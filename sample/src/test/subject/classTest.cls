@@ -13,4 +13,9 @@ class subject.classTest inherits subject.class :
         Assert:IsTrue(methodOne()).
     end method.
 
+    @Test.
+    method public void testMethod3 () :
+        Assert:IsTrue(false).
+    end method.
+
 end class.

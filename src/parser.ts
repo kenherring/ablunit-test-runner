@@ -3,8 +3,7 @@ import * as vscode from 'vscode';
 // CLASS statement
 const headingRe = /^\s+class (\S+)\s*:/;
 // METHOD statement
-
-const testRe = /^\s+method public void (\S+) /;
+const methodRe = /^\s+method public void (\S+) /;
 
 export const parseABLUnit = (text: string, events: {
 	onTest(range: vscode.Range, methodName: string): void;
@@ -19,7 +18,7 @@ export const parseABLUnit = (text: string, events: {
 
 	for (let lineNo = 0; lineNo < lines.length; lineNo++) {
 		const line = lines[lineNo];
-		const test = testRe.exec(line);
+		const test = methodRe.exec(line);
 
 		if (test) {
 			const [, methodName] = test;

@@ -10,3 +10,4 @@ node_modules
 
 # OpenEdge Files
 *.r
+results.xml

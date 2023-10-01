@@ -13,3 +13,7 @@ This VSCode test provider extension integrates [ABLUnit tests](https://docs.prog
 	- Start a task `npm: watch` to compile the code
 	- Run the extension in a new VS Code window
 - Create a `test.cls` file containing the given content
+
+## Links
+
+* [Progress Documentation -> Progress Developer Studio for OpenEdge Online Help -> Run test cases from the command prompt](https://docs.progress.com/bundle/openedge-developer-studio-help/page/Run-test-cases-from-the-command-prompt.html)

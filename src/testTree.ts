@@ -1,6 +1,7 @@
 import { TextDecoder } from 'util';
 import * as vscode from 'vscode';
 import { parseABLUnit } from './parser';
+import * as cp from "child_process";
 
 const textDecoder = new TextDecoder('utf-8');
 
@@ -53,9 +54,9 @@ export class TestFile {
 			onTest: (range, methodName) => {
 				const parent = ancestors[ancestors.length - 1];
 				const data = new TestCase(methodName, thisGeneration);
-				const id = `${item.uri}/${data.getLabel()}`;
+				const id = `${item.uri}#${data.getLabel()}`;
 
-
+				// TODO tag as method?
 				const tcase = controller.createTestItem(id, data.getLabel(), item.uri);
 				testData.set(tcase, data);
 				tcase.range = range;
@@ -96,7 +97,56 @@ export class TestCase {
 		const start = Date.now();
 		// await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 1000));
 		// const actual = this.evaluate();
+		let itemPath = vscode.workspace.asRelativePath(item.uri!.fsPath).replace('src/test/','');
+		if(item.label.startsWith('testMethod'))
+			itemPath = itemPath + '#' + item.label; 
+
+		// console.log("run0: " + item.uri + " " + item.uri?.path + " " + item.uri?.fsPath);
+		// console.log("run1: " + item.id + " " + item.parent + " " + item.label + " " + item.children);
+		// console.log("vscode dir=" + vscode.workspace.workspaceFolders?.map(item => item.uri.path));
+
+		const workspaceDir = vscode.workspace.workspaceFolders?.map(item => item.uri.fsPath);
+
+		const cmd =  'pwd && echo $0 && _progres -b -p ABLUnitCore.p -basekey INI -ininame progress.ini -param "' + itemPath + ' CFG=ablunit.json"';
+		console.log("cmd=" + cmd);
+		// const cmd = "pwd"
+		await new Promise<string>((resolve, reject) => {
+			const { exec } = require('child_process');
+			cp.exec
+			cp.exec(cmd, { cwd: workspaceDir?.toString() }, (err, stdout, stderr) => {
+				if (err) {
+					console.log(cmd+' error!');
+					options.appendOutput(stderr);
+					reject(err);
+				}
+				console.log(stdout);
+				options.appendOutput(stdout);
+				return resolve(stdout);
+			});
+		});
 		const duration = Date.now() - start;
+
+		const fs = require('fs');
+		var parseString = require('xml2js').parseString;
+		const xmlData = fs.readFileSync(workspaceDir + '/results.xml', "utf8");
+		// const jsonData = parseString(xmlData);
+		parseString(xmlData, function (err: any, result: any) {
+			const errors: any[] = result['testsuites']['$']['errors'];
+			const failures: any[] = result['testsuites']['$']['failures'];
+			const tests: any[] = result['testsuites']['$']['tests'];
+			console.log(errors + " " + failures + " " + tests);
+			
+
+			if(errors[0] > 0)
+				options.errored(item, new vscode.TestMessage("Error"), duration);
+			else if(failures[0] > 0)
+				options.failed(item, new vscode.TestMessage("Failed"));
+			else if(tests[0] > 0)
+				options.passed(item, duration);
+			else
+				options.skipped(item);
+		});
+
 
 		// if (actual === this.expected) {
 			options.passed(item, duration);
