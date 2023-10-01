@@ -1,26 +1,15 @@
-# Test Provider Sample
+# ABLUnit Test Provider
 
-This sample demonstrates usage of the Test Provider API. It looks for tests as additions in `.md` files, with heading as groups, for example:
+This VSCode test provider extension integrates [ABLUnit tests](https://docs.progress.com/bundle/openedge-developer-studio-help-122/page/Learn-About-ABLUnit-Test-Framework.html) into the VSCode test explorer.
 
-```
-# Easy Math
+## Prerequisites
 
-2 + 2 = 4 // this test will pass
-2 + 2 = 5 // this test will fail
+- Run `winget install nodejs`
 
-# Harder Math
-
-230230 + 5819123 = 6049353
-```
-
-## VS Code API
-
-todo
-
-## Running the Sample
+## Running the Project
 
 - Run `npm install` in terminal to install dependencies
 - Run the `Run Extension` target in the Debug View. This will:
 	- Start a task `npm: watch` to compile the code
 	- Run the extension in a new VS Code window
-- Create a `test.md` file containing the given content
+- Create a `test.cls` file containing the given content

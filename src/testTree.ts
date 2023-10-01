@@ -1,12 +1,12 @@
 import { TextDecoder } from 'util';
 import * as vscode from 'vscode';
-import { parseMarkdown } from './parser';
+import { parseABLUnit } from './parser';
 
 const textDecoder = new TextDecoder('utf-8');
 
-export type MarkdownTestData = TestFile | TestHeading | TestCase;
+export type ABLUnitTestData = TestFile | TestHeading | TestCase;
 
-export const testData = new WeakMap<vscode.TestItem, MarkdownTestData>();
+export const testData = new WeakMap<vscode.TestItem, ABLUnitTestData>();
 
 let generationCounter = 0;
 
@@ -49,10 +49,10 @@ export class TestFile {
 			}
 		};
 
-		parseMarkdown(content, {
-			onTest: (range, a, operator, b, expected) => {
+		parseABLUnit(content, {
+			onTest: (range, methodName) => {
 				const parent = ancestors[ancestors.length - 1];
-				const data = new TestCase(a, operator as Operator, b, expected, thisGeneration);
+				const data = new TestCase(methodName, thisGeneration);
 				const id = `${item.uri}/${data.getLabel()}`;
 
 
@@ -62,12 +62,11 @@ export class TestFile {
 				parent.children.push(tcase);
 			},
 
-			onHeading: (range, name, depth) => {
-				ascend(depth);
+			onHeading: (range, className) => {
 				const parent = ancestors[ancestors.length - 1];
-				const id = `${item.uri}/${name}`;
+				const id = `${item.uri}/${className}`;
 
-				const thead = controller.createTestItem(id, name, item.uri);
+				const thead = controller.createTestItem(id, className, item.uri);
 				thead.range = range;
 				testData.set(thead, new TestHeading(thisGeneration));
 				parent.children.push(thead);
@@ -83,46 +82,41 @@ export class TestHeading {
 	constructor(public generation: number) { }
 }
 
-type Operator = '+' | '-' | '*' | '/';
-
 export class TestCase {
 	constructor(
-		private readonly a: number,
-		private readonly operator: Operator,
-		private readonly b: number,
-		private readonly expected: number,
+    private readonly methodName: string,
 		public generation: number
 	) { }
 
 	getLabel() {
-		return `${this.a} ${this.operator} ${this.b} = ${this.expected}`;
+		return `${this.methodName}`;
 	}
 
 	async run(item: vscode.TestItem, options: vscode.TestRun): Promise<void> {
 		const start = Date.now();
-		await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 1000));
-		const actual = this.evaluate();
+		// await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 1000));
+		// const actual = this.evaluate();
 		const duration = Date.now() - start;
 
-		if (actual === this.expected) {
+		// if (actual === this.expected) {
 			options.passed(item, duration);
-		} else {
-			const message = vscode.TestMessage.diff(`Expected ${item.label}`, String(this.expected), String(actual));
-			message.location = new vscode.Location(item.uri!, item.range!);
-			options.failed(item, message, duration);
-		}
+		// } else {
+		// 	const message = vscode.TestMessage.diff(`Expected ${item.label}`, String(this.expected), String(actual));
+		// 	message.location = new vscode.Location(item.uri!, item.range!);
+		// 	options.failed(item, message, duration);
+		// }
 	}
 
-	private evaluate() {
-		switch (this.operator) {
-			case '-':
-				return this.a - this.b;
-			case '+':
-				return this.a + this.b;
-			case '/':
-				return Math.floor(this.a / this.b);
-			case '*':
-				return this.a * this.b;
-		}
-	}
+	// private evaluate() {
+	// 	switch (this.operator) {
+	// 		case '-':
+	// 			return this.a - this.b;
+	// 		case '+':
+	// 			return this.a + this.b;
+	// 		case '/':
+	// 			return Math.floor(this.a / this.b);
+	// 		case '*':
+	// 			return this.a * this.b;
+	// 	}
+	// }
 }

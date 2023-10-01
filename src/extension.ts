@@ -1,8 +1,8 @@
 import * as vscode from 'vscode';
-import { getContentFromFilesystem, MarkdownTestData, TestCase, testData, TestFile } from './testTree';
+import { getContentFromFilesystem, ABLUnitTestData, TestCase, testData, TestFile } from './testTree';
 
 export async function activate(context: vscode.ExtensionContext) {
-	const ctrl = vscode.tests.createTestController('mathTestController', 'Markdown Math');
+	const ctrl = vscode.tests.createTestController('ablunitTestController', 'ABLUnit Test');
 	context.subscriptions.push(ctrl);
 
 	const fileChangedEmitter = new vscode.EventEmitter<vscode.Uri>();
@@ -126,7 +126,7 @@ export async function activate(context: vscode.ExtensionContext) {
 			return;
 		}
 
-		if (!e.uri.path.endsWith('.md')) {
+		if (!e.uri.path.endsWith('.cls')) {
 			return;
 		}
 
@@ -173,7 +173,7 @@ function getWorkspaceTestPatterns() {
 
 	return vscode.workspace.workspaceFolders.map(workspaceFolder => ({
 		workspaceFolder,
-		pattern: new vscode.RelativePattern(workspaceFolder, '**/*.md'),
+		pattern: new vscode.RelativePattern(workspaceFolder, '**/*.cls'),
 	}));
 }
 
