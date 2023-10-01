@@ -4,3 +4,9 @@ node_modules
 *.vsix
 
 /vscode.d.ts
+
+# OpenEdge ABL Extension (vscode-abl/vscode-abl)
+.builder
+
+# OpenEdge Files
+*.r

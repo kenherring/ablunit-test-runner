@@ -1,12 +1,12 @@
 {
 	"name": "g",
-	"displayName": "test-provider-sample",
-	"description": "Sample showing how to use the test APIs",
+	"displayName": "ablunit-test-provider",
+	"description": "Integrate OpenEdge ABLUnit Tests with VSCode",
 	"version": "0.0.1",
-	"publisher": "vscode-samples",
+	"publisher": "kenherring",
 	"private": true,
 	"license": "MIT",
-	"repository": "https://github.com/Microsoft/vscode-extension-samples",
+	"repository": "https://github.com/kherring/ablunit-test-provider",
 	"enabledApiProposals": [
 		"testCoverage"
 	],
@@ -17,7 +17,7 @@
 		"Other"
 	],
 	"activationEvents": [
-		"workspaceContains:*.md"
+		"workspaceContains:**/*.cls"
 	],
 	"main": "./out/extension.js",
 	"scripts": {
