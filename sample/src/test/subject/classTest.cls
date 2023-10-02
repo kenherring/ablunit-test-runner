@@ -18,4 +18,9 @@ class subject.classTest inherits subject.class :
         Assert:IsTrue(false).
     end method.
 
+    @Test.
+    method public void testMethod4 () :
+        message "error:" + string(integer("123a")).
+    end method.
+
 end class.

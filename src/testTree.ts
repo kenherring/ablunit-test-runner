@@ -95,24 +95,15 @@ export class TestCase {
 
 	async run(item: vscode.TestItem, options: vscode.TestRun): Promise<void> {
 		const start = Date.now();
-		// await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 1000));
-		// const actual = this.evaluate();
+
 		let itemPath = vscode.workspace.asRelativePath(item.uri!.fsPath).replace('src/test/','');
 		if(item.label.startsWith('testMethod'))
 			itemPath = itemPath + '#' + item.label; 
-
-		// console.log("run0: " + item.uri + " " + item.uri?.path + " " + item.uri?.fsPath);
-		// console.log("run1: " + item.id + " " + item.parent + " " + item.label + " " + item.children);
-		// console.log("vscode dir=" + vscode.workspace.workspaceFolders?.map(item => item.uri.path));
-
 		const workspaceDir = vscode.workspace.workspaceFolders?.map(item => item.uri.fsPath);
 
-		const cmd =  'pwd && echo $0 && _progres -b -p ABLUnitCore.p -basekey INI -ininame progress.ini -param "' + itemPath + ' CFG=ablunit.json"';
+		const cmd = '_progres -b -p ABLUnitCore.p -basekey INI -ininame progress.ini -param "' + itemPath + ' CFG=ablunit.json"';
 		console.log("cmd=" + cmd);
-		// const cmd = "pwd"
 		await new Promise<string>((resolve, reject) => {
-			const { exec } = require('child_process');
-			cp.exec
 			cp.exec(cmd, { cwd: workspaceDir?.toString() }, (err, stdout, stderr) => {
 				if (err) {
 					console.log(cmd+' error!');
@@ -131,42 +122,42 @@ export class TestCase {
 		const xmlData = fs.readFileSync(workspaceDir + '/results.xml', "utf8");
 		// const jsonData = parseString(xmlData);
 		parseString(xmlData, function (err: any, result: any) {
-			const errors: any[] = result['testsuites']['$']['errors'];
-			const failures: any[] = result['testsuites']['$']['failures'];
-			const tests: any[] = result['testsuites']['$']['tests'];
-			console.log(errors + " " + failures + " " + tests);
+			console.log("err=" + err + " result=" + result);
+
+			if (err) {
+				options.errored(item, new vscode.TestMessage(err), duration);
+				return console.error(err);
+			}
+			console.log("write json to file");
+			fs.writeFile(workspaceDir + "/results.json", JSON.stringify(result, null, 2), function(err: any) {
+				if (err) {
+					console.log(err);
+				}
+			});
+
+			const errorCount: any[] = result['testsuites']['$']['errors'];
+			const failureCount: any[] = result['testsuites']['$']['failures'];
+			const testCount: any[] = result['testsuites']['$']['tests'];
+			console.log(errorCount + " " + failureCount + " " + testCount);
 			
 
-			if(errors[0] > 0)
-				options.errored(item, new vscode.TestMessage("Error"), duration);
-			else if(failures[0] > 0)
-				options.failed(item, new vscode.TestMessage("Failed"));
-			else if(tests[0] > 0)
+			if(errorCount[0] > 0) {
+				const errMessage = result['testsuites']['testsuite']['0']['testcase']['0']['error']['0']['$']['message'] + '\n\n' +
+								   result['testsuites']['testsuite']['0']['testcase']['0']['error']['0']['_'];
+				options.errored(item, new vscode.TestMessage(errMessage), duration);
+			} else if(failureCount[0] > 0) {
+				// console.log("result4=" + JSON.stringify(result['testsuites']['testsuite']['0']['testcase']['0']['failure']['0']['$']['message']));
+				
+				const failMessage = result['testsuites']['testsuite']['0']['testcase']['0']['failure']['0']['$']['message'];
+				const expected = failMessage.replace('Expected: ','').replace(/ but was: .*$/,'');
+				const got = failMessage.replace(/^.* but was: /,'');
+				const message = vscode.TestMessage.diff(`Expected ${item.label}`, String(expected), String(got));
+				options.failed(item, message, duration);
+			} else if(testCount[0] > 0)
 				options.passed(item, duration);
 			else
 				options.skipped(item);
 		});
-
-
-		// if (actual === this.expected) {
-			options.passed(item, duration);
-		// } else {
-		// 	const message = vscode.TestMessage.diff(`Expected ${item.label}`, String(this.expected), String(actual));
-		// 	message.location = new vscode.Location(item.uri!, item.range!);
-		// 	options.failed(item, message, duration);
-		// }
 	}
 
-	// private evaluate() {
-	// 	switch (this.operator) {
-	// 		case '-':
-	// 			return this.a - this.b;
-	// 		case '+':
-	// 			return this.a + this.b;
-	// 		case '/':
-	// 			return Math.floor(this.a / this.b);
-	// 		case '*':
-	// 			return this.a * this.b;
-	// 	}
-	// }
 }

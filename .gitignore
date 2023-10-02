@@ -10,4 +10,5 @@ node_modules
 
 # OpenEdge Files
 *.r
+results.json
 results.xml
