@@ -1,6 +1,7 @@
 import { TextDecoder } from 'util';
 import * as vscode from 'vscode';
 import { parseABLUnit } from './parser';
+import * as cp from "child_process";
 
 const textDecoder = new TextDecoder('utf-8');
 
@@ -53,9 +54,9 @@ export class TestFile {
 			onTest: (range, methodName) => {
 				const parent = ancestors[ancestors.length - 1];
 				const data = new TestCase(methodName, thisGeneration);
-				const id = `${item.uri}/${data.getLabel()}`;
+				const id = `${item.uri}#${data.getLabel()}`;
 
-
+				// TODO tag as method?
 				const tcase = controller.createTestItem(id, data.getLabel(), item.uri);
 				testData.set(tcase, data);
 				tcase.range = range;
@@ -94,29 +95,69 @@ export class TestCase {
 
 	async run(item: vscode.TestItem, options: vscode.TestRun): Promise<void> {
 		const start = Date.now();
-		// await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 1000));
-		// const actual = this.evaluate();
+
+		let itemPath = vscode.workspace.asRelativePath(item.uri!.fsPath).replace('src/test/','');
+		if(item.label.startsWith('testMethod'))
+			itemPath = itemPath + '#' + item.label; 
+		const workspaceDir = vscode.workspace.workspaceFolders?.map(item => item.uri.fsPath);
+
+		const cmd = '_progres -b -p ABLUnitCore.p -basekey INI -ininame progress.ini -param "' + itemPath + ' CFG=ablunit.json"';
+		console.log("cmd=" + cmd);
+		await new Promise<string>((resolve, reject) => {
+			cp.exec(cmd, { cwd: workspaceDir?.toString() }, (err, stdout, stderr) => {
+				if (err) {
+					console.log(cmd+' error!');
+					options.appendOutput(stderr);
+					reject(err);
+				}
+				console.log(stdout);
+				options.appendOutput(stdout);
+				return resolve(stdout);
+			});
+		});
 		const duration = Date.now() - start;
 
-		// if (actual === this.expected) {
-			options.passed(item, duration);
-		// } else {
-		// 	const message = vscode.TestMessage.diff(`Expected ${item.label}`, String(this.expected), String(actual));
-		// 	message.location = new vscode.Location(item.uri!, item.range!);
-		// 	options.failed(item, message, duration);
-		// }
+		const fs = require('fs');
+		var parseString = require('xml2js').parseString;
+		const xmlData = fs.readFileSync(workspaceDir + '/results.xml', "utf8");
+		// const jsonData = parseString(xmlData);
+		parseString(xmlData, function (err: any, result: any) {
+			console.log("err=" + err + " result=" + result);
+
+			if (err) {
+				options.errored(item, new vscode.TestMessage(err), duration);
+				return console.error(err);
+			}
+			console.log("write json to file");
+			fs.writeFile(workspaceDir + "/results.json", JSON.stringify(result, null, 2), function(err: any) {
+				if (err) {
+					console.log(err);
+				}
+			});
+
+			const errorCount: any[] = result['testsuites']['$']['errors'];
+			const failureCount: any[] = result['testsuites']['$']['failures'];
+			const testCount: any[] = result['testsuites']['$']['tests'];
+			console.log(errorCount + " " + failureCount + " " + testCount);
+			
+
+			if(errorCount[0] > 0) {
+				const errMessage = result['testsuites']['testsuite']['0']['testcase']['0']['error']['0']['$']['message'] + '\n\n' +
+								   result['testsuites']['testsuite']['0']['testcase']['0']['error']['0']['_'];
+				options.errored(item, new vscode.TestMessage(errMessage), duration);
+			} else if(failureCount[0] > 0) {
+				// console.log("result4=" + JSON.stringify(result['testsuites']['testsuite']['0']['testcase']['0']['failure']['0']['$']['message']));
+				
+				const failMessage = result['testsuites']['testsuite']['0']['testcase']['0']['failure']['0']['$']['message'];
+				const expected = failMessage.replace('Expected: ','').replace(/ but was: .*$/,'');
+				const got = failMessage.replace(/^.* but was: /,'');
+				const message = vscode.TestMessage.diff(`Expected ${item.label}`, String(expected), String(got));
+				options.failed(item, message, duration);
+			} else if(testCount[0] > 0)
+				options.passed(item, duration);
+			else
+				options.skipped(item);
+		});
 	}
 
-	// private evaluate() {
-	// 	switch (this.operator) {
-	// 		case '-':
-	// 			return this.a - this.b;
-	// 		case '+':
-	// 			return this.a + this.b;
-	// 		case '/':
-	// 			return Math.floor(this.a / this.b);
-	// 		case '*':
-	// 			return this.a * this.b;
-	// 	}
-	// }
 }

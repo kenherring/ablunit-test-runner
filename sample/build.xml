@@ -1,0 +1,5 @@
+<project name="sample" default="test">
+    <target name="test">
+        <echo>TestItem=${TestItem}</echo>
+    </target>
+</project>
