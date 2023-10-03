@@ -1,12 +1,20 @@
 {
-	"name": "g",
-	"displayName": "ablunit-test-provider",
-	"description": "Integrate OpenEdge ABLUnit Tests with VSCode",
+	"name": "ablunit-test-provider",
+	"displayName": "ABLUnit Test Runner",
+	"description": "OpenEdge ABLUnit support for VSCode",
 	"version": "0.0.1",
 	"publisher": "kenherring",
 	"private": true,
 	"license": "MIT",
+	"capabilities": {
+		"untrustedWorkspaces": {
+			"supported": false
+		}
+	},
 	"repository": "https://github.com/kherring/ablunit-test-provider",
+	"bugs": {
+		"url": "https://github.coim/kherring/ablunit-test-provider/issues"
+	},
 	"enabledApiProposals": [
 		"testCoverage"
 	],
@@ -14,10 +22,10 @@
 		"vscode": "^1.68.0"
 	},
 	"categories": [
-		"Other"
+		"Testing"
 	],
 	"activationEvents": [
-		"workspaceContains:**/*.cls"
+		"workspaceContains:**/*.[cls|p]"
 	],
 	"main": "./out/extension.js",
 	"scripts": {
@@ -36,14 +44,21 @@
 		"eslint": "^8.26.0",
 		"typescript": "^5.2.2"
 	},
-	"configuration": {
-		"type": "object",
-		"title": "ABLUnit Command",
-		"properties": {
-			"ablunit.runTestCommand": {
-				"type": "string",
-				"default": "",
-				"description": "When enabled outline shows list of include files"
+	"contributes": {
+		"configuration": {
+			"type": "object",
+			"title": "ABLUnit Configuration",
+			"properties": {
+				"ablunit.runTestCommand": {
+					"type": "string",
+					"default": "_progres -b -p ABLUnitCore.p",
+					"description": "Command executed to run a test"
+				},
+				"ablunit.resultsPath": {
+					"type": "string",
+					"default": "results.xml",
+					"description": "Location of the outputted results.xml file"
+				}
 			}
 		}
 	},
