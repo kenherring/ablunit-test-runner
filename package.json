@@ -51,7 +51,7 @@
 			"properties": {
 				"ablunit.runTestCommand": {
 					"type": "string",
-					"default": "_progres -b -p ABLUnitCore.p",
+					"default": "",
 					"description": "Command executed to run a test"
 				},
 				"ablunit.resultsPath": {

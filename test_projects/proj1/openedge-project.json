@@ -1,5 +1,7 @@
 {
-    "name": "sample",
+    "name": "proj1",
+    "version": "1",
+    "charset": "utf-8",
     "oeversion": "12.2",
     "graphicalMode": false,
     "buildPath": [ 

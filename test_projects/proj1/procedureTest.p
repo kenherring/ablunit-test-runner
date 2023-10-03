@@ -23,7 +23,6 @@ procedure test_call_fail_1 :
     Assert:Equals(true,false).
 end procedure.
 
-
 @Test.
 procedure test_call_error :
     define variable val as integer no-undo.
