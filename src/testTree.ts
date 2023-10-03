@@ -1,6 +1,7 @@
 import { TextDecoder } from 'util';
 import * as vscode from 'vscode';
 import { parseABLUnit } from './parser';
+import { parseABLCallStack } from './ablHelper';
 import * as cp from "child_process";
 
 const textDecoder = new TextDecoder('utf-8');
@@ -96,21 +97,31 @@ export class TestCase {
 	async run(item: vscode.TestItem, options: vscode.TestRun): Promise<void> {
 		const start = Date.now();
 
-		let itemPath = vscode.workspace.asRelativePath(item.uri!.fsPath).replace('src/test/','');
-		if(item.label.startsWith('testMethod'))
-			itemPath = itemPath + '#' + item.label; 
+		let itemPath = vscode.workspace.asRelativePath(item.uri!.fsPath);
+		console.log("itemPath=" + itemPath);
+		// if(item.label.startsWith("testMethod") || item.label.startsWith("testProc")) {
+		// 	itemPath = itemPath + "#" + item.label; 
+		// }
 		const workspaceDir = vscode.workspace.workspaceFolders?.map(item => item.uri.fsPath);
 
-		const cmd = '_progres -b -p ABLUnitCore.p -basekey INI -ininame progress.ini -param "' + itemPath + ' CFG=ablunit.json"';
+		var cmd = vscode.workspace.getConfiguration('ablunit').get('runTestCommand', '').trim();
+		console.log("ablunitCommand=" + cmd);
+		if (! cmd) {
+			cmd = '_progres -b -p ABLUnitCore.p -basekey INI -ininame progress.ini -param "${itemPath} CFG=ablunit.json"';
+		}
+
+		cmd = cmd.replace("${itemPath}",itemPath);
+		
 		console.log("cmd=" + cmd);
 		await new Promise<string>((resolve, reject) => {
 			cp.exec(cmd, { cwd: workspaceDir?.toString() }, (err, stdout, stderr) => {
 				if (err) {
 					console.log(cmd+' error!');
+					console.log(err);
 					options.appendOutput(stderr);
-					reject(err);
+					// reject(err);
 				}
-				console.log(stdout);
+				// console.log(stdout);
 				options.appendOutput(stdout);
 				return resolve(stdout);
 			});
@@ -119,45 +130,73 @@ export class TestCase {
 
 		const fs = require('fs');
 		var parseString = require('xml2js').parseString;
-		const xmlData = fs.readFileSync(workspaceDir + '/results.xml', "utf8");
+		
+		const resultsPath = vscode.workspace.getConfiguration('ablunit').get('resultsPath', '').trim();
+		console.log("resultsPath=" + resultsPath);
+		const xmlData = fs.readFileSync(workspaceDir + "/" + resultsPath, "utf8");
 		// const jsonData = parseString(xmlData);
 		parseString(xmlData, function (err: any, result: any) {
-			console.log("err=" + err + " result=" + result);
-
 			if (err) {
 				options.errored(item, new vscode.TestMessage(err), duration);
 				return console.error(err);
 			}
-			console.log("write json to file");
-			fs.writeFile(workspaceDir + "/results.json", JSON.stringify(result, null, 2), function(err: any) {
+			fs.writeFile(workspaceDir + "/" + resultsPath.replace(/\.xml$/,".json"), JSON.stringify(result, null, 2), function(err: any) {
 				if (err) {
 					console.log(err);
 				}
 			});
 
-			const errorCount: any[] = result['testsuites']['$']['errors'];
-			const failureCount: any[] = result['testsuites']['$']['failures'];
-			const testCount: any[] = result['testsuites']['$']['tests'];
-			console.log(errorCount + " " + failureCount + " " + testCount);
+			// const errorCount: any[] = result['testsuites']['$']['errors'];
+			// const failureCount: any[] = result['testsuites']['$']['failures'];
+			// const testCount: any[] = result['testsuites']['$']['tests'];
+			// console.log(errorCount + " " + failureCount + " " + testCount);
 			
+			var testSuite
+			for (let key in result['testsuites']['testsuite']) {
+				if(JSON.stringify(result['testsuites']['testsuite'][key]['$']['name']).endsWith(itemPath + '"')) {
+					testSuite=result['testsuites']['testsuite'][key]
+				}
+			}
+			
+			var testCase
+			for(let key in testSuite['testcase']){
+				if (testSuite['testcase'][key]['$']['name'] == item.label){
+					testCase = testSuite['testcase'][key];
+				}
+			}
+			console.log("status=" + testCase['$']['status'])
+			
+			const re = new RegExp(`${workspaceDir}`, 'g')
 
-			if(errorCount[0] > 0) {
-				const errMessage = result['testsuites']['testsuite']['0']['testcase']['0']['error']['0']['$']['message'] + '\n\n' +
-								   result['testsuites']['testsuite']['0']['testcase']['0']['error']['0']['_'];
-				options.errored(item, new vscode.TestMessage(errMessage), duration);
-			} else if(failureCount[0] > 0) {
-				// console.log("result4=" + JSON.stringify(result['testsuites']['testsuite']['0']['testcase']['0']['failure']['0']['$']['message']));
-				
-				const failMessage = result['testsuites']['testsuite']['0']['testcase']['0']['failure']['0']['$']['message'];
-				const expected = failMessage.replace('Expected: ','').replace(/ but was: .*$/,'');
-				const got = failMessage.replace(/^.* but was: /,'');
-				const message = vscode.TestMessage.diff(`Expected ${item.label}`, String(expected), String(got));
-				options.failed(item, message, duration);
-			} else if(testCount[0] > 0)
-				options.passed(item, duration);
-			else
-				options.skipped(item);
+			switch (testCase['$']['status']) {
+				case "Success":
+					if (testCase['$']['ignored']) {
+						options.skipped(item);
+					} else {
+						options.passed(item, duration);
+					}
+					return;
+				case "Failure":
+					const failMessage = testCase['failure']['0']['$']['message'];
+					const expected = failMessage.replace('Expected: ','').replace(/ but was: .*$/,'');
+					const got = failMessage.replace(/^.* but was: /,'');
+
+					const stackStringFail = parseABLCallStack(testCase['failure'][0]['_'].replaceAll(workspaceDir + "\\",""));
+					const mdStack = new vscode.MarkdownString("# Assert Failure\n\n" + failMessage + "\n\n# Call Stack\n\n" + stackStringFail);
+					
+					const message1 = vscode.TestMessage.diff(failMessage, String(expected), String(got));
+					const message2 = new vscode.TestMessage(mdStack);
+					options.failed(item, [message1, message2], duration);
+					return;
+				case "Error":
+					const errMessage = testCase['error'][0]['$']['message'].replace(re,'');
+					const stackStringErr = testCase['error']['0']['_'].replaceAll(workspaceDir + "\\","")
+ 					options.errored(item, [new vscode.TestMessage(errMessage), new vscode.TestMessage(stackStringErr)], duration);
+					return;
+				default:
+					throw('test case result not found!');
+			}
+			
 		});
 	}
-
 }

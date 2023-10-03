@@ -126,7 +126,7 @@ export async function activate(context: vscode.ExtensionContext) {
 			return;
 		}
 
-		if (!e.uri.path.endsWith('.cls')) {
+		if (!e.uri.path.endsWith('.cls') && !e.uri.path.endsWith('.p')) {
 			return;
 		}
 
@@ -173,7 +173,7 @@ function getWorkspaceTestPatterns() {
 
 	return vscode.workspace.workspaceFolders.map(workspaceFolder => ({
 		workspaceFolder,
-		pattern: new vscode.RelativePattern(workspaceFolder, '**/*.cls'),
+		pattern: new vscode.RelativePattern(workspaceFolder, '**/*.(cls|p)')
 	}));
 }
 

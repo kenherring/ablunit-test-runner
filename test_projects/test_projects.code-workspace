@@ -1,0 +1,10 @@
+{
+    "folders": [
+        { "path": "proj1" }
+    ],
+    "settings": {
+        "terminal.integrated.env.windows": {
+            "PATH": "${env:PATH}:/c/Progress/OpenEdge/ant/bin"
+        },
+    }
+}

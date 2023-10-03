@@ -3,25 +3,26 @@ import * as vscode from 'vscode';
 // CLASS statement
 const headingRe = /^\s+class (\S+)\s*:/;
 // METHOD statement
-const methodRe = /^\s+method public void (\S+) /;
+const methodRe = /\s+method\s(\s*public){0,1}\s*void\s*(\S[^\s\(]+)/;
+// PROCEDURE statement
+const procRe = /(^|\s+)procedure\s+(\S+)\s*:/;
 
 export const parseABLUnit = (text: string, events: {
 	onTest(range: vscode.Range, methodName: string): void;
 	onHeading(range: vscode.Range, className: string): void;
 }) => {
+	if(text.toLowerCase().indexOf("@test.") == -1) {
+		return
+	}
 
-	if (text.toLowerCase().indexOf("@test.") == -1)
-		return;
-
-	const lines = text.split('\n');
-
-
+	const lines = text.replace('\r','').split('\n');
 	for (let lineNo = 0; lineNo < lines.length; lineNo++) {
-		const line = lines[lineNo];
-		const test = methodRe.exec(line);
-
+		var test = methodRe.exec(lines[lineNo]);
+		if (! test) {
+			test = procRe.exec(lines[lineNo]);
+		}
 		if (test) {
-			const [, methodName] = test;
+			const [, pubOrBlank, methodName] = test;
 			const range = new vscode.Range(new vscode.Position(lineNo, 0), new vscode.Position(lineNo, test[0].length));
 			
 			const prevLine = lines[lineNo - 1];
@@ -31,10 +32,10 @@ export const parseABLUnit = (text: string, events: {
 			}
 		}
 
-		const heading = headingRe.exec(line);
+		const heading = headingRe.exec(lines[lineNo]);
 		if (heading) {
 			const [, className] = heading;
-			const range = new vscode.Range(new vscode.Position(lineNo, 0), new vscode.Position(lineNo, line.length));
+			const range = new vscode.Range(new vscode.Position(lineNo, 0), new vscode.Position(lineNo, heading.length));
 			events.onHeading(range, className);
 		}
 	}
