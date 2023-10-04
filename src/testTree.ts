@@ -86,7 +86,7 @@ export class TestHeading {
 
 export class TestCase {
 	constructor(
-    private readonly methodName: string,
+		private readonly methodName: string,
 		public generation: number
 	) { }
 
@@ -107,7 +107,7 @@ export class TestCase {
 		var cmd = vscode.workspace.getConfiguration('ablunit').get('runTestCommand', '').trim();
 		console.log("ablunitCommand=" + cmd);
 		if (! cmd) {
-			cmd = '_progres -b -p ABLUnitCore.p -basekey INI -ininame progress.ini -param "${itemPath} CFG=ablunit.json"';
+			cmd = '_progres -b -p ABLUnitCore.p -basekey INI -ininame progress.ini -param "${itemPath} CFG=ablunit.json" -profile profile.config';
 		}
 
 		cmd = cmd.replace("${itemPath}",itemPath);
