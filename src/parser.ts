@@ -19,15 +19,19 @@ interface SuiteLoc {
 }
 
 export const parseABLUnit = (text: string, relativePath: string, events: {
-	onTestSuite(range: vscode.Range, suiteName: string): void;
-	onTestClass(range: vscode.Range, className: string): void;
+	onTestSuite(range: vscode.Range, suitename: string): void;
+	onTestClassNamespace(range: vscode.Range, classpath: string, element: string): void;
+	onTestClass(range: vscode.Range, classname: string, label: string): void;
 	onTestProgram(range: vscode.Range, procedureName: string): void;
-	onTestMethod(range: vscode.Range, className: string, methodName: string): void;
-	onTestProcedure(range: vscode.Range, programName: string, prcocedureName: string): void;
-	onAssert(range: vscode.Range, methodName: string): void;
+	onTestMethod(range: vscode.Range, classname: string, methodname: string): void;
+	onTestProcedure(range: vscode.Range, programname: string, prcocedurename: string): void;
+	onAssert(range: vscode.Range, methodname: string): void;
 }) => {
 	
 	const lines = text.split("\n")
+	const configStyle = vscode.workspace.getConfiguration('ablunit').get('display.style');
+	const configClassLabel= vscode.workspace.getConfiguration('ablunit').get('display.classLabel');
+	// console.log("configStyle=" + configStyle + ", configClassLabel=" + configClassLabel)
 
 	const parseByType = () => {
 		if (relativePath.endsWith(".cls")) {
@@ -47,8 +51,17 @@ export const parseABLUnit = (text: string, relativePath: string, events: {
 		}
 	}
 
+	const splitpath = (path: string) => {
+		var elems = []
+		elems = path.split('.')
+		if (elems.length > 1) return elems
+		elems = path.split('/')
+		if (elems.length > 1) return elems
+		elems = path.split('\\')
+		return elems
+	}
+
 	const parseClass = () => {
-		// console.log("parse test class")
 		if (text.toLowerCase().indexOf("@test.") == -1) {
 			return
 		}
@@ -63,10 +76,28 @@ export const parseABLUnit = (text: string, relativePath: string, events: {
 			if (!foundClassHead) {
 				const classResult = classRE.exec(lines[lineNo])
 				if (classResult) {
-					const [, className] = classResult;
-					// console.log("className=" + className + " isTestSuite=" + isTestSuite)
+					className = classResult[1];
 					const range = new vscode.Range(new vscode.Position(lineNo, lines[lineNo].indexOf(className)), new vscode.Position(lineNo, className.length));
-					events.onTestClass(range, className);
+
+					if (configClassLabel == "filepath") {
+						// className = 
+						className = relativePath;
+					}
+					
+					var label = className
+					if (configStyle == "tree") {
+						var path = splitpath(className)
+						var classpath: string = ""
+						for (let idx=0; idx < path.length - 1; idx++) {
+							if (classpath == "") 
+								classpath = path[idx]
+							else
+								classpath = classpath + "." + path[idx]
+							events.onTestClassNamespace(range, classpath, path[idx])
+						}
+						label = path[path.length - 1]
+					}
+					events.onTestClass(range, className, label);
 					foundClassHead = true
 					continue;
 				}
@@ -87,7 +118,6 @@ export const parseABLUnit = (text: string, relativePath: string, events: {
 	}
 
 	const parseProgram = () => {
-		// console.log("parse test program")
 		if (text.toLowerCase().indexOf("@test.") == -1) {
 			return
 		}
@@ -112,7 +142,6 @@ export const parseABLUnit = (text: string, relativePath: string, events: {
 	const suiteItemRE2 = /,(classes|procedures)="([^"]*)+"/i
 
 	const parseSuiteClass = () => {
-		// console.log("TODO - parseSuiteClass - " + relativePath)
 
 		events.onTestSuite(new vscode.Range(new vscode.Position(0,0), new vscode.Position(0,0)), '[suite] ' + relativePath)
 
@@ -167,7 +196,7 @@ export const parseABLUnit = (text: string, relativePath: string, events: {
 					events.onTestSuite(range, className);
 					
 					for (let idx=0; idx<suiteList.length; idx++) {
-						events.onTestClass(suiteList[idx]['range'], suiteList[idx]['name'])
+						events.onTestClass(suiteList[idx]['range'], suiteList[idx]['name'], suiteList[idx]['name'])
 					}
 
 					return

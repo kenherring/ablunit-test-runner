@@ -1,6 +1,5 @@
 import * as vscode from 'vscode';
-import { getContentFromFilesystem, ABLTestClass, ABLTestProgram, ABLTestMethod, ABLTestProcedure, testData, TestFile } from './testTree';
-// import { getContentFromFilesystem, ABLUnitTestData, ABLTestSuiteClass, ABLTestClass, ABLTestProgram, ABLTestMethod, ABLTestProcedure, ABLAssert, testData, TestFile } from './testTree';
+import { getContentFromFilesystem, ABLUnitTestData, ABLTestSuiteClass, ABLTestClassNamespace, ABLTestClass, ABLTestProgram, ABLTestMethod, ABLTestProcedure, ABLAssert, testData, TestFile } from './testTree';
 
 export async function activate(context: vscode.ExtensionContext) {
 	const ctrl = vscode.tests.createTestController('ablunitTestController', 'ABLUnit Test');
@@ -38,18 +37,20 @@ export async function activate(context: vscode.ExtensionContext) {
 
 				const data = testData.get(test);
 
-				// if(data instanceof TestFile)
-				// 	console.log(" - TestFile")
-				// // if(data instanceof ABLTestSuiteClass)
-				// // 	console.log(" - ABLTestSuite")
-				// if(data instanceof ABLTestClass)
-				// 	console.log(" - ABLTestClass")
-				// if(data instanceof ABLTestMethod)
-				// 	console.log(" - ABLTestMethod")
-				// if(data instanceof ABLTestProgram)
-				// 	console.log(" - ABLTestProgram")
-				// if(data instanceof ABLTestProcedure)
-				// 	console.log(" - ABLTestProcedure")
+				if(data instanceof TestFile)
+					console.log(" - TestFile")
+				if(data instanceof ABLTestSuiteClass)
+					console.log(" - ABLTestSuite")
+				if(data instanceof ABLTestClassNamespace)
+					console.log(" - ABLTestClassNamespace")
+				if(data instanceof ABLTestClass)
+					console.log(" - ABLTestClass")
+				if(data instanceof ABLTestMethod)
+					console.log(" - ABLTestMethod")
+				if(data instanceof ABLTestProgram)
+					console.log(" - ABLTestProgram")
+				if(data instanceof ABLTestProcedure)
+					console.log(" - ABLTestProcedure")
 
 				if (data instanceof TestFile || data instanceof ABLTestClass || data instanceof ABLTestMethod) {
 					run.enqueued(test);
@@ -140,6 +141,7 @@ export async function activate(context: vscode.ExtensionContext) {
 		}
 		const { file, data } = getOrCreateFile(ctrl, e.uri);
 		data.updateFromContents(ctrl, e.getText(), file);
+		console.log("data.updateFromContents " + file.children.size) //zero
 	}
 
 	context.subscriptions.push(
@@ -158,6 +160,7 @@ function getOrCreateFile(controller: vscode.TestController, uri: vscode.Uri) {
 	file.tags = [ new vscode.TestTag("runnable") ]
 	controller.items.add(file);
 	const data = new TestFile();
+	console.log("testData.set " + file.children.size)
 	testData.set(file, data);
 	file.canResolveChildren = true;
 	return { file, data };
@@ -176,32 +179,40 @@ function getWorkspaceTestPatterns() {
 
 	return vscode.workspace.workspaceFolders.map(workspaceFolder => ({
 		workspaceFolder,
-		pattern: new vscode.RelativePattern(workspaceFolder, '**/*.(cls|p)')
+		pattern: new vscode.RelativePattern(workspaceFolder, '{**/*.cls,**/*.p}')
 	}));
 }
 
-async function findFilesForPattern(controller: vscode.TestController, workspaceFolder: vscode.WorkspaceFolder, ptrn: string) {
-	const pattern = new vscode.RelativePattern(workspaceFolder, ptrn);
-	for (const wsFile of await vscode.workspace.findFiles(pattern)) {
-		getOrCreateFile(controller,wsFile);
-		const { file, data } = getOrCreateFile(controller, wsFile);
-		await data.updateFromDisk(controller, file);
-	}
-}
+// async function findFilesForPattern(controller: vscode.TestController, workspaceFolder: vscode.WorkspaceFolder, pattern: vscode.GlobPattern) {
+// 	for (const wsFile of await vscode.workspace.findFiles(pattern)) {
+// 		if (wsFile.toString().indexOf(".builder") == -1) {
+// 			console.log(wsFile)
+// 			const { file, data } = getOrCreateFile(controller, wsFile);
+// 			await data.updateFromDisk(controller, file);
+// 		}
+// 	}
+// }
 
 async function findInitialFiles(controller: vscode.TestController, pattern: vscode.GlobPattern) {
-	for (const wsFile of await vscode.workspace.findFiles(pattern)) {
-		const { file, data } = getOrCreateFile(controller, wsFile);
-		await data.updateFromDisk(controller, file);
+	console.log(JSON.stringify(pattern))
+	const findAllFilesAtStartup = vscode.workspace.getConfiguration('ablunit').get('findAllFilesAtStartup');
+	if (findAllFilesAtStartup) {
+		for (const wsFile of await vscode.workspace.findFiles(pattern)) {
+			if (wsFile.toString().indexOf(".builder") == -1) {
+				const { file, data } = getOrCreateFile(controller, wsFile);
+				await data.updateFromDisk(controller, file);
+			}
+		}
 	}
 
-	// TODO: for large workspaces only do this later??
-	if (vscode.workspace.workspaceFolders) {
-		vscode.workspace.workspaceFolders.map(async workspaceFolder => {
-			await findFilesForPattern(controller, workspaceFolder, "**/*.cls")
-			await findFilesForPattern(controller, workspaceFolder, "**/*.p")
-		})
-	}
+	// console.log("findAllFilesAtStartup=" + findAllFilesAtStartup)
+	// if (findAllFilesAtStartup) {
+	// 	if (vscode.workspace.workspaceFolders) {
+	// 		vscode.workspace.workspaceFolders.map(async workspaceFolder => {
+	// 			await findFilesForPattern(controller, workspaceFolder, pattern)
+	// 		})
+	// 	}
+	// }
 }
 
 function startWatchingWorkspace(controller: vscode.TestController, fileChangedEmitter: vscode.EventEmitter<vscode.Uri> ) {
@@ -214,8 +225,10 @@ function startWatchingWorkspace(controller: vscode.TestController, fileChangedEm
 		});
 		watcher.onDidChange(async uri => {
 			const { file, data } = getOrCreateFile(controller, uri);
-			if (data.didResolve) {
-				await data.updateFromDisk(controller, file);
+			if (uri.toString().indexOf(".builder") == -1) {
+				if (data.didResolve) {
+					await data.updateFromDisk(controller, file);
+				}
 			}
 			fileChangedEmitter.fire(uri);
 		});

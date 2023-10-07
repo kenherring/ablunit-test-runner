@@ -7,7 +7,7 @@ import * as cp from "child_process";
 
 const textDecoder = new TextDecoder('utf-8');
 
-export type ABLUnitTestData = TestFile | ABLTestSuiteClass | ABLTestClass | ABLTestProgram | ABLTestMethod | ABLTestProcedure | ABLAssert
+export type ABLUnitTestData = TestFile | ABLTestSuiteClass | ABLTestClassNamespace | ABLTestClass | ABLTestProgram | ABLTestMethod | ABLTestProcedure | ABLAssert
 
 export const testData = new WeakMap<vscode.TestItem, ABLUnitTestData>();
 
@@ -28,14 +28,14 @@ class TestTypeObj {
 }
 
 export class TestFile extends TestTypeObj{
-	public testFileType = "";
+	public testFileType = "TestFile";
 
 	public async updateFromDisk(controller: vscode.TestController, item: vscode.TestItem) {
 		try {
 			const content = await getContentFromFilesystem(item.uri!);
 			item.error = undefined;
 			this.updateFromContents(controller, content, item);
-
+			
 			if  (item.children.size == 0) {
 				controller.items.delete(item.id)
 			}
@@ -60,7 +60,6 @@ export class TestFile extends TestTypeObj{
 			}
 		};
 
-
 		parseABLUnit(content, vscode.workspace.asRelativePath(item.uri!.fsPath), {
 
 			onTestSuite: (range, suiteName) => {
@@ -76,7 +75,23 @@ export class TestFile extends TestTypeObj{
 				ancestors.push({ item: thead, children: [] });
 			},
 
-			onTestClass: (range, className) => {
+			onTestClassNamespace: (range, classpath, element) => {
+				this.testFileType = "ABLTestClassNamespace"
+				var parent = ancestors[ancestors.length - 1];
+
+				const id = `${classpath}`;
+				const thead = controller.createTestItem(id, classpath, item.uri);
+				thead.range = range;
+				thead.tags = [ new vscode.TestTag("runnable"), new vscode.TestTag("ABLTestClassNamespace") ]
+				thead.label = element
+				testData.set(thead, new ABLTestClassNamespace(thisGeneration, classpath, element));
+				if (! (testData.get(parent.item) instanceof TestFile)) {
+					parent.children.push(thead);
+				}
+				ancestors.push({ item: thead, children: [] });
+			},
+
+			onTestClass: (range: vscode.Range, classname: string, label: string) => {
 				this.testFileType = "ABLTestClass"
 				var parent = ancestors[ancestors.length - 1];
 				var index = ancestors.length - 1
@@ -85,31 +100,34 @@ export class TestFile extends TestTypeObj{
 					parent = ancestors[index]
 				}
 
-				const id = `${item.uri}/${className}`;
-				const thead = controller.createTestItem(id, className, item.uri);
+				const id = `${item.uri}/${classname}`;
+				const thead = controller.createTestItem(id, classname, item.uri);
 				thead.range = range;
 				thead.tags = [ new vscode.TestTag("runnable"), new vscode.TestTag("ABLTestClass") ]
-				testData.set(thead, new ABLTestClass(thisGeneration, className));
-				// console.log("createTestItem - ABLTestClass")
-				parent.children.push(thead);
+				thead.label = label
+				testData.set(thead, new ABLTestClass(thisGeneration, classname, label));
+
+				if (! (testData.get(parent.item) instanceof TestFile)) {
+					parent.children.push(thead);
+				}
 				ancestors.push({ item: thead, children: [] });
 			},
 
-			onTestProgram: (range, programName) => {
+			onTestProgram: (range: vscode.Range, programname: string) => {
 				this.testFileType = "ABLTestProgram"
 				const parent = ancestors[ancestors.length - 1];
-				const id = `${item.uri}/${programName}`;
+				const id = `${item.uri}/${programname}`;
 
-				const thead = controller.createTestItem(id, programName, item.uri);
+				const thead = controller.createTestItem(id, programname, item.uri);
 				thead.range = range;
 				thead.tags = [ new vscode.TestTag("runnable"), new vscode.TestTag("ABLTestProgram")]
-				testData.set(thead, new ABLTestProgram(thisGeneration, programName));
-				// console.log("createTestItem - ABLTestProgram")
+				testData.set(thead, new ABLTestProgram(thisGeneration, programname));
 				parent.children.push(thead);
 				ancestors.push({ item: thead, children: [] });
 			},
 
-			onTestMethod: (range, className, methodName) => {
+			onTestMethod: (range: vscode.Range, classname: string, methodname: string) => {
+				console.log("onTestMethod: classname=" + classname + " methodname=" + methodname)
 				this.testFileType = "ABLTestMethod"
 				var parent = ancestors[ancestors.length - 1];
 				var index = ancestors.length - 1
@@ -118,17 +136,16 @@ export class TestFile extends TestTypeObj{
 					parent = ancestors[index]
 				}
 
-				const id = `${item.uri}/${className}/${methodName}`;
-				const thead = controller.createTestItem(id, methodName, item.uri);
+				const id = `${item.uri}/${classname}/${methodname}`;
+				const thead = controller.createTestItem(id, methodname, item.uri);
 				thead.range = range;
 				thead.tags = [ new vscode.TestTag("runnable"), new vscode.TestTag("ABLTestMethod") ]
-				testData.set(thead, new ABLTestMethod(thisGeneration, className, methodName));
-				// console.log("createTestItem - ABLTestMethod")
+				testData.set(thead, new ABLTestMethod(thisGeneration, classname, methodname));
 				parent.children.push(thead);
 				ancestors.push({ item: thead, children: [] });
 			},
 
-			onTestProcedure: (range, programName, procedureName) => {
+			onTestProcedure: (range: vscode.Range, programName: string, procedureName: string) => {
 				this.testFileType = "ABLTestProcedure"
 				var parent = ancestors[ancestors.length - 1];
 				var index = ancestors.length - 1
@@ -286,12 +303,31 @@ export class ABLTestSuiteClass extends TestTypeObj {
 	}
 }
 
+export class ABLTestClassNamespace extends TestTypeObj {
+
+	constructor(
+		public generation: number,
+		private readonly classpath: string,
+		private readonly element: string
+	) { super() }
+
+	getLabel() {
+		return this.element
+	}
+
+	async run(item: vscode.TestItem, options: vscode.TestRun): Promise<void> {
+		console.log("ABLTestClassNamespace.run() TODO")
+	}
+}
+
+
 export class ABLTestClass extends TestTypeObj {
 	methods: ABLTestMethod[] = []
 	
 	constructor(
 		public generation: number,
-		private readonly className: string
+		private readonly classname: string,
+		private readonly classlabel: string
 	) { super () }
 
 	addMethod(method: ABLTestMethod) {
@@ -299,7 +335,7 @@ export class ABLTestClass extends TestTypeObj {
 	}
 
 	getLabel() {
-		return this.className
+		return this.classlabel
 	}
 
 	async run(item: vscode.TestItem, options: vscode.TestRun): Promise<void> {
