@@ -1,0 +1,87 @@
+{
+	"@Test. method": {
+		"prefix": "@Test. method public void testMethod ()",
+		"body": [
+			"@Test.",
+			"method public void ${1:testMethod} () :",
+			"  ${2:Assert:Equals(1,2).}",
+			"end method."
+		],
+		"description": "A method that is a test method"
+	},
+	"@Test. procedure": {
+		"prefix": "@Test. procedure testProcedure :",
+		"body": [
+			"@Test.",
+			"procedure ${1:testProcedure} :",
+			"  OpenEdge.Core.Assert:isTrue(yes).",
+			"end procedure."
+		],
+		"description": "A procedure that is a test procedure"
+	},
+	"@Setup.": {
+		"prefix": "@Setup.",
+		"body": [
+			"@Setup.",
+			"method public void beforeAll () :",
+			"  //Runs before each test method",
+			"  ${1:// do setup here}",
+			"end method."
+		],
+		"description": "Executes the method before each test. This annotation prepares the test environment such as reading input data or initializing the class."
+	},
+	"@Before": {
+		"prefix": "@Before",
+		"body": [
+			"@Before.",
+			"method public void beforeEach () :",
+			"  //Executes after each test",
+			"  ${1:// do setup here}",
+			"end method."
+		],
+		"description": "Executes the method once per class, before the start of all tests. This annotation can be used to perform time-sensitive activities such as connecting to a database."
+	},
+	"@TearDown": {
+		"prefix": "@TearDown",
+		"body": [
+			"@TearDown.",
+			"method public void afterEach () :",
+			"  //Executes after each test",
+			"  ${1:// do some cleanup here}",
+			"end method."
+		],
+		"description": "Executes the method after each test. This annotation cleans up the test environment such as deleting temporary data or restoring defaults."
+	},
+	"@After": {
+		"prefix": "@After",
+		"body": [
+			"@After.",
+			"method public void afterAll () :",
+			"  //Executes after each test",
+			"end method."
+		],
+		"description": "Executes the method once, after all the tests are executed. This annotation is used to perform clean-up activities such as disconnecting from a database."
+	},
+	"@Ignore": {
+		"prefix": "@Ignore",
+		"body": [
+			"@Ignore"
+		],
+		"description": "Ignores the test. You can use this annotation when you are still working on a code, the test case is not ready to run, or if the execution time of test is too long to be included."
+	},
+	"@Test (expected=\"$ExceptionType\")": {
+		"prefix": "@Test (expected=\"ExceptionType\")",
+		"body": [
+			"@Test (expected=\"${1:ExceptionType}\")",
+			"method public void testExceptionMethod () :",
+			"  ${2:runMethodThrowsException().} //Throws ${1}",
+			"end method."
+		],
+		"description": "Fails the method if the method does not throw the exception mentioned in the expected attribute."
+	},
+	"@Testsuite": {
+		"prefix": "@Testsuite",
+		"body": "@Testsuite.",
+		"description": ""
+	}
+}

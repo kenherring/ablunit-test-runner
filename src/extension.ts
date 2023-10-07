@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
-import { getContentFromFilesystem, ABLUnitTestData, TestCase, testData, TestFile } from './testTree';
+import { getContentFromFilesystem, ABLTestClass, ABLTestProgram, ABLTestMethod, ABLTestProcedure, testData, TestFile } from './testTree';
+// import { getContentFromFilesystem, ABLUnitTestData, ABLTestSuiteClass, ABLTestClass, ABLTestProgram, ABLTestMethod, ABLTestProcedure, ABLAssert, testData, TestFile } from './testTree';
 
 export async function activate(context: vscode.ExtensionContext) {
 	const ctrl = vscode.tests.createTestController('ablunitTestController', 'ABLUnit Test');
@@ -23,7 +24,8 @@ export async function activate(context: vscode.ExtensionContext) {
 	};
 
 	const startTestRun = (request: vscode.TestRunRequest) => {
-		const queue: { test: vscode.TestItem; data: TestCase }[] = [];
+		const queue: { test: vscode.TestItem; data: TestFile | ABLTestClass | ABLTestMethod | ABLTestProgram | ABLTestProcedure }[] = [];
+		// const queue: { test: vscode.TestItem; data: TestFile | ABLTestSuiteClass | ABLTestClass | ABLTestMethod | ABLTestProgram | ABLTestProcedure }[] = [];
 		const run = ctrl.createTestRun(request);
 		// map of file uris to statements on each line:
 		const coveredLines = new Map</* file uri */ string, (vscode.StatementCoverage | undefined)[]>();
@@ -35,7 +37,21 @@ export async function activate(context: vscode.ExtensionContext) {
 				}
 
 				const data = testData.get(test);
-				if (data instanceof TestCase) {
+
+				// if(data instanceof TestFile)
+				// 	console.log(" - TestFile")
+				// // if(data instanceof ABLTestSuiteClass)
+				// // 	console.log(" - ABLTestSuite")
+				// if(data instanceof ABLTestClass)
+				// 	console.log(" - ABLTestClass")
+				// if(data instanceof ABLTestMethod)
+				// 	console.log(" - ABLTestMethod")
+				// if(data instanceof ABLTestProgram)
+				// 	console.log(" - ABLTestProgram")
+				// if(data instanceof ABLTestProcedure)
+				// 	console.log(" - ABLTestProcedure")
+
+				if (data instanceof TestFile || data instanceof ABLTestClass || data instanceof ABLTestMethod) {
 					run.enqueued(test);
 					queue.push({ test, data });
 				} else {
@@ -64,6 +80,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
 		const runTestQueue = async () => {
 			for (const { test, data } of queue) {
+				
 				run.appendOutput(`Running ${test.id}\r\n`);
 				if (run.token.isCancellationRequested) {
 					run.skipped(test);
@@ -72,15 +89,8 @@ export async function activate(context: vscode.ExtensionContext) {
 					await data.run(test, run);
 				}
 
-				const lineNo = test.range!.start.line;
-				const fileCoverage = coveredLines.get(test.uri!.toString());
-				if (fileCoverage) {
-					fileCoverage[lineNo]!.executionCount++;
-				}
-
 				run.appendOutput(`Completed ${test.id}\r\n`);
 			}
-
 			run.end();
 		};
 
@@ -107,14 +117,13 @@ export async function activate(context: vscode.ExtensionContext) {
 		await Promise.all(getWorkspaceTestPatterns().map(({ pattern }) => findInitialFiles(ctrl, pattern)));
 	};
 
-	ctrl.createRunProfile('Run Tests', vscode.TestRunProfileKind.Run, runHandler, true, undefined, true);
+	ctrl.createRunProfile('Run Tests', vscode.TestRunProfileKind.Run, runHandler, true, new vscode.TestTag("runnable"), false);
 
 	ctrl.resolveHandler = async item => {
 		if (!item) {
 			context.subscriptions.push(...startWatchingWorkspace(ctrl, fileChangedEmitter));
 			return;
 		}
-
 		const data = testData.get(item);
 		if (data instanceof TestFile) {
 			await data.updateFromDisk(ctrl, item);
@@ -129,13 +138,8 @@ export async function activate(context: vscode.ExtensionContext) {
 		if (!e.uri.path.endsWith('.cls') && !e.uri.path.endsWith('.p')) {
 			return;
 		}
-
 		const { file, data } = getOrCreateFile(ctrl, e.uri);
 		data.updateFromContents(ctrl, e.getText(), file);
-	}
-
-	for (const document of vscode.workspace.textDocuments) {
-		updateNodeForDocument(document);
 	}
 
 	context.subscriptions.push(
@@ -151,11 +155,10 @@ function getOrCreateFile(controller: vscode.TestController, uri: vscode.Uri) {
 	}
 
 	const file = controller.createTestItem(uri.toString(), uri.path.split('/').pop()!, uri);
+	file.tags = [ new vscode.TestTag("runnable") ]
 	controller.items.add(file);
-
 	const data = new TestFile();
 	testData.set(file, data);
-
 	file.canResolveChildren = true;
 	return { file, data };
 }
@@ -177,9 +180,27 @@ function getWorkspaceTestPatterns() {
 	}));
 }
 
+async function findFilesForPattern(controller: vscode.TestController, workspaceFolder: vscode.WorkspaceFolder, ptrn: string) {
+	const pattern = new vscode.RelativePattern(workspaceFolder, ptrn);
+	for (const wsFile of await vscode.workspace.findFiles(pattern)) {
+		getOrCreateFile(controller,wsFile);
+		const { file, data } = getOrCreateFile(controller, wsFile);
+		await data.updateFromDisk(controller, file);
+	}
+}
+
 async function findInitialFiles(controller: vscode.TestController, pattern: vscode.GlobPattern) {
-	for (const file of await vscode.workspace.findFiles(pattern)) {
-		getOrCreateFile(controller, file);
+	for (const wsFile of await vscode.workspace.findFiles(pattern)) {
+		const { file, data } = getOrCreateFile(controller, wsFile);
+		await data.updateFromDisk(controller, file);
+	}
+
+	// TODO: for large workspaces only do this later??
+	if (vscode.workspace.workspaceFolders) {
+		vscode.workspace.workspaceFolders.map(async workspaceFolder => {
+			await findFilesForPattern(controller, workspaceFolder, "**/*.cls")
+			await findFilesForPattern(controller, workspaceFolder, "**/*.p")
+		})
 	}
 }
 

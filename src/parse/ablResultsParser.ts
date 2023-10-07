@@ -1,0 +1,156 @@
+
+export interface TestCase {
+	name: string
+	classname?: string
+	status: string
+	time: number
+	failure?: {
+		callstack: string
+		message: string
+		type: string
+	}
+	error?: {
+		callstack: string
+		message: string
+		type: string
+	}
+}
+
+interface TestSuite {
+	name?: string
+	classname?: string
+	id: number
+	tests: number
+	errors: number
+	failures: number
+	skipped: number
+	time: number
+	testsuite?: TestSuite[]
+	properties?: { [key: string]: string }
+	testcases?: TestCase[]
+}
+
+interface TestSuites {
+	name: string
+	tests: number
+	errors: number
+	failures: number
+	testsuite?: TestSuite[]
+}
+
+export class ABLResultsParser {
+	fs = require('fs');
+	resultsJson: TestSuites
+	
+	constructor(xmlFileName: string) {
+		const resultsX1 = this.fs.readFileSync(xmlFileName, "utf8")
+
+		const resultsXml = this.fs.readFileSync(xmlFileName, "utf8")
+		const resultsXmlJson = this.parseXml(resultsXml)
+		this.resultsJson = this.parseSuites(resultsXmlJson)
+		this.outputJson(xmlFileName.replace(/\.xml$/,".json"), this.resultsJson)
+	}
+	
+	parseXml(xmlData: string) {
+		var parseString = require('xml2js').parseString;
+		var res: any
+
+		parseString(xmlData, function (err: any, resultsRaw: any) {
+			if (err) {
+				throw("error parsing XML")
+			}
+			res = resultsRaw
+			return String(resultsRaw)
+		})
+		return res
+	}
+
+	parseSuites(res: any) {
+		if(!res['testsuites']) {
+			throw "malformed results.xml file - could not find top-level 'testsuites' node"
+		}
+		res = res['testsuites']
+
+		const jsonData = {
+			name: res['$']['name'],
+			tests: Number(res['$']['tests']),
+			failures: Number(res['$']['failues']),
+			errors: Number(res['$']['errors']),
+			testsuite: this.parseSuite(res['testsuite'])
+		}
+		return jsonData
+	}
+
+	parseSuite(res: any) {
+		if (!res) { return undefined }
+		var suites: TestSuite[] = []
+
+		for (let idx=0; idx<res.length; idx++) {
+			suites[idx] = {
+				name: res[idx]['$']['name'] ?? undefined,
+				classname: res[idx]['$']['classname'] ?? undefined,
+				id: res[idx]['$']['id'],
+				tests: Number(res[idx]['$']['tests']),
+				errors: Number(res[idx]['$']['errors']),
+				failures: Number(res[idx]['$']['failures']),
+				skipped: Number(res[idx]['$']['skipped']),
+				time: Number(res[idx]['$']['time']),
+				properties: this.parseProperties(res[idx]['properties']),
+				testsuite: this.parseSuite(res[idx]['testsuite']),
+				testcases: this.parseTestCases(res[idx]['testcase'])
+			}
+		}
+		return suites
+	}
+
+	parseProperties(res: any) {
+		if (!res){ return undefined }
+		res = res[0]['property']
+		var props: { [key: string]: string } = {}
+
+		for(let idx=0; idx<res.length; idx++) {
+			props[res[idx]['$']['name']] = res[idx]['$']['value']
+		}
+		return props
+	}
+
+	parseTestCases(res: any) {
+		if (!res) { return undefined }
+		var cases: TestCase[] = []
+		
+		for (let idx=0; idx<res.length; idx++) {
+			cases[idx] = {
+				name: res[idx]['$']['name'],
+				classname: res[idx]['$']['classname'] ?? undefined,
+				status: res[idx]['$']['status'],
+				time: Number(res[idx]['$']['time']),
+				failure: this.parseFailOrError('failure', res[idx]),
+				error: this.parseFailOrError('error', res[idx])
+			}
+		}
+		return cases
+	}
+
+	parseFailOrError(type: string, res: any) {
+		if (!res || !res[type]) { return undefined }
+		return {
+			//TODO: can we have more than one failure or error?
+			callstack: res[type][0]['_'],
+			message: res[type][0]['$']['message'],
+			type: res[type][0]['$']['type']
+		}
+	}
+	
+	outputJson(jsonFileName: string, toJson: any) {
+		console.log("outputJson to " + jsonFileName)
+		this.fs.writeFile(jsonFileName, JSON.stringify(toJson, null, 2), function(err: any) {
+			if (err) {
+				console.log(err);
+			}
+		});
+	}
+}
+
+// console.log(1)
+// var parseTest = new ABLResultsParser("c:/git/ablunit-test-provider/test_projects/proj2/results.xml")
+// console.log(2)
