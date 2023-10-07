@@ -154,7 +154,7 @@ function getOrCreateFile(controller: vscode.TestController, uri: vscode.Uri) {
 		return { file: existing, data: testData.get(existing) as TestFile };
 	}
 
-	const file = controller.createTestItem(uri.toString(), uri.path.split('/').pop()!, uri);
+	const file = controller.createTestItem(uri.toString(), vscode.workspace.asRelativePath(uri.fsPath), uri);
 	file.tags = [ new vscode.TestTag("runnable") ]
 	controller.items.add(file);
 	const data = new TestFile();

@@ -13,6 +13,7 @@ prof.json
 *.out
 *.prof
 *.r
+*.xref
 listings/
 results.json
 results.xml

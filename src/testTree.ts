@@ -7,8 +7,7 @@ import * as cp from "child_process";
 
 const textDecoder = new TextDecoder('utf-8');
 
-export type ABLUnitTestData = TestFile | ABLTestClass | ABLTestProgram | ABLTestMethod | ABLTestProcedure | ABLAssert
-// export type ABLUnitTestData = TestFile | ABLTestSuiteClass | ABLTestClass | ABLTestProgram | ABLTestMethod | ABLTestProcedure | ABLAssert
+export type ABLUnitTestData = TestFile | ABLTestSuiteClass | ABLTestClass | ABLTestProgram | ABLTestMethod | ABLTestProcedure | ABLAssert
 
 export const testData = new WeakMap<vscode.TestItem, ABLUnitTestData>();
 
@@ -38,7 +37,6 @@ export class TestFile extends TestTypeObj{
 			this.updateFromContents(controller, content, item);
 
 			if  (item.children.size == 0) {
-				console.log("updateFromDisk: DELETE ME")
 				controller.items.delete(item.id)
 			}
 		} catch (e) {
@@ -62,20 +60,21 @@ export class TestFile extends TestTypeObj{
 			}
 		};
 
-		parseABLUnit(content, {
 
-			// onTestSuite: (range, suiteName) => {
-			// 	this.testFileType = "ABLTestSuite"
-			// 	const parent = ancestors[ancestors.length - 1];
-			// 	const id = `${item.uri}/${suiteName}`;
+		parseABLUnit(content, vscode.workspace.asRelativePath(item.uri!.fsPath), {
 
-			// 	const thead = controller.createTestItem(id, suiteName, item.uri);
-			// 	thead.range = range;
-			// 	thead.tags = [ new vscode.TestTag("runnable"), new vscode.TestTag("ABLTestSuite") ]
-			// 	testData.set(thead, new ABLTestSuiteClass(thisGeneration, suiteName));
-			// 	parent.children.push(thead);
-			// 	ancestors.push({ item: thead, children: [] });
-			// },
+			onTestSuite: (range, suiteName) => {
+				this.testFileType = "ABLTestSuite"
+				const parent = ancestors[ancestors.length - 1];
+				const id = `${item.uri}/${suiteName}`;
+
+				const thead = controller.createTestItem(id, suiteName, item.uri);
+				thead.range = range;
+				thead.tags = [ new vscode.TestTag("runnable"), new vscode.TestTag("ABLTestSuite") ]
+				testData.set(thead, new ABLTestSuiteClass(thisGeneration, suiteName));
+				parent.children.push(thead);
+				ancestors.push({ item: thead, children: [] });
+			},
 
 			onTestClass: (range, className) => {
 				this.testFileType = "ABLTestClass"
@@ -271,20 +270,21 @@ export class TestFile extends TestTypeObj{
 	}
 }
 
-// export class ABLTestSuiteClass {
-// 	constructor(
-// 		public generation: number,
-// 		private readonly suiteName: string
-// 	) { }
+export class ABLTestSuiteClass extends TestTypeObj {
 
-// 	getLabel() {
-// 		return this.suiteName
-// 	}
+	constructor(
+		public generation: number,
+		private readonly suiteName: string
+	) { super() }
 
-// 	async run(item: vscode.TestItem, options: vscode.TestRun): Promise<void> {
-// 		// console.log("ABLTestSuite.run() TODO")
-// 	}
-// }
+	getLabel() {
+		return this.suiteName
+	}
+
+	async run(item: vscode.TestItem, options: vscode.TestRun): Promise<void> {
+		console.log("ABLTestSuite.run() TODO")
+	}
+}
 
 export class ABLTestClass extends TestTypeObj {
 	methods: ABLTestMethod[] = []
