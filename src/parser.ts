@@ -20,7 +20,7 @@ interface SuiteLoc {
 
 export const parseABLUnit = (text: string, relativePath: string, events: {
 	onTestSuite(range: vscode.Range, suitename: string): void;
-	onTestClassNamespace(range: vscode.Range, classpath: string, element: string): void;
+	onTestClassNamespace(range: vscode.Range, classpath: string, element: string, classpathUri: vscode.Uri): void;
 	onTestClass(range: vscode.Range, classname: string, label: string): void;
 	onTestProgram(range: vscode.Range, procedureName: string): void;
 	onTestMethod(range: vscode.Range, classname: string, methodname: string): void;
@@ -31,6 +31,9 @@ export const parseABLUnit = (text: string, relativePath: string, events: {
 	const lines = text.split("\n")
 	const configStyle = vscode.workspace.getConfiguration('ablunit').get('display.style');
 	const configClassLabel= vscode.workspace.getConfiguration('ablunit').get('display.classLabel');
+	if (!vscode.workspace.workspaceFolders) return
+	const workspaceDir = vscode.workspace.workspaceFolders.map(item => item.uri)[0];
+
 	// console.log("configStyle=" + configStyle + ", configClassLabel=" + configClassLabel)
 
 	const parseByType = () => {
@@ -85,15 +88,21 @@ export const parseABLUnit = (text: string, relativePath: string, events: {
 					}
 					
 					var label = className
+					// console.log("relativePath=" + relativePath)
+					var basePath = vscode.Uri.joinPath(workspaceDir,relativePath.substring(0,relativePath.lastIndexOf(className.replace('.','/'))))
+					// console.log("basePath=" + basePath)
+
 					if (configStyle == "tree") {
 						var path = splitpath(className)
 						var classpath: string = ""
+						var classpath2: string[] = []
 						for (let idx=0; idx < path.length - 1; idx++) {
 							if (classpath == "") 
 								classpath = path[idx]
 							else
 								classpath = classpath + "." + path[idx]
-							events.onTestClassNamespace(range, classpath, path[idx])
+							classpath2[classpath2.length] = path[idx]
+							events.onTestClassNamespace(range, classpath, path[idx], vscode.Uri.joinPath(basePath,classpath2.join("/")))
 						}
 						label = path[path.length - 1]
 					}
@@ -206,7 +215,7 @@ export const parseABLUnit = (text: string, relativePath: string, events: {
 	}
 	
 	const parseSuiteProgram = () => {
-		console.log("TODO - parseSuiteProgram - " + relativePath)
+		// console.log("TODO - parseSuiteProgram - " + relativePath)
 	}
 	
 	parseByType()
