@@ -20,13 +20,27 @@
 			"preLaunchTask": "npm: watch"
 		},
 		{
-			"name": "Test Extension",
+			"name": "Test Extension - test_projects workspace",
 			"type": "extensionHost",
 			"request": "launch",
 			"runtimeExecutable": "${execPath}",
 			"args": [
 				"--extensionDevelopmentPath=${workspaceFolder}",
 				"${workspaceFolder}/test_projects/test_projects.code-workspace"
+			],
+			"outFiles": [
+				"${workspaceFolder}/out/**/*.js"
+			],
+			"preLaunchTask": "npm: watch"
+		},
+		{
+			"name": "Test Extension - proj2",
+			"type": "extensionHost",
+			"request": "launch",
+			"runtimeExecutable": "${execPath}",
+			"args": [
+				"--extensionDevelopmentPath=${workspaceFolder}",
+				"${workspaceFolder}/test_projects/proj2"
 			],
 			"outFiles": [
 				"${workspaceFolder}/out/**/*.js"
