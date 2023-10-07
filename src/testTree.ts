@@ -7,7 +7,8 @@ import * as cp from "child_process";
 
 const textDecoder = new TextDecoder('utf-8');
 
-export type ABLUnitTestData = TestFile | ABLTestSuiteClass | ABLTestClass | ABLTestProgram | ABLTestMethod | ABLTestProcedure | ABLAssert
+export type ABLUnitTestData = TestFile | ABLTestClass | ABLTestProgram | ABLTestMethod | ABLTestProcedure | ABLAssert
+// export type ABLUnitTestData = TestFile | ABLTestSuiteClass | ABLTestClass | ABLTestProgram | ABLTestMethod | ABLTestProcedure | ABLAssert
 
 export const testData = new WeakMap<vscode.TestItem, ABLUnitTestData>();
 
@@ -23,8 +24,11 @@ export const getContentFromFilesystem = async (uri: vscode.Uri) => {
 	}
 };
 
-export class TestFile {
-	public didResolve = false;
+class TestTypeObj {
+	public didResolve: boolean = false
+}
+
+export class TestFile extends TestTypeObj{
 	public testFileType = "";
 
 	public async updateFromDisk(controller: vscode.TestController, item: vscode.TestItem) {
@@ -32,12 +36,11 @@ export class TestFile {
 			const content = await getContentFromFilesystem(item.uri!);
 			item.error = undefined;
 			this.updateFromContents(controller, content, item);
-			controller.items.forEach(item => {
-				if (item.children.size == 0) {
-					console.log("DELETE")
-					controller.items.delete(item.id)
-				}
-			});
+
+			if  (item.children.size == 0) {
+				console.log("updateFromDisk: DELETE ME")
+				controller.items.delete(item.id)
+			}
 		} catch (e) {
 			item.error = (e as Error).stack;
 		}
@@ -61,18 +64,18 @@ export class TestFile {
 
 		parseABLUnit(content, {
 
-			onTestSuite: (range, suiteName) => {
-				this.testFileType = "ABLTestSuite"
-				const parent = ancestors[ancestors.length - 1];
-				const id = `${item.uri}/${suiteName}`;
+			// onTestSuite: (range, suiteName) => {
+			// 	this.testFileType = "ABLTestSuite"
+			// 	const parent = ancestors[ancestors.length - 1];
+			// 	const id = `${item.uri}/${suiteName}`;
 
-				const thead = controller.createTestItem(id, suiteName, item.uri);
-				thead.range = range;
-				thead.tags = [ new vscode.TestTag("runnable"), new vscode.TestTag("ABLTestSuite") ]
-				testData.set(thead, new ABLTestSuiteClass(thisGeneration, suiteName));
-				parent.children.push(thead);
-				ancestors.push({ item: thead, children: [] });
-			},
+			// 	const thead = controller.createTestItem(id, suiteName, item.uri);
+			// 	thead.range = range;
+			// 	thead.tags = [ new vscode.TestTag("runnable"), new vscode.TestTag("ABLTestSuite") ]
+			// 	testData.set(thead, new ABLTestSuiteClass(thisGeneration, suiteName));
+			// 	parent.children.push(thead);
+			// 	ancestors.push({ item: thead, children: [] });
+			// },
 
 			onTestClass: (range, className) => {
 				this.testFileType = "ABLTestClass"
@@ -268,28 +271,28 @@ export class TestFile {
 	}
 }
 
-export class ABLTestSuiteClass {
-	constructor(
-		public generation: number,
-		private readonly suiteName: string
-	) { }
+// export class ABLTestSuiteClass {
+// 	constructor(
+// 		public generation: number,
+// 		private readonly suiteName: string
+// 	) { }
 
-	getLabel() {
-		return this.suiteName
-	}
+// 	getLabel() {
+// 		return this.suiteName
+// 	}
 
-	async run(item: vscode.TestItem, options: vscode.TestRun): Promise<void> {
-		// console.log("ABLTestSuite.run() TODO")
-	}
-}
+// 	async run(item: vscode.TestItem, options: vscode.TestRun): Promise<void> {
+// 		// console.log("ABLTestSuite.run() TODO")
+// 	}
+// }
 
-export class ABLTestClass {
+export class ABLTestClass extends TestTypeObj {
 	methods: ABLTestMethod[] = []
 	
 	constructor(
 		public generation: number,
 		private readonly className: string
-	) { }
+	) { super () }
 
 	addMethod(method: ABLTestMethod) {
 		this.methods[this.methods.length] = method
@@ -407,13 +410,13 @@ export class ABLTestClass {
 	
 }
 
-export class ABLTestProgram {
+export class ABLTestProgram extends TestTypeObj {
 	procedures: ABLTestProcedure[] = []
 
 	constructor(
 		public generation: number,
 		private readonly className: string
-	) { }
+	) { super () }
 
 	addMethod(method: ABLTestProcedure) {
 		this.procedures[this.procedures.length] = method
@@ -515,12 +518,12 @@ export class ABLTestProgram {
 	}
 }
 
-export class ABLTestMethod { // child of TestClass
+export class ABLTestMethod extends TestTypeObj { // child of TestClass
 	constructor(
 		public generation: number,
 		private readonly className: string,
 		private readonly methodName: string
-	) { }
+	) { super () }
 
 	getLabel() {
 		return this.methodName
@@ -593,14 +596,14 @@ export class ABLTestMethod { // child of TestClass
 
 }
 
-export class ABLTestProcedure { // child of TestProgram
+export class ABLTestProcedure extends TestTypeObj { // child of TestProgram
 	public description: string = "ABL Test Procedure"
 
 	constructor(
 		public generation: number,
 		private readonly programName: string,
 		private readonly procedureName: string
-	) { }
+	) { super() }
 
 	getLabel() {
 		return this.procedureName
@@ -612,14 +615,14 @@ export class ABLTestProcedure { // child of TestProgram
 
 }
 
-export class ABLAssert { // child of TestClass or TestProcedure
+export class ABLAssert extends TestTypeObj { // child of TestClass or TestProcedure
 	public canResolveChildren: boolean = false
 	public runnable: boolean = false
 	
 	constructor(
 		public generation: number,
 		private readonly assertText: string
-	) {}
+	) { super() }
 
 	getLabel() {
 		return this.assertText

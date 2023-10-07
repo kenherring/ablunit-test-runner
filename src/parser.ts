@@ -23,7 +23,7 @@ interface SuiteLoc {
 }
 
 export const parseABLUnit = (text: string, events: {
-	onTestSuite(range: vscode.Range, suiteName: string): void;
+	// onTestSuite(range: vscode.Range, suiteName: string): void;
 	onTestClass(range: vscode.Range, className: string): void;
 	onTestProgram(range: vscode.Range, procedureName: string): void;
 	onTestMethod(range: vscode.Range, className: string, methodName: string): void;

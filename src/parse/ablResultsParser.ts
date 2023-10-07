@@ -151,6 +151,6 @@ export class ABLResultsParser {
 	}
 }
 
-console.log(1)
-var parseTest = new ABLResultsParser("c:/git/ablunit-test-provider/test_projects/proj2/results.xml")
-console.log(2)
+// console.log(1)
+// var parseTest = new ABLResultsParser("c:/git/ablunit-test-provider/test_projects/proj2/results.xml")
+// console.log(2)
