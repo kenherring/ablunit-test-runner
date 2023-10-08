@@ -1,0 +1,12 @@
+{
+    "options": {
+        "output": {
+            "location": "results",
+            "format": "xml"
+        },
+        "quitOnEnd": true,
+        "writeLog": true,
+        "showErrorMessage": true,
+        "throwError": true
+    }
+}

@@ -1,42 +1,239 @@
 import * as vscode from 'vscode';
 
-// CLASS statement
-const headingRe = /^\s+class (\S+)\s*:/;
-// METHOD statement
-const methodRe = /\s+method\s(\s*public){0,1}\s*void\s*(\S[^\s\(]+)/;
-// PROCEDURE statement
-const procRe = /(^|\s+)procedure\s+(\S+)\s*:/;
+// TODO - If the XREF is available let's try to parse that instead
 
-export const parseABLUnit = (text: string, events: {
-	onTest(range: vscode.Range, methodName: string): void;
-	onHeading(range: vscode.Range, className: string): void;
+// TESTSUITE statement
+const suiteRE = /@testsuite\((.*)\)/
+const suiteItemRE = /(classes|procedures)="([^"]*)+"/i
+const suiteItemRE2 = /,(classes|procedures)="([^"]*)+"/i
+// CLASS statement
+const classRE = /^\s*class\s+(\S+)\s*:/i
+// METHOD statement
+const methodRE = /\s+method\s(\s*public){0,1}\s*void\s*(\S[^\s\(]+)/i
+// PROCEDURE statement
+const procedureRE = /(^|\s+)procedure\s+(\S+)\s*:/i
+// ASSERT method call
+const assertRE = /(OpenEdge.Core.Assert\:\S+\s*\(.*\))/i
+
+interface SuiteLoc {
+	name: string
+	type: string
+	range: vscode.Range
+}
+
+export const parseABLUnit = (text: string, relativePath: string, events: {
+	onTestSuite(range: vscode.Range, suitename: string): void;
+	onTestClassNamespace(range: vscode.Range, classpath: string, element: string, classpathUri: vscode.Uri): void;
+	onTestClass(range: vscode.Range, classname: string, label: string): void;
+	onTestMethod(range: vscode.Range, classname: string, methodname: string): void;
+	onTestProgramDirectory (range: vscode.Range, dirpath: string, dir: string, dirUri: vscode.Uri): void
+	onTestProgram(range: vscode.Range, relativePath: string, label: string, programUri: vscode.Uri): void;
+	onTestProcedure(range: vscode.Range, relativePath: string, label: string, programUri: vscode.Uri): void;
+	onAssert(range: vscode.Range, methodname: string): void;
 }) => {
-	if(text.toLowerCase().indexOf("@test.") == -1) {
-		return
+	
+	const lines = text.split("\n")
+	const configStyle = vscode.workspace.getConfiguration('ablunit').get('display.style');
+	const configClassLabel= vscode.workspace.getConfiguration('ablunit').get('display.classLabel');
+	if (!vscode.workspace.workspaceFolders) return
+	const workspaceDir = vscode.workspace.workspaceFolders.map(item => item.uri)[0];
+
+	const parseByType = () => {
+		if (relativePath.endsWith(".cls")) {
+			if (text.toLowerCase().indexOf("@testsuite") != -1) {
+				parseSuiteClass()
+				return
+			}
+			parseClass()
+			return
+		} else if (relativePath.endsWith(".p")) {
+			if (text.toLowerCase().indexOf("@testsuite") != -1) {
+				parseSuiteProgram()
+				return
+			}
+			parseProgram()
+			return
+		}
 	}
 
-	const lines = text.replace('\r','').split('\n');
-	for (let lineNo = 0; lineNo < lines.length; lineNo++) {
-		var test = methodRe.exec(lines[lineNo]);
-		if (! test) {
-			test = procRe.exec(lines[lineNo]);
+	const splitpath = (path: string) => {
+		var elems = []
+		elems = path.split('.')
+		if (elems.length > 1) return elems
+		elems = path.split('/')
+		if (elems.length > 1) return elems
+		elems = path.split('\\')
+		return elems
+	}
+
+	const parseClass = () => {
+		if (text.toLowerCase().indexOf("@test.") == -1) {
+			return
 		}
-		if (test) {
-			const [, pubOrBlank, methodName] = test;
-			const range = new vscode.Range(new vscode.Position(lineNo, 0), new vscode.Position(lineNo, test[0].length));
-			
-			const prevLine = lines[lineNo - 1];
-			if(prevLine.toLowerCase().indexOf("@test.") != -1) {
-				events.onTest(range, methodName);
-				continue;
+
+		var assertCount: number = 0
+		var foundClassHead = false
+		var classname: string = ""
+
+		for (let lineNo = 0; lineNo < lines.length; lineNo++) {
+
+			//first find the class statement
+			if (!foundClassHead) {
+				const classResult = classRE.exec(lines[lineNo])
+				if (classResult) {
+					classname = classResult[1];
+					const range = new vscode.Range(new vscode.Position(lineNo, lines[lineNo].indexOf(classname)), new vscode.Position(lineNo, classname.length));
+
+					if (configClassLabel == "filepath") {
+						// className = 
+						classname = relativePath;
+					}
+					
+					var label = classname
+					var basePath = vscode.Uri.joinPath(workspaceDir,relativePath.substring(0,relativePath.lastIndexOf(classname.replace('.','/'))))
+					
+					if (configStyle == "tree") {
+						var path = splitpath(classname)
+						path.unshift("classpath root")
+						var element: string = ""
+						var classpath: string[] = []
+						for (let idx=0; idx < path.length - 1; idx++) {
+							element = path[idx]
+							classpath.push(element)
+							events.onTestClassNamespace(range, classpath.join('.'), path[idx], vscode.Uri.joinPath(basePath,classpath.join("/")))
+						}
+						label = path[path.length - 1]
+					}
+					events.onTestClass(range, classname, label);
+					foundClassHead = true
+					continue;
+				}
+			} else {
+				//second, find all the @test methods
+				if (lines[lineNo - 1].toLowerCase().indexOf("@test.") != -1) {
+					const method = methodRE.exec(lines[lineNo]);
+					if (method) {
+						const [, publicKeyword, methodname] = method;
+						const range = new vscode.Range(new vscode.Position(lineNo, 0), new vscode.Position(lineNo, method[0].length));
+						assertCount = 0;
+						events.onTestMethod(range, classname, methodname);
+						continue;
+					}
+				}
 			}
 		}
+	}
 
-		const heading = headingRe.exec(lines[lineNo]);
-		if (heading) {
-			const [, className] = heading;
-			const range = new vscode.Range(new vscode.Position(lineNo, 0), new vscode.Position(lineNo, heading.length));
-			events.onHeading(range, className);
+	const parseProgram = () => {
+		if (text.toLowerCase().indexOf("@test.") == -1) {
+			return
+		}
+
+		const programUri = vscode.Uri.joinPath(workspaceDir,relativePath)
+
+		const zeroRange = new vscode.Range(new vscode.Position(0,0), new vscode.Position(0,0))
+		if (configStyle == "tree") {
+			const parts = relativePath.split("/")
+			var relativeTree = ""
+			for (let idx=0; idx < parts.length - 1; idx++) {
+				if (relativeTree == "") {
+					relativeTree = parts[idx]
+				} else {
+					relativeTree = relativeTree + '/' + parts[idx]
+				}
+				events.onTestProgramDirectory(zeroRange, relativeTree, parts[idx], vscode.Uri.joinPath(workspaceDir,relativeTree))
+			}
+			const progLabel = parts[parts.length - 1]
+			events.onTestProgram(zeroRange, relativePath, progLabel, programUri)
+		} else {
+			events.onTestProgram(zeroRange, relativePath, relativePath, programUri)
+		}
+
+		for (let lineNo = 1; lineNo < lines.length; lineNo++) {
+			if(lines[lineNo - 1].toLowerCase().indexOf("@test.") != -1) {
+				const proc = procedureRE.exec(lines[lineNo])
+				if (proc) {
+					const [ , blank, procedureName] = proc;
+					const range = new vscode.Range(new vscode.Position(lineNo, lines[lineNo].indexOf(procedureName)), new vscode.Position(lineNo, procedureName.length));
+					var label = relativePath;
+					if (configStyle == "tree") {
+						label = procedureName
+					}
+					events.onTestProcedure(range, relativePath, procedureName, programUri)
+					continue;
+				}
+			}
+		}
+	};
+
+	const parseSuiteClass = () => {
+
+		events.onTestSuite(new vscode.Range(new vscode.Position(0,0), new vscode.Position(0,0)), '[suite] ' + relativePath)
+
+		var suiteList: SuiteLoc[] = []
+
+		for (let lineNo = 1; lineNo < lines.length; lineNo++) {
+			if (lines[lineNo].trim().startsWith("//"))
+				continue
+			if(lines[lineNo].toLowerCase().indexOf("@testsuite") != -1) {
+				const suiteRes = suiteRE.exec(lines[lineNo])
+				if (suiteRes) {
+					const [ , params] = suiteRes
+					const cr = suiteItemRE.exec(params)
+					if(cr) {
+						const [, type, list] = cr
+						const split = list.split(',')
+						for (let idx=0; idx<split.length; idx++) {
+							suiteList[suiteList.length] = {
+								name: split[idx],
+								type: type,
+								range: new vscode.Range(
+									new vscode.Position(lineNo, lines[lineNo].indexOf(split[idx])),
+									new vscode.Position(lineNo, lines[lineNo].indexOf(split[idx]) + split[idx].length)
+								)
+							}
+						}
+					}
+
+					//TODO: how can we better find all the params?
+					const cr2 = suiteItemRE2.exec(params)
+					if(cr2) {
+						const [, type2, list2] = cr2
+						const split = list2.split(',')
+						for (let idx=0; idx<split.length; idx++) {
+							suiteList[suiteList.length] = {
+								name: split[idx],
+								type: type2,
+								range: new vscode.Range(
+									new vscode.Position(lineNo, lines[lineNo].indexOf(split[idx])),
+									new vscode.Position(lineNo, lines[lineNo].indexOf(split[idx]) + split[idx].length)
+								)
+							}
+						}
+					}
+					continue
+				}
+			} else {
+				const classResult = classRE.exec(lines[lineNo])
+				if (classResult) {
+					const [, className] = classResult;
+					const range = new vscode.Range(new vscode.Position(lineNo, lines[lineNo].indexOf(className)), new vscode.Position(lineNo, className.length));
+					events.onTestSuite(range, className);
+					
+					for (let idx=0; idx<suiteList.length; idx++) {
+						events.onTestClass(suiteList[idx]['range'], suiteList[idx]['name'], suiteList[idx]['name'])
+					}
+
+					return
+				}
+			}
 		}
 	}
+	
+	const parseSuiteProgram = () => {
+		// console.log("TODO - parseSuiteProgram - " + relativePath)
+	}
+	
+	parseByType()
+
 };

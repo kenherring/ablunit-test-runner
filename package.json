@@ -25,7 +25,7 @@
 		"Testing"
 	],
 	"activationEvents": [
-		"workspaceContains:**/*.[cls|p]"
+		"workspaceContains:{**/*.cls,**/*.p}"
 	],
 	"main": "./out/extension.js",
 	"scripts": {
@@ -49,18 +49,116 @@
 			"type": "object",
 			"title": "ABLUnit Configuration",
 			"properties": {
-				"ablunit.runTestCommand": {
+				"ablunit.display.classLabel": {
+					"type": "string",
+					"default": "classname",
+					"enum": [
+						"classname",
+						"filepath"
+					]
+				},
+				"ablunit.display.style": {
+					"type": "string",
+					"default": "tree",
+					"enum": [
+						"tree",
+						"flat"
+					]
+				},
+				"ablunit.files.include": {
+					"type": "string",
+					"default": "{**/*.cls,**/*.p}"
+				},
+				"ablunit.files.exclude": {
+					"type": "string",
+					"default": "**/.builder/**"
+				},
+				"ablunit.findAllFilesAtStartup": {
+					"type": "boolean",
+					"default": true
+				},
+				"ablunit.notificationsEnabled": {
+					"type": "boolean",
+					"default": true
+				},
+				"ablunit.importOpenedgeProjectJson": {
+					"type": "boolean",
+					"default": true,
+					"description": "import configuration settings from openedge-project.json when possible"
+				},
+				"ablunit.params": {
 					"type": "string",
 					"default": "",
-					"description": "Command executed to run a test"
+					"description": "Additional parameters to pass to the ABLUnit command line (ex: '-pf dbconns.pf')"
+				},
+				"ablunit.progressIni": {
+					"type": "string"
 				},
 				"ablunit.resultsPath": {
 					"type": "string",
 					"default": "results.xml",
 					"description": "Location of the outputted results.xml file"
+				},
+				"ablunit.tempDir": {
+					"type": "string",
+					"description": "Location of the temporary directory used to store the results.xml file"
+				},
+				"ablunit.tests.command": {
+					"type": "string",
+					"default": "",
+					"description": "Custom command line executed to run a test"
+				},
+				"ablunit.tests.command.useABLPluginCommand": {
+					"type": "string",
+					"default": "",
+					"description": "Use a command from the VSCode OpenEdge ABL (vscode-abl/vscode-abl) plugin to run a test"
+				},
+				"ablunit.tests.task": {
+					"type": "string",
+					"default": "TODO",
+					"descriptiont": "run tests using the specified task"
 				}
 			}
-		}
+		},
+		"commands": [
+            {
+                "command": "ablunit.test.runActive",
+                "title": "ABLUnit: run tests from the active file",
+                "description": "Run all tests in the active file"
+            },
+            {
+                "command": "ablunit.test.runAll",
+                "title": "ABLUnit: run all tests for the workspace",
+                "description": "Run all tests for the workspace"
+            },
+			{
+				"command": "ablunit.test.debugActive",
+				"title": "ABLUnit: debug the active test file",
+				"description": "ABLUnit: run tests with debugging from the file in the active editor"
+			}
+		],
+        "menus": {
+            "commandPalette": [
+                {
+                    "command": "abl.runProgres.currentFile",
+                    "when": "editorLangId == 'abl'"
+                },
+                {
+                    "command": "abl.test",
+                    "when": "editorLangId == 'abl'"
+                },
+                {
+                    "command": "abl.test.currentFile",
+                    "when": "editorLangId == 'abl'"
+                }
+            ]
+        },
+		"snippets": [
+			{
+				"language": "abl",
+				"path": "./snippets.json"
+			}
+		]
 	},
 	"dependencies": {
 		"xml2js": "^0.6.2"

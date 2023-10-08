@@ -3,7 +3,7 @@ import * as vscode from 'vscode'
 
 exports.runTests = void 0;
 
-export const runTests = (debugFlag: boolean, config: string, storageUri: vscode.Uri) => {
+export const runTests = (config: string, storageUri: vscode.Uri) => {
 	console.log(1)
 	const workspaceUri = vscode.workspace.workspaceFolders![0].uri
 	console.log("2: " +  JSON.stringify(vscode.workspace.workspaceFolders![0].uri))

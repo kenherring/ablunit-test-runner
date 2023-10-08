@@ -10,11 +10,12 @@ node_modules
 .builder
 
 # OpenEdge Files
-listings/
 *.out
 *.prof
 *.r
 *.xref
+dbg_*
+listings/
+prof.json
 results.json
 results.xml
-prof.json
