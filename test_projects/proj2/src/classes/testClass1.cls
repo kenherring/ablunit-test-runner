@@ -1,3 +1,5 @@
+block-level on error undo, throw.
+
 class src.classes.testClass1 :
 
     @Setup.
@@ -34,7 +36,7 @@ class src.classes.testClass1 :
     end method.
 
     method public void runMethodThrowsException() :
-      undo, throw new MyException().
+      // undo, throw new MyException().
     end method.
 
     @TearDown.

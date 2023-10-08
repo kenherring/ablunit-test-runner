@@ -14,8 +14,10 @@
     </condition>
     <mkdir dir="${tempDir}" />
 
-    <ABLUnit writeLog="true" destDir="target" failOnError="true" haltOnFailure="true" tempDir="${tempDir}">
-      <fileset dir="." includes="${includes}" />
+    <echo>includes=${includes}</echo>
+
+    <ABLUnit writeLog="true" destDir="target" failOnError="false" haltOnFailure="false" tempDir="${tempDir}">
+      <fileset dir="." excludes=".builder/**" includes="${fileset.includes}" />
       <propath>
         <pathelement path="." />
       </propath>

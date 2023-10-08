@@ -1,11 +1,37 @@
 import * as vscode from 'vscode';
 import { getContentFromFilesystem, ABLUnitTestData, ABLTestSuiteClass, ABLTestClassNamespace, ABLTestClass, ABLTestProgram, ABLTestMethod, ABLTestProcedure, ABLAssert, testData } from './testTree';
+import { runTests }	from './runTests';
 
 export async function activate(context: vscode.ExtensionContext) {
-	const ctrl = vscode.tests.createTestController('ablunitTestController', 'ABLUnit Test');
-	context.subscriptions.push(ctrl);
+	const ctrl = vscode.tests.createTestController('ablunitTestController', 'ABLUnit Test')
 	const extensionUri = context.extensionUri
 	const storageUri: vscode.Uri | undefined = context.storageUri
+
+
+	const runAllTestsCommand = () => {
+		console.log("TODO - run all tests")
+		runTests("", context.storageUri!)
+		console.log("done")
+	}
+
+	function runActiveTestCommand () {
+		console.log("TODO - run active test")
+		// runTests()
+	}
+	
+	function debugActiveTestCommand () { //This already exists as 'Test: Debug Tests in Current Files' and 'Test: Debug Test at Cursor'
+		// console.log("TODO - debug active test")
+		console.debug("TODO - debug active test")
+		runTests("", context.storageUri!)
+	}
+
+	context.subscriptions.push(ctrl);
+	context.subscriptions.push(vscode.commands.registerCommand('ablunit.test.runAll', runAllTestsCommand))
+	context.subscriptions.push(vscode.commands.registerCommand('ablunit.test.runActive', runActiveTestCommand))
+	context.subscriptions.push(vscode.commands.registerCommand('ablunit.test.debugActive', debugActiveTestCommand))
+
+
+
 
 	const fileChangedEmitter = new vscode.EventEmitter<vscode.Uri>();
 	const runHandler = (request: vscode.TestRunRequest2, cancellation: vscode.CancellationToken) => {
@@ -114,7 +140,9 @@ export async function activate(context: vscode.ExtensionContext) {
 		await Promise.all(getWorkspaceTestPatterns().map(({ includePattern, excludePattern }) => findInitialFiles(ctrl, includePattern, excludePattern)));
 	};
 
-	ctrl.createRunProfile('Run Tests', vscode.TestRunProfileKind.Run, runHandler, true, new vscode.TestTag("runnable"), false);
+	ctrl.createRunProfile('Run Tests', vscode.TestRunProfileKind.Run, runHandler, false, new vscode.TestTag("runnable"), false);
+	ctrl.createRunProfile('Debug Tests', vscode.TestRunProfileKind.Debug, runHandler, false, new vscode.TestTag("runnable"), false);
+	ctrl.createRunProfile('Run Tests with Coverage', vscode.TestRunProfileKind.Coverage, runHandler, true, new vscode.TestTag("runnable"), false);
 
 	ctrl.resolveHandler = async item => {
 		if (!item) {
