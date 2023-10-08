@@ -49,6 +49,34 @@
 			"type": "object",
 			"title": "ABLUnit Configuration",
 			"properties": {
+				"ablunit.display.classLabel": {
+					"type": "string",
+					"default": "classname",
+					"enum": [
+						"classname",
+						"filepath"
+					]
+				},
+				"ablunit.display.style": {
+					"type": "string",
+					"default": "tree",
+					"enum": [
+						"tree",
+						"flat"
+					]
+				},
+				"ablunit.files.include": {
+					"type": "string",
+					"default": "{**/*.cls,**/*.p}"
+				},
+				"ablunit.files.exclude": {
+					"type": "string",
+					"default": "**/.builder/**"
+				},
+				"ablunit.findAllFilesAtStartup": {
+					"type": "boolean",
+					"default": true
+				},
 				"ablunit.runTestCommand": {
 					"type": "string",
 					"default": "",

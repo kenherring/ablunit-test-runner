@@ -5,16 +5,27 @@ class src.classes.testClass1 :
       //Runs before each test method
       // do setup here
     end method.
+    
 
+    
+    
+    
     @Before.
     method public void beforeEach () :
       //Executes after each test
+      
       // do setup here
     end method.
+    
+    @Test.
+    method public void testMethod1-1 () :
+        message "running testMethod1 !!".
+    end method.
+    
 
     @Test.
-    method public void testMethod1 () :
-        message "running testMethod1 !!".
+    method public void testMethod1-2 () :
+        message "running testMethod1-2 !!".
     end method.
 
     @Test (expected="MyException").
