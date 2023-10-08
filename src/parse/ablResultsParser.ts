@@ -54,8 +54,8 @@ export class ABLResultsParser {
 		const resultsXmlJson = await this.parseXml(resultsXml)
 		console.log("resultsJson=" + resultsXmlJson)
 		this.resultsJson = this.parseSuites(resultsXmlJson)
-		console.log("this.resultsJson=" + this.resultsJson)
-		this.outputJson(Uri.parse(resultsUri.fsPath.replace(/\.xml$/,".json")), this.resultsJson)
+		console.log("this.resultsJson=" + JSON.stringify(this.resultsJson))
+		this.outputJson(Uri.parse(resultsUri.toString().replace(/\.xml$/,".json")), this.resultsJson)
 		console.log("output json complete")
 	}
 	
@@ -150,7 +150,8 @@ export class ABLResultsParser {
 	}
 	
 	outputJson(jsonUri: Uri, toJson: any) {
-		console.log("outputJson to " + jsonUri)
+		console.log("outputJson to " + jsonUri.toString())
+		console.log("outputJson to " + jsonUri.fsPath)
 		const bufferJson = Buffer.from(JSON.stringify(toJson, null, 2))
 		workspace.fs.writeFile(jsonUri, bufferJson)
 	}

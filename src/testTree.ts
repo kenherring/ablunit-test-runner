@@ -4,6 +4,7 @@ import { parseABLUnit } from './parser';
 import { parseABLCallStack } from './ablHelper';
 import { ABLResultsParser, TestCase } from './parse/ablResultsParser';
 import * as cp from "child_process";
+import { timeStamp } from 'console';
 
 const textDecoder = new TextDecoder('utf-8');
 
@@ -47,12 +48,30 @@ class TestTypeObj {
 		return this.extensionUri
 	}
 
-	protected workspaceDir = () => {
+	protected workspaceUri = () => {
 		const workspaceDir = vscode.workspace.workspaceFolders?.map(item => item.uri)[0]
 		if (!workspaceDir) {
 			throw ("no workspace directory opened")
 		}
 		return vscode.Uri.file(workspaceDir.fsPath)
+	}
+
+	protected resultsUri = () => {
+		var resultsFile = vscode.workspace.getConfiguration('ablunit').get('resultsPath', '')
+		if(!resultsFile) {
+			throw ("no workspace directory opened")
+		}
+		if(resultsFile == "") {
+			resultsFile = "results.xml"
+		}
+
+		if (resultsFile.startsWith("/") || resultsFile.startsWith("\\")) {
+			const uri = vscode.Uri.file(resultsFile)
+			if (uri) {
+				return uri
+			}
+		}
+		return vscode.Uri.joinPath(this.workspaceUri(), resultsFile)
 	}
 }
 
@@ -65,10 +84,10 @@ class TestFile extends TestTypeObj{
 			const content = await getContentFromFilesystem(item.uri!);
 			item.error = undefined;
 			this.updateFromContents(controller, content, item);
-			if (item.children.size == 0) {
-				controller.items.delete(item.id)
-				return
-			}
+			// if (item.children.size == 0) {
+			// 	controller.items.delete(item.id)
+			// 	return
+			// }
 
 			if(this.replaceWith != undefined) {
 				const currItem = controller.items.get(this.replaceWith.id)
@@ -76,11 +95,9 @@ class TestFile extends TestTypeObj{
 				if (currItem) {
 					this.addItemsToController(currItem, this.replaceWith)
 				} else {
-					console.log("add item " + this.replaceWith.id + " to controller")
 					controller.items.add(this.replaceWith)
 					// controller.items.delete(item.id)
 				}
-				console.log("delete " + item.id)
 				controller.items.delete(item.id)
 			} else {
 				//this is definitely valid for classes - not sure about other types
@@ -97,7 +114,6 @@ class TestFile extends TestTypeObj{
 	}
 
 	addItemsToController(item: vscode.TestItem, addItem: vscode.TestItem) {
-
 		addItem.children.forEach(addChild => {
 			const currChild = item.children.get(addChild.id)
 			if (currChild) {
@@ -127,16 +143,15 @@ class TestFile extends TestTypeObj{
 	}
 
 	 getProgressIni() {
-		//TODO - only for windows
-		if (!this.workspaceDir) {
+		if (!this.workspaceUri) {
 			throw ("no workspace directory opened")
 		}
-		console.log("getProgressIni workspaceDir=" + this.workspaceDir)
+		console.log("getProgressIni workspaceDir=" + this.workspaceUri)
 
 		//first, check if the progressIni config is set for the workspace
 		const configIni = vscode.workspace.getConfiguration('ablunit').get('progressIni', '')
 		if (configIni != '') {
-			const uri1 = vscode.Uri.joinPath(this.workspaceDir(), configIni)
+			const uri1 = vscode.Uri.joinPath(this.workspaceUri(), configIni)
 			console.log("uri1=" + uri1)
 			if(uri1){
 				return uri1
@@ -144,9 +159,9 @@ class TestFile extends TestTypeObj{
 		}
 
 		//second, check if there is a progress ini in the root of the repo
-		console.log("workspaceDir=" + this.workspaceDir)
-		if(this.workspaceDir) {
-			const uri2 = vscode.Uri.joinPath(this.workspaceDir(), 'progress.ini')
+		console.log("workspaceDir=" + this.workspaceUri())
+		if(this.workspaceUri()) {
+			const uri2 = vscode.Uri.joinPath(this.workspaceUri(), 'progress.ini')
 			console.log("uri2=" + uri2)
 			if (uri2) {
 				return uri2
@@ -188,51 +203,122 @@ class TestFile extends TestTypeObj{
 		if(!this.storageUri) {
 			throw ("temp directory not set")
 		}
-		vscode.workspace.fs.createDirectory(this.storageUri)
-
-		const progressIni = this.getProgressIni()
-		if (!progressIni) { throw ("cannot find progress.ini or suitable location to write one") }
-		const progressIniStat = vscode.workspace.fs.stat(progressIni)
-		if(! progressIniStat) {
-			console.log("progress.ini does not exist - creating")
-			this.createProgressIni(progressIni)
-		}
-
-		var cmd = vscode.workspace.getConfiguration('ablunit').get('runTestCommand', '').trim();
+		// vscode.workspace.fs.createDirectory(this.storageUri)
+		
+		var cmd = vscode.workspace.getConfiguration('ablunit').get('tests.command', '').trim();
 		if (! cmd) {
-			cmd = '_progres -b -p ABLUnitCore.p -basekey INI -ininame "${progressIni}" -param "${itemPath} CFG=ablunit.json"';
+			cmd = '_progres -b -p ABLUnitCore.p ${progressIni} -param "${itemPath} CFG=${ablunit.json}"';
 		}
-		cmd = cmd.replace("${itemPath}",itemPath).replace("${progressIni}",progressIni.fsPath);
+		
+		if (process.platform === 'win32') {
+			const progressIni = this.getProgressIni()
+			if (!progressIni) { throw ("cannot find progress.ini or suitable location to write one") }
+			const progressIniStat = vscode.workspace.fs.stat(progressIni)
+			if(! progressIniStat) {
+				console.log("progress.ini does not exist - creating")
+				this.createProgressIni(progressIni)
+			}
+			const ablunitJson = vscode.Uri.joinPath(this.workspaceUri(), "ablunit.json").fsPath
+			// const ablunitJson = "ablunit.json"
+			cmd = cmd.replace("${itemPath}",itemPath).replace("${ablunit.json}",ablunitJson).replace("${progressIni}","-basekey INI -ininame " + progressIni.fsPath);
+		}
+
+		console.log("cmd='" + cmd + "'")
 		return cmd
-	}
-
-	async runCommand(itemPath: string, options: vscode.TestRun) {
-		const cmd: string = this.getCommand(itemPath)
-
-		vscode.window.showInformationMessage("running ablunit tests");
-		await vscode.tasks.executeTask(
-			new vscode.Task(
-				{ type: 'shell' },
-				vscode.TaskScope.Global,
-				"ablunit run tests",
-				"ablunit-test-provider",
-				new vscode.ShellExecution(cmd, {
-					// eslint-disable-next-line @typescript-eslint/naming-convention
-					env: vscode.l10n.uri ? { EXTENSION_BUNDLE_PATH: vscode.l10n.uri?.fsPath } : undefined
-				})));
-		vscode.window.showInformationMessage("ablunit tests complete");
-	}
-
-	async parseResults () {
-		if (!this.workspaceDir()) {}
-		const resultsUri = vscode.Uri.joinPath(this.workspaceDir(),"/results.xml")
-		const ablResults = new ABLResultsParser()
-		await ablResults.importResults(resultsUri)
-		return ablResults.resultsJson
 	}
 	
 	async run(item: vscode.TestItem, options: vscode.TestRun): Promise<void> {
-		console.error("run via TestFile is not supported")
+		const start = Date.now()
+		let itemPath = vscode.workspace.asRelativePath(item.uri!.fsPath)
+		
+		const cmd: string = this.getCommand(itemPath)
+		const notificationsEnabled = vscode.workspace.getConfiguration('ablunit').get('notificationsEnabled', true)
+
+		
+		if (notificationsEnabled) {
+			vscode.window.showInformationMessage("running ablunit tests");
+		}
+		console.log("ShellExecution Started - " + this.workspaceUri().fsPath)
+		const dir = this.workspaceUri().fsPath
+
+		// await new Promise<string>((resolve, reject) => {
+		// 	vscode.tasks.executeTask(
+		// 		new vscode.Task(
+		// 			{ type: 'process' },
+		// 			vscode.TaskScope.Workspace,
+		// 			"ablunit run tests",
+		// 			"ablunit-test-provider",
+		// 			new vscode.ShellExecution(cmd, { cwd: dir })));
+		// });
+
+		await new Promise<string>((resolve, reject) => {
+			cp.exec(cmd, { cwd: dir }, (err:any, stdout: any, stderr: any) => {
+				console.log('stdout: ' + stdout);
+				console.log('stderr: ' + stderr);
+				if (err) {
+					// console.log(cmd+' error!');
+					// console.log(err);
+					options.appendOutput(stderr);
+					reject(err);
+				}
+				options.appendOutput(stdout);
+				return resolve(stdout);
+			});
+		});
+		const duration = Date.now() - start
+		console.log("ShellExecution Completed - duration: " + duration)
+		if (notificationsEnabled) {
+			vscode.window.showInformationMessage("ablunit tests complete");
+		}
+
+		
+		await this.parseResults(item, options, duration)
+		// await this.parseProfile(item, options, duration)
+	}
+	
+	async parseResults (item: vscode.TestItem, options: vscode.TestRun, duration: number) {
+		if (!this.workspaceUri()) {}
+		const resultsUri = this.resultsUri()
+		const ablResults = new ABLResultsParser()
+		await ablResults.importResults(resultsUri)
+		const res = ablResults.resultsJson
+
+		if(!res || !res['testsuite']) {
+			options.errored(item, new vscode.TestMessage("malformed results - could not find 'testsuite' node"), duration)
+			return
+		}
+
+		const s = res.testsuite.find((s: any) => s = item.id)
+		if (!s) {
+			options.errored(item, new vscode.TestMessage("could not find test suite in results"), duration)
+			return
+		}
+
+		if (s.tests > 0) {
+			if(s.errors == 0 && s.failures == 0) {
+				options.passed(item, s.time)
+			} else if (s.tests = s.skipped) {
+				options.skipped(item)
+			} else if (s.failures > 0 || s.errors > 0) {
+				options.failed(item, new vscode.TestMessage("one or more tests failed"), s.time)
+			} else {
+				options.errored(item, new vscode.TestMessage("unknown error - test results are all zero"), s.time)
+			}
+		}
+
+		if (!s.testcases) {
+			options.errored(item, new vscode.TestMessage("malformed results - could not find 'testcases' node"), duration)
+			return
+		}
+
+		item.children.forEach(child => {
+			const tc = s.testcases?.find(t => t.name === child.label)
+			if(!tc) {
+				options.errored(child, new vscode.TestMessage("could not find result for test case"))
+				return
+			}
+			this.setChildResults(child, options, tc)
+		})
 	}
 
 	setChildResults(item: vscode.TestItem, options: vscode.TestRun, tc: TestCase) {
@@ -268,7 +354,7 @@ class TestFile extends TestTypeObj{
 	}
 }
 
-export class ABLTestSuiteClass extends TestTypeObj {
+export class ABLTestSuiteClass extends TestFile {
 
 	constructor(
 		public generation: number,
@@ -278,13 +364,9 @@ export class ABLTestSuiteClass extends TestTypeObj {
 	getLabel() {
 		return this.suiteName
 	}
-
-	async run(item: vscode.TestItem, options: vscode.TestRun): Promise<void> {
-		console.log("ABLTestSuite.run() TODO")
-	}
 }
 
-export class ABLTestClassNamespace extends TestTypeObj {
+export class ABLTestClassNamespace extends TestFile {
 	public canResolveChildren: boolean = false
 
 	constructor(
@@ -295,10 +377,6 @@ export class ABLTestClassNamespace extends TestTypeObj {
 
 	getLabel() {
 		return this.element
-	}
-
-	async run(item: vscode.TestItem, options: vscode.TestRun): Promise<void> {
-		console.log("ABLTestClassNamespace.run() TODO")
 	}
 }
 
@@ -375,10 +453,6 @@ export class ABLTestClass extends TestFile {
 				ancestors.push({ item: thead, children: [] as vscode.TestItem[] })
 			},
 
-			onTestProgramDirectory (range: vscode.Range, programname: string, dir: string) { console.error("should not be here! programname=" + programname + " dir=" + dir) },
-
-			onTestProgram: (range: vscode.Range, relativepath: string, label: string, programUri: vscode.Uri) => { console.error("should not be here! relativepath=" + relativepath) },
-
 			onTestMethod: (range: vscode.Range, classpath: string, methodname: string) => {
 				this.testFileType = "ABLTestMethod"
 				const id = `${classpath}#${methodname}`
@@ -392,7 +466,11 @@ export class ABLTestClass extends TestFile {
 				item.children.add(thead)
 			},
 
-			onTestProcedure: (range: vscode.Range, programname: string, procedurename: string) => { console.log("should not be here! programname=" + programname + " procedurename=" + procedurename) },
+			onTestProgramDirectory (range: vscode.Range, programname: string, dir: string) { console.error("should not be here! programname=" + programname + " dir=" + dir) },
+
+			onTestProgram: (range: vscode.Range, relativepath: string, label: string, programUri: vscode.Uri) => { console.error("should not be here! relativepath=" + relativepath) },
+
+			onTestProcedure: (range: vscode.Range, programname: string, procedurename: string, programUri) => { console.log("should not be here! programname=" + programname + " procedurename=" + procedurename) },
 			
 			onAssert: (range, assertMethod) => {
 				this.testFileType = "ABLAssert"
@@ -409,114 +487,6 @@ export class ABLTestClass extends TestFile {
 
 		this.ascend(0, ancestors); // finish and assign children for all remaining items
 	}
-
-	async run(item: vscode.TestItem, options: vscode.TestRun): Promise<void> {
-		const start = Date.now();
-
-		let itemPath = vscode.workspace.asRelativePath(item.uri!.fsPath);
-		// }
-		const workspaceDir = vscode.workspace.workspaceFolders?.map(item => item.uri.fsPath);
-
-		var cmd = vscode.workspace.getConfiguration('ablunit').get('runTestCommand', '').trim();
-		if (! cmd) {
-			cmd = '_progres -b -p ABLUnitCore.p -basekey INI -ininame progress.ini -param "${itemPath} CFG=ablunit.json"';
-		}
-		cmd = cmd.replace("${itemPath}",itemPath);
-
-		await new Promise<string>((resolve, reject) => {
-			cp.exec(cmd, { cwd: workspaceDir?.toString() }, (err, stdout, stderr) => {
-				if (err) {
-					// console.log(cmd+' error!');
-					// console.log(err);
-					options.appendOutput(stderr);
-					reject(err);
-				}
-				options.appendOutput(stdout);
-				return resolve(stdout);
-			});
-		});
-		const duration = Date.now() - start;
-
-		const fs = require('fs');
-		var parseString = require('xml2js').parseString;
-
-		
-		const resultsPath = vscode.workspace.getConfiguration('ablunit').get('resultsPath', '').trim();
-		const resultsUri = vscode.Uri.joinPath(this.workspaceDir(),"/results.xml")
-		const ablResults = new ABLResultsParser()
-		await ablResults.importResults(resultsUri)
-		const results = ablResults.resultsJson
-
-		if(!results || !results.name){
-			options.errored(item, new vscode.TestMessage("cannot find top node `testsuites` in results.xml"))
-			return
-		} else if(!results.testsuite) {
-			options.errored(item, new vscode.TestMessage("cannot find testsuite in results.xml"))
-			return
-		} if (results.testsuite.length > 1) {
-			options.errored(item, new vscode.TestMessage("invalid results.xml - should only have 1 test suite"))
-		} else {
-			if (results.testsuite[0].tests > 0) {
-				if(results.testsuite[0].errors == 0 && results.testsuite[0].failures == 0) {
-					options.passed(item)
-				} else if (results.testsuite[0].tests = results.testsuite[0].skipped) {
-					options.skipped(item)
-				} else if (results.testsuite[0].failures > 0 || results.testsuite[0].errors > 0) {
-					options.failed(item, new vscode.TestMessage("one or more tests failed"), results.testsuite[0].time)
-				} else {
-					options.errored(item, new vscode.TestMessage("unknown error - test results are all zero"), results.testsuite[0].time)
-				}
-			}
-
-			const testcases = results.testsuite[0].testcases
-			if(testcases) {
-
-				item.children.forEach(child => {
-					if (testcases?.length) {
-						for(let idx=0; idx<testcases.length; idx++) {
-							const tc = testcases[idx]
-							if (child.label == tc.name) {
-								this.setChildResults(child,options,tc)
-							}
-						}
-					}
-				})
-			}
-		}
-	}
-
-	setChildResults(item: vscode.TestItem, options: vscode.TestRun, tc: TestCase) {
-		switch(tc.status) {
-			case "Success":
-				options.passed(item, tc.time)
-				return
-			case "Failure":
-				if (tc.failure) {
-					options.failed(item, [
-						new vscode.TestMessage(tc.failure.message),
-						new vscode.TestMessage(tc.failure.callstack)
-					], tc.time)
-					return
-				}
-				throw("unexpected failure")
-			case "Error":
-				if (tc.error) {
-					options.failed(item, [
-						new vscode.TestMessage(tc.error.message),
-						new vscode.TestMessage(tc.error.callstack)
-					])
-					return
-				}
-				throw("unexpected error")
-			case "Skpped":
-				options.skipped(item)
-				return
-			default:
-				options.errored(item, new vscode.TestMessage("unexpected test status: " + tc.status),tc.time)
-				return
-		}
-	}
-	
 }
 
 export class ABLTestProgramDirectory extends TestTypeObj {
@@ -530,10 +500,6 @@ export class ABLTestProgramDirectory extends TestTypeObj {
 
 	getLabel() {
 		return this.element
-	}
-
-	async run(item: vscode.TestItem, options: vscode.TestRun): Promise<void> {
-		console.log("ABLTestClassNamespace.run() TODO")
 	}
 }
 
@@ -564,6 +530,8 @@ export class ABLTestProgram extends TestFile {
 
 			onTestClass: (range: vscode.Range, classname: string, label: string) => { console.error("onTestClassNamespace") },
 			
+			onTestMethod: (range: vscode.Range, classname: string, methodname: string) => { console.error("onTestMethod") },
+
 			onTestProgramDirectory (range: vscode.Range, dirpath: string, dir: string, dirUri: vscode.Uri) {
 				const id = `pgmpath:${dirpath}`
 				const thead = controller.createTestItem(id, dirpath, dirUri)
@@ -599,9 +567,7 @@ export class ABLTestProgram extends TestFile {
 				ancestors.push({ item: thead, children: [] as vscode.TestItem[] })
 			},
 
-			onTestMethod: (range: vscode.Range, classname: string, methodname: string) => { console.error("onTestMethod") },
-
-			onTestProcedure: (range: vscode.Range, relativePath: string, procedureName: string) => {
+			onTestProcedure: (range: vscode.Range, relativePath: string, procedureName: string, programUri: vscode.Uri) => {
 				this.testFileType = "ABLTestProcedure"
 				
 				const id = `${relativePath}#${procedureName}`
@@ -630,137 +596,18 @@ export class ABLTestProgram extends TestFile {
 
 		this.ascend(0, ancestors); // finish and assign children for all remaining items
 	}
-
-	async run(item: vscode.TestItem, options: vscode.TestRun): Promise<void> {
-		const start = Date.now();
-		let itemPath = vscode.workspace.asRelativePath(item.uri!.fsPath);
-		const workspaceDir = vscode.workspace.workspaceFolders?.map(item => item.uri.fsPath)[0]; //todo what about if we have multiple workspaces???
-		if(!workspaceDir) {
-			options.errored(item, new vscode.TestMessage("cannot resolve workspace directory"))
-			return
-		}
-		await this.runCommand(itemPath, options)
-		const duration = Date.now() - start;
-		const res = await this.parseResults()
-
-		if(!res || !res['testsuite']) {
-			options.errored(item, new vscode.TestMessage("malformed results - could not find 'testsuite' node"), duration)
-			return
-		}
-
-		const s = res.testsuite.find((s: any) => s = item.id)
-		if (!s) {
-			options.errored(item, new vscode.TestMessage("could not find test suite in results"), duration)
-			return
-		}
-		if (s.tests > 0) {
-			if(s.errors == 0 && s.failures == 0) {
-				options.passed(item, s.time)
-			} else if (s.tests = s.skipped) {
-				options.skipped(item)
-			} else if (s.failures > 0 || s.errors > 0) {
-				options.failed(item, new vscode.TestMessage("one or more tests failed"), s.time)
-			} else {
-				options.errored(item, new vscode.TestMessage("unknown error - test results are all zero"), s.time)
-			}
-		}
-
-		if (!s.testcases) {
-			options.errored(item, new vscode.TestMessage("malformed results - could not find 'testcases' node"), duration)
-			return
-		}
-
-		item.children.forEach(child => {
-			const tc = s.testcases?.find(t => t.name === child.label)
-			if(!tc) {
-				options.errored(child, new vscode.TestMessage("could not find result for test case"))
-				return
-			}
-			this.setChildResults(child, options, tc)
-		})
-		return
-	}
 }
 
-export class ABLTestMethod extends TestTypeObj { // child of TestClass
+export class ABLTestMethod extends TestFile { // child of TestClass
 
 	constructor(public generation: number,
 				private readonly classname: string,
 				private readonly methodName: string ) { 
-		super ()
-		this.name = methodName
-		this.label = methodName 
+		super()
 	}
-
-	async run(item: vscode.TestItem, options: vscode.TestRun): Promise<void> {
-		const start = Date.now();
-
-		let itemPath = vscode.workspace.asRelativePath(item.uri!.fsPath)
-		itemPath = itemPath + "#" + item.label;
-		const workspaceDir = vscode.workspace.workspaceFolders?.map(item => item.uri.fsPath);
-
-		var cmd = vscode.workspace.getConfiguration('ablunit').get('runTestCommand', '').trim();
-		if (!cmd) { cmd = '_progres -b -p ABLUnitCore.p -basekey INI -ininame progress.ini -param "${itemPath} CFG=ablunit.json"' }
-		cmd = cmd.replace("${itemPath}",itemPath);
-
-		await new Promise<string>((resolve, reject) => {
-			cp.exec(cmd, { cwd: workspaceDir?.toString() }, (err, stdout, stderr) => {
-				if (err) {
-					options.appendOutput(stderr);
-					reject(err);
-				}
-				options.appendOutput(stdout);
-				return resolve(stdout);
-			});
-		});
-		const duration = Date.now() - start;
-
-		const resultsPath = vscode.workspace.getConfiguration('ablunit').get('resultsPath', '').trim();
-		const resultsUri = vscode.Uri.joinPath(this.workspaceDir(),"/results.xml")
-		const ablResults = new ABLResultsParser()
-		await ablResults.importResults(resultsUri)
-		const results = ablResults.resultsJson
-
-		if(!results || !results.name){
-			options.errored(item, new vscode.TestMessage("cannot find top node `testsuites` in results.xml"))
-			return
-		} else if(!results.testsuite) {
-			options.errored(item, new vscode.TestMessage("cannot find testsuite in results.xml"))
-			return
-		} if (results.testsuite.length > 1) {
-			options.errored(item, new vscode.TestMessage("invalid results.xml - should only have 1 test suite"))
-		} else {
-			if (results.testsuite[0].tests > 0) {
-				if(results.testsuite[0].errors == 0 && results.testsuite[0].failures == 0) {
-					options.passed(item)
-				} else if (results.testsuite[0].tests = results.testsuite[0].skipped) {
-					options.skipped(item)
-				} else if (results.testsuite[0].failures > 0 || results.testsuite[0].errors > 0) {
-					options.failed(item, new vscode.TestMessage("one or more tests failed"), results.testsuite[0].time)
-				} else {
-					options.errored(item, new vscode.TestMessage("unknown error - test results are all zero"), results.testsuite[0].time)
-				}
-			}
-
-			const testcases = results.testsuite[0].testcases
-			if(testcases) {
-
-				item.children.forEach(child => {
-					if (testcases?.length) {
-						for(let idx=0; idx<testcases.length; idx++) {
-							const tc = testcases[idx]
-							if (child.label == tc.name) {
-							}
-						}
-					}
-				})
-			}
-		}
-	}
-
 }
 
-export class ABLTestProcedure extends TestTypeObj { // child of TestProgram
+export class ABLTestProcedure extends TestFile { // child of TestProgram
 	public description: string = "ABL Test Procedure"
 
 	constructor(public generation: number,
@@ -769,11 +616,6 @@ export class ABLTestProcedure extends TestTypeObj { // child of TestProgram
 		super()
 		this.label = procedurename
 	}
-
-	async run(item: vscode.TestItem, options: vscode.TestRun): Promise<void> {
-		// console.log("ABLTestProcedure.run() TODO")
-	}
-
 }
 
 export class ABLAssert extends TestTypeObj { // child of TestClass or TestProcedure

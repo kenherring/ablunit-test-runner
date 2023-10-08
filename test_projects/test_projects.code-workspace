@@ -6,5 +6,7 @@
         "terminal.integrated.env.windows": {
             "PATH": "${env:PATH}:/c/Progress/OpenEdge/ant/bin"
         },
-    }
+        "ablunit.resultsPath": "target/results.xml",
+        "ablunit.tests.command": "C:\\Progress\\OpenEdge\\ant\\bin\\ant test -Dfile=${itemPath}"
+    },
 }

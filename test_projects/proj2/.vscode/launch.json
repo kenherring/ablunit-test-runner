@@ -1,0 +1,37 @@
+{
+	// Use IntelliSense to learn about possible attributes.
+	// Hover to view descriptions of existing attributes.
+	// For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+	"version": "0.2.0",
+	"configurations": [
+		{
+			"name": "ablunit",
+			"type": "abl",
+			"request": "launch",
+			"program": "${file}",
+			"cwd": "${workspaceFolder}",
+			"graphicalMode": false
+		},
+		{
+			"name": "ablunit2",
+			"type": "abl",
+			"request": "launch",
+			"graphicalMode": false,
+			"cwd": "${workspaceFolder}",
+			"program": "ABLUnitCore.p"
+		},
+		{
+			"name": "Attach to process",
+			"type": "abl",
+			"request": "attach",
+			"hostname": "localhost",
+			"mode": "legacy",
+			"port": 3099,
+			"localRoot": "${workspaceFolder}",
+			"remoteRoot": "path to remote files",
+			"sourceMap": {
+				"Z:\\path\\to\\remote\\files\\**": "c:\\path\\to\\local\\src\\**"
+			}
+		}
+	]
+}

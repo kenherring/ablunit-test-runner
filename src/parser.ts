@@ -2,7 +2,10 @@ import * as vscode from 'vscode';
 
 // TODO - If the XREF is available let's try to parse that instead
 
-
+// TESTSUITE statement
+const suiteRE = /@testsuite\((.*)\)/
+const suiteItemRE = /(classes|procedures)="([^"]*)+"/i
+const suiteItemRE2 = /,(classes|procedures)="([^"]*)+"/i
 // CLASS statement
 const classRE = /^\s*class\s+(\S+)\s*:/i
 // METHOD statement
@@ -22,10 +25,10 @@ export const parseABLUnit = (text: string, relativePath: string, events: {
 	onTestSuite(range: vscode.Range, suitename: string): void;
 	onTestClassNamespace(range: vscode.Range, classpath: string, element: string, classpathUri: vscode.Uri): void;
 	onTestClass(range: vscode.Range, classname: string, label: string): void;
+	onTestMethod(range: vscode.Range, classname: string, methodname: string): void;
 	onTestProgramDirectory (range: vscode.Range, dirpath: string, dir: string, dirUri: vscode.Uri): void
 	onTestProgram(range: vscode.Range, relativePath: string, label: string, programUri: vscode.Uri): void;
-	onTestMethod(range: vscode.Range, classname: string, methodname: string): void;
-	onTestProcedure(range: vscode.Range, relativePath: string, label: string): void;
+	onTestProcedure(range: vscode.Range, relativePath: string, label: string, programUri: vscode.Uri): void;
 	onAssert(range: vscode.Range, methodname: string): void;
 }) => {
 	
@@ -34,8 +37,6 @@ export const parseABLUnit = (text: string, relativePath: string, events: {
 	const configClassLabel= vscode.workspace.getConfiguration('ablunit').get('display.classLabel');
 	if (!vscode.workspace.workspaceFolders) return
 	const workspaceDir = vscode.workspace.workspaceFolders.map(item => item.uri)[0];
-
-	// console.log("configStyle=" + configStyle + ", configClassLabel=" + configClassLabel)
 
 	const parseByType = () => {
 		if (relativePath.endsWith(".cls")) {
@@ -128,6 +129,8 @@ export const parseABLUnit = (text: string, relativePath: string, events: {
 			return
 		}
 
+		const programUri = vscode.Uri.joinPath(workspaceDir,relativePath)
+
 		const zeroRange = new vscode.Range(new vscode.Position(0,0), new vscode.Position(0,0))
 		if (configStyle == "tree") {
 			const parts = relativePath.split("/")
@@ -141,9 +144,9 @@ export const parseABLUnit = (text: string, relativePath: string, events: {
 				events.onTestProgramDirectory(zeroRange, relativeTree, parts[idx], vscode.Uri.joinPath(workspaceDir,relativeTree))
 			}
 			const progLabel = parts[parts.length - 1]
-			events.onTestProgram(zeroRange, relativePath, progLabel, vscode.Uri.joinPath(workspaceDir,relativePath))
+			events.onTestProgram(zeroRange, relativePath, progLabel, programUri)
 		} else {
-			events.onTestProgram(zeroRange, relativePath, relativePath, vscode.Uri.joinPath(workspaceDir,relativePath))
+			events.onTestProgram(zeroRange, relativePath, relativePath, programUri)
 		}
 
 		for (let lineNo = 1; lineNo < lines.length; lineNo++) {
@@ -156,17 +159,12 @@ export const parseABLUnit = (text: string, relativePath: string, events: {
 					if (configStyle == "tree") {
 						label = procedureName
 					}
-					events.onTestProcedure(range, relativePath, label)
+					events.onTestProcedure(range, relativePath, procedureName, programUri)
 					continue;
 				}
 			}
 		}
 	};
-
-	// TESTSUITE statement
-	const suiteRE = /@testsuite\((.*)\)/
-	const suiteItemRE = /(classes|procedures)="([^"]*)+"/i
-	const suiteItemRE2 = /,(classes|procedures)="([^"]*)+"/i
 
 	const parseSuiteClass = () => {
 
