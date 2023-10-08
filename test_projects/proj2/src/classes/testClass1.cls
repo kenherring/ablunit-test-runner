@@ -13,7 +13,6 @@ class src.classes.testClass1 :
     @Before.
     method public void beforeEach () :
       //Executes after each test
-      
       // do setup here
     end method.
     

@@ -1,3 +1,4 @@
+import { Uri, workspace } from "vscode";
 
 export interface TestCase {
 	name: string
@@ -40,15 +41,22 @@ interface TestSuites {
 
 export class ABLResultsParser {
 	fs = require('fs');
-	resultsJson: TestSuites
+	resultsJson?: TestSuites
 	
-	constructor(xmlFileName: string) {
-		const resultsX1 = this.fs.readFileSync(xmlFileName, "utf8")
-
-		const resultsXml = this.fs.readFileSync(xmlFileName, "utf8")
-		const resultsXmlJson = this.parseXml(resultsXml)
+	constructor() {}
+	
+	async importResults(resultsUri: Uri) {
+		console.log("ABLResultsParser importResults resultsUri=" + resultsUri)
+		const resultsBits = await workspace.fs.readFile(resultsUri);
+		console.log("read bits")
+		const resultsXml = await Buffer.from(resultsBits.toString()).toString('utf8');
+		console.log("resultsXml=" + resultsXml)
+		const resultsXmlJson = await this.parseXml(resultsXml)
+		console.log("resultsJson=" + resultsXmlJson)
 		this.resultsJson = this.parseSuites(resultsXmlJson)
-		this.outputJson(xmlFileName.replace(/\.xml$/,".json"), this.resultsJson)
+		console.log("this.resultsJson=" + this.resultsJson)
+		this.outputJson(Uri.parse(resultsUri.fsPath.replace(/\.xml$/,".json")), this.resultsJson)
+		console.log("output json complete")
 	}
 	
 	parseXml(xmlData: string) {
@@ -94,7 +102,7 @@ export class ABLResultsParser {
 				errors: Number(res[idx]['$']['errors']),
 				failures: Number(res[idx]['$']['failures']),
 				skipped: Number(res[idx]['$']['skipped']),
-				time: Number(res[idx]['$']['time']),
+				time: Number(res[idx]['$']['time'] * 1000),
 				properties: this.parseProperties(res[idx]['properties']),
 				testsuite: this.parseSuite(res[idx]['testsuite']),
 				testcases: this.parseTestCases(res[idx]['testcase'])
@@ -141,13 +149,10 @@ export class ABLResultsParser {
 		}
 	}
 	
-	outputJson(jsonFileName: string, toJson: any) {
-		console.log("outputJson to " + jsonFileName)
-		this.fs.writeFile(jsonFileName, JSON.stringify(toJson, null, 2), function(err: any) {
-			if (err) {
-				console.log(err);
-			}
-		});
+	outputJson(jsonUri: Uri, toJson: any) {
+		console.log("outputJson to " + jsonUri)
+		const bufferJson = Buffer.from(JSON.stringify(toJson, null, 2))
+		workspace.fs.writeFile(jsonUri, bufferJson)
 	}
 }
 

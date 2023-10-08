@@ -22,9 +22,10 @@ export const parseABLUnit = (text: string, relativePath: string, events: {
 	onTestSuite(range: vscode.Range, suitename: string): void;
 	onTestClassNamespace(range: vscode.Range, classpath: string, element: string, classpathUri: vscode.Uri): void;
 	onTestClass(range: vscode.Range, classname: string, label: string): void;
-	onTestProgram(range: vscode.Range, procedureName: string): void;
+	onTestProgramDirectory (range: vscode.Range, dirpath: string, dir: string, dirUri: vscode.Uri): void
+	onTestProgram(range: vscode.Range, relativePath: string, label: string, programUri: vscode.Uri): void;
 	onTestMethod(range: vscode.Range, classname: string, methodname: string): void;
-	onTestProcedure(range: vscode.Range, programname: string, prcocedurename: string): void;
+	onTestProcedure(range: vscode.Range, relativePath: string, label: string): void;
 	onAssert(range: vscode.Range, methodname: string): void;
 }) => {
 	
@@ -71,7 +72,7 @@ export const parseABLUnit = (text: string, relativePath: string, events: {
 
 		var assertCount: number = 0
 		var foundClassHead = false
-		var className: string = ""
+		var classname: string = ""
 
 		for (let lineNo = 0; lineNo < lines.length; lineNo++) {
 
@@ -79,34 +80,30 @@ export const parseABLUnit = (text: string, relativePath: string, events: {
 			if (!foundClassHead) {
 				const classResult = classRE.exec(lines[lineNo])
 				if (classResult) {
-					className = classResult[1];
-					const range = new vscode.Range(new vscode.Position(lineNo, lines[lineNo].indexOf(className)), new vscode.Position(lineNo, className.length));
+					classname = classResult[1];
+					const range = new vscode.Range(new vscode.Position(lineNo, lines[lineNo].indexOf(classname)), new vscode.Position(lineNo, classname.length));
 
 					if (configClassLabel == "filepath") {
 						// className = 
-						className = relativePath;
+						classname = relativePath;
 					}
 					
-					var label = className
-					// console.log("relativePath=" + relativePath)
-					var basePath = vscode.Uri.joinPath(workspaceDir,relativePath.substring(0,relativePath.lastIndexOf(className.replace('.','/'))))
-					// console.log("basePath=" + basePath)
-
+					var label = classname
+					var basePath = vscode.Uri.joinPath(workspaceDir,relativePath.substring(0,relativePath.lastIndexOf(classname.replace('.','/'))))
+					
 					if (configStyle == "tree") {
-						var path = splitpath(className)
-						var classpath: string = ""
-						var classpath2: string[] = []
+						var path = splitpath(classname)
+						path.unshift("classpath root")
+						var element: string = ""
+						var classpath: string[] = []
 						for (let idx=0; idx < path.length - 1; idx++) {
-							if (classpath == "") 
-								classpath = path[idx]
-							else
-								classpath = classpath + "." + path[idx]
-							classpath2[classpath2.length] = path[idx]
-							events.onTestClassNamespace(range, classpath, path[idx], vscode.Uri.joinPath(basePath,classpath2.join("/")))
+							element = path[idx]
+							classpath.push(element)
+							events.onTestClassNamespace(range, classpath.join('.'), path[idx], vscode.Uri.joinPath(basePath,classpath.join("/")))
 						}
 						label = path[path.length - 1]
 					}
-					events.onTestClass(range, className, label);
+					events.onTestClass(range, classname, label);
 					foundClassHead = true
 					continue;
 				}
@@ -115,10 +112,10 @@ export const parseABLUnit = (text: string, relativePath: string, events: {
 				if (lines[lineNo - 1].toLowerCase().indexOf("@test.") != -1) {
 					const method = methodRE.exec(lines[lineNo]);
 					if (method) {
-						const [, publicKeyword, methodName] = method;
+						const [, publicKeyword, methodname] = method;
 						const range = new vscode.Range(new vscode.Position(lineNo, 0), new vscode.Position(lineNo, method[0].length));
 						assertCount = 0;
-						events.onTestMethod(range, className, methodName);
+						events.onTestMethod(range, classname, methodname);
 						continue;
 					}
 				}
@@ -131,14 +128,35 @@ export const parseABLUnit = (text: string, relativePath: string, events: {
 			return
 		}
 
+		const zeroRange = new vscode.Range(new vscode.Position(0,0), new vscode.Position(0,0))
+		if (configStyle == "tree") {
+			const parts = relativePath.split("/")
+			var relativeTree = ""
+			for (let idx=0; idx < parts.length - 1; idx++) {
+				if (relativeTree == "") {
+					relativeTree = parts[idx]
+				} else {
+					relativeTree = relativeTree + '/' + parts[idx]
+				}
+				events.onTestProgramDirectory(zeroRange, relativeTree, parts[idx], vscode.Uri.joinPath(workspaceDir,relativeTree))
+			}
+			const progLabel = parts[parts.length - 1]
+			events.onTestProgram(zeroRange, relativePath, progLabel, vscode.Uri.joinPath(workspaceDir,relativePath))
+		} else {
+			events.onTestProgram(zeroRange, relativePath, relativePath, vscode.Uri.joinPath(workspaceDir,relativePath))
+		}
+
 		for (let lineNo = 1; lineNo < lines.length; lineNo++) {
 			if(lines[lineNo - 1].toLowerCase().indexOf("@test.") != -1) {
 				const proc = procedureRE.exec(lines[lineNo])
 				if (proc) {
 					const [ , blank, procedureName] = proc;
 					const range = new vscode.Range(new vscode.Position(lineNo, lines[lineNo].indexOf(procedureName)), new vscode.Position(lineNo, procedureName.length));
-					var assertCount = 0;
-					events.onTestProcedure(range, "", procedureName);
+					var label = relativePath;
+					if (configStyle == "tree") {
+						label = procedureName
+					}
+					events.onTestProcedure(range, relativePath, label)
 					continue;
 				}
 			}

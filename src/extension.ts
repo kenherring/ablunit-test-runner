@@ -4,6 +4,8 @@ import { getContentFromFilesystem, ABLUnitTestData, ABLTestSuiteClass, ABLTestCl
 export async function activate(context: vscode.ExtensionContext) {
 	const ctrl = vscode.tests.createTestController('ablunitTestController', 'ABLUnit Test');
 	context.subscriptions.push(ctrl);
+	const extensionUri = context.extensionUri
+	const storageUri: vscode.Uri | undefined = context.storageUri
 
 	const fileChangedEmitter = new vscode.EventEmitter<vscode.Uri>();
 	const runHandler = (request: vscode.TestRunRequest2, cancellation: vscode.CancellationToken) => {
@@ -49,7 +51,7 @@ export async function activate(context: vscode.ExtensionContext) {
 				if(data instanceof ABLTestProcedure)
 					console.log(" - ABLTestProcedure")
 
-				if (data instanceof ABLTestClassNamespace || data instanceof ABLTestClass || data instanceof ABLTestMethod) {
+				if (data instanceof ABLTestClassNamespace || data instanceof ABLTestClass || data instanceof ABLTestProgram || data instanceof ABLTestMethod) {
 					run.enqueued(test);
 					queue.push({ test, data });
 				} else {
@@ -80,6 +82,7 @@ export async function activate(context: vscode.ExtensionContext) {
 					run.skipped(test);
 				} else {
 					run.started(test);
+					data.setStorageUri(extensionUri, storageUri)
 					await data.run(test, run);
 				}
 
@@ -135,7 +138,6 @@ export async function activate(context: vscode.ExtensionContext) {
 		const { file, data } = getOrCreateFile(ctrl, e.uri);
 		if(file) {
 			data.updateFromContents(ctrl, e.getText(), file);
-			console.log("data.updateFromContents " + file.children.size) //zero
 		}
 	}
 
@@ -164,7 +166,6 @@ function getOrCreateFile(controller: vscode.TestController, uri: vscode.Uri) {
 	file.tags = [ new vscode.TestTag("runnable") ]
 	controller.items.add(file);
 	const data = createTopNode(file);
-	console.log("testData.set " + file.children.size)
 	testData.set(file, data);
 	file.canResolveChildren = true;
 	return { file, data };
@@ -199,7 +200,6 @@ function getWorkspaceTestPatterns() {
 }
 
 async function findInitialFiles(controller: vscode.TestController, includePattern: vscode.GlobPattern, excludePattern: vscode.GlobPattern) {
-	console.log(JSON.stringify(includePattern) + " " + JSON.stringify(excludePattern))
 	const findAllFilesAtStartup = vscode.workspace.getConfiguration('ablunit').get('findAllFilesAtStartup');
 
 	if (findAllFilesAtStartup) {
