@@ -7,7 +7,7 @@ import * as cp from "child_process";
 
 const textDecoder = new TextDecoder('utf-8');
 
-export type ABLUnitTestData = ABLTestSuiteClass | ABLTestClassNamespace | ABLTestClass | ABLTestProgram | ABLTestMethod | ABLTestProcedure | ABLAssert
+export type ABLUnitTestData = ABLTestSuiteClass | ABLTestProgramDirectory | ABLTestClassNamespace | ABLTestClass | ABLTestProgram | ABLTestMethod | ABLTestProcedure | ABLAssert
 
 export const testData = new WeakMap<vscode.TestItem, ABLUnitTestData>();
 
@@ -27,9 +27,32 @@ class TestTypeObj {
 	public didResolve: boolean = false
 	public name: string = ""
 	public label: string = ""
+	protected storageUri: vscode.Uri | undefined
+	protected extensionUri: vscode.Uri | undefined
 	
 	getLabel() {
 		return this.label
+	}
+
+	public setStorageUri(extensionUri: vscode.Uri, storageUri: vscode.Uri | undefined) {
+		this.extensionUri = extensionUri
+		this.storageUri = storageUri
+	}
+
+	getExtensionUri() {
+		if (!this.extensionUri) {
+			// should be impossible to hit this
+			throw ("extensionUri not set")
+		}
+		return this.extensionUri
+	}
+
+	protected workspaceDir = () => {
+		const workspaceDir = vscode.workspace.workspaceFolders?.map(item => item.uri)[0]
+		if (!workspaceDir) {
+			throw ("no workspace directory opened")
+		}
+		return vscode.Uri.file(workspaceDir.fsPath)
 	}
 }
 
@@ -42,265 +65,174 @@ class TestFile extends TestTypeObj{
 			const content = await getContentFromFilesystem(item.uri!);
 			item.error = undefined;
 			this.updateFromContents(controller, content, item);
-			console.log("updateFromDisk item.children.size=" + item.children.size + " " + item.id + " " + item.label + " " + item.parent?.id + " " + item.parent?.label)
-
-			var topNode = item;
-			while(topNode.parent) {
-				topNode = topNode.parent
+			if (item.children.size == 0) {
+				controller.items.delete(item.id)
+				return
 			}
-			// console.log("controller.items.add=" + topNode.id + " " + topNode.label)
-			// controller.items.add(topNode)
+
 			if(this.replaceWith != undefined) {
 				const currItem = controller.items.get(this.replaceWith.id)
+
 				if (currItem) {
-					console.log("currItem id=" + currItem.id + " " + currItem.label)
-					this.replaceWith.children.forEach(element => {
-						currItem.children.add(element)
-					});
+					this.addItemsToController(currItem, this.replaceWith)
 				} else {
-					console.log("controller.items.add=" + this.replaceWith.id + " " + this.replaceWith.label)
+					console.log("add item " + this.replaceWith.id + " to controller")
 					controller.items.add(this.replaceWith)
+					// controller.items.delete(item.id)
 				}
+				console.log("delete " + item.id)
 				controller.items.delete(item.id)
 			} else {
-				console.log("replaceWith = undefined")
+				//this is definitely valid for classes - not sure about other types
+				//if a class has no @test annotations it won't have any children to display
+				const hasCurrent = controller.items.get(item.id)
+				if(hasCurrent) {
+					controller.items.delete(item.id)
+				}
 			}
-
-			
-			
-			
-			// if  (item.children.size == 0) {
-			// 	console.log("TestFile controller.items.delete=" + item.id + " " + item.label)
-			// 	controller.items.delete(item.id)
-			// }
+			controller.items.delete(item.id)
 		} catch (e) {
 			item.error = (e as Error).stack;
 		}
 	}
 
-	/**
-	 * Parses the tests from the input text, and updates the tests contained
-	 * by this file to be those from the text,
-	 */
+	addItemsToController(item: vscode.TestItem, addItem: vscode.TestItem) {
+
+		addItem.children.forEach(addChild => {
+			const currChild = item.children.get(addChild.id)
+			if (currChild) {
+				this.addItemsToController(currChild, addChild)
+			} else {
+				item.children.add(addChild)
+			}
+		})
+	}
+
+	ascend(depth: number, ancestors: [{ item: vscode.TestItem, children: vscode.TestItem[] }]) {
+		// for(let idx=0; idx<ancestors.length; idx++) {
+		// 	console.log("1: ancestor-label[" + idx + "]=" + ancestors[idx].item.label + " " + ancestors[idx].item.children.size + " " + JSON.stringify(ancestors[idx].item.tags) + " parent=" +  ancestors[idx].item.parent?.label)
+		// }
+		while (ancestors.length > depth) {
+			const finished = ancestors.pop()!;
+			finished.item.children.replace(finished.children);
+			// console.log("2: ancestor-label-" + depth + "=" + finished.item.label + " " + finished.children + " " + JSON.stringify(finished.item.tags) + " parent=" +  finished.item.parent?.label)
+			this.replaceWith = finished.item
+			// this.replaceWith.children.replace(finished.children)
+			// console.log("REPLACED_WITH=" + this.replaceWith?.id + " " + this.replaceWith?.label + " " + this.replaceWith?.children.size + " " + this.replaceWith.uri)
+		}
+	}
+
 	public updateFromContents(controller: vscode.TestController, content: string, item: vscode.TestItem) {
-		console.log("updateFromContents TestFile - skipping")
-	}
-	
-	public updateFromContents2(controller: vscode.TestController, content: string, item: vscode.TestItem) { 
-		const ancestors = [{ item, children: [] as vscode.TestItem[] }];
-		const thisGeneration = generationCounter++;
-		this.didResolve = true;
-
-		const ascend = (depth: number) => {
-			console.log("ascend depth=" + depth)
-
-			for(let idx=1; idx<ancestors.length; idx++) {
-				console.log("ancestor-label-" + idx + "=" + ancestors[idx].item.label + " " + JSON.stringify(ancestors[idx].item.tags))
-			}
-
-			while (ancestors.length > depth) {
-				const finished = ancestors.pop()!;
-				console.log("finished.item.label=" + finished.item.label)
-				finished.item.children.replace(finished.children);
-			}
-		};
-
-		parseABLUnit(content, vscode.workspace.asRelativePath(item.uri!.fsPath), {
-
-			onTestSuite: (range, suiteName) => {
-				this.testFileType = "ABLTestSuite"
-				const parent = ancestors[ancestors.length - 1];
-				const id = `${item.uri}/${suiteName}`;
-
-				const thead = controller.createTestItem(id, suiteName, item.uri);
-				thead.range = range;
-				thead.tags = [ new vscode.TestTag("runnable"), new vscode.TestTag("ABLTestSuite") ]
-				testData.set(thead, new ABLTestSuiteClass(thisGeneration, suiteName));
-				parent.children.push(thead);
-				ancestors.unshift({ item: thead, children: [] });
-			},
-
-			onTestClassNamespace: (range, classpath, element) => {
-				this.testFileType = "ABLTestClassNamespace"
-				console.log("onTestClassNamespace classpath=" + classpath + " element=" + element)
-				var parent = ancestors[ancestors.length - 1];
-				console.log("parent=" + parent.item.label)
-
-				const id = `${classpath}`;
-				const thead = controller.createTestItem(id, classpath, item.uri);
-				thead.range = range;
-				thead.tags = [ new vscode.TestTag("runnable"), new vscode.TestTag("ABLTestClassNamespace") ]
-				thead.label = element
-				thead.children.add(item)
-				testData.set(thead, new ABLTestClassNamespace(thisGeneration, classpath, element));
-				ancestors.unshift({ item: thead, children: [] });
-			},
-
-			onTestClass: (range: vscode.Range, classname: string, label: string) => {
-				this.testFileType = "ABLTestClass"
-				console.log("onTestClass classname=" + classname + " label=" + label)
-				var parent = ancestors[ancestors.length - 1];
-				console.log("parent=" + parent)
-
-				item.range = range
-				item.label = label
-				item.tags = [ new vscode.TestTag("runnable"), new vscode.TestTag("ABLTestClass") ]
-				
-				
-				console.log()
-				
-				// testData.set(thead, new ABLTestClass(thisGeneration, classname, label));
-
-				// if (! (testData.get(parent.item) instanceof TestFile)) {
-					// parent.children.push(thead);
-				// }
-				// ancestors.push({ item: thead, children: [] });
-			},
-
-			onTestProgram: (range: vscode.Range, programname: string) => {
-				this.testFileType = "ABLTestProgram"
-
-				var self = ancestors[ancestors.length - 1];
-				self.item.range = range
-				self.item.label = programname
-				self.item.tags = [ new vscode.TestTag("runnable"), new vscode.TestTag("ABLTestProgram") ]
-
-				// const parent = ancestors[ancestors.length - 1];
-				// const id = `${item.uri}/${programname}`;
-
-				// const thead = controller.createTestItem(id, programname, item.uri);
-				// thead.range = range;
-				// thead.tags = [ new vscode.TestTag("runnable"), new vscode.TestTag("ABLTestProgram")]
-				// testData.set(thead, new ABLTestProgram(thisGeneration, programname));
-				// parent.children.push(thead);
-			},
-
-			onTestMethod: (range: vscode.Range, classname: string, methodname: string) => {
-				console.log("onTestMethod: classname=" + classname + " methodname=" + methodname)
-				this.testFileType = "ABLTestMethod"
-				var parent = ancestors[ancestors.length - 1];
-				var index = ancestors.length - 1
-				while(testData.get(parent.item) instanceof ABLTestMethod) {
-					index--
-					parent = ancestors[index]
-				}
-
-				const id = `${item.uri}/${classname}/${methodname}`;
-				const thead = controller.createTestItem(id, methodname, item.uri);
-				thead.range = range;
-				thead.tags = [ new vscode.TestTag("runnable"), new vscode.TestTag("ABLTestMethod") ]
-				testData.set(thead, new ABLTestMethod(thisGeneration, classname, methodname));
-				parent.children.push(thead);
-				ancestors.push({ item: thead, children: [] });
-			},
-
-			onTestProcedure: (range: vscode.Range, programName: string, procedureName: string) => {
-				this.testFileType = "ABLTestProcedure"
-				var parent = ancestors[ancestors.length - 1];
-				var index = ancestors.length - 1
-				while(testData.get(parent.item) instanceof ABLTestProcedure) {
-					index--
-					parent = ancestors[index]
-				}
-
-				const id = `${item.uri}/${programName}/${procedureName}`;
-				const thead = controller.createTestItem(id, procedureName, item.uri);
-				thead.range = range;
-				// thead.tags = [ new vscode.TestTag("runnable") ]
-				thead.tags = [ new vscode.TestTag("ABLTestProcedure") ]
-				testData.set(thead, new ABLTestProcedure(thisGeneration, programName, procedureName));
-				parent.children.push(thead);
-				ancestors.push({ item: thead, children: [] });
-			},
-			
-			onAssert: (range, assertMethod) => {
-				this.testFileType = "ABLAssert"
-				const parent = ancestors[ancestors.length - 1];
-				const id = `${item.uri}/${assertMethod}`;
-
-				const thead = controller.createTestItem(id, assertMethod, item.uri);
-				thead.range = range;
-				thead.tags = [ new vscode.TestTag("not runnable"), new vscode.TestTag("ABLAssert") ]
-				testData.set(thead, new ABLAssert(thisGeneration, assertMethod));
-				parent.children.push(thead);
-			}
-		});
-
-		ascend(0); // finish and assign children for all remaining items
+		console.error("updateFromContents TestFile - skipping")
 	}
 
-	async run(item: vscode.TestItem, options: vscode.TestRun): Promise<void> {
-		// console.log("TestFile.run()")
+	 getProgressIni() {
+		//TODO - only for windows
+		if (!this.workspaceDir) {
+			throw ("no workspace directory opened")
+		}
+		console.log("getProgressIni workspaceDir=" + this.workspaceDir)
 
-		const start = Date.now();
+		//first, check if the progressIni config is set for the workspace
+		const configIni = vscode.workspace.getConfiguration('ablunit').get('progressIni', '')
+		if (configIni != '') {
+			const uri1 = vscode.Uri.joinPath(this.workspaceDir(), configIni)
+			console.log("uri1=" + uri1)
+			if(uri1){
+				return uri1
+			}
+		}
 
-		let itemPath = vscode.workspace.asRelativePath(item.uri!.fsPath);
-		const workspaceDir = vscode.workspace.workspaceFolders?.map(item => item.uri.fsPath);
+		//second, check if there is a progress ini in the root of the repo
+		console.log("workspaceDir=" + this.workspaceDir)
+		if(this.workspaceDir) {
+			const uri2 = vscode.Uri.joinPath(this.workspaceDir(), 'progress.ini')
+			console.log("uri2=" + uri2)
+			if (uri2) {
+				return uri2
+			}
+		}
+
+		//third, check if the workspace has a temp directory configured
+		const uri3 = vscode.Uri.parse(vscode.workspace.getConfiguration('ablunit').get('tempDir', ''))
+		console.log("uri3=" + uri3)
+		if (uri3) {
+			return uri3
+		}
+
+		//fourth, and lastly, use the extension temp directory
+		if(this.storageUri) {
+			const stat1 = vscode.workspace.fs.stat(this.storageUri)
+			console.log("stat1=" + stat1)
+			if(!stat1) {
+				vscode.workspace.fs.createDirectory(this.storageUri)
+			}
+			const stat2 = vscode.workspace.fs.stat(this.storageUri)
+			console.log("stat2=" + stat2)
+
+			const uri4 = vscode.Uri.joinPath(this.storageUri, 'progress.ini')
+			console.log("uri4=" + uri4)
+			if(uri4) {
+				return uri4
+			}
+		}
+		throw ("cannot find a suitable progress.ini or temp directory")
+	}
+
+	createProgressIni (progressIni: vscode.Uri) {
+		const iniData = [ "[WinChar Startup]", "PROPATH=." ]
+		vscode.workspace.fs.writeFile(progressIni, Uint8Array.from(Buffer.from(iniData.join("\n"))))
+	}
+
+	getCommand(itemPath: string): string {
+		if(!this.storageUri) {
+			throw ("temp directory not set")
+		}
+		vscode.workspace.fs.createDirectory(this.storageUri)
+
+		const progressIni = this.getProgressIni()
+		if (!progressIni) { throw ("cannot find progress.ini or suitable location to write one") }
+		const progressIniStat = vscode.workspace.fs.stat(progressIni)
+		if(! progressIniStat) {
+			console.log("progress.ini does not exist - creating")
+			this.createProgressIni(progressIni)
+		}
 
 		var cmd = vscode.workspace.getConfiguration('ablunit').get('runTestCommand', '').trim();
 		if (! cmd) {
-			cmd = '_progres -b -p ABLUnitCore.p -basekey INI -ininame progress.ini -param "${itemPath} CFG=ablunit.json"';
+			cmd = '_progres -b -p ABLUnitCore.p -basekey INI -ininame "${progressIni}" -param "${itemPath} CFG=ablunit.json"';
 		}
-		cmd = cmd.replace("${itemPath}",itemPath);
+		cmd = cmd.replace("${itemPath}",itemPath).replace("${progressIni}",progressIni.fsPath);
+		return cmd
+	}
 
-		await new Promise<string>((resolve, reject) => {
-			cp.exec(cmd, { cwd: workspaceDir?.toString() }, (err, stdout, stderr) => {
-				if (err) {
-					// console.log(cmd+' error!');
-					// console.log(err);
-					options.appendOutput(stderr);
-					reject(err);
-				}
-				options.appendOutput(stdout);
-				return resolve(stdout);
-			});
-		});
-		const duration = Date.now() - start;
+	async runCommand(itemPath: string, options: vscode.TestRun) {
+		const cmd: string = this.getCommand(itemPath)
 
-		const fs = require('fs');
-		var parseString = require('xml2js').parseString;
+		vscode.window.showInformationMessage("running ablunit tests");
+		await vscode.tasks.executeTask(
+			new vscode.Task(
+				{ type: 'shell' },
+				vscode.TaskScope.Global,
+				"ablunit run tests",
+				"ablunit-test-provider",
+				new vscode.ShellExecution(cmd, {
+					// eslint-disable-next-line @typescript-eslint/naming-convention
+					env: vscode.l10n.uri ? { EXTENSION_BUNDLE_PATH: vscode.l10n.uri?.fsPath } : undefined
+				})));
+		vscode.window.showInformationMessage("ablunit tests complete");
+	}
 
-		
-		const resultsPath = vscode.workspace.getConfiguration('ablunit').get('resultsPath', '').trim();
-		const resultsClass = new ABLResultsParser(workspaceDir + '/' + resultsPath)
-		const results = resultsClass.resultsJson
-
-		if(!results || !results.name){
-			options.errored(item, new vscode.TestMessage("cannot find top node `testsuites` in results.xml"))
-			return
-		} else if(!results.testsuite) {
-			options.errored(item, new vscode.TestMessage("cannot find testsuite in results.xml"))
-			return
-		} if (results.testsuite.length > 1) {
-			options.errored(item, new vscode.TestMessage("invalid results.xml - should only have 1 test suite"))
-		} else {
-			if (results.testsuite[0].tests > 0) {
-				if(results.testsuite[0].errors == 0 && results.testsuite[0].failures == 0) {
-					options.passed(item)
-				} else if (results.testsuite[0].tests = results.testsuite[0].skipped) {
-					options.skipped(item)
-				} else if (results.testsuite[0].failures > 0 || results.testsuite[0].errors > 0) {
-					options.failed(item, new vscode.TestMessage("one or more tests failed"), results.testsuite[0].time)
-				} else {
-					options.errored(item, new vscode.TestMessage("unknown error - test results are all zero"), results.testsuite[0].time)
-				}
-			}
-
-			const testcases = results.testsuite[0].testcases
-			if(testcases) {
-
-				item.children.forEach(child => {
-					if (testcases?.length) {
-						for(let idx=0; idx<testcases.length; idx++) {
-							const tc = testcases[idx]
-							if (child.label == tc.name) {
-								this.setChildResults(child,options,tc)
-							}
-						}
-					}
-				})
-			}
-		}
+	async parseResults () {
+		if (!this.workspaceDir()) {}
+		const resultsUri = vscode.Uri.joinPath(this.workspaceDir(),"/results.xml")
+		const ablResults = new ABLResultsParser()
+		await ablResults.importResults(resultsUri)
+		return ablResults.resultsJson
+	}
+	
+	async run(item: vscode.TestItem, options: vscode.TestRun): Promise<void> {
+		console.error("run via TestFile is not supported")
 	}
 
 	setChildResults(item: vscode.TestItem, options: vscode.TestRun, tc: TestCase) {
@@ -353,6 +285,7 @@ export class ABLTestSuiteClass extends TestTypeObj {
 }
 
 export class ABLTestClassNamespace extends TestTypeObj {
+	public canResolveChildren: boolean = false
 
 	constructor(
 		public generation: number,
@@ -370,6 +303,7 @@ export class ABLTestClassNamespace extends TestTypeObj {
 }
 
 export class ABLTestClass extends TestFile {
+	public canResolveChildren: boolean = true
 	methods: ABLTestMethod[] = []
 	
 	setClassInfo(classname: string, classlabel: string) {
@@ -382,124 +316,80 @@ export class ABLTestClass extends TestFile {
 	}
 
 	public updateFromContents(controller: vscode.TestController, content: string, item: vscode.TestItem) {
-		console.log("updateFromContents ABLTestClass")
-		const ancestors = [{ item, children: [] as vscode.TestItem[] }];
+		var ancestors: [{item: vscode.TestItem, children: vscode.TestItem[] }] = [{ item, children: [] as vscode.TestItem[] }]
 		ancestors.pop()
 		const thisGeneration = generationCounter++;
 		this.didResolve = true;
 
-		const ascend = (depth: number) => {
-			console.log("ascend depth=" + depth)
-
-			for(let idx=0; idx<ancestors.length; idx++) {
-				console.log("1: ancestor-label-" + idx + "=" + ancestors[idx].item.label + " " + JSON.stringify(ancestors[idx].item.tags) + " parent=" +  ancestors[idx].item.parent?.label)
-			}
-
-			while (ancestors.length > depth) {
-				const finished = ancestors.pop()!;
-				console.log("finished.item.label=" + finished.item.label + " " + finished.item.children.size + " " + finished.children.length)
-				finished.item.children.replace(finished.children);
-				console.log("finished.item=" + finished.item.id + " " + finished.item.children.size + " " + finished.item.parent?.id + " " + finished.item.parent?.label)
-				this.replaceWith = finished.item
-			}
-
-
-			
-		};
-
 		parseABLUnit(content, vscode.workspace.asRelativePath(item.uri!.fsPath), {
 			
 			onTestSuite: (range, suiteName) => {
-				this.testFileType = "ABLTestSuite"
-				const parent = ancestors[ancestors.length - 1];
-				const id = `${item.uri}/${suiteName}`;
+				// this.testFileType = "ABLTestSuite"
+				// const parent = ancestors[ancestors.length - 1]
+				// const id = `${item.uri}/${suiteName}`
 
-				const thead = controller.createTestItem(id, suiteName, item.uri);
-				thead.range = range;
-				thead.tags = [ new vscode.TestTag("runnable"), new vscode.TestTag("ABLTestSuite") ]
-				testData.set(thead, new ABLTestSuiteClass(thisGeneration, suiteName));
-				parent.children.push(thead);
-				ancestors.unshift({ item: thead, children: [] });
+				// const thead = controller.createTestItem(id, suiteName, item.uri)
+				// thead.range = range
+				// thead.tags = [ new vscode.TestTag("runnable"), new vscode.TestTag("ABLTestSuite") ]
+				// testData.set(thead, new ABLTestSuiteClass(thisGeneration, suiteName))
+				// parent.children.push(thead)
+				// ancestors.unshift({ item: thead, children: [] })
 			},
 
 			onTestClassNamespace: (range: vscode.Range, classpath: string, element: string, classpathUri: vscode.Uri) => {
 				this.testFileType = "ABLTestClassNamespace2"
-				console.log("onTestClassNamespace classpath=" + classpath + " element=" + element + " classpathUri=" + classpathUri.toString())
-				if (ancestors.length > 0) {
-					var parent = ancestors[ancestors.length - 1];
-					console.log("parent=" + parent.item.label)
+				const id = `classpath:${classpath}`
+				const thead = controller.createTestItem(id, classpath, classpathUri)
+				thead.range = range
+				if (element == "classpath root") {
+					thead.tags = [ new vscode.TestTag("ABLTestClassNamespace") ]
+				} else {
+					thead.tags = [ new vscode.TestTag("runnable"), new vscode.TestTag("ABLTestClassNamespace") ]
 				}
-
-				const id = `${classpath}`;
-				console.log("id=" + id + " classpath=" + classpath + " element=" + element + " uri=" + item.uri?.toString().lastIndexOf(element))
-				const thead = controller.createTestItem(id, classpath, item.uri);
-				thead.range = range;
-				thead.tags = [ new vscode.TestTag("runnable"), new vscode.TestTag("ABLTestClassNamespace") ]
 				thead.label = element
+				
 				if (ancestors.length > 0) {
-					var parent = ancestors[ancestors.length - 1];
-					console.log("add " + thead.label + " as child to " + parent.item.label)
+					var parent = ancestors[ancestors.length - 1]
 					parent.children.push(thead)
-					// parent.item.children.add(item)
 				}
 				testData.set(thead, new ABLTestClassNamespace(thisGeneration, classpath, element));
-				console.log("ancestors.push")
-				ancestors.push({ item: thead, children: [] as vscode.TestItem[] });
-				console.log("ancestors=" + ancestors)
+				ancestors.push({ item: thead, children: [] as vscode.TestItem[]})
 			},
 
-			onTestClass: (range: vscode.Range, classname: string, label: string) => {
+			onTestClass: (range: vscode.Range, classpath: string, label: string) => {
 				this.testFileType = "ABLTestClass"
-				console.log("onTestClass classname=" + classname + " label=" + label + " item.uri=" + item.uri?.toString())
-				var parent = ancestors[ancestors.length - 1];
-				console.log("parent=" + parent.item.label)
-
-				const id = `${classname}`;
-				const thead = controller.createTestItem(id, classname, item.uri)
+				
+				const id = `${classpath}`
+				const thead = controller.createTestItem(id, classpath, item.uri)
 				thead.range = range
 				thead.label = label
 				thead.tags = [ new vscode.TestTag("runnable"), new vscode.TestTag("ABLTestClass") ]
 				var tData = new ABLTestClass()
-				tData.setClassInfo(classname, label)
+				tData.setClassInfo(classpath, label)
 				testData.set(thead, tData)
-				console.log("parent.add=" + parent.item.label + " " + thead.label)
-				parent.children.push(thead)
-				// parent.item.children.add(item)
-				console.log("ancestors.push")
-				ancestors.push({ item: thead, children: [] as vscode.TestItem[] });
-				console.log("ancestors=" + ancestors)
-				console.log("myparent=" + thead.parent?.id + " " + thead.parent?.label)
 				
-				
-				// testData.set(thead, new ABLTestClass(thisGeneration, classname, label));
-
-				// if (! (testData.get(parent.item) instanceof TestFile)) {
-					// parent.children.push(thead);
-				// }
-				// ancestors.push({ item: thead, children: [] });
+				var parent = ancestors[ancestors.length - 1]
+				if(parent) {
+					parent.children.push(thead)
+				}
+				ancestors.push({ item: thead, children: [] as vscode.TestItem[] })
 			},
 
-			onTestProgram: (range: vscode.Range, programname: string) => { console.error("should not be here! programname=" + programname) },
+			onTestProgramDirectory (range: vscode.Range, programname: string, dir: string) { console.error("should not be here! programname=" + programname + " dir=" + dir) },
 
-			onTestMethod: (range: vscode.Range, classname: string, methodname: string) => {
-				console.log("onTestMethod: classname=" + classname + " methodname=" + methodname)
+			onTestProgram: (range: vscode.Range, relativepath: string, label: string, programUri: vscode.Uri) => { console.error("should not be here! relativepath=" + relativepath) },
+
+			onTestMethod: (range: vscode.Range, classpath: string, methodname: string) => {
 				this.testFileType = "ABLTestMethod"
-				var parent = ancestors[ancestors.length - 1];
-				console.log("parent=" + parent.item.label)
-				// var index = ancestors.length - 1
-				// while(testData.get(parent.item) instanceof ABLTestMethod) {
-				// 	index--
-				// 	parent = ancestors[index]
-				// }
-
-				const id = `${item.uri}/${classname}/${methodname}`;
+				const id = `${classpath}#${methodname}`
 				const thead = controller.createTestItem(id, methodname, item.uri);
 				thead.range = range;
 				thead.tags = [ new vscode.TestTag("runnable"), new vscode.TestTag("ABLTestMethod") ]
 				thead.label = methodname
-				testData.set(thead, new ABLTestMethod(thisGeneration, classname, methodname));
-				parent.children.push(thead);
-				// ancestors.push({ item: thead, children: [] });
+				testData.set(thead, new ABLTestMethod(thisGeneration, classpath, methodname));
+				var parent = ancestors[ancestors.length - 1];
+				parent.children.push(thead)
+				item.children.add(thead)
 			},
 
 			onTestProcedure: (range: vscode.Range, programname: string, procedurename: string) => { console.log("should not be here! programname=" + programname + " procedurename=" + procedurename) },
@@ -517,11 +407,10 @@ export class ABLTestClass extends TestFile {
 			}
 		});
 
-		ascend(0); // finish and assign children for all remaining items
+		this.ascend(0, ancestors); // finish and assign children for all remaining items
 	}
 
 	async run(item: vscode.TestItem, options: vscode.TestRun): Promise<void> {
-		// console.log("ABLTestClass.run() TODO")
 		const start = Date.now();
 
 		let itemPath = vscode.workspace.asRelativePath(item.uri!.fsPath);
@@ -553,8 +442,10 @@ export class ABLTestClass extends TestFile {
 
 		
 		const resultsPath = vscode.workspace.getConfiguration('ablunit').get('resultsPath', '').trim();
-		const resultsClass = new ABLResultsParser(workspaceDir + '/' + resultsPath)
-		const results = resultsClass.resultsJson
+		const resultsUri = vscode.Uri.joinPath(this.workspaceDir(),"/results.xml")
+		const ablResults = new ABLResultsParser()
+		await ablResults.importResults(resultsUri)
+		const results = ablResults.resultsJson
 
 		if(!results || !results.name){
 			options.errored(item, new vscode.TestMessage("cannot find top node `testsuites` in results.xml"))
@@ -628,7 +519,26 @@ export class ABLTestClass extends TestFile {
 	
 }
 
+export class ABLTestProgramDirectory extends TestTypeObj {
+	public canResolveChildren: boolean = false
+
+	constructor(
+		public generation: number,
+		private readonly relativeDir: string,
+		private readonly element: string
+	) { super() }
+
+	getLabel() {
+		return this.element
+	}
+
+	async run(item: vscode.TestItem, options: vscode.TestRun): Promise<void> {
+		console.log("ABLTestClassNamespace.run() TODO")
+	}
+}
+
 export class ABLTestProgram extends TestFile {
+	public canResolveChildren: boolean = true
 	procedures: ABLTestProcedure[] = []
 	
 	setProgramInfo(programname: string, programlabel: string) {
@@ -640,95 +550,135 @@ export class ABLTestProgram extends TestFile {
 		this.procedures[this.procedures.length] = method
 	}
 
+	public updateFromContents(controller: vscode.TestController, content: string, item: vscode.TestItem) {
+		const ancestors: [{item: vscode.TestItem, children: vscode.TestItem[] }] = [{ item, children: [] as vscode.TestItem[] }]
+		ancestors.pop()
+		const thisGeneration = generationCounter++;
+		this.didResolve = true;
+
+		parseABLUnit(content, vscode.workspace.asRelativePath(item.uri!.fsPath), {
+
+			onTestSuite: (range, suiteName) => { console.error("onTestSuite") },
+
+			onTestClassNamespace: (range, classpath, element) => { console.error("onTestClassNamespace") },
+
+			onTestClass: (range: vscode.Range, classname: string, label: string) => { console.error("onTestClassNamespace") },
+			
+			onTestProgramDirectory (range: vscode.Range, dirpath: string, dir: string, dirUri: vscode.Uri) {
+				const id = `pgmpath:${dirpath}`
+				const thead = controller.createTestItem(id, dirpath, dirUri)
+				thead.range = range
+				thead.tags = [ new vscode.TestTag("runnable"), new vscode.TestTag("ABLTestProgramDirectory")]
+				thead.label = dir
+
+				if (ancestors.length > 0) {
+					var parent = ancestors[ancestors.length - 1]
+					parent.children.push(thead)
+				}
+
+				testData.set(thead, new ABLTestProgramDirectory(thisGeneration, dir, dir))
+				ancestors.push({ item: thead, children: [] as vscode.TestItem[]})
+			},
+
+			onTestProgram: (range: vscode.Range, relativepath: string, label: string, programUri: vscode.Uri) => {
+				this.testFileType = "ABLTestProgram"
+				
+				const id = `${relativepath}`
+				const thead = controller.createTestItem(id, relativepath, item.uri)
+				thead.range = range
+				thead.label = label
+				thead.tags = [ new vscode.TestTag("runnable"), new vscode.TestTag("ABLTestProgram")]
+				var tData = new ABLTestProgram()
+				tData.setProgramInfo(relativepath, label)
+				testData.set(thead, tData)
+
+				var parent = ancestors[ancestors.length - 1]
+				if (parent) {
+					parent.children.push(thead)
+				}
+				ancestors.push({ item: thead, children: [] as vscode.TestItem[] })
+			},
+
+			onTestMethod: (range: vscode.Range, classname: string, methodname: string) => { console.error("onTestMethod") },
+
+			onTestProcedure: (range: vscode.Range, relativePath: string, procedureName: string) => {
+				this.testFileType = "ABLTestProcedure"
+				
+				const id = `${relativePath}#${procedureName}`
+				const thead = controller.createTestItem(id, procedureName, item.uri)
+				thead.range = range
+				thead.label = procedureName
+				thead.tags = [ new vscode.TestTag("runnable"), new vscode.TestTag("ABLTestProcedure") ]
+				testData.set(thead, new ABLTestProcedure(thisGeneration, relativePath, procedureName))
+				
+				var parent = ancestors[ancestors.length - 1]
+				parent.children.push(thead)
+			},
+			
+			onAssert: (range, assertMethod) => {
+				this.testFileType = "ABLAssert"
+				const parent = ancestors[ancestors.length - 1];
+				const id = `${item.uri}/${assertMethod}`;
+
+				const thead = controller.createTestItem(id, assertMethod, item.uri);
+				thead.range = range;
+				thead.tags = [ new vscode.TestTag("not runnable"), new vscode.TestTag("ABLAssert") ]
+				testData.set(thead, new ABLAssert(thisGeneration, assertMethod));
+				parent.children.push(thead);
+			}
+		});
+
+		this.ascend(0, ancestors); // finish and assign children for all remaining items
+	}
+
 	async run(item: vscode.TestItem, options: vscode.TestRun): Promise<void> {
 		const start = Date.now();
-
 		let itemPath = vscode.workspace.asRelativePath(item.uri!.fsPath);
-		const workspaceDir = vscode.workspace.workspaceFolders?.map(item => item.uri.fsPath);
-
-		var cmd = vscode.workspace.getConfiguration('ablunit').get('runTestCommand', '').trim();
-		if (! cmd) {
-			cmd = '_progres -b -p ABLUnitCore.p -basekey INI -ininame progress.ini -param "${itemPath} CFG=ablunit.json"';
+		const workspaceDir = vscode.workspace.workspaceFolders?.map(item => item.uri.fsPath)[0]; //todo what about if we have multiple workspaces???
+		if(!workspaceDir) {
+			options.errored(item, new vscode.TestMessage("cannot resolve workspace directory"))
+			return
 		}
-		cmd = cmd.replace("${itemPath}",itemPath);
-		
-		await new Promise<string>((resolve, reject) => {
-			cp.exec(cmd, { cwd: workspaceDir?.toString() }, (err, stdout, stderr) => {
-				if (err) {
-					options.appendOutput(stderr);
-					reject(err);
-				}
-				options.appendOutput(stdout);
-				return resolve(stdout);
-			});
-		});
+		await this.runCommand(itemPath, options)
 		const duration = Date.now() - start;
+		const res = await this.parseResults()
 
-		const fs = require('fs');
-		var parseString = require('xml2js').parseString;
-		
-		const resultsPath = vscode.workspace.getConfiguration('ablunit').get('resultsPath', '').trim();
-		const xmlData = fs.readFileSync(workspaceDir + "/" + resultsPath, "utf8");
-		parseString(xmlData, function (err: any, result: any) {
-			if (err) {
-				options.errored(item, new vscode.TestMessage(err), duration);
-				return console.error(err);
-			}
-			fs.writeFile(workspaceDir + "/" + resultsPath.replace(/\.xml$/,".json"), JSON.stringify(result, null, 2), function(err: any) {
-				if (err) {
-					console.log(err);
-				}
-			});
+		if(!res || !res['testsuite']) {
+			options.errored(item, new vscode.TestMessage("malformed results - could not find 'testsuite' node"), duration)
+			return
+		}
 
-			var testSuite
-			for (let key in result['testsuites']['testsuite']) {
-				if(JSON.stringify(result['testsuites']['testsuite'][key]['$']['name']).endsWith(itemPath + '"')) {
-					testSuite=result['testsuites']['testsuite'][key]
-				}
-			}
-
-			if(! testSuite){
+		const s = res.testsuite.find((s: any) => s = item.id)
+		if (!s) {
+			options.errored(item, new vscode.TestMessage("could not find test suite in results"), duration)
+			return
+		}
+		if (s.tests > 0) {
+			if(s.errors == 0 && s.failures == 0) {
+				options.passed(item, s.time)
+			} else if (s.tests = s.skipped) {
 				options.skipped(item)
-				return;
+			} else if (s.failures > 0 || s.errors > 0) {
+				options.failed(item, new vscode.TestMessage("one or more tests failed"), s.time)
+			} else {
+				options.errored(item, new vscode.TestMessage("unknown error - test results are all zero"), s.time)
 			}
-			
-			var testCase
-			for(let key in testSuite['testcase']){
-				if (testSuite['testcase'][key]['$']['name'] == item.label){
-					testCase = testSuite['testcase'][key];
-				}
-			}
-			
-			switch (testCase['$']['status']) {
-				case "Success":
-					if (testCase['$']['ignored']) {
-						options.skipped(item);
-					} else {
-						options.passed(item, duration);
-					}
-					return;
-				case "Failure":
-					const failMessage = testCase['failure']['0']['$']['message'];
-					const expected = failMessage.replace('Expected: ','').replace(/ but was: .*$/,'');
-					const got = failMessage.replace(/^.* but was: /,'');
+		}
 
-					const stackStringFail = parseABLCallStack(testCase['failure'][0]['_'].replaceAll(workspaceDir + "\\",""));
-					const mdStack = new vscode.MarkdownString("# Assert Failure\n\n" + failMessage + "\n\n# Call Stack\n\n" + stackStringFail);
-					
-					const message1 = vscode.TestMessage.diff(failMessage, String(expected), String(got));
-					const message2 = new vscode.TestMessage(mdStack);
-					options.failed(item, [message1, message2], duration);
-					return;
-				case "Error":
-					const errMessage = testCase['error'][0]['$']['message']
-					const stackStringErr = testCase['error']['0']['_'].replaceAll(workspaceDir + "\\","")
- 					options.errored(item, [new vscode.TestMessage(errMessage), new vscode.TestMessage(stackStringErr)], duration);
-					return;
-				default:
-					throw('test case result not found!');
+		if (!s.testcases) {
+			options.errored(item, new vscode.TestMessage("malformed results - could not find 'testcases' node"), duration)
+			return
+		}
+
+		item.children.forEach(child => {
+			const tc = s.testcases?.find(t => t.name === child.label)
+			if(!tc) {
+				options.errored(child, new vscode.TestMessage("could not find result for test case"))
+				return
 			}
-			
-		});
+			this.setChildResults(child, options, tc)
+		})
+		return
 	}
 }
 
@@ -743,7 +693,6 @@ export class ABLTestMethod extends TestTypeObj { // child of TestClass
 	}
 
 	async run(item: vscode.TestItem, options: vscode.TestRun): Promise<void> {
-		// console.log("ABLTestClass.run() TODO")
 		const start = Date.now();
 
 		let itemPath = vscode.workspace.asRelativePath(item.uri!.fsPath)
@@ -767,8 +716,10 @@ export class ABLTestMethod extends TestTypeObj { // child of TestClass
 		const duration = Date.now() - start;
 
 		const resultsPath = vscode.workspace.getConfiguration('ablunit').get('resultsPath', '').trim();
-		const resultsClass = new ABLResultsParser(workspaceDir + '/' + resultsPath)
-		const results = resultsClass.resultsJson
+		const resultsUri = vscode.Uri.joinPath(this.workspaceDir(),"/results.xml")
+		const ablResults = new ABLResultsParser()
+		await ablResults.importResults(resultsUri)
+		const results = ablResults.resultsJson
 
 		if(!results || !results.name){
 			options.errored(item, new vscode.TestMessage("cannot find top node `testsuites` in results.xml"))
