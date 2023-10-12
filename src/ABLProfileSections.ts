@@ -121,8 +121,6 @@ export interface UserData { //Section 7
     UserData: string
 }
 
-
-
 export class ABLProfileSection1 { //Description Data Section
 	version: number
 	// profileDate: Date

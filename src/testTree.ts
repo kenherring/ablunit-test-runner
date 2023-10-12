@@ -5,6 +5,7 @@ import { parseABLCallStack } from './ablHelper';
 import { ABLResultsParser, TestCase } from './parse/ablResultsParser';
 import * as cp from "child_process";
 import { timeStamp } from 'console';
+import { ABLProfile } from './parseABLProfile';
 
 const textDecoder = new TextDecoder('utf-8');
 
@@ -72,6 +73,24 @@ class TestTypeObj {
 			}
 		}
 		return vscode.Uri.joinPath(this.workspaceUri(), resultsFile)
+	}
+
+	protected profilerUri = () => {
+		var profilerFile = vscode.workspace.getConfiguration('ablunit').get('profilerPath', '')
+		if(!profilerFile) {
+			throw ("no workspace directory opened")
+		}
+		if(profilerFile == "") {
+			profilerFile = "results.prof"
+		}
+
+		if (profilerFile.startsWith("/") || profilerFile.startsWith("\\")) {
+			const uri = vscode.Uri.file(profilerFile)
+			if (uri) {
+				return uri
+			}
+		}
+		return vscode.Uri.joinPath(this.workspaceUri(), profilerFile)
 	}
 }
 
@@ -207,7 +226,7 @@ class TestFile extends TestTypeObj{
 		
 		var cmd = vscode.workspace.getConfiguration('ablunit').get('tests.command', '').trim();
 		if (! cmd) {
-			cmd = '_progres -b -p ABLUnitCore.p ${progressIni} -param "${itemPath} CFG=${ablunit.json}"';
+			cmd = '_progres -b -p ABLUnitCore.p ${progressIni} -param "${itemPath} CFG=${ablunit.json}" -profile "${profile.options}"';
 		}
 		
 		if (process.platform === 'win32') {
@@ -219,8 +238,12 @@ class TestFile extends TestTypeObj{
 				this.createProgressIni(progressIni)
 			}
 			const ablunitJson = vscode.Uri.joinPath(this.workspaceUri(), "ablunit.json").fsPath
-			// const ablunitJson = "ablunit.json"
-			cmd = cmd.replace("${itemPath}",itemPath).replace("${ablunit.json}",ablunitJson).replace("${progressIni}","-basekey INI -ininame " + progressIni.fsPath);
+			const profileOptions = vscode.Uri.joinPath(this.workspaceUri(), "profile.options").fsPath
+			
+			cmd = cmd.replace("${itemPath}",itemPath)
+			cmd = cmd.replace("${ablunit.json}",ablunitJson)
+			cmd = cmd.replace("${profile.options}",profileOptions)
+			cmd = cmd.replace("${progressIni}","-basekey INI -ininame " + progressIni.fsPath);
 		}
 
 		console.log("cmd='" + cmd + "'")
@@ -239,6 +262,7 @@ class TestFile extends TestTypeObj{
 			vscode.window.showInformationMessage("running ablunit tests");
 		}
 		console.log("ShellExecution Started - " + this.workspaceUri().fsPath)
+		console.log("cmd='" + cmd + "'")
 		const dir = this.workspaceUri().fsPath
 
 		// await new Promise<string>((resolve, reject) => {
@@ -273,7 +297,7 @@ class TestFile extends TestTypeObj{
 
 		
 		await this.parseResults(item, options, duration)
-		// await this.parseProfile(item, options, duration)
+		await this.parseProfile()
 	}
 	
 	async parseResults (item: vscode.TestItem, options: vscode.TestRun, duration: number) {
@@ -319,6 +343,17 @@ class TestFile extends TestTypeObj{
 			}
 			this.setChildResults(child, options, tc)
 		})
+	}
+
+	parseProfile() {
+		console.log("parsing profiler output")
+		const profilerUri = this.profilerUri()
+		console.log("parsing profiler 2")
+		var profParser = new ABLProfile(profilerUri.fsPath)
+		console.log(profParser)
+
+		// TODO - turn this into TestCoverage class objects
+
 	}
 
 	setChildResults(item: vscode.TestItem, options: vscode.TestRun, tc: TestCase) {
@@ -402,16 +437,16 @@ export class ABLTestClass extends TestFile {
 		parseABLUnit(content, vscode.workspace.asRelativePath(item.uri!.fsPath), {
 			
 			onTestSuite: (range, suiteName) => {
-				// this.testFileType = "ABLTestSuite"
-				// const parent = ancestors[ancestors.length - 1]
-				// const id = `${item.uri}/${suiteName}`
+				this.testFileType = "ABLTestSuite"
+				const parent = ancestors[ancestors.length - 1]
+				const id = `${item.uri}/${suiteName}`
 
-				// const thead = controller.createTestItem(id, suiteName, item.uri)
-				// thead.range = range
-				// thead.tags = [ new vscode.TestTag("runnable"), new vscode.TestTag("ABLTestSuite") ]
-				// testData.set(thead, new ABLTestSuiteClass(thisGeneration, suiteName))
-				// parent.children.push(thead)
-				// ancestors.unshift({ item: thead, children: [] })
+				const thead = controller.createTestItem(id, suiteName, item.uri)
+				thead.range = range
+				thead.tags = [ new vscode.TestTag("runnable"), new vscode.TestTag("ABLTestSuite") ]
+				testData.set(thead, new ABLTestSuiteClass(thisGeneration, suiteName))
+				parent.children.push(thead)
+				ancestors.unshift({ item: thead, children: [] })
 			},
 
 			onTestClassNamespace: (range: vscode.Range, classpath: string, element: string, classpathUri: vscode.Uri) => {
@@ -419,11 +454,12 @@ export class ABLTestClass extends TestFile {
 				const id = `classpath:${classpath}`
 				const thead = controller.createTestItem(id, classpath, classpathUri)
 				thead.range = range
-				if (element == "classpath root") {
-					thead.tags = [ new vscode.TestTag("ABLTestClassNamespace") ]
-				} else {
-					thead.tags = [ new vscode.TestTag("runnable"), new vscode.TestTag("ABLTestClassNamespace") ]
-				}
+				// if (element == "classpath root") {
+				// 	thead.tags = [ new vscode.TestTag("ABLTestClassNamespace") ]
+				// } else {
+				// 	thead.tags = [ new vscode.TestTag("runnable"), new vscode.TestTag("ABLTestClassNamespace") ]
+				// }
+				thead.tags = [ new vscode.TestTag("runnable"), new vscode.TestTag("ABLTestClassNamespace") ]
 				thead.label = element
 				
 				if (ancestors.length > 0) {

@@ -84,7 +84,7 @@ export class ABLProfile {
 		// profJson.addCoverageData(this.section6)
 
 		
-		console.log("profJson = " + JSON.stringify(this.section2))
+		// console.log("profJson = " + JSON.stringify(this.section2))
 
 		// console.log("0: " + JSON.stringify(this.section2.modules[135]))
 
@@ -102,7 +102,7 @@ export class ABLProfile {
 	}
 }
 
-console.log("init")
-const prof = new ABLProfile("C:/git/ablunit-test-provider/test_projects/proj1/prof.out");
-console.log("DONE: " + prof)
+// console.log("init")
+// const prof = new ABLProfile("C:/git/ablunit-test-provider/test_projects/proj1/prof.out");
+// console.log("DONE: " + prof)
 

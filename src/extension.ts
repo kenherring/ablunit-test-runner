@@ -77,9 +77,9 @@ export async function activate(context: vscode.ExtensionContext) {
 				if(data instanceof ABLTestProcedure)
 					console.log(" - ABLTestProcedure")
 
-				if (data instanceof ABLTestClassNamespace || data instanceof ABLTestClass || data instanceof ABLTestProgram || data instanceof ABLTestMethod) {
-					run.enqueued(test);
-					queue.push({ test, data });
+				if (data instanceof ABLTestClass || data instanceof ABLTestProgram || data instanceof ABLTestMethod) {
+					run.enqueued(test)
+					queue.push({ test, data })
 				} else {
 					await discoverTests(gatherTestItems(test.children));
 				}
@@ -109,29 +109,35 @@ export async function activate(context: vscode.ExtensionContext) {
 				} else {
 					run.started(test);
 					data.setStorageUri(extensionUri, storageUri)
+					console.log("data.run begin");
 					await data.run(test, run);
+					console.log("data.run end")
 				}
 
+				console.log("run.appendOutput begin")
 				run.appendOutput(`Completed ${test.id}\r\n`);
+				console.log("run.appendOutput end")
 			}
+			console.log("run.end begin")
 			run.end();
+			console.log("run.end end")
 		};
 
-		run.coverageProvider = {
-			provideFileCoverage() {
-				const coverage: vscode.FileCoverage[] = [];
-				for (const [uri, statements] of coveredLines) {
-					coverage.push(
-						vscode.FileCoverage.fromDetails(
-							vscode.Uri.parse(uri),
-							statements.filter((s): s is vscode.StatementCoverage => !!s)
-						)
-					);
-				}
+		// run.coverageProvider = {
+		// 	provideFileCoverage() {
+		// 		const coverage: vscode.FileCoverage[] = [];
+		// 		for (const [uri, statements] of coveredLines) {
+		// 			coverage.push(
+		// 				vscode.FileCoverage.fromDetails(
+		// 					vscode.Uri.parse(uri),
+		// 					statements.filter((s): s is vscode.StatementCoverage => !!s)
+		// 				)
+		// 			);
+		// 		}
 
-				return coverage;
-			},
-		};
+		// 		return coverage;
+		// 	},
+		// };
 
 		discoverTests(request.include ?? gatherTestItems(ctrl.items)).then(runTestQueue);
 	};
@@ -141,7 +147,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	};
 
 	ctrl.createRunProfile('Run Tests', vscode.TestRunProfileKind.Run, runHandler, false, new vscode.TestTag("runnable"), false);
-	ctrl.createRunProfile('Debug Tests', vscode.TestRunProfileKind.Debug, runHandler, false, new vscode.TestTag("runnable"), false);
+	// ctrl.createRunProfile('Debug Tests', vscode.TestRunProfileKind.Debug, runHandler, false, new vscode.TestTag("runnable"), false);
 	ctrl.createRunProfile('Run Tests with Coverage', vscode.TestRunProfileKind.Coverage, runHandler, true, new vscode.TestTag("runnable"), false);
 
 	ctrl.resolveHandler = async item => {
