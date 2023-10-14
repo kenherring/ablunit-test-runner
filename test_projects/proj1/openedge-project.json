@@ -1,11 +1,16 @@
 {
-    "name": "proj1",
-    "version": "1",
-    "charset": "utf-8",
-    "oeversion": "12.2",
-    "graphicalMode": false,
-    "buildPath": [ 
-        { "type": "source", "path": "."}
-    ],
-    "dbConnections": []
+	"name": "proj1",
+	"version": "1.0",
+	"oeversion": "12.2",
+	"charset": "UTF-8",
+	"buildDirectory": "build",
+	"numThreads": 1,
+	"dbConnections": [],
+	"graphicalMode": false,
+	"extraParameters": "-debugalert",
+	"buildPath": [
+		{ "type": "source", "path": "." }
+	],
+	"procedures": [],
+	"profiles": []
 }

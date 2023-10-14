@@ -46,17 +46,11 @@ export class ABLResultsParser {
 	constructor() {}
 	
 	async importResults(resultsUri: Uri) {
-		console.log("ABLResultsParser importResults resultsUri=" + resultsUri)
 		const resultsBits = await workspace.fs.readFile(resultsUri);
-		console.log("read bits")
 		const resultsXml = await Buffer.from(resultsBits.toString()).toString('utf8');
-		console.log("resultsXml=" + resultsXml)
 		const resultsXmlJson = await this.parseXml(resultsXml)
-		console.log("resultsJson=" + resultsXmlJson)
 		this.resultsJson = this.parseSuites(resultsXmlJson)
-		console.log("this.resultsJson=" + JSON.stringify(this.resultsJson))
 		this.outputJson(Uri.parse(resultsUri.toString().replace(/\.xml$/,".json")), this.resultsJson)
-		console.log("output json complete")
 	}
 	
 	parseXml(xmlData: string) {
@@ -151,7 +145,6 @@ export class ABLResultsParser {
 	
 	outputJson(jsonUri: Uri, toJson: any) {
 		console.log("outputJson to " + jsonUri.toString())
-		console.log("outputJson to " + jsonUri.fsPath)
 		const bufferJson = Buffer.from(JSON.stringify(toJson, null, 2))
 		workspace.fs.writeFile(jsonUri, bufferJson)
 	}

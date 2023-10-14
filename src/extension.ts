@@ -1,27 +1,54 @@
 import * as vscode from 'vscode';
-import { getContentFromFilesystem, ABLUnitTestData, ABLTestSuiteClass, ABLTestClassNamespace, ABLTestClass, ABLTestProgram, ABLTestMethod, ABLTestProcedure, ABLAssert, testData } from './testTree';
+import { getContentFromFilesystem, ABLUnitTestData, ABLTestSuiteClass, ABLTestClassNamespace, ABLTestClass, ABLTestProgram, ABLTestMethod, ABLTestProcedure, ABLAssert, testData, testCoverage } from './testTree';
 import { runTests }	from './runTests';
+
+
+const backgroundExecutable = vscode.window.createTextEditorDecorationType({
+	backgroundColor: 'rgba(255,0,0,0.1)',
+  })
+const backgroundExecuted = vscode.window.createTextEditorDecorationType({
+	backgroundColor: 'rgba(0,255,0,0.1)',
+})
 
 export async function activate(context: vscode.ExtensionContext) {
 	const ctrl = vscode.tests.createTestController('ablunitTestController', 'ABLUnit Test')
 	const extensionUri = context.extensionUri
 	const storageUri: vscode.Uri | undefined = context.storageUri
 
+	vscode.workspace.onWillSaveTextDocument(event => {
+		const openEditor = vscode.window.visibleTextEditors.filter(
+			editor => editor.document.uri
+		)[0]
+		decorate(openEditor)
+	})
+
+	// vscode.workspace.onDidOpenTextDocument(event => {
+	// 	const openEditors = vscode.window.visibleTextEditors.filter(
+	// 		editor => editor.document.uri === event.document.uri
+	// 	)
+	// 	openEditors.forEach(editor => {
+	// 		decorate(editor)
+	// 	})
+	// })
+
+	vscode.workspace.onDidChangeTextDocument(event => {
+		const openEditor = vscode.window.visibleTextEditors.filter(
+		  editor => editor.document.uri === event.document.uri
+		)[0]
+		decorate(openEditor)
+	})
 
 	const runAllTestsCommand = () => {
-		console.log("TODO - run all tests")
 		runTests("", context.storageUri!)
-		console.log("done")
 	}
 
 	function runActiveTestCommand () {
-		console.log("TODO - run active test")
+		// console.log("TODO - run active test")
 		// runTests()
 	}
 	
 	function debugActiveTestCommand () { //This already exists as 'Test: Debug Tests in Current Files' and 'Test: Debug Test at Cursor'
 		// console.log("TODO - debug active test")
-		console.debug("TODO - debug active test")
 		runTests("", context.storageUri!)
 	}
 
@@ -54,7 +81,7 @@ export async function activate(context: vscode.ExtensionContext) {
 		const queue: { test: vscode.TestItem; data: ABLTestClass | ABLTestSuiteClass | ABLTestClassNamespace | ABLTestMethod | ABLTestProgram | ABLTestProcedure }[] = [];
 		const run = ctrl.createTestRun(request);
 		// map of file uris to statements on each line:
-		const coveredLines = new Map</* file uri */ string, (vscode.StatementCoverage | undefined)[]>();
+		// const coveredLines = new Map</* file uri */ string, (vscode.StatementCoverage | undefined)[]>();
 
 		const discoverTests = async (tests: Iterable<vscode.TestItem>) => {
 			for (const test of tests) {
@@ -77,26 +104,26 @@ export async function activate(context: vscode.ExtensionContext) {
 				if(data instanceof ABLTestProcedure)
 					console.log(" - ABLTestProcedure")
 
-				if (data instanceof ABLTestClassNamespace || data instanceof ABLTestClass || data instanceof ABLTestProgram || data instanceof ABLTestMethod) {
-					run.enqueued(test);
-					queue.push({ test, data });
+				if (data instanceof ABLTestClass || data instanceof ABLTestProgram || data instanceof ABLTestMethod) {
+					run.enqueued(test)
+					queue.push({ test, data })
 				} else {
 					await discoverTests(gatherTestItems(test.children));
 				}
 
-				if (test.uri && !coveredLines.has(test.uri.toString())) {
-					try {
-						const lines = (await getContentFromFilesystem(test.uri)).split('\n');
-						coveredLines.set(
-							test.uri.toString(),
-							lines.map((lineText, lineNo) =>
-								lineText.trim().length ? new vscode.StatementCoverage(0, new vscode.Position(lineNo, 0)) : undefined
-							)
-						);
-					} catch {
-						// ignored
-					}
-				}
+				// if (test.uri && !coveredLines.has(test.uri.toString())) {
+				// 	try {
+				// 		const lines = (await getContentFromFilesystem(test.uri)).split('\n');
+				// 		coveredLines.set(
+				// 			test.uri.toString(),
+				// 			lines.map((lineText, lineNo) =>
+				// 				lineText.trim().length ? new vscode.StatementCoverage(0, new vscode.Position(lineNo, 0)) : undefined
+				// 			)
+				// 		);
+				// 	} catch {
+				// 		// ignored
+				// 	}
+				// }
 			}
 		};
 
@@ -119,15 +146,18 @@ export async function activate(context: vscode.ExtensionContext) {
 
 		run.coverageProvider = {
 			provideFileCoverage() {
+				console.log("coverageProvider.provideFileCoverage!!!!!")
 				const coverage: vscode.FileCoverage[] = [];
-				for (const [uri, statements] of coveredLines) {
-					coverage.push(
-						vscode.FileCoverage.fromDetails(
-							vscode.Uri.parse(uri),
-							statements.filter((s): s is vscode.StatementCoverage => !!s)
-						)
-					);
-				}
+				// for (const [uri, statements] of coveredLines) {
+				// 	coverage.push(
+				// 		vscode.FileCoverage.fromDetails(
+				// 			vscode.Uri.parse(uri),
+				// 			statements.filter((s): s is vscode.StatementCoverage => !!s)
+				// 		)
+				// 	);
+				// }
+
+				// console.log("coverageProvider.provideFileCoverage!!!!!")
 
 				return coverage;
 			},
@@ -141,8 +171,8 @@ export async function activate(context: vscode.ExtensionContext) {
 	};
 
 	ctrl.createRunProfile('Run Tests', vscode.TestRunProfileKind.Run, runHandler, false, new vscode.TestTag("runnable"), false);
-	ctrl.createRunProfile('Debug Tests', vscode.TestRunProfileKind.Debug, runHandler, false, new vscode.TestTag("runnable"), false);
-	ctrl.createRunProfile('Run Tests with Coverage', vscode.TestRunProfileKind.Coverage, runHandler, true, new vscode.TestTag("runnable"), false);
+	// ctrl.createRunProfile('Debug Tests', vscode.TestRunProfileKind.Debug, runHandler, false, new vscode.TestTag("runnable"), false);
+	// ctrl.createRunProfile('Run Tests with Coverage', vscode.TestRunProfileKind.Coverage, runHandler, true, new vscode.TestTag("runnable"), false);
 
 	ctrl.resolveHandler = async item => {
 		if (!item) {
@@ -262,3 +292,29 @@ function startWatchingWorkspace(controller: vscode.TestController, fileChangedEm
 		return watcher;
 	});
 }
+
+function decorate(editor: vscode.TextEditor) {
+	let sourceCode = editor.document.getText()
+	let regex = /(@Test)/i
+
+	let executedArray: vscode.DecorationOptions[] = []
+	let executableArray: vscode.DecorationOptions[] = []
+	const vUri = <vscode.Uri> editor.document.uri
+	const tc = testCoverage.get(editor.document.uri.fsPath)
+	if (tc) {
+		// if (tc[0]) {
+			tc.detailedCoverage?.forEach(element => {
+				let range = <vscode.Range> element.location;
+				let decoration = { range }
+				if (element.executionCount > 0) {
+					executedArray.push(decoration)
+				} else {
+					executableArray.push(decoration)
+				}
+			});
+		// }
+	}
+
+	editor.setDecorations(backgroundExecuted, executedArray)
+	editor.setDecorations(backgroundExecutable, executableArray)
+  }

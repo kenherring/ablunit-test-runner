@@ -99,6 +99,16 @@
 					"default": "results.xml",
 					"description": "Location of the outputted results.xml file"
 				},
+				"ablunit.profileOptionsPath": {
+					"type": "string",
+					"default": "profile.options",
+					"description": "Location of the outputted profile.options file (see -profile startup parameter)"
+				},
+				"ablunit.profileOutputPath": {
+					"type": "string",
+					"default": "results.prof",
+					"description": "Location of the profiler results"
+				},
 				"ablunit.tempDir": {
 					"type": "string",
 					"description": "Location of the temporary directory used to store the results.xml file"

@@ -41,7 +41,10 @@ export const parseABLUnit = (text: string, relativePath: string, events: {
 	const parseByType = () => {
 		if (relativePath.endsWith(".cls")) {
 			if (text.toLowerCase().indexOf("@testsuite") != -1) {
-				parseSuiteClass()
+				if (false) {
+					//TODO
+					parseSuiteClass()
+				}
 				return
 			}
 			parseClass()
