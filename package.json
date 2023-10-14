@@ -131,38 +131,38 @@
 			}
 		},
 		"commands": [
-            {
-                "command": "ablunit.test.runActive",
-                "title": "ABLUnit: run tests from the active file",
-                "description": "Run all tests in the active file"
-            },
-            {
-                "command": "ablunit.test.runAll",
-                "title": "ABLUnit: run all tests for the workspace",
-                "description": "Run all tests for the workspace"
-            },
+			{
+				"command": "ablunit.test.runActive",
+				"title": "ABLUnit: run tests from the active file",
+				"description": "Run all tests in the active file"
+			},
+			{
+				"command": "ablunit.test.runAll",
+				"title": "ABLUnit: run all tests for the workspace",
+				"description": "Run all tests for the workspace"
+			},
 			{
 				"command": "ablunit.test.debugActive",
 				"title": "ABLUnit: debug the active test file",
 				"description": "ABLUnit: run tests with debugging from the file in the active editor"
 			}
 		],
-        "menus": {
-            "commandPalette": [
-                {
-                    "command": "abl.runProgres.currentFile",
-                    "when": "editorLangId == 'abl'"
-                },
-                {
-                    "command": "abl.test",
-                    "when": "editorLangId == 'abl'"
-                },
-                {
-                    "command": "abl.test.currentFile",
-                    "when": "editorLangId == 'abl'"
-                }
-            ]
-        },
+		"menus": {
+			"commandPalette": [
+				{
+					"command": "abl.runProgres.currentFile",
+					"when": "editorLangId == 'abl'"
+				},
+				{
+					"command": "abl.test",
+					"when": "editorLangId == 'abl'"
+				},
+				{
+					"command": "abl.test.currentFile",
+					"when": "editorLangId == 'abl'"
+				}
+			]
+		},
 		"snippets": [
 			{
 				"language": "abl",

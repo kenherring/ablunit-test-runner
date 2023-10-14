@@ -7,6 +7,7 @@ import * as cp from "child_process";
 import { timeStamp } from 'console';
 import { ABLProfile } from './parseABLProfile';
 import { Module, LineSummary } from './ABLProfileSections';
+import { getSourceLine } from './ABLDebugLines';
 
 const textDecoder = new TextDecoder('utf-8');
 
@@ -35,7 +36,7 @@ class TestTypeObj {
 	protected extensionUri: vscode.Uri | undefined
 
 	public fileCoverage: vscode.FileCoverage[] = []
-	
+
 	getLabel() {
 		return this.label
 	}
@@ -230,15 +231,15 @@ class TestFile extends TestTypeObj{
 			throw ("temp directory not set")
 		}
 		// vscode.workspace.fs.createDirectory(this.storageUri)
-		
+
 		var cmd = vscode.workspace.getConfiguration('ablunit').get('tests.command', '').trim();
 		if (! cmd) {
 			cmd = '_progres -b -p ABLUnitCore.p ${progressIni} -param "${itemPath} CFG=${ablunit.json}" -profile "${profile.options}"';
 		}
-		
+
 		const ablunitJson = vscode.Uri.joinPath(this.workspaceUri(), "ablunit.json").fsPath
 		const profileOptions = vscode.Uri.joinPath(this.workspaceUri(), "profile.options")
-		
+
 		cmd = cmd.replace("${itemPath}",itemPath)
 		cmd = cmd.replace("${ablunit.json}",ablunitJson)
 		cmd = cmd.replace("${profile.options}",profileOptions.fsPath)
@@ -249,7 +250,7 @@ class TestFile extends TestTypeObj{
 		if (true) {
 			this.createProfileOptions(profileOptions)
 		}
-		
+
 		if (process.platform === 'win32') {
 			const progressIni = this.getProgressIni()
 			if (!progressIni) { throw ("cannot find progress.ini or suitable location to write one") }
@@ -261,19 +262,19 @@ class TestFile extends TestTypeObj{
 		} else {
 			cmd = cmd.replace("${progressIni}","");
 		}
-		
+
 		console.log("cmd='" + cmd + "'")
 		return cmd
 	}
-	
+
 	async run(item: vscode.TestItem, options: vscode.TestRun): Promise<void> {
 		const start = Date.now()
 		let itemPath = vscode.workspace.asRelativePath(item.uri!.fsPath)
-		
+
 		const cmd: string = this.getCommand(itemPath)
 		const notificationsEnabled = vscode.workspace.getConfiguration('ablunit').get('notificationsEnabled', true)
 
-		
+
 		if (notificationsEnabled) {
 			vscode.window.showInformationMessage("running ablunit tests");
 		}
@@ -310,11 +311,11 @@ class TestFile extends TestTypeObj{
 			vscode.window.showInformationMessage("ablunit tests complete");
 		}
 
-		
+
 		await this.parseResults(item, options, duration)
 		await this.parseProfile()
 	}
-	
+
 	async parseResults (item: vscode.TestItem, options: vscode.TestRun, duration: number) {
 		if (!this.workspaceUri()) {}
 		const resultsUri = this.resultsUri()
@@ -336,12 +337,26 @@ class TestFile extends TestTypeObj{
 			return
 		}
 
+		const td = testData.get(item)
+		if (td && (td instanceof ABLTestProcedure || td instanceof ABLTestMethod)) {
+			// Test Procedure type
+			if(s.testcases) {
+				const tc = s.testcases.find(tc => tc.name === item.label)
+				if(tc) {
+					await this.setChildResults(item, options, tc)
+				}
+			}
+			return
+		}
+
+		// TestFile type
 		if (s.tests > 0) {
 			if(s.errors == 0 && s.failures == 0) {
 				options.passed(item, s.time)
 			} else if (s.tests = s.skipped) {
 				options.skipped(item)
 			} else if (s.failures > 0 || s.errors > 0) {
+				//// This should be populated automatically by the child messages filtering up
 				// options.failed(item, new vscode.TestMessage("one or more tests failed"), s.time)
 			} else {
 				options.errored(item, new vscode.TestMessage("unknown error - test results are all zero"), s.time)
@@ -353,38 +368,33 @@ class TestFile extends TestTypeObj{
 			return
 		}
 
+		const promArr: Promise<void>[] = [Promise.resolve()]
 		item.children.forEach(child => {
 			const tc = s.testcases?.find(t => t.name === child.label)
-
-			// if (s.testcases) {
-			// 	for (let idx=0 ; idx<s.testcases.length; idx++) {
-			// 		console.log("testcase[" + idx + "]=" + s.testcases[idx].name)
-			// 	}
-			// }
-
 			if(!tc) {
 				options.errored(child, new vscode.TestMessage("could not find result for test case"))
 				return
 			}
-			this.setChildResults(child, options, tc)
+			promArr.push(this.setChildResults(child, options, tc))
 		})
+		return Promise.all(promArr)
 	}
 
 	parseProfile() {
 		const profilerUri = this.profilerUri()
-		console.log("parsing profiler 2: " + profilerUri.fsPath)
 		var profParser = new ABLProfile(profilerUri)
 		profParser.writeJsonToFile(vscode.Uri.joinPath(this.workspaceUri(), "profiler.json"))
 		const profOutput = profParser.profJSON
 
 		testCoverage.clear()
-		
+
 		profOutput.modules.forEach((module: Module) => {
-			if (!module.SourceName || module.SourceName?.startsWith("OpenEdge")) {
+			if (!module.SourceName || module.SourceName.startsWith("OpenEdge") || module.SourceName == "ABLUnitCore.p") {
 				return
 			}
 
-			const fc = new vscode.FileCoverage(vscode.Uri.joinPath(this.workspaceUri(), module.SourceName), new vscode.CoveredCount(1,2))
+			const moduleUri = vscode.Uri.joinPath(this.workspaceUri(), module.SourceName)
+			var fc: vscode.FileCoverage | undefined = undefined
 
 			module.lines.forEach((line: LineSummary) => {
 				if (line.LineNo <= 0) {
@@ -393,45 +403,57 @@ class TestFile extends TestTypeObj{
 					return
 				}
 
-				if(! fc.detailedCoverage) {
+				const dbg = getSourceLine(moduleUri, line.LineNo)
+				if (!dbg) {
+					console.error("cannot find dbg for " + moduleUri.fsPath)
+					return
+				}
+
+				if (!fc || fc.uri.fsPath != dbg.incUri.fsPath) {
+					//get existing FileCoverage object
+					fc = testCoverage.get(dbg.incUri.fsPath)
+					if (!fc) {
+						//create a new FileCoverage object if one didn't already exist
+						fc = new vscode.FileCoverage(dbg.incUri, new vscode.CoveredCount(0,0))
+						testCoverage.set(fc.uri.fsPath, fc)
+					}
+				}
+				if (!fc) {
+					throw ("ERROR: cannot find or create fc")
+				}
+				if (!fc.detailedCoverage) {
 					fc.detailedCoverage = []
 				}
 				fc.detailedCoverage.push(new vscode.StatementCoverage(line.ExecCount ?? 0,
-					new vscode.Range(new vscode.Position(line.LineNo - 1 ,0),new vscode.Position(line.LineNo,0))))
+					new vscode.Range(new vscode.Position(dbg.incLine - 1 ,0),new vscode.Position(dbg.incLine,0))))
 			});
-
-			let tc = testCoverage.get(fc.uri.fsPath)
-			if (!tc) {
-				testCoverage.set(fc.uri.fsPath, fc)
-			// } else {
-			// 	console.log("push")
-			// 	tc.push(fc)
-			// 	// testCoverage.set(fc.uri, tc.push(fc))
-			}
 		});
+
 		// TODO - turn this into TestCoverage class objects
 		//      - will be useful when the proposed API is finalized
 	}
 
-	setChildResults(item: vscode.TestItem, options: vscode.TestRun, tc: TestCase) {
+	async setChildResults(item: vscode.TestItem, options: vscode.TestRun, tc: TestCase) {
 		switch(tc.status) {
 			case "Success":
 				options.passed(item, tc.time)
 				return
 			case "Failure":
 				if (tc.failure) {
-					options.failed(item, [
-						new vscode.TestMessage(getFailureMarkdownMessage(tc.failure))
-					], tc.time)
-					return
+					return getFailureMarkdownMessage(tc.failure).then((msg) => {
+						options.failed(item, [
+							new vscode.TestMessage(msg)
+						], tc.time)
+					})
 				}
 				throw("unexpected failure")
 			case "Error":
 				if (tc.error) {
-					options.failed(item, [
-						new vscode.TestMessage(getFailureMarkdownMessage(tc.error))
-					])
-					return
+					return getFailureMarkdownMessage(tc.error).then((msg) => {
+						options.failed(item, [
+							new vscode.TestMessage(msg)
+						], tc.time)
+					})
 				}
 				throw("unexpected error")
 			case "Skpped":
@@ -473,7 +495,7 @@ export class ABLTestClassNamespace extends TestFile {
 export class ABLTestClass extends TestFile {
 	public canResolveChildren: boolean = true
 	methods: ABLTestMethod[] = []
-	
+
 	setClassInfo(classname: string, classlabel: string) {
 		this.name = classname
 		this.label = classlabel
@@ -490,7 +512,7 @@ export class ABLTestClass extends TestFile {
 		this.didResolve = true;
 
 		parseABLUnit(content, vscode.workspace.asRelativePath(item.uri!.fsPath), {
-			
+
 			onTestSuite: (range, suiteName) => {
 				this.testFileType = "ABLTestSuite"
 				const parent = ancestors[ancestors.length - 1]
@@ -516,7 +538,7 @@ export class ABLTestClass extends TestFile {
 				// }
 				thead.tags = [ new vscode.TestTag("runnable"), new vscode.TestTag("ABLTestClassNamespace") ]
 				thead.label = element
-				
+
 				if (ancestors.length > 0) {
 					var parent = ancestors[ancestors.length - 1]
 					parent.children.push(thead)
@@ -527,7 +549,7 @@ export class ABLTestClass extends TestFile {
 
 			onTestClass: (range: vscode.Range, classpath: string, label: string) => {
 				this.testFileType = "ABLTestClass"
-				
+
 				const id = `${classpath}`
 				const thead = controller.createTestItem(id, classpath, item.uri)
 				thead.range = range
@@ -536,7 +558,7 @@ export class ABLTestClass extends TestFile {
 				var tData = new ABLTestClass()
 				tData.setClassInfo(classpath, label)
 				testData.set(thead, tData)
-				
+
 				var parent = ancestors[ancestors.length - 1]
 				if(parent) {
 					parent.children.push(thead)
@@ -562,7 +584,7 @@ export class ABLTestClass extends TestFile {
 			onTestProgram: (range: vscode.Range, relativepath: string, label: string, programUri: vscode.Uri) => { console.error("should not be here! relativepath=" + relativepath) },
 
 			onTestProcedure: (range: vscode.Range, programname: string, procedurename: string, programUri) => { console.log("should not be here! programname=" + programname + " procedurename=" + procedurename) },
-			
+
 			onAssert: (range, assertMethod) => {
 				this.testFileType = "ABLAssert"
 				const parent = ancestors[ancestors.length - 1];
@@ -597,7 +619,7 @@ export class ABLTestProgramDirectory extends TestTypeObj {
 export class ABLTestProgram extends TestFile {
 	public canResolveChildren: boolean = true
 	procedures: ABLTestProcedure[] = []
-	
+
 	setProgramInfo(programname: string, programlabel: string) {
 		this.name = programname
 		this.label = programlabel
@@ -620,7 +642,7 @@ export class ABLTestProgram extends TestFile {
 			onTestClassNamespace: (range, classpath, element) => { console.error("onTestClassNamespace") },
 
 			onTestClass: (range: vscode.Range, classname: string, label: string) => { console.error("onTestClassNamespace") },
-			
+
 			onTestMethod: (range: vscode.Range, classname: string, methodname: string) => { console.error("onTestMethod") },
 
 			onTestProgramDirectory (range: vscode.Range, dirpath: string, dir: string, dirUri: vscode.Uri) {
@@ -641,7 +663,7 @@ export class ABLTestProgram extends TestFile {
 
 			onTestProgram: (range: vscode.Range, relativepath: string, label: string, programUri: vscode.Uri) => {
 				this.testFileType = "ABLTestProgram"
-				
+
 				const id = `${relativepath}`
 				const thead = controller.createTestItem(id, relativepath, item.uri)
 				thead.range = range
@@ -660,18 +682,18 @@ export class ABLTestProgram extends TestFile {
 
 			onTestProcedure: (range: vscode.Range, relativePath: string, procedureName: string, programUri: vscode.Uri) => {
 				this.testFileType = "ABLTestProcedure"
-				
+
 				const id = `${relativePath}#${procedureName}`
 				const thead = controller.createTestItem(id, procedureName, item.uri)
 				thead.range = range
 				thead.label = procedureName
 				thead.tags = [ new vscode.TestTag("runnable"), new vscode.TestTag("ABLTestProcedure") ]
 				testData.set(thead, new ABLTestProcedure(thisGeneration, relativePath, procedureName))
-				
+
 				var parent = ancestors[ancestors.length - 1]
 				parent.children.push(thead)
 			},
-			
+
 			onAssert: (range, assertMethod) => {
 				this.testFileType = "ABLAssert"
 				const parent = ancestors[ancestors.length - 1];
@@ -693,7 +715,7 @@ export class ABLTestMethod extends TestFile { // child of TestClass
 
 	constructor(public generation: number,
 				private readonly classname: string,
-				private readonly methodName: string ) { 
+				private readonly methodName: string ) {
 		super()
 	}
 }
@@ -703,7 +725,7 @@ export class ABLTestProcedure extends TestFile { // child of TestProgram
 
 	constructor(public generation: number,
 				private readonly programname: string,
-				private readonly procedurename: string) { 
+				private readonly procedurename: string) {
 		super()
 		this.label = procedurename
 	}
@@ -712,7 +734,7 @@ export class ABLTestProcedure extends TestFile { // child of TestProgram
 export class ABLAssert extends TestTypeObj { // child of TestClass or TestProcedure
 	public canResolveChildren: boolean = false
 	public runnable: boolean = false
-	
+
 	constructor(
 		public generation: number,
 		private readonly assertText: string

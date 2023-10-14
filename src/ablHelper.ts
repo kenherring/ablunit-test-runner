@@ -2,6 +2,7 @@
 import { Location, Position, Range, Uri, workspace, MarkdownString } from "vscode";
 import { TCFailure } from "./parse/ablResultsParser";
 import { getPromsg } from "./ABLpromsgs";
+import { importDebugFile, getSourceLine } from "./ABLDebugLines";
 
 // RunTests OpenEdge.ABLUnit.Runner.ABLRunner at line 149  (OpenEdge/ABLUnit/Runner/ABLRunner.r)
 const stackLineRE1 = /^(\S+) (\S+) at line ([0-9]+) +\((\S+)\)/
@@ -16,10 +17,6 @@ interface CallStackLine {
 	debugLine: Position;
 	rcode: string;
 	raw: string;
-	////TODO - find actual source line!
-	// sourceFile: string | null
-	// sourceUri: Uri | null
-	// sourceLine: Position | null
 };
 
 interface CallStack {
@@ -39,10 +36,22 @@ function getDebugUri (debugFile: string): Uri {
 	return debugUri
 }
 
-export const getFailureMarkdownMessage = (failure: TCFailure): MarkdownString => {
+export async function getFailureMarkdownMessage(failure: TCFailure): Promise<MarkdownString> {
 	const stack = parseABLCallStack(failure.callstack)
 
-	//TODO: failure.message should pull in promsg info from $DLC/prohelp/msgdata
+	// start getting the debug files where needed
+	const promArr: Promise<void>[] = [Promise.resolve()]
+	const paths: string[] = []
+	stack.lines.forEach((line) => {
+		const dbgUri = getDebugUri(line.debugFile)
+		if (paths.indexOf(dbgUri.fsPath) == -1) {
+			paths.push(dbgUri.fsPath)
+			const relativePath =  workspace.asRelativePath(dbgUri)
+			if (!relativePath.startsWith("OpenEdge.") && relativePath != "ABLUnitCore.p") {
+				promArr.push(importDebugFile(dbgUri))
+			}
+		}
+	})
 
 	const promsgMatch = failure.message.match(/(\d+)/)
 	var promsgNum = ""
@@ -50,6 +59,44 @@ export const getFailureMarkdownMessage = (failure: TCFailure): MarkdownString =>
 		promsgNum = promsgMatch[0]
 
 	let stackString = failure.message
+	stackString += "\n\n" + "**ABL Call Stack**\n\n"
+	let stackCount = 0
+
+	return Promise.all(promArr).then((values) => {
+		// all the debug lists have been resolved, now build the stack message
+
+		stack.lines.forEach((line) => {
+			stackString += "<code>"
+			if (stackCount == 0)
+				stackString += "--> "
+			else
+				stackString += "&nbsp;&nbsp;&nbsp; "
+			stackCount = stackCount + 1
+			if (line.method) {
+				stackString += line.method + " "
+			}
+			
+			stackString += line.debugFile + " at line " + line.debugLine.line
+			const dbgUri = getDebugUri(line.debugFile)
+			const relativePath =  workspace.asRelativePath(dbgUri)
+			if (!relativePath.startsWith("OpenEdge.") && relativePath != "ABLUnitCore.p") {
+				const dbg = getSourceLine(dbgUri,line.debugLine.line)
+				if(dbg) {
+					const incRelativePath = workspace.asRelativePath(dbg.incUri)
+					stackString += " (" + "[" + incRelativePath + ":" + dbg.incLine + "]" +
+										 "(command:_ablunit.openStackTrace?" + encodeURIComponent(JSON.stringify(dbg.incUri + "&" + dbg.incLine)) + ")" + ")"
+				}
+			}
+	
+			stackString += "</code><br>\n"
+		})
+		let md = new MarkdownString(stackString);
+		md.isTrusted = true;
+		md.supportHtml = true;
+		return md;
+	})
+
+	//TODO: failure.message should pull in promsg info from $DLC/prohelp/msgdata
 	// console.log("getFail1")
 	// if (promsgNum != "") {
 	// 	console.log("getFail2")
@@ -65,38 +112,7 @@ export const getFailureMarkdownMessage = (failure: TCFailure): MarkdownString =>
 	// 		}
 	// 	}
 	// }
-	
-	stackString += "\n\n" + "**ABL Call Stack**\n\n"
-	let stackCount = 0
-	stack.lines.forEach((line) => {
-		stackString += "<code>"
-		if (stackCount == 0)
-			stackString += "--> "
-		else
-			stackString += "&nbsp;&nbsp;&nbsp; "
-		stackCount = stackCount + 1
-		if (line.method) {
-			stackString += line.method + " "
-		}
-		stackString += "[" + line.debugFile + " at line " + line.debugLine.line + "](command:_ablunit.openStackTrace?" + 
-				encodeURIComponent(JSON.stringify(getDebugUri(line.debugFile) + "&" + 
-				line.debugLine.line)) + ")"
-		stackString += "</code><br>\n"
-	})
-	let md = new MarkdownString(stackString);
-	md.isTrusted = true;
-	md.supportHtml = true;
-	return md;
 }
-
-// interface CallStackLine {
-// 	method: string;
-// 	debugFile: string;
-// 	debugLine: number;
-// 	sourceFile: string;
-// 	sourceLine: number;
-// 	rcodeFile: string;
-// }
 
 export const parseABLCallStack = (text: string) => {
 	
