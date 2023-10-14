@@ -123,14 +123,11 @@ export class ABLProfileJSON {
                 // const parentModule = this.modules.find(parentMod => parentMod.SourceName === mod.SourceName)
                 // console.log("PARENT: " + mod.ModuleID + " " + mod.EntityName + " " + mod.ModuleName + " " + mod.SourceName + " " + parentModule?.ModuleID + " " + parentModule?.ModuleName + " " + parentModule?.SourceName)
             }
-            console.log("added " + this.modules.length + " modules")
         }
 
         childModules.forEach(child => {
-            console.log("CHILD: " + child.ModuleID)
             const parent = this.modules.find(p => p.SourceName === child.SourceName)
             if(parent) {
-                console.log("CHILD: " + child.ModuleID + " PARENT: " + parent?.ModuleID)
                 if(!parent.childModules)
                     parent.childModules = []
                 child.ParentModuleId = parent.ParentModuleId // TODO: is this in the JSON?
@@ -289,17 +286,12 @@ export class ABLProfileJSON {
             }
         }
         
-        console.log("ADD LINES")
         this.modules.forEach(parent => {
-            console.log("parent.ModuleID=" + parent.ModuleID);
             parent.childModules?.forEach(child => {
-                console.log("parent.ModuleID=" + parent.ModuleID + " child.ModuleID=" + child.ModuleID);
                 parent.executableLines += child.executableLines
                 parent.executedLines += child.executedLines
                 if(child.lines) {
-                    console.log("ADD LINES: " + parent.SourceName + " " + parent.ModuleID + " " + child.EntityName + " " + child.ModuleID)
                     child.lines.forEach(line => {
-                        console.log(line.LineNo + " " + line.ExecCount);
                         const parentLine = parent.lines.find(l => l.LineNo == line.LineNo)
                         if(parentLine) {
                             parentLine.ExecCount = line.ExecCount

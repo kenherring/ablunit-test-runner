@@ -1,20 +1,18 @@
 import { Uri, workspace } from "vscode";
 
+export interface TCFailure {
+	callstack: string
+	message: string
+	type: string
+}
+
 export interface TestCase {
 	name: string
 	classname?: string
 	status: string
 	time: number
-	failure?: {
-		callstack: string
-		message: string
-		type: string
-	}
-	error?: {
-		callstack: string
-		message: string
-		type: string
-	}
+	failure?: TCFailure
+	error?: TCFailure
 }
 
 interface TestSuite {

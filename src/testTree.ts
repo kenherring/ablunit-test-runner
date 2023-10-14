@@ -1,7 +1,7 @@
 import { TextDecoder } from 'util';
 import * as vscode from 'vscode';
 import { parseABLUnit } from './parser';
-import { parseABLCallStack } from './ablHelper';
+import { getFailureMarkdownMessage, parseABLCallStack } from './ablHelper';
 import { ABLResultsParser, TestCase } from './parse/ablResultsParser';
 import * as cp from "child_process";
 import { timeStamp } from 'console';
@@ -342,7 +342,7 @@ class TestFile extends TestTypeObj{
 			} else if (s.tests = s.skipped) {
 				options.skipped(item)
 			} else if (s.failures > 0 || s.errors > 0) {
-				options.failed(item, new vscode.TestMessage("one or more tests failed"), s.time)
+				// options.failed(item, new vscode.TestMessage("one or more tests failed"), s.time)
 			} else {
 				options.errored(item, new vscode.TestMessage("unknown error - test results are all zero"), s.time)
 			}
@@ -421,8 +421,7 @@ class TestFile extends TestTypeObj{
 			case "Failure":
 				if (tc.failure) {
 					options.failed(item, [
-						new vscode.TestMessage(tc.failure.message),
-						new vscode.TestMessage(tc.failure.callstack)
+						new vscode.TestMessage(getFailureMarkdownMessage(tc.failure))
 					], tc.time)
 					return
 				}
@@ -430,8 +429,7 @@ class TestFile extends TestTypeObj{
 			case "Error":
 				if (tc.error) {
 					options.failed(item, [
-						new vscode.TestMessage(tc.error.message),
-						new vscode.TestMessage(tc.error.callstack)
+						new vscode.TestMessage(getFailureMarkdownMessage(tc.error))
 					])
 					return
 				}

@@ -15,21 +15,26 @@ export async function activate(context: vscode.ExtensionContext) {
 	const extensionUri = context.extensionUri
 	const storageUri: vscode.Uri | undefined = context.storageUri
 
-	vscode.workspace.onWillSaveTextDocument(event => {
-		const openEditor = vscode.window.visibleTextEditors.filter(
-			editor => editor.document.uri
-		)[0]
-		decorate(openEditor)
+	// vscode.workspace.onWillSaveTextDocument(event => {
+	// 	const openEditor = vscode.window.visibleTextEditors.filter(
+	// 		editor => editor.document.uri
+	// 	)[0]
+	// 	decorate(openEditor)
+	// })
+
+	vscode.window.onDidChangeActiveTextEditor(editor => {
+		if(editor)
+			decorate(editor)
 	})
 
-	// vscode.workspace.onDidOpenTextDocument(event => {
-	// 	const openEditors = vscode.window.visibleTextEditors.filter(
-	// 		editor => editor.document.uri === event.document.uri
-	// 	)
-	// 	openEditors.forEach(editor => {
-	// 		decorate(editor)
-	// 	})
-	// })
+	vscode.workspace.onDidOpenTextDocument(event => {
+		const openEditors = vscode.window.visibleTextEditors.filter(
+			editor => editor.document.uri === event.uri
+		)
+		openEditors.forEach(editor => {
+			decorate(editor)
+		})
+	})
 
 	vscode.workspace.onDidChangeTextDocument(event => {
 		const openEditor = vscode.window.visibleTextEditors.filter(
@@ -56,6 +61,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(vscode.commands.registerCommand('ablunit.test.runAll', runAllTestsCommand))
 	context.subscriptions.push(vscode.commands.registerCommand('ablunit.test.runActive', runActiveTestCommand))
 	context.subscriptions.push(vscode.commands.registerCommand('ablunit.test.debugActive', debugActiveTestCommand))
+	context.subscriptions.push(vscode.commands.registerCommand('_ablunit.openStackTrace', openStackTrace))
 
 
 
@@ -142,6 +148,8 @@ export async function activate(context: vscode.ExtensionContext) {
 				run.appendOutput(`Completed ${test.id}\r\n`);
 			}
 			run.end();
+			if (vscode.window.activeTextEditor)
+				decorate(vscode.window.activeTextEditor)
 		};
 
 		run.coverageProvider = {
@@ -317,4 +325,23 @@ function decorate(editor: vscode.TextEditor) {
 
 	editor.setDecorations(backgroundExecuted, executedArray)
 	editor.setDecorations(backgroundExecutable, executableArray)
-  }
+}
+
+function openStackTrace(traceUriStr: string) {
+	const traceUri = vscode.Uri.parse(traceUriStr.split("&")[0])
+	const traceLine = Number(traceUriStr.split("&")[1])
+	vscode.window.showInformationMessage("COMMAND RUNNING! " + traceUri.fsPath + ":" + traceLine)
+
+	vscode.window.showTextDocument(traceUri).then(editor => {
+		console.log(vscode.window.activeTextEditor?.document.uri)
+
+		const lineToGoBegin = new vscode.Position(traceLine,0)
+		const lineToGoEnd = new vscode.Position(traceLine + 1,0)
+		editor.selections = [new vscode.Selection(lineToGoBegin, lineToGoEnd)];
+		var range = new vscode.Range(lineToGoBegin, lineToGoEnd);
+		editor.revealRange(range);
+		decorate(editor)
+
+	})
+	console.log("file should be opened now")
+}

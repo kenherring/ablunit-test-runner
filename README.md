@@ -14,7 +14,7 @@ Quality code, and thus unit testing, is a passion of mine.  I hope this extensio
 * See test results
 * View code coverage
 
-	![Alt text](image-2.png)
+	![Alt text](docs/coverage.png)
 
 ## Contributing
 
