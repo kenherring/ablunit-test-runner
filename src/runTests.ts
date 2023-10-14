@@ -4,12 +4,9 @@ import * as vscode from 'vscode'
 exports.runTests = void 0;
 
 export const runTests = (config: string, storageUri: vscode.Uri) => {
-	console.log(1)
 	const workspaceUri = vscode.workspace.workspaceFolders![0].uri
-	console.log("2: " +  JSON.stringify(vscode.workspace.workspaceFolders![0].uri))
 	
 	const runCommand = (testConfig: string, options: vscode.TestRun, storageUri: vscode.Uri) => {
-		console.log("3: runCommand")
 		if (!workspaceUri) {
 			throw ("no workspace directory opened")
 		}
@@ -37,11 +34,10 @@ export const runTests = (config: string, storageUri: vscode.Uri) => {
 	}
 
 	const runCommandSimple = (testConfig: string, storageUri: vscode.Uri) => {
-		console.log("3: runCommand workspaceUri=" + workspaceUri)
-		if (!workspaceUri) {
-			console.log("4: workspaceUri=" + workspaceUri)
-		}
-		console.log(5)
+		// console.log("3: runCommand workspaceUri=" + workspaceUri)
+		// if (!workspaceUri) {
+		// 	console.log("4: workspaceUri=" + workspaceUri)
+		// }
 		const cmd: string = buildCommand(testConfig, workspaceUri, storageUri)
 		const notificationsEnabled = vscode.workspace.getConfiguration('ablunit').get('notificationsEnabled', true)
 

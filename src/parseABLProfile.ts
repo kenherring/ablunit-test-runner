@@ -4,12 +4,11 @@ import { ABLProfileJSON } from './ABLProfileSections'
 export class ABLProfile {
 	
 	profJSON: ABLProfileJSON
+	fs = require('fs');
 
 	constructor(filepath: Uri) {
 		
-		const fs = require('fs');
-		
-		const text = fs.readFileSync(filepath.fsPath, "utf8").replaceAll('\r','')
+		const text =this.fs.readFileSync(filepath.fsPath, "utf8").replaceAll('\r','')
 		const lines = text.split('\n')
 		
 		var sectionLines: string[][] = []
@@ -17,7 +16,6 @@ export class ABLProfile {
 		var currentSection: number
 		sectionLines[0] = []
 		currentSection = 1
-		console.log("num-lines:" + lines.length)
 
 		for (let lineNo = 0; lineNo < lines.length; lineNo++) {
 			// console.log(lineNo + " - " + lines[lineNo])
@@ -41,13 +39,9 @@ export class ABLProfile {
 	}
 
 	writeJsonToFile (file: Uri) {
-		const fs = require('fs');
-		fs.writeFile(file.fsPath, JSON.stringify(this.profJSON, null, 2), function(err: any) {
-			console.log(1)
+		this.fs.writeFile(file.fsPath, JSON.stringify(this.profJSON, null, 2), function(err: any) {
 			if (err) {
-				console.log(2)
 				console.log(err);
-				console.log(3)
 			}
 		});
 	}
