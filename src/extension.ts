@@ -110,7 +110,7 @@ export async function activate(context: vscode.ExtensionContext) {
 				if(data instanceof ABLTestProcedure)
 					console.log(" - ABLTestProcedure")
 
-				if (data instanceof ABLTestClass || data instanceof ABLTestProgram || data instanceof ABLTestMethod) {
+				if (data instanceof ABLTestClass || data instanceof ABLTestProgram || data instanceof ABLTestMethod || data instanceof ABLTestProcedure || data instanceof ABLTestMethod) {
 					run.enqueued(test)
 					queue.push({ test, data })
 				} else {
@@ -145,7 +145,7 @@ export async function activate(context: vscode.ExtensionContext) {
 					await data.run(test, run);
 				}
 
-				run.appendOutput(`Completed ${test.id}\r\n`);
+				await run.appendOutput(`Completed ${test.id}\r\n`);
 			}
 			run.end();
 			if (vscode.window.activeTextEditor)
@@ -164,8 +164,6 @@ export async function activate(context: vscode.ExtensionContext) {
 				// 		)
 				// 	);
 				// }
-
-				// console.log("coverageProvider.provideFileCoverage!!!!!")
 
 				return coverage;
 			},
@@ -330,8 +328,6 @@ function decorate(editor: vscode.TextEditor) {
 function openStackTrace(traceUriStr: string) {
 	const traceUri = vscode.Uri.parse(traceUriStr.split("&")[0])
 	const traceLine = Number(traceUriStr.split("&")[1])
-	vscode.window.showInformationMessage("COMMAND RUNNING! " + traceUri.fsPath + ":" + traceLine)
-
 	vscode.window.showTextDocument(traceUri).then(editor => {
 		console.log(vscode.window.activeTextEditor?.document.uri)
 
@@ -343,5 +339,4 @@ function openStackTrace(traceUriStr: string) {
 		decorate(editor)
 
 	})
-	console.log("file should be opened now")
 }

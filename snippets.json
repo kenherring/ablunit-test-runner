@@ -1,4 +1,20 @@
 {
+
+	"block-level on error undo, throw.": {
+		"prefix": "block-level on error undo, throw.",
+		"body": [
+			"block-level on error undo, throw."
+		]
+	},
+	"routing-level on error undo, throw.": {
+		"prefix": "routine-level on error undo, throw.",
+		"body": "routine-level on error undo, throw."
+	},
+	"using OpenEdge.Core.Assert.":{
+		"prefix": "using OpenEdge.Core.Assert.",
+		"body": "using OpenEdge.Core.Assert."
+	},
+	
 	"@Test. method": {
 		"prefix": "@Test. method public void testMethod ()",
 		"body": [
