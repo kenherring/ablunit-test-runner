@@ -1,50 +1,28 @@
-console.log("test");
-import { 
-	RawProfileSection,
-	ABLProfileSection1,
-	ABLProfileSection2,
-	ABLProfileSection3,
-	ABLProfileSection4,
-	ABLProfileSection5,
-	ABLProfileSection6,
-	ABLProfileSection7,
-	ABLProfileData
-} from './ABLProfileSections';
-
-const section1 = /^(\S+) at line ([0-9]+) +\((\S+)\)$/
+import { Uri } from 'vscode';
+import { ABLProfileJSON } from './ABLProfileSections'
 
 export class ABLProfile {
-	section1: ABLProfileSection1
-	section2: ABLProfileSection2
-	// section3: ABLProfileSection3
-	section4: ABLProfileSection4
-	// section5: ABLProfileSection5
-	section6: ABLProfileSection6
-	// section7: ABLProfileSection7
+	
+	profJSON: ABLProfileJSON
 
-	constructor(filepath: string) {
+	constructor(filepath: Uri) {
 		
 		const fs = require('fs');
 		
-		const text = fs.readFileSync(filepath, "utf8").replaceAll('\r','')
+		const text = fs.readFileSync(filepath.fsPath, "utf8").replaceAll('\r','')
 		const lines = text.split('\n')
 		
-		var sectionLines: RawProfileSection[] = []
+		var sectionLines: string[][] = []
 		var linesArr: string[] = []
 		var currentSection: number
-		sectionLines[0] = new RawProfileSection()
+		sectionLines[0] = []
 		currentSection = 1
 		console.log("num-lines:" + lines.length)
 
 		for (let lineNo = 0; lineNo < lines.length; lineNo++) {
 			// console.log(lineNo + " - " + lines[lineNo])
 			if(lines[lineNo] == '.' && (currentSection != 6 || lines[lineNo + 1] == '.')) {
-				console.log("NEW SECTION: " + currentSection + " (line: " + lineNo + ")");
-				console.log("LAST LINE: " + lines[lineNo -1])
-				console.log(linesArr.length + " " + sectionLines.length)
-				
-				sectionLines[currentSection] = new RawProfileSection()
-				sectionLines[currentSection].lines = linesArr
+				sectionLines[currentSection] = linesArr
 				currentSection++
 				linesArr = []
 			} else {
@@ -52,43 +30,19 @@ export class ABLProfile {
 			}
 		}
 
-		console.log("1-0: " + sectionLines[1].lines[0])
-		console.log("2-0: " + sectionLines[2].lines[0])
-		console.log("3-0: " + sectionLines[3].lines[0])
+		this.profJSON = new ABLProfileJSON(sectionLines[1][0])
+		this.profJSON.addModules(sectionLines[2])
+		this.profJSON.addCallTree(sectionLines[3])
+		this.profJSON.addLineSummary(sectionLines[4])
+		this.profJSON.addTracing(sectionLines[5])
+		this.profJSON.addCoverage(sectionLines[6])
+		this.profJSON.addUserData(sectionLines[7])
+		this.profJSON.addSection8(sectionLines[8])
+	}
 
-		console.log("section1")
-		this.section1 = new ABLProfileSection1(sectionLines[1].lines[0])
-		
-		console.log("section4")
-		this.section4 = new ABLProfileSection4(sectionLines[4].lines)
-		console.log("section2")
-		this.section2 = new ABLProfileSection2(sectionLines[2].lines, this.section4.lineSummary)
-		// console.log("section3")
-		// this.section3 = new ABLProfileSection3(sectionLines[3].lines)
-		// console.log("section5")
-		// this.section5 = new ABLProfileSection3(sectionLines[5].lines)
-		// console.log("section6: " + sectionLines[6].lines.length)
-		this.section6 = new ABLProfileSection6(sectionLines[6].lines)
-		// console.log("section7: " + sectionLines[7].lines.length)
-		// this.section7 = new ABLProfileSection3(sectionLines[7].lines)
-		// console.log("section8: " + sectionLines[8].lines.length)
-		// console.log("section9: " + sectionLines[9].lines.length)
-		// console.log("section10: " + sectionLines[10].lines.length)
-
-		// console.log("DONE1: " + JSON.stringify(this.section1))
-		// console.log("DONE2: " + JSON.stringify(this.section2))
-		
-		// var profJson = new ABLProfileData()
-		// profJson.addSection1(this.section1)
-		// profJson.addModuleData(this.section2)
-		// profJson.addCoverageData(this.section6)
-
-		
-		// console.log("profJson = " + JSON.stringify(this.section2))
-
-		// console.log("0: " + JSON.stringify(this.section2.modules[135]))
-
-		fs.writeFile("c:/git/ablunit-test-provider/prof.json", JSON.stringify(this.section2, null, 2), function(err: any) {
+	writeJsonToFile (file: Uri) {
+		const fs = require('fs');
+		fs.writeFile(file.fsPath, JSON.stringify(this.profJSON, null, 2), function(err: any) {
 			console.log(1)
 			if (err) {
 				console.log(2)
@@ -96,13 +50,13 @@ export class ABLProfile {
 				console.log(3)
 			}
 		});
+	}
 
-
+	provideFileCoverage () {
 		
 	}
 }
 
-// console.log("init")
-// const prof = new ABLProfile("C:/git/ablunit-test-provider/test_projects/proj1/prof.out");
-// console.log("DONE: " + prof)
+// const prof = new ABLProfile(Uri.parse("C:/git/ablunit-test-provider/test_projects/proj1/prof.out"));
+// prof.writeJsonToFile(Uri.parse("c:/git/ablunit-test-provider/prof.json"))
 

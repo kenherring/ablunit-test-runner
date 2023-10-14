@@ -16,6 +16,7 @@ node_modules
 *.xref
 dbg_*
 listings/
-prof.json
+prof*.json
+
 results.json
 results.xml
