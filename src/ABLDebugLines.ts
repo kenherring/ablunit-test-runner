@@ -133,7 +133,7 @@ class ABLDebugLines {
 			}
 			return Promise.all(promArr)
 		})
-
+		
 
 		return Promise.all([prom1, prom2]).then(() => {
 			// console.log("NOW... calculate the line mappings")
