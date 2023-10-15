@@ -21,7 +21,7 @@ jobs:
     steps:
       - checkout
       - run: npm install -g @vscode/vsce
-      # - run: npm install
+      - run: npm install
       - run: vsce package
       - persist_to_workspace:
           root: .
