@@ -125,7 +125,7 @@ class TestFile extends TestTypeObj {
 	}
 
 	createAblunitJson(uri: vscode.Uri, itemPath: string, cfg: ABLUnitConfig) {
-		const opt: options = {
+		const opt: Options = {
 			output: {
 				location: cfg.resultsUri().fsPath,
 				format: "xml",

@@ -53,7 +53,7 @@ class ABLDebugLines {
 	}
 
 	getSourceLine(debugUri: Uri, debugLine: number) {
-		var debugLines = this.map.find((dlm) => dlm.uri.fsPath === debugUri.fsPath) //TODO - is there a better way to compare URIs?
+		const debugLines = this.map.find((dlm) => dlm.uri.fsPath === debugUri.fsPath) //TODO - is there a better way to compare URIs?
 		if (!debugLines) {
 			console.error("cannot find debugLines for " + debugUri)
 			return null
@@ -121,19 +121,21 @@ class ABLDebugLines {
 			for (let idx=0; idx < lines.length; idx++) {
 				const xref = incRE.exec(lines[idx])
 				if (xref && xref[4] == "INCLUDE") {
-					const [,source,parent,lineNumStr,xrefType,includeNameRaw] = xref
-					const lineNum = Number(lineNumStr)
-					const includeName = includeNameRaw.replace(/^"(.*)"$/, '$1').trim()
+					const [, ,parent,lineNumStr,xrefType,includeNameRaw] = xref
+					if (xrefType === "INCLUDE") {
+						const lineNum = Number(lineNumStr)
+						const includeName = includeNameRaw.replace(/^"(.*)"$/, '$1').trim()
 
-					const incUri = Uri.joinPath(getWorkspaceUri(),includeName)
-					const pUri = Uri.joinPath(getWorkspaceUri(),parent)
-					promArr.push(this.readIncludeLineCount(incUri))
-					m?.includes.push({includeUri: incUri, parentUri: pUri, parentLineNum: lineNum})
+						const incUri = Uri.joinPath(getWorkspaceUri(),includeName)
+						const pUri = Uri.joinPath(getWorkspaceUri(),parent)
+						promArr.push(this.readIncludeLineCount(incUri))
+						m?.includes.push({includeUri: incUri, parentUri: pUri, parentLineNum: lineNum})
+					}
 				}
 			}
 			return Promise.all(promArr)
 		})
-		
+
 
 		return Promise.all([prom1, prom2]).then(() => {
 			// console.log("NOW... calculate the line mappings")

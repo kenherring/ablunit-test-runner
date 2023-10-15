@@ -1,14 +1,14 @@
 
-const summaryRE = /^([0-9]+) ([0-9]{2}\/[0-9]{2}\/[0-9]{4}) "([^"]*)" ([0-9]{2}:[0-9]{2}:[0-9]{2}) "([^"]*)"/
-const moduleRE = /^([0-9]+) "([^"]*)" "([^"]*)" ([0-9]+) ([0-9]+) "([^"]*)"$/
+const summaryRE = /^(\d+) (\d{2}\/\d{2}\/\d{4}) "([^"]*)" (\d{2}:\d{2}:\d{2}) "([^"]*)"/
+const moduleRE = /^(\d+) "([^"]*)" "([^"]*)" (\d+) (\d+) "([^"]*)"$/
 //CALL TREE: CallerID CallerLineno CalleeID CallCount
-const callTreeRE = /^([0-9]+) (-?[0-9]+) ([0-9]+) ([0-9]+)$/
+const callTreeRE = /^(\d+) (-?\d+) (\d+) (\d+)$/
 //LINE SUMMARY: ModuleID LineNo ExecCount ActualTime CumulativeTime
-const lineSummaryRE = /^(-?[0-9]+) (-?[0-9]+) ([0-9]+) ([0-9]+\.[0-9]+) ([0-9]+\.[0-9]+)$/
+const lineSummaryRE = /^(-?\d+) (-?\d+) (\d+) (\d+\.\d+) (\d+\.\d+)$/
 //TRACING: ModuleID LineNo ActualTime StartTime
-const tracingRE = /^([0-9]+) ([0-9]+) ([0-9]+\.[0-9]+) ([0-9]+\.[0-9]+)$/
+const tracingRE = /^(\d+) (\d+) (\d+\.\d+) (\d+\.\d+)$/
 //COVERAGE:
-const coverageRE = /^([0-9]+) "([^"]*)" ([0-9]+)$/
+const coverageRE = /^(\d+) "([^"]*)" (\d+)$/
 
 
 interface Trace { //Section 5
@@ -85,7 +85,7 @@ export class ABLProfileJSON {
         for(let lineNo=0; lineNo < lines.length; lineNo++){
             const test = moduleRE.exec(lines[lineNo])
 
-            let mod: Module  = {
+            const mod: Module  = {
                 ModuleID: Number(test![1]),
                 ModuleName: test![2],
                 ListingFile: test![3],
@@ -130,9 +130,9 @@ export class ABLProfileJSON {
         }
 
         childModules.forEach(child => {
-            var parent = this.modules.find(p => p.SourceName === child.SourceName)
+            let parent = this.modules.find(p => p.SourceName === child.SourceName)
             if (!parent) {
-                var parent = this.modules.find(p => p.SourceName + ".cls" === child.SourceName)
+                parent = this.modules.find(p => p.SourceName + ".cls" === child.SourceName)
             }
             if(parent) {
                 if(!parent.childModules) {
@@ -264,39 +264,33 @@ export class ABLProfileJSON {
     addCoverage(lines: string[]) {
         console.log("ABLProfileSections addCoverage")
         for(let lineNo=0; lineNo < lines.length; lineNo++){
-            var mod
+            let mod
 
             if(lines[lineNo] == '.') {
                 if (mod && mod.executableLines) {
                     mod.coveragePct = (mod.executableLines / mod.lines.length * 100)
                 }
-            } else {
-                if(lineNo == 0 || lines[lineNo - 1] == '.') {
-                    const test = coverageRE.exec(lines[lineNo])
-                    if(test) {
-                        mod = this.getModule(Number(test[1]))
-                        if (mod) {
-                            mod.coverageName= test[2]
-                            mod.executableLines = Number(test[3])
-                        }
-                    }
-                } else {
+            } else if (lineNo == 0 || lines[lineNo - 1] == '.') {
+                const test = coverageRE.exec(lines[lineNo])
+                if(test) {
+                    mod = this.getModule(Number(test[1]))
                     if (mod) {
-                        const line = this.getLine(mod,Number(lines[lineNo]))
-                        if (line) {
-                            line.Executable = true
-                        } else {
-                            let line = {
-                                LineNo: Number(lines[lineNo]),
-                                Executable: true
-                            }
-                            mod.lines[mod.lines.length] = line
-                        }
+                        mod.coverageName= test[2]
+                        mod.executableLines = Number(test[3])
+                    }
+                }
+            } else if (mod) {
+                const line = this.getLine(mod,Number(lines[lineNo]))
+                if (line) {
+                    line.Executable = true
+                } else {
+                    mod.lines[mod.lines.length] = {
+                        LineNo: Number(lines[lineNo]),
+                        Executable: true
                     }
                 }
             }
         }
-
         this.modules.forEach(parent => {
             parent.childModules?.forEach(child => {
                 parent.executableLines += child.executableLines
@@ -319,19 +313,16 @@ export class ABLProfileJSON {
 
     }
 
+    // addUserData(lines: string[]) {
+    //     for(let lineNo=0; lineNo < lines.length; lineNo++){
+    //         console.log("UserData-" + lineNo + ": " + lines[lineNo])
+    //     }
+    // }
 
-    addUserData(lines: string[]) {
-        var mod
-        for(let lineNo=0; lineNo < lines.length; lineNo++){
-            console.log("UserData-" + lineNo + ": " + lines[lineNo])
-        }
-    }
-
-    addSection8(lines: string[]) {
-        var mod
-        for(let lineNo=0; lineNo < lines.length; lineNo++){
-            // console.log("Section8-" + lineNo + ": " + lines[lineNo])
-        }
-    }
+    // addSection8(lines: string[]) {
+    //     for(let lineNo=0; lineNo < lines.length; lineNo++){
+    //         // console.log("Section8-" + lineNo + ": " + lines[lineNo])
+    //     }
+    // }
 
 }

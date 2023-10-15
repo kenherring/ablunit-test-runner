@@ -1,4 +1,5 @@
-import { Uri, workspace } from "vscode";
+import { Uri, workspace } from "vscode"
+import * as xml2js from "xml2js"
 
 export interface TCFailure {
 	callstack: string
@@ -40,9 +41,9 @@ interface TestSuites {
 export class ABLResultsParser {
 	fs = require('fs');
 	resultsJson?: TestSuites
-	
+
 	constructor() {}
-	
+
 	async importResults(resultsUri: Uri) {
 		const resultsBits = await workspace.fs.readFile(resultsUri);
 		const resultsXml = await Buffer.from(resultsBits.toString()).toString('utf8');
@@ -50,10 +51,10 @@ export class ABLResultsParser {
 		this.resultsJson = this.parseSuites(resultsXmlJson)
 		this.outputJson(Uri.parse(resultsUri.toString().replace(/\.xml$/,".json")), this.resultsJson)
 	}
-	
+
 	parseXml(xmlData: string) {
-		var parseString = require('xml2js').parseString;
-		var res: any
+		const parseString = xml2js.parseString;
+		let res: any
 
 		parseString(xmlData, function (err: any, resultsRaw: any) {
 			if (err) {
@@ -83,7 +84,7 @@ export class ABLResultsParser {
 
 	parseSuite(res: any) {
 		if (!res) { return undefined }
-		var suites: TestSuite[] = []
+		const suites: TestSuite[] = []
 
 		for (let idx=0; idx<res.length; idx++) {
 			suites[idx] = {
@@ -106,7 +107,7 @@ export class ABLResultsParser {
 	parseProperties(res: any) {
 		if (!res){ return undefined }
 		res = res[0]['property']
-		var props: { [key: string]: string } = {}
+		const props: { [key: string]: string } = {}
 
 		for(let idx=0; idx<res.length; idx++) {
 			props[res[idx]['$']['name']] = res[idx]['$']['value']
@@ -116,8 +117,8 @@ export class ABLResultsParser {
 
 	parseTestCases(res: any) {
 		if (!res) { return undefined }
-		var cases: TestCase[] = []
-		
+		const cases: TestCase[] = []
+
 		for (let idx=0; idx<res.length; idx++) {
 			cases[idx] = {
 				name: res[idx]['$']['name'],
@@ -132,7 +133,7 @@ export class ABLResultsParser {
 	}
 
 	parseFailOrError(type: string, res: any) {
-		if (!res || !res[type]) { return undefined }
+		if (!res[type]) { return undefined }
 		return {
 			//TODO: can we have more than one failure or error?
 			callstack: res[type][0]['_'],
@@ -140,7 +141,7 @@ export class ABLResultsParser {
 			type: res[type][0]['$']['type']
 		}
 	}
-	
+
 	outputJson(jsonUri: Uri, toJson: any) {
 		console.log("outputJson to " + jsonUri.toString())
 		const bufferJson = Buffer.from(JSON.stringify(toJson, null, 2))
