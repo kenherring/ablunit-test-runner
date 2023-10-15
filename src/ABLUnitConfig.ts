@@ -45,7 +45,7 @@ export class ABLUnitConfig  {
 
 	setTempDirUri = async () => {
 		const uriList = [this.storageUri]
-		let tempDir = workspace.getConfiguration('ablunit').get('tempDir', '')
+		const tempDir: string = workspace.getConfiguration('ablunit').get('tempDir', '')
 
 		if (tempDir) {
 			try {
@@ -114,7 +114,7 @@ export class ABLUnitConfig  {
 	}
 
 	resultsUri () {
-		var resultsFile = workspace.getConfiguration('ablunit').get('resultsPath', '')
+		let resultsFile = workspace.getConfiguration('ablunit').get('resultsPath', '')
 		if(!resultsFile) {
 			throw ("no workspace directory opened")
 		}
@@ -140,5 +140,9 @@ export class ABLUnitConfig  {
 
 	notificationsEnabled(): boolean {
 		return workspace.getConfiguration('ablunit').get('notificationsEnabled', true)
+	}
+
+	getCommandSetting(): string {
+		return workspace.getConfiguration('ablunit').get('tests.command', '').trim()
 	}
 }

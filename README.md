@@ -18,7 +18,7 @@ This project was developed using the [Progress OpenEdge Developers Kit: Classroo
 * See test results
 * View code coverage
 
-	![Alt text](./docs/coverage.png)
+	![code coverage](./docs/coverage.png)
 
 ## Configuration
 

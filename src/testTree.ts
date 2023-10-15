@@ -21,11 +21,11 @@ let generationCounter = 0
 
 export const getContentFromFilesystem = async (uri: vscode.Uri) => {
 	try {
-		const rawContent = await vscode.workspace.fs.readFile(uri);
-		return textDecoder.decode(rawContent);
+		const rawContent = await vscode.workspace.fs.readFile(uri)
+		return textDecoder.decode(rawContent)
 	} catch (e) {
-		console.warn(`Error providing tests for ${uri.fsPath}`, e);
-		return '';
+		console.warn(`Error providing tests for ${uri.fsPath}`, e)
+		return ''
 	}
 }
 
@@ -146,9 +146,9 @@ class TestFile extends TestTypeObj {
 			throw ("temp directory not set")
 		}
 
-		var cmd1 = vscode.workspace.getConfiguration('ablunit').get('tests.command', '').trim();
+		// const cmd1 = cfg.getCommandSetting()
 		// console.log("cmd setting=" + cmd1)
-		var cmd = ['_progres', '-b', '-p', 'ABLUnitCore.p']
+		const cmd = ['_progres', '-b', '-p', 'ABLUnitCore.p']
 		// if (! cmd) {
 		// cmd = '_progres -b -p ABLUnitCore.p ${progressIni} -T ${tempDir} -profile ${profile.options} -param "${itemPath} CFG=${ablunit.json}"'
 		// }
@@ -294,7 +294,7 @@ class TestFile extends TestTypeObj {
 		if (s.tests > 0) {
 			if (s.errors == 0 && s.failures == 0) {
 				options.passed(item, s.time)
-			} else if (s.tests = s.skipped) {
+			} else if (s.tests === s.skipped) {
 				options.skipped(item)
 			} else if (s.failures > 0 || s.errors > 0) {
 				//// This should be populated automatically by the child messages filtering up
@@ -324,7 +324,7 @@ class TestFile extends TestTypeObj {
 	async parseProfile(cfg: ABLUnitConfig) {
 		const profilerUri = cfg.getProfileOutputUri()
 		console.log("parsing profiler 2: " + profilerUri.fsPath)
-		var profParser = new ABLProfile()
+		const profParser = new ABLProfile()
 		await profParser.parseData(profilerUri)
 		profParser.writeJsonToFile(vscode.Uri.joinPath(cfg.tempDirUri!, "prof.json"))
 		const profOutput = profParser.profJSON
@@ -338,7 +338,7 @@ class TestFile extends TestTypeObj {
 				return
 			}
 
-			var fc: vscode.FileCoverage | undefined = undefined
+			let fc: vscode.FileCoverage | undefined = undefined
 
 			const moduleUri = vscode.Uri.joinPath(cfg.workspaceUri(), module.SourceName)
 			module.lines.forEach((line: LineSummary) => {
@@ -453,7 +453,7 @@ export class ABLTestClass extends TestFile {
 	}
 
 	public updateFromContents(controller: vscode.TestController, content: string, item: vscode.TestItem) {
-		var ancestors: [{ item: vscode.TestItem, children: vscode.TestItem[] }] = [{ item, children: [] as vscode.TestItem[] }]
+		const ancestors: [{ item: vscode.TestItem, children: vscode.TestItem[] }] = [{ item, children: [] as vscode.TestItem[] }]
 		ancestors.pop()
 		const thisGeneration = generationCounter++;
 		this.didResolve = true;
@@ -487,7 +487,7 @@ export class ABLTestClass extends TestFile {
 				thead.label = element
 
 				if (ancestors.length > 0) {
-					var parent = ancestors[ancestors.length - 1]
+					const parent = ancestors[ancestors.length - 1]
 					parent.children.push(thead)
 				}
 				testData.set(thead, new ABLTestClassNamespace(thisGeneration, classpath, element));
@@ -502,11 +502,11 @@ export class ABLTestClass extends TestFile {
 				thead.range = range
 				thead.label = label
 				thead.tags = [new vscode.TestTag("runnable"), new vscode.TestTag("ABLTestClass")]
-				var tData = new ABLTestClass()
+				const tData = new ABLTestClass()
 				tData.setClassInfo(classpath, label)
 				testData.set(thead, tData)
 
-				var parent = ancestors[ancestors.length - 1]
+				const parent = ancestors[ancestors.length - 1]
 				if (parent) {
 					parent.children.push(thead)
 				}
@@ -521,7 +521,7 @@ export class ABLTestClass extends TestFile {
 				thead.tags = [new vscode.TestTag("runnable"), new vscode.TestTag("ABLTestMethod")]
 				thead.label = methodname
 				testData.set(thead, new ABLTestMethod(thisGeneration, classpath, methodname));
-				var parent = ancestors[ancestors.length - 1];
+				const parent = ancestors[ancestors.length - 1];
 				parent.children.push(thead)
 				item.children.add(thead)
 			},
@@ -600,7 +600,7 @@ export class ABLTestProgram extends TestFile {
 				thead.label = dir
 
 				if (ancestors.length > 0) {
-					var parent = ancestors[ancestors.length - 1]
+					const parent = ancestors[ancestors.length - 1]
 					parent.children.push(thead)
 				}
 
@@ -616,11 +616,11 @@ export class ABLTestProgram extends TestFile {
 				thead.range = range
 				thead.label = label
 				thead.tags = [new vscode.TestTag("runnable"), new vscode.TestTag("ABLTestProgram")]
-				var tData = new ABLTestProgram()
+				const tData = new ABLTestProgram()
 				tData.setProgramInfo(relativepath, label)
 				testData.set(thead, tData)
 
-				var parent = ancestors[ancestors.length - 1]
+				const parent = ancestors[ancestors.length - 1]
 				if (parent) {
 					parent.children.push(thead)
 				}
@@ -637,7 +637,7 @@ export class ABLTestProgram extends TestFile {
 				thead.tags = [new vscode.TestTag("runnable"), new vscode.TestTag("ABLTestProcedure")]
 				testData.set(thead, new ABLTestProcedure(thisGeneration, relativePath, procedureName))
 
-				var parent = ancestors[ancestors.length - 1]
+				const parent = ancestors[ancestors.length - 1]
 				parent.children.push(thead)
 			},
 
