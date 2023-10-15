@@ -1,0 +1,7 @@
+{
+	"recommendations": [
+		"circleci.circleci",
+		"riversidesoftware.openedge-abl-lsp",
+		"sonarsource.sonarlint-vscode",
+	]
+}

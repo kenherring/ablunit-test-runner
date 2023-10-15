@@ -1,4 +1,4 @@
-# ABLUnit Test Provider [![CircleCI](https://img.shields.io/circleci/build/github/kenherring/ablunit-test-provider/main)](https://dl.circleci.com/status-badge/redirect/gh/kenherring/ablunit-test-provider/tree/main)
+# ABLUnit Test Provider [![CircleCI](https://img.shields.io/circleci/build/github/kenherring/ablunit-test-provider/main)](https://dl.circleci.com/status-badge/redirect/gh/kenherring/ablunit-test-provider/tree/main) [![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=kenherring_ablunit-test-provider&metric=sqale_rating)](https://sonarcloud.io/summary/new_code?id=kenherring_ablunit-test-provider)
 
 This VSCode test provider extension integrates [ABLUnit tests](https://docs.progress.com/bundle/openedge-developer-studio-help-122/page/Learn-About-ABLUnit-Test-Framework.html) into the VSCode test explorer.
 
