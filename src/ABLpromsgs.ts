@@ -1,7 +1,7 @@
 import { Uri } from "vscode";
 import { outputChannel } from "./ABLUnitCommon";
 
-interface promsg {
+interface Promsg {
 	msgnum: number
 	msgtext: string[]
 }
@@ -10,7 +10,7 @@ let promsgsObj: ABLPromsgs
 
 export class ABLPromsgs {
 	DLC = process.env.DLC
-	promsgs: promsg[] = []
+	promsgs: Promsg[] = []
 
 	fs = require('fs');
 
@@ -21,6 +21,7 @@ export class ABLPromsgs {
 			console.log("DLC does not exist")
 			throw "DLC does not exist"
 		}
+		// eslint-disable-next-line @typescript-eslint/no-this-alias
 		promsgsObj = this
 
 		const cacheFile = tempDirUri.fsPath + "/promsgs.json"
@@ -50,10 +51,8 @@ export class ABLPromsgs {
 			if(lines[idx].match(/^(\d+) /)) {
 				newlines.push(currLine)
 				currLine = lines[idx]
-			} else {
-				if(lines[idx].trim() !== '"' && lines[idx].trim() !== '' && lines[idx].trim() !== "\" \"\" \"\"") {
-					currLine += '\\n' + lines[idx]
-				}
+			} else  if(lines[idx].trim() !== '"' && lines[idx].trim() !== '' && lines[idx].trim() !== "\" \"\" \"\"") {
+				currLine += '\\n' + lines[idx]
 			}
 		}
 
@@ -62,20 +61,19 @@ export class ABLPromsgs {
 			const s = line.split(' "')
 
 			let msgnum: number = 0
-			let msgtext: string[] = []
+			const msgtext: string[] = []
 			s.forEach((element, index) => {
 				if (index === 0) {
 					msgnum = Number(element)
 				} else {
-					var t = element.replace(/"$/g, '')
+					const t = element.replace(/"$/g, '')
 					if (t != '') {
 						msgtext.push(t)
 					}
 				}
 			})
 
-			let msg: promsg  = { msgnum: msgnum, msgtext: msgtext }
-			this.promsgs.push(msg)
+			this.promsgs.push({ msgnum: msgnum, msgtext: msgtext })
 		})
 	}
 

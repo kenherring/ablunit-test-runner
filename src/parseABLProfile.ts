@@ -22,9 +22,9 @@ export class ABLProfile {
 		const text = await getContentFromFilesystem(filepath)
 		const lines = text.replace(/\r/g,'').split('\n')
 
-		var sectionLines: string[][] = []
-		var linesArr: string[] = []
-		var currentSection: number
+		const sectionLines: string[][] = []
+		let linesArr: string[] = []
+		let currentSection: number
 		sectionLines[0] = []
 		currentSection = 1
 
@@ -44,8 +44,8 @@ export class ABLProfile {
 		this.profJSON.addLineSummary(sectionLines[4])
 		this.profJSON.addTracing(sectionLines[5])
 		this.profJSON.addCoverage(sectionLines[6])
-		this.profJSON.addUserData(sectionLines[7])
-		this.profJSON.addSection8(sectionLines[8])
+		// this.profJSON.addUserData(sectionLines[7])
+		// this.profJSON.addSection8(sectionLines[8])
 	}
 
 	writeJsonToFile (file: Uri) {

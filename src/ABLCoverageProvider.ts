@@ -1,4 +1,4 @@
-import { CancellationToken, CoveredCount, FileCoverage, Location, Position, ProviderResult, Range, StatementCoverage, TestCoverageProvider, Uri } from "vscode";
+import { CancellationToken, CoveredCount, FileCoverage, ProviderResult, TestCoverageProvider, Uri } from "vscode";
 
 
 export class ABLCoverageProvider implements TestCoverageProvider {
@@ -11,7 +11,7 @@ export class ABLCoverageProvider implements TestCoverageProvider {
     provideFileCoverage(token: CancellationToken): ProviderResult<FileCoverage[]> {
         console.log("ABLCoverageProvider profideFileCoverage")
         const coverage: FileCoverage[] = []
-        const fileUri: Uri = Uri.parse("C:\git\ablunit-test-provider\test_projects\proj1\classTest.cls")
+        const fileUri: Uri = Uri.parse("C:/git/ablunit-test-provider/test_projects/proj1/classTest.cls")
 
         // const pos: Position = new Position(1,1)
         // const stmt: StatementCoverage = new StatementCoverage(1, new Range(pos,pos))

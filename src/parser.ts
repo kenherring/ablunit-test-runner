@@ -9,11 +9,11 @@ const suiteItemRE2 = /,(classes|procedures)="([^"]*)+"/i
 // CLASS statement
 const classRE = /^\s*class\s+(\S+)\s*:/i
 // METHOD statement
-const methodRE = /\s+method\s(\s*public){0,1}\s*void\s*(\S[^\s\(]+)/i
+const methodRE = /\s+method\s(\s*public)?\s*void\s*(\S[^\s(]+)/i
 // PROCEDURE statement
 const procedureRE = /(^|\s+)procedure\s+(\S+)\s*:/i
 // ASSERT method call
-const assertRE = /(OpenEdge.Core.Assert\:\S+\s*\(.*\))/i
+const assertRE = /(OpenEdge.Core.Assert:\S+\s*\(.*\))/i
 
 interface SuiteLoc {
 	name: string
@@ -31,7 +31,7 @@ export const parseABLUnit = (text: string, relativePath: string, events: {
 	onTestProcedure(range: vscode.Range, relativePath: string, label: string, programUri: vscode.Uri): void;
 	onAssert(range: vscode.Range, methodname: string): void;
 }) => {
-	
+
 	const lines = text.split("\n")
 	const configStyle = vscode.workspace.getConfiguration('ablunit').get('display.style');
 	const configClassLabel= vscode.workspace.getConfiguration('ablunit').get('display.classLabel');
@@ -41,10 +41,10 @@ export const parseABLUnit = (text: string, relativePath: string, events: {
 	const parseByType = () => {
 		if (relativePath.endsWith(".cls")) {
 			if (text.toLowerCase().indexOf("@testsuite") != -1) {
-				if (false) {
-					//TODO
-					parseSuiteClass()
-				}
+				// if (false) {
+				// 	//TODO
+				// 	parseSuiteClass()
+				// }
 				return
 			}
 			parseClass()
@@ -60,7 +60,7 @@ export const parseABLUnit = (text: string, relativePath: string, events: {
 	}
 
 	const splitpath = (path: string) => {
-		var elems = []
+		let elems = []
 		elems = path.split('.')
 		if (elems.length > 1) return elems
 		elems = path.split('/')
@@ -74,9 +74,8 @@ export const parseABLUnit = (text: string, relativePath: string, events: {
 			return
 		}
 
-		var assertCount: number = 0
-		var foundClassHead = false
-		var classname: string = ""
+		let foundClassHead = false
+		let classname: string = ""
 
 		for (let lineNo = 0; lineNo < lines.length; lineNo++) {
 
@@ -88,18 +87,18 @@ export const parseABLUnit = (text: string, relativePath: string, events: {
 					const range = new vscode.Range(new vscode.Position(lineNo, lines[lineNo].indexOf(classname)), new vscode.Position(lineNo, classname.length));
 
 					if (configClassLabel == "filepath") {
-						// className = 
+						// className =
 						classname = relativePath;
 					}
-					
-					var label = classname
-					var basePath = vscode.Uri.joinPath(workspaceDir,relativePath.substring(0,relativePath.lastIndexOf(classname.replace('.','/'))))
-					
+
+					let label = classname
+					const basePath = vscode.Uri.joinPath(workspaceDir,relativePath.substring(0,relativePath.lastIndexOf(classname.replace('.','/'))))
+
 					if (configStyle == "tree") {
-						var path = splitpath(classname)
+						const path = splitpath(classname)
 						path.unshift("classpath root")
-						var element: string = ""
-						var classpath: string[] = []
+						let element: string = ""
+						const classpath: string[] = []
 						for (let idx=0; idx < path.length - 1; idx++) {
 							element = path[idx]
 							classpath.push(element)
@@ -118,7 +117,6 @@ export const parseABLUnit = (text: string, relativePath: string, events: {
 					if (method) {
 						const [, publicKeyword, methodname] = method;
 						const range = new vscode.Range(new vscode.Position(lineNo, 0), new vscode.Position(lineNo, method[0].length));
-						assertCount = 0;
 						events.onTestMethod(range, classname, methodname);
 						continue;
 					}
@@ -137,7 +135,7 @@ export const parseABLUnit = (text: string, relativePath: string, events: {
 		const zeroRange = new vscode.Range(new vscode.Position(0,0), new vscode.Position(0,0))
 		if (configStyle == "tree") {
 			const parts = relativePath.split("/")
-			var relativeTree = ""
+			let relativeTree = ""
 			for (let idx=0; idx < parts.length - 1; idx++) {
 				if (relativeTree == "") {
 					relativeTree = parts[idx]
@@ -158,7 +156,7 @@ export const parseABLUnit = (text: string, relativePath: string, events: {
 				if (proc) {
 					const [ , blank, procedureName] = proc;
 					const range = new vscode.Range(new vscode.Position(lineNo, lines[lineNo].indexOf(procedureName)), new vscode.Position(lineNo, procedureName.length));
-					var label = relativePath;
+					let label = relativePath;
 					if (configStyle == "tree") {
 						label = procedureName
 					}
@@ -173,7 +171,7 @@ export const parseABLUnit = (text: string, relativePath: string, events: {
 
 		events.onTestSuite(new vscode.Range(new vscode.Position(0,0), new vscode.Position(0,0)), '[suite] ' + relativePath)
 
-		var suiteList: SuiteLoc[] = []
+		const suiteList: SuiteLoc[] = []
 
 		for (let lineNo = 1; lineNo < lines.length; lineNo++) {
 			if (lines[lineNo].trim().startsWith("//"))
@@ -222,7 +220,7 @@ export const parseABLUnit = (text: string, relativePath: string, events: {
 					const [, className] = classResult;
 					const range = new vscode.Range(new vscode.Position(lineNo, lines[lineNo].indexOf(className)), new vscode.Position(lineNo, className.length));
 					events.onTestSuite(range, className);
-					
+
 					for (let idx=0; idx<suiteList.length; idx++) {
 						events.onTestClass(suiteList[idx]['range'], suiteList[idx]['name'], suiteList[idx]['name'])
 					}
@@ -232,11 +230,11 @@ export const parseABLUnit = (text: string, relativePath: string, events: {
 			}
 		}
 	}
-	
+
 	const parseSuiteProgram = () => {
 		// console.log("TODO - parseSuiteProgram - " + relativePath)
 	}
-	
+
 	parseByType()
 
 };

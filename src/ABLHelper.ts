@@ -1,14 +1,15 @@
-import { Location, Position, Range, Uri, workspace, MarkdownString } from "vscode";
+import { Location, Position, Uri, workspace, MarkdownString } from "vscode";
 import { TCFailure } from "./parse/ablResultsParser";
 import { getPromsg } from "./ABLpromsgs";
 import { importDebugFile, getSourceLine } from "./ABLDebugLines";
+import * as fs from 'fs';
 
 // First, attempt to match with a function/procedure/method name
 // RunTests OpenEdge.ABLUnit.Runner.ABLRunner at line 149  (OpenEdge/ABLUnit/Runner/ABLRunner.r)
-const stackLineRE1 = /^(\S+) (\S+) at line ([0-9]+) +\((\S+)\)/
+const stackLineRE1 = /^(\S+) (\S+) at line (\d+) +\((\S+)\)/
 // Second, attempt to match with only a program name
 // ABLUnitCore.p at line 79  (ABLUnitCore.r)
-const stackLineRE2 = /^(\S+) at line ([0-9]+) +\((\S+)\)$/
+const stackLineRE2 = /^(\S+) at line (\d+) +\((\S+)\)$/
 
 interface CallStackLine {
 	method: string | null;
@@ -17,7 +18,7 @@ interface CallStackLine {
 	debugLine: Position;
 	rcode: string;
 	raw: string;
-};
+}
 
 interface CallStack {
 	lines: CallStackLine[];
@@ -43,7 +44,7 @@ export async function getFailureMarkdownMessage(failure: TCFailure): Promise<Mar
 	const promArr: Promise<void>[] = [Promise.resolve()]
 	const paths: string[] = []
 	stack.lines.forEach((line) => {
-		var dbgFile = line.debugFile
+		let dbgFile = line.debugFile
 
 		if(dbgFile.startsWith("OpenEdge.") || dbgFile === "ABLUnitCore.p") {
 			return
@@ -60,7 +61,7 @@ export async function getFailureMarkdownMessage(failure: TCFailure): Promise<Mar
 	})
 
 	const promsgMatch = failure.message.match(/\((\d+)\)$/)
-	var promsgNum = ""
+	let promsgNum = ""
 	if (promsgMatch)
 		promsgNum = promsgMatch[1]
 	const promsg = getPromsg(Number(promsgNum))
@@ -102,13 +103,13 @@ export async function getFailureMarkdownMessage(failure: TCFailure): Promise<Mar
 				if(dbg) {
 					const incRelativePath = workspace.asRelativePath(dbg.incUri)
 					stackString += " (" + "[" + incRelativePath + ":" + dbg.incLine + "]" +
-										 "(command:_ablunit.openStackTrace?" + encodeURIComponent(JSON.stringify(dbg.incUri + "&" + dbg.incLine)) + ")" + ")"
+										"(command:_ablunit.openStackTrace?" + encodeURIComponent(JSON.stringify(dbg.incUri + "&" + dbg.incLine)) + ")" + ")"
 				}
 			}
 
 			stackString += "</code><br>\n"
 		})
-		let md = new MarkdownString(stackString);
+		const md = new MarkdownString(stackString);
 		md.isTrusted = true;
 		md.supportHtml = true;
 		return md;
@@ -136,12 +137,12 @@ export const parseABLCallStack = (text: string) => {
 
 	const lines = text.replace(/\r/g,'').split('\n');
 	// var stack: CallStack;
-	var stack = {} as CallStack;
+	const stack = {} as CallStack;
 
 	stack.lines = [];
 	for (let lineNo = 0; lineNo < lines.length; lineNo++) {
 		const line = lines[lineNo];
-		var test = stackLineRE1.exec(line);
+		let test = stackLineRE1.exec(line);
 
 		if (test) {
 			const [ , method, debugFile, debugLine, rcode] = test;
@@ -174,10 +175,9 @@ export const parseABLCallStack = (text: string) => {
 		stack.lines[lineNo]['debugUri'] = Uri.file(stack.lines[lineNo]['debugFile']);
 
 		if (stack.firstLocation == undefined) {
-			let firstUri = Uri.file(stack.lines[lineNo]['debugFile']);
+			const firstUri = Uri.file(stack.lines[lineNo]['debugFile']);
 
-			const fs = require('fs');
-			let path = stack.lines[lineNo]['debugFile'];
+			const path = stack.lines[lineNo]['debugFile'];
 			if (fs.existsSync(path)) {
 				stack.firstLocation = new Location(firstUri, stack.lines[lineNo]['debugLine']);
 			}

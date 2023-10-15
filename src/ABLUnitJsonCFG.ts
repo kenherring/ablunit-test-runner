@@ -1,4 +1,4 @@
-interface options {
+interface Options {
 	output: {
 		location: string
 		format: "xml"
