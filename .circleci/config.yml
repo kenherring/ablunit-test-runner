@@ -27,6 +27,8 @@ jobs:
           root: .
           paths:
             - "*.vsix"
+      - store_artifacts:
+          path: ablunit-test-provider-*.vsix
   build:
     docker:
       - image: cimg/node:20.8.0
