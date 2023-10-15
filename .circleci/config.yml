@@ -26,6 +26,9 @@ jobs:
           root: .
           paths:
             - dist
+      - store_artifacts:
+          when: on_fail
+          path: /root/.npm/_logs/
   test:
     docker:
       - image: cimg/node:10.15.3
