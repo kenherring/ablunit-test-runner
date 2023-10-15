@@ -1,0 +1,42 @@
+
+workflows:
+  build:
+    jobs:
+      - build
+      - test
+      # - deploy:
+      #     requires:
+      #       - build
+      #       - test
+      #     filters:
+      #       branches:
+      #         only: main
+
+jobs:
+  build:
+    docker:
+      - image: circleci/node:10.15.3
+    steps:
+      - checkout
+      - run: npm install -g @vscode/vsce
+      - run: npm install
+      - run: npm run build
+      - persist_to_workspace:
+          root: .
+          paths:
+            - dist
+  test:
+    docker:
+      - image: circleci/node:10.15.3
+    steps:
+      - checkout
+      - run: npm install
+      - run: npm run test
+  deploy:
+    docker:
+      - image: circleci/node:10.15.3
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - run: vsce publish -p $VSCE_TOKEN
