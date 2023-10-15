@@ -3,5 +3,6 @@
 		"circleci.circleci",
 		"riversidesoftware.openedge-abl-lsp",
 		"sonarsource.sonarlint-vscode",
+		"dbaeumer.vscode-eslint"
 	]
 }

@@ -19,9 +19,9 @@ jobs:
       - run: npm install
       - run: vsce package
       - run: mkdir artifacts && cp ablunit-test-provider-*.vsix artifacts
-      - run: npm init @eslint/config
-      - run: eslint . --ext .ts,.js -f json -o artifacts/eslint_plain_report.json
-      - run: eslint . --ext .ts,.js -f tools/sonarqube_formatter.js -o artifacts/eslint_report.json
+      # - run: npm init @eslint/config
+      - run: npx eslint . --ext .ts,.js -f json -o artifacts/eslint_plain_report.json
+      - run: npx eslint . --ext .ts,.js -f tools/sonarqube_formatter.js -o artifacts/eslint_report.json
       - sonarcloud/scan
       - persist_to_workspace:
           root: .
