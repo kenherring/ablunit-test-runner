@@ -23,12 +23,13 @@ jobs:
       - run: npm install -g @vscode/vsce
       - run: npm install
       - run: vsce package
+      - run: mkdir artifacts && cp ablunit-test-provider-*.vsix artifacts
       - persist_to_workspace:
           root: .
           paths:
             - "*.vsix"
       - store_artifacts:
-          path: ablunit-test-provider-*.vsix
+          path: artifacts
   build:
     docker:
       - image: cimg/node:20.8.0
