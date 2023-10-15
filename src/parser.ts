@@ -4,8 +4,8 @@ import * as vscode from 'vscode';
 
 // TESTSUITE statement
 const suiteRE = /@testsuite\((.*)\)/
-const suiteItemRE = /(classes|procedures)="([^"]*)+"/i
-const suiteItemRE2 = /,(classes|procedures)="([^"]*)+"/i
+const suiteItemRE = /(classes|procedures)="([^"]+)+"/i
+const suiteItemRE2 = /,(classes|procedures)="([^"]+)+"/i
 // CLASS statement
 const classRE = /^\s*class\s+(\S+)\s*:/i
 // METHOD statement
@@ -48,14 +48,12 @@ export const parseABLUnit = (text: string, relativePath: string, events: {
 				return
 			}
 			parseClass()
-			return
 		} else if (relativePath.endsWith(".p")) {
 			if (text.toLowerCase().indexOf("@testsuite") != -1) {
 				parseSuiteProgram()
 				return
 			}
 			parseProgram()
-			return
 		}
 	}
 
@@ -110,16 +108,13 @@ export const parseABLUnit = (text: string, relativePath: string, events: {
 					foundClassHead = true
 					continue;
 				}
-			} else {
-				//second, find all the @test methods
-				if (lines[lineNo - 1].toLowerCase().indexOf("@test.") != -1) {
-					const method = methodRE.exec(lines[lineNo]);
-					if (method) {
-						const [, publicKeyword, methodname] = method;
-						const range = new vscode.Range(new vscode.Position(lineNo, 0), new vscode.Position(lineNo, method[0].length));
-						events.onTestMethod(range, classname, methodname);
-						continue;
-					}
+			} else if (lines[lineNo - 1].toLowerCase().indexOf("@test.") != -1) {
+				const method = methodRE.exec(lines[lineNo]);
+				if (method) {
+					const [, , methodname] = method;
+					const range = new vscode.Range(new vscode.Position(lineNo, 0), new vscode.Position(lineNo, method[0].length));
+					events.onTestMethod(range, classname, methodname);
+					continue;
 				}
 			}
 		}
@@ -154,12 +149,8 @@ export const parseABLUnit = (text: string, relativePath: string, events: {
 			if(lines[lineNo - 1].toLowerCase().indexOf("@test.") != -1) {
 				const proc = procedureRE.exec(lines[lineNo])
 				if (proc) {
-					const [ , blank, procedureName] = proc;
+					const [ , , procedureName] = proc;
 					const range = new vscode.Range(new vscode.Position(lineNo, lines[lineNo].indexOf(procedureName)), new vscode.Position(lineNo, procedureName.length));
-					let label = relativePath;
-					if (configStyle == "tree") {
-						label = procedureName
-					}
 					events.onTestProcedure(range, relativePath, procedureName, programUri)
 					continue;
 				}
@@ -184,13 +175,13 @@ export const parseABLUnit = (text: string, relativePath: string, events: {
 					if(cr) {
 						const [, type, list] = cr
 						const split = list.split(',')
-						for (let idx=0; idx<split.length; idx++) {
+						for (const element of split) {
 							suiteList[suiteList.length] = {
-								name: split[idx],
+								name: element,
 								type: type,
 								range: new vscode.Range(
-									new vscode.Position(lineNo, lines[lineNo].indexOf(split[idx])),
-									new vscode.Position(lineNo, lines[lineNo].indexOf(split[idx]) + split[idx].length)
+									new vscode.Position(lineNo, lines[lineNo].indexOf(element)),
+									new vscode.Position(lineNo, lines[lineNo].indexOf(element) + element.length)
 								)
 							}
 						}
@@ -201,13 +192,13 @@ export const parseABLUnit = (text: string, relativePath: string, events: {
 					if(cr2) {
 						const [, type2, list2] = cr2
 						const split = list2.split(',')
-						for (let idx=0; idx<split.length; idx++) {
+						for (const element of split) {
 							suiteList[suiteList.length] = {
-								name: split[idx],
+								name: element,
 								type: type2,
 								range: new vscode.Range(
-									new vscode.Position(lineNo, lines[lineNo].indexOf(split[idx])),
-									new vscode.Position(lineNo, lines[lineNo].indexOf(split[idx]) + split[idx].length)
+									new vscode.Position(lineNo, lines[lineNo].indexOf(element)),
+									new vscode.Position(lineNo, lines[lineNo].indexOf(element) + element.length)
 								)
 							}
 						}
@@ -221,8 +212,8 @@ export const parseABLUnit = (text: string, relativePath: string, events: {
 					const range = new vscode.Range(new vscode.Position(lineNo, lines[lineNo].indexOf(className)), new vscode.Position(lineNo, className.length));
 					events.onTestSuite(range, className);
 
-					for (let idx=0; idx<suiteList.length; idx++) {
-						events.onTestClass(suiteList[idx]['range'], suiteList[idx]['name'], suiteList[idx]['name'])
+					for (const element of suiteList) {
+						events.onTestClass(element['range'], element['name'], element['name'])
 					}
 
 					return
@@ -232,7 +223,7 @@ export const parseABLUnit = (text: string, relativePath: string, events: {
 	}
 
 	const parseSuiteProgram = () => {
-		// console.log("TODO - parseSuiteProgram - " + relativePath)
+		console.log("TODO - parseSuiteProgram - " + relativePath)
 	}
 
 	parseByType()

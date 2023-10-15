@@ -42,11 +42,9 @@ export class ABLResultsParser {
 	fs = require('fs');
 	resultsJson?: TestSuites
 
-	constructor() {}
-
 	async importResults(resultsUri: Uri) {
 		const resultsBits = await workspace.fs.readFile(resultsUri);
-		const resultsXml = await Buffer.from(resultsBits.toString()).toString('utf8');
+		const resultsXml = Buffer.from(resultsBits.toString()).toString('utf8');
 		const resultsXmlJson = await this.parseXml(resultsXml)
 		this.resultsJson = this.parseSuites(resultsXmlJson)
 		this.outputJson(Uri.parse(resultsUri.toString().replace(/\.xml$/,".json")), this.resultsJson)
@@ -58,7 +56,7 @@ export class ABLResultsParser {
 
 		parseString(xmlData, function (err: any, resultsRaw: any) {
 			if (err) {
-				throw("error parsing XML")
+				throw(new Error("error parsing XML"))
 			}
 			res = resultsRaw
 			return String(resultsRaw)
@@ -68,7 +66,7 @@ export class ABLResultsParser {
 
 	parseSuites(res: any) {
 		if(!res['testsuites']) {
-			throw "malformed results.xml file - could not find top-level 'testsuites' node"
+			throw new Error("malformed results.xml file - could not find top-level 'testsuites' node")
 		}
 		res = res['testsuites']
 
@@ -109,8 +107,8 @@ export class ABLResultsParser {
 		res = res[0]['property']
 		const props: { [key: string]: string } = {}
 
-		for(let idx=0; idx<res.length; idx++) {
-			props[res[idx]['$']['name']] = res[idx]['$']['value']
+		for(const element of res) {
+			props[element['$']['name']] = element['$']['value']
 		}
 		return props
 	}
@@ -134,8 +132,11 @@ export class ABLResultsParser {
 
 	parseFailOrError(type: string, res: any) {
 		if (!res[type]) { return undefined }
+
+		if (res[type][1]) {
+			console.error("more than one failure or error in testcase - use case not handled")
+		}
 		return {
-			//TODO: can we have more than one failure or error?
 			callstack: res[type][0]['_'],
 			message: res[type][0]['$']['message'],
 			type: res[type][0]['$']['type']

@@ -27,17 +27,9 @@ export class ABLUnitConfig  {
 		})
 	}
 
-	workspaceUri() {
+	workspaceUri(): Uri {
 		if (workspace.workspaceFolders == undefined) {
-			throw "No workspace folders defined"
-		}
-		return workspace.workspaceFolders[0].uri
-		// TODO - handle multiple workspace folders
-	}
-
-	static workspaceUri(): Uri {
-		if (workspace.workspaceFolders == undefined) {
-			throw "No workspace folders defined"
+			throw new Error("No workspace folders defined")
 		}
 		return workspace.workspaceFolders[0].uri
 		// TODO - handle multiple workspace folders
@@ -50,11 +42,11 @@ export class ABLUnitConfig  {
 		if (tempDir) {
 			try {
 				// if the dir maps to a Uri that is valid, put it at the front of the list
-				if (tempDir.match(/^[a-zA-Z]:/)) {
+				if (RegExp(/^[a-zA-Z]:/).exec(tempDir)) {
 					uriList.unshift(Uri.parse(tempDir))
 					//TODO test unix paths
 				} else {
-					uriList.unshift(Uri.joinPath(ABLUnitConfig.workspaceUri(), tempDir))
+					uriList.unshift(Uri.joinPath(this.workspaceUri(), tempDir))
 				}
 			} catch (err) {
 				console.error(err)
@@ -76,13 +68,13 @@ export class ABLUnitConfig  {
 				}
 			}
 		}
-		throw("uncaught error - cannot resolve tempDir")
+		throw(new Error("uncaught error - cannot resolve tempDir"))
 	}
 
 	async getProgressIni () {
-		const workspaceUri = ABLUnitConfig.workspaceUri()
+		const workspaceUri = this.workspaceUri()
 		if (!workspaceUri) {
-			throw ("no workspace directory opened")
+			throw (new Error("no workspace directory opened"))
 		}
 		console.log("getProgressIni workspaceUri=" + workspaceUri)
 
@@ -110,19 +102,19 @@ export class ABLUnitConfig  {
 			return uri3
 		}
 
-		throw ("cannot find a suitable progress.ini or temp directory")
+		throw (new Error("cannot find a suitable progress.ini or temp directory"))
 	}
 
 	resultsUri () {
 		let resultsFile = workspace.getConfiguration('ablunit').get('resultsPath', '')
 		if(!resultsFile) {
-			throw ("no workspace directory opened")
+			throw (new Error("no workspace directory opened"))
 		}
 		if(resultsFile == "") {
 			resultsFile = "results.xml"
 		}
 
-		if (resultsFile.match(/^[a-zA-Z]:/)) {
+		if (RegExp(/^[a-zA-Z]:/).exec(resultsFile)) {
 			return Uri.parse(resultsFile)
 		}
 		return Uri.joinPath(this.tempDirUri!, resultsFile)
@@ -131,7 +123,7 @@ export class ABLUnitConfig  {
 
 	getProfileOutputUri () {
 		const profileOutputPath = workspace.getConfiguration('ablunit').get('profileOutputPath', '')
-		if (profileOutputPath.match(/^[a-zA-Z]:/)) {
+		if (RegExp(/^[a-zA-Z]:/).exec(profileOutputPath)) {
 			return Uri.parse(profileOutputPath)
 		} else {
 			return Uri.joinPath(this.tempDirUri!, profileOutputPath)

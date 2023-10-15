@@ -27,7 +27,7 @@ interface CallStack {
 
 function getWorkspacePath(): Uri {
 	if (workspace.workspaceFolders == undefined) {
-		throw "No workspace folders defined"
+		throw new Error("No workspace folders defined")
 	}
 	return workspace.workspaceFolders[0].uri
 }
@@ -60,7 +60,7 @@ export async function getFailureMarkdownMessage(failure: TCFailure): Promise<Mar
 		}
 	})
 
-	const promsgMatch = failure.message.match(/\((\d+)\)$/)
+	const promsgMatch = RegExp(/\((\d+)\)$/).exec(failure.message)
 	let promsgNum = ""
 	if (promsgMatch)
 		promsgNum = promsgMatch[1]
@@ -114,29 +114,11 @@ export async function getFailureMarkdownMessage(failure: TCFailure): Promise<Mar
 		md.supportHtml = true;
 		return md;
 	})
-
-	//TODO: failure.message should pull in promsg info from $DLC/prohelp/msgdata
-	// console.log("getFail1")
-	// if (promsgNum != "") {
-	// 	console.log("getFail2")
-	// 	const promsg = getPromsg(Number(promsgNum))
-	// 	if (promsg) {
-	// 		console.log("getFail3")
-	// 		if (promsg.extraText) {
-	// 			console.log("getFail4")
-	// 			promsg.extraText.forEach((text) => {
-	// 				console.log("getFail5")
-	// 				stackString += "\n\n" + text
-	// 			})
-	// 		}
-	// 	}
-	// }
 }
 
 export const parseABLCallStack = (text: string) => {
 
 	const lines = text.replace(/\r/g,'').split('\n');
-	// var stack: CallStack;
 	const stack = {} as CallStack;
 
 	stack.lines = [];
@@ -167,7 +149,7 @@ export const parseABLCallStack = (text: string) => {
 					rcode
 				};
 			} else {
-				throw("Could not parse call stack line: '" + line + "'");
+				throw(new Error("Could not parse call stack line: '" + line + "'"));
 			}
 		}
 

@@ -3,7 +3,7 @@ import { Uri, workspace } from "vscode"
 
 function getWorkspaceUri(): Uri {
 	if (workspace.workspaceFolders == undefined) {
-		throw "No workspace folders defined"
+		throw new Error("No workspace folders defined")
 	}
 	return workspace.workspaceFolders[0].uri
 }
@@ -97,7 +97,7 @@ class ABLDebugLines {
 			this.map.push(m)
 		}
 		if (!m) {
-			throw "cannot find debugLines for " + debugUri + " [should not hit this!! (1)]"
+			throw new Error("cannot find debugLines for " + debugUri + " [should not hit this!! (1)]")
 		}
 
 		const prom2 = this.readLineCount(debugUri).then((lc) => {
@@ -118,8 +118,8 @@ class ABLDebugLines {
 			const lines = content.split("\n")
 
 			const promArr: Promise<void>[] = [Promise.resolve()]
-			for (let idx=0; idx < lines.length; idx++) {
-				const xref = incRE.exec(lines[idx])
+			for (const element of lines) {
+				const xref = incRE.exec(element)
 				if (xref && xref[4] == "INCLUDE") {
 					const [, ,parent,lineNumStr,xrefType,includeNameRaw] = xref
 					if (xrefType === "INCLUDE") {
@@ -140,7 +140,7 @@ class ABLDebugLines {
 		return Promise.all([prom1, prom2]).then(() => {
 			// console.log("NOW... calculate the line mappings")
 			if (!m) {
-				throw "cannot find debugLines for " + debugUri + " [should not hit this!! (2)]"
+				throw new Error("cannot find debugLines for " + debugUri + " [should not hit this!! (2)]")
 			}
 			// console.log("m.length=" + m.lineCount)
 			// m.includes.forEach((inc) => {
@@ -172,7 +172,7 @@ class ABLDebugLines {
 		if (inc) {
 			const incLen = this.incLengths.find((incLen) => incLen.uri.fsPath === inc.includeUri.fsPath)
 			if (!incLen) {
-				throw "cannot find include length for " + inc.includeUri + " [should not hit this!! (3)]"
+				throw new Error("cannot find include length for " + inc.includeUri + " [should not hit this!! (3)]")
 			}
 			for(let incLine=1; incLine<=incLen.lineCount; incLine++) {
 				dbgLine++
