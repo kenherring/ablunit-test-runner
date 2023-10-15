@@ -17,7 +17,7 @@ workflows:
 jobs:
   package:
     docker:
-      - image: cimg/node:10.15.3
+      - image: cimg/node:20.8.0
     steps:
       - checkout
       - run: npm install -g @vscode/vsce
@@ -29,7 +29,7 @@ jobs:
             - "*.vsix"
   build:
     docker:
-      - image: cimg/node:10.15.3
+      - image: cimg/node:20.8.0
     steps:
       - checkout
       - run: npm install -g @vscode/vsce
@@ -44,7 +44,7 @@ jobs:
           path: /root/.npm/_logs/
   test:
     docker:
-      - image: cimg/node:10.15.3
+      - image: cimg/node:20.8.0
     steps:
       - checkout
       - run: npm install
@@ -56,7 +56,7 @@ jobs:
           path: test-results.xml
   deploy:
     docker:
-      - image: cimg/node:10.15.3
+      - image: cimg/node:20.8.0
     steps:
       - checkout
       - attach_workspace:
