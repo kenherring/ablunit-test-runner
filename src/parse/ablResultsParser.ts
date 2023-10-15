@@ -133,7 +133,7 @@ export class ABLResultsParser {
 	parseFailOrError(type: string, res: any) {
 		if (!res[type]) { return undefined }
 
-		if (res['type'][1]) {
+		if (res[type][1]) {
 			console.error("more than one failure or error in testcase - use case not handled")
 		}
 		return {
