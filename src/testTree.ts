@@ -1,21 +1,22 @@
-import { TextDecoder } from 'util';
-import * as vscode from 'vscode';
-import { parseABLUnit } from './parser';
-import { getFailureMarkdownMessage, parseABLCallStack } from './ablHelper';
-import { ABLResultsParser, TestCase } from './parse/ablResultsParser';
-import * as cp from "child_process";
-import { timeStamp } from 'console';
 import { ABLProfile } from './parseABLProfile';
+import { ABLResultsParser, TestCase } from './parse/ablResultsParser';
+import { ABLUnitConfig } from './ABLUnitConfig';
+import { getFailureMarkdownMessage } from './ablHelper';
 import { Module, LineSummary } from './ABLProfileSections';
+import { parseABLUnit } from './parser';
+import { TextDecoder } from 'util';
+import { outputChannel } from './ABLUnitCommon';
+import * as cp from "child_process";
+import * as vscode from 'vscode';
 
 const textDecoder = new TextDecoder('utf-8');
 
 export type ABLUnitTestData = ABLTestSuiteClass | ABLTestProgramDirectory | ABLTestClassNamespace | ABLTestClass | ABLTestProgram | ABLTestMethod | ABLTestProcedure | ABLAssert
 
-export const testData = new WeakMap<vscode.TestItem, ABLUnitTestData>();
-export const testCoverage: Map<string, vscode.FileCoverage> = new Map<string, vscode.FileCoverage>();
+export const testData = new WeakMap<vscode.TestItem, ABLUnitTestData>()
+export const testCoverage: Map<string, vscode.FileCoverage> = new Map<string, vscode.FileCoverage>()
 
-let generationCounter = 0;
+let generationCounter = 0
 
 export const getContentFromFilesystem = async (uri: vscode.Uri) => {
 	try {
@@ -25,76 +26,29 @@ export const getContentFromFilesystem = async (uri: vscode.Uri) => {
 		console.warn(`Error providing tests for ${uri.fsPath}`, e);
 		return '';
 	}
-};
+}
+
+const doesFileExist = async (uri: vscode.Uri) => {
+	try {
+		const stat = await vscode.workspace.fs.stat(uri);
+		if(stat) {
+			return true
+		}
+		return false
+	} catch (e) {
+		return false
+	}
+}
 
 class TestTypeObj {
 	public didResolve: boolean = false
 	public name: string = ""
 	public label: string = ""
-	protected storageUri: vscode.Uri | undefined
-	protected extensionUri: vscode.Uri | undefined
 
 	public fileCoverage: vscode.FileCoverage[] = []
-	
+
 	getLabel() {
 		return this.label
-	}
-
-	public setStorageUri(extensionUri: vscode.Uri, storageUri: vscode.Uri | undefined) {
-		this.extensionUri = extensionUri
-		this.storageUri = storageUri
-	}
-
-	getExtensionUri() {
-		if (!this.extensionUri) {
-			// should be impossible to hit this
-			throw ("extensionUri not set")
-		}
-		return this.extensionUri
-	}
-
-	protected workspaceUri = () => {
-		const workspaceDir = vscode.workspace.workspaceFolders?.map(item => item.uri)[0]
-		if (!workspaceDir) {
-			throw ("no workspace directory opened")
-		}
-		return vscode.Uri.file(workspaceDir.fsPath)
-	}
-
-	protected resultsUri = () => {
-		var resultsFile = vscode.workspace.getConfiguration('ablunit').get('resultsPath', '')
-		if(!resultsFile) {
-			throw ("no workspace directory opened")
-		}
-		if(resultsFile == "") {
-			resultsFile = "results.xml"
-		}
-
-		if (resultsFile.startsWith("/") || resultsFile.startsWith("\\")) {
-			const uri = vscode.Uri.file(resultsFile)
-			if (uri) {
-				return uri
-			}
-		}
-		return vscode.Uri.joinPath(this.workspaceUri(), resultsFile)
-	}
-
-	protected profilerUri = () => {
-		var profilerFile = vscode.workspace.getConfiguration('ablunit').get('profileOutputPath', '')
-		if(!profilerFile) {
-			throw ("no workspace directory opened")
-		}
-		if(profilerFile == "") {
-			profilerFile = "results.prof"
-		}
-
-		if (profilerFile.startsWith("/") || profilerFile.startsWith("\\")) {
-			const uri = vscode.Uri.file(profilerFile)
-			if (uri) {
-				return uri
-			}
-		}
-		return vscode.Uri.joinPath(this.workspaceUri(), profilerFile)
 	}
 }
 
@@ -148,16 +102,10 @@ class TestFile extends TestTypeObj{
 	}
 
 	ascend(depth: number, ancestors: [{ item: vscode.TestItem, children: vscode.TestItem[] }]) {
-		// for(let idx=0; idx<ancestors.length; idx++) {
-		// 	console.log("1: ancestor-label[" + idx + "]=" + ancestors[idx].item.label + " " + ancestors[idx].item.children.size + " " + JSON.stringify(ancestors[idx].item.tags) + " parent=" +  ancestors[idx].item.parent?.label)
-		// }
 		while (ancestors.length > depth) {
 			const finished = ancestors.pop()!;
 			finished.item.children.replace(finished.children);
-			// console.log("2: ancestor-label-" + depth + "=" + finished.item.label + " " + finished.children + " " + JSON.stringify(finished.item.tags) + " parent=" +  finished.item.parent?.label)
 			this.replaceWith = finished.item
-			// this.replaceWith.children.replace(finished.children)
-			// console.log("REPLACED_WITH=" + this.replaceWith?.id + " " + this.replaceWith?.label + " " + this.replaceWith?.children.size + " " + this.replaceWith.uri)
 		}
 	}
 
@@ -165,163 +113,156 @@ class TestFile extends TestTypeObj{
 		console.error("updateFromContents TestFile - skipping")
 	}
 
-	 getProgressIni() {
-		if (!this.workspaceUri()) {
-			throw ("no workspace directory opened")
-		}
-		// console.log("getProgressIni workspaceDir=" + this.workspaceUri())
-
-		//first, check if the progressIni config is set for the workspace
-		const configIni = vscode.workspace.getConfiguration('ablunit').get('progressIni', '')
-		if (configIni != '') {
-			const uri1 = vscode.Uri.joinPath(this.workspaceUri(), configIni)
-			// console.log("uri1=" + uri1)
-			if(uri1){
-				return uri1
-			}
-		}
-
-		//second, check if there is a progress ini in the root of the repo
-		// console.log("workspaceDir=" + this.workspaceUri())
-		if(this.workspaceUri()) {
-			const uri2 = vscode.Uri.joinPath(this.workspaceUri(), 'progress.ini')
-			// console.log("uri2=" + uri2)
-			if (uri2) {
-				return uri2
-			}
-		}
-
-		//third, check if the workspace has a temp directory configured
-		const uri3 = vscode.Uri.parse(vscode.workspace.getConfiguration('ablunit').get('tempDir', ''))
-		// console.log("uri3=" + uri3)
-		if (uri3) {
-			return uri3
-		}
-
-		//fourth, and lastly, use the extension temp directory
-		if(this.storageUri) {
-			const stat1 = vscode.workspace.fs.stat(this.storageUri)
-			if(!stat1) {
-				vscode.workspace.fs.createDirectory(this.storageUri)
-			}
-			const stat2 = vscode.workspace.fs.stat(this.storageUri)
-
-			const uri4 = vscode.Uri.joinPath(this.storageUri, 'progress.ini')
-			// console.log("uri4=" + uri4)
-			if(uri4) {
-				return uri4
-			}
-		}
-		throw ("cannot find a suitable progress.ini or temp directory")
-	}
-
 	createProgressIni (progressIni: vscode.Uri) {
 		const iniData = [ "[WinChar Startup]", "PROPATH=." ]
-		vscode.workspace.fs.writeFile(progressIni, Uint8Array.from(Buffer.from(iniData.join("\n"))))
+		return vscode.workspace.fs.writeFile(progressIni, Uint8Array.from(Buffer.from(iniData.join("\n"))))
 	}
 
-	createProfileOptions (profileOptions: vscode.Uri) {
-		const profOpts = [ "-coverage", "-description \"ABLUnit\"", "-filename results.prof" ]
+	createProfileOptions (profileOptions: vscode.Uri, cfg: ABLUnitConfig) {
+		const profOpts = [ "-coverage", "-description \"ABLUnit\"", "-filename " + cfg.getProfileOutputUri().fsPath ]
 		vscode.workspace.fs.writeFile(profileOptions, Uint8Array.from(Buffer.from(profOpts.join("\n"))))
 	}
 
-	getCommand(itemPath: string): string {
-		if(!this.storageUri) {
+	createAblunitJson(uri: vscode.Uri, itemPath: string, cfg: ABLUnitConfig) {
+		const opt: options = {
+			output: {
+				location: cfg.resultsUri().fsPath,
+				format: "xml",
+			},
+			quitOnEnd: true,
+			writeLog: true,
+			showErrorMessage: true,
+			throwError: true,
+			tests: [
+				{ test: itemPath }
+			]
+		}
+		vscode.workspace.fs.writeFile(uri, Uint8Array.from(Buffer.from(JSON.stringify(opt, null, 2))))
+	}
+
+	async getCommand(itemPath: string, cfg: ABLUnitConfig) {
+		if(!cfg.tempDirUri) {
 			throw ("temp directory not set")
 		}
-		// vscode.workspace.fs.createDirectory(this.storageUri)
-		
-		var cmd = vscode.workspace.getConfiguration('ablunit').get('tests.command', '').trim();
-		if (! cmd) {
-			cmd = '_progres -b -p ABLUnitCore.p ${progressIni} -param "${itemPath} CFG=${ablunit.json}" -profile "${profile.options}"';
-		}
-		
-		const ablunitJson = vscode.Uri.joinPath(this.workspaceUri(), "ablunit.json").fsPath
-		const profileOptions = vscode.Uri.joinPath(this.workspaceUri(), "profile.options")
-		
-		cmd = cmd.replace("${itemPath}",itemPath)
-		cmd = cmd.replace("${ablunit.json}",ablunitJson)
-		cmd = cmd.replace("${profile.options}",profileOptions.fsPath)
 
-		// need to promisify
-		// const profileOptFile = vscode.workspace.fs.stat(profileOptions).then((stat) => { return true }, (err) => { return false })
-		// if (! profileOptFile) {
-		if (true) {
-			this.createProfileOptions(profileOptions)
-		}
-		
+		var cmd1 = vscode.workspace.getConfiguration('ablunit').get('tests.command', '').trim();
+		// console.log("cmd setting=" + cmd1)
+		var cmd = ['_progres', '-b', '-p', 'ABLUnitCore.p']
+		// if (! cmd) {
+			// cmd = '_progres -b -p ABLUnitCore.p ${progressIni} -T ${tempDir} -profile ${profile.options} -param "${itemPath} CFG=${ablunit.json}"'
+		// }
+
 		if (process.platform === 'win32') {
-			const progressIni = this.getProgressIni()
-			if (!progressIni) { throw ("cannot find progress.ini or suitable location to write one") }
-			const progressIniStat = vscode.workspace.fs.stat(progressIni)
-			if(! progressIniStat) {
-				this.createProgressIni(progressIni)
-			}
-			cmd = cmd.replace("${progressIni}","-basekey INI -ininame " + progressIni.fsPath);
-		} else {
-			cmd = cmd.replace("${progressIni}","");
+			const progressIni = await cfg.getProgressIni()
+			// console.log("progress.ini=" + progressIni.fsPath)
+			//TODO - if this is from the setting, don't overwrite it
+			// console.log("creating progress.ini")
+			await this.createProgressIni(progressIni)
+			// cmd = cmd.replace("${progressIni}","-basekey INI -ininame " + progressIni.fsPath);
+			cmd.push('-basekey', 'INI', '-ininame', progressIni.fsPath)
 		}
-		
+
+		// cmd = cmd.replace("${tempDir}", cfg.tempDirUri.fsPath)
+		cmd.push('-T', cfg.tempDirUri.fsPath)
+
+		const profileOptions = vscode.Uri.joinPath(cfg.tempDirUri, "profile.options")
+		// cmd = cmd.replace("${profile.options}", profileOptions.fsPath)
+		cmd.push('-profile', profileOptions.fsPath)
+
+		const ablunitJson = vscode.Uri.joinPath(cfg.tempDirUri, "ablunit.json")
+		// cmd = cmd.replace("${itemPath}", itemPath)
+		// cmd = cmd.replace("${ablunit.json}", ablunitJson.fsPath)
+		// cmd.push("-param", itemPath)
+		// cmd.push("-outputLocation", cfg.tempDirUri.fsPath)
+		// cmd.push('-param', "'CFG=" + ablunitJson.fsPath + "'")
+		cmd.push("-param", '"' + itemPath + " -outputLocation " + cfg.tempDirUri.fsPath + '"')
+
+		// TODO - don't create if they already exist?
+		this.createAblunitJson(ablunitJson, itemPath, cfg)
+		this.createProfileOptions(profileOptions, cfg)
+
+		// console.log("replacing directory separators")
+		cmd.forEach(element => {
+			element = element.replace(/\\/g, '/')
+		});
+
 		console.log("cmd='" + cmd + "'")
+		outputChannel.appendLine("ABLUnit Command: " + cmd.join(' '))
 		return cmd
 	}
-	
-	async run(item: vscode.TestItem, options: vscode.TestRun): Promise<void> {
+
+	async run(item: vscode.TestItem, options: vscode.TestRun, cfg: ABLUnitConfig) {
 		const start = Date.now()
 		let itemPath = vscode.workspace.asRelativePath(item.uri!.fsPath)
-		
-		const cmd: string = this.getCommand(itemPath)
-		const notificationsEnabled = vscode.workspace.getConfiguration('ablunit').get('notificationsEnabled', true)
 
-		
-		if (notificationsEnabled) {
-			vscode.window.showInformationMessage("running ablunit tests");
-		}
-		console.log("ShellExecution Started - " + this.workspaceUri().fsPath)
-		const dir = this.workspaceUri().fsPath
-
-		// await new Promise<string>((resolve, reject) => {
-		// 	vscode.tasks.executeTask(
-		// 		new vscode.Task(
-		// 			{ type: 'process' },
-		// 			vscode.TaskScope.Workspace,
-		// 			"ablunit run tests",
-		// 			"ablunit-test-provider",
-		// 			new vscode.ShellExecution(cmd, { cwd: dir })));
-		// });
-
-		await new Promise<string>((resolve, reject) => {
-			cp.exec(cmd, { cwd: dir }, (err:any, stdout: any, stderr: any) => {
-				// console.log('stdout: ' + stdout);
-				// console.log('stderr: ' + stderr);
-				if (err) {
-					// console.log(cmd+' error!');
-					// console.log(err);
-					options.appendOutput(stderr);
-					reject(err);
-				}
-				options.appendOutput(stdout);
-				return resolve(stdout);
-			});
-		});
-		const duration = Date.now() - start
-		console.log("ShellExecution Completed - duration: " + duration)
-		if (notificationsEnabled) {
-			vscode.window.showInformationMessage("ablunit tests complete");
+		const data = testData.get(item)
+		console.log("this.testFileType=" + this.testFileType)
+		if (data instanceof ABLTestProcedure || data instanceof ABLTestMethod) {
+			console.log("itemPath=" + itemPath)
+			itemPath = itemPath + "#" + item.label
+			console.log("itemPath=" + itemPath)
 		}
 
-		
-		await this.parseResults(item, options, duration)
-		await this.parseProfile()
+		return this.getCommand(itemPath, cfg).then((args) => {
+
+			outputChannel.appendLine("ShellExecution Started - dir='" + cfg.workspaceUri().fsPath + "'")
+			console.log("ShellExecution Started - dir='" + cfg.workspaceUri().fsPath + "'")
+
+			const cmd = args[0]
+			args.shift()
+			// console.log("args=" + args)
+
+			// return vscode.tasks.executeTask(
+			// 	new vscode.Task(
+			// 		{ type: 'process' },
+			// 		vscode.TaskScope.Workspace,
+			// 		"ablunit run tests",
+			// 		"ablunit-test-provider",
+			// 		new vscode.ProcessExecution(cmd, args, { cwd: cfg.workspaceUri().fsPath })
+			// 	)
+			// ).then((value) => {
+			// 	console.log("after vscode.tasks.executeTask")
+			// 	const duration = Date.now() - start
+			// 	console.log("ShellExecution Completed - duration: " + duration)
+			// 	console.error("TODO - reenable parseProfile")
+			// 	return Promise.all([
+			// 		this.parseResults(item, options, duration, cfg),
+			// 		// this.parseProfile(cfg)
+			// 	])
+			// })
+
+			// console.log("COMMAND='" + '_progres ' + args.join(' ') + "'")
+			return new Promise<string>((resolve, reject) => {
+				cp.exec('_progres ' + args.join(' '), { cwd: cfg.workspaceUri().fsPath }, (err:any, stdout: any, stderr: any) => {
+					// console.log('stdout: ' + stdout)
+					// console.log('stderr: ' + stderr)
+					if (stderr) {
+						console.error(stderr)
+						options.appendOutput("ERROR:" + stderr)
+						reject(stderr)
+					}
+					const duration = Date.now() - start
+					outputChannel.appendLine("ShellExecution Completed - duration: " + duration)
+					console.log("ShellExecution Completed - duration: " + duration)
+					console.log(stdout)
+					options.appendOutput(stdout)
+					resolve(stdout)
+				})
+			}).then((value) => {
+				const duration = Date.now() - start
+				return Promise.all([
+					this.parseResults(item, options, duration, cfg),
+					this.parseProfile(cfg)
+				])
+			})
+		})
 	}
-	
-	async parseResults (item: vscode.TestItem, options: vscode.TestRun, duration: number) {
-		if (!this.workspaceUri()) {}
-		const resultsUri = this.resultsUri()
+
+	async parseResults (item: vscode.TestItem, options: vscode.TestRun, duration: number, cfg: ABLUnitConfig) {
+		const resultsUri = cfg.resultsUri()
 		const ablResults = new ABLResultsParser()
 		await ablResults.importResults(resultsUri)
 		const res = ablResults.resultsJson
-
 
 		if(!res || !res['testsuite']) {
 			console.log("malformed results - could not find 'testsuite' node")
@@ -370,21 +311,24 @@ class TestFile extends TestTypeObj{
 		})
 	}
 
-	parseProfile() {
-		const profilerUri = this.profilerUri()
+	async parseProfile(cfg: ABLUnitConfig) {
+		const profilerUri = cfg.getProfileOutputUri()
 		console.log("parsing profiler 2: " + profilerUri.fsPath)
-		var profParser = new ABLProfile(profilerUri)
-		profParser.writeJsonToFile(vscode.Uri.joinPath(this.workspaceUri(), "profiler.json"))
+		var profParser = new ABLProfile()
+		await profParser.parseData(profilerUri)
+		profParser.writeJsonToFile(vscode.Uri.joinPath(cfg.tempDirUri!, "prof.json"))
 		const profOutput = profParser.profJSON
+		if (!profOutput)
+			throw("no profile data available...")
 
 		testCoverage.clear()
-		
+
 		profOutput.modules.forEach((module: Module) => {
 			if (!module.SourceName || module.SourceName?.startsWith("OpenEdge")) {
 				return
 			}
 
-			const fc = new vscode.FileCoverage(vscode.Uri.joinPath(this.workspaceUri(), module.SourceName), new vscode.CoveredCount(1,2))
+			const fc = new vscode.FileCoverage(vscode.Uri.joinPath(cfg.workspaceUri(), module.SourceName), new vscode.CoveredCount(1,2))
 
 			module.lines.forEach((line: LineSummary) => {
 				if (line.LineNo <= 0) {
@@ -403,10 +347,6 @@ class TestFile extends TestTypeObj{
 			let tc = testCoverage.get(fc.uri.fsPath)
 			if (!tc) {
 				testCoverage.set(fc.uri.fsPath, fc)
-			// } else {
-			// 	console.log("push")
-			// 	tc.push(fc)
-			// 	// testCoverage.set(fc.uri, tc.push(fc))
 			}
 		});
 		// TODO - turn this into TestCoverage class objects
@@ -473,7 +413,7 @@ export class ABLTestClassNamespace extends TestFile {
 export class ABLTestClass extends TestFile {
 	public canResolveChildren: boolean = true
 	methods: ABLTestMethod[] = []
-	
+
 	setClassInfo(classname: string, classlabel: string) {
 		this.name = classname
 		this.label = classlabel
@@ -490,7 +430,7 @@ export class ABLTestClass extends TestFile {
 		this.didResolve = true;
 
 		parseABLUnit(content, vscode.workspace.asRelativePath(item.uri!.fsPath), {
-			
+
 			onTestSuite: (range, suiteName) => {
 				this.testFileType = "ABLTestSuite"
 				const parent = ancestors[ancestors.length - 1]
@@ -516,7 +456,7 @@ export class ABLTestClass extends TestFile {
 				// }
 				thead.tags = [ new vscode.TestTag("runnable"), new vscode.TestTag("ABLTestClassNamespace") ]
 				thead.label = element
-				
+
 				if (ancestors.length > 0) {
 					var parent = ancestors[ancestors.length - 1]
 					parent.children.push(thead)
@@ -527,7 +467,7 @@ export class ABLTestClass extends TestFile {
 
 			onTestClass: (range: vscode.Range, classpath: string, label: string) => {
 				this.testFileType = "ABLTestClass"
-				
+
 				const id = `${classpath}`
 				const thead = controller.createTestItem(id, classpath, item.uri)
 				thead.range = range
@@ -536,7 +476,7 @@ export class ABLTestClass extends TestFile {
 				var tData = new ABLTestClass()
 				tData.setClassInfo(classpath, label)
 				testData.set(thead, tData)
-				
+
 				var parent = ancestors[ancestors.length - 1]
 				if(parent) {
 					parent.children.push(thead)
@@ -562,7 +502,7 @@ export class ABLTestClass extends TestFile {
 			onTestProgram: (range: vscode.Range, relativepath: string, label: string, programUri: vscode.Uri) => { console.error("should not be here! relativepath=" + relativepath) },
 
 			onTestProcedure: (range: vscode.Range, programname: string, procedurename: string, programUri) => { console.log("should not be here! programname=" + programname + " procedurename=" + procedurename) },
-			
+
 			onAssert: (range, assertMethod) => {
 				this.testFileType = "ABLAssert"
 				const parent = ancestors[ancestors.length - 1];
@@ -597,7 +537,7 @@ export class ABLTestProgramDirectory extends TestTypeObj {
 export class ABLTestProgram extends TestFile {
 	public canResolveChildren: boolean = true
 	procedures: ABLTestProcedure[] = []
-	
+
 	setProgramInfo(programname: string, programlabel: string) {
 		this.name = programname
 		this.label = programlabel
@@ -620,7 +560,7 @@ export class ABLTestProgram extends TestFile {
 			onTestClassNamespace: (range, classpath, element) => { console.error("onTestClassNamespace") },
 
 			onTestClass: (range: vscode.Range, classname: string, label: string) => { console.error("onTestClassNamespace") },
-			
+
 			onTestMethod: (range: vscode.Range, classname: string, methodname: string) => { console.error("onTestMethod") },
 
 			onTestProgramDirectory (range: vscode.Range, dirpath: string, dir: string, dirUri: vscode.Uri) {
@@ -641,7 +581,7 @@ export class ABLTestProgram extends TestFile {
 
 			onTestProgram: (range: vscode.Range, relativepath: string, label: string, programUri: vscode.Uri) => {
 				this.testFileType = "ABLTestProgram"
-				
+
 				const id = `${relativepath}`
 				const thead = controller.createTestItem(id, relativepath, item.uri)
 				thead.range = range
@@ -660,18 +600,18 @@ export class ABLTestProgram extends TestFile {
 
 			onTestProcedure: (range: vscode.Range, relativePath: string, procedureName: string, programUri: vscode.Uri) => {
 				this.testFileType = "ABLTestProcedure"
-				
+
 				const id = `${relativePath}#${procedureName}`
 				const thead = controller.createTestItem(id, procedureName, item.uri)
 				thead.range = range
 				thead.label = procedureName
 				thead.tags = [ new vscode.TestTag("runnable"), new vscode.TestTag("ABLTestProcedure") ]
 				testData.set(thead, new ABLTestProcedure(thisGeneration, relativePath, procedureName))
-				
+
 				var parent = ancestors[ancestors.length - 1]
 				parent.children.push(thead)
 			},
-			
+
 			onAssert: (range, assertMethod) => {
 				this.testFileType = "ABLAssert"
 				const parent = ancestors[ancestors.length - 1];
@@ -693,7 +633,7 @@ export class ABLTestMethod extends TestFile { // child of TestClass
 
 	constructor(public generation: number,
 				private readonly classname: string,
-				private readonly methodName: string ) { 
+				private readonly methodName: string ) {
 		super()
 	}
 }
@@ -703,7 +643,7 @@ export class ABLTestProcedure extends TestFile { // child of TestProgram
 
 	constructor(public generation: number,
 				private readonly programname: string,
-				private readonly procedurename: string) { 
+				private readonly procedurename: string) {
 		super()
 		this.label = procedurename
 	}
@@ -712,7 +652,7 @@ export class ABLTestProcedure extends TestFile { // child of TestProgram
 export class ABLAssert extends TestTypeObj { // child of TestClass or TestProcedure
 	public canResolveChildren: boolean = false
 	public runnable: boolean = false
-	
+
 	constructor(
 		public generation: number,
 		private readonly assertText: string

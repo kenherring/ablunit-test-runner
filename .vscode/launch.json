@@ -20,32 +20,32 @@
 			"preLaunchTask": "npm: watch"
 		},
 		{
-			"name": "Test Extension - test_projects workspace",
+			"name": "Test Extension - Select Workspace",
 			"type": "extensionHost",
 			"request": "launch",
 			"runtimeExecutable": "${execPath}",
 			"args": [
 				"--extensionDevelopmentPath=${workspaceFolder}",
-				"${workspaceFolder}/test_projects/test_projects.code-workspace"
+				"${workspaceFolder}/test_projects/${input:workspaceName}"
 			],
 			"outFiles": [
 				"${workspaceFolder}/out/**/*.js"
 			],
 			"preLaunchTask": "npm: watch"
 		},
+	],
+	"inputs": [
 		{
-			"name": "Test Extension - proj2",
-			"type": "extensionHost",
-			"request": "launch",
-			"runtimeExecutable": "${execPath}",
-			"args": [
-				"--extensionDevelopmentPath=${workspaceFolder}",
-				"${workspaceFolder}/test_projects/proj2"
+			"id": "workspaceName",
+			"description": "Enter the name of the workspace to test",
+			"type": "pickString",
+			"options": [
+				"test_projects.code-workspace",
+				"proj1",
+				"proj2",
+				"proj3_debugLines",
+				"proj4_tempDir"
 			],
-			"outFiles": [
-				"${workspaceFolder}/out/**/*.js"
-			],
-			"preLaunchTask": "npm: watch"
 		}
 	]
 }

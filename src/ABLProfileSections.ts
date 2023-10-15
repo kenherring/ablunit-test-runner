@@ -84,7 +84,7 @@ export class ABLProfileJSON {
         const childModules: Module[] = []
         for(let lineNo=0; lineNo < lines.length; lineNo++){
             const test = moduleRE.exec(lines[lineNo])
-            
+
             let mod: Module  = {
                 ModuleID: Number(test![1]),
                 ModuleName: test![2],
@@ -100,19 +100,23 @@ export class ABLProfileJSON {
                 calledBy: [],
                 calledTo: []
             }
-            mod['Destructor'] = (mod['ModuleName'].startsWith("~"))
-            const split = mod['ModuleName'].split(" ")
+            mod.Destructor = (mod.ModuleName.startsWith("~"))
+            const split = mod.ModuleName.split(" ")
                 if (split.length >= 4) {
-                    console.log("SPLIT4!!!!! " + lines[lineNo])
+                    console.error("SPLIT4!!!!! " + lines[lineNo])
                 } else {
-                    mod['EntityName'] = split[0]
+                    mod.EntityName = split[0]
                     if (split.length == 1) {
-                        mod['SourceName'] = split[0]
+                        mod.SourceName = split[0]
                     } else {
                         if (split[1])
-                            mod['SourceName'] = split[1]
-                        if (split[2])
-                            mod['ParentName'] = split[2]
+                            mod.SourceName = split[1]
+                        if (split[2]) {
+                            mod.ParentName = split[2]
+                            if (!mod.SourceName?.endsWith(".cls")) {
+                                mod.SourceName = mod.SourceName + ".cls"
+                            }
+                        }
                     }
                 }
 
@@ -126,41 +130,48 @@ export class ABLProfileJSON {
         }
 
         childModules.forEach(child => {
-            const parent = this.modules.find(p => p.SourceName === child.SourceName)
+            var parent = this.modules.find(p => p.SourceName === child.SourceName)
+            if (!parent) {
+                var parent = this.modules.find(p => p.SourceName + ".cls" === child.SourceName)
+            }
             if(parent) {
-                if(!parent.childModules)
+                if(!parent.childModules) {
                     parent.childModules = []
+                }
                 child.ParentModuleId = parent.ParentModuleId // TODO: is this in the JSON?
                 parent.childModules[parent.childModules.length] = child
+                if (parent.SourceName + ".cls" === child.SourceName) {
+                    parent.SourceName = child.SourceName
+                }
             }
         })
     }
 
     getModule(modID: number):Module | undefined {
         for(let idx=0; idx < this.modules.length; idx++){
-            if(this.modules[idx]['ModuleID'] == modID)
+            if(this.modules[idx].ModuleID === modID)
                 return this.modules[idx]
         }
         const parent = this.modules.find(mod => mod.childModules?.find(child => child.ModuleID == modID))
         if(parent)
             return parent.childModules?.find(child => child.ModuleID == modID)
-        
+
     }
 
     getModuleLine(modID: number, lineNo: number): LineSummary | undefined {
         const mod = this.getModule(modID)
         if(mod) {
-            for(let idx=0; idx < mod['lines'].length; idx++) {
-                if(mod['lines'][idx]['LineNo'] == lineNo)
-                    return mod['lines'][idx]
+            for(let idx=0; idx < mod.lines.length; idx++) {
+                if(mod.lines[idx].LineNo === lineNo)
+                    return mod.lines[idx]
             }
         }
     }
 
     getLine(mod: Module, lineNo: number): LineSummary | undefined {
-        for(let idx=0; idx < mod['lines'].length; idx++) {
-            if(mod['lines'][idx]['LineNo'] == lineNo)
-                return mod['lines'][idx]
+        for(let idx=0; idx < mod.lines.length; idx++) {
+            if(mod.lines[idx].LineNo == lineNo)
+                return mod.lines[idx]
         }
     }
 
@@ -169,7 +180,7 @@ export class ABLProfileJSON {
         for(let lineNo=0; lineNo < lines.length; lineNo++){
             // console.log(lines[lineNo])
             const test = callTreeRE.exec(lines[lineNo])
-            
+
 
             if(test && test.length == 5) {
                 //Called By
@@ -218,11 +229,11 @@ export class ABLProfileJSON {
                 const mod = this.getModule(modID)
                 if (mod) {
                     // console.log("lines.length=" + mod['lines'].length + " lines.modid=" + mod['ModuleID'])
-                    if (! mod['lines']) {
-                        mod['lines'] = []
+                    if (! mod.lines) {
+                        mod.lines = []
                     }
-                    mod['lines'][mod['lines'].length] = sum
-                    mod['lineCount']++
+                    mod.lines[mod.lines.length] = sum
+                    mod.lineCount++
                     // console.log(mod['ModuleID'] + " " + mod['ModuleName'] + " " + mod['lineCount'])
                 }
             }
@@ -242,10 +253,10 @@ export class ABLProfileJSON {
                 }
                 const line = this.getModuleLine(modID,lineNo)
                 if (line) {
-                    if(! line['trace']) line.trace = []
-                    line['trace'][line['trace'].length] = trace
+                    if(! line.trace) line.trace = []
+                    line.trace[line.trace.length] = trace
                 }
-            
+
             }
         }
     }
@@ -256,8 +267,8 @@ export class ABLProfileJSON {
             var mod
 
             if(lines[lineNo] == '.') {
-                if (mod && mod['executableLines']) {
-                    mod['coveragePct'] = (mod['executableLines'] / mod['lines'].length * 100)
+                if (mod && mod.executableLines) {
+                    mod.coveragePct = (mod.executableLines / mod.lines.length * 100)
                 }
             } else {
                 if(lineNo == 0 || lines[lineNo - 1] == '.') {
@@ -265,27 +276,27 @@ export class ABLProfileJSON {
                     if(test) {
                         mod = this.getModule(Number(test[1]))
                         if (mod) {
-                            mod['coverageName'] = test[2]
-                            mod['executableLines'] = Number(test[3])
+                            mod.coverageName= test[2]
+                            mod.executableLines = Number(test[3])
                         }
                     }
                 } else {
                     if (mod) {
                         const line = this.getLine(mod,Number(lines[lineNo]))
                         if (line) {
-                            line['Executable'] = true
+                            line.Executable = true
                         } else {
                             let line = {
                                 LineNo: Number(lines[lineNo]),
                                 Executable: true
                             }
-                            mod['lines'][mod['lines'].length] = line
+                            mod.lines[mod.lines.length] = line
                         }
                     }
                 }
             }
         }
-        
+
         this.modules.forEach(parent => {
             parent.childModules?.forEach(child => {
                 parent.executableLines += child.executableLines
@@ -308,7 +319,7 @@ export class ABLProfileJSON {
 
     }
 
-    
+
     addUserData(lines: string[]) {
         var mod
         for(let lineNo=0; lineNo < lines.length; lineNo++){
