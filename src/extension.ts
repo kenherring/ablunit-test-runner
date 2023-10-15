@@ -1,6 +1,5 @@
 import * as vscode from 'vscode';
-import { getContentFromFilesystem, ABLUnitTestData, ABLTestSuiteClass, ABLTestClassNamespace, ABLTestClass, ABLTestProgram, ABLTestMethod, ABLTestProcedure, ABLAssert, testData, testCoverage } from './testTree';
-// import { runTests }	from './runTests';
+import { ABLTestSuiteClass, ABLTestClassNamespace, ABLTestClass, ABLTestProgram, ABLTestMethod, ABLTestProcedure, testData, testCoverage } from './testTree';
 import { ABLUnitConfig } from './ABLUnitConfig';
 import { outputChannel } from './ABLUnitCommon'
 
@@ -13,7 +12,6 @@ const backgroundExecuted = vscode.window.createTextEditorDecorationType({
 
 export async function activate(context: vscode.ExtensionContext) {
 	const ctrl = vscode.tests.createTestController('ablunitTestController', 'ABLUnit Test')
-	const extensionUri = context.extensionUri
 
 	console.log("ACTIVATE!")
 	outputChannel.appendLine("ACTIVATE!")
@@ -37,7 +35,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	vscode.workspace.onDidChangeTextDocument(event => {
 		const openEditor = vscode.window.visibleTextEditors.filter(
-		  editor => editor.document.uri === event.document.uri
+			editor => editor.document.uri === event.document.uri
 		)[0]
 		decorate(openEditor)
 	})
@@ -52,10 +50,10 @@ export async function activate(context: vscode.ExtensionContext) {
 		// runTests()
 	}
 
-	// function debugActiveTestCommand () { //This already exists as 'Test: Debug Tests in Current Files' and 'Test: Debug Test at Cursor'
-	// 	// console.log("TODO - debug active test")
-	// 	runTests("")
-	// }
+	function debugActiveTestCommand () { //This already exists as 'Test: Debug Tests in Current Files' and 'Test: Debug Test at Cursor'
+		console.log("TODO - debug active test")
+		// runTests("")
+	}
 
 	context.subscriptions.push(ctrl);
 	context.subscriptions.push(vscode.commands.registerCommand('ablunit.test.runAll', runAllTestsCommand))
@@ -71,7 +69,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
 		const l = fileChangedEmitter.event(uri => startTestRun(
 			new vscode.TestRunRequest2(
-				[getOrCreateFile(ctrl, uri)?.file!],
+				[getOrCreateFile(ctrl, uri).file!],
 				undefined,
 				request.profile,
 				true
@@ -192,7 +190,7 @@ function getOrCreateFile(controller: vscode.TestController, uri: vscode.Uri) {
 		if (data instanceof ABLTestClass) {
 			return { file: existing, data: data as ABLTestClass }
 		} else {
-			return { file: existing, data: data as ABLTestProgram}
+			return { file: existing, data: data as ABLTestProgram }
 		}
 	}
 
@@ -217,7 +215,7 @@ function createTopNode(file: vscode.TestItem) {
 	} else if (file.uri?.toString().endsWith(".p")) {
 		return new ABLTestProgram()
 	}
-	throw("invalid file extension. file='" + file.uri?.toString)
+	throw(new Error("invalid file extension. file='" + file.uri?.toString))
 }
 
 function gatherTestItems(collection: vscode.TestItemCollection) {
@@ -259,7 +257,7 @@ function startWatchingWorkspace(controller: vscode.TestController, fileChangedEm
 		});
 		watcher.onDidChange(async uri => {
 			const { file, data } = getOrCreateFile(controller, uri);
-			if (data && data.didResolve) {
+			if (data?.didResolve) {
 				await data.updateFromDisk(controller, file);
 			}
 			fileChangedEmitter.fire(uri);
@@ -273,18 +271,15 @@ function startWatchingWorkspace(controller: vscode.TestController, fileChangedEm
 }
 
 function decorate(editor: vscode.TextEditor) {
-	let sourceCode = editor.document.getText()
-	let regex = /(@Test)/i
-
-	let executedArray: vscode.DecorationOptions[] = []
-	let executableArray: vscode.DecorationOptions[] = []
-	const vUri = <vscode.Uri> editor.document.uri
+	const executedArray: vscode.DecorationOptions[] = []
+	const executableArray: vscode.DecorationOptions[] = []
 	const tc = testCoverage.get(editor.document.uri.fsPath)
 	if (tc) {
+		//TODO
 		// if (tc[0]) {
 			tc.detailedCoverage?.forEach(element => {
-				let range = <vscode.Range> element.location;
-				let decoration = { range }
+				const range = <vscode.Range> element.location;
+				const decoration = { range }
 				if (element.executionCount > 0) {
 					executedArray.push(decoration)
 				} else {
@@ -305,7 +300,7 @@ function openStackTrace(traceUriStr: string) {
 		const lineToGoBegin = new vscode.Position(traceLine,0)
 		const lineToGoEnd = new vscode.Position(traceLine + 1,0)
 		editor.selections = [new vscode.Selection(lineToGoBegin, lineToGoEnd)];
-		var range = new vscode.Range(lineToGoBegin, lineToGoEnd);
+		const range = new vscode.Range(lineToGoBegin, lineToGoEnd);
 		decorate(editor)
 		editor.revealRange(range);
 	})

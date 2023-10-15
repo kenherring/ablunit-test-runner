@@ -19,7 +19,7 @@ export class ABLPromsgs {
 		if(! this.fs.existsSync(this.DLC)) {
 			outputChannel.appendLine("DLC does not exist")
 			console.log("DLC does not exist")
-			throw "DLC does not exist"
+			throw new Error("DLC does not exist")
 		}
 		// eslint-disable-next-line @typescript-eslint/no-this-alias
 		promsgsObj = this
