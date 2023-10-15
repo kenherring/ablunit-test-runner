@@ -1,6 +1,7 @@
+version: 2.1
 
 workflows:
-  build:
+  build-extension:
     jobs:
       - build
       - test
@@ -15,7 +16,7 @@ workflows:
 jobs:
   build:
     docker:
-      - image: circleci/node:10.15.3
+      - image: cimg/node:10.15.3
     steps:
       - checkout
       - run: npm install -g @vscode/vsce
@@ -27,14 +28,19 @@ jobs:
             - dist
   test:
     docker:
-      - image: circleci/node:10.15.3
+      - image: cimg/node:10.15.3
     steps:
       - checkout
       - run: npm install
       - run: npm run test
+      - store_artifacts:
+          path: test-results.xml
+          destination: test-results.xml
+      - store_test_results:
+          path: test-results.xml
   deploy:
     docker:
-      - image: circleci/node:10.15.3
+      - image: cimg/node:10.15.3
     steps:
       - checkout
       - attach_workspace:
