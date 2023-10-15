@@ -1,5 +1,6 @@
 import { Uri, workspace } from 'vscode'
 import { outputChannel } from './ABLUnitCommon'
+import { ABLPromsgs } from './ABLpromsgs';
 
 const doesFileExistSync = async (uri: Uri) => {
 	try {
@@ -17,9 +18,13 @@ export class ABLUnitConfig  {
 
 	storageUri: Uri
 	tempDirUri: Uri | undefined
+	promsgs: ABLPromsgs | undefined
 
 	constructor(sUri: Uri) {
 		this.storageUri = sUri
+		this.setTempDirUri().then(() => {
+			this.promsgs = new ABLPromsgs(this.tempDirUri!)
+		})
 	}
 
 	workspaceUri() {
@@ -39,7 +44,6 @@ export class ABLUnitConfig  {
 	}
 
 	setTempDirUri = async () => {
-		console.log("tempDirUri 1")
 		const uriList = [this.storageUri]
 		let tempDir = workspace.getConfiguration('ablunit').get('tempDir', '')
 
@@ -58,9 +62,7 @@ export class ABLUnitConfig  {
 		}
 
 		for (const uri of uriList) {
-			console.log("checking if uri exists: " + uri)
 			if (await doesFileExistSync(uri)) {
-				console.log("tempDirUri 2 - return " + uri)
 				outputChannel.appendLine("tempDir='" + uri.fsPath + "'")
 				this.tempDirUri = uri
 				return
@@ -69,7 +71,6 @@ export class ABLUnitConfig  {
 				await workspace.fs.createDirectory(uri)
 				if (await doesFileExistSync(uri)) {
 					outputChannel.appendLine("tempDir='" + uri.fsPath + "'")
-					console.log("tempDirUri 3 - return " + uri)
 					this.tempDirUri = uri
 					return
 				}
@@ -91,23 +92,19 @@ export class ABLUnitConfig  {
 		const configIni = workspace.getConfiguration('ablunit').get('progressIni', '')
 		if (configIni != '') {
 			const uri1 = Uri.joinPath(workspaceUri, configIni)
-			console.log("uri1=" + uri1)
 			if(uri1 && await doesFileExistSync(uri1)) {
 				return uri1
 			}
 		}
 
 		//second, check if there is a progress ini in the root of the repo
-		console.log("workspaceUri=" + workspaceUri)
 		const uri2 = Uri.joinPath(workspaceUri, 'progress.ini')
-		console.log("uri2=" + uri2)
 		if(uri2 && await doesFileExistSync(uri2)) {
 			return uri2
 		}
 
 		//third, check if the workspace has a temp directory configured
 		const uri3 = Uri.joinPath(this.tempDirUri!, 'progress.ini')
-		console.log("uri3=" + uri3)
 		if(uri3) {
 			//Use this whether or not it exists yet
 			return uri3

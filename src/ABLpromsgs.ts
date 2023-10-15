@@ -1,68 +1,97 @@
-import { Uri, workspace } from "vscode";
+import { Uri } from "vscode";
+import { outputChannel } from "./ABLUnitCommon";
 
 interface promsg {
 	msgnum: number
-	msgtext: string
-	extraText: string[]
+	msgtext: string[]
 }
 
-class ABLPromsgs {
+let promsgsObj: ABLPromsgs
+
+export class ABLPromsgs {
 	DLC = process.env.DLC
-	promsgs: promsg[]
+	promsgs: promsg[] = []
 
 	fs = require('fs');
 
-	constructor() {
+	constructor(tempDirUri: Uri) {
 		console.log("DLC=" + this.DLC)
-		this.promsgs = []
-
-		if(! this.DLC) {
-			console.log("DLC not set")
-			return
+		if(! this.fs.existsSync(this.DLC)) {
+			outputChannel.appendLine("DLC does not exist")
+			console.log("DLC does not exist")
+			throw "DLC does not exist"
 		}
-		const dlcUri = Uri.joinPath(Uri.parse(this.DLC))
-		const promsgDirUri = Uri.joinPath(dlcUri,"prohelp/msgdata")
+		promsgsObj = this
 
-		const dirFiles = this.fs.readdirSync(promsgDirUri.fsPath)
+		const cacheFile = tempDirUri.fsPath + "/promsgs.json"
 
-		dirFiles.forEach((file: string) => {
-			if (file == "msg287")
-				this.loadPromsgFile(Uri.joinPath(promsgDirUri,file))
-		})
+		if (this.fs.existsSync(cacheFile)) {
+			this.loadFromCache(cacheFile)
+			return
+		} else {
 
-		// dirFiles.forEach((file) => {
-		// 	if (file[0].endsWith(".msg")) {
-		// 		this.loadPromsgFile(file[0])
-		// 	}
-		// })
-		// }, (reason) => {
-		// })
+			const promsgDir = this.DLC + "/prohelp/msgdata"
+			const dirFiles = this.fs.readdirSync(promsgDir)
+			dirFiles.forEach((file: string) => {
+				this.loadPromsgFile(promsgDir + "/" + file)
+			})
+		}
+
+		this.saveCache(cacheFile)
 	}
 
-	
-	msgRegex = /^(\d+) "([^"]*)" "([^"]*)" "([^"]*)"/
-	
-	loadPromsgFile(msgfileUri: Uri) {
-		this.fs.readFileSync(msgfileUri.fsPath, "utf8").split('\n').forEach((line: string) => {
-			const res = this.msgRegex.exec(line)
-			if(res) {
-				const [ , msgnumText, msgtext0, msgtext1, msgtext2] = res
-				if (msgnumText) {
-					const msgnum = Number(msgnumText)
+	loadPromsgFile(msgfile: string) {
+		const lines = this.fs.readFileSync(msgfile, "utf8").split('\n')
+		const newlines: string[] = []
 
-					this.promsgs.push({
-						msgnum: msgnum,
-						msgtext: msgtext0,
-						extraText: [
-							msgtext1,
-							msgtext2
-						]
-					})
+		//First, merge lines where necessary
+		let currLine = lines[0]
+		for (let idx=1 ; idx<lines.length; idx++) {
+			if(lines[idx].match(/^(\d+) /)) {
+				newlines.push(currLine)
+				currLine = lines[idx]
+			} else {
+				if(lines[idx].trim() !== '"' && lines[idx].trim() !== '' && lines[idx].trim() !== "\" \"\" \"\"") {
+					currLine += '\\n' + lines[idx]
+				}
+			}
+		}
+
+		//Then, read the lines into our object
+		newlines.forEach(line => {
+			const s = line.split(' "')
+
+			let msgnum: number = 0
+			let msgtext: string[] = []
+			s.forEach((element, index) => {
+				if (index === 0) {
+					msgnum = Number(element)
 				} else {
-					if (this.promsgs.length > 0) {
-						this.promsgs[this.promsgs.length - 1].extraText.push(line)
+					var t = element.replace(/"$/g, '')
+					if (t != '') {
+						msgtext.push(t)
 					}
 				}
+			})
+
+			let msg: promsg  = { msgnum: msgnum, msgtext: msgtext }
+			this.promsgs.push(msg)
+		})
+	}
+
+	loadFromCache(cacheFile: string) {
+		console.log("load promsgs from cache")
+		outputChannel.appendLine("load promsgs cache")
+		this.promsgs = JSON.parse(this.fs.readFileSync(cacheFile, "utf8"))
+	}
+
+	saveCache(cacheFile: string) {
+		console.log("save promsgs cache file='" + cacheFile + "'")
+		outputChannel.appendLine("save promsgs cache")
+		this.fs.writeFileSync(cacheFile, JSON.stringify(this.promsgs), (err: any) => {
+			if (err) {
+				console.log("Error writing promsgs cache file: " + err)
+				outputChannel.appendLine("Error writing promsgs cache file: " + err)
 			}
 		})
 	}
@@ -72,9 +101,10 @@ class ABLPromsgs {
 	}
 }
 
-var promsgs: ABLPromsgs
-
 export function getPromsg(msgnum: number) {
-	promsgs = new ABLPromsgs()
-	return promsgs.getMsgNum(msgnum)
+	return promsgsObj.getMsgNum(msgnum)
 }
+
+// console.log("----- start -----")
+// console.log(getPromsg(14332))
+// console.log("----- end -----")

@@ -1,12 +1,12 @@
-//First, attempt to match with a function/procedure/method name
 import { Location, Position, Range, Uri, workspace, MarkdownString } from "vscode";
 import { TCFailure } from "./parse/ablResultsParser";
 import { getPromsg } from "./ABLpromsgs";
 import { importDebugFile, getSourceLine } from "./ABLDebugLines";
 
+// First, attempt to match with a function/procedure/method name
 // RunTests OpenEdge.ABLUnit.Runner.ABLRunner at line 149  (OpenEdge/ABLUnit/Runner/ABLRunner.r)
 const stackLineRE1 = /^(\S+) (\S+) at line ([0-9]+) +\((\S+)\)/
-//Second, attempt to match with only a program name
+// Second, attempt to match with only a program name
 // ABLUnitCore.p at line 79  (ABLUnitCore.r)
 const stackLineRE2 = /^(\S+) at line ([0-9]+) +\((\S+)\)$/
 
@@ -59,12 +59,24 @@ export async function getFailureMarkdownMessage(failure: TCFailure): Promise<Mar
 		}
 	})
 
-	const promsgMatch = failure.message.match(/(\d+)/)
+	const promsgMatch = failure.message.match(/\((\d+)\)$/)
 	var promsgNum = ""
 	if (promsgMatch)
-		promsgNum = promsgMatch[0]
+		promsgNum = promsgMatch[1]
+	const promsg = getPromsg(Number(promsgNum))
 
 	let stackString = failure.message
+	if(promsg) {
+		let count = 0
+		promsg.msgtext.forEach((text: string) => {
+			if (count === 0) {
+				count++
+			} else {
+				stackString += "\n\n" + text.replace(/\\n/g,"\n\n")
+			}
+		})
+	}
+
 	stackString += "\n\n" + "**ABL Call Stack**\n\n"
 	let stackCount = 0
 
