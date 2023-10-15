@@ -143,22 +143,22 @@
                 "description": "Run all tests for the workspace"
             }
 		],
-        "menus": {
-            "commandPalette": [
-                {
-                    "command": "abl.runProgres.currentFile",
-                    "when": "editorLangId == 'abl'"
-                },
-                {
-                    "command": "abl.test",
-                    "when": "editorLangId == 'abl'"
-                },
-                {
-                    "command": "abl.test.currentFile",
-                    "when": "editorLangId == 'abl'"
-                }
-            ]
-        },
+		"menus": {
+			"commandPalette": [
+				{
+					"command": "abl.runProgres.currentFile",
+					"when": "editorLangId == 'abl'"
+				},
+				{
+					"command": "abl.test",
+					"when": "editorLangId == 'abl'"
+				},
+				{
+					"command": "abl.test.currentFile",
+					"when": "editorLangId == 'abl'"
+				}
+			]
+		},
 		"snippets": [
 			{
 				"language": "abl",

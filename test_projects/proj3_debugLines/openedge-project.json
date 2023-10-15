@@ -1,0 +1,8 @@
+{
+	"name": "proj3_debugLines",
+	"version": "0.0.1",
+	//test comment
+	"charset": "utf-8",
+	"buildPath": [ {"type": "source", "path": "."} ],
+	"buildDirectory": "build"
+}

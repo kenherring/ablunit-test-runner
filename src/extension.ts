@@ -111,7 +111,7 @@ export async function activate(context: vscode.ExtensionContext) {
 				if(data instanceof ABLTestProcedure)
 					console.log(" - ABLTestProcedure")
 
-				if (data instanceof ABLTestClass || data instanceof ABLTestProgram || data instanceof ABLTestMethod) {
+				if (data instanceof ABLTestClass || data instanceof ABLTestProgram || data instanceof ABLTestMethod || data instanceof ABLTestProcedure || data instanceof ABLTestMethod) {
 					run.enqueued(test)
 					queue.push({ test, data })
 				} else {
@@ -301,7 +301,6 @@ function decorate(editor: vscode.TextEditor) {
 function openStackTrace(traceUriStr: string) {
 	const traceUri = vscode.Uri.parse(traceUriStr.split("&")[0])
 	const traceLine = Number(traceUriStr.split("&")[1])
-
 	vscode.window.showTextDocument(traceUri).then(editor => {
 		const lineToGoBegin = new vscode.Position(traceLine,0)
 		const lineToGoEnd = new vscode.Position(traceLine + 1,0)

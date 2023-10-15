@@ -18,7 +18,7 @@ This project was developed using the [Progress OpenEdge Developers Kit: Classroo
 * See test results
 * View code coverage
 
-	![Alt text](docs/coverage.png)
+	![Alt text](./docs/coverage.png)
 
 ## Configuration
 
@@ -65,4 +65,5 @@ This project was developed using the [Progress OpenEdge Developers Kit: Classroo
 ## Links
 
 * [Progress Documentation -> Progress Developer Studio for OpenEdge Online Help -> Run test cases from the command prompt](https://docs.progress.com/bundle/openedge-developer-studio-help/page/Run-test-cases-from-the-command-prompt.html)
-* [ABLUnit Annotations](// https://docs.progress.com/bundle/openedge-developer-studio-olh-117/page/Annotations-supported-with-ABLUnit.html) - Used w/ snippets
+* [Progress Documentation -> ABLUnit Annotations](// https://docs.progress.com/bundle/openedge-developer-studio-olh-117/page/Annotations-supported-with-ABLUnit.html) - Used w/ snippets
+* [GitHub progress/ade](https://github.com/progress/ADE) - source files for OE code

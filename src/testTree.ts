@@ -2,6 +2,7 @@ import { ABLProfile } from './parseABLProfile';
 import { ABLResultsParser, TestCase } from './parse/ablResultsParser';
 import { ABLUnitConfig } from './ABLUnitConfig';
 import { getFailureMarkdownMessage } from './ablHelper';
+import { getSourceLine } from "./ABLDebugLines";
 import { Module, LineSummary } from './ABLProfileSections';
 import { parseABLUnit } from './parser';
 import { TextDecoder } from 'util';
@@ -277,12 +278,26 @@ class TestFile extends TestTypeObj{
 			return
 		}
 
+		const td = testData.get(item)
+		if (td && (td instanceof ABLTestProcedure || td instanceof ABLTestMethod)) {
+			// Test Procedure type
+			if(s.testcases) {
+				const tc = s.testcases.find(tc => tc.name === item.label)
+				if(tc) {
+					await this.setChildResults(item, options, tc)
+				}
+			}
+			return
+		}
+
+		// TestFile type
 		if (s.tests > 0) {
 			if(s.errors == 0 && s.failures == 0) {
 				options.passed(item, s.time)
 			} else if (s.tests = s.skipped) {
 				options.skipped(item)
 			} else if (s.failures > 0 || s.errors > 0) {
+				//// This should be populated automatically by the child messages filtering up
 				// options.failed(item, new vscode.TestMessage("one or more tests failed"), s.time)
 			} else {
 				options.errored(item, new vscode.TestMessage("unknown error - test results are all zero"), s.time)
@@ -294,21 +309,16 @@ class TestFile extends TestTypeObj{
 			return
 		}
 
+		const promArr: Promise<void>[] = [Promise.resolve()]
 		item.children.forEach(child => {
 			const tc = s.testcases?.find(t => t.name === child.label)
-
-			// if (s.testcases) {
-			// 	for (let idx=0 ; idx<s.testcases.length; idx++) {
-			// 		console.log("testcase[" + idx + "]=" + s.testcases[idx].name)
-			// 	}
-			// }
-
 			if(!tc) {
 				options.errored(child, new vscode.TestMessage("could not find result for test case"))
 				return
 			}
-			this.setChildResults(child, options, tc)
+			promArr.push(this.setChildResults(child, options, tc))
 		})
+		return Promise.all(promArr)
 	}
 
 	async parseProfile(cfg: ABLUnitConfig) {
@@ -324,11 +334,11 @@ class TestFile extends TestTypeObj{
 		testCoverage.clear()
 
 		profOutput.modules.forEach((module: Module) => {
-			if (!module.SourceName || module.SourceName?.startsWith("OpenEdge")) {
+			if (!module.SourceName || module.SourceName.startsWith("OpenEdge") || module.SourceName == "ABLUnitCore.p") {
 				return
 			}
 
-			const fc = new vscode.FileCoverage(vscode.Uri.joinPath(cfg.workspaceUri(), module.SourceName), new vscode.CoveredCount(1,2))
+			var fc: vscode.FileCoverage | undefined = undefined
 
 			module.lines.forEach((line: LineSummary) => {
 				if (line.LineNo <= 0) {
@@ -336,42 +346,61 @@ class TestFile extends TestTypeObj{
 					//TODO: 0 is a special case
 					return
 				}
+				if (!module.SourceName) {
+					throw "module.SourceName is null"
+				}
+				const moduleUri = vscode.Uri.joinPath(cfg.workspaceUri(), module.SourceName)
+				const dbg = getSourceLine(moduleUri, line.LineNo)
+				if (!dbg) {
+					console.error("cannot find dbg for " + moduleUri.fsPath)
+					return
+				}
 
-				if(! fc.detailedCoverage) {
+				if (!fc || fc.uri.fsPath != dbg.incUri.fsPath) {
+					//get existing FileCoverage object
+					fc = testCoverage.get(dbg.incUri.fsPath)
+					if (!fc) {
+						//create a new FileCoverage object if one didn't already exist
+						fc = new vscode.FileCoverage(dbg.incUri, new vscode.CoveredCount(0,0))
+						testCoverage.set(fc.uri.fsPath, fc)
+					}
+				}
+				if (!fc) {
+					throw ("ERROR: cannot find or create fc")
+				}
+				if (!fc.detailedCoverage) {
 					fc.detailedCoverage = []
 				}
 				fc.detailedCoverage.push(new vscode.StatementCoverage(line.ExecCount ?? 0,
-					new vscode.Range(new vscode.Position(line.LineNo - 1 ,0),new vscode.Position(line.LineNo,0))))
+					new vscode.Range(new vscode.Position(dbg.incLine - 1 ,0),new vscode.Position(dbg.incLine,0))))
 			});
-
-			let tc = testCoverage.get(fc.uri.fsPath)
-			if (!tc) {
-				testCoverage.set(fc.uri.fsPath, fc)
-			}
 		});
+
 		// TODO - turn this into TestCoverage class objects
 		//      - will be useful when the proposed API is finalized
 	}
 
-	setChildResults(item: vscode.TestItem, options: vscode.TestRun, tc: TestCase) {
+	async setChildResults(item: vscode.TestItem, options: vscode.TestRun, tc: TestCase) {
 		switch(tc.status) {
 			case "Success":
 				options.passed(item, tc.time)
 				return
 			case "Failure":
 				if (tc.failure) {
-					options.failed(item, [
-						new vscode.TestMessage(getFailureMarkdownMessage(tc.failure))
-					], tc.time)
-					return
+					return getFailureMarkdownMessage(tc.failure).then((msg) => {
+						options.failed(item, [
+							new vscode.TestMessage(msg)
+						], tc.time)
+					})
 				}
 				throw("unexpected failure")
 			case "Error":
 				if (tc.error) {
-					options.failed(item, [
-						new vscode.TestMessage(getFailureMarkdownMessage(tc.error))
-					])
-					return
+					return getFailureMarkdownMessage(tc.error).then((msg) => {
+						options.failed(item, [
+							new vscode.TestMessage(msg)
+						], tc.time)
+					})
 				}
 				throw("unexpected error")
 			case "Skpped":
