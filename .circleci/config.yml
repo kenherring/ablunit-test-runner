@@ -1,0 +1,67 @@
+version: 2.1
+
+workflows:
+  build-extension:
+    jobs:
+      - package
+      # - build
+      # - test
+      # - deploy:
+      #     requires:
+      #       - build
+      #       - test
+      #     filters:
+      #       branches:
+      #         only: main
+
+jobs:
+  package:
+    docker:
+      - image: cimg/node:20.8.0
+    steps:
+      - checkout
+      - run: npm install -g @vscode/vsce
+      - run: npm install
+      - run: vsce package
+      - run: mkdir artifacts && cp ablunit-test-provider-*.vsix artifacts
+      - persist_to_workspace:
+          root: .
+          paths:
+            - "*.vsix"
+      - store_artifacts:
+          path: artifacts
+  build:
+    docker:
+      - image: cimg/node:20.8.0
+    steps:
+      - checkout
+      - run: npm install -g @vscode/vsce
+      - run: npm install
+      - run: npm run build
+      - persist_to_workspace:
+          root: .
+          paths:
+            - dist
+      - store_artifacts:
+          when: on_fail
+          path: /root/.npm/_logs/
+  test:
+    docker:
+      - image: cimg/node:20.8.0
+    steps:
+      - checkout
+      - run: npm install
+      - run: npm run test
+      - store_artifacts:
+          path: test-results.xml
+          destination: test-results.xml
+      - store_test_results:
+          path: test-results.xml
+  deploy:
+    docker:
+      - image: cimg/node:20.8.0
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - run: vsce publish -p $VSCE_TOKEN
