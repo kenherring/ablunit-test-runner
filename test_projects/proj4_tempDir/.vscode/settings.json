@@ -1,0 +1,5 @@
+{
+	"ablunit.tempDir": "target",
+	"terminal.integrated.allowMnemonics": true,
+	"terminal.integrated.allowChords": true
+}

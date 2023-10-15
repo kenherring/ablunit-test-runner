@@ -1,6 +1,7 @@
 out
 node_modules
 .vscode-test/
+target/
 *.vsix
 *.log
 
@@ -10,10 +11,14 @@ node_modules
 .builder
 
 # OpenEdge Files
+*.dbg
+*.listing
 *.out
+*.preprocess
 *.prof
 *.r
 *.xref
+*.xref.xml
 dbg_*
 listings/
 prof*.json

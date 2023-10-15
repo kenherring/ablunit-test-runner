@@ -1,7 +1,8 @@
 import * as vscode from 'vscode';
 import { getContentFromFilesystem, ABLUnitTestData, ABLTestSuiteClass, ABLTestClassNamespace, ABLTestClass, ABLTestProgram, ABLTestMethod, ABLTestProcedure, ABLAssert, testData, testCoverage } from './testTree';
-import { runTests }	from './runTests';
-
+// import { runTests }	from './runTests';
+import { ABLUnitConfig } from './ABLUnitConfig';
+import { outputChannel } from './ABLUnitCommon'
 
 const backgroundExecutable = vscode.window.createTextEditorDecorationType({
 	backgroundColor: 'rgba(255,0,0,0.1)',
@@ -13,14 +14,12 @@ const backgroundExecuted = vscode.window.createTextEditorDecorationType({
 export async function activate(context: vscode.ExtensionContext) {
 	const ctrl = vscode.tests.createTestController('ablunitTestController', 'ABLUnit Test')
 	const extensionUri = context.extensionUri
-	const storageUri: vscode.Uri | undefined = context.storageUri
 
-	// vscode.workspace.onWillSaveTextDocument(event => {
-	// 	const openEditor = vscode.window.visibleTextEditors.filter(
-	// 		editor => editor.document.uri
-	// 	)[0]
-	// 	decorate(openEditor)
-	// })
+	console.log("ACTIVATE!")
+	outputChannel.appendLine("ACTIVATE!")
+
+	const cfg = new ABLUnitConfig(context.storageUri!)
+	await cfg.setTempDirUri()
 
 	vscode.window.onDidChangeActiveTextEditor(editor => {
 		if(editor)
@@ -44,27 +43,25 @@ export async function activate(context: vscode.ExtensionContext) {
 	})
 
 	const runAllTestsCommand = () => {
-		runTests("", context.storageUri!)
+		console.log("TODO - run all tests")
+		// runTests(cfg)
 	}
 
 	function runActiveTestCommand () {
-		// console.log("TODO - run active test")
+		console.log("TODO - run active test")
 		// runTests()
 	}
-	
-	function debugActiveTestCommand () { //This already exists as 'Test: Debug Tests in Current Files' and 'Test: Debug Test at Cursor'
-		// console.log("TODO - debug active test")
-		runTests("", context.storageUri!)
-	}
+
+	// function debugActiveTestCommand () { //This already exists as 'Test: Debug Tests in Current Files' and 'Test: Debug Test at Cursor'
+	// 	// console.log("TODO - debug active test")
+	// 	runTests("")
+	// }
 
 	context.subscriptions.push(ctrl);
 	context.subscriptions.push(vscode.commands.registerCommand('ablunit.test.runAll', runAllTestsCommand))
 	context.subscriptions.push(vscode.commands.registerCommand('ablunit.test.runActive', runActiveTestCommand))
-	context.subscriptions.push(vscode.commands.registerCommand('ablunit.test.debugActive', debugActiveTestCommand))
+	// context.subscriptions.push(vscode.commands.registerCommand('ablunit.test.debugActive', debugActiveTestCommand))
 	context.subscriptions.push(vscode.commands.registerCommand('_ablunit.openStackTrace', openStackTrace))
-
-
-
 
 	const fileChangedEmitter = new vscode.EventEmitter<vscode.Uri>();
 	const runHandler = (request: vscode.TestRunRequest2, cancellation: vscode.CancellationToken) => {
@@ -84,6 +81,10 @@ export async function activate(context: vscode.ExtensionContext) {
 	};
 
 	const startTestRun = (request: vscode.TestRunRequest) => {
+		if (cfg.notificationsEnabled()) {
+			vscode.window.showInformationMessage("running ablunit tests");
+		}
+
 		const queue: { test: vscode.TestItem; data: ABLTestClass | ABLTestSuiteClass | ABLTestClassNamespace | ABLTestMethod | ABLTestProgram | ABLTestProcedure }[] = [];
 		const run = ctrl.createTestRun(request);
 		// map of file uris to statements on each line:
@@ -110,64 +111,39 @@ export async function activate(context: vscode.ExtensionContext) {
 				if(data instanceof ABLTestProcedure)
 					console.log(" - ABLTestProcedure")
 
-				if (data instanceof ABLTestClass || data instanceof ABLTestProgram || data instanceof ABLTestMethod) {
+				if (data instanceof ABLTestClass || data instanceof ABLTestProgram || data instanceof ABLTestMethod || data instanceof ABLTestProcedure || data instanceof ABLTestMethod) {
 					run.enqueued(test)
 					queue.push({ test, data })
 				} else {
 					await discoverTests(gatherTestItems(test.children));
 				}
-
-				// if (test.uri && !coveredLines.has(test.uri.toString())) {
-				// 	try {
-				// 		const lines = (await getContentFromFilesystem(test.uri)).split('\n');
-				// 		coveredLines.set(
-				// 			test.uri.toString(),
-				// 			lines.map((lineText, lineNo) =>
-				// 				lineText.trim().length ? new vscode.StatementCoverage(0, new vscode.Position(lineNo, 0)) : undefined
-				// 			)
-				// 		);
-				// 	} catch {
-				// 		// ignored
-				// 	}
-				// }
 			}
 		};
 
 		const runTestQueue = async () => {
 			for (const { test, data } of queue) {
-				
 				run.appendOutput(`Running ${test.id}\r\n`);
 				if (run.token.isCancellationRequested) {
 					run.skipped(test);
 				} else {
 					run.started(test);
-					data.setStorageUri(extensionUri, storageUri)
-					await data.run(test, run);
+					await data.run(test, run, cfg)
 				}
-
 				run.appendOutput(`Completed ${test.id}\r\n`);
 			}
 			run.end();
 			if (vscode.window.activeTextEditor)
 				decorate(vscode.window.activeTextEditor)
+
+			if (cfg.notificationsEnabled()) {
+				vscode.window.showInformationMessage("ablunit tests complete");
+			}
 		};
 
 		run.coverageProvider = {
 			provideFileCoverage() {
 				console.log("coverageProvider.provideFileCoverage!!!!!")
-				const coverage: vscode.FileCoverage[] = [];
-				// for (const [uri, statements] of coveredLines) {
-				// 	coverage.push(
-				// 		vscode.FileCoverage.fromDetails(
-				// 			vscode.Uri.parse(uri),
-				// 			statements.filter((s): s is vscode.StatementCoverage => !!s)
-				// 		)
-				// 	);
-				// }
-
-				// console.log("coverageProvider.provideFileCoverage!!!!!")
-
-				return coverage;
+				return [];
 			},
 		};
 
@@ -194,15 +170,11 @@ export async function activate(context: vscode.ExtensionContext) {
 	};
 
 	function updateNodeForDocument(e: vscode.TextDocument) {
-		if (e.uri.scheme !== 'file') {
-			return;
-		}
+		if (e.uri.scheme !== 'file') { return }
+		if (!e.uri.path.endsWith('.cls') && !e.uri.path.endsWith('.p')) { return }
 
-		if (!e.uri.path.endsWith('.cls') && !e.uri.path.endsWith('.p')) {
-			return;
-		}
 		const { file, data } = getOrCreateFile(ctrl, e.uri);
-		if(file) {
+		if (file) {
 			data.updateFromContents(ctrl, e.getText(), file);
 		}
 	}
@@ -214,16 +186,18 @@ export async function activate(context: vscode.ExtensionContext) {
 }
 
 function getOrCreateFile(controller: vscode.TestController, uri: vscode.Uri) {
-	const existing = controller.items.get(uri.toString());
+	const existing = controller.items.get(uri.toString())
 	if (existing) {
 		const data = testData.get(existing)
 		if (data instanceof ABLTestClass) {
-			return { file: existing, data: data as ABLTestClass };
+			return { file: existing, data: data as ABLTestClass }
 		} else {
 			return { file: existing, data: data as ABLTestProgram}
 		}
 	}
 
+	//TODO: this is a hack to prevent the builder from trying to parse the ablunit files
+	//TODO: this should use the exclude pattern instead
 	if (uri.toString().indexOf("/.builder/") != -1) {
 		return { file: undefined, data: undefined }
 	}
@@ -243,8 +217,7 @@ function createTopNode(file: vscode.TestItem) {
 	} else if (file.uri?.toString().endsWith(".p")) {
 		return new ABLTestProgram()
 	}
-	console.error("invalid extenstion. file='" + file.uri?.toString)
-	return new ABLTestProgram()
+	throw("invalid file extension. file='" + file.uri?.toString)
 }
 
 function gatherTestItems(collection: vscode.TestItemCollection) {
@@ -254,9 +227,7 @@ function gatherTestItems(collection: vscode.TestItemCollection) {
 }
 
 function getWorkspaceTestPatterns() {
-	if (!vscode.workspace.workspaceFolders) {
-		return [];
-	}
+	if (!vscode.workspace.workspaceFolders) { return [] }
 
 	return vscode.workspace.workspaceFolders.map(workspaceFolder => ({
 		workspaceFolder,
@@ -330,18 +301,12 @@ function decorate(editor: vscode.TextEditor) {
 function openStackTrace(traceUriStr: string) {
 	const traceUri = vscode.Uri.parse(traceUriStr.split("&")[0])
 	const traceLine = Number(traceUriStr.split("&")[1])
-	vscode.window.showInformationMessage("COMMAND RUNNING! " + traceUri.fsPath + ":" + traceLine)
-
 	vscode.window.showTextDocument(traceUri).then(editor => {
-		console.log(vscode.window.activeTextEditor?.document.uri)
-
 		const lineToGoBegin = new vscode.Position(traceLine,0)
 		const lineToGoEnd = new vscode.Position(traceLine + 1,0)
 		editor.selections = [new vscode.Selection(lineToGoBegin, lineToGoEnd)];
 		var range = new vscode.Range(lineToGoBegin, lineToGoEnd);
-		editor.revealRange(range);
 		decorate(editor)
-
+		editor.revealRange(range);
 	})
-	console.log("file should be opened now")
 }

@@ -10,7 +10,7 @@ interface options {
 	tests?: [
 		{
 			test: string,
-			cases: [
+			cases?: [
 				string
 			]
 		} |
