@@ -1,0 +1,5 @@
+{
+	"redhat.telemetry.enabled": false,
+	"sonarlint.disableTelemetry": true,
+	"eslint.enable": true
+}
