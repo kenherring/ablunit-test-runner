@@ -3,8 +3,9 @@ version: 2.1
 workflows:
   build-extension:
     jobs:
-      - build
-      - test
+      - package
+      # - build
+      # - test
       # - deploy:
       #     requires:
       #       - build
@@ -14,6 +15,18 @@ workflows:
       #         only: main
 
 jobs:
+  package:
+    docker:
+      - image: cimg/node:10.15.3
+    steps:
+      - checkout
+      - run: npm install -g @vscode/vsce
+      # - run: npm install
+      - run: vsce package
+      - persist_to_workspace:
+          root: .
+          paths:
+            - "*.vsix"
   build:
     docker:
       - image: cimg/node:10.15.3
