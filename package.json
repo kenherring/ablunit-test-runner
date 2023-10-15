@@ -67,7 +67,7 @@
 				},
 				"ablunit.files.include": {
 					"type": "string",
-					"default": "{**/*.cls,**/*.p}"
+					"default": "**/*.{cls,p}"
 				},
 				"ablunit.files.exclude": {
 					"type": "string",
@@ -91,8 +91,9 @@
 					"default": "",
 					"description": "Additional parameters to pass to the ABLUnit command line (ex: '-pf dbconns.pf')"
 				},
-				"ablunit.progressIni": {
-					"type": "string"
+				"ablunit.progressIniPath": {
+					"type": "string",
+					"description": "Location of the progress.ini file (relative or absolute)"
 				},
 				"ablunit.resultsPath": {
 					"type": "string",
@@ -106,7 +107,7 @@
 				},
 				"ablunit.profileOutputPath": {
 					"type": "string",
-					"default": "results.prof",
+					"default": "prof.out",
 					"description": "Location of the profiler results"
 				},
 				"ablunit.tempDir": {
@@ -131,21 +132,16 @@
 			}
 		},
 		"commands": [
-			{
-				"command": "ablunit.test.runActive",
-				"title": "ABLUnit: run tests from the active file",
-				"description": "Run all tests in the active file"
-			},
-			{
-				"command": "ablunit.test.runAll",
-				"title": "ABLUnit: run all tests for the workspace",
-				"description": "Run all tests for the workspace"
-			},
-			{
-				"command": "ablunit.test.debugActive",
-				"title": "ABLUnit: debug the active test file",
-				"description": "ABLUnit: run tests with debugging from the file in the active editor"
-			}
+            {
+                "command": "ablunit.test.runActive",
+                "title": "ABLUnit: run tests from the active file",
+                "description": "Run all tests in the active file"
+            },
+            {
+                "command": "ablunit.test.runAll",
+                "title": "ABLUnit: run all tests for the workspace",
+                "description": "Run all tests for the workspace"
+            }
 		],
 		"menus": {
 			"commandPalette": [

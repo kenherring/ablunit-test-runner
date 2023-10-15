@@ -43,13 +43,19 @@ export async function getFailureMarkdownMessage(failure: TCFailure): Promise<Mar
 	const promArr: Promise<void>[] = [Promise.resolve()]
 	const paths: string[] = []
 	stack.lines.forEach((line) => {
+		var dbgFile = line.debugFile
+
+		if(dbgFile.startsWith("OpenEdge.") || dbgFile === "ABLUnitCore.p") {
+			return
+		}
+
+		if (!dbgFile.endsWith(".p")) {
+			dbgFile = dbgFile.replace(/\./g,'/') + ".cls"
+		}
 		const dbgUri = getDebugUri(line.debugFile)
 		if (paths.indexOf(dbgUri.fsPath) == -1) {
 			paths.push(dbgUri.fsPath)
-			const relativePath =  workspace.asRelativePath(dbgUri)
-			if (!relativePath.startsWith("OpenEdge.") && relativePath != "ABLUnitCore.p") {
-				promArr.push(importDebugFile(dbgUri))
-			}
+			promArr.push(importDebugFile(dbgUri))
 		}
 	})
 
@@ -75,7 +81,7 @@ export async function getFailureMarkdownMessage(failure: TCFailure): Promise<Mar
 			if (line.method) {
 				stackString += line.method + " "
 			}
-			
+
 			stackString += line.debugFile + " at line " + line.debugLine.line
 			const dbgUri = getDebugUri(line.debugFile)
 			const relativePath =  workspace.asRelativePath(dbgUri)
@@ -87,7 +93,7 @@ export async function getFailureMarkdownMessage(failure: TCFailure): Promise<Mar
 										 "(command:_ablunit.openStackTrace?" + encodeURIComponent(JSON.stringify(dbg.incUri + "&" + dbg.incLine)) + ")" + ")"
 				}
 			}
-	
+
 			stackString += "</code><br>\n"
 		})
 		let md = new MarkdownString(stackString);
@@ -115,7 +121,7 @@ export async function getFailureMarkdownMessage(failure: TCFailure): Promise<Mar
 }
 
 export const parseABLCallStack = (text: string) => {
-	
+
 	const lines = text.replace(/\r/g,'').split('\n');
 	// var stack: CallStack;
 	var stack = {} as CallStack;
@@ -124,7 +130,7 @@ export const parseABLCallStack = (text: string) => {
 	for (let lineNo = 0; lineNo < lines.length; lineNo++) {
 		const line = lines[lineNo];
 		var test = stackLineRE1.exec(line);
-		
+
 		if (test) {
 			const [ , method, debugFile, debugLine, rcode] = test;
 			stack.lines[lineNo] = {
@@ -163,7 +169,7 @@ export const parseABLCallStack = (text: string) => {
 			if (fs.existsSync(path)) {
 				stack.firstLocation = new Location(firstUri, stack.lines[lineNo]['debugLine']);
 			}
-	
+
 		}
 	}
 

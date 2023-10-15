@@ -1,16 +1,27 @@
-import { Uri } from 'vscode';
+import { Uri, workspace } from 'vscode';
 import { ABLProfileJSON } from './ABLProfileSections'
+import { TextDecoder } from 'util';
+
+const textDecoder = new TextDecoder('utf-8');
+
+export const getContentFromFilesystem = async (uri: Uri) => {
+	try {
+		const rawContent = await workspace.fs.readFile(uri);
+		return textDecoder.decode(rawContent);
+	} catch (e) {
+		console.warn(`Error providing tests for ${uri.fsPath}`, e);
+		return '';
+	}
+}
 
 export class ABLProfile {
-	
-	profJSON: ABLProfileJSON
-	fs = require('fs');
 
-	constructor(filepath: Uri) {
-		
-		const text =this.fs.readFileSync(filepath.fsPath, "utf8").replaceAll('\r','')
-		const lines = text.split('\n')
-		
+	profJSON: ABLProfileJSON | undefined
+
+	async parseData(filepath: Uri) {
+		const text = await getContentFromFilesystem(filepath)
+		const lines = text.replace(/\r/g,'').split('\n')
+
 		var sectionLines: string[][] = []
 		var linesArr: string[] = []
 		var currentSection: number
@@ -18,8 +29,7 @@ export class ABLProfile {
 		currentSection = 1
 
 		for (let lineNo = 0; lineNo < lines.length; lineNo++) {
-			// console.log(lineNo + " - " + lines[lineNo])
-			if(lines[lineNo] == '.' && (currentSection != 6 || lines[lineNo + 1] == '.')) {
+			if(lines[lineNo] === '.' && (currentSection != 6 || lines[lineNo + 1] === '.')) {
 				sectionLines[currentSection] = linesArr
 				currentSection++
 				linesArr = []
@@ -39,18 +49,13 @@ export class ABLProfile {
 	}
 
 	writeJsonToFile (file: Uri) {
-		this.fs.writeFile(file.fsPath, JSON.stringify(this.profJSON, null, 2), function(err: any) {
-			if (err) {
-				console.log(err);
-			}
-		});
+		workspace.fs.writeFile(file, Uint8Array.from(Buffer.from(JSON.stringify(this.profJSON, null, 2))))
 	}
 
 	provideFileCoverage () {
-		
+		console.log("provideFileCoverage")
 	}
 }
 
 // const prof = new ABLProfile(Uri.parse("C:/git/ablunit-test-provider/test_projects/proj1/prof.out"));
 // prof.writeJsonToFile(Uri.parse("c:/git/ablunit-test-provider/prof.json"))
-
