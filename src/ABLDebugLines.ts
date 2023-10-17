@@ -83,17 +83,16 @@ export class ABLDebugLines {
 		})
 	}
 
-	async importDebugFile(debugFile: string, debugUri: Uri) {
-		return await this.importDebugLines(debugFile, debugUri).then((success) => {
+	async importDebugFile(debugFile: string, debugUri: Uri, xrefDir: string) {
+		return await this.importDebugLines(debugFile, debugUri, xrefDir).then((success) => {
 			return success
 		},	(err) => {
 			return err
 		})
 	}
 
-	async importDebugLines(propathRelativePath: string, debugUri: Uri) {
+	async importDebugLines(propathRelativePath: string, debugUri: Uri, xrefDir: string) {
 		// const xrefDir = ".builder/.pct0"
-		const xrefDir = "build"
 		const xrefUri = Uri.joinPath(getWorkspaceUri(),xrefDir,".pct",propathRelativePath + ".xref")
 
 		const incRE = /(\S+) (\S+) (\d+) ([A-Z-]+) (("[^"]+?")|(\S+))/

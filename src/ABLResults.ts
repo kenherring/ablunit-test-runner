@@ -275,7 +275,7 @@ export class ABLResults {
 		this.debugMap.set(propathRelativeFile, debugUri)
 		this.debugMap.set(debugFile, debugUri)
 		this.debugMap.set(debugUri.fsPath, debugUri)
-		return await this.debugLines.importDebugFile(propathRelativeFile, debugUri)
+		return await this.debugLines.importDebugFile(propathRelativeFile, debugUri, this.cfg.getBuildDir())
 		// return await importDebugFile(propathRelativeFile, debugUri)
 	}
 

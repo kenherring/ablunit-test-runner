@@ -1,5 +1,7 @@
 {
 	"ablunit.tempDir": "target",
+	"ablunit.propath":"src,path",
+	"ablunit.buildDir": "build"
 	// "terminal.integrated.env.windows": {
 	// 	"PROPATH": "src,path"
 	// }

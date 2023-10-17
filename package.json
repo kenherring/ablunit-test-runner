@@ -129,7 +129,17 @@
 				"ablunit.tests.task": {
 					"type": "string",
 					"default": "TODO",
-					"descriptiont": "run tests using the specified task"
+					"description": "run tests using the specified task"
+				},
+				"ablunit.propath": {
+					"type": "string",
+					"default": ".",
+					"description": "TEMPORARY"
+				},
+				"ablunit.buildDir": {
+					"type": "string",
+					"default": "build",
+					"description": "TEMPORARY"
 				}
 			}
 		},
