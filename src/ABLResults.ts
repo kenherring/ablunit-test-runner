@@ -104,7 +104,7 @@ export class ABLResults {
 			throw (new Error("no results data available..."))
 		}
 
-		if (!res!.testsuite) {
+		if (!res.testsuite) {
 			console.log("malformed results - could not find 'testsuite' node")
 			options.errored(item, new TestMessage("malformed results - could not find 'testsuite' node"), this.duration())
 			return
@@ -122,11 +122,11 @@ export class ABLResults {
 			return
 		}
 
-		const td = this.testData!.get(item)
+		const td = this.testData.get(item)
 		if (td && (td instanceof ABLTestProcedure || td instanceof ABLTestMethod)) {
 			// Test Procedure/Method type
 			if (! s.testcases) { return }
-			const tc = s.testcases.find(tc => tc.name === item.label)
+			const tc = s.testcases.find((tc: TestCase) => tc.name === item.label)
 			if (! tc) { return }
 			return this.setChildResults(item, options, tc)
 		}
@@ -152,7 +152,7 @@ export class ABLResults {
 
 		const promArr: Promise<void>[] = [Promise.resolve()]
 		item.children.forEach(child => {
-			const tc = s.testcases?.find(t => t.name === child.label)
+			const tc = s.testcases?.find((t: TestCase) => t.name === child.label)
 			if (!tc) {
 				options.errored(child, new TestMessage("could not find result for test case"))
 				return
@@ -226,7 +226,7 @@ export class ABLResults {
 
 		let fc: FileCoverage | undefined = undefined
 
-		await this.getDebugUri(module.SourceName!).then((uri) => {
+		await this.getDebugUri(module.SourceName).then((uri) => {
 			module.lines.forEach((line: LineSummary) => {
 				if (line.LineNo <= 0) {
 					//TODO
@@ -240,7 +240,7 @@ export class ABLResults {
 					return
 				}
 
-				if (!fc || fc!.uri.fsPath != dbg.incUri.fsPath) {
+				if (!fc || fc.uri.fsPath != dbg.incUri.fsPath) {
 					//get existing FileCoverage object
 					fc = this.testCoverage.get(dbg.incUri.fsPath)
 					if (!fc) {

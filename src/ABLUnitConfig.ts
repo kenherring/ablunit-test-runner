@@ -157,10 +157,10 @@ export class ABLUnitConfig  {
 		return workspace.getConfiguration('ablunit').get('propath', '.')
 		// const env = process.env.PROPATH
 		// this.importOpenedgeProjectJson()
-		return "src,path"
 	}
 
 	getBuildDir(): string {
 		return workspace.getConfiguration('ablunit').get('buildDir', '')
 	}
+
 }
