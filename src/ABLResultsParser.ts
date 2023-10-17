@@ -16,7 +16,7 @@ export interface TestCase {
 	error?: TCFailure
 }
 
-interface TestSuite {
+export interface TestSuite {
 	name?: string
 	classname?: string
 	id: number
@@ -30,7 +30,7 @@ interface TestSuite {
 	testcases?: TestCase[]
 }
 
-interface TestSuites {
+export interface TestSuites {
 	name: string
 	tests: number
 	errors: number
@@ -65,17 +65,17 @@ export class ABLResultsParser {
 	}
 
 	parseSuites(res: any) {
-		if(!res['testsuites']) {
+		if(!res.testsuites) {
 			throw new Error("malformed results.xml file - could not find top-level 'testsuites' node")
 		}
-		res = res['testsuites']
+		res = res.testsuites
 
 		const jsonData = {
-			name: res['$']['name'],
-			tests: Number(res['$']['tests']),
-			failures: Number(res['$']['failues']),
-			errors: Number(res['$']['errors']),
-			testsuite: this.parseSuite(res['testsuite'])
+			name: res['$'].name,
+			tests: Number(res['$'].tests),
+			failures: Number(res['$'].failures),
+			errors: Number(res['$'].errors),
+			testsuite: this.parseSuite(res.testsuite)
 		}
 		return jsonData
 	}
@@ -86,17 +86,17 @@ export class ABLResultsParser {
 
 		for (let idx=0; idx<res.length; idx++) {
 			suites[idx] = {
-				name: res[idx]['$']['name'] ?? undefined,
-				classname: res[idx]['$']['classname'] ?? undefined,
-				id: res[idx]['$']['id'],
-				tests: Number(res[idx]['$']['tests']),
-				errors: Number(res[idx]['$']['errors']),
-				failures: Number(res[idx]['$']['failures']),
-				skipped: Number(res[idx]['$']['skipped']),
-				time: Number(res[idx]['$']['time'] * 1000),
-				properties: this.parseProperties(res[idx]['properties']),
-				testsuite: this.parseSuite(res[idx]['testsuite']),
-				testcases: this.parseTestCases(res[idx]['testcase'])
+				name: res[idx]['$'].name ?? undefined,
+				classname: res[idx]['$'].classname ?? undefined,
+				id: res[idx]['$'].id,
+				tests: Number(res[idx]['$'].tests),
+				errors: Number(res[idx]['$'].errors),
+				failures: Number(res[idx]['$'].failures),
+				skipped: Number(res[idx]['$'].skipped),
+				time: Number(res[idx]['$'].time * 1000),
+				properties: this.parseProperties(res[idx].properties),
+				testsuite: this.parseSuite(res[idx].testsuite),
+				testcases: this.parseTestCases(res[idx].testcase)
 			}
 		}
 		return suites
@@ -104,11 +104,11 @@ export class ABLResultsParser {
 
 	parseProperties(res: any) {
 		if (!res){ return undefined }
-		res = res[0]['property']
+		res = res[0].property
 		const props: { [key: string]: string } = {}
 
 		for(const element of res) {
-			props[element['$']['name']] = element['$']['value']
+			props[element['$'].name] = element['$'].value
 		}
 		return props
 	}
@@ -119,10 +119,10 @@ export class ABLResultsParser {
 
 		for (let idx=0; idx<res.length; idx++) {
 			cases[idx] = {
-				name: res[idx]['$']['name'],
-				classname: res[idx]['$']['classname'] ?? undefined,
-				status: res[idx]['$']['status'],
-				time: Number(res[idx]['$']['time']),
+				name: res[idx]['$'].name,
+				classname: res[idx]['$'].classname ?? undefined,
+				status: res[idx]['$'].status,
+				time: Number(res[idx]['$'].time),
 				failure: this.parseFailOrError('failure', res[idx]),
 				error: this.parseFailOrError('error', res[idx])
 			}
@@ -138,8 +138,8 @@ export class ABLResultsParser {
 		}
 		return {
 			callstack: res[type][0]['_'],
-			message: res[type][0]['$']['message'],
-			type: res[type][0]['$']['type']
+			message: res[type][0]['$'].message,
+			type: res[type][0]['$'].types
 		}
 	}
 

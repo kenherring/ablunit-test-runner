@@ -45,7 +45,8 @@
 				"proj1",
 				"proj2",
 				"proj3_debugLines",
-				"proj4_tempDir"
+				"proj4_tempDir",
+				"proj5_propath",
 			]
 		}
 	]

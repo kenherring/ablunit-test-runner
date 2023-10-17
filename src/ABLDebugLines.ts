@@ -9,12 +9,12 @@ function getWorkspaceUri(): Uri {
 }
 
 async function readXrefFile(xrefUri: Uri) {
-	return workspace.fs.readFile(xrefUri).then((content) => {
+	return await workspace.fs.readFile(xrefUri).then((content) => {
 		const str = Buffer.from(content.buffer).toString();
 		return str
 	}, (reason) => {
-		console.error("ERROR readXrefFile:" +  reason)
-		return null
+		console.error("(readXrefFile) WARNING: xref file not found '" + xrefUri.fsPath + "': " + reason)
+		return "xref not found"
 	})
 }
 
@@ -43,7 +43,7 @@ interface DebugLineMap {
 	includes: XrefInclude[]
 }
 
-class ABLDebugLines {
+export class ABLDebugLines {
 	map: DebugLineMap[] //TODO - replace with a real map
 	incLengths: IncLength[]
 
@@ -53,9 +53,11 @@ class ABLDebugLines {
 	}
 
 	getSourceLine(debugUri: Uri, debugLine: number) {
+		// this.map.forEach((key) => {	console.log("key=" + key) })
+
 		const debugLines = this.map.find((dlm) => dlm.uri.fsPath === debugUri.fsPath) //TODO - is there a better way to compare URIs?
 		if (!debugLines) {
-			console.error("cannot find debugLines for " + debugUri)
+			console.error("cannot find debugLines (1) for " + debugUri)
 			return null
 		}
 		return debugLines?.lines.find((line) => line.debugLine === debugLine)
@@ -81,9 +83,17 @@ class ABLDebugLines {
 		})
 	}
 
-	async importDebugLines(debugUri: Uri) {
-		const xrefDir = ".builder/.pct0"
-		const xrefUri = Uri.joinPath(getWorkspaceUri(),xrefDir,workspace.asRelativePath(debugUri) + ".xref")
+	async importDebugFile(debugFile: string, debugUri: Uri, xrefDir: string) {
+		return await this.importDebugLines(debugFile, debugUri, xrefDir).then((success) => {
+			return success
+		},	(err) => {
+			return err
+		})
+	}
+
+	async importDebugLines(propathRelativePath: string, debugUri: Uri, xrefDir: string) {
+		// const xrefDir = ".builder/.pct0"
+		const xrefUri = Uri.joinPath(getWorkspaceUri(),xrefDir,".pct",propathRelativePath + ".xref")
 
 		const incRE = /(\S+) (\S+) (\d+) ([A-Z-]+) (("[^"]+?")|(\S+))/
 		let m = this.map.find((dlm) => dlm.uri.fsPath === debugUri.fsPath)
@@ -103,7 +113,11 @@ class ABLDebugLines {
 		const prom2 = this.readLineCount(debugUri).then((lc) => {
 			if (m) {
 				m.lineCount = lc
+				return
 			}
+			throw new Error("cannot find debugLines for " + debugUri + " [should not hit this!! (10)]")
+		}, (err) => {
+			throw new Error("cannot find debugLines for " + debugUri + " [should not hit this!! (11)]")
 		})
 
 		// This reads the xref to find where the include files belong, and finds how many lines each of those includes has
@@ -125,7 +139,6 @@ class ABLDebugLines {
 					if (xrefType === "INCLUDE") {
 						const lineNum = Number(lineNumStr)
 						const includeName = includeNameRaw.replace(/^"(.*)"$/, '$1').trim()
-
 						const incUri = Uri.joinPath(getWorkspaceUri(),includeName)
 						const pUri = Uri.joinPath(getWorkspaceUri(),parent)
 						promArr.push(this.readIncludeLineCount(incUri))
@@ -134,6 +147,9 @@ class ABLDebugLines {
 				}
 			}
 			return Promise.all(promArr)
+		}, (err) => {
+			//Do nothing, this is expected if the xref file doesn't exist
+			return err
 		})
 
 
@@ -167,6 +183,7 @@ class ABLDebugLines {
 			// })
 		})
 	}
+
 	injectInclude(m: DebugLineMap, parentUri: Uri, sourceLine: number, incLine: number, dbgLine: number) {
 		const inc = m.includes.find((inc) => inc.parentUri.fsPath === parentUri.fsPath && inc.parentLineNum === incLine)
 		if (inc) {
@@ -187,15 +204,4 @@ class ABLDebugLines {
 		}
 		return dbgLine
 	}
-}
-
-
-const debugLines = new ABLDebugLines()
-
-export async function importDebugFile(debugUri: Uri) {
-	return debugLines.importDebugLines(debugUri)
-}
-
-export const getSourceLine = (debugUri: Uri, debugLine: number) => {
-	return debugLines.getSourceLine(debugUri, debugLine)
 }

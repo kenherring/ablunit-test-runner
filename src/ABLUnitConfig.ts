@@ -2,18 +2,6 @@ import { Uri, workspace } from 'vscode'
 import { outputChannel } from './ABLUnitCommon'
 import { ABLPromsgs } from './ABLpromsgs';
 
-const doesFileExistSync = async (uri: Uri) => {
-	try {
-		const stat = await workspace.fs.stat(uri);
-		if(stat) {
-			return true
-		}
-		return false
-	} catch (e) {
-		return false
-	}
-}
-
 export class ABLUnitConfig  {
 
 	storageUri: Uri
@@ -54,15 +42,19 @@ export class ABLUnitConfig  {
 		}
 
 		for (const uri of uriList) {
-			if (await doesFileExistSync(uri)) {
+			if (await workspace.fs.stat(uri).then((stat) => { return true }, (err) => { return false })) {
 				outputChannel.appendLine("tempDir='" + uri.fsPath + "'")
 				this.tempDirUri = uri
 				return
 			} else {
 				console.log("attempting to create tempDir '" + uri.fsPath + "'")
-				await workspace.fs.createDirectory(uri)
-				if (await doesFileExistSync(uri)) {
-					outputChannel.appendLine("tempDir='" + uri.fsPath + "'")
+				await workspace.fs.createDirectory(uri).then(() => {
+					console.log("created tempDir '" + uri.fsPath + "' successfully")
+				}, (err) => {
+					console.error("failed to create " + uri.fsPath + " - " + err)
+				})
+				if (await workspace.fs.stat(uri).then((stat) => { return true }, (err) => { return false })) {
+					outputChannel.appendLine("created tempDir='" + uri.fsPath + "'")
 					this.tempDirUri = uri
 					return
 				}
@@ -76,7 +68,6 @@ export class ABLUnitConfig  {
 		if (!workspaceUri) {
 			throw (new Error("no workspace directory opened"))
 		}
-		console.log("getProgressIni workspaceUri=" + workspaceUri)
 
 		const uriList: Uri[] = []
 
@@ -84,15 +75,21 @@ export class ABLUnitConfig  {
 		const configIni = workspace.getConfiguration('ablunit').get('progressIni', '')
 		if (configIni != '') {
 			const uri1 = Uri.joinPath(workspaceUri, configIni)
-			if(uri1 && await doesFileExistSync(uri1)) {
+			if(uri1 && await workspace.fs.stat(uri1)) {
 				return uri1
 			}
 		}
 
 		//second, check if there is a progress ini in the root of the repo
 		const uri2 = Uri.joinPath(workspaceUri, 'progress.ini')
-		if(uri2 && await doesFileExistSync(uri2)) {
-			return uri2
+		if(uri2) {
+			const stat2 = await workspace.fs.stat(uri2).then((stat) => {
+				if(stat) { return true }}, (err) => {
+				return false
+			})
+			if (stat2) {
+				return uri2
+			}
 		}
 
 		//third, check if the workspace has a temp directory configured
@@ -102,7 +99,7 @@ export class ABLUnitConfig  {
 			return uri3
 		}
 
-		throw (new Error("cannot find a suitable progress.ini or temp directory"))
+		throw (new Error("cannot resolve progress.ini path"))
 	}
 
 	resultsUri () {
@@ -120,7 +117,6 @@ export class ABLUnitConfig  {
 		return Uri.joinPath(this.tempDirUri!, resultsFile)
 	}
 
-
 	getProfileOutputUri () {
 		const profileOutputPath = workspace.getConfiguration('ablunit').get('profileOutputPath', '')
 		if (RegExp(/^[a-zA-Z]:/).exec(profileOutputPath)) {
@@ -130,6 +126,19 @@ export class ABLUnitConfig  {
 		}
 	}
 
+	async listingDirUri() {
+		const uri = Uri.joinPath(this.tempDirUri!, 'listings')
+		return await workspace.fs.stat(uri).then((stat) => {
+			return uri
+		}, (err) => {
+			return workspace.fs.createDirectory(uri).then(() => {
+				return uri
+			}, (err) => {
+				throw new Error("failed to create directory (2) " + uri + " with error: " + err)
+			});
+		})
+	}
+
 	notificationsEnabled(): boolean {
 		return workspace.getConfiguration('ablunit').get('notificationsEnabled', true)
 	}
@@ -137,4 +146,21 @@ export class ABLUnitConfig  {
 	getCommandSetting(): string {
 		return workspace.getConfiguration('ablunit').get('tests.command', '').trim()
 	}
+
+	// importOpenedgeProjectJson(): string {
+		// const setting = workspace.getConfiguration('ablunit').get('importOpenedgeProjectJson', '')
+		// console.log("setting=" + setting)
+		// return workspace.getConfiguration('ablunit').get('importOpenedgeProjectJson', '')
+	// }
+
+	getPropath(): string {
+		return workspace.getConfiguration('ablunit').get('propath', '.')
+		// const env = process.env.PROPATH
+		// this.importOpenedgeProjectJson()
+	}
+
+	getBuildDir(): string {
+		return workspace.getConfiguration('ablunit').get('buildDir', '')
+	}
+
 }

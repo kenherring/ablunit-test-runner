@@ -1,7 +1,8 @@
 import * as vscode from 'vscode';
-import { ABLTestSuiteClass, ABLTestClassNamespace, ABLTestClass, ABLTestProgram, ABLTestMethod, ABLTestProcedure, testData, testCoverage } from './testTree';
+import { ABLTestSuiteClass, ABLTestClassNamespace, ABLTestClass, ABLTestProgram, ABLTestMethod, ABLTestProcedure, testData, resultData } from './testTree';
 import { ABLUnitConfig } from './ABLUnitConfig';
 import { outputChannel } from './ABLUnitCommon'
+import { ABLResults } from './ABLResults'
 
 const backgroundExecutable = vscode.window.createTextEditorDecorationType({
 	backgroundColor: 'rgba(255,0,0,0.1)',
@@ -10,8 +11,16 @@ const backgroundExecuted = vscode.window.createTextEditorDecorationType({
 	backgroundColor: 'rgba(0,255,0,0.1)',
 })
 
+let recentResults: ABLResults | undefined
+
+
 export async function activate(context: vscode.ExtensionContext) {
 	const ctrl = vscode.tests.createTestController('ablunitTestController', 'ABLUnit Test')
+	// const obsv = vscode.tests.createTestObserver()
+
+	// obsv.onDidChangeTest(() => {
+	// 	console.error("onDidChangeTest")
+	// })
 
 	console.log("ACTIVATE!")
 	outputChannel.appendLine("ACTIVATE!")
@@ -40,6 +49,7 @@ export async function activate(context: vscode.ExtensionContext) {
 		decorate(openEditor)
 	})
 
+
 	const runAllTestsCommand = () => {
 		console.log("TODO - run all tests")
 		// runTests(cfg)
@@ -56,6 +66,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	}
 
 	context.subscriptions.push(ctrl);
+	// context.subscriptions.push(obsv);
 	context.subscriptions.push(vscode.commands.registerCommand('ablunit.test.runAll', runAllTestsCommand))
 	context.subscriptions.push(vscode.commands.registerCommand('ablunit.test.runActive', runActiveTestCommand))
 	// context.subscriptions.push(vscode.commands.registerCommand('ablunit.test.debugActive', debugActiveTestCommand))
@@ -80,11 +91,13 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	const startTestRun = (request: vscode.TestRunRequest) => {
 		if (cfg.notificationsEnabled()) {
-			vscode.window.showInformationMessage("running ablunit tests");
+			vscode.window.showInformationMessage("running ablunit tests")
 		}
 
-		const queue: { test: vscode.TestItem; data: ABLTestClass | ABLTestSuiteClass | ABLTestClassNamespace | ABLTestMethod | ABLTestProgram | ABLTestProcedure }[] = [];
-		const run = ctrl.createTestRun(request);
+		const queue: { test: vscode.TestItem; data: ABLTestClass | ABLTestSuiteClass | ABLTestClassNamespace | ABLTestMethod | ABLTestProgram | ABLTestProcedure }[] = []
+		const run = ctrl.createTestRun(request)
+		resultData.set(run, new ABLResults(cfg))
+
 		// map of file uris to statements on each line:
 		// const coveredLines = new Map</* file uri */ string, (vscode.StatementCoverage | undefined)[]>();
 
@@ -129,7 +142,10 @@ export async function activate(context: vscode.ExtensionContext) {
 				}
 				run.appendOutput(`Completed ${test.id}\r\n`);
 			}
+
 			run.end();
+			recentResults = resultData.get(run)
+
 			if (vscode.window.activeTextEditor)
 				decorate(vscode.window.activeTextEditor)
 
@@ -273,21 +289,21 @@ function startWatchingWorkspace(controller: vscode.TestController, fileChangedEm
 function decorate(editor: vscode.TextEditor) {
 	const executedArray: vscode.DecorationOptions[] = []
 	const executableArray: vscode.DecorationOptions[] = []
-	const tc = testCoverage.get(editor.document.uri.fsPath)
-	if (tc) {
-		//TODO
-		// if (tc[0]) {
-			tc.detailedCoverage?.forEach(element => {
-				const range = <vscode.Range> element.location;
-				const decoration = { range }
-				if (element.executionCount > 0) {
-					executedArray.push(decoration)
-				} else {
-					executableArray.push(decoration)
-				}
-			});
-		// }
-	}
+
+	if(!recentResults) { return }
+
+	const tc = recentResults.testCoverage.get(editor.document.uri.fsPath)
+	if (!tc) { return }
+	tc.detailedCoverage?.forEach(element => {
+		//TODO we could store these ranges directly in the testCoverage object
+		const range = <vscode.Range> element.location;
+		const decoration = { range }
+		if (element.executionCount > 0) {
+			executedArray.push(decoration)
+		} else {
+			executableArray.push(decoration)
+		}
+	});
 
 	editor.setDecorations(backgroundExecuted, executedArray)
 	editor.setDecorations(backgroundExecutable, executableArray)
