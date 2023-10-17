@@ -1,6 +1,6 @@
 import { ABLUnitConfig } from "./ABLUnitConfig"
 import { CoveredCount, FileCoverage, MarkdownString, Position, Range, StatementCoverage, TestItem, TestMessage, TestRun, Uri, workspace } from "vscode"
-import { ABLResultsParser, TCFailure, TestCase, TestSuite, TestSuites } from "./parse/ABLResultsParser"
+import { ABLResultsParser, TCFailure, TestCase, TestSuite, TestSuites } from "./ABLResultsParser"
 import { ABLTestMethod, ABLTestProcedure, ABLUnitTestData } from "./testTree"
 import { parseABLCallStack } from "./ABLHelper"
 import { PropathParser } from "./ABLPropath"
