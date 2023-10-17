@@ -22,8 +22,6 @@ export class ABLProfile {
 	cfg!: ABLUnitConfig
 	resultsPropath!: PropathParser
 
-	constructor () { }
-
 	async parseData(filepath: Uri, propath: PropathParser) {
 		const text = await getContentFromFilesystem(filepath)
 		const lines = text.replace(/\r/g,'').split('\n')

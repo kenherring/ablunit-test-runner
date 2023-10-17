@@ -74,12 +74,12 @@ export class ABLProfileJSON {
     constructor(line: string) {
         const test = summaryRE.exec(line)
         if(test) {
-            this.version = Number(test![1])
-            this.systemDate = test![2]
-            this.systemTime = test![4]
-            this.description = test![3]
-            this.userID = test![5]
-            this.properties = JSON.parse(test![6].replace(/\\/g,'/'))
+            this.version = Number(test[1])
+            this.systemDate = test[2]
+            this.systemTime = test[4]
+            this.description = test[3]
+            this.userID = test[5]
+            this.properties = JSON.parse(test[6].replace(/\\/g,'/'))
         } else {
             throw (new Error("Unable to parse profile data in section 1"))
         }
@@ -88,8 +88,8 @@ export class ABLProfileJSON {
     addModules (lines: string[]) {
         this.modules = []
         const childModules: Module[] = []
-        for(let lineNo=0; lineNo < lines.length; lineNo++){
-            const test = moduleRE.exec(lines[lineNo])
+        for(const element of lines){
+            const test = moduleRE.exec(element)
 
             const mod: Module  = {
                 ModuleID: Number(test![1]),
@@ -109,7 +109,7 @@ export class ABLProfileJSON {
             mod.Destructor = (mod.ModuleName.startsWith("~"))
             const split = mod.ModuleName.split(" ")
                 if (split.length >= 4) {
-                    console.error("SPLIT4!!!!! " + lines[lineNo])
+                    console.error("SPLIT4!!!!! " + element)
                 } else {
                     mod.EntityName = split[0]
                     if (split.length == 1) {
@@ -160,9 +160,9 @@ export class ABLProfileJSON {
     }
 
     getModule(modID: number):Module | undefined {
-        for(let idx=0; idx < this.modules.length; idx++){
-            if(this.modules[idx].ModuleID === modID)
-                return this.modules[idx]
+        for(const element of this.modules){
+            if(element.ModuleID === modID)
+                return element
         }
         const parent = this.modules.find(mod => mod.childModules?.find(child => child.ModuleID == modID))
         if(parent)
@@ -173,34 +173,34 @@ export class ABLProfileJSON {
     getModuleLine(modID: number, lineNo: number): LineSummary | undefined {
         const mod = this.getModule(modID)
         if(mod) {
-            for(let idx=0; idx < mod.lines.length; idx++) {
-                if(mod.lines[idx].LineNo === lineNo)
-                    return mod.lines[idx]
+            for(const element of mod.lines) {
+                if(element.LineNo === lineNo)
+                    return element
             }
         }
     }
 
     getLine(mod: Module, lineNo: number): LineSummary | undefined {
-        for(let idx=0; idx < mod.lines.length; idx++) {
-            if(mod.lines[idx].LineNo == lineNo)
-                return mod.lines[idx]
+        for(const element of mod.lines) {
+            if(element.LineNo == lineNo)
+                return element
         }
     }
 
 
     addCallTree (lines: string[]) {
-        for(let lineNo=0; lineNo < lines.length; lineNo++){
+        for(const element of lines){
             // console.log(lines[lineNo])
-            const test = callTreeRE.exec(lines[lineNo])
+            const test = callTreeRE.exec(element)
 
 
             if(test && test.length == 5) {
                 //Called By
                 const cbModID = Number(test[3])
                 const cb = {
-                    CallerModuleID: Number(test![1]),
-                    CallerLineNo: Number(test![2]),
-                    CallCount: Number(test![4])
+                    CallerModuleID: Number(test[1]),
+                    CallerLineNo: Number(test[2]),
+                    CallCount: Number(test[4])
                 }
                 const mod = this.getModule(cbModID)
                 if (mod != undefined) {
@@ -211,9 +211,9 @@ export class ABLProfileJSON {
                 //Called To
                 const ctModID = Number(test[1])
                 const ct = {
-                    CalleeModuleID: Number(test![3]),
-                    CallerLineNo: Number(test![2]),
-                    CallCount: Number(test![4])
+                    CalleeModuleID: Number(test[3]),
+                    CallerLineNo: Number(test[2]),
+                    CallCount: Number(test[4])
                 }
 
                 const mod2 = this.getModule(ctModID)
@@ -226,9 +226,9 @@ export class ABLProfileJSON {
     }
 
     addLineSummary (lines: string[]) {
-        for(let lineNo=0; lineNo < lines.length; lineNo++){
+        for(const element of lines){
             // console.log(lines[lineNo])
-            const test = lineSummaryRE.exec(lines[lineNo])
+            const test = lineSummaryRE.exec(element)
 
             if(test){
                 const modID = Number(test[1])
@@ -253,9 +253,9 @@ export class ABLProfileJSON {
     }
 
     addTracing (lines: string[]) {
-        for(let lineNo=0; lineNo < lines.length; lineNo++){
+        for(const element of lines){
             // console.log(lines[lineNo])
-            const test = tracingRE.exec(lines[lineNo])
+            const test = tracingRE.exec(element)
             if (test) {
                 const modID = Number(test[1])
                 const lineNo = Number(test[2])
