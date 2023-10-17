@@ -1,5 +1,5 @@
 
-const summaryRE = /^(\d+) (\d{2}\/\d{2}\/\d{4}) "([^"]*)" (\d{2}:\d{2}:\d{2}) "([^"]*)"/
+const summaryRE = /^(\d+) (\d{2}\/\d{2}\/\d{4}) "([^"]*)" (\d{2}:\d{2}:\d{2}) "([^"]*)" (.*)$/
 const moduleRE = /^(\d+) "([^"]*)" "([^"]*)" (\d+) (\d+) "([^"]*)"$/
 //CALL TREE: CallerID CallerLineno CalleeID CallCount
 const callTreeRE = /^(\d+) (-?\d+) (\d+) (\d+)$/
@@ -47,7 +47,7 @@ export interface Module { //Section 2
     Destructor?: boolean
     ListingFile: string
     CrcValue: number
-    TableCrcValue: number
+    ModuleLineNum: number
     UnknownString1?: string
     coverageName?: string
     executableLines: number
@@ -66,17 +66,24 @@ export class ABLProfileJSON {
 	systemTime?: string
 	description?: string
 	userID?: string
+    properties?: {[key: string]: string}
 	// otherInfo: string
 	// StmtCnt: string | undefined
     modules: Module[] = []
 
     constructor(line: string) {
         const test = summaryRE.exec(line)
-        this.version = Number(test![1])
-        this.systemDate = test![2]
-        this.systemTime = test![4]
-        this.description = test![3]
-        this.userID = test![5]
+        console.log("ABLProfileJson.constructor")
+        if(test) {
+            this.version = Number(test![1])
+            this.systemDate = test![2]
+            this.systemTime = test![4]
+            this.description = test![3]
+            this.userID = test![5]
+            this.properties = JSON.parse(test![6].replace(/\\/g,'/'))
+        } else {
+            throw (new Error("Unable to parse profile data in section 1"))
+        }
     }
 
     addModules (lines: string[]) {
@@ -90,7 +97,7 @@ export class ABLProfileJSON {
                 ModuleName: test![2],
                 ListingFile: test![3],
                 CrcValue: Number(test![4]),
-                TableCrcValue: Number(test![5]),
+                ModuleLineNum: Number(test![5]),
                 UnknownString1: test![6],
                 executableLines: 0,
                 executedLines: 0,
@@ -109,8 +116,14 @@ export class ABLProfileJSON {
                     if (split.length == 1) {
                         mod.SourceName = split[0]
                     } else {
-                        if (split[1])
+                        if (split[1]) {
                             mod.SourceName = split[1]
+                            if (mod.SourceName === mod.EntityName &&
+                                !mod.SourceName.endsWith(".cls") &&
+                                !mod.SourceName.endsWith(".p")) {
+                                mod.SourceName = mod.SourceName + ".cls"
+                            }
+                        }
                         if (split[2]) {
                             mod.ParentName = split[2]
                             if (!mod.SourceName?.endsWith(".cls")) {

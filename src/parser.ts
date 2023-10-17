@@ -7,7 +7,8 @@ const suiteRE = /@testsuite\((.*)\)/
 const suiteItemRE = /(classes|procedures)="([^"]+)+"/i
 const suiteItemRE2 = /,(classes|procedures)="([^"]+)+"/i
 // CLASS statement
-const classRE = /^\s*class\s+(\S+)\s*:/i
+const classRE = /^\s*class\s+(\S+)\s*/i
+// const classRE = /^\s*class\s+(\S+)\s*(inherits)\s*(\S+)\s*:/i
 // METHOD statement
 const methodRE = /\s+method\s(\s*public)?\s*void\s*(\S[^\s(]+)/i
 // PROCEDURE statement

@@ -16,7 +16,8 @@
 		"url": "https://github.coim/kherring/ablunit-test-provider/issues"
 	},
 	"enabledApiProposals": [
-		"testCoverage"
+		"testCoverage",
+		"testObserver"
 	],
 	"engines": {
 		"vscode": "^1.68.0"
@@ -141,7 +142,9 @@
 			{
 				"command": "ablunit.test.runAll",
 				"title": "ABLUnit: run all tests for the workspace",
-				"description": "Run all tests for the workspace"
+				"description": "Run all tests for the workspace",
+				"category": "testing",
+				"enablement": "workspaceContains:**/*.cls || workspaceContains:**/*.p"
 			}
 		],
 		"menus": {

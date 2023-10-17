@@ -12,6 +12,7 @@ export class ABLPromsgs {
 	DLC = process.env.DLC
 	promsgs: Promsg[] = []
 
+	//todo - get rid of thise
 	fs = require('fs');
 
 	constructor(tempDirUri: Uri) {
