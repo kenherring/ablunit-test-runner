@@ -6,7 +6,7 @@ import { parseABLCallStack } from "./ABLHelper"
 import { PropathParser } from "./ABLPropath"
 import { ABLProfile } from "./ABLProfileParser"
 import { ABLProfileJSON, LineSummary, Module } from "./ABLProfileSections"
-import { getSourceLine, importDebugFile } from "./ABLDebugLines"
+import { ABLDebugLines } from "./ABLDebugLines"
 import { getPromsg } from "./ABLpromsgs"
 
 interface RunConfig {
@@ -25,6 +25,7 @@ interface RunConfig {
 }
 
 export class ABLResults {
+	public status: string = "none"
 	public runConfig: RunConfig = {}
 	testData!: WeakMap<TestItem, ABLUnitTestData>
 	cfg: ABLUnitConfig
@@ -37,10 +38,13 @@ export class ABLResults {
 	public propath: PropathParser
 	testResultsJson?: TestSuites
 	profileJson?: ABLProfileJSON
-	testCoverage: Map<string, FileCoverage> = new Map<string, FileCoverage>()
+	debugLines = new ABLDebugLines()
+	public testCoverage: Map<string, FileCoverage> = new Map<string, FileCoverage>()
+	debugMap: Map<string, Uri> = new Map<string, Uri>()
 
 
 	constructor(cfg: ABLUnitConfig) {
+		this.status = "constructed"
 		this.cfg = cfg
 		this.startTime = new Date()
 		this.runConfig.workspaceDir = cfg.workspaceUri()
@@ -58,6 +62,7 @@ export class ABLResults {
 	}
 
 	async parseOutput(item: TestItem, options: TestRun) {
+		this.status = "parsing"
 		console.log("parseOutput - start profile")
 		await this.parseProfile().then(() => {
 			console.log("this.parseProfile() complete")
@@ -71,6 +76,8 @@ export class ABLResults {
 		}, (err) => { console.error("parseResultsFile error: " + err) })
 
 		console.log("parseOutput - done")
+
+		this.status = "complete"
 
 		// const prom: Promise<void | void[]>[] = [Promise.resolve()]
 		// prom[0] = this.parseResultsFile(item, options)
@@ -186,7 +193,6 @@ export class ABLResults {
 	async parseProfile() {
 		const profParser = new ABLProfile()
 		return profParser.parseData(this.runConfig.profileOutput!, this.propath).then(() => {
-			console.log("parseProfile parseData complete! did propath flow? " + this.propath.propath)
 			profParser.writeJsonToFile(this.runConfig.profileOutputJson!)
 			this.profileJson = profParser.profJSON
 			return this.assignProfileResults().then(() => {
@@ -217,32 +223,27 @@ export class ABLResults {
 			console.error("could not find moduleUri for " + module.SourceName)
 			return
 		}
-		console.log("setCoverage-1 module.SourceName=" + module.SourceName)
 
 		let fc: FileCoverage | undefined = undefined
-		try {
-			console.log("setCoverage-2")
+
+		await this.getDebugUri(module.SourceName!).then((uri) => {
 			module.lines.forEach((line: LineSummary) => {
-				console.log("setCoverage-3 " + line.LineNo)
 				if (line.LineNo <= 0) {
 					//TODO
 					//  * -2 is a special case - need to handgle this better
 					//  *  0 is a special case - method header
 					return
 				}
-				console.log("setCoverage-4 " + module.SourceName + " " + moduleUri)
-				const dbg = getSourceLine(moduleUri, line.LineNo)
+				const dbg = this.debugLines.getSourceLine(moduleUri, line.LineNo)
 				if (!dbg) {
 					console.error("cannot find dbg for " + moduleUri.fsPath)
 					return
 				}
-				console.log("setCoverage-5")
 
 				if (!fc || fc!.uri.fsPath != dbg.incUri.fsPath) {
 					//get existing FileCoverage object
 					fc = this.testCoverage.get(dbg.incUri.fsPath)
 					if (!fc) {
-						console.log("setCoverage-7")
 						//create a new FileCoverage object if one didn't already exist
 						fc = new FileCoverage(dbg.incUri, new CoveredCount(0, 0))
 						fc.detailedCoverage = []
@@ -250,34 +251,22 @@ export class ABLResults {
 					}
 				}
 
-				console.log("setCoverage-8")
 				if (!fc) { throw (new Error("cannot find or create FileCoverage object")) }
-				console.log("setCoverage-9")
 				fc.detailedCoverage!.push(new StatementCoverage(line.ExecCount ?? 0,
 					new Range(new Position(dbg.incLine - 1, 0), new Position(dbg.incLine, 0))))
-					console.log("setCoverage-10")
-				});
-				console.log("setCoverage-11")
-			} catch {
-				//Do nothing, likely can't find debug listing
-			}
-			console.log("setCoverage-12")
+			});
+		})
 		// TODO - turn this into TestCoverage class objects
 		//      - will be useful when the proposed API is finalized
 	}
 
-	debugMap: Map<string, Uri> = new Map<string, Uri>()
-
-	async getDebugUri (debugFile: string) {
+	async getDebugUri (debugFile: string) { //TODO rename as this doesn't return a URI
 		// console.log("search propath for " + debugFile)
-
 		let propathRelativeFile = debugFile
-		if (!debugFile.endsWith(".p")) {
+		if (!debugFile.endsWith(".p") && !debugFile.endsWith(".cls")) {
 			propathRelativeFile = debugFile.replace(/\./g,'/') + ".cls"
 		}
 		let debugUri = await this.propath.searchPropath(propathRelativeFile)
-
-		console.log("debugUri=" + debugUri)
 
 		if (!debugUri) {
 			debugUri = Uri.joinPath(this.runConfig.workspaceDir!,debugFile)
@@ -285,7 +274,8 @@ export class ABLResults {
 		// Probably don't want both, but keeping for now until we're more consistent
 		this.debugMap.set(propathRelativeFile, debugUri)
 		this.debugMap.set(debugFile, debugUri)
-		return importDebugFile(propathRelativeFile, debugUri)
+		this.debugMap.set(debugUri.fsPath, debugUri)
+		return await this.debugLines.importDebugFile(propathRelativeFile, debugUri)
 		// return await importDebugFile(propathRelativeFile, debugUri)
 	}
 
@@ -326,7 +316,6 @@ export class ABLResults {
 		let stackCount = 0
 
 		return await Promise.all(promArr).then(() => {
-			console.log("ready to build stack message")
 			// all the debug lists have been resolved, now build the stack message
 			stack.lines.forEach((line) => {
 				stackString += "<code>"
@@ -345,8 +334,7 @@ export class ABLResults {
 				if(dbgUri) {
 					const relativePath =  workspace.asRelativePath(dbgUri)
 					if (!relativePath.startsWith("OpenEdge.") && relativePath != "ABLUnitCore.p") {
-						const dbg = getSourceLine(dbgUri,line.debugLine.line)
-						console.log("dbgUri=" + dbgUri + " line.debugLine.line=" + line.debugLine.line)
+						const dbg = this.debugLines.getSourceLine(dbgUri,line.debugLine.line)
 						if(dbg) {
 							const incRelativePath = workspace.asRelativePath(dbg.incUri)
 							stackString += " (" + "[" + incRelativePath + ":" + dbg.incLine + "]" +

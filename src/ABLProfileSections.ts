@@ -73,7 +73,6 @@ export class ABLProfileJSON {
 
     constructor(line: string) {
         const test = summaryRE.exec(line)
-        console.log("ABLProfileJson.constructor")
         if(test) {
             this.version = Number(test![1])
             this.systemDate = test![2]
@@ -275,15 +274,19 @@ export class ABLProfileJSON {
     }
 
     addCoverage(lines: string[]) {
-        console.log("ABLProfileSections addCoverage")
-        for(let lineNo=0; lineNo < lines.length; lineNo++){
-            let mod
+        lines.unshift('.')
+        let mod
 
-            if(lines[lineNo] == '.') {
-                if (mod && mod.executableLines) {
+        for(let lineNo=1; lineNo < lines.length; lineNo++){
+            if (lines[lineNo] === '.') { continue }
+
+            if (lines[lineNo - 1] === '.') {
+                // set info for the previous section
+                if(lines[lineNo] == '.' && mod) {
                     mod.coveragePct = (mod.executableLines / mod.lines.length * 100)
                 }
-            } else if (lineNo == 0 || lines[lineNo - 1] == '.') {
+
+                // prepare the new section.
                 const test = coverageRE.exec(lines[lineNo])
                 if(test) {
                     mod = this.getModule(Number(test[1]))
@@ -292,7 +295,10 @@ export class ABLProfileJSON {
                         mod.executableLines = Number(test[3])
                     }
                 }
-            } else if (mod) {
+                continue
+            }
+
+            if (mod) {
                 const line = this.getLine(mod,Number(lines[lineNo]))
                 if (line) {
                     line.Executable = true
@@ -302,8 +308,11 @@ export class ABLProfileJSON {
                         Executable: true
                     }
                 }
+                continue
             }
+            //TODO - throw here?
         }
+
         this.modules.forEach(parent => {
             parent.childModules?.forEach(child => {
                 parent.executableLines += child.executableLines

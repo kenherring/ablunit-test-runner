@@ -9,7 +9,7 @@ class testMe inherits parentTestMe:
 		OpenEdge.Core.Assert:Equals(1,1).
 		message 101.
 	end method.
- 
+
 	@Test.
 	method public void testMethodCallAndFail () :
 		message 200.

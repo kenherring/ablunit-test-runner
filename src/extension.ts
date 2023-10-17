@@ -138,14 +138,14 @@ export async function activate(context: vscode.ExtensionContext) {
 					run.skipped(test);
 				} else {
 					run.started(test);
-					console.log("data.run() start")
 					await data.run(test, run, cfg)
-					console.log("data.run() end")
 				}
 				run.appendOutput(`Completed ${test.id}\r\n`);
 			}
+
 			run.end();
 			recentResults = resultData.get(run)
+
 			if (vscode.window.activeTextEditor)
 				decorate(vscode.window.activeTextEditor)
 
@@ -290,16 +290,11 @@ function decorate(editor: vscode.TextEditor) {
 	const executedArray: vscode.DecorationOptions[] = []
 	const executableArray: vscode.DecorationOptions[] = []
 
-	// console.log("decorate me like a cake!")
-
 	if(!recentResults) { return }
-	// console.log("found results.  searching coverage for " + editor.document.uri.fsPath)
+
 	const tc = recentResults.testCoverage.get(editor.document.uri.fsPath)
-	// console.log("found coverage?")
 	if (!tc) { return }
-	// console.log("found coverage")
 	tc.detailedCoverage?.forEach(element => {
-		console.log("found element " + element.location)
 		//TODO we could store these ranges directly in the testCoverage object
 		const range = <vscode.Range> element.location;
 		const decoration = { range }
@@ -310,7 +305,6 @@ function decorate(editor: vscode.TextEditor) {
 		}
 	});
 
-	// console.log("executed: " + executedArray.length + " executable: " + executableArray.length)
 	editor.setDecorations(backgroundExecuted, executedArray)
 	editor.setDecorations(backgroundExecutable, executableArray)
 }

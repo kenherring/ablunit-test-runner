@@ -66,13 +66,10 @@ export class ABLProfile {
 	}
 
 	async writeJsonToFile (file: Uri) {
-
 		// Filter out the OpenEdge.* classes
 		// TODO: should this be optional?
 		const out: ABLProfileJSON = JSON.parse(JSON.stringify(this.profJSON))
 		out.modules = out.modules.filter((m) => (!m.ModuleName?.startsWith('OpenEdge.')))
-
-		console.log(JSON.stringify(out, null, 2))
 
 		workspace.fs.writeFile(file, Uint8Array.from(Buffer.from(JSON.stringify(out, null, 2)))).then(() => {
 			console.log("wrote profile output json file: " + file.fsPath)

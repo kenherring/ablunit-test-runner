@@ -43,7 +43,7 @@ interface DebugLineMap {
 	includes: XrefInclude[]
 }
 
-class ABLDebugLines {
+export class ABLDebugLines {
 	map: DebugLineMap[] //TODO - replace with a real map
 	incLengths: IncLength[]
 
@@ -55,12 +55,8 @@ class ABLDebugLines {
 	getSourceLine(debugUri: Uri, debugLine: number) {
 		// this.map.forEach((key) => {	console.log("key=" + key) })
 
-		console.log("getSourceLine debugUri=" + debugUri + " debugLine=" + debugLine)
 		const debugLines = this.map.find((dlm) => dlm.uri.fsPath === debugUri.fsPath) //TODO - is there a better way to compare URIs?
 		if (!debugLines) {
-			this.map.find((dlm) => {
-				console.log("dlm.uri=" + dlm.uri + " " + dlm.uri.fsPath)
-			})
 			console.error("cannot find debugLines (1) for " + debugUri)
 			return null
 		}
@@ -87,8 +83,15 @@ class ABLDebugLines {
 		})
 	}
 
+	async importDebugFile(debugFile: string, debugUri: Uri) {
+		return await this.importDebugLines(debugFile, debugUri).then((success) => {
+			return success
+		},	(err) => {
+			return err
+		})
+	}
+
 	async importDebugLines(propathRelativePath: string, debugUri: Uri) {
-		console.log("importDebugLines: " + propathRelativePath)
 		// const xrefDir = ".builder/.pct0"
 		const xrefDir = "build"
 		const xrefUri = Uri.joinPath(getWorkspaceUri(),xrefDir,".pct",propathRelativePath + ".xref")
@@ -181,6 +184,7 @@ class ABLDebugLines {
 			// })
 		})
 	}
+
 	injectInclude(m: DebugLineMap, parentUri: Uri, sourceLine: number, incLine: number, dbgLine: number) {
 		const inc = m.includes.find((inc) => inc.parentUri.fsPath === parentUri.fsPath && inc.parentLineNum === incLine)
 		if (inc) {
@@ -201,19 +205,4 @@ class ABLDebugLines {
 		}
 		return dbgLine
 	}
-}
-
-
-const debugLines = new ABLDebugLines()
-
-export async function importDebugFile(debugFile: string, debugUri: Uri) {
-	return debugLines.importDebugLines(debugFile, debugUri).then((success) => {
-		return success
-	},	(err) => {
-		return err
-	})
-}
-
-export const getSourceLine = (debugUri: Uri, debugLine: number) => {
-	return debugLines.getSourceLine(debugUri, debugLine)
 }
