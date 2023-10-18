@@ -1,18 +1,26 @@
 import { Uri, workspace } from 'vscode'
 import { outputChannel } from './ABLUnitCommon'
 import { ABLPromsgs } from './ABLpromsgs';
+import { IProjectJson, IPropathEntry, readOpenEdgeProjectJson } from './projectSchema';
+import { PropathParser } from "./ABLPropath"
 
 export class ABLUnitConfig  {
 
 	storageUri: Uri
 	tempDirUri: Uri | undefined
 	promsgs: ABLPromsgs | undefined
+	propath: PropathParser
 
-	constructor(sUri: Uri) {
+	constructor(sUri: Uri, wsFolder: Uri) {
 		this.storageUri = sUri
-		this.setTempDirUri().then(() => {
+		this.propath = new PropathParser(wsFolder)
+	}
+
+	async start () {
+		await this.setTempDirUri().then(() => {
 			this.promsgs = new ABLPromsgs(this.tempDirUri!)
 		})
+		await this.getPropath().then
 	}
 
 	workspaceUri(): Uri {
@@ -47,14 +55,13 @@ export class ABLUnitConfig  {
 				this.tempDirUri = uri
 				return
 			} else {
-				console.log("attempting to create tempDir '" + uri.fsPath + "'")
 				await workspace.fs.createDirectory(uri).then(() => {
-					console.log("created tempDir '" + uri.fsPath + "' successfully")
+					console.log("created tempDir(1)='" + uri.fsPath + "' successfully")
 				}, (err) => {
 					console.error("failed to create " + uri.fsPath + " - " + err)
 				})
 				if (await workspace.fs.stat(uri).then((stat) => { return true }, (err) => { return false })) {
-					outputChannel.appendLine("created tempDir='" + uri.fsPath + "'")
+					outputChannel.appendLine("created tempDir(2)='" + uri.fsPath + "'")
 					this.tempDirUri = uri
 					return
 				}
@@ -102,7 +109,22 @@ export class ABLUnitConfig  {
 		throw (new Error("cannot resolve progress.ini path"))
 	}
 
-	resultsUri () {
+	async createProgressIni(progressIni: Uri, propath: string) {
+		const iniData = ["[WinChar Startup]", "PROPATH=" + propath]
+		const iniBytes = Uint8Array.from(Buffer.from(iniData.join("\n")))
+
+		return workspace.fs.writeFile(progressIni, iniBytes).then(() => {
+			return true
+		}, (err) => {
+			throw (new Error("error writing progress.ini: " + err))
+		})
+	}
+
+	async getAblunitJson() {
+		return Uri.joinPath(this.tempDirUri!, 'ablunit.json')
+	}
+
+	async resultsUri () {
 		let resultsFile = workspace.getConfiguration('ablunit').get('resultsPath', '')
 		if(!resultsFile) {
 			throw (new Error("no workspace directory opened"))
@@ -117,13 +139,25 @@ export class ABLUnitConfig  {
 		return Uri.joinPath(this.tempDirUri!, resultsFile)
 	}
 
-	getProfileOutputUri () {
-		const profileOutputPath = workspace.getConfiguration('ablunit').get('profileOutputPath', '')
-		if (RegExp(/^[a-zA-Z]:/).exec(profileOutputPath)) {
-			return Uri.parse(profileOutputPath)
+	getProfileOutput() {
+		return Uri.joinPath(this.tempDirUri!,workspace.getConfiguration('ablunit').get('profileOutputPath', ''))
+	}
+
+	async createProfileOptions (profOut: Uri, listingDir: Uri) {
+		const profFile = 'profile.options'
+
+		let profUri: Uri
+		if (RegExp(/^[a-zA-Z]:/).exec(profFile)) {
+			profUri = Uri.parse(profFile)
 		} else {
-			return Uri.joinPath(this.tempDirUri!, profileOutputPath)
+			profUri = Uri.joinPath(this.tempDirUri!, profFile)
 		}
+		const profOpts = [	"-coverage",
+							"-description \"ABLUnit\"",
+							"-filename " + profOut.fsPath,
+							"-listings " + listingDir.fsPath ]
+		await workspace.fs.writeFile(profUri, Uint8Array.from(Buffer.from(profOpts.join("\n")))).then()
+		return profUri
 	}
 
 	async listingDirUri() {
@@ -139,24 +173,55 @@ export class ABLUnitConfig  {
 		})
 	}
 
-	notificationsEnabled(): boolean {
-		return workspace.getConfiguration('ablunit').get('notificationsEnabled', true)
-	}
-
 	getCommandSetting(): string {
 		return workspace.getConfiguration('ablunit').get('tests.command', '').trim()
 	}
 
-	// importOpenedgeProjectJson(): string {
-		// const setting = workspace.getConfiguration('ablunit').get('importOpenedgeProjectJson', '')
-		// console.log("setting=" + setting)
-		// return workspace.getConfiguration('ablunit').get('importOpenedgeProjectJson', '')
-	// }
+	async importOpenedgeProjectJson_str() {
+		const pp = await readOpenEdgeProjectJson().then((oeProjConfig) => {
+			if (!oeProjConfig) {
+				return
+			}
+			const propath: string[] = []
+			const buildDir: string[] = []
+			for (const e in oeProjConfig.propathEntry) {
+				propath.push(oeProjConfig.propathEntry[e].path)
+			}
+			return propath
+		})
+		return (pp)
+	}
 
-	getPropath(): string {
-		return workspace.getConfiguration('ablunit').get('propath', '.')
-		// const env = process.env.PROPATH
-		// this.importOpenedgeProjectJson()
+	async getPropath() {
+		await readOpenEdgeProjectJson().then((propath) => {
+			if (propath) {
+				this.propath.setPropath(propath)
+				return
+			} else {
+				const dflt1: IPropathEntry = {
+					path: '.',
+					type: 'source',
+					buildDir: '.'
+				}
+				const dflt2: IProjectJson = { propathEntry: []}
+				dflt2.propathEntry.push(dflt1)
+				this.propath.setPropath(dflt2)
+				return
+			}
+		}, (err) => {
+			const dflt1: IPropathEntry = {
+				path: '.',
+				type: 'source',
+				buildDir: '.'
+			}
+			const dflt2: IProjectJson = { propathEntry: []}
+			dflt2.propathEntry.push(dflt1)
+			this.propath.setPropath(dflt2)
+			return
+		})
+
+		outputChannel.appendLine("propath='" + this.propath.toString())
+		return this.propath.toString()
 	}
 
 	getBuildDir(): string {

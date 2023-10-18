@@ -52,15 +52,13 @@ export class ABLDebugLines {
 		this.incLengths = []
 	}
 
-	getSourceLine(debugUri: Uri, debugLine: number) {
-		// this.map.forEach((key) => {	console.log("key=" + key) })
-
-		const debugLines = this.map.find((dlm) => dlm.uri.fsPath === debugUri.fsPath) //TODO - is there a better way to compare URIs?
+	getSourceLine(sourceUri: Uri, debugLine: number) {
+		const debugLines = this.map.find((dlm) => dlm.uri.fsPath === sourceUri.fsPath) //TODO - is there a better way to compare URIs?
 		if (!debugLines) {
-			console.error("cannot find debugLines (1) for " + debugUri)
+			console.error("cannot find debugLines (1) for " + sourceUri.fsPath + " " + debugLine)
 			return null
 		}
-		return debugLines?.lines.find((line) => line.debugLine === debugLine)
+		return debugLines.lines.find((line) => line.debugLine === debugLine)
 	}
 
 	async readLineCount(uri: Uri) {
@@ -70,7 +68,7 @@ export class ABLDebugLines {
 	}
 
 	async readIncludeLineCount(uri: Uri) {
-		return workspace.fs.readFile(uri).then((content) => {
+		return await workspace.fs.readFile(uri).then((content) => {
 			const lines = Buffer.from(content.buffer).toString().split("\n")
 			let lc = lines.length
 			if (lines[lines.length] != "") {
@@ -83,48 +81,45 @@ export class ABLDebugLines {
 		})
 	}
 
-	async importDebugFile(debugFile: string, debugUri: Uri, xrefDir: string) {
-		return await this.importDebugLines(debugFile, debugUri, xrefDir).then((success) => {
+	async importDebugFile(sourceUri: Uri, xrefUri: Uri) {
+		return await this.importDebugLines(sourceUri, xrefUri).then((success) => {
 			return success
 		},	(err) => {
-			return err
+			throw err
 		})
 	}
 
-	async importDebugLines(propathRelativePath: string, debugUri: Uri, xrefDir: string) {
-		// const xrefDir = ".builder/.pct0"
-		const xrefUri = Uri.joinPath(getWorkspaceUri(),xrefDir,".pct",propathRelativePath + ".xref")
-
+	async importDebugLines(sourceUri: Uri, xrefUri: Uri) {
 		const incRE = /(\S+) (\S+) (\d+) ([A-Z-]+) (("[^"]+?")|(\S+))/
-		let m = this.map.find((dlm) => dlm.uri.fsPath === debugUri.fsPath)
+		let m = this.map.find((dlm) => dlm.uri.fsPath === sourceUri.fsPath)
 		if (!m) {
 			m = {
-				uri: debugUri,
+				uri: sourceUri,
 				lines: [],
 				includes: [],
 				lineCount: 0
 			}
 			this.map.push(m)
 		}
-		if (!m) {
-			throw new Error("cannot find debugLines for " + debugUri + " [should not hit this!! (1)]")
-		}
+		if (!m) { throw new Error("cannot find debugLines for " + sourceUri + " [should not hit this!! (1)]") }
 
-		const prom2 = this.readLineCount(debugUri).then((lc) => {
+		const prom2 = this.readLineCount(sourceUri).then((lc) => {
 			if (m) {
 				m.lineCount = lc
 				return
 			}
-			throw new Error("cannot find debugLines for " + debugUri + " [should not hit this!! (10)]")
+			throw new Error("cannot find debugLines for " + sourceUri + " [should not hit this!! (10)]")
 		}, (err) => {
-			throw new Error("cannot find debugLines for " + debugUri + " [should not hit this!! (11)]")
+			throw new Error("cannot find debugLines for " + sourceUri + " [should not hit this!! (11)]")
 		})
 
 		// This reads the xref to find where the include files belong, and finds how many lines each of those includes has
 		// TODO [BUG]: this only works for single line includes.  Need to figure out how to deal with multi-line includes,
 		//				 and instances where the include has code which expands to multiple lines or shrinks the preprocessor
 		//				suspect this might require using listings, or more likely breaking apart the r-code which I don't want to do
+
 		const prom1 = readXrefFile(xrefUri).then((content) => {
+
 			if (!content) {
 				console.error("readXrefFile: content is undefined")
 				return
@@ -134,7 +129,8 @@ export class ABLDebugLines {
 			const promArr: Promise<void>[] = [Promise.resolve()]
 			for (const element of lines) {
 				const xref = incRE.exec(element)
-				if (xref && xref[4] == "INCLUDE") {
+
+				if (xref && (xref[4] === "INCLUDE" || xref[4] === "COMPILE")) {
 					const [, ,parent,lineNumStr,xrefType,includeNameRaw] = xref
 					if (xrefType === "INCLUDE") {
 						const lineNum = Number(lineNumStr)
@@ -149,38 +145,28 @@ export class ABLDebugLines {
 			return Promise.all(promArr)
 		}, (err) => {
 			//Do nothing, this is expected if the xref file doesn't exist
+			console.error("err: " + err)
 			return err
 		})
 
+		await prom1.then(() => {}, (err) => console.error("prom1 error: " + err))
+		await prom2.then(() => {}, (err) => console.error("prom1 error: " + err))
 
-		return Promise.all([prom1, prom2]).then(() => {
-			// console.log("NOW... calculate the line mappings")
+		return await Promise.all([prom1, prom2]).then(() => {
 			if (!m) {
-				throw new Error("cannot find debugLines for " + debugUri + " [should not hit this!! (2)]")
+				throw new Error("cannot find debugLines for " + sourceUri + " [should not hit this!! (2)]")
 			}
-			// console.log("m.length=" + m.lineCount)
-			// m.includes.forEach((inc) => {
-			// 	console.log("inc=" + inc.parentUri + " " + inc.parentLineNum + " " + inc.includeUri)
-			// })
-			// this.incLengths.forEach((incLen) => {
-			// 	console.log("incLen=" + incLen.uri + " " + incLen.lineCount)
-			// })
-
 			let dbgLine = 0
 			for (let i=1; i<=m.lineCount; i++) {
 				dbgLine++
 				m.lines.push({
 					debugLine: dbgLine,
 					sourceLine: i,
-					incUri: debugUri,
+					incUri: sourceUri,
 					incLine: i
 				})
 				dbgLine = this.injectInclude(m, m.uri, i, i, dbgLine)
 			}
-
-			// m.lines.forEach((line) => {
-			// 	console.log(line.debugLine + " " + line.sourceLine + " " + line.incLine + " " + line.incUri)
-			// })
 		})
 	}
 

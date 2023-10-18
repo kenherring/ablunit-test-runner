@@ -144,7 +144,7 @@ export class ABLResultsParser {
 	}
 
 	outputJson(jsonUri: Uri, toJson: any) {
-		console.log("outputJson to " + jsonUri.toString())
+		console.log("outputJson to " + jsonUri.fsPath)
 		const bufferJson = Buffer.from(JSON.stringify(toJson, null, 2))
 		workspace.fs.writeFile(jsonUri, bufferJson)
 	}

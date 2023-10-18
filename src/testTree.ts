@@ -94,46 +94,10 @@ class TestFile extends TestTypeObj {
 		console.error("updateFromContents TestFile - skipping")
 	}
 
-	// MOVEME
-	async createProgressIni(progressIni: vscode.Uri, cfg: ABLUnitConfig) {
-		const iniData = ["[WinChar Startup]", "PROPATH=" + cfg.getPropath()]
-		this.currentResults!.runConfig.propath = cfg.getPropath()
-		this.currentResults!.runConfig.progressIni = progressIni
-		return await vscode.workspace.fs.writeFile(progressIni, Uint8Array.from(Buffer.from(iniData.join("\n")))).then(() => {
-			return true
-		}, (err) => {
-			throw (new Error("error writing progress.ini: " + err))
-		})
-	}
-
-	// MOVEME
-	async createProfileOptions(profileOptions: vscode.Uri, cfg: ABLUnitConfig) {
-		const listingDirUri = await cfg.listingDirUri().then((uri) => {
-			return uri
-		}, (err) => {
-			throw (new Error("error getting listing directory: " + err))
-		});
-
-		this.currentResults!.runConfig.listingDir = listingDirUri
-		this.currentResults!.runConfig.profileOptions = profileOptions
-		this.currentResults!.runConfig.profileOutput = cfg.getProfileOutputUri()
-		this.currentResults!.runConfig.profileOutputJson = vscode.Uri.file(this.currentResults!.runConfig.profileOutput.fsPath.replace(".out",".json"))
-
-		const profOpts = [	"-coverage",
-							"-description \"ABLUnit\"",
-							"-filename " + cfg.getProfileOutputUri().fsPath,
-							"-listings " + listingDirUri.fsPath]
-		return await vscode.workspace.fs.writeFile(profileOptions, Uint8Array.from(Buffer.from(profOpts.join("\n")))).then(() => {
-			return
-		}, (err) => {
-			throw (new Error("error writing profile.options: " + err))
-		})
-	}
-
-	async createAblunitJson(uri: vscode.Uri, itemPath: string, cfg: ABLUnitConfig) {
+	async createAblunitJson(uri: vscode.Uri, itemPath: string) {
 		const opt: Options = {
 			output: {
-				location: cfg.resultsUri().fsPath,
+				location: this.currentResults!.runConfig.resultsUri!.fsPath,
 				format: "xml",
 			},
 			quitOnEnd: true,
@@ -145,82 +109,68 @@ class TestFile extends TestTypeObj {
 			]
 		}
 
-		this.currentResults!.runConfig.ablunitJson = uri
 		this.currentResults!.runConfig.ablunitOptions = opt
 		return vscode.workspace.fs.writeFile(uri, Uint8Array.from(Buffer.from(JSON.stringify(opt, null, 2))))
 	}
 
-	async getCommand(itemPath: string, cfg: ABLUnitConfig) {
-		if (!cfg.tempDirUri) {
+	async getCommand(itemPath: string) {
+		itemPath="testMe.cls"
+		if (!this.currentResults?.runConfig.tempDirUri) {
 			throw (new Error("temp directory not set"))
 		}
 
-		const propath = cfg.getPropath()
-		console.log("propath=" + propath)
-
-		// const cmd1 = cfg.getCommandSetting()
-		// console.log("cmd setting=" + cmd1)
 		const cmd = ['_progres', '-b', '-p', 'ABLUnitCore.p']
-		// if (! cmd) {
-		// cmd = '_progres -b -p ABLUnitCore.p ${progressIni} -T ${tempDir} -profile ${profile.options} -param "${itemPath} CFG=${ablunit.json}"'
-		// }
 
 		if (process.platform === 'win32') {
-			const progressIni = await cfg.getProgressIni()
-			//TODO - if this is from the setting, don't overwrite it
-			const res = await this.createProgressIni(progressIni, cfg)
-			cmd.push('-basekey', 'INI', '-ininame', progressIni.fsPath)
+			cmd.push('-basekey', 'INI', '-ininame', this.currentResults.runConfig.progressIni!.fsPath)
 		}
 
-		cmd.push('-T', cfg.tempDirUri.fsPath)
-		this.currentResults!.runConfig.tempDir = cfg.tempDirUri
+		const resultsOut = vscode.workspace.asRelativePath(this.currentResults.runConfig.tempDirUri!)
+		cmd.push('-T', this.currentResults.runConfig.tempDirUri.fsPath)
+		cmd.push('-profile', this.currentResults.runConfig.profileOptions!.fsPath)
+		// cmd.push('-param', "'CFG=" + this.currentResults.runConfig.ablunitJson!.fsPath + "'")
+		cmd.push("-param", '"' + itemPath + ' -outputLocation ' + resultsOut + ' -format xml"')
+		await this.createAblunitJson(this.currentResults.runConfig.ablunitJson!, itemPath)
 
-		const profileOptions = vscode.Uri.joinPath(cfg.tempDirUri, "profile.options")
-		cmd.push('-profile', profileOptions.fsPath)
-
-		const ablunitJson = vscode.Uri.joinPath(cfg.tempDirUri, "ablunit.json")
-		// cmd.push('-param', "'CFG=" + ablunitJson.fsPath + "'")
-		cmd.push("-param", '"' + vscode.Uri.joinPath(cfg.workspaceUri(), itemPath).fsPath + " -outputLocation " + cfg.tempDirUri.fsPath + '"')
-
-		// don't create if they already exist?
-		await this.createAblunitJson(ablunitJson, itemPath, cfg)
-		await this.createProfileOptions(profileOptions, cfg)
-
+		const cmdSanitized: string[] = []
 		cmd.forEach(element => {
-			element = element.replace(/\\/g, '/')
+			cmdSanitized.push(element.replace(/\\/g, '/'))
 		});
 
-		this.currentResults!.runConfig.cmd = cmd
-		console.log("cmd='" + cmd + "'")
-		outputChannel.appendLine("ABLUnit Command: " + cmd.join(' '))
-		return cmd
+		this.currentResults.runConfig.cmd = cmdSanitized
+		outputChannel.appendLine("ABLUnit Command: " + cmdSanitized.join(' '))
+		return cmdSanitized
 	}
 
-	async run(item: vscode.TestItem, options: vscode.TestRun, cfg: ABLUnitConfig) {
+	async run(item: vscode.TestItem, options: vscode.TestRun) {
 		const start = Date.now()
-		let itemPath = vscode.workspace.asRelativePath(item.uri!.fsPath)
 
 		const data = testData.get(item)
 		this.currentResults = resultData.get(options)
-		this.currentResults!.setTestData(testData)
+		if(!this.currentResults) {
+			throw new Error("no current results")
+		}
+		this.currentResults.setTestData(testData)
 
+		let itemPath = item.uri!.fsPath
 		if (data instanceof ABLTestProcedure || data instanceof ABLTestMethod) {
-			console.log("itemPath=" + itemPath)
 			itemPath = itemPath + "#" + item.label
-			console.log("itemPath=" + itemPath)
 		}
 
-		return this.getCommand(itemPath, cfg).then((args) => {
+		return this.getCommand(itemPath).then((args) => {
+			if (!this.currentResults) {
+				throw(new Error("no current results"))
+			}
 
-			console.log("ShellExecution Started - dir='" + cfg.workspaceUri().fsPath + "'")
-			outputChannel.appendLine("ShellExecution Started - dir='" + cfg.workspaceUri().fsPath + "'")
+			console.log("ShellExecution Started - dir='" + this.currentResults.runConfig.workspaceDir.fsPath + "'")
+			outputChannel.appendLine("ShellExecution Started - dir='" + this.currentResults.runConfig.workspaceDir.fsPath + "'")
 
 			const cmd = args[0]
 			args.shift()
 
-			// console.log("COMMAND='" + '_progres ' + args.join(' ') + "'")
+			console.log("COMMAND='" + cmd + ' ' + args.join(' ') + "'")
 			return new Promise<string>((resolve, reject) => {
-				cp.exec(cmd + ' ' + args.join(' '), { cwd: cfg.workspaceUri().fsPath }, (err: any, stdout: any, stderr: any) => {
+				cp.exec(cmd + ' ' + args.join(' '), { cwd: this.currentResults!.runConfig.workspaceDir.fsPath }, (err: any, stdout: any, stderr: any) => {
 					// console.log('stdout: ' + stdout)
 					// console.log('stderr: ' + stderr)
 					if (stderr) {

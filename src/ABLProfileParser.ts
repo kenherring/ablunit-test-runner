@@ -43,7 +43,7 @@ export class ABLProfile {
 		}
 
 		this.profJSON = new ABLProfileJSON(sectionLines[1][0])
-		propath.setPropath(this.profJSON.properties!.Propath)
+		// propath.setPropath(this.profJSON.properties!.Propath)
 		this.profJSON.addModules(sectionLines[2])
 
 		for (const mod of this.profJSON.modules) {
@@ -72,7 +72,7 @@ export class ABLProfile {
 		workspace.fs.writeFile(file, Uint8Array.from(Buffer.from(JSON.stringify(out, null, 2)))).then(() => {
 			console.log("wrote profile output json file: " + file.fsPath)
 		}, (err) => {
-			console.log("failed to write profile output json file " + file.fsPath + " - " + err)
+			console.error("failed to write profile output json file " + file.fsPath + " - " + err)
 		})
 	}
 

@@ -3,15 +3,14 @@ import { ABLUnitConfig } from "./ABLUnitConfig"
 import { ABLResultsParser, TCFailure, TestCase, TestSuite, TestSuites } from "./ABLResultsParser"
 import { ABLTestMethod, ABLTestProcedure, ABLUnitTestData } from "./testTree"
 import { parseABLCallStack } from "./ABLHelper"
-import { PropathParser } from "./ABLPropath"
 import { ABLProfile } from "./ABLProfileParser"
 import { ABLProfileJSON, LineSummary, Module } from "./ABLProfileSections"
 import { ABLDebugLines } from "./ABLDebugLines"
 import { getPromsg } from "./ABLpromsgs"
 
 interface RunConfig {
-	workspaceDir?: Uri
-	propath?: string
+	workspaceDir: Uri
+	tempDirUri: Uri
 	progressIni?: Uri
 	listingDir?: Uri
 	profileOptions?: Uri
@@ -20,62 +19,68 @@ interface RunConfig {
 	ablunitJson?: Uri
 	ablunitOptions?: Options
 	cmd?: string[]
-	tempDir?: Uri
 	resultsUri?: Uri
 }
 
 export class ABLResults {
 	public status: string = "none"
-	public runConfig: RunConfig = {}
+	public runConfig: RunConfig
 	testData!: WeakMap<TestItem, ABLUnitTestData>
-	cfg: ABLUnitConfig
+	private cfg: ABLUnitConfig
 	profJson: [] = []
 	resultsJsonUri: [] = []
 	coverageJson: [] = []
 	startTime: Date
 	endTime!: Date
 	duration = () => { return (Number(this.endTime) - Number(this.startTime)) }
-	public propath: PropathParser
 	testResultsJson?: TestSuites
 	profileJson?: ABLProfileJSON
 	debugLines = new ABLDebugLines()
 	public testCoverage: Map<string, FileCoverage> = new Map<string, FileCoverage>()
 	debugMap: Map<string, Uri> = new Map<string, Uri>()
+	sourceMap: Map<string, Uri> = new Map<string, Uri>()
 
+	constructor(storageUri: Uri) {
+		if (!workspace.workspaceFolders) {
+			throw (new Error("no workspace folder is open"))
+		}
 
-	constructor(cfg: ABLUnitConfig) {
-		this.status = "constructed"
-		this.cfg = cfg
 		this.startTime = new Date()
-		this.runConfig.workspaceDir = cfg.workspaceUri()
-		this.runConfig.resultsUri = cfg.resultsUri()
-		this.propath = new PropathParser(cfg)
+		this.status = "constructed"
+		this.runConfig = {
+			workspaceDir: workspace.workspaceFolders[0].uri,
+			tempDirUri: storageUri
+		}
+		this.cfg = new ABLUnitConfig(storageUri, this.runConfig.workspaceDir)
+	}
+
+	async start () {
+		//TODO - do all, then wait
+		await this.cfg.start().then()
+		this.runConfig.tempDirUri = this.cfg.tempDirUri!
+		this.runConfig.listingDir = await this.cfg.listingDirUri()
+		this.runConfig.profileOutput = this.cfg.getProfileOutput()
+		this.runConfig.profileOutputJson = Uri.file(this.runConfig.profileOutput.fsPath.replace(/\.prof$/, ".json"))
+		this.runConfig.resultsUri = await this.cfg.resultsUri()
+		this.runConfig.progressIni = await this.cfg.getProgressIni()
+		this.runConfig.ablunitJson = await this.cfg.getAblunitJson()
+		await this.cfg.createProgressIni(this.runConfig.progressIni, this.cfg.propath.toString()).then()
+		this.runConfig.profileOptions = await this.cfg.createProfileOptions(this.runConfig.profileOutput, this.runConfig.listingDir).then()
 	}
 
 	async setTestData(testData: WeakMap<TestItem, ABLUnitTestData>) {
 		this.testData = testData
 	}
 
-	async setPropath(propath: string) {
-		this.runConfig.propath = propath
-		this.propath.setPropath(propath)
-	}
-
 	async parseOutput(item: TestItem, options: TestRun) {
 		this.status = "parsing"
-		console.log("parseOutput - start profile")
 		await this.parseProfile().then(() => {
-			console.log("this.parseProfile() complete")
 			return true
 		}, (err) => { console.error("parseProfile error: " + err) })
 
-		console.log("parseOutput - start results")
 		await this.parseResultsFile(item, options).then(() => {
-			console.log("this.parseResultsFile complete")
 			return true
 		}, (err) => { console.error("parseResultsFile error: " + err) })
-
-		console.log("parseOutput - done")
 
 		this.status = "complete"
 
@@ -105,7 +110,7 @@ export class ABLResults {
 		}
 
 		if (!res.testsuite) {
-			console.log("malformed results - could not find 'testsuite' node")
+			console.error("malformed results - could not find 'testsuite' node")
 			options.errored(item, new TestMessage("malformed results - could not find 'testsuite' node"), this.duration())
 			return
 		}
@@ -117,7 +122,7 @@ export class ABLResults {
 		}
 		const s = res.testsuite.find((s: TestSuite) => s.classname === suiteName)
 		if (!s) {
-			console.log("could not find test suite in results")
+			console.error("could not find test suite in results")
 			options.errored(item, new TestMessage("could not find test suite in results"), this.duration())
 			return
 		}
@@ -192,7 +197,7 @@ export class ABLResults {
 
 	async parseProfile() {
 		const profParser = new ABLProfile()
-		return profParser.parseData(this.runConfig.profileOutput!, this.propath).then(() => {
+		return profParser.parseData(this.runConfig.profileOutput!, this.cfg.propath).then(() => {
 			profParser.writeJsonToFile(this.runConfig.profileOutputJson!)
 			this.profileJson = profParser.profJSON
 			return this.assignProfileResults().then(() => {
@@ -218,7 +223,8 @@ export class ABLResults {
 
 	async setCoverage(module: Module) {
 		if (!module.SourceName) { return }
-		const moduleUri = await this.propath.searchPropath(module.SourceName)
+		const pUri = await this.cfg.propath.searchPropath(module.SourceName)
+		const moduleUri = Uri.joinPath(pUri, module.SourceName)
 		if (!moduleUri) {
 			console.error("could not find moduleUri for " + module.SourceName)
 			return
@@ -226,7 +232,9 @@ export class ABLResults {
 
 		let fc: FileCoverage | undefined = undefined
 
-		await this.getDebugUri(module.SourceName).then((uri) => {
+		const buildDir = this.cfg.propath.getBuildDir(module.SourceName)
+
+		await this.importDebugFile(module.SourceName).then((uri) => {
 			module.lines.forEach((line: LineSummary) => {
 				if (line.LineNo <= 0) {
 					//TODO
@@ -260,23 +268,27 @@ export class ABLResults {
 		//      - will be useful when the proposed API is finalized
 	}
 
-	async getDebugUri (debugFile: string) { //TODO rename as this doesn't return a URI
-		// console.log("search propath for " + debugFile)
-		let propathRelativeFile = debugFile
-		if (!debugFile.endsWith(".p") && !debugFile.endsWith(".cls")) {
-			propathRelativeFile = debugFile.replace(/\./g,'/') + ".cls"
+	async importDebugFile (debugSourceName: string) { //TODO rename as this doesn't return a URI
+		let propathRelativeFile: string
+		if (!debugSourceName.endsWith(".p") && !debugSourceName.endsWith(".cls")) {
+			propathRelativeFile = debugSourceName.replace(/\./g,'/') + ".cls"
+		} else {
+			propathRelativeFile = debugSourceName
 		}
-		let debugUri = await this.propath.searchPropath(propathRelativeFile)
 
-		if (!debugUri) {
-			debugUri = Uri.joinPath(this.runConfig.workspaceDir!,debugFile)
-		}
+		const propathUri = await this.cfg.propath.searchPropath(debugSourceName)
+		const buildDir = await this.cfg.propath.getBuildDir(propathRelativeFile)
+		const xrefUri = Uri.joinPath(this.runConfig.workspaceDir,buildDir!,".pct",propathRelativeFile + ".xref")
+
 		// Probably don't want both, but keeping for now until we're more consistent
-		this.debugMap.set(propathRelativeFile, debugUri)
-		this.debugMap.set(debugFile, debugUri)
-		this.debugMap.set(debugUri.fsPath, debugUri)
-		return await this.debugLines.importDebugFile(propathRelativeFile, debugUri, this.cfg.getBuildDir())
-		// return await importDebugFile(propathRelativeFile, debugUri)
+		const sourceUri = Uri.joinPath(propathUri,propathRelativeFile)
+		this.debugMap.set(sourceUri.fsPath, xrefUri)
+		this.debugMap.set(debugSourceName, xrefUri)
+		this.debugMap.set(debugSourceName.replace(/\.cls$/,''), xrefUri)
+		return await this.debugLines.importDebugFile(sourceUri, xrefUri).then(() => {
+		}, (err) => {
+			console.error("importDebugFile error: " + err)
+		})
 	}
 
 	async getFailureMarkdownMessage(failure: TCFailure): Promise<MarkdownString> {
@@ -290,7 +302,7 @@ export class ABLResults {
 			if(line.debugFile.startsWith("OpenEdge.") || line.debugFile === "ABLUnitCore.p") { return }
 			if (paths.indexOf(line.debugFile) == -1) {
 				paths.push(line.debugFile)
-				promArr.push(this.getDebugUri(line.debugFile))
+				promArr.push(this.importDebugFile(line.debugFile))
 			}
 		})
 
@@ -325,21 +337,22 @@ export class ABLResults {
 					stackString += "&nbsp;&nbsp;&nbsp; "
 				}
 				stackCount = stackCount + 1
+
 				if (line.method) {
 					stackString += line.method + " "
 				}
 
 				stackString += line.debugFile + " at line " + line.debugLine.line
-				const dbgUri = this.debugMap.get(line.debugFile)
-				if(dbgUri) {
-					const relativePath =  workspace.asRelativePath(dbgUri)
-					if (!relativePath.startsWith("OpenEdge.") && relativePath != "ABLUnitCore.p") {
-						const dbg = this.debugLines.getSourceLine(dbgUri,line.debugLine.line)
-						if(dbg) {
-							const incRelativePath = workspace.asRelativePath(dbg.incUri)
-							stackString += " (" + "[" + incRelativePath + ":" + dbg.incLine + "]" +
-												"(command:_ablunit.openStackTrace?" + encodeURIComponent(JSON.stringify(dbg.incUri + "&" + dbg.incLine)) + ")" + ")"
-						}
+
+				if (!line.debugFile.startsWith("OpenEdge.") && line.debugFile != "ABLUnitCore.p") {
+					const sourcePath = this.cfg.propath.getSourcePropathInfo(line.debugFile)
+					const sourceUri = Uri.file(sourcePath)
+					const dbg = this.debugLines.getSourceLine(sourceUri,line.debugLine.line)
+
+					if(dbg) {
+						const incRelativePath = workspace.asRelativePath(dbg.incUri)
+						stackString += " (" + "[" + incRelativePath + ":" + dbg.incLine + "]" +
+											"(command:_ablunit.openStackTrace?" + encodeURIComponent(JSON.stringify(dbg.incUri + "&" + dbg.incLine)) + ")" + ")"
 					}
 				}
 				stackString += "</code><br>\n"
