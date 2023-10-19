@@ -1,10 +1,8 @@
-import { ABLUnitConfig } from './ABLUnitConfig';
+import * as vscode from 'vscode';
 import { parseABLUnit } from './parser';
 import { TextDecoder } from 'util';
-import { outputChannel } from './ABLUnitCommon';
-import * as cp from "child_process";
-import * as vscode from 'vscode';
 import { ABLResults } from './ABLResults';
+import { ablunitRun } from './ABLUnitRun';
 
 const textDecoder = new TextDecoder('utf-8');
 
@@ -94,135 +92,31 @@ class TestFile extends TestTypeObj {
 		console.error("updateFromContents TestFile - skipping")
 	}
 
-	async createAblunitJson(uri: vscode.Uri, itemPath: string) {
-		const opt: Options = {
-			output: {
-				location: this.currentResults!.runConfig.resultsUri!.fsPath,
-				format: "xml",
-			},
-			quitOnEnd: true,
-			writeLog: true,
-			showErrorMessage: true,
-			throwError: true,
-			tests: [
-				{ test: itemPath }
-			]
-		}
-
-		this.currentResults!.runConfig.ablunitOptions = opt
-		return vscode.workspace.fs.writeFile(uri, Uint8Array.from(Buffer.from(JSON.stringify(opt, null, 2))))
-	}
-
-	async getCommand(itemPath: string) {
-		itemPath="testMe.cls"
-		if (!this.currentResults?.runConfig.tempDirUri) {
-			throw (new Error("temp directory not set"))
-		}
-
-		const cmd = ['_progres', '-b', '-p', 'ABLUnitCore.p']
-
-		if (process.platform === 'win32') {
-			cmd.push('-basekey', 'INI', '-ininame', this.currentResults.runConfig.progressIni!.fsPath)
-		}
-
-		const resultsOut = vscode.workspace.asRelativePath(this.currentResults.runConfig.tempDirUri!)
-		cmd.push('-T', this.currentResults.runConfig.tempDirUri.fsPath)
-		cmd.push('-profile', this.currentResults.runConfig.profileOptions!.fsPath)
-		// cmd.push('-param', "'CFG=" + this.currentResults.runConfig.ablunitJson!.fsPath + "'")
-		cmd.push("-param", '"' + itemPath + ' -outputLocation ' + resultsOut + ' -format xml"')
-		await this.createAblunitJson(this.currentResults.runConfig.ablunitJson!, itemPath)
-
-		const cmdSanitized: string[] = []
-		cmd.forEach(element => {
-			cmdSanitized.push(element.replace(/\\/g, '/'))
-		});
-
-		this.currentResults.runConfig.cmd = cmdSanitized
-		outputChannel.appendLine("ABLUnit Command: " + cmdSanitized.join(' '))
-		return cmdSanitized
-	}
-
 	async run(item: vscode.TestItem, options: vscode.TestRun) {
-		const start = Date.now()
-
-		const data = testData.get(item)
+		if (!resultData) {
+			throw new Error("no result data")
+		}
 		this.currentResults = resultData.get(options)
-		if(!this.currentResults) {
-			throw new Error("no current results")
-		}
-		this.currentResults.setTestData(testData)
-
-		let itemPath = item.uri!.fsPath
-		if (data instanceof ABLTestProcedure || data instanceof ABLTestMethod) {
-			itemPath = itemPath + "#" + item.label
-		}
-
-		return this.getCommand(itemPath).then((args) => {
-			if (!this.currentResults) {
-				throw(new Error("no current results"))
-			}
-
-			console.log("ShellExecution Started - dir='" + this.currentResults.runConfig.workspaceDir.fsPath + "'")
-			outputChannel.appendLine("ShellExecution Started - dir='" + this.currentResults.runConfig.workspaceDir.fsPath + "'")
-
-			const cmd = args[0]
-			args.shift()
-
-			console.log("COMMAND='" + cmd + ' ' + args.join(' ') + "'")
-			return new Promise<string>((resolve, reject) => {
-				cp.exec(cmd + ' ' + args.join(' '), { cwd: this.currentResults!.runConfig.workspaceDir.fsPath }, (err: any, stdout: any, stderr: any) => {
-					// console.log('stdout: ' + stdout)
-					// console.log('stderr: ' + stderr)
-					if (stderr) {
-						console.error(stderr)
-						options.appendOutput("ERROR:" + stderr)
-						reject(stderr)
-					}
-					const duration = Date.now() - start
-					outputChannel.appendLine("ShellExecution Completed - duration: " + duration)
-					console.log("ShellExecution Completed - duration: " + duration)
-					console.log(stdout)
-					options.appendOutput(stdout)
-					return this.currentResults!.parseOutput(item, options).then(() => {
-						updateCallStacks(item)
-						resolve(stdout)
-					}, (err) => {
-						throw new Error("error parsing output: " + err)
-					})
-				})
-			})
-		})
+		this.currentResults!.setTestData(testData)
+		console.log("call ablunitRun")
+		await ablunitRun(item, options, testData.get(item)!, resultData.get(options)!).then()
+		console.log("return ablunitRun")
 	}
-}
-
-function updateCallStacks (item: vscode.TestItem) {
-	console.log('updating call stack for ' + item.label + ' ' + item.id)
-
 }
 
 export class ABLTestSuiteClass extends TestFile {
-
-	constructor(
-		public generation: number,
-		private readonly suiteName: string
-	) { super() }
-
-	getLabel() {
-		return this.suiteName
+	constructor(public generation: number, private readonly suiteName: string) {
+		super()
+		this.label = suiteName
 	}
 }
 
 export class ABLTestClassNamespace extends TestFile {
 	public canResolveChildren: boolean = false
 
-	constructor(
-		public generation: number,
-		private readonly classpath: string,
-		private readonly element: string
-	) { super() }
-
-	getLabel() {
-		return this.element
+	constructor(public generation: number, private readonly classpath: string, private readonly element: string) {
+		super()
+		this.label = element
 	}
 }
 
@@ -334,14 +228,9 @@ export class ABLTestClass extends TestFile {
 export class ABLTestProgramDirectory extends TestTypeObj {
 	public canResolveChildren: boolean = false
 
-	constructor(
-		public generation: number,
-		private readonly relativeDir: string,
-		private readonly element: string
-	) { super() }
-
-	getLabel() {
-		return this.element
+	constructor(public generation: number, private readonly relativeDir: string, private readonly element: string) {
+		super()
+		this.label = element
 	}
 }
 
@@ -441,20 +330,16 @@ export class ABLTestProgram extends TestFile {
 }
 
 export class ABLTestMethod extends TestFile { // child of TestClass
-
-	constructor(public generation: number,
-		private readonly classname: string,
-		private readonly methodName: string) {
+	constructor(public generation: number, private readonly classname: string, private readonly methodName: string) {
 		super()
+		this.label = methodName
 	}
 }
 
 export class ABLTestProcedure extends TestFile { // child of TestProgram
 	public description: string = "ABL Test Procedure"
 
-	constructor(public generation: number,
-		private readonly programname: string,
-		private readonly procedurename: string) {
+	constructor(public generation: number, private readonly programname: string, private readonly procedurename: string) {
 		super()
 		this.label = procedurename
 	}
@@ -464,12 +349,8 @@ export class ABLAssert extends TestTypeObj { // child of TestClass or TestProced
 	public canResolveChildren: boolean = false
 	public runnable: boolean = false
 
-	constructor(
-		public generation: number,
-		private readonly assertText: string
-	) { super() }
-
-	getLabel() {
-		return this.assertText
+	constructor(public generation: number, private readonly assertText: string) {
+		super()
+		this.label = assertText
 	}
 }

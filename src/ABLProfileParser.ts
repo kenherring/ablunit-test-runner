@@ -2,7 +2,7 @@ import { Uri, workspace } from 'vscode';
 import { ABLProfileJSON } from './ABLProfileSections'
 import { TextDecoder } from 'util';
 import { PropathParser } from './ABLPropath';
-import { ABLUnitConfig } from './ABLUnitConfig';
+import { ABLUnitConfig } from './ABLUnitConfigWriter';
 
 const textDecoder = new TextDecoder('utf-8');
 
@@ -56,16 +56,15 @@ export class ABLProfile {
 		this.profJSON.addLineSummary(sectionLines[4])
 		this.profJSON.addTracing(sectionLines[5])
 		this.profJSON.addCoverage(sectionLines[6])
-		// this.profJSON.addUserData(sectionLines[7])
-		// this.profJSON.addSection8(sectionLines[8])
+		this.profJSON.addUserData(sectionLines[7])
 
 		// TODO - this doesn't work
 		// this.profJSON.modules.sort()
 	}
 
 	async writeJsonToFile (file: Uri) {
-		// Filter out the OpenEdge.* classes
-		// TODO: should this be optional?
+		// TODO: Filter out the OpenEdge.* classes - make optional?
+		// TODO: should writing json be optional?
 		const out: ABLProfileJSON = JSON.parse(JSON.stringify(this.profJSON))
 		out.modules = out.modules.filter((m) => (!m.ModuleName?.startsWith('OpenEdge.')))
 

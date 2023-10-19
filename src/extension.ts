@@ -66,7 +66,7 @@ export async function activate(context: vscode.ExtensionContext) {
 		vscode.commands.registerCommand('ablunit.test.runAll', runAllTestsCommand),
 		vscode.commands.registerCommand('ablunit.test.runActive', runActiveTestCommand),
 		vscode.commands.registerCommand('ablunit.test.debugActive', debugActiveTestCommand),
-		vscode.commands.registerCommand('_ablunit.openStackTrace', openStackTrace),
+		vscode.commands.registerCommand('_ablunit.openStackTraceItem', openStackTraceItem),
 		vscode.workspace.onDidOpenTextDocument(updateNodeForDocument),
 		vscode.workspace.onDidChangeTextDocument(e => updateNodeForDocument(e.document)),
 	)
@@ -290,7 +290,7 @@ function decorate(editor: vscode.TextEditor) {
 	editor.setDecorations(backgroundExecutable, executableArray)
 }
 
-function openStackTrace(traceUriStr: string) {
+function openStackTraceItem(traceUriStr: string) {
 	const traceUri = vscode.Uri.parse(traceUriStr.split("&")[0])
 	const traceLine = Number(traceUriStr.split("&")[1])
 	vscode.window.showTextDocument(traceUri).then(editor => {

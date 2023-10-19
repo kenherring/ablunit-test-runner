@@ -178,6 +178,21 @@ export class PropathParser {
 		return file!.uri
 	}
 
+	searchPropathPostParse(filepath: string) {
+		let propathRelativeFile: string
+		if (!filepath.endsWith(".p") && !filepath.endsWith(".cls")) {
+			propathRelativeFile = filepath.replace(/\./g,'/') + ".cls"
+		} else {
+			propathRelativeFile = filepath
+		}
+
+		const file = this.filemap.get(propathRelativeFile)
+		if (file) {
+			return file!.uri
+		}
+		throw new Error("cannot find '" + propathRelativeFile + "' in propath")
+	}
+
 	toString () {
 		const paths: string[] = []
 		for (const entry of this.propath) {
