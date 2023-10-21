@@ -22,8 +22,10 @@ export class ABLProfile {
 	cfg!: ABLUnitConfig
 	resultsPropath!: PropathParser
 
-	async parseData(filepath: Uri, propath: PropathParser) {
+	async parseData(filepath: Uri) {
+		console.log("filepath=" + filepath.fsPath)
 		const text = await getContentFromFilesystem(filepath)
+		console.log("2")
 		const lines = text.replace(/\r/g,'').split('\n')
 
 		const sectionLines: string[][] = []
@@ -46,11 +48,13 @@ export class ABLProfile {
 		// propath.setPropath(this.profJSON.properties!.Propath)
 		this.profJSON.addModules(sectionLines[2])
 
-		for (const mod of this.profJSON.modules) {
-			if (mod.SourceName) {
-				await propath.setSourcePropathInfo(mod.SourceName)
-			}
-		}
+		// console.log(3)
+		// for (const mod of this.profJSON.modules) {
+		// 	if (mod.SourceName) {
+		// 		await propath.setSourcePropathInfo(mod.SourceName)
+		// 	}
+		// }
+		// console.log(4)
 
 		this.profJSON.addCallTree(sectionLines[3])
 		this.profJSON.addLineSummary(sectionLines[4])
@@ -63,10 +67,8 @@ export class ABLProfile {
 	}
 
 	async writeJsonToFile (file: Uri) {
-		// TODO: Filter out the OpenEdge.* classes - make optional?
 		// TODO: should writing json be optional?
 		const out: ABLProfileJSON = JSON.parse(JSON.stringify(this.profJSON))
-		out.modules = out.modules.filter((m) => (!m.ModuleName?.startsWith('OpenEdge.')))
 
 		workspace.fs.writeFile(file, Uint8Array.from(Buffer.from(JSON.stringify(out, null, 2)))).then(() => {
 			console.log("wrote profile output json file: " + file.fsPath)

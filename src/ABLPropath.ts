@@ -2,36 +2,51 @@ import { Uri, workspace } from 'vscode'
 import path = require('path')
 import { IProjectJson } from './projectSchema'
 
-interface PropathEntry {
+interface IPropathEntry {
 	uri: Uri
 	path: string
 	relativePath?: string
-	type?: string
-	buildDir?: string
-	buildDirUri?: Uri
+	type: string
+	buildDir: string
+	buildDirUri: Uri
+	xrefDir: string
+	xrefDirUri: Uri
 }
 
-interface ABLFile {
+export interface IABLFile {
 	uri: Uri,
-	relativePath?: string,
-	propathEntry?: PropathEntry,
-	propathRelativePath?: string
+	file: string
+	relativeFile: string,
+	propathEntry: IPropathEntry,
+	propathRelativeFile: string
+	xrefUri: Uri
 }
+
+export interface IPropath {
+	entry: IPropathEntry[]
+}
+
+const ABLFiles: IABLFile[] = []
 
 export class PropathParser {
-	propath: PropathEntry[] = []
-	filemap: Map<string, ABLFile> = new Map()
-	files: ABLFile[] = []
+	filemap: Map<string, IABLFile> = new Map()
+	files: IABLFile[] = []
 	workspaceUri: Uri
+	buildMap: Map<string, string> = new Map()
+
+	propath: IPropath = {
+		entry: [] as IPropathEntry[]
+	}
 
 	constructor(workspaceUri: Uri) {
 		this.workspaceUri = workspaceUri
 	}
 
-	async setPropath(propath: IProjectJson) {
-		// await this.findFilesPromise
+	async setPropath(importedPropath: IProjectJson) {
 		console.log("////////////// setPropath begin //////////////")
-		for (const entry of propath.propathEntry) {
+
+		for (const entry of importedPropath.propathEntry) {
+			console.log("setPropath: " + entry.path + " " + entry.type + " " + entry.buildDir)
 			let uri: Uri
 			if(RegExp(/^[a-zA-Z]:/).exec(entry.path)) {
 				uri = Uri.file(entry.path)
@@ -39,12 +54,18 @@ export class PropathParser {
 				uri = Uri.joinPath(this.workspaceUri,entry.path)
 			}
 
-			console.log("setPropath: " + entry.path + " " + entry.type + " " + entry.buildDir)
 			let buildUri: Uri
 			if(RegExp(/^[a-zA-Z]:/).exec(entry.buildDir)) {
 				buildUri = Uri.file(entry.buildDir)
 			} else {
 				buildUri = Uri.joinPath(this.workspaceUri,entry.buildDir)
+			}
+
+			let xrefDirUri: Uri
+			if(RegExp(/^[a-zA-Z]:/).exec(entry.xrefDir)) {
+				xrefDirUri = Uri.file(entry.xrefDir)
+			} else {
+				xrefDirUri = Uri.joinPath(this.workspaceUri,entry.xrefDir)
 			}
 
 			let rel: string | undefined
@@ -53,149 +74,70 @@ export class PropathParser {
 				rel = undefined
 			}
 
-			const e: PropathEntry = {
+			const e: IPropathEntry = {
 				path: entry.path,
 				type: entry.type,
 				buildDir: entry.buildDir,
 				uri: uri,
 				relativePath: rel,
-				buildDirUri: buildUri
-				// files: []
+				buildDirUri: buildUri,
+				xrefDir: entry.xrefDir,
+				xrefDirUri: xrefDirUri
 			}
-			// e.files = this.oeUris.filter((oeUri) => { return oeUri.fsPath.startsWith(uri.fsPath) })
-			this.propath.push(e)
+			this.propath.entry.push(e)
 		}
 		console.log("////////////// setPropath end //////////////")
 	}
 
-	getPropath(): PropathEntry[] {
+	getPropath() {
 		return this.propath
 	}
-
-	async getPropathEntryFromFileUri(uri: Uri) {
-		return this.propath.find((entry) => {
-			if(entry.uri.fsPath === uri.fsPath) {
-				return entry
-			} else {
-				throw (new Error(`Could not find propath entry for ${uri.fsPath}`))
-			}
-		})
-	}
-
-	async setSourcePropathInfo(source: string) {
-		if(source.startsWith('OpenEdge.') || source === 'ABLUnitCore.p') { return }
-		if (this.filemap.get(source)) { return }
-
-		const proStr: string[] = []
-		for (const entry of this.propath) {
-			if (entry.relativePath) {
-				proStr.push(entry.relativePath + "/" + source)
-			}
-		}
-
-		const uri = await workspace.findFiles(`{${proStr.join(',')}}`, "**/.builder/**").then((uris) => {
-			if (uris.length === 0) {
-				throw (new Error(`Could not find file for ${source}`))
-			} else if (uris.length > 1) {
-				throw (new Error(`Found multiple files for ${source}`))
-			} else {
-				return uris[0]
-			}
-		})
-
-		const file: ABLFile = {
-			uri: uri,
-			relativePath: workspace.asRelativePath(uri),
-			propathRelativePath: source
-		}
-		this.files.push(file)
-		this.filemap.set(source, file)
-	}
-
-	getSourcePropathInfo(filepath: string) {
-		let propathRelativeFile: string
-		if (!filepath.endsWith(".p") && !filepath.endsWith(".cls")) {
-			propathRelativeFile = filepath.replace(/\./g,'/') + ".cls"
-		} else {
-			propathRelativeFile = filepath
-		}
-		const got = this.filemap.get(propathRelativeFile)
-		return this.filemap.get(propathRelativeFile)!.uri.fsPath
-	}
-
-	async setFilePropathInfo(uri: Uri) {
-		if (this.filemap.get(uri.fsPath)) { return }
-
-		const file: ABLFile = {
-			uri: uri,
-			relativePath: workspace.asRelativePath(uri)
-		}
-		this.files.push(file) //TODO - do the assigns after still update the files array?
-		this.getPropathEntryFromFileUri(uri).then((entry) => {
-			file.propathEntry = entry
-		})
-		file.propathRelativePath = uri.fsPath.replace(file.propathEntry!.uri.fsPath,'')
-		this.filemap.set(uri.fsPath, file)
-	}
-
-	getFileByUri(uri: Uri): ABLFile {
-		return this.files.find((file) => {
-			if(file.uri.fsPath === uri.fsPath) {
-				return file
-			} else {
-				throw (new Error(`Could not find file for ${uri.fsPath}`))
-			}
-		})!
-	}
-
-	buildMap: Map<string, string> = new Map()
 
 	async getBuildDir(filepath: string) {
 		return this.buildMap.get(filepath)
 	}
 
-	async searchPropath(filepath: string) {
-
-		let propathRelativeFile: string
-		if (!filepath.endsWith(".p") && !filepath.endsWith(".cls")) {
-			propathRelativeFile = filepath.replace(/\./g,'/') + ".cls"
-		} else {
-			propathRelativeFile = filepath
+	async search(file: string) {
+		let relativeFile = file
+		relativeFile = file
+		if (!relativeFile.endsWith(".cls") && !relativeFile.endsWith(".p") && !relativeFile.endsWith(".w") && !relativeFile.endsWith(".i")) {
+			relativeFile = relativeFile.replace(/\./g,'/') + ".cls"
 		}
 
-		const file = this.filemap.get(propathRelativeFile)
-		if (!file) {
-			console.error("cannot find '" + propathRelativeFile + "' in propath")
+		const got = this.filemap.get(relativeFile)
+		if (got) {
+			return got
 		}
 
-		for (const e of this.propath) {
-			const stat = await workspace.fs.stat(e.uri).then()
-			if (stat) {
-				this.buildMap.set(propathRelativeFile, e.buildDir!)
-				return e.uri
+		for (const e of this.propath.entry) {
+			const fileInPropathUri = Uri.joinPath(e.uri, relativeFile)
+			const exists = await workspace.fs.stat(fileInPropathUri).then((stat) => { return true }, (err) => { return false })
+
+
+			if (exists) {
+				const propathRelativeFile = fileInPropathUri.fsPath.replace(e.uri.fsPath,'')
+				const fileObj: IABLFile = {
+					uri: fileInPropathUri,
+					file: file,
+					relativeFile: relativeFile,
+					propathEntry: e,
+					propathRelativeFile: propathRelativeFile,
+					xrefUri: Uri.joinPath(e.xrefDirUri,propathRelativeFile + ".xref")
+				}
+				this.files.push(fileObj)
+				this.filemap.set(relativeFile,fileObj)
+				return fileObj
 			}
 		}
-		return file!.uri
-	}
-
-	searchPropathPostParse(filepath: string) {
-		let propathRelativeFile: string
-		if (!filepath.endsWith(".p") && !filepath.endsWith(".cls")) {
-			propathRelativeFile = filepath.replace(/\./g,'/') + ".cls"
-		} else {
-			propathRelativeFile = filepath
+		if (!file) {
+			console.error("cannot find '" + file + "' in propath")
+			throw new Error("cannot find '" + file + "' in propath")
 		}
-
-		const file = this.filemap.get(propathRelativeFile)
-		if (file) {
-			return file!.uri
-		}
-		throw new Error("cannot find '" + propathRelativeFile + "' in propath")
 	}
 
 	toString () {
 		const paths: string[] = []
-		for (const entry of this.propath) {
+		for (const entry of this.propath.entry) {
 			paths.push(entry.path)
 		}
 		return paths.join(',')

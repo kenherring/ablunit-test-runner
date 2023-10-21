@@ -9,7 +9,7 @@ import * as cp from "child_process";
 export const ablunitRun = async(item: TestItem, options: TestRun, data: ABLUnitTestData, res: ABLResults) => {
 	const start = Date.now()
 
-	let itemPath = item.uri!.fsPath
+	let itemPath = workspace.asRelativePath(item.uri!.fsPath)
 	if (data instanceof ABLTestProcedure || data instanceof ABLTestMethod) {
 		itemPath = itemPath + "#" + item.label
 	}
@@ -28,7 +28,7 @@ export const ablunitRun = async(item: TestItem, options: TestRun, data: ABLUnitT
 		cmd.push('-T', res.runConfig.tempDirUri.fsPath)
 		cmd.push('-profile', res.runConfig.profileOptions!.fsPath)
 		// cmd.push('-param', "'CFG=" + res.runConfig.ablunitJson!.fsPath + "'")
-		cmd.push("-param", '"' + itemPath + ' -outputLocation ' + workspace.asRelativePath(res.runConfig.tempDirUri) + ' -format xml"')
+		// cmd.push("-param", '"' + itemPath + ' -outputLocation ' + workspace.asRelativePath(res.runConfig.tempDirUri) + ' -format xml"')
 		cmd.push("-param", '"' + itemPath + ' -outputLocation ' + workspace.asRelativePath(res.runConfig.tempDirUri) + '"')
 		const cmdSanitized: string[] = []
 		cmd.forEach(element => {
@@ -48,11 +48,11 @@ export const ablunitRun = async(item: TestItem, options: TestRun, data: ABLUnitT
 		const cmd = args[0]
 		args.shift()
 
-		console.log("COMMAND='" + cmd + ' ' + args.join(' ') + "'")
 		return new Promise<string>((resolve, reject) => {
 			cp.exec(cmd + ' ' + args.join(' '), { cwd: res.runConfig.workspaceDir.fsPath }, (err: any, stdout: any, stderr: any) => {
 				const duration = Date.now() - start
 				if (err) {
+					console.error("cp.exec error:" + err)
 					throw err
 				}
 				if (stderr) {
@@ -71,7 +71,6 @@ export const ablunitRun = async(item: TestItem, options: TestRun, data: ABLUnitT
 
 	await res.createAblunitJson(itemPath)
 	return runCommand().then(() => {
-		console.log("runCommand completed")
 		return res.parseOutput(item, options).then();
 	})
 }

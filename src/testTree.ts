@@ -98,9 +98,7 @@ class TestFile extends TestTypeObj {
 		}
 		this.currentResults = resultData.get(options)
 		this.currentResults!.setTestData(testData)
-		console.log("call ablunitRun")
 		await ablunitRun(item, options, testData.get(item)!, resultData.get(options)!).then()
-		console.log("return ablunitRun")
 	}
 }
 

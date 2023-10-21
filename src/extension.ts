@@ -194,7 +194,7 @@ function getOrCreateFile(controller: vscode.TestController, uri: vscode.Uri) {
 	}
 
 	//TODO: this is a hack to prevent the builder from trying to parse the ablunit files.  this should use the exclude pattern instead
-	if (uri.toString().indexOf("/.builder/") != -1) {
+	if (uri.toString().indexOf("/.builder/") != -1 || uri.toString().indexOf("/.oe/") != -1) {
 		return { file: undefined, data: undefined }
 	}
 

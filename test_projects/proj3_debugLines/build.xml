@@ -1,0 +1,15 @@
+<project name="proj3_debugLines">
+
+	<property environment="env" />
+
+	<taskdef resource="PCT.properties" />
+	<typedef resource="types.properties" />
+
+	<copy todir=".oe">
+		<plfileset src="${env.DLC}/src/OpenEdge.Core.pl" includes="**/*" />
+	</copy>
+	<copy todir=".oe">
+		<plfileset src="${env.DLC}/tty/ablunit.pl" includes="**/*" />
+	</copy>
+
+</project>

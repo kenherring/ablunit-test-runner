@@ -125,13 +125,14 @@ export class ABLProfileJSON {
                             if (mod.SourceName === mod.EntityName &&
                                 !mod.SourceName.endsWith(".cls") &&
                                 !mod.SourceName.endsWith(".p")) {
-                                mod.SourceName = mod.SourceName + ".cls"
+
+                                mod.SourceName = mod.SourceName.replace(/\./g,'/') + ".cls"
                             }
                         }
                         if (split[2]) {
                             mod.ParentName = split[2]
                             if (!mod.SourceName?.endsWith(".cls")) {
-                                mod.SourceName = mod.SourceName + ".cls"
+                                mod.SourceName = mod.SourceName.replace(/\./g,'/') + ".cls"
                             }
                         }
                     }

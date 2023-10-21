@@ -3,6 +3,11 @@
 	"version": "0.0.1",
 	//test comment
 	"charset": "utf-8",
-	"buildPath": [ {"type": "source", "path": "."} ],
+	"buildPath": [
+		{ "type": "source", "path": "." },
+		{ "type": "propath", "path": "oe/src/ablunit" },
+		{ "type": "propath", "path": ".oe/src/ablunit" },
+		{ "type": "propath", "path": ".oe/src/corelib" }
+	],
 	"buildDirectory": "build"
 }

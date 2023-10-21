@@ -1,13 +1,14 @@
-import { CoveredCount, FileCoverage, MarkdownString, Position, Range, StatementCoverage, TestItem, TestMessage, TestRun, Uri, workspace } from "vscode"
+import { FileCoverage, MarkdownString, TestItem, TestMessage, TestRun, Uri, workspace, Location, Range, Position } from "vscode"
 import { ABLUnitConfig } from "./ABLUnitConfigWriter"
 import { ABLResultsParser, TCFailure, TestCase, TestSuite, TestSuites } from "./ABLResultsParser"
 import { ABLTestMethod, ABLTestProcedure, ABLUnitTestData } from "./testTree"
-import { parseABLCallStack } from "./ABLHelper"
+import { parseCallstack } from "./parse/ParseCallStack"
 import { ABLProfile } from "./ABLProfileParser"
 import { ABLProfileJSON, LineSummary, Module } from "./ABLProfileSections"
 import { ABLDebugLines } from "./ABLDebugLines"
-import { ABLPromsgs, getPromsg } from "./ABLpromsgs"
+import { ABLPromsgs, getPromsg } from "./ABLPromsgs"
 import { PropathParser } from "./ABLPropath"
+import { outputChannel } from "./ABLUnitCommon"
 
 interface AblunitOptions {
 	output: {
@@ -34,36 +35,41 @@ interface AblunitOptions {
 interface RunConfig {
 	workspaceDir: Uri
 	tempDirUri: Uri
+
 	progressIni?: Uri
 	listingDir?: Uri
 	profileOptions?: Uri
+	ablunitJson?: Uri
+
+	resultsUri?: Uri
 	profileOutput?: Uri
 	profileOutputJson?: Uri
-	ablunitJson?: Uri
+
 	cmd?: string[]
-	resultsUri?: Uri
 }
 
 export class ABLResults {
+
+	private cfg: ABLUnitConfig
+
 	public status: string = "none"
 	public runConfig: RunConfig
-	testData!: WeakMap<TestItem, ABLUnitTestData>
-	private cfg: ABLUnitConfig
-	profJson: [] = []
-	resultsJsonUri: [] = []
-	coverageJson: [] = []
+	public testCoverage: Map<string, FileCoverage> = new Map<string, FileCoverage>()
+
 	startTime: Date
 	endTime!: Date
 	duration = () => { return (Number(this.endTime) - Number(this.startTime)) }
+
+	propath: PropathParser | undefined
+	debugLines?: ABLDebugLines
+
+	promsgs: ABLPromsgs | undefined
 	testResultsJson?: TestSuites
 	profileJson?: ABLProfileJSON
-	debugLines = new ABLDebugLines()
-	public testCoverage: Map<string, FileCoverage> = new Map<string, FileCoverage>()
-	debugMap: Map<string, Uri> = new Map<string, Uri>()
-	sourceMap: Map<string, Uri> = new Map<string, Uri>()
+	coverageJson: [] = []
+
+	testData!: WeakMap<TestItem, ABLUnitTestData>
 	ablunitOptions: AblunitOptions = {} as AblunitOptions
-	promsgs: ABLPromsgs | undefined
-	propath: PropathParser | undefined
 
 	constructor(storageUri: Uri) {
 		if (!workspace.workspaceFolders) {
@@ -79,16 +85,35 @@ export class ABLResults {
 		this.status = "constructed"
 	}
 
+	async setTestData(testData: WeakMap<TestItem, ABLUnitTestData>) {
+		this.testData = testData
+	}
+
 	async start () {
 		//TODO - do all, then wait
 
-		await this.cfg.getTempDirUri().then((uri) => {
+		await this.cfg.getTempDirUri(this.runConfig.tempDirUri).then((uri) => {
 			this.runConfig.tempDirUri = uri
+		}, (err) => {
+			//Do nothing - we'll use the default storageUri
+			outputChannel.appendLine("using tempDir='" + this.runConfig.tempDirUri.fsPath + "'")
+		})
+		await this.cfg.createTempDirUri(this.runConfig.tempDirUri).then((uri) => {
+			console.log("tempDir='" + uri.fsPath + "'")
+		}, (err) => {
+			throw err
 		})
 
 		this.promsgs = new ABLPromsgs(this.runConfig.tempDirUri)
 
-		this.propath = await this.cfg.readPropathFromJson().then()
+		await this.cfg.readPropathFromJson().then((propath) => {
+			this.propath = propath
+			this.debugLines = new ABLDebugLines(this.propath)
+		}, (err) => {
+			console.error("readPropathFromJson error: " + err)
+			throw (err)
+		})
+		this.debugLines = new ABLDebugLines(this.propath!)
 		this.runConfig.ablunitJson = Uri.joinPath(this.runConfig.tempDirUri, 'ablunit.json')
 		this.runConfig.listingDir = Uri.joinPath(this.runConfig.tempDirUri, 'listings')
 		this.runConfig.profileOutput = this.cfg.getProfileOutput(this.runConfig.tempDirUri)
@@ -126,37 +151,30 @@ export class ABLResults {
 		}
 	}
 
-	async setTestData(testData: WeakMap<TestItem, ABLUnitTestData>) {
-		this.testData = testData
-	}
-
 	async parseOutput(item: TestItem, options: TestRun) {
+		this.endTime = new Date()
 		this.status = "parsing"
-		await this.parseProfile().then(() => {
-			return true
-		}, (err) => { console.error("parseProfile error: " + err) })
+		// await this.parseProfile().then(() => {
+		// 	return true
+		// }, (err) => { console.error("parseProfile error: " + err) })
 
-		await this.parseResultsFile(item, options).then(() => {
-			return true
-		}, (err) => { console.error("parseResultsFile error: " + err) })
+		console.log("parseResultsFile")
 
+		const ablResults = new ABLResultsParser(this.propath!, this.debugLines!)
+		await ablResults.importResults(this.runConfig.resultsUri!).then(() => {
+			if(!ablResults.resultsJson) {
+				throw (new Error("no results data available..."))
+			}
+			return this.assignTestResults(ablResults.resultsJson, item, options)
+		}, (err) => {
+			console.error("parseResultsFile error: " + err)
+		})
 		this.status = "complete"
 	}
 
-	async parseResultsFile(item: TestItem, options: TestRun) {
-		this.endTime = new Date()
-		const ablResults = new ABLResultsParser()
-		return ablResults.importResults(this.runConfig.resultsUri!).then(() => {
-			this.testResultsJson = ablResults.resultsJson
-			return this.assignTestResults(item, options)
-		})
-	}
-
-	async assignTestResults (item: TestItem, options: TestRun) {
-		const res = this.testResultsJson
-		if(!res) {
-			throw (new Error("no results data available..."))
-		}
+	async assignTestResults (resultsJson: TestSuites, item: TestItem, options: TestRun) {
+		this.testResultsJson = resultsJson
+		const res = resultsJson
 		if (!res.testsuite) {
 			if (res.tests === 0) {
 				options.errored(item, new TestMessage("no tests run, check the configuration for accuracy"), this.duration())
@@ -171,7 +189,10 @@ export class ABLResults {
 			suiteName = item.id.split("#")[0]
 		}
 
-		const s = res.testsuite.find((s: TestSuite) => s.classname === suiteName)
+		let s = res.testsuite.find((s: TestSuite) => s.classname === suiteName)
+		if (!s) {
+			s = res.testsuite.find((s: TestSuite) => s.name === suiteName)
+		}
 		if (!s) {
 			options.errored(item, new TestMessage("could not find test suite for '" + suiteName + " in results"), this.duration())
 			return
@@ -207,7 +228,7 @@ export class ABLResults {
 
 		const promArr: Promise<void>[] = [Promise.resolve()]
 		item.children.forEach(child => {
-			const tc = s.testcases?.find((t: TestCase) => t.name === child.label)
+			const tc = s!.testcases?.find((t: TestCase) => t.name === child.label)
 			if (!tc) {
 				options.errored(child, new TestMessage("could not find result for test case"))
 				return
@@ -225,15 +246,20 @@ export class ABLResults {
 				return
 			case "Failure":
 				if (tc.failure) {
-					return this.getFailureMarkdownMessage(tc.failure).then((msg) => {
-						options.failed(item, [ new TestMessage(msg) ], tc.time)
+					return this.getFailureMarkdownMessage(item, options, tc.failure).then((msg) => {
+						const tm = new TestMessage(msg)
+						tm.location = tc.failure!.callstackFirstLocation
+						console.log("position: " + JSON.stringify(tm.location))
+						options.failed(item, [ tm ], tc.time)
 					})
 				}
 				throw (new Error("unexpected failure"))
 			case "Error":
 				if (tc.error) {
-					return this.getFailureMarkdownMessage(tc.error).then((msg) => {
-						options.failed(item, [ new TestMessage(msg) ], tc.time)
+					return this.getFailureMarkdownMessage(item, options, tc.error).then((msg) => {
+						const tm = new TestMessage(msg)
+						tm.location = tc.failure!.callstackFirstLocation
+						options.failed(item, [ tm ], tc.time)
 					})
 				}
 				throw (new Error("unexpected error"))
@@ -245,9 +271,14 @@ export class ABLResults {
 		}
 	}
 
+
+
+
+
 	async parseProfile() {
 		const profParser = new ABLProfile()
-		return profParser.parseData(this.runConfig.profileOutput!, this.propath!).then(() => {
+		// return profParser.parseData(this.runConfig.profileOutput!, this.propath!).then(() => {
+		return profParser.parseData(this.runConfig.profileOutput!).then(() => {
 			profParser.writeJsonToFile(this.runConfig.profileOutputJson!)
 			this.profileJson = profParser.profJSON
 			return this.assignProfileResults().then(() => {
@@ -266,23 +297,28 @@ export class ABLResults {
 		const mods: Module[] = this.profileJson.modules
 		for (let idx=1; idx < mods.length; idx++) {
 			const module = mods[idx]
-			if (!module.SourceName || module.SourceName.startsWith("OpenEdge.") || module.SourceName == "ABLUnitCore.p") {
+			if (!module.SourceName) {
 				continue
 			}
 			await this.setCoverage(module).then()
 		}
 	}
 
+
+
+
+
 	async setCoverage(module: Module) {
-		const pUri = await this.propath!.searchPropath(module.SourceName)
-		const moduleUri = Uri.joinPath(pUri, module.SourceName)
+		const fileinfo = await this.propath!.search(module.SourceName)
+
+		const moduleUri = fileinfo?.uri
 		if (!moduleUri) {
 			console.error("could not find moduleUri for " + module.SourceName)
 			return
 		}
 
 		//can we import this sooner?
-		await this.importDebugFile(module.SourceName).then()
+		// await this.importDebugFile(module.SourceName).then()
 
 		// let fc: FileCoverage = new FileCoverage(module.SourceUri, new CoveredCount(0, 0)) : new FileCoverage(moduleUri, new CoveredCount(0, 0))
 		let fc: FileCoverage | undefined
@@ -294,95 +330,57 @@ export class ABLResults {
 				return
 			}
 
-			const dbg = this.debugLines.getSourceLine(moduleUri, line.LineNo)
-			if (!dbg) {
-				console.error("cannot find dbg for " + moduleUri.fsPath)
-				return
-			}
+			// const dbg = this.debugLines.getSourceLine(moduleUri, moduleUri, line.LineNo)
+			// if (!dbg) {
+			// 	console.error("cannot find dbg for " + moduleUri.fsPath)
+			// 	return
+			// }
 
-			if (fc?.uri.fsPath != dbg.incUri.fsPath) {
-				//get existing FileCoverage object
-				fc = this.testCoverage.get(dbg.incUri.fsPath)
-				if (!fc) {
-					//create a new FileCoverage object if one didn't already exist
-					fc = new FileCoverage(dbg.incUri, new CoveredCount(0, 0))
-					fc.detailedCoverage = []
-					this.testCoverage.set(fc.uri.fsPath, fc)
-				}
-			}
+			// if (fc?.uri.fsPath != dbg.incUri.fsPath) {
+			// 	//get existing FileCoverage object
+			// 	fc = this.testCoverage.get(dbg.incUri.fsPath)
+			// 	if (!fc) {
+			// 		//create a new FileCoverage object if one didn't already exist
+			// 		fc = new FileCoverage(dbg.incUri, new CoveredCount(0, 0))
+			// 		fc.detailedCoverage = []
+			// 		this.testCoverage.set(fc.uri.fsPath, fc)
+			// 	}
+			// }
 
-			if (!fc) { throw (new Error("cannot find or create FileCoverage object")) }
+			// if (!fc) { throw (new Error("cannot find or create FileCoverage object")) }
 
-			fc.detailedCoverage!.push(new StatementCoverage(line.ExecCount ?? 0,
-				new Range(new Position(dbg.incLine - 1, 0), new Position(dbg.incLine, 0))))
+			// fc.detailedCoverage!.push(new StatementCoverage(line.ExecCount ?? 0,
+			// 	new Range(new Position(dbg.incLine - 1, 0), new Position(dbg.incLine, 0))))
 		})
 
 		// TODO - turn this into TestCoverage class objects
 		//      - will be useful when the proposed API is finalized
 	}
 
-	async importDebugFile (debugSourceName: string) {
-		let propathRelativeFile: string = debugSourceName
-		if (!propathRelativeFile.endsWith(".p") && !propathRelativeFile.endsWith(".cls")) {
-			propathRelativeFile = propathRelativeFile.replace(/\./g,'/') + ".cls"
-		}
+	async getFailureMarkdownMessage(item: TestItem, options: TestRun, failure: TCFailure): Promise<MarkdownString> {
+		const stack = await parseCallstack(this.debugLines!, failure.callstackRaw)
+		//TODO - get promsg
 
-		const propathUri = await this.propath!.searchPropath(debugSourceName)
-		const buildDir = await this.propath!.getBuildDir(propathRelativeFile)
-		const xrefUri = Uri.joinPath(this.runConfig.workspaceDir,buildDir!,".pct",propathRelativeFile + ".xref")
+		const md = new MarkdownString(failure.message + "\n\n")
 
-		// Probably don't want both, but keeping for now until we're more consistent
-		const sourceUri = Uri.joinPath(propathUri,propathRelativeFile)
-		this.debugMap.set(sourceUri.fsPath, xrefUri)
-		this.debugMap.set(debugSourceName, xrefUri)
-		this.debugMap.set(debugSourceName.replace(/\.cls$/,''), xrefUri)
-		return await this.debugLines.importDebugFile(sourceUri, xrefUri).then(() => {
-		}, (err) => {
-			console.error("importDebugFile error: " + err)
-		})
-	}
+		if (stack.markdownText) {
+			md.appendMarkdown(stack.markdownText)
 
-	async getFailureMarkdownMessage(failure: TCFailure): Promise<MarkdownString> {
-		const stack = parseABLCallStack(failure.callstack)
+			console.log("append output?")
 
-		// start getting the debug files where needed
-		const paths: string[] = []
-
-		let stackString = this.getPromsgText(failure.message)
-		stackString += "\n\n" + "**ABL Call Stack**\n\n"
-		let stackCount = 0
-
-		// all the debug lists have been resolved, now build the stack message
-		stack.lines.forEach((line) => {
-			stackString += "<code>"
-			if (stackCount == 0) {
-				stackString += "--> "
-			} else {
-				stackString += "&nbsp;&nbsp;&nbsp; "
-			}
-			stackCount = stackCount + 1
-
-			if (line.method) {
-				stackString += line.method + " "
-			}
-
-			stackString += line.debugFile + " at line " + line.debugLine.line
-
-			if (!line.debugFile.startsWith("OpenEdge.") && line.debugFile != "ABLUnitCore.p") {
-				const sourceUri = this.propath!.searchPropathPostParse(line.debugFile)
-				const dbg = this.debugLines.getSourceLine(sourceUri,line.debugLine.line)
-				if(dbg) {
-					const incRelativePath = workspace.asRelativePath(dbg.incUri)
-					stackString += " (" + "[" + incRelativePath + ":" + dbg.incLine + "]" +
-										"(command:_ablunit.openStackTraceItem?" + encodeURIComponent(JSON.stringify(dbg.incUri + "&" + dbg.incLine)) + ")" + ")"
+			for(const stackItem of stack.items) {
+				console.log("stackItem")
+				if(stackItem.loc) {
+					console.log("appendLog " + JSON.stringify(stackItem.loc))
+					options.appendOutput(item.label + " failed", stackItem.loc)
 				}
 			}
-			stackString += "</code><br>\n"
-		})
-		const md = new MarkdownString(stackString);
-		md.isTrusted = true;
-		md.supportHtml = true;
-		return md;
+		} else {
+			md.appendMarkdown(failure.message + "\n\n**ABL Call Stack**\n\n<code>\n" + failure.callstackRaw.replace(/\r/g,'\n') + "\n</code>")
+		}
+		md.isTrusted = true
+		md.supportHtml = true
+		return md
 	}
 
 	getPromsgText (text: string) {

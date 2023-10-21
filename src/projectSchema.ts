@@ -5,6 +5,7 @@ export interface IPropathEntry {
 	path: string
 	type: string
 	buildDir: string
+	xrefDir: string
 }
 
 export interface IProjectJson {
@@ -21,7 +22,7 @@ export async function readOpenEdgeProjectJson () {
 }
 
 function parseOpenEdgeProjectJson (conf: any) {
-	//TODO what about if we're running a differen profile?
+	//TODO what about if we're running a different profile?
 	if (!conf.buildPath) {
 		throw new Error("buildPath not found in openedge-project.json")
 	}
@@ -33,6 +34,12 @@ function parseOpenEdgeProjectJson (conf: any) {
 		if (entry.type) {
 			type = entry.type.toLowerCase()
 		}
+
+		let path: string = entry.path
+		if (path === ".") {
+			path = workspace.workspaceFolders![0].uri.fsPath
+		}
+
 		let buildDir: string = entry.build
 		if (!buildDir) {
 			buildDir = conf.buildDirectory
@@ -40,11 +47,12 @@ function parseOpenEdgeProjectJson (conf: any) {
 		if (!buildDir) {
 			throw new Error("buildDirectory not found in openedge-project.json")
 		}
-		
+
 		pj.propathEntry.push({
 			path: entry.path,
 			type: type,
-			buildDir: entry.build
+			buildDir: buildDir,
+			xrefDir: ".builder/.pct0" //TODO
 		})
 	}
 	return pj

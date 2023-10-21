@@ -18,7 +18,7 @@ export class ABLUnitConfig  {
 		return workspace.workspaceFolders[0].uri
 	}
 
-	async getTempDirUri () {
+	async getTempDirUri (storageUri: Uri) {
 		const tempDir: string = workspace.getConfiguration('ablunit').get('tempDir', '')
 		if (!tempDir || tempDir === '') {
 			throw new Error("no tempDir configured")
@@ -37,6 +37,19 @@ export class ABLUnitConfig  {
 		}, (err) => {
 			console.log("getTempDir error: " + err)
 			throw err
+		})
+	}
+
+	async createTempDirUri (uri: Uri) {
+		return workspace.fs.stat(uri).then((stat) => {
+			return uri
+		}, (err) => {
+			return workspace.fs.createDirectory(uri).then(() => {
+				return uri
+			}, (err) => {
+				console.log("createTempDir error: " + err)
+				throw err
+			})
 		})
 	}
 
@@ -126,10 +139,7 @@ export class ABLUnitConfig  {
 	}
 
 	async createListingDir(uri: Uri) {
-		console.log("creating listing dir")
-		return workspace.fs.stat(uri).then((stat) => {
-			console.log("listing dir exists")
-		}, (err) => {
+		return workspace.fs.stat(uri).then((stat) => {}, (err) => {
 			return workspace.fs.createDirectory(uri)
 		})
 	}
@@ -144,7 +154,8 @@ export class ABLUnitConfig  {
 		const dflt: IProjectJson = { propathEntry: [{
 			path: '.',
 			type: 'source',
-			buildDir: '.'
+			buildDir: '.',
+			xrefDir: '.'
 		}]}
 
 		await readOpenEdgeProjectJson().then((propath) => {
