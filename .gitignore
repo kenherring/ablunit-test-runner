@@ -23,6 +23,7 @@ target/
 dbg_*
 listings/
 prof*.json
+protrace.*
 
 results.json
 results.xml

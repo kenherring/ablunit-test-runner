@@ -1,10 +1,8 @@
-import { ABLUnitConfig } from './ABLUnitConfig';
+import * as vscode from 'vscode';
 import { parseABLUnit } from './parser';
 import { TextDecoder } from 'util';
-import { outputChannel } from './ABLUnitCommon';
-import * as cp from "child_process";
-import * as vscode from 'vscode';
 import { ABLResults } from './ABLResults';
+import { ablunitRun } from './ABLUnitRun';
 
 const textDecoder = new TextDecoder('utf-8');
 
@@ -94,185 +92,29 @@ class TestFile extends TestTypeObj {
 		console.error("updateFromContents TestFile - skipping")
 	}
 
-	// MOVEME
-	async createProgressIni(progressIni: vscode.Uri, cfg: ABLUnitConfig) {
-		const iniData = ["[WinChar Startup]", "PROPATH=" + cfg.getPropath()]
-		this.currentResults!.runConfig.propath = cfg.getPropath()
-		this.currentResults!.runConfig.progressIni = progressIni
-		return await vscode.workspace.fs.writeFile(progressIni, Uint8Array.from(Buffer.from(iniData.join("\n")))).then(() => {
-			return true
-		}, (err) => {
-			throw (new Error("error writing progress.ini: " + err))
-		})
-	}
-
-	// MOVEME
-	async createProfileOptions(profileOptions: vscode.Uri, cfg: ABLUnitConfig) {
-		const listingDirUri = await cfg.listingDirUri().then((uri) => {
-			return uri
-		}, (err) => {
-			throw (new Error("error getting listing directory: " + err))
-		});
-
-		this.currentResults!.runConfig.listingDir = listingDirUri
-		this.currentResults!.runConfig.profileOptions = profileOptions
-		this.currentResults!.runConfig.profileOutput = cfg.getProfileOutputUri()
-		this.currentResults!.runConfig.profileOutputJson = vscode.Uri.file(this.currentResults!.runConfig.profileOutput.fsPath.replace(".out",".json"))
-
-		const profOpts = [	"-coverage",
-							"-description \"ABLUnit\"",
-							"-filename " + cfg.getProfileOutputUri().fsPath,
-							"-listings " + listingDirUri.fsPath]
-		return await vscode.workspace.fs.writeFile(profileOptions, Uint8Array.from(Buffer.from(profOpts.join("\n")))).then(() => {
-			return
-		}, (err) => {
-			throw (new Error("error writing profile.options: " + err))
-		})
-	}
-
-	async createAblunitJson(uri: vscode.Uri, itemPath: string, cfg: ABLUnitConfig) {
-		const opt: Options = {
-			output: {
-				location: cfg.resultsUri().fsPath,
-				format: "xml",
-			},
-			quitOnEnd: true,
-			writeLog: true,
-			showErrorMessage: true,
-			throwError: true,
-			tests: [
-				{ test: itemPath }
-			]
+	async run(item: vscode.TestItem, options: vscode.TestRun) {
+		if (!resultData) {
+			throw new Error("no result data")
 		}
-
-		this.currentResults!.runConfig.ablunitJson = uri
-		this.currentResults!.runConfig.ablunitOptions = opt
-		return vscode.workspace.fs.writeFile(uri, Uint8Array.from(Buffer.from(JSON.stringify(opt, null, 2))))
-	}
-
-	async getCommand(itemPath: string, cfg: ABLUnitConfig) {
-		if (!cfg.tempDirUri) {
-			throw (new Error("temp directory not set"))
-		}
-
-		const propath = cfg.getPropath()
-		console.log("propath=" + propath)
-
-		// const cmd1 = cfg.getCommandSetting()
-		// console.log("cmd setting=" + cmd1)
-		const cmd = ['_progres', '-b', '-p', 'ABLUnitCore.p']
-		// if (! cmd) {
-		// cmd = '_progres -b -p ABLUnitCore.p ${progressIni} -T ${tempDir} -profile ${profile.options} -param "${itemPath} CFG=${ablunit.json}"'
-		// }
-
-		if (process.platform === 'win32') {
-			const progressIni = await cfg.getProgressIni()
-			//TODO - if this is from the setting, don't overwrite it
-			const res = await this.createProgressIni(progressIni, cfg)
-			cmd.push('-basekey', 'INI', '-ininame', progressIni.fsPath)
-		}
-
-		cmd.push('-T', cfg.tempDirUri.fsPath)
-		this.currentResults!.runConfig.tempDir = cfg.tempDirUri
-
-		const profileOptions = vscode.Uri.joinPath(cfg.tempDirUri, "profile.options")
-		cmd.push('-profile', profileOptions.fsPath)
-
-		const ablunitJson = vscode.Uri.joinPath(cfg.tempDirUri, "ablunit.json")
-		// cmd.push('-param', "'CFG=" + ablunitJson.fsPath + "'")
-		cmd.push("-param", '"' + vscode.Uri.joinPath(cfg.workspaceUri(), itemPath).fsPath + " -outputLocation " + cfg.tempDirUri.fsPath + '"')
-
-		// don't create if they already exist?
-		await this.createAblunitJson(ablunitJson, itemPath, cfg)
-		await this.createProfileOptions(profileOptions, cfg)
-
-		cmd.forEach(element => {
-			element = element.replace(/\\/g, '/')
-		});
-
-		this.currentResults!.runConfig.cmd = cmd
-		console.log("cmd='" + cmd + "'")
-		outputChannel.appendLine("ABLUnit Command: " + cmd.join(' '))
-		return cmd
-	}
-
-	async run(item: vscode.TestItem, options: vscode.TestRun, cfg: ABLUnitConfig) {
-		const start = Date.now()
-		let itemPath = vscode.workspace.asRelativePath(item.uri!.fsPath)
-
-		const data = testData.get(item)
 		this.currentResults = resultData.get(options)
 		this.currentResults!.setTestData(testData)
-
-		if (data instanceof ABLTestProcedure || data instanceof ABLTestMethod) {
-			console.log("itemPath=" + itemPath)
-			itemPath = itemPath + "#" + item.label
-			console.log("itemPath=" + itemPath)
-		}
-
-		return this.getCommand(itemPath, cfg).then((args) => {
-
-			console.log("ShellExecution Started - dir='" + cfg.workspaceUri().fsPath + "'")
-			outputChannel.appendLine("ShellExecution Started - dir='" + cfg.workspaceUri().fsPath + "'")
-
-			const cmd = args[0]
-			args.shift()
-
-			// console.log("COMMAND='" + '_progres ' + args.join(' ') + "'")
-			return new Promise<string>((resolve, reject) => {
-				cp.exec(cmd + ' ' + args.join(' '), { cwd: cfg.workspaceUri().fsPath }, (err: any, stdout: any, stderr: any) => {
-					// console.log('stdout: ' + stdout)
-					// console.log('stderr: ' + stderr)
-					if (stderr) {
-						console.error(stderr)
-						options.appendOutput("ERROR:" + stderr)
-						reject(stderr)
-					}
-					const duration = Date.now() - start
-					outputChannel.appendLine("ShellExecution Completed - duration: " + duration)
-					console.log("ShellExecution Completed - duration: " + duration)
-					console.log(stdout)
-					options.appendOutput(stdout)
-					return this.currentResults!.parseOutput(item, options).then(() => {
-						updateCallStacks(item)
-						resolve(stdout)
-					}, (err) => {
-						throw new Error("error parsing output: " + err)
-					})
-				})
-			})
-		})
+		await ablunitRun(item, options, testData.get(item)!, resultData.get(options)!).then()
 	}
-}
-
-function updateCallStacks (item: vscode.TestItem) {
-	console.log('updating call stack for ' + item.label + ' ' + item.id)
-
 }
 
 export class ABLTestSuiteClass extends TestFile {
-
-	constructor(
-		public generation: number,
-		private readonly suiteName: string
-	) { super() }
-
-	getLabel() {
-		return this.suiteName
+	constructor(public generation: number, private readonly suiteName: string) {
+		super()
+		this.label = suiteName
 	}
 }
 
 export class ABLTestClassNamespace extends TestFile {
 	public canResolveChildren: boolean = false
 
-	constructor(
-		public generation: number,
-		private readonly classpath: string,
-		private readonly element: string
-	) { super() }
-
-	getLabel() {
-		return this.element
+	constructor(public generation: number, private readonly classpath: string, private readonly element: string) {
+		super()
+		this.label = element
 	}
 }
 
@@ -384,14 +226,9 @@ export class ABLTestClass extends TestFile {
 export class ABLTestProgramDirectory extends TestTypeObj {
 	public canResolveChildren: boolean = false
 
-	constructor(
-		public generation: number,
-		private readonly relativeDir: string,
-		private readonly element: string
-	) { super() }
-
-	getLabel() {
-		return this.element
+	constructor(public generation: number, private readonly relativeDir: string, private readonly element: string) {
+		super()
+		this.label = element
 	}
 }
 
@@ -491,20 +328,16 @@ export class ABLTestProgram extends TestFile {
 }
 
 export class ABLTestMethod extends TestFile { // child of TestClass
-
-	constructor(public generation: number,
-		private readonly classname: string,
-		private readonly methodName: string) {
+	constructor(public generation: number, private readonly classname: string, private readonly methodName: string) {
 		super()
+		this.label = methodName
 	}
 }
 
 export class ABLTestProcedure extends TestFile { // child of TestProgram
 	public description: string = "ABL Test Procedure"
 
-	constructor(public generation: number,
-		private readonly programname: string,
-		private readonly procedurename: string) {
+	constructor(public generation: number, private readonly programname: string, private readonly procedurename: string) {
 		super()
 		this.label = procedurename
 	}
@@ -514,12 +347,8 @@ export class ABLAssert extends TestTypeObj { // child of TestClass or TestProced
 	public canResolveChildren: boolean = false
 	public runnable: boolean = false
 
-	constructor(
-		public generation: number,
-		private readonly assertText: string
-	) { super() }
-
-	getLabel() {
-		return this.assertText
+	constructor(public generation: number, private readonly assertText: string) {
+		super()
+		this.label = assertText
 	}
 }

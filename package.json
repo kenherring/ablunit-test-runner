@@ -38,6 +38,7 @@
 		"postinstall": "npm run download-api"
 	},
 	"devDependencies": {
+		"@types/jsonminify": "^0.4.1",
 		"@types/node": "^16.18.34",
 		"@types/xml2js": "^0.4.12",
 		"@typescript-eslint/eslint-plugin": "^6.7.0",
@@ -95,7 +96,8 @@
 				},
 				"ablunit.progressIniPath": {
 					"type": "string",
-					"description": "Location of the progress.ini file (relative or absolute)"
+					"description": "Location of the progress.ini file (relative or absolute)",
+					"TODO": "use params instead?"
 				},
 				"ablunit.resultsPath": {
 					"type": "string",
@@ -130,16 +132,6 @@
 					"type": "string",
 					"default": "TODO",
 					"description": "run tests using the specified task"
-				},
-				"ablunit.propath": {
-					"type": "string",
-					"default": ".",
-					"description": "TEMPORARY"
-				},
-				"ablunit.buildDir": {
-					"type": "string",
-					"default": "build",
-					"description": "TEMPORARY"
 				}
 			}
 		},
@@ -181,6 +173,7 @@
 		]
 	},
 	"dependencies": {
+		"jsonminify": "^0.4.2",
 		"xml2js": "^0.6.2"
 	}
 }

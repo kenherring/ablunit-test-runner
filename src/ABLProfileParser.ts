@@ -2,7 +2,7 @@ import { Uri, workspace } from 'vscode';
 import { ABLProfileJSON } from './ABLProfileSections'
 import { TextDecoder } from 'util';
 import { PropathParser } from './ABLPropath';
-import { ABLUnitConfig } from './ABLUnitConfig';
+import { ABLUnitConfig } from './ABLUnitConfigWriter';
 
 const textDecoder = new TextDecoder('utf-8');
 
@@ -22,8 +22,10 @@ export class ABLProfile {
 	cfg!: ABLUnitConfig
 	resultsPropath!: PropathParser
 
-	async parseData(filepath: Uri, propath: PropathParser) {
+	async parseData(filepath: Uri) {
+		console.log("filepath=" + filepath.fsPath)
 		const text = await getContentFromFilesystem(filepath)
+		console.log("2")
 		const lines = text.replace(/\r/g,'').split('\n')
 
 		const sectionLines: string[][] = []
@@ -43,36 +45,26 @@ export class ABLProfile {
 		}
 
 		this.profJSON = new ABLProfileJSON(sectionLines[1][0])
-		propath.setPropath(this.profJSON.properties!.Propath)
 		this.profJSON.addModules(sectionLines[2])
-
-		for (const mod of this.profJSON.modules) {
-			if (mod.SourceName) {
-				await propath.setSourcePropathInfo(mod.SourceName)
-			}
-		}
 
 		this.profJSON.addCallTree(sectionLines[3])
 		this.profJSON.addLineSummary(sectionLines[4])
 		this.profJSON.addTracing(sectionLines[5])
 		this.profJSON.addCoverage(sectionLines[6])
-		// this.profJSON.addUserData(sectionLines[7])
-		// this.profJSON.addSection8(sectionLines[8])
+		this.profJSON.addUserData(sectionLines[7])
 
 		// TODO - this doesn't work
 		// this.profJSON.modules.sort()
 	}
 
 	async writeJsonToFile (file: Uri) {
-		// Filter out the OpenEdge.* classes
-		// TODO: should this be optional?
+		// TODO: should writing json be optional?
 		const out: ABLProfileJSON = JSON.parse(JSON.stringify(this.profJSON))
-		out.modules = out.modules.filter((m) => (!m.ModuleName?.startsWith('OpenEdge.')))
 
 		workspace.fs.writeFile(file, Uint8Array.from(Buffer.from(JSON.stringify(out, null, 2)))).then(() => {
 			console.log("wrote profile output json file: " + file.fsPath)
 		}, (err) => {
-			console.log("failed to write profile output json file " + file.fsPath + " - " + err)
+			console.error("failed to write profile output json file " + file.fsPath + " - " + err)
 		})
 	}
 

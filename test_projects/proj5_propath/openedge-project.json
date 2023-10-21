@@ -6,6 +6,6 @@
 		// { "type": "source", "path": "src", "build": "build/src_r" },
 		// { "type": "source", "path": "path", "build": "build/path_r" }
 		{ "type": "source", "path": "src", "build": "build" },
-		{ "type": "source", "path": "path", "build": "build" }
+		{ "type": "source", "path": "path", "build": "build"}
 	]
 }

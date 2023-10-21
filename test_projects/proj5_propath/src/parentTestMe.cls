@@ -13,4 +13,11 @@ class parentTestMe :
 	  Assert:Equals(1,1).
 	end method.
 
-end class
+	method public void inheritedProc () :
+		if yes then
+			integer("1").
+		else
+			integer("2").
+	end method.
+
+end class.

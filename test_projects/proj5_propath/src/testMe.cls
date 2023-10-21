@@ -19,6 +19,8 @@ class testMe inherits parentTestMe:
 		else
 			message 204.
 
+		inheritedProc().
+
 		Assert:Equals(1,2).
 		message 201.
 		run callMe.p.

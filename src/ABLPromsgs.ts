@@ -12,7 +12,7 @@ export class ABLPromsgs {
 	DLC = process.env.DLC
 	promsgs: Promsg[] = []
 
-	//todo - get rid of thise
+	//TODO - get rid of this
 	fs = require('fs');
 
 	constructor(tempDirUri: Uri) {
@@ -25,10 +25,10 @@ export class ABLPromsgs {
 		// eslint-disable-next-line @typescript-eslint/no-this-alias
 		promsgsObj = this
 
-		const cacheFile = tempDirUri.fsPath + "/promsgs.json"
+		const cacheUri = Uri.joinPath(tempDirUri,'promsgs.json')
 
-		if (this.fs.existsSync(cacheFile)) {
-			this.loadFromCache(cacheFile)
+		if (this.fs.existsSync(cacheUri.fsPath)) {
+			this.loadFromCache(cacheUri)
 			return
 		} else {
 
@@ -39,7 +39,7 @@ export class ABLPromsgs {
 			})
 		}
 
-		this.saveCache(cacheFile)
+		this.saveCache(cacheUri)
 	}
 
 	loadPromsgFile(msgfile: string) {
@@ -78,21 +78,24 @@ export class ABLPromsgs {
 		})
 	}
 
-	loadFromCache(cacheFile: string) {
+	loadFromCache(cacheUri: Uri) {
 		console.log("load promsgs from cache")
 		outputChannel.appendLine("load promsgs cache")
-		this.promsgs = JSON.parse(this.fs.readFileSync(cacheFile, "utf8"))
+		this.promsgs = JSON.parse(this.fs.readFileSync(cacheUri.fsPath, "utf8"))
 	}
 
-	saveCache(cacheFile: string) {
-		console.log("save promsgs cache file='" + cacheFile + "'")
+	saveCache(cacheUri: Uri) {
+		console.log("save promsgs cache file='" + cacheUri.fsPath + "'")
 		outputChannel.appendLine("save promsgs cache")
-		this.fs.writeFileSync(cacheFile, JSON.stringify(this.promsgs), (err: any) => {
+		this.fs.writeFileSync(cacheUri.fsPath, JSON.stringify(this.promsgs), (err: any) => {
+			console.log(1)
 			if (err) {
 				console.log("Error writing promsgs cache file: " + err)
 				outputChannel.appendLine("Error writing promsgs cache file: " + err)
 			}
+			console.log(2)
 		})
+		console.log("saved promsgs cache successfully")
 	}
 
 	getMsgNum (msgnum: number) {
@@ -102,6 +105,30 @@ export class ABLPromsgs {
 
 export function getPromsg(msgnum: number) {
 	return promsgsObj.getMsgNum(msgnum)
+}
+
+export function getPromsgText (text: string) {
+
+	console.log("text=" + text)
+
+	try {
+		const promsgMatch = RegExp(/\((\d+)\)$/).exec(text)
+		const promsg = promsgsObj.getMsgNum(Number(promsgMatch![1]))
+		let stackString = text
+		let count = 0
+		promsg?.msgtext.forEach((text: string) => {
+			if (count === 0) {
+				count++
+			} else {
+				stackString += "\n\n" + text.replace(/\\n/g,"\n\n")
+			}
+		})
+		return stackString
+	} catch (e) {
+		return text
+	}
+
+
 }
 
 // console.log("----- start -----")

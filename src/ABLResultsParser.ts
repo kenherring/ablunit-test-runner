@@ -1,8 +1,13 @@
 import { Uri, workspace } from "vscode"
+import { parseCallstack, ICallStack } from "./parse/ParseCallStack"
+import { PropathParser } from "./ABLPropath"
 import * as xml2js from "xml2js"
+import { ABLDebugLines } from "./ABLDebugLines"
+
 
 export interface TCFailure {
-	callstack: string
+	callstackRaw: string
+	callstack: ICallStack
 	message: string
 	type: string
 }
@@ -41,12 +46,19 @@ export interface TestSuites {
 export class ABLResultsParser {
 	fs = require('fs');
 	resultsJson?: TestSuites
+	propath: PropathParser
+	debugLines: ABLDebugLines
+
+	constructor(propath: PropathParser, debugLines: ABLDebugLines) {
+		this.propath = propath
+		this.debugLines = debugLines
+	}
 
 	async importResults(resultsUri: Uri) {
 		const resultsBits = await workspace.fs.readFile(resultsUri);
 		const resultsXml = Buffer.from(resultsBits.toString()).toString('utf8');
 		const resultsXmlJson = await this.parseXml(resultsXml)
-		this.resultsJson = this.parseSuites(resultsXmlJson)
+		this.resultsJson = await this.parseSuites(resultsXmlJson)
 		this.outputJson(Uri.parse(resultsUri.toString().replace(/\.xml$/,".json")), this.resultsJson)
 	}
 
@@ -64,27 +76,30 @@ export class ABLResultsParser {
 		return res
 	}
 
-	parseSuites(res: any) {
+	async parseSuites(res: any) {
 		if(!res.testsuites) {
 			throw new Error("malformed results.xml file - could not find top-level 'testsuites' node")
 		}
 		res = res.testsuites
 
-		const jsonData = {
+		const testsuite = await this.parseSuite(res.testsuite)
+		const jsonData: TestSuites = {
 			name: res['$'].name,
 			tests: Number(res['$'].tests),
 			failures: Number(res['$'].failures),
 			errors: Number(res['$'].errors),
-			testsuite: this.parseSuite(res.testsuite)
+			testsuite: testsuite
 		}
 		return jsonData
 	}
 
-	parseSuite(res: any) {
+	async parseSuite(res: any) {
 		if (!res) { return undefined }
 		const suites: TestSuite[] = []
 
 		for (let idx=0; idx<res.length; idx++) {
+			const testsuite = await this.parseSuite(res[idx].testsuite).then()
+			const testcases = await this.parseTestCases(res[idx].testcase).then()
 			suites[idx] = {
 				name: res[idx]['$'].name ?? undefined,
 				classname: res[idx]['$'].classname ?? undefined,
@@ -95,8 +110,8 @@ export class ABLResultsParser {
 				skipped: Number(res[idx]['$'].skipped),
 				time: Number(res[idx]['$'].time * 1000),
 				properties: this.parseProperties(res[idx].properties),
-				testsuite: this.parseSuite(res[idx].testsuite),
-				testcases: this.parseTestCases(res[idx].testcase)
+				testsuite: testsuite,
+				testcases: testcases
 			}
 		}
 		return suites
@@ -113,38 +128,44 @@ export class ABLResultsParser {
 		return props
 	}
 
-	parseTestCases(res: any) {
+	async parseTestCases(res: any) {
 		if (!res) { return undefined }
 		const cases: TestCase[] = []
 
 		for (let idx=0; idx<res.length; idx++) {
+			const failure = await this.parseFailOrError('failure', res[idx])
+			const error = await this.parseFailOrError('error', res[idx])
 			cases[idx] = {
 				name: res[idx]['$'].name,
 				classname: res[idx]['$'].classname ?? undefined,
 				status: res[idx]['$'].status,
 				time: Number(res[idx]['$'].time),
-				failure: this.parseFailOrError('failure', res[idx]),
-				error: this.parseFailOrError('error', res[idx])
+				failure: failure,
+				error: error
 			}
 		}
 		return cases
 	}
 
-	parseFailOrError(type: string, res: any) {
+	async parseFailOrError(type: string, res: any) {
 		if (!res[type]) { return undefined }
 
 		if (res[type][1]) {
-			console.error("more than one failure or error in testcase - use case not handled")
+			throw new Error("more than one failure or error in testcase - use case not handled")
 		}
-		return {
-			callstack: res[type][0]['_'],
+
+		const callstack = await parseCallstack(this.debugLines, res[type][0]['_'])
+		const fail: TCFailure = {
+			callstackRaw: res[type][0]['_'],
+			callstack: callstack,
 			message: res[type][0]['$'].message,
 			type: res[type][0]['$'].types
 		}
+		return fail
 	}
 
 	outputJson(jsonUri: Uri, toJson: any) {
-		console.log("outputJson to " + jsonUri.toString())
+		// console.log("outputJson to " + jsonUri.fsPath)
 		const bufferJson = Buffer.from(JSON.stringify(toJson, null, 2))
 		workspace.fs.writeFile(jsonUri, bufferJson)
 	}

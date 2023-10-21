@@ -1,3 +1,4 @@
+import { Uri } from "vscode"
 
 const summaryRE = /^(\d+) (\d{2}\/\d{2}\/\d{4}) "([^"]*)" (\d{2}:\d{2}:\d{2}) "([^"]*)" (.*)$/
 const moduleRE = /^(\d+) "([^"]*)" "([^"]*)" (\d+) (\d+) "([^"]*)"$/
@@ -21,7 +22,7 @@ export interface LineSummary { //Section 4
     ExecCount?: number
     ActualTime?: number
     CumulativeTime?: number
-    Executable?: boolean
+    Executable: boolean
     trace?: Trace[]
 }
 
@@ -37,18 +38,20 @@ interface CalledTo{ //Section 3
     CallCount: number
 }
 
+//Split module and child module?
 export interface Module { //Section 2
     ModuleID: number
     ParentModuleId?: number
     ModuleName: string
     EntityName?: string // function/procedure/method name
-    SourceName?: string // source file name
+    SourceName: string // source file
+    SourceUri?: Uri
     ParentName?: string // parent class, when inheriting
     Destructor?: boolean
-    ListingFile: string
+    ListingFile?: string
     CrcValue: number
     ModuleLineNum: number
-    UnknownString1?: string
+    UnknownString1: string
     coverageName?: string
     executableLines: number
     executedLines: number
@@ -91,9 +94,10 @@ export class ABLProfileJSON {
         for(const element of lines){
             const test = moduleRE.exec(element)
 
-            const mod: Module  = {
+            const mod: Module = {
                 ModuleID: Number(test![1]),
                 ModuleName: test![2],
+                SourceName: test![2],
                 ListingFile: test![3],
                 CrcValue: Number(test![4]),
                 ModuleLineNum: Number(test![5]),
@@ -117,17 +121,9 @@ export class ABLProfileJSON {
                     } else {
                         if (split[1]) {
                             mod.SourceName = split[1]
-                            if (mod.SourceName === mod.EntityName &&
-                                !mod.SourceName.endsWith(".cls") &&
-                                !mod.SourceName.endsWith(".p")) {
-                                mod.SourceName = mod.SourceName + ".cls"
-                            }
                         }
                         if (split[2]) {
                             mod.ParentName = split[2]
-                            if (!mod.SourceName?.endsWith(".cls")) {
-                                mod.SourceName = mod.SourceName + ".cls"
-                            }
                         }
                     }
                 }
@@ -136,15 +132,13 @@ export class ABLProfileJSON {
                 this.modules[this.modules.length] = mod
             } else {
                 childModules[childModules.length] = mod
-                // const parentModule = this.modules.find(parentMod => parentMod.SourceName === mod.SourceName)
-                // console.log("PARENT: " + mod.ModuleID + " " + mod.EntityName + " " + mod.ModuleName + " " + mod.SourceName + " " + parentModule?.ModuleID + " " + parentModule?.ModuleName + " " + parentModule?.SourceName)
             }
         }
 
         childModules.forEach(child => {
             let parent = this.modules.find(p => p.SourceName === child.SourceName)
             if (!parent) {
-                parent = this.modules.find(p => p.SourceName + ".cls" === child.SourceName)
+                parent = this.modules.find(p => p.SourceName === child.SourceName)
             }
             if(parent) {
                 if(!parent.childModules) {
@@ -152,14 +146,16 @@ export class ABLProfileJSON {
                 }
                 child.ParentModuleId = parent.ParentModuleId // TODO: is this in the JSON?
                 parent.childModules[parent.childModules.length] = child
-                if (parent.SourceName + ".cls" === child.SourceName) {
+                if (parent.SourceName === child.SourceName) {
                     parent.SourceName = child.SourceName
                 }
+            } else {
+                throw new Error("Unable to find parent module for " + child.SourceName + " " + child.coverageName + " " + child.ModuleName)
             }
         })
     }
 
-    getModule(modID: number):Module | undefined {
+    getModule(modID: number): Module | undefined {
         for(const element of this.modules){
             if(element.ModuleID === modID)
                 return element
@@ -190,9 +186,7 @@ export class ABLProfileJSON {
 
     addCallTree (lines: string[]) {
         for(const element of lines){
-            // console.log(lines[lineNo])
             const test = callTreeRE.exec(element)
-
 
             if(test && test.length == 5) {
                 //Called By
@@ -203,8 +197,7 @@ export class ABLProfileJSON {
                     CallCount: Number(test[4])
                 }
                 const mod = this.getModule(cbModID)
-                if (mod != undefined) {
-                    if (mod.calledBy == undefined) mod.calledBy = []
+                if (mod?.calledBy != undefined) {
                     mod.calledBy[mod.calledBy.length] = cb
                 }
 
@@ -217,8 +210,7 @@ export class ABLProfileJSON {
                 }
 
                 const mod2 = this.getModule(ctModID)
-                if (mod2 != undefined) {
-                    if (mod2.calledTo == undefined) mod2.calledBy = []
+                if (mod2?.calledTo != undefined) {
                     mod2.calledTo[mod2.calledTo.length] = ct
                 }
             }
@@ -227,7 +219,6 @@ export class ABLProfileJSON {
 
     addLineSummary (lines: string[]) {
         for(const element of lines){
-            // console.log(lines[lineNo])
             const test = lineSummaryRE.exec(element)
 
             if(test){
@@ -235,18 +226,17 @@ export class ABLProfileJSON {
                 const sum = {
                     LineNo: Number(test[2]),
                     ExecCount: Number(test[3]),
+                    Executable: true,
                     ActualTime: Number(test[4]),
                     CumulativeTime: Number(test[5])
                 }
                 const mod = this.getModule(modID)
                 if (mod) {
-                    // console.log("lines.length=" + mod['lines'].length + " lines.modid=" + mod['ModuleID'])
                     if (! mod.lines) {
                         mod.lines = []
                     }
                     mod.lines[mod.lines.length] = sum
                     mod.lineCount++
-                    // console.log(mod['ModuleID'] + " " + mod['ModuleName'] + " " + mod['lineCount'])
                 }
             }
         }
@@ -254,7 +244,6 @@ export class ABLProfileJSON {
 
     addTracing (lines: string[]) {
         for(const element of lines){
-            // console.log(lines[lineNo])
             const test = tracingRE.exec(element)
             if (test) {
                 const modID = Number(test[1])
@@ -277,28 +266,34 @@ export class ABLProfileJSON {
         lines.unshift('.')
         let mod
 
-        for(let lineNo=1; lineNo < lines.length; lineNo++){
-            if (lines[lineNo] === '.') { continue }
+        try {
+            for(let lineNo=1; lineNo < lines.length; lineNo++){
+                if (lines[lineNo] === '.') { continue }
 
-            if (lines[lineNo - 1] === '.') {
-                // set info for the previous section
-                if(lines[lineNo] == '.' && mod) {
-                    mod.coveragePct = (mod.executableLines / mod.lines.length * 100)
-                }
-
-                // prepare the new section.
-                const test = coverageRE.exec(lines[lineNo])
-                if(test) {
-                    mod = this.getModule(Number(test[1]))
-                    if (mod) {
-                        mod.coverageName= test[2]
-                        mod.executableLines = Number(test[3])
+                if (lines[lineNo - 1] === '.') {
+                    //TODO - is the last last section being set?
+                    // set info for the previous section
+                    if(lines[lineNo] == '.' && mod) {
+                        mod.coveragePct = (mod.executableLines / mod.lines.length * 100)
                     }
-                }
-                continue
-            }
 
-            if (mod) {
+                    // prepare the next section.
+                    const test = coverageRE.exec(lines[lineNo])
+                    if (!test) {
+                        throw new Error("Unable to parse coverage data in section 6")
+                    }
+
+                    mod = this.getModule(Number(test[1]))
+                    if (!mod) {
+                        throw new Error("Unable to find module " + test[1] + " in section 6")
+                    }
+
+                    mod.coverageName = test[2]
+                    mod.executableLines = Number(test[3])
+                    continue
+                }
+                if(!mod) { throw new Error("invalid data in section 6") }
+
                 const line = this.getLine(mod,Number(lines[lineNo]))
                 if (line) {
                     line.Executable = true
@@ -308,11 +303,14 @@ export class ABLProfileJSON {
                         Executable: true
                     }
                 }
-                continue
             }
-            //TODO - throw here?
+        } catch (error) {
+            console.error("Error parsing coverage data in section 6 [module=" + mod + "]: error=" + error)
         }
+        this.assignParentCoverage()
+    }
 
+    assignParentCoverage() {
         this.modules.forEach(parent => {
             parent.childModules?.forEach(child => {
                 parent.executableLines += child.executableLines
@@ -332,19 +330,11 @@ export class ABLProfileJSON {
                 }
             })
         })
-
     }
 
-    // addUserData(lines: string[]) {
-    //     for(let lineNo=0; lineNo < lines.length; lineNo++){
-    //         console.log("UserData-" + lineNo + ": " + lines[lineNo])
-    //     }
-    // }
-
-    // addSection8(lines: string[]) {
-    //     for(let lineNo=0; lineNo < lines.length; lineNo++){
-    //         // console.log("Section8-" + lineNo + ": " + lines[lineNo])
-    //     }
-    // }
-
+    addUserData(lines: string[]) {
+        for(let lineNo=0; lineNo < lines.length; lineNo++){
+            console.log("TODO: UserData-" + lineNo + ": " + lines[lineNo])
+        }
+    }
 }
