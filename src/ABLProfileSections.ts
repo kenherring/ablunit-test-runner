@@ -45,8 +45,8 @@ export interface Module { //Section 2
     ModuleName: string
     EntityName?: string // function/procedure/method name
     SourceName: string // source file
-    SourceUri?: Uri //TODO - assign this when importing
-    ParentName: string // parent class, when inheriting
+    SourceUri?: Uri
+    ParentName?: string // parent class, when inheriting
     Destructor?: boolean
     ListingFile?: string
     CrcValue: number
@@ -97,8 +97,7 @@ export class ABLProfileJSON {
             const mod: Module = {
                 ModuleID: Number(test![1]),
                 ModuleName: test![2],
-                SourceName: "",
-                ParentName: "",
+                SourceName: test![2],
                 ListingFile: test![3],
                 CrcValue: Number(test![4]),
                 ModuleLineNum: Number(test![5]),
@@ -287,10 +286,14 @@ export class ABLProfileJSON {
 
                     // prepare the next section.
                     const test = coverageRE.exec(lines[lineNo])
-                    if(!test) { throw new Error("Unable to parse coverage data in section 6") }
+                    if (!test) {
+                        throw new Error("Unable to parse coverage data in section 6")
+                    }
 
                     mod = this.getModule(Number(test[1]))
-                    if(!mod) { throw new Error("Unable to find module " + test[1] + " in section 6") }
+                    if (!mod) {
+                        throw new Error("Unable to find module " + test[1] + " in section 6")
+                    }
 
                     mod.coverageName = test[2]
                     mod.executableLines = Number(test[3])
@@ -309,7 +312,7 @@ export class ABLProfileJSON {
                 }
             }
         } catch (error) {
-            console.error("Error parsing coverage data in section 6: " + error)
+            console.error("Error parsing coverage data in section 6 [module=" + mod + "]: error=" + error)
         }
         this.assignParentCoverage()
     }

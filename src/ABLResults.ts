@@ -349,10 +349,7 @@ export class ABLResults {
 
 	async getFailureMarkdownMessage(item: TestItem, options: TestRun, failure: TCFailure): Promise<MarkdownString> {
 		const stack = await parseCallstack(this.debugLines!, failure.callstackRaw)
-		//TODO - get promsg
-
 		const promsg = getPromsgText(failure.message)
-
 		const md = new MarkdownString(promsg + "\n\n")
 
 		if (stack.markdownText) {

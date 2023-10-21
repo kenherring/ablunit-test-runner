@@ -45,16 +45,7 @@ export class ABLProfile {
 		}
 
 		this.profJSON = new ABLProfileJSON(sectionLines[1][0])
-		// propath.setPropath(this.profJSON.properties!.Propath)
 		this.profJSON.addModules(sectionLines[2])
-
-		// console.log(3)
-		// for (const mod of this.profJSON.modules) {
-		// 	if (mod.SourceName) {
-		// 		await propath.setSourcePropathInfo(mod.SourceName)
-		// 	}
-		// }
-		// console.log(4)
 
 		this.profJSON.addCallTree(sectionLines[3])
 		this.profJSON.addLineSummary(sectionLines[4])

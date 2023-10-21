@@ -1,7 +1,5 @@
 import * as vscode from 'vscode';
 
-// TODO - If the XREF is available let's try to parse that instead
-
 // TESTSUITE statement
 const suiteRE = /@testsuite\((.*)\)/
 const suiteItemRE = /(classes|procedures)="([^"]+)+"/i
