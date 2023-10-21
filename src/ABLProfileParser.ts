@@ -1,18 +1,20 @@
 import { Uri, workspace } from 'vscode';
-import { ABLProfileJSON } from './ABLProfileSections'
+import { ABLProfileJSON, ProfileData } from './ABLProfileSections'
 import { TextDecoder } from 'util';
 import { PropathParser } from './ABLPropath';
 import { ABLUnitConfig } from './ABLUnitConfigWriter';
+import { ABLDebugLines } from './ABLDebugLines';
 
 const textDecoder = new TextDecoder('utf-8');
 
 export const getContentFromFilesystem = async (uri: Uri) => {
 	try {
-		const rawContent = await workspace.fs.readFile(uri);
-		return textDecoder.decode(rawContent);
+		const rawContent = await workspace.fs.readFile(uri)
+		return textDecoder.decode(rawContent)
 	} catch (e) {
-		console.warn(`Error providing tests for ${uri.fsPath}`, e);
-		return '';
+		// throw new Error(`Error reading ${uri.fsPath}: ${e}`)
+		console.warn(`Error reading ${uri.fsPath}`, e)
+		return ''
 	}
 }
 
@@ -21,8 +23,10 @@ export class ABLProfile {
 	profJSON: ABLProfileJSON | undefined
 	cfg!: ABLUnitConfig
 	resultsPropath!: PropathParser
+	debugLines: ABLDebugLines | undefined
 
-	async parseData(filepath: Uri) {
+	async parseData(filepath: Uri, debugLines: ABLDebugLines) {
+		this.debugLines = debugLines
 		console.log("filepath=" + filepath.fsPath)
 		const text = await getContentFromFilesystem(filepath)
 		console.log("2")
@@ -44,24 +48,63 @@ export class ABLProfile {
 			}
 		}
 
-		this.profJSON = new ABLProfileJSON(sectionLines[1][0])
+		console.log("section1 " + sectionLines[1].length)
+		this.profJSON = new ABLProfileJSON(sectionLines[1][0], debugLines)
+
+		console.log("section2 " + sectionLines[2].length)
 		this.profJSON.addModules(sectionLines[2])
 
+		console.log("section3 " + sectionLines[3].length)
 		this.profJSON.addCallTree(sectionLines[3])
-		this.profJSON.addLineSummary(sectionLines[4])
-		this.profJSON.addTracing(sectionLines[5])
-		this.profJSON.addCoverage(sectionLines[6])
-		this.profJSON.addUserData(sectionLines[7])
 
-		// TODO - this doesn't work
-		// this.profJSON.modules.sort()
+		console.log("section4 " + sectionLines[4].length)
+		await this.profJSON.addLineSummary(sectionLines[4])
+
+		console.log("section5 " + sectionLines[5].length)
+		this.profJSON.addTracing(sectionLines[5])
+
+		console.log("section6 " + sectionLines[6].length)
+		this.profJSON.addCoverage(sectionLines[6])
+
+		console.log("section7 " + sectionLines[7].length)
+		this.profJSON.addSection7(sectionLines[7])
+
+		console.log("section8 " + sectionLines[8].length)
+		this.profJSON.addSection8(sectionLines[8])
+
+		console.log("section9 " + sectionLines[9].length)
+		this.profJSON.addSection9(sectionLines[9])
+
+		console.log("section10 " + sectionLines[10].length)
+		this.profJSON.addSection10(sectionLines[10])
+
+		console.log("section11 " + sectionLines[11].length)
+		this.profJSON.addSection11(sectionLines[11])
+
+		console.log("section12 " + sectionLines[12].length)
+		this.profJSON.addSection12(sectionLines[12])
+
+		console.log("section13 - User Data" + sectionLines[13].length)
+		this.profJSON.addUserData(sectionLines[13])
+
+		// console.log("section14 " + sectionLines[14].length)
+		// this.profJSON.addSection14(sectionLines[14])
+
+		console.log("done")
+
+		this.profJSON.modules.sort((a,b) => a.ModuleID - b.ModuleID)
 	}
 
 	async writeJsonToFile (file: Uri) {
 		// TODO: should writing json be optional?
-		const out: ABLProfileJSON = JSON.parse(JSON.stringify(this.profJSON))
 
-		workspace.fs.writeFile(file, Uint8Array.from(Buffer.from(JSON.stringify(out, null, 2)))).then(() => {
+		const data: ProfileData = {
+			modules: this.profJSON!.modules,
+			userData: this.profJSON!.userData,
+		}
+		// const out: ProfileData = JSON.parse(JSON.stringify(data))
+
+		workspace.fs.writeFile(file, Uint8Array.from(Buffer.from(JSON.stringify(data, null, 2)))).then(() => {
 			console.log("wrote profile output json file: " + file.fsPath)
 		}, (err) => {
 			console.error("failed to write profile output json file " + file.fsPath + " - " + err)

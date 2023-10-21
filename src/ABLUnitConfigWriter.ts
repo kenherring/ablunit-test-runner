@@ -127,7 +127,8 @@ export class ABLUnitConfig  {
 		const profOpts = [	"-coverage",
 							"-description \"ABLUnit Run from VSCode\"",
 							"-filename " + profOut.fsPath,
-							"-listings " + listingDir.fsPath ]
+							"-listings " + listingDir.fsPath,
+							"-statistics" ]
 		console.log("creating profile.options")
 		return workspace.fs.writeFile(profUri, Uint8Array.from(Buffer.from(profOpts.join("\n"))))
 	}

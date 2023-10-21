@@ -12,7 +12,6 @@ const backgroundExecuted = vscode.window.createTextEditorDecorationType({
 
 let recentResults: ABLResults | undefined
 
-
 export async function activate(context: vscode.ExtensionContext) {
 
 	console.log("ACTIVATE!")
@@ -20,16 +19,15 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	const ctrl = vscode.tests.createTestController('ablunitTestController', 'ABLUnit Test')
 
-	// obsv.onDidChangeTest(() => {
-	// 	console.error("onDidChangeTest")
-	// })
 
 	vscode.window.onDidChangeActiveTextEditor(editor => {
+		// console.log("onDidChangeActiveTextEditor " + JSON.stringify(editor))
 		if(editor)
 			decorate(editor)
 	})
 
 	vscode.workspace.onDidOpenTextDocument(event => {
+		// console.log("onDidOpenTextDocument " + JSON.stringify(event))
 		const openEditors = vscode.window.visibleTextEditors.filter(
 			editor => editor.document.uri === event.uri
 		)
@@ -39,33 +37,18 @@ export async function activate(context: vscode.ExtensionContext) {
 	})
 
 	vscode.workspace.onDidChangeTextDocument(event => {
+		// console.log("onDidChangeTextDocument " + JSON.stringify(event))
 		const openEditor = vscode.window.visibleTextEditors.filter(
 			editor => editor.document.uri === event.document.uri
 		)[0]
 		decorate(openEditor)
 	})
 
-
-	const runAllTestsCommand = () => {
-		console.log("TODO - run all tests")
-		// runTests(cfg)
-	}
-
-	function runActiveTestCommand () {
-		console.log("TODO - run active test")
-		// runTests()
-	}
-
-	function debugActiveTestCommand () { //This already exists as 'Test: Debug Tests in Current Files' and 'Test: Debug Test at Cursor'
-		console.log("TODO - debug active test")
-		// runTests("")
-	}
-
 	context.subscriptions.push(ctrl)
 	context.subscriptions.push(
-		vscode.commands.registerCommand('ablunit.test.runAll', runAllTestsCommand),
-		vscode.commands.registerCommand('ablunit.test.runActive', runActiveTestCommand),
-		vscode.commands.registerCommand('ablunit.test.debugActive', debugActiveTestCommand),
+		// vscode.commands.registerCommand('ablunit.test.runAll', runAllTestsCommand),
+		// vscode.commands.registerCommand('ablunit.test.runActive', runActiveTestCommand),
+		// vscode.commands.registerCommand('ablunit.test.debugActive', debugActiveTestCommand),
 		vscode.commands.registerCommand('_ablunit.openStackTraceItem', openStackTraceItem),
 		vscode.workspace.onDidOpenTextDocument(updateNodeForDocument),
 		vscode.workspace.onDidChangeTextDocument(e => updateNodeForDocument(e.document)),

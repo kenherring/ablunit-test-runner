@@ -18,7 +18,7 @@ This project was developed using the [Progress OpenEdge Developers Kit: Classroo
 * See test results
 * View code coverage
 
-	![code coverage](./docs/coverage.png)
+	![code coverage](docs/coverage.png)
 
 ## Configuration
 
@@ -38,19 +38,7 @@ This project was developed using the [Progress OpenEdge Developers Kit: Classroo
 | `ablunit.tempDir` | Extension storage area | Any files generated when running ABLUnit will be stored here.  It is also used for the [`-T`](https://docs.progress.com/bundle/openedge-startup-and-parameter-reference-122/page/Temporary-Directory-T.html) startup parameter |
 | `ablunit.tests.command` | `_progres -b -p ABLUnitCore.p <...>` | This setting can be used to run tests with any existing shell command your tests are configured to run with.  Example: `ant test` |
 
-<!--
-| `ablunit.tests.command.useABLPluginCommand` | | |
-| `ablunit.tests.task` | | |
--->
-
-# Commands
-
-| Command | Description |
-| --- | --- |
-| `ablunit.test.runActive` | Run tests in the active file |
-| `ablunit.test.runAll` | Run all tests in the workspace |
-
-<!-- TODO: how many of these can just use default commands? -->
+<!-- TODO: Update the config list before release -->
 
 ## Contributing
 
@@ -67,11 +55,3 @@ This project was developed using the [Progress OpenEdge Developers Kit: Classroo
 * [Progress Documentation -> Progress Developer Studio for OpenEdge Online Help -> Run test cases from the command prompt](https://docs.progress.com/bundle/openedge-developer-studio-help/page/Run-test-cases-from-the-command-prompt.html)
 * [Progress Documentation -> ABLUnit Annotations](// https://docs.progress.com/bundle/openedge-developer-studio-olh-117/page/Annotations-supported-with-ABLUnit.html) - Used w/ snippets
 * [GitHub progress/ade](https://github.com/progress/ADE) - source files for OE code
-
-
-<!--
-
-TODO:
-* import test results, such as those returned by sonar
-* promsg - insert "search kbase" link
--->

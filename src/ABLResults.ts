@@ -323,7 +323,7 @@ export class ABLResults {
 
 	async parseProfile() {
 		const profParser = new ABLProfile()
-		return profParser.parseData(this.runConfig.profileOutput!).then(() => {
+		return profParser.parseData(this.runConfig.profileOutput!, this.debugLines!).then(() => {
 			profParser.writeJsonToFile(this.runConfig.profileOutputJson!)
 			this.profileJson = profParser.profJSON
 			return this.assignProfileResults().then(() => {
