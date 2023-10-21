@@ -3,6 +3,103 @@ import { outputChannel } from './ABLUnitCommon'
 import { IProjectJson, readOpenEdgeProjectJson } from './projectSchema';
 import { PropathParser } from "./ABLPropath"
 
+interface IABLUnitJson {
+	configPath: string
+	configUri: Uri
+	output: string
+	outputUri: string //results.xml directory
+	quitOnEnd: boolean
+	writeLog: boolean
+	showErrorMessage: boolean
+	throwError: boolean
+}
+
+interface IProfilerOptions {
+	profileOptionsPath: string
+	enabled: boolean
+	description: string
+	filename: string
+	fileUri: Uri
+	listings: string
+	listingsUri: Uri
+	statistics: boolean
+	traceFilter: string
+	tracing: string
+}
+
+interface IABLUnitConfig {
+	display: {
+		classLabel: string
+		style: string
+	}
+	files: {
+		include: string
+		exclude: string
+	}
+	findAllFilesAtStartup: boolean
+	importOpenedgeProjectJson: boolean
+	notificationsEnabled: boolean
+	params: string,
+	progressIniPath: string
+	tempDir: string
+	tests: {
+		command: string
+		task: string
+	}
+	configPath: string
+	configJson: IABLUnitJson
+	profilerOptions: IProfilerOptions
+}
+
+// default values to start
+const config: IABLUnitConfig = {
+	display: {
+		classLabel: "classname",
+		style: "tree"
+	},
+	files: {
+		include: "**/*.cls,**/*.p",
+		exclude: "**/.builder/**"
+	},
+	findAllFilesAtStartup: true,
+	importOpenedgeProjectJson: true,
+	notificationsEnabled: true,
+	params: "",
+	progressIniPath: "",
+	tempDir: "",
+	tests: {
+		command: "",
+		task: ""
+	},
+	configPath: "",
+	configJson: {
+		configPath: "",
+		configUri: Uri.file(""),
+		output: "",
+		outputUri: "",
+		quitOnEnd: true,
+		writeLog: true,
+		showErrorMessage: true,
+		throwError: true
+	},
+	profilerOptions: {
+		profileOptionsPath: "",
+		enabled: false,
+		description: "",
+		filename: "",
+		fileUri: Uri.file(""),
+		listings: "",
+		listingsUri: Uri.file(""),
+		statistics: false,
+		traceFilter: "",
+		tracing: ""
+	}
+}
+
+
+
+
+
 export class ABLUnitConfig  {
 	workspaceDir: Uri
 
@@ -105,9 +202,10 @@ export class ABLUnitConfig  {
 	}
 
 	resultsUri (tempDirUri: Uri) {
-		let resultsFile = workspace.getConfiguration('ablunit').get('resultsPath', '')
+		let resultsFile = "results.xml"
+		console.log("resultsFile=" + resultsFile)
 		if(!resultsFile) {
-			throw (new Error("no workspace directory opened"))
+			throw new Error("unable to find 'ablunit.configPath' setting")
 		}
 		if(resultsFile == "") {
 			resultsFile = "results.xml"
@@ -119,8 +217,18 @@ export class ABLUnitConfig  {
 		return Uri.joinPath(tempDirUri, resultsFile)
 	}
 
+	getProfilerOptions() {
+		const opt1 = workspace.getConfiguration('ablunit')
+		console.log("opt1=" + opt1 + " " + JSON.stringify(opt1))
+
+		const profOpts = workspace.getConfiguration('ablunit').get('profilerOptions', '')
+		console.log("profOpts=" + profOpts + " " + JSON.stringify(profOpts))
+		return "profile.options"
+		// return profOpts
+	}
+
 	getProfileOutput(tempDirUri: Uri) {
-		return Uri.joinPath(tempDirUri,workspace.getConfiguration('ablunit').get('profileOutputPath', ''))
+		return Uri.joinPath(tempDirUri, "prof.out")
 	}
 
 	async createProfileOptions (profUri: Uri, profOut: Uri, listingDir: Uri) {

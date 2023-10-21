@@ -165,7 +165,7 @@ export class ABLProfileJSON {
 					}
 				}
 			}
-			console.log("moduleName-5=" + moduleName)
+			
 			const mod: Module = {
 				ModuleID: Number(test![1]),
 				ModuleName: moduleName,
@@ -288,7 +288,7 @@ export class ABLProfileJSON {
 
 			if(test){
 				const modID = Number(test[1])
-				const moduleName = this.getModule(modID)?.ModuleName
+				const sourceName = this.getModule(modID)?.SourceName
 				const sum: LineSummary = {
 					LineNo: Number(test[2]),
 					ExecCount: Number(test[3]),
@@ -296,8 +296,8 @@ export class ABLProfileJSON {
 					ActualTime: Number(test[4]),
 					CumulativeTime: Number(test[5])
 				}
-				if (moduleName) {
-					const lineinfo = await this.debugLines.getSourceLine(moduleName, sum.LineNo)
+				if (sourceName) {
+					const lineinfo = await this.debugLines.getSourceLine(sourceName, sum.LineNo)
 					if (lineinfo) {
 						sum.srcLine = lineinfo.srcLine
 						sum.srcUri = lineinfo.srcUri

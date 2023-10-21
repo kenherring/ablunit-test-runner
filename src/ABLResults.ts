@@ -10,7 +10,9 @@ import { ABLPromsgs, getPromsgText } from "./ABLPromsgs"
 import { PropathParser } from "./ABLPropath"
 import { outputChannel } from "./ABLUnitCommon"
 
-interface AblunitOptions {
+
+
+interface ABLUnitOptions {
 	output: {
 		location: string
 		format: "xml"
@@ -32,9 +34,12 @@ interface AblunitOptions {
 	]
 }
 
+//TODO REMOVE
 interface RunConfig {
 	workspaceDir: Uri
 	tempDirUri: Uri
+
+	profilerOptions: string
 
 	progressIni?: Uri
 	listingDir?: Uri
@@ -70,19 +75,25 @@ export class ABLResults {
 	coverageJson: [] = []
 
 	testData!: WeakMap<TestItem, ABLUnitTestData>
-	ablunitOptions: AblunitOptions = {} as AblunitOptions
+	ablunitOptions: ABLUnitOptions = {} as ABLUnitOptions
 
 	constructor(storageUri: Uri) {
 		if (!workspace.workspaceFolders) {
 			throw (new Error("no workspace folder is open"))
 		}
 
+		const workspaceDir = workspace.workspaceFolders[0].uri
+		this.cfg = new ABLUnitConfig(workspaceDir)
+		console.log(1)
+		const profOptTmp = this.cfg.getProfilerOptions()
+		console.log(2)
 		this.startTime = new Date()
 		this.runConfig = {
-			workspaceDir: workspace.workspaceFolders[0].uri,
-			tempDirUri: storageUri
+			workspaceDir: workspaceDir,
+			tempDirUri: storageUri,
+			profilerOptions: this.cfg.getProfilerOptions()
 		}
-		this.cfg = new ABLUnitConfig(this.runConfig.workspaceDir)
+
 		this.status = "constructed"
 	}
 
@@ -115,6 +126,7 @@ export class ABLResults {
 			throw (err)
 		})
 		this.debugLines = new ABLDebugLines(this.propath!)
+		this.runConfig.profilerOptions = this.cfg.getProfilerOptions()
 		this.runConfig.ablunitJson = Uri.joinPath(this.runConfig.tempDirUri, 'ablunit.json')
 		this.runConfig.listingDir = Uri.joinPath(this.runConfig.tempDirUri, 'listings')
 		this.runConfig.profileOutput = this.cfg.getProfileOutput(this.runConfig.tempDirUri)
