@@ -124,7 +124,6 @@ export class ABLUnitConfig  {
 	}
 
 	async createProfileOptions (profUri: Uri, profOut: Uri, listingDir: Uri) {
-		const profFile = 'profile.options'
 		const profOpts = [	"-coverage",
 							"-description \"ABLUnit Run from VSCode\"",
 							"-filename " + profOut.fsPath,

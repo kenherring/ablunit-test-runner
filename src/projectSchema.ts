@@ -31,7 +31,7 @@ function parseOpenEdgeProjectJson (conf: any) {
 
 	for (const entry of conf.buildPath) {
 		let type: string = entry.type
-		let dotPct = ".pct"
+		let dotPct: string
 		if (entry.type) {
 			type = entry.type.toLowerCase()
 		}

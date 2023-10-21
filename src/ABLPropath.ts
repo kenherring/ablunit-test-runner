@@ -99,7 +99,6 @@ export class PropathParser {
 
 	async search(file: string) {
 		let relativeFile = file
-		relativeFile = file
 		if (!relativeFile.endsWith(".cls") && !relativeFile.endsWith(".p") && !relativeFile.endsWith(".w") && !relativeFile.endsWith(".i")) {
 			relativeFile = relativeFile.replace(/\./g,'/') + ".cls"
 		}
