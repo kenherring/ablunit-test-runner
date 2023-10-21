@@ -9,7 +9,8 @@ import * as cp from "child_process";
 export const ablunitRun = async(item: TestItem, options: TestRun, data: ABLUnitTestData, res: ABLResults) => {
 	const start = Date.now()
 
-	let itemPath = workspace.asRelativePath(item.uri!.fsPath)
+	// let itemPath = workspace.asRelativePath(item.uri!.fsPath)
+	let itemPath = item.uri!.fsPath
 	if (data instanceof ABLTestProcedure || data instanceof ABLTestMethod) {
 		itemPath = itemPath + "#" + item.label
 	}
@@ -49,6 +50,8 @@ export const ablunitRun = async(item: TestItem, options: TestRun, data: ABLUnitT
 		args.shift()
 
 		return new Promise<string>((resolve, reject) => {
+
+			console.log("COMMAND=" + cmd + " " + args.join(' '))
 			cp.exec(cmd + ' ' + args.join(' '), { cwd: res.runConfig.workspaceDir.fsPath }, (err: any, stdout: any, stderr: any) => {
 				const duration = Date.now() - start
 				if (err) {

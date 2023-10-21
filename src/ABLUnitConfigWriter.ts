@@ -32,15 +32,7 @@ export class ABLUnitConfig  {
 			uri = Uri.joinPath(this.workspaceUri(), tempDir)
 		}
 
-		return workspace.fs.stat(uri).then((stat) => {
-			return uri
-		}, (err) => {
-			return workspace.fs.createDirectory(uri).then(() => {
-				return uri
-			}, (err) => {
-				throw err
-			})
-		})
+		return uri
 	}
 
 	async createTempDirUri (uri: Uri) {

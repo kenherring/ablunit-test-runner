@@ -129,7 +129,7 @@ export class ABLResults {
 		prom[2] =  this.cfg.createListingDir(this.runConfig.listingDir)
 
 		await Promise.all(prom).then(() => {
-			// console.log("done creating files")
+			console.log("done creating config files for run")
 		}, (err) => {
 			throw err
 		})
