@@ -97,8 +97,10 @@ export class ABLDebugLines {
 		// const incRE = /(\S+) (\S+) (\d+) ([A-Z-]+) (("[^"]+?")|(\S+))/
 		const incRE = /(\S+) (\S+) (\d+) ([A-Z-_"]+)\s+(.*)/
 
-		const got = this.map.find((dlm) => dlm.debugSourceName === debugSourceName) //TODO: should we just return this?
-		if (got) { return got }
+		const got = this.map.find((dlm) => dlm.debugSourceName === debugSourceName)
+		if (got) {
+			return got
+		}
 
 		const m: DebugLineMap = {
 			debugSourceName: debugSourceName,
@@ -109,22 +111,14 @@ export class ABLDebugLines {
 		}
 		this.map.push(m)
 
-		await this.readLineCount(debugSourceUri).then((lc) => { m.lineCount = lc }, (err) => {
-			throw new Error("cannot find debugLines for " + debugSourceName + " [should not hit this!! (11)] err=" + err)
-		})
+		m.lineCount = await this.readLineCount(debugSourceUri)
 
 		// This reads the xref to find where the include files belong, and finds how many lines each of those includes has
 		// TODO [BUG]: this only works for single line includes.  Need to figure out how to deal with multi-line includes,
 		//				 and instances where the include has code which expands to multiple lines or shrinks the preprocessor
 		//				suspect this might require using listings, or more likely breaking apart the r-code which I don't want to do
 
-		const content = await readXrefFile(xrefUri).then((content) => {
-			return content
-		}, (err) => {
-			//Do nothing, this is expected if the xref file doesn't exist
-			console.error("err: " + err)
-			return undefined
-		})
+		const content = await readXrefFile(xrefUri)
 
 		if (content) {
 			const lines = content.split("\n")
@@ -132,18 +126,15 @@ export class ABLDebugLines {
 				const line = lines[idx]
 				const xref = incRE.exec(line)
 
-				if (xref && xref.length >= 5 && (xref[4] == "INCLUDE" || xref[4] == "COMPILE")) {
-					const [, relativePath,propathRelativePathInc,lineNumStr,xrefType,includeNameRaw] = xref
+				if (xref && xref.length >= 5 && xref[4] == "INCLUDE") {
+					const [, relativePath, ,lineNumStr, ,includeNameRaw] = xref
 					const pinfo = await this.propath.search(relativePath)
-
-					if (xrefType === "INCLUDE") {
-						const lineNum = Number(lineNumStr)
-						const includeName = includeNameRaw.replace(/^"(.*)"$/, '$1').trim()
-						const incinfo = await this.propath.search(includeName)
-						if (incinfo) {
-							m.includes.push({incUri: incinfo.uri, srcUri: pinfo!.uri, srcLine: lineNum})
-							await this.readIncludeLineCount(incinfo.uri)
-						}
+					const lineNum = Number(lineNumStr)
+					const includeName = includeNameRaw.replace(/^"(.*)"$/, '$1').trim()
+					const incinfo = await this.propath.search(includeName)
+					if (incinfo) {
+						m.includes.push({incUri: incinfo.uri, srcUri: pinfo!.uri, srcLine: lineNum})
+						await this.readIncludeLineCount(incinfo.uri)
 					}
 				}
 			}
