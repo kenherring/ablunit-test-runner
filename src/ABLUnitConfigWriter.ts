@@ -35,8 +35,11 @@ export class ABLUnitConfig  {
 		return workspace.fs.stat(uri).then((stat) => {
 			return uri
 		}, (err) => {
-			console.log("getTempDir error: " + err)
-			throw err
+			return workspace.fs.createDirectory(uri).then(() => {
+				return uri
+			}, (err) => {
+				throw err
+			})
 		})
 	}
 
