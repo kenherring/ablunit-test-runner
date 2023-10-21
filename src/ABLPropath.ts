@@ -115,7 +115,10 @@ export class PropathParser {
 
 
 			if (exists) {
-				const propathRelativeFile = fileInPropathUri.fsPath.replace(e.uri.fsPath,'')
+				let propathRelativeFile = fileInPropathUri.fsPath.replace(e.uri.fsPath,'')
+				if (propathRelativeFile != fileInPropathUri.fsPath) {
+					propathRelativeFile = propathRelativeFile.substring(1)
+				}
 				const fileObj: IABLFile = {
 					uri: fileInPropathUri,
 					file: file,
@@ -130,8 +133,8 @@ export class PropathParser {
 			}
 		}
 		if (!file) {
-			console.error("cannot find '" + file + "' in propath")
-			throw new Error("cannot find '" + file + "' in propath")
+			console.error("(search) cannot find '" + file + "' in propath")
+			throw new Error("(search) cannot find '" + file + "' in propath")
 		}
 	}
 

@@ -31,6 +31,7 @@ function parseOpenEdgeProjectJson (conf: any) {
 
 	for (const entry of conf.buildPath) {
 		let type: string = entry.type
+		let dotPct = ".pct"
 		if (entry.type) {
 			type = entry.type.toLowerCase()
 		}
@@ -43,16 +44,24 @@ function parseOpenEdgeProjectJson (conf: any) {
 		let buildDir: string = entry.build
 		if (!buildDir) {
 			buildDir = conf.buildDirectory
+			dotPct = ".builder/.pct0"
+		} else {
+			dotPct = buildDir + "/.pct"
 		}
 		if (!buildDir) {
 			throw new Error("buildDirectory not found in openedge-project.json")
+		}
+
+		let xrefDir: string = entry.xref
+		if (!xrefDir) {
+			xrefDir = dotPct
 		}
 
 		pj.propathEntry.push({
 			path: entry.path,
 			type: type,
 			buildDir: buildDir,
-			xrefDir: ".builder/.pct0" //TODO
+			xrefDir: xrefDir
 		})
 	}
 	return pj

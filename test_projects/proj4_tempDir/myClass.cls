@@ -20,4 +20,9 @@ class myClass :
 		OpenEdge.Core.Assert:Equals(1,1).
 	end method.
 
+	@Test.
+	method public void testLog () :
+		log-manager:write-message("test message").
+	end method.
+
 end class

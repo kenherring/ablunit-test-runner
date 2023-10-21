@@ -10,7 +10,7 @@ export const ablunitRun = async(item: TestItem, options: TestRun, data: ABLUnitT
 	const start = Date.now()
 
 	// let itemPath = workspace.asRelativePath(item.uri!.fsPath)
-	let itemPath = item.uri!.fsPath
+	let itemPath = workspace.asRelativePath(item.uri!.fsPath)
 	if (data instanceof ABLTestProcedure || data instanceof ABLTestMethod) {
 		itemPath = itemPath + "#" + item.label
 	}

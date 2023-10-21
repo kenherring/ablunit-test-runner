@@ -1,4 +1,4 @@
-import { Uri, workspace, Location } from "vscode"
+import { Uri, workspace } from "vscode"
 import { parseCallstack, ICallStack } from "./parse/ParseCallStack"
 import { PropathParser } from "./ABLPropath"
 import * as xml2js from "xml2js"
@@ -8,7 +8,6 @@ import { ABLDebugLines } from "./ABLDebugLines"
 export interface TCFailure {
 	callstackRaw: string
 	callstack: ICallStack
-	callstackFirstLocation?: Location //TODO do we really need this?
 	message: string
 	type: string
 }
@@ -166,7 +165,7 @@ export class ABLResultsParser {
 	}
 
 	outputJson(jsonUri: Uri, toJson: any) {
-		console.debug("outputJson to " + jsonUri.fsPath)
+		// console.log("outputJson to " + jsonUri.fsPath)
 		const bufferJson = Buffer.from(JSON.stringify(toJson, null, 2))
 		workspace.fs.writeFile(jsonUri, bufferJson)
 	}

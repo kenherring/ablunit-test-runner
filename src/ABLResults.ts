@@ -1,12 +1,12 @@
-import { FileCoverage, MarkdownString, TestItem, TestMessage, TestRun, Uri, workspace, Location, Range, Position } from "vscode"
+import { CoveredCount, FileCoverage, MarkdownString, Position, Range, StatementCoverage, TestItem, TestMessage, TestRun, Uri, workspace } from "vscode"
 import { ABLUnitConfig } from "./ABLUnitConfigWriter"
 import { ABLResultsParser, TCFailure, TestCase, TestSuite, TestSuites } from "./ABLResultsParser"
 import { ABLTestMethod, ABLTestProcedure, ABLUnitTestData } from "./testTree"
 import { parseCallstack } from "./parse/ParseCallStack"
 import { ABLProfile } from "./ABLProfileParser"
-import { ABLProfileJSON, LineSummary, Module } from "./ABLProfileSections"
+import { ABLProfileJSON, Module } from "./ABLProfileSections"
 import { ABLDebugLines } from "./ABLDebugLines"
-import { ABLPromsgs, getPromsg } from "./ABLPromsgs"
+import { ABLPromsgs, getPromsgText } from "./ABLPromsgs"
 import { PropathParser } from "./ABLPropath"
 import { outputChannel } from "./ABLUnitCommon"
 
@@ -153,12 +153,8 @@ export class ABLResults {
 
 	async parseOutput(item: TestItem, options: TestRun) {
 		this.endTime = new Date()
-		this.status = "parsing"
-		// await this.parseProfile().then(() => {
-		// 	return true
-		// }, (err) => { console.error("parseProfile error: " + err) })
-
-		console.log("parseResultsFile")
+		this.status = "parsing results"
+		console.log("STATUS: parsing results")
 
 		const ablResults = new ABLResultsParser(this.propath!, this.debugLines!)
 		await ablResults.importResults(this.runConfig.resultsUri!).then(() => {
@@ -169,7 +165,13 @@ export class ABLResults {
 		}, (err) => {
 			console.error("parseResultsFile error: " + err)
 		})
-		this.status = "complete"
+
+
+		this.status = "parsing profile output"
+		console.log("STATUS: parsing profile output")
+		await this.parseProfile().then(() => {
+			return true
+		}, (err) => { console.error("parseProfile error: " + err) })
 	}
 
 	async assignTestResults (resultsJson: TestSuites, item: TestItem, options: TestRun) {
@@ -178,9 +180,9 @@ export class ABLResults {
 		if (!res.testsuite) {
 			if (res.tests === 0) {
 				options.errored(item, new TestMessage("no tests run, check the configuration for accuracy"), this.duration())
-				return
+			} else {
+				options.errored(item, new TestMessage("malformed results - could not find 'testsuite' node"), this.duration())
 			}
-			options.errored(item, new TestMessage("malformed results - could not find 'testsuite' node"), this.duration())
 			return
 		}
 
@@ -189,8 +191,9 @@ export class ABLResults {
 			suiteName = item.id.split("#")[0]
 		}
 
-		let s = res.testsuite.find((s: TestSuite) => s.classname === suiteName)
+		let s = res.testsuite.find((s: TestSuite) => s.classname === suiteName || s.name === suiteName)
 		if (!s) {
+			suiteName = item.uri!.fsPath.replace(/\\/g, '/')
 			s = res.testsuite.find((s: TestSuite) => s.name === suiteName)
 		}
 		if (!s) {
@@ -248,8 +251,6 @@ export class ABLResults {
 				if (tc.failure) {
 					return this.getFailureMarkdownMessage(item, options, tc.failure).then((msg) => {
 						const tm = new TestMessage(msg)
-						tm.location = tc.failure!.callstackFirstLocation
-						console.log("position: " + JSON.stringify(tm.location))
 						options.failed(item, [ tm ], tc.time)
 					})
 				}
@@ -258,7 +259,6 @@ export class ABLResults {
 				if (tc.error) {
 					return this.getFailureMarkdownMessage(item, options, tc.error).then((msg) => {
 						const tm = new TestMessage(msg)
-						tm.location = tc.failure!.callstackFirstLocation
 						options.failed(item, [ tm ], tc.time)
 					})
 				}
@@ -277,7 +277,6 @@ export class ABLResults {
 
 	async parseProfile() {
 		const profParser = new ABLProfile()
-		// return profParser.parseData(this.runConfig.profileOutput!, this.propath!).then(() => {
 		return profParser.parseData(this.runConfig.profileOutput!).then(() => {
 			profParser.writeJsonToFile(this.runConfig.profileOutputJson!)
 			this.profileJson = profParser.profJSON
@@ -310,100 +309,64 @@ export class ABLResults {
 
 	async setCoverage(module: Module) {
 		const fileinfo = await this.propath!.search(module.SourceName)
-
 		const moduleUri = fileinfo?.uri
 		if (!moduleUri) {
-			console.error("could not find moduleUri for " + module.SourceName)
+			if (!module.SourceName.startsWith("OpenEdge.")) {
+				console.error("could not find moduleUri for " + module.SourceName)
+			}
 			return
 		}
-
-		//can we import this sooner?
-		// await this.importDebugFile(module.SourceName).then()
-
-		// let fc: FileCoverage = new FileCoverage(module.SourceUri, new CoveredCount(0, 0)) : new FileCoverage(moduleUri, new CoveredCount(0, 0))
 		let fc: FileCoverage | undefined
 
-		module.lines.forEach((line: LineSummary) => {
+		for (let idx=0; idx < module.lines.length; idx++) { //NOSONAR
+			const line = module.lines[idx]
 			if (line.LineNo <= 0) {
 				//  * -2 is a special case - need to handgle this better
 				//  *  0 is a special case - method header
+				continue
+			}
+
+			const dbg = await this.debugLines!.getSourceLine(fileinfo.propathRelativeFile, line.LineNo)
+			if (!dbg) {
 				return
 			}
 
-			// const dbg = this.debugLines.getSourceLine(moduleUri, moduleUri, line.LineNo)
-			// if (!dbg) {
-			// 	console.error("cannot find dbg for " + moduleUri.fsPath)
-			// 	return
-			// }
+			if (fc?.uri.fsPath != dbg.incUri.fsPath) {
+				//get existing FileCoverage object
+				fc = this.testCoverage.get(dbg.incUri.fsPath)
+				if (!fc) {
+					//create a new FileCoverage object if one didn't already exist
+					fc = new FileCoverage(dbg.incUri, new CoveredCount(0, 0))
+					fc.detailedCoverage = []
+					this.testCoverage.set(fc.uri.fsPath, fc)
+				}
+			}
 
-			// if (fc?.uri.fsPath != dbg.incUri.fsPath) {
-			// 	//get existing FileCoverage object
-			// 	fc = this.testCoverage.get(dbg.incUri.fsPath)
-			// 	if (!fc) {
-			// 		//create a new FileCoverage object if one didn't already exist
-			// 		fc = new FileCoverage(dbg.incUri, new CoveredCount(0, 0))
-			// 		fc.detailedCoverage = []
-			// 		this.testCoverage.set(fc.uri.fsPath, fc)
-			// 	}
-			// }
-
-			// if (!fc) { throw (new Error("cannot find or create FileCoverage object")) }
-
-			// fc.detailedCoverage!.push(new StatementCoverage(line.ExecCount ?? 0,
-			// 	new Range(new Position(dbg.incLine - 1, 0), new Position(dbg.incLine, 0))))
-		})
-
-		// TODO - turn this into TestCoverage class objects
-		//      - will be useful when the proposed API is finalized
+			fc.detailedCoverage!.push(new StatementCoverage(line.ExecCount ?? 0,
+				new Range(new Position(dbg.incLine - 1, 0), new Position(dbg.incLine, 0))))
+		}
 	}
 
 	async getFailureMarkdownMessage(item: TestItem, options: TestRun, failure: TCFailure): Promise<MarkdownString> {
 		const stack = await parseCallstack(this.debugLines!, failure.callstackRaw)
 		//TODO - get promsg
 
-		const md = new MarkdownString(failure.message + "\n\n")
+		const promsg = getPromsgText(failure.message)
+
+		const md = new MarkdownString(promsg + "\n\n")
 
 		if (stack.markdownText) {
 			md.appendMarkdown(stack.markdownText)
-
-			console.log("append output?")
-
 			for(const stackItem of stack.items) {
-				console.log("stackItem")
 				if(stackItem.loc) {
-					console.log("appendLog " + JSON.stringify(stackItem.loc))
 					options.appendOutput(item.label + " failed", stackItem.loc)
 				}
 			}
 		} else {
-			md.appendMarkdown(failure.message + "\n\n**ABL Call Stack**\n\n<code>\n" + failure.callstackRaw.replace(/\r/g,'\n') + "\n</code>")
+			md.appendMarkdown(promsg + "\n\n**ABL Call Stack**\n\n<code>\n" + failure.callstackRaw.replace(/\r/g,'\n') + "\n</code>")
 		}
 		md.isTrusted = true
 		md.supportHtml = true
 		return md
-	}
-
-	getPromsgText (text: string) {
-		const promsgMatch = RegExp(/\((\d+)\)$/).exec(text)
-		if (!promsgMatch) {
-			return text
-		}
-
-		const promsg = getPromsg(Number(promsgMatch[1]))
-
-		if(!promsg) {
-			return text
-		}
-
-		let stackString = text
-		let count = 0
-		promsg.msgtext.forEach((text: string) => {
-			if (count === 0) {
-				count++
-			} else {
-				stackString += "\n\n" + text.replace(/\\n/g,"\n\n")
-			}
-		})
-		return stackString
 	}
 }

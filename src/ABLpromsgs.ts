@@ -107,6 +107,30 @@ export function getPromsg(msgnum: number) {
 	return promsgsObj.getMsgNum(msgnum)
 }
 
+export function getPromsgText (text: string) {
+
+	console.log("text=" + text)
+
+	try {
+		const promsgMatch = RegExp(/\((\d+)\)$/).exec(text)
+		const promsg = promsgsObj.getMsgNum(Number(promsgMatch![1]))
+		let stackString = text
+		let count = 0
+		promsg?.msgtext.forEach((text: string) => {
+			if (count === 0) {
+				count++
+			} else {
+				stackString += "\n\n" + text.replace(/\\n/g,"\n\n")
+			}
+		})
+		return stackString
+	} catch (e) {
+		return text
+	}
+
+
+}
+
 // console.log("----- start -----")
 // console.log(getPromsg(14332))
 // console.log("----- end -----")

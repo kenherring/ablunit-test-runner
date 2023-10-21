@@ -62,7 +62,9 @@ export class ABLDebugLines {
 		if (!debugLines) {
 			const fileinfo = await this.propath.search(debugSourceName)
 			if (!fileinfo) {
-				console.error("cannot find " + debugSourceName + " in propath")
+				if (!debugSourceName.startsWith("OpenEdge.") && debugSourceName != "ABLUnitCore.p") {
+					console.error("(getSourceLine) cannot find " + debugSourceName + " in propath.")
+				}
 				return undefined
 			}
 			debugLines = await this.importDebugLines(debugSourceName, fileinfo.uri, fileinfo.xrefUri)
@@ -157,6 +159,7 @@ export class ABLDebugLines {
 				incUri: debugSourceUri,
 				incLine: i
 			})
+			// console.log("add-1: " + i + " " + dbgLine + " " + i + " " + debugSourceUri.fsPath + " " + debugSourceUri.fsPath)
 			dbgLine = this.injectInclude(m, m.debugSourceUri, i, i, dbgLine)
 		}
 		return m
@@ -181,6 +184,7 @@ export class ABLDebugLines {
 					incUri: incLen.incUri,
 					incLine: incLine
 				})
+				// console.log("add-2: " + sourceLine + " " + dbgLine + " " + incLine + " " + parentUri.fsPath + " " + incLen.incUri.fsPath)
 				dbgLine = this.injectInclude(m, incLen.incUri, sourceLine, incLine, dbgLine)
 			}
 		}
