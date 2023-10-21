@@ -121,18 +121,9 @@ export class ABLProfileJSON {
                     } else {
                         if (split[1]) {
                             mod.SourceName = split[1]
-                            if (mod.SourceName === mod.EntityName &&
-                                !mod.SourceName.endsWith(".cls") &&
-                                !mod.SourceName.endsWith(".p")) {
-
-                                mod.SourceName = mod.SourceName.replace(/\./g,'/') + ".cls"
-                            }
                         }
                         if (split[2]) {
                             mod.ParentName = split[2]
-                            if (!mod.SourceName?.endsWith(".cls")) {
-                                mod.SourceName = mod.SourceName.replace(/\./g,'/') + ".cls"
-                            }
                         }
                     }
                 }
@@ -147,7 +138,7 @@ export class ABLProfileJSON {
         childModules.forEach(child => {
             let parent = this.modules.find(p => p.SourceName === child.SourceName)
             if (!parent) {
-                parent = this.modules.find(p => p.SourceName + ".cls" === child.SourceName)
+                parent = this.modules.find(p => p.SourceName === child.SourceName)
             }
             if(parent) {
                 if(!parent.childModules) {
@@ -155,9 +146,11 @@ export class ABLProfileJSON {
                 }
                 child.ParentModuleId = parent.ParentModuleId // TODO: is this in the JSON?
                 parent.childModules[parent.childModules.length] = child
-                if (parent.SourceName + ".cls" === child.SourceName) {
+                if (parent.SourceName === child.SourceName) {
                     parent.SourceName = child.SourceName
                 }
+            } else {
+                throw new Error("Unable to find parent module for " + child.SourceName + " " + child.coverageName + " " + child.ModuleName)
             }
         })
     }

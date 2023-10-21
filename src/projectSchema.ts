@@ -43,7 +43,11 @@ function parseOpenEdgeProjectJson (conf: any) {
 
 		let buildDir: string = entry.build
 		if (!buildDir) {
-			buildDir = conf.buildDirectory
+			if (conf.buildDirectory) {
+				buildDir = conf.buildDirectory
+			} else {
+				buildDir = entry.path
+			}
 			dotPct = ".builder/.pct0"
 		} else {
 			dotPct = buildDir + "/.pct"

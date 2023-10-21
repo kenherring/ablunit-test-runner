@@ -2,8 +2,8 @@
     "name": "sample",
     "oeversion": "12.2",
     "graphicalMode": false,
-    "buildPath": [ 
-        { "type": "source", "path": "."}
+    "buildPath": [
+        { "type": "source", "path": "." }
     ],
     "dbConnections": []
 }
