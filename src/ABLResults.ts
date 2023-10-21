@@ -55,6 +55,7 @@ export class ABLResults {
 	public status: string = "none"
 	public runConfig: RunConfig
 	public testCoverage: Map<string, FileCoverage> = new Map<string, FileCoverage>()
+	coverage: FileCoverage[] = []
 
 	startTime: Date
 	endTime!: Date
@@ -250,8 +251,12 @@ export class ABLResults {
 			case "Failure":
 				if (tc.failure) {
 					return this.getFailureMarkdownMessage(item, options, tc.failure).then((msg) => {
-						const tm = new TestMessage(msg)
-						options.failed(item, [ tm ], tc.time)
+						const tmArr = [ new TestMessage(msg) ]
+						const tm = this.getDiffMessage(tc.failure!)
+						if (tm) {
+							tmArr.push(tm)
+						}
+						options.failed(item, tmArr, tc.time)
 					})
 				}
 				throw (new Error("unexpected failure"))
@@ -269,6 +274,47 @@ export class ABLResults {
 			default:
 				throw (new Error("unexpected test status: " + tc.status))
 		}
+	}
+
+	async getFailureMarkdownMessage(item: TestItem, options: TestRun, failure: TCFailure): Promise<MarkdownString> {
+		const stack = await parseCallstack(this.debugLines!, failure.callstackRaw)
+		const promsg = getPromsgText(failure.message)
+		const md = new MarkdownString(promsg + "\n\n")
+
+		if (stack.markdownText) {
+			md.appendMarkdown(stack.markdownText)
+			for(const stackItem of stack.items) {
+				if(stackItem.loc) {
+					options.appendOutput(item.label + " failed", stackItem.loc)
+				}
+			}
+		} else {
+			md.appendMarkdown(promsg + "\n\n**ABL Call Stack**\n\n<code>\n" + failure.callstackRaw.replace(/\r/g,'\n') + "\n</code>")
+		}
+		md.isTrusted = true
+		md.supportHtml = true
+		return md
+	}
+
+	getDiffMessage (failure: TCFailure) {
+		if (!failure.message.startsWith("Expected:")) {
+			return undefined
+		}
+
+		const diffRE = /Expected: (.*) but was: (.*)/
+		const diff = diffRE.exec(failure.message)
+		if (diff) {
+			const tm = new TestMessage("Assert failed!")
+			tm.expectedOutput = diff[1]
+			tm.actualOutput = diff[2]
+			for (const line of failure.callstack.items) {
+				if (line.loc) {
+					tm.location = line.loc
+				}
+			}
+			return tm
+		}
+		return undefined
 	}
 
 
@@ -303,10 +349,6 @@ export class ABLResults {
 		}
 	}
 
-
-
-
-
 	async setCoverage(module: Module) {
 		const fileinfo = await this.propath!.search(module.SourceName)
 		const moduleUri = fileinfo?.uri
@@ -316,6 +358,7 @@ export class ABLResults {
 			}
 			return
 		}
+		module.SourceUri = fileinfo.uri
 		let fc: FileCoverage | undefined
 
 		for (let idx=0; idx < module.lines.length; idx++) { //NOSONAR
@@ -339,31 +382,12 @@ export class ABLResults {
 					fc = new FileCoverage(dbg.incUri, new CoveredCount(0, 0))
 					fc.detailedCoverage = []
 					this.testCoverage.set(fc.uri.fsPath, fc)
+					this.coverage.push(fc)
 				}
 			}
 
 			fc.detailedCoverage!.push(new StatementCoverage(line.ExecCount ?? 0,
 				new Range(new Position(dbg.incLine - 1, 0), new Position(dbg.incLine, 0))))
 		}
-	}
-
-	async getFailureMarkdownMessage(item: TestItem, options: TestRun, failure: TCFailure): Promise<MarkdownString> {
-		const stack = await parseCallstack(this.debugLines!, failure.callstackRaw)
-		const promsg = getPromsgText(failure.message)
-		const md = new MarkdownString(promsg + "\n\n")
-
-		if (stack.markdownText) {
-			md.appendMarkdown(stack.markdownText)
-			for(const stackItem of stack.items) {
-				if(stackItem.loc) {
-					options.appendOutput(item.label + " failed", stackItem.loc)
-				}
-			}
-		} else {
-			md.appendMarkdown(promsg + "\n\n**ABL Call Stack**\n\n<code>\n" + failure.callstackRaw.replace(/\r/g,'\n') + "\n</code>")
-		}
-		md.isTrusted = true
-		md.supportHtml = true
-		return md
 	}
 }

@@ -135,20 +135,7 @@
 				}
 			}
 		},
-		"commands": [
-			{
-				"command": "ablunit.test.runActive",
-				"title": "ABLUnit: run tests from the active file",
-				"description": "Run all tests in the active file"
-			},
-			{
-				"command": "ablunit.test.runAll",
-				"title": "ABLUnit: run all tests for the workspace",
-				"description": "Run all tests for the workspace",
-				"category": "testing",
-				"enablement": "workspaceContains:**/*.cls || workspaceContains:**/*.p"
-			}
-		],
+		"commands": [],
 		"menus": {
 			"commandPalette": [
 				{
