@@ -97,7 +97,7 @@
 				},
 				"ablunit.progressIniPath": {
 					"type": "string",
-					"default": "",
+					"default": "progress.ini",
 					"scope": "window",
 					"markdownDescription": "Location of the `progress.ini` file (relative or absolute).  When blank the extension will look for a `progress.ini` file in the repo root before creating one at ${config:ablunit.tempDir}"
 				},
@@ -113,26 +113,27 @@
 				},
 				"ablunit.tests.command.useABLPluginCommand": {
 					"type": "string",
-					"default": "TODO",
-					"description": "Use a command from the VSCode OpenEdge ABL (vscode-abl/vscode-abl) plugin to run a test"
+					"default": "",
+					"description": "Use a command from the VSCode OpenEdge ABL (vscode-abl/vscode-abl) plugin to run a test",
+					"TODO": true
 				},
 				"ablunit.tests.task": {
 					"type": "string",
 					"default": "TODO",
 					"description": "run tests using the specified task"
 				},
-				"ablunit.configPath": {
-					"type": "string",
-					"default": "${config:ablunit.tempDir}/ablunit.json",
-					"description": "CFG=<file>"
-				},
 				"ablunit.configJson": {
 					"type": "object",
 					"markdownDescription": "Configuration options for the ABLUnit command line passed to session via the CFG param option [see [Run test cases from the command prompt](https://docs.progress.com/bundle/openedge-developer-studio-help/page/Run-test-cases-from-the-command-prompt.html)",
 					"properties": {
-						"output": {
+						"configPath": {
 							"type": "string",
-							"default": "${config:ablunit.tempDir}",
+							"default": "ablunit.json",
+							"description": "CFG=<file>"
+						},
+						"output.location": {
+							"type": "string",
+							"default": "",
 							"description": "Location of the outputted results.xml file (directory only, filename will always be 'results.xml')"
 						},
 						"quitOnEnd": {
@@ -157,15 +158,15 @@
 						}
 					}
 				},
-				"ablunit.profilerOptionsPath": {
-					"type": "string",
-					"default": "profile.options",
-					"markdownDescription": "Location of the outputted profile.options file (see [-profile](https://docs.progress.com/bundle/openedge-startup-and-parameter-reference-122/page/Profiler-profile.html) startup parameter)"
-				},
 				"ablunit.profilerOptions": {
 					"type": "object",
 					"markdownDescription": "Options for the profiler.  (see [-profile](https://docs.progress.com/bundle/openedge-startup-and-parameter-reference-122/page/Profiler-profile.html) command line parameter)",
 					"properties": {
+						"optionsPath": {
+							"type": "string",
+							"default": "profile.options",
+							"markdownDescription": "Location of the outputted profile.options file (see [-profile](https://docs.progress.com/bundle/openedge-startup-and-parameter-reference-122/page/Profiler-profile.html) startup parameter)"
+						},
 						"enabled": {
 							"type": "boolean",
 							"default": true,
@@ -178,12 +179,12 @@
 						},
 						"filename": {
 							"type": "string",
-							"default": "${config:ablunit.tempDir}/prof.out",
+							"default": "prof.out",
 							"description": "Location of the profiler results (-outfile <outfile>)"
 						},
 						"listings": {
-							"type": "boolean",
-							"default": false,
+							"type": "string",
+							"default": "listings",
 							"description": "Flag to output debug listings (-listings)"
 						},
 						"statistics": {

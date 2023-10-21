@@ -1,5 +1,5 @@
 import { CoveredCount, FileCoverage, MarkdownString, Position, Range, StatementCoverage, TestItem, TestMessage, TestRun, Uri, workspace } from "vscode"
-import { ABLUnitConfig } from "./ABLUnitConfigWriter"
+import { ABLUnitConfig, ablunitConfig } from "./ABLUnitConfigWriter"
 import { ABLResultsParser, TCFailure, TestCase, TestSuite, TestSuites } from "./ABLResultsParser"
 import { ABLTestMethod, ABLTestProcedure, ABLUnitTestData } from "./testTree"
 import { parseCallstack } from "./parse/ParseCallStack"
@@ -11,71 +11,25 @@ import { PropathParser } from "./ABLPropath"
 import { outputChannel } from "./ABLUnitCommon"
 
 
-
-interface ABLUnitOptions {
-	output: {
-		location: string
-		format: "xml"
-	},
-	quitOnEnd: boolean
-	writeLog: boolean
-	showErrorMessage: boolean
-	throwError: boolean
-	tests?: [
-		{
-			test: string,
-			cases?: [
-				string
-			]
-		} |
-		{
-			folder: string
-		}
-	]
-}
-
-//TODO REMOVE
-interface RunConfig {
-	workspaceDir: Uri
-	tempDirUri: Uri
-
-	profilerOptions: string
-
-	progressIni?: Uri
-	listingDir?: Uri
-	profileOptions?: Uri
-	ablunitJson?: Uri
-
-	resultsUri?: Uri
-	profileOutput?: Uri
-	profileOutputJson?: Uri
-
-	cmd?: string[]
-}
-
 export class ABLResults {
 
-	private cfg: ABLUnitConfig
-
 	public status: string = "none"
-	public runConfig: RunConfig
-	public testCoverage: Map<string, FileCoverage> = new Map<string, FileCoverage>()
+	private cfg: ABLUnitConfig
 	coverage: FileCoverage[] = []
 
 	startTime: Date
 	endTime!: Date
 	duration = () => { return (Number(this.endTime) - Number(this.startTime)) }
 
+	testData!: WeakMap<TestItem, ABLUnitTestData>
 	propath: PropathParser | undefined
 	debugLines?: ABLDebugLines
-
 	promsgs: ABLPromsgs | undefined
 	testResultsJson?: TestSuites
 	profileJson?: ABLProfileJSON
 	coverageJson: [] = []
+	public testCoverage: Map<string, FileCoverage> = new Map<string, FileCoverage>()
 
-	testData!: WeakMap<TestItem, ABLUnitTestData>
-	ablunitOptions: ABLUnitOptions = {} as ABLUnitOptions
 
 	constructor(storageUri: Uri) {
 		if (!workspace.workspaceFolders) {
@@ -85,14 +39,10 @@ export class ABLResults {
 		const workspaceDir = workspace.workspaceFolders[0].uri
 		this.cfg = new ABLUnitConfig(workspaceDir)
 		console.log(1)
-		const profOptTmp = this.cfg.getProfilerOptions()
 		console.log(2)
 		this.startTime = new Date()
-		this.runConfig = {
-			workspaceDir: workspaceDir,
-			tempDirUri: storageUri,
-			profilerOptions: this.cfg.getProfilerOptions()
-		}
+		ablunitConfig.workspaceUri = workspaceDir
+		ablunitConfig.tempDirUri = storageUri
 
 		this.status = "constructed"
 	}
@@ -104,19 +54,10 @@ export class ABLResults {
 	async start () {
 		//TODO - do all, then wait
 
-		await this.cfg.getTempDirUri(this.runConfig.tempDirUri).then((uri) => {
-			this.runConfig.tempDirUri = uri
-		}, (err) => {
-			//Do nothing - we'll use the default storageUri
-			outputChannel.appendLine("using tempDir='" + this.runConfig.tempDirUri.fsPath + "'")
-		})
-		await this.cfg.createTempDirUri(this.runConfig.tempDirUri).then((uri) => {
-			console.log("tempDir='" + uri.fsPath + "'")
-		}, (err) => {
-			throw err
-		})
+		await this.cfg.setTempDirUri(ablunitConfig.tempDirUri)
+		outputChannel.appendLine("using tempDir='" + ablunitConfig.tempDirUri.fsPath + "'")
 
-		this.promsgs = new ABLPromsgs(this.runConfig.tempDirUri)
+		this.promsgs = new ABLPromsgs(ablunitConfig.tempDirUri)
 
 		await this.cfg.readPropathFromJson().then((propath) => {
 			this.propath = propath
@@ -126,42 +67,25 @@ export class ABLResults {
 			throw (err)
 		})
 		this.debugLines = new ABLDebugLines(this.propath!)
-		this.runConfig.profilerOptions = this.cfg.getProfilerOptions()
-		this.runConfig.ablunitJson = Uri.joinPath(this.runConfig.tempDirUri, 'ablunit.json')
-		this.runConfig.listingDir = Uri.joinPath(this.runConfig.tempDirUri, 'listings')
-		this.runConfig.profileOutput = this.cfg.getProfileOutput(this.runConfig.tempDirUri)
-		this.runConfig.profileOutputJson = Uri.file(this.runConfig.profileOutput.fsPath.replace(/\.out$/, ".json"))
-		this.runConfig.resultsUri = this.cfg.resultsUri(this.runConfig.tempDirUri)
-		this.runConfig.profileOptions = Uri.joinPath(this.runConfig.tempDirUri, 'profile.options')
-
-		this.runConfig.progressIni = await this.cfg.getProgressIni(this.runConfig.tempDirUri)
 
 		const prom: Promise<void>[] = [Promise.resolve()]
-		prom[0] = this.cfg.createProfileOptions(this.runConfig.profileOptions, this.runConfig.profileOutput, this.runConfig.listingDir)
-		prom[1] = this.cfg.createProgressIni(this.runConfig.progressIni, this.propath!.toString())
-		prom[2] =  this.cfg.createListingDir(this.runConfig.listingDir)
+		// prom[0] = this.cfg.createProfileOptions(ablunitConfig.profilerOptions)
+		// prom[1] = this.cfg.createProgressIni(this.propath!.toString())
+		// prom[2] = this.cfg.createAblunitJson(ablunitConfig.configJson)
+		console.log(100)
+		await this.cfg.createProfileOptions(ablunitConfig.profilerOptions)
+		console.log(101)
+		await this.cfg.createProgressIni(this.propath!.toString())
+		console.log(102)
+		await this.cfg.createAblunitJson(ablunitConfig.configJson)
+		console.log(103)
 
 		await Promise.all(prom).then(() => {
 			console.log("done creating config files for run")
 		}, (err) => {
 			throw err
 		})
-	}
-
-	async createAblunitJson (itemPath: string) {
-		this.ablunitOptions = {
-			output: {
-				location: this.runConfig.resultsUri!.fsPath,
-				format: "xml",
-			},
-			quitOnEnd: true,
-			writeLog: true,
-			showErrorMessage: true,
-			throwError: true,
-			tests: [
-				{ test: itemPath }
-			]
-		}
+		console.log(104)
 	}
 
 	async parseOutput(item: TestItem, options: TestRun) {
@@ -170,7 +94,7 @@ export class ABLResults {
 		console.log("STATUS: parsing results")
 
 		const ablResults = new ABLResultsParser(this.propath!, this.debugLines!)
-		await ablResults.importResults(this.runConfig.resultsUri!).then(() => {
+		await ablResults.importResults(ablunitConfig.configJson.output.resultsUri).then(() => {
 			if(!ablResults.resultsJson) {
 				throw (new Error("no results data available..."))
 			}
@@ -334,9 +258,13 @@ export class ABLResults {
 
 
 	async parseProfile() {
+		if (!ablunitConfig.profilerOptions.enabled) {
+			return
+		}
 		const profParser = new ABLProfile()
-		return profParser.parseData(this.runConfig.profileOutput!, this.debugLines!).then(() => {
-			profParser.writeJsonToFile(this.runConfig.profileOutputJson!)
+		return profParser.parseData(ablunitConfig.profilerOptions.fileUri, this.debugLines!).then(() => {
+			// TODO - add an option to write the json to a file
+			// profParser.writeJsonToFile(this.runConfig.profileOutputJson!)
 			this.profileJson = profParser.profJSON
 			return this.assignProfileResults().then(() => {
 				console.log("assignProfileResults complete")

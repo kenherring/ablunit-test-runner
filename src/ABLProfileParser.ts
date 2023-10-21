@@ -69,23 +69,35 @@ export class ABLProfile {
 		console.log("section7 " + sectionLines[7].length)
 		this.profJSON.addSection7(sectionLines[7])
 
-		console.log("section8 " + sectionLines[8].length)
-		this.profJSON.addSection8(sectionLines[8])
+		if(sectionLines.length > 11) {
+			console.log("section8 " + sectionLines[8].length)
+			this.profJSON.addSection8(sectionLines[8])
 
-		console.log("section9 " + sectionLines[9].length)
-		this.profJSON.addSection9(sectionLines[9])
+			console.log("section9 " + sectionLines[9].length)
+			this.profJSON.addSection9(sectionLines[9])
 
-		console.log("section10 " + sectionLines[10].length)
-		this.profJSON.addSection10(sectionLines[10])
+			console.log("section10 " + sectionLines[10].length)
+			this.profJSON.addSection10(sectionLines[10])
 
-		console.log("section11 " + sectionLines[11].length)
-		this.profJSON.addSection11(sectionLines[11])
+			console.log("section11 " + sectionLines[11].length)
+			this.profJSON.addSection11(sectionLines[11])
 
-		console.log("section12 " + sectionLines[12].length)
-		this.profJSON.addSection12(sectionLines[12])
 
-		console.log("section13 - User Data" + sectionLines[13].length)
-		this.profJSON.addUserData(sectionLines[13])
+			console.log("section12 " + sectionLines[12].length)
+			this.profJSON.addSection12(sectionLines[12])
+
+			console.log("section13 - User Data" + sectionLines[13].length)
+			this.profJSON.addUserData(sectionLines[13])
+		} else {
+
+		console.log("section12 " + sectionLines[8].length)
+		this.profJSON.addSection12(sectionLines[8])
+
+		console.log("section13 - User Data" + sectionLines[9].length)
+		this.profJSON.addUserData(sectionLines[9])
+		}
+
+
 
 		// console.log("section14 " + sectionLines[14].length)
 		// this.profJSON.addSection14(sectionLines[14])
