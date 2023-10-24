@@ -29,13 +29,13 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	const fileChangedEmitter = new vscode.EventEmitter<vscode.Uri>()
 
-	const runHandler = (request: vscode.TestRunRequest2, cancellation: vscode.CancellationToken) => {
+	const runHandler = (request: vscode.TestRunRequest, cancellation: vscode.CancellationToken) => {
 		if (!request.continuous) {
 			return startTestRun(request)
 		}
 
 		const l = fileChangedEmitter.event(uri => startTestRun(
-			new vscode.TestRunRequest2(
+			new vscode.TestRunRequest(
 				[getOrCreateFile(ctrl, uri).file!],
 				undefined,
 				request.profile,
@@ -93,13 +93,6 @@ export async function activate(context: vscode.ExtensionContext) {
 				decorate(vscode.window.activeTextEditor)
 
 			showNotification("ablunit tests complete")
-		}
-
-		run.coverageProvider = {
-			provideFileCoverage() {
-				console.log("TODO coverageProvider.provideFileCoverage!!!!!")
-				return []
-			},
 		}
 
 		res.start().then(() => {
