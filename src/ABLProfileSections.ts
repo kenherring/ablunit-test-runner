@@ -18,24 +18,24 @@ interface UserData { //Section 9
 	data: string
 }
 
-interface sectionEight {
+interface ISectionEight {
 	ModuleID: number
 	field2: number
 	field3: number
 	field4: string
 }
 
-interface sectionNine { //-statistics?
+interface ISectionNine { //-statistics?
 	ModuleID: number
 	fields: string[]
 }
 
-interface sectionTen {
+interface ISectionTen {
 	ModuleID: number,
 	remainder: string
 }
 
-interface sectionTwelve {
+interface ISectionTwelve {
 	ModuleID: number,
 	field1: number,
 	field2: number,
@@ -98,10 +98,10 @@ export interface Module { //Section 2
 	calledTo: CalledTo[]
 	childModules: Module[]
 	lines: LineSummary[]
-	sectionEight: sectionEight[]
-	sectionNine: sectionNine[]
-	sectionTen: sectionTen[]
-	sectionTwelve: sectionTwelve[]
+	ISectionEight: ISectionEight[]
+	ISectionNine: ISectionNine[]
+	ISectionTen: ISectionTen[]
+	ISectionTwelve: ISectionTwelve[]
 }
 
 export interface ProfileData {
@@ -190,10 +190,10 @@ export class ABLProfileJSON {
 				lines: [],
 				calledBy: [],
 				calledTo: [],
-				sectionEight: [],
-				sectionNine: [],
-				sectionTen: [],
-				sectionTwelve: []
+				ISectionEight: [],
+				ISectionNine: [],
+				ISectionTen: [],
+				ISectionTwelve: []
 			}
 
 			if (Number(test![4]) != 0) {
@@ -345,14 +345,16 @@ export class ABLProfileJSON {
 
 		try {
 			for(let lineNo=1; lineNo < lines.length; lineNo++){
-				if (lines[lineNo] === '.') { continue }
+				if (lines[lineNo] === '.') {
+					if (mod) {
+						// set info for the previous section
+						mod.coveragePct = (mod.executableLines / mod.lines.length * 100)
+					}
+					continue
+				}
 
 				if (lines[lineNo - 1] === '.') {
 					//TODO - is the last last section being set?
-					// set info for the previous section
-					if(lines[lineNo] == '.' && mod) {
-						mod.coveragePct = (mod.executableLines / mod.lines.length * 100)
-					}
 
 					// prepare the next section.
 					const test = coverageRE.exec(lines[lineNo])
@@ -392,19 +394,16 @@ export class ABLProfileJSON {
 			parent.childModules?.forEach(child => {
 				parent.executableLines += child.executableLines
 				parent.executedLines += child.executedLines
-				if(child.lines) {
-					child.lines.forEach(line => {
-						const parentLine = parent.lines.find(l => l.LineNo == line.LineNo)
-						if(parentLine) {
-							parentLine.ExecCount = line.ExecCount
-							parentLine.ActualTime = line.ActualTime
-							parentLine.CumulativeTime = line.CumulativeTime
-						} else {
-							parent.lines[parent.lines.length] = line
-						}
-					});
-
-				}
+				child.lines.forEach(line => {
+					const parentLine = parent.lines.find(l => l.LineNo == line.LineNo)
+					if(parentLine) {
+						parentLine.ExecCount = line.ExecCount
+						parentLine.ActualTime = line.ActualTime
+						parentLine.CumulativeTime = line.CumulativeTime
+					} else {
+						parent.lines[parent.lines.length] = line
+					}
+				});
 				child.lines.sort((a,b) => a.LineNo - b.LineNo)
 			})
 			parent.lines.sort((a,b) => a.LineNo - b.LineNo)
@@ -441,17 +440,17 @@ export class ABLProfileJSON {
 		for(let lineNo=0; lineNo < lines.length; lineNo++){
 			const test = sectRE.exec(lines[lineNo])
 			if (test) {
-				const sectionEight: sectionEight = {
+				const ISectionEight: ISectionEight = {
 					ModuleID: Number(test[1]),
 					field2: Number(test[2]),
 					field3: Number(test[3]),
 					field4: test[4]
 				}
-				const mod = this.getModule(sectionEight.ModuleID)
+				const mod = this.getModule(ISectionEight.ModuleID)
 				if (mod) {
-					mod.sectionEight.push(sectionEight)
+					mod.ISectionEight.push(ISectionEight)
 				} else {
-					console.error("Unable to find module " + sectionEight.ModuleID + " in section 8")
+					console.error("Unable to find module " + ISectionEight.ModuleID + " in section 8")
 					console.error("  - line='" + lines[lineNo] + "'")
 				}
 			} else {
@@ -467,15 +466,15 @@ export class ABLProfileJSON {
 		for(let lineNo=0; lineNo < lines.length; lineNo++){
 			const test = sectRE.exec(lines[lineNo])
 			if (test) {
-				const sectionNine: sectionNine = {
+				const ISectionNine: ISectionNine = {
 					ModuleID: Number(test[1]),
 					fields: test[2].trim().split(" ").filter(f => f.length > 0)
 				}
-				const mod = this.getModule(sectionNine.ModuleID)
+				const mod = this.getModule(ISectionNine.ModuleID)
 				if (mod) {
-					mod.sectionNine.push(sectionNine)
+					mod.ISectionNine.push(ISectionNine)
 				} else {
-					console.error("Unable to find module " + sectionNine.ModuleID + " in section 9")
+					console.error("Unable to find module " + ISectionNine.ModuleID + " in section 9")
 					console.error("  - line='" + lines[lineNo] + "'")
 				}
 			}
@@ -485,19 +484,19 @@ export class ABLProfileJSON {
 	addSection10(lines: string[]) {
 		if (!lines.length) { return }
 		const sectRE = /^(\d+) (.*)$/
-		for(let lineNo=0; lineNo < lines.length; lineNo++){
-			const test = sectRE.exec(lines[lineNo])
+		for(const element of lines){
+			const test = sectRE.exec(element)
 			if (test) {
-				const sectionTen: sectionTen = {
+				const ISectionTen: ISectionTen = {
 					ModuleID: Number(test[1]),
 					remainder: test[2]
 				}
-				const mod = this.getModule(sectionTen.ModuleID)
+				const mod = this.getModule(ISectionTen.ModuleID)
 				if (mod) {
-					mod.sectionTen.push(sectionTen)
+					mod.ISectionTen.push(ISectionTen)
 				} else {
-					console.error("Unable to find module " + sectionTen.ModuleID + " in section 10")
-					console.error("  - line='" + lines[lineNo] + "'")
+					console.error("Unable to find module " + ISectionTen.ModuleID + " in section 10")
+					console.error("  - line='" + element + "'")
 				}
 			}
 		}
@@ -514,13 +513,13 @@ export class ABLProfileJSON {
 		const sectRE1 = /^(\d+) (\d+) (\d+) (\d+) (\d+) (\d+\.\d+) (.+)?$/
 		const sectRE2 = /^(\d+) (\d+) (\d+) (\d+) (\d+) (\d+\.\d+)$/
 		if (!lines.length) { return }
-		for(let lineNo=0; lineNo < lines.length; lineNo++){
-			let test = sectRE1.exec(lines[lineNo])
+		for(const element of lines){
+			let test = sectRE1.exec(element)
 			if (!test) {
-				test = sectRE2.exec(lines[lineNo])
+				test = sectRE2.exec(element)
 			}
 			if (test) {
-				const sectionTwelve: sectionTwelve = {
+				const ISectionTwelve: ISectionTwelve = {
 					ModuleID: Number(test[3]),
 					field1: Number(test[1]),
 					field2: Number(test[2]),
@@ -529,12 +528,12 @@ export class ABLProfileJSON {
 					field6: Number(test[6]),
 					remainder: test[7]
 				}
-				const mod = this.getModule(sectionTwelve.ModuleID)
+				const mod = this.getModule(ISectionTwelve.ModuleID)
 				if (mod) {
-					mod.sectionTwelve.push(sectionTwelve)
+					mod.ISectionTwelve.push(ISectionTwelve)
 				} else {
-					console.error("Unable to find module " + sectionTwelve.ModuleID + " in section 12")
-					console.error("  - line='" + lines[lineNo] + "'")
+					console.error("Unable to find module " + ISectionTwelve.ModuleID + " in section 12")
+					console.error("  - line='" + element + "'")
 				}
 			}
 		}
@@ -553,24 +552,19 @@ export class ABLProfileJSON {
 		}
 	}
 
-
-
-
-
-
 	addUserData(lines: string[]) {
 		const userRE = /(\d+\.\d+) "(.*)"$/
 		if (!lines.length) { return }
-		for(let lineNo=0; lineNo < lines.length; lineNo++){
-			console.log("userDataLine=" + lines[lineNo])
-			const test = userRE.exec(lines[lineNo])
+		for(const element of lines){
+			console.log("userDataLine=" + element)
+			const test = userRE.exec(element)
 			if (test) {
 				this.userData.push({
 					time: Number(test[1]),
 					data: test[2]
 				})
 			} else {
-				throw new Error("Unable to parse user data in section 9")
+				throw new Error("Unable to parse user data")
 			}
 		}
 	}

@@ -22,6 +22,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(ctrl)
 	context.subscriptions.push(
 		vscode.commands.registerCommand('_ablunit.openCallStackItem', openCallStackItem),
+		vscode.window.onDidChangeActiveTextEditor(e => decorate(e!) ),
 		vscode.workspace.onDidOpenTextDocument(updateNodeForDocument),
 		vscode.workspace.onDidChangeTextDocument(e => updateNodeForDocument(e.document)),
 	)
