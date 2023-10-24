@@ -405,7 +405,6 @@ export class ABLProfileJSON {
 					});
 
 				}
-				child.lines = child.lines.sort()
 				child.lines.sort((a,b) => a.LineNo - b.LineNo)
 			})
 			parent.lines.sort((a,b) => a.LineNo - b.LineNo)
@@ -512,7 +511,7 @@ export class ABLProfileJSON {
 	}
 
 	addSection12(lines: string[]) {
-		const sectRE1 = /^(\d+) (\d+) (\d+) (\d+) (\d+) (\d+\.\d+) (.*)?$/
+		const sectRE1 = /^(\d+) (\d+) (\d+) (\d+) (\d+) (\d+\.\d+) (.+)?$/
 		const sectRE2 = /^(\d+) (\d+) (\d+) (\d+) (\d+) (\d+\.\d+)$/
 		if (!lines.length) { return }
 		for(let lineNo=0; lineNo < lines.length; lineNo++){

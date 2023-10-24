@@ -15,10 +15,7 @@
 	"bugs": {
 		"url": "https://github.coim/kherring/ablunit-test-provider/issues"
 	},
-	"enabledApiProposals": [
-		"testCoverage",
-		"testObserver"
-	],
+	"enabledApiProposals": [],
 	"engines": {
 		"vscode": "^1.68.0"
 	},
