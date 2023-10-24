@@ -12,7 +12,6 @@ const backgroundExecuted = vscode.window.createTextEditorDecorationType({
 
 let recentResults: ABLResults | undefined
 
-
 export async function activate(context: vscode.ExtensionContext) {
 
 	console.log("ACTIVATE!")
@@ -20,53 +19,10 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	const ctrl = vscode.tests.createTestController('ablunitTestController', 'ABLUnit Test')
 
-	// obsv.onDidChangeTest(() => {
-	// 	console.error("onDidChangeTest")
-	// })
-
-	vscode.window.onDidChangeActiveTextEditor(editor => {
-		if(editor)
-			decorate(editor)
-	})
-
-	vscode.workspace.onDidOpenTextDocument(event => {
-		const openEditors = vscode.window.visibleTextEditors.filter(
-			editor => editor.document.uri === event.uri
-		)
-		openEditors.forEach(editor => {
-			decorate(editor)
-		})
-	})
-
-	vscode.workspace.onDidChangeTextDocument(event => {
-		const openEditor = vscode.window.visibleTextEditors.filter(
-			editor => editor.document.uri === event.document.uri
-		)[0]
-		decorate(openEditor)
-	})
-
-
-	const runAllTestsCommand = () => {
-		console.log("TODO - run all tests")
-		// runTests(cfg)
-	}
-
-	function runActiveTestCommand () {
-		console.log("TODO - run active test")
-		// runTests()
-	}
-
-	function debugActiveTestCommand () { //This already exists as 'Test: Debug Tests in Current Files' and 'Test: Debug Test at Cursor'
-		console.log("TODO - debug active test")
-		// runTests("")
-	}
-
 	context.subscriptions.push(ctrl)
 	context.subscriptions.push(
-		vscode.commands.registerCommand('ablunit.test.runAll', runAllTestsCommand),
-		vscode.commands.registerCommand('ablunit.test.runActive', runActiveTestCommand),
-		vscode.commands.registerCommand('ablunit.test.debugActive', debugActiveTestCommand),
-		vscode.commands.registerCommand('_ablunit.openStackTraceItem', openStackTraceItem),
+		vscode.commands.registerCommand('_ablunit.openCallStackItem', openCallStackItem),
+		vscode.window.onDidChangeActiveTextEditor(e => decorate(e!) ),
 		vscode.workspace.onDidOpenTextDocument(updateNodeForDocument),
 		vscode.workspace.onDidChangeTextDocument(e => updateNodeForDocument(e.document)),
 	)
@@ -120,14 +76,14 @@ export async function activate(context: vscode.ExtensionContext) {
 
 		const runTestQueue = async () => {
 			for (const { test, data } of queue) {
-				run.appendOutput(`Running ${test.id}\r\n`)
+				run.appendOutput(`running ${test.id}\r\n`)
 				if (run.token.isCancellationRequested) {
 					run.skipped(test)
 				} else {
 					run.started(test)
 					await data.run(test, run)
 				}
-				run.appendOutput(`Completed ${test.id}\r\n`)
+				run.appendOutput(`completed ${test.id}\r\n`)
 			}
 
 			run.end()
@@ -172,6 +128,9 @@ export async function activate(context: vscode.ExtensionContext) {
 	}
 
 	function updateNodeForDocument(e: vscode.TextDocument) {
+		const openEditors = vscode.window.visibleTextEditors.filter(editor => editor.document.uri === e.uri)
+		openEditors.forEach(editor => { decorate(editor) })
+
 		if (e.uri.scheme !== 'file') { return }
 		if (!e.uri.path.endsWith('.cls') && !e.uri.path.endsWith('.p')) { return }
 
@@ -290,7 +249,7 @@ function decorate(editor: vscode.TextEditor) {
 	editor.setDecorations(backgroundExecutable, executableArray)
 }
 
-function openStackTraceItem(traceUriStr: string) {
+function openCallStackItem(traceUriStr: string) {
 	const traceUri = vscode.Uri.parse(traceUriStr.split("&")[0])
 	const traceLine = Number(traceUriStr.split("&")[1])
 	vscode.window.showTextDocument(traceUri).then(editor => {

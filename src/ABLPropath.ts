@@ -97,7 +97,32 @@ export class PropathParser {
 		return this.buildMap.get(filepath)
 	}
 
-	async search(file: string) {
+	private async searchUri (uri: Uri) {
+		for (const e of this.propath.entry) {
+			if(uri.fsPath.startsWith(e.uri.fsPath)) {
+				const propathRelativeFile = uri.fsPath.replace(e.uri.fsPath,'').substring(1)
+				const relativeFile = workspace.asRelativePath(uri)
+
+				const fileObj: IABLFile = {
+					uri: uri,
+					file: relativeFile,
+					relativeFile: relativeFile,
+					propathEntry: e,
+					propathRelativeFile: propathRelativeFile,
+					xrefUri: Uri.joinPath(e.xrefDirUri,propathRelativeFile + ".xref")
+				}
+				this.files.push(fileObj)
+				this.filemap.set(relativeFile,fileObj)
+				return fileObj
+			}
+		}
+		return undefined
+	}
+
+	async search(file: string | Uri) {
+		if (file instanceof Uri) {
+			return this.searchUri(file)
+		}
 		let relativeFile = file
 		if (!relativeFile.endsWith(".cls") && !relativeFile.endsWith(".p") && !relativeFile.endsWith(".w") && !relativeFile.endsWith(".i")) {
 			relativeFile = relativeFile.replace(/\./g,'/') + ".cls"

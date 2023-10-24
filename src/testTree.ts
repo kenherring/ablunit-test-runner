@@ -3,6 +3,7 @@ import { parseABLUnit } from './parser';
 import { TextDecoder } from 'util';
 import { ABLResults } from './ABLResults';
 import { ablunitRun } from './ABLUnitRun';
+import { ablunitConfig } from './ABLUnitConfigWriter';
 
 const textDecoder = new TextDecoder('utf-8');
 
@@ -98,7 +99,7 @@ class TestFile extends TestTypeObj {
 		}
 		this.currentResults = resultData.get(options)
 		this.currentResults!.setTestData(testData)
-		await ablunitRun(item, options, testData.get(item)!, resultData.get(options)!).then()
+		await ablunitRun(item, ablunitConfig, options, testData.get(item)!, this.currentResults!).then()
 	}
 }
 

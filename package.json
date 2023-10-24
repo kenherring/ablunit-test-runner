@@ -15,10 +15,7 @@
 	"bugs": {
 		"url": "https://github.coim/kherring/ablunit-test-provider/issues"
 	},
-	"enabledApiProposals": [
-		"testCoverage",
-		"testObserver"
-	],
+	"enabledApiProposals": [],
 	"engines": {
 		"vscode": "^1.68.0"
 	},
@@ -50,7 +47,7 @@
 	"contributes": {
 		"configuration": {
 			"type": "object",
-			"title": "ABLUnit Configuration",
+			"title": "ABLUnit Test Provider",
 			"properties": {
 				"ablunit.display.classLabel": {
 					"type": "string",
@@ -80,14 +77,14 @@
 					"type": "boolean",
 					"default": true
 				},
-				"ablunit.notificationsEnabled": {
-					"type": "boolean",
-					"default": true
-				},
 				"ablunit.importOpenedgeProjectJson": {
 					"type": "boolean",
 					"default": true,
-					"description": "import configuration settings from openedge-project.json when possible"
+					"markdownDescription": "import configuration settings from `openedge-project.json` when possible"
+				},
+				"ablunit.notificationsEnabled": {
+					"type": "boolean",
+					"default": true
 				},
 				"ablunit.params": {
 					"type": "string",
@@ -96,26 +93,13 @@
 				},
 				"ablunit.progressIniPath": {
 					"type": "string",
-					"description": "Location of the progress.ini file (relative or absolute)",
-					"TODO": "use params instead?"
-				},
-				"ablunit.resultsPath": {
-					"type": "string",
-					"default": "results.xml",
-					"description": "Location of the outputted results.xml file"
-				},
-				"ablunit.profileOptionsPath": {
-					"type": "string",
-					"default": "profile.options",
-					"description": "Location of the outputted profile.options file (see -profile startup parameter)"
-				},
-				"ablunit.profileOutputPath": {
-					"type": "string",
-					"default": "prof.out",
-					"description": "Location of the profiler results"
+					"default": "progress.ini",
+					"scope": "window",
+					"markdownDescription": "Location of the `progress.ini` file (relative or absolute).  When blank the extension will look for a `progress.ini` file in the repo root before creating one at ${config:ablunit.tempDir}"
 				},
 				"ablunit.tempDir": {
 					"type": "string",
+					"default": "",
 					"description": "Location of the temporary directory used to store the results.xml file"
 				},
 				"ablunit.tests.command": {
@@ -126,45 +110,110 @@
 				"ablunit.tests.command.useABLPluginCommand": {
 					"type": "string",
 					"default": "",
-					"description": "Use a command from the VSCode OpenEdge ABL (vscode-abl/vscode-abl) plugin to run a test"
+					"description": "Use a command from the VSCode OpenEdge ABL (vscode-abl/vscode-abl) plugin to run a test",
+					"TODO": true
 				},
 				"ablunit.tests.task": {
 					"type": "string",
 					"default": "TODO",
 					"description": "run tests using the specified task"
+				},
+				"ablunit.configJson": {
+					"type": "object",
+					"markdownDescription": "Configuration options for the ABLUnit command line passed to session via the CFG param option [see [Run test cases from the command prompt](https://docs.progress.com/bundle/openedge-developer-studio-help/page/Run-test-cases-from-the-command-prompt.html)",
+					"properties": {
+						"configPath": {
+							"type": "string",
+							"default": "ablunit.json",
+							"description": "CFG=<file>"
+						},
+						"outputLocation": {
+							"type": "string",
+							"default": "",
+							"description": "Location of the outputted results.xml file (directory only, filename will always be 'results.xml')"
+						},
+						"outputWriteJson": {
+							"type": "boolean",
+							"default": false,
+							"description": "Write the results to a json file.  Default location is the same directory as results.xml"
+						},
+						"quitOnEnd": {
+							"type": "boolean",
+							"default": true,
+							"description": "Quit the session when the test run is complete"
+						},
+						"writeLog": {
+							"type": "boolean",
+							"default": true,
+							"description": "Start the session with logging enabled"
+						},
+						"showErrorMessage": {
+							"type": "boolean",
+							"default": true,
+							"description": "TODO"
+						},
+						"throwError": {
+							"type": "boolean",
+							"default": true,
+							"description": "TODO"
+						}
+					}
+				},
+				"ablunit.profilerOptions": {
+					"type": "object",
+					"markdownDescription": "Options for the profiler. For more information:\n\n  * See the[`-profile`](https://docs.progress.com/bundle/openedge-startup-and-parameter-reference-122/page/Profiler-profile.html) command line parameters\n  * See the [`PROFILER`](https://docs.progress.com/bundle/abl-reference/page/PROFILER-system-handle.html) system handle",
+					"properties": {
+						"optionsPath": {
+							"type": "string",
+							"default": "profile.options",
+							"markdownDescription": "Location of the outputted profile.options file (see [`-profile`](https://docs.progress.com/bundle/openedge-startup-and-parameter-reference-122/page/Profiler-profile.html))"
+						},
+						"enabled": {
+							"type": "boolean",
+							"default": true,
+							"markdownDescription": "Enable the profiler.  (see the [`PROFILER:PROFILING`](https://docs.progress.com/bundle/abl-reference/page/PROFILING-attribute.html) attribute"
+						},
+						"description": {
+							"type": "string",
+							"default": "Unit Tests Run via ABLUnit Test Provider (VSCode)",
+							"description": "Description of the profiler run (see the [`PROFILER:DESCRIPTION`](https://docs.progress.com/bundle/abl-reference/page/DESCRIPTION-attribute.html) attribute)"
+						},
+						"filename": {
+							"type": "string",
+							"default": "prof.out",
+							"description": "Location of the profiler results (`-outfile <outfile>`) (see the [`PROFILER:FILE-NAME`](https://docs.progress.com/bundle/abl-reference/page/DIRECTORY-attribute.html) attribute)"
+						},
+						"listings": {
+							"type": "string",
+							"default": "listings",
+							"description": "Flag to output debug listings (`-listings`) (see the [`PROFILER:LISTINGS`](https://docs.progress.com/bundle/abl-reference/page/LISTINGS-attribute.html) attribute)"
+						},
+						"statistics": {
+							"type": "boolean",
+							"default": false,
+							"description": "Flag to output statistics (-statistics) (see the [`PROFILER:STATISTICS`](https://docs.progress.com/bundle/abl-reference/page/STATISTICS-attribute.html) attribute)"
+						},
+						"traceFilter": {
+							"type": "string",
+							"default": "",
+							"description": "Comma-separated string that uses wildcard matching for any procedure or class you want trace (`-trace-filter <string>`) (see the [`PROFILER:TRACE-FILTER`](https://docs.progress.com/bundle/abl-reference/page/TRACE-FILTER-attribute.html) attribute)"
+						},
+						"tracing": {
+							"type": "string",
+							"default": "",
+							"description": "Comma-separated string of procedure and line number pairs. A pipe (|) separates the procedure name and line number. For example, \"test1|32,test2|17\" (`-tracing <string>`) (see the [`PROFILER:TRACING`](https://docs.progress.com/bundle/abl-reference/page/TRACING-attribute.html) attribute)"
+						},
+						"writeJson": {
+							"type": "boolean",
+							"default": "false",
+							"description": "Output the results in JSON format after parsing.  Writes to a file by the same name as the `filename` option, but with a `.json` extension (default: `prof.json`)"
+						}
+					}
 				}
+
 			}
 		},
-		"commands": [
-			{
-				"command": "ablunit.test.runActive",
-				"title": "ABLUnit: run tests from the active file",
-				"description": "Run all tests in the active file"
-			},
-			{
-				"command": "ablunit.test.runAll",
-				"title": "ABLUnit: run all tests for the workspace",
-				"description": "Run all tests for the workspace",
-				"category": "testing",
-				"enablement": "workspaceContains:**/*.cls || workspaceContains:**/*.p"
-			}
-		],
-		"menus": {
-			"commandPalette": [
-				{
-					"command": "abl.runProgres.currentFile",
-					"when": "editorLangId == 'abl'"
-				},
-				{
-					"command": "abl.test",
-					"when": "editorLangId == 'abl'"
-				},
-				{
-					"command": "abl.test.currentFile",
-					"when": "editorLangId == 'abl'"
-				}
-			]
-		},
+		"commands": [],
 		"snippets": [
 			{
 				"language": "abl",

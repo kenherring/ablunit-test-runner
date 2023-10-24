@@ -3,148 +3,211 @@ import { outputChannel } from './ABLUnitCommon'
 import { IProjectJson, readOpenEdgeProjectJson } from './projectSchema';
 import { PropathParser } from "./ABLPropath"
 
+const workspaceDir = workspace.workspaceFolders![0].uri // TODO - handle multiple workspace folders
+
+export interface IABLUnitJson {
+	configPath: string
+	configUri: Uri
+	output: {
+		location: string //results.xml directory
+		locationUri: Uri //results.xml directory
+		resultsFile: "results.xml"
+		resultsUri: Uri
+		format: "xml"
+		writeJson: boolean
+		jsonUri: Uri
+	}
+	quitOnEnd: boolean
+	writeLog: boolean
+	showErrorMessage: boolean
+	throwError: boolean
+	tests?: [
+		{
+			test: string,
+			cases?: [
+				string
+			]
+		} |
+		{
+			folder: string
+		}
+	]
+}
+
+export interface IProfilerOptions {
+	optionsPath: string
+	optionsUri: Uri
+	enabled: boolean
+	coverage: boolean
+	description: string
+	filename: string
+	filenameUri: Uri
+	listings: string
+	listingsUri: Uri
+	statistics: boolean
+	traceFilter: string
+	tracing: string
+	writeJson: boolean
+	jsonUri: Uri
+}
+
+export interface IABLUnitConfig {
+	workspaceUri: Uri
+	tempDirUri: Uri
+	display: {
+		classLabel: string
+		style: string
+	}
+	files: {
+		include: string
+		exclude: string
+	}
+	findAllFilesAtStartup: boolean
+	importOpenedgeProjectJson: boolean
+	notificationsEnabled: boolean
+	params: string,
+	progressIniPath: string
+	progressIniUri: Uri
+	tempDir: string
+	tests: {
+		command: string
+		commandArr: string[]
+		task: string
+	}
+	configJson: IABLUnitJson
+	profilerOptions: IProfilerOptions
+}
+
+export const ablunitConfig: IABLUnitConfig = {
+	workspaceUri: workspaceDir,
+	tempDir: workspace.getConfiguration('ablunit').get('tempDir', workspaceDir.fsPath),
+	tempDirUri: Uri.file(workspace.getConfiguration('ablunit').get('tempDir',workspaceDir.fsPath)),
+	display: {
+		classLabel: workspace.getConfiguration('ablunit').get('classLabel', 'classpath'),
+		style: workspace.getConfiguration('ablunit').get('files.style', 'tree'),
+	},
+	files: {
+		include: workspace.getConfiguration('ablunit').get('files.include', '**/*.{cls,p}'),
+		exclude: workspace.getConfiguration('ablunit').get('files.exclude', '**/.builder/**'),
+	},
+	findAllFilesAtStartup: workspace.getConfiguration('ablunit').get('findAllFilesAtStartup', true),
+	importOpenedgeProjectJson:  workspace.getConfiguration('ablunit').get('importOpenedgeProjectJson', true),
+	notificationsEnabled:  workspace.getConfiguration('ablunit').get('notificationsEnabled', true),
+	params: "",
+	progressIniPath: "progress.ini",
+	progressIniUri: Uri.joinPath(workspaceDir, "progress.ini"),
+	tests: {
+		command: workspace.getConfiguration('ablunit').get('tests.command', ''),
+		commandArr: [ '_progres', '-p', 'ABLUnitCore.p'],
+		task: workspace.getConfiguration('ablunit').get('tests.task', ''),
+	},
+	configJson: {
+		configPath: "ablunit.json",
+		configUri: Uri.joinPath(workspaceDir, "ablunit.json"),
+		output: {
+			location: workspace.getConfiguration('ablunit.configJson').get('outputLocation', ''),
+			locationUri: Uri.file(workspace.getConfiguration('ablunit.configJson').get('outputLocation', '')),
+			resultsFile: "results.xml",
+			resultsUri: Uri.file(workspace.getConfiguration('ablunit.configJson').get('outputLocation', '') + "/results.xml"),
+			format: "xml",
+			writeJson: workspace.getConfiguration('ablunit.configJson').get('outputWriteJson', false),
+			jsonUri: Uri.file(workspace.getConfiguration('ablunit.configJson').get('outputLocation', '') + "/results.json")
+		},
+		quitOnEnd: workspace.getConfiguration('ablunit').get('configJson.quitOnEnd', true),
+		writeLog: workspace.getConfiguration('ablunit').get('configJson.writeLog', true),
+		showErrorMessage: workspace.getConfiguration('ablunit').get('configJson.showErrorMessage', true),
+		throwError: workspace.getConfiguration('ablunit').get('configJson.throwError', true),
+	},
+	profilerOptions: {
+		enabled: workspace.getConfiguration('ablunit.profilerOptions').get('enabled', true),
+		optionsPath: workspace.getConfiguration('ablunit.profilerOption').get('optionsPath', 'profile.options'),
+		optionsUri: Uri.joinPath(workspaceDir, workspace.getConfiguration('ablunit.profilerOption').get('optionsPath', '')),
+		coverage: workspace.getConfiguration('ablunit.profilerOption').get('coverage', true),
+		description: workspace.getConfiguration('ablunit.profilerOption').get('description', 'Unit Tests Run via ABLUnit Test Provider (VSCode)'),
+		filename: workspace.getConfiguration('ablunit.profilerOption').get('filename', 'prof.out'),
+		filenameUri: Uri.joinPath(workspaceDir, workspace.getConfiguration('ablunit.profilerOption').get('filename', 'prof.out')),
+		listings: workspace.getConfiguration('ablunit.profilerOption').get('listings', 'listings'),
+		listingsUri: Uri.joinPath(workspaceDir, workspace.getConfiguration('ablunit.profilerOption').get('listings', 'listings')),
+		statistics: workspace.getConfiguration('ablunit.profilerOption').get('statistics', false),
+		traceFilter: workspace.getConfiguration('ablunit.profilerOption').get('traceFilter', ''),
+		tracing: workspace.getConfiguration('ablunit.profilerOption').get('tracing', ''),
+		writeJson: workspace.getConfiguration('ablunit.profilerOption').get('writeJson', false),
+		jsonUri: Uri.joinPath(workspaceDir, workspace.getConfiguration('ablunit.profilerOption').get('filename', 'prof.out').replace(/\.[a-zA-Z]+$/, '.json'))
+	}
+}
+
 export class ABLUnitConfig  {
-	workspaceDir: Uri
 
 	constructor(workspaceDir: Uri) {
-		this.workspaceDir = workspaceDir
+		ablunitConfig.workspaceUri = workspaceDir
+		this.setTempDirUri(workspaceDir)
 	}
 
-	workspaceUri(): Uri {
-		// TODO - handle multiple workspace folders
-		if (workspace.workspaceFolders == undefined) {
-			throw new Error("No workspace folders defined")
+	async setTempDirUri (tempDir: Uri) {
+		outputChannel.appendLine("using tempDir='" + ablunitConfig.tempDirUri.fsPath + "'")
+		ablunitConfig.tempDirUri = Uri.joinPath(workspaceDir, ablunitConfig.tempDir)
+		if (ablunitConfig.tempDirUri.fsPath == ablunitConfig.workspaceUri.fsPath) {
+			return
 		}
-		return workspace.workspaceFolders[0].uri
+		ablunitConfig.progressIniUri = Uri.joinPath(ablunitConfig.tempDirUri, ablunitConfig.progressIniPath)
+		ablunitConfig.configJson.configUri = Uri.joinPath(ablunitConfig.tempDirUri, ablunitConfig.configJson.configPath)
+		ablunitConfig.configJson.output.locationUri = Uri.joinPath(ablunitConfig.tempDirUri, ablunitConfig.configJson.output.location)
+		ablunitConfig.configJson.output.resultsUri = Uri.joinPath(ablunitConfig.configJson.output.locationUri, ablunitConfig.configJson.output.resultsFile)
+		ablunitConfig.configJson.output.jsonUri = Uri.joinPath(ablunitConfig.configJson.output.locationUri, ablunitConfig.configJson.output.resultsFile.replace(/\.[a-zA-Z]+$/, '.json'))
+		ablunitConfig.profilerOptions.optionsUri = Uri.joinPath(ablunitConfig.tempDirUri, ablunitConfig.profilerOptions.optionsPath)
+		ablunitConfig.profilerOptions.filenameUri = Uri.joinPath(ablunitConfig.tempDirUri, ablunitConfig.profilerOptions.filename)
+		ablunitConfig.profilerOptions.listingsUri = Uri.joinPath(ablunitConfig.tempDirUri, ablunitConfig.profilerOptions.listings)
+		ablunitConfig.profilerOptions.jsonUri = Uri.joinPath(ablunitConfig.tempDirUri, ablunitConfig.profilerOptions.filename.replace(/\.[a-zA-Z]+$/, '.json'))
 	}
 
-	async getTempDirUri (storageUri: Uri) {
-		const tempDir: string = workspace.getConfiguration('ablunit').get('tempDir', '')
-		if (!tempDir || tempDir === '') {
-			throw new Error("no tempDir configured")
-		}
-
-		let uri: Uri
-		if (RegExp(/^[a-zA-Z]:/).exec(tempDir)) {
-			uri = Uri.file(tempDir)
-			//TODO test unix paths
-		} else {
-			uri = Uri.joinPath(this.workspaceUri(), tempDir)
-		}
-
-		return uri
-	}
-
-	async createTempDirUri (uri: Uri) {
-		return workspace.fs.stat(uri).then((stat) => {
-			return uri
-		}, (err) => {
-			return workspace.fs.createDirectory(uri).then(() => {
-				return uri
-			}, (err) => {
-				console.log("createTempDir error: " + err)
-				throw err
-			})
-		})
-	}
-
-	async getProgressIni (tempDirUri: Uri) {
-		const workspaceUri = this.workspaceUri()
-		if (!workspaceUri) {
-			throw (new Error("no workspace directory opened"))
-		}
-
-		const uriList: Uri[] = []
-
-		//first, check if the progressIni config is set for the workspace
-		const configIni = workspace.getConfiguration('ablunit').get('progressIni', '')
-		if (configIni != '') {
-			const uri1 = Uri.joinPath(workspaceUri, configIni)
-			if(uri1 && await workspace.fs.stat(uri1)) {
-				return uri1
-			}
-		}
-
-		//second, check if there is a progress ini in the root of the repo
-		const uri2 = Uri.joinPath(workspaceUri, 'progress.ini')
-		if(uri2) {
-			const stat2 = await workspace.fs.stat(uri2).then((stat) => {
-				if(stat) { return true }}, (err) => {
-				return false
-			})
-			if (stat2) {
-				return uri2
-			}
-		}
-
-		//third, check if the workspace has a temp directory configured
-		const uri3 = Uri.joinPath(tempDirUri, 'progress.ini')
-		if(uri3) {
-			//Use this whether or not it exists yet
-			return uri3
-		}
-
-		throw (new Error("cannot resolve progress.ini path"))
-	}
-
-	async createProgressIni(progressIni: Uri, propath: string) {
-		const iniData = ["[WinChar Startup]", "PROPATH=" + propath]
-		const iniBytes = Uint8Array.from(Buffer.from(iniData.join("\n")))
-
-		console.log("creating profile.ini")
-		return workspace.fs.writeFile(progressIni, iniBytes)
-	}
-
-	async createAblunitJson(uri: Uri, opt: any) {
-		return workspace.fs.writeFile(uri, Uint8Array.from(Buffer.from(JSON.stringify(opt, null, 2)))).then(() => {
-			console.log("created ablunit.json")
-		}, (err) => {
-			console.error("error creating ablunit.json: " + err)
-			throw err
-		})
-	}
-
-	resultsUri (tempDirUri: Uri) {
-		let resultsFile = workspace.getConfiguration('ablunit').get('resultsPath', '')
-		if(!resultsFile) {
-			throw (new Error("no workspace directory opened"))
-		}
-		if(resultsFile == "") {
-			resultsFile = "results.xml"
-		}
-
-		if (RegExp(/^[a-zA-Z]:/).exec(resultsFile)) {
-			return Uri.parse(resultsFile)
-		}
-		return Uri.joinPath(tempDirUri, resultsFile)
-	}
-
-	getProfileOutput(tempDirUri: Uri) {
-		return Uri.joinPath(tempDirUri,workspace.getConfiguration('ablunit').get('profileOutputPath', ''))
-	}
-
-	async createProfileOptions (profUri: Uri, profOut: Uri, listingDir: Uri) {
-		const profOpts = [	"-coverage",
-							"-description \"ABLUnit Run from VSCode\"",
-							"-filename " + profOut.fsPath,
-							"-listings " + listingDir.fsPath ]
-		console.log("creating profile.options")
-		return workspace.fs.writeFile(profUri, Uint8Array.from(Buffer.from(profOpts.join("\n"))))
-	}
-
-	async createListingDir(uri: Uri) {
+	async createDir(uri: Uri) {
 		return workspace.fs.stat(uri).then((stat) => {}, (err) => {
+			console.log("creating directory: '" + workspace.asRelativePath(uri) + "'")
 			return workspace.fs.createDirectory(uri)
 		})
 	}
 
-	getCommandSetting(): string {
-		return workspace.getConfiguration('ablunit').get('tests.command', '').trim()
+	async createProgressIni(propath: string) {
+		const iniData = ["[WinChar Startup]", "PROPATH=" + propath]
+		const iniBytes = Uint8Array.from(Buffer.from(iniData.join("\n")))
+		console.log("creating progress.ini: '" + workspace.asRelativePath(ablunitConfig.progressIniUri) + "'")
+		return workspace.fs.writeFile(ablunitConfig.progressIniUri, iniBytes)
+	}
+
+	async createAblunitJson(cfg: IABLUnitJson) {
+		console.log("creating ablunit.json: '" + workspace.asRelativePath(cfg.configUri) + "'")
+		return workspace.fs.writeFile(cfg.configUri, Uint8Array.from(Buffer.from(JSON.stringify(cfg, null, 2))))
+	}
+
+	async createProfileOptions (profOpts: IProfilerOptions) {
+		if (!profOpts.enabled) { return }
+
+		const opt: string[] = [ '-profiling',
+								'-filename "' + workspace.asRelativePath(profOpts.filenameUri) + '"',
+								'-description "' + profOpts.description + '"' ]
+		if (profOpts.coverage) {
+			opt.push('-coverage')
+		}
+		if (profOpts.listings != "") {
+			opt.push('-listings "' + workspace.asRelativePath(profOpts.listingsUri) + '"')
+			await this.createDir(profOpts.listingsUri)
+		}
+		if (profOpts.statistics) {
+			opt.push('-statistics')
+		}
+		if (profOpts.tracing != "") {
+			opt.push('-tracing "' + profOpts.tracing + '"')
+		}
+		if (profOpts.traceFilter != '') {
+			opt.push('-traceFilter "' + profOpts.traceFilter + '"')
+		}
+		console.log('creating profile.options: "' + workspace.asRelativePath(profOpts.optionsUri) + '"')
+		return workspace.fs.writeFile(profOpts.optionsUri, Uint8Array.from(Buffer.from(opt.join('\n'))))
 	}
 
 	async readPropathFromJson() {
-		const parser: PropathParser = new PropathParser(this.workspaceUri())
-
+		console.log("reading propath from openedge-project.json")
+		const parser: PropathParser = new PropathParser(ablunitConfig.workspaceUri)
 		const dflt: IProjectJson = { propathEntry: [{
 			path: '.',
 			type: 'source',
@@ -160,11 +223,10 @@ export class ABLUnitConfig  {
 			}
 			return parser
 		}, (err) => {
-			console.log("error reading openedge-project.json: " + err)
+			console.error("error reading openedge-project.json, falling back to default propath '.'\nerror: " + err)
 			parser.setPropath(dflt)
 			return parser
 		})
-
 		outputChannel.appendLine("propath='" + parser.toString() + "'")
 		return parser
 	}

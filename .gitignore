@@ -23,6 +23,7 @@ target/
 dbg_*
 listings/
 prof*.json
+profile.options
 protrace.*
 
 results.json

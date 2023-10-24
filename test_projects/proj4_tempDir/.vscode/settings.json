@@ -1,5 +1,11 @@
 {
-	"ablunit.tempDir": "target",
 	"terminal.integrated.allowMnemonics": true,
-	"terminal.integrated.allowChords": true
+	"terminal.integrated.allowChords": true,
+	"ablunit.tempDir": "target",
+	"ablunit.configJson": {
+		"outputWriteJson": true
+	},
+	"ablunit.profilerOptions": {
+		"enabled": false
+	}
 }
