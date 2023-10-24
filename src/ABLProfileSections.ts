@@ -122,9 +122,12 @@ export class ABLProfileJSON {
 	userData: UserData[] = []
 	debugLines: ABLDebugLines
 
-	constructor(line: string, debugLines: ABLDebugLines) {
+	constructor(lines: string[], debugLines: ABLDebugLines) {
 		this.debugLines = debugLines
-		const test = summaryRE.exec(line)
+		if (lines.length > 1) {
+			throw new Error("Invalid profile data - section 1 should have exactly one line")
+		}
+		const test = summaryRE.exec(lines[0])
 		if(test) {
 			this.version = Number(test[1])
 			this.systemDate = test[2]
@@ -165,7 +168,7 @@ export class ABLProfileJSON {
 					}
 				}
 			}
-			
+
 			const mod: Module = {
 				ModuleID: Number(test![1]),
 				ModuleName: moduleName,

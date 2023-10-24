@@ -24,15 +24,13 @@ export const ablunitRun = async(item: TestItem, ablunitConfig: IABLUnitConfig, o
 		}
 
 		const cmd = ['_progres', '-b', '-p', 'ABLUnitCore.p']
-
 		if (process.platform === 'win32') {
 			cmd.push('-basekey', 'INI', '-ininame', ablunitConfig.progressIniUri.fsPath)
 		}
-
-		cmd.push('-T', ablunitConfig.tempDirUri.fsPath)
+		cmd.push('-T', workspace.asRelativePath(ablunitConfig.tempDirUri))
 
 		if (ablunitConfig.profilerOptions.enabled) {
-			cmd.push('-profile', ablunitConfig.profilerOptions.optionsUri.fsPath)
+			cmd.push('-profile', workspace.asRelativePath(ablunitConfig.profilerOptions.optionsUri))
 		}
 		// cmd.push('-param', "'CFG=" + res.runConfig.ablunitJson!.fsPath + "'")
 		// cmd.push("-param", '"' + itemPath + ' -outputLocation ' + workspace.asRelativePath(res.runConfig.tempDirUri) + ' -format xml"')
@@ -58,15 +56,17 @@ export const ablunitRun = async(item: TestItem, ablunitConfig: IABLUnitConfig, o
 		return new Promise<string>((resolve, reject) => {
 
 			console.log("COMMAND=" + cmd + " " + args.join(' '))
+			res.setStatus("running '" + cmd + "' command")
 			cp.exec(cmd + ' ' + args.join(' '), { cwd: ablunitConfig.workspaceUri.fsPath }, (err: any, stdout: any, stderr: any) => {
 				const duration = Date.now() - start
 				if (err) {
 					console.error("cp.exec error:" + err)
+					options.appendOutput(err)
 					throw err
 				}
 				if (stderr) {
 					console.error(stderr)
-					options.appendOutput("stderr:" + stderr)
+					options.appendOutput(stderr)
 					reject(stderr)
 				}
 				options.appendOutput(stdout)
@@ -79,6 +79,7 @@ export const ablunitRun = async(item: TestItem, ablunitConfig: IABLUnitConfig, o
 	}
 
 	return runCommand().then(() => {
+		options.appendOutput("parsing results\r\n")
 		return res.parseOutput(item, options).then();
 	})
 }

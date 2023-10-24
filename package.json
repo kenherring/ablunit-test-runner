@@ -84,7 +84,6 @@
 					"type": "boolean",
 					"default": true,
 					"markdownDescription": "import configuration settings from `openedge-project.json` when possible"
-
 				},
 				"ablunit.notificationsEnabled": {
 					"type": "boolean",
@@ -131,10 +130,15 @@
 							"default": "ablunit.json",
 							"description": "CFG=<file>"
 						},
-						"output.location": {
+						"outputLocation": {
 							"type": "string",
 							"default": "",
 							"description": "Location of the outputted results.xml file (directory only, filename will always be 'results.xml')"
+						},
+						"outputWriteJson": {
+							"type": "boolean",
+							"default": false,
+							"description": "Write the results to a json file.  Default location is the same directory as results.xml"
 						},
 						"quitOnEnd": {
 							"type": "boolean",
@@ -160,47 +164,52 @@
 				},
 				"ablunit.profilerOptions": {
 					"type": "object",
-					"markdownDescription": "Options for the profiler.  (see [-profile](https://docs.progress.com/bundle/openedge-startup-and-parameter-reference-122/page/Profiler-profile.html) command line parameter)",
+					"markdownDescription": "Options for the profiler. For more information:\n\n  * See the[`-profile`](https://docs.progress.com/bundle/openedge-startup-and-parameter-reference-122/page/Profiler-profile.html) command line parameters\n  * See the [`PROFILER`](https://docs.progress.com/bundle/abl-reference/page/PROFILER-system-handle.html) system handle",
 					"properties": {
 						"optionsPath": {
 							"type": "string",
 							"default": "profile.options",
-							"markdownDescription": "Location of the outputted profile.options file (see [-profile](https://docs.progress.com/bundle/openedge-startup-and-parameter-reference-122/page/Profiler-profile.html) startup parameter)"
+							"markdownDescription": "Location of the outputted profile.options file (see [`-profile`](https://docs.progress.com/bundle/openedge-startup-and-parameter-reference-122/page/Profiler-profile.html))"
 						},
 						"enabled": {
 							"type": "boolean",
 							"default": true,
-							"description": "Enable the profiler.  (-profiling)"
+							"markdownDescription": "Enable the profiler.  (see the [`PROFILER:PROFILING`](https://docs.progress.com/bundle/abl-reference/page/PROFILING-attribute.html) attribute"
 						},
 						"description": {
 							"type": "string",
 							"default": "Unit Tests Run via ABLUnit Test Provider (VSCode)",
-							"description": "Description of the profiler run (-description <string>)"
+							"description": "Description of the profiler run (see the [`PROFILER:DESCRIPTION`](https://docs.progress.com/bundle/abl-reference/page/DESCRIPTION-attribute.html) attribute)"
 						},
 						"filename": {
 							"type": "string",
 							"default": "prof.out",
-							"description": "Location of the profiler results (-outfile <outfile>)"
+							"description": "Location of the profiler results (`-outfile <outfile>`) (see the [`PROFILER:FILE-NAME`](https://docs.progress.com/bundle/abl-reference/page/DIRECTORY-attribute.html) attribute)"
 						},
 						"listings": {
 							"type": "string",
 							"default": "listings",
-							"description": "Flag to output debug listings (-listings)"
+							"description": "Flag to output debug listings (`-listings`) (see the [`PROFILER:LISTINGS`](https://docs.progress.com/bundle/abl-reference/page/LISTINGS-attribute.html) attribute)"
 						},
 						"statistics": {
 							"type": "boolean",
 							"default": false,
-							"description": "Flag to output statistics (-statistics)"
+							"description": "Flag to output statistics (-statistics) (see the [`PROFILER:STATISTICS`](https://docs.progress.com/bundle/abl-reference/page/STATISTICS-attribute.html) attribute)"
 						},
 						"traceFilter": {
 							"type": "string",
 							"default": "",
-							"description": "Comma-separated string that uses wildcard matching for any procedure or class you want trace (-trace-filter <string>)"
+							"description": "Comma-separated string that uses wildcard matching for any procedure or class you want trace (`-trace-filter <string>`) (see the [`PROFILER:TRACE-FILTER`](https://docs.progress.com/bundle/abl-reference/page/TRACE-FILTER-attribute.html) attribute)"
 						},
 						"tracing": {
 							"type": "string",
 							"default": "",
-							"description": "Comma-separated string of procedure and line number pairs. A pipe (|) separates the procedure name and line number. For example, \"test1|32,test2|17\" (-traceing <string>)"
+							"description": "Comma-separated string of procedure and line number pairs. A pipe (|) separates the procedure name and line number. For example, \"test1|32,test2|17\" (`-tracing <string>`) (see the [`PROFILER:TRACING`](https://docs.progress.com/bundle/abl-reference/page/TRACING-attribute.html) attribute)"
+						},
+						"writeJson": {
+							"type": "boolean",
+							"default": "false",
+							"description": "Output the results in JSON format after parsing.  Writes to a file by the same name as the `filename` option, but with a `.json` extension (default: `prof.json`)"
 						}
 					}
 				}

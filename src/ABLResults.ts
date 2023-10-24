@@ -12,39 +12,39 @@ import { outputChannel } from "./ABLUnitCommon"
 
 
 export class ABLResults {
-
 	public status: string = "none"
 	private cfg: ABLUnitConfig
-	coverage: FileCoverage[] = []
-
 	startTime: Date
 	endTime!: Date
 	duration = () => { return (Number(this.endTime) - Number(this.startTime)) }
 
 	testData!: WeakMap<TestItem, ABLUnitTestData>
-	propath: PropathParser | undefined
+	propath?: PropathParser
 	debugLines?: ABLDebugLines
-	promsgs: ABLPromsgs | undefined
-	testResultsJson?: TestSuites
+	promsgs?: ABLPromsgs
+	results?: TestSuites
 	profileJson?: ABLProfileJSON
 	coverageJson: [] = []
+	coverage: FileCoverage[] = []
 	public testCoverage: Map<string, FileCoverage> = new Map<string, FileCoverage>()
 
 
 	constructor(storageUri: Uri) {
 		if (!workspace.workspaceFolders) {
-			throw (new Error("no workspace folder is open"))
+			throw new Error("no workspace folder is open")
 		}
-
 		const workspaceDir = workspace.workspaceFolders[0].uri
 		this.cfg = new ABLUnitConfig(workspaceDir)
-		console.log(1)
-		console.log(2)
 		this.startTime = new Date()
 		ablunitConfig.workspaceUri = workspaceDir
 		ablunitConfig.tempDirUri = storageUri
+		this.setStatus("constructed")
+	}
 
-		this.status = "constructed"
+	setStatus(status: string) {
+		this.status = status
+		outputChannel.appendLine("STATUS: " + status)
+		console.log("STATUS: " + status)
 	}
 
 	async setTestData(testData: WeakMap<TestItem, ABLUnitTestData>) {
@@ -52,74 +52,57 @@ export class ABLResults {
 	}
 
 	async start () {
-		//TODO - do all, then wait
 
 		await this.cfg.setTempDirUri(ablunitConfig.tempDirUri)
-		outputChannel.appendLine("using tempDir='" + ablunitConfig.tempDirUri.fsPath + "'")
-
 		this.promsgs = new ABLPromsgs(ablunitConfig.tempDirUri)
 
 		await this.cfg.readPropathFromJson().then((propath) => {
 			this.propath = propath
 			this.debugLines = new ABLDebugLines(this.propath)
-		}, (err) => {
-			console.error("readPropathFromJson error: " + err)
-			throw (err)
 		})
-		this.debugLines = new ABLDebugLines(this.propath!)
 
 		const prom: Promise<void>[] = [Promise.resolve()]
-		// prom[0] = this.cfg.createProfileOptions(ablunitConfig.profilerOptions)
-		// prom[1] = this.cfg.createProgressIni(this.propath!.toString())
-		// prom[2] = this.cfg.createAblunitJson(ablunitConfig.configJson)
-		console.log(100)
-		await this.cfg.createProfileOptions(ablunitConfig.profilerOptions)
-		console.log(101)
-		await this.cfg.createProgressIni(this.propath!.toString())
-		console.log(102)
-		await this.cfg.createAblunitJson(ablunitConfig.configJson)
-		console.log(103)
+		prom[0] = this.cfg.createProfileOptions(ablunitConfig.profilerOptions)
+		prom[1] = this.cfg.createProgressIni(this.propath!.toString())
+		prom[2] = this.cfg.createAblunitJson(ablunitConfig.configJson)
 
-		await Promise.all(prom).then(() => {
+		return Promise.all(prom).then(() => {
 			console.log("done creating config files for run")
-		}, (err) => {
-			throw err
 		})
-		console.log(104)
 	}
 
 	async parseOutput(item: TestItem, options: TestRun) {
+		this.setStatus("parsing results")
 		this.endTime = new Date()
-		this.status = "parsing results"
-		console.log("STATUS: parsing results")
 
 		const ablResults = new ABLResultsParser(this.propath!, this.debugLines!)
-		await ablResults.importResults(ablunitConfig.configJson.output.resultsUri).then(() => {
+		await ablResults.parseResults(ablunitConfig.configJson).then(() => {
 			if(!ablResults.resultsJson) {
 				throw (new Error("no results data available..."))
 			}
 			return this.assignTestResults(ablResults.resultsJson, item, options)
 		}, (err) => {
-			console.error("parseResultsFile error: " + err)
+			console.error("[parseResultsFile] " + err)
 		})
 
-
-		this.status = "parsing profile output"
-		console.log("STATUS: parsing profile output")
-		await this.parseProfile().then(() => {
-			return true
-		}, (err) => { console.error("parseProfile error: " + err) })
+		if (ablunitConfig.profilerOptions.enabled) {
+			this.setStatus("parsing profiler data")
+			await this.parseProfile().then(() => {
+				return true
+			}, (err) => {
+				console.error("parseProfile error: " + err)
+			})
+		}
 	}
 
-	async assignTestResults (resultsJson: TestSuites, item: TestItem, options: TestRun) {
-		this.testResultsJson = resultsJson
-		const res = resultsJson
-		if (!res.testsuite) {
-			if (res.tests === 0) {
-				options.errored(item, new TestMessage("no tests run, check the configuration for accuracy"), this.duration())
-			} else {
-				options.errored(item, new TestMessage("malformed results - could not find 'testsuite' node"), this.duration())
-			}
+	async assignTestResults (resultsJson: TestSuites[], item: TestItem, options: TestRun) {
+		if(resultsJson.length > 1) {
+			options.errored(item, new TestMessage("multiple results files found - this is not supported"), this.duration())
+			return
+		}
+		this.results = resultsJson[0]
+		if (!this.results.testsuite) {
+			options.errored(item, new TestMessage("no tests results available, check the configuration for accuracy"), this.duration())
 			return
 		}
 
@@ -128,10 +111,10 @@ export class ABLResults {
 			suiteName = item.id.split("#")[0]
 		}
 
-		let s = res.testsuite.find((s: TestSuite) => s.classname === suiteName || s.name === suiteName)
+		let s = this.results.testsuite.find((s: TestSuite) => s.classname === suiteName || s.name === suiteName)
 		if (!s) {
 			suiteName = item.uri!.fsPath.replace(/\\/g, '/')
-			s = res.testsuite.find((s: TestSuite) => s.name === suiteName)
+			s = this.results.testsuite.find((s: TestSuite) => s.name === suiteName)
 		}
 		if (!s) {
 			options.errored(item, new TestMessage("could not find test suite for '" + suiteName + " in results"), this.duration())
@@ -186,29 +169,29 @@ export class ABLResults {
 				return
 			case "Failure":
 				if (tc.failure) {
+					const diff = this.getDiffMessage(tc.failure)
 					return this.getFailureMarkdownMessage(item, options, tc.failure).then((msg) => {
-						const tmArr = [ new TestMessage(msg) ]
-						const tm = this.getDiffMessage(tc.failure!)
-						if (tm) {
-							tmArr.push(tm)
+						const tmArr: TestMessage[] = [ new TestMessage(msg) ]
+						if (diff) {
+							tmArr.push(diff)
 						}
 						options.failed(item, tmArr, tc.time)
 					})
 				}
-				throw (new Error("unexpected failure"))
+				throw new Error("unexpected failure for '" + tc.name)
 			case "Error":
-				if (tc.error) {
-					return this.getFailureMarkdownMessage(item, options, tc.error).then((msg) => {
+				if (tc.failure) {
+					return this.getFailureMarkdownMessage(item, options, tc.failure).then((msg) => {
 						const tm = new TestMessage(msg)
 						options.failed(item, [ tm ], tc.time)
 					})
 				}
-				throw (new Error("unexpected error"))
+				throw new Error("unexpected error for " + tc.name)
 			case "Skpped":
 				options.skipped(item)
 				return
 			default:
-				throw (new Error("unexpected test status: " + tc.status))
+				throw new Error("unexpected test status " + tc.status + " for " + tc.name)
 		}
 	}
 
@@ -219,38 +202,32 @@ export class ABLResults {
 
 		if (stack.markdownText) {
 			md.appendMarkdown(stack.markdownText)
+			md.isTrusted = {
+				enabledCommands: [ "_ablunit.openCallStackItem" ]
+			}
 			for(const stackItem of stack.items) {
 				if(stackItem.loc) {
-					options.appendOutput(item.label + " failed", stackItem.loc)
+					options.appendOutput(item.label + " failed! " + failure.message + "\r\n", stackItem.loc)
 				}
 			}
 		} else {
 			md.appendMarkdown(promsg + "\n\n**ABL Call Stack**\n\n<code>\n" + failure.callstackRaw.replace(/\r/g,'\n') + "\n</code>")
 		}
-		md.isTrusted = true
 		md.supportHtml = true
 		return md
 	}
 
 	getDiffMessage (failure: TCFailure) {
-		if (!failure.message.startsWith("Expected:")) {
+		if (!failure.diff) {
 			return undefined
 		}
-
-		const diffRE = /Expected: (.*) but was: (.*)/
-		const diff = diffRE.exec(failure.message)
-		if (diff) {
-			const tm = new TestMessage("Assert failed!")
-			tm.expectedOutput = diff[1]
-			tm.actualOutput = diff[2]
-			for (const line of failure.callstack.items) {
-				if (line.loc) {
-					tm.location = line.loc
-				}
+		const tm = TestMessage.diff("Assert failed!", failure.diff.expectedOutput, failure.diff.actualOutput)
+		for (const line of failure.callstack.items) {
+			if (line.loc) {
+				tm.location = line.loc
 			}
-			return tm
 		}
-		return undefined
+		return tm
 	}
 
 
@@ -258,18 +235,13 @@ export class ABLResults {
 
 
 	async parseProfile() {
-		if (!ablunitConfig.profilerOptions.enabled) {
-			return
-		}
 		const profParser = new ABLProfile()
-		return profParser.parseData(ablunitConfig.profilerOptions.fileUri, this.debugLines!).then(() => {
-			// TODO - add an option to write the json to a file
-			// profParser.writeJsonToFile(this.runConfig.profileOutputJson!)
+		return profParser.parseData(ablunitConfig.profilerOptions, this.debugLines!).then(() => {
 			this.profileJson = profParser.profJSON
 			return this.assignProfileResults().then(() => {
 				console.log("assignProfileResults complete")
 			}, (err) => {
-				console.error("assignProfileResults error: " + err)
+				throw new Error("assignProfileResults error: " + err)
 			})
 		})
 	}
@@ -278,7 +250,6 @@ export class ABLResults {
 		if (!this.profileJson) {
 			throw (new Error("no profile data available..."))
 		}
-
 		const mods: Module[] = this.profileJson.modules
 		for (let idx=1; idx < mods.length; idx++) {
 			const module = mods[idx]
@@ -321,8 +292,8 @@ export class ABLResults {
 					//create a new FileCoverage object if one didn't already exist
 					fc = new FileCoverage(dbg.incUri, new CoveredCount(0, 0))
 					fc.detailedCoverage = []
-					this.testCoverage.set(fc.uri.fsPath, fc)
 					this.coverage.push(fc)
+					this.testCoverage.set(fc.uri.fsPath, fc)
 				}
 			}
 

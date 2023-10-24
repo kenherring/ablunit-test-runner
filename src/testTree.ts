@@ -99,7 +99,7 @@ class TestFile extends TestTypeObj {
 		}
 		this.currentResults = resultData.get(options)
 		this.currentResults!.setTestData(testData)
-		await ablunitRun(item, ablunitConfig, options, testData.get(item)!, resultData.get(options)!).then()
+		await ablunitRun(item, ablunitConfig, options, testData.get(item)!, this.currentResults!).then()
 	}
 }
 

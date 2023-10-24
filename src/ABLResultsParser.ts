@@ -3,6 +3,7 @@ import { parseCallstack, ICallStack } from "./parse/ParseCallStack"
 import { PropathParser } from "./ABLPropath"
 import * as xml2js from "xml2js"
 import { ABLDebugLines } from "./ABLDebugLines"
+import { IABLUnitJson } from "./ABLUnitConfigWriter"
 
 
 export interface TCFailure {
@@ -10,6 +11,10 @@ export interface TCFailure {
 	callstack: ICallStack
 	message: string
 	type: string
+	diff?: {
+		expectedOutput: string
+		actualOutput: string
+	}
 }
 
 export interface TestCase {
@@ -18,7 +23,6 @@ export interface TestCase {
 	status: string
 	time: number
 	failure?: TCFailure
-	error?: TCFailure
 }
 
 export interface TestSuite {
@@ -44,8 +48,7 @@ export interface TestSuites {
 }
 
 export class ABLResultsParser {
-	fs = require('fs');
-	resultsJson?: TestSuites
+	resultsJson: TestSuites[] = []
 	propath: PropathParser
 	debugLines: ABLDebugLines
 
@@ -54,12 +57,20 @@ export class ABLResultsParser {
 		this.debugLines = debugLines
 	}
 
-	async importResults(resultsUri: Uri) {
-		const resultsBits = await workspace.fs.readFile(resultsUri);
+	async parseResults(opts: IABLUnitJson) {
+		console.log("resultsUri=" + opts.output.resultsUri.fsPath)
+		const resultsBits = await workspace.fs.readFile(opts.output.resultsUri);
 		const resultsXml = Buffer.from(resultsBits.toString()).toString('utf8');
 		const resultsXmlJson = await this.parseXml(resultsXml)
-		this.resultsJson = await this.parseSuites(resultsXmlJson)
-		this.outputJson(Uri.parse(resultsUri.toString().replace(/\.xml$/,".json")), this.resultsJson)
+		try {
+			this.resultsJson = [ await this.parseSuites(resultsXmlJson) ]
+		} catch (err) {
+			console.error("[parseResults] error parsing results.xml file: " + err)
+			throw err
+		}
+		if (opts.output.writeJson) {
+			this.writeJsonToFile(opts.output.jsonUri)
+		}
 	}
 
 	parseXml(xmlData: string) {
@@ -68,7 +79,7 @@ export class ABLResultsParser {
 
 		parseString(xmlData, function (err: any, resultsRaw: any) {
 			if (err) {
-				throw(new Error("error parsing XML"))
+				throw new Error("error parsing XML file: " + err)
 			}
 			res = resultsRaw
 			return String(resultsRaw)
@@ -78,7 +89,7 @@ export class ABLResultsParser {
 
 	async parseSuites(res: any) {
 		if(!res.testsuites) {
-			throw new Error("malformed results.xml file - could not find top-level 'testsuites' node")
+			throw new Error("malformed results file (1) - could not find top-level 'testsuites' node")
 		}
 		res = res.testsuites
 
@@ -133,26 +144,31 @@ export class ABLResultsParser {
 		const cases: TestCase[] = []
 
 		for (let idx=0; idx<res.length; idx++) {
-			const failure = await this.parseFailOrError('failure', res[idx])
-			const error = await this.parseFailOrError('error', res[idx])
 			cases[idx] = {
 				name: res[idx]['$'].name,
 				classname: res[idx]['$'].classname ?? undefined,
 				status: res[idx]['$'].status,
 				time: Number(res[idx]['$'].time),
-				failure: failure,
-				error: error
+				failure: await this.parseFailOrError(res[idx])
 			}
 		}
 		return cases
 	}
 
-	async parseFailOrError(type: string, res: any) {
-		if (!res[type]) { return undefined }
-
-		if (res[type][1]) {
-			throw new Error("more than one failure or error in testcase - use case not handled")
+	async parseFailOrError(res: any) {
+		if (res['$'].status === "Success" || res['$'].status === "Skipped") {
+			return undefined
 		}
+		let type = ''
+
+		if (res['failure']) {
+			type = "failure"
+		} else if (res['error']){
+			type = "error"
+		} else {
+			throw new Error("malformed results  file (3) - could not find 'failure' or 'error' node")
+		}
+		if (res[type].length > 1) { throw new Error("more than one failure or error in testcase - use case not handled") }
 
 		const callstack = await parseCallstack(this.debugLines, res[type][0]['_'])
 		const fail: TCFailure = {
@@ -161,13 +177,24 @@ export class ABLResultsParser {
 			message: res[type][0]['$'].message,
 			type: res[type][0]['$'].types
 		}
+		const diffRE = /Expected: (.*) but was: (.*)/
+		const diff = diffRE.exec(res[type][0]['$'].message)
+		if (diff) {
+			fail.diff = {
+				expectedOutput: diff[1],
+				actualOutput: diff[2]
+			}
+		}
 		return fail
 	}
 
-	outputJson(jsonUri: Uri, toJson: any) {
-		// console.log("outputJson to " + jsonUri.fsPath)
-		const bufferJson = Buffer.from(JSON.stringify(toJson, null, 2))
-		workspace.fs.writeFile(jsonUri, bufferJson)
+	writeJsonToFile(uri: Uri) {
+		const data = this.resultsJson
+		workspace.fs.writeFile(uri, Uint8Array.from(Buffer.from(JSON.stringify(data, null, 2)))).then(() => {
+			console.log("wrote results json file: " + uri.fsPath)
+		}, (err) => {
+			console.error("failed to write profile output json file " + uri.fsPath + " - " + err)
+		})
 	}
 }
 

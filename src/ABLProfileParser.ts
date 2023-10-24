@@ -2,7 +2,7 @@ import { Uri, workspace } from 'vscode';
 import { ABLProfileJSON, ProfileData } from './ABLProfileSections'
 import { TextDecoder } from 'util';
 import { PropathParser } from './ABLPropath';
-import { ABLUnitConfig } from './ABLUnitConfigWriter';
+import { IProfilerOptions } from './ABLUnitConfigWriter';
 import { ABLDebugLines } from './ABLDebugLines';
 
 const textDecoder = new TextDecoder('utf-8');
@@ -19,17 +19,11 @@ export const getContentFromFilesystem = async (uri: Uri) => {
 }
 
 export class ABLProfile {
+	profJSON?: ABLProfileJSON
+	resultsPropath?: PropathParser
 
-	profJSON: ABLProfileJSON | undefined
-	cfg!: ABLUnitConfig
-	resultsPropath!: PropathParser
-	debugLines: ABLDebugLines | undefined
-
-	async parseData(filepath: Uri, debugLines: ABLDebugLines) {
-		this.debugLines = debugLines
-		console.log("filepath=" + filepath.fsPath)
-		const text = await getContentFromFilesystem(filepath)
-		console.log("2")
+	async parseData(opts: IProfilerOptions, debugLines: ABLDebugLines) {
+		const text = await getContentFromFilesystem(opts.filenameUri)
 		const lines = text.replace(/\r/g,'').split('\n')
 
 		const sectionLines: string[][] = []
@@ -49,7 +43,7 @@ export class ABLProfile {
 		}
 
 		console.log("section1 " + sectionLines[1].length)
-		this.profJSON = new ABLProfileJSON(sectionLines[1][0], debugLines)
+		this.profJSON = new ABLProfileJSON(sectionLines[1], debugLines)
 
 		console.log("section2 " + sectionLines[2].length)
 		this.profJSON.addModules(sectionLines[2])
@@ -96,35 +90,26 @@ export class ABLProfile {
 		console.log("section13 - User Data" + sectionLines[9].length)
 		this.profJSON.addUserData(sectionLines[9])
 		}
-
-
-
 		// console.log("section14 " + sectionLines[14].length)
 		// this.profJSON.addSection14(sectionLines[14])
 
-		console.log("done")
-
 		this.profJSON.modules.sort((a,b) => a.ModuleID - b.ModuleID)
+		console.log("parsing profiler data complete")
+		if (opts.writeJson) {
+			this.writeJsonToFile(opts.jsonUri)
+		}
 	}
 
-	async writeJsonToFile (file: Uri) {
-		// TODO: should writing json be optional?
-
+	async writeJsonToFile (uri: Uri) {
 		const data: ProfileData = {
 			modules: this.profJSON!.modules,
 			userData: this.profJSON!.userData,
 		}
-		// const out: ProfileData = JSON.parse(JSON.stringify(data))
-
-		workspace.fs.writeFile(file, Uint8Array.from(Buffer.from(JSON.stringify(data, null, 2)))).then(() => {
-			console.log("wrote profile output json file: " + file.fsPath)
+		workspace.fs.writeFile(uri, Uint8Array.from(Buffer.from(JSON.stringify(data, null, 2)))).then(() => {
+			console.log("wrote profile output json file: " + uri.fsPath)
 		}, (err) => {
-			console.error("failed to write profile output json file " + file.fsPath + " - " + err)
+			console.error("failed to write profile output json file " + uri.fsPath + " - " + err)
 		})
-	}
-
-	provideFileCoverage () {
-		console.log("TODO  !!!!! provideFileCoverage !!!!!")
 	}
 }
 
