@@ -29,8 +29,6 @@ class TestTypeObj {
 	public name: string = ""
 	public label: string = ""
 
-	public fileCoverage: vscode.FileCoverage[] = []
-
 	getLabel() {
 		return this.label
 	}

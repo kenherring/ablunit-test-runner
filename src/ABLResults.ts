@@ -1,4 +1,4 @@
-import { CoveredCount, FileCoverage, MarkdownString, Position, Range, StatementCoverage, TestItem, TestMessage, TestRun, Uri, workspace } from "vscode"
+import { MarkdownString, Position, Range, TestItem, TestMessage, TestRun, Uri, workspace } from "vscode"
 import { ABLUnitConfig, ablunitConfig } from "./ABLUnitConfigWriter"
 import { ABLResultsParser, TCFailure, TestCase, TestSuite, TestSuites } from "./ABLResultsParser"
 import { ABLTestMethod, ABLTestProcedure, ABLUnitTestData } from "./testTree"
@@ -9,6 +9,7 @@ import { ABLDebugLines } from "./ABLDebugLines"
 import { ABLPromsgs, getPromsgText } from "./ABLPromsgs"
 import { PropathParser } from "./ABLPropath"
 import { outputChannel } from "./ABLUnitCommon"
+import { FileCoverage, CoveredCount, StatementCoverage } from "./TestCoverage"
 
 
 export class ABLResults {
