@@ -1,4 +1,4 @@
-import { Uri } from "vscode";
+import { Uri, workspace } from "vscode";
 import { outputChannel } from "./ABLUnitCommon";
 
 interface Promsg {
@@ -12,44 +12,69 @@ export class ABLPromsgs {
 	DLC = process.env.DLC
 	promsgs: Promsg[] = []
 
-	//TODO - get rid of this
-	fs = require('fs');
-
-	constructor(tempDirUri: Uri) {
-		console.log("DLC=" + this.DLC)
-		if(! this.fs.existsSync(this.DLC)) {
-			outputChannel.appendLine("DLC does not exist")
-			console.log("DLC does not exist")
-			throw new Error("DLC does not exist")
+	constructor(storageUri: Uri) {
+		if (!this.DLC) {
+			throw new Error("DLC environment variable is not set")
 		}
+
+		console.log("promsgs DLC=" + this.DLC)
+		const dlcUri = Uri.file(this.DLC)
+		const cacheUri = Uri.joinPath(storageUri,'promsgs.json')
 		// eslint-disable-next-line @typescript-eslint/no-this-alias
 		promsgsObj = this
 
-		const cacheUri = Uri.joinPath(tempDirUri,'promsgs.json')
-
-		if (this.fs.existsSync(cacheUri.fsPath)) {
-			this.loadFromCache(cacheUri)
-			return
-		} else {
-
-			const promsgDir = this.DLC + "/prohelp/msgdata"
-			const dirFiles = this.fs.readdirSync(promsgDir)
-			dirFiles.forEach((file: string) => {
-				this.loadPromsgFile(promsgDir + "/" + file)
+		this.loadFromCache(cacheUri).then(() => {
+			console.log("promsgs loaded from cache '" + cacheUri.fsPath + "'")
+		}, (err) => {
+			console.log("reading promsgs from DLC")
+			this.loadFromDLC(dlcUri, cacheUri).then(() => {
+				this.saveCache(cacheUri)
+			}, (err) => {
+				console.log("Cannot load promsgs from DLC, err=" + err)
 			})
-		}
-
-		this.saveCache(cacheUri)
+		})
 	}
 
-	loadPromsgFile(msgfile: string) {
-		const lines = this.fs.readFileSync(msgfile, "utf8").split('\n')
-		const newlines: string[] = []
+	async loadFromDLC(dlcUri: Uri, cacheUri: Uri) {
+		return workspace.fs.stat(dlcUri).then((stat) => {
+			const promsgDir = Uri.joinPath(dlcUri, "prohelp/msgdata")
+			return workspace.fs.readDirectory(promsgDir).then((dirFiles) => {
+
+				const promArr = []
+				for (const file of dirFiles) {
+					promArr.push(this.loadPromsgFile(Uri.joinPath(promsgDir,file[0])).then().catch(err => {
+						throw new Error("Cannot load promsgs file '" + file + "', err=" + err)
+					}))
+				}
+
+				return Promise.all(promArr).then(() => {
+					console.log("promsgs loaded from DLC")
+				}, (err) => {
+					throw new Error("Cannot load promsgs from DLC, err=" + err)
+				})
+
+			}, (err) => {
+				throw new Error("Cannot read promsgs directory '" + promsgDir + "', err=" + err)
+			})
+		}, (err) => {
+			outputChannel.appendLine("Cannot find DLC directory '" + this.DLC + '"')
+			throw new Error("Cannot find DLC directory '" + this.DLC + '", err=' + err)
+		})
+	}
+
+	async loadPromsgFile(msgfile: Uri) {
+		const lines = await workspace.fs.readFile(msgfile).then(( buffer ) => {
+			return Buffer.from(buffer).toString('utf8').split('\n')
+		}, (err) => {
+			throw new Error("Cannot read promsgs file '" + msgfile + "', err=" + err)
+		})
+
 
 		//First, merge lines where necessary
+		const newlines: string[] = []
 		let currLine = lines[0]
 		for (let idx=1 ; idx<lines.length; idx++) {
-			if(lines[idx].match(/^(\d+) /)) {
+			if(RegExp(/^(\d+) /).exec(lines[idx])) {
 				newlines.push(currLine)
 				currLine = lines[idx]
 			} else  if(lines[idx].trim() !== '"' && lines[idx].trim() !== '' && lines[idx].trim() !== "\" \"\" \"\"") {
@@ -78,24 +103,26 @@ export class ABLPromsgs {
 		})
 	}
 
-	loadFromCache(cacheUri: Uri) {
-		console.log("load promsgs from cache")
-		outputChannel.appendLine("load promsgs cache")
-		this.promsgs = JSON.parse(this.fs.readFileSync(cacheUri.fsPath, "utf8"))
+	async loadFromCache(cacheUri: Uri) {
+		console.log("load promsgs from cache") //REMOVEME
+		await workspace.fs.readFile(cacheUri).then(( buffer ) => {
+			this.promsgs.push(JSON.parse(Buffer.from(buffer).toString('utf8')))
+		}, (err) => {
+			throw new Error("Cannot read promsgs file '" + cacheUri.fsPath + "', err=" + err)
+		})
 	}
 
-	saveCache(cacheUri: Uri) {
+	async saveCache(cacheUri: Uri) {
+		console.log("saveCache=" + this.promsgs.length)
+		if (this.promsgs.length === 0) {
+			throw new Error("promsgs not loaded, cannot save cache - zero records found")
+		}
 		console.log("save promsgs cache file='" + cacheUri.fsPath + "'")
-		outputChannel.appendLine("save promsgs cache")
-		this.fs.writeFileSync(cacheUri.fsPath, JSON.stringify(this.promsgs), (err: any) => {
-			console.log(1)
-			if (err) {
-				console.log("Error writing promsgs cache file: " + err)
-				outputChannel.appendLine("Error writing promsgs cache file: " + err)
-			}
-			console.log(2)
+		workspace.fs.writeFile(cacheUri, Buffer.from(JSON.stringify(this.promsgs))).then(() => {
+			console.log("saved promsgs cache successfully '" + cacheUri.fsPath + "'")
+		}, (err) => {
+			throw new Error("error writing promsgs cache file: " + err)
 		})
-		console.log("saved promsgs cache successfully")
 	}
 
 	getMsgNum (msgnum: number) {
@@ -108,9 +135,6 @@ export function getPromsg(msgnum: number) {
 }
 
 export function getPromsgText (text: string) {
-
-	console.log("text=" + text)
-
 	try {
 		const promsgMatch = RegExp(/\((\d+)\)$/).exec(text)
 		const promsg = promsgsObj.getMsgNum(Number(promsgMatch![1]))
@@ -127,10 +151,4 @@ export function getPromsgText (text: string) {
 	} catch (e) {
 		return text
 	}
-
-
 }
-
-// console.log("----- start -----")
-// console.log(getPromsg(14332))
-// console.log("----- end -----")

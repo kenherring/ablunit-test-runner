@@ -20,11 +20,12 @@ target/
 *.r
 *.xref
 *.xref.xml
+ablunit.json
 dbg_*
 listings/
 prof*.json
 profile.options
+progress.ini
 protrace.*
-
 results.json
 results.xml

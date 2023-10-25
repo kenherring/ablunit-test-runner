@@ -207,7 +207,6 @@ export class ABLProfileJSON {
 			const parent = this.modules.find(p => p.SourceName === child.SourceName)
 
 			if(parent) {
-				console.log("child.ModuleID=" + child.ModuleID + " parent.ModuleID=" + parent.ModuleID)
 				parent.childModules[parent.childModules.length] = child
 				if (parent.SourceName === child.SourceName) {
 					parent.SourceName = child.SourceName
