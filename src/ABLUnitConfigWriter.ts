@@ -107,7 +107,7 @@ export const ablunitConfig: IABLUnitConfig = {
 		configPath: "ablunit.json",
 		configUri: Uri.joinPath(workspaceDir, "ablunit.json"),
 		output: {
-			location: workspace.getConfiguration('ablunit.configJson').get('outputLocation', workspaceDir.fsPath),
+			location: workspace.getConfiguration('ablunit.configJson').get('outputLocation', ''),
 			locationUri: Uri.file(workspace.getConfiguration('ablunit.configJson').get('outputLocation', workspaceDir.fsPath)),
 			resultsFile: "results.xml",
 			resultsUri: Uri.file(workspace.getConfiguration('ablunit.configJson').get('outputLocation', workspaceDir.fsPath) + "/results.xml"),

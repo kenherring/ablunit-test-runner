@@ -286,32 +286,31 @@ export class ABLProfileJSON {
 	async addLineSummary (lines: string[]) {
 		for(const element of lines){
 			const test = lineSummaryRE.exec(element)
+			if(!test) continue
 
-			if(test){
-				const modID = Number(test[1])
-				const sourceName = this.getModule(modID)?.SourceName
-				const sum: LineSummary = {
-					LineNo: Number(test[2]),
-					ExecCount: Number(test[3]),
-					Executable: true,
-					ActualTime: Number(test[4]),
-					CumulativeTime: Number(test[5])
+			const modID = Number(test[1])
+			const sourceName = this.getModule(modID)?.SourceName
+			const sum: LineSummary = {
+				LineNo: Number(test[2]),
+				ExecCount: Number(test[3]),
+				Executable: true,
+				ActualTime: Number(test[4]),
+				CumulativeTime: Number(test[5])
+			}
+			if (sourceName) {
+				const lineinfo = await this.debugLines.getSourceLine(sourceName, sum.LineNo)
+				if (lineinfo) {
+					sum.srcLine = lineinfo.srcLine
+					sum.srcUri = lineinfo.srcUri
+					sum.incLine = lineinfo.incLine
+					sum.incUri = lineinfo.incUri
 				}
-				if (sourceName) {
-					const lineinfo = await this.debugLines.getSourceLine(sourceName, sum.LineNo)
-					if (lineinfo) {
-						sum.srcLine = lineinfo.srcLine
-						sum.srcUri = lineinfo.srcUri
-						sum.incLine = lineinfo.incLine
-						sum.incUri = lineinfo.incUri
-					}
-				}
-				const mod = this.getModule(modID)
-				if (mod) {
-					mod.lines[mod.lines.length] = sum
-					if (sum.LineNo != 0) {
-						mod.lineCount++
-					}
+			}
+			const mod = this.getModule(modID)
+			if (mod) {
+				mod.lines[mod.lines.length] = sum
+				if (sum.LineNo != 0) {
+					mod.lineCount++
 				}
 			}
 		}
