@@ -87,7 +87,6 @@ export interface Module { //Section 2
 	CrcValue: number
 	ModuleLineNum: number
 	UnknownString1: string
-	coverageName?: string
 	executableLines: number
 	executedLines: number
 	coveragePct: number
@@ -212,8 +211,7 @@ export class ABLProfileJSON {
 					parent.SourceName = child.SourceName
 				}
 			} else {
-				console.log(JSON.stringify(child))
-				throw new Error("Unable to find parent module for " + child.SourceName + " " + child.coverageName + " " + child.ModuleName)
+				throw new Error("Unable to find parent module for " + child.SourceName + " " + child.ModuleName)
 			}
 		})
 	}
@@ -226,7 +224,13 @@ export class ABLProfileJSON {
 		const parent = this.modules.find(mod => mod.childModules?.find(child => child.ModuleID == modID))
 		if(parent)
 			return parent.childModules?.find(child => child.ModuleID == modID)
+	}
 
+	getChildModule(modID: number, entityName: string): Module | undefined {
+		const parent = this.getModule(modID)
+		if(parent) {
+			return parent.childModules?.find(child => child.EntityName == entityName)
+		}
 	}
 
 	getModuleLine(modID: number, lineNo: number): LineSummary | undefined {
@@ -282,29 +286,30 @@ export class ABLProfileJSON {
 	async addLineSummary (lines: string[]) {
 		for(const element of lines){
 			const test = lineSummaryRE.exec(element)
+			if(!test) continue
 
-			if(test){
-				const modID = Number(test[1])
-				const sourceName = this.getModule(modID)?.SourceName
-				const sum: LineSummary = {
-					LineNo: Number(test[2]),
-					ExecCount: Number(test[3]),
-					Executable: true,
-					ActualTime: Number(test[4]),
-					CumulativeTime: Number(test[5])
+			const modID = Number(test[1])
+			const sourceName = this.getModule(modID)?.SourceName
+			const sum: LineSummary = {
+				LineNo: Number(test[2]),
+				ExecCount: Number(test[3]),
+				Executable: true,
+				ActualTime: Number(test[4]),
+				CumulativeTime: Number(test[5])
+			}
+			if (sourceName) {
+				const lineinfo = await this.debugLines.getSourceLine(sourceName, sum.LineNo)
+				if (lineinfo) {
+					sum.srcLine = lineinfo.srcLine
+					sum.srcUri = lineinfo.srcUri
+					sum.incLine = lineinfo.incLine
+					sum.incUri = lineinfo.incUri
 				}
-				if (sourceName) {
-					const lineinfo = await this.debugLines.getSourceLine(sourceName, sum.LineNo)
-					if (lineinfo) {
-						sum.srcLine = lineinfo.srcLine
-						sum.srcUri = lineinfo.srcUri
-						sum.incLine = lineinfo.incLine
-						sum.incUri = lineinfo.incUri
-					}
-				}
-				const mod = this.getModule(modID)
-				if (mod) {
-					mod.lines[mod.lines.length] = sum
+			}
+			const mod = this.getModule(modID)
+			if (mod) {
+				mod.lines[mod.lines.length] = sum
+				if (sum.LineNo != 0) {
 					mod.lineCount++
 				}
 			}
@@ -335,34 +340,41 @@ export class ABLProfileJSON {
 
 	addCoverage(lines: string[]) {
 		lines.unshift('.')
+		lines.push('.')
 		let mod
 
 		try {
 			for(let lineNo=1; lineNo < lines.length; lineNo++){
 				if (lines[lineNo] === '.') {
-					if (mod) {
-						// set info for the previous section
-						mod.coveragePct = (mod.executableLines / mod.lines.length * 100)
+					// set info for the previous section
+					if (mod && mod.executableLines > 0) {
+						mod.coveragePct = (mod.executedLines / mod.executableLines) * 100
 					}
 					continue
 				}
 
 				if (lines[lineNo - 1] === '.') {
-					//TODO - is the last last section being set?
-
 					// prepare the next section.
 					const test = coverageRE.exec(lines[lineNo])
 					if (!test) {
 						throw new Error("Unable to parse coverage data in section 6")
 					}
 
-					mod = this.getModule(Number(test[1]))
-					if (!mod) {
-						throw new Error("Unable to find module " + test[1] + " in section 6")
+					if (test[2] != "") {
+						mod = this.getChildModule(Number(test[1]), test[2])
+						if (mod) {
+							mod.executableLines = Number(test[3])
+						}
 					}
-
-					mod.coverageName = test[2]
-					mod.executableLines = Number(test[3])
+					if (!mod) {
+						mod = this.getModule(Number(test[1]))
+						if (mod) {
+							mod.executableLines += Number(test[3])
+						}
+					}
+					if (!mod) {
+						throw new Error("Unable to find module " + test[1] + " " + test[2] + " in section 6")
+					}
 					continue
 				}
 				if(!mod) { throw new Error("invalid data in section 6") }
@@ -370,6 +382,7 @@ export class ABLProfileJSON {
 				const line = this.getLine(mod,Number(lines[lineNo]))
 				if (line) {
 					line.Executable = true
+					mod.executedLines++
 				} else {
 					mod.lines[mod.lines.length] = {
 						LineNo: Number(lines[lineNo]),
@@ -397,9 +410,10 @@ export class ABLProfileJSON {
 					} else {
 						parent.lines[parent.lines.length] = line
 					}
-				});
+				})
 				child.lines.sort((a,b) => a.LineNo - b.LineNo)
 			})
+			parent.coveragePct = (parent.executedLines / parent.executableLines) * 100
 			parent.lines.sort((a,b) => a.LineNo - b.LineNo)
 			parent.childModules.sort((a,b) => a.ModuleID - b.ModuleID)
 		})
@@ -529,15 +543,11 @@ export class ABLProfileJSON {
 	addSection13(lines: string[]) {
 		console.error("section 13 not implemented.  line count = " + lines.length)
 	}
-	addSection14(lines: string[]) {
-		console.error("section 14 not implemented.  line count = " + lines.length)
-	}
 
 	addUserData(lines: string[]) {
 		const userRE = /(\d+\.\d+) "(.*)"$/
 		if (!lines.length) { return }
 		for(const element of lines){
-			console.log("userDataLine=" + element)
 			const test = userRE.exec(element)
 			if (test) {
 				this.userData.push({

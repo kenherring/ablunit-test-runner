@@ -43,13 +43,13 @@ function profileSection1_test () {
 
 // profileSection1_test()
 
-interface testint {
+interface ITestInt {
 	name: string,
 	properties: {[key: string]: string}
 }
 
 function testJson () {
-	const  nv: testint = {
+	const  nv: ITestInt = {
 		name: "ken",
 		properties: {
 			"prop1": "val1",

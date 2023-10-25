@@ -107,12 +107,12 @@ export const ablunitConfig: IABLUnitConfig = {
 		configPath: "ablunit.json",
 		configUri: Uri.joinPath(workspaceDir, "ablunit.json"),
 		output: {
-			location: workspace.getConfiguration('ablunit.configJson').get('outputLocation', workspaceDir.fsPath),
+			location: workspace.getConfiguration('ablunit.configJson').get('outputLocation', ''),
 			locationUri: Uri.file(workspace.getConfiguration('ablunit.configJson').get('outputLocation', workspaceDir.fsPath)),
 			resultsFile: "results.xml",
 			resultsUri: Uri.file(workspace.getConfiguration('ablunit.configJson').get('outputLocation', workspaceDir.fsPath) + "/results.xml"),
 			format: "xml",
-			writeJson: workspace.getConfiguration('ablunit.configJson').get('outputWriteJson', false),
+			writeJson: workspace.getConfiguration('ablunit.configJson').get('writeJson', false),
 			jsonUri: Uri.file(workspace.getConfiguration('ablunit.configJson').get('outputLocation', '') + "/results.json")
 		},
 		quitOnEnd: workspace.getConfiguration('ablunit').get('configJson.quitOnEnd', true),
@@ -122,19 +122,19 @@ export const ablunitConfig: IABLUnitConfig = {
 	},
 	profilerOptions: {
 		enabled: workspace.getConfiguration('ablunit.profilerOptions').get('enabled', true),
-		optionsPath: workspace.getConfiguration('ablunit.profilerOption').get('optionsPath', 'profile.options'),
-		optionsUri: Uri.joinPath(workspaceDir, workspace.getConfiguration('ablunit.profilerOption').get('optionsPath', 'profile.options')),
-		coverage: workspace.getConfiguration('ablunit.profilerOption').get('coverage', true),
-		description: workspace.getConfiguration('ablunit.profilerOption').get('description', 'Unit Tests Run via ABLUnit Test Provider (VSCode)'),
-		filename: workspace.getConfiguration('ablunit.profilerOption').get('filename', 'prof.out'),
-		filenameUri: Uri.joinPath(workspaceDir, workspace.getConfiguration('ablunit.profilerOption').get('filename', 'prof.out')),
-		listings: workspace.getConfiguration('ablunit.profilerOption').get('listings', 'listings'),
-		listingsUri: Uri.joinPath(workspaceDir, workspace.getConfiguration('ablunit.profilerOption').get('listings', 'listings')),
-		statistics: workspace.getConfiguration('ablunit.profilerOption').get('statistics', false),
-		traceFilter: workspace.getConfiguration('ablunit.profilerOption').get('traceFilter', ''),
-		tracing: workspace.getConfiguration('ablunit.profilerOption').get('tracing', ''),
-		writeJson: workspace.getConfiguration('ablunit.profilerOption').get('writeJson', false),
-		jsonUri: Uri.joinPath(workspaceDir, workspace.getConfiguration('ablunit.profilerOption').get('filename', 'prof.out').replace(/\.[a-zA-Z]+$/, '.json'))
+		optionsPath: workspace.getConfiguration('ablunit.profilerOptions').get('optionsPath', 'profile.options'),
+		optionsUri: Uri.joinPath(workspaceDir, workspace.getConfiguration('ablunit.profilerOptions').get('optionsPath', 'profile.options')),
+		coverage: workspace.getConfiguration('ablunit.profilerOptions').get('coverage', true),
+		description: workspace.getConfiguration('ablunit.profilerOptions').get('description', 'Unit Tests Run via ABLUnit Test Provider (VSCode)'),
+		filename: workspace.getConfiguration('ablunit.profilerOptions').get('filename', 'prof.out'),
+		filenameUri: Uri.joinPath(workspaceDir, workspace.getConfiguration('ablunit.profilerOptions').get('filename', 'prof.out')),
+		listings: workspace.getConfiguration('ablunit.profilerOptions').get('listings', 'listings'),
+		listingsUri: Uri.joinPath(workspaceDir, workspace.getConfiguration('ablunit.profilerOptions').get('listings', 'listings')),
+		statistics: workspace.getConfiguration('ablunit.profilerOptions').get('statistics', false),
+		traceFilter: workspace.getConfiguration('ablunit.profilerOptions').get('traceFilter', ''),
+		tracing: workspace.getConfiguration('ablunit.profilerOptions').get('tracing', ''),
+		writeJson: workspace.getConfiguration('ablunit.profilerOptions').get('writeJson', false),
+		jsonUri: Uri.joinPath(workspaceDir, workspace.getConfiguration('ablunit.profilerOptions').get('filename', 'prof.out').replace(/\.[a-zA-Z]+$/, '.json'))
 	}
 }
 

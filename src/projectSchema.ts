@@ -30,11 +30,7 @@ function parseOpenEdgeProjectJson (conf: any) {
 	const pj: IProjectJson = { propathEntry: []}
 
 	for (const entry of conf.buildPath) {
-		let type: string = entry.type
 		let dotPct: string
-		if (entry.type) {
-			type = entry.type.toLowerCase()
-		}
 
 		let path: string = entry.path
 		if (path === ".") {
@@ -63,7 +59,7 @@ function parseOpenEdgeProjectJson (conf: any) {
 
 		pj.propathEntry.push({
 			path: entry.path,
-			type: type,
+			type: entry.type.toLowerCase(),
 			buildDir: buildDir,
 			xrefDir: xrefDir
 		})
