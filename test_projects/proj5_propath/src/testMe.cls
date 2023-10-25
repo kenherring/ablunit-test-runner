@@ -14,6 +14,7 @@ class testMe inherits parentTestMe:
 	method public void testMethodCallAndFail () :
 		message 200.
 
+
 		if true then
 			message 203.
 		else

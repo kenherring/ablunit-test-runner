@@ -23,6 +23,7 @@ export async function readOpenEdgeProjectJson () {
 
 function parseOpenEdgeProjectJson (conf: any) {
 	//TODO what about if we're running a different profile?
+	//TODO import the correct DLC
 	if (!conf.buildPath) {
 		throw new Error("buildPath not found in openedge-project.json")
 	}

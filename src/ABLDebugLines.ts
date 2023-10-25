@@ -29,13 +29,6 @@ interface DebugLineMap {
 	includes: XrefInclude[]
 }
 
-function getWorkspaceUri(): Uri {
-	if (workspace.workspaceFolders == undefined) {
-		throw new Error("No workspace folders defined")
-	}
-	return workspace.workspaceFolders[0].uri
-}
-
 async function readXrefFile(xrefUri: Uri) {
 	return await workspace.fs.readFile(xrefUri).then((content) => {
 		const str = Buffer.from(content.buffer).toString();

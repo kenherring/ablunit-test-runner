@@ -1,9 +1,9 @@
 import { Uri, workspace } from "vscode"
-import { parseCallstack, ICallStack } from "./parse/ParseCallStack"
-import { PropathParser } from "./ABLPropath"
+import { parseCallstack, ICallStack } from "./CallStackParser"
+import { PropathParser } from "../ABLPropath"
 import * as xml2js from "xml2js"
-import { ABLDebugLines } from "./ABLDebugLines"
-import { IABLUnitJson } from "./ABLUnitConfigWriter"
+import { ABLDebugLines } from "../ABLDebugLines"
+import { IABLUnitJson } from "../ABLUnitConfigWriter"
 
 
 export interface TCFailure {
