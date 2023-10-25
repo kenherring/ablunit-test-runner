@@ -1,4 +1,4 @@
-import { MarkdownString, Position, Range, TestItem, TestMessage, TestRun, Uri, workspace } from "vscode"
+import { MarkdownString, Position, Range, TestItem, TestItemCollection, TestMessage, TestRun, Uri, workspace } from "vscode"
 import { ABLUnitConfig, ablunitConfig } from "./ABLUnitConfigWriter"
 import { ABLResultsParser, TCFailure, TestCase, TestSuite, TestSuites } from "./ABLResultsParser"
 import { ABLTestMethod, ABLTestProcedure, ABLUnitTestData } from "./testTree"
@@ -39,6 +39,8 @@ export class ABLResults {
 		this.startTime = new Date()
 		ablunitConfig.workspaceUri = workspaceDir
 		ablunitConfig.tempDirUri = storageUri
+		ablunitConfig.storageUri = storageUri
+		this.promsgs = new ABLPromsgs(ablunitConfig.storageUri)
 		this.setStatus("constructed")
 	}
 
@@ -53,10 +55,7 @@ export class ABLResults {
 	}
 
 	async start () {
-
 		await this.cfg.setTempDirUri(ablunitConfig.tempDirUri)
-		this.promsgs = new ABLPromsgs(ablunitConfig.tempDirUri)
-
 		await this.cfg.readPropathFromJson().then((propath) => {
 			this.propath = propath
 			this.debugLines = new ABLDebugLines(this.propath)
@@ -89,17 +88,20 @@ export class ABLResults {
 		if (ablunitConfig.profilerOptions.enabled) {
 			this.setStatus("parsing profiler data")
 			await this.parseProfile().then(() => {
+				this.setStatus("test run complete")
 				return true
 			}, (err) => {
 				console.error("parseProfile error: " + err)
 			})
+		} else {
+			this.setStatus("test run complete")
 		}
 	}
 
 	async assignTestResults (resultsJson: TestSuites[], item: TestItem, options: TestRun) {
 		if(resultsJson.length > 1) {
 			options.errored(item, new TestMessage("multiple results files found - this is not supported"), this.duration())
-			return
+			// return
 		}
 		this.results = resultsJson[0]
 		if (!this.results.testsuite) {
@@ -112,11 +114,11 @@ export class ABLResults {
 			suiteName = item.id.split("#")[0]
 		}
 
-		let s = this.results.testsuite.find((s: TestSuite) => s.classname === suiteName || s.name === suiteName)
-		if (!s) {
-			suiteName = item.uri!.fsPath.replace(/\\/g, '/')
-			s = this.results.testsuite.find((s: TestSuite) => s.name === suiteName)
-		}
+		const s = this.results.testsuite.find((s: TestSuite) => s.classname === suiteName || s.name === suiteName)
+		// if (!s) {
+		// 	suiteName = item.uri!.fsPath.replace(/\\/g, '/')
+		// 	s = this.results.testsuite.find((s: TestSuite) => s.name === suiteName)
+		// }
 		if (!s) {
 			options.errored(item, new TestMessage("could not find test suite for '" + suiteName + " in results"), this.duration())
 			return
@@ -150,17 +152,20 @@ export class ABLResults {
 			return
 		}
 
+		return this.setAllChildResults(item.children, s.testcases, options)
+	}
+
+	async setAllChildResults(children: TestItemCollection, testcases: TestCase[], options: TestRun) {
 		const promArr: Promise<void>[] = [Promise.resolve()]
-		item.children.forEach(child => {
-			const tc = s!.testcases?.find((t: TestCase) => t.name === child.label)
+		children.forEach(child => {
+			const tc = testcases.find((t: TestCase) => t.name === child.label)
 			if (!tc) {
 				options.errored(child, new TestMessage("could not find result for test case"))
 				return
 			}
 			promArr.push(this.setChildResults(child, options, tc))
 		})
-
-		return Promise.all(promArr)
+		return promArr
 	}
 
 	async setChildResults(item: TestItem, options: TestRun, tc: TestCase) {

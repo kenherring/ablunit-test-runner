@@ -1,3 +1,5 @@
+-profiling
+-filename "prof.out"
+-description "Unit Tests Run via ABLUnit Test Provider (VSCode)"
 -coverage
--description "ABLUnit"
--filename results.prof
+-listings "listings"

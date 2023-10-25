@@ -1,5 +1,4 @@
 import { Uri } from "vscode"
-import { outputChannel } from "./ABLUnitCommon"
 import { ABLDebugLines } from "./ABLDebugLines"
 
 const summaryRE = /^(\d+) (\d{2}\/\d{2}\/\d{4}) "([^"]*)" (\d{2}:\d{2}:\d{2}) "([^"]*)" (.*)$/
@@ -82,7 +81,6 @@ export interface Module { //Section 2
 	EntityName?: string // function/procedure/method name
 	SourceUri?: Uri
 	SourceName: string // source file
-	ParentModuleID?: number
 	ParentName?: string // parent class, when inheriting
 	Destructor?: boolean
 	ListingFile?: string
@@ -154,18 +152,18 @@ export class ABLProfileJSON {
 			const split = moduleName.split(" ")
 
 			if (split.length >= 4) {
-				console.error("SPLIT4!!!!! " + element)
+				throw new Error("Unable to parse module name - has 4 sections which is more than expected: " + moduleName)
+			}
+
+			entityName = split[0]
+			if (split.length == 1) {
+				sourceName = split[0]
 			} else {
-				entityName = split[0]
-				if (split.length == 1) {
-					sourceName = split[0]
-				} else {
-					if (split[1]) {
-						sourceName = split[1]
-					}
-					if (split[2]) {
-						parentName = split[2]
-					}
+				if (split[1]) {
+					sourceName = split[1]
+				}
+				if (split[2]) {
+					parentName = split[2]
 				}
 			}
 
@@ -175,7 +173,6 @@ export class ABLProfileJSON {
 				EntityName: entityName,
 				SourceName: sourceName,
 				SourceUri: undefined,
-				ParentModuleID: 0,
 				ParentName: parentName,
 				ListingFile: test![3],
 				CrcValue: Number(test![4]),
@@ -202,17 +199,14 @@ export class ABLProfileJSON {
 				childModules[childModules.length] = mod
 			}
 		}
+		this.addChildModulesToParents(childModules)
+	}
 
+	addChildModulesToParents(childModules: Module[]) {
 		childModules.forEach(child => {
-			let parent = this.modules.find(p => p.SourceName === child.SourceName)
-			if (!parent) {
-				parent = this.modules.find(p => p.SourceName === child.SourceName)
-			}
+			const parent = this.modules.find(p => p.SourceName === child.SourceName)
+
 			if(parent) {
-				if(!parent.childModules) {
-					parent.childModules = []
-				}
-				child.ParentModuleID = parent.ParentModuleID // TODO: is this in the JSON?
 				parent.childModules[parent.childModules.length] = child
 				if (parent.SourceName === child.SourceName) {
 					parent.SourceName = child.SourceName
@@ -412,11 +406,7 @@ export class ABLProfileJSON {
 	}
 
 	addSection7(lines: string[]) {
-		if (!lines.length) { return }
-		for(let lineNo=0; lineNo < lines.length; lineNo++){
-			outputChannel.appendLine("TODO: section7-" + lineNo + ": " + lines[lineNo])
-			console.error("  - line='" + lines[lineNo] + "'")
-		}
+		console.error("section 7 not implemented.  line count = " + lines.length)
 	}
 
 	// https://docs.progress.com/bundle/abl-reference/page/STATISTICS-attribute.html
@@ -463,8 +453,8 @@ export class ABLProfileJSON {
 	addSection9(lines: string[]) {
 		if (!lines.length) { return }
 		const sectRE = /^(\d+) (.*)$/
-		for(let lineNo=0; lineNo < lines.length; lineNo++){
-			const test = sectRE.exec(lines[lineNo])
+		for(const element of lines){
+			const test = sectRE.exec(element)
 			if (test) {
 				const ISectionNine: ISectionNine = {
 					ModuleID: Number(test[1]),
@@ -475,7 +465,7 @@ export class ABLProfileJSON {
 					mod.ISectionNine.push(ISectionNine)
 				} else {
 					console.error("Unable to find module " + ISectionNine.ModuleID + " in section 9")
-					console.error("  - line='" + lines[lineNo] + "'")
+					console.error("  - line='" + element + "'")
 				}
 			}
 		}
@@ -503,10 +493,7 @@ export class ABLProfileJSON {
 	}
 
 	addSection11(lines: string[]) {
-		if (!lines.length) { return }
-		for(let lineNo=0; lineNo < lines.length; lineNo++){
-			console.log("TODO: section11-" + lineNo + ": " + lines[lineNo])
-		}
+		console.error("section 11 not implemented.  line count = " + lines.length)
 	}
 
 	addSection12(lines: string[]) {
@@ -540,16 +527,10 @@ export class ABLProfileJSON {
 	}
 
 	addSection13(lines: string[]) {
-		if (!lines.length) { return }
-		for(let lineNo=0; lineNo < lines.length; lineNo++){
-			console.log("TODO: section13-" + lineNo + ": " + lines[lineNo])
-		}
+		console.error("section 13 not implemented.  line count = " + lines.length)
 	}
 	addSection14(lines: string[]) {
-		if (!lines.length) { return }
-		for(let lineNo=0; lineNo < lines.length; lineNo++){
-			console.log("TODO: section14-" + lineNo + ": " + lines[lineNo])
-		}
+		console.error("section 14 not implemented.  line count = " + lines.length)
 	}
 
 	addUserData(lines: string[]) {

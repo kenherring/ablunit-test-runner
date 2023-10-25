@@ -80,7 +80,7 @@ export const parseABLUnit = (text: string, relativePath: string, events: {
 			if (!foundClassHead) {
 				const classResult = classRE.exec(lines[lineNo])
 				if (classResult) {
-					classname = classResult[1];
+					classname = classResult[1].replace(/:$/,'');
 					const range = new vscode.Range(new vscode.Position(lineNo, lines[lineNo].indexOf(classname)), new vscode.Position(lineNo, classname.length));
 
 					if (configClassLabel == "filepath") {

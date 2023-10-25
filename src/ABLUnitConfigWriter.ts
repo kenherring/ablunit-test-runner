@@ -53,6 +53,7 @@ export interface IProfilerOptions {
 
 export interface IABLUnitConfig {
 	workspaceUri: Uri
+	storageUri: Uri
 	tempDirUri: Uri
 	display: {
 		classLabel: string
@@ -80,6 +81,7 @@ export interface IABLUnitConfig {
 
 export const ablunitConfig: IABLUnitConfig = {
 	workspaceUri: workspaceDir,
+	storageUri: workspaceDir,
 	tempDir: workspace.getConfiguration('ablunit').get('tempDir', workspaceDir.fsPath),
 	tempDirUri: Uri.file(workspace.getConfiguration('ablunit').get('tempDir',workspaceDir.fsPath)),
 	display: {
@@ -105,10 +107,10 @@ export const ablunitConfig: IABLUnitConfig = {
 		configPath: "ablunit.json",
 		configUri: Uri.joinPath(workspaceDir, "ablunit.json"),
 		output: {
-			location: workspace.getConfiguration('ablunit.configJson').get('outputLocation', ''),
-			locationUri: Uri.file(workspace.getConfiguration('ablunit.configJson').get('outputLocation', '')),
+			location: workspace.getConfiguration('ablunit.configJson').get('outputLocation', workspaceDir.fsPath),
+			locationUri: Uri.file(workspace.getConfiguration('ablunit.configJson').get('outputLocation', workspaceDir.fsPath)),
 			resultsFile: "results.xml",
-			resultsUri: Uri.file(workspace.getConfiguration('ablunit.configJson').get('outputLocation', '') + "/results.xml"),
+			resultsUri: Uri.file(workspace.getConfiguration('ablunit.configJson').get('outputLocation', workspaceDir.fsPath) + "/results.xml"),
 			format: "xml",
 			writeJson: workspace.getConfiguration('ablunit.configJson').get('outputWriteJson', false),
 			jsonUri: Uri.file(workspace.getConfiguration('ablunit.configJson').get('outputLocation', '') + "/results.json")
@@ -121,7 +123,7 @@ export const ablunitConfig: IABLUnitConfig = {
 	profilerOptions: {
 		enabled: workspace.getConfiguration('ablunit.profilerOptions').get('enabled', true),
 		optionsPath: workspace.getConfiguration('ablunit.profilerOption').get('optionsPath', 'profile.options'),
-		optionsUri: Uri.joinPath(workspaceDir, workspace.getConfiguration('ablunit.profilerOption').get('optionsPath', '')),
+		optionsUri: Uri.joinPath(workspaceDir, workspace.getConfiguration('ablunit.profilerOption').get('optionsPath', 'profile.options')),
 		coverage: workspace.getConfiguration('ablunit.profilerOption').get('coverage', true),
 		description: workspace.getConfiguration('ablunit.profilerOption').get('description', 'Unit Tests Run via ABLUnit Test Provider (VSCode)'),
 		filename: workspace.getConfiguration('ablunit.profilerOption').get('filename', 'prof.out'),
