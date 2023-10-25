@@ -462,7 +462,9 @@ export class ABLProfileJson {
 				if (lines[lineNo - 1] === '.') {
 					// prepare the next section by finding the correct module
 					mod = this.addCoverageNextSection(lines[lineNo])
+					continue
 				}
+
 				if(!mod) { throw new Error("invalid data in section 6") }
 
 				const line = this.getLine(mod,Number(lines[lineNo]))
@@ -513,6 +515,7 @@ export class ABLProfileJson {
 				parent.executableLines += child.executableLines
 				parent.executedLines += child.executedLines
 				child.lines.forEach(line => {
+					console.log(parent.ModuleID + " " + child.ModuleID + " " + line.LineNo)
 					const parentLine = parent.lines.find(l => l.LineNo == line.LineNo)
 					if(parentLine) {
 						parentLine.ExecCount = line.ExecCount

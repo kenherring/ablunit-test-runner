@@ -164,7 +164,8 @@ export class ABLResults {
 			}
 			promArr.push(this.setChildResults(child, options, tc))
 		})
-		return promArr
+
+		return Promise.all(promArr)
 	}
 
 	async setChildResults(item: TestItem, options: TestRun, tc: TestCase) {
@@ -226,7 +227,7 @@ export class ABLResults {
 		if (!failure.diff) {
 			return undefined
 		}
-		const tm = TestMessage.diff("Assert failed!", failure.diff.expectedOutput, failure.diff.actualOutput)
+		const tm = TestMessage.diff("Assert failed! ", failure.diff.expectedOutput, failure.diff.actualOutput)
 		for (const line of failure.callstack.items) {
 			if (line.loc) {
 				tm.location = line.loc
