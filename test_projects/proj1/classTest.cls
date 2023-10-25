@@ -8,7 +8,7 @@ class classTest:
     end method.
 
     @TEST.
-    method void testMethodTwo(): //TODO - fix name
+    method void testMethodTwo():
         //nothing here - always pass
         Assert:equals(1,1).
     end method.
