@@ -1,5 +1,8 @@
 {
 	"ablunit.tempDir": "target",
+	"ablunit.profilerOptions": {
+		"writeJson": true
+	}
 	// "terminal.integrated.env.windows": {
 	// 	"PROPATH": "src,path"
 	// }

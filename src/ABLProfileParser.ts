@@ -90,13 +90,11 @@ export class ABLProfile {
 		console.log("section13 - User Data" + sectionLines[9].length)
 		this.profJSON.addUserData(sectionLines[9])
 		}
-		// console.log("section14 " + sectionLines[14].length)
-		// this.profJSON.addSection14(sectionLines[14])
 
 		this.profJSON.modules.sort((a,b) => a.ModuleID - b.ModuleID)
 		console.log("parsing profiler data complete")
 		if (opts.writeJson) {
-			this.writeJsonToFile(opts.jsonUri)
+			this.writeJsonToFile(opts.jsonUri).then()
 		}
 	}
 
