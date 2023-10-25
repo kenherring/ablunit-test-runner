@@ -1,10 +1,9 @@
 import { MarkdownString, Position, Range, TestItem, TestItemCollection, TestMessage, TestRun, Uri, workspace } from "vscode"
 import { ABLUnitConfig, ablunitConfig } from "./ABLUnitConfigWriter"
-import { ABLResultsParser, TCFailure, TestCase, TestSuite, TestSuites } from "./ABLResultsParser"
+import { ABLResultsParser, TCFailure, TestCase, TestSuite, TestSuites } from "./parse/ResultsParser"
 import { ABLTestMethod, ABLTestProcedure, ABLUnitTestData } from "./testTree"
-import { parseCallstack } from "./parse/ParseCallStack"
-import { ABLProfile } from "./ABLProfileParser"
-import { ABLProfileJSON, Module } from "./ABLProfileSections"
+import { parseCallstack } from "./parse/CallStackParser"
+import { ABLProfile, ABLProfileJson, Module } from "./parse/ProfileParser"
 import { ABLDebugLines } from "./ABLDebugLines"
 import { ABLPromsgs, getPromsgText } from "./ABLPromsgs"
 import { PropathParser } from "./ABLPropath"
@@ -24,7 +23,7 @@ export class ABLResults {
 	debugLines?: ABLDebugLines
 	promsgs?: ABLPromsgs
 	results?: TestSuites
-	profileJson?: ABLProfileJSON
+	profileJson?: ABLProfileJson
 	coverageJson: [] = []
 	coverage: FileCoverage[] = []
 	public testCoverage: Map<string, FileCoverage> = new Map<string, FileCoverage>()

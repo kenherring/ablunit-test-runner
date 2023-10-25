@@ -1,6 +1,5 @@
 import { Uri, workspace } from 'vscode'
-import path = require('path')
-import { IProjectJson } from './projectSchema'
+import { IProjectJson } from './parse/OpenedgeProjectParser'
 
 interface IPropathEntry {
 	uri: Uri

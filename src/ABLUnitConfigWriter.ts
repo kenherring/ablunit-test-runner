@@ -1,6 +1,6 @@
 import { Uri, workspace } from 'vscode'
 import { outputChannel } from './ABLUnitCommon'
-import { IProjectJson, readOpenEdgeProjectJson } from './projectSchema';
+import { IProjectJson, readOpenEdgeProjectJson } from './parse/OpenedgeProjectParser';
 import { PropathParser } from "./ABLPropath"
 
 const workspaceDir = workspace.workspaceFolders![0].uri // TODO - handle multiple workspace folders
