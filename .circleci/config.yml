@@ -25,10 +25,10 @@ jobs:
       - run: xvfb-run -a npm run test
       - store_artifacts:
           when: always
-          path: artifacts/test_results
+          path: artifacts/
       - store_test_results:
           when: always
-          path: artifacts/test_results/mochawesome.json
+          path: artifacts/results.xml
   package-and-scan:
     docker:
       - image: cimg/node:20.8.0

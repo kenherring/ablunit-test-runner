@@ -7,11 +7,15 @@ export function run(): Promise<void> {
   const mocha = new Mocha({
     ui: 'tdd',
     color: true,
-    reporter: 'mochawesome',
+    reporter: 'mocha-junit-reporter',
     reporterOptions: {
-      reportDir: '../../artifacts/test_results',
-      quiet: true,
+        mochaFile: '../../artifacts/results.xml'
     }
+    // reporter: 'mochawesome',
+    // reporterOptions: {
+    //   reportDir: '../../artifacts/test_results',
+    //   quiet: true,
+    // }
   });
 
   const testsRoot = path.resolve(__dirname, '..');
