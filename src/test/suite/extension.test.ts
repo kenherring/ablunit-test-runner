@@ -19,7 +19,7 @@ suite('Extension Test Suite', () => {
 
 	test('ablunit.json file exists', () => {
 		vscode.commands.executeCommand('testing.runAll').then(() => {
-			const ablunitJson = vscode.Uri.joinPath(vscode.workspace.workspaceFolders![0].uri,'target/ablunit2.json')
+			const ablunitJson = vscode.Uri.joinPath(vscode.workspace.workspaceFolders![0].uri,'target/ablunit.json')
 			console.log("ablunitJson: " + ablunitJson.fsPath)
 			assert.equal(doesFileExist(ablunitJson),true)
 		})
