@@ -17,6 +17,7 @@ jobs:
     docker:
       - image: node:20-buster
     steps:
+      - checkout
       - run: npm install
       - run: |
           apt update
@@ -28,7 +29,6 @@ jobs:
     docker:
       - image: cimg/node:20.8.0
     steps:
-      - checkout
       - run: npm install
       - run: npm install -g @vscode/vsce
       - run: npm run compile
