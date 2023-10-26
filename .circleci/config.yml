@@ -19,10 +19,10 @@ jobs:
     steps:
       - checkout
       - run: npm install
-      - run: |
-          apt update
-          apt install -y libasound2 libgbm1 libgtk-3-0 libnss3 xvfb
-          xvfb-run -a npm run test
+      - run: apt update
+      - run: apt install -y libasound2 libgbm1 libgtk-3-0 libnss3 xvfb
+      - run: npm run compile
+      - run: xvfb-run -a npm run test
       - store_test_results:
           path: test-results
   package-and-scan:
