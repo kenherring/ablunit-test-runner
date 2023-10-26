@@ -23,8 +23,12 @@ jobs:
       - run: apt install -y libasound2 libgbm1 libgtk-3-0 libnss3 xvfb
       - run: npm run compile
       - run: xvfb-run -a npm run test
+      - store_artifacts:
+          when: always
+          path: artifacts/test_results
       - store_test_results:
-          path: test-results
+          when: always
+          path: artifacts/test_results/mochawesome.json
   package-and-scan:
     docker:
       - image: cimg/node:20.8.0

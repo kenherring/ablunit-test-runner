@@ -6,7 +6,12 @@ export function run(): Promise<void> {
   // Create the mocha test
   const mocha = new Mocha({
     ui: 'tdd',
-    color: true
+    color: true,
+    reporter: 'mochawesome',
+    reporterOptions: {
+      reportDir: '../../artifacts/test_results',
+      quiet: true,
+    }
   });
 
   const testsRoot = path.resolve(__dirname, '..');
