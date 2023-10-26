@@ -29,6 +29,7 @@
 	"scripts": {
 		"vscode:prepublish": "npm run compile",
 		"compile": "tsc -p ./",
+		"test": "mocha -u tdd ./out/test",
 		"lint": "eslint \"src/**/*.ts\"",
 		"watch": "tsc -watch -p ./",
 		"download-api": "dts main && dts dev",

@@ -6,10 +6,24 @@ orbs:
 workflows:
   build:
     jobs:
+      - test
       - package-and-scan:
+          requires:
+            - test
           context: SonarCloud
 
 jobs:
+  test:
+    docker:
+      - image: node:20-buster
+    steps:
+      - run: npm install
+      - run: |
+          apt update
+          apt install -y libasound2 libgbm1 libgtk-3-0 libnss3 xvfb
+          xvfb-run -a npm run test
+      - store_test_results:
+          path: test-results
   package-and-scan:
     docker:
       - image: cimg/node:20.8.0
