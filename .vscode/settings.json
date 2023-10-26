@@ -5,5 +5,16 @@
 	"sonarlint.connectedMode.project": {
 		"connectionId": "sonarcloud",
 		"projectKey": "kenherring_ablunit-test-provider"
+	},
+	"extension-test-runner.extractSettings": {
+		"suite": [
+			"describe",
+			"suite"
+		],
+		"test": [
+			"it",
+			"test"
+		],
+		"extractWith": "syntax"
 	}
 }

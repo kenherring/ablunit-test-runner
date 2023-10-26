@@ -18,11 +18,12 @@ jobs:
       - image: node:20-buster
     steps:
       - checkout
-      - run: npm install
       - run: apt update
       - run: apt install -y libasound2 libgbm1 libgtk-3-0 libnss3 xvfb
+      - run: npm install
       - run: npm run compile
       - run: xvfb-run -a npm run test
+      - run: '[ -f artifacts/results.xml ] || exit 1'
       - store_artifacts:
           when: always
           path: artifacts/
