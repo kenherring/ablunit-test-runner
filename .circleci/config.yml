@@ -18,7 +18,7 @@ jobs:
       - image: cimg/node:20.8
     steps:
       - checkout
-      - run: apt update
+      - run: sudo apt update
       - run: apt install -y libasound2 libgbm1 libgtk-3-0 libnss3 xvfb
       - run: npm install
       - run: npm run compile
