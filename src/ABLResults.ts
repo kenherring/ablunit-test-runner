@@ -26,10 +26,15 @@ export class ABLResults {
 	profileJson?: ABLProfileJson
 	coverageJson: [] = []
 	coverage: FileCoverage[] = []
+	dlc: string | undefined
 	public testCoverage: Map<string, FileCoverage> = new Map<string, FileCoverage>()
 
 
 	constructor(storageUri: Uri) {
+		this.dlc = process.env.DLC
+		if(!this.dlc) {
+			throw new Error("unable to determine DLC")
+		}
 		if (!workspace.workspaceFolders) {
 			throw new Error("no workspace folder is open")
 		}
@@ -39,7 +44,7 @@ export class ABLResults {
 		ablunitConfig.workspaceUri = workspaceDir
 		ablunitConfig.tempDirUri = storageUri
 		ablunitConfig.storageUri = storageUri
-		this.promsgs = new ABLPromsgs(ablunitConfig.storageUri)
+		this.promsgs = new ABLPromsgs(this.dlc, ablunitConfig.storageUri)
 		this.setStatus("constructed")
 	}
 
