@@ -46,12 +46,21 @@ export async function activate(context: vscode.ExtensionContext) {
 	}
 
 	const startTestRun = (request: vscode.TestRunRequest) => {
+
+		let res: ABLResults
+		try {
+			res = new ABLResults(context.storageUri!)
+		} catch (err) {
+			vscode.window.showErrorMessage("Could not start test run. " + err)
+			outputChannel.appendLine("Could not start test run. " + err)
+			console.log("Could not start test run. " + err)
+			return
+		}
 		showNotification("running ablunit tests")
 
 		const queue: { test: vscode.TestItem; data: ABLTestClass | ABLTestSuiteClass | ABLTestClassNamespace | ABLTestMethod | ABLTestProgram | ABLTestProcedure }[] = []
 		const run = ctrl.createTestRun(request)
 		console.log('created testRun')
-		const res = new ABLResults(context.storageUri!)
 		resultData.set(run, res)
 
 		console.log('created resultData')
