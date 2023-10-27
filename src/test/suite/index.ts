@@ -10,13 +10,8 @@ export function run(): Promise<void> {
     color: true,
     reporter: 'mocha-junit-reporter',
     reporterOptions: {
-        mochaFile: '../../artifacts/results.xml'
+        mochaFile: '../../artifacts/mocha_results.xml'
     }
-    // reporter: 'mochawesome',
-    // reporterOptions: {
-    //   reportDir: '../../artifacts/test_results',
-    //   quiet: true,
-    // }
   });
 
   const testsRoot = path.resolve(__dirname, '..');

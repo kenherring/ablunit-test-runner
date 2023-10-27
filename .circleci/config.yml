@@ -21,9 +21,10 @@ jobs:
 
       - run: npm install
       - run: npm run compile
-      - run: sudo apt update
-      - run: sudo apt install -y libasound2 libgbm1 libgtk-3-0 libnss3 xvfb
-      - run: xvfb-run -a npm run test
+      - run: sudo apt update &&  sudo apt install -y libasound2 libgbm1 libgtk-3-0 libnss3 xvfb
+      - run: |
+          sudo service dbus start
+          xvfb-run -a npm run test
       - run: '[ -f artifacts/results.xml ] || exit 1'
       - store_artifacts:
           when: always
