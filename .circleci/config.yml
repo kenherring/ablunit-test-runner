@@ -25,13 +25,13 @@ jobs:
       - run: |
           sudo service dbus start
           xvfb-run -a npm run test
-      - run: '[ -f artifacts/results.xml ] || exit 1'
+      - run: '[ -f artifacts/mocha_results.xml ] || exit 1'
       - store_artifacts:
           when: always
           path: artifacts/
       - store_test_results:
           when: always
-          path: artifacts/results.xml
+          path: artifacts/mocha_results.xml
   package-and-scan:
     docker:
       - image: cimg/node:20.8

@@ -13,6 +13,7 @@
 			"runtimeExecutable": "${execPath}",
 			"args": [
 				"--extensionDevelopmentPath=${workspaceFolder}",
+				"--disable-extensions",
 				"${workspaceFolder}/sample"
 			],
 			"outFiles": [
@@ -27,6 +28,7 @@
 			"runtimeExecutable": "${execPath}",
 			"args": [
 				"--extensionDevelopmentPath=${workspaceFolder}",
+				"--disable-extensions",
 				"${workspaceFolder}/test_projects/${input:workspaceName}"
 			],
 			"outFiles": [
@@ -41,8 +43,9 @@
 			"runtimeExecutable": "${execPath}",
 			"args": [
 			  "--extensionDevelopmentPath=${workspaceFolder}",
-			  "${workspaceFolder}/test_projects/proj1",
-			  "--extensionTestsPath=${workspaceFolder}/out/test/suite/index"
+			  "--disable-extensions",
+			  "--extensionTestsPath=${workspaceFolder}/out/test/suite/index",
+			  "${workspaceFolder}/test_projects/proj1"
 			],
 			"outFiles": ["${workspaceFolder}/out/test/**/*.js"],
 			"preLaunchTask": "npm: compile"

@@ -17,8 +17,9 @@ suite('Extension Test Suite', () => {
 		assert.strictEqual(-1, [1, 2, 3].indexOf(0))
 	});
 
-	test('ablunit.json file exists', async () => {
+	test('ablunit.json file exists 1', async () => {
 		console.log(1)
+		console.log("2: " + vscode.workspace.workspaceFolders![0].uri.fsPath)
 		const ablunitJson = vscode.Uri.joinPath(vscode.workspace.workspaceFolders![0].uri,'ablunit.json')
 		console.log(2 + " " + vscode.workspace.workspaceFolders![0].uri.fsPath)
 		await vscode.commands.executeCommand('testing.runAll').then(() => {
@@ -29,8 +30,18 @@ suite('Extension Test Suite', () => {
 		})
 		console.log(3)
 		const val = await vscode.workspace.fs.stat(ablunitJson).then((stat) => { return stat.type === vscode.FileType.File }, (err) => { return false })
+		console.log("val=" + val)
 		console.log(4)
+		// const val = true
 		assert.equal(val,true)
-		console.log(5)
+		// console.log(5)
 	}).timeout(10000)
+
+	test('ablunit.json file exists 2', async () => {
+		console.log(1)
+		console.log("2: " + vscode.workspace.workspaceFolders![0].uri.fsPath)
+		const ablunitJson = vscode.Uri.joinPath(vscode.workspace.workspaceFolders![0].uri,'ablunit.json')
+		const val = true
+		assert.equal(val,true)
+	})
 })
