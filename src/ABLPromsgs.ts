@@ -9,10 +9,11 @@ interface Promsg {
 let promsgsObj: ABLPromsgs
 
 export class ABLPromsgs {
-	DLC = process.env.DLC
+	DLC: string
 	promsgs: Promsg[] = []
 
-	constructor(storageUri: Uri) {
+	constructor(dlc: string, storageUri: Uri) {
+		this.DLC = dlc
 		if (!this.DLC) {
 			throw new Error("DLC environment variable is not set")
 		}

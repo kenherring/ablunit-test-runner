@@ -45,6 +45,23 @@
 		"typescript": "^5.2.2"
 	},
 	"contributes": {
+		"languages": [
+            {
+                "id": "abl",
+                "aliases": [
+                    "OpenEdge ABL",
+                    "abl",
+                    "Progress",
+                    "Progress 4GL"
+                ],
+                "extensions": [
+                    ".w",
+                    ".p",
+                    ".i",
+                    ".cls"
+                ]
+			}
+		],
 		"configuration": {
 			"type": "object",
 			"title": "ABLUnit Test Provider",
