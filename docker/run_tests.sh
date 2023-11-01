@@ -8,7 +8,8 @@ docker run --rm kherring/ablunit-test-runner bash -c "set -eou pipefail;
 	git clone https://github.com/kenherring/ablunit-test-provider .; \
 	git checkout '"$GIT_BRANCH"'; \
 	npm install; \
-	sudo service dbus start; \
+	npm run compile; \
 	sudo chmod +x /psc/dlc/bin/_progres; \
+	sudo service dbus start; \
 	xvfb-run -a npm run test; \
 	echo 'done running tests'"
