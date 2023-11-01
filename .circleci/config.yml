@@ -18,10 +18,9 @@ jobs:
       - image: cimg/node:20.8
     steps:
       - checkout
-
       - run: npm install
       - run: npm run compile
-      - run: sudo apt update &&  sudo apt install -y libasound2 libgbm1 libgtk-3-0 libnss3 xvfb
+      - run: sudo apt update && sudo apt install -y libasound2 libgbm1 libgtk-3-0 libnss3 xvfb
       - run: |
           sudo service dbus start
           xvfb-run -a npm run test
