@@ -28,7 +28,6 @@ async function main() {
        */
       launchArgs: [
         'test_projects/proj1',
-        '--disable-extensions'
       ]
     });
   } catch (err) {

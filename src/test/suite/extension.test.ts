@@ -10,6 +10,8 @@ import * as vscode from 'vscode';
 suite('Extension Test Suite', () => {
 	after(() => {
 		vscode.window.showInformationMessage('All tests done!')
+		console.log("DONE after!")
+		vscode.commands.executeCommand('workbench.action.closeWindow')
 	});
 
 	test('Sample test', () => {
@@ -18,30 +20,26 @@ suite('Extension Test Suite', () => {
 	});
 
 	test('ablunit.json file exists 1', async () => {
-		console.log(1)
-		console.log("2: " + vscode.workspace.workspaceFolders![0].uri.fsPath)
 		const ablunitJson = vscode.Uri.joinPath(vscode.workspace.workspaceFolders![0].uri,'ablunit.json')
-		console.log(2 + " " + vscode.workspace.workspaceFolders![0].uri.fsPath)
-		await vscode.commands.executeCommand('testing.runAll').then(() => {
-			console.log(3)
-			console.log("ablunitJson: " + ablunitJson.fsPath)
-		}, (err) => {
-			assert.fail(err)
+		await vscode.commands.executeCommand('workbench.view.testing.focus').then(async () => {
+			return
 		})
-		console.log(3)
+		await vscode.commands.executeCommand('testing.runAll').then(() => {
+			console.log("testing.runAll complete!")
+		}, (err) => {
+			assert.fail("testing.runAll failed: " + err)
+		})
 		const val = await vscode.workspace.fs.stat(ablunitJson).then((stat) => { return stat.type === vscode.FileType.File }, (err) => { return false })
 		console.log("val=" + val)
-		console.log(4)
-		// const val = true
-		assert.equal(val,true)
-		// console.log(5)
-	}).timeout(10000)
-
-	test('ablunit.json file exists 2', async () => {
-		console.log(1)
-		console.log("2: " + vscode.workspace.workspaceFolders![0].uri.fsPath)
-		const ablunitJson = vscode.Uri.joinPath(vscode.workspace.workspaceFolders![0].uri,'ablunit.json')
-		const val = true
 		assert.equal(val,true)
 	})
+
+	// test('ablunit.json file exists 2', async () => {
+	// 	console.log(10)
+	// 	console.log("20: " + vscode.workspace.workspaceFolders![0].uri.fsPath)
+	// 	const ablunitJson = vscode.Uri.joinPath(vscode.workspace.workspaceFolders![0].uri,'ablunit.json')
+	// 	const val = true
+	// 	assert.equal(val,true)
+	// 	console.log("done 3")
+	// })
 })

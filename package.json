@@ -53,20 +53,20 @@
 	},
 	"contributes": {
 		"languages": [
-            {
-                "id": "abl",
-                "aliases": [
-                    "OpenEdge ABL",
-                    "abl",
-                    "Progress",
-                    "Progress 4GL"
-                ],
-                "extensions": [
-                    ".w",
-                    ".p",
-                    ".i",
-                    ".cls"
-                ]
+			{
+				"id": "abl",
+				"aliases": [
+					"OpenEdge ABL",
+					"abl",
+					"Progress",
+					"Progress 4GL"
+				],
+				"extensions": [
+					".w",
+					".p",
+					".i",
+					".cls"
+				]
 			}
 		],
 		"configuration": {
