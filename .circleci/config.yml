@@ -43,7 +43,7 @@ jobs:
     steps:
       - checkout
       - run: npm install
-      - run: npm install -g @vscode/vsce
+      - run: npm install @vscode/vsce
       - run: npm run compile
       - run: npx eslint . --ext .ts,.js -f json -o artifacts/eslint_plain_report.json || true
       - run: npx eslint . --ext .ts,.js -f .circleci/sonarqube_formatter.js -o artifacts/eslint_report.json || true
