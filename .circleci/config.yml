@@ -15,12 +15,12 @@ workflows:
 jobs:
   test:
     docker:
-      - image: cimg/node:20.8
+      - image: kherring/ablunit-test-runner
     steps:
       - checkout
       - run: npm install
       - run: npm run compile
-      - run: sudo apt update && sudo apt install -y libasound2 libgbm1 libgtk-3-0 libnss3 xvfb
+      - run: sudo chmod +x /psc/dlc/bin/_progres
       - run: |
           sudo service dbus start
           xvfb-run -a npm run test
