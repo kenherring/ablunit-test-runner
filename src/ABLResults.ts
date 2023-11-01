@@ -31,6 +31,7 @@ export class ABLResults {
 
 
 	constructor(storageUri: Uri) {
+		console.log("is this covered? " + storageUri.fsPath)
 		this.dlc = process.env.DLC
 		if(!this.dlc) {
 			throw new Error("unable to determine DLC")
