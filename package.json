@@ -34,7 +34,8 @@
 		"download-api": "dts main && dts dev",
 		"postinstall": "npm run download-api",
 		"pretest": "npm run compile",
-		"test": "node ./out/test/runTest.js"
+		"test": "node ./out/test/runTest.js",
+		"test-with-coverage": "nyc --reporter=lcov --report-dir=artifacts npm run test"
 	},
 	"devDependencies": {
 		"@types/glob": "^8.1.0",
@@ -49,6 +50,7 @@
 		"eslint": "^8.26.0",
 		"mocha": "^10.2.0",
 		"mocha-junit-reporter": "^2.2.1",
+		"nyc": "^15.1.0",
 		"typescript": "^5.2.2"
 	},
 	"contributes": {
