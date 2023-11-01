@@ -6,7 +6,8 @@ orbs:
 workflows:
   build:
     jobs:
-      - test
+      - test:
+          context: DockerHub
       - package-and-scan:
           requires:
             - test
@@ -16,6 +17,9 @@ jobs:
   test:
     docker:
       - image: kherring/ablunit-test-runner
+        auth:
+          username: mydockerhub-user
+          password: $DOCKERHUB_TOKEN
     steps:
       - checkout
       - run: npm install
