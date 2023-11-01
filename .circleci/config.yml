@@ -34,6 +34,10 @@ jobs:
       - store_artifacts:
           when: always
           path: artifacts/
+      - persist_to_workspace:
+          root: .
+          paths:
+            - artifacts
       - store_test_results:
           when: always
           path: artifacts/mocha_results.xml
@@ -42,6 +46,8 @@ jobs:
       - image: cimg/node:20.8
     steps:
       - checkout
+      - attach_workspace:
+          at: .
       - run: sudo npm install -g @vscode/vsce
       - run: npm install
       - run: npm run compile
