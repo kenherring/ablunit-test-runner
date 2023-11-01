@@ -23,10 +23,10 @@ jobs:
           username: kherring
           password: $DOCKERHUB_TOKEN
     steps:
+      - run: tr ' ' '\n' \<<< "$PROGRESS_CFG_BASE64" | base64 --decode > /psc/dlc/progress.cfg
       - checkout
       - run: npm install
       - run: npm run compile
-      - run: tr ' ' '\n' \<<< \"\$PROGRESS_CFG_BASE64\" | base64 --decode > /psc/dlc/progress.cfg
       - run: |
           sudo service dbus start
           xvfb-run -a npm run test
