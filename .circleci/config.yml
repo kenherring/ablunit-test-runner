@@ -29,7 +29,7 @@ jobs:
       - run: npm run compile
       - run: |
           sudo service dbus start
-          xvfb-run -a npm run test
+          xvfb-run -a npm run test-with-coverage
       - run: '[ -f artifacts/mocha_results.xml ] || exit 1'
       - store_artifacts:
           when: always
