@@ -6,6 +6,7 @@ async function main() {
   try {
     const extensionDevelopmentPath = path.resolve(__dirname, '../../');
     const extensionTestsPath = path.resolve(__dirname, './suite/index');
+    console.log("1 - does this report as covered?")
 
     // Download VS Code, unzip it and run the integration test
     await runTests({
