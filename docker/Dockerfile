@@ -6,9 +6,9 @@ RUN sudo apt update \
 	&& sudo rm -rf /var/lib/apt/lists/* /var/cache/apt/archives/*
 
 # requirements for running ablunit tests
-COPY --from=progresssoftware/prgs-oedb:12.2_latest_ent --chown=circleci:circleci --chmod=644 /psc /psc
+COPY --from=progresssoftware/prgs-oedb:12.2_latest_ent --chown=circleci:circleci --chmod=744 /psc /psc
 
-RUN sudo chmod +x /psc/dlc/bin/_progres
+RUN sudo chmod a+x /psc/dlc/bin/_progres
 
 ENV DLC /psc/dlc
 ENV PATH $PATH:$DLC/bin

@@ -7,7 +7,9 @@ workflows:
   build:
     jobs:
       - test:
-          context: DockerHub
+          context:
+            - DockerHub
+            - PROGRESS_CFG
       - package-and-scan:
           requires:
             - test
@@ -24,8 +26,8 @@ jobs:
       - checkout
       - run: npm install
       - run: npm run compile
+      - run: tr ' ' '\n' \<<< \"\$PROGRESS_CFG_BASE64\" | base64 --decode > /psc/dlc/progress.cfg
       - run: |
-          sudo chmod +x /psc/dlc/bin/_progres
           sudo service dbus start
           xvfb-run -a npm run test
       - run: '[ -f artifacts/mocha_results.xml ] || exit 1'
