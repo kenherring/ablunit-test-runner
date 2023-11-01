@@ -29,7 +29,7 @@ export function run(): Promise<void> {
         // Run the mocha test
         mocha.run(failures => {
           if (failures > 0) {
-            console.error(`${failures} tests failed.`)
+            console.error(`${failures} tests failed.`);
             e(new Error(`${failures} tests failed.`));
           } else {
             c();
@@ -38,7 +38,6 @@ export function run(): Promise<void> {
       } catch (err) {
         e(err);
       }
-      return
     });
   });
 }
