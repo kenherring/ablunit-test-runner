@@ -50,9 +50,5 @@ jobs:
       - run: vsce package
       - run: mkdir -p artifacts && cp ablunit-test-provider-*.vsix artifacts
       - sonarcloud/scan
-      # - persist_to_workspace:
-      #     root: .
-      #     paths:
-      #       - "*.vsix"
       - store_artifacts:
           path: artifacts

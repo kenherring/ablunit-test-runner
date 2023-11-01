@@ -11,11 +11,11 @@
 			"supported": false
 		}
 	},
-	"enabledApiProposals": [],
 	"repository": "https://github.com/kherring/ablunit-test-provider",
 	"bugs": {
 		"url": "https://github.coim/kherring/ablunit-test-provider/issues"
 	},
+	"enabledApiProposals": [],
 	"engines": {
 		"vscode": "^1.68.0"
 	},
