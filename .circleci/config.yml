@@ -18,7 +18,7 @@ jobs:
     docker:
       - image: kherring/ablunit-test-runner
         auth:
-          username: mydockerhub-user
+          username: kherring
           password: $DOCKERHUB_TOKEN
     steps:
       - checkout
