@@ -32,7 +32,9 @@
 		"lint": "eslint \"src/**/*.ts\"",
 		"watch": "tsc -watch -p ./",
 		"download-api": "dts main && dts dev",
-		"postinstall": "npm run download-api"
+		"postinstall": "npm run download-api",
+		"pretest": "tsc -p ./",
+		"test": "vscode-test"
 	},
 	"devDependencies": {
 		"@types/jsonminify": "^0.4.1",
@@ -41,25 +43,27 @@
 		"@typescript-eslint/eslint-plugin": "^6.7.0",
 		"@typescript-eslint/parser": "^6.7.0",
 		"@vscode/dts": "^0.4.0",
+		"@vscode/test-cli": "^0.0.4",
+		"@vscode/test-electron": "^2.3.6",
 		"eslint": "^8.26.0",
 		"typescript": "^5.2.2"
 	},
 	"contributes": {
 		"languages": [
-            {
-                "id": "abl",
-                "aliases": [
-                    "OpenEdge ABL",
-                    "abl",
-                    "Progress",
-                    "Progress 4GL"
-                ],
-                "extensions": [
-                    ".w",
-                    ".p",
-                    ".i",
-                    ".cls"
-                ]
+			{
+				"id": "abl",
+				"aliases": [
+					"OpenEdge ABL",
+					"abl",
+					"Progress",
+					"Progress 4GL"
+				],
+				"extensions": [
+					".w",
+					".p",
+					".i",
+					".cls"
+				]
 			}
 		],
 		"configuration": {
@@ -227,7 +231,6 @@
 						}
 					}
 				}
-
 			}
 		},
 		"commands": [],
