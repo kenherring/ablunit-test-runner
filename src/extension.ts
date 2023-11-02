@@ -15,6 +15,7 @@ let recentResults: ABLResults | undefined
 export async function activate(context: vscode.ExtensionContext) {
 
 	console.log("ACTIVATE!")
+	console.log("is activation covered?")
 	outputChannel.appendLine("ACTIVATE!")
 
 	const ctrl = vscode.tests.createTestController('ablunitTestController', 'ABLUnit Test')
