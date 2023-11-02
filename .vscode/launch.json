@@ -13,7 +13,6 @@
 			"runtimeExecutable": "${execPath}",
 			"args": [
 				"--extensionDevelopmentPath=${workspaceFolder}",
-				"--disable-extensions",
 				"${workspaceFolder}/sample"
 			],
 			"outFiles": [
@@ -28,7 +27,6 @@
 			"runtimeExecutable": "${execPath}",
 			"args": [
 				"--extensionDevelopmentPath=${workspaceFolder}",
-				"--disable-extensions",
 				"${workspaceFolder}/test_projects/${input:workspaceName}"
 			],
 			"outFiles": [
@@ -36,20 +34,6 @@
 			],
 			"preLaunchTask": "npm: watch"
 		},
-		{
-			"name": "Test Runner",
-			"type": "extensionHost",
-			"request": "launch",
-			"runtimeExecutable": "${execPath}",
-			"args": [
-			  "--extensionDevelopmentPath=${workspaceFolder}",
-			  "--disable-extensions",
-			  "--extensionTestsPath=${workspaceFolder}/out/test/suite/index",
-			  "${workspaceFolder}/test_projects/proj1"
-			],
-			"outFiles": ["${workspaceFolder}/out/test/**/*.js"],
-			"preLaunchTask": "npm: compile"
-		  }
 	],
 	"inputs": [
 		{
