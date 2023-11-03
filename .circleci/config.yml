@@ -6,7 +6,10 @@ orbs:
 workflows:
   build:
     jobs:
-      - test
+      - test:
+          context:
+            - DockerHub
+            - PROGRESS_CFG
       - package-and-scan:
           requires:
             - test
