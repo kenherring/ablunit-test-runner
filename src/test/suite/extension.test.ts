@@ -1,7 +1,13 @@
 import * as assert from 'assert';
+import { after } from 'mocha';
 import * as vscode from 'vscode';
 
 suite('Extension Test Suite', () => {
+
+	after(() => {
+		console.log("after")
+		vscode.commands.executeCommand('workbench.action.closeWindow')
+	});
 
 	test('Sample test', () => {
 		console.log("test1")

@@ -60,11 +60,13 @@ export async function run(): Promise<void> {
         mocha.addFile(path.resolve(testsRoot, file));
     }
     try {
+		console.log("await promise")
         await new Promise<void>((resolve, reject) => {
-			console.log("running mocha")
+			console.log("----- running mocha")
             mocha.run(failures => (failures ? reject(new Error(`${failures} tests failed`)) : resolve()))
-			console.log("mocha complete")
+			console.log("----- mocha complete")
 		});
+		console.log("----- promise complete")
     } finally {
         if (nyc !== undefined) {
 			console.log("writing coverage file")

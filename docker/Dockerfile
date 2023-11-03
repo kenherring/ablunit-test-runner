@@ -2,7 +2,7 @@ FROM cimg/node:20.8
 
 # requirements for running vscode extension tests
 RUN sudo apt update \
-	&& sudo apt install -y libasound2 libgbm1 libgtk-3-0 libnss3 xvfb \
+	&& sudo apt install -y libasound2 libgbm1 libgtk-3-0 libnss3 xvfb rsync \
 	&& sudo rm -rf /var/lib/apt/lists/* /var/cache/apt/archives/*
 
 # requirements for running ablunit tests

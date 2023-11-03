@@ -10,4 +10,7 @@
 	},
 	"terminal.integrated.allowMnemonics": true,
 	"terminal.integrated.allowChords": true,
+	"ablunit.profilerOptions": {
+		"enabled": false
+	}
 }
