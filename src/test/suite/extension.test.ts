@@ -6,7 +6,7 @@ suite('Extension Test Suite', () => {
 
 	after(() => {
 		console.log("after")
-		vscode.commands.executeCommand('workbench.action.closeWindow')
+		// vscode.commands.executeCommand('workbench.action.closeWindow')
 	});
 
 	test('Sample test', () => {
