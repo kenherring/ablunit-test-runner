@@ -4,7 +4,7 @@ module.exports = defineConfig(
 	[{
 		label: 'unitTests',
 		files: 'out/test/**/*.test.js',
-		version: 'insiders',
+		// version: 'insiders',
 		workspaceFolder: './test_projects/proj1',
 		mocha: {
 			ui: 'tdd',

@@ -4,11 +4,13 @@ import * as vscode from 'vscode';
 suite('Extension Test Suite', () => {
 
 	test('Sample test', () => {
+		console.log("test1")
 		assert.strictEqual(-1, [1, 2, 3].indexOf(5));
 		assert.strictEqual(-1, [1, 2, 3].indexOf(0));
 	});
 
 	test('ablunit.json file exists 1', async () => {
+		console.log("test2")
 		const ablunitJson = vscode.Uri.joinPath(vscode.workspace.workspaceFolders![0].uri,'ablunit.json')
 		await vscode.commands.executeCommand('workbench.view.testing.focus').then(async () => {
 			return

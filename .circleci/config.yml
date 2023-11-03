@@ -6,15 +6,44 @@ orbs:
 workflows:
   build:
     jobs:
+      - test
       - package-and-scan:
+          requires: test
           context: SonarCloud
 
 jobs:
+  test:
+    docker:
+      - image: kherring/ablunit-test-runner
+        auth:
+          username: kherring
+          password: $DOCKERHUB_TOKEN
+    steps:
+      - run: tr ' ' '\n' \<<< "$PROGRESS_CFG_BASE64" | base64 --decode > /psc/dlc/progress.cfg
+      - checkout
+      - run: npm install
+      - run: |
+          sudo service dbus start
+          xvfb-run -a npm run test
+      - run: '[ -f artifacts/mocha_results.xml ] || exit 1'
+      - persist_to_workspace:
+          root: .
+          paths:
+            - artifacts
+            - coverage/lcov.info
+      - store_artifacts:
+          when: always
+          path: artifacts/
+      - store_test_results:
+          when: always
+          path: artifacts/mocha_results.xml
   package-and-scan:
     docker:
       - image: cimg/node:20.8.0
     steps:
       - checkout
+      - attach_workspace:
+          at: .
       - run: npm install
       - run: npm install -g @vscode/vsce
       - run: npm run compile
