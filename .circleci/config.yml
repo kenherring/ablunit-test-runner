@@ -8,7 +8,8 @@ workflows:
     jobs:
       - test
       - package-and-scan:
-          requires: test
+          requires:
+            - test
           context: SonarCloud
 
 jobs:
