@@ -26,9 +26,7 @@ jobs:
       - run: tr ' ' '\n' \<<< "$PROGRESS_CFG_BASE64" | base64 --decode > /psc/dlc/progress.cfg
       - checkout
       - run: npm install
-      - run: |
-          sudo service dbus start
-          xvfb-run -a npm run test
+      - run: xvfb-run -a npm run test
       - run: '[ -f artifacts/mocha_results.xml ] || exit 1'
       - persist_to_workspace:
           root: .
