@@ -47,7 +47,7 @@ export async function run(): Promise<void> {
 		timeout: 20000,
 		reporter: 'mocha-junit-reporter',
 		reporterOptions: {
-			mochaFile: '../../artifacts/mocha_results.xml'
+			mochaFile: 'artifacts/mocha_results.xml'
 		}
 	});
 
@@ -55,12 +55,12 @@ export async function run(): Promise<void> {
 	const options = { cwd: testsRoot };
 	const files = glob.sync("**/**.test.js", options);
 
-	console.log('Glob verification', await nyc.exclude.glob(nyc.cwd));
+	// console.log('Glob verification', await nyc.exclude.glob(nyc.cwd));
     for (const file of files) {
         mocha.addFile(path.resolve(testsRoot, file));
     }
     try {
-		console.log("await promise")
+		console.log("----- await promise")
         await new Promise<void>((resolve, reject) => {
 			console.log("----- running mocha")
             mocha.run(failures => (failures ? reject(new Error(`${failures} tests failed`)) : resolve()))
@@ -68,6 +68,7 @@ export async function run(): Promise<void> {
 		});
 		console.log("----- promise complete")
     } finally {
+		console.log("finally!")
         if (nyc !== undefined) {
 			console.log("writing coverage file")
             nyc.writeCoverageFile();
