@@ -2,8 +2,9 @@ FROM node:20.8
 
 # requirements for running vscode extension tests
 RUN apt update \
-	&& apt install -y libasound2 libgbm1 libgtk-3-0 libnss3 \
-	&& apt install -y xvfb rsync \
+	&& apt install -y --no-install-recommends libasound2 libgbm1 libgtk-3-0 libnss3 \
+	&& apt install -y --no-install-recommends xauth \
+	&& apt install -y --no-install-recommends xvfb rsync \
 	&& rm -rf /var/lib/apt/lists/* /var/cache/apt/archives/*
 
 # requirements for running ablunit tests

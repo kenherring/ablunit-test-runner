@@ -17,7 +17,7 @@ npm run compile
 export PROPATH=.
 
 echo 'starting tests...'
-if $CIRCLECI; then
+if ${CIRCLECI:-false}; then
 	xvfb-run -a npm run test
 else
 	if ! xvfb-run -a npm run test; then
