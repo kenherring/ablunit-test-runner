@@ -7,7 +7,6 @@
 		],
 		"outDir": "out",
 		"sourceMap": true,
-		// "inlineSourceMap": true,
 		"strict": true,
 		"rootDir": "src",
 		"experimentalDecorators": true,

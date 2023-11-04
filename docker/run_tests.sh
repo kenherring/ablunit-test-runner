@@ -9,8 +9,6 @@ export GIT_BRANCH PROGRESS_CFG_BASE64
 
 docker volume create --name vscode-test
 
-
-	# -v "c:\git\ablunit-test-provider\.vscode-test-docker\:/home/circleci/project/.vscode-test" \
 docker run --rm -it -e PROGRESS_CFG_BASE64 -e GIT_BRANCH \
 	-v "c:\\git\\ablunit-test-provider\\":/home/circleci/ablunit-test-provider \
 	-v vscode-test:/home/circleci/project/.vscode-test \

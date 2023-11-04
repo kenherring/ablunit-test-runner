@@ -41,7 +41,7 @@ jobs:
           path: artifacts/mocha_results.xml
   package-and-scan:
     docker:
-      - image: cimg/node:20.8.0
+      - image: cimg/node:20.8
     steps:
       - checkout
       - attach_workspace:
