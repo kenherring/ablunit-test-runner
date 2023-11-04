@@ -14,10 +14,6 @@ export class ABLPromsgs {
 
 	constructor(dlc: string, storageUri: Uri) {
 		this.DLC = dlc
-		if (!this.DLC) {
-			throw new Error("DLC environment variable is not set")
-		}
-
 		console.log("promsgs DLC=" + this.DLC)
 		const dlcUri = Uri.file(this.DLC)
 		const cacheUri = Uri.joinPath(storageUri,'promsgs.json')
@@ -41,7 +37,7 @@ export class ABLPromsgs {
 			const promsgDir = Uri.joinPath(dlcUri, "prohelp/msgdata")
 			return workspace.fs.readDirectory(promsgDir).then((dirFiles) => {
 
-				const promArr = []
+				const promArr: Promise<void>[] = []
 				for (const file of dirFiles) {
 					promArr.push(this.loadPromsgFile(Uri.joinPath(promsgDir,file[0])).then().catch(err => {
 						throw new Error("Cannot load promsgs file '" + file + "', err=" + err)

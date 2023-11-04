@@ -23,7 +23,7 @@ export const ablunitRun = async(item: TestItem, ablunitConfig: IABLUnitConfig, o
 			throw (new Error("temp directory not set"))
 		}
 
-		const cmd = ['_progres', '-b', '-p', 'ABLUnitCore.p']
+		const cmd = [res.dlc + '/bin/_progres', '-b', '-p', 'ABLUnitCore.p']
 		if (process.platform === 'win32') {
 			cmd.push('-basekey', 'INI', '-ininame', ablunitConfig.progressIniUri.fsPath)
 		}

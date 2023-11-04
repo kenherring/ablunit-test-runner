@@ -5,17 +5,12 @@ GIT_BRANCH=$(git branch --show-current)
 PROGRESS_CFG_BASE64=$(base64 "$DLC/progress.cfg" | tr '\n' ' ')
 export GIT_BRANCH PROGRESS_CFG_BASE64
 
+./cleanup.sh
+
+docker volume create --name vscode-test
+
 docker run --rm -it -e PROGRESS_CFG_BASE64 -e GIT_BRANCH \
+	-v "c:\\git\\ablunit-test-provider\\":/home/circleci/ablunit-test-provider \
+	-v vscode-test:/home/circleci/project/.vscode-test \
 	kherring/ablunit-test-runner \
-	bash -c "set -eou pipefail; \
-	echo 'starting tests...'; \
-	tr ' ' '\n' <<< \"\$PROGRESS_CFG_BASE64\" | base64 --decode > /psc/dlc/progress.cfg; \
-	git clone https://github.com/kenherring/ablunit-test-provider .; \
-	git checkout \"\$GIT_BRANCH\"; \
-	npm install; \
-	npm run compile; \
-	sudo service dbus start; \
-	xvfb-run -a npm run test; \
-	[ -f artifacts/mocha_results.xml ] || exit 1; \
-	echo 'done running tests';
-	"
+	bash -c "/home/circleci/ablunit-test-provider/docker/entrypoint.sh;"

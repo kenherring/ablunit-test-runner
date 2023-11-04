@@ -26,11 +26,13 @@ jobs:
       - run: tr ' ' '\n' \<<< "$PROGRESS_CFG_BASE64" | base64 --decode > /psc/dlc/progress.cfg
       - checkout
       - run: npm install
-      - run: npm run compile
-      - run: |
-          sudo service dbus start
-          xvfb-run -a npm run test
+      - run: xvfb-run -a npm run test
       - run: '[ -f artifacts/mocha_results.xml ] || exit 1'
+      - persist_to_workspace:
+          root: .
+          paths:
+            - artifacts
+            - coverage/lcov.info
       - store_artifacts:
           when: always
           path: artifacts/
@@ -42,13 +44,19 @@ jobs:
       - image: cimg/node:20.8
     steps:
       - checkout
-      - run: sudo npm install -g @vscode/vsce
+      - attach_workspace:
+          at: .
       - run: npm install
+      - run: sudo npm install -g @vscode/vsce
       - run: npm run compile
       - run: npx eslint . --ext .ts,.js -f json -o artifacts/eslint_plain_report.json || true
       - run: npx eslint . --ext .ts,.js -f .circleci/sonarqube_formatter.js -o artifacts/eslint_report.json || true
       - run: vsce package
       - run: mkdir -p artifacts && cp ablunit-test-provider-*.vsix artifacts
       - sonarcloud/scan
+      - persist_to_workspace:
+          root: .
+          paths:
+            - "*.vsix"
       - store_artifacts:
           path: artifacts

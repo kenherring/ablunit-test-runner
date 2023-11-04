@@ -2,6 +2,7 @@ import { Uri, workspace } from 'vscode'
 import { outputChannel } from './ABLUnitCommon'
 import { IProjectJson, readOpenEdgeProjectJson } from './parse/OpenedgeProjectParser';
 import { PropathParser } from "./ABLPropath"
+import * as os from 'os'
 
 const workspaceDir = workspace.workspaceFolders![0].uri // TODO - handle multiple workspace folders
 
@@ -170,6 +171,7 @@ export class ABLUnitConfig  {
 	}
 
 	async createProgressIni(propath: string) {
+		if (os.platform() != 'win32') { return }
 		const iniData = ["[WinChar Startup]", "PROPATH=" + propath]
 		const iniBytes = Uint8Array.from(Buffer.from(iniData.join("\n")))
 		console.log("creating progress.ini: '" + workspace.asRelativePath(ablunitConfig.progressIniUri) + "'")

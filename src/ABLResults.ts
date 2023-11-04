@@ -95,7 +95,7 @@ export class ABLResults {
 				this.setStatus("test run complete")
 				return true
 			}, (err) => {
-				console.error("parseProfile error: " + err)
+				throw new Error("parseProfile error: " + err)
 			})
 		} else {
 			this.setStatus("test run complete")

@@ -1,7 +1,9 @@
 out
 node_modules
 .vscode-test/
+.vscode-test-docker/
 artifacts/
+coverage/
 target/
 *.vsix
 *.log
@@ -12,6 +14,7 @@ target/
 .builder
 
 # OpenEdge Files
+docker/ablunit.pl
 *.dbg
 *.listing
 *.out
