@@ -17,6 +17,14 @@ npm run compile
 export PROPATH=.
 
 echo 'starting tests...'
+if $CIRCLECI; then
+	xvfb-run -a npm run test
+else
+	if ! xvfb-run -a npm run test; then
+		bash
+	fi
+fi
+
 xvfb-run -a npm run test
 if [ ! -f artifacts/mocha_results.xml ]; then
 	echo 'mocha_results.xml not found'

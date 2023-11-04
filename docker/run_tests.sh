@@ -15,4 +15,4 @@ docker run --rm -it -e PROGRESS_CFG_BASE64 -e GIT_BRANCH \
 	-v "c:\\git\\ablunit-test-provider\\":/home/circleci/ablunit-test-provider \
 	-v vscode-test:/home/circleci/project/.vscode-test \
 	kherring/ablunit-test-runner \
-	bash -c "/home/circleci/ablunit-test-provider/docker/entrypoint.sh"
+	bash -c "/home/circleci/ablunit-test-provider/docker/entrypoint.sh;"

@@ -18,14 +18,14 @@ async function main() {
         extensionDevelopmentPath,
         extensionTestsPath,
         launchArgs: [
-          '--disable-extensions',
-          '--disable-gpu',
+          'test_projects/proj1',
+          // '--disable-extensions',
+          // '--disable-gpu',
           // ' --disable-dev-shm-usage',
           // '--no-xshm',
           // '--no-sanbox',
           // '--disable-gpu-sandbox',
           // '--headless', //somewhat works!
-          'test_projects/proj1',
         ]
     });
     console.log("runTests complete")
