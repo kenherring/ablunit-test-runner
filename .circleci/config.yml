@@ -11,7 +11,7 @@ workflows:
             - DockerHub
             - PROGRESS_CFG
             - SonarCloud
-      - package:
+      - package-and-publish:
           requires:
             - test-and-scan
           # context: SonarCloud
@@ -38,7 +38,7 @@ jobs:
           when: always
           path: artifacts/mocha_results.xml
       - sonarcloud/scan
-  package:
+  package-and-publish:
     docker:
       - image: cimg/node:20.8
     steps:
