@@ -52,7 +52,8 @@ jobs:
           name: vsce package && vsce publish
           command: |
             vsce package --pre-release
-            vsce publish --pre-release
+            vsce publish --pre-release --packagePath ablunit-test-provider-*.vsix
       - run: mkdir -p artifacts && cp ablunit-test-provider-*.vsix artifacts
       - store_artifacts:
+          when: always
           path: artifacts
