@@ -1,0 +1,7 @@
+#!/bin/sh
+
+if command -v circleci; then
+	circleci config validate
+else
+	wsl circleci config validate
+fi

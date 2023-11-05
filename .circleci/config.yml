@@ -48,10 +48,11 @@ jobs:
           at: .
       - run: npm install
       - run: sudo npm install -g @vscode/vsce
-      - run: vsce package && vsce publish
-        command: |
-          vsce package --pre-release
-          vsce publish --pre-release
+      - run:
+          name: vsce package && vsce publish
+          command: |
+            vsce package --pre-release
+            vsce publish --pre-release
       - run: mkdir -p artifacts && cp ablunit-test-provider-*.vsix artifacts
       - store_artifacts:
           path: artifacts
