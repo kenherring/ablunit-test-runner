@@ -36,11 +36,12 @@
 		"pretest": "npm run compile",
 		"vscode-test": "vscode-test",
 		"test": "node ./out/test/runTest.js",
-		"vscode:prepublish": "npm run esbuild-base -- --minify",
 		"esbuild-base": "esbuild ./src/extension.ts --bundle --outfile=out/main.js --external:vscode --format=cjs --platform=node",
 		"esbuild": "npm run esbuild-base -- --sourcemap",
 		"esbuild-watch": "npm run esbuild-base -- --sourcemap --watch",
-		"test-compile": "tsc -p ./"
+		"test-compile": "tsc -p ./",
+		"vscode:prepublish": "tsc",
+		"vscode:prepublish-esbuild": "npm run esbuild-base -- --minify"
 	},
 	"devDependencies": {
 		"@types/glob": "^8.1.0",

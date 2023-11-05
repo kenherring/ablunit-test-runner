@@ -4,6 +4,5 @@
 .vscode/
 node_modules/
 src/
-out/
 tsconfig.json
 webpack.config.js
