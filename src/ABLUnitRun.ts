@@ -69,8 +69,7 @@ export const ablunitRun = async(item: TestItem, ablunitConfig: IABLUnitConfig, o
 					options.appendOutput(stderr)
 					reject(stderr)
 				}
-				options.appendOutput(stdout)
-
+				options.appendOutput("stdout:" + stdout + "\r\n")
 				console.log("ShellExecution Completed - duration: " + duration)
 				outputChannel.appendLine("ShellExecution Completed - duration: " + duration)
 				resolve(stdout)

@@ -147,8 +147,8 @@ export class ABLUnitConfig  {
 	}
 
 	async setTempDirUri (tempDir: Uri) {
+		ablunitConfig.tempDirUri = tempDir
 		outputChannel.appendLine("using tempDir='" + ablunitConfig.tempDirUri.fsPath + "'")
-		ablunitConfig.tempDirUri = Uri.joinPath(workspaceDir, ablunitConfig.tempDir)
 		if (ablunitConfig.tempDirUri.fsPath == ablunitConfig.workspaceUri.fsPath) {
 			return
 		}

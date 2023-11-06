@@ -13,6 +13,7 @@
 			"runtimeExecutable": "${execPath}",
 			"args": [
 				"--extensionDevelopmentPath=${workspaceFolder}",
+				"--disable-extensions",
 				"${workspaceFolder}/sample"
 			],
 			"outFiles": [
@@ -27,6 +28,7 @@
 			"runtimeExecutable": "${execPath}",
 			"args": [
 				"--extensionDevelopmentPath=${workspaceFolder}",
+				"--disable-extensions",
 				"${workspaceFolder}/test_projects/${input:workspaceName}"
 			],
 			"outFiles": [

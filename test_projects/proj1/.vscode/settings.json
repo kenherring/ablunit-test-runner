@@ -10,7 +10,7 @@
 	},
 	"terminal.integrated.allowMnemonics": true,
 	"terminal.integrated.allowChords": true,
-	"ablunit.profilerOptions": {
-		"enabled": false
-	}
+	"ablunit.profilerOptions.enabled": false,
+	"ablunit.notificationsEnabled": false,
+	// "ablunit.tempDir": "${workspaceFolder}"
 }

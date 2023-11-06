@@ -1,11 +1,12 @@
 {
 	// "ablunit.display.classLabel": "filepath"
 	// "ablunit.display.classLabel": "filepath",
-	// "ablunit.display.style": "flat",
 	"ablunit.findAllFilesAtStartup": true,
 	"ablunit.files.include": "{**/*.cls,**/*.p}",
 	// "ablunit.files.include": "**/*.cls,**/*.p"
 	// "ablunit.files.include": "**/*.p",
 	// "ablunit.files.include": "**/*.cls"
-	"ablunit.notificationsEnabled": true
+	"ablunit.notificationsEnabled": false,
+	"ablunit.tempDir": "${workspaceFolder}/temp",
+	"ablunit.profilerOptions.enabled": false
 }
