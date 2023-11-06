@@ -6,17 +6,19 @@ orbs:
 workflows:
   build:
     jobs:
-      - test:
+      - test-and-scan:
           context:
             - DockerHub
             - PROGRESS_CFG
-      - package-and-scan:
+            - SonarCloud
+      - package-and-publish:
           requires:
-            - test
-          context: SonarCloud
+            - test-and-scan
+          context:
+            - Azure_PAT
 
 jobs:
-  test:
+  test-and-scan:
     docker:
       - image: kherring/ablunit-test-runner
         auth:
@@ -26,29 +28,39 @@ jobs:
       - run: tr ' ' '\n' \<<< "$PROGRESS_CFG_BASE64" | base64 --decode > /psc/dlc/progress.cfg
       - checkout
       - run: npm install
-      - run: npm run compile
-      - run: |
-          sudo service dbus start
-          xvfb-run -a npm run test
+      - run: xvfb-run -a npm run test
       - run: '[ -f artifacts/mocha_results.xml ] || exit 1'
+      - run: npx eslint . --ext .ts,.js -f json -o artifacts/eslint_plain_report.json || true
+      - run: npx eslint . --ext .ts,.js -f .circleci/sonarqube_formatter.js -o artifacts/eslint_report.json || true
       - store_artifacts:
           when: always
           path: artifacts/
       - store_test_results:
           when: always
           path: artifacts/mocha_results.xml
-  package-and-scan:
+      - sonarcloud/scan
+  package-and-publish:
     docker:
       - image: cimg/node:20.8
     steps:
       - checkout
-      - run: sudo npm install -g @vscode/vsce
+      - attach_workspace:
+          at: .
       - run: npm install
-      - run: npm run compile
-      - run: npx eslint . --ext .ts,.js -f json -o artifacts/eslint_plain_report.json || true
-      - run: npx eslint . --ext .ts,.js -f .circleci/sonarqube_formatter.js -o artifacts/eslint_report.json || true
-      - run: vsce package
+      - run: sudo npm install -g @vscode/vsce
+      - run: vsce package --pre-release --githubBranch main --allow-star-activation
+      - when:
+          condition: << pipeline.git.tag >>
+          steps:
+          - run:
+              name: validate version matches tag
+              command: |
+                if [ "$(jq -r .version package.json)" != "${CIRCLE_TAG#v}" ]; then
+                  echo "Version in package.json does not match tag"
+                  exit 1
+                fi
+          - run: vsce publish --pre-release --packagePath ablunit-test-provider-*.vsix --githubBranch main --allow-star-activation
       - run: mkdir -p artifacts && cp ablunit-test-provider-*.vsix artifacts
-      - sonarcloud/scan
       - store_artifacts:
+          when: always
           path: artifacts

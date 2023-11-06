@@ -1,4 +1,8 @@
 {
+	"abl.debugAdapterDebug": true,
+	"abl.debugAdapterTrace": true,
+	"abl.langServerDebug": true,
+	"abl.langServerTrace": true,
 	"terminal.integrated.env.windows": {
 		"dlc": "/c/Progress/OpenEdge",
 		"DLC": "/c/Progress/OpenEdge",
@@ -6,7 +10,7 @@
 	},
 	"terminal.integrated.allowMnemonics": true,
 	"terminal.integrated.allowChords": true,
-	"ablunit.configJson": {
-		"configPath": "target/ablunit.json"
+	"ablunit.profilerOptions": {
+		"enabled": false
 	}
 }

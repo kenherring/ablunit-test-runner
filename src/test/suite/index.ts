@@ -1,43 +1,80 @@
+import * as Mocha from "mocha";
 import * as path from 'path';
-import * as Mocha from 'mocha';
 import * as glob from 'glob';
 
-export function run(): Promise<void> {
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const NYC = require('nyc');
 
-  // Create the mocha test
-  const mocha = new Mocha({
-    ui: 'tdd',
-    color: true,
-    reporter: 'mocha-junit-reporter',
-    reporterOptions: {
-        mochaFile: 'artifacts/mocha_results.xml'
+function setupCoverage() {
+	const nyc = new NYC({
+		cwd: path.join(__dirname, '..', '..', '..'),
+		// exclude: ['**/test/**', '.vscode-test/**'],
+		reporter: ['text', 'html', 'lcov' ],
+		tempDir: path.join(__dirname, "..", "..", "..", "coverage", ".nyc_output"),
+		all: true,
+		instrument: true,
+		hookRequire: true,
+		hookRunInContext: true,
+		hookRunInThisContext: true,
+		require: [
+				'ts-node/register',
+				'source-map-support/register'
+		],
+		include: [ "**/out/**/*.js" ]
+	});
+
+	nyc.reset();
+	nyc.wrap();
+
+	Object.keys(require.cache).filter(f => nyc.exclude.shouldInstrument(f)).forEach(m => {
+		console.warn('Module loaded before NYC, invalidating:', m);
+		delete require.cache[m];
+		require(m);
+	});
+
+
+	return nyc;
+  }
+
+export async function run(): Promise<void> {
+	const nyc = setupCoverage();
+	await nyc.createTempDirectory();
+
+	// Create the mocha test
+	const mocha = new Mocha({
+		ui: 'tdd',
+		color: true,
+		timeout: 20000,
+		reporter: 'mocha-junit-reporter',
+		reporterOptions: {
+			mochaFile: 'artifacts/mocha_results.xml'
+		}
+	});
+
+	const testsRoot = path.resolve(__dirname, '../..');
+	const options = { cwd: testsRoot };
+	const files = glob.sync("**/**.test.js", options);
+
+	// console.log('Glob verification', await nyc.exclude.glob(nyc.cwd));
+    for (const file of files) {
+        mocha.addFile(path.resolve(testsRoot, file));
     }
-  });
+    try {
+		console.log("----- await promise")
+        await new Promise<void>((resolve, reject) => {
+			console.log("----- running mocha")
+            mocha.run(failures => (failures ? reject(new Error(`${failures} tests failed`)) : resolve()))
+			console.log("----- mocha complete")
+		});
+		console.log("----- promise complete")
+    } finally {
+		console.log("finally!")
+        if (nyc !== undefined) {
+			console.log("writing coverage file")
+            nyc.writeCoverageFile();
+            await nyc.report();
+			console.log("coverage file written")
+        }
+    }
 
-  const testsRoot = path.resolve(__dirname, '..');
-
-  return new Promise((c, e) => {
-    glob('**/**.test.js', { cwd: testsRoot }, (err, files) => {
-      if (err) {
-        return e(err);
-      }
-
-      // Add files to the test suite
-      files.forEach(f => mocha.addFile(path.resolve(testsRoot, f)));
-
-      try {
-        // Run the mocha test
-        mocha.run(failures => {
-          if (failures > 0) {
-            console.error(`${failures} tests failed.`);
-            e(new Error(`${failures} tests failed.`));
-          } else {
-            c();
-          }
-        });
-      } catch (err) {
-        e(err);
-      }
-    });
-  });
 }

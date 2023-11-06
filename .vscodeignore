@@ -1,7 +1,19 @@
 **/*.js.map
+**/*.ts
 
-.vscode
-node_modules
+.circleci/
+.git-hooks/
+.vscode/
+artifacts/
+coverage/
+node_modules/
+sampple/
 src/
+test_projects/
+
+.gitignore
+.vscode-test.js
+cleanup.sh
+sonar-project.properties
 tsconfig.json
 webpack.config.js
