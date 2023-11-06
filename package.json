@@ -2,7 +2,7 @@
 	"name": "ablunit-test-provider",
 	"displayName": "ABLUnit Test Runner",
 	"description": "OpenEdge ABLUnit support for VSCode",
-	"version": "0.0.1",
+	"version": "0.1.0",
 	"publisher": "kherring",
 	"pricing": "Free",
 	"private": true,
@@ -63,7 +63,7 @@
 	"contributes": {
 		"languages": [
 			{
-				"id": "abl",
+				"id": "abl-procedures",
 				"aliases": [
 					"OpenEdge ABL",
 					"abl",
@@ -71,9 +71,18 @@
 					"Progress 4GL"
 				],
 				"extensions": [
-					".w",
-					".p",
-					".i",
+					".p"
+				]
+			},
+			{
+				"id": "abl-classes",
+				"aliases": [
+					"OpenEdge ABL",
+					"abl",
+					"Progress",
+					"Progress 4GL"
+				],
+				"extensions": [
 					".cls"
 				]
 			}
@@ -248,8 +257,12 @@
 		"commands": [],
 		"snippets": [
 			{
-				"language": "abl",
-				"path": "./snippets.json"
+				"language": "abl-procedures",
+				"path": "./snippets-procedures.json"
+			},
+			{
+				"language": "abl-classes",
+				"path": "./snippets-classes.json"
 			}
 		]
 	},

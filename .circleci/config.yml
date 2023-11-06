@@ -50,10 +50,16 @@ jobs:
       - run: sudo npm install -g @vscode/vsce
       - run: vsce package --pre-release
       - when:
-          condition:
-            equal: [ "main", << pipeline.git.branch >> ]
+          condition: << pipeline.git.tag >>
           steps:
-          - run: vsce publish --pre-release --packagePath ablunit-test-provider-*.vsix
+          - run:
+              name: validate version matches tag
+              command: |
+                if [ "$(jq -r .version package.json)" != "${CIRCLE_TAG#v}" ]; then
+                  echo "Version in package.json does not match tag"
+                  exit 1
+                fi
+          - run: vsce publish --pre-release --packagePath ablunit-test-provider-*.vsix --githubBranch main --allow-star-activation
       - run: mkdir -p artifacts && cp ablunit-test-provider-*.vsix artifacts
       - store_artifacts:
           when: always
