@@ -1,7 +1,8 @@
 **/*.js.map
-
-.vscode
-node_modules
+**/*.ts
+.circleci/
+.vscode/
+node_modules/
 src/
 tsconfig.json
 webpack.config.js
