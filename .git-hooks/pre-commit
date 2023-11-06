@@ -1,5 +1,6 @@
 #!/bin/sh
 
+echo "validing CircleCI config..." >&2
 if command -v circleci; then
 	circleci config validate
 else

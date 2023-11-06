@@ -48,11 +48,12 @@ jobs:
           at: .
       - run: npm install
       - run: sudo npm install -g @vscode/vsce
-      - run:
-          name: vsce package && vsce publish
-          command: |
-            vsce package --pre-release
-            vsce publish --pre-release --packagePath ablunit-test-provider-*.vsix
+      - run: vsce package --pre-release
+      - when:
+          condition:
+            equal: [ "main", << pipeline.git.branch >> ]
+          steps:
+          - run: vsce publish --pre-release --packagePath ablunit-test-provider-*.vsix
       - run: mkdir -p artifacts && cp ablunit-test-provider-*.vsix artifacts
       - store_artifacts:
           when: always
