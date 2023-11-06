@@ -1,0 +1,92 @@
+{
+	"block-level on error undo, throw.": {
+		"prefix": "block-level on error undo, throw.",
+		"body": [
+			"block-level on error undo, throw."
+		]
+	},
+	"routing-level on error undo, throw.": {
+		"prefix": "routine-level on error undo, throw.",
+		"body": "routine-level on error undo, throw."
+	},
+	"using OpenEdge.Core.Assert.":{
+		"prefix": "using OpenEdge.Core.Assert.",
+		"body": "using OpenEdge.Core.Assert."
+	},
+	"@Ignore": {
+		"prefix": "@Ignore",
+		"body": [
+			"@Ignore"
+		],
+		"description": "Ignores the test. You can use this annotation when you are still working on a code, the test case is not ready to run, or if the execution time of test is too long to be included."
+	},
+	"@Testsuite": {
+		"prefix": "@Testsuite",
+		"body": "@Testsuite.",
+		"description": ""
+	},
+
+	"@Test procedure": {
+		"prefix": "@Test procedure",
+		"body": [
+			"@Test.",
+			"procedure ${1:testProcedureName} :",
+			"  ${2:Assert:Equals(1,2).}",
+			"end procedure."
+		],
+		"description": "A procedure that is a test procedure"
+	},
+	"@Setup procedure": {
+		"prefix": "@Setup procedure",
+		"body": [
+			"@Setup.",
+			"procedure beforeAll :",
+			"  //Runs before each test procedure",
+			"  ${1:// do setup here}",
+			"end procedure."
+		],
+		"description": "Executes the procedure before each test. This annotation prepares the test environment such as reading input data or initializing the class."
+	},
+	"@Before procedure": {
+		"prefix": "@Before procedure",
+		"body": [
+			"@Before.",
+			"procedure beforeEach :",
+			"  //Executes after each test",
+			"  ${1:// do setup here}",
+			"end procedure."
+		],
+		"description": "Executes the procedure once per class, before the start of all tests. This annotation can be used to perform time-sensitive activities such as connecting to a database."
+	},
+	"@TearDown procedure": {
+		"prefix": "@TearDown procedure",
+		"body": [
+			"@TearDown.",
+			"procedure afterEach :",
+			"  //Executes after each test",
+			"  ${1:// do some cleanup here}",
+			"end procedure."
+		],
+		"description": "Executes the procedure after each test. This annotation cleans up the test environment such as deleting temporary data or restoring defaults."
+	},
+	"@After procedure": {
+		"prefix": "@After procedure",
+		"body": [
+			"@After.",
+			"procedure afterAll :",
+			"  //Executes after each test",
+			"end procedure."
+		],
+		"description": "Executes the procedure once, after all the tests are executed. This annotation is used to perform clean-up activities such as disconnecting from a database."
+	},
+	"@Test exception procedure": {
+		"prefix": "@Test exception procedure",
+		"body": [
+			"@Test (expected=\"${1:ExceptionType}\")",
+			"procedure testExceptionProc :",
+			"  ${2:runProcThrowsException().} //Throws ${1}",
+			"end procedure."
+		],
+		"description": "Fails the test if the procedure does not throw the exception mentioned in the expected attribute."
+	}
+}
