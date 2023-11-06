@@ -12,17 +12,35 @@
 			"supported": false
 		}
 	},
+	"badges": [
+		{
+			"href": "https://sonarcloud.io/api/project_badges/measure?project=kenherring_ablunit-test-provider&metric=sqale_rating",
+			"url": "https://sonarcloud.io/summary/new_code?id=kenherring_ablunit-test-provider",
+			"description": "SonarCloud Maintainability Rating"
+		}
+	],
+	"keywords": [
+		"progress",
+		"progress software",
+		"openege",
+		"abl",
+		"ablunit",
+		"progress software",
+		"pdsoe"
+	],
 	"repository": "https://github.com/kherring/ablunit-test-provider",
 	"bugs": {
 		"url": "https://github.coim/kherring/ablunit-test-provider/issues"
 	},
 	"engines": {
-		"vscode": "^1.68.0"
+		"vscode": "^1.83.0"
 	},
 	"categories": [
-		"Testing"
+		"Testing",
+		"Snippets"
 	],
 	"activationEvents": [
+		"onStartupFinished",
 		"workspaceContains:{**/*.cls,**/*.p}"
 	],
 	"main": "./out/extension.js",
