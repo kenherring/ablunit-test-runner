@@ -2,9 +2,9 @@
 	"eslint.enable": true,
 	"npm.autoDetect": "on",
 	"redhat.telemetry.enabled": false,
-	"sonarlint.disableTelemetry": true,
 	"sonarlint.connectedMode.project": {
 		"connectionId": "sonarcloud",
 		"projectKey": "kenherring_ablunit-test-provider"
 	},
+	"sonarlint.disableTelemetry": true,
 }
