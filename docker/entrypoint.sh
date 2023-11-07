@@ -26,9 +26,14 @@ else
 fi
 
 RESULTS_COUNT=$(find . -name 'mocha_results_*.xml' | wc -l)
+LCOV_COUNT=$(find . -name 'lcov.info' | wc -l)
 
 if [ "$RESULTS_COUNT" = 0 ]; then
 	echo 'mocha_results_*.xml not found'
+	exit 1
+fi
+if [ "$LCOV_COUNT" = 0 ]; then
+	echo 'lcov.info not found'
 	exit 1
 fi
 

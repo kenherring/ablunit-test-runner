@@ -44,7 +44,7 @@ jobs:
           path: artifacts/
       - store_artifacts:
           when: always
-          path: coverage_*/
+          path: coverage_proj1/
       - store_test_results:
           when: always
           path: artifacts/mocha_results_*.xml
