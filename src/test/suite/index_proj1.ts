@@ -9,6 +9,7 @@ function setupCoverage() {
 	const nyc = new NYC({
 		cwd: path.join(__dirname, '..', '..', '..'),
 		// exclude: ['**/test/**', '.vscode-test/**'],
+		exclude: ['**/.vscode-test/**'],
 		reporter: ['text', 'html', 'lcov' ],
 		tempDir: path.join(__dirname, "..", "..", "..", "coverage", ".nyc_output"),
 		all: true,
@@ -47,7 +48,7 @@ export async function run(): Promise<void> {
 		timeout: 20000,
 		reporter: 'mocha-junit-reporter',
 		reporterOptions: {
-			mochaFile: 'artifacts/mocha_results.xml'
+			mochaFile: 'artifacts/mocha_results_proj1.xml'
 		}
 	});
 

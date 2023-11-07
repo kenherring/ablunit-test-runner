@@ -25,8 +25,10 @@ else
 	fi
 fi
 
-if [ ! -f artifacts/mocha_results.xml ]; then
-	echo 'mocha_results.xml not found'
+RESULTS_COUNT=$(find . -name 'mocha_results_*.xml' | wc -l)
+
+if [ "$RESULTS_COUNT" = 0 ]; then
+	echo 'mocha_results_*.xml not found'
 	exit 1
 fi
 
