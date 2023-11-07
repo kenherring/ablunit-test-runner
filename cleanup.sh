@@ -11,6 +11,6 @@ for F in "${ARR[@]}"; do
 done
 
 echo "deleting 'listings' directories"
-find . -type d -name 'listings' $DELETE
+find . -type d -name 'listings' -exec rm -rv {} +
 
 rm -rf artifacts/ coverage/

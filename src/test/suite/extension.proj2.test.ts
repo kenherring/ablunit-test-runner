@@ -2,19 +2,14 @@ import * as assert from 'assert';
 import { after } from 'mocha';
 import * as vscode from 'vscode';
 
-suite('Extension Test Suite', () => {
+suite('Extension Test Suite - proj2', () => {
 
 	after(() => {
 		console.log("after")
 	});
 
-	test('Sample test', () => {
-		assert.strictEqual(-1, [1, 2, 3].indexOf(5));
-		assert.strictEqual(-1, [1, 2, 3].indexOf(0));
-	});
-
-	test('ablunit.json file exists 1', async () => {
-		const ablunitJson = vscode.Uri.joinPath(vscode.workspace.workspaceFolders![0].uri,'ablunit.json')
+	test('temp/ablunit.json file exists', async () => {
+		const ablunitJson = vscode.Uri.joinPath(vscode.workspace.workspaceFolders![0].uri,'temp','ablunit.json')
 		await vscode.commands.executeCommand('workbench.view.testing.focus').then(async () => {
 			return
 		})

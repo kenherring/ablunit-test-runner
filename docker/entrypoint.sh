@@ -25,7 +25,6 @@ else
 	fi
 fi
 
-xvfb-run -a npm run test
 if [ ! -f artifacts/mocha_results.xml ]; then
 	echo 'mocha_results.xml not found'
 	exit 1

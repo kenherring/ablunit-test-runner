@@ -3,6 +3,8 @@
 		"circleci.circleci",
 		"riversidesoftware.openedge-abl-lsp",
 		"sonarsource.sonarlint-vscode",
-		"dbaeumer.vscode-eslint"
+		"dbaeumer.vscode-eslint",
+		"ms-vscode.extension-test-runner",
+		"timonwong.shellcheck"
 	]
 }

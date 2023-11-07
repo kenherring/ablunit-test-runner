@@ -12,5 +12,5 @@
 	"terminal.integrated.allowChords": true,
 	"ablunit.profilerOptions.enabled": false,
 	"ablunit.notificationsEnabled": false,
-	// "ablunit.tempDir": "${workspaceFolder}"
+	"ablunit.tempDir": "${workspaceFolder}"
 }

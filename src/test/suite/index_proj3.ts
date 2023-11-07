@@ -53,7 +53,7 @@ export async function run(): Promise<void> {
 
 	const testsRoot = path.resolve(__dirname, '../..');
 	const options = { cwd: testsRoot };
-	const files = glob.sync("**/**.test.js", options);
+	const files = glob.sync("**/**.proj3.test.js", options);
 
 	// console.log('Glob verification', await nyc.exclude.glob(nyc.cwd));
     for (const file of files) {
