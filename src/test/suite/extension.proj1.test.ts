@@ -1,5 +1,5 @@
 import * as assert from 'assert';
-import { after, beforeEach } from 'mocha';
+import { after } from 'mocha';
 import * as vscode from 'vscode';
 
 suite('Extension Test Suite - proj1', () => {

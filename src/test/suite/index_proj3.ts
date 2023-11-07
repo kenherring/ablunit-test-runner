@@ -9,8 +9,9 @@ function setupCoverage() {
 	const nyc = new NYC({
 		cwd: path.join(__dirname, '..', '..', '..'),
 		// exclude: ['**/test/**', '.vscode-test/**'],\
-		exlcude: ['**/.vscode-test/**'],
-		reporter: ['text', 'html', 'lcov' ],
+		// exlcude: ['**/.vscode-test/**'],
+		// reporter: ['text', 'html', 'lcov'],
+		reporter: ['lcov'],
 		tempDir: path.join(__dirname, "..", "..", "..", "coverage_proj3", ".nyc_output"),
 		reportDir: path.join(__dirname, "..", "..", "..", "coverage_proj3"),
 		all: true,
