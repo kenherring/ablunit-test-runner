@@ -1,10 +1,10 @@
 {
 	"recommendations": [
 		"circleci.circleci",
-		"riversidesoftware.openedge-abl-lsp",
-		"sonarsource.sonarlint-vscode",
 		"dbaeumer.vscode-eslint",
 		"ms-vscode.extension-test-runner",
+		"riversidesoftware.openedge-abl-lsp",
+		"sonarsource.sonarlint-vscode",
 		"timonwong.shellcheck"
 	]
 }
