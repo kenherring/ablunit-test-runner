@@ -11,9 +11,9 @@ function setupCoverage() {
 		// exclude: ['**/test/**', '.vscode-test/**'],\
 		// exlcude: ['**/.vscode-test/**'],
 		// reporter: ['text', 'html', 'lcov'],
-		reporter: ['lcov'],
-		tempDir: path.join(__dirname, "..", "..", "..", "coverage_proj3", ".nyc_output"),
-		reportDir: path.join(__dirname, "..", "..", "..", "coverage_proj3"),
+		reporter: ['text', 'lcov'],
+		tempDir: path.join(__dirname, "..", "..", "..", "coverage", ".nyc_output"),
+		reportDir: path.join(__dirname, "..", "..", "..", "coverage"),
 		all: true,
 		instrument: true,
 		hookRequire: true,
