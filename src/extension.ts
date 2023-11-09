@@ -90,10 +90,7 @@ export async function activate(context: vscode.ExtensionContext) {
 					run.skipped(test)
 				} else {
 					run.started(test)
-					console.log('data.run() start')
 					const prom = await data.run(test, run)
-					console.log('data.run() end')
-					// prom.resolve()
 				}
 				run.appendOutput(`completed ${test.id}\r\n`)
 			}
