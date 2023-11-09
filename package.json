@@ -226,7 +226,7 @@
 				},
 				"ablunit.profilerOptions.description": {
 					"type": "string",
-					"default": "Unit Tests Run via ABLUnit Test Provider (VSCode)",
+					"default": "Unit Tests Run via ABLUnit Test Runner (VSCode)",
 					"markdownDescription": "Description of the profiler run\n\nsee the [`PROFILER:DESCRIPTION`](https://docs.progress.com/bundle/abl-reference/page/DESCRIPTION-attribute.html) attribute"
 				},
 				"ablunit.profilerOptions.filename": {

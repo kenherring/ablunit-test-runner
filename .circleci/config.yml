@@ -11,11 +11,19 @@ workflows:
             - DockerHub
             - PROGRESS_CFG
             - SonarCloud
+          filters:
+            tags:
+              only:
+                - /^v.*/
       - package-and-publish:
           requires:
             - test-and-scan
           context:
             - Azure_PAT
+          filters:
+            tags:
+              only:
+                - /^v.*/
 
 jobs:
   test-and-scan:
