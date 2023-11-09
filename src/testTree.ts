@@ -91,13 +91,13 @@ class TestFile extends TestTypeObj {
 		console.error("updateFromContents TestFile - skipping")
 	}
 
-	async run(item: vscode.TestItem, options: vscode.TestRun) {
+	run(item: vscode.TestItem, options: vscode.TestRun) {
 		if (!resultData) {
 			throw new Error("no result data")
 		}
 		this.currentResults = resultData.get(options)
 		this.currentResults!.setTestData(testData)
-		await ablunitRun(item, ablunitConfig, options, testData.get(item)!, this.currentResults!).then()
+		return ablunitRun(item, ablunitConfig, options, testData.get(item)!, this.currentResults!).then()
 	}
 }
 

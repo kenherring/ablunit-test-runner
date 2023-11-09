@@ -12,9 +12,9 @@ export interface IABLUnitJson {
 	output: {
 		location: string //results.xml directory
 		locationUri: Uri //results.xml directory
-		resultsFile: "results.xml"
+		resultsFile: 'results.xml'
 		resultsUri: Uri
-		format: "xml"
+		format: 'xml'
 		writeJson: boolean
 		jsonUri: Uri
 	}
@@ -83,8 +83,8 @@ export interface IABLUnitConfig {
 export const ablunitConfig: IABLUnitConfig = {
 	workspaceUri: workspaceDir,
 	storageUri: workspaceDir,
-	tempDir: workspace.getConfiguration('ablunit').get('tempDir', workspaceDir.fsPath),
-	tempDirUri: Uri.file(workspace.getConfiguration('ablunit').get('tempDir',workspaceDir.fsPath)),
+	tempDir: workspace.getConfiguration('ablunit').get('tempDir', '').replace('${workspaceFolder}', workspaceDir.fsPath),
+	tempDirUri: workspaceDir,
 	display: {
 		classLabel: workspace.getConfiguration('ablunit').get('classLabel', 'classpath'),
 		style: workspace.getConfiguration('ablunit').get('files.style', 'tree'),
@@ -96,7 +96,7 @@ export const ablunitConfig: IABLUnitConfig = {
 	findAllFilesAtStartup: workspace.getConfiguration('ablunit').get('findAllFilesAtStartup', true),
 	importOpenedgeProjectJson:  workspace.getConfiguration('ablunit').get('importOpenedgeProjectJson', true),
 	notificationsEnabled:  workspace.getConfiguration('ablunit').get('notificationsEnabled', true),
-	params: "",
+	params: '',
 	progressIniPath: "progress.ini",
 	progressIniUri: Uri.joinPath(workspaceDir, "progress.ini"),
 	tests: {
@@ -105,16 +105,16 @@ export const ablunitConfig: IABLUnitConfig = {
 		task: workspace.getConfiguration('ablunit').get('tests.task', ''),
 	},
 	configJson: {
-		configPath: "ablunit.json",
-		configUri: Uri.joinPath(workspaceDir, "ablunit.json"),
+		configPath: workspace.getConfiguration('ablunit').get('configJson.configPath', 'ablunit.json'),
+		configUri: Uri.joinPath(workspaceDir, 'ablunit.json'),
 		output: {
-			location: workspace.getConfiguration('ablunit.configJson').get('outputLocation', ''),
-			locationUri: Uri.file(workspace.getConfiguration('ablunit.configJson').get('outputLocation', workspaceDir.fsPath)),
-			resultsFile: "results.xml",
-			resultsUri: Uri.file(workspace.getConfiguration('ablunit.configJson').get('outputLocation', workspaceDir.fsPath) + "/results.xml"),
-			format: "xml",
-			writeJson: workspace.getConfiguration('ablunit.configJson').get('writeJson', false),
-			jsonUri: Uri.file(workspace.getConfiguration('ablunit.configJson').get('outputLocation', '') + "/results.json")
+			location: workspace.getConfiguration('ablunit').get('configJson.outputLocation', ''),
+			locationUri: workspaceDir,
+			resultsFile: 'results.xml',
+			resultsUri: Uri.joinPath(workspaceDir, 'results.xml'),
+			format: 'xml',
+			writeJson: workspace.getConfiguration('ablunit').get('configJson.writeJson', false),
+			jsonUri: Uri.joinPath(workspaceDir,'results.json')
 		},
 		quitOnEnd: workspace.getConfiguration('ablunit').get('configJson.quitOnEnd', true),
 		writeLog: workspace.getConfiguration('ablunit').get('configJson.writeLog', true),
@@ -123,19 +123,19 @@ export const ablunitConfig: IABLUnitConfig = {
 	},
 	profilerOptions: {
 		enabled: workspace.getConfiguration('ablunit.profilerOptions').get('enabled', true),
-		optionsPath: workspace.getConfiguration('ablunit.profilerOptions').get('optionsPath', 'profile.options'),
-		optionsUri: Uri.joinPath(workspaceDir, workspace.getConfiguration('ablunit.profilerOptions').get('optionsPath', 'profile.options')),
+		optionsPath: 'profile.options',
+		optionsUri: Uri.joinPath(workspaceDir, 'profile.options'),
 		coverage: workspace.getConfiguration('ablunit.profilerOptions').get('coverage', true),
 		description: workspace.getConfiguration('ablunit.profilerOptions').get('description', 'Unit Tests Run via ABLUnit Test Provider (VSCode)'),
-		filename: workspace.getConfiguration('ablunit.profilerOptions').get('filename', 'prof.out'),
-		filenameUri: Uri.joinPath(workspaceDir, workspace.getConfiguration('ablunit.profilerOptions').get('filename', 'prof.out')),
-		listings: workspace.getConfiguration('ablunit.profilerOptions').get('listings', 'listings'),
-		listingsUri: Uri.joinPath(workspaceDir, workspace.getConfiguration('ablunit.profilerOptions').get('listings', 'listings')),
+		filename: 'prof.out',
+		filenameUri: Uri.joinPath(workspaceDir, 'prof.out'),
+		listings: 'listings',
+		listingsUri: Uri.joinPath(workspaceDir, 'listings'),
 		statistics: workspace.getConfiguration('ablunit.profilerOptions').get('statistics', false),
 		traceFilter: workspace.getConfiguration('ablunit.profilerOptions').get('traceFilter', ''),
 		tracing: workspace.getConfiguration('ablunit.profilerOptions').get('tracing', ''),
 		writeJson: workspace.getConfiguration('ablunit.profilerOptions').get('writeJson', false),
-		jsonUri: Uri.joinPath(workspaceDir, workspace.getConfiguration('ablunit.profilerOptions').get('filename', 'prof.out').replace(/\.[a-zA-Z]+$/, '.json'))
+		jsonUri: Uri.joinPath(workspaceDir, 'prof.json')
 	}
 }
 
@@ -143,24 +143,49 @@ export class ABLUnitConfig  {
 
 	constructor(workspaceDir: Uri) {
 		ablunitConfig.workspaceUri = workspaceDir
-		this.setTempDirUri(workspaceDir)
+		if (ablunitConfig.tempDir != '') {
+			if (isRelativePath(ablunitConfig.tempDir)) {
+				ablunitConfig.tempDirUri = Uri.joinPath(ablunitConfig.workspaceUri, ablunitConfig.tempDir)
+			} else {
+				ablunitConfig.tempDirUri = Uri.file(ablunitConfig.tempDir)
+			}
+			this.setTempDirUri(ablunitConfig.tempDirUri)
+		}
+		console.log("[ABLUnitConfig constructor] workspaceUri=" + workspaceDir.fsPath)
+		console.log("[ABLUnitConfig constructor] tempDir=" + workspace.getConfiguration('ablunit').get('tempDir', ''))
 	}
 
 	async setTempDirUri (tempDir: Uri) {
+		console.log("[setTempDirUri] tempDir=" + tempDir.fsPath)
 		outputChannel.appendLine("using tempDir='" + ablunitConfig.tempDirUri.fsPath + "'")
-		ablunitConfig.tempDirUri = Uri.joinPath(workspaceDir, ablunitConfig.tempDir)
 		if (ablunitConfig.tempDirUri.fsPath == ablunitConfig.workspaceUri.fsPath) {
+			console.log("skip setTempDir - tempDir is the same as workspace")
 			return
 		}
-		ablunitConfig.progressIniUri = Uri.joinPath(ablunitConfig.tempDirUri, ablunitConfig.progressIniPath)
-		ablunitConfig.configJson.configUri = Uri.joinPath(ablunitConfig.tempDirUri, ablunitConfig.configJson.configPath)
-		ablunitConfig.configJson.output.locationUri = Uri.joinPath(ablunitConfig.tempDirUri, ablunitConfig.configJson.output.location)
-		ablunitConfig.configJson.output.resultsUri = Uri.joinPath(ablunitConfig.configJson.output.locationUri, ablunitConfig.configJson.output.resultsFile)
-		ablunitConfig.configJson.output.jsonUri = Uri.joinPath(ablunitConfig.configJson.output.locationUri, ablunitConfig.configJson.output.resultsFile.replace(/\.[a-zA-Z]+$/, '.json'))
-		ablunitConfig.profilerOptions.optionsUri = Uri.joinPath(ablunitConfig.tempDirUri, ablunitConfig.profilerOptions.optionsPath)
-		ablunitConfig.profilerOptions.filenameUri = Uri.joinPath(ablunitConfig.tempDirUri, ablunitConfig.profilerOptions.filename)
-		ablunitConfig.profilerOptions.listingsUri = Uri.joinPath(ablunitConfig.tempDirUri, ablunitConfig.profilerOptions.listings)
-		ablunitConfig.profilerOptions.jsonUri = Uri.joinPath(ablunitConfig.tempDirUri, ablunitConfig.profilerOptions.filename.replace(/\.[a-zA-Z]+$/, '.json'))
+
+		if (isRelativePath(ablunitConfig.progressIniPath)) {
+			ablunitConfig.progressIniUri = Uri.joinPath(ablunitConfig.tempDirUri, ablunitConfig.progressIniPath)
+		}
+		if (isRelativePath(ablunitConfig.configJson.configPath)) {
+			ablunitConfig.configJson.configUri = Uri.joinPath(ablunitConfig.tempDirUri, ablunitConfig.configJson.configPath)
+		}
+		if (isRelativePath(ablunitConfig.configJson.output.location)) {
+			ablunitConfig.configJson.output.locationUri = Uri.joinPath(ablunitConfig.tempDirUri, ablunitConfig.configJson.output.location)
+		}
+		if (isRelativePath(ablunitConfig.configJson.output.resultsFile)) {
+			ablunitConfig.configJson.output.resultsUri = Uri.joinPath(ablunitConfig.configJson.output.locationUri, ablunitConfig.configJson.output.resultsFile)
+			ablunitConfig.configJson.output.jsonUri = Uri.joinPath(ablunitConfig.configJson.output.locationUri, ablunitConfig.configJson.output.resultsFile.replace(/\.[a-zA-Z]+$/, '.json'))
+		}
+		if (isRelativePath(ablunitConfig.profilerOptions.optionsPath)) {
+			ablunitConfig.profilerOptions.optionsUri = Uri.joinPath(ablunitConfig.tempDirUri, ablunitConfig.profilerOptions.optionsPath)
+		}
+		if (isRelativePath(ablunitConfig.profilerOptions.filename)) {
+			ablunitConfig.profilerOptions.filenameUri = Uri.joinPath(ablunitConfig.tempDirUri, ablunitConfig.profilerOptions.filename)
+		}
+		if (isRelativePath(ablunitConfig.profilerOptions.listings)) {
+			ablunitConfig.profilerOptions.listingsUri = Uri.joinPath(ablunitConfig.tempDirUri, ablunitConfig.profilerOptions.listings)
+			ablunitConfig.profilerOptions.jsonUri = Uri.joinPath(ablunitConfig.tempDirUri, ablunitConfig.profilerOptions.filename.replace(/\.[a-zA-Z]+$/, '.json'))
+		}
 	}
 
 	async createDir(uri: Uri) {
@@ -172,19 +197,19 @@ export class ABLUnitConfig  {
 
 	async createProgressIni(propath: string) {
 		if (os.platform() != 'win32') { return }
+		console.log("creating progress.ini: '" + ablunitConfig.progressIniUri.fsPath + "'")
 		const iniData = ["[WinChar Startup]", "PROPATH=" + propath]
 		const iniBytes = Uint8Array.from(Buffer.from(iniData.join("\n")))
-		console.log("creating progress.ini: '" + workspace.asRelativePath(ablunitConfig.progressIniUri) + "'")
 		return workspace.fs.writeFile(ablunitConfig.progressIniUri, iniBytes)
 	}
 
 	async createAblunitJson(cfg: IABLUnitJson) {
-		console.log("creating ablunit.json: '" + workspace.asRelativePath(cfg.configUri) + "'")
+		console.log("creating ablunit.json: '" + cfg.configUri.fsPath + "'")
 		return workspace.fs.writeFile(cfg.configUri, Uint8Array.from(Buffer.from(JSON.stringify(cfg, null, 2))))
 	}
 
 	async createProfileOptions (profOpts: IProfilerOptions) {
-		if (!profOpts.enabled) { return }
+		if (!profOpts.enabled) { return Promise.resolve()}
 
 		const opt: string[] = [ '-profiling',
 								'-filename "' + workspace.asRelativePath(profOpts.filenameUri) + '"',
@@ -233,5 +258,14 @@ export class ABLUnitConfig  {
 		})
 		outputChannel.appendLine("propath='" + parser.toString() + "'")
 		return parser
+	}
+}
+
+
+function isRelativePath (path: string) {
+	if(path.startsWith("/") || RegExp(/^[a-zA-Z]:\\/).exec(path)) {
+		return false
+	} else {
+		return true
 	}
 }

@@ -515,7 +515,6 @@ export class ABLProfileJson {
 				parent.executableLines += child.executableLines
 				parent.executedLines += child.executedLines
 				child.lines.forEach(line => {
-					console.log(parent.ModuleID + " " + child.ModuleID + " " + line.LineNo)
 					const parentLine = parent.lines.find(l => l.LineNo == line.LineNo)
 					if(parentLine) {
 						parentLine.ExecCount = line.ExecCount

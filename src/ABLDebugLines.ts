@@ -35,7 +35,7 @@ async function readXrefFile(xrefUri: Uri) {
 		return str
 	}, (reason) => {
 		console.error("(readXrefFile) WARNING: xref file not found '" + xrefUri.fsPath + "': " + reason)
-		throw reason
+		return undefined //don't rethrow, just return undefined because we don't want to stop processing
 	})
 }
 
