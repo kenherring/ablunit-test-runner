@@ -9,7 +9,6 @@
 		"sourceMap": true,
 		"strict": true,
 		"rootDir": "src",
-		// "downlevelIteration": true,
 		"plugins": [
 			{
 				"name": "typescript-tslint-plugin"

@@ -143,8 +143,6 @@ export class ABLUnitConfig  {
 
 	constructor(workspaceDir: Uri) {
 		ablunitConfig.workspaceUri = workspaceDir
-		console.log("[ABLUnitConfig constructor] workspaceUri=" + workspaceDir.fsPath)
-		console.log("[ABLUnitConfig constructor] tempDir=" + workspace.getConfiguration('ablunit').get('tempDir', ''))
 		if (ablunitConfig.tempDir != '') {
 			if (isRelativePath(ablunitConfig.tempDir)) {
 				ablunitConfig.tempDirUri = Uri.joinPath(ablunitConfig.workspaceUri, ablunitConfig.tempDir)
@@ -153,43 +151,30 @@ export class ABLUnitConfig  {
 			}
 			this.setTempDirUri(ablunitConfig.tempDirUri)
 		}
-
-		console.log("[ABLUnitConfig constructor] tempDir=" + ablunitConfig.tempDir)
-		console.log("[ABLUnitConfig constructor] tempDirUri=" + ablunitConfig.tempDirUri.fsPath)
+		console.log("[ABLUnitConfig constructor] workspaceUri=" + workspaceDir.fsPath)
+		console.log("[ABLUnitConfig constructor] tempDir=" + workspace.getConfiguration('ablunit').get('tempDir', ''))
 	}
 
 	async setTempDirUri (tempDir: Uri) {
 		console.log("[setTempDirUri] tempDir=" + tempDir.fsPath)
-
-		console.log("using tempDir='" + ablunitConfig.tempDirUri.fsPath + "'")
 		outputChannel.appendLine("using tempDir='" + ablunitConfig.tempDirUri.fsPath + "'")
 		if (ablunitConfig.tempDirUri.fsPath == ablunitConfig.workspaceUri.fsPath) {
-			console.log("skip set dir")
+			console.log("skip setTempDir - tempDir is the same as workspace")
 			return
 		}
 
 		if (isRelativePath(ablunitConfig.progressIniPath)) {
 			ablunitConfig.progressIniUri = Uri.joinPath(ablunitConfig.tempDirUri, ablunitConfig.progressIniPath)
 		}
-		console.log("ablunitConfig.configJson.configPath=" + ablunitConfig.configJson.configPath)
 		if (isRelativePath(ablunitConfig.configJson.configPath)) {
 			ablunitConfig.configJson.configUri = Uri.joinPath(ablunitConfig.tempDirUri, ablunitConfig.configJson.configPath)
-			console.log("ablunitConfig.configJson.configUri=" + ablunitConfig.configJson.configUri.fsPath)
 		}
-		console.log("output.location=" + ablunitConfig.configJson.output.location)
 		if (isRelativePath(ablunitConfig.configJson.output.location)) {
-			console.log("output.locationUri(1)=" + ablunitConfig.configJson.output.locationUri)
 			ablunitConfig.configJson.output.locationUri = Uri.joinPath(ablunitConfig.tempDirUri, ablunitConfig.configJson.output.location)
-			console.log("output.locationUri(2)=" + ablunitConfig.configJson.output.locationUri)
 		}
 		if (isRelativePath(ablunitConfig.configJson.output.resultsFile)) {
-			console.log("resultsFile=" + ablunitConfig.configJson.output.resultsFile)
-			console.log("resultsUri(1)=" + ablunitConfig.configJson.output.resultsUri)
-			console.log("locationUri=" + ablunitConfig.configJson.output.locationUri)
 			ablunitConfig.configJson.output.resultsUri = Uri.joinPath(ablunitConfig.configJson.output.locationUri, ablunitConfig.configJson.output.resultsFile)
-			console.log("resultsUri(2)=" + ablunitConfig.configJson.output.resultsUri)
 			ablunitConfig.configJson.output.jsonUri = Uri.joinPath(ablunitConfig.configJson.output.locationUri, ablunitConfig.configJson.output.resultsFile.replace(/\.[a-zA-Z]+$/, '.json'))
-			console.log("resultsJsonUri=" + ablunitConfig.configJson.output.jsonUri)
 		}
 		if (isRelativePath(ablunitConfig.profilerOptions.optionsPath)) {
 			ablunitConfig.profilerOptions.optionsUri = Uri.joinPath(ablunitConfig.tempDirUri, ablunitConfig.profilerOptions.optionsPath)
@@ -279,10 +264,8 @@ export class ABLUnitConfig  {
 
 function isRelativePath (path: string) {
 	if(path.startsWith("/") || RegExp(/^[a-zA-Z]:\\/).exec(path)) {
-		console.log("ABSOLUTE: " + path)
 		return false
 	} else {
-		console.log("RELATIVE: " + path)
 		return true
 	}
 }

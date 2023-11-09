@@ -5,7 +5,6 @@ import * as path from "path";
 function setupNyc() {
 	// eslint-disable-next-line @typescript-eslint/no-var-requires
 	const NYC = require("nyc");
-	// create an nyc instance, config here is the same as your package.json
 	const nyc = new NYC({
 		cache: false,
 		cwd: path.join(__dirname, "..", "..", ".."),
@@ -39,7 +38,6 @@ function setupNyc() {
 }
 
 export function run(): Promise <void> {
-
 	const nyc = setupNyc();
 
 	// Create the mocha test
@@ -64,57 +62,28 @@ export function run(): Promise <void> {
 
 			// Add files to the test suite
 			files.forEach((f) => {
-				console.log("f=" + f)
 				mocha.addFile(path.resolve(testsRoot, f))
 			});
 
-
-
 			try {
-				console.log("1 - mocha.run()")
 				// Run the mocha test
 				mocha.run(async (failures) => {
-					console.log("2 - mocha.run() complete")
 					if (nyc) {
-						console.log("3")
 						nyc.writeCoverageFile();
-						console.log("4")
 						await nyc.report();
-						console.log("5")
 					}
-					console.log("6")
 
 					if (failures > 0) {
-						console.log("7")
-						e(new Error(`${failures} tests failed.`));
 						console.log(`${failures} tests failed.`)
-						console.log("8")
+						e(new Error(`${failures} tests failed.`));
 					}
-					console.log("9")
 					c();
-					console.log("10")
 				});
-				console.log("11")
 			} catch (err) {
-				console.log("12 - catch")
-				console.error(err);
-				console.log("13")
+				console.error('[index_proj3.ts] catch err= ' + err);
 				e(err);
-				console.log("14")
-			// } finally {
-			// 	console.log("[index_proj3.ts] finally")
-			// 	if (nyc) {
-			// 		console.log("16")
-			// 		nyc.writeCoverageFile();
-			// 		console.log("17")
-			// 		nyc.report();
-			// 		console.log("18")
-			// 	}
-			// 	console.log("19")
 			}
-			console.log("20")
 		});
-		console.log("21")
 	});
 
 }
