@@ -1,83 +1,104 @@
+import * as glob from "glob";
 import * as Mocha from "mocha";
-import * as path from 'path';
-import * as glob from 'glob';
+import * as path from "path";
 
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const NYC = require('nyc');
-
-function setupCoverage() {
+function setupNyc() {
+	// eslint-disable-next-line @typescript-eslint/no-var-requires
+	const NYC = require("nyc");
+	// create an nyc instance, config here is the same as your package.json
 	const nyc = new NYC({
-		cwd: path.join(__dirname, '..', '..', '..'),
-		// exclude: ['**/test/**', '.vscode-test/**'],\
-		// exlcude: ['**/.vscode-test/**'],
-		// reporter: ['text', 'html', 'lcov'],
-		reporter: ['text', 'lcov'],
-		tempDir: path.join(__dirname, "..", "..", "..", "coverage", ".nyc_output"),
+		cache: false,
+		cwd: path.join(__dirname, "..", "..", ".."),
 		reportDir: path.join(__dirname, "..", "..", "..", "coverage"),
-		all: true,
-		instrument: true,
+		tempDir: path.join(__dirname, "..", "..", "..", "coverage", ".nyc_output"),
+		exclude: [
+			".attic",
+			".history",
+			"node_modules",
+			"out/test/**",
+			".vscode-test",
+		],
+		extension: [
+			".ts",
+			".tsx",
+		],
 		hookRequire: true,
 		hookRunInContext: true,
 		hookRunInThisContext: true,
+		instrument: true,
+		reporter: ["html", "text"],
 		require: [
-				'ts-node/register',
-				'source-map-support/register'
+			"ts-node/register",
 		],
-		include: [ "**/out/**/*.js" ]
+		sourceMap: true,
 	});
-
 	nyc.reset();
 	nyc.wrap();
-
-	Object.keys(require.cache).filter(f => nyc.exclude.shouldInstrument(f)).forEach(m => {
-		console.warn('Module loaded before NYC, invalidating:', m);
-		delete require.cache[m];
-		require(m);
-	});
-
-
 	return nyc;
-  }
+}
 
-export async function run(): Promise<void> {
-	const nyc = setupCoverage();
-	await nyc.createTempDirectory();
+export function run(): Promise <void> {
+
+	const nyc = setupNyc();
 
 	// Create the mocha test
 	const mocha = new Mocha({
-		ui: 'tdd',
 		color: true,
-		timeout: 20000,
-		reporter: 'mocha-junit-reporter',
-		reporterOptions: {
-			mochaFile: 'artifacts/mocha_results_proj3.xml'
-		}
+		ui: "tdd",
+		timeout: 5000
 	});
 
-	const testsRoot = path.resolve(__dirname, '../..');
-	const options = { cwd: testsRoot };
-	const files = glob.sync("**/**.proj3.test.js", options);
+	const testsRoot = path.resolve(__dirname, "..");
+	return new Promise((c, e) => {
+		glob("**/**.proj3.test.js", {
+			cwd: testsRoot
+		}, (err, files) => {
+			if (err) {
+				return e(err);
+			}
 
-	// console.log('Glob verification', await nyc.exclude.glob(nyc.cwd));
-    for (const file of files) {
-        mocha.addFile(path.resolve(testsRoot, file));
-    }
-    try {
-		console.log("----- await promise")
-        await new Promise<void>((resolve, reject) => {
-			console.log("----- running mocha")
-            mocha.run(failures => (failures ? reject(new Error(`${failures} tests failed`)) : resolve()))
-			console.log("----- mocha complete")
+			// Add files to the test suite
+			files.forEach((f) => {
+				console.log("f=" + f)
+				mocha.addFile(path.resolve(testsRoot, f))
+			});
+
+
+
+			try {
+				console.log("1")
+				// Run the mocha test
+				mocha.run(async (failures) => {
+					console.log("2")
+					if (nyc) {
+						console.log("3")
+						nyc.writeCoverageFile();
+						console.log("4")
+						await nyc.report();
+						console.log("5")
+					}
+					console.log("6")
+
+					if (failures > 0) {
+						console.log("7")
+						e(new Error(`${failures} tests failed.`));
+						console.log("8")
+					}
+					console.log("9")
+					c();
+					console.log("10")
+				});
+				console.log("11")
+			} catch (err) {
+				console.log("12")
+				console.error(err);
+				console.log("13")
+				e(err);
+				console.log("14")
+			}
+			console.log("15")
 		});
-		console.log("----- promise complete")
-    } finally {
-		console.log("finally!")
-        if (nyc !== undefined) {
-			console.log("writing coverage file")
-            nyc.writeCoverageFile();
-            await nyc.report();
-			console.log("coverage file written")
-        }
-    }
+		console.log("16")
+	});
 
 }

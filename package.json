@@ -39,36 +39,38 @@
 		"Testing",
 		"Snippets"
 	],
-	"activationEvents": [
+	"activationEvents2": [
 		"onStartupFinished",
 		"workspaceContains:{**/*.cls,**/*.p}"
 	],
-	"main": "./out/extension.js",
+	"activationEvents": [
+		"onStartupFinished"
+	],
+	"main": "./out/extension",
 	"scripts": {
-		"compile": "tsc -p ./",
-		"compile:testcases": "tsc -p ./",
-		"lint": "eslint \"src/**/*.ts\"",
-		"watch": "tsc -watch -p ./",
-		"download-api": "dts main && dts dev",
-		"postinstall": "npm run download-api",
+		"esbuild-base": "rm -rf out && esbuild ./src/extension.ts --bundle --outfile=out/extension.js --external:vscode --format=cjs --platform=node",
+        "build": "npm run esbuild",
+        "clean": "rm -rf coverage out && sh -c ./cleanup.sh",
+        "compile": "npm run clean && tsc -p ./",
+        "esbuild-watch": "npm run esbuild-base -- --sourcemap --watch",
+        "esbuild": "npm run esbuild-base -- --sourcemap",
+        "postinstall": "echo node ./node_modules/vscode/bin/install",
 		"pretest": "npm run compile",
-		"vscode-test": "vscode-test",
-		"test": "node ./out/test/runTest.js",
-		"esbuild-base": "esbuild ./src/extension.ts --bundle --outfile=out/main.js --external:vscode --format=cjs --platform=node",
-		"esbuild": "npm run esbuild-base -- --sourcemap",
-		"esbuild-watch": "npm run esbuild-base -- --sourcemap --watch",
-		"test-compile": "tsc -p ./",
-		"vscode:prepublish": "tsc",
-		"vscode:prepublish-esbuild": "npm run esbuild-base -- --minify"
+        "test-compile": "tsc -p ./",
+        "test": "node ./out/test/runTest.js",
+        "vscode:prepublish": "npm run esbuild-base -- --minify",
+        "watch-tsc": "tsc -watch -p ./",
+        "watch": "npm run esbuild-watch"
 	},
 	"devDependencies": {
 		"@types/glob": "^8.1.0",
 		"@types/jsonminify": "^0.4.1",
+		"@types/mocha": "^10.0.4",
 		"@types/node": "^16.18.34",
+		"@types/vscode": "^1.84.1",
 		"@types/xml2js": "^0.4.12",
 		"@typescript-eslint/eslint-plugin": "^6.7.0",
 		"@typescript-eslint/parser": "^6.7.0",
-		"@vscode/dts": "^0.4.0",
 		"@vscode/test-cli": "^0.0.4",
 		"@vscode/test-electron": "^2.3.6",
 		"esbuild": "^0.19.5",
@@ -77,6 +79,8 @@
 		"mocha-junit-reporter": "^2.2.1",
 		"nyc": "^15.1.0",
 		"source-map-support": "^0.5.21",
+		"ts-loader": "^9.5.0",
+		"ts-node": "^10.9.1",
 		"typescript": "^5.2.2"
 	},
 	"contributes": {

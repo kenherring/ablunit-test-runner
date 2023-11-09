@@ -15,7 +15,6 @@ function setupCoverage() {
 		// reporter: ['lcov'],
 		tempDir: path.join(__dirname, "..", "..", "..", "coverage", ".nyc_output"),
 		reportDir: path.join(__dirname, "..", "..", "..", "coverage"),
-		all: true,
 		instrument: true,
 		hookRequire: true,
 		hookRunInContext: true,
