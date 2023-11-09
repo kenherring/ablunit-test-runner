@@ -31,10 +31,12 @@ npm run compile
 export PROPATH=.
 
 echo 'starting tests...'
+sed -i 's/"activationEvents"/"activationEvents-vscode"/g;s/"activationEvents-coverage"/"activationEvents"/g' package.json
 xvfb-run -a npm run test
-# 	if ! xvfb-run -a npm test && ! ${CIRCLECI:-false}; then
-# 		bash
-	# fi
+# if ! xvfb-run -a npm test && ! ${CIRCLECI:-false}; then
+# 	bash
+# fi
+sed -i 's/"activationEvents"/"activationEvents-coverage"/g;s/"activationEvents-vscode"/"activationEvents"/g' package.json
 
 RESULTS_COUNT=$(find . -name 'mocha_results_*.xml' | wc -l)
 LCOV_COUNT=$(find . -name 'lcov.info' | wc -l)

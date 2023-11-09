@@ -39,12 +39,12 @@
 		"Testing",
 		"Snippets"
 	],
-	"activationEvents2": [
-		"onStartupFinished",
-		"workspaceContains:{**/*.cls,**/*.p}"
+	"activationEvents-coverage": [
+		"onStartupFinished"
 	],
 	"activationEvents": [
-		"onStartupFinished"
+		"onStartupFinished",
+		"workspaceContains:{**/*.cls,**/*.p}"
 	],
 	"main": "./out/extension",
 	"scripts": {
@@ -58,6 +58,7 @@
 		"pretest": "npm run compile",
 		"test-compile": "tsc -p ./",
 		"test": "node ./out/test/runTest.js",
+		"vscode-test": "vscode-test",
 		"vscode:prepublish": "npm run esbuild-base -- --minify",
 		"watch-tsc": "tsc -watch -p ./",
 		"watch": "npm run esbuild-watch"
@@ -77,8 +78,7 @@
 		"mocha": "^10.2.0",
 		"mocha-junit-reporter": "^2.2.1",
 		"nyc": "^15.1.0",
-		"ts-node": "^10.9.1",
-		"typescript": "^5.2.2"
+		"ts-node": "^10.9.1"
 	},
 	"contributes": {
 		"languages": [
