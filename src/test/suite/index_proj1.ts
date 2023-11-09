@@ -1,83 +1,90 @@
+import * as glob from "glob";
 import * as Mocha from "mocha";
-import * as path from 'path';
-import * as glob from 'glob';
+import * as path from "path";
 
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const NYC = require('nyc');
+const projName = 'proj1'
 
-function setupCoverage() {
+function setupNyc() {
+	// eslint-disable-next-line @typescript-eslint/no-var-requires
+	const NYC = require("nyc");
 	const nyc = new NYC({
-		cwd: path.join(__dirname, '..', '..', '..'),
-		// exclude: ['**/test/**', '.vscode-test/**'],
-		// exclude: ['**/.vscode-test/**'],
-		// reporter: ['text', 'html', 'lcov'],
-		reporter: ['text', 'lcov'],
-		// reporter: ['lcov'],
-		tempDir: path.join(__dirname, "..", "..", "..", "coverage", ".nyc_output"),
-		reportDir: path.join(__dirname, "..", "..", "..", "coverage"),
-		instrument: true,
+		cache: false,
+		cwd: path.join(__dirname, "..", "..", ".."),
+		reportDir: path.join(__dirname, "..", "..", "..", 'coverage', "coverage_" + projName),
+		tempDir: path.join(__dirname, "..", "..", "..", 'coverage', "coverage_" + projName, ".nyc_output"),
+		exclude: [
+			"node_modules",
+			"out/test/**",
+			".vscode-test",
+		],
+		extension: [
+			".ts",
+			".tsx",
+		],
 		hookRequire: true,
 		hookRunInContext: true,
 		hookRunInThisContext: true,
-		require: [
-				'ts-node/register',
-				'source-map-support/register'
+		instrument: true,
+		sourceMap: true,
+		reporter: [
+			'text',
+			'lcov'
 		],
-		include: [ "**/out/**/*.js" ]
+		require: [
+			"ts-node/register",
+		]
 	});
-
 	nyc.reset();
 	nyc.wrap();
-
-	Object.keys(require.cache).filter(f => nyc.exclude.shouldInstrument(f)).forEach(m => {
-		console.warn('Module loaded before NYC, invalidating:', m);
-		delete require.cache[m];
-		require(m);
-	});
-
-
 	return nyc;
-  }
+}
 
-export async function run(): Promise<void> {
-	const nyc = setupCoverage();
-	await nyc.createTempDirectory();
+export function run(): Promise <void> {
+	const nyc = setupNyc();
 
 	// Create the mocha test
 	const mocha = new Mocha({
-		ui: 'tdd',
 		color: true,
+		ui: "tdd",
 		timeout: 20000,
 		reporter: 'mocha-junit-reporter',
 		reporterOptions: {
-			mochaFile: 'artifacts/mocha_results_proj1.xml'
+			mochaFile: 'artifacts/mocha_results_' + projName + '.xml'
 		}
 	});
 
-	const testsRoot = path.resolve(__dirname, '../..');
-	const options = { cwd: testsRoot };
-	const files = glob.sync("**/**.proj1.test.js", options);
+	const testsRoot = path.resolve(__dirname, "..");
+	return new Promise((c, e) => {
+		glob("**/**." + projName + ".test.js", {
+			cwd: testsRoot
+		}, (err, files) => {
+			if (err) {
+				return e(err);
+			}
 
-	// console.log('Glob verification', await nyc.exclude.glob(nyc.cwd));
-    for (const file of files) {
-        mocha.addFile(path.resolve(testsRoot, file));
-    }
-    try {
-		console.log("----- await promise")
-        await new Promise<void>((resolve, reject) => {
-			console.log("----- running mocha")
-            mocha.run(failures => (failures ? reject(new Error(`${failures} tests failed`)) : resolve()))
-			console.log("----- mocha complete")
+			// Add files to the test suite
+			files.forEach((f) => {
+				mocha.addFile(path.resolve(testsRoot, f))
+			});
+
+			try {
+				// Run the mocha test
+				mocha.run(async (failures) => {
+					if (nyc) {
+						nyc.writeCoverageFile();
+						await nyc.report();
+					}
+
+					if (failures > 0) {
+						console.log(`${failures} tests failed.`)
+						e(new Error(`${failures} tests failed.`));
+					}
+					c();
+				});
+			} catch (err) {
+				console.error('[index_' + projName + '.ts] catch err= ' + err);
+				e(err);
+			}
 		});
-		console.log("----- promise complete")
-    } finally {
-		console.log("finally!")
-        if (nyc !== undefined) {
-			console.log("writing coverage file")
-            nyc.writeCoverageFile();
-            await nyc.report();
-			console.log("coverage file written")
-        }
-    }
-
+	});
 }

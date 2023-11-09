@@ -2,6 +2,8 @@ import * as assert from 'assert';
 import { after, before } from 'mocha';
 import * as vscode from 'vscode';
 
+const projName = 'proj3'
+
 before(async () => {
     console.log("before")
 });
@@ -10,7 +12,7 @@ after(() => {
 	console.log("after")
 });
 
-suite('Extension Test Suite - proj3', () => {
+suite('Extension Test Suite - ' + projName, () => {
 
 	test('target/ablunit.json file exists', async () => {
 		const ablunitJson = vscode.Uri.joinPath(vscode.workspace.workspaceFolders![0].uri,'target','ablunit.json')

@@ -2,14 +2,16 @@ import * as glob from "glob";
 import * as Mocha from "mocha";
 import * as path from "path";
 
+const projName = 'proj3'
+
 function setupNyc() {
 	// eslint-disable-next-line @typescript-eslint/no-var-requires
 	const NYC = require("nyc");
 	const nyc = new NYC({
 		cache: false,
 		cwd: path.join(__dirname, "..", "..", ".."),
-		reportDir: path.join(__dirname, "..", "..", "..", "coverage"),
-		tempDir: path.join(__dirname, "..", "..", "..", "coverage", ".nyc_output"),
+		reportDir: path.join(__dirname, "..", "..", "..", 'coverage', "coverage_" + projName),
+		tempDir: path.join(__dirname, "..", "..", "..", 'coverage', "coverage_" + projName, ".nyc_output"),
 		exclude: [
 			"node_modules",
 			"out/test/**",
@@ -47,13 +49,13 @@ export function run(): Promise <void> {
 		timeout: 20000,
 		reporter: 'mocha-junit-reporter',
 		reporterOptions: {
-			mochaFile: 'artifacts/mocha_results_proj3.xml'
+			mochaFile: 'artifacts/mocha_results_' + projName + '.xml'
 		}
 	});
 
 	const testsRoot = path.resolve(__dirname, "..");
 	return new Promise((c, e) => {
-		glob("**/**.proj3.test.js", {
+		glob("**/**." + projName + ".test.js", {
 			cwd: testsRoot
 		}, (err, files) => {
 			if (err) {
@@ -80,10 +82,9 @@ export function run(): Promise <void> {
 					c();
 				});
 			} catch (err) {
-				console.error('[index_proj3.ts] catch err= ' + err);
+				console.error('[index_' + projName + '.ts] catch err= ' + err);
 				e(err);
 			}
 		});
 	});
-
 }
