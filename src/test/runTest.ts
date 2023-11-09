@@ -1,33 +1,34 @@
 import * as path from 'path';
-
 import { runTests } from '@vscode/test-electron';
 
-async function main() {
-  try {
-    const extensionDevelopmentPath = path.resolve(__dirname, '../../');
-    const extensionTestsPath = path.resolve(__dirname, './suite/index');
 
-    console.log("await runTests")
-    await runTests({
-        extensionDevelopmentPath,
-        extensionTestsPath,
-        launchArgs: [
-          'test_projects/proj1',
-          // '--disable-extensions',
-          // '--disable-gpu',
-          // ' --disable-dev-shm-usage',
-          // '--no-xshm',
-          // '--no-sanbox',
-          // '--disable-gpu-sandbox',
-          // '--headless', //somewhat works!
-        ]
-    });
-    console.log("runTests complete")
-  } catch (err) {
-    console.error("ERR: " + err);
-    console.error('Failed to run tests');
-    process.exit(1);
-  }
+async function main() {
+	await testProject("proj1")
+	await testProject("proj2")
+	await testProject("proj3", "proj3_debugLines")
 }
 
-main();
+async function testProject(projName: string, projDir?: string) {
+	if (!projDir) {
+		projDir = projName
+	}
+	const extensionDevelopmentPath = path.resolve(__dirname, '../../');
+	try {
+		const extensionTestsPath = path.resolve(__dirname, './suite/index_' + projName);
+		await runTests({
+				extensionDevelopmentPath,
+				extensionTestsPath,
+				launchArgs: [
+					'--disable-extensions',
+					'test_projects/' + projDir,
+				]
+		});
+	} catch (err) {
+		console.error('[runTest.ts] Failed to run tests, err=' + err);
+		process.exit(1);
+	} finally {
+		console.log("finally")
+	}
+}
+
+main()

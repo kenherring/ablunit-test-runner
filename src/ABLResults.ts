@@ -42,8 +42,10 @@ export class ABLResults {
 		this.cfg = new ABLUnitConfig(workspaceDir)
 		this.startTime = new Date()
 		ablunitConfig.workspaceUri = workspaceDir
-		ablunitConfig.tempDirUri = storageUri
 		ablunitConfig.storageUri = storageUri
+		if (ablunitConfig.tempDir === '') {
+			ablunitConfig.tempDirUri = storageUri
+		}
 		this.promsgs = new ABLPromsgs(this.dlc, ablunitConfig.storageUri)
 		this.setStatus("constructed")
 	}
@@ -72,6 +74,8 @@ export class ABLResults {
 
 		return Promise.all(prom).then(() => {
 			console.log("done creating config files for run")
+		}, (err) => {
+			console.error("ABLResults.start() did not complete promises")
 		})
 	}
 

@@ -60,17 +60,20 @@ export const ablunitRun = async(item: TestItem, ablunitConfig: IABLUnitConfig, o
 			cp.exec(cmd + ' ' + args.join(' '), { cwd: ablunitConfig.workspaceUri.fsPath }, (err: any, stdout: any, stderr: any) => {
 				const duration = Date.now() - start
 				if (err) {
-					console.error("cp.exec error:" + err)
-					options.appendOutput(err)
-					throw err
+					console.error("cp.exec error=" + err.toString())
+					console.error("cp.exec stdout=" + stdout)
+					console.error("cp.exec stderr=" + stderr)
+					options.appendOutput("err=" + err)
+					options.appendOutput("stdout=" + stdout)
+					options.appendOutput("stderr=" + stderr)
+					reject(err)
 				}
 				if (stderr) {
-					console.error(stderr)
+					console.error("cp.exec stderr=" + stderr)
 					options.appendOutput(stderr)
 					reject(stderr)
 				}
-				options.appendOutput(stdout)
-
+				options.appendOutput("stdout:" + stdout + "\r\n")
 				console.log("ShellExecution Completed - duration: " + duration)
 				outputChannel.appendLine("ShellExecution Completed - duration: " + duration)
 				resolve(stdout)

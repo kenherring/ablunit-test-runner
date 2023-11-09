@@ -28,16 +28,25 @@ jobs:
       - run: tr ' ' '\n' \<<< "$PROGRESS_CFG_BASE64" | base64 --decode > /psc/dlc/progress.cfg
       - checkout
       - run: npm install
-      - run: xvfb-run -a npm run test
-      - run: '[ -f artifacts/mocha_results.xml ] || exit 1'
+      - run: npm run test:coverage-activation-before
+      - run: xvfb-run -a npm test
+      - run:
+          name: validate test results exist
+          command: |
+            RESULTS_COUNT=$(find artifacts -name "mocha_results_*.xml")
+            if [ "$RESULTS_COUNT" = 0 ]; then
+              echo "No test results found"
+              exit 1
+            fi
       - run: npx eslint . --ext .ts,.js -f json -o artifacts/eslint_plain_report.json || true
       - run: npx eslint . --ext .ts,.js -f .circleci/sonarqube_formatter.js -o artifacts/eslint_report.json || true
+      # - run: npx eslint . --format junit --output-file artifacts/eslint.xml
       - store_artifacts:
           when: always
           path: artifacts/
       - store_test_results:
           when: always
-          path: artifacts/mocha_results.xml
+          path: artifacts/
       - sonarcloud/scan
   package-and-publish:
     docker:

@@ -69,18 +69,17 @@ export async function parseCallstack (debugLines: ABLDebugLines, callstackRaw: s
 }
 
 function buildFullMarkdownText(callstack: ICallStack) {
-	let markdown: string = "**ABL Stack Trace**\n\n"
+	let markdown: string = "## ABL Stack Trace\n\n"
 	let firstItem = true
+	markdown += "<style>code { white-space: pre }</style>\n\n"
 	for (const item of callstack.items) {
-		markdown += "<code>"
 		if (firstItem) {
 			firstItem = false
-			markdown += " --> "
+			markdown += "--> "
 		} else {
-			markdown += "     "
+			markdown += "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"
 		}
-		markdown += item.markdownText
-		markdown += "</code></br>\n"
+		markdown += "<code>" + item.markdownText + "</code></br>\n"
 	}
 	return markdown
 }
