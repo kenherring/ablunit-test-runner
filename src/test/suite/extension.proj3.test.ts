@@ -20,6 +20,8 @@ suite('Extension Test Suite - proj3', () => {
 		console.log("test2")
 		await vscode.commands.executeCommand('testing.refreshTests');
 		const val2 = await vscode.commands.executeCommand('workbench.view.testing.focus')
+		console.log("sleeping for 2s while tests are discovered") //There's gotta be a better way to do this...
+		await new Promise( resolve => setTimeout(resolve, 2000))
 		console.log("test3")
 		const val1 = await vscode.commands.executeCommand('testing.runAll').then(() => {
 			console.log("testing.runAll complete!")

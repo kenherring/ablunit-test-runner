@@ -71,10 +71,10 @@ export function run(): Promise <void> {
 
 
 			try {
-				console.log("1")
+				console.log("1 - mocha.run()")
 				// Run the mocha test
 				mocha.run(async (failures) => {
-					console.log("2")
+					console.log("2 - mocha.run() complete")
 					if (nyc) {
 						console.log("3")
 						nyc.writeCoverageFile();
@@ -87,8 +87,7 @@ export function run(): Promise <void> {
 					if (failures > 0) {
 						console.log("7")
 						e(new Error(`${failures} tests failed.`));
-						// console.log(`${failures} tests failed.`)
-						// process.exitCode = 1; //TODO
+						console.log(`${failures} tests failed.`)
 						console.log("8")
 					}
 					console.log("9")
@@ -97,15 +96,25 @@ export function run(): Promise <void> {
 				});
 				console.log("11")
 			} catch (err) {
-				console.log("12")
+				console.log("12 - catch")
 				console.error(err);
 				console.log("13")
 				e(err);
 				console.log("14")
+			// } finally {
+			// 	console.log("[index_proj3.ts] finally")
+			// 	if (nyc) {
+			// 		console.log("16")
+			// 		nyc.writeCoverageFile();
+			// 		console.log("17")
+			// 		nyc.report();
+			// 		console.log("18")
+			// 	}
+			// 	console.log("19")
 			}
-			console.log("15")
+			console.log("20")
 		});
-		console.log("16")
+		console.log("21")
 	});
 
 }

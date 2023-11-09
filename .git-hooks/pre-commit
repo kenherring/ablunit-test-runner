@@ -1,8 +1,18 @@
 #!/bin/sh
 
-echo "validing CircleCI config..." >&2
-if command -v circleci; then
-	circleci config validate
-else
-	wsl circleci config validate
-fi
+
+validate_circleci_config () {
+	if git diff --name-only --staged | ! grep -q 'circleci/config.yml'; then
+		echo "circleci/config.yml is not staged for commit, skipping validation..." >&2
+		return 0
+	fi
+
+	echo "validing CircleCI config..." >&2
+	if command -v circleci; then
+		circleci config validate
+	else
+		wsl circleci config validate
+	fi
+}
+
+validate_circleci_config
