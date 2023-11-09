@@ -21,7 +21,11 @@ suite('Extension Test Suite - proj3', () => {
 		await vscode.commands.executeCommand('testing.refreshTests');
 		const val2 = await vscode.commands.executeCommand('workbench.view.testing.focus')
 		console.log("test3")
-		const val1 = await vscode.commands.executeCommand('testing.runAll')
+		const val1 = await vscode.commands.executeCommand('testing.runAll').then(() => {
+			console.log("testing.runAll complete!")
+		} , (err) => {
+			assert.fail("testing.runAll failed: " + err)
+		})
 		// const val1 = await vscode.commands.executeCommand('testing.runAll').then(() => {
 		// 	console.log("test4")
 		// 	console.log("testing.runAll complete!")
@@ -32,17 +36,23 @@ suite('Extension Test Suite - proj3', () => {
 		// })
 		console.log("test7")
 		const val = await vscode.workspace.fs.stat(ablunitJson).then((stat) => {
-			return true
+			assert(stat.type === vscode.FileType.File)
 		}, (err) => {
-			console.log("stat err=" + err)
-			return false
+			assert.fail("ablunit.json file does not exist: " + err)
 		})
-		// expect(val).equal(true)
 		console.log("test8")
-		console.log("val=" + val)
-		console.log("test9")
-		assert.equal(val,true)
-		console.log("test10")
+		// const val = await vscode.workspace.fs.stat(ablunitJson).then((stat) => {
+		// 	return true
+		// }, (err) => {
+		// 	console.log("stat err=" + err)
+		// 	return false
+		// })
+		// expect(val).equal(true)
+		// console.log("test8")
+		// console.log("val=" + val)
+		// console.log("test9")
+		// assert.equal(val,true)
+		// console.log("test10")
 	});
 
 	test('wrap up', () => {

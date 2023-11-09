@@ -32,7 +32,6 @@ export const parseABLUnit = (text: string, relativePath: string, events: {
 }) => {
 
 	const lines = text.split("\n")
-	// const configStyle = vscode.workspace.getConfiguration('ablunit').get('display.style');
 	const configStyle = "tree"
 	const configClassLabel= vscode.workspace.getConfiguration('ablunit').get('display.classLabel');
 	if (!vscode.workspace.workspaceFolders) return

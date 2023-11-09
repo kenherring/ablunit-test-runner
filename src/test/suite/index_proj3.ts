@@ -12,8 +12,6 @@ function setupNyc() {
 		reportDir: path.join(__dirname, "..", "..", "..", "coverage"),
 		tempDir: path.join(__dirname, "..", "..", "..", "coverage", ".nyc_output"),
 		exclude: [
-			".attic",
-			".history",
 			"node_modules",
 			"out/test/**",
 			".vscode-test",
@@ -26,11 +24,14 @@ function setupNyc() {
 		hookRunInContext: true,
 		hookRunInThisContext: true,
 		instrument: true,
-		reporter: ["html", "text"],
+		sourceMap: true,
+		reporter: [
+			'text',
+			'lcov'
+		],
 		require: [
 			"ts-node/register",
-		],
-		sourceMap: true,
+		]
 	});
 	nyc.reset();
 	nyc.wrap();
@@ -45,7 +46,11 @@ export function run(): Promise <void> {
 	const mocha = new Mocha({
 		color: true,
 		ui: "tdd",
-		timeout: 5000
+		timeout: 20000,
+		reporter: 'mocha-junit-reporter',
+		reporterOptions: {
+			mochaFile: 'artifacts/mocha_results_proj3.xml'
+		}
 	});
 
 	const testsRoot = path.resolve(__dirname, "..");
@@ -82,6 +87,8 @@ export function run(): Promise <void> {
 					if (failures > 0) {
 						console.log("7")
 						e(new Error(`${failures} tests failed.`));
+						// console.log(`${failures} tests failed.`)
+						// process.exitCode = 1; //TODO
 						console.log("8")
 					}
 					console.log("9")
