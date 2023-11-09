@@ -26,7 +26,7 @@ async function testProject(projName: string, projDir?: string) {
 	} catch (err) {
 		console.error("ERR: " + err);
 		console.error('Failed to run tests');
-		// process.exit(1);
+		process.exit(1);
 	} finally {
 		console.log("finally")
 	}

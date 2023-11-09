@@ -17,13 +17,14 @@ npm run compile
 export PROPATH=.
 
 echo 'starting tests...'
-if ${CIRCLECI:-false}; then
-	xvfb-run -a npm run test
-else
-	if ! xvfb-run -a npm run test; then
-		bash
-	fi
-fi
+xvfb-run -a npm run test
+# if ${CIRCLECI:-false}; then
+# 	xvfb-run -a npm run test
+# else
+# 	if ! xvfb-run -a npm run test; then
+# 		bash
+# 	fi
+# fi
 
 RESULTS_COUNT=$(find . -name 'mocha_results_*.xml' | wc -l)
 LCOV_COUNT=$(find . -name 'lcov.info' | wc -l)
