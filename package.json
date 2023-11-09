@@ -58,7 +58,9 @@
 		"pretest": "npm run compile",
 		"test-compile": "tsc -p ./",
 		"test": "node ./out/test/runTest.js",
+		"test:coverage-activation-before": "sed -i 's/\"activationEvents\"/\"activationEvents-vscode\"/g;s/\"activationEvents-coverage\"/\"activationEvents\"/g' package.json",
 		"vscode-test": "vscode-test",
+		"test:coverage-activation-after": "sed -i 's/\"activationEvents\"/\"activationEvents-coverage\"/g;s/\"activationEvents-vscode\"/\"activationEvents\"/g' package.json",
 		"vscode:prepublish": "npm run esbuild-base -- --minify",
 		"watch-tsc": "tsc -watch -p ./",
 		"watch": "npm run esbuild-watch"
