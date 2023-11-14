@@ -10,8 +10,12 @@ if ! ${CIRCLECI:-false}; then
 	git config --global init.defaultBranch main
 	git init
 	git remote add origin /home/circleci/ablunit-test-provider
-	git fetch origin "$GIT_BRANCH:$GIT_BRANCH"
-	git checkout "$GIT_BRANCH"
+	git fetch origin
+	if [ "$GIT_BRANCH" = "$(git branch show-current)" ]; then
+		git reset --hard origin/main
+	else
+		git checkout "$GIT_BRANCH"
+	fi
 
 	while read -r FILE; do
 		echo "copying staged file $FILE"
