@@ -11,7 +11,7 @@ RUN apt update \
 # requirements for running ablunit tests
 ADD docker/ablunit.pl /psc/dlc/tty/ablunit.pl
 COPY --from=progresssoftware/prgs-oedb:12.2_latest_ent --chown=circleci:circleci --chmod=744 /psc /psc
-RUN curl -v -L https://github.com/Riverside-Software/pct/releases/download/v226/PCT.jar -o /usr/share/ant/lib/PCT.jar
+RUN curl https://github.com/Riverside-Software/pct/releases/download/v226/PCT.jar -o /usr/share/ant/lib/PCT.jar
 ENV DLC /psc/dlc
 ENV PATH $PATH:$DLC/bin
 ENV PROMSGS $DLC/promsgs
