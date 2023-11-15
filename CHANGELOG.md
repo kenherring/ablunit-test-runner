@@ -1,3 +1,8 @@
+# [v0.1.1](https://github.com/kenherring/ablunit-test-provider/releases/tag/v0.1.1) - 2023-11-14 (pre-release)
+
+* Improve coverage analysis
+* Fix and add test for `ablunit.params`
+
 # [v0.1.0](https://github.com/kenherring/ablunit-test-provider/releases/tag/v0.1.0) - 2023-11-09 (pre-release)
 
 * Flatten the VSCode `ablunit` configuration options
