@@ -70,14 +70,14 @@ export function run(): Promise <void> {
 			try {
 				// Run the mocha test
 				mocha.run(async (failures) => {
-					// if (nyc) {
-					// 	nyc.writeCoverageFile();
-					// 	// await nyc.report();
-					// }
+					if (nyc) {
+						nyc.writeCoverageFile();
+						await nyc.report();
+					}
 
 					if (failures > 0) {
 						console.log(`${failures} tests failed.`)
-						// throw new Error(`${failures} tests failed.`);
+						throw new Error(`${failures} tests failed.`);
 					}
 					c();
 				});
