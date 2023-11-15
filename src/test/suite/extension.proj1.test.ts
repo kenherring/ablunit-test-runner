@@ -35,6 +35,9 @@ suite('Extension Test Suite - ' + projName, () => {
 		assert(doesFileExist(resultsXml))
 		console.log("check-3")
 
+		console.log("ablunitJson: " + ablunitJson.fsPath)
+		console.log("resultsXml:" + resultsXml.fsPath)
+
 		await vscode.workspace.fs.stat(resultsXml).then((stat) => {
 			assert(stat.type === vscode.FileType.File)
 		}, (err) => {
@@ -42,8 +45,6 @@ suite('Extension Test Suite - ' + projName, () => {
 			assert.fail("results.xml file does not exist: " + err)
 		})
 		console.log("check-3")
-		console.log("ablunitJson: " + ablunitJson.fsPath)
-		console.log("resultsXml:" + resultsXml.fsPath)
 	});
 
 	test('wrap up', () => {

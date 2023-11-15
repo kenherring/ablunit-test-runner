@@ -96,7 +96,7 @@ export const ablunitConfig: IABLUnitConfig = {
 	findAllFilesAtStartup: workspace.getConfiguration('ablunit').get('findAllFilesAtStartup', true),
 	importOpenedgeProjectJson:  workspace.getConfiguration('ablunit').get('importOpenedgeProjectJson', true),
 	notificationsEnabled:  workspace.getConfiguration('ablunit').get('notificationsEnabled', true),
-	params: '',
+	params: workspace.getConfiguration('ablunit').get('params', ''),
 	progressIniPath: "progress.ini",
 	progressIniUri: Uri.joinPath(workspaceDir, "progress.ini"),
 	tests: {

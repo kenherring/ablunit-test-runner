@@ -25,14 +25,19 @@ suite('Extension Test Suite - ' + projName, () => {
 		await vscode.commands.executeCommand('workbench.view.testing.focus')
 		console.log("sleeping for 2s while tests are discovered") //There's gotta be a better way to do this...
 		await new Promise( resolve => setTimeout(resolve, 2000))
+		console.log("test-1.1")
 		await vscode.commands.executeCommand('testing.runAll').then(() => {
 			console.log("testing.runAll complete!")
 		} , (err) => {
+			console.log("testing.runAll failed: " + err)
 			assert.fail("testing.runAll failed: " + err)
 		})
+		console.log("test-1.2")
 
 		const storageUri = getStorageUri()
+		console.log("test-1.3")
 		if (!storageUri) {
+			console.log("test-1.4")
 			assert.fail("storage uri not defined")
 			return
 		}
