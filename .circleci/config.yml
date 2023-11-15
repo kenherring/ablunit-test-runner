@@ -37,6 +37,7 @@ jobs:
       - checkout
       - run: npm install
       - run: npm run test:coverage-activation-before
+      - run: test_projects/setup.sh
       - run: xvfb-run -a npm test
       - run:
           name: validate test results exist

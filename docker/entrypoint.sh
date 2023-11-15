@@ -12,7 +12,7 @@ if ! ${CIRCLECI:-false}; then
 	git remote add origin /home/circleci/ablunit-test-provider
 	git fetch origin
 	if [ "$GIT_BRANCH" = "$(git branch show-current)" ]; then
-		git reset --hard origin/main
+		git reset --hard "origin/$GIT_BRANCH"
 	else
 		git checkout "$GIT_BRANCH"
 	fi
@@ -31,6 +31,9 @@ fi
 echo 'compile, etc...'
 npm install
 npm run compile
+pwd
+ls -al
+test_projects/setup.sh
 
 export PROPATH=.
 

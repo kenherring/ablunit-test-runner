@@ -1,0 +1,15 @@
+<project name="proj0">
+
+	<property environment="env" />
+	<taskdef resource="PCT.properties" />
+	<typedef resource="types.properties" />
+	<DlcHome value="${env.DLC}" />
+
+	<mkdir dir="target/db" />
+	<sports2000 dbName="sp2k" destDir="target/db" />
+
+	<PCTDumpSchema destFile="target/sp2k.df">
+		<DBConnection dbName="target/db/sp2k" singleUser="true" />
+	</PCTDumpSchema>
+
+</project>
