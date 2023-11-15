@@ -14,3 +14,5 @@ echo "deleting 'listings' directories"
 find . -type d -name 'listings' -exec rm -rv {} +
 
 rm -rf artifacts/ coverage/
+
+echo "done cleanup"

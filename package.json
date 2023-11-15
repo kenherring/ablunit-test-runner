@@ -51,7 +51,7 @@
 		"esbuild-base": "rm -rf out && esbuild ./src/extension.ts --bundle --outfile=out/extension.js --external:vscode --format=cjs --platform=node",
 		"build": "npm run esbuild",
 		"clean": "rm -rf coverage out && sh -c ./cleanup.sh",
-		"compile": "npm run clean && tsc -p ./",
+		"compile": "tsc -p ./",
 		"esbuild-watch": "npm run esbuild-base -- --sourcemap --watch",
 		"esbuild": "npm run esbuild-base -- --sourcemap",
 		"postinstall": "echo node ./node_modules/vscode/bin/install",
@@ -226,7 +226,7 @@
 				},
 				"ablunit.profilerOptions.description": {
 					"type": "string",
-					"default": "Unit Tests Run via ABLUnit Test Provider (VSCode)",
+					"default": "Unit Tests Run via ABLUnit Test Runner (VSCode)",
 					"markdownDescription": "Description of the profiler run\n\nsee the [`PROFILER:DESCRIPTION`](https://docs.progress.com/bundle/abl-reference/page/DESCRIPTION-attribute.html) attribute"
 				},
 				"ablunit.profilerOptions.filename": {

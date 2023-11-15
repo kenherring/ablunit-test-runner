@@ -11,6 +11,11 @@ const backgroundExecuted = vscode.window.createTextEditorDecorationType({
 })
 
 let recentResults: ABLResults | undefined
+let storageUri: vscode.Uri | undefined = undefined
+
+export function getStorageUri () {
+	return storageUri
+}
 
 export async function activate(context: vscode.ExtensionContext) {
 
@@ -18,6 +23,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	outputChannel.appendLine("ACTIVATE!")
 
 	const ctrl = vscode.tests.createTestController('ablunitTestController', 'ABLUnit Test')
+	storageUri = context.storageUri
 
 	context.subscriptions.push(ctrl)
 	context.subscriptions.push(

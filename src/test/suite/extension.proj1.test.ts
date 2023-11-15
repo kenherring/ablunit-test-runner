@@ -1,6 +1,7 @@
 import * as assert from 'assert';
 import { after, before } from 'mocha';
 import * as vscode from 'vscode';
+import { doesFileExist } from '../common'
 
 const projName = 'proj1'
 
@@ -16,6 +17,7 @@ suite('Extension Test Suite - ' + projName, () => {
 
 	test('ablunit.json file exists', async () => {
 		const ablunitJson = vscode.Uri.joinPath(vscode.workspace.workspaceFolders![0].uri,'ablunit.json')
+		const resultsXml = vscode.Uri.joinPath(vscode.workspace.workspaceFolders![0].uri,'results.xml')
 
 		await vscode.commands.executeCommand('testing.refreshTests');
 		await vscode.commands.executeCommand('workbench.view.testing.focus')
@@ -27,13 +29,22 @@ suite('Extension Test Suite - ' + projName, () => {
 			assert.fail("testing.runAll failed: " + err)
 		})
 
+		console.log("check-1")
+		assert(doesFileExist(ablunitJson))
+		console.log("check-2")
+		assert(doesFileExist(resultsXml))
+		console.log("check-3")
+
 		console.log("ablunitJson: " + ablunitJson.fsPath)
-		await vscode.workspace.fs.stat(ablunitJson).then((stat) => {
+		console.log("resultsXml:" + resultsXml.fsPath)
+
+		await vscode.workspace.fs.stat(resultsXml).then((stat) => {
 			assert(stat.type === vscode.FileType.File)
 		}, (err) => {
-			console.log("ablunit.json file does not exist (" + ablunitJson.fsPath + "): " + err)
-			assert.fail("ablunit.json file does not exist: " + err)
+			console.log("results.xml file does not exist (" + resultsXml.fsPath + "): " + err)
+			assert.fail("results.xml file does not exist: " + err)
 		})
+		console.log("check-3")
 	});
 
 	test('wrap up', () => {

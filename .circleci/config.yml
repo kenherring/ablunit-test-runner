@@ -11,11 +11,19 @@ workflows:
             - DockerHub
             - PROGRESS_CFG
             - SonarCloud
+          filters:
+            tags:
+              only:
+                - /^v.*/
       - package-and-publish:
           requires:
             - test-and-scan
           context:
             - Azure_PAT
+          filters:
+            tags:
+              only:
+                - /^v.*/
 
 jobs:
   test-and-scan:
@@ -29,6 +37,7 @@ jobs:
       - checkout
       - run: npm install
       - run: npm run test:coverage-activation-before
+      - run: test_projects/setup.sh
       - run: xvfb-run -a npm test
       - run:
           name: validate test results exist
