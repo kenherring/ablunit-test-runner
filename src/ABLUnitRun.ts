@@ -34,8 +34,14 @@ export const ablunitRun = async(item: TestItem, ablunitConfig: IABLUnitConfig, o
 		}
 		// cmd.push('-param', "'CFG=" + res.runConfig.ablunitJson!.fsPath + "'")
 		// cmd.push("-param", '"' + itemPath + ' -outputLocation ' + workspace.asRelativePath(res.runConfig.tempDirUri) + ' -format xml"')
-		cmd.push("-param", '"' + itemPath + ' -outputLocation ' + workspace.asRelativePath(ablunitConfig.tempDirUri) + '"')
+
 		const cmdSanitized: string[] = []
+
+		ablunitConfig.params.split(' ').forEach(element => {
+			cmd.push(element)
+		});
+
+		cmd.push("-param", '"' + itemPath + ' -outputLocation ' + workspace.asRelativePath(ablunitConfig.tempDirUri) + '"')
 		cmd.forEach(element => {
 			cmdSanitized.push(element.replace(/\\/g, '/'))
 		});

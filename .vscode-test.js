@@ -2,6 +2,18 @@ const { defineConfig } = require('@vscode/test-cli');
 
 module.exports = defineConfig([
 	{
+		label: 'extension tests - proj0',
+		files: 'out/test/**/*.proj0.test.js',
+		workspaceFolder: './test_projects/proj0',
+		mocha: {
+			ui: 'tdd',
+			timeout: 20000
+		},
+		"launchArgs": [
+			'--disable-extensions'
+		]
+	},
+	{
 		label: 'extension tests - proj1',
 		files: 'out/test/**/*.proj1.test.js',
 		workspaceFolder: './test_projects/proj1',

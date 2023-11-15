@@ -1,0 +1,13 @@
+{
+	"buildPath": [
+		{ "type": "source", "path": "src" }
+	],
+	"dbConnections": [
+		{
+			"name": "sp2k",
+			"connect": "-db target/db/sp2k -RO",
+			"dumpFile": "target/sp2k.df"
+		}
+	],
+	"numThreads": 1
+}

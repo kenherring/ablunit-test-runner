@@ -10,8 +10,12 @@ if ! ${CIRCLECI:-false}; then
 	git config --global init.defaultBranch main
 	git init
 	git remote add origin /home/circleci/ablunit-test-provider
-	git fetch origin "$GIT_BRANCH:$GIT_BRANCH"
-	git checkout "$GIT_BRANCH"
+	git fetch origin
+	if [ "$GIT_BRANCH" = "$(git branch show-current)" ]; then
+		git reset --hard "origin/$GIT_BRANCH"
+	else
+		git checkout "$GIT_BRANCH"
+	fi
 
 	while read -r FILE; do
 		echo "copying staged file $FILE"
@@ -27,8 +31,7 @@ fi
 echo 'compile, etc...'
 npm install
 npm run compile
-
-export PROPATH=.
+test_projects/setup.sh
 
 echo 'starting tests...'
 sed -i 's/"activationEvents"/"activationEvents-vscode"/g;s/"activationEvents-coverage"/"activationEvents"/g' package.json
@@ -41,12 +44,16 @@ sed -i 's/"activationEvents"/"activationEvents-coverage"/g;s/"activationEvents-v
 RESULTS_COUNT=$(find . -name 'mocha_results_*.xml' | wc -l)
 LCOV_COUNT=$(find . -name 'lcov.info' | wc -l)
 
+HAS_ERROR=false
 if [ "$RESULTS_COUNT" = 0 ]; then
-	echo 'mocha_results_*.xml not found'
-	exit 1
+	echo 'ERROR: mocha_results_*.xml not found'
+	HAS_ERROR=true
 fi
 if [ "$LCOV_COUNT" = 0 ]; then
-	echo 'lcov.info not found'
+	echo 'ERROR: lcov.info not found'
+	HAS_ERROR=true
+fi
+if $HAS_ERROR; then
 	exit 1
 fi
 

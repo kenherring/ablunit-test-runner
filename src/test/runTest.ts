@@ -3,6 +3,7 @@ import { runTests } from '@vscode/test-electron';
 
 
 async function main() {
+	await testProject("proj0")
 	await testProject("proj1")
 	await testProject("proj2")
 	await testProject("proj3", "proj3_debugLines")
