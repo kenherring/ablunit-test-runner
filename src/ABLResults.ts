@@ -80,6 +80,8 @@ export class ABLResults {
 
 	async parseOutput(item: TestItem, options: TestRun) {
 		this.setStatus("parsing results")
+		options.appendOutput("parsing results\r\n")
+
 		this.endTime = new Date()
 
 		const ablResults = new ABLResultsParser(this.propath!, this.debugLines!)
@@ -94,24 +96,27 @@ export class ABLResults {
 
 		if (ablunitConfig.profilerOptions.enabled) {
 			this.setStatus("parsing profiler data")
+			options.appendOutput("parsing profiler data\r\n")
 			await this.parseProfile().then(() => {
-				this.setStatus("test run complete")
 				return true
 			}, (err) => {
 				throw new Error("parseProfile error: " + err)
 			})
-		} else {
-			this.setStatus("test run complete")
 		}
+
+		this.setStatus("test run complete")
+		options.appendOutput("test run complete\r\n")
 	}
 
 	async assignTestResults (resultsJson: TestSuites[], item: TestItem, options: TestRun) {
 		if(resultsJson.length > 1) {
+			logToChannel("multiple results files found - this is not supported")
 			options.errored(item, new TestMessage("multiple results files found - this is not supported"), this.duration())
 			// return
 		}
 		this.results = resultsJson[0]
 		if (!this.results.testsuite) {
+			logToChannel("no tests results available, check the configuration for accuracy")
 			options.errored(item, new TestMessage("no tests results available, check the configuration for accuracy"), this.duration())
 			return
 		}
@@ -121,12 +126,23 @@ export class ABLResults {
 			suiteName = item.id.split("#")[0]
 		}
 
+		if(suiteName) {
+			const propathRelativePath = this.propath!.search(suiteName)!
+			suiteName = await propathRelativePath.then((res) => {
+				if (res?.propathRelativeFile) {
+					return res?.propathRelativeFile.replace(/\\/g, '/')
+				}
+				return suiteName
+			})
+		}
+
 		const s = this.results.testsuite.find((s: TestSuite) => s.classname === suiteName || s.name === suiteName)
 		// if (!s) {
 		// 	suiteName = item.uri!.fsPath.replace(/\\/g, '/')
 		// 	s = this.results.testsuite.find((s: TestSuite) => s.name === suiteName)
 		// }
 		if (!s) {
+			logToChannel("could not find test suite for '" + suiteName + " in results")
 			options.errored(item, new TestMessage("could not find test suite for '" + suiteName + " in results"), this.duration())
 			return
 		}
@@ -150,11 +166,13 @@ export class ABLResults {
 				//// This should be populated automatically by the child messages filtering up
 				// options.failed(item, new vscode.TestMessage("one or more tests failed"), s.time)
 			} else {
+				logToChannel("unknown error - test results are all zero")
 				options.errored(item, new TestMessage("unknown error - test results are all zero"), s.time)
 			}
 		}
 
 		if (!s.testcases) {
+			logToChannel("no test cases discovered or run - check the configuration for accuracy")
 			options.errored(item, new TestMessage("no test cases discovered or run - check the configuration for accuracy"), this.duration())
 			return
 		}
@@ -167,6 +185,7 @@ export class ABLResults {
 		children.forEach(child => {
 			const tc = testcases.find((t: TestCase) => t.name === child.label)
 			if (!tc) {
+				logToChannel("could not find result for test case " + child.label)
 				options.errored(child, new TestMessage("could not find result for test case"))
 				return
 			}
@@ -243,10 +262,6 @@ export class ABLResults {
 		}
 		return tm
 	}
-
-
-
-
 
 	async parseProfile() {
 		const profParser = new ABLProfile()

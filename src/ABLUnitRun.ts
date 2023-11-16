@@ -86,7 +86,6 @@ export const ablunitRun = async(item: TestItem, ablunitConfig: IABLUnitConfig, o
 	}
 
 	return runCommand().then(() => {
-		options.appendOutput("parsing results\r\n")
 		return res.parseOutput(item, options).then();
 	})
 }
