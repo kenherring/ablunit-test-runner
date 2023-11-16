@@ -35,7 +35,6 @@ export const parseABLUnit = (text: string, relativePath: string, events: {
 	logToChannel("parsing " + relativePath)
 
 	const lines = text.split("\n")
-	const configStyle = "tree"
 	const configClassLabel= vscode.workspace.getConfiguration('ablunit').get('display.classLabel');
 	if (!vscode.workspace.workspaceFolders) return
 	const workspaceDir = vscode.workspace.workspaceFolders.map(item => item.uri)[0];
@@ -60,16 +59,6 @@ export const parseABLUnit = (text: string, relativePath: string, events: {
 		}
 	}
 
-	const splitpath = (path: string) => {
-		let elems = []
-		elems = path.split('.')
-		if (elems.length > 1) return elems
-		elems = path.split('/')
-		if (elems.length > 1) return elems
-		elems = path.split('\\')
-		return elems
-	}
-
 	const parseClass = () => {
 		if (text.toLowerCase().indexOf("@test.") == -1) {
 			return
@@ -90,8 +79,6 @@ export const parseABLUnit = (text: string, relativePath: string, events: {
 					if (configClassLabel == "filepath") {
 						classname = relativePath;
 					}
-
-					const basePath = vscode.Uri.joinPath(workspaceDir,relativePath.substring(0,relativePath.lastIndexOf(classname.replace('.','/'))))
 
 					const parts = relativePath.split("/")
 					let relativeTree = ""

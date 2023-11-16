@@ -158,7 +158,7 @@ export class ABLUnitConfig  {
 
 	async setTempDirUri (tempDir: Uri, fromConstructor: boolean = false) {
 		console.log("setTempDirUri tempDir=" + tempDir.fsPath)
-		if (fromConstructor == false && ablunitConfig.tempDirUri === tempDir) {
+		if (!fromConstructor && ablunitConfig.tempDirUri === tempDir) {
 			console.log("skip setTempDir - tempDir is the same as before (" + ablunitConfig.tempDirUri.fsPath + ")")
 			return
 		}
