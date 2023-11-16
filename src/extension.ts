@@ -1,6 +1,6 @@
 import * as vscode from 'vscode'
 import { ABLTestSuiteClass, ABLTestClassNamespace, ABLTestClass, ABLTestProgram, ABLTestMethod, ABLTestProcedure, testData, resultData } from './testTree'
-import { outputChannel } from './ABLUnitCommon'
+import { logToChannel } from './ABLUnitCommon'
 import { ABLResults } from './ABLResults'
 
 const backgroundExecutable = vscode.window.createTextEditorDecorationType({
@@ -19,8 +19,7 @@ export function getStorageUri () {
 
 export async function activate(context: vscode.ExtensionContext) {
 
-	console.log("ACTIVATE!")
-	outputChannel.appendLine("ACTIVATE!")
+	logToChannel("ACTIVATE!")
 
 	const ctrl = vscode.tests.createTestController('ablunitTestController', 'ABLUnit Test')
 	storageUri = context.storageUri
@@ -58,8 +57,7 @@ export async function activate(context: vscode.ExtensionContext) {
 			res = new ABLResults(context.storageUri!)
 		} catch (err) {
 			vscode.window.showErrorMessage("Could not start test run. " + err)
-			outputChannel.appendLine("Could not start test run. " + err)
-			console.log("Could not start test run. " + err)
+			logToChannel("Could not start test run. " + err)
 			return
 		}
 		showNotification("running ablunit tests")

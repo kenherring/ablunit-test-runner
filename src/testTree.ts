@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { parseABLUnit } from './parser';
+import { parseABLUnit } from './parse/SourceParser';
 import { TextDecoder } from 'util';
 import { ABLResults } from './ABLResults';
 import { ablunitRun } from './ABLUnitRun';

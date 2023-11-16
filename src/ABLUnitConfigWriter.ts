@@ -1,5 +1,5 @@
 import { Uri, workspace } from 'vscode'
-import { outputChannel } from './ABLUnitCommon'
+import { logToChannel } from './ABLUnitCommon'
 import { IProjectJson, readOpenEdgeProjectJson } from './parse/OpenedgeProjectParser';
 import { PropathParser } from "./ABLPropath"
 import * as os from 'os'
@@ -156,8 +156,7 @@ export class ABLUnitConfig  {
 	}
 
 	async setTempDirUri (tempDir: Uri) {
-		console.log("[setTempDirUri] tempDir=" + tempDir.fsPath)
-		outputChannel.appendLine("using tempDir='" + ablunitConfig.tempDirUri.fsPath + "'")
+		logToChannel("[setTempDirUri] tempDir=" + tempDir.fsPath)
 		if (ablunitConfig.tempDirUri.fsPath == ablunitConfig.workspaceUri.fsPath) {
 			console.log("skip setTempDir - tempDir is the same as workspace")
 			return
@@ -235,7 +234,7 @@ export class ABLUnitConfig  {
 	}
 
 	async readPropathFromJson() {
-		console.log("reading propath from openedge-project.json")
+		logToChannel("reading propath from openedge-project.json")
 		const parser: PropathParser = new PropathParser(ablunitConfig.workspaceUri)
 		const dflt: IProjectJson = { propathEntry: [{
 			path: '.',
@@ -256,7 +255,7 @@ export class ABLUnitConfig  {
 			parser.setPropath(dflt)
 			return parser
 		})
-		outputChannel.appendLine("propath='" + parser.toString() + "'")
+		logToChannel("using propath='" + parser.toString() + "'")
 		return parser
 	}
 }

@@ -1,7 +1,7 @@
 import { TestItem, TestRun, workspace } from "vscode"
 import { ABLTestMethod, ABLTestProcedure, ABLUnitTestData } from "./testTree"
 import { ABLResults } from "./ABLResults"
-import { outputChannel } from './ABLUnitCommon'
+import { logToChannel } from './ABLUnitCommon'
 import { IABLUnitConfig } from "./ABLUnitConfigWriter"
 
 //TODO remove this
@@ -47,14 +47,13 @@ export const ablunitRun = async(item: TestItem, ablunitConfig: IABLUnitConfig, o
 		});
 
 		ablunitConfig.tests.commandArr = cmdSanitized
-		outputChannel.appendLine("ABLUnit Command: " + cmdSanitized.join(' '))
+		logToChannel("ABLUnit Command: " + cmdSanitized.join(' '))
 		return cmdSanitized
 	}
 
 	const runCommand = () => {
 		const args = getCommand(itemPath)
-		console.log("ShellExecution Started - dir='" + ablunitConfig.workspaceUri.fsPath + "'")
-		outputChannel.appendLine("ShellExecution Started - dir='" + ablunitConfig.workspaceUri.fsPath + "'")
+		logToChannel("ShellExecution Started - dir='" + ablunitConfig.workspaceUri.fsPath + "'")
 
 		const cmd = args[0]
 		args.shift()
@@ -80,8 +79,7 @@ export const ablunitRun = async(item: TestItem, ablunitConfig: IABLUnitConfig, o
 					reject(stderr)
 				}
 				options.appendOutput("stdout:" + stdout + "\r\n")
-				console.log("ShellExecution Completed - duration: " + duration)
-				outputChannel.appendLine("ShellExecution Completed - duration: " + duration)
+				logToChannel("ShellExecution Completed - duration: " + duration)
 				resolve(stdout)
 			})
 		})

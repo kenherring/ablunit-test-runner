@@ -7,7 +7,7 @@ import { ABLProfile, ABLProfileJson, Module } from "./parse/ProfileParser"
 import { ABLDebugLines } from "./ABLDebugLines"
 import { ABLPromsgs, getPromsgText } from "./ABLPromsgs"
 import { PropathParser } from "./ABLPropath"
-import { outputChannel } from "./ABLUnitCommon"
+import { logToChannel } from "./ABLUnitCommon"
 import { FileCoverage, CoveredCount, StatementCoverage } from "./TestCoverage"
 
 
@@ -52,8 +52,7 @@ export class ABLResults {
 
 	setStatus(status: string) {
 		this.status = status
-		outputChannel.appendLine("STATUS: " + status)
-		console.log("STATUS: " + status)
+		logToChannel("STATUS: " + status)
 	}
 
 	async setTestData(testData: WeakMap<TestItem, ABLUnitTestData>) {
