@@ -138,7 +138,6 @@ export class ABLTestClass extends TestFile {
 		const relativePath = vscode.workspace.asRelativePath(item.uri!.fsPath)
 
 		parseABLUnit(content, relativePath, {
-		// parseABLUnit(content, propathRelativePath, relativePath, {
 
 			onTestSuite: (range, suiteName) => {
 				this.testFileType = "ABLTestSuite"

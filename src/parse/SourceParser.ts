@@ -88,11 +88,9 @@ export const parseABLUnit = (text: string, relativePath: string, events: {
 					const range = new vscode.Range(new vscode.Position(lineNo, lines[lineNo].indexOf(classname)), new vscode.Position(lineNo, classname.length));
 
 					if (configClassLabel == "filepath") {
-						// className =
 						classname = relativePath;
 					}
 
-					// const label = classname
 					const basePath = vscode.Uri.joinPath(workspaceDir,relativePath.substring(0,relativePath.lastIndexOf(classname.replace('.','/'))))
 
 					const parts = relativePath.split("/")
@@ -142,7 +140,6 @@ export const parseABLUnit = (text: string, relativePath: string, events: {
 		}
 		const label = parts[parts.length - 1]
 		events.onTestProgram(zeroRange, relativePath, label, programUri)
-		// events.onTestProgram(zeroRange, relativePath, relativePath, programUri)
 
 		for (let lineNo = 1; lineNo < lines.length; lineNo++) {
 			if(lines[lineNo - 1].toLowerCase().indexOf("@test.") != -1) {
