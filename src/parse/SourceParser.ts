@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { logToChannel } from '../ABLUnitCommon';
 
 // TESTSUITE statement
 const suiteRE = /@testsuite\((.*)\)/
@@ -31,11 +32,13 @@ export const parseABLUnit = (text: string, relativePath: string, events: {
 	onAssert(range: vscode.Range, methodname: string): void;
 }) => {
 
+	logToChannel("parsing " + relativePath)
+
 	const lines = text.split("\n")
-	const configStyle = "tree"
 	const configClassLabel= vscode.workspace.getConfiguration('ablunit').get('display.classLabel');
 	if (!vscode.workspace.workspaceFolders) return
 	const workspaceDir = vscode.workspace.workspaceFolders.map(item => item.uri)[0];
+	const zeroRange = new vscode.Range(new vscode.Position(0,0), new vscode.Position(0,0))
 
 	const parseByType = () => {
 		if (relativePath.endsWith(".cls")) {
@@ -56,16 +59,6 @@ export const parseABLUnit = (text: string, relativePath: string, events: {
 		}
 	}
 
-	const splitpath = (path: string) => {
-		let elems = []
-		elems = path.split('.')
-		if (elems.length > 1) return elems
-		elems = path.split('/')
-		if (elems.length > 1) return elems
-		elems = path.split('\\')
-		return elems
-	}
-
 	const parseClass = () => {
 		if (text.toLowerCase().indexOf("@test.") == -1) {
 			return
@@ -84,25 +77,21 @@ export const parseABLUnit = (text: string, relativePath: string, events: {
 					const range = new vscode.Range(new vscode.Position(lineNo, lines[lineNo].indexOf(classname)), new vscode.Position(lineNo, classname.length));
 
 					if (configClassLabel == "filepath") {
-						// className =
 						classname = relativePath;
 					}
 
-					let label = classname
-					const basePath = vscode.Uri.joinPath(workspaceDir,relativePath.substring(0,relativePath.lastIndexOf(classname.replace('.','/'))))
-
-					if (configStyle == "tree") {
-						const path = splitpath(classname)
-						path.unshift("classpath root")
-						let element: string = ""
-						const classpath: string[] = []
-						for (let idx=0; idx < path.length - 1; idx++) {
-							element = path[idx]
-							classpath.push(element)
-							events.onTestClassNamespace(range, classpath.join('.'), path[idx], vscode.Uri.joinPath(basePath,classpath.join("/")))
+					const parts = relativePath.split("/")
+					let relativeTree = ""
+					for (let idx=0; idx < parts.length - 1; idx++) {
+						if (relativeTree == "") {
+							relativeTree = parts[idx]
+						} else {
+							relativeTree = relativeTree + '/' + parts[idx]
 						}
-						label = path[path.length - 1]
+						events.onTestProgramDirectory(zeroRange, relativeTree, parts[idx], vscode.Uri.joinPath(workspaceDir,relativeTree))
 					}
+					const label = parts[parts.length - 1]
+
 					events.onTestClass(range, classname, label);
 					foundClassHead = true
 					continue;
@@ -126,23 +115,18 @@ export const parseABLUnit = (text: string, relativePath: string, events: {
 
 		const programUri = vscode.Uri.joinPath(workspaceDir,relativePath)
 
-		const zeroRange = new vscode.Range(new vscode.Position(0,0), new vscode.Position(0,0))
-		if (configStyle == "tree") {
-			const parts = relativePath.split("/")
-			let relativeTree = ""
-			for (let idx=0; idx < parts.length - 1; idx++) {
-				if (relativeTree == "") {
-					relativeTree = parts[idx]
-				} else {
-					relativeTree = relativeTree + '/' + parts[idx]
-				}
-				events.onTestProgramDirectory(zeroRange, relativeTree, parts[idx], vscode.Uri.joinPath(workspaceDir,relativeTree))
+		const parts = relativePath.split("/")
+		let relativeTree = ""
+		for (let idx=0; idx < parts.length - 1; idx++) {
+			if (relativeTree == "") {
+				relativeTree = parts[idx]
+			} else {
+				relativeTree = relativeTree + '/' + parts[idx]
 			}
-			const progLabel = parts[parts.length - 1]
-			events.onTestProgram(zeroRange, relativePath, progLabel, programUri)
-		} else {
-			events.onTestProgram(zeroRange, relativePath, relativePath, programUri)
+			events.onTestProgramDirectory(zeroRange, relativeTree, parts[idx], vscode.Uri.joinPath(workspaceDir,relativeTree))
 		}
+		const label = parts[parts.length - 1]
+		events.onTestProgram(zeroRange, relativePath, label, programUri)
 
 		for (let lineNo = 1; lineNo < lines.length; lineNo++) {
 			if(lines[lineNo - 1].toLowerCase().indexOf("@test.") != -1) {

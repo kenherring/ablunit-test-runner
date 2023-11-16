@@ -1,6 +1,7 @@
 {
 	"buildPath": [
-		{ "type": "source", "path": "src" }
+		{ "type": "source", "path": "src" },
+		{ "type": "source", "path": "test" }
 	],
 	"dbConnections": [
 		{

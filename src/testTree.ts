@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { parseABLUnit } from './parser';
+import { parseABLUnit } from './parse/SourceParser';
 import { TextDecoder } from 'util';
 import { ABLResults } from './ABLResults';
 import { ablunitRun } from './ABLUnitRun';
@@ -135,8 +135,9 @@ export class ABLTestClass extends TestFile {
 		ancestors.pop()
 		const thisGeneration = generationCounter++;
 		this.didResolve = true;
+		const relativePath = vscode.workspace.asRelativePath(item.uri!.fsPath)
 
-		parseABLUnit(content, vscode.workspace.asRelativePath(item.uri!.fsPath), {
+		parseABLUnit(content, relativePath, {
 
 			onTestSuite: (range, suiteName) => {
 				this.testFileType = "ABLTestSuite"
@@ -199,7 +200,21 @@ export class ABLTestClass extends TestFile {
 				item.children.add(thead)
 			},
 
-			onTestProgramDirectory(range: vscode.Range, programname: string, dir: string) { console.error("should not be here! programname=" + programname + " dir=" + dir) },
+			onTestProgramDirectory(range: vscode.Range, dirpath: string, dir: string, dirUri: vscode.Uri) {
+				const id = `pgmpath:${dirpath}`
+				const thead = controller.createTestItem(id, dirpath, dirUri)
+				thead.range = range
+				thead.tags = [new vscode.TestTag("runnable"), new vscode.TestTag("ABLTestProgramDirectory")]
+				thead.label = dir
+
+				if (ancestors.length > 0) {
+					const parent = ancestors[ancestors.length - 1]
+					parent.children.push(thead)
+				}
+
+				testData.set(thead, new ABLTestProgramDirectory(thisGeneration, dir, dir))
+				ancestors.push({ item: thead, children: [] as vscode.TestItem[] })
+			},
 
 			onTestProgram: (range: vscode.Range, relativepath: string, label: string, programUri: vscode.Uri) => { console.error("should not be here! relativepath=" + relativepath) },
 
@@ -249,8 +264,9 @@ export class ABLTestProgram extends TestFile {
 		ancestors.pop()
 		const thisGeneration = generationCounter++;
 		this.didResolve = true;
+		const relativePath = vscode.workspace.asRelativePath(item.uri!.fsPath)
 
-		parseABLUnit(content, vscode.workspace.asRelativePath(item.uri!.fsPath), {
+		parseABLUnit(content, relativePath, {
 
 			onTestSuite: (range, suiteName) => { console.error("onTestSuite") },
 

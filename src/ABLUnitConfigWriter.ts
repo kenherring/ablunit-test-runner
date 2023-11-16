@@ -1,5 +1,5 @@
 import { Uri, workspace } from 'vscode'
-import { outputChannel } from './ABLUnitCommon'
+import { logToChannel } from './ABLUnitCommon'
 import { IProjectJson, readOpenEdgeProjectJson } from './parse/OpenedgeProjectParser';
 import { PropathParser } from "./ABLPropath"
 import * as os from 'os'
@@ -143,25 +143,27 @@ export class ABLUnitConfig  {
 
 	constructor(workspaceDir: Uri) {
 		ablunitConfig.workspaceUri = workspaceDir
+		let tempDir: Uri = ablunitConfig.workspaceUri
 		if (ablunitConfig.tempDir != '') {
 			if (isRelativePath(ablunitConfig.tempDir)) {
-				ablunitConfig.tempDirUri = Uri.joinPath(ablunitConfig.workspaceUri, ablunitConfig.tempDir)
+				tempDir = Uri.joinPath(ablunitConfig.workspaceUri, ablunitConfig.tempDir)
 			} else {
-				ablunitConfig.tempDirUri = Uri.file(ablunitConfig.tempDir)
+				tempDir = Uri.file(ablunitConfig.tempDir)
 			}
-			this.setTempDirUri(ablunitConfig.tempDirUri)
 		}
-		console.log("[ABLUnitConfig constructor] workspaceUri=" + workspaceDir.fsPath)
-		console.log("[ABLUnitConfig constructor] tempDir=" + workspace.getConfiguration('ablunit').get('tempDir', ''))
+		this.setTempDirUri(tempDir, true)
+		console.log("[ABLUnitConfigWriter constructor] workspaceUri=" + ablunitConfig.workspaceUri.fsPath)
+		console.log("[ABLUnitConfigWriter constructor] tempDir=" + ablunitConfig.tempDirUri.fsPath)
 	}
 
-	async setTempDirUri (tempDir: Uri) {
-		console.log("[setTempDirUri] tempDir=" + tempDir.fsPath)
-		outputChannel.appendLine("using tempDir='" + ablunitConfig.tempDirUri.fsPath + "'")
-		if (ablunitConfig.tempDirUri.fsPath == ablunitConfig.workspaceUri.fsPath) {
-			console.log("skip setTempDir - tempDir is the same as workspace")
+	async setTempDirUri (tempDir: Uri, fromConstructor: boolean = false) {
+		console.log("setTempDirUri tempDir=" + tempDir.fsPath)
+		if (!fromConstructor && ablunitConfig.tempDirUri === tempDir) {
+			console.log("skip setTempDir - tempDir is the same as before (" + ablunitConfig.tempDirUri.fsPath + ")")
 			return
 		}
+		ablunitConfig.tempDirUri = tempDir
+		logToChannel("using tempDir=" + tempDir.fsPath)
 
 		if (isRelativePath(ablunitConfig.progressIniPath)) {
 			ablunitConfig.progressIniUri = Uri.joinPath(ablunitConfig.tempDirUri, ablunitConfig.progressIniPath)
@@ -235,7 +237,7 @@ export class ABLUnitConfig  {
 	}
 
 	async readPropathFromJson() {
-		console.log("reading propath from openedge-project.json")
+		logToChannel("reading propath from openedge-project.json")
 		const parser: PropathParser = new PropathParser(ablunitConfig.workspaceUri)
 		const dflt: IProjectJson = { propathEntry: [{
 			path: '.',
@@ -256,7 +258,7 @@ export class ABLUnitConfig  {
 			parser.setPropath(dflt)
 			return parser
 		})
-		outputChannel.appendLine("propath='" + parser.toString() + "'")
+		logToChannel("using propath='" + parser.toString() + "'")
 		return parser
 	}
 }

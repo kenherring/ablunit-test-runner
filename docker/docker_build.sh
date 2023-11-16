@@ -8,6 +8,6 @@ fi
 
 cp "$DLC/tty/ablunit.pl" docker/ablunit.pl
 
-docker build -f docker/Dockerfile -t kherring/ablunit-test-runner .
+docker build -f docker/Dockerfile -t kherring/ablunit-test-runner:latest .
 
 # docker push kherring/ablunit-test-runner

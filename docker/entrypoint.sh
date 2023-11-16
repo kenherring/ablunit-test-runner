@@ -1,6 +1,5 @@
 #!/bin/bash
 set -eou pipefail
-set -x
 
 tr ' ' '\n' <<< "$PROGRESS_CFG_BASE64" | base64 --decode > /psc/dlc/progress.cfg
 
@@ -35,6 +34,10 @@ test_projects/setup.sh
 
 echo 'starting tests...'
 sed -i 's/"activationEvents"/"activationEvents-vscode"/g;s/"activationEvents-coverage"/"activationEvents"/g' package.json
+
+# export ELECTRON_ENABLE_LOGGING=true
+service dbus start
+
 xvfb-run -a npm run test
 # if ! xvfb-run -a npm test && ! ${CIRCLECI:-false}; then
 # 	bash

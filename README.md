@@ -18,7 +18,7 @@ This project was developed using the [Progress OpenEdge Developers Kit: Classroo
 * See test results
 * View code coverage
 
-	![code coverage](docs/coverage.png)
+	![code coverage](https://github.com/kenherring/ablunit-test-provider/raw/main/docs/coverage.png)
 
 ## Configuration
 

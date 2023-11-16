@@ -1,7 +1,7 @@
 
 import { Uri, workspace } from "vscode"
 import { PropathParser } from "./ABLPropath"
-import { outputChannel } from "./ABLUnitCommon"
+import { logToChannel } from "./ABLUnitCommon"
 
 export interface IDebugLine {
 	srcUri: Uri
@@ -64,7 +64,7 @@ export class ABLDebugLines {
 			try {
 				debugLines = await this.importDebugLines(debugSourceName, fileinfo.uri, fileinfo.xrefUri)
 			} catch (e) {
-				outputChannel.appendLine("cannot read: " + fileinfo.uri.fsPath)
+				logToChannel("cannot read: " + fileinfo.uri.fsPath, "warn")
 				console.warn("cannot read " + fileinfo.uri.fsPath)
 				return undefined
 			}
