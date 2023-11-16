@@ -143,23 +143,23 @@ export class ABLUnitConfig  {
 
 	constructor(workspaceDir: Uri) {
 		ablunitConfig.workspaceUri = workspaceDir
+		let tempDir: Uri = ablunitConfig.workspaceUri
 		if (ablunitConfig.tempDir != '') {
-			let tempDir: Uri
 			if (isRelativePath(ablunitConfig.tempDir)) {
 				tempDir = Uri.joinPath(ablunitConfig.workspaceUri, ablunitConfig.tempDir)
 			} else {
 				tempDir = Uri.file(ablunitConfig.tempDir)
 			}
-			this.setTempDirUri(tempDir, true)
 		}
-		console.log("[ABLUnitConfig constructor] workspaceUri=" + workspaceDir.fsPath)
-		console.log("[ABLUnitConfig constructor] tempDir=" + workspace.getConfiguration('ablunit').get('tempDir', ''))
+		this.setTempDirUri(tempDir, true)
+		console.log("[ABLUnitConfigWriter constructor] workspaceUri=" + ablunitConfig.workspaceUri.fsPath)
+		console.log("[ABLUnitConfigWriter constructor] tempDir=" + ablunitConfig.tempDirUri.fsPath)
 	}
 
 	async setTempDirUri (tempDir: Uri, fromConstructor: boolean = false) {
 		console.log("setTempDirUri tempDir=" + tempDir.fsPath)
 		if (fromConstructor == false && ablunitConfig.tempDirUri === tempDir) {
-			console.log("skip setTempDir - tempDir is the same as before")
+			console.log("skip setTempDir - tempDir is the same as before (" + ablunitConfig.tempDirUri.fsPath + ")")
 			return
 		}
 		ablunitConfig.tempDirUri = tempDir

@@ -44,7 +44,7 @@ export class ABLResults {
 		ablunitConfig.workspaceUri = workspaceDir
 		ablunitConfig.storageUri = storageUri
 		if (ablunitConfig.tempDir === '') {
-			ablunitConfig.tempDirUri = storageUri
+			this.cfg.setTempDirUri(storageUri)
 		}
 		this.promsgs = new ABLPromsgs(this.dlc, ablunitConfig.storageUri)
 		this.setStatus("constructed")
