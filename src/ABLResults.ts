@@ -9,6 +9,7 @@ import { ABLPromsgs, getPromsgText } from "./ABLPromsgs"
 import { PropathParser } from "./ABLPropath"
 import { logToChannel } from "./ABLUnitCommon"
 import { FileCoverage, CoveredCount, StatementCoverage } from "./TestCoverage"
+import { ablunitRun } from "./ABLUnitRun"
 
 
 export class ABLResults {
@@ -18,11 +19,11 @@ export class ABLResults {
 	endTime!: Date
 	duration = () => { return (Number(this.endTime) - Number(this.startTime)) }
 
+	ablResults: ABLResultsParser | undefined
 	testData!: WeakMap<TestItem, ABLUnitTestData>
 	propath?: PropathParser
 	debugLines?: ABLDebugLines
 	promsgs?: ABLPromsgs
-	results?: TestSuites
 	profileJson?: ABLProfileJson
 	coverageJson: [] = []
 	coverage: FileCoverage[] = []
@@ -78,18 +79,48 @@ export class ABLResults {
 		})
 	}
 
-	async parseOutput(item: TestItem, options: TestRun) {
+	resetTests() {
+		ablunitConfig.configJson.tests = undefined
+	}
+
+	async addTest (testName: string) {
+		const testUri = Uri.joinPath(ablunitConfig.workspaceUri, testName.toString())
+		let test: string = workspace.asRelativePath(testName)
+
+		const p = await this.propath!.search(testUri)
+		if (p) {
+			test = p.propathRelativeFile
+		}
+
+		if (ablunitConfig.configJson.tests === undefined) {
+			ablunitConfig.configJson.tests = [{ test: test}]
+		} else {
+			ablunitConfig.configJson.tests.push({ test: test})
+		}
+	}
+
+	createAblunitJson() {
+		this.cfg.createAblunitJson(ablunitConfig.configJson)
+	}
+
+	async run(options: TestRun) {
+		await ablunitRun(ablunitConfig, options, this).then()
+		if(!this.ablResults!.resultsJson) {
+			throw new Error("no results available")
+		}
+	}
+
+	async parseOutput(options: TestRun) {
 		this.setStatus("parsing results")
 		options.appendOutput("parsing results\r\n")
 
 		this.endTime = new Date()
 
-		const ablResults = new ABLResultsParser(this.propath!, this.debugLines!)
-		await ablResults.parseResults(ablunitConfig.configJson).then(() => {
-			if(!ablResults.resultsJson) {
+		this.ablResults = new ABLResultsParser(this.propath!, this.debugLines!)
+		await this.ablResults.parseResults(ablunitConfig.configJson, ablunitConfig.config_output_resultsUri, ablunitConfig.config_output_jsonUri).then(() => {
+			if(!this.ablResults!.resultsJson) {
 				throw (new Error("no results data available..."))
 			}
-			return this.assignTestResults(ablResults.resultsJson, item, options)
 		}, (err) => {
 			console.error("[parseResultsFile] " + err)
 		})
@@ -108,14 +139,14 @@ export class ABLResults {
 		options.appendOutput("test run complete\r\n")
 	}
 
-	async assignTestResults (resultsJson: TestSuites[], item: TestItem, options: TestRun) {
-		if(resultsJson.length > 1) {
+	async assignTestResults (item: TestItem, options: TestRun) {
+		if(this.ablResults!.resultsJson.length > 1) {
 			logToChannel("multiple results files found - this is not supported")
 			options.errored(item, new TestMessage("multiple results files found - this is not supported"), this.duration())
-			// return
+			return
 		}
-		this.results = resultsJson[0]
-		if (!this.results.testsuite) {
+
+		if (!this.ablResults!.resultsJson[0].testsuite) {
 			logToChannel("no tests results available, check the configuration for accuracy")
 			options.errored(item, new TestMessage("no tests results available, check the configuration for accuracy"), this.duration())
 			return
@@ -130,20 +161,20 @@ export class ABLResults {
 			const propathRelativePath = this.propath!.search(suiteName)!
 			suiteName = await propathRelativePath.then((res) => {
 				if (res?.propathRelativeFile) {
-					return res?.propathRelativeFile.replace(/\\/g, '/')
+					return res?.propathRelativeFile
 				}
 				return suiteName
 			})
 		}
 
-		const s = this.results.testsuite.find((s: TestSuite) => s.classname === suiteName || s.name === suiteName)
+		const s = this.ablResults!.resultsJson[0].testsuite.find((s: TestSuite) => s.classname === suiteName || s.name === suiteName)
 		// if (!s) {
 		// 	suiteName = item.uri!.fsPath.replace(/\\/g, '/')
 		// 	s = this.results.testsuite.find((s: TestSuite) => s.name === suiteName)
 		// }
 		if (!s) {
-			logToChannel("could not find test suite for '" + suiteName + " in results")
-			options.errored(item, new TestMessage("could not find test suite for '" + suiteName + " in results"), this.duration())
+			logToChannel("could not find test suite for '" + suiteName + "' in results", 'error')
+			options.errored(item, new TestMessage("could not find test suite for '" + suiteName + "' in results"), this.duration())
 			return
 		}
 

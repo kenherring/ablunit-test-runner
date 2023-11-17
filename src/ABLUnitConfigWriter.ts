@@ -7,21 +7,17 @@ import * as os from 'os'
 const workspaceDir = workspace.workspaceFolders![0].uri // TODO - handle multiple workspace folders
 
 export interface IABLUnitJson {
-	configPath: string
-	configUri: Uri
-	output: {
-		location: string //results.xml directory
-		locationUri: Uri //results.xml directory
-		resultsFile: 'results.xml'
-		resultsUri: Uri
-		format: 'xml'
-		writeJson: boolean
-		jsonUri: Uri
+	options: {
+		output: {
+			location: string //results.xml directory
+			format: 'xml'
+			writeJson: boolean
+		}
+		quitOnEnd: boolean
+		writeLog: boolean
+		showErrorMessage: boolean
+		throwError: boolean
 	}
-	quitOnEnd: boolean
-	writeLog: boolean
-	showErrorMessage: boolean
-	throwError: boolean
 	tests?: [
 		{
 			test: string,
@@ -76,6 +72,12 @@ export interface IABLUnitConfig {
 		commandArr: string[]
 		task: string
 	}
+	config_path: string
+	config_uri: Uri,
+	config_output_locationUri: Uri,
+	config_output_resultsFile: string,
+	config_output_resultsUri: Uri,
+	config_output_jsonUri: Uri,
 	configJson: IABLUnitJson
 	profilerOptions: IProfilerOptions
 }
@@ -104,22 +106,24 @@ export const ablunitConfig: IABLUnitConfig = {
 		commandArr: [ '_progres', '-p', 'ABLUnitCore.p'],
 		task: workspace.getConfiguration('ablunit').get('tests.task', ''),
 	},
+	config_output_locationUri: workspaceDir,
+	config_output_resultsFile: 'results.xml',
+	config_output_resultsUri: Uri.joinPath(workspaceDir, 'results.xml'),
+	config_output_jsonUri: Uri.joinPath(workspaceDir, 'results.json'),
+	config_path: workspace.getConfiguration('ablunit').get('configJson.configPath', 'ablunit.json'),
+	config_uri: Uri.joinPath(workspaceDir, 'ablunit.json'),
 	configJson: {
-		configPath: workspace.getConfiguration('ablunit').get('configJson.configPath', 'ablunit.json'),
-		configUri: Uri.joinPath(workspaceDir, 'ablunit.json'),
-		output: {
-			location: workspace.getConfiguration('ablunit').get('configJson.outputLocation', ''),
-			locationUri: workspaceDir,
-			resultsFile: 'results.xml',
-			resultsUri: Uri.joinPath(workspaceDir, 'results.xml'),
-			format: 'xml',
-			writeJson: workspace.getConfiguration('ablunit').get('configJson.writeJson', false),
-			jsonUri: Uri.joinPath(workspaceDir,'results.json')
-		},
-		quitOnEnd: workspace.getConfiguration('ablunit').get('configJson.quitOnEnd', true),
-		writeLog: workspace.getConfiguration('ablunit').get('configJson.writeLog', true),
-		showErrorMessage: workspace.getConfiguration('ablunit').get('configJson.showErrorMessage', true),
-		throwError: workspace.getConfiguration('ablunit').get('configJson.throwError', true),
+		options: {
+			output: {
+				location: workspace.getConfiguration('ablunit').get('configJson.outputLocation', ''),
+				format: 'xml',
+				writeJson: workspace.getConfiguration('ablunit').get('configJson.writeJson', false),
+			},
+			quitOnEnd: workspace.getConfiguration('ablunit').get('configJson.quitOnEnd', true),
+			writeLog: workspace.getConfiguration('ablunit').get('configJson.writeLog', true),
+			showErrorMessage: workspace.getConfiguration('ablunit').get('configJson.showErrorMessage', true),
+			throwError: workspace.getConfiguration('ablunit').get('configJson.throwError', true),
+		}
 	},
 	profilerOptions: {
 		enabled: workspace.getConfiguration('ablunit.profilerOptions').get('enabled', true),
@@ -168,15 +172,20 @@ export class ABLUnitConfig  {
 		if (isRelativePath(ablunitConfig.progressIniPath)) {
 			ablunitConfig.progressIniUri = Uri.joinPath(ablunitConfig.tempDirUri, ablunitConfig.progressIniPath)
 		}
-		if (isRelativePath(ablunitConfig.configJson.configPath)) {
-			ablunitConfig.configJson.configUri = Uri.joinPath(ablunitConfig.tempDirUri, ablunitConfig.configJson.configPath)
+		if (isRelativePath(ablunitConfig.config_path)) {
+			ablunitConfig.config_uri = Uri.joinPath(ablunitConfig.tempDirUri, ablunitConfig.config_path)
 		}
-		if (isRelativePath(ablunitConfig.configJson.output.location)) {
-			ablunitConfig.configJson.output.locationUri = Uri.joinPath(ablunitConfig.tempDirUri, ablunitConfig.configJson.output.location)
+
+		if (isRelativePath(ablunitConfig.configJson.options.output.location)) {
+			ablunitConfig.config_output_locationUri = Uri.joinPath(ablunitConfig.tempDirUri, ablunitConfig.configJson.options.output.location)
 		}
-		if (isRelativePath(ablunitConfig.configJson.output.resultsFile)) {
-			ablunitConfig.configJson.output.resultsUri = Uri.joinPath(ablunitConfig.configJson.output.locationUri, ablunitConfig.configJson.output.resultsFile)
-			ablunitConfig.configJson.output.jsonUri = Uri.joinPath(ablunitConfig.configJson.output.locationUri, ablunitConfig.configJson.output.resultsFile.replace(/\.[a-zA-Z]+$/, '.json'))
+		if (ablunitConfig.configJson.options.output.location === '') {
+			ablunitConfig.configJson.options.output.location = ablunitConfig.config_output_locationUri.fsPath
+		}
+
+		if (isRelativePath(ablunitConfig.config_output_resultsFile)) {
+			ablunitConfig.config_output_resultsUri = Uri.joinPath(ablunitConfig.config_output_locationUri, ablunitConfig.config_output_resultsFile)
+			ablunitConfig.config_output_jsonUri = Uri.joinPath(ablunitConfig.config_output_locationUri, ablunitConfig.config_output_resultsFile.replace(/\.[a-zA-Z]+$/, '.json'))
 		}
 		if (isRelativePath(ablunitConfig.profilerOptions.optionsPath)) {
 			ablunitConfig.profilerOptions.optionsUri = Uri.joinPath(ablunitConfig.tempDirUri, ablunitConfig.profilerOptions.optionsPath)
@@ -206,8 +215,8 @@ export class ABLUnitConfig  {
 	}
 
 	async createAblunitJson(cfg: IABLUnitJson) {
-		console.log("creating ablunit.json: '" + cfg.configUri.fsPath + "'")
-		return workspace.fs.writeFile(cfg.configUri, Uint8Array.from(Buffer.from(JSON.stringify(cfg, null, 2))))
+		console.log("creating ablunit.json: '" + ablunitConfig.config_uri.fsPath + "'")
+		return workspace.fs.writeFile(ablunitConfig.config_uri, Uint8Array.from(Buffer.from(JSON.stringify(cfg, null, 2))))
 	}
 
 	async createProfileOptions (profOpts: IProfilerOptions) {
@@ -232,7 +241,7 @@ export class ABLUnitConfig  {
 		if (profOpts.traceFilter != '') {
 			opt.push('-traceFilter "' + profOpts.traceFilter + '"')
 		}
-		console.log('creating profile.options: "' + workspace.asRelativePath(profOpts.optionsUri) + '"')
+		console.log('creating profile.options: "' + profOpts.optionsUri.fsPath + '"')
 		return workspace.fs.writeFile(profOpts.optionsUri, Uint8Array.from(Buffer.from(opt.join('\n'))))
 	}
 

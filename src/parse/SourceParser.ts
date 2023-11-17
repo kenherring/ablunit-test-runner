@@ -24,7 +24,7 @@ interface SuiteLoc {
 export const parseABLUnit = (text: string, relativePath: string, events: {
 	onTestSuite(range: vscode.Range, suitename: string): void;
 	onTestClassNamespace(range: vscode.Range, classpath: string, element: string, classpathUri: vscode.Uri): void;
-	onTestClass(range: vscode.Range, classname: string, label: string): void;
+	onTestClass(range: vscode.Range, relativePath: string, classname: string, label: string): void;
 	onTestMethod(range: vscode.Range, classname: string, methodname: string): void;
 	onTestProgramDirectory (range: vscode.Range, dirpath: string, dir: string, dirUri: vscode.Uri): void
 	onTestProgram(range: vscode.Range, relativePath: string, label: string, programUri: vscode.Uri): void;
@@ -92,7 +92,7 @@ export const parseABLUnit = (text: string, relativePath: string, events: {
 					}
 					const label = parts[parts.length - 1]
 
-					events.onTestClass(range, classname, label);
+					events.onTestClass(range, relativePath, classname, label);
 					foundClassHead = true
 					continue;
 				}
@@ -196,7 +196,7 @@ export const parseABLUnit = (text: string, relativePath: string, events: {
 					events.onTestSuite(range, className);
 
 					for (const element of suiteList) {
-						events.onTestClass(element['range'], element['name'], element['name'])
+						events.onTestClass(element['range'], element['name'], element['name'], element['name'])
 					}
 
 					return

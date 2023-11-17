@@ -66,7 +66,6 @@ export async function activate(context: vscode.ExtensionContext) {
 		const run = ctrl.createTestRun(request)
 		console.log('created testRun')
 		resultData.set(run, res)
-
 		console.log('created resultData')
 
 		const discoverTests = async (tests: Iterable<vscode.TestItem>) => {
@@ -81,6 +80,9 @@ export async function activate(context: vscode.ExtensionContext) {
 				if (data instanceof ABLTestClass || data instanceof ABLTestProgram || data instanceof ABLTestMethod || data instanceof ABLTestProcedure || data instanceof ABLTestMethod) {
 					run.enqueued(test)
 					queue.push({ test, data })
+					if (data instanceof ABLTestProgram || data instanceof ABLTestClass) {
+						await res.addTest(test.id)
+					}
 				} else {
 					await discoverTests(gatherTestItems(test.children))
 				}
@@ -89,14 +91,29 @@ export async function activate(context: vscode.ExtensionContext) {
 
 		const runTestQueue = async () => {
 			for (const { test, data } of queue) {
-				run.appendOutput(`running ${test.id}\r\n`)
 				if (run.token.isCancellationRequested) {
 					run.skipped(test)
 				} else {
 					run.started(test)
-					const prom = await data.run(test, run)
+					for(const childTest of gatherTestItems(test.children)) {
+						run.started(childTest)
+					}
 				}
-				run.appendOutput(`completed ${test.id}\r\n`)
+			}
+
+			res.setTestData(testData)
+			logToChannel('starting ablunit run...')
+			run.appendOutput('starting ablunit run...\r\n')
+			await res.run(run)
+			logToChannel('ablunit run complete')
+			run.appendOutput('ablunit run complete\r\n')
+
+			for (const { test, data } of queue) {
+				if (run.token.isCancellationRequested) {
+					run.skipped(test)
+				} else {
+					await res.assignTestResults(test, run)
+				}
 			}
 
 			run.end()
@@ -109,6 +126,7 @@ export async function activate(context: vscode.ExtensionContext) {
 		}
 
 		res.start().then(() => {
+			res.resetTests()
 			discoverTests(request.include ?? gatherTestItems(ctrl.items)).then(
 				runTestQueue
 			)

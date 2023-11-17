@@ -7,18 +7,12 @@ import { IABLUnitConfig } from "./ABLUnitConfigWriter"
 //TODO remove this
 import * as cp from "child_process";
 
-export const ablunitRun = async(item: TestItem, ablunitConfig: IABLUnitConfig, options: TestRun, data: ABLUnitTestData, res: ABLResults) => {
+export const ablunitRun = async(ablunitConfig: IABLUnitConfig, options: TestRun, res: ABLResults) => {
 	const start = Date.now()
 
-	// let itemPath = workspace.asRelativePath(item.uri!.fsPath)
-	const fileinfo = await res.propath?.search(item.uri!)
-	let itemPath: string = fileinfo?.propathRelativeFile ?? item.uri!.fsPath
+	res.createAblunitJson()
 
-	if (data instanceof ABLTestProcedure || data instanceof ABLTestMethod) {
-		itemPath = itemPath + "#" + item.label
-	}
-
-	const getCommand = (itemPath: string) => {
+	const getCommand = () => {
 		if (!ablunitConfig.tempDirUri) {
 			throw (new Error("temp directory not set"))
 		}
@@ -32,6 +26,7 @@ export const ablunitRun = async(item: TestItem, ablunitConfig: IABLUnitConfig, o
 		if (ablunitConfig.profilerOptions.enabled) {
 			cmd.push('-profile', workspace.asRelativePath(ablunitConfig.profilerOptions.optionsUri))
 		}
+
 		// cmd.push('-param', "'CFG=" + res.runConfig.ablunitJson!.fsPath + "'")
 		// cmd.push("-param", '"' + itemPath + ' -outputLocation ' + workspace.asRelativePath(res.runConfig.tempDirUri) + ' -format xml"')
 
@@ -41,7 +36,7 @@ export const ablunitRun = async(item: TestItem, ablunitConfig: IABLUnitConfig, o
 			cmd.push(element)
 		});
 
-		cmd.push("-param", '"' + itemPath + ' -outputLocation ' + workspace.asRelativePath(ablunitConfig.tempDirUri) + '"')
+		cmd.push("-param", '"CFG=' + ablunitConfig.config_uri.fsPath + '"')
 		cmd.forEach(element => {
 			cmdSanitized.push(element.replace(/\\/g, '/'))
 		});
@@ -52,7 +47,7 @@ export const ablunitRun = async(item: TestItem, ablunitConfig: IABLUnitConfig, o
 	}
 
 	const runCommand = () => {
-		const args = getCommand(itemPath)
+		const args = getCommand()
 		logToChannel("ShellExecution Started - dir='" + ablunitConfig.workspaceUri.fsPath + "'")
 
 		const cmd = args[0]
@@ -86,6 +81,6 @@ export const ablunitRun = async(item: TestItem, ablunitConfig: IABLUnitConfig, o
 	}
 
 	return runCommand().then(() => {
-		return res.parseOutput(item, options).then();
+		return res.parseOutput(options).then();
 	})
 }

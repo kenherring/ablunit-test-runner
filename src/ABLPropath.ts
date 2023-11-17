@@ -136,7 +136,6 @@ export class PropathParser {
 			const fileInPropathUri = Uri.joinPath(e.uri, relativeFile)
 			const exists = await workspace.fs.stat(fileInPropathUri).then((stat) => { return true }, (err) => { return false })
 
-
 			if (exists) {
 				let propathRelativeFile = fileInPropathUri.fsPath.replace(e.uri.fsPath,'')
 				if (propathRelativeFile != fileInPropathUri.fsPath) {
