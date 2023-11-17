@@ -84,6 +84,16 @@ export class ABLResults {
 	}
 
 	async addTest (testName: string) {
+
+		console.log("addTest testName=" + testName)
+
+
+		let testCase = ""
+		if (testName.indexOf("#") > -1) {
+			testCase = testName.split("#")[1]
+			testName = testName.split("#")[0]
+		}
+
 		const testUri = Uri.joinPath(ablunitConfig.workspaceUri, testName.toString())
 		let test: string = workspace.asRelativePath(testName)
 
@@ -93,9 +103,17 @@ export class ABLResults {
 		}
 
 		if (ablunitConfig.configJson.tests === undefined) {
-			ablunitConfig.configJson.tests = [{ test: test}]
+			if (testCase != "") {
+				ablunitConfig.configJson.tests = [{ test: test, cases: [ testCase ] }]
+			} else {
+				ablunitConfig.configJson.tests = [{ test: test }]
+			}
 		} else {
-			ablunitConfig.configJson.tests.push({ test: test})
+			if (testCase != "") {
+				ablunitConfig.configJson.tests.push({ test: test })
+			} else {
+				ablunitConfig.configJson.tests.push({ test: test, cases: [ testCase ] })
+			}
 		}
 	}
 

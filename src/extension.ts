@@ -80,9 +80,7 @@ export async function activate(context: vscode.ExtensionContext) {
 				if (data instanceof ABLTestClass || data instanceof ABLTestProgram || data instanceof ABLTestMethod || data instanceof ABLTestProcedure || data instanceof ABLTestMethod) {
 					run.enqueued(test)
 					queue.push({ test, data })
-					if (data instanceof ABLTestProgram || data instanceof ABLTestClass) {
-						await res.addTest(test.id)
-					}
+					await res.addTest(test.id)
 				} else {
 					await discoverTests(gatherTestItems(test.children))
 				}
