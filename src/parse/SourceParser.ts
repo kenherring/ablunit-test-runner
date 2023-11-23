@@ -32,6 +32,7 @@ export const parseABLUnit = (text: string, relativePath: string, events: {
 	onAssert(range: vscode.Range, methodname: string): void;
 }) => {
 
+	relativePath = relativePath.replace(/\\/g, '/')
 	logToChannel("parsing " + relativePath)
 
 	const lines = text.split("\n")
@@ -80,7 +81,7 @@ export const parseABLUnit = (text: string, relativePath: string, events: {
 						classname = relativePath;
 					}
 
-					const parts = relativePath.split("/")
+					const parts = relativePath.split('/')
 					let relativeTree = ""
 					for (let idx=0; idx < parts.length - 1; idx++) {
 						if (relativeTree == "") {
@@ -115,7 +116,7 @@ export const parseABLUnit = (text: string, relativePath: string, events: {
 
 		const programUri = vscode.Uri.joinPath(workspaceDir,relativePath)
 
-		const parts = relativePath.split("/")
+		const parts = relativePath.split('/')
 		let relativeTree = ""
 		for (let idx=0; idx < parts.length - 1; idx++) {
 			if (relativeTree == "") {

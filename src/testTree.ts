@@ -2,8 +2,6 @@ import * as vscode from 'vscode';
 import { parseABLUnit } from './parse/SourceParser';
 import { TextDecoder } from 'util';
 import { ABLResults } from './ABLResults';
-import { ablunitRun } from './ABLUnitRun';
-import { ablunitConfig } from './ABLUnitConfigWriter';
 
 const textDecoder = new TextDecoder('utf-8');
 
@@ -159,16 +157,16 @@ export class ABLTestClass extends TestFile {
 				ancestors.push({ item: thead, children: [] as vscode.TestItem[] })
 			},
 
-			onTestClass: (range: vscode.Range, relativePath: string, classpath: string, label: string) => {
+			onTestClass: (range: vscode.Range, relativepath: string, classpath: string, label: string) => {
 				this.testFileType = "ABLTestClass"
 
-				const id = `${relativePath}`
-				const thead = controller.createTestItem(id, relativePath, item.uri)
+				const id = `${relativepath}`
+				const thead = controller.createTestItem(id, relativepath, item.uri)
 				thead.range = range
 				thead.label = label
 				thead.tags = [new vscode.TestTag("runnable"), new vscode.TestTag("ABLTestClass")]
 				const tData = new ABLTestClass()
-				tData.setClassInfo(relativePath, label)
+				tData.setClassInfo(relativepath, label)
 				testData.set(thead, tData)
 
 				const parent = ancestors[ancestors.length - 1]

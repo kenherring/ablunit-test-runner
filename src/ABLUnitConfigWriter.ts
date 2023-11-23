@@ -11,7 +11,6 @@ export interface IABLUnitJson {
 		output: {
 			location: string //results.xml directory
 			format: 'xml'
-			writeJson: boolean
 		}
 		quitOnEnd: boolean
 		writeLog: boolean
@@ -21,13 +20,12 @@ export interface IABLUnitJson {
 	tests?: [
 		{
 			test: string,
-			cases?: [
-				string
-			]
-		} |
-		{
-			folder: string
+			cases?: string[]
 		}
+		// } |
+		// {
+		// 	folder: string
+		// }
 	]
 }
 
@@ -78,6 +76,7 @@ export interface IABLUnitConfig {
 	config_output_resultsFile: string,
 	config_output_resultsUri: Uri,
 	config_output_jsonUri: Uri,
+	config_output_writeJson: boolean,
 	configJson: IABLUnitJson
 	profilerOptions: IProfilerOptions
 }
@@ -110,6 +109,7 @@ export const ablunitConfig: IABLUnitConfig = {
 	config_output_resultsFile: 'results.xml',
 	config_output_resultsUri: Uri.joinPath(workspaceDir, 'results.xml'),
 	config_output_jsonUri: Uri.joinPath(workspaceDir, 'results.json'),
+	config_output_writeJson: workspace.getConfiguration('ablunit').get('configJson.writeJson', false),
 	config_path: workspace.getConfiguration('ablunit').get('configJson.configPath', 'ablunit.json'),
 	config_uri: Uri.joinPath(workspaceDir, 'ablunit.json'),
 	configJson: {
@@ -117,7 +117,6 @@ export const ablunitConfig: IABLUnitConfig = {
 			output: {
 				location: workspace.getConfiguration('ablunit').get('configJson.outputLocation', ''),
 				format: 'xml',
-				writeJson: workspace.getConfiguration('ablunit').get('configJson.writeJson', false),
 			},
 			quitOnEnd: workspace.getConfiguration('ablunit').get('configJson.quitOnEnd', true),
 			writeLog: workspace.getConfiguration('ablunit').get('configJson.writeLog', true),
@@ -216,7 +215,7 @@ export class ABLUnitConfig  {
 
 	async createAblunitJson(cfg: IABLUnitJson) {
 		console.log("creating ablunit.json: '" + ablunitConfig.config_uri.fsPath + "'")
-		return workspace.fs.writeFile(ablunitConfig.config_uri, Uint8Array.from(Buffer.from(JSON.stringify(cfg, null, 2))))
+		return workspace.fs.writeFile(ablunitConfig.config_uri, Uint8Array.from(Buffer.from(JSON.stringify(cfg, null, 4))))
 	}
 
 	async createProfileOptions (profOpts: IProfilerOptions) {

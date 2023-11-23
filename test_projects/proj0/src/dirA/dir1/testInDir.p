@@ -8,9 +8,28 @@ end procedure.
 
 @Test.
 procedure customerTest :
-    for each customer no-lock:
-        message customer.name.
-    end.
+  message "customerTest".
+  for each customer no-lock:
+      message customer.name.
+  end.
+end procedure.
+
+@Test.
+procedure test3.1 :
+  message 3.1.
+  Assert:Equals(1,1).
+end procedure.
+
+@Test.
+procedure test3.2 :
+  message 3.2.
+  Assert:Equals(1,1).
+end procedure.
+
+@Test.
+procedure test4 :
+  message 4.
+  Assert:Equals(2,2).
 end procedure.
 
 {dirA/inc/somefile.i}

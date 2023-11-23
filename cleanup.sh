@@ -3,7 +3,7 @@ set -eou pipefail
 
 DELETE='-delete'
 
-ARR=("ablunit.json" "progress.ini" "prof.out" "prof.json" "protrace.*" "results.json" "results.xml" "dbg_*" "*.xref" "results.prof" "profiler.json" "profile.options")
+ARR=("ablunit.json" "ablunit.log" "progress.ini" "prof.out" "prof.json" "protrace.*" "results.json" "results.xml" "dbg_*" "*.xref" "results.prof" "profiler.json" "profile.options")
 
 for F in "${ARR[@]}"; do
 	echo "deleting $F"

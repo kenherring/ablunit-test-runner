@@ -102,7 +102,25 @@ export async function activate(context: vscode.ExtensionContext) {
 			res.setTestData(testData)
 			logToChannel('starting ablunit run...')
 			run.appendOutput('starting ablunit run...\r\n')
-			await res.run(run)
+
+			const ret = await res.run(run).then(() => {
+				return true
+			}, (err) => {
+				logToChannel("ablunit run failed with exception: " + err,'error')
+				return false
+			})
+
+			if(!ret) {
+				for (const { test, data } of queue) {
+					run.errored(test,new vscode.TestMessage("ablunit run failed"))
+					for (const childTest of gatherTestItems(test.children)) {
+						run.errored(childTest,new vscode.TestMessage("ablunit run failed"))
+					}
+				}
+				run.end()
+				return
+			}
+
 			logToChannel('ablunit run complete')
 			run.appendOutput('ablunit run complete\r\n')
 

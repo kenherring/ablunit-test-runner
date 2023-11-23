@@ -88,44 +88,64 @@ export class ABLResults {
 		console.log("addTest testName=" + testName)
 
 
-		let testCase = ""
+		let testCase = undefined
 		if (testName.indexOf("#") > -1) {
 			testCase = testName.split("#")[1]
 			testName = testName.split("#")[0]
 		}
 
 		const testUri = Uri.joinPath(ablunitConfig.workspaceUri, testName.toString())
-		let test: string = workspace.asRelativePath(testName)
+		let testRel: string = workspace.asRelativePath(testName)
 
 		const p = await this.propath!.search(testUri)
 		if (p) {
-			test = p.propathRelativeFile
+			testRel = p.propathRelativeFile
+		}
+		testRel = testRel.replace(/\\/g, '/')
+
+		let testObj: { test: string; cases?: string[] }
+		if (!testCase) {
+			testObj = { test: testRel }
+		} else {
+			testObj = { test: testRel, cases: [ testCase ] }
 		}
 
-		if (ablunitConfig.configJson.tests === undefined) {
-			if (testCase != "") {
-				ablunitConfig.configJson.tests = [{ test: test, cases: [ testCase ] }]
+		if (!ablunitConfig.configJson.tests) {
+			ablunitConfig.configJson.tests = [testObj]
+		} else if (testCase) {
+			const testObj = ablunitConfig.configJson.tests.find((t: any) => t.test === testRel)
+			if (testObj) {
+				testObj.cases?.push(testCase)
 			} else {
-				ablunitConfig.configJson.tests = [{ test: test }]
+				ablunitConfig.configJson.tests = testObj
 			}
 		} else {
-			if (testCase != "") {
-				ablunitConfig.configJson.tests.push({ test: test })
-			} else {
-				ablunitConfig.configJson.tests.push({ test: test, cases: [ testCase ] })
-			}
+			ablunitConfig.configJson.tests.push(testObj)
 		}
 	}
 
-	createAblunitJson() {
-		this.cfg.createAblunitJson(ablunitConfig.configJson)
+	async createAblunitJson() {
+		return this.cfg.createAblunitJson(ablunitConfig.configJson)
+	}
+
+	async deleteResultsXml() {
+		return workspace.fs.stat(ablunitConfig.config_output_resultsUri).then((stat) => {
+			console.log("delete " + ablunitConfig.config_output_resultsUri.fsPath)
+			return workspace.fs.delete(ablunitConfig.config_output_resultsUri)
+		}, (err) => {
+			// do nothing, can't delete a file that doesn't exist
+		})
 	}
 
 	async run(options: TestRun) {
-		await ablunitRun(ablunitConfig, options, this).then()
-		if(!this.ablResults!.resultsJson) {
-			throw new Error("no results available")
-		}
+		return ablunitRun(ablunitConfig, options, this).then(() => {
+			if(!this.ablResults!.resultsJson) {
+				throw new Error("no results available")
+			}
+		}, (err) => {
+			console.log("-- [ABLResults run caught exception]")
+			throw new Error("ablunitRun error: " + err)
+		})
 	}
 
 	async parseOutput(options: TestRun) {
@@ -184,6 +204,7 @@ export class ABLResults {
 				return suiteName
 			})
 		}
+		suiteName = suiteName.replace(/\\/g, '/')
 
 		const s = this.ablResults!.resultsJson[0].testsuite.find((s: TestSuite) => s.classname === suiteName || s.name === suiteName)
 		// if (!s) {

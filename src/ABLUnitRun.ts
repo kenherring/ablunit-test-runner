@@ -10,7 +10,8 @@ import * as cp from "child_process";
 export const ablunitRun = async(ablunitConfig: IABLUnitConfig, options: TestRun, res: ABLResults) => {
 	const start = Date.now()
 
-	res.createAblunitJson()
+	await res.createAblunitJson()
+	await res.deleteResultsXml()
 
 	const getCommand = () => {
 		if (!ablunitConfig.tempDirUri) {
@@ -19,7 +20,7 @@ export const ablunitRun = async(ablunitConfig: IABLUnitConfig, options: TestRun,
 
 		const cmd = [res.dlc + '/bin/_progres', '-b', '-p', 'ABLUnitCore.p']
 		if (process.platform === 'win32') {
-			cmd.push('-basekey', 'INI', '-ininame', ablunitConfig.progressIniUri.fsPath)
+			cmd.push('-basekey', 'INI', '-ininame', workspace.asRelativePath(ablunitConfig.progressIniUri.fsPath))
 		}
 		cmd.push('-T', workspace.asRelativePath(ablunitConfig.tempDirUri))
 
@@ -27,16 +28,13 @@ export const ablunitRun = async(ablunitConfig: IABLUnitConfig, options: TestRun,
 			cmd.push('-profile', workspace.asRelativePath(ablunitConfig.profilerOptions.optionsUri))
 		}
 
-		// cmd.push('-param', "'CFG=" + res.runConfig.ablunitJson!.fsPath + "'")
-		// cmd.push("-param", '"' + itemPath + ' -outputLocation ' + workspace.asRelativePath(res.runConfig.tempDirUri) + ' -format xml"')
-
 		const cmdSanitized: string[] = []
 
 		ablunitConfig.params.split(' ').forEach(element => {
 			cmd.push(element)
 		});
 
-		cmd.push("-param", '"CFG=' + ablunitConfig.config_uri.fsPath + '"')
+		cmd.push("-param", '"CFG=' + workspace.asRelativePath(ablunitConfig.config_uri.fsPath) + '"')
 		cmd.forEach(element => {
 			cmdSanitized.push(element.replace(/\\/g, '/'))
 		});
@@ -48,34 +46,33 @@ export const ablunitRun = async(ablunitConfig: IABLUnitConfig, options: TestRun,
 
 	const runCommand = () => {
 		const args = getCommand()
-		logToChannel("ShellExecution Started - dir='" + ablunitConfig.workspaceUri.fsPath + "'")
+		logToChannel("ABLUnit Command Execution Started - dir='" + ablunitConfig.workspaceUri.fsPath + "'")
 
 		const cmd = args[0]
 		args.shift()
 
 		return new Promise<string>((resolve, reject) => {
-
-			console.log("COMMAND=" + cmd + " " + args.join(' '))
+			console.log("using command=" + cmd + " " + args.join(' '))
 			res.setStatus("running '" + cmd + "' command")
+
 			cp.exec(cmd + ' ' + args.join(' '), { cwd: ablunitConfig.workspaceUri.fsPath }, (err: any, stdout: any, stderr: any) => {
 				const duration = Date.now() - start
-				if (err) {
-					console.error("cp.exec error=" + err.toString())
-					console.error("cp.exec stdout=" + stdout)
-					console.error("cp.exec stderr=" + stderr)
-					options.appendOutput("err=" + err)
-					options.appendOutput("stdout=" + stdout)
-					options.appendOutput("stderr=" + stderr)
-					reject(err)
+				if (stdout) {
+					logToChannel("_progres stdout=" + stdout)
+					options.appendOutput("_progres stdout=" + stdout + "\r\n")
 				}
 				if (stderr) {
-					console.error("cp.exec stderr=" + stderr)
-					options.appendOutput(stderr)
+					logToChannel("_progres stderr=" + stderr)
+					options.appendOutput("_progres stderr=" + stderr + "\r\n")
 					reject(stderr)
 				}
-				options.appendOutput("stdout:" + stdout + "\r\n")
-				logToChannel("ShellExecution Completed - duration: " + duration)
-				resolve(stdout)
+				if (err) {
+					logToChannel("_progres err=" + err.toString(), 'error')
+					options.appendOutput("_progres err=" + err)
+					reject(err)
+				}
+				logToChannel("ABLUnit Command Execution Completed - duration: " + duration)
+				resolve("resolve _progres promise")
 			})
 		})
 	}
