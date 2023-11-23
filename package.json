@@ -97,14 +97,14 @@
 					"markdownDescription": "* classpath example: `com.example.myclass`\n* filepath example: `src/com/example/myclass.cls`"
 				},
 				"ablunit.files.include": {
-					"type": "string",
-					"default": "**/*.{cls,p}",
-					"description": "Glob pattern to match test files"
+					"type": "array",
+					"default": [ "**/*.{cls,p}" ],
+					"description": "Glob patterns to include test files"
 				},
 				"ablunit.files.exclude": {
-					"type": "string",
-					"default": "**/.builder/**",
-					"description": "Glob pattern to exclude test files"
+					"type": "array",
+					"default": [ "**/.builder/**" ],
+					"description": "Glob patterns to exclude test files"
 				},
 				"ablunit.findAllFilesAtStartup": {
 					"type": "boolean",

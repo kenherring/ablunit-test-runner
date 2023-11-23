@@ -25,8 +25,8 @@ This project was developed using the [Progress OpenEdge Developers Kit: Classroo
 | Setting | Default | Description |
 | --- | --- | --- |
 | `ablunit.display.classLabel` | `classname` | `[ "classname" \| "filename" ]` |
-| `ablunit.files.include` | `**/*.{cls,p}` | Glob pattern to identify potential tests |
-| `ablunit.files.exclude` | `**/.builder/**` | Glob pattern to exclude |
+| `ablunit.files.include` | `[ "**/*.{cls,p}" ]` | Glob pattern array to include test files |
+| `ablunit.files.exclude` | `[ "**/.builder/**" ]` | Glob pattern array to exclude test files |
 | `ablunit.findAllFilesAtStartup` | `true` | Search all workspace files for test cases.  It may be beneficial to disable this for large workspaces, in which case the extension will find tests as files are accessed. |
 | `ablunit.importOpenedgeProjectJson` | `false` | import settings from `openedge-project.json` |
 | `ablunit.notificationsEnabled` | `true` | Enable/disable notifications |
