@@ -83,32 +83,6 @@
 		"ts-node": "^10.9.1"
 	},
 	"contributes": {
-		"languages": [
-			{
-				"id": "abl-procedures",
-				"aliases": [
-					"OpenEdge ABL",
-					"abl",
-					"Progress",
-					"Progress 4GL"
-				],
-				"extensions": [
-					".p"
-				]
-			},
-			{
-				"id": "abl-classes",
-				"aliases": [
-					"OpenEdge ABL",
-					"abl",
-					"Progress",
-					"Progress 4GL"
-				],
-				"extensions": [
-					".cls"
-				]
-			}
-		],
 		"configuration": {
 			"type": "object",
 			"title": "ABLUnit Test Provider",
@@ -261,13 +235,23 @@
 				}
 			}
 		},
+		"languages": [
+			{
+				"id": "abl-procedure",
+				"extensions": [ ".p" ]
+			},
+			{
+				"id": "abl-class",
+				"extensions": [ ".cls" ]
+			}
+		],
 		"snippets": [
 			{
-				"language": "abl-procedures",
+				"language": "abl-procedure",
 				"path": "./snippets-procedures.json"
 			},
 			{
-				"language": "abl-classes",
+				"language": "abl-class",
 				"path": "./snippets-classes.json"
 			}
 		]

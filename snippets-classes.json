@@ -3,27 +3,32 @@
 		"prefix": "block-level on error undo, throw.",
 		"body": [
 			"block-level on error undo, throw."
-		]
+		],
+		"scope": "abl-class"
 	},
 	"routing-level on error undo, throw.": {
 		"prefix": "routine-level on error undo, throw.",
-		"body": "routine-level on error undo, throw."
+		"body": "routine-level on error undo, throw.",
+		"scope": "abl-class"
 	},
 	"using OpenEdge.Core.Assert.":{
 		"prefix": "using OpenEdge.Core.Assert.",
-		"body": "using OpenEdge.Core.Assert."
+		"body": "using OpenEdge.Core.Assert.",
+		"scope": "abl-class"
 	},
 	"@Ignore": {
 		"prefix": "@Ignore",
 		"body": [
 			"@Ignore"
 		],
-		"description": "Ignores the test. You can use this annotation when you are still working on a code, the test case is not ready to run, or if the execution time of test is too long to be included."
+		"description": "Ignores the test. You can use this annotation when you are still working on a code, the test case is not ready to run, or if the execution time of test is too long to be included.",
+		"scope": "abl-class"
 	},
 	"@Testsuite": {
 		"prefix": "@Testsuite",
-		"body": "@Testsuite.",
-		"description": ""
+		"body": "@Testsuite(classes=\"${1:classList}\", procedures=\"${2:procedureList}\")",
+		"description": "Identifies that the suite of test procedures or test methods is a test suite.",
+		"scope": "abl-class"
 	},
 
 	"@Test method": {
@@ -34,7 +39,8 @@
 			"  ${2:Assert:Equals(1,2).}",
 			"end method."
 		],
-		"description": "A method that is a test method"
+		"description": "A method that is a test method",
+		"scope": "abl-class"
 	},
 	"@Setup method": {
 		"prefix": "@Setup method",
@@ -45,7 +51,8 @@
 			"  ${1:// do setup here}",
 			"end method."
 		],
-		"description": "Executes the method before each test. This annotation prepares the test environment such as reading input data or initializing the class."
+		"description": "Executes the method before each test. This annotation prepares the test environment such as reading input data or initializing the class.",
+		"scope": "abl-class"
 	},
 	"@Before method": {
 		"prefix": "@Before method",
@@ -56,7 +63,8 @@
 			"  ${1:// do setup here}",
 			"end method."
 		],
-		"description": "Executes the method once per class, before the start of all tests. This annotation can be used to perform time-sensitive activities such as connecting to a database."
+		"description": "Executes the method once per class, before the start of all tests. This annotation can be used to perform time-sensitive activities such as connecting to a database.",
+		"scope": "abl-class"
 	},
 	"@TearDown method": {
 		"prefix": "@TearDown method",
@@ -67,7 +75,8 @@
 			"  ${1:// do some cleanup here}",
 			"end method."
 		],
-		"description": "Executes the method after each test. This annotation cleans up the test environment such as deleting temporary data or restoring defaults."
+		"description": "Executes the method after each test. This annotation cleans up the test environment such as deleting temporary data or restoring defaults.",
+		"scope": "abl-class"
 	},
 	"@After method": {
 		"prefix": "@After method",
@@ -77,16 +86,18 @@
 			"  //Executes after each test",
 			"end method."
 		],
-		"description": "Executes the method once, after all the tests are executed. This annotation is used to perform clean-up activities such as disconnecting from a database."
+		"description": "Executes the method once, after all the tests are executed. This annotation is used to perform clean-up activities such as disconnecting from a database.",
+		"scope": "abl-class"
 	},
-	"@Test exception method": {
-		"prefix": "@Test exception method",
+	"@Test method exception": {
+		"prefix": "@Test method exception",
 		"body": [
 			"@Test (expected=\"${1:ExceptionType}\")",
 			"method public void testExceptionMethod () :",
 			"  ${2:runMethodThrowsException().} //Throws ${1}",
 			"end method."
 		],
-		"description": "Fails the test if the method does not throw the exception mentioned in the expected attribute."
+		"description": "Fails the test if the method does not throw the exception mentioned in the expected attribute.",
+		"scope": "abl-class"
 	}
 }

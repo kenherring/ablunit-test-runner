@@ -3,7 +3,7 @@ import { parseCallstack, ICallStack } from "./CallStackParser"
 import { PropathParser } from "../ABLPropath"
 import * as xml2js from "xml2js"
 import { ABLDebugLines } from "../ABLDebugLines"
-import { IABLUnitJson } from "../ABLUnitConfigWriter"
+import { IABLUnitJson, ablunitConfig } from "../ABLUnitConfigWriter"
 
 
 export interface TCFailure {
@@ -57,9 +57,9 @@ export class ABLResultsParser {
 		this.debugLines = debugLines
 	}
 
-	async parseResults(opts: IABLUnitJson) {
-		console.log("resultsUri=" + opts.output.resultsUri.fsPath)
-		const resultsBits = await workspace.fs.readFile(opts.output.resultsUri);
+	async parseResults(opts: IABLUnitJson, resultsUri: Uri, jsonUri: Uri) {
+		console.log("resultsUri=" + resultsUri.fsPath)
+		const resultsBits = await workspace.fs.readFile(resultsUri);
 		const resultsXml = Buffer.from(resultsBits.toString()).toString('utf8');
 		const resultsXmlJson = await this.parseXml(resultsXml)
 		try {
@@ -68,8 +68,8 @@ export class ABLResultsParser {
 			console.error("[parseResults] error parsing results.xml file: " + err)
 			throw err
 		}
-		if (opts.output.writeJson) {
-			this.writeJsonToFile(opts.output.jsonUri)
+		if (ablunitConfig.config_output_writeJson) {
+			this.writeJsonToFile(jsonUri)
 		}
 	}
 

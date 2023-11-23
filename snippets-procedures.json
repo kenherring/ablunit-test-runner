@@ -3,27 +3,32 @@
 		"prefix": "block-level on error undo, throw.",
 		"body": [
 			"block-level on error undo, throw."
-		]
+		],
+		"scope": "abl-procedure"
 	},
 	"routing-level on error undo, throw.": {
 		"prefix": "routine-level on error undo, throw.",
-		"body": "routine-level on error undo, throw."
+		"body": "routine-level on error undo, throw.",
+		"scope": "abl-procedure"
 	},
 	"using OpenEdge.Core.Assert.":{
 		"prefix": "using OpenEdge.Core.Assert.",
-		"body": "using OpenEdge.Core.Assert."
+		"body": "using OpenEdge.Core.Assert.",
+		"scope": "abl-procedure"
 	},
 	"@Ignore": {
 		"prefix": "@Ignore",
 		"body": [
 			"@Ignore"
 		],
-		"description": "Ignores the test. You can use this annotation when you are still working on a code, the test case is not ready to run, or if the execution time of test is too long to be included."
+		"description": "Ignores the test. You can use this annotation when you are still working on a code, the test case is not ready to run, or if the execution time of test is too long to be included.",
+		"scope": "abl-procedure"
 	},
 	"@Testsuite": {
 		"prefix": "@Testsuite",
-		"body": "@Testsuite.",
-		"description": ""
+		"body": "@Testsuite(classes=\"${1:classList}\", procedures=\"${2:procedureList}\")",
+		"description": "Identifies that the suite of test procedures or test methods is a test suite.",
+		"scope": "abl-procedure"
 	},
 
 	"@Test procedure": {
@@ -34,7 +39,8 @@
 			"  ${2:Assert:Equals(1,2).}",
 			"end procedure."
 		],
-		"description": "A procedure that is a test procedure"
+		"description": "A procedure that is a test procedure",
+		"scope": "abl-procedure"
 	},
 	"@Setup procedure": {
 		"prefix": "@Setup procedure",
@@ -45,7 +51,8 @@
 			"  ${1:// do setup here}",
 			"end procedure."
 		],
-		"description": "Executes the procedure before each test. This annotation prepares the test environment such as reading input data or initializing the class."
+		"description": "Executes the procedure before each test. This annotation prepares the test environment such as reading input data or initializing the class.",
+		"scope": "abl-procedure"
 	},
 	"@Before procedure": {
 		"prefix": "@Before procedure",
@@ -56,7 +63,8 @@
 			"  ${1:// do setup here}",
 			"end procedure."
 		],
-		"description": "Executes the procedure once per class, before the start of all tests. This annotation can be used to perform time-sensitive activities such as connecting to a database."
+		"description": "Executes the procedure once per class, before the start of all tests. This annotation can be used to perform time-sensitive activities such as connecting to a database.",
+		"scope": "abl-procedure"
 	},
 	"@TearDown procedure": {
 		"prefix": "@TearDown procedure",
@@ -67,7 +75,8 @@
 			"  ${1:// do some cleanup here}",
 			"end procedure."
 		],
-		"description": "Executes the procedure after each test. This annotation cleans up the test environment such as deleting temporary data or restoring defaults."
+		"description": "Executes the procedure after each test. This annotation cleans up the test environment such as deleting temporary data or restoring defaults.",
+		"scope": "abl-procedure"
 	},
 	"@After procedure": {
 		"prefix": "@After procedure",
@@ -77,16 +86,18 @@
 			"  //Executes after each test",
 			"end procedure."
 		],
-		"description": "Executes the procedure once, after all the tests are executed. This annotation is used to perform clean-up activities such as disconnecting from a database."
+		"description": "Executes the procedure once, after all the tests are executed. This annotation is used to perform clean-up activities such as disconnecting from a database.",
+		"scope": "abl-procedure"
 	},
-	"@Test exception procedure": {
-		"prefix": "@Test exception procedure",
+	"@Test procedure exception": {
+		"prefix": "@Test procedure exception",
 		"body": [
 			"@Test (expected=\"${1:ExceptionType}\")",
 			"procedure testExceptionProc :",
 			"  ${2:runProcThrowsException().} //Throws ${1}",
 			"end procedure."
 		],
-		"description": "Fails the test if the procedure does not throw the exception mentioned in the expected attribute."
+		"description": "Fails the test if the procedure does not throw the exception mentioned in the expected attribute.",
+		"scope": "abl-procedure"
 	}
 }

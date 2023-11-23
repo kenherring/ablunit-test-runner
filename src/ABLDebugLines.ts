@@ -65,7 +65,6 @@ export class ABLDebugLines {
 				debugLines = await this.importDebugLines(debugSourceName, fileinfo.uri, fileinfo.xrefUri)
 			} catch (e) {
 				logToChannel("cannot read: " + fileinfo.uri.fsPath, "warn")
-				console.warn("cannot read " + fileinfo.uri.fsPath)
 				return undefined
 			}
 		}

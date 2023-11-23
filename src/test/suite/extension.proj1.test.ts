@@ -21,30 +21,20 @@ suite('Extension Test Suite - ' + projName, () => {
 
 		await vscode.commands.executeCommand('testing.refreshTests');
 		await vscode.commands.executeCommand('workbench.view.testing.focus')
+
 		console.log("sleeping for 2s while tests are discovered") //There's gotta be a better way to do this...
 		await new Promise( resolve => setTimeout(resolve, 2000))
-		const val1 = await vscode.commands.executeCommand('testing.runAll').then(() => {
+
+		await vscode.commands.executeCommand('testing.runAll').then(() => {
 			console.log("testing.runAll complete!")
 		} , (err) => {
 			assert.fail("testing.runAll failed: " + err)
 		})
 
-		console.log("check-1")
-		assert(doesFileExist(ablunitJson))
-		console.log("check-2")
-		assert(doesFileExist(resultsXml))
-		console.log("check-3")
-
 		console.log("ablunitJson: " + ablunitJson.fsPath)
-		console.log("resultsXml:" + resultsXml.fsPath)
-
-		await vscode.workspace.fs.stat(resultsXml).then((stat) => {
-			assert(stat.type === vscode.FileType.File)
-		}, (err) => {
-			console.log("results.xml file does not exist (" + resultsXml.fsPath + "): " + err)
-			assert.fail("results.xml file does not exist: " + err)
-		})
-		console.log("check-3")
+		assert(doesFileExist(ablunitJson))
+		console.log("resultsXml: " + resultsXml.fsPath)
+		assert(doesFileExist(resultsXml))
 	});
 
 	test('wrap up', () => {

@@ -2,8 +2,6 @@ import * as vscode from 'vscode';
 import { parseABLUnit } from './parse/SourceParser';
 import { TextDecoder } from 'util';
 import { ABLResults } from './ABLResults';
-import { ablunitRun } from './ABLUnitRun';
-import { ablunitConfig } from './ABLUnitConfigWriter';
 
 const textDecoder = new TextDecoder('utf-8');
 
@@ -90,15 +88,6 @@ class TestFile extends TestTypeObj {
 	public updateFromContents(controller: vscode.TestController, content: string, item: vscode.TestItem) {
 		console.error("updateFromContents TestFile - skipping")
 	}
-
-	run(item: vscode.TestItem, options: vscode.TestRun) {
-		if (!resultData) {
-			throw new Error("no result data")
-		}
-		this.currentResults = resultData.get(options)
-		this.currentResults!.setTestData(testData)
-		return ablunitRun(item, ablunitConfig, options, testData.get(item)!, this.currentResults!).then()
-	}
 }
 
 export class ABLTestSuiteClass extends TestFile {
@@ -168,16 +157,16 @@ export class ABLTestClass extends TestFile {
 				ancestors.push({ item: thead, children: [] as vscode.TestItem[] })
 			},
 
-			onTestClass: (range: vscode.Range, classpath: string, label: string) => {
+			onTestClass: (range: vscode.Range, relativepath: string, classpath: string, label: string) => {
 				this.testFileType = "ABLTestClass"
 
-				const id = `${classpath}`
-				const thead = controller.createTestItem(id, classpath, item.uri)
+				const id = `${relativepath}`
+				const thead = controller.createTestItem(id, relativepath, item.uri)
 				thead.range = range
 				thead.label = label
 				thead.tags = [new vscode.TestTag("runnable"), new vscode.TestTag("ABLTestClass")]
 				const tData = new ABLTestClass()
-				tData.setClassInfo(classpath, label)
+				tData.setClassInfo(relativepath, label)
 				testData.set(thead, tData)
 
 				const parent = ancestors[ancestors.length - 1]
@@ -218,7 +207,7 @@ export class ABLTestClass extends TestFile {
 
 			onTestProgram: (range: vscode.Range, relativepath: string, label: string, programUri: vscode.Uri) => { console.error("should not be here! relativepath=" + relativepath) },
 
-			onTestProcedure: (range: vscode.Range, programname: string, procedurename: string, programUri) => { console.log("should not be here! programname=" + programname + " procedurename=" + procedurename) },
+			onTestProcedure: (range: vscode.Range, programname: string, procedurename: string, programUri) => { console.error("should not be here! programname=" + programname + " procedurename=" + procedurename) },
 
 			onAssert: (range, assertMethod) => {
 				this.testFileType = "ABLAssert"
