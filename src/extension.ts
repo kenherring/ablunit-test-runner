@@ -223,7 +223,19 @@ function gatherTestItems(collection: vscode.TestItemCollection) {
 }
 
 function getExcludePatterns() {
-	const excludePatterns = vscode.workspace.getConfiguration("ablunit").get("files.exclude", [ "**/.builder/**" ])
+	let excludePatterns: string[] = []
+
+	const excludePatternsConfig: string[] | undefined = vscode.workspace.getConfiguration("ablunit").get("files.exclude")
+	if (!excludePatternsConfig) {
+		excludePatterns = [ "**/.builder/**" ]
+	} else if (excludePatternsConfig[0].length == 1) {
+		excludePatterns[0] = ''
+		for (const pattern of excludePatternsConfig) {
+			excludePatterns[0] = excludePatterns[0] + pattern
+		}
+	} else {
+		excludePatterns = excludePatternsConfig
+	}
 	let retVal: vscode.RelativePattern[] = []
 
 	vscode.workspace.workspaceFolders!.map(workspaceFolder => {
@@ -236,17 +248,28 @@ function getWorkspaceTestPatterns() {
 	let includePatterns: string[] = []
 	let excludePatterns: string[] = []
 
-	const includePatternsConfig = vscode.workspace.getConfiguration("ablunit").get("files.include")
+	const includePatternsConfig: string[] | undefined = vscode.workspace.getConfiguration("ablunit").get("files.include")
 	if (!includePatternsConfig) {
 		includePatterns = [ "**/*.{cls,p}" ]
-	} else if (includePatterns instanceof String) {
-		includePatterns = [includePatterns.toString()]
+	} else if (includePatternsConfig[0].length == 1) {
+		includePatterns[0] = ''
+		for (const pattern of includePatternsConfig) {
+			includePatterns[0] = includePatterns[0] + pattern
+		}
+	} else {
+		includePatterns = includePatternsConfig
 	}
-	const excludePatternsConfig = vscode.workspace.getConfiguration("ablunit").get("files.exclude")
+
+	const excludePatternsConfig: string[] | undefined = vscode.workspace.getConfiguration("ablunit").get("files.exclude")
 	if (!excludePatternsConfig) {
 		excludePatterns = [ "**/.builder/**" ]
-	} else if (excludePatterns instanceof String) {
-		excludePatterns = [excludePatterns.toString()]
+	} else if (excludePatternsConfig[0].length == 1) {
+		excludePatterns[0] = ''
+		for (const pattern of excludePatternsConfig) {
+			excludePatterns[0] = excludePatterns[0] + pattern
+		}
+	} else {
+		excludePatterns = excludePatternsConfig
 	}
 
 	return vscode.workspace.workspaceFolders!.map(workspaceFolder => ({
