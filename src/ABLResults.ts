@@ -1,6 +1,6 @@
-import { MarkdownString, Position, Range, TestItem, TestItemCollection, TestMessage, TestRun, Uri, workspace } from "vscode"
+import { FileType, MarkdownString, Position, Range, TestItem, TestItemCollection, TestMessage, TestRun, Uri, workspace } from "vscode"
 import { ABLUnitConfig, ablunitConfig } from "./ABLUnitConfigWriter"
-import { ABLResultsParser, TCFailure, TestCase, TestSuite, TestSuites } from "./parse/ResultsParser"
+import { ABLResultsParser, TCFailure, TestCase, TestSuite } from "./parse/ResultsParser"
 import { ABLTestMethod, ABLTestProcedure, ABLUnitTestData } from "./testTree"
 import { parseCallstack } from "./parse/CallStackParser"
 import { ABLProfile, ABLProfileJson, Module } from "./parse/ProfileParser"
@@ -129,9 +129,19 @@ export class ABLResults {
 	}
 
 	async deleteResultsXml() {
+		workspace.fs.stat(ablunitConfig.config_output_jsonUri).then((stat) => {
+			if (stat.type === FileType.File) {
+				console.log("delete " + ablunitConfig.config_output_jsonUri.fsPath)
+				workspace.fs.delete(ablunitConfig.config_output_jsonUri)
+			}
+		}, (err) => {
+			// do nothing, can't delete a file that doesn't exist
+		})
 		return workspace.fs.stat(ablunitConfig.config_output_resultsUri).then((stat) => {
-			console.log("delete " + ablunitConfig.config_output_resultsUri.fsPath)
-			return workspace.fs.delete(ablunitConfig.config_output_resultsUri)
+			if (stat.type === FileType.File) {
+				console.log("delete " + ablunitConfig.config_output_resultsUri.fsPath)
+				return workspace.fs.delete(ablunitConfig.config_output_resultsUri)
+			}
 		}, (err) => {
 			// do nothing, can't delete a file that doesn't exist
 		})
@@ -173,8 +183,8 @@ export class ABLResults {
 			})
 		}
 
-		this.setStatus("test run complete")
-		options.appendOutput("test run complete\r\n")
+		this.setStatus("parsing output complete")
+		options.appendOutput("parsing output complete\r\n")
 	}
 
 	async assignTestResults (item: TestItem, options: TestRun) {

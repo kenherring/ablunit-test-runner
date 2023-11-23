@@ -1,4 +1,4 @@
-import { Uri, workspace } from 'vscode'
+import { FileType, Uri, workspace } from 'vscode'
 import { logToChannel } from './ABLUnitCommon'
 import { IProjectJson, readOpenEdgeProjectJson } from './parse/OpenedgeProjectParser';
 import { PropathParser } from "./ABLPropath"
@@ -72,6 +72,7 @@ export interface IABLUnitConfig {
 	}
 	config_path: string
 	config_uri: Uri,
+	config_output_location: string,
 	config_output_locationUri: Uri,
 	config_output_resultsFile: string,
 	config_output_resultsUri: Uri,
@@ -105,17 +106,18 @@ export const ablunitConfig: IABLUnitConfig = {
 		commandArr: [ '_progres', '-p', 'ABLUnitCore.p'],
 		task: workspace.getConfiguration('ablunit').get('tests.task', ''),
 	},
+	config_output_location: workspace.getConfiguration('ablunit').get('configJson.outputLocation', ''),
 	config_output_locationUri: workspaceDir,
 	config_output_resultsFile: 'results.xml',
 	config_output_resultsUri: Uri.joinPath(workspaceDir, 'results.xml'),
 	config_output_jsonUri: Uri.joinPath(workspaceDir, 'results.json'),
-	config_output_writeJson: workspace.getConfiguration('ablunit').get('configJson.writeJson', false),
+	config_output_writeJson: workspace.getConfiguration('ablunit').get('configJson.outputWriteJson', false),
 	config_path: workspace.getConfiguration('ablunit').get('configJson.configPath', 'ablunit.json'),
 	config_uri: Uri.joinPath(workspaceDir, 'ablunit.json'),
 	configJson: {
 		options: {
 			output: {
-				location: workspace.getConfiguration('ablunit').get('configJson.outputLocation', ''),
+				location: workspaceDir.fsPath,
 				format: 'xml',
 			},
 			quitOnEnd: workspace.getConfiguration('ablunit').get('configJson.quitOnEnd', true),
@@ -175,12 +177,12 @@ export class ABLUnitConfig  {
 			ablunitConfig.config_uri = Uri.joinPath(ablunitConfig.tempDirUri, ablunitConfig.config_path)
 		}
 
-		if (isRelativePath(ablunitConfig.configJson.options.output.location)) {
-			ablunitConfig.config_output_locationUri = Uri.joinPath(ablunitConfig.tempDirUri, ablunitConfig.configJson.options.output.location)
+		if (ablunitConfig.config_output_location == '') {
+			ablunitConfig.config_output_locationUri = ablunitConfig.tempDirUri
+		} else if (isRelativePath(ablunitConfig.config_output_location)) {
+			ablunitConfig.config_output_locationUri = Uri.joinPath(ablunitConfig.workspaceUri, ablunitConfig.config_output_location)
 		}
-		if (ablunitConfig.configJson.options.output.location === '') {
-			ablunitConfig.configJson.options.output.location = ablunitConfig.config_output_locationUri.fsPath
-		}
+		ablunitConfig.configJson.options.output.location = ablunitConfig.config_output_locationUri.fsPath
 
 		if (isRelativePath(ablunitConfig.config_output_resultsFile)) {
 			ablunitConfig.config_output_resultsUri = Uri.joinPath(ablunitConfig.config_output_locationUri, ablunitConfig.config_output_resultsFile)
@@ -215,6 +217,13 @@ export class ABLUnitConfig  {
 
 	async createAblunitJson(cfg: IABLUnitJson) {
 		console.log("creating ablunit.json: '" + ablunitConfig.config_uri.fsPath + "'")
+		await workspace.fs.stat(ablunitConfig.config_output_locationUri).then((stat) => {
+			if (stat.type != FileType.Directory) {
+				throw new Error("configJson.outputLocation is not a Directory: " + ablunitConfig.config_output_locationUri.fsPath)
+			}
+		}, (err) => {
+			return this.createDir(ablunitConfig.config_output_locationUri)
+		})
 		return workspace.fs.writeFile(ablunitConfig.config_uri, Uint8Array.from(Buffer.from(JSON.stringify(cfg, null, 4))))
 	}
 

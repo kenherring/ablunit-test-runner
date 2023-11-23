@@ -9,11 +9,11 @@ const projName = 'proj0'
 
 before(async () => {
     console.log("before")
-});
+})
 
 after(() => {
 	console.log("after")
-});
+})
 
 suite('Extension Test Suite - ' + projName, () => {
 
@@ -39,15 +39,13 @@ suite('Extension Test Suite - ' + projName, () => {
 		const ablunitJson = vscode.Uri.joinPath(storageUri,'ablunit.json')
 		const resultsXml = vscode.Uri.joinPath(storageUri,'results.xml')
 
-		console.log("ablunitJson: " + ablunitJson.fsPath)
-		assert(doesFileExist(ablunitJson))
-		console.log("resultsXml: " + resultsXml.fsPath)
-		assert(doesFileExist(resultsXml))
-	});
+		assert(await doesFileExist(ablunitJson), "missing ablunit.json (" + ablunitJson.fsPath + ")")
+		assert(await doesFileExist(resultsXml), "missing results.xml (" + resultsXml.fsPath + ")")
+	})
 
 	test('wrap up', () => {
 		console.log("Test-2 wrap up")
 		assert.equal(1,1);
 	})
 
-});
+})

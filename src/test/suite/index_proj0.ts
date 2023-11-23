@@ -1,57 +1,26 @@
 import * as glob from "glob";
 import * as Mocha from "mocha";
 import * as path from "path";
+import { setupNyc } from "../indexCommon";
 
 const projName = 'proj0'
 
-function setupNyc() {
-	// eslint-disable-next-line @typescript-eslint/no-var-requires
-	const NYC = require("nyc");
-	const nyc = new NYC({
-		cache: false,
-		cwd: path.join(__dirname, "..", "..", ".."),
-		reportDir: path.join(__dirname, "..", "..", "..", 'coverage', "coverage_" + projName),
-		tempDir: path.join(__dirname, "..", "..", "..", 'coverage', "coverage_" + projName, ".nyc_output"),
-		exclude: [
-			"node_modules",
-			"out/test/**",
-			".vscode-test",
-		],
-		extension: [
-			".ts",
-			".tsx",
-		],
-		hookRequire: true,
-		hookRunInContext: true,
-		hookRunInThisContext: true,
-		instrument: true,
-		sourceMap: true,
-		reporter: [
-			'text',
-			'lcov'
-		],
-		require: [
-			"ts-node/register",
-		]
-	});
-	nyc.reset();
-	nyc.wrap();
-	return nyc;
-}
-
 export function run(): Promise <void> {
-	const nyc = setupNyc();
+	const nyc = setupNyc(projName);
 
 	// Create the mocha test
 	const mocha = new Mocha({
 		color: true,
 		ui: "tdd",
 		timeout: 20000,
-		reporter: 'mocha-junit-reporter',
+		reporter: 'mocha-multi-reporters',
 		reporterOptions: {
-			mochaFile: 'artifacts/mocha_results_' + projName + '.xml'
+			reporterEnabled: 'text, spec, mocha-junit-reporter',
+			mochaJunitReporterReporterOptions: {
+				mochaFile: 'artifacts/mocha_results_' + projName + '.xml'
+			}
 		}
-	});
+	})
 
 	const testsRoot = path.resolve(__dirname, "..");
 	return new Promise((c, e) => {
@@ -77,7 +46,7 @@ export function run(): Promise <void> {
 
 					if (failures > 0) {
 						console.log(`${failures} tests failed.`)
-						throw new Error(`${failures} tests failed.`);
+						e(new Error(`${failures} tests failed.`))
 					}
 					c();
 				});

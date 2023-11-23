@@ -9,6 +9,13 @@ module.exports = defineConfig([
 			ui: 'tdd',
 			timeout: 20000
 		},
+		reporter: 'mocha-multi-reporters',
+		reporterOptions: {
+			reporterEnabled: 'text, spec, mocha-junit-reporter',
+			mochaJunitReporterReporterOptions: {
+				mochaFile: 'test-results.xml'
+			}
+		},
 		"launchArgs": [
 			'--disable-extensions'
 		]

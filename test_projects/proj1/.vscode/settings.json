@@ -12,5 +12,6 @@
 	"terminal.integrated.allowChords": true,
 	"ablunit.profilerOptions.enabled": false,
 	"ablunit.notificationsEnabled": false,
+	"ablunit.configJson.outputWriteJson": true,
 	"ablunit.tempDir": "${workspaceFolder}"
 }

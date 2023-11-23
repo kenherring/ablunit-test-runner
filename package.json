@@ -51,6 +51,7 @@
 		"esbuild-base": "rm -rf out && esbuild ./src/extension.ts --bundle --outfile=out/extension.js --external:vscode --format=cjs --platform=node",
 		"build": "npm run esbuild",
 		"clean": "rm -rf coverage out && sh -c ./cleanup.sh",
+		"clean-and-compile": "npm run clean && npm run compile",
 		"compile": "tsc -p ./",
 		"esbuild-watch": "npm run esbuild-base -- --sourcemap --watch",
 		"esbuild": "npm run esbuild-base -- --sourcemap",
@@ -79,6 +80,7 @@
 		"eslint": "^8.26.0",
 		"mocha": "^10.2.0",
 		"mocha-junit-reporter": "^2.2.1",
+		"mocha-multi-reporters": "^1.5.1",
 		"nyc": "^15.1.0",
 		"ts-node": "^10.9.1"
 	},
@@ -97,14 +99,18 @@
 					"markdownDescription": "* classpath example: `com.example.myclass`\n* filepath example: `src/com/example/myclass.cls`"
 				},
 				"ablunit.files.include": {
-					"type": "string",
-					"default": "**/*.{cls,p}",
-					"description": "Glob pattern to match test files"
+					"type": "array",
+					"default": [
+						"**/*.{cls,p}"
+					],
+					"description": "Glob patterns to include test files"
 				},
 				"ablunit.files.exclude": {
-					"type": "string",
-					"default": "**/.builder/**",
-					"description": "Glob pattern to exclude test files"
+					"type": "array",
+					"default": [
+						"**/.builder/**"
+					],
+					"description": "Glob patterns to exclude test files"
 				},
 				"ablunit.findAllFilesAtStartup": {
 					"type": "boolean",
@@ -161,7 +167,7 @@
 				"ablunit.configJson.outputLocation": {
 					"type": "string",
 					"default": "",
-					"markdownDescription": "Location of the outputted results.xml file\n\nDirectory only, filename will always be `results.xml`"
+					"markdownDescription": "Location of the outputted results.xml file.  Default = `ablunit.tempDir`\n\nDirectory only, filename will always be `results.xml`\n\nPath can be absolute or relative to the workspace root.\n\n"
 				},
 				"ablunit.configJson.outputWriteJson": {
 					"type": "boolean",
@@ -238,11 +244,15 @@
 		"languages": [
 			{
 				"id": "abl-procedure",
-				"extensions": [ ".p" ]
+				"extensions": [
+					".p"
+				]
 			},
 			{
 				"id": "abl-class",
-				"extensions": [ ".cls" ]
+				"extensions": [
+					".cls"
+				]
 			}
 		],
 		"snippets": [

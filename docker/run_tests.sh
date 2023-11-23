@@ -10,9 +10,14 @@ export GIT_BRANCH PROGRESS_CFG_BASE64
 ## create volume for .vscode-test directory to persist vscode application downloads
 docker volume create --name vscode-test
 
+OPTS=
+if [ "${1:-}" = "-b" ]; then
+	OPTS='-b'
+fi
+
 ## run tests inside the container
 docker run --rm -it -e PROGRESS_CFG_BASE64 -e GIT_BRANCH \
 	-v "$PWD":/home/circleci/ablunit-test-provider \
 	-v vscode-test:/home/circleci/project/.vscode-test \
 	kherring/ablunit-test-runner:latest \
-	bash -c "/home/circleci/ablunit-test-provider/docker/entrypoint.sh;"
+	bash -c "/home/circleci/ablunit-test-provider/docker/entrypoint.sh $OPTS;"

@@ -28,6 +28,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(
 		vscode.commands.registerCommand('_ablunit.openCallStackItem', openCallStackItem),
 		vscode.window.onDidChangeActiveTextEditor(e => decorate(e!) ),
+		vscode.workspace.onDidChangeConfiguration(e => updateConfiguration(ctrl, e) ),
 		vscode.workspace.onDidOpenTextDocument(updateNodeForDocument),
 		vscode.workspace.onDidChangeTextDocument(e => updateNodeForDocument(e.document)),
 	)
@@ -41,7 +42,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
 		const l = fileChangedEmitter.event(uri => startTestRun(
 			new vscode.TestRunRequest(
-				[getOrCreateFile(ctrl, uri).file!],
+				[getOrCreateFile(ctrl, uri).file],
 				undefined,
 				request.profile,
 				true
@@ -88,7 +89,7 @@ export async function activate(context: vscode.ExtensionContext) {
 		}
 
 		const runTestQueue = async () => {
-			for (const { test, data } of queue) {
+			for (const { test } of queue) {
 				if (run.token.isCancellationRequested) {
 					run.skipped(test)
 				} else {
@@ -111,7 +112,7 @@ export async function activate(context: vscode.ExtensionContext) {
 			})
 
 			if(!ret) {
-				for (const { test, data } of queue) {
+				for (const { test } of queue) {
 					run.errored(test,new vscode.TestMessage("ablunit run failed"))
 					for (const childTest of gatherTestItems(test.children)) {
 						run.errored(childTest,new vscode.TestMessage("ablunit run failed"))
@@ -124,7 +125,7 @@ export async function activate(context: vscode.ExtensionContext) {
 			logToChannel('ablunit run complete')
 			run.appendOutput('ablunit run complete\r\n')
 
-			for (const { test, data } of queue) {
+			for (const { test } of queue) {
 				if (run.token.isCancellationRequested) {
 					run.skipped(test)
 				} else {
@@ -150,7 +151,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	}
 
 	ctrl.refreshHandler = async () => {
-		await Promise.all(getWorkspaceTestPatterns().map(({ includePattern, excludePattern }) => findInitialFiles(ctrl, includePattern, excludePattern)))
+		await Promise.all(getWorkspaceTestPatterns().map(({ includePatterns, excludePatterns }) => findInitialFiles(ctrl, includePatterns, excludePatterns, true)))
 	}
 
 	ctrl.createRunProfile('Run Tests', vscode.TestRunProfileKind.Run, runHandler, false, new vscode.TestTag("runnable"), false)
@@ -179,6 +180,12 @@ export async function activate(context: vscode.ExtensionContext) {
 			data.updateFromContents(ctrl, e.getText(), file)
 		}
 	}
+
+	function updateConfiguration(controller: vscode.TestController, e: vscode.ConfigurationChangeEvent) {
+		if (e.affectsConfiguration('ablunit')) {
+			vscode.commands.executeCommand('testing.refreshTests')
+		}
+	}
 }
 
 function getOrCreateFile(controller: vscode.TestController, uri: vscode.Uri) {
@@ -192,10 +199,11 @@ function getOrCreateFile(controller: vscode.TestController, uri: vscode.Uri) {
 		}
 	}
 
-	//TODO: this is a hack to prevent the builder from trying to parse the ablunit files.  this should use the exclude pattern instead
-	if (uri.toString().indexOf("/.builder/") != -1 || uri.toString().indexOf("/.oe/") != -1) {
-		return { file: undefined, data: undefined }
-	}
+	isFileExcluded(uri,getExcludePatterns()).then(excluded => {
+		if(excluded) {
+			return { file: undefined, data: undefined }
+		}
+	})
 
 	const file = controller.createTestItem(uri.toString(), vscode.workspace.asRelativePath(uri.fsPath), uri)
 	file.tags = [ new vscode.TestTag("runnable") ]
@@ -221,50 +229,130 @@ function gatherTestItems(collection: vscode.TestItemCollection) {
 	return items
 }
 
-function getWorkspaceTestPatterns() {
-	if (!vscode.workspace.workspaceFolders) { return [] }
+function getExcludePatterns() {
+	let excludePatterns: string[] = []
 
-	return vscode.workspace.workspaceFolders.map(workspaceFolder => ({
+	const excludePatternsConfig: string[] | undefined = vscode.workspace.getConfiguration("ablunit").get("files.exclude")
+	if (!excludePatternsConfig) {
+		excludePatterns = [ "**/.builder/**" ]
+	} else if (excludePatternsConfig[0].length == 1) {
+		excludePatterns[0] = ''
+		for (const pattern of excludePatternsConfig) {
+			excludePatterns[0] = excludePatterns[0] + pattern
+		}
+	} else {
+		excludePatterns = excludePatternsConfig
+	}
+	let retVal: vscode.RelativePattern[] = []
+
+	vscode.workspace.workspaceFolders!.map(workspaceFolder => {
+		retVal = retVal.concat(excludePatterns.map(pattern => new vscode.RelativePattern(workspaceFolder, pattern)))
+	})
+	return retVal
+}
+
+function getWorkspaceTestPatterns() {
+	let includePatterns: string[] = []
+	let excludePatterns: string[] = []
+
+	const includePatternsConfig: string[] | undefined = vscode.workspace.getConfiguration("ablunit").get("files.include")
+	if (!includePatternsConfig) {
+		includePatterns = [ "**/*.{cls,p}" ]
+	} else if (includePatternsConfig[0].length == 1) {
+		includePatterns[0] = ''
+		for (const pattern of includePatternsConfig) {
+			includePatterns[0] = includePatterns[0] + pattern
+		}
+	} else {
+		includePatterns = includePatternsConfig
+	}
+
+	const excludePatternsConfig: string[] | undefined = vscode.workspace.getConfiguration("ablunit").get("files.exclude")
+	if (!excludePatternsConfig) {
+		excludePatterns = [ "**/.builder/**" ]
+	} else if (excludePatternsConfig[0].length == 1) {
+		excludePatterns[0] = ''
+		for (const pattern of excludePatternsConfig) {
+			excludePatterns[0] = excludePatterns[0] + pattern
+		}
+	} else {
+		excludePatterns = excludePatternsConfig
+	}
+
+	return vscode.workspace.workspaceFolders!.map(workspaceFolder => ({
 		workspaceFolder,
-		includePattern: new vscode.RelativePattern(workspaceFolder, vscode.workspace.getConfiguration("ablunit").get("files.include") ?? ''),
-		excludePattern: new vscode.RelativePattern(workspaceFolder, vscode.workspace.getConfiguration("ablunit").get("files.exclude") ?? '')
+		includePatterns: includePatterns.map(pattern => new vscode.RelativePattern(workspaceFolder, pattern)),
+		excludePatterns: excludePatterns.map(pattern => new vscode.RelativePattern(workspaceFolder, pattern))
 	}))
 }
 
-async function findInitialFiles(controller: vscode.TestController, includePattern: vscode.GlobPattern, excludePattern: vscode.GlobPattern) {
+async function removeExcludedFiles(controller: vscode.TestController, excludePatterns: vscode.RelativePattern[]) {
+	for (const item of gatherTestItems(controller.items)) {
+		if (item.uri && await isFileExcluded(item.uri, excludePatterns)) {
+			controller.items.delete(item.id)
+		}
+	}
+}
+
+async function findInitialFiles(controller: vscode.TestController, includePatterns: vscode.RelativePattern[], excludePatterns: vscode.RelativePattern[], removeExcluded: boolean = false) {
 	const findAllFilesAtStartup = vscode.workspace.getConfiguration('ablunit').get('findAllFilesAtStartup')
 
-	if (findAllFilesAtStartup) {
-		for (const wsFile of await vscode.workspace.findFiles(includePattern, excludePattern)) {
-			const { file, data } = getOrCreateFile(controller, wsFile)
-			if(file) {
-				await data.updateFromDisk(controller, file)
+	if (removeExcluded) {
+		removeExcludedFiles(controller, excludePatterns)
+	}
+
+	if (!findAllFilesAtStartup) {
+		return
+	}
+	for (const includePattern of includePatterns) {
+		for (const wsFile of await vscode.workspace.findFiles(includePattern)) {
+			const excluded = await isFileExcluded(wsFile, excludePatterns)
+			if (!excluded) {
+				const { file, data } = getOrCreateFile(controller, wsFile)
+				if(file) {
+					await data.updateFromDisk(controller, file)
+				}
 			}
 		}
 	}
 }
 
 function startWatchingWorkspace(controller: vscode.TestController, fileChangedEmitter: vscode.EventEmitter<vscode.Uri> ) {
-	return getWorkspaceTestPatterns().map(({ workspaceFolder, includePattern, excludePattern }) => {
-		const watcher = vscode.workspace.createFileSystemWatcher(includePattern)
 
-		watcher.onDidCreate(uri => {
-			getOrCreateFile(controller, uri)
-			fileChangedEmitter.fire(uri)
-		})
-		watcher.onDidChange(async uri => {
-			const { file, data } = getOrCreateFile(controller, uri)
-			if (data?.didResolve) {
-				await data.updateFromDisk(controller, file)
-			}
-			fileChangedEmitter.fire(uri)
-		})
-		watcher.onDidDelete(uri => controller.items.delete(uri.toString()))
+	return getWorkspaceTestPatterns().map(({ workspaceFolder, includePatterns, excludePatterns }) => {
 
-		findInitialFiles(controller, includePattern, excludePattern)
+		const watchers = []
 
-		return watcher
-	})
+		for (const includePattern of includePatterns) {
+			const watcher = vscode.workspace.createFileSystemWatcher(includePattern)
+
+			watcher.onDidCreate(async uri => {
+				if (await isFileExcluded(uri, excludePatterns))  {
+					return
+				}
+				getOrCreateFile(controller, uri)
+				fileChangedEmitter.fire(uri)
+			})
+
+			watcher.onDidChange(async uri => {
+				if (await isFileExcluded(uri,excludePatterns)) {
+					return
+				}
+
+				const { file, data } = getOrCreateFile(controller, uri)
+				if (data?.didResolve) {
+					await data.updateFromDisk(controller, file)
+				}
+				fileChangedEmitter.fire(uri)
+			})
+
+			watcher.onDidDelete(uri => controller.items.delete(uri.toString()))
+			watchers.push(watcher)
+		}
+
+		findInitialFiles(controller, includePatterns, excludePatterns)
+		return watchers
+	}).flat()
 }
 
 function decorate(editor: vscode.TextEditor) {
@@ -306,6 +394,23 @@ function showNotification(message: string) {
 	if (vscode.workspace.getConfiguration('ablunit').get('notificationsEnabled', true)) {
 		vscode.window.showInformationMessage(message)
 	}
+}
+
+async function isFileExcluded (uri: vscode.Uri, excludePatterns: vscode.RelativePattern[]) {
+	if (!excludePatterns || excludePatterns.length == 0) {
+		return false
+	}
+
+	const relativePath = vscode.workspace.asRelativePath(uri.fsPath)
+
+	for (const excludePattern of excludePatterns) {
+		const files = await vscode.workspace.findFiles(relativePath, excludePattern, 1)
+		if (files.length == 0) {
+			logToChannel("file excluded: " + relativePath + ", excludePattern: " + excludePattern.pattern)
+			return true
+		}
+	}
+	return false
 }
 
 ////////// DEBUG FUNCTIONS //////////

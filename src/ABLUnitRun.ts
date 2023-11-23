@@ -1,5 +1,4 @@
-import { TestItem, TestRun, workspace } from "vscode"
-import { ABLTestMethod, ABLTestProcedure, ABLUnitTestData } from "./testTree"
+import { TestRun, workspace } from "vscode"
 import { ABLResults } from "./ABLResults"
 import { logToChannel } from './ABLUnitCommon'
 import { IABLUnitConfig } from "./ABLUnitConfigWriter"
@@ -21,6 +20,10 @@ export const ablunitRun = async(ablunitConfig: IABLUnitConfig, options: TestRun,
 		const cmd = [res.dlc + '/bin/_progres', '-b', '-p', 'ABLUnitCore.p']
 		if (process.platform === 'win32') {
 			cmd.push('-basekey', 'INI', '-ininame', workspace.asRelativePath(ablunitConfig.progressIniUri.fsPath))
+		} else if (process.platform === 'linux') {
+			process.env.PROPATH = res.propath!.toString()
+		} else {
+			throw new Error("unsupported platform: " + process.platform)
 		}
 		cmd.push('-T', workspace.asRelativePath(ablunitConfig.tempDirUri))
 
