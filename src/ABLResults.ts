@@ -1,6 +1,6 @@
 import { MarkdownString, Position, Range, TestItem, TestItemCollection, TestMessage, TestRun, Uri, workspace } from "vscode"
 import { ABLUnitConfig, ablunitConfig } from "./ABLUnitConfigWriter"
-import { ABLResultsParser, TCFailure, TestCase, TestSuite, TestSuites } from "./parse/ResultsParser"
+import { ABLResultsParser, TCFailure, TestCase, TestSuite } from "./parse/ResultsParser"
 import { ABLTestMethod, ABLTestProcedure, ABLUnitTestData } from "./testTree"
 import { parseCallstack } from "./parse/CallStackParser"
 import { ABLProfile, ABLProfileJson, Module } from "./parse/ProfileParser"
