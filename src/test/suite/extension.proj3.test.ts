@@ -17,6 +17,7 @@ suite('Extension Test Suite - ' + projName, () => {
 
 	test('target/ablunit.json file exists', async () => {
 		const ablunitJson = vscode.Uri.joinPath(vscode.workspace.workspaceFolders![0].uri,'target','ablunit.json')
+		const resultsXml = vscode.Uri.joinPath(vscode.workspace.workspaceFolders![0].uri,'ablunit-output','results.xml')
 
 		await vscode.commands.executeCommand('testing.refreshTests');
 		await vscode.commands.executeCommand('workbench.view.testing.focus')
@@ -30,8 +31,8 @@ suite('Extension Test Suite - ' + projName, () => {
 			assert.fail("testing.runAll failed: " + err)
 		})
 
-		console.log("ablunitJson: " + ablunitJson.fsPath)
-		assert(await doesFileExist(ablunitJson))
+		assert(await doesFileExist(ablunitJson), "missing ablunit.json (" + ablunitJson.fsPath + ")")
+		assert(await doesFileExist(resultsXml), "missing results.xml (" + resultsXml.fsPath + ")")
 	});
 
 	test('wrap up', () => {

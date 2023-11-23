@@ -1,4 +1,4 @@
-import { Uri, workspace } from 'vscode'
+import { FileType, Uri, workspace } from 'vscode'
 import { logToChannel } from './ABLUnitCommon'
 import { IProjectJson, readOpenEdgeProjectJson } from './parse/OpenedgeProjectParser';
 import { PropathParser } from "./ABLPropath"
@@ -177,8 +177,10 @@ export class ABLUnitConfig  {
 			ablunitConfig.config_uri = Uri.joinPath(ablunitConfig.tempDirUri, ablunitConfig.config_path)
 		}
 
-		if (isRelativePath(ablunitConfig.config_output_location)) {
-			ablunitConfig.config_output_locationUri = Uri.joinPath(ablunitConfig.tempDirUri, ablunitConfig.config_output_location)
+		if (ablunitConfig.config_output_location == '') {
+			ablunitConfig.config_output_locationUri = ablunitConfig.tempDirUri
+		}else if (isRelativePath(ablunitConfig.config_output_location)) {
+			ablunitConfig.config_output_locationUri = Uri.joinPath(ablunitConfig.workspaceUri, ablunitConfig.config_output_location)
 		}
 		ablunitConfig.configJson.options.output.location = ablunitConfig.config_output_locationUri.fsPath
 
@@ -215,6 +217,13 @@ export class ABLUnitConfig  {
 
 	async createAblunitJson(cfg: IABLUnitJson) {
 		console.log("creating ablunit.json: '" + ablunitConfig.config_uri.fsPath + "'")
+		await workspace.fs.stat(ablunitConfig.config_output_locationUri).then((stat) => {
+			if (stat.type != FileType.Directory) {
+				throw new Error("configJson.outputLocation is not a Directory: " + ablunitConfig.config_output_locationUri.fsPath)
+			}
+		}, (err) => {
+			return this.createDir(ablunitConfig.config_output_locationUri)
+		})
 		return workspace.fs.writeFile(ablunitConfig.config_uri, Uint8Array.from(Buffer.from(JSON.stringify(cfg, null, 4))))
 	}
 

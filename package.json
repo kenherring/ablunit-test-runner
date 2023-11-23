@@ -167,7 +167,7 @@
 				"ablunit.configJson.outputLocation": {
 					"type": "string",
 					"default": "",
-					"markdownDescription": "Location of the outputted results.xml file\n\nDirectory only, filename will always be `results.xml`"
+					"markdownDescription": "Location of the outputted results.xml file.  Default = `ablunit.tempDir`\n\nDirectory only, filename will always be `results.xml`\n\nPath can be absolute or relative to the workspace root.\n\n"
 				},
 				"ablunit.configJson.outputWriteJson": {
 					"type": "boolean",

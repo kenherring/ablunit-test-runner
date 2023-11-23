@@ -3,5 +3,6 @@
 		"DLC": "/c/Progress/OpenEdge",
 		"PATH": "${env:PATH}:/c/Progress/OpenEdge/ant/bin"
 	},
-	"ablunit.tempDir": "${workspaceFolder}/target"
+	"ablunit.tempDir": "${workspaceFolder}/target",
+	"ablunit.configJson.outputLocation": "ablunit-output"
 }
