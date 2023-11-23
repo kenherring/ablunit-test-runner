@@ -51,6 +51,7 @@
 		"esbuild-base": "rm -rf out && esbuild ./src/extension.ts --bundle --outfile=out/extension.js --external:vscode --format=cjs --platform=node",
 		"build": "npm run esbuild",
 		"clean": "rm -rf coverage out && sh -c ./cleanup.sh",
+		"clean-and-compile": "npm run clean && npm run compile",
 		"compile": "tsc -p ./",
 		"esbuild-watch": "npm run esbuild-base -- --sourcemap --watch",
 		"esbuild": "npm run esbuild-base -- --sourcemap",

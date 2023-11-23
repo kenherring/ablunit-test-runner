@@ -31,7 +31,7 @@ suite('Extension Test Suite - ' + projName, () => {
 		})
 
 		console.log("ablunitJson: " + ablunitJson.fsPath)
-		assert(doesFileExist(ablunitJson))
+		assert(await doesFileExist(ablunitJson))
 	});
 
 	test('wrap up', () => {

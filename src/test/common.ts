@@ -11,3 +11,12 @@ export async function doesFileExist(uri: Uri) {
 	})
 	return ret
 }
+
+export async function getTestCount(resultsJson: Uri) {
+	const count = await workspace.fs.readFile(resultsJson).then((content) => {
+		const str = Buffer.from(content.buffer).toString();
+		const results = JSON.parse(str)
+		return results[0].tests
+	})
+	return count
+}

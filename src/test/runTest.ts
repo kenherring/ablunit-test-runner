@@ -17,12 +17,12 @@ async function testProject(projName: string, projDir?: string) {
 	try {
 		const extensionTestsPath = path.resolve(__dirname, './suite/index_' + projName);
 		await runTests({
-				extensionDevelopmentPath,
-				extensionTestsPath,
-				launchArgs: [
-					'--disable-extensions',
-					'test_projects/' + projDir,
-				]
+			extensionDevelopmentPath,
+			extensionTestsPath,
+			launchArgs: [
+				'--disable-extensions',
+				'test_projects/' + projDir,
+			]
 		});
 	} catch (err) {
 		console.error('[runTest.ts] Failed to run tests, err=' + err);
