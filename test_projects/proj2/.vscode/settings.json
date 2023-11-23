@@ -2,9 +2,8 @@
 	// "ablunit.display.classLabel": "filepath"
 	// "ablunit.display.classLabel": "filepath",
 	"ablunit.findAllFilesAtStartup": true,
-	"ablunit.files.include": [
-		"{**/*.cls,**/*.p}",
-	],
+	"ablunit.files.include": "**/*.cls,**/*.p",
+	"ablunit.files.exclude": "",
 	// "ablunit.files.include": "**/*.cls,**/*.p"
 	// "ablunit.files.include": "**/*.p",
 	// "ablunit.files.include": "**/*.cls"
