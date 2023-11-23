@@ -179,7 +179,7 @@ export class ABLUnitConfig  {
 
 		if (ablunitConfig.config_output_location == '') {
 			ablunitConfig.config_output_locationUri = ablunitConfig.tempDirUri
-		}else if (isRelativePath(ablunitConfig.config_output_location)) {
+		} else if (isRelativePath(ablunitConfig.config_output_location)) {
 			ablunitConfig.config_output_locationUri = Uri.joinPath(ablunitConfig.workspaceUri, ablunitConfig.config_output_location)
 		}
 		ablunitConfig.configJson.options.output.location = ablunitConfig.config_output_locationUri.fsPath
