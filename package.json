@@ -120,19 +120,19 @@
 					"default": [
 						"**/*.{cls,p}"
 					],
-					"description": "Glob patterns to include test files"
+					"markdownDescription": "Glob patterns to include test files"
 				},
 				"ablunit.files.exclude": {
 					"type": "array",
 					"default": [
 						"**/.builder/**"
 					],
-					"description": "Glob patterns to exclude test files"
+					"markdownDescription": "Glob patterns to exclude test files"
 				},
 				"ablunit.findAllFilesAtStartup": {
 					"type": "boolean",
 					"default": true,
-					"description": "For large workspaces this may improve performance by loading tests as they are found instead of doing so when the extension is activated"
+					"markdownDescription": "For large workspaces this may improve performance by loading tests as they are found instead of doing so when the extension is activated"
 				},
 				"ablunit.importOpenedgeProjectJson": {
 					"type": "boolean",
@@ -142,7 +142,7 @@
 				"ablunit.notificationsEnabled": {
 					"type": "boolean",
 					"default": true,
-					"description": "Show notifications when tests are run"
+					"markdownDescription": "Show notifications when tests are run"
 				},
 				"ablunit.params": {
 					"type": "string",
@@ -163,7 +163,7 @@
 				"ablunit.tests.command": {
 					"type": "string",
 					"default": "",
-					"description": "Custom command line executed to run a test"
+					"markdownDescription": "Custom command line executed to run a test"
 				},
 				"ablunit.tests.task": {
 					"type": "string",
@@ -188,12 +188,12 @@
 				"ablunit.configJson.quitOnEnd": {
 					"type": "boolean",
 					"default": true,
-					"description": "Quit the session when the test run is complete"
+					"markdownDescription": "Quit the session when the test run is complete"
 				},
 				"ablunit.configJson.writeLog": {
 					"type": "boolean",
 					"default": true,
-					"markdownDescription": "if `writeLog` is true then a log file, `ablunit.log` is created in the current working directory and writes error messages to that log file"
+					"markdownDescription": "If `writeLog` is true then a log file, `ablunit.log` is created in the current working directory and writes error messages to that log file"
 				},
 				"ablunit.configJson.showErrorMessage": {
 					"type": "boolean",
@@ -208,7 +208,7 @@
 				"ablunit.profilerOptions.optionsPath": {
 					"type": "string",
 					"default": "profile.options",
-					"markdownDescription": "Location of the outputted profile.options file\n\nsee [`-profile`](https://docs.progress.com/bundle/openedge-startup-and-parameter-reference-122/page/Profiler-profile.html)"
+					"markdownDescription": "Location of the `profile.options` file\n\nSee the [`-profile`](https://docs.progress.com/bundle/openedge-startup-and-parameter-reference-122/page/Profiler-profile.html) attribute"
 				},
 				"ablunit.profilerOptions.enabled": {
 					"type": "boolean",
@@ -218,22 +218,22 @@
 				"ablunit.profilerOptions.description": {
 					"type": "string",
 					"default": "Unit Tests Run via ABLUnit Test Runner (VSCode)",
-					"markdownDescription": "Description of the profiler run\n\nsee the [`PROFILER:DESCRIPTION`](https://docs.progress.com/bundle/abl-reference/page/DESCRIPTION-attribute.html) attribute"
+					"markdownDescription": "Description assigned to the profiler output\n\nSee the [`PROFILER:DESCRIPTION`](https://docs.progress.com/bundle/abl-reference/page/DESCRIPTION-attribute.html) attribute"
 				},
 				"ablunit.profilerOptions.filename": {
 					"type": "string",
 					"default": "prof.out",
-					"markdownDescription": "Location of the profiler results (`-outfile <outfile>`)\n\nsee the [`PROFILER:FILE-NAME`](https://docs.progress.com/bundle/abl-reference/page/DIRECTORY-attribute.html) attribute"
+					"markdownDescription": "Location of the profiler results (`-outfile <outfile>`)\n\nSee the [`PROFILER:FILE-NAME`](https://docs.progress.com/bundle/abl-reference/page/DIRECTORY-attribute.html) attribute"
 				},
 				"ablunit.profilerOptions.listings": {
 					"type": "string",
-					"default": "listings",
-					"markdownDescription": "Flag to output debug listings (`-listings`)\n\nsee the [`PROFILER:LISTINGS`](https://docs.progress.com/bundle/abl-reference/page/LISTINGS-attribute.html) attribute"
+					"default": "",
+					"markdownDescription": "Output debug listings directory (`-listings`)\n\nWhen unset (default) no listings will be output.  When set to `\"true\"` listings will be output to the `${config:ablunit.tempDir}/listings` directory.\n\n<ul><li>See the [`PROFILER:LISTINGS`](https://docs.progress.com/bundle/abl-reference/page/LISTINGS-attribute.html) attribute</li><li>See the [`PROFILER:DIRECTORY`](https://docs.progress.com/bundle/abl-reference/page/DIRECTORY-attribute.html) attribute</li></ul>"
 				},
 				"ablunit.profilerOptions.statistics": {
 					"type": "boolean",
 					"default": false,
-					"markdownDescription": "Flag to output statistics (-statistics)\n\nsee the [`PROFILER:STATISTICS`](https://docs.progress.com/bundle/abl-reference/page/STATISTICS-attribute.html) attribute"
+					"markdownDescription": "Flag to output statistics (`-statistics`)\n\nSee the [`PROFILER:STATISTICS`](https://docs.progress.com/bundle/abl-reference/page/STATISTICS-attribute.html) attribute"
 				},
 				"ablunit.profilerOptions.traceFilter": {
 					"type": "string",
@@ -243,7 +243,7 @@
 				"ablunit.profilerOptions.tracing": {
 					"type": "string",
 					"default": "",
-					"markdownDescription": "Comma-separated string of procedure and line number pairs. A pipe (|) separates the procedure name and line number.\n\n**Example**: \"test1|32,test2|17\" (`-tracing <string>`)\n\nsee the [`PROFILER:TRACING`](https://docs.progress.com/bundle/abl-reference/page/TRACING-attribute.html) attribute"
+					"markdownDescription": "Comma-separated string of procedure and line number pairs. A pipe (`|`) separates the procedure name and line number (`-tracing <string>`)\n\n**Example**: `test1|32,test2|17`\n\nSee the [`PROFILER:TRACING`](https://docs.progress.com/bundle/abl-reference/page/TRACING-attribute.html) attribute"
 				},
 				"ablunit.profilerOptions.writeJson": {
 					"type": "boolean",
