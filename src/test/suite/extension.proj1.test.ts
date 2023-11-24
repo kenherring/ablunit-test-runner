@@ -35,11 +35,11 @@ suite('Extension Test Suite - ' + projName, () => {
 		})
 
 		console.log("ablunitJson: " + ablunitJson.fsPath)
-		assert(await doesFileExist(ablunitJson),"ablunit.json exists")
+		assert(await doesFileExist(ablunitJson),"ablunit.json does not exist")
 		console.log("resultsXml: " + resultsXml.fsPath)
-		assert(await doesFileExist(resultsXml),"results.xml exists")
+		assert(await doesFileExist(resultsXml),"results.xml does not exist")
 		console.log("resultsJson: " + resultsJson.fsPath)
-		assert(!await doesFileExist(resultsJson),"results.json does not exist")
+		assert(await doesFileExist(resultsJson),"results.json does not exist")
 	})
 
 	test('output files exist 2 - exclude compileError.p', async () => {

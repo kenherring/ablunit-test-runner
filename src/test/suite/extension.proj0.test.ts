@@ -38,9 +38,11 @@ suite('Extension Test Suite - ' + projName, () => {
 		}
 		const ablunitJson = vscode.Uri.joinPath(storageUri,'ablunit.json')
 		const resultsXml = vscode.Uri.joinPath(storageUri,'results.xml')
+		const resultsJson = vscode.Uri.joinPath(storageUri,'results.json')
 
 		assert(await doesFileExist(ablunitJson), "missing ablunit.json (" + ablunitJson.fsPath + ")")
 		assert(await doesFileExist(resultsXml), "missing results.xml (" + resultsXml.fsPath + ")")
+		assert(!await doesFileExist(resultsJson), "results.json exists and should not (" + resultsJson.fsPath + ")")
 	})
 
 })
