@@ -165,16 +165,10 @@
 					"default": "",
 					"description": "Custom command line executed to run a test"
 				},
-				"ablunit.tests.command.useABLPluginCommand": {
-					"type": "string",
-					"default": "",
-					"markdownDescription": "Use a command from the VSCode [OpenEdge ABL](https://marketplace.visualstudio.com/items?itemName=RiversideSoftware.openedge-abl-lsp) plugin to run a test",
-					"TODO": true
-				},
 				"ablunit.tests.task": {
 					"type": "string",
-					"default": "TODO",
-					"description": "Run tests using the specified task"
+					"default": "",
+					"markdownDescription": "Run tests using the specified task"
 				},
 				"ablunit.configJson.configPath": {
 					"type": "string",
@@ -199,17 +193,17 @@
 				"ablunit.configJson.writeLog": {
 					"type": "boolean",
 					"default": true,
-					"description": "Start the session with logging enabled"
+					"markdownDescription": "if `writeLog` is true then a log file, `ablunit.log` is created in the current working directory and writes error messages to that log file"
 				},
 				"ablunit.configJson.showErrorMessage": {
 					"type": "boolean",
-					"default": true,
-					"description": "TODO"
+					"default": false,
+					"markdownDescription": "If `showErrorMessage` is set to true then the error messages is displayed in a new window"
 				},
 				"ablunit.configJson.throwError": {
 					"type": "boolean",
-					"default": true,
-					"description": "TODO"
+					"default": false,
+					"markdownDescription": "If ABLUnit is used as a library inside another program, set `throwError` to true, the framework displays the errors occurred"
 				},
 				"ablunit.profilerOptions.optionsPath": {
 					"type": "string",
