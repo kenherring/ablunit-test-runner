@@ -15,9 +15,14 @@
 	},
 	"badges": [
 		{
-			"href": "https://sonarcloud.io/api/project_badges/measure?project=kenherring_ablunit-test-provider&metric=sqale_rating",
-			"url": "https://sonarcloud.io/summary/new_code?id=kenherring_ablunit-test-provider",
+			"href": "https://sonarcloud.io/summary/new_code?id=kenherring_ablunit-test-provider",
+			"url": "https://sonarcloud.io/api/project_badges/measure?project=kenherring_ablunit-test-provider&metric=sqale_rating",
 			"description": "SonarCloud Maintainability Rating"
+		},
+		{
+			"href": "https://dl.circleci.com/status-badge/img/gh/kenherring/ablunit-test-provider/tree/main.svg?style=svg",
+			"url": "https://dl.circleci.com/status-badge/redirect/gh/kenherring/ablunit-test-provider/tree/main",
+			"description": "CircleCI Build Status"
 		}
 	],
 	"keywords": [
