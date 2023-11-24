@@ -2,7 +2,7 @@
 	"name": "ablunit-test-provider",
 	"displayName": "ABLUnit Test Runner",
 	"description": "OpenEdge ABLUnit support for VSCode",
-	"version": "0.1.3",
+	"version": "0.1.4",
 	"publisher": "kherring",
 	"pricing": "Free",
 	"private": true,
@@ -27,14 +27,14 @@
 	},
 	"badges": [
 		{
+			"href": "https://dl.circleci.com/status-badge/redirect/gh/kenherring/ablunit-test-provider/tree/main",
+			"url": "https://img.shields.io/circleci/build/github/kenherring/ablunit-test-provider/main?logo=circleci",
+			"description": "CircleCI Build Status"
+		},
+		{
 			"href": "https://sonarcloud.io/summary/new_code?id=kenherring_ablunit-test-provider",
 			"url": "https://sonarcloud.io/api/project_badges/measure?project=kenherring_ablunit-test-provider&metric=sqale_rating",
 			"description": "SonarCloud Maintainability Rating"
-		},
-		{
-			"href": "https://dl.circleci.com/status-badge/img/gh/kenherring/ablunit-test-provider/tree/main.svg?style=svg",
-			"url": "https://dl.circleci.com/status-badge/redirect/gh/kenherring/ablunit-test-provider/tree/main",
-			"description": "CircleCI Build Status"
 		}
 	],
 	"keywords": [
