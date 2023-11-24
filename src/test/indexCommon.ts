@@ -2,7 +2,7 @@ import * as glob from "glob"
 import * as path from "path"
 import * as Mocha from "mocha"
 
-export function setupNyc(projName: string) {
+function setupNyc(projName: string) {
 	// eslint-disable-next-line @typescript-eslint/no-var-requires
 	const NYC = require("nyc")
 	const nyc = new NYC({
@@ -32,12 +32,13 @@ export function setupNyc(projName: string) {
 			"ts-node/register",
 		]
 	});
+	console.log("reportDir=" + path.join(__dirname, "..", "..", "..", 'coverage', "coverage_" + projName))
 	nyc.reset()
 	nyc.wrap()
 	return nyc
 }
 
-export function setupMocha(projName: string) {
+function setupMocha(projName: string) {
 	return new Mocha({
 		color: true,
 		ui: "tdd",
@@ -56,7 +57,10 @@ export function setupMocha(projName: string) {
 	})
 }
 
-export function runTests (projName: string, mocha: Mocha, nyc: any) {
+export function runTests (projName: string) {
+
+	const nyc = setupNyc(projName)
+	const mocha = setupMocha(projName)
 	const testsRoot = path.resolve(__dirname, "..");
 	return new Promise<void>((c, e) => {
 		glob("**/**." + projName + ".test.js", {

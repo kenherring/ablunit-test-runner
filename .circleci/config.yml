@@ -42,9 +42,14 @@ jobs:
       - run:
           name: validate test results exist
           command: |
-            RESULTS_COUNT=$(find artifacts -name "mocha_results_*.xml")
+            RESULTS_COUNT=$(find artifacts -name "mocha_results_*.xml" | wc -l)
             if [ "$RESULTS_COUNT" = 0 ]; then
               echo "No test results found"
+              exit 1
+            fi
+            LCOV_COUNT=$(find . -name 'lcov.info' | wc -l)
+            if [ "$LCOV_COUNT" = 0 ]; then
+              echo 'ERROR: lcov.info not found'
               exit 1
             fi
       - run: npx eslint . --ext .ts,.js -f json -o artifacts/eslint_plain_report.json || true

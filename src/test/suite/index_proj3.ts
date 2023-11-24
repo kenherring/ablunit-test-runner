@@ -1,9 +1,5 @@
-import { setupNyc, setupMocha, runTests } from "../indexCommon"
-
-const projName = 'proj3'
+import { runTests } from "../indexCommon"
 
 export function run(): Promise <void> {
-	const nyc = setupNyc(projName);
-	const mocha = setupMocha(projName)
-	return runTests(projName, mocha, nyc)
+	return runTests('proj3')
 }
