@@ -7,9 +7,9 @@ function setupNyc(projName: string) {
 	const NYC = require("nyc")
 	const nyc = new NYC({
 		cache: false,
-		cwd: path.join(__dirname, "..", "..", ".."),
-		reportDir: path.join(__dirname, "..", "..", "..", 'coverage', "coverage_" + projName),
-		tempDir: path.join(__dirname, "..", "..", "..", 'coverage', "coverage_" + projName, ".nyc_output"),
+		cwd: path.join(__dirname, "..", ".."),
+		reportDir: path.join(__dirname, "..", "..", 'coverage', "coverage_" + projName),
+		tempDir: path.join(__dirname, "..", "..", 'coverage', "coverage_" + projName, ".nyc_output"),
 		exclude: [
 			"node_modules",
 			"out/test/**",
@@ -32,7 +32,6 @@ function setupNyc(projName: string) {
 			"ts-node/register",
 		]
 	});
-	console.log("reportDir=" + path.join(__dirname, "..", "..", "..", 'coverage', "coverage_" + projName))
 	nyc.reset()
 	nyc.wrap()
 	return nyc
