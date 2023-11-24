@@ -86,7 +86,6 @@ This project was developed using the [Progress OpenEdge Developers Kit: Classroo
 
 [![CircleCI](https://img.shields.io/circleci/build/github/kenherring/ablunit-test-provider/main?logo=circleci)](https://dl.circleci.com/status-badge/redirect/gh/kenherring/ablunit-test-provider/tree/main)
 
-[![CircleCI](https://dl.circleci.com/status-badge/img/gh/kenherring/ablunit-test-provider/tree/main.svg?style=shield)](https://dl.circleci.com/status-badge/redirect/gh/kenherring/ablunit-test-provider/tree/main)
 
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=kenherring_ablunit-test-provider&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=kenherring_ablunit-test-provider)
 
