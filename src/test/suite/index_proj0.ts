@@ -1,26 +1,12 @@
-import * as glob from "glob";
-import * as Mocha from "mocha";
-import * as path from "path";
-import { setupNyc } from "../indexCommon";
+import * as glob from "glob"
+import * as path from "path"
+import { setupMocha, setupNyc } from "../indexCommon"
 
 const projName = 'proj0'
 
 export function run(): Promise <void> {
-	const nyc = setupNyc(projName);
-
-	// Create the mocha test
-	const mocha = new Mocha({
-		color: true,
-		ui: "tdd",
-		timeout: 20000,
-		reporter: 'mocha-multi-reporters',
-		reporterOptions: {
-			reporterEnabled: 'text, spec, mocha-junit-reporter',
-			mochaJunitReporterReporterOptions: {
-				mochaFile: 'artifacts/mocha_results_' + projName + '.xml'
-			}
-		}
-	})
+	const nyc = setupNyc(projName)
+	const mocha = setupMocha(projName)
 
 	const testsRoot = path.resolve(__dirname, "..");
 	return new Promise((c, e) => {

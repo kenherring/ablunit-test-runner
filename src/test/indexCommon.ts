@@ -1,8 +1,9 @@
-import * as path from "path";
+import * as path from "path"
+import * as Mocha from "mocha"
 
 export function setupNyc(projName: string) {
 	// eslint-disable-next-line @typescript-eslint/no-var-requires
-	const NYC = require("nyc");
+	const NYC = require("nyc")
 	const nyc = new NYC({
 		cache: false,
 		cwd: path.join(__dirname, "..", "..", ".."),
@@ -30,7 +31,22 @@ export function setupNyc(projName: string) {
 			"ts-node/register",
 		]
 	});
-	nyc.reset();
-	nyc.wrap();
-	return nyc;
+	nyc.reset()
+	nyc.wrap()
+	return nyc
+}
+
+export function setupMocha(projName: string) {
+	return new Mocha({
+		color: true,
+		ui: "tdd",
+		timeout: 20000,
+		reporter: 'mocha-multi-reporters',
+		reporterOptions: {
+			reporterEnabled: 'spec, mocha-junit-reporter',
+			mochaJunitReporterReporterOptions: {
+				mochaFile: 'artifacts/mocha_results_' + projName + '.xml'
+			}
+		}
+	})
 }
