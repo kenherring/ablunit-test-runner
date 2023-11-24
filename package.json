@@ -2,7 +2,7 @@
 	"name": "ablunit-test-provider",
 	"displayName": "ABLUnit Test Runner",
 	"description": "OpenEdge ABLUnit support for VSCode",
-	"version": "0.1.3",
+	"version": "0.1.4",
 	"publisher": "kherring",
 	"pricing": "Free",
 	"private": true,
