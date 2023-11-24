@@ -18,7 +18,7 @@
 	],
 	"repository": "https://github.com/kenherring/ablunit-test-provider",
 	"bugs": {
-		"url": "https://github.coim/kenherring/ablunit-test-provider/issues"
+		"url": "https://github.com/kenherring/ablunit-test-provider/issues"
 	},
 	"capabilities": {
 		"untrustedWorkspaces": {
