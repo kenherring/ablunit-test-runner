@@ -8,11 +8,18 @@
 	"private": true,
 	"license": "MIT",
 	"icon": "images/icon_128.png",
-	"capabilities": {
-		"untrustedWorkspaces": {
-			"supported": false
-		}
+	"author": "Ken Herring",
+	"qna": "false",
+	"repository": "https://github.com/kenherring/ablunit-test-provider",
+	"bugs": {
+		"url": "https://github.com/kenherring/ablunit-test-provider/issues"
 	},
+	"licenses": [
+		{
+			"type": "MIT",
+			"url": "https://github.com/kenherring/ablunit-test-provider/blob/main/LICENSE.md"
+		}
+	],
 	"badges": [
 		{
 			"href": "https://dl.circleci.com/status-badge/redirect/gh/kenherring/ablunit-test-provider/tree/main",
@@ -25,6 +32,11 @@
 			"description": "SonarCloud Maintainability Rating"
 		}
 	],
+	"capabilities": {
+		"untrustedWorkspaces": {
+			"supported": false
+		}
+	},
 	"keywords": [
 		"progress",
 		"progress software",
@@ -34,10 +46,6 @@
 		"progress software",
 		"pdsoe"
 	],
-	"repository": "https://github.com/kenherring/ablunit-test-provider",
-	"bugs": {
-		"url": "https://github.coim/kenherring/ablunit-test-provider/issues"
-	},
 	"engines": {
 		"vscode": "^1.83.0"
 	},
@@ -70,6 +78,10 @@
 		"vscode:prepublish": "npm run esbuild-base -- --minify",
 		"watch-tsc": "tsc -watch -p ./",
 		"watch": "npm run esbuild-watch"
+	},
+	"dependencies": {
+		"jsonminify": "^0.4.2",
+		"xml2js": "^0.6.2"
 	},
 	"devDependencies": {
 		"@types/glob": "^8.1.0",
@@ -270,9 +282,5 @@
 				"path": "./snippets-classes.json"
 			}
 		]
-	},
-	"dependencies": {
-		"jsonminify": "^0.4.2",
-		"xml2js": "^0.6.2"
 	}
 }
