@@ -29,9 +29,9 @@
 		"progress software",
 		"pdsoe"
 	],
-	"repository": "https://github.com/kherring/ablunit-test-provider",
+	"repository": "https://github.com/kenherring/ablunit-test-provider",
 	"bugs": {
-		"url": "https://github.coim/kherring/ablunit-test-provider/issues"
+		"url": "https://github.coim/kenherring/ablunit-test-provider/issues"
 	},
 	"engines": {
 		"vscode": "^1.83.0"
