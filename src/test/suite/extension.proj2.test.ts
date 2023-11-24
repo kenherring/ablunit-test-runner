@@ -7,11 +7,11 @@ const projName = 'proj2'
 
 before(async () => {
     console.log("before")
-});
+})
 
 after(() => {
 	console.log("after")
-});
+})
 
 suite('Extension Test Suite - ' + projName, () => {
 
@@ -32,10 +32,6 @@ suite('Extension Test Suite - ' + projName, () => {
 
 		console.log("ablunitJson: " + ablunitJson.fsPath)
 		assert(await doesFileExist(ablunitJson))
-	});
-
-	test('wrap up', () => {
-		assert.equal(1,1);
 	})
 
-});
+})

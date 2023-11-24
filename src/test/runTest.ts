@@ -14,7 +14,6 @@ async function testProject(projName: string, projDir?: string) {
 		projDir = projName
 	}
 	const extensionDevelopmentPath = path.resolve(__dirname, '../../');
-	console.log("extensionDevelopmentPath=" + extensionDevelopmentPath)
 	try {
 		const extensionTestsPath = path.resolve(__dirname, './suite/index_' + projName);
 		await runTests({

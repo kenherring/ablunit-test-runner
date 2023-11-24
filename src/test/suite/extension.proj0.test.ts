@@ -43,9 +43,4 @@ suite('Extension Test Suite - ' + projName, () => {
 		assert(await doesFileExist(resultsXml), "missing results.xml (" + resultsXml.fsPath + ")")
 	})
 
-	test('wrap up', () => {
-		console.log("Test-2 wrap up")
-		assert.equal(1,1);
-	})
-
 })

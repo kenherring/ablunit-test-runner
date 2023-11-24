@@ -42,17 +42,17 @@ function setupMocha(projName: string) {
 		color: true,
 		ui: "tdd",
 		timeout: 20000,
-		reporter: 'mocha-junit-reporter',
-		reporterOptions: {
-			mochaFile: 'artifacts/mocha_results_' + projName + '.xml'
-		}
-		// reporter: 'mocha-multi-reporters',
+		// reporter: 'mocha-junit-reporter',
 		// reporterOptions: {
-		// 	reporterEnabled: 'spec, mocha-junit-reporter',
-		// 	mochaJunitReporterReporterOptions: {
-		// 		mochaFile: 'artifacts/mocha_results_' + projName + '.xml'
-		// 	}
+		// 	mochaFile: 'artifacts/mocha_results_' + projName + '.xml'
 		// }
+		reporter: 'mocha-multi-reporters',
+		reporterOptions: {
+			reporterEnabled: 'spec, mocha-junit-reporter',
+			mochaJunitReporterReporterOptions: {
+				mochaFile: 'artifacts/mocha_results_' + projName + '.xml'
+			}
+		}
 	})
 }
 

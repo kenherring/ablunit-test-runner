@@ -40,7 +40,7 @@ suite('Extension Test Suite - ' + projName, () => {
 		assert(await doesFileExist(resultsXml),"results.xml exists")
 		console.log("resultsJson: " + resultsJson.fsPath)
 		assert(!await doesFileExist(resultsJson),"results.json does not exist")
-	});
+	})
 
 	test('output files exist 2 - exclude compileError.p', async () => {
 		await vscode.workspace.getConfiguration('ablunit').update('files.exclude', ['.builder/**','compileError.p'])
@@ -56,6 +56,6 @@ suite('Extension Test Suite - ' + projName, () => {
 		const testCount = await getTestCount(resultsJson)
 		console.log("getTestCount: " + testCount)
 		assert.equal(10,testCount)
-	});
+	})
 
-});
+})

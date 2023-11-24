@@ -6,7 +6,7 @@ initialize () {
 	while getopts 'b' OPT; do
 		case "$OPT" in
 			b)	BASH_AFTER_FAIL=true ;;
-			?)	echo "script usage: $(basename $0) [-b]" >&2
+			?)	echo "script usage: $(basename "$0") [-b]" >&2
 				exit 1 ;;
 		esac
 	done
