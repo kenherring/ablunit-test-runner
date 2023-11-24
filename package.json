@@ -7,6 +7,7 @@
 	"pricing": "Free",
 	"private": true,
 	"license": "MIT",
+	"icon": "images/icon_128.png",
 	"capabilities": {
 		"untrustedWorkspaces": {
 			"supported": false
@@ -36,8 +37,7 @@
 		"vscode": "^1.83.0"
 	},
 	"categories": [
-		"Testing",
-		"Snippets"
+		"Testing"
 	],
 	"activationEvents-coverage": [
 		"onStartupFinished"
