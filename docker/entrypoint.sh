@@ -6,7 +6,7 @@ initialize () {
 	while getopts 'b' OPT; do
 		case "$OPT" in
 			b)	BASH_AFTER_FAIL=true ;;
-			?)	echo "script usage: $(basename $0) [-b]" >&2
+			?)	echo "script usage: $(basename "$0") [-b]" >&2
 				exit 1 ;;
 		esac
 	done
@@ -52,11 +52,8 @@ setup () {
 }
 
 run_tests () {
-	echo "BASH_AFTER_FAIL=$BASH_AFTER_FAIL"
 	if $BASH_AFTER_FAIL; then
-		echo "BASH_AFTER_FAIL=$BASH_AFTER_FAIL"
-		if ! xvfb-run -a npm test && ! ${CIRCLECI:-false}; then
-			echo "BASH_AFTER_FAIL=$BASH_AFTER_FAIL"
+		if ! xvfb-run -a npm test; then
 			bash
 		fi
 	else
@@ -71,8 +68,8 @@ teardown () {
 analyze_results () {
 	RESULTS_COUNT=$(find . -name 'mocha_results_*.xml' | wc -l)
 	LCOV_COUNT=$(find . -name 'lcov.info' | wc -l)
-
 	HAS_ERROR=false
+
 	if [ "$RESULTS_COUNT" = 0 ]; then
 		echo 'ERROR: mocha_results_*.xml not found'
 		HAS_ERROR=true
@@ -81,7 +78,11 @@ analyze_results () {
 		echo 'ERROR: lcov.info not found'
 		HAS_ERROR=true
 	fi
+
 	if $HAS_ERROR; then
+		if $BASH_AFTER_FAIL; then
+			bash
+		fi
 		exit 1
 	fi
 }

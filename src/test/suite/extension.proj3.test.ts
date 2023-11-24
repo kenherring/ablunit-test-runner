@@ -7,11 +7,11 @@ const projName = 'proj3'
 
 before(async () => {
     console.log("before")
-});
+})
 
 after(() => {
 	console.log("after")
-});
+})
 
 suite('Extension Test Suite - ' + projName, () => {
 
@@ -33,10 +33,6 @@ suite('Extension Test Suite - ' + projName, () => {
 
 		assert(await doesFileExist(ablunitJson), "missing ablunit.json (" + ablunitJson.fsPath + ")")
 		assert(await doesFileExist(resultsXml), "missing results.xml (" + resultsXml.fsPath + ")")
-	});
-
-	test('wrap up', () => {
-		assert.equal(1,1);
 	})
 
-});
+})
