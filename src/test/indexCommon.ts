@@ -23,10 +23,11 @@ async function installOpenedgeABLExtension () {
 	if (!extensions.getExtension("riversidesoftware.openedge-abl-lsp")) {
 		console.log("[indexCommon.ts] installing riversidesoftware.openedge-abl-lsp extension")
 		await commands.executeCommand('workbench.extensions.installExtension', 'riversidesoftware.openedge-abl-lsp').then(() => {
-			console.log("[indexCommon.ts] install successful")
+			console.log("[indexCommon.ts] triggered extension install. sleeping for 1s while extension is installed...")
+			return new Promise( resolve => setTimeout(resolve, 1000))
 		}, (err) => {
 			if (err.toString() === 'Error: Missing gallery') {
-				console.log("[indexCommon.ts] installed extension, but caught '" + err + "'")
+				console.log("[indexCommon.ts] triggered installed extension, but caught '" + err + "'")
 			} else {
 				throw new Error("[indexCommon.ts] failed to install extension: " + err)
 			}
