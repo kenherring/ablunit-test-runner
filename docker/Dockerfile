@@ -5,7 +5,7 @@ RUN apt update \
 	&& apt install -y --no-install-recommends libasound2 libgbm1 libgtk-3-0 libnss3 \
 	&& apt install -y --no-install-recommends xauth \
 	&& apt install -y --no-install-recommends xvfb rsync \
-	&& apt install -y --no-install-recommends ant \
+	&& apt install -y --no-install-recommends ant shellcheck \
 	&& rm -rf /var/lib/apt/lists/* /var/cache/apt/archives/*
 
 # requirements for running ablunit tests
