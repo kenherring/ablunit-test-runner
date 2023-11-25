@@ -237,7 +237,7 @@ export class ABLUnitConfig  {
 	}
 
 	async createProfileOptions (profilerOptions: IProfilerOptions) {
-		if (!profilerOptions.enabled) { return Promise.resolve()}
+		if (!profilerOptions.enabled) { return Promise.resolve() }
 
 		const opt: string[] = [ '-profiling',
 								'-filename "' + workspace.asRelativePath(profilerOptions.filenameUri) + '"',
@@ -292,7 +292,7 @@ export class ABLUnitConfig  {
 
 
 function isRelativePath (path: string) {
-	if(path.startsWith("/") || RegExp(/^[a-zA-Z]:\\/).exec(path)) {
+	if(path.startsWith('/') || RegExp(/^[a-zA-Z]:[\\/]/).exec(path)) {
 		return false
 	} else {
 		return true

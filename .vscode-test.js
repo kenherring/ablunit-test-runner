@@ -9,14 +9,7 @@ module.exports = defineConfig([
 			ui: 'tdd',
 			timeout: 20000
 		},
-		reporter: 'mocha-multi-reporters',
-		reporterOptions: {
-			reporterEnabled: 'text, spec, mocha-junit-reporter',
-			mochaJunitReporterReporterOptions: {
-				mochaFile: 'test-results.xml'
-			}
-		},
-		"launchArgs": [
+		launchArgs: [
 			'--disable-extensions'
 		]
 	},
@@ -28,7 +21,7 @@ module.exports = defineConfig([
 			ui: 'tdd',
 			timeout: 20000
 		},
-		"launchArgs": [
+		launchArgs: [
 			'--disable-extensions'
 		]
 	},
@@ -40,7 +33,7 @@ module.exports = defineConfig([
 			ui: 'tdd',
 			timeout: 20000
 		},
-		"launchArgs": [
+		launchArgs: [
 			'--disable-extensions'
 		]
 	},
@@ -52,7 +45,19 @@ module.exports = defineConfig([
 			ui: 'tdd',
 			timeout: 20000
 		},
-		"launchArgs": [
+		launchArgs: [
+			'--disable-extensions'
+		]
+	},
+	{
+		label: 'extension tests - proj4',
+		files: 'out/test/**/*.proj4.test.js',
+		workspaceFolder: './test_projects/proj4_debugLines',
+		mocha: {
+			ui: 'tdd',
+			timeout: 20000
+		},
+		launchArgs: [
 			'--disable-extensions'
 		]
 	}

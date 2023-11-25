@@ -3,7 +3,6 @@ import { ABLResults } from "./ABLResults"
 import { logToChannel } from './ABLUnitCommon'
 import { IABLUnitConfig } from "./ABLUnitConfigWriter"
 
-//TODO remove this
 import * as cp from "child_process";
 
 export const ablunitRun = async(ablunitConfig: IABLUnitConfig, options: TestRun, res: ABLResults) => {

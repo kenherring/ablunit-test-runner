@@ -104,8 +104,8 @@ export async function activate(context: vscode.ExtensionContext) {
 			}
 
 			res.setTestData(testData)
-			logToChannel('starting ablunit run...')
-			run.appendOutput('starting ablunit run...\r\n')
+			logToChannel('starting ablunit run')
+			run.appendOutput('starting ablunit run\r\n')
 
 			const ret = await res.run(run).then(() => {
 				return true
