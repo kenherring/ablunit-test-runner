@@ -15,7 +15,7 @@ for D in "${ARR[@]}"; do
 done
 
 echo "deleting artifacts and coverage directory"
-rm -rf artifacts/ coverage/
+rm -rf artifacts/ coverage/ C:/temp/ablunit/
 
 echo "deleting storage directory kherring.ablunit-test-provider"
 find . -type d -name "kherring.ablunit-test-provider" -exec rm -rv {} +

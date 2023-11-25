@@ -1,23 +1,25 @@
 {
 	"name": "ablunit-test-provider",
 	"displayName": "ABLUnit Test Runner",
-	"description": "OpenEdge ABLUnit support for VSCode",
-	"version": "0.1.4",
+	"description": "OpenEdge ABLUnit test runner for VSCode",
+	"version": "0.1.5",
 	"publisher": "kherring",
 	"pricing": "Free",
 	"private": true,
-	"license": "MIT",
 	"icon": "images/icon_128.png",
 	"author": "Ken Herring",
-	"qna": "false",
-	"repository": "https://github.com/kenherring/ablunit-test-provider",
+	"qna": false,
+	"homepage": "https://github.com/kenherring/ablunit-test-provider/blob/main/README.md",
+	"repository": {
+		"url": "https://github.com/kenherring/ablunit-test-provider"
+	},
 	"bugs": {
 		"url": "https://github.com/kenherring/ablunit-test-provider/issues"
 	},
 	"licenses": [
 		{
 			"type": "MIT",
-			"url": "https://github.com/kenherring/ablunit-test-provider/blob/main/LICENSE.md"
+			"url": "https://github.com/kenherring/ablunit-test-provider/blob/main/LICENSE"
 		}
 	],
 	"badges": [
@@ -30,6 +32,11 @@
 			"href": "https://sonarcloud.io/summary/new_code?id=kenherring_ablunit-test-provider",
 			"url": "https://sonarcloud.io/api/project_badges/measure?project=kenherring_ablunit-test-provider&metric=sqale_rating",
 			"description": "SonarCloud Maintainability Rating"
+		},
+		{
+			"href": "https://sonarcloud.io/summary/new_code?id=kenherring_ablunit-test-provider",
+			"url": "https://sonarcloud.io/api/project_badges/measure?project=kenherring_ablunit-test-provider&metric=coverage",
+			"description": "SonarCloud Coverage"
 		}
 	],
 	"capabilities": {

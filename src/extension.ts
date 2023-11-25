@@ -2,6 +2,7 @@ import * as vscode from 'vscode'
 import { ABLTestSuiteClass, ABLTestClassNamespace, ABLTestClass, ABLTestProgram, ABLTestMethod, ABLTestProcedure, testData, resultData } from './testTree'
 import { logToChannel } from './ABLUnitCommon'
 import { ABLResults } from './ABLResults'
+import { resetAblunitConfig } from './ABLUnitConfigWriter'
 
 const backgroundExecutable = vscode.window.createTextEditorDecorationType({
 	backgroundColor: 'rgba(255,0,0,0.1)',
@@ -104,8 +105,8 @@ export async function activate(context: vscode.ExtensionContext) {
 			}
 
 			res.setTestData(testData)
-			logToChannel('starting ablunit run...')
-			run.appendOutput('starting ablunit run...\r\n')
+			logToChannel('starting ablunit run')
+			run.appendOutput('starting ablunit run\r\n')
 
 			const ret = await res.run(run).then(() => {
 				return true
@@ -185,6 +186,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	}
 
 	function updateConfiguration(controller: vscode.TestController, e: vscode.ConfigurationChangeEvent) {
+		resetAblunitConfig()
 		if (e.affectsConfiguration('ablunit')) {
 			vscode.commands.executeCommand('testing.refreshTests')
 		}
