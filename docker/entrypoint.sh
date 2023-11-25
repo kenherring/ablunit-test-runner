@@ -47,17 +47,16 @@ setup () {
 	echo 'starting tests...'
 	sed -i 's/"activationEvents"/"activationEvents-vscode"/g;s/"activationEvents-coverage"/"activationEvents"/g' package.json
 
-	# export ELECTRON_ENABLE_LOGGING=true
 	service dbus start
 }
 
 run_tests () {
-	if $BASH_AFTER_FAIL; then
-		if ! xvfb-run -a npm test; then
+	if ! xvfb-run -a npm test; then
+		if $BASH_AFTER_FAIL; then
 			bash
+		else
+			exit 1
 		fi
-	else
-		xvfb-run -a npm run test
 	fi
 }
 

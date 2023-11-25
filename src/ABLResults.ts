@@ -51,10 +51,6 @@ export class ABLResults {
 
 	async asyncConstructor(storageUri: Uri) {
 		this.dlc = await getDLC()
-		console.log("this.dlc = ")
-		if(!this.dlc) {
-			throw new Error("unable to determine DLC")
-		}
 		this.promsgs = new ABLPromsgs(this.dlc, ablunitConfig.storageUri)
 	}
 
@@ -436,14 +432,25 @@ async function getDLC() {
 	for (const runtime of runtimes) {
 		console.log("runtime.name=" + runtime.name + ", runtime.path=" + runtime.path + ", runtime.default=" + runtime.default)
 		if (runtime.name === oeversion) {
+			console.log("dlc=" + runtime.path)
 			return runtime.path
 		}
+		console.log("runtime.default=" + runtime.default)
 		if (runtime.default) {
+			console.log("defaultDLC=" + runtime.path)
 			defaultDLC = runtime.path
 		}
+		console.log("done with runtime")
 	}
+	console.log("defaultDLC=" + defaultDLC)
 	if (defaultDLC) {
+		console.log("return defaultDLC=" + defaultDLC)
 		return defaultDLC
 	}
+	if(!process.env.DLC) {
+		throw new Error("unable to determine DLC")
+	}
+
+	console.log("return process.env.DLC=" + process.env.DLC)
 	return process.env.DLC
 }

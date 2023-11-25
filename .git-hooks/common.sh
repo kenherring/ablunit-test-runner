@@ -1,6 +1,7 @@
 #!/bin/sh
 
 validate_version_updated() {
+	echo "validating version is proper throughout the project..." >&2
 	PACKAGE_VERSION=$(jq -r '.version' package.json)
 	TAG_VERSION=$(git tag | tail -1)
 	SONAR_PROJECT_VERSION=$(grep -E '^sonar.projectVersion=' sonar-project.properties | cut -d'=' -f2)
