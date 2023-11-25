@@ -21,6 +21,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	logToChannel("ACTIVATE!")
 
+	const debugEnabled = vscode.workspace.getConfiguration('ablunit').get('debugEnabled', false)
 	const ctrl = vscode.tests.createTestController('ablunitTestController', 'ABLUnit Test')
 	storageUri = context.storageUri
 
@@ -76,7 +77,9 @@ export async function activate(context: vscode.ExtensionContext) {
 				}
 
 				const data = testData.get(test)
-				printDataType(data)
+				if (debugEnabled) {
+					printDataType(data)
+				}
 
 				if (data instanceof ABLTestClass || data instanceof ABLTestProgram || data instanceof ABLTestMethod || data instanceof ABLTestProcedure || data instanceof ABLTestMethod) {
 					run.enqueued(test)
@@ -417,15 +420,17 @@ async function isFileExcluded (uri: vscode.Uri, excludePatterns: vscode.Relative
 
 function printDataType(data: any) {
 	if(data instanceof ABLTestSuiteClass)
-		console.log(" - ABLTestSuite")
+		logToChannel(" - ABLTestSuite")
 	else if(data instanceof ABLTestClassNamespace)
-		console.log(" - ABLTestClassNamespace")
+		logToChannel(" - ABLTestClassNamespace")
 	else if(data instanceof ABLTestClass)
-		console.log(" - ABLTestClass")
+		logToChannel(" - ABLTestClass")
 	else if(data instanceof ABLTestMethod)
-		console.log(" - ABLTestMethod")
+		logToChannel(" - ABLTestMethod")
 	else if(data instanceof ABLTestProgram)
-		console.log(" - ABLTestProgram")
+		logToChannel(" - ABLTestProgram")
 	else if(data instanceof ABLTestProcedure)
-		console.log(" - ABLTestProcedure")
+		logToChannel(" - ABLTestProcedure")
+	else
+		logToChannel(" - unexpected instanceof type")
 }

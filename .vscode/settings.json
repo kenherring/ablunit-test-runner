@@ -1,5 +1,8 @@
 {
 	"eslint.enable": true,
+	"git.branchProtection": [
+		"main"
+	],
 	"npm.autoDetect": "on",
 	"redhat.telemetry.enabled": false,
 	"sonarlint.connectedMode.project": {

@@ -4,5 +4,6 @@
 		"PATH": "${env:PATH}:/c/Progress/OpenEdge/ant/bin"
 	},
 	"ablunit.tempDir": "${workspaceFolder}/target",
-	"ablunit.configJson.outputLocation": "ablunit-output"
+	"ablunit.configJson.outputLocation": "ablunit-output",
+	"ablunit.profilerOptions.listings": "true"
 }

@@ -1,18 +1,23 @@
 #!/bin/bash
 set -eou pipefail
 
-DELETE='-delete'
-
-ARR=("ablunit.json" "ablunit.log" "progress.ini" "prof.out" "prof.json" "protrace.*" "results.json" "results.xml" "dbg_*" "*.xref" "results.prof" "profiler.json" "profile.options")
-
+ARR=("ablunit.json" "ablunit.log" "progress.ini" "prof.out" "prof.json" "protrace.*" "results.json"
+	 "results.xml" "dbg_*" "*.xref" "results.prof" "profiler.json" "profile.options")
 for F in "${ARR[@]}"; do
-	echo "deleting $F"
-	find test_projects -name "$F" -type f $DELETE
+	echo "deleting files matching '$F'"
+	find test_projects -type f -name "$F" -delete
 done
 
-echo "deleting 'listings' directories"
-find . -type d -name 'listings' -exec rm -rv {} +
+ARR=("listings" ".builder" "build" "ablunit-output")
+for D in "${ARR[@]}"; do
+	echo "deleting directories matching '$D'"
+	find test_projects -type d -name "$D" -exec rm -rv {} +
+done
 
+echo "deleting artifacts and coverage directory"
 rm -rf artifacts/ coverage/
 
-echo "done cleanup"
+echo "deleting storage directory kherring.ablunit-test-provider"
+find . -type d -name "kherring.ablunit-test-provider" -exec rm -rv {} +
+
+echo "cleanup complete"

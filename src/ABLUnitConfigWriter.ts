@@ -134,7 +134,7 @@ export const ablunitConfig: IABLUnitConfig = {
 		description: workspace.getConfiguration('ablunit.profilerOptions').get('description', 'Unit Tests Run via ABLUnit Test Provider (VSCode)'),
 		filename: 'prof.out',
 		filenameUri: Uri.joinPath(workspaceDir, 'prof.out'),
-		listings: 'listings',
+		listings: workspace.getConfiguration('ablunit.profilerOptions').get('listings', ''),
 		listingsUri: Uri.joinPath(workspaceDir, 'listings'),
 		statistics: workspace.getConfiguration('ablunit.profilerOptions').get('statistics', false),
 		traceFilter: workspace.getConfiguration('ablunit.profilerOptions').get('traceFilter', ''),
@@ -156,6 +156,11 @@ export class ABLUnitConfig  {
 				tempDir = Uri.file(ablunitConfig.tempDir)
 			}
 		}
+
+		if (ablunitConfig.profilerOptions.listings == 'true') {
+			ablunitConfig.profilerOptions.listings = 'listings'
+		}
+
 		this.setTempDirUri(tempDir, true)
 		console.log("[ABLUnitConfigWriter constructor] workspaceUri=" + ablunitConfig.workspaceUri.fsPath)
 		console.log("[ABLUnitConfigWriter constructor] tempDir=" + ablunitConfig.tempDirUri.fsPath)
@@ -193,10 +198,14 @@ export class ABLUnitConfig  {
 		}
 		if (isRelativePath(ablunitConfig.profilerOptions.filename)) {
 			ablunitConfig.profilerOptions.filenameUri = Uri.joinPath(ablunitConfig.tempDirUri, ablunitConfig.profilerOptions.filename)
-		}
-		if (isRelativePath(ablunitConfig.profilerOptions.listings)) {
-			ablunitConfig.profilerOptions.listingsUri = Uri.joinPath(ablunitConfig.tempDirUri, ablunitConfig.profilerOptions.listings)
 			ablunitConfig.profilerOptions.jsonUri = Uri.joinPath(ablunitConfig.tempDirUri, ablunitConfig.profilerOptions.filename.replace(/\.[a-zA-Z]+$/, '.json'))
+		}
+		if (ablunitConfig.profilerOptions.listings != '') {
+			if (isRelativePath(ablunitConfig.profilerOptions.listings)) {
+				ablunitConfig.profilerOptions.listingsUri = Uri.joinPath(ablunitConfig.tempDirUri, ablunitConfig.profilerOptions.listings)
+			} else {
+				ablunitConfig.profilerOptions.listingsUri = Uri.file(ablunitConfig.profilerOptions.listings)
+			}
 		}
 	}
 
@@ -227,30 +236,31 @@ export class ABLUnitConfig  {
 		return workspace.fs.writeFile(ablunitConfig.config_uri, Uint8Array.from(Buffer.from(JSON.stringify(cfg, null, 4))))
 	}
 
-	async createProfileOptions (profOpts: IProfilerOptions) {
-		if (!profOpts.enabled) { return Promise.resolve()}
+	async createProfileOptions (profilerOptions: IProfilerOptions) {
+		if (!profilerOptions.enabled) { return Promise.resolve()}
 
 		const opt: string[] = [ '-profiling',
-								'-filename "' + workspace.asRelativePath(profOpts.filenameUri) + '"',
-								'-description "' + profOpts.description + '"' ]
-		if (profOpts.coverage) {
+								'-filename "' + workspace.asRelativePath(profilerOptions.filenameUri) + '"',
+								'-description "' + profilerOptions.description + '"' ]
+		if (profilerOptions.coverage) {
 			opt.push('-coverage')
 		}
-		if (profOpts.listings != "") {
-			opt.push('-listings "' + workspace.asRelativePath(profOpts.listingsUri) + '"')
-			await this.createDir(profOpts.listingsUri)
+
+		if (profilerOptions.listings != '') {
+			opt.push('-listings "' + workspace.asRelativePath(profilerOptions.listingsUri) + '"')
+			await this.createDir(profilerOptions.listingsUri)
 		}
-		if (profOpts.statistics) {
+		if (profilerOptions.statistics) {
 			opt.push('-statistics')
 		}
-		if (profOpts.tracing != "") {
-			opt.push('-tracing "' + profOpts.tracing + '"')
+		if (profilerOptions.tracing != '') {
+			opt.push('-tracing "' + profilerOptions.tracing + '"')
 		}
-		if (profOpts.traceFilter != '') {
-			opt.push('-traceFilter "' + profOpts.traceFilter + '"')
+		if (profilerOptions.traceFilter != '') {
+			opt.push('-traceFilter "' + profilerOptions.traceFilter + '"')
 		}
-		console.log('creating profile.options: "' + profOpts.optionsUri.fsPath + '"')
-		return workspace.fs.writeFile(profOpts.optionsUri, Uint8Array.from(Buffer.from(opt.join('\n'))))
+		console.log('creating profile.options: "' + profilerOptions.optionsUri.fsPath + '"')
+		return workspace.fs.writeFile(profilerOptions.optionsUri, Uint8Array.from(Buffer.from(opt.join('\n'))))
 	}
 
 	async readPropathFromJson() {

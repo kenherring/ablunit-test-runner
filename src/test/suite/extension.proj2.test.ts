@@ -30,8 +30,7 @@ suite('Extension Test Suite - ' + projName, () => {
 			assert.fail("testing.runAll failed: " + err)
 		})
 
-		console.log("ablunitJson: " + ablunitJson.fsPath)
-		assert(await doesFileExist(ablunitJson))
+		assert(await doesFileExist(ablunitJson),"missing ablunit.json (" + ablunitJson.fsPath + ")")
 	})
 
 })
