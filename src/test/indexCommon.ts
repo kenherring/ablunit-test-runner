@@ -21,11 +21,14 @@ export function getSessionTempDir () {
 
 async function installOpenedgeABLExtension () {
 	console.log("[indexCommon.ts] installing riversidesoftware.openedge-abl-lsp extension")
-	return await commands.executeCommand('workbench.extensions.installExtension', 'riversidesoftware.openedge-abl-lsp').then(() => {
+	await commands.executeCommand('workbench.extensions.installExtension', 'riversidesoftware.openedge-abl-lsp').then(() => {
 		console.log("[indexCommon.ts] install successful")
 	}, (err) => {
 		throw new Error("[indexCommon.ts] failed to install extension: " + err)
 	})
+
+	console.log("[indexCommon.ts] sleeping for 1s while extension is installed")
+	return new Promise( resolve => setTimeout(resolve, 1000))
 }
 
 export function getDefaultDLC () {

@@ -7,7 +7,7 @@ import { getDefaultDLC, setRuntimes } from '../indexCommon';
 const projName = 'proj3'
 
 before(async () => {
-	setRuntimes([{name: "11.7", path: "/psc/dlc_11.7"}, {name: "12.2", path: getDefaultDLC(), default: true}])
+	await setRuntimes([{name: "11.7", path: "/psc/dlc_11.7"}, {name: "12.2", path: getDefaultDLC(), default: true}])
 })
 
 after(() => {
