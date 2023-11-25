@@ -10,6 +10,7 @@ import { PropathParser } from "./ABLPropath"
 import { logToChannel } from "./ABLUnitCommon"
 import { FileCoverage, CoveredCount, StatementCoverage } from "./TestCoverage"
 import { ablunitRun } from "./ABLUnitRun"
+import { getOEVersion } from "./parse/OpenedgeProjectParser"
 
 
 export class ABLResults {
@@ -30,9 +31,8 @@ export class ABLResults {
 	dlc: string | undefined
 	public testCoverage: Map<string, FileCoverage> = new Map<string, FileCoverage>()
 
-
 	constructor(storageUri: Uri) {
-		this.dlc = process.env.DLC
+		this.dlc = getDLC()
 		if(!this.dlc) {
 			throw new Error("unable to determine DLC")
 		}
@@ -410,4 +410,29 @@ export class ABLResults {
 				new Range(new Position(dbg.incLine - 1, 0), new Position(dbg.incLine, 0))))
 		}
 	}
+}
+
+interface IRuntime {
+	name: string,
+	path: string,
+	default?: boolean
+}
+
+function getDLC() {
+	let defaultDLC: string | undefined = undefined
+	const oeversion = getOEVersion()
+	const runtimes: IRuntime[] = workspace.getConfiguration("abl.configuration").get("runtimes",[])
+
+	for (const runtime of runtimes) {
+		if (runtime.name === oeversion) {
+			return runtime.path
+		}
+		if (runtime.default) {
+			defaultDLC = runtime.path
+		}
+	}
+	if (defaultDLC) {
+		return defaultDLC
+	}
+	return process.env.DLC
 }

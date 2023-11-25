@@ -11,7 +11,7 @@ done
 ARR=("listings" ".builder" "build" "ablunit-output")
 for D in "${ARR[@]}"; do
 	echo "deleting directories matching '$D'"
-	find test_projects -type d -name "$D" -exec rm -rv {} +
+	find test_projects -type d -name "$D" -exec rm -rv {} + || true
 done
 
 echo "deleting artifacts and coverage directory"

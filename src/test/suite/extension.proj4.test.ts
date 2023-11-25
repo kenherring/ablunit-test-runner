@@ -1,5 +1,5 @@
 import * as assert from 'assert';
-import { afterEach } from 'mocha';
+import { before, afterEach } from 'mocha';
 import * as vscode from 'vscode';
 import { doesDirExist, doesFileExist } from '../common'
 import { getSessionTempDir } from '../indexCommon';
@@ -7,6 +7,13 @@ import { getSessionTempDir } from '../indexCommon';
 const projName = 'proj4'
 const sessionTempDir = vscode.Uri.parse(getSessionTempDir())
 
+before(() => {
+	let path = "C:\\Progress\\OpenEdge"
+	if (process.platform === 'linux') {
+		path = "/psc/dlc"
+	}
+	vscode.workspace.getConfiguration('ablunit').update('runtimes', [{name: "12.2", path: path}], vscode.ConfigurationTarget.Global)
+})
 
 afterEach(async () => {
 	await vscode.workspace.getConfiguration('ablunit').update('profilerOptions.listings','c:\\temp\\ablunit-local\\listings')
