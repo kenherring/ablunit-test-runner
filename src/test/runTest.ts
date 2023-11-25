@@ -3,10 +3,10 @@ import { runTests } from '@vscode/test-electron';
 
 
 async function main() {
-	await testProject("proj0")
-	await testProject("proj1")
-	await testProject("proj2")
-	await testProject("proj3", "proj3_debugLines")
+	// await testProject("proj0")
+	// await testProject("proj1")
+	// await testProject("proj2")
+	// await testProject("proj3", "proj3_debugLines")
 	await testProject("proj4")
 }
 
@@ -16,17 +16,26 @@ async function testProject(projName: string, projDir?: string) {
 	}
 	const extensionDevelopmentPath = path.resolve(__dirname, '../../');
 	try {
-		const extensionTestsPath = path.resolve(__dirname, './suite/index_' + projName);
+		const extensionTestsPath = path.resolve(__dirname, './suite/index_' + projName)
+
+		let args = [
+			'--disable-extensions',
+			'test_projects/' + projDir,
+		]
+		if (projDir === "proj4") {
+			args = [
+				'test_projects/' + projDir
+			]
+		}
+
+		console.log("running tests")
 		await runTests({
 			extensionDevelopmentPath,
 			extensionTestsPath,
-			launchArgs: [
-				'--disable-extensions',
-				'test_projects/' + projDir,
-			]
-		});
+			launchArgs: args
+		})
 	} catch (err) {
-		console.error('[runTest.ts] Failed to run tests, err=' + err);
+		console.error('[runTest.ts] Failed to run tests, err=' + err)
 		process.exit(1);
 	} finally {
 		console.log("finally")

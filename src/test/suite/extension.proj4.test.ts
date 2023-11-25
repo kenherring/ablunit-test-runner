@@ -7,12 +7,25 @@ import { getSessionTempDir } from '../indexCommon';
 const projName = 'proj4'
 const sessionTempDir = vscode.Uri.parse(getSessionTempDir())
 
-before(() => {
+before(async () => {
+	console.log("[before] installing riversidesoftware.openedge-abl-lsp extension")
+	await vscode.commands.executeCommand('workbench.extensions.installExtension', 'riversidesoftware.openedge-abl-lsp').then(() => {
+		console.log("[before] install successful")
+	}, (err) => {
+		console.log("[before] install error: " + err)
+	})
+	await new Promise( resolve => setTimeout(resolve, 2000))
+
+	console.log("[before] setting abl.configuration.runtimes")
 	let path = "C:\\Progress\\OpenEdge"
 	if (process.platform === 'linux') {
 		path = "/psc/dlc"
 	}
-	vscode.workspace.getConfiguration('abl.configuration').update('runtimes', [{name: "12.2", path: path}], vscode.ConfigurationTarget.Global)
+	await vscode.workspace.getConfiguration('abl.configuration').update('runtimes', [{name: "11.7", path: "/psc/dlc_11.7"},{name: "12.2", path: path}], vscode.ConfigurationTarget.Global).then(() =>{
+		console.log("[before] abl.configuration.runtimes set successfully")
+	}, (err) => {
+		assert.fail("[before] failed to set runtimes: " + err)
+	})
 })
 
 afterEach(async () => {

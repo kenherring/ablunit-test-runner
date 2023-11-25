@@ -57,8 +57,6 @@ module.exports = defineConfig([
 			ui: 'tdd',
 			timeout: 20000
 		},
-		launchArgs: [
-			'--disable-extensions'
-		]
+		launchArgs: []
 	}
 ]);
