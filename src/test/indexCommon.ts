@@ -2,6 +2,16 @@ import * as glob from "glob"
 import * as path from "path"
 import * as Mocha from "mocha"
 
+export function getSessionTempDir () {
+	if (process.platform === 'win32') {
+		return "file:///c:/temp/ablunit"
+	} else if(process.platform === 'linux') {
+		return "file:///tmp/ablunit"
+	} else {
+		throw new Error("Unsupported platform: " + process.platform)
+	}
+}
+
 function setupNyc(projName: string) {
 	// eslint-disable-next-line @typescript-eslint/no-var-requires
 	const NYC = require("nyc")

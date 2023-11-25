@@ -52,7 +52,7 @@ module.exports = defineConfig([
 	{
 		label: 'extension tests - proj4',
 		files: 'out/test/**/*.proj4.test.js',
-		workspaceFolder: './test_projects/proj4_debugLines',
+		workspaceFolder: './test_projects/proj4',
 		mocha: {
 			ui: 'tdd',
 			timeout: 20000

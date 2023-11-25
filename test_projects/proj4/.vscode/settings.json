@@ -5,5 +5,5 @@
 	"ablunit.configJson.writeLog": true,
 	"ablunit.configJson.outputWriteJson": true,
 	"ablunit.profilerOptions.enabled": true,
-	"ablunit.profilerOptions.listings": "c:/temp/listings"
+	"ablunit.profilerOptions.listings": "c:\\temp\\ablunit-local\\listings"
 }
