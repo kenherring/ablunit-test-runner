@@ -7,6 +7,7 @@ orbs:
 workflows:
   build:
     jobs:
+      - shellcheck/check
       - test-and-scan:
           context:
             - DockerHub
@@ -19,6 +20,7 @@ workflows:
       - package-and-publish:
           requires:
             - test-and-scan
+            - shellcheck/check
           context:
             - Azure_PAT
           filters:
@@ -36,8 +38,6 @@ jobs:
     steps:
       - run: tr ' ' '\n' \<<< "$PROGRESS_CFG_BASE64" | base64 --decode > /psc/dlc/progress.cfg
       - checkout
-      - shellcheck/install
-      - shellcheck/check
       - run: npm install
       - run: npm run test:coverage-activation-before
       - run: test_projects/setup.sh
