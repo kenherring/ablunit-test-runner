@@ -19,12 +19,12 @@ export function getSessionTempDir () {
 	}
 }
 
-function installOpenedgeABLExtension () {
+async function installOpenedgeABLExtension () {
 	console.log("[indexCommon.ts] installing riversidesoftware.openedge-abl-lsp extension")
-	return commands.executeCommand('workbench.extensions.installExtension', 'riversidesoftware.openedge-abl-lsp').then(() => {
+	return await commands.executeCommand('workbench.extensions.installExtension', 'riversidesoftware.openedge-abl-lsp').then(() => {
 		console.log("[indexCommon.ts] install successful")
 	}, (err) => {
-		console.log("[indexCommon.ts] install error: " + err)
+		throw new Error("[indexCommon.ts] failed to install extension: " + err)
 	})
 }
 
@@ -36,13 +36,13 @@ export function getDefaultDLC () {
 }
 
 export async function setRuntimes (runtimes: IRuntime[]) {
-	await installOpenedgeABLExtension().then(async () => {
-		console.log("[indexCommon.ts] setting abl.configuration.runtimes")
-		await workspace.getConfiguration('abl.configuration').update('runtimes', runtimes, ConfigurationTarget.Global).then(() =>{
-			console.log("[indexCommon.ts] abl.configuration.runtimes set successfully")
-		}, (err) => {
-			throw new Error("[indexCommon.ts] failed to set runtimes: " + err)
-		})
+	await installOpenedgeABLExtension()
+
+	console.log("[indexCommon.ts] setting abl.configuration.runtimes")
+	await workspace.getConfiguration('abl.configuration').update('runtimes', runtimes, ConfigurationTarget.Global).then(() =>{
+		console.log("[indexCommon.ts] abl.configuration.runtimes set successfully")
+	}, (err) => {
+		throw new Error("[indexCommon.ts] failed to set runtimes: " + err)
 	})
 }
 
