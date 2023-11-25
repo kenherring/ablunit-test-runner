@@ -32,23 +32,30 @@ export class ABLResults {
 	public testCoverage: Map<string, FileCoverage> = new Map<string, FileCoverage>()
 
 	constructor(storageUri: Uri) {
-		this.dlc = getDLC()
-		if(!this.dlc) {
-			throw new Error("unable to determine DLC")
-		}
+		this.asyncConstructor(storageUri)
+
 		if (!workspace.workspaceFolders) {
 			throw new Error("no workspace folder is open")
 		}
 		const workspaceDir = workspace.workspaceFolders[0].uri
 		this.cfg = new ABLUnitConfig(workspaceDir)
+
 		this.startTime = new Date()
 		ablunitConfig.workspaceUri = workspaceDir
 		ablunitConfig.storageUri = storageUri
 		if (ablunitConfig.tempDir === '') {
 			this.cfg.setTempDirUri(storageUri)
 		}
-		this.promsgs = new ABLPromsgs(this.dlc, ablunitConfig.storageUri)
 		this.setStatus("constructed")
+	}
+
+	async asyncConstructor(storageUri: Uri) {
+		this.dlc = await getDLC()
+		console.log("this.dlc = ")
+		if(!this.dlc) {
+			throw new Error("unable to determine DLC")
+		}
+		this.promsgs = new ABLPromsgs(this.dlc, ablunitConfig.storageUri)
 	}
 
 	setStatus(status: string) {
@@ -418,7 +425,7 @@ interface IRuntime {
 	default?: boolean
 }
 
-function getDLC() {
+async function getDLC() {
 	let defaultDLC: string | undefined = undefined
 	const oeversion = getOEVersion()
 	console.log("oeversion=" + oeversion)
@@ -428,7 +435,7 @@ function getDLC() {
 
 	for (const runtime of runtimes) {
 		console.log("runtime.name=" + runtime.name + ", runtime.path=" + runtime.path + ", runtime.default=" + runtime.default)
-		if (runtime.name === oeversion) {
+		if (runtime.name === await oeversion) {
 			return runtime.path
 		}
 		if (runtime.default) {

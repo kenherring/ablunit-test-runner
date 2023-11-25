@@ -13,18 +13,14 @@ export interface IProjectJson {
 }
 
 export async function readOpenEdgeProjectJson () {
-	if (!workspace.workspaceFolders) { return }
-
-	return workspace.fs.readFile(Uri.joinPath(workspace.workspaceFolders[0].uri,"openedge-project.json")).then((data) => {
+	return workspace.fs.readFile(Uri.joinPath(workspace.workspaceFolders![0].uri,"openedge-project.json")).then((data) => {
 		const projectJson = JSON.parse(jsonminify(data.toString()))
 		return parseOpenEdgeProjectJson(projectJson)
 	})
 }
 
-export function getOEVersion () {
-	if (!workspace.workspaceFolders) { return "none" }
-
-	return workspace.fs.readFile(Uri.joinPath(workspace.workspaceFolders[0].uri,"openedge-project.json")).then((data) => {
+export async function getOEVersion () {
+	return workspace.fs.readFile(Uri.joinPath(workspace.workspaceFolders![0].uri,"openedge-project.json")).then((data) => {
 		const projectJson = JSON.parse(jsonminify(data.toString()))
 		if (projectJson.oeversion) {
 			return projectJson.oeversion.toString()
