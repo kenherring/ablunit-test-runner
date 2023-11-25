@@ -16,7 +16,9 @@ suite('Extension Test Suite - ' + projName, () => {
 
 	test('proj4 - Absolute Paths', async () => {
 		const listingsDir = vscode.Uri.joinPath(sessionTempDir,'listings')
+		const resultsXml = vscode.Uri.joinPath(sessionTempDir,'tempDir','results.xml')
 		await vscode.workspace.getConfiguration('ablunit').update('profilerOptions.listings', listingsDir.fsPath)
+		await vscode.workspace.getConfiguration('ablunit').update('tempDir', vscode.Uri.joinPath(sessionTempDir,'tempDir').fsPath)
 
 		await vscode.commands.executeCommand('testing.refreshTests')
 		await vscode.commands.executeCommand('workbench.view.testing.focus')
@@ -30,6 +32,7 @@ suite('Extension Test Suite - ' + projName, () => {
 			assert.fail("testing.runAll failed: " + err)
 		})
 
+		assert(await doesFileExist(resultsXml),"missing results file (" + resultsXml.fsPath + ")")
 		assert(await doesDirExist(listingsDir),"missing listings directory (" + listingsDir.fsPath + ")")
 	})
 
