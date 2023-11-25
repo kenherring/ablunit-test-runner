@@ -10,6 +10,7 @@ import { PropathParser } from "./ABLPropath"
 import { logToChannel } from "./ABLUnitCommon"
 import { FileCoverage, CoveredCount, StatementCoverage } from "./TestCoverage"
 import { ablunitRun } from "./ABLUnitRun"
+import { getOEVersion } from "./parse/OpenedgeProjectParser"
 
 
 export class ABLResults {
@@ -30,25 +31,28 @@ export class ABLResults {
 	dlc: string | undefined
 	public testCoverage: Map<string, FileCoverage> = new Map<string, FileCoverage>()
 
-
 	constructor(storageUri: Uri) {
-		this.dlc = process.env.DLC
-		if(!this.dlc) {
-			throw new Error("unable to determine DLC")
-		}
+		this.startTime = new Date()
 		if (!workspace.workspaceFolders) {
 			throw new Error("no workspace folder is open")
 		}
+
+		this.asyncConstructor(storageUri)
+
 		const workspaceDir = workspace.workspaceFolders[0].uri
 		this.cfg = new ABLUnitConfig(workspaceDir)
-		this.startTime = new Date()
 		ablunitConfig.workspaceUri = workspaceDir
 		ablunitConfig.storageUri = storageUri
 		if (ablunitConfig.tempDir === '') {
 			this.cfg.setTempDirUri(storageUri)
 		}
-		this.promsgs = new ABLPromsgs(this.dlc, ablunitConfig.storageUri)
 		this.setStatus("constructed")
+	}
+
+	async asyncConstructor(storageUri: Uri) {
+		this.dlc = await getDLC()
+		console.log("using DLC = " + this.dlc)
+		this.promsgs = new ABLPromsgs(this.dlc, storageUri)
 	}
 
 	setStatus(status: string) {
@@ -410,4 +414,33 @@ export class ABLResults {
 				new Range(new Position(dbg.incLine - 1, 0), new Position(dbg.incLine, 0))))
 		}
 	}
+}
+
+interface IRuntime {
+	name: string,
+	path: string,
+	default?: boolean
+}
+
+async function getDLC() {
+	let defaultDLC: string | undefined = undefined
+	const oeversion = await getOEVersion()
+	const runtimes: IRuntime[] = workspace.getConfiguration("abl.configuration").get("runtimes",[])
+
+	for (const runtime of runtimes) {
+		if (runtime.name === oeversion) {
+			return runtime.path
+		}
+		if (runtime.default) {
+			defaultDLC = runtime.path
+		}
+	}
+	if (defaultDLC) {
+		return defaultDLC
+	}
+	if(!process.env.DLC) {
+		throw new Error("unable to determine DLC")
+	}
+
+	return process.env.DLC
 }

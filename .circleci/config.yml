@@ -1,11 +1,13 @@
 version: 2.1
 
 orbs:
+  shellcheck: circleci/shellcheck@3.2.0
   sonarcloud: sonarsource/sonarcloud@2.0.0
 
 workflows:
   build:
     jobs:
+      - shellcheck/check
       - test-and-scan:
           context:
             - DockerHub
@@ -18,6 +20,7 @@ workflows:
       - package-and-publish:
           requires:
             - test-and-scan
+            - shellcheck/check
           context:
             - Azure_PAT
           filters:
@@ -39,29 +42,17 @@ jobs:
       - run: npm run test:coverage-activation-before
       - run: test_projects/setup.sh
       - run: xvfb-run -a npm test
-      - run:
-          name: validate test results exist
-          command: |
-            RESULTS_COUNT=$(find artifacts -name "mocha_results_*.xml" | wc -l)
-            if [ "$RESULTS_COUNT" = 0 ]; then
-              echo "No test results found"
-              exit 1
-            fi
-            LCOV_COUNT=$(find . -name 'lcov.info' | wc -l)
-            if [ "$LCOV_COUNT" = 0 ]; then
-              echo 'ERROR: lcov.info not found'
-              exit 1
-            fi
+      - store_test_results:
+          when: always
+          path: artifacts/
       - run: npx eslint . --ext .ts,.js -f json -o artifacts/eslint_plain_report.json || true
       - run: npx eslint . --ext .ts,.js -f .circleci/sonarqube_formatter.js -o artifacts/eslint_report.json || true
       # - run: npx eslint . --format junit --output-file artifacts/eslint.xml
       - store_artifacts:
           when: always
           path: artifacts/
-      - store_test_results:
-          when: always
-          path: artifacts/
       - sonarcloud/scan
+      - run: .circleci/validate.sh
   package-and-publish:
     docker:
       - image: cimg/node:20.8

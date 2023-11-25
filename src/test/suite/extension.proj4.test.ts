@@ -1,12 +1,15 @@
 import * as assert from 'assert';
-import { afterEach } from 'mocha';
+import { before, afterEach } from 'mocha';
 import * as vscode from 'vscode';
 import { doesDirExist, doesFileExist } from '../common'
-import { getSessionTempDir } from '../indexCommon';
+import { getDefaultDLC, getSessionTempDir, setRuntimes } from '../indexCommon';
 
 const projName = 'proj4'
 const sessionTempDir = vscode.Uri.parse(getSessionTempDir())
 
+before(async () => {
+	await setRuntimes([{name: "11.7", path: "/psc/dlc_11.7"},{name: "12.2", path: getDefaultDLC()}])
+})
 
 afterEach(async () => {
 	await vscode.workspace.getConfiguration('ablunit').update('profilerOptions.listings','c:\\temp\\ablunit-local\\listings')
