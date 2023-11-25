@@ -13,5 +13,6 @@
 	"ablunit.profilerOptions.enabled": false,
 	"ablunit.notificationsEnabled": false,
 	"ablunit.configJson.outputWriteJson": true,
-	"ablunit.tempDir": "${workspaceFolder}"
+	"ablunit.tempDir": "${workspaceFolder}",
+	"ablunit.debugEnabled": true
 }
