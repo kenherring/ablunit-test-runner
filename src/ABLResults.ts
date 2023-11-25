@@ -427,7 +427,7 @@ interface IRuntime {
 
 async function getDLC() {
 	let defaultDLC: string | undefined = undefined
-	const oeversion = getOEVersion()
+	const oeversion = await getOEVersion()
 	console.log("oeversion=" + oeversion)
 	const runtimes: IRuntime[] = workspace.getConfiguration("abl.configuration").get("runtimes",[])
 
@@ -435,7 +435,7 @@ async function getDLC() {
 
 	for (const runtime of runtimes) {
 		console.log("runtime.name=" + runtime.name + ", runtime.path=" + runtime.path + ", runtime.default=" + runtime.default)
-		if (runtime.name === await oeversion) {
+		if (runtime.name === oeversion) {
 			return runtime.path
 		}
 		if (runtime.default) {
