@@ -12,7 +12,7 @@ before(() => {
 	if (process.platform === 'linux') {
 		path = "/psc/dlc"
 	}
-	vscode.workspace.getConfiguration('ablunit').update('runtimes', [{name: "12.2", path: path}], vscode.ConfigurationTarget.Global)
+	vscode.workspace.getConfiguration('abl.configuration').update('runtimes', [{name: "12.2", path: path}], vscode.ConfigurationTarget.Global)
 })
 
 afterEach(async () => {
