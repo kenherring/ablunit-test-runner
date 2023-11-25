@@ -1,6 +1,8 @@
 #!/bin/bash
 set -eou pipefail
 
+. .git-hooks/common.sh
+
 validate_results_count() {
 	TEST_COUNT=$(find src/test/suite -name "*.test.ts" | wc -l)
 	echo "TEST_COUNT=$TEST_COUNT"
@@ -22,3 +24,4 @@ validate_results_count() {
 
 ########## MAIN BLOCK ##########
 validate_results_count
+validate_version_updated

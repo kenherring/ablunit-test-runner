@@ -1,6 +1,7 @@
 version: 2.1
 
 orbs:
+  shellcheck: circleci/shellcheck@3.2.0
   sonarcloud: sonarsource/sonarcloud@2.0.0
 
 workflows:
@@ -39,13 +40,14 @@ jobs:
       - run: npm run test:coverage-activation-before
       - run: test_projects/setup.sh
       - run: xvfb-run -a npm test
+      - store_test_results:
+          when: always
+          path: artifacts/
       - run: npx eslint . --ext .ts,.js -f json -o artifacts/eslint_plain_report.json || true
       - run: npx eslint . --ext .ts,.js -f .circleci/sonarqube_formatter.js -o artifacts/eslint_report.json || true
       # - run: npx eslint . --format junit --output-file artifacts/eslint.xml
+      - shellcheck/check
       - store_artifacts:
-          when: always
-          path: artifacts/
-      - store_test_results:
           when: always
           path: artifacts/
       - sonarcloud/scan
