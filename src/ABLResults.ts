@@ -32,15 +32,15 @@ export class ABLResults {
 	public testCoverage: Map<string, FileCoverage> = new Map<string, FileCoverage>()
 
 	constructor(storageUri: Uri) {
-		this.asyncConstructor(storageUri)
-
+		this.startTime = new Date()
 		if (!workspace.workspaceFolders) {
 			throw new Error("no workspace folder is open")
 		}
+
+		this.asyncConstructor(storageUri)
+
 		const workspaceDir = workspace.workspaceFolders[0].uri
 		this.cfg = new ABLUnitConfig(workspaceDir)
-
-		this.startTime = new Date()
 		ablunitConfig.workspaceUri = workspaceDir
 		ablunitConfig.storageUri = storageUri
 		if (ablunitConfig.tempDir === '') {
@@ -51,7 +51,8 @@ export class ABLResults {
 
 	async asyncConstructor(storageUri: Uri) {
 		this.dlc = await getDLC()
-		this.promsgs = new ABLPromsgs(this.dlc, ablunitConfig.storageUri)
+		console.log("using DLC = " + this.dlc)
+		this.promsgs = new ABLPromsgs(this.dlc, storageUri)
 	}
 
 	setStatus(status: string) {
@@ -424,33 +425,22 @@ interface IRuntime {
 async function getDLC() {
 	let defaultDLC: string | undefined = undefined
 	const oeversion = await getOEVersion()
-	console.log("oeversion=" + oeversion)
 	const runtimes: IRuntime[] = workspace.getConfiguration("abl.configuration").get("runtimes",[])
 
-	console.log("runtimes=" + JSON.stringify(runtimes))
-
 	for (const runtime of runtimes) {
-		console.log("runtime.name=" + runtime.name + ", runtime.path=" + runtime.path + ", runtime.default=" + runtime.default)
 		if (runtime.name === oeversion) {
-			console.log("dlc=" + runtime.path)
 			return runtime.path
 		}
-		console.log("runtime.default=" + runtime.default)
 		if (runtime.default) {
-			console.log("defaultDLC=" + runtime.path)
 			defaultDLC = runtime.path
 		}
-		console.log("done with runtime")
 	}
-	console.log("defaultDLC=" + defaultDLC)
 	if (defaultDLC) {
-		console.log("return defaultDLC=" + defaultDLC)
 		return defaultDLC
 	}
 	if(!process.env.DLC) {
 		throw new Error("unable to determine DLC")
 	}
 
-	console.log("return process.env.DLC=" + process.env.DLC)
 	return process.env.DLC
 }
