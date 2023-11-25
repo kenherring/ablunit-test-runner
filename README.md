@@ -5,7 +5,7 @@ This VSCode test provider extension integrates [ABLUnit tests](https://docs.prog
 
 This is my first VSCode extension, and my first TypeScript project. I'm sure there are many ways to improve the code, and I welcome any feedback.  I'm also open to collaboration if anyone is interested.
 
-Quality code, and thus unit testing, is a passion of mine.  I hope this extension helps others to embrace [TDD](https://en.wikipedia.org/wiki/Test-driven_development) and improve their code.
+Quality code, and thus unit testing, is my passion  I hope this extension helps others to embrace [TDD](https://en.wikipedia.org/wiki/Test-driven_development) and improve their code.
 
 ## OpenEdge Versions Note
 
@@ -16,24 +16,38 @@ This project was developed using the [Progress OpenEdge Developers Kit: Classroo
 ### Features
 
 * Run ABLUnit Tests
-* See test results
-* View code coverage
+* See test results in VSCode Test Explorer
+* View code coverage highlighting in the editor
 
-	![code coverage](https://github.com/kenherring/ablunit-test-provider/raw/main/docs/coverage.png)
+#### Code Coverage Example Screenshot
+
+![code coverage example screenshot](https://github.com/kenherring/ablunit-test-provider/raw/main/docs/coverage.png)
 
 ## Configuration
+
+The configuration is broken into two sections.
+
+1.  The first section shows configuration options that users are most likely to change.
+2.  Additional configuration options available that are not likely to be change by most users.
+
+### Configuration - Most Commonly Changed
+
+| Setting | Default | Description |
+| --- | --- | --- |
+| `ablunit.params` | | Additional options/parameters passed to `_progres`.  This is most useful for providing database connections. Example: `-pf path/to/dbconnections.pf` |
+| `ablunit.files.include` | `[ "**/*.{cls,p}" ]` | Glob pattern array to include test files |
+| `ablunit.files.exclude` | `[ "**/.builder/**" ]` | Glob pattern array to exclude test files |
+| `ablunit.findAllFilesAtStartup` | `true` | Search all workspace files for test cases.  It may be beneficial to disable this for large workspaces, in which case the extension will find tests as files are accessed. |
+| `ablunit.notificationsEnabled` | `true` | Enable/disable notifications |
+| `ablunit.tempDir` | Extension storage area | Any files generated when running ABLUnit will be stored here.  It is also used for the [`-T`](https://docs.progress.com/bundle/openedge-startup-and-parameter-reference-122/page/Temporary-Directory-T.html) startup parameter |
+
+### Configuration - Additional Options
 
 | Setting | Default | Description |
 | --- | --- | --- |
 | `ablunit.display.classLabel` | `classname` | `[ "classname" \| "filename" ]` |
-| `ablunit.files.include` | `[ "**/*.{cls,p}" ]` | Glob pattern array to include test files |
-| `ablunit.files.exclude` | `[ "**/.builder/**" ]` | Glob pattern array to exclude test files |
-| `ablunit.findAllFilesAtStartup` | `true` | Search all workspace files for test cases.  It may be beneficial to disable this for large workspaces, in which case the extension will find tests as files are accessed. |
-| `ablunit.importOpenedgeProjectJson` | `true` | import settings from `openedge-project.json` |
-| `ablunit.notificationsEnabled` | `true` | Enable/disable notifications |
-| `ablunit.params` | | Additional options/parameters passed to `_progres` |
-| `ablunit.progressIniPath` | | Path to a `progress.ini` file to use |
-| `ablunit.tempDir` | Extension storage area | Any files generated when running ABLUnit will be stored here.  It is also used for the [`-T`](https://docs.progress.com/bundle/openedge-startup-and-parameter-reference-122/page/Temporary-Directory-T.html) startup parameter |
+| `ablunit.importOpenedgeProjectJson` | `true` | Import settings from `openedge-project.json` |
+| `ablunit.progressIniPath` | | Path to a `progress.ini` file.  Exclusive to Windows. |
 | `ablunit.tests.command` | `_progres -b -p ABLUnitCore.p <...>` | This setting can be used to run tests with any existing shell command your tests are configured to run with.  Example: `ant test` |
 | `ablunit.tests.task` | | Use this task to run tests via VSCode |
 | `ablunit.configJson.configPath` | `ablunit.json` | |
@@ -56,23 +70,7 @@ This project was developed using the [Progress OpenEdge Developers Kit: Classroo
 
 ## Contributing
 
-### Running the Project
-
-- Run `npm install` in terminal to install dependencies
-- Run the `Run Extension` target in the Debug View. This will:
-	- Start a task `npm: watch` to compile the code
-	- Run the extension in a new VS Code window
-- Run a test in the new VS Code window
-
-### Testing the Project
-
-* Using the CLI: `npm test`
-* Using the native VSCode API:  install the [Extension Test Runner](https://marketplace.visualstudio.com/items?itemName=ms-vscode.extension-test-runner) extension
-* Using docker:
-    ```bash
-	docker/docker_build.sh # run once to build the container
-	docker/run_tests.sh
-	```
+See [CONTRIBUTING.md](.github/CONTRIBUTING.md)
 
 ## Links
 
