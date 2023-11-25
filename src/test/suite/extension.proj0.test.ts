@@ -2,7 +2,7 @@ import * as assert from 'assert';
 import { after, before } from 'mocha';
 import * as vscode from 'vscode';
 import { getStorageUri } from '../../extension'
-import { doesFileExist } from '../common'
+import { doesDirExist, doesFileExist } from '../common'
 
 
 const projName = 'proj0'
@@ -34,15 +34,17 @@ suite('Extension Test Suite - ' + projName, () => {
 		const storageUri = getStorageUri()
 		if (!storageUri) {
 			assert.fail("storage uri not defined")
-			return
 		}
 		const ablunitJson = vscode.Uri.joinPath(storageUri,'ablunit.json')
 		const resultsXml = vscode.Uri.joinPath(storageUri,'results.xml')
 		const resultsJson = vscode.Uri.joinPath(storageUri,'results.json')
+		const listingsDir = vscode.Uri.joinPath(storageUri,'listings')
 
+		console.log("storageUri= " + storageUri.fsPath)
 		assert(await doesFileExist(ablunitJson), "missing ablunit.json (" + ablunitJson.fsPath + ")")
 		assert(await doesFileExist(resultsXml), "missing results.xml (" + resultsXml.fsPath + ")")
 		assert(!await doesFileExist(resultsJson), "results.json exists and should not (" + resultsJson.fsPath + ")")
+		assert(!await doesDirExist(listingsDir), "listings dir exists and should not (" + listingsDir.fsPath + ")")
 	})
 
 })
