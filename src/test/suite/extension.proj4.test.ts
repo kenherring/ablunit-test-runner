@@ -2,14 +2,13 @@ import * as assert from 'assert';
 import { before, afterEach } from 'mocha';
 import * as vscode from 'vscode';
 import { doesDirExist, doesFileExist } from '../common'
-import { getDefaultDLC, getSessionTempDir, installOpenedgeABLExtension, setRuntimes } from '../indexCommon';
+import { getDefaultDLC, getSessionTempDir, setRuntimes } from '../indexCommon';
 
 const projName = 'proj4'
 const sessionTempDir = vscode.Uri.parse(getSessionTempDir())
 
 before(async () => {
-	installOpenedgeABLExtension()
-	setRuntimes([{name: "11.7", path: "/psc/dlc_11.7"},{name: "12.2", path: getDefaultDLC()}])
+	await setRuntimes([{name: "11.7", path: "/psc/dlc_11.7"},{name: "12.2", path: getDefaultDLC()}])
 })
 
 afterEach(async () => {
