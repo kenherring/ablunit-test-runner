@@ -2,7 +2,7 @@
 set -eou pipefail
 
 validate_results_count() {
-	TEST_COUNT=$(find src/test/suite -name "*.test.js" | wc -l)
+	TEST_COUNT=$(find src/test/suite -name "*.test.ts" | wc -l)
 	echo "TEST_COUNT=$TEST_COUNT"
 
 	RESULTS_COUNT=$(find artifacts -name "mocha_results_*.xml" | wc -l)
