@@ -36,6 +36,8 @@ jobs:
     steps:
       - run: tr ' ' '\n' \<<< "$PROGRESS_CFG_BASE64" | base64 --decode > /psc/dlc/progress.cfg
       - checkout
+      - shellcheck/install
+      - shellcheck/check
       - run: npm install
       - run: npm run test:coverage-activation-before
       - run: test_projects/setup.sh
@@ -46,7 +48,6 @@ jobs:
       - run: npx eslint . --ext .ts,.js -f json -o artifacts/eslint_plain_report.json || true
       - run: npx eslint . --ext .ts,.js -f .circleci/sonarqube_formatter.js -o artifacts/eslint_report.json || true
       # - run: npx eslint . --format junit --output-file artifacts/eslint.xml
-      - shellcheck/check
       - store_artifacts:
           when: always
           path: artifacts/
