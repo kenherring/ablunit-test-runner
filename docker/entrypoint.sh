@@ -47,7 +47,15 @@ setup () {
 	echo 'starting tests...'
 	sed -i 's/"activationEvents"/"activationEvents-vscode"/g;s/"activationEvents-coverage"/"activationEvents"/g' package.json
 
+	## These lines fix dbus errors in the logs: https://github.com/microsoft/vscode/issues/190345#issuecomment-1676291938
 	service dbus start
+	XDG_RUNTIME_DIR=/run/user/$(id -u)
+	export XDG_RUNTIME_DIR
+	mkdir "$XDG_RUNTIME_DIR"
+	chmod 700 "$XDG_RUNTIME_DIR"
+	chown "$(id -un)":"$(id -gn)" "$XDG_RUNTIME_DIR"
+	export DBUS_SESSION_BUS_ADDRESS=unix:path=$XDG_RUNTIME_DIR/bus
+	dbus-daemon --session --address="$DBUS_SESSION_BUS_ADDRESS" --nofork --nopidfile --syslog-only &
 }
 
 run_tests () {

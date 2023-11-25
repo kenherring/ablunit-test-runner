@@ -38,7 +38,15 @@ jobs:
     steps:
       - run: tr ' ' '\n' \<<< "$PROGRESS_CFG_BASE64" | base64 --decode > /psc/dlc/progress.cfg
       - checkout
+      - restore_cache:
+          keys:
+            - v1-nodemodules-{{ checksum "package.json" }}
+            - v1-nodemodules-
       - run: npm install
+      - save_cache:
+          key: v1-nodemodules-{{ checksum "package.json" }}
+          paths:
+            - node_modules
       - run: npm run test:coverage-activation-before
       - run: test_projects/setup.sh
       - run: xvfb-run -a npm test
