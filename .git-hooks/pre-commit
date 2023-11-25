@@ -1,5 +1,14 @@
 #!/bin/sh
 
+jq () {
+	if command jq >/dev/null 2>&1; then
+		command jq "$@"
+	elif command -v jq-windows-amd64.exe >/dev/null 2>&1; then
+		jq-windows-amd64.exe "$@"
+	else
+		echo "jq not found" >&2
+	fi
+}
 
 validate_circleci_config () {
 	if ! git diff --name-only --staged | grep -q 'circleci/config.yml'; then
@@ -15,4 +24,17 @@ validate_circleci_config () {
 	fi
 }
 
+validate_version_updated() {
+	PACKAGE_VERSION=$(jq -r '.version' package.json)
+	TAG_VERSION=$(git tag | tail -1)
+
+	if [ "$PACKAGE_VERSION" = "$TAG_VERSION" ]; then
+		echo "package.json version ($PACKAGE_VERSION) matches latest git tag ($TAG_VERSION) and should be updated" >&2
+		exit 1
+	fi
+}
+
+########## MAIN BLOCK ##########
+
 validate_circleci_config
+validate_version_updated
