@@ -6,8 +6,6 @@ Thank you for your interest in contributing to this project!  All suggestions, P
 
 This project strictly enforces the [GitHub Community Code of Conduct](https://docs.github.com/en/site-policy/github-terms/github-community-code-of-conduct).  Please review it before contributing.
 
-Additional guidelines may be added to this document as neccessary.
-
 ## Pull Requests
 
 All pull requests must have corresponding tests and appropriate test coverage.  The CirlceCI build and SonarCloud scan do a good job of ensuring this, but PRs may still be rejected when all build steps pass if the code appears deficient in some way.

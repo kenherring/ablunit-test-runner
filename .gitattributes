@@ -1,0 +1,4 @@
+*.cls linguist-language=OpenEdge-ABL
+*.i linguist-language=OpenEdge-ABL
+*.p linguist-language=OpenEdge-ABL
+*.pf linguist-language=OpenEdge-ABL

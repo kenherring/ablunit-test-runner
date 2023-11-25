@@ -20,20 +20,20 @@ export function getSessionTempDir () {
 }
 
 async function installOpenedgeABLExtension () {
-	console.log("[indexCommon.ts] installing riversidesoftware.openedge-abl-lsp extension")
+	if (!extensions.getExtension("riversidesoftware.openedge-abl-lsp")) {
+		console.log("[indexCommon.ts] installing riversidesoftware.openedge-abl-lsp extension")
+		await commands.executeCommand('workbench.extensions.installExtension', 'riversidesoftware.openedge-abl-lsp').then(() => {
+			console.log("[indexCommon.ts] install successful")
+		}, (err) => {
+			if (err.toString() === 'Error: Missing gallery') {
+				console.log("[indexCommon.ts] installed extension, but caught '" + err + "'")
+			} else {
+				throw new Error("[indexCommon.ts] failed to install extension: " + err)
+			}
+		})
+	}
+	console.log("[indexCommon.ts] activating riversidesoftware.openedge-abl-lsp extension")
 	await extensions.getExtension("riversidesoftware.openedge-abl-lsp")!.activate()
-	// await commands.executeCommand('workbench.extensions.installExtension', 'riversidesoftware.openedge-abl-lsp').then(() => {
-	// 	console.log("[indexCommon.ts] install successful")
-	// }, (err) => {
-	// 	if (err.toString() === 'Error: Missing gallery') {
-	// 		console.log("[indexCommon.ts] installed extension, but caught '" + err + "'")
-	// 	} else {
-	// 		throw new Error("[indexCommon.ts] failed to install extension: " + err)
-	// 	}
-	// })
-
-	console.log("[indexCommon.ts] sleeping for 1s while extension is installed")
-	return new Promise( resolve => setTimeout(resolve, 1000))
 }
 
 export function getDefaultDLC () {
