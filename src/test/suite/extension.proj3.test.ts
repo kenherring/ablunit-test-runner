@@ -2,11 +2,13 @@ import * as assert from 'assert';
 import { after, before } from 'mocha';
 import * as vscode from 'vscode';
 import { doesDirExist, doesFileExist } from '../common'
+import { getDefaultDLC, installOpenedgeABLExtension, setRuntimes } from '../indexCommon';
 
 const projName = 'proj3'
 
 before(async () => {
-    console.log("before")
+	installOpenedgeABLExtension()
+	setRuntimes([{name: "11.7", path: "/psc/dlc_11.7"}, {name: "12.2", path: getDefaultDLC(), default: true}])
 })
 
 after(() => {
