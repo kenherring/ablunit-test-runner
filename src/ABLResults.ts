@@ -1,7 +1,7 @@
 import { FileType, MarkdownString, Position, Range, TestItem, TestItemCollection, TestMessage, TestRun, Uri, workspace } from "vscode"
 import { ABLUnitConfig, ablunitConfig } from "./ABLUnitConfigWriter"
 import { ABLResultsParser, TCFailure, TestCase, TestSuite } from "./parse/ResultsParser"
-import { ABLTestMethod, ABLTestProcedure, ABLUnitTestData } from "./testTree"
+import { ABLUnitTestData } from "./testTree"
 import { parseCallstack } from "./parse/CallStackParser"
 import { ABLProfile, ABLProfileJson, Module } from "./parse/ProfileParser"
 import { ABLDebugLines } from "./ABLDebugLines"
@@ -192,20 +192,24 @@ export class ABLResults {
 	}
 
 	async assignTestResults (item: TestItem, options: TestRun) {
-		if(this.ablResults!.resultsJson.length > 1) {
+		if(!this.ablResults) {
+			throw new Error("no ABLResults object initialized")
+		}
+
+		if(this.ablResults.resultsJson.length > 1) {
 			logToChannel("multiple results files found - this is not supported")
 			options.errored(item, new TestMessage("multiple results files found - this is not supported"), this.duration())
 			return
 		}
 
-		if (!this.ablResults!.resultsJson[0].testsuite) {
+		if (!this.ablResults.resultsJson[0].testsuite) {
 			logToChannel("no tests results available, check the configuration for accuracy")
 			options.errored(item, new TestMessage("no tests results available, check the configuration for accuracy"), this.duration())
 			return
 		}
 
 		const suiteName = await this.getSuiteName(item)
-		const s = this.ablResults!.resultsJson[0].testsuite.find((s: TestSuite) => s.classname === suiteName || s.name === suiteName)
+		const s = this.ablResults.resultsJson[0].testsuite.find((s: TestSuite) => s.classname === suiteName || s.name === suiteName)
 		if (!s) {
 			logToChannel("could not find test suite for '" + suiteName + "' in results", 'error')
 			options.errored(item, new TestMessage("could not find test suite for '" + suiteName + "' in results"), this.duration())
@@ -246,7 +250,7 @@ export class ABLResults {
 			const propathRelativePath = this.propath!.search(suiteName)!
 			suiteName = await propathRelativePath.then((res) => {
 				if (res?.propathRelativeFile) {
-					return res?.propathRelativeFile
+					return res.propathRelativeFile
 				}
 				return suiteName
 			})
