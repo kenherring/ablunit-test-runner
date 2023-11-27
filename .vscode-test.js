@@ -58,5 +58,14 @@ module.exports = defineConfig([
 			timeout: 20000
 		},
 		launchArgs: []
+	},
+	{
+		label: 'unit tests',
+		files: 'out/test/**/parse/*.test.js',
+		workspaceFolder: './test_projects/proj5_suites',
+		mocha: {
+			ui: 'tdd',
+			timeout: 20000
+		}
 	}
 ]);

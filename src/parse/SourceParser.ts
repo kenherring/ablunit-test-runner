@@ -1,8 +1,8 @@
-import * as vscode from 'vscode';
-import { logToChannel } from '../ABLUnitCommon';
+import * as vscode from 'vscode'
+import { logToChannel } from '../ABLUnitCommon'
 
 // TESTSUITE statement
-const suiteRE = /@testsuite\((.*)\)/
+// const suiteRE = /@testsuite\((.*)\)/
 const suiteItemRE = /(classes|procedures)="([^"]+)+"/i
 const suiteItemRE2 = /,(classes|procedures)="([^"]+)+"/i
 // CLASS statement
@@ -22,32 +22,31 @@ interface SuiteLoc {
 }
 
 export const parseABLUnit = (text: string, relativePath: string, events: {
-	onTestSuite(range: vscode.Range, suitename: string): void;
-	onTestClassNamespace(range: vscode.Range, classpath: string, element: string, classpathUri: vscode.Uri): void;
-	onTestClass(range: vscode.Range, relativePath: string, classname: string, label: string): void;
-	onTestMethod(range: vscode.Range, classname: string, methodname: string): void;
+	onTestSuite(range: vscode.Range, suitename: string): void
+	onTestClassNamespace(range: vscode.Range, classpath: string, element: string, classpathUri: vscode.Uri): void
+	onTestClass(range: vscode.Range, relativePath: string, classname: string, label: string): void
+	onTestMethod(range: vscode.Range, classname: string, methodname: string): void
 	onTestProgramDirectory (range: vscode.Range, dirpath: string, dir: string, dirUri: vscode.Uri): void
-	onTestProgram(range: vscode.Range, relativePath: string, label: string, programUri: vscode.Uri): void;
-	onTestProcedure(range: vscode.Range, relativePath: string, label: string, programUri: vscode.Uri): void;
-	onAssert(range: vscode.Range, methodname: string): void;
+	onTestProgram(range: vscode.Range, relativePath: string, label: string, programUri: vscode.Uri): void
+	onTestProcedure(range: vscode.Range, relativePath: string, label: string, programUri: vscode.Uri): void
+	onAssert(range: vscode.Range, methodname: string): void
 }) => {
 
 	relativePath = relativePath.replace(/\\/g, '/')
 	logToChannel("parsing " + relativePath)
 
 	const lines = text.split("\n")
-	const configClassLabel= vscode.workspace.getConfiguration('ablunit').get('display.classLabel');
-	if (!vscode.workspace.workspaceFolders) return
-	const workspaceDir = vscode.workspace.workspaceFolders.map(item => item.uri)[0];
+	const configClassLabel= vscode.workspace.getConfiguration('ablunit').get('display.classLabel')
+	if (!vscode.workspace.workspaceFolders) {
+		return
+	}
+	const workspaceDir = vscode.workspace.workspaceFolders.map(item => item.uri)[0]
 	const zeroRange = new vscode.Range(new vscode.Position(0,0), new vscode.Position(0,0))
 
 	const parseByType = () => {
 		if (relativePath.endsWith(".cls")) {
 			if (text.toLowerCase().indexOf("@testsuite") != -1) {
-				// if (false) {
-				// 	//TODO
-				// 	parseSuiteClass()
-				// }
+				parseSuiteClass()
 				return
 			}
 			parseClass()
@@ -74,11 +73,11 @@ export const parseABLUnit = (text: string, relativePath: string, events: {
 			if (!foundClassHead) {
 				const classResult = classRE.exec(lines[lineNo])
 				if (classResult) {
-					classname = classResult[1].replace(/:$/,'');
-					const range = new vscode.Range(new vscode.Position(lineNo, lines[lineNo].indexOf(classname)), new vscode.Position(lineNo, classname.length));
+					classname = classResult[1].replace(/:$/,'')
+					const range = new vscode.Range(new vscode.Position(lineNo, lines[lineNo].indexOf(classname)), new vscode.Position(lineNo, classname.length))
 
 					if (configClassLabel == "filepath") {
-						classname = relativePath;
+						classname = relativePath
 					}
 
 					const parts = relativePath.split('/')
@@ -93,17 +92,17 @@ export const parseABLUnit = (text: string, relativePath: string, events: {
 					}
 					const label = parts[parts.length - 1]
 
-					events.onTestClass(range, relativePath, classname, label);
+					events.onTestClass(range, relativePath, classname, label)
 					foundClassHead = true
-					continue;
+					continue
 				}
 			} else if (lines[lineNo - 1].toLowerCase().indexOf("@test.") != -1) {
-				const method = methodRE.exec(lines[lineNo]);
+				const method = methodRE.exec(lines[lineNo])
 				if (method) {
-					const [, , methodname] = method;
-					const range = new vscode.Range(new vscode.Position(lineNo, 0), new vscode.Position(lineNo, method[0].length));
-					events.onTestMethod(range, classname, methodname);
-					continue;
+					const [, , methodname] = method
+					const range = new vscode.Range(new vscode.Position(lineNo, 0), new vscode.Position(lineNo, method[0].length))
+					events.onTestMethod(range, classname, methodname)
+					continue
 				}
 			}
 		}
@@ -133,77 +132,18 @@ export const parseABLUnit = (text: string, relativePath: string, events: {
 			if(lines[lineNo - 1].toLowerCase().indexOf("@test.") != -1) {
 				const proc = procedureRE.exec(lines[lineNo])
 				if (proc) {
-					const [ , , procedureName] = proc;
+					const [ , , procedureName] = proc
 					const range = new vscode.Range(new vscode.Position(lineNo, lines[lineNo].indexOf(procedureName)), new vscode.Position(lineNo, procedureName.length));
 					events.onTestProcedure(range, relativePath, procedureName, programUri)
-					continue;
-				}
-			}
-		}
-	};
-
-	const parseSuiteClass = () => {
-
-		events.onTestSuite(new vscode.Range(new vscode.Position(0,0), new vscode.Position(0,0)), '[suite] ' + relativePath)
-
-		const suiteList: SuiteLoc[] = []
-
-		for (let lineNo = 1; lineNo < lines.length; lineNo++) {
-			if (lines[lineNo].trim().startsWith("//"))
-				continue
-			if(lines[lineNo].toLowerCase().indexOf("@testsuite") != -1) {
-				const suiteRes = suiteRE.exec(lines[lineNo])
-				if (suiteRes) {
-					const [ , params] = suiteRes
-					const cr = suiteItemRE.exec(params)
-					if(cr) {
-						const [, type, list] = cr
-						const split = list.split(',')
-						for (const element of split) {
-							suiteList[suiteList.length] = {
-								name: element,
-								type: type,
-								range: new vscode.Range(
-									new vscode.Position(lineNo, lines[lineNo].indexOf(element)),
-									new vscode.Position(lineNo, lines[lineNo].indexOf(element) + element.length)
-								)
-							}
-						}
-					}
-
-					//TODO: how can we better find all the params?
-					const cr2 = suiteItemRE2.exec(params)
-					if(cr2) {
-						const [, type2, list2] = cr2
-						const split = list2.split(',')
-						for (const element of split) {
-							suiteList[suiteList.length] = {
-								name: element,
-								type: type2,
-								range: new vscode.Range(
-									new vscode.Position(lineNo, lines[lineNo].indexOf(element)),
-									new vscode.Position(lineNo, lines[lineNo].indexOf(element) + element.length)
-								)
-							}
-						}
-					}
 					continue
 				}
-			} else {
-				const classResult = classRE.exec(lines[lineNo])
-				if (classResult) {
-					const [, className] = classResult;
-					const range = new vscode.Range(new vscode.Position(lineNo, lines[lineNo].indexOf(className)), new vscode.Position(lineNo, className.length));
-					events.onTestSuite(range, className);
-
-					for (const element of suiteList) {
-						events.onTestClass(element['range'], element['name'], element['name'], element['name'])
-					}
-
-					return
-				}
 			}
 		}
+	}
+
+	const parseSuiteClass = () => {
+		events.onTestSuite(new vscode.Range(new vscode.Position(0,0), new vscode.Position(0,0)), '[suite] ' + relativePath)
+		parseSuiteClassFunc(lines)
 	}
 
 	const parseSuiteProgram = () => {
@@ -212,4 +152,88 @@ export const parseABLUnit = (text: string, relativePath: string, events: {
 
 	parseByType()
 
-};
+}
+
+
+const suiteRE = /@testsuite(.*)/i
+
+export function parseSuiteClassFunc (lines: string[]) {
+	console.log("TODO - parseSuiteClass")
+
+	const suiteList: SuiteLoc[] = []
+
+	for (let lineNo = 1; lineNo < lines.length; lineNo++) {
+		if (lines[lineNo].trim().startsWith("//"))
+			continue
+		console.log("line[" + lineNo + "] = " + lines[lineNo])
+
+		console.log("lines[lineNo].toLowerCase()=" + lines[lineNo].toLowerCase())
+		console.log("lines[lineNo].toLowerCase().indexOf(testsuite)=" + lines[lineNo].toLowerCase().indexOf("@testsuite"))
+		if(lines[lineNo].toLowerCase().indexOf("@testsuite") != -1) {
+			console.log("annotation-1")
+			const suiteRes = suiteRE.exec(lines[lineNo])
+			console.log("annotation-2: " + suiteRes)
+			if (suiteRes) {
+				console.log("FOUND ANNOTATION: " + suiteRes)
+			}
+			continue
+		}
+
+		const classResult = classRE.exec(lines[lineNo])
+		if (classResult) {
+			const [, className] = classResult
+			console.log("SUITE CLASS: " + className)
+			continue
+		}
+
+		// 		const [ , params] = suiteRes
+		// 		const cr = suiteItemRE.exec(params)
+		// 		if(cr) {
+		// 			const [, type, list] = cr
+		// 			const split = list.split(',')
+		// 			for (const element of split) {
+		// 				suiteList[suiteList.length] = {
+		// 					name: element,
+		// 					type: type,
+		// 					range: new vscode.Range(
+		// 						new vscode.Position(lineNo, lines[lineNo].indexOf(element)),
+		// 						new vscode.Position(lineNo, lines[lineNo].indexOf(element) + element.length)
+		// 					)
+		// 				}
+		// 			}
+		// 		}
+
+		// 		//TODO: how can we better find all the params?
+		// 		const cr2 = suiteItemRE2.exec(params)
+		// 		if(cr2) {
+		// 			const [, type2, list2] = cr2
+		// 			const split = list2.split(',')
+		// 			for (const element of split) {
+		// 				suiteList[suiteList.length] = {
+		// 					name: element,
+		// 					type: type2,
+		// 					range: new vscode.Range(
+		// 						new vscode.Position(lineNo, lines[lineNo].indexOf(element)),
+		// 						new vscode.Position(lineNo, lines[lineNo].indexOf(element) + element.length)
+		// 					)
+		// 				}
+		// 			}
+		// 		}
+		// 		continue
+		// 	}
+		// } else {
+		// 	const classResult = classRE.exec(lines[lineNo])
+		// 	if (classResult) {
+		// 		const [, className] = classResult
+		// 		const range = new vscode.Range(new vscode.Position(lineNo, lines[lineNo].indexOf(className)), new vscode.Position(lineNo, className.length))
+		// 		events.onTestSuite(range, className)
+
+		// 		for (const element of suiteList) {
+		// 			events.onTestClass(element['range'], element['name'], element['name'], element['name'])
+		// 		}
+
+		// 		return
+		// 	}
+		// }
+	}
+}

@@ -1,5 +1,6 @@
 import * as path from 'path';
-import { runTests } from '@vscode/test-electron';
+import { runTests } from '@vscode/test-electron'
+// import { runUnitTests } from './parse/index_unitTests.test'
 
 
 async function main() {
@@ -8,6 +9,8 @@ async function main() {
 	await testProject("proj2")
 	await testProject("proj3", "proj3_debugLines")
 	await testProject("proj4")
+
+	// unitTests()
 }
 
 async function testProject(projName: string, projDir?: string) {
@@ -18,14 +21,14 @@ async function testProject(projName: string, projDir?: string) {
 	try {
 		const extensionTestsPath = path.resolve(__dirname, './suite/index_' + projName)
 
-		let args = [
-			'--disable-extensions',
+		const args = [
 			'test_projects/' + projDir,
+			'--disable-gpu',
+			// '--verbose',
+			// '--telemetry'
 		]
-		if (projName === "proj3" || projName === "proj4") {
-			args = [
-				'test_projects/' + projDir
-			]
+		if (projName != "proj3" && projName !== "proj4") {
+			args.push('--disable-extensions')
 		}
 
 		await runTests({
@@ -40,5 +43,9 @@ async function testProject(projName: string, projDir?: string) {
 		console.log("[runTest.ts testProject] finally")
 	}
 }
+
+// function unitTests() {
+// 	runUnitTests()
+// }
 
 main()

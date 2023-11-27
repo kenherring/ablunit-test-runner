@@ -31,3 +31,4 @@ validate_circleci_config () {
 
 validate_circleci_config
 validate_version_updated
+echo "pre-commit checks successful!" >&2

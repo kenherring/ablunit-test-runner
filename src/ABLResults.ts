@@ -204,40 +204,12 @@ export class ABLResults {
 			return
 		}
 
-		let suiteName = item.id
-		if (suiteName.indexOf("#") > -1) {
-			suiteName = item.id.split("#")[0]
-		}
-
-		if(suiteName) {
-			const propathRelativePath = this.propath!.search(suiteName)!
-			suiteName = await propathRelativePath.then((res) => {
-				if (res?.propathRelativeFile) {
-					return res?.propathRelativeFile
-				}
-				return suiteName
-			})
-		}
-		suiteName = suiteName.replace(/\\/g, '/')
-
+		const suiteName = await this.getSuiteName(item)
 		const s = this.ablResults!.resultsJson[0].testsuite.find((s: TestSuite) => s.classname === suiteName || s.name === suiteName)
-		// if (!s) {
-		// 	suiteName = item.uri!.fsPath.replace(/\\/g, '/')
-		// 	s = this.results.testsuite.find((s: TestSuite) => s.name === suiteName)
-		// }
 		if (!s) {
 			logToChannel("could not find test suite for '" + suiteName + "' in results", 'error')
 			options.errored(item, new TestMessage("could not find test suite for '" + suiteName + "' in results"), this.duration())
 			return
-		}
-
-		const td = this.testData.get(item)
-		if (td && (td instanceof ABLTestProcedure || td instanceof ABLTestMethod)) {
-			// Test Procedure/Method type
-			if (! s.testcases) { return }
-			const tc = s.testcases.find((tc: TestCase) => tc.name === item.label)
-			if (! tc) { return }
-			return this.setChildResults(item, options, tc)
 		}
 
 		// TestFile type
@@ -264,7 +236,26 @@ export class ABLResults {
 		return this.setAllChildResults(item.children, s.testcases, options)
 	}
 
-	async setAllChildResults(children: TestItemCollection, testcases: TestCase[], options: TestRun) {
+	private async getSuiteName (item: TestItem) {
+		let suiteName = item.id
+		if (suiteName.indexOf("#") > -1) {
+			suiteName = item.id.split("#")[0]
+		}
+
+		if(suiteName) {
+			const propathRelativePath = this.propath!.search(suiteName)!
+			suiteName = await propathRelativePath.then((res) => {
+				if (res?.propathRelativeFile) {
+					return res?.propathRelativeFile
+				}
+				return suiteName
+			})
+		}
+		suiteName = suiteName.replace(/\\/g, '/')
+		return suiteName
+	}
+
+	private async setAllChildResults(children: TestItemCollection, testcases: TestCase[], options: TestRun) {
 		const promArr: Promise<void>[] = [Promise.resolve()]
 		children.forEach(child => {
 			const tc = testcases.find((t: TestCase) => t.name === child.label)
@@ -279,7 +270,7 @@ export class ABLResults {
 		return Promise.all(promArr)
 	}
 
-	async setChildResults(item: TestItem, options: TestRun, tc: TestCase) {
+	private async setChildResults(item: TestItem, options: TestRun, tc: TestCase) {
 		switch (tc.status) {
 			case "Success":
 				options.passed(item, tc.time)
@@ -312,7 +303,7 @@ export class ABLResults {
 		}
 	}
 
-	async getFailureMarkdownMessage(item: TestItem, options: TestRun, failure: TCFailure): Promise<MarkdownString> {
+	private async getFailureMarkdownMessage(item: TestItem, options: TestRun, failure: TCFailure): Promise<MarkdownString> {
 		const stack = await parseCallstack(this.debugLines!, failure.callstackRaw)
 		const promsg = getPromsgText(failure.message)
 		const md = new MarkdownString(promsg + "\n\n")
@@ -334,7 +325,7 @@ export class ABLResults {
 		return md
 	}
 
-	getDiffMessage (failure: TCFailure) {
+	private getDiffMessage (failure: TCFailure) {
 		if (!failure.diff) {
 			return undefined
 		}

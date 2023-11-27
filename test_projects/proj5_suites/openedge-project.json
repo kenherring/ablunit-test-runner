@@ -1,0 +1,8 @@
+{
+	"name": "proj5_suites",
+	"buildDirectory": "build",
+	"buildPath": [
+		{ "type": "source", "path": "src" },
+		{ "type": "source", "path": "test" }
+	]
+}
