@@ -5,7 +5,7 @@ class login.doLoginTest inherits login.doLogin use-widget-pool:
 
 	@Test.
 	method public void testLogin() :
-		Assert:equals(getLoginData(),"testuser").
+		Assert:equals("someUser",getLoginData()).
 	end method.
 
 end class.

@@ -1,5 +1,5 @@
 import * as vscode from 'vscode'
-import { ABLTestSuiteClass, ABLTestClassNamespace, ABLTestClass, ABLTestProgram, ABLTestMethod, ABLTestProcedure, testData, resultData } from './testTree'
+import { ABLTestSuite, ABLTestClass, ABLTestProgram, ABLTestMethod, ABLTestProcedure, testData, resultData } from './testTree'
 import { logToChannel } from './ABLUnitCommon'
 import { ABLResults } from './ABLResults'
 import { resetAblunitConfig } from './ABLUnitConfigWriter'
@@ -65,7 +65,7 @@ export async function activate(context: vscode.ExtensionContext) {
 		}
 		showNotification("running ablunit tests")
 
-		const queue: { test: vscode.TestItem; data: ABLTestClass | ABLTestSuiteClass | ABLTestClassNamespace | ABLTestMethod | ABLTestProgram | ABLTestProcedure }[] = []
+		const queue: { test: vscode.TestItem; data: ABLTestSuite | ABLTestClass | ABLTestMethod | ABLTestProgram | ABLTestProcedure }[] = []
 		const run = ctrl.createTestRun(request)
 		console.log('created testRun')
 		resultData.set(run, res)
@@ -82,7 +82,7 @@ export async function activate(context: vscode.ExtensionContext) {
 					printDataType(data)
 				}
 
-				if (data instanceof ABLTestClass || data instanceof ABLTestProgram || data instanceof ABLTestMethod || data instanceof ABLTestProcedure || data instanceof ABLTestMethod) {
+				if (data instanceof ABLTestSuite || data instanceof ABLTestClass || data instanceof ABLTestProgram || data instanceof ABLTestMethod || data instanceof ABLTestProcedure || data instanceof ABLTestMethod) {
 					run.enqueued(test)
 					queue.push({ test, data })
 					await res.addTest(test.id)
@@ -421,10 +421,10 @@ async function isFileExcluded (uri: vscode.Uri, excludePatterns: vscode.Relative
 ////////// DEBUG FUNCTIONS //////////
 
 function printDataType(data: any) {
-	if(data instanceof ABLTestSuiteClass)
+	if(data instanceof ABLTestSuite)
 		logToChannel(" - ABLTestSuite")
-	else if(data instanceof ABLTestClassNamespace)
-		logToChannel(" - ABLTestClassNamespace")
+	// else if(data instanceof ABLTestClassNamespace)
+	// 	logToChannel(" - ABLTestClassNamespace")
 	else if(data instanceof ABLTestClass)
 		logToChannel(" - ABLTestClass")
 	else if(data instanceof ABLTestMethod)

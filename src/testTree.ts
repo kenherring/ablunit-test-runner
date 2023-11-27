@@ -5,7 +5,8 @@ import { ABLResults } from './ABLResults';
 
 const textDecoder = new TextDecoder('utf-8');
 
-export type ABLUnitTestData = ABLTestSuiteClass | ABLTestProgramDirectory | ABLTestClassNamespace | ABLTestClass | ABLTestProgram | ABLTestMethod | ABLTestProcedure | ABLAssert
+// export type ABLUnitTestData = ABLTestSuite | ABLTestProgramDirectory | ABLTestClassNamespace | ABLTestClass | ABLTestProgram | ABLTestMethod | ABLTestProcedure | ABLAssert
+export type ABLUnitTestData = ABLTestSuite | ABLTestProgramDirectory | ABLTestClass | ABLTestProgram | ABLTestMethod | ABLTestProcedure | ABLAssert
 
 export const testData = new WeakMap<vscode.TestItem, ABLUnitTestData>()
 export const resultData = new WeakMap<vscode.TestRun, ABLResults>()
@@ -90,21 +91,22 @@ class TestFile extends TestTypeObj {
 	}
 }
 
-export class ABLTestSuiteClass extends TestFile {
-	constructor(public generation: number, private readonly suiteName: string) {
+export class ABLTestSuite extends TestFile {
+	constructor(public relativePath: string, private readonly suiteName: string) {
 		super()
+		this.name = relativePath
 		this.label = suiteName
 	}
 }
 
-export class ABLTestClassNamespace extends TestFile {
-	public canResolveChildren: boolean = false
+// export class ABLTestClassNamespace extends TestFile {
+// 	public canResolveChildren: boolean = false
 
-	constructor(public generation: number, private readonly classpath: string, private readonly element: string) {
-		super()
-		this.label = element
-	}
-}
+// 	constructor(public generation: number, private readonly classpath: string, private readonly element: string) {
+// 		super()
+// 		this.label = element
+// 	}
+// }
 
 export class ABLTestClass extends TestFile {
 	public canResolveChildren: boolean = true
@@ -128,62 +130,74 @@ export class ABLTestClass extends TestFile {
 
 		parseABLUnit(content, relativePath, {
 
-			onTestSuite: (range, suiteName) => {
+			onTestSuite: (range: vscode.Range, relativePath: string, suiteName:string) => {
 				this.testFileType = "ABLTestSuite"
-				const parent = ancestors[ancestors.length - 1]
-				const id = `${item.uri}/${suiteName}`
 
+				const id = `${relativePath}`
 				const thead = controller.createTestItem(id, suiteName, item.uri)
 				thead.range = range
+				thead.label = suiteName
 				thead.tags = [new vscode.TestTag("runnable"), new vscode.TestTag("ABLTestSuite")]
-				testData.set(thead, new ABLTestSuiteClass(thisGeneration, suiteName))
-				parent.children.push(thead)
-				ancestors.unshift({ item: thead, children: [] })
-			},
+				const tData = new ABLTestSuite(relativePath, suiteName)
+				testData.set(thead, tData)
 
-			onTestClassNamespace: (range: vscode.Range, classpath: string, element: string, classpathUri: vscode.Uri) => {
-				this.testFileType = "ABLTestClassNamespace2"
-				const id = `classpath:${classpath}`
-				const thead = controller.createTestItem(id, classpath, classpathUri)
-				thead.range = range
-				thead.tags = [new vscode.TestTag("runnable"), new vscode.TestTag("ABLTestClassNamespace")]
-				thead.label = element
-
-				if (ancestors.length > 0) {
-					const parent = ancestors[ancestors.length - 1]
+				const parent = ancestors[ancestors.length - 1]
+				if (ancestors.length < 1) {
+					const grp = controller.createTestItem('ABLTestSuiteGroup',"[ABLUnit Test Suites]")
+					grp.tags = [new vscode.TestTag("runnable"), new vscode.TestTag("ABLTestSuiteGroup")]
+					ancestors.push({ item: grp, children: [thead] as vscode.TestItem[] })
+				} else {
 					parent.children.push(thead)
 				}
-				testData.set(thead, new ABLTestClassNamespace(thisGeneration, classpath, element));
 				ancestors.push({ item: thead, children: [] as vscode.TestItem[] })
 			},
 
-			onTestClass: (range: vscode.Range, relativepath: string, classpath: string, label: string) => {
+			// onTestClassNamespace: (range: vscode.Range, classpath: string, element: string, classpathUri: vscode.Uri) => {
+			// 	console.log("TODO - onTestClassNamespace")
+			// 	// this.testFileType = "ABLTestClassNamespace2"
+			// 	// const id = `classpath:${classpath}`
+			// 	// const thead = controller.createTestItem(id, classpath, classpathUri)
+			// 	// thead.range = range
+			// 	// thead.tags = [new vscode.TestTag("runnable"), new vscode.TestTag("ABLTestClassNamespace")]
+			// 	// thead.label = element
+
+			// 	// if (ancestors.length > 0) {
+			// 	// 	const parent = ancestors[ancestors.length - 1]
+			// 	// 	parent.children.push(thead)
+			// 	// }
+			// 	// testData.set(thead, new ABLTestClassNamespace(thisGeneration, classpath, element));
+			// 	// ancestors.push({ item: thead, children: [] as vscode.TestItem[] })
+			// },
+
+			onTestClass: (range: vscode.Range, relativePath: string, classpath: string, label: string, suiteName?: string) => {
 				this.testFileType = "ABLTestClass"
 
-				const id = `${relativepath}`
-				const thead = controller.createTestItem(id, relativepath, item.uri)
+				const id = `${relativePath}`
+				const thead = controller.createTestItem(id, relativePath, item.uri)
 				thead.range = range
 				thead.label = label
 				thead.tags = [new vscode.TestTag("runnable"), new vscode.TestTag("ABLTestClass")]
 				const tData = new ABLTestClass()
-				tData.setClassInfo(relativepath, label)
+				tData.setClassInfo(relativePath, label)
 				testData.set(thead, tData)
 
 				const parent = ancestors[ancestors.length - 1]
 				if (parent) {
 					parent.children.push(thead)
 				}
-				ancestors.push({ item: thead, children: [] as vscode.TestItem[] })
+				if (!suiteName) {
+					ancestors.push({ item: thead, children: [] as vscode.TestItem[] })
+				}
 			},
 
-			onTestMethod: (range: vscode.Range, classpath: string, methodname: string) => {
+			onTestMethod: (range: vscode.Range, relativePath: string, classpath: string, methodname: string) => {
 				this.testFileType = "ABLTestMethod"
-				const id = `${classpath}#${methodname}`
+				const id = `${relativePath}#${methodname}`
 				const thead = controller.createTestItem(id, methodname, item.uri);
 				thead.range = range;
 				thead.tags = [new vscode.TestTag("runnable"), new vscode.TestTag("ABLTestMethod")]
 				thead.label = methodname
-				testData.set(thead, new ABLTestMethod(thisGeneration, classpath, methodname));
+				testData.set(thead, new ABLTestMethod(thisGeneration, relativePath, classpath, methodname));
 				const parent = ancestors[ancestors.length - 1];
 				parent.children.push(thead)
 				item.children.add(thead)
@@ -259,9 +273,9 @@ export class ABLTestProgram extends TestFile {
 
 			onTestSuite: (range, suiteName) => { console.error("onTestSuite") },
 
-			onTestClassNamespace: (range, classpath, element) => { console.error("onTestClassNamespace") },
+			// onTestClassNamespace: (range, classpath, element) => { console.error("onTestClassNamespace") },
 
-			onTestClass: (range: vscode.Range, classname: string, label: string) => { console.error("onTestClassNamespace") },
+			onTestClass: (range: vscode.Range, classname: string, label: string, testSuite?: string) => { console.error("onTestClass") },
 
 			onTestMethod: (range: vscode.Range, classname: string, methodname: string) => { console.error("onTestMethod") },
 
@@ -332,7 +346,7 @@ export class ABLTestProgram extends TestFile {
 }
 
 export class ABLTestMethod extends TestFile { // child of TestClass
-	constructor(public generation: number, private readonly classname: string, private readonly methodName: string) {
+	constructor(public generation: number, private readonly relativePath: string, private readonly classname: string, private readonly methodName: string) {
 		super()
 		this.label = methodName
 	}

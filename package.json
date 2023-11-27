@@ -204,7 +204,7 @@
 				},
 				"ablunit.configJson.showErrorMessage": {
 					"type": "boolean",
-					"default": false,
+					"default": true,
 					"markdownDescription": "If `showErrorMessage` is set to true then the error messages is displayed in a new window"
 				},
 				"ablunit.configJson.throwError": {

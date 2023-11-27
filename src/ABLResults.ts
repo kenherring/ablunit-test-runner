@@ -1,7 +1,7 @@
 import { FileType, MarkdownString, Position, Range, TestItem, TestItemCollection, TestMessage, TestRun, Uri, workspace } from "vscode"
 import { ABLUnitConfig, ablunitConfig } from "./ABLUnitConfigWriter"
 import { ABLResultsParser, TCFailure, TestCase, TestSuite } from "./parse/ResultsParser"
-import { ABLUnitTestData } from "./testTree"
+import { ABLTestSuite, ABLUnitTestData } from "./testTree"
 import { parseCallstack } from "./parse/CallStackParser"
 import { ABLProfile, ABLProfileJson, Module } from "./parse/ProfileParser"
 import { ABLDebugLines } from "./ABLDebugLines"
@@ -209,14 +209,43 @@ export class ABLResults {
 		}
 
 		const suiteName = await this.getSuiteName(item)
-		const s = this.ablResults!.resultsJson[0].testsuite.find((s: TestSuite) => s.classname === suiteName || s.name === suiteName)
+		const s = this.ablResults.resultsJson[0].testsuite.find((s: TestSuite) => s.classname === suiteName || s.name === suiteName)
 		if (!s) {
 			logToChannel("could not find test suite for '" + suiteName + "' in results", 'error')
 			options.errored(item, new TestMessage("could not find test suite for '" + suiteName + "' in results"), this.duration())
 			return
 		}
 
-		// TestFile type
+		const data = this.testData.get(item)
+		if (data instanceof ABLTestSuite) {
+			if (!s.testsuite) {
+				console.error("no child testsuites found for " + suiteName)
+				options.errored(item, new TestMessage("no child testsuites found for " + suiteName), this.duration())
+				return
+			}
+
+			for (const t of s.testsuite) {
+
+				// find matching child TestItem
+				let child = item.children.get(t.name!)
+				if (!child) {
+					child = item.children.get(t.classname!)
+				}
+
+				// parse results for the child TestItem, if it exists
+				if (child) {
+					await this.parseFinalSuite(child, t, options)
+				} else {
+					console.error("could not find child test item for " + t.name + " or " + t.classname)
+					throw new Error("could not find child test item for " + t.name + " or " + t.classname)
+				}
+			}
+		} else {
+			return this.parseFinalSuite(item, s, options)
+		}
+	}
+
+	private async parseFinalSuite (item: TestItem, s: TestSuite, options: TestRun) {
 		if (s.tests > 0) {
 			if (s.errors === 0 && s.failures === 0) {
 				options.passed(item, s.time)
