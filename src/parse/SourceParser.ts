@@ -133,7 +133,7 @@ export const parseABLUnit = (text: string, relativePath: string, events: {
 				const proc = procedureRE.exec(lines[lineNo])
 				if (proc) {
 					const [ , , procedureName] = proc
-					const range = new vscode.Range(new vscode.Position(lineNo, lines[lineNo].indexOf(procedureName)), new vscode.Position(lineNo, procedureName.length));
+					const range = new vscode.Range(new vscode.Position(lineNo, lines[lineNo].indexOf(procedureName)), new vscode.Position(lineNo, procedureName.length))
 					events.onTestProcedure(range, relativePath, procedureName, programUri)
 					continue
 				}
