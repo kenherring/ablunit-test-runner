@@ -38,10 +38,14 @@ jobs:
     steps:
       - run: tr ' ' '\n' \<<< "$PROGRESS_CFG_BASE64" | base64 --decode > /psc/dlc/progress.cfg
       - checkout
-      - run: npm install
-      - run: npm run test:coverage-activation-before
-      - run: test_projects/setup.sh
-      - run: xvfb-run -a npm test
+      - restore_cache:
+          keys:
+            - v1-nodemodules-{{ checksum "package.json" }}
+            - v1-nodemodules-
+      - restore_cache:
+          keys:
+            - v1-vscode-test-1.84.2
+      - run: .circleci/run_test_wrapper.sh
       - store_test_results:
           when: always
           path: artifacts/
@@ -53,6 +57,14 @@ jobs:
           path: artifacts/
       - sonarcloud/scan
       - run: .circleci/validate.sh
+      - save_cache:
+          key: v1-nodemodules-{{ checksum "package.json" }}
+          paths:
+            - node_modules
+      - save_cache:
+          key: v1-vscode-test-1.84.2
+          paths:
+            - .vscode-test
   package-and-publish:
     docker:
       - image: cimg/node:20.8

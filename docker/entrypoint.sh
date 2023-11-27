@@ -38,20 +38,9 @@ initialize () {
 	fi
 }
 
-setup () {
-	echo 'compile, etc...'
-	npm install
-	npm run compile
-	test_projects/setup.sh
-
-	echo 'starting tests...'
-	sed -i 's/"activationEvents"/"activationEvents-vscode"/g;s/"activationEvents-coverage"/"activationEvents"/g' package.json
-
-	service dbus start
-}
-
 run_tests () {
-	if ! xvfb-run -a npm test; then
+	echo "starting tests..."
+	if ! .circleci/run_test_wrapper.sh; then
 		if $BASH_AFTER_FAIL; then
 			bash
 		else
@@ -88,7 +77,6 @@ analyze_results () {
 
 ########## MAIN BLOCK ##########
 initialize "$@"
-setup
 run_tests
 teardown
 analyze_results
