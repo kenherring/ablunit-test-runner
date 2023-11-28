@@ -23,8 +23,6 @@ async function installOpenedgeABLExtension () {
 	if (!extensions.getExtension("riversidesoftware.openedge-abl-lsp")) {
 		console.log("[indexCommon.ts] installing riversidesoftware.openedge-abl-lsp extension")
 		await commands.executeCommand('workbench.extensions.installExtension', 'riversidesoftware.openedge-abl-lsp').then(() => {
-			console.log("[indexCommon.ts] triggered extension install. sleeping for 500ms while extension is installed...")
-			return new Promise( resolve => setTimeout(resolve, 500))
 		}, (err) => {
 			if (err.toString() === 'Error: Missing gallery') {
 				console.log("[indexCommon.ts] triggered installed extension, but caught '" + err + "'")
@@ -33,8 +31,15 @@ async function installOpenedgeABLExtension () {
 			}
 		})
 	}
+
 	console.log("[indexCommon.ts] activating riversidesoftware.openedge-abl-lsp extension")
-	await extensions.getExtension("riversidesoftware.openedge-abl-lsp")!.activate()
+	extensions.getExtension("riversidesoftware.openedge-abl-lsp")?.activate()
+	while(!extensions.getExtension("riversidesoftware.openedge-abl-lsp")?.isActive) {
+		console.log(extensions.getExtension("riversidesoftware.openedge-abl-lsp") + " " + extensions.getExtension("riversidesoftware.openedge-abl-lsp")?.isActive)
+		console.log("[indexCommon.ts] sleeping for 500ms while extension activates...")
+		await new Promise( resolve => setTimeout(resolve, 500))
+	}
+	console.log("openedge-abl active? " + !extensions.getExtension("riversidesoftware.openedge-abl-lsp")?.isActive)
 }
 
 export function getDefaultDLC () {
@@ -55,7 +60,7 @@ export async function setRuntimes (runtimes: IRuntime[]) {
 	})
 }
 
-function setupNyc(projName: string) {
+export function setupNyc(projName: string) {
 	// eslint-disable-next-line @typescript-eslint/no-var-requires
 	const NYC = require("nyc")
 	const nyc = new NYC({
@@ -90,11 +95,11 @@ function setupNyc(projName: string) {
 	return nyc
 }
 
-function setupMocha(projName: string) {
+export function setupMocha(projName: string) {
 	return new Mocha({
 		color: true,
 		ui: "tdd",
-		timeout: 20000,
+		timeout: 30000,
 		// reporter: 'mocha-junit-reporter',
 		// reporterOptions: {
 		// 	mochaFile: 'artifacts/mocha_results_' + projName + '.xml'

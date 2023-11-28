@@ -36,6 +36,12 @@
 			],
 			"preLaunchTask": "npm: clean-and-compile"
 		},
+		{
+			"name": "index_unitTests",
+			"type": "node-terminal",
+			"request": "launch",
+			"command": "npm run ./out/test/suite/index_unitTests.js"
+		}
 	],
 	"inputs": [
 		{
@@ -49,7 +55,7 @@
 				"proj2",
 				"proj3_debugLines",
 				"proj4",
-				"proj5_propath",
+				"proj5_suites",
 			]
 		}
 	]

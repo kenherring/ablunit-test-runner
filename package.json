@@ -16,6 +16,7 @@
 	"bugs": {
 		"url": "https://github.com/kenherring/ablunit-test-provider/issues"
 	},
+	"license": "MIT",
 	"licenses": [
 		{
 			"type": "MIT",
@@ -204,7 +205,7 @@
 				},
 				"ablunit.configJson.showErrorMessage": {
 					"type": "boolean",
-					"default": false,
+					"default": true,
 					"markdownDescription": "If `showErrorMessage` is set to true then the error messages is displayed in a new window"
 				},
 				"ablunit.configJson.throwError": {

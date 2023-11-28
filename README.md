@@ -30,6 +30,20 @@ The configuration is broken into two sections.
 1.  The first section shows configuration options that users are most likely to change.
 2.  Additional configuration options available that are not likely to be change by most users.
 
+### Configuration - Sample Config
+
+This config searches the `test/` directory for test files, named `*Test.cls` or `*Test.p`.  It also passes a database connection to `_progres` via the `-pf` parameter.
+
+**`.vscode/settings.json`**:
+```json
+{
+  "ablunit.files.include": [
+    "test/**/*Test.{cls,p}"
+  ],
+  "ablunit.params": "-pf path/to/dbconnections.pf"
+}
+```
+
 ### Configuration - Most Commonly Changed
 
 | Setting | Default | Description |
@@ -55,7 +69,7 @@ The configuration is broken into two sections.
 | `ablunit.configJson.outputWriteJson` | `false` | Output `results.json` version of `results.xml` after analysis |
 | `ablunit.configJson.quitOnEnd` | `true` | Quit the session when the test run is complete |
 | `ablunit.configJson.writeLog` | `true` | If `writeLog` is true then a log file, `ablunit.log` is created in the current working directory and writes error messages to that log file |
-| `ablunit.configJson.showErrorMessage` | `false` | If `showErrorMessage` is set to true then the error messages is displayed in a new window |
+| `ablunit.configJson.showErrorMessage` | `true` | If `showErrorMessage` is set to true then the error messages is displayed in a new window |
 | `ablunit.configJson.throwError` | `true` | If ABLUnit is used as a library inside another program, set `throwError` to true, the framework displays the errors occurred |
 | `ablunit.profilerOptions.optionsPath` | `profile.options` | See the [`-profile`](https://docs.progress.com/bundle/openedge-startup-and-parameter-reference-122/page/Profiler-profile.html) startup parameter |
 | `ablunit.profilerOptions.enabled` | `true` | Enable the profiler<br>See the [`PROFILER:ENABLED`](https://docs.progress.com/bundle/abl-reference/page/ENABLED-attribute.html) attribute |

@@ -21,6 +21,7 @@ interface SuiteLoc {
 	range: vscode.Range
 }
 
+// @Deprecate("parseABLUnit")
 export const parseABLUnit = (text: string, relativePath: string, events: {
 	onTestSuite(range: vscode.Range, suitename: string): void
 	onTestClassNamespace(range: vscode.Range, classpath: string, element: string, classpathUri: vscode.Uri): void

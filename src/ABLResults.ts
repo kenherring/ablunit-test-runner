@@ -1,7 +1,7 @@
 import { FileType, MarkdownString, Position, Range, TestItem, TestItemCollection, TestMessage, TestRun, Uri, workspace } from "vscode"
 import { ABLUnitConfig, ablunitConfig } from "./ABLUnitConfigWriter"
 import { ABLResultsParser, TCFailure, TestCase, TestSuite } from "./parse/ResultsParser"
-import { ABLUnitTestData } from "./testTree"
+import { ABLTestSuite, ABLUnitTestData } from "./testTree"
 import { parseCallstack } from "./parse/CallStackParser"
 import { ABLProfile, ABLProfileJson, Module } from "./parse/ProfileParser"
 import { ABLDebugLines } from "./ABLDebugLines"
@@ -216,7 +216,38 @@ export class ABLResults {
 			return
 		}
 
-		// TestFile type
+		const data = this.testData.get(item)
+		if (data instanceof ABLTestSuite) {
+			if (!s.testsuite) {
+				console.error("no child testsuites found for " + suiteName)
+				options.errored(item, new TestMessage("no child testsuites found for " + suiteName), this.duration())
+				return
+			}
+			await this.parseChildSuites(item, s.testsuite, options, suiteName)
+		} else {
+			return this.parseFinalSuite(item, s, options)
+		}
+	}
+
+	async parseChildSuites (item: TestItem, s: TestSuite[], options: TestRun, suiteName: string) {
+		for (const t of s) {
+			// find matching child TestItem
+			let child = item.children.get(t.name!)
+			if (!child) {
+				child = item.children.get(t.classname!)
+			}
+
+			// parse results for the child TestItem, if it exists
+			if (child) {
+				await this.parseFinalSuite(child, t, options)
+			} else {
+				console.error("could not find child test item for " + t.name + " or " + t.classname)
+				// throw new Error("could not find child test item for " + t.name + " or " + t.classname)
+			}
+		}
+	}
+
+	private async parseFinalSuite (item: TestItem, s: TestSuite, options: TestRun) {
 		if (s.tests > 0) {
 			if (s.errors === 0 && s.failures === 0) {
 				options.passed(item, s.time)
@@ -250,7 +281,7 @@ export class ABLResults {
 			const propathRelativePath = this.propath!.search(suiteName)!
 			suiteName = await propathRelativePath.then((res) => {
 				if (res?.propathRelativeFile) {
-					return res.propathRelativeFile
+					return res?.propathRelativeFile
 				}
 				return suiteName
 			})

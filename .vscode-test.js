@@ -45,9 +45,7 @@ module.exports = defineConfig([
 			ui: 'tdd',
 			timeout: 20000
 		},
-		launchArgs: [
-			'--disable-extensions'
-		]
+		launchArgs: []
 	},
 	{
 		label: 'extension tests - proj4',
@@ -58,5 +56,14 @@ module.exports = defineConfig([
 			timeout: 20000
 		},
 		launchArgs: []
+	},
+	{
+		label: 'extension tests - proj5 (unit tests)',
+		files: 'out/test/**/*.proj5.test.js',
+		workspaceFolder: './test_projects/proj5_suites',
+		mocha: {
+			ui: 'tdd',
+			timeout: 20000
+		}
 	}
 ]);

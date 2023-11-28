@@ -1,6 +1,5 @@
 import * as path from 'path';
-import { runTests } from '@vscode/test-electron';
-
+import { runTests } from '@vscode/test-electron'
 
 async function main() {
 	await testProject("proj0")
@@ -8,6 +7,7 @@ async function main() {
 	await testProject("proj2")
 	await testProject("proj3", "proj3_debugLines")
 	await testProject("proj4")
+	await testProject("proj5", "proj5_suites")
 }
 
 async function testProject(projName: string, projDir?: string) {
@@ -24,7 +24,7 @@ async function testProject(projName: string, projDir?: string) {
 			// '--verbose',
 			// '--telemetry'
 		]
-		if (projName != "proj3" && projName !== "proj4") {
+		if (projName !== "proj3" && projName !== "proj4") {
 			args.push('--disable-extensions')
 		}
 

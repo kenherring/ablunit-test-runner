@@ -1,11 +1,13 @@
-import * as vscode from 'vscode';
-import { parseABLUnit } from './parse/SourceParser';
-import { TextDecoder } from 'util';
-import { ABLResults } from './ABLResults';
+import * as vscode from 'vscode'
+import { TextDecoder } from 'util'
+import { ABLResults } from './ABLResults'
+import { parseABLTestSuite } from './parse/TestSuiteParser'
+import { parseABLTestClass } from './parse/TestClassParser'
+import { parseABLTestProgram } from './parse/TestProgramParser'
 
-const textDecoder = new TextDecoder('utf-8');
+const textDecoder = new TextDecoder('utf-8')
 
-export type ABLUnitTestData = ABLTestSuiteClass | ABLTestProgramDirectory | ABLTestClassNamespace | ABLTestClass | ABLTestProgram | ABLTestMethod | ABLTestProcedure | ABLAssert
+export type ABLUnitTestData = ABLTestSuite | ABLTestProgramDirectory | ABLTestClass | ABLTestProgram | ABLTestMethod | ABLTestProcedure | ABLAssert
 
 export const testData = new WeakMap<vscode.TestItem, ABLUnitTestData>()
 export const resultData = new WeakMap<vscode.TestRun, ABLResults>()
@@ -33,15 +35,15 @@ class TestTypeObj {
 }
 
 class TestFile extends TestTypeObj {
-	public testFileType = "TestFile";
+	public testFileType = "TestFile"
 	protected replaceWith: vscode.TestItem | undefined = undefined
 	currentResults?: ABLResults
 
 	public async updateFromDisk(controller: vscode.TestController, item: vscode.TestItem) {
 		try {
-			const content = await getContentFromFilesystem(item.uri!);
-			item.error = undefined;
-			this.updateFromContents(controller, content, item);
+			const content = await getContentFromFilesystem(item.uri!)
+			item.error = undefined
+			this.updateFromContents(controller, content, item)
 
 			if (this.replaceWith != undefined) {
 				const currItem = controller.items.get(this.replaceWith.id)
@@ -62,7 +64,7 @@ class TestFile extends TestTypeObj {
 			}
 			controller.items.delete(item.id)
 		} catch (e) {
-			item.error = (e as Error).stack;
+			item.error = (e as Error).stack
 		}
 	}
 
@@ -79,8 +81,8 @@ class TestFile extends TestTypeObj {
 
 	ascend(depth: number, ancestors: [{ item: vscode.TestItem, children: vscode.TestItem[] }]) {
 		while (ancestors.length > depth) {
-			const finished = ancestors.pop()!;
-			finished.item.children.replace(finished.children);
+			const finished = ancestors.pop()!
+			finished.item.children.replace(finished.children)
 			this.replaceWith = finished.item
 		}
 	}
@@ -90,17 +92,96 @@ class TestFile extends TestTypeObj {
 	}
 }
 
-export class ABLTestSuiteClass extends TestFile {
-	constructor(public generation: number, private readonly suiteName: string) {
-		super()
+export class ABLTestSuite extends TestFile {
+
+	setSuiteInfo(relativePath: string, suiteName: string) {
+		this.name = relativePath
 		this.label = suiteName
+	}
+
+	public updateFromContents(controller: vscode.TestController, content: string, item: vscode.TestItem) {
+		const ancestors: [{ item: vscode.TestItem, children: vscode.TestItem[] }] = [{ item, children: [] as vscode.TestItem[] }]
+		ancestors.pop()
+		this.didResolve = true
+		const relativePath = vscode.workspace.asRelativePath(item.uri!.fsPath)
+
+		parseABLTestSuite(content, relativePath, {
+
+			onTestSuite: (range: vscode.Range, relativePath: string, suiteName:string) => {
+				this.testFileType = "ABLTestSuite"
+
+				const id = `${relativePath}`
+				const thead = controller.createTestItem(id, suiteName, item.uri)
+				thead.range = range
+				thead.label = suiteName
+				thead.tags = [new vscode.TestTag("runnable"), new vscode.TestTag("ABLTestSuite")]
+				const tData = new ABLTestSuite()
+				this.setSuiteInfo(relativePath, suiteName)
+				testData.set(thead, tData)
+
+				const parent = ancestors[ancestors.length - 1]
+				if (ancestors.length < 1) {
+					const grp = controller.createTestItem('ABLTestSuiteGroup',"[ABLUnit Test Suites]")
+					grp.tags = [new vscode.TestTag("runnable"), new vscode.TestTag("ABLTestSuiteGroup")]
+					ancestors.push({ item: grp, children: [thead] as vscode.TestItem[] })
+				} else {
+					parent.children.push(thead)
+				}
+				ancestors.push({ item: thead, children: [] as vscode.TestItem[] })
+			},
+
+			onTestClass: (range: vscode.Range, relativePath: string, classpath: string, label: string, suiteName?: string) => {
+				this.testFileType = "ABLTestClass"
+
+				const id = `${relativePath}`
+				const thead = controller.createTestItem(id, relativePath, item.uri)
+				thead.range = range
+				thead.label = label
+				thead.tags = [new vscode.TestTag("runnable"), new vscode.TestTag("ABLTestClass")]
+				const tData = new ABLTestClass()
+				tData.setClassInfo(relativePath, label)
+				testData.set(thead, tData)
+
+				const parent = ancestors[ancestors.length - 1]
+				if (parent) {
+					parent.children.push(thead)
+				}
+				if (!suiteName) {
+					ancestors.push({ item: thead, children: [] as vscode.TestItem[] })
+				}
+			},
+
+			onTestProgram: (range: vscode.Range, relativepath: string, label: string, suiteName?: string) => {
+				this.testFileType = "ABLTestProgram"
+
+				const id = `${relativepath}`
+				const thead = controller.createTestItem(id, relativepath, item.uri)
+				thead.range = range
+				thead.label = label
+				thead.tags = [new vscode.TestTag("runnable"), new vscode.TestTag("ABLTestProgram")]
+				const tData = new ABLTestProgram()
+				tData.setProgramInfo(relativepath, label)
+				testData.set(thead, tData)
+
+				const parent = ancestors[ancestors.length - 1]
+				if (parent) {
+					parent.children.push(thead)
+				}
+				if (!suiteName) {
+					ancestors.push({ item: thead, children: [] as vscode.TestItem[] })
+				}
+			},
+
+		})
+
+		this.ascend(0, ancestors) // finish and assign children for all remaining items
 	}
 }
 
-export class ABLTestClassNamespace extends TestFile {
+export class ABLTestProgramDirectory extends TestTypeObj {
 	public canResolveChildren: boolean = false
 
-	constructor(public generation: number, private readonly classpath: string, private readonly element: string) {
+	constructor(public generation: number, private readonly relativeDir: string, private readonly element: string) {
 		super()
 		this.label = element
 	}
@@ -122,72 +203,11 @@ export class ABLTestClass extends TestFile {
 	public updateFromContents(controller: vscode.TestController, content: string, item: vscode.TestItem) {
 		const ancestors: [{ item: vscode.TestItem, children: vscode.TestItem[] }] = [{ item, children: [] as vscode.TestItem[] }]
 		ancestors.pop()
-		const thisGeneration = generationCounter++;
-		this.didResolve = true;
+		const thisGeneration = generationCounter++
+		this.didResolve = true
 		const relativePath = vscode.workspace.asRelativePath(item.uri!.fsPath)
 
-		parseABLUnit(content, relativePath, {
-
-			onTestSuite: (range, suiteName) => {
-				this.testFileType = "ABLTestSuite"
-				const parent = ancestors[ancestors.length - 1]
-				const id = `${item.uri}/${suiteName}`
-
-				const thead = controller.createTestItem(id, suiteName, item.uri)
-				thead.range = range
-				thead.tags = [new vscode.TestTag("runnable"), new vscode.TestTag("ABLTestSuite")]
-				testData.set(thead, new ABLTestSuiteClass(thisGeneration, suiteName))
-				parent.children.push(thead)
-				ancestors.unshift({ item: thead, children: [] })
-			},
-
-			onTestClassNamespace: (range: vscode.Range, classpath: string, element: string, classpathUri: vscode.Uri) => {
-				this.testFileType = "ABLTestClassNamespace2"
-				const id = `classpath:${classpath}`
-				const thead = controller.createTestItem(id, classpath, classpathUri)
-				thead.range = range
-				thead.tags = [new vscode.TestTag("runnable"), new vscode.TestTag("ABLTestClassNamespace")]
-				thead.label = element
-
-				if (ancestors.length > 0) {
-					const parent = ancestors[ancestors.length - 1]
-					parent.children.push(thead)
-				}
-				testData.set(thead, new ABLTestClassNamespace(thisGeneration, classpath, element));
-				ancestors.push({ item: thead, children: [] as vscode.TestItem[] })
-			},
-
-			onTestClass: (range: vscode.Range, relativepath: string, classpath: string, label: string) => {
-				this.testFileType = "ABLTestClass"
-
-				const id = `${relativepath}`
-				const thead = controller.createTestItem(id, relativepath, item.uri)
-				thead.range = range
-				thead.label = label
-				thead.tags = [new vscode.TestTag("runnable"), new vscode.TestTag("ABLTestClass")]
-				const tData = new ABLTestClass()
-				tData.setClassInfo(relativepath, label)
-				testData.set(thead, tData)
-
-				const parent = ancestors[ancestors.length - 1]
-				if (parent) {
-					parent.children.push(thead)
-				}
-				ancestors.push({ item: thead, children: [] as vscode.TestItem[] })
-			},
-
-			onTestMethod: (range: vscode.Range, classpath: string, methodname: string) => {
-				this.testFileType = "ABLTestMethod"
-				const id = `${classpath}#${methodname}`
-				const thead = controller.createTestItem(id, methodname, item.uri);
-				thead.range = range;
-				thead.tags = [new vscode.TestTag("runnable"), new vscode.TestTag("ABLTestMethod")]
-				thead.label = methodname
-				testData.set(thead, new ABLTestMethod(thisGeneration, classpath, methodname));
-				const parent = ancestors[ancestors.length - 1];
-				parent.children.push(thead)
-				item.children.add(thead)
-			},
+		parseABLTestClass(content, relativePath, {
 
 			onTestProgramDirectory(range: vscode.Range, dirpath: string, dir: string, dirUri: vscode.Uri) {
 				const id = `pgmpath:${dirpath}`
@@ -205,33 +225,43 @@ export class ABLTestClass extends TestFile {
 				ancestors.push({ item: thead, children: [] as vscode.TestItem[] })
 			},
 
-			onTestProgram: (range: vscode.Range, relativepath: string, label: string, programUri: vscode.Uri) => { console.error("should not be here! relativepath=" + relativepath) },
+			onTestClass: (range: vscode.Range, relativePath: string, classpath: string, label: string, suiteName?: string) => {
+				this.testFileType = "ABLTestClass"
 
-			onTestProcedure: (range: vscode.Range, programname: string, procedurename: string, programUri) => { console.error("should not be here! programname=" + programname + " procedurename=" + procedurename) },
+				const id = `${relativePath}`
+				const thead = controller.createTestItem(id, relativePath, item.uri)
+				thead.range = range
+				thead.label = label
+				thead.tags = [new vscode.TestTag("runnable"), new vscode.TestTag("ABLTestClass")]
+				const tData = new ABLTestClass()
+				tData.setClassInfo(relativePath, label)
+				testData.set(thead, tData)
 
-			onAssert: (range, assertMethod) => {
-				this.testFileType = "ABLAssert"
-				const parent = ancestors[ancestors.length - 1];
-				const id = `${item.uri}/${assertMethod}`;
+				const parent = ancestors[ancestors.length - 1]
+				if (parent) {
+					parent.children.push(thead)
+				}
+				if (!suiteName) {
+					ancestors.push({ item: thead, children: [] as vscode.TestItem[] })
+				}
+			},
 
-				const thead = controller.createTestItem(id, assertMethod, item.uri);
-				thead.range = range;
-				thead.tags = [new vscode.TestTag("not runnable"), new vscode.TestTag("ABLAssert")]
-				testData.set(thead, new ABLAssert(thisGeneration, assertMethod));
-				parent.children.push(thead);
+			onTestMethod: (range: vscode.Range, relativePath: string, classpath: string, methodname: string) => {
+				this.testFileType = "ABLTestMethod"
+				const id = `${relativePath}#${methodname}`
+				const thead = controller.createTestItem(id, methodname, item.uri)
+				thead.range = range
+				thead.tags = [new vscode.TestTag("runnable"), new vscode.TestTag("ABLTestMethod")]
+				thead.label = methodname
+				testData.set(thead, new ABLTestMethod(thisGeneration, relativePath, classpath, methodname))
+				const parent = ancestors[ancestors.length - 1]
+				parent.children.push(thead)
+				item.children.add(thead)
 			}
-		});
 
-		this.ascend(0, ancestors); // finish and assign children for all remaining items
-	}
-}
+		})
 
-export class ABLTestProgramDirectory extends TestTypeObj {
-	public canResolveChildren: boolean = false
-
-	constructor(public generation: number, private readonly relativeDir: string, private readonly element: string) {
-		super()
-		this.label = element
+		this.ascend(0, ancestors) // finish and assign children for all remaining items
 	}
 }
 
@@ -251,19 +281,11 @@ export class ABLTestProgram extends TestFile {
 	public updateFromContents(controller: vscode.TestController, content: string, item: vscode.TestItem) {
 		const ancestors: [{ item: vscode.TestItem, children: vscode.TestItem[] }] = [{ item, children: [] as vscode.TestItem[] }]
 		ancestors.pop()
-		const thisGeneration = generationCounter++;
-		this.didResolve = true;
+		const thisGeneration = generationCounter++
+		this.didResolve = true
 		const relativePath = vscode.workspace.asRelativePath(item.uri!.fsPath)
 
-		parseABLUnit(content, relativePath, {
-
-			onTestSuite: (range, suiteName) => { console.error("onTestSuite") },
-
-			onTestClassNamespace: (range, classpath, element) => { console.error("onTestClassNamespace") },
-
-			onTestClass: (range: vscode.Range, classname: string, label: string) => { console.error("onTestClassNamespace") },
-
-			onTestMethod: (range: vscode.Range, classname: string, methodname: string) => { console.error("onTestMethod") },
+		parseABLTestProgram(content, relativePath, {
 
 			onTestProgramDirectory(range: vscode.Range, dirpath: string, dir: string, dirUri: vscode.Uri) {
 				const id = `pgmpath:${dirpath}`
@@ -281,7 +303,7 @@ export class ABLTestProgram extends TestFile {
 				ancestors.push({ item: thead, children: [] as vscode.TestItem[] })
 			},
 
-			onTestProgram: (range: vscode.Range, relativepath: string, label: string, programUri: vscode.Uri) => {
+			onTestProgram: (range: vscode.Range, relativepath: string, label: string, suiteName?: string) => {
 				this.testFileType = "ABLTestProgram"
 
 				const id = `${relativepath}`
@@ -297,10 +319,12 @@ export class ABLTestProgram extends TestFile {
 				if (parent) {
 					parent.children.push(thead)
 				}
-				ancestors.push({ item: thead, children: [] as vscode.TestItem[] })
+				if (!suiteName) {
+					ancestors.push({ item: thead, children: [] as vscode.TestItem[] })
+				}
 			},
 
-			onTestProcedure: (range: vscode.Range, relativePath: string, procedureName: string, programUri: vscode.Uri) => {
+			onTestProcedure: (range: vscode.Range, relativePath: string, procedureName: string) => {
 				this.testFileType = "ABLTestProcedure"
 
 				const id = `${relativePath}#${procedureName}`
@@ -314,25 +338,14 @@ export class ABLTestProgram extends TestFile {
 				parent.children.push(thead)
 			},
 
-			onAssert: (range, assertMethod) => {
-				this.testFileType = "ABLAssert"
-				const parent = ancestors[ancestors.length - 1];
-				const id = `${item.uri}/${assertMethod}`;
+		})
 
-				const thead = controller.createTestItem(id, assertMethod, item.uri);
-				thead.range = range;
-				thead.tags = [new vscode.TestTag("not runnable"), new vscode.TestTag("ABLAssert")]
-				testData.set(thead, new ABLAssert(thisGeneration, assertMethod));
-				parent.children.push(thead);
-			}
-		});
-
-		this.ascend(0, ancestors); // finish and assign children for all remaining items
+		this.ascend(0, ancestors) // finish and assign children for all remaining items
 	}
 }
 
 export class ABLTestMethod extends TestFile { // child of TestClass
-	constructor(public generation: number, private readonly classname: string, private readonly methodName: string) {
+	constructor(public generation: number, private readonly relativePath: string, private readonly classname: string, private readonly methodName: string) {
 		super()
 		this.label = methodName
 	}
