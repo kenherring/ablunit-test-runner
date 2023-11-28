@@ -237,7 +237,7 @@ export class ABLResults {
 					await this.parseFinalSuite(child, t, options)
 				} else {
 					console.error("could not find child test item for " + t.name + " or " + t.classname)
-					throw new Error("could not find child test item for " + t.name + " or " + t.classname)
+					// throw new Error("could not find child test item for " + t.name + " or " + t.classname)
 				}
 			}
 		} else {

@@ -1,4 +1,4 @@
-USING Progress.Lang.*.
+@testsuite(procedures="procs/proc0.p").
 ROUTINE-LEVEL ON ERROR UNDO, THROW.
 
 @TestSuite(classes="login/doLoginTest.cls").

@@ -65,7 +65,7 @@ export function parseSuiteClassFunc (lines: string[]) {
 
 	const suiteList: SuiteLoc[] = []
 
-	for (let lineNo = 1; lineNo < lines.length; lineNo++) {
+	for (let lineNo = 0; lineNo < lines.length; lineNo++) {
 		if (lines[lineNo].trim().startsWith("//"))
 			continue
 		// console.log("line[" + lineNo + "] = " + lines[lineNo])

@@ -225,7 +225,9 @@ function getOrCreateFile(controller: vscode.TestController, uri: vscode.Uri) {
 }
 
 function createTopNode(file: vscode.TestItem) {
-	if (isTestSuite(file.uri)) {
+	const isSuite = isTestSuite(file.uri)
+
+	if (isSuite) {
 		return new ABLTestSuite()
 	}
 	if (file.uri?.toString().endsWith(".cls")) {
@@ -236,8 +238,6 @@ function createTopNode(file: vscode.TestItem) {
 
 function isTestSuite(file: vscode.Uri | undefined) {
 	if (!file) { return false }
-
-	console.log("isTestSuite: " + file.fsPath)
 	const suiteRegex = /@testsuite/i
 	const contents = readFileSync(file.fsPath).toString()
 	return suiteRegex.test(contents)

@@ -27,7 +27,7 @@ suite('SourceParser Test Suite - proj5', () => {
 		const suiteRet = parseSuiteClassFunc(lines)
 		assert.strictEqual(suiteRet.name, "suites.suite1")
 		assert.strictEqual(suiteRet.classes.length, 4)
-		assert.strictEqual(suiteRet.procedures.length, 6)
+		assert.strictEqual(suiteRet.procedures.length, 7)
 	})
 
 	////////// TEST CLASSES //////////
