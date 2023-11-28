@@ -2,8 +2,8 @@ import * as assert from 'assert';
 import { readFileSync } from 'fs';
 import { after, before } from 'mocha';
 
-import { parseTestClass } from '../../parse/SourceParser'
-import { parseSuiteClassFunc } from '../../parse/TestSuiteParser'
+import { parseTestClass } from '../../parse/TestClassParser'
+import { parseTestSuite } from '../../parse/TestSuiteParser'
 import path = require('path');
 import { Uri } from 'vscode';
 
@@ -25,7 +25,7 @@ suite('SourceParser Test Suite - proj5', () => {
 
 	test('test suite - suite1.cls', async () => {
 		const lines = readLinesFromFile('test/suites/suite1.cls')
-		const suiteRet = parseSuiteClassFunc(lines)
+		const suiteRet = parseTestSuite(lines)
 		assert.strictEqual(suiteRet.name, "suites.suite1")
 		assert.strictEqual(suiteRet.classes.length, 4)
 		assert.strictEqual(suiteRet.procedures.length, 7)

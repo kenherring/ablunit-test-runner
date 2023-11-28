@@ -103,7 +103,6 @@ export class ABLTestSuite extends TestFile {
 	public updateFromContents(controller: vscode.TestController, content: string, item: vscode.TestItem) {
 		const ancestors: [{ item: vscode.TestItem, children: vscode.TestItem[] }] = [{ item, children: [] as vscode.TestItem[] }]
 		ancestors.pop()
-		const thisGeneration = generationCounter++
 		this.didResolve = true
 		const relativePath = vscode.workspace.asRelativePath(item.uri!.fsPath)
 
@@ -153,7 +152,7 @@ export class ABLTestSuite extends TestFile {
 				}
 			},
 
-			onTestProgram: (range: vscode.Range, relativepath: string, label: string, programUri: vscode.Uri, suiteName?: string) => {
+			onTestProgram: (range: vscode.Range, relativepath: string, label: string, suiteName?: string) => {
 				this.testFileType = "ABLTestProgram"
 
 				const id = `${relativepath}`
@@ -305,7 +304,7 @@ export class ABLTestProgram extends TestFile {
 				ancestors.push({ item: thead, children: [] as vscode.TestItem[] })
 			},
 
-			onTestProgram: (range: vscode.Range, relativepath: string, label: string, programUri: vscode.Uri, suiteName?: string) => {
+			onTestProgram: (range: vscode.Range, relativepath: string, label: string, suiteName?: string) => {
 				this.testFileType = "ABLTestProgram"
 
 				const id = `${relativepath}`
@@ -326,7 +325,7 @@ export class ABLTestProgram extends TestFile {
 				}
 			},
 
-			onTestProcedure: (range: vscode.Range, relativePath: string, procedureName: string, programUri: vscode.Uri) => {
+			onTestProcedure: (range: vscode.Range, relativePath: string, procedureName: string) => {
 				this.testFileType = "ABLTestProcedure"
 
 				const id = `${relativePath}#${procedureName}`
