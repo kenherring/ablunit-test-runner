@@ -9,7 +9,7 @@ async function main() {
 	await testProject("proj2")
 	await testProject("proj3", "proj3_debugLines")
 	await testProject("proj4")
-
+	await testProject("proj5", "proj5_suites")
 	// unitTests()
 }
 

@@ -63,12 +63,10 @@ export function parseSuiteClassFunc (lines: string[]) {
 		procedures: []
 	}
 
-	const suiteList: SuiteLoc[] = []
-
 	for (let lineNo = 0; lineNo < lines.length; lineNo++) {
 		if (lines[lineNo].trim().startsWith("//"))
 			continue
-		// console.log("line[" + lineNo + "] = " + lines[lineNo])
+		console.log("line[" + lineNo + "] = " + lines[lineNo])
 
 		// console.log("lines[lineNo].toLowerCase()=" + lines[lineNo].toLowerCase())
 		// console.log("lines[lineNo].toLowerCase().indexOf(testsuite)=" + lines[lineNo].toLowerCase().indexOf("@testsuite"))

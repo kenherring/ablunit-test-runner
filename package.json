@@ -16,6 +16,7 @@
 	"bugs": {
 		"url": "https://github.com/kenherring/ablunit-test-provider/issues"
 	},
+	"license": "MIT",
 	"licenses": [
 		{
 			"type": "MIT",
@@ -94,7 +95,7 @@
 		"@types/glob": "^8.1.0",
 		"@types/jsonminify": "^0.4.1",
 		"@types/node": "^16.18.34",
-		"@types/vscode": "^1.83.0",
+		"@types/vscode": "^1.84.2",
 		"@types/xml2js": "^0.4.12",
 		"@typescript-eslint/eslint-plugin": "^6.7.0",
 		"@typescript-eslint/parser": "^6.7.0",

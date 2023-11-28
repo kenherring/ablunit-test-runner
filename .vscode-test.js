@@ -60,7 +60,7 @@ module.exports = defineConfig([
 		launchArgs: []
 	},
 	{
-		label: 'unit tests',
+		label: 'extension tests - proj5 (unit tests)',
 		files: 'out/test/**/parse/*.test.js',
 		workspaceFolder: './test_projects/proj5_suites',
 		mocha: {
