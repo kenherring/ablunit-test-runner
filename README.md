@@ -30,6 +30,20 @@ The configuration is broken into two sections.
 1.  The first section shows configuration options that users are most likely to change.
 2.  Additional configuration options available that are not likely to be change by most users.
 
+### Configuration - Sample Config
+
+This config searches the `test/` directory for test files, named `*Test.cls` or `*Test.p`.  It also passes a database connection to `_progres` via the `-pf` parameter.
+
+**`.vscode/settings.json`**:
+```json
+{
+  "ablunit.files.include": [
+    "test/**/*Test.{cls,p}"
+  ],
+  "ablunit.params": "-pf path/to/dbconnections.pf"
+}
+```
+
 ### Configuration - Most Commonly Changed
 
 | Setting | Default | Description |

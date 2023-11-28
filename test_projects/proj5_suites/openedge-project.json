@@ -3,6 +3,7 @@
 	"buildDirectory": "build",
 	"buildPath": [
 		{ "type": "source", "path": "src" },
-		{ "type": "source", "path": "test" }
+		{ "type": "source", "path": "test" },
+		{ "type": "propath", "path": "build" }
 	]
 }

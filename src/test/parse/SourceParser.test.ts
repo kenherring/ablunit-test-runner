@@ -26,8 +26,8 @@ suite('SourceParser Test Suite - proj5', () => {
 		const lines = readLinesFromFile('test/suites/suite1.cls')
 		const suiteRet = parseSuiteClassFunc(lines)
 		assert.strictEqual(suiteRet.name, "suites.suite1")
-		assert.strictEqual(suiteRet.classes.length, 3)
-		assert.strictEqual(suiteRet.procedures.length, 0)
+		assert.strictEqual(suiteRet.classes.length, 4)
+		assert.strictEqual(suiteRet.procedures.length, 6)
 	})
 
 	////////// TEST CLASSES //////////

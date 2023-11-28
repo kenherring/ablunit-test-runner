@@ -3,6 +3,7 @@ import { ABLTestSuite, ABLTestClass, ABLTestProgram, ABLTestMethod, ABLTestProce
 import { logToChannel } from './ABLUnitCommon'
 import { ABLResults } from './ABLResults'
 import { resetAblunitConfig } from './ABLUnitConfigWriter'
+import { readFileSync } from 'fs'
 
 const backgroundExecutable = vscode.window.createTextEditorDecorationType({
 	backgroundColor: 'rgba(255,0,0,0.1)',
@@ -167,7 +168,7 @@ export async function activate(context: vscode.ExtensionContext) {
 			return
 		}
 		const data = testData.get(item)
-		if (data instanceof ABLTestClass || data instanceof ABLTestProgram) {
+		if (data instanceof ABLTestSuite || data instanceof ABLTestClass || data instanceof ABLTestProgram) {
 			await data.updateFromDisk(ctrl, item)
 		}
 	}
@@ -197,10 +198,14 @@ function getOrCreateFile(controller: vscode.TestController, uri: vscode.Uri) {
 	const existing = controller.items.get(uri.toString())
 	if (existing) {
 		const data = testData.get(existing)
-		if (data instanceof ABLTestClass) {
+		if (data instanceof ABLTestSuite) {
+			return { file: existing, data: data }
+		} else if (data instanceof ABLTestClass) {
+			return { file: existing, data: data }
+		} else if (data instanceof ABLTestProgram) {
 			return { file: existing, data: data }
 		} else {
-			return { file: existing, data: data as ABLTestProgram }
+			throw new Error("[getOrCreateFile] unexpected data type")
 		}
 	}
 
@@ -220,12 +225,22 @@ function getOrCreateFile(controller: vscode.TestController, uri: vscode.Uri) {
 }
 
 function createTopNode(file: vscode.TestItem) {
+	if (isTestSuite(file.uri)) {
+		return new ABLTestSuite()
+	}
 	if (file.uri?.toString().endsWith(".cls")) {
 		return new ABLTestClass()
-	} else if (file.uri?.toString().endsWith(".p")) {
-		return new ABLTestProgram()
 	}
-	throw(new Error("invalid file extension. file='" + file.uri?.toString))
+	return new ABLTestProgram()
+}
+
+function isTestSuite(file: vscode.Uri | undefined) {
+	if (!file) { return false }
+
+	console.log("isTestSuite: " + file.fsPath)
+	const suiteRegex = /@testsuite/i
+	const contents = readFileSync(file.fsPath).toString()
+	return suiteRegex.test(contents)
 }
 
 function gatherTestItems(collection: vscode.TestItemCollection) {

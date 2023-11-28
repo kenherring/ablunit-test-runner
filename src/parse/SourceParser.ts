@@ -27,7 +27,7 @@ export const parseABLUnit = (text: string, relativePath: string, events: {
 	onTestClass(range: vscode.Range, relativePath: string, classname: string, label: string, suiteName?: string): void
 	onTestMethod(range: vscode.Range, relativePath: string, classname: string, methodname: string): void
 	onTestProgramDirectory (range: vscode.Range, dirpath: string, dir: string, dirUri: vscode.Uri): void
-	onTestProgram(range: vscode.Range, relativePath: string, label: string, programUri: vscode.Uri): void
+	onTestProgram(range: vscode.Range, relativePath: string, label: string, programUri: vscode.Uri, suiteName?: string): void
 	onTestProcedure(range: vscode.Range, relativePath: string, label: string, programUri: vscode.Uri): void
 	onAssert(range: vscode.Range, methodname: string): void
 }) => {
@@ -118,12 +118,13 @@ export const parseABLUnit = (text: string, relativePath: string, events: {
 		for (const classEntry of suiteRet.classes) {
 			events.onTestClass(suiteRet.range, classEntry, classEntry, classEntry, suiteRet.name)
 		}
-		// for (const procedureEntry of suiteRet.procedures) {
-		// 	events.onTestProcedure(suiteRet.range, procedureEntry, procedureEntry, vscode.Uri.joinPath(workspaceDir,procedureEntry))
-		// }
+		for (const procedureEntry of suiteRet.procedures) {
+			events.onTestProgram(suiteRet.range, procedureEntry, procedureEntry, vscode.Uri.joinPath(workspaceDir,procedureEntry), suiteRet.name)
+		}
 	}
 
 	const parseSuiteProgram = () => {
+		//TODO
 		console.log("TODO - parseSuiteProgram - " + relativePath)
 	}
 
