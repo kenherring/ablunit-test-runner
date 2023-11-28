@@ -11,12 +11,7 @@ const procedureRE = /(^|\s+)procedure\s+(\S+)\s*:/i
 // ASSERT method call
 const assertRE = /(OpenEdge.Core.Assert:\S+\s*\(.*\))/i
 
-interface SuiteLoc {
-	name: string
-	type: string
-	range: vscode.Range
-}
-
+//@deprecated("Use TestClassParser, TestProgramParser, or TestSuiteParser instead")
 export const parseABLUnit = (text: string, relativePath: string, events: {
 	onTestClass(range: vscode.Range, relativePath: string, classname: string, label: string, suiteName?: string): void
 	onTestMethod(range: vscode.Range, relativePath: string, classname: string, methodname: string): void
