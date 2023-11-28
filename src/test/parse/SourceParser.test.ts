@@ -2,7 +2,8 @@ import * as assert from 'assert';
 import { readFileSync } from 'fs';
 import { after, before } from 'mocha';
 
-import { parseSuiteClassFunc, parseTestClass } from '../../parse/SourceParser'
+import { parseTestClass } from '../../parse/SourceParser'
+import { parseSuiteClassFunc } from '../../parse/TestSuiteParser'
 import path = require('path');
 import { Uri } from 'vscode';
 

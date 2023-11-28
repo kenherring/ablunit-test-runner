@@ -2,7 +2,7 @@ import * as vscode from 'vscode'
 import { parseABLUnit } from './parse/SourceParser'
 import { TextDecoder } from 'util'
 import { ABLResults } from './ABLResults'
-import { parseABLTestSuite } from './parse/ParseTestSuite'
+import { parseABLTestSuite } from './parse/TestSuiteParser'
 
 const textDecoder = new TextDecoder('utf-8')
 
@@ -201,10 +201,6 @@ export class ABLTestClass extends TestFile {
 
 		parseABLUnit(content, relativePath, {
 
-			onTestSuite: (range: vscode.Range, relativePath: string, suiteName:string) => {
-				console.log("should not be here - ABLTestClass:onTestSuite")
-			},
-
 			onTestClass: (range: vscode.Range, relativePath: string, classpath: string, label: string, suiteName?: string) => {
 				this.testFileType = "ABLTestClass"
 
@@ -310,10 +306,6 @@ export class ABLTestProgram extends TestFile {
 		const relativePath = vscode.workspace.asRelativePath(item.uri!.fsPath)
 
 		parseABLUnit(content, relativePath, {
-
-			onTestSuite: (range, suiteName) => {
-				console.error("should not be here - ABLTestProgram:onTestSuite")
-			},
 
 			onTestClass: (range: vscode.Range, classname: string, label: string, testSuite?: string) => {
 				console.error("should not be here - ABLTestProgram:onTestClass")

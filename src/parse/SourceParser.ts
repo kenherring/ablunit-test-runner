@@ -1,10 +1,6 @@
 import * as vscode from 'vscode'
 import { logToChannel } from '../ABLUnitCommon'
 
-// TESTSUITE statement
-// const suiteRE = /@testsuite\((.*)\)/
-const suiteItemRE = /(classes|procedures)="([^"]+)+"/i
-const suiteItemRE2 = /,(classes|procedures)="([^"]+)+"/i
 // CLASS statement
 const classRE = /^\s*class\s+(\S+[^:])\s*/i
 // const classRE = /^\s*class\s+(\S+)\s*(inherits)\s*(\S+)\s*:/i
@@ -22,8 +18,6 @@ interface SuiteLoc {
 }
 
 export const parseABLUnit = (text: string, relativePath: string, events: {
-	onTestSuite(range: vscode.Range, relativePath: string, suitename: string): void
-	// onTestClassNamespace(range: vscode.Range, classpath: string, element: string, classpathUri: vscode.Uri): void
 	onTestClass(range: vscode.Range, relativePath: string, classname: string, label: string, suiteName?: string): void
 	onTestMethod(range: vscode.Range, relativePath: string, classname: string, methodname: string): void
 	onTestProgramDirectory (range: vscode.Range, dirpath: string, dir: string, dirUri: vscode.Uri): void
@@ -45,16 +39,8 @@ export const parseABLUnit = (text: string, relativePath: string, events: {
 
 	const parseByType = () => {
 		if (relativePath.endsWith(".cls")) {
-			if (text.toLowerCase().indexOf("@testsuite") != -1) {
-				parseSuiteClass()
-				return
-			}
 			parseClass()
 		} else if (relativePath.endsWith(".p")) {
-			if (text.toLowerCase().indexOf("@testsuite") != -1) {
-				parseSuiteProgram()
-				return
-			}
 			parseProgram()
 		}
 	}
@@ -110,22 +96,6 @@ export const parseABLUnit = (text: string, relativePath: string, events: {
 				}
 			}
 		}
-	}
-
-	const parseSuiteClass = () => {
-		const suiteRet = parseSuiteClassFunc(lines)
-		events.onTestSuite(suiteRet.range, relativePath, suiteRet.name)
-		for (const classEntry of suiteRet.classes) {
-			events.onTestClass(suiteRet.range, classEntry, classEntry, classEntry, suiteRet.name)
-		}
-		for (const procedureEntry of suiteRet.procedures) {
-			events.onTestProgram(suiteRet.range, procedureEntry, procedureEntry, vscode.Uri.joinPath(workspaceDir,procedureEntry), suiteRet.name)
-		}
-	}
-
-	const parseSuiteProgram = () => {
-		//TODO
-		console.log("TODO - parseSuiteProgram - " + relativePath)
 	}
 
 	parseByType()
@@ -205,73 +175,4 @@ export function parseTestClass (lines: string[], configClassLabel: string, relat
 		}
 	}
 	return classRet
-}
-
-
-const suiteRE = /@testsuite\s*\(((classes|procedures).*)\)/i
-const suiteClasses = /classes\s*=\s*"([^"]+)+"/i
-const suiteProcedures = /procedures\s*=\s*"([^"]+)+"/i
-
-export interface ITestSuite {
-	name: string,
-	range: vscode.Range,
-	classes: string[],
-	procedures: string[]
-}
-
-export function parseSuiteClassFunc (lines: string[]) {
-	const suiteRet: ITestSuite = {
-		name: "",
-		range: new vscode.Range(new vscode.Position(0,0), new vscode.Position(0,0)),
-		classes: [],
-		procedures: []
-	}
-
-	const suiteList: SuiteLoc[] = []
-
-	for (let lineNo = 1; lineNo < lines.length; lineNo++) {
-		if (lines[lineNo].trim().startsWith("//"))
-			continue
-		// console.log("line[" + lineNo + "] = " + lines[lineNo])
-
-		// console.log("lines[lineNo].toLowerCase()=" + lines[lineNo].toLowerCase())
-		// console.log("lines[lineNo].toLowerCase().indexOf(testsuite)=" + lines[lineNo].toLowerCase().indexOf("@testsuite"))
-		if(lines[lineNo].toLowerCase().indexOf("@testsuite") != -1) {
-			// console.log("annotation-1")
-			const suiteRes = suiteRE.exec(lines[lineNo])
-			if(suiteRes) {
-				const [,details] = suiteRes
-				// console.log("annotation-2: " + details)
-				if (details) {
-					console.log("FOUND ANNOTATION: " + details)
-					const classesRes = suiteClasses.exec(details)
-					if (classesRes) {
-						const [, classes] = classesRes
-						console.log("FOUND CLASSES: " + classes.split(','))
-						suiteRet.classes = suiteRet.classes.concat(classes.split(','))
-					}
-					const proceduresRes = suiteProcedures.exec(details)
-					if (proceduresRes) {
-						const [, procedures] = proceduresRes
-						console.log("FOUND PROCEDURES: " + procedures.split(','))
-						suiteRet.procedures = suiteRet.procedures.concat(procedures.split(','))
-					}
-				}
-			}
-			continue
-		}
-
-		const classResult = classRE.exec(lines[lineNo])
-		console.log("classResult=" + JSON.stringify(classResult))
-		if (classResult) {
-			console.log("lines[lineNo]=" + lines[lineNo])
-			const [, className] = classResult
-			console.log("SUITE CLASS: " + className)
-			suiteRet.name = className
-			suiteRet.range = new vscode.Range(new vscode.Position(lineNo, lines[lineNo].indexOf(className)), new vscode.Position(lineNo, className.length))
-		}
-	}
-
-	console.log("suiteRet=" + JSON.stringify(suiteRet))
-	return suiteRet
 }

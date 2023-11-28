@@ -27,7 +27,8 @@ async function testProject(projName: string, projDir?: string) {
 			// '--verbose',
 			// '--telemetry'
 		]
-		if (projName != "proj3" && projName !== "proj4") {
+		if (projName !== "proj3" && projName !== "proj4") {
+			console.log('disable extensionts')
 			args.push('--disable-extensions')
 		}
 

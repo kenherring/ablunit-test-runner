@@ -45,9 +45,7 @@ module.exports = defineConfig([
 			ui: 'tdd',
 			timeout: 20000
 		},
-		launchArgs: [
-			'--disable-extensions'
-		]
+		launchArgs: []
 	},
 	{
 		label: 'extension tests - proj4',
