@@ -56,6 +56,8 @@
 				"proj3_debugLines",
 				"proj4",
 				"proj5_suites",
+				"proj6_propath",
+				"proj7_load_performance"
 			]
 		}
 	]

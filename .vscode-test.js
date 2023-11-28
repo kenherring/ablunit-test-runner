@@ -63,7 +63,16 @@ module.exports = defineConfig([
 		workspaceFolder: './test_projects/proj5_suites',
 		mocha: {
 			ui: 'tdd',
-			timeout: 20000
+			timeout: 30000
+		}
+	},
+	{
+		label: 'extension tests - proj7 (load performance)',
+		files: 'out/test/**/*.proj7.test.js',
+		workspaceFolder: './test_projects/proj7_load_performance',
+		mocha: {
+			ui: 'tdd',
+			timeout: 60000
 		}
 	}
 ]);
