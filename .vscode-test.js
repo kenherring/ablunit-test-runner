@@ -59,7 +59,7 @@ module.exports = defineConfig([
 	},
 	{
 		label: 'extension tests - proj5 (unit tests)',
-		files: 'out/test/**/parse/*.test.js',
+		files: 'out/test/**/*.proj5.test.js',
 		workspaceFolder: './test_projects/proj5_suites',
 		mocha: {
 			ui: 'tdd',

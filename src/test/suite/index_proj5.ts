@@ -1,13 +1,13 @@
 import path = require("path")
 import { setupMocha, setupNyc } from "../indexCommon"
 
-export function runUnitTests(): Promise <void> {
+export function run(): Promise <void> {
 	const testsRoot = path.resolve(__dirname, "..");
 	const nyc = setupNyc("unitTests")
 	const mocha = setupMocha("unitTests")
 
 	return new Promise<void>((c, e) => {
-		mocha.addFile(path.resolve(testsRoot, "index_unitTests.ts"))
+		mocha.addFile(path.resolve(testsRoot, 'suite', 'extension.proj5.test.js'))
 		try {
 			// Run the mocha test
 			mocha.run(async (failures) => {

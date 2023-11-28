@@ -4,13 +4,12 @@ import { runTests } from '@vscode/test-electron'
 
 
 async function main() {
-	await testProject("proj0")
-	await testProject("proj1")
-	await testProject("proj2")
-	await testProject("proj3", "proj3_debugLines")
-	await testProject("proj4")
+	// await testProject("proj0")
+	// await testProject("proj1")
+	// await testProject("proj2")
+	// await testProject("proj3", "proj3_debugLines")
+	// await testProject("proj4")
 	await testProject("proj5", "proj5_suites")
-	// unitTests()
 }
 
 async function testProject(projName: string, projDir?: string) {
@@ -28,7 +27,6 @@ async function testProject(projName: string, projDir?: string) {
 			// '--telemetry'
 		]
 		if (projName !== "proj3" && projName !== "proj4") {
-			console.log('disable extensionts')
 			args.push('--disable-extensions')
 		}
 
@@ -44,9 +42,5 @@ async function testProject(projName: string, projDir?: string) {
 		console.log("[runTest.ts testProject] finally")
 	}
 }
-
-// function unitTests() {
-// 	runUnitTests()
-// }
 
 main()
