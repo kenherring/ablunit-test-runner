@@ -7,7 +7,6 @@ import { parseABLTestProgram } from './parse/TestProgramParser'
 
 const textDecoder = new TextDecoder('utf-8')
 
-// export type ABLUnitTestData = ABLTestSuite | ABLTestProgramDirectory | ABLTestClassNamespace | ABLTestClass | ABLTestProgram | ABLTestMethod | ABLTestProcedure | ABLAssert
 export type ABLUnitTestData = ABLTestSuite | ABLTestProgramDirectory | ABLTestClass | ABLTestProgram | ABLTestMethod | ABLTestProcedure | ABLAssert
 
 export const testData = new WeakMap<vscode.TestItem, ABLUnitTestData>()

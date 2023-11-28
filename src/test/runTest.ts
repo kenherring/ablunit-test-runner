@@ -1,7 +1,5 @@
 import * as path from 'path';
 import { runTests } from '@vscode/test-electron'
-// import { runUnitTests } from './parse/index_unitTests.test'
-
 
 async function main() {
 	await testProject("proj0")

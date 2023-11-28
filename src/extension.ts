@@ -438,8 +438,6 @@ async function isFileExcluded (uri: vscode.Uri, excludePatterns: vscode.Relative
 function printDataType(data: any) {
 	if(data instanceof ABLTestSuite)
 		logToChannel(" - ABLTestSuite")
-	// else if(data instanceof ABLTestClassNamespace)
-	// 	logToChannel(" - ABLTestClassNamespace")
 	else if(data instanceof ABLTestClass)
 		logToChannel(" - ABLTestClass")
 	else if(data instanceof ABLTestMethod)

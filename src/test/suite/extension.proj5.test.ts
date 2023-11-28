@@ -2,20 +2,11 @@ import * as vscode from 'vscode'
 import * as assert from 'assert'
 import path = require('path')
 import { readFileSync } from 'fs'
-import { after, before } from 'mocha'
 import { parseTestClass } from '../../parse/TestClassParser'
 import { parseTestSuite } from '../../parse/TestSuiteParser'
 import { getTestCount } from '../common'
 
 const projName = 'proj0'
-
-before(async () => {
-    console.log("before")
-})
-
-after(() => {
-	console.log("after")
-})
 
 suite('SourceParser Test Suite - proj5', () => {
 
