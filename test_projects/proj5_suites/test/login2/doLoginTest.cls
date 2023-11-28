@@ -1,7 +1,7 @@
 using OpenEdge.Core.Assert.
 block-level on error undo, throw.
 
-class login2.doLoginTest inherits login2.doLogin use-widget-pool:
+class login2.doLoginTest inherits login.doLogin use-widget-pool:
 
 	@Test.
 	method public void testLogin() :

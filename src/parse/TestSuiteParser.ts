@@ -29,6 +29,10 @@ export const parseABLTestSuite = (text: string, relativePath: string, events: {
 
 	const parseSuiteClass = () => {
 		const suiteRet = parseSuiteClassFunc(lines)
+		if (suiteRet.name === "") {
+			suiteRet.name = relativePath
+		}
+
 		events.onTestSuite(suiteRet.range, relativePath, suiteRet.name)
 		for (const classEntry of suiteRet.classes) {
 			console.log("onTestClass: " + classEntry)

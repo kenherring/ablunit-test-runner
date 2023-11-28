@@ -8,6 +8,3 @@ ROUTINE-LEVEL ON ERROR UNDO, THROW.
  	   @TESTSUITE 	  (procedures 	  = 	  "proc2/proc4.p" 	 ).
 @testsuite(procedures="proc2/proc5.p", classes="login2/test5.cls").
 @testsuite(procedures="login2/test6.cls").
-
-class suites.suite1:
-end class.
