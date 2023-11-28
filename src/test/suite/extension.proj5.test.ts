@@ -1,11 +1,11 @@
-import * as assert from 'assert';
-import { readFileSync } from 'fs';
-import { after, before } from 'mocha';
-
+import * as vscode from 'vscode'
+import * as assert from 'assert'
+import path = require('path')
+import { readFileSync } from 'fs'
+import { after, before } from 'mocha'
 import { parseTestClass } from '../../parse/TestClassParser'
 import { parseTestSuite } from '../../parse/TestSuiteParser'
-import path = require('path');
-import { Uri } from 'vscode';
+import { getTestCount } from '../common'
 
 const projName = 'proj0'
 
@@ -19,7 +19,22 @@ after(() => {
 
 suite('SourceParser Test Suite - proj5', () => {
 
-	const workspaceDir = Uri.parse(path.resolve(__dirname, '..', '..', '..', 'test_projects', 'proj5_suites'))
+	const workspaceDir = vscode.Uri.parse(path.resolve(__dirname, '..', '..', '..', 'test_projects', 'proj5_suites'))
+
+	test('testCount', async () => {
+		await vscode.commands.executeCommand('testing.refreshTests')
+		await vscode.commands.executeCommand('testing.runAll').then(() => {
+			console.log("testing.runAll complete!")
+		} , (err) => {
+			assert.fail("testing.runAll failed: " + err)
+		})
+
+		const resultsJson = vscode.Uri.joinPath(vscode.workspace.workspaceFolders![0].uri,'ablunit','results.json')
+		const testCount = await getTestCount(resultsJson)
+		console.log("getTestCount: " + testCount)
+		assert(testCount > 100)
+	})
+
 
 	////////// TEST SUITES //////////
 
@@ -35,13 +50,13 @@ suite('SourceParser Test Suite - proj5', () => {
 
 	test("test class - login/test2.cls - ablunit.display.classLabel=classname (default)", async () => {
 		const lines = readLinesFromFile('test/login/test2.cls')
-		const classRet = parseTestClass(lines, 'classname', 'login/test2.cls', Uri.joinPath(workspaceDir, 'src/login/test2.cls'))
+		const classRet = parseTestClass(lines, 'classname', 'login/test2.cls', vscode.Uri.joinPath(workspaceDir, 'src/login/test2.cls'))
 		assert.strictEqual(classRet.classname, "login.test2")
 	})
 
 	test("test class - login/test2.cls - ablunit.display.classLabel=filepath", async () => {
 		const lines = readLinesFromFile('test/login/test2.cls')
-		const classRet = parseTestClass(lines, 'filepath', 'login/test2.cls', Uri.joinPath(workspaceDir, 'src/login/test2.cls'))
+		const classRet = parseTestClass(lines, 'filepath', 'login/test2.cls', vscode.Uri.joinPath(workspaceDir, 'src/login/test2.cls'))
 		assert.strictEqual(classRet.classname, "login/test2.cls")
 	})
 

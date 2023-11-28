@@ -43,7 +43,6 @@ export const parseABLTestProgram = (text: string, relativePath: string, events: 
 	}
 
 	parseProgram()
-
 }
 
 interface ITree {

@@ -99,7 +99,7 @@ export function setupMocha(projName: string) {
 	return new Mocha({
 		color: true,
 		ui: "tdd",
-		timeout: 20000,
+		timeout: 30000,
 		// reporter: 'mocha-junit-reporter',
 		// reporterOptions: {
 		// 	mochaFile: 'artifacts/mocha_results_' + projName + '.xml'

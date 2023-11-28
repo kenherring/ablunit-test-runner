@@ -2,7 +2,7 @@ import * as vscode from 'vscode'
 import { logToChannel } from '../ABLUnitCommon'
 
 // CLASS statement
-const classRE = /^\s*class\s+(\S+[^:])\s*/i
+const classRE = /^\s*class\s+(\S+\w):?\s*/i
 
 interface SuiteLoc {
 	name: string
@@ -42,7 +42,6 @@ export const parseABLTestSuite = (text: string, relativePath: string, events: {
 	}
 
 	parseSuite()
-
 }
 
 const suiteRE = /@testsuite\s*\(((classes|procedures).*)\)/i

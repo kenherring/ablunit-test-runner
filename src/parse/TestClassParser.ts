@@ -12,7 +12,6 @@ export const parseABLTestClass = (text: string, relativePath: string, events: {
 	onTestClass(range: Range, relativePath: string, classname: string, label: string, suiteName?: string): void
 	onTestMethod(range: Range, relativePath: string, classname: string, methodname: string): void
 }) => {
-
 	relativePath = relativePath.replace(/\\/g, '/')
 	logToChannel("parsing " + relativePath)
 

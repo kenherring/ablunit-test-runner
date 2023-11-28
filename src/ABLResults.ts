@@ -223,25 +223,27 @@ export class ABLResults {
 				options.errored(item, new TestMessage("no child testsuites found for " + suiteName), this.duration())
 				return
 			}
-
-			for (const t of s.testsuite) {
-
-				// find matching child TestItem
-				let child = item.children.get(t.name!)
-				if (!child) {
-					child = item.children.get(t.classname!)
-				}
-
-				// parse results for the child TestItem, if it exists
-				if (child) {
-					await this.parseFinalSuite(child, t, options)
-				} else {
-					console.error("could not find child test item for " + t.name + " or " + t.classname)
-					// throw new Error("could not find child test item for " + t.name + " or " + t.classname)
-				}
-			}
+			await this.parseChildSuites(item, s.testsuite, options, suiteName)
 		} else {
 			return this.parseFinalSuite(item, s, options)
+		}
+	}
+
+	async parseChildSuites (item: TestItem, s: TestSuite[], options: TestRun, suiteName: string) {
+		for (const t of s) {
+			// find matching child TestItem
+			let child = item.children.get(t.name!)
+			if (!child) {
+				child = item.children.get(t.classname!)
+			}
+
+			// parse results for the child TestItem, if it exists
+			if (child) {
+				await this.parseFinalSuite(child, t, options)
+			} else {
+				console.error("could not find child test item for " + t.name + " or " + t.classname)
+				// throw new Error("could not find child test item for " + t.name + " or " + t.classname)
+			}
 		}
 	}
 
