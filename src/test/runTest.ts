@@ -8,6 +8,7 @@ async function main() {
 	await testProject("proj3", "proj3_debugLines")
 	await testProject("proj4")
 	await testProject("proj5", "proj5_suites")
+	await testProject("proj7", "proj7_load_performance")
 }
 
 async function testProject(projName: string, projDir?: string) {
