@@ -310,6 +310,7 @@ function getWorkspaceTestPatterns() {
 async function removeExcludedFiles(controller: vscode.TestController, excludePatterns: vscode.RelativePattern[]) {
 	for (const item of gatherTestItems(controller.items)) {
 		if (item.uri && await isFileExcluded(item.uri, excludePatterns)) {
+			console.log("----- DELETE! item.id=" + item.id + " item.uri=" + item.uri.fsPath)
 			controller.items.delete(item.id)
 		}
 	}
@@ -318,10 +319,35 @@ async function removeExcludedFiles(controller: vscode.TestController, excludePat
 async function findInitialFiles(controller: vscode.TestController,
 								includePatterns: vscode.RelativePattern[],
 								excludePatterns: vscode.RelativePattern[],
+									removeExcluded: boolean = false) {
+	const findAllFilesAtStartup = vscode.workspace.getConfiguration('ablunit').get('findAllFilesAtStartup')
+
+	if (!findAllFilesAtStartup) {
+		return
+	}
+
+	for (const includePattern of includePatterns) {
+		for (const wsFile of await vscode.workspace.findFiles(includePattern)) {
+			const excluded = await isFileExcluded(wsFile, excludePatterns)
+			if (!excluded) {
+				const { file, data } = getOrCreateFile(controller, wsFile)
+				if(file) {
+					await data.updateFromDisk(controller, file)
+				}
+			}
+		}
+	}
+}
+
+async function findInitialFilesGrep(controller: vscode.TestController,
+								includePatterns: vscode.RelativePattern[],
+								excludePatterns: vscode.RelativePattern[],
 								removeExcluded: boolean = false) {
 	const findAllFilesAtStartup = vscode.workspace.getConfiguration('ablunit').get('findAllFilesAtStartup')
 
+	console.log("removeExcluded-1=" + removeExcluded)
 	if (removeExcluded) {
+
 		removeExcludedFiles(controller, excludePatterns)
 	}
 
@@ -343,20 +369,10 @@ async function findInitialFiles(controller: vscode.TestController,
 			data.updateFromDisk(controller, file)
 		}
 	}
-}
 
-//@deprecated
-async function findInitialFilesOld(controller: vscode.TestController, includePatterns: vscode.RelativePattern[], excludePatterns: vscode.RelativePattern[], removeExcluded: boolean = false) {
-	for (const includePattern of includePatterns) {
-		for (const wsFile of await vscode.workspace.findFiles(includePattern)) {
-			const excluded = await isFileExcluded(wsFile, excludePatterns)
-			if (!excluded) {
-				const { file, data } = getOrCreateFile(controller, wsFile)
-				if(file) {
-					await data.updateFromDisk(controller, file)
-				}
-			}
-		}
+	console.log("removeExcluded-2=" + removeExcluded)
+	if (removeExcluded) {
+		removeExcludedFiles(controller, excludePatterns)
 	}
 }
 
