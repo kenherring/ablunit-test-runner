@@ -17,7 +17,13 @@ let generationCounter = 0
 export const getContentFromFilesystem = async (uri: vscode.Uri) => {
 	try {
 		const rawContent = await vscode.workspace.fs.readFile(uri)
-		return textDecoder.decode(rawContent)
+		const lines = textDecoder.decode(rawContent).split("\n")
+		for (let i = 0; i < lines.length; i++) {
+			if (lines[i].trim().startsWith("//")) {
+				lines[i] = ""
+			}
+		}
+		return lines.join("\n")
 	} catch (e) {
 		console.warn(`Error providing tests for ${uri.fsPath}`, e)
 		return ''

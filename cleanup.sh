@@ -2,7 +2,7 @@
 set -eou pipefail
 
 ARR=("ablunit.json" "ablunit.log" "progress.ini" "prof.out" "prof.json" "protrace.*" "results.json"
-	 "results.xml" "dbg_*" "*.xref" "results.prof" "profiler.json" "profile.options")
+	 "results.xml" "dbg_*" "*.r" "*.xref" "results.prof" "profiler.json" "profile.options")
 for F in "${ARR[@]}"; do
 	echo "deleting files matching '$F'"
 	find test_projects -type f -name "$F" -delete

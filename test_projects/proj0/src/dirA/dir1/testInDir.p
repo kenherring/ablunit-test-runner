@@ -9,7 +9,7 @@ end procedure.
 @Test.
 procedure customerTest :
   message "customerTest".
-  for each customer no-lock:
+  for each customer no-lock where customer.name begins "b":
       message customer.name.
   end.
 end procedure.

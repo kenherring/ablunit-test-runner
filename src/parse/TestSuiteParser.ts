@@ -68,8 +68,6 @@ export function parseTestSuite (lines: string[]) {
 	}
 
 	for (let lineNo = 0; lineNo < lines.length; lineNo++) {
-		if (lines[lineNo].trim().startsWith("//"))
-			continue
 
 		if(lines[lineNo].toLowerCase().indexOf("@testsuite") != -1) {
 			const suiteRes = suiteRE.exec(lines[lineNo])
