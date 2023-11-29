@@ -7,7 +7,10 @@ module.exports = {
 		'@typescript-eslint',
 	],
 	"ignorePatterns": [
-		"tools/**"
+		".vscode-test/**",
+		"node_modules/**",
+		"test_projects/**",
+		"out/**",
 	],
 	extends: [
 		'eslint:recommended',

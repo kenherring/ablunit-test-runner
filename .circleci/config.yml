@@ -49,8 +49,8 @@ jobs:
       - store_test_results:
           when: always
           path: artifacts/
-      - run: npx eslint . --ext .ts,.js -f json -o artifacts/eslint_plain_report.json || true
-      - run: npx eslint . --ext .ts,.js -f .circleci/sonarqube_formatter.js -o artifacts/eslint_report.json || true
+      - run: npx eslint . --ext .ts,.js -f json -o artifacts/eslint_plain_report.json
+      - run: npx eslint . --ext .ts,.js -f .circleci/sonarqube_formatter.js -o artifacts/eslint_report.json
       # - run: npx eslint . --format junit --output-file artifacts/eslint.xml
       - store_artifacts:
           when: always
