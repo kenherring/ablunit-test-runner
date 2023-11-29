@@ -4,7 +4,7 @@ import path = require('path')
 import { readFileSync } from 'fs'
 import { parseTestClass } from '../../parse/TestClassParser'
 import { parseTestSuite } from '../../parse/TestSuiteParser'
-import { getTestCount } from '../common'
+import { getTestCount, sleep } from '../common'
 
 const projName = 'proj0'
 
@@ -14,6 +14,8 @@ suite('SourceParser Test Suite - proj5', () => {
 
 	test('testCount', async () => {
 		await vscode.commands.executeCommand('testing.refreshTests')
+		await sleep(500)
+
 		await vscode.commands.executeCommand('testing.runAll').then(() => {
 			console.log("testing.runAll complete!")
 		} , (err) => {

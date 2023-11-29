@@ -13,6 +13,8 @@ const backgroundExecuted = vscode.window.createTextEditorDecorationType({
 	backgroundColor: 'rgba(0,255,0,0.1)',
 })
 
+let excludedFiles: vscode.Uri[] = []
+
 let recentResults: ABLResults | undefined
 let storageUri: vscode.Uri | undefined = undefined
 
@@ -131,6 +133,13 @@ export async function activate(context: vscode.ExtensionContext) {
 			logToChannel('ablunit run complete')
 			run.appendOutput('ablunit run complete\r\n')
 
+			if (res.ablResults) {
+				const p = res.ablResults.resultsJson[0]
+				const totals = "Totals - " + p.tests + " tests, " + p.passed + " passed, " + p.errors + " errors, " + p.failures + " failures"
+				logToChannel(totals)
+				run.appendOutput(totals + "\r\n")
+			}
+
 			for (const { test } of queue) {
 				if (run.token.isCancellationRequested) {
 					run.skipped(test)
@@ -174,12 +183,16 @@ export async function activate(context: vscode.ExtensionContext) {
 		}
 	}
 
-	function updateNodeForDocument(e: vscode.TextDocument) {
+	async function updateNodeForDocument(e: vscode.TextDocument) {
 		const openEditors = vscode.window.visibleTextEditors.filter(editor => editor.document.uri === e.uri)
 		openEditors.forEach(editor => { decorate(editor) })
 
 		if (e.uri.scheme !== 'file') { return }
 		if (!e.uri.path.endsWith('.cls') && !e.uri.path.endsWith('.p')) { return }
+
+		if(await isFileExcluded(e.uri,getExcludePatterns())) {
+			return
+		}
 
 		const { file, data } = getOrCreateFile(ctrl, e.uri)
 		if (file) {
@@ -187,10 +200,13 @@ export async function activate(context: vscode.ExtensionContext) {
 		}
 	}
 
-	function updateConfiguration(controller: vscode.TestController, e: vscode.ConfigurationChangeEvent) {
+	async function updateConfiguration(controller: vscode.TestController, e: vscode.ConfigurationChangeEvent) {
 		resetAblunitConfig()
+		excludedFiles = []
+
 		if (e.affectsConfiguration('ablunit')) {
-			vscode.commands.executeCommand('testing.refreshTests')
+			await removeExcludedFiles(controller, getExcludePatterns())
+			// vscode.commands.executeCommand('testing.refreshTests')
 		}
 	}
 }
@@ -209,12 +225,6 @@ function getOrCreateFile(controller: vscode.TestController, uri: vscode.Uri) {
 			throw new Error("[getOrCreateFile] unexpected data type")
 		}
 	}
-
-	isFileExcluded(uri,getExcludePatterns()).then(excluded => {
-		if(excluded) {
-			return { file: undefined, data: undefined }
-		}
-	})
 
 	const file = controller.createTestItem(uri.toString(), vscode.workspace.asRelativePath(uri.fsPath), uri)
 	file.tags = [ new vscode.TestTag("runnable") ]
@@ -309,9 +319,28 @@ function getWorkspaceTestPatterns() {
 
 async function removeExcludedFiles(controller: vscode.TestController, excludePatterns: vscode.RelativePattern[]) {
 	for (const item of gatherTestItems(controller.items)) {
-		if (item.uri && await isFileExcluded(item.uri, excludePatterns)) {
-			console.log("----- DELETE! item.id=" + item.id + " item.uri=" + item.uri.fsPath)
-			controller.items.delete(item.id)
+		const data = testData.get(item)
+		if (data instanceof ABLTestClass || data instanceof ABLTestProgram || data instanceof ABLTestSuite) {
+			if (item.uri && await isFileExcluded(item.uri, excludePatterns)) {
+				controller.items.delete(item.id)
+			}
+		} else {
+			await removeExcludedChildren(item, excludePatterns)
+		}
+	}
+}
+
+async function removeExcludedChildren(parent: vscode.TestItem, excludePatterns: vscode.RelativePattern[]) {
+	if (!parent.children) { return }
+3
+	for(const [,item] of parent.children) {
+		const data = testData.get(item)
+		if (data instanceof ABLTestClass || data instanceof ABLTestProgram || data instanceof ABLTestSuite) {
+			if (item.uri && await isFileExcluded(item.uri, excludePatterns)) {
+				parent.children.delete(item.id)
+			}
+		} else {
+			await removeExcludedChildren(item, excludePatterns)
 		}
 	}
 }
@@ -324,13 +353,16 @@ async function findInitialFiles(controller: vscode.TestController,
 
 	if (!findAllFilesAtStartup) {
 		if (removeExcluded) {
-			removeExcludedFiles(controller, excludePatterns)
+			await removeExcludedFiles(controller, excludePatterns)
 		}
 		return
 	}
 
 	for (const includePattern of includePatterns) {
 		for (const wsFile of await vscode.workspace.findFiles(includePattern)) {
+			if (await isFileExcluded(wsFile, excludePatterns)) {
+				continue
+			}
 			const { file, data } = getOrCreateFile(controller, wsFile)
 			if(file) {
 				await data.updateFromDisk(controller, file)
@@ -339,7 +371,7 @@ async function findInitialFiles(controller: vscode.TestController,
 	}
 
 	if (removeExcluded) {
-		removeExcludedFiles(controller, excludePatterns)
+		await removeExcludedFiles(controller, excludePatterns)
 	}
 }
 
@@ -351,8 +383,7 @@ async function findInitialFilesGrep(controller: vscode.TestController,
 
 	console.log("removeExcluded-1=" + removeExcluded)
 	if (removeExcluded) {
-
-		removeExcludedFiles(controller, excludePatterns)
+		await removeExcludedFiles(controller, excludePatterns)
 	}
 
 	if (!findAllFilesAtStartup) {
@@ -368,6 +399,9 @@ async function findInitialFilesGrep(controller: vscode.TestController,
 
 	for (const grepFile of grepFiles) {
 		const wsFile = vscode.Uri.joinPath(workspaceDir, grepFile)
+		if (await isFileExcluded(wsFile, excludePatterns)) {
+			continue
+		}
 		const { file, data } = getOrCreateFile(controller, wsFile)
 		if(file) {
 			data.updateFromDisk(controller, file)
@@ -376,7 +410,7 @@ async function findInitialFilesGrep(controller: vscode.TestController,
 
 	console.log("removeExcluded-2=" + removeExcluded)
 	if (removeExcluded) {
-		removeExcludedFiles(controller, excludePatterns)
+		await removeExcludedFiles(controller, excludePatterns)
 	}
 }
 
@@ -486,6 +520,9 @@ async function isFileExcluded (uri: vscode.Uri, excludePatterns: vscode.Relative
 	if (!excludePatterns || excludePatterns.length == 0) {
 		return false
 	}
+	if (excludedFiles.includes(uri)) {
+		return true
+	}
 
 	const relativePath = vscode.workspace.asRelativePath(uri.fsPath)
 
@@ -493,6 +530,7 @@ async function isFileExcluded (uri: vscode.Uri, excludePatterns: vscode.Relative
 		const files = await vscode.workspace.findFiles(relativePath, excludePattern, 1)
 		if (files.length == 0) {
 			logToChannel("file excluded: " + relativePath + ", excludePattern: " + excludePattern.pattern)
+			excludedFiles.push(uri)
 			return true
 		}
 	}

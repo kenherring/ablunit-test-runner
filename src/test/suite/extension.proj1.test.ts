@@ -1,7 +1,7 @@
 import * as assert from 'assert';
 import { afterEach, beforeEach } from 'mocha';
 import * as vscode from 'vscode';
-import { doesFileExist, getTestCount } from '../common'
+import { doesFileExist, getTestCount, sleep } from '../common'
 
 const projName = 'proj1'
 
@@ -25,8 +25,7 @@ suite('Extension Test Suite - ' + projName, () => {
 		await vscode.commands.executeCommand('testing.refreshTests');
 		await vscode.commands.executeCommand('workbench.view.testing.focus')
 
-		console.log("sleeping for 2s while tests are discovered")
-		await new Promise( resolve => setTimeout(resolve, 2000))
+		await sleep(2000)
 
 		await vscode.commands.executeCommand('testing.runAll').then(() => {
 			console.log("testing.runAll complete!")
@@ -42,9 +41,6 @@ suite('Extension Test Suite - ' + projName, () => {
 	test('output files exist 2 - exclude compileError.p', async () => {
 		await vscode.workspace.getConfiguration('ablunit').update('files.exclude', [ ".builder/**", "compileError.p" ])
 		await vscode.commands.executeCommand('testing.refreshTests')
-
-		console.log("sleeping for 500ms while tests are re-discovered")
-		await new Promise( resolve => setTimeout(resolve, 500))
 
 		await vscode.commands.executeCommand('testing.runAll').then(() => {
 			console.log("testing.runAll complete!")
