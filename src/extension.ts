@@ -319,10 +319,13 @@ async function removeExcludedFiles(controller: vscode.TestController, excludePat
 async function findInitialFiles(controller: vscode.TestController,
 								includePatterns: vscode.RelativePattern[],
 								excludePatterns: vscode.RelativePattern[],
-									removeExcluded: boolean = false) {
+								removeExcluded: boolean = false) {
 	const findAllFilesAtStartup = vscode.workspace.getConfiguration('ablunit').get('findAllFilesAtStartup')
 
 	if (!findAllFilesAtStartup) {
+		if (removeExcluded) {
+			removeExcludedFiles(controller, excludePatterns)
+		}
 		return
 	}
 
@@ -336,6 +339,10 @@ async function findInitialFiles(controller: vscode.TestController,
 				}
 			}
 		}
+	}
+
+	if (removeExcluded) {
+		removeExcludedFiles(controller, excludePatterns)
 	}
 }
 
