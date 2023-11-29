@@ -29,6 +29,9 @@ export const parseABLTestClass = (text: string, relativePath: string, events: {
 		}
 
 		const classRet = parseTestClass(lines, configClassLabel, relativePath, workspaceDir)
+		if (classRet.methods.length == 0) {
+			return
+		}
 
 		for(const testProgramDir of classRet.testProgramDirs) {
 			if(testProgramDir) {

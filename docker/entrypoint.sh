@@ -36,6 +36,11 @@ initialize () {
 			cp "/home/circleci/ablunit-test-provider/$FILE" "$FILE"
 		done < <(cd /home/circleci/ablunit-test-provider && git diff --name-only)
 	fi
+
+	if [ ! -f .vscode-test/v12.2.13.0.tar.gz ]; then
+		curl -L https://github.com/progress/ADE/archive/refs/tags/v12.2.13.0.tar.gz -o .vscode-test/v12.2.13.0.tar.gz
+	fi
+	tar -xf .vscode-test/v12.2.13.0.tar.gz -C test_projects/proj7_load_performance/src
 }
 
 run_tests () {

@@ -26,6 +26,10 @@ export const parseABLTestSuite = (text: string, relativePath: string, events: {
 
 	const parseSuite = () => {
 		const suiteRet = parseTestSuite(lines)
+		if (suiteRet.classes.length == 0 && suiteRet.procedures.length == 0) {
+			return
+		}
+
 		if (suiteRet.name === "") {
 			suiteRet.name = relativePath
 		}

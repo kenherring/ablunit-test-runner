@@ -4,6 +4,7 @@ import { logToChannel } from './ABLUnitCommon'
 import { ABLResults } from './ABLResults'
 import { resetAblunitConfig } from './ABLUnitConfigWriter'
 import { readFileSync } from 'fs'
+import { exec } from "child_process"
 
 const backgroundExecutable = vscode.window.createTextEditorDecorationType({
 	backgroundColor: 'rgba(255,0,0,0.1)',
@@ -314,7 +315,10 @@ async function removeExcludedFiles(controller: vscode.TestController, excludePat
 	}
 }
 
-async function findInitialFiles(controller: vscode.TestController, includePatterns: vscode.RelativePattern[], excludePatterns: vscode.RelativePattern[], removeExcluded: boolean = false) {
+async function findInitialFiles(controller: vscode.TestController,
+								includePatterns: vscode.RelativePattern[],
+								excludePatterns: vscode.RelativePattern[],
+								removeExcluded: boolean = false) {
 	const findAllFilesAtStartup = vscode.workspace.getConfiguration('ablunit').get('findAllFilesAtStartup')
 
 	if (removeExcluded) {
@@ -324,6 +328,25 @@ async function findInitialFiles(controller: vscode.TestController, includePatter
 	if (!findAllFilesAtStartup) {
 		return
 	}
+
+	const workspaceDir = vscode.workspace.workspaceFolders![0].uri
+	const grepFiles = await grepTrackedFiles("@test")
+
+	if (grepFiles.length == 0) {
+		return
+	}
+
+	for (const grepFile of grepFiles) {
+		const wsFile = vscode.Uri.joinPath(workspaceDir, grepFile)
+		const { file, data } = getOrCreateFile(controller, wsFile)
+		if(file) {
+			data.updateFromDisk(controller, file)
+		}
+	}
+}
+
+//@deprecated
+async function findInitialFilesOld(controller: vscode.TestController, includePatterns: vscode.RelativePattern[], excludePatterns: vscode.RelativePattern[], removeExcluded: boolean = false) {
 	for (const includePattern of includePatterns) {
 		for (const wsFile of await vscode.workspace.findFiles(includePattern)) {
 			const excluded = await isFileExcluded(wsFile, excludePatterns)
@@ -335,6 +358,29 @@ async function findInitialFiles(controller: vscode.TestController, includePatter
 			}
 		}
 	}
+}
+
+async function grepTrackedFiles (pattern: string) {
+	const grepFiles: string[] = []
+	await new Promise<string>((resolve, reject) => {
+		exec('git grep -irl "' + pattern + '" .', { cwd: vscode.workspace.workspaceFolders![0].uri.fsPath }, (err: any, stdout: any, stderr: any) => {
+			if (stdout) {
+				stdout.split("\n").forEach((line: string) => {
+					if (line != "") {
+						grepFiles.push(line)
+					}
+				})
+			}
+			if (stderr) {
+				logToChannel("grep stderr=" + stderr)
+			}
+			if (err) {
+				logToChannel("grep err=" + err.toString(), 'error')
+			}
+			resolve("resolve grep promise")
+		})
+	})
+	return grepFiles
 }
 
 function startWatchingWorkspace(controller: vscode.TestController, fileChangedEmitter: vscode.EventEmitter<vscode.Uri> ) {

@@ -26,6 +26,9 @@ export const parseABLTestProgram = (text: string, relativePath: string, events: 
 		}
 
 		const programRet = parseTestProgram(lines, relativePath, workspaceDir)
+		if (programRet.procedures.length == 0) {
+			return
+		}
 
 		for (const testProgramDir of programRet.testProgramDirs) {
 			if(testProgramDir) {
