@@ -331,12 +331,9 @@ async function findInitialFiles(controller: vscode.TestController,
 
 	for (const includePattern of includePatterns) {
 		for (const wsFile of await vscode.workspace.findFiles(includePattern)) {
-			const excluded = await isFileExcluded(wsFile, excludePatterns)
-			if (!excluded) {
-				const { file, data } = getOrCreateFile(controller, wsFile)
-				if(file) {
-					await data.updateFromDisk(controller, file)
-				}
+			const { file, data } = getOrCreateFile(controller, wsFile)
+			if(file) {
+				await data.updateFromDisk(controller, file)
 			}
 		}
 	}

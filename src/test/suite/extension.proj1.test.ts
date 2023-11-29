@@ -25,7 +25,7 @@ suite('Extension Test Suite - ' + projName, () => {
 		await vscode.commands.executeCommand('testing.refreshTests');
 		await vscode.commands.executeCommand('workbench.view.testing.focus')
 
-		console.log("sleeping for 2s while tests are discovered") //There's gotta be a better way to do this...
+		console.log("sleeping for 2s while tests are discovered")
 		await new Promise( resolve => setTimeout(resolve, 2000))
 
 		await vscode.commands.executeCommand('testing.runAll').then(() => {
@@ -40,8 +40,11 @@ suite('Extension Test Suite - ' + projName, () => {
 	})
 
 	test('output files exist 2 - exclude compileError.p', async () => {
-		await vscode.workspace.getConfiguration('ablunit').update('files.exclude', ['.builder/**','compileError.p'])
+		await vscode.workspace.getConfiguration('ablunit').update('files.exclude', [ ".builder/**", "compileError.p" ])
 		await vscode.commands.executeCommand('testing.refreshTests')
+
+		console.log("sleeping for 500ms while tests are re-discovered")
+		await new Promise( resolve => setTimeout(resolve, 500))
 
 		await vscode.commands.executeCommand('testing.runAll').then(() => {
 			console.log("testing.runAll complete!")
