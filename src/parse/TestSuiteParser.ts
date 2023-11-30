@@ -1,5 +1,6 @@
 import * as vscode from 'vscode'
 import { logToChannel } from '../ABLUnitCommon'
+import { getLines } from './TestParserCommon'
 
 // CLASS statement
 const classRE = /^\s*class\s+(\S+\w):?\s*/i
@@ -19,7 +20,11 @@ export const parseABLTestSuite = (text: string, relativePath: string, events: {
 	relativePath = relativePath.replace(/\\/g, '/')
 	logToChannel("parsing " + relativePath)
 
-	const lines = text.replace(/\r/g,'').split("\n")
+	const [ lines, foundAnnotation ] = getLines(text,"@testsuite")
+	if (!foundAnnotation) {
+		return
+	}
+
 	if (!vscode.workspace.workspaceFolders) {
 		return
 	}
@@ -36,11 +41,9 @@ export const parseABLTestSuite = (text: string, relativePath: string, events: {
 
 		events.onTestSuite(suiteRet.range, relativePath, suiteRet.name)
 		for (const classEntry of suiteRet.classes) {
-			console.log("onTestClass: " + classEntry)
 			events.onTestClass(suiteRet.range, classEntry, classEntry, classEntry, suiteRet.name)
 		}
 		for (const procedureEntry of suiteRet.procedures) {
-			console.log("onTestProcedure: " + procedureEntry)
 			events.onTestProgram(suiteRet.range, procedureEntry, procedureEntry, suiteRet.name)
 		}
 	}
@@ -91,7 +94,6 @@ export function parseTestSuite (lines: string[]) {
 		}
 	}
 
-	console.log("suiteRet=" + JSON.stringify(suiteRet))
 	return suiteRet
 }
 
@@ -104,17 +106,14 @@ function parseAnnotation (suiteRes: RegExpExecArray | null) {
 	const [,details] = suiteRes
 
 	if (details) {
-		console.log("FOUND ANNOTATION: " + details)
 		const classesRes = suiteClasses.exec(details)
 		if (classesRes) {
 			const [, classes] = classesRes
-			console.log("FOUND CLASSES: " + classes.split(','))
 			retClasses = retClasses.concat(classes.split(','))
 		}
 		const proceduresRes = suiteProcedures.exec(details)
 		if (proceduresRes) {
 			const [, procedures] = proceduresRes
-			console.log("FOUND PROCEDURES: " + procedures.split(','))
 			retProcedures = retProcedures.concat(procedures.split(','))
 		}
 	}

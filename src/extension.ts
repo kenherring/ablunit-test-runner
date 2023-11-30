@@ -1,10 +1,11 @@
 import * as vscode from 'vscode'
-import { ABLTestSuite, ABLTestClass, ABLTestProgram, ABLTestMethod, ABLTestProcedure, testData, resultData } from './testTree'
+import { ABLTestSuite, ABLTestClass, ABLTestProgram, ABLTestMethod, ABLTestProcedure, testData, resultData, ABLTestFile, ABLUnitDir, ABLTestCase, ABLRunnable } from './testTree'
 import { logToChannel } from './ABLUnitCommon'
 import { ABLResults } from './ABLResults'
 import { resetAblunitConfig } from './ABLUnitConfigWriter'
 import { readFileSync } from 'fs'
 import { exec } from "child_process"
+import * as glob from 'glob';
 
 const backgroundExecutable = vscode.window.createTextEditorDecorationType({
 	backgroundColor: 'rgba(255,0,0,0.1)',
@@ -12,8 +13,6 @@ const backgroundExecutable = vscode.window.createTextEditorDecorationType({
 const backgroundExecuted = vscode.window.createTextEditorDecorationType({
 	backgroundColor: 'rgba(0,255,0,0.1)',
 })
-
-let excludedFiles: vscode.Uri[] = []
 
 let recentResults: ABLResults | undefined
 let storageUri: vscode.Uri | undefined = undefined
@@ -46,14 +45,19 @@ export async function activate(context: vscode.ExtensionContext) {
 			return startTestRun(request)
 		}
 
-		const l = fileChangedEmitter.event(uri => startTestRun(
-			new vscode.TestRunRequest(
-				[getOrCreateFile(ctrl, uri).file],
-				undefined,
-				request.profile,
-				true
-			)
-		))
+		const l = fileChangedEmitter.event(uri => {
+			const file = getOrCreateFile(ctrl, uri).file
+			if(file) {
+				startTestRun(
+					new vscode.TestRunRequest(
+						[file],
+						undefined,
+						request.profile,
+						true
+					)
+				)
+			}
+		})
 		cancellation.onCancellationRequested(() => l.dispose())
 	}
 
@@ -69,11 +73,9 @@ export async function activate(context: vscode.ExtensionContext) {
 		}
 		showNotification("running ablunit tests")
 
-		const queue: { test: vscode.TestItem; data: ABLTestSuite | ABLTestClass | ABLTestMethod | ABLTestProgram | ABLTestProcedure }[] = []
+		const queue: { test: vscode.TestItem; data: ABLRunnable }[] = []
 		const run = ctrl.createTestRun(request)
-		console.log('created testRun')
 		resultData.set(run, res)
-		console.log('created resultData')
 
 		const discoverTests = async (tests: Iterable<vscode.TestItem>) => {
 			for (const test of tests) {
@@ -86,7 +88,11 @@ export async function activate(context: vscode.ExtensionContext) {
 					printDataType(data)
 				}
 
-				if (data instanceof ABLTestSuite || data instanceof ABLTestClass || data instanceof ABLTestProgram || data instanceof ABLTestMethod || data instanceof ABLTestProcedure || data instanceof ABLTestMethod) {
+				if (data instanceof ABLTestSuite ||
+					data instanceof ABLTestClass ||
+					data instanceof ABLTestProgram ||
+					data instanceof ABLTestMethod ||
+					data instanceof ABLTestProcedure) {
 					run.enqueued(test)
 					queue.push({ test, data })
 					await res.addTest(test.id)
@@ -190,7 +196,7 @@ export async function activate(context: vscode.ExtensionContext) {
 		if (e.uri.scheme !== 'file') { return }
 		if (!e.uri.path.endsWith('.cls') && !e.uri.path.endsWith('.p')) { return }
 
-		if(await isFileExcluded(e.uri,getExcludePatterns())) {
+		if(isFileExcluded(e.uri,getExcludePatterns())) {
 			return
 		}
 
@@ -202,7 +208,6 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	async function updateConfiguration(controller: vscode.TestController, e: vscode.ConfigurationChangeEvent) {
 		resetAblunitConfig()
-		excludedFiles = []
 
 		if (e.affectsConfiguration('ablunit')) {
 			await removeExcludedFiles(controller, getExcludePatterns())
@@ -226,37 +231,70 @@ function getOrCreateFile(controller: vscode.TestController, uri: vscode.Uri) {
 		}
 	}
 
+	const data = createTopNode(uri)
+	if(!data) {
+		return { file: undefined, data: undefined }
+	}
+
 	const file = controller.createTestItem(uri.toString(), vscode.workspace.asRelativePath(uri.fsPath), uri)
 	file.tags = [ new vscode.TestTag("runnable") ]
+
 	controller.items.add(file)
-	const data = createTopNode(file)
 	testData.set(file, data)
 	file.canResolveChildren = true
+	file.description = "xyz"
 	return { file, data }
 }
 
-function createTopNode(file: vscode.TestItem) {
-	const isSuite = isTestSuite(file.uri)
+function createTopNode(file: vscode.Uri) {
+	const fileAttrs = getTestFileAttrs(file)
+	if (fileAttrs === "none") {
+		return undefined
+	}
 
-	if (isSuite) {
+	if (fileAttrs === "suite") {
 		return new ABLTestSuite()
 	}
-	if (file.uri?.toString().endsWith(".cls")) {
+	if (file.fsPath.endsWith(".cls")) {
 		return new ABLTestClass()
 	}
 	return new ABLTestProgram()
 }
 
-function isTestSuite(file: vscode.Uri | undefined) {
-	if (!file) { return false }
+function getTestFileAttrs(file: vscode.Uri | undefined) {
+	if (!file) {
+		return "none"
+	}
 	const suiteRegex = /@testsuite/i
 	const contents = readFileSync(file.fsPath).toString()
-	return suiteRegex.test(contents)
+	if (!contents) {
+		return "none"
+	}
+	if (contents.length < 1) {
+		return "none"
+	}
+
+	if (suiteRegex.test(contents)) {
+		return "suite"
+	}
+	return "other"
 }
 
 function gatherTestItems(collection: vscode.TestItemCollection) {
 	const items: vscode.TestItem[] = []
 	collection.forEach(item => items.push(item))
+	return items
+}
+
+function getABLTestFiles(collection: vscode.TestItemCollection) {
+	let items: vscode.TestItem[] = []
+	collection.forEach(item => {
+		if(item instanceof ABLTestFile) {
+			items.push(item)
+		} else if(item instanceof ABLUnitDir) {
+			items = items.concat(getABLTestFiles(item.children))
+		}
+	})
 	return items
 }
 
@@ -318,29 +356,47 @@ function getWorkspaceTestPatterns() {
 }
 
 async function removeExcludedFiles(controller: vscode.TestController, excludePatterns: vscode.RelativePattern[]) {
-	for (const item of gatherTestItems(controller.items)) {
+	const items = gatherTestItems(controller.items)
+
+	for (const element of items) {
+		const item = element
 		const data = testData.get(item)
-		if (data instanceof ABLTestClass || data instanceof ABLTestProgram || data instanceof ABLTestSuite) {
-			if (item.uri && await isFileExcluded(item.uri, excludePatterns)) {
+		if (item.id === "ABLTestSuiteGroup" || data instanceof ABLUnitDir) {
+			await removeExcludedChildren(item, excludePatterns)
+		}
+		if (item.uri && (data instanceof ABLTestSuite || data instanceof ABLTestClass || data instanceof ABLTestProgram)) {
+			const excluded = isFileExcluded(item.uri, excludePatterns)
+			if (item.uri && excluded) {
+				testData.delete(item)
 				controller.items.delete(item.id)
 			}
-		} else {
-			await removeExcludedChildren(item, excludePatterns)
+		}
+		if (data instanceof ABLUnitDir && item.children.size == 0) {
+			testData.delete(item)
+			controller.items.delete(item.id)
 		}
 	}
 }
 
 async function removeExcludedChildren(parent: vscode.TestItem, excludePatterns: vscode.RelativePattern[]) {
-	if (!parent.children) { return }
-3
+	if (!parent.children) {
+		return
+	}
+
 	for(const [,item] of parent.children) {
 		const data = testData.get(item)
-		if (data instanceof ABLTestClass || data instanceof ABLTestProgram || data instanceof ABLTestSuite) {
-			if (item.uri && await isFileExcluded(item.uri, excludePatterns)) {
+		if (data instanceof ABLTestFile) {
+			const excluded = isFileExcluded(item.uri!, excludePatterns)
+			if (item.uri && excluded) {
 				parent.children.delete(item.id)
+				testData.delete(item)
 			}
-		} else {
+		} else if (data?.isFile) {
 			await removeExcludedChildren(item, excludePatterns)
+			if (item.children.size == 0) {
+				parent.children.delete(item.id)
+				testData.delete(item)
+			}
 		}
 	}
 }
@@ -360,7 +416,7 @@ async function findInitialFiles(controller: vscode.TestController,
 
 	for (const includePattern of includePatterns) {
 		for (const wsFile of await vscode.workspace.findFiles(includePattern)) {
-			if (await isFileExcluded(wsFile, excludePatterns)) {
+			if (isFileExcluded(wsFile, excludePatterns)) {
 				continue
 			}
 			const { file, data } = getOrCreateFile(controller, wsFile)
@@ -381,7 +437,6 @@ async function findInitialFilesGrep(controller: vscode.TestController,
 								removeExcluded: boolean = false) {
 	const findAllFilesAtStartup = vscode.workspace.getConfiguration('ablunit').get('findAllFilesAtStartup')
 
-	console.log("removeExcluded-1=" + removeExcluded)
 	if (removeExcluded) {
 		await removeExcludedFiles(controller, excludePatterns)
 	}
@@ -399,7 +454,7 @@ async function findInitialFilesGrep(controller: vscode.TestController,
 
 	for (const grepFile of grepFiles) {
 		const wsFile = vscode.Uri.joinPath(workspaceDir, grepFile)
-		if (await isFileExcluded(wsFile, excludePatterns)) {
+		if (isFileExcluded(wsFile, excludePatterns)) {
 			continue
 		}
 		const { file, data } = getOrCreateFile(controller, wsFile)
@@ -408,7 +463,6 @@ async function findInitialFilesGrep(controller: vscode.TestController,
 		}
 	}
 
-	console.log("removeExcluded-2=" + removeExcluded)
 	if (removeExcluded) {
 		await removeExcludedFiles(controller, excludePatterns)
 	}
@@ -447,7 +501,7 @@ function startWatchingWorkspace(controller: vscode.TestController, fileChangedEm
 			const watcher = vscode.workspace.createFileSystemWatcher(includePattern)
 
 			watcher.onDidCreate(async uri => {
-				if (await isFileExcluded(uri, excludePatterns))  {
+				if (isFileExcluded(uri, excludePatterns))  {
 					return
 				}
 				getOrCreateFile(controller, uri)
@@ -455,7 +509,7 @@ function startWatchingWorkspace(controller: vscode.TestController, fileChangedEm
 			})
 
 			watcher.onDidChange(async uri => {
-				if (await isFileExcluded(uri,excludePatterns)) {
+				if (isFileExcluded(uri,excludePatterns)) {
 					return
 				}
 
@@ -516,31 +570,23 @@ function showNotification(message: string) {
 	}
 }
 
-async function isFileExcluded (uri: vscode.Uri, excludePatterns: vscode.RelativePattern[]) {
-	if (!excludePatterns || excludePatterns.length == 0) {
-		return false
-	}
-	if (excludedFiles.includes(uri)) {
-		return true
-	}
-
+function isFileExcluded(uri: vscode.Uri, excludePatterns: vscode.RelativePattern[]) {
+	const patterns = excludePatterns.map(pattern => pattern.pattern)
 	const relativePath = vscode.workspace.asRelativePath(uri.fsPath)
-
-	for (const excludePattern of excludePatterns) {
-		const files = await vscode.workspace.findFiles(relativePath, excludePattern, 1)
-		if (files.length == 0) {
-			logToChannel("file excluded: " + relativePath + ", excludePattern: " + excludePattern.pattern)
-			excludedFiles.push(uri)
-			return true
-		}
-	}
-	return false
+	const g = new glob.GlobSync(relativePath, { cwd: vscode.workspace.workspaceFolders![0].uri.fsPath, ignore: patterns })
+	return g.found.length == 0
 }
 
 ////////// DEBUG FUNCTIONS //////////
 
 function printDataType(data: any) {
-	if(data instanceof ABLTestSuite)
+	if (data instanceof ABLUnitDir)
+		logToChannel(" - ABLUnitDir")
+	if (data instanceof ABLTestFile)
+		logToChannel(" - ABLTestFile")
+	if (data instanceof ABLTestCase)
+		logToChannel(" - ABLTestCase")
+	if (data instanceof ABLTestSuite)
 		logToChannel(" - ABLTestSuite")
 	else if(data instanceof ABLTestClass)
 		logToChannel(" - ABLTestClass")

@@ -99,7 +99,7 @@ export class ABLResultsParser {
 		const jsonData: TestSuites = {
 			name: res['$'].name,
 			tests: Number(res['$'].tests),
-			passed: Number(res['$'].tests) - Number(res['$'].errors) - Number(res['$'].failures) - Number(res['$'].skipped),
+			passed: Number(res['$'].tests) - Number(res['$'].errors) - Number(res['$'].failures),
 			failures: Number(res['$'].failures),
 			errors: Number(res['$'].errors),
 			testsuite: testsuite

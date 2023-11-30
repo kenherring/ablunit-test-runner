@@ -1,5 +1,6 @@
 import { Position, Range, Uri, workspace } from 'vscode'
 import { logToChannel } from '../ABLUnitCommon'
+import { getLines } from './TestParserCommon'
 
 // PROCEDURE statement
 const procedureRE = /(^|\s+)procedure\s+(\S+)\s*:/i
@@ -13,7 +14,11 @@ export const parseABLTestProgram = (text: string, relativePath: string, events: 
 	relativePath = relativePath.replace(/\\/g, '/')
 	logToChannel("parsing " + relativePath)
 
-	const lines = text.replace(/\r/g,'').split("\n")
+	const [ lines, foundAnnotation ] = getLines(text, "@test")
+	if(!foundAnnotation) {
+		return
+	}
+
 	if (!workspace.workspaceFolders) {
 		return
 	}
@@ -21,10 +26,6 @@ export const parseABLTestProgram = (text: string, relativePath: string, events: 
 	const zeroRange = new Range(new Position(0,0), new Position(0,0))
 
 	const parseProgram = () => {
-		if (text.toLowerCase().indexOf("@test.") == -1) {
-			return
-		}
-
 		const programRet = parseTestProgram(lines, relativePath, workspaceDir)
 		if (programRet.procedures.length == 0) {
 			return

@@ -1,53 +1,47 @@
 import * as vscode from 'vscode'
-import { TextDecoder } from 'util'
 import { ABLResults } from './ABLResults'
 import { parseABLTestSuite } from './parse/TestSuiteParser'
 import { parseABLTestClass } from './parse/TestClassParser'
 import { parseABLTestProgram } from './parse/TestProgramParser'
+import { getContentFromFilesystem } from './parse/ProfileParser'
 
-const textDecoder = new TextDecoder('utf-8')
+export type ABLUnitTestData = ABLTestFile | ABLUnitDir | ABLRunnable | ABLAssert
+export type ABLRunnable = ABLTestSuite | ABLTestClass | ABLTestProgram | ABLTestMethod | ABLTestProcedure
+export type TestFile = ABLTestSuite | ABLTestClass | ABLTestProgram
 
-export type ABLUnitTestData = ABLTestSuite | ABLTestProgramDirectory | ABLTestClass | ABLTestProgram | ABLTestMethod | ABLTestProcedure | ABLAssert
 
 export const testData = new WeakMap<vscode.TestItem, ABLUnitTestData>()
 export const resultData = new WeakMap<vscode.TestRun, ABLResults>()
 
 let generationCounter = 0
 
-export const getContentFromFilesystem = async (uri: vscode.Uri) => {
-	try {
-		const rawContent = await vscode.workspace.fs.readFile(uri)
-		const lines: string[] = textDecoder.decode(rawContent).split("\n")
-		let foundAnnotation = false
-		for (let i = 0; i < lines.length; i++) {
-			if (lines[i].trim().startsWith("//")) {
-				lines[i] = ''
-			} else if (!foundAnnotation && lines[i].toLowerCase().indexOf("@test")) {
-				foundAnnotation = true
-			}
-		}
-		if (!foundAnnotation) {
-			return undefined
-		}
-		return lines.join("\n")
-	} catch (e) {
-		console.warn(`Error providing tests for ${uri.fsPath}`, e)
-		return ''
-	}
+interface ITestType {
+	isFile: boolean
+	didResolve: boolean
+	name: string
+	label: string
+	runnable: boolean
+	canResolveChildren: boolean
 }
 
-class TestTypeObj {
+class TestTypeObj implements ITestType {
+	public isFile: boolean = false
 	public didResolve: boolean = false
 	public name: string = ""
 	public label: string = ""
+	public runnable: boolean = false
+	public canResolveChildren: boolean = false
 
 	getLabel() {
 		return this.label
 	}
 }
 
-class TestFile extends TestTypeObj {
+export class ABLTestFile extends TestTypeObj {
+	public isFile: boolean = true
 	public testFileType = "TestFile"
+	public runnable: boolean = true
+	public canResolveChildren: boolean = false
 	protected replaceWith: vscode.TestItem | undefined = undefined
 	currentResults?: ABLResults
 
@@ -55,7 +49,6 @@ class TestFile extends TestTypeObj {
 		try {
 			const content = await getContentFromFilesystem(item.uri!)
 			if(!content) {
-				// console.log("no tests in " + item.uri!.fsPath)
 				return
 			}
 			item.error = undefined
@@ -108,7 +101,13 @@ class TestFile extends TestTypeObj {
 	}
 }
 
-export class ABLTestSuite extends TestFile {
+export class ABLTestCase extends TestTypeObj {
+	public testCaseType = "TestCase"
+	public runnable: boolean = true
+	public canResolveChildren: boolean = true
+}
+
+export class ABLTestSuite extends ABLTestFile {
 
 	setSuiteInfo(relativePath: string, suiteName: string) {
 		this.name = relativePath
@@ -194,7 +193,7 @@ export class ABLTestSuite extends TestFile {
 	}
 }
 
-export class ABLTestProgramDirectory extends TestTypeObj {
+export class ABLUnitDir extends TestTypeObj {
 	public canResolveChildren: boolean = false
 
 	constructor(public generation: number, private readonly relativeDir: string, private readonly element: string) {
@@ -203,7 +202,7 @@ export class ABLTestProgramDirectory extends TestTypeObj {
 	}
 }
 
-export class ABLTestClass extends TestFile {
+export class ABLTestClass extends ABLTestFile {
 	public canResolveChildren: boolean = true
 	methods: ABLTestMethod[] = []
 
@@ -225,6 +224,12 @@ export class ABLTestClass extends TestFile {
 
 		parseABLTestClass(content, relativePath, {
 
+			deleteTest() {
+				console.log("DELETE " + item.id + " " + item.label)
+				controller.items.delete(item.id)
+				testData.delete(item)
+			},
+
 			onTestProgramDirectory(range: vscode.Range, dirpath: string, dir: string, dirUri: vscode.Uri) {
 				const id = `pgmpath:${dirpath}`
 				const thead = controller.createTestItem(id, dirpath, dirUri)
@@ -237,7 +242,7 @@ export class ABLTestClass extends TestFile {
 					parent.children.push(thead)
 				}
 
-				testData.set(thead, new ABLTestProgramDirectory(thisGeneration, dir, dir))
+				testData.set(thead, new ABLUnitDir(thisGeneration, dir, dir))
 				ancestors.push({ item: thead, children: [] as vscode.TestItem[] })
 			},
 
@@ -277,11 +282,11 @@ export class ABLTestClass extends TestFile {
 
 		})
 
-		this.ascend(0, ancestors) // finish and assign children for all remaining items
+		this.ascend(0, ancestors) // finish and assign children for all remaining
 	}
 }
 
-export class ABLTestProgram extends TestFile {
+export class ABLTestProgram extends ABLTestFile {
 	public canResolveChildren: boolean = true
 	procedures: ABLTestProcedure[] = []
 
@@ -315,7 +320,7 @@ export class ABLTestProgram extends TestFile {
 					parent.children.push(thead)
 				}
 
-				testData.set(thead, new ABLTestProgramDirectory(thisGeneration, dir, dir))
+				testData.set(thead, new ABLUnitDir(thisGeneration, dir, dir))
 				ancestors.push({ item: thead, children: [] as vscode.TestItem[] })
 			},
 
@@ -327,6 +332,7 @@ export class ABLTestProgram extends TestFile {
 				thead.range = range
 				thead.label = label
 				thead.tags = [new vscode.TestTag("runnable"), new vscode.TestTag("ABLTestProgram")]
+				thead.description = "TestProgram"
 				const tData = new ABLTestProgram()
 				tData.setProgramInfo(relativepath, label)
 				testData.set(thead, tData)
@@ -360,14 +366,14 @@ export class ABLTestProgram extends TestFile {
 	}
 }
 
-export class ABLTestMethod extends TestFile { // child of TestClass
+export class ABLTestMethod extends ABLTestCase { // child of TestClass
 	constructor(public generation: number, private readonly relativePath: string, private readonly classname: string, private readonly methodName: string) {
 		super()
 		this.label = methodName
 	}
 }
 
-export class ABLTestProcedure extends TestFile { // child of TestProgram
+export class ABLTestProcedure extends ABLTestCase { // child of TestProgram
 	public description: string = "ABL Test Procedure"
 
 	constructor(public generation: number, private readonly programname: string, private readonly procedurename: string) {

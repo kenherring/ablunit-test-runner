@@ -40,7 +40,7 @@ suite('Extension Test Suite - ' + projName, () => {
 
 	test('output files exist 2 - exclude compileError.p', async () => {
 		await vscode.workspace.getConfiguration('ablunit').update('files.exclude', [ ".builder/**", "compileError.p" ])
-		await vscode.commands.executeCommand('testing.refreshTests')
+		sleep(500)
 
 		await vscode.commands.executeCommand('testing.runAll').then(() => {
 			console.log("testing.runAll complete!")

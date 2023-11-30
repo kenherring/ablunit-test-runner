@@ -1,5 +1,6 @@
 import { Position, Range, Uri, workspace } from 'vscode'
 import { logToChannel } from '../ABLUnitCommon'
+import { getLines } from './TestParserCommon'
 
 // CLASS statement
 const classRE = /^\s*class\s+(\S+[^:])\s*/i
@@ -8,6 +9,7 @@ const methodRE = /\s+method\s(\s*public)?\s*void\s*(\S+\w)/i
 // const methodRE = /\s+method\s(\s*public)?\s*void\s*(\S[^\s:(]+)/i
 
 export const parseABLTestClass = (text: string, relativePath: string, events: {
+	deleteTest(): void
 	onTestProgramDirectory (range: Range, dirpath: string, dir: string, dirUri: Uri): void
 	onTestClass(range: Range, relativePath: string, classname: string, label: string, suiteName?: string): void
 	onTestMethod(range: Range, relativePath: string, classname: string, methodname: string): void
@@ -15,7 +17,12 @@ export const parseABLTestClass = (text: string, relativePath: string, events: {
 	relativePath = relativePath.replace(/\\/g, '/')
 	logToChannel("parsing " + relativePath)
 
-	const lines = text.replace(/\r/g,'').split("\n")
+	const [lines, foundAnnotation] = getLines(text, "@test")
+	if(!foundAnnotation) {
+		events.deleteTest()
+		return
+	}
+
 	const configClassLabel = workspace.getConfiguration('ablunit').get('display.classLabel','')
 	if (!workspace.workspaceFolders) {
 		return
@@ -24,10 +31,6 @@ export const parseABLTestClass = (text: string, relativePath: string, events: {
 	const zeroRange = new Range(new Position(0,0), new Position(0,0))
 
 	const parseClass = () => {
-		if (text.toLowerCase().indexOf("@test.") == -1) {
-			return
-		}
-
 		const classRet = parseTestClass(lines, configClassLabel, relativePath, workspaceDir)
 		if (classRet.methods.length == 0) {
 			return
@@ -115,7 +118,6 @@ export function parseTestClass (lines: string[], configClassLabel: string, relat
 				classRet.testProgramDirs = getTestProgramDirs(workspaceDir, parts)
 				classRet.label = parts[parts.length - 1]
 
-				console.log("event.onTestClass-1 '" + relativePath + "' '" + classRet.classname + "' '" + classRet.label + "'" )
 				classRet.range = range
 				foundClassHead = true
 				continue
