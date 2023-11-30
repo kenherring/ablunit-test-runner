@@ -1,15 +1,14 @@
 import * as vscode from 'vscode'
-import { ABLTestSuite, ABLTestClass, ABLTestProgram, ABLTestMethod, ABLTestProcedure, testData, resultData, ABLTestFile, ABLUnitDir, ABLTestCase, ABLRunnable } from './testTree'
-import { logToChannel } from './ABLUnitCommon'
 import { ABLResults } from './ABLResults'
-import { resetAblunitConfig } from './ABLUnitConfigWriter'
+import { ABLTestSuite, ABLTestClass, ABLTestProgram, ABLTestMethod, ABLTestProcedure, testData, resultData, ABLTestFile, ABLUnitDir, ABLTestCase, ABLRunnable } from './testTree'
+import { GlobSync } from 'glob'
+import { logToChannel } from './ABLUnitCommon'
 import { readFileSync } from 'fs'
-import { exec } from "child_process"
-import * as glob from 'glob';
+import { resetAblunitConfig } from './ABLUnitConfigWriter'
 
 const backgroundExecutable = vscode.window.createTextEditorDecorationType({
 	backgroundColor: 'rgba(255,0,0,0.1)',
-  })
+})
 const backgroundExecuted = vscode.window.createTextEditorDecorationType({
 	backgroundColor: 'rgba(0,255,0,0.1)',
 })
@@ -513,7 +512,7 @@ function showNotification(message: string) {
 function isFileExcluded(uri: vscode.Uri, excludePatterns: vscode.RelativePattern[]) {
 	const patterns = excludePatterns.map(pattern => pattern.pattern)
 	const relativePath = vscode.workspace.asRelativePath(uri.fsPath)
-	const g = new glob.GlobSync(relativePath, { cwd: vscode.workspace.workspaceFolders![0].uri.fsPath, ignore: patterns })
+	const g = new GlobSync(relativePath, { cwd: vscode.workspace.workspaceFolders![0].uri.fsPath, ignore: patterns })
 	return g.found.length == 0
 }
 
