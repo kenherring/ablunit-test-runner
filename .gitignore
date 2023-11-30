@@ -32,3 +32,11 @@ progress.ini
 protrace.*
 results.json
 results.xml
+
+# Generated test files
+test_projects/proj7_load_performance/src/procs
+test_projects/proj7_load_performance/src/classes
+
+# Dowloaded test files
+test_projects/proj7_load_performance/v12.2.13.0.tar.gz
+test_projects/proj7_load_performance/src/ADE-12.2.13.0

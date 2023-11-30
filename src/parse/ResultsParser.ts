@@ -30,6 +30,7 @@ export interface TestSuite {
 	classname?: string
 	id: number
 	tests: number
+	passed: number
 	errors: number
 	failures: number
 	skipped: number
@@ -42,6 +43,7 @@ export interface TestSuite {
 export interface TestSuites {
 	name: string
 	tests: number
+	passed: number
 	errors: number
 	failures: number
 	testsuite?: TestSuite[]
@@ -97,6 +99,7 @@ export class ABLResultsParser {
 		const jsonData: TestSuites = {
 			name: res['$'].name,
 			tests: Number(res['$'].tests),
+			passed: Number(res['$'].tests) - Number(res['$'].errors) - Number(res['$'].failures),
 			failures: Number(res['$'].failures),
 			errors: Number(res['$'].errors),
 			testsuite: testsuite
@@ -116,6 +119,7 @@ export class ABLResultsParser {
 				classname: res[idx]['$'].classname ?? undefined,
 				id: res[idx]['$'].id,
 				tests: Number(res[idx]['$'].tests),
+				passed: Number(res[idx]['$'].tests) - Number(res[idx]['$'].errors) - Number(res[idx]['$'].failures) - Number(res[idx]['$'].skipped),
 				errors: Number(res[idx]['$'].errors),
 				failures: Number(res[idx]['$'].failures),
 				skipped: Number(res[idx]['$'].skipped),

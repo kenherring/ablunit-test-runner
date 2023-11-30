@@ -1,5 +1,10 @@
 import { FileType, Uri, workspace } from 'vscode'
 
+export async function sleep (time: number = 500) {
+	console.log("sleeping for " + time + "ms")
+	await new Promise( resolve => setTimeout(resolve, time))
+}
+
 export async function doesFileExist(uri: Uri) {
 	const ret = await workspace.fs.stat(uri).then((stat) => {
 		if (stat.type === FileType.File) {

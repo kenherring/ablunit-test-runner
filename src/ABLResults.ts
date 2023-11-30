@@ -143,7 +143,6 @@ export class ABLResults {
 		})
 		return workspace.fs.stat(ablunitConfig.config_output_resultsUri).then((stat) => {
 			if (stat.type === FileType.File) {
-				console.log("delete " + ablunitConfig.config_output_resultsUri.fsPath)
 				return workspace.fs.delete(ablunitConfig.config_output_resultsUri)
 			}
 		}, (err) => {
@@ -157,8 +156,8 @@ export class ABLResults {
 				throw new Error("no results available")
 			}
 		}, (err) => {
-			console.log("-- [ABLResults run caught exception]")
-			throw new Error("ablunitRun error: " + err)
+			console.log("Exception: [ABLResults run] " + err)
+			throw new Error("Exception: [ABLResults run] " + err)
 		})
 	}
 

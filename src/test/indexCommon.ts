@@ -1,4 +1,5 @@
 import { ConfigurationTarget, commands, extensions, workspace } from "vscode"
+import { sleep } from "./common"
 import * as glob from "glob"
 import * as path from "path"
 import * as Mocha from "mocha"
@@ -36,8 +37,7 @@ async function installOpenedgeABLExtension () {
 	extensions.getExtension("riversidesoftware.openedge-abl-lsp")?.activate()
 	while(!extensions.getExtension("riversidesoftware.openedge-abl-lsp")?.isActive) {
 		console.log(extensions.getExtension("riversidesoftware.openedge-abl-lsp") + " " + extensions.getExtension("riversidesoftware.openedge-abl-lsp")?.isActive)
-		console.log("[indexCommon.ts] sleeping for 500ms while extension activates...")
-		await new Promise( resolve => setTimeout(resolve, 500))
+		await sleep(500)
 	}
 	console.log("openedge-abl active? " + !extensions.getExtension("riversidesoftware.openedge-abl-lsp")?.isActive)
 }
@@ -95,11 +95,11 @@ export function setupNyc(projName: string) {
 	return nyc
 }
 
-export function setupMocha(projName: string) {
+export function setupMocha(projName: string, timeout: number = 20000) {
 	return new Mocha({
 		color: true,
 		ui: "tdd",
-		timeout: 30000,
+		timeout: timeout,
 		// reporter: 'mocha-junit-reporter',
 		// reporterOptions: {
 		// 	mochaFile: 'artifacts/mocha_results_' + projName + '.xml'
@@ -114,10 +114,10 @@ export function setupMocha(projName: string) {
 	})
 }
 
-export function runTests (projName: string) {
+export function runTests (projName: string, timeout?: number) {
 
 	const nyc = setupNyc(projName)
-	const mocha = setupMocha(projName)
+	const mocha = setupMocha(projName, timeout)
 	const testsRoot = path.resolve(__dirname, "..");
 	return new Promise<void>((c, e) => {
 		glob("**/**." + projName + ".test.js", {
