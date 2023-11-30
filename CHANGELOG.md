@@ -1,3 +1,9 @@
+# [v0.1.5](https://github.com/kenherring/ablunit-test-provider/releases/tag/v0.1.5) - 2023-11-30 (pre-release)
+
+* Performance improvements
+* Test suite parsing enabled
+* Various fixes for testing config (absolute paths, DLC lookup)
+
 # [v0.1.4](https://github.com/kenherring/ablunit-test-provider/releases/tag/v0.1.4) - 2023-11-24 (pre-release)
 
 * Fix badges displayed in marketplace
