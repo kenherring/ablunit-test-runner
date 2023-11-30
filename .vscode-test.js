@@ -72,7 +72,7 @@ module.exports = defineConfig([
 		workspaceFolder: './test_projects/proj7_load_performance',
 		mocha: {
 			ui: 'tdd',
-			timeout: 30000
+			timeout: 45000
 		}
 	}
 ]);

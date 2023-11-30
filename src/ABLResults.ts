@@ -215,10 +215,6 @@ export class ABLResults {
 			return
 		}
 
-		// const itemSummary = item.label + " - Tests: " + s.tests + ", Passed: " + s.passed + ", Errors: " + s.errors + ", Failures: " + s.failures + ", Skipped: " + s.skipped
-		// logToChannel(itemSummary)
-		// options.appendOutput(itemSummary + "\r\n")
-
 		const data = this.testData.get(item)
 		if (data instanceof ABLTestSuite) {
 			if (!s.testsuite) {

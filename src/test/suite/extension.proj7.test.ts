@@ -27,24 +27,6 @@ before(async () => {
 			await vscode.workspace.fs.writeFile(getUri(`src/classes/dir${i}/testClass${j}.cls`), writeContent)
 		}
 	}
-
-	// await new Promise<string>((resolve, reject) => {
-	// 	exec('git init && git add .', { cwd: vscode.workspace.workspaceFolders![0].uri.fsPath }, (err: any, stdout: any, stderr: any) => {
-	// 		console.log("cp.exec complete?")
-	// 		if (stdout) {
-	// 			console.log("add stdout=" + stdout)
-	// 		}
-	// 		if (stderr) {
-	// 			console.log("add stderr=" + stderr)
-	// 		}
-	// 		if (err) {
-	// 			console.log("add err=" + err.toString(), 'error')
-	// 		}
-	// 		console.log("resolve add promise")
-	// 		resolve("resolve add promise")
-	// 	})
-	// })
-	// console.log("BEFORE END")
 })
 
 suite('SourceParser Test Suite - proj7', () => {
