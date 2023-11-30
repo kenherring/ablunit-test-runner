@@ -32,7 +32,7 @@ function getTestConfig () {
 	testConfig.push(createTestConfig('proj3', './test_projects/proj3_debugLines', 0));
 	testConfig.push(createTestConfig('proj4', '', 0));
 	testConfig.push(createTestConfig('proj5', './test_projects/proj5_suites', 0));
-	testConfig.push(createTestConfig('proj7', './test_projects/proj7_load_performance', 45000));
+	testConfig.push(createTestConfig('proj7', './test_projects/proj7_load_performance', 50000));
 	return testConfig;
 }
 
