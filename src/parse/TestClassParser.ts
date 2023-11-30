@@ -110,10 +110,6 @@ export function parseTestClass (lines: string[], configClassLabel: string, relat
 				classRet.classname = classResult[1].replace(/:$/,'').trim()
 				const range = new Range(new Position(lineNo, lines[lineNo].indexOf(classRet.classname)), new Position(lineNo, classRet.classname.length))
 
-				if (configClassLabel == "filepath") {
-					classRet.classname = relativePath
-				}
-
 				const parts = relativePath.split('/')
 				classRet.testProgramDirs = getTestProgramDirs(workspaceDir, parts)
 				classRet.label = parts[parts.length - 1]
@@ -131,6 +127,10 @@ export function parseTestClass (lines: string[], configClassLabel: string, relat
 				continue
 			}
 		}
+	}
+
+	if (configClassLabel == "filepath") {
+		classRet.classname = relativePath
 	}
 	return classRet
 }
