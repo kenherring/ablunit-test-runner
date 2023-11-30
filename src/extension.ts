@@ -431,66 +431,6 @@ async function findInitialFiles(controller: vscode.TestController,
 	}
 }
 
-async function findInitialFilesGrep(controller: vscode.TestController,
-								includePatterns: vscode.RelativePattern[],
-								excludePatterns: vscode.RelativePattern[],
-								removeExcluded: boolean = false) {
-	const findAllFilesAtStartup = vscode.workspace.getConfiguration('ablunit').get('findAllFilesAtStartup')
-
-	if (removeExcluded) {
-		await removeExcludedFiles(controller, excludePatterns)
-	}
-
-	if (!findAllFilesAtStartup) {
-		return
-	}
-
-	const workspaceDir = vscode.workspace.workspaceFolders![0].uri
-	const grepFiles = await grepTrackedFiles("@test")
-
-	if (grepFiles.length == 0) {
-		return
-	}
-
-	for (const grepFile of grepFiles) {
-		const wsFile = vscode.Uri.joinPath(workspaceDir, grepFile)
-		if (isFileExcluded(wsFile, excludePatterns)) {
-			continue
-		}
-		const { file, data } = getOrCreateFile(controller, wsFile)
-		if(file) {
-			data.updateFromDisk(controller, file)
-		}
-	}
-
-	if (removeExcluded) {
-		await removeExcludedFiles(controller, excludePatterns)
-	}
-}
-
-async function grepTrackedFiles (pattern: string) {
-	const grepFiles: string[] = []
-	await new Promise<string>((resolve, reject) => {
-		exec('git grep -irl "' + pattern + '" .', { cwd: vscode.workspace.workspaceFolders![0].uri.fsPath }, (err: any, stdout: any, stderr: any) => {
-			if (stdout) {
-				stdout.split("\n").forEach((line: string) => {
-					if (line != "") {
-						grepFiles.push(line)
-					}
-				})
-			}
-			if (stderr) {
-				logToChannel("grep stderr=" + stderr)
-			}
-			if (err) {
-				logToChannel("grep err=" + err.toString(), 'error')
-			}
-			resolve("resolve grep promise")
-		})
-	})
-	return grepFiles
-}
-
 function startWatchingWorkspace(controller: vscode.TestController, fileChangedEmitter: vscode.EventEmitter<vscode.Uri> ) {
 
 	return getWorkspaceTestPatterns().map(({ workspaceFolder, includePatterns, excludePatterns }) => {
