@@ -38,6 +38,10 @@ initialize () {
 	fi
 }
 
+run_lint () {
+	.circleci/run_eslint.sh
+}
+
 run_tests () {
 	echo "starting tests..."
 	if ! .circleci/run_test_wrapper.sh; then
