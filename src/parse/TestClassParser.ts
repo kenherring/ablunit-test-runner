@@ -96,6 +96,9 @@ export function parseTestClass (lines: string[], configClassLabel: string, relat
 	}
 
 	for (let lineNo = 0; lineNo < lines.length; lineNo++) {
+		if (lines[lineNo] === "") {
+			continue
+		}
 
 		//first find the class statement
 		if (!foundClassHead) {

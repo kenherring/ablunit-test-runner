@@ -17,11 +17,17 @@ let generationCounter = 0
 export const getContentFromFilesystem = async (uri: vscode.Uri) => {
 	try {
 		const rawContent = await vscode.workspace.fs.readFile(uri)
-		const lines = textDecoder.decode(rawContent).split("\n")
+		const lines: string[] = textDecoder.decode(rawContent).split("\n")
+		let foundAnnotation = false
 		for (let i = 0; i < lines.length; i++) {
 			if (lines[i].trim().startsWith("//")) {
-				lines[i] = ""
+				lines[i] = ''
+			} else if (!foundAnnotation && lines[i].toLowerCase().indexOf("@test")) {
+				foundAnnotation = true
 			}
+		}
+		if (!foundAnnotation) {
+			return undefined
 		}
 		return lines.join("\n")
 	} catch (e) {
@@ -48,6 +54,10 @@ class TestFile extends TestTypeObj {
 	public async updateFromDisk(controller: vscode.TestController, item: vscode.TestItem) {
 		try {
 			const content = await getContentFromFilesystem(item.uri!)
+			if(!content) {
+				// console.log("no tests in " + item.uri!.fsPath)
+				return
+			}
 			item.error = undefined
 			this.updateFromContents(controller, content, item)
 

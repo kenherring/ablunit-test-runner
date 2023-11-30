@@ -96,6 +96,10 @@ function parseTestProgram (lines: string[], relativePath: string, workspaceDir: 
 	programRet.label = parts[parts.length - 1]
 
 	for (let lineNo = 1; lineNo < lines.length; lineNo++) {
+		if (lines[lineNo] === "") {
+			continue
+		}
+
 		if(lines[lineNo - 1].toLowerCase().indexOf("@test.") != -1) {
 			const proc = procedureRE.exec(lines[lineNo])
 			if (proc) {
