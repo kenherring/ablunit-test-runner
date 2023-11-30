@@ -1,4 +1,4 @@
-# [v0.1.5](https://github.com/kenherring/ablunit-test-provider/releases/tag/v0.1.5) - 2023-11-30 (pre-release)
+# [v0.1.6](https://github.com/kenherring/ablunit-test-provider/releases/tag/v0.1.6) - 2023-11-30 (pre-release)
 
 * Performance improvements
 * Test suite parsing enabled

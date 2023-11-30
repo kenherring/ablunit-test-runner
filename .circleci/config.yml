@@ -73,6 +73,7 @@ jobs:
       - run: npm install
       - run: sudo npm install -g @vscode/vsce
       - run: vsce package --pre-release --githubBranch main --allow-star-activation
+      - run: vsce ls
       - when:
           condition: << pipeline.git.tag >>
           steps:
