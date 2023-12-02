@@ -1,9 +1,11 @@
 import * as assert from 'assert';
 import { after, before } from 'mocha';
 import * as vscode from 'vscode';
-import { doesFileExist } from '../common'
+import { doesFileExist, getWorkspaceUri, runAllTests } from '../common'
+
 
 const projName = 'proj2'
+const workspaceUri = getWorkspaceUri()
 
 before(async () => {
     console.log("before")
@@ -13,23 +15,12 @@ after(() => {
 	console.log("after")
 })
 
-suite('Extension Test Suite - ' + projName, () => {
+suite(projName + ' - Extension Test Suite', () => {
 
-	test('temp/ablunit.json file exists', async () => {
-		const ablunitJson = vscode.Uri.joinPath(vscode.workspace.workspaceFolders![0].uri,'temp','ablunit.json')
+	test(projName + '.1 - temp/ablunit.json file exists', async () => {
+		await runAllTests()
 
-		await vscode.commands.executeCommand('testing.refreshTests');
-		await vscode.commands.executeCommand('workbench.view.testing.focus')
-
-		console.log("sleeping for 2s while tests are discovered") //There's gotta be a better way to do this...
-		await new Promise( resolve => setTimeout(resolve, 2000))
-
-		await vscode.commands.executeCommand('testing.runAll').then(() => {
-			console.log("testing.runAll complete!")
-		} , (err) => {
-			assert.fail("testing.runAll failed: " + err)
-		})
-
+		const ablunitJson = vscode.Uri.joinPath(workspaceUri,'temp','ablunit.json')
 		assert(await doesFileExist(ablunitJson),"missing ablunit.json (" + ablunitJson.fsPath + ")")
 	})
 

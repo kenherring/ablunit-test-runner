@@ -6,6 +6,9 @@
 .vscode/
 artifacts/
 coverage/
+docker/
+docs/
+images/
 node_modules/
 sampple/
 src/

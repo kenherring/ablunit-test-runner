@@ -1,5 +1,5 @@
-import { FileType, MarkdownString, Position, Range, TestItem, TestItemCollection, TestMessage, TestRun, Uri, workspace } from "vscode"
-import { ABLUnitConfig, ablunitConfig } from "./ABLUnitConfigWriter"
+import { FileType, MarkdownString, Position, Range, TestItem, TestItemCollection, TestMessage, TestRun, Uri, workspace, WorkspaceFolder } from "vscode"
+import { ABLUnitConfig, ITestObj } from "./ABLUnitConfigWriter"
 import { ABLResultsParser, TCFailure, TestCase, TestSuite } from "./parse/ResultsParser"
 import { ABLTestSuite, ABLUnitTestData } from "./testTree"
 import { parseCallstack } from "./parse/CallStackParser"
@@ -14,13 +14,17 @@ import { getOEVersion } from "./parse/OpenedgeProjectParser"
 
 
 export class ABLResults {
-	public status: string = "none"
-	private cfg: ABLUnitConfig
+	workspaceFolder: WorkspaceFolder
+	storageUri: Uri
+	globalStorageUri: Uri
+	status: string = "none"
+	cfg: ABLUnitConfig
 	startTime: Date
 	endTime!: Date
 	duration = () => { return (Number(this.endTime) - Number(this.startTime)) }
 
 	ablResults: ABLResultsParser | undefined
+	tests: TestItem[] = []
 	testData!: WeakMap<TestItem, ABLUnitTestData>
 	propath?: PropathParser
 	debugLines?: ABLDebugLines
@@ -31,28 +35,20 @@ export class ABLResults {
 	dlc: string | undefined
 	public testCoverage: Map<string, FileCoverage> = new Map<string, FileCoverage>()
 
-	constructor(storageUri: Uri) {
+	constructor(workspaceFolder: WorkspaceFolder, storageUri: Uri, globalStorageUri: Uri) {
+
 		this.startTime = new Date()
-		if (!workspace.workspaceFolders) {
-			throw new Error("no workspace folder is open")
-		}
+		this.workspaceFolder = workspaceFolder
+		this.storageUri = storageUri
+		this.globalStorageUri = globalStorageUri
 
-		this.asyncConstructor(storageUri)
-
-		const workspaceDir = workspace.workspaceFolders[0].uri
-		this.cfg = new ABLUnitConfig(workspaceDir)
-		ablunitConfig.workspaceUri = workspaceDir
-		ablunitConfig.storageUri = storageUri
-		if (ablunitConfig.tempDir === '') {
+		this.cfg = new ABLUnitConfig(workspaceFolder)
+		this.cfg.ablunitConfig.workspaceFolder = workspaceFolder
+		this.cfg.ablunitConfig.storageUri = storageUri
+		if (this.cfg.ablunitConfig.tempDir === '') {
 			this.cfg.setTempDirUri(storageUri)
 		}
 		this.setStatus("constructed")
-	}
-
-	async asyncConstructor(storageUri: Uri) {
-		this.dlc = await getDLC()
-		console.log("using DLC = " + this.dlc)
-		this.promsgs = new ABLPromsgs(this.dlc, storageUri)
 	}
 
 	setStatus(status: string) {
@@ -65,16 +61,19 @@ export class ABLResults {
 	}
 
 	async start () {
-		await this.cfg.setTempDirUri(ablunitConfig.tempDirUri)
+		this.cfg.setTempDirUri(this.cfg.ablunitConfig.tempDirUri)
+		this.dlc = await getDLC(this.workspaceFolder)
+		this.promsgs = new ABLPromsgs(this.dlc, this.globalStorageUri)
+
 		await this.cfg.readPropathFromJson().then((propath) => {
 			this.propath = propath
 			this.debugLines = new ABLDebugLines(this.propath)
 		})
 
-		const prom: Promise<void>[] = [Promise.resolve()]
-		prom[0] = this.cfg.createProfileOptions(ablunitConfig.profilerOptions)
+		const prom: (Promise<void> | Promise<void[]>)[] = []
+		prom[0] = this.cfg.createProfileOptions(this.cfg.ablunitConfig.profilerOptions)
 		prom[1] = this.cfg.createProgressIni(this.propath!.toString())
-		prom[2] = this.cfg.createAblunitJson(ablunitConfig.configJson)
+		prom[2] = this.cfg.createAblunitJson(this.cfg.ablunitConfig.configJson)
 
 		return Promise.all(prom).then(() => {
 			console.log("done creating config files for run")
@@ -84,66 +83,73 @@ export class ABLResults {
 	}
 
 	resetTests() {
-		ablunitConfig.configJson.tests = undefined
+		this.cfg.ablunitConfig.configJson.tests = []
 	}
 
-	async addTest (testName: string) {
+	async addTest (test:  TestItem) {
+		console.log("addTest: " + test.id + " " + test.uri!.fsPath)
+		console.log('addTest { workspaceFolder: "' + this.cfg.ablunitConfig.workspaceFolder.name + '", test: "' + test.id + '" }')
+		// outputToChannel('addTest { workspaceFolder: "' + this.cfg.ablunitConfig.workspaceFolder.name + '", test: "' + test.id + '" }')
 
-		console.log("addTest testName=" + testName)
-
+		this.tests.push(test)
+		let testName = test.id
+		console.log("3")
 
 		let testCase = undefined
 		if (testName.indexOf("#") > -1) {
 			testCase = testName.split("#")[1]
 			testName = testName.split("#")[0]
 		}
+		console.log("4")
 
-		const testUri = Uri.joinPath(ablunitConfig.workspaceUri, testName.toString())
-		let testRel: string = workspace.asRelativePath(testName)
-
+		const testUri = test.uri!
+		console.log("5 testUri=" + testUri.fsPath)
+		let testRel: string = workspace.asRelativePath(testUri, false)
+		console.log("testRel=" + testRel)
+		console.log("propath = " + this.propath)
 		const p = await this.propath!.search(testUri)
 		if (p) {
 			testRel = p.propathRelativeFile
 		}
 		testRel = testRel.replace(/\\/g, '/')
+		console.log("testRel=" + testRel + " workspaceFolder=" + this.cfg.ablunitConfig.workspaceFolder.uri.fsPath)
+		console.log("6")
 
-		let testObj: { test: string; cases?: string[] }
-		if (!testCase) {
-			testObj = { test: testRel }
-		} else {
-			testObj = { test: testRel, cases: [ testCase ] }
+		const testObj: ITestObj = { test: testRel }
+		if (testCase) {
+			testObj.cases = [ testCase ]
 		}
 
-		if (!ablunitConfig.configJson.tests) {
-			ablunitConfig.configJson.tests = [testObj]
-		} else if (testCase) {
-			const testObj = ablunitConfig.configJson.tests.find((t: any) => t.test === testRel)
-			if (testObj) {
-				testObj.cases?.push(testCase)
-			} else {
-				ablunitConfig.configJson.tests = testObj
+		if (testCase) {
+			const existingTestObj = this.cfg.ablunitConfig.configJson.tests.find((t: any) => t.test === testRel)
+			if (existingTestObj) {
+				if (testObj.cases) {
+					if (!existingTestObj.cases) {
+						existingTestObj.cases = []
+					}
+					existingTestObj.cases.push(testCase)
+					console.log("push= " + JSON.stringify(testCase))
+				}
+				return
 			}
-		} else {
-			ablunitConfig.configJson.tests.push(testObj)
 		}
-	}
-
-	async createAblunitJson() {
-		return this.cfg.createAblunitJson(ablunitConfig.configJson)
+		console.log("testObj = " + JSON.stringify(testObj))
+		this.cfg.ablunitConfig.configJson.tests.push(testObj)
+		console.log("99 " + JSON.stringify(this.cfg.ablunitConfig.configJson.tests))
 	}
 
 	async deleteResultsXml() {
-		workspace.fs.stat(ablunitConfig.config_output_jsonUri).then((stat) => {
+		workspace.fs.stat(this.cfg.ablunitConfig.config_output_jsonUri).then((stat) => {
 			if (stat.type === FileType.File) {
-				console.log("delete " + ablunitConfig.config_output_jsonUri.fsPath)
-				workspace.fs.delete(ablunitConfig.config_output_jsonUri)
+				console.log("delete " + this.cfg.ablunitConfig.config_output_jsonUri.fsPath)
+				workspace.fs.delete(this.cfg.ablunitConfig.config_output_jsonUri)
 			}
 		}, (err) => {
 			// do nothing, can't delete a file that doesn't exist
 		})
-		return workspace.fs.stat(ablunitConfig.config_output_resultsUri).then((stat) => {
+		return workspace.fs.stat(this.cfg.ablunitConfig.config_output_resultsUri).then((stat) => {
 			if (stat.type === FileType.File) {
-				return workspace.fs.delete(ablunitConfig.config_output_resultsUri)
+				return workspace.fs.delete(this.cfg.ablunitConfig.config_output_resultsUri)
 			}
 		}, (err) => {
 			// do nothing, can't delete a file that doesn't exist
@@ -151,13 +157,12 @@ export class ABLResults {
 	}
 
 	async run(options: TestRun) {
-		return ablunitRun(ablunitConfig, options, this).then(() => {
+		return ablunitRun(options, this).then(() => {
 			if(!this.ablResults!.resultsJson) {
 				throw new Error("no results available")
 			}
 		}, (err) => {
-			console.log("Exception: [ABLResults run] " + err)
-			throw new Error("Exception: [ABLResults run] " + err)
+			throw new Error("[ABLResults run] Exception: " + err)
 		})
 	}
 
@@ -168,7 +173,7 @@ export class ABLResults {
 		this.endTime = new Date()
 
 		this.ablResults = new ABLResultsParser(this.propath!, this.debugLines!)
-		await this.ablResults.parseResults(ablunitConfig.configJson, ablunitConfig.config_output_resultsUri, ablunitConfig.config_output_jsonUri).then(() => {
+		await this.ablResults.parseResults(this.cfg.ablunitConfig).then(() => {
 			if(!this.ablResults!.resultsJson) {
 				throw (new Error("no results data available..."))
 			}
@@ -176,7 +181,7 @@ export class ABLResults {
 			console.error("[parseResultsFile] " + err)
 		})
 
-		if (ablunitConfig.profilerOptions.enabled) {
+		if (this.cfg.ablunitConfig.profilerOptions.enabled) {
 			this.setStatus("parsing profiler data")
 			options.appendOutput("parsing profiler data\r\n")
 			await this.parseProfile().then(() => {
@@ -271,21 +276,26 @@ export class ABLResults {
 	}
 
 	private async getSuiteName (item: TestItem) {
-		let suiteName = item.id
-		if (suiteName.indexOf("#") > -1) {
-			suiteName = item.id.split("#")[0]
-		}
+		let suiteName = workspace.asRelativePath(item.uri!, false)
+		// if (suiteName.indexOf("#") > -1) {
+		// 	suiteName = item.id.split("#")[0]
+		// }
+
+		console.log("suiteName= " + suiteName)
 
 		if(suiteName) {
 			const propathRelativePath = this.propath!.search(suiteName)!
 			suiteName = await propathRelativePath.then((res) => {
 				if (res?.propathRelativeFile) {
+					console.log("ret propathRelativeFile= " + res?.propathRelativeFile)
 					return res?.propathRelativeFile
 				}
+				console.log("ret suiteName=" + suiteName)
 				return suiteName
 			})
 		}
 		suiteName = suiteName.replace(/\\/g, '/')
+		console.log("ret=" + suiteName)
 		return suiteName
 	}
 
@@ -374,7 +384,7 @@ export class ABLResults {
 
 	async parseProfile() {
 		const profParser = new ABLProfile()
-		return profParser.parseData(ablunitConfig.profilerOptions, this.debugLines!).then(() => {
+		return profParser.parseData(this.cfg.ablunitConfig.profilerOptions, this.debugLines!).then(() => {
 			this.profileJson = profParser.profJSON
 			return this.assignProfileResults().then(() => {
 				console.log("assignProfileResults complete")
@@ -447,25 +457,29 @@ interface IRuntime {
 	default?: boolean
 }
 
-async function getDLC() {
-	let defaultDLC: string | undefined = undefined
-	const oeversion = await getOEVersion()
+async function getDLC(workspaceFolder: WorkspaceFolder) {
+	let DLC: string | undefined = undefined
+	const oeversion = await getOEVersion(workspaceFolder)
 	const runtimes: IRuntime[] = workspace.getConfiguration("abl.configuration").get("runtimes",[])
 
 	for (const runtime of runtimes) {
 		if (runtime.name === oeversion) {
-			return runtime.path
+			DLC = runtime.path
+			break
 		}
 		if (runtime.default) {
-			defaultDLC = runtime.path
+			DLC = runtime.path
 		}
 	}
-	if (defaultDLC) {
-		return defaultDLC
+	if (!DLC && process.env.DLC) {
+		DLC = process.env.DLC
 	}
-	if(!process.env.DLC) {
-		throw new Error("unable to determine DLC")
+	if (DLC) {
+		console.log("using DLC = " + DLC)
+		return DLC
 	}
-
-	return process.env.DLC
+	throw new Error("unable to determine DLC")
+}
+function outputToChannel(arg0: string) {
+	throw new Error("Function not implemented.")
 }

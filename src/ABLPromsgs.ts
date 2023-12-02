@@ -14,7 +14,6 @@ export class ABLPromsgs {
 
 	constructor(dlc: string, storageUri: Uri) {
 		this.DLC = dlc
-		console.log("promsgs DLC=" + this.DLC)
 		const dlcUri = Uri.file(this.DLC)
 		const cacheUri = Uri.joinPath(storageUri,'promsgs.json')
 		// eslint-disable-next-line @typescript-eslint/no-this-alias

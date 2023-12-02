@@ -4,10 +4,7 @@
 	//test comment
 	"charset": "utf-8",
 	"buildPath": [
-		{ "type": "source", "path": "." },
-		{ "type": "propath", "path": "oe/src/ablunit" },
-		{ "type": "propath", "path": ".oe/src/ablunit" },
-		{ "type": "propath", "path": ".oe/src/corelib" }
+		{ "type": "source", "path": "." }
 	],
 	"buildDirectory": "build"
 }

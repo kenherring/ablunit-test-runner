@@ -5,14 +5,16 @@ ARR=("ablunit.json" "ablunit.log" "progress.ini" "prof.out" "prof.json" "protrac
 	 "results.xml" "dbg_*" "*.r" "*.xref" "results.prof" "profiler.json" "profile.options")
 for F in "${ARR[@]}"; do
 	echo "deleting files matching '$F'"
-	find test_projects -type f -name "$F" -delete
+	find test_projects -type f -name "$F" -delete &
 done
+wait
 
 ARR=("listings" ".builder" "build" "ablunit-output")
 for D in "${ARR[@]}"; do
 	echo "deleting directories matching '$D'"
-	find test_projects -type d -name "$D" -exec rm -rv {} + || true
+	find test_projects -type d -name "$D" -exec rm -rv {} + || true &
 done
+wait
 
 echo "deleting artifacts and coverage directory"
 rm -rf artifacts/ coverage/ C:/temp/ablunit/

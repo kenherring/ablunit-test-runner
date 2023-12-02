@@ -4,7 +4,6 @@ import { ABLTestSuite, ABLTestClass, ABLTestProgram, ABLTestMethod, ABLTestProce
 import { GlobSync } from 'glob'
 import { logToChannel } from './ABLUnitCommon'
 import { readFileSync } from 'fs'
-import { resetAblunitConfig } from './ABLUnitConfigWriter'
 
 const backgroundExecutable = vscode.window.createTextEditorDecorationType({
 	backgroundColor: 'rgba(255,0,0,0.1)',
@@ -13,11 +12,21 @@ const backgroundExecuted = vscode.window.createTextEditorDecorationType({
 	backgroundColor: 'rgba(0,255,0,0.1)',
 })
 
-let recentResults: ABLResults | undefined
-let storageUri: vscode.Uri | undefined = undefined
+let recentResults: ABLResults[] | undefined
+let contextStorageUri: vscode.Uri | undefined = undefined
 
-export function getStorageUri () {
-	return storageUri
+export function getStorageUri (workspaceFolder?: vscode.WorkspaceFolder) {
+	if (!workspaceFolder) {
+		return contextStorageUri
+	}
+
+	if (!contextStorageUri) {
+		throw new Error("contextStorageUri is undefined")
+	}
+	const dirs = workspaceFolder.uri.path.split('/')
+	const ret = vscode.Uri.joinPath(contextStorageUri,dirs[dirs.length - 1]) ?? workspaceFolder.uri
+	console.log('storageUri= ' + ret.fsPath)
+	return ret
 }
 
 export async function activate(context: vscode.ExtensionContext) {
@@ -26,7 +35,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	const debugEnabled = vscode.workspace.getConfiguration('ablunit').get('debugEnabled', false)
 	const ctrl = vscode.tests.createTestController('ablunitTestController', 'ABLUnit Test')
-	storageUri = context.storageUri
+	contextStorageUri = context.storageUri ?? vscode.workspace.workspaceFolders![0].uri
 
 	context.subscriptions.push(ctrl)
 	context.subscriptions.push(
@@ -61,20 +70,10 @@ export async function activate(context: vscode.ExtensionContext) {
 	}
 
 	const startTestRun = (request: vscode.TestRunRequest) => {
-
-		let res: ABLResults
-		try {
-			res = new ABLResults(context.storageUri!)
-		} catch (err) {
-			vscode.window.showErrorMessage("Could not start test run. " + err)
-			logToChannel("Could not start test run. " + err)
-			return
-		}
 		showNotification("running ablunit tests")
 
 		const queue: { test: vscode.TestItem; data: ABLRunnable }[] = []
 		const run = ctrl.createTestRun(request)
-		resultData.set(run, res)
 
 		const discoverTests = async (tests: Iterable<vscode.TestItem>) => {
 			for (const test of tests) {
@@ -94,14 +93,13 @@ export async function activate(context: vscode.ExtensionContext) {
 					data instanceof ABLTestProcedure) {
 					run.enqueued(test)
 					queue.push({ test, data })
-					await res.addTest(test.id)
 				} else {
 					await discoverTests(gatherTestItems(test.children))
 				}
 			}
 		}
 
-		const runTestQueue = async () => {
+		const runTestQueue = async (res: ABLResults[]) => {
 			for (const { test } of queue) {
 				if (run.token.isCancellationRequested) {
 					run.skipped(test)
@@ -113,16 +111,39 @@ export async function activate(context: vscode.ExtensionContext) {
 				}
 			}
 
-			res.setTestData(testData)
 			logToChannel('starting ablunit run')
 			run.appendOutput('starting ablunit run\r\n')
 
-			const ret = await res.run(run).then(() => {
-				return true
-			}, (err) => {
-				logToChannel("ablunit run failed with exception: " + err,'error')
-				return false
-			})
+			let ret = false
+			for (const r of res) {
+				r.setTestData(testData) // TODO - should this be broken out?
+				logToChannel("starting ablunit tests for folder: " + r.workspaceFolder.uri.fsPath)
+				run.appendOutput("starting ablunit tests for folder: " + r.workspaceFolder.uri.fsPath + "\r\n")
+				ret = await r.run(run).then(() => {
+					return true
+				}, (err) => {
+					logToChannel("ablunit run failed with exception: " + err,'error')
+					return false
+				})
+				if (!ret) {
+					break
+				}
+
+				if (r.ablResults) {
+					const p = r.ablResults.resultsJson[0]
+					const totals = "Totals - " + p.tests + " tests, " + p.passed + " passed, " + p.errors + " errors, " + p.failures + " failures"
+					logToChannel(totals)
+					run.appendOutput(totals + "\r\n")
+				}
+
+				for (const { test } of queue) {
+					if (run.token.isCancellationRequested) {
+						run.skipped(test)
+					} else {
+						await r.assignTestResults(test, run)
+					}
+				}
+			}
 
 			if(!ret) {
 				for (const { test } of queue) {
@@ -138,18 +159,9 @@ export async function activate(context: vscode.ExtensionContext) {
 			logToChannel('ablunit run complete')
 			run.appendOutput('ablunit run complete\r\n')
 
-			if (res.ablResults) {
-				const p = res.ablResults.resultsJson[0]
-				const totals = "Totals - " + p.tests + " tests, " + p.passed + " passed, " + p.errors + " errors, " + p.failures + " failures"
-				logToChannel(totals)
-				run.appendOutput(totals + "\r\n")
-			}
-
-			for (const { test } of queue) {
-				if (run.token.isCancellationRequested) {
+			if (run.token.isCancellationRequested) {
+				for (const { test } of queue) {
 					run.skipped(test)
-				} else {
-					await res.assignTestResults(test, run)
 				}
 			}
 
@@ -162,11 +174,32 @@ export async function activate(context: vscode.ExtensionContext) {
 			showNotification("ablunit tests complete")
 		}
 
-		res.start().then(() => {
-			res.resetTests()
-			discoverTests(request.include ?? gatherTestItems(ctrl.items)).then(
-				runTestQueue
-			)
+		const createABLResults = async () => {
+			const res: ABLResults[] = []
+			const proms: Promise<void>[] = []
+
+			for(const itemData of queue) {
+				const wf = vscode.workspace.getWorkspaceFolder(itemData.test.uri!)
+				if (!wf) {
+					console.error("Skipping test run for test item with no workspace folder: " + itemData.test.uri!.fsPath)
+					continue
+				}
+				let r = res.find(r => r.workspaceFolder === wf)
+				if (!r) {
+					r = new ABLResults(wf, getStorageUri(wf) ?? wf.uri, contextStorageUri!)
+					await r.start()
+					res.push(r)
+				}
+				proms.push(r.addTest(itemData.test))
+			}
+			await Promise.all(proms)
+			resultData.set(run, res)
+			return res
+		}
+
+		discoverTests(request.include ?? gatherTestItems(ctrl.items)).then(async () => {
+			const res = await createABLResults()
+			runTestQueue(res)
 		})
 	}
 
@@ -206,11 +239,20 @@ export async function activate(context: vscode.ExtensionContext) {
 	}
 
 	async function updateConfiguration(controller: vscode.TestController, e: vscode.ConfigurationChangeEvent) {
-		resetAblunitConfig()
+		// resetAblunitConfig()
+		// TODO!!!
 
 		if (e.affectsConfiguration('ablunit')) {
+			// for(const wf of vscode.workspace.workspaceFolders!) {
+			// 	const res = resultData.get(wf.uri)
+			// 	if (res) {
+			// 		for(const r of res) {
+			// 			r.resetAblunitConfig()
+			// 		}
+			// 	}
+			// }
+
 			await removeExcludedFiles(controller, getExcludePatterns())
-			// vscode.commands.executeCommand('testing.refreshTests')
 		}
 	}
 }
@@ -472,10 +514,15 @@ function decorate(editor: vscode.TextEditor) {
 	const executedArray: vscode.DecorationOptions[] = []
 	const executableArray: vscode.DecorationOptions[] = []
 
-	if(!recentResults) { return }
+	if(!recentResults || recentResults.length == 0) { return }
 
-	const tc = recentResults.testCoverage.get(editor.document.uri.fsPath)
+	const wf = vscode.workspace.getWorkspaceFolder(editor.document.uri)
+	const idx = recentResults.findIndex(r => r.workspaceFolder === wf)
+	if (idx < 0) { return }
+
+	const tc = recentResults[idx].testCoverage.get(editor.document.uri.fsPath)
 	if (!tc) { return }
+
 	tc.detailedCoverage?.forEach(element => {
 		const range = <vscode.Range> element.location
 		const decoration = { range }
@@ -504,6 +551,7 @@ function openCallStackItem(traceUriStr: string) {
 }
 
 function showNotification(message: string) {
+	console.log("[showNotification] " + message)
 	if (vscode.workspace.getConfiguration('ablunit').get('notificationsEnabled', true)) {
 		vscode.window.showInformationMessage(message)
 	}
@@ -511,8 +559,12 @@ function showNotification(message: string) {
 
 function isFileExcluded(uri: vscode.Uri, excludePatterns: vscode.RelativePattern[]) {
 	const patterns = excludePatterns.map(pattern => pattern.pattern)
-	const relativePath = vscode.workspace.asRelativePath(uri.fsPath)
-	const g = new GlobSync(relativePath, { cwd: vscode.workspace.workspaceFolders![0].uri.fsPath, ignore: patterns })
+	const relativePath = vscode.workspace.asRelativePath(uri.fsPath, false)
+	const workspaceFolder = vscode.workspace.getWorkspaceFolder(uri)
+	if (!workspaceFolder) {
+		return true
+	}
+	const g = new GlobSync(relativePath, { cwd: workspaceFolder.uri.fsPath, ignore: patterns })
 	return g.found.length == 0
 }
 

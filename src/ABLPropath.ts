@@ -1,5 +1,6 @@
-import { Uri, workspace } from 'vscode'
+import { Uri, workspace, WorkspaceFolder } from 'vscode'
 import { IProjectJson } from './parse/OpenedgeProjectParser'
+import { isRelativePath } from './ABLUnitConfigWriter'
 
 interface IPropathEntry {
 	uri: Uri
@@ -30,15 +31,15 @@ const ABLFiles: IABLFile[] = []
 export class PropathParser {
 	filemap: Map<string, IABLFile> = new Map()
 	files: IABLFile[] = []
-	workspaceUri: Uri
+	workspaceFolder: WorkspaceFolder
 	buildMap: Map<string, string> = new Map()
 
 	propath: IPropath = {
 		entry: [] as IPropathEntry[]
 	}
 
-	constructor(workspaceUri: Uri) {
-		this.workspaceUri = workspaceUri
+	constructor(workspaceFolder: WorkspaceFolder) {
+		this.workspaceFolder = workspaceFolder
 	}
 
 	async setPropath(importedPropath: IProjectJson) {
@@ -47,28 +48,28 @@ export class PropathParser {
 		for (const entry of importedPropath.propathEntry) {
 			console.log("setPropath: " + entry.path + " " + entry.type + " " + entry.buildDir)
 			let uri: Uri
-			if(RegExp(/^[a-zA-Z]:/).exec(entry.path)) {
-				uri = Uri.file(entry.path)
+			if(isRelativePath(entry.path)) {
+				uri = Uri.joinPath(this.workspaceFolder.uri, entry.path)
 			} else {
-				uri = Uri.joinPath(this.workspaceUri,entry.path)
+				uri = Uri.parse(entry.path)
 			}
 
 			let buildUri: Uri
-			if(RegExp(/^[a-zA-Z]:/).exec(entry.buildDir)) {
-				buildUri = Uri.file(entry.buildDir)
+			if(isRelativePath(entry.buildDir)) {
+				buildUri = Uri.joinPath(this.workspaceFolder.uri, entry.buildDir)
 			} else {
-				buildUri = Uri.joinPath(this.workspaceUri,entry.buildDir)
+				buildUri = Uri.file(entry.buildDir)
 			}
 
 			let xrefDirUri: Uri
-			if(RegExp(/^[a-zA-Z]:/).exec(entry.xrefDir)) {
-				xrefDirUri = Uri.file(entry.xrefDir)
+			if(isRelativePath(entry.xrefDir)) {
+				xrefDirUri = Uri.joinPath(this.workspaceFolder.uri, entry.xrefDir)
 			} else {
-				xrefDirUri = Uri.joinPath(this.workspaceUri,entry.xrefDir)
+				xrefDirUri = Uri.file(entry.xrefDir)
 			}
 
 			let rel: string | undefined
-			rel = workspace.asRelativePath(uri)
+			rel = workspace.asRelativePath(uri, false)
 			if(uri.fsPath === rel) {
 				rel = undefined
 			}
@@ -100,7 +101,7 @@ export class PropathParser {
 		for (const e of this.propath.entry) {
 			if(uri.fsPath.startsWith(e.uri.fsPath)) {
 				const propathRelativeFile = uri.fsPath.replace(e.uri.fsPath,'').substring(1)
-				const relativeFile = workspace.asRelativePath(uri)
+				const relativeFile = workspace.asRelativePath(uri, false)
 
 				const fileObj: IABLFile = {
 					uri: uri,

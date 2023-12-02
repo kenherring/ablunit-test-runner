@@ -15,4 +15,6 @@
 	"ablunit.configJson.outputWriteJson": true,
 	"ablunit.tempDir": "${workspaceFolder}",
 	"ablunit.debugEnabled": true
+	// "ablunit.files.exclude": "compileError.p",
+	// "ablunit.files.include": "classTest.cls"
 }

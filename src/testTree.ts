@@ -11,7 +11,7 @@ export type TestFile = ABLTestSuite | ABLTestClass | ABLTestProgram
 
 
 export const testData = new WeakMap<vscode.TestItem, ABLUnitTestData>()
-export const resultData = new WeakMap<vscode.TestRun, ABLResults>()
+export const resultData = new WeakMap<vscode.TestRun, ABLResults[]>()
 
 let generationCounter = 0
 
