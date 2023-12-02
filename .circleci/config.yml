@@ -49,7 +49,6 @@ jobs:
       - store_test_results:
           when: always
           path: artifacts/
-      - run: .circleci/run_eslint.sh
       - store_artifacts:
           when: always
           path: artifacts/

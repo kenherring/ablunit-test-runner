@@ -35,7 +35,10 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	const debugEnabled = vscode.workspace.getConfiguration('ablunit').get('debugEnabled', false)
 	const ctrl = vscode.tests.createTestController('ablunitTestController', 'ABLUnit Test')
-	contextStorageUri = context.storageUri ?? vscode.workspace.workspaceFolders![0].uri
+	logToChannel("context.storageUri= " + context.storageUri?.fsPath)
+	contextStorageUri = context.storageUri ?? vscode.Uri.parse("file://" + process.env.TEMP) //should always be defined as context.storageUri
+	logToChannel("contextStorageUri=" + contextStorageUri.fsPath)
+	await createDir(contextStorageUri)
 
 	context.subscriptions.push(ctrl)
 	context.subscriptions.push(
@@ -589,4 +592,21 @@ function printDataType(data: any) {
 		logToChannel(" - ABLTestProcedure")
 	else
 		logToChannel(" - unexpected instanceof type")
+}
+
+function createDir(uri: vscode.Uri) {
+	if(!uri) {
+		return
+	}
+	return vscode.workspace.fs.stat(uri).then((stat) => {
+		console.log("stat:" + stat.type)
+		if (!stat) {
+			logToChannel("create dir for extension storage: " + uri.fsPath)
+			return vscode.workspace.fs.createDirectory(uri)
+		} else {
+			console.log("extension storage directory already exists: " + uri.fsPath)
+		}
+	}, (err) => {
+		throw new Error("could not create directory for extension storage (" + uri.fsPath + "): " + err)
+	})
 }

@@ -10,6 +10,7 @@ setup () {
 }
 
 dbus_config () {
+	echo "dbus_config"
 	## These lines fix dbus errors in the logs related to the next section
 	## However, they also create new errors
 	# apt update
@@ -26,7 +27,25 @@ dbus_config () {
 	dbus-daemon --session --address="$DBUS_SESSION_BUS_ADDRESS" --nofork --nopidfile --syslog-only &
 }
 
+run_lint () {
+	echo "run_lint"
+	if ! npx eslint . --ext .ts,.js; then
+		echo "eslint failed"
+	fi
+	if ! npx eslint . --ext .ts,.js -f json | jq '.' > artifacts/eslint_plain_report.json; then
+		echo "eslint plain failed"
+	fi
+	if ! npx eslint . --ext .ts,.js -f .circleci/sonarqube_formatter.js | jq '.' > artifacts/eslint_sonar_report.json; then
+		echo "eslint sonar failed"
+	fi
+	if ! npx eslint . --ext .ts,.js -f junit -o artifacts/eslint.xml; then
+		echo "eslint junit failed"
+	fi
+
+}
+
 ########## MAIN BLOCK ##########
 setup
 dbus_config
 xvfb-run -a npm test
+run_lint

@@ -8,7 +8,6 @@ async function main() {
 
 	for (const conf of config) {
 		await testProject(conf.projName, conf.workspaceFolder, conf.launchArgs)
-		break
 	}
 }
 
@@ -30,8 +29,8 @@ async function testProject(projName: string, projDir?: string, launchArgs?: stri
 			// '--telemetry'
 		]
 
-		for(const arg of args) {
-			if(arg) {
+		if (launchArgs && launchArgs.length > 0) {
+			for (const arg of launchArgs) {
 				args.push(arg)
 			}
 		}
