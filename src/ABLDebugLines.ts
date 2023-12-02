@@ -1,7 +1,7 @@
 
 import { Uri, workspace } from "vscode"
 import { PropathParser } from "./ABLPropath"
-import { outputChannel } from "./ABLUnitCommon"
+import { logToChannel } from "./ABLUnitCommon"
 
 export interface IDebugLine {
 	srcUri: Uri
@@ -35,7 +35,7 @@ async function readXrefFile(xrefUri: Uri) {
 		const str = Buffer.from(content.buffer).toString();
 		return str
 	}, (reason) => {
-		console.error("(readXrefFile) WARNING: xref file not found '" + xrefUri.fsPath + "': " + reason)
+		console.error("WARNING: xref file not found '" + xrefUri.fsPath)
 		return undefined //don't rethrow, just return undefined because we don't want to stop processing
 	})
 }
@@ -64,8 +64,7 @@ export class ABLDebugLines {
 			try {
 				debugLines = await this.importDebugLines(debugSourceName, fileinfo.uri, fileinfo.xrefUri)
 			} catch (e) {
-				outputChannel.appendLine("cannot read: " + fileinfo.uri.fsPath)
-				console.warn("cannot read " + fileinfo.uri.fsPath)
+				logToChannel("cannot read: " + fileinfo.uri.fsPath, "warn")
 				return undefined
 			}
 		}

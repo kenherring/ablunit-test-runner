@@ -13,17 +13,24 @@ export interface IProjectJson {
 }
 
 export async function readOpenEdgeProjectJson () {
-	if (!workspace.workspaceFolders) { return }
-
-	return workspace.fs.readFile(Uri.joinPath(workspace.workspaceFolders[0].uri,"openedge-project.json")).then((data) => {
-		const projectJson = JSON.parse(jsonminify(data.toString()));
+	return workspace.fs.readFile(Uri.joinPath(workspace.workspaceFolders![0].uri,"openedge-project.json")).then((data) => {
+		const projectJson = JSON.parse(jsonminify(data.toString()))
 		return parseOpenEdgeProjectJson(projectJson)
+	})
+}
+
+export async function getOEVersion () {
+	return workspace.fs.readFile(Uri.joinPath(workspace.workspaceFolders![0].uri,"openedge-project.json")).then((data) => {
+		const projectJson = JSON.parse(jsonminify(data.toString()))
+		if (projectJson.oeversion) {
+			return projectJson.oeversion.toString()
+		}
+		return "none"
 	})
 }
 
 function parseOpenEdgeProjectJson (conf: any) {
 	//TODO what about if we're running a different profile?
-	//TODO import the correct DLC
 	if (!conf.buildPath) {
 		throw new Error("buildPath not found in openedge-project.json")
 	}

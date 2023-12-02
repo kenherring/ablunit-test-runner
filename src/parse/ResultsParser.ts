@@ -3,7 +3,7 @@ import { parseCallstack, ICallStack } from "./CallStackParser"
 import { PropathParser } from "../ABLPropath"
 import * as xml2js from "xml2js"
 import { ABLDebugLines } from "../ABLDebugLines"
-import { IABLUnitJson } from "../ABLUnitConfigWriter"
+import { IABLUnitJson, ablunitConfig } from "../ABLUnitConfigWriter"
 
 
 export interface TCFailure {
@@ -30,6 +30,7 @@ export interface TestSuite {
 	classname?: string
 	id: number
 	tests: number
+	passed: number
 	errors: number
 	failures: number
 	skipped: number
@@ -42,6 +43,7 @@ export interface TestSuite {
 export interface TestSuites {
 	name: string
 	tests: number
+	passed: number
 	errors: number
 	failures: number
 	testsuite?: TestSuite[]
@@ -57,9 +59,9 @@ export class ABLResultsParser {
 		this.debugLines = debugLines
 	}
 
-	async parseResults(opts: IABLUnitJson) {
-		console.log("resultsUri=" + opts.output.resultsUri.fsPath)
-		const resultsBits = await workspace.fs.readFile(opts.output.resultsUri);
+	async parseResults(opts: IABLUnitJson, resultsUri: Uri, jsonUri: Uri) {
+		console.log("resultsUri=" + resultsUri.fsPath)
+		const resultsBits = await workspace.fs.readFile(resultsUri);
 		const resultsXml = Buffer.from(resultsBits.toString()).toString('utf8');
 		const resultsXmlJson = await this.parseXml(resultsXml)
 		try {
@@ -68,8 +70,8 @@ export class ABLResultsParser {
 			console.error("[parseResults] error parsing results.xml file: " + err)
 			throw err
 		}
-		if (opts.output.writeJson) {
-			this.writeJsonToFile(opts.output.jsonUri)
+		if (ablunitConfig.config_output_writeJson) {
+			this.writeJsonToFile(jsonUri)
 		}
 	}
 
@@ -97,6 +99,7 @@ export class ABLResultsParser {
 		const jsonData: TestSuites = {
 			name: res['$'].name,
 			tests: Number(res['$'].tests),
+			passed: Number(res['$'].tests) - Number(res['$'].errors) - Number(res['$'].failures),
 			failures: Number(res['$'].failures),
 			errors: Number(res['$'].errors),
 			testsuite: testsuite
@@ -116,6 +119,7 @@ export class ABLResultsParser {
 				classname: res[idx]['$'].classname ?? undefined,
 				id: res[idx]['$'].id,
 				tests: Number(res[idx]['$'].tests),
+				passed: Number(res[idx]['$'].tests) - Number(res[idx]['$'].errors) - Number(res[idx]['$'].failures) - Number(res[idx]['$'].skipped),
 				errors: Number(res[idx]['$'].errors),
 				failures: Number(res[idx]['$'].failures),
 				skipped: Number(res[idx]['$'].skipped),

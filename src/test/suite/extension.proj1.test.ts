@@ -1,54 +1,57 @@
 import * as assert from 'assert';
-import { after, before } from 'mocha';
+import { afterEach, beforeEach } from 'mocha';
 import * as vscode from 'vscode';
-import { doesFileExist } from '../common'
+import { doesFileExist, getTestCount, sleep } from '../common'
 
 const projName = 'proj1'
 
-before(async () => {
-    console.log("before")
-});
+beforeEach(async () => {
+    console.log("beforeEach")
+	await vscode.workspace.getConfiguration('ablunit').update('files.exclude', undefined)
+})
 
-after(() => {
-	console.log("after")
-});
+afterEach(async () => {
+	console.log("afterEach")
+	await vscode.workspace.getConfiguration('ablunit').update('files.exclude', undefined)
+})
 
 suite('Extension Test Suite - ' + projName, () => {
 
-	test('ablunit.json file exists', async () => {
+	test('output files exist - 1', async () => {
 		const ablunitJson = vscode.Uri.joinPath(vscode.workspace.workspaceFolders![0].uri,'ablunit.json')
 		const resultsXml = vscode.Uri.joinPath(vscode.workspace.workspaceFolders![0].uri,'results.xml')
+		const resultsJson = vscode.Uri.joinPath(vscode.workspace.workspaceFolders![0].uri,'results.json')
 
 		await vscode.commands.executeCommand('testing.refreshTests');
 		await vscode.commands.executeCommand('workbench.view.testing.focus')
-		console.log("sleeping for 2s while tests are discovered") //There's gotta be a better way to do this...
-		await new Promise( resolve => setTimeout(resolve, 2000))
-		const val1 = await vscode.commands.executeCommand('testing.runAll').then(() => {
+
+		await sleep(2000)
+
+		await vscode.commands.executeCommand('testing.runAll').then(() => {
 			console.log("testing.runAll complete!")
 		} , (err) => {
 			assert.fail("testing.runAll failed: " + err)
 		})
 
-		console.log("check-1")
-		assert(doesFileExist(ablunitJson))
-		console.log("check-2")
-		assert(doesFileExist(resultsXml))
-		console.log("check-3")
-
-		console.log("ablunitJson: " + ablunitJson.fsPath)
-		console.log("resultsXml:" + resultsXml.fsPath)
-
-		await vscode.workspace.fs.stat(resultsXml).then((stat) => {
-			assert(stat.type === vscode.FileType.File)
-		}, (err) => {
-			console.log("results.xml file does not exist (" + resultsXml.fsPath + "): " + err)
-			assert.fail("results.xml file does not exist: " + err)
-		})
-		console.log("check-3")
-	});
-
-	test('wrap up', () => {
-		assert.equal(1,1);
+		assert(await doesFileExist(ablunitJson),"missing ablunit.json (" + ablunitJson.fsPath + ")")
+		assert(await doesFileExist(resultsXml),"missing results.xml (" + resultsXml.fsPath + ")")
+		assert(await doesFileExist(resultsJson),"missing results.json (" + resultsJson.fsPath + ")")
 	})
 
-});
+	test('output files exist 2 - exclude compileError.p', async () => {
+		await vscode.workspace.getConfiguration('ablunit').update('files.exclude', [ ".builder/**", "compileError.p" ])
+		sleep(500)
+
+		await vscode.commands.executeCommand('testing.runAll').then(() => {
+			console.log("testing.runAll complete!")
+		} , (err) => {
+			assert.fail("testing.runAll failed: " + err)
+		})
+
+		const resultsJson = vscode.Uri.joinPath(vscode.workspace.workspaceFolders![0].uri,'results.json')
+		const testCount = await getTestCount(resultsJson)
+		console.log("getTestCount: " + testCount)
+		assert.equal(10,testCount)
+	})
+
+})

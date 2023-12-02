@@ -1,14 +1,16 @@
-import { MarkdownString, Position, Range, TestItem, TestItemCollection, TestMessage, TestRun, Uri, workspace } from "vscode"
+import { FileType, MarkdownString, Position, Range, TestItem, TestItemCollection, TestMessage, TestRun, Uri, workspace } from "vscode"
 import { ABLUnitConfig, ablunitConfig } from "./ABLUnitConfigWriter"
-import { ABLResultsParser, TCFailure, TestCase, TestSuite, TestSuites } from "./parse/ResultsParser"
-import { ABLTestMethod, ABLTestProcedure, ABLUnitTestData } from "./testTree"
+import { ABLResultsParser, TCFailure, TestCase, TestSuite } from "./parse/ResultsParser"
+import { ABLTestSuite, ABLUnitTestData } from "./testTree"
 import { parseCallstack } from "./parse/CallStackParser"
 import { ABLProfile, ABLProfileJson, Module } from "./parse/ProfileParser"
 import { ABLDebugLines } from "./ABLDebugLines"
 import { ABLPromsgs, getPromsgText } from "./ABLPromsgs"
 import { PropathParser } from "./ABLPropath"
-import { outputChannel } from "./ABLUnitCommon"
+import { logToChannel } from "./ABLUnitCommon"
 import { FileCoverage, CoveredCount, StatementCoverage } from "./TestCoverage"
+import { ablunitRun } from "./ABLUnitRun"
+import { getOEVersion } from "./parse/OpenedgeProjectParser"
 
 
 export class ABLResults {
@@ -18,42 +20,44 @@ export class ABLResults {
 	endTime!: Date
 	duration = () => { return (Number(this.endTime) - Number(this.startTime)) }
 
+	ablResults: ABLResultsParser | undefined
 	testData!: WeakMap<TestItem, ABLUnitTestData>
 	propath?: PropathParser
 	debugLines?: ABLDebugLines
 	promsgs?: ABLPromsgs
-	results?: TestSuites
 	profileJson?: ABLProfileJson
 	coverageJson: [] = []
 	coverage: FileCoverage[] = []
 	dlc: string | undefined
 	public testCoverage: Map<string, FileCoverage> = new Map<string, FileCoverage>()
 
-
 	constructor(storageUri: Uri) {
-		this.dlc = process.env.DLC
-		if(!this.dlc) {
-			throw new Error("unable to determine DLC")
-		}
+		this.startTime = new Date()
 		if (!workspace.workspaceFolders) {
 			throw new Error("no workspace folder is open")
 		}
+
+		this.asyncConstructor(storageUri)
+
 		const workspaceDir = workspace.workspaceFolders[0].uri
 		this.cfg = new ABLUnitConfig(workspaceDir)
-		this.startTime = new Date()
 		ablunitConfig.workspaceUri = workspaceDir
 		ablunitConfig.storageUri = storageUri
 		if (ablunitConfig.tempDir === '') {
-			ablunitConfig.tempDirUri = storageUri
+			this.cfg.setTempDirUri(storageUri)
 		}
-		this.promsgs = new ABLPromsgs(this.dlc, ablunitConfig.storageUri)
 		this.setStatus("constructed")
+	}
+
+	async asyncConstructor(storageUri: Uri) {
+		this.dlc = await getDLC()
+		console.log("using DLC = " + this.dlc)
+		this.promsgs = new ABLPromsgs(this.dlc, storageUri)
 	}
 
 	setStatus(status: string) {
 		this.status = status
-		outputChannel.appendLine("STATUS: " + status)
-		console.log("STATUS: " + status)
+		logToChannel("STATUS: " + status)
 	}
 
 	async setTestData(testData: WeakMap<TestItem, ABLUnitTestData>) {
@@ -79,69 +83,170 @@ export class ABLResults {
 		})
 	}
 
-	async parseOutput(item: TestItem, options: TestRun) {
+	resetTests() {
+		ablunitConfig.configJson.tests = undefined
+	}
+
+	async addTest (testName: string) {
+
+		console.log("addTest testName=" + testName)
+
+
+		let testCase = undefined
+		if (testName.indexOf("#") > -1) {
+			testCase = testName.split("#")[1]
+			testName = testName.split("#")[0]
+		}
+
+		const testUri = Uri.joinPath(ablunitConfig.workspaceUri, testName.toString())
+		let testRel: string = workspace.asRelativePath(testName)
+
+		const p = await this.propath!.search(testUri)
+		if (p) {
+			testRel = p.propathRelativeFile
+		}
+		testRel = testRel.replace(/\\/g, '/')
+
+		let testObj: { test: string; cases?: string[] }
+		if (!testCase) {
+			testObj = { test: testRel }
+		} else {
+			testObj = { test: testRel, cases: [ testCase ] }
+		}
+
+		if (!ablunitConfig.configJson.tests) {
+			ablunitConfig.configJson.tests = [testObj]
+		} else if (testCase) {
+			const testObj = ablunitConfig.configJson.tests.find((t: any) => t.test === testRel)
+			if (testObj) {
+				testObj.cases?.push(testCase)
+			} else {
+				ablunitConfig.configJson.tests = testObj
+			}
+		} else {
+			ablunitConfig.configJson.tests.push(testObj)
+		}
+	}
+
+	async createAblunitJson() {
+		return this.cfg.createAblunitJson(ablunitConfig.configJson)
+	}
+
+	async deleteResultsXml() {
+		workspace.fs.stat(ablunitConfig.config_output_jsonUri).then((stat) => {
+			if (stat.type === FileType.File) {
+				console.log("delete " + ablunitConfig.config_output_jsonUri.fsPath)
+				workspace.fs.delete(ablunitConfig.config_output_jsonUri)
+			}
+		}, (err) => {
+			// do nothing, can't delete a file that doesn't exist
+		})
+		return workspace.fs.stat(ablunitConfig.config_output_resultsUri).then((stat) => {
+			if (stat.type === FileType.File) {
+				return workspace.fs.delete(ablunitConfig.config_output_resultsUri)
+			}
+		}, (err) => {
+			// do nothing, can't delete a file that doesn't exist
+		})
+	}
+
+	async run(options: TestRun) {
+		return ablunitRun(ablunitConfig, options, this).then(() => {
+			if(!this.ablResults!.resultsJson) {
+				throw new Error("no results available")
+			}
+		}, (err) => {
+			console.log("Exception: [ABLResults run] " + err)
+			throw new Error("Exception: [ABLResults run] " + err)
+		})
+	}
+
+	async parseOutput(options: TestRun) {
 		this.setStatus("parsing results")
+		options.appendOutput("parsing results\r\n")
+
 		this.endTime = new Date()
 
-		const ablResults = new ABLResultsParser(this.propath!, this.debugLines!)
-		await ablResults.parseResults(ablunitConfig.configJson).then(() => {
-			if(!ablResults.resultsJson) {
+		this.ablResults = new ABLResultsParser(this.propath!, this.debugLines!)
+		await this.ablResults.parseResults(ablunitConfig.configJson, ablunitConfig.config_output_resultsUri, ablunitConfig.config_output_jsonUri).then(() => {
+			if(!this.ablResults!.resultsJson) {
 				throw (new Error("no results data available..."))
 			}
-			return this.assignTestResults(ablResults.resultsJson, item, options)
 		}, (err) => {
 			console.error("[parseResultsFile] " + err)
 		})
 
 		if (ablunitConfig.profilerOptions.enabled) {
 			this.setStatus("parsing profiler data")
+			options.appendOutput("parsing profiler data\r\n")
 			await this.parseProfile().then(() => {
-				this.setStatus("test run complete")
 				return true
 			}, (err) => {
 				throw new Error("parseProfile error: " + err)
 			})
-		} else {
-			this.setStatus("test run complete")
 		}
+
+		this.setStatus("parsing output complete")
+		options.appendOutput("parsing output complete\r\n")
 	}
 
-	async assignTestResults (resultsJson: TestSuites[], item: TestItem, options: TestRun) {
-		if(resultsJson.length > 1) {
-			options.errored(item, new TestMessage("multiple results files found - this is not supported"), this.duration())
-			// return
+	async assignTestResults (item: TestItem, options: TestRun) {
+		if(!this.ablResults) {
+			throw new Error("no ABLResults object initialized")
 		}
-		this.results = resultsJson[0]
-		if (!this.results.testsuite) {
+
+		if(this.ablResults.resultsJson.length > 1) {
+			logToChannel("multiple results files found - this is not supported")
+			options.errored(item, new TestMessage("multiple results files found - this is not supported"), this.duration())
+			return
+		}
+
+		if (!this.ablResults.resultsJson[0].testsuite) {
+			logToChannel("no tests results available, check the configuration for accuracy")
 			options.errored(item, new TestMessage("no tests results available, check the configuration for accuracy"), this.duration())
 			return
 		}
 
-		let suiteName = item.id
-		if (suiteName.indexOf("#") > -1) {
-			suiteName = item.id.split("#")[0]
-		}
-
-		const s = this.results.testsuite.find((s: TestSuite) => s.classname === suiteName || s.name === suiteName)
-		// if (!s) {
-		// 	suiteName = item.uri!.fsPath.replace(/\\/g, '/')
-		// 	s = this.results.testsuite.find((s: TestSuite) => s.name === suiteName)
-		// }
+		const suiteName = await this.getSuiteName(item)
+		const s = this.ablResults.resultsJson[0].testsuite.find((s: TestSuite) => s.classname === suiteName || s.name === suiteName)
 		if (!s) {
-			options.errored(item, new TestMessage("could not find test suite for '" + suiteName + " in results"), this.duration())
+			logToChannel("could not find test suite for '" + suiteName + "' in results", 'error')
+			options.errored(item, new TestMessage("could not find test suite for '" + suiteName + "' in results"), this.duration())
 			return
 		}
 
-		const td = this.testData.get(item)
-		if (td && (td instanceof ABLTestProcedure || td instanceof ABLTestMethod)) {
-			// Test Procedure/Method type
-			if (! s.testcases) { return }
-			const tc = s.testcases.find((tc: TestCase) => tc.name === item.label)
-			if (! tc) { return }
-			return this.setChildResults(item, options, tc)
+		const data = this.testData.get(item)
+		if (data instanceof ABLTestSuite) {
+			if (!s.testsuite) {
+				console.error("no child testsuites found for " + suiteName)
+				options.errored(item, new TestMessage("no child testsuites found for " + suiteName), this.duration())
+				return
+			}
+			await this.parseChildSuites(item, s.testsuite, options, suiteName)
+		} else {
+			return this.parseFinalSuite(item, s, options)
 		}
+	}
 
-		// TestFile type
+	async parseChildSuites (item: TestItem, s: TestSuite[], options: TestRun, suiteName: string) {
+		for (const t of s) {
+			// find matching child TestItem
+			let child = item.children.get(t.name!)
+			if (!child) {
+				child = item.children.get(t.classname!)
+			}
+
+			// parse results for the child TestItem, if it exists
+			if (child) {
+				await this.parseFinalSuite(child, t, options)
+			} else {
+				console.error("could not find child test item for " + t.name + " or " + t.classname)
+				// throw new Error("could not find child test item for " + t.name + " or " + t.classname)
+			}
+		}
+	}
+
+	private async parseFinalSuite (item: TestItem, s: TestSuite, options: TestRun) {
 		if (s.tests > 0) {
 			if (s.errors === 0 && s.failures === 0) {
 				options.passed(item, s.time)
@@ -151,11 +256,13 @@ export class ABLResults {
 				//// This should be populated automatically by the child messages filtering up
 				// options.failed(item, new vscode.TestMessage("one or more tests failed"), s.time)
 			} else {
+				logToChannel("unknown error - test results are all zero")
 				options.errored(item, new TestMessage("unknown error - test results are all zero"), s.time)
 			}
 		}
 
 		if (!s.testcases) {
+			logToChannel("no test cases discovered or run - check the configuration for accuracy")
 			options.errored(item, new TestMessage("no test cases discovered or run - check the configuration for accuracy"), this.duration())
 			return
 		}
@@ -163,11 +270,31 @@ export class ABLResults {
 		return this.setAllChildResults(item.children, s.testcases, options)
 	}
 
-	async setAllChildResults(children: TestItemCollection, testcases: TestCase[], options: TestRun) {
+	private async getSuiteName (item: TestItem) {
+		let suiteName = item.id
+		if (suiteName.indexOf("#") > -1) {
+			suiteName = item.id.split("#")[0]
+		}
+
+		if(suiteName) {
+			const propathRelativePath = this.propath!.search(suiteName)!
+			suiteName = await propathRelativePath.then((res) => {
+				if (res?.propathRelativeFile) {
+					return res?.propathRelativeFile
+				}
+				return suiteName
+			})
+		}
+		suiteName = suiteName.replace(/\\/g, '/')
+		return suiteName
+	}
+
+	private async setAllChildResults(children: TestItemCollection, testcases: TestCase[], options: TestRun) {
 		const promArr: Promise<void>[] = [Promise.resolve()]
 		children.forEach(child => {
 			const tc = testcases.find((t: TestCase) => t.name === child.label)
 			if (!tc) {
+				logToChannel("could not find result for test case " + child.label)
 				options.errored(child, new TestMessage("could not find result for test case"))
 				return
 			}
@@ -177,7 +304,7 @@ export class ABLResults {
 		return Promise.all(promArr)
 	}
 
-	async setChildResults(item: TestItem, options: TestRun, tc: TestCase) {
+	private async setChildResults(item: TestItem, options: TestRun, tc: TestCase) {
 		switch (tc.status) {
 			case "Success":
 				options.passed(item, tc.time)
@@ -210,7 +337,7 @@ export class ABLResults {
 		}
 	}
 
-	async getFailureMarkdownMessage(item: TestItem, options: TestRun, failure: TCFailure): Promise<MarkdownString> {
+	private async getFailureMarkdownMessage(item: TestItem, options: TestRun, failure: TCFailure): Promise<MarkdownString> {
 		const stack = await parseCallstack(this.debugLines!, failure.callstackRaw)
 		const promsg = getPromsgText(failure.message)
 		const md = new MarkdownString(promsg + "\n\n")
@@ -232,7 +359,7 @@ export class ABLResults {
 		return md
 	}
 
-	getDiffMessage (failure: TCFailure) {
+	private getDiffMessage (failure: TCFailure) {
 		if (!failure.diff) {
 			return undefined
 		}
@@ -244,10 +371,6 @@ export class ABLResults {
 		}
 		return tm
 	}
-
-
-
-
 
 	async parseProfile() {
 		const profParser = new ABLProfile()
@@ -316,4 +439,33 @@ export class ABLResults {
 				new Range(new Position(dbg.incLine - 1, 0), new Position(dbg.incLine, 0))))
 		}
 	}
+}
+
+interface IRuntime {
+	name: string,
+	path: string,
+	default?: boolean
+}
+
+async function getDLC() {
+	let defaultDLC: string | undefined = undefined
+	const oeversion = await getOEVersion()
+	const runtimes: IRuntime[] = workspace.getConfiguration("abl.configuration").get("runtimes",[])
+
+	for (const runtime of runtimes) {
+		if (runtime.name === oeversion) {
+			return runtime.path
+		}
+		if (runtime.default) {
+			defaultDLC = runtime.path
+		}
+	}
+	if (defaultDLC) {
+		return defaultDLC
+	}
+	if(!process.env.DLC) {
+		throw new Error("unable to determine DLC")
+	}
+
+	return process.env.DLC
 }

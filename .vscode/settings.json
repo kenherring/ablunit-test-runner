@@ -1,9 +1,13 @@
 {
 	"eslint.enable": true,
+	"git.branchProtection": [
+		"main"
+	],
 	"npm.autoDetect": "on",
 	"redhat.telemetry.enabled": false,
+	"shellcheck.useWorkspaceRootAsCwd": true,
 	"sonarlint.connectedMode.project": {
-		"connectionId": "sonarcloud",
+		"connectionId": "sonarcloud-kenherring",
 		"projectKey": "kenherring_ablunit-test-provider"
 	},
 	"sonarlint.disableTelemetry": true,

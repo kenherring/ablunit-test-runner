@@ -1,10 +1,11 @@
-# ABLUnit Test Provider [![CircleCI](https://img.shields.io/circleci/build/github/kenherring/ablunit-test-provider/main)](https://dl.circleci.com/status-badge/redirect/gh/kenherring/ablunit-test-provider/tree/main) [![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=kenherring_ablunit-test-provider&metric=sqale_rating)](https://sonarcloud.io/summary/new_code?id=kenherring_ablunit-test-provider)
+# ABLUnit Test Runner [![CircleCI](https://img.shields.io/circleci/build/github/kenherring/ablunit-test-provider/main?logo=circleci)](https://dl.circleci.com/status-badge/redirect/gh/kenherring/ablunit-test-provider/tree/main) [![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=kenherring_ablunit-test-provider&metric=sqale_rating)](https://sonarcloud.io/summary/new_code?id=kenherring_ablunit-test-provider) [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=kenherring_ablunit-test-provider&metric=coverage)](https://sonarcloud.io/summary/new_code?id=kenherring_ablunit-test-provider)
+
 
 This VSCode test provider extension integrates [ABLUnit tests](https://docs.progress.com/bundle/openedge-developer-studio-help-122/page/Learn-About-ABLUnit-Test-Framework.html) into the VSCode test explorer.
 
 This is my first VSCode extension, and my first TypeScript project. I'm sure there are many ways to improve the code, and I welcome any feedback.  I'm also open to collaboration if anyone is interested.
 
-Quality code, and thus unit testing, is a passion of mine.  I hope this extension helps others to embrace [TDD](https://en.wikipedia.org/wiki/Test-driven_development) and improve their code.
+Quality code, and thus unit testing, is my passion  I hope this extension helps others to embrace [TDD](https://en.wikipedia.org/wiki/Test-driven_development) and improve their code.
 
 ## OpenEdge Versions Note
 
@@ -15,66 +16,81 @@ This project was developed using the [Progress OpenEdge Developers Kit: Classroo
 ### Features
 
 * Run ABLUnit Tests
-* See test results
-* View code coverage
+* See test results in VSCode Test Explorer
+* View code coverage highlighting in the editor
 
-	![code coverage](docs/coverage.png)
+#### Code Coverage Example Screenshot
+
+![code coverage example screenshot](https://github.com/kenherring/ablunit-test-provider/raw/main/docs/coverage.png)
 
 ## Configuration
+
+The configuration is broken into two sections.
+
+1.  The first section shows configuration options that users are most likely to change.
+2.  Additional configuration options available that are not likely to be change by most users.
+
+### Configuration - Sample Config
+
+This config searches the `test/` directory for test files, named `*Test.cls` or `*Test.p`.  It also passes a database connection to `_progres` via the `-pf` parameter.
+
+**`.vscode/settings.json`**:
+```json
+{
+  "ablunit.files.include": [
+    "test/**/*Test.{cls,p}"
+  ],
+  "ablunit.params": "-pf path/to/dbconnections.pf"
+}
+```
+
+### Configuration - Most Commonly Changed
+
+| Setting | Default | Description |
+| --- | --- | --- |
+| `ablunit.params` | | Additional options/parameters passed to `_progres`.  This is most useful for providing database connections. Example: `-pf path/to/dbconnections.pf` |
+| `ablunit.files.include` | `[ "**/*.{cls,p}" ]` | Glob pattern array to include test files |
+| `ablunit.files.exclude` | `[ "**/.builder/**" ]` | Glob pattern array to exclude test files |
+| `ablunit.findAllFilesAtStartup` | `true` | Search all workspace files for test cases.  It may be beneficial to disable this for large workspaces, in which case the extension will find tests as files are accessed. |
+| `ablunit.notificationsEnabled` | `true` | Enable/disable notifications |
+| `ablunit.tempDir` | Extension storage area | Any files generated when running ABLUnit will be stored here.  It is also used for the [`-T`](https://docs.progress.com/bundle/openedge-startup-and-parameter-reference-122/page/Temporary-Directory-T.html) startup parameter |
+
+### Configuration - Additional Options
 
 | Setting | Default | Description |
 | --- | --- | --- |
 | `ablunit.display.classLabel` | `classname` | `[ "classname" \| "filename" ]` |
-| `ablunit.files.include` | `**/*.{cls,p}` | Glob pattern to identify potential tests |
-| `ablunit.files.exclude` | `**/.builder/**` | Glob pattern to exclude |
-| `ablunit.findAllFilesAtStartup` | `true` | Search all workspace files for test cases.  It may be beneficial to disable this for large workspaces, in which case the extension will find tests as files are accessed. |
-| `ablunit.importOpenedgeProjectJson` | `false` | import settings from `openedge-project.json` |
-| `ablunit.notificationsEnabled` | `true` | Enable/disable notifications |
-| `ablunit.params` | | Additional options/parameters passed to `_progres` |
-| `ablunit.progressIniPath` | | Path to a `progress.ini` file to use |
-| `ablunit.tempDir` | Extension storage area | Any files generated when running ABLUnit will be stored here.  It is also used for the [`-T`](https://docs.progress.com/bundle/openedge-startup-and-parameter-reference-122/page/Temporary-Directory-T.html) startup parameter |
+| `ablunit.importOpenedgeProjectJson` | `true` | Import settings from `openedge-project.json` |
+| `ablunit.progressIniPath` | | Path to a `progress.ini` file.  Exclusive to Windows. |
 | `ablunit.tests.command` | `_progres -b -p ABLUnitCore.p <...>` | This setting can be used to run tests with any existing shell command your tests are configured to run with.  Example: `ant test` |
 | `ablunit.tests.task` | | Use this task to run tests via VSCode |
-| `ablunit.configJson.configJson.configPath` | `ablunit.json` | |
-| `ablunit.configJson.configJson.outputPath` | `results.xml` | Output location for the xml generated by ABLUnit.  Typically used with `ablunit.tests.command` |
-| `ablunit.configJson.configJson.outputWriteJson` | | Output `results.json` version of `results.xml` after analysis |
-| `ablunit.configJson.configJson.quitOnEnd` | | |
-| `ablunit.configJson.configJson.writeLog` | | |
-| `ablunit.configJson.configJson.showErrorMessage` | | |
-| `ablunit.configJson.configJson.throwError` | | |
+| `ablunit.configJson.configPath` | `ablunit.json` | |
+| `ablunit.configJson.outputLocation` | `results.xml` | Output location for the xml generated by ABLUnit.  Typically used with `ablunit.tests.command` |
+| `ablunit.configJson.outputWriteJson` | `false` | Output `results.json` version of `results.xml` after analysis |
+| `ablunit.configJson.quitOnEnd` | `true` | Quit the session when the test run is complete |
+| `ablunit.configJson.writeLog` | `true` | If `writeLog` is true then a log file, `ablunit.log` is created in the current working directory and writes error messages to that log file |
+| `ablunit.configJson.showErrorMessage` | `true` | If `showErrorMessage` is set to true then the error messages is displayed in a new window |
+| `ablunit.configJson.throwError` | `true` | If ABLUnit is used as a library inside another program, set `throwError` to true, the framework displays the errors occurred |
 | `ablunit.profilerOptions.optionsPath` | `profile.options` | See the [`-profile`](https://docs.progress.com/bundle/openedge-startup-and-parameter-reference-122/page/Profiler-profile.html) startup parameter |
-| `ablunit.profilerOptions.enabled` | `true` | Enable the profiler |
-| `ablunit.profilerOptions.description` | `Unit Tests Run via ABLUnit Test Runner (VSCode)| |
-| `ablunit.profilerOptions.filename` | `prof.out` | |
-| `ablunit.profilerOptions.listings` | `false`` | |
-| `ablunit.profilerOptions.statistics` | `false` | |
-| `ablunit.profilerOptions.traceFilter` | | |
-| `ablunit.profilerOptions.tracing` | | |
-| `ablunit.profilerOptions.writeJson` | | Output a json formatted version of the profiler output.  Filepath is the same as `abluint.profilerOptions.filename` with `json` extension. |
-<!-- | `ablunit.tests.command.useABLPluginCommand` | | Use this command to run tests from the CLI | -->
+| `ablunit.profilerOptions.enabled` | `true` | Enable the profiler<br>See the [`PROFILER:ENABLED`](https://docs.progress.com/bundle/abl-reference/page/ENABLED-attribute.html) attribute |
+| `ablunit.profilerOptions.description` | `Unit Tests Run via ABLUnit Test Runner (VSCode)` | Description assigned to the profiler output<br>See the [`PROFILER:DESCRIPTION`](https://docs.progress.com/bundle/abl-reference/page/DESCRIPTION-attribute.html) attribute |
+| `ablunit.profilerOptions.filename` | `prof.out` | Location of the profiler results (`-outfile <outfile>`)<br>See the [`PROFILER:FILE-NAME`](https://docs.progress.com/bundle/abl-reference/page/FILE-NAME-attribute.html) attribute |
+| `ablunit.profilerOptions.listings` |  | Flag to output debug listings (`-listings`)<br>When unset (default value) no listings will be output.  When set to `"true"` listings will be output to the `${config:ablunit.tempDir}/listings` directory.<br><ul><li>See the [`PROFILER:LISTINGS`](https://docs.progress.com/bundle/abl-reference/page/LISTINGS-attribute.html) attribute</li><li>See the [`PROFILER:DIRECTORY`](https://docs.progress.com/bundle/abl-reference/page/DIRECTORY-attribute.html) attribute</li></ul> |
+| `ablunit.profilerOptions.directory` | | The directory to which the listings files are written (`-directory <dirname>`)<br>When set to blank or not set the `${config:ablunit.tempDir}/listings` diretory will be used.<br> |
+| `ablunit.profilerOptions.statistics` | `false` | Flag to output statistics (`-statistics`)<br>See the [`PROFILER:STATISTICS`](https://docs.progress.com/bundle/abl-reference/page/STATISTICS-attribute.html) attribute |
+| `ablunit.profilerOptions.traceFilter` | | Comma-separated string that uses wildcard matching for any procedure or class you want trace (`-trace-filter <string>`)<br>See the [`PROFILER:TRACE-FILTER`](https://docs.progress.com/bundle/abl-reference/page/TRACE-FILTER-attribute.html) attribute |
+| `ablunit.profilerOptions.tracing` | | Comma-separated string of procedure and line number pairs. A pipe (`\|`) separates the procedure name and line number (`-tracing <string>`)<br>**Example**: `test1\|32,test2\|17`<br>See the [`PROFILER:TRACING`](https://docs.progress.com/bundle/abl-reference/page/TRACING-attribute.html) attribute |
+| `ablunit.profilerOptions.writeJson` | `false` | Output a json formatted version of the profiler output.  Filepath is the same as `abluint.profilerOptions.filename` with `json` extension. |
 
 ## Contributing
 
-### Running the Project
-
-- Run `npm install` in terminal to install dependencies
-- Run the `Run Extension` target in the Debug View. This will:
-	- Start a task `npm: watch` to compile the code
-	- Run the extension in a new VS Code window
-- Run a test in the new VS Code window
-
-### Testing the Project
-
-* Using the CLI: `npm test`
-* Using the native VSCode API:  install the [Extension Test Runner](https://marketplace.visualstudio.com/items?itemName=ms-vscode.extension-test-runner) extension
-* Using docker:
-    ```bash
-	docker/docker_build.sh # run once to build the container
-	docker/run_tests.sh
-	```
+See [CONTRIBUTING.md](.github/CONTRIBUTING.md)
 
 ## Links
 
-* [Progress Documentation -> Progress Developer Studio for OpenEdge Online Help -> Run test cases from the command prompt](https://docs.progress.com/bundle/openedge-developer-studio-help/page/Run-test-cases-from-the-command-prompt.html)
-* [Progress Documentation -> ABLUnit Annotations](// https://docs.progress.com/bundle/openedge-developer-studio-olh-117/page/Annotations-supported-with-ABLUnit.html) - Used w/ snippets
-* [GitHub progress/ade](https://github.com/progress/ADE) - source files for OE code
+* [VSCode Marketplace - ABLUnit Test Runner](https://marketplace.visualstudio.com/items?itemName=kherring.ablunit-test-provider)
+* Progress Documentation
+  * [Run test cases from the command prompt](https://docs.progress.com/bundle/openedge-developer-studio-help/page/Run-test-cases-from-the-command-prompt.html)
+  * [Learn About ABLUnit Test Framework](https://docs.progress.com/bundle/openedge-developer-studio-help/page/Learn-About-ABLUnit-Test-Framework.html)
+  * [ABLUnit Annotations](https://docs.progress.com/bundle/openedge-developer-studio-help/page/Annotations-supported-with-ABLUnit.html)
+* GitHub Repo - [progress/ade](https://github.com/progress/ADE) - OpenEdge Source Files

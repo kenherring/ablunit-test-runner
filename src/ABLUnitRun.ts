@@ -1,39 +1,34 @@
-import { TestItem, TestRun, workspace } from "vscode"
-import { ABLTestMethod, ABLTestProcedure, ABLUnitTestData } from "./testTree"
+import { TestRun, workspace } from "vscode"
 import { ABLResults } from "./ABLResults"
-import { outputChannel } from './ABLUnitCommon'
+import { logToChannel } from './ABLUnitCommon'
 import { IABLUnitConfig } from "./ABLUnitConfigWriter"
 
-//TODO remove this
 import * as cp from "child_process";
 
-export const ablunitRun = async(item: TestItem, ablunitConfig: IABLUnitConfig, options: TestRun, data: ABLUnitTestData, res: ABLResults) => {
+export const ablunitRun = async(ablunitConfig: IABLUnitConfig, options: TestRun, res: ABLResults) => {
 	const start = Date.now()
 
-	// let itemPath = workspace.asRelativePath(item.uri!.fsPath)
-	const fileinfo = await res.propath?.search(item.uri!)
-	let itemPath: string = fileinfo?.propathRelativeFile ?? item.uri!.fsPath
+	await res.createAblunitJson()
+	await res.deleteResultsXml()
 
-	if (data instanceof ABLTestProcedure || data instanceof ABLTestMethod) {
-		itemPath = itemPath + "#" + item.label
-	}
-
-	const getCommand = (itemPath: string) => {
+	const getCommand = () => {
 		if (!ablunitConfig.tempDirUri) {
 			throw (new Error("temp directory not set"))
 		}
 
 		const cmd = [res.dlc + '/bin/_progres', '-b', '-p', 'ABLUnitCore.p']
 		if (process.platform === 'win32') {
-			cmd.push('-basekey', 'INI', '-ininame', ablunitConfig.progressIniUri.fsPath)
+			cmd.push('-basekey', 'INI', '-ininame', workspace.asRelativePath(ablunitConfig.progressIniUri.fsPath))
+		} else if (process.platform === 'linux') {
+			process.env.PROPATH = res.propath!.toString()
+		} else {
+			throw new Error("unsupported platform: " + process.platform)
 		}
 		cmd.push('-T', workspace.asRelativePath(ablunitConfig.tempDirUri))
 
 		if (ablunitConfig.profilerOptions.enabled) {
 			cmd.push('-profile', workspace.asRelativePath(ablunitConfig.profilerOptions.optionsUri))
 		}
-		// cmd.push('-param', "'CFG=" + res.runConfig.ablunitJson!.fsPath + "'")
-		// cmd.push("-param", '"' + itemPath + ' -outputLocation ' + workspace.asRelativePath(res.runConfig.tempDirUri) + ' -format xml"')
 
 		const cmdSanitized: string[] = []
 
@@ -41,54 +36,50 @@ export const ablunitRun = async(item: TestItem, ablunitConfig: IABLUnitConfig, o
 			cmd.push(element)
 		});
 
-		cmd.push("-param", '"' + itemPath + ' -outputLocation ' + workspace.asRelativePath(ablunitConfig.tempDirUri) + '"')
+		cmd.push("-param", '"CFG=' + workspace.asRelativePath(ablunitConfig.config_uri.fsPath) + '"')
 		cmd.forEach(element => {
 			cmdSanitized.push(element.replace(/\\/g, '/'))
 		});
 
 		ablunitConfig.tests.commandArr = cmdSanitized
-		outputChannel.appendLine("ABLUnit Command: " + cmdSanitized.join(' '))
+		logToChannel("ABLUnit Command: " + cmdSanitized.join(' '))
 		return cmdSanitized
 	}
 
 	const runCommand = () => {
-		const args = getCommand(itemPath)
-		console.log("ShellExecution Started - dir='" + ablunitConfig.workspaceUri.fsPath + "'")
-		outputChannel.appendLine("ShellExecution Started - dir='" + ablunitConfig.workspaceUri.fsPath + "'")
+		const args = getCommand()
+		logToChannel("ABLUnit Command Execution Started - dir='" + ablunitConfig.workspaceUri.fsPath + "'")
 
 		const cmd = args[0]
 		args.shift()
 
 		return new Promise<string>((resolve, reject) => {
-
-			console.log("COMMAND=" + cmd + " " + args.join(' '))
+			console.log("using command=" + cmd + " " + args.join(' '))
 			res.setStatus("running '" + cmd + "' command")
+
 			cp.exec(cmd + ' ' + args.join(' '), { cwd: ablunitConfig.workspaceUri.fsPath }, (err: any, stdout: any, stderr: any) => {
 				const duration = Date.now() - start
-				if (err) {
-					console.error("cp.exec error=" + err.toString())
-					console.error("cp.exec stdout=" + stdout)
-					console.error("cp.exec stderr=" + stderr)
-					options.appendOutput("err=" + err)
-					options.appendOutput("stdout=" + stdout)
-					options.appendOutput("stderr=" + stderr)
-					reject(err)
+				if (stdout) {
+					logToChannel("_progres stdout=" + stdout)
+					options.appendOutput("_progres stdout=" + stdout + "\r\n")
 				}
 				if (stderr) {
-					console.error("cp.exec stderr=" + stderr)
-					options.appendOutput(stderr)
+					logToChannel("_progres stderr=" + stderr)
+					options.appendOutput("_progres stderr=" + stderr + "\r\n")
 					reject(stderr)
 				}
-				options.appendOutput("stdout:" + stdout + "\r\n")
-				console.log("ShellExecution Completed - duration: " + duration)
-				outputChannel.appendLine("ShellExecution Completed - duration: " + duration)
-				resolve(stdout)
+				if (err) {
+					logToChannel("_progres err=" + err.toString(), 'error')
+					options.appendOutput("_progres err=" + err)
+					reject(err)
+				}
+				logToChannel("ABLUnit Command Execution Completed - duration: " + duration)
+				resolve("resolve _progres promise")
 			})
 		})
 	}
 
 	return runCommand().then(() => {
-		options.appendOutput("parsing results\r\n")
-		return res.parseOutput(item, options).then();
+		return res.parseOutput(options).then();
 	})
 }

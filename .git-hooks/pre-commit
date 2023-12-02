@@ -1,5 +1,17 @@
 #!/bin/sh
+set -eou pipefail
 
+. .git-hooks/common.sh
+
+jq () {
+	if command jq >/dev/null 2>&1; then
+		command jq "$@"
+	elif command -v jq-windows-amd64.exe >/dev/null 2>&1; then
+		jq-windows-amd64.exe "$@"
+	else
+		echo "jq not found" >&2
+	fi
+}
 
 validate_circleci_config () {
 	if ! git diff --name-only --staged | grep -q 'circleci/config.yml'; then
@@ -15,4 +27,8 @@ validate_circleci_config () {
 	fi
 }
 
+########## MAIN BLOCK ##########
+
 validate_circleci_config
+validate_version_updated
+echo "pre-commit checks successful!" >&2

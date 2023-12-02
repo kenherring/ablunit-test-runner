@@ -1,0 +1,14 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "test_projects/proj5_suites"
+		}
+	],
+	"settings": {
+		"redhat.telemetry.enabled": false,
+		"sonarlint.disableTelemetry": true
+	}
+}

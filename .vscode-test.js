@@ -1,52 +1,39 @@
 const { defineConfig } = require('@vscode/test-cli');
 
-module.exports = defineConfig([
-	{
-		label: 'extension tests - proj0',
-		files: 'out/test/**/*.proj0.test.js',
-		workspaceFolder: './test_projects/proj0',
+function createTestConfig(projName, workspaceFolder, timeout) {
+	if (workspaceFolder == '') {
+		workspaceFolder = `./test_projects/${projName}`;
+	};
+	if (timeout == 0) {
+		timeout = 20000;
+	};
+	const retVal = {
+		label: `extension tests - ${projName}`,
+		files: `out/test/**/*.${projName}.test.js`,
+		workspaceFolder: workspaceFolder,
 		mocha: {
 			ui: 'tdd',
-			timeout: 20000
+			timeout: timeout
 		},
-		"launchArgs": [
+		launchArgs: [
 			'--disable-extensions'
 		]
-	},
-	{
-		label: 'extension tests - proj1',
-		files: 'out/test/**/*.proj1.test.js',
-		workspaceFolder: './test_projects/proj1',
-		mocha: {
-			ui: 'tdd',
-			timeout: 20000
-		},
-		"launchArgs": [
-			'--disable-extensions'
-		]
-	},
-	{
-		label: 'extension tests - proj2',
-		files: 'out/test/**/*.proj2.test.js',
-		workspaceFolder: './test_projects/proj2',
-		mocha: {
-			ui: 'tdd',
-			timeout: 20000
-		},
-		"launchArgs": [
-			'--disable-extensions'
-		]
-	},
-	{
-		label: 'extension tests - proj3',
-		files: 'out/test/**/*.proj3.test.js',
-		workspaceFolder: './test_projects/proj3_debugLines',
-		mocha: {
-			ui: 'tdd',
-			timeout: 20000
-		},
-		"launchArgs": [
-			'--disable-extensions'
-		]
-	}
-]);
+	};
+
+	// console.log("retVal: ", retVal)
+	return retVal;
+}
+
+function getTestConfig () {
+	const testConfig = []
+	testConfig.push(createTestConfig('proj0', '', 0));
+	testConfig.push(createTestConfig('proj1', '', 0));
+	testConfig.push(createTestConfig('proj2', '', 0));
+	testConfig.push(createTestConfig('proj3', './test_projects/proj3_debugLines', 0));
+	testConfig.push(createTestConfig('proj4', '', 0));
+	testConfig.push(createTestConfig('proj5', './test_projects/proj5_suites', 0));
+	testConfig.push(createTestConfig('proj7', './test_projects/proj7_load_performance', 50000));
+	return testConfig;
+}
+
+module.exports = defineConfig(getTestConfig());

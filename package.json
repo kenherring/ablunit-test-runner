@@ -1,24 +1,50 @@
 {
 	"name": "ablunit-test-provider",
 	"displayName": "ABLUnit Test Runner",
-	"description": "OpenEdge ABLUnit support for VSCode",
-	"version": "0.1.0",
+	"description": "OpenEdge ABLUnit test runner for VSCode",
+	"version": "0.1.6",
 	"publisher": "kherring",
 	"pricing": "Free",
 	"private": true,
+	"icon": "images/icon_128.png",
+	"author": "Ken Herring",
+	"qna": false,
+	"homepage": "https://github.com/kenherring/ablunit-test-provider/blob/main/README.md",
+	"repository": {
+		"url": "https://github.com/kenherring/ablunit-test-provider"
+	},
+	"bugs": {
+		"url": "https://github.com/kenherring/ablunit-test-provider/issues"
+	},
 	"license": "MIT",
+	"licenses": [
+		{
+			"type": "MIT",
+			"url": "https://github.com/kenherring/ablunit-test-provider/blob/main/LICENSE"
+		}
+	],
+	"badges": [
+		{
+			"href": "https://dl.circleci.com/status-badge/redirect/gh/kenherring/ablunit-test-provider/tree/main",
+			"url": "https://img.shields.io/circleci/build/github/kenherring/ablunit-test-provider/main?logo=circleci",
+			"description": "CircleCI Build Status"
+		},
+		{
+			"href": "https://sonarcloud.io/summary/new_code?id=kenherring_ablunit-test-provider",
+			"url": "https://sonarcloud.io/api/project_badges/measure?project=kenherring_ablunit-test-provider&metric=sqale_rating",
+			"description": "SonarCloud Maintainability Rating"
+		},
+		{
+			"href": "https://sonarcloud.io/summary/new_code?id=kenherring_ablunit-test-provider",
+			"url": "https://sonarcloud.io/api/project_badges/measure?project=kenherring_ablunit-test-provider&metric=coverage",
+			"description": "SonarCloud Coverage"
+		}
+	],
 	"capabilities": {
 		"untrustedWorkspaces": {
 			"supported": false
 		}
 	},
-	"badges": [
-		{
-			"href": "https://sonarcloud.io/api/project_badges/measure?project=kenherring_ablunit-test-provider&metric=sqale_rating",
-			"url": "https://sonarcloud.io/summary/new_code?id=kenherring_ablunit-test-provider",
-			"description": "SonarCloud Maintainability Rating"
-		}
-	],
 	"keywords": [
 		"progress",
 		"progress software",
@@ -28,16 +54,11 @@
 		"progress software",
 		"pdsoe"
 	],
-	"repository": "https://github.com/kherring/ablunit-test-provider",
-	"bugs": {
-		"url": "https://github.coim/kherring/ablunit-test-provider/issues"
-	},
 	"engines": {
 		"vscode": "^1.83.0"
 	},
 	"categories": [
-		"Testing",
-		"Snippets"
+		"Testing"
 	],
 	"activationEvents-coverage": [
 		"onStartupFinished"
@@ -51,6 +72,7 @@
 		"esbuild-base": "rm -rf out && esbuild ./src/extension.ts --bundle --outfile=out/extension.js --external:vscode --format=cjs --platform=node",
 		"build": "npm run esbuild",
 		"clean": "rm -rf coverage out && sh -c ./cleanup.sh",
+		"clean-and-compile": "npm run clean && npm run compile",
 		"compile": "tsc -p ./",
 		"esbuild-watch": "npm run esbuild-base -- --sourcemap --watch",
 		"esbuild": "npm run esbuild-base -- --sourcemap",
@@ -64,6 +86,10 @@
 		"vscode:prepublish": "npm run esbuild-base -- --minify",
 		"watch-tsc": "tsc -watch -p ./",
 		"watch": "npm run esbuild-watch"
+	},
+	"dependencies": {
+		"jsonminify": "^0.4.2",
+		"xml2js": "^0.6.2"
 	},
 	"devDependencies": {
 		"@types/glob": "^8.1.0",
@@ -79,36 +105,11 @@
 		"eslint": "^8.26.0",
 		"mocha": "^10.2.0",
 		"mocha-junit-reporter": "^2.2.1",
+		"mocha-multi-reporters": "^1.5.1",
 		"nyc": "^15.1.0",
 		"ts-node": "^10.9.1"
 	},
 	"contributes": {
-		"languages": [
-			{
-				"id": "abl-procedures",
-				"aliases": [
-					"OpenEdge ABL",
-					"abl",
-					"Progress",
-					"Progress 4GL"
-				],
-				"extensions": [
-					".p"
-				]
-			},
-			{
-				"id": "abl-classes",
-				"aliases": [
-					"OpenEdge ABL",
-					"abl",
-					"Progress",
-					"Progress 4GL"
-				],
-				"extensions": [
-					".cls"
-				]
-			}
-		],
 		"configuration": {
 			"type": "object",
 			"title": "ABLUnit Test Provider",
@@ -123,19 +124,23 @@
 					"markdownDescription": "* classpath example: `com.example.myclass`\n* filepath example: `src/com/example/myclass.cls`"
 				},
 				"ablunit.files.include": {
-					"type": "string",
-					"default": "**/*.{cls,p}",
-					"description": "Glob pattern to match test files"
+					"type": "array",
+					"default": [
+						"**/*.{cls,p}"
+					],
+					"markdownDescription": "Glob patterns to include test files"
 				},
 				"ablunit.files.exclude": {
-					"type": "string",
-					"default": "**/.builder/**",
-					"description": "Glob pattern to exclude test files"
+					"type": "array",
+					"default": [
+						"**/.builder/**"
+					],
+					"markdownDescription": "Glob patterns to exclude test files"
 				},
 				"ablunit.findAllFilesAtStartup": {
 					"type": "boolean",
 					"default": true,
-					"description": "For large workspaces this may improve performance by loading tests as they are found instead of doing so when the extension is activated"
+					"markdownDescription": "For large workspaces this may improve performance by loading tests as they are found instead of doing so when the extension is activated"
 				},
 				"ablunit.importOpenedgeProjectJson": {
 					"type": "boolean",
@@ -145,7 +150,7 @@
 				"ablunit.notificationsEnabled": {
 					"type": "boolean",
 					"default": true,
-					"description": "Show notifications when tests are run"
+					"markdownDescription": "Show notifications when tests are run"
 				},
 				"ablunit.params": {
 					"type": "string",
@@ -166,18 +171,12 @@
 				"ablunit.tests.command": {
 					"type": "string",
 					"default": "",
-					"description": "Custom command line executed to run a test"
-				},
-				"ablunit.tests.command.useABLPluginCommand": {
-					"type": "string",
-					"default": "",
-					"markdownDescription": "Use a command from the VSCode [OpenEdge ABL](https://marketplace.visualstudio.com/items?itemName=RiversideSoftware.openedge-abl-lsp) plugin to run a test",
-					"TODO": true
+					"markdownDescription": "Custom command line executed to run a test"
 				},
 				"ablunit.tests.task": {
 					"type": "string",
-					"default": "TODO",
-					"description": "Run tests using the specified task"
+					"default": "",
+					"markdownDescription": "Run tests using the specified task"
 				},
 				"ablunit.configJson.configPath": {
 					"type": "string",
@@ -187,7 +186,7 @@
 				"ablunit.configJson.outputLocation": {
 					"type": "string",
 					"default": "",
-					"markdownDescription": "Location of the outputted results.xml file\n\nDirectory only, filename will always be `results.xml`"
+					"markdownDescription": "Location of the outputted results.xml file.  Default = `ablunit.tempDir`\n\nDirectory only, filename will always be `results.xml`\n\nPath can be absolute or relative to the workspace root.\n\n"
 				},
 				"ablunit.configJson.outputWriteJson": {
 					"type": "boolean",
@@ -197,27 +196,27 @@
 				"ablunit.configJson.quitOnEnd": {
 					"type": "boolean",
 					"default": true,
-					"description": "Quit the session when the test run is complete"
+					"markdownDescription": "Quit the session when the test run is complete"
 				},
 				"ablunit.configJson.writeLog": {
 					"type": "boolean",
 					"default": true,
-					"description": "Start the session with logging enabled"
+					"markdownDescription": "If `writeLog` is true then a log file, `ablunit.log` is created in the current working directory and writes error messages to that log file"
 				},
 				"ablunit.configJson.showErrorMessage": {
 					"type": "boolean",
 					"default": true,
-					"description": "TODO"
+					"markdownDescription": "If `showErrorMessage` is set to true then the error messages is displayed in a new window"
 				},
 				"ablunit.configJson.throwError": {
 					"type": "boolean",
-					"default": true,
-					"description": "TODO"
+					"default": false,
+					"markdownDescription": "If ABLUnit is used as a library inside another program, set `throwError` to true, the framework displays the errors occurred"
 				},
 				"ablunit.profilerOptions.optionsPath": {
 					"type": "string",
 					"default": "profile.options",
-					"markdownDescription": "Location of the outputted profile.options file\n\nsee [`-profile`](https://docs.progress.com/bundle/openedge-startup-and-parameter-reference-122/page/Profiler-profile.html)"
+					"markdownDescription": "Location of the `profile.options` file\n\nSee the [`-profile`](https://docs.progress.com/bundle/openedge-startup-and-parameter-reference-122/page/Profiler-profile.html) attribute"
 				},
 				"ablunit.profilerOptions.enabled": {
 					"type": "boolean",
@@ -227,22 +226,22 @@
 				"ablunit.profilerOptions.description": {
 					"type": "string",
 					"default": "Unit Tests Run via ABLUnit Test Runner (VSCode)",
-					"markdownDescription": "Description of the profiler run\n\nsee the [`PROFILER:DESCRIPTION`](https://docs.progress.com/bundle/abl-reference/page/DESCRIPTION-attribute.html) attribute"
+					"markdownDescription": "Description assigned to the profiler output\n\nSee the [`PROFILER:DESCRIPTION`](https://docs.progress.com/bundle/abl-reference/page/DESCRIPTION-attribute.html) attribute"
 				},
 				"ablunit.profilerOptions.filename": {
 					"type": "string",
 					"default": "prof.out",
-					"markdownDescription": "Location of the profiler results (`-outfile <outfile>`)\n\nsee the [`PROFILER:FILE-NAME`](https://docs.progress.com/bundle/abl-reference/page/DIRECTORY-attribute.html) attribute"
+					"markdownDescription": "Location of the profiler results (`-outfile <outfile>`)\n\nSee the [`PROFILER:FILE-NAME`](https://docs.progress.com/bundle/abl-reference/page/DIRECTORY-attribute.html) attribute"
 				},
 				"ablunit.profilerOptions.listings": {
 					"type": "string",
-					"default": "listings",
-					"markdownDescription": "Flag to output debug listings (`-listings`)\n\nsee the [`PROFILER:LISTINGS`](https://docs.progress.com/bundle/abl-reference/page/LISTINGS-attribute.html) attribute"
+					"default": "",
+					"markdownDescription": "Output debug listings directory (`-listings`)\n\nWhen unset (default) no listings will be output.  When set to `\"true\"` listings will be output to the `${config:ablunit.tempDir}/listings` directory.\n\n<ul><li>See the [`PROFILER:LISTINGS`](https://docs.progress.com/bundle/abl-reference/page/LISTINGS-attribute.html) attribute</li><li>See the [`PROFILER:DIRECTORY`](https://docs.progress.com/bundle/abl-reference/page/DIRECTORY-attribute.html) attribute</li></ul>"
 				},
 				"ablunit.profilerOptions.statistics": {
 					"type": "boolean",
 					"default": false,
-					"markdownDescription": "Flag to output statistics (-statistics)\n\nsee the [`PROFILER:STATISTICS`](https://docs.progress.com/bundle/abl-reference/page/STATISTICS-attribute.html) attribute"
+					"markdownDescription": "Flag to output statistics (`-statistics`)\n\nSee the [`PROFILER:STATISTICS`](https://docs.progress.com/bundle/abl-reference/page/STATISTICS-attribute.html) attribute"
 				},
 				"ablunit.profilerOptions.traceFilter": {
 					"type": "string",
@@ -252,28 +251,43 @@
 				"ablunit.profilerOptions.tracing": {
 					"type": "string",
 					"default": "",
-					"markdownDescription": "Comma-separated string of procedure and line number pairs. A pipe (|) separates the procedure name and line number.\n\n**Example**: \"test1|32,test2|17\" (`-tracing <string>`)\n\nsee the [`PROFILER:TRACING`](https://docs.progress.com/bundle/abl-reference/page/TRACING-attribute.html) attribute"
+					"markdownDescription": "Comma-separated string of procedure and line number pairs. A pipe (`|`) separates the procedure name and line number (`-tracing <string>`)\n\n**Example**: `test1|32,test2|17`\n\nSee the [`PROFILER:TRACING`](https://docs.progress.com/bundle/abl-reference/page/TRACING-attribute.html) attribute"
 				},
 				"ablunit.profilerOptions.writeJson": {
 					"type": "boolean",
 					"default": "false",
 					"markdownDescription": "Output the results in JSON format after parsing.  Writes to a file by the same name as the `filename` option, but with a `.json` extension (default: `prof.json`)"
+				},
+				"ablunit.debugEnabled": {
+					"type": "boolean",
+					"default": false,
+					"markdownDescription": "Enable debug level logging for the extension"
 				}
 			}
 		},
+		"languages": [
+			{
+				"id": "abl-procedure",
+				"extensions": [
+					".p"
+				]
+			},
+			{
+				"id": "abl-class",
+				"extensions": [
+					".cls"
+				]
+			}
+		],
 		"snippets": [
 			{
-				"language": "abl-procedures",
+				"language": "abl-procedure",
 				"path": "./snippets-procedures.json"
 			},
 			{
-				"language": "abl-classes",
+				"language": "abl-class",
 				"path": "./snippets-classes.json"
 			}
 		]
-	},
-	"dependencies": {
-		"jsonminify": "^0.4.2",
-		"xml2js": "^0.6.2"
 	}
 }

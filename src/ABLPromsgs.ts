@@ -1,5 +1,5 @@
 import { Uri, workspace } from "vscode";
-import { outputChannel } from "./ABLUnitCommon";
+import { logToChannel } from "./ABLUnitCommon";
 
 interface Promsg {
 	msgnum: number
@@ -54,7 +54,7 @@ export class ABLPromsgs {
 				throw new Error("Cannot read promsgs directory '" + promsgDir + "', err=" + err)
 			})
 		}, (err) => {
-			outputChannel.appendLine("Cannot find DLC directory '" + this.DLC + '"')
+			logToChannel("Cannot find DLC directory '" + this.DLC + '"')
 			throw new Error("Cannot find DLC directory '" + this.DLC + '", err=' + err)
 		})
 	}
