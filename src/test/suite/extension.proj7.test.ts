@@ -1,7 +1,7 @@
 import * as assert from 'assert'
 import { Uri, workspace } from 'vscode'
 import { before } from 'mocha'
-import { getTestCount, getWorkspaceUri, runAllTests } from '../common'
+import { getTestCount, getWorkspaceUri, runAllTests } from '../testCommon'
 // import { exec } from "child_process"
 
 

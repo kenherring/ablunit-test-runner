@@ -2,7 +2,7 @@ import * as assert from 'assert'
 import { Uri, workspace } from 'vscode'
 import { after, before } from 'mocha'
 import { getStorageUri } from '../../extension'
-import { doesDirExist, doesFileExist, runAllTests } from '../common'
+import { doesDirExist, doesFileExist, runAllTests } from '../testCommon'
 
 
 const projName = 'workspace0'

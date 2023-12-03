@@ -3,7 +3,7 @@ import path = require('path')
 import { Uri } from 'vscode'
 import { parseTestClass } from '../../parse/TestClassParser'
 import { parseTestSuite } from '../../parse/TestSuiteParser'
-import { getTestCount, sleep, getWorkspaceUri, runAllTests } from '../common'
+import { getTestCount, sleep, getWorkspaceUri, runAllTests } from '../testCommon'
 import { getContentFromFilesystem } from '../../parse/ProfileParser'
 import { getLines } from '../../parse/TestParserCommon'
 
