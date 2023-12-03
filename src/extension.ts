@@ -99,6 +99,11 @@ export async function activate(context: ExtensionContext) {
 					data instanceof ABLTestProcedure) {
 					run.enqueued(test)
 					queue.push({ test, data })
+
+					for(const [,childTest] of test.children) {
+						run.enqueued(childTest)
+					}
+
 				} else {
 					await discoverTests(gatherTestItems(test.children))
 				}
@@ -260,7 +265,7 @@ export async function activate(context: ExtensionContext) {
 }
 
 function getExistingTestItem (controller: TestController, uri: Uri) {
-	const items = gatherTestItems(controller.items)
+	const items = gatherAllTestItems(controller.items)
 	const relPath = workspace.asRelativePath(uri.fsPath)
 
 	const existRel = items.find(item => item.id === relPath)
@@ -403,12 +408,18 @@ function getTestFileAttrs(file: Uri | undefined) {
 	return "other"
 }
 
-function gatherTestItems(collection: TestItemCollection) {
+function gatherAllTestItems(collection: TestItemCollection) {
 	const items: TestItem[] = []
 	collection.forEach(item => {
 		items.push(item)
 		items.push(...gatherTestItems(item.children))
 	})
+	return items
+}
+
+function gatherTestItems(collection: TestItemCollection) {
+	const items: TestItem[] = []
+	collection.forEach(item => items.push(item))
 	return items
 }
 
@@ -470,7 +481,7 @@ function getWorkspaceTestPatterns() {
 }
 
 async function removeExcludedFiles(controller: TestController, excludePatterns: RelativePattern[]) {
-	const items = gatherTestItems(controller.items)
+	const items = gatherAllTestItems(controller.items)
 
 	for (const element of items) {
 		const item = element

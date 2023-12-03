@@ -286,8 +286,8 @@ export class ABLResults {
 		children.forEach(child => {
 			const tc = testcases.find((t: TestCase) => t.name === child.label)
 			if (!tc) {
-				logToChannel("could not find result for test case " + child.label)
-				options.errored(child, new TestMessage("could not find result for test case"))
+				logToChannel("could not find result for test case '" + child.label + "'", "error")
+				options.errored(child, new TestMessage("could not find result for test case '" + child.label + "'"))
 				return
 			}
 			promArr.push(this.setChildResults(child, options, tc))
