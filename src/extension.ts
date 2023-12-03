@@ -82,35 +82,27 @@ export async function activate(context: ExtensionContext) {
 		const run = ctrl.createTestRun(request)
 
 		const discoverTests = async (tests: Iterable<TestItem>) => {
-			console.log("20")
 			for (const test of tests) {
-				console.log("21 " + test.id)
 				if (request.exclude?.includes(test)) {
 					continue
 				}
-				console.log("22")
 
 				const data = testData.get(test)
 				if (debugEnabled) {
 					printDataType(data)
 				}
-				console.log("23")
 
 				if (data instanceof ABLTestSuite ||
 					data instanceof ABLTestClass ||
 					data instanceof ABLTestProgram ||
 					data instanceof ABLTestMethod ||
 					data instanceof ABLTestProcedure) {
-					console.log("24")
 					run.enqueued(test)
 					queue.push({ test, data })
 				} else {
-					console.log("25")
 					await discoverTests(gatherTestItems(test.children))
 				}
-				console.log("26")
 			}
-			console.log("27")
 		}
 
 		const runTestQueue = async (res: ABLResults[]) => {
@@ -192,35 +184,23 @@ export async function activate(context: ExtensionContext) {
 			const res: ABLResults[] = []
 			const proms: Promise<void>[] = []
 
-			console.log("1")
-
 			for(const itemData of queue) {
-				console.log("2")
 				const wf = workspace.getWorkspaceFolder(itemData.test.uri!)
-				console.log("3")
 
 				if (!wf) {
 					console.error("Skipping test run for test item with no workspace folder: " + itemData.test.uri!.fsPath)
 					continue
 				}
-				console.log("4")
 				let r = res.find(r => r.workspaceFolder === wf)
-				console.log("5")
 				if (!r) {
-					console.log("6")
 					r = new ABLResults(wf, await getStorageUri(wf) ?? wf.uri, contextStorageUri!)
 					await r.start()
 					res.push(r)
 				}
-				console.log("7")
 				proms.push(r.addTest(itemData.test))
-				console.log("8")
 			}
-			console.log("9")
 			await Promise.all(proms)
-			console.log("10")
 			resultData.set(run, res)
-			console.log("11")
 			return res
 		}
 
@@ -293,19 +273,24 @@ function getOrCreateFile(controller: TestController, uri: Uri) {
 	}
 	data.didResolve = false
 
-	const file = controller.createTestItem(uri.toString(), workspace.asRelativePath(uri.fsPath), uri)
+	const file = controller.createTestItem(workspace.asRelativePath(uri.fsPath), workspace.asRelativePath(uri.fsPath), uri)
+	file.description = "To be parsed..."
 	file.tags = [ new TestTag("runnable") ]
 
+	let relativePath = workspace.asRelativePath(uri.fsPath)
+	if(data instanceof ABLTestSuite) {
+		relativePath = '[ABL Test Suites]/'	+ relativePath
+	}
 
-	const parent = getOrCreateDirNode(controller, workspace.getWorkspaceFolder(uri)!, workspace.asRelativePath(uri.fsPath))
-	controller.items.add(file)
+	const parent = getOrCreateDirNode(controller, workspace.getWorkspaceFolder(uri)!, relativePath)
 	if (parent) {
 		parent.children.add(file)
+	} else {
+		controller.items.add(file)
 	}
 
 	testData.set(file, data)
 	file.canResolveChildren = false
-	file.description = "xyz"
 	return { file, data }
 }
 
@@ -371,12 +356,11 @@ function getTestFileAttrs(file: Uri | undefined) {
 	if (!file) {
 		return "none"
 	}
+	const testRegex = /@test/i
 	const suiteRegex = /@testsuite/i
+
 	const contents = readFileSync(file.fsPath).toString()
-	if (!contents) {
-		return "none"
-	}
-	if (contents.length < 1) {
+	if (!contents || contents.length < 1 || !testRegex.test(contents)) {
 		return "none"
 	}
 
@@ -461,13 +445,11 @@ async function removeExcludedFiles(controller: TestController, excludePatterns: 
 		if (item.uri && (data instanceof ABLTestSuite || data instanceof ABLTestClass || data instanceof ABLTestProgram)) {
 			const excluded = isFileExcluded(item.uri, excludePatterns)
 			if (item.uri && excluded) {
-				console.log("delete item (Excluded): " + item.id)
 				testData.delete(item)
 				controller.items.delete(item.id)
 			}
 		}
 		if (item.children.size == 0) {
-			console.log("delete item (size=0): " + item.id)
 			testData.delete(item)
 			controller.items.delete(item.id)
 		}
@@ -484,14 +466,12 @@ async function removeExcludedChildren(parent: TestItem, excludePatterns: Relativ
 		if (data instanceof ABLTestFile) {
 			const excluded = isFileExcluded(item.uri!, excludePatterns)
 			if (item.uri && excluded) {
-				console.log("delete 2 excluded " + item.id)
 				parent.children.delete(item.id)
 				testData.delete(item)
 			}
 		} else if (data?.isFile) {
 			await removeExcludedChildren(item, excludePatterns)
 			if (item.children.size == 0) {
-				console.log("delete item-2 (size=0): " + item.id)
 				parent.children.delete(item.id)
 				testData.delete(item)
 			}
@@ -553,6 +533,7 @@ function startWatchingWorkspace(controller: TestController, fileChangedEmitter: 
 
 				const { file, data } = getOrCreateFile(controller, uri)
 				if (data?.didResolve) {
+					// controller.invalidateTestResults(file)
 					await data.updateFromDisk(controller, file)
 				}
 				fileChangedEmitter.fire(uri)

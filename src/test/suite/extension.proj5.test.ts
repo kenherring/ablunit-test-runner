@@ -2,7 +2,7 @@ import * as assert from 'assert'
 import path = require('path')
 import { Uri } from 'vscode'
 import { parseTestClass } from '../../parse/TestClassParser'
-import { parseTestSuite } from '../../parse/TestSuiteParser'
+import { parseSuiteLines } from '../../parse/TestSuiteParser'
 import { getTestCount, sleep, getWorkspaceUri, runAllTests } from '../testCommon'
 import { getContentFromFilesystem } from '../../parse/ProfileParser'
 import { getLines } from '../../parse/TestParserCommon'
@@ -26,7 +26,7 @@ suite(projName + ' - Extension Test Suite', () => {
 
 	test(projName + '.2 - TestSuite - suite1.cls', async () => {
 		const lines = await readLinesFromFile('test/suites/suite1.cls',"@testsuite")
-		const suiteRet = parseTestSuite(lines)
+		const suiteRet = parseSuiteLines(lines)
 		assert.strictEqual(suiteRet.name, "suites.suite1")
 		assert.strictEqual(suiteRet.classes.length, 4, "expected 4 classes in suite1.cls")
 		assert.strictEqual(suiteRet.procedures.length, 7, "expected 7 procedures in suite1.cls")
