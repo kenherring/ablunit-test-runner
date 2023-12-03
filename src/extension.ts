@@ -17,14 +17,9 @@ let contextStorageUri: vscode.Uri | undefined = undefined
 
 const resultData = new WeakMap<vscode.TestRun, ABLResults[]>() //TODO how do we display data from previous test runs?
 
-export async function getStorageUri (workspaceFolder?: vscode.WorkspaceFolder) {
-	if (!workspaceFolder) {
-		return contextStorageUri
-	}
+export async function getStorageUri (workspaceFolder: vscode.WorkspaceFolder) {
+	if (!contextStorageUri) { throw new Error("contextStorageUri is undefined") }
 
-	if (!contextStorageUri) {
-		throw new Error("contextStorageUri is undefined")
-	}
 	const dirs = workspaceFolder.uri.path.split('/')
 	const ret = vscode.Uri.joinPath(contextStorageUri,dirs[dirs.length - 1])
 	await createDir(ret)
@@ -34,10 +29,13 @@ export async function getStorageUri (workspaceFolder?: vscode.WorkspaceFolder) {
 export async function activate(context: vscode.ExtensionContext) {
 
 	logToChannel("ACTIVATE!")
+	if(!vscode.workspace.workspaceFolders) {
+		return
+	}
 
 	const debugEnabled = vscode.workspace.getConfiguration('ablunit').get('debugEnabled', false)
 	const ctrl = vscode.tests.createTestController('ablunitTestController', 'ABLUnit Test')
-	contextStorageUri = context.storageUri ?? vscode.Uri.parse("file://" + process.env.TEMP) //should always be defined as context.storageUri
+	contextStorageUri = context.storageUri ?? vscode.Uri.parse("file://" + process.env.TEMP) //will always be defined as context.storageUri
 	await createDir(contextStorageUri)
 
 	context.subscriptions.push(ctrl)

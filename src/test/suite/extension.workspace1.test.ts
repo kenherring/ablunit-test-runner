@@ -31,21 +31,28 @@ suite(projName + ' - Extension Test Suite', () => {
 		}
 
 		console.log("validate proj0 success")
-		const ablunitJson = vscode.Uri.joinPath(storageUri[0],'ablunit.json')
-		const resultsXml = vscode.Uri.joinPath(storageUri[0],'results.xml')
-		const resultsJson = vscode.Uri.joinPath(storageUri[0],'results.json')
-		const listingsDir = vscode.Uri.joinPath(storageUri[0],'listings')
-
+		let ablunitJson = vscode.Uri.joinPath(storageUri[0],'ablunit.json')
+		let resultsXml = vscode.Uri.joinPath(storageUri[0],'results.xml')
+		let resultsJson = vscode.Uri.joinPath(storageUri[0],'results.json')
+		let listingsDir = vscode.Uri.joinPath(storageUri[0],'listings')
 		assert(await doesFileExist(ablunitJson), "missing ablunit.json (" + ablunitJson.fsPath + ")")
 		assert(await doesFileExist(resultsXml), "missing results.xml (" + resultsXml.fsPath + ")")
 		assert(!await doesFileExist(resultsJson), "results.json exists and should not (" + resultsJson.fsPath + ")")
 		assert(!await doesDirExist(listingsDir), "listings dir exists and should not (" + listingsDir.fsPath + ")")
 
 		console.log("validate proj3 success")
+		ablunitJson = vscode.Uri.joinPath(storageUri[1],'ablunit.json')
+		resultsXml = vscode.Uri.joinPath(storageUri[1],'results.xml')
+		resultsJson = vscode.Uri.joinPath(storageUri[1],'results.json')
+		listingsDir = vscode.Uri.joinPath(storageUri[1],'listings')
 		assert(await doesFileExist(ablunitJson), "missing ablunit.json (" + ablunitJson.fsPath + ")")
 		assert(await doesFileExist(resultsXml), "missing results.xml (" + resultsXml.fsPath + ")")
 		assert(!await doesFileExist(resultsJson), "results.json exists and should not (" + resultsJson.fsPath + ")")
 		assert(!await doesDirExist(listingsDir), "listings dir exists and should not (" + listingsDir.fsPath + ")")
+
+		console.log("validate projX has no ablunit.json")
+		ablunitJson = vscode.Uri.joinPath(vscode.workspace.workspaceFolders![2].uri,'ablunit.json')
+		assert(!await doesFileExist(ablunitJson), "ablunit.json exists and should not (" + ablunitJson.fsPath + ")")
 	})
 
 	test(projName + '.2 - <storageUri>/ablunit.json file exists', async () => {

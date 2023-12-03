@@ -123,7 +123,12 @@ export class ABLResults {
 				return
 			}
 		}
-		this.cfg.ablunitConfig.configJson.tests.push(testObj)
+
+		if (this.cfg.ablunitConfig.configJson.tests.find((t: any) => t.test === testRel)) {
+			console.log("test already exists in configJson.tests: " + testRel)
+		} else {
+			this.cfg.ablunitConfig.configJson.tests.push(testObj)
+		}
 	}
 
 	async deleteResultsXml() {

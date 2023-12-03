@@ -5,7 +5,10 @@
 		},
 		{
 			"path": "proj3_debugLines",
-			"name": "TEST PROJECT 3",
+			"name": "TEST PROJECT 3"
+		},
+		{
+			"path": "projX_no_oe_code"
 		}
 	],
 	"settings": {

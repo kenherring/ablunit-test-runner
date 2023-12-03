@@ -181,7 +181,6 @@ export class ABLUnitConfig  {
 	}
 
 	setTempDirUri (tempDir: Uri, fromConstructor: boolean = false) {
-		console.log("setTempDirUri tempDir=" + tempDir.fsPath)
 		if (!fromConstructor && this.ablunitConfig.tempDirUri === tempDir) {
 			console.log("skip setTempDir - tempDir is the same as before (" + this.ablunitConfig.tempDirUri.fsPath + ")")
 			return
@@ -224,9 +223,8 @@ export class ABLUnitConfig  {
 	}
 
 	async deleteFile(uri: Uri) {
-		console.log("----- deleteFile uri=" + uri.fsPath)
 		return workspace.fs.delete(uri).then((val) => {
-			// console.log("----- deleted! " + uri.fsPath)
+			console.log("deleted file: " + uri.fsPath)
 		}, (err) => {
 			// console.log("----- file '" + workspace.asRelativePath(uri, false) + "' does not exist")
 			//do nothing.  if the file doesn't exist we can just continue on.
