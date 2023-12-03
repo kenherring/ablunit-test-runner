@@ -225,7 +225,7 @@ export class ABLTestClass extends ABLTestFile {
 		parseABLTestClass(content, relativePath, {
 
 			deleteTest() {
-				console.log("DELETE " + item.id + " " + item.label)
+				console.log("[deleteTest] " + item.id + " " + item.label)
 				controller.items.delete(item.id)
 				testData.delete(item)
 			},

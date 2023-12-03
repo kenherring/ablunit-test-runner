@@ -4,7 +4,6 @@ import * as Config from './createTestConfig'
 
 async function main() {
 	const config = Config.getTestConfig()
-	console.log("config=" + config)
 
 	for (const conf of config) {
 		await testProject(conf.projName, conf.workspaceFolder, conf.launchArgs)

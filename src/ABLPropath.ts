@@ -46,7 +46,7 @@ export class PropathParser {
 		console.log("////////////// setPropath begin //////////////")
 
 		for (const entry of importedPropath.propathEntry) {
-			console.log("setPropath: " + entry.path + " " + entry.type + " " + entry.buildDir)
+			console.log("found propath entry: " + entry.path + " " + entry.type + " " + entry.buildDir)
 			let uri: Uri
 			if(isRelativePath(entry.path)) {
 				uri = Uri.joinPath(this.workspaceFolder.uri, entry.path)

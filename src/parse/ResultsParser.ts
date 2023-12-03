@@ -60,8 +60,6 @@ export class ABLResultsParser {
 	}
 
 	async parseResults(cfg: IABLUnitConfig) {
-	// async parseResults(opts: IABLUnitJson, resultsUri: Uri, jsonUri: Uri) {
-		console.log("resultsUri=" + cfg.config_output_resultsUri.fsPath)
 		const resultsBits = await workspace.fs.readFile(cfg.config_output_resultsUri);
 		const resultsXml = Buffer.from(resultsBits.toString()).toString('utf8');
 		const resultsXmlJson = await this.parseXml(resultsXml)
@@ -202,7 +200,3 @@ export class ABLResultsParser {
 		})
 	}
 }
-
-// console.log(1)
-// var parseTest = new ABLResultsParser("c:/git/ablunit-test-provider/test_projects/proj2/results.xml")
-// console.log(2)

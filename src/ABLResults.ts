@@ -88,32 +88,24 @@ export class ABLResults {
 
 	async addTest (test:  TestItem) {
 		console.log("addTest: " + test.id + " " + test.uri!.fsPath)
-		console.log('addTest { workspaceFolder: "' + this.cfg.ablunitConfig.workspaceFolder.name + '", test: "' + test.id + '" }')
 		// outputToChannel('addTest { workspaceFolder: "' + this.cfg.ablunitConfig.workspaceFolder.name + '", test: "' + test.id + '" }')
 
 		this.tests.push(test)
 		let testName = test.id
-		console.log("3")
 
 		let testCase = undefined
 		if (testName.indexOf("#") > -1) {
 			testCase = testName.split("#")[1]
 			testName = testName.split("#")[0]
 		}
-		console.log("4")
 
 		const testUri = test.uri!
-		console.log("5 testUri=" + testUri.fsPath)
 		let testRel: string = workspace.asRelativePath(testUri, false)
-		console.log("testRel=" + testRel)
-		console.log("propath = " + this.propath)
 		const p = await this.propath!.search(testUri)
 		if (p) {
 			testRel = p.propathRelativeFile
 		}
 		testRel = testRel.replace(/\\/g, '/')
-		console.log("testRel=" + testRel + " workspaceFolder=" + this.cfg.ablunitConfig.workspaceFolder.uri.fsPath)
-		console.log("6")
 
 		const testObj: ITestObj = { test: testRel }
 		if (testCase) {
@@ -128,14 +120,11 @@ export class ABLResults {
 						existingTestObj.cases = []
 					}
 					existingTestObj.cases.push(testCase)
-					console.log("push= " + JSON.stringify(testCase))
 				}
 				return
 			}
 		}
-		console.log("testObj = " + JSON.stringify(testObj))
 		this.cfg.ablunitConfig.configJson.tests.push(testObj)
-		console.log("99 " + JSON.stringify(this.cfg.ablunitConfig.configJson.tests))
 	}
 
 	async deleteResultsXml() {
@@ -276,27 +265,19 @@ export class ABLResults {
 	}
 
 	private async getSuiteName (item: TestItem) {
-		let suiteName = workspace.asRelativePath(item.uri!, false)
-		// if (suiteName.indexOf("#") > -1) {
-		// 	suiteName = item.id.split("#")[0]
-		// }
+		let suitePath = workspace.asRelativePath(item.uri!, false)
 
-		console.log("suiteName= " + suiteName)
-
-		if(suiteName) {
-			const propathRelativePath = this.propath!.search(suiteName)!
-			suiteName = await propathRelativePath.then((res) => {
+		if(suitePath) {
+			const propathRelativePath = this.propath!.search(suitePath)!
+			suitePath = await propathRelativePath.then((res) => {
 				if (res?.propathRelativeFile) {
-					console.log("ret propathRelativeFile= " + res?.propathRelativeFile)
 					return res?.propathRelativeFile
 				}
-				console.log("ret suiteName=" + suiteName)
-				return suiteName
+				return suitePath
 			})
 		}
-		suiteName = suiteName.replace(/\\/g, '/')
-		console.log("ret=" + suiteName)
-		return suiteName
+		suitePath = suitePath.replace(/\\/g, '/')
+		return suitePath
 	}
 
 	private async setAllChildResults(children: TestItemCollection, testcases: TestCase[], options: TestRun) {

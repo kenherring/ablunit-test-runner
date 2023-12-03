@@ -54,17 +54,13 @@ export async function activate(context: vscode.ExtensionContext) {
 	const fileChangedEmitter = new vscode.EventEmitter<vscode.Uri>()
 
 	const runHandler = (request: vscode.TestRunRequest, cancellation: vscode.CancellationToken) => {
-		console.log("runHandler")
 		if (!request.continuous) {
-			console.log("startTestRun - not continuous")
 			return startTestRun(request)
 		}
 
 		const l = fileChangedEmitter.event(uri => {
-			console.log("startTestRun - file=" + uri.fsPath)
 			const file = getOrCreateFile(ctrl, uri).file
 			if(file) {
-				console.log("startTestRun")
 				startTestRun(
 					new vscode.TestRunRequest(
 						[file],
@@ -74,21 +70,18 @@ export async function activate(context: vscode.ExtensionContext) {
 					)
 				)
 			} else {
-				console.log("startTestRun - file not found: " + uri.fsPath)
+				console.error("startTestRun - file not found: " + uri.fsPath)
 			}
 		})
 		cancellation.onCancellationRequested(() => l.dispose())
 	}
 
 	const startTestRun = (request: vscode.TestRunRequest) => {
-		console.log("startTestRun")
 		showNotification("running ablunit tests")
 
 		const queue: { test: vscode.TestItem; data: ABLRunnable }[] = []
-		console.log("createTestRun")
 		const run = ctrl.createTestRun(request)
 
-		console.log('discoverTests')
 		const discoverTests = async (tests: Iterable<vscode.TestItem>) => {
 			for (const test of tests) {
 				if (request.exclude?.includes(test)) {
@@ -114,17 +107,12 @@ export async function activate(context: vscode.ExtensionContext) {
 		}
 
 		const runTestQueue = async (res: ABLResults[]) => {
-			console.log("runTestQueue")
-			console.log("queue.length = " + queue.length)
 			for (const { test } of queue) {
 				if (run.token.isCancellationRequested) {
-					console.log("run.skipped")
 					run.skipped(test)
 				} else {
-					console.log("run.started parent")
 					run.started(test)
 					for(const childTest of gatherTestItems(test.children)) {
-						console.log("run.started child")
 						run.started(childTest)
 					}
 				}
@@ -233,11 +221,8 @@ export async function activate(context: vscode.ExtensionContext) {
 		}
 		const data = testData.get(item)
 		if (data instanceof ABLTestSuite || data instanceof ABLTestClass || data instanceof ABLTestProgram) {
-			console.log("updateFromDisk-1.1")
 			await data.updateFromDisk(ctrl, item)
-			console.log("updateFromDisk-1.2")
 		}
-		console.log("resolveHandler-complete")
 	}
 
 	async function updateNodeForDocument(e: vscode.TextDocument) {
@@ -253,9 +238,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
 		const { file, data } = getOrCreateFile(ctrl, e.uri)
 		if (file) {
-			console.log("updateFromContents-1")
 			data.updateFromContents(ctrl, e.getText(), file)
-			console.log("updateFromContents-2")
 		}
 	}
 
@@ -486,9 +469,7 @@ async function findInitialFiles(controller: vscode.TestController,
 			}
 			const { file, data } = getOrCreateFile(controller, wsFile)
 			if(file) {
-				console.log("updateFromDisk-2.1")
 				await data.updateFromDisk(controller, file)
-				console.log("updateFromDisk-2.2")
 			}
 		}
 	}
@@ -496,7 +477,6 @@ async function findInitialFiles(controller: vscode.TestController,
 	if (removeExcluded) {
 		await removeExcludedFiles(controller, excludePatterns)
 	}
-	console.log("findInitialFiles-complete")
 }
 
 function startWatchingWorkspace(controller: vscode.TestController, fileChangedEmitter: vscode.EventEmitter<vscode.Uri> ) {
@@ -523,9 +503,7 @@ function startWatchingWorkspace(controller: vscode.TestController, fileChangedEm
 
 				const { file, data } = getOrCreateFile(controller, uri)
 				if (data?.didResolve) {
-					console.log("updateFromDisk-3.1")
 					await data.updateFromDisk(controller, file)
-					console.log("updateFromDisk-3.2")
 				}
 				fileChangedEmitter.fire(uri)
 			})
@@ -535,7 +513,6 @@ function startWatchingWorkspace(controller: vscode.TestController, fileChangedEm
 		}
 
 		findInitialFiles(controller, includePatterns, excludePatterns)
-		console.log("startWatchingWorkspace-complete")
 		return watchers
 	}).flat()
 
@@ -627,12 +604,11 @@ function createDir(uri: vscode.Uri) {
 		return
 	}
 	return vscode.workspace.fs.stat(uri).then((stat) => {
-		console.log("stat:" + stat.type)
 		if (!stat) {
 			logToChannel("create dir for extension storage: " + uri.fsPath)
 			return vscode.workspace.fs.createDirectory(uri)
 		} else {
-			console.log("extension storage directory already exists: " + uri.fsPath)
+			// console.log("extension storage directory already exists: " + uri.fsPath)
 		}
 	}, (err) => {
 		logToChannel("create dir for extension storage: " + uri.fsPath)

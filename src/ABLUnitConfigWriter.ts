@@ -227,12 +227,10 @@ export class ABLUnitConfig  {
 	}
 
 	async writeFile(uri: Uri, data: Uint8Array) {
-		console.log('write file: ' + uri.fsPath)
 		return workspace.fs.writeFile(uri, data)
 	}
 
 	async createDir(uri: Uri) {
-		console.log("----- createDir uri=" + uri.fsPath)
 		return workspace.fs.stat(uri).then((stat) => {}, (err) => {
 			return workspace.fs.createDirectory(uri)
 		})
@@ -255,7 +253,6 @@ export class ABLUnitConfig  {
 					throw new Error("configJson.outputLocation is not a Directory: " + this.ablunitConfig.config_output_locationUri.fsPath)
 				}
 			}, (err) => {
-				console.log("[createAblunitJson] createDir")
 				return this.createDir(this.ablunitConfig.config_output_locationUri)
 			})
 		)
