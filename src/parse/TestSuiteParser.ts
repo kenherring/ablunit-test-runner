@@ -2,6 +2,8 @@ import { Position, Range } from 'vscode'
 import { logToChannel } from '../ABLUnitCommon'
 import { getLines } from './TestParserCommon'
 
+//TODO - need to parse test directories
+
 // CLASS statement
 const classRE = /^\s*class\s+(\S+\w):?\s*/i
 

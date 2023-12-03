@@ -8,7 +8,7 @@ import { getContentFromFilesystem } from '../../parse/ProfileParser'
 import { getLines } from '../../parse/TestParserCommon'
 
 
-const projName = 'proj6'
+const projName = 'proj5'
 const workspaceUri = getWorkspaceUri()
 
 suite(projName + ' - Extension Test Suite', () => {
@@ -36,13 +36,13 @@ suite(projName + ' - Extension Test Suite', () => {
 
 	test(projName + '.3 - TestClass - login/test2.cls - ablunit.display.classLabel=classname (default)', async () => {
 		const lines = await readLinesFromFile('test/login/test2.cls')
-		const classRet = parseTestClass(lines, 'classname', 'login/test2.cls', Uri.joinPath(workspaceUri, 'src/login/test2.cls'))
+		const classRet = parseTestClass(lines, 'classname', 'login/test2.cls')
 		assert.strictEqual(classRet.classname, "login.test2")
 	})
 
 	test(projName + '.4 - TestClass - login/test2.cls - ablunit.display.classLabel=filepath', async () => {
 		const lines = await readLinesFromFile('test/login/test2.cls')
-		const classRet = parseTestClass(lines, 'filepath', 'login/test2.cls', Uri.joinPath(workspaceUri, 'src/login/test2.cls'))
+		const classRet = parseTestClass(lines, 'filepath', 'login/test2.cls')
 		assert.strictEqual(classRet.classname, "login/test2.cls")
 	})
 

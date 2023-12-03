@@ -1,11 +1,11 @@
-import { Range, TestController, TestItem, TestTag, Uri, workspace } from 'vscode'
+import { Range, TestController, TestItem, TestItemCollection, TestTag, Uri, workspace } from 'vscode'
 import { ABLResults } from './ABLResults'
 import { parseABLTestSuite } from './parse/TestSuiteParser'
 import { parseABLTestClass } from './parse/TestClassParser'
 import { parseABLTestProgram } from './parse/TestProgramParser'
 import { getContentFromFilesystem } from './parse/ProfileParser'
 
-export type ABLUnitTestData = ABLTestFile | ABLUnitDir | ABLRunnable | ABLAssert
+export type ABLUnitTestData = ABLTestDir | ABLTestFile | ABLRunnable | ABLAssert
 export type ABLRunnable = ABLTestSuite | ABLTestClass | ABLTestProgram | ABLTestMethod | ABLTestProcedure
 export type TestFile = ABLTestSuite | ABLTestClass | ABLTestProgram
 
@@ -13,202 +13,226 @@ export type TestFile = ABLTestSuite | ABLTestClass | ABLTestProgram
 export const testData = new WeakMap<TestItem, ABLUnitTestData>()
 const displayClassLabel = workspace.getConfiguration('ablunit').get('display.classLabel','')
 
-let generationCounter = 0
+interface IAncestor {
+	item: TestItem
+	children: TestItem[]
+}
 
 interface ITestType {
 	isFile: boolean
 	didResolve: boolean
 	name: string
-	label: string
 	runnable: boolean
 	canResolveChildren: boolean
 }
 
-class TestTypeObj implements ITestType {
-	public isFile: boolean = false
-	public didResolve: boolean = false
-	public name: string = ""
-	public label: string = ""
-	public runnable: boolean = false
-	public canResolveChildren: boolean = false
+function gatherTestItems(collection: TestItemCollection) {
+	const items: TestItem[] = []
+	collection.forEach(item => items.push(item))
+	return items
+}
 
-	getLabel() {
-		return this.label
-	}
+//@deprecate
+function createTestItem(controller: TestController,
+						item: TestItem,
+						range: Range | undefined,
+						id: string,
+						label: string,
+						tag: string,
+						description?: string) {
+	const thead = controller.createTestItem(id, label, item.uri)
+	thead.description = description
+	thead.range = range
+	thead.tags = [new TestTag("runnable"), new TestTag(tag)]
+	return thead
+}
+
+function createTestChild(controller: TestController,
+						range: Range,
+						procedureName: string,
+						relativePath: string,
+						uri: Uri) {
+	const child = controller.createTestItem(relativePath + '#' + procedureName, procedureName, uri)
+	child.range = range
+	child.label = procedureName
+	child.tags = [new TestTag("runnable"), new TestTag("ABLTestProcedure")]
+	child.canResolveChildren = false
+	child.description = "ABL Test Procedure"
+	return child
+}
+
+
+class TestTypeObj implements ITestType {
+	public isFile = false
+	public didResolve = false
+	public name = ""
+	public runnable = false
+	public canResolveChildren = false
+}
+
+export class ABLTestDir implements ITestType {
+	public isFile = false
+	public didResolve = true
+	public name = "TestDirName"
+	public runnable = true
+	public canResolveChildren = false
+}
+
+export class ABLTestCase extends TestTypeObj {
+	public testCaseType = "TestCase"
+	public runnable = true
+	public canResolveChildren = true
 }
 
 export class ABLTestFile extends TestTypeObj {
 	public isFile: boolean = true
-	public testFileType = "TestFile"
 	public runnable: boolean = true
 	public canResolveChildren: boolean = false
+	public relativePath: string = ''
 	protected replaceWith: TestItem | undefined = undefined
 	currentResults?: ABLResults
 
 	public async updateFromDisk(controller: TestController, item: TestItem) {
 		try {
 			const content = await getContentFromFilesystem(item.uri!)
-			if(!content) {
-				return
-			}
+			if(!content) { return }
 			item.error = undefined
 			this.updateFromContents(controller, content, item)
 
-			if (this.replaceWith != undefined) {
-				const currItem = controller.items.get(this.replaceWith.id)
+			// if (this.replaceWith != undefined) {
+			// 	const currItem = controller.items.get(this.replaceWith.id)
 
-				if (currItem) {
-					this.addItemsToController(currItem, this.replaceWith)
-				} else {
-					controller.items.add(this.replaceWith)
-				}
-				controller.items.delete(item.id)
-			} else {
-				//this is definitely valid for classes - not sure about other types
-				//if a class has no @test annotations it won't have any children to display
-				const hasCurrent = controller.items.get(item.id)
-				if (hasCurrent) {
-					controller.items.delete(item.id)
-				}
-			}
-			controller.items.delete(item.id)
+			// 	if (currItem) {
+			// 		this.addItemsToController(currItem, this.replaceWith)
+			// 	} else {
+			// 		controller.items.add(this.replaceWith)
+			// 	}
+			// 	controller.items.delete(item.id)
+			// } else {
+			// 	//this is definitely valid for classes - not sure about other types
+			// 	//if a class has no @test annotations it won't have any children to display
+			// 	const hasCurrent = controller.items.get(item.id)
+			// 	if (hasCurrent) {
+			// 		controller.items.delete(item.id)
+			// 	}
+			// }
+			// controller.items.delete(item.id)
 		} catch (e) {
 			item.error = (e as Error).stack
 		}
 	}
 
-	addItemsToController(item: TestItem, addItem: TestItem) {
-		addItem.children.forEach(addChild => {
-			const currChild = item.children.get(addChild.id)
-			if (currChild) {
-				this.addItemsToController(currChild, addChild)
-			} else {
-				item.children.add(addChild)
-			}
-		})
+	// addItemsToController(item: TestItem, addItem: TestItem) {
+	// 	addItem.children.forEach(addChild => {
+	// 		const currChild = item.children.get(addChild.id)
+	// 		if (currChild) {
+	// 			this.addItemsToController(currChild, addChild)
+	// 		} else {
+	// 			item.children.add(addChild)
+	// 		}
+	// 	})
+	// }
+
+	// ascend(depth: number, ancestors: IAncestor[]) {
+	// 	while (ancestors.length > depth) {
+	// 		const finished = ancestors.pop()!
+	// 		finished.item.children.replace(finished.children)
+	// 		this.replaceWith = finished.item
+	// 	}
+	// }
+
+	updateFromContents(controller: TestController, content: string, item: TestItem) {
+		throw new Error("Method not implemented.")
 	}
 
-	ascend(depth: number, ancestors: [{ item: TestItem, children: TestItem[] }]) {
-		while (ancestors.length > depth) {
-			const finished = ancestors.pop()!
-			finished.item.children.replace(finished.children)
-			this.replaceWith = finished.item
+	addToParent(ancestors: IAncestor[], item: TestItem, push: boolean = false) {
+		if (ancestors.length > 0) {
+			const parent = ancestors[ancestors.length - 1]
+			parent.children.push(item)
+		}
+		if (!push) {
+			ancestors.push({ item: item, children: [] })
 		}
 	}
-
-	public updateFromContents(controller: TestController, content: string, item: TestItem) {
-		throw new Error("updateFromContents TestFile not implemented")
-	}
-}
-
-export class ABLTestCase extends TestTypeObj {
-	public testCaseType = "TestCase"
-	public runnable: boolean = true
-	public canResolveChildren: boolean = true
 }
 
 export class ABLTestSuite extends ABLTestFile {
 
 	setSuiteInfo(relativePath: string, suiteName: string) {
 		this.name = relativePath
-		this.label = suiteName
 	}
 
 	public updateFromContents(controller: TestController, content: string, item: TestItem) {
-		const ancestors: [{ item: TestItem, children: TestItem[] }] = [{ item, children: [] as TestItem[] }]
-		ancestors.pop()
+		const ancestors: IAncestor[] = []
 		this.didResolve = true
-		const relativePath = workspace.asRelativePath(item.uri!.fsPath)
+		this.relativePath = workspace.asRelativePath(item.uri!.fsPath)
 
-		parseABLTestSuite(content, relativePath, {
+		const items = gatherTestItems(controller.items)
 
+		parseABLTestSuite(content, this.relativePath, {
 			onTestSuite: (range: Range, relativePath: string, suiteName:string) => {
-				this.testFileType = "ABLTestSuite"
-
-				const id = `${relativePath}`
-				const thead = controller.createTestItem(id, suiteName, item.uri)
-				thead.range = range
-				thead.label = suiteName
-				thead.tags = [new TestTag("runnable"), new TestTag("ABLTestSuite")]
-				const tData = new ABLTestSuite()
-				this.setSuiteInfo(relativePath, suiteName)
-				testData.set(thead, tData)
+				this.name = relativePath
+				const thead = createTestItem(controller, item, range, relativePath, suiteName, "ABLTestSuite")
+				testData.set(thead, this)
 
 				const parent = ancestors[ancestors.length - 1]
 				if (ancestors.length < 1) {
 					const grp = controller.createTestItem('ABLTestSuiteGroup',"[ABLUnit Test Suites]")
 					grp.tags = [new TestTag("runnable"), new TestTag("ABLTestSuiteGroup")]
-					ancestors.push({ item: grp, children: [thead] as TestItem[] })
+					ancestors.push({ item: grp, children: [thead] })
 				} else {
 					parent.children.push(thead)
 				}
-				ancestors.push({ item: thead, children: [] as TestItem[] })
+				ancestors.push({ item: thead, children: [] })
 			},
-
 			onTestClass: (range: Range, relativePath: string, classpath: string, label: string, suiteName?: string) => {
-				this.testFileType = "ABLTestClass"
+				const existing = items.find(item => item.id == relativePath)
+				if (existing) {
+					if(existing.parent) {
+						existing.parent.children.delete(existing.id)
+					}
+					this.addToParent(ancestors, existing)
+					return
+				}
 
-				const id = `${relativePath}`
-				const thead = controller.createTestItem(id, relativePath, item.uri)
-				thead.range = range
-				thead.label = label
-				thead.tags = [new TestTag("runnable"), new TestTag("ABLTestClass")]
+				const thead = createTestItem(controller, item, range, relativePath, label, "ABLTestClass")
 				const tData = new ABLTestClass()
-				tData.setClassInfo(relativePath, label)
+				tData.setClassInfo(relativePath, classpath, label)
 				testData.set(thead, tData)
-
-				const parent = ancestors[ancestors.length - 1]
-				if (parent) {
-					parent.children.push(thead)
-				}
-				if (!suiteName) {
-					ancestors.push({ item: thead, children: [] as TestItem[] })
-				}
+				this.addToParent(ancestors, thead)
 			},
-
 			onTestProgram: (range: Range, relativepath: string, label: string, suiteName?: string) => {
-				this.testFileType = "ABLTestProgram"
+				const existing = items.find(item => item.id == relativepath)
+				if (existing) {
+					if(existing.parent) {
+						existing.parent.children.delete(existing.id)
+					}
+					this.addToParent(ancestors, existing)
+					return
+				}
 
-				const id = `${relativepath}`
-				const thead = controller.createTestItem(id, relativepath, item.uri)
-				thead.range = range
-				thead.label = label
-				thead.tags = [new TestTag("runnable"), new TestTag("ABLTestProgram")]
+				const thead = createTestItem(controller, item, range, relativepath, label, "ABLTestProgram")
 				const tData = new ABLTestProgram()
 				tData.setProgramInfo(relativepath, label)
 				testData.set(thead, tData)
-
-				const parent = ancestors[ancestors.length - 1]
-				if (parent) {
-					parent.children.push(thead)
-				}
-				if (!suiteName) {
-					ancestors.push({ item: thead, children: [] as TestItem[] })
-				}
-			},
-
+				this.addToParent(ancestors, thead)
+			}
 		})
 
-		this.ascend(0, ancestors) // finish and assign children for all remaining items
-	}
-}
-
-export class ABLUnitDir extends TestTypeObj {
-	public canResolveChildren: boolean = false
-
-	constructor(public generation: number, private readonly relativeDir: string, private readonly element: string) {
-		super()
-		this.label = element
+		// this.ascend(0, ancestors) // finish and assign children for all remaining items
 	}
 }
 
 export class ABLTestClass extends ABLTestFile {
 	public canResolveChildren: boolean = true
+	public classpath: string = ''
+	public classlabel: string = ''
 	methods: ABLTestMethod[] = []
 
-	setClassInfo(classname: string, classlabel: string) {
-		this.name = classname
-		this.label = classlabel
+	setClassInfo(relativePath: string, classpath: string, classlabel: string) {
+		this.name = relativePath
+		this.classpath = classpath
+		this.classlabel = classlabel
 	}
 
 	addMethod(method: ABLTestMethod) {
@@ -216,73 +240,32 @@ export class ABLTestClass extends ABLTestFile {
 	}
 
 	public updateFromContents(controller: TestController, content: string, item: TestItem) {
-		const ancestors: [{ item: TestItem, children: TestItem[] }] = [{ item, children: [] as TestItem[] }]
-		ancestors.pop()
-		const thisGeneration = generationCounter++
+		const ancestors: IAncestor[] = []
 		this.didResolve = true
-		const relativePath = workspace.asRelativePath(item.uri!.fsPath)
+		this.relativePath = workspace.asRelativePath(item.uri!.fsPath)
 
-		parseABLTestClass(workspace.getWorkspaceFolder(item.uri!)!, displayClassLabel, content, relativePath, {
+		const response = parseABLTestClass(workspace.getWorkspaceFolder(item.uri!)!, displayClassLabel, content, this.relativePath)
 
-			deleteTest() {
-				console.log("[deleteTest] " + item.id + " " + item.label)
-				controller.items.delete(item.id)
-				testData.delete(item)
-			},
+		if(!response) {
+			testData.delete(item)
+			item.parent?.children.delete(item.id)
+			return
+		}
 
-			onTestProgramDirectory(range: Range, dirpath: string, dir: string, dirUri: Uri) {
-				const id = `pgmpath:${dirpath}`
-				const thead = controller.createTestItem(id, dirpath, dirUri)
-				thead.range = range
-				thead.tags = [new TestTag("runnable"), new TestTag("ABLTestProgramDirectory")]
-				thead.label = dir
+		item.description = "TestClass"
+		item.label = response.classname
+		item.range = response.range
+		item.tags = [new TestTag("runnable"), new TestTag("ABLTestClass")]
+		item.children.replace([])
+		item.canResolveChildren = false
 
-				if (ancestors.length > 0) {
-					const parent = ancestors[ancestors.length - 1]
-					parent.children.push(thead)
-				}
-
-				testData.set(thead, new ABLUnitDir(thisGeneration, dir, dir))
-				ancestors.push({ item: thead, children: [] as TestItem[] })
-			},
-
-			onTestClass: (range: Range, relativePath: string, classpath: string, label: string, suiteName?: string) => {
-				this.testFileType = "ABLTestClass"
-
-				const id = `${relativePath}`
-				const thead = controller.createTestItem(id, relativePath, item.uri)
-				thead.range = range
-				thead.label = label
-				thead.tags = [new TestTag("runnable"), new TestTag("ABLTestClass")]
-				const tData = new ABLTestClass()
-				tData.setClassInfo(relativePath, label)
-				testData.set(thead, tData)
-
-				const parent = ancestors[ancestors.length - 1]
-				if (parent) {
-					parent.children.push(thead)
-				}
-				if (!suiteName) {
-					ancestors.push({ item: thead, children: [] as TestItem[] })
-				}
-			},
-
-			onTestMethod: (range: Range, relativePath: string, classpath: string, methodname: string) => {
-				this.testFileType = "ABLTestMethod"
-				const id = `${relativePath}#${methodname}`
-				const thead = controller.createTestItem(id, methodname, item.uri)
-				thead.range = range
-				thead.tags = [new TestTag("runnable"), new TestTag("ABLTestMethod")]
-				thead.label = methodname
-				testData.set(thead, new ABLTestMethod(thisGeneration, relativePath, classpath, methodname))
-				const parent = ancestors[ancestors.length - 1]
-				parent.children.push(thead)
-				item.children.add(thead)
-			}
-
-		})
-
-		this.ascend(0, ancestors) // finish and assign children for all remaining
+		for(const method of response.methods) {
+			if(!method) { continue }
+			const child = createTestChild(controller, method.range, method.methodname, response.classname, item.uri!)
+			const methodObj = new ABLTestMethod(response.classname, response.classname, method.methodname)
+			this.addMethod(methodObj)
+			item.children.add(child)
+		}
 	}
 }
 
@@ -292,102 +275,63 @@ export class ABLTestProgram extends ABLTestFile {
 
 	setProgramInfo(programname: string, programlabel: string) {
 		this.name = programname
-		this.label = programlabel
 	}
 
-	addMethod(method: ABLTestProcedure) {
-		this.procedures[this.procedures.length] = method
+	addChild(item: TestItem, proc: ABLTestProcedure) {
+		this.procedures.push(proc)
+		testData.set(item, new ABLTestProcedure(this.relativePath, proc.name))
 	}
 
 	public updateFromContents(controller: TestController, content: string, item: TestItem) {
-		const ancestors: [{ item: TestItem, children: TestItem[] }] = [{ item, children: [] as TestItem[] }]
-		ancestors.pop()
-		const thisGeneration = generationCounter++
+		const ancestors: IAncestor[] = []
 		this.didResolve = true
-		const relativePath = workspace.asRelativePath(item.uri!.fsPath)
+		this.relativePath = workspace.asRelativePath(item.uri!.fsPath)
 
-		parseABLTestProgram(workspace.getWorkspaceFolder(item.uri!)!, content, relativePath, {
+		const response = parseABLTestProgram(content, this.relativePath)
 
-			onTestProgramDirectory(range: Range, dirpath: string, dir: string, dirUri: Uri) {
-				const id = `pgmpath:${dirpath}`
-				const thead = controller.createTestItem(id, dirpath, dirUri)
-				thead.range = range
-				thead.tags = [new TestTag("runnable"), new TestTag("ABLTestProgramDirectory")]
-				thead.label = dir
+		if(!response) {
+			testData.delete(item)
+			item.parent?.children.delete(item.id)
+			return
+		}
 
-				if (ancestors.length > 0) {
-					const parent = ancestors[ancestors.length - 1]
-					parent.children.push(thead)
-				}
+		item.description = "TestProgram"
+		item.label = response.label
+		item.range = new Range(0,0,0,0)
+		item.tags = [new TestTag("runnable"), new TestTag("ABLTestProgram")]
+		item.children.replace([])
+		item.canResolveChildren = false
 
-				testData.set(thead, new ABLUnitDir(thisGeneration, dir, dir))
-				ancestors.push({ item: thead, children: [] as TestItem[] })
-			},
+		for(const procedure of response.procedures) {
+			if(!procedure) { continue }
+			const child = createTestChild(controller, procedure.range, procedure.procedureName, response.label, item.uri!)
+			const method = new ABLTestProcedure(response.label, procedure.procedureName)
+			this.addChild(child, method)
+			item.children.add(child)
+		}
 
-			onTestProgram: (range: Range, relativepath: string, label: string, suiteName?: string) => {
-				this.testFileType = "ABLTestProgram"
-
-				const id = `${relativepath}`
-				const thead = controller.createTestItem(id, relativepath, item.uri)
-				thead.range = range
-				thead.label = label
-				thead.tags = [new TestTag("runnable"), new TestTag("ABLTestProgram")]
-				thead.description = "TestProgram"
-				const tData = new ABLTestProgram()
-				tData.setProgramInfo(relativepath, label)
-				testData.set(thead, tData)
-
-				const parent = ancestors[ancestors.length - 1]
-				if (parent) {
-					parent.children.push(thead)
-				}
-				if (!suiteName) {
-					ancestors.push({ item: thead, children: [] as TestItem[] })
-				}
-			},
-
-			onTestProcedure: (range: Range, relativePath: string, procedureName: string) => {
-				this.testFileType = "ABLTestProcedure"
-
-				const id = `${relativePath}#${procedureName}`
-				const thead = controller.createTestItem(id, procedureName, item.uri)
-				thead.range = range
-				thead.label = procedureName
-				thead.tags = [new TestTag("runnable"), new TestTag("ABLTestProcedure")]
-				testData.set(thead, new ABLTestProcedure(thisGeneration, relativePath, procedureName))
-
-				const parent = ancestors[ancestors.length - 1]
-				parent.children.push(thead)
-			},
-
-		})
-
-		this.ascend(0, ancestors) // finish and assign children for all remaining items
 	}
 }
 
 export class ABLTestMethod extends ABLTestCase { // child of TestClass
-	constructor(public generation: number, private readonly relativePath: string, private readonly classname: string, private readonly methodName: string) {
+	public description = "ABL Test Method"
+	constructor(private readonly relativePath: string, private readonly classname: string, private readonly methodName: string) {
 		super()
-		this.label = methodName
 	}
 }
 
 export class ABLTestProcedure extends ABLTestCase { // child of TestProgram
-	public description: string = "ABL Test Procedure"
-
-	constructor(public generation: number, private readonly programname: string, private readonly procedurename: string) {
+	public description = "ABL Test Procedure"
+	constructor(private readonly programname: string, private readonly procedurename: string) {
 		super()
-		this.label = procedurename
 	}
 }
 
-export class ABLAssert extends TestTypeObj { // child of TestClass or TestProcedure
+export class ABLAssert extends TestTypeObj { // child of TestMethod or TestProcedure
 	public canResolveChildren: boolean = false
 	public runnable: boolean = false
 
-	constructor(public generation: number, private readonly assertText: string) {
+	constructor(private readonly assertText: string) {
 		super()
-		this.label = assertText
 	}
 }

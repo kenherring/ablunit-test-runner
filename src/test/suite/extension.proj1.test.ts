@@ -39,7 +39,7 @@ suite(projName + ' - Extension Test Suite', () => {
 		const resultsJson = Uri.joinPath(workspaceUri,'results.json')
 		const testCount = await getTestCount(resultsJson)
 		console.log("getTestCount: " + testCount)
-		assert.equal(11,testCount)
+		assert.equal(testCount, 11)
 	})
 
 	test(projName + '.3 - run test case in file', async () => {

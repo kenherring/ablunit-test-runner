@@ -42,7 +42,6 @@
 			"description": "Enter the name of the workspace to test",
 			"type": "pickString",
 			"options": [
-				"test_projects.code-workspace",
 				"proj0",
 				"proj1",
 				"proj2",

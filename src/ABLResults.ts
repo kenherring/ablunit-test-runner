@@ -88,14 +88,11 @@ export class ABLResults {
 	async addTest (test:  TestItem) {
 		console.log("addTest: " + test.id + " " + test.uri!.fsPath)
 		// outputToChannel('addTest { workspaceFolder: "' + this.cfg.ablunitConfig.workspaceFolder.name + '", test: "' + test.id + '" }')
-
 		this.tests.push(test)
-		let testName = test.id
 
 		let testCase = undefined
-		if (testName.indexOf("#") > -1) {
-			testCase = testName.split("#")[1]
-			testName = testName.split("#")[0]
+		if (test.id.indexOf("#") > -1) {
+			testCase = test.id.split("#")[1]
 		}
 
 		const testUri = test.uri!
@@ -129,6 +126,8 @@ export class ABLResults {
 		} else {
 			this.cfg.ablunitConfig.configJson.tests.push(testObj)
 		}
+
+		console.log("tests = " + JSON.stringify(this.cfg.ablunitConfig.configJson.tests))
 	}
 
 	async deleteResultsXml() {
