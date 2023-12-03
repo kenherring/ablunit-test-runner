@@ -1,6 +1,6 @@
 import * as vscode from 'vscode'
 import { ABLResults } from './ABLResults'
-import { ABLTestSuite, ABLTestClass, ABLTestProgram, ABLTestMethod, ABLTestProcedure, testData, resultData, ABLTestFile, ABLUnitDir, ABLTestCase, ABLRunnable } from './testTree'
+import { ABLTestSuite, ABLTestClass, ABLTestProgram, ABLTestMethod, ABLTestProcedure, testData, ABLTestFile, ABLUnitDir, ABLTestCase, ABLRunnable } from './testTree'
 import { GlobSync } from 'glob'
 import { logToChannel } from './ABLUnitCommon'
 import { readFileSync } from 'fs'
@@ -15,6 +15,8 @@ const backgroundExecuted = vscode.window.createTextEditorDecorationType({
 let recentResults: ABLResults[] | undefined
 let contextStorageUri: vscode.Uri | undefined = undefined
 
+const resultData = new WeakMap<vscode.TestRun, ABLResults[]>() //TODO how do we display data from previous test runs?
+
 export async function getStorageUri (workspaceFolder?: vscode.WorkspaceFolder) {
 	if (!workspaceFolder) {
 		return contextStorageUri
@@ -26,7 +28,6 @@ export async function getStorageUri (workspaceFolder?: vscode.WorkspaceFolder) {
 	const dirs = workspaceFolder.uri.path.split('/')
 	const ret = vscode.Uri.joinPath(contextStorageUri,dirs[dirs.length - 1])
 	await createDir(ret)
-	console.log('storageUri= ' + ret.fsPath)
 	return ret
 }
 
@@ -36,11 +37,8 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	const debugEnabled = vscode.workspace.getConfiguration('ablunit').get('debugEnabled', false)
 	const ctrl = vscode.tests.createTestController('ablunitTestController', 'ABLUnit Test')
-	logToChannel("context.storageUri= " + context.storageUri?.fsPath)
 	contextStorageUri = context.storageUri ?? vscode.Uri.parse("file://" + process.env.TEMP) //should always be defined as context.storageUri
-	logToChannel("contextStorageUri=" + contextStorageUri.fsPath)
 	await createDir(contextStorageUri)
-	logToChannel("created2")
 
 	context.subscriptions.push(ctrl)
 	context.subscriptions.push(
@@ -70,7 +68,7 @@ export async function activate(context: vscode.ExtensionContext) {
 					)
 				)
 			} else {
-				console.error("startTestRun - file not found: " + uri.fsPath)
+				logToChannel("startTestRun - file not found: " + uri.fsPath, "error")
 			}
 		})
 		cancellation.onCancellationRequested(() => l.dispose())
@@ -243,19 +241,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	}
 
 	async function updateConfiguration(e: vscode.ConfigurationChangeEvent) {
-		// resetAblunitConfig()
-		// TODO!!!
-
 		if (e.affectsConfiguration('ablunit')) {
-			// for(const wf of vscode.workspace.workspaceFolders!) {
-			// 	const res = resultData.get(wf.uri)
-			// 	if (res) {
-			// 		for(const r of res) {
-			// 			r.resetAblunitConfig()
-			// 		}
-			// 	}
-			// }
-
 			await removeExcludedFiles(ctrl, getExcludePatterns())
 		}
 	}
@@ -607,10 +593,8 @@ function createDir(uri: vscode.Uri) {
 		if (!stat) {
 			logToChannel("create dir for extension storage: " + uri.fsPath)
 			return vscode.workspace.fs.createDirectory(uri)
-		} else {
-			// console.log("extension storage directory already exists: " + uri.fsPath)
 		}
-	}, (err) => {
+	}, () => {
 		logToChannel("create dir for extension storage: " + uri.fsPath)
 		return vscode.workspace.fs.createDirectory(uri)
 	})

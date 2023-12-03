@@ -1,11 +1,11 @@
-import { Position, Range, Uri, workspace } from 'vscode'
+import { Position, Range, Uri, WorkspaceFolder } from 'vscode'
 import { logToChannel } from '../ABLUnitCommon'
 import { getLines } from './TestParserCommon'
 
 // PROCEDURE statement
 const procedureRE = /(^|\s+)procedure\s+(\S+)\s*:/i
 
-export const parseABLTestProgram = (text: string, relativePath: string, events: {
+export const parseABLTestProgram = (workspaceFolder: WorkspaceFolder, text: string, relativePath: string, events: {
 	onTestProgramDirectory (range: Range, dirpath: string, dir: string, dirUri: Uri): void
 	onTestProgram(range: Range, relativePath: string, label: string, suiteName?: string): void
 	onTestProcedure(range: Range, relativePath: string, label: string): void
@@ -19,14 +19,10 @@ export const parseABLTestProgram = (text: string, relativePath: string, events: 
 		return
 	}
 
-	if (!workspace.workspaceFolders) {
-		return
-	}
-	const workspaceDir = workspace.workspaceFolders.map(item => item.uri)[0]
 	const zeroRange = new Range(new Position(0,0), new Position(0,0))
 
 	const parseProgram = () => {
-		const programRet = parseTestProgram(lines, relativePath, workspaceDir)
+		const programRet = parseTestProgram(lines, relativePath, workspaceFolder.uri)
 		if (programRet.procedures.length == 0) {
 			return
 		}

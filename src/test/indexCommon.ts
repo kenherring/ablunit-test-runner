@@ -31,7 +31,7 @@ export function setupNyc(projName: string) {
 		require: [
 			"ts-node/register",
 		]
-	});
+	})
 	nyc.reset()
 	nyc.wrap()
 	return nyc
@@ -60,38 +60,38 @@ export function runTests (projName: string, timeout?: number) {
 
 	const nyc = setupNyc(projName)
 	const mocha = setupMocha(projName, timeout)
-	const testsRoot = path.resolve(__dirname, "..");
+	const testsRoot = path.resolve(__dirname, "..")
 	return new Promise<void>((c, e) => {
 		glob("**/**." + projName + ".test.js", {
 			cwd: testsRoot
 		}, (err, files) => {
 			if (err) {
-				return e(err);
+				return e(err)
 			}
 
 			// Add files to the test suite
 			files.forEach((f) => {
 				mocha.addFile(path.resolve(testsRoot, f))
-			});
+			})
 
 			try {
 				// Run the mocha test
 				mocha.run(async (failures) => {
 					if (nyc) {
-						nyc.writeCoverageFile();
-						await nyc.report();
+						nyc.writeCoverageFile()
+						await nyc.report()
 					}
 
 					if (failures > 0) {
 						console.log(`${failures} tests failed.`)
 						e(new Error(`${failures} tests failed.`))
 					}
-					c();
-				});
+					c()
+				})
 			} catch (err) {
-				console.error('[index_' + projName + '.ts] catch err= ' + err);
-				e(err);
+				console.error('[index_' + projName + '.ts] catch err= ' + err)
+				e(err)
 			}
-		});
-	});
+		})
+	})
 }

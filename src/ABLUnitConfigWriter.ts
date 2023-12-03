@@ -5,9 +5,16 @@ import { PropathParser } from "./ABLPropath"
 import * as os from 'os'
 
 export interface ITestObj {
-	test: string,
+	test: string
 	cases?: string[]
 }
+
+export interface IFolderObj {
+	folder: string
+}
+
+type TestsObj = ITestObj
+// type TestsObj = ITestObj | IFolderObj
 
 export interface IABLUnitJson {
 	options: {
@@ -20,7 +27,7 @@ export interface IABLUnitJson {
 		showErrorMessage: boolean
 		throwError: boolean
 	}
-	tests: ITestObj[]
+	tests: TestsObj[]
 }
 
 export interface IProfilerOptions {

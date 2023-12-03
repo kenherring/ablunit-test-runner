@@ -1,5 +1,5 @@
 import { FileType, MarkdownString, Position, Range, TestItem, TestItemCollection, TestMessage, TestRun, Uri, workspace, WorkspaceFolder } from "vscode"
-import { ABLUnitConfig, ITestObj } from "./ABLUnitConfigWriter"
+import { ABLUnitConfig, ITestObj, IFolderObj } from "./ABLUnitConfigWriter"
 import { ABLResultsParser, TCFailure, TestCase, TestSuite } from "./parse/ResultsParser"
 import { ABLTestSuite, ABLUnitTestData } from "./testTree"
 import { parseCallstack } from "./parse/CallStackParser"
@@ -12,6 +12,7 @@ import { FileCoverage, CoveredCount, StatementCoverage } from "./TestCoverage"
 import { ablunitRun } from "./ABLUnitRun"
 import { getOEVersion } from "./parse/OpenedgeProjectParser"
 
+type TestsObj = ITestObj | IFolderObj
 
 export class ABLResults {
 	workspaceFolder: WorkspaceFolder
@@ -115,7 +116,7 @@ export class ABLResults {
 		if (testCase) {
 			const existingTestObj = this.cfg.ablunitConfig.configJson.tests.find((t: any) => t.test === testRel)
 			if (existingTestObj) {
-				if (testObj.cases) {
+				if(testObj.cases) {
 					if (!existingTestObj.cases) {
 						existingTestObj.cases = []
 					}

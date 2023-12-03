@@ -1,4 +1,5 @@
 import * as vscode from 'vscode'
+import { WorkspaceFolder } from 'vscode'
 import { logToChannel } from '../ABLUnitCommon'
 import { getLines } from './TestParserCommon'
 
@@ -22,10 +23,6 @@ export const parseABLTestSuite = (text: string, relativePath: string, events: {
 
 	const [ lines, foundAnnotation ] = getLines(text,"@testsuite")
 	if (!foundAnnotation) {
-		return
-	}
-
-	if (!vscode.workspace.workspaceFolders) {
 		return
 	}
 

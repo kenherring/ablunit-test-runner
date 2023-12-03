@@ -1,3 +1,4 @@
+import { workspace } from 'vscode'
 import * as vscode from 'vscode'
 import { ABLResults } from './ABLResults'
 import { parseABLTestSuite } from './parse/TestSuiteParser'
@@ -11,7 +12,7 @@ export type TestFile = ABLTestSuite | ABLTestClass | ABLTestProgram
 
 
 export const testData = new WeakMap<vscode.TestItem, ABLUnitTestData>()
-export const resultData = new WeakMap<vscode.TestRun, ABLResults[]>()
+const displayClassLabel = workspace.getConfiguration('ablunit').get('display.classLabel','')
 
 let generationCounter = 0
 
@@ -222,7 +223,7 @@ export class ABLTestClass extends ABLTestFile {
 		this.didResolve = true
 		const relativePath = vscode.workspace.asRelativePath(item.uri!.fsPath)
 
-		parseABLTestClass(content, relativePath, {
+		parseABLTestClass(vscode.workspace.getWorkspaceFolder(item.uri!)!, displayClassLabel, content, relativePath, {
 
 			deleteTest() {
 				console.log("[deleteTest] " + item.id + " " + item.label)
@@ -306,7 +307,7 @@ export class ABLTestProgram extends ABLTestFile {
 		this.didResolve = true
 		const relativePath = vscode.workspace.asRelativePath(item.uri!.fsPath)
 
-		parseABLTestProgram(content, relativePath, {
+		parseABLTestProgram(vscode.workspace.getWorkspaceFolder(item.uri!)!, content, relativePath, {
 
 			onTestProgramDirectory(range: vscode.Range, dirpath: string, dir: string, dirUri: vscode.Uri) {
 				const id = `pgmpath:${dirpath}`
