@@ -139,7 +139,9 @@ export async function activate(context: ExtensionContext) {
 					const p = r.ablResults.resultsJson[0]
 					const totals = "Totals - " + p.tests + " tests, " + p.passed + " passed, " + p.errors + " errors, " + p.failures + " failures"
 					logToChannel(totals)
+					logToChannel("Duration - " + r.duration() + "s")
 					run.appendOutput(totals + "\r\n")
+					run.appendOutput("Duration - " + r.duration() + "s\r\n")
 				}
 
 				for (const { test } of queue) {

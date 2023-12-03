@@ -126,8 +126,6 @@ export class ABLResults {
 		} else {
 			this.cfg.ablunitConfig.configJson.tests.push(testObj)
 		}
-
-		console.log("tests = " + JSON.stringify(this.cfg.ablunitConfig.configJson.tests))
 	}
 
 	async deleteResultsXml() {

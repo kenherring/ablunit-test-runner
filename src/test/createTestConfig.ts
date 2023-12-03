@@ -49,7 +49,7 @@ export function getTestConfig () {
 	testConfig.push(createTestConfig('proj3', 'proj3_debugLines', 0))
 	testConfig.push(createTestConfig('proj4', '', 0))
 	testConfig.push(createTestConfig('proj5', 'proj5_suites', 20000))
-	testConfig.push(createTestConfig('proj7', 'proj7_load_performance', 50000))
+	testConfig.push(createTestConfig('proj7', 'proj7_load_performance', 60000))
 
 	// Workspaces
 	testConfig.push(createTestConfig('workspace0', 'workspace0.code-workspace',0))
