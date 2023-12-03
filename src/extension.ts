@@ -229,7 +229,8 @@ export async function activate(context: ExtensionContext) {
 
 	async function updateNodeForDocument(e: TextDocument) {
 		const openEditors = window.visibleTextEditors.filter(editor => editor.document.uri === e.uri)
-		openEditors.forEach(editor => { decorate(editor) })
+		openEditors.forEach(editor => {
+			decorate(editor)})
 
 		if (e.uri.scheme !== 'file') { return }
 		if (!e.uri.path.endsWith('.cls') && !e.uri.path.endsWith('.p')) { return }
@@ -239,9 +240,13 @@ export async function activate(context: ExtensionContext) {
 		}
 
 		const { file, data } = getOrCreateFile(ctrl, e.uri)
-		if (file && data) {
-			data.updateFromContents(ctrl, e.getText(), file)
+		if(file) {
+			ctrl.invalidateTestResults(file)
+			if (data) {
+				data.updateFromContents(ctrl, e.getText(), file)
+			}
 		}
+
 	}
 
 	async function updateConfiguration(e: ConfigurationChangeEvent) {
@@ -254,8 +259,25 @@ export async function activate(context: ExtensionContext) {
 	// ctrl.createRunProfile('Debug Tests', vscode.TestRunProfileKind.Debug, runHandler, false, new vscode.TestTag("runnable"), false)
 }
 
+function getExistingTestItem (controller: TestController, uri: Uri) {
+	const items = gatherTestItems(controller.items)
+	const relPath = workspace.asRelativePath(uri.fsPath)
+
+	const existRel = items.find(item => item.id === relPath)
+	if (existRel) {
+		return existRel
+	}
+
+	const existUri = items.find(item => item.id === uri.fsPath)
+	if (existUri) {
+		return existUri
+	}
+
+	return undefined
+}
+
 function getOrCreateFile(controller: TestController, uri: Uri) {
-	const existing = controller.items.get(uri.toString())
+	const existing = getExistingTestItem(controller, uri)
 	if (existing) {
 		const data = testData.get(existing)
 		if (data instanceof ABLTestSuite) {
@@ -374,7 +396,10 @@ function getTestFileAttrs(file: Uri | undefined) {
 
 function gatherTestItems(collection: TestItemCollection) {
 	const items: TestItem[] = []
-	collection.forEach(item => items.push(item))
+	collection.forEach(item => {
+		items.push(item)
+		items.push(...gatherTestItems(item.children))
+	})
 	return items
 }
 
@@ -535,7 +560,7 @@ function startWatchingWorkspace(controller: TestController, fileChangedEmitter: 
 
 				const { file, data } = getOrCreateFile(controller, uri)
 				if (data?.didResolve) {
-					// controller.invalidateTestResults(file)
+					controller.invalidateTestResults(file)
 					await data.updateFromDisk(controller, file)
 				}
 				fileChangedEmitter.fire(uri)
