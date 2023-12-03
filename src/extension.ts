@@ -115,12 +115,16 @@ export async function activate(context: vscode.ExtensionContext) {
 
 		const runTestQueue = async (res: ABLResults[]) => {
 			console.log("runTestQueue")
+			console.log("queue.length = " + queue.length)
 			for (const { test } of queue) {
 				if (run.token.isCancellationRequested) {
+					console.log("run.skipped")
 					run.skipped(test)
 				} else {
+					console.log("run.started parent")
 					run.started(test)
 					for(const childTest of gatherTestItems(test.children)) {
+						console.log("run.started child")
 						run.started(childTest)
 					}
 				}
