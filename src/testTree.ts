@@ -14,20 +14,6 @@ export type TestFile = ABLTestSuite | ABLTestClass | ABLTestProgram
 export const testData = new WeakMap<TestItem, ABLUnitTestData>()
 const displayClassLabel = workspace.getConfiguration('ablunit').get('display.classLabel','')
 
-interface ITestType {
-	isFile: boolean
-	didResolve: boolean
-	name: string
-	runnable: boolean
-	canResolveChildren: boolean
-}
-
-function gatherTestItems(collection: TestItemCollection) {
-	const items: TestItem[] = []
-	collection.forEach(item => items.push(item))
-	return items
-}
-
 //@deprecate
 function createTestItem(controller: TestController,
 						item: TestItem,
@@ -58,11 +44,16 @@ function createTestChild(controller: TestController,
 	return child
 }
 
+interface ITestType {
+	isFile: boolean
+	didResolve: boolean
+	runnable: boolean
+	canResolveChildren: boolean
+}
 
 class TestTypeObj implements ITestType {
 	public isFile = false
 	public didResolve = false
-	public name = ""
 	public runnable = false
 	public canResolveChildren = false
 }
@@ -107,6 +98,16 @@ export class ABLTestFile extends TestTypeObj {
 		throw new Error("Method not implemented - should be calling implementation in subclass")
 	}
 
+	startParsing(item: TestItem, tag: string) {
+		this.relativePath = workspace.asRelativePath(item.uri!.fsPath)
+		logToChannel("parsing " + this.relativePath)
+		this.didResolve = true
+		item.tags = [new TestTag("runnable"), new TestTag(tag)]
+		item.description = tag
+		item.canResolveChildren = false
+		item.children.replace([])
+	}
+
 	deleteFromParent(controller: TestController, item: TestItem) {
 		//Recursively delete from parent, if parent has no children, delete it too
 		if (item.parent) {
@@ -127,15 +128,9 @@ export class ABLTestFile extends TestTypeObj {
 }
 
 export class ABLTestSuite extends ABLTestFile {
-	public description = "ABL Test Suite"
 
 	public updateFromContents(controller: TestController, content: string, item: TestItem) {
-		this.didResolve = true
-		this.relativePath = workspace.asRelativePath(item.uri!.fsPath)
-
-		const items = gatherTestItems(controller.items)
-
-		logToChannel("parsing " + this.relativePath)
+		this.startParsing(item, "ABL Test Suite")
 		const response = parseABLTestSuite(content)
 
 		if (!response) {
@@ -143,25 +138,13 @@ export class ABLTestSuite extends ABLTestFile {
 			return
 		}
 
-		item.description = this.description
 		item.label = this.relativePath
 		item.range = response.range
-		item.tags = [new TestTag("runnable"), new TestTag("ABLTestSuite")]
-		item.children.replace([])
-		item.canResolveChildren = false
-
-		if (response.name == '') {
-			response.name = this.relativePath
-		}
-		this.name = response.name
-
-			// 	const grp = controller.createTestItem('ABLTestSuiteGroup',"[ABLUnit Test Suites]")
-			// 	grp.tags = [new TestTag("runnable"), new TestTag("ABLTestSuiteGroup")]
 
 		for (const classpath of response.classes) {
 			const thead = createTestItem(controller, item, undefined, classpath, classpath, "ABLTestClass")
 			const tData = new ABLTestClass()
-			tData.setClassInfo(classpath, classpath, classpath)
+			tData.setClassInfo(classpath, classpath)
 			testData.set(thead, tData)
 			item.children.add(thead)
 		}
@@ -169,7 +152,6 @@ export class ABLTestSuite extends ABLTestFile {
 		for (const procedure of response.procedures) {
 			const thead = createTestItem(controller, item, undefined, procedure, procedure, "ABLTestClass")
 			const tData = new ABLTestProgram()
-			tData.setProgramInfo(procedure, procedure)
 			testData.set(thead, tData)
 			item.children.add(thead)
 		}
@@ -178,13 +160,11 @@ export class ABLTestSuite extends ABLTestFile {
 
 export class ABLTestClass extends ABLTestFile {
 	public canResolveChildren: boolean = true
-	public description = "ABL Test Class"
 	public classpath: string = ''
 	public classlabel: string = ''
 	methods: ABLTestMethod[] = []
 
-	setClassInfo(relativePath: string, classpath: string, classlabel: string) {
-		this.name = relativePath
+	setClassInfo(classpath: string, classlabel: string) {
 		this.classpath = classpath
 		this.classlabel = classlabel
 	}
@@ -194,9 +174,7 @@ export class ABLTestClass extends ABLTestFile {
 	}
 
 	public updateFromContents(controller: TestController, content: string, item: TestItem) {
-		this.didResolve = true
-		this.relativePath = workspace.asRelativePath(item.uri!.fsPath)
-
+		this.startParsing(item, "ABL Test Class")
 		const response = parseABLTestClass(workspace.getWorkspaceFolder(item.uri!)!, displayClassLabel, content, this.relativePath)
 
 		if(!response) {
@@ -204,12 +182,8 @@ export class ABLTestClass extends ABLTestFile {
 			return
 		}
 
-		item.description = this.description
 		item.label = response.classname
 		item.range = response.range
-		item.tags = [new TestTag("runnable"), new TestTag("ABLTestClass")]
-		item.children.replace([])
-		item.canResolveChildren = false
 
 		for(const method of response.methods) {
 			if(!method) { continue }
@@ -223,12 +197,7 @@ export class ABLTestClass extends ABLTestFile {
 
 export class ABLTestProgram extends ABLTestFile {
 	public canResolveChildren: boolean = true
-	public description = "ABL Test Program"
 	procedures: ABLTestProcedure[] = []
-
-	setProgramInfo(programname: string, programlabel: string) {
-		this.name = programname
-	}
 
 	addChild(item: TestItem, proc: ABLTestProcedure) {
 		this.procedures.push(proc)
@@ -236,28 +205,21 @@ export class ABLTestProgram extends ABLTestFile {
 	}
 
 	public updateFromContents(controller: TestController, content: string, item: TestItem) {
-		this.didResolve = true
-		this.relativePath = workspace.asRelativePath(item.uri!.fsPath)
-
+		this.startParsing(item, "ABL Test Program")
 		const response = parseABLTestProgram(content, this.relativePath)
-
 		if(!response) {
 			this.deleteItem(controller,item)
 			return
 		}
 
-		item.description = this.description
 		item.label = response.label
 		item.range = new Range(0,0,0,0)
-		item.tags = [new TestTag("runnable"), new TestTag("ABLTestProgram")]
-		item.children.replace([])
-		item.canResolveChildren = false
 
 		for(const procedure of response.procedures) {
 			if(!procedure) { continue }
 			const child = createTestChild(controller, procedure.range, procedure.procedureName, response.label, item.uri!, "Procedure")
-			const method = new ABLTestProcedure(response.label, procedure.procedureName)
-			this.addChild(child, method)
+			const proc = new ABLTestProcedure(response.label, procedure.procedureName)
+			this.addChild(child, proc)
 			item.children.add(child)
 		}
 
@@ -266,15 +228,19 @@ export class ABLTestProgram extends ABLTestFile {
 
 export class ABLTestMethod extends ABLTestCase { // child of TestClass
 	public description = "ABL Test Method"
+	public name: string
 	constructor(private readonly relativePath: string, private readonly classname: string, private readonly methodName: string) {
 		super()
+		this.name = methodName
 	}
 }
 
 export class ABLTestProcedure extends ABLTestCase { // child of TestProgram
 	public description = "ABL Test Procedure"
-	constructor(private readonly programname: string, private readonly procedurename: string) {
+	public name: string
+	constructor(private readonly programname: string, private readonly procedureName: string) {
 		super()
+		this.name = procedureName
 	}
 }
 

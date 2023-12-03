@@ -1,5 +1,4 @@
 import { Position, Range } from 'vscode'
-import { logToChannel } from '../ABLUnitCommon'
 import { getLines } from './TestParserCommon'
 
 //TODO - need to parse test directories

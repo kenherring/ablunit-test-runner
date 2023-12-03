@@ -1,5 +1,4 @@
 import { Range } from 'vscode'
-import { logToChannel } from '../ABLUnitCommon'
 import { getLines } from './TestParserCommon'
 
 // PROCEDURE statement
@@ -15,7 +14,6 @@ interface IProgramRet {
 
 export function parseABLTestProgram (text: string, relativePath: string) {
 	relativePath = relativePath.replace(/\\/g, '/')
-	logToChannel("parsing " + relativePath)
 
 	const [ lines, foundAnnotation ] = getLines(text, "@test")
 	if(!foundAnnotation) {

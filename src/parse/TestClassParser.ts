@@ -1,5 +1,4 @@
 import { Range,  WorkspaceFolder } from 'vscode'
-import { logToChannel } from '../ABLUnitCommon'
 import { getLines } from './TestParserCommon'
 
 // CLASS statement
@@ -19,7 +18,6 @@ interface IClassRet {
 
 export function parseABLTestClass (workspaceFolder: WorkspaceFolder, displayClassLabel: string, text: string, relativePath: string) {
 	relativePath = relativePath.replace(/\\/g, '/')
-	logToChannel("parsing " + relativePath)
 
 	const [lines, foundAnnotation] = getLines(text, "@test")
 	if(!foundAnnotation) {
