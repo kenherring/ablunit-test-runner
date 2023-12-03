@@ -480,6 +480,20 @@ function getWorkspaceTestPatterns() {
 	}))
 }
 
+function deleteTest(controller: TestController | undefined, item: TestItem) {
+	testData.delete(item)
+	if(item.parent) {
+		item.parent.children.delete(item.id)
+		if(item.parent.children.size == 0) {
+			deleteTest(controller, item.parent)
+		}
+	} else if (controller) {
+		controller.items.delete(item.id)
+	} else {
+		throw new Error("deleteTest failed - could not find parent for item: " + item.id)
+	}
+}
+
 async function removeExcludedFiles(controller: TestController, excludePatterns: RelativePattern[]) {
 	const items = gatherAllTestItems(controller.items)
 
@@ -492,13 +506,11 @@ async function removeExcludedFiles(controller: TestController, excludePatterns: 
 		if (item.uri && (data instanceof ABLTestSuite || data instanceof ABLTestClass || data instanceof ABLTestProgram)) {
 			const excluded = isFileExcluded(item.uri, excludePatterns)
 			if (item.uri && excluded) {
-				testData.delete(item)
-				controller.items.delete(item.id)
+				deleteTest(controller, item)
 			}
 		}
 		if (item.children.size == 0 && !(data instanceof ABLTestCase)) {
-			testData.delete(item)
-			controller.items.delete(item.id)
+			deleteTest(controller, item)
 		}
 	}
 }
@@ -513,14 +525,12 @@ async function removeExcludedChildren(parent: TestItem, excludePatterns: Relativ
 		if (data instanceof ABLTestFile) {
 			const excluded = isFileExcluded(item.uri!, excludePatterns)
 			if (item.uri && excluded) {
-				parent.children.delete(item.id)
-				testData.delete(item)
+				deleteTest(undefined, item)
 			}
 		} else if (data?.isFile) {
 			await removeExcludedChildren(item, excludePatterns)
 			if (item.children.size == 0) {
-				parent.children.delete(item.id)
-				testData.delete(item)
+				deleteTest(undefined, item)
 			}
 		}
 	}
