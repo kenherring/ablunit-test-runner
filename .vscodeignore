@@ -9,7 +9,7 @@ coverage/
 docker/
 docs/
 images/
-!images/icon_128.png.md
+!images/icon_128.png
 node_modules/
 sampple/
 src/
