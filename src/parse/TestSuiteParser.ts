@@ -1,8 +1,6 @@
 import { Position, Range } from 'vscode'
 import { getLines } from './TestParserCommon'
 
-//TODO - need to parse test directories
-
 const classRE = /^\s*class\s+(\S+\w):?\s*/i
 const suiteRE = /@testsuite\s*\(((classes|procedures).*)\)/i
 const suiteClasses = /classes\s*=\s*"([^"]+)+"/i
