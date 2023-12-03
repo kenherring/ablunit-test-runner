@@ -1,5 +1,5 @@
-import { TestRun, workspace } from "vscode"
-import { ABLResults } from "./ABLResults"
+import { TestRun, workspace } from 'vscode'
+import { ABLResults } from './ABLResults'
 import { logToChannel } from './ABLUnitCommon'
 
 import * as cp from "child_process";

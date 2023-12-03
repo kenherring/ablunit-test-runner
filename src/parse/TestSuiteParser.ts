@@ -1,4 +1,4 @@
-import * as vscode from 'vscode'
+import { Position, Range } from 'vscode'
 import { logToChannel } from '../ABLUnitCommon'
 import { getLines } from './TestParserCommon'
 
@@ -8,13 +8,13 @@ const classRE = /^\s*class\s+(\S+\w):?\s*/i
 interface SuiteLoc {
 	name: string
 	type: string
-	range: vscode.Range
+	range: Range
 }
 
 export const parseABLTestSuite = (text: string, relativePath: string, events: {
-	onTestSuite(range: vscode.Range, relativePath: string, suitename: string): void
-	onTestClass(range: vscode.Range, relativePath: string, classname: string, label: string, suiteName: string): void
-	onTestProgram(range: vscode.Range, relativePath: string, label: string, suiteName: string): void
+	onTestSuite(range: Range, relativePath: string, suitename: string): void
+	onTestClass(range: Range, relativePath: string, classname: string, label: string, suiteName: string): void
+	onTestProgram(range: Range, relativePath: string, label: string, suiteName: string): void
 }) => {
 
 	relativePath = relativePath.replace(/\\/g, '/')
@@ -53,7 +53,7 @@ const suiteProcedures = /procedures\s*=\s*"([^"]+)+"/i
 
 export interface ITestSuite {
 	name: string,
-	range: vscode.Range,
+	range: Range,
 	classes: string[],
 	procedures: string[]
 }
@@ -61,7 +61,7 @@ export interface ITestSuite {
 export function parseTestSuite (lines: string[]) {
 	const suiteRet: ITestSuite = {
 		name: "",
-		range: new vscode.Range(new vscode.Position(0,0), new vscode.Position(0,0)),
+		range: new Range(new Position(0,0), new Position(0,0)),
 		classes: [],
 		procedures: []
 	}
@@ -86,7 +86,7 @@ export function parseTestSuite (lines: string[]) {
 		if (classResult) {
 			const [, className] = classResult
 			suiteRet.name = className
-			suiteRet.range = new vscode.Range(new vscode.Position(lineNo, lines[lineNo].indexOf(className)), new vscode.Position(lineNo, className.length))
+			suiteRet.range = new Range(new Position(lineNo, lines[lineNo].indexOf(className)), new Position(lineNo, className.length))
 		}
 	}
 

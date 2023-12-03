@@ -1,5 +1,5 @@
-import { workspace, Location, Position, Range } from "vscode"
-import { ABLDebugLines, IDebugLine } from "../ABLDebugLines"
+import { workspace, Location, Position, Range } from 'vscode'
+import { ABLDebugLines, IDebugLine } from '../ABLDebugLines'
 
 interface ICallStackItem {
 	rawText: string
