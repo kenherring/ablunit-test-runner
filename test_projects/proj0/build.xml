@@ -1,8 +1,8 @@
 <project name="proj0">
 
 	<property environment="env" />
-	<taskdef resource="PCT.properties" />
-	<typedef resource="types.properties" />
+	<taskdef resource="PCT.properties" classpath="${user.home}/.ant/lib/PCT.jar;/usr/share/ant/lib/PCT.jar" />
+	<typedef resource="types.properties" classpath="${user.home}/.ant/lib/PCT.jar;/usr/share/ant/lib/PCT.jar" />
 	<DlcHome value="${env.DLC}" />
 
 	<mkdir dir="target/db" />
