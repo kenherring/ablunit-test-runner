@@ -107,9 +107,14 @@ export async function setRuntimes (runtimes: IRuntime[]) {
 export async function runAllTests (doRefresh: boolean = true) {
 	console.log("running all tests")
 	if (doRefresh) {
+		console.log("testing.refreshTests starting")
 		await commands.executeCommand('testing.refreshTests')
+		console.log("testing.refreshTests complete")
 	}
 
+	await sleep(500)
+
+	console.log("testing.runAll starting")
 	return commands.executeCommand('testing.runAll').then(() => {
 		console.log("testing.runAll complete!")
 	} , (err) => {

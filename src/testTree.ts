@@ -97,7 +97,7 @@ export class ABLTestFile extends TestTypeObj {
 	}
 
 	public updateFromContents(controller: vscode.TestController, content: string, item: vscode.TestItem) {
-		console.error("updateFromContents TestFile - skipping")
+		throw new Error("updateFromContents TestFile not implemented")
 	}
 }
 

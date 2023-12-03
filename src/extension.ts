@@ -15,7 +15,7 @@ const backgroundExecuted = vscode.window.createTextEditorDecorationType({
 let recentResults: ABLResults[] | undefined
 let contextStorageUri: vscode.Uri | undefined = undefined
 
-export function getStorageUri (workspaceFolder?: vscode.WorkspaceFolder) {
+export async function getStorageUri (workspaceFolder?: vscode.WorkspaceFolder) {
 	if (!workspaceFolder) {
 		return contextStorageUri
 	}
@@ -24,7 +24,8 @@ export function getStorageUri (workspaceFolder?: vscode.WorkspaceFolder) {
 		throw new Error("contextStorageUri is undefined")
 	}
 	const dirs = workspaceFolder.uri.path.split('/')
-	const ret = vscode.Uri.joinPath(contextStorageUri,dirs[dirs.length - 1]) ?? workspaceFolder.uri
+	const ret = vscode.Uri.joinPath(contextStorageUri,dirs[dirs.length - 1])
+	await createDir(ret)
 	console.log('storageUri= ' + ret.fsPath)
 	return ret
 }
@@ -39,12 +40,13 @@ export async function activate(context: vscode.ExtensionContext) {
 	contextStorageUri = context.storageUri ?? vscode.Uri.parse("file://" + process.env.TEMP) //should always be defined as context.storageUri
 	logToChannel("contextStorageUri=" + contextStorageUri.fsPath)
 	await createDir(contextStorageUri)
+	logToChannel("created2")
 
 	context.subscriptions.push(ctrl)
 	context.subscriptions.push(
 		vscode.commands.registerCommand('_ablunit.openCallStackItem', openCallStackItem),
 		vscode.window.onDidChangeActiveTextEditor(e => decorate(e!) ),
-		vscode.workspace.onDidChangeConfiguration(e => updateConfiguration(ctrl, e) ),
+		vscode.workspace.onDidChangeConfiguration(e => updateConfiguration(e) ),
 		vscode.workspace.onDidOpenTextDocument(updateNodeForDocument),
 		vscode.workspace.onDidChangeTextDocument(e => updateNodeForDocument(e.document)),
 	)
@@ -52,13 +54,17 @@ export async function activate(context: vscode.ExtensionContext) {
 	const fileChangedEmitter = new vscode.EventEmitter<vscode.Uri>()
 
 	const runHandler = (request: vscode.TestRunRequest, cancellation: vscode.CancellationToken) => {
+		console.log("runHandler")
 		if (!request.continuous) {
+			console.log("startTestRun - not continuous")
 			return startTestRun(request)
 		}
 
 		const l = fileChangedEmitter.event(uri => {
+			console.log("startTestRun - file=" + uri.fsPath)
 			const file = getOrCreateFile(ctrl, uri).file
 			if(file) {
+				console.log("startTestRun")
 				startTestRun(
 					new vscode.TestRunRequest(
 						[file],
@@ -67,17 +73,22 @@ export async function activate(context: vscode.ExtensionContext) {
 						true
 					)
 				)
+			} else {
+				console.log("startTestRun - file not found: " + uri.fsPath)
 			}
 		})
 		cancellation.onCancellationRequested(() => l.dispose())
 	}
 
 	const startTestRun = (request: vscode.TestRunRequest) => {
+		console.log("startTestRun")
 		showNotification("running ablunit tests")
 
 		const queue: { test: vscode.TestItem; data: ABLRunnable }[] = []
+		console.log("createTestRun")
 		const run = ctrl.createTestRun(request)
 
+		console.log('discoverTests')
 		const discoverTests = async (tests: Iterable<vscode.TestItem>) => {
 			for (const test of tests) {
 				if (request.exclude?.includes(test)) {
@@ -103,6 +114,7 @@ export async function activate(context: vscode.ExtensionContext) {
 		}
 
 		const runTestQueue = async (res: ABLResults[]) => {
+			console.log("runTestQueue")
 			for (const { test } of queue) {
 				if (run.token.isCancellationRequested) {
 					run.skipped(test)
@@ -189,7 +201,7 @@ export async function activate(context: vscode.ExtensionContext) {
 				}
 				let r = res.find(r => r.workspaceFolder === wf)
 				if (!r) {
-					r = new ABLResults(wf, getStorageUri(wf) ?? wf.uri, contextStorageUri!)
+					r = new ABLResults(wf, await getStorageUri(wf) ?? wf.uri, contextStorageUri!)
 					await r.start()
 					res.push(r)
 				}
@@ -210,9 +222,6 @@ export async function activate(context: vscode.ExtensionContext) {
 		await Promise.all(getWorkspaceTestPatterns().map(({ includePatterns, excludePatterns }) => findInitialFiles(ctrl, includePatterns, excludePatterns, true)))
 	}
 
-	ctrl.createRunProfile('Run Tests', vscode.TestRunProfileKind.Run, runHandler, false, new vscode.TestTag("runnable"), false)
-	// ctrl.createRunProfile('Debug Tests', vscode.TestRunProfileKind.Debug, runHandler, false, new vscode.TestTag("runnable"), false)
-
 	ctrl.resolveHandler = async item => {
 		if (!item) {
 			context.subscriptions.push(...startWatchingWorkspace(ctrl, fileChangedEmitter))
@@ -220,8 +229,11 @@ export async function activate(context: vscode.ExtensionContext) {
 		}
 		const data = testData.get(item)
 		if (data instanceof ABLTestSuite || data instanceof ABLTestClass || data instanceof ABLTestProgram) {
+			console.log("updateFromDisk-1.1")
 			await data.updateFromDisk(ctrl, item)
+			console.log("updateFromDisk-1.2")
 		}
+		console.log("resolveHandler-complete")
 	}
 
 	async function updateNodeForDocument(e: vscode.TextDocument) {
@@ -237,11 +249,13 @@ export async function activate(context: vscode.ExtensionContext) {
 
 		const { file, data } = getOrCreateFile(ctrl, e.uri)
 		if (file) {
+			console.log("updateFromContents-1")
 			data.updateFromContents(ctrl, e.getText(), file)
+			console.log("updateFromContents-2")
 		}
 	}
 
-	async function updateConfiguration(controller: vscode.TestController, e: vscode.ConfigurationChangeEvent) {
+	async function updateConfiguration(e: vscode.ConfigurationChangeEvent) {
 		// resetAblunitConfig()
 		// TODO!!!
 
@@ -255,9 +269,12 @@ export async function activate(context: vscode.ExtensionContext) {
 			// 	}
 			// }
 
-			await removeExcludedFiles(controller, getExcludePatterns())
+			await removeExcludedFiles(ctrl, getExcludePatterns())
 		}
 	}
+
+	ctrl.createRunProfile('Run Tests', vscode.TestRunProfileKind.Run, runHandler, false, new vscode.TestTag("runnable"), false)
+	// ctrl.createRunProfile('Debug Tests', vscode.TestRunProfileKind.Debug, runHandler, false, new vscode.TestTag("runnable"), false)
 }
 
 function getOrCreateFile(controller: vscode.TestController, uri: vscode.Uri) {
@@ -465,7 +482,9 @@ async function findInitialFiles(controller: vscode.TestController,
 			}
 			const { file, data } = getOrCreateFile(controller, wsFile)
 			if(file) {
+				console.log("updateFromDisk-2.1")
 				await data.updateFromDisk(controller, file)
+				console.log("updateFromDisk-2.2")
 			}
 		}
 	}
@@ -473,6 +492,7 @@ async function findInitialFiles(controller: vscode.TestController,
 	if (removeExcluded) {
 		await removeExcludedFiles(controller, excludePatterns)
 	}
+	console.log("findInitialFiles-complete")
 }
 
 function startWatchingWorkspace(controller: vscode.TestController, fileChangedEmitter: vscode.EventEmitter<vscode.Uri> ) {
@@ -499,7 +519,9 @@ function startWatchingWorkspace(controller: vscode.TestController, fileChangedEm
 
 				const { file, data } = getOrCreateFile(controller, uri)
 				if (data?.didResolve) {
+					console.log("updateFromDisk-3.1")
 					await data.updateFromDisk(controller, file)
+					console.log("updateFromDisk-3.2")
 				}
 				fileChangedEmitter.fire(uri)
 			})
@@ -509,8 +531,10 @@ function startWatchingWorkspace(controller: vscode.TestController, fileChangedEm
 		}
 
 		findInitialFiles(controller, includePatterns, excludePatterns)
+		console.log("startWatchingWorkspace-complete")
 		return watchers
 	}).flat()
+
 }
 
 function decorate(editor: vscode.TextEditor) {
@@ -607,6 +631,7 @@ function createDir(uri: vscode.Uri) {
 			console.log("extension storage directory already exists: " + uri.fsPath)
 		}
 	}, (err) => {
-		throw new Error("could not create directory for extension storage (" + uri.fsPath + "): " + err)
+		logToChannel("create dir for extension storage: " + uri.fsPath)
+		return vscode.workspace.fs.createDirectory(uri)
 	})
 }

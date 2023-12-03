@@ -23,8 +23,8 @@ suite(projName + ' - Extension Test Suite', () => {
 		await runAllTests()
 
 		const storageUri = [
-			getStorageUri(vscode.workspace.workspaceFolders![0]),
-			getStorageUri(vscode.workspace.workspaceFolders![1])
+			await getStorageUri(vscode.workspace.workspaceFolders![0]),
+			await getStorageUri(vscode.workspace.workspaceFolders![1])
 		]
 		if (!storageUri[0] || !storageUri[1]) {
 			assert.fail("storage uri not defined")

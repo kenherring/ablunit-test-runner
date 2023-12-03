@@ -20,7 +20,7 @@ suite(projName + ' - Extension Test Suite', () => {
 	test(projName + '.1 - <storageUri>/ablunit.json file exists', async () => {
 		await runAllTests()
 
-		const storageUri = getStorageUri(vscode.workspace.workspaceFolders![0])
+		const storageUri = await getStorageUri(vscode.workspace.workspaceFolders![0])
 		if (!storageUri) {
 			assert.fail("storage uri not defined")
 		}
