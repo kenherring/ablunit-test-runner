@@ -280,6 +280,9 @@ function getOrCreateFile(controller: TestController, uri: Uri) {
 	const existing = getExistingTestItem(controller, uri)
 	if (existing) {
 		const data = testData.get(existing)
+		if (!data) {
+			throw new Error("[getOrCreateFile] data not found for existing item. file=" + workspace.asRelativePath(uri) + ", existing.id=" + existing.id)
+		}
 		if (data instanceof ABLTestSuite) {
 			return { file: existing, data: data }
 		} else if (data instanceof ABLTestClass) {
@@ -287,7 +290,10 @@ function getOrCreateFile(controller: TestController, uri: Uri) {
 		} else if (data instanceof ABLTestProgram) {
 			return { file: existing, data: data }
 		} else {
-			throw new Error("[getOrCreateFile] unexpected data type")
+			throw new Error("[getOrCreateFile] unexpected data type." +
+								" file=" + workspace.asRelativePath(uri) +
+								", existing.id=" + existing.id +
+								", data.description=" + data?.description)
 		}
 	}
 
@@ -348,7 +354,10 @@ function getOrCreateDirNode(controller: TestController, workspaceFolder: Workspa
 		const dir = controller.createTestItem('ABLUnitDir:' + relPath, path, uri)
 		dir.canResolveChildren = false
 		dir.tags = [ new TestTag("runnable"), new TestTag("ABLUnitDir") ]
-		testData.set(dir, new ABLTestDir())
+
+
+		const data = new ABLTestDir(dir.uri!)
+		testData.set(dir, data)
 
 		if (parent) {
 			parent.children.add(dir)
@@ -476,7 +485,7 @@ async function removeExcludedFiles(controller: TestController, excludePatterns: 
 				controller.items.delete(item.id)
 			}
 		}
-		if (item.children.size == 0) {
+		if (item.children.size == 0 && !(data instanceof ABLTestCase)) {
 			testData.delete(item)
 			controller.items.delete(item.id)
 		}
