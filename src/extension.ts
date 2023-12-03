@@ -121,7 +121,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
 			let ret = false
 			for (const r of res) {
-				r.setTestData(testData) // TODO - should this be broken out by workpsaceFolder?
+				r.setTestData(testData)
 				logToChannel("starting ablunit tests for folder: " + r.workspaceFolder.uri.fsPath)
 				run.appendOutput("starting ablunit tests for folder: " + r.workspaceFolder.uri.fsPath + "\r\n")
 				ret = await r.run(run).then(() => {

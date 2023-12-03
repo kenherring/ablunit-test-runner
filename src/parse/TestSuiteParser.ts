@@ -1,5 +1,4 @@
 import * as vscode from 'vscode'
-import { WorkspaceFolder } from 'vscode'
 import { logToChannel } from '../ABLUnitCommon'
 import { getLines } from './TestParserCommon'
 
