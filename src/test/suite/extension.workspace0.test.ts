@@ -1,11 +1,11 @@
-import * as assert from 'assert'
-import { after, before } from 'mocha'
-import * as vscode from 'vscode'
+import * as assert from 'assert';
+import { after, before } from 'mocha';
+import * as vscode from 'vscode';
 import { getStorageUri } from '../../extension'
 import { doesDirExist, doesFileExist, runAllTests } from '../common'
 
 
-const projName = 'proj0'
+const projName = 'workspace0'
 
 before(async () => {
     console.log("before")

@@ -1,13 +1,15 @@
 import * as vscode from 'vscode'
 import * as assert from 'assert'
 import { before } from 'mocha'
-import { getTestCount } from '../common'
+import { getTestCount, getWorkspaceUri, runAllTests } from '../common'
 // import { exec } from "child_process"
 
-const projName = 'proj0'
+
+const projName = 'proj7'
+const workspaceUri = getWorkspaceUri()
 
 function getUri (path: string) {
-	return vscode.Uri.joinPath(vscode.workspace.workspaceFolders![0].uri, path)
+	return vscode.Uri.joinPath(workspaceUri, path)
 }
 
 before(async () => {
@@ -29,17 +31,12 @@ before(async () => {
 	}
 })
 
-suite('SourceParser Test Suite - proj7', () => {
+suite(projName + ' - Extension Test Suite', () => {
 
-	test('testCount', async () => {
-		await vscode.commands.executeCommand('testing.refreshTests')
-		await vscode.commands.executeCommand('testing.runAll').then(() => {
-			console.log("testing.runAll complete!")
-		} , (err) => {
-			assert.fail("testing.runAll failed: " + err)
-		})
+	test(projName + '.1 - test count', async () => {
+		await runAllTests()
 
-		const resultsJson = vscode.Uri.joinPath(vscode.workspace.workspaceFolders![0].uri,'temp','results.json')
+		const resultsJson = vscode.Uri.joinPath(workspaceUri,'temp','results.json')
 		const testCount = await getTestCount(resultsJson)
 		console.log("getTestCount: " + testCount)
 		assert(testCount > 1000, "testCount should be > 100, but is " + testCount)

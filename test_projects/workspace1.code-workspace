@@ -1,0 +1,25 @@
+{
+	"folders": [
+		{
+			"path": "proj0"
+		},
+		{
+			"path": "proj3_debugLines",
+			"name": "TEST PROJECT 3"
+		},
+		{
+			"path": "projX_no_oe_code"
+		}
+	],
+	"settings": {
+		"ablunit.params": "-pf test.pf",
+		// "ablunit.configJson.outputWriteJson": true,
+		// "ablunit.configJson.writeLog": true,
+		// "ablunit.configJson.throwError": true,
+		// "ablunit.profilerOptions.enabled": false,
+		"terminal.integrated.env.windows": {
+			"DLC": "/c/Progress/OpenEdge",
+			"PATH": "${env:PATH}:/c/Progress/OpenEdge/ant/bin"
+		}
+	}
+}

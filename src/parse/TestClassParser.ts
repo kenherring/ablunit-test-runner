@@ -1,4 +1,4 @@
-import { Position, Range, Uri, workspace } from 'vscode'
+import { Position, Range, Uri, WorkspaceFolder } from 'vscode'
 import { logToChannel } from '../ABLUnitCommon'
 import { getLines } from './TestParserCommon'
 
@@ -8,7 +8,7 @@ const classRE = /^\s*class\s+(\S+[^:])\s*/i
 const methodRE = /\s+method\s(\s*public)?\s*void\s*(\S+\w)/i
 // const methodRE = /\s+method\s(\s*public)?\s*void\s*(\S[^\s:(]+)/i
 
-export const parseABLTestClass = (text: string, relativePath: string, events: {
+export const parseABLTestClass = (workspaceFolder: WorkspaceFolder, displayClassLabel: string, text: string, relativePath: string, events: {
 	deleteTest(): void
 	onTestProgramDirectory (range: Range, dirpath: string, dir: string, dirUri: Uri): void
 	onTestClass(range: Range, relativePath: string, classname: string, label: string, suiteName?: string): void
@@ -23,15 +23,10 @@ export const parseABLTestClass = (text: string, relativePath: string, events: {
 		return
 	}
 
-	const configClassLabel = workspace.getConfiguration('ablunit').get('display.classLabel','')
-	if (!workspace.workspaceFolders) {
-		return
-	}
-	const workspaceDir = workspace.workspaceFolders.map(item => item.uri)[0]
 	const zeroRange = new Range(new Position(0,0), new Position(0,0))
 
 	const parseClass = () => {
-		const classRet = parseTestClass(lines, configClassLabel, relativePath, workspaceDir)
+		const classRet = parseTestClass(lines, displayClassLabel, relativePath, workspaceFolder.uri)
 		if (classRet.methods.length == 0) {
 			return
 		}

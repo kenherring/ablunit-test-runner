@@ -1,0 +1,14 @@
+{
+	"folders": [
+		{
+			"path": "proj0"
+		}
+	],
+	"settings": {
+		"ablunit.params": "-pf test.pf",
+		"terminal.integrated.env.windows": {
+			"DLC": "/c/Progress/OpenEdge",
+			"PATH": "${env:PATH}:/c/Progress/OpenEdge/ant/bin"
+		}
+	}
+}

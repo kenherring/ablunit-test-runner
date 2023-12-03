@@ -15,10 +15,14 @@ if [ "${1:-}" = "-b" ]; then
 	OPTS='-b'
 fi
 
+if [ -z "${DOCKER_TAG:-}" ]; then
+	DOCKER_TAG=latest
+fi
+
 ## run tests inside the container
 docker run --rm -it -e PROGRESS_CFG_BASE64 -e GIT_BRANCH \
 	-v "$PWD":/home/circleci/ablunit-test-provider \
 	-v vscode-test:/home/circleci/project/.vscode-test \
 	-v node-modules:/home/circleci/project/node_modules \
-	kherring/ablunit-test-runner:latest \
+	kherring/ablunit-test-runner:"$DOCKER_TAG" \
 	bash -c "/home/circleci/ablunit-test-provider/docker/entrypoint.sh $OPTS;"

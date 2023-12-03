@@ -9,7 +9,7 @@
 	"graphicalMode": false,
 	"extraParameters": "-debugalert",
 	"buildPath": [
-		{ "type": "source", "path": "." }
+		{ "type": "source", "path": ".", "excludes": "compileError.p" }
 	],
 	"procedures": [],
 	"profiles": []

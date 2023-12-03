@@ -25,10 +25,6 @@ export const parseABLTestSuite = (text: string, relativePath: string, events: {
 		return
 	}
 
-	if (!vscode.workspace.workspaceFolders) {
-		return
-	}
-
 	const parseSuite = () => {
 		const suiteRet = parseTestSuite(lines)
 		if (suiteRet.classes.length == 0 && suiteRet.procedures.length == 0) {
