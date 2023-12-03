@@ -1,4 +1,4 @@
-import { Uri, workspace, WorkspaceFolder } from 'vscode';
+import { Uri, workspace, WorkspaceFolder } from 'vscode'
 import jsonminify = require('jsonminify')
 
 export interface IPropathEntry {

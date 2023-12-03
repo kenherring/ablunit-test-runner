@@ -1,8 +1,8 @@
-import * as assert from 'assert';
-import { after, before } from 'mocha';
-import * as vscode from 'vscode';
+import * as assert from 'assert'
+import { Uri, workspace } from 'vscode'
+import { after, before } from 'mocha'
 import { getStorageUri } from '../../extension'
-import { doesDirExist, doesFileExist, runAllTests } from '../common'
+import { doesDirExist, doesFileExist, runAllTests } from '../testCommon'
 
 
 const projName = 'workspace0'
@@ -20,14 +20,14 @@ suite(projName + ' - Extension Test Suite', () => {
 	test(projName + '.1 - <storageUri>/ablunit.json file exists', async () => {
 		await runAllTests()
 
-		const storageUri = await getStorageUri(vscode.workspace.workspaceFolders![0])
+		const storageUri = await getStorageUri(workspace.workspaceFolders![0])
 		if (!storageUri) {
 			assert.fail("storage uri not defined")
 		}
-		const ablunitJson = vscode.Uri.joinPath(storageUri,'ablunit.json')
-		const resultsXml = vscode.Uri.joinPath(storageUri,'results.xml')
-		const resultsJson = vscode.Uri.joinPath(storageUri,'results.json')
-		const listingsDir = vscode.Uri.joinPath(storageUri,'listings')
+		const ablunitJson = Uri.joinPath(storageUri,'ablunit.json')
+		const resultsXml = Uri.joinPath(storageUri,'results.xml')
+		const resultsJson = Uri.joinPath(storageUri,'results.json')
+		const listingsDir = Uri.joinPath(storageUri,'listings')
 
 		console.log("storageUri= " + storageUri.fsPath)
 		assert(await doesFileExist(ablunitJson), "missing ablunit.json (" + ablunitJson.fsPath + ")")

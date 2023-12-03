@@ -1,67 +1,35 @@
-import * as vscode from 'vscode'
-import { logToChannel } from '../ABLUnitCommon'
+import { Position, Range } from 'vscode'
 import { getLines } from './TestParserCommon'
 
-// CLASS statement
 const classRE = /^\s*class\s+(\S+\w):?\s*/i
-
-interface SuiteLoc {
-	name: string
-	type: string
-	range: vscode.Range
-}
-
-export const parseABLTestSuite = (text: string, relativePath: string, events: {
-	onTestSuite(range: vscode.Range, relativePath: string, suitename: string): void
-	onTestClass(range: vscode.Range, relativePath: string, classname: string, label: string, suiteName: string): void
-	onTestProgram(range: vscode.Range, relativePath: string, label: string, suiteName: string): void
-}) => {
-
-	relativePath = relativePath.replace(/\\/g, '/')
-	logToChannel("parsing " + relativePath)
-
-	const [ lines, foundAnnotation ] = getLines(text,"@testsuite")
-	if (!foundAnnotation) {
-		return
-	}
-
-	const parseSuite = () => {
-		const suiteRet = parseTestSuite(lines)
-		if (suiteRet.classes.length == 0 && suiteRet.procedures.length == 0) {
-			return
-		}
-
-		if (suiteRet.name === "") {
-			suiteRet.name = relativePath
-		}
-
-		events.onTestSuite(suiteRet.range, relativePath, suiteRet.name)
-		for (const classEntry of suiteRet.classes) {
-			events.onTestClass(suiteRet.range, classEntry, classEntry, classEntry, suiteRet.name)
-		}
-		for (const procedureEntry of suiteRet.procedures) {
-			events.onTestProgram(suiteRet.range, procedureEntry, procedureEntry, suiteRet.name)
-		}
-	}
-
-	parseSuite()
-}
-
 const suiteRE = /@testsuite\s*\(((classes|procedures).*)\)/i
 const suiteClasses = /classes\s*=\s*"([^"]+)+"/i
 const suiteProcedures = /procedures\s*=\s*"([^"]+)+"/i
 
 export interface ITestSuite {
 	name: string,
-	range: vscode.Range,
+	range: Range,
 	classes: string[],
 	procedures: string[]
 }
 
-export function parseTestSuite (lines: string[]) {
+export function parseABLTestSuite(text: string) {
+	const [ lines, foundAnnotation ] = getLines(text,"@testsuite")
+	if (!foundAnnotation) {
+		return
+	}
+
+	const suiteRet = parseSuiteLines(lines)
+	if (suiteRet.classes.length == 0 && suiteRet.procedures.length == 0) {
+		return
+	}
+	return suiteRet
+}
+
+export function parseSuiteLines (lines: string[]) {
 	const suiteRet: ITestSuite = {
 		name: "",
-		range: new vscode.Range(new vscode.Position(0,0), new vscode.Position(0,0)),
+		range: new Range(new Position(0,0), new Position(0,0)),
 		classes: [],
 		procedures: []
 	}
@@ -86,7 +54,7 @@ export function parseTestSuite (lines: string[]) {
 		if (classResult) {
 			const [, className] = classResult
 			suiteRet.name = className
-			suiteRet.range = new vscode.Range(new vscode.Position(lineNo, lines[lineNo].indexOf(className)), new vscode.Position(lineNo, className.length))
+			suiteRet.range = new Range(new Position(lineNo, lines[lineNo].indexOf(className)), new Position(lineNo, className.length))
 		}
 	}
 

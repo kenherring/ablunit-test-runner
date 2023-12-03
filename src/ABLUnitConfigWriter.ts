@@ -1,8 +1,8 @@
 import { FileType, Uri, workspace, WorkspaceFolder } from 'vscode'
 import { logToChannel } from './ABLUnitCommon'
-import { IProjectJson, readOpenEdgeProjectJson } from './parse/OpenedgeProjectParser';
-import { PropathParser } from "./ABLPropath"
-import * as os from 'os'
+import { IProjectJson, readOpenEdgeProjectJson } from './parse/OpenedgeProjectParser'
+import { PropathParser } from './ABLPropath'
+import { platform } from 'os'
 
 export interface ITestObj {
 	test: string
@@ -242,7 +242,7 @@ export class ABLUnitConfig  {
 	}
 
 	async createProgressIni(propath: string) {
-		if (os.platform() != 'win32') { return }
+		if (platform() != 'win32') { return }
 		console.log("creating progress.ini: '" + this.ablunitConfig.progressIniUri.fsPath + "'")
 		const iniData = ["[WinChar Startup]", "PROPATH=" + propath]
 		const iniBytes = Uint8Array.from(Buffer.from(iniData.join("\n")))

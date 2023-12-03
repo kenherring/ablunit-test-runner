@@ -1,8 +1,8 @@
-import { Uri, workspace } from 'vscode';
-import { TextDecoder } from 'util';
-import { PropathParser } from '../ABLPropath';
-import { IProfilerOptions } from '../ABLUnitConfigWriter';
-import { ABLDebugLines } from '../ABLDebugLines';
+import { Uri, workspace } from 'vscode'
+import { TextDecoder } from 'util'
+import { PropathParser } from '../ABLPropath'
+import { IProfilerOptions } from '../ABLUnitConfigWriter'
+import { ABLDebugLines } from '../ABLDebugLines'
 
 const textDecoder = new TextDecoder('utf-8');
 

@@ -1,16 +1,16 @@
-import { FileType, MarkdownString, Position, Range, TestItem, TestItemCollection, TestMessage, TestRun, Uri, workspace, WorkspaceFolder } from "vscode"
-import { ABLUnitConfig, ITestObj } from "./ABLUnitConfigWriter"
-import { ABLResultsParser, TCFailure, TestCase, TestSuite } from "./parse/ResultsParser"
-import { ABLTestSuite, ABLUnitTestData } from "./testTree"
-import { parseCallstack } from "./parse/CallStackParser"
-import { ABLProfile, ABLProfileJson, Module } from "./parse/ProfileParser"
-import { ABLDebugLines } from "./ABLDebugLines"
-import { ABLPromsgs, getPromsgText } from "./ABLPromsgs"
-import { PropathParser } from "./ABLPropath"
-import { logToChannel } from "./ABLUnitCommon"
-import { FileCoverage, CoveredCount, StatementCoverage } from "./TestCoverage"
-import { ablunitRun } from "./ABLUnitRun"
-import { getOEVersion } from "./parse/OpenedgeProjectParser"
+import { FileType, MarkdownString, Position, Range, TestItem, TestItemCollection, TestMessage, TestRun, Uri, workspace, WorkspaceFolder } from 'vscode'
+import { ABLUnitConfig, ITestObj } from './ABLUnitConfigWriter'
+import { ABLResultsParser, TCFailure, TestCase, TestSuite } from './parse/ResultsParser'
+import { ABLTestSuite, ABLUnitTestData } from './testTree'
+import { parseCallstack } from './parse/CallStackParser'
+import { ABLProfile, ABLProfileJson, Module } from './parse/ProfileParser'
+import { ABLDebugLines } from './ABLDebugLines'
+import { ABLPromsgs, getPromsgText } from './ABLPromsgs'
+import { PropathParser } from './ABLPropath'
+import { logToChannel } from './ABLUnitCommon'
+import { FileCoverage, CoveredCount, StatementCoverage } from './TestCoverage'
+import { ablunitRun } from './ABLUnitRun'
+import { getOEVersion } from './parse/OpenedgeProjectParser'
 
 export class ABLResults {
 	workspaceFolder: WorkspaceFolder
@@ -88,14 +88,11 @@ export class ABLResults {
 	async addTest (test:  TestItem) {
 		console.log("addTest: " + test.id + " " + test.uri!.fsPath)
 		// outputToChannel('addTest { workspaceFolder: "' + this.cfg.ablunitConfig.workspaceFolder.name + '", test: "' + test.id + '" }')
-
 		this.tests.push(test)
-		let testName = test.id
 
 		let testCase = undefined
-		if (testName.indexOf("#") > -1) {
-			testCase = testName.split("#")[1]
-			testName = testName.split("#")[0]
+		if (test.id.indexOf("#") > -1) {
+			testCase = test.id.split("#")[1]
 		}
 
 		const testUri = test.uri!
