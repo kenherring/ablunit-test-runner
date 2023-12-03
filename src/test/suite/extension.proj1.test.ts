@@ -33,9 +33,9 @@ suite(projName + ' - Extension Test Suite', () => {
 
 	test(projName + '.2 - output files exist 2 - exclude compileError.p', async () => {
 		await vscode.workspace.getConfiguration('ablunit').update('files.exclude', [ ".builder/**", "compileError.p" ])
-		sleep(500)
-		await runAllTests()
+		await sleep(500)
 
+		await runAllTests()
 		const resultsJson = vscode.Uri.joinPath(workspaceUri,'results.json')
 		const testCount = await getTestCount(resultsJson)
 		console.log("getTestCount: " + testCount)

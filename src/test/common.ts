@@ -22,7 +22,11 @@ export function getSessionTempDir () {
 
 export async function sleep (time: number = 2000) {
 	console.log("sleeping for " + time + "ms")
-	await new Promise( resolve => setTimeout(resolve, time))
+	return new Promise(resolve => setTimeout(resolve, time))
+}
+
+export async function deleteFile(uri: Uri) {
+	return workspace.fs.delete(uri)
 }
 
 export async function doesFileExist(uri: Uri) {
@@ -105,6 +109,8 @@ export async function setRuntimes (runtimes: IRuntime[]) {
 }
 
 export async function runAllTests (doRefresh: boolean = true) {
+	await sleep(100)
+
 	console.log("running all tests")
 	if (doRefresh) {
 		console.log("testing.refreshTests starting")
