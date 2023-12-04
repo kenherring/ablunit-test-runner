@@ -1,9 +1,10 @@
 import { Uri, workspace } from 'vscode'
 import { parseCallstack, ICallStack } from './CallStackParser'
 import { PropathParser } from '../ABLPropath'
-import * as xml2js from 'xml2js'
+import { parseString } from 'xml2js'
 import { ABLDebugLines } from '../ABLDebugLines'
 import { IABLUnitConfig } from '../ABLUnitConfigWriter'
+import { logToChannel } from '../ABLUnitCommon'
 
 
 export interface TCFailure {
@@ -69,13 +70,16 @@ export class ABLResultsParser {
 			console.error("[parseResults] error parsing results.xml file: " + err)
 			throw err
 		}
+		console.log("---- cfg.config_output_writeJson=" + cfg.config_output_writeJson)
+		// console.log("cfg= " + JSON.stringify(cfg,null,2))
+		console.log("ablunitConfig.configJson.output.location=" + workspace.getConfiguration("ablunit").get("configJson.outputLocation"))
 		if (cfg.config_output_writeJson) {
-			this.writeJsonToFile(cfg.config_output_jsonUri)
+			console.log("2")
+			return this.writeJsonToFile(cfg.config_output_jsonUri)
 		}
 	}
 
 	parseXml(xmlData: string) {
-		const parseString = xml2js.parseString;
 		let res: any
 
 		parseString(xmlData, function (err: any, resultsRaw: any) {
@@ -193,10 +197,13 @@ export class ABLResultsParser {
 
 	writeJsonToFile(uri: Uri) {
 		const data = this.resultsJson
-		workspace.fs.writeFile(uri, Uint8Array.from(Buffer.from(JSON.stringify(data, null, 2)))).then(() => {
-			console.log("wrote results json file: " + uri.fsPath)
+		console.log("writing results json file: " + uri.fsPath)
+		console.log("config-1: " + workspace.getConfiguration("ablunit").get("configJson.outputwriteJson"))
+		console.log("config-2: " + workspace.getConfiguration("ablunit").get("configJson.outputLocation"))
+		return workspace.fs.writeFile(uri, Uint8Array.from(Buffer.from(JSON.stringify(data, null, 2)))).then(() => {
+			logToChannel("wrote results json file: " + uri.fsPath)
 		}, (err) => {
-			console.error("failed to write profile output json file " + uri.fsPath + " - " + err)
+			logToChannel("failed to write profile output json file " + uri.fsPath + " - " + err,"error")
 		})
 	}
 }

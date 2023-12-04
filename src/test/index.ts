@@ -1,8 +1,12 @@
+import { workspace } from 'vscode'
+import { getTestConfig } from './createTestConfig'
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+// const { getTestConfig } = require('./out/test/createTestConfig')
 import * as glob from "glob"
 import * as path from "path"
 import * as Mocha from "mocha"
 
-export function setupNyc(projName: string) {
+function setupNyc(projName: string) {
 	// eslint-disable-next-line @typescript-eslint/no-var-requires
 	const NYC = require("nyc")
 	const nyc = new NYC({
@@ -37,7 +41,7 @@ export function setupNyc(projName: string) {
 	return nyc
 }
 
-export function setupMocha(projName: string, timeout: number = 20000) {
+function setupMocha(projName: string, timeout: number) {
 	return new Mocha({
 		color: true,
 		ui: "tdd",
@@ -56,13 +60,12 @@ export function setupMocha(projName: string, timeout: number = 20000) {
 	})
 }
 
-export function runTests (projName: string, timeout?: number) {
-
+function runTestsForProject (projName: string, timeout: number) {
 	const nyc = setupNyc(projName)
 	const mocha = setupMocha(projName, timeout)
 	const testsRoot = path.resolve(__dirname, "..")
 	return new Promise<void>((c, e) => {
-		glob("**/**." + projName + ".test.js", {
+		glob("**/extension." + projName + ".test.js", {
 			cwd: testsRoot
 		}, (err, files) => {
 			if (err) {
@@ -89,9 +92,27 @@ export function runTests (projName: string, timeout?: number) {
 					c()
 				})
 			} catch (err) {
-				console.error('[index_' + projName + '.ts] catch err= ' + err)
+				console.error('[index.ts] catch err= ' + err)
 				e(err)
 			}
 		})
 	})
+}
+
+export function run(): Promise <void> {
+	let proj: string
+	if (workspace.workspaceFile) {
+		proj = workspace.workspaceFile.fsPath
+	} else if (workspace.workspaceFolders) {
+		proj = workspace.workspaceFolders[0].uri.fsPath
+	} else {
+		throw new Error("No workspace file or folder found")
+	}
+
+	proj = proj.replace(/\\/g, '/').split('/').reverse()[0].replace(".code-workspace", '')
+	proj = proj.split('_')[0]
+	const tc = getTestConfig()
+	const config = tc.filter((config) => { return config.projName === proj })[0]
+
+	return runTestsForProject(proj, config.mocha.timeout)
 }

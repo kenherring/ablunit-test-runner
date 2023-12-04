@@ -45,7 +45,7 @@ export async function activate(context: ExtensionContext) {
 	context.subscriptions.push(
 		commands.registerCommand('_ablunit.openCallStackItem', openCallStackItem),
 		window.onDidChangeActiveTextEditor(e => decorate(e!) ),
-		workspace.onDidChangeConfiguration(e => updateConfiguration(e) ),
+		workspace.onDidChangeConfiguration(e => updateConfiguration(e)),
 		workspace.onDidOpenTextDocument(updateNodeForDocument),
 		workspace.onDidChangeTextDocument(e => updateNodeForDocument(e.document)),
 	)
@@ -76,10 +76,6 @@ export async function activate(context: ExtensionContext) {
 	}
 
 	const startTestRun = (request: TestRunRequest) => {
-		showNotification("running ablunit tests")
-
-		const queue: { test: TestItem; data: ABLRunnable }[] = []
-		const run = ctrl.createTestRun(request)
 
 		const discoverTests = async (tests: Iterable<TestItem>) => {
 			for (const test of tests) {
@@ -99,6 +95,11 @@ export async function activate(context: ExtensionContext) {
 					data instanceof ABLTestProcedure) {
 					run.enqueued(test)
 					queue.push({ test, data })
+
+					for(const [,childTest] of test.children) {
+						run.enqueued(childTest)
+					}
+
 				} else {
 					await discoverTests(gatherTestItems(test.children))
 				}
@@ -132,7 +133,8 @@ export async function activate(context: ExtensionContext) {
 					return false
 				})
 				if (!ret) {
-					break
+					console.error("ablunit run failed?")
+					continue
 				}
 
 				if (r.ablResults) {
@@ -145,10 +147,12 @@ export async function activate(context: ExtensionContext) {
 				}
 
 				for (const { test } of queue) {
-					if (run.token.isCancellationRequested) {
-						run.skipped(test)
-					} else {
-						await r.assignTestResults(test, run)
+					if (workspace.getWorkspaceFolder(test.uri!) === r.workspaceFolder) {
+						if (run.token.isCancellationRequested) {
+							run.skipped(test)
+						} else {
+							await r.assignTestResults(test, run)
+						}
 					}
 				}
 			}
@@ -176,8 +180,9 @@ export async function activate(context: ExtensionContext) {
 			run.end()
 			recentResults = resultData.get(run)
 
-			if (window.activeTextEditor)
+			if (window.activeTextEditor) {
 				decorate(window.activeTextEditor)
+			}
 
 			showNotification("ablunit tests complete")
 		}
@@ -206,14 +211,24 @@ export async function activate(context: ExtensionContext) {
 			return res
 		}
 
-		discoverTests(request.include ?? gatherTestItems(ctrl.items)).then(async () => {
+		showNotification("running ablunit tests")
+		const queue: { test: TestItem; data: ABLRunnable }[] = []
+		const run = ctrl.createTestRun(request)
+		const tests = request.include ?? gatherTestItems(ctrl.items)
+
+		discoverTests(tests).then(async () => {
 			const res = await createABLResults()
 			runTestQueue(res)
 		})
 	}
 
 	ctrl.refreshHandler = async () => {
-		await Promise.all(getWorkspaceTestPatterns().map(({ includePatterns, excludePatterns }) => findInitialFiles(ctrl, includePatterns, excludePatterns, true)))
+		const proms: Promise<void>[] = []
+		const patterns = getWorkspaceTestPatterns()
+
+		for (const pattern of patterns) {
+			await findInitialFiles(ctrl, pattern.workspaceFolder, pattern.includePatterns, pattern.excludePatterns, true)
+		}
 	}
 
 	ctrl.resolveHandler = async item => {
@@ -222,14 +237,15 @@ export async function activate(context: ExtensionContext) {
 			return
 		}
 		const data = testData.get(item)
-		if (data instanceof ABLTestSuite || data instanceof ABLTestClass || data instanceof ABLTestProgram) {
-			await data.updateFromDisk(ctrl, item)
+		if (data instanceof ABLTestFile) {
+			return data.updateFromDisk(ctrl, item)
 		}
 	}
 
 	async function updateNodeForDocument(e: TextDocument) {
 		const openEditors = window.visibleTextEditors.filter(editor => editor.document.uri === e.uri)
-		openEditors.forEach(editor => { decorate(editor) })
+		openEditors.forEach(editor => {
+			decorate(editor)})
 
 		if (e.uri.scheme !== 'file') { return }
 		if (!e.uri.path.endsWith('.cls') && !e.uri.path.endsWith('.p')) { return }
@@ -239,25 +255,53 @@ export async function activate(context: ExtensionContext) {
 		}
 
 		const { file, data } = getOrCreateFile(ctrl, e.uri)
-		if (file && data) {
-			data.updateFromContents(ctrl, e.getText(), file)
+		if(file) {
+			ctrl.invalidateTestResults(file)
+			if (data) {
+				data.updateFromContents(ctrl, e.getText(), file)
+			}
 		}
+
 	}
 
 	async function updateConfiguration(e: ConfigurationChangeEvent) {
 		if (e.affectsConfiguration('ablunit')) {
-			await removeExcludedFiles(ctrl, getExcludePatterns())
+			removeExcludedFiles(ctrl, getExcludePatterns())
 		}
 	}
 
 	ctrl.createRunProfile('Run Tests', TestRunProfileKind.Run, runHandler, false, new TestTag("runnable"), false)
 	// ctrl.createRunProfile('Debug Tests', vscode.TestRunProfileKind.Debug, runHandler, false, new vscode.TestTag("runnable"), false)
+
+	if(workspace.getConfiguration('ablunit').get('findAllFilesAtStartup', false)) {
+		commands.executeCommand('testing.refreshTests')
+	}
+}
+
+function getExistingTestItem (controller: TestController, uri: Uri) {
+	const items = gatherAllTestItems(controller.items)
+	const relPath = workspace.asRelativePath(uri.fsPath)
+
+	const existRel = items.find(item => item.id === relPath)
+	if (existRel) {
+		return existRel
+	}
+
+	const existUri = items.find(item => item.id === uri.fsPath)
+	if (existUri) {
+		return existUri
+	}
+
+	return undefined
 }
 
 function getOrCreateFile(controller: TestController, uri: Uri) {
-	const existing = controller.items.get(uri.toString())
+	const existing = getExistingTestItem(controller, uri)
 	if (existing) {
 		const data = testData.get(existing)
+		if (!data) {
+			throw new Error("[getOrCreateFile] data not found for existing item. file=" + workspace.asRelativePath(uri) + ", existing.id=" + existing.id)
+		}
 		if (data instanceof ABLTestSuite) {
 			return { file: existing, data: data }
 		} else if (data instanceof ABLTestClass) {
@@ -265,7 +309,10 @@ function getOrCreateFile(controller: TestController, uri: Uri) {
 		} else if (data instanceof ABLTestProgram) {
 			return { file: existing, data: data }
 		} else {
-			throw new Error("[getOrCreateFile] unexpected data type")
+			throw new Error("[getOrCreateFile] unexpected data type." +
+								" file=" + workspace.asRelativePath(uri) +
+								", existing.id=" + existing.id +
+								", data.description=" + data?.description)
 		}
 	}
 
@@ -275,16 +322,11 @@ function getOrCreateFile(controller: TestController, uri: Uri) {
 	}
 	data.didResolve = false
 
-	const file = controller.createTestItem(workspace.asRelativePath(uri.fsPath), workspace.asRelativePath(uri.fsPath), uri)
+	const file = controller.createTestItem(uri.fsPath, workspace.asRelativePath(uri.fsPath), uri)
 	file.description = "To be parsed..."
 	file.tags = [ new TestTag("runnable") ]
 
-	let relativePath = workspace.asRelativePath(uri.fsPath)
-	if(data instanceof ABLTestSuite) {
-		relativePath = '[ABL Test Suites]/'	+ relativePath
-	}
-
-	const parent = getOrCreateDirNode(controller, workspace.getWorkspaceFolder(uri)!, relativePath)
+	const parent = getOrCreateDirNode(controller, uri, (data instanceof ABLTestSuite))
 	if (parent) {
 		parent.children.add(file)
 	} else {
@@ -296,42 +338,91 @@ function getOrCreateFile(controller: TestController, uri: Uri) {
 	return { file, data }
 }
 
-function getOrCreateDirNode(controller: TestController, workspaceFolder: WorkspaceFolder, relativePath: string) {
-	const paths = relativePath.split('/')
-	paths.pop()
-
-	let relPath: string
+function getOrCreateDirNode(controller: TestController, uri: Uri, isTestSuite: boolean) {
+	let relPath: string | undefined = undefined
 	let parent: TestItem | undefined = undefined
 
-	for (const path of paths) {
-		if (!path) {
-			relPath = paths[0]
-		} else {
-			relPath = path + "/" + path
+	const workspaceFolder = workspace.getWorkspaceFolder(uri)
+	if(!workspaceFolder) { return }
+	const relativePath = workspace.asRelativePath(uri,false).replace(/\\/g, '/')
+
+	const paths = relativePath.split('/').reverse()
+	paths.shift()
+
+	let wfName: string | undefined = undefined
+	if (workspace.workspaceFolders!.length > 1) {
+		wfName = workspaceFolder.name
+		paths.unshift(workspaceFolder.uri.fsPath.replace(/\\/g,'/').split('/').reverse()[0])
+	}
+
+	let suiteGroup: TestItem | undefined = undefined
+	if (isTestSuite) {
+		suiteGroup = controller.items.get("ABLTestSuiteGroup")
+		if(!suiteGroup) {
+			suiteGroup = controller.createTestItem("ABLTestSuiteGroup", "[ABL Test Suites]")
+			suiteGroup.canResolveChildren = false
+			suiteGroup.description = "ABLTestSuiteGroup"
+			suiteGroup.tags = [ new TestTag("runnable"), new TestTag("ABLTestSuiteGroup") ]
+
+			if (!testData.get(suiteGroup)) {
+				const data = new ABLTestDir('[ABL Test Suites]')
+				testData.set(suiteGroup, data)
+			}
 		}
 
-		const uri = Uri.joinPath(workspaceFolder.uri, relPath)
+		//TODO: add test suite support
+		//currently works for workspaces, but not for folders.
+		//test in workspace with single folder too
+	}
+
+	for (const path of paths) {
+		if (!relPath) {
+			relPath = path
+		} else {
+			relPath = relPath + "/" + path
+			wfName = undefined
+			suiteGroup = undefined
+		}
+
+		const uri = Uri.joinPath(workspaceFolder.uri, '..', relPath)
 
 		let existing: TestItem | undefined = undefined
 		if (!parent) {
-			existing = controller.items.get('ABLUnitDir:' + relPath)
+			existing = controller.items.get(uri.fsPath)
 		} else {
-			existing = parent.children.get('ABLUnitDir:' + relPath)
+			existing = parent.children.get(uri.fsPath)
 		}
 		if (existing) {
 			parent = existing
+			if (suiteGroup) {
+				const sg = parent.children.get("ABLTestSuiteGroup")
+				if(!sg) {
+					parent.children.add(suiteGroup)
+					suiteGroup = undefined
+				}
+				parent = sg
+			}
 			continue
 		}
 
-		const dir = controller.createTestItem('ABLUnitDir:' + relPath, path, uri)
+		let dir = controller.createTestItem(uri.fsPath, path, uri)
+		if (wfName) {
+			dir.label = wfName
+		}
 		dir.canResolveChildren = false
-		dir.tags = [ new TestTag("runnable"), new TestTag("ABLUnitDir") ]
-		testData.set(dir, new ABLTestDir())
+		dir.tags = [ new TestTag("runnable"), new TestTag("ABLTestDir") ]
+
+		const data = new ABLTestDir(dir.uri!)
+		testData.set(dir, data)
 
 		if (parent) {
 			parent.children.add(dir)
 		} else {
 			controller.items.add(dir)
+			if (suiteGroup) {
+				dir.children.add(suiteGroup)
+				dir = suiteGroup
+			}
 		}
 		parent = dir
 	}
@@ -372,9 +463,20 @@ function getTestFileAttrs(file: Uri | undefined) {
 	return "other"
 }
 
+function gatherAllTestItems(collection: TestItemCollection) {
+	const items: TestItem[] = []
+	collection.forEach(item => {
+		items.push(item)
+		items.push(...gatherTestItems(item.children))
+	})
+	return items
+}
+
 function gatherTestItems(collection: TestItemCollection) {
 	const items: TestItem[] = []
-	collection.forEach(item => items.push(item))
+	for(const [, item] of collection) {
+		items.push(item)
+	}
 	return items
 }
 
@@ -428,37 +530,63 @@ function getWorkspaceTestPatterns() {
 		excludePatterns = excludePatternsConfig
 	}
 
-	return workspace.workspaceFolders!.map(workspaceFolder => ({
-		workspaceFolder,
-		includePatterns: includePatterns.map(pattern => new RelativePattern(workspaceFolder, pattern)),
-		excludePatterns: excludePatterns.map(pattern => new RelativePattern(workspaceFolder, pattern))
-	}))
+	const retVal: { workspaceFolder: WorkspaceFolder, includePatterns: RelativePattern[], excludePatterns: RelativePattern[] }[] = []
+	for(const workspaceFolder of workspace.workspaceFolders!) {
+		retVal.push({
+			workspaceFolder,
+			includePatterns: includePatterns.map(pattern => new RelativePattern(workspaceFolder, pattern)),
+			excludePatterns: excludePatterns.map(pattern => new RelativePattern(workspaceFolder, pattern))
+		})
+	}
+	return retVal
 }
 
-async function removeExcludedFiles(controller: TestController, excludePatterns: RelativePattern[]) {
-	const items = gatherTestItems(controller.items)
+function deleteTest(controller: TestController | undefined, item: TestItem) {
+	deleteChildren(controller, item)
+	testData.delete(item)
+
+	if(item.parent) {
+		item.parent.children.delete(item.id)
+		if(item.parent.children.size == 0) {
+			deleteTest(controller, item.parent)
+		}
+	} else if (controller) {
+		controller.items.delete(item.id)
+	} else {
+		throw new Error("deleteTest failed - could not find parent for item: " + item.id)
+	}
+}
+
+function deleteChildren(controller: TestController | undefined, item: TestItem) {
+	for (const child of gatherTestItems(item.children)) {
+		deleteChildren(controller, child)
+		child.children.delete(item.id)
+		testData.delete(child)
+	}
+}
+
+function removeExcludedFiles(controller: TestController, excludePatterns: RelativePattern[]) {
+	const items = gatherAllTestItems(controller.items)
 
 	for (const element of items) {
 		const item = element
 		const data = testData.get(item)
 		if (item.id === "ABLTestSuiteGroup") {
-			await removeExcludedChildren(item, excludePatterns)
+			removeExcludedChildren(item, excludePatterns)
 		}
 		if (item.uri && (data instanceof ABLTestSuite || data instanceof ABLTestClass || data instanceof ABLTestProgram)) {
 			const excluded = isFileExcluded(item.uri, excludePatterns)
-			if (item.uri && excluded) {
-				testData.delete(item)
-				controller.items.delete(item.id)
+			if (excluded) {
+				deleteTest(controller, item)
 			}
 		}
-		if (item.children.size == 0) {
-			testData.delete(item)
-			controller.items.delete(item.id)
+		if (item.children.size == 0 && (data instanceof ABLTestDir)) {
+			deleteTest(controller, item)
 		}
 	}
 }
 
-async function removeExcludedChildren(parent: TestItem, excludePatterns: RelativePattern[]) {
+function removeExcludedChildren(parent: TestItem, excludePatterns: RelativePattern[]) {
 	if (!parent.children) {
 		return
 	}
@@ -468,20 +596,19 @@ async function removeExcludedChildren(parent: TestItem, excludePatterns: Relativ
 		if (data instanceof ABLTestFile) {
 			const excluded = isFileExcluded(item.uri!, excludePatterns)
 			if (item.uri && excluded) {
-				parent.children.delete(item.id)
-				testData.delete(item)
+				deleteTest(undefined, item)
 			}
 		} else if (data?.isFile) {
-			await removeExcludedChildren(item, excludePatterns)
+			removeExcludedChildren(item, excludePatterns)
 			if (item.children.size == 0) {
-				parent.children.delete(item.id)
-				testData.delete(item)
+				deleteTest(undefined, item)
 			}
 		}
 	}
 }
 
 async function findInitialFiles(controller: TestController,
+								workspaceFolder: WorkspaceFolder,
 								includePatterns: RelativePattern[],
 								excludePatterns: RelativePattern[],
 								removeExcluded: boolean = false) {
@@ -489,11 +616,12 @@ async function findInitialFiles(controller: TestController,
 
 	if (!findAllFilesAtStartup) {
 		if (removeExcluded) {
-			await removeExcludedFiles(controller, excludePatterns)
+			removeExcludedFiles(controller, excludePatterns)
 		}
 		return
 	}
 
+	const updates: Promise<void>[] = []
 	for (const includePattern of includePatterns) {
 		for (const wsFile of await workspace.findFiles(includePattern)) {
 			if (isFileExcluded(wsFile, excludePatterns)) {
@@ -501,13 +629,14 @@ async function findInitialFiles(controller: TestController,
 			}
 			const { file, data } = getOrCreateFile(controller, wsFile)
 			if(file) {
-				await data.updateFromDisk(controller, file)
+				updates.push(data.updateFromDisk(controller, file))
 			}
 		}
 	}
+	await Promise.all(updates)
 
 	if (removeExcluded) {
-		await removeExcludedFiles(controller, excludePatterns)
+		removeExcludedFiles(controller, excludePatterns)
 	}
 }
 
@@ -535,17 +664,18 @@ function startWatchingWorkspace(controller: TestController, fileChangedEmitter: 
 
 				const { file, data } = getOrCreateFile(controller, uri)
 				if (data?.didResolve) {
-					// controller.invalidateTestResults(file)
+					controller.invalidateTestResults(file)
 					await data.updateFromDisk(controller, file)
 				}
 				fileChangedEmitter.fire(uri)
 			})
 
-			watcher.onDidDelete(uri => controller.items.delete(uri.toString()))
+			watcher.onDidDelete(uri => {
+				controller.items.delete(uri.fsPath)
+			})
 			watchers.push(watcher)
 		}
 
-		findInitialFiles(controller, includePatterns, excludePatterns)
 		return watchers
 	}).flat()
 

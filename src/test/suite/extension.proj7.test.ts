@@ -1,9 +1,7 @@
 import * as assert from 'assert'
-import { Uri, workspace } from 'vscode'
 import { before } from 'mocha'
-import { getTestCount, getWorkspaceUri, runAllTests } from '../testCommon'
-// import { exec } from "child_process"
-
+import { Uri, workspace } from 'vscode'
+import { getTestCount, getWorkspaceUri, runAllTests, waitForExtensionActive } from '../testCommon'
 
 const projName = 'proj7'
 const workspaceUri = getWorkspaceUri()
@@ -13,6 +11,7 @@ function getUri (path: string) {
 }
 
 before(async () => {
+	await waitForExtensionActive()
 	const templateProc = Uri.joinPath(getUri('src/template_proc.p'))
 	const templateClass = Uri.joinPath(getUri('src/template_class.cls'))
 	const classContent = await workspace.fs.readFile(templateClass).then((data) => {

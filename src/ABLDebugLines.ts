@@ -51,13 +51,19 @@ export class ABLDebugLines {
 		this.incLengths = []
 	}
 
+	private warnings: string[] = []
+
 	async getSourceLine(debugSourceName: string, debugLine: number) {
+
 		let  debugLines = this.map.find((dlm) => dlm.debugSourceName == debugSourceName)
 		if (!debugLines) {
 			const fileinfo = await this.propath.search(debugSourceName)
 			if (!fileinfo) {
 				if (!debugSourceName.startsWith("OpenEdge.") && debugSourceName != "ABLUnitCore.p") {
-					console.error("(getSourceLine) cannot find " + debugSourceName + " in propath.")
+					if (this.warnings.indexOf(debugSourceName) < 0) {
+						console.error("[getSourceLine] WARNING: cannot find " + debugSourceName + " in propath.")
+						this.warnings.push(debugSourceName)
+					}
 				}
 				return undefined
 			}

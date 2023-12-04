@@ -1,11 +1,12 @@
 import * as path from 'path';
 import { runTests } from '@vscode/test-electron'
-import * as Config from './createTestConfig'
+import { getTestConfig } from './createTestConfig'
 
 async function main() {
-	const config = Config.getTestConfig()
+	const config = getTestConfig()
 
 	for (const conf of config) {
+		// if (conf.projName.startsWith('workspace'))
 		await testProject(conf.projName, conf.workspaceFolder, conf.launchArgs)
 	}
 }
@@ -18,7 +19,7 @@ async function testProject(projName: string, projDir?: string, launchArgs?: stri
 	const extensionDevelopmentPath = path.resolve(__dirname, '../../');
 	console.log("extensionDevelopmentPath=" + extensionDevelopmentPath)
 	try {
-		const extensionTestsPath = path.resolve(__dirname, './suite/index_' + projName)
+		const extensionTestsPath = path.resolve(__dirname, './index')
 		console.log("extensionTestsPath=" + extensionTestsPath)
 
 		const args: string[] = [

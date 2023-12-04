@@ -1,20 +1,21 @@
 import * as assert from 'assert'
-import { afterEach, beforeEach } from 'mocha'
-import { commands, Selection, Uri, window, workspace } from 'vscode'
-import { doesFileExist, getTestCount, sleep, getWorkspaceUri, runAllTests } from '../testCommon'
+import { afterEach, before } from 'mocha'
+import { Selection, Uri, commands, window } from 'vscode'
+import { doesFileExist, getTestCount, getWorkspaceUri, runAllTests, sleep, updateConfig, waitForExtensionActive } from '../testCommon'
 
 
 const projName = 'proj1'
 const workspaceUri = getWorkspaceUri()
 
-beforeEach(async () => {
-    console.log("beforeEach")
-	await workspace.getConfiguration('ablunit').update('files.exclude', undefined)
+before(async () => {
+    console.log("before")
+	await waitForExtensionActive()
+	await updateConfig("files.exclude", undefined)
 })
 
 afterEach(async () => {
 	console.log("afterEach")
-	await workspace.getConfiguration('ablunit').update('files.exclude', undefined)
+	await updateConfig("files.exclude", undefined)
 })
 
 suite(projName + ' - Extension Test Suite', () => {
@@ -32,10 +33,9 @@ suite(projName + ' - Extension Test Suite', () => {
 	})
 
 	test(projName + '.2 - output files exist 2 - exclude compileError.p', async () => {
-		await workspace.getConfiguration('ablunit').update('files.exclude', [ ".builder/**", "compileError.p" ])
-		await sleep(500)
-
+		await updateConfig("files.exclude", [ ".builder/**", "compileError.p" ])
 		await runAllTests()
+
 		const resultsJson = Uri.joinPath(workspaceUri,'results.json')
 		const testCount = await getTestCount(resultsJson)
 		console.log("getTestCount: " + testCount)

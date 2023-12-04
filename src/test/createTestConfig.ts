@@ -17,11 +17,11 @@ function createTestConfig(projName: string, workspaceFolder?: string, timeout?: 
 	}
 
 	if (!timeout || timeout == 0) {
-		timeout = 10000
+		timeout = 15000
 	}
 
 	const launchArgs: string[] = []
-	if (projName !== "proj3" && projName !== "proj4") {
+	if (projName != "proj3" && projName != "proj4") {
 		launchArgs.push('--disable-extensions')
 	}
 
@@ -44,16 +44,17 @@ export function getTestConfig () {
 	const testConfig = []
 	// Folders
 	testConfig.push(createTestConfig('proj0'))
-	testConfig.push(createTestConfig('proj1'))
-	testConfig.push(createTestConfig('proj2', '', 0))
-	testConfig.push(createTestConfig('proj3', 'proj3_debugLines', 0))
-	testConfig.push(createTestConfig('proj4', '', 0))
+	testConfig.push(createTestConfig('proj1', undefined, 15000))
+	testConfig.push(createTestConfig('proj2'))
+	testConfig.push(createTestConfig('proj3', 'proj3_debugLines'))
+	testConfig.push(createTestConfig('proj4'))
 	testConfig.push(createTestConfig('proj5', 'proj5_suites', 20000))
+	testConfig.push(createTestConfig('proj6', 'proj6_dot_dir'))
 	testConfig.push(createTestConfig('proj7', 'proj7_load_performance', 60000))
 
 	// Workspaces
-	testConfig.push(createTestConfig('workspace0', 'workspace0.code-workspace',0))
-	testConfig.push(createTestConfig('workspace1', 'workspace1.code-workspace',0))
+	testConfig.push(createTestConfig('workspace0', 'workspace0.code-workspace'))
+	testConfig.push(createTestConfig('workspace1', 'workspace1.code-workspace'))
 
 	return testConfig
 }

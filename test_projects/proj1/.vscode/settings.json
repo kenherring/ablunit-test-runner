@@ -8,5 +8,6 @@
 	"ablunit.configJson.outputWriteJson": true,
 	"ablunit.tempDir": "${workspaceFolder}",
 	// "ablunit.files.include": "classTest.cls"
+	// "ablunit.files.exclude": [ "compileError.p" ],
 	"ablunit.debugEnabled": true
 }

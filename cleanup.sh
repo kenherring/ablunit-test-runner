@@ -9,15 +9,21 @@ for F in "${ARR[@]}"; do
 done
 wait
 
-ARR=("listings" ".builder" "build" "ablunit-output")
+ARR=("listings" ".builder" "build" "ablunit-output" "workspaceAblunit")
 for D in "${ARR[@]}"; do
 	echo "deleting directories matching '$D'"
 	find test_projects -type d -name "$D" -exec rm -rv {} + || true &
 done
+find .vscode -type d -name "kherring.ablunit-test-provider" -exec rm -rv {} + || true &
 wait
 
 echo "deleting artifacts and coverage directory"
-rm -rf artifacts/ coverage/ C:/temp/ablunit/
+rm -rf artifacts/ coverage/
+if [ "${OS:-}" = "Windows_NT" ]; then
+	rm -rf C:/temp/ablunit/
+else
+	rm -rf /tmp/ablunit/
+fi
 
 echo "deleting storage directory kherring.ablunit-test-provider"
 find . -type d -name "kherring.ablunit-test-provider" -exec rm -rv {} +

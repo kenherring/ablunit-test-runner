@@ -9,10 +9,14 @@
 		},
 		{
 			"path": "projX_no_oe_code"
+		},
+		{
+			"path": "proj5_suites"
 		}
 	],
 	"settings": {
 		"ablunit.params": "-pf test.pf",
+		// "ablunit.tempDir": "ablunit",
 		// "ablunit.configJson.outputWriteJson": true,
 		// "ablunit.configJson.writeLog": true,
 		// "ablunit.configJson.throwError": true,

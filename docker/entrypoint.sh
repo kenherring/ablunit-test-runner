@@ -42,6 +42,8 @@ initialize () {
 			cp "/home/circleci/ablunit-test-provider/$FILE" "$FILE"
 		done < /tmp/modified_files
 	fi
+
+	./cleanup.sh
 }
 
 run_tests () {

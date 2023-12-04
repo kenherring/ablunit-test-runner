@@ -1,10 +1,8 @@
 {
-	"name": "proj5_propath",
+	"name": "proj6_dot_dir",
 	"version": "0.0.1",
 	"charset": "utf-8",
 	"buildPath": [
-		// { "type": "source", "path": "src", "build": "build/src_r" },
-		// { "type": "source", "path": "path", "build": "build/path_r" }
 		{ "type": "source", "path": "src", "build": "build" },
 		{ "type": "source", "path": "path", "build": "build"}
 	]

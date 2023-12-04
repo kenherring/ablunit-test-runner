@@ -1,5 +1,34 @@
 import { ConfigurationTarget, FileType, Uri, commands, extensions, workspace } from 'vscode'
 
+export async function waitForExtensionActive () {
+	const ext = extensions.getExtension("kherring.ablunit-test-provider")
+	if (!ext) {
+		throw new Error("kherring.ablunit-test-provider is not installed")
+	}
+	if (!ext.isActive) {
+		await ext.activate().then(() => {
+			console.log("activated kherring.ablunit-test-provider")
+		}, (err) => {
+			throw new Error("failed to activate kherring.ablunit-test-provider: " + err)
+		})
+	}
+
+	if(!ext.isActive) {
+		console.log("waiting for extension to activate - should never be here!")
+		for (let i=0; i<50; i++) {
+			await sleep(100)
+			if (ext.isActive) {
+				console.log("waitied " + ((i + 1) * 100) + "ms for extension to activate")
+				break
+			}
+		}
+	}
+
+	if (!ext.isActive) {
+		throw new Error("kherring.ablunit-test-provider is not active")
+	}
+}
+
 export function getWorkspaceUri () {
 	if (workspace.workspaceFolders === undefined || workspace.workspaceFolders.length === 0) {
 		throw new Error("workspace.workspaceFolders is undefined")
@@ -20,9 +49,14 @@ export function getSessionTempDir () {
 	}
 }
 
-export async function sleep (time: number = 2000) {
-	console.log("sleeping for " + time + "ms")
-	return new Promise(resolve => setTimeout(resolve, time))
+export async function sleep (time: number = 2000, msg?: string) {
+	let status = "sleeping for " + time + "ms"
+	if (msg) {
+		status = status + " [" + msg + "]"
+	}
+	console.log(status)
+	await new Promise(resolve => setTimeout(resolve, time))
+	return
 }
 
 export async function deleteFile(uri: Uri) {
@@ -117,16 +151,19 @@ export async function setRuntimes (runtimes: IRuntime[]) {
 }
 
 export async function runAllTests (doRefresh: boolean = true) {
-	await sleep(100)
 
 	console.log("running all tests")
 	if (doRefresh) {
 		console.log("testing.refreshTests starting")
-		await commands.executeCommand('testing.refreshTests')
-		console.log("testing.refreshTests complete")
+		await commands.executeCommand('testing.refreshTests').then(() => {
+			console.log("testing.refreshTests complete!")
+		}, (err) => {
+			throw new Error("testing.refreshTests failed: " + err)
+		})
+		await sleep(500)
+	} else {
+		await sleep(250)
 	}
-
-	await sleep(500)
 
 	console.log("testing.runAll starting")
 	return commands.executeCommand('testing.runAll').then(() => {
@@ -134,4 +171,13 @@ export async function runAllTests (doRefresh: boolean = true) {
 	} , (err) => {
 		throw new Error("testing.runAll failed: " + err)
 	})
+}
+
+export async function updateConfig (key: string, value: any) {
+	await workspace.getConfiguration('ablunit').update(key, value, ConfigurationTarget.Workspace).then(() => {
+		console.log("ablunit." + key + " set successfully (value='" + value + "')")
+	}, (err) => {
+		throw new Error("failed to set ablunit." + key + ": " + err)
+	})
+	await sleep(250, "sleep after updateConfig")
 }
