@@ -1,9 +1,5 @@
 # WSL Notes
 
-```bash
-npm install --save-dev @vscode/test-electron
-```
-
 ## Links
 
 * https://github.com/microsoft/WSL/issues/5663
@@ -11,7 +7,8 @@ npm install --save-dev @vscode/test-electron
 ## With windows path
 
 ```bash
-# error while loading shared libraries: libnss3.so: cannot open shared object file: No such file or directory
+## error while loading shared libraries:
+## "libnss3.so: cannot open shared object file: No such file or directory"
 
 apt install -y libnss3
 #or
