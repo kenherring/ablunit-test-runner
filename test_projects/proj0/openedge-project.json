@@ -1,11 +1,12 @@
 {
 	"buildPath": [
-		{ "type": "source", "path": "src" },
+		{ "type": "source", "path": "src", "excludes": "emptyClass.cls"},
 		{ "type": "source", "path": "test" }
 	],
 	"dbConnections": [
 		{
 			"name": "sp2k",
+			"aliases": [],
 			"connect": "-db target/db/sp2k -RO",
 			"dumpFile": "target/sp2k.df"
 		}

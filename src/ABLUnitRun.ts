@@ -1,63 +1,61 @@
-import { TestRun, workspace } from "vscode"
-import { ABLResults } from "./ABLResults"
+import { TestRun, workspace } from 'vscode'
+import { ABLResults } from './ABLResults'
 import { logToChannel } from './ABLUnitCommon'
-import { IABLUnitConfig } from "./ABLUnitConfigWriter"
 
 import * as cp from "child_process";
 
-export const ablunitRun = async(ablunitConfig: IABLUnitConfig, options: TestRun, res: ABLResults) => {
+export const ablunitRun = async(options: TestRun, res: ABLResults) => {
 	const start = Date.now()
 
-	await res.createAblunitJson()
-	await res.deleteResultsXml()
+	await res.cfg.createAblunitJson(res.cfg.ablunitConfig.configJson)
 
 	const getCommand = () => {
-		if (!ablunitConfig.tempDirUri) {
+		if (!res.cfg.ablunitConfig.tempDirUri) {
 			throw (new Error("temp directory not set"))
 		}
 
 		const cmd = [res.dlc + '/bin/_progres', '-b', '-p', 'ABLUnitCore.p']
 		if (process.platform === 'win32') {
-			cmd.push('-basekey', 'INI', '-ininame', workspace.asRelativePath(ablunitConfig.progressIniUri.fsPath))
+			cmd.push('-basekey', 'INI', '-ininame', workspace.asRelativePath(res.cfg.ablunitConfig.progressIniUri.fsPath, false))
 		} else if (process.platform === 'linux') {
 			process.env.PROPATH = res.propath!.toString()
 		} else {
 			throw new Error("unsupported platform: " + process.platform)
 		}
-		cmd.push('-T', workspace.asRelativePath(ablunitConfig.tempDirUri))
+		cmd.push('-T', workspace.asRelativePath(res.cfg.ablunitConfig.tempDirUri, false))
 
-		if (ablunitConfig.profilerOptions.enabled) {
-			cmd.push('-profile', workspace.asRelativePath(ablunitConfig.profilerOptions.optionsUri))
+		if (res.cfg.ablunitConfig.profilerOptions.enabled) {
+			cmd.push('-profile', workspace.asRelativePath(res.cfg.ablunitConfig.profilerOptions.optionsUri, false))
 		}
 
 		const cmdSanitized: string[] = []
 
-		ablunitConfig.params.split(' ').forEach(element => {
+		res.cfg.ablunitConfig.params.split(' ').forEach(element => {
 			cmd.push(element)
 		});
 
-		cmd.push("-param", '"CFG=' + workspace.asRelativePath(ablunitConfig.config_uri.fsPath) + '"')
+		cmd.push("-param", '"CFG=' + workspace.asRelativePath(res.cfg.ablunitConfig.config_uri.fsPath, false) + '"')
 		cmd.forEach(element => {
 			cmdSanitized.push(element.replace(/\\/g, '/'))
 		});
 
-		ablunitConfig.tests.commandArr = cmdSanitized
+		res.cfg.ablunitConfig.tests.commandArr = cmdSanitized
 		logToChannel("ABLUnit Command: " + cmdSanitized.join(' '))
 		return cmdSanitized
 	}
 
 	const runCommand = () => {
 		const args = getCommand()
-		logToChannel("ABLUnit Command Execution Started - dir='" + ablunitConfig.workspaceUri.fsPath + "'")
+		logToChannel("ABLUnit Command Execution Started - dir='" + res.cfg.ablunitConfig.workspaceFolder.uri.fsPath + "'")
 
 		const cmd = args[0]
 		args.shift()
 
 		return new Promise<string>((resolve, reject) => {
-			console.log("using command=" + cmd + " " + args.join(' '))
-			res.setStatus("running '" + cmd + "' command")
+			res.setStatus("running command")
+			console.log("command: " + cmd + " " + args.join(' '))
 
-			cp.exec(cmd + ' ' + args.join(' '), { cwd: ablunitConfig.workspaceUri.fsPath }, (err: any, stdout: any, stderr: any) => {
+			cp.exec(cmd + ' ' + args.join(' '), { cwd: res.cfg.ablunitConfig.workspaceFolder.uri.fsPath }, (err: any, stdout: any, stderr: any) => {
 				const duration = Date.now() - start
 				if (stdout) {
 					logToChannel("_progres stdout=" + stdout)
@@ -66,12 +64,13 @@ export const ablunitRun = async(ablunitConfig: IABLUnitConfig, options: TestRun,
 				if (stderr) {
 					logToChannel("_progres stderr=" + stderr)
 					options.appendOutput("_progres stderr=" + stderr + "\r\n")
-					reject(stderr)
 				}
 				if (err) {
 					logToChannel("_progres err=" + err.toString(), 'error')
 					options.appendOutput("_progres err=" + err)
-					reject(err)
+				}
+				if(err || stderr) {
+					reject(new Error ("ABLUnit Command Execution Failed - duration: " + duration))
 				}
 				logToChannel("ABLUnit Command Execution Completed - duration: " + duration)
 				resolve("resolve _progres promise")

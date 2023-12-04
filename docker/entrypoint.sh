@@ -26,20 +26,24 @@ initialize () {
 			git checkout "$GIT_BRANCH"
 		fi
 
+		cd /home/circleci/ablunit-test-provider
+		git --no-pager diff --diff-filter=d --name-only --staged > /tmp/stage_files
+		git --no-pager diff --diff-filter=d --name-only > /tmp/modified_files
+		cd -
+
+
 		while read -r FILE; do
 			echo "copying staged file $FILE"
 			cp "/home/circleci/ablunit-test-provider/$FILE" "$FILE"
-		done < <(cd /home/circleci/ablunit-test-provider && git diff --name-only --staged)
+		done < /tmp/stage_files
 
 		while read -r FILE; do
 			echo "copying modified file $FILE"
 			cp "/home/circleci/ablunit-test-provider/$FILE" "$FILE"
-		done < <(cd /home/circleci/ablunit-test-provider && git diff --name-only)
+		done < /tmp/modified_files
 	fi
-}
 
-run_lint () {
-	.circleci/run_eslint.sh
+	./cleanup.sh
 }
 
 run_tests () {

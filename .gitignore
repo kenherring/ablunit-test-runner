@@ -32,6 +32,9 @@ progress.ini
 protrace.*
 results.json
 results.xml
+lbia*
+rcda*
+srta*
 
 # Generated test files
 test_projects/proj7_load_performance/src/procs

@@ -1,4 +1,4 @@
-import { Uri, workspace } from 'vscode';
+import { Uri, workspace, WorkspaceFolder } from 'vscode'
 import jsonminify = require('jsonminify')
 
 export interface IPropathEntry {
@@ -12,15 +12,15 @@ export interface IProjectJson {
 	propathEntry: IPropathEntry[]
 }
 
-export async function readOpenEdgeProjectJson () {
-	return workspace.fs.readFile(Uri.joinPath(workspace.workspaceFolders![0].uri,"openedge-project.json")).then((data) => {
+export async function readOpenEdgeProjectJson (workspaceFolder: WorkspaceFolder) {
+	return workspace.fs.readFile(Uri.joinPath(workspaceFolder.uri, "openedge-project.json")).then((data) => {
 		const projectJson = JSON.parse(jsonminify(data.toString()))
-		return parseOpenEdgeProjectJson(projectJson)
+		return parseOpenEdgeProjectJson(workspaceFolder, projectJson)
 	})
 }
 
-export async function getOEVersion () {
-	return workspace.fs.readFile(Uri.joinPath(workspace.workspaceFolders![0].uri,"openedge-project.json")).then((data) => {
+export async function getOEVersion (workspaceFolder: WorkspaceFolder) {
+	return workspace.fs.readFile(Uri.joinPath(workspaceFolder.uri,"openedge-project.json")).then((data) => {
 		const projectJson = JSON.parse(jsonminify(data.toString()))
 		if (projectJson.oeversion) {
 			return projectJson.oeversion.toString()
@@ -29,7 +29,7 @@ export async function getOEVersion () {
 	})
 }
 
-function parseOpenEdgeProjectJson (conf: any) {
+function parseOpenEdgeProjectJson (workspaceFolder: WorkspaceFolder, conf: any) {
 	//TODO what about if we're running a different profile?
 	if (!conf.buildPath) {
 		throw new Error("buildPath not found in openedge-project.json")
@@ -42,15 +42,16 @@ function parseOpenEdgeProjectJson (conf: any) {
 
 		let path: string = entry.path
 		if (path === ".") {
-			path = workspace.workspaceFolders![0].uri.fsPath
+			path = workspaceFolder.uri.fsPath
+		} else if (path.startsWith("./")) {
+			path = workspaceFolder.uri.fsPath + path.substring(1)
 		}
 
 		let buildDir: string = entry.build
 		if (!buildDir) {
+			buildDir = path
 			if (conf.buildDirectory) {
 				buildDir = conf.buildDirectory
-			} else {
-				buildDir = entry.path
 			}
 			dotPct = ".builder/.pct0"
 		} else {
@@ -66,7 +67,7 @@ function parseOpenEdgeProjectJson (conf: any) {
 		}
 
 		pj.propathEntry.push({
-			path: entry.path,
+			path: path,
 			type: entry.type.toLowerCase(),
 			buildDir: buildDir,
 			xrefDir: xrefDir

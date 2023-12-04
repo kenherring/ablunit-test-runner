@@ -5,7 +5,7 @@ import { getStorageUri } from '../../extension'
 import { doesDirExist, doesFileExist, runAllTests, waitForExtensionActive } from '../testCommon'
 
 
-const projName = 'proj0'
+const projName = 'workspace0'
 
 before(async () => {
 	await waitForExtensionActive()

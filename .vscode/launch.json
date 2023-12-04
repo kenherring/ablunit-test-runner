@@ -5,7 +5,6 @@
 {
 	"version": "0.2.0",
 	"configurations": [
-
 		{
 			"name": "Run Extension",
 			"type": "extensionHost",
@@ -35,12 +34,6 @@
 				"${workspaceFolder}/out/**/*.js"
 			],
 			"preLaunchTask": "npm: clean-and-compile"
-		},
-		{
-			"name": "index_unitTests",
-			"type": "node-terminal",
-			"request": "launch",
-			"command": "npm run ./out/test/suite/index_unitTests.js"
 		}
 	],
 	"inputs": [
@@ -49,15 +42,16 @@
 			"description": "Enter the name of the workspace to test",
 			"type": "pickString",
 			"options": [
-				"test_projects.code-workspace",
 				"proj0",
 				"proj1",
 				"proj2",
 				"proj3_debugLines",
 				"proj4",
 				"proj5_suites",
-				"proj6_propath",
-				"proj7_load_performance"
+				"proj6_dot_dir",
+				"proj7_load_performance",
+				"workspace0.code-workspace",
+				"workspace1.code-workspace"
 			]
 		}
 	]

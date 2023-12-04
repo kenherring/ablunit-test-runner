@@ -1,29 +1,27 @@
-import * as vscode from 'vscode'
 import * as assert from 'assert'
+import { before } from 'mocha'
 import path = require('path')
+import { Uri } from 'vscode'
 import { parseTestClass } from '../../parse/TestClassParser'
-import { parseTestSuite } from '../../parse/TestSuiteParser'
-import { getTestCount, sleep } from '../common'
+import { parseSuiteLines } from '../../parse/TestSuiteParser'
+import { getTestCount, getWorkspaceUri, runAllTests, waitForExtensionActive } from '../testCommon'
 import { getContentFromFilesystem } from '../../parse/ProfileParser'
 import { getLines } from '../../parse/TestParserCommon'
 
-const projName = 'proj0'
 
-suite('SourceParser Test Suite - proj5', () => {
+const projName = 'proj5'
+const workspaceUri = getWorkspaceUri()
 
-	const workspaceDir = vscode.workspace.workspaceFolders![0].uri
+before(async () => {
+	await waitForExtensionActive()
+})
 
-	test('testCount', async () => {
-		await vscode.commands.executeCommand('testing.refreshTests')
-		await sleep(500)
+suite(projName + ' - Extension Test Suite', () => {
 
-		await vscode.commands.executeCommand('testing.runAll').then(() => {
-			console.log("testing.runAll complete!")
-		} , (err) => {
-			assert.fail("testing.runAll failed: " + err)
-		})
+	test(projName + '.1 - test count', async () => {
+		await runAllTests()
 
-		const resultsJson = vscode.Uri.joinPath(workspaceDir,'ablunit','results.json')
+		const resultsJson = Uri.joinPath(workspaceUri,'ablunit','results.json')
 		const testCount = await getTestCount(resultsJson)
 		assert(testCount > 100)
 	})
@@ -31,9 +29,9 @@ suite('SourceParser Test Suite - proj5', () => {
 
 	////////// TEST SUITES //////////
 
-	test('test suite - suite1.cls', async () => {
+	test(projName + '.2 - TestSuite - suite1.cls', async () => {
 		const lines = await readLinesFromFile('test/suites/suite1.cls',"@testsuite")
-		const suiteRet = parseTestSuite(lines)
+		const suiteRet = parseSuiteLines(lines)
 		assert.strictEqual(suiteRet.name, "suites.suite1")
 		assert.strictEqual(suiteRet.classes.length, 4, "expected 4 classes in suite1.cls")
 		assert.strictEqual(suiteRet.procedures.length, 7, "expected 7 procedures in suite1.cls")
@@ -41,15 +39,15 @@ suite('SourceParser Test Suite - proj5', () => {
 
 	////////// TEST CLASSES //////////
 
-	test("test class - login/test2.cls - ablunit.display.classLabel=classname (default)", async () => {
+	test(projName + '.3 - TestClass - login/test2.cls - ablunit.display.classLabel=classname (default)', async () => {
 		const lines = await readLinesFromFile('test/login/test2.cls')
-		const classRet = parseTestClass(lines, 'classname', 'login/test2.cls', vscode.Uri.joinPath(workspaceDir, 'src/login/test2.cls'))
+		const classRet = parseTestClass(lines, 'classname', 'login/test2.cls')
 		assert.strictEqual(classRet.classname, "login.test2")
 	})
 
-	test("test class - login/test2.cls - ablunit.display.classLabel=filepath", async () => {
+	test(projName + '.4 - TestClass - login/test2.cls - ablunit.display.classLabel=filepath', async () => {
 		const lines = await readLinesFromFile('test/login/test2.cls')
-		const classRet = parseTestClass(lines, 'filepath', 'login/test2.cls', vscode.Uri.joinPath(workspaceDir, 'src/login/test2.cls'))
+		const classRet = parseTestClass(lines, 'filepath', 'login/test2.cls')
 		assert.strictEqual(classRet.classname, "login/test2.cls")
 	})
 
@@ -57,7 +55,7 @@ suite('SourceParser Test Suite - proj5', () => {
 
 
 async function readLinesFromFile (file: string, annotation: string = "@test") {
-	const uri = vscode.Uri.joinPath(vscode.workspace.workspaceFolders![0].uri, file)
+	const uri = Uri.joinPath(workspaceUri, file)
 	return getContentFromFilesystem(uri).then((content) => {
 		const [ lines, ] = getLines(content, annotation)
 		return lines

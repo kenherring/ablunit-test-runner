@@ -1,37 +1,25 @@
-import * as assert from 'assert';
-import { after, before } from 'mocha';
-import * as vscode from 'vscode';
-import { doesDirExist, doesFileExist } from '../common'
-import { getDefaultDLC, setRuntimes } from '../indexCommon';
+import * as assert from 'assert'
+import { before } from 'mocha'
+import { Uri } from 'vscode'
+import { doesDirExist, doesFileExist, getDefaultDLC, getWorkspaceUri, runAllTests, setRuntimes, waitForExtensionActive } from '../testCommon'
+
 
 const projName = 'proj3'
+const workspaceUri = getWorkspaceUri()
 
 before(async () => {
+	await waitForExtensionActive()
 	await setRuntimes([{name: "11.7", path: "/psc/dlc_11.7"}, {name: "12.2", path: getDefaultDLC(), default: true}])
 })
 
-after(() => {
-	console.log("after")
-})
+suite(projName + ' - Extension Test Suite', () => {
 
-suite('Extension Test Suite - ' + projName, () => {
+	test(projName + '.1 - target/ablunit.json file exists', async () => {
+		await runAllTests()
 
-	test('target/ablunit.json file exists', async () => {
-		const ablunitJson = vscode.Uri.joinPath(vscode.workspace.workspaceFolders![0].uri,'target','ablunit.json')
-		const resultsXml = vscode.Uri.joinPath(vscode.workspace.workspaceFolders![0].uri,'ablunit-output','results.xml')
-		const listingsDir = vscode.Uri.joinPath(vscode.workspace.workspaceFolders![0].uri,'target','listings')
-
-		await vscode.commands.executeCommand('testing.refreshTests');
-		await vscode.commands.executeCommand('workbench.view.testing.focus')
-
-		console.log("sleeping for 2s while tests are discovered") //There's gotta be a better way to do this...
-		await new Promise( resolve => setTimeout(resolve, 2000))
-
-		await vscode.commands.executeCommand('testing.runAll').then(() => {
-			console.log("testing.runAll complete!")
-		} , (err) => {
-			assert.fail("testing.runAll failed: " + err)
-		})
+		const ablunitJson = Uri.joinPath(workspaceUri,'target','ablunit.json')
+		const resultsXml = Uri.joinPath(workspaceUri,'ablunit-output','results.xml')
+		const listingsDir = Uri.joinPath(workspaceUri,'target','listings')
 
 		assert(await doesFileExist(ablunitJson), "missing ablunit.json (" + ablunitJson.fsPath + ")")
 		assert(await doesFileExist(resultsXml), "missing results.xml (" + resultsXml.fsPath + ")")

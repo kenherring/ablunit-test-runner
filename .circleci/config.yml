@@ -49,7 +49,6 @@ jobs:
       - store_test_results:
           when: always
           path: artifacts/
-      - run: .circleci/run_eslint.sh
       - store_artifacts:
           when: always
           path: artifacts/
@@ -72,7 +71,7 @@ jobs:
           at: .
       - run: npm install
       - run: sudo npm install -g @vscode/vsce
-      - run: vsce package --pre-release --githubBranch main --allow-star-activation
+      - run: vsce package --pre-release --githubBranch main
       - run: vsce ls
       - when:
           condition: << pipeline.git.tag >>
@@ -84,7 +83,7 @@ jobs:
                   echo "Version in package.json does not match tag"
                   exit 1
                 fi
-          - run: vsce publish --pre-release --packagePath ablunit-test-provider-*.vsix --githubBranch main --allow-star-activation
+          - run: vsce publish --pre-release --packagePath ablunit-test-provider-*.vsix --githubBranch main
       - run: mkdir -p artifacts && cp ablunit-test-provider-*.vsix artifacts
       - store_artifacts:
           when: always

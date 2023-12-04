@@ -17,6 +17,11 @@ function someFunc returns integer (ipChar as character) :
 end function.
 
 @Test.
+procedure test_pass :
+    Assert:Equals(1,1).
+end procedure.
+
+@Test.
 procedure test_call_fail_1 :
     define variable val as integer no-undo.
     val = someFunc("1").

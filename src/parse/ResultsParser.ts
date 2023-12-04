@@ -1,9 +1,10 @@
-import { Uri, workspace } from "vscode"
-import { parseCallstack, ICallStack } from "./CallStackParser"
-import { PropathParser } from "../ABLPropath"
-import * as xml2js from "xml2js"
-import { ABLDebugLines } from "../ABLDebugLines"
-import { IABLUnitJson, ablunitConfig } from "../ABLUnitConfigWriter"
+import { Uri, workspace } from 'vscode'
+import { parseCallstack, ICallStack } from './CallStackParser'
+import { PropathParser } from '../ABLPropath'
+import { parseString } from 'xml2js'
+import { ABLDebugLines } from '../ABLDebugLines'
+import { IABLUnitConfig } from '../ABLUnitConfigWriter'
+import { logToChannel } from '../ABLUnitCommon'
 
 
 export interface TCFailure {
@@ -59,9 +60,8 @@ export class ABLResultsParser {
 		this.debugLines = debugLines
 	}
 
-	async parseResults(opts: IABLUnitJson, resultsUri: Uri, jsonUri: Uri) {
-		console.log("resultsUri=" + resultsUri.fsPath)
-		const resultsBits = await workspace.fs.readFile(resultsUri);
+	async parseResults(cfg: IABLUnitConfig) {
+		const resultsBits = await workspace.fs.readFile(cfg.config_output_resultsUri);
 		const resultsXml = Buffer.from(resultsBits.toString()).toString('utf8');
 		const resultsXmlJson = await this.parseXml(resultsXml)
 		try {
@@ -70,13 +70,16 @@ export class ABLResultsParser {
 			console.error("[parseResults] error parsing results.xml file: " + err)
 			throw err
 		}
-		if (ablunitConfig.config_output_writeJson) {
-			this.writeJsonToFile(jsonUri)
+		console.log("---- cfg.config_output_writeJson=" + cfg.config_output_writeJson)
+		// console.log("cfg= " + JSON.stringify(cfg,null,2))
+		console.log("ablunitConfig.configJson.output.location=" + workspace.getConfiguration("ablunit").get("configJson.outputLocation"))
+		if (cfg.config_output_writeJson) {
+			console.log("2")
+			return this.writeJsonToFile(cfg.config_output_jsonUri)
 		}
 	}
 
 	parseXml(xmlData: string) {
-		const parseString = xml2js.parseString;
 		let res: any
 
 		parseString(xmlData, function (err: any, resultsRaw: any) {
@@ -194,14 +197,13 @@ export class ABLResultsParser {
 
 	writeJsonToFile(uri: Uri) {
 		const data = this.resultsJson
-		workspace.fs.writeFile(uri, Uint8Array.from(Buffer.from(JSON.stringify(data, null, 2)))).then(() => {
-			console.log("wrote results json file: " + uri.fsPath)
+		console.log("writing results json file: " + uri.fsPath)
+		console.log("config-1: " + workspace.getConfiguration("ablunit").get("configJson.outputwriteJson"))
+		console.log("config-2: " + workspace.getConfiguration("ablunit").get("configJson.outputLocation"))
+		return workspace.fs.writeFile(uri, Uint8Array.from(Buffer.from(JSON.stringify(data, null, 2)))).then(() => {
+			logToChannel("wrote results json file: " + uri.fsPath)
 		}, (err) => {
-			console.error("failed to write profile output json file " + uri.fsPath + " - " + err)
+			logToChannel("failed to write profile output json file " + uri.fsPath + " - " + err,"error")
 		})
 	}
 }
-
-// console.log(1)
-// var parseTest = new ABLResultsParser("c:/git/ablunit-test-provider/test_projects/proj2/results.xml")
-// console.log(2)
