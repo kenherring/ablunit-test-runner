@@ -45,7 +45,7 @@ export async function activate(context: ExtensionContext) {
 	context.subscriptions.push(
 		commands.registerCommand('_ablunit.openCallStackItem', openCallStackItem),
 		window.onDidChangeActiveTextEditor(e => decorate(e!) ),
-		workspace.onDidChangeConfiguration(e => updateConfiguration(e) ),
+		workspace.onDidChangeConfiguration(e => updateConfiguration(e)),
 		workspace.onDidOpenTextDocument(updateNodeForDocument),
 		workspace.onDidChangeTextDocument(e => updateNodeForDocument(e.document)),
 	)
@@ -256,7 +256,7 @@ export async function activate(context: ExtensionContext) {
 
 	async function updateConfiguration(e: ConfigurationChangeEvent) {
 		if (e.affectsConfiguration('ablunit')) {
-			await removeExcludedFiles(ctrl, getExcludePatterns())
+			removeExcludedFiles(ctrl, getExcludePatterns())
 		}
 	}
 
@@ -481,7 +481,9 @@ function getWorkspaceTestPatterns() {
 }
 
 function deleteTest(controller: TestController | undefined, item: TestItem) {
+	deleteChildren(controller, item)
 	testData.delete(item)
+
 	if(item.parent) {
 		item.parent.children.delete(item.id)
 		if(item.parent.children.size == 0) {
@@ -494,18 +496,26 @@ function deleteTest(controller: TestController | undefined, item: TestItem) {
 	}
 }
 
-async function removeExcludedFiles(controller: TestController, excludePatterns: RelativePattern[]) {
+function deleteChildren(controller: TestController | undefined, item: TestItem) {
+	for (const child of gatherTestItems(item.children)) {
+		deleteChildren(controller, child)
+		child.children.delete(item.id)
+		testData.delete(child)
+	}
+}
+
+function removeExcludedFiles(controller: TestController, excludePatterns: RelativePattern[]) {
 	const items = gatherAllTestItems(controller.items)
 
 	for (const element of items) {
 		const item = element
 		const data = testData.get(item)
 		if (item.id === "ABLTestSuiteGroup") {
-			await removeExcludedChildren(item, excludePatterns)
+			removeExcludedChildren(item, excludePatterns)
 		}
 		if (item.uri && (data instanceof ABLTestSuite || data instanceof ABLTestClass || data instanceof ABLTestProgram)) {
 			const excluded = isFileExcluded(item.uri, excludePatterns)
-			if (item.uri && excluded) {
+			if (excluded) {
 				deleteTest(controller, item)
 			}
 		}
@@ -515,7 +525,7 @@ async function removeExcludedFiles(controller: TestController, excludePatterns: 
 	}
 }
 
-async function removeExcludedChildren(parent: TestItem, excludePatterns: RelativePattern[]) {
+function removeExcludedChildren(parent: TestItem, excludePatterns: RelativePattern[]) {
 	if (!parent.children) {
 		return
 	}
@@ -528,7 +538,7 @@ async function removeExcludedChildren(parent: TestItem, excludePatterns: Relativ
 				deleteTest(undefined, item)
 			}
 		} else if (data?.isFile) {
-			await removeExcludedChildren(item, excludePatterns)
+			removeExcludedChildren(item, excludePatterns)
 			if (item.children.size == 0) {
 				deleteTest(undefined, item)
 			}
@@ -544,7 +554,7 @@ async function findInitialFiles(controller: TestController,
 
 	if (!findAllFilesAtStartup) {
 		if (removeExcluded) {
-			await removeExcludedFiles(controller, excludePatterns)
+			removeExcludedFiles(controller, excludePatterns)
 		}
 		return
 	}
@@ -562,7 +572,7 @@ async function findInitialFiles(controller: TestController,
 	}
 
 	if (removeExcluded) {
-		await removeExcludedFiles(controller, excludePatterns)
+		removeExcludedFiles(controller, excludePatterns)
 	}
 }
 

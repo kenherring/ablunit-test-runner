@@ -9,7 +9,7 @@ for F in "${ARR[@]}"; do
 done
 wait
 
-ARR=("listings" ".builder" "build" "ablunit-output")
+ARR=("listings" ".builder" "build" "ablunit-output" "workspaceAblunit")
 for D in "${ARR[@]}"; do
 	echo "deleting directories matching '$D'"
 	find test_projects -type d -name "$D" -exec rm -rv {} + || true &

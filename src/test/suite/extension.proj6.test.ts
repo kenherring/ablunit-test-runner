@@ -1,12 +1,7 @@
 import * as assert from 'assert'
 import path = require('path')
 import { Uri } from 'vscode'
-import { parseTestClass } from '../../parse/TestClassParser'
-import { parseSuiteLines } from '../../parse/TestSuiteParser'
 import { getWorkspaceUri, runAllTests, doesFileExist } from '../testCommon'
-import { getContentFromFilesystem } from '../../parse/ProfileParser'
-import { getLines } from '../../parse/TestParserCommon'
-
 
 const projName = 'proj6'
 const workspaceUri = getWorkspaceUri()

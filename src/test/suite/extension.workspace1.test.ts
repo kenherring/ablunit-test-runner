@@ -1,20 +1,20 @@
 import * as assert from 'assert'
+import { after, beforeEach } from 'mocha'
 import { Uri, workspace } from 'vscode'
-import { after, before } from 'mocha'
 import { getStorageUri } from '../../extension'
-import { doesDirExist, doesFileExist, runAllTests } from '../testCommon'
+import { doesDirExist, doesFileExist, runAllTests, updateConfig } from '../testCommon'
 
 
 const projName = 'workspace1'
 
-before(async () => {
+beforeEach(async () => {
     console.log("before")
-	await workspace.getConfiguration('ablunit').update('tempDir', undefined)
+	await updateConfig("tempDir", undefined)
 })
 
 after(async () => {
 	console.log("after")
-	await workspace.getConfiguration('ablunit').update('tempDir', undefined)
+	await updateConfig("tempDir", undefined)
 })
 
 suite(projName + ' - Extension Test Suite', () => {
@@ -56,7 +56,7 @@ suite(projName + ' - Extension Test Suite', () => {
 	})
 
 	test(projName + '.2 - <storageUri>/ablunit.json file exists', async () => {
-		await workspace.getConfiguration('ablunit').update('tempDir', 'workspaceAblunit')
+		await updateConfig("tempDir", "workspaceAblunit")
 		await runAllTests()
 
 		for (let i = 0; i < 2; i++) {

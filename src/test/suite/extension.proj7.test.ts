@@ -1,9 +1,7 @@
 import * as assert from 'assert'
-import { Uri, workspace } from 'vscode'
 import { before } from 'mocha'
+import { Uri, workspace } from 'vscode'
 import { getTestCount, getWorkspaceUri, runAllTests } from '../testCommon'
-// import { exec } from "child_process"
-
 
 const projName = 'proj7'
 const workspaceUri = getWorkspaceUri()
