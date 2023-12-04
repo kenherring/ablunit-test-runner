@@ -1,14 +1,15 @@
 import * as assert from 'assert'
 import { afterEach, before } from 'mocha'
 import { Selection, Uri, commands, window } from 'vscode'
-import { doesFileExist, getTestCount, getWorkspaceUri, runAllTests, sleep, updateConfig } from '../testCommon'
+import { doesFileExist, getTestCount, getWorkspaceUri, runAllTests, sleep, updateConfig, waitForExtensionActive } from '../testCommon'
 
 
 const projName = 'proj1'
 const workspaceUri = getWorkspaceUri()
 
 before(async () => {
-    console.log("beforeEach")
+    console.log("before")
+	await waitForExtensionActive()
 	await updateConfig("files.exclude", undefined)
 })
 

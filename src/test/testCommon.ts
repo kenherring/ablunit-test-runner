@@ -1,5 +1,34 @@
 import { ConfigurationTarget, FileType, Uri, commands, extensions, workspace } from 'vscode'
 
+export async function waitForExtensionActive () {
+	const ext = extensions.getExtension("kherring.ablunit-test-provider")
+	if (!ext) {
+		throw new Error("kherring.ablunit-test-provider is not installed")
+	}
+	if (!ext.isActive) {
+		await ext.activate().then(() => {
+			console.log("activated kherring.ablunit-test-provider")
+		}, (err) => {
+			throw new Error("failed to activate kherring.ablunit-test-provider: " + err)
+		})
+	}
+
+	if(!ext.isActive) {
+		console.log("waiting for extension to activate - should never be here!")
+		for (let i=0; i<50; i++) {
+			await sleep(100)
+			if (ext.isActive) {
+				console.log("waitied " + ((i + 1) * 100) + "ms for extension to activate")
+				break
+			}
+		}
+	}
+
+	if (!ext.isActive) {
+		throw new Error("kherring.ablunit-test-provider is not active")
+	}
+}
+
 export function getWorkspaceUri () {
 	if (workspace.workspaceFolders === undefined || workspace.workspaceFolders.length === 0) {
 		throw new Error("workspace.workspaceFolders is undefined")
@@ -117,16 +146,19 @@ export async function setRuntimes (runtimes: IRuntime[]) {
 }
 
 export async function runAllTests (doRefresh: boolean = true) {
-	await sleep(100)
 
 	console.log("running all tests")
 	if (doRefresh) {
 		console.log("testing.refreshTests starting")
-		await commands.executeCommand('testing.refreshTests')
-		console.log("testing.refreshTests complete")
+		await commands.executeCommand('testing.refreshTests').then(() => {
+			console.log("testing.refreshTests complete!")
+		}, (err) => {
+			throw new Error("testing.refreshTests failed: " + err)
+		})
+		await sleep(1000)
+	} else {
+		await sleep(500)
 	}
-
-	await sleep(500)
 
 	console.log("testing.runAll starting")
 	return commands.executeCommand('testing.runAll').then(() => {

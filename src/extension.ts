@@ -76,10 +76,6 @@ export async function activate(context: ExtensionContext) {
 	}
 
 	const startTestRun = (request: TestRunRequest) => {
-		showNotification("running ablunit tests")
-
-		const queue: { test: TestItem; data: ABLRunnable }[] = []
-		const run = ctrl.createTestRun(request)
 
 		const discoverTests = async (tests: Iterable<TestItem>) => {
 			for (const test of tests) {
@@ -137,7 +133,8 @@ export async function activate(context: ExtensionContext) {
 					return false
 				})
 				if (!ret) {
-					break
+					console.error("ablunit run failed?")
+					continue
 				}
 
 				if (r.ablResults) {
@@ -150,10 +147,12 @@ export async function activate(context: ExtensionContext) {
 				}
 
 				for (const { test } of queue) {
-					if (run.token.isCancellationRequested) {
-						run.skipped(test)
-					} else {
-						await r.assignTestResults(test, run)
+					if (workspace.getWorkspaceFolder(test.uri!) === r.workspaceFolder) {
+						if (run.token.isCancellationRequested) {
+							run.skipped(test)
+						} else {
+							await r.assignTestResults(test, run)
+						}
 					}
 				}
 			}
@@ -211,6 +210,9 @@ export async function activate(context: ExtensionContext) {
 			return res
 		}
 
+		showNotification("running ablunit tests")
+		const queue: { test: TestItem; data: ABLRunnable }[] = []
+		const run = ctrl.createTestRun(request)
 		discoverTests(request.include ?? gatherTestItems(ctrl.items)).then(async () => {
 			const res = await createABLResults()
 			runTestQueue(res)
@@ -317,7 +319,7 @@ function getOrCreateFile(controller: TestController, uri: Uri) {
 		relativePath = '[ABL Test Suites]/'	+ relativePath
 	}
 
-	const parent = getOrCreateDirNode(controller, workspace.getWorkspaceFolder(uri)!, relativePath)
+	const parent = getOrCreateDirNode(controller, uri)
 	if (parent) {
 		parent.children.add(file)
 	} else {
@@ -329,7 +331,11 @@ function getOrCreateFile(controller: TestController, uri: Uri) {
 	return { file, data }
 }
 
-function getOrCreateDirNode(controller: TestController, workspaceFolder: WorkspaceFolder, relativePath: string) {
+function getOrCreateDirNode(controller: TestController, uri: Uri) {
+	const relativePath = workspace.asRelativePath(uri.fsPath, false)
+	const workspaceFolder = workspace.getWorkspaceFolder(uri)
+	if (!workspaceFolder) { return }
+
 	const paths = relativePath.split('/')
 	paths.pop()
 

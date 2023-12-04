@@ -1,11 +1,15 @@
 import * as assert from 'assert'
-import { beforeEach, after } from 'mocha'
+import { after, before, beforeEach } from 'mocha'
 import { Uri } from 'vscode'
-import { doesDirExist, doesFileExist, getDefaultDLC, getSessionTempDir, runAllTests, setRuntimes, updateConfig } from '../testCommon'
+import { doesDirExist, doesFileExist, getDefaultDLC, getSessionTempDir, runAllTests, setRuntimes, updateConfig, waitForExtensionActive } from '../testCommon'
 
 
 const projName = 'proj4'
 const sessionTempDir = Uri.parse(getSessionTempDir())
+
+before(async () => {
+	await waitForExtensionActive()
+})
 
 beforeEach(async () => {
 	await setRuntimes([{name: "11.7", path: "/psc/dlc_11.7"},{name: "12.2", path: getDefaultDLC()}])

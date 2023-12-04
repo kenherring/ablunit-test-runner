@@ -6,6 +6,7 @@ async function main() {
 	const config = getTestConfig()
 
 	for (const conf of config) {
+		// if (conf.projName.startsWith('workspace'))
 		await testProject(conf.projName, conf.workspaceFolder, conf.launchArgs)
 	}
 }

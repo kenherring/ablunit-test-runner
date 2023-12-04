@@ -1,11 +1,15 @@
 import * as assert from 'assert'
-import { after, beforeEach } from 'mocha'
+import { after, before, beforeEach } from 'mocha'
 import { Uri, workspace } from 'vscode'
 import { getStorageUri } from '../../extension'
-import { doesDirExist, doesFileExist, runAllTests, updateConfig } from '../testCommon'
+import { doesDirExist, doesFileExist, runAllTests, updateConfig, waitForExtensionActive } from '../testCommon'
 
 
 const projName = 'workspace1'
+
+before(async () => {
+	await waitForExtensionActive()
+})
 
 beforeEach(async () => {
     console.log("before")
@@ -60,7 +64,7 @@ suite(projName + ' - Extension Test Suite', () => {
 		await runAllTests()
 
 		for (let i = 0; i < 2; i++) {
-			console.log("validate proj0 success")
+			console.log("___ validate proj" + i + " success [" + workspace.workspaceFolders![i].name + "] ___")
 			const ablunitJson = Uri.joinPath(workspace.workspaceFolders![i].uri,'workspaceAblunit','ablunit.json')
 			const resultsXml = Uri.joinPath(workspace.workspaceFolders![i].uri,'workspaceAblunit','results.xml')
 			const resultsJson = Uri.joinPath(workspace.workspaceFolders![i].uri,'workspaceAblunit','results.json')

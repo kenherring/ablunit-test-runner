@@ -1,15 +1,20 @@
 import * as assert from 'assert'
+import { before } from 'mocha'
 import path = require('path')
 import { Uri } from 'vscode'
 import { parseTestClass } from '../../parse/TestClassParser'
 import { parseSuiteLines } from '../../parse/TestSuiteParser'
-import { getTestCount, getWorkspaceUri, runAllTests } from '../testCommon'
+import { getTestCount, getWorkspaceUri, runAllTests, waitForExtensionActive } from '../testCommon'
 import { getContentFromFilesystem } from '../../parse/ProfileParser'
 import { getLines } from '../../parse/TestParserCommon'
 
 
 const projName = 'proj5'
 const workspaceUri = getWorkspaceUri()
+
+before(async () => {
+	await waitForExtensionActive()
+})
 
 suite(projName + ' - Extension Test Suite', () => {
 

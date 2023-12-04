@@ -1,10 +1,15 @@
 import * as assert from 'assert'
+import { before } from 'mocha'
 import { Uri } from 'vscode'
-import { doesFileExist, getWorkspaceUri, runAllTests } from '../testCommon'
+import { doesFileExist, getWorkspaceUri, runAllTests, waitForExtensionActive } from '../testCommon'
 
 
 const projName = 'proj2'
 const workspaceUri = getWorkspaceUri()
+
+before(async () => {
+	await waitForExtensionActive()
+})
 
 suite(projName + ' - Extension Test Suite', () => {
 

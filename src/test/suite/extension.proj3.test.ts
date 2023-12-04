@@ -1,13 +1,14 @@
 import * as assert from 'assert'
 import { before } from 'mocha'
 import { Uri } from 'vscode'
-import { doesDirExist, doesFileExist, getDefaultDLC, getWorkspaceUri, runAllTests, setRuntimes } from '../testCommon'
+import { doesDirExist, doesFileExist, getDefaultDLC, getWorkspaceUri, runAllTests, setRuntimes, waitForExtensionActive } from '../testCommon'
 
 
 const projName = 'proj3'
 const workspaceUri = getWorkspaceUri()
 
 before(async () => {
+	await waitForExtensionActive()
 	await setRuntimes([{name: "11.7", path: "/psc/dlc_11.7"}, {name: "12.2", path: getDefaultDLC(), default: true}])
 })
 
