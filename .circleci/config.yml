@@ -52,6 +52,7 @@ jobs:
       - store_artifacts:
           when: always
           path: artifacts/
+      - run: rm artifacts/eslint_report_junit.xml
       - sonarcloud/scan
       - run: .circleci/validate.sh
       - save_cache:
