@@ -237,7 +237,6 @@ export async function activate(context: ExtensionContext) {
 			return
 		}
 		const data = testData.get(item)
-		// if (data instanceof ABLTestSuite || data instanceof ABLTestClass || data instanceof ABLTestProgram) {
 		if (data instanceof ABLTestFile) {
 			return data.updateFromDisk(ctrl, item)
 		}
@@ -365,7 +364,7 @@ function getOrCreateDirNode(controller: TestController, uri: Uri, isTestSuite: b
 			suiteGroup.description = "ABLTestSuiteGroup"
 			suiteGroup.tags = [ new TestTag("runnable"), new TestTag("ABLTestSuiteGroup") ]
 
-			if (!testData.get(suiteGroup!)) {
+			if (!testData.get(suiteGroup)) {
 				const data = new ABLTestDir('[ABL Test Suites]')
 				testData.set(suiteGroup, data)
 			}

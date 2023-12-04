@@ -1,4 +1,4 @@
-import { Range,  WorkspaceFolder } from 'vscode'
+import { Range } from 'vscode'
 import { getLines } from './TestParserCommon'
 
 // CLASS statement
