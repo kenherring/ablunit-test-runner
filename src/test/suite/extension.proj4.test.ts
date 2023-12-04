@@ -24,8 +24,8 @@ suite(projName + ' - Extension Test Suite', () => {
 	test(projName + '.1 - Absolute Paths', async () => {
 		const listingsDir = Uri.joinPath(sessionTempDir,'listings')
 		const resultsXml = Uri.joinPath(sessionTempDir,'tempDir','results.xml')
-		updateConfig("profilerOptions.listings", listingsDir.fsPath)
-		updateConfig("tempDir", Uri.joinPath(sessionTempDir,'tempDir').fsPath)
+		await updateConfig("profilerOptions.listings", listingsDir.fsPath)
+		await updateConfig("tempDir", Uri.joinPath(sessionTempDir,'tempDir').fsPath)
 
 		await runAllTests()
 

@@ -49,9 +49,14 @@ export function getSessionTempDir () {
 	}
 }
 
-export async function sleep (time: number = 2000) {
-	console.log("sleeping for " + time + "ms")
-	return new Promise(resolve => setTimeout(resolve, time))
+export async function sleep (time: number = 2000, msg?: string) {
+	let status = "sleeping for " + time + "ms"
+	if (msg) {
+		status = status + " [" + msg + "]"
+	}
+	console.log(status)
+	await new Promise(resolve => setTimeout(resolve, time))
+	return
 }
 
 export async function deleteFile(uri: Uri) {
@@ -155,9 +160,9 @@ export async function runAllTests (doRefresh: boolean = true) {
 		}, (err) => {
 			throw new Error("testing.refreshTests failed: " + err)
 		})
-		await sleep(1000)
-	} else {
 		await sleep(500)
+	} else {
+		await sleep(250)
 	}
 
 	console.log("testing.runAll starting")
@@ -168,11 +173,11 @@ export async function runAllTests (doRefresh: boolean = true) {
 	})
 }
 
-export function updateConfig (key: string, value: any) {
-	return workspace.getConfiguration('ablunit').update(key, value, ConfigurationTarget.Workspace).then(() => {
+export async function updateConfig (key: string, value: any) {
+	await workspace.getConfiguration('ablunit').update(key, value, ConfigurationTarget.Workspace).then(() => {
 		console.log("ablunit." + key + " set successfully (value='" + value + "')")
-		return sleep(250)
 	}, (err) => {
 		throw new Error("failed to set ablunit." + key + ": " + err)
 	})
+	await sleep(250, "sleep after updateConfig")
 }

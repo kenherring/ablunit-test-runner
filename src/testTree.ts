@@ -7,22 +7,20 @@ import { getContentFromFilesystem } from './parse/ProfileParser'
 import { logToChannel } from './ABLUnitCommon'
 
 export type ABLUnitTestData = ABLTestDir | ABLTestFile | ABLRunnable | ABLAssert
-export type ABLRunnable = ABLTestSuite | ABLTestClass | ABLTestProgram | ABLTestMethod | ABLTestProcedure
+export type ABLRunnable = ABLTestFile | ABLTestSuite | ABLTestClass | ABLTestProgram | ABLTestMethod | ABLTestProcedure
 export type TestFile = ABLTestSuite | ABLTestClass | ABLTestProgram
 
 
 export const testData = new WeakMap<TestItem, ABLUnitTestData>()
 const displayClassLabel = workspace.getConfiguration('ablunit').get('display.classLabel','')
 
-//@deprecate
 function createTestItem(controller: TestController,
 						item: TestItem,
 						range: Range | undefined,
-						id: string,
 						label: string,
 						tag: string,
 						description?: string) {
-	const thead = controller.createTestItem(id, label, item.uri)
+	const thead = controller.createTestItem(item.uri!.fsPath, label, item.uri)
 	thead.description = description
 	thead.range = range
 	thead.tags = [new TestTag("runnable"), new TestTag(tag)]
@@ -36,7 +34,7 @@ function createTestChild(controller: TestController,
 						uri: Uri,
 						description: string,
 						data: ABLTestProcedure | ABLTestMethod) {
-	const child = controller.createTestItem(relativePath + '#' + procedureName, procedureName, uri)
+	const child = controller.createTestItem(uri.fsPath + '#' + procedureName, procedureName, uri)
 	child.range = range
 	child.label = procedureName
 	child.tags = [new TestTag("runnable"), new TestTag("ABLTestProcedure")]
@@ -74,9 +72,13 @@ export class ABLTestDir implements ITestType {
 	public description: string
 	public relativePath: string
 
-	constructor (uri: Uri) {
+	constructor (path: Uri | string) {
 		this.description = "ABLTestDir"
-		this.relativePath = workspace.asRelativePath(uri.fsPath)
+		if (path instanceof Uri) {
+			this.relativePath = workspace.asRelativePath(path.fsPath, false)
+		} else {
+			this.relativePath = path
+		}
 	}
 }
 
@@ -208,7 +210,7 @@ export class ABLTestClass extends ABLTestFile {
 
 	public updateFromContents(controller: TestController, content: string, item: TestItem) {
 		this.startParsing(item, "ABL Test Class")
-		const response = parseABLTestClass(workspace.getWorkspaceFolder(item.uri!)!, displayClassLabel, content, this.relativePath)
+		const response = parseABLTestClass(displayClassLabel, content, this.relativePath)
 
 		if(!response) {
 			this.deleteItem(controller,item)

@@ -16,7 +16,7 @@ interface IClassRet {
 	}?]
 }
 
-export function parseABLTestClass (workspaceFolder: WorkspaceFolder, displayClassLabel: string, text: string, relativePath: string) {
+export function parseABLTestClass (displayClassLabel: string, text: string, relativePath: string) {
 	relativePath = relativePath.replace(/\\/g, '/')
 
 	const [lines, foundAnnotation] = getLines(text, "@test")
