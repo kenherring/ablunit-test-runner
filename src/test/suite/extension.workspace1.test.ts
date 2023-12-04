@@ -30,7 +30,7 @@ suite(projName + ' - Extension Test Suite', () => {
 			assert.fail("storage uri not defined")
 		}
 
-		console.log("validate proj0 success")
+		console.log("___ validate proj0 ___")
 		let ablunitJson = Uri.joinPath(storageUri[0],'ablunit.json')
 		let resultsXml = Uri.joinPath(storageUri[0],'results.xml')
 		let resultsJson = Uri.joinPath(storageUri[0],'results.json')
@@ -40,7 +40,7 @@ suite(projName + ' - Extension Test Suite', () => {
 		assert(!await doesFileExist(resultsJson), "results.json exists and should not (" + resultsJson.fsPath + ")")
 		assert(!await doesDirExist(listingsDir), "listings dir exists and should not (" + listingsDir.fsPath + ")")
 
-		console.log("validate proj3 success")
+		console.log("___ validate proj3 ___")
 		ablunitJson = Uri.joinPath(storageUri[1],'ablunit.json')
 		resultsXml = Uri.joinPath(storageUri[1],'results.xml')
 		resultsJson = Uri.joinPath(storageUri[1],'results.json')
@@ -50,7 +50,7 @@ suite(projName + ' - Extension Test Suite', () => {
 		assert(!await doesFileExist(resultsJson), "results.json exists and should not (" + resultsJson.fsPath + ")")
 		assert(!await doesDirExist(listingsDir), "listings dir exists and should not (" + listingsDir.fsPath + ")")
 
-		console.log("validate projX has no ablunit.json")
+		console.log("___ validate projX has no ablunit.json ___")
 		ablunitJson = Uri.joinPath(workspace.workspaceFolders![2].uri,'ablunit.json')
 		assert(!await doesFileExist(ablunitJson), "ablunit.json exists and should not (" + ablunitJson.fsPath + ")")
 	})

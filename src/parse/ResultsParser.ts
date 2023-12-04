@@ -71,7 +71,7 @@ export class ABLResultsParser {
 			throw err
 		}
 		console.log("---- cfg.config_output_writeJson=" + cfg.config_output_writeJson)
-		console.log("cfg= " + JSON.stringify(cfg))
+		// console.log("cfg= " + JSON.stringify(cfg,null,2))
 		console.log("ablunitConfig.configJson.output.location=" + workspace.getConfiguration("ablunit").get("configJson.outputLocation"))
 		if (cfg.config_output_writeJson) {
 			console.log("2")
