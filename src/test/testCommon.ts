@@ -171,7 +171,7 @@ export async function runAllTests (doRefresh: boolean = true) {
 export function updateConfig (key: string, value: any) {
 	return workspace.getConfiguration('ablunit').update(key, value, ConfigurationTarget.Workspace).then(() => {
 		console.log("ablunit." + key + " set successfully (value='" + value + "')")
-		return sleep(100)
+		return sleep(250)
 	}, (err) => {
 		throw new Error("failed to set ablunit." + key + ": " + err)
 	})
