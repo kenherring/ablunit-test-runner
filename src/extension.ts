@@ -346,8 +346,9 @@ function getOrCreateDirNode(controller: TestController, uri: Uri, isTestSuite: b
 	if(!workspaceFolder) { return }
 	const relativePath = workspace.asRelativePath(uri,false).replace(/\\/g, '/')
 
-	const paths = relativePath.split('/').reverse()
+	let paths = relativePath.split('/').reverse()
 	paths.shift()
+	paths = paths.reverse()
 
 	let wfName: string | undefined = undefined
 	if (workspace.workspaceFolders!.length > 1) {
