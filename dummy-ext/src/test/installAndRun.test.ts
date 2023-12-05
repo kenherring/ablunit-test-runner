@@ -1,5 +1,4 @@
 import * as assert from 'assert'
-import { time } from 'console'
 import { before } from 'mocha'
 import { ConfigurationTarget, FileType, Uri, commands, extensions, workspace } from 'vscode'
 

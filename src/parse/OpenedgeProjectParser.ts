@@ -1,8 +1,6 @@
 import { Uri, workspace, WorkspaceFolder } from 'vscode'
 import { logToChannel } from '../ABLUnitCommon'
 import { TextDecoder } from 'util'
-import { parse } from 'path';
-import { get } from 'http';
 
 // import { minifyJson } from './util'
 
