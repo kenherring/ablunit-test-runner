@@ -7,7 +7,7 @@ SCRIPT=entrypoint
 VSCODE_DIR=/home/circleci/project/.vscode-test
 if [ "${1:-}" = "-b" ]; then
 	OPTS='-b'
-elif [ "$1" = "install-and-run" ] || [ "$1" = "install_and_run" ]; then
+elif [ "${1:-}" = "install-and-run" ] || [ "${1:-}" = "install_and_run" ]; then
 	SCRIPT=install_and_run
 	VSCODE_DIR=/home/circleci/project/dummy-ext/.vscode-test
 fi
