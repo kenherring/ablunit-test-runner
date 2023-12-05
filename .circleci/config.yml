@@ -56,6 +56,8 @@ jobs:
           keys:
             - v1-vscode-test-<< pipeline.parameters.vscode-version >>
       - run: .circleci/run_test_wrapper.sh
+      - run: find . -name 'lcov.info'
+      - run: exit 1
       - store_test_results:
           when: always
           path: artifacts/
@@ -63,8 +65,6 @@ jobs:
           when: always
           path: artifacts/
       - run: .circleci/validate.sh
-      - run: find . -name 'lcov.info'
-      - run: exit 1
       - sonarcloud/scan
       - save_cache:
           key: v1-nodemodules-{{ checksum "package.json" }}
@@ -92,7 +92,6 @@ jobs:
             - v1-nodemodules-{{ checksum "package.json" }}
             - v1-nodemodules-
       - run: npm install
-      - run: npm install -g @vscode/vsce
       - run: vsce package --pre-release --githubBranch "$(git branch --show-current)"
       - run: vsce ls
       - restore_cache:
@@ -130,13 +129,7 @@ jobs:
                   echo "Version in package.json does not match tag"
                   exit 1
                 fi
-          - run:
-              name: vsce publish
-              command: |
-                vsce publish
-                    --pre-release
-                    --packagePath ablunit-test-provider-<< pipeline.git.tag >>.vsix
-                    --githubBranch "$(git branch --show-current)"
+          - run: vsce publish --pre-release --packagePath --githubBranch "$(git branch --show-current)" --packagePath ablunit-test-provider-<< pipeline.git.tag >>.vsix
       - run: mkdir -p artifacts && cp ablunit-test-provider-*.vsix artifacts
       - store_artifacts:
           when: always

@@ -38,6 +38,7 @@ function setupNyc(projName: string) {
 	})
 	nyc.reset()
 	nyc.wrap()
+	console.log("RETURN nyc")
 	return nyc
 }
 
@@ -62,6 +63,7 @@ function setupMocha(projName: string, timeout: number) {
 
 function runTestsForProject (projName: string, timeout: number) {
 	const nyc = setupNyc(projName)
+	console.log("nyc= " + nyc)
 	const mocha = setupMocha(projName, timeout)
 	const testsRoot = path.resolve(__dirname, "..")
 	return new Promise<void>((c, e) => {
