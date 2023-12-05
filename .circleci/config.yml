@@ -12,6 +12,7 @@ workflows:
           context:
             - DockerHub
             - PROGRESS_CFG
+            - SonarCloud
           filters:
             tags:
               only:
