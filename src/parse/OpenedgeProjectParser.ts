@@ -2,9 +2,6 @@ import { Uri, workspace, WorkspaceFolder } from 'vscode'
 import { logToChannel } from '../ABLUnitCommon'
 import { TextDecoder } from 'util'
 
-// import { minifyJson } from './util'
-
-// eslint-disable-next-line @typescript-eslint/no-var-requires
 const textDecoder = new TextDecoder('utf-8');
 
 export interface IPropathEntry {
