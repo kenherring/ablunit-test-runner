@@ -9,7 +9,7 @@ import * as path from 'path'
 import { downloadAndUnzipVSCode, resolveCliArgsFromVSCodeExecutablePath, runTests } from '@vscode/test-electron'
 
 async function main() {
-	// await runTest('stable')
+	await runTest('stable')
 	await runTest('insiders')
 }
 
