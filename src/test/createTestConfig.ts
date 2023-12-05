@@ -41,7 +41,7 @@ function createTestConfig(projName: string, workspaceFolder?: string, timeout?: 
 }
 
 export function getTestConfig () {
-	const testConfig: TestConfig[] = []
+	const testConfig = []
 	// Folders
 	testConfig.push(createTestConfig('proj0'))
 	testConfig.push(createTestConfig('proj1', undefined, 15000))

@@ -56,7 +56,6 @@ jobs:
           keys:
             - v1-vscode-test-<< pipeline.parameters.vscode-version >>
       - run: .circleci/run_test_wrapper.sh
-      # - run: rm artifacts/eslint_report_junit.xml
       - store_test_results:
           when: always
           path: artifacts/
@@ -117,7 +116,7 @@ jobs:
     steps:
       - checkout
       - run: npm install
-      - run: npm install -g @vscode/vsce
+      - run: sudo npm install -g @vscode/vsce
       - run: vsce package --pre-release --githubBranch "$(git branch --show-current)"
       - when:
           condition: << pipeline.git.tag >>
