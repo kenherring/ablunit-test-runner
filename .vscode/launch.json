@@ -45,7 +45,6 @@
 				"--install-extension=ablunit-test-provider-0.1.7.vsix",
 				"${workspaceFolder}/test_projects/${input:workspaceName}"
 			],
-
 		}
 	],
 	"inputs": [

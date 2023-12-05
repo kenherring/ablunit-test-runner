@@ -81,7 +81,9 @@ function runTestsForProject (projName: string, timeout: number) {
 				// Run the mocha test
 				mocha.run(async (failures) => {
 					if (nyc) {
-						nyc.writeCoverageFile()
+						console.log("nyc.writeCoverageFile")
+						await nyc.writeCoverageFile()
+						console.log("nyc.report")
 						await nyc.report()
 					}
 

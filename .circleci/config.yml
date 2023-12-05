@@ -63,6 +63,8 @@ jobs:
           when: always
           path: artifacts/
       - run: .circleci/validate.sh
+      - run: find . -name 'lcov.info'
+      - run: exit 1
       - sonarcloud/scan
       - save_cache:
           key: v1-nodemodules-{{ checksum "package.json" }}

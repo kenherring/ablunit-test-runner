@@ -1,36 +1,9 @@
 ## Keep these files
 !images/icon_128.png
 !out/extension.js
-# !package.json
+!LICENSE
+!package.json
 !snippets-classes.json
 !snippets-procedures.json
 
-## Ignore everything else
-**/*.js.map
-**/*.ts
-
-.circleci/
-.git-hooks/
-.vscode/
-artifacts/
-coverage/
-docker/
-docs/
-dummy-ext/
-images/
-node_modules/
-src/
-scripts/
-test_projects/
-
-.editorconfig
-.eslint.js
-.gitattributes
-.gitignore
-.shellcheckrc
-.vscode-test.js
-.vscodeignore
-# webpack.config.js
-package-lock.json
-sonar-project.properties
-tsconfig.json
+**/*

@@ -20,10 +20,12 @@ async function getProjectJson (workspaceFolder: WorkspaceFolder) {
 		return Buffer.from(raw.buffer).toString().replace(/\r/g,'').replace(/\/\/.*/g,'')
 	}, (err) => {
 		logToChannel("Failed to parse openedge-project.json: " + err,'error')
-		return "none"
-		// throw new Error("Failed to parse openedge-project.json: " + err)
+		return undefined
 	})
-	return JSON.parse(data)
+	if (data) {
+		return JSON.parse(data)
+	}
+	return undefined
 }
 
 export async function readOpenEdgeProjectJson (workspaceFolder: WorkspaceFolder) {
