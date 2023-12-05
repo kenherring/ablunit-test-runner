@@ -8,7 +8,7 @@ workflows:
   build:
     jobs:
       - shellcheck/check
-      - run-tests:
+      - test-and-scan:
           context:
             - DockerHub
             - PROGRESS_CFG
@@ -16,19 +16,10 @@ workflows:
             tags:
               only:
                 - /^v.*/
-      - sonarcloud/scan:
-          context:
-            - SonarCloud
-          requires:
-            - run-tests
-          filters:
-            tags:
-              only:
-                - /^v.*/
       - package-and-publish:
           requires:
-            - run-tests
             - shellcheck/check
+            - test-and-scan
           context:
             - Azure_PAT
           filters:
@@ -37,7 +28,7 @@ workflows:
                 - /^v.*/
 
 jobs:
-  run-tests:
+  test-and-scan:
     docker:
       - image: kherring/ablunit-test-runner
         auth:
@@ -62,6 +53,7 @@ jobs:
           when: always
           path: artifacts/
       - run: .circleci/validate.sh
+      - sonarcloud/scan
       - save_cache:
           key: v1-nodemodules-{{ checksum "package.json" }}
           paths:
