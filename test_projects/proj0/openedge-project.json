@@ -1,12 +1,14 @@
 {
+	"oeversion": "11.7",
 	"buildPath": [
 		{ "type": "source", "path": "src", "excludes": "emptyClass.cls"},
 		{ "type": "source", "path": "test" }
 	],
+	//this is a comment!
 	"dbConnections": [
 		{
 			"name": "sp2k",
-			"aliases": [],
+			"aliases": [], //here's another comment.  why is this field required per the schema?
 			"connect": "-db target/db/sp2k -RO",
 			"dumpFile": "target/sp2k.df"
 		}

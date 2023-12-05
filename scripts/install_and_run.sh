@@ -3,4 +3,5 @@ set -eou pipefail
 
 vsce package --pre-release --githubBranch "$(git branch --show-current)"
 cd dummy-ext
+npm run compile
 npm run test:install-and-run

@@ -9,7 +9,7 @@ import * as path from 'path'
 import { downloadAndUnzipVSCode, resolveCliArgsFromVSCodeExecutablePath, runTests } from '@vscode/test-electron'
 
 async function main() {
-	await runTest('stable')
+	// await runTest('stable')
 	await runTest('insiders')
 }
 
@@ -22,9 +22,7 @@ async function runTest(version: string) {
 		const [cliPath, ...args] = resolveCliArgsFromVSCodeExecutablePath(vscodeExecutablePath)
 
 		const packagedExtensionPath = path.resolve(__dirname, '../../../ablunit-test-provider-0.1.7.vsix')
-		console.log("6 - packagedExtensionPath=" + packagedExtensionPath)
 		const projDir = path.resolve(__dirname, '../../../test_projects/proj0')
-		console.log("7 - projDir=" + projDir)
 
 		// Use cp.spawn / cp.exec for custom setup
 		cp.spawnSync(
@@ -36,7 +34,6 @@ async function runTest(version: string) {
 				stdio: 'inherit'
 			}
 		)
-		console.log("8")
 
 		// Run the extension test
 		await runTests({
@@ -49,14 +46,11 @@ async function runTest(version: string) {
 				'--trace-deprecation'
 			]
 		})
-		console.log("9")
 	} catch (err) {
 		console.error('Failed to run tests')
 		process.exit(1)
 	}
-	console.log("[installAndRun] end")
+	console.log("[installAndRun] success!  version=" + version)
 }
 
-console.log("--- start ---")
 main()
-console.log("--- end ---")

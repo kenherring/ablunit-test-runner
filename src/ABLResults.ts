@@ -441,7 +441,13 @@ interface IRuntime {
 
 async function getDLC(workspaceFolder: WorkspaceFolder) {
 	let DLC: string | undefined = undefined
-	const oeversion = await getOEVersion(workspaceFolder)
+	const oeversion = await getOEVersion(workspaceFolder).then((res) => {
+		return res
+	}, (err) => {
+		logToChannel("OEVersion error: " + err,'error')
+		console.warn("Attempting to find DLC from configuration or environment vars...", 'warn')
+		return ""
+	})
 	const runtimes: IRuntime[] = workspace.getConfiguration("abl.configuration").get("runtimes",[])
 
 	for (const runtime of runtimes) {
@@ -457,11 +463,7 @@ async function getDLC(workspaceFolder: WorkspaceFolder) {
 		DLC = process.env.DLC
 	}
 	if (DLC) {
-		console.log("using DLC = " + DLC)
 		return DLC
 	}
 	throw new Error("unable to determine DLC")
-}
-function outputToChannel(arg0: string) {
-	throw new Error("Function not implemented.")
 }

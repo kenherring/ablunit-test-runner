@@ -1,5 +1,13 @@
 import { Uri, workspace, WorkspaceFolder } from 'vscode'
-import jsonminify = require('jsonminify')
+import { logToChannel } from '../ABLUnitCommon'
+import { TextDecoder } from 'util'
+import { parse } from 'path';
+import { get } from 'http';
+
+// import { minifyJson } from './util'
+
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const textDecoder = new TextDecoder('utf-8');
 
 export interface IPropathEntry {
 	path: string
@@ -12,21 +20,27 @@ export interface IProjectJson {
 	propathEntry: IPropathEntry[]
 }
 
-export async function readOpenEdgeProjectJson (workspaceFolder: WorkspaceFolder) {
-	return workspace.fs.readFile(Uri.joinPath(workspaceFolder.uri, "openedge-project.json")).then((data) => {
-		const projectJson = JSON.parse(jsonminify(data.toString()))
-		return parseOpenEdgeProjectJson(workspaceFolder, projectJson)
+async function getProjectJson (workspaceFolder: WorkspaceFolder) {
+	const data = await workspace.fs.readFile(Uri.joinPath(workspaceFolder.uri,"openedge-project.json")).then((raw) => {
+		return Buffer.from(raw.buffer).toString().replace(/\r/g,'').replace(/\/\/.*/g,'')
+	}, (err) => {
+		logToChannel("Failed to parse openedge-project.json: " + err,'error')
+		return "none"
+		// throw new Error("Failed to parse openedge-project.json: " + err)
 	})
+	return JSON.parse(data)
+}
+
+export async function readOpenEdgeProjectJson (workspaceFolder: WorkspaceFolder) {
+	return parseOpenEdgeProjectJson(workspaceFolder, await getProjectJson(workspaceFolder))
 }
 
 export async function getOEVersion (workspaceFolder: WorkspaceFolder) {
-	return workspace.fs.readFile(Uri.joinPath(workspaceFolder.uri,"openedge-project.json")).then((data) => {
-		const projectJson = JSON.parse(jsonminify(data.toString()))
-		if (projectJson.oeversion) {
-			return projectJson.oeversion.toString()
-		}
-		return "none"
-	})
+	const projectJson = await getProjectJson(workspaceFolder)
+	if (projectJson.oeversion) {
+		return projectJson.oeversion.toString()
+	}
+	return "none"
 }
 
 function parseOpenEdgeProjectJson (workspaceFolder: WorkspaceFolder, conf: any) {

@@ -13,7 +13,9 @@
 			{
 				"name": "typescript-tslint-plugin"
 			}
-		]
+		],
+		// "esModuleInterop": true,
+        // "noUnusedLocals": false
 	},
 	"exclude": [
 		"dummy-ext",

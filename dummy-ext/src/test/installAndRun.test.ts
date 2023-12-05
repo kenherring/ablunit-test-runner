@@ -1,4 +1,5 @@
 import * as assert from 'assert'
+import { time } from 'console'
 import { before } from 'mocha'
 import { ConfigurationTarget, FileType, Uri, commands, extensions, workspace } from 'vscode'
 
@@ -25,6 +26,7 @@ before(async () => {
 suite('install and run', () => {
 
 	test("install and run - does package extension work?", async () => {
+		await new Promise((resolve) => setTimeout(resolve, 1000))
 		await runAllTests()
 
 		const workspaceDir = workspace.workspaceFolders![0].uri
