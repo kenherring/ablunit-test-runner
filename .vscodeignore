@@ -1,3 +1,10 @@
+## Keep these files
+!images/icon_128.png
+!out/extension.js
+!snippets-classes.json
+!snippets-procedures.json
+
+## Ignore everything else
 **/*.js.map
 **/*.ts
 
@@ -8,16 +15,25 @@ artifacts/
 coverage/
 docker/
 docs/
+dummy-ext/
 images/
-!images/icon_128.png
-node_modules/
-sampple/
-src/
+# node_modules/
+# src/
 test_projects/
 
+.editorconfig
+# .eslint.js
+.gitattributes
 .gitignore
-.vscode-test.js
+.shellcheckrc
+# .vscode-test.js
+# .vscode-test.json
+# .vscodeignore
+# # webpack.config.js
 cleanup.sh
-sonar-project.properties
-tsconfig.json
-webpack.config.js
+# cleanup.sh
+# package-lock.json
+# package.json
+# setup_wsl.sh
+# sonar-project.properties
+# tsconfig.json

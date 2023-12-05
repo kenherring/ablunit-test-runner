@@ -5,8 +5,9 @@ node_modules
 artifacts/
 coverage/
 target/
-*.vsix
 *.log
+*.vsix
+*.zip
 
 /vscode.d.ts
 

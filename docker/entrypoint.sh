@@ -57,10 +57,6 @@ run_tests () {
 	fi
 }
 
-teardown () {
-	sed -i 's/"activationEvents"/"activationEvents-coverage"/g;s/"activationEvents-vscode"/"activationEvents"/g' package.json
-}
-
 analyze_results () {
 	RESULTS_COUNT=$(find . -name 'mocha_results_*.xml' | wc -l)
 	LCOV_COUNT=$(find . -name 'lcov.info' | wc -l)
@@ -83,9 +79,15 @@ analyze_results () {
 	fi
 }
 
+finish () {
+	echo "Artifacts to be saved:"
+	ls -al artifacts
+	echo 'done running tests'
+}
+
 ########## MAIN BLOCK ##########
 initialize "$@"
 run_tests
 teardown
 analyze_results
-echo 'done running tests'
+finish

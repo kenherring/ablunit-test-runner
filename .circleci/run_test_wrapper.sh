@@ -7,6 +7,7 @@ setup () {
 	npm run compile
 	npm run test:coverage-activation-before
 	test_projects/setup.sh
+	npm run test:coverage-activation-after
 }
 
 dbus_config () {

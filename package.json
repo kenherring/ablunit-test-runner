@@ -46,13 +46,17 @@
 		}
 	},
 	"keywords": [
-		"progress",
-		"progress software",
-		"openege",
+		"4gl",
 		"abl",
+		"abl unit",
 		"ablunit",
+		"ablunit-test-provider",
+		"ablunit-test-runner",
+		"oeunit",
+		"openedge",
+		"pdsoe",
 		"progress software",
-		"pdsoe"
+		"progress"
 	],
 	"engines": {
 		"vscode": "^1.83.0"

@@ -27,7 +27,9 @@ All pull requests must have corresponding tests and appropriate test coverage.  
 
 ### Testing the Project
 
-* Using the CLI: `npm test`
+* Using the CLI.  Two options:
+  * `npm test`
+  * `vscode-test`
 * Using the native VSCode API: install the [Extension Test Runner](https://marketplace.visualstudio.com/items?itemName=ms-vscode.extension-test-runner) extension
 * Using docker:
     ```bash

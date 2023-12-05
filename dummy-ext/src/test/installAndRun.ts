@@ -1,0 +1,67 @@
+// This file was adapted from the VSCode docs:
+//    * https://code.visualstudio.com/api/working-with-extensions/testing-extension#the-test-runner-script
+// Instead of testing as a development extension this loads a dummy extension,
+// installs the packaged ablunit-test-provider extension, and runs a test.
+// This gives confidence that the packaged extension is functional.
+
+import * as cp from 'child_process'
+import * as path from 'path'
+import {
+		downloadAndUnzipVSCode,
+		resolveCliArgsFromVSCodeExecutablePath,
+		runTests
+	} from '@vscode/test-electron'
+
+
+async function main() {
+	console.log("[installAndRun] start")
+	try {
+		console.log("1")
+		const extensionDevelopmentPath = path.resolve(__dirname, '../../')
+		console.log("2 " + extensionDevelopmentPath)
+		const extensionTestsPath = path.resolve(__dirname, './index')
+		console.log("3 - extensionTestsPath=" + extensionTestsPath)
+		const vscodeExecutablePath = await downloadAndUnzipVSCode('stable')
+		console.log("4")
+		const [cliPath, ...args] = resolveCliArgsFromVSCodeExecutablePath(vscodeExecutablePath)
+		console.log("5")
+
+		const packagedExtensionPath = path.resolve(__dirname, '../../../ablunit-test-provider-0.1.7.vsix')
+		console.log("6 - packagedExtensionPath=" + packagedExtensionPath)
+		const projDir = path.resolve(__dirname, '../../../test_projects/proj0')
+		console.log("7 - projDir=" + projDir)
+
+		// Use cp.spawn / cp.exec for custom setup
+		cp.spawnSync(
+			cliPath,
+			[...args, '--trace-deprecation', '--install-extension', packagedExtensionPath],
+			// [...args, '--install-extension', packagedExtensionPath],
+			{
+				encoding: 'utf-8',
+				stdio: 'inherit'
+			}
+		)
+		console.log("8")
+
+		// Run the extension test
+		await runTests({
+			// Use the specified `code` executable
+			vscodeExecutablePath,
+			extensionDevelopmentPath,
+			extensionTestsPath,
+			launchArgs: [
+				projDir,
+				'--trace-deprecation'
+			]
+		})
+		console.log("9")
+	} catch (err) {
+		console.error('Failed to run tests')
+		process.exit(1)
+	}
+	console.log("[installAndRun] end")
+}
+
+console.log("--- start ---")
+main()
+console.log("--- end ---")

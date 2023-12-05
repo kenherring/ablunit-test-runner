@@ -8,18 +8,26 @@ workflows:
   build:
     jobs:
       - shellcheck/check
-      - test-and-scan:
+      - run-tests:
           context:
             - DockerHub
             - PROGRESS_CFG
+          filters:
+            tags:
+              only:
+                - /^v.*/
+      - sonarcloud/scan:
+          context:
             - SonarCloud
+          requires:
+            - run-tests
           filters:
             tags:
               only:
                 - /^v.*/
       - package-and-publish:
           requires:
-            - test-and-scan
+            - run-tests
             - shellcheck/check
           context:
             - Azure_PAT
@@ -29,7 +37,7 @@ workflows:
                 - /^v.*/
 
 jobs:
-  test-and-scan:
+  run-tests:
     docker:
       - image: kherring/ablunit-test-runner
         auth:
@@ -46,14 +54,13 @@ jobs:
           keys:
             - v1-vscode-test-1.84.2
       - run: .circleci/run_test_wrapper.sh
+      # - run: rm artifacts/eslint_report_junit.xml
       - store_test_results:
           when: always
           path: artifacts/
       - store_artifacts:
           when: always
           path: artifacts/
-      - run: rm artifacts/eslint_report_junit.xml
-      - sonarcloud/scan
       - run: .circleci/validate.sh
       - save_cache:
           key: v1-nodemodules-{{ checksum "package.json" }}
@@ -63,17 +70,30 @@ jobs:
           key: v1-vscode-test-1.84.2
           paths:
             - .vscode-test
+      - persist_to_workspace:
+          root: .
+          paths:
+            - .
   package-and-publish:
     docker:
       - image: cimg/node:20.8
     steps:
       - checkout
-      - attach_workspace:
-          at: .
       - run: npm install
       - run: sudo npm install -g @vscode/vsce
-      - run: vsce package --pre-release --githubBranch main
+      - run:
+          name: vsce package
+          command: |
+            vsce package \
+                --pre-release \
+                --githubBranch "$(git branch --show-current)"
       - run: vsce ls
+      - run:
+          name: install and run
+          command: |
+            cd dummy-ext
+            npm run compile
+            npm run test:install-and-run
       - when:
           condition: << pipeline.git.tag >>
           steps:
@@ -84,7 +104,13 @@ jobs:
                   echo "Version in package.json does not match tag"
                   exit 1
                 fi
-          - run: vsce publish --pre-release --packagePath ablunit-test-provider-*.vsix --githubBranch main
+          - run:
+              name: vsce publish
+              command: |
+                vsce publish
+                    --pre-release
+                    --packagePath ablunit-test-provider-<< pipeline.git.tag >>.vsix
+                    --githubBranch "$(git branch --show-current)"
       - run: mkdir -p artifacts && cp ablunit-test-provider-*.vsix artifacts
       - store_artifacts:
           when: always
