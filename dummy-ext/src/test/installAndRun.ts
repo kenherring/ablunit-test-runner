@@ -6,25 +6,20 @@
 
 import * as cp from 'child_process'
 import * as path from 'path'
-import {
-		downloadAndUnzipVSCode,
-		resolveCliArgsFromVSCodeExecutablePath,
-		runTests
-	} from '@vscode/test-electron'
-
+import { downloadAndUnzipVSCode, resolveCliArgsFromVSCodeExecutablePath, runTests } from '@vscode/test-electron'
 
 async function main() {
-	console.log("[installAndRun] start")
+	await runTest('stable')
+	await runTest('insiders')
+}
+
+async function runTest(version: string) {
+	console.log("[installAndRun] start test run.  version=" + version)
 	try {
-		console.log("1")
 		const extensionDevelopmentPath = path.resolve(__dirname, '../../')
-		console.log("2 " + extensionDevelopmentPath)
 		const extensionTestsPath = path.resolve(__dirname, './index')
-		console.log("3 - extensionTestsPath=" + extensionTestsPath)
-		const vscodeExecutablePath = await downloadAndUnzipVSCode('stable')
-		console.log("4")
+		const vscodeExecutablePath = await downloadAndUnzipVSCode(version)
 		const [cliPath, ...args] = resolveCliArgsFromVSCodeExecutablePath(vscodeExecutablePath)
-		console.log("5")
 
 		const packagedExtensionPath = path.resolve(__dirname, '../../../ablunit-test-provider-0.1.7.vsix')
 		console.log("6 - packagedExtensionPath=" + packagedExtensionPath)

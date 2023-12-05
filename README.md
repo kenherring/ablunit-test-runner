@@ -1,9 +1,8 @@
 # ABLUnit Test Runner [![CircleCI](https://img.shields.io/circleci/build/github/kenherring/ablunit-test-provider/main?logo=circleci)](https://dl.circleci.com/status-badge/redirect/gh/kenherring/ablunit-test-provider/tree/main) [![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=kenherring_ablunit-test-provider&metric=sqale_rating)](https://sonarcloud.io/summary/new_code?id=kenherring_ablunit-test-provider) [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=kenherring_ablunit-test-provider&metric=coverage)](https://sonarcloud.io/summary/new_code?id=kenherring_ablunit-test-provider)
 
+The [ABLUnit Test Runner](https://github.com/kenherring/ablunit-test-provider/) VSCode extension integrates [ABLUnit tests](https://docs.progress.com/bundle/openedge-developer-studio-help-122/page/Learn-About-ABLUnit-Test-Framework.html) into the VSCode test explorer.
 
-This VSCode test provider extension integrates [ABLUnit tests](https://docs.progress.com/bundle/openedge-developer-studio-help-122/page/Learn-About-ABLUnit-Test-Framework.html) into the VSCode test explorer.
-
-This is my first VSCode extension, and my first TypeScript project. I'm sure there are many ways to improve the code, and I welcome any feedback.  I'm also open to collaboration if anyone is interested.
+This is my first VSCode extension, and my first TypeScript project. I'm sure there are many ways to improve the code, and I welcome any feedback.  I'm also open to collaboration for anyone who might wish to contribute.
 
 Quality code, and thus unit testing, is my passion  I hope this extension helps others to embrace [TDD](https://en.wikipedia.org/wiki/Test-driven_development) and improve their code.
 

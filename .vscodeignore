@@ -1,6 +1,7 @@
 ## Keep these files
 !images/icon_128.png
 !out/extension.js
+# !package.json
 !snippets-classes.json
 !snippets-procedures.json
 
@@ -17,23 +18,19 @@ docker/
 docs/
 dummy-ext/
 images/
-# node_modules/
-# src/
+node_modules/
+src/
+scripts/
 test_projects/
 
 .editorconfig
-# .eslint.js
+.eslint.js
 .gitattributes
 .gitignore
 .shellcheckrc
-# .vscode-test.js
-# .vscode-test.json
-# .vscodeignore
-# # webpack.config.js
-cleanup.sh
-# cleanup.sh
-# package-lock.json
-# package.json
-# setup_wsl.sh
-# sonar-project.properties
-# tsconfig.json
+.vscode-test.js
+.vscodeignore
+# webpack.config.js
+package-lock.json
+sonar-project.properties
+tsconfig.json

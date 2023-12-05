@@ -30,6 +30,7 @@ workflows:
           requires:
             - shellcheck/check
             - test-and-scan
+            - install-and-run
           context:
             - Azure_PAT
           filters:
@@ -91,12 +92,8 @@ jobs:
             - v1-nodemodules-
       - run: npm install
       - run: npm install -g @vscode/vsce
-      - run:
-          name: vsce package
-          command: |
-            vsce package \
-                --pre-release \
-                --githubBranch "$(git branch --show-current)"
+      - run: vsce package --pre-release --githubBranch "$(git branch --show-current)"
+      - run: vsce ls
       - restore_cache:
           keys:
             - v1-vscode-test-<< pipeline.parameters.vscode-version >>
@@ -105,7 +102,8 @@ jobs:
           command: |
             cd dummy-ext
             npm run compile
-            npm run test:install-and-run
+            export DONT_PROMPT_WSL_INSTALL=No_Prompt_please
+            xvfb-run -a npm run test:install-and-run
       - store_test_results:
           when: always
           path: artifacts/
@@ -119,13 +117,7 @@ jobs:
       - checkout
       - run: npm install
       - run: npm install -g @vscode/vsce
-      - run:
-          name: vsce package
-          command: |
-            vsce package \
-                --pre-release \
-                --githubBranch "$(git branch --show-current)"
-      - run: vsce ls
+      - run: vsce package --pre-release --githubBranch "$(git branch --show-current)"
       - when:
           condition: << pipeline.git.tag >>
           steps:

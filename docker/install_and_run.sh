@@ -2,15 +2,6 @@
 set -eou pipefail
 
 initialize () {
-	BASH_AFTER_FAIL=false
-	while getopts 'b' OPT; do
-		case "$OPT" in
-			b)	BASH_AFTER_FAIL=true ;;
-			?)	echo "script usage: $(basename "$0") [-b]" >&2
-				exit 1 ;;
-		esac
-	done
-
 	tr ' ' '\n' <<< "$PROGRESS_CFG_BASE64" | base64 --decode > /psc/dlc/progress.cfg
 
 	if ! ${CIRCLECI:-false}; then
@@ -44,50 +35,49 @@ initialize () {
 	fi
 
 	scripts/cleanup.sh
+
+	cp -r .vscode-test dummy-ext/
+}
+
+package_extension () {
+    npm install -g @vscode/vsce
+	vsce package --pre-release --githubBranch "$(git branch --show-current)"
+}
+
+dbus_config () {
+	echo "dbus_config"
+	## These lines fix dbus errors in the logs related to the next section
+	## However, they also create new errors
+	# apt update
+	# apt install -y xdg-desktop-portal
+
+	## These lines fix dbus errors in the logs: https://github.com/microsoft/vscode/issues/190345#issuecomment-1676291938
+	service dbus start
+	XDG_RUNTIME_DIR=/run/user/$(id -u)
+	export XDG_RUNTIME_DIR
+	mkdir "$XDG_RUNTIME_DIR"
+	chmod 700 "$XDG_RUNTIME_DIR"
+	chown "$(id -un)":"$(id -gn)" "$XDG_RUNTIME_DIR"
+	export DBUS_SESSION_BUS_ADDRESS=unix:path=$XDG_RUNTIME_DIR/bus
+	dbus-daemon --session --address="$DBUS_SESSION_BUS_ADDRESS" --nofork --nopidfile --syslog-only &
 }
 
 run_tests () {
-	echo "starting tests..."
-	if ! .circleci/run_test_wrapper.sh; then
-		if $BASH_AFTER_FAIL; then
-			bash
-		else
-			exit 1
-		fi
-	fi
-}
-
-analyze_results () {
-	RESULTS_COUNT=$(find . -name 'mocha_results_*.xml' | wc -l)
-	LCOV_COUNT=$(find . -name 'lcov.info' | wc -l)
-	HAS_ERROR=false
-
-	if [ "$RESULTS_COUNT" = 0 ]; then
-		echo 'ERROR: mocha_results_*.xml not found'
-		HAS_ERROR=true
-	fi
-	if [ "$LCOV_COUNT" = 0 ]; then
-		echo 'ERROR: lcov.info not found'
-		HAS_ERROR=true
-	fi
-
-	if $HAS_ERROR; then
-		if $BASH_AFTER_FAIL; then
-			bash
-		fi
-		exit 1
-	fi
+	echo "starting 'test:install-and-run'..."
+	test_projects/setup.sh
+	cd dummy-ext
+	npm run compile
+	export DONT_PROMPT_WSL_INSTALL=No_Prompt_please
+	xvfb-run -a npm run test:install-and-run
 }
 
 finish () {
-	echo "Artifacts to be saved:"
-	ls -al artifacts
 	echo 'done running tests'
 }
 
 ########## MAIN BLOCK ##########
 initialize "$@"
+dbus_config
+package_extension
 run_tests
-teardown
-analyze_results
 finish
