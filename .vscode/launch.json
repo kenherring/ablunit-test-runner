@@ -6,28 +6,13 @@
 	"version": "0.2.0",
 	"configurations": [
 		{
-			"name": "Run Extension",
+			"name": "Run Extension - Select Workspace",
 			"type": "extensionHost",
 			"request": "launch",
 			"runtimeExecutable": "${execPath}",
 			"args": [
 				"--extensionDevelopmentPath=${workspaceFolder}",
-				"--disable-extensions",
-				"${workspaceFolder}/sample"
-			],
-			"outFiles": [
-				"${workspaceFolder}/out/**/*.js"
-			],
-			"preLaunchTask": "npm: watch"
-		},
-		{
-			"name": "Test Extension - Select Workspace",
-			"type": "extensionHost",
-			"request": "launch",
-			"runtimeExecutable": "${execPath}",
-			"args": [
-				"--extensionDevelopmentPath=${workspaceFolder}",
-				"--disable-extensions",
+				"${input:disable-extensions}",
 				"${workspaceFolder}/test_projects/${input:workspaceName}"
 			],
 			"outFiles": [
@@ -63,6 +48,22 @@
 				"proj7_load_performance",
 				"workspace0.code-workspace",
 				"workspace1.code-workspace"
+			]
+		},
+		{
+			"id": "disable-extensions",
+			"description": "Disable all extensions except the one being launched",
+			"type": "pickString",
+			"default": "Yes",
+			"options": [
+				{
+					"value": "--disable-extensions",
+					"label": "Yes"
+				},
+				{
+					"value": "",
+					"label": "No"
+				}
 			]
 		}
 	]
