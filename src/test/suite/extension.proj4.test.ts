@@ -46,4 +46,15 @@ suite(projName + ' - Extension Test Suite', () => {
 		assert(await doesFileExist(ablunitJson), "missing ablunit.json (" + ablunitJson.fsPath + ")")
 	})
 
+	test(projName + '.3 - tempDir=.builder/.ablunit', async () => {
+		await updateConfig("tempDir", ".builder/.ablunit")
+		await updateConfig("profilerOptions.listings", ".listings")
+		const workspaceUri = getWorkspaceUri()
+		await runAllTests()
+		const ablunitJson = Uri.joinPath(workspaceUri,'.builder', '.ablunit', 'ablunit.json')
+		const listingsDir = Uri.joinPath(workspaceUri,'.builder', '.ablunit', '.listings')
+		assert(await doesFileExist(ablunitJson), "missing ablunit.json (" + ablunitJson.fsPath + ")")
+		assert(await doesDirExist(listingsDir),"missing listings directory (" + listingsDir.fsPath + ")")
+	})
+
 })
