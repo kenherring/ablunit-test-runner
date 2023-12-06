@@ -457,13 +457,13 @@ async function getDLC(workspaceFolder: WorkspaceFolder) {
 		}
 		if (runtime.default) {
 			DLC = runtime.path
-			console.log("using DLC = " + DLC)
 		}
 	}
 	if (!DLC && process.env.DLC) {
 		DLC = process.env.DLC
 	}
 	if (DLC) {
+		console.log("using DLC = " + DLC)
 		return DLC
 	}
 	throw new Error("unable to determine DLC")

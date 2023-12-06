@@ -7,7 +7,6 @@ setup () {
 	npm run compile
 	npm run test:coverage-activation-before
 	test_projects/setup.sh
-	npm run test:coverage-activation-after
 }
 
 dbus_config () {
@@ -45,9 +44,9 @@ run_lint () {
 	mkdir -p artifacts
 	rm -rf test_projects/proj7_load_performance/src/ADE-12.2.13.0
 
-	if ! npx eslint . --ext .ts,js; then
-		echo "eslint failed"
-	fi
+	# if ! npx eslint . --ext .ts,.js; then
+	# 	echo "eslint failed"
+	# fi
 	if ! npx_eslint json artifacts/eslint_report_plain.json; then
 		echo "eslint plain failed"
 	fi
@@ -63,4 +62,5 @@ run_lint () {
 setup
 dbus_config
 xvfb-run -a npm test
-# run_lint
+npm run test:coverage-activation-after
+run_lint

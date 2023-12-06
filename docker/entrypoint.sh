@@ -28,6 +28,7 @@ initialize () {
 
 		cd /home/circleci/ablunit-test-provider
 		git --no-pager diff --diff-filter=d --name-only --staged > /tmp/stage_files
+		git --no-pager diff --diff-filter=D --name-only --staged > /tmp/deleted_files
 		git --no-pager diff --diff-filter=d --name-only > /tmp/modified_files
 		cd -
 
@@ -41,6 +42,11 @@ initialize () {
 			echo "copying modified file $FILE"
 			cp "/home/circleci/ablunit-test-provider/$FILE" "$FILE"
 		done < /tmp/modified_files
+
+		while read -r FILE; do
+			echo "deleting deleted file $FILE"
+			rm "$FILE"
+		done < /tmp/deleted_files
 	fi
 
 	scripts/cleanup.sh

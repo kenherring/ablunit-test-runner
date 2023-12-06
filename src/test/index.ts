@@ -38,7 +38,6 @@ function setupNyc(projName: string) {
 	})
 	nyc.reset()
 	nyc.wrap()
-	console.log("RETURN nyc")
 	return nyc
 }
 
@@ -63,7 +62,6 @@ function setupMocha(projName: string, timeout: number) {
 
 function runTestsForProject (projName: string, timeout: number) {
 	const nyc = setupNyc(projName)
-	console.log("nyc= " + nyc)
 	const mocha = setupMocha(projName, timeout)
 	const testsRoot = path.resolve(__dirname, "..")
 	return new Promise<void>((c, e) => {
@@ -83,9 +81,7 @@ function runTestsForProject (projName: string, timeout: number) {
 				// Run the mocha test
 				mocha.run(async (failures) => {
 					if (nyc) {
-						console.log("nyc.writeCoverageFile")
-						await nyc.writeCoverageFile()
-						console.log("nyc.report")
+						nyc.writeCoverageFile()
 						await nyc.report()
 					}
 
