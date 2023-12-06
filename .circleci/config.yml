@@ -56,16 +56,14 @@ jobs:
           keys:
             - v1-vscode-test-<< pipeline.parameters.vscode-version >>
       - run: .circleci/run_test_wrapper.sh
-      - run: find . -name 'lcov.info'
-      - run: exit 1
       - store_test_results:
           when: always
-          path: artifacts/
+          path: artifacts
       - store_artifacts:
           when: always
-          path: artifacts/
-      - run: .circleci/validate.sh
+          path: artifacts
       - sonarcloud/scan
+      - run: .circleci/validate.sh
       - save_cache:
           key: v1-nodemodules-{{ checksum "package.json" }}
           paths:
@@ -107,10 +105,10 @@ jobs:
             xvfb-run -a npm run test:install-and-run
       - store_test_results:
           when: always
-          path: artifacts/
+          path: artifacts
       - store_artifacts:
           when: always
-          path: artifacts/
+          path: artifacts
   package-and-publish:
     docker:
       - image: cimg/node:20.8
