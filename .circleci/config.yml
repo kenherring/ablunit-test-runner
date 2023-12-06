@@ -90,7 +90,7 @@ jobs:
             - v1-nodemodules-{{ checksum "package.json" }}
             - v1-nodemodules-
       - run: npm install
-      - run: sudo npm install -g @vscode/vsce
+      - run: npm install -g @vscode/vsce
       - run: vsce package --pre-release --githubBranch "$(git branch --show-current)"
       - run: vsce ls
       - restore_cache:
@@ -116,7 +116,7 @@ jobs:
     steps:
       - checkout
       - run: npm install
-      - run: npm install -g @vscode/vsce
+      - run: sudo npm install -g @vscode/vsce
       - run: vsce package --pre-release --githubBranch "$(git branch --show-current)"
       - when:
           condition: << pipeline.git.tag >>
