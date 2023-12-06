@@ -13,7 +13,7 @@ before(async () => {
 
 suite(projName + ' - Extension Test Suite', () => {
 
-	test(projName + '.1 - ablunit json file', async () => {
+	test(projName + '.1 - tempDir=.ablunit', async () => {
 		await runAllTests()
 		const ablunitJson = Uri.joinPath(workspaceUri,'.ablunit','ablunit.json')
 		assert(await doesFileExist(ablunitJson), "missing ablunit.json (" + ablunitJson.fsPath + ")")
