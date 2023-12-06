@@ -1,23 +1,9 @@
-**/*.js.map
-**/*.ts
-
-.circleci/
-.git-hooks/
-.vscode/
-artifacts/
-coverage/
-docker/
-docs/
-images/
+## Keep these files
 !images/icon_128.png
-node_modules/
-sampple/
-src/
-test_projects/
+!out/extension.js
+!LICENSE
+!package.json
+!snippets-classes.json
+!snippets-procedures.json
 
-.gitignore
-.vscode-test.js
-cleanup.sh
-sonar-project.properties
-tsconfig.json
-webpack.config.js
+**/*

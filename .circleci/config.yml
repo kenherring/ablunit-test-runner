@@ -4,6 +4,11 @@ orbs:
   shellcheck: circleci/shellcheck@3.2.0
   sonarcloud: sonarsource/sonarcloud@2.0.0
 
+parameters:
+  vscode-version:
+    type: string
+    default: 1.84.2
+
 workflows:
   build:
     jobs:
@@ -17,10 +22,15 @@ workflows:
             tags:
               only:
                 - /^v.*/
+      - install-and-run:
+          context:
+            - DockerHub
+            - PROGRESS_CFG
       - package-and-publish:
           requires:
-            - test-and-scan
             - shellcheck/check
+            - test-and-scan
+            - install-and-run
           context:
             - Azure_PAT
           filters:
@@ -44,14 +54,14 @@ jobs:
             - v1-nodemodules-
       - restore_cache:
           keys:
-            - v1-vscode-test-1.84.2
+            - v1-vscode-test-<< pipeline.parameters.vscode-version >>
       - run: .circleci/run_test_wrapper.sh
       - store_test_results:
           when: always
-          path: artifacts/
+          path: artifacts
       - store_artifacts:
           when: always
-          path: artifacts/
+          path: artifacts
       - sonarcloud/scan
       - run: .circleci/validate.sh
       - save_cache:
@@ -59,20 +69,55 @@ jobs:
           paths:
             - node_modules
       - save_cache:
-          key: v1-vscode-test-1.84.2
+          key: v1-vscode-test-<< pipeline.parameters.vscode-version >>
           paths:
             - .vscode-test
+      - persist_to_workspace:
+          root: .
+          paths:
+            - .
+  install-and-run:
+    docker:
+      - image: kherring/ablunit-test-runner
+        auth:
+          username: kherring
+          password: $DOCKERHUB_TOKEN
+    steps:
+      - run: tr ' ' '\n' \<<< "$PROGRESS_CFG_BASE64" | base64 --decode > /psc/dlc/progress.cfg
+      - checkout
+      - restore_cache:
+          keys:
+            - v1-nodemodules-{{ checksum "package.json" }}
+            - v1-nodemodules-
+      - run: npm install
+      - run: npm install -g @vscode/vsce
+      - run: vsce package --pre-release --githubBranch "$(git branch --show-current)"
+      - run: vsce ls
+      - restore_cache:
+          keys:
+            - v1-vscode-test-<< pipeline.parameters.vscode-version >>
+      - run:
+          name: install and run
+          command: |
+            test_projects/setup.sh
+            cd dummy-ext
+            npm run compile
+            export DONT_PROMPT_WSL_INSTALL=No_Prompt_please
+            xvfb-run -a npm run test:install-and-run
+      - store_test_results:
+          when: always
+          path: artifacts
+      - store_artifacts:
+          when: always
+          path: artifacts
   package-and-publish:
     docker:
       - image: cimg/node:20.8
     steps:
       - checkout
-      - attach_workspace:
-          at: .
       - run: npm install
       - run: sudo npm install -g @vscode/vsce
-      - run: vsce package --pre-release --githubBranch main
-      - run: vsce ls
+      - run: vsce package --pre-release --githubBranch "$(git branch --show-current)"
       - when:
           condition: << pipeline.git.tag >>
           steps:
@@ -83,7 +128,7 @@ jobs:
                   echo "Version in package.json does not match tag"
                   exit 1
                 fi
-          - run: vsce publish --pre-release --packagePath ablunit-test-provider-*.vsix --githubBranch main
+          - run: vsce publish --pre-release --packagePath --githubBranch "$(git branch --show-current)" --packagePath ablunit-test-provider-<< pipeline.git.tag >>.vsix
       - run: mkdir -p artifacts && cp ablunit-test-provider-*.vsix artifacts
       - store_artifacts:
           when: always

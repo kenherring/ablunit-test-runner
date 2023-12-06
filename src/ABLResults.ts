@@ -462,6 +462,3 @@ async function getDLC(workspaceFolder: WorkspaceFolder) {
 	}
 	throw new Error("unable to determine DLC")
 }
-function outputToChannel(arg0: string) {
-	throw new Error("Function not implemented.")
-}

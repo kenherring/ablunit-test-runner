@@ -21,3 +21,6 @@ ENV TERM=vt100
 
 # create directory for vscode-test which will be a mounted volume
 RUN mkdir -p ~/.vscode-test
+
+# install vscode packaging dependency
+npm install -g @vscode/vsce

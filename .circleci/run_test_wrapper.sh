@@ -53,13 +53,14 @@ run_lint () {
 	if ! npx_eslint .circleci/sonarqube_formatter.js artifacts/eslint_report_sonar.json; then
 		echo "eslint sonar failed"
 	fi
-	if ! npx_eslint junit artifacts/eslint_report_junit.xml; then
-		echo "eslint junit failed"
-	fi
+	# if ! npx_eslint junit artifacts/eslint_report_junit.xml; then
+	# 	echo "eslint junit failed"
+	# fi
 }
 
 ########## MAIN BLOCK ##########
 setup
 dbus_config
 xvfb-run -a npm test
+npm run test:coverage-activation-after
 run_lint

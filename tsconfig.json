@@ -16,6 +16,7 @@
 		]
 	},
 	"exclude": [
+		"dummy-ext",
 		"node_modules",
 		"test_projects",
 		".vscode-test"

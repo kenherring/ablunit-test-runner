@@ -1,0 +1,34 @@
+{
+	"name": "dummy-ext",
+	"version": "0.0.0",
+	"license": "MIT",
+	"capabilities": {
+		"untrustedWorkspaces": {
+			"supported": false
+		}
+	},
+	"engines": {
+		"vscode": "^1.83.0"
+	},
+	"activationEvents": [
+		"onStartupFinished"
+	],
+	"main": "./out/extension",
+	"scripts": {
+		"compile": "tsc -p ./",
+		"test:install-and-run": "node ./out/test/installAndRun"
+	},
+	"contributes": {
+		"configuration": {
+			"type": "object",
+			"title": "dummy-ext",
+			"properties": {
+				"dummy.config": {
+					"type": "string",
+					"markdownDescription": "dummy config"
+				}
+			}
+		}
+
+	}
+}
