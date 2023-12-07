@@ -1,3 +1,10 @@
+# [v0.1.7](https://github.com/kenherring/ablunit-test-provider/releases/tag/v0.1.7) - 2023-11-30 (pre-release)
+
+* Refactoring
+* WSL fixes for extension development
+* Fix json parsing `openedge-project.json` when comments are present
+* Fix usage of dot-dir in `ablunit` configuration
+
 # [v0.1.6](https://github.com/kenherring/ablunit-test-provider/releases/tag/v0.1.6) - 2023-11-30 (pre-release)
 
 * Performance improvements

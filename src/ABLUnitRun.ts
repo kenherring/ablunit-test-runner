@@ -1,7 +1,7 @@
 import { TestRun, workspace } from 'vscode'
 import { ABLResults } from './ABLResults'
 import { logToChannel } from './ABLUnitCommon'
-
+import { isRelativePath } from './ABLUnitConfigWriter';
 import * as cp from "child_process";
 
 export const ablunitRun = async(options: TestRun, res: ABLResults) => {
@@ -22,7 +22,12 @@ export const ablunitRun = async(options: TestRun, res: ABLResults) => {
 		} else {
 			throw new Error("unsupported platform: " + process.platform)
 		}
-		cmd.push('-T', workspace.asRelativePath(res.cfg.ablunitConfig.tempDirUri, false))
+
+		let tempPath = workspace.asRelativePath(res.cfg.ablunitConfig.tempDirUri, false)
+		if (isRelativePath(tempPath)) {
+			tempPath = './' + tempPath
+		}
+		cmd.push('-T',tempPath)
 
 		if (res.cfg.ablunitConfig.profilerOptions.enabled) {
 			cmd.push('-profile', workspace.asRelativePath(res.cfg.ablunitConfig.profilerOptions.optionsUri, false))
