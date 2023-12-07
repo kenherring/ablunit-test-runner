@@ -120,8 +120,8 @@ function createAblunitConfig(workspaceFolder: WorkspaceFolder) {
 		configJson: {
 			options: {
 				output: {
-					location: workspace.getConfiguration('ablunit').get('configJson.output.location', ''),
-					filename: workspace.getConfiguration('ablunit').get('configJson.output.filename', '').replace(/\.xml$/, '') + '.xml',
+					location: workspace.getConfiguration('ablunit').get('configJson.output.location',''),
+					filename: workspace.getConfiguration('ablunit').get('configJson.output.filename', 'results').replace(/\.xml$/, '') + '.xml',
 					format: 'xml',
 				},
 				quitOnEnd: workspace.getConfiguration('ablunit').get('configJson.quitOnEnd', true),
@@ -201,14 +201,12 @@ export class ABLUnitConfig  {
 			this.ablunitConfig.config_output_locationUri = Uri.joinPath(this.ablunitConfig.workspaceFolder.uri, this.ablunitConfig.config_output_location)
 		}
 		this.ablunitConfig.configJson.options.output.location = this.ablunitConfig.config_output_locationUri.fsPath
+		Uri.joinPath(this.ablunitConfig.config_output_locationUri, this.ablunitConfig.configJson.options.output.filename)
+		Uri.joinPath(this.ablunitConfig.config_output_locationUri, this.ablunitConfig.configJson.options.output.filename.replace(/\.xml$/, '.json'))
 
-
-
-		this.ablunitConfig.config_output_filenameUri = Uri.joinPath(this.ablunitConfig.config_output_locationUri, 'results.xml')
-		this.ablunitConfig.config_output_jsonUri = Uri.joinPath(this.ablunitConfig.config_output_locationUri, 'results.json')
 		if (this.ablunitConfig.configJson.options.output.filename != '') {
-			this.ablunitConfig.config_output_filenameUri = Uri.joinPath(this.ablunitConfig.config_output_locationUri, this.ablunitConfig.configJson.options.output.filename + '.xml')
-			this.ablunitConfig.config_output_jsonUri = Uri.joinPath(this.ablunitConfig.config_output_locationUri, this.ablunitConfig.configJson.options.output.filename + '.json')
+			this.ablunitConfig.config_output_filenameUri = Uri.joinPath(this.ablunitConfig.config_output_locationUri, this.ablunitConfig.configJson.options.output.filename)
+			this.ablunitConfig.config_output_jsonUri = Uri.joinPath(this.ablunitConfig.config_output_locationUri, this.ablunitConfig.configJson.options.output.filename.replace(/\.xml$/, '.json'))
 		}
 
 		if (isRelativePath(this.ablunitConfig.profilerOptions.optionsPath)) {
