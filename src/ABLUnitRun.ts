@@ -42,7 +42,11 @@ export const ablunitRun = async(options: TestRun, res: ABLResults) => {
 			throw (new Error("temp directory not set"))
 		}
 
-		const cmd = [res.dlc + '/bin/_progres', '-b', '-p', 'ABLUnitCore.p']
+		let cmd = [ '_progres', '-b', '-p', 'ABLUnitCore.p' ]
+		if (res.dlc) {
+			cmd = [res.dlc.uri.fsPath + '/bin/_progres', '-b', '-p', 'ABLUnitCore.p']
+		}
+
 		if (process.platform === 'win32') {
 			cmd.push('-basekey', 'INI', '-ininame', workspace.asRelativePath(res.cfg.ablunitConfig.progressIniUri.fsPath, false))
 		} else if (process.platform === 'linux') {

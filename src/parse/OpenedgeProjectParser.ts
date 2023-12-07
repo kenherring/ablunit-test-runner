@@ -16,7 +16,7 @@ export interface IPropathEntry {
 }
 
 export interface IDlc {
-	path: Uri,
+	uri: Uri,
 	version: string
 }
 
@@ -64,7 +64,7 @@ export async function getDLC(workspaceFolder: WorkspaceFolder, projectJson?: any
 	}
 	if (runtimeDlc) {
 		console.log("using DLC = " + runtimeDlc)
-		const dlcObj: IDlc = { path: runtimeDlc, version: oeversion }
+		const dlcObj: IDlc = { uri: runtimeDlc, version: oeversion }
 		dlcMap.set(workspaceFolder, dlcObj)
 		return dlcObj
 	}
@@ -99,7 +99,7 @@ function parseOpenEdgeProjectJson (workspaceFolder: WorkspaceFolder, conf: any, 
 	for (const entry of conf.buildPath) {
 		let dotPct: string
 
-		let path: string = entry.path.replace('${DLC}',dlc.path)
+		let path: string = entry.path.replace('${DLC}',dlc.uri)
 		if (path === ".") {
 			path = workspaceFolder.uri.fsPath
 		} else if (path.startsWith("./")) {
