@@ -15,7 +15,7 @@ validate_version_updated() {
 		exit 1
 	fi
 
-	if ! head CHANGELOG.md -n 1 | grep "$TAG_VERSION"; then
+	if ! head CHANGELOG.md -n 1 | grep "$TAG_VERSION" >/dev/null 2>&1; then
 		if [ "${CIRCLE_TAG:-}" != "" ]; then
 			echo "ERROR: CHANGELOG.md does not match the latest git tag ($TAG_VERSION)" >&2
 			exit 1

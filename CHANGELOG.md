@@ -1,4 +1,4 @@
-# [v0.1.7](https://github.com/kenherring/ablunit-test-provider/releases/tag/v0.1.7) - 2023-11-30 (pre-release)
+# [v0.1.7](https://github.com/kenherring/ablunit-test-provider/releases/tag/v0.1.7) - 2023-12-06 (pre-release)
 
 * Refactoring
 * WSL fixes for extension development
