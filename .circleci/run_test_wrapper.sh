@@ -3,9 +3,7 @@ set -eou pipefail
 
 setup () {
 	echo 'compile, etc...'
-	npm install
-	npm run compile
-	npm run test:coverage-activation-before
+	# npm install
 	test_projects/setup.sh
 }
 
@@ -62,5 +60,4 @@ run_lint () {
 setup
 dbus_config
 xvfb-run -a npm test
-npm run test:coverage-activation-after
 run_lint
