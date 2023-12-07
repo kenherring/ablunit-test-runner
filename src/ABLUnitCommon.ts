@@ -1,8 +1,8 @@
-import { window } from 'vscode'
+import { TestRun, window } from 'vscode'
 
 const outputChannel = window.createOutputChannel('ABLUnit');
 
-export function logToChannel(message: string, consoleMessageType: string = "log") {
+export function logToChannel(message: string, consoleMessageType: string = "log", options?: TestRun) {
 	outputChannel.appendLine(message)
 	if (consoleMessageType === "warn") {
 		console.warn(message)
@@ -13,5 +13,8 @@ export function logToChannel(message: string, consoleMessageType: string = "log"
 		if (consoleMessageType != '' && consoleMessageType != 'log') {
 			console.warn("WARNING: consoleMessageType not recognized - '" + consoleMessageType + "'")
 		}
+	}
+	if (options) {
+		options.appendOutput(message + "\r\n")
 	}
 }

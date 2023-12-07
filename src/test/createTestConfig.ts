@@ -51,7 +51,7 @@ export function getTestConfig () {
 	testConfig.push(createTestConfig('proj5', 'proj5_suites'))
 	testConfig.push(createTestConfig('proj6', 'proj6_dot_dir'))
 	testConfig.push(createTestConfig('proj7', 'proj7_load_performance', 50000))
-	testConfig.push(createTestConfig('proj8', 'proj8_custom-command'))
+	testConfig.push(createTestConfig('proj8', 'proj8_custom_command'))
 
 	// Workspaces
 	testConfig.push(createTestConfig('workspace0', 'workspace0.code-workspace'))

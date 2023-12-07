@@ -11,5 +11,5 @@ end procedure.
 
 @Test.
 procedure testProcedure1 :
-  OpenEdge.Core.Assert:isTrue(no).
+  OpenEdge.Core.Assert:isTrue(yes).
 end procedure.

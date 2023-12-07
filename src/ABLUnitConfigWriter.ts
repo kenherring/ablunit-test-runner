@@ -137,7 +137,7 @@ function createAblunitConfig(workspaceFolder: WorkspaceFolder) {
 			optionsUri: Uri.joinPath(workspaceFolder.uri, 'profile.options'),
 			coverage: workspace.getConfiguration('ablunit.profilerOptions').get('coverage', true),
 			description: workspace.getConfiguration('ablunit.profilerOptions').get('description', 'Unit Tests Run via ABLUnit Test Provider (VSCode)'),
-			filename: 'prof.out',
+			filename: workspace.getConfiguration('ablunit.profilerOptions').get('filename', '').replace('${workspaceFolder}', workspaceFolder.uri.fsPath),
 			filenameUri: Uri.joinPath(workspaceFolder.uri, 'prof.out'),
 			listings: workspace.getConfiguration('ablunit.profilerOptions').get('listings', ''),
 			listingsUri: Uri.joinPath(workspaceFolder.uri, 'listings'),
@@ -209,9 +209,14 @@ export class ABLUnitConfig  {
 		if (isRelativePath(this.ablunitConfig.profilerOptions.optionsPath)) {
 			this.ablunitConfig.profilerOptions.optionsUri = Uri.joinPath(this.ablunitConfig.tempDirUri, this.ablunitConfig.profilerOptions.optionsPath)
 		}
-		if (isRelativePath(this.ablunitConfig.profilerOptions.filename)) {
-			this.ablunitConfig.profilerOptions.filenameUri = Uri.joinPath(this.ablunitConfig.tempDirUri, this.ablunitConfig.profilerOptions.filename)
-			this.ablunitConfig.profilerOptions.jsonUri = Uri.joinPath(this.ablunitConfig.tempDirUri, this.ablunitConfig.profilerOptions.filename.replace(/\.[a-zA-Z]+$/, '.json'))
+		if (this.ablunitConfig.profilerOptions.filename != '') {
+			if (isRelativePath(this.ablunitConfig.profilerOptions.filename)) {
+				this.ablunitConfig.profilerOptions.filenameUri = Uri.joinPath(this.ablunitConfig.tempDirUri, this.ablunitConfig.profilerOptions.filename)
+				this.ablunitConfig.profilerOptions.jsonUri = Uri.joinPath(this.ablunitConfig.tempDirUri, this.ablunitConfig.profilerOptions.filename.replace(/\.[a-zA-Z]+$/, '.json'))
+			} else {
+				this.ablunitConfig.profilerOptions.filenameUri = Uri.file(this.ablunitConfig.profilerOptions.filename)
+				this.ablunitConfig.profilerOptions.jsonUri = Uri.file(this.ablunitConfig.profilerOptions.filename.replace(/\.[a-zA-Z]+$/, '.json'))
+			}
 		}
 		if (this.ablunitConfig.profilerOptions.listings != '') {
 			if (isRelativePath(this.ablunitConfig.profilerOptions.listings)) {

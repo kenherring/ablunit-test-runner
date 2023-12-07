@@ -1,5 +1,5 @@
 import { FileType, MarkdownString, Position, Range, TestItem, TestItemCollection, TestMessage, TestRun, Uri, workspace, WorkspaceFolder } from 'vscode'
-import { ABLUnitConfig, ITestObj } from './ABLUnitConfigWriter'
+import { ablunitConfig, ABLUnitConfig, ITestObj } from './ABLUnitConfigWriter'
 import { ABLResultsParser, TCFailure, TestCase, TestSuite } from './parse/ResultsParser'
 import { ABLTestSuite, ABLUnitTestData } from './testTree'
 import { parseCallstack } from './parse/CallStackParser'
@@ -11,6 +11,7 @@ import { logToChannel } from './ABLUnitCommon'
 import { FileCoverage, CoveredCount, StatementCoverage } from './TestCoverage'
 import { ablunitRun } from './ABLUnitRun'
 import { getOEVersion } from './parse/OpenedgeProjectParser'
+import { log } from 'console'
 
 export class ABLResults {
 	workspaceFolder: WorkspaceFolder
@@ -158,30 +159,37 @@ export class ABLResults {
 
 	async parseOutput(options: TestRun) {
 		this.setStatus("parsing results")
-		options.appendOutput("parsing results\r\n")
+		logToChannel("parsing results from " + this.cfg.ablunitConfig.config_output_resultsUri.fsPath, 'log', options)
 
 		this.endTime = new Date()
 
 		this.ablResults = new ABLResultsParser(this.propath!, this.debugLines!)
 		await this.ablResults.parseResults(this.cfg.ablunitConfig).then(() => {
 			if(!this.ablResults!.resultsJson) {
-				throw (new Error("no results data available..."))
+				logToChannel("No results found in " + this.cfg.ablunitConfig.config_output_resultsUri.fsPath,"error", options)
+				throw (new Error("[ABLResults parseOutput] No results found in " + this.cfg.ablunitConfig.config_output_resultsUri.fsPath + "\r\n"))
 			}
+			return true
 		}, (err) => {
-			console.error("[parseResultsFile] " + err)
+			this.setStatus("error parsing results data")
+			logToChannel("Error parsing ablunit results from " + this.cfg.ablunitConfig.config_output_resultsUri.fsPath,"error",options)
+			throw (new Error("[ABLResults parseOutput] Error parsing ablunit results from " + this.cfg.ablunitConfig.config_output_resultsUri.fsPath + "\r\n"))
 		})
 
 		if (this.cfg.ablunitConfig.profilerOptions.enabled) {
 			this.setStatus("parsing profiler data")
-			options.appendOutput("parsing profiler data\r\n")
+			logToChannel("parsing profiler data from " + this.cfg.ablunitConfig.profilerOptions.filenameUri.fsPath, 'log', options)
 			await this.parseProfile().then(() => {
 				return true
 			}, (err) => {
-				throw new Error("parseProfile error: " + err)
+				this.setStatus("error parsing profiler data")
+				logToChannel("Error parsing profiler data from " + this.cfg.ablunitConfig.profilerOptions.filenameUri.fsPath, "error", options)
+				throw new Error("[ABLResults parseOutput] Error parsing profiler data from " + this.cfg.ablunitConfig.profilerOptions.filenameUri.fsPath + "\r\n")
 			})
 		}
 
 		this.setStatus("parsing output complete")
+		logToChannel("parsing output complete")
 		options.appendOutput("parsing output complete\r\n")
 	}
 

@@ -27,7 +27,7 @@
 			<propath>
 				<pathelement path="." />
 			</propath>
-			<Profiler enabled="true" outputDir="target" coverage="true" />
+			<Profiler enabled="true" outputFile="target/ablunit.prof" coverage="true" />
 		</ABLUnit>
 	</target>
 
