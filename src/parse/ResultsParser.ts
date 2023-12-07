@@ -61,7 +61,7 @@ export class ABLResultsParser {
 	}
 
 	async parseResults(cfg: IABLUnitConfig) {
-		const resultsBits = await workspace.fs.readFile(cfg.config_output_resultsUri);
+		const resultsBits = await workspace.fs.readFile(cfg.config_output_filenameUri);
 		const resultsXml = Buffer.from(resultsBits.toString()).toString('utf8');
 		const resultsXmlJson = await this.parseXml(resultsXml)
 		try {
@@ -70,9 +70,6 @@ export class ABLResultsParser {
 			console.error("[parseResults] error parsing results.xml file: " + err)
 			throw err
 		}
-		console.log("---- cfg.config_output_writeJson=" + cfg.config_output_writeJson)
-		// console.log("cfg= " + JSON.stringify(cfg,null,2))
-		console.log("ablunitConfig.configJson.output.location=" + workspace.getConfiguration("ablunit").get("configJson.outputLocation"))
 		if (cfg.config_output_writeJson) {
 			console.log("2")
 			return this.writeJsonToFile(cfg.config_output_jsonUri)
@@ -198,8 +195,8 @@ export class ABLResultsParser {
 	writeJsonToFile(uri: Uri) {
 		const data = this.resultsJson
 		console.log("writing results json file: " + uri.fsPath)
-		console.log("config-1: " + workspace.getConfiguration("ablunit").get("configJson.outputwriteJson"))
-		console.log("config-2: " + workspace.getConfiguration("ablunit").get("configJson.outputLocation"))
+		console.log("config-1: " + workspace.getConfiguration("ablunit").get("configJson.output.writeJson"))
+		console.log("config-2: " + workspace.getConfiguration("ablunit").get("configJson.output.location"))
 		return workspace.fs.writeFile(uri, Uint8Array.from(Buffer.from(JSON.stringify(data, null, 2)))).then(() => {
 			logToChannel("wrote results json file: " + uri.fsPath)
 		}, (err) => {

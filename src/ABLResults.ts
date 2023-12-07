@@ -137,9 +137,9 @@ export class ABLResults {
 		}, (err) => {
 			// do nothing, can't delete a file that doesn't exist
 		})
-		return workspace.fs.stat(this.cfg.ablunitConfig.config_output_resultsUri).then((stat) => {
+		return workspace.fs.stat(this.cfg.ablunitConfig.config_output_filenameUri).then((stat) => {
 			if (stat.type === FileType.File) {
-				return workspace.fs.delete(this.cfg.ablunitConfig.config_output_resultsUri)
+				return workspace.fs.delete(this.cfg.ablunitConfig.config_output_filenameUri)
 			}
 		}, (err) => {
 			// do nothing, can't delete a file that doesn't exist
@@ -158,21 +158,21 @@ export class ABLResults {
 
 	async parseOutput(options: TestRun) {
 		this.setStatus("parsing results")
-		logToChannel("parsing results from " + this.cfg.ablunitConfig.config_output_resultsUri.fsPath, 'log', options)
+		logToChannel("parsing results from " + this.cfg.ablunitConfig.config_output_filenameUri.fsPath, 'log', options)
 
 		this.endTime = new Date()
 
 		this.ablResults = new ABLResultsParser(this.propath!, this.debugLines!)
 		await this.ablResults.parseResults(this.cfg.ablunitConfig).then(() => {
 			if(!this.ablResults!.resultsJson) {
-				logToChannel("No results found in " + this.cfg.ablunitConfig.config_output_resultsUri.fsPath,"error", options)
-				throw (new Error("[ABLResults parseOutput] No results found in " + this.cfg.ablunitConfig.config_output_resultsUri.fsPath + "\r\n"))
+				logToChannel("No results found in " + this.cfg.ablunitConfig.config_output_filenameUri.fsPath,"error", options)
+				throw (new Error("[ABLResults parseOutput] No results found in " + this.cfg.ablunitConfig.config_output_filenameUri.fsPath + "\r\n"))
 			}
 			return true
 		}, (err) => {
 			this.setStatus("error parsing results data")
-			logToChannel("Error parsing ablunit results from " + this.cfg.ablunitConfig.config_output_resultsUri.fsPath,"error",options)
-			throw (new Error("[ABLResults parseOutput] Error parsing ablunit results from " + this.cfg.ablunitConfig.config_output_resultsUri.fsPath + "\r\n"))
+			logToChannel("Error parsing ablunit results from " + this.cfg.ablunitConfig.config_output_filenameUri.fsPath,"error",options)
+			throw (new Error("[ABLResults parseOutput] Error parsing ablunit results from " + this.cfg.ablunitConfig.config_output_filenameUri.fsPath + "\r\n"))
 		})
 
 		if (this.cfg.ablunitConfig.profilerOptions.enabled) {

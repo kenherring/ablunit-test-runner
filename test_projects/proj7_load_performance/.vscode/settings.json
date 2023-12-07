@@ -1,4 +1,4 @@
 {
 	"ablunit.tempDir": "temp",
-	"ablunit.configJson.outputWriteJson": true
+	"ablunit.configJson.output.writeJson": true
 }

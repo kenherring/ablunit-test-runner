@@ -1,8 +1,8 @@
 {
 	"ablunit.tempDir": "target/tempDir",
 	"ablunit.configJson.writeLog": true,
-	"ablunit.configJson.outputLocation": "target",
-	"ablunit.configJson.outputWriteJson": true,
+	"ablunit.configJson.output.location": "target",
+	"ablunit.configJson.output.writeJson": true,
 	"ablunit.profilerOptions.listings": "target",
 	"ablunit.profilerOptions.filename": "${workspaceFolder}/target/ablunit.prof",
 	"ablunit.tests.command": "ant test -Dfiles='${testlist}'",

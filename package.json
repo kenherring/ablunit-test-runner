@@ -186,12 +186,12 @@
 					"default": "ablunit.json",
 					"markdownDescription": "Location of ablunit json configutation passed to the command line with `-param= \"CFG=ablunit.json\"`"
 				},
-				"ablunit.configJson.outputLocation": {
+				"ablunit.configJson.output.location": {
 					"type": "string",
 					"default": "",
-					"markdownDescription": "Location of the outputted results.xml file.  Default = `ablunit.tempDir`\n\nDirectory only, filename will always be `results.xml`\n\nPath can be absolute or relative to the workspace root.\n\n"
+					"markdownDescription": "Location of the outputted results.xml file.  Default = `ablunit.tempDir`\n\nDirectory only, filename will always be `results.xml`\n\nPath can be absolute or relative to the workspace root."
 				},
-				"ablunit.configJson.outputWriteJson": {
+				"ablunit.configJson.output.writeJson": {
 					"type": "boolean",
 					"default": false,
 					"markdownDescription": "Write the results to `results.json`.  Location is the same directory as `results.xml`"
