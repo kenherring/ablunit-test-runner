@@ -9,7 +9,8 @@
 	"graphicalMode": false,
 	"extraParameters": "-debugalert",
 	"buildPath": [
-		{ "type": "source", "path": ".", "excludes": "compileError.p" }
+		{ "type": "source", "path": ".", "excludes": "compileError.p" },
+		{ "type": "propath", "path": "${DLC}/tty/OpenEdge.BusinessLogic.pl" }
 	],
 	"procedures": [],
 	"profiles": []

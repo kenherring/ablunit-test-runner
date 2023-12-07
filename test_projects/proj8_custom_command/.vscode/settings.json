@@ -1,0 +1,17 @@
+{
+	"ablunit.tempDir": "target/tempDir",
+	"ablunit.configJson.writeLog": true,
+	"ablunit.configJson.outputLocation": "target",
+	"ablunit.configJson.outputWriteJson": true,
+	"ablunit.profilerOptions.listings": "target",
+	"ablunit.profilerOptions.filename": "target/prof.out",
+	"ablunit.tests.command": "bash -c 'ant test -Dfiles=\"${testlist}\"'",
+	// "ablunit.tests.command": "bash -c 'pwd'",
+	"terminal.integrated.env.linux": {
+		"DLC": "/psc/dlc"
+	},
+	"terminal.integrated.env.windows": {
+		"DLC": "/C/Progress/OpenEdge",
+		"PATH": "${env:PATH};/C/Progress/OpenEdge/ant/bin"
+	}
+}

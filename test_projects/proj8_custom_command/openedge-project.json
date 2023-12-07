@@ -1,0 +1,5 @@
+{
+	"oeversion": "12.2",
+	"buildPath": [ { "type": "source", "path": "." } ],
+	"buildDirectory": "build"
+}
