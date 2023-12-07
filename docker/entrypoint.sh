@@ -49,6 +49,8 @@ initialize () {
 		done < /tmp/deleted_files
 	fi
 
+	npm i
+
 	scripts/cleanup.sh
 }
 

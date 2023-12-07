@@ -2,7 +2,7 @@ import { TestRun, workspace } from 'vscode'
 import { ABLResults } from './ABLResults'
 import { logToChannel } from './ABLUnitCommon'
 import { isRelativePath } from './ABLUnitConfigWriter';
-import * as cp from "child_process";
+import { exec } from "child_process";
 
 export const ablunitRun = async(options: TestRun, res: ABLResults) => {
 	const start = Date.now()
@@ -88,7 +88,7 @@ export const ablunitRun = async(options: TestRun, res: ABLResults) => {
 			res.setStatus("running command")
 			console.log("command: " + cmd + " " + args.join(' '))
 
-			cp.exec(cmd + ' ' + args.join(' '), { cwd: res.cfg.ablunitConfig.workspaceFolder.uri.fsPath }, (err: any, stdout: any, stderr: any) => {
+			exec(cmd + ' ' + args.join(' '), {env: process.env, cwd: res.cfg.ablunitConfig.workspaceFolder.uri.fsPath }, (err: any, stdout: any, stderr: any) => {
 				const duration = Date.now() - start
 				if (stdout) {
 					logToChannel("_progres stdout=" + stdout)

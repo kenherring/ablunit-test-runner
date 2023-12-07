@@ -1,8 +1,12 @@
 import { Uri, workspace, WorkspaceFolder } from 'vscode'
 import { logToChannel } from '../ABLUnitCommon'
-import { TextDecoder } from 'util'
 
-const textDecoder = new TextDecoder('utf-8');
+
+interface IRuntime {
+	name: string,
+	path: string,
+	default?: boolean
+}
 
 export interface IPropathEntry {
 	path: string
@@ -10,6 +14,14 @@ export interface IPropathEntry {
 	buildDir: string
 	xrefDir: string
 }
+
+export interface IDlc {
+	path: Uri,
+	version: string
+}
+
+const dlcMap = new Map<WorkspaceFolder, IDlc>()
+
 
 export interface IProjectJson {
 	propathEntry: IPropathEntry[]
@@ -28,19 +40,55 @@ async function getProjectJson (workspaceFolder: WorkspaceFolder) {
 	return undefined
 }
 
-export async function readOpenEdgeProjectJson (workspaceFolder: WorkspaceFolder) {
-	return parseOpenEdgeProjectJson(workspaceFolder, await getProjectJson(workspaceFolder))
+export async function getDLC(workspaceFolder: WorkspaceFolder, projectJson?: any) {
+	const dlc = dlcMap.get(workspaceFolder)
+	if (dlc) {
+		return dlc
+	}
+
+	let runtimeDlc: Uri | undefined = undefined
+	const oeversion = await getOEVersion(workspaceFolder, projectJson)
+	const runtimes: IRuntime[] = workspace.getConfiguration("abl.configuration").get("runtimes",[])
+
+	for (const runtime of runtimes) {
+		if (runtime.name === oeversion) {
+			runtimeDlc = Uri.file(runtime.path)
+			break
+		}
+		if (runtime.default) {
+			runtimeDlc = Uri.file(runtime.path)
+		}
+	}
+	if (!runtimeDlc && process.env.DLC) {
+		runtimeDlc = Uri.file(process.env.DLC)
+	}
+	if (runtimeDlc) {
+		console.log("using DLC = " + runtimeDlc)
+		const dlcObj: IDlc = { path: runtimeDlc, version: oeversion }
+		dlcMap.set(workspaceFolder, dlcObj)
+		return dlcObj
+	}
+	throw new Error("unable to determine DLC")
 }
 
-export async function getOEVersion (workspaceFolder: WorkspaceFolder) {
+export async function readOpenEdgeProjectJson (workspaceFolder: WorkspaceFolder) {
 	const projectJson = await getProjectJson(workspaceFolder)
+	const dlc = await getDLC(workspaceFolder, projectJson)
+	return parseOpenEdgeProjectJson(workspaceFolder, projectJson, dlc)
+}
+
+export async function getOEVersion (workspaceFolder: WorkspaceFolder, projectJson?: any) {
+	if (!projectJson) {
+		projectJson = await getProjectJson(workspaceFolder)
+	}
 	if (projectJson.oeversion) {
 		return projectJson.oeversion.toString()
 	}
 	return "none"
 }
 
-function parseOpenEdgeProjectJson (workspaceFolder: WorkspaceFolder, conf: any) {
+
+function parseOpenEdgeProjectJson (workspaceFolder: WorkspaceFolder, conf: any, dlc: IDlc) {
 	//TODO what about if we're running a different profile?
 	if (!conf.buildPath) {
 		throw new Error("buildPath not found in openedge-project.json")
@@ -51,7 +99,7 @@ function parseOpenEdgeProjectJson (workspaceFolder: WorkspaceFolder, conf: any) 
 	for (const entry of conf.buildPath) {
 		let dotPct: string
 
-		let path: string = entry.path
+		let path: string = entry.path.replace('${DLC}',dlc.path)
 		if (path === ".") {
 			path = workspaceFolder.uri.fsPath
 		} else if (path.startsWith("./")) {

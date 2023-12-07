@@ -1,31 +1,29 @@
 #!/bin/bash
 set -eou pipefail
 
-ARR=("ablunit.json" "ablunit.log" "progress.ini" "prof.out" "prof.json" "protrace.*" "results.json"
-	 "results.xml" "dbg_*" "*.r" "*.xref" "results.prof" "profiler.json" "profile.options")
-for F in "${ARR[@]}"; do
-	echo "deleting files matching '$F'"
-	find test_projects -type f -name "$F" -delete &
-done
-wait
+DIRS=(listings .builder build ablunit-output workspaceAblunit)
+PATTERNS=("ablunit.json" "ablunit.log" "progress.ini" "prof.out" "prof.json" "protrace.*" "results.json"
+			 "results.xml" "dbg_*" "*.r" "*.xref" "results.prof" "profiler.json" "profile.options")
 
-ARR=("listings" ".builder" "build" "ablunit-output" "workspaceAblunit")
-for D in "${ARR[@]}"; do
-	echo "deleting directories matching '$D'"
-	find test_projects -type d -name "$D" -exec rm -rv {} + || true &
-done
-find .vscode -type d -name "kherring.ablunit-test-provider" -exec rm -rv {} + || true &
-wait
 
-echo "deleting artifacts and coverage directory"
+echo "deleting directories..."
 rm -rf artifacts/ coverage/
+find . -type d -name "kherring.ablunit-test-provider" -exec rm -rf {} + &
 if [ "${OS:-}" = "Windows_NT" ]; then
-	rm -rf C:/temp/ablunit/
+	rm -rf C:/temp/ablunit/ &
 else
-	rm -rf /tmp/ablunit/
+	rm -rf /tmp/ablunit/ &
 fi
+for DIR in "${DIRS[@]}"; do
+	find test_projects -type d -name "$DIR" -exec rm -rv {} + &
+done
 
-echo "deleting storage directory kherring.ablunit-test-provider"
-find . -type d -name "kherring.ablunit-test-provider" -exec rm -rv {} +
 
+echo "deleting file patterns..."
+for PATTERN in "${PATTERNS[@]}"; do
+	find test_projects -type f -name "$PATTERN" -delete &
+done
+
+
+wait
 echo "cleanup complete"

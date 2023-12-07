@@ -10,8 +10,7 @@ import { PropathParser } from './ABLPropath'
 import { logToChannel } from './ABLUnitCommon'
 import { FileCoverage, CoveredCount, StatementCoverage } from './TestCoverage'
 import { ablunitRun } from './ABLUnitRun'
-import { getOEVersion } from './parse/OpenedgeProjectParser'
-import { log } from 'console'
+import { getDLC, IDlc } from './parse/OpenedgeProjectParser'
 
 export class ABLResults {
 	workspaceFolder: WorkspaceFolder
@@ -32,7 +31,7 @@ export class ABLResults {
 	profileJson?: ABLProfileJson
 	coverageJson: [] = []
 	coverage: FileCoverage[] = []
-	dlc: string | undefined
+	dlc: IDlc | undefined
 	public testCoverage: Map<string, FileCoverage> = new Map<string, FileCoverage>()
 
 	constructor(workspaceFolder: WorkspaceFolder, storageUri: Uri, globalStorageUri: Uri) {
@@ -439,34 +438,4 @@ export class ABLResults {
 				new Range(new Position(dbg.incLine - 1, 0), new Position(dbg.incLine, 0))))
 		}
 	}
-}
-
-interface IRuntime {
-	name: string,
-	path: string,
-	default?: boolean
-}
-
-async function getDLC(workspaceFolder: WorkspaceFolder) {
-	let DLC: string | undefined = undefined
-	const oeversion = await getOEVersion(workspaceFolder)
-	const runtimes: IRuntime[] = workspace.getConfiguration("abl.configuration").get("runtimes",[])
-
-	for (const runtime of runtimes) {
-		if (runtime.name === oeversion) {
-			DLC = runtime.path
-			break
-		}
-		if (runtime.default) {
-			DLC = runtime.path
-		}
-	}
-	if (!DLC && process.env.DLC) {
-		DLC = process.env.DLC
-	}
-	if (DLC) {
-		console.log("using DLC = " + DLC)
-		return DLC
-	}
-	throw new Error("unable to determine DLC")
 }

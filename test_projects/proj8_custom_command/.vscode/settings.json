@@ -5,7 +5,7 @@
 	"ablunit.configJson.outputWriteJson": true,
 	"ablunit.profilerOptions.listings": "target",
 	"ablunit.profilerOptions.filename": "${workspaceFolder}/target/ablunit.prof",
-	"ablunit.tests.command": "bash -c 'ant test -Dfiles=\"${testlist}\"'",
+	"ablunit.tests.command": "ant test -Dfiles='${testlist}'",
 	"terminal.integrated.env.linux": {
 		"DLC": "/psc/dlc"
 	},

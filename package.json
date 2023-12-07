@@ -174,7 +174,7 @@
 				"ablunit.tests.command": {
 					"type": "string",
 					"default": "",
-					"markdownDescription": "Custom command line executed to run a test"
+					"markdownDescription": "Custom command executed to run a test"
 				},
 				"ablunit.tests.task": {
 					"type": "string",
