@@ -76,7 +76,6 @@ export interface IABLUnitConfig {
 	config_uri: Uri,
 	config_output_location: string,
 	config_output_locationUri: Uri,
-	config_output_filename: string
 	config_output_filenameUri: Uri,
 	config_output_jsonUri: Uri,
 	config_output_writeJson: boolean,
@@ -113,7 +112,6 @@ function createAblunitConfig(workspaceFolder: WorkspaceFolder) {
 		},
 		config_output_location: workspace.getConfiguration('ablunit').get('configJson.output.location', ''),
 		config_output_locationUri: workspaceFolder.uri,
-		config_output_filename: workspace.getConfiguration('ablunit').get('configJson.output.filename', ''),
 		config_output_filenameUri: Uri.joinPath(workspaceFolder.uri, 'results.xml'),
 		config_output_jsonUri: Uri.joinPath(workspaceFolder.uri, 'results.json'),
 		config_output_writeJson: workspace.getConfiguration('ablunit').get('configJson.output.writeJson', false),
@@ -123,7 +121,7 @@ function createAblunitConfig(workspaceFolder: WorkspaceFolder) {
 			options: {
 				output: {
 					location: workspace.getConfiguration('ablunit').get('configJson.output.location', ''),
-					filename: workspace.getConfiguration('ablunit').get('configJson.output.filename', ''),
+					filename: workspace.getConfiguration('ablunit').get('configJson.output.filename', '').replace(/\.xml$/, '') + '.xml',
 					format: 'xml',
 				},
 				quitOnEnd: workspace.getConfiguration('ablunit').get('configJson.quitOnEnd', true),
@@ -169,11 +167,6 @@ export class ABLUnitConfig  {
 			}
 		}
 
-		if (this.ablunitConfig.config_output_filename != '') {
-			this.ablunitConfig.configJson.options.output.filename = this.ablunitConfig.config_output_filename.replace(/\.xml$/, '')
-			this.ablunitConfig.config_output_filenameUri = Uri.joinPath(this.ablunitConfig.config_output_locationUri, this.ablunitConfig.config_output_filename)
-		}
-
 		if (this.ablunitConfig.profilerOptions.listings == 'true') {
 			this.ablunitConfig.profilerOptions.listings = 'listings'
 		}
@@ -210,12 +203,12 @@ export class ABLUnitConfig  {
 		this.ablunitConfig.configJson.options.output.location = this.ablunitConfig.config_output_locationUri.fsPath
 
 
+
+		this.ablunitConfig.config_output_filenameUri = Uri.joinPath(this.ablunitConfig.config_output_locationUri, 'results.xml')
+		this.ablunitConfig.config_output_jsonUri = Uri.joinPath(this.ablunitConfig.config_output_locationUri, 'results.json')
 		if (this.ablunitConfig.configJson.options.output.filename != '') {
 			this.ablunitConfig.config_output_filenameUri = Uri.joinPath(this.ablunitConfig.config_output_locationUri, this.ablunitConfig.configJson.options.output.filename + '.xml')
 			this.ablunitConfig.config_output_jsonUri = Uri.joinPath(this.ablunitConfig.config_output_locationUri, this.ablunitConfig.configJson.options.output.filename + '.json')
-		} else {
-			this.ablunitConfig.config_output_filenameUri = Uri.joinPath(this.ablunitConfig.config_output_locationUri, 'results.xml')
-			this.ablunitConfig.config_output_jsonUri = Uri.joinPath(this.ablunitConfig.config_output_locationUri, 'results.json')
 		}
 
 		if (isRelativePath(this.ablunitConfig.profilerOptions.optionsPath)) {
@@ -231,10 +224,9 @@ export class ABLUnitConfig  {
 			}
 		}
 		if (this.ablunitConfig.profilerOptions.listings != '') {
+			this.ablunitConfig.profilerOptions.listingsUri = Uri.file(this.ablunitConfig.profilerOptions.listings)
 			if (isRelativePath(this.ablunitConfig.profilerOptions.listings)) {
 				this.ablunitConfig.profilerOptions.listingsUri = Uri.joinPath(this.ablunitConfig.tempDirUri, this.ablunitConfig.profilerOptions.listings)
-			} else {
-				this.ablunitConfig.profilerOptions.listingsUri = Uri.file(this.ablunitConfig.profilerOptions.listings)
 			}
 		}
 	}
