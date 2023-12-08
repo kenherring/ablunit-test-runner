@@ -53,7 +53,7 @@ export interface IABLUnitConfig {
 	storageUri: Uri
 	tempDirUri: Uri
 	display: {
-		classLabel: string
+		classlabel: string
 		style: string
 	}
 	files: {
@@ -92,7 +92,7 @@ function createAblunitConfig(workspaceFolder: WorkspaceFolder) {
 		tempDir: workspace.getConfiguration('ablunit').get('tempDir', '').replace('${workspaceFolder}', workspaceFolder.uri.fsPath),
 		tempDirUri: workspaceFolder.uri,
 		display: {
-			classLabel: workspace.getConfiguration('ablunit').get('classLabel', 'classpath'),
+			classlabel: workspace.getConfiguration('ablunit').get('classlabel', 'filename'),
 			style: workspace.getConfiguration('ablunit').get('files.style', 'tree'),
 		},
 		files: {
