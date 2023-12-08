@@ -39,15 +39,15 @@ suite(projName + ' - Extension Test Suite', () => {
 
 	////////// TEST CLASSES //////////
 
-	test(projName + '.3 - TestClass - login/test2.cls - ablunit.display.classLabel=classname (default)', async () => {
+	test(projName + '.3 - TestClass - login/test2.cls - ablunit.display.classlabel=class-test-name (default)', async () => {
 		const lines = await readLinesFromFile('test/login/test2.cls')
-		const classRet = parseTestClass(lines, 'classname', 'login/test2.cls')
+		const classRet = parseTestClass(lines, 'class-test-name', 'login/test2.cls')
 		assert.strictEqual(classRet.classname, "login.test2")
 	})
 
-	test(projName + '.4 - TestClass - login/test2.cls - ablunit.display.classLabel=filepath', async () => {
+	test(projName + '.4 - TestClass - login/test2.cls - ablunit.display.classlabel=filename', async () => {
 		const lines = await readLinesFromFile('test/login/test2.cls')
-		const classRet = parseTestClass(lines, 'filepath', 'login/test2.cls')
+		const classRet = parseTestClass(lines, 'filename', 'login/test2.cls')
 		assert.strictEqual(classRet.classname, "login/test2.cls")
 	})
 

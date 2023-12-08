@@ -119,9 +119,9 @@
 			"properties": {
 				"ablunit.display.classlabel": {
 					"type": "string",
-					"default": "classname",
+					"default": "class-type-name",
 					"enum": [
-						"classname",
+						"class-type-name",
 						"filepath"
 					],
 					"markdownDescription": "The label to display for test classes. Example for class with path \\`com/example/myClass.cls\\`\\:\\n\\n* class-type-name example\\: \\`com.example.myClass\\`\\n* filename example\\: \\`myClass.cls\\`"

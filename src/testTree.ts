@@ -12,7 +12,7 @@ export type TestFile = ABLTestSuite | ABLTestClass | ABLTestProgram
 
 
 export const testData = new WeakMap<TestItem, ABLUnitTestData>()
-const displayClassLabel = workspace.getConfiguration('ablunit').get('display.classLabel','')
+const displayClassLabel = workspace.getConfiguration('ablunit').get('display.classlabel','')
 
 function createTestItem(controller: TestController,
 						item: TestItem,
@@ -217,14 +217,14 @@ export class ABLTestClass extends ABLTestFile {
 			return
 		}
 
-		item.label = response.classname
+		item.label = response.label
 		item.range = response.range
 
 		for(const method of response.methods) {
 			if(!method) { continue }
 			const data = new ABLTestMethod(this.relativePath, response.classname, method.methodname)
-			const child = createTestChild(controller, method.range, method.methodname, response.classname, item.uri!, "Method", data)
-			const methodObj = new ABLTestMethod(response.classname, response.classname, method.methodname)
+			const child = createTestChild(controller, method.range, method.methodname,this.relativePath, item.uri!, "Method", data)
+			const methodObj = new ABLTestMethod(this.relativePath, response.classname, method.methodname)
 			this.addMethod(methodObj)
 			item.children.add(child)
 		}
