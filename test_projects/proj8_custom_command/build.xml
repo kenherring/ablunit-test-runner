@@ -1,0 +1,34 @@
+<project name="proj1_custom_command" default="test">
+
+	<property environment="env" />
+	<property name="tempDir" value="target/temp" />
+
+	<taskdef resource="PCT.properties" classpath="${user.home}/.ant/lib/PCT.jar;/usr/share/ant/lib/PCT.jar" />
+	<typedef resource="types.properties" classpath="${user.home}/.ant/lib/PCT.jar;/usr/share/ant/lib/PCT.jar" />
+
+	<condition property="DLC" value="${env.DLC}" else="/psc/dlc">
+		<isset property="${env.DLC}" />
+	</condition>
+
+	<DlcHome value="${DLC}" />
+	<echo>DLC=${DLC}</echo>
+
+	<target name="test">
+		<property name="files" value="${env.FILES}" />
+		<condition property="fileset.includes" value="${files}" else="**/*.cls,**/*.p" >
+			<isset property="files" />
+		</condition>
+		<mkdir dir="${tempDir}" />
+
+		<echo>fileset.includes=${fileset.includes}</echo>
+
+		<ABLUnit writeLog="true" destDir="target" failOnError="false" haltOnFailure="false" tempDir="${tempDir}">
+			<fileset dir="." excludes="**/.builder/**" includes="${fileset.includes}" />
+			<propath>
+				<pathelement path="." />
+			</propath>
+			<Profiler enabled="true" outputFile="target/ablunit.prof" coverage="true" />
+		</ABLUnit>
+	</target>
+
+  </project>

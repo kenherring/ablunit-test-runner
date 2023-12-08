@@ -174,7 +174,7 @@
 				"ablunit.tests.command": {
 					"type": "string",
 					"default": "",
-					"markdownDescription": "Custom command line executed to run a test"
+					"markdownDescription": "Custom command executed to run a test"
 				},
 				"ablunit.tests.task": {
 					"type": "string",
@@ -186,12 +186,12 @@
 					"default": "ablunit.json",
 					"markdownDescription": "Location of configutation passed to the command line.\\n\\n**Example usage\\:** \\`-param=\\\\\"CFG=ablunit.json\\\\\"\\`"
 				},
-				"ablunit.configJson.outputLocation": {
+				"ablunit.configJson.output.location": {
 					"type": "string",
 					"default": "",
-					"markdownDescription": "Directory where the results file will be written.\\n\\n* The filename will always be \\`results.xml\\`\\n* If the directory does not exist, it will be created\\n* Path can be absolute or relative to the workspace root"
+					"markdownDescription": "Location of the outputted results.xml file.  Default = `ablunit.tempDir`\n\nDirectory only, filename will always be `results.xml`\n\nPath can be absolute or relative to the workspace root."
 				},
-				"ablunit.configJson.outputWriteJson": {
+				"ablunit.configJson.output.writeJson": {
 					"type": "boolean",
 					"default": false,
 					"markdownDescription": "Write the results to \\`results.json\\` in the same directory as \\`results.xml\\`."

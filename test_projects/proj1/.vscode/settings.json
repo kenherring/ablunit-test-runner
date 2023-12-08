@@ -5,7 +5,7 @@
 	"abl.langServerTrace": true,
 	"ablunit.profilerOptions.enabled": false,
 	"ablunit.notificationsEnabled": false,
-	"ablunit.configJson.outputWriteJson": true,
+	"ablunit.configJson.output.writeJson": true,
 	"ablunit.tempDir": "${workspaceFolder}",
 	// "ablunit.files.include": "classTest.cls"
 	// "ablunit.files.exclude": [ "compileError.p" ],

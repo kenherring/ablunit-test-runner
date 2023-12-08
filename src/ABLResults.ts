@@ -10,7 +10,7 @@ import { PropathParser } from './ABLPropath'
 import { logToChannel } from './ABLUnitCommon'
 import { FileCoverage, CoveredCount, StatementCoverage } from './TestCoverage'
 import { ablunitRun } from './ABLUnitRun'
-import { getOEVersion } from './parse/OpenedgeProjectParser'
+import { getDLC, IDlc } from './parse/OpenedgeProjectParser'
 
 export class ABLResults {
 	workspaceFolder: WorkspaceFolder
@@ -31,7 +31,7 @@ export class ABLResults {
 	profileJson?: ABLProfileJson
 	coverageJson: [] = []
 	coverage: FileCoverage[] = []
-	dlc: string | undefined
+	dlc: IDlc | undefined
 	public testCoverage: Map<string, FileCoverage> = new Map<string, FileCoverage>()
 
 	constructor(workspaceFolder: WorkspaceFolder, storageUri: Uri, globalStorageUri: Uri) {
@@ -137,9 +137,9 @@ export class ABLResults {
 		}, (err) => {
 			// do nothing, can't delete a file that doesn't exist
 		})
-		return workspace.fs.stat(this.cfg.ablunitConfig.config_output_resultsUri).then((stat) => {
+		return workspace.fs.stat(this.cfg.ablunitConfig.config_output_filenameUri).then((stat) => {
 			if (stat.type === FileType.File) {
-				return workspace.fs.delete(this.cfg.ablunitConfig.config_output_resultsUri)
+				return workspace.fs.delete(this.cfg.ablunitConfig.config_output_filenameUri)
 			}
 		}, (err) => {
 			// do nothing, can't delete a file that doesn't exist
@@ -158,30 +158,37 @@ export class ABLResults {
 
 	async parseOutput(options: TestRun) {
 		this.setStatus("parsing results")
-		options.appendOutput("parsing results\r\n")
+		logToChannel("parsing results from " + this.cfg.ablunitConfig.config_output_filenameUri.fsPath, 'log', options)
 
 		this.endTime = new Date()
 
 		this.ablResults = new ABLResultsParser(this.propath!, this.debugLines!)
 		await this.ablResults.parseResults(this.cfg.ablunitConfig).then(() => {
 			if(!this.ablResults!.resultsJson) {
-				throw (new Error("no results data available..."))
+				logToChannel("No results found in " + this.cfg.ablunitConfig.config_output_filenameUri.fsPath,"error", options)
+				throw (new Error("[ABLResults parseOutput] No results found in " + this.cfg.ablunitConfig.config_output_filenameUri.fsPath + "\r\n"))
 			}
+			return true
 		}, (err) => {
-			console.error("[parseResultsFile] " + err)
+			this.setStatus("error parsing results data")
+			logToChannel("Error parsing ablunit results from " + this.cfg.ablunitConfig.config_output_filenameUri.fsPath,"error",options)
+			throw (new Error("[ABLResults parseOutput] Error parsing ablunit results from " + this.cfg.ablunitConfig.config_output_filenameUri.fsPath + "\r\n"))
 		})
 
 		if (this.cfg.ablunitConfig.profilerOptions.enabled) {
 			this.setStatus("parsing profiler data")
-			options.appendOutput("parsing profiler data\r\n")
+			logToChannel("parsing profiler data from " + this.cfg.ablunitConfig.profilerOptions.filenameUri.fsPath, 'log', options)
 			await this.parseProfile().then(() => {
 				return true
 			}, (err) => {
-				throw new Error("parseProfile error: " + err)
+				this.setStatus("error parsing profiler data")
+				logToChannel("Error parsing profiler data from " + this.cfg.ablunitConfig.profilerOptions.filenameUri.fsPath, "error", options)
+				throw new Error("[ABLResults parseOutput] Error parsing profiler data from " + this.cfg.ablunitConfig.profilerOptions.filenameUri.fsPath + "\r\n")
 			})
 		}
 
 		this.setStatus("parsing output complete")
+		logToChannel("parsing output complete")
 		options.appendOutput("parsing output complete\r\n")
 	}
 
@@ -431,34 +438,4 @@ export class ABLResults {
 				new Range(new Position(dbg.incLine - 1, 0), new Position(dbg.incLine, 0))))
 		}
 	}
-}
-
-interface IRuntime {
-	name: string,
-	path: string,
-	default?: boolean
-}
-
-async function getDLC(workspaceFolder: WorkspaceFolder) {
-	let DLC: string | undefined = undefined
-	const oeversion = await getOEVersion(workspaceFolder)
-	const runtimes: IRuntime[] = workspace.getConfiguration("abl.configuration").get("runtimes",[])
-
-	for (const runtime of runtimes) {
-		if (runtime.name === oeversion) {
-			DLC = runtime.path
-			break
-		}
-		if (runtime.default) {
-			DLC = runtime.path
-		}
-	}
-	if (!DLC && process.env.DLC) {
-		DLC = process.env.DLC
-	}
-	if (DLC) {
-		console.log("using DLC = " + DLC)
-		return DLC
-	}
-	throw new Error("unable to determine DLC")
 }

@@ -23,4 +23,4 @@ ENV TERM=vt100
 RUN mkdir -p ~/.vscode-test
 
 # install vscode packaging dependency
-npm install -g @vscode/vsce
+RUN npm install -g @vscode/vsce

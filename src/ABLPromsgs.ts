@@ -1,5 +1,6 @@
 import { Uri, workspace } from "vscode";
 import { logToChannel } from "./ABLUnitCommon";
+import { IDlc } from "./parse/OpenedgeProjectParser";
 
 interface Promsg {
 	msgnum: number
@@ -9,12 +10,11 @@ interface Promsg {
 let promsgsObj: ABLPromsgs
 
 export class ABLPromsgs {
-	DLC: string
+	dlc: IDlc
 	promsgs: Promsg[] = []
 
-	constructor(dlc: string, storageUri: Uri) {
-		this.DLC = dlc
-		const dlcUri = Uri.file(this.DLC)
+	constructor(dlc: IDlc, storageUri: Uri) {
+		this.dlc = dlc
 		const cacheUri = Uri.joinPath(storageUri,'promsgs.json')
 		// eslint-disable-next-line @typescript-eslint/no-this-alias
 		promsgsObj = this
@@ -23,7 +23,7 @@ export class ABLPromsgs {
 			console.log("promsgs loaded from cache '" + cacheUri.fsPath + "'")
 		}, (err) => {
 			console.log("reading promsgs from DLC")
-			this.loadFromDLC(dlcUri, cacheUri).then(() => {
+			this.loadFromDLC(dlc, cacheUri).then(() => {
 				this.saveCache(cacheUri)
 			}, (err) => {
 				console.log("Cannot load promsgs from DLC, err=" + err)
@@ -31,9 +31,9 @@ export class ABLPromsgs {
 		})
 	}
 
-	async loadFromDLC(dlcUri: Uri, cacheUri: Uri) {
-		return workspace.fs.stat(dlcUri).then((stat) => {
-			const promsgDir = Uri.joinPath(dlcUri, "prohelp/msgdata")
+	async loadFromDLC(dlc: IDlc, cacheUri: Uri) {
+		return workspace.fs.stat(dlc.uri).then((stat) => {
+			const promsgDir = Uri.joinPath(dlc.uri, "prohelp/msgdata")
 			return workspace.fs.readDirectory(promsgDir).then((dirFiles) => {
 
 				const promArr: Promise<void>[] = []
@@ -53,8 +53,8 @@ export class ABLPromsgs {
 				throw new Error("Cannot read promsgs directory '" + promsgDir + "', err=" + err)
 			})
 		}, (err) => {
-			logToChannel("Cannot find DLC directory '" + this.DLC + '"')
-			throw new Error("Cannot find DLC directory '" + this.DLC + '", err=' + err)
+			logToChannel("Cannot find DLC directory '" + this.dlc + '"')
+			throw new Error("Cannot find DLC directory '" + this.dlc + '", err=' + err)
 		})
 	}
 
