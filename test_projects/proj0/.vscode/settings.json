@@ -1,4 +1,5 @@
 {
 	"ablunit.params": "-pf test.pf",
+	"ablunit.display.classlabel": "filepath"
 	// "ablunit.tempDir": "ablunit",
 }

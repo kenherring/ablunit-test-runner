@@ -6,6 +6,7 @@ artifacts/
 coverage/
 target/
 *.log
+*.tmp
 *.vsix
 *.zip
 

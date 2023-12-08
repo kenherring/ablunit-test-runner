@@ -70,8 +70,8 @@ export function parseTestClass (lines: string[], configClassLabel: string, relat
 		}
 	}
 
-	if (configClassLabel == "filepath") {
-		classRet.classname = relativePath
+	if (configClassLabel == "class-type-name") {
+		classRet.label = classRet.classname
 	}
 	return classRet
 }
