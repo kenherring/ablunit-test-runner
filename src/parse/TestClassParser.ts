@@ -6,14 +6,16 @@ const classRE = /^\s*class\s+(\S+[^:])\s*/i
 // METHOD statement
 const methodRE = /\s+method\s(\s*public)?\s*(\S+)\s*(\S+\w)/i
 
-interface IClassRet {
+export interface ITestCase {
+	label: string
+	range: Range
+}
+
+export interface IClassRet {
 	classname: string
 	label: string
 	range: Range
-	methods: [{
-		methodname: string,
-		range: Range
-	}?]
+	testcases: ITestCase[]
 }
 
 export function parseABLTestClass (displayClassLabel: string, text: string, relativePath: string) {
@@ -25,7 +27,7 @@ export function parseABLTestClass (displayClassLabel: string, text: string, rela
 	}
 
 	const classRet = parseTestClass(lines, displayClassLabel, relativePath)
-	if (classRet.methods.length == 0) {
+	if (classRet.testcases.length == 0) {
 		return
 	}
 	return classRet
@@ -37,7 +39,7 @@ export function parseTestClass (lines: string[], configClassLabel: string, relat
 		classname: "",
 		label: "",
 		range: new Range(0,0,0,0),
-		methods: []
+		testcases: []
 	}
 
 	for (let lineNo = 0; lineNo < lines.length; lineNo++) {
@@ -64,7 +66,7 @@ export function parseTestClass (lines: string[], configClassLabel: string, relat
 			if (method) {
 				const [, , , methodname] = method
 				const range = new Range(lineNo, lines[lineNo].indexOf(methodname), lineNo, methodname.length)
-				classRet.methods?.push({methodname: methodname, range: range})
+				classRet.testcases.push({label: methodname, range: range})
 				continue
 			}
 		}

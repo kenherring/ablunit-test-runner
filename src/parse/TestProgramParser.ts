@@ -4,12 +4,15 @@ import { getLines } from './TestParserCommon'
 // PROCEDURE statement
 const procedureRE = /(^|\s+)procedure\s+(\S+)\s*:/i
 
-interface IProgramRet {
+interface ITestCase {
 	label: string
-	procedures: [{
-		procedureName: string
-		range: Range
-	}?]
+	range: Range
+}
+
+export interface IProgramRet {
+	label: string
+	range: Range
+	testcases: ITestCase[]
 }
 
 export function parseABLTestProgram (text: string, relativePath: string) {
@@ -28,7 +31,8 @@ function parseTestProgram (lines: string[], label: string) {
 
 	const programRet: IProgramRet = {
 		label: label,
-		procedures: []
+		range: new Range(0,0,0,0),
+		testcases: []
 	}
 
 	for (let lineNo = 1; lineNo < lines.length; lineNo++) {
@@ -41,8 +45,8 @@ function parseTestProgram (lines: string[], label: string) {
 			if (proc) {
 				const [ , , procedureName] = proc
 				const range = new Range(lineNo, lines[lineNo].indexOf(procedureName), lineNo, procedureName.length)
-				programRet.procedures.push({
-					procedureName: procedureName,
+				programRet.testcases.push({
+					label: procedureName,
 					range: range
 				})
 				continue

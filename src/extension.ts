@@ -3,7 +3,7 @@ import { commands, tests, window, workspace,
 	TestController, TestItem, TestItemCollection, TestMessage,  TestRun, TestTag, TestRunProfileKind, TestRunRequest,
 	TextDocument, TextEditor, Uri, WorkspaceFolder } from 'vscode'
 import { ABLResults } from './ABLResults'
-import { ABLTestSuite, ABLTestClass, ABLTestProgram, ABLTestMethod, ABLTestProcedure, testData, ABLTestFile, ABLTestCase, ABLRunnable, ABLTestDir } from './testTree'
+import { testData, ABLTestSuite, ABLTestClass, ABLTestProgram, ABLTestFile, ABLTestCase, ABLTestDir, ABLTestData } from './testTree'
 import { GlobSync } from 'glob'
 import { logToChannel } from './ABLUnitCommon'
 import { readFileSync } from 'fs'
@@ -88,11 +88,7 @@ export async function activate(context: ExtensionContext) {
 					printDataType(data)
 				}
 
-				if (data instanceof ABLTestSuite ||
-					data instanceof ABLTestClass ||
-					data instanceof ABLTestProgram ||
-					data instanceof ABLTestMethod ||
-					data instanceof ABLTestProcedure) {
+				if (data instanceof ABLTestFile || data instanceof ABLTestCase) {
 					run.enqueued(test)
 					queue.push({ test, data })
 
@@ -123,7 +119,7 @@ export async function activate(context: ExtensionContext) {
 
 			let ret = false
 			for (const r of res) {
-				r.setTestData(testData)
+				r.setTestData(testData.getMap())
 				logToChannel("starting ablunit tests for folder: " + r.workspaceFolder.uri.fsPath)
 				run.appendOutput("starting ablunit tests for folder: " + r.workspaceFolder.uri.fsPath + "\r\n")
 				ret = await r.run(run).then(() => {
@@ -212,7 +208,7 @@ export async function activate(context: ExtensionContext) {
 		}
 
 		showNotification("running ablunit tests")
-		const queue: { test: TestItem; data: ABLRunnable }[] = []
+		const queue: { test: TestItem; data: ABLTestData }[] = []
 		const run = ctrl.createTestRun(request)
 		const tests = request.include ?? gatherTestItems(ctrl.items)
 
@@ -280,13 +276,6 @@ export async function activate(context: ExtensionContext) {
 
 function getExistingTestItem (controller: TestController, uri: Uri) {
 	const items = gatherAllTestItems(controller.items)
-	const relPath = workspace.asRelativePath(uri.fsPath)
-
-	const existRel = items.find(item => item.id === relPath)
-	if (existRel) {
-		return existRel
-	}
-
 	const existUri = items.find(item => item.id === uri.fsPath)
 	if (existUri) {
 		return existUri
@@ -300,15 +289,13 @@ function getOrCreateFile(controller: TestController, uri: Uri) {
 	if (existing) {
 		const data = testData.get(existing)
 		if (!data) {
+			console.log("[getOrCreateFile] data not found for existing item. file=" + workspace.asRelativePath(uri) + ", existing.id=" + existing.id)
 			throw new Error("[getOrCreateFile] data not found for existing item. file=" + workspace.asRelativePath(uri) + ", existing.id=" + existing.id)
 		}
-		if (data instanceof ABLTestSuite) {
-			return { file: existing, data: data }
-		} else if (data instanceof ABLTestClass) {
-			return { file: existing, data: data }
-		} else if (data instanceof ABLTestProgram) {
+		if (data instanceof ABLTestFile) {
 			return { file: existing, data: data }
 		} else {
+			console.log("[getOrCreateFile] unexpected data type for existing item. file=" + workspace.asRelativePath(uri) + ", existing.id=" + existing.id)
 			throw new Error("[getOrCreateFile] unexpected data type." +
 								" file=" + workspace.asRelativePath(uri) +
 								", existing.id=" + existing.id +
@@ -318,11 +305,13 @@ function getOrCreateFile(controller: TestController, uri: Uri) {
 
 	const data = createFileNode(uri)
 	if(!data) {
+		console.error("No tests found in file: " + uri.fsPath)
 		return { file: undefined, data: undefined }
 	}
+	const file = controller.createTestItem(uri.fsPath, workspace.asRelativePath(uri.fsPath), uri)
+	testData.set(file, data)
 	data.didResolve = false
 
-	const file = controller.createTestItem(uri.fsPath, workspace.asRelativePath(uri.fsPath), uri)
 	file.description = "To be parsed..."
 	file.tags = [ new TestTag("runnable") ]
 
@@ -333,8 +322,7 @@ function getOrCreateFile(controller: TestController, uri: Uri) {
 		controller.items.add(file)
 	}
 
-	testData.set(file, data)
-	file.canResolveChildren = false
+	file.canResolveChildren = true
 	return { file, data }
 }
 
@@ -370,10 +358,6 @@ function getOrCreateDirNode(controller: TestController, uri: Uri, isTestSuite: b
 				testData.set(suiteGroup, data)
 			}
 		}
-
-		//TODO: add test suite support
-		//currently works for workspaces, but not for folders.
-		//test in workspace with single folder too
 	}
 
 	for (const path of paths) {
@@ -435,15 +419,16 @@ function createFileNode(file: Uri) {
 	if (fileAttrs === "none") {
 		return undefined
 	}
+	const relativePath = workspace.asRelativePath(file.fsPath)
 
 	if (fileAttrs === "suite") {
-		return new ABLTestSuite()
+		return new ABLTestSuite(relativePath)
 	}
 
 	if (file.fsPath.endsWith(".cls")) {
-		return new ABLTestClass()
+		return new ABLTestClass(relativePath)
 	}
-	return new ABLTestProgram()
+	return new ABLTestProgram(relativePath)
 }
 
 function getTestFileAttrs(file: Uri | undefined) {
@@ -468,7 +453,7 @@ function gatherAllTestItems(collection: TestItemCollection) {
 	const items: TestItem[] = []
 	collection.forEach(item => {
 		items.push(item)
-		items.push(...gatherTestItems(item.children))
+		items.push(...gatherAllTestItems(item.children))
 	})
 	return items
 }
@@ -751,12 +736,10 @@ function printDataType(data: any) {
 		logToChannel(" - ABLTestSuite")
 	else if(data instanceof ABLTestClass)
 		logToChannel(" - ABLTestClass")
-	else if(data instanceof ABLTestMethod)
-		logToChannel(" - ABLTestMethod")
 	else if(data instanceof ABLTestProgram)
-		logToChannel(" - ABLTestProgram")
-	else if(data instanceof ABLTestProcedure)
 		logToChannel(" - ABLTestProcedure")
+	else if(data instanceof ABLTestCase)
+		logToChannel(" - ABLTestCase")
 	else
 		logToChannel(" - unexpected instanceof type")
 }
