@@ -230,10 +230,9 @@ export class ABLUnitConfig  {
 	}
 
 	async deleteFile(uri: Uri) {
-		return workspace.fs.delete(uri).then((val) => {
+		return workspace.fs.delete(uri).then(() => {
 			console.log("deleted file: " + uri.fsPath)
-		}, (err) => {
-			// console.log("----- file '" + workspace.asRelativePath(uri, false) + "' does not exist")
+		}, () => {
 			//do nothing.  if the file doesn't exist we can just continue on.
 		})
 	}
@@ -243,7 +242,7 @@ export class ABLUnitConfig  {
 	}
 
 	async createDir(uri: Uri) {
-		return workspace.fs.stat(uri).then((stat) => {}, (err) => {
+		return workspace.fs.stat(uri).then(() => {}, () => {
 			return workspace.fs.createDirectory(uri)
 		})
 	}
@@ -264,7 +263,7 @@ export class ABLUnitConfig  {
 				if (stat.type != FileType.Directory) {
 					throw new Error("configJson.output.location is not a Directory: " + this.ablunitConfig.config_output_locationUri.fsPath)
 				}
-			}, (err) => {
+			}, () => {
 				return this.createDir(this.ablunitConfig.config_output_locationUri)
 			})
 		)
@@ -277,9 +276,12 @@ export class ABLUnitConfig  {
 	async createProfileOptions (profilerOptions: IProfilerOptions) {
 		if (!profilerOptions.enabled) { return Promise.resolve() }
 
-		const opt: string[] = [ '-profiling',
-								'-filename "' + workspace.asRelativePath(profilerOptions.filenameUri, false) + '"',
-								'-description "' + profilerOptions.description + '"' ]
+		const opt: string[] = [
+			'-profiling',
+			'-filename "' + workspace.asRelativePath(profilerOptions.filenameUri, false) + '"',
+			'-description "' + profilerOptions.description + '"'
+		]
+
 		if (profilerOptions.coverage) {
 			opt.push('-coverage')
 		}

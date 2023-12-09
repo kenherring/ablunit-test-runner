@@ -1,6 +1,5 @@
 import * as assert from 'assert'
 import { before } from 'mocha'
-import path = require('path')
 import { Uri } from 'vscode'
 import { parseSuiteLines } from '../../parse/TestSuiteParser'
 import { parseTestClass } from '../../parse/TestClassParser'

@@ -26,8 +26,6 @@ export interface IPropath {
 	entry: IPropathEntry[]
 }
 
-const ABLFiles: IABLFile[] = []
-
 export class PropathParser {
 	filemap: Map<string, IABLFile> = new Map()
 	files: IABLFile[] = []
@@ -135,7 +133,7 @@ export class PropathParser {
 
 		for (const e of this.propath.entry) {
 			const fileInPropathUri = Uri.joinPath(e.uri, relativeFile)
-			const exists = await workspace.fs.stat(fileInPropathUri).then((stat) => { return true }, (err) => { return false })
+			const exists = await workspace.fs.stat(fileInPropathUri).then(() => { return true }, () => { return false })
 
 
 			if (exists) {

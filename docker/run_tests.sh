@@ -27,7 +27,7 @@ fi
 
 ## run tests inside the container
 echo "starting 'docker run' [script=docker/$SCRIPT.sh]..."
-docker run --rm -it -e PROGRESS_CFG_BASE64 -e GIT_BRANCH \
+time docker run --rm -it -e PROGRESS_CFG_BASE64 -e GIT_BRANCH \
 	-v "$PWD":/home/circleci/ablunit-test-provider \
 	-v vscode-test:$VSCODE_DIR \
 	-v node-modules:/home/circleci/project/node_modules \

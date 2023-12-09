@@ -57,15 +57,19 @@ initialize () {
 run_tests () {
 	echo "starting tests..."
 	if ! .circleci/run_test_wrapper.sh; then
+		echo "run_tests failed"
 		if $BASH_AFTER_FAIL; then
 			bash
+			exit 1
 		else
 			exit 1
 		fi
 	fi
+	echo "run_tests success"
 }
 
 analyze_results () {
+	echo "analyzing results..."
 	RESULTS_COUNT=$(find . -name 'mocha_results_*.xml' | wc -l)
 	LCOV_COUNT=$(find . -name 'lcov.info' | wc -l)
 	HAS_ERROR=false
@@ -96,6 +100,5 @@ finish () {
 ########## MAIN BLOCK ##########
 initialize "$@"
 run_tests
-teardown
 analyze_results
 finish

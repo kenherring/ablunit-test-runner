@@ -1,4 +1,4 @@
-import * as path from 'path';
+import * as path from 'path'
 import { runTests } from '@vscode/test-electron'
 import { getTestConfig } from './createTestConfig'
 
@@ -15,12 +15,9 @@ async function testProject(projName: string, projDir?: string, launchArgs?: stri
 		projDir = projName
 	}
 
-	const extensionDevelopmentPath = path.resolve(__dirname, '../../');
-	console.log("extensionDevelopmentPath=" + extensionDevelopmentPath)
+	const extensionDevelopmentPath = path.resolve(__dirname, '../../')
+	const extensionTestsPath = path.resolve(__dirname, './index')
 	try {
-		const extensionTestsPath = path.resolve(__dirname, './index')
-		console.log("extensionTestsPath=" + extensionTestsPath)
-
 		const args: string[] = [
 			projDir,
 			'--disable-gpu',
@@ -41,10 +38,15 @@ async function testProject(projName: string, projDir?: string, launchArgs?: stri
 		})
 	} catch (err) {
 		console.error('[runTest.ts testProject] Failed to run tests, err=' + err)
-		process.exit(1);
+		process.exit(1)
 	} finally {
 		console.log("[runTest.ts testProject] finally")
 	}
 }
 
-main()
+main().then(() => {
+	console.log("[runTest.ts main] completed successfully!")
+}, (err) => {
+	console.error('[runTest.ts main] Failed to run tests, err=' + err)
+	process.exit(1)
+})

@@ -8,13 +8,11 @@ const projName = 'proj1'
 const workspaceUri = getWorkspaceUri()
 
 before(async () => {
-    console.log("before")
 	await waitForExtensionActive()
 	await updateConfig("files.exclude", undefined)
 })
 
 afterEach(async () => {
-	console.log("afterEach")
 	await updateConfig("files.exclude", undefined)
 })
 

@@ -89,7 +89,6 @@ jobs:
           keys:
             - v1-nodemodules-{{ checksum "package.json" }}
             - v1-nodemodules-
-      - run: npm install
       - run: npm install -g @vscode/vsce
       - run: vsce package --pre-release --githubBranch "$(git branch --show-current)"
       - run: vsce ls

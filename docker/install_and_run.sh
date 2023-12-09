@@ -36,7 +36,7 @@ initialize () {
 
 	scripts/cleanup.sh
 
-	cp -r .vscode-test dummy-ext/
+	cp -r .vscode-test dummy-ext/ || true
 }
 
 package_extension () {
