@@ -78,9 +78,11 @@ export class ABLTestDir implements ITestType {
 	public canResolveChildren = false
 	public description: string
 	public relativePath: string
+	public label: string = ''
 
-	constructor (path: Uri | string) {
-		this.description = "ABLTestDir"
+	constructor (desc: string, label: string, path: Uri | string) {
+		this.description = desc
+		this.label = label
 		if (path instanceof Uri) {
 			this.relativePath = workspace.asRelativePath(path.fsPath, false)
 		} else {
