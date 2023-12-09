@@ -32,9 +32,7 @@ export async function getStorageUri (workspaceFolder: WorkspaceFolder) {
 export async function activate(context: ExtensionContext) {
 
 	logToChannel("ACTIVATE!")
-	if(!workspace.workspaceFolders) {
-		return
-	}
+	if(!workspace.workspaceFolders) { return }
 
 	const debugEnabled = workspace.getConfiguration('ablunit').get('debugEnabled', false)
 	const ctrl = tests.createTestController('ablunitTestController', 'ABLUnit Test')
@@ -60,14 +58,7 @@ export async function activate(context: ExtensionContext) {
 		const l = fileChangedEmitter.event(uri => {
 			const file = getOrCreateFile(ctrl, uri).file
 			if(file) {
-				startTestRun(
-					new TestRunRequest(
-						[file],
-						undefined,
-						request.profile,
-						true
-					)
-				)
+				startTestRun(new TestRunRequest([file], undefined, request.profile, true))
 			} else {
 				logToChannel("startTestRun - file not found: " + uri.fsPath, "error")
 			}
@@ -114,32 +105,26 @@ export async function activate(context: ExtensionContext) {
 				}
 			}
 
-			logToChannel('starting ablunit run')
-			run.appendOutput('starting ablunit run\r\n')
+			logToChannel('starting ablunit run', 'log', run)
 
 			let ret = false
 			for (const r of res) {
 				r.setTestData(testData.getMap())
-				logToChannel("starting ablunit tests for folder: " + r.workspaceFolder.uri.fsPath)
-				run.appendOutput("starting ablunit tests for folder: " + r.workspaceFolder.uri.fsPath + "\r\n")
+				logToChannel("starting ablunit tests for folder: " + r.workspaceFolder.uri.fsPath, 'log', run)
+
 				ret = await r.run(run).then(() => {
 					return true
 				}, (err) => {
-					logToChannel("ablunit run failed with exception: " + err,'error')
+					logToChannel("ablunit run failed with exception: " + err, 'error', run)
 					return false
 				})
-				if (!ret) {
-					console.error("ablunit run failed?")
-					continue
-				}
+				if (!ret) { continue }
 
 				if (r.ablResults) {
 					const p = r.ablResults.resultsJson[0]
 					const totals = "Totals - " + p.tests + " tests, " + p.passed + " passed, " + p.errors + " errors, " + p.failures + " failures"
-					logToChannel(totals)
-					logToChannel("Duration - " + r.duration() + "s")
-					run.appendOutput(totals + "\r\n")
-					run.appendOutput("Duration - " + r.duration() + "s\r\n")
+					logToChannel(totals, 'log', run)
+					logToChannel("Duration - " + r.duration() + "s", 'log', run)
 				}
 
 				for (const { test } of queue) {
@@ -164,8 +149,7 @@ export async function activate(context: ExtensionContext) {
 				return
 			}
 
-			logToChannel('ablunit run complete')
-			run.appendOutput('ablunit run complete\r\n')
+			logToChannel('ablunit tests complete', 'log', run)
 
 			if (run.token.isCancellationRequested) {
 				for (const { test } of queue) {
@@ -338,11 +322,7 @@ function getWorkspaceFolderNode(controller: TestController, workspaceFolder: Wor
 	wf.tags = [ new TestTag("runnable"), new TestTag("ABLTestDir") ]
 	controller.items.add(wf)
 
-	if(!testData.get(wf)) {
-		const data = new ABLTestDir("WorkspaceFolder", workspaceFolder.name, workspaceFolder.uri)
-		data.label = workspaceFolder.name
-		testData.set(wf, data)
-	}
+	testData.set(wf, new ABLTestDir("WorkspaceFolder", workspaceFolder.name, workspaceFolder.uri))
 	return wf
 }
 
@@ -364,12 +344,9 @@ function getTestSuiteNode(controller: TestController, workspaceFolder: Workspace
 	suiteGroup.canResolveChildren = false
 	suiteGroup.description = "ABLTestSuiteGroup"
 	suiteGroup.tags = [ new TestTag("runnable"), new TestTag("ABLTestSuiteGroup") ]
+	testData.set(suiteGroup, new ABLTestDir("TestSuiteGroup", "[ABL Test Suites]" , groupId))
+	siblings.add(suiteGroup)
 
-	if (!testData.get(suiteGroup)) {
-		const data = new ABLTestDir("TestSuiteGroup", "[ABL Test Suites]" , groupId)
-		testData.set(suiteGroup, data)
-		siblings.add(suiteGroup)
-	}
 	return suiteGroup
 }
 
@@ -435,10 +412,7 @@ function createFileNode(file: Uri) {
 	return new ABLTestProgram(relativePath)
 }
 
-function getTestFileAttrs(file: Uri | undefined) {
-	if (!file) {
-		return "none"
-	}
+function getTestFileAttrs(file: Uri) {
 	const testRegex = /@test/i
 	const suiteRegex = /@testsuite/i
 
@@ -491,31 +465,14 @@ function getExcludePatterns() {
 }
 
 function getWorkspaceTestPatterns() {
-	let includePatterns: string[] = []
-	let excludePatterns: string[] = []
+	let includePatterns: string[] | string = workspace.getConfiguration("ablunit").get("files.include", [ "**/*.{cls,p}" ])
+	let excludePatterns: string[] | string = workspace.getConfiguration("ablunit").get("files.exclude", [ "**/.builder/**" ])
 
-	const includePatternsConfig: string[] | undefined = workspace.getConfiguration("ablunit").get("files.include")
-	if (!includePatternsConfig) {
-		includePatterns = [ "**/*.{cls,p}" ]
-	} else if (includePatternsConfig[0].length == 1) {
-		includePatterns[0] = ''
-		for (const pattern of includePatternsConfig) {
-			includePatterns[0] = includePatterns[0] + pattern
-		}
-	} else {
-		includePatterns = includePatternsConfig
+	if (typeof includePatterns === "string") {
+		includePatterns = [ includePatterns ]
 	}
-
-	const excludePatternsConfig: string[] | undefined = workspace.getConfiguration("ablunit").get("files.exclude")
-	if (!excludePatternsConfig) {
-		excludePatterns = [ "**/.builder/**" ]
-	} else if (excludePatternsConfig[0].length == 1) {
-		excludePatterns[0] = ''
-		for (const pattern of excludePatternsConfig) {
-			excludePatterns[0] = excludePatterns[0] + pattern
-		}
-	} else {
-		excludePatterns = excludePatternsConfig
+	if (typeof excludePatterns === "string") {
+		excludePatterns = [ excludePatterns ]
 	}
 
 	const retVal: { workspaceFolder: WorkspaceFolder, includePatterns: RelativePattern[], excludePatterns: RelativePattern[] }[] = []
