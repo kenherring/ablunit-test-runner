@@ -4,7 +4,7 @@ import { getLines } from './TestParserCommon'
 // CLASS statement
 const classRE = /^\s*class\s+(\S+[^:])\s*/i
 // METHOD statement
-const methodRE = /\s+method\s(\s*public)?\s*(\S+)\s*(\S+\w)/i
+const methodRE = /\s*method\s(\s*public)?\s*(\S+)\s*(\S+\w)/i
 
 export interface ITestCase {
 	label: string
@@ -34,7 +34,6 @@ export function parseABLTestClass (displayClassLabel: string, text: string, rela
 }
 
 export function parseTestClass (lines: string[], configClassLabel: string, relativePath: string) {
-	let foundClassHead = false
 	const classRet: IClassRet = {
 		classname: "",
 		label: "",
@@ -42,38 +41,45 @@ export function parseTestClass (lines: string[], configClassLabel: string, relat
 		testcases: []
 	}
 
+	let lastNonBlankLineHasAnnotation = false
+	const regexTest = /@test\./i
+
 	for (let lineNo = 0; lineNo < lines.length; lineNo++) {
-		if (lines[lineNo] === "") {
+		if (lines[lineNo].trim() === "") {
 			continue
 		}
 
 		//first find the class statement
-		if (!foundClassHead) {
+		if (classRet.classname === "") {
 			const classResult = classRE.exec(lines[lineNo])
-			if (classResult) {
-				classRet.classname = classResult[1].replace(/:$/,'').trim()
-				const range = new Range(lineNo, lines[lineNo].indexOf(classRet.classname), lineNo, classRet.classname.length)
+			if (!classResult) { continue }
 
-				const parts = relativePath.split('/')
-				classRet.label = parts[parts.length - 1]
+			classRet.classname = classResult[1].replace(/:$/,'').trim()
+			classRet.range = new Range(lineNo, lines[lineNo].indexOf(classRet.classname), lineNo, classRet.classname.length)
+			classRet.label = getClassLabel(configClassLabel, classRet.classname, relativePath)
+			continue
+		}
 
-				classRet.range = range
-				foundClassHead = true
-				continue
-			}
-		} else if (lines[lineNo - 1].toLowerCase().indexOf("@test.") != -1) {
+		if (lastNonBlankLineHasAnnotation || lines[lineNo].toLowerCase().indexOf("@test.") != -1) {
 			const method = methodRE.exec(lines[lineNo])
 			if (method) {
 				const [, , , methodname] = method
-				const range = new Range(lineNo, lines[lineNo].indexOf(methodname), lineNo, methodname.length)
-				classRet.testcases.push({label: methodname, range: range})
-				continue
+				classRet.testcases.push({
+					label: methodname,
+					range: new Range(lineNo, lines[lineNo].indexOf(methodname), lineNo, methodname.length)
+				})
 			}
 		}
+		lastNonBlankLineHasAnnotation = regexTest.exec(lines[lineNo]) != null
 	}
 
-	if (configClassLabel == "class-type-name") {
-		classRet.label = classRet.classname
-	}
 	return classRet
+}
+
+function getClassLabel (configClassLabel: string, classname: string, relativePath: string) {
+	if (configClassLabel == "class-type-name") {
+		return classname
+	} else {
+		return relativePath.split('/').pop() ?? 'UNDEFINED'
+	}
 }

@@ -1,23 +1,8 @@
 import { Uri, workspace } from 'vscode'
-import { TextDecoder } from 'util'
+import { getContentFromFilesystem } from './TestParserCommon'
 import { PropathParser } from '../ABLPropath'
 import { IProfilerOptions } from '../ABLUnitConfigWriter'
 import { ABLDebugLines } from '../ABLDebugLines'
-
-const textDecoder = new TextDecoder('utf-8');
-
-
-
-export const getContentFromFilesystem = async (uri: Uri) => {
-	try {
-		const rawContent = await workspace.fs.readFile(uri)
-		return textDecoder.decode(rawContent)
-	} catch (e) {
-		// throw new Error(`Error reading ${uri.fsPath}: ${e}`)
-		console.warn(`Error reading ${uri.fsPath}`, e)
-		return ''
-	}
-}
 
 export class ABLProfile {
 	profJSON?: ABLProfileJson

@@ -2,11 +2,11 @@ import * as assert from 'assert'
 import { before } from 'mocha'
 import path = require('path')
 import { Uri } from 'vscode'
-import { parseTestClass } from '../../parse/TestClassParser'
 import { parseSuiteLines } from '../../parse/TestSuiteParser'
+import { parseTestClass } from '../../parse/TestClassParser'
+import { parseTestProgram } from '../../parse/TestProgramParser'
 import { getTestCount, getWorkspaceUri, runAllTests, waitForExtensionActive } from '../testCommon'
-import { getContentFromFilesystem } from '../../parse/ProfileParser'
-import { getLines } from '../../parse/TestParserCommon'
+import { getContentFromFilesystem, getLines } from '../../parse/TestParserCommon'
 
 
 const projName = 'proj5'
@@ -53,16 +53,42 @@ suite(projName + ' - Extension Test Suite', () => {
 		assert.strictEqual(classRet.label, "test2.cls")
 	})
 
+	test(projName + '.5 - TestClass - login/test5.cls - test count', async () => {
+		const lines = await readLinesFromFile('test/login/test5.cls')
+		const classRet = parseTestClass(lines, 'filename', 'login/test5.cls')
+		assert.strictEqual(classRet.testcases.length, 8, "testcase count in test/login/test5.cls")
+	})
+
+	test(projName + '.6 - TestClass - login/test5.cls - test count', async () => {
+		const lines = await readLinesFromFile('test/login/test7.cls')
+		const classRet = parseTestClass(lines, 'filename', 'login/test7.cls')
+		assert.strictEqual(classRet.testcases.length, 0, "testcase count in test/login/test5.cls")
+	})
+
+	////////// TEST PROGRAMS //////////
+
+	test(projName + '.7 - TestProgram - test/proc2/proc2.p - test count', async () => {
+		const lines = await readLinesFromFile('test/proc2/proc2.p')
+		const classRet = parseTestProgram(lines, 'filename')
+		assert.strictEqual(classRet.testcases.length, 9, "testcase count in test/proc2/proc2.p")
+	})
+
+	test(projName + '.8 - TestClass - test/proc2/test7.p- test count', async () => {
+		const lines = await readLinesFromFile('test/proc2/test7.p')
+		const classRet = parseTestProgram(lines, 'filename')
+		assert.strictEqual(classRet.testcases.length, 0, "testcase count in test/proc2/test7.p")
+	})
+
 })
 
 
-async function readLinesFromFile (file: string, annotation: string = "@test") {
-	const uri = Uri.joinPath(workspaceUri, file)
+async function readLinesFromFile (relativeFile: string, annotation: string = "@test") {
+	const uri = Uri.joinPath(workspaceUri, relativeFile)
 	return getContentFromFilesystem(uri).then((content) => {
 		const [ lines, ] = getLines(content, annotation)
 		return lines
 	}, (err) => {
-		console.error("ERROR: " + err)
+		console.error("Error reading file (" + relativeFile + "): " + err)
 		throw err
 	})
 }

@@ -87,7 +87,6 @@ export async function getOEVersion (workspaceFolder: WorkspaceFolder, projectJso
 	return "none"
 }
 
-
 function parseOpenEdgeProjectJson (workspaceFolder: WorkspaceFolder, conf: any, dlc: IDlc) {
 	//TODO what about if we're running a different profile?
 	if (!conf.buildPath) {

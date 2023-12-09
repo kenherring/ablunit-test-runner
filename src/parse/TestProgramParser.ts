@@ -27,7 +27,7 @@ export function parseABLTestProgram (text: string, relativePath: string) {
 	return programRet
 }
 
-function parseTestProgram (lines: string[], label: string) {
+export function parseTestProgram (lines: string[], label: string) {
 
 	const programRet: IProgramRet = {
 		label: label,
@@ -35,12 +35,16 @@ function parseTestProgram (lines: string[], label: string) {
 		testcases: []
 	}
 
-	for (let lineNo = 1; lineNo < lines.length; lineNo++) {
-		if (lines[lineNo] === "") {
+	let lastNonBlankLineHasAnnotation = false
+	const regexTest = /@test\./i
+
+	for (let lineNo = 0; lineNo < lines.length; lineNo++) {
+		if (lines[lineNo].trim() === "") {
 			continue
 		}
 
-		if(lines[lineNo - 1].toLowerCase().indexOf("@test.") != -1) {
+		if(lastNonBlankLineHasAnnotation ||
+			lines[lineNo].toLowerCase().indexOf("@test.") != -1) {
 			const proc = procedureRE.exec(lines[lineNo])
 			if (proc) {
 				const [ , , procedureName] = proc
@@ -49,9 +53,9 @@ function parseTestProgram (lines: string[], label: string) {
 					label: procedureName,
 					range: range
 				})
-				continue
 			}
 		}
+		lastNonBlankLineHasAnnotation = regexTest.exec(lines[lineNo]) != null
 	}
 	return programRet
 }
