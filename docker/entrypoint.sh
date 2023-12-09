@@ -29,7 +29,10 @@ initialize () {
 		cd /home/circleci/ablunit-test-provider
 		git --no-pager diff --diff-filter=d --name-only --staged > /tmp/stage_files
 		git --no-pager diff --diff-filter=D --name-only --staged > /tmp/deleted_files
-		git --no-pager diff --diff-filter=d --name-only > /tmp/modified_files
+
+		if ${STAGED_ONLY:-true}; then
+			git --no-pager diff --diff-filter=d --name-only > /tmp/modified_files
+		fi
 		cd -
 
 
@@ -38,10 +41,12 @@ initialize () {
 			cp "/home/circleci/ablunit-test-provider/$FILE" "$FILE"
 		done < /tmp/stage_files
 
-		while read -r FILE; do
-			echo "copying modified file $FILE"
-			cp "/home/circleci/ablunit-test-provider/$FILE" "$FILE"
-		done < /tmp/modified_files
+		if [ -f /tmp/modified_files ]; then
+			while read -r FILE; do
+				echo "copying modified file $FILE"
+				cp "/home/circleci/ablunit-test-provider/$FILE" "$FILE"
+			done < /tmp/modified_files
+		fi
 
 		while read -r FILE; do
 			echo "deleting deleted file $FILE"

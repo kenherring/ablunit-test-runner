@@ -89,7 +89,7 @@
 		"test": "node ./out/test/runTest.js && echo \"'npm test' success\" || npm run test-failed",
 		"test-failed": "sh -c scripts/npm-test-failed.sh",
 		"test:cov-before": "sed -i 's/\"activationEvents\"/\"activationEvents-vscode\"/g;s/\"activationEvents-coverage\"/\"activationEvents\"/g' package.json",
-		"test:cov-after": "sed -i 's/\"activationEvents\"/\"activationEvents-coverage\"/g;s/\"activationEvents-vscode\"/\"activationEvents\"/g' package.json && echo 200 || echo 201",
+		"test:cov-after": "sed -i 's/\"activationEvents\"/\"activationEvents-coverage\"/g;s/\"activationEvents-vscode\"/\"activationEvents\"/g' package.json",
 		"test:install-and-run": "npm run package && cd dummy-ext && npm run test:install-and-run",
 		"vscode-test": "vscode-test",
 		"vscode:prepublish": "npm run esbuild-base -- --minify",

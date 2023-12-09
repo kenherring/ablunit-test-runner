@@ -22,6 +22,10 @@ module.exports = {
 		},
 	],
 	ignorePatterns: [
+		'dummy-ext',
+		'node_modules',
+		'out',
+		'test_projects',
 		'.eslintrc.cjs'
 	],
 	rules: {

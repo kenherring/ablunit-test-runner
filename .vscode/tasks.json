@@ -18,6 +18,22 @@
 			"runOptions": {
 				"runOn": "folderOpen"
 			}
+		},
+		{
+			"type": "eslint",
+			"problemMatcher": [
+				"$eslint-stylish"
+			],
+			"label": "eslint: lint whole folder",
+			"options": {
+				"shell": {
+					"executable": "cmd.exe",
+					"args": [
+						"/d",
+						"/c"
+					]
+				}
+			}
 		}
 	]
 }
