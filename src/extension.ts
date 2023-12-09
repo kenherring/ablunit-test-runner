@@ -90,7 +90,7 @@ export async function activate (context: ExtensionContext) {
 
 			let ret = false
 			for (const r of res) {
-				void r.setTestData(testData.getMap())
+				r.setTestData(testData.getMap())
 				logToChannel('starting ablunit tests for folder: ' + r.workspaceFolder.uri.fsPath, 'log', run)
 
 				ret = await r.run(run).then(() => {

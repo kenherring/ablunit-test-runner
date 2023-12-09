@@ -55,7 +55,7 @@ export class ABLResults {
 		logToChannel("STATUS: " + status)
 	}
 
-	async setTestData(testData: WeakMap<TestItem, ABLTestData>) {
+	setTestData(testData: WeakMap<TestItem, ABLTestData>) {
 		this.testData = testData
 	}
 
@@ -132,7 +132,7 @@ export class ABLResults {
 		workspace.fs.stat(this.cfg.ablunitConfig.config_output_jsonUri).then((stat) => {
 			if (stat.type === FileType.File) {
 				console.log("delete " + this.cfg.ablunitConfig.config_output_jsonUri.fsPath)
-				workspace.fs.delete(this.cfg.ablunitConfig.config_output_jsonUri)
+				return workspace.fs.delete(this.cfg.ablunitConfig.config_output_jsonUri)
 			}
 		}, () => {
 			// do nothing, can't delete a file that doesn't exist
