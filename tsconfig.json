@@ -16,7 +16,8 @@
 		],
 	},
 	"include": [
-		"src/**/*.ts"
+		"src/**/*.ts",
+		"vscode.proposed.*.d.ts"
 	],
 	"exclude": [
 		"dummy-ext",

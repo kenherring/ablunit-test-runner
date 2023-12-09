@@ -1,4 +1,6 @@
-import { FileType, MarkdownString, Position, Range, TestItem, TestItemCollection, TestMessage, TestRun, Uri, workspace, WorkspaceFolder } from 'vscode'
+import { FileType, MarkdownString, Position, Range, TestItem, TestItemCollection, TestMessage, TestRun, Uri, workspace, WorkspaceFolder,
+		FileCoverage, CoveredCount, StatementCoverage,
+		FileStat } from 'vscode'
 import { ABLUnitConfig, ITestObj } from './ABLUnitConfigWriter'
 import { ABLResultsParser, TCFailure, TestCase, TestSuite } from './parse/ResultsParser'
 import { ABLTestSuite, ABLTestData } from './testTree'
@@ -8,7 +10,6 @@ import { ABLDebugLines } from './ABLDebugLines'
 import { ABLPromsgs, getPromsgText } from './ABLPromsgs'
 import { PropathParser } from './ABLPropath'
 import { logToChannel } from './ABLUnitCommon'
-import { FileCoverage, CoveredCount, StatementCoverage } from './TestCoverage'
 import { ablunitRun } from './ABLUnitRun'
 import { getDLC, IDlc } from './parse/OpenedgeProjectParser'
 
@@ -129,7 +130,7 @@ export class ABLResults {
 	}
 
 	async deleteResultsXml() {
-		workspace.fs.stat(this.cfg.ablunitConfig.config_output_jsonUri).then((stat) => {
+		workspace.fs.stat(this.cfg.ablunitConfig.config_output_jsonUri).then((stat: FileStat) => {
 			if (stat.type === FileType.File) {
 				console.log("delete " + this.cfg.ablunitConfig.config_output_jsonUri.fsPath)
 				workspace.fs.delete(this.cfg.ablunitConfig.config_output_jsonUri)
