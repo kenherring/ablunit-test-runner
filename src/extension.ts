@@ -1,7 +1,7 @@
 import { commands, tests, window, workspace,
 	CancellationToken, ConfigurationChangeEvent, EventEmitter, ExtensionContext, Position, Range, RelativePattern, Selection,
-	TestController, TestItem, TestItemCollection, TestMessage, TestTag, TestRunProfileKind, TestRunRequest,
-	TextDocument, Uri, WorkspaceFolder } from 'vscode'
+	TestController, TestItem, TestItemCollection, TestMessage, TestTag, TestRunProfileKind, TestRunRequest, TextDocument, Uri, WorkspaceFolder,
+	FileCoverage } from 'vscode'
 import { ABLResults } from './ABLResults'
 import { testData, ABLTestSuite, ABLTestClass, ABLTestProgram, ABLTestFile, ABLTestCase, ABLTestDir, ABLTestData, resultData } from './testTree'
 import { GlobSync } from 'glob'
@@ -90,7 +90,7 @@ export async function activate (context: ExtensionContext) {
 
 			let ret = false
 			for (const r of res) {
-				void r.setTestData(testData.getMap())
+				r.setTestData(testData.getMap())
 				logToChannel('starting ablunit tests for folder: ' + r.workspaceFolder.uri.fsPath, 'log', run)
 
 				ret = await r.run(run).then(() => {
@@ -176,6 +176,25 @@ export async function activate (context: ExtensionContext) {
 		const queue: { test: TestItem; data: ABLTestData }[] = []
 		const run = ctrl.createTestRun(request)
 		const tests = request.include ?? gatherTestItems(ctrl.items)
+
+		run.coverageProvider = {
+			provideFileCoverage: () => {
+				console.log("---------- provideFileCoverage ----------")
+				const results = resultData.get(run)
+				if (!results) { return [] }
+
+				const coverage: FileCoverage[] = []
+				for (const r of results ?? []) {
+					coverage.push(...r.coverage)
+				}
+				console.log("coverage.length=" + coverage.length)
+				return coverage
+			},
+			resolveFileCoverage: (coverage: FileCoverage, token: CancellationToken) => {
+				console.error("resolveFileCoverage not implemented")
+				return coverage
+			}
+		}
 
 		discoverTests(tests).then(async () => {
 			const res = await createABLResults()

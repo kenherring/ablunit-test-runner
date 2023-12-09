@@ -17,7 +17,10 @@ end procedure.
 @Test.
 procedure test3.1 :
   message 3.1.
-  Assert:Equals(1,1).
+  if true then
+    Assert:Equals(1,1).
+  else
+    Assert:Equals(1,2).
 end procedure.
 
 @Test.

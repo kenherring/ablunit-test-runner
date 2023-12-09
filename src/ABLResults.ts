@@ -56,7 +56,7 @@ export class ABLResults {
 		logToChannel("STATUS: " + status)
 	}
 
-	async setTestData(testData: WeakMap<TestItem, ABLTestData>) {
+	setTestData(testData: WeakMap<TestItem, ABLTestData>) {
 		this.testData = testData
 	}
 
@@ -133,7 +133,7 @@ export class ABLResults {
 		workspace.fs.stat(this.cfg.ablunitConfig.config_output_jsonUri).then((stat: FileStat) => {
 			if (stat.type === FileType.File) {
 				console.log("delete " + this.cfg.ablunitConfig.config_output_jsonUri.fsPath)
-				workspace.fs.delete(this.cfg.ablunitConfig.config_output_jsonUri)
+				return workspace.fs.delete(this.cfg.ablunitConfig.config_output_jsonUri)
 			}
 		}, () => {
 			// do nothing, can't delete a file that doesn't exist
@@ -440,8 +440,34 @@ export class ABLResults {
 				}
 			}
 
-			fc.detailedCoverage!.push(new StatementCoverage(line.ExecCount ?? 0,
-				new Range(new Position(dbg.incLine - 1, 0), new Position(dbg.incLine, 0))))
+			console.log("dbg.uri.fsPath=" + fc.uri.fsPath)
+			console.log("line.LineNo=" + line.LineNo + " -> " + dbg.incLine + ", line.ExecCount=" + line.ExecCount)
+
+			const range = new Range(dbg.incLine - 1, 0, dbg.incLine - 1, 0)
+			if (!fc.detailedCoverage) { fc.detailedCoverage = [] }
+
+			//TODO - weak map here would be faster
+			const dc = fc.detailedCoverage.find((dc) => {
+				if (dc.location instanceof Range && dc.location.isEqual(range)) {
+					return true
+				}
+			})
+			if (dc) {
+				if (dc instanceof StatementCoverage) {
+					if (line.ExecCount) {
+						if (dc.executionCount === 0 && line.ExecCount > 0) {
+							fc.statementCoverage.covered += 1
+						}
+						dc.executionCount += line.ExecCount ?? 0
+					}
+				}
+			} else {
+				fc.detailedCoverage.push(new StatementCoverage(line.ExecCount ?? 0,new Range(dbg.incLine - 1, 0,dbg.incLine, 0)))
+				if ((line.ExecCount ?? 0) > 0) {
+					fc.statementCoverage.covered += 1
+				}
+				fc.statementCoverage.total += 1
+			}
 		}
 	}
 }
