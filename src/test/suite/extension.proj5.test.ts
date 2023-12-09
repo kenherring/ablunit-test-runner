@@ -59,12 +59,24 @@ suite(projName + ' - Extension Test Suite', () => {
 		assert.strictEqual(classRet.testcases.length, 8, "testcase count in test/login/test5.cls")
 	})
 
+	test(projName + '.6 - TestClass - login/test5.cls - test count', async () => {
+		const lines = await readLinesFromFile('test/login/test7.cls')
+		const classRet = parseTestClass(lines, 'filename', 'login/test7.cls')
+		assert.strictEqual(classRet.testcases.length, 0, "testcase count in test/login/test5.cls")
+	})
+
 	////////// TEST PROGRAMS //////////
 
-	test(projName + '.6 - TestProgram - test/proc2/proc2.p - test count', async () => {
+	test(projName + '.7 - TestProgram - test/proc2/proc2.p - test count', async () => {
 		const lines = await readLinesFromFile('test/proc2/proc2.p')
 		const classRet = parseTestProgram(lines, 'filename')
 		assert.strictEqual(classRet.testcases.length, 9, "testcase count in test/proc2/proc2.p")
+	})
+
+	test(projName + '.8 - TestClass - test/proc2/test7.p- test count', async () => {
+		const lines = await readLinesFromFile('test/proc2/test7.p')
+		const classRet = parseTestProgram(lines, 'filename')
+		assert.strictEqual(classRet.testcases.length, 0, "testcase count in test/proc2/test7.p")
 	})
 
 })
