@@ -105,10 +105,6 @@ export class ABLTestFile extends TestTypeObj {
 	currentResults?: ABLResults
 	public children: ABLTestCase[] = []
 
-	constructor (description: string, label: string) {
-		super(description, label)
-	}
-
 	public async updateFromDisk(controller: TestController, item: TestItem) {
 		try {
 			const content = await getContentFromFilesystem(item.uri!)
@@ -284,7 +280,6 @@ export class ABLTestSuite extends ABLTestFile {
 
 		if(child) {
 			child.label = label
-			child.range = response.range //TODO: this doesn't seem right
 			return true
 		} else {
 			const thead = createTestItem(controller, item, undefined, label, label, type)
