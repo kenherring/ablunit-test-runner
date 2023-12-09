@@ -87,11 +87,11 @@ export async function doesDirExist(uri: Uri) {
 	return ret
 }
 
-export async function getTestCount(resultsJson: Uri, status?: string) {
+export async function getTestCount(resultsJson: Uri, status: string = 'tests') {
 	const count = await workspace.fs.readFile(resultsJson).then((content) => {
 		const str = Buffer.from(content.buffer).toString();
 		const results = JSON.parse(str)
-		if (!status) {
+		if (status === 'tests') {
 			return results[0].tests
 		} else if (status === 'pass') {
 			return results[0].passed
@@ -101,6 +101,7 @@ export async function getTestCount(resultsJson: Uri, status?: string) {
 			return results[0].errors
 		}
 	})
+	console.log("getTestCount: " + status + " = " + count)
 	return count
 }
 
