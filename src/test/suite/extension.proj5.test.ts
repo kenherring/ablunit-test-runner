@@ -53,6 +53,12 @@ suite(projName + ' - Extension Test Suite', () => {
 		assert.strictEqual(classRet.label, "test2.cls")
 	})
 
+	test(projName + '.5 - TestClass - login/test5.cls - ablunit.display.classlabel=filename-noext', async () => {
+		const lines = await readLinesFromFile('test/login/test5.cls')
+		const classRet = parseTestClass(lines, 'filename', 'login/test5.cls')
+		assert.strictEqual(classRet.testcases.length, 7, "testcase count in test5.cls")
+	})
+
 })
 
 
