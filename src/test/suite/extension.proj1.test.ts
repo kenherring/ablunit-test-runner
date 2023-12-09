@@ -55,7 +55,7 @@ suite(projName + ' - Extension Test Suite', () => {
 		await commands.executeCommand('testing.runCurrentFile')
 
 		const resultsJson = Uri.joinPath(workspaceUri,'results.json')
-		const testCount = await getTestCount(resultsJson)
+		const testCount: number = await getTestCount(resultsJson)
 		const pass = await getTestCount(resultsJson, 'pass')
 		const fail = await getTestCount(resultsJson, 'fail')
 		const error = await getTestCount(resultsJson, 'error')

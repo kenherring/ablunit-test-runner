@@ -2,7 +2,7 @@ import { TestRun, workspace } from 'vscode'
 import { ABLResults } from './ABLResults'
 import { logToChannel } from './ABLUnitCommon'
 import { isRelativePath } from './ABLUnitConfigWriter';
-import { exec } from "child_process";
+import { ExecException, exec } from "child_process";
 
 export const ablunitRun = async(options: TestRun, res: ABLResults) => {
 	const start = Date.now()
@@ -92,7 +92,7 @@ export const ablunitRun = async(options: TestRun, res: ABLResults) => {
 			res.setStatus("running command")
 			console.log("command: " + cmd + " " + args.join(' '))
 
-			exec(cmd + ' ' + args.join(' '), {env: process.env, cwd: res.cfg.ablunitConfig.workspaceFolder.uri.fsPath }, (err: any, stdout: any, stderr: any) => {
+			exec(cmd + ' ' + args.join(' '), {env: process.env, cwd: res.cfg.ablunitConfig.workspaceFolder.uri.fsPath }, (err: ExecException | null, stdout: string, stderr: string) => {
 				const duration = Date.now() - start
 				if (stdout) {
 					logToChannel("_progres stdout=" + stdout)
@@ -105,9 +105,10 @@ export const ablunitRun = async(options: TestRun, res: ABLResults) => {
 					options.appendOutput("_progres stderr=" + stderr + "\r\n")
 				}
 				if (err) {
-					logToChannel("_progres err=" + err.toString(), 'error')
-					err = err.toString().replace(/\r\n/g, '\n').replace(/\n/g, '\r\n')
-					options.appendOutput("_progres err=" + err + '\r\n')
+					logToChannel("_progres err=" + err.name, 'error')
+					console.error("err.stack=" + err.stack)
+					const errName = err.name.replace(/\r\n/g, '\n').replace(/\n/g, '\r\n')
+					options.appendOutput("_progres err=" + errName + ' (ExecException)\r\n')
 				}
 				if(err || stderr) {
 					reject(new Error ("ABLUnit Command Execution Failed - duration: " + duration))
