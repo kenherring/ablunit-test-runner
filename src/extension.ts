@@ -315,7 +315,7 @@ function getOrCreateFile(controller: TestController, uri: Uri) {
 	file.description = "To be parsed..."
 	file.tags = [ new TestTag("runnable") ]
 
-	const parent = getOrCreateDirNode(controller, uri, (data instanceof ABLTestSuite))
+	const parent = getOrCreateDirNodeForFile(controller, uri, (data instanceof ABLTestSuite))
 	if (parent) {
 		parent.children.add(file)
 	} else {
@@ -326,38 +326,68 @@ function getOrCreateFile(controller: TestController, uri: Uri) {
 	return { file, data }
 }
 
-function getOrCreateDirNode(controller: TestController, uri: Uri, isTestSuite: boolean) {
-	let relPath: string | undefined = undefined
-	let parent: TestItem | undefined = undefined
-
-	const workspaceFolder = workspace.getWorkspaceFolder(uri)
-	if(!workspaceFolder) { return }
-	const relativePath = workspace.asRelativePath(uri,false).replace(/\\/g, '/')
-
-	let paths = relativePath.split('/').reverse()
-	paths.shift()
-	paths = paths.reverse()
-
-	let wfName: string | undefined = undefined
-	if (workspace.workspaceFolders!.length > 1) {
-		wfName = workspaceFolder.name
-		paths.unshift(workspaceFolder.uri.fsPath.replace(/\\/g,'/').split('/').reverse()[0])
+function getWorkspaceFolderNode(controller: TestController, workspaceFolder: WorkspaceFolder) {
+	const wfNode = controller.items.get(workspaceFolder.uri.fsPath)
+	if(wfNode) {
+		return wfNode
 	}
 
-	let suiteGroup: TestItem | undefined = undefined
-	if (isTestSuite) {
-		suiteGroup = controller.items.get("ABLTestSuiteGroup")
-		if(!suiteGroup) {
-			suiteGroup = controller.createTestItem("ABLTestSuiteGroup", "[ABL Test Suites]")
-			suiteGroup.canResolveChildren = false
-			suiteGroup.description = "ABLTestSuiteGroup"
-			suiteGroup.tags = [ new TestTag("runnable"), new TestTag("ABLTestSuiteGroup") ]
+	const wf = controller.createTestItem(workspaceFolder.uri.fsPath, workspaceFolder.name, workspaceFolder.uri)
+	wf.canResolveChildren = false
+	wf.description = "WorkspaceFolder"
+	wf.tags = [ new TestTag("runnable"), new TestTag("ABLTestDir") ]
+	controller.items.add(wf)
 
-			if (!testData.get(suiteGroup)) {
-				const data = new ABLTestDir('[ABL Test Suites]')
-				testData.set(suiteGroup, data)
-			}
-		}
+	if(!testData.get(wf)) {
+		const data = new ABLTestDir("WorkspaceFolder", workspaceFolder.name, workspaceFolder.uri)
+		data.label = workspaceFolder.name
+		testData.set(wf, data)
+	}
+	return wf
+}
+
+function getTestSuiteNode(controller: TestController, workspaceFolder: WorkspaceFolder, parent: TestItem | undefined) {
+	const groupId = (parent?.id ?? workspaceFolder.uri.fsPath) + "#ABLTestSuiteGroup"
+
+	let siblings: TestItemCollection
+	if(parent) {
+		siblings = parent.children
+	} else {
+		siblings = controller.items
+	}
+	const existing = siblings.get(groupId)
+	if (existing) {
+		return existing
+	}
+
+	const suiteGroup = controller.createTestItem(groupId, "[ABL Test Suites]")
+	suiteGroup.canResolveChildren = false
+	suiteGroup.description = "ABLTestSuiteGroup"
+	suiteGroup.tags = [ new TestTag("runnable"), new TestTag("ABLTestSuiteGroup") ]
+
+	if (!testData.get(suiteGroup)) {
+		const data = new ABLTestDir("TestSuiteGroup", "[ABL Test Suites]" , groupId)
+		testData.set(suiteGroup, data)
+		siblings.add(suiteGroup)
+	}
+	return suiteGroup
+}
+
+function getOrCreateDirNodeForFile(controller: TestController, file: Uri, isTestSuite: boolean) {
+	let relPath: string | undefined = undefined
+	let parent: TestItem | undefined = undefined
+	const paths = workspace.asRelativePath(file, false).replace(/\\/g, '/').split('/')
+	paths.pop()
+
+	const workspaceFolder = workspace.getWorkspaceFolder(file)
+	if (!workspaceFolder) { return }
+
+	if (workspace.workspaceFolders!.length > 1) {
+		parent = getWorkspaceFolderNode(controller, workspaceFolder)
+	}
+
+	if (isTestSuite) {
+		parent = getTestSuiteNode(controller, workspaceFolder, parent)
 	}
 
 	for (const path of paths) {
@@ -365,51 +395,25 @@ function getOrCreateDirNode(controller: TestController, uri: Uri, isTestSuite: b
 			relPath = path
 		} else {
 			relPath = relPath + "/" + path
-			wfName = undefined
-			suiteGroup = undefined
 		}
+		const dirUri = Uri.joinPath(workspaceFolder.uri, relPath)
 
-		const uri = Uri.joinPath(workspaceFolder.uri, '..', relPath)
-
-		let existing: TestItem | undefined = undefined
-		if (!parent) {
-			existing = controller.items.get(uri.fsPath)
-		} else {
-			existing = parent.children.get(uri.fsPath)
-		}
+		const siblings = parent?.children ?? controller.items
+		const existing = siblings.get(dirUri.fsPath)
 		if (existing) {
 			parent = existing
-			if (suiteGroup) {
-				const sg = parent.children.get("ABLTestSuiteGroup")
-				if(!sg) {
-					parent.children.add(suiteGroup)
-					suiteGroup = undefined
-				}
-				parent = sg
-			}
 			continue
 		}
 
-		let dir = controller.createTestItem(uri.fsPath, path, uri)
-		if (wfName) {
-			dir.label = wfName
-		}
-		dir.canResolveChildren = false
-		dir.tags = [ new TestTag("runnable"), new TestTag("ABLTestDir") ]
+		const dirNode = controller.createTestItem(dirUri.fsPath, path, dirUri)
+		dirNode.canResolveChildren = false
+		dirNode.description = "ABLTestDir"
+		dirNode.tags = [ new TestTag("runnable"), new TestTag("ABL Test Dir") ]
 
-		const data = new ABLTestDir(dir.uri!)
-		testData.set(dir, data)
-
-		if (parent) {
-			parent.children.add(dir)
-		} else {
-			controller.items.add(dir)
-			if (suiteGroup) {
-				dir.children.add(suiteGroup)
-				dir = suiteGroup
-			}
-		}
-		parent = dir
+		const data = new ABLTestDir("ABLTestDir", path, dirNode.uri!)
+		testData.set(dirNode, data)
+		siblings.add(dirNode)
+		parent = dirNode
 	}
 	return parent
 }
