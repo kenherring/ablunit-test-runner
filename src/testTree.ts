@@ -1,17 +1,39 @@
 import { Range, TestController, TestItem, TestTag, Uri, workspace } from 'vscode'
 import { ABLResults } from './ABLResults'
-import { parseABLTestSuite } from './parse/TestSuiteParser'
-import { parseABLTestClass } from './parse/TestClassParser'
-import { parseABLTestProgram } from './parse/TestProgramParser'
+import { ITestSuite, parseABLTestSuite } from './parse/TestSuiteParser'
+import { IClassRet, ITestCase, parseABLTestClass } from './parse/TestClassParser'
+import { IProgramRet, parseABLTestProgram } from './parse/TestProgramParser'
 import { getContentFromFilesystem } from './parse/ProfileParser'
 import { logToChannel } from './ABLUnitCommon'
 
-export type ABLUnitTestData = ABLTestDir | ABLTestFile | ABLRunnable | ABLAssert
-export type ABLRunnable = ABLTestFile | ABLTestSuite | ABLTestClass | ABLTestProgram | ABLTestMethod | ABLTestProcedure
+export type ABLTestData = ABLTestDir | ABLTestFile | ABLTestCase
 export type TestFile = ABLTestSuite | ABLTestClass | ABLTestProgram
 
+class TestData {
+	private td: WeakMap<TestItem, ABLTestData> = new WeakMap<TestItem, ABLTestData>()
 
-export const testData = new WeakMap<TestItem, ABLUnitTestData>()
+	get(item: TestItem) {
+		// console.log("testData.get: " + item.id + " " + this.td.get(item) + " " + this.td.get(item)?.description)
+		return this.td.get(item)
+	}
+
+	set(item: TestItem, data: ABLTestData) {
+		// console.log("testData.set: " + item.id + " " + data.description)
+		this.td.set(item, data)
+	}
+
+	delete(item: TestItem) {
+		// console.log("testData.delete: " + item.id)
+		this.td.delete(item)
+	}
+
+	getMap() {
+		return this.td
+	}
+}
+
+export const testData = new TestData()
+
 const displayClassLabel = workspace.getConfiguration('ablunit').get('display.classlabel','')
 
 function createTestItem(controller: TestController,
@@ -25,23 +47,6 @@ function createTestItem(controller: TestController,
 	thead.range = range
 	thead.tags = [new TestTag("runnable"), new TestTag(tag)]
 	return thead
-}
-
-function createTestChild(controller: TestController,
-						range: Range,
-						procedureName: string,
-						relativePath: string,
-						uri: Uri,
-						description: string,
-						data: ABLTestProcedure | ABLTestMethod) {
-	const child = controller.createTestItem(uri.fsPath + '#' + procedureName, procedureName, uri)
-	child.range = range
-	child.label = procedureName
-	child.tags = [new TestTag("runnable"), new TestTag("ABLTestProcedure")]
-	child.canResolveChildren = false
-	child.description = "ABL Test " + description
-	testData.set(child, data)
-	return child
 }
 
 interface ITestType {
@@ -58,9 +63,11 @@ class TestTypeObj implements ITestType {
 	public runnable = false
 	public canResolveChildren = false
 	public description: string
+	public label: string
 
-	constructor () {
-		this.description = "TestTypeObj"
+	constructor (description: string, label: string) {
+		this.description = description
+		this.label = label
 	}
 }
 
@@ -83,13 +90,10 @@ export class ABLTestDir implements ITestType {
 }
 
 export class ABLTestCase extends TestTypeObj {
-	public testCaseType = "TestCase"
-	public runnable = true
-	public canResolveChildren = true
-
-	constructor () {
-		super()
-		this.description = "ABLTestCase"
+	constructor (public readonly id: string,
+				label: string,
+				description: string) {
+		super(description, label)
 	}
 }
 
@@ -99,11 +103,7 @@ export class ABLTestFile extends TestTypeObj {
 	public canResolveChildren: boolean = false
 	public relativePath: string = ''
 	currentResults?: ABLResults
-
-	constructor () {
-		super()
-		this.description = "ABLTestFile"
-	}
+	public children: ABLTestCase[] = []
 
 	public async updateFromDisk(controller: TestController, item: TestItem) {
 		try {
@@ -113,8 +113,10 @@ export class ABLTestFile extends TestTypeObj {
 				return
 			}
 			item.error = undefined
+			item.canResolveChildren = true
 			this.updateFromContents(controller, content, item)
 		} catch (e) {
+			console.error("Error updating " + item.id + " from disk: " + e)
 			item.error = (e as Error).stack
 		}
 	}
@@ -123,14 +125,12 @@ export class ABLTestFile extends TestTypeObj {
 		throw new Error("Method not implemented - should be calling implementation in subclass")
 	}
 
-	startParsing(item: TestItem, tag: string) {
+	startParsing(item: TestItem) {
 		this.relativePath = workspace.asRelativePath(item.uri!.fsPath)
-		logToChannel("parsing " + this.relativePath)
+		logToChannel("parsing " + this.relativePath + " as " + this.description)
 		this.didResolve = true
-		item.tags = [new TestTag("runnable"), new TestTag(tag)]
-		item.description = tag
-		item.canResolveChildren = false
-		item.children.replace([])
+		item.tags = [new TestTag("runnable"), new TestTag(this.description)]
+		item.description = this.description
 	}
 
 	deleteFromParent(controller: TestController, item: TestItem) {
@@ -145,22 +145,101 @@ export class ABLTestFile extends TestTypeObj {
 		}
 	}
 
+	updateItem(controller: TestController, item: TestItem, response: IClassRet | IProgramRet | undefined, childType: "Method" | "Procedure") {
+		if (!response) {
+			this.deleteItem(controller, item)
+			return
+		}
+		item.label = response.label
+		item.range = response.range
+		this.updateChildren(controller, item, response.testcases, childType)
+	}
+
 	deleteItem(controller: TestController, item: TestItem) {
 		testData.delete(item)
 		this.deleteFromParent(controller, item)
 		controller.items.delete(item.id)
 	}
+
+	updateChildren(controller: TestController, item: TestItem, testcases: ITestCase[], type: "Method" | "Procedure") {
+		const originalChildren: string[] = []
+		for (const [childId,] of item.children) {
+			originalChildren.push(childId)
+		}
+
+		for (const tc of testcases) {
+			const id = item.uri!.fsPath + "#" + tc.label
+			const child = item.children.get(id)
+
+			if (child) {
+				originalChildren.splice(originalChildren.indexOf(id), 1)
+				child.label = tc.label
+				child.range = tc.range
+			} else {
+				this.createTestChild(controller, item, id, tc.range, tc.label, item.uri!, type)
+			}
+		}
+
+		this.removeUnusedChildren(controller, item, originalChildren)
+	}
+
+	createTestChild(controller: TestController,
+					item: TestItem,
+					id: string,
+					range: Range,
+					label: string,
+					uri: Uri,
+					type: string) {
+		const child = controller.createTestItem(id, label, uri)
+		const data = new ABLTestCase(id, label, "ABL Test " + type)
+		child.range = range
+		child.tags = [new TestTag("runnable"), new TestTag("ABLTest" + type)]
+		child.canResolveChildren = false
+		child.description = "ABL Test " + type
+
+		testData.set(child, data)
+		this.children.push(data)
+		item.children.add(child)
+	}
+
+	updateChild(item: TestItem, id: string, range: Range, label: string) {
+		const child = item.children.get(id)
+		if (child) {
+			child.range = range
+			child.label = label
+			return true
+		}
+		return false
+	}
+
+	deleteChild(controller: TestController, item: TestItem, child: TestItem) {
+		if (child) {
+			item.children.delete(child.id)
+			controller.items.delete(child.id)
+			testData.delete(child)
+		}
+	}
+
+	removeUnusedChildren(controller: TestController, item: TestItem, orphans: string[]) {
+		// remove any children that no longer exist
+		for (const childId of orphans) {
+			const child = item.children.get(childId)
+			if (child) {
+				this.deleteChild(controller, item, child)
+			}
+		}
+	}
+
 }
 
 export class ABLTestSuite extends ABLTestFile {
 
-	constructor() {
-		super()
-		this.description = "ABL Test Suite"
+	constructor (label: string) {
+		super("ABL Test Suite", label)
 	}
 
 	public updateFromContents(controller: TestController, content: string, item: TestItem) {
-		this.startParsing(item, "ABL Test Suite")
+		this.startParsing(item)
 		const response = parseABLTestSuite(content)
 
 		if (!response) {
@@ -170,129 +249,85 @@ export class ABLTestSuite extends ABLTestFile {
 
 		item.label = this.relativePath
 		item.range = response.range
+		item.canResolveChildren = true
 
-		for (const classpath of response.classes) {
-			const thead = createTestItem(controller, item, undefined, classpath, classpath, "ABLTestClass")
-			const tData = new ABLTestClass()
-			tData.setClassInfo(classpath, classpath)
-			testData.set(thead, tData)
-			item.children.add(thead)
+		const originalChildren: string[] = []
+		for (const [childId,] of item.children) {
+			originalChildren.push(childId)
 		}
 
-		for (const procedure of response.procedures) {
-			const thead = createTestItem(controller, item, undefined, procedure, procedure, "ABLTestClass")
-			const tData = new ABLTestProgram()
-			testData.set(thead, tData)
+		for (const cls of response.classes) {
+			if(!cls) { continue }
+			const id = item.uri!.fsPath + "#" + cls
+			if(this.updateChildProgram(controller, item, response, id, cls, "ABLTestClass")) {
+				originalChildren.splice(originalChildren.indexOf(id), 1)
+			}
+		}
+
+		for (const proc of response.procedures) {
+			if(!proc) { continue }
+			const id = item.uri!.fsPath + "#" + proc
+			if(this.updateChildProgram(controller, item, response, id, proc, "ABLTestProgram")) {
+				originalChildren.splice(originalChildren.indexOf(id), 1)
+			}
+		}
+
+		this.removeUnusedChildren(controller, item, originalChildren)
+	}
+
+	updateChildProgram(controller: TestController, item: TestItem, response: ITestSuite, id: string, label: string, type: "ABLTestClass" | "ABLTestProgram") {
+		const child = item.children.get(id)
+
+		if(child) {
+			child.label = label
+			return true
+		} else {
+			const thead = createTestItem(controller, item, undefined, label, label, type)
+			if (type === "ABLTestClass") {
+				const tData = new ABLTestClass(label)
+				tData.setClassInfo(label)
+				testData.set(thead, tData)
+			} else {
+				const tData = new ABLTestProgram(label)
+				testData.set(thead, tData)
+			}
 			item.children.add(thead)
 		}
+		return false
 	}
 }
 
 export class ABLTestClass extends ABLTestFile {
-	public canResolveChildren: boolean = true
-	public classpath: string = ''
-	public classlabel: string = ''
-	methods: ABLTestMethod[] = []
+	public classTypeName: string = ''
 
-	constructor() {
-		super()
-		this.description = "ABL Test Class"
+	constructor(label: string) {
+		super("ABL Test Class", label)
 	}
 
-	setClassInfo(classpath: string, classlabel: string) {
-		this.classpath = classpath
-		this.classlabel = classlabel
-	}
-
-	addMethod(method: ABLTestMethod) {
-		this.methods[this.methods.length] = method
+	setClassInfo(classTypeName?: string) {
+		if(classTypeName) {
+			this.classTypeName = classTypeName
+		}
 	}
 
 	public updateFromContents(controller: TestController, content: string, item: TestItem) {
-		this.startParsing(item, "ABL Test Class")
+		this.startParsing(item)
 		const response = parseABLTestClass(displayClassLabel, content, this.relativePath)
+		this.updateItem(controller, item, response, "Method")
 
-		if(!response) {
-			this.deleteItem(controller,item)
-			return
-		}
-
-		item.label = response.label
-		item.range = response.range
-
-		for(const method of response.methods) {
-			if(!method) { continue }
-			const data = new ABLTestMethod(this.relativePath, response.classname, method.methodname)
-			const child = createTestChild(controller, method.range, method.methodname,this.relativePath, item.uri!, "Method", data)
-			const methodObj = new ABLTestMethod(this.relativePath, response.classname, method.methodname)
-			this.addMethod(methodObj)
-			item.children.add(child)
-		}
+		this.setClassInfo(response?.classname)
 	}
 }
 
 export class ABLTestProgram extends ABLTestFile {
-	public canResolveChildren: boolean = true
-	procedures: ABLTestProcedure[] = []
 
-	constructor() {
-		super()
-		this.description = "ABL Test Program"
-	}
-
-	addChild(item: TestItem, proc: ABLTestProcedure) {
-		this.procedures.push(proc)
-		testData.set(item, new ABLTestProcedure(this.relativePath, proc.name))
+	constructor(label: string) {
+		super("ABL Test Program", label)
 	}
 
 	public updateFromContents(controller: TestController, content: string, item: TestItem) {
-		this.startParsing(item, "ABL Test Program")
+		this.startParsing(item)
 		const response = parseABLTestProgram(content, this.relativePath)
-		if(!response) {
-			this.deleteItem(controller,item)
-			return
-		}
-
-		item.label = response.label
-		item.range = new Range(0,0,0,0)
-
-		for(const procedure of response.procedures) {
-			if(!procedure) { continue }
-			const data = new ABLTestProcedure(response.label, procedure.procedureName)
-			const child = createTestChild(controller, procedure.range, procedure.procedureName, response.label, item.uri!, "Procedure", data)
-			const proc = new ABLTestProcedure(response.label, procedure.procedureName)
-			this.addChild(child, proc)
-			item.children.add(child)
-		}
-
-	}
-}
-
-export class ABLTestMethod extends ABLTestCase { // child of TestClass
-	public name: string
-	constructor(private readonly relativePath: string, private readonly classname: string, private readonly methodName: string) {
-		super()
-		this.name = methodName
-		this.description = "ABL Test Method"
-	}
-}
-
-export class ABLTestProcedure extends ABLTestCase { // child of TestProgram
-	public name: string
-	constructor(private readonly programname: string, private readonly procedureName: string) {
-		super()
-		this.name = procedureName
-		this.description = "ABL Test Procedure"
-	}
-}
-
-export class ABLAssert extends TestTypeObj { // child of TestMethod or TestProcedure
-	public name: string
-	constructor(private readonly assertText: string) {
-		super()
-		this.name = assertText
-		this.description = "ABL Assert"
-		this.canResolveChildren = false
-		this.runnable = false
+		this.updateItem(controller, item, response, "Procedure")
 	}
 }

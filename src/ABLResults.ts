@@ -1,7 +1,7 @@
 import { FileType, MarkdownString, Position, Range, TestItem, TestItemCollection, TestMessage, TestRun, Uri, workspace, WorkspaceFolder } from 'vscode'
 import { ABLUnitConfig, ITestObj } from './ABLUnitConfigWriter'
 import { ABLResultsParser, TCFailure, TestCase, TestSuite } from './parse/ResultsParser'
-import { ABLTestSuite, ABLUnitTestData } from './testTree'
+import { ABLTestSuite, ABLTestData } from './testTree'
 import { parseCallstack } from './parse/CallStackParser'
 import { ABLProfile, ABLProfileJson, Module } from './parse/ProfileParser'
 import { ABLDebugLines } from './ABLDebugLines'
@@ -24,7 +24,7 @@ export class ABLResults {
 
 	ablResults: ABLResultsParser | undefined
 	tests: TestItem[] = []
-	testData!: WeakMap<TestItem, ABLUnitTestData>
+	testData!: WeakMap<TestItem, ABLTestData>
 	propath?: PropathParser
 	debugLines?: ABLDebugLines
 	promsgs?: ABLPromsgs
@@ -55,7 +55,7 @@ export class ABLResults {
 		logToChannel("STATUS: " + status)
 	}
 
-	async setTestData(testData: WeakMap<TestItem, ABLUnitTestData>) {
+	async setTestData(testData: WeakMap<TestItem, ABLTestData>) {
 		this.testData = testData
 	}
 
