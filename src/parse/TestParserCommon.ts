@@ -3,7 +3,7 @@ import { TextDecoder } from 'util'
 
 const textDecoder = new TextDecoder('utf-8')
 
-async function getContentFromFilesystem (uri: Uri) {
+export async function getContentFromFilesystem (uri: Uri) {
 	try {
 		const rawContent = await workspace.fs.readFile(uri)
 		return textDecoder.decode(rawContent)
@@ -29,7 +29,8 @@ export function getLines (text: string, annotation: string): [ string[], boolean
 	const lines = text.replace(/\r/g,'').split('\n')
 	let foundAnnotation = false
 	for (let i = 0; i < lines.length; i++) {
-		lines[i] = lines[i].replace(/\/\/.*/g,'') // trim end of line comments
+		lines[i] = removeComments(lines[i])
+
 		if (lines[i].trim() == "") {
 			// set empty lines to empty string
 			lines[i] = ''
@@ -41,4 +42,18 @@ export function getLines (text: string, annotation: string): [ string[], boolean
 		return [ lines, false ]
 	}
 	return [ lines, foundAnnotation ]
+}
+
+const blockCommentRE = /\/\*.*\*\//g
+
+function removeComments(line: string) {
+	line = line.replace(/\/\/.*/g,'') // trim end of line comments
+
+	const matches = blockCommentRE.exec(line)
+	if(!matches) { return line }
+
+	for(const element of matches) {
+		line = line.replace(element,' '.repeat(element.length))
+	}
+	return line
 }

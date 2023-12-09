@@ -41,7 +41,8 @@ export function parseTestClass (lines: string[], configClassLabel: string, relat
 		testcases: []
 	}
 
-	let lastNonBlankLine = ""
+	let lastNonBlankLineHasAnnotation = false
+	const regexTest = /@test\./i
 
 	for (let lineNo = 0; lineNo < lines.length; lineNo++) {
 		if (lines[lineNo].trim() === "") {
@@ -59,18 +60,17 @@ export function parseTestClass (lines: string[], configClassLabel: string, relat
 			continue
 		}
 
-		if (lastNonBlankLine.toLowerCase().indexOf("@test.") != -1 || lines[lineNo].toLowerCase().indexOf("@test.") != -1) {
+		if (lastNonBlankLineHasAnnotation || lines[lineNo].toLowerCase().indexOf("@test.") != -1) {
 			const method = methodRE.exec(lines[lineNo])
 			if (method) {
 				const [, , , methodname] = method
-				const range =
 				classRet.testcases.push({
 					label: methodname,
 					range: new Range(lineNo, lines[lineNo].indexOf(methodname), lineNo, methodname.length)
 				})
 			}
 		}
-		lastNonBlankLine = lines[lineNo]
+		lastNonBlankLineHasAnnotation = regexTest.exec(lines[lineNo]) != null
 	}
 
 	return classRet

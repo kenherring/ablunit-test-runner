@@ -3,7 +3,7 @@ import { ABLResults } from './ABLResults'
 import { ITestSuite, parseABLTestSuite } from './parse/TestSuiteParser'
 import { IClassRet, ITestCase, parseABLTestClass } from './parse/TestClassParser'
 import { IProgramRet, parseABLTestProgram } from './parse/TestProgramParser'
-import { getContentFromFilesystem } from './parse/ProfileParser'
+import { getContentFromFilesystem } from './parse/TestParserCommon'
 import { logToChannel } from './ABLUnitCommon'
 
 export type ABLTestData = ABLTestDir | ABLTestFile | ABLTestCase
