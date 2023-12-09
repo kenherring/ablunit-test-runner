@@ -1,14 +1,8 @@
 #!/bin/bash
 set -eou pipefail
 
-setup () {
-	echo 'compile, etc...'
-	# npm install
-	test_projects/setup.sh
-}
-
 dbus_config () {
-	echo "dbus_config"
+	echo "dbus_config..."
 	## These lines fix dbus errors in the logs related to the next section
 	## However, they also create new errors
 	# apt update
@@ -25,14 +19,15 @@ dbus_config () {
 	dbus-daemon --session --address="$DBUS_SESSION_BUS_ADDRESS" --nofork --nopidfile --syslog-only &
 }
 
-npx_eslint () {
-	local TYPE=$1
-	local OUTFILE=$2
-	echo "npx_eslint $TYPE $OUTFILE"
-
-	npx eslint . --ext .ts,.js -f "$TYPE" > "$OUTFILE" || true
-	if [[ "$OUTFILE" =~ .json$ ]]; then
-		jq '.' < "$OUTFILE" > "${OUTFILE//\.json/_pretty.json}"
+run_tests () {
+	echo "run_tests..."
+	EXIT_CODE=0
+	xvfb-run -a npm test || EXIT_CODE=$?
+	if [ "$EXIT_CODE" = "0" ]; then
+		echo "xvfb-run success"
+	else
+		echo "xvfb-run failed (EXIT_CODE=$EXIT_CODE)"
+		exit $EXIT_CODE
 	fi
 }
 
@@ -42,22 +37,18 @@ run_lint () {
 	mkdir -p artifacts
 	rm -rf test_projects/proj7_load_performance/src/ADE-12.2.13.0
 
-	# if ! npx eslint . --ext .ts,.js; then
-	# 	echo "eslint failed"
-	# fi
-	if ! npx_eslint json artifacts/eslint_report_plain.json; then
+	if ! npx eslint . --ext .ts,.js > artifacts/eslint_report.txt; then
+		echo "eslint failed"
+	fi
+	if ! npx eslint . --ext .ts,.js -f json > artifacts/eslint_report.json; then
 		echo "eslint plain failed"
 	fi
-	if ! npx_eslint .circleci/sonarqube_formatter.js artifacts/eslint_report_sonar.json; then
-		echo "eslint sonar failed"
+	if [ -f artifacts/eslint_report.txt ]; then
+		jq '.' < artifacts/eslint_report.json > artifacts/eslint_report_pretty.json
 	fi
-	# if ! npx_eslint junit artifacts/eslint_report_junit.xml; then
-	# 	echo "eslint junit failed"
-	# fi
 }
 
 ########## MAIN BLOCK ##########
-setup
 dbus_config
-xvfb-run -a npm test
+run_tests
 run_lint

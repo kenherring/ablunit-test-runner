@@ -1,4 +1,4 @@
-import { Range, TestController, TestItem, TestTag, Uri, workspace } from 'vscode'
+import { Range, TestController, TestItem, TestRun, TestTag, Uri, workspace } from 'vscode'
 import { ABLResults } from './ABLResults'
 import { ITestSuite, parseABLTestSuite } from './parse/TestSuiteParser'
 import { IClassRet, ITestCase, parseABLTestClass } from './parse/TestClassParser'
@@ -8,6 +8,7 @@ import { logToChannel } from './ABLUnitCommon'
 
 export type ABLTestData = ABLTestDir | ABLTestFile | ABLTestCase
 export type TestFile = ABLTestSuite | ABLTestClass | ABLTestProgram
+export const resultData = new WeakMap<TestRun, ABLResults[]>()
 
 class TestData {
 	private td: WeakMap<TestItem, ABLTestData> = new WeakMap<TestItem, ABLTestData>()

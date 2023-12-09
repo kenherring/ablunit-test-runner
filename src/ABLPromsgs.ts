@@ -21,9 +21,9 @@ export class ABLPromsgs {
 
 		this.loadFromCache(cacheUri).then(() => {
 			console.log("promsgs loaded from cache '" + cacheUri.fsPath + "'")
-		}, (err) => {
+		}, () => {
 			console.log("reading promsgs from DLC")
-			this.loadFromDLC(dlc, cacheUri).then(() => {
+			this.loadFromDLC(dlc).then(() => {
 				this.saveCache(cacheUri)
 			}, (err) => {
 				console.log("Cannot load promsgs from DLC, err=" + err)
@@ -31,8 +31,8 @@ export class ABLPromsgs {
 		})
 	}
 
-	async loadFromDLC(dlc: IDlc, cacheUri: Uri) {
-		return workspace.fs.stat(dlc.uri).then((stat) => {
+	async loadFromDLC(dlc: IDlc) {
+		return workspace.fs.stat(dlc.uri).then(() => {
 			const promsgDir = Uri.joinPath(dlc.uri, "prohelp/msgdata")
 			return workspace.fs.readDirectory(promsgDir).then((dirFiles) => {
 
@@ -109,7 +109,7 @@ export class ABLPromsgs {
 	}
 
 	async saveCache(cacheUri: Uri) {
-		console.log("saveCache=" + this.promsgs.length)
+		console.log("[saveCache] promsgs.length=" + this.promsgs.length)
 		if (this.promsgs.length === 0) {
 			throw new Error("promsgs not loaded, cannot save cache - zero records found")
 		}

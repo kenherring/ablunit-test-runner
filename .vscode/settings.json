@@ -1,5 +1,7 @@
 {
 	"eslint.enable": true,
+	"eslint.lintTask.enable": true,
+	"eslint.run": "onType",
 	"git.branchProtection": [
 		"main"
 	],
@@ -11,4 +13,5 @@
 		"projectKey": "kenherring_ablunit-test-provider"
 	},
 	"sonarlint.disableTelemetry": true,
+	"tslint.enable": false // this project uses eslint
 }

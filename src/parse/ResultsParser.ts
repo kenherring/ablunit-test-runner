@@ -71,7 +71,6 @@ export class ABLResultsParser {
 			throw err
 		}
 		if (cfg.config_output_writeJson) {
-			console.log("2")
 			return this.writeJsonToFile(cfg.config_output_jsonUri)
 		}
 	}
@@ -195,8 +194,6 @@ export class ABLResultsParser {
 	writeJsonToFile(uri: Uri) {
 		const data = this.resultsJson
 		console.log("writing results json file: " + uri.fsPath)
-		console.log("config-1: " + workspace.getConfiguration("ablunit").get("configJson.output.writeJson"))
-		console.log("config-2: " + workspace.getConfiguration("ablunit").get("configJson.output.location"))
 		return workspace.fs.writeFile(uri, Uint8Array.from(Buffer.from(JSON.stringify(data, null, 2)))).then(() => {
 			logToChannel("wrote results json file: " + uri.fsPath)
 		}, (err) => {

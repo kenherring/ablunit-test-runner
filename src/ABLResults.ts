@@ -77,7 +77,7 @@ export class ABLResults {
 		return Promise.all(prom).then(() => {
 			console.log("done creating config files for run")
 		}, (err) => {
-			console.error("ABLResults.start() did not complete promises")
+			console.error("ABLResults.start() did not complete promises. err=" + err)
 		})
 	}
 
@@ -109,7 +109,7 @@ export class ABLResults {
 		}
 
 		if (testCase) {
-			const existingTestObj = this.cfg.ablunitConfig.configJson.tests.find((t: any) => t.test === testRel)
+			const existingTestObj = this.cfg.ablunitConfig.configJson.tests.find((t: ITestObj) => t.test === testRel)
 			if (existingTestObj) {
 				if(testObj.cases) {
 					if (!existingTestObj.cases) {
@@ -121,7 +121,7 @@ export class ABLResults {
 			}
 		}
 
-		if (this.cfg.ablunitConfig.configJson.tests.find((t: any) => t.test === testRel)) {
+		if (this.cfg.ablunitConfig.configJson.tests.find((t: ITestObj) => t.test === testRel)) {
 			console.log("test already exists in configJson.tests: " + testRel)
 		} else {
 			this.cfg.ablunitConfig.configJson.tests.push(testObj)
@@ -134,14 +134,14 @@ export class ABLResults {
 				console.log("delete " + this.cfg.ablunitConfig.config_output_jsonUri.fsPath)
 				workspace.fs.delete(this.cfg.ablunitConfig.config_output_jsonUri)
 			}
-		}, (err) => {
+		}, () => {
 			// do nothing, can't delete a file that doesn't exist
 		})
 		return workspace.fs.stat(this.cfg.ablunitConfig.config_output_filenameUri).then((stat) => {
 			if (stat.type === FileType.File) {
 				return workspace.fs.delete(this.cfg.ablunitConfig.config_output_filenameUri)
 			}
-		}, (err) => {
+		}, () => {
 			// do nothing, can't delete a file that doesn't exist
 		})
 	}
@@ -171,8 +171,8 @@ export class ABLResults {
 			return true
 		}, (err) => {
 			this.setStatus("error parsing results data")
-			logToChannel("Error parsing ablunit results from " + this.cfg.ablunitConfig.config_output_filenameUri.fsPath,"error",options)
-			throw (new Error("[ABLResults parseOutput] Error parsing ablunit results from " + this.cfg.ablunitConfig.config_output_filenameUri.fsPath + "\r\n"))
+			logToChannel("Error parsing ablunit results from " + this.cfg.ablunitConfig.config_output_filenameUri.fsPath + ".  err=" + err,"error",options)
+			throw (new Error("[ABLResults parseOutput] Error parsing ablunit results from " + this.cfg.ablunitConfig.config_output_filenameUri.fsPath + "\r\nerr=" + err))
 		})
 
 		if (this.cfg.ablunitConfig.profilerOptions.enabled) {
@@ -182,8 +182,8 @@ export class ABLResults {
 				return true
 			}, (err) => {
 				this.setStatus("error parsing profiler data")
-				logToChannel("Error parsing profiler data from " + this.cfg.ablunitConfig.profilerOptions.filenameUri.fsPath, "error", options)
-				throw new Error("[ABLResults parseOutput] Error parsing profiler data from " + this.cfg.ablunitConfig.profilerOptions.filenameUri.fsPath + "\r\n")
+				logToChannel("Error parsing profiler data from " + this.cfg.ablunitConfig.profilerOptions.filenameUri.fsPath + ".  err=" + err, "error", options)
+				throw new Error("[ABLResults parseOutput] Error parsing profiler data from " + this.cfg.ablunitConfig.profilerOptions.filenameUri.fsPath + "\r\nerr=" + err)
 			})
 		}
 
@@ -224,13 +224,13 @@ export class ABLResults {
 				options.errored(item, new TestMessage("no child testsuites found for " + suiteName), this.duration())
 				return
 			}
-			await this.parseChildSuites(item, s.testsuite, options, suiteName)
+			await this.parseChildSuites(item, s.testsuite, options)
 		} else {
 			return this.parseFinalSuite(item, s, options)
 		}
 	}
 
-	async parseChildSuites (item: TestItem, s: TestSuite[], options: TestRun, suiteName: string) {
+	async parseChildSuites (item: TestItem, s: TestSuite[], options: TestRun) {
 		for (const t of s) {
 			// find matching child TestItem
 			let child = item.children.get(t.name!)
@@ -305,10 +305,11 @@ export class ABLResults {
 
 	private async setChildResults(item: TestItem, options: TestRun, tc: TestCase) {
 		switch (tc.status) {
-			case "Success":
+			case "Success": {
 				options.passed(item, tc.time)
 				return
-			case "Failure":
+			}
+			case "Failure": {
 				if (tc.failure) {
 					const diff = this.getDiffMessage(tc.failure)
 					return this.getFailureMarkdownMessage(item, options, tc.failure).then((msg) => {
@@ -320,7 +321,8 @@ export class ABLResults {
 					})
 				}
 				throw new Error("unexpected failure for '" + tc.name)
-			case "Error":
+			}
+			case "Error": {
 				if (tc.failure) {
 					return this.getFailureMarkdownMessage(item, options, tc.failure).then((msg) => {
 						const tm = new TestMessage(msg)
@@ -328,11 +330,14 @@ export class ABLResults {
 					})
 				}
 				throw new Error("unexpected error for " + tc.name)
-			case "Skpped":
+			}
+			case "Skpped": {
 				options.skipped(item)
 				return
-			default:
+			}
+			default: {
 				throw new Error("unexpected test status " + tc.status + " for " + tc.name)
+			}
 		}
 	}
 

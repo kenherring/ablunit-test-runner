@@ -155,7 +155,6 @@ export class ABLDebugLines {
 				incUri: debugSourceUri,
 				incLine: i
 			})
-			// console.log("add-1: " + i + " " + dbgLine + " " + i + " " + debugSourceUri.fsPath + " " + debugSourceUri.fsPath)
 			dbgLine = this.injectInclude(m, m.debugSourceUri, i, i, dbgLine)
 		}
 		return m
@@ -180,7 +179,6 @@ export class ABLDebugLines {
 					incUri: incLen.incUri,
 					incLine: incLine
 				})
-				// console.log("add-2: " + sourceLine + " " + dbgLine + " " + incLine + " " + parentUri.fsPath + " " + incLen.incUri.fsPath)
 				dbgLine = this.injectInclude(m, incLen.incUri, sourceLine, incLine, dbgLine)
 			}
 		}
