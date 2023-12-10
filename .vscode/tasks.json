@@ -6,6 +6,9 @@
 		{
 			"type": "npm",
 			"script": "watch",
+			"dependsOn": [
+				"npm: test-compile"
+			],
 			"problemMatcher": "$tsc-watch",
 			"isBackground": true,
 			"presentation": {
@@ -17,6 +20,19 @@
 			},
 			"runOptions": {
 				"runOn": "folderOpen"
+			}
+		},
+		{
+			"label": "npm: test-compile",
+			"type": "npm",
+			"script": "test-compile",
+			"problemMatcher": "$tsc-watch",
+			"presentation": {
+				"reveal": "never"
+			},
+			"group": {
+				"kind": "build",
+				"isDefault": false
 			}
 		}
 	]

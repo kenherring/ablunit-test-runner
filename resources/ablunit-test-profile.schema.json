@@ -1,0 +1,204 @@
+{
+	"$schema": "http://json-schema.org/draft-07/schema#",
+	"type": "object",
+	"uniqueItems": true,
+	"properties": {
+		"configurations": {
+			"type": "array",
+			"uniqueItems": true,
+			"maxItems": 1,
+			"default": [],
+			"items": {
+				"type": "object",
+				"uniqueItems": true,
+				"default": "coverage",
+				"properties": {
+					"runProfile": {
+						"type": "string",
+						"uniqueItems": true,
+						"enum": [ "coverage" ]
+					},
+					"tempDir": {
+						"type": [ "string", "null" ],
+						"minLength": 1,
+						"default": "${extensionContextStorage}",
+						"description": "Path to temporary directory (-T).  Written to by both the extension and the OpenEdge test execution process."
+					},
+					"importOpenedgeProjectJson": {
+						"type": "boolean",
+						"default": true,
+						"description": "Import the propath and database connection settings from 'openedge-project.json' possible."
+					},
+					"files": {
+						"type": "object",
+						"description": "Glob patterns to match when discovering tests in files",
+						"properties": {
+							"include": {
+								"type": "array",
+								"description": "Glob pattern(s) matching files containing tests to include during test discovery",
+								"minItems": 1,
+								"items": {
+									"type": "string",
+									"uniqueItems": true,
+									"minLength": 1,
+									"default": "**/*.{cls,p}"
+								}
+							},
+							"exclude": {
+								"type": "array",
+								"description": "Glob pattern(s) matching files to exclude from test discovery",
+								"default": [ "**/.builder/**", "**/.pct/**" ],
+								"minItems": 1,
+								"items": {
+									"type": "string",
+									"uniqueItems": true,
+									"minLength": 1
+								}
+							}
+						}
+					},
+					"command": {
+						"type": "object",
+						"description": "Options related to the command line executable",
+						"properties": {
+							"executable": {
+								"type": "string",
+								"default": "${DLC}/bin/_progres",
+								"description": "Program to execute.  Typically an OpenEdge executable, but could be something like `ant` or another script to launch your test suite.",
+								"minLength": 1
+							},
+							"batch": {
+								"type": "boolean",
+								"default": true,
+								"description": "batch mode (-b)"
+							},
+							"progressIni": {
+								"type": "string",
+								"default": "${tempDir}/progress.ini",
+								"nullable": true,
+								"description": "Windows only. Path to ini configuration file. Appended to test run execution with command line arguments: `-basekey INI -basename <progressIni>`.  Set to \"null\" to disable."
+							},
+							"additionalArgs": {
+								"type": "array",
+								"default": [],
+								"description": "Additional args passed to the command line.",
+								"items": { "type": "string" }
+							}
+						}
+					},
+					"options": {
+						"type": [ "object", "null" ],
+						"description": "Options passed to the OE test runner via the 'ablunit.json' file.  Set to null to prevent the creation of 'ablunit.json' or related args passed to the command line.",
+						"default": {
+							"output": {
+								"location": "${tempDir}",
+								"filename": "results.xml",
+								"format": "xml"
+							},
+							"quitOnEnd": true,
+							"writeLog": false,
+							"showErrorMessage": true,
+							"throwError": true
+						},
+						"nullable": true,
+						"properties": {
+							"output": {
+								"type": "object",
+								"description": "Options for test result output.",
+								"properties": {
+									"location": {
+										"type": "string",
+										"description": "Output directory for test results.",
+										"default": "${tempDir}"
+									},
+									"filename": {
+										"type": "string",
+										"description": "Output filename for test results.  If the value does not end with '.xml' it will be appended.",
+										"default": "results.xml"
+									},
+									"format": {
+										"type": [ "array", "string" ],
+										"description": "Output file extension(s) for results output.  'xml' is required and the default value.  'json' is optional.  The ABLUnit Test Runner VSCode extension performs the xml=>json conversion.",
+										"enum": [ "xml", [ "xml" ], [ "xml", "json" ] ],
+										"default": "xml"
+									}
+								}
+							},
+							"quitOnEnd": {
+								"type": "boolean",
+								"default": true
+							},
+							"writeLog": {
+								"type": "boolean",
+								"default": false
+							},
+							"showErrorMessage": {
+								"type": "boolean",
+								"default": true
+							},
+							"throwError": {
+								"type": "boolean",
+								"default": true
+							}
+						}
+					},
+					"profiler": {
+						"type": [ "object", "null" ],
+						"description": "Options passed to the OE test runner via `-profile <options-file>`.  Set to null to prevent the creation of the options file or args passed to the command line.",
+						"default": {
+							"enabled": true,
+							"coverage": true
+						},
+						"properties": {
+							"enabled": {
+								"type": "boolean",
+								"default": true,
+								"description": "Enable the profiler by passing `-profile <options-file>` to the OE test runner."
+							},
+							"coverage": {
+								"type": "boolean",
+								"default": true,
+								"description": "Enable code coverage logging by the profiler."
+							},
+							"description": {
+								"type": "string",
+								"default": "VSCode Test Run - ABLUnit Test Provider Extension",
+								"description": "Description outputted as header information by the `PROFILER` system handle."
+							},
+							"filename": {
+								"type": "string",
+								"default": "${tempDir}/prof.out",
+								"description": "Filepath where profiler data is written by the `PROFILER` system handle.  When the value is a directory a filename of 'prof.out' will be used."
+							},
+							"listings": {
+								"type": "boolean",
+								"default": false,
+								"description": "Include source code listings in the profiler output.  Output directory: `\"{tempDir}/listings\"`"
+							},
+							"statistics": {
+								"type": "boolean",
+								"default": false,
+								"description": "Include statistics in the profiler output."
+							},
+							"traceFilter": {
+								"type": "string",
+								"default": "",
+								"description": "Filter for tracing.  See OpenEdge documentation for details."
+							},
+							"tracing": {
+								"type": "boolean",
+								"default": false,
+								"description": "Include tracing in the profiler output."
+							},
+							"writeJson": {
+								"type": "boolean",
+								"default": false,
+								"description": "Write a JSON file containing the parsed profiler data.  The file will be written to the same directorye `filename` property."
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}

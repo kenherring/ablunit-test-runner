@@ -44,34 +44,36 @@ This config searches the `test/` directory for test files, named `*Test.cls` or 
 }
 ```
 
-### Configuration - Most Commonly Changed
+### Configuration - VSCode Configuration (`.vscode/settings.json`, et al.)
 
 | Setting | Default | Description |
+| `ablunit.test.classlabel` | `classname` | The label to display for test classes. Example for class with path \`com/example/myClass.cls\`\:<br><br>* class-type-name example\: \`com.example.myClass\`<br>* filename example\: \`myClass.cls\` |
 | --- | --- | --- |
-| `ablunit.params` | | Additional options/parameters passed to `_progres`.  This is most useful for providing database connections. Example: `-pf path/to/dbconnections.pf` |
-| `ablunit.files.include` | `[ "**/*.{cls,p}" ]` | Glob pattern array to include test files |
-| `ablunit.files.exclude` | `[ "**/.builder/**" ]` | Glob pattern array to exclude test files |
-| `ablunit.findAllFilesAtStartup` | `true` | Search all workspace files for test cases.  It may be beneficial to disable this for large workspaces, in which case the extension will find tests as files are accessed. |
+| `ablunit.discoverFilesOnActivate` | `true` | Search all workspace files for test cases.  It may be beneficial to disable this for large workspaces, in which case the extension will find tests as files are accessed. |
 | `ablunit.notificationsEnabled` | `true` | Enable/disable notifications |
-| `ablunit.tempDir` | Extension storage area | Any files generated when running ABLUnit will be stored here.  It is also used for the [`-T`](https://docs.progress.com/bundle/openedge-startup-and-parameter-reference-122/page/Temporary-Directory-T.html) startup parameter |
+| `ablunit.debugEnabled` | `false` | Enable debug level logging for the extension |
+
+### Configuration - Test Run Configuration (`.vscode/ablunit-test-profile.json`)
+
 
 <!-- START CONFIGURATION PROPERTIES -->
 ## Configuration Properties
 
 | Property | Default | Description |
 | --- | --- | --- |
-| `ablunit.configJson.configPath` | `ablunit.json` | Location of configutation passed to the command line.<br><br>**Example usage\:** \`-param=\\"CFG=ablunit.json\\"\` |
+| `ablunit.` | | Additional options/parameters passed to `_progres`.  This is most useful for providing database connections. Example: `-pf path/to/dbconnections.pf` |
+| `ablunit.tempDir` | Extension storage area | Any files generated when running ABLUnit will be stored here.  It is also used for the [`-T`](https://docs.progress.com/bundle/openedge-startup-and-parameter-reference-122/page/Temporary-Directory-T.html) startup parameter |
+| `ablunit.files.include` | `[ "**/*.{cls,p}" ]` | Glob pattern array to include test files |
+| `ablunit.files.exclude` | `[ "**/.builder/**" ]` | Glob pattern array to exclude test files |
 | `ablunit.configJson.outputLocation` |  | Directory where the results file will be written.<br><br>* The filename will always be \`results.xml\`<br>* If the directory does not exist, it will be created<br>* Path can be absolute or relative to the workspace root |
 | `ablunit.configJson.outputWriteJson` | `false` | Write the results to \`results.json\` in the same directory as \`results.xml\`. |
 | `ablunit.configJson.quitOnEnd` | `true` | Quit the session when the test run is complete<br><br>See [\`Run-test-cases-from-the-command-prompt\`](https\://docs.progress.com/bundle/openedge-developer-studio-help/page/Run-test-cases-from-the-command-prompt.html) for more information. |
 | `ablunit.configJson.showErrorMessage` | `true` | If \`showErrorMessage\` is set to true then the error messages is displayed in a new window |
 | `ablunit.configJson.throwError` | `false` | If ABLUnit is used as a library inside another program, set \`throwError\` to true, the framework displays the errors occurred |
 | `ablunit.configJson.writeLog` | `true` | If \`writeLog\` is true then a log file, \`ablunit.log\` is created in the current working directory and writes error messages to that log file |
-| `ablunit.debugEnabled` | `false` | Enable debug level logging for the extension |
-| `ablunit.display.classlabel` | `classname` | The label to display for test classes. Example for class with path \`com/example/myClass.cls\`\:<br><br>* class-type-name example\: \`com.example.myClass\`<br>* filename example\: \`myClass.cls\` |
 | `ablunit.files.exclude` | `[  "**/.builder/**" ]` | Glob patterns to exclude test files |
 | `ablunit.files.include` | `[  "**/*.{cls,p}" ]` | Glob patterns to include test files |
-| `ablunit.findAllFilesAtStartup` | `true` | For large workspaces this may improve performance by loading tests as they are found instead of doing so when the extension is activated |
+| `ablunit.discoverFilesOnActivate` | `true` | For large workspaces this may improve performance by loading tests as they are found instead of doing so when the extension is activated |
 | `ablunit.importOpenedgeProjectJson` | `true` | Import configuration settings from \`openedge-project.json\` when possible |
 | `ablunit.notificationsEnabled` | `true` | Show notifications when tests are run |
 | `ablunit.params` |  | Additional parameters to pass to the ABLUnit command line<br><br>**Example**\: \`-pf dbconns.pf\` |
@@ -101,4 +103,6 @@ See [CONTRIBUTING.md](.github/CONTRIBUTING.md)
   * [Run test cases from the command prompt](https://docs.progress.com/bundle/openedge-developer-studio-help/page/Run-test-cases-from-the-command-prompt.html)
   * [Learn About ABLUnit Test Framework](https://docs.progress.com/bundle/openedge-developer-studio-help/page/Learn-About-ABLUnit-Test-Framework.html)
   * [ABLUnit Annotations](https://docs.progress.com/bundle/openedge-developer-studio-help/page/Annotations-supported-with-ABLUnit.html)
+  * [PROFILER system handle](https://docs.progress.com/bundle/abl-reference/page/PROFILER-system-handle.html)
+  * [Profiler (-profile) startup parameter](https://docs.progress.com/bundle/openedge-startup-and-parameter-reference/page/Profiler-profile.html)
 * GitHub Repo - [progress/ade](https://github.com/progress/ADE) - OpenEdge Source Files

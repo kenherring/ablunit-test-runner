@@ -1,5 +1,5 @@
 {
-	"ablunit.findAllFilesAtStartup": true,
+	"ablunit.discoverFilesOnActivate": true,
 	"ablunit.files.include": "{**/*.cls,**/*.p}",
 	"ablunit.files.exclude": "",
 	// "ablunit.files.include": "**/*.cls,**/*.p"

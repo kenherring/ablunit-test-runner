@@ -1,0 +1,29 @@
+{
+	"progressIni": "${tempDir}/progress.ini",
+	"executable": "${DLC}/_progres",
+	"batch": true,
+	"files": {
+		"include": [ "**/*.{cls,p}" ],
+		"exclude": [ "**/.builder/**" ]
+	},
+	"tempDir": "${extensionContextStorage}",
+	"display": {
+		"classlabel": "filename"
+	},
+	"options": {
+		"output": {
+			"location": "${tempDir}",
+			"filename": "results",
+			"format": "xml"
+		},
+		"quitOnEnd": true,
+		"showErrorMessage": true,
+		"throwError": true
+	},
+	"profilerOptions": {
+		"enabled": true,
+		"coverage": true,
+		"description": "Run via VSCode - ABLUnit Test Provider Extension",
+		"filename": "prof.out"
+	}
+}

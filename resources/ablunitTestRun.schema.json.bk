@@ -1,0 +1,197 @@
+{
+	"$schema": "http://json-schema.org/draft-04/schema#",
+	"type": "object",
+	"uniqueItems": true,
+	"properties": {
+		"configurations": {
+			"type": "array",
+			"uniqueItems": true,
+			"maxItems": 3
+		}
+		"array"
+		"type": "array",
+		""
+		"type": "object",
+		"properties": {
+			"runProfile": {
+				"type": "string",
+				"enum": [
+					"test",
+					"coverage",
+					"debug"
+				],
+				"default": "coverage",
+				"description": "`test | coverage | debug`"
+			},
+			"importOpenedgeProjectJson": {
+				"type": "boolean",
+				"default": true,
+				"description": "Import the propath and database connection settings from 'openedge-project.json' possible."
+			},
+			"additionalArgs": {
+				"type": "array",
+				"default": [],
+				"description": "Additional args passed to the command line.",
+				"items": {
+					"type": "string"
+				}
+			},
+			"progressIni": {
+				"type": "string",
+				"default": "${tempDir}/progress.ini",
+				"nullable": true,
+				"description": "Windows only. Path to ini configuration file. Appended to test run execution with command line arguments: `-basekey INI -basename <progressIni>`.  Set to \"null\" to disable."
+			},
+			"executable": {
+				"type": "string",
+				"default": "${DLC}/_progres",
+				"minLength": 1,
+				"enum": [
+					"${DLC}/_progres",
+					"${DLC}/bin/_prowin",
+					"${DLC}/bin/_prowin32"
+				],
+				"description": "Path to command line executable"
+			},
+			"batch": {
+				"type": "boolean",
+				"default": true,
+				"description": "batch mode (-b)"
+			},
+			"files": {
+				"type": "object",
+				"description": "Include/exclude glob patterns to idenitfy test files",
+				"properties": {
+					"include": {
+						"type": "array",
+						"uniqueItems": true,
+						"minLength": 1,
+						"decription": "Glob pattern matching files containing tests to include when discovering tests",
+						"items": {
+							"type": "string",
+							"description": "Glob pattern matching files to be included in test discovery",
+						},
+						"default": [
+							"**/*.{cls,p}"
+						]
+					},
+					"exclude": {
+						"type": "array",
+						"uniqueItems": true,
+						"decription": "Glob pattern matching files to exclude when discovering tests discovery",
+						"items": {
+								"type": "string",
+								"description": "Glob pattern matching files to be excluded from test discovery",
+								"minLength": 1
+						},
+						"default": [
+							"**/.builder/**",
+							"**/.pct/**"
+						]
+					}
+				}
+			},
+			"tempDir": {
+				"type": "string",
+				"minLength": 1,
+				"default": "${extensionContextStorage}",
+				"description": "Path to temporary directory (-T).  Written to by both the extension and the OpenEdge test execution process.",
+				"nullable": true
+			},
+			"options": {
+				"type": "object",
+				"nullable": true,
+				"properties": {
+					"output": {
+						"type": "object",
+						"properties": {
+							"location": {
+								"type": "string",
+								"description": "Path to output directory for test results.",
+								"default": "${tempDir}"
+							},
+							"filename": {
+								"type": "string",
+								"description": "Filename used for test results.  If the value does not end with '.xml' it will be appended.",
+								"default": "results.xml"
+							},
+							"format": {
+								"type": "string",
+								"description": "File extension for results output.  Only 'xml' is a valid value",
+								"default": "xml",
+								"enum": [
+									"xml"
+								]
+							}
+						}
+					},
+					"quitOnEnd": {
+						"type": "boolean",
+						"default": true
+					},
+					"writeLog": {
+						"type": "boolean",
+						"default": false
+					},
+					"showErrorMessage": {
+						"type": "boolean",
+						"default": true
+					},
+					"throwError": {
+						"type": "boolean",
+						"default": true
+					}
+				}
+			},
+			"profilerOptions": {
+				"type": "object",
+				"nullable": true,
+				"properties": {
+					"enabled": {
+						"type": "boolean",
+						"default": true
+					},
+					"coverage": {
+						"type": "boolean",
+						"default": true
+					},
+					"description": {
+						"type": "string",
+						"default": "VSCode Test Run - ABLUnit Test Provider Extension",
+						"description": "Description outputted as header information by the `PROFILER` system handle."
+					},
+					"filename": {
+						"type": "string",
+						"default": "${tempDir}/prof.out",
+						"description": "Filepath where profiler data is written by the `PROFILER` system handle.  When the value is a directory a filename of 'prof.out' will be used."
+					},
+					"listings": {
+						"type": "boolean",
+						"default": false,
+						"description": "Include source code listings in the profiler output."
+					},
+					"statistics": {
+						"type": "boolean",
+						"default": false,
+						"description": "Include statistics in the profiler output."
+					},
+					"traceFilter": {
+						"type": "string",
+						"default": "",
+						"description": "Filter for tracing.  See OpenEdge documentation for details."
+					},
+					"tracing": {
+						"type": "boolean",
+						"default": false,
+						"description": "Include tracing in the profiler output."
+					},
+					"writeJson": {
+						"type": "boolean",
+						"default": false,
+						"description": "Write a JSON file containing the parsed profiler data.  The file will be written to the same directorye `filename` property."
+					}
+				}
+			}
+		}
+	}
+}

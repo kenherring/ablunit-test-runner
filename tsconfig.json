@@ -13,7 +13,7 @@
 			{
 				"name": "typescript-tslint-plugin"
 			}
-		],
+		]
 	},
 	"include": [
 		"src/**/*.ts"

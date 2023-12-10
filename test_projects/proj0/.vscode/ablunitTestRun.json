@@ -1,0 +1,36 @@
+{
+	"configurations": [
+		{
+			"runProfile": "coverage",
+			"tempDir": null,
+			"importOpenedgeProjectJson": true,
+			"files": {
+				"include": ["**/*.{cls,p}"],
+				"exclude": [
+					"**/.builder/**",
+					"**/.pct/**"
+				]
+			},
+			"command": {
+				"additionalArgs": [
+					"-pf",
+					"path/to/dbconnections.pf"
+				]
+			},
+			"options": {
+				"output": {
+					"location": "${tempDir}",
+					"filename": "results.xml"
+				},
+				"quitOnEnd": true,
+				"writeLog": false,
+				"showErrorMessage": true,
+				"throwError": true
+			},
+			"profiler": {
+				"enabled": true,
+				"coverage": true
+			}
+		}
+	]
+}

@@ -1,7 +1,7 @@
 import { commands, tests, window, workspace,
 	CancellationToken, ConfigurationChangeEvent, EventEmitter, ExtensionContext, Position, Range, RelativePattern, Selection,
 	TestController, TestItem, TestItemCollection, TestMessage, TestTag, TestRunProfileKind, TestRunRequest,
-	TextDocument, Uri, WorkspaceFolder } from 'vscode'
+	TextDocument, Uri, WorkspaceFolder, FileType } from 'vscode'
 import { ABLResults } from './ABLResults'
 import { testData, ABLTestSuite, ABLTestClass, ABLTestProgram, ABLTestFile, ABLTestCase, ABLTestDir, ABLTestData, resultData } from './testTree'
 import { GlobSync } from 'glob'
@@ -45,6 +45,52 @@ export async function activate (context: ExtensionContext) {
 		})
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 		cancellation.onCancellationRequested(() => l.dispose())
+	}
+
+	const configureHandler = () => {
+		console.log("100")
+		openTestRunConfig().catch( (err) => {
+			logToChannel("[configureHandler] Failed to open '.vscode/ablunit-test-profile.json'. err=" + err, 'error')
+		})
+		console.log("200")
+	}
+
+	async function openTestRunConfig() {
+		let workspaceFolder: WorkspaceFolder
+		if (workspace.workspaceFolders?.length === 1) {
+			workspaceFolder = workspace.workspaceFolders[0]
+		} else {
+			throw new Error('configureHandler not implemented for multi-folder workspaces')
+		}
+
+
+		const uri = Uri.joinPath(workspaceFolder.uri, '.vscode', 'ablunit-test-profile.json')
+		const det = Uri.joinPath(context.extensionUri, 'resources', 'ablunit-test-profile.details.jsonc')
+		const dir = Uri.joinPath(workspaceFolder.uri, '.vscode')
+
+		console.log("100")
+		const exists = await doesFileExist(uri)
+		console.log("101")
+		if (!exists) {
+			console.log("102")
+			await createDir(dir)
+			console.log("103")
+			console.log("file does not exist.  let's create it!")
+			console.log("copy from: " + det.fsPath)
+			console.log("copy to:   " + uri.fsPath)
+			await workspace.fs.copy(det, uri, { overwrite: false }).then(() => {
+				console.log('successfully create .vscode/ablunit-test-profile.json')
+			}, (err) => {
+				logToChannel('failed to create .vscode/ablunit-test-profile.json. err=' + err, 'error')
+				throw(err)
+			})
+		}
+
+		window.showTextDocument(Uri.joinPath(workspaceFolder.uri, '.vscode', 'ablunit-test-profile.json')).then(() => {
+			console.log("Opened .vscode/ablunit-test-profile.json")
+		}, (err) => {
+			console.error('Failed to open .vscode/ablunit-test-profile.json! err=' + err)
+		})
 	}
 
 	const startTestRun = (request: TestRunRequest) => {
@@ -224,7 +270,6 @@ export async function activate (context: ExtensionContext) {
 				data.updateFromContents(ctrl, e.getText(), file)
 			}
 		}
-
 	}
 
 	function updateConfiguration(e: ConfigurationChangeEvent) {
@@ -233,10 +278,14 @@ export async function activate (context: ExtensionContext) {
 		}
 	}
 
-	ctrl.createRunProfile('Run Tests', TestRunProfileKind.Run, runHandler, false, new TestTag('runnable'), false)
-	// ctrl.createRunProfile('Debug Tests', vscode.TestRunProfileKind.Debug, runHandler, false, new vscode.TestTag("runnable"), false)
+	const testRunProfile = ctrl.createRunProfile('Run ABLUnit Tests', TestRunProfileKind.Run, runHandler, false, new TestTag('runnable'), false)
+	testRunProfile.configureHandler = configureHandler
+	const testCoverageProfile = ctrl.createRunProfile('Run ABLUnit Tests w/ Coverage', TestRunProfileKind.Coverage, runHandler, true, new TestTag('runnable'), false)
+	testCoverageProfile.configureHandler = configureHandler
+	const testDebugProfile = ctrl.createRunProfile('Debug ABLUnit Tests', TestRunProfileKind.Debug, runHandler, false, new TestTag("runnable"), false)
+	testDebugProfile.configureHandler = configureHandler
 
-	if(workspace.getConfiguration('ablunit').get('findAllFilesAtStartup', false)) {
+	if(workspace.getConfiguration('ablunit').get('discoverFilesOnActivate', false)) {
 		await commands.executeCommand('testing.refreshTests')
 	}
 }
@@ -560,9 +609,9 @@ async function findInitialFiles (
 	includePatterns: RelativePattern[],
 	excludePatterns: RelativePattern[],
 	removeExcluded: boolean = false) {
-	const findAllFilesAtStartup = workspace.getConfiguration('ablunit').get('findAllFilesAtStartup')
+	const discoverFilesOnActivate = workspace.getConfiguration('ablunit').get('discoverFilesOnActivate')
 
-	if (!findAllFilesAtStartup) {
+	if (!discoverFilesOnActivate) {
 		if (removeExcluded) {
 			removeExcludedFiles(controller, excludePatterns)
 		}
@@ -660,6 +709,33 @@ function isFileExcluded(uri: Uri, excludePatterns: RelativePattern[]) {
 	return g.found.length == 0
 }
 
+
+export async function doesDirExist(uri: Uri) {
+	const ret = await workspace.fs.stat(uri).then((stat) => {
+		if (stat.type === FileType.Directory) {
+			return true
+		}
+		return false
+	}, (err) => {
+		console.log("[doesDirExist] caught: " + err)
+		return false
+	})
+	return ret
+}
+
+export async function doesFileExist(uri: Uri) {
+	const ret = await workspace.fs.stat(uri).then((stat) => {
+		if (stat.type === FileType.File) {
+			return true
+		}
+		return false
+	}, (err) => {
+		console.log("[doesFileExist] caught: " + err)
+		return false
+	})
+	return ret
+}
+
 ////////// DEBUG FUNCTIONS //////////
 
 function printDataType(data: ABLTestData | undefined) {
@@ -679,17 +755,18 @@ function printDataType(data: ABLTestData | undefined) {
 		logToChannel(' - unexpected instanceof type')
 }
 
-function createDir(uri: Uri) {
+async function createDir(uri: Uri) {
 	if(!uri) {
 		return
 	}
 	return workspace.fs.stat(uri).then((stat) => {
 		if (!stat) {
-			logToChannel('create dir for extension storage: ' + uri.fsPath)
+			logToChannel('[createDir] stat=' + JSON.stringify(stat))
+			logToChannel('[createDir] create-1: ' + uri.fsPath)
 			return workspace.fs.createDirectory(uri)
 		}
 	}, () => {
-		logToChannel('create dir for extension storage: ' + uri.fsPath)
+		logToChannel('[createDir] create after err: ' + uri.fsPath)
 		return workspace.fs.createDirectory(uri)
 	})
 }

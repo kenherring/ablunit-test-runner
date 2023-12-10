@@ -4,6 +4,61 @@ import { IProjectJson, readOpenEdgeProjectJson } from './parse/OpenedgeProjectPa
 import { PropathParser } from './ABLPropath'
 import { platform } from 'os'
 
+
+// KEEP IN REPO CONFIG:
+//  * notificationsEnabled
+//  * discoverFilesOnActivate
+//  * importOpenedgeProjectJson
+//  *
+
+interface ITestRunConfig {
+	tempDir?: string
+	params?: string
+	run?: {
+		command?: string
+		task?: string
+	}
+	files?: {
+		include: string[] //= [ "**/*.{cls,p}" ]
+		exclude?: string[] //= [ "**/.builder/**" ]
+	}
+	display?: {
+		classlabel?: "class-type-name" | "filename" //= "filename"
+	}
+	config?: {
+		output?: {
+			location?: string
+			writeJson?: boolean //= false
+		}
+		quitOnEnd?: boolean //= true
+		writeLog?: boolean //= true
+		showErrorMessage?: boolean //= true
+		throwError?: boolean //= true
+	}
+	profilerOptions?: {
+		enabled?: boolean //= true
+		coverage?: boolean //= true
+		description?: string //= "Run via VSCode - ABLUnit Test Provider Extension"
+		filename?: string //= "prof.out"
+		listings?: string //= ""
+		statistics?: boolean //= false
+		traceFilter?: string //= ""
+		tracing?: string //= ""
+		writeJson?: boolean //= false
+	}
+}
+
+export const defaultRunConfig: ITestRunConfig = {
+	files: {
+		include: [
+			"**/*.{cls,p}",
+		],
+		exclude: [
+			"**/.builder/**",
+		],
+	}
+}
+
 export interface ITestObj {
 	test: string
 	cases?: string[]
@@ -60,7 +115,7 @@ export interface IABLUnitConfig {
 		include: string
 		exclude: string
 	}
-	findAllFilesAtStartup: boolean
+	discoverFilesOnActivate: boolean
 	importOpenedgeProjectJson: boolean
 	notificationsEnabled: boolean
 	params: string,
@@ -99,7 +154,7 @@ function createAblunitConfig(workspaceFolder: WorkspaceFolder) {
 			include: workspace.getConfiguration('ablunit').get('files.include', '**/*.{cls,p}'),
 			exclude: workspace.getConfiguration('ablunit').get('files.exclude', '**/.builder/**'),
 		},
-		findAllFilesAtStartup: workspace.getConfiguration('ablunit').get('findAllFilesAtStartup', true),
+		discoverFilesOnActivate: workspace.getConfiguration('ablunit').get('discoverFilesOnActivate', true),
 		importOpenedgeProjectJson:  workspace.getConfiguration('ablunit').get('importOpenedgeProjectJson', true),
 		notificationsEnabled:  workspace.getConfiguration('ablunit').get('notificationsEnabled', true),
 		params: workspace.getConfiguration('ablunit').get('params', ''),
@@ -315,15 +370,12 @@ export class ABLUnitConfig  {
 
 		await readOpenEdgeProjectJson(this.ablunitConfig.workspaceFolder).then((propath) => {
 			if (propath) {
-				parser.setPropath(propath)
-			} else {
-				parser.setPropath(dflt)
+				return parser.setPropath(propath)
 			}
-			return parser
+			return parser.setPropath(dflt)
 		}, (err) => {
 			console.error("error reading openedge-project.json, falling back to default propath '.'\nerror: " + err)
-			parser.setPropath(dflt)
-			return parser
+			return parser.setPropath(dflt)
 		})
 		logToChannel("using propath='" + parser.toString() + "'")
 		return parser
