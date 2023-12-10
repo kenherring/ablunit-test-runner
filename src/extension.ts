@@ -254,6 +254,7 @@ export async function activate (context: ExtensionContext) {
 
 	ctrl.createRunProfile('Run Tests', TestRunProfileKind.Run, runHandler, false, new TestTag('runnable'), false)
 	// ctrl.createRunProfile('Debug Tests', vscode.TestRunProfileKind.Debug, runHandler, false, new vscode.TestTag("runnable"), false)
+	//ctrl.createRunProfile('Run Tests w/ Coverage', TestRunProfileKind.Coverage, runHandler, false, new TestTag('runnable'), false)
 
 	if(workspace.getConfiguration('ablunit').get('findAllFilesAtStartup', false)) {
 		await commands.executeCommand('testing.refreshTests')
