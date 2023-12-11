@@ -705,7 +705,9 @@ function isFileExcluded(uri: Uri, excludePatterns: RelativePattern[]) {
 	if (!workspaceFolder) {
 		return true
 	}
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
 	const g = new GlobSync(relativePath, { cwd: workspaceFolder.uri.fsPath, ignore: patterns })
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 	return g.found.length == 0
 }
 
@@ -765,8 +767,8 @@ async function createDir(uri: Uri) {
 			logToChannel('[createDir] create-1: ' + uri.fsPath)
 			return workspace.fs.createDirectory(uri)
 		}
-	}, () => {
-		logToChannel('[createDir] create after err: ' + uri.fsPath)
+	}, (err) => {
+		logToChannel('[createDir] create dir (' + uri.fsPath + ') after stat failed. err=' + err)
 		return workspace.fs.createDirectory(uri)
 	})
 }

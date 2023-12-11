@@ -11,53 +11,6 @@ import { platform } from 'os'
 //  * importOpenedgeProjectJson
 //  *
 
-interface ITestRunConfig {
-	tempDir?: string
-	params?: string
-	run?: {
-		command?: string
-		task?: string
-	}
-	files?: {
-		include: string[] //= [ "**/*.{cls,p}" ]
-		exclude?: string[] //= [ "**/.builder/**" ]
-	}
-	display?: {
-		classlabel?: "class-type-name" | "filename" //= "filename"
-	}
-	config?: {
-		output?: {
-			location?: string
-			writeJson?: boolean //= false
-		}
-		quitOnEnd?: boolean //= true
-		writeLog?: boolean //= true
-		showErrorMessage?: boolean //= true
-		throwError?: boolean //= true
-	}
-	profilerOptions?: {
-		enabled?: boolean //= true
-		coverage?: boolean //= true
-		description?: string //= "Run via VSCode - ABLUnit Test Provider Extension"
-		filename?: string //= "prof.out"
-		listings?: string //= ""
-		statistics?: boolean //= false
-		traceFilter?: string //= ""
-		tracing?: string //= ""
-		writeJson?: boolean //= false
-	}
-}
-
-export const defaultRunConfig: ITestRunConfig = {
-	files: {
-		include: [
-			"**/*.{cls,p}",
-		],
-		exclude: [
-			"**/.builder/**",
-		],
-	}
-}
 
 export interface ITestObj {
 	test: string

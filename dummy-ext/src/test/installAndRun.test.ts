@@ -9,7 +9,7 @@ before(async () => {
 		throw new Error("extension not found: kherring.ablunit-test-provider")
 	}
 
-	await ext!.activate().then(() => {
+	await ext.activate().then(() => {
 		console.log("extension activated! setting tempDir to 'target'")
 		return workspace.getConfiguration('ablunit').update('tempDir', 'target', ConfigurationTarget.Global).then(() => {
 			console.log("tempDir set to 'target'")
@@ -59,6 +59,7 @@ async function doesFileExist(uri: Uri) {
 		}
 		return false
 	}, (err) => {
+		console.error('failed to stat file: ' + uri.fsPath + ', err=' + err)
 		return false
 	})
 	return ret

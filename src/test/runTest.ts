@@ -6,17 +6,20 @@ async function main() {
 	const config = getTestConfig()
 
 	for (const conf of config) {
-		await testProject(conf.projName, conf.workspaceFolder, conf.launchArgs)
+		if (conf.projName == 'Parsers') {
+			console.log("conf = " + JSON.stringify(conf))
+			await testProject(conf.projName, conf.workspaceFolder, conf.launchArgs, conf.indexFile)
+		}
 	}
 }
 
-async function testProject(projName: string, projDir?: string, launchArgs?: string[]) {
+async function testProject(projName: string, projDir?: string, launchArgs?: string[], indexFile: string = './index') {
 	if(!projDir) {
 		projDir = projName
 	}
 
 	const extensionDevelopmentPath = path.resolve(__dirname, '../../')
-	const extensionTestsPath = path.resolve(__dirname, './index')
+	const extensionTestsPath = path.resolve(__dirname, indexFile)
 	try {
 		const args: string[] = [
 			projDir,

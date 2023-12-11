@@ -3,6 +3,7 @@ interface TestConfig {
 	projName: string
 	label: string
 	files: string
+	indexFile: string,
 	workspaceFolder: string
 	mocha: {
 		ui: string
@@ -34,7 +35,8 @@ function createTestConfig(projName: string, workspaceFolder?: string, timeout?: 
 			ui: 'tdd',
 			timeout: timeout
 		},
-		launchArgs: launchArgs
+		launchArgs: launchArgs,
+		indexFile: './index'
 	}
 
 	return retVal
@@ -56,6 +58,24 @@ export function getTestConfig () {
 	// Workspaces
 	testConfig.push(createTestConfig('workspace0', 'workspace0.code-workspace'))
 	testConfig.push(createTestConfig('workspace1', 'workspace1.code-workspace'))
+
+	// Unit Tests
+	testConfig.push({
+		projName: 'Parsers',
+		label: 'unit tests - Parsers',
+		files: 'out/test/**/*Parser.test.js',
+		workspaceFolder: './test_projects/ParserTests',
+		mocha: {
+			ui: 'tdd',
+			timeout: 10000
+		},
+		launchArgs: [
+			'--disable-extensions'
+		],
+		indexFile: './index_2'
+	})
+
+	console.log("testConfig = " + JSON.stringify(testConfig))
 
 	return testConfig
 }

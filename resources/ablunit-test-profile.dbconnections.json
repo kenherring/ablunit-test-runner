@@ -1,6 +1,10 @@
 {
-	"additionalArgs": [
-		"-pf",
-		"path/to/dbconnections.pf"
-	]
+	"configurations": [{
+		"command": {
+			"additionalArgs": [
+				"-pf",
+				"path/to/dbconnections.pf"
+			]
+		}
+	}]
 }

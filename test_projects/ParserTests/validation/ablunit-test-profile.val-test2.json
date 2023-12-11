@@ -6,8 +6,8 @@
 			"tempDir": "${extensionContextStorage}",
 			"importOpenEdgeProjectJson": true,
 			"files": {
-				"include": [ "**/*.{cls,p}" ],
-				"exclude": [ "**/.builder/**", "**/.pct/**" ]
+				"include": [ "**/test/*.test.p" ],
+				"exclude": [ "**/debug/*.test.p" ]
 			},
 			"command": {
 				"executable": "${DLC}/_progres",
