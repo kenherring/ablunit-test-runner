@@ -3,7 +3,6 @@ import { parseCallstack, ICallStack } from './CallStackParser'
 import { PropathParser } from '../ABLPropath'
 import { parseString } from 'xml2js'
 import { ABLDebugLines } from '../ABLDebugLines'
-import { IABLUnitConfig } from '../ABLUnitConfigWriter'
 import { logToChannel } from '../ABLUnitCommon'
 
 
@@ -60,8 +59,8 @@ export class ABLResultsParser {
 		this.debugLines = debugLines
 	}
 
-	async parseResults(cfg: IABLUnitConfig) {
-		const resultsBits = await workspace.fs.readFile(cfg.config_output_filenameUri);
+	async parseResults(configUri: Uri, jsonUri: Uri | undefined) {
+		const resultsBits = await workspace.fs.readFile(configUri);
 		const resultsXml = Buffer.from(resultsBits.toString()).toString('utf8');
 		const resultsXmlJson = await this.parseXml(resultsXml)
 		try {
@@ -70,8 +69,8 @@ export class ABLResultsParser {
 			console.error("[parseResults] error parsing results.xml file: " + err)
 			throw err
 		}
-		if (cfg.config_output_writeJson) {
-			return this.writeJsonToFile(cfg.config_output_jsonUri)
+		if (jsonUri) {
+			return this.writeJsonToFile(jsonUri)
 		}
 	}
 

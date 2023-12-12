@@ -80,29 +80,27 @@ function runTests (projName: string) {
 		try {
 			console.log("104")
 			// Run the mocha test
-			const runner = mocha.run((failures) => {
-				console.log("failures=" + failures)
-			}).on('end', () => {
-
+			mocha.run((failures) => {
 				console.log("nyc.writeCoverageFile()")
+				if (failures > 0) {
+					console.log("106")
+					console.log(`${failures} tests failed.`)
+					console.log("107")
+					e(new Error(`${failures} tests failed.`))
+				}
 				if (nyc) {
 					nyc.writeCoverageFile()
 					console.log("nyc.writeCoverageFile() done")
-					nyc.report().then(() => { console.log("nyc.report() done") })
-					c()
+					nyc.report().then(() => {
+						console.log("nyc.report() done")
+						c()
+					})
 				}
-				console.log("105")
-
-				if (runner.failures > 0) {
-					console.log("106")
-					console.log(`${runner.failures} tests failed.`)
-					console.log("107")
-					e(new Error(`${runner.failures} tests failed.`))
-				}
-				console.log("108")
+				console.log("105 failures=" + failures)
+			}).on('end', () => {
+				console.log("106 - END")
 			})
-			// c()
-			// console.log("109")
+			console.log("109")
 
 		} catch (err) {
 			console.error('[index_2.ts] catch err= ' + err)

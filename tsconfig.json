@@ -9,11 +9,11 @@
 		"sourceMap": true,
 		"strict": true,
 		"rootDir": "src",
-		"plugins": [
-			{
-				"name": "typescript-tslint-plugin"
-			}
-		]
+		// "plugins": [
+		// 	{
+		// 		"name": "typescript-tslint-plugin"
+		// 	}
+		// ]
 	},
 	"include": [
 		"src/**/*.ts"

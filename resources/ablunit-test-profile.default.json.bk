@@ -1,14 +1,9 @@
 {
 	"configurations": [
 		{
-			"runProfile": "run",
 			"hide": false,
-			"tempDir": "${extensionContextStorage}",
+			"tempDir": "${workspaceDir}",
 			"importOpenEdgeProjectJson": true,
-			"files": {
-				"include": [ "**/*.{cls,p}" ],
-				"exclude": [ "**/.builder/**", "**/.pct/**" ]
-			},
 			"command": {
 				"executable": "${DLC}/_progres",
 				"progressIni": "progress.ini",
@@ -37,9 +32,6 @@
 				"tracing": false,
 				"writeJson": false
 			}
-		},
-		{
-			"runProfile": "debug"
 		}
 	]
 }

@@ -65,8 +65,7 @@
 		"Testing"
 	],
 	"activationEvents-coverage": [
-		"onStartupFinished",
-		"workspaceContains:{**/*.cls,**/*.p,.vscode/ablunit-test-profile.json}"
+		"onStartupFinished"
 	],
 	"activationEvents": [
 		"onStartupFinished",
@@ -102,7 +101,7 @@
 	"devDependencies": {
 		"@types/glob": "^8.1.0",
 		"@types/node": "^16.18.34",
-		"@types/vscode": "^1.85.0",
+		"@types/vscode": "^1.83.0",
 		"@types/xml2js": "^0.4.12",
 		"@typescript-eslint/eslint-plugin": "^6.13.2",
 		"@typescript-eslint/parser": "^6.13.2",

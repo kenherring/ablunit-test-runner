@@ -13,15 +13,10 @@
 				"uniqueItems": true,
 				"default": "coverage",
 				"properties": {
-					"runProfile": {
-						"type": "string",
-						"uniqueItems": true,
-						"enum": [ "coverage" ]
-					},
 					"tempDir": {
 						"type": [ "string", "null" ],
 						"minLength": 1,
-						"default": "${extensionContextStorage}",
+						"default": "${workspaceDir}",
 						"description": "Path to temporary directory (-T).  Written to by both the extension and the OpenEdge test execution process."
 					},
 					"importOpenedgeProjectJson": {

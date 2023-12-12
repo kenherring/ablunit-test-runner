@@ -1,6 +1,6 @@
 
 import * as assert from 'assert'
-import { Uri, WorkspaceFolder, extensions, workspace } from 'vscode'
+import { Uri, WorkspaceFolder, workspace } from 'vscode'
 import { IConfigurations, parseRunProfiles } from '../../parse/RunProfileParser'
 
 function readValidationFile (filename: string) {
@@ -26,18 +26,13 @@ function getWorkspaceFolders () {
 suite('RunProfileParser.test', () => {
 
 	////////// SETUP
-	const extensionUri = extensions.getExtension("kherring.ablunit-test-provider")?.extensionUri
-	if (!extensionUri) {
-		throw new Error("unable to find extensionUri - failing test1")
-	}
-	const extensionResources = Uri.joinPath(extensionUri, 'resources')
 	const workspaceFolders = getWorkspaceFolders()
 	if (!workspaceFolders) {
 		throw new Error("unable to find workspaceFolders - failing test1")
 	}
 
 	test("test1", async () => {
-		const result = parseRunProfiles(extensionResources, workspaceFolders)
+		const result = parseRunProfiles(workspaceFolders)
 		let profiles
 		try{
 			profiles = await result
@@ -45,13 +40,12 @@ suite('RunProfileParser.test', () => {
 			console.error("caught error in parseRunProfiles! err = " + err)
 			assert.fail("caught error in parseRunProfiles! err = " + err)
 		}
-		assert.equal(profiles.length, 2, "profiles.length = 2")
-		assert.equal(profiles[0].runProfile, "run", "runProfile = run")
-		assert.equal(profiles[1].runProfile, "debug", "runProfile = debug")
+		assert.equal(profiles.length, 1, "profiles.length = 1")
+		assert.equal(profiles[0].hide, false, "hide=false")
 	})
 
-	test("test2", async () => {
-		const res = JSON.stringify(await parseRunProfiles(extensionResources, workspaceFolders, 'ablunit-test-profile.test2.json'))
+	test("test2 - modified files.include & files.exclude", async () => {
+		const res = JSON.stringify(await parseRunProfiles(workspaceFolders, 'ablunit-test-profile.test2.json'))
 		const val = await readValidationFile('ablunit-test-profile.val-test2.json')
 		assert.strictEqual(res,val)
 		return workspaceFolders

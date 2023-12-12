@@ -15,7 +15,6 @@
 ////#   * ${DLC} - The value of the DLC environment variable
 ////#   * ${tempDir} - See the "tempDir" key below
 ////#   * ${workspaceFolder} - The path of the folder opened in VS Code
-////#   * ${extensionContextStorage} - The path to the extension's storage directory
 
 {
 	"configurations": [{
@@ -30,7 +29,7 @@
 		////#
 		////# NOTE: A null value will disable the -T option from the command execution but
 		////#       may still use the default value for extension generated files.
-		"tempDir": "${extensionContextStorage}",
+		"tempDir": "${workspaceDir}",
 
 		////# When true read 'openedge-project.json' to determine proper configuration
 		////# including DLC, propath, and database connections.

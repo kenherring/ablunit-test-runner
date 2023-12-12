@@ -1,9 +1,8 @@
 {
 	"configurations": [
 		{
-			"runProfile": "run",
 			"hide": false,
-			"tempDir": "${extensionContextStorage}",
+			"tempDir": "${workspaceDir}",
 			"importOpenEdgeProjectJson": true,
 			"files": {
 				"include": [ "**/test/*.test.p" ],
@@ -37,9 +36,6 @@
 				"tracing": false,
 				"writeJson": false
 			}
-		},
-		{
-			"runProfile": "debug"
 		}
 	]
 }

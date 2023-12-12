@@ -1,15 +1,14 @@
 import { Uri, workspace } from 'vscode'
 import { getContentFromFilesystem } from './TestParserCommon'
 import { PropathParser } from '../ABLPropath'
-import { IProfilerOptions } from '../ABLUnitConfigWriter'
 import { ABLDebugLines } from '../ABLDebugLines'
 
 export class ABLProfile {
 	profJSON?: ABLProfileJson
 	resultsPropath?: PropathParser
 
-	async parseData(opts: IProfilerOptions, debugLines: ABLDebugLines) {
-		const text = await getContentFromFilesystem(opts.filenameUri)
+	async parseData(uri: Uri, writeJson: boolean, debugLines: ABLDebugLines) {
+		const text = await getContentFromFilesystem(uri)
 		const lines = text.replace(/\r/g,'').split('\n')
 
 		const sectionLines: string[][] = []
@@ -64,17 +63,20 @@ export class ABLProfile {
 
 		this.profJSON.modules.sort((a,b) => a.ModuleID - b.ModuleID)
 		console.log("parsing profiler data complete")
-		if (opts.writeJson) {
-			this.writeJsonToFile(opts.jsonUri).then()
+		if (writeJson) {
+			const jsonUri = Uri.parse(uri.fsPath.replace(/\.[a-zA-Z]+$/,'.json'))
+			this.writeJsonToFile(jsonUri).then(null, (err: Error) => {
+				console.error("Error writing profile output json file: " + err)
+			})
 		}
 	}
 
-	async writeJsonToFile (uri: Uri) {
+	writeJsonToFile (uri: Uri) {
 		const data: ProfileData = {
 			modules: this.profJSON!.modules,
 			userData: this.profJSON!.userData,
 		}
-		workspace.fs.writeFile(uri, Uint8Array.from(Buffer.from(JSON.stringify(data, null, 2)))).then(() => {
+		return workspace.fs.writeFile(uri, Uint8Array.from(Buffer.from(JSON.stringify(data, null, 2)))).then(() => {
 			console.log("wrote profile output json file: " + uri.fsPath)
 		}, (err) => {
 			console.error("failed to write profile output json file " + uri.fsPath + " - " + err)
@@ -189,13 +191,17 @@ export interface ProfileData {
 	userData: UserData[]
 }
 
+interface IProps {
+	[key: string]: string
+}
+
 export class ABLProfileJson {
 	version: number
 	systemDate: string
 	systemTime?: string
 	description?: string
 	userID?: string
-	properties?: {[key: string]: string}
+	properties?: IProps
 	// otherInfo: string
 	// StmtCnt: string | undefined
 	modules: Module[] = []
@@ -214,7 +220,7 @@ export class ABLProfileJson {
 			this.systemTime = test[4]
 			this.description = test[3]
 			this.userID = test[5]
-			this.properties = JSON.parse(test[6].replace(/\\/g,'/'))
+			this.properties = <IProps>JSON.parse(test[6].replace(/\\/g,'/'))
 		} else {
 			throw (new Error("Unable to parse profile data in section 1"))
 		}
