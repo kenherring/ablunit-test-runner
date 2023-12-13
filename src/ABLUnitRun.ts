@@ -84,8 +84,6 @@ export const ablunitRun = async(options: TestRun, res: ABLResults) => {
 
 		const cmd = args[0]
 		args.shift()
-		console.log("command: " + cmd + " " + args.join(' ')) //TODO
-		console.log(" ---- cwd: " + res.cfg.ablunitConfig.workspaceFolder.uri.fsPath) //TODO
 
 		return new Promise<string>((resolve, reject) => {
 			res.setStatus("running command")

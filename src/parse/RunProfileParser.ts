@@ -66,14 +66,11 @@ function mergeObjects (from: object, into: object) {
 				// @ts-expect-error 123
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 				into[key] = mergeObjects(from[key], into[key])
-			}
-		} else {
+			} //@ts-expect-error 123
+		} else if (from[key] != undefined) {
 			// @ts-expect-error 123
-			if (from[key] != undefined) {
-				// @ts-expect-error 123
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-				into[key] = from[key]
-			}
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+			into[key] = from[key]
 		}
 	})
 	return into

@@ -109,22 +109,40 @@ export async function getOEVersion (workspaceFolder: WorkspaceFolder, projectJso
 	//TODO return undefined
 }
 
+interface IBuildPath {
+	path: string
+	type: string
+	build: string
+	xref: string
+}
+
 function parseOpenEdgeProjectJson (workspaceFolder: WorkspaceFolder, inConf: string, dlc: IDlc) {
-	const conf = JSON.parse(inConf)
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+	const conf = <object>JSON.parse(inConf)
+
+	let buildPath: IBuildPath[] | undefined
+	let buildDirectory: string | undefined
+	if (typeof conf === 'object') {
+		if (Object.prototype.hasOwnProperty.call(conf,'buildPath')) {
+			buildPath = <IBuildPath[]>conf['buildPath']
+		}
+		if (Object.prototype.hasOwnProperty.call(conf,'buildDirectory')) {
+			buildDirectory = <string>conf['buildDirectory']
+		}
+	}
 
 	//TODO what about if we're running a different profile?
-	if (!conf.buildPath) {
+	if (!buildPath) {
 		console.error("buildPath not found in openedge-project.json")
-		console.error("openedge-project.json: " + JSON.stringify(conf, null, 4)) //TODO remove me
 		throw new Error("buildPath not found in openedge-project.json")
 	}
 
 	const pj: IProjectJson = { propathEntry: []}
 
-	for (const entry of conf.buildPath) {
+	for (const entry of buildPath) {
 		let dotPct: string
 
-		let path: string = entry.path.replace('${DLC}',dlc.uri)
+		let path: string = entry.path.replace('${DLC}', dlc.uri.fsPath)
 		if (path === ".") {
 			path = workspaceFolder.uri.fsPath
 		} else if (path.startsWith("./")) {
@@ -134,8 +152,8 @@ function parseOpenEdgeProjectJson (workspaceFolder: WorkspaceFolder, inConf: str
 		let buildDir: string = entry.build
 		if (!buildDir) {
 			buildDir = path
-			if (conf.buildDirectory) {
-				buildDir = conf.buildDirectory
+			if (buildDirectory) {
+				buildDir = buildDirectory
 			}
 			dotPct = ".builder/.pct0"
 		} else {

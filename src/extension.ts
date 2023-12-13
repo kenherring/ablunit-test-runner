@@ -735,27 +735,6 @@ export async function doesFileExist(uri: Uri) {
 	return ret
 }
 
-////////// DEBUG FUNCTIONS //////////
-
-// function printDataType(data: ABLTestData | undefined) {
-// 	if (data instanceof ABLTestDir)
-// 		logToChannel(' - ABLTestDir')
-// 	else if (data instanceof ABLTestFile)
-// 		logToChannel(' - ABLTestFile')
-// 	else if (data instanceof ABLTestCase)
-// 		logToChannel(' - ABLTestCase')
-// 	if (data instanceof ABLTestSuite)
-// 		logToChannel(' - ABLTestSuite')
-// 	else if(data instanceof ABLTestClass)
-// 		logToChannel(' - ABLTestClass')
-// 	else if(data instanceof ABLTestProgram)
-// 		logToChannel(' - ABLTestProcedure')
-// 	else if(data instanceof ABLTestCase)
-// 		logToChannel(' - ABLTestCase')
-// 	else
-// 		logToChannel(' - unexpected instanceof type (typeof=' + typeof data + ', data.description=' + data?.description + ')')
-// }
-
 async function createDir(uri: Uri) {
 	if(!uri) {
 		return
