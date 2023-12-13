@@ -12,6 +12,7 @@
 		"filename": "${workspaceFolder}/target/ablunit.prof"
 	},
 	"command": {
-		"executable": "${DLC}/ant/bin/ant test -Dfiles='${testlist}'"
+		// "executable": "${DLC}/ant/bin/ant test -Dfiles='${testlist}'"
+		"executable": "ant test -Dfiles='${testlist}'"
 	}
 }]}

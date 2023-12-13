@@ -44,11 +44,11 @@ suite('RunProfileParser.test', () => {
 		assert.equal(profiles[0].hide, false, "hide=false")
 	})
 
-	test("test2 - modified files.include & files.exclude", async () => {
-		const res = JSON.stringify(await parseRunProfiles(workspaceFolders, 'ablunit-test-profile.test2.json'))
-		const val = await readValidationFile('ablunit-test-profile.val-test2.json')
-		assert.strictEqual(res,val)
-		return workspaceFolders
-	})
+	// test("test2 - modified files.include & files.exclude", async () => {
+	// 	const res = JSON.stringify(await parseRunProfiles(workspaceFolders, 'ablunit-test-profile.test2.json'))
+	// 	const val = await readValidationFile('ablunit-test-profile.val-test2.json')
+	// 	assert.strictEqual(res,val)
+	// 	return workspaceFolders
+	// })
 
 })

@@ -166,28 +166,27 @@ export class RunConfig extends DefaultRunProfile {
 		this.config_uri = Uri.joinPath(this.tempDirUri, 'ablunit.json')
 		this.profOptsUri = Uri.joinPath(this.tempDirUri, 'profile.options')
 
+		this.options = new CoreOptions(this.profile.options)
 		const tmpFilename = (this.profile.options?.output?.filename?.replace(/\.xml$/,'') ?? 'results') + '.xml'
-
 		this.optionsUri = {
 			locationUri: this.getUri(this.profile.options?.output?.location),
 			filenameUri: Uri.joinPath(this.tempDirUri, tmpFilename),
 		}
-
-		this.options = new CoreOptions(this.profile.options)
-		this.options.output.location = workspace.asRelativePath(this.optionsUri.locationUri)
+		this.options.output.location = workspace.asRelativePath(this.optionsUri.locationUri, false)
+		this.optionsUri.filenameUri = Uri.joinPath(this.optionsUri.locationUri, tmpFilename)
 		if (this.options.output?.writeJson) {
 			this.optionsUri.jsonUri = Uri.joinPath(this.optionsUri.locationUri, tmpFilename.replace(/\.xml$/,'') + '.json')
 		}
 
 		this.command = new CommandOptions(this.profile.command)
 		this.progressIniUri = this.getUri(this.command.progressIni)
-		this.command.progressIni = workspace.asRelativePath(this.progressIniUri)
+		this.command.progressIni = workspace.asRelativePath(this.progressIniUri, false)
 
 		this.profiler = new ProfilerOptions()
 		this.profiler.merge(this.profile.profiler)
 		this.profFilenameUri = this.getUri(this.profiler.filename)
 		if (this.profFilenameUri) {
-			this.profiler.filename = workspace.asRelativePath(this.profFilenameUri)
+			this.profiler.filename = workspace.asRelativePath(this.profFilenameUri, false)
 		}
 
 		if (typeof this.profiler.listings === 'boolean') {
@@ -198,7 +197,7 @@ export class RunConfig extends DefaultRunProfile {
 			this.profListingsUri = this.getUri(this.profiler.listings)
 		}
 		if (this.profListingsUri) {
-			this.profiler.listings = workspace.asRelativePath(this.profListingsUri)
+			this.profiler.listings = workspace.asRelativePath(this.profListingsUri, false)
 		}
 	}
 
