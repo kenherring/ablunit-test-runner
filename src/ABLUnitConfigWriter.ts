@@ -58,17 +58,17 @@ export class ABLUnitConfig  {
 		console.log("creating ablunit.json: '" + this.ablunitConfig.config_uri.fsPath + "'")
 		const promarr: PromiseLike<void>[] = []
 		promarr.push(
-			workspace.fs.stat(this.ablunitConfig.options.locationUri).then((stat) => {
+			workspace.fs.stat(this.ablunitConfig.optionsUri.locationUri).then((stat) => {
 				if (stat.type != FileType.Directory) {
-					throw new Error("configJson.output.location is not a Directory: " + this.ablunitConfig.options.locationUri.fsPath)
+					throw new Error("configJson.output.location is not a Directory: " + this.ablunitConfig.optionsUri.locationUri.fsPath)
 				}
 			}, () => {
-				return this.createDir(this.ablunitConfig.options.locationUri)
+				return this.createDir(this.ablunitConfig.optionsUri.locationUri)
 			})
 		)
-		promarr.push(this.deleteFile(this.ablunitConfig.options.filenameUri))
-		if (this.ablunitConfig.options.jsonUri) {
-			promarr.push(this.deleteFile(this.ablunitConfig.options.jsonUri))
+		promarr.push(this.deleteFile(this.ablunitConfig.optionsUri.filenameUri))
+		if (this.ablunitConfig.optionsUri.jsonUri) {
+			promarr.push(this.deleteFile(this.ablunitConfig.optionsUri.jsonUri))
 		}
 
 		const out = <IABLUnitJson>{
@@ -80,31 +80,31 @@ export class ABLUnitConfig  {
 		return Promise.all(promarr)
 	}
 
-	async createProfileOptions (uri: Uri, profilerOptions: ProfilerOptions) {
-		if (!profilerOptions.enabled) { return Promise.resolve() }
+	async createProfileOptions (uri: Uri, profOpts: ProfilerOptions) {
+		if (!profOpts.enabled) { return Promise.resolve() }
 
 		const opt: string[] = [
 			'-profiling',
-			'-filename "' + profilerOptions.filename + '"',
-			'-description "' + profilerOptions.description + '"'
+			'-filename "' + profOpts.filename + '"',
+			'-description "' + profOpts.description + '"'
 		]
 
-		if (profilerOptions.coverage) {
+		if (profOpts.coverage) {
 			opt.push('-coverage')
 		}
 
-		if (profilerOptions.listings != '') {
-			opt.push('-listings "' + profilerOptions.listings + '"')
+		if (this.ablunitConfig.profListingsUri) {
+			opt.push('-listings "' + profOpts.listings + '"')
 			await this.createDir(this.ablunitConfig.profListingsUri)
 		}
-		if (profilerOptions.statistics) {
+		if (profOpts.statistics) {
 			opt.push('-statistics')
 		}
-		if (profilerOptions.tracing != '') {
-			opt.push('-tracing "' + profilerOptions.tracing + '"')
+		if (profOpts.tracing != '') {
+			opt.push('-tracing "' + profOpts.tracing + '"')
 		}
-		if (profilerOptions.traceFilter != '') {
-			opt.push('-traceFilter "' + profilerOptions.traceFilter + '"')
+		if (profOpts.traceFilter != '') {
+			opt.push('-traceFilter "' + profOpts.traceFilter + '"')
 		}
 		await this.deleteFile(this.ablunitConfig.profFilenameUri)
 		await this.writeFile(uri, Uint8Array.from(Buffer.from(opt.join('\n') + '\n')))

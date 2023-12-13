@@ -182,3 +182,23 @@ export async function updateConfig (key: string, value: any) {
 	})
 	await sleep(250, "sleep after updateConfig")
 }
+
+export function updateTestProfile (key: string, value: string | string[] | boolean): Thenable<void> {
+	return workspace.fs.readFile(Uri.joinPath(getWorkspaceUri(), '.vscode', 'ablunit-test-profile.json')).then((content) => {
+		const str = Buffer.from(content.buffer).toString();
+		const profile = JSON.parse(str)
+
+		const keys = key.split('.')
+
+		if (keys.length === 3) {
+			profile["configurations"][0][keys[0]][keys[1]][keys[2]] = value
+		} else if (keys.length ===2) {
+			profile["configurations"][0][keys[0]][keys[1]] = value
+		} else {
+			profile["configurations"][0][keys[0]] = value
+		}
+
+		// profile.configurations[0][key] = value
+		return workspace.fs.writeFile(Uri.joinPath(getWorkspaceUri(), '.vscode', 'ablunit-test-profile.json'), Buffer.from(JSON.stringify(profile,null,4)))
+	})
+}

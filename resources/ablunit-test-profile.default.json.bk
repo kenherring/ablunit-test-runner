@@ -2,7 +2,7 @@
 	"configurations": [
 		{
 			"hide": false,
-			"tempDir": "${workspaceDir}",
+			"tempDir": "${workspaceFolder}",
 			"importOpenEdgeProjectJson": true,
 			"command": {
 				"executable": "${DLC}/_progres",

@@ -1,0 +1,15 @@
+{
+	"configurations": [
+		{
+			"tempDir": "${workspaceFolder}",
+			"options": {
+				"output": {
+					"writeJson": true
+				}
+			},
+			"profiler": {
+				"enabled": false
+			}
+		}
+	]
+}

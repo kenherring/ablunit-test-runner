@@ -7,10 +7,12 @@ import { exec } from "child_process";
 export const ablunitRun = async(options: TestRun, res: ABLResults) => {
 	const start = Date.now()
 
-	await res.cfg.createAblunitJson(res.cfg.ablunitConfig.config_uri, res.cfg.ablunitConfig.coreOpts, res.testQueue)
+	await res.cfg.createAblunitJson(res.cfg.ablunitConfig.config_uri, res.cfg.ablunitConfig.options, res.testQueue)
 
 	const getCommand = () => {
-		if (res.cfg.ablunitConfig.command.executable != "") {
+		if (res.cfg.ablunitConfig.command.executable != "${DLC}/_progres" &&
+		res.cfg.ablunitConfig.command.executable != "${DLC}/prowin" &&
+		res.cfg.ablunitConfig.command.executable != "${DLC}/prowin32") {
 			return getCustomCommand()
 		}
 		return getDefaultCommand()
@@ -61,7 +63,7 @@ export const ablunitRun = async(options: TestRun, res: ABLResults) => {
 		}
 		cmd.push('-T',tempPath)
 
-		if (res.cfg.ablunitConfig.profOpts.enabled) {
+		if (res.cfg.ablunitConfig.profiler.enabled) {
 			cmd.push('-profile', workspace.asRelativePath(res.cfg.ablunitConfig.profOptsUri, false))
 		}
 

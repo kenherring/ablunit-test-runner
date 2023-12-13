@@ -102,9 +102,6 @@ export async function activate (context: ExtensionContext) {
 				}
 
 				const data = testData.get(test)
-				if (debugEnabled) {
-					printDataType(data)
-				}
 
 				if (data instanceof ABLTestFile || data instanceof ABLTestCase) {
 					run.enqueued(test)
@@ -741,9 +738,11 @@ export async function doesFileExist(uri: Uri) {
 ////////// DEBUG FUNCTIONS //////////
 
 function printDataType(data: ABLTestData | undefined) {
-	if (data instanceof ABLTestFile)
+	if (data instanceof ABLTestDir)
+		logToChannel(' - ABLTestDir')
+	else if (data instanceof ABLTestFile)
 		logToChannel(' - ABLTestFile')
-	if (data instanceof ABLTestCase)
+	else if (data instanceof ABLTestCase)
 		logToChannel(' - ABLTestCase')
 	if (data instanceof ABLTestSuite)
 		logToChannel(' - ABLTestSuite')
@@ -754,7 +753,7 @@ function printDataType(data: ABLTestData | undefined) {
 	else if(data instanceof ABLTestCase)
 		logToChannel(' - ABLTestCase')
 	else
-		logToChannel(' - unexpected instanceof type')
+		logToChannel(' - unexpected instanceof type (typeof=' + typeof data + ', data.description=' + data?.description + ')')
 }
 
 async function createDir(uri: Uri) {

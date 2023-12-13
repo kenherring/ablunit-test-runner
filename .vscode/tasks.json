@@ -18,6 +18,25 @@
 				"kind": "build",
 				"isDefault": true
 			},
+			// "runOptions": {
+			// 	"runOn": "folderOpen"
+			// }
+		},
+		{
+			"type": "npm",
+			"script": "watch-tsc",
+			// "dependsOn": [
+			// 	"npm: test-compile"
+			// ],
+			"problemMatcher": "$tsc-watch",
+			"isBackground": true,
+			"presentation": {
+				"reveal": "never"
+			},
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
 			"runOptions": {
 				"runOn": "folderOpen"
 			}

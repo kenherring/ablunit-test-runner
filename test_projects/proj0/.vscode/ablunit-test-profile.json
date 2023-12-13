@@ -29,7 +29,7 @@
 		////#
 		////# NOTE: A null value will disable the -T option from the command execution but
 		////#       may still use the default value for extension generated files.
-		"tempDir": "${workspaceDir}",
+		"tempDir": "${workspaceFolder}",
 
 		////# When true read 'openedge-project.json' to determine proper configuration
 		////# including DLC, propath, and database connections.
@@ -62,19 +62,9 @@
 			////#    "-pf",
 			////# 	 "path/to/dbconnections.pf"
 			////# ],
-			"additionalArgs": []
-		},
-
-		////# This "files" key defines glob patterns used to identify test files.
-		////# More information on glob patterns can be found here:
-		////#   * https://code.visualstudio.com/docs/editor/glob-patterns
-		"files": {
-			"include": [
-				"**/*.{cls,p}"
-			],
-			"exclude": [
-				"**/.builder/**",  // OpenEdge ABL Extension working directory
-				"**/.pct/**"       // Output path generally used with ant/PCT tasks
+			"additionalArgs": [
+				"-pf",
+				"test.pf"
 			]
 		},
 
@@ -106,7 +96,7 @@
 		////#   * When the "enabled" flag is false the process will not have the profiler enabled
 		////#     on startup but the `-profile` option is passed to the command., args will not be passed to
 		////#     the command line, and the "profiler.options" file will not be created.
-		////#   * When the "profilerOptions" key is set to null the 'profile.options' file will not
+		////#   * When the "profiler" key is set to null the 'profile.options' file will not
 		////#     be created and the `-profile` option will not be passed to the command line.
 		////#
 		////# See the OpenEdge documentation for more information about these values.

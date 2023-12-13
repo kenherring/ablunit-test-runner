@@ -12,9 +12,10 @@
 				"type": "object",
 				"uniqueItems": true,
 				"default": "coverage",
+				"additionalProperties": false,
 				"properties": {
 					"tempDir": {
-						"type": [ "string", "null" ],
+						"type": "string",
 						"minLength": 1,
 						"default": "${workspaceDir}",
 						"description": "Path to temporary directory (-T).  Written to by both the extension and the OpenEdge test execution process."
@@ -24,37 +25,10 @@
 						"default": true,
 						"description": "Import the propath and database connection settings from 'openedge-project.json' possible."
 					},
-					"files": {
-						"type": "object",
-						"description": "Glob patterns to match when discovering tests in files",
-						"properties": {
-							"include": {
-								"type": "array",
-								"description": "Glob pattern(s) matching files containing tests to include during test discovery",
-								"minItems": 1,
-								"items": {
-									"type": "string",
-									"uniqueItems": true,
-									"minLength": 1,
-									"default": "**/*.{cls,p}"
-								}
-							},
-							"exclude": {
-								"type": "array",
-								"description": "Glob pattern(s) matching files to exclude from test discovery",
-								"default": [ "**/.builder/**", "**/.pct/**" ],
-								"minItems": 1,
-								"items": {
-									"type": "string",
-									"uniqueItems": true,
-									"minLength": 1
-								}
-							}
-						}
-					},
 					"command": {
 						"type": "object",
 						"description": "Options related to the command line executable",
+						"additionalProperties": false,
 						"properties": {
 							"executable": {
 								"type": "string",
@@ -95,11 +69,12 @@
 							"showErrorMessage": true,
 							"throwError": true
 						},
-						"nullable": true,
+						"additionalProperties": false,
 						"properties": {
 							"output": {
 								"type": "object",
 								"description": "Options for test result output.",
+								"additionalProperties": false,
 								"properties": {
 									"location": {
 										"type": "string",
@@ -144,6 +119,7 @@
 							"enabled": true,
 							"coverage": true
 						},
+						"additionalProperties": false,
 						"properties": {
 							"enabled": {
 								"type": "boolean",

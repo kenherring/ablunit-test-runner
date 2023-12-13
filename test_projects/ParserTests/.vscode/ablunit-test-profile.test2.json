@@ -1,10 +1,6 @@
 {
 	"configurations": [
 		{
-			"files": {
-				"include": [ "**/test/*.test.p" ],
-				"exclude": [ "**/debug/*.test.p" ]
-			}
 		}
 	]
 }

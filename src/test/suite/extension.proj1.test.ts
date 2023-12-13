@@ -27,7 +27,7 @@ suite(projName + ' - Extension Test Suite', () => {
 
 		assert(await doesFileExist(ablunitJson),"missing ablunit.json (" + ablunitJson.fsPath + ")")
 		assert(await doesFileExist(resultsXml),"missing results.xml (" + resultsXml.fsPath + ")")
-		assert(await doesFileExist(resultsJson),"missing results.json (" + resultsJson.fsPath + ")")
+		assert(! await doesFileExist(resultsJson),"unexpected results.json (" + resultsJson.fsPath + ")")
 	})
 
 	test(projName + '.2 - output files exist 2 - exclude compileError.p', async () => {

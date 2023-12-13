@@ -93,7 +93,8 @@
 		"test:install-and-run": "npm run package && cd dummy-ext && npm run test:install-and-run",
 		"vscode-test": "vscode-test",
 		"vscode:prepublish": "npm run esbuild-base -- --minify",
-		"watch": "npm run esbuild-watch"
+		"watch": "npm run esbuild-watch",
+		"watch-tsc": "tsc -p ./ -w"
 	},
 	"dependencies": {
 		"xml2js": "^0.6.2"
@@ -139,6 +140,20 @@
 					],
 					"markdownDescription": "Label style for test class files in the test explorer view. <br><br>Example styles for `com/example/myClass.cls`:\n<ul><li>class-type-name\\: `com.example.myClass`</li><li>filename\\: `myClass.cls`</li></ul>"
 				},
+				"ablunit.files.include": {
+					"type": "array",
+					"default": [
+						"**/*.{cls,p}"
+					],
+					"markdownDescription": "Glob patterns to include test files"
+				},
+				"ablunit.files.exclude": {
+					"type": "array",
+					"default": [
+						"**/.builder/**,**/.pct/**"
+					],
+					"markdownDescription": "Glob patterns to exclude test files"
+				},
 				"ablunit.importOpenedgeProjectJson": {
 					"type": "boolean",
 					"default": true,
@@ -179,6 +194,14 @@
 				]
 			}
 		],
+		"jsonValidation": [
+			{
+				"fileMatch": [
+					"**/ablunit-test-profile*.json"
+				],
+				"url": "./resources/ablunit-test-profile.schema.json"
+			}
+		],
 		"snippets": [
 			{
 				"language": "abl-procedure",
@@ -187,15 +210,6 @@
 			{
 				"language": "abl-class",
 				"path": "./snippets-classes.json"
-			}
-		],
-		"jsonValidation": [
-			{
-				"fileMatch": [
-					".vscode/ablunit-test-profile.json",
-					".vscode/ablunit-test-profile.*.json"
-				],
-				"url": "./resources/ablunit-test-profile.schema.json"
 			}
 		]
 	}

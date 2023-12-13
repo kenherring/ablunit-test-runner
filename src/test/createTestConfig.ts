@@ -3,7 +3,7 @@ interface TestConfig {
 	projName: string
 	label: string
 	files: string
-	indexFile: string,
+	indexFile?: string,
 	workspaceFolder: string
 	mocha: {
 		ui: string
@@ -74,8 +74,6 @@ export function getTestConfig () {
 		],
 		indexFile: './index_2'
 	})
-
-	console.log("testConfig = " + JSON.stringify(testConfig))
 
 	return testConfig
 }

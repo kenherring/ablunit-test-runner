@@ -1,7 +1,7 @@
 import { Uri, WorkspaceFolder, workspace } from 'vscode'
 import { isRelativePath } from '../ABLUnitConfigWriter'
 import { CoreOptions } from './config/CoreOptions'
-import {  IRunProfile, DefaultRunProfile } from './config/RunProfile'
+import { IRunProfile, DefaultRunProfile } from './config/RunProfile'
 import { ProfilerOptions } from './config/ProfilerOptions'
 import { CommandOptions } from './config/CommandOptions'
 
@@ -24,7 +24,7 @@ async function readJson (uri: Uri) {
 		d = d.replace(/\/\*.*\*\//g,'') // remove multi-line comments
 		return d
 	}, (err: Error) => {
-		console.error("Failed to parse openedge-run-profile.json: " + err)
+		console.error("Failed to parse ablunit-test-profile.json: " + err)
 		throw err
 	})
 	return <JSON>JSON.parse(data)
@@ -39,7 +39,7 @@ async function getConfigurations(uri: Uri) {
 			}
 			return <IConfigurations>JSON.parse(str)
 		} catch (err) {
-			console.error("Failed to parse openedge-run-profile.json: " + err)
+			console.error("Failed to parse ablunit-test-profile: " + err)
 			throw err
 		}
 	})
@@ -49,13 +49,6 @@ function mergeObjects (from: object, into: object) {
 	if(typeof from !== typeof into) {
 		throw new Error("Merge objects must be the same type! (from=" + typeof from + ", into=" + typeof into + ")")
 	}
-
-	// Object.entries(from).forEach(([key, value]) => {
-	// 	console.log("[mergeObjects]-2.2 key=" + key + ", value=" + value)
-	// })
-	// Object.entries(into).forEach(([key, value]) => {
-	// 	console.log("[mergeObjects]-2.3 key=" + key + ", value=" + value)
-	// })
 
 	Object.entries(from).forEach(([key,]) => {
 		// @ts-expect-error 123
@@ -75,7 +68,6 @@ function mergeObjects (from: object, into: object) {
 				into[key] = mergeObjects(from[key], into[key])
 			}
 		} else {
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 			// @ts-expect-error 123
 			if (from[key] != undefined) {
 				// @ts-expect-error 123
@@ -136,60 +128,84 @@ export async function parseRunProfile(workspaceFolder: WorkspaceFolder) {
 	return runProfiles[0]
 }
 
-
-function getUri (dir: string | undefined, workspaceFolder: WorkspaceFolder): Uri {
+function getUri (dir: string | undefined, workspaceFolderUri: Uri, tempDir?: Uri ): Uri {
 	if (dir === undefined || dir === '') {
-		return workspaceFolder.uri
+		return workspaceFolderUri
 	}
+
+	if (tempDir != undefined) {
+		dir = dir.replace('${tempDir}', tempDir.fsPath)
+	}
+	dir = dir.replace('${workspaceFolder}', workspaceFolderUri.fsPath)
+
 	if (isRelativePath(dir)) {
-		return Uri.joinPath(workspaceFolder.uri, dir)
+		return Uri.joinPath(workspaceFolderUri, dir)
 	} else {
+		console.log('dir-4=' + Uri.file(dir).fsPath)
 		return Uri.file(dir)
 	}
 }
 
-export class RunConfig {
+export class RunConfig extends DefaultRunProfile {
 	public readonly tempDirUri: Uri
 	public readonly config_uri: Uri
-	public readonly options: {
+	public readonly optionsUri: {
 		locationUri: Uri,
 		filenameUri: Uri
 		jsonUri?: Uri
 	}
-	public readonly coreOpts: CoreOptions
-	public readonly command: CommandOptions
 	public readonly progressIniUri: Uri
 	public readonly profOptsUri: Uri
-	public readonly profListingsUri: Uri
+	public readonly profListingsUri: Uri | undefined
 	public readonly profFilenameUri: Uri
-	public readonly profOpts: ProfilerOptions = new ProfilerOptions()
 
 	constructor(private readonly profile: IRunProfile,
 				public workspaceFolder: WorkspaceFolder) {
+		super()
 		this.tempDirUri = this.getUri(this.profile.tempDir)
 		this.config_uri = Uri.joinPath(this.tempDirUri, 'ablunit.json')
 		this.profOptsUri = Uri.joinPath(this.tempDirUri, 'profile.options')
 
 		const tmpFilename = (this.profile.options?.output?.filename?.replace(/\.xml$/,'') ?? 'results') + '.xml'
-		this.options = {
+
+		this.optionsUri = {
 			locationUri: this.getUri(this.profile.options?.output?.location),
 			filenameUri: Uri.joinPath(this.tempDirUri, tmpFilename),
 		}
-		this.coreOpts = new CoreOptions(this.profile.options)
+
+		this.options = new CoreOptions(this.profile.options)
+
+		if (this.options.output?.writeJson) {
+			this.optionsUri.jsonUri = Uri.joinPath(this.tempDirUri, tmpFilename.replace(/\.xml$/,'') + '.json')
+		}
+		this.options.output.location = workspace.asRelativePath(this.optionsUri.locationUri)
+
 
 		this.command = new CommandOptions(this.profile.command)
 		this.progressIniUri = this.getUri(this.command.progressIni)
+		this.command.progressIni = workspace.asRelativePath(this.progressIniUri)
 
-		if (this.profile.options?.output?.writeJson) {
-			this.options.jsonUri = Uri.joinPath(this.tempDirUri, tmpFilename.replace(/\.xml$/,'') + '.json')
+		this.profiler = new ProfilerOptions()
+		this.profiler.merge(this.profile.profiler)
+		this.profFilenameUri = this.getUri(this.profiler.filename)
+		if (this.profFilenameUri) {
+			this.profiler.filename = workspace.asRelativePath(this.profFilenameUri)
 		}
-		this.profOpts.merge(this.profile.profilerOpts)
-		this.profListingsUri = this.getUri(this.profOpts.listings)
-		this.profFilenameUri = this.getUri(this.profOpts.filename)
+
+		if (typeof this.profiler.listings === 'boolean') {
+			if (this.profiler.listings === true) {
+				this.profListingsUri = Uri.joinPath(this.tempDirUri, 'listings')
+			}
+		} else {
+			this.profListingsUri = this.getUri(this.profiler.listings)
+		}
+		if (this.profListingsUri) {
+			this.profiler.listings = workspace.asRelativePath(this.profListingsUri)
+		}
 	}
 
 	getUri (dir: string | undefined): Uri {
-		return getUri(dir, this.workspaceFolder)
+		return getUri(dir, this.workspaceFolder.uri, this.tempDirUri)
 	}
 }
 

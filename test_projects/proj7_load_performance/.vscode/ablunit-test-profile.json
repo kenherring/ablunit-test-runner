@@ -1,0 +1,8 @@
+{"configurations": [{
+	"tempDir": "temp",
+	"options": {
+		"output": {
+			"writeJson": true
+		}
+	}
+}]}

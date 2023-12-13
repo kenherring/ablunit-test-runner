@@ -4,13 +4,6 @@
 			"runProfile": "coverage",
 			"tempDir": null,
 			"importOpenedgeProjectJson": true,
-			"files": {
-				"include": ["**/*.{cls,p}"],
-				"exclude": [
-					"**/.builder/**",
-					"**/.pct/**"
-				]
-			},
 			"command": {
 				"additionalArgs": [
 					"-pf",

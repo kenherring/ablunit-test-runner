@@ -2,12 +2,8 @@
 	"configurations": [
 		{
 			"hide": false,
-			"tempDir": "${workspaceDir}",
+			"tempDir": "${workspaceFolder}",
 			"importOpenEdgeProjectJson": true,
-			"files": {
-				"include": [ "**/test/*.test.p" ],
-				"exclude": [ "**/debug/*.test.p" ]
-			},
 			"command": {
 				"executable": "${DLC}/_progres",
 				"progressIni": "progress.ini",

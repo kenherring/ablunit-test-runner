@@ -90,7 +90,7 @@
 		////#   * When the "enabled" flag is false the process will not have the profiler enabled
 		////#     on startup but the `-profile` option is passed to the command., args will not be passed to
 		////#     the command line, and the "profiler.options" file will not be created.
-		////#   * When the "profilerOptions" key is set to null the 'profile.options' file will not
+		////#   * When the "profiler" key is set to null the 'profile.options' file will not
 		////#     be created and the `-profile` option will not be passed to the command line.
 		////#
 		////# See the OpenEdge documentation for more information about these values.

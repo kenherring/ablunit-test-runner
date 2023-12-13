@@ -1,14 +1,14 @@
 
 export interface IProfilerOptions {
-	enabled?: boolean //= true
-	coverage?: boolean //= true
-	description?: string //= "Run via VSCode - ABLUnit Test Provider Extension"
-	filename?: string //= "prof.out"
-	listings?: string //= ""
-	statistics?: boolean //= false
-	traceFilter?: string //= ""
-	tracing?: string //= ""
-	writeJson?: boolean //= false
+	enabled?: boolean
+	coverage?: boolean
+	description?: string
+	filename?: string
+	listings?: string | boolean
+	statistics?: boolean
+	traceFilter?: string
+	tracing?: string
+	writeJson?: boolean
 }
 
 export class ProfilerOptions implements IProfilerOptions {
@@ -16,7 +16,7 @@ export class ProfilerOptions implements IProfilerOptions {
 	public coverage: boolean = true
 	public description: string = 'Run via VSCode - ABLUnit Test Provider Extension'
 	public filename: string = 'prof.out'
-	public listings: string = ''
+	public listings: string | boolean = ''
 	public statistics: boolean = false
 	public traceFilter: string = ''
 	public tracing: string = ''

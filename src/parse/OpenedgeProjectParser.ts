@@ -35,12 +35,16 @@ async function getProjectJson (workspaceFolder: WorkspaceFolder) {
 		return undefined
 	})
 	if (data) {
-		return JSON.parse(data)
+		if (!JSON.parse(data)) {
+			logToChannel("Failed to parse openedge-project.json", 'error')
+			return undefined
+		}
+		return data
 	}
 	return undefined
 }
 
-export async function getDLC(workspaceFolder: WorkspaceFolder, projectJson?: any) {
+export async function getDLC(workspaceFolder: WorkspaceFolder, projectJson?: string) {
 	const dlc = dlcMap.get(workspaceFolder)
 	if (dlc) {
 		return dlc
@@ -63,7 +67,7 @@ export async function getDLC(workspaceFolder: WorkspaceFolder, projectJson?: any
 		runtimeDlc = Uri.file(process.env.DLC)
 	}
 	if (runtimeDlc) {
-		console.log("using DLC = " + runtimeDlc)
+		console.log("using DLC = " + runtimeDlc.fsPath)
 		const dlcObj: IDlc = { uri: runtimeDlc, version: oeversion }
 		dlcMap.set(workspaceFolder, dlcObj)
 		return dlcObj
@@ -72,24 +76,46 @@ export async function getDLC(workspaceFolder: WorkspaceFolder, projectJson?: any
 }
 
 export async function readOpenEdgeProjectJson (workspaceFolder: WorkspaceFolder) {
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+	console.log("1000")
 	const projectJson = await getProjectJson(workspaceFolder)
-	const dlc = await getDLC(workspaceFolder, projectJson)
-	return parseOpenEdgeProjectJson(workspaceFolder, projectJson, dlc)
+	console.log("1001")
+	if (projectJson) {
+		const dlc = await getDLC(workspaceFolder, projectJson)
+		console.log("1002")
+		const ret = parseOpenEdgeProjectJson(workspaceFolder, projectJson, dlc)
+		console.log("1003")
+		return ret
+	}
+
+	logToChannel("openedge-project.json not found.", 'warn')
+	return <IProjectJson>{ propathEntry: [] }
 }
 
-export async function getOEVersion (workspaceFolder: WorkspaceFolder, projectJson?: any) {
+export async function getOEVersion (workspaceFolder: WorkspaceFolder, projectJson?: string) {
 	if (!projectJson) {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		projectJson = await getProjectJson(workspaceFolder)
 	}
-	if (projectJson.oeversion) {
-		return projectJson.oeversion.toString()
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+	if(projectJson) {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+		const tmpVer: string = JSON.parse(projectJson).oeversion
+		if(tmpVer) {
+			return tmpVer
+		}
 	}
 	return "none"
+	//TODO return undefined
 }
 
-function parseOpenEdgeProjectJson (workspaceFolder: WorkspaceFolder, conf: any, dlc: IDlc) {
+function parseOpenEdgeProjectJson (workspaceFolder: WorkspaceFolder, inConf: string, dlc: IDlc) {
+	const conf = JSON.parse(inConf)
+
 	//TODO what about if we're running a different profile?
 	if (!conf.buildPath) {
+		console.error("buildPath not found in openedge-project.json")
+		console.error("openedge-project.json: " + JSON.stringify(conf, null, 4)) //TODO remove me
 		throw new Error("buildPath not found in openedge-project.json")
 	}
 
