@@ -6,7 +6,7 @@
 	"publisher": "kherring",
 	"pricing": "Free",
 	"private": true,
-	"icon": "images/icon_128.png",
+	"icon": "resources/images/icon_128.png",
 	"author": "Ken Herring",
 	"qna": false,
 	"homepage": "https://github.com/kenherring/ablunit-test-provider/blob/main/README.md",
