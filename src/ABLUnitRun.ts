@@ -10,16 +10,16 @@ export const ablunitRun = async(options: TestRun, res: ABLResults) => {
 	await res.cfg.createAblunitJson(res.cfg.ablunitConfig.config_uri, res.cfg.ablunitConfig.options, res.testQueue)
 
 	const getCommand = () => {
-		if (res.cfg.ablunitConfig.command.executable != "${DLC}/_progres" &&
-		res.cfg.ablunitConfig.command.executable != "${DLC}/prowin" &&
-		res.cfg.ablunitConfig.command.executable != "${DLC}/prowin32") {
+		if (res.cfg.ablunitConfig.command.executable != "_progres" &&
+			res.cfg.ablunitConfig.command.executable != "prowin" &&
+			res.cfg.ablunitConfig.command.executable != "prowin32") {
 			return getCustomCommand()
 		}
 		return getDefaultCommand()
 	}
 
 	const getCustomCommand = () => {
-		const cmd = res.cfg.ablunitConfig.command.executable
+		const cmd = res.cfg.ablunitConfig.command.executable.replace("${DLC}", res.dlc!.uri.fsPath.replace(/\\/g, '/'))
 
 		const testarr: string[] = []
 		for (const test of res.testQueue) {
@@ -44,10 +44,9 @@ export const ablunitRun = async(options: TestRun, res: ABLResults) => {
 			throw (new Error("temp directory not set"))
 		}
 
-		let cmd = [ '_progres', '-b', '-p', 'ABLUnitCore.p' ]
-		if (res.dlc) {
-			cmd = [res.dlc.uri.fsPath + '/bin/_progres', '-b', '-p', 'ABLUnitCore.p']
-		}
+		const executable = res.dlc!.uri.fsPath.replace(/\\/g, '/') + '/bin/' + res.cfg.ablunitConfig.command.executable
+
+		let cmd = [ executable, '-b', '-p', 'ABLUnitCore.p' ]
 
 		if (process.platform === 'win32') {
 			cmd.push('-basekey', 'INI', '-ininame', workspace.asRelativePath(res.cfg.ablunitConfig.progressIniUri.fsPath, false))
@@ -85,10 +84,11 @@ export const ablunitRun = async(options: TestRun, res: ABLResults) => {
 
 		const cmd = args[0]
 		args.shift()
+		console.log("command: " + cmd + " " + args.join(' ')) //TODO
+		console.log(" ---- cwd: " + res.cfg.ablunitConfig.workspaceFolder.uri.fsPath) //TODO
 
 		return new Promise<string>((resolve, reject) => {
 			res.setStatus("running command")
-			console.log("command: " + cmd + " " + args.join(' '))
 
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			exec(cmd + ' ' + args.join(' '), {env: process.env, cwd: res.cfg.ablunitConfig.workspaceFolder.uri.fsPath }, (err: any, stdout: any, stderr: any) => {

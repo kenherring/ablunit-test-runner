@@ -39,7 +39,7 @@
 		"command": {
 
 			////# Path to the executable used launch the test run.
-			"executable": "${DLC}/_progres",
+			"executable": "_progres",
 
 			////# Path to the "progressIni" file which can define a propath, etc.  It will be
 			////# passed to the test run process with the following parameters:

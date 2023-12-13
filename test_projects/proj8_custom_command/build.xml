@@ -6,12 +6,19 @@
 	<taskdef resource="PCT.properties" classpath="${user.home}/.ant/lib/PCT.jar;/usr/share/ant/lib/PCT.jar" />
 	<typedef resource="types.properties" classpath="${user.home}/.ant/lib/PCT.jar;/usr/share/ant/lib/PCT.jar" />
 
-	<condition property="DLC" value="${env.DLC}" else="/psc/dlc">
+	<condition property="os-dlc" value="/psc/dlc" else="C:/Progress/OpenEdge">
+		<os family="unix" />
+	</condition>
+
+	<condition property="DLC" value="${env.DLC}" else="${os-dlc}">
 		<isset property="${env.DLC}" />
 	</condition>
 
 	<DlcHome value="${DLC}" />
+
 	<echo>DLC=${DLC}</echo>
+	<echo>basedir=${basedir}</echo>
+	<echo>${user.home}</echo>
 
 	<target name="test">
 		<property name="files" value="${env.FILES}" />

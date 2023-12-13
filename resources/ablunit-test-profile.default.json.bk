@@ -5,7 +5,7 @@
 			"tempDir": "${workspaceFolder}",
 			"importOpenEdgeProjectJson": true,
 			"command": {
-				"executable": "${DLC}/_progres",
+				"executable": "_progres",
 				"progressIni": "progress.ini",
 				"batch": true,
 				"additionalArgs": []

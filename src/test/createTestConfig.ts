@@ -55,7 +55,7 @@ export function getTestConfig () {
 	testConfig.push(createTestConfig('proj7', 'proj7_load_performance', 50000))
 	testConfig.push(createTestConfig('proj8', 'proj8_custom_command'))
 
-	// Workspaces
+	// // Workspaces
 	testConfig.push(createTestConfig('workspace0', 'workspace0.code-workspace'))
 	testConfig.push(createTestConfig('workspace1', 'workspace1.code-workspace'))
 
@@ -72,7 +72,6 @@ export function getTestConfig () {
 		launchArgs: [
 			'--disable-extensions'
 		],
-		indexFile: './index_2'
 	})
 
 	return testConfig

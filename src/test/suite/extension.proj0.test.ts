@@ -1,7 +1,6 @@
 import * as assert from 'assert'
 import { before } from 'mocha'
 import { Uri, workspace } from 'vscode'
-import { getStorageUri } from '../../extension'
 import { doesDirExist, doesFileExist, runAllTests, waitForExtensionActive } from '../testCommon'
 
 

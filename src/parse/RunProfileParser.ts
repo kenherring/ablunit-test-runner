@@ -174,12 +174,10 @@ export class RunConfig extends DefaultRunProfile {
 		}
 
 		this.options = new CoreOptions(this.profile.options)
-
-		if (this.options.output?.writeJson) {
-			this.optionsUri.jsonUri = Uri.joinPath(this.tempDirUri, tmpFilename.replace(/\.xml$/,'') + '.json')
-		}
 		this.options.output.location = workspace.asRelativePath(this.optionsUri.locationUri)
-
+		if (this.options.output?.writeJson) {
+			this.optionsUri.jsonUri = Uri.joinPath(this.optionsUri.locationUri, tmpFilename.replace(/\.xml$/,'') + '.json')
+		}
 
 		this.command = new CommandOptions(this.profile.command)
 		this.progressIniUri = this.getUri(this.command.progressIni)

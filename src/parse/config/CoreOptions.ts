@@ -35,6 +35,7 @@ export class CoreOptions implements ICoreOptions {
 		if (from === undefined) {
 			return
 		}
+
 		if(from.output) {
 			this.output = {
 				location: from.output.location ?? this.output.location,

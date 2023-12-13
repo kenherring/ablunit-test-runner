@@ -13,7 +13,7 @@ export async function activate (context: ExtensionContext) {
 	logToChannel('ACTIVATE!')
 	if (!workspace.workspaceFolders) { return }
 
-	const debugEnabled = workspace.getConfiguration('ablunit').get('debugEnabled', false)
+	// const debugEnabled = workspace.getConfiguration('ablunit').get('debugEnabled', false)
 	const ctrl = tests.createTestController('ablunitTestController', 'ABLUnit Test')
 	const contextStorageUri = context.storageUri ?? Uri.parse('file://' + process.env.TEMP) // will always be defined as context.storageUri
 	setContextStorageUri(contextStorageUri)
@@ -133,7 +133,7 @@ export async function activate (context: ExtensionContext) {
 
 			let ret = false
 			for (const r of res) {
-				void r.setTestData(testData.getMap())
+				r.setTestData(testData.getMap())
 				logToChannel('starting ablunit tests for folder: ' + r.workspaceFolder.uri.fsPath, 'log', run)
 
 				ret = await r.run(run).then(() => {
@@ -297,7 +297,7 @@ export function getContextStorageUri() {
 	return contextStorageUri
 }
 
-export async function getStorageUri (workspaceFolder: WorkspaceFolder) {
+async function getStorageUri (workspaceFolder: WorkspaceFolder) {
 	if (!getContextStorageUri) { throw new Error('contextStorageUri is undefined') }
 
 	const dirs = workspaceFolder.uri.path.split('/')
@@ -737,24 +737,24 @@ export async function doesFileExist(uri: Uri) {
 
 ////////// DEBUG FUNCTIONS //////////
 
-function printDataType(data: ABLTestData | undefined) {
-	if (data instanceof ABLTestDir)
-		logToChannel(' - ABLTestDir')
-	else if (data instanceof ABLTestFile)
-		logToChannel(' - ABLTestFile')
-	else if (data instanceof ABLTestCase)
-		logToChannel(' - ABLTestCase')
-	if (data instanceof ABLTestSuite)
-		logToChannel(' - ABLTestSuite')
-	else if(data instanceof ABLTestClass)
-		logToChannel(' - ABLTestClass')
-	else if(data instanceof ABLTestProgram)
-		logToChannel(' - ABLTestProcedure')
-	else if(data instanceof ABLTestCase)
-		logToChannel(' - ABLTestCase')
-	else
-		logToChannel(' - unexpected instanceof type (typeof=' + typeof data + ', data.description=' + data?.description + ')')
-}
+// function printDataType(data: ABLTestData | undefined) {
+// 	if (data instanceof ABLTestDir)
+// 		logToChannel(' - ABLTestDir')
+// 	else if (data instanceof ABLTestFile)
+// 		logToChannel(' - ABLTestFile')
+// 	else if (data instanceof ABLTestCase)
+// 		logToChannel(' - ABLTestCase')
+// 	if (data instanceof ABLTestSuite)
+// 		logToChannel(' - ABLTestSuite')
+// 	else if(data instanceof ABLTestClass)
+// 		logToChannel(' - ABLTestClass')
+// 	else if(data instanceof ABLTestProgram)
+// 		logToChannel(' - ABLTestProcedure')
+// 	else if(data instanceof ABLTestCase)
+// 		logToChannel(' - ABLTestCase')
+// 	else
+// 		logToChannel(' - unexpected instanceof type (typeof=' + typeof data + ', data.description=' + data?.description + ')')
+// }
 
 async function createDir(uri: Uri) {
 	if(!uri) {

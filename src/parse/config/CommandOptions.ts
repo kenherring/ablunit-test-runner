@@ -7,7 +7,7 @@ export interface ICommandOptions {
 }
 
 export class CommandOptions implements ICommandOptions {
-	executable: string = "${DLC}/_progres"
+	executable: string = "_progres"
 	progressIni: string = "progress.ini"
 	batch: boolean = true
 	additionalArgs: string[] = []

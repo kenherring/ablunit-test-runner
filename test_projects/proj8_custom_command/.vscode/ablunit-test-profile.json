@@ -2,17 +2,16 @@
 	"tempDir": "target/tempDir",
 	"options": {
 		"output": {
-			"writeLog": true,
 			"location": "target",
-			"json": true
-		}
+			"writeJson": true
+		},
+		"writeLog": true
 	},
 	"profiler": {
-		"listings": "target",
+		"listings": true,
 		"filename": "${workspaceFolder}/target/ablunit.prof"
 	},
 	"command": {
-		"command": "ant test -Dfiles='${testlist}'"
-	},
-	"test": "t", "test2": "test"
+		"executable": "${DLC}/ant/bin/ant test -Dfiles='${testlist}'"
+	}
 }]}

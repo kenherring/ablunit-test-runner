@@ -182,21 +182,21 @@ export class ABLResults {
 
 	async parseOutput(options: TestRun) {
 		this.setStatus("parsing results")
-		logToChannel("parsing results from " + this.cfg.ablunitConfig.config_uri.fsPath, 'log', options)
+		logToChannel("parsing results from " + this.cfg.ablunitConfig.optionsUri.filenameUri.fsPath, 'log', options)
 
 		this.endTime = new Date()
 
 		this.ablResults = new ABLResultsParser(this.propath!, this.debugLines!)
 		await this.ablResults.parseResults(this.cfg.ablunitConfig.optionsUri.filenameUri, this.cfg.ablunitConfig.optionsUri.jsonUri).then(() => {
 			if(!this.ablResults!.resultsJson) {
-				logToChannel("No results found in " + this.cfg.ablunitConfig.config_uri.fsPath,"error", options)
-				throw (new Error("[ABLResults parseOutput] No results found in " + this.cfg.ablunitConfig.config_uri.fsPath + "\r\n"))
+				logToChannel("No results found in " + this.cfg.ablunitConfig.optionsUri.filenameUri.fsPath,"error", options)
+				throw (new Error("[ABLResults parseOutput] No results found in " + this.cfg.ablunitConfig.optionsUri.filenameUri.fsPath + "\r\n"))
 			}
 			return true
 		}, (err) => {
 			this.setStatus("error parsing results data")
-			logToChannel("Error parsing ablunit results from " + this.cfg.ablunitConfig.config_uri.fsPath + ".  err=" + err,"error",options)
-			throw (new Error("[ABLResults parseOutput] Error parsing ablunit results from " + this.cfg.ablunitConfig.config_uri.fsPath + "\r\nerr=" + err))
+			logToChannel("Error parsing ablunit results from " + this.cfg.ablunitConfig.optionsUri.filenameUri.fsPath + ".  err=" + err,"error",options)
+			throw (new Error("[ABLResults parseOutput] Error parsing ablunit results from " + this.cfg.ablunitConfig.optionsUri.filenameUri.fsPath + "\r\nerr=" + err))
 		})
 
 		if (this.cfg.ablunitConfig.profiler.enabled) {

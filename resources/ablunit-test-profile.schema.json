@@ -25,36 +25,6 @@
 						"default": true,
 						"description": "Import the propath and database connection settings from 'openedge-project.json' possible."
 					},
-					"command": {
-						"type": "object",
-						"description": "Options related to the command line executable",
-						"additionalProperties": false,
-						"properties": {
-							"executable": {
-								"type": "string",
-								"default": "${DLC}/bin/_progres",
-								"description": "Program to execute.  Typically an OpenEdge executable, but could be something like `ant` or another script to launch your test suite.",
-								"minLength": 1
-							},
-							"batch": {
-								"type": "boolean",
-								"default": true,
-								"description": "batch mode (-b)"
-							},
-							"progressIni": {
-								"type": "string",
-								"default": "${tempDir}/progress.ini",
-								"nullable": true,
-								"description": "Windows only. Path to ini configuration file. Appended to test run execution with command line arguments: `-basekey INI -basename <progressIni>`.  Set to \"null\" to disable."
-							},
-							"additionalArgs": {
-								"type": "array",
-								"default": [],
-								"description": "Additional args passed to the command line.",
-								"items": { "type": "string" }
-							}
-						}
-					},
 					"options": {
 						"type": [ "object", "null" ],
 						"description": "Options passed to the OE test runner via the 'ablunit.json' file.  Set to null to prevent the creation of 'ablunit.json' or related args passed to the command line.",
@@ -87,10 +57,15 @@
 										"default": "results.xml"
 									},
 									"format": {
-										"type": [ "array", "string" ],
+										"type": "string",
 										"description": "Output file extension(s) for results output.  'xml' is required and the default value.  'json' is optional.  The ABLUnit Test Runner VSCode extension performs the xml=>json conversion.",
-										"enum": [ "xml", [ "xml" ], [ "xml", "json" ] ],
+										"enum": [ "xml" ],
 										"default": "xml"
+									},
+									"writeJson": {
+										"type": "boolean",
+										"default": false,
+										"description": "Write a JSON file containing the parsed results data.  The file will be written to the same directory as `results.xml`."
 									}
 								}
 							},
@@ -142,7 +117,10 @@
 								"description": "Filepath where profiler data is written by the `PROFILER` system handle.  When the value is a directory a filename of 'prof.out' will be used."
 							},
 							"listings": {
-								"type": "boolean",
+								"anyOf": [
+									{ "type": "boolean" },
+									{ "type": "string" }
+								],
 								"default": false,
 								"description": "Include source code listings in the profiler output.  Output directory: `\"{tempDir}/listings\"`"
 							},
@@ -165,6 +143,36 @@
 								"type": "boolean",
 								"default": false,
 								"description": "Write a JSON file containing the parsed profiler data.  The file will be written to the same directorye `filename` property."
+							}
+						}
+					},
+					"command": {
+						"type": "object",
+						"description": "Options related to the command line executable",
+						"additionalProperties": false,
+						"properties": {
+							"executable": {
+								"type": "string",
+								"default": "_progres",
+								"description": "Program to execute.  Typically an OpenEdge executable, but could be something like `ant` or another script to launch your test suite.",
+								"minLength": 1
+							},
+							"batch": {
+								"type": "boolean",
+								"default": true,
+								"description": "batch mode (-b)"
+							},
+							"progressIni": {
+								"type": "string",
+								"default": "${tempDir}/progress.ini",
+								"nullable": true,
+								"description": "Windows only. Path to ini configuration file. Appended to test run execution with command line arguments: `-basekey INI -basename <progressIni>`.  Set to \"null\" to disable."
+							},
+							"additionalArgs": {
+								"type": "array",
+								"default": [],
+								"description": "Additional args passed to the command line.",
+								"items": { "type": "string" }
 							}
 						}
 					}
