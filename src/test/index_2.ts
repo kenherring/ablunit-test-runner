@@ -41,11 +41,11 @@ function setupNyc(projName: string) {
 	return nyc
 }
 
-function setupMocha(projName: string) {
+function setupMocha(projName: string, timeout: number) {
 	return new Mocha({
 		color: true,
 		ui: "tdd",
-		timeout: 10000,
+		timeout: timeout,
 		// reporter: 'mocha-junit-reporter',
 		// reporterOptions: {
 		// 	mochaFile: 'artifacts/mocha_results_' + projName + '.xml'
@@ -60,25 +60,19 @@ function setupMocha(projName: string) {
 	})
 }
 
-function runTests (projName: string) {
+function runTests (projName: string, timeout: number) {
 	const nyc = setupNyc(projName)
-	const mocha = setupMocha(projName)
+	const mocha = setupMocha(projName, timeout)
 	const testsRoot = path.resolve(__dirname, "..")
-
-	console.log("100")
 	return new Promise<void>((c, e) => {
-		console.log("101")
 		const files = new GlobSync("**/*Parser.test.js", { cwd: testsRoot })
-		console.log("102 - " + files.found.length + " test files found")
 
 		for(const f of files.found) {
 			console.log("mocha.addFile " + path.resolve(testsRoot, f))
 			mocha.addFile(path.resolve(testsRoot, f))
 		}
-		console.log("103")
 
 		try {
-			console.log("104")
 			// Run the mocha test
 			mocha.run((failures) => {
 				console.log("nyc.writeCoverageFile()")
@@ -114,7 +108,7 @@ console.log("112")
 
 export function run(): Promise <void> {
 	console.log("200")
-	const ret = runTests('parsers')
+	const ret = runTests('parsers', 10000)
 	console.log("201")
 	return ret
 }

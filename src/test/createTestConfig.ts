@@ -72,6 +72,7 @@ export function getTestConfig () {
 		launchArgs: [
 			'--disable-extensions'
 		],
+		indexFile: './index_2'
 	})
 
 	return testConfig

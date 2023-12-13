@@ -22,6 +22,8 @@ dbus_config () {
 run_tests () {
 	echo "run_tests..."
 	EXIT_CODE=0
+	npm run clean
+
 	xvfb-run -a npm test || EXIT_CODE=$?
 	if [ "$EXIT_CODE" = "0" ]; then
 		echo "xvfb-run success"
