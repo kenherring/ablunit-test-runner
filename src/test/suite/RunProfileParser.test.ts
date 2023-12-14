@@ -1,5 +1,5 @@
 
-import * as assert from 'assert'
+import { strict as assert } from 'assert'
 import { Uri, WorkspaceFolder, workspace } from 'vscode'
 import { IConfigurations, parseRunProfiles } from '../../parse/TestProfileParser'
 
@@ -26,7 +26,7 @@ function getWorkspaceFolders () {
 
 suite('RunProfileParser.test', () => {
 
-	////////// SETUP
+	// //////// SETUP
 	const workspaceFolders = getWorkspaceFolders()
 	if (!workspaceFolders) {
 		throw new Error("unable to find workspaceFolders - failing test1")

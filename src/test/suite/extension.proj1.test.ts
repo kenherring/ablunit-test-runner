@@ -1,4 +1,4 @@
-import * as assert from 'assert'
+import { strict as assert } from 'assert'
 import { afterEach, before } from 'mocha'
 import { Selection, Uri, commands, window } from 'vscode'
 import { doesFileExist, getTestCount, getWorkspaceUri, runAllTests, sleep, updateConfig, waitForExtensionActive } from '../testCommon'

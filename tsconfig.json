@@ -11,13 +11,9 @@
 		"rootDir": "src"
 	},
 	"include": [
-		".eslintrc.cjs",
 		"src/**/*.ts"
 	],
 	"exclude": [
-		"dummy-ext",
-		"node_modules",
-		"test_projects",
-		".vscode-test"
+		"node_modules"
 	]
 }

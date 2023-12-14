@@ -5,11 +5,12 @@
 		"browser": true
 	},
 	"extends": [
-		"plugin:@typescript-eslint/eslint-recommended"
+		// "plugin:@typescript-eslint/eslint-recommended"
 		// "eslint:all"
-		// "eslint:recommended",
-		// "plugin:@typescript-eslint/recommended",
-		// "plugin:@typescript-eslint/recommended-type-checked"
+		"eslint:recommended",
+		"plugin:@typescript-eslint/recommended",
+		"plugin:@typescript-eslint/eslint-recommended",
+		"plugin:@typescript-eslint/recommended-type-checked"
 	],
 	"parser": "@typescript-eslint/parser",
 	"plugins": [
@@ -17,51 +18,34 @@
 	],
 	"parserOptions": {
 		"project": [
-			// "package.json"
-			"./tsconfig.json"
+			// "package.json",
+			"tsconfig.json"
 		],
 		"ecmaVersion": 2019,
 		"module": true
 	},
 	"root": true,
 	"ignorePatterns": [
+		"dist",
 		"dummy-ext",
 		"out",
-		"test_projects",
-		"**/*.test.ts"
+		"test_projects"
 	],
 	"rules": {
         // "@typescript-esline/explicit-function-return-type": "off",
+		// "@typescript-eslint/interface-name-prefix": ["error", "always"],
+		// "quotes": ["warn", "single"]
 		"@typescript-eslint/indent": ["error", "tab"],
-		"@typescript-eslint/interface-name-prefix": "I",
 		"@typescript-eslint/restrict-plus-operands": "off",
 		"linebreak-style": ["error", "unix"],
 		"no-console": "warn",
 		"no-empty": "warn",
 		"no-mixed-spaces-and-tabs": ["error", "smart-tabs"],
-		// "quotes": ["warn", "single"]
 		"semi": ["error", "never"],
 		"space-before-function-paren": ["warn", "always"],
 		"space-in-parens": ["warn", "never"],
 		"space-before-blocks": ["error", "always"],
 		"spaced-comment": ["error", "always"],
-		"no-trailing-spaces": ["error", { "skipBlankLines": false }],
-
-		// "@typescript-eslint/no-unused-vars": [
-        //     "warn",
-        //     {
-        //         "vars": "all",
-        //         "args": "none",
-        //         "ignoreRestSiblings": false
-        //     }
-        // ],
-        // "@typescript-eslint/no-use-before-define": [
-        //     "warn",
-        //     {
-        //         "functions": true,
-        //         "classes": true
-        //     }
-        // ],
-        // "@typescript-eslint/no-inferrable-types": 0
+		"no-trailing-spaces": ["error", { "skipBlankLines": false }]
 	}
 }

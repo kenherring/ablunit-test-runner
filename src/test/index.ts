@@ -1,14 +1,13 @@
-import { workspace } from 'vscode'
-import { getTestConfig } from './createTestConfig'
-
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-var-requires */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-call */
+import { getTestConfig } from './createTestConfig'
 import { GlobSync }  from 'glob'
+import { workspace } from 'vscode'
+import Mocha = require("mocha");
 import * as path from 'path'
-import * as Mocha from 'mocha'
 
 function setupNyc (projName: string) {
 	const NYC = require("nyc")

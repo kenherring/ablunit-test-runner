@@ -1,4 +1,4 @@
-import * as assert from 'assert'
+import { strict as assert } from 'assert'
 import { before } from 'mocha'
 import { Uri } from 'vscode'
 import { parseSuiteLines } from '../../parse/TestSuiteParser'
@@ -26,7 +26,7 @@ suite(projName + ' - Extension Test Suite', () => {
 	})
 
 
-	////////// TEST SUITES //////////
+	// //////// TEST SUITES //////////
 
 	test(projName + '.2 - TestSuite - suite1.cls', async () => {
 		const lines = await readLinesFromFile('test/suites/suite1.cls',"@testsuite")
@@ -36,7 +36,7 @@ suite(projName + ' - Extension Test Suite', () => {
 		assert.strictEqual(suiteRet.procedures.length, 7, "expected 7 procedures in suite1.cls")
 	})
 
-	////////// TEST CLASSES //////////
+	// //////// TEST CLASSES //////////
 
 	test(projName + '.3 - TestClass - login/test2.cls - ablunit.explorer.classlabel=class-type-name (default)', async () => {
 		const lines = await readLinesFromFile('test/login/test2.cls')
@@ -64,7 +64,7 @@ suite(projName + ' - Extension Test Suite', () => {
 		assert.strictEqual(classRet.testcases.length, 0, "testcase count in test/login/test5.cls")
 	})
 
-	////////// TEST PROGRAMS //////////
+	// //////// TEST PROGRAMS //////////
 
 	test(projName + '.7 - TestProgram - test/proc2/proc2.p - test count', async () => {
 		const lines = await readLinesFromFile('test/proc2/proc2.p')

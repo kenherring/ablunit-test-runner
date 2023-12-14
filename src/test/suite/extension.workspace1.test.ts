@@ -1,4 +1,4 @@
-import * as assert from 'assert'
+import { strict as assert } from 'assert'
 import { after, before, beforeEach } from 'mocha'
 import { Uri, workspace } from 'vscode'
 import { doesDirExist, doesFileExist, runAllTests, updateConfig, waitForExtensionActive } from '../testCommon'
@@ -11,7 +11,7 @@ before(async () => {
 })
 
 beforeEach(async () => {
-    console.log("before")
+	console.log("before")
 	await updateConfig("tempDir", undefined)
 })
 
