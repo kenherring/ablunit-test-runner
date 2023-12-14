@@ -1,6 +1,6 @@
 import * as assert from 'assert'
 import { before } from 'mocha'
-import { ConfigurationTarget, FileType, Uri, commands, extensions, workspace } from 'vscode'
+import { FileType, Uri, commands, extensions, workspace } from 'vscode'
 
 before(async () => {
 	console.log("activating extension: kherring.ablunit-test-provider")
@@ -9,13 +9,10 @@ before(async () => {
 		throw new Error("extension not found: kherring.ablunit-test-provider")
 	}
 
-	await ext.activate().then(() => {
+	await ext.activate().then(async () => {
 		console.log("extension activated! setting tempDir to 'target'")
-		return workspace.getConfiguration('ablunit').update('tempDir', 'target', ConfigurationTarget.Global).then(() => {
-			console.log("tempDir set to 'target'")
-		}, (err) => {
-			throw new Error("failed to set tempDir to 'target': " + err)
-		})
+		await updateTestProfile('tempDir', 'target')
+		console.log("tempDir set to 'target'")
 	}, (err) => {
 		throw new Error("failed to activate extension: " + err)
 	})
@@ -42,8 +39,7 @@ suite('install and run', () => {
 
 })
 
-
-export async function runAllTests () {
+function runAllTests () {
 	console.log("testing.runAll starting")
 	return commands.executeCommand('testing.runAll').then(() => {
 		console.log("testing.runAll complete!")
@@ -63,4 +59,20 @@ async function doesFileExist(uri: Uri) {
 		return false
 	})
 	return ret
+}
+
+function getWorkspaceUri () {
+	return workspace.workspaceFolders![0].uri
+}
+
+function updateTestProfile (key: string, value: string | string[] | boolean): Thenable<void> {
+	console.log("workspaceDir = " + getWorkspaceUri().fsPath)
+	return workspace.fs.readFile(Uri.joinPath(getWorkspaceUri(), '.vscode', 'ablunit-test-profile.json')).then((content) => {
+		console.log("got content")
+		let str = Buffer.from(content.buffer).toString()
+		str = str.replace(/"tempDir": *".*"/, '"' + key + '": "' + value + '"')
+		return workspace.fs.writeFile(Uri.joinPath(getWorkspaceUri(), '.vscode', 'ablunit-test-profile.json'), Buffer.from(str))
+	}, (err) => {
+		console.log("error reading ablunit-test-profile.json: " + err)
+	})
 }
