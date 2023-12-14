@@ -32,7 +32,7 @@ interface DebugLineMap {
 
 async function readXrefFile(xrefUri: Uri) {
 	return await workspace.fs.readFile(xrefUri).then((content) => {
-		const str = Buffer.from(content.buffer).toString();
+		const str = Buffer.from(content.buffer).toString()
 		return str
 	}, (reason) => {
 		console.error("xref file not found '" + xrefUri.fsPath + "\n  - reason=" + reason)

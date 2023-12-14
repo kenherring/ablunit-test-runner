@@ -193,7 +193,7 @@ export async function updateConfig (key: string, value: string | string[] | unde
 
 export function updateTestProfile (key: string, value: string | string[] | boolean): Thenable<void> {
 	return workspace.fs.readFile(Uri.joinPath(getWorkspaceUri(), '.vscode', 'ablunit-test-profile.json')).then((content) => {
-		const str = Buffer.from(content.buffer).toString();
+		const str = Buffer.from(content.buffer).toString()
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		const profile = JSON.parse(str)
 

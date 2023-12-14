@@ -63,8 +63,8 @@ export class ABLResultsParser {
 	}
 
 	async parseResults(configUri: Uri, jsonUri: Uri | undefined) {
-		const resultsBits = await workspace.fs.readFile(configUri);
-		const resultsXml = Buffer.from(resultsBits.toString()).toString('utf8');
+		const resultsBits = await workspace.fs.readFile(configUri)
+		const resultsXml = Buffer.from(resultsBits.toString()).toString('utf8')
 		const resultsXmlJson = this.parseXml(resultsXml)
 		try {
 			this.resultsJson = [ await this.parseSuites(resultsXmlJson) ]

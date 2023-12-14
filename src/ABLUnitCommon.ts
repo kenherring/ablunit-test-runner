@@ -1,6 +1,6 @@
 import { TestRun, window } from 'vscode'
 
-const outputChannel = window.createOutputChannel('ABLUnit');
+const outputChannel = window.createOutputChannel('ABLUnit')
 
 export function logToChannel(message: string, consoleMessageType: 'log' | 'error' | 'warn' | '' = 'log', options?: TestRun) {
 	outputChannel.appendLine(message)

@@ -80,6 +80,7 @@
 		"compile": "npm run esbuild",
 		"esbuild-watch": "npm run esbuild-base -- --sourcemap --watch",
 		"esbuild": "npm run esbuild-base -- --sourcemap",
+		"lint": "npx eslint . --ext .ts,.js",
 		"package": "vsce package --pre-release",
 		"package-release": "vsce package",
 		"posttest": "npm run test:cov-after",

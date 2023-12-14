@@ -1,5 +1,5 @@
-import { DecorationOptions, Range, TextEditor, window, workspace } from "vscode";
-import { ABLResults } from "./ABLResults";
+import { DecorationOptions, Range, TextEditor, window, workspace } from "vscode"
+import { ABLResults } from "./ABLResults"
 
 let recentResults: ABLResults[] | undefined
 

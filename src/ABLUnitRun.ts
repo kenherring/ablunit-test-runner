@@ -1,8 +1,8 @@
 import { TestRun, workspace } from 'vscode'
 import { ABLResults } from './ABLResults'
 import { logToChannel } from './ABLUnitCommon'
-import { isRelativePath } from './ABLUnitConfigWriter';
-import { ExecException, exec } from "child_process";
+import { isRelativePath } from './ABLUnitConfigWriter'
+import { ExecException, exec } from "child_process"
 
 export const ablunitRun = async(options: TestRun, res: ABLResults) => {
 	const start = Date.now()
@@ -72,7 +72,7 @@ export const ablunitRun = async(options: TestRun, res: ABLResults) => {
 		cmd.push("-param", '"CFG=' + workspace.asRelativePath(res.cfg.ablunitConfig.config_uri.fsPath, false) + '"')
 		cmd.forEach(element => {
 			cmdSanitized.push(element.replace(/\\/g, '/'))
-		});
+		})
 
 		logToChannel("ABLUnit Command: " + cmdSanitized.join(' '))
 		return cmdSanitized
@@ -110,6 +110,6 @@ export const ablunitRun = async(options: TestRun, res: ABLResults) => {
 	}
 
 	return runCommand().then(() => {
-		return res.parseOutput(options).then();
+		return res.parseOutput(options).then()
 	})
 }

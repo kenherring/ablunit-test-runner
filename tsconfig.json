@@ -8,14 +8,10 @@
 		"outDir": "out",
 		"sourceMap": true,
 		"strict": true,
-		"rootDir": "src",
-		// "plugins": [
-		// 	{
-		// 		"name": "typescript-tslint-plugin"
-		// 	}
-		// ]
+		"rootDir": "src"
 	},
 	"include": [
+		".eslintrc.cjs",
 		"src/**/*.ts"
 	],
 	"exclude": [

@@ -13,7 +13,7 @@ export const resultData = new WeakMap<TestRun, ABLResults[]>()
 class TestData {
 	private td: WeakMap<TestItem, ABLTestData> = new WeakMap<TestItem, ABLTestData>()
 
-	get(item: TestItem) {
+	get (item: TestItem) {
 		// console.log("testData.get: " + item.id + " " + this.td.get(item) + " " + this.td.get(item)?.description)
 		return this.td.get(item)
 	}
@@ -37,12 +37,15 @@ export const testData = new TestData()
 
 const displayClassLabel = workspace.getConfiguration('ablunit').get('explorer.classlabel','')
 
-function createTestItem(controller: TestController,
-						item: TestItem,
-						range: Range | undefined,
-						label: string,
-						tag: string,
-						description?: string) {
+function createTestItem(
+	controller: TestController,
+	item: TestItem,
+	range: Range | undefined,
+	label: string,
+	tag: string,
+	description?: string)
+{
+
 	const thead = controller.createTestItem(item.uri!.fsPath, label, item.uri)
 	thead.description = description
 	thead.range = range
@@ -93,11 +96,10 @@ export class ABLTestDir implements ITestType {
 }
 
 export class ABLTestCase extends TestTypeObj {
-	constructor (public readonly id: string,
-				label: string,
-				description: string) {
-		super(description, label)
-	}
+	constructor (
+		public readonly id: string,
+		label: string,
+		description: string) { super(description, label) }
 }
 
 export class ABLTestFile extends TestTypeObj {
@@ -188,12 +190,12 @@ export class ABLTestFile extends TestTypeObj {
 	}
 
 	createTestChild(controller: TestController,
-					item: TestItem,
-					id: string,
-					range: Range,
-					label: string,
-					uri: Uri,
-					type: string) {
+		item: TestItem,
+		id: string,
+		range: Range,
+		label: string,
+		uri: Uri,
+		type: string) {
 		const child = controller.createTestItem(id, label, uri)
 		const data = new ABLTestCase(id, label, "ABL Test " + type)
 		child.range = range

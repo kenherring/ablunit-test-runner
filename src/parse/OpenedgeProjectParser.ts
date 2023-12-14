@@ -76,15 +76,10 @@ export async function getDLC(workspaceFolder: WorkspaceFolder, projectJson?: str
 }
 
 export async function readOpenEdgeProjectJson (workspaceFolder: WorkspaceFolder) {
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-	console.log("1000")
 	const projectJson = await getProjectJson(workspaceFolder)
-	console.log("1001")
 	if (projectJson) {
 		const dlc = await getDLC(workspaceFolder, projectJson)
-		console.log("1002")
 		const ret = parseOpenEdgeProjectJson(workspaceFolder, projectJson, dlc)
-		console.log("1003")
 		return ret
 	}
 
@@ -94,10 +89,8 @@ export async function readOpenEdgeProjectJson (workspaceFolder: WorkspaceFolder)
 
 export async function getOEVersion (workspaceFolder: WorkspaceFolder, projectJson?: string) {
 	if (!projectJson) {
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		projectJson = await getProjectJson(workspaceFolder)
 	}
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 	if(projectJson) {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
 		const tmpVer: string = JSON.parse(projectJson).oeversion

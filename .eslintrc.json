@@ -1,0 +1,43 @@
+{
+	"extends": [
+		// "eslint:all"
+		"eslint:recommended",
+		"plugin:@typescript-eslint/recommended",
+		"plugin:@typescript-eslint/eslint-recommended",
+		"plugin:@typescript-eslint/recommended-type-checked"
+	],
+	"parser": "@typescript-eslint/parser",
+	"plugins": [
+		"@typescript-eslint"
+	],
+	"parserOptions": {
+		"project": [
+			// "package.json"
+			"./tsconfig.json"
+		],
+		"ecmaVersion": 2019
+	},
+	"root": true,
+	"ignorePatterns": [
+		// "dummy-ext",
+		"out",
+		"test_projects",
+		"**/*.test.ts"
+	],
+	"rules": {
+        // "@typescript-esline/explicit-function-return-type": "off",
+		"@typescript-eslint/indent": ["error", "tab"],
+		"@typescript-eslint/restrict-plus-operands": "off",
+		"linebreak-style": ["error", "unix"],
+		"no-console": "warn",
+		"no-empty": "warn",
+		"no-mixed-spaces-and-tabs": ["error", "smart-tabs"],
+		// "quotes": ["warn", "single"]
+		"semi": ["error", "never"],
+		"space-before-function-paren": ["error", "warn"],
+		"space-in-parens": ["error", "warn"],
+		"space-before-blocks": ["error", "warn"],
+		"spaced-comment": ["error", "warn"],
+		"no-trailing-spaces": ["error", { "skipBlankLines": false } ]
+	}
+}
