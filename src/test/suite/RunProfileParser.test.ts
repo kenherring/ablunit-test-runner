@@ -3,6 +3,7 @@ import * as assert from 'assert'
 import { Uri, WorkspaceFolder, workspace } from 'vscode'
 import { IConfigurations, parseRunProfiles } from '../../parse/RunProfileParser'
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function readValidationFile (filename: string) {
 	const uri = Uri.joinPath(workspace.workspaceFolders![0].uri, 'validation', filename)
 	return workspace.fs.readFile(uri).then((content) => {

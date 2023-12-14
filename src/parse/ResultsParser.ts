@@ -1,3 +1,6 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { Uri, workspace } from 'vscode'
 import { parseCallstack, ICallStack } from './CallStackParser'
 import { PropathParser } from '../ABLPropath'
@@ -62,7 +65,7 @@ export class ABLResultsParser {
 	async parseResults(configUri: Uri, jsonUri: Uri | undefined) {
 		const resultsBits = await workspace.fs.readFile(configUri);
 		const resultsXml = Buffer.from(resultsBits.toString()).toString('utf8');
-		const resultsXmlJson = await this.parseXml(resultsXml)
+		const resultsXmlJson = this.parseXml(resultsXml)
 		try {
 			this.resultsJson = [ await this.parseSuites(resultsXmlJson) ]
 		} catch (err) {
@@ -75,9 +78,9 @@ export class ABLResultsParser {
 	}
 
 	parseXml(xmlData: string) {
-		let res: any
+		let res
 
-		parseString(xmlData, function (err: any, resultsRaw: any) {
+		parseString(xmlData, function (err: Error | null, resultsRaw: any) {
 			if (err) {
 				throw new Error("error parsing XML file: " + err)
 			}
@@ -172,6 +175,7 @@ export class ABLResultsParser {
 		}
 		if (res[type].length > 1) { throw new Error("more than one failure or error in testcase - use case not handled") }
 
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 		const callstack = await parseCallstack(this.debugLines, res[type][0]['_'])
 		const fail: ITestCaseFailure = {
 			callstackRaw: res[type][0]['_'],
@@ -180,6 +184,7 @@ export class ABLResultsParser {
 			type: res[type][0]['$'].types
 		}
 		const diffRE = /Expected: (.*) but was: (.*)/
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 		const diff = diffRE.exec(res[type][0]['$'].message)
 		if (diff) {
 			fail.diff = {
