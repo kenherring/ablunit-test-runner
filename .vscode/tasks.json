@@ -23,37 +23,6 @@
 			}
 		},
 		{
-			"type": "npm",
-			"script": "watch-tsc",
-			// "dependsOn": [
-			// 	"npm: test-compile"
-			// ],
-			"problemMatcher": "$tsc-watch",
-			"isBackground": true,
-			"presentation": {
-				"reveal": "never"
-			},
-			"group": {
-				"kind": "build",
-				"isDefault": false
-			},
-			// "runOptions": {
-			// 	"runOn": "folderOpen"
-			// }
-		},
-		{
-			"type": "npm",
-			"script": "test-compile",
-			"problemMatcher": "$tsc-watch",
-			"presentation": {
-				"reveal": "never"
-			},
-			"group": {
-				"kind": "build",
-				"isDefault": false
-			}
-		},
-		{
 			"type": "eslint",
 			"problemMatcher": [
 				"$eslint-stylish"

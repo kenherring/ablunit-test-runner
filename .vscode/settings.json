@@ -1,6 +1,6 @@
 {
 	"eslint.enable": true,
-	"eslint.lintTask.enable": true,
+	"eslint.lintTask.enable": false,
 	"eslint.run": "onType",
 	"git.branchProtection": [
 		"main"

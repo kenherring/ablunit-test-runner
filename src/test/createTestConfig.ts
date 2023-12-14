@@ -28,7 +28,7 @@ function createTestConfig (projName: string, workspaceFolder?: string, timeout?:
 	const retVal: TestConfig = {
 		projName: projName,
 		label: 'extension tests - ' + projName,
-		files: 'out/test/**/extension.' + projName + '.test.js',
+		files: 'out/test/**/*' + projName + '.test.js',
 		workspaceFolder: './test_projects/' + workspaceFolder,
 		mocha: {
 			ui: 'tdd',
