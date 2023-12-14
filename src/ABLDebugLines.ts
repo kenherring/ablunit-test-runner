@@ -5,10 +5,10 @@ import { logToChannel } from "./ABLUnitCommon"
 
 export interface IDebugLine {
 	srcUri: Uri
-	srcLine: number //line number of the source file
-	dbgLine: number //debug listing/callstack/profiler line number
+	srcLine: number // line number of the source file
+	dbgLine: number // debug listing/callstack/profiler line number
 	incUri: Uri
-	incLine: number //line number of the include
+	incLine: number // line number of the include
 }
 
 interface XrefInclude {
@@ -30,13 +30,13 @@ interface DebugLineMap {
 	includes: XrefInclude[]
 }
 
-async function readXrefFile(xrefUri: Uri) {
+async function readXrefFile (xrefUri: Uri) {
 	return await workspace.fs.readFile(xrefUri).then((content) => {
 		const str = Buffer.from(content.buffer).toString()
 		return str
 	}, (reason) => {
 		console.error("xref file not found '" + xrefUri.fsPath + "\n  - reason=" + reason)
-		return undefined //don't rethrow, just return undefined because we don't want to stop processing
+		return undefined // don't rethrow, just return undefined because we don't want to stop processing
 	})
 }
 
@@ -53,7 +53,7 @@ export class ABLDebugLines {
 
 	private warnings: string[] = []
 
-	async getSourceLine(debugSourceName: string, debugLine: number) {
+	async getSourceLine (debugSourceName: string, debugLine: number) {
 
 		let  debugLines = this.map.find((dlm) => dlm.debugSourceName == debugSourceName)
 		if (!debugLines) {
@@ -77,13 +77,13 @@ export class ABLDebugLines {
 		return debugLines.lines.find((line) => line.dbgLine === debugLine)
 	}
 
-	async readLineCount(uri: Uri) {
+	async readLineCount (uri: Uri) {
 		return workspace.fs.readFile(uri).then((content) => {
 			return Buffer.from(content.buffer).toString().split("\n").length
 		})
 	}
 
-	async readIncludeLineCount(uri: Uri) {
+	async readIncludeLineCount (uri: Uri) {
 		return await workspace.fs.readFile(uri).then((content) => {
 			const lines = Buffer.from(content.buffer).toString().replace(/\r/g,'').split("\n")
 
@@ -98,7 +98,7 @@ export class ABLDebugLines {
 		})
 	}
 
-	async importDebugLines(debugSourceName: string, debugSourceUri: Uri,  xrefUri: Uri) {
+	async importDebugLines (debugSourceName: string, debugSourceUri: Uri,  xrefUri: Uri) {
 		// const incRE = /(\S+) (\S+) (\d+) ([A-Z-]+) (("[^"]+?")|(\S+))/
 		const incRE = /(\S+) (\S+) (\d+) ([A-Z-_"]+)\s+(.*)/
 
@@ -160,7 +160,7 @@ export class ABLDebugLines {
 		return m
 	}
 
-	injectInclude(m: DebugLineMap, parentUri: Uri, sourceLine: number, incLine: number, dbgLine: number) {
+	injectInclude (m: DebugLineMap, parentUri: Uri, sourceLine: number, incLine: number, dbgLine: number) {
 		const inc = m.includes.find((inc) => inc.srcUri.fsPath === parentUri.fsPath && inc.srcLine === incLine)
 		if (inc) {
 			const incLen = this.incLengths.find((incLen) => incLen.incUri.fsPath === inc.incUri.fsPath)

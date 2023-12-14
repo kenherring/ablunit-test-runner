@@ -10,11 +10,11 @@ const backgroundExecuted = window.createTextEditorDecorationType({
 	backgroundColor: 'rgba(0,255,0,0.1)',
 })
 
-export function setRecentResults(results: ABLResults[]) {
+export function setRecentResults (results: ABLResults[]) {
 	recentResults = results
 }
 
-export function decorate(editor: TextEditor) {
+export function decorate (editor: TextEditor) {
 	const executedArray: DecorationOptions[] = []
 	const executableArray: DecorationOptions[] = []
 

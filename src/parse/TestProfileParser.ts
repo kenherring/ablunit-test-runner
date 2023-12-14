@@ -30,7 +30,7 @@ async function readJson (uri: Uri) {
 	return <JSON>JSON.parse(data)
 }
 
-async function getConfigurations(uri: Uri) {
+async function getConfigurations (uri: Uri) {
 	return readJson(uri).then((data) => {
 		try {
 			let str = JSON.stringify(data)
@@ -66,7 +66,7 @@ function mergeObjects (from: object, into: object) {
 				// @ts-expect-error 123
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 				into[key] = mergeObjects(from[key], into[key])
-			} //@ts-expect-error 123
+			} // @ts-expect-error 123
 		} else if (from[key] != undefined) {
 			// @ts-expect-error 123
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
@@ -80,7 +80,7 @@ function getDefaultConfig () {
 	return <IConfigurations> { configurations: [ new DefaultRunProfile ] }
 }
 
-export async function parseRunProfiles(workspaceFolders: WorkspaceFolder[], wsFilename: string = runProfileFilename) {
+export async function parseRunProfiles (workspaceFolders: WorkspaceFolder[], wsFilename: string = runProfileFilename) {
 	if (workspaceFolders.length === 0) {
 		throw new Error("Workspace has no open folders")
 	}
@@ -117,7 +117,7 @@ export async function parseRunProfiles(workspaceFolders: WorkspaceFolder[], wsFi
 	return runProfiles
 }
 
-export async function parseRunProfile(workspaceFolder: WorkspaceFolder) {
+export async function parseRunProfile (workspaceFolder: WorkspaceFolder) {
 	const runProfiles = await parseRunProfiles([workspaceFolder])
 	if (runProfiles.length === 0) {
 		throw new Error("No run profiles found")
@@ -125,7 +125,7 @@ export async function parseRunProfile(workspaceFolder: WorkspaceFolder) {
 	return runProfiles[0]
 }
 
-function getUri (dir: string | undefined, workspaceFolderUri: Uri, tempDir?: Uri ): Uri {
+function getUri (dir: string | undefined, workspaceFolderUri: Uri, tempDir?: Uri): Uri {
 	if (dir === undefined || dir === '') {
 		return workspaceFolderUri
 	}
@@ -156,8 +156,8 @@ export class RunConfig extends DefaultRunProfile {
 	public readonly profListingsUri: Uri | undefined
 	public readonly profFilenameUri: Uri
 
-	constructor(private readonly profile: IRunProfile,
-				public workspaceFolder: WorkspaceFolder) {
+	constructor (private readonly profile: IRunProfile,
+		public workspaceFolder: WorkspaceFolder) {
 		super()
 		this.tempDirUri = this.getUri(this.profile.tempDir)
 		this.config_uri = Uri.joinPath(this.tempDirUri, 'ablunit.json')
@@ -203,7 +203,7 @@ export class RunConfig extends DefaultRunProfile {
 	}
 }
 
-export function getProfileConfig(workspaceFolder: WorkspaceFolder) {
+export function getProfileConfig (workspaceFolder: WorkspaceFolder) {
 	return parseRunProfile(workspaceFolder).then((prof) => {
 		return new RunConfig(prof, workspaceFolder)
 	})

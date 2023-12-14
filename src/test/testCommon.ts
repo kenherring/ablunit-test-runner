@@ -59,11 +59,11 @@ export async function sleep (time: number = 2000, msg?: string) {
 	await new Promise(resolve => setTimeout(resolve, time))
 }
 
-export async function deleteFile(uri: Uri) {
+export async function deleteFile (uri: Uri) {
 	return workspace.fs.delete(uri)
 }
 
-export async function doesFileExist(uri: Uri) {
+export async function doesFileExist (uri: Uri) {
 	const ret = await workspace.fs.stat(uri).then((stat) => {
 		if (stat.type === FileType.File) {
 			return true
@@ -75,7 +75,7 @@ export async function doesFileExist(uri: Uri) {
 	return ret
 }
 
-export async function doesDirExist(uri: Uri) {
+export async function doesDirExist (uri: Uri) {
 	const ret = await workspace.fs.stat(uri).then((stat) => {
 		if (stat.type === FileType.Directory) {
 			return true
@@ -87,7 +87,7 @@ export async function doesDirExist(uri: Uri) {
 	return ret
 }
 
-export async function getTestCount(resultsJson: Uri, status: string = 'tests') {
+export async function getTestCount (resultsJson: Uri, status: string = 'tests') {
 	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 	const count = await workspace.fs.readFile(resultsJson).then((content) => {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment

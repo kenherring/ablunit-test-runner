@@ -20,8 +20,8 @@ export interface ITestObj {
 export interface IABLUnitJson {
 	options: {
 		output: {
-			location: string //results.xml directory
-			filename: string //<filename>.xml
+			location: string // results.xml directory
+			filename: string // <filename>.xml
 			format: 'xml'
 		}
 		quitOnEnd: boolean
@@ -55,7 +55,7 @@ export class ABLResults {
 	dlc: IDlc | undefined
 	public testCoverage: Map<string, FileCoverage> = new Map<string, FileCoverage>()
 
-	constructor(workspaceFolder: WorkspaceFolder, storageUri: Uri, globalStorageUri: Uri) {
+	constructor (workspaceFolder: WorkspaceFolder, storageUri: Uri, globalStorageUri: Uri) {
 
 		this.startTime = new Date()
 		this.workspaceFolder = workspaceFolder
@@ -65,12 +65,12 @@ export class ABLResults {
 		this.setStatus("constructed")
 	}
 
-	setStatus(status: string) {
+	setStatus (status: string) {
 		this.status = status
 		logToChannel("STATUS: " + status)
 	}
 
-	setTestData(testData: WeakMap<TestItem, ABLTestData>) {
+	setTestData (testData: WeakMap<TestItem, ABLTestData>) {
 		this.testData = testData
 	}
 
@@ -102,7 +102,7 @@ export class ABLResults {
 		})
 	}
 
-	resetTests() {
+	resetTests () {
 		this.tests = []
 	}
 
@@ -149,7 +149,7 @@ export class ABLResults {
 		}
 	}
 
-	async deleteResultsXml() {
+	async deleteResultsXml () {
 		if (this.cfg.ablunitConfig.optionsUri.jsonUri) {
 			const jsonUri = this.cfg.ablunitConfig.optionsUri.jsonUri
 			await workspace.fs.stat(jsonUri).then((stat) => {
@@ -170,7 +170,7 @@ export class ABLResults {
 		})
 	}
 
-	async run(options: TestRun) {
+	async run (options: TestRun) {
 		return ablunitRun(options, this).then(() => {
 			if(!this.ablResults!.resultsJson) {
 				throw new Error("no results available")
@@ -180,7 +180,7 @@ export class ABLResults {
 		})
 	}
 
-	async parseOutput(options: TestRun) {
+	async parseOutput (options: TestRun) {
 		this.setStatus("parsing results")
 		logToChannel("parsing results from " + this.cfg.ablunitConfig.optionsUri.filenameUri.fsPath, 'log', options)
 
@@ -279,7 +279,7 @@ export class ABLResults {
 			} else if (s.tests === s.skipped) {
 				options.skipped(item)
 			} else if (s.failures > 0 || s.errors > 0) {
-				//// This should be populated automatically by the child messages filtering up
+				// // This should be populated automatically by the child messages filtering up
 				// options.failed(item, new vscode.TestMessage("one or more tests failed"), s.time)
 			} else {
 				logToChannel("unknown error - test results are all zero")
@@ -312,7 +312,7 @@ export class ABLResults {
 		return suitePath
 	}
 
-	private async setAllChildResults(children: TestItemCollection, testcases: ITestCase[], options: TestRun) {
+	private async setAllChildResults (children: TestItemCollection, testcases: ITestCase[], options: TestRun) {
 		const promArr: Promise<void>[] = [Promise.resolve()]
 		children.forEach(child => {
 			const tc = testcases.find((t: ITestCase) => t.name === child.label)
@@ -327,7 +327,7 @@ export class ABLResults {
 		return Promise.all(promArr)
 	}
 
-	private async setChildResults(item: TestItem, options: TestRun, tc: ITestCase) {
+	private async setChildResults (item: TestItem, options: TestRun, tc: ITestCase) {
 		switch (tc.status) {
 			case "Success": {
 				options.passed(item, tc.time)
@@ -365,7 +365,7 @@ export class ABLResults {
 		}
 	}
 
-	private async getFailureMarkdownMessage(item: TestItem, options: TestRun, failure: ITestCaseFailure): Promise<MarkdownString> {
+	private async getFailureMarkdownMessage (item: TestItem, options: TestRun, failure: ITestCaseFailure): Promise<MarkdownString> {
 		const stack = await parseCallstack(this.debugLines!, failure.callstackRaw)
 		const promsg = getPromsgText(failure.message)
 		const md = new MarkdownString(promsg + "\n\n")
@@ -400,7 +400,7 @@ export class ABLResults {
 		return tm
 	}
 
-	async parseProfile() {
+	async parseProfile () {
 		const profParser = new ABLProfile()
 		return profParser.parseData(this.cfg.ablunitConfig.profFilenameUri, this.cfg.ablunitConfig.profiler.writeJson, this.debugLines!).then(() => {
 			this.profileJson = profParser.profJSON
@@ -412,7 +412,7 @@ export class ABLResults {
 		})
 	}
 
-	async assignProfileResults() {
+	async assignProfileResults () {
 		if (!this.profileJson) {
 			throw (new Error("no profile data available..."))
 		}
@@ -426,7 +426,7 @@ export class ABLResults {
 		}
 	}
 
-	async setCoverage(module: Module) {
+	async setCoverage (module: Module) {
 		const fileinfo = await this.propath!.search(module.SourceName)
 		const moduleUri = fileinfo?.uri
 		if (!moduleUri) {
@@ -438,7 +438,7 @@ export class ABLResults {
 		module.SourceUri = fileinfo.uri
 		let fc: FileCoverage | undefined
 
-		for (let idx=0; idx < module.lines.length; idx++) { //NOSONAR
+		for (let idx=0; idx < module.lines.length; idx++) { // NOSONAR
 			const line = module.lines[idx]
 			if (line.LineNo <= 0) {
 				//  * -2 is a special case - need to handgle this better
@@ -452,10 +452,10 @@ export class ABLResults {
 			}
 
 			if (fc?.uri.fsPath != dbg.incUri.fsPath) {
-				//get existing FileCoverage object
+				// get existing FileCoverage object
 				fc = this.testCoverage.get(dbg.incUri.fsPath)
 				if (!fc) {
-					//create a new FileCoverage object if one didn't already exist
+					// create a new FileCoverage object if one didn't already exist
 					fc = new FileCoverage(dbg.incUri, new CoveredCount(0, 0))
 					fc.detailedCoverage = []
 					this.coverage.push(fc)

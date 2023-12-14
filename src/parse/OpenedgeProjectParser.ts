@@ -44,7 +44,7 @@ async function getProjectJson (workspaceFolder: WorkspaceFolder) {
 	return undefined
 }
 
-export async function getDLC(workspaceFolder: WorkspaceFolder, projectJson?: string) {
+export async function getDLC (workspaceFolder: WorkspaceFolder, projectJson?: string) {
 	const dlc = dlcMap.get(workspaceFolder)
 	if (dlc) {
 		return dlc
@@ -99,7 +99,7 @@ export async function getOEVersion (workspaceFolder: WorkspaceFolder, projectJso
 		}
 	}
 	return "none"
-	//TODO return undefined
+	// TODO return undefined
 }
 
 interface IBuildPath {
@@ -126,7 +126,7 @@ function parseOpenEdgeProjectJson (workspaceFolder: WorkspaceFolder, inConf: str
 		}
 	}
 
-	//TODO what about if we're running a different profile?
+	// TODO what about if we're running a different profile?
 	if (!buildPath) {
 		console.error("buildPath not found in openedge-project.json")
 		throw new Error("buildPath not found in openedge-project.json")

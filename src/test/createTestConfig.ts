@@ -11,7 +11,7 @@ interface TestConfig {
 	launchArgs: string[]
 }
 
-function createTestConfig(projName: string, workspaceFolder?: string, timeout?: number) {
+function createTestConfig (projName: string, workspaceFolder?: string, timeout?: number) {
 	if (!workspaceFolder || workspaceFolder == '') {
 		workspaceFolder = projName
 	}

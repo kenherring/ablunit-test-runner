@@ -2,7 +2,7 @@ import * as path from 'path'
 import { getTestConfig } from './createTestConfig'
 import { runTests } from '@vscode/test-electron'
 
-async function main() {
+async function main () {
 	const config = getTestConfig()
 
 	for (const conf of config) {
@@ -10,7 +10,7 @@ async function main() {
 	}
 }
 
-async function testProject(projName: string, projDir?: string, launchArgs?: string[], indexFile: string = './index') {
+async function testProject (projName: string, projDir?: string, launchArgs?: string[], indexFile: string = './index') {
 	if(!projDir) {
 		projDir = projName
 	}

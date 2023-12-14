@@ -10,7 +10,7 @@ import { GlobSync }  from 'glob'
 import * as path from 'path'
 import * as Mocha from 'mocha'
 
-function setupNyc(projName: string) {
+function setupNyc (projName: string) {
 	const NYC = require("nyc")
 	const nyc = new NYC({
 		cache: false,
@@ -44,7 +44,7 @@ function setupNyc(projName: string) {
 	return nyc
 }
 
-function setupMocha(projName: string, timeout: number) {
+function setupMocha (projName: string, timeout: number) {
 	return new Mocha({
 		color: true,
 		ui: "tdd",
@@ -108,7 +108,7 @@ function runTestsForProject (projName: string, timeout: number) {
 	console.log("111")
 }
 
-export function run(): Promise <void> {
+export function run (): Promise <void> {
 
 	let proj: string
 	if (workspace.workspaceFile) {

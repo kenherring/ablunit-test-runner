@@ -1,10 +1,15 @@
 {
+	"env": {
+		"node": true,
+		"es6": true,
+		"browser": true
+	},
 	"extends": [
+		"plugin:@typescript-eslint/eslint-recommended"
 		// "eslint:all"
-		"eslint:recommended",
-		"plugin:@typescript-eslint/recommended",
-		"plugin:@typescript-eslint/eslint-recommended",
-		"plugin:@typescript-eslint/recommended-type-checked"
+		// "eslint:recommended",
+		// "plugin:@typescript-eslint/recommended",
+		// "plugin:@typescript-eslint/recommended-type-checked"
 	],
 	"parser": "@typescript-eslint/parser",
 	"plugins": [
@@ -15,11 +20,12 @@
 			// "package.json"
 			"./tsconfig.json"
 		],
-		"ecmaVersion": 2019
+		"ecmaVersion": 2019,
+		"module": true
 	},
 	"root": true,
 	"ignorePatterns": [
-		// "dummy-ext",
+		"dummy-ext",
 		"out",
 		"test_projects",
 		"**/*.test.ts"
@@ -27,6 +33,7 @@
 	"rules": {
         // "@typescript-esline/explicit-function-return-type": "off",
 		"@typescript-eslint/indent": ["error", "tab"],
+		"@typescript-eslint/interface-name-prefix": "I",
 		"@typescript-eslint/restrict-plus-operands": "off",
 		"linebreak-style": ["error", "unix"],
 		"no-console": "warn",
@@ -35,9 +42,26 @@
 		// "quotes": ["warn", "single"]
 		"semi": ["error", "never"],
 		"space-before-function-paren": ["warn", "always"],
-		"space-in-parens": ["warn", "always"],
+		"space-in-parens": ["warn", "never"],
 		"space-before-blocks": ["error", "always"],
 		"spaced-comment": ["error", "always"],
-		"no-trailing-spaces": ["error", { "skipBlankLines": false }]
+		"no-trailing-spaces": ["error", { "skipBlankLines": false }],
+
+		// "@typescript-eslint/no-unused-vars": [
+        //     "warn",
+        //     {
+        //         "vars": "all",
+        //         "args": "none",
+        //         "ignoreRestSiblings": false
+        //     }
+        // ],
+        // "@typescript-eslint/no-use-before-define": [
+        //     "warn",
+        //     {
+        //         "functions": true,
+        //         "classes": true
+        //     }
+        // ],
+        // "@typescript-eslint/no-inferrable-types": 0
 	}
 }

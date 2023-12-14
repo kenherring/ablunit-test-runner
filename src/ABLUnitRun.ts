@@ -4,7 +4,7 @@ import { logToChannel } from './ABLUnitCommon'
 import { isRelativePath } from './ABLUnitConfigWriter'
 import { ExecException, exec } from "child_process"
 
-export const ablunitRun = async(options: TestRun, res: ABLResults) => {
+export const ablunitRun = async (options: TestRun, res: ABLResults) => {
 	const start = Date.now()
 
 	await res.cfg.createAblunitJson(res.cfg.ablunitConfig.config_uri, res.cfg.ablunitConfig.options, res.testQueue)
