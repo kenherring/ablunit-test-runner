@@ -35,7 +35,7 @@ class TestData {
 
 export const testData = new TestData()
 
-const displayClassLabel = workspace.getConfiguration('ablunit').get('display.classlabel','')
+const displayClassLabel = workspace.getConfiguration('ablunit').get('explorer.classlabel','')
 
 function createTestItem(controller: TestController,
 						item: TestItem,

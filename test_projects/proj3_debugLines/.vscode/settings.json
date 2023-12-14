@@ -2,8 +2,5 @@
 	"terminal.integrated.env.windows": {
 		"DLC": "/c/Progress/OpenEdge",
 		"PATH": "${env:PATH}:/c/Progress/OpenEdge/ant/bin"
-	},
-	"ablunit.tempDir": "${workspaceFolder}/target",
-	"ablunit.configJson.output.location": "ablunit-output",
-	"ablunit.profilerOptions.listings": "true"
+	}
 }

@@ -1,13 +1,15 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { Uri, workspace } from 'vscode'
 import { parseCallstack, ICallStack } from './CallStackParser'
 import { PropathParser } from '../ABLPropath'
 import { parseString } from 'xml2js'
 import { ABLDebugLines } from '../ABLDebugLines'
-import { IABLUnitConfig } from '../ABLUnitConfigWriter'
 import { logToChannel } from '../ABLUnitCommon'
 
 
-export interface TCFailure {
+export interface ITestCaseFailure {
 	callstackRaw: string
 	callstack: ICallStack
 	message: string
@@ -18,15 +20,15 @@ export interface TCFailure {
 	}
 }
 
-export interface TestCase {
+export interface ITestCase {
 	name: string
 	classname?: string
 	status: string
 	time: number
-	failure?: TCFailure
+	failure?: ITestCaseFailure
 }
 
-export interface TestSuite {
+export interface ITestSuite {
 	name?: string
 	classname?: string
 	id: number
@@ -36,22 +38,22 @@ export interface TestSuite {
 	failures: number
 	skipped: number
 	time: number
-	testsuite?: TestSuite[]
+	testsuite?: ITestSuite[]
 	properties?: { [key: string]: string }
-	testcases?: TestCase[]
+	testcases?: ITestCase[]
 }
 
-export interface TestSuites {
+export interface ITestSuites {
 	name: string
 	tests: number
 	passed: number
 	errors: number
 	failures: number
-	testsuite?: TestSuite[]
+	testsuite?: ITestSuite[]
 }
 
 export class ABLResultsParser {
-	resultsJson: TestSuites[] = []
+	resultsJson: ITestSuites[] = []
 	propath: PropathParser
 	debugLines: ABLDebugLines
 
@@ -60,25 +62,25 @@ export class ABLResultsParser {
 		this.debugLines = debugLines
 	}
 
-	async parseResults(cfg: IABLUnitConfig) {
-		const resultsBits = await workspace.fs.readFile(cfg.config_output_filenameUri);
+	async parseResults(configUri: Uri, jsonUri: Uri | undefined) {
+		const resultsBits = await workspace.fs.readFile(configUri);
 		const resultsXml = Buffer.from(resultsBits.toString()).toString('utf8');
-		const resultsXmlJson = await this.parseXml(resultsXml)
+		const resultsXmlJson = this.parseXml(resultsXml)
 		try {
 			this.resultsJson = [ await this.parseSuites(resultsXmlJson) ]
 		} catch (err) {
 			console.error("[parseResults] error parsing results.xml file: " + err)
 			throw err
 		}
-		if (cfg.config_output_writeJson) {
-			return this.writeJsonToFile(cfg.config_output_jsonUri)
+		if (jsonUri) {
+			return this.writeJsonToFile(jsonUri)
 		}
 	}
 
 	parseXml(xmlData: string) {
-		let res: any
+		let res
 
-		parseString(xmlData, function (err: any, resultsRaw: any) {
+		parseString(xmlData, function (err: Error | null, resultsRaw: any) {
 			if (err) {
 				throw new Error("error parsing XML file: " + err)
 			}
@@ -95,7 +97,7 @@ export class ABLResultsParser {
 		res = res.testsuites
 
 		const testsuite = await this.parseSuite(res.testsuite)
-		const jsonData: TestSuites = {
+		const jsonData: ITestSuites = {
 			name: res['$'].name,
 			tests: Number(res['$'].tests),
 			passed: Number(res['$'].tests) - Number(res['$'].errors) - Number(res['$'].failures),
@@ -108,7 +110,7 @@ export class ABLResultsParser {
 
 	async parseSuite(res: any) {
 		if (!res) { return undefined }
-		const suites: TestSuite[] = []
+		const suites: ITestSuite[] = []
 
 		for (let idx=0; idx<res.length; idx++) {
 			const testsuite = await this.parseSuite(res[idx].testsuite).then()
@@ -144,7 +146,7 @@ export class ABLResultsParser {
 
 	async parseTestCases(res: any) {
 		if (!res) { return undefined }
-		const cases: TestCase[] = []
+		const cases: ITestCase[] = []
 
 		for (let idx=0; idx<res.length; idx++) {
 			cases[idx] = {
@@ -173,14 +175,16 @@ export class ABLResultsParser {
 		}
 		if (res[type].length > 1) { throw new Error("more than one failure or error in testcase - use case not handled") }
 
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 		const callstack = await parseCallstack(this.debugLines, res[type][0]['_'])
-		const fail: TCFailure = {
+		const fail: ITestCaseFailure = {
 			callstackRaw: res[type][0]['_'],
 			callstack: callstack,
 			message: res[type][0]['$'].message,
 			type: res[type][0]['$'].types
 		}
 		const diffRE = /Expected: (.*) but was: (.*)/
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 		const diff = diffRE.exec(res[type][0]['$'].message)
 		if (diff) {
 			fail.diff = {
