@@ -124,9 +124,11 @@ function parseOpenEdgeProjectJson (workspaceFolder: WorkspaceFolder, inConf: str
 	let buildDirectory: string | undefined
 	if (typeof conf === 'object') {
 		if (Object.prototype.hasOwnProperty.call(conf,'buildPath')) {
+			// @ts-expect-error 123
 			buildPath = <IBuildPath[]>conf['buildPath']
 		}
 		if (Object.prototype.hasOwnProperty.call(conf,'buildDirectory')) {
+			// @ts-expect-error 123
 			buildDirectory = <string>conf['buildDirectory']
 		}
 	}
