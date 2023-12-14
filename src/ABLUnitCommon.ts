@@ -15,6 +15,7 @@ export function logToChannel(message: string, consoleMessageType: 'log' | 'error
 		}
 	}
 	if (options) {
+		message = message.replace(/\r/g, '').replace(/\n/g, '\r\n')
 		options.appendOutput(message + "\r\n")
 	}
 }

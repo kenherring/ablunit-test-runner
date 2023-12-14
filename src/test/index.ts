@@ -1,13 +1,16 @@
 import { workspace } from 'vscode'
 import { getTestConfig } from './createTestConfig'
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-// const { getTestConfig } = require('./out/test/createTestConfig')
-import * as glob from "glob"
-import * as path from "path"
-import * as Mocha from "mocha"
+
+/* eslint-disable @typescript-eslint/no-unsafe-return */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-var-requires */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+import { GlobSync }  from 'glob'
+import * as path from 'path'
+import * as Mocha from 'mocha'
 
 function setupNyc(projName: string) {
-	// eslint-disable-next-line @typescript-eslint/no-var-requires
 	const NYC = require("nyc")
 	const nyc = new NYC({
 		cache: false,
@@ -65,41 +68,48 @@ function runTestsForProject (projName: string, timeout: number) {
 	const mocha = setupMocha(projName, timeout)
 	const testsRoot = path.resolve(__dirname, "..")
 	return new Promise<void>((c, e) => {
-		glob("**/extension." + projName + ".test.js", {
-			cwd: testsRoot
-		}, (err, files) => {
-			if (err) {
-				return e(err)
-			}
+		const files = new GlobSync("**/*" + projName + ".test.js", { cwd: testsRoot })
 
-			// Add files to the test suite
-			files.forEach((f) => {
-				mocha.addFile(path.resolve(testsRoot, f))
+		for(const f of files.found) {
+			console.log("mocha.addFile " + path.resolve(testsRoot, f))
+			mocha.addFile(path.resolve(testsRoot, f))
+		}
+
+		try {
+			// Run the mocha test
+			mocha.run((failures) => {
+				console.log("nyc.writeCoverageFile()")
+				if (failures > 0) {
+					console.log("106")
+					console.log(`${failures} tests failed.`)
+					console.log("107")
+					e(new Error(`${failures} tests failed.`))
+				}
+				if (nyc) {
+					nyc.writeCoverageFile()
+					console.log("nyc.writeCoverageFile() done")
+					nyc.report().then(() => {
+						console.log("nyc.report() done")
+						c()
+					})
+				}
+				console.log("105 failures=" + failures)
+			}).on('end', () => {
+				console.log("106 - END")
 			})
+			console.log("109")
 
-			try {
-				// Run the mocha test
-				mocha.run(async (failures) => {
-					if (nyc) {
-						nyc.writeCoverageFile()
-						await nyc.report()
-					}
-
-					if (failures > 0) {
-						console.log(`${failures} tests failed.`)
-						e(new Error(`${failures} tests failed.`))
-					}
-					c()
-				})
-			} catch (err) {
-				console.error('[index.ts] catch err= ' + err)
-				e(err)
-			}
-		})
+		} catch (err) {
+			console.error('[index_2.ts] catch err= ' + err)
+			e(err)
+		}
+		console.log("110")
 	})
+	console.log("111")
 }
 
 export function run(): Promise <void> {
+
 	let proj: string
 	if (workspace.workspaceFile) {
 		proj = workspace.workspaceFile.fsPath

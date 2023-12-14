@@ -24,7 +24,7 @@ export class ABLPromsgs {
 		}, () => {
 			console.log("reading promsgs from DLC")
 			this.loadFromDLC(dlc).then(() => {
-				this.saveCache(cacheUri).catch((err) => {
+				this.saveCache(cacheUri).then(() => {}, (err) => {
 					throw(err)
 				})
 			}, (err) => {

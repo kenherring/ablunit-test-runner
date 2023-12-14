@@ -1,7 +1,7 @@
 
 import * as assert from 'assert'
 import { Uri, WorkspaceFolder, workspace } from 'vscode'
-import { IConfigurations, parseRunProfiles } from '../../parse/RunProfileParser'
+import { IConfigurations, parseRunProfiles } from '../../parse/TestProfileParser'
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 function readValidationFile (filename: string) {

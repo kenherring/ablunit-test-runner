@@ -57,7 +57,6 @@ export async function sleep (time: number = 2000, msg?: string) {
 	}
 	console.log(status)
 	await new Promise(resolve => setTimeout(resolve, time))
-	return
 }
 
 export async function deleteFile(uri: Uri) {
@@ -70,7 +69,7 @@ export async function doesFileExist(uri: Uri) {
 			return true
 		}
 		return false
-	}, (err) => {
+	}, () => {
 		return false
 	})
 	return ret
@@ -125,7 +124,7 @@ async function installOpenedgeABLExtension () {
 	if (!extensions.getExtension("riversidesoftware.openedge-abl-lsp")) {
 		console.log("[indexCommon.ts] installing riversidesoftware.openedge-abl-lsp extension")
 		await commands.executeCommand('workbench.extensions.installExtension', 'riversidesoftware.openedge-abl-lsp').then(() => {
-		}, (err) => {
+		}, (err: Error) => {
 			if (err.toString() === 'Error: Missing gallery') {
 				console.log("[indexCommon.ts] triggered installed extension, but caught '" + err + "'")
 			} else {
@@ -183,7 +182,7 @@ export async function runAllTests (doRefresh: boolean = true) {
 	})
 }
 
-export async function updateConfig (key: string, value: any) {
+export async function updateConfig (key: string, value: string | string[] | undefined) {
 	await workspace.getConfiguration('ablunit').update(key, value, ConfigurationTarget.Workspace).then(() => {
 		console.log("ablunit." + key + " set successfully (value='" + value + "')")
 	}, (err) => {
