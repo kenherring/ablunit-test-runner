@@ -34,10 +34,10 @@
 		"no-mixed-spaces-and-tabs": ["error", "smart-tabs"],
 		// "quotes": ["warn", "single"]
 		"semi": ["error", "never"],
-		"space-before-function-paren": ["error", "warn"],
-		"space-in-parens": ["error", "warn"],
-		"space-before-blocks": ["error", "warn"],
-		"spaced-comment": ["error", "warn"],
-		"no-trailing-spaces": ["error", { "skipBlankLines": false } ]
+		"space-before-function-paren": ["warn", "always"],
+		"space-in-parens": ["warn", "always"],
+		"space-before-blocks": ["error", "always"],
+		"spaced-comment": ["error", "always"],
+		"no-trailing-spaces": ["error", { "skipBlankLines": false }]
 	}
 }
