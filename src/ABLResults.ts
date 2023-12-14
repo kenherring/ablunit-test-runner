@@ -1,8 +1,6 @@
-import { FileType, MarkdownString, Position, Range, TestItem, TestItemCollection, TestMessage, TestRun, Uri, workspace, WorkspaceFolder,
-		FileCoverage, CoveredCount, StatementCoverage,
-		FileStat } from 'vscode'
-import { ABLUnitConfig, ITestObj } from './ABLUnitConfigWriter'
-import { ABLResultsParser, TCFailure, TestCase, TestSuite } from './parse/ResultsParser'
+import { FileType, MarkdownString, Position, Range, TestItem, TestItemCollection, TestMessage, TestRun, Uri, workspace, WorkspaceFolder } from 'vscode'
+import { ABLUnitConfig } from './ABLUnitConfigWriter'
+import { ABLResultsParser, ITestCaseFailure, ITestCase, ITestSuite } from './parse/ResultsParser'
 import { ABLTestSuite, ABLTestData } from './testTree'
 import { parseCallstack } from './parse/CallStackParser'
 import { ABLProfile, ABLProfileJson, Module } from './parse/ProfileParser'
@@ -12,6 +10,26 @@ import { PropathParser } from './ABLPropath'
 import { logToChannel } from './ABLUnitCommon'
 import { ablunitRun } from './ABLUnitRun'
 import { getDLC, IDlc } from './parse/OpenedgeProjectParser'
+
+export interface ITestObj {
+	test: string
+	cases?: string[]
+}
+
+export interface IABLUnitJson {
+	options: {
+		output: {
+			location: string //results.xml directory
+			filename: string //<filename>.xml
+			format: 'xml'
+		}
+		quitOnEnd: boolean
+		writeLog: boolean
+		showErrorMessage: boolean
+		throwError: boolean
+	}
+	tests: ITestObj[]
+}
 
 export class ABLResults {
 	workspaceFolder: WorkspaceFolder
@@ -25,6 +43,7 @@ export class ABLResults {
 
 	ablResults: ABLResultsParser | undefined
 	tests: TestItem[] = []
+	testQueue: ITestObj[] = []
 	testData!: WeakMap<TestItem, ABLTestData>
 	propath?: PropathParser
 	debugLines?: ABLDebugLines
@@ -41,13 +60,7 @@ export class ABLResults {
 		this.workspaceFolder = workspaceFolder
 		this.storageUri = storageUri
 		this.globalStorageUri = globalStorageUri
-
-		this.cfg = new ABLUnitConfig(workspaceFolder)
-		this.cfg.ablunitConfig.workspaceFolder = workspaceFolder
-		this.cfg.ablunitConfig.storageUri = storageUri
-		if (this.cfg.ablunitConfig.tempDir === '') {
-			this.cfg.setTempDirUri(storageUri)
-		}
+		this.cfg = new ABLUnitConfig()
 		this.setStatus("constructed")
 	}
 
@@ -61,7 +74,13 @@ export class ABLResults {
 	}
 
 	async start () {
-		this.cfg.setTempDirUri(this.cfg.ablunitConfig.tempDirUri)
+		await this.cfg.setup(this.workspaceFolder).then(() => {
+			console.log("setup complete")
+		}, (err) => {
+			console.error("[ABLResults.ts start] ABLResults.setup() failed. err=" + err)
+			throw new Error("[ABLResults.ts start] ABLResults.setup() failed. err=" + err)
+		})
+
 		this.dlc = await getDLC(this.workspaceFolder)
 		this.promsgs = new ABLPromsgs(this.dlc, this.globalStorageUri)
 
@@ -71,9 +90,9 @@ export class ABLResults {
 		})
 
 		const prom: (Promise<void> | Promise<void[]>)[] = []
-		prom[0] = this.cfg.createProfileOptions(this.cfg.ablunitConfig.profilerOptions)
+		prom[0] = this.cfg.createProfileOptions(this.cfg.ablunitConfig.profOptsUri,this.cfg.ablunitConfig.profiler)
 		prom[1] = this.cfg.createProgressIni(this.propath!.toString())
-		prom[2] = this.cfg.createAblunitJson(this.cfg.ablunitConfig.configJson)
+		prom[2] = this.cfg.createAblunitJson(this.cfg.ablunitConfig.config_uri, this.cfg.ablunitConfig.options, this.testQueue)
 
 		return Promise.all(prom).then(() => {
 			console.log("done creating config files for run")
@@ -83,7 +102,7 @@ export class ABLResults {
 	}
 
 	resetTests() {
-		this.cfg.ablunitConfig.configJson.tests = []
+		this.tests = []
 	}
 
 	async addTest (test:  TestItem) {
@@ -110,7 +129,7 @@ export class ABLResults {
 		}
 
 		if (testCase) {
-			const existingTestObj = this.cfg.ablunitConfig.configJson.tests.find((t: ITestObj) => t.test === testRel)
+			const existingTestObj = this.testQueue.find((t: ITestObj) => t.test === testRel)
 			if (existingTestObj) {
 				if(testObj.cases) {
 					if (!existingTestObj.cases) {
@@ -122,25 +141,28 @@ export class ABLResults {
 			}
 		}
 
-		if (this.cfg.ablunitConfig.configJson.tests.find((t: ITestObj) => t.test === testRel)) {
+		if (this.testQueue.find((t: ITestObj) => t.test === testRel)) {
 			console.log("test already exists in configJson.tests: " + testRel)
 		} else {
-			this.cfg.ablunitConfig.configJson.tests.push(testObj)
+			this.testQueue.push(testObj)
 		}
 	}
 
 	async deleteResultsXml() {
-		workspace.fs.stat(this.cfg.ablunitConfig.config_output_jsonUri).then((stat: FileStat) => {
+		if (this.cfg.ablunitConfig.optionsUri.jsonUri) {
+			const jsonUri = this.cfg.ablunitConfig.optionsUri.jsonUri
+			await workspace.fs.stat(jsonUri).then((stat) => {
+				if (stat.type === FileType.File) {
+					console.log("delete " + jsonUri.fsPath)
+					return workspace.fs.delete(jsonUri)
+				}
+			}, () => {
+				// do nothing, can't delete a file that doesn't exist
+			})
+		}
+		return workspace.fs.stat(this.cfg.ablunitConfig.optionsUri.filenameUri).then((stat: FileStat) => {
 			if (stat.type === FileType.File) {
-				console.log("delete " + this.cfg.ablunitConfig.config_output_jsonUri.fsPath)
-				return workspace.fs.delete(this.cfg.ablunitConfig.config_output_jsonUri)
-			}
-		}, () => {
-			// do nothing, can't delete a file that doesn't exist
-		})
-		return workspace.fs.stat(this.cfg.ablunitConfig.config_output_filenameUri).then((stat) => {
-			if (stat.type === FileType.File) {
-				return workspace.fs.delete(this.cfg.ablunitConfig.config_output_filenameUri)
+				return workspace.fs.delete(this.cfg.ablunitConfig.optionsUri.filenameUri)
 			}
 		}, () => {
 			// do nothing, can't delete a file that doesn't exist
@@ -159,32 +181,32 @@ export class ABLResults {
 
 	async parseOutput(options: TestRun) {
 		this.setStatus("parsing results")
-		logToChannel("parsing results from " + this.cfg.ablunitConfig.config_output_filenameUri.fsPath, 'log', options)
+		logToChannel("parsing results from " + this.cfg.ablunitConfig.optionsUri.filenameUri.fsPath, 'log', options)
 
 		this.endTime = new Date()
 
 		this.ablResults = new ABLResultsParser(this.propath!, this.debugLines!)
-		await this.ablResults.parseResults(this.cfg.ablunitConfig).then(() => {
+		await this.ablResults.parseResults(this.cfg.ablunitConfig.optionsUri.filenameUri, this.cfg.ablunitConfig.optionsUri.jsonUri).then(() => {
 			if(!this.ablResults!.resultsJson) {
-				logToChannel("No results found in " + this.cfg.ablunitConfig.config_output_filenameUri.fsPath,"error", options)
-				throw (new Error("[ABLResults parseOutput] No results found in " + this.cfg.ablunitConfig.config_output_filenameUri.fsPath + "\r\n"))
+				logToChannel("No results found in " + this.cfg.ablunitConfig.optionsUri.filenameUri.fsPath,"error", options)
+				throw (new Error("[ABLResults parseOutput] No results found in " + this.cfg.ablunitConfig.optionsUri.filenameUri.fsPath + "\r\n"))
 			}
 			return true
 		}, (err) => {
 			this.setStatus("error parsing results data")
-			logToChannel("Error parsing ablunit results from " + this.cfg.ablunitConfig.config_output_filenameUri.fsPath + ".  err=" + err,"error",options)
-			throw (new Error("[ABLResults parseOutput] Error parsing ablunit results from " + this.cfg.ablunitConfig.config_output_filenameUri.fsPath + "\r\nerr=" + err))
+			logToChannel("Error parsing ablunit results from " + this.cfg.ablunitConfig.optionsUri.filenameUri.fsPath + ".  err=" + err,"error",options)
+			throw (new Error("[ABLResults parseOutput] Error parsing ablunit results from " + this.cfg.ablunitConfig.optionsUri.filenameUri.fsPath + "\r\nerr=" + err))
 		})
 
-		if (this.cfg.ablunitConfig.profilerOptions.enabled) {
+		if (this.cfg.ablunitConfig.profiler.enabled) {
 			this.setStatus("parsing profiler data")
-			logToChannel("parsing profiler data from " + this.cfg.ablunitConfig.profilerOptions.filenameUri.fsPath, 'log', options)
+			logToChannel("parsing profiler data from " + this.cfg.ablunitConfig.profFilenameUri.fsPath, 'log', options)
 			await this.parseProfile().then(() => {
 				return true
 			}, (err) => {
 				this.setStatus("error parsing profiler data")
-				logToChannel("Error parsing profiler data from " + this.cfg.ablunitConfig.profilerOptions.filenameUri.fsPath + ".  err=" + err, "error", options)
-				throw new Error("[ABLResults parseOutput] Error parsing profiler data from " + this.cfg.ablunitConfig.profilerOptions.filenameUri.fsPath + "\r\nerr=" + err)
+				logToChannel("Error parsing profiler data from " + this.cfg.ablunitConfig.profFilenameUri.fsPath + ".  err=" + err, "error", options)
+				throw new Error("[ABLResults parseOutput] Error parsing profiler data from " + this.cfg.ablunitConfig.profFilenameUri.fsPath + "\r\nerr=" + err)
 			})
 		}
 
@@ -211,7 +233,7 @@ export class ABLResults {
 		}
 
 		const suiteName = await this.getSuiteName(item)
-		const s = this.ablResults.resultsJson[0].testsuite.find((s: TestSuite) => s.classname === suiteName || s.name === suiteName)
+		const s = this.ablResults.resultsJson[0].testsuite.find((s: ITestSuite) => s.classname === suiteName || s.name === suiteName)
 		if (!s) {
 			logToChannel("could not find test suite for '" + suiteName + "' in results", 'error')
 			options.errored(item, new TestMessage("could not find test suite for '" + suiteName + "' in results"), this.duration())
@@ -231,7 +253,7 @@ export class ABLResults {
 		}
 	}
 
-	async parseChildSuites (item: TestItem, s: TestSuite[], options: TestRun) {
+	async parseChildSuites (item: TestItem, s: ITestSuite[], options: TestRun) {
 		for (const t of s) {
 			// find matching child TestItem
 			let child = item.children.get(t.name!)
@@ -249,7 +271,7 @@ export class ABLResults {
 		}
 	}
 
-	private async parseFinalSuite (item: TestItem, s: TestSuite, options: TestRun) {
+	private async parseFinalSuite (item: TestItem, s: ITestSuite, options: TestRun) {
 		if (s.tests > 0) {
 			if (s.errors === 0 && s.failures === 0) {
 				options.passed(item, s.time)
@@ -289,10 +311,10 @@ export class ABLResults {
 		return suitePath
 	}
 
-	private async setAllChildResults(children: TestItemCollection, testcases: TestCase[], options: TestRun) {
+	private async setAllChildResults(children: TestItemCollection, testcases: ITestCase[], options: TestRun) {
 		const promArr: Promise<void>[] = [Promise.resolve()]
 		children.forEach(child => {
-			const tc = testcases.find((t: TestCase) => t.name === child.label)
+			const tc = testcases.find((t: ITestCase) => t.name === child.label)
 			if (!tc) {
 				logToChannel("could not find result for test case '" + child.label + "'", "error")
 				options.errored(child, new TestMessage("could not find result for test case '" + child.label + "'"))
@@ -304,7 +326,7 @@ export class ABLResults {
 		return Promise.all(promArr)
 	}
 
-	private async setChildResults(item: TestItem, options: TestRun, tc: TestCase) {
+	private async setChildResults(item: TestItem, options: TestRun, tc: ITestCase) {
 		switch (tc.status) {
 			case "Success": {
 				options.passed(item, tc.time)
@@ -342,7 +364,7 @@ export class ABLResults {
 		}
 	}
 
-	private async getFailureMarkdownMessage(item: TestItem, options: TestRun, failure: TCFailure): Promise<MarkdownString> {
+	private async getFailureMarkdownMessage(item: TestItem, options: TestRun, failure: ITestCaseFailure): Promise<MarkdownString> {
 		const stack = await parseCallstack(this.debugLines!, failure.callstackRaw)
 		const promsg = getPromsgText(failure.message)
 		const md = new MarkdownString(promsg + "\n\n")
@@ -364,7 +386,7 @@ export class ABLResults {
 		return md
 	}
 
-	private getDiffMessage (failure: TCFailure) {
+	private getDiffMessage (failure: ITestCaseFailure) {
 		if (!failure.diff) {
 			return undefined
 		}
@@ -379,7 +401,7 @@ export class ABLResults {
 
 	async parseProfile() {
 		const profParser = new ABLProfile()
-		return profParser.parseData(this.cfg.ablunitConfig.profilerOptions, this.debugLines!).then(() => {
+		return profParser.parseData(this.cfg.ablunitConfig.profFilenameUri, this.cfg.ablunitConfig.profiler.writeJson, this.debugLines!).then(() => {
 			this.profileJson = profParser.profJSON
 			return this.assignProfileResults().then(() => {
 				console.log("assignProfileResults complete")

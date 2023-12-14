@@ -40,7 +40,7 @@ export class PropathParser {
 		this.workspaceFolder = workspaceFolder
 	}
 
-	async setPropath(importedPropath: IProjectJson) {
+	setPropath(importedPropath: IProjectJson) {
 		console.log("////////////// setPropath begin //////////////")
 
 		for (const entry of importedPropath.propathEntry) {
@@ -91,11 +91,11 @@ export class PropathParser {
 		return this.propath
 	}
 
-	async getBuildDir(filepath: string) {
+	getBuildDir(filepath: string) {
 		return this.buildMap.get(filepath)
 	}
 
-	private async searchUri (uri: Uri) {
+	private searchUri (uri: Uri) {
 		for (const e of this.propath.entry) {
 			if(uri.fsPath.startsWith(e.uri.fsPath)) {
 				const propathRelativeFile = uri.fsPath.replace(e.uri.fsPath,'').substring(1)

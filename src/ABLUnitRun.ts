@@ -7,20 +7,22 @@ import { exec } from "child_process";
 export const ablunitRun = async(options: TestRun, res: ABLResults) => {
 	const start = Date.now()
 
-	await res.cfg.createAblunitJson(res.cfg.ablunitConfig.configJson)
+	await res.cfg.createAblunitJson(res.cfg.ablunitConfig.config_uri, res.cfg.ablunitConfig.options, res.testQueue)
 
 	const getCommand = () => {
-		if (res.cfg.ablunitConfig.tests.command != "") {
+		if (res.cfg.ablunitConfig.command.executable != "_progres" &&
+			res.cfg.ablunitConfig.command.executable != "prowin" &&
+			res.cfg.ablunitConfig.command.executable != "prowin32") {
 			return getCustomCommand()
 		}
 		return getDefaultCommand()
 	}
 
 	const getCustomCommand = () => {
-		const cmd = res.cfg.ablunitConfig.tests.command
+		const cmd = res.cfg.ablunitConfig.command.executable.replace("${DLC}", res.dlc!.uri.fsPath.replace(/\\/g, '/'))
 
 		const testarr: string[] = []
-		for (const test of res.cfg.ablunitConfig.configJson.tests) {
+		for (const test of res.testQueue) {
 			if (test.test) {
 				testarr.push(test.test)
 			}
@@ -42,10 +44,9 @@ export const ablunitRun = async(options: TestRun, res: ABLResults) => {
 			throw (new Error("temp directory not set"))
 		}
 
-		let cmd = [ '_progres', '-b', '-p', 'ABLUnitCore.p' ]
-		if (res.dlc) {
-			cmd = [res.dlc.uri.fsPath + '/bin/_progres', '-b', '-p', 'ABLUnitCore.p']
-		}
+		const executable = res.dlc!.uri.fsPath.replace(/\\/g, '/') + '/bin/' + res.cfg.ablunitConfig.command.executable
+
+		let cmd = [ executable, '-b', '-p', 'ABLUnitCore.p' ]
 
 		if (process.platform === 'win32') {
 			cmd.push('-basekey', 'INI', '-ininame', workspace.asRelativePath(res.cfg.ablunitConfig.progressIniUri.fsPath, false))
@@ -61,22 +62,18 @@ export const ablunitRun = async(options: TestRun, res: ABLResults) => {
 		}
 		cmd.push('-T',tempPath)
 
-		if (res.cfg.ablunitConfig.profilerOptions.enabled) {
-			cmd.push('-profile', workspace.asRelativePath(res.cfg.ablunitConfig.profilerOptions.optionsUri, false))
+		if (res.cfg.ablunitConfig.profiler.enabled) {
+			cmd.push('-profile', workspace.asRelativePath(res.cfg.ablunitConfig.profOptsUri, false))
 		}
 
 		const cmdSanitized: string[] = []
-
-		res.cfg.ablunitConfig.params.split(' ').forEach(element => {
-			cmd.push(element)
-		});
+		cmd = cmd.concat(res.cfg.ablunitConfig.command.additionalArgs)
 
 		cmd.push("-param", '"CFG=' + workspace.asRelativePath(res.cfg.ablunitConfig.config_uri.fsPath, false) + '"')
 		cmd.forEach(element => {
 			cmdSanitized.push(element.replace(/\\/g, '/'))
 		});
 
-		res.cfg.ablunitConfig.tests.commandArr = cmdSanitized
 		logToChannel("ABLUnit Command: " + cmdSanitized.join(' '))
 		return cmdSanitized
 	}
@@ -90,22 +87,26 @@ export const ablunitRun = async(options: TestRun, res: ABLResults) => {
 
 		return new Promise<string>((resolve, reject) => {
 			res.setStatus("running command")
-			console.log("command: " + cmd + " " + args.join(' '))
 
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			exec(cmd + ' ' + args.join(' '), {env: process.env, cwd: res.cfg.ablunitConfig.workspaceFolder.uri.fsPath }, (err: any, stdout: any, stderr: any) => {
 				const duration = Date.now() - start
 				if (stdout) {
 					logToChannel("_progres stdout=" + stdout)
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
 					stdout = stdout.replace(/\r\n/g, '\n').replace(/\n/g, '\r\n')
 					options.appendOutput("_progres stdout=" + stdout + "\r\n")
 				}
 				if (stderr) {
 					logToChannel("_progres stderr=" + stderr)
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
 					stderr = stderr.replace(/\r\n/g, '\n').replace(/\n/g, '\r\n')
 					options.appendOutput("_progres stderr=" + stderr + "\r\n")
 				}
 				if (err) {
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
 					logToChannel("_progres err=" + err.toString(), 'error')
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
 					err = err.toString().replace(/\r\n/g, '\n').replace(/\n/g, '\r\n')
 					options.appendOutput("_progres err=" + err + '\r\n')
 				}

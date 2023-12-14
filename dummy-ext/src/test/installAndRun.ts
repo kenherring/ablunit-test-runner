@@ -53,4 +53,7 @@ async function runTest(version: string) {
 	console.log("[installAndRun] success!  version=" + version)
 }
 
-main()
+main().catch(err => {
+	console.error("ERROR running tests:" + err)
+	process.exit(1)
+})

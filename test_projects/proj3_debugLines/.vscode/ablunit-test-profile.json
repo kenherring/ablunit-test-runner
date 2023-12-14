@@ -1,0 +1,15 @@
+{
+	"configurations": [
+		{
+			"tempDir": "${workspaceFolder}/target",
+			"options": {
+				"output": {
+					"location": "ablunit-output"
+				}
+			},
+			"profiler": {
+				"listings": true
+			}
+		}
+	]
+}

@@ -1,0 +1,18 @@
+{"configurations":[{
+	"tempDir": "target/tempDir",
+	"options": {
+		"output": {
+			"location": "target",
+			"writeJson": true
+		},
+		"writeLog": true
+	},
+	"profiler": {
+		"listings": true,
+		"filename": "${workspaceFolder}/target/ablunit.prof"
+	},
+	"command": {
+		// "executable": "${DLC}/ant/bin/ant test -Dfiles='${testlist}'"
+		"executable": "ant test -Dfiles='${testlist}'"
+	}
+}]}

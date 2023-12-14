@@ -35,12 +35,16 @@ async function getProjectJson (workspaceFolder: WorkspaceFolder) {
 		return undefined
 	})
 	if (data) {
-		return JSON.parse(data)
+		if (!JSON.parse(data)) {
+			logToChannel("Failed to parse openedge-project.json", 'error')
+			return undefined
+		}
+		return data
 	}
 	return undefined
 }
 
-export async function getDLC(workspaceFolder: WorkspaceFolder, projectJson?: any) {
+export async function getDLC(workspaceFolder: WorkspaceFolder, projectJson?: string) {
 	const dlc = dlcMap.get(workspaceFolder)
 	if (dlc) {
 		return dlc
@@ -63,7 +67,7 @@ export async function getDLC(workspaceFolder: WorkspaceFolder, projectJson?: any
 		runtimeDlc = Uri.file(process.env.DLC)
 	}
 	if (runtimeDlc) {
-		console.log("using DLC = " + runtimeDlc)
+		console.log("using DLC = " + runtimeDlc.fsPath)
 		const dlcObj: IDlc = { uri: runtimeDlc, version: oeversion }
 		dlcMap.set(workspaceFolder, dlcObj)
 		return dlcObj
@@ -72,33 +76,75 @@ export async function getDLC(workspaceFolder: WorkspaceFolder, projectJson?: any
 }
 
 export async function readOpenEdgeProjectJson (workspaceFolder: WorkspaceFolder) {
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+	console.log("1000")
 	const projectJson = await getProjectJson(workspaceFolder)
-	const dlc = await getDLC(workspaceFolder, projectJson)
-	return parseOpenEdgeProjectJson(workspaceFolder, projectJson, dlc)
+	console.log("1001")
+	if (projectJson) {
+		const dlc = await getDLC(workspaceFolder, projectJson)
+		console.log("1002")
+		const ret = parseOpenEdgeProjectJson(workspaceFolder, projectJson, dlc)
+		console.log("1003")
+		return ret
+	}
+
+	logToChannel("openedge-project.json not found.", 'warn')
+	return <IProjectJson>{ propathEntry: [] }
 }
 
-export async function getOEVersion (workspaceFolder: WorkspaceFolder, projectJson?: any) {
+export async function getOEVersion (workspaceFolder: WorkspaceFolder, projectJson?: string) {
 	if (!projectJson) {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		projectJson = await getProjectJson(workspaceFolder)
 	}
-	if (projectJson.oeversion) {
-		return projectJson.oeversion.toString()
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+	if(projectJson) {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+		const tmpVer: string = JSON.parse(projectJson).oeversion
+		if(tmpVer) {
+			return tmpVer
+		}
 	}
 	return "none"
+	//TODO return undefined
 }
 
-function parseOpenEdgeProjectJson (workspaceFolder: WorkspaceFolder, conf: any, dlc: IDlc) {
+interface IBuildPath {
+	path: string
+	type: string
+	build: string
+	xref: string
+}
+
+function parseOpenEdgeProjectJson (workspaceFolder: WorkspaceFolder, inConf: string, dlc: IDlc) {
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+	const conf = <object>JSON.parse(inConf)
+
+	let buildPath: IBuildPath[] | undefined
+	let buildDirectory: string | undefined
+	if (typeof conf === 'object') {
+		if (Object.prototype.hasOwnProperty.call(conf,'buildPath')) {
+			// @ts-expect-error 123
+			buildPath = <IBuildPath[]>conf['buildPath']
+		}
+		if (Object.prototype.hasOwnProperty.call(conf,'buildDirectory')) {
+			// @ts-expect-error 123
+			buildDirectory = <string>conf['buildDirectory']
+		}
+	}
+
 	//TODO what about if we're running a different profile?
-	if (!conf.buildPath) {
+	if (!buildPath) {
+		console.error("buildPath not found in openedge-project.json")
 		throw new Error("buildPath not found in openedge-project.json")
 	}
 
 	const pj: IProjectJson = { propathEntry: []}
 
-	for (const entry of conf.buildPath) {
+	for (const entry of buildPath) {
 		let dotPct: string
 
-		let path: string = entry.path.replace('${DLC}',dlc.uri)
+		let path: string = entry.path.replace('${DLC}', dlc.uri.fsPath)
 		if (path === ".") {
 			path = workspaceFolder.uri.fsPath
 		} else if (path.startsWith("./")) {
@@ -108,8 +154,8 @@ function parseOpenEdgeProjectJson (workspaceFolder: WorkspaceFolder, conf: any, 
 		let buildDir: string = entry.build
 		if (!buildDir) {
 			buildDir = path
-			if (conf.buildDirectory) {
-				buildDir = conf.buildDirectory
+			if (buildDirectory) {
+				buildDir = buildDirectory
 			}
 			dotPct = ".builder/.pct0"
 		} else {

@@ -1,6 +1,6 @@
-The label to display for test classes. Example for class with path `com/example/myClass.cls`:
+Format of the label displayed in the test explorer view for test classes and suites.
 
-**Examples:**
+Example for a class filepath of `com/example/myClass.cls`:
 
-* `class-type-name` = `com.example.myClass`
-* `filename` =`myClass.cls`
+* `"filename"` =`myClass.cls`
+* `"class-type-name"` = `com.example.myClass`

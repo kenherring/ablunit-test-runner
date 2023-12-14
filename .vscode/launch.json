@@ -19,7 +19,7 @@
 			"outFiles": [
 				"${workspaceFolder}/out/**/*.js"
 			],
-			"preLaunchTask": "npm: clean-and-compile"
+			"preLaunchTask": "npm: test-compile"
 		},
 		{
 			"name": "Install Packaged Extension - Select Workspace",
@@ -60,12 +60,12 @@
 			"default": "Yes",
 			"options": [
 				{
-					"value": "--disable-extensions",
-					"label": "Yes"
-				},
-				{
 					"value": "",
 					"label": "No"
+				},
+				{
+					"value": "--disable-extensions",
+					"label": "Yes"
 				}
 			]
 		}
