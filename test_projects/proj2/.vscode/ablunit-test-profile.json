@@ -1,0 +1,10 @@
+{
+	"configurations": [
+		{
+			"tempDir": "temp",
+			"profiler": {
+				"enabled": false
+			}
+		}
+	]
+}

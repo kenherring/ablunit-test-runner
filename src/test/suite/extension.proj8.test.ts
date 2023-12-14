@@ -18,7 +18,7 @@ suite(projName + ' - Extension Test Suite', () => {
 		const resultsJson = Uri.joinPath(getWorkspaceUri(),'target','results.json')
 
 		assert(await doesFileExist(resultsXml), "missing results.xml (" + resultsXml.fsPath + ")")
-		assert(await doesFileExist(resultsJson), "missing results.xml (" + resultsJson.fsPath + ")")
+		assert(await doesFileExist(resultsJson), "missing results.json (" + resultsJson.fsPath + ")")
 
 		const testCount = await getTestCount(resultsJson)
 		assert(testCount === 2, "testCount should be 10, but is " + testCount)

@@ -53,8 +53,8 @@ export class ABLPromsgs {
 				throw new Error("Cannot read promsgs directory '" + promsgDir + "', err=" + err)
 			})
 		}, (err) => {
-			logToChannel("Cannot find DLC directory '" + this.dlc + '"')
-			throw new Error("Cannot find DLC directory '" + this.dlc + '", err=' + err)
+			logToChannel("Cannot find DLC directory '" + this.dlc.uri.fsPath + '"')
+			throw new Error("Cannot find DLC directory '" + this.dlc.uri.fsPath + '", err=' + err)
 		})
 	}
 
@@ -102,13 +102,13 @@ export class ABLPromsgs {
 	async loadFromCache(cacheUri: Uri) {
 		console.log("load promsgs from cache") //REMOVEME
 		await workspace.fs.readFile(cacheUri).then(( buffer ) => {
-			this.promsgs.push(JSON.parse(Buffer.from(buffer).toString('utf8')))
+			this.promsgs.push(<Promsg>JSON.parse(Buffer.from(buffer).toString('utf8')))
 		}, (err) => {
 			throw new Error("Cannot read promsgs file '" + cacheUri.fsPath + "', err=" + err)
 		})
 	}
 
-	async saveCache(cacheUri: Uri) {
+	saveCache(cacheUri: Uri) {
 		console.log("[saveCache] promsgs.length=" + this.promsgs.length)
 		if (this.promsgs.length === 0) {
 			throw new Error("promsgs not loaded, cannot save cache - zero records found")

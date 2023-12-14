@@ -1,17 +1,18 @@
 import * as assert from 'assert'
 import { after, before, beforeEach } from 'mocha'
 import { Uri } from 'vscode'
-import { doesDirExist, doesFileExist, getDefaultDLC, getSessionTempDir, getWorkspaceUri, runAllTests, setRuntimes, updateConfig, waitForExtensionActive } from '../testCommon'
+import { doesDirExist, doesFileExist, getDefaultDLC, getSessionTempDir, getWorkspaceUri, runAllTests, setRuntimes, updateTestProfile, waitForExtensionActive } from '../testCommon'
 
 
 const projName = 'proj4'
 const sessionTempDir = Uri.parse(getSessionTempDir())
 
+
 before(async () => {
 	await waitForExtensionActive()
 	if (process.platform === 'linux') {
-		await updateConfig("tempDir", "/tmp/ablunit")
-		await updateConfig("profilerOptions.listings", "/tmp/ablunit-local/listings")
+		await updateTestProfile("tempDir", "/tmp/ablunit")
+		await updateTestProfile("profiler.listings", "/tmp/ablunit-local/listings")
 	}
 })
 
@@ -20,8 +21,8 @@ beforeEach(async () => {
 })
 
 after(async () => {
-	await updateConfig("tempDir", "c:\\temp\\ablunit\\tempDir")
-	await updateConfig("profilerOptions.listings", "c:\\temp\\ablunit-local\\listings")
+	await updateTestProfile("tempDir", "c:\\temp\\ablunit\\tempDir")
+	await updateTestProfile("profiler.listings", "c:\\temp\\ablunit-local\\listings")
 })
 
 suite(projName + ' - Extension Test Suite', () => {
@@ -29,8 +30,8 @@ suite(projName + ' - Extension Test Suite', () => {
 	test(projName + '.1 - Absolute Paths', async () => {
 		const listingsDir = Uri.joinPath(sessionTempDir,'listings')
 		const resultsXml = Uri.joinPath(sessionTempDir,'tempDir','results.xml')
-		await updateConfig("profilerOptions.listings", listingsDir.fsPath)
-		await updateConfig("tempDir", Uri.joinPath(sessionTempDir,'tempDir').fsPath)
+		await updateTestProfile("profiler.listings", listingsDir.fsPath)
+		await updateTestProfile("tempDir", Uri.joinPath(sessionTempDir,'tempDir').fsPath)
 
 		await runAllTests()
 
@@ -39,7 +40,7 @@ suite(projName + ' - Extension Test Suite', () => {
 	})
 
 	test(projName + '.2 - tempDir=.builder/ablunit', async () => {
-		await updateConfig("tempDir", ".builder/ablunit")
+		await updateTestProfile("tempDir", ".builder/ablunit")
 		const workspaceUri = getWorkspaceUri()
 		await runAllTests()
 		const ablunitJson = Uri.joinPath(workspaceUri,'.builder', 'ablunit','ablunit.json')
@@ -47,8 +48,8 @@ suite(projName + ' - Extension Test Suite', () => {
 	})
 
 	test(projName + '.3 - tempDir=.builder/.ablunit', async () => {
-		await updateConfig("tempDir", ".builder/.ablunit")
-		await updateConfig("profilerOptions.listings", ".listings")
+		await updateTestProfile("tempDir", ".builder/.ablunit")
+		await updateTestProfile("profiler.listings", ".builder/.ablunit/.listings")
 		const workspaceUri = getWorkspaceUri()
 		await runAllTests()
 		const ablunitJson = Uri.joinPath(workspaceUri,'.builder', '.ablunit', 'ablunit.json')

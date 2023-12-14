@@ -35,7 +35,7 @@ class TestData {
 
 export const testData = new TestData()
 
-const displayClassLabel = workspace.getConfiguration('ablunit').get('display.classlabel','')
+const displayClassLabel = workspace.getConfiguration('ablunit').get('explorer.classlabel','')
 
 function createTestItem(controller: TestController,
 						item: TestItem,
@@ -124,6 +124,7 @@ export class ABLTestFile extends TestTypeObj {
 		}
 	}
 
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	updateFromContents(controller: TestController, content: string, item: TestItem) {
 		throw new Error("Method not implemented - should be calling implementation in subclass")
 	}

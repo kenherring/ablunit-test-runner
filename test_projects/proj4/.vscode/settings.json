@@ -1,9 +1,0 @@
-{
-	"terminal.integrated.allowMnemonics": true,
-	"terminal.integrated.allowChords": true,
-	"ablunit.tempDir": "c:\\temp\\ablunit\\tempDir",
-	"ablunit.configJson.writeLog": true,
-	"ablunit.configJson.output.writeJson": true,
-	"ablunit.profilerOptions.enabled": true,
-	"ablunit.profilerOptions.listings": "c:\\temp\\ablunit-local\\listings"
-}
