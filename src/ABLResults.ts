@@ -1,6 +1,6 @@
 import { FileType, MarkdownString, Position, Range, TestItem, TestItemCollection, TestMessage, TestRun, Uri, workspace, WorkspaceFolder } from 'vscode'
 import { ABLUnitConfig } from './ABLUnitConfigWriter'
-import { ABLResultsParser, TCFailure, TestCase, TestSuite } from './parse/ResultsParser'
+import { ABLResultsParser, ITestCaseFailure, ITestCase, ITestSuite } from './parse/ResultsParser'
 import { ABLTestSuite, ABLTestData } from './testTree'
 import { parseCallstack } from './parse/CallStackParser'
 import { ABLProfile, ABLProfileJson, Module } from './parse/ProfileParser'
@@ -234,7 +234,7 @@ export class ABLResults {
 		}
 
 		const suiteName = await this.getSuiteName(item)
-		const s = this.ablResults.resultsJson[0].testsuite.find((s: TestSuite) => s.classname === suiteName || s.name === suiteName)
+		const s = this.ablResults.resultsJson[0].testsuite.find((s: ITestSuite) => s.classname === suiteName || s.name === suiteName)
 		if (!s) {
 			logToChannel("could not find test suite for '" + suiteName + "' in results", 'error')
 			options.errored(item, new TestMessage("could not find test suite for '" + suiteName + "' in results"), this.duration())
@@ -254,7 +254,7 @@ export class ABLResults {
 		}
 	}
 
-	async parseChildSuites (item: TestItem, s: TestSuite[], options: TestRun) {
+	async parseChildSuites (item: TestItem, s: ITestSuite[], options: TestRun) {
 		for (const t of s) {
 			// find matching child TestItem
 			let child = item.children.get(t.name!)
@@ -272,7 +272,7 @@ export class ABLResults {
 		}
 	}
 
-	private async parseFinalSuite (item: TestItem, s: TestSuite, options: TestRun) {
+	private async parseFinalSuite (item: TestItem, s: ITestSuite, options: TestRun) {
 		if (s.tests > 0) {
 			if (s.errors === 0 && s.failures === 0) {
 				options.passed(item, s.time)
@@ -312,10 +312,10 @@ export class ABLResults {
 		return suitePath
 	}
 
-	private async setAllChildResults(children: TestItemCollection, testcases: TestCase[], options: TestRun) {
+	private async setAllChildResults(children: TestItemCollection, testcases: ITestCase[], options: TestRun) {
 		const promArr: Promise<void>[] = [Promise.resolve()]
 		children.forEach(child => {
-			const tc = testcases.find((t: TestCase) => t.name === child.label)
+			const tc = testcases.find((t: ITestCase) => t.name === child.label)
 			if (!tc) {
 				logToChannel("could not find result for test case '" + child.label + "'", "error")
 				options.errored(child, new TestMessage("could not find result for test case '" + child.label + "'"))
@@ -327,7 +327,7 @@ export class ABLResults {
 		return Promise.all(promArr)
 	}
 
-	private async setChildResults(item: TestItem, options: TestRun, tc: TestCase) {
+	private async setChildResults(item: TestItem, options: TestRun, tc: ITestCase) {
 		switch (tc.status) {
 			case "Success": {
 				options.passed(item, tc.time)
@@ -365,7 +365,7 @@ export class ABLResults {
 		}
 	}
 
-	private async getFailureMarkdownMessage(item: TestItem, options: TestRun, failure: TCFailure): Promise<MarkdownString> {
+	private async getFailureMarkdownMessage(item: TestItem, options: TestRun, failure: ITestCaseFailure): Promise<MarkdownString> {
 		const stack = await parseCallstack(this.debugLines!, failure.callstackRaw)
 		const promsg = getPromsgText(failure.message)
 		const md = new MarkdownString(promsg + "\n\n")
@@ -387,7 +387,7 @@ export class ABLResults {
 		return md
 	}
 
-	private getDiffMessage (failure: TCFailure) {
+	private getDiffMessage (failure: ITestCaseFailure) {
 		if (!failure.diff) {
 			return undefined
 		}

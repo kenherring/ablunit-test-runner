@@ -1,4 +1,5 @@
 import { ConfigurationTarget, FileType, Uri, commands, extensions, workspace } from 'vscode'
+import { ITestSuites } from '../parse/ResultsParser'
 
 export async function waitForExtensionActive () {
 	const ext = extensions.getExtension("kherring.ablunit-test-provider")
@@ -81,16 +82,22 @@ export async function doesDirExist(uri: Uri) {
 			return true
 		}
 		return false
-	}, (err) => {
+	}, () => {
 		return false
 	})
 	return ret
 }
 
 export async function getTestCount(resultsJson: Uri, status: string = 'tests') {
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 	const count = await workspace.fs.readFile(resultsJson).then((content) => {
-		const str = Buffer.from(content.buffer).toString();
-		const results = JSON.parse(str)
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+		const results = <ITestSuites[]>JSON.parse(Buffer.from(content.buffer).toString())
+
+		if (!results || results.length === 0) {
+			throw new Error("[getTestCount] no testsuite found in results")
+		}
+
 		if (status === 'tests') {
 			return results[0].tests
 		} else if (status === 'pass') {
@@ -99,6 +106,8 @@ export async function getTestCount(resultsJson: Uri, status: string = 'tests') {
 			return results[0].failures
 		} else if (status === 'error') {
 			return results[0].errors
+		} else {
+			throw new Error("[getTestCount] unknown status: " + status)
 		}
 	})
 	console.log("getTestCount: " + status + " = " + count)
@@ -186,15 +195,19 @@ export async function updateConfig (key: string, value: any) {
 export function updateTestProfile (key: string, value: string | string[] | boolean): Thenable<void> {
 	return workspace.fs.readFile(Uri.joinPath(getWorkspaceUri(), '.vscode', 'ablunit-test-profile.json')).then((content) => {
 		const str = Buffer.from(content.buffer).toString();
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		const profile = JSON.parse(str)
 
 		const keys = key.split('.')
 
 		if (keys.length === 3) {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 			profile["configurations"][0][keys[0]][keys[1]][keys[2]] = value
 		} else if (keys.length ===2) {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 			profile["configurations"][0][keys[0]][keys[1]] = value
 		} else {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 			profile["configurations"][0][keys[0]] = value
 		}
 
