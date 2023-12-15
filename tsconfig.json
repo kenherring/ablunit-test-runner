@@ -37,6 +37,7 @@
 		"useUnknownInCatchVariables": false,
 	},
 	"include": [
+		"./vscode.proposed.testCoverage.d.ts",
 		"./src/**/*.ts",
 		// for when glob doesn't work
 		"./src/*.ts",

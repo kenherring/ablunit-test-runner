@@ -8,7 +8,9 @@
             "ui": "tdd",
             "timeout": 60000
         },
-        "launchArgs": [],
+        "launchArgs": [
+            "--enable-proposed-api=kherring.ablunit-test-runner"
+        ],
         "env": {
             "ABLUNIT_TEST_RUNNER_UNIT_TESTING": "true",
             "ABLUNIT_TEST_RUNNER_PROJECT_NAME": "DebugLines"
@@ -24,7 +26,8 @@
             "timeout": 15000
         },
         "launchArgs": [
-            "--disable-extensions"
+            "--disable-extensions",
+            "--enable-proposed-api=kherring.ablunit-test-runner"
         ],
         "env": {
             "ABLUNIT_TEST_RUNNER_UNIT_TESTING": "true",
@@ -41,7 +44,8 @@
             "timeout": 15000
         },
         "launchArgs": [
-            "--disable-extensions"
+            "--disable-extensions",
+            "--enable-proposed-api=kherring.ablunit-test-runner"
         ],
         "env": {
             "ABLUNIT_TEST_RUNNER_UNIT_TESTING": "true",
@@ -58,7 +62,8 @@
             "timeout": 15000
         },
         "launchArgs": [
-            "--disable-extensions"
+            "--disable-extensions",
+            "--enable-proposed-api=kherring.ablunit-test-runner"
         ],
         "env": {
             "ABLUNIT_TEST_RUNNER_UNIT_TESTING": "true",
@@ -74,7 +79,9 @@
             "ui": "tdd",
             "timeout": 15000
         },
-        "launchArgs": [],
+        "launchArgs": [
+            "--enable-proposed-api=kherring.ablunit-test-runner"
+        ],
         "env": {
             "ABLUNIT_TEST_RUNNER_UNIT_TESTING": "true",
             "ABLUNIT_TEST_RUNNER_PROJECT_NAME": "proj3"
@@ -89,7 +96,9 @@
             "ui": "tdd",
             "timeout": 15000
         },
-        "launchArgs": [],
+        "launchArgs": [
+            "--enable-proposed-api=kherring.ablunit-test-runner"
+        ],
         "env": {
             "ABLUNIT_TEST_RUNNER_UNIT_TESTING": "true",
             "ABLUNIT_TEST_RUNNER_PROJECT_NAME": "proj4"
@@ -105,7 +114,8 @@
             "timeout": 15000
         },
         "launchArgs": [
-            "--disable-extensions"
+            "--disable-extensions",
+            "--enable-proposed-api=kherring.ablunit-test-runner"
         ],
         "env": {
             "ABLUNIT_TEST_RUNNER_UNIT_TESTING": "true",
@@ -122,7 +132,8 @@
             "timeout": 15000
         },
         "launchArgs": [
-            "--disable-extensions"
+            "--disable-extensions",
+            "--enable-proposed-api=kherring.ablunit-test-runner"
         ],
         "env": {
             "ABLUNIT_TEST_RUNNER_UNIT_TESTING": "true",
@@ -138,7 +149,9 @@
             "ui": "tdd",
             "timeout": 60000
         },
-        "launchArgs": [],
+        "launchArgs": [
+            "--enable-proposed-api=kherring.ablunit-test-runner
+        ],
         "env": {
             "ABLUNIT_TEST_RUNNER_UNIT_TESTING": "true",
             "ABLUNIT_TEST_RUNNER_PROJECT_NAME": "proj7A"
@@ -153,7 +166,9 @@
             "ui": "tdd",
             "timeout": 15000
         },
-        "launchArgs": [],
+        "launchArgs": [
+            "--enable-proposed-api=kherring.ablunit-test-runner"
+        ],
         "env": {
             "ABLUNIT_TEST_RUNNER_UNIT_TESTING": "true",
             "ABLUNIT_TEST_RUNNER_PROJECT_NAME": "proj7B"
@@ -169,7 +184,8 @@
             "timeout": 15000
         },
         "launchArgs": [
-            "--disable-extensions"
+            "--disable-extensions",
+            "--enable-proposed-api=kherring.ablunit-test-runner"
         ],
         "env": {
             "ABLUNIT_TEST_RUNNER_UNIT_TESTING": "true",
@@ -185,7 +201,9 @@
             "ui": "tdd",
             "timeout": 15000
         },
-        "launchArgs": [],
+        "launchArgs": [
+            "--enable-proposed-api=kherring.ablunit-test-runner"
+        ],
         "env": {
             "ABLUNIT_TEST_RUNNER_UNIT_TESTING": "true",
             "ABLUNIT_TEST_RUNNER_PROJECT_NAME": "proj9"
@@ -200,7 +218,9 @@
             "ui": "tdd",
             "timeout": 15000
         },
-        "launchArgs": [],
+        "launchArgs": [
+            "--enable-proposed-api=kherring.ablunit-test-runner"
+        ],
         "env": {
             "ABLUNIT_TEST_RUNNER_UNIT_TESTING": "true",
             "ABLUNIT_TEST_RUNNER_PROJECT_NAME": "projA"
@@ -216,7 +236,8 @@
             "timeout": 15000
         },
         "launchArgs": [
-            "--disable-extensions"
+            "--disable-extensions",
+            "--enable-proposed-api=kherring.ablunit-test-runner"
         ],
         "env": {
             "ABLUNIT_TEST_RUNNER_UNIT_TESTING": "true",
@@ -233,7 +254,8 @@
             "timeout": 15000
         },
         "launchArgs": [
-            "--disable-extensions"
+            "--disable-extensions",
+            "--enable-proposed-api=kherring.ablunit-test-runner"
         ],
         "env": {
             "ABLUNIT_TEST_RUNNER_UNIT_TESTING": "true",
@@ -250,7 +272,8 @@
             "timeout": 15000
         },
         "launchArgs": [
-            "--disable-extensions"
+            "--disable-extensions",
+            "--enable-proposed-api=kherring.ablunit-test-runner"
         ],
         "env": {
             "ABLUNIT_TEST_RUNNER_UNIT_TESTING": "true",

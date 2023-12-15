@@ -1,8 +1,7 @@
 import { existsSync } from 'fs'
-import { CancellationToken, DecorationOptions, FileDecoration, FileDecorationProvider, ProviderResult, Range, TextDocument, TextEditor, TextEditorDecorationType, Uri, window, workspace } from 'vscode'
+import { CancellationToken, DecorationOptions, FileCoverage, FileDecoration, FileDecorationProvider, ProviderResult, Range, TextDocument, TextEditor, TextEditorDecorationType, Uri, window, workspace } from 'vscode'
 import { ABLResults } from './ABLResults'
 import { log } from './ChannelLogger'
-import { FileCoverage } from './TestCoverage'
 
 interface IExecLines {
 	count?: number,
@@ -106,19 +105,18 @@ export class Decorator {
 			return this.setDecorations(editor, rc)
 		}
 
-		const tc = this.recentCoverage.get(editor.document.uri.fsPath)
+		const tc = this.recentCoverage.get(editor.document.uri.fsPath) as FileCoverage
 		if (!tc) {
 			log.trace('No coverage for ' + editor.document.uri.fsPath + ', coverage.size=' + this.recentCoverage.size + ', decorations.size=' + this.recentDecorations.size)
 			log.trace('  -       have: ' + editor.document.uri.fsPath)
-			// for (const [k, v] of this.recentCoverage) {
-			// 	log.trace('  - found coverage: ' + k + ' ' + v.detailedCoverage.length)
-			// }
 			return false
 		}
 
-		tc.detailedCoverage.filter(element => element.executionCount > 0).forEach(element => {
+		if (!tc.detailedCoverage) {
+			tc.detailedCoverage = []
+		}
+		tc.detailedCoverage.filter(element => element.executed).forEach(element => {
 			const opts: DecorationOptions = {
-				hoverMessage: 'Executed ' + element.executionCount + ' times',
 				range: element.location as Range,
 				// renderOptions: {
 				// 	before: {
@@ -136,7 +134,7 @@ export class Decorator {
 			}
 			executedArray.push(opts)
 		})
-		tc.detailedCoverage.filter(element => element.executionCount=== 0).forEach(element => {
+		tc.detailedCoverage.filter(element => element.executed).forEach(element => {
 			executableArray.push({ range: element.location as Range })
 		})
 		// log.info('setDecorations ' + editor.document.uri.fsPath)

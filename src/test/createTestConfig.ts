@@ -13,6 +13,7 @@ import * as fs from 'fs'
 /* Run:    `node ./out/test/createTestConfig.js`
 /* ********** End Notes ********** */
 
+const insidersBuild = true
 
 export interface ITestConfig {
 	projName: string
@@ -58,6 +59,10 @@ function createTestConfig (projName: string, testFile: string, workspaceFolder?:
 		projName != 'proj9' &&
 		projName != 'projA') {
 		launchArgs.push('--disable-extensions')
+	}
+
+	if (insidersBuild) {
+		launchArgs.push('--enable-proposed-api=kherring.ablunit-test-provider')
 	}
 
 	const retVal: ITestConfig = {

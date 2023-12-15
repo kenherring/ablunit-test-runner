@@ -27,6 +27,9 @@ echo "deleting file patterns..."
 for PATTERN in "${PATTERNS[@]}"; do
 	find test_projects -type f -name "$PATTERN" -delete &
 done
-
 wait
+
+## pull proposed APIs
+npx @vscode/dts dev
+
 echo "cleanup complete"

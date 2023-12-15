@@ -1,4 +1,5 @@
-import { CancellationError, CancellationToken, Disposable, FileType, MarkdownString, Range, TestItem, TestItemCollection, TestMessage, TestRun, Uri, workspace, WorkspaceFolder } from 'vscode'
+import { FileStat, FileType, MarkdownString, Range, TestItem, TestItemCollection, TestMessage, TestRun, Uri, workspace, WorkspaceFolder,
+	CoveredCount, FileCoverage, StatementCoverage, Disposable, CancellationToken, CancellationError } from 'vscode'
 import { ABLUnitConfig } from './ABLUnitConfigWriter'
 import { ABLResultsParser, ITestCaseFailure, ITestCase, ITestSuite } from './parse/ResultsParser'
 import { ABLTestSuite, ABLTestData } from './testTree'
@@ -8,7 +9,6 @@ import { ABLDebugLines } from './ABLDebugLines'
 import { ABLPromsgs, getPromsgText } from './ABLPromsgs'
 import { PropathParser } from './ABLPropath'
 import { log } from './ChannelLogger'
-import { FileCoverage, CoveredCount, StatementCoverage } from './TestCoverage'
 import { ablunitRun } from './ABLUnitRun'
 import { getDLC, IDlc } from './parse/OpenedgeProjectParser'
 import { Duration, isRelativePath } from './ABLUnitCommon'
@@ -199,7 +199,7 @@ export class ABLResults implements Disposable {
 				// do nothing, can't delete a file that doesn't exist
 			})
 		}
-		return workspace.fs.stat(this.cfg.ablunitConfig.optionsUri.filenameUri).then((stat) => {
+		return workspace.fs.stat(this.cfg.ablunitConfig.optionsUri.filenameUri).then((stat: FileStat) => {
 			if (stat.type === FileType.File) {
 				return workspace.fs.delete(this.cfg.ablunitConfig.optionsUri.filenameUri)
 			}
@@ -532,6 +532,9 @@ export class ABLResults implements Disposable {
 			// TODO: end of range should be the end of the line, not the beginning of the next line
 			const coverageRange = new Range(dbg.sourceLine - 1, 0, dbg.sourceLine, 0)
 			const coverageStatement = new StatementCoverage(line.ExecCount ?? 0, coverageRange)
+			if (!fc.detailedCoverage) {
+				fc.detailedCoverage = []
+			}
 			fc.detailedCoverage.push(coverageStatement)
 		}
 	}

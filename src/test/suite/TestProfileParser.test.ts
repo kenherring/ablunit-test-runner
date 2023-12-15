@@ -12,7 +12,7 @@ import { log } from '../testCommon'
 // 		const conf = JSON.parse(data) as IConfigurations
 // 		return JSON.stringify(conf.configurations)
 // 	}, (err) => {
-// 		console.error("Reading validation file failed: " + err)
+// 		log.error("Reading validation file failed: " + err)
 // 		throw err
 // 	})
 // }
