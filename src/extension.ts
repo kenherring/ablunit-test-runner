@@ -232,8 +232,12 @@ export async function activate (context: ExtensionContext) {
 				console.log("coverage.length=" + coverage.length)
 				return coverage
 			},
-			resolveFileCoverage: (coverage: FileCoverage, token: CancellationToken) => {
+			resolveFileCoverage: (coverage: FileCoverage, cancellation: CancellationToken) => {
 				console.error("resolveFileCoverage not implemented")
+
+				cancellation.onCancellationRequested(() => {
+					console.log('cancellation requested!')
+				})
 				return coverage
 			}
 		}
@@ -293,9 +297,9 @@ export async function activate (context: ExtensionContext) {
 		}
 	}
 
-	ctrl.createRunProfile('Run Tests', TestRunProfileKind.Run, runHandler, false, new TestTag('runnable'), false)
-	// ctrl.createRunProfile('Debug Tests', vscode.TestRunProfileKind.Debug, runHandler, false, new vscode.TestTag("runnable"), false)
-	// ctrl.createRunProfile('Run Tests w/ Coverage', TestRunProfileKind.Coverage, runHandler, false, new TestTag('runnable'), false)
+	ctrl.createRunProfile('Run Tests', TestRunProfileKind.Run, runHandler, true, new TestTag('runnable'), false)
+	ctrl.createRunProfile('Debug Tests', TestRunProfileKind.Debug, runHandler, false, new TestTag("runnable"), false)
+	ctrl.createRunProfile('Run Tests w/ Coverage', TestRunProfileKind.Coverage, runHandler, false, new TestTag('runnable'), false)
 
 	if(workspace.getConfiguration('ablunit').get('discoverFilesOnActivate', false)) {
 		await commands.executeCommand('testing.refreshTests')
