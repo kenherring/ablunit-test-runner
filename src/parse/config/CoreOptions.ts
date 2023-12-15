@@ -13,10 +13,10 @@ export interface ICoreOptions {
 		format?: "xml"
 		writeJson: boolean
 	}
-	quitOnEnd?: boolean //= true
-	writeLog?: boolean //= true
-	showErrorMessage?: boolean //= true
-	throwError?: boolean //= true
+	quitOnEnd?: boolean // = true
+	writeLog?: boolean // = true
+	showErrorMessage?: boolean // = true
+	throwError?: boolean // = true
 }
 
 export class CoreOptions implements ICoreOptions {

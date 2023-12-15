@@ -12,7 +12,7 @@ export class CommandOptions implements ICommandOptions {
 	batch: boolean = true
 	additionalArgs: string[] = []
 
-	constructor(from?: ICommandOptions) {
+	constructor (from?: ICommandOptions) {
 		if (from === undefined) {
 			return
 		}

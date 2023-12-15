@@ -67,43 +67,37 @@
 	"categories": [
 		"Testing"
 	],
-	"activationEvents": [
-		"onStartupFinished"
-	],
-	"activationEvents-vscode": [
+	"activationEvents-reduced": [
 		"onStartupFinished",
 		"workspaceContains:{**/*.cls,**/*.p,.vscode/ablunit-test-profile.json}"
 	],
+	"activationEvents": [
+		"onStartupFinished"
+	],
 	"main": "./out/extension",
 	"scripts": {
-		"esbuild-base": "esbuild ./src/extension.ts --bundle --outfile=out/extension.js --external:vscode --format=cjs --platform=node",
-		"build": "npm run esbuild",
+		"build": "npm run esbuild-base",
+		"watch": "npm run esbuild-base -- --watch",
 		"clean": "sh -c scripts/cleanup.sh",
-		"clean-and-compile": "npm run clean && npm run compile",
-		"compile": "npm run esbuild",
-		"esbuild-watch": "npm run esbuild-base -- --sourcemap --watch",
-		"esbuild": "npm run esbuild-base -- --sourcemap",
-		"package": "vsce package --pre-release",
-		"package-release": "vsce package",
-		"posttest": "npm run test:cov-after",
-		"pretest": "npm run test-compile && npm run test:cov-before && sh -c test_projects/setup.sh",
-		"test-compile": "tsc -p ./",
-		"test-clean-compile": "npm run clean && tsc -p ./",
-		"test": "node ./out/test/runTest.js && echo \"'npm test' success\" || npm run test-failed",
-		"test-failed": "sh -c scripts/npm-test-failed.sh",
-		"test:cov-before": "sed -i 's/\"activationEvents\"/\"activationEvents-vscode\"/g;s/\"activationEvents-coverage\"/\"activationEvents\"/g' package.json",
-		"test:cov-after": "sed -i 's/\"activationEvents\"/\"activationEvents-coverage\"/g;s/\"activationEvents-vscode\"/\"activationEvents\"/g' package.json && echo 200 || echo 201",
+		"lint": "npx eslint . --ext .ts,.js",
+
+		"esbuild-base": "esbuild src/**/*.ts --outdir=out --platform=node --format=cjs --sourcemap",
+		"esbuild-test": "node ./.esbuild.test.config.ts",
+		"esbuild-bundle": "rm -rf out && esbuild ./src/extension.ts --outfile=./out/extension.js --platform=node --format=cjs --bundle --minify --external:vscode",
+
+		"pretest": "npm run test:setup && npm run esbuild-test",
+		"test:setup": "sh -c test_projects/setup.sh",
+		"test": "node ./out/test/runTest.js",
 		"test:install-and-run": "npm run package && cd dummy-ext && npm run test:install-and-run",
-		"vscode-test": "vscode-test",
-		"vscode:prepublish": "npm run esbuild-base -- --minify",
-		"watch": "npm run esbuild-watch",
-		"watch-tsc": "tsc -p ./ -w"
+
+		"vscode:prepublish": "npm run esbuild-bundle"
 	},
 	"dependencies": {
 		"xml2js": "^0.6.2"
 	},
 	"devDependencies": {
 		"@types/glob": "^8.1.0",
+		"@types/mocha": "^10.0.6",
 		"@types/node": "^16.18.34",
 		"@types/vscode": "^1.85.0",
 		"@types/xml2js": "^0.4.12",
@@ -116,8 +110,7 @@
 		"mocha": "^10.2.0",
 		"mocha-junit-reporter": "^2.2.1",
 		"mocha-multi-reporters": "^1.5.1",
-		"nyc": "^15.1.0",
-		"typescript": "^5.3.3"
+		"nyc": "^15.1.0"
 	},
 	"contributes": {
 		"configuration": {

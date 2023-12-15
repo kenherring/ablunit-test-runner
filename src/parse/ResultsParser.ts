@@ -57,14 +57,14 @@ export class ABLResultsParser {
 	propath: PropathParser
 	debugLines: ABLDebugLines
 
-	constructor(propath: PropathParser, debugLines: ABLDebugLines) {
+	constructor (propath: PropathParser, debugLines: ABLDebugLines) {
 		this.propath = propath
 		this.debugLines = debugLines
 	}
 
-	async parseResults(configUri: Uri, jsonUri: Uri | undefined) {
-		const resultsBits = await workspace.fs.readFile(configUri);
-		const resultsXml = Buffer.from(resultsBits.toString()).toString('utf8');
+	async parseResults (configUri: Uri, jsonUri: Uri | undefined) {
+		const resultsBits = await workspace.fs.readFile(configUri)
+		const resultsXml = Buffer.from(resultsBits.toString()).toString('utf8')
 		const resultsXmlJson = this.parseXml(resultsXml)
 		try {
 			this.resultsJson = [ await this.parseSuites(resultsXmlJson) ]
@@ -77,7 +77,7 @@ export class ABLResultsParser {
 		}
 	}
 
-	parseXml(xmlData: string) {
+	parseXml (xmlData: string) {
 		let res
 
 		parseString(xmlData, function (err: Error | null, resultsRaw: any) {
@@ -90,7 +90,7 @@ export class ABLResultsParser {
 		return res
 	}
 
-	async parseSuites(res: any) {
+	async parseSuites (res: any) {
 		if(!res.testsuites) {
 			throw new Error("malformed results file (1) - could not find top-level 'testsuites' node")
 		}
@@ -108,7 +108,7 @@ export class ABLResultsParser {
 		return jsonData
 	}
 
-	async parseSuite(res: any) {
+	async parseSuite (res: any) {
 		if (!res) { return undefined }
 		const suites: ITestSuite[] = []
 
@@ -133,8 +133,8 @@ export class ABLResultsParser {
 		return suites
 	}
 
-	parseProperties(res: any) {
-		if (!res){ return undefined }
+	parseProperties (res: any) {
+		if (!res) { return undefined }
 		res = res[0].property
 		const props: { [key: string]: string } = {}
 
@@ -144,7 +144,7 @@ export class ABLResultsParser {
 		return props
 	}
 
-	async parseTestCases(res: any) {
+	async parseTestCases (res: any) {
 		if (!res) { return undefined }
 		const cases: ITestCase[] = []
 
@@ -160,7 +160,7 @@ export class ABLResultsParser {
 		return cases
 	}
 
-	async parseFailOrError(res: any) {
+	async parseFailOrError (res: any) {
 		if (res['$'].status === "Success" || res['$'].status === "Skipped") {
 			return undefined
 		}
@@ -168,7 +168,7 @@ export class ABLResultsParser {
 
 		if (res['failure']) {
 			type = "failure"
-		} else if (res['error']){
+		} else if (res['error']) {
 			type = "error"
 		} else {
 			throw new Error("malformed results  file (3) - could not find 'failure' or 'error' node")
@@ -195,7 +195,7 @@ export class ABLResultsParser {
 		return fail
 	}
 
-	writeJsonToFile(uri: Uri) {
+	writeJsonToFile (uri: Uri) {
 		const data = this.resultsJson
 		console.log("writing results json file: " + uri.fsPath)
 		return workspace.fs.writeFile(uri, Uint8Array.from(Buffer.from(JSON.stringify(data, null, 2)))).then(() => {

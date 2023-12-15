@@ -10,8 +10,11 @@
 		"strict": true,
 		"rootDir": "src",
 	},
+	"include": [
+		".eslintrc.cjs",
+		"src/**/*.ts"
+	],
 	"exclude": [
-		"node_modules",
-		".vscode-test"
+		"node_modules"
 	]
 }

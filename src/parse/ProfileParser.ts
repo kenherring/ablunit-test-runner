@@ -7,7 +7,7 @@ export class ABLProfile {
 	profJSON?: ABLProfileJson
 	resultsPropath?: PropathParser
 
-	async parseData(uri: Uri, writeJson: boolean, debugLines: ABLDebugLines) {
+	async parseData (uri: Uri, writeJson: boolean, debugLines: ABLDebugLines) {
 		const text = await getContentFromFilesystem(uri)
 		const lines = text.replace(/\r/g,'').split('\n')
 
@@ -55,10 +55,10 @@ export class ABLProfile {
 			// console.log("section13 - User Data" + sectionLines[13].length)
 			this.profJSON.addUserData(sectionLines[13])
 		} else {
-		// console.log("section12 " + sectionLines[8].length)
-		this.profJSON.addSection12(sectionLines[8])
-		// console.log("section13 - User Data" + sectionLines[9].length)
-		this.profJSON.addUserData(sectionLines[9])
+			// console.log("section12 " + sectionLines[8].length)
+			this.profJSON.addSection12(sectionLines[8])
+			// console.log("section13 - User Data" + sectionLines[9].length)
+			this.profJSON.addUserData(sectionLines[9])
 		}
 
 		this.profJSON.modules.sort((a,b) => a.ModuleID - b.ModuleID)
@@ -88,16 +88,16 @@ export class ABLProfile {
 
 const summaryRE = /^(\d+) (\d{2}\/\d{2}\/\d{4}) "([^"]*)" (\d{2}:\d{2}:\d{2}) "([^"]*)" (.*)$/
 const moduleRE = /^(\d+) "([^"]*)" "([^"]*)" (\d+) (\d+) "([^"]*)"$/
-//CALL TREE: CallerID CallerLineno CalleeID CallCount
+// CALL TREE: CallerID CallerLineno CalleeID CallCount
 const callTreeRE = /^(\d+) (-?\d+) (\d+) (\d+)$/
-//LINE SUMMARY: ModuleID LineNo ExecCount ActualTime CumulativeTime
+// LINE SUMMARY: ModuleID LineNo ExecCount ActualTime CumulativeTime
 const lineSummaryRE = /^(-?\d+) (-?\d+) (\d+) (\d+\.\d+) (\d+\.\d+)$/
-//TRACING: ModuleID LineNo ActualTime StartTime
+// TRACING: ModuleID LineNo ActualTime StartTime
 const tracingRE = /^(\d+) (\d+) (\d+\.\d+) (\d+\.\d+)$/
-//COVERAGE:
+// COVERAGE:
 const coverageRE = /^(\d+) "([^"]*)" (\d+)$/
 
-interface UserData { //Section 9
+interface UserData { // Section 9
 	time: number,
 	data: string
 }
@@ -109,7 +109,7 @@ interface ISectionEight {
 	field4: string
 }
 
-interface ISectionNine { //-statistics?
+interface ISectionNine { // -statistics?
 	ModuleID: number
 	fields: string[]
 }
@@ -129,12 +129,12 @@ interface ISectionTwelve {
 	remainder: string
 }
 
-interface Trace { //Section 5
+interface Trace { // Section 5
 	StartTime: number,
 	ActualTime: number
 }
 
-export interface LineSummary { //Section 4
+export interface LineSummary { // Section 4
 	LineNo: number
 	ExecCount?: number
 	ActualTime?: number
@@ -147,20 +147,20 @@ export interface LineSummary { //Section 4
 	incUri?: Uri
 }
 
-interface CalledBy{ //Section 3
+interface CalledBy{ // Section 3
 	CallerModuleID: number
 	CallerLineNo: number
 	CallCount: number
 }
 
-interface CalledTo{ //Section 3
+interface CalledTo{ // Section 3
 	CalleeModuleID: number
 	CallerLineNo: number
 	CallCount: number
 }
 
-//Split module and child module?
-export interface Module { //Section 2
+// Split module and child module?
+export interface Module { // Section 2
 	ModuleID: number
 	ModuleName: string
 	EntityName?: string // function/procedure/method name
@@ -208,7 +208,7 @@ export class ABLProfileJson {
 	userData: UserData[] = []
 	debugLines: ABLDebugLines
 
-	constructor(lines: string[], debugLines: ABLDebugLines) {
+	constructor (lines: string[], debugLines: ABLDebugLines) {
 		this.debugLines = debugLines
 		if (lines.length > 1) {
 			throw new Error("Invalid profile data - section 1 should have exactly one line")
@@ -229,7 +229,7 @@ export class ABLProfileJson {
 	addModules (lines: string[]) {
 		this.modules = []
 		const childModules: Module[] = []
-		for(const element of lines){
+		for(const element of lines) {
 			const test = moduleRE.exec(element)
 
 			const moduleName = test![2]
@@ -290,7 +290,7 @@ export class ABLProfileJson {
 		this.addChildModulesToParents(childModules)
 	}
 
-	addChildModulesToParents(childModules: Module[]) {
+	addChildModulesToParents (childModules: Module[]) {
 		childModules.forEach(child => {
 			const parent = this.modules.find(p => p.SourceName === child.SourceName)
 
@@ -305,8 +305,8 @@ export class ABLProfileJson {
 		})
 	}
 
-	getModule(modID: number): Module | undefined {
-		for(const element of this.modules){
+	getModule (modID: number): Module | undefined {
+		for(const element of this.modules) {
 			if(element.ModuleID === modID)
 				return element
 		}
@@ -315,14 +315,14 @@ export class ABLProfileJson {
 			return parent.childModules?.find(child => child.ModuleID == modID)
 	}
 
-	getChildModule(modID: number, entityName: string): Module | undefined {
+	getChildModule (modID: number, entityName: string): Module | undefined {
 		const parent = this.getModule(modID)
 		if(parent) {
 			return parent.childModules?.find(child => child.EntityName == entityName)
 		}
 	}
 
-	getModuleLine(modID: number, lineNo: number): LineSummary | undefined {
+	getModuleLine (modID: number, lineNo: number): LineSummary | undefined {
 		const mod = this.getModule(modID)
 		if(mod) {
 			for(const element of mod.lines) {
@@ -332,7 +332,7 @@ export class ABLProfileJson {
 		}
 	}
 
-	getLine(mod: Module, lineNo: number): LineSummary | undefined {
+	getLine (mod: Module, lineNo: number): LineSummary | undefined {
 		for(const element of mod.lines) {
 			if(element.LineNo == lineNo)
 				return element
@@ -340,11 +340,11 @@ export class ABLProfileJson {
 	}
 
 	addCallTree (lines: string[]) {
-		for(const element of lines){
+		for(const element of lines) {
 			const test = callTreeRE.exec(element)
 
 			if(test && test.length == 5) {
-				//Called By
+				// Called By
 				const cbModID = Number(test[3])
 				const cb = {
 					CallerModuleID: Number(test[1]),
@@ -356,7 +356,7 @@ export class ABLProfileJson {
 					mod.calledBy[mod.calledBy.length] = cb
 				}
 
-				//Called To
+				// Called To
 				const ctModID = Number(test[1])
 				const ct = {
 					CalleeModuleID: Number(test[3]),
@@ -373,7 +373,7 @@ export class ABLProfileJson {
 	}
 
 	async addLineSummary (lines: string[]) {
-		for(const element of lines){
+		for(const element of lines) {
 			const test = lineSummaryRE.exec(element)
 			if(!test) continue
 
@@ -406,7 +406,7 @@ export class ABLProfileJson {
 	}
 
 	addTracing (lines: string[]) {
-		for(const element of lines){
+		for(const element of lines) {
 			const test = tracingRE.exec(element)
 			if (test) {
 				const modID = Number(test[1])
@@ -425,8 +425,8 @@ export class ABLProfileJson {
 		}
 	}
 
-	////// https://community.progress.com/s/article/What-information-is-provided-by-PROFILER-COVERAGE-Method
-	////// Section format:
+	// //// https://community.progress.com/s/article/What-information-is-provided-by-PROFILER-COVERAGE-Method
+	// //// Section format:
 	// module-id "module-name" executable-lines
 	// lineNo
 	// lineNo
@@ -435,13 +435,13 @@ export class ABLProfileJson {
 	// lineNo
 	// .
 	// .  (end of section)
-	addCoverage(lines: string[]) {
+	addCoverage (lines: string[]) {
 		lines.unshift('.')
 		lines.push('.')
 		let mod
 
 		try {
-			for(let lineNo=1; lineNo < lines.length; lineNo++){
+			for(let lineNo=1; lineNo < lines.length; lineNo++) {
 				if (lines[lineNo] === '.') {
 					// set info for the previous section
 					if (mod && mod.executableLines > 0) {
@@ -475,7 +475,7 @@ export class ABLProfileJson {
 		this.assignParentCoverage()
 	}
 
-	addCoverageNextSection(line: string) {
+	addCoverageNextSection (line: string) {
 		const test = coverageRE.exec(line)
 		let mod: Module | undefined
 		if (!test) {
@@ -500,7 +500,7 @@ export class ABLProfileJson {
 		return mod
 	}
 
-	assignParentCoverage() {
+	assignParentCoverage () {
 		this.modules.forEach(parent => {
 			parent.childModules?.forEach(child => {
 				parent.executableLines += child.executableLines
@@ -523,27 +523,27 @@ export class ABLProfileJson {
 		})
 	}
 
-	addSection7(lines: string[]) {
+	addSection7 (lines: string[]) {
 		console.error("section 7 not implemented.  line count = " + lines.length)
 	}
 
-	////// https://docs.progress.com/bundle/abl-reference/page/STATISTICS-attribute.html
-	////// https://community.progress.com/s/article/What-s-the-PROFILER-STATISTICS-method
-	////// PROFILER:STATISTICS has 4 sections ()
+	// //// https://docs.progress.com/bundle/abl-reference/page/STATISTICS-attribute.html
+	// //// https://community.progress.com/s/article/What-s-the-PROFILER-STATISTICS-method
+	// //// PROFILER:STATISTICS has 4 sections ()
 	// 1. Operation Section
 	// 2. Module Detail Section
 	// 3. Sessions Watermark Section
 	// 4. Parameter and Database Section
 
-	////// Examples:
+	// //// Examples:
 	// 114 10036 4 "TY_ASGNODBFLD "
 	// 114 37 15 "ECONST"
 	// 114 58 2 "RETRY"
-	addSection8(lines: string[]) {
+	addSection8 (lines: string[]) {
 		// const sectRE = /&(\d+) (\d+) (-?\d+) (-?\d+) (\d+\.\d+) (.*)$/
 		const sectRE = /^(\d+) (\d+) (\d+) "(.*)"/
 		if (!lines.length) { return }
-		for(let lineNo=0; lineNo < lines.length; lineNo++){
+		for(let lineNo=0; lineNo < lines.length; lineNo++) {
 			const test = sectRE.exec(lines[lineNo])
 			if (test) {
 				const ISectionEight: ISectionEight = {
@@ -566,10 +566,10 @@ export class ABLProfileJson {
 		}
 	}
 
-	addSection9(lines: string[]) {
+	addSection9 (lines: string[]) {
 		if (!lines.length) { return }
 		const sectRE = /^(\d+) (.*)$/
-		for(const element of lines){
+		for(const element of lines) {
 			const test = sectRE.exec(element)
 			if (test) {
 				const ISectionNine: ISectionNine = {
@@ -587,10 +587,10 @@ export class ABLProfileJson {
 		}
 	}
 
-	addSection10(lines: string[]) {
+	addSection10 (lines: string[]) {
 		if (!lines.length) { return }
 		const sectRE = /^(\d+) (.*)$/
-		for(const element of lines){
+		for(const element of lines) {
 			const test = sectRE.exec(element)
 			if (test) {
 				const ISectionTen: ISectionTen = {
@@ -608,15 +608,15 @@ export class ABLProfileJson {
 		}
 	}
 
-	addSection11(lines: string[]) {
+	addSection11 (lines: string[]) {
 		console.error("section 11 not implemented.  line count = " + lines.length)
 	}
 
-	addSection12(lines: string[]) {
+	addSection12 (lines: string[]) {
 		const sectRE1 = /^(\d+) (\d+) (\d+) (\d+) (\d+) (\d+\.\d+) (.+)?$/
 		const sectRE2 = /^(\d+) (\d+) (\d+) (\d+) (\d+) (\d+\.\d+)$/
 		if (!lines.length) { return }
-		for(const element of lines){
+		for(const element of lines) {
 			let test = sectRE1.exec(element)
 			if (!test) {
 				test = sectRE2.exec(element)
@@ -642,14 +642,14 @@ export class ABLProfileJson {
 		}
 	}
 
-	addSection13(lines: string[]) {
+	addSection13 (lines: string[]) {
 		console.error("section 13 not implemented.  line count = " + lines.length)
 	}
 
-	addUserData(lines: string[]) {
+	addUserData (lines: string[]) {
 		const userRE = /(\d+\.\d+) "(.*)"$/
 		if (!lines.length) { return }
-		for(const element of lines){
+		for(const element of lines) {
 			const test = userRE.exec(element)
 			if (test) {
 				this.userData.push({

@@ -46,7 +46,7 @@ export function getLines (text: string, annotation: string): [ string[], boolean
 
 const blockCommentRE = /\/\*.*\*\//g
 
-function removeComments(line: string) {
+function removeComments (line: string) {
 	line = line.replace(/\/\/.*/g,'') // trim end of line comments
 
 	const matches = blockCommentRE.exec(line)

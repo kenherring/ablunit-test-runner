@@ -49,14 +49,12 @@ export async function activate (context: ExtensionContext) {
 	}
 
 	const configureHandler = () => {
-		console.log("100")
-		openTestRunConfig().catch( (err) => {
+		openTestRunConfig().catch((err) => {
 			logToChannel("[configureHandler] Failed to open '.vscode/ablunit-test-profile.json'. err=" + err, 'error')
 		})
-		console.log("200")
 	}
 
-	async function openTestRunConfig() {
+	async function openTestRunConfig () {
 		let workspaceFolder: WorkspaceFolder
 		if (workspace.workspaceFolders?.length === 1) {
 			workspaceFolder = workspace.workspaceFolders[0]
@@ -268,7 +266,7 @@ export async function activate (context: ExtensionContext) {
 		}
 	}
 
-	function updateNodeForDocument(e: TextDocument) {
+	function updateNodeForDocument (e: TextDocument) {
 		const openEditors = window.visibleTextEditors.filter(editor => editor.document.uri === e.uri)
 		openEditors.forEach(editor => {
 			decorate(editor)})
@@ -289,7 +287,7 @@ export async function activate (context: ExtensionContext) {
 		}
 	}
 
-	function updateConfiguration(e: ConfigurationChangeEvent) {
+	function updateConfiguration (e: ConfigurationChangeEvent) {
 		if (e.affectsConfiguration('ablunit')) {
 			removeExcludedFiles(ctrl, getExcludePatterns())
 		}
@@ -306,11 +304,11 @@ export async function activate (context: ExtensionContext) {
 
 let contextStorageUri: Uri
 
-export function setContextStorageUri(uri: Uri) {
+export function setContextStorageUri (uri: Uri) {
 	contextStorageUri = uri
 }
 
-export function getContextStorageUri() {
+export function getContextStorageUri () {
 	return contextStorageUri
 }
 
@@ -333,7 +331,7 @@ function getExistingTestItem (controller: TestController, uri: Uri) {
 	return undefined
 }
 
-function getOrCreateFile(controller: TestController, uri: Uri) {
+function getOrCreateFile (controller: TestController, uri: Uri) {
 	const existing = getExistingTestItem(controller, uri)
 	if (existing) {
 		const data = testData.get(existing)
@@ -375,7 +373,7 @@ function getOrCreateFile(controller: TestController, uri: Uri) {
 	return { file, data }
 }
 
-function getWorkspaceFolderNode(controller: TestController, workspaceFolder: WorkspaceFolder) {
+function getWorkspaceFolderNode (controller: TestController, workspaceFolder: WorkspaceFolder) {
 	const wfNode = controller.items.get(workspaceFolder.uri.fsPath)
 	if(wfNode) {
 		return wfNode
@@ -391,7 +389,7 @@ function getWorkspaceFolderNode(controller: TestController, workspaceFolder: Wor
 	return wf
 }
 
-function getTestSuiteNode(controller: TestController, workspaceFolder: WorkspaceFolder, parent: TestItem | undefined) {
+function getTestSuiteNode (controller: TestController, workspaceFolder: WorkspaceFolder, parent: TestItem | undefined) {
 	const groupId = (parent?.id ?? workspaceFolder.uri.fsPath) + '#ABLTestSuiteGroup'
 
 	let siblings: TestItemCollection
@@ -415,7 +413,7 @@ function getTestSuiteNode(controller: TestController, workspaceFolder: Workspace
 	return suiteGroup
 }
 
-function getOrCreateDirNodeForFile(controller: TestController, file: Uri, isTestSuite: boolean) {
+function getOrCreateDirNodeForFile (controller: TestController, file: Uri, isTestSuite: boolean) {
 	let relPath: string | undefined = undefined
 	let parent: TestItem | undefined = undefined
 	const paths = workspace.asRelativePath(file, false).replace(/\\/g, '/').split('/')
@@ -460,7 +458,7 @@ function getOrCreateDirNodeForFile(controller: TestController, file: Uri, isTest
 	return parent
 }
 
-function createFileNode(file: Uri) {
+function createFileNode (file: Uri) {
 	const fileAttrs = getTestFileAttrs(file)
 	if (fileAttrs === 'none') {
 		return undefined
@@ -477,7 +475,7 @@ function createFileNode(file: Uri) {
 	return new ABLTestProgram(relativePath)
 }
 
-function getTestFileAttrs(file: Uri) {
+function getTestFileAttrs (file: Uri) {
 	const testRegex = /@test/i
 	const suiteRegex = /@testsuite/i
 
@@ -492,7 +490,7 @@ function getTestFileAttrs(file: Uri) {
 	return 'other'
 }
 
-function gatherAllTestItems(collection: TestItemCollection) {
+function gatherAllTestItems (collection: TestItemCollection) {
 	const items: TestItem[] = []
 	collection.forEach(item => {
 		items.push(item)
@@ -501,7 +499,7 @@ function gatherAllTestItems(collection: TestItemCollection) {
 	return items
 }
 
-function gatherTestItems(collection: TestItemCollection) {
+function gatherTestItems (collection: TestItemCollection) {
 	const items: TestItem[] = []
 	for(const [, item] of collection) {
 		items.push(item)
@@ -509,7 +507,7 @@ function gatherTestItems(collection: TestItemCollection) {
 	return items
 }
 
-function getExcludePatterns() {
+function getExcludePatterns () {
 	let excludePatterns: string[] = []
 
 	const excludePatternsConfig: string[] | undefined = workspace.getConfiguration('ablunit').get('files.exclude', [ '**/.builder/**' ])
@@ -529,7 +527,7 @@ function getExcludePatterns() {
 	return retVal
 }
 
-function getWorkspaceTestPatterns() {
+function getWorkspaceTestPatterns () {
 	let includePatterns: string[] | string = workspace.getConfiguration('ablunit').get('files.include', [ '**/*.{cls,p}' ])
 	let excludePatterns: string[] | string = workspace.getConfiguration('ablunit').get('files.exclude', [ '**/.builder/**' ])
 
@@ -551,7 +549,7 @@ function getWorkspaceTestPatterns() {
 	return retVal
 }
 
-function deleteTest(controller: TestController | undefined, item: TestItem) {
+function deleteTest (controller: TestController | undefined, item: TestItem) {
 	deleteChildren(controller, item)
 	testData.delete(item)
 
@@ -567,7 +565,7 @@ function deleteTest(controller: TestController | undefined, item: TestItem) {
 	}
 }
 
-function deleteChildren(controller: TestController | undefined, item: TestItem) {
+function deleteChildren (controller: TestController | undefined, item: TestItem) {
 	for (const child of gatherTestItems(item.children)) {
 		deleteChildren(controller, child)
 		child.children.delete(item.id)
@@ -575,7 +573,7 @@ function deleteChildren(controller: TestController | undefined, item: TestItem) 
 	}
 }
 
-function removeExcludedFiles(controller: TestController, excludePatterns: RelativePattern[]) {
+function removeExcludedFiles (controller: TestController, excludePatterns: RelativePattern[]) {
 	const items = gatherAllTestItems(controller.items)
 
 	for (const element of items) {
@@ -596,7 +594,7 @@ function removeExcludedFiles(controller: TestController, excludePatterns: Relati
 	}
 }
 
-function removeExcludedChildren(parent: TestItem, excludePatterns: RelativePattern[]) {
+function removeExcludedChildren (parent: TestItem, excludePatterns: RelativePattern[]) {
 	if (!parent.children) {
 		return
 	}
@@ -651,7 +649,7 @@ async function findInitialFiles (
 	}
 }
 
-function startWatchingWorkspace(controller: TestController, fileChangedEmitter: EventEmitter<Uri> ) {
+function startWatchingWorkspace (controller: TestController, fileChangedEmitter: EventEmitter<Uri>) {
 
 	return getWorkspaceTestPatterns().map(({ includePatterns, excludePatterns }) => {
 
@@ -692,7 +690,7 @@ function startWatchingWorkspace(controller: TestController, fileChangedEmitter: 
 
 }
 
-function openCallStackItem(traceUriStr: string) {
+function openCallStackItem (traceUriStr: string) {
 	const traceUri = Uri.parse(traceUriStr.split('&')[0])
 	const traceLine = Number(traceUriStr.split('&')[1])
 	return window.showTextDocument(traceUri).then(editor => {
@@ -705,14 +703,14 @@ function openCallStackItem(traceUriStr: string) {
 	})
 }
 
-function showNotification(message: string) {
+function showNotification (message: string) {
 	console.log('[showNotification] ' + message)
 	if (workspace.getConfiguration('ablunit').get('notificationsEnabled', true)) {
 		void window.showInformationMessage(message)
 	}
 }
 
-function isFileExcluded(uri: Uri, excludePatterns: RelativePattern[]) {
+function isFileExcluded (uri: Uri, excludePatterns: RelativePattern[]) {
 	const patterns = excludePatterns.map(pattern => pattern.pattern)
 	const relativePath = workspace.asRelativePath(uri.fsPath, false)
 	const workspaceFolder = workspace.getWorkspaceFolder(uri)
@@ -726,7 +724,7 @@ function isFileExcluded(uri: Uri, excludePatterns: RelativePattern[]) {
 }
 
 
-export async function doesDirExist(uri: Uri) {
+export async function doesDirExist (uri: Uri) {
 	const ret = await workspace.fs.stat(uri).then((stat) => {
 		if (stat.type === FileType.Directory) {
 			return true
@@ -739,7 +737,7 @@ export async function doesDirExist(uri: Uri) {
 	return ret
 }
 
-export async function doesFileExist(uri: Uri) {
+export async function doesFileExist (uri: Uri) {
 	const ret = await workspace.fs.stat(uri).then((stat) => {
 		if (stat.type === FileType.File) {
 			return true
@@ -752,7 +750,7 @@ export async function doesFileExist(uri: Uri) {
 	return ret
 }
 
-async function createDir(uri: Uri) {
+async function createDir (uri: Uri) {
 	if(!uri) {
 		return
 	}

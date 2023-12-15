@@ -13,7 +13,7 @@ export interface ITestSuite {
 	procedures: string[]
 }
 
-export function parseABLTestSuite(text: string) {
+export function parseABLTestSuite (text: string) {
 	const [ lines, foundAnnotation ] = getLines(text,"@testsuite")
 	if (!foundAnnotation) {
 		return
