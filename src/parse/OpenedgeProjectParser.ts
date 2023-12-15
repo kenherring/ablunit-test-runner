@@ -44,7 +44,7 @@ async function getProjectJson (workspaceFolder: WorkspaceFolder) {
 	return undefined
 }
 
-export async function getDLC(workspaceFolder: WorkspaceFolder, projectJson?: string) {
+export async function getDLC (workspaceFolder: WorkspaceFolder, projectJson?: string) {
 	const dlc = dlcMap.get(workspaceFolder)
 	if (dlc) {
 		return dlc
@@ -76,15 +76,10 @@ export async function getDLC(workspaceFolder: WorkspaceFolder, projectJson?: str
 }
 
 export async function readOpenEdgeProjectJson (workspaceFolder: WorkspaceFolder) {
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-	console.log("1000")
 	const projectJson = await getProjectJson(workspaceFolder)
-	console.log("1001")
 	if (projectJson) {
 		const dlc = await getDLC(workspaceFolder, projectJson)
-		console.log("1002")
 		const ret = parseOpenEdgeProjectJson(workspaceFolder, projectJson, dlc)
-		console.log("1003")
 		return ret
 	}
 
@@ -94,10 +89,8 @@ export async function readOpenEdgeProjectJson (workspaceFolder: WorkspaceFolder)
 
 export async function getOEVersion (workspaceFolder: WorkspaceFolder, projectJson?: string) {
 	if (!projectJson) {
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		projectJson = await getProjectJson(workspaceFolder)
 	}
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 	if(projectJson) {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
 		const tmpVer: string = JSON.parse(projectJson).oeversion
@@ -106,7 +99,7 @@ export async function getOEVersion (workspaceFolder: WorkspaceFolder, projectJso
 		}
 	}
 	return "none"
-	//TODO return undefined
+	// TODO return undefined
 }
 
 interface IBuildPath {
@@ -133,7 +126,7 @@ function parseOpenEdgeProjectJson (workspaceFolder: WorkspaceFolder, inConf: str
 		}
 	}
 
-	//TODO what about if we're running a different profile?
+	// TODO what about if we're running a different profile?
 	if (!buildPath) {
 		console.error("buildPath not found in openedge-project.json")
 		throw new Error("buildPath not found in openedge-project.json")

@@ -8,7 +8,7 @@ export class CoveredCount {
 	covered: number // Number of items covered in the file.
 	total: number // Total number of covered items in the file.
 
-	constructor(covered: number, total: number) {
+	constructor (covered: number, total: number) {
 		this.covered = covered
 		this.total = total
 	}
@@ -19,7 +19,7 @@ export class FileCoverage {
 	statementCoverage: CoveredCount
 	detailedCoverage?: StatementCoverage[]
 
-	constructor( uri: Uri, statementCoverage: CoveredCount){
+	constructor (uri: Uri, statementCoverage: CoveredCount) {
 		this.uri = uri
 		this.statementCoverage = statementCoverage
 		this.detailedCoverage = []
@@ -30,7 +30,7 @@ export class StatementCoverage {
 	executionCount: number
 	location: Position | Range
 
-	constructor(executionCount: number, location: Position | Range) {
+	constructor (executionCount: number, location: Position | Range) {
 		this.executionCount = executionCount
 		this.location = location
 	}

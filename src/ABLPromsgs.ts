@@ -1,6 +1,6 @@
-import { Uri, workspace } from "vscode";
-import { logToChannel } from "./ABLUnitCommon";
-import { IDlc } from "./parse/OpenedgeProjectParser";
+import { Uri, workspace } from "vscode"
+import { logToChannel } from "./ABLUnitCommon"
+import { IDlc } from "./parse/OpenedgeProjectParser"
 
 interface Promsg {
 	msgnum: number
@@ -13,7 +13,7 @@ export class ABLPromsgs {
 	dlc: IDlc
 	promsgs: Promsg[] = []
 
-	constructor(dlc: IDlc, storageUri: Uri) {
+	constructor (dlc: IDlc, storageUri: Uri) {
 		this.dlc = dlc
 		const cacheUri = Uri.joinPath(storageUri,'promsgs.json')
 		// eslint-disable-next-line @typescript-eslint/no-this-alias
@@ -24,14 +24,16 @@ export class ABLPromsgs {
 		}, () => {
 			console.log("reading promsgs from DLC")
 			this.loadFromDLC(dlc).then(() => {
-				this.saveCache(cacheUri)
+				this.saveCache(cacheUri).then(() => {}, (err) => {
+					throw(err)
+				})
 			}, (err) => {
 				console.log("Cannot load promsgs from DLC, err=" + err)
 			})
 		})
 	}
 
-	async loadFromDLC(dlc: IDlc) {
+	async loadFromDLC (dlc: IDlc) {
 		return workspace.fs.stat(dlc.uri).then(() => {
 			const promsgDir = Uri.joinPath(dlc.uri, "prohelp/msgdata")
 			return workspace.fs.readDirectory(promsgDir).then((dirFiles) => {
@@ -58,15 +60,15 @@ export class ABLPromsgs {
 		})
 	}
 
-	async loadPromsgFile(msgfile: Uri) {
-		const lines = await workspace.fs.readFile(msgfile).then(( buffer ) => {
+	async loadPromsgFile (msgfile: Uri) {
+		const lines = await workspace.fs.readFile(msgfile).then((buffer) => {
 			return Buffer.from(buffer).toString('utf8').split('\n')
 		}, (err) => {
 			throw new Error("Cannot read promsgs file '" + msgfile + "', err=" + err)
 		})
 
 
-		//First, merge lines where necessary
+		// First, merge lines where necessary
 		const newlines: string[] = []
 		let currLine = lines[0]
 		for (let idx=1 ; idx<lines.length; idx++) {
@@ -78,7 +80,7 @@ export class ABLPromsgs {
 			}
 		}
 
-		//Then, read the lines into our object
+		// Then, read the lines into our object
 		newlines.forEach(line => {
 			const s = line.split(' "')
 
@@ -99,22 +101,22 @@ export class ABLPromsgs {
 		})
 	}
 
-	async loadFromCache(cacheUri: Uri) {
-		console.log("load promsgs from cache") //REMOVEME
-		await workspace.fs.readFile(cacheUri).then(( buffer ) => {
+	async loadFromCache (cacheUri: Uri) {
+		console.log("load promsgs from cache") // REMOVEME
+		await workspace.fs.readFile(cacheUri).then((buffer) => {
 			this.promsgs.push(<Promsg>JSON.parse(Buffer.from(buffer).toString('utf8')))
 		}, (err) => {
 			throw new Error("Cannot read promsgs file '" + cacheUri.fsPath + "', err=" + err)
 		})
 	}
 
-	saveCache(cacheUri: Uri) {
+	saveCache (cacheUri: Uri) {
 		console.log("[saveCache] promsgs.length=" + this.promsgs.length)
 		if (this.promsgs.length === 0) {
 			throw new Error("promsgs not loaded, cannot save cache - zero records found")
 		}
 		console.log("save promsgs cache file='" + cacheUri.fsPath + "'")
-		workspace.fs.writeFile(cacheUri, Buffer.from(JSON.stringify(this.promsgs))).then(() => {
+		return workspace.fs.writeFile(cacheUri, Buffer.from(JSON.stringify(this.promsgs))).then(() => {
 			console.log("saved promsgs cache successfully '" + cacheUri.fsPath + "'")
 		}, (err) => {
 			throw new Error("error writing promsgs cache file: " + err)
@@ -126,7 +128,7 @@ export class ABLPromsgs {
 	}
 }
 
-export function getPromsg(msgnum: number) {
+export function getPromsg (msgnum: number) {
 	return promsgsObj.getMsgNum(msgnum)
 }
 

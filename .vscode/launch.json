@@ -17,8 +17,7 @@
 			],
 			"outFiles": [
 				"${workspaceFolder}/out/**/*.js"
-			],
-			"preLaunchTask": "npm: test-compile"
+			]
 		},
 		{
 			"name": "Install Packaged Extension - Select Workspace",
@@ -29,7 +28,7 @@
 				"--extensionDevelopmentPath=${workspaceFolder}/dummy-ext",
 				"--install-extension=ablunit-test-provider-0.1.7.vsix",
 				"${workspaceFolder}/test_projects/${input:workspaceName}"
-			],
+			]
 		}
 	],
 	"inputs": [

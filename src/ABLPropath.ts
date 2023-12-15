@@ -36,11 +36,11 @@ export class PropathParser {
 		entry: [] as IPropathEntry[]
 	}
 
-	constructor(workspaceFolder: WorkspaceFolder) {
+	constructor (workspaceFolder: WorkspaceFolder) {
 		this.workspaceFolder = workspaceFolder
 	}
 
-	setPropath(importedPropath: IProjectJson) {
+	setPropath (importedPropath: IProjectJson) {
 		console.log("////////////// setPropath begin //////////////")
 
 		for (const entry of importedPropath.propathEntry) {
@@ -87,11 +87,11 @@ export class PropathParser {
 		console.log("////////////// setPropath end //////////////")
 	}
 
-	getPropath() {
+	getPropath () {
 		return this.propath
 	}
 
-	getBuildDir(filepath: string) {
+	getBuildDir (filepath: string) {
 		return this.buildMap.get(filepath)
 	}
 
@@ -117,7 +117,7 @@ export class PropathParser {
 		return undefined
 	}
 
-	async search(file: string | Uri) {
+	async search (file: string | Uri) {
 		if (file instanceof Uri) {
 			return this.searchUri(file)
 		}

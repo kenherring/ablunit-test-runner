@@ -3,7 +3,7 @@ import { logToChannel } from './ABLUnitCommon'
 import { IProjectJson, readOpenEdgeProjectJson } from './parse/OpenedgeProjectParser'
 import { PropathParser } from './ABLPropath'
 import { platform } from 'os'
-import { getProfileConfig, RunConfig } from './parse/RunProfileParser'
+import { getProfileConfig, RunConfig } from './parse/TestProfileParser'
 import { IABLUnitJson, ITestObj } from './ABLResults'
 import { CoreOptions } from './parse/config/CoreOptions'
 import { ProfilerOptions } from './parse/config/ProfilerOptions'
@@ -22,31 +22,31 @@ export class ABLUnitConfig  {
 	// ablunitConfig: IABLUnitConfig = <IABLUnitConfig>{}
 	ablunitConfig: RunConfig = <RunConfig>{}
 
-	async setup(workspaceFolder: WorkspaceFolder) {
+	async setup (workspaceFolder: WorkspaceFolder) {
 		this.ablunitConfig = await getProfileConfig(workspaceFolder)
 		console.log("[ABLUnitConfigWriter constructor] workspaceUri=" + this.ablunitConfig.workspaceFolder.uri.fsPath)
 		console.log("[ABLUnitConfigWriter constructor] tempDir=" + this.ablunitConfig.tempDirUri.fsPath)
 	}
 
-	async deleteFile(uri: Uri) {
+	async deleteFile (uri: Uri) {
 		return workspace.fs.delete(uri).then(() => {
 			console.log("deleted file: " + uri.fsPath)
 		}, () => {
-			//do nothing.  if the file doesn't exist we can just continue on.
+			// do nothing.  if the file doesn't exist we can just continue on.
 		})
 	}
 
-	async writeFile(uri: Uri, data: Uint8Array) {
+	async writeFile (uri: Uri, data: Uint8Array) {
 		return workspace.fs.writeFile(uri, data)
 	}
 
-	async createDir(uri: Uri) {
+	async createDir (uri: Uri) {
 		return workspace.fs.stat(uri).then(() => {}, () => {
 			return workspace.fs.createDirectory(uri)
 		})
 	}
 
-	async createProgressIni(propath: string) {
+	async createProgressIni (propath: string) {
 		if (platform() != 'win32') { return }
 		console.log("creating progress.ini: '" + this.ablunitConfig.progressIniUri.fsPath + "'")
 		const iniData = ["[WinChar Startup]", "PROPATH=" + propath]
@@ -54,7 +54,7 @@ export class ABLUnitConfig  {
 		return workspace.fs.writeFile(this.ablunitConfig.progressIniUri, iniBytes)
 	}
 
-	async createAblunitJson(uri: Uri, cfg: CoreOptions, testQueue: ITestObj[]) {
+	async createAblunitJson (uri: Uri, cfg: CoreOptions, testQueue: ITestObj[]) {
 		console.log("creating ablunit.json: '" + this.ablunitConfig.config_uri.fsPath + "'")
 		const promarr: PromiseLike<void>[] = []
 		promarr.push(
@@ -110,7 +110,7 @@ export class ABLUnitConfig  {
 		await this.writeFile(uri, Uint8Array.from(Buffer.from(opt.join('\n') + '\n')))
 	}
 
-	async readPropathFromJson() {
+	async readPropathFromJson () {
 		logToChannel("reading propath from openedge-project.json")
 		const parser: PropathParser = new PropathParser(this.ablunitConfig.workspaceFolder)
 		const dflt: IProjectJson = { propathEntry: [{

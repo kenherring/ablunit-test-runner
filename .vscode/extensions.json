@@ -5,6 +5,9 @@
 		"ms-vscode.extension-test-runner",
 		"riversidesoftware.openedge-abl-lsp",
 		"sonarsource.sonarlint-vscode",
-		"timonwong.shellcheck"
+		"timonwong.shellcheck",
+		"editorconfig.editorconfig",
+		"github.vscode-pull-request-github",
+		"redhat.vscode-xml"
 	]
 }

@@ -6,28 +6,6 @@
 		{
 			"type": "npm",
 			"script": "watch",
-			"dependsOn": [
-				"npm: test-compile"
-			],
-			"problemMatcher": "$tsc-watch",
-			"isBackground": true,
-			"presentation": {
-				"reveal": "never"
-			},
-			"group": {
-				"kind": "build",
-				"isDefault": true
-			},
-			// "runOptions": {
-			// 	"runOn": "folderOpen"
-			// }
-		},
-		{
-			"type": "npm",
-			"script": "watch-tsc",
-			// "dependsOn": [
-			// 	"npm: test-compile"
-			// ],
 			"problemMatcher": "$tsc-watch",
 			"isBackground": true,
 			"presentation": {
@@ -42,16 +20,19 @@
 			}
 		},
 		{
-			"label": "npm: test-compile",
-			"type": "npm",
-			"script": "test-compile",
-			"problemMatcher": "$tsc-watch",
-			"presentation": {
-				"reveal": "never"
-			},
-			"group": {
-				"kind": "build",
-				"isDefault": false
+			"type": "eslint",
+			"problemMatcher": [
+				"$eslint-stylish"
+			],
+			"label": "eslint: lint whole folder",
+			"options": {
+				"shell": {
+					"executable": "cmd.exe",
+					"args": [
+						"/d",
+						"/c"
+					]
+				}
 			}
 		}
 	]

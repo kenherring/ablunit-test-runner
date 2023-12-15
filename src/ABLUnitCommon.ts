@@ -1,8 +1,8 @@
 import { TestRun, window } from 'vscode'
 
-const outputChannel = window.createOutputChannel('ABLUnit');
+const outputChannel = window.createOutputChannel('ABLUnit')
 
-export function logToChannel(message: string, consoleMessageType: 'log' | 'error' | 'warn' | '' = 'log', options?: TestRun) {
+export function logToChannel (message: string, consoleMessageType: 'log' | 'error' | 'warn' | '' = 'log', options?: TestRun) {
 	outputChannel.appendLine(message)
 	if (consoleMessageType === "warn") {
 		console.warn(message)
@@ -15,6 +15,7 @@ export function logToChannel(message: string, consoleMessageType: 'log' | 'error
 		}
 	}
 	if (options) {
+		message = message.replace(/\r/g, '').replace(/\n/g, '\r\n')
 		options.appendOutput(message + "\r\n")
 	}
 }
