@@ -59,6 +59,9 @@ copy_files () {
 	local TYPE="$1"
 	while read -r FILE; do
 		echo "copying $TYPE file $FILE"
+		if [ ! -d "$(dirname "$FILE")" ]; then
+			mkdir -p "$(dirname "$FILE")"
+		fi
 		cp "/home/circleci/ablunit-test-provider/$FILE" "$FILE"
 	done < "/tmp/${TYPE}_files"
 }

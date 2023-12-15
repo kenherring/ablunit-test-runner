@@ -59,6 +59,7 @@ function setupMocha (projName: string, timeout: number) {
 }
 
 function runTestsForProject (projName: string, timeout: number) {
+	console.log('[runTestsForProject] projName=' + projName)
 	const nyc = setupNyc(projName)
 	const mocha = setupMocha(projName, timeout)
 	const testsRoot = path.resolve(__dirname, "..")

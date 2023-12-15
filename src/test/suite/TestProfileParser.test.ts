@@ -24,7 +24,7 @@ function getWorkspaceFolders () {
 	return workspaceFolders
 }
 
-suite('RunProfileParser.test', () => {
+suite('TestProfileParser.test', () => {
 
 	// //////// SETUP
 	const workspaceFolders = getWorkspaceFolders()

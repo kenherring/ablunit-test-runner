@@ -58,7 +58,7 @@ export function getTestConfig () {
 	testConfig.push(createTestConfig('workspace1', 'workspace1.code-workspace'))
 
 	// Unit Tests
-	testConfig.push(createTestConfig('TestProfileParser', 'ParserTests', 10000))
+	testConfig.push(createTestConfig('TestProfileParser'))
 
 	return testConfig
 }
