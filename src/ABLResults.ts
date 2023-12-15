@@ -1,4 +1,5 @@
-import { CancellationError, CancellationToken, Disposable, FileType, MarkdownString, Range, TestItem, TestItemCollection, TestMessage, TestRun, Uri, workspace, WorkspaceFolder } from 'vscode'
+import { FileStat, FileType, MarkdownString, Range, TestItem, TestItemCollection, TestMessage, TestRun, Uri, workspace, WorkspaceFolder,
+	CoveredCount, FileCoverage, StatementCoverage } from 'vscode'
 import { ABLUnitConfig } from './ABLUnitConfigWriter'
 import { ABLResultsParser, ITestCaseFailure, ITestCase, ITestSuite } from './parse/ResultsParser'
 import { ABLTestSuite, ABLTestData } from './testTree'
@@ -7,8 +8,7 @@ import { ABLProfile, ABLProfileJson, IModule } from './parse/ProfileParser'
 import { ABLDebugLines } from './ABLDebugLines'
 import { ABLPromsgs, getPromsgText } from './ABLPromsgs'
 import { PropathParser } from './ABLPropath'
-import { log } from './ChannelLogger'
-import { FileCoverage, CoveredCount, StatementCoverage } from './TestCoverage'
+import { logToChannel } from './ABLUnitCommon'
 import { ablunitRun } from './ABLUnitRun'
 import { getDLC, IDlc } from './parse/OpenedgeProjectParser'
 import { Duration, isRelativePath } from './ABLUnitCommon'
@@ -199,7 +199,7 @@ export class ABLResults implements Disposable {
 				// do nothing, can't delete a file that doesn't exist
 			})
 		}
-		return workspace.fs.stat(this.cfg.ablunitConfig.optionsUri.filenameUri).then((stat) => {
+		return workspace.fs.stat(this.cfg.ablunitConfig.optionsUri.filenameUri).then((stat: FileStat) => {
 			if (stat.type === FileType.File) {
 				return workspace.fs.delete(this.cfg.ablunitConfig.optionsUri.filenameUri)
 			}
@@ -529,10 +529,34 @@ export class ABLResults implements Disposable {
 				}
 			}
 
-			// TODO: end of range should be the end of the line, not the beginning of the next line
-			const coverageRange = new Range(dbg.sourceLine - 1, 0, dbg.sourceLine, 0)
-			const coverageStatement = new StatementCoverage(line.ExecCount ?? 0, coverageRange)
-			fc.detailedCoverage.push(coverageStatement)
+			console.log("dbg.uri.fsPath=" + fc.uri.fsPath)
+			console.log("line.LineNo=" + line.LineNo + " -> " + dbg.incLine + ", line.ExecCount=" + line.ExecCount)
+
+			const range = new Range(dbg.incLine - 1, 0, dbg.incLine - 1, 0)
+			if (!fc.detailedCoverage) { fc.detailedCoverage = [] }
+
+			// TODO - weak map here would be faster
+			const dc = fc.detailedCoverage.find((dc) => {
+				if (dc.location instanceof Range && dc.location.isEqual(range)) {
+					return true
+				}
+			})
+			if (dc) {
+				if (dc instanceof StatementCoverage) {
+					if (line.ExecCount) {
+						if (dc.executionCount === 0 && line.ExecCount > 0) {
+							fc.statementCoverage.covered += 1
+						}
+						dc.executionCount += line.ExecCount ?? 0
+					}
+				}
+			} else {
+				fc.detailedCoverage.push(new StatementCoverage(line.ExecCount ?? 0,new Range(dbg.incLine - 1, 0,dbg.incLine, 0)))
+				if ((line.ExecCount ?? 0) > 0) {
+					fc.statementCoverage.covered += 1
+				}
+				fc.statementCoverage.total += 1
+			}
 		}
 	}
 }

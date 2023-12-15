@@ -12,6 +12,7 @@
 			"runtimeExecutable": "${execPath}",
 			"args": [
 				"--extensionDevelopmentPath=${workspaceFolder}",
+				"--enable-proposed-api=kherring.ablunit-test-provider",
 				"${input:disable-extensions}",
 				"${workspaceFolder}/test_projects/${input:workspaceName}"
 			],
@@ -27,7 +28,8 @@
 			"runtimeExecutable": "${execPath}",
 			"args": [
 				"--extensionDevelopmentPath=${workspaceFolder}/dummy-ext",
-				"--install-extension=ablunit-test-runner-0.2.1.vsix",
+				"--install-extension=ablunit-test-provider-0.1.7.vsix",
+				"--enable-proposed-api=kherring.ablunit-test-provider",
 				"${workspaceFolder}/test_projects/${input:workspaceName}"
 			]
 		},

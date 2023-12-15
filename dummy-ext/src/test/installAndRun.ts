@@ -54,7 +54,11 @@ async function runTest(version: string) {
 			vscodeExecutablePath,
 			extensionDevelopmentPath,
 			extensionTestsPath,
-			launchArgs: [ projDir, '--log', 'debug' ]
+			launchArgs: [
+				projDir,
+				'--trace-deprecation',
+				'--enable-proposed-api=kherring.ablunit-test-provider'
+			]
 		})
 	} catch (err) {
 		throw new Error("Failed to run tests! err=" + err)

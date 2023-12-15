@@ -37,11 +37,8 @@
 		"useUnknownInCatchVariables": false,
 	},
 	"include": [
-		"./src/**/*.ts",
-		// for when glob doesn't work
-		"./src/*.ts",
-		"./src/*/*.ts",
-		"./src/*/*/*.ts"
+		"src/**/*.ts",
+		"vscode.proposed.*.d.ts"
 	],
 	"exclude": [
 		"dist",
