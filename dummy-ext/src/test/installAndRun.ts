@@ -43,7 +43,8 @@ async function runTest(version: string) {
 			extensionTestsPath,
 			launchArgs: [
 				projDir,
-				'--trace-deprecation'
+				'--trace-deprecation',
+				'--enable-proposed-api=kherring.ablunit-test-provider'
 			]
 		})
 	} catch (err) {

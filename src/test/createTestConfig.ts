@@ -21,7 +21,7 @@ function createTestConfig (projName: string, workspaceFolder?: string, timeout?:
 		timeout = 15000
 	}
 
-	const launchArgs: string[] = [ "--enable-proposed-api=kherring.ablunit-test-provider" ]
+	const launchArgs: string[] = [ '--enable-proposed-api=kherring.ablunit-test-provider' ]
 	if (projName != "proj3" && projName != "proj4") {
 		launchArgs.push('--disable-extensions')
 	}
