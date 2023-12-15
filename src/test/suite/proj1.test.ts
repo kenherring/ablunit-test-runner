@@ -41,7 +41,7 @@ suite(projName + ' - Extension Test Suite', () => {
 
 	test(projName + '.3 - output files exist 3 - exclude compileError.p as string', async () => {
 		// this isn't officially supported and won't syntac check in the settings.json file(s), but it works
-		await updateConfig("files.exclude", "compileError.p" )
+		await updateConfig("files.exclude", "compileError.p")
 		await runAllTests()
 
 		const resultsJson = Uri.joinPath(workspaceUri,'results.json')

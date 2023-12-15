@@ -16,7 +16,7 @@
 	"main": "./out/extension",
 	"scripts": {
 		"compile": "tsc -p ./",
-		"test:install-and-run": "npm run compile && node ./out/test/installAndRun"
+		"test:install-and-run": "node ./out/test/installAndRun"
 	},
 	"contributes": {
 		"configuration": {

@@ -77,14 +77,14 @@
 
 		"esbuild-base": "esbuild src/**/*.ts --outdir=out --platform=node --format=cjs --sourcemap",
 		"esbuild-test": "node ./.esbuild.test.config.ts",
-		"esbuild-bundle": "esbuild ./src/extension.ts --outfile=./out/extension.js --platform=node --format=cjs --bundle --minify --external:vscode",
+		"esbuild-bundle": "rm -rf out && esbuild ./src/extension.ts --outfile=./out/extension.js --platform=node --format=cjs --bundle --minify --external:vscode",
 
 		"pretest": "npm run test:setup && npm run esbuild-test",
 		"test:setup": "sh -c test_projects/setup.sh",
 		"test": "node ./out/test/runTest.js",
 		"test:install-and-run": "npm run package && cd dummy-ext && npm run test:install-and-run",
 
-		"vscode:prepublish": "rm -r out && npm run esbuild-bundle"
+		"vscode:prepublish": "npm run esbuild-bundle"
 	},
 	"dependencies": {
 		"xml2js": "^0.6.2"

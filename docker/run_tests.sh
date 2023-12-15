@@ -20,6 +20,8 @@ initialize () {
 	elif [ "${1:-}" = "install-and-run" ] || [ "${1:-}" = "install_and_run" ]; then
 		SCRIPT=install_and_run
 		VSCODE_DIR=/home/circleci/project/dummy-ext/.vscode-test
+	elif [ -n "${1:-}" ]; then
+		echo "Invalid option: $1" >&2 && exit 1
 	fi
 
 	GIT_BRANCH=$(git branch --show-current)
