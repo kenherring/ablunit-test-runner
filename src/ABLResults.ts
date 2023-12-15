@@ -1,4 +1,5 @@
-import { FileType, MarkdownString, Position, Range, TestItem, TestItemCollection, TestMessage, TestRun, Uri, workspace, WorkspaceFolder } from 'vscode'
+import { FileStat, FileType, MarkdownString, Range, TestItem, TestItemCollection, TestMessage, TestRun, Uri, workspace, WorkspaceFolder,
+	CoveredCount, FileCoverage, StatementCoverage } from 'vscode'
 import { ABLUnitConfig } from './ABLUnitConfigWriter'
 import { ABLResultsParser, ITestCaseFailure, ITestCase, ITestSuite } from './parse/ResultsParser'
 import { ABLTestSuite, ABLTestData } from './testTree'
@@ -468,7 +469,7 @@ export class ABLResults {
 			const range = new Range(dbg.incLine - 1, 0, dbg.incLine - 1, 0)
 			if (!fc.detailedCoverage) { fc.detailedCoverage = [] }
 
-			//TODO - weak map here would be faster
+			// TODO - weak map here would be faster
 			const dc = fc.detailedCoverage.find((dc) => {
 				if (dc.location instanceof Range && dc.location.isEqual(range)) {
 					return true
