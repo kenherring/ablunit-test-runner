@@ -3,7 +3,6 @@
 artifacts/
 coverage/
 node_modules
-dist/
 out/
 target/
 *.log

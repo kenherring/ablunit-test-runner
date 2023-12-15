@@ -48,10 +48,6 @@ function setupMocha (projName: string, timeout: number) {
 		color: true,
 		ui: "tdd",
 		timeout: timeout,
-		// reporter: 'mocha-junit-reporter',
-		// reporterOptions: {
-		// 	mochaFile: 'artifacts/mocha_results_' + projName + '.xml'
-		// }
 		reporter: 'mocha-multi-reporters',
 		reporterOptions: {
 			reporterEnabled: 'spec, mocha-junit-reporter',
@@ -66,18 +62,25 @@ function runTestsForProject (projName: string, timeout: number) {
 	const nyc = setupNyc(projName)
 	const mocha = setupMocha(projName, timeout)
 	const testsRoot = path.resolve(__dirname, "..")
+	console.log("101")
 	return new Promise<void>((c, e) => {
-		const files = new GlobSync("**/*" + projName + ".test.js", { cwd: testsRoot })
-
+		console.log("102 testsRoot=" + testsRoot)
+		const files = new GlobSync("**/extension." + projName + ".test.js", { cwd: testsRoot })
+		console.log("pattern=" + "**/extension." + projName + ".test.js")
+		console.log("files.found.length=" + files.found.length)
+		console.log("projName=" + projName)
 		for(const f of files.found) {
 			console.log("mocha.addFile " + path.resolve(testsRoot, f))
 			mocha.addFile(path.resolve(testsRoot, f))
 		}
 
+		console.log("103")
 		try {
+			console.log("104")
 			// Run the mocha test
 			mocha.run((failures) => {
 				console.log("nyc.writeCoverageFile()")
+				console.log("105 " + failures)
 				if (failures > 0) {
 					console.log("106")
 					console.log(`${failures} tests failed.`)

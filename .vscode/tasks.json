@@ -6,9 +6,6 @@
 		{
 			"type": "npm",
 			"script": "watch",
-			// "dependsOn": [
-			// 	"npm: test-compile"
-			// ],
 			"problemMatcher": "$tsc-watch",
 			"isBackground": true,
 			"presentation": {

@@ -26,7 +26,6 @@
 	},
 	"root": true,
 	"ignorePatterns": [
-		"dist",
 		"dummy-ext",
 		"out",
 		"test_projects"

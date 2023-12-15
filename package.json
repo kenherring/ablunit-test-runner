@@ -71,31 +71,31 @@
 		"onStartupFinished",
 		"workspaceContains:{**/*.cls,**/*.p,.vscode/ablunit-test-profile.json}"
 	],
-	"main": "./dist/extension",
+	"main": "./out/extension",
 	"scripts": {
-		"build": "npm run esbuild",
-		"clean-and-compile": "npm run clean && npm run esbuild",
+		"build": "npm run esbuild-base",
+		"watch": "npm run esbuild-base -- --watch",
 		"clean": "sh -c scripts/cleanup.sh",
-		"compile": "npm run esbuild",
-		"esbuild-base": "esbuild ./src/**/*.ts --sourcemap --outdir=out --format=cjs --platform=node",
-		"esbuild-bundle": "esbuild ./src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --format=cjs --platform=node",
-		"esbuild-package": "npm run esbuild-bundle -- --minify",
-		"esbuild-watch": "npm run esbuild-base -- --watch",
-		"esbuild": "npm run esbuild-base",
 		"lint": "npx eslint . --ext .ts,.js",
-		"package-release": "vsce package",
-		"package": "vsce package --pre-release",
-		"posttest": "npm run test:cov-after",
-		"pretest": "npm run test-compile && npm run test:cov-before && sh -c test_projects/setup.sh",
-		"test-clean-compile": "npm run clean && npm run esbuild",
-		"test-failed": "sh -c scripts/npm-test-failed.sh",
-		"test:cov-after": "sed -i 's/\"activationEvents\"/\"activationEvents-coverage\"/g;s/\"activationEvents-vscode\"/\"activationEvents\"/g' package.json",
-		"test:cov-before": "sed -i 's/\"activationEvents\"/\"activationEvents-vscode\"/g;s/\"activationEvents-coverage\"/\"activationEvents\"/g' package.json",
+
+		"esbuild-base": "esbuild $(find src -type f -name \"*.ts\")  --outdir=out --platform=node --format=cjs --sourcemap",
+		"esbuild-bundle": "esbuild ./src/extension.ts --outfile=./out/extension.js --platform=node --format=cjs --bundle --minify --external:vscode",
+
+		"pretest": "npm run test:coverage-before && npm run test:setup && npm run build",
+		"test:coverage-before": "sed -i 's/\"activationEvents\"/\"activationEvents-vscode\"/g;s/\"activationEvents-coverage\"/\"activationEvents\"/g' package.json",
+		"test:setup": "sh -c test_projects/setup.sh",
+
 		"test:install-and-run": "npm run package && cd dummy-ext && npm run test:install-and-run",
-		"test": "node ./out/test/runTest.js && echo \"'npm test' success\" || npm run test-failed",
-		"vscode-test": "vscode-test",
-		"vscode:prepublish": "npm run esbuild-bundle -- --minify",
-		"watch": "npm run esbuild-watch"
+		"test": "node ./out/test/runTest.js && npm run test:success || npm run test:failed",
+
+		"posttest": "npm run test:coverage-after",
+		"test:coverage-after": "sed -i 's/\"activationEvents\"/\"activationEvents-coverage\"/g;s/\"activationEvents-vscode\"/\"activationEvents\"/g' package.json",
+		"test:failed": "sh -c scripts/npm-test-failed.sh",
+		"test:success": "echo \"'npm test' success\"",
+
+		"vscode:prepublish": "npm run esbuild-bundle",
+		"vscode:publish": "vsce package",
+		"vscode:prerelease": "npm run vscode:publish -- --pre-release"
 	},
 	"dependencies": {
 		"xml2js": "^0.6.2"
@@ -115,8 +115,7 @@
 		"mocha": "^10.2.0",
 		"mocha-junit-reporter": "^2.2.1",
 		"mocha-multi-reporters": "^1.5.1",
-		"nyc": "^15.1.0",
-		"typescript": "^5.3.3"
+		"nyc": "^15.1.0"
 	},
 	"contributes": {
 		"configuration": {
