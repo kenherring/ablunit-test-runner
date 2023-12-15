@@ -1,7 +1,8 @@
 import { commands, tests, window, workspace,
 	CancellationToken, ConfigurationChangeEvent, EventEmitter, ExtensionContext, Position, Range, RelativePattern, Selection,
 	TestController, TestItem, TestItemCollection, TestMessage, TestTag, TestRunProfileKind, TestRunRequest,
-	TextDocument, Uri, WorkspaceFolder, FileType } from 'vscode'
+	TextDocument, Uri, WorkspaceFolder, FileType,
+	FileCoverage } from 'vscode'
 import { ABLResults } from './ABLResults'
 import { testData, ABLTestSuite, ABLTestClass, ABLTestProgram, ABLTestFile, ABLTestCase, ABLTestDir, ABLTestData, resultData } from './testTree'
 import { GlobSync } from 'glob'
@@ -225,6 +226,30 @@ export async function activate (context: ExtensionContext) {
 			logToChannel('ablunit run failed with exception: ' + err, 'error', run)
 			run.end()
 		})
+
+
+		run.coverageProvider = {
+			provideFileCoverage: () => {
+				console.log("---------- provideFileCoverage ----------")
+				const results = resultData.get(run)
+				if (!results) { return [] }
+
+				const coverage: FileCoverage[] = []
+				for (const r of results ?? []) {
+					coverage.push(...r.coverage)
+				}
+				console.log("coverage.length=" + coverage.length)
+				return coverage
+			},
+			resolveFileCoverage: (coverage: FileCoverage, cancellation: CancellationToken) => {
+				console.error("resolveFileCoverage not implemented")
+
+				cancellation.onCancellationRequested(() => {
+					console.log('cancellation requested!')
+				})
+				return coverage
+			}
+		}
 	}
 
 	ctrl.refreshHandler = async () => {
@@ -273,12 +298,9 @@ export async function activate (context: ExtensionContext) {
 		}
 	}
 
-	const testRunProfile = ctrl.createRunProfile('Run ABLUnit Tests', TestRunProfileKind.Run, runHandler, false, new TestTag('runnable'), false)
-	testRunProfile.configureHandler = configureHandler
-	const testCoverageProfile = ctrl.createRunProfile('Run ABLUnit Tests w/ Coverage', TestRunProfileKind.Coverage, runHandler, true, new TestTag('runnable'), false)
-	testCoverageProfile.configureHandler = configureHandler
-	const testDebugProfile = ctrl.createRunProfile('Debug ABLUnit Tests', TestRunProfileKind.Debug, runHandler, false, new TestTag("runnable"), false)
-	testDebugProfile.configureHandler = configureHandler
+	ctrl.createRunProfile('Run Tests', TestRunProfileKind.Run, runHandler, true, new TestTag('runnable'), false)
+	ctrl.createRunProfile('Debug Tests', TestRunProfileKind.Debug, runHandler, false, new TestTag("runnable"), false)
+	ctrl.createRunProfile('Run Tests w/ Coverage', TestRunProfileKind.Coverage, runHandler, false, new TestTag('runnable'), false)
 
 	if(workspace.getConfiguration('ablunit').get('discoverFilesOnActivate', false)) {
 		await commands.executeCommand('testing.refreshTests')

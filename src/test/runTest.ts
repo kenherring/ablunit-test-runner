@@ -21,6 +21,7 @@ async function testProject (projName: string, projDir?: string, launchArgs: stri
 		const args: string[] = [
 			projDir,
 			'--disable-gpu',
+			'--enable-proposed-api'
 			// '--verbose',
 			// '--telemetry'
 		]
