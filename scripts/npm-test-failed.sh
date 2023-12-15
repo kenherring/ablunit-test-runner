@@ -1,7 +1,7 @@
 #!/bin/sh
 
 echo "'npm test' failed!"
-if ! npm run test:cov-after; then
+if ! npm run test:coverage-after; then
 	echo 'exit 2'
 	exit 2
 fi

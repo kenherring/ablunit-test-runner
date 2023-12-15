@@ -10,13 +10,13 @@ async function main () {
 	}
 }
 
-async function testProject (projName: string, projDir?: string, launchArgs?: string[], indexFile: string = './index') {
+async function testProject (projName: string, projDir?: string, launchArgs: string[] = []) {
 	if(!projDir) {
 		projDir = projName
 	}
 
 	const extensionDevelopmentPath = path.resolve(__dirname, '../../')
-	const extensionTestsPath = path.resolve(__dirname, indexFile)
+	const extensionTestsPath = path.resolve(__dirname)
 	try {
 		const args: string[] = [
 			projDir,
@@ -24,12 +24,7 @@ async function testProject (projName: string, projDir?: string, launchArgs?: str
 			// '--verbose',
 			// '--telemetry'
 		]
-
-		if (launchArgs && launchArgs.length > 0) {
-			for (const arg of launchArgs) {
-				args.push(arg)
-			}
-		}
+		args.push(...launchArgs)
 
 		await runTests({
 			extensionDevelopmentPath,
@@ -37,15 +32,15 @@ async function testProject (projName: string, projDir?: string, launchArgs?: str
 			launchArgs: args
 		})
 	} catch (err) {
-		console.error('[runTest.ts testProject] Failed to run tests, err=' + err)
+		console.error('[runTest.ts testProject] (projName=' + projName + ') failed to run tests, err=' + err)
 		process.exit(1)
 	} finally {
-		console.log("[runTest.ts testProject] finally")
+		console.log('[runTest.ts testProject] (projName=' + projName + ') finally')
 	}
 }
 
 main().then(() => {
-	console.log("[runTest.ts main] completed successfully!")
+	console.log('[runTest.ts main] completed successfully!')
 }, (err) => {
 	console.error('[runTest.ts main] Failed to run tests, err=' + err)
 	process.exit(1)

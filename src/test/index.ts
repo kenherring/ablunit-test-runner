@@ -13,9 +13,9 @@ function setupNyc (projName: string) {
 	const NYC = require("nyc")
 	const nyc = new NYC({
 		cache: false,
-		cwd: path.join(__dirname, "..", ".."),
+		cwd:       path.join(__dirname, "..", ".."),
 		reportDir: path.join(__dirname, "..", "..", 'coverage', "coverage_" + projName),
-		tempDir: path.join(__dirname, "..", "..", 'coverage', "coverage_" + projName, ".nyc_output"),
+		tempDir:   path.join(__dirname, "..", "..", 'coverage', "coverage_" + projName, ".nyc_output"),
 		exclude: [
 			"node_modules",
 			"out/test/**",
@@ -62,52 +62,38 @@ function runTestsForProject (projName: string, timeout: number) {
 	const nyc = setupNyc(projName)
 	const mocha = setupMocha(projName, timeout)
 	const testsRoot = path.resolve(__dirname, "..")
-	console.log("101")
 	return new Promise<void>((c, e) => {
-		console.log("102 testsRoot=" + testsRoot)
-		const files = new GlobSync("**/extension." + projName + ".test.js", { cwd: testsRoot })
-		console.log("pattern=" + "**/extension." + projName + ".test.js")
-		console.log("files.found.length=" + files.found.length)
-		console.log("projName=" + projName)
+		const files = new GlobSync("**/" + projName + ".test.js", { cwd: testsRoot })
+		console.log("pattern=" + "**/" + projName + ".test.js, file.found.length=" + files.found.length)
 		for(const f of files.found) {
 			console.log("mocha.addFile " + path.resolve(testsRoot, f))
 			mocha.addFile(path.resolve(testsRoot, f))
 		}
 
-		console.log("103")
 		try {
-			console.log("104")
 			// Run the mocha test
 			mocha.run((failures) => {
-				console.log("nyc.writeCoverageFile()")
-				console.log("105 " + failures)
 				if (failures > 0) {
-					console.log("106")
 					console.log(`${failures} tests failed.`)
-					console.log("107")
 					e(new Error(`${failures} tests failed.`))
 				}
 				if (nyc) {
+					console.log("nyc.writeCoverageFile()")
 					nyc.writeCoverageFile()
-					console.log("nyc.writeCoverageFile() done")
 					nyc.report().then(() => {
 						console.log("nyc.report() done")
 						c()
 					})
 				}
-				console.log("105 failures=" + failures)
 			}).on('end', () => {
-				console.log("106 - END")
+				console.log("mocha.run().on('end')")
 			})
-			console.log("109")
 
 		} catch (err) {
 			console.error('[index_2.ts] catch err= ' + err)
 			e(err)
 		}
-		console.log("110")
 	})
-	console.log("111")
 }
 
 export function run (): Promise <void> {
