@@ -64,9 +64,6 @@
 	"categories": [
 		"Testing"
 	],
-	"activationEvents-coverage": [
-		"onStartupFinished"
-	],
 	"activationEvents": [
 		"onStartupFinished",
 		"workspaceContains:{**/*.cls,**/*.p,.vscode/ablunit-test-profile.json}"
@@ -82,21 +79,12 @@
 		"esbuild-test": "node ./.esbuild.test.config.ts",
 		"esbuild-bundle": "esbuild ./src/extension.ts --outfile=./out/extension.js --platform=node --format=cjs --bundle --minify --external:vscode",
 
-		"pretest": "npm run test:coverage-before && npm run test:setup && npm run esbuild-test",
-		"test:coverage-before": "sed -i 's/\"activationEvents\"/\"activationEvents-vscode\"/g;s/\"activationEvents-coverage\"/\"activationEvents\"/g' package.json",
+		"pretest": "npm run test:setup && npm run esbuild-test",
 		"test:setup": "sh -c test_projects/setup.sh",
-
+		"test": "node ./out/test/runTest.js",
 		"test:install-and-run": "npm run package && cd dummy-ext && npm run test:install-and-run",
-		"test": "node ./out/test/runTest.js && npm run test:success || npm run test:failed",
 
-		"posttest": "npm run test:coverage-after",
-		"test:coverage-after": "sed -i 's/\"activationEvents\"/\"activationEvents-coverage\"/g;s/\"activationEvents-vscode\"/\"activationEvents\"/g' package.json",
-		"test:failed": "sh -c scripts/npm-test-failed.sh",
-		"test:success": "echo \"'npm test' success\"",
-
-		"vscode:prepublish": "npm run esbuild-bundle",
-		"vscode:publish": "vsce package",
-		"vscode:prerelease": "npm run vscode:publish -- --pre-release"
+		"vscode:prepublish": "rm -r out && npm run esbuild-bundle"
 	},
 	"dependencies": {
 		"xml2js": "^0.6.2"
