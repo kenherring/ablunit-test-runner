@@ -4,7 +4,6 @@ interface TestConfig {
 	label: string
 	files: string
 	workspaceFolder: string
-	version: string
 	mocha: {
 		ui: string
 		timeout: number
@@ -21,7 +20,7 @@ function createTestConfig (projName: string, workspaceFolder?: string, timeout?:
 		timeout = 15000
 	}
 
-	const launchArgs: string[] = [ '--enable-proposed-api=kherring.ablunit-test-provider' ]
+	const launchArgs: string[] = []
 	if (projName != "proj3" && projName != "proj4") {
 		launchArgs.push('--disable-extensions')
 	}
@@ -31,7 +30,6 @@ function createTestConfig (projName: string, workspaceFolder?: string, timeout?:
 		label: 'extension tests - ' + projName,
 		files: 'out/test/**/*' + projName + '.test.js',
 		workspaceFolder: './test_projects/' + workspaceFolder,
-		version: 'insiders',
 		mocha: {
 			ui: 'tdd',
 			timeout: timeout

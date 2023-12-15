@@ -146,7 +146,8 @@
 				"ablunit.files.exclude": {
 					"type": "array",
 					"default": [
-						"**/.builder/**,**/.pct/**"
+						"**/.builder/**",
+						"**/.pct/**"
 					],
 					"markdownDescription": "Glob patterns to exclude test files"
 				},

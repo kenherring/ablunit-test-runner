@@ -219,6 +219,15 @@ export async function activate (context: ExtensionContext) {
 		const run = ctrl.createTestRun(request)
 		const tests = request.include ?? gatherTestItems(ctrl.items)
 
+		discoverTests(tests).then(async () => {
+			const res = await createABLResults()
+			return runTestQueue(res)
+		}).catch((err) => {
+			logToChannel('ablunit run failed with exception: ' + err, 'error', run)
+			run.end()
+		})
+
+
 		run.coverageProvider = {
 			provideFileCoverage: () => {
 				console.log("---------- provideFileCoverage ----------")
@@ -241,14 +250,6 @@ export async function activate (context: ExtensionContext) {
 				return coverage
 			}
 		}
-
-		discoverTests(tests).then(async () => {
-			const res = await createABLResults()
-			return runTestQueue(res)
-		}).catch((err) => {
-			logToChannel('ablunit run failed with exception: ' + err, 'error', run)
-			run.end()
-		})
 	}
 
 	ctrl.refreshHandler = async () => {
