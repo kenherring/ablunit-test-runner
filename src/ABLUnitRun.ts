@@ -1,10 +1,10 @@
 import { TestRun, workspace } from 'vscode'
 import { ABLResults } from './ABLResults'
 import { logToChannel } from './ABLUnitCommon'
-import { isRelativePath } from './ABLUnitConfigWriter';
-import { exec } from "child_process";
+import { isRelativePath } from './ABLUnitConfigWriter'
+import { ExecException, exec } from "child_process"
 
-export const ablunitRun = async(options: TestRun, res: ABLResults) => {
+export const ablunitRun = async (options: TestRun, res: ABLResults) => {
 	const start = Date.now()
 
 	await res.cfg.createAblunitJson(res.cfg.ablunitConfig.config_uri, res.cfg.ablunitConfig.options, res.testQueue)
@@ -72,7 +72,7 @@ export const ablunitRun = async(options: TestRun, res: ABLResults) => {
 		cmd.push("-param", '"CFG=' + workspace.asRelativePath(res.cfg.ablunitConfig.config_uri.fsPath, false) + '"')
 		cmd.forEach(element => {
 			cmdSanitized.push(element.replace(/\\/g, '/'))
-		});
+		})
 
 		logToChannel("ABLUnit Command: " + cmdSanitized.join(' '))
 		return cmdSanitized
@@ -89,26 +89,16 @@ export const ablunitRun = async(options: TestRun, res: ABLResults) => {
 			res.setStatus("running command")
 
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			exec(cmd + ' ' + args.join(' '), {env: process.env, cwd: res.cfg.ablunitConfig.workspaceFolder.uri.fsPath }, (err: any, stdout: any, stderr: any) => {
+			exec(cmd + ' ' + args.join(' '), {env: process.env, cwd: res.cfg.ablunitConfig.workspaceFolder.uri.fsPath }, (err: ExecException | null, stdout: string, stderr: string) => {
 				const duration = Date.now() - start
 				if (stdout) {
-					logToChannel("_progres stdout=" + stdout)
-					// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-					stdout = stdout.replace(/\r\n/g, '\n').replace(/\n/g, '\r\n')
-					options.appendOutput("_progres stdout=" + stdout + "\r\n")
+					logToChannel("_progres stdout=" + stdout, 'log', options)
 				}
 				if (stderr) {
-					logToChannel("_progres stderr=" + stderr)
-					// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-					stderr = stderr.replace(/\r\n/g, '\n').replace(/\n/g, '\r\n')
-					options.appendOutput("_progres stderr=" + stderr + "\r\n")
+					logToChannel("_progres stderr=" + stderr, 'error', options)
 				}
 				if (err) {
-					// eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-					logToChannel("_progres err=" + err.toString(), 'error')
-					// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-					err = err.toString().replace(/\r\n/g, '\n').replace(/\n/g, '\r\n')
-					options.appendOutput("_progres err=" + err + '\r\n')
+					logToChannel("_progres err=" + err.name + " (ExecExcetion)\r\n   " + err.message, 'error', options)
 				}
 				if(err || stderr) {
 					reject(new Error ("ABLUnit Command Execution Failed - duration: " + duration))
@@ -120,6 +110,6 @@ export const ablunitRun = async(options: TestRun, res: ABLResults) => {
 	}
 
 	return runCommand().then(() => {
-		return res.parseOutput(options).then();
+		return res.parseOutput(options).then()
 	})
 }

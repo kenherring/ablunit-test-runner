@@ -57,26 +57,25 @@ export async function sleep (time: number = 2000, msg?: string) {
 	}
 	console.log(status)
 	await new Promise(resolve => setTimeout(resolve, time))
-	return
 }
 
-export async function deleteFile(uri: Uri) {
+export async function deleteFile (uri: Uri) {
 	return workspace.fs.delete(uri)
 }
 
-export async function doesFileExist(uri: Uri) {
+export async function doesFileExist (uri: Uri) {
 	const ret = await workspace.fs.stat(uri).then((stat) => {
 		if (stat.type === FileType.File) {
 			return true
 		}
 		return false
-	}, (err) => {
+	}, () => {
 		return false
 	})
 	return ret
 }
 
-export async function doesDirExist(uri: Uri) {
+export async function doesDirExist (uri: Uri) {
 	const ret = await workspace.fs.stat(uri).then((stat) => {
 		if (stat.type === FileType.Directory) {
 			return true
@@ -88,7 +87,7 @@ export async function doesDirExist(uri: Uri) {
 	return ret
 }
 
-export async function getTestCount(resultsJson: Uri, status: string = 'tests') {
+export async function getTestCount (resultsJson: Uri, status: string = 'tests') {
 	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 	const count = await workspace.fs.readFile(resultsJson).then((content) => {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
@@ -125,7 +124,7 @@ async function installOpenedgeABLExtension () {
 	if (!extensions.getExtension("riversidesoftware.openedge-abl-lsp")) {
 		console.log("[indexCommon.ts] installing riversidesoftware.openedge-abl-lsp extension")
 		await commands.executeCommand('workbench.extensions.installExtension', 'riversidesoftware.openedge-abl-lsp').then(() => {
-		}, (err) => {
+		}, (err: Error) => {
 			if (err.toString() === 'Error: Missing gallery') {
 				console.log("[indexCommon.ts] triggered installed extension, but caught '" + err + "'")
 			} else {
@@ -183,7 +182,7 @@ export async function runAllTests (doRefresh: boolean = true) {
 	})
 }
 
-export async function updateConfig (key: string, value: any) {
+export async function updateConfig (key: string, value: string | string[] | undefined) {
 	await workspace.getConfiguration('ablunit').update(key, value, ConfigurationTarget.Workspace).then(() => {
 		console.log("ablunit." + key + " set successfully (value='" + value + "')")
 	}, (err) => {
@@ -194,7 +193,7 @@ export async function updateConfig (key: string, value: any) {
 
 export function updateTestProfile (key: string, value: string | string[] | boolean): Thenable<void> {
 	return workspace.fs.readFile(Uri.joinPath(getWorkspaceUri(), '.vscode', 'ablunit-test-profile.json')).then((content) => {
-		const str = Buffer.from(content.buffer).toString();
+		const str = Buffer.from(content.buffer).toString()
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		const profile = JSON.parse(str)
 

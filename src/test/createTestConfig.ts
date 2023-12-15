@@ -3,7 +3,6 @@ interface TestConfig {
 	projName: string
 	label: string
 	files: string
-	indexFile?: string,
 	workspaceFolder: string
 	mocha: {
 		ui: string
@@ -12,7 +11,7 @@ interface TestConfig {
 	launchArgs: string[]
 }
 
-function createTestConfig(projName: string, workspaceFolder?: string, timeout?: number) {
+function createTestConfig (projName: string, workspaceFolder?: string, timeout?: number) {
 	if (!workspaceFolder || workspaceFolder == '') {
 		workspaceFolder = projName
 	}
@@ -29,21 +28,20 @@ function createTestConfig(projName: string, workspaceFolder?: string, timeout?: 
 	const retVal: TestConfig = {
 		projName: projName,
 		label: 'extension tests - ' + projName,
-		files: 'out/test/**/extension.' + projName + '.test.js',
+		files: 'out/test/**/*' + projName + '.test.js',
 		workspaceFolder: './test_projects/' + workspaceFolder,
 		mocha: {
 			ui: 'tdd',
 			timeout: timeout
 		},
-		launchArgs: launchArgs,
-		indexFile: './index'
+		launchArgs: launchArgs
 	}
 
 	return retVal
 }
 
 export function getTestConfig () {
-	const testConfig = []
+	const testConfig: TestConfig[] = []
 	// Folders
 	testConfig.push(createTestConfig('proj0'))
 	testConfig.push(createTestConfig('proj1'))
@@ -60,20 +58,7 @@ export function getTestConfig () {
 	testConfig.push(createTestConfig('workspace1', 'workspace1.code-workspace'))
 
 	// Unit Tests
-	testConfig.push({
-		projName: 'Parsers',
-		label: 'unit tests - Parsers',
-		files: 'out/test/**/*Parser.test.js',
-		workspaceFolder: './test_projects/ParserTests',
-		mocha: {
-			ui: 'tdd',
-			timeout: 10000
-		},
-		launchArgs: [
-			'--disable-extensions'
-		],
-		indexFile: './index_2'
-	})
+	testConfig.push(createTestConfig('TestProfileParser'))
 
 	return testConfig
 }

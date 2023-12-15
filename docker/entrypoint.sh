@@ -3,6 +3,7 @@ set -eou pipefail
 
 initialize () {
 	BASH_AFTER_FAIL=false
+
 	while getopts 'b' OPT; do
 		case "$OPT" in
 			b)	BASH_AFTER_FAIL=true ;;
@@ -11,47 +12,58 @@ initialize () {
 		esac
 	done
 
+	## save my license from the environment variable at runtime
 	tr ' ' '\n' <<< "$PROGRESS_CFG_BASE64" | base64 --decode > /psc/dlc/progress.cfg
 
-	if ! ${CIRCLECI:-false}; then
-		echo 'copying files'
-		cd /home/circleci/project
-		git config --global init.defaultBranch main
-		git init
-		git remote add origin /home/circleci/ablunit-test-provider
-		git fetch origin
-		if [ "$GIT_BRANCH" = "$(git branch show-current)" ]; then
-			git reset --hard "origin/$GIT_BRANCH"
-		else
-			git checkout "$GIT_BRANCH"
-		fi
+	echo 'copying files from local'
+	initialize_repo
+	copy_files_from_volume
+	npm install
+}
 
-		cd /home/circleci/ablunit-test-provider
-		git --no-pager diff --diff-filter=d --name-only --staged > /tmp/stage_files
-		git --no-pager diff --diff-filter=D --name-only --staged > /tmp/deleted_files
-		git --no-pager diff --diff-filter=d --name-only > /tmp/modified_files
-		cd -
-
-
-		while read -r FILE; do
-			echo "copying staged file $FILE"
-			cp "/home/circleci/ablunit-test-provider/$FILE" "$FILE"
-		done < /tmp/stage_files
-
-		while read -r FILE; do
-			echo "copying modified file $FILE"
-			cp "/home/circleci/ablunit-test-provider/$FILE" "$FILE"
-		done < /tmp/modified_files
-
-		while read -r FILE; do
-			echo "deleting deleted file $FILE"
-			rm "$FILE"
-		done < /tmp/deleted_files
+initialize_repo () {
+	cd /home/circleci/project
+	git config --global init.defaultBranch main
+	git init
+	git remote add origin /home/circleci/ablunit-test-provider
+	git fetch origin
+	if [ "$GIT_BRANCH" = "$(git branch --show-current)" ]; then
+		git reset --hard "origin/$GIT_BRANCH"
+	else
+		git checkout "$GIT_BRANCH"
 	fi
+}
 
-	npm i
+copy_files_from_volume () {
+	find_files_to_copy
+	copy_files "staged"
+	[ -f /tmp/modified_files ] && copy_files "modified"
+	while read -r FILE; do
+		echo "deleting deleted file $FILE"
+		rm "$FILE"
+	done < /tmp/deleted_files
+}
 
-	scripts/cleanup.sh
+find_files_to_copy () {
+	cd /home/circleci/ablunit-test-provider
+	git --no-pager diff --diff-filter=d --name-only --staged > /tmp/staged_files
+	git --no-pager diff --diff-filter=D --name-only --staged > /tmp/deleted_files
+
+	if ! ${STAGED_ONLY:-false}; then
+		git --no-pager diff --diff-filter=d --name-only > /tmp/modified_files
+	fi
+	cd -
+}
+
+copy_files () {
+	local TYPE="$1"
+	while read -r FILE; do
+		echo "copying $TYPE file $FILE"
+		if [ ! -d "$(dirname "$FILE")" ]; then
+			mkdir -p "$(dirname "$FILE")"
+		fi
+		cp "/home/circleci/ablunit-test-provider/$FILE" "$FILE"
+	done < "/tmp/${TYPE}_files"
 }
 
 run_tests () {
@@ -94,7 +106,6 @@ analyze_results () {
 finish () {
 	echo "Artifacts to be saved:"
 	ls -al artifacts
-	echo 'done running tests'
 }
 
 ########## MAIN BLOCK ##########
@@ -102,3 +113,4 @@ initialize "$@"
 run_tests
 analyze_results
 finish
+echo "entrypoint.sh finished successfully!"

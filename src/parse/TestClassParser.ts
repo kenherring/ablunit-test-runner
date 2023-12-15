@@ -49,7 +49,7 @@ export function parseTestClass (lines: string[], configClassLabel: string, relat
 			continue
 		}
 
-		//first find the class statement
+		// first find the class statement
 		if (classRet.classname === "") {
 			const classResult = classRE.exec(lines[lineNo])
 			if (!classResult) { continue }

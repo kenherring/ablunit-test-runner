@@ -68,7 +68,7 @@ export async function parseCallstack (debugLines: ABLDebugLines, callstackRaw: s
 	return callstack
 }
 
-function buildFullMarkdownText(callstack: ICallStack) {
+function buildFullMarkdownText (callstack: ICallStack) {
 	let markdown: string = "## ABL Stack Trace\n\n"
 	let firstItem = true
 	markdown += "<style>code { white-space: pre }</style>\n\n"

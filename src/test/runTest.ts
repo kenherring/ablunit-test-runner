@@ -1,24 +1,22 @@
 import * as path from 'path'
-import { runTests } from '@vscode/test-electron'
 import { getTestConfig } from './createTestConfig'
+import { runTests } from '@vscode/test-electron'
 
-async function main() {
+async function main () {
 	const config = getTestConfig()
 
 	for (const conf of config) {
-		// if (conf.projName == 'proj8' || conf.projName == 'Parsers') {
-			await testProject(conf.projName, conf.workspaceFolder, conf.launchArgs, conf.indexFile)
-		// }
+		await testProject(conf.projName, conf.workspaceFolder, conf.launchArgs)
 	}
 }
 
-async function testProject(projName: string, projDir?: string, launchArgs?: string[], indexFile: string = './index') {
+async function testProject (projName: string, projDir?: string, launchArgs: string[] = []) {
 	if(!projDir) {
 		projDir = projName
 	}
 
 	const extensionDevelopmentPath = path.resolve(__dirname, '../../')
-	const extensionTestsPath = path.resolve(__dirname, indexFile)
+	const extensionTestsPath = path.resolve(__dirname)
 	try {
 		const args: string[] = [
 			projDir,
@@ -26,28 +24,24 @@ async function testProject(projName: string, projDir?: string, launchArgs?: stri
 			// '--verbose',
 			// '--telemetry'
 		]
+		args.push(...launchArgs)
 
-		if (launchArgs && launchArgs.length > 0) {
-			for (const arg of launchArgs) {
-				args.push(arg)
-			}
-		}
-
+		console.log('[runTest.ts testProject] (projName=' + projName + ') running tests with args=' + args)
 		await runTests({
 			extensionDevelopmentPath,
 			extensionTestsPath,
 			launchArgs: args
 		})
 	} catch (err) {
-		console.error('[runTest.ts testProject] Failed to run tests, err=' + err)
+		console.error('[runTest.ts testProject] (projName=' + projName + ') failed to run tests, err=' + err)
 		process.exit(1)
 	} finally {
-		console.log("[runTest.ts testProject] finally")
+		console.log('[runTest.ts testProject] (projName=' + projName + ') finally')
 	}
 }
 
 main().then(() => {
-	console.log("[runTest.ts main] completed successfully!")
+	console.log('[runTest.ts main] completed successfully!')
 }, (err) => {
 	console.error('[runTest.ts main] Failed to run tests, err=' + err)
 	process.exit(1)

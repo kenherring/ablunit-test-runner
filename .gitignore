@@ -1,9 +1,9 @@
-out
-node_modules
 .vscode-test/
 .vscode-test-docker/
 artifacts/
 coverage/
+node_modules
+out/
 target/
 *.log
 *.tmp
