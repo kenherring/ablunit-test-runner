@@ -1,0 +1,664 @@
+import { Uri, workspace } from "vscode"
+
+interface IRCodeItem {
+	uint: number
+	desc: string
+	str?: string
+}
+
+interface IRCodeTransmission {
+	items: IRCodeItem[]
+}
+
+interface ISourceMapItem {
+	debugLine: number
+	sourceline: number
+	sourecUri: Uri
+}
+
+interface ISourceMap {
+	uri: Uri,
+	items: ISourceMapItem[]
+}
+
+// Parse a RCode file (*.r) and return a source map
+export function getSourceMapFromRCode (uri: Uri) {
+	// input parameter is the Uri of the r-code, not the source file.
+
+	console.log("100")
+	return readRCodeToHexArray(uri).then((trans: IRCodeTransmission[]) => {
+
+		trans = [trans[trans.length - 1]]
+
+		const split16 = splitBy(trans[0], 16)
+		for(const s16 of split16) {
+			splitAndPrint(s16, 's16 --- ')
+		}
+
+
+		// console.log("110 trans.length=" + trans.length)
+		// for (let i=0; i < trans.length; i++) {
+		// 	console.log("lines[" + i + "].items.length=" + trans[i].items.length)
+		// 	debugPrintTransmission(trans[i], i)
+		// }
+
+		// testFunction(trans)
+
+		const sourceMap: ISourceMap = {
+			uri: uri,
+			items: []
+		}
+
+
+		// const startLine = 0
+		// sourceMap.items.push(parseFirstLine(lines[startLine]))
+		// debugPrintTransmission(lines[startLine], startLine)
+		// for (let i=(startLine+1); i < lines.length; i++) {
+		// 	debugPrintTransmission(lines[i], i)
+
+		// 	const [sourceNum, sourceName] = parseLaterLine(lines[i])
+		// 	console.log("FOUND INCLUDE: " + sourceNum + " " + sourceName)
+		// 	// includes.push({sourceNum, sourceName})
+		// }
+		return sourceMap
+	})
+}
+
+function splitAndPrint (t: IRCodeTransmission, prefix: string) {
+	let d = ''
+	for(const element of t.items) {
+		d = d + element.desc
+		if (element.uint !=0 && element.uint < 33 && element.uint > 126) {
+			d = d + "(" + element.uint + ")"
+		}
+		d = d + ","
+	}
+	console.log(prefix + d)
+}
+
+// function parseFirstLine (line: IRCodeTransmission): ISourceMapItem {
+// 	return {
+// 		debugLine: 0,
+// 		sourceline: 0,
+// 		sourecUri: Uri.file('')
+// 	}
+// }
+
+// function parseLaterLine (line: IRCodeTransmission) {
+
+// 	const sourceNum = line.items[1].uint
+// 	const sourceName = parseStringToNull(line.items,3)
+// 	console.log("FOUND INCLUDE: " + sourceNum + " " + sourceName)
+
+// 	return [sourceNum, sourceName]
+// }
+
+function splitBy (t: IRCodeTransmission, split: number) {
+	const retVal: IRCodeTransmission[] = []
+
+	console.log("splitby")
+
+	let newItems: IRCodeItem[] = []
+	let nulCount = 0
+
+	for(const element of t.items) {
+		if (element.uint === 0) {
+			nulCount++
+		} else {
+			nulCount = 0
+		}
+		newItems.push(element)
+
+		// read until a non-nul char
+		if (element.uint != 0 && nulCount >= split) {
+			retVal.push({items: newItems})
+			newItems = []
+		}
+	}
+	retVal.push({items: newItems})
+	return retVal
+}
+
+function splitByDesc (t: IRCodeTransmission, split: string) {
+	const retVal: IRCodeTransmission[] = []
+
+	let newItems: IRCodeItem[] = []
+	let prevDesc = ''
+	for(const element of t.items) {
+		newItems.push(element)
+		if (newItems.length > 2 && element.desc === 'NUL' && prevDesc === split) {
+			retVal.push({items: newItems})
+			newItems = []
+			prevDesc = ''
+			continue
+		}
+		prevDesc = element.desc
+	}
+	retVal.push({items: newItems})
+	return retVal
+}
+
+function parseStringToNull (items: IRCodeItem[], start: number): string {
+	let str = ''
+	for (let i=start; i < items.length; i++) {
+		if (items[i].desc === 'NUL') {
+			break
+		}
+		str = str + items[i].str
+	}
+	return str
+}
+
+function debugPrintTransmission (line: IRCodeTransmission, num: number) {
+	let str: string = ''
+	let d: string = ''
+	let i: string = ''
+	let prevDesc: string = ''
+	console.log("\r\n\r\n----- line #" + num + " -----")
+
+	let itemCount = -1
+	for (const item of line.items) {
+		itemCount++
+
+		if (item.desc === 'NUL' && prevDesc === 'NUL') {
+			// continue
+		}
+		prevDesc = item.desc
+		if (item.str) {
+			str = str + item.str
+		}
+
+		// if (itemCount == 4) {
+		// 	d = d + "\r\n"
+		// 	itemCount = 0
+		// }
+		// if(item.desc === 'SOH' || item.desc === 'STX') {
+		// 	d = d + "\r\n"
+		// }
+
+		if (d != '') {
+			d = d + ","
+		}
+		if (item.desc === 'NUL') {
+			d = d + item.desc
+		} else {
+			d = d + item.desc + "(" + item.uint + ")"
+		}
+		if (i != '') {
+			i = i + ","
+		}
+		i = i + item.uint
+	}
+
+	console.log("[debug - " + num + "] str = " + str)
+	console.log("[debug - " + num + "] d=" + d)
+	console.log("[debug - " + num + "] i=" + i)
+}
+
+function testFunction (trans: IRCodeTransmission[]) {
+	console.log("---------- testFunction ----------")
+	let cnt = 0
+	for (const tran of trans) {
+		cnt++
+		if (cnt != trans.length) {
+			const incCount = tran.items[0].uint
+			const blockCount = tran.items[4].uint
+			const includeName = parseStringToNull(tran.items, 8)
+			console.log("INC: " + incCount + " " + blockCount + " " + includeName)
+
+			const remItems = tran.items.slice(8+includeName.length+1)
+			const lines = splitBy({items: remItems}, 4)
+			for (const line of lines) {
+				let d = ''
+				for (const item of line.items) {
+					d = d + item.desc
+					if (item.uint !=0 && item.uint < 33 && item.uint > 126) {
+						d = d + "(" + item.uint + ")"
+					}
+					d = d + ","
+				}
+				console.log("   d=" + d)
+			}
+			let lText = ''
+			for(let l=0; l < lines[0].items.length; l+=4) {
+				if (lines[0].items[l].desc === 'NUL') {
+					break
+				}
+				lText = lText + " " + lines[0].items[l].uint
+			}
+			console.log("   lText=" + lText)
+
+			// if (tran.items[8+includeName.length+4].desc !== 'NUL') {
+			// 	let lines = ''
+			// 	for (let i=8+includeName.length+4; i < tran.items.length; i+=4) {
+			// 		lines = lines + ' ' + tran.items[i].uint
+			// 	}
+			// 	console.log("   LINES: " + lines)
+			// }
+
+			// let rem = ''
+			// for (let i=8+includeName.length+1; i < tran.items.length; i++) {
+			// 	rem = rem + tran.items[i].desc
+			// 	if (tran.items[i].uint !=0 && tran.items[i].uint < 33 && tran.items[i].uint > 126) {
+			// 		rem = rem + "(" + tran.items[i].uint + ")"
+			// 	}
+			// 	rem = rem + ","
+			// }
+			// console.log("   rem: " + rem)
+		} else {
+			const sTrans = splitByDesc(tran,'EOT')
+			for (const s of sTrans) {
+
+				if (s.items.length > 4 && s.items[2].uint === 8) {
+					const includeNum = s.items[0].uint
+					const includeName = parseStringToNull(s.items, 3)
+					console.log("INC: " + includeNum + " " + includeName)
+					continue
+				}
+
+				let d = ''
+				for (const item of s.items) {
+					d = d + item.desc
+					if (item.uint !=0 && item.uint < 33 && item.uint > 126) {
+						d = d + "(" + item.uint + ")"
+					}
+					d = d + ","
+				}
+				console.log("d=" + d + '\r\n\r\n')
+			}
+		}
+
+	}
+}
+
+// Read the file into an array a 8-bit unsigned integers.
+// Cut the array down to just the last section (debug listing lines).f
+// Join the array into logical lines based on content and order of the items.
+function readRCodeToHexArray (uri: Uri) {
+	return workspace.fs.readFile(uri).then((items) => {
+		// items = items.slice(items.lastIndexOf(232))
+		console.log("items.length-1=" + items.length)
+
+		// items[4] === 0 && items[5] === 0 && items[6] === 0 && items[7] === 0) {
+
+
+		let r_items: IRCodeItem[] = []
+		const trans: IRCodeTransmission[] = []
+		let foundHEADER = false
+		let foundEXT = false
+		let foundSOS = false
+		let foundXON = false
+
+		for(const itemInt of items) {
+			const item = getAsciiItem(itemInt)
+			// console.log(item.desc + "(" + item.uint + ")")
+
+			if (item.desc === 'yuml' && r_items.length >=4 &&
+				r_items[r_items.length-1].desc === 'yuml' &&
+				r_items[r_items.length-2].desc === 'yuml' &&
+				r_items[r_items.length-3].desc === 'yuml') {
+				r_items.push(item)
+				trans.push({items: r_items})
+				r_items = []
+				foundEXT = false
+				foundSOS = false
+				foundXON = false
+				continue
+			}
+
+
+			// if (foundXON && item.desc != 'XOFF') {
+			// 	item.str = item.uint.toString()
+			// }
+			// if (foundEXT) {
+			// 	item.str = item.uint.toString()
+			// }
+			// if (foundSOS) {
+			// 	item.str = item.uint.toString()
+			// }
+			// if (foundHEADER && item.desc === 'STX') {
+			// 	item.str = '**\r\n'
+			// 	foundHEADER = false
+			// }
+
+			// console.log("PUSH desc = " + item.desc + " str = " + item.str)
+			r_items.push(item)
+
+			if (item.desc === 'XON') {
+				foundXON = true
+			}
+			if (item.desc === 'XOFF') {
+				foundXON = false
+			}
+			if (item.desc === 'SOH') {
+				foundHEADER = true
+			}
+			if (item.desc === 'EXT') {
+				foundEXT = true
+			}
+			if (item.desc === 'SOS') {
+				foundSOS = true
+			}
+			if (item.desc === 'ST') {
+				foundSOS = false
+			}
+			if (item.desc === 'STX') {
+				foundEXT = false
+				foundHEADER = false
+			}
+		}
+		if (items.length > 0) {
+			trans.push({items: r_items})
+		}
+		return trans
+	})
+}
+
+
+function getAsciiItem (val: number): IRCodeItem {
+	// TODO Notes
+	// * Do we need to convert the codepage? https://docs.progress.com/bundle/openedge-abl-internationalize-applications/page/The-undefined-code-page.html
+
+	const item: IRCodeItem = {
+		uint: val,
+		desc: getAsciiType(val),
+		str: undefined
+	}
+	if (val >= 32 && val <= 126) {
+		item.str = item.desc
+	} else {
+		// if (item.desc === 'NUL') {
+		// 	str = str + ' '
+		// }
+		switch (item.desc) {
+			case 'NUL': item.str = ' \0'; break
+			case 'SOH': item.str = '\r\n**'; break
+			case 'CAN': item.str = '\x18'; break
+
+			case 'SP': item.str = ' '; break
+			case '&VeryThinSpace': item.str = ' '; break
+
+			case 'PAD': item.str = '\t'; break
+			case 'HT': item.str = '\t'; break
+			case 'LF': item.str = '\r\n'; break
+			case '&lf': item.str = '\r\n'; break
+			case 'FF': item.str = '\r\n------\r\n'; break
+			case 'nbsp': item.str = ' '; break
+			case '&plus+': item.str = '+'; break
+			case '&minus': item.str = '-'; break
+			case '&NestedLessLess': item.str = '<<'; break
+		}
+	}
+	return item
+}
+
+function getAsciiType (val: number): string {
+	switch (val) {
+		case 0: return 'NUL'
+		case 1: return 'SOH'
+		case 2: return 'STX'
+		case 3: return 'ETX'
+		case 4: return 'EOT'
+		case 5: return 'ENQ'
+		case 6: return 'ACK'
+		case 7: return 'BEL'
+		case 8: return 'BS'
+		case 9: return 'HT'
+		case 10: return 'LF'
+		case 11: return 'VT'
+		case 12: return 'FF'
+		case 13: return 'CR'
+		case 14: return 'SO'
+		case 15: return 'SI'
+		case 16: return 'DLE'
+		// case 17: return 'DC1'
+		case 17: return 'XON'
+		case 18: return 'DC2'
+		// case 19: return 'DC3'
+		case 19: return 'XOFF'
+		case 20: return 'DC4'
+		case 21: return 'NAK'
+		case 22: return 'SYN'
+		case 23: return 'ETB'
+		case 24: return 'CAN'
+		case 25: return 'EM'
+		case 26: return 'SUB'
+		case 27: return 'ESC'
+		case 28: return 'FS'
+		case 29: return 'GS'
+		case 30: return 'RS'
+		case 31: return 'US'
+		case 32: return 'SP'
+		case 33: return '!'
+		case 34: return '"'
+		case 35: return '#'
+		case 36: return '$'
+		case 37: return '%'
+		case 38: return '&'
+		case 39: return "'"
+		case 40: return '('
+		case 41: return ')'
+		case 42: return '*'
+		case 43: return '+'
+		case 44: return ','
+		case 45: return '-'
+		case 46: return '.'
+		case 47: return '/'
+		case 48: return '0'
+		case 49: return '1'
+		case 50: return '2'
+		case 51: return '3'
+		case 52: return '4'
+		case 53: return '5'
+		case 54: return '6'
+		case 55: return '7'
+		case 56: return '8'
+		case 57: return '9'
+		case 58: return ':'
+		case 59: return ';'
+		case 60: return '<'
+		case 61: return '='
+		case 62: return '>'
+		case 63: return '?'
+		case 64: return '@'
+		case 65: return 'A'
+		case 66: return 'B'
+		case 67: return 'C'
+		case 68: return 'D'
+		case 69: return 'E'
+		case 70: return 'F'
+		case 71: return 'G'
+		case 72: return 'H'
+		case 73: return 'I'
+		case 74: return 'J'
+		case 75: return 'K'
+		case 76: return 'L'
+		case 77: return 'M'
+		case 78: return 'N'
+		case 79: return 'O'
+		case 80: return 'P'
+		case 81: return 'Q'
+		case 82: return 'R'
+		case 83: return 'S'
+		case 84: return 'T'
+		case 85: return 'U'
+		case 86: return 'V'
+		case 87: return 'W'
+		case 88: return 'X'
+		case 89: return 'Y'
+		case 90: return 'Z'
+		case 91: return '['
+		case 92: return '\\'
+		case 93: return ']'
+		case 94: return '^'
+		case 95: return '_'
+		case 96: return '`'
+		case 97: return 'a'
+		case 98: return 'b'
+		case 99: return 'c'
+		case 100: return 'd'
+		case 101: return 'e'
+		case 102: return 'f'
+		case 103: return 'g'
+		case 104: return 'h'
+		case 105: return 'i'
+		case 106: return 'j'
+		case 107: return 'k'
+		case 108: return 'l'
+		case 109: return 'm'
+		case 110: return 'n'
+		case 111: return 'o'
+		case 112: return 'p'
+		case 113: return 'q'
+		case 114: return 'r'
+		case 115: return 's'
+		case 116: return 't'
+		case 117: return 'u'
+		case 118: return 'v'
+		case 119: return 'w'
+		case 120: return 'x'
+		case 121: return 'y'
+		case 122: return 'z'
+		case 123: return '{'
+		case 124: return '|'
+		case 125: return '}'
+		case 126: return '~'
+		case 127: return 'DEL'
+		case 128: return 'PAD'
+		case 129: return 'HOP'
+		case 130: return 'BPH'
+		case 131: return 'NBH'
+		case 132: return 'IND'
+		case 133: return 'NEL'
+		case 134: return 'SSA'
+		case 135: return 'ESA'
+		case 136: return 'HTS'
+		case 137: return 'HTJ'
+		case 138: return 'VTS'
+		case 139: return 'PLD'
+		case 140: return 'PLU'
+		case 141: return 'RI'
+		case 142: return 'SS2'
+		case 143: return 'SS3'
+		case 144: return 'DCS'
+		case 145: return 'PU1'
+		case 146: return 'PU2'
+		case 147: return 'STS'
+		case 148: return 'CCH'
+		case 149: return 'MW'
+		case 150: return 'SPA'
+		case 151: return 'EPA'
+		case 152: return 'SOS'
+		case 153: return 'SGCI'
+		case 154: return 'SCI'
+		case 155: return 'CSI'
+		case 156: return 'ST'
+		case 157: return 'OSC'
+		case 158: return 'PM'
+		case 159: return 'APC'
+		case 160: return 'nbsp'
+		case 161: return 'iexcl'
+		case 162: return 'cent'
+		case 163: return 'pound'
+		case 164: return 'curren'
+		case 165: return 'yen'
+		case 166: return 'brvbar'
+		case 167: return 'sect'
+		case 168: return 'uml'
+		case 169: return 'copy'
+		case 170: return 'ordf'
+		case 171: return 'laquo'
+		case 172: return 'not'
+		case 173: return 'shy'
+		case 174: return 'reg'
+		case 175: return 'macr'
+		case 176: return 'deg'
+		case 177: return 'plusmn'
+		case 178: return 'sup2'
+		case 179: return 'sup3'
+		// case 180: return 'acute'
+		case 180: return '&minus'
+		case 181: return 'micro'
+		case 182: return 'para'
+		case 183: return 'middot'
+		case 184: return 'cedil'
+		case 185: return 'sup1'
+		case 186: return 'ordm'
+		case 187: return 'raquo'
+		case 188: return 'frac14'
+		case 189: return 'frac12'
+		case 190: return 'frac34'
+		case 191: return 'iquest'
+		case 192: return 'Agrave'
+		case 193: return 'Aacute'
+		case 194: return 'ACI' // Acirc
+		case 195: return 'Atilde'
+		case 196: return 'Auml'
+		case 197: return 'Aring'
+		case 198: return 'AElig'
+		case 199: return 'Ccedil'
+		case 200: return '&VeryThinSpace'
+		case 201: return 'Eacute'
+		case 202: return 'Ecirc'
+		case 203: return 'Euml'
+		case 204: return 'Igrave'
+		case 205: return 'Iacute'
+		case 206: return 'Icirc'
+		case 207: return 'Iuml'
+		// case 208: return 'Eth'
+		case 208: return '&plus+'
+		case 209: return 'Ntilde'
+		case 210: return 'Ograve'
+		case 211: return 'Oacute'
+		case 212: return 'Ocirc'
+		case 213: return 'Otilde'
+		case 214: return 'Ouml'
+		case 215: return 'times'
+		// case 216: return 'Oslash'
+		case 216: return '&Oslash;'
+		case 217: return 'Ugrave'
+		case 218: return 'Uacute'
+		case 219: return 'Ucirc'
+		case 220: return 'Uuml'
+		case 221: return 'Yacute'
+		case 222: return 'THORN'
+		case 223: return 'szlig'
+		case 224: return 'agrave'
+		case 225: return 'aacute'
+		// case 226: return 'acirc'
+		case 226: return '&NestedLessLess'
+		case 227: return 'atilde'
+		case 228: return 'auml'
+		case 229: return 'aring'
+		case 230: return 'aelig'
+		case 231: return 'ccedil'
+		case 232: return 'egrave'
+		case 233: return 'eacute'
+		case 234: return 'ecirc'
+		case 235: return 'euml'
+		case 236: return 'igrave'
+		case 237: return 'iacute'
+		case 238: return 'icirc'
+		case 239: return 'iuml'
+		// case 240: return 'eth'
+		case 240: return '&lf'
+		case 241: return 'ntilde'
+		case 242: return 'ograve'
+		case 243: return 'oacute'
+		case 244: return 'ocirc'
+		case 245: return 'otilde'
+		case 246: return 'ouml'
+		case 247: return 'divide'
+		case 248: return 'oslash'
+		case 249: return 'ugrave'
+		case 250: return 'uacute'
+		case 251: return 'ucirc'
+		case 252: return 'uuml'
+		case 253: return 'yacute'
+		case 254: return 'thorn'
+		case 255: return 'yuml'
+		default:
+			console.error('unknown ascii value for code: ' + val)
+			return val.toString()
+	}
+}

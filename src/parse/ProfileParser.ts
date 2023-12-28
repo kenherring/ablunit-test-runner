@@ -388,11 +388,16 @@ export class ABLProfileJson {
 			}
 			if (sourceName) {
 				const lineinfo = await this.debugLines.getSourceLine(sourceName, sum.LineNo)
+				if(!lineinfo) {
+					console.error("Unable to find source/debug line info for " + sourceName + " " + sum.LineNo)
+					// throw new Error("Unable to find source/debug line info for " + sourceName + " " + sum.LineNo)
+				}
+				
 				if (lineinfo) {
-					sum.srcLine = lineinfo.srcLine
-					sum.srcUri = lineinfo.srcUri
-					sum.incLine = lineinfo.incLine
-					sum.incUri = lineinfo.incUri
+					sum.srcLine = lineinfo.debugLine
+					sum.srcUri = lineinfo.debugUri
+					sum.incLine = lineinfo.sourceLine
+					sum.incUri = lineinfo.sourceUri
 				}
 			}
 			const mod = this.getModule(modID)

@@ -37,6 +37,7 @@
 			"description": "Enter the name of the workspace to test",
 			"type": "pickString",
 			"options": [
+				"DebugLines",
 				"proj0",
 				"proj1",
 				"proj2",

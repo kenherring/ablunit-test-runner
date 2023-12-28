@@ -1,5 +1,6 @@
 import { workspace, Location, Position, Range } from 'vscode'
-import { ABLDebugLines, IDebugLine } from '../ABLDebugLines'
+import { ABLDebugLines } from '../ABLDebugLines'
+import { ISourceMapItem } from './RCodeParser'
 
 interface ICallStackItem {
 	rawText: string
@@ -8,7 +9,7 @@ interface ICallStackItem {
 	debugFile?: string
 	sourceLine?: number
 	// fileinfo?: IABLFile
-	lineinfo?: IDebugLine
+	lineinfo?: ISourceMapItem
 	markdownText?: string
 	loc?: Location
 }
@@ -46,18 +47,24 @@ export async function parseCallstack (debugLines: ABLDebugLines, callstackRaw: s
 			debugFile: debugFile
 		}
 
-		const lineinfo = await debugLines.getSourceLine(moduleParent, debugLine)
+		let lineinfo: ISourceMapItem | undefined = undefined
+		try {
+			lineinfo = await debugLines.getSourceLine(moduleParent, debugLine)
+		} catch {
+			console.log("could not find source line for " + moduleParent + " at line " + debugLine + ".  using raw callstack data")
+		}
+
 		if(lineinfo) {
 			const markdownText = module + " at line " + debugLine + " " +
-				"([" + workspace.asRelativePath(lineinfo.incUri, false) + ":" + (lineinfo.incLine) + "]" +
-				"(command:_ablunit.openCallStackItem?" + encodeURIComponent(JSON.stringify(lineinfo.incUri + "&" + (lineinfo.incLine - 1))) + "))"
+				"([" + workspace.asRelativePath(lineinfo.sourceUri, false) + ":" + (lineinfo.sourceUri) + "]" +
+				"(command:_ablunit.openCallStackItem?" + encodeURIComponent(JSON.stringify(lineinfo.sourceUri + "&" + (lineinfo.sourceLine - 1))) + "))"
 
 			callstackItem.lineinfo = lineinfo
 			callstackItem.markdownText = markdownText
 
-			callstackItem.loc = new Location(lineinfo.incUri, new Range(
-				new Position(lineinfo.incLine - 1, 0),
-				new Position(lineinfo.incLine, 0)
+			callstackItem.loc = new Location(lineinfo.sourceUri, new Range(
+				new Position(lineinfo.sourceLine - 1, 0),
+				new Position(lineinfo.sourceLine, 0)
 			))
 		} else {
 			callstackItem.markdownText = module + " at line " + debugLine + " (" + debugFile + ")"

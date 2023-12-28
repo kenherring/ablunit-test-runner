@@ -34,6 +34,12 @@
 					]
 				}
 			}
+		},
+		{
+			"label": "run unit tests in docker",
+			"type": "shell",
+			"command": "docker/run_tests.sh",
+			"problemMatcher": []
 		}
 	]
 }
