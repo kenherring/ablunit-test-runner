@@ -138,7 +138,6 @@ export class PropathParser {
 				}
 				this.files.push(fileObj)
 				this.filemap.set(relativeFile,fileObj)
-				console.log(" ---- buildMap-1.set " + relativeFile + " " + e.buildDirUri.fsPath)
 				this.buildMap.set(relativeFile, e.buildDirUri.fsPath)
 				return fileObj
 			}
@@ -150,7 +149,6 @@ export class PropathParser {
 		if (file instanceof Uri) {
 			return this.searchUri(file)
 		}
-		console.log("----- searching for " + file)
 		let relativeFile = file
 		if (!relativeFile.endsWith(".cls") && !relativeFile.endsWith(".p") && !relativeFile.endsWith(".w") && !relativeFile.endsWith(".i")) {
 			relativeFile = relativeFile.replace(/\./g,'/') + ".cls"
@@ -158,16 +156,12 @@ export class PropathParser {
 
 		const got = this.filemap.get(relativeFile)
 		if (got) {
-			console.log("---- return got " + JSON.stringify(got))
 			return got
 		}
 
-		console.log(" ----- const e of this.propath.entry")
 		for (const e of this.propath.entry) {
 			const fileInPropathUri = Uri.joinPath(e.uri, relativeFile)
 			const exists = await workspace.fs.stat(fileInPropathUri).then(() => { return true }, () => { return false })
-
-			console.log("----- exists=" + exists + " " + fileInPropathUri.fsPath)
 
 			if (exists) {
 				let propathRelativeFile = fileInPropathUri.fsPath.replace(e.uri.fsPath,'')
@@ -185,7 +179,6 @@ export class PropathParser {
 				}
 				this.files.push(fileObj)
 				this.filemap.set(relativeFile,fileObj)
-				console.log("----- buildMap-2.set " + relativeFile + " " + e.buildDirUri.fsPath)
 				this.buildMap.set(relativeFile, e.buildDirUri.fsPath)
 				return fileObj
 			}
