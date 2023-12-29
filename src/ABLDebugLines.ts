@@ -12,7 +12,6 @@ export class ABLDebugLines {
 	}
 
 	async getSourceLine (debugSource: string, debugLine: number) {
-		// console.log("debugSource=" + debugSource + ", debugLine=" + debugLine)
 		if (debugSource.startsWith("OpenEdge.")) {
 			return undefined
 		}
@@ -31,7 +30,7 @@ export class ABLDebugLines {
 			try {
 				map = await getSourceMapFromRCode(this.propath, await this.propath.getRCodeUri(debugSource))
 			} catch (e) {
-				console.log("getSourceMapForRCode error: " + e)
+				console.error("getSourceMapForRCode error: " + e)
 				return undefined
 			}
 

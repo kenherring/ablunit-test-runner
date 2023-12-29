@@ -100,23 +100,17 @@ export class PropathParser {
 		let bd = this.buildMap.get(filepath)
 
 		if (!bd) {
-			console.warn("running extra search for " + filepath + " in propath...")
 			const found = await this.search(filepath)
 			if (found) {
 				bd = this.buildMap.get(filepath)
-				if (bd) {
-					console.warn("found build dir for " + filepath + " in propath: '" + bd + "'.  this should have already been available...")
-				}
 			}
 		}
 
-		// console.log("[getRCodeUri] bd = " + JSON.stringify(bd))
 		if (!bd) {
 			throw new Error("cannot find build dir for " + filepath)
 		}
 
 		const rpath = Uri.joinPath(Uri.file(bd), filepath.replace(/\.(p|cls)$/,'.r'))
-		// console.log("[getBuildDirUri] rpath = " + rpath.fsPath)
 		return rpath
 	}
 

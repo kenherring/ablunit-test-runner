@@ -75,10 +75,6 @@ export const getSourceMapFromRCode = async (propath: PropathParser, uri: Uri) =>
 		const debug = segmentTable.subarray(12,16)
 		const debugsize = segmentTable.subarray(28,32)
 		const debugLoc = toBase10(debug) + segmentTable.byteOffset + segmentTable.length
-		console.log("debugLoc= " + Uint8toArray(debug) + " " + toBase10(debug))
-		console.log("debugSize= " + Uint8toArray(debugsize) + " " + toBase10(debugsize))
-		console.log("debugLoc = " + debugLoc)
-
 		return {
 			debugLoc: debugLoc,
 			debugSize: toBase10(debugsize)
