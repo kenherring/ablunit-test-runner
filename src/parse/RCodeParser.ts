@@ -58,6 +58,20 @@ export const getSourceMapFromRCode = async (propath: PropathParser, uri: Uri) =>
 	const map: IIncludeMap[] = []
 	const debugLines: ISourceMapItem[] = []
 
+	const toBase10 = (items: Uint8Array) => {
+		if (items.length === 4) {
+			return items[3] * 256 * 256 * 256 +
+				items[2] * 256 * 256 +
+				items[1] * 256 +
+				items[0]
+		} else if (items.length === 2) {
+			return items[1] * 256 + items[0]
+		} else if (items.length === 1) {
+			return items[0]
+		}
+		throw new Error("invalid length=" + items.length)
+	}
+
 
 	const parseHeader = (raw: Uint8Array) => {
 		const rcodeHeader = raw.subarray(0,headerLength)
@@ -376,26 +390,4 @@ export const getSourceMapFromRCode = async (propath: PropathParser, uri: Uri) =>
 
 		return sourceMap
 	})
-}
-
-function Uint8toArray (items: Uint8Array) {
-	const ret: number[] = []
-	for (const item of items) {
-		ret.push(item)
-	}
-	return ret
-}
-
-function toBase10 (items: Uint8Array) {
-	if (items.length === 4) {
-		return items[3] * 256 * 256 * 256 +
-			items[2] * 256 * 256 +
-			items[1] * 256 +
-			items[0]
-	} else if (items.length === 2) {
-		return items[1] * 256 + items[0]
-	} else if (items.length === 1) {
-		return items[0]
-	}
-	throw new Error("invalid length=" + items.length)
 }

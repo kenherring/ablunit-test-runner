@@ -375,7 +375,7 @@ export class ABLProfileJson {
 	async addLineSummary (lines: string[]) {
 		for(const element of lines) {
 			const test = lineSummaryRE.exec(element)
-			if(!test) continue
+			if (!test) continue
 
 			const modID = Number(test[1])
 			const sourceName = this.getModule(modID)?.SourceName
@@ -386,20 +386,24 @@ export class ABLProfileJson {
 				ActualTime: Number(test[4]),
 				CumulativeTime: Number(test[5])
 			}
-			if (sourceName) {
-				const lineinfo = await this.debugLines.getSourceLine(sourceName, sum.LineNo)
-				if(!lineinfo) {
-					console.error("Unable to find source/debug line info for " + sourceName + " " + sum.LineNo)
-					// throw new Error("Unable to find source/debug line info for " + sourceName + " " + sum.LineNo)
-				}
-				
-				if (lineinfo) {
-					sum.srcLine = lineinfo.debugLine
-					sum.srcUri = lineinfo.debugUri
-					sum.incLine = lineinfo.sourceLine
-					sum.incUri = lineinfo.sourceUri
-				}
+			if (!sourceName) {
+				console.error('could not find source name for module ' + modID)
+				return
 			}
+
+			const lineinfo = await this.debugLines.getSourceLine(sourceName, sum.LineNo)
+			if(!lineinfo) {
+				console.error("Unable to find source/debug line info for " + sourceName + " " + sum.LineNo)
+				// throw new Error("Unable to find source/debug line info for " + sourceName + " " + sum.LineNo)
+			}
+
+			if (lineinfo) {
+				sum.srcLine = lineinfo.debugLine
+				sum.srcUri = lineinfo.debugUri
+				sum.incLine = lineinfo.sourceLine
+				sum.incUri = lineinfo.sourceUri
+			}
+
 			const mod = this.getModule(modID)
 			if (mod) {
 				mod.lines[mod.lines.length] = sum
