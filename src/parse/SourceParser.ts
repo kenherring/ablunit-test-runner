@@ -33,7 +33,7 @@ async function readXrefFile (xrefUri: Uri) {
 		const str = Buffer.from(content.buffer).toString()
 		return str
 	}, (reason) => {
-		console.error("xref file not found '" + xrefUri.fsPath + "\n  - reason=" + reason)
+		console.warn("xref file not found '" + xrefUri.fsPath + "\n  - reason=" + reason)
 		return undefined // don't rethrow, just return undefined because we don't want to stop processing
 	})
 }
@@ -111,10 +111,9 @@ export const getSourceMapFromSource = async (propath: PropathParser, debugSource
 
 		lineCount = await readLineCount(debugSourceUri)
 
-		// This reads the xref to find where the include files belong, and finds how many lines each of those includes has
-		// TODO [BUG]: this only works for single line includes.  Need to figure out how to deal with multi-line includes,
-		//				 and instances where the include has code which expands to multiple lines or shrinks the preprocessor
-		//				suspect this might require using listings, or more likely breaking apart the r-code which I don't want to do
+		// This reads the xref to find where the include files belong, and finds how many lines each of those includes contain
+		// It is is prone to error, especially in cases of multiple line arguments or include declarations.
+		// Ideally we will parse the rcode for the source map, but this is a fallback option.
 
 		const content = await readXrefFile(xrefUri)
 

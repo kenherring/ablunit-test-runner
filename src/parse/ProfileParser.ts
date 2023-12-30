@@ -379,6 +379,7 @@ export class ABLProfileJson {
 
 			const modID = Number(test[1])
 			const sourceName = this.getModule(modID)?.SourceName
+			if (sourceName?.startsWith("OpenEdge.")) continue
 			const sum: LineSummary = {
 				LineNo: Number(test[2]),
 				ExecCount: Number(test[3]),
@@ -393,10 +394,8 @@ export class ABLProfileJson {
 
 			const lineinfo = await this.debugLines.getSourceLine(sourceName, sum.LineNo)
 			if(!lineinfo) {
-				if (!sourceName.startsWith("OpenEdge.")) {
-					console.error("Unable to find source/debug line info for " + sourceName + " " + sum.LineNo)
-					// throw new Error("Unable to find source/debug line info for " + sourceName + " " + sum.LineNo)
-				}
+				console.error("Unable to find source/debug line info for " + sourceName + " " + sum.LineNo)
+				// throw new Error("Unable to find source/debug line info for " + sourceName + " " + sum.LineNo)
 			} else {
 				sum.srcLine = lineinfo.debugLine
 				sum.srcUri = lineinfo.debugUri
