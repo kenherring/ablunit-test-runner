@@ -2,5 +2,7 @@
 *.png binary
 *.sh text eol=lf
 
-*.{cls,i,p,w} linguist-language=OpenEdge-ABL
-
+*.cls linguist-language=OpenEdge-ABL
+*.i linguist-language=OpenEdge-ABL
+*.p linguist-language=OpenEdge-ABL
+*.w linguist-language=OpenEdge-ABL
