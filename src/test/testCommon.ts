@@ -50,13 +50,13 @@ export function getSessionTempDir () {
 	}
 }
 
-export async function sleep (time: number = 2000, msg?: string) {
+export function sleep (time: number = 2000, msg?: string) {
 	let status = "sleeping for " + time + "ms"
 	if (msg) {
 		status = status + " [" + msg + "]"
 	}
 	console.log(status)
-	await new Promise(resolve => setTimeout(resolve, time))
+	return new Promise(resolve => setTimeout(resolve, time))
 }
 
 export async function deleteFile (uri: Uri) {
@@ -182,13 +182,13 @@ export async function runAllTests (doRefresh: boolean = true) {
 	})
 }
 
-export async function updateConfig (key: string, value: string | string[] | undefined) {
-	await workspace.getConfiguration('ablunit').update(key, value, ConfigurationTarget.Workspace).then(() => {
+export function updateConfig (key: string, value: string | string[] | undefined) {
+	return workspace.getConfiguration('ablunit').update(key, value, ConfigurationTarget.Workspace).then(() => {
 		console.log("ablunit." + key + " set successfully (value='" + value + "')")
+		return sleep(100, "sleep after updateConfig")
 	}, (err) => {
 		throw new Error("failed to set ablunit." + key + ": " + err)
 	})
-	await sleep(250, "sleep after updateConfig")
 }
 
 export function updateTestProfile (key: string, value: string | string[] | boolean): Thenable<void> {

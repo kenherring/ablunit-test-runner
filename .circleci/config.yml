@@ -14,12 +14,16 @@ workflows:
     jobs:
       - shellcheck/check
       - test-and-scan:
+          matrix:
+            parameters:
+              oe-version: [ 12.2.12, 12.7.0 ]
+          name: test-and-scan_<< matrix.oe-version >>
           context:
             - DockerHub
             - PROGRESS_CFG
             - SonarCloud
           filters:
-            tags:
+            tags: ## all tags starting with 'v' (all branches also included by default)
               only:
                 - /^v.*/
       - install-and-run:
@@ -29,7 +33,8 @@ workflows:
       - package-and-publish:
           requires:
             - shellcheck/check
-            - test-and-scan
+            - test-and-scan_12.2.12
+            - test-and-scan_12.7.0
             - install-and-run
           context:
             - Azure_PAT
@@ -40,8 +45,13 @@ workflows:
 
 jobs:
   test-and-scan:
+    parameters:
+      oe-version:
+        type: string
+        enum: [ 12.2.12, 12.7.0 ]
+        default: 12.2.12
     docker:
-      - image: kherring/ablunit-test-runner
+      - image: kherring/ablunit-test-runner:<< parameters.oe-version >>
         auth:
           username: kherring
           password: $DOCKERHUB_TOKEN
@@ -62,7 +72,11 @@ jobs:
       - store_artifacts:
           when: always
           path: artifacts
-      - sonarcloud/scan
+      - when:
+          condition:
+            equals: [ << parameters.oe-version >>, 12.2.12 ]
+          steps:
+            - sonarcloud/scan
       - run: .circleci/validate.sh
       - save_cache:
           key: v1-nodemodules-{{ checksum "package.json" }}
@@ -78,7 +92,7 @@ jobs:
             - .
   install-and-run:
     docker:
-      - image: kherring/ablunit-test-runner
+      - image: kherring/ablunit-test-runner:12.2.12
         auth:
           username: kherring
           password: $DOCKERHUB_TOKEN

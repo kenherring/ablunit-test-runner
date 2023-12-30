@@ -62,7 +62,7 @@ copy_files () {
 		if [ ! -d "$(dirname "$FILE")" ]; then
 			mkdir -p "$(dirname "$FILE")"
 		fi
-		cp "/home/circleci/ablunit-test-provider/$FILE" "$FILE"
+		cp "/home/circleci/ablunit-test-provider/$FILE" "$FILE" || true
 	done < "/tmp/${TYPE}_files"
 }
 
@@ -113,4 +113,4 @@ initialize "$@"
 run_tests
 analyze_results
 finish
-echo "entrypoint.sh finished successfully!"
+echo "$0 finished successfully!"

@@ -20,7 +20,6 @@ dbus_config () {
 }
 
 run_tests () {
-	set -x
 	echo "run_tests..."
 	EXIT_CODE=0
 

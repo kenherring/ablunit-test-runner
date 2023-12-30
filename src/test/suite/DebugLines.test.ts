@@ -15,12 +15,12 @@ before(async () => {
 	const langClientWait = 2
 	console.log("waiting " + langClientWait + "s for language client ready...")
 	await new Promise((resolve) => setTimeout(resolve, langClientWait * 1000)).then(() => {
-		console.log("language client ready?  continuing...")
+		console.log("language client ready? continuing...")
 	})
 
-	const buildWaitTime = 3
+	const buildWaitTime = 5
 	await commands.executeCommand('abl.project.rebuild').then(() => {
-		console.log("ablunit rebuild started.  waiting " + buildWaitTime + " seconds...")
+		console.log("ablunit rebuild started. waiting " + buildWaitTime + " seconds...")
 	})
 	await new Promise((resolve) => setTimeout(resolve, buildWaitTime * 1000)).then(() => {
 		console.log("abl project rebuild complete!")

@@ -1,16 +1,15 @@
+ARG OE_VERSION
+FROM progresssoftware/prgs-oedb:${OE_VERSION}_ent AS psc
 FROM node:20.8
 
-# requirements for running vscode extension tests
-RUN apt update \
-	&& apt install -y --no-install-recommends libasound2 libgbm1 libgtk-3-0 libnss3 \
-	&& apt install -y --no-install-recommends xauth \
-	&& apt install -y --no-install-recommends xvfb rsync \
-	&& apt install -y --no-install-recommends ant jq \
-	&& rm -rf /var/lib/apt/lists/* /var/cache/apt/archives/*
+## dependencies for running vscode extension tests
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends libasound2 libgbm1 libgtk-3-0 libnss3 \
+    && apt-get install -y --no-install-recommends xauth xvfb xauth rsync ant jq \
+    && rm -rf /var/lib/apt/lists/* /var/cache/apt/archives/*
 
-# requirements for running ablunit tests
-ADD docker/ablunit.pl /psc/dlc/tty/ablunit.pl
-COPY --from=progresssoftware/prgs-oedb:12.2_latest_ent --chown=circleci:circleci --chmod=744 /psc /psc
+## dependencies for running ablunit tests
+COPY --from=psc --chown=circleci:circleci --chmod=744 /psc /psc
 RUN curl -v -L https://github.com/Riverside-Software/pct/releases/download/v226/PCT.jar -o /usr/share/ant/lib/PCT.jar
 RUN echo "JAVA_HOME=$(which java)" > /psc/dlc/properties/java.properties
 
@@ -19,8 +18,19 @@ ENV PATH $PATH:$DLC/bin
 ENV PROMSGS $DLC/promsgs
 ENV TERM=vt100
 
-# create directory for vscode-test which will be a mounted volume
+## clone and build ablunit.pl for the OE version
+ADD build.xml /psc/dlc/tty/build.xml
+WORKDIR /psc/dlc/tty
+ARG OE_VERSION
+RUN --mount=type=secret,id=license,target=/psc/dlc/progress.cfg \
+    git clone --single-branch -b "v${OE_VERSION}.0" https://github.com/progress/ADE.git \
+    && ant compile \
+    && rm -rf build.xml ADE/ /tmp/*
+
+WORKDIR /
+
+## create directory for vscode-test which will be a mounted volume
 RUN mkdir -p ~/.vscode-test
 
-# install vscode packaging dependency
+## install vscode packaging dependency
 RUN npm install -g @vscode/vsce

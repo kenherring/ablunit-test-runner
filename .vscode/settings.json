@@ -2,6 +2,7 @@
 	"eslint.enable": true,
 	"eslint.lintTask.enable": false,
 	"eslint.run": "onType",
+	"extension-test-runner.debugOptions": {},
 	"git.branchProtection": [
 		"main"
 	],
@@ -14,12 +15,4 @@
 	},
 	"sonarlint.disableTelemetry": true,
 	"tslint.enable": false, // this project uses eslint
-	"extension-test-runner.debugOptions": {}
-	// "extension-test-runner.debugOptions": {
-	// 	"type": "extensionHost",
-	// 	"runtimeExecutable": "${execPath}",
-	// 	"outFiles": [
-	// 		"${workspaceFolder}/out/**/*.js"
-	// 	]
-	// }
 }
