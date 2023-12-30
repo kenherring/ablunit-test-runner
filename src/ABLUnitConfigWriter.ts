@@ -23,6 +23,7 @@ export class ABLUnitConfig  {
 	ablunitConfig: RunConfig = <RunConfig>{}
 
 	async setup (workspaceFolder: WorkspaceFolder) {
+		console.log("[ABLUnitConfigWriter setup] workspaceUri=" + workspaceFolder.uri.fsPath)
 		this.ablunitConfig = await getProfileConfig(workspaceFolder)
 		console.log("[ABLUnitConfigWriter constructor] workspaceUri=" + this.ablunitConfig.workspaceFolder.uri.fsPath)
 		console.log("[ABLUnitConfigWriter constructor] tempDir=" + this.ablunitConfig.tempDirUri.fsPath)

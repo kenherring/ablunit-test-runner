@@ -335,7 +335,7 @@ function getOrCreateFile (controller: TestController, uri: Uri) {
 
 	const data = createFileNode(uri)
 	if(!data) {
-		console.error('No tests found in file: ' + uri.fsPath)
+		logToChannel('No tests found in file: ' + uri.fsPath, 'warn')
 		return { file: undefined, data: undefined }
 	}
 	const file = controller.createTestItem(uri.fsPath, workspace.asRelativePath(uri.fsPath), uri)

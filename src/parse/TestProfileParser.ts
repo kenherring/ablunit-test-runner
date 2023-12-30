@@ -4,6 +4,7 @@ import { CoreOptions } from './config/CoreOptions'
 import { IRunProfile, DefaultRunProfile } from './config/RunProfile'
 import { ProfilerOptions } from './config/ProfilerOptions'
 import { CommandOptions } from './config/CommandOptions'
+import { logToChannel } from '../ABLUnitCommon'
 
 
 const runProfileFilename: string = 'ablunit-test-profile.json'
@@ -24,7 +25,7 @@ async function readJson (uri: Uri) {
 		d = d.replace(/\/\*.*\*\//g,'') // remove multi-line comments
 		return d
 	}, (err: Error) => {
-		console.error("Failed to parse ablunit-test-profile.json: " + err)
+		console.error("Failed to parse .vscode/ablunit-test-profile.json: " + err)
 		throw err
 	})
 	return <JSON>JSON.parse(data)
@@ -88,7 +89,20 @@ export async function parseRunProfiles (workspaceFolders: WorkspaceFolder[], wsF
 
 	const runProfiles: IRunProfile[] = []
 	for (const workspaceFolder of workspaceFolders) {
-		const wfConfig = await getConfigurations(Uri.joinPath(workspaceFolder.uri,'.vscode',wsFilename))
+		console.log("100")
+		const wfConfig = await getConfigurations(Uri.joinPath(workspaceFolder.uri,'.vscode',wsFilename)).then((config) => {
+			if (config.configurations.length === 0) {
+				return { configurations: [] }
+			}
+			return config
+		}, (err: Error) => {
+			logToChannel("Failed to parse ablunit-test-profile.json: " + err, 'warn')
+			return { configurations: [] }
+		})
+		console.log("101")
+		if (wfConfig.configurations.length === 0) {
+			return defaultConfig.configurations
+		}
 
 		for(const dfltProfile of defaultConfig.configurations) {
 			let folderProfile: IRunProfile | undefined = undefined
@@ -119,9 +133,6 @@ export async function parseRunProfiles (workspaceFolders: WorkspaceFolder[], wsF
 
 export async function parseRunProfile (workspaceFolder: WorkspaceFolder) {
 	const runProfiles = await parseRunProfiles([workspaceFolder])
-	if (runProfiles.length === 0) {
-		throw new Error("No run profiles found")
-	}
 	return runProfiles[0]
 }
 

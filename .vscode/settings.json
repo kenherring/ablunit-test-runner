@@ -13,5 +13,13 @@
 		"projectKey": "kenherring_ablunit-test-provider"
 	},
 	"sonarlint.disableTelemetry": true,
-	"tslint.enable": false // this project uses eslint
+	"tslint.enable": false, // this project uses eslint
+	"extension-test-runner.debugOptions": {}
+	// "extension-test-runner.debugOptions": {
+	// 	"type": "extensionHost",
+	// 	"runtimeExecutable": "${execPath}",
+	// 	"outFiles": [
+	// 		"${workspaceFolder}/out/**/*.js"
+	// 	]
+	// }
 }

@@ -1,0 +1,12 @@
+{
+    "configurations": [
+        {
+            "options": {
+                "output": {
+                    "writeJson": true
+                }
+            },
+            "tempDir": "c:\\temp\\ablunit\\tempDir"
+        }
+    ]
+}

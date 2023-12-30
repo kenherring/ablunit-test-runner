@@ -1,0 +1,12 @@
+{
+	"name": "DebugLines",
+	"oeversion": "12.2",
+	"charset": "UTF-8",
+	"dbConnections": [],
+	"graphicalMode": false,
+	"version": "0.0.0",
+	"buildPath": [
+		{ "path": "src", "type": "source", "includes": "*.*,**/*.*" }
+	],
+	"buildDirectory": "out"
+}

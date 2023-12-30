@@ -14,10 +14,11 @@ interface IPropathEntry {
 }
 
 export interface IABLFile {
-	uri: Uri,
+	uri: Uri
 	file: string
-	relativeFile: string,
-	propathEntry: IPropathEntry,
+	rcodeUri: Uri
+	relativeFile: string
+	propathEntry: IPropathEntry
 	propathRelativeFile: string
 	xrefUri: Uri
 }
@@ -95,15 +96,35 @@ export class PropathParser {
 		return this.buildMap.get(filepath)
 	}
 
+	async getRCodeUri (filepath: string) {
+		let bd = this.buildMap.get(filepath)
+
+		if (!bd) {
+			const found = await this.search(filepath)
+			if (found) {
+				bd = this.buildMap.get(filepath)
+			}
+		}
+
+		if (!bd) {
+			throw new Error("cannot find build dir for " + filepath)
+		}
+
+		const rpath = Uri.joinPath(Uri.file(bd), filepath.replace(/\.(p|cls)$/,'.r'))
+		return rpath
+	}
+
 	private searchUri (uri: Uri) {
 		for (const e of this.propath.entry) {
 			if(uri.fsPath.startsWith(e.uri.fsPath)) {
 				const propathRelativeFile = uri.fsPath.replace(e.uri.fsPath,'').substring(1)
 				const relativeFile = workspace.asRelativePath(uri, false)
+				const rcodeUri = Uri.joinPath(e.buildDirUri, relativeFile.replace(/\.(p|cls)$/,'.r'))
 
 				const fileObj: IABLFile = {
 					uri: uri,
 					file: relativeFile,
+					rcodeUri: rcodeUri,
 					relativeFile: relativeFile,
 					propathEntry: e,
 					propathRelativeFile: propathRelativeFile,
@@ -111,6 +132,7 @@ export class PropathParser {
 				}
 				this.files.push(fileObj)
 				this.filemap.set(relativeFile,fileObj)
+				this.buildMap.set(relativeFile, e.buildDirUri.fsPath)
 				return fileObj
 			}
 		}
@@ -135,7 +157,6 @@ export class PropathParser {
 			const fileInPropathUri = Uri.joinPath(e.uri, relativeFile)
 			const exists = await workspace.fs.stat(fileInPropathUri).then(() => { return true }, () => { return false })
 
-
 			if (exists) {
 				let propathRelativeFile = fileInPropathUri.fsPath.replace(e.uri.fsPath,'')
 				if (propathRelativeFile != fileInPropathUri.fsPath) {
@@ -144,6 +165,7 @@ export class PropathParser {
 				const fileObj: IABLFile = {
 					uri: fileInPropathUri,
 					file: file,
+					rcodeUri: Uri.joinPath(e.buildDirUri, relativeFile.replace(/\.(p|cls)$/,'.r')),
 					relativeFile: relativeFile,
 					propathEntry: e,
 					propathRelativeFile: propathRelativeFile,
@@ -151,6 +173,7 @@ export class PropathParser {
 				}
 				this.files.push(fileObj)
 				this.filemap.set(relativeFile,fileObj)
+				this.buildMap.set(relativeFile, e.buildDirUri.fsPath)
 				return fileObj
 			}
 		}

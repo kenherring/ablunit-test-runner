@@ -1,4 +1,4 @@
-import { FileType, MarkdownString, Position, Range, TestItem, TestItemCollection, TestMessage, TestRun, Uri, workspace, WorkspaceFolder } from 'vscode'
+import { FileType, MarkdownString, Range, TestItem, TestItemCollection, TestMessage, TestRun, Uri, workspace, WorkspaceFolder } from 'vscode'
 import { ABLUnitConfig } from './ABLUnitConfigWriter'
 import { ABLResultsParser, ITestCaseFailure, ITestCase, ITestSuite } from './parse/ResultsParser'
 import { ABLTestSuite, ABLTestData } from './testTree'
@@ -56,7 +56,7 @@ export class ABLResults {
 	public testCoverage: Map<string, FileCoverage> = new Map<string, FileCoverage>()
 
 	constructor (workspaceFolder: WorkspaceFolder, storageUri: Uri, globalStorageUri: Uri) {
-
+		logToChannel("workspaceFolder=" + workspaceFolder.uri.fsPath)
 		this.startTime = new Date()
 		this.workspaceFolder = workspaceFolder
 		this.storageUri = storageUri
@@ -75,6 +75,7 @@ export class ABLResults {
 	}
 
 	async start () {
+		logToChannel("[ABLResults.ts start] workspaceFolder=" + this.workspaceFolder.uri.fsPath)
 		await this.cfg.setup(this.workspaceFolder).then(() => {
 			console.log("setup complete")
 		}, (err) => {
@@ -451,20 +452,20 @@ export class ABLResults {
 				return
 			}
 
-			if (fc?.uri.fsPath != dbg.incUri.fsPath) {
+			if (fc?.uri.fsPath != dbg.sourceUri.fsPath) {
 				// get existing FileCoverage object
-				fc = this.testCoverage.get(dbg.incUri.fsPath)
+				fc = this.testCoverage.get(dbg.sourceUri.fsPath)
 				if (!fc) {
 					// create a new FileCoverage object if one didn't already exist
-					fc = new FileCoverage(dbg.incUri, new CoveredCount(0, 0))
+					fc = new FileCoverage(dbg.sourceUri, new CoveredCount(0, 0))
 					fc.detailedCoverage = []
 					this.coverage.push(fc)
-					this.testCoverage.set(fc.uri.fsPath, fc)
+					this.testCoverage.set(dbg.sourceUri.fsPath, fc)
 				}
 			}
 
 			fc.detailedCoverage!.push(new StatementCoverage(line.ExecCount ?? 0,
-				new Range(new Position(dbg.incLine - 1, 0), new Position(dbg.incLine, 0))))
+				new Range(dbg.sourceLine - 1, 0, dbg.sourceLine, 0)))
 		}
 	}
 }
