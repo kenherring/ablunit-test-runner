@@ -393,11 +393,11 @@ export class ABLProfileJson {
 
 			const lineinfo = await this.debugLines.getSourceLine(sourceName, sum.LineNo)
 			if(!lineinfo) {
-				console.error("Unable to find source/debug line info for " + sourceName + " " + sum.LineNo)
-				// throw new Error("Unable to find source/debug line info for " + sourceName + " " + sum.LineNo)
-			}
-
-			if (lineinfo) {
+				if (!sourceName.startsWith("OpenEdge.")) {
+					console.error("Unable to find source/debug line info for " + sourceName + " " + sum.LineNo)
+					// throw new Error("Unable to find source/debug line info for " + sourceName + " " + sum.LineNo)
+				}
+			} else {
 				sum.srcLine = lineinfo.debugLine
 				sum.srcUri = lineinfo.debugUri
 				sum.incLine = lineinfo.sourceLine

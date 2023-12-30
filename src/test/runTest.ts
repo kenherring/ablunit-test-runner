@@ -32,6 +32,7 @@ async function testProject (projName: string, projDir?: string, launchArgs: stri
 			extensionTestsPath,
 			launchArgs: args
 		})
+		console.log("[runTest.ts testProject] (projName=" + projName + ") tests completed successfully!")
 	} catch (err) {
 		console.error('[runTest.ts testProject] (projName=' + projName + ') failed to run tests, err=' + err)
 		process.exit(1)

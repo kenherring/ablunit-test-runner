@@ -11,7 +11,7 @@ function readValidationFile (filename: string) {
 		const conf = <IConfigurations>JSON.parse(data)
 		return JSON.stringify(conf.configurations)
 	}, (err) => {
-		console.error("reading validation file failed: " + err)
+		console.error("Reading validation file failed: " + err)
 		throw err
 	})
 }
@@ -29,7 +29,7 @@ suite('TestProfileParser.test', () => {
 	// //////// SETUP
 	const workspaceFolders = getWorkspaceFolders()
 	if (!workspaceFolders) {
-		throw new Error("unable to find workspaceFolders - failing test1")
+		throw new Error("Unable to find workspaceFolders - failing test1")
 	}
 
 	test("test1", async () => {
@@ -38,8 +38,8 @@ suite('TestProfileParser.test', () => {
 		try{
 			profiles = await result
 		} catch (err) {
-			console.error("caught error in parseRunProfiles! err = " + err)
-			assert.fail("caught error in parseRunProfiles! err = " + err)
+			console.error("Caught error in parseRunProfiles! err = " + err)
+			assert.fail("Caught error in parseRunProfiles! err = " + err)
 		}
 		assert.equal(profiles.length, 1, "profiles.length = 1")
 		assert.equal(profiles[0].hide, false, "hide=false")

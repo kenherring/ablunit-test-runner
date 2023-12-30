@@ -5,7 +5,7 @@ import { getDefaultDLC, getWorkspaceUri, setRuntimes, waitForExtensionActive } f
 import { getSourceMapFromRCode } from '../../parse/RCodeParser'
 import { PropathParser } from '../../ABLPropath'
 
-const projName = 'proj0'
+const projName = 'DebugLines'
 const workspaceFolder = workspace.workspaceFolders![0]
 
 before(async () => {
