@@ -1,7 +1,8 @@
-* text=auto eol=lf
-* png=binary
+* text=auto
+*.png binary
+*.sh text eol=lf
 
 *.cls linguist-language=OpenEdge-ABL
 *.i linguist-language=OpenEdge-ABL
 *.p linguist-language=OpenEdge-ABL
-
+*.w linguist-language=OpenEdge-ABL
