@@ -21,7 +21,7 @@ initialize () {
 	VSCODE_DIR=/home/circleci/project/.vscode-test
 	OE_VERSION=12.2.12
 
-	while getopts "bdisoh" OPT; do
+	while getopts "bdiso:h" OPT; do
 		case $OPT in
 			o) 	OE_VERSION=$OPTARG ;;
 			b)	OPTS='-b' ;;
@@ -53,11 +53,12 @@ initialize () {
 run_tests_in_docker () {
 	## run tests inside the container
 	echo "starting 'docker run' [script=docker/$SCRIPT.sh]..."
+	set -x
 	time docker run --rm -it \
 		-e PROGRESS_CFG_BASE64 \
 		-e GIT_BRANCH \
 		-e STAGED_ONLY \
-		-v "$PWD":/home/circleci/ablunit-test-provider \
+		-v "$PWD":/home/circleci/ablunit-test-provider:ro \
 		-v vscode-test:$VSCODE_DIR \
 		-v node-modules:/home/circleci/project/node_modules \
 		kherring/ablunit-test-runner:"$OE_VERSION" \

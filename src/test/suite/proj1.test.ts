@@ -19,12 +19,16 @@ afterEach(async () => {
 suite(projName + ' - Extension Test Suite', () => {
 
 	test(projName + '.1 - output files exist - 1', async () => {
-		await runAllTests()
-
-		console.log("workspaceUri=" + workspaceUri.fsPath)
 		const ablunitJson = Uri.joinPath(workspaceUri,'ablunit.json')
 		const resultsXml = Uri.joinPath(workspaceUri,'results.xml')
 		const resultsJson = Uri.joinPath(workspaceUri,'results.json')
+		
+		console.log("doesExist-1: " + await doesFileExist(Uri.joinPath(workspaceUri,'results.xml')))
+		assert(await doesFileExist(resultsXml),"missing results.xml (" + resultsXml.fsPath + ")")
+		await runAllTests()
+		console.log("doesExist-2: " + await doesFileExist(Uri.joinPath(workspaceUri,'results.xml')))
+
+		console.log("workspaceUri=" + workspaceUri.fsPath)
 
 		console.log("ablunitJson=" + ablunitJson.fsPath)
 		assert(await doesFileExist(ablunitJson),"missing ablunit.json (" + ablunitJson.fsPath + ")")

@@ -26,7 +26,6 @@ RUN --mount=type=secret,id=license,target=/psc/dlc/progress.cfg \
     git clone --single-branch -b "v${OE_VERSION}.0" https://github.com/progress/ADE.git \
     && ant compile \
     && rm -rf build.xml ADE/ /tmp/*
-
 WORKDIR /
 
 ## create directory for vscode-test which will be a mounted volume

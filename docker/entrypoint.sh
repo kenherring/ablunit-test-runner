@@ -3,6 +3,7 @@ set -eou pipefail
 
 initialize () {
 	BASH_AFTER_FAIL=false
+	REPO_VOLUME=/home/circleci/ablunit-test-provider
 
 	while getopts 'b' OPT; do
 		case "$OPT" in
@@ -25,7 +26,7 @@ initialize_repo () {
 	cd /home/circleci/project
 	git config --global init.defaultBranch main
 	git init
-	git remote add origin /home/circleci/ablunit-test-provider
+	git remote add origin "$REPO_VOLUME"
 	git fetch origin
 	if [ "$GIT_BRANCH" = "$(git branch --show-current)" ]; then
 		git reset --hard "origin/$GIT_BRANCH"
@@ -45,7 +46,10 @@ copy_files_from_volume () {
 }
 
 find_files_to_copy () {
-	cd /home/circleci/ablunit-test-provider
+	set -x
+	cd "$REPO_VOLUME"
+	git config --global --add safe.directory "$REPO_VOLUME"
+
 	git --no-pager diff --diff-filter=d --name-only --staged > /tmp/staged_files
 	git --no-pager diff --diff-filter=D --name-only --staged > /tmp/deleted_files
 
@@ -62,7 +66,7 @@ copy_files () {
 		if [ ! -d "$(dirname "$FILE")" ]; then
 			mkdir -p "$(dirname "$FILE")"
 		fi
-		cp "/home/circleci/ablunit-test-provider/$FILE" "$FILE" || true
+		cp "$REPO_VOLUME/$FILE" "$FILE" || true
 	done < "/tmp/${TYPE}_files"
 }
 
