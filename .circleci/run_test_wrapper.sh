@@ -1,8 +1,13 @@
 #!/bin/bash
 set -eou pipefail
 
+initialize () {
+	echo "[$0 initialize]"
+	npm install
+}
+
 dbus_config () {
-	echo "dbus_config..."
+	echo "[$0 dbus_config]"
 	## These lines fix dbus errors in the logs related to the next section
 	## However, they also create new errors
 	# apt update
@@ -20,7 +25,7 @@ dbus_config () {
 }
 
 run_tests () {
-	echo "run_tests..."
+	echo "[$0 run_tests]"
 	EXIT_CODE=0
 
 	xvfb-run -a npm test || EXIT_CODE=$?
@@ -33,7 +38,7 @@ run_tests () {
 }
 
 run_lint () {
-	echo "run_lint"
+	echo "[$0 run_lint]"
 
 	mkdir -p artifacts
 	rm -rf test_projects/proj7_load_performance/src/ADE-12.2.13.0
@@ -53,3 +58,4 @@ run_lint () {
 dbus_config
 run_tests
 run_lint
+echo "$0 completed successfully!"
