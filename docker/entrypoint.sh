@@ -54,6 +54,7 @@ find_files_to_copy () {
 	BASE_DIR=$(pwd)
 
 	cd "$REPO_VOLUME"
+	git config --global --add safe.directory "$REPO_VOLUME"
 	git --no-pager diff --diff-filter=d --name-only --staged --ignore-cr-at-eol > /tmp/staged_files
 	git --no-pager diff --diff-filter=D --name-only --staged --ignore-cr-at-eol > /tmp/deleted_files
 	if ! ${STAGED_ONLY:-false}; then
