@@ -50,25 +50,12 @@ copy_files_from_volume () {
 
 find_files_to_copy () {
 	echo "[$0 find_files_to_copy]"
-	local BASE_DIR=$(pwd)
+	local BASE_DIR
+	BASE_DIR=$(pwd)
 
-	## copy from read-only volume to a writable directory
-	mkdir "${REPO_VOLUME}-2"
-	cp -r "$REPO_VOLUME"/* "${REPO_VOLUME}-2"
-	cd "${REPO_VOLUME}-2"
-	
-	echo "converting CRLF to LF"
-	git ls-files > /tmp/git_ls_files
-	while read -r FILE; do
-		echo "converting CRLF to LF for $FILE"
-		dos2unix "$FILE"
-		# sed -i 's/\r$//' "$FILE"
-	done < /tmp/git_ls_files
-	# git config --global --add safe.directory "$REPO_VOLUME"
-
+	cd "$REPO_VOLUME"
 	git --no-pager diff --diff-filter=d --name-only --staged --ignore-cr-at-eol > /tmp/staged_files
 	git --no-pager diff --diff-filter=D --name-only --staged --ignore-cr-at-eol > /tmp/deleted_files
-
 	if ! ${STAGED_ONLY:-false}; then
 		git --no-pager diff --diff-filter=d --name-only --ignore-cr-at-eol > /tmp/modified_files
 	fi
@@ -89,13 +76,12 @@ copy_files () {
 		if [ ! -d "$(dirname "$FILE")" ]; then
 			mkdir -p "$(dirname "$FILE")"
 		fi
-		cp "$REPO_VOLUME/$FILE" "$FILE" || true
+		sed 's/\r//g' "$REPO_VOLUME/$FILE" > "$FILE"
 	done < "/tmp/${TYPE}_files"
 }
 
 run_tests () {
 	echo "[$0 run_tests]"
-	exit 1
 	if ! .circleci/run_test_wrapper.sh; then
 		echo "run_tests failed"
 		if $BASH_AFTER_FAIL; then
