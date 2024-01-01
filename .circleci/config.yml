@@ -77,16 +77,16 @@ jobs:
           condition:
             equals: [ '<< parameters.oe-version >>', '12.2.12' ]
           steps:
-            run: echo "12.2.12"
+            - run: echo "12.2.12"
       - when:
           conditions:
             equals: [ '<< parameters.oe-version >>', '12.7.0' ]
           steps:
-            run: echo "12.7.0"
+            - run: echo "12.7.0"
       - unless:
           condition: << parameters.oe-version >>
           steps:
-            run: echo "not 12.2.12 or 12.7.0"
+            - run: echo "not 12.2.12 or 12.7.0"
 
       #     steps:
       #       - sonarcloud/scan
