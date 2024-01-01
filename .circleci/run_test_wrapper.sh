@@ -55,6 +55,7 @@ run_lint () {
 }
 
 ########## MAIN BLOCK ##########
+initialize
 dbus_config
 run_tests
 run_lint
