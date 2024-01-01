@@ -86,7 +86,7 @@
 		"test:setup": "sh -c test_projects/setup.sh",
 		"test": "node ./out/test/runTest.js",
 		"test:install-and-run": "npm run package && cd dummy-ext && npm run test:install-and-run",
-		
+
 		"vscode:prepublish": "npm run esbuild-bundle"
 	},
 	"dependencies": {
