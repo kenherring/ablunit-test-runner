@@ -2,6 +2,7 @@
 set -eou pipefail
 
 initialize () {
+	echo "[$0 initialize]"
 	BASH_AFTER_FAIL=false
 	REPO_VOLUME=/home/circleci/ablunit-test-provider
 
@@ -23,6 +24,7 @@ initialize () {
 }
 
 initialize_repo () {
+	echo "[$0 initialize_repo]"
 	cd /home/circleci/project
 	git config --global init.defaultBranch main
 	git init
@@ -36,6 +38,7 @@ initialize_repo () {
 }
 
 copy_files_from_volume () {
+	echo "[$0 copy_files_from_volume]"
 	find_files_to_copy
 	copy_files "staged"
 	[ -f /tmp/modified_files ] && copy_files "modified"
@@ -46,6 +49,7 @@ copy_files_from_volume () {
 }
 
 find_files_to_copy () {
+	echo "[$0 find_files_to_copy]"
 	cd "$REPO_VOLUME"
 	git config --global --add safe.directory "$REPO_VOLUME"
 
@@ -59,6 +63,7 @@ find_files_to_copy () {
 }
 
 copy_files () {
+	echo "[$0 copy_files]"
 	local TYPE="$1"
 	while read -r FILE; do
 		echo "copying $TYPE file $FILE"
@@ -70,7 +75,8 @@ copy_files () {
 }
 
 run_tests () {
-	echo "starting tests..."
+	echo "[$0 run_tests]"
+	exit 1
 	if ! .circleci/run_test_wrapper.sh; then
 		echo "run_tests failed"
 		if $BASH_AFTER_FAIL; then
@@ -84,7 +90,7 @@ run_tests () {
 }
 
 analyze_results () {
-	echo "analyzing results..."
+	echo "[$0 analyze_results]"
 	RESULTS_COUNT=$(find . -name 'mocha_results_*.xml' | wc -l)
 	LCOV_COUNT=$(find . -name 'lcov.info' | wc -l)
 	HAS_ERROR=false
@@ -107,7 +113,7 @@ analyze_results () {
 }
 
 finish () {
-	echo "Artifacts to be saved:"
+	echo "[$0 finish] artifacts to be saved:"
 	ls -al artifacts
 }
 
@@ -116,4 +122,4 @@ initialize "$@"
 run_tests
 analyze_results
 finish
-echo "$0 finished successfully!"
+echo "[$0] completed successfully!"
