@@ -16,7 +16,7 @@ workflows:
       - test-and-scan:
           matrix:
             parameters:
-              oe-version: [ 12.2.12, 12.7.0 ]
+              oe-version: [ '12.2.12', '12.7.0' ]
           name: test-and-scan_<< matrix.oe-version >>
           context:
             - DockerHub
@@ -48,8 +48,8 @@ jobs:
     parameters:
       oe-version:
         type: string
-        enum: [ 12.2.12, 12.7.0 ]
-        default: 12.2.12
+        enum: [ '12.2.12', '12.7.0' ]
+        default: '12.2.12'
     docker:
       - image: kherring/ablunit-test-runner:<< parameters.oe-version >>
         auth:
@@ -86,7 +86,7 @@ jobs:
           paths: [ .vscode-test ]
       - when:
           condition:
-            equals: [ << parameters.oe-version >>, 12.2.12 ]
+            equals: [ << parameters.oe-version >>, '12.2.12' ]
           steps:
             - persist_to_workspace:
                 root: .
