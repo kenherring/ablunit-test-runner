@@ -89,11 +89,11 @@ jobs:
                 name: "'<< parameters.oe-version >>'"
                 command: |
                   if [ "<< parameters.oe-version >> " = "12.2.12" ]; then
-                    message 100
+                    echo 100
                   elif [ "<< parameters.oe-version >>" = "12.7.0" ]; then
-                    message 200
+                    echo 200
                   else
-                    message 300
+                    echo 300
                   fi
       - when:
           condition:
