@@ -79,7 +79,7 @@ jobs:
           steps:
             - run: echo "12.2.12"
       - when:
-          conditions:
+          condition:
             equals: [ '<< parameters.oe-version >>', '12.7.0' ]
           steps:
             - run: echo "12.7.0"
