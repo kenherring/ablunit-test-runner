@@ -42,7 +42,6 @@ This config searches the `test/` directory for test files, named `*Test.cls` or 
 }
 ```
 
-<!-- START CONFIGURATION PROPERTIES -->
 ### Configuration - VSCode Configuration (`.vscode/settings.json`, et al.)
 
 | Setting | Default | Description |
@@ -67,9 +66,6 @@ See [CONTRIBUTING.md](.github/CONTRIBUTING.md)
 * `npm install`
 * Make any changes you wish
 * `npm test` or use the [Extension Test Runner](https://marketplace.visualstudio.com/items?itemName=ms-vscode.extension-test-runner)
-<!-- Can we clone and run these steps successfully?
-     TODO: add a test in CircleCI for this
--->
 
 ## 🔗 Links
 
