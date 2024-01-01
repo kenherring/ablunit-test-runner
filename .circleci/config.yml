@@ -60,8 +60,8 @@ jobs:
       - checkout
       - restore_cache:
           keys:
-            - v1-nodemodules-{{ checksum "package.json" }}
-            - v1-nodemodules-
+            - v1-nodemodules-<< parameters.oe-version >>-{{ checksum "package.json" }}
+            - v1-nodemodules-<< parameters.oe-version >>-
       - restore_cache:
           keys:
             - v1-vscode-test-<< pipeline.parameters.vscode-version >>
@@ -74,22 +74,24 @@ jobs:
           path: artifacts
       - when:
           condition:
-            equals: [ << parameters.oe-version >>, 12.2.12 ]
+            equals: [ '<< parameters.oe-version >>', '12.2.12' ]
           steps:
             - sonarcloud/scan
       - run: .circleci/validate.sh
       - save_cache:
-          key: v1-nodemodules-{{ checksum "package.json" }}
-          paths:
+          key: v1-nodemodules-<< parameters.oe-version >>-{{ checksum "package.json" }}
+          paths: [ node_modules ]
             - node_modules
       - save_cache:
           key: v1-vscode-test-<< pipeline.parameters.vscode-version >>
-          paths:
-            - .vscode-test
-      - persist_to_workspace:
-          root: .
-          paths:
-            - .
+          paths: [ .vscode-test ]
+      - when:
+          condition:
+            equals: [ << parameters.oe-version >>, 12.2.12 ]
+          steps:
+            - persist_to_workspace:
+                root: .
+                paths: [ . ]
   install-and-run:
     docker:
       - image: kherring/ablunit-test-runner:12.2.12
