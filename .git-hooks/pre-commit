@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 set -eou pipefail
 
 . .git-hooks/common.sh
@@ -16,7 +16,7 @@ jq () {
 validate_compile () {
 	echo "compiling..." >&2
 	
-	npm run compile
+	npm run build
 }
 
 validate_circleci_config () {
