@@ -50,8 +50,21 @@ copy_files_from_volume () {
 
 find_files_to_copy () {
 	echo "[$0 find_files_to_copy]"
-	cd "$REPO_VOLUME"
-	git config --global --add safe.directory "$REPO_VOLUME"
+	local BASE_DIR=$(pwd)
+
+	## copy from read-only volume to a writable directory
+	mkdir "${REPO_VOLUME}-2"
+	cp -r "$REPO_VOLUME"/* "${REPO_VOLUME}-2"
+	cd "${REPO_VOLUME}-2"
+	
+	echo "converting CRLF to LF"
+	git ls-files > /tmp/git_ls_files
+	while read -r FILE; do
+		echo "converting CRLF to LF for $FILE"
+		dos2unix "$FILE"
+		# sed -i 's/\r$//' "$FILE"
+	done < /tmp/git_ls_files
+	# git config --global --add safe.directory "$REPO_VOLUME"
 
 	git --no-pager diff --diff-filter=d --name-only --staged --ignore-cr-at-eol > /tmp/staged_files
 	git --no-pager diff --diff-filter=D --name-only --staged --ignore-cr-at-eol > /tmp/deleted_files
@@ -59,7 +72,13 @@ find_files_to_copy () {
 	if ! ${STAGED_ONLY:-false}; then
 		git --no-pager diff --diff-filter=d --name-only --ignore-cr-at-eol > /tmp/modified_files
 	fi
-	cd -
+
+	echo "file counts:"
+	echo "  staged=$(wc -l /tmp/staged_files)"
+	echo " deleted=$(wc -l /tmp/deleted_files)"
+	echo " modified=$(wc -l /tmp/modified_files)"
+
+	cd "$BASE_DIR"
 }
 
 copy_files () {
