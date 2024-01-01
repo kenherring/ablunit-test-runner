@@ -26,22 +26,22 @@ workflows:
             tags: ## all tags starting with 'v' (all branches also included by default)
               only:
                 - /^v.*/
-      # - install-and-run:
-      #     context:
-      #       - DockerHub
-      #       - PROGRESS_CFG
-      # - package-and-publish:
-      #     requires:
-      #       - shellcheck/check
-      #       - test-and-scan_12.2.12
-      #       - test-and-scan_12.7.0
-      #       - install-and-run
-      #     context:
-      #       - Azure_PAT
-      #     filters:
-      #       tags:
-      #         only:
-      #           - /^v.*/
+      - install-and-run:
+          context:
+            - DockerHub
+            - PROGRESS_CFG
+      - package-and-publish:
+          requires:
+            - shellcheck/check
+            - test-and-scan_12.2.12
+            - test-and-scan_12.7.0
+            - install-and-run
+          context:
+            - Azure_PAT
+          filters:
+            tags:
+              only:
+                - /^v.*/
 
 jobs:
   test-and-scan:
