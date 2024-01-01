@@ -40,13 +40,13 @@ export function getWorkspaceUri () {
 	}
 }
 
-export async function deleteTestFiles() {
+export async function deleteTestFiles () {
 	await deleteTestFile("ablunit.json")
 	await deleteTestFile("results.xml")
 	await deleteTestFile("results.json")
 }
 
-async function deleteTestFile(filename: string) {
+async function deleteTestFile (filename: string) {
 	const workspaceUri = getWorkspaceUri()
 	if (await doesFileExist(Uri.joinPath(workspaceUri, filename))) {
 		await workspace.fs.delete(Uri.joinPath(workspaceUri, filename))
