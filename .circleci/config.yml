@@ -50,6 +50,9 @@ jobs:
         type: string
         enum: [ '12.2.12', '12.7.0' ]
         default: '12.2.12'
+      sonar-scan:
+        type: boolean
+        default: false
     docker:
       - image: kherring/ablunit-test-runner:<< parameters.oe-version >>
         auth:
@@ -74,13 +77,42 @@ jobs:
       #     path: artifacts
       - run: echo "parameters.oe-version=<< parameters.oe-version >>"
       - when:
+          condition: << parameters.sonar-scan >>
+          steps:
+            - run: echo "sonar-scan"
+      - when:
+          condition:
+            equals: [ "<< parameters.oe-version >>", "12.2.12" ]
+          steps:
+            - run: echo "12.2.12"
+            - run:
+                name: "'<< parameters.oe-version >>'"
+                command: |
+                  if [ "<< parameters.oe-version >> " = "12.2.12" ]; then
+                    message 100
+                  elid [ "<< parameters.oe-version >>" = "12.7.0" ]; then
+                    message 200
+                  else
+                    message 300
+                  fi
+      - when:
+          condition:
+            equals: [ "<< parameters.oe-version >>", "12.2.12" ]
+          steps:
+            - run: echo "12.2.12-A"
+      - when:
           condition:
             equals: [ '<< parameters.oe-version >>', '12.2.12' ]
           steps:
-            - run: echo "12.2.12"
+            - run: echo "12.2.12-B"
       - when:
           condition:
-            equals: [ '<< parameters.oe-version >>', '12.7.0' ]
+            equal: [ '<< parameters.oe-version >>', '12.2.12' ]
+          steps:
+            - run: echo "12.2.12-C"
+      - when:
+          condition:
+            equal: [ '<< parameters.oe-version >>', '12.7.0' ]
           steps:
             - run: echo "12.7.0"
       - unless:
