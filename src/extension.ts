@@ -222,7 +222,7 @@ export async function activate (context: ExtensionContext) {
 			const res = await createABLResults()
 			return runTestQueue(res)
 		}).catch((err) => {
-			logToChannel('ablunit run failed with exception: ' + err, 'error', run)
+			logToChannel('ablunit run failed discovering tests with exception: ' + err, 'error', run)
 			run.end()
 		})
 	}

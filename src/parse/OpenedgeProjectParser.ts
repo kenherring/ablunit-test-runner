@@ -30,10 +30,7 @@ export interface IProjectJson {
 
 async function getProjectJson (workspaceFolder: WorkspaceFolder) {
 	const data = await workspace.fs.readFile(Uri.joinPath(workspaceFolder.uri,"openedge-project.json")).then((raw) => {
-		const oeproj = Buffer.from(raw.buffer).toString().replace(/\r/g,'').replace(/\/\/.*/g,'')
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-call
-		const mini =  JSON.stringify(JSON.parse(JSON.minify(oeproj)))
-		return mini
+		return JSON.minify(Buffer.from(raw.buffer).toString())
 	}, (err) => {
 		logToChannel("Failed to parse openedge-project.json: " + err,'error')
 		return undefined
