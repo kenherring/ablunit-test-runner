@@ -1,5 +1,7 @@
 import { Uri, workspace, WorkspaceFolder } from 'vscode'
 import { logToChannel } from '../ABLUnitCommon'
+require("jsonminify")
+
 
 interface IRuntime {
 	name: string,

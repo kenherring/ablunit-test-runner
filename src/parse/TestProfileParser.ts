@@ -5,6 +5,7 @@ import { IRunProfile, DefaultRunProfile } from './config/RunProfile'
 import { ProfilerOptions } from './config/ProfilerOptions'
 import { CommandOptions } from './config/CommandOptions'
 import { logToChannel } from '../ABLUnitCommon'
+require("jsonminify")
 
 
 const runProfileFilename: string = 'ablunit-test-profile.json'
