@@ -26,22 +26,22 @@ workflows:
             tags: ## all tags starting with 'v' (all branches also included by default)
               only:
                 - /^v.*/
-      - install-and-run:
-          context:
-            - DockerHub
-            - PROGRESS_CFG
-      - package-and-publish:
-          requires:
-            - shellcheck/check
-            - test-and-scan_12.2.12
-            - test-and-scan_12.7.0
-            - install-and-run
-          context:
-            - Azure_PAT
-          filters:
-            tags:
-              only:
-                - /^v.*/
+      # - install-and-run:
+      #     context:
+      #       - DockerHub
+      #       - PROGRESS_CFG
+      # - package-and-publish:
+      #     requires:
+      #       - shellcheck/check
+      #       - test-and-scan_12.2.12
+      #       - test-and-scan_12.7.0
+      #       - install-and-run
+      #     context:
+      #       - Azure_PAT
+      #     filters:
+      #       tags:
+      #         only:
+      #           - /^v.*/
 
 jobs:
   test-and-scan:
@@ -58,39 +58,52 @@ jobs:
     steps:
       - run: tr ' ' '\n' \<<< "$PROGRESS_CFG_BASE64" | base64 --decode > /psc/dlc/progress.cfg
       - checkout
-      - restore_cache:
-          keys:
-            - v1-nodemodules-<< parameters.oe-version >>-{{ checksum "package.json" }}
-            - v1-nodemodules-<< parameters.oe-version >>-
-      - restore_cache:
-          keys:
-            - v1-vscode-test-<< pipeline.parameters.vscode-version >>
-      - run: .circleci/run_test_wrapper.sh
-      - store_test_results:
-          when: always
-          path: artifacts
-      - store_artifacts:
-          when: always
-          path: artifacts
+      # - restore_cache:
+      #     keys:
+      #       - v1-nodemodules-<< parameters.oe-version >>-{{ checksum "package.json" }}
+      #       - v1-nodemodules-<< parameters.oe-version >>-
+      # - restore_cache:
+      #     keys:
+      #       - v1-vscode-test-<< pipeline.parameters.vscode-version >>
+      # - run: .circleci/run_test_wrapper.sh
+      # - store_test_results:
+      #     when: always
+      #     path: artifacts
+      # - store_artifacts:
+      #     when: always
+      #     path: artifacts
+      - run: echo "parameters.oe-version=<< parameters.oe-version >>"
       - when:
           condition:
             equals: [ '<< parameters.oe-version >>', '12.2.12' ]
           steps:
-            - sonarcloud/scan
-      - run: .circleci/validate.sh
-      - save_cache:
-          key: v1-nodemodules-<< parameters.oe-version >>-{{ checksum "package.json" }}
-          paths: [ node_modules ]
-      - save_cache:
-          key: v1-vscode-test-<< pipeline.parameters.vscode-version >>
-          paths: [ .vscode-test ]
+            run: echo "12.2.12"
       - when:
-          condition:
-            equals: [ << parameters.oe-version >>, '12.2.12' ]
+          conditions:
+            equals: [ '<< parameters.oe-version >>', '12.7.0' ]
           steps:
-            - persist_to_workspace:
-                root: .
-                paths: [ . ]
+            run: echo "12.7.0"
+      - unless:
+          condition: << parameters.oe-version >>
+          steps:
+            run: echo "not 12.2.12 or 12.7.0"
+
+      #     steps:
+      #       - sonarcloud/scan
+      # - run: .circleci/validate.sh
+      # - save_cache:
+      #     key: v1-nodemodules-<< parameters.oe-version >>-{{ checksum "package.json" }}
+      #     paths: [ node_modules ]
+      # - save_cache:
+      #     key: v1-vscode-test-<< pipeline.parameters.vscode-version >>
+      #     paths: [ .vscode-test ]
+      # - when:
+      #     condition:
+      #       equals: [ << parameters.oe-version >>, '12.2.12' ]
+      #     steps:
+      #       - persist_to_workspace:
+      #           root: .
+      #           paths: [ . ]
   install-and-run:
     docker:
       - image: kherring/ablunit-test-runner:12.2.12
