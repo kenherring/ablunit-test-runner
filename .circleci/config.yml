@@ -90,7 +90,7 @@ jobs:
                 command: |
                   if [ "<< parameters.oe-version >> " = "12.2.12" ]; then
                     message 100
-                  elid [ "<< parameters.oe-version >>" = "12.7.0" ]; then
+                  elif [ "<< parameters.oe-version >>" = "12.7.0" ]; then
                     message 200
                   else
                     message 300
