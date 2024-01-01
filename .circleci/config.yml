@@ -82,7 +82,7 @@ jobs:
             - run: echo "sonar-scan"
       - when:
           condition:
-            equals: [ "<< parameters.oe-version >>", "12.2.12" ]
+            equal: [ "<< parameters.oe-version >>", "12.2.12" ]
           steps:
             - run: echo "12.2.12"
             - run:
@@ -97,12 +97,12 @@ jobs:
                   fi
       - when:
           condition:
-            equals: [ "<< parameters.oe-version >>", "12.2.12" ]
+            equal: [ "<< parameters.oe-version >>", "12.2.12" ]
           steps:
             - run: echo "12.2.12-A"
       - when:
           condition:
-            equals: [ '<< parameters.oe-version >>', '12.2.12' ]
+            equal: [ '<< parameters.oe-version >>', '12.2.12' ]
           steps:
             - run: echo "12.2.12-B"
       - when:
