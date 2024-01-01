@@ -1,1 +1,4 @@
-{}
+{
+    "ablunit.debugEnabled": true,
+    "ablunit.discoverFilesOnActivate": true
+}
