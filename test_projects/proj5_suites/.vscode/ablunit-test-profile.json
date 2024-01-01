@@ -2,11 +2,16 @@
 	"configurations": [
 		{
 			"tempDir": "ablunit",
+			/*
+			multi
+			line
+			comment*/
 			"options": {
 				"output": {
 					"writeJson": true
 				}
 			}
+			//singleline comment
 		}
 	]
 }

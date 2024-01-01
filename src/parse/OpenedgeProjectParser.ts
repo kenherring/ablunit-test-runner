@@ -1,5 +1,6 @@
 import { Uri, workspace, WorkspaceFolder } from 'vscode'
 import { logToChannel } from '../ABLUnitCommon'
+require("jsonminify")
 
 
 interface IRuntime {
@@ -29,7 +30,7 @@ export interface IProjectJson {
 
 async function getProjectJson (workspaceFolder: WorkspaceFolder) {
 	const data = await workspace.fs.readFile(Uri.joinPath(workspaceFolder.uri,"openedge-project.json")).then((raw) => {
-		return Buffer.from(raw.buffer).toString().replace(/\r/g,'').replace(/\/\/.*/g,'')
+		return JSON.minify(Buffer.from(raw.buffer).toString())
 	}, (err) => {
 		logToChannel("Failed to parse openedge-project.json: " + err,'error')
 		return undefined

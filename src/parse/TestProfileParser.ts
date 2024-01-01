@@ -5,6 +5,7 @@ import { IRunProfile, DefaultRunProfile } from './config/RunProfile'
 import { ProfilerOptions } from './config/ProfilerOptions'
 import { CommandOptions } from './config/CommandOptions'
 import { logToChannel } from '../ABLUnitCommon'
+require("jsonminify")
 
 
 const runProfileFilename: string = 'ablunit-test-profile.json'
@@ -18,12 +19,7 @@ export interface IConfigurations {
 
 async function readJson (uri: Uri) {
 	const data = await workspace.fs.readFile(uri).then((raw) => {
-		let d = Buffer.from(raw.buffer).toString().trim()
-
-		// this json cleanup is a bit hacky, but it works
-		d = d.replace(/[\r\t]/g,'').replace(/\/\/.*/g,'').replace(/^$/g,'') // remove tabs, carriage returns, and single line comments
-		d = d.replace(/\/\*.*\*\//g,'') // remove multi-line comments
-		return d
+		return JSON.minify(Buffer.from(raw.buffer).toString())
 	}, (err: Error) => {
 		console.error("Failed to parse .vscode/ablunit-test-profile.json: " + err)
 		throw err
