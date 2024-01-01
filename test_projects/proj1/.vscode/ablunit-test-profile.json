@@ -4,7 +4,6 @@
 			"tempDir": "${workspaceFolder}",
 			"options": {
 				"output": {
-					"writeLog": true,
 					"writeJson": true
 				}
 			},

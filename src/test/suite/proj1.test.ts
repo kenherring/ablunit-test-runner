@@ -8,18 +8,15 @@ const projName = 'proj1'
 const workspaceUri = getWorkspaceUri()
 
 before(async () => {
-	console.log("before")
 	await waitForExtensionActive()
 	await updateConfig("files.exclude", undefined)
 })
 
 beforeEach(async () => {
-	console.log("beforeEach")
 	await deleteTestFiles()
 })
 
 afterEach(async () => {
-	console.log("afterEach")
 	await updateConfig("files.exclude", undefined)
 })
 
@@ -30,28 +27,19 @@ suite(projName + ' - Extension Test Suite', () => {
 		const resultsXml = Uri.joinPath(workspaceUri,'results.xml')
 		const resultsJson = Uri.joinPath(workspaceUri,'results.json')
 
-		console.log("doesExist-10: " + await doesFileExist(Uri.joinPath(workspaceUri,'results.xml')))
-		console.log("doesExist-20: " + await doesFileExist(resultsXml))
 		if (await doesFileExist(resultsXml)) {
-			console.log("results.xml exists before test runs (" + resultsXml.fsPath + ")")
 			assert.fail("results.xml should not exist before test runs (" + resultsXml.fsPath + ")")
 		}
 
 		await runAllTests()
-		console.log("doesExist-30: " + await doesFileExist(Uri.joinPath(workspaceUri,'results.xml')))
 
-		console.log("workspaceUri=" + workspaceUri.fsPath)
-		console.log("ablunitJson=" + ablunitJson.fsPath)
 		assert(await doesFileExist(ablunitJson),"missing ablunit.json (" + ablunitJson.fsPath + ")")
-		console.log("resultsXml=" + resultsXml.fsPath)
 		if (process.platform === 'win32') {
 			assert(await doesFileExist(resultsXml),"missing results.xml (" + resultsXml.fsPath + ")")
 		} else {
 			assert(! await doesFileExist(resultsXml),"missing results.xml (" + resultsXml.fsPath + ")")
 		}
-		console.log("resultsJson=" + resultsJson.fsPath)
 		assert(! await doesFileExist(resultsJson),"unexpected results.json (" + resultsJson.fsPath + ")")
-		console.log("ablunit.json and results.xml exist, results.json does not exist as expected")
 	})
 
 	test(projName + '.2 - output files exist 2 - exclude compileError.p', async () => {

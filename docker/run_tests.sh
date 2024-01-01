@@ -53,7 +53,6 @@ initialize () {
 run_tests_in_docker () {
 	## run tests inside the container
 	echo "starting 'docker run' [script=docker/$SCRIPT.sh]..."
-	set -x
 	time docker run --rm -it \
 		-e PROGRESS_CFG_BASE64 \
 		-e GIT_BRANCH \
@@ -68,4 +67,4 @@ run_tests_in_docker () {
 ########## MAIN BLOCK ##########
 initialize "$@"
 run_tests_in_docker
-echo "'docker run' completed successfully! [script=docker/$SCRIPT.sh]"
+echo "$0 completed successfully! [script=docker/$SCRIPT.sh]"

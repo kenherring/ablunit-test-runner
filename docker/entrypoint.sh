@@ -46,7 +46,6 @@ copy_files_from_volume () {
 }
 
 find_files_to_copy () {
-	set -x
 	cd "$REPO_VOLUME"
 	git config --global --add safe.directory "$REPO_VOLUME"
 
