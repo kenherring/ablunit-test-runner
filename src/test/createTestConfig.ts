@@ -18,7 +18,6 @@ function createTestConfig (projName: string, workspaceFolder?: string, timeout?:
 
 	if (!timeout || timeout == 0) {
 		timeout = 15000
-		// timeout = 30000
 	}
 
 	const launchArgs: string[] = []
