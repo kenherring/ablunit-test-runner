@@ -1,7 +1,9 @@
 import { strict as assert } from 'assert'
 import { afterEach, before } from 'mocha'
-import { Selection, Uri, commands, window } from 'vscode'
-import { doesFileExist, getTestCount, getWorkspaceUri, runAllTests, sleep, updateConfig, waitForExtensionActive } from '../testCommon'
+// import { Selection, Uri, commands, window } from 'vscode'
+// import { doesFileExist, getTestCount, getWorkspaceUri, runAllTests, sleep, updateConfig, waitForExtensionActive } from '../testCommon'
+import { Uri } from 'vscode'
+import { doesFileExist, getWorkspaceUri, runAllTests, updateConfig, waitForExtensionActive } from '../testCommon'
 
 
 const projName = 'proj1'
@@ -22,14 +24,18 @@ suite(projName + ' - Extension Test Suite', () => {
 		const ablunitJson = Uri.joinPath(workspaceUri,'ablunit.json')
 		const resultsXml = Uri.joinPath(workspaceUri,'results.xml')
 		const resultsJson = Uri.joinPath(workspaceUri,'results.json')
-		
-		console.log("doesExist-1: " + await doesFileExist(Uri.joinPath(workspaceUri,'results.xml')))
-		assert(await doesFileExist(resultsXml),"missing results.xml (" + resultsXml.fsPath + ")")
+
+		console.log("doesExist-10: " + await doesFileExist(Uri.joinPath(workspaceUri,'results.xml')))
+		console.log("doesExist-20: " + await doesFileExist(resultsXml))
+		if (await doesFileExist(resultsXml)) {
+			console.log("results.xml exists before test runs (" + resultsXml.fsPath + ")")
+			assert.fail("results.xml should not exist before test runs (" + resultsXml.fsPath + ")")
+		}
+
 		await runAllTests()
-		console.log("doesExist-2: " + await doesFileExist(Uri.joinPath(workspaceUri,'results.xml')))
+		console.log("doesExist-30: " + await doesFileExist(Uri.joinPath(workspaceUri,'results.xml')))
 
 		console.log("workspaceUri=" + workspaceUri.fsPath)
-
 		console.log("ablunitJson=" + ablunitJson.fsPath)
 		assert(await doesFileExist(ablunitJson),"missing ablunit.json (" + ablunitJson.fsPath + ")")
 		console.log("resultsXml=" + resultsXml.fsPath)

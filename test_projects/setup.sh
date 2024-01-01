@@ -17,8 +17,8 @@ get_performance_test_code () {
 	if [ ! -f .vscode-test/v12.2.13.0.tar.gz ]; then
 		mkdir -p .vscode-test
 		curl -L https://github.com/progress/ADE/archive/refs/tags/v12.2.13.0.tar.gz -o .vscode-test/v12.2.13.0.tar.gz
+		tar -xf .vscode-test/v12.2.13.0.tar.gz -C test_projects/proj7_load_performance/src
 	fi
-	tar -xf .vscode-test/v12.2.13.0.tar.gz -C test_projects/proj7_load_performance/src
 }
 
 get_pct () {
