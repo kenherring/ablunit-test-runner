@@ -1,17 +1,17 @@
 {
-    "configurations": [
-        {
-            "tempDir": "c:\\temp\\ablunit\\tempDir",
-            "options": {
-                "output": {
-                    "writeLog": true,
-                    "writeJson": true
-                }
-            },
-            "profiler": {
-                "enabled": true,
-                "listings": "c:\\temp\\ablunit-local\\listings"
-            }
-        }
-    ]
+	"configurations": [
+		{
+			"tempDir": "c:\\temp\\ablunit\\tempDir",
+			"options": {
+				"output": {
+					"writeLog": true,
+					"writeJson": true
+				}
+			},
+			"profiler": {
+				"enabled": true,
+				"listings": "c:\\temp\\ablunit-local\\listings"
+			}
+		}
+	]
 }

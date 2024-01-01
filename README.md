@@ -1,28 +1,26 @@
-# ABLUnit Test Runner [![CircleCI](https://img.shields.io/circleci/build/github/kenherring/ablunit-test-provider/main?logo=circleci)](https://dl.circleci.com/status-badge/redirect/gh/kenherring/ablunit-test-provider/tree/main) [![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=kenherring_ablunit-test-provider&metric=sqale_rating)](https://sonarcloud.io/summary/new_code?id=kenherring_ablunit-test-provider) [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=kenherring_ablunit-test-provider&metric=coverage)](https://sonarcloud.io/summary/new_code?id=kenherring_ablunit-test-provider)
+# ABLUnit Test Runner 🏃‍♂️🏃🏃‍♀️ [![CircleCI](https://img.shields.io/circleci/build/github/kenherring/ablunit-test-provider/main?logo=circleci)](https://dl.circleci.com/status-badge/redirect/gh/kenherring/ablunit-test-provider/tree/main) [![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=kenherring_ablunit-test-provider&metric=sqale_rating)](https://sonarcloud.io/summary/new_code?id=kenherring_ablunit-test-provider) [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=kenherring_ablunit-test-provider&metric=coverage)](https://sonarcloud.io/summary/new_code?id=kenherring_ablunit-test-provider)
 
 The [ABLUnit Test Runner](https://github.com/kenherring/ablunit-test-provider/) VSCode extension integrates [ABLUnit tests](https://docs.progress.com/bundle/openedge-developer-studio-help-122/page/Learn-About-ABLUnit-Test-Framework.html) into the VSCode test explorer.
 
 This is my first VSCode extension, and my first TypeScript project. I'm sure there are many ways to improve the code, and I welcome any feedback.  I'm also open to collaboration for anyone who might wish to contribute.
 
-Quality code, and thus unit testing, is my passion  I hope this extension helps others to embrace [TDD](https://en.wikipedia.org/wiki/Test-driven_development) and improve their code.
+Quality code is my passion.  Unit testing is an important component of ensuring code remains functional when future changes are made.  I hope this extension helps others to embrace [TDD](https://en.wikipedia.org/wiki/Test-driven_development) and improve their code.
 
-## OpenEdge Versions Note
+## 🌴 Features
 
-This project was developed using the [Progress OpenEdge Developers Kit: Classroom Edition](https://www.progress.com/openedge/classroom-edition).  That means it's only been tested against version 12.2 at the moment.  Feel free to report any bugs you may run into with other versions.
+* Execute ABLUnit tests from the VSCode **Test Explorer View**
+* Display test results in the VSCode **Test Results View**
+* Color coded line coverage highlighting in the editor
 
-## Extension
-
-### Features
-
-* Run ABLUnit Tests
-* See test results in VSCode Test Explorer
-* View code coverage highlighting in the editor
-
-#### Code Coverage Example Screenshot
+### Code Coverage Example Screenshot
 
 ![code coverage example screenshot](https://github.com/kenherring/ablunit-test-provider/raw/main/docs/coverage.png)
 
-## Configuration
+## 📝 Supported OpenEdge Versions
+
+This project was developed using the [Progress OpenEdge Developers Kit: Classroom Edition](https://www.progress.com/openedge/classroom-edition).  It was primarily tested with 12.2.12, but the unit tests are run for 12.7.0 during the CI builds too.
+
+## ⛺ Configuration
 
 The configuration is broken into two sections.
 
@@ -57,19 +55,19 @@ This config searches the `test/` directory for test files, named `*Test.cls` or 
 
 ### Configuration - Test Run Configuration (`.vscode/ablunit-test-profile.json`)
 
-<!-- TODO -->
+Running tests will work for most users without any configuration.  However, there are some advanced options available which can be configured via `.vscode/ablunit-test-profile.json`.
 
-<!-- START CONFIGURATION PROPERTIES -->
-## Configuration Properties
-
-| Property | Default | Description |
-| --- | --- | --- |
-
-## Contributing
+## 👷‍♂️ Contributing
 
 See [CONTRIBUTING.md](.github/CONTRIBUTING.md)
 
-## Links
+## 💻 Development
+
+* `npm install`
+* Make any changes you wish
+* `npm test` or use the [Extension Test Runner](https://marketplace.visualstudio.com/items?itemName=ms-vscode.extension-test-runner)
+
+## 🔗 Links
 
 * [VSCode Marketplace - ABLUnit Test Runner](https://marketplace.visualstudio.com/items?itemName=kherring.ablunit-test-provider)
 * Progress Documentation
@@ -79,3 +77,4 @@ See [CONTRIBUTING.md](.github/CONTRIBUTING.md)
   * [PROFILER system handle](https://docs.progress.com/bundle/abl-reference/page/PROFILER-system-handle.html)
   * [Profiler (-profile) startup parameter](https://docs.progress.com/bundle/openedge-startup-and-parameter-reference/page/Profiler-profile.html)
 * GitHub Repo - [progress/ade](https://github.com/progress/ADE) - OpenEdge Source Files
+* Docker Hub - Progress Software Corporation - [progresssoftware/prgs-oedb](https://hub.docker.com/r/progresssoftware/prgs-oedb)

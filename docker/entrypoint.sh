@@ -2,7 +2,9 @@
 set -eou pipefail
 
 initialize () {
+	echo "[$0 initialize]"
 	BASH_AFTER_FAIL=false
+	REPO_VOLUME=/home/circleci/ablunit-test-provider
 
 	while getopts 'b' OPT; do
 		case "$OPT" in
@@ -22,10 +24,11 @@ initialize () {
 }
 
 initialize_repo () {
+	echo "[$0 initialize_repo]"
 	cd /home/circleci/project
 	git config --global init.defaultBranch main
 	git init
-	git remote add origin /home/circleci/ablunit-test-provider
+	git remote add origin "$REPO_VOLUME"
 	git fetch origin
 	if [ "$GIT_BRANCH" = "$(git branch --show-current)" ]; then
 		git reset --hard "origin/$GIT_BRANCH"
@@ -35,6 +38,7 @@ initialize_repo () {
 }
 
 copy_files_from_volume () {
+	echo "[$0 copy_files_from_volume]"
 	find_files_to_copy
 	copy_files "staged"
 	[ -f /tmp/modified_files ] && copy_files "modified"
@@ -45,29 +49,40 @@ copy_files_from_volume () {
 }
 
 find_files_to_copy () {
-	cd /home/circleci/ablunit-test-provider
-	git --no-pager diff --diff-filter=d --name-only --staged > /tmp/staged_files
-	git --no-pager diff --diff-filter=D --name-only --staged > /tmp/deleted_files
+	echo "[$0 find_files_to_copy]"
+	local BASE_DIR
+	BASE_DIR=$(pwd)
 
+	cd "$REPO_VOLUME"
+	git config --global --add safe.directory "$REPO_VOLUME"
+	git --no-pager diff --diff-filter=d --name-only --staged --ignore-cr-at-eol > /tmp/staged_files
+	git --no-pager diff --diff-filter=D --name-only --staged --ignore-cr-at-eol > /tmp/deleted_files
 	if ! ${STAGED_ONLY:-false}; then
-		git --no-pager diff --diff-filter=d --name-only > /tmp/modified_files
+		git --no-pager diff --diff-filter=d --name-only --ignore-cr-at-eol > /tmp/modified_files
 	fi
-	cd -
+
+	echo "file counts:"
+	echo "  staged=$(wc -l /tmp/staged_files)"
+	echo " deleted=$(wc -l /tmp/deleted_files)"
+	echo " modified=$(wc -l /tmp/modified_files)"
+
+	cd "$BASE_DIR"
 }
 
 copy_files () {
+	echo "[$0 copy_files]"
 	local TYPE="$1"
 	while read -r FILE; do
 		echo "copying $TYPE file $FILE"
 		if [ ! -d "$(dirname "$FILE")" ]; then
 			mkdir -p "$(dirname "$FILE")"
 		fi
-		cp "/home/circleci/ablunit-test-provider/$FILE" "$FILE"
+		sed 's/\r//g' "$REPO_VOLUME/$FILE" > "$FILE"
 	done < "/tmp/${TYPE}_files"
 }
 
 run_tests () {
-	echo "starting tests..."
+	echo "[$0 run_tests]"
 	if ! .circleci/run_test_wrapper.sh; then
 		echo "run_tests failed"
 		if $BASH_AFTER_FAIL; then
@@ -81,7 +96,7 @@ run_tests () {
 }
 
 analyze_results () {
-	echo "analyzing results..."
+	echo "[$0 analyze_results]"
 	RESULTS_COUNT=$(find . -name 'mocha_results_*.xml' | wc -l)
 	LCOV_COUNT=$(find . -name 'lcov.info' | wc -l)
 	HAS_ERROR=false
@@ -104,7 +119,7 @@ analyze_results () {
 }
 
 finish () {
-	echo "Artifacts to be saved:"
+	echo "[$0 finish] artifacts to be saved:"
 	ls -al artifacts
 }
 
@@ -113,4 +128,4 @@ initialize "$@"
 run_tests
 analyze_results
 finish
-echo "entrypoint.sh finished successfully!"
+echo "[$0] completed successfully!"

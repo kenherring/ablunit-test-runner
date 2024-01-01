@@ -1,8 +1,14 @@
 #!/bin/bash
 set -eou pipefail
 
+initialize () {
+	echo "[$0 initialize]"
+	npm install
+	npm run build
+}
+
 dbus_config () {
-	echo "dbus_config..."
+	echo "[$0 dbus_config]"
 	## These lines fix dbus errors in the logs related to the next section
 	## However, they also create new errors
 	# apt update
@@ -20,8 +26,7 @@ dbus_config () {
 }
 
 run_tests () {
-	set -x
-	echo "run_tests..."
+	echo "[$0 run_tests]"
 	EXIT_CODE=0
 
 	xvfb-run -a npm test || EXIT_CODE=$?
@@ -34,15 +39,15 @@ run_tests () {
 }
 
 run_lint () {
-	echo "run_lint"
+	echo "[$0 run_lint]"
 
 	mkdir -p artifacts
 	rm -rf test_projects/proj7_load_performance/src/ADE-12.2.13.0
 
-	if ! npx eslint . --ext .ts,.js > artifacts/eslint_report.txt; then
+	if ! npx eslint src --ext .ts,.js > artifacts/eslint_report.txt; then
 		echo "eslint failed"
 	fi
-	if ! npx eslint . --ext .ts,.js -f json > artifacts/eslint_report.json; then
+	if ! npx eslint src --ext .ts,.js -f json > artifacts/eslint_report.json; then
 		echo "eslint plain failed"
 	fi
 	if [ -f artifacts/eslint_report.txt ]; then
@@ -51,6 +56,8 @@ run_lint () {
 }
 
 ########## MAIN BLOCK ##########
+initialize
 dbus_config
 run_tests
 run_lint
+echo "$0 completed successfully!"

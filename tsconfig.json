@@ -10,9 +10,15 @@
 		"strict": true,
 		"rootDir": "src"
 	},
+	"parseOptions": {
+		"project": "tsconfig.json",
+		"tsconfigRootDir": "."
+	},
 	"include": [
 		"src/**/*.ts",
-		"src/**/**/*.ts"
+		"src/*/*.ts",
+		"src/*/*/*.ts",
+		"src/*/*/*/*.ts"
 	],
 	"exclude": [
 		"node_modules"

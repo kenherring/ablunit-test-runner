@@ -1,13 +1,71 @@
 #!/bin/bash
 set -eou pipefail
 
-if [ -z "$DLC" ]; then
-	echo "ERROR: DLC environment variable not set... exiting"
-	exit 1
-fi
+initialize () {
+	echo "iniailizing..."
+	local OPT OPTARG OPTIND
+	while getopts "p" OPT; do
+		case "$OPT" in
+			p)	DOCKER_PUSH=true ;;
+			*)	echo "ERROR: invalid option: -$OPTARG" ; exit 1 ;;
+		esac
+	done
 
-cp "$DLC/tty/ablunit.pl" docker/ablunit.pl
+	if [ -z "$DLC" ]; then
+		echo "ERROR: DLC environment variable not set... exiting"
+		exit 1
+	fi
+	if [ ! -f "$DLC/progress.cfg" ]; then
+		echo "ERROR: \$DLC/progress.cfg file not found... exiting"
+		echo " - full path: $DLC/progress.cfg"
+		exit 1
+	fi
 
-docker build -f docker/Dockerfile -t kherring/ablunit-test-runner:latest .
+	if [ -z "${DOCKER_TAGS:-}" ]; then
+		DOCKER_TAGS=("12.2.12" "12.7.0")
+	fi
+	DOCKER_TAGS=("12.2.12" "12.7.0")
+}
 
-# docker push kherring/ablunit-test-runner
+build_images () {
+	echo "building images..."
+	for DOCKER_TAG in "${DOCKER_TAGS[@]}"; do
+		echo "Building docker image for OE $DOCKER_TAG"
+		docker build docker \
+			--build-arg OE_VERSION="$DOCKER_TAG" \
+			--secret id=license,src="$DLC/progress.cfg" \
+			-t "ablunit-test-runner:$DOCKER_TAG"
+
+		echo "validate and tag new image..."
+		## ensure we're leaving behind a license or ssh-keys
+		## since we're using secret mounts we shouldn't be, but good to be safe in case it changes later
+		## alternative option - use a secret mount: https://docs.docker.com/build/building/secrets/#secret-mounts
+		if ! docker run --rm "ablunit-test-runner:$DOCKER_TAG" bash -c 'test ! -f ~/.ssh/*'; then
+			echo "ERROR: found ssh key(s) left in the docker image..."
+			exit 1
+		fi
+		## tag with the org now that we know it doesn't have an accidental license exposure
+		docker tag "ablunit-test-runner:$DOCKER_TAG" "kherring/ablunit-test-runner:$DOCKER_TAG"
+
+		if ${DOCKER_PUSH:-false}; then
+			docker push "kherring/ablunit-test-runner:$DOCKER_TAG"
+		fi
+	done
+	SUCCESS_MESSAGE="Docker image(s) built successfully!"
+}
+
+push_images () {
+	${DOCKER_PUSH:-false} || return 0
+	echo "pushing images to dockerhub..."
+	for DOCKER_TAG in "${DOCKER_TAGS[@]}"; do
+		docker push "kherring/ablunit-test-runner:$DOCKER_TAG"
+	done
+	SUCCESS_MESSAGE="Docker image(s) pushed successfully!"
+
+}
+
+########## MAIN BLOCK ##########
+initialize "$@"
+build_images
+push_images
+echo "$SUCCESS_MESSAGE"

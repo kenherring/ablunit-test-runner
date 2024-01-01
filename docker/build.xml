@@ -1,0 +1,34 @@
+<project name="ADE" default="compile">
+
+	<property environment="env" />
+	<taskdef resource="PCT.properties" classpath="${user.home}/.ant/lib/PCT.jar;/usr/share/ant/lib/PCT.jar" />
+	<typedef resource="types.properties" classpath="${user.home}/.ant/lib/PCT.jar;/usr/share/ant/lib/PCT.jar" />
+
+	<condition property="os-dlc" value="/psc/dlc" else="C:/Progress/OpenEdge">
+		<os family="unix" />
+	</condition>
+	<condition property="DLC" value="${env.DLC}" else="${os-dlc}">
+		<isset property="${env.DLC}" />
+	</condition>
+	<DlcHome value="${DLC}" />
+
+	<echo>DLC=${DLC}, basedir=${basedir}, user.home=${user.home}</echo>
+
+	<target name="compile">
+		<echo>compiling ablunit...</echo>
+		<PCTCompile basedir="." destDir="rcode/ablunit" relativePaths="true" tempDir="/tmp">
+			<fileset dir="ADE/ablunit" includes="**/*.p,**/*.cls" excludes="**/.builder/**" />
+			<propath>
+				<pathelement path="ADE/ablunit" />
+			</propath>
+		</PCTCompile>
+		<PCTLibrary destfile="ablunit.pl">
+			<fileset dir="rcode/ablunit">
+				<include name="**/*.r" />
+			</fileset>
+		</PCTLibrary>
+		<delete dir="rcode" />
+		<echo>compile successful!</echo>
+	</target>
+
+</project>
