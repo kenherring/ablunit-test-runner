@@ -4,6 +4,7 @@ set -eou pipefail
 initialize () {
 	echo "[$0 initialize]"
 	npm install
+	npm run build
 }
 
 dbus_config () {
