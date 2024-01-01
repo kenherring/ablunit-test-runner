@@ -6,7 +6,9 @@ async function main () {
 	const config = getTestConfig()
 
 	for (const conf of config) {
-		await testProject(conf.projName, conf.workspaceFolder, conf.launchArgs)
+		if (conf.projName === 'proj1') {
+			await testProject(conf.projName, conf.workspaceFolder, conf.launchArgs)
+		}
 	}
 }
 

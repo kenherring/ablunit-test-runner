@@ -34,10 +34,10 @@ suite(projName + ' - Extension Test Suite', () => {
 		await runAllTests()
 
 		assert(await doesFileExist(ablunitJson),"missing ablunit.json (" + ablunitJson.fsPath + ")")
-		if (process.platform === 'win32') {
-			assert(await doesFileExist(resultsXml),"missing results.xml (" + resultsXml.fsPath + ")")
+		if (process.platform === 'win32' || process.env.WSL_DISTRO_NAME !== undefined) {
+			assert(await doesFileExist(resultsXml),"missing results.xml (" + resultsXml.fsPath + "), progress.platform=" + process.platform)
 		} else {
-			assert(! await doesFileExist(resultsXml),"missing results.xml (" + resultsXml.fsPath + ")")
+			assert(! await doesFileExist(resultsXml),"missing results.xml (" + resultsXml.fsPath + "), progress.platform=" + process.platform)
 		}
 		assert(! await doesFileExist(resultsJson),"unexpected results.json (" + resultsJson.fsPath + ")")
 	})
