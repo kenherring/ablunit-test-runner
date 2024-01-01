@@ -40,6 +40,19 @@ export function getWorkspaceUri () {
 	}
 }
 
+export async function deleteTestFiles() {
+	await deleteTestFile("ablunit.json")
+	await deleteTestFile("results.xml")
+	await deleteTestFile("results.json")
+}
+
+async function deleteTestFile(filename: string) {
+	const workspaceUri = getWorkspaceUri()
+	if (await doesFileExist(Uri.joinPath(workspaceUri, filename))) {
+		await workspace.fs.delete(Uri.joinPath(workspaceUri, filename))
+	}
+}
+
 export function getSessionTempDir () {
 	if (process.platform === 'win32') {
 		return "file:///c:/temp/ablunit"

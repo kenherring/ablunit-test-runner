@@ -36,7 +36,6 @@
 		// "quotes": ["warn", "single"]
 		"@typescript-eslint/indent": ["error", "tab"],
 		"@typescript-eslint/restrict-plus-operands": "off",
-		"linebreak-style": ["error", "unix"],
 		"no-console": "warn",
 		"no-empty": "warn",
 		"no-mixed-spaces-and-tabs": ["error", "smart-tabs"],
