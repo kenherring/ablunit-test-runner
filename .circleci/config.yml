@@ -81,7 +81,6 @@ jobs:
       - save_cache:
           key: v1-nodemodules-<< parameters.oe-version >>-{{ checksum "package.json" }}
           paths: [ node_modules ]
-            - node_modules
       - save_cache:
           key: v1-vscode-test-<< pipeline.parameters.vscode-version >>
           paths: [ .vscode-test ]
