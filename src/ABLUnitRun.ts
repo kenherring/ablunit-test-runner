@@ -74,7 +74,7 @@ export const ablunitRun = async (options: TestRun, res: ABLResults) => {
 		cmd = cmd.concat(res.cfg.ablunitConfig.command.additionalArgs)
 
 		let params = "CFG=" + workspace.asRelativePath(res.cfg.ablunitConfig.config_uri.fsPath, false)
-		if (res.cfg.ablunitConfig.dbAliases) {
+		if (res.cfg.ablunitConfig.dbAliases.length > 0) {
 			params = params + " = ALIASES=" + res.cfg.ablunitConfig.dbAliases.join(';')
 		}
 		cmd.push("-param", '"' + params + '"')
