@@ -77,10 +77,10 @@ export async function getDLC (workspaceFolder: WorkspaceFolder, projectJson?: st
 }
 
 export async function readOpenEdgeProjectJson (workspaceFolder: WorkspaceFolder) {
-	const projectJson2 = await getProjectJson(workspaceFolder)
-	if (projectJson2) {
-		const dlc = await getDLC(workspaceFolder, projectJson2)
-		const ret = parseOpenEdgeProjectJson(workspaceFolder, projectJson2, dlc)
+	const projectJson = await getProjectJson(workspaceFolder)
+	if (projectJson) {
+		const dlc = await getDLC(workspaceFolder, projectJson)
+		const ret = parseOpenEdgeProjectJson(workspaceFolder, projectJson, dlc)
 		return ret
 	}
 

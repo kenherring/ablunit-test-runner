@@ -42,6 +42,8 @@ export class PropathParser {
 	}
 
 	setPropath (importedPropath: IProjectJson) {
+		console.log("////////////// setPropath begin //////////////")
+
 		for (const entry of importedPropath.propathEntry) {
 			console.log("found propath entry: " + entry.path + " " + entry.type + " " + entry.buildDir)
 			let uri: Uri
@@ -83,6 +85,7 @@ export class PropathParser {
 			}
 			this.propath.entry.push(e)
 		}
+		console.log("////////////// setPropath end //////////////")
 	}
 
 	getPropath () {
@@ -175,7 +178,7 @@ export class PropathParser {
 			}
 		}
 		if (!file) {
-			console.error("(search) cannot find '" + file + "' in propath", 'error')
+			console.error("(search) cannot find '" + file + "' in propath")
 			throw new Error("(search) cannot find '" + file + "' in propath")
 		}
 	}
