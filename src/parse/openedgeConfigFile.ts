@@ -226,6 +226,10 @@ function getDlcDirectory (version: string): string {
 		dlc = oeRuntimes[0].path
 	}
 
+	if (dlc === '') {
+		dlc = process.env.DLC ?? ''
+	}
+
 	if (dlc === '' && dfltDlc != '') {
 		dlc = dfltDlc
 		logToChannel("OpenEdge version not configured in workspace settings, using default version (" + dfltName + ") in user settings.")
