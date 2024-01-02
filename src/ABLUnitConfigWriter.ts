@@ -119,7 +119,9 @@ export class ABLUnitConfig  {
 		for (const conn of dbConns) {
 			lines.push(conn.connect)
 		}
-		await this.writeFile(uri, Uint8Array.from(Buffer.from(lines.join('\n') + '\n')))
+		if (lines.length > 0) {
+			await this.writeFile(uri, Uint8Array.from(Buffer.from(lines.join('\n') + '\n')))
+		}
 	}
 
 	async readPropathFromJson () {

@@ -101,10 +101,12 @@ export class ABLResults {
 		prom[2] = this.cfg.createAblunitJson(this.cfg.ablunitConfig.config_uri, this.cfg.ablunitConfig.options, this.testQueue)
 		prom[3] = this.cfg.createDbConnPf(this.cfg.ablunitConfig.dbConnPfUri, this.cfg.ablunitConfig.dbConns)
 
-		this.cfg.ablunitConfig.dbAliases = []
-		for (const conn of this.cfg.ablunitConfig.dbConns) {
-			if (conn.aliases.length > 0) {
-				this.cfg.ablunitConfig.dbAliases.push(conn.name + ',' + conn.aliases.join(","))
+		if(this.cfg.ablunitConfig.dbConns) {
+			this.cfg.ablunitConfig.dbAliases = []
+			for (const conn of this.cfg.ablunitConfig.dbConns) {
+				if (conn.aliases.length > 0) {
+					this.cfg.ablunitConfig.dbAliases.push(conn.name + ',' + conn.aliases.join(","))
+				}
 			}
 		}
 

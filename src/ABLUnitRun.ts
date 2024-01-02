@@ -62,7 +62,7 @@ export const ablunitRun = async (options: TestRun, res: ABLResults) => {
 		}
 		cmd.push('-T',tempPath)
 
-		if (res.cfg.ablunitConfig.dbConnPfUri) {
+		if (res.cfg.ablunitConfig.dbConnPfUri && res.cfg.ablunitConfig.dbConns && res.cfg.ablunitConfig.dbConns.length > 0) {
 			cmd.push('-pf', workspace.asRelativePath(res.cfg.ablunitConfig.dbConnPfUri.fsPath, false))
 		}
 
