@@ -222,6 +222,9 @@ function getDlcDirectory (version: string): string {
 	})
 
 	log.debug('[getDlcDirectory] dlc = ' + dlc + ", dfltDlc = " + dfltDlc)
+	if (dlc === '' && oeRuntimes.length === 1) {
+		dlc = oeRuntimes[0].path
+	}
 
 	if (dlc === '' && dfltDlc != '') {
 		dlc = dfltDlc

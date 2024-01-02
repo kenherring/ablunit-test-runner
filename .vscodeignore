@@ -1,4 +1,5 @@
 ## Keep these files
+!resources/ABLUnitCore-wrapper.p
 !resources/images/icon_128.png
 !out/extension.js
 !CHANGELOG.md
