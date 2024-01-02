@@ -20,12 +20,14 @@ docker/ablunit.pl
 *.dbg
 *.listing
 *.out
+*.pl
 *.preprocess
 *.prof
 *.r
 *.xref
 *.xref.xml
 ablunit.json
+dbconn.pf
 dbg_*
 listings/
 prof*.json

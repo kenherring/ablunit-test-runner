@@ -12,4 +12,15 @@
 		<DBConnection dbName="target/db/sp2k" singleUser="true" />
 	</PCTDumpSchema>
 
+	<target name="copy">
+		<echo>extract tty/ablunit.pl</echo>
+		<copy todir="oe/tty">
+			<plfileset src="${env.DLC}/tty/ablunit.pl" includes="**/*" />
+		</copy>
+		<echo>extract gui/ablunit.pl</echo>
+		<copy todir="oe/gui">
+			<plfileset src="${env.DLC}/gui/ablunit.pl" includes="**/*" />
+		</copy>
+	</target>
+
 </project>

@@ -18,7 +18,7 @@ export interface IPropathEntry {
 
 export interface IDlc {
 	uri: Uri,
-	version: string
+	version?: string
 }
 
 const dlcMap = new Map<WorkspaceFolder, IDlc>()
@@ -68,8 +68,8 @@ export async function getDLC (workspaceFolder: WorkspaceFolder, projectJson?: st
 		runtimeDlc = Uri.file(process.env.DLC)
 	}
 	if (runtimeDlc) {
-		console.log("using DLC = " + runtimeDlc.fsPath)
-		const dlcObj: IDlc = { uri: runtimeDlc, version: oeversion }
+		logToChannel("using DLC = " + runtimeDlc.fsPath)
+		const dlcObj: IDlc = { uri: runtimeDlc }
 		dlcMap.set(workspaceFolder, dlcObj)
 		return dlcObj
 	}
@@ -77,14 +77,14 @@ export async function getDLC (workspaceFolder: WorkspaceFolder, projectJson?: st
 }
 
 export async function readOpenEdgeProjectJson (workspaceFolder: WorkspaceFolder) {
-	const projectJson = await getProjectJson(workspaceFolder)
-	if (projectJson) {
-		const dlc = await getDLC(workspaceFolder, projectJson)
-		const ret = parseOpenEdgeProjectJson(workspaceFolder, projectJson, dlc)
+	const projectJson2 = await getProjectJson(workspaceFolder)
+	if (projectJson2) {
+		const dlc = await getDLC(workspaceFolder, projectJson2)
+		const ret = parseOpenEdgeProjectJson(workspaceFolder, projectJson2, dlc)
 		return ret
 	}
 
-	logToChannel("openedge-project.json not found.", 'warn')
+	logToChannel("Failed to parse openedge-project.json", 'warn')
 	return <IProjectJson>{ propathEntry: [] }
 }
 
@@ -99,8 +99,7 @@ export async function getOEVersion (workspaceFolder: WorkspaceFolder, projectJso
 			return tmpVer
 		}
 	}
-	return "none"
-	// TODO return undefined
+	return undefined
 }
 
 interface IBuildPath {
@@ -129,7 +128,7 @@ function parseOpenEdgeProjectJson (workspaceFolder: WorkspaceFolder, inConf: str
 
 	// TODO what about if we're running a different profile?
 	if (!buildPath) {
-		console.error("buildPath not found in openedge-project.json")
+		logToChannel("buildPath not found in openedge-project.json", 'error')
 		throw new Error("buildPath not found in openedge-project.json")
 	}
 

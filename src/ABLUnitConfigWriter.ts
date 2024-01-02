@@ -7,6 +7,7 @@ import { getProfileConfig, RunConfig } from './parse/TestProfileParser'
 import { IABLUnitJson, ITestObj } from './ABLResults'
 import { CoreOptions } from './parse/config/CoreOptions'
 import { ProfilerOptions } from './parse/config/ProfilerOptions'
+import { IDatabaseConnection } from './parse/openedgeConfigFile'
 
 
 // KEEP IN REPO CONFIG:
@@ -109,6 +110,16 @@ export class ABLUnitConfig  {
 		}
 		await this.deleteFile(this.ablunitConfig.profFilenameUri)
 		await this.writeFile(uri, Uint8Array.from(Buffer.from(opt.join('\n') + '\n')))
+	}
+
+	async createDbConnPf (uri: Uri, dbConns: IDatabaseConnection[]) {
+		logToChannel("creating dbconn.pf: '" + this.ablunitConfig.dbConnPfUri.fsPath + "'")
+		const lines: string[] = []
+
+		for (const conn of dbConns) {
+			lines.push(conn.connect)
+		}
+		await this.writeFile(uri, Uint8Array.from(Buffer.from(lines.join('\n') + '\n')))
 	}
 
 	async readPropathFromJson () {

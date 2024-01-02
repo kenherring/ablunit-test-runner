@@ -1,0 +1,7 @@
+{
+    "name": "ablunit-test-provider",
+    "buildPath": [
+        { "type": "source", "path": "resources" }
+    ],
+    "buildDirectory": "target"
+}

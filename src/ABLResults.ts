@@ -36,6 +36,8 @@ export class ABLResults {
 	workspaceFolder: WorkspaceFolder
 	storageUri: Uri
 	globalStorageUri: Uri
+	extensionResourcesUri: Uri
+	wrapperUri: Uri
 	status: string = "none"
 	cfg: ABLUnitConfig
 	startTime: Date
@@ -55,12 +57,14 @@ export class ABLResults {
 	dlc: IDlc | undefined
 	public testCoverage: Map<string, FileCoverage> = new Map<string, FileCoverage>()
 
-	constructor (workspaceFolder: WorkspaceFolder, storageUri: Uri, globalStorageUri: Uri) {
+	constructor (workspaceFolder: WorkspaceFolder, storageUri: Uri, globalStorageUri: Uri, extensionResourcesUri: Uri) {
 		logToChannel("workspaceFolder=" + workspaceFolder.uri.fsPath)
 		this.startTime = new Date()
 		this.workspaceFolder = workspaceFolder
 		this.storageUri = storageUri
 		this.globalStorageUri = globalStorageUri
+		this.extensionResourcesUri = extensionResourcesUri
+		this.wrapperUri = Uri.joinPath(this.extensionResourcesUri, 'ABLUnitCore-wrapper.p')
 		this.cfg = new ABLUnitConfig()
 		this.setStatus("constructed")
 	}
@@ -95,6 +99,14 @@ export class ABLResults {
 		prom[0] = this.cfg.createProfileOptions(this.cfg.ablunitConfig.profOptsUri,this.cfg.ablunitConfig.profiler)
 		prom[1] = this.cfg.createProgressIni(this.propath!.toString())
 		prom[2] = this.cfg.createAblunitJson(this.cfg.ablunitConfig.config_uri, this.cfg.ablunitConfig.options, this.testQueue)
+		prom[3] = this.cfg.createDbConnPf(this.cfg.ablunitConfig.dbConnPfUri, this.cfg.ablunitConfig.dbConns)
+
+		this.cfg.ablunitConfig.dbAliases = []
+		for (const conn of this.cfg.ablunitConfig.dbConns) {
+			if (conn.aliases.length > 0) {
+				this.cfg.ablunitConfig.dbAliases.push(conn.name + ',' + conn.aliases.join(","))
+			}
+		}
 
 		return Promise.all(prom).then(() => {
 			console.log("done creating config files for run")

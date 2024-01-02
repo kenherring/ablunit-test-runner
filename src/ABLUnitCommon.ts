@@ -1,11 +1,28 @@
+/* eslint-disable no-console */
 import { TestRun, window } from 'vscode'
+import path = require('path')
 
 const logOutputChannel = window.createOutputChannel('ABLUnit', {log: true })
 logOutputChannel.clear()
 
-export function logToChannel (message: string, consoleMessageType: 'trace' | 'debug' | 'info' | 'warn' | 'error' | 'log' | '' = 'info', options?: TestRun) {
+class Logger {
+	debug (message: string) {
+		logToChannel(this.getPrefix() + ' ' + message, 'debug')
+	}
+
+	getPrefix () {
+		return '[' + path.normalize(__dirname + "/..").replace(/\\/g, '/') + ']'
+	}
+}
+
+export const log = new Logger()
+
+export function logToChannel (message: string, consoleMessageType: 'trace' | 'verbose' | 'debug' | 'info' | 'warn' | 'error' | 'log' | '' = 'info', options?: TestRun) {
 	if (consoleMessageType === '' || consoleMessageType === 'log') {
 		consoleMessageType = 'info'
+	}
+	if (consoleMessageType === 'verbose') {
+		consoleMessageType = 'trace'
 	}
 
 	if (options) {
@@ -24,7 +41,7 @@ export function logToChannel (message: string, consoleMessageType: 'trace' | 'de
 			break
 		case 'info':
 			console.log(message)
-			logOutputChannel.appendLine(message)
+			logOutputChannel.info(message)
 			break
 		case 'warn':
 			console.warn(message)

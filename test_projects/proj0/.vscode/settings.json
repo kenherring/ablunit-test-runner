@@ -1,6 +1,4 @@
 {
-	// "ablunit.params": "-pf test.pf",
-	// "ablunit.tempDir": "ablunit",
 	"ablunit.explorer.classlabel": "class-type-name",
 	"ablunit.discoverFilesOnActivate": true,
 	"ablunit.debugEnabled": true,
