@@ -109,7 +109,7 @@ export class ABLUnitConfig  {
 			opt.push('-traceFilter "' + profOpts.traceFilter + '"')
 		}
 		await this.deleteFile(this.ablunitConfig.profFilenameUri)
-		await this.writeFile(uri, Uint8Array.from(Buffer.from(opt.join('\n') + '\n')))
+		return this.writeFile(uri, Uint8Array.from(Buffer.from(opt.join('\n') + '\n')))
 	}
 
 	async createDbConnPf (uri: Uri, dbConns: IDatabaseConnection[]) {
@@ -120,7 +120,7 @@ export class ABLUnitConfig  {
 			lines.push(conn.connect)
 		}
 		if (lines.length > 0) {
-			await this.writeFile(uri, Uint8Array.from(Buffer.from(lines.join('\n') + '\n')))
+			return this.writeFile(uri, Uint8Array.from(Buffer.from(lines.join('\n') + '\n')))
 		}
 	}
 
