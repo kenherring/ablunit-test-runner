@@ -48,6 +48,7 @@ export class ABLResults {
 	tests: TestItem[] = []
 	testQueue: ITestObj[] = []
 	testData!: WeakMap<TestItem, ABLTestData>
+	skippedTests: TestItem[] = []
 	propath?: PropathParser
 	debugLines?: ABLDebugLines
 	promsgs?: ABLPromsgs
@@ -90,14 +91,12 @@ export class ABLResults {
 		this.dlc = await getDLC(this.workspaceFolder)
 		this.promsgs = new ABLPromsgs(this.dlc, this.globalStorageUri)
 
-		await this.cfg.readPropathFromJson().then((propath) => {
-			this.propath = propath
-			this.debugLines = new ABLDebugLines(this.propath)
-		})
+		this.propath = this.cfg.readPropathFromJson()
+		this.debugLines = new ABLDebugLines(this.propath)
 
 		const prom: (Promise<void> | Promise<void[]>)[] = []
 		prom[0] = this.cfg.createProfileOptions(this.cfg.ablunitConfig.profOptsUri,this.cfg.ablunitConfig.profiler)
-		prom[1] = this.cfg.createProgressIni(this.propath!.toString())
+		prom[1] = this.cfg.createProgressIni(this.propath.toString())
 		prom[2] = this.cfg.createAblunitJson(this.cfg.ablunitConfig.config_uri, this.cfg.ablunitConfig.options, this.testQueue)
 		prom[3] = this.cfg.createDbConnPf(this.cfg.ablunitConfig.dbConnPfUri, this.cfg.ablunitConfig.dbConns)
 
@@ -121,9 +120,23 @@ export class ABLResults {
 		this.tests = []
 	}
 
-	async addTest (test:  TestItem) {
-		console.log("addTest: " + test.id + " " + test.uri!.fsPath)
-		// outputToChannel('addTest { workspaceFolder: "' + this.cfg.ablunitConfig.workspaceFolder.name + '", test: "' + test.id + '" }')
+	async addTest (test:  TestItem, options: TestRun) {
+		if (!test.uri) {
+			logToChannel('test.uri is undefined (test.label = ' + test.label + ')', 'error', options)
+			return
+		}
+		if (!this.propath) {
+			throw new Error("propath is undefined")
+		}
+
+		const testPropath = await this.propath.search(test.uri)
+		if (!testPropath) {
+			this.skippedTests.push(test)
+			logToChannel("skipping test, not found in propath: " + workspace.asRelativePath(test.uri), 'warn', options)
+			return
+		}
+
+		logToChannel("addTest: " + test.id)
 		this.tests.push(test)
 
 		let testCase = undefined
@@ -131,34 +144,29 @@ export class ABLResults {
 			testCase = test.id.split("#")[1]
 		}
 
-		const testUri = test.uri!
+		const testUri = test.uri
 		let testRel: string = workspace.asRelativePath(testUri, false)
-		const p = await this.propath!.search(testUri)
-		if (p) {
-			testRel = p.propathRelativeFile
-		}
-		testRel = testRel.replace(/\\/g, '/')
+		const p = await this.propath.search(testUri)
+		testRel = p?.propathRelativeFile ?? testRel.replace(/\\/g, '/')
 
 		const testObj: ITestObj = { test: testRel }
 		if (testCase) {
 			testObj.cases = [ testCase ]
 		}
 
-		if (testCase) {
-			const existingTestObj = this.testQueue.find((t: ITestObj) => t.test === testRel)
-			if (existingTestObj) {
-				if(testObj.cases) {
-					if (!existingTestObj.cases) {
-						existingTestObj.cases = []
-					}
-					existingTestObj.cases.push(testCase)
+		const existingTestObj = this.testQueue.find((t: ITestObj) => t.test === testRel)
+		if (testCase && existingTestObj) {
+			if(testObj.cases) {
+				if (!existingTestObj.cases) {
+					existingTestObj.cases = []
 				}
-				return
+				existingTestObj.cases.push(testCase)
 			}
+			return
 		}
 
 		if (this.testQueue.find((t: ITestObj) => t.test === testRel)) {
-			console.log("test already exists in configJson.tests: " + testRel)
+			logToChannel("test already exists in configJson.tests: " + testRel, 'warn')
 		} else {
 			this.testQueue.push(testObj)
 		}
@@ -169,7 +177,7 @@ export class ABLResults {
 			const jsonUri = this.cfg.ablunitConfig.optionsUri.jsonUri
 			await workspace.fs.stat(jsonUri).then((stat) => {
 				if (stat.type === FileType.File) {
-					console.log("delete " + jsonUri.fsPath)
+					logToChannel("delete " + jsonUri.fsPath)
 					return workspace.fs.delete(jsonUri)
 				}
 			}, () => {
@@ -232,6 +240,11 @@ export class ABLResults {
 	}
 
 	async assignTestResults (item: TestItem, options: TestRun) {
+
+		if (this.skippedTests.indexOf(item) > -1) {
+			options.skipped(item)
+			return
+		}
 		if(!this.ablResults) {
 			throw new Error("no ABLResults object initialized")
 		}

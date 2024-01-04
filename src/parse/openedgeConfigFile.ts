@@ -44,7 +44,7 @@ interface OpenEdgeConfig {
 	numThreads: number
 	graphicalMode: boolean
 	extraParameters?: string
-	buildPath?: BuildPathEntry[]
+	buildPath?: IBuildPathEntry[]
 	buildDirectory?: string
 	dbConnections: IDatabaseConnection[]
 	procedures: Procedure[]
@@ -64,9 +64,11 @@ interface OpenEdgeMainConfig extends OpenEdgeConfig {
 	profiles?: OEProfile[]
 }
 
-interface BuildPathEntry {
+export interface IBuildPathEntry {
 	type: string
 	path: string
+	buildDir: string
+	xrefDir: string
 }
 
 interface Procedure {
@@ -84,15 +86,15 @@ let oeRuntimes: IOERuntime[] = []
 class ProfileConfig {
 	name?: string
 	version?: string
-	oeversion: string = ''
+	oeversion?: string
+	dlc: string = ''
 	extraParameters?: string
 	gui: boolean = false
-	dlc: string = ''
+	buildPath: IBuildPathEntry[] = []
 	propath: string[] = []
 	dbConnections: IDatabaseConnection[] = []
 	procedures: Procedure[] = []
 
-	propathMode: string = 'append'
 	startupProc?: string
 	parameterFiles: string[] = []
 	dbDictionary: string[] = []
@@ -110,6 +112,8 @@ class ProfileConfig {
 			this.gui = parent.gui
 		if (!this.propath)
 			this.propath = parent.propath
+		if (!this.buildPath)
+			this.buildPath = parent.buildPath
 		if (!this.dbConnections)
 			this.dbConnections = parent.dbConnections
 		if (!this.procedures)
@@ -139,8 +143,22 @@ class ProfileConfig {
 
 class OpenEdgeProjectConfig extends ProfileConfig {
 	activeProfile?: string
-	rootDir?: string
+	rootDir: string = '.'
+	buildDirectory: string = '.'
 	profiles: Map<string, ProfileConfig> = new Map<string, ProfileConfig>()
+}
+
+export function getActiveProfile (rootDir: string) {
+	if (fs.existsSync(path.join(rootDir, ".vscode", "profile.json"))) {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+		const txt = JSON.parse(fs.readFileSync(path.join(rootDir, ".vscode", "profile.json"), { encoding: 'utf8' }))
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+		const actProf = <string>txt['profile']
+		console.log(" ----- ----- [getActiveProfile] actProf=" + actProf)
+		return actProf
+	}
+	console.log(" ----- ----- [getActiveProfile] actProf=default")
+	return "default"
 }
 
 function loadConfigFile (filename: string): OpenEdgeMainConfig {
@@ -156,7 +174,7 @@ function loadConfigFile (filename: string): OpenEdgeMainConfig {
 	}
 }
 
-function readGlobalOpenEdgeRuntimes () {
+function readGlobalOpenEdgeRuntimes (workspaceUri: Uri) {
 	console.log("[readGlobalOpenEdgeRuntimes]")
 	oeRuntimes = workspace.getConfiguration('abl.configuration').get<Array<IOERuntime>>('runtimes') ?? []
 	console.log("[readGlobalOpenEdgeRuntimes] oeRuntimes = " + JSON.stringify(oeRuntimes, null, 2))
@@ -197,7 +215,7 @@ function readGlobalOpenEdgeRuntimes () {
 	if (defaultRuntime != null) {
 		defaultProject = new OpenEdgeProjectConfig()
 		defaultProject.dlc = defaultRuntime.path
-		defaultProject.rootDir = workspace.workspaceFolders[0].uri.fsPath // TODO
+		defaultProject.rootDir = workspaceUri.fsPath
 		defaultProject.oeversion = defaultRuntime.name
 		defaultProject.extraParameters = ''
 		defaultProject.gui = false
@@ -246,7 +264,7 @@ function parseOpenEdgeConfig (cfg: OpenEdgeConfig): ProfileConfig {
 	retVal.gui = cfg.graphicalMode
 	if (cfg.buildPath)
 		retVal.propath = cfg.buildPath.map(str => str.path.replace('${DLC}', retVal.dlc))
-	retVal.propathMode = 'append'
+	retVal.buildPath = cfg.buildPath ?? []
 	retVal.startupProc = ''
 	retVal.parameterFiles = []
 	retVal.dbDictionary = []
@@ -256,13 +274,13 @@ function parseOpenEdgeConfig (cfg: OpenEdgeConfig): ProfileConfig {
 	return retVal
 }
 
-function parseOpenEdgeProjectConfig (uri: Uri, config: OpenEdgeMainConfig): OpenEdgeProjectConfig {
+function parseOpenEdgeProjectConfig (uri: Uri, workspaceUri: Uri, config: OpenEdgeMainConfig): OpenEdgeProjectConfig {
 	console.log("[parseOpenEdgeProjectConfig] uri = " + uri.fsPath)
 	const prjConfig = new OpenEdgeProjectConfig()
 	prjConfig.name = config.name
 	prjConfig.version = config.version
 	prjConfig.rootDir = Uri.parse(path.dirname(uri.path)).fsPath
-	readGlobalOpenEdgeRuntimes()
+	readGlobalOpenEdgeRuntimes(workspaceUri)
 	prjConfig.dlc = getDlcDirectory(config.oeversion)
 	prjConfig.extraParameters = config.extraParameters ? config.extraParameters : ""
 	prjConfig.oeversion = config.oeversion
@@ -271,7 +289,8 @@ function parseOpenEdgeProjectConfig (uri: Uri, config: OpenEdgeMainConfig): Open
 	if (config.buildPath) {
 		prjConfig.propath = config.buildPath.map(str => str.path.replace('${DLC}', prjConfig.dlc))
 	}
-	prjConfig.propathMode = 'append'
+	prjConfig.buildPath = config.buildPath ?? []
+	prjConfig.buildDirectory = config.buildDirectory ?? workspaceUri.fsPath
 	prjConfig.dbConnections = config.dbConnections
 	prjConfig.procedures = config.procedures
 
@@ -287,11 +306,8 @@ function parseOpenEdgeProjectConfig (uri: Uri, config: OpenEdgeMainConfig): Open
 	}
 
 	// Active profile
-	if (fs.existsSync(path.join(prjConfig.rootDir, ".vscode", "profile.json"))) {
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-		const txt = JSON.parse(fs.readFileSync(path.join(prjConfig.rootDir, ".vscode", "profile.json"), { encoding: 'utf8' }))
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-		const actProf = <string>txt['profile']
+	const actProf = getActiveProfile(prjConfig.rootDir)
+	if (actProf) {
 		if (prjConfig.profiles.has(actProf)) {
 			prjConfig.activeProfile = actProf
 		} else {
@@ -303,15 +319,15 @@ function parseOpenEdgeProjectConfig (uri: Uri, config: OpenEdgeMainConfig): Open
 	return prjConfig
 }
 
-function readOEConfigFile (uri: Uri) {
+function readOEConfigFile (uri: Uri, workspaceUri: Uri) {
 	logToChannel("[readOEConfigFile] uri = " + uri.fsPath, 'debug')
 	const projects: OpenEdgeProjectConfig[] = []
 
 	logToChannel("[readOEConfigFile] OpenEdge project config file found: " + uri.fsPath)
 	const config = loadConfigFile(uri.fsPath)
 
-	const prjConfig = parseOpenEdgeProjectConfig(uri, config)
-	logToChannel(("[readOEConfigFile] --- prjConfig = " + JSON.stringify(prjConfig, null, 2)))
+	const prjConfig = parseOpenEdgeProjectConfig(uri, workspaceUri, config)
+	logToChannel(("[readOEConfigFile] prjConfig = " + JSON.stringify(prjConfig, null, 2)), 'debug')
 	if (prjConfig.dlc != "") {
 		logToChannel("OpenEdge project configured in " + prjConfig.rootDir + " -- DLC: " + prjConfig.dlc)
 		const idx: number = projects.findIndex((element) =>
@@ -332,12 +348,23 @@ function readOEConfigFile (uri: Uri) {
 	}
 }
 
-function getWorkspaceProfileConfig(uri: Uri) {
+function getWorkspaceProfileConfig (workspaceUri: Uri) {
+	const uri = Uri.joinPath(workspaceUri, 'openedge-project.json')
 	logToChannel("[getWorkspaceProfileConfig] uri = " + uri.fsPath, 'debug')
-	const prjConfig = readOEConfigFile(uri)
+	const prjConfig = readOEConfigFile(uri, workspaceUri)
 
 	if (prjConfig?.activeProfile) {
-		return prjConfig.profiles.get(prjConfig.activeProfile)
+		const prf =  prjConfig.profiles.get(prjConfig.activeProfile)
+		if (prf) {
+			if (!prf.buildPath)
+				prf.buildPath = prjConfig.buildPath
+			if (!prf.propath)
+				prf.propath = prjConfig.propath
+			for (const e of prf.buildPath) {
+				e.buildDir = prjConfig.buildDirectory ?? workspaceUri
+			}
+			return prf
+		}
 	}
 	if (prjConfig) {
 		return prjConfig.profiles.get("default")
@@ -345,10 +372,18 @@ function getWorkspaceProfileConfig(uri: Uri) {
 	return undefined
 }
 
+export function getOpenEdgeProfileConfig (workspaceUri: Uri) {
+	const profileConfig = getWorkspaceProfileConfig(workspaceUri)
+	if (profileConfig) {
+		return profileConfig
+	}
+	return undefined
+}
+
 export function getProfileDbConns (workspaceUri: Uri) {
 	logToChannel("[getProfileDbConns] workspaceUri = " + workspaceUri.fsPath, 'debug')
 
-	const profileConfig = getWorkspaceProfileConfig(Uri.joinPath(workspaceUri, 'openedge-project.json'))
+	const profileConfig = getWorkspaceProfileConfig(workspaceUri)
 	logToChannel("[getProfileDbConns] profileConfig = " + JSON.stringify(profileConfig, null, 2), 'debug')
 	log.debug("[getProfileDbConns] profileConfig = " + JSON.stringify(profileConfig, null, 2))
 	if (!profileConfig) {

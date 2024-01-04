@@ -1,0 +1,26 @@
+<project name="proj0">
+
+	<property environment="env" />
+	<taskdef resource="PCT.properties" classpath="${user.home}/.ant/lib/PCT.jar;/usr/share/ant/lib/PCT.jar" />
+	<typedef resource="types.properties" classpath="${user.home}/.ant/lib/PCT.jar;/usr/share/ant/lib/PCT.jar" />
+	<DlcHome value="${env.DLC}" />
+
+	<mkdir dir="target/db" />
+	<sports2000 dbName="sp2k" destDir="target/db" />
+
+	<PCTDumpSchema destFile="target/sp2k.df">
+		<DBConnection dbName="target/db/sp2k" singleUser="true" />
+	</PCTDumpSchema>
+
+	<target name="copy">
+		<echo>extract tty/ablunit.pl</echo>
+		<copy todir="oe/tty">
+			<plfileset src="${env.DLC}/tty/ablunit.pl" includes="**/*" />
+		</copy>
+		<echo>extract gui/ablunit.pl</echo>
+		<copy todir="oe/gui">
+			<plfileset src="${env.DLC}/gui/ablunit.pl" includes="**/*" />
+		</copy>
+	</target>
+
+</project>

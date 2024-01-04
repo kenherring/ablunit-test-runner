@@ -41,15 +41,15 @@ export function getWorkspaceUri () {
 }
 
 export async function deleteTestFiles () {
-	await deleteTestFile("ablunit.json")
-	await deleteTestFile("results.xml")
-	await deleteTestFile("results.json")
+	const workspaceUri = getWorkspaceUri()
+	await deleteFile(Uri.joinPath(workspaceUri, "ablunit.json"))
+	await deleteFile(Uri.joinPath(workspaceUri, "results.json"))
+	await deleteFile(Uri.joinPath(workspaceUri, "results.xml"))
 }
 
-async function deleteTestFile (filename: string) {
-	const workspaceUri = getWorkspaceUri()
-	if (await doesFileExist(Uri.joinPath(workspaceUri, filename))) {
-		await workspace.fs.delete(Uri.joinPath(workspaceUri, filename))
+export async function deleteFile (file: Uri) {
+	if (await doesFileExist(file)) {
+		return workspace.fs.delete(file)
 	}
 }
 
@@ -70,10 +70,6 @@ export function sleep (time: number = 2000, msg?: string) {
 	}
 	console.log(status)
 	return new Promise(resolve => setTimeout(resolve, time))
-}
-
-export async function deleteFile (uri: Uri) {
-	return workspace.fs.delete(uri)
 }
 
 export async function doesFileExist (uri: Uri) {
@@ -225,5 +221,19 @@ export function updateTestProfile (key: string, value: string | string[] | boole
 
 		// profile.configurations[0][key] = value
 		return workspace.fs.writeFile(Uri.joinPath(getWorkspaceUri(), '.vscode', 'ablunit-test-profile.json'), Buffer.from(JSON.stringify(profile,null,4)))
+	})
+}
+
+export async function selectProfile (profile: string) {
+	const profileJson = {
+		profile: profile
+	}
+	const profileUri = Uri.joinPath(getWorkspaceUri(), '.vscode', 'profile.json')
+	return workspace.fs.writeFile(profileUri, Buffer.from(JSON.stringify(profileJson))).then(() => {
+		return commands.executeCommand('abl.restart.langserv').then(() => {
+			return true
+		}, (err) => {
+			throw new Error("failed to restart langserv: " + err)
+		})
 	})
 }

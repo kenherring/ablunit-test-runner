@@ -1,5 +1,6 @@
 import { Uri, workspace, WorkspaceFolder } from 'vscode'
 import { logToChannel } from '../ABLUnitCommon'
+import { getOpenEdgeProfileConfig, IBuildPathEntry } from './openedgeConfigFile'
 require("jsonminify")
 
 
@@ -9,30 +10,22 @@ interface IRuntime {
 	default?: boolean
 }
 
-export interface IPropathEntry {
-	path: string
-	type: string
-	buildDir: string
-	xrefDir: string
-}
-
 export interface IDlc {
 	uri: Uri,
 	version?: string
 }
 
-const dlcMap = new Map<WorkspaceFolder, IDlc>()
-
-
 export interface IProjectJson {
-	propathEntry: IPropathEntry[]
+	propathEntry: IBuildPathEntry[]
 }
+
+const dlcMap = new Map<WorkspaceFolder, IDlc>()
 
 async function getProjectJson (workspaceFolder: WorkspaceFolder) {
 	const data = await workspace.fs.readFile(Uri.joinPath(workspaceFolder.uri,"openedge-project.json")).then((raw) => {
 		return JSON.minify(Buffer.from(raw.buffer).toString())
 	}, (err) => {
-		logToChannel("Failed to parse openedge-project.json: " + err,'error')
+		logToChannel("Failed to read openedge-project.json: " + err,'error')
 		return undefined
 	})
 	if (data) {
@@ -89,8 +82,22 @@ export async function readOpenEdgeProjectJson (workspaceFolder: WorkspaceFolder)
 }
 
 export async function getOEVersion (workspaceFolder: WorkspaceFolder, projectJson?: string) {
+	const profileJson = getOpenEdgeProfileConfig(workspaceFolder.uri)
+	if (!profileJson) {
+		logToChannel("[getOEVersion] profileJson not found", 'debug')
+		return undefined
+	}
+
+	if (profileJson.oeversion) {
+		logToChannel("[getOEVersion] profileJson.value.oeversion = " + profileJson.oeversion, 'debug')
+		return profileJson.oeversion
+	}
+
 	if (!projectJson) {
 		projectJson = await getProjectJson(workspaceFolder)
+		if (!projectJson) {
+			return undefined
+		}
 	}
 	if(projectJson) {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
@@ -102,31 +109,14 @@ export async function getOEVersion (workspaceFolder: WorkspaceFolder, projectJso
 	return undefined
 }
 
-interface IBuildPath {
-	path: string
-	type: string
-	build: string
-	xref: string
-}
-
 function parseOpenEdgeProjectJson (workspaceFolder: WorkspaceFolder, inConf: string, dlc: IDlc) {
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-	const conf = <object>JSON.parse(inConf)
-
-	let buildPath: IBuildPath[] | undefined
-	let buildDirectory: string | undefined
-	if (typeof conf === 'object') {
-		if (Object.prototype.hasOwnProperty.call(conf,'buildPath')) {
-			// @ts-expect-error 123
-			buildPath = <IBuildPath[]>conf['buildPath']
-		}
-		if (Object.prototype.hasOwnProperty.call(conf,'buildDirectory')) {
-			// @ts-expect-error 123
-			buildDirectory = <string>conf['buildDirectory']
-		}
+	const conf = getOpenEdgeProfileConfig(workspaceFolder.uri)
+	if (!conf) {
+		logToChannel("Failed to parse openedge-project.json", 'warn')
+		return <IProjectJson>{ propathEntry: [] }
 	}
 
-	// TODO what about if we're running a different profile?
+	const buildPath = conf.buildPath ?? []
 	if (!buildPath) {
 		logToChannel("buildPath not found in openedge-project.json", 'error')
 		throw new Error("buildPath not found in openedge-project.json")
@@ -144,12 +134,9 @@ function parseOpenEdgeProjectJson (workspaceFolder: WorkspaceFolder, inConf: str
 			path = workspaceFolder.uri.fsPath + path.substring(1)
 		}
 
-		let buildDir: string = entry.build
+		let buildDir: string = entry.buildDir
 		if (!buildDir) {
 			buildDir = path
-			if (buildDirectory) {
-				buildDir = buildDirectory
-			}
 			dotPct = ".builder/.pct0"
 		} else {
 			dotPct = buildDir + "/.pct"
@@ -158,7 +145,7 @@ function parseOpenEdgeProjectJson (workspaceFolder: WorkspaceFolder, inConf: str
 			throw new Error("buildDirectory not found in openedge-project.json")
 		}
 
-		let xrefDir: string = entry.xref
+		let xrefDir: string = entry.xrefDir
 		if (!xrefDir) {
 			xrefDir = dotPct
 		}

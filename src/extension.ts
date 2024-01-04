@@ -207,7 +207,7 @@ export async function activate (context: ExtensionContext) {
 					await r.start()
 					res.push(r)
 				}
-				proms.push(r.addTest(itemData.test))
+				proms.push(r.addTest(itemData.test, run))
 			}
 			await Promise.all(proms)
 			resultData.set(run, res)

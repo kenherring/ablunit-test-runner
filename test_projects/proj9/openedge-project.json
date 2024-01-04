@@ -1,0 +1,17 @@
+{
+	"buildPath": [
+		{ "type": "source", "path": "src", "excludes": "emptyClass.cls"},
+		{ "type": "source", "path": "test" }
+	],
+	"numThreads": 1,
+	"profiles": [
+		{
+			"name": "profile2",
+			"value": {
+				"buildPath": [
+					{ "type": "source", "path": "src-nodb" }
+				]
+			}
+		}
+	]
+}

@@ -35,27 +35,27 @@ export function logToChannel (message: string, consoleMessageType: 'trace' | 've
 			console.trace(message)
 			logOutputChannel.trace(message)
 			break
+		case 'error':
+			console.error(message)
+			logOutputChannel.error(message)
+			break
 		case 'debug':
 			console.debug(message)
 			logOutputChannel.debug(message)
-			break
-		case 'info':
-			console.log(message)
-			logOutputChannel.info(message)
 			break
 		case 'warn':
 			console.warn(message)
 			logOutputChannel.warn(message)
 			break
-		case 'error':
-			console.error(message)
-			logOutputChannel.error(message)
+		case 'info':
+			console.log(message)
+			logOutputChannel.info(message)
 			break
 		default:
-			console.log(message)
 			if (consoleMessageType != '' && consoleMessageType != 'log') {
 				console.warn("WARNING: consoleMessageType not recognized - '" + consoleMessageType + "'")
 			}
+			console.log(message)
 			logOutputChannel.appendLine(message)
 			break
 	}

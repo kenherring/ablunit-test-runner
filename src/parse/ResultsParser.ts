@@ -72,7 +72,9 @@ export class ABLResultsParser {
 			console.error("[parseResults] error parsing results.xml file: " + err)
 			throw err
 		}
+		console.log("----- jsonUri=" + jsonUri?.fsPath)
 		if (jsonUri) {
+			console.log("----- writeJsonToFile")
 			return this.writeJsonToFile(jsonUri)
 		}
 	}
