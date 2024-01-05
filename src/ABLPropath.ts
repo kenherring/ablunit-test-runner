@@ -1,6 +1,7 @@
 import { Uri, workspace, WorkspaceFolder } from 'vscode'
 import { IProjectJson } from './parse/OpenedgeProjectParser'
 import { isRelativePath } from './ABLUnitConfigWriter'
+import { log, logToChannel } from './ABLUnitCommon'
 
 interface IPropathEntry {
 	uri: Uri
@@ -42,29 +43,29 @@ export class PropathParser {
 	}
 
 	setPropath (importedPropath: IProjectJson) {
-		console.log("////////////// setPropath begin //////////////")
+		log.debug("importedPropath.length=" + importedPropath.propathEntry.length)
 
 		for (const entry of importedPropath.propathEntry) {
-			console.log("found propath entry: " + entry.path + " " + entry.type + " " + entry.buildDir)
-			let uri: Uri
+			log.debug("found propath entry: " + entry.path + " " + entry.type + " " + entry.buildDir)
+			let uri: Uri = Uri.parse(entry.path)
 			if(isRelativePath(entry.path)) {
 				uri = Uri.joinPath(this.workspaceFolder.uri, entry.path)
-			} else {
-				uri = Uri.parse(entry.path)
 			}
 
-			let buildUri: Uri
-			if(isRelativePath(entry.buildDir)) {
-				buildUri = Uri.joinPath(this.workspaceFolder.uri, entry.buildDir)
-			} else {
+			let buildUri: Uri = uri
+			if (entry.buildDir) {
 				buildUri = Uri.file(entry.buildDir)
+				if(isRelativePath(entry.buildDir)) {
+					buildUri = Uri.joinPath(this.workspaceFolder.uri, entry.buildDir)
+				}
 			}
 
-			let xrefDirUri: Uri
-			if(isRelativePath(entry.xrefDir)) {
-				xrefDirUri = Uri.joinPath(this.workspaceFolder.uri, entry.xrefDir)
-			} else {
+			let xrefDirUri: Uri = uri
+			if (entry.xrefDir) {
 				xrefDirUri = Uri.file(entry.xrefDir)
+				if(isRelativePath(entry.xrefDir)) {
+					xrefDirUri = Uri.joinPath(this.workspaceFolder.uri, entry.xrefDir)
+				}
 			}
 
 			let rel: string | undefined
@@ -83,9 +84,10 @@ export class PropathParser {
 				xrefDir: entry.xrefDir,
 				xrefDirUri: xrefDirUri
 			}
+			// console.log("push entry=" + e.path + " " + e.uri.fsPath)
 			this.propath.entry.push(e)
 		}
-		console.log("////////////// setPropath end //////////////")
+		log.debug("propath=" + this.toString())
 	}
 
 	getPropath () {
@@ -116,7 +118,7 @@ export class PropathParser {
 
 	private searchUri (uri: Uri) {
 		for (const e of this.propath.entry) {
-			if(uri.fsPath.startsWith(e.uri.fsPath)) {
+			if(uri.fsPath.replace(/\\/g,'/').startsWith(e.uri.fsPath.replace(/\\/g,'/') + '/')) {
 				const propathRelativeFile = uri.fsPath.replace(e.uri.fsPath,'').substring(1)
 				const relativeFile = workspace.asRelativePath(uri, false)
 				const rcodeUri = Uri.joinPath(e.buildDirUri, relativeFile.replace(/\.(p|cls)$/,'.r'))
@@ -178,7 +180,7 @@ export class PropathParser {
 			}
 		}
 		if (!file) {
-			console.error("(search) cannot find '" + file + "' in propath")
+			logToChannel("(search) cannot find '" + file + "' in propath", 'error')
 			throw new Error("(search) cannot find '" + file + "' in propath")
 		}
 	}

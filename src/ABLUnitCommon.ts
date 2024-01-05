@@ -1,11 +1,39 @@
+/* eslint-disable no-console */
 import { TestRun, window } from 'vscode'
+import path = require('path')
 
 const logOutputChannel = window.createOutputChannel('ABLUnit', {log: true })
 logOutputChannel.clear()
 
-export function logToChannel (message: string, consoleMessageType: 'trace' | 'debug' | 'info' | 'warn' | 'error' | 'log' | '' = 'info', options?: TestRun) {
+class Logger {
+	info (message: string) {
+		logToChannel(this.getPrefix() + ' ' + message, 'info')
+	}
+	warn (message: string) {
+		logToChannel(this.getPrefix() + ' ' + message, 'warn')
+	}
+	debug (message: string) {
+		logToChannel(this.getPrefix() + ' ' + message, 'debug')
+	}
+	trace (message: string) {
+		throw new Error("not implemented.  message=" + message)
+	}
+	error (message: string) {
+		logToChannel(this.getPrefix() + ' ' + message, 'error')
+	}
+	getPrefix () {
+		return '[' + path.normalize(__dirname + "/..").replace(/\\/g, '/') + ']'
+	}
+}
+
+export const log = new Logger()
+
+export function logToChannel (message: string, consoleMessageType: 'trace' | 'verbose' | 'debug' | 'info' | 'warn' | 'error' | 'log' | '' = 'info', options?: TestRun) {
 	if (consoleMessageType === '' || consoleMessageType === 'log') {
 		consoleMessageType = 'info'
+	}
+	if (consoleMessageType === 'verbose') {
+		consoleMessageType = 'trace'
 	}
 
 	if (options) {
@@ -18,27 +46,27 @@ export function logToChannel (message: string, consoleMessageType: 'trace' | 'de
 			console.trace(message)
 			logOutputChannel.trace(message)
 			break
+		case 'error':
+			console.error(message)
+			logOutputChannel.error(message)
+			break
 		case 'debug':
 			console.debug(message)
 			logOutputChannel.debug(message)
-			break
-		case 'info':
-			console.log(message)
-			logOutputChannel.appendLine(message)
 			break
 		case 'warn':
 			console.warn(message)
 			logOutputChannel.warn(message)
 			break
-		case 'error':
-			console.error(message)
-			logOutputChannel.error(message)
+		case 'info':
+			console.log(message)
+			logOutputChannel.info(message)
 			break
 		default:
-			console.log(message)
 			if (consoleMessageType != '' && consoleMessageType != 'log') {
 				console.warn("WARNING: consoleMessageType not recognized - '" + consoleMessageType + "'")
 			}
+			console.log(message)
 			logOutputChannel.appendLine(message)
 			break
 	}

@@ -46,7 +46,7 @@ export const ablunitRun = async (options: TestRun, res: ABLResults) => {
 
 		const executable = res.dlc!.uri.fsPath.replace(/\\/g, '/') + '/bin/' + res.cfg.ablunitConfig.command.executable
 
-		let cmd = [ executable, '-b', '-p', 'ABLUnitCore.p' ]
+		let cmd = [ executable, '-b', '-p', res.wrapperUri.fsPath.replace(/\\/g,'/') ]
 
 		if (process.platform === 'win32') {
 			cmd.push('-basekey', 'INI', '-ininame', workspace.asRelativePath(res.cfg.ablunitConfig.progressIniUri.fsPath, false))
@@ -62,6 +62,10 @@ export const ablunitRun = async (options: TestRun, res: ABLResults) => {
 		}
 		cmd.push('-T',tempPath)
 
+		if (res.cfg.ablunitConfig.dbConnPfUri && res.cfg.ablunitConfig.dbConns && res.cfg.ablunitConfig.dbConns.length > 0) {
+			cmd.push('-pf', workspace.asRelativePath(res.cfg.ablunitConfig.dbConnPfUri.fsPath, false))
+		}
+
 		if (res.cfg.ablunitConfig.profiler.enabled) {
 			cmd.push('-profile', workspace.asRelativePath(res.cfg.ablunitConfig.profOptsUri, false))
 		}
@@ -69,7 +73,12 @@ export const ablunitRun = async (options: TestRun, res: ABLResults) => {
 		const cmdSanitized: string[] = []
 		cmd = cmd.concat(res.cfg.ablunitConfig.command.additionalArgs)
 
-		cmd.push("-param", '"CFG=' + workspace.asRelativePath(res.cfg.ablunitConfig.config_uri.fsPath, false) + '"')
+		let params = "CFG=" + workspace.asRelativePath(res.cfg.ablunitConfig.config_uri.fsPath, false)
+		if (res.cfg.ablunitConfig.dbAliases.length > 0) {
+			params = params + " = ALIASES=" + res.cfg.ablunitConfig.dbAliases.join(';')
+		}
+		cmd.push("-param", '"' + params + '"')
+
 		cmd.forEach(element => {
 			cmdSanitized.push(element.replace(/\\/g, '/'))
 		})

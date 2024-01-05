@@ -7,7 +7,7 @@
 	"dbConnections": [
 		{
 			"name": "sp2k",
-			"aliases": [], //here's another comment.  why is this field required per the schema?
+			"aliases": [ "dbalias", "third" ], //here's another comment.  why is this field required per the schema?
 			"connect": "-db target/db/sp2k -RO",
 			"dumpFile": "target/sp2k.df"
 		}

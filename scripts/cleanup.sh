@@ -4,7 +4,7 @@ set -eou pipefail
 # shellcheck disable=SC3030
 DIRS=(listings .builder build ablunit-output workspaceAblunit)
 # shellcheck disable=SC3030
-PATTERNS=("ablunit.json" "ablunit.log" "progress.ini" "prof.out" "prof.json" "protrace.*" "results.json"
+PATTERNS=("ablunit.json" "ablunit.log" "progress.ini" "prof.out" "prof.json" "profile.json" "protrace.*" "results.json"
 			 "results.xml" "dbg_*" "*.r" "*.xref" "results.prof" "profiler.json" "profile.options")
 
 

@@ -1,19 +1,18 @@
 import { FileType, Uri, workspace, WorkspaceFolder } from 'vscode'
 import { logToChannel } from './ABLUnitCommon'
-import { IProjectJson, readOpenEdgeProjectJson } from './parse/OpenedgeProjectParser'
 import { PropathParser } from './ABLPropath'
 import { platform } from 'os'
 import { getProfileConfig, RunConfig } from './parse/TestProfileParser'
 import { IABLUnitJson, ITestObj } from './ABLResults'
 import { CoreOptions } from './parse/config/CoreOptions'
 import { ProfilerOptions } from './parse/config/ProfilerOptions'
+import { getOpenEdgeProfileConfig, IBuildPathEntry, IDatabaseConnection } from './parse/openedgeConfigFile'
 
 
 // KEEP IN REPO CONFIG:
 //  * notificationsEnabled
 //  * discoverFilesOnActivate
 //  * importOpenedgeProjectJson
-//  *
 
 export const ablunitConfig = new WeakMap<WorkspaceFolder, RunConfig>()
 
@@ -108,28 +107,46 @@ export class ABLUnitConfig  {
 			opt.push('-traceFilter "' + profOpts.traceFilter + '"')
 		}
 		await this.deleteFile(this.ablunitConfig.profFilenameUri)
-		await this.writeFile(uri, Uint8Array.from(Buffer.from(opt.join('\n') + '\n')))
+		return this.writeFile(uri, Uint8Array.from(Buffer.from(opt.join('\n') + '\n')))
 	}
 
-	async readPropathFromJson () {
+	async createDbConnPf (uri: Uri, dbConns: IDatabaseConnection[]) {
+		logToChannel("creating dbconn.pf: '" + this.ablunitConfig.dbConnPfUri.fsPath + "'")
+		const lines: string[] = []
+
+		for (const conn of dbConns) {
+			lines.push(conn.connect)
+		}
+		if (lines.length > 0) {
+			return this.writeFile(uri, Uint8Array.from(Buffer.from(lines.join('\n') + '\n')))
+		}
+	}
+
+	readPropathFromJson () {
 		logToChannel("reading propath from openedge-project.json")
 		const parser: PropathParser = new PropathParser(this.ablunitConfig.workspaceFolder)
-		const dflt: IProjectJson = { propathEntry: [{
-			path: '.',
-			type: 'source',
-			buildDir: '.',
-			xrefDir: '.'
-		}]}
 
-		await readOpenEdgeProjectJson(this.ablunitConfig.workspaceFolder).then((propath) => {
-			if (propath) {
-				return parser.setPropath(propath)
+		const conf = getOpenEdgeProfileConfig(this.ablunitConfig.workspaceFolder.uri)
+		if (conf && conf.buildPath.length > 0) {
+			const pathObj: IBuildPathEntry[] = []
+			for (const e of conf.buildPath) {
+				pathObj.push({
+					path: e.path,
+					type: e.type.toLowerCase(),
+					buildDir: e.buildDir,
+					xrefDir: e.xrefDir
+				})
 			}
-			return parser.setPropath(dflt)
-		}, (err) => {
-			console.error("error reading openedge-project.json, falling back to default propath '.'\nerror: " + err)
-			return parser.setPropath(dflt)
-		})
+			parser.setPropath({ propathEntry: pathObj })
+		} else {
+			parser.setPropath({ propathEntry: [{
+				path: '.',
+				type: 'source',
+				buildDir: '.',
+				xrefDir: '.'
+			}]})
+		}
+
 		logToChannel("using propath='" + parser.toString() + "'")
 		return parser
 	}

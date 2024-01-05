@@ -3,7 +3,7 @@ import { commands, tests, window, workspace,
 	TestController, TestItem, TestItemCollection, TestMessage, TestTag, TestRunProfileKind, TestRunRequest,
 	TextDocument, Uri, WorkspaceFolder, FileType } from 'vscode'
 import { ABLResults } from './ABLResults'
-import { testData, ABLTestSuite, ABLTestClass, ABLTestProgram, ABLTestFile, ABLTestCase, ABLTestDir, ABLTestData, resultData } from './testTree'
+import { ABLTestSuite, ABLTestClass, ABLTestProgram, ABLTestFile, ABLTestCase, ABLTestDir, ABLTestData, resultData, testData } from './testTree'
 import { GlobSync } from 'glob'
 import { logToChannel } from './ABLUnitCommon'
 import { readFileSync } from 'fs'
@@ -16,7 +16,8 @@ export async function activate (context: ExtensionContext) {
 	// const debugEnabled = workspace.getConfiguration('ablunit').get('debugEnabled', false)
 	const ctrl = tests.createTestController('ablunitTestController', 'ABLUnit Test')
 	const contextStorageUri = context.storageUri ?? Uri.parse('file://' + process.env.TEMP) // will always be defined as context.storageUri
-	setContextStorageUri(contextStorageUri)
+	const contextResourcesUri = Uri.joinPath(context.extensionUri,'resources')
+	setContextPaths(contextStorageUri, contextResourcesUri)
 	await createDir(contextStorageUri)
 
 	context.subscriptions.push(ctrl)
@@ -202,11 +203,11 @@ export async function activate (context: ExtensionContext) {
 				}
 				let r = res.find(r => r.workspaceFolder === wf)
 				if (!r) {
-					r = new ABLResults(wf, await getStorageUri(wf) ?? wf.uri, contextStorageUri)
+					r = new ABLResults(wf, await getStorageUri(wf) ?? wf.uri, contextStorageUri, contextResourcesUri)
 					await r.start()
 					res.push(r)
 				}
-				proms.push(r.addTest(itemData.test))
+				proms.push(r.addTest(itemData.test, run))
 			}
 			await Promise.all(proms)
 			resultData.set(run, res)
@@ -286,13 +287,19 @@ export async function activate (context: ExtensionContext) {
 }
 
 let contextStorageUri: Uri
+let contextResourcesUri: Uri
 
-export function setContextStorageUri (uri: Uri) {
-	contextStorageUri = uri
+export function setContextPaths (storageUri: Uri, resourcesUri: Uri) {
+	contextStorageUri = storageUri
+	contextResourcesUri = resourcesUri
 }
 
 export function getContextStorageUri () {
 	return contextStorageUri
+}
+
+export function getContextResourcesUri () {
+	return contextResourcesUri
 }
 
 async function getStorageUri (workspaceFolder: WorkspaceFolder) {

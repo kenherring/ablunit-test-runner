@@ -5,6 +5,7 @@ import { IRunProfile, DefaultRunProfile } from './config/RunProfile'
 import { ProfilerOptions } from './config/ProfilerOptions'
 import { CommandOptions } from './config/CommandOptions'
 import { logToChannel } from '../ABLUnitCommon'
+import { IDatabaseConnection, getProfileDbConns } from './openedgeConfigFile'
 require("jsonminify")
 
 
@@ -162,6 +163,9 @@ export class RunConfig extends DefaultRunProfile {
 	public readonly profOptsUri: Uri
 	public readonly profListingsUri: Uri | undefined
 	public readonly profFilenameUri: Uri
+	public readonly dbConns: IDatabaseConnection[]
+	public readonly dbConnPfUri: Uri
+	public dbAliases: string[] = []
 
 	constructor (private readonly profile: IRunProfile,
 		public workspaceFolder: WorkspaceFolder) {
@@ -169,6 +173,8 @@ export class RunConfig extends DefaultRunProfile {
 		this.tempDirUri = this.getUri(this.profile.tempDir)
 		this.config_uri = Uri.joinPath(this.tempDirUri, 'ablunit.json')
 		this.profOptsUri = Uri.joinPath(this.tempDirUri, 'profile.options')
+		this.dbConnPfUri = Uri.joinPath(this.tempDirUri, 'dbconn.pf')
+		this.dbConns = getProfileDbConns(this.workspaceFolder.uri)
 
 		this.options = new CoreOptions(this.profile.options)
 		const tmpFilename = (this.profile.options?.output?.filename?.replace(/\.xml$/,'') ?? 'results') + '.xml'
@@ -197,8 +203,10 @@ export class RunConfig extends DefaultRunProfile {
 			if (this.profiler.listings === true) {
 				this.profListingsUri = Uri.joinPath(this.tempDirUri, 'listings')
 			}
-		} else {
+		} else if (this.profiler.listings) {
 			this.profListingsUri = this.getUri(this.profiler.listings)
+		} else {
+			this.profListingsUri = undefined
 		}
 		if (this.profListingsUri) {
 			this.profiler.listings = workspace.asRelativePath(this.profListingsUri, false)

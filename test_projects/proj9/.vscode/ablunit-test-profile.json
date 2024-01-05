@@ -54,18 +54,14 @@
 			"progressIni": "progress.ini",
 
 			////# Include batch mode (-b) argument
-			"batch": true
+			"batch": true,
 
 			////# These parameters will be passed to the command line.  Most commonly
 			////# this would be used to provide database connection parameters.
-			////# "additionalArgs": [
-			////#    "-pf",
-			////# 	 "path/to/dbconnections.pf"
-			////# ],
-			// "additionalArgs": [
-			// 	"-pf",
-			// 	"test.pf"
-			// ]
+			"additionalArgs": [
+				"-pf",
+				"proj9.pf"
+			]
 		},
 
 		////# The "config" key contains values that will be added to 'ablunit.json'.
@@ -77,7 +73,8 @@
 			"output": {
 				"location": "${tempDir}",
 				"filename": "results",
-				"format": "xml"
+				"format": "xml",
+				"writeJson": true
 			},
 			"quitOnEnd": true,
 			"writeLog":  false,
