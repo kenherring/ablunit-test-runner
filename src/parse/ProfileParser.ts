@@ -41,6 +41,7 @@ export class ABLProfile {
 		this.profJSON.addCoverage(sectionLines[6])
 		// console.log("section7 " + sectionLines[7].length)
 		this.profJSON.addSection7(sectionLines[7])
+		// console.log("sectionLines.length=" + sectionLines.length)
 		if(sectionLines.length > 11) {
 			// console.log("section8 " + sectionLines[8].length)
 			this.profJSON.addSection8(sectionLines[8])
@@ -69,6 +70,7 @@ export class ABLProfile {
 				console.error("Error writing profile output json file: " + err)
 			})
 		}
+		// console.log("[parseData] returning")
 	}
 
 	writeJsonToFile (uri: Uri) {

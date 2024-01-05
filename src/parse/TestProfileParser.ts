@@ -203,8 +203,10 @@ export class RunConfig extends DefaultRunProfile {
 			if (this.profiler.listings === true) {
 				this.profListingsUri = Uri.joinPath(this.tempDirUri, 'listings')
 			}
-		} else {
+		} else if (this.profiler.listings) {
 			this.profListingsUri = this.getUri(this.profiler.listings)
+		} else {
+			this.profListingsUri = undefined
 		}
 		if (this.profListingsUri) {
 			this.profiler.listings = workspace.asRelativePath(this.profListingsUri, false)
