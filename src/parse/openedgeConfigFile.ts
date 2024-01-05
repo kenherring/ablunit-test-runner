@@ -154,15 +154,13 @@ export function getActiveProfile (rootDir: string) {
 		const txt = JSON.parse(fs.readFileSync(path.join(rootDir, ".vscode", "profile.json"), { encoding: 'utf8' }))
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 		const actProf = <string>txt['profile']
-		console.log(" ----- ----- [getActiveProfile] actProf=" + actProf)
 		return actProf
 	}
-	console.log(" ----- ----- [getActiveProfile] actProf=default")
 	return "default"
 }
 
 function loadConfigFile (filename: string): OpenEdgeMainConfig {
-	console.log("[loadConfigFile] filename = " + filename)
+	logToChannel("[loadConfigFile] filename = " + filename,'debug')
 	if (!filename) {
 		throw new Error("filename is undefined")
 	}
@@ -175,11 +173,11 @@ function loadConfigFile (filename: string): OpenEdgeMainConfig {
 }
 
 function readGlobalOpenEdgeRuntimes (workspaceUri: Uri) {
-	console.log("[readGlobalOpenEdgeRuntimes]")
+	logToChannel("[readGlobalOpenEdgeRuntimes]",'debug')
 	oeRuntimes = workspace.getConfiguration('abl.configuration').get<Array<IOERuntime>>('runtimes') ?? []
-	console.log("[readGlobalOpenEdgeRuntimes] oeRuntimes = " + JSON.stringify(oeRuntimes, null, 2))
+	logToChannel("[readGlobalOpenEdgeRuntimes] oeRuntimes = " + JSON.stringify(oeRuntimes, null, 2),'debug')
 	const oeRuntimesDefault = workspace.getConfiguration('abl').get('configuration.defaultRuntime')
-	console.log("[readGlobalOpenEdgeRuntimes] oeRuntimesDefault = " + oeRuntimesDefault)
+	logToChannel("[readGlobalOpenEdgeRuntimes] oeRuntimesDefault = " + oeRuntimesDefault,'debug')
 
 	if (!workspace.workspaceFolders) return
 
@@ -256,7 +254,7 @@ function getDlcDirectory (version: string): string {
 }
 
 function parseOpenEdgeConfig (cfg: OpenEdgeConfig): ProfileConfig {
-	console.log("[parseOpenEdgeConfig] cfg = " + JSON.stringify(cfg, null, 2))
+	logToChannel("[parseOpenEdgeConfig] cfg = " + JSON.stringify(cfg, null, 2),'debug')
 	const retVal = new ProfileConfig()
 	retVal.dlc = getDlcDirectory(cfg.oeversion)
 	retVal.extraParameters = cfg.extraParameters
@@ -275,7 +273,7 @@ function parseOpenEdgeConfig (cfg: OpenEdgeConfig): ProfileConfig {
 }
 
 function parseOpenEdgeProjectConfig (uri: Uri, workspaceUri: Uri, config: OpenEdgeMainConfig): OpenEdgeProjectConfig {
-	console.log("[parseOpenEdgeProjectConfig] uri = " + uri.fsPath)
+	logToChannel("[parseOpenEdgeProjectConfig] uri = " + uri.fsPath,'debug')
 	const prjConfig = new OpenEdgeProjectConfig()
 	prjConfig.name = config.name
 	prjConfig.version = config.version

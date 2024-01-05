@@ -69,18 +69,6 @@ export async function getDLC (workspaceFolder: WorkspaceFolder, projectJson?: st
 	throw new Error("unable to determine DLC")
 }
 
-export async function readOpenEdgeProjectJson (workspaceFolder: WorkspaceFolder) {
-	const projectJson = await getProjectJson(workspaceFolder)
-	if (projectJson) {
-		const dlc = await getDLC(workspaceFolder, projectJson)
-		const ret = parseOpenEdgeProjectJson(workspaceFolder, projectJson, dlc)
-		return ret
-	}
-
-	logToChannel("Failed to parse openedge-project.json", 'warn')
-	return <IProjectJson>{ propathEntry: [] }
-}
-
 export async function getOEVersion (workspaceFolder: WorkspaceFolder, projectJson?: string) {
 	const profileJson = getOpenEdgeProfileConfig(workspaceFolder.uri)
 	if (!profileJson) {
@@ -107,55 +95,4 @@ export async function getOEVersion (workspaceFolder: WorkspaceFolder, projectJso
 		}
 	}
 	return undefined
-}
-
-function parseOpenEdgeProjectJson (workspaceFolder: WorkspaceFolder, inConf: string, dlc: IDlc) {
-	const conf = getOpenEdgeProfileConfig(workspaceFolder.uri)
-	if (!conf) {
-		logToChannel("Failed to parse openedge-project.json", 'warn')
-		return <IProjectJson>{ propathEntry: [] }
-	}
-
-	const buildPath = conf.buildPath ?? []
-	if (!buildPath) {
-		logToChannel("buildPath not found in openedge-project.json", 'error')
-		throw new Error("buildPath not found in openedge-project.json")
-	}
-
-	const pj: IProjectJson = { propathEntry: []}
-
-	for (const entry of buildPath) {
-		let dotPct: string
-
-		let path: string = entry.path.replace('${DLC}', dlc.uri.fsPath)
-		if (path === ".") {
-			path = workspaceFolder.uri.fsPath
-		} else if (path.startsWith("./")) {
-			path = workspaceFolder.uri.fsPath + path.substring(1)
-		}
-
-		let buildDir: string = entry.buildDir
-		if (!buildDir) {
-			buildDir = path
-			dotPct = ".builder/.pct0"
-		} else {
-			dotPct = buildDir + "/.pct"
-		}
-		if (!buildDir) {
-			throw new Error("buildDirectory not found in openedge-project.json")
-		}
-
-		let xrefDir: string = entry.xrefDir
-		if (!xrefDir) {
-			xrefDir = dotPct
-		}
-
-		pj.propathEntry.push({
-			path: path,
-			type: entry.type.toLowerCase(),
-			buildDir: buildDir,
-			xrefDir: xrefDir
-		})
-	}
-	return pj
 }
