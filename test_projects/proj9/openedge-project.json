@@ -12,6 +12,13 @@
 					{ "type": "source", "path": "src-nodb" }
 				]
 			}
+		},
+		{
+			"name": "profile3",
+			"inherits": "profile2",
+			"value": {
+				"buildDirectory": "build3"
+			}
 		}
 	]
 }

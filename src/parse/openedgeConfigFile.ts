@@ -38,7 +38,7 @@ interface IOERuntime {
 	default: boolean
 }
 
-interface OpenEdgeConfig {
+interface IOpenEdgeConfig {
 	// Content of a profile section in openedge-project.json
 	oeversion: string
 	numThreads: number
@@ -47,7 +47,7 @@ interface OpenEdgeConfig {
 	buildPath?: IBuildPathEntry[]
 	buildDirectory?: string
 	dbConnections: IDatabaseConnection[]
-	procedures: Procedure[]
+	procedures: IProcedure[]
 }
 
 export interface IDatabaseConnection {
@@ -57,11 +57,11 @@ export interface IDatabaseConnection {
 	aliases: string[]
 }
 
-interface OpenEdgeMainConfig extends OpenEdgeConfig {
+interface IOpenEdgeMainConfig extends IOpenEdgeConfig {
 	// JSON mapping of openedge-project.json
 	name: string
 	version: string
-	profiles?: OEProfile[]
+	profiles?: IOEProfile[]
 }
 
 export interface IBuildPathEntry {
@@ -71,14 +71,14 @@ export interface IBuildPathEntry {
 	xrefDir: string
 }
 
-interface Procedure {
+interface IProcedure {
 	name: string
 	mode: string
 }
-interface OEProfile {
+interface IOEProfile {
 	name: string
 	inherits: string
-	value: OpenEdgeConfig
+	value: IOpenEdgeConfig
 }
 
 let oeRuntimes: IOERuntime[] = []
@@ -91,9 +91,10 @@ class ProfileConfig {
 	extraParameters?: string
 	gui: boolean = false
 	buildPath: IBuildPathEntry[] = []
+	buildDirectory: string = '.'
 	propath: string[] = []
 	dbConnections: IDatabaseConnection[] = []
-	procedures: Procedure[] = []
+	procedures: IProcedure[] = []
 
 	startupProc?: string
 	parameterFiles: string[] = []
@@ -112,8 +113,11 @@ class ProfileConfig {
 			this.gui = parent.gui
 		if (!this.propath)
 			this.propath = parent.propath
-		if (!this.buildPath)
+		if (this.buildPath.length == 0) {
 			this.buildPath = parent.buildPath
+		}
+		if (!this.buildDirectory)
+			this.buildDirectory = parent.buildDirectory
 		if (!this.dbConnections)
 			this.dbConnections = parent.dbConnections
 		if (!this.procedures)
@@ -159,7 +163,7 @@ export function getActiveProfile (rootDir: string) {
 	return "default"
 }
 
-function loadConfigFile (filename: string): OpenEdgeMainConfig {
+function loadConfigFile (filename: string): IOpenEdgeMainConfig {
 	logToChannel("[loadConfigFile] filename = " + filename,'debug')
 	if (!filename) {
 		throw new Error("filename is undefined")
@@ -175,9 +179,9 @@ function loadConfigFile (filename: string): OpenEdgeMainConfig {
 function readGlobalOpenEdgeRuntimes (workspaceUri: Uri) {
 	logToChannel("[readGlobalOpenEdgeRuntimes]",'debug')
 	oeRuntimes = workspace.getConfiguration('abl.configuration').get<Array<IOERuntime>>('runtimes') ?? []
-	logToChannel("[readGlobalOpenEdgeRuntimes] oeRuntimes = " + JSON.stringify(oeRuntimes, null, 2),'debug')
+	log.debug("[readGlobalOpenEdgeRuntimes] oeRuntimes = " + JSON.stringify(oeRuntimes, null, 2))
 	const oeRuntimesDefault = workspace.getConfiguration('abl').get('configuration.defaultRuntime')
-	logToChannel("[readGlobalOpenEdgeRuntimes] oeRuntimesDefault = " + oeRuntimesDefault,'debug')
+	log.debug("[readGlobalOpenEdgeRuntimes] oeRuntimesDefault = " + oeRuntimesDefault)
 
 	if (!workspace.workspaceFolders) return
 
@@ -201,7 +205,7 @@ function readGlobalOpenEdgeRuntimes (workspaceUri: Uri) {
 	log.debug("[readGlobalOpenEdgeRuntimes] oeRuntimes = " + JSON.stringify(oeRuntimes, null, 2))
 
 	if (oeRuntimes.length == 0) {
-		logToChannel('[readGlobaleOpenEdgeRuntimes] No OpenEdge runtime configured on this machine', 'warn')
+		log.warn('[readGlobaleOpenEdgeRuntimes] No OpenEdge runtime configured on this machine')
 	}
 
 	let defaultRuntime = oeRuntimes.find(runtime => runtime.default)
@@ -253,15 +257,15 @@ function getDlcDirectory (version: string): string {
 	return dlc
 }
 
-function parseOpenEdgeConfig (cfg: OpenEdgeConfig): ProfileConfig {
+function parseOpenEdgeConfig (cfg: IOpenEdgeConfig): ProfileConfig {
 	logToChannel("[parseOpenEdgeConfig] cfg = " + JSON.stringify(cfg, null, 2),'debug')
 	const retVal = new ProfileConfig()
 	retVal.dlc = getDlcDirectory(cfg.oeversion)
-	retVal.extraParameters = cfg.extraParameters
-	retVal.oeversion = cfg.oeversion
-	retVal.gui = cfg.graphicalMode
+	retVal.extraParameters = cfg.extraParameters ?? ''
+	retVal.oeversion = cfg.oeversion ?? ''
+	retVal.gui = cfg.graphicalMode ?? ''
 	if (cfg.buildPath)
-		retVal.propath = cfg.buildPath.map(str => str.path.replace('${DLC}', retVal.dlc))
+		retVal.propath = cfg.buildPath.map(str => str.path.replace('${DLC}', retVal.dlc)) ?? ''
 	retVal.buildPath = cfg.buildPath ?? []
 	retVal.startupProc = ''
 	retVal.parameterFiles = []
@@ -272,7 +276,7 @@ function parseOpenEdgeConfig (cfg: OpenEdgeConfig): ProfileConfig {
 	return retVal
 }
 
-function parseOpenEdgeProjectConfig (uri: Uri, workspaceUri: Uri, config: OpenEdgeMainConfig): OpenEdgeProjectConfig {
+function parseOpenEdgeProjectConfig (uri: Uri, workspaceUri: Uri, config: IOpenEdgeMainConfig): OpenEdgeProjectConfig {
 	logToChannel("[parseOpenEdgeProjectConfig] uri = " + uri.fsPath,'debug')
 	const prjConfig = new OpenEdgeProjectConfig()
 	prjConfig.name = config.name
@@ -295,9 +299,11 @@ function parseOpenEdgeProjectConfig (uri: Uri, workspaceUri: Uri, config: OpenEd
 	prjConfig.profiles.set("default", prjConfig)
 	if (config.profiles) {
 		config.profiles.forEach(profile => {
+			log.debug("parsing profile '" + profile.name + "'")
 			const p = parseOpenEdgeConfig(profile.value)
 			if (profile.inherits && prjConfig.profiles.get(profile.inherits)) {
-				p.overwriteValues(prjConfig.profiles.get(profile.inherits))
+				const parent = prjConfig.profiles.get(profile.inherits)
+				p.overwriteValues(parent)
 			}
 			prjConfig.profiles.set(profile.name, p)
 		})

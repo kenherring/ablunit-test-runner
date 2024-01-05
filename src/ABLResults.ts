@@ -7,7 +7,7 @@ import { ABLProfile, ABLProfileJson, Module } from './parse/ProfileParser'
 import { ABLDebugLines } from './ABLDebugLines'
 import { ABLPromsgs, getPromsgText } from './ABLPromsgs'
 import { PropathParser } from './ABLPropath'
-import { logToChannel } from './ABLUnitCommon'
+import { log, logToChannel } from './ABLUnitCommon'
 import { FileCoverage, CoveredCount, StatementCoverage } from './TestCoverage'
 import { ablunitRun } from './ABLUnitRun'
 import { getDLC, IDlc } from './parse/OpenedgeProjectParser'
@@ -136,7 +136,7 @@ export class ABLResults {
 			return
 		}
 
-		logToChannel("addTest: " + test.id)
+		log.debug("addTest: " + test.id + ", propathEntry=" + testPropath.propathEntry.path)
 		this.tests.push(test)
 
 		let testCase = undefined
@@ -194,6 +194,7 @@ export class ABLResults {
 	}
 
 	async run (options: TestRun) {
+		await this.deleteResultsXml()
 		return ablunitRun(options, this).then(() => {
 			if(!this.ablResults!.resultsJson) {
 				throw new Error("no results available")

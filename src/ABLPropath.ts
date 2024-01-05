@@ -1,7 +1,7 @@
 import { Uri, workspace, WorkspaceFolder } from 'vscode'
 import { IProjectJson } from './parse/OpenedgeProjectParser'
 import { isRelativePath } from './ABLUnitConfigWriter'
-import { logToChannel } from './ABLUnitCommon'
+import { log, logToChannel } from './ABLUnitCommon'
 
 interface IPropathEntry {
 	uri: Uri
@@ -43,10 +43,10 @@ export class PropathParser {
 	}
 
 	setPropath (importedPropath: IProjectJson) {
-		logToChannel("[setPropath] begin importedPropath.length=" + importedPropath.propathEntry.length, 'debug')
+		log.debug("importedPropath.length=" + importedPropath.propathEntry.length)
 
 		for (const entry of importedPropath.propathEntry) {
-			logToChannel("found propath entry: " + entry.path + " " + entry.type + " " + entry.buildDir, 'debug')
+			log.debug("found propath entry: " + entry.path + " " + entry.type + " " + entry.buildDir)
 			let uri: Uri = Uri.parse(entry.path)
 			if(isRelativePath(entry.path)) {
 				uri = Uri.joinPath(this.workspaceFolder.uri, entry.path)
@@ -87,7 +87,7 @@ export class PropathParser {
 			// console.log("push entry=" + e.path + " " + e.uri.fsPath)
 			this.propath.entry.push(e)
 		}
-		logToChannel("[setPropath] end propath=" + this.toString(), 'debug')
+		log.debug("propath=" + this.toString())
 	}
 
 	getPropath () {

@@ -97,8 +97,10 @@ export class ABLResultsParser {
 		res = res.testsuites
 
 		const testsuite = await this.parseSuite(res.testsuite)
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-call
+		const namePathSep = res['$'].name.replace(/\\/g, '/')
 		const jsonData: ITestSuites = {
-			name: res['$'].name,
+			name: namePathSep,
 			tests: Number(res['$'].tests),
 			passed: Number(res['$'].tests) - Number(res['$'].errors) - Number(res['$'].failures),
 			failures: Number(res['$'].failures),
@@ -115,8 +117,10 @@ export class ABLResultsParser {
 		for (let idx=0; idx<res.length; idx++) {
 			const testsuite = await this.parseSuite(res[idx].testsuite).then()
 			const testcases = await this.parseTestCases(res[idx].testcase).then()
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-call
+			const namePathSep = res[idx]['$'].name.replace(/\\/g, '/') ?? undefined
 			suites[idx] = {
-				name: res[idx]['$'].name ?? undefined,
+				name: namePathSep,
 				classname: res[idx]['$'].classname ?? undefined,
 				id: res[idx]['$'].id,
 				tests: Number(res[idx]['$'].tests),

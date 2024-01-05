@@ -6,10 +6,21 @@ const logOutputChannel = window.createOutputChannel('ABLUnit', {log: true })
 logOutputChannel.clear()
 
 class Logger {
+	info (message: string) {
+		logToChannel(this.getPrefix() + ' ' + message, 'info')
+	}
+	warn (message: string) {
+		logToChannel(this.getPrefix() + ' ' + message, 'warn')
+	}
 	debug (message: string) {
 		logToChannel(this.getPrefix() + ' ' + message, 'debug')
 	}
-
+	trace (message: string) {
+		throw new Error("not implemented.  message=" + message)
+	}
+	error (message: string) {
+		logToChannel(this.getPrefix() + ' ' + message, 'error')
+	}
 	getPrefix () {
 		return '[' + path.normalize(__dirname + "/..").replace(/\\/g, '/') + ']'
 	}
