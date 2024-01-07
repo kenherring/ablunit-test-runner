@@ -238,7 +238,10 @@ export async function activate (context: ExtensionContext) {
 
 	ctrl.resolveHandler = async item => {
 		if (!item) {
-			context.subscriptions.push(...startWatchingWorkspace(ctrl, fileChangedEmitter))
+			const workspaceWatchers = startWatchingWorkspace(ctrl, fileChangedEmitter)
+			for (const watchers of workspaceWatchers) {
+				context.subscriptions.push(...watchers)
+			}
 			return
 		}
 		const data = testData.get(item)
@@ -676,7 +679,7 @@ function startWatchingWorkspace (controller: TestController, fileChangedEmitter:
 		}
 
 		return watchers
-	}).flat()
+	})
 
 }
 
