@@ -25,11 +25,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-require('jsonminify')
 import * as path from 'path'
 import * as fs from 'fs'
 import { Uri, workspace } from 'vscode'
-import { log, logToChannel } from '../ABLUnitCommon'
+import { log, logToChannel, readStrippedJsonFile } from '../ABLUnitCommon'
 
 interface IOERuntime {
 	name: string
@@ -169,8 +168,8 @@ function loadConfigFile (filename: string): IOpenEdgeMainConfig {
 		throw new Error("filename is undefined")
 	}
 	try {
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-		return JSON.parse(JSON.minify(fs.readFileSync(filename, { encoding: 'utf8' })))
+		const data = readStrippedJsonFile(Uri.parse(filename))
+		return <IOpenEdgeMainConfig><unknown>data
 	} catch (caught) {
 		throw new Error("Failed to parse " + filename + ": " + caught)
 	}
