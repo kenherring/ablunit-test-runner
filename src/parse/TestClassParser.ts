@@ -4,7 +4,7 @@ import { getLines } from './TestParserCommon'
 // CLASS statement
 const classRE = /^\s*class\s+(\S+[^:])\s*/i
 // METHOD statement
-const methodRE = /\s*method\s(\s*public)?\s*(\S+)\s*(\S+\w)/i
+const methodRE = /\s*method\s(\s*public)?(\s*static)?\s*(\S+)\s*(\S+\w)/i
 
 export interface ITestCase {
 	label: string
@@ -63,7 +63,7 @@ export function parseTestClass (lines: string[], configClassLabel: string, relat
 		if (lastNonBlankLineHasAnnotation || lines[lineNo].toLowerCase().indexOf("@test.") != -1) {
 			const method = methodRE.exec(lines[lineNo])
 			if (method) {
-				const [, , , methodname] = method
+				const [, , , , methodname] = method
 				classRet.testcases.push({
 					label: methodname,
 					range: new Range(lineNo, lines[lineNo].indexOf(methodname), lineNo, methodname.length)

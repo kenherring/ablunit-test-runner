@@ -154,7 +154,7 @@ class OpenEdgeProjectConfig extends ProfileConfig {
 export function getActiveProfile (rootDir: string) {
 	if (fs.existsSync(path.join(rootDir, ".vscode", "profile.json"))) {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-		const txt = JSON.parse(fs.readFileSync(path.join(rootDir, ".vscode", "profile.json"), { encoding: 'utf8' }))
+		const txt = JSON.parse(fs.readFileSync(path.join(rootDir, ".vscode", "profile.json"), { encoding: 'utf8' }).replace(/\r/g,''))
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 		const actProf = <string>txt['profile']
 		return actProf
@@ -168,9 +168,10 @@ function loadConfigFile (filename: string): IOpenEdgeMainConfig {
 		throw new Error("filename is undefined")
 	}
 	try {
-		const data = readStrippedJsonFile(Uri.parse(filename))
-		return <IOpenEdgeMainConfig><unknown>data
+		const data = readStrippedJsonFile(filename)
+		return <IOpenEdgeMainConfig>data
 	} catch (caught) {
+		log.error("[loadConfigFile] Failed to parse " + filename + ": " + caught)
 		throw new Error("Failed to parse " + filename + ": " + caught)
 	}
 }

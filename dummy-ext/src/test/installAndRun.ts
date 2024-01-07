@@ -21,8 +21,9 @@ async function runTest(version: string) {
 		const vscodeExecutablePath = await downloadAndUnzipVSCode(version)
 		const [cliPath, ...args] = resolveCliArgsFromVSCodeExecutablePath(vscodeExecutablePath)
 
-		const packagedExtensionPath = path.resolve(__dirname, '../../../ablunit-test-provider-0.1.7.vsix')
+		const packagedExtensionPath = path.resolve(__dirname, '../../../ablunit-test-provider-0.1.9.vsix')
 		const projDir = path.resolve(__dirname, '../../../test_projects/proj0')
+		// const projDir = path.resolve(__dirname, '../../../test_projects/proj1')
 
 		// Use cp.spawn / cp.exec for custom setup
 		cp.spawnSync(

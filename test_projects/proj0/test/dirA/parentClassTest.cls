@@ -8,4 +8,9 @@ class dirA.parentClassTest inherits dirA.parentClass :
 	  Assert:isTrue(testMessage()).
 	end method.
 
+	@Test.
+	method public static void testMethod2 () :
+	  Assert:equals(1,1).
+	end method.
+
 end class.

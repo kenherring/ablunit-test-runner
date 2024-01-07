@@ -1,3 +1,11 @@
+# [v0.1.9](https://github.com/kenherring/ablunit-test-provider/releases/tag/v0.1.9) - 2024-01-05 (pre-release)
+
+* Import DB connections from openedge-project.json
+* Parse source map from rcode for accuracy
+* Load run profiles from `.vscode/ablunit-test-profile.json`
+* Enable custom CLI commands such as `ant test`
+* Various fixes/improvements/linting
+
 # [v0.1.7](https://github.com/kenherring/ablunit-test-provider/releases/tag/v0.1.7) - 2023-12-06 (pre-release)
 
 * Refactoring

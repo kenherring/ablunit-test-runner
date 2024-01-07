@@ -134,6 +134,7 @@ jobs:
       - checkout
       - run: npm install
       - run: sudo npm install -g @vscode/vsce
+      - run: scripts/update_version.sh --pre-release
       - run: vsce package --pre-release --githubBranch "$(git branch --show-current)"
       - when:
           condition: << pipeline.git.tag >>

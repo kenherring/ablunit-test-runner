@@ -1,4 +1,4 @@
-import * as path from 'path'
+import path = require('path')
 import { getTestConfig } from './createTestConfig'
 import { runTests } from '@vscode/test-electron'
 
@@ -7,6 +7,9 @@ async function main () {
 
 	for (const conf of config) {
 		await testProject(conf.projName, conf.workspaceFolder, conf.launchArgs)
+		// if (conf.projName === 'proj0') {
+		// 	await testProject(conf.projName, conf.workspaceFolder, conf.launchArgs)
+		// }
 	}
 }
 

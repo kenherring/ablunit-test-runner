@@ -4,7 +4,7 @@ import { CoreOptions } from './config/CoreOptions'
 import { IRunProfile, DefaultRunProfile } from './config/RunProfile'
 import { ProfilerOptions } from './config/ProfilerOptions'
 import { CommandOptions } from './config/CommandOptions'
-import { readStrippedJsonFile } from '../ABLUnitCommon'
+import { log, readStrippedJsonFile } from '../ABLUnitCommon'
 import { IDatabaseConnection, getProfileDbConns } from './openedgeConfigFile'
 
 const runProfileFilename: string = 'ablunit-test-profile.json'
@@ -17,11 +17,17 @@ export interface IConfigurations {
 }
 
 function getConfigurations (uri: Uri) {
-	let str = JSON.stringify(readStrippedJsonFile(uri))
-	if (str === '' || str === '{}') {
-		str = '{ "configurations":[] }'
+	const data = readStrippedJsonFile(uri)
+	try {
+		let str = JSON.stringify(data)
+		if (str === '' || str === '{}') {
+			str = '{ "configurations":[] }'
+		}
+		return <IConfigurations>JSON.parse(str)
+	} catch (err) {
+		log.error("Failed to parse ablunit-test-profile: " + err)
+		throw err
 	}
-	return <IConfigurations>JSON.parse(str)
 }
 
 function mergeObjects (from: object, into: object) {
@@ -35,7 +41,7 @@ function mergeObjects (from: object, into: object) {
 			// @ts-expect-error 123
 			if (into[key] === undefined) {
 				// @ts-expect-error 123
-				console.error('into.' + key + ' is undefined and the value will not be merged (value = ' + JSON.stringify(from[key]) + ')')
+				log.error('into.' + key + ' is undefined and the value will not be merged (value = ' + JSON.stringify(from[key]) + ')')
 			// @ts-expect-error 123
 			} else if (Array.isArray(from[key])) {
 				// @ts-expect-error 123
@@ -67,11 +73,7 @@ export function parseRunProfiles (workspaceFolders: WorkspaceFolder[], wsFilenam
 
 	const runProfiles: IRunProfile[] = []
 	for (const workspaceFolder of workspaceFolders) {
-		let wfConfig: IConfigurations = getConfigurations(Uri.joinPath(workspaceFolder.uri,'.vscode',wsFilename))
-
-		if (wfConfig.configurations.length === 0) {
-			wfConfig =  { configurations: [] }
-		}
+		const wfConfig = getConfigurations(Uri.joinPath(workspaceFolder.uri,'.vscode',wsFilename))
 		if (wfConfig.configurations.length === 0) {
 			return defaultConfig.configurations
 		}
@@ -97,9 +99,17 @@ export function parseRunProfiles (workspaceFolders: WorkspaceFolder[], wsFilenam
 				runProfiles.push(merged)
 			}
 		}
+
+		runProfiles.forEach((profile) => {
+			if (!profile.tempDir) {
+				profile.tempDir = '${workspaceFolder}/.ablunit'
+			}
+
+			const wsFolder = profile.workspaceFolder?.uri.fsPath ?? '.'
+			profile.tempDir = profile.tempDir.replace('${workspaceFolder}', wsFolder)
+		})
 	}
 
-	console.log("runProfiles=" + JSON.stringify(runProfiles))
 	return runProfiles
 }
 
@@ -121,7 +131,6 @@ function getUri (dir: string | undefined, workspaceFolderUri: Uri, tempDir?: Uri
 	if (isRelativePath(dir)) {
 		return Uri.joinPath(workspaceFolderUri, dir)
 	} else {
-		console.log('dir-4=' + Uri.file(dir).fsPath)
 		return Uri.file(dir)
 	}
 }
@@ -142,10 +151,10 @@ export class RunConfig extends DefaultRunProfile {
 	public readonly dbConnPfUri: Uri
 	public dbAliases: string[] = []
 
-	constructor (private readonly profile: IRunProfile,
-		public workspaceFolder: WorkspaceFolder) {
+	constructor (private readonly profile: IRunProfile, public workspaceFolder: WorkspaceFolder) {
 		super()
 		this.tempDirUri = this.getUri(this.profile.tempDir)
+		log.debug("tempDirUri=" + this.tempDirUri.fsPath)
 		this.config_uri = Uri.joinPath(this.tempDirUri, 'ablunit.json')
 		this.profOptsUri = Uri.joinPath(this.tempDirUri, 'profile.options')
 		this.dbConnPfUri = Uri.joinPath(this.tempDirUri, 'dbconn.pf')
