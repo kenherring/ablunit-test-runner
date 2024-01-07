@@ -25,13 +25,13 @@ suite('install and run', () => {
 		await new Promise((resolve) => setTimeout(resolve, 1000))
 		await runAllTests()
 
-		const workspaceDir = workspace.workspaceFolders![0].uri
+		const workspaceFolder = workspace.workspaceFolders![0].uri
 
-		const ablunitJson = Uri.joinPath(workspaceDir, 'target', 'ablunit.json')
-		const resultsXml = Uri.joinPath(workspaceDir, 'target', 'results.xml')
-		const resultsJson = Uri.joinPath(workspaceDir, 'target', 'results.json')
+		const ablunitJson = Uri.joinPath(workspaceFolder, 'target', 'ablunit.json')
+		const resultsXml = Uri.joinPath(workspaceFolder, 'target', 'results.xml')
+		const resultsJson = Uri.joinPath(workspaceFolder, 'target', 'results.json')
 
-		console.log("storageUri= " + workspaceDir.fsPath)
+		console.log("storageUri= " + workspaceFolder.fsPath)
 		assert(await doesFileExist(ablunitJson), "missing ablunit.json (" + ablunitJson.fsPath + ")")
 		assert(await doesFileExist(resultsXml), "missing results.xml (" + resultsXml.fsPath + ")")
 		assert(!await doesFileExist(resultsJson), "results.json exists and should not (" + resultsJson.fsPath + ")")
@@ -66,7 +66,7 @@ function getWorkspaceUri () {
 }
 
 function updateTestProfile (key: string, value: string | string[] | boolean): Thenable<void> {
-	console.log("workspaceDir = " + getWorkspaceUri().fsPath)
+	console.log("workspaceFolder = " + getWorkspaceUri().fsPath)
 	return workspace.fs.readFile(Uri.joinPath(getWorkspaceUri(), '.vscode', 'ablunit-test-profile.json')).then((content) => {
 		console.log("got content")
 		let str = Buffer.from(content.buffer).toString()

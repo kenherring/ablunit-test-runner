@@ -17,7 +17,7 @@
 					"tempDir": {
 						"type": "string",
 						"minLength": 1,
-						"default": "${workspaceDir}",
+						"default": "${workspaceFolder}",
 						"description": "Path to temporary directory (-T).  Written to by both the extension and the OpenEdge test execution process."
 					},
 					"importOpenedgeProjectJson": {

@@ -60,11 +60,8 @@ jobs:
       - checkout
       - restore_cache:
           keys:
-            - v1-nodemodules-<< parameters.oe-version >>-{{ checksum "package.json" }}
-            - v1-nodemodules-<< parameters.oe-version >>-
-      - restore_cache:
-          keys:
-            - v1-vscode-test-<< pipeline.parameters.vscode-version >>
+            - v1-cache-<< parameters.oe-version >>-{{ checksum "package.json" }}
+            - v1-cache-<< parameters.oe-version >>-
       - run: .circleci/run_test_wrapper.sh
       - store_test_results:
           when: always
@@ -79,11 +76,10 @@ jobs:
             - sonarcloud/scan
       - run: .circleci/validate.sh
       - save_cache:
-          key: v1-nodemodules-<< parameters.oe-version >>-{{ checksum "package.json" }}
-          paths: [ node_modules ]
-      - save_cache:
-          key: v1-vscode-test-<< pipeline.parameters.vscode-version >>
-          paths: [ .vscode-test ]
+          key: v1-cache-<< parameters.oe-version >>-{{ checksum "package.json" }}
+          paths:
+            - node_modules
+            - .vscode-test
       - when:
           condition:
             equal: [ << parameters.oe-version >>, '12.2.12' ]
@@ -102,14 +98,11 @@ jobs:
       - checkout
       - restore_cache:
           keys:
-            - v1-nodemodules-{{ checksum "package.json" }}
-            - v1-nodemodules-
+            - v1-cache-{{ checksum "package.json" }}
+      - run: npm install
       - run: npm install -g @vscode/vsce
       - run: vsce package --pre-release --githubBranch "$(git branch --show-current)"
       - run: vsce ls
-      - restore_cache:
-          keys:
-            - v1-vscode-test-<< pipeline.parameters.vscode-version >>
       - run:
           name: install and run
           command: |
