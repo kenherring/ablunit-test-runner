@@ -99,6 +99,7 @@ jobs:
       - restore_cache:
           keys:
             - v1-cache-{{ checksum "package.json" }}
+      - run: npm install
       - run: npm install -g @vscode/vsce
       - run: vsce package --pre-release --githubBranch "$(git branch --show-current)"
       - run: vsce ls
