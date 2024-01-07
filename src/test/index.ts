@@ -36,7 +36,7 @@ function setupNyc (projName: string) {
 		],
 		require: [
 			"ts-node/register",
-		],
+		]
 	})
 
 	nyc.reset()
