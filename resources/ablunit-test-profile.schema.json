@@ -11,7 +11,15 @@
 			"items": {
 				"type": "object",
 				"uniqueItems": true,
-				"default": "coverage",
+				"default": [
+					{
+						"tempDir": "${workspaceFolder}",
+						"profiler": {
+							"enabled": true,
+							"coverage": true
+						}
+					}
+				],
 				"additionalProperties": false,
 				"properties": {
 					"tempDir": {

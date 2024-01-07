@@ -20,13 +20,26 @@
 			]
 		},
 		{
+			"name": "Run Extension - pug challenge",
+			"type": "extensionHost",
+			"request": "launch",
+			"runtimeExecutable": "${execPath}",
+			"args": [
+				"--extensionDevelopmentPath=${workspaceFolder}",
+				"c:/git/pug-challenge"
+			],
+			"outFiles": [
+				"${workspaceFolder}/out/**/*.js"
+			]
+		},
+		{
 			"name": "Install Packaged Extension - Select Workspace",
 			"type": "extensionHost",
 			"request": "launch",
 			"runtimeExecutable": "${execPath}",
 			"args": [
 				"--extensionDevelopmentPath=${workspaceFolder}/dummy-ext",
-				"--install-extension=ablunit-test-provider-0.1.7.vsix",
+				"--install-extension=ablunit-test-provider-0.1.9.vsix",
 				"${workspaceFolder}/test_projects/${input:workspaceName}"
 			]
 		}
@@ -49,7 +62,7 @@
 				"proj8_custom_command",
 				"proj9",
 				"workspace0.code-workspace",
-				"workspace1.code-workspace"
+				"workspace1.code-workspace",
 			]
 		},
 		{

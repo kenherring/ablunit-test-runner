@@ -20,22 +20,6 @@
 			}
 		},
 		{
-			"type": "eslint",
-			"problemMatcher": [
-				"$eslint-stylish"
-			],
-			"label": "eslint: lint whole folder",
-			"options": {
-				"shell": {
-					"executable": "cmd.exe",
-					"args": [
-						"/d",
-						"/c"
-					]
-				}
-			}
-		},
-		{
 			"label": "run unit tests in docker",
 			"type": "shell",
 			"command": "docker/run_tests.sh",

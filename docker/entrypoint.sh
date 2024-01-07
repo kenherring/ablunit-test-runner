@@ -2,13 +2,14 @@
 set -eou pipefail
 
 initialize () {
+	local OPT OPTARG OPTIND
 	echo "[$0 initialize]"
-	BASH_AFTER_FAIL=false
+	BASH_AFTER=false
 	REPO_VOLUME=/home/circleci/ablunit-test-provider
 
 	while getopts 'b' OPT; do
 		case "$OPT" in
-			b)	BASH_AFTER_FAIL=true ;;
+			b)	BASH_AFTER=true ;;
 			?)	echo "script usage: $(basename "$0") [-b]" >&2
 				exit 1 ;;
 		esac
@@ -83,14 +84,17 @@ copy_files () {
 
 run_tests () {
 	echo "[$0 run_tests]"
-	if ! .circleci/run_test_wrapper.sh; then
+
+	if [ -z "$RUNCMD" ]; then
+		RUNCMD='build'
+	fi
+
+	if ! .circleci/run_test_wrapper.sh "$RUNCMD"; then
 		echo "run_tests failed"
-		if $BASH_AFTER_FAIL; then
+		if $BASH_AFTER; then
 			bash
-			exit 1
-		else
-			exit 1
 		fi
+		exit 1
 	fi
 	echo "run_tests success"
 }
@@ -111,7 +115,7 @@ analyze_results () {
 	fi
 
 	if $HAS_ERROR; then
-		if $BASH_AFTER_FAIL; then
+		if $BASH_AFTER; then
 			bash
 		fi
 		exit 1
@@ -121,6 +125,9 @@ analyze_results () {
 finish () {
 	echo "[$0 finish] artifacts to be saved:"
 	ls -al artifacts
+	if [ $BASH_AFTER ]; then
+		bash
+	fi
 }
 
 ########## MAIN BLOCK ##########
