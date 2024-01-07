@@ -77,25 +77,21 @@
 		"watch": "npm run esbuild-base -- --watch",
 		"clean": "sh -c scripts/cleanup.sh",
 		"lint": "npx eslint . --ext .ts,.js",
-
 		"esbuild-base": "esbuild src/*.ts src/**/*.ts src/**/**/*.ts --outdir=out --platform=node --format=cjs --sourcemap",
 		"esbuild-test": "node ./.esbuild.test.config.ts",
-		"esbuild-bundle": "rm -rf out && esbuild ./src/extension.ts --outfile=./out/extension.js --platform=node --format=cjs --bundle --minify --external:vscode --external:jsonminify",
-
+		"esbuild-bundle": "rm -rf out && esbuild ./src/extension.ts --outfile=./out/extension.js --platform=node --format=cjs --bundle --minify --external:vscode",
 		"pretest": "npm run test:setup && npm run build",
 		"test:setup": "sh -c test_projects/setup.sh",
 		"test": "node ./out/test/runTest.js",
 		"test:install-and-run": "npm run package && cd dummy-ext && npm run test:install-and-run",
-
 		"vscode:prepublish": "npm run esbuild-bundle"
 	},
 	"dependencies": {
-		"jsonminify": "^0.4.2",
+		"node-json-minify": "^3.0.0",
 		"xml2js": "^0.6.2"
 	},
 	"devDependencies": {
 		"@types/glob": "^8.1.0",
-		"@types/jsonminify": "^0.4.3",
 		"@types/mocha": "^10.0.6",
 		"@types/node": "^16.18.34",
 		"@types/vscode": "^1.83.0",
