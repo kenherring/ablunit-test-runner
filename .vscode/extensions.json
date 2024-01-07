@@ -2,12 +2,13 @@
 	"recommendations": [
 		"circleci.circleci",
 		"dbaeumer.vscode-eslint",
+		"editorconfig.editorconfig",
+		"github.vscode-pull-request-github",
 		"ms-vscode.extension-test-runner",
+		"ms-vscode.vscode-typescript-next",
+		"redhat.vscode-xml",
 		"riversidesoftware.openedge-abl-lsp",
 		"sonarsource.sonarlint-vscode",
 		"timonwong.shellcheck",
-		"editorconfig.editorconfig",
-		"github.vscode-pull-request-github",
-		"redhat.vscode-xml"
 	]
 }

@@ -9,97 +9,111 @@ parameters:
     type: string
     default: 1.84.2
 
+oe-version-param: &oe-version-param
+  parameters:
+    oe-version:
+      type: string
+      enum: [ '12.2.12', '12.7.0' ]
+      default: '12.2.12'
+setup: &setup
+  when:
+    condition: true
+    steps:
+      - run: tr ' ' '\n' \<<< "$PROGRESS_CFG_BASE64" | base64 --decode > /psc/dlc/progress.cfg
+      - checkout
+      - restore_cache:
+          keys:
+            - v1-nodemodules-<< parameters.oe-version >>-{{ checksum "package.json" }}
+            - v1-nodemodules-<< parameters.oe-version >>
+      - restore_cache:
+          keys:
+            - v1-vscode-test-<< pipeline.parameters.vscode-version >>
+context-and-filters: &context-and-filters
+  context:
+    - DockerHub
+    - PROGRESS_CFG
+    - SonarCloud
+    - Azure_PAT
+  filters:
+    tags: ## all tags starting with 'v' (all branches also included by default)
+      only:
+        - /^v.*/
+store-artifacts: &store-artifacts
+  - store_artifacts:
+      when: always
+      path: artifacts
+store-results: &store-results
+  - store_test_results:
+      when: always
+      path: artifacts
+
+executors:
+  psc-primary:
+    docker:
+      - image: kherring/ablunit-test-runner:12.2.12
+        auth:
+          username: $DOCKERHUB_USERNAME
+          password: $DOCKERHUB_TOKEN
+
 workflows:
   build:
     jobs:
       - shellcheck/check
       - test-and-scan:
+          <<: *context-and-filters
           matrix:
             parameters:
-              oe-version: [ '12.2.12', '12.7.0' ]
+              oe-version: [ 12.2.12, 12.7.0 ]
           name: test-and-scan_<< matrix.oe-version >>
-          context:
-            - DockerHub
-            - PROGRESS_CFG
-            - SonarCloud
-          filters:
-            tags: ## all tags starting with 'v' (all branches also included by default)
-              only:
-                - /^v.*/
+      - test-with-bundle:
+          <<: *context-and-filters
       - install-and-run:
-          context:
-            - DockerHub
-            - PROGRESS_CFG
+          <<: *context-and-filters
       - package-and-publish:
           requires:
             - shellcheck/check
             - test-and-scan_12.2.12
             - test-and-scan_12.7.0
+            - test-with-bundle
             - install-and-run
-          context:
-            - Azure_PAT
-          filters:
-            tags:
-              only:
-                - /^v.*/
+          <<: *context-and-filters
 
 jobs:
   test-and-scan:
-    parameters:
-      oe-version:
-        type: string
-        enum: [ '12.2.12', '12.7.0' ]
-        default: '12.2.12'
+    <<: *oe-version-param
     docker:
       - image: kherring/ablunit-test-runner:<< parameters.oe-version >>
         auth:
-          username: kherring
+          username: $DOCKERHUB_USERNAME
           password: $DOCKERHUB_TOKEN
     steps:
-      - run: tr ' ' '\n' \<<< "$PROGRESS_CFG_BASE64" | base64 --decode > /psc/dlc/progress.cfg
-      - checkout
-      - restore_cache:
-          keys:
-            - v1-cache-<< parameters.oe-version >>-{{ checksum "package.json" }}
-            - v1-cache-<< parameters.oe-version >>-
+      - <<: *setup
       - run: .circleci/run_test_wrapper.sh
-      - store_test_results:
-          when: always
-          path: artifacts
-      - store_artifacts:
-          when: always
-          path: artifacts
-      - when:
-          condition:
-            equal: [ '<< parameters.oe-version >>', '12.2.12' ]
-          steps:
-            - sonarcloud/scan
-      - run: .circleci/validate.sh
-      - save_cache:
-          key: v1-cache-<< parameters.oe-version >>-{{ checksum "package.json" }}
-          paths:
-            - node_modules
-            - .vscode-test
+      - <<: *store-results
+      - <<: *store-artifacts
       - when:
           condition:
             equal: [ << parameters.oe-version >>, '12.2.12' ]
           steps:
-            - persist_to_workspace:
-                root: .
-                paths: [ . ]
-  install-and-run:
-    docker:
-      - image: kherring/ablunit-test-runner:12.2.12
-        auth:
-          username: kherring
-          password: $DOCKERHUB_TOKEN
+            - sonarcloud/scan
+      - run: .circleci/validate.sh
+      - save_cache:
+          key: v1-nodemodules-<< parameters.oe-version >>-{{ checksum "package.json" }}
+          paths:
+            - node_modules
+            - .vscode-test
+  test-with-bundle:
+    <<: *oe-version-param
+    executor: psc-primary
     steps:
-      - run: tr ' ' '\n' \<<< "$PROGRESS_CFG_BASE64" | base64 --decode > /psc/dlc/progress.cfg
-      - checkout
-      - restore_cache:
-          keys:
-            - v1-cache-{{ checksum "package.json" }}
-      - run: npm install
+      - <<: *setup
+      - run: .circleci/run_test_wrapper.sh bundle
+      - <<: *store-results
+  install-and-run:
+    <<: *oe-version-param
+    executor: psc-primary
+    steps:
+      - <<: *setup
       - run: npm install -g @vscode/vsce
       - run: vsce package --pre-release --githubBranch "$(git branch --show-current)"
       - run: vsce ls
@@ -111,12 +125,8 @@ jobs:
             npm run compile
             export DONT_PROMPT_WSL_INSTALL=No_Prompt_please
             xvfb-run -a npm run test:install-and-run
-      - store_test_results:
-          when: always
-          path: artifacts
-      - store_artifacts:
-          when: always
-          path: artifacts
+      - <<: *store-results
+      - <<: *store-artifacts
   package-and-publish:
     docker:
       - image: cimg/node:20.8
@@ -137,6 +147,4 @@ jobs:
                 fi
           - run: vsce publish --pre-release --githubBranch "$(git branch --show-current)" --packagePath ablunit-test-provider-${CIRCLE_TAG#v}.vsix
       - run: mkdir -p artifacts && cp ablunit-test-provider-*.vsix artifacts
-      - store_artifacts:
-          when: always
-          path: artifacts
+      - <<: *store-artifacts

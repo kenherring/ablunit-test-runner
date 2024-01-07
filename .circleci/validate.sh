@@ -1,7 +1,7 @@
 #!/bin/bash
 set -eou pipefail
 
-. .git-hooks/common.sh
+. scripts/common.sh
 
 validate_results_count() {
 	TEST_COUNT=$(find src/test/suite -name "*.test.ts" | wc -l)

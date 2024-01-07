@@ -4,7 +4,16 @@ set -eou pipefail
 initialize () {
 	echo "[$0 initialize]"
 	npm install
-	npm run build
+
+	echo "\$1=${1:-}"
+	if [ "${1:-}" = "bundle" ]; then
+		RUNCMD="esbuild-bundle"
+	else
+		RUNCMD="build"
+	fi
+	rm -rf out
+	npm run "$RUNCMD"
+	echo "npm run $RUNCMD - success"
 }
 
 dbus_config () {
@@ -56,7 +65,7 @@ run_lint () {
 }
 
 ########## MAIN BLOCK ##########
-initialize
+initialize "$@"
 dbus_config
 run_tests
 run_lint

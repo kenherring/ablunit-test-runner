@@ -9,15 +9,16 @@ initialize () {
 	if [ -n "${WSL_DISTRO_NAME:-}" ]; then
 		WSL=true
 	fi
+	OE_VERSION=${OE_VERSION:-12.2.12}
 }
 
 # load lots of code for a performance test
 get_performance_test_code () {
 	echo "$0: Getting performance test code..."
-	if [ ! -f .vscode-test/v12.2.13.0.tar.gz ]; then
+	if [ ! -f ".vscode-test/v${OE_VERSION}.0.tar.gz" ]; then
 		mkdir -p .vscode-test
-		curl -L https://github.com/progress/ADE/archive/refs/tags/v12.2.13.0.tar.gz -o .vscode-test/v12.2.13.0.tar.gz
-		tar -xf .vscode-test/v12.2.13.0.tar.gz -C test_projects/proj7_load_performance/src
+		curl -L "https://github.com/progress/ADE/archive/refs/tags/v${OE_VERSION}.0.tar.gz" -o ".vscode-test/v${OE_VERSION}.0.tar.gz"
+		tar -xf ".vscode-test/v${OE_VERSION}.0.tar.gz" -C test_projects/proj7_load_performance/src
 	fi
 }
 

@@ -1,16 +1,12 @@
 #!/bin/bash
 set -eou pipefail
 
-. .git-hooks/common.sh
+. scripts/common.sh
 
-jq () {
-	if command jq >/dev/null 2>&1; then
-		command jq "$@"
-	elif command -v jq-windows-amd64.exe >/dev/null 2>&1; then
-		jq-windows-amd64.exe "$@"
-	else
-		echo "jq not found" >&2
-	fi
+validate_compile () {
+	echo "compiling..." >&2
+
+	npm run compile
 }
 
 validate_compile () {

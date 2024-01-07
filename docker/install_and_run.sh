@@ -1,8 +1,22 @@
 #!/bin/bash
 set -eou pipefail
 
+
 initialize () {
+	echo "[$0 initialize]"
 	tr ' ' '\n' <<< "$PROGRESS_CFG_BASE64" | base64 --decode > /psc/dlc/progress.cfg
+
+	local OPT OPTARG OPTIND
+	BASH_AFTER_FAIL=false
+
+	while getopts 'b' OPT; do
+		case "$OPT" in
+			b)	BASH_AFTER_FAIL=true ;;
+			?)	echo "script usage: $(basename "$0") [-b]" >&2
+				exit 1 ;;
+		esac
+	done
+	
 
 	if ! ${CIRCLECI:-false}; then
 		echo 'copying files'
@@ -40,12 +54,14 @@ initialize () {
 }
 
 package_extension () {
+	echo "[$0 package_extension]"
     npm install -g @vscode/vsce
+	npm install
 	vsce package --pre-release --githubBranch "$(git branch --show-current)"
 }
 
 dbus_config () {
-	echo "dbus_config"
+	echo "[$0 dbus_config]"
 	## These lines fix dbus errors in the logs related to the next section
 	## However, they also create new errors
 	# apt update
@@ -63,16 +79,18 @@ dbus_config () {
 }
 
 run_tests () {
-	echo "starting 'test:install-and-run'..."
+	echo "[$0 run_tests] starting 'test:install-and-run'..."
 	test_projects/setup.sh
 	cd dummy-ext
 	npm run compile
 	export DONT_PROMPT_WSL_INSTALL=No_Prompt_please
-	xvfb-run -a npm run test:install-and-run
+	if ! xvfb-run -a npm run test:install-and-run && $BASH_AFTER_FAIL; then
+		bash
+	fi
 }
 
 finish () {
-	echo 'done running tests'
+	echo "[$0 finish] done running tests"
 }
 
 ########## MAIN BLOCK ##########
