@@ -110,7 +110,7 @@ jobs:
     executor: psc-primary
     steps:
       - <<: *setup
-      - run: npm install -g @vscode/vsce
+      - run: npm install
       - run: vsce package --pre-release --githubBranch "$(git branch --show-current)"
       - run: vsce ls
       - run:
