@@ -3,9 +3,12 @@ set -eou pipefail
 
 initialize () {
 	local OPT OPTARG OPTIND
-	echo "[$0 initialize]"
+	echo "[$0 ${FUNCNAME[0]}] pwd=$(pwd)"
 	BASH_AFTER=false
+	CACHE_BASE=/home/circleci/cache
 	REPO_VOLUME=/home/circleci/ablunit-test-provider
+	export npm_config_cache=$CACHE_BASE/node_modules_cache
+	mkdir -p $CACHE_BASE/node_modules_cache
 
 	while getopts 'b' OPT; do
 		case "$OPT" in
@@ -15,17 +18,24 @@ initialize () {
 		esac
 	done
 
+	if [ -z "${TEST_PROJECT:-}" ]; then
+		echo "ERROR: \$TEST_PROJECT not set (values: base, dummy-ext)"
+		exit 1
+	fi
+
 	## save my license from the environment variable at runtime
 	tr ' ' '\n' <<< "$PROGRESS_CFG_BASE64" | base64 --decode > /psc/dlc/progress.cfg
 
 	echo 'copying files from local'
 	initialize_repo
 	copy_files_from_volume
+	restore_cache
 	npm install
 }
 
 initialize_repo () {
-	echo "[$0 initialize_repo]"
+	echo "[$0 ${FUNCNAME[0]}] pwd=$(pwd)"
+	mkdir -p /home/circleci/project
 	cd /home/circleci/project
 	git config --global init.defaultBranch main
 	git init
@@ -39,7 +49,7 @@ initialize_repo () {
 }
 
 copy_files_from_volume () {
-	echo "[$0 copy_files_from_volume]"
+	echo "[$0 ${FUNCNAME[0]}] pwd=$(pwd)"
 	find_files_to_copy
 	copy_files "staged"
 	[ -f /tmp/modified_files ] && copy_files "modified"
@@ -50,7 +60,7 @@ copy_files_from_volume () {
 }
 
 find_files_to_copy () {
-	echo "[$0 find_files_to_copy]"
+	echo "[$0 ${FUNCNAME[0]}] pwd=$(pwd)"
 	local BASE_DIR
 	BASE_DIR=$(pwd)
 
@@ -71,7 +81,7 @@ find_files_to_copy () {
 }
 
 copy_files () {
-	echo "[$0 copy_files]"
+	echo "[$0 ${FUNCNAME[0]}] pwd=$(pwd)"
 	local TYPE="$1"
 	while read -r FILE; do
 		echo "copying $TYPE file $FILE"
@@ -83,7 +93,19 @@ copy_files () {
 }
 
 run_tests () {
-	echo "[$0 run_tests]"
+	echo "[$0 ${FUNCNAME[0]}] pwd=$(pwd)"
+	if [ "$TEST_PROJECT" = "base" ]; then
+		run_tests_base
+	elif [ "$TEST_PROJECT" = "dummy-ext" ]; then
+		run_tests_dummy_ext
+	else
+		echo "ERROR: unknown test project"
+		exit 1
+	fi
+}
+
+run_tests_base () {
+	echo "[$0 ${FUNCNAME[0]}] pwd=$(pwd)"
 
 	if [ -z "$RUNCMD" ]; then
 		RUNCMD='build'
@@ -97,10 +119,11 @@ run_tests () {
 		exit 1
 	fi
 	echo "run_tests success"
+	analyze_results
 }
 
 analyze_results () {
-	echo "[$0 analyze_results]"
+	echo "[$0 ${FUNCNAME[0]}] pwd=$(pwd)"
 	RESULTS_COUNT=$(find . -name 'mocha_results_*.xml' | wc -l)
 	LCOV_COUNT=$(find . -name 'lcov.info' | wc -l)
 	HAS_ERROR=false
@@ -120,12 +143,75 @@ analyze_results () {
 		fi
 		exit 1
 	fi
+
+	echo "[$0 ${FUNCNAME[0]}] artifacts to be saved:"
+	ls -al artifacts
+}
+
+run_tests_dummy_ext () {
+	echo "[$0 ${FUNCNAME[0]}] pwd = $(pwd)"
+	npm run test:setup
+	package_extension
+	run_packaged_tests
+}
+
+package_extension () {
+	echo "[$0 ${FUNCNAME[0]}] pwd = $(pwd)"
+	npm install
+	vsce package --pre-release --githubBranch "$(git branch --show-current)"
+
+	echo "find packages: $(find . -name "ablunit-test-provider-*.vsix")"
+	if [ "$(find . -name "ablunit-test-provider-*.vsix" | wc -l )" = "0" ]; then
+		echo "ERROR: could not find .vsix after packaging extension!"
+		exit 1
+	fi
+}
+
+run_packaged_tests () {
+	echo "[$0 ${FUNCNAME[0]}] pwd=$(pwd)"
+	cd dummy-ext
+	npm run compile
+	export DONT_PROMPT_WSL_INSTALL=No_Prompt_please
+	if ! xvfb-run -a npm run test:install-and-run; then
+		if $BASH_AFTER; then
+			bash
+		fi
+		exit 1
+	fi
+	cd ..
+}
+
+save_cache () {
+	echo "[$0 ${FUNCNAME[0]}] pwd=$(pwd)"
+	if [ -d .vscode-test ]; then
+		mkdir -p "$CACHE_BASE/.vscode-test"
+		rsync -aR ./.vscode-test "$CACHE_BASE"
+	fi
+	if [ -d dummy-ext/.vscode-test ]; then
+		mkdir -p "$CACHE_BASE/dummy-ext/.vscode-test"
+		rsync -aR ./dummy-ext/.vscode-test "$CACHE_BASE"
+	fi
+}
+
+restore_cache () {
+	echo "[$0 ${FUNCNAME[0]}] pwd=$(pwd)"
+	local BASE_DIR
+	BASE_DIR=$(pwd)
+
+	cd "$CACHE_BASE"
+	if [ -d "$CACHE_BASE/.vscode-test" ]; then
+		rsync -aR .vscode-test "$BASE_DIR"
+	fi
+	if [ -d "$CACHE_BASE/dummy-ext/.vscode-test" ]; then
+		rsync -aR dummy-ext/.vscode-test "$BASE_DIR"
+	fi
+	cd -
 }
 
 finish () {
-	echo "[$0 finish] artifacts to be saved:"
-	ls -al artifacts
-	if [ $BASH_AFTER ]; then
+	echo "[$0 ${FUNCNAME[0]}] pwd=$(pwd)"
+	save_cache
+	if $BASH_AFTER; then
 		bash
 	fi
 }
@@ -133,6 +219,5 @@ finish () {
 ########## MAIN BLOCK ##########
 initialize "$@"
 run_tests
-analyze_results
 finish
 echo "[$0] completed successfully!"

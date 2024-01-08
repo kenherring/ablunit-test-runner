@@ -5,13 +5,12 @@ import { commands, tests, window, workspace,
 import { ABLResults } from './ABLResults'
 import { ABLTestSuite, ABLTestClass, ABLTestProgram, ABLTestFile, ABLTestCase, ABLTestDir, ABLTestData, resultData, testData } from './testTree'
 import { GlobSync } from 'glob'
-import { logToChannel } from './ABLUnitCommon'
+import { log, logToChannel } from './ABLUnitCommon'
 import { readFileSync } from 'fs'
 import { decorate, setRecentResults } from './decorator'
 
 export async function activate (context: ExtensionContext) {
-	logToChannel('ACTIVATE!')
-	if (!workspace.workspaceFolders) { return }
+	log.info('ACTIVATE!')
 
 	// const debugEnabled = workspace.getConfiguration('ablunit').get('debugEnabled', false)
 	const ctrl = tests.createTestController('ablunitTestController', 'ABLUnit Test')
@@ -133,7 +132,9 @@ export async function activate (context: ExtensionContext) {
 			let ret = false
 			for (const r of res) {
 				r.setTestData(testData.getMap())
-				logToChannel('starting ablunit tests for folder: ' + r.workspaceFolder.uri.fsPath, 'log', run)
+				if (res.length > 1) {
+					logToChannel('starting ablunit tests for folder: ' + r.workspaceFolder.uri.fsPath, 'log', run)
+				}
 
 				ret = await r.run(run).then(() => {
 					return true
@@ -172,7 +173,7 @@ export async function activate (context: ExtensionContext) {
 				return
 			}
 
-			logToChannel('ablunit tests complete', 'log', run)
+			logToChannel('ablunit test run complete', 'log', run)
 
 			if (run.token.isCancellationRequested) {
 				for (const { test } of queue) {

@@ -23,11 +23,8 @@ setup: &setup
       - checkout
       - restore_cache:
           keys:
-            - v1-nodemodules-<< parameters.oe-version >>-{{ checksum "package.json" }}
-            - v1-nodemodules-<< parameters.oe-version >>
-      - restore_cache:
-          keys:
-            - v1-vscode-test-<< pipeline.parameters.vscode-version >>
+            - v2-cache-<< parameters.oe-version >>-{{ checksum "package.json" }}
+            - v2-cache-<< parameters.oe-version >>
 context-and-filters: &context-and-filters
   context:
     - DockerHub
@@ -98,10 +95,9 @@ jobs:
             - sonarcloud/scan
       - run: .circleci/validate.sh
       - save_cache:
-          key: v1-nodemodules-<< parameters.oe-version >>-{{ checksum "package.json" }}
+          key: v2-cache-<< parameters.oe-version >>-{{ checksum "package.json" }}
           paths:
-            - node_modules
-            - .vscode-test
+            - cache
   test-with-bundle:
     <<: *oe-version-param
     executor: psc-primary
@@ -114,13 +110,13 @@ jobs:
     executor: psc-primary
     steps:
       - <<: *setup
-      - run: npm install -g @vscode/vsce
+      - run: npm install
+      - run: npm run test:setup
       - run: vsce package --pre-release --githubBranch "$(git branch --show-current)"
       - run: vsce ls
       - run:
           name: install and run
           command: |
-            test_projects/setup.sh
             cd dummy-ext
             npm run compile
             export DONT_PROMPT_WSL_INSTALL=No_Prompt_please
@@ -134,6 +130,7 @@ jobs:
       - checkout
       - run: npm install
       - run: sudo npm install -g @vscode/vsce
+      - run: scripts/update_version.sh --pre-release
       - run: vsce package --pre-release --githubBranch "$(git branch --show-current)"
       - when:
           condition: << pipeline.git.tag >>

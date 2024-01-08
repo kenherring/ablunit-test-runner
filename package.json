@@ -2,7 +2,13 @@
 	"name": "ablunit-test-provider",
 	"displayName": "ABLUnit Test Runner",
 	"description": "OpenEdge ABLUnit test runner for VSCode",
-	"version": "0.1.7",
+	"version": "0.1.9",
+	"preview": true,
+	"engineStrict": true,
+	"galleryBanner": {
+		"color": "#007ACC",
+		"theme": "dark"
+	},
 	"publisher": "kherring",
 	"pricing": "Free",
 	"private": true,
@@ -64,7 +70,7 @@
 	"categories": [
 		"Testing"
 	],
-	"activationEvents-reduced": [
+	"activationEvents-other": [
 		"onStartupFinished",
 		"workspaceContains:{**/*.cls,**/*.p,.vscode/ablunit-test-profile.json}"
 	],
@@ -78,12 +84,13 @@
 		"clean": "sh -c scripts/cleanup.sh",
 		"lint": "npx eslint . --ext .ts,.js",
 		"esbuild-base": "esbuild src/*.ts src/**/*.ts src/**/**/*.ts --outdir=out --platform=node --format=cjs --sourcemap",
-		"esbuild-test": "node ./.esbuild.test.config.ts",
+		"esbuild-test": "node .esbuild.test.config.ts",
 		"esbuild-bundle": "rm -rf out && esbuild ./src/extension.ts --outfile=./out/extension.js --platform=node --format=cjs --bundle --minify --external:vscode",
 		"pretest": "npm run test:setup && npm run build",
 		"test:setup": "sh -c test_projects/setup.sh",
 		"test": "node ./out/test/runTest.js",
 		"test:install-and-run": "npm run package && cd dummy-ext && npm run test:install-and-run",
+		"test:install-and-run-nopack": "cd dummy-ext && npm run test:install-and-run",
 		"vscode:prepublish": "npm run esbuild-bundle"
 	},
 	"dependencies": {
@@ -95,7 +102,6 @@
 		"@types/mocha": "^10.0.6",
 		"@types/node": "^16.18.34",
 		"@types/vscode": "^1.83.0",
-		"@types/xml2js": "^0.4.12",
 		"@typescript-eslint/eslint-plugin": "^6.13.2",
 		"@typescript-eslint/parser": "^6.13.2",
 		"@vscode/test-cli": "^0.0.4",

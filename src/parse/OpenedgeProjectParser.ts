@@ -20,8 +20,8 @@ export interface IProjectJson {
 const dlcMap = new Map<WorkspaceFolder, IDlc>()
 
 function getProjectJson (workspaceFolder: WorkspaceFolder) {
-	const data = readStrippedJsonFile(Uri.joinPath(workspaceFolder.uri,"openedge-project.json"))
-	return JSON.stringify(data)
+	const data = JSON.stringify(readStrippedJsonFile(Uri.joinPath(workspaceFolder.uri,"openedge-project.json")))
+	return data
 }
 
 export function getDLC (workspaceFolder: WorkspaceFolder, projectJson?: string) {

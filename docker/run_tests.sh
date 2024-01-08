@@ -16,10 +16,11 @@ options:
 }
 
 initialize () {
+	echo "[$0 ${FUNCNAME[0]}] pwd=$(pwd)"
 	OPTS=
 	SCRIPT=entrypoint
+	TEST_PROJECT=base
 	STAGED_ONLY=false
-	VSCODE_DIR=/home/circleci/project/.vscode-test
 	OE_VERSION=12.2.12
 	RUNCMD='build'
 
@@ -28,8 +29,7 @@ initialize () {
 			o) 	OE_VERSION=$OPTARG ;;
 			b)	OPTS='-b' ;;
 			d)	SCRIPT=development_test ;;
-			i)	SCRIPT=install_and_run
-				VSCODE_DIR=/home/circleci/project/dummy-ext/.vscode-test ;;
+			i)	TEST_PROJECT=dummy-ext ;;
 			p)	RUNCMD='esbuild-bundle' ;;
 			s)	STAGED_ONLY=true ;;
 			h) 	usage && exit 0 ;;
@@ -41,14 +41,11 @@ initialize () {
 	GIT_BRANCH=$(git branch --show-current)
 	PROGRESS_CFG_BASE64=$(base64 "$DLC/progress.cfg" | tr '\n' ' ')
 	PWD=$(pwd -W 2>/dev/null || pwd)
-	export GIT_BRANCH PROGRESS_CFG_BASE64 STAGED_ONLY OE_VERSION RUNCMD
+	export GIT_BRANCH PROGRESS_CFG_BASE64 STAGED_ONLY OE_VERSION RUNCMD TEST_PROJECT
 
 	## create volume for .vscode-test directory to persist vscode application downloads
-	if ! docker volume ls | grep -q vscode-test; then
-		docker volume create --name vscode-test
-	fi
-	if ! docker volume ls | grep -q node-modules; then
-		docker volume create --name node-modules
+	if ! docker volume ls | grep -q test-runner-cache; then
+		docker volume create --name test-runner-cache
 	fi
 
 	if [ "$OE_VERSION" != "12.2.12" ] && [ "$OE_VERSION" != "12.7.0" ]; then
@@ -58,8 +55,8 @@ initialize () {
 }
 
 run_tests_in_docker () {
+	echo "[$0 ${FUNCNAME[0]}] pwd=$(pwd)"
 	## run tests inside the container
-	echo "starting 'docker run' [script=docker/$SCRIPT.sh]..."
 	echo "RUNCMD=$RUNCMD"
 	time docker run --rm -it \
 		-e PROGRESS_CFG_BASE64 \
@@ -67,9 +64,9 @@ run_tests_in_docker () {
 		-e STAGED_ONLY \
 		-e OE_VERSION \
 		-e RUNCMD \
+		-e TEST_PROJECT \
 		-v "$PWD":/home/circleci/ablunit-test-provider:ro \
-		-v vscode-test:$VSCODE_DIR \
-		-v node-modules:/home/circleci/project/node_modules \
+		-v test-runner-cache:/home/circleci/cache \
 		kherring/ablunit-test-runner:"$OE_VERSION" \
 		bash -c "/home/circleci/ablunit-test-provider/docker/$SCRIPT.sh $OPTS;"
 }

@@ -4,13 +4,13 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 import { getTestConfig } from './createTestConfig'
-import { GlobSync }  from 'glob'
+import { GlobSync } from 'glob'
 import { workspace } from 'vscode'
-import Mocha = require("mocha");
+import Mocha = require('mocha')
 import * as path from 'path'
+const NYC = require('nyc')
 
 function setupNyc (projName: string) {
-	const NYC = require("nyc")
 	const nyc = new NYC({
 		cache: false,
 		cwd:       path.join(__dirname, "..", ".."),
@@ -38,8 +38,16 @@ function setupNyc (projName: string) {
 			"ts-node/register",
 		]
 	})
+
 	nyc.reset()
 	nyc.wrap()
+
+	// console.warn('Invalidating require cache...')
+	// Object.keys(require.cache).filter(f => nyc.exclude.shouldInstrument(f)).forEach(m => {
+	// 	console.debug('Invalidate require cache for ' + m)
+	// 	delete require.cache[m]
+	// 	require(m)
+	// })
 	return nyc
 }
 

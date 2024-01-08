@@ -6,6 +6,7 @@
 
 import * as cp from 'child_process'
 import * as path from 'path'
+import { existsSync } from 'fs'
 import { downloadAndUnzipVSCode, resolveCliArgsFromVSCodeExecutablePath, runTests } from '@vscode/test-electron'
 
 async function main() {
@@ -21,9 +22,14 @@ async function runTest(version: string) {
 		const vscodeExecutablePath = await downloadAndUnzipVSCode(version)
 		const [cliPath, ...args] = resolveCliArgsFromVSCodeExecutablePath(vscodeExecutablePath)
 
-		const packagedExtensionPath = path.resolve(__dirname, '../../../ablunit-test-provider-0.1.7.vsix')
+		const packagedExtensionPath = path.resolve(__dirname, '../../../ablunit-test-provider-0.1.9.vsix')
+		if (!existsSync(packagedExtensionPath)) {
+			throw new Error("Extension bundle does not exist! '" + packagedExtensionPath + "'")
+		}
 		const projDir = path.resolve(__dirname, '../../../test_projects/proj0')
+		// const projDir = path.resolve(__dirname, '../../../test_projects/proj1')
 
+		console.log("[installAndRun.ts runTest] cp.spawnSync")
 		// Use cp.spawn / cp.exec for custom setup
 		cp.spawnSync(
 			cliPath,
@@ -36,6 +42,7 @@ async function runTest(version: string) {
 		)
 
 		// Run the extension test
+		console.log("[installAndRun.ts runTest] await runTests")
 		await runTests({
 			// Use the specified `code` executable
 			vscodeExecutablePath,
@@ -47,7 +54,7 @@ async function runTest(version: string) {
 			]
 		})
 	} catch (err) {
-		console.error('Failed to run tests')
+		console.error('Failed to run tests! err=' + err)
 		process.exit(1)
 	}
 	console.log("[installAndRun] success!  version=" + version)

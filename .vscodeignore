@@ -1,11 +1,15 @@
 ## Keep these files
+!CHANGELOG.md
+!docs/coverage.png
+!LICENSE
+!out/extension.js
+!package.json
+!resources/ablunit-test-profile.details.jsonc
+!resources/ablunit-test-profile.schema.json
 !resources/ABLUnitCore-wrapper.p
 !resources/images/icon_128.png
-!out/extension.js
-!CHANGELOG.md
-!LICENSE
-!package.json
 !snippets-classes.json
 !snippets-procedures.json
 
+## Ignore everything else
 **/*
