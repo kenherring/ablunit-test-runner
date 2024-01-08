@@ -111,7 +111,7 @@ jobs:
     steps:
       - <<: *setup
       - run: npm install
-      - run: npm test:setup
+      - run: npm run test:setup
       - run: vsce package --pre-release --githubBranch "$(git branch --show-current)"
       - run: vsce ls
       - run:
