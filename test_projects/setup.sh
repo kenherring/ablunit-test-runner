@@ -4,12 +4,10 @@ set -eou pipefail
 initialize () {
 	echo "[$0 ${FUNCNAME[0]}] pwd=$(pwd)"
 	export PATH=$PATH:$DLC/ant/bin
-	SKIP_PERF=false
 	WSL=false
 
 	while getopts 'S' OPT; do
 		case "$OPT" in
-			S)	SKIP_PERF=true ;;
 			?)	echo "script usage: $(basename "$0") [-S]" >&2
 				exit 1 ;;
 		esac
@@ -23,7 +21,6 @@ initialize () {
 
 # load lots of code for a performance test
 get_performance_test_code () {
-	$SKIP_PERF && return 0
 	echo "[$0 ${FUNCNAME[0]}] pwd=$(pwd) OE_VERSION=$OE_VERSION"
 
 	local TO_FILE="/home/circleci/v${OE_VERSION}.0.tar.gz"

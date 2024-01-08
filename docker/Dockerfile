@@ -30,7 +30,7 @@ RUN --mount=type=secret,id=license,target=/psc/dlc/progress.cfg \
     && ant compile \
     && rm -rf build.xml ADE/ /tmp/*
 RUN mkdir /home/circleci
-RUN echo "OE_VERSION=${OE_VERSION}" && curl -L "https://github.com/progress/ADE/archive/refs/tags/v${OE_VERSION}.0.tar.gz" -o "/home/circleci/v${OE_VERSION}.0.tar.gz"
+RUN curl -L "https://github.com/progress/ADE/archive/refs/tags/v${OE_VERSION}.0.tar.gz" -o "/home/circleci/v${OE_VERSION}.0.tar.gz"
 WORKDIR /
 
 ## create directory for vscode-test which will be a mounted volume
