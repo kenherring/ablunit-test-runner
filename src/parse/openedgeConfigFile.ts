@@ -169,7 +169,7 @@ function loadConfigFile (filename: string): IOpenEdgeMainConfig {
 	}
 	try {
 		const data = readStrippedJsonFile(filename)
-		return <IOpenEdgeMainConfig>data
+		return <IOpenEdgeMainConfig><unknown>data
 	} catch (caught) {
 		log.error("[loadConfigFile] Failed to parse " + filename + ": " + caught)
 		throw new Error("Failed to parse " + filename + ": " + caught)
@@ -179,9 +179,7 @@ function loadConfigFile (filename: string): IOpenEdgeMainConfig {
 function readGlobalOpenEdgeRuntimes (workspaceUri: Uri) {
 	logToChannel("[readGlobalOpenEdgeRuntimes]",'debug')
 	oeRuntimes = workspace.getConfiguration('abl.configuration').get<Array<IOERuntime>>('runtimes') ?? []
-	log.debug("[readGlobalOpenEdgeRuntimes] oeRuntimes = " + JSON.stringify(oeRuntimes, null, 2))
 	const oeRuntimesDefault = workspace.getConfiguration('abl').get('configuration.defaultRuntime')
-	log.debug("[readGlobalOpenEdgeRuntimes] oeRuntimesDefault = " + oeRuntimesDefault)
 
 	if (!workspace.workspaceFolders) return
 
@@ -196,13 +194,9 @@ function readGlobalOpenEdgeRuntimes (workspaceUri: Uri) {
 			}
 			runtime.path = runtime.path.replace(/\\/g,'/')
 			runtime.pathExists = fs.existsSync(runtime.path)
-			logToChannel("[readGlobalOpenEdgeRuntimes] pathExists=" + runtime.pathExists + ", " + runtime.path, 'debug')
 		})
 		oeRuntimes = oeRuntimes.filter(runtime => runtime.pathExists)
 	}
-
-	log.debug("[readGlobalOpenEdgeRuntimes] oeRuntimes.length = " + oeRuntimes.length)
-	log.debug("[readGlobalOpenEdgeRuntimes] oeRuntimes = " + JSON.stringify(oeRuntimes, null, 2))
 
 	if (oeRuntimes.length == 0) {
 		log.warn('[readGlobaleOpenEdgeRuntimes] No OpenEdge runtime configured on this machine')
@@ -226,7 +220,6 @@ function readGlobalOpenEdgeRuntimes (workspaceUri: Uri) {
 }
 
 function getDlcDirectory (version: string): string {
-	log.debug("[getDlcDirectory] version = " + version)
 	let dlc: string = ""
 	let dfltDlc: string = ""
 	let dfltName: string = ""
@@ -241,7 +234,6 @@ function getDlcDirectory (version: string): string {
 		runtime.pathExists = fs.existsSync(runtime.path)
 	})
 
-	log.debug('[getDlcDirectory] dlc = ' + dlc + ", dfltDlc = " + dfltDlc)
 	if (dlc === '' && oeRuntimes.length === 1) {
 		dlc = oeRuntimes[0].path
 	}
@@ -299,7 +291,6 @@ function parseOpenEdgeProjectConfig (uri: Uri, workspaceUri: Uri, config: IOpenE
 	prjConfig.profiles.set("default", prjConfig)
 	if (config.profiles) {
 		config.profiles.forEach(profile => {
-			log.debug("parsing profile '" + profile.name + "'")
 			const p = parseOpenEdgeConfig(profile.value)
 			if (profile.inherits && prjConfig.profiles.get(profile.inherits)) {
 				const parent = prjConfig.profiles.get(profile.inherits)
@@ -389,7 +380,6 @@ export function getProfileDbConns (workspaceUri: Uri) {
 
 	const profileConfig = getWorkspaceProfileConfig(workspaceUri)
 	logToChannel("[getProfileDbConns] profileConfig = " + JSON.stringify(profileConfig, null, 2), 'debug')
-	log.debug("[getProfileDbConns] profileConfig = " + JSON.stringify(profileConfig, null, 2))
 	if (!profileConfig) {
 		logToChannel("[getProfileDbConns] profileConfig is undefined")
 		return []

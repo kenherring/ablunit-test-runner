@@ -22,10 +22,15 @@ ENV TERM=vt100
 ADD build.xml /psc/dlc/tty/build.xml
 WORKDIR /psc/dlc/tty
 ARG OE_VERSION
+ENV OE_VERSION=${OE_VERSION}
+ENV DOCKER_IMAGE=ablunit-test-runner-${OE_VERSION}
 RUN --mount=type=secret,id=license,target=/psc/dlc/progress.cfg \
+    echo "OE_VERSION=$OE_VERSION}" && \
     git clone --single-branch -b "v${OE_VERSION}.0" https://github.com/progress/ADE.git \
     && ant compile \
     && rm -rf build.xml ADE/ /tmp/*
+RUN mkdir /home/circleci
+RUN echo "OE_VERSION=${OE_VERSION}" && curl -L "https://github.com/progress/ADE/archive/refs/tags/v${OE_VERSION}.0.tar.gz" -o "/home/circleci/v${OE_VERSION}.0.tar.gz"
 WORKDIR /
 
 ## create directory for vscode-test which will be a mounted volume

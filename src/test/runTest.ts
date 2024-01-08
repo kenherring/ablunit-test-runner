@@ -1,4 +1,4 @@
-import path = require('path')
+import * as path from 'path'
 import { getTestConfig } from './createTestConfig'
 import { runTests } from '@vscode/test-electron'
 

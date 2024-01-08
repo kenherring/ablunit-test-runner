@@ -23,11 +23,8 @@ setup: &setup
       - checkout
       - restore_cache:
           keys:
-            - v1-nodemodules-<< parameters.oe-version >>-{{ checksum "package.json" }}
-            - v1-nodemodules-<< parameters.oe-version >>
-      - restore_cache:
-          keys:
-            - v1-vscode-test-<< pipeline.parameters.vscode-version >>
+            - v2-cache-<< parameters.oe-version >>-{{ checksum "package.json" }}
+            - v2-cache-<< parameters.oe-version >>
 context-and-filters: &context-and-filters
   context:
     - DockerHub
@@ -98,10 +95,9 @@ jobs:
             - sonarcloud/scan
       - run: .circleci/validate.sh
       - save_cache:
-          key: v1-nodemodules-<< parameters.oe-version >>-{{ checksum "package.json" }}
+          key: v2-cache-<< parameters.oe-version >>-{{ checksum "package.json" }}
           paths:
-            - node_modules
-            - .vscode-test
+            - cache
   test-with-bundle:
     <<: *oe-version-param
     executor: psc-primary
