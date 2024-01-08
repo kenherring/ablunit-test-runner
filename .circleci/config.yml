@@ -111,12 +111,12 @@ jobs:
     steps:
       - <<: *setup
       - run: npm install
+      - run: npm test:setup
       - run: vsce package --pre-release --githubBranch "$(git branch --show-current)"
       - run: vsce ls
       - run:
           name: install and run
           command: |
-            test_projects/setup.sh
             cd dummy-ext
             npm run compile
             export DONT_PROMPT_WSL_INSTALL=No_Prompt_please
