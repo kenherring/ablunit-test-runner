@@ -24,7 +24,8 @@ function createTestConfig (projName: string, workspaceFolder?: string, timeout?:
 	if (projName != "DebugLines" &&
 		projName != "proj3" &&
 		projName != "proj4" &&
-		projName != "proj9") {
+		projName != "proj9" &&
+		projName != "projA") {
 		launchArgs.push('--disable-extensions')
 	}
 
@@ -60,6 +61,7 @@ export function getTestConfig () {
 	testConfig.push(createTestConfig('proj7', 'proj7_load_performance', 50000))
 	testConfig.push(createTestConfig('proj8', 'proj8_custom_command'))
 	testConfig.push(createTestConfig('proj9'))
+	testConfig.push(createTestConfig('projA'))
 
 	// // Workspaces
 	testConfig.push(createTestConfig('workspace0', 'workspace0.code-workspace'))

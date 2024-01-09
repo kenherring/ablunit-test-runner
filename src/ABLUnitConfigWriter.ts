@@ -1,5 +1,5 @@
 import { FileType, Uri, workspace, WorkspaceFolder } from 'vscode'
-import { logToChannel } from './ABLUnitCommon'
+import { log, logToChannel } from './ABLUnitCommon'
 import { PropathParser } from './ABLPropath'
 import { platform } from 'os'
 import { getProfileConfig, RunConfig } from './parse/TestProfileParser'
@@ -21,11 +21,10 @@ export class ABLUnitConfig  {
 	// ablunitConfig: IABLUnitConfig = <IABLUnitConfig>{}
 	ablunitConfig: RunConfig = <RunConfig>{}
 
-	async setup (workspaceFolder: WorkspaceFolder) {
-		console.log("[ABLUnitConfigWriter setup] workspaceUri=" + workspaceFolder.uri.fsPath)
-		this.ablunitConfig = await getProfileConfig(workspaceFolder)
-		console.log("[ABLUnitConfigWriter constructor] workspaceUri=" + this.ablunitConfig.workspaceFolder.uri.fsPath)
-		console.log("[ABLUnitConfigWriter constructor] tempDir=" + this.ablunitConfig.tempDirUri.fsPath)
+	setup (workspaceFolder: WorkspaceFolder) {
+		log.info("[ABLUnitConfigWriter setup] workspaceUri=" + workspaceFolder.uri.fsPath)
+		this.ablunitConfig = getProfileConfig(workspaceFolder)
+		log.info("[ABLUnitConfigWriter constructor] setup complete! tempDir=" + this.ablunitConfig.tempDirUri.fsPath)
 	}
 
 	async deleteFile (uri: Uri) {
