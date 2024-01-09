@@ -48,7 +48,7 @@ suite(projName + ' - Extension Test Suite', () => {
 
 		const resultsJson = Uri.joinPath(workspaceUri,'results.json')
 		const testCount = await getTestCount(resultsJson)
-		assert.equal(testCount, 11)
+		assert.equal(testCount, 12)
 	})
 
 	test(projName + '.3 - output files exist 3 - exclude compileError.p as string', async () => {
@@ -58,7 +58,7 @@ suite(projName + ' - Extension Test Suite', () => {
 
 		const resultsJson = Uri.joinPath(workspaceUri,'results.json')
 		const testCount = await getTestCount(resultsJson)
-		assert.equal(testCount, 11)
+		assert.equal(testCount, 12)
 	})
 
 	test(projName + '.4 - run test case in file', async () => {
@@ -71,10 +71,10 @@ suite(projName + ' - Extension Test Suite', () => {
 		const pass = await getTestCount(resultsJson, 'pass')
 		const fail = await getTestCount(resultsJson, 'fail')
 		const error = await getTestCount(resultsJson, 'error')
-		assert.equal(5,testCount)
-		assert.equal(1,pass)
-		assert.equal(2,fail)
-		assert.equal(2,error)
+		assert.equal(6,testCount,"test count")
+		assert.equal(2,pass,"pass count")
+		assert.equal(2,fail,"fail count")
+		assert.equal(2,error,"error count")
 	})
 
 	test(projName + '.5 - run test case at cursor', async () => {

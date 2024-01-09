@@ -322,7 +322,6 @@ function readOEConfigFile (uri: Uri, workspaceUri: Uri) {
 	const config = loadConfigFile(uri.fsPath)
 
 	const prjConfig = parseOpenEdgeProjectConfig(uri, workspaceUri, config)
-	logToChannel(("[readOEConfigFile] prjConfig = " + JSON.stringify(prjConfig, null, 2)), 'debug')
 	if (prjConfig.dlc != "") {
 		logToChannel("OpenEdge project configured in " + prjConfig.rootDir + " -- DLC: " + prjConfig.dlc)
 		const idx: number = projects.findIndex((element) =>
@@ -379,7 +378,6 @@ export function getProfileDbConns (workspaceUri: Uri) {
 	logToChannel("[getProfileDbConns] workspaceUri = " + workspaceUri.fsPath, 'debug')
 
 	const profileConfig = getWorkspaceProfileConfig(workspaceUri)
-	logToChannel("[getProfileDbConns] profileConfig = " + JSON.stringify(profileConfig, null, 2), 'debug')
 	if (!profileConfig) {
 		logToChannel("[getProfileDbConns] profileConfig is undefined")
 		return []

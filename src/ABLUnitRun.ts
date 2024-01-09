@@ -75,7 +75,7 @@ export const ablunitRun = async (options: TestRun, res: ABLResults) => {
 
 		let params = "CFG=" + workspace.asRelativePath(res.cfg.ablunitConfig.config_uri.fsPath, false)
 		if (res.cfg.ablunitConfig.dbAliases.length > 0) {
-			params = params + " = ALIASES=" + res.cfg.ablunitConfig.dbAliases.join(';')
+			params = params + "= ALIASES=" + res.cfg.ablunitConfig.dbAliases.join(';')
 		}
 		cmd.push("-param", '"' + params + '"')
 
@@ -97,8 +97,29 @@ export const ablunitRun = async (options: TestRun, res: ABLResults) => {
 		return new Promise<string>((resolve, reject) => {
 			res.setStatus("running command")
 
+			const runenv = process.env
+			console.log("process.platform=" + process.platform)
+			let envConfig: {[key: string]: string} | undefined = undefined
+			if (process.platform === 'win32') {
+				envConfig = workspace.getConfiguration('terminal').get('integrated.env.windows', undefined)
+			} else if (process.platform === 'linux') {
+				envConfig = workspace.getConfiguration('terminal').get('integrated.env.linux', undefined)
+			} else if (process.platform === 'darwin') {
+				envConfig = workspace.getConfiguration('terminal').get('integrated.env.osx', undefined)
+			}
+
+			if (envConfig) {
+				console.log("term=" + JSON.stringify(envConfig))
+				for (const key of Object.keys(envConfig)) {
+					runenv[key] = envConfig[key]
+				}
+			}
+			// console.log("term=" + configuration.getConfiguration('terminal.integrated.env.linux').name + " " + JSON.stringify(vscode.TerminalProfile))
+			// for (const term of vscode.TerminalProfile)
+			// if (vscode.TerminalProfile.
+
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			exec(cmd + ' ' + args.join(' '), {env: process.env, cwd: res.cfg.ablunitConfig.workspaceFolder.uri.fsPath }, (err: ExecException | null, stdout: string, stderr: string) => {
+			exec(cmd + ' ' + args.join(' '), {env: runenv, cwd: res.cfg.ablunitConfig.workspaceFolder.uri.fsPath }, (err: ExecException | null, stdout: string, stderr: string) => {
 				const duration = Date.now() - start
 				if (stdout) {
 					logToChannel("_progres stdout=" + stdout, 'log', options)

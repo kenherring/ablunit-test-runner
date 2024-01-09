@@ -4,5 +4,11 @@
 	"abl.langServerDebug": true,
 	"abl.langServerTrace": true,
 	"ablunit.notificationsEnabled": false,
-	"ablunit.debugEnabled": true
+	"ablunit.debugEnabled": true,
+	"terminal.integrated.env.linux": {
+		"ENV_VAR_1": "THISisTHEvalue",
+	},
+	"terminal.integrated.env.windows": {
+		"ENV_VAR_1": "THISisTHEvalue",
+	}
 }
