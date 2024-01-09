@@ -162,10 +162,13 @@ export function getActiveProfile (rootDir: string) {
 	return "default"
 }
 
-function loadConfigFile (filename: string): IOpenEdgeMainConfig {
-	logToChannel("[loadConfigFile] filename = " + filename,'debug')
+function loadConfigFile (filename: string): IOpenEdgeMainConfig | undefined {
+	log.debug("[loadConfigFile] filename = " + filename)
 	if (!filename) {
 		throw new Error("filename is undefined")
+	}
+	if (!fs.existsSync(filename)) {
+		return undefined
 	}
 	try {
 		const data = readStrippedJsonFile(filename)
@@ -320,6 +323,9 @@ function readOEConfigFile (uri: Uri, workspaceUri: Uri) {
 
 	logToChannel("[readOEConfigFile] OpenEdge project config file found: " + uri.fsPath)
 	const config = loadConfigFile(uri.fsPath)
+	if (!config) {
+		return new OpenEdgeProjectConfig()
+	}
 
 	const prjConfig = parseOpenEdgeProjectConfig(uri, workspaceUri, config)
 	if (prjConfig.dlc != "") {

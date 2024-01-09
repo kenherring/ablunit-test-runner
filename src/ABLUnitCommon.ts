@@ -2,6 +2,7 @@
 import { TestRun, Uri, window } from 'vscode'
 import path = require('path')
 import * as fs from 'fs'
+// @ts-expect-error 123
 import JSON_minify from 'node-json-minify'
 
 const logOutputChannel = window.createOutputChannel('ABLUnit', {log: true })

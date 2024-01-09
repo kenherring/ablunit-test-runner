@@ -1,5 +1,6 @@
 import { ConfigurationTarget, FileType, Uri, commands, extensions, workspace } from 'vscode'
 import { ITestSuites } from '../parse/ResultsParser'
+import { strict as assert } from 'assert'
 
 export async function waitForExtensionActive () {
 	const ext = extensions.getExtension("kherring.ablunit-test-provider")
@@ -237,3 +238,25 @@ export async function selectProfile (profile: string) {
 		})
 	})
 }
+
+class AssertResults {
+	async assertResultsCountByStatus (expectedCount: number, status: string) {
+		const workspaceFolder = workspace.workspaceFolders![0].uri
+		const resultsJson = Uri.joinPath(workspaceFolder,'results.json')
+		assert.equal(expectedCount, await getTestCount(resultsJson, status), "test count != " + expectedCount)
+	}
+	public count = async (expectedCount: number) => {
+		return this.assertResultsCountByStatus(expectedCount, 'all')
+	}
+	passed (expectedCount: number) {
+		return this.assertResultsCountByStatus(expectedCount, 'pass')
+	}
+	errored (expectedCount: number) {
+		return this.assertResultsCountByStatus(expectedCount, 'error')
+	}
+	failed (expectedCount: number) {
+		return this.assertResultsCountByStatus(expectedCount, 'fail')
+	}
+}
+
+export const assertResults = new AssertResults()

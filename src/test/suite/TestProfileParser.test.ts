@@ -32,11 +32,10 @@ suite('TestProfileParser.test', () => {
 		throw new Error("Unable to find workspaceFolders - failing test1")
 	}
 
-	test("test1", async () => {
-		const result = parseRunProfiles(workspaceFolders)
+	test("test1", () => {
 		let profiles
 		try{
-			profiles = await result
+			profiles = parseRunProfiles(workspaceFolders)
 		} catch (err) {
 			console.error("Caught error in parseRunProfiles! err = " + err)
 			assert.fail("Caught error in parseRunProfiles! err = " + err)

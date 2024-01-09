@@ -73,7 +73,14 @@ export function parseRunProfiles (workspaceFolders: WorkspaceFolder[], wsFilenam
 
 	const runProfiles: IRunProfile[] = []
 	for (const workspaceFolder of workspaceFolders) {
-		const wfConfig = getConfigurations(Uri.joinPath(workspaceFolder.uri,'.vscode',wsFilename))
+		let wfConfig: IConfigurations
+		try {
+			wfConfig = getConfigurations(Uri.joinPath(workspaceFolder.uri,'.vscode',wsFilename))
+		} catch (err) {
+			log.error('could not import ablunit-test-profile.json.  reverting to default profile')
+			log.debug('err=' + err)
+			return defaultConfig.configurations
+		}
 		if (wfConfig.configurations.length === 0) {
 			return defaultConfig.configurations
 		}
@@ -113,10 +120,6 @@ export function parseRunProfiles (workspaceFolders: WorkspaceFolder[], wsFilenam
 	return runProfiles
 }
 
-export function parseRunProfile (workspaceFolder: WorkspaceFolder) {
-	const runProfiles = parseRunProfiles([workspaceFolder])
-	return runProfiles[0]
-}
 
 function getUri (dir: string | undefined, workspaceFolderUri: Uri, tempDir?: Uri): Uri {
 	if (dir === undefined || dir === '') {
@@ -203,5 +206,5 @@ export class RunConfig extends DefaultRunProfile {
 }
 
 export function getProfileConfig (workspaceFolder: WorkspaceFolder) {
-	return new RunConfig(parseRunProfile(workspaceFolder), workspaceFolder)
+	return new RunConfig(parseRunProfiles([workspaceFolder])[0], workspaceFolder)
 }

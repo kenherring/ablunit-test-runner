@@ -80,15 +80,10 @@ export class ABLResults {
 	}
 
 	async start () {
-		logToChannel("[ABLResults.ts start] workspaceFolder=" + this.workspaceFolder.uri.fsPath)
-		await this.cfg.setup(this.workspaceFolder).then(() => {
-			console.log("setup complete")
-		}, (err) => {
-			console.error("[ABLResults.ts start] ABLResults.setup() failed. err=" + err)
-			throw new Error("[ABLResults.ts start] ABLResults.setup() failed. err=" + err)
-		})
+		log.info("[start] workspaceFolder=" + this.workspaceFolder.uri.fsPath)
+		this.cfg.setup(this.workspaceFolder)
 
-		this.dlc = await getDLC(this.workspaceFolder)
+		this.dlc = getDLC(this.workspaceFolder)
 		this.promsgs = new ABLPromsgs(this.dlc, this.globalStorageUri)
 
 		this.propath = this.cfg.readPropathFromJson()
