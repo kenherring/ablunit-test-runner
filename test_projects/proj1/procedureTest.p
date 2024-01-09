@@ -35,3 +35,10 @@ procedure test_call_error :
     val = someFunc("true").
     Assert:Equals(val,2).
 end procedure.
+
+@Test.
+procedure testProcedureEnvVar :
+    define variable ENV_VAR_1 as character no-undo.
+    assign ENV_VAR_1 = os-getenv("ENV_VAR_1").
+    Assert:equals("THISisTHEvalue",ENV_VAR_1).
+end procedure.
