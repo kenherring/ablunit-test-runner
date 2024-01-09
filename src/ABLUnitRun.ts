@@ -102,6 +102,7 @@ export const ablunitRun = async (options: TestRun, res: ABLResults) => {
 				runenv[key] = envConfig[key]
 			}
 		}
+		runenv['DLC'] = res.dlc!.uri.fsPath.replace(/\\/g, '/')
 		return runenv
 	}
 
