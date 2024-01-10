@@ -272,7 +272,19 @@ export class ABLResults {
 				options.errored(item, new TestMessage("no child testsuites found for " + suiteName), this.duration())
 				return
 			}
-			await this.parseChildSuites(item, s.testsuite, options)
+			if (item.children.size > 0) {
+				await this.parseChildSuites(item, s.testsuite, options)
+			} else {
+				if (s.errors > 0) {
+					options.errored(item,new TestMessage("errors = " + s.errors + ", failures = " + s.failures + ", passed = " + s.passed))
+				} else if (s.failures) {
+					options.failed(item, new TestMessage("failures = " + s.failures + ", passed = " + s.passed))
+				} else if (s.skipped) {
+					options.skipped(item)
+				} else {
+					options.passed(item)
+				}
+			}
 		} else {
 			return this.parseFinalSuite(item, s, options)
 		}

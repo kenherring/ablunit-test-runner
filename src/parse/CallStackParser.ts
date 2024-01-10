@@ -56,7 +56,7 @@ export async function parseCallstack (debugLines: ABLDebugLines, callstackRaw: s
 
 		if(lineinfo) {
 			const markdownText = module + " at line " + debugLine + " " +
-				"([" + workspace.asRelativePath(lineinfo.sourceUri, false) + ":" + (lineinfo.sourceUri) + "]" +
+				"([" + workspace.asRelativePath(lineinfo.sourceUri, false) + ":" + (lineinfo.sourceLine) + "]" +
 				"(command:_ablunit.openCallStackItem?" + encodeURIComponent(JSON.stringify(lineinfo.sourceUri + "&" + (lineinfo.sourceLine - 1))) + "))"
 
 			callstackItem.lineinfo = lineinfo
