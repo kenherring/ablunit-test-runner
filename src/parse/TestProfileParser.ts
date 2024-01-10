@@ -132,8 +132,13 @@ function getUri (dir: string | undefined, workspaceFolderUri: Uri, tempDir?: Uri
 	dir = dir.replace('${workspaceFolder}', workspaceFolderUri.fsPath)
 
 	if (isRelativePath(dir)) {
-		return Uri.joinPath(tempDir ?? workspaceFolderUri, dir)
+		if (dir.indexOf('/') > -1 || dir.indexOf('\\') > -1) {
+			return Uri.joinPath(workspaceFolderUri, dir)
+		} else {
+			return Uri.joinPath(tempDir ?? workspaceFolderUri, dir)
+		}
 	} else {
+		console.log("return-3=" + Uri.file(dir).fsPath)
 		return Uri.file(dir)
 	}
 }
@@ -166,11 +171,12 @@ export class RunConfig extends DefaultRunProfile {
 		this.options = new CoreOptions(this.profile.options)
 		const tmpFilename = (this.profile.options?.output?.filename?.replace(/\.xml$/,'') ?? 'results') + '.xml'
 		this.optionsUri = {
-			locationUri: this.getUri(this.profile.options?.output?.location),
+			locationUri: this.getUri(this.profile.options?.output?.location + '/'),
 			filenameUri: Uri.joinPath(this.tempDirUri, tmpFilename),
 		}
 		this.options.output.location = workspace.asRelativePath(this.optionsUri.locationUri, false)
-		this.optionsUri.filenameUri = Uri.joinPath(this.optionsUri.locationUri, tmpFilename)
+		this.optionsUri.filenameUri = Uri.joinPath(this.optionsUri.locationUri, tmpFilename)cccccbkbtfukbgctkvgrfeddukievdtrvetclgfhtriu
+
 		if (this.options.output?.writeJson) {
 			this.optionsUri.jsonUri = Uri.joinPath(this.optionsUri.locationUri, tmpFilename.replace(/\.xml$/,'') + '.json')
 		}
