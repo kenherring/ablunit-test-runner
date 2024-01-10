@@ -102,6 +102,7 @@
 		"@types/mocha": "^10.0.6",
 		"@types/node": "^16.18.34",
 		"@types/vscode": "^1.83.0",
+		"@types/xml2js": "^0.4.14",
 		"@typescript-eslint/eslint-plugin": "^6.13.2",
 		"@typescript-eslint/parser": "^6.13.2",
 		"@vscode/test-cli": "^0.0.4",

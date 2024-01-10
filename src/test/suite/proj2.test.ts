@@ -36,4 +36,19 @@ suite(projName + ' - Extension Test Suite', () => {
 		}
 	})
 
+	test(projName + '.3 - run current test suite', async () => {
+		await commands.executeCommand('vscode.open', Uri.joinPath(workspaceUri,'src/testSuite.cls'))
+		await sleep(200)
+		await commands.executeCommand('testing.runCurrentFile')
+
+		const res = recentResults?.[0].ablResults?.resultsJson[0]
+		if (!res) {
+			assert.fail("res is null")
+		}
+		assert.equal(1,res.errors,"res.errors should be 0")
+		assert.equal(3,res.failures,"res.failures should be 0")
+		assert.equal(5,res.passed,"res.passed should be 0")
+		assert.equal(9,res.tests,"res.tests should be 1")
+	})
+
 })
