@@ -132,7 +132,7 @@ function getUri (dir: string | undefined, workspaceFolderUri: Uri, tempDir?: Uri
 	dir = dir.replace('${workspaceFolder}', workspaceFolderUri.fsPath)
 
 	if (isRelativePath(dir)) {
-		return Uri.joinPath(workspaceFolderUri, dir)
+		return Uri.joinPath(tempDir ?? workspaceFolderUri, dir)
 	} else {
 		return Uri.file(dir)
 	}
