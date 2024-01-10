@@ -66,7 +66,9 @@ suite(projName + ' - Extension Test Suite', () => {
 		await updateTestProfile('tempDir','target')
 		await runAllTests()
 		assert(await doesFileExist(ablunitJson), "missing ablunit.json (" + ablunitJson.fsPath + ")")
-		assert(await doesFileExist(progressIni), "missing ablunit.json (" + progressIni.fsPath + ")")
+		if (process.platform === 'win32') {
+			assert(await doesFileExist(progressIni), "missing progress.ini (" + progressIni.fsPath + ")")
+		}
 	})
 
 })
