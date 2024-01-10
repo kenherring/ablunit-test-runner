@@ -162,11 +162,6 @@
 					"type": "boolean",
 					"default": true,
 					"markdownDescription": "Show notifications for test run events"
-				},
-				"ablunit.debugEnabled": {
-					"type": "boolean",
-					"default": false,
-					"markdownDescription": "Enable debug level logging for the extension"
 				}
 			}
 		},

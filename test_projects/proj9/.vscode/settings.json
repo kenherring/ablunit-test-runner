@@ -3,7 +3,6 @@
 	// "ablunit.tempDir": "ablunit",
 	"ablunit.explorer.classlabel": "class-type-name",
 	"ablunit.discoverFilesOnActivate": true,
-	"ablunit.debugEnabled": true,
 	"ablunit.notificationsEnabled": false,
 	"ablunit.files.exclude": [
 		".builder/**",

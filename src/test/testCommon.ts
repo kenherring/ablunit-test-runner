@@ -206,7 +206,6 @@ export function updateTestProfile (key: string, value: string | string[] | boole
 		const str = Buffer.from(content.buffer).toString()
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		const profile = JSON.parse(str)
-
 		const keys = key.split('.')
 
 		if (keys.length === 3) {
@@ -221,7 +220,12 @@ export function updateTestProfile (key: string, value: string | string[] | boole
 		}
 
 		// profile.configurations[0][key] = value
-		return workspace.fs.writeFile(Uri.joinPath(getWorkspaceUri(), '.vscode', 'ablunit-test-profile.json'), Buffer.from(JSON.stringify(profile,null,4)))
+		let newtext = JSON.stringify(profile,null,4) + "\n"
+		if (process.platform === 'win32') {
+			newtext = newtext.replace(/\n/g,'\r\n')
+		}
+		const newjson = Buffer.from(newtext)
+		return workspace.fs.writeFile(Uri.joinPath(getWorkspaceUri(), '.vscode', 'ablunit-test-profile.json'), newjson)
 	})
 }
 

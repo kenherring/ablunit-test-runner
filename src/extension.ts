@@ -12,7 +12,6 @@ import { decorate, setRecentResults } from './decorator'
 export async function activate (context: ExtensionContext) {
 	log.info('ACTIVATE!')
 
-	// const debugEnabled = workspace.getConfiguration('ablunit').get('debugEnabled', false)
 	const ctrl = tests.createTestController('ablunitTestController', 'ABLUnit Test')
 	const contextStorageUri = context.storageUri ?? Uri.parse('file://' + process.env.TEMP) // will always be defined as context.storageUri
 	const contextResourcesUri = Uri.joinPath(context.extensionUri,'resources')
