@@ -138,7 +138,6 @@ function getUri (dir: string | undefined, workspaceFolderUri: Uri, tempDir?: Uri
 			return Uri.joinPath(tempDir ?? workspaceFolderUri, dir)
 		}
 	} else {
-		console.log("return-3=" + Uri.file(dir).fsPath)
 		return Uri.file(dir)
 	}
 }
