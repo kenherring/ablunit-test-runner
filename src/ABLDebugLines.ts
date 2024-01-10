@@ -13,7 +13,7 @@ export class ABLDebugLines {
 	}
 
 	async getSourceLine (debugSource: string, debugLine: number) {
-		if (debugSource.startsWith("OpenEdge.")) {
+		if (debugSource.startsWith("OpenEdge.") || debugSource.indexOf("ABLUnitCore") !== -1) {
 			return undefined
 		}
 
