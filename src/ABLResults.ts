@@ -105,9 +105,9 @@ export class ABLResults {
 		}
 
 		return Promise.all(prom).then(() => {
-			console.log("done creating config files for run")
+			log.info("done creating config files for run")
 		}, (err) => {
-			console.error("ABLResults.start() did not complete promises. err=" + err)
+			log.error("ABLResults.start() did not complete promises. err=" + err)
 		})
 	}
 
@@ -268,7 +268,7 @@ export class ABLResults {
 		const data = this.testData.get(item)
 		if (data instanceof ABLTestSuite) {
 			if (!s.testsuite) {
-				console.error("no child testsuites found for " + suiteName)
+				log.error("no child testsuites found for " + suiteName)
 				options.errored(item, new TestMessage("no child testsuites found for " + suiteName), this.duration())
 				return
 			}
@@ -302,7 +302,7 @@ export class ABLResults {
 			if (child) {
 				await this.parseFinalSuite(child, t, options)
 			} else {
-				console.error("could not find child test item for " + t.name + " or " + t.classname)
+				log.error("could not find child test item for " + t.name + " or " + t.classname)
 				// throw new Error("could not find child test item for " + t.name + " or " + t.classname)
 			}
 		}
@@ -441,7 +441,7 @@ export class ABLResults {
 		return profParser.parseData(this.cfg.ablunitConfig.profFilenameUri, this.cfg.ablunitConfig.profiler.writeJson, this.debugLines!).then(() => {
 			this.profileJson = profParser.profJSON
 			return this.assignProfileResults().then(() => {
-				console.log("assignProfileResults complete")
+				log.info("assignProfileResults complete")
 			}, (err) => {
 				throw new Error("assignProfileResults error: " + err)
 			})
@@ -467,7 +467,7 @@ export class ABLResults {
 		const moduleUri = fileinfo?.uri
 		if (!moduleUri) {
 			if (!module.SourceName.startsWith("OpenEdge.")) {
-				console.error("could not find moduleUri for " + module.SourceName)
+				log.error("could not find moduleUri for " + module.SourceName)
 			}
 			return
 		}

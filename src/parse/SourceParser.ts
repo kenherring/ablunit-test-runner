@@ -1,6 +1,6 @@
 import { Uri, workspace } from 'vscode'
 import { PropathParser } from '../ABLPropath'
-import { logToChannel } from '../ABLUnitCommon'
+import { log, logToChannel } from '../ABLUnitCommon'
 
 interface IXrefInclude {
 	incUri: Uri
@@ -33,7 +33,7 @@ async function readXrefFile (xrefUri: Uri) {
 		const str = Buffer.from(content.buffer).toString()
 		return str
 	}, (reason) => {
-		console.warn("xref file not found '" + xrefUri.fsPath + "\n  - reason=" + reason)
+		log.warn("xref file not found '" + xrefUri.fsPath + "\n  - reason=" + reason)
 		return undefined // don't rethrow, just return undefined because we don't want to stop processing
 	})
 }

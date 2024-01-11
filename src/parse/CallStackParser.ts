@@ -1,6 +1,7 @@
 import { workspace, Location, Position, Range } from 'vscode'
 import { ABLDebugLines } from '../ABLDebugLines'
 import { ISourceMapItem } from './RCodeParser'
+import { log } from '../ABLUnitCommon'
 
 interface ICallStackItem {
 	rawText: string
@@ -51,7 +52,7 @@ export async function parseCallstack (debugLines: ABLDebugLines, callstackRaw: s
 		try {
 			lineinfo = await debugLines.getSourceLine(moduleParent, debugLine)
 		} catch {
-			console.log("could not find source line for " + moduleParent + " at line " + debugLine + ".  using raw callstack data")
+			log.info("could not find source line for " + moduleParent + " at line " + debugLine + ".  using raw callstack data")
 		}
 
 		if(lineinfo) {

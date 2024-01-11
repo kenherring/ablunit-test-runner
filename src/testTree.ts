@@ -4,7 +4,7 @@ import { ITestSuite, parseABLTestSuite } from './parse/TestSuiteParser'
 import { IClassRet, ITestCase, parseABLTestClass } from './parse/TestClassParser'
 import { IProgramRet, parseABLTestProgram } from './parse/TestProgramParser'
 import { getContentFromFilesystem } from './parse/TestParserCommon'
-import { logToChannel } from './ABLUnitCommon'
+import { log, logToChannel } from './ABLUnitCommon'
 
 export type ABLTestData = ABLTestDir | ABLTestFile | ABLTestCase
 export type TestFile = ABLTestSuite | ABLTestClass | ABLTestProgram
@@ -14,17 +14,17 @@ class TestData {
 	private td: WeakMap<TestItem, ABLTestData> = new WeakMap<TestItem, ABLTestData>()
 
 	get (item: TestItem) {
-		// console.log("testData.get: " + item.id + " " + this.td.get(item) + " " + this.td.get(item)?.description)
+		// log.info("testData.get: " + item.id + " " + this.td.get(item) + " " + this.td.get(item)?.description)
 		return this.td.get(item)
 	}
 
 	set (item: TestItem, data: ABLTestData) {
-		// console.log("testData.set: " + item.id + " " + data.description)
+		// log.info("testData.set: " + item.id + " " + data.description)
 		this.td.set(item, data)
 	}
 
 	delete (item: TestItem) {
-		// console.log("testData.delete: " + item.id)
+		// log.info("testData.delete: " + item.id)
 		this.td.delete(item)
 	}
 
@@ -121,7 +121,7 @@ export class ABLTestFile extends TestTypeObj {
 			item.canResolveChildren = true
 			this.updateFromContents(controller, content, item)
 		} catch (e) {
-			console.error("Error updating " + item.id + " from disk: " + e)
+			log.error("Error updating " + item.id + " from disk: " + e)
 			item.error = (e as Error).stack
 		}
 	}

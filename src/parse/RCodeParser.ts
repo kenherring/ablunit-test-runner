@@ -2,6 +2,7 @@
 import { TextDecoder } from "util"
 import { Uri, workspace } from "vscode"
 import { PropathParser } from "../ABLPropath"
+import { log } from '../ABLUnitCommon'
 
 const headerLength = 68
 
@@ -123,7 +124,7 @@ export const getSourceMapFromRCode = async (propath: PropathParser, uri: Uri) =>
 
 	const nextDelim = (bytes: Uint32Array, pos: number, count: number = 2, prefix: string = '') => {
 		if (debug) {
-			console.log(prefix + " count=" + count)
+			log.info(prefix + " count=" + count)
 		}
 		let next = bytes.indexOf(0,pos/4)
 
@@ -140,7 +141,7 @@ export const getSourceMapFromRCode = async (propath: PropathParser, uri: Uri) =>
 
 	const parseProcName = (bytes: Uint32Array, pos: number, prefix: string = '') => {
 		if (debug) {
-			console.log(prefix + " [parseProcName] pos=" + pos)
+			log.info(prefix + " [parseProcName] pos=" + pos)
 		}
 		const childBytes = bytes.subarray(pos/4,nextDelim(bytes,pos,1))
 
@@ -151,15 +152,15 @@ export const getSourceMapFromRCode = async (propath: PropathParser, uri: Uri) =>
 	}
 
 	const parseVar = (bytes: Uint32Array, pos: number, prefix: string = '') => {
-		console.warn(prefix + " TODO - implement parseVar")
+		log.warn(prefix + " TODO - implement parseVar")
 	}
 
 	const parseParam = (bytes: Uint32Array, pos: number, prefix: string = '') => {
-		console.warn(prefix + " TODO - implement parseParam")
+		log.warn(prefix + " TODO - implement parseParam")
 	}
 
 	const parseProcTT = (bytes: Uint32Array, pos: number, prefix: string = '') => {
-		console.warn(prefix + " TODO - implement parseProcTT")
+		log.warn(prefix + " TODO - implement parseProcTT")
 	}
 
 	const parseProcs = (bytes: Uint32Array, pos: number, prefix: string = '') => {
@@ -255,7 +256,7 @@ export const getSourceMapFromRCode = async (propath: PropathParser, uri: Uri) =>
 	}
 
 	const parseTT = (bytes: Uint32Array, pos: number, prefix: string = '') => {
-		console.warn(prefix + " TODO - implement parseTT (bytes.length=" + bytes.length + ", pos=" + pos + ", byte[" + pos/4 + "]=" + bytes[pos/4] + ")")
+		log.warn(prefix + " TODO - implement parseTT (bytes.length=" + bytes.length + ", pos=" + pos + ", byte[" + pos/4 + "]=" + bytes[pos/4] + ")")
 	}
 
 	const parseMap = async (bytes: Uint32Array, pos: number, prefix: string = '') => {
@@ -281,7 +282,7 @@ export const getSourceMapFromRCode = async (propath: PropathParser, uri: Uri) =>
 	}
 
 	const parse4 = (bytes: Uint32Array, pos: number, prefix: string = '') => {
-		console.warn(prefix + "TODO - implement parse4")
+		log.warn(prefix + "TODO - implement parse4")
 		throw new Error("parse4 not implemented")
 	}
 

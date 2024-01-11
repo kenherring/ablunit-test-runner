@@ -84,7 +84,7 @@ export class PropathParser {
 				xrefDir: entry.xrefDir,
 				xrefDirUri: xrefDirUri
 			}
-			// console.log("push entry=" + e.path + " " + e.uri.fsPath)
+			// log.info("push entry=" + e.path + " " + e.uri.fsPath)
 			this.propath.entry.push(e)
 		}
 		log.debug("propath=" + this.toString())

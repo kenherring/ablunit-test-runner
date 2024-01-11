@@ -85,7 +85,7 @@
 		"lint": "npx eslint . --ext .ts,.js",
 		"esbuild-base": "esbuild src/*.ts src/**/*.ts src/**/**/*.ts --outdir=out --platform=node --format=cjs --sourcemap",
 		"esbuild-test": "node .esbuild.test.config.ts",
-		"esbuild-bundle": "rm -rf out && esbuild ./src/extension.ts --outfile=./out/extension.js --platform=node --format=cjs --bundle --minify --external:vscode",
+		"esbuild-bundle": "rm -rf out && esbuild ./src/extension.ts --outfile=./out/extension.js --platform=node --format=cjs --bundle --minify --external:vscode --sourcemap",
 		"pretest": "npm run test:setup && npm run build",
 		"test:setup": "sh -c test_projects/setup.sh",
 		"test": "node ./out/test/runTest.js",

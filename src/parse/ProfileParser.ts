@@ -2,6 +2,7 @@ import { Uri, workspace } from 'vscode'
 import { getContentFromFilesystem } from './TestParserCommon'
 import { PropathParser } from '../ABLPropath'
 import { ABLDebugLines } from '../ABLDebugLines'
+import { log } from '../ABLUnitCommon'
 
 export class ABLProfile {
 	profJSON?: ABLProfileJson
@@ -27,50 +28,50 @@ export class ABLProfile {
 			}
 		}
 
-		// console.log("section1 " + sectionLines[1].length)
+		// log.info("section1 " + sectionLines[1].length)
 		this.profJSON = new ABLProfileJson(sectionLines[1], debugLines)
-		// console.log("section2 " + sectionLines[2].length)
+		// log.info("section2 " + sectionLines[2].length)
 		this.profJSON.addModules(sectionLines[2])
-		// console.log("section3 " + sectionLines[3].length)
+		// log.info("section3 " + sectionLines[3].length)
 		this.profJSON.addCallTree(sectionLines[3])
-		// console.log("section4 " + sectionLines[4].length)
+		// log.info("section4 " + sectionLines[4].length)
 		await this.profJSON.addLineSummary(sectionLines[4])
-		// console.log("section5 " + sectionLines[5].length)
+		// log.info("section5 " + sectionLines[5].length)
 		this.profJSON.addTracing(sectionLines[5])
-		// console.log("section6 " + sectionLines[6].length)
+		// log.info("section6 " + sectionLines[6].length)
 		this.profJSON.addCoverage(sectionLines[6])
-		// console.log("section7 " + sectionLines[7].length)
+		// log.info("section7 " + sectionLines[7].length)
 		this.profJSON.addSection7(sectionLines[7])
-		// console.log("sectionLines.length=" + sectionLines.length)
+		// log.info("sectionLines.length=" + sectionLines.length)
 		if(sectionLines.length > 11) {
-			// console.log("section8 " + sectionLines[8].length)
+			// log.info("section8 " + sectionLines[8].length)
 			this.profJSON.addSection8(sectionLines[8])
-			// console.log("section9 " + sectionLines[9].length)
+			// log.info("section9 " + sectionLines[9].length)
 			this.profJSON.addSection9(sectionLines[9])
-			// console.log("section10 " + sectionLines[10].length)
+			// log.info("section10 " + sectionLines[10].length)
 			this.profJSON.addSection10(sectionLines[10])
-			// console.log("section11 " + sectionLines[11].length)
+			// log.info("section11 " + sectionLines[11].length)
 			this.profJSON.addSection11(sectionLines[11])
-			// console.log("section12 " + sectionLines[12].length)
+			// log.info("section12 " + sectionLines[12].length)
 			this.profJSON.addSection12(sectionLines[12])
-			// console.log("section13 - User Data" + sectionLines[13].length)
+			// log.info("section13 - User Data" + sectionLines[13].length)
 			this.profJSON.addUserData(sectionLines[13])
 		} else {
-			// console.log("section12 " + sectionLines[8].length)
+			// log.info("section12 " + sectionLines[8].length)
 			this.profJSON.addSection12(sectionLines[8])
-			// console.log("section13 - User Data" + sectionLines[9].length)
+			// log.info("section13 - User Data" + sectionLines[9].length)
 			this.profJSON.addUserData(sectionLines[9])
 		}
 
 		this.profJSON.modules.sort((a,b) => a.ModuleID - b.ModuleID)
-		console.log("parsing profiler data complete")
+		log.info("parsing profiler data complete")
 		if (writeJson) {
 			const jsonUri = Uri.parse(uri.fsPath.replace(/\.[a-zA-Z]+$/,'.json'))
 			this.writeJsonToFile(jsonUri).then(null, (err: Error) => {
-				console.error("Error writing profile output json file: " + err)
+				log.error("Error writing profile output json file: " + err)
 			})
 		}
-		// console.log("[parseData] returning")
+		// log.info("[parseData] returning")
 	}
 
 	writeJsonToFile (uri: Uri) {
@@ -79,9 +80,9 @@ export class ABLProfile {
 			userData: this.profJSON!.userData,
 		}
 		return workspace.fs.writeFile(uri, Uint8Array.from(Buffer.from(JSON.stringify(data, null, 2)))).then(() => {
-			console.log("wrote profile output json file: " + uri.fsPath)
+			log.info("wrote profile output json file: " + uri.fsPath)
 		}, (err) => {
-			console.error("failed to write profile output json file " + uri.fsPath + " - " + err)
+			log.error("failed to write profile output json file " + uri.fsPath + " - " + err)
 		})
 	}
 }
@@ -390,13 +391,13 @@ export class ABLProfileJson {
 				CumulativeTime: Number(test[5])
 			}
 			if (!sourceName) {
-				console.error('could not find source name for module ' + modID)
+				log.error('could not find source name for module ' + modID)
 				return
 			}
 
 			const lineinfo = await this.debugLines.getSourceLine(sourceName, sum.LineNo)
 			if(!lineinfo) {
-				console.error("Unable to find source/debug line info for " + sourceName + " " + sum.LineNo)
+				log.error("Unable to find source/debug line info for " + sourceName + " " + sum.LineNo)
 				// throw new Error("Unable to find source/debug line info for " + sourceName + " " + sum.LineNo)
 			} else {
 				sum.srcLine = lineinfo.debugLine
@@ -480,7 +481,7 @@ export class ABLProfileJson {
 				}
 			}
 		} catch (error) {
-			console.error("Error parsing coverage data in section 6 [module=" + mod + "]: error=" + error)
+			log.error("Error parsing coverage data in section 6 [module=" + mod + "]: error=" + error)
 		}
 		this.assignParentCoverage()
 	}
@@ -534,7 +535,7 @@ export class ABLProfileJson {
 	}
 
 	addSection7 (lines: string[]) {
-		console.error("section 7 not implemented.  line count = " + lines.length)
+		log.error("section 7 not implemented.  line count = " + lines.length)
 	}
 
 	// //// https://docs.progress.com/bundle/abl-reference/page/STATISTICS-attribute.html
@@ -566,12 +567,12 @@ export class ABLProfileJson {
 				if (mod) {
 					mod.ISectionEight.push(ISectionEight)
 				} else {
-					console.error("Unable to find module " + ISectionEight.ModuleID + " in section 8")
-					console.error("  - line='" + lines[lineNo] + "'")
+					log.error("Unable to find module " + ISectionEight.ModuleID + " in section 8")
+					log.error("  - line='" + lines[lineNo] + "'")
 				}
 			} else {
-				console.error("Unable to parse section 8 line " + lineNo + ": " + lines[lineNo])
-				console.error("  - line='" + lines[lineNo] + "'")
+				log.error("Unable to parse section 8 line " + lineNo + ": " + lines[lineNo])
+				log.error("  - line='" + lines[lineNo] + "'")
 			}
 		}
 	}
@@ -590,8 +591,8 @@ export class ABLProfileJson {
 				if (mod) {
 					mod.ISectionNine.push(ISectionNine)
 				} else {
-					console.error("Unable to find module " + ISectionNine.ModuleID + " in section 9")
-					console.error("  - line='" + element + "'")
+					log.error("Unable to find module " + ISectionNine.ModuleID + " in section 9")
+					log.error("  - line='" + element + "'")
 				}
 			}
 		}
@@ -611,15 +612,15 @@ export class ABLProfileJson {
 				if (mod) {
 					mod.ISectionTen.push(ISectionTen)
 				} else {
-					console.error("Unable to find module " + ISectionTen.ModuleID + " in section 10")
-					console.error("  - line='" + element + "'")
+					log.error("Unable to find module " + ISectionTen.ModuleID + " in section 10")
+					log.error("  - line='" + element + "'")
 				}
 			}
 		}
 	}
 
 	addSection11 (lines: string[]) {
-		console.error("section 11 not implemented.  line count = " + lines.length)
+		log.error("section 11 not implemented.  line count = " + lines.length)
 	}
 
 	addSection12 (lines: string[]) {
@@ -645,15 +646,15 @@ export class ABLProfileJson {
 				if (mod) {
 					mod.ISectionTwelve.push(ISectionTwelve)
 				} else {
-					console.error("Unable to find module " + ISectionTwelve.ModuleID + " in section 12")
-					console.error("  - line='" + element + "'")
+					log.error("Unable to find module " + ISectionTwelve.ModuleID + " in section 12")
+					log.error("  - line='" + element + "'")
 				}
 			}
 		}
 	}
 
 	addSection13 (lines: string[]) {
-		console.error("section 13 not implemented.  line count = " + lines.length)
+		log.error("section 13 not implemented.  line count = " + lines.length)
 	}
 
 	addUserData (lines: string[]) {

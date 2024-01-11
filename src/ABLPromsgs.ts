@@ -1,5 +1,5 @@
 import { Uri, workspace } from "vscode"
-import { logToChannel } from "./ABLUnitCommon"
+import { log, logToChannel } from "./ABLUnitCommon"
 import { IDlc } from "./parse/OpenedgeProjectParser"
 
 interface Promsg {
@@ -20,15 +20,15 @@ export class ABLPromsgs {
 		promsgsObj = this
 
 		this.loadFromCache(cacheUri).then(() => {
-			console.log("promsgs loaded from cache '" + cacheUri.fsPath + "'")
+			log.info("promsgs loaded from cache '" + cacheUri.fsPath + "'")
 		}, () => {
-			console.log("reading promsgs from DLC")
+			log.info("reading promsgs from DLC")
 			this.loadFromDLC(dlc).then(() => {
 				this.saveCache(cacheUri).then(() => {}, (err) => {
 					throw(err)
 				})
 			}, (err) => {
-				console.log("Cannot load promsgs from DLC, err=" + err)
+				log.info("Cannot load promsgs from DLC, err=" + err)
 			})
 		})
 	}
@@ -46,7 +46,7 @@ export class ABLPromsgs {
 				}
 
 				return Promise.all(promArr).then(() => {
-					console.log("promsgs loaded from DLC")
+					log.info("promsgs loaded from DLC")
 				}, (err) => {
 					throw new Error("Cannot load promsgs from DLC, err=" + err)
 				})
@@ -102,7 +102,7 @@ export class ABLPromsgs {
 	}
 
 	async loadFromCache (cacheUri: Uri) {
-		console.log("load promsgs from cache") // REMOVEME
+		log.info("load promsgs from cache") // REMOVEME
 		await workspace.fs.readFile(cacheUri).then((buffer) => {
 			this.promsgs.push(<Promsg>JSON.parse(Buffer.from(buffer).toString('utf8')))
 		}, (err) => {
@@ -111,13 +111,13 @@ export class ABLPromsgs {
 	}
 
 	saveCache (cacheUri: Uri) {
-		console.log("[saveCache] promsgs.length=" + this.promsgs.length)
+		log.info("[saveCache] promsgs.length=" + this.promsgs.length)
 		if (this.promsgs.length === 0) {
 			throw new Error("promsgs not loaded, cannot save cache - zero records found")
 		}
-		console.log("save promsgs cache file='" + cacheUri.fsPath + "'")
+		log.info("save promsgs cache file='" + cacheUri.fsPath + "'")
 		return workspace.fs.writeFile(cacheUri, Buffer.from(JSON.stringify(this.promsgs))).then(() => {
-			console.log("saved promsgs cache successfully '" + cacheUri.fsPath + "'")
+			log.info("saved promsgs cache successfully '" + cacheUri.fsPath + "'")
 		}, (err) => {
 			throw new Error("error writing promsgs cache file: " + err)
 		})
