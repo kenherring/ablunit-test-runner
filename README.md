@@ -67,7 +67,6 @@ See [CONTRIBUTING.md](.github/CONTRIBUTING.md)
 * Make any changes you wish
 * `npm test` or use the [Extension Test Runner](https://marketplace.visualstudio.com/items?itemName=ms-vscode.extension-test-runner)
 
-
 ## 🔗 Links
 
 * [VSCode Marketplace - ABLUnit Test Runner](https://marketplace.visualstudio.com/items?itemName=kherring.ablunit-test-provider)
