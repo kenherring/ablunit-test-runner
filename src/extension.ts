@@ -65,18 +65,11 @@ export async function activate (context: ExtensionContext) {
 		const det = Uri.joinPath(context.extensionUri, 'resources', 'ablunit-test-profile.details.jsonc')
 		const dir = Uri.joinPath(workspaceFolder.uri, '.vscode')
 
-		console.log("100")
 		const exists = await doesFileExist(uri)
-		console.log("101")
 		if (!exists) {
-			console.log("102")
 			await createDir(dir)
-			console.log("103")
-			console.log("file does not exist.  let's create it!")
-			console.log("copy from: " + det.fsPath)
-			console.log("copy to:   " + uri.fsPath)
 			await workspace.fs.copy(det, uri, { overwrite: false }).then(() => {
-				console.log('successfully create .vscode/ablunit-test-profile.json')
+				log.info('successfully created .vscode/ablunit-test-profile.json')
 			}, (err) => {
 				logToChannel('failed to create .vscode/ablunit-test-profile.json. err=' + err, 'error')
 				throw(err)
@@ -84,9 +77,9 @@ export async function activate (context: ExtensionContext) {
 		}
 
 		window.showTextDocument(Uri.joinPath(workspaceFolder.uri, '.vscode', 'ablunit-test-profile.json')).then(() => {
-			console.log("Opened .vscode/ablunit-test-profile.json")
+			log.info("Opened .vscode/ablunit-test-profile.json")
 		}, (err) => {
-			console.error('Failed to open .vscode/ablunit-test-profile.json! err=' + err)
+			log.error('Failed to open .vscode/ablunit-test-profile.json! err=' + err)
 		})
 	}
 
@@ -198,7 +191,7 @@ export async function activate (context: ExtensionContext) {
 				const wf = workspace.getWorkspaceFolder(itemData.test.uri!)
 
 				if (!wf) {
-					console.error('Skipping test run for test item with no workspace folder: ' + itemData.test.uri!.fsPath)
+					log.error('Skipping test run for test item with no workspace folder: ' + itemData.test.uri!.fsPath)
 					continue
 				}
 				let r = res.find(r => r.workspaceFolder === wf)
@@ -329,13 +322,13 @@ function getOrCreateFile (controller: TestController, uri: Uri) {
 	if (existing) {
 		const data = testData.get(existing)
 		if (!data) {
-			console.log('[getOrCreateFile] data not found for existing item. file=' + workspace.asRelativePath(uri) + ', existing.id=' + existing.id)
+			log.info('[getOrCreateFile] data not found for existing item. file=' + workspace.asRelativePath(uri) + ', existing.id=' + existing.id)
 			throw new Error('[getOrCreateFile] data not found for existing item. file=' + workspace.asRelativePath(uri) + ', existing.id=' + existing.id)
 		}
 		if (data instanceof ABLTestFile) {
 			return { file: existing, data: data }
 		} else {
-			console.log('[getOrCreateFile] unexpected data type for existing item. file=' + workspace.asRelativePath(uri) + ', existing.id=' + existing.id)
+			log.info('[getOrCreateFile] unexpected data type for existing item. file=' + workspace.asRelativePath(uri) + ', existing.id=' + existing.id)
 			throw new Error('[getOrCreateFile] unexpected data type.' +
 								' file=' + workspace.asRelativePath(uri) +
 								', existing.id=' + existing.id +
@@ -697,7 +690,7 @@ function openCallStackItem (traceUriStr: string) {
 }
 
 function showNotification (message: string) {
-	console.log('[showNotification] ' + message)
+	log.info('[showNotification] ' + message)
 	if (workspace.getConfiguration('ablunit').get('notificationsEnabled', true)) {
 		void window.showInformationMessage(message)
 	}
@@ -724,7 +717,7 @@ export async function doesDirExist (uri: Uri) {
 		}
 		return false
 	}, (err) => {
-		console.log("[doesDirExist] caught: " + err)
+		log.info("[doesDirExist] caught: " + err)
 		return false
 	})
 	return ret
@@ -737,7 +730,7 @@ export async function doesFileExist (uri: Uri) {
 		}
 		return false
 	}, (err) => {
-		console.log("[doesFileExist] caught: " + err)
+		log.info("[doesFileExist] caught: " + err)
 		return false
 	})
 	return ret
