@@ -14,17 +14,17 @@ class TestData {
 	private td: WeakMap<TestItem, ABLTestData> = new WeakMap<TestItem, ABLTestData>()
 
 	get (item: TestItem) {
-		// console.log("testData.get: " + item.id + " " + this.td.get(item) + " " + this.td.get(item)?.description)
+		// log.info("testData.get: " + item.id + " " + this.td.get(item) + " " + this.td.get(item)?.description)
 		return this.td.get(item)
 	}
 
 	set (item: TestItem, data: ABLTestData) {
-		// console.log("testData.set: " + item.id + " " + data.description)
+		// log.info("testData.set: " + item.id + " " + data.description)
 		this.td.set(item, data)
 	}
 
 	delete (item: TestItem) {
-		// console.log("testData.delete: " + item.id)
+		// log.info("testData.delete: " + item.id)
 		this.td.delete(item)
 	}
 

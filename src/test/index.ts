@@ -42,7 +42,7 @@ function setupNyc (projName: string) {
 	nyc.reset()
 	nyc.wrap()
 
-	// console.warn('Invalidating require cache...')
+	// log.warn('Invalidating require cache...')
 	// Object.keys(require.cache).filter(f => nyc.exclude.shouldInstrument(f)).forEach(m => {
 	// 	console.debug('Invalidate require cache for ' + m)
 	// 	delete require.cache[m]

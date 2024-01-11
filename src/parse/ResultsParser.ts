@@ -210,7 +210,7 @@ export class ABLResultsParser {
 
 	writeJsonToFile (uri: Uri) {
 		const data = this.resultsJson
-		console.log("writing results json file: " + uri.fsPath)
+		log.info("writing results json file: " + uri.fsPath)
 		return workspace.fs.writeFile(uri, Uint8Array.from(Buffer.from(JSON.stringify(data, null, 2)))).then(() => {
 			logToChannel("wrote results json file: " + uri.fsPath)
 		}, (err) => {

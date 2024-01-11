@@ -60,7 +60,7 @@ export function logToChannel (message: string, consoleMessageType: 'trace' | 'de
 			break
 		default:
 			if (consoleMessageType != '' && consoleMessageType != 'log') {
-				console.warn("WARNING: consoleMessageType not recognized - '" + consoleMessageType + "'")
+				log.warn("WARNING: consoleMessageType not recognized - '" + consoleMessageType + "'")
 			}
 			console.log(message)
 			logOutputChannel.appendLine(message)
