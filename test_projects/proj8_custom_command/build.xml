@@ -2,6 +2,7 @@
 
 	<property environment="env" />
 	<property name="tempDir" value="target/temp" />
+	<!-- <property name="tempDir" value="target/tempDir" /> -->
 
 	<taskdef resource="PCT.properties" classpath="${user.home}/.ant/lib/PCT.jar;/usr/share/ant/lib/PCT.jar" />
 	<typedef resource="types.properties" classpath="${user.home}/.ant/lib/PCT.jar;/usr/share/ant/lib/PCT.jar" />
@@ -21,13 +22,15 @@
 	<echo>${user.home}</echo>
 
 	<target name="test">
-		<property name="files" value="${env.FILES}" />
+		<property name="files" value="${env.ABLUNIT_FILES}" />
 		<condition property="fileset.includes" value="${files}" else="**/*.cls,**/*.p" >
 			<isset property="files" />
 		</condition>
 		<mkdir dir="${tempDir}" />
 
 		<echo>fileset.includes=${fileset.includes}</echo>
+		<echo>tempDir=${tempDir}</echo>
+		<!-- <antcall target="print-fileset" /> -->
 
 		<ABLUnit writeLog="true" destDir="target" failOnError="false" haltOnFailure="false" tempDir="${tempDir}">
 			<fileset dir="." excludes="**/.builder/**" includes="${fileset.includes}" />
@@ -36,6 +39,19 @@
 			</propath>
 			<Profiler enabled="true" outputFile="target/ablunit.prof" coverage="true" />
 		</ABLUnit>
+	</target>
+
+	<target name="print-fileset" description="" >
+		<path id="fileset.paths">
+			<fileset dir="." excludes="**/.builder/**" includes="${files}" />
+		</path>
+
+		<pathconvert pathsep="${line.separator}|   |-- "
+			property="echo.paths"
+			refid="fileset.paths">
+		</pathconvert>
+		<echo>files=${files}</echo>
+		<echo>paths=${echo.paths}</echo>
 	</target>
 
   </project>

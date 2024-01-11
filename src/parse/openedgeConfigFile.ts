@@ -282,9 +282,11 @@ function parseOpenEdgeProjectConfig (uri: Uri, workspaceUri: Uri, config: IOpenE
 	prjConfig.extraParameters = config.extraParameters ? config.extraParameters : ""
 	prjConfig.oeversion = config.oeversion
 	prjConfig.gui = config.graphicalMode
-	prjConfig.propath = [ '.' ] // default the propath to the root of the workspace
-	if (config.buildPath) {
+	if (config.buildPath && config.buildPath.length > 0) {
 		prjConfig.propath = config.buildPath.map(str => str.path.replace('${DLC}', prjConfig.dlc))
+	} else {
+		// default the propath to the root of the workspace
+		prjConfig.propath = [ '.' ]
 	}
 	prjConfig.buildPath = config.buildPath ?? []
 	prjConfig.buildDirectory = config.buildDirectory ?? workspaceUri.fsPath

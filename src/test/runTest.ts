@@ -7,9 +7,9 @@ async function main () {
 
 	for (const conf of config) {
 		await testProject(conf.projName, conf.workspaceFolder, conf.launchArgs)
-		if (conf.projName === 'proj9') {
-			await testProject(conf.projName, conf.workspaceFolder, conf.launchArgs)
-		}
+		// if (conf.projName === 'proj8') {
+		// 	await testProject(conf.projName, conf.workspaceFolder, conf.launchArgs)
+		// }
 	}
 }
 

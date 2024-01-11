@@ -8,7 +8,7 @@
 			"end method."
 		],
 		"description": "A method that is a test method",
-		"scope": "abl-class"
+		"scope": "abl"
 	},
 	"@Setup method": {
 		"prefix": "@Setup method",
@@ -20,7 +20,7 @@
 			"end method."
 		],
 		"description": "Executes the method before each test. This annotation prepares the test environment such as reading input data or initializing the class.",
-		"scope": "abl-class"
+		"scope": "abl"
 	},
 	"@Before method": {
 		"prefix": "@Before method",
@@ -32,7 +32,7 @@
 			"end method."
 		],
 		"description": "Executes the method once per class, before the start of all tests. This annotation can be used to perform time-sensitive activities such as connecting to a database.",
-		"scope": "abl-class"
+		"scope": "abl"
 	},
 	"@TearDown method": {
 		"prefix": "@TearDown method",
@@ -44,7 +44,7 @@
 			"end method."
 		],
 		"description": "Executes the method after each test. This annotation cleans up the test environment such as deleting temporary data or restoring defaults.",
-		"scope": "abl-class"
+		"scope": "abl"
 	},
 	"@After method": {
 		"prefix": "@After method",
@@ -55,7 +55,7 @@
 			"end method."
 		],
 		"description": "Executes the method once, after all the tests are executed. This annotation is used to perform clean-up activities such as disconnecting from a database.",
-		"scope": "abl-class"
+		"scope": "abl"
 	},
 	"@Test method exception": {
 		"prefix": "@Test method exception",
@@ -66,6 +66,6 @@
 			"end method."
 		],
 		"description": "Fails the test if the method does not throw the exception mentioned in the expected attribute.",
-		"scope": "abl-class"
+		"scope": "abl"
 	}
 }

@@ -1,7 +1,9 @@
 import { strict as assert } from 'assert'
 import { before } from 'mocha'
 import { Uri } from 'vscode'
-import { doesFileExist, getTestCount, getWorkspaceUri, runAllTests, waitForExtensionActive } from '../testCommon'
+import { assertResults, doesFileExist, getWorkspaceUri, runAllTests, waitForExtensionActive } from '../testCommon'
+import { recentResults } from '../../decorator'
+import { getEnvVars } from '../../ABLUnitRun'
 
 const projName = 'proj8'
 
@@ -20,8 +22,25 @@ suite(projName + ' - Extension Test Suite', () => {
 		assert(await doesFileExist(resultsXml), "missing results.xml (" + resultsXml.fsPath + ")")
 		assert(await doesFileExist(resultsJson), "missing results.json (" + resultsJson.fsPath + ")")
 
-		const testCount = await getTestCount(resultsJson)
-		assert(testCount === 2, "testCount should be 10, but is " + testCount)
+		assertResults.count(2)
+		assertResults.errored(0)
+		assertResults.failed(0)
+		assertResults.passed(2)
+	})
+
+	test(projName + '.2 - getEnvVars confirm PATH is set correctly', async () => {
+		await runAllTests()
+		const res = recentResults?.[0]
+		if (!res) {
+			assert.fail("res is null")
+		}
+		const envVars = getEnvVars(res.dlc?.uri)
+		const envPath = envVars.PATH
+		if (envPath) {
+			assert(envPath.indexOf('${env:PATH}') === -1, 'env should not contain ${env.PATH}, but does')
+		} else {
+			assert.fail("env is undefined")
+		}
 	})
 
 })
