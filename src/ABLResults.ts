@@ -258,9 +258,7 @@ export class ABLResults {
 		}
 
 		const suiteName = await this.getSuiteName(item)
-		console.log('---- suiteName=' + suiteName)
 		const s = this.ablResults.resultsJson[0].testsuite.find((s: ITestSuite) => s.classname === suiteName || s.name === suiteName)
-
 		if (!s) {
 			logToChannel("could not find test suite for '" + suiteName + "' in results", 'error')
 			options.errored(item, new TestMessage("could not find test suite for '" + suiteName + "' in results"), this.duration())

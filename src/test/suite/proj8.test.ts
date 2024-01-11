@@ -37,7 +37,7 @@ suite(projName + ' - Extension Test Suite', () => {
 		const envVars = getEnvVars(res.dlc?.uri)
 		const envPath = envVars.PATH
 		if (envPath) {
-			assert(envPath.indexOf("{env:PATH}") === -1, "env should not contain {env.PATH}, but does")
+			assert(envPath.indexOf('${env:PATH}') === -1, 'env should not contain ${env.PATH}, but does')
 		} else {
 			assert.fail("env is undefined")
 		}
