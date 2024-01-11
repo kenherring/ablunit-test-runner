@@ -1,5 +1,6 @@
 
 import { PropathParser } from "./ABLPropath"
+import { log } from './ABLUnitCommon'
 import { ISourceMap, getSourceMapFromRCode } from "./parse/RCodeParser"
 import { getSourceMapFromSource } from "./parse/SourceParser"
 
@@ -23,7 +24,7 @@ export class ABLDebugLines {
 
 		const debugSourceObj = await this.propath.search(debugSource)
 		if (!debugSourceObj) {
-			console.error("cannot find debug source in propath (" + debugSource + ")")
+			log.error("cannot find debug source in propath (" + debugSource + ")")
 			return undefined
 		}
 		let map = maps.get(debugSource)
@@ -31,7 +32,7 @@ export class ABLDebugLines {
 			try {
 				map = await getSourceMapFromRCode(this.propath, await this.propath.getRCodeUri(debugSource))
 			} catch (e) {
-				console.warn("cannot parse source map from rcode, falling back to source parser (" + debugSource + ")")
+				log.warn("cannot parse source map from rcode, falling back to source parser (" + debugSource + ")")
 				map = await getSourceMapFromSource(this.propath, debugSource)
 			}
 

@@ -31,14 +31,7 @@ class Logger {
 
 export const log = new Logger()
 
-export function logToChannel (message: string, consoleMessageType: 'trace' | 'verbose' | 'debug' | 'info' | 'warn' | 'error' | 'log' | '' = 'info', options?: TestRun) {
-	if (consoleMessageType === '' || consoleMessageType === 'log') {
-		consoleMessageType = 'info'
-	}
-	if (consoleMessageType === 'verbose') {
-		consoleMessageType = 'trace'
-	}
-
+export function logToChannel (message: string, consoleMessageType: 'trace' | 'debug' | 'info' | 'warn' | 'error' = 'info', options?: TestRun) {
 	if (options) {
 		const optMsg = message.replace(/\r/g, '').replace(/\n/g, '\r\n')
 		options.appendOutput(optMsg + "\r\n")

@@ -29,7 +29,7 @@ export class ABLUnitConfig  {
 
 	async deleteFile (uri: Uri) {
 		return workspace.fs.delete(uri).then(() => {
-			console.log("deleted file: " + uri.fsPath)
+			log.info("deleted file: " + uri.fsPath)
 		}, () => {
 			// do nothing.  if the file doesn't exist we can just continue on.
 		})
@@ -47,14 +47,14 @@ export class ABLUnitConfig  {
 
 	async createProgressIni (propath: string) {
 		if (platform() != 'win32') { return }
-		console.log("creating progress.ini: '" + this.ablunitConfig.progressIniUri.fsPath + "'")
+		log.info("creating progress.ini: '" + this.ablunitConfig.progressIniUri.fsPath + "'")
 		const iniData = ["[WinChar Startup]", "PROPATH=" + propath]
 		const iniBytes = Uint8Array.from(Buffer.from(iniData.join("\n")))
 		return workspace.fs.writeFile(this.ablunitConfig.progressIniUri, iniBytes)
 	}
 
 	async createAblunitJson (uri: Uri, cfg: CoreOptions, testQueue: ITestObj[]) {
-		console.log("creating ablunit.json: '" + this.ablunitConfig.config_uri.fsPath + "'")
+		log.info("creating ablunit.json: '" + this.ablunitConfig.config_uri.fsPath + "'")
 		const promarr: PromiseLike<void>[] = []
 		promarr.push(
 			workspace.fs.stat(this.ablunitConfig.optionsUri.locationUri).then((stat) => {

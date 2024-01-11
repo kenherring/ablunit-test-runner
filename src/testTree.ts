@@ -4,7 +4,7 @@ import { ITestSuite, parseABLTestSuite } from './parse/TestSuiteParser'
 import { IClassRet, ITestCase, parseABLTestClass } from './parse/TestClassParser'
 import { IProgramRet, parseABLTestProgram } from './parse/TestProgramParser'
 import { getContentFromFilesystem } from './parse/TestParserCommon'
-import { logToChannel } from './ABLUnitCommon'
+import { log, logToChannel } from './ABLUnitCommon'
 
 export type ABLTestData = ABLTestDir | ABLTestFile | ABLTestCase
 export type TestFile = ABLTestSuite | ABLTestClass | ABLTestProgram
@@ -121,7 +121,7 @@ export class ABLTestFile extends TestTypeObj {
 			item.canResolveChildren = true
 			this.updateFromContents(controller, content, item)
 		} catch (e) {
-			console.error("Error updating " + item.id + " from disk: " + e)
+			log.error("Error updating " + item.id + " from disk: " + e)
 			item.error = (e as Error).stack
 		}
 	}

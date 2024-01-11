@@ -119,13 +119,13 @@ export async function activate (context: ExtensionContext) {
 				}
 			}
 
-			logToChannel('starting ablunit run', 'log', run)
+			logToChannel('starting ablunit run', 'info', run)
 
 			let ret = false
 			for (const r of res) {
 				r.setTestData(testData.getMap())
 				if (res.length > 1) {
-					logToChannel('starting ablunit tests for folder: ' + r.workspaceFolder.uri.fsPath, 'log', run)
+					logToChannel('starting ablunit tests for folder: ' + r.workspaceFolder.uri.fsPath, 'info', run)
 				}
 
 				ret = await r.run(run).then(() => {
@@ -139,8 +139,8 @@ export async function activate (context: ExtensionContext) {
 				if (r.ablResults) {
 					const p = r.ablResults.resultsJson[0]
 					const totals = 'Totals - ' + p.tests + ' tests, ' + p.passed + ' passed, ' + p.errors + ' errors, ' + p.failures + ' failures'
-					logToChannel(totals, 'log', run)
-					logToChannel('Duration - ' + r.duration() + 's', 'log', run)
+					logToChannel(totals, 'info', run)
+					logToChannel('Duration - ' + r.duration() + 's', 'info', run)
 				}
 
 				for (const { test } of queue) {
@@ -165,7 +165,7 @@ export async function activate (context: ExtensionContext) {
 				return
 			}
 
-			logToChannel('ablunit test run complete', 'log', run)
+			logToChannel('ablunit test run complete', 'info', run)
 
 			if (run.token.isCancellationRequested) {
 				for (const { test } of queue) {
