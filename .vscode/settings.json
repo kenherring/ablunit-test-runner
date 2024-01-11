@@ -11,7 +11,7 @@
 	"shellcheck.useWorkspaceRootAsCwd": true,
 	"sonarlint.connectedMode.project": {
 		"connectionId": "sonarcloud-kenherring",
-		"projectKey": "kenherring_ablunit-test-provider"
+		"projectKey": "kenherring_ablunit-test-runner"
 	},
 	"sonarlint.disableTelemetry": true,
 	"tslint.enable": false, // this project uses eslint

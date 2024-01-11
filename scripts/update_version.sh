@@ -96,7 +96,7 @@ update-other-files () {
 	echo "updating sonar-project.properties..."
 	sed -i "s/sonar.projectVersion=.*/sonar.projectVersion=$1/" sonar-project.properties
 	echo "updating .vscode/launch.json..."
-	sed -i "s/ablunit-test-provider-.*.vsix/ablunit-test-provider-$1.vsix/" .vscode/launch.json dummy-ext/src/test/installAndRun.ts
+	sed -i "s/ablunit-test-runner-.*.vsix/ablunit-test-runner-$1.vsix/" .vscode/launch.json dummy-ext/src/test/installAndRun.ts
 }
 
 update-changelog () {
@@ -114,7 +114,7 @@ update-changelog () {
 
 	rm "changelog_$PACKAGE_VERSION.md" 2>/dev/null || true
 	{
-		echo -e "# [v$PACKAGE_VERSION](https://github.com/kenherring/ablunit-test-provider/releases/tag/v$PACKAGE_VERSION) - $(date +%Y-%m-%d)$PRE_RELEASE\n"
+		echo -e "# [v$PACKAGE_VERSION](https://github.com/kenherring/ablunit-test-runner/releases/tag/v$PACKAGE_VERSION) - $(date +%Y-%m-%d)$PRE_RELEASE\n"
 		git log --pretty=format:' * %s' "v${PREVIOUS_VERSION}..HEAD"
 		echo -e '\n'
 		cat CHANGELOG.md

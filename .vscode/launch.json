@@ -39,7 +39,7 @@
 			"runtimeExecutable": "${execPath}",
 			"args": [
 				"--extensionDevelopmentPath=${workspaceFolder}/dummy-ext",
-				"--install-extension=ablunit-test-provider-0.1.9.vsix",
+				"--install-extension=ablunit-test-runner-0.1.9.vsix",
 				"${workspaceFolder}/test_projects/${input:workspaceName}"
 			]
 		}

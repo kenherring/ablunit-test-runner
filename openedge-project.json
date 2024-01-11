@@ -1,5 +1,5 @@
 {
-    "name": "ablunit-test-provider",
+    "name": "ablunit-test-runner",
     "buildPath": [
         { "type": "source", "path": "resources" }
     ],

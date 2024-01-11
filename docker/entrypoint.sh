@@ -6,7 +6,7 @@ initialize () {
 	echo "[$0 ${FUNCNAME[0]}] pwd=$(pwd)"
 	BASH_AFTER=false
 	CACHE_BASE=/home/circleci/cache
-	REPO_VOLUME=/home/circleci/ablunit-test-provider
+	REPO_VOLUME=/home/circleci/ablunit-test-runner
 	export npm_config_cache=$CACHE_BASE/node_modules_cache
 	mkdir -p $CACHE_BASE/node_modules_cache
 
@@ -160,8 +160,8 @@ package_extension () {
 	npm install
 	vsce package --pre-release --githubBranch "$(git branch --show-current)"
 
-	echo "find packages: $(find . -name "ablunit-test-provider-*.vsix")"
-	if [ "$(find . -name "ablunit-test-provider-*.vsix" | wc -l )" = "0" ]; then
+	echo "find packages: $(find . -name "ablunit-test-runner-*.vsix")"
+	if [ "$(find . -name "ablunit-test-runner-*.vsix" | wc -l )" = "0" ]; then
 		echo "ERROR: could not find .vsix after packaging extension!"
 		exit 1
 	fi

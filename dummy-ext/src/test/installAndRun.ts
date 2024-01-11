@@ -1,7 +1,7 @@
 // This file was adapted from the VSCode docs:
 //    * https://code.visualstudio.com/api/working-with-extensions/testing-extension#the-test-runner-script
 // Instead of testing as a development extension this loads a dummy extension,
-// installs the packaged ablunit-test-provider extension, and runs a test.
+// installs the packaged ablunit-test-runner extension, and runs a test.
 // This gives confidence that the packaged extension is functional.
 
 import * as cp from 'child_process'
@@ -22,7 +22,7 @@ async function runTest(version: string) {
 		const vscodeExecutablePath = await downloadAndUnzipVSCode(version)
 		const [cliPath, ...args] = resolveCliArgsFromVSCodeExecutablePath(vscodeExecutablePath)
 
-		const packagedExtensionPath = path.resolve(__dirname, '../../../ablunit-test-provider-0.1.9.vsix')
+		const packagedExtensionPath = path.resolve(__dirname, '../../../ablunit-test-runner-0.1.9.vsix')
 		if (!existsSync(packagedExtensionPath)) {
 			throw new Error("Extension bundle does not exist! '" + packagedExtensionPath + "'")
 		}
