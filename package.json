@@ -167,24 +167,9 @@
 		},
 		"languages": [
 			{
-				"id": "abl-procedure",
-				"extensions": [
-					".p"
-				]
-			},
-			{
-				"id": "abl-class",
-				"extensions": [
-					".cls"
-				]
-			},
-			{
 				"id": "jsonc",
-				"filenames": [
-					"ablunit-test-profile.json"
-				],
 				"filenamePatterns": [
-					"ablunit-test-profile.*.json"
+					"**/ablunit-test-profile*.json"
 				]
 			}
 		],
@@ -198,12 +183,16 @@
 		],
 		"snippets": [
 			{
-				"language": "abl-procedure",
-				"path": "./snippets-procedures.json"
+				"language": "abl",
+				"path": "./snippets-abl.json"
 			},
 			{
-				"language": "abl-class",
-				"path": "./snippets-classes.json"
+				"language": "abl",
+				"path": "./snippets-procedurs.json"
+			},
+			{
+				"language": "abl",
+				"path": "./snippets-class.json"
 			}
 		]
 	}
