@@ -70,7 +70,7 @@ export class ABLResultsParser {
 		try {
 			this.resultsJson = [ await this.parseSuites(resultsXmlJson) ]
 		} catch (err) {
-			console.error("[parseResults] error parsing results.xml file: " + err)
+			log.error("[parseResults] error parsing results.xml file: " + err)
 			throw err
 		}
 		if (jsonUri) {

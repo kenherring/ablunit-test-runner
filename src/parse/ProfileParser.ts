@@ -68,7 +68,7 @@ export class ABLProfile {
 		if (writeJson) {
 			const jsonUri = Uri.parse(uri.fsPath.replace(/\.[a-zA-Z]+$/,'.json'))
 			this.writeJsonToFile(jsonUri).then(null, (err: Error) => {
-				console.error("Error writing profile output json file: " + err)
+				log.error("Error writing profile output json file: " + err)
 			})
 		}
 		// log.info("[parseData] returning")
@@ -82,7 +82,7 @@ export class ABLProfile {
 		return workspace.fs.writeFile(uri, Uint8Array.from(Buffer.from(JSON.stringify(data, null, 2)))).then(() => {
 			log.info("wrote profile output json file: " + uri.fsPath)
 		}, (err) => {
-			console.error("failed to write profile output json file " + uri.fsPath + " - " + err)
+			log.error("failed to write profile output json file " + uri.fsPath + " - " + err)
 		})
 	}
 }
@@ -391,13 +391,13 @@ export class ABLProfileJson {
 				CumulativeTime: Number(test[5])
 			}
 			if (!sourceName) {
-				console.error('could not find source name for module ' + modID)
+				log.error('could not find source name for module ' + modID)
 				return
 			}
 
 			const lineinfo = await this.debugLines.getSourceLine(sourceName, sum.LineNo)
 			if(!lineinfo) {
-				console.error("Unable to find source/debug line info for " + sourceName + " " + sum.LineNo)
+				log.error("Unable to find source/debug line info for " + sourceName + " " + sum.LineNo)
 				// throw new Error("Unable to find source/debug line info for " + sourceName + " " + sum.LineNo)
 			} else {
 				sum.srcLine = lineinfo.debugLine
@@ -481,7 +481,7 @@ export class ABLProfileJson {
 				}
 			}
 		} catch (error) {
-			console.error("Error parsing coverage data in section 6 [module=" + mod + "]: error=" + error)
+			log.error("Error parsing coverage data in section 6 [module=" + mod + "]: error=" + error)
 		}
 		this.assignParentCoverage()
 	}
@@ -535,7 +535,7 @@ export class ABLProfileJson {
 	}
 
 	addSection7 (lines: string[]) {
-		console.error("section 7 not implemented.  line count = " + lines.length)
+		log.error("section 7 not implemented.  line count = " + lines.length)
 	}
 
 	// //// https://docs.progress.com/bundle/abl-reference/page/STATISTICS-attribute.html
@@ -567,12 +567,12 @@ export class ABLProfileJson {
 				if (mod) {
 					mod.ISectionEight.push(ISectionEight)
 				} else {
-					console.error("Unable to find module " + ISectionEight.ModuleID + " in section 8")
-					console.error("  - line='" + lines[lineNo] + "'")
+					log.error("Unable to find module " + ISectionEight.ModuleID + " in section 8")
+					log.error("  - line='" + lines[lineNo] + "'")
 				}
 			} else {
-				console.error("Unable to parse section 8 line " + lineNo + ": " + lines[lineNo])
-				console.error("  - line='" + lines[lineNo] + "'")
+				log.error("Unable to parse section 8 line " + lineNo + ": " + lines[lineNo])
+				log.error("  - line='" + lines[lineNo] + "'")
 			}
 		}
 	}
@@ -591,8 +591,8 @@ export class ABLProfileJson {
 				if (mod) {
 					mod.ISectionNine.push(ISectionNine)
 				} else {
-					console.error("Unable to find module " + ISectionNine.ModuleID + " in section 9")
-					console.error("  - line='" + element + "'")
+					log.error("Unable to find module " + ISectionNine.ModuleID + " in section 9")
+					log.error("  - line='" + element + "'")
 				}
 			}
 		}
@@ -612,15 +612,15 @@ export class ABLProfileJson {
 				if (mod) {
 					mod.ISectionTen.push(ISectionTen)
 				} else {
-					console.error("Unable to find module " + ISectionTen.ModuleID + " in section 10")
-					console.error("  - line='" + element + "'")
+					log.error("Unable to find module " + ISectionTen.ModuleID + " in section 10")
+					log.error("  - line='" + element + "'")
 				}
 			}
 		}
 	}
 
 	addSection11 (lines: string[]) {
-		console.error("section 11 not implemented.  line count = " + lines.length)
+		log.error("section 11 not implemented.  line count = " + lines.length)
 	}
 
 	addSection12 (lines: string[]) {
@@ -646,15 +646,15 @@ export class ABLProfileJson {
 				if (mod) {
 					mod.ISectionTwelve.push(ISectionTwelve)
 				} else {
-					console.error("Unable to find module " + ISectionTwelve.ModuleID + " in section 12")
-					console.error("  - line='" + element + "'")
+					log.error("Unable to find module " + ISectionTwelve.ModuleID + " in section 12")
+					log.error("  - line='" + element + "'")
 				}
 			}
 		}
 	}
 
 	addSection13 (lines: string[]) {
-		console.error("section 13 not implemented.  line count = " + lines.length)
+		log.error("section 13 not implemented.  line count = " + lines.length)
 	}
 
 	addUserData (lines: string[]) {

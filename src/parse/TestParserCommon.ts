@@ -1,5 +1,6 @@
 import { Uri, workspace } from 'vscode'
 import { TextDecoder } from 'util'
+import { log } from '../ABLUnitCommon'
 
 const textDecoder = new TextDecoder('utf-8')
 
@@ -8,7 +9,7 @@ export async function getContentFromFilesystem (uri: Uri) {
 		const rawContent = await workspace.fs.readFile(uri)
 		return textDecoder.decode(rawContent)
 	} catch (e) {
-		log.warn(`Error providing tests for ${uri.fsPath}`, e)
+		log.warn('Error providing tests for ${uri.fsPath}: ' + e)
 		return ''
 	}
 }
