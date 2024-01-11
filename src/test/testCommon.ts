@@ -1,6 +1,7 @@
 import { ConfigurationTarget, FileType, Uri, commands, extensions, workspace } from 'vscode'
 import { ITestSuites } from '../parse/ResultsParser'
 import { strict as assert } from 'assert'
+import { recentResults } from '../decorator'
 
 export async function waitForExtensionActive () {
 	const ext = extensions.getExtension("kherring.ablunit-test-runner")
@@ -244,22 +245,32 @@ export async function selectProfile (profile: string) {
 }
 
 class AssertResults {
-	async assertResultsCountByStatus (expectedCount: number, status: string) {
-		const workspaceFolder = workspace.workspaceFolders![0].uri
-		const resultsJson = Uri.joinPath(workspaceFolder,'results.json')
-		assert.equal(expectedCount, await getTestCount(resultsJson, status), "test count != " + expectedCount)
+	assertResultsCountByStatus (expectedCount: number, status: 'passed' | 'failed' | 'errored' | 'all') {
+		const res = recentResults?.[0].ablResults?.resultsJson[0]
+		if (!res) {
+			assert.fail('No results found. Expected ' + expectedCount + ' ' + status + ' tests')
+		}
+
+		let actualCount: number = -1
+		switch (status) {
+			case 'passed': actualCount = res.passed; break
+			case 'failed': actualCount = res.failures; break
+			case 'errored': actualCount = res.errors; break
+			case 'all': actualCount = res.tests; break
+		}
+		assert.equal(expectedCount, actualCount, "test count != " + expectedCount)
 	}
-	public count = async (expectedCount: number) => {
+	public count = (expectedCount: number) => {
 		return this.assertResultsCountByStatus(expectedCount, 'all')
 	}
 	passed (expectedCount: number) {
-		return this.assertResultsCountByStatus(expectedCount, 'pass')
+		return this.assertResultsCountByStatus(expectedCount, 'passed')
 	}
 	errored (expectedCount: number) {
-		return this.assertResultsCountByStatus(expectedCount, 'error')
+		return this.assertResultsCountByStatus(expectedCount, 'errored')
 	}
 	failed (expectedCount: number) {
-		return this.assertResultsCountByStatus(expectedCount, 'fail')
+		return this.assertResultsCountByStatus(expectedCount, 'failed')
 	}
 }
 

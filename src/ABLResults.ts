@@ -201,7 +201,7 @@ export class ABLResults {
 
 	async parseOutput (options: TestRun) {
 		this.setStatus("parsing results")
-		logToChannel("parsing results from " + this.cfg.ablunitConfig.optionsUri.filenameUri.fsPath, 'log', options)
+		logToChannel("parsing results from " + this.cfg.ablunitConfig.optionsUri.filenameUri.fsPath, 'info', options)
 
 		this.endTime = new Date()
 
@@ -220,7 +220,7 @@ export class ABLResults {
 
 		if (this.cfg.ablunitConfig.profiler.enabled) {
 			this.setStatus("parsing profiler data")
-			logToChannel("parsing profiler data from " + this.cfg.ablunitConfig.profFilenameUri.fsPath, 'log', options)
+			logToChannel("parsing profiler data from " + this.cfg.ablunitConfig.profFilenameUri.fsPath, 'info', options)
 			await this.parseProfile().then(() => {
 				return true
 			}, (err) => {
@@ -258,7 +258,9 @@ export class ABLResults {
 		}
 
 		const suiteName = await this.getSuiteName(item)
+		console.log('---- suiteName=' + suiteName)
 		const s = this.ablResults.resultsJson[0].testsuite.find((s: ITestSuite) => s.classname === suiteName || s.name === suiteName)
+
 		if (!s) {
 			logToChannel("could not find test suite for '" + suiteName + "' in results", 'error')
 			options.errored(item, new TestMessage("could not find test suite for '" + suiteName + "' in results"), this.duration())

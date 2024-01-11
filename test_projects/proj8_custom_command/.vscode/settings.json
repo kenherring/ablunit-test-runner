@@ -1,0 +1,8 @@
+{
+    "terminal.integrated.env.linux": {
+        "PATH": "${env.PATH}:/psc/dlc/ant/bin"
+    },
+    "terminal.integrated.env.windows": {
+        "PATH": "${env:PATH};C:\\Progress\\OpenEdge\\ant\\bin"
+    }
+}

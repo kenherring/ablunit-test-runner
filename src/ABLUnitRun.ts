@@ -1,4 +1,4 @@
-import { TestRun, workspace } from 'vscode'
+import { TestRun, Uri, workspace } from 'vscode'
 import { ABLResults } from './ABLResults'
 import { logToChannel } from './ABLUnitCommon'
 import { isRelativePath } from './ABLUnitConfigWriter'
@@ -19,7 +19,7 @@ export const ablunitRun = async (options: TestRun, res: ABLResults) => {
 	}
 
 	const getCustomCommand = () => {
-		const cmd = res.cfg.ablunitConfig.command.executable.replace("${DLC}", res.dlc!.uri.fsPath.replace(/\\/g, '/'))
+		let cmd = res.cfg.ablunitConfig.command.executable.replace("${DLC}", res.dlc!.uri.fsPath.replace(/\\/g, '/'))
 
 		const testarr: string[] = []
 		for (const test of res.testQueue) {
@@ -30,10 +30,12 @@ export const ablunitRun = async (options: TestRun, res: ABLResults) => {
 		const testlist = testarr.join(',')
 
 		if (cmd.indexOf('${testlist}') === -1) {
-			logToChannel("command does not contain ${testlist}", 'error')
+			logToChannel("command does not contain ${testlist}", 'error', options)
 			throw (new Error("command does not contain ${testlist}"))
 		}
-		const cmdSanitized = cmd.replace(/\$\{testlist\}/, testlist).split(' ')
+		cmd = cmd.replace(/\$\{testlist\}/, testlist)
+		cmd = cmd.replace(/\$\{tempDir\}/, workspace.asRelativePath(res.cfg.ablunitConfig.tempDirUri, false))
+		const cmdSanitized = cmd.split(' ')
 
 		logToChannel("ABLUnit Command: " + cmdSanitized.join(' '))
 		return cmdSanitized
@@ -87,25 +89,6 @@ export const ablunitRun = async (options: TestRun, res: ABLResults) => {
 		return cmdSanitized
 	}
 
-	const getEnvVars = () => {
-		const runenv = process.env
-		let envConfig: {[key: string]: string} | undefined = undefined
-		if (process.platform === 'win32') {
-			envConfig = workspace.getConfiguration('terminal').get('integrated.env.windows')
-		} else if (process.platform === 'linux') {
-			envConfig = workspace.getConfiguration('terminal').get('integrated.env.linux')
-		} else if (process.platform === 'darwin') {
-			envConfig = workspace.getConfiguration('terminal').get('integrated.env.osx')
-		}
-		if (envConfig) {
-			for (const key of Object.keys(envConfig)) {
-				runenv[key] = envConfig[key]
-			}
-		}
-		runenv['DLC'] = res.dlc!.uri.fsPath.replace(/\\/g, '/')
-		return runenv
-	}
-
 	const runCommand = () => {
 		const args = getCommand()
 		logToChannel("ABLUnit Command Execution Started - dir='" + res.cfg.ablunitConfig.workspaceFolder.uri.fsPath + "'")
@@ -116,12 +99,12 @@ export const ablunitRun = async (options: TestRun, res: ABLResults) => {
 		return new Promise<string>((resolve, reject) => {
 			res.setStatus("running command")
 
-			const runenv = getEnvVars()
+			const runenv = getEnvVars(res.dlc!.uri)
 
 			exec(cmd + ' ' + args.join(' '), {env: runenv, cwd: res.cfg.ablunitConfig.workspaceFolder.uri.fsPath }, (err: ExecException | null, stdout: string, stderr: string) => {
 				const duration = Date.now() - start
 				if (stdout) {
-					logToChannel("_progres stdout=" + stdout, 'log', options)
+					logToChannel("_progres stdout=" + stdout, 'info', options)
 				}
 				if (stderr) {
 					logToChannel("_progres stderr=" + stderr, 'error', options)
@@ -141,4 +124,29 @@ export const ablunitRun = async (options: TestRun, res: ABLResults) => {
 	return runCommand().then(() => {
 		return res.parseOutput(options).then()
 	})
+}
+
+export const getEnvVars = (dlcUri: Uri | undefined) => {
+	const runenv = process.env
+	let envConfig: {[key: string]: string} | undefined = undefined
+	if (process.platform === 'win32') {
+		envConfig = workspace.getConfiguration('terminal').get('integrated.env.windows')
+	} else if (process.platform === 'linux') {
+		envConfig = workspace.getConfiguration('terminal').get('integrated.env.linux')
+	} else if (process.platform === 'darwin') {
+		envConfig = workspace.getConfiguration('terminal').get('integrated.env.osx')
+	}
+	if (envConfig) {
+		for (const key of Object.keys(envConfig)) {
+			if (key === 'PATH' && process.env.PATH) {
+				runenv[key] = envConfig[key].replace("${env:PATH}", process.env.PATH)
+			} else {
+				runenv[key] = envConfig[key]
+			}
+		}
+	}
+	if (dlcUri) {
+		runenv['DLC'] = dlcUri.fsPath.replace(/\\/g, '/')
+	}
+	return runenv
 }

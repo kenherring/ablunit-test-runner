@@ -753,8 +753,8 @@ async function createDir (uri: Uri) {
 			logToChannel('[createDir] create-1: ' + uri.fsPath)
 			return workspace.fs.createDirectory(uri)
 		}
-	}, (err) => {
-		logToChannel('[createDir] create dir (' + uri.fsPath + ') after stat failed. err=' + err)
+	}, () => {
+		logToChannel('[createDir] create dir (' + uri.fsPath + ')')
 		return workspace.fs.createDirectory(uri)
 	})
 }

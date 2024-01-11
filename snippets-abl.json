@@ -4,17 +4,17 @@
 		"body": [
 			"block-level on error undo, throw."
 		],
-		"scope": "abl-class"
+		"scope": "abl"
 	},
 	"routing-level on error undo, throw.": {
 		"prefix": "routine-level on error undo, throw.",
 		"body": "routine-level on error undo, throw.",
-		"scope": "abl-class"
+		"scope": "abl"
 	},
 	"using OpenEdge.Core.Assert.":{
 		"prefix": "using OpenEdge.Core.Assert.",
 		"body": "using OpenEdge.Core.Assert.",
-		"scope": "abl-class"
+		"scope": "abl"
 	},
 	"@Ignore": {
 		"prefix": "@Ignore",
@@ -22,12 +22,12 @@
 			"@Ignore"
 		],
 		"description": "Ignores the test. You can use this annotation when you are still working on a code, the test case is not ready to run, or if the execution time of test is too long to be included.",
-		"scope": "abl-class"
+		"scope": "abl"
 	},
 	"@Testsuite": {
 		"prefix": "@Testsuite",
 		"body": "@Testsuite(classes=\"${1:classList}\", procedures=\"${2:procedureList}\")",
 		"description": "Identifies that the suite of test procedures or test methods is a test suite.",
-		"scope": "abl-class"
+		"scope": "abl"
 	}
 }

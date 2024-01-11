@@ -6,7 +6,8 @@ import { parseCallstack, ICallStack } from './CallStackParser'
 import { PropathParser } from '../ABLPropath'
 import { parseString } from 'xml2js'
 import { ABLDebugLines } from '../ABLDebugLines'
-import { logToChannel } from '../ABLUnitCommon'
+import { log, logToChannel } from '../ABLUnitCommon'
+import { isRelativePath } from '../ABLUnitConfigWriter'
 
 
 export interface ITestCaseFailure {
@@ -92,13 +93,17 @@ export class ABLResultsParser {
 
 	async parseSuites (res: any) {
 		if(!res.testsuites) {
+			log.error("malformed results file (1) - could not find top-level 'testsuites' node")
 			throw new Error("malformed results file (1) - could not find top-level 'testsuites' node")
 		}
 		res = res.testsuites
 
 		const testsuite = await this.parseSuite(res.testsuite)
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-call
-		const namePathSep = res['$'].name.replace(/\\/g, '/')
+		let namePathSep = <string>res['$'].name.replace(/\\/g, '/')
+		if (!isRelativePath(namePathSep)) {
+			namePathSep = workspace.asRelativePath(namePathSep, false)
+		}
 		const jsonData: ITestSuites = {
 			name: namePathSep,
 			tests: Number(res['$'].tests),
@@ -118,7 +123,11 @@ export class ABLResultsParser {
 			const testsuite = await this.parseSuite(res[idx].testsuite).then()
 			const testcases = await this.parseTestCases(res[idx].testcase).then()
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-call
-			const namePathSep = res[idx]['$'].name.replace(/\\/g, '/') ?? undefined
+			let namePathSep = <string>res[idx]['$'].name.replace(/\\/g, '/') ?? undefined
+			if (!isRelativePath(namePathSep)) {
+				namePathSep = workspace.asRelativePath(namePathSep, false)
+			}
+
 			suites[idx] = {
 				name: namePathSep,
 				classname: res[idx]['$'].classname ?? undefined,

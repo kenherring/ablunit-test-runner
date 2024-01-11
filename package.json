@@ -167,6 +167,18 @@
 		},
 		"languages": [
 			{
+				"id": "abl",
+				"aliases": [
+					"OpenEdge ABL"
+				],
+				"extensions": [
+					".cls",
+					".i",
+					".p",
+					".w"
+				]
+			},
+			{
 				"id": "jsonc",
 				"filenamePatterns": [
 					"**/ablunit-test-profile*.json"
@@ -188,11 +200,11 @@
 			},
 			{
 				"language": "abl",
-				"path": "./snippets-procedurs.json"
+				"path": "./snippets-abl-procedure.json"
 			},
 			{
 				"language": "abl",
-				"path": "./snippets-class.json"
+				"path": "./snippets-abl-class.json"
 			}
 		]
 	}
