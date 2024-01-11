@@ -1,5 +1,5 @@
 {
-	"name": "ablunit-test-provider",
+	"name": "ablunit-test-runner",
 	"displayName": "ABLUnit Test Runner",
 	"description": "OpenEdge ABLUnit test runner for VSCode",
 	"version": "0.1.9",
@@ -15,34 +15,34 @@
 	"icon": "resources/images/icon_128.png",
 	"author": "Ken Herring",
 	"qna": false,
-	"homepage": "https://github.com/kenherring/ablunit-test-provider/blob/main/README.md",
+	"homepage": "https://github.com/kenherring/ablunit-test-runner/blob/main/README.md",
 	"repository": {
-		"url": "https://github.com/kenherring/ablunit-test-provider"
+		"url": "https://github.com/kenherring/ablunit-test-runner"
 	},
 	"bugs": {
-		"url": "https://github.com/kenherring/ablunit-test-provider/issues"
+		"url": "https://github.com/kenherring/ablunit-test-runner/issues"
 	},
 	"license": "MIT",
 	"licenses": [
 		{
 			"type": "MIT",
-			"url": "https://github.com/kenherring/ablunit-test-provider/blob/main/LICENSE"
+			"url": "https://github.com/kenherring/ablunit-test-runner/blob/main/LICENSE"
 		}
 	],
 	"badges": [
 		{
-			"href": "https://dl.circleci.com/status-badge/redirect/gh/kenherring/ablunit-test-provider/tree/main",
-			"url": "https://img.shields.io/circleci/build/github/kenherring/ablunit-test-provider/main?logo=circleci",
+			"href": "https://dl.circleci.com/status-badge/redirect/gh/kenherring/ablunit-test-runner/tree/main",
+			"url": "https://img.shields.io/circleci/build/github/kenherring/ablunit-test-runner/main?logo=circleci",
 			"description": "CircleCI Build Status"
 		},
 		{
-			"href": "https://sonarcloud.io/summary/new_code?id=kenherring_ablunit-test-provider",
-			"url": "https://sonarcloud.io/api/project_badges/measure?project=kenherring_ablunit-test-provider&metric=sqale_rating",
+			"href": "https://sonarcloud.io/summary/new_code?id=kenherring_ablunit-test-runner",
+			"url": "https://sonarcloud.io/api/project_badges/measure?project=kenherring_ablunit-test-runner&metric=sqale_rating",
 			"description": "SonarCloud Maintainability Rating"
 		},
 		{
-			"href": "https://sonarcloud.io/summary/new_code?id=kenherring_ablunit-test-provider",
-			"url": "https://sonarcloud.io/api/project_badges/measure?project=kenherring_ablunit-test-provider&metric=coverage",
+			"href": "https://sonarcloud.io/summary/new_code?id=kenherring_ablunit-test-runner",
+			"url": "https://sonarcloud.io/api/project_badges/measure?project=kenherring_ablunit-test-runner&metric=coverage",
 			"description": "SonarCloud Coverage"
 		}
 	],
@@ -56,7 +56,7 @@
 		"abl",
 		"abl unit",
 		"ablunit",
-		"ablunit-test-provider",
+		"ablunit-test-runner",
 		"ablunit-test-runner",
 		"oeunit",
 		"openedge",

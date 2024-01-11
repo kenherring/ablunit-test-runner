@@ -142,6 +142,6 @@ jobs:
                   echo "Version in package.json does not match tag"
                   exit 1
                 fi
-          - run: vsce publish --pre-release --githubBranch "$(git branch --show-current)" --packagePath ablunit-test-provider-${CIRCLE_TAG#v}.vsix
-      - run: mkdir -p artifacts && cp ablunit-test-provider-*.vsix artifacts
+          - run: vsce publish --pre-release --githubBranch "$(git branch --show-current)" --packagePath ablunit-test-runner-${CIRCLE_TAG#v}.vsix
+      - run: mkdir -p artifacts && cp ablunit-test-runner-*.vsix artifacts
       - <<: *store-artifacts

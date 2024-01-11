@@ -3,10 +3,10 @@ import { before } from 'mocha'
 import { FileType, Uri, commands, extensions, workspace } from 'vscode'
 
 before(async () => {
-	console.log("activating extension: kherring.ablunit-test-provider")
-	const ext = extensions.getExtension('kherring.ablunit-test-provider')
+	console.log("activating extension: kherring.ablunit-test-runner")
+	const ext = extensions.getExtension('kherring.ablunit-test-runner')
 	if (!ext) {
-		throw new Error("extension not found: kherring.ablunit-test-provider")
+		throw new Error("extension not found: kherring.ablunit-test-runner")
 	}
 
 	await ext.activate().then(async () => {

@@ -10,7 +10,7 @@ PATTERNS=("ablunit.json" "ablunit.log" "progress.ini" "prof.out" "prof.json" "pr
 
 echo "deleting directories..."
 rm -rf artifacts/ coverage/
-find . -type d -name "kherring.ablunit-test-provider" -exec rm -rf {} + &
+find . -type d -name "kherring.ablunit-test-runner" -exec rm -rf {} + &
 if [ "${OS:-}" = "Windows_NT" ]; then
 	rm -rf C:/temp/ablunit/ &
 else

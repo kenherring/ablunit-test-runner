@@ -3,15 +3,15 @@ import { ITestSuites } from '../parse/ResultsParser'
 import { strict as assert } from 'assert'
 
 export async function waitForExtensionActive () {
-	const ext = extensions.getExtension("kherring.ablunit-test-provider")
+	const ext = extensions.getExtension("kherring.ablunit-test-runner")
 	if (!ext) {
-		throw new Error("kherring.ablunit-test-provider is not installed")
+		throw new Error("kherring.ablunit-test-runner is not installed")
 	}
 	if (!ext.isActive) {
 		await ext.activate().then(() => {
-			console.log("activated kherring.ablunit-test-provider")
+			console.log("activated kherring.ablunit-test-runner")
 		}, (err) => {
-			throw new Error("failed to activate kherring.ablunit-test-provider: " + err)
+			throw new Error("failed to activate kherring.ablunit-test-runner: " + err)
 		})
 	}
 
@@ -27,7 +27,7 @@ export async function waitForExtensionActive () {
 	}
 
 	if (!ext.isActive) {
-		throw new Error("kherring.ablunit-test-provider is not active")
+		throw new Error("kherring.ablunit-test-runner is not active")
 	}
 }
 

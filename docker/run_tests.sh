@@ -65,10 +65,10 @@ run_tests_in_docker () {
 		-e OE_VERSION \
 		-e RUNCMD \
 		-e TEST_PROJECT \
-		-v "$PWD":/home/circleci/ablunit-test-provider:ro \
+		-v "$PWD":/home/circleci/ablunit-test-runner:ro \
 		-v test-runner-cache:/home/circleci/cache \
 		kherring/ablunit-test-runner:"$OE_VERSION" \
-		bash -c "/home/circleci/ablunit-test-provider/docker/$SCRIPT.sh $OPTS;"
+		bash -c "/home/circleci/ablunit-test-runner/docker/$SCRIPT.sh $OPTS;"
 }
 
 ########## MAIN BLOCK ##########

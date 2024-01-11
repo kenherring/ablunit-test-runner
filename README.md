@@ -1,6 +1,6 @@
-# ABLUnit Test Runner 🏃‍♂️🏃🏃‍♀️ [![CircleCI](https://img.shields.io/circleci/build/github/kenherring/ablunit-test-provider/main?logo=circleci)](https://dl.circleci.com/status-badge/redirect/gh/kenherring/ablunit-test-provider/tree/main) [![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=kenherring_ablunit-test-provider&metric=sqale_rating)](https://sonarcloud.io/summary/new_code?id=kenherring_ablunit-test-provider) [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=kenherring_ablunit-test-provider&metric=coverage)](https://sonarcloud.io/summary/new_code?id=kenherring_ablunit-test-provider)
+# ABLUnit Test Runner 🏃‍♂️🏃🏃‍♀️ [![CircleCI](https://img.shields.io/circleci/build/github/kenherring/ablunit-test-runner/main?logo=circleci)](https://dl.circleci.com/status-badge/redirect/gh/kenherring/ablunit-test-runner/tree/main) [![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=kenherring_ablunit-test-runner&metric=sqale_rating)](https://sonarcloud.io/summary/new_code?id=kenherring_ablunit-test-runner) [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=kenherring_ablunit-test-runner&metric=coverage)](https://sonarcloud.io/summary/new_code?id=kenherring_ablunit-test-runner)
 
-The [ABLUnit Test Runner](https://github.com/kenherring/ablunit-test-provider/) VSCode extension integrates [ABLUnit tests](https://docs.progress.com/bundle/openedge-developer-studio-help-122/page/Learn-About-ABLUnit-Test-Framework.html) into the VSCode test explorer.
+The [ABLUnit Test Runner](https://github.com/kenherring/ablunit-test-runner/) VSCode extension integrates [ABLUnit tests](https://docs.progress.com/bundle/openedge-developer-studio-help-122/page/Learn-About-ABLUnit-Test-Framework.html) into the VSCode test explorer.
 
 This is my first VSCode extension, and my first TypeScript project. I'm sure there are many ways to improve the code, and I welcome any feedback.  I'm also open to collaboration for anyone who might wish to contribute.
 
@@ -14,7 +14,7 @@ Quality code is my passion.  Unit testing is an important component of ensuring 
 
 ### Code Coverage Example Screenshot
 
-![code coverage example screenshot](https://github.com/kenherring/ablunit-test-provider/raw/main/docs/coverage.png)
+![code coverage example screenshot](https://github.com/kenherring/ablunit-test-runner/raw/main/docs/coverage.png)
 
 ## 📝 Supported OpenEdge Versions
 
@@ -69,7 +69,7 @@ See [CONTRIBUTING.md](.github/CONTRIBUTING.md)
 
 ## 🔗 Links
 
-* [VSCode Marketplace - ABLUnit Test Runner](https://marketplace.visualstudio.com/items?itemName=kherring.ablunit-test-provider)
+* [VSCode Marketplace - ABLUnit Test Runner](https://marketplace.visualstudio.com/items?itemName=kherring.ablunit-test-runner)
 * Progress Documentation
   * [Run test cases from the command prompt](https://docs.progress.com/bundle/openedge-developer-studio-help/page/Run-test-cases-from-the-command-prompt.html)
   * [Learn About ABLUnit Test Framework](https://docs.progress.com/bundle/openedge-developer-studio-help/page/Learn-About-ABLUnit-Test-Framework.html)
