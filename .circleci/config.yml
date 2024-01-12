@@ -23,8 +23,7 @@ setup: &setup
       - checkout
       - restore_cache:
           keys:
-            - v2-cache-<< parameters.oe-version >>-{{ checksum "package.json" }}
-            - v2-cache-<< parameters.oe-version >>
+            - v3-cache-<< parameters.oe-version >>-{{ checksum "package.json" }}
 context-and-filters: &context-and-filters
   context:
     - DockerHub
@@ -95,7 +94,7 @@ jobs:
             - sonarcloud/scan
       - run: .circleci/validate.sh
       - save_cache:
-          key: v2-cache-<< parameters.oe-version >>-{{ checksum "package.json" }}
+          key: v3-cache-<< parameters.oe-version >>-{{ checksum "package.json" }}
           paths:
             - cache
   test-with-bundle:
