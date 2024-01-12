@@ -6,10 +6,6 @@ function setupMocha(projName: string, timeout: number) {
 		color: true,
 		ui: "tdd",
 		timeout: timeout,
-		// reporter: 'mocha-junit-reporter',
-		// reporterOptions: {
-		// 	mochaFile: 'artifacts/mocha_results_' + projName + '.xml'
-		// }
 		reporter: 'mocha-multi-reporters',
 		reporterOptions: {
 			reporterEnabled: 'spec, mocha-junit-reporter',

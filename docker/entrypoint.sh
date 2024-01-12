@@ -113,9 +113,7 @@ run_tests_base () {
 
 	if ! .circleci/run_test_wrapper.sh "$RUNCMD"; then
 		echo "run_tests failed"
-		if $BASH_AFTER; then
-			bash
-		fi
+		$BASH_AFTER && bash
 		exit 1
 	fi
 	echo "run_tests success"
@@ -138,9 +136,7 @@ analyze_results () {
 	fi
 
 	if $HAS_ERROR; then
-		if $BASH_AFTER; then
-			bash
-		fi
+		$BASH_AFTER && bash
 		exit 1
 	fi
 
@@ -173,9 +169,12 @@ run_packaged_tests () {
 	npm run compile
 	export DONT_PROMPT_WSL_INSTALL=No_Prompt_please
 	if ! xvfb-run -a npm run test:install-and-run; then
-		if $BASH_AFTER; then
-			bash
-		fi
+		$BASH_AFTER && bash
+		exit 1
+	fi
+	if ! ls -al "$(pwd)"/artifacts/*.xml; then
+		echo "ERROR: no test results found"
+		$BASH_AFTER && bash
 		exit 1
 	fi
 	cd ..
@@ -211,9 +210,7 @@ restore_cache () {
 finish () {
 	echo "[$0 ${FUNCNAME[0]}] pwd=$(pwd)"
 	save_cache
-	if $BASH_AFTER; then
-		bash
-	fi
+	$BASH_AFTER && bash
 }
 
 ########## MAIN BLOCK ##########
