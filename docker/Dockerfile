@@ -13,10 +13,10 @@ COPY --from=psc --chown=circleci:circleci --chmod=744 /psc /psc
 RUN curl -v -L https://github.com/Riverside-Software/pct/releases/download/v226/PCT.jar -o /usr/share/ant/lib/PCT.jar
 RUN echo "JAVA_HOME=$(which java)" > /psc/dlc/properties/java.properties
 
+ENV TERM=vt100
 ENV DLC /psc/dlc
 ENV PATH $PATH:$DLC/bin
 ENV PROMSGS $DLC/promsgs
-ENV TERM=vt100
 
 ## clone and build ablunit.pl for the OE version
 ADD build.xml /psc/dlc/tty/build.xml
