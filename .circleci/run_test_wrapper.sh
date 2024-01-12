@@ -59,7 +59,7 @@ run_lint () {
 	if ! npm run lint -- -f json > artifacts/eslint_report.json; then
 		echo "eslint plain failed"
 	fi
-	if [ -f artifacts/eslint_report.txt ]; then
+	if [ -f artifacts/eslint_report.json ]; then
 		jq '.' < artifacts/eslint_report.json > artifacts/eslint_report_pretty.json
 	else
 		echo "ERROR: eslint_report.txt not found"
