@@ -23,8 +23,7 @@ setup: &setup
       - checkout
       - restore_cache:
           keys:
-            - v2-cache-<< parameters.oe-version >>-{{ checksum "package.json" }}
-            - v2-cache-<< parameters.oe-version >>
+            - v3-cache-<< parameters.oe-version >>-{{ checksum "package.json" }}
 context-and-filters: &context-and-filters
   context:
     - DockerHub
@@ -92,10 +91,11 @@ jobs:
           condition:
             equal: [ << parameters.oe-version >>, '12.2.12' ]
           steps:
-            - sonarcloud/scan
+            - sonarcloud/scan:
+                cache_version: 3
       - run: .circleci/validate.sh
       - save_cache:
-          key: v2-cache-<< parameters.oe-version >>-{{ checksum "package.json" }}
+          key: v3-cache-<< parameters.oe-version >>-{{ checksum "package.json" }}
           paths:
             - cache
   test-with-bundle:
@@ -121,7 +121,9 @@ jobs:
             npm run compile
             export DONT_PROMPT_WSL_INSTALL=No_Prompt_please
             xvfb-run -a npm run test:install-and-run
-      - <<: *store-results
+      - store_test_results:
+          when: always
+          path: dummy-ext/artifacts
       - <<: *store-artifacts
   package-and-publish:
     docker:

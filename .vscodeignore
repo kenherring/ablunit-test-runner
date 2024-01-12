@@ -8,8 +8,7 @@
 !resources/ablunit-test-profile.schema.json
 !resources/ABLUnitCore-wrapper.p
 !resources/images/icon_128.png
-!snippets-classes.json
-!snippets-procedures.json
+!snippets/
 
 ## Ignore everything else
 **/*

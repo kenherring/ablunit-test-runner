@@ -15,12 +15,15 @@
 		"tsconfigRootDir": "."
 	},
 	"include": [
+		"**/*.ts",
 		"src/**/*.ts",
+		"src/*.ts",
 		"src/*/*.ts",
 		"src/*/*/*.ts",
 		"src/*/*/*/*.ts"
 	],
 	"exclude": [
-		"node_modules"
+		"node_modules",
+		"out"
 	]
 }
