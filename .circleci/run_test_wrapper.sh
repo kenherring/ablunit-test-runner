@@ -53,10 +53,10 @@ run_lint () {
 	mkdir -p artifacts
 	rm -rf test_projects/proj7_load_performance/src/ADE-12.2.13.0
 
-	if ! npm run lint > artifacts/eslint_report.txt; then
+	if ! npm run lint -o artifacts/eslint_report.txt; then
 		echo "eslint failed"
 	fi
-	if ! npm run lint -- -f json > artifacts/eslint_report.json; then
+	if ! npm run lint -- -f json -o artifacts/eslint_report.json; then
 		echo "eslint plain failed"
 	fi
 	if [ -f artifacts/eslint_report.json ]; then

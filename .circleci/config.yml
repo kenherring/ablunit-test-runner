@@ -91,7 +91,8 @@ jobs:
           condition:
             equal: [ << parameters.oe-version >>, '12.2.12' ]
           steps:
-            - sonarcloud/scan
+            - sonarcloud/scan:
+                cache_version: 3
       - run: .circleci/validate.sh
       - save_cache:
           key: v3-cache-<< parameters.oe-version >>-{{ checksum "package.json" }}
