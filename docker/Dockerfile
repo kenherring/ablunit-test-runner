@@ -35,6 +35,3 @@ WORKDIR /
 
 ## create directory for vscode-test which will be a mounted volume
 RUN mkdir -p ~/.vscode-test
-
-## install vscode packaging dependency
-RUN npm install -g @vscode/vsce
