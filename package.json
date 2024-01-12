@@ -196,15 +196,15 @@
 		"snippets": [
 			{
 				"language": "abl",
-				"path": "./snippets-abl.json"
+				"path": "./snippets/snippets-abl.json"
 			},
 			{
 				"language": "abl",
-				"path": "./snippets-abl-procedure.json"
+				"path": "./snippets/snippets-abl-procedure.json"
 			},
 			{
 				"language": "abl",
-				"path": "./snippets-abl-class.json"
+				"path": "./snippets/snippets-abl-class.json"
 			}
 		]
 	}
