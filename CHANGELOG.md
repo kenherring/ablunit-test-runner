@@ -1,3 +1,22 @@
+# [v0.1.10](https://github.com/kenherring/ablunit-test-runner/releases/tag/v0.1.10) - 2024-01-12 (pre-release)
+
+ * Ensure eslint results passed to sonar (#100)
+ * Tagge builds: skip version update (#99)
+ * Cleanup console.log statements (#98)
+ * Set path with `terminal.integrated.env` settings (#97)
+ * Rename repo: replace 'ablunit-test-provider' references with 'ablunit-test-runner' (#96)
+ * Rework snippets to remove language competition (#95)
+ * Write progress.ini to the proper location (#94)
+ * Call stack show line number instead of uri (#93)
+ * Allow tests to run with no ablunit-test-profile.json file (#92)
+ * Pass terminal.integrated.env configuation to ABLUnit process (#91)
+ * Automate version increments (#76)
+ * Configuration and script updates (#90)
+ * Change dependency jsonminify -> node-json-minify (#89)
+ * Update workspaceDir -> workspaceFolder (#88)
+
+**Full Changelog**: [v0.1.9...v0.1.10](https://github.com/kenherring/ablunit-test-runner/compare/v0.1.9...v0.1.10)
+
 # [v0.1.9](https://github.com/kenherring/ablunit-test-runner/releases/tag/v0.1.9) - 2024-01-05 (pre-release)
 
 * Import DB connections from openedge-project.json
