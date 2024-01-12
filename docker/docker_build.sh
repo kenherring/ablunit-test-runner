@@ -1,15 +1,25 @@
 #!/bin/bash
 set -eou pipefail
 
+usage () {
+	echo "
+usage: $0 [-p] [-h]
+options:
+  -p        push docker images to dockerhub after build
+  -h        show this help message and exit
+" >&2
+}
+
 initialize () {
-	echo "iniailizing..."
 	local OPT OPTARG OPTIND
-	while getopts "p" OPT; do
+	while getopts "ph" OPT; do
 		case "$OPT" in
 			p)	DOCKER_PUSH=true ;;
-			*)	echo "ERROR: invalid option: -$OPTARG" ; exit 1 ;;
+			h) 	usage && exit 0 ;;
+			*)	echo "Invalid option: -$OPT" >&2 && usage && exit 1 ;;
 		esac
 	done
+	echo "iniailizing..."
 
 	if [ -z "$DLC" ]; then
 		echo "ERROR: DLC environment variable not set... exiting"
