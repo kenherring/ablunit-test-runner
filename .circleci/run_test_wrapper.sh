@@ -61,6 +61,9 @@ run_lint () {
 	fi
 	if [ -f artifacts/eslint_report.txt ]; then
 		jq '.' < artifacts/eslint_report.json > artifacts/eslint_report_pretty.json
+	else
+		echo "ERROR: eslint_report.txt not found"
+		exit 1
 	fi
 }
 
