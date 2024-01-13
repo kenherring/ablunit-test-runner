@@ -7,7 +7,7 @@ import { ABLProfile, ABLProfileJson, Module } from './parse/ProfileParser'
 import { ABLDebugLines } from './ABLDebugLines'
 import { ABLPromsgs, getPromsgText } from './ABLPromsgs'
 import { PropathParser } from './ABLPropath'
-import { log, logToChannel } from './ABLUnitCommon'
+import { log } from './ABLUnitCommon'
 import { FileCoverage, CoveredCount, StatementCoverage } from './TestCoverage'
 import { ablunitRun } from './ABLUnitRun'
 import { getDLC, IDlc } from './parse/OpenedgeProjectParser'
@@ -59,7 +59,7 @@ export class ABLResults {
 	public testCoverage: Map<string, FileCoverage> = new Map<string, FileCoverage>()
 
 	constructor (workspaceFolder: WorkspaceFolder, storageUri: Uri, globalStorageUri: Uri, extensionResourcesUri: Uri) {
-		logToChannel("workspaceFolder=" + workspaceFolder.uri.fsPath)
+		log.info("workspaceFolder=" + workspaceFolder.uri.fsPath)
 		this.startTime = new Date()
 		this.workspaceFolder = workspaceFolder
 		this.storageUri = storageUri
@@ -72,7 +72,7 @@ export class ABLResults {
 
 	setStatus (status: string) {
 		this.status = status
-		logToChannel("STATUS: " + status)
+		log.info("STATUS: " + status)
 	}
 
 	setTestData (testData: WeakMap<TestItem, ABLTestData>) {
@@ -117,7 +117,7 @@ export class ABLResults {
 
 	async addTest (test:  TestItem, options: TestRun) {
 		if (!test.uri) {
-			logToChannel('test.uri is undefined (test.label = ' + test.label + ')', 'error', options)
+			log.error('test.uri is undefined (test.label = ' + test.label + ')', options)
 			return
 		}
 		if (!this.propath) {
@@ -127,7 +127,7 @@ export class ABLResults {
 		const testPropath = await this.propath.search(test.uri)
 		if (!testPropath) {
 			this.skippedTests.push(test)
-			logToChannel("skipping test, not found in propath: " + workspace.asRelativePath(test.uri), 'warn', options)
+			log.warn("skipping test, not found in propath: " + workspace.asRelativePath(test.uri), options)
 			return
 		}
 
@@ -161,7 +161,7 @@ export class ABLResults {
 		}
 
 		if (this.testQueue.find((t: ITestObj) => t.test === testRel)) {
-			logToChannel("test already exists in configJson.tests: " + testRel, 'warn')
+			log.warn("test already exists in configJson.tests: " + testRel)
 		} else {
 			this.testQueue.push(testObj)
 		}
@@ -172,7 +172,7 @@ export class ABLResults {
 			const jsonUri = this.cfg.ablunitConfig.optionsUri.jsonUri
 			await workspace.fs.stat(jsonUri).then((stat) => {
 				if (stat.type === FileType.File) {
-					logToChannel("delete " + jsonUri.fsPath)
+					log.info("delete " + jsonUri.fsPath)
 					return workspace.fs.delete(jsonUri)
 				}
 			}, () => {
@@ -201,37 +201,37 @@ export class ABLResults {
 
 	async parseOutput (options: TestRun) {
 		this.setStatus("parsing results")
-		logToChannel("parsing results from " + this.cfg.ablunitConfig.optionsUri.filenameUri.fsPath, 'info', options)
+		log.info("parsing results from " + this.cfg.ablunitConfig.optionsUri.filenameUri.fsPath, options)
 
 		this.endTime = new Date()
 
 		this.ablResults = new ABLResultsParser(this.propath!, this.debugLines!)
 		await this.ablResults.parseResults(this.cfg.ablunitConfig.optionsUri.filenameUri, this.cfg.ablunitConfig.optionsUri.jsonUri).then(() => {
 			if(!this.ablResults!.resultsJson) {
-				logToChannel("No results found in " + this.cfg.ablunitConfig.optionsUri.filenameUri.fsPath,"error", options)
+				log.error("No results found in " + this.cfg.ablunitConfig.optionsUri.filenameUri.fsPath, options)
 				throw (new Error("[ABLResults parseOutput] No results found in " + this.cfg.ablunitConfig.optionsUri.filenameUri.fsPath + "\r\n"))
 			}
 			return true
 		}, (err) => {
 			this.setStatus("error parsing results data")
-			logToChannel("Error parsing ablunit results from " + this.cfg.ablunitConfig.optionsUri.filenameUri.fsPath + ".  err=" + err,"error",options)
+			log.error("Error parsing ablunit results from " + this.cfg.ablunitConfig.optionsUri.filenameUri.fsPath + ".  err=" + err, options)
 			throw (new Error("[ABLResults parseOutput] Error parsing ablunit results from " + this.cfg.ablunitConfig.optionsUri.filenameUri.fsPath + "\r\nerr=" + err))
 		})
 
 		if (this.cfg.ablunitConfig.profiler.enabled) {
 			this.setStatus("parsing profiler data")
-			logToChannel("parsing profiler data from " + this.cfg.ablunitConfig.profFilenameUri.fsPath, 'info', options)
+			log.info("parsing profiler data from " + this.cfg.ablunitConfig.profFilenameUri.fsPath, options)
 			await this.parseProfile().then(() => {
 				return true
 			}, (err) => {
 				this.setStatus("error parsing profiler data")
-				logToChannel("Error parsing profiler data from " + this.cfg.ablunitConfig.profFilenameUri.fsPath + ".  err=" + err, "error", options)
+				log.error("Error parsing profiler data from " + this.cfg.ablunitConfig.profFilenameUri.fsPath + ".  err=" + err, options)
 				throw new Error("[ABLResults parseOutput] Error parsing profiler data from " + this.cfg.ablunitConfig.profFilenameUri.fsPath + "\r\nerr=" + err)
 			})
 		}
 
 		this.setStatus("parsing output complete")
-		logToChannel("parsing output complete")
+		log.info("parsing output complete")
 		options.appendOutput("parsing output complete\r\n")
 	}
 
@@ -246,13 +246,13 @@ export class ABLResults {
 		}
 
 		if(this.ablResults.resultsJson.length > 1) {
-			logToChannel("multiple results files found - this is not supported")
+			log.info("multiple results files found - this is not supported")
 			options.errored(item, new TestMessage("multiple results files found - this is not supported"), this.duration())
 			return
 		}
 
 		if (!this.ablResults.resultsJson[0].testsuite) {
-			logToChannel("no tests results available, check the configuration for accuracy")
+			log.info("no tests results available, check the configuration for accuracy")
 			options.errored(item, new TestMessage("no tests results available, check the configuration for accuracy"), this.duration())
 			return
 		}
@@ -260,7 +260,7 @@ export class ABLResults {
 		const suiteName = await this.getSuiteName(item)
 		const s = this.ablResults.resultsJson[0].testsuite.find((s: ITestSuite) => s.classname === suiteName || s.name === suiteName)
 		if (!s) {
-			logToChannel("could not find test suite for '" + suiteName + "' in results", 'error')
+			log.error("could not find test suite for '" + suiteName + "' in results")
 			options.errored(item, new TestMessage("could not find test suite for '" + suiteName + "' in results"), this.duration())
 			return
 		}
@@ -318,13 +318,13 @@ export class ABLResults {
 				// // This should be populated automatically by the child messages filtering up
 				// options.failed(item, new vscode.TestMessage("one or more tests failed"), s.time)
 			} else {
-				logToChannel("unknown error - test results are all zero")
+				log.info("unknown error - test results are all zero")
 				options.errored(item, new TestMessage("unknown error - test results are all zero"), s.time)
 			}
 		}
 
 		if (!s.testcases) {
-			logToChannel("no test cases discovered or run - check the configuration for accuracy")
+			log.info("no test cases discovered or run - check the configuration for accuracy")
 			options.errored(item, new TestMessage("no test cases discovered or run - check the configuration for accuracy"), this.duration())
 			return
 		}
@@ -353,7 +353,7 @@ export class ABLResults {
 		children.forEach(child => {
 			const tc = testcases.find((t: ITestCase) => t.name === child.label)
 			if (!tc) {
-				logToChannel("could not find result for test case '" + child.label + "'", "error")
+				log.error("could not find result for test case '" + child.label + "'")
 				options.errored(child, new TestMessage("could not find result for test case '" + child.label + "'"))
 				return
 			}

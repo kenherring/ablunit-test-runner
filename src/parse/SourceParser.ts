@@ -1,6 +1,6 @@
 import { Uri, workspace } from 'vscode'
 import { PropathParser } from '../ABLPropath'
-import { log, logToChannel } from '../ABLUnitCommon'
+import { log } from '../ABLUnitCommon'
 
 interface IXrefInclude {
 	incUri: Uri
@@ -161,7 +161,7 @@ export const getSourceMapFromSource = async (propath: PropathParser, debugSource
 			if (!fileinfo) {
 				if (!debugSourceName.startsWith("OpenEdge.") && debugSourceName != "ABLUnitCore.p") {
 					if (warnings.indexOf(debugSourceName) < 0) {
-						console.error("[getSourceMap] WARNING: cannot find " + debugSourceName + " in propath.")
+						log.error("[getSourceMap] WARNING: cannot find " + debugSourceName + " in propath.")
 						warnings.push(debugSourceName)
 					}
 				}
@@ -170,7 +170,7 @@ export const getSourceMapFromSource = async (propath: PropathParser, debugSource
 			try {
 				debugLines = await importDebugLines(debugSourceName, fileinfo.uri, fileinfo.xrefUri)
 			} catch (e) {
-				logToChannel("cannot read: " + fileinfo.uri.fsPath, "warn")
+				log.warn("cannot read: " + fileinfo.uri.fsPath)
 				return undefined
 			}
 		}

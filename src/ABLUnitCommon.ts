@@ -9,64 +9,53 @@ const logOutputChannel = window.createOutputChannel('ABLUnit', {log: true })
 logOutputChannel.clear()
 
 class Logger {
-	info (message: string) {
-		logToChannel(this.getPrefix() + ' ' + message, 'info')
+	info (message: string, testRun?: TestRun) {
+		message = this.decorateMessage(message)
+		this.logTestConsole(message, testRun)
+		console.log(message)
+		logOutputChannel.info(message)
 	}
-	warn (message: string) {
-		logToChannel(this.getPrefix() + ' ' + message, 'warn')
+	warn (message: string, testRun?: TestRun) {
+		message = this.decorateMessage(message)
+		this.logTestConsole(message, testRun)
+		console.warn(message)
+		logOutputChannel.warn(message)
 	}
-	debug (message: string) {
-		logToChannel(this.getPrefix() + ' ' + message, 'debug')
+	debug (message: string, testRun?: TestRun) {
+		message = this.decorateMessage(message)
+		this.logTestConsole(message, testRun)
+		console.debug(message)
+		logOutputChannel.debug(message)
 	}
-	trace (message: string) {
-		throw new Error("not implemented.  message=" + message)
+	trace (message: string, testRun?: TestRun) {
+		message = this.decorateMessage(message)
+		this.logTestConsole(message, testRun)
+		console.trace(message)
+		logOutputChannel.trace(message)
 	}
-	error (message: string) {
-		logToChannel(this.getPrefix() + ' ' + message, 'error')
+	error (message: string, testRun?: TestRun) {
+		message = this.decorateMessage(message)
+		this.logTestConsole(message, testRun)
+		console.error(message)
+		logOutputChannel.error(message)
 	}
-	getPrefix () {
+
+	private decorateMessage (message: string) {
+		return this.getPrefix() + ' ' + message
+	}
+
+	private logTestConsole (message: string, testRun: TestRun | undefined) {
+		if (!testRun) { return }
+		const optMsg = message.replace(/\r/g, '').replace(/\n/g, '\r\n')
+		testRun.appendOutput(optMsg + "\r\n")
+	}
+
+	private getPrefix () {
 		return '[' + path.normalize(__dirname + "/..").replace(/\\/g, '/') + ']'
 	}
 }
 
 export const log = new Logger()
-
-export function logToChannel (message: string, consoleMessageType: 'trace' | 'debug' | 'info' | 'warn' | 'error' = 'info', options?: TestRun) {
-	if (options) {
-		const optMsg = message.replace(/\r/g, '').replace(/\n/g, '\r\n')
-		options.appendOutput(optMsg + "\r\n")
-	}
-
-	switch (consoleMessageType) {
-		case 'trace':
-			console.trace(message)
-			logOutputChannel.trace(message)
-			break
-		case 'error':
-			console.error(message)
-			logOutputChannel.error(message)
-			break
-		case 'debug':
-			console.debug(message)
-			logOutputChannel.debug(message)
-			break
-		case 'warn':
-			console.warn(message)
-			logOutputChannel.warn(message)
-			break
-		case 'info':
-			console.log(message)
-			logOutputChannel.info(message)
-			break
-		default:
-			if (consoleMessageType != '' && consoleMessageType != 'log') {
-				log.warn("WARNING: consoleMessageType not recognized - '" + consoleMessageType + "'")
-			}
-			console.log(message)
-			logOutputChannel.appendLine(message)
-			break
-	}
-}
 
 export const readStrippedJsonFile = (uri: Uri | string): JSON => {
 	if (typeof uri === 'string') {

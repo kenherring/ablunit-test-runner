@@ -6,7 +6,7 @@ import { parseCallstack, ICallStack } from './CallStackParser'
 import { PropathParser } from '../ABLPropath'
 import { parseString } from 'xml2js'
 import { ABLDebugLines } from '../ABLDebugLines'
-import { log, logToChannel } from '../ABLUnitCommon'
+import { log } from '../ABLUnitCommon'
 import { isRelativePath } from '../ABLUnitConfigWriter'
 
 
@@ -212,9 +212,9 @@ export class ABLResultsParser {
 		const data = this.resultsJson
 		log.info("writing results json file: " + uri.fsPath)
 		return workspace.fs.writeFile(uri, Uint8Array.from(Buffer.from(JSON.stringify(data, null, 2)))).then(() => {
-			logToChannel("wrote results json file: " + uri.fsPath)
+			log.info("wrote results json file: " + uri.fsPath)
 		}, (err) => {
-			logToChannel("failed to write profile output json file " + uri.fsPath + " - " + err,"error")
+			log.error("failed to write profile output json file " + uri.fsPath + " - " + err)
 		})
 	}
 }
