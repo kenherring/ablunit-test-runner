@@ -1,5 +1,6 @@
 import * as assert from 'assert'
-import { before } from 'mocha'
+import { copyFileSync, existsSync } from 'fs'
+import { afterEach, before } from 'mocha'
 import { FileType, Uri, commands, extensions, workspace } from 'vscode'
 
 before(async () => {
@@ -10,37 +11,36 @@ before(async () => {
 	}
 
 	await ext.activate().then(async () => {
-		console.log("extension activated! setting tempDir to 'target'")
-		await updateTestProfile('tempDir', 'target')
-		console.log("tempDir set to 'target'")
+		console.log("extension activated!")
 	}, (err) => {
 		throw new Error("failed to activate extension: " + err)
 	})
 	console.log("before complete!")
 })
 
+afterEach(async () => {
+	await restoreTestProfile()
+})
+
 suite('install and run', () => {
 
 	test("install and run - does package extension work?", async () => {
-		await new Promise((resolve) => setTimeout(resolve, 1000))
+		await updateTestProfile('tempDir', 'target')
 		await runAllTests()
 
-		const workspaceFolder = workspace.workspaceFolders![0].uri
-
+		const workspaceFolder = getWorkspaceUri()
 		const ablunitJson = Uri.joinPath(workspaceFolder, 'target', 'ablunit.json')
 		const resultsXml = Uri.joinPath(workspaceFolder, 'target', 'results.xml')
 		const resultsJson = Uri.joinPath(workspaceFolder, 'target', 'results.json')
 
-		console.log("storageUri= " + workspaceFolder.fsPath)
-		assert(await doesFileExist(ablunitJson), "missing ablunit.json (" + ablunitJson.fsPath + ")")
-		assert(await doesFileExist(resultsXml), "missing results.xml (" + resultsXml.fsPath + ")")
-		assert(!await doesFileExist(resultsJson), "results.json exists and should not (" + resultsJson.fsPath + ")")
+		assert(existsSync(ablunitJson.fsPath), "missing ablunit.json (" + ablunitJson.fsPath + ")")
+		assert(existsSync(resultsXml.fsPath), "missing results.xml (" + resultsXml.fsPath + ")")
+		assert(existsSync(resultsJson.fsPath), "results.json exists and should not (" + resultsJson.fsPath + ")")
 	})
 
 })
 
 function runAllTests () {
-	console.log("testing.runAll starting")
 	return commands.executeCommand('testing.runAll').then(() => {
 		console.log("testing.runAll complete!")
 	} , (err) => {
@@ -48,31 +48,44 @@ function runAllTests () {
 	})
 }
 
-async function doesFileExist(uri: Uri) {
-	const ret = await workspace.fs.stat(uri).then((stat) => {
-		if (stat.type === FileType.File) {
-			return true
-		}
-		return false
-	}, (err) => {
-		console.error('failed to stat file: ' + uri.fsPath + ', err=' + err)
-		return false
-	})
-	return ret
-}
-
 function getWorkspaceUri () {
 	return workspace.workspaceFolders![0].uri
 }
 
-function updateTestProfile (key: string, value: string | string[] | boolean): Thenable<void> {
-	console.log("workspaceFolder = " + getWorkspaceUri().fsPath)
-	return workspace.fs.readFile(Uri.joinPath(getWorkspaceUri(), '.vscode', 'ablunit-test-profile.json')).then((content) => {
-		console.log("got content")
-		let str = Buffer.from(content.buffer).toString()
-		str = str.replace(/"tempDir": *".*"/, '"' + key + '": "' + value + '"')
-		return workspace.fs.writeFile(Uri.joinPath(getWorkspaceUri(), '.vscode', 'ablunit-test-profile.json'), Buffer.from(str))
+function updateTestProfile (key: string, value: string | string[] | boolean) {
+	console.log("100")
+	const testProfileFile = Uri.joinPath(getWorkspaceUri(), '.vscode', 'ablunit-test-profile.json')
+	console.log("reading test profile: " + testProfileFile.fsPath)
+
+	return workspace.fs.readFile(testProfileFile).then((content) => {
+		// can only use json without comments when testing here...
+		let settings = JSON.parse(Buffer.from(content.buffer).toString())
+		console.log("key: " + key + ", value: " + value + ", oldValue: " + settings['configurations'][0][key])
+		settings['configurations'][0][key] = value
+		createRestoreFile(testProfileFile)
+		return workspace.fs.writeFile(testProfileFile, Buffer.from(JSON.stringify(settings, null, 2) + '\n')).then(() => {
+			console.log("updated ablunit-test-profile.json")
+		}, (err) => {
+			console.log("error writing ablunit-test-profile.json: " + err)
+			throw err
+		})
 	}, (err) => {
 		console.log("error reading ablunit-test-profile.json: " + err)
+		throw err
 	})
+}
+
+function createRestoreFile (src: Uri) {
+	const dest = Uri.file(src.fsPath + '.restore')
+	if (!existsSync(dest.fsPath)) {
+		console.log("creating restore file: " + dest.fsPath)
+		copyFileSync(src.fsPath, dest.fsPath)
+	}
+}
+
+function restoreTestProfile () {
+	const settingsFile = Uri.joinPath(getWorkspaceUri(), '.vscode', 'ablunit-test-profile.json')
+	const restoreFile = Uri.joinPath(getWorkspaceUri(), '.vscode', 'ablunit-test-profile.json.restore')
+	console.log("restoring " + workspace.asRelativePath(settingsFile) + " from " + workspace.asRelativePath(restoreFile) + "...")
+	return workspace.fs.rename(restoreFile, settingsFile, { overwrite: true })
 }

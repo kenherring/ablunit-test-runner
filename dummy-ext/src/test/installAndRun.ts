@@ -26,8 +26,7 @@ async function runTest(version: string) {
 		if (!existsSync(packagedExtensionPath)) {
 			throw new Error("Extension bundle does not exist! '" + packagedExtensionPath + "'")
 		}
-		const projDir = path.resolve(__dirname, '../../../test_projects/proj0')
-		// const projDir = path.resolve(__dirname, '../../../test_projects/proj1')
+		const projDir = path.resolve(__dirname, '../../../test_projects/proj4')
 
 		console.log("[installAndRun.ts runTest] cp.spawnSync")
 		// Use cp.spawn / cp.exec for custom setup

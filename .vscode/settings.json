@@ -16,6 +16,7 @@
 	// "task.saveBeforeRun": "always",
 	"task.quickOpen.showAll": true,
 	"tslint.enable": false,
+	"typescript.format.insertSpaceBeforeFunctionParenthesis": true,
 	"typescript.format.semicolons": "remove",
 	"typescript.tsc.autoDetect": "off",
 	"typescript.preferences.quoteStyle": "single",
