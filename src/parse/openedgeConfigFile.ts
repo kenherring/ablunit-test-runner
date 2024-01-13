@@ -28,7 +28,7 @@
 import * as path from 'path'
 import * as fs from 'fs'
 import { Uri, workspace } from 'vscode'
-import { log, logToChannel, readStrippedJsonFile } from '../ABLUnitCommon'
+import { log, readStrippedJsonFile } from '../ABLUnitCommon'
 
 interface IOERuntime {
 	name: string
@@ -180,7 +180,7 @@ function loadConfigFile (filename: string): IOpenEdgeMainConfig | undefined {
 }
 
 function readGlobalOpenEdgeRuntimes (workspaceUri: Uri) {
-	logToChannel("[readGlobalOpenEdgeRuntimes]",'debug')
+	log.debug('[readGlobalOpenEdgeRuntimes]')
 	oeRuntimes = workspace.getConfiguration('abl.configuration').get<Array<IOERuntime>>('runtimes') ?? []
 	const oeRuntimesDefault = workspace.getConfiguration('abl').get('configuration.defaultRuntime')
 
@@ -247,13 +247,13 @@ function getDlcDirectory (version: string): string {
 
 	if (dlc === '' && dfltDlc != '') {
 		dlc = dfltDlc
-		logToChannel("OpenEdge version not configured in workspace settings, using default version (" + dfltName + ") in user settings.")
+		log.info("OpenEdge version not configured in workspace settings, using default version (" + dfltName + ") in user settings.")
 	}
 	return dlc
 }
 
 function parseOpenEdgeConfig (cfg: IOpenEdgeConfig): ProfileConfig {
-	logToChannel("[parseOpenEdgeConfig] cfg = " + JSON.stringify(cfg, null, 2),'debug')
+	log.debug("[parseOpenEdgeConfig] cfg = " + JSON.stringify(cfg, null, 2))
 	const retVal = new ProfileConfig()
 	retVal.dlc = getDlcDirectory(cfg.oeversion)
 	retVal.extraParameters = cfg.extraParameters ?? ''
@@ -272,7 +272,7 @@ function parseOpenEdgeConfig (cfg: IOpenEdgeConfig): ProfileConfig {
 }
 
 function parseOpenEdgeProjectConfig (uri: Uri, workspaceUri: Uri, config: IOpenEdgeMainConfig): OpenEdgeProjectConfig {
-	logToChannel("[parseOpenEdgeProjectConfig] uri = " + uri.fsPath,'debug')
+	log.debug("[parseOpenEdgeProjectConfig] uri = " + uri.fsPath)
 	const prjConfig = new OpenEdgeProjectConfig()
 	prjConfig.name = config.name
 	prjConfig.version = config.version
@@ -320,10 +320,10 @@ function parseOpenEdgeProjectConfig (uri: Uri, workspaceUri: Uri, config: IOpenE
 }
 
 function readOEConfigFile (uri: Uri, workspaceUri: Uri) {
-	logToChannel("[readOEConfigFile] uri = " + uri.fsPath, 'debug')
+	log.debug("[readOEConfigFile] uri = " + uri.fsPath)
 	const projects: OpenEdgeProjectConfig[] = []
 
-	logToChannel("[readOEConfigFile] OpenEdge project config file found: " + uri.fsPath)
+	log.info("[readOEConfigFile] OpenEdge project config file found: " + uri.fsPath)
 	const config = loadConfigFile(uri.fsPath)
 	if (!config) {
 		return new OpenEdgeProjectConfig()
@@ -331,7 +331,7 @@ function readOEConfigFile (uri: Uri, workspaceUri: Uri) {
 
 	const prjConfig = parseOpenEdgeProjectConfig(uri, workspaceUri, config)
 	if (prjConfig.dlc != "") {
-		logToChannel("OpenEdge project configured in " + prjConfig.rootDir + " -- DLC: " + prjConfig.dlc)
+		log.info("OpenEdge project configured in " + prjConfig.rootDir + " -- DLC: " + prjConfig.dlc)
 		const idx: number = projects.findIndex((element) =>
 			(element.name == prjConfig.name) && (element.version == prjConfig.version)
 		)
@@ -339,20 +339,20 @@ function readOEConfigFile (uri: Uri, workspaceUri: Uri) {
 			if (projects[idx].rootDir == prjConfig.rootDir)
 				projects[idx] = prjConfig
 			else {
-				logToChannel("Duplicate project " + prjConfig.name + " " + prjConfig.version + " found in " + prjConfig.rootDir + " and " + projects[idx].rootDir)
+				log.info("Duplicate project " + prjConfig.name + " " + prjConfig.version + " found in " + prjConfig.rootDir + " and " + projects[idx].rootDir)
 			}
 		} else {
 			projects.push(prjConfig)
 		}
 		return prjConfig
 	} else {
-		logToChannel("[readOEConfigFile] Skip OpenEdge project in " + prjConfig.rootDir + " -- OpenEdge install not found")
+		log.info("[readOEConfigFile] Skip OpenEdge project in " + prjConfig.rootDir + " -- OpenEdge install not found")
 	}
 }
 
 function getWorkspaceProfileConfig (workspaceUri: Uri) {
 	const uri = Uri.joinPath(workspaceUri, 'openedge-project.json')
-	logToChannel("[getWorkspaceProfileConfig] uri = " + uri.fsPath, 'debug')
+	log.debug("[getWorkspaceProfileConfig] uri = " + uri.fsPath)
 	const prjConfig = readOEConfigFile(uri, workspaceUri)
 
 	if (prjConfig?.activeProfile) {
@@ -383,13 +383,13 @@ export function getOpenEdgeProfileConfig (workspaceUri: Uri) {
 }
 
 export function getProfileDbConns (workspaceUri: Uri) {
-	logToChannel("[getProfileDbConns] workspaceUri = " + workspaceUri.fsPath, 'debug')
+	log.debug("[getProfileDbConns] workspaceUri = " + workspaceUri.fsPath)
 
 	const profileConfig = getWorkspaceProfileConfig(workspaceUri)
 	if (!profileConfig) {
-		logToChannel("[getProfileDbConns] profileConfig is undefined")
+		log.info("[getProfileDbConns] profileConfig is undefined")
 		return []
 	}
-	logToChannel("[getProfileDbConns] profileConfig.dbConnections = " + JSON.stringify(profileConfig.dbConnections, null, 2), 'debug')
+	log.debug("[getProfileDbConns] profileConfig.dbConnections = " + JSON.stringify(profileConfig.dbConnections, null, 2))
 	return profileConfig.dbConnections
 }

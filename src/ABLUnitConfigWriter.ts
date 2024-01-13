@@ -1,5 +1,5 @@
 import { FileType, Uri, workspace, WorkspaceFolder } from 'vscode'
-import { log, logToChannel } from './ABLUnitCommon'
+import { log } from './ABLUnitCommon'
 import { PropathParser } from './ABLPropath'
 import { platform } from 'os'
 import { getProfileConfig, RunConfig } from './parse/TestProfileParser'
@@ -110,7 +110,7 @@ export class ABLUnitConfig  {
 	}
 
 	async createDbConnPf (uri: Uri, dbConns: IDatabaseConnection[]) {
-		logToChannel("creating dbconn.pf: '" + this.ablunitConfig.dbConnPfUri.fsPath + "'")
+		log.info("creating dbconn.pf: '" + this.ablunitConfig.dbConnPfUri.fsPath + "'")
 		const lines: string[] = []
 
 		for (const conn of dbConns) {
@@ -122,7 +122,7 @@ export class ABLUnitConfig  {
 	}
 
 	readPropathFromJson () {
-		logToChannel("reading propath from openedge-project.json")
+		log.info("reading propath from openedge-project.json")
 		const parser: PropathParser = new PropathParser(this.ablunitConfig.workspaceFolder)
 
 		const conf = getOpenEdgeProfileConfig(this.ablunitConfig.workspaceFolder.uri)
@@ -146,7 +146,7 @@ export class ABLUnitConfig  {
 			}]})
 		}
 
-		logToChannel("using propath='" + parser.toString() + "'")
+		log.info("using propath='" + parser.toString() + "'")
 		return parser
 	}
 }

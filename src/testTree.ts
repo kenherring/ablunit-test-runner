@@ -4,7 +4,7 @@ import { ITestSuite, parseABLTestSuite } from './parse/TestSuiteParser'
 import { IClassRet, ITestCase, parseABLTestClass } from './parse/TestClassParser'
 import { IProgramRet, parseABLTestProgram } from './parse/TestProgramParser'
 import { getContentFromFilesystem } from './parse/TestParserCommon'
-import { log, logToChannel } from './ABLUnitCommon'
+import { log } from './ABLUnitCommon'
 
 export type ABLTestData = ABLTestDir | ABLTestFile | ABLTestCase
 export type TestFile = ABLTestSuite | ABLTestClass | ABLTestProgram
@@ -133,7 +133,7 @@ export class ABLTestFile extends TestTypeObj {
 
 	startParsing (item: TestItem) {
 		this.relativePath = workspace.asRelativePath(item.uri!.fsPath)
-		logToChannel("parsing " + this.relativePath + " as " + this.description)
+		log.info("parsing " + this.relativePath + " as " + this.description)
 		this.didResolve = true
 		item.tags = [new TestTag("runnable"), new TestTag(this.description)]
 		item.description = this.description
