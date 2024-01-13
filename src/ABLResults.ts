@@ -246,13 +246,13 @@ export class ABLResults {
 		}
 
 		if(this.ablResults.resultsJson.length > 1) {
-			log.info("multiple results files found - this is not supported")
+			log.info("multiple results files found - this is not supported (item=" + item.label + ")")
 			options.errored(item, new TestMessage("multiple results files found - this is not supported"), this.duration())
 			return
 		}
 
 		if (!this.ablResults.resultsJson[0].testsuite) {
-			log.info("no tests results available, check the configuration for accuracy")
+			log.info("no tests results available, check the configuration for accuracy (item=" + item.label + ")")
 			options.errored(item, new TestMessage("no tests results available, check the configuration for accuracy"), this.duration())
 			return
 		}
@@ -260,7 +260,7 @@ export class ABLResults {
 		const suiteName = await this.getSuiteName(item)
 		const s = this.ablResults.resultsJson[0].testsuite.find((s: ITestSuite) => s.classname === suiteName || s.name === suiteName)
 		if (!s) {
-			log.error("could not find test suite for '" + suiteName + "' in results")
+			log.error("could not find test suite for '" + suiteName + "' in results (item=" + item.label + ")")
 			options.errored(item, new TestMessage("could not find test suite for '" + suiteName + "' in results"), this.duration())
 			return
 		}
@@ -268,7 +268,7 @@ export class ABLResults {
 		const data = this.testData.get(item)
 		if (data instanceof ABLTestSuite) {
 			if (!s.testsuite) {
-				log.error("no child testsuites found for " + suiteName)
+				log.error("no child testsuites found (item=" + item.label + ")")
 				options.errored(item, new TestMessage("no child testsuites found for " + suiteName), this.duration())
 				return
 			}
@@ -276,10 +276,13 @@ export class ABLResults {
 				await this.parseChildSuites(item, s.testsuite, options)
 			} else {
 				if (s.errors > 0) {
+					log.error("errors = " + s.errors + ", failures = " + s.failures + ", passed = " + s.passed + " (item=" + item.label + ")")
 					options.errored(item,new TestMessage("errors = " + s.errors + ", failures = " + s.failures + ", passed = " + s.passed))
 				} else if (s.failures) {
+					log.error("failures = " + s.failures + ", passed = " + s.passed + " (item=" + item.label + ")")
 					options.failed(item, new TestMessage("failures = " + s.failures + ", passed = " + s.passed))
 				} else if (s.skipped) {
+					log.warn("skipped = " + s.skipped + ", passed = " + s.passed + " (item=" + item.label + ")")
 					options.skipped(item)
 				} else {
 					options.passed(item)
@@ -318,13 +321,13 @@ export class ABLResults {
 				// // This should be populated automatically by the child messages filtering up
 				// options.failed(item, new vscode.TestMessage("one or more tests failed"), s.time)
 			} else {
-				log.info("unknown error - test results are all zero")
+				log.error("unknown error - test results are all zero (item: " + item.label + ")")
 				options.errored(item, new TestMessage("unknown error - test results are all zero"), s.time)
 			}
 		}
 
 		if (!s.testcases) {
-			log.info("no test cases discovered or run - check the configuration for accuracy")
+			log.error("no test cases discovered or run - check the configuration for accuracy (item: " + item.label + ")")
 			options.errored(item, new TestMessage("no test cases discovered or run - check the configuration for accuracy"), this.duration())
 			return
 		}
@@ -353,7 +356,7 @@ export class ABLResults {
 		children.forEach(child => {
 			const tc = testcases.find((t: ITestCase) => t.name === child.label)
 			if (!tc) {
-				log.error("could not find result for test case '" + child.label + "'")
+				log.error("could not find result for test case (item=" + child.label + ")")
 				options.errored(child, new TestMessage("could not find result for test case '" + child.label + "'"))
 				return
 			}
@@ -380,6 +383,7 @@ export class ABLResults {
 						options.failed(item, tmArr, tc.time)
 					})
 				}
+				log.error("unexpected failure for '" + tc.name + "'")
 				throw new Error("unexpected failure for '" + tc.name)
 			}
 			case "Error": {
@@ -389,6 +393,7 @@ export class ABLResults {
 						options.failed(item, [ tm ], tc.time)
 					})
 				}
+				log.error("unexpected error for " + tc.name)
 				throw new Error("unexpected error for " + tc.name)
 			}
 			case "Skpped": {
@@ -396,6 +401,7 @@ export class ABLResults {
 				return
 			}
 			default: {
+				log.error("unexpected test status " + tc.status + " for " + tc.name)
 				throw new Error("unexpected test status " + tc.status + " for " + tc.name)
 			}
 		}
