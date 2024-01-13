@@ -1,5 +1,5 @@
 import { Uri, workspace } from "vscode"
-import { log, logToChannel } from "./ABLUnitCommon"
+import { log } from "./ABLUnitCommon"
 import { IDlc } from "./parse/OpenedgeProjectParser"
 
 interface Promsg {
@@ -55,7 +55,7 @@ export class ABLPromsgs {
 				throw new Error("Cannot read promsgs directory '" + promsgDir + "', err=" + err)
 			})
 		}, (err) => {
-			logToChannel("Cannot find DLC directory '" + this.dlc.uri.fsPath + '"')
+			log.info("Cannot find DLC directory '" + this.dlc.uri.fsPath + '"')
 			throw new Error("Cannot find DLC directory '" + this.dlc.uri.fsPath + '", err=' + err)
 		})
 	}

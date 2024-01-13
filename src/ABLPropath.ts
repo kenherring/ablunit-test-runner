@@ -1,7 +1,7 @@
 import { Uri, workspace, WorkspaceFolder } from 'vscode'
 import { IProjectJson } from './parse/OpenedgeProjectParser'
 import { isRelativePath } from './ABLUnitConfigWriter'
-import { log, logToChannel } from './ABLUnitCommon'
+import { log } from './ABLUnitCommon'
 
 interface IPropathEntry {
 	uri: Uri
@@ -180,7 +180,7 @@ export class PropathParser {
 			}
 		}
 		if (!file) {
-			logToChannel("(search) cannot find '" + file + "' in propath", 'error')
+			log.error("(search) cannot find '" + file + "' in propath")
 			throw new Error("(search) cannot find '" + file + "' in propath")
 		}
 	}

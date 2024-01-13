@@ -5,7 +5,7 @@ import { commands, tests, window, workspace,
 import { ABLResults } from './ABLResults'
 import { ABLTestSuite, ABLTestClass, ABLTestProgram, ABLTestFile, ABLTestCase, ABLTestDir, ABLTestData, resultData, testData } from './testTree'
 import { GlobSync } from 'glob'
-import { log, logToChannel } from './ABLUnitCommon'
+import { log } from './ABLUnitCommon'
 import { readFileSync } from 'fs'
 import { decorate, setRecentResults } from './decorator'
 
@@ -34,12 +34,14 @@ export async function activate (context: ExtensionContext) {
 		if (! request.continuous) {
 			return startTestRun(request, cancellation)
 		}
-		throw new Error('continuous test runs not implemented')
+		const e = new Error('continuous test runs not implemented')
+		log.error(e)
+		throw e
 	}
 
 	const configureHandler = () => {
 		openTestRunConfig().catch((err) => {
-			logToChannel("[configureHandler] Failed to open '.vscode/ablunit-test-profile.json'. err=" + err, 'error')
+			log.error("[configureHandler] Failed to open '.vscode/ablunit-test-profile.json'. err=" + err)
 		})
 	}
 
@@ -62,7 +64,7 @@ export async function activate (context: ExtensionContext) {
 			await workspace.fs.copy(det, uri, { overwrite: false }).then(() => {
 				log.info('successfully created .vscode/ablunit-test-profile.json')
 			}, (err) => {
-				logToChannel('failed to create .vscode/ablunit-test-profile.json. err=' + err, 'error')
+				log.error('failed to create .vscode/ablunit-test-profile.json. err=' + err)
 				throw(err)
 			})
 		}
@@ -113,19 +115,19 @@ export async function activate (context: ExtensionContext) {
 				}
 			}
 
-			logToChannel('starting ablunit run', 'info', run)
+			log.info('starting ablunit run', run)
 
 			let ret = false
 			for (const r of res) {
 				r.setTestData(testData.getMap())
 				if (res.length > 1) {
-					logToChannel('starting ablunit tests for folder: ' + r.workspaceFolder.uri.fsPath, 'info', run)
+					log.info('starting ablunit tests for folder: ' + r.workspaceFolder.uri.fsPath, run)
 				}
 
 				ret = await r.run(run).then(() => {
 					return true
 				}, (err) => {
-					logToChannel('ablunit run failed with exception: ' + err, 'error', run)
+					log.error('ablunit run failed with exception: ' + err, run)
 					return false
 				})
 				if (!ret) { continue }
@@ -133,8 +135,8 @@ export async function activate (context: ExtensionContext) {
 				if (r.ablResults) {
 					const p = r.ablResults.resultsJson[0]
 					const totals = 'Totals - ' + p.tests + ' tests, ' + p.passed + ' passed, ' + p.errors + ' errors, ' + p.failures + ' failures'
-					logToChannel(totals, 'info', run)
-					logToChannel('Duration - ' + r.duration() + 's', 'info', run)
+					log.info(totals, run)
+					log.info('Duration - ' + r.duration() + 's', run)
 				}
 
 				for (const { test } of queue) {
@@ -159,7 +161,7 @@ export async function activate (context: ExtensionContext) {
 				return
 			}
 
-			logToChannel('ablunit test run complete', 'info', run)
+			log.info('ablunit test run complete', run)
 
 			if (run.token.isCancellationRequested) {
 				for (const { test } of queue) {
@@ -227,7 +229,7 @@ export async function activate (context: ExtensionContext) {
 				throw new Error('runTestQueue not defined')
 			}
 		}).catch((err) => {
-			logToChannel('ablunit run failed discovering tests with exception: ' + err, 'error', run)
+			log.error('ablunit run failed discovering tests with exception: ' + err, run)
 			run.end()
 		})
 	}
@@ -363,7 +365,7 @@ function getOrCreateFile (controller: TestController, uri: Uri) {
 
 	const data = createFileNode(uri)
 	if(!data) {
-		log.debug('no tests found in file: ' + uri.fsPath)
+		log.debug('No tests found in file: ' + uri.fsPath)
 		return { file: undefined, data: undefined }
 	}
 	const file = controller.createTestItem(uri.fsPath, workspace.asRelativePath(uri.fsPath), uri)
@@ -817,12 +819,12 @@ async function createDir (uri: Uri) {
 	}
 	return workspace.fs.stat(uri).then((stat) => {
 		if (!stat) {
-			logToChannel('[createDir] stat=' + JSON.stringify(stat))
-			logToChannel('[createDir] create-1: ' + uri.fsPath)
+			log.info('[createDir] stat=' + JSON.stringify(stat))
+			log.info('[createDir] create-1: ' + uri.fsPath)
 			return workspace.fs.createDirectory(uri)
 		}
 	}, () => {
-		logToChannel('[createDir] create dir (' + uri.fsPath + ')')
+		log.info('[createDir] create dir (' + uri.fsPath + ')')
 		return workspace.fs.createDirectory(uri)
 	})
 }

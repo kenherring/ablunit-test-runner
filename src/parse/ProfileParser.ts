@@ -535,7 +535,7 @@ export class ABLProfileJson {
 	}
 
 	addSection7 (lines: string[]) {
-		log.error("section 7 not implemented.  line count = " + lines.length)
+		log.trace("section 7 not implemented.  line count = " + lines.length)
 	}
 
 	// //// https://docs.progress.com/bundle/abl-reference/page/STATISTICS-attribute.html

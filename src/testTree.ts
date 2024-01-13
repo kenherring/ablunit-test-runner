@@ -143,7 +143,7 @@ export class ABLTestFile extends TestTypeObj {
 
 	startParsing (item: TestItem) {
 		this.relativePath = workspace.asRelativePath(item.uri!.fsPath)
-		log.trace("parsing test file " + this.relativePath + " as " + this.description)
+		log.debug("parsing test file " + this.relativePath + " as " + this.description)
 		this.didResolve = true
 		item.tags = [new TestTag("runnable"), new TestTag(this.description)]
 		item.description = this.description

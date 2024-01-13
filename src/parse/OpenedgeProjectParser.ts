@@ -1,5 +1,5 @@
 import { Uri, workspace, WorkspaceFolder } from 'vscode'
-import { logToChannel, readStrippedJsonFile } from '../ABLUnitCommon'
+import { log, readStrippedJsonFile } from '../ABLUnitCommon'
 import { getOpenEdgeProfileConfig, IBuildPathEntry } from './openedgeConfigFile'
 
 interface IRuntime {
@@ -47,7 +47,7 @@ export function getDLC (workspaceFolder: WorkspaceFolder, projectJson?: string) 
 		runtimeDlc = Uri.file(process.env.DLC)
 	}
 	if (runtimeDlc) {
-		logToChannel("using DLC = " + runtimeDlc.fsPath)
+		log.info("using DLC = " + runtimeDlc.fsPath)
 		const dlcObj: IDlc = { uri: runtimeDlc }
 		dlcMap.set(workspaceFolder, dlcObj)
 		return dlcObj
@@ -58,12 +58,12 @@ export function getDLC (workspaceFolder: WorkspaceFolder, projectJson?: string) 
 export function getOEVersion (workspaceFolder: WorkspaceFolder, projectJson?: string) {
 	const profileJson = getOpenEdgeProfileConfig(workspaceFolder.uri)
 	if (!profileJson) {
-		logToChannel("[getOEVersion] profileJson not found", 'debug')
+		log.debug("[getOEVersion] profileJson not found")
 		return undefined
 	}
 
 	if (profileJson.oeversion) {
-		logToChannel("[getOEVersion] profileJson.value.oeversion = " + profileJson.oeversion, 'debug')
+		log.debug("[getOEVersion] profileJson.value.oeversion = " + profileJson.oeversion)
 		return profileJson.oeversion
 	}
 

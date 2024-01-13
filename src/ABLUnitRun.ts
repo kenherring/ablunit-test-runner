@@ -1,8 +1,8 @@
 import { CancellationToken, TestRun, Uri, workspace } from 'vscode'
 import { ABLResults } from './ABLResults'
-import { log, logToChannel } from './ABLUnitCommon'
 import { isRelativePath } from './ABLUnitConfigWriter'
-import { ExecException, exec } from 'child_process'
+import { ExecException, exec } from "child_process"
+import { log } from './ABLUnitCommon'
 
 export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation?: CancellationToken) => {
 	const start = Date.now()
@@ -39,14 +39,14 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 		const testlist = testarr.join(',')
 
 		if (cmd.indexOf('${testlist}') === -1) {
-			logToChannel("command does not contain ${testlist}", 'error', options)
+			log.error("command does not contain ${testlist}", options)
 			throw (new Error("command does not contain ${testlist}"))
 		}
 		cmd = cmd.replace(/\$\{testlist\}/, testlist)
 		cmd = cmd.replace(/\$\{tempDir\}/, workspace.asRelativePath(res.cfg.ablunitConfig.tempDirUri, false))
 		const cmdSanitized = cmd.split(' ')
 
-		logToChannel("ABLUnit Command: " + cmdSanitized.join(' '))
+		log.info("ABLUnit Command: " + cmdSanitized.join(' '))
 		return cmdSanitized
 	}
 
@@ -94,13 +94,13 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 			cmdSanitized.push(element.replace(/\\/g, '/'))
 		})
 
-		logToChannel("ABLUnit Command: " + cmdSanitized.join(' '))
+		log.info("ABLUnit Command: " + cmdSanitized.join(' '))
 		return cmdSanitized
 	}
 
 	const runCommand = () => {
 		const args = getCommand()
-		logToChannel("ABLUnit Command Execution Started - dir='" + res.cfg.ablunitConfig.workspaceFolder.uri.fsPath + "'")
+		log.info("ABLUnit Command Execution Started - dir='" + res.cfg.ablunitConfig.workspaceFolder.uri.fsPath + "'")
 
 		const cmd = args[0]
 		args.shift()
@@ -113,18 +113,18 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 			exec(cmd + ' ' + args.join(' '), {env: runenv, cwd: res.cfg.ablunitConfig.workspaceFolder.uri.fsPath, signal: signal}, (err: ExecException | null, stdout: string, stderr: string) => {
 				const duration = Date.now() - start
 				if (stdout) {
-					logToChannel("_progres stdout=" + stdout, 'info', options)
+					log.info("_progres stdout=" + stdout, options)
 				}
 				if (stderr) {
-					logToChannel("_progres stderr=" + stderr, 'error', options)
+					log.error("_progres stderr=" + stderr, options)
 				}
 				if (err) {
-					logToChannel("_progres err=" + err.name + " (ExecExcetion)\r\n   " + err.message, 'error', options)
+					log.error("_progres err=" + err.name + " (ExecExcetion)\r\n   " + err.message, options)
 				}
 				if(err || stderr) {
 					reject(new Error ("ABLUnit Command Execution Failed - duration: " + duration))
 				}
-				logToChannel("ABLUnit Command Execution Completed - duration: " + duration)
+				log.info("ABLUnit Command Execution Completed - duration: " + duration)
 				resolve("resolve _progres promise")
 			})
 		})
