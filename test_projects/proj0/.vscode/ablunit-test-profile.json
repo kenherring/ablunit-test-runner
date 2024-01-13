@@ -29,7 +29,7 @@
 		////#
 		////# NOTE: A null value will disable the -T option from the command execution but
 		////#       may still use the default value for extension generated files.
-		"tempDir": "${workspaceFolder}",
+		"tempDir": "target",
 
 		////# When true read 'openedge-project.json' to determine proper configuration
 		////# including DLC, propath, and database connections.
