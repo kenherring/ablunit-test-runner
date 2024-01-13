@@ -10,26 +10,26 @@ logOutputChannel.clear()
 
 class Logger {
 	info (message: string, testRun?: TestRun) {
-		message = this.decorateMessage(message)
-		this.logTestConsole(message, testRun)
+		message = this._decorateMessage(message)
+		this._logTestConsole(message, testRun)
 		console.log(message)
 		logOutputChannel.info(message)
 	}
 	warn (message: string, testRun?: TestRun) {
-		message = this.decorateMessage(message)
-		this.logTestConsole(message, testRun)
+		message = this._decorateMessage(message)
+		this._logTestConsole(message, testRun)
 		console.warn(message)
 		logOutputChannel.warn(message)
 	}
 	debug (message: string, testRun?: TestRun) {
-		message = this.decorateMessage(message)
-		this.logTestConsole(message, testRun)
+		message = this._decorateMessage(message)
+		this._logTestConsole(message, testRun)
 		console.debug(message)
 		logOutputChannel.debug(message)
 	}
 	trace (message: string, testRun?: TestRun) {
-		message = this.decorateMessage(message)
-		this.logTestConsole(message, testRun)
+		message = this._decorateMessage(message)
+		this._logTestConsole(message, testRun)
 		console.trace(message)
 		logOutputChannel.trace(message)
 	}
@@ -41,36 +41,39 @@ class Logger {
 				message = '[' + message.name + '] ' +  message.message
 			}
 		}
-		message = this.decorateMessage(message)
-		this.logTestConsole(message, testRun)
+		message = this._decorateMessage(message)
+		this._logTestConsole(message, testRun)
 		console.error(message)
 		logOutputChannel.error(message)
 	}
 
-	private _getCallerFile () {
+	private _getCallerSourceLine () {
 		const prepareStackTraceOrg = Error.prepareStackTrace
 		const err = new Error()
 		Error.prepareStackTrace = (_, stack) => stack
 		const stack = err.stack as unknown as NodeJS.CallSite[]
 		Error.prepareStackTrace = prepareStackTraceOrg
+
+		let ret: string | undefined = undefined
 		for (const s of stack) {
 			const fileName = s.getFileName()
 			if (fileName && fileName !== __filename) {
-				return fileName.replace(path.normalize(__dirname),'').substring(1).replace(/\\/g, '/')
+				ret = fileName.replace(path.normalize(__dirname),'').substring(1).replace(/\\/g, '/')
+				ret = ret + ' ' + s.getFunctionName() + ':' + s.getLineNumber()
+				return ret
 			}
 		}
 	}
 
-	private decorateMessage (message: string) {
-		const callerFile = this._getCallerFile()
-		if (callerFile) {
-			return '[' + this._getCallerFile() + '] ' + message
+	private _decorateMessage (message: string) {
+		const callerSourceLine = this._getCallerSourceLine()
+		if (callerSourceLine) {
+			return '[' + callerSourceLine + '] ' + message
 		}
 		return message
-		// return this.getPrefix() + ' ' + message
 	}
 
-	private logTestConsole (message: string, testRun: TestRun | undefined) {
+	private _logTestConsole (message: string, testRun: TestRun | undefined) {
 		if (!testRun) { return }
 		const optMsg = message.replace(/\r/g, '').replace(/\n/g, '\r\n')
 		testRun.appendOutput(optMsg + "\r\n")

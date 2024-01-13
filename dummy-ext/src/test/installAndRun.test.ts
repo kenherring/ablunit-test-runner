@@ -25,7 +25,9 @@ afterEach(async () => {
 suite('install and run', () => {
 
 	test("install and run - does package extension work?", async () => {
-		await updateTestProfile('tempDir', 'target')
+		await updateTestProfile('tempDir', 'target').then(() => {
+			return new Promise((resolve) => { setTimeout(resolve, 200) })
+		})
 		await runAllTests()
 
 		const workspaceFolder = getWorkspaceUri()
@@ -41,10 +43,12 @@ suite('install and run', () => {
 })
 
 function runAllTests () {
-	return commands.executeCommand('testing.runAll').then(() => {
-		console.log("testing.runAll complete!")
-	} , (err) => {
-		throw new Error("testing.runAll failed: " + err)
+	return commands.executeCommand('testing.refreshTests').then(() => {
+		return commands.executeCommand('testing.runAll').then(() => {
+			console.log("testing.runAll complete!")
+		} , (err) => {
+			throw new Error("testing.runAll failed: " + err)
+		})
 	})
 }
 

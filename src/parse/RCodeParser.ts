@@ -152,15 +152,15 @@ export const getSourceMapFromRCode = async (propath: PropathParser, uri: Uri) =>
 	}
 
 	const parseVar = (bytes: Uint32Array, pos: number, prefix: string = '') => {
-		log.warn(prefix + " TODO - implement parseVar")
+		log.debug(prefix + " TODO - implement parseVar")
 	}
 
 	const parseParam = (bytes: Uint32Array, pos: number, prefix: string = '') => {
-		log.warn(prefix + " TODO - implement parseParam")
+		log.debug(prefix + " TODO - implement parseParam")
 	}
 
 	const parseProcTT = (bytes: Uint32Array, pos: number, prefix: string = '') => {
-		log.warn(prefix + " TODO - implement parseProcTT")
+		log.debug(prefix + " TODO - implement parseProcTT")
 	}
 
 	const parseProcs = (bytes: Uint32Array, pos: number, prefix: string = '') => {
@@ -256,7 +256,7 @@ export const getSourceMapFromRCode = async (propath: PropathParser, uri: Uri) =>
 	}
 
 	const parseTT = (bytes: Uint32Array, pos: number, prefix: string = '') => {
-		log.warn(prefix + " TODO - implement parseTT (bytes.length=" + bytes.length + ", pos=" + pos + ", byte[" + pos/4 + "]=" + bytes[pos/4] + ")")
+		log.debug(prefix + " TODO - implement parseTT (bytes.length=" + bytes.length + ", pos=" + pos + ", byte[" + pos/4 + "]=" + bytes[pos/4] + ")")
 	}
 
 	const parseMap = async (bytes: Uint32Array, pos: number, prefix: string = '') => {
@@ -282,7 +282,7 @@ export const getSourceMapFromRCode = async (propath: PropathParser, uri: Uri) =>
 	}
 
 	const parse4 = (bytes: Uint32Array, pos: number, prefix: string = '') => {
-		log.warn(prefix + "TODO - implement parse4")
+		log.debug(prefix + "TODO - implement parse4")
 		throw new Error("parse4 not implemented")
 	}
 

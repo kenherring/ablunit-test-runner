@@ -397,8 +397,7 @@ export class ABLProfileJson {
 
 			const lineinfo = await this.debugLines.getSourceLine(sourceName, sum.LineNo)
 			if(!lineinfo) {
-				log.error("Unable to find source/debug line info for " + sourceName + " " + sum.LineNo)
-				// throw new Error("Unable to find source/debug line info for " + sourceName + " " + sum.LineNo)
+				log.debug("Unable to find source/debug line info for " + sourceName + " " + sum.LineNo)
 			} else {
 				sum.srcLine = lineinfo.debugLine
 				sum.srcUri = lineinfo.debugUri

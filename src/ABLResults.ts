@@ -103,12 +103,6 @@ export class ABLResults implements Disposable {
 		this.propath = this.cfg.readPropathFromJson()
 		this.debugLines = new ABLDebugLines(this.propath)
 
-		const prom: (Promise<void> | Promise<void[]>)[] = []
-		prom[0] = this.cfg.createProfileOptions(this.cfg.ablunitConfig.profOptsUri,this.cfg.ablunitConfig.profiler)
-		prom[1] = this.cfg.createProgressIni(this.propath.toString())
-		prom[2] = this.cfg.createAblunitJson(this.cfg.ablunitConfig.config_uri, this.cfg.ablunitConfig.options, this.testQueue)
-		prom[3] = this.cfg.createDbConnPf(this.cfg.ablunitConfig.dbConnPfUri, this.cfg.ablunitConfig.dbConns)
-
 		if(this.cfg.ablunitConfig.dbConns) {
 			this.cfg.ablunitConfig.dbAliases = []
 			for (const conn of this.cfg.ablunitConfig.dbConns) {
@@ -117,6 +111,12 @@ export class ABLResults implements Disposable {
 				}
 			}
 		}
+
+		const prom: (Promise<void> | Promise<void[]>)[] = []
+		prom[0] = this.cfg.createProfileOptions(this.cfg.ablunitConfig.profOptsUri,this.cfg.ablunitConfig.profiler)
+		prom[1] = this.cfg.createProgressIni(this.propath.toString())
+		prom[2] = this.cfg.createAblunitJson(this.cfg.ablunitConfig.config_uri, this.cfg.ablunitConfig.options, this.testQueue)
+		prom[3] = this.cfg.createDbConnPf(this.cfg.ablunitConfig.dbConnPfUri, this.cfg.ablunitConfig.dbConns)
 
 		return Promise.all(prom).then(() => {
 			log.info("done creating config files for run")
@@ -490,7 +490,7 @@ export class ABLResults implements Disposable {
 		const fileinfo = await this.propath!.search(module.SourceName)
 		const moduleUri = fileinfo?.uri
 		if (!moduleUri) {
-			if (!module.SourceName.startsWith("OpenEdge.")) {
+			if (!module.SourceName.startsWith("OpenEdge.") && module.SourceName !== 'ABLUnitCore.p') {
 				log.error("could not find moduleUri for " + module.SourceName)
 			}
 			return
