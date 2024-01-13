@@ -9,20 +9,20 @@ const logOutputChannel = window.createOutputChannel('ABLUnit', {log: true })
 logOutputChannel.clear()
 
 class Logger {
-	info (message: string) {
-		logToChannel(this.getPrefix() + ' ' + message, 'info')
+	info (message: string, testRun?: TestRun) {
+		logToChannel(this.getPrefix() + ' ' + message, 'info', testRun)
 	}
-	warn (message: string) {
-		logToChannel(this.getPrefix() + ' ' + message, 'warn')
+	warn (message: string, testRun?: TestRun) {
+		logToChannel(this.getPrefix() + ' ' + message, 'warn', testRun)
 	}
-	debug (message: string) {
-		logToChannel(this.getPrefix() + ' ' + message, 'debug')
+	debug (message: string, testRun?: TestRun) {
+		logToChannel(this.getPrefix() + ' ' + message, 'debug', testRun)
 	}
-	trace (message: string) {
-		throw new Error("not implemented.  message=" + message)
+	trace (message: string, testRun?: TestRun) {
+		logToChannel(this.getPrefix() + ' ' + message, 'trace', testRun)
 	}
-	error (message: string) {
-		logToChannel(this.getPrefix() + ' ' + message, 'error')
+	error (message: string, testRun?: TestRun) {
+		logToChannel(this.getPrefix() + ' ' + message, 'error', testRun)
 	}
 	getPrefix () {
 		return '[' + path.normalize(__dirname + "/..").replace(/\\/g, '/') + ']'

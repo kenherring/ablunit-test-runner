@@ -1,4 +1,4 @@
-import { FileType, MarkdownString, Range, TestItem, TestItemCollection, TestMessage, TestRun, Uri, workspace, WorkspaceFolder } from 'vscode'
+import { CancellationToken, Disposable, FileType, MarkdownString, Range, TestItem, TestItemCollection, TestMessage, TestRun, Uri, workspace, WorkspaceFolder } from 'vscode'
 import { ABLUnitConfig } from './ABLUnitConfigWriter'
 import { ABLResultsParser, ITestCaseFailure, ITestCase, ITestSuite } from './parse/ResultsParser'
 import { ABLTestSuite, ABLTestData } from './testTree'
@@ -32,7 +32,7 @@ export interface IABLUnitJson {
 	tests: ITestObj[]
 }
 
-export class ABLResults {
+export class ABLResults implements Disposable {
 	workspaceFolder: WorkspaceFolder
 	storageUri: Uri
 	globalStorageUri: Uri
@@ -57,9 +57,15 @@ export class ABLResults {
 	coverage: FileCoverage[] = []
 	dlc: IDlc | undefined
 	public testCoverage: Map<string, FileCoverage> = new Map<string, FileCoverage>()
+	private cancellation: CancellationToken | undefined
 
-	constructor (workspaceFolder: WorkspaceFolder, storageUri: Uri, globalStorageUri: Uri, extensionResourcesUri: Uri) {
+	constructor (workspaceFolder: WorkspaceFolder, storageUri: Uri, globalStorageUri: Uri, extensionResourcesUri: Uri, cancellation?: CancellationToken) {
 		logToChannel("workspaceFolder=" + workspaceFolder.uri.fsPath)
+		if(cancellation) {
+			cancellation.onCancellationRequested(() => {
+				logToChannel("[ABLResults] test run cancellation detected")
+			})
+		}
 		this.startTime = new Date()
 		this.workspaceFolder = workspaceFolder
 		this.storageUri = storageUri
@@ -68,6 +74,14 @@ export class ABLResults {
 		this.wrapperUri = Uri.joinPath(this.extensionResourcesUri, 'ABLUnitCore-wrapper.p')
 		this.cfg = new ABLUnitConfig()
 		this.setStatus("constructed")
+	}
+
+	dispose () {
+		this.setStatus("cancelled")
+		delete this.profileJson
+		delete this.ablResults
+		delete this.debugLines
+		delete this.profileJson
 	}
 
 	setStatus (status: string) {
@@ -190,7 +204,7 @@ export class ABLResults {
 
 	async run (options: TestRun) {
 		await this.deleteResultsXml()
-		return ablunitRun(options, this).then(() => {
+		return ablunitRun(options, this, this.cancellation).then(() => {
 			if(!this.ablResults!.resultsJson) {
 				throw new Error("no results available")
 			}
@@ -205,8 +219,11 @@ export class ABLResults {
 
 		this.endTime = new Date()
 
+		const parseStartTime = new Date()
+
 		this.ablResults = new ABLResultsParser(this.propath!, this.debugLines!)
 		await this.ablResults.parseResults(this.cfg.ablunitConfig.optionsUri.filenameUri, this.cfg.ablunitConfig.optionsUri.jsonUri).then(() => {
+			log.debug('[parseOutput] parsing complete (time=' + (Number(new Date()) - Number(parseStartTime)) + ')')
 			if(!this.ablResults!.resultsJson) {
 				logToChannel("No results found in " + this.cfg.ablunitConfig.optionsUri.filenameUri.fsPath,"error", options)
 				throw (new Error("[ABLResults parseOutput] No results found in " + this.cfg.ablunitConfig.optionsUri.filenameUri.fsPath + "\r\n"))
@@ -230,9 +247,9 @@ export class ABLResults {
 			})
 		}
 
-		this.setStatus("parsing output complete")
-		logToChannel("parsing output complete")
-		options.appendOutput("parsing output complete\r\n")
+		const parseTime = (Number(new Date()) - Number(parseStartTime))
+		this.setStatus("parsing output complete (time=" + parseTime + ")")
+		logToChannel("parsing output complete (time=" + parseTime + ")", 'info', options)
 	}
 
 	async assignTestResults (item: TestItem, options: TestRun) {
@@ -437,11 +454,12 @@ export class ABLResults {
 	}
 
 	async parseProfile () {
+		const startTime = new Date()
 		const profParser = new ABLProfile()
 		return profParser.parseData(this.cfg.ablunitConfig.profFilenameUri, this.cfg.ablunitConfig.profiler.writeJson, this.debugLines!).then(() => {
 			this.profileJson = profParser.profJSON
 			return this.assignProfileResults().then(() => {
-				log.info("assignProfileResults complete")
+				log.info("assignProfileResults complete (time=" + (Number(new Date()) - Number(startTime)) + ")")
 			}, (err) => {
 				throw new Error("assignProfileResults error: " + err)
 			})

@@ -1,10 +1,10 @@
-import { Range, TestController, TestItem, TestRun, TestTag, Uri, workspace } from 'vscode'
+import { CancellationToken, Range, TestController, TestItem, TestRun, TestTag, Uri, workspace } from 'vscode'
 import { ABLResults } from './ABLResults'
 import { ITestSuite, parseABLTestSuite } from './parse/TestSuiteParser'
 import { IClassRet, ITestCase, parseABLTestClass } from './parse/TestClassParser'
 import { IProgramRet, parseABLTestProgram } from './parse/TestProgramParser'
 import { getContentFromFilesystem } from './parse/TestParserCommon'
-import { log, logToChannel } from './ABLUnitCommon'
+import { log } from './ABLUnitCommon'
 
 export type ABLTestData = ABLTestDir | ABLTestFile | ABLTestCase
 export type TestFile = ABLTestSuite | ABLTestClass | ABLTestProgram
@@ -109,31 +109,41 @@ export class ABLTestFile extends TestTypeObj {
 	public relativePath: string = ''
 	currentResults?: ABLResults
 	public children: ABLTestCase[] = []
+	public cancelled: boolean = false
 
-	public async updateFromDisk (controller: TestController, item: TestItem) {
-		try {
-			const content = await getContentFromFilesystem(item.uri!)
-			if(!content) {
-				this.deleteItem(controller,item)
-				return
-			}
+	public async updateFromDisk (controller: TestController, item: TestItem, isCancelled?: () => boolean, token?: CancellationToken) {
+		log.debug("updateFromDisk: " + item.id + " " + this.cancelled + " " + token?.isCancellationRequested)
+		if (this.cancelled) {
+			throw new Error("cancellation detected. skpping updateFromDisk for " + item.id)
+		}
+
+		return getContentFromFilesystem(item.uri!).then((content) => {
+			item.error = 'Error parsing test file from disk: no content'
+			// if(!content) {
+			// 	log.error("Error updating " + item.id + " from disk: no content")
+			// 	this.deleteItem(controller,item)
+			// 	return false
+			// }
 			item.error = undefined
 			item.canResolveChildren = true
-			this.updateFromContents(controller, content, item)
-		} catch (e) {
-			log.error("Error updating " + item.id + " from disk: " + e)
+			return this.updateFromContents(controller, content, item)
+		}, (e) => {
+			// log.error("Error updating " + item.id + " from disk: " + e)
 			item.error = (e as Error).stack
-		}
+			throw e
+		})
 	}
 
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	updateFromContents (controller: TestController, content: string, item: TestItem) {
-		throw new Error("Method not implemented - should be calling implementation in subclass")
+		log.error("updateFromContents not implemented - should be calling implementation in subclass (item=" + item.id + ")")
+		return false
+		// throw new Error("Method not implemented - should be calling implementation in subclass")
 	}
 
 	startParsing (item: TestItem) {
 		this.relativePath = workspace.asRelativePath(item.uri!.fsPath)
-		logToChannel("parsing " + this.relativePath + " as " + this.description)
+		log.trace("parsing test file " + this.relativePath + " as " + this.description)
 		this.didResolve = true
 		item.tags = [new TestTag("runnable"), new TestTag(this.description)]
 		item.description = this.description
@@ -250,7 +260,7 @@ export class ABLTestSuite extends ABLTestFile {
 
 		if (!response) {
 			this.deleteItem(controller,item)
-			return
+			return false
 		}
 
 		item.label = this.relativePath
@@ -279,6 +289,7 @@ export class ABLTestSuite extends ABLTestFile {
 		}
 
 		this.removeUnusedChildren(controller, item, originalChildren)
+		return item.children.size > 0
 	}
 
 	updateChildProgram (controller: TestController, item: TestItem, response: ITestSuite, id: string, label: string, type: "ABLTestClass" | "ABLTestProgram") {
@@ -322,6 +333,7 @@ export class ABLTestClass extends ABLTestFile {
 		this.updateItem(controller, item, response, "Method")
 
 		this.setClassInfo(response?.classname)
+		return item.children.size > 0
 	}
 }
 
@@ -335,5 +347,6 @@ export class ABLTestProgram extends ABLTestFile {
 		this.startParsing(item)
 		const response = parseABLTestProgram(content, this.relativePath)
 		this.updateItem(controller, item, response, "Procedure")
+		return item.children.size > 0
 	}
 }

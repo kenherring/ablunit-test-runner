@@ -1,11 +1,20 @@
-import { TestRun, Uri, workspace } from 'vscode'
+import { CancellationToken, TestRun, Uri, workspace } from 'vscode'
 import { ABLResults } from './ABLResults'
-import { logToChannel } from './ABLUnitCommon'
+import { log, logToChannel } from './ABLUnitCommon'
 import { isRelativePath } from './ABLUnitConfigWriter'
-import { ExecException, exec } from "child_process"
+import { ExecException, exec } from 'child_process'
 
-export const ablunitRun = async (options: TestRun, res: ABLResults) => {
+export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation?: CancellationToken) => {
 	const start = Date.now()
+	const abort = new AbortController()
+	const { signal } = abort
+
+	if (cancellation) {
+		cancellation.onCancellationRequested(() => {
+			log.info("[ablunitRun] cancellation requested")
+			abort.abort()
+		})
+	}
 
 	await res.cfg.createAblunitJson(res.cfg.ablunitConfig.config_uri, res.cfg.ablunitConfig.options, res.testQueue)
 
@@ -101,7 +110,7 @@ export const ablunitRun = async (options: TestRun, res: ABLResults) => {
 
 			const runenv = getEnvVars(res.dlc!.uri)
 
-			exec(cmd + ' ' + args.join(' '), {env: runenv, cwd: res.cfg.ablunitConfig.workspaceFolder.uri.fsPath }, (err: ExecException | null, stdout: string, stderr: string) => {
+			exec(cmd + ' ' + args.join(' '), {env: runenv, cwd: res.cfg.ablunitConfig.workspaceFolder.uri.fsPath, signal: signal}, (err: ExecException | null, stdout: string, stderr: string) => {
 				const duration = Date.now() - start
 				if (stdout) {
 					logToChannel("_progres stdout=" + stdout, 'info', options)

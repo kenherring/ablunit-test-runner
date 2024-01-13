@@ -1,7 +1,5 @@
 {
 	"eslint.enable": true,
-	"eslint.lintTask.enable": false,
-	"eslint.run": "onType",
 	"extension-test-runner.debugOptions": {},
 	"git.branchProtection": [
 		"main"
@@ -14,6 +12,11 @@
 		"projectKey": "kenherring_ablunit-test-runner"
 	},
 	"sonarlint.disableTelemetry": true,
-	"tslint.enable": false, // this project uses eslint
-	"typescript.preferences.quoteStyle": "single"
+	// "task.autoDetect": "off",
+	// "task.saveBeforeRun": "always",
+	"task.quickOpen.showAll": true,
+	"tslint.enable": false,
+	"typescript.format.semicolons": "remove",
+	"typescript.tsc.autoDetect": "off",
+	"typescript.preferences.quoteStyle": "single",
 }

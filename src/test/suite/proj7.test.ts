@@ -40,4 +40,11 @@ suite(projName + ' - Extension Test Suite', () => {
 		assert(testCount > 1000, "testCount should be > 100, but is " + testCount)
 	})
 
+	// test(projName + '.2 - test cancel refresh', () => {
+	// 	// refreshTests()
+	// 	// sleep(50)
+	// 	// cancelRefreshTests()
+	// 	assert.fail("test cancel refresh not implemented")
+	// })
+
 })

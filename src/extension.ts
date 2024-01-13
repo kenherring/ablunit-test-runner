@@ -32,18 +32,9 @@ export async function activate (context: ExtensionContext) {
 
 	const runHandler = (request: TestRunRequest, cancellation: CancellationToken) => {
 		if (! request.continuous) {
-			return startTestRun(request)
+			return startTestRun(request, cancellation)
 		}
-		const l = fileChangedEmitter.event(uri => {
-			const file = getOrCreateFile(ctrl, uri).file
-			if(file) {
-				startTestRun(new TestRunRequest([file], undefined, request.profile, true))
-			} else {
-				logToChannel('startTestRun - file not found: ' + uri.fsPath, 'error')
-			}
-		})
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-		cancellation.onCancellationRequested(() => l.dispose())
+		throw new Error('continuous test runs not implemented')
 	}
 
 	const configureHandler = () => {
@@ -83,10 +74,13 @@ export async function activate (context: ExtensionContext) {
 		})
 	}
 
-	const startTestRun = (request: TestRunRequest) => {
+	const startTestRun = (request: TestRunRequest, cancellation: CancellationToken) => {
 
 		const discoverTests = async (tests: Iterable<TestItem>) => {
 			for (const test of tests) {
+				if (run.token.isCancellationRequested) {
+					return
+				}
 				if (request.exclude?.includes(test)) {
 					continue
 				}
@@ -188,6 +182,9 @@ export async function activate (context: ExtensionContext) {
 			const proms: Promise<void>[] = []
 
 			for(const itemData of queue) {
+				if (run.token.isCancellationRequested) {
+					return
+				}
 				const wf = workspace.getWorkspaceFolder(itemData.test.uri!)
 
 				if (!wf) {
@@ -197,6 +194,10 @@ export async function activate (context: ExtensionContext) {
 				let r = res.find(r => r.workspaceFolder === wf)
 				if (!r) {
 					r = new ABLResults(wf, await getStorageUri(wf) ?? wf.uri, contextStorageUri, contextResourcesUri)
+					cancellation.onCancellationRequested(() => {
+						log.info("dispose of ABLResults (" + r?.workspaceFolder.uri + ")")
+						r!.dispose()
+					})
 					await r.start()
 					res.push(r)
 				}
@@ -210,23 +211,38 @@ export async function activate (context: ExtensionContext) {
 		showNotification('running ablunit tests')
 		const queue: { test: TestItem; data: ABLTestData }[] = []
 		const run = ctrl.createTestRun(request)
+		// cancellation.onCancellationRequested(() => {
+		// 	log.error("[startTestRun] cancellation requested", run)
+		// 	run.end()
+		// })
 		const tests = request.include ?? gatherTestItems(ctrl.items)
 
 		discoverTests(tests).then(async () => {
 			const res = await createABLResults()
-			return runTestQueue(res)
+			if (res) {
+				return runTestQueue(res)
+			} else if (run.token.isCancellationRequested) {
+				run.end()
+			} else {
+				throw new Error('runTestQueue not defined')
+			}
 		}).catch((err) => {
 			logToChannel('ablunit run failed discovering tests with exception: ' + err, 'error', run)
 			run.end()
 		})
 	}
 
-	ctrl.refreshHandler = async () => {
+	ctrl.refreshHandler = async (token: CancellationToken) => {
+		token.onCancellationRequested(() => {
+			log.trace('[refreshHandler] cancellation requested')
+		})
 		const patterns = getWorkspaceTestPatterns()
 
+		const promArr: Promise<void>[] = []
 		for (const pattern of patterns) {
-			await findInitialFiles(ctrl, pattern.workspaceFolder, pattern.includePatterns, pattern.excludePatterns, true)
+			promArr.push(findInitialFiles(ctrl, token, pattern.includePatterns, pattern.excludePatterns))
 		}
+		return Promise.all(promArr).then(() => { return Promise.resolve() })
 	}
 
 	ctrl.resolveHandler = async item => {
@@ -235,11 +251,24 @@ export async function activate (context: ExtensionContext) {
 			for (const watchers of workspaceWatchers) {
 				context.subscriptions.push(...watchers)
 			}
+
+			// find initial items
+			if(workspace.getConfiguration('ablunit').get('discoverFilesOnActivate', false)) {
+				log.debug('[resolveHandler] discoverFilesOnActivate is true. refreshing test tree...')
+				commands.executeCommand('testing.refreshTests').then(() => {}, (err) => {
+					log.error('[resolveHandler] failed to refresh test tree. err=' + err)
+				})
+			} else {
+				for (const e of window.visibleTextEditors) {
+					updateNodeForDocument(e.document)
+				}
+			}
+
 			return
 		}
 		const data = testData.get(item)
 		if (data instanceof ABLTestFile) {
-			return data.updateFromDisk(ctrl, item)
+			return data.updateFromDisk(ctrl, item).then(() => {}, (err) => { throw err })
 		}
 	}
 
@@ -270,16 +299,12 @@ export async function activate (context: ExtensionContext) {
 		}
 	}
 
-	const testRunProfile = ctrl.createRunProfile('Run ABLUnit Tests', TestRunProfileKind.Run, runHandler, false, new TestTag('runnable'), false)
+	const testRunProfile = ctrl.createRunProfile('ABLUnit - Run Tests', TestRunProfileKind.Run, runHandler, false, new TestTag('runnable'), false)
 	testRunProfile.configureHandler = configureHandler
-	const testCoverageProfile = ctrl.createRunProfile('Run ABLUnit Tests w/ Coverage', TestRunProfileKind.Coverage, runHandler, true, new TestTag('runnable'), false)
-	testCoverageProfile.configureHandler = configureHandler
-	const testDebugProfile = ctrl.createRunProfile('Debug ABLUnit Tests', TestRunProfileKind.Debug, runHandler, false, new TestTag("runnable"), false)
-	testDebugProfile.configureHandler = configureHandler
-
-	if(workspace.getConfiguration('ablunit').get('discoverFilesOnActivate', false)) {
-		await commands.executeCommand('testing.refreshTests')
-	}
+	// const testCoverageProfile = ctrl.createRunProfile('Run ABLUnit Tests w/ Coverage', TestRunProfileKind.Coverage, runHandler, true, new TestTag('runnable'), false)
+	// testCoverageProfile.configureHandler = configureHandler
+	// const testDebugProfile = ctrl.createRunProfile('Debug ABLUnit Tests', TestRunProfileKind.Debug, runHandler, false, new TestTag("runnable"), false)
+	// testDebugProfile.configureHandler = configureHandler
 }
 
 let contextStorageUri: Uri
@@ -322,13 +347,13 @@ function getOrCreateFile (controller: TestController, uri: Uri) {
 	if (existing) {
 		const data = testData.get(existing)
 		if (!data) {
-			log.info('[getOrCreateFile] data not found for existing item. file=' + workspace.asRelativePath(uri) + ', existing.id=' + existing.id)
+			log.debug('[getOrCreateFile] data not found for existing item. file=' + workspace.asRelativePath(uri) + ', existing.id=' + existing.id)
 			throw new Error('[getOrCreateFile] data not found for existing item. file=' + workspace.asRelativePath(uri) + ', existing.id=' + existing.id)
 		}
 		if (data instanceof ABLTestFile) {
 			return { file: existing, data: data }
 		} else {
-			log.info('[getOrCreateFile] unexpected data type for existing item. file=' + workspace.asRelativePath(uri) + ', existing.id=' + existing.id)
+			log.debug('[getOrCreateFile] unexpected data type for existing item. file=' + workspace.asRelativePath(uri) + ', existing.id=' + existing.id)
 			throw new Error('[getOrCreateFile] unexpected data type.' +
 								' file=' + workspace.asRelativePath(uri) +
 								', existing.id=' + existing.id +
@@ -338,7 +363,7 @@ function getOrCreateFile (controller: TestController, uri: Uri) {
 
 	const data = createFileNode(uri)
 	if(!data) {
-		logToChannel('No tests found in file: ' + uri.fsPath, 'warn')
+		log.debug('no tests found in file: ' + uri.fsPath)
 		return { file: undefined, data: undefined }
 	}
 	const file = controller.createTestItem(uri.fsPath, workspace.asRelativePath(uri.fsPath), uri)
@@ -603,36 +628,86 @@ function removeExcludedChildren (parent: TestItem, excludePatterns: RelativePatt
 
 async function findInitialFiles (
 	controller: TestController,
-	workspaceFolder: WorkspaceFolder,
+	token: CancellationToken,
 	includePatterns: RelativePattern[],
-	excludePatterns: RelativePattern[],
-	removeExcluded: boolean = false) {
-	const discoverFilesOnActivate = workspace.getConfiguration('ablunit').get('discoverFilesOnActivate')
+	excludePatterns: RelativePattern[]
+) {
+	let searchCount = 0
+	let updateCount = 0
+	const startTime = Date.now()
+	const elapsedTime = () => { return '(time=' + (Date.now() - startTime) + 'ms)' }
 
-	if (!discoverFilesOnActivate) {
-		if (removeExcluded) {
-			removeExcludedFiles(controller, excludePatterns)
-		}
-		return
-	}
+	token.onCancellationRequested(() => {
+		log.trace("[findInitialFiles] cancellation requested")
+	})
 
-	const updates: Promise<void>[] = []
+	const updates: Promise<boolean>[] = []
 	for (const includePattern of includePatterns) {
 		for (const wsFile of await workspace.findFiles(includePattern)) {
+			if (token.isCancellationRequested) {
+				log.warn('[findInitialFiles] cancellation requested while matching files to patterns')
+				break
+			}
+			searchCount++
 			if (isFileExcluded(wsFile, excludePatterns)) {
 				continue
 			}
 			const { file, data } = getOrCreateFile(controller, wsFile)
 			if(file) {
-				updates.push(data.updateFromDisk(controller, file))
+				const d = data.updateFromDisk(controller, file, undefined, token).then((success) => {
+					if (success) {
+						return Promise.resolve(success)
+					}
+					return Promise.reject(new Error('updateFromDisk failed for file: unknown reason'))
+				}, (err) => {
+					return Promise.reject(err)
+				})
+				updates.push(d)
+				updateCount++
 			}
 		}
 	}
-	await Promise.all(updates)
-
-	if (removeExcluded) {
-		removeExcludedFiles(controller, excludePatterns)
+	log.info('[findInitialFiles] found ' + updateCount + ' included files of ' + searchCount + ' total files ' + elapsedTime() + '. parsing content for test cases...')
+	const promResponses = await Promise.allSettled(updates)
+	const resolvedCount = promResponses.filter(p => p.status === "fulfilled").length
+	const rejectedCount = promResponses.filter(p => p.status === "rejected").length
+	// for (const p of promResponses) {
+	// 	log.info(p.status + " " + JSON.stringify(p))
+	// }
+	log.debug('[findInitialFiles] update from disk complete. resolved=' + resolvedCount + ', rejected=' + rejectedCount + ', total=' + updates.length + elapsedTime())
+	if (token.isCancellationRequested) {
+		log.warn('[findInitialFiles] cancellation requested! aborted search for test files')
 	}
+
+	log.info('[findInitialFiles] found ' + getControllerTestFileCount(controller) + ' files with test cases ' + elapsedTime())
+	log.debug('[findInitialiles]  - ' + searchCount + ' files matching glob pattern(s)')
+	log.debug('[findInitialiles]  - ' + updateCount + ' files with potential test case(s)')
+	log.debug('[findInitialiles]  - ' + resolvedCount + ' files parsed had one or more test case(s)')
+	log.debug('[findInitialiles]  - ' + rejectedCount + ' files parsed had zero test case(s)')
+}
+
+function getControllerTestFileCount (controller: TestController) {
+	const getTestCount = (item: TestItem) => {
+		let count = 0
+		for(const [,child] of item.children) {
+			if (testData.get(child) instanceof ABLTestFile) {
+				count++
+			} else {
+				count += getTestCount(child)
+			}
+		}
+		return count
+	}
+
+	let count = 0
+	for(const [,item] of controller.items) {
+		if (testData.get(item) instanceof ABLTestFile) {
+			count ++
+		} else {
+			count += getTestCount(item)
+		}
+	}
+	return count
 }
 
 function startWatchingWorkspace (controller: TestController, fileChangedEmitter: EventEmitter<Uri>) {

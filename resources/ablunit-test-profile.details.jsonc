@@ -8,20 +8,17 @@
 ////# Keys which are not provided in this file will use the defaults as referenced below.
 ////#
 ////#  * Blank values are the same as not providing the key.
-////#  * Some keys can be disabled by settings to null, see key desription for details.
-////#  * All paths are assumed as relative to the workspace, or absolute.
+////#  * All paths are assumed as absolute, or relative to the workspace.
 ////#
 ////# The following substituion can be used in path values:
-////#   * ${DLC} - The value of the DLC environment variable
+////#   * ${DLC} - The OpenEdge installation directory, determined in the following order:
+////#       * From the `opendge-project.json` file configuration
+////#       * From the `DLC` environment variable
 ////#   * ${tempDir} - See the "tempDir" key below
 ////#   * ${workspaceFolder} - The path of the folder opened in VS Code
 
 {
 	"configurations": [{
-
-		////# Do not import this configuration.  Useful for testing when you may need
-		////# to switch between configurations quickly.
-		"hide": false,
 
 		////# Path to directory where temporary files will be written.  This path will be
 		////# added to the command line with the temporary directory (-T) option.
