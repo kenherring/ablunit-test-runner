@@ -47,8 +47,27 @@ class Logger {
 		logOutputChannel.error(message)
 	}
 
+	private _getCallerFile () {
+		const prepareStackTraceOrg = Error.prepareStackTrace
+		const err = new Error()
+		Error.prepareStackTrace = (_, stack) => stack
+		const stack = err.stack as unknown as NodeJS.CallSite[]
+		Error.prepareStackTrace = prepareStackTraceOrg
+		for (const s of stack) {
+			const fileName = s.getFileName()
+			if (fileName && fileName !== __filename) {
+				return fileName.replace(path.normalize(__dirname),'').substring(1).replace(/\\/g, '/')
+			}
+		}
+	}
+
 	private decorateMessage (message: string) {
-		return this.getPrefix() + ' ' + message
+		const callerFile = this._getCallerFile()
+		if (callerFile) {
+			return '[' + this._getCallerFile() + '] ' + message
+		}
+		return message
+		// return this.getPrefix() + ' ' + message
 	}
 
 	private logTestConsole (message: string, testRun: TestRun | undefined) {
@@ -57,12 +76,25 @@ class Logger {
 		testRun.appendOutput(optMsg + "\r\n")
 	}
 
-	private getPrefix () {
-		return '[' + path.normalize(__dirname + "/..").replace(/\\/g, '/') + ']'
-	}
+	// getPrefix () {
+	// 	let source = path.normalize(__filename)
+	// 	source = source.replace(path.normalize(__dirname),'')
+	// 	source = source.substring(1)
+	// 	return '[' + source + ']'
+	// 	// return '[' + path.normalize(__filename).replace(/\\/g, '/') + ']'
+	// }
 }
 
-export const log = new Logger()
+export const getPrefix = () => {
+	let source = path.normalize(__filename)
+	source = source.replace(path.normalize(__dirname),'')
+	source = source.substring(1)
+	return '[' + source + ']'
+}
+
+export const log: Logger = new Logger()
+
+// module.exports = new Logger()
 
 export const readStrippedJsonFile = (uri: Uri | string): JSON => {
 	if (typeof uri === 'string') {
