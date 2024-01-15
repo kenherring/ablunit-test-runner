@@ -9,7 +9,7 @@ options:
   -b            drop to bash shell inside container on failure
   -d            run development test
   -i            run install and run test
-  -p            run esbuild-bundle instead of build
+  -p            run webpack instead of build
   -s            run staged tests only
   -h            show this help message and exit
 " >&2

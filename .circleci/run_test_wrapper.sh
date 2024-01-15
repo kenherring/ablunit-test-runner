@@ -6,9 +6,7 @@ initialize () {
 	npm install
 
 	echo "\$1=${1:-}"
-	if [ "${1:-}" = "bundle" ]; then
-		RUNCMD="esbuild-bundle"
-	elif [ "${1:-}" = "webpack" ]; then
+	if [ "${1:-}" = "webpack" ]; then
 		RUNCMD="webpack"
 	else
 		RUNCMD="build"
