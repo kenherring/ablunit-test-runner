@@ -30,7 +30,7 @@ initialize () {
 			b)	OPTS='-b' ;;
 			d)	SCRIPT=development_test ;;
 			i)	TEST_PROJECT=dummy-ext ;;
-			p)	RUNCMD='esbuild-bundle' ;;
+			p)	RUNCMD='webpack' ;;
 			s)	STAGED_ONLY=true ;;
 			h) 	usage && exit 0 ;;
 			?) 	usage && exit 1 ;;

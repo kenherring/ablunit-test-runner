@@ -15,6 +15,7 @@
 		"esModuleInterop": true
 	},
 	"parseOptions": {
+		"ecmaVersion": "latest",
 		"project": "tsconfig.json",
 		"tsconfigRootDir": "."
 	},

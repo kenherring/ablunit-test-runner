@@ -15,5 +15,6 @@
 	},
 	"sonarlint.disableTelemetry": true,
 	"typescript.preferences.quoteStyle": "single",
-	"task.autoDetect": "off"
+	"typescript.validate.enable": false,
+	"task.autoDetect": "off",
 }
