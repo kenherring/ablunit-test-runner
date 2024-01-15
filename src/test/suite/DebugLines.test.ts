@@ -21,13 +21,28 @@ async function awaitRCode () {
 			return
 		}
 		console.log("found " + g.found.length + " r-code files. waiting...")
+		await commands.executeCommand('abl.dumpFileStatus').then(() => {
+			console.log("abl.dumpFileStatus complete!")
+		})
+		await commands.executeCommand('abl.dumpLangServStatus').then(() => {
+			console.log("abl.dumpLangServStatus complete!")
+		})
 		await new Promise((resolve) => setTimeout(resolve, 1000))
 	}
+
+	await commands.executeCommand('abl.dumpFileStatus').then(() => {
+		console.log("abl.dumpFileStatus complete!")
+	})
+	await commands.executeCommand('abl.dumpLangServStatus').then(() => {
+		console.log("abl.dumpLangServStatus complete!")
+	})
+
 	throw new Error("r-code files not found")
 }
 
 before(async () => {
 	await waitForExtensionActive()
+	console.log("getDefaultDLC=" + getDefaultDLC())
 	await setRuntimes([{name: "12.2", path: getDefaultDLC(), default: true}])
 
 	const langClientWait = 2

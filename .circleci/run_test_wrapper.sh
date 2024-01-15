@@ -43,8 +43,13 @@ run_tests () {
 		echo "xvfb-run success"
 	else
 		echo "xvfb-run failed (EXIT_CODE=$EXIT_CODE)"
+		print_debug_output
 		exit $EXIT_CODE
 	fi
+}
+
+print_debug_output () {
+	find . -name "2-ABL Language Server.log" -exec cat {} \;
 }
 
 run_lint () {

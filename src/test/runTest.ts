@@ -1,4 +1,4 @@
-import path from 'path'
+import * as path from 'path'
 import { getTestConfig } from './createTestConfig'
 import { runTests } from '@vscode/test-electron'
 
@@ -18,7 +18,7 @@ async function testProject (projName: string, projDir?: string, launchArgs: stri
 		projDir = projName
 	}
 
-	const extensionDevelopmentPath = path.resolve(__dirname, '../../')
+	const extensionDevelopmentPath: string = path.resolve(__dirname, '../../')
 	const extensionTestsPath = path.resolve(__dirname)
 	try {
 		const args: string[] = [

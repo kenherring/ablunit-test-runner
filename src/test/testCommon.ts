@@ -125,6 +125,7 @@ export async function getTestCount (resultsJson: Uri, status: string = 'tests') 
 }
 
 export function getDefaultDLC () {
+	console.log("process.platform=" + process.platform)
 	if (process.platform === 'linux') {
 		return "/psc/dlc"
 	}
@@ -160,13 +161,19 @@ interface IRuntime {
 }
 
 export async function setRuntimes (runtimes: IRuntime[]) {
-	await installOpenedgeABLExtension()
+	return installOpenedgeABLExtension().then(() => {
 
-	console.log("[indexCommon.ts] setting abl.configuration.runtimes")
-	await workspace.getConfiguration('abl.configuration').update('runtimes', runtimes, ConfigurationTarget.Global).then(() =>{
-		console.log("[indexCommon.ts] abl.configuration.runtimes set successfully")
-	}, (err) => {
-		throw new Error("[indexCommon.ts] failed to set runtimes: " + err)
+		console.log("[indexCommon.ts] setting abl.configuration.runtimes")
+		return workspace.getConfiguration('abl.configuration').update('runtimes', runtimes, ConfigurationTarget.Global).then(() =>{
+			console.log("[indexCommon.ts] abl.configuration.runtimes set successfully")
+		}, (err) => {
+			throw new Error("[indexCommon.ts] failed to set runtimes: " + err)
+		}).then(() => {
+
+			return commands.executeCommand('abl.restart.langserv').then(() => {
+				console.log("[indexCommon.ts] abl.restart.langserv complete!")
+			})
+		})
 	})
 }
 
@@ -246,6 +253,7 @@ export async function selectProfile (profile: string) {
 
 class AssertResults {
 	assertResultsCountByStatus (expectedCount: number, status: 'passed' | 'failed' | 'errored' | 'all') {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
 		const res = recentResults?.[0].ablResults?.resultsJson[0]
 		if (!res) {
 			assert.fail('No results found. Expected ' + expectedCount + ' ' + status + ' tests')
@@ -253,9 +261,13 @@ class AssertResults {
 
 		let actualCount: number = -1
 		switch (status) {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
 			case 'passed': actualCount = res.passed; break
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
 			case 'failed': actualCount = res.failures; break
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
 			case 'errored': actualCount = res.errors; break
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
 			case 'all': actualCount = res.tests; break
 		}
 		assert.equal(expectedCount, actualCount, "test count != " + expectedCount)
