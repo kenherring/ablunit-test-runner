@@ -168,8 +168,8 @@ export async function setRuntimes (runtimes: IRuntime[]) {
 			console.log("[indexCommon.ts] abl.configuration.runtimes set successfully")
 		}, (err) => {
 			throw new Error("[indexCommon.ts] failed to set runtimes: " + err)
-		}).then(() => {
-
+		}).then(async () => {
+			await sleep(500)
 			return commands.executeCommand('abl.restart.langserv').then(() => {
 				console.log("[indexCommon.ts] abl.restart.langserv complete!")
 			})

@@ -7,6 +7,8 @@ initialize () {
 	BASH_AFTER=false
 	CACHE_BASE=/home/circleci/cache
 	REPO_VOLUME=/home/circleci/ablunit-test-runner
+	STAGED_ONLY=${STAGED_ONLY:-true}
+	RUN_CMD=${RUN_CMD:-webpack}
 	export npm_config_cache=$CACHE_BASE/node_modules_cache
 	mkdir -p $CACHE_BASE/node_modules_cache
 
@@ -68,13 +70,13 @@ find_files_to_copy () {
 	git config --global --add safe.directory "$REPO_VOLUME"
 	git --no-pager diff --diff-filter=d --name-only --staged --ignore-cr-at-eol > /tmp/staged_files
 	git --no-pager diff --diff-filter=D --name-only --staged --ignore-cr-at-eol > /tmp/deleted_files
-	if ! ${STAGED_ONLY:-false}; then
+	if ! $STAGED_ONLY; then
 		git --no-pager diff --diff-filter=d --name-only --ignore-cr-at-eol > /tmp/modified_files
 	fi
 
 	echo "file counts:"
-	echo "  staged=$(wc -l /tmp/staged_files)"
-	echo " deleted=$(wc -l /tmp/deleted_files)"
+	echo "   staged=$(wc -l /tmp/staged_files)"
+	echo "  deleted=$(wc -l /tmp/deleted_files)"
 	echo " modified=$(wc -l /tmp/modified_files)"
 
 	cd "$BASE_DIR"
@@ -106,10 +108,6 @@ run_tests () {
 
 run_tests_base () {
 	echo "[$0 ${FUNCNAME[0]}] pwd=$(pwd)"
-
-	if [ -z "$RUNCMD" ]; then
-		RUNCMD='build'
-	fi
 
 	if ! .circleci/run_test_wrapper.sh "$RUNCMD"; then
 		echo "run_tests failed"

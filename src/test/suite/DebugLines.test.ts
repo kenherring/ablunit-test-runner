@@ -10,9 +10,10 @@ const projName = 'DebugLines'
 const workspaceFolder = workspace.workspaceFolders![0]
 
 async function awaitRCode () {
-	const buildWaitTime = 30
+	const buildWaitTime = 10
 	console.log("ablunit rebuild started. waiting up to" + buildWaitTime + " seconds for r-code")
 	for (let i = 0; i < buildWaitTime; i++) {
+		await new Promise((resolve) => setTimeout(resolve, 1000))
 
 		const g = new GlobSync('**/*.r', { cwd: workspaceFolder.uri.fsPath })
 		console.log("(" + i + "/" + buildWaitTime + ") found " + g.found.length + " r-code files...")
@@ -21,14 +22,9 @@ async function awaitRCode () {
 			return
 		}
 		console.log("found " + g.found.length + " r-code files. waiting...")
-		await commands.executeCommand('abl.dumpFileStatus').then(() => {
-			console.log("abl.dumpFileStatus complete!")
-		})
-		await commands.executeCommand('abl.dumpLangServStatus').then(() => {
-			console.log("abl.dumpLangServStatus complete!")
-		})
-		await new Promise((resolve) => setTimeout(resolve, 1000))
+		console.log("found files: " + JSON.stringify(g.found,null,2))
 	}
+
 
 	await commands.executeCommand('abl.dumpFileStatus').then(() => {
 		console.log("abl.dumpFileStatus complete!")

@@ -1,18 +1,23 @@
 'use strict';
 const path = require('path');
 
+const outputDir = path.resolve(__dirname, 'dist');
+let mode = 'development';
+if (process.argv.indexOf('--mode=production') !== -1) {
+  mode = 'production';
+}
+
+console.log('webpack mode: ' + mode);
+
 /**@type {import('webpack').Configuration}*/
 const config = {
-  // vscode extensions run in a Node.js-context -> https://webpack.js.org/configuration/node/
   target: 'node',
   node: false,
-  // the entry point of this extension -> https://webpack.js.org/configuration/entry-context/
   entry: {
     'extension': './src/extension.ts'
   },
-  // the bundle is stored in the 'dist' folder (check package.json) -> https://webpack.js.org/configuration/output/
   output: {
-    path: path.resolve(__dirname, 'dist'),
+    path: outputDir,
     filename: '[name].js',
     libraryTarget: "commonjs2",
     devtoolModuleFilenameTemplate: "../[resource-path]",
@@ -23,7 +28,7 @@ const config = {
     vscode: "commonjs vscode"
   },
   resolve: {
-    // support reading TypeScript and JavaScript files -> https://github.com/TypeStrong/ts-loader
+    mainFields: ['browser', 'module', 'main'],
     extensions: ['.ts', '.js']
   },
   module: {
@@ -35,6 +40,7 @@ const config = {
       }]
     }]
   },
+  mode: mode
 }
 
 module.exports = config;

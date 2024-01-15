@@ -3,16 +3,20 @@ set -eou pipefail
 
 initialize () {
 	echo "[$0 initialize]"
+	RUNCMD=${1:-webpack}
+	VERBOSE=${VERBOSE:-false}
 	npm install
 
-	echo "\$1=${1:-}"
-	if [ "${1:-}" = "webpack" ]; then
-		RUNCMD="webpack"
-	else
-		RUNCMD="build"
-	fi
-	rm -rf out
-	npm run "$RUNCMD"
+	# RUNCMD="build" ## always build so the *.test.ts are compiled
+	# if [ "$RUNCMD" = "webpack" ]; then
+	# 	RUNCMD="webpack"
+	# fi
+	# rm -rf dist out
+	# npm run "$RUNCMD"
+
+	rm -rf dist out
+	npm run build
+	npm run webpack
 	echo "npm run $RUNCMD - success"
 }
 
@@ -52,6 +56,9 @@ run_tests () {
 }
 
 print_debug_output () {
+	$VERBOSE || return 0
+	echo "[$0 print_debug_output]"
+
 	echo "[$0 print_debug_output]"
 	echo "********** '1-ABL.log' **********"
 	find . -name "1-ABL.log" -exec cat {} \;

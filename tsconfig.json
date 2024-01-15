@@ -9,6 +9,7 @@
 		"outDir": "out",
 		"baseUrl": ".",
 		"esModuleInterop": true,
+		// "listEmittedFiles": true,
 
 		"isolatedModules": true,
 		"experimentalDecorators": true,
@@ -38,6 +39,6 @@
 		"dummy-ext",
 		"node_modules",
 		"out",
-		"test_projects"
+		"test_projects",
 	]
 }

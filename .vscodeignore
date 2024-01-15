@@ -2,6 +2,7 @@
 !CHANGELOG.md
 !docs/coverage.png
 !LICENSE
+!dist/extension.js*
 !out/extension.js
 !package.json
 !resources/ablunit-test-profile.details.jsonc
