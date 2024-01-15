@@ -46,9 +46,16 @@ run_tests () {
 		print_debug_output
 		exit $EXIT_CODE
 	fi
+
+	find .vscode-test -name "1-ABL.log" -exec cp {} artifacts \;
+	find .vscode-test -name "2-ABL Language Server.log" -exec cp {} artifacts \;
 }
 
 print_debug_output () {
+	echo "[$0 print_debug_output]"
+	echo "********** '1-ABL.log' **********"
+	find . -name "1-ABL.log" -exec cat {} \;
+	echo "********** '2-ABL Language Server.log' **********"
 	find . -name "2-ABL Language Server.log" -exec cat {} \;
 }
 
