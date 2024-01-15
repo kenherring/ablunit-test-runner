@@ -47,7 +47,7 @@ function createTestConfig (projName: string, workspaceFolder?: string, timeout?:
 export function getTestConfig () {
 	const testConfig: TestConfig[] = []
 	// Unit Tests
-	testConfig.push(createTestConfig('DebugLines', undefined, 30000))
+	testConfig.push(createTestConfig('DebugLines', undefined, 45000))
 	testConfig.push(createTestConfig('TestProfileParser'))
 
 	// Folders

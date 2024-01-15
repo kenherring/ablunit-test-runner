@@ -4,9 +4,27 @@ import { Uri, commands, workspace } from 'vscode'
 import { getDefaultDLC, getWorkspaceUri, setRuntimes, waitForExtensionActive } from '../testCommon'
 import { getSourceMapFromRCode } from '../../parse/RCodeParser'
 import { PropathParser } from '../../ABLPropath'
+import { GlobSync } from 'glob'
 
 const projName = 'DebugLines'
 const workspaceFolder = workspace.workspaceFolders![0]
+
+async function awaitRCode () {
+	const buildWaitTime = 30
+	console.log("ablunit rebuild started. waiting up to" + buildWaitTime + " seconds for r-code")
+	for (let i = 0; i < buildWaitTime; i++) {
+
+		const g = new GlobSync('**/*.r', { cwd: workspaceFolder.uri.fsPath })
+		console.log("(" + i + "/" + buildWaitTime + ") found " + g.found.length + " r-code files...")
+		if (g.found.length > 5) {
+			console.log("found " + g.found.length + " r-code files! ready to test")
+			return
+		}
+		console.log("found " + g.found.length + " r-code files. waiting...")
+		await new Promise((resolve) => setTimeout(resolve, 1000))
+	}
+	throw new Error("r-code files not found")
+}
 
 before(async () => {
 	await waitForExtensionActive()
@@ -18,11 +36,11 @@ before(async () => {
 		console.log("language client ready? continuing...")
 	})
 
-	const buildWaitTime = 5
 	await commands.executeCommand('abl.project.rebuild').then(() => {
-		console.log("ablunit rebuild started. waiting " + buildWaitTime + " seconds...")
+		console.log("abl project rebuild started")
 	})
-	await new Promise((resolve) => setTimeout(resolve, buildWaitTime * 1000)).then(() => {
+	const waiting = awaitRCode()
+	await waiting.then(() => {
 		console.log("abl project rebuild complete!")
 	})
 })
