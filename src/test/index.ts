@@ -6,7 +6,7 @@
 import { getTestConfig } from './createTestConfig'
 import { GlobSync } from 'glob'
 import { workspace } from 'vscode'
-import Mocha = require('mocha')
+import Mocha from 'mocha'
 import * as path from 'path'
 const NYC = require('nyc')
 

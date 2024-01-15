@@ -1,27 +1,28 @@
 {
 	"compilerOptions": {
-		"module": "commonjs",
+		"module": "CommonJS",
+		"moduleResolution": "node",
 		"target": "ES2019",
 		"lib": [
-			"ES2019"
+			"ESNext", "DOM"
 		],
-		"outDir": "out",
 		"sourceMap": true,
 		"strict": true,
-		"rootDir": "src"
+		"alwaysStrict": true,
+		"rootDir": "src",
+		"outDir": "out",
+		"baseUrl": ".",
+		"esModuleInterop": true
 	},
 	"parseOptions": {
 		"project": "tsconfig.json",
 		"tsconfigRootDir": "."
 	},
 	"include": [
-		"src/**/*.ts",
-		"src/*.ts",
-		"src/*/*.ts",
-		"src/*/*/*.ts",
-		"src/*/*/*/*.ts"
+		"src/**/*.ts"
 	],
 	"exclude": [
+		"dist",
 		"node_modules",
 		"out"
 	]
