@@ -603,7 +603,7 @@ function removeExcludedChildren (parent: TestItem, excludePatterns: RelativePatt
 
 async function findInitialFiles (
 	controller: TestController,
-	workspaceFolder: WorkspaceFolder,
+	_workspaceFolder: WorkspaceFolder,
 	includePatterns: RelativePattern[],
 	excludePatterns: RelativePattern[],
 	removeExcluded: boolean = false) {

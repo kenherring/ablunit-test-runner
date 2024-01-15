@@ -25,6 +25,7 @@ get_performance_test_code () {
 
 	local TO_FILE="/home/circleci/v${OE_VERSION}.0.tar.gz"
 	if [ "${OS:-}" = "Windows_NT" ]; then
+		mkdir -p .vscode-test
 		TO_FILE=.vscode-test/v${OE_VERSION}.0.tar.gz
 	fi
 	if [ ! -f "$TO_FILE" ]; then

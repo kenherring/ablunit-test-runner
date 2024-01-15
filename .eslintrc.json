@@ -1,8 +1,8 @@
 {
 	"env": {
-		"node": true
-		// "esnext": true,
-		// "commonjs": true,
+		"node": true,
+		"esnext": true,
+		"commonjs": true
 		// "browser": false
 	},
 	"extends": [

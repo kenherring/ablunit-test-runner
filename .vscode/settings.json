@@ -14,7 +14,7 @@
 		"projectKey": "kenherring_ablunit-test-runner"
 	},
 	"sonarlint.disableTelemetry": true,
-	"typescript.preferences.quoteStyle": "single",
-	"typescript.validate.enable": false,
 	"task.autoDetect": "off",
+	"typescript.preferences.quoteStyle": "single",
+	"typescript.validate.enable": true,
 }

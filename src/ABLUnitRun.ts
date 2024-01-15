@@ -7,7 +7,7 @@ import { log } from './ABLUnitCommon'
 export const ablunitRun = async (options: TestRun, res: ABLResults) => {
 	const start = Date.now()
 
-	await res.cfg.createAblunitJson(res.cfg.ablunitConfig.config_uri, res.cfg.ablunitConfig.options, res.testQueue)
+	await res.cfg.createAblunitJson(res.cfg.ablunitConfig.options, res.testQueue)
 
 	const getCommand = () => {
 		if (res.cfg.ablunitConfig.command.executable != "_progres" &&

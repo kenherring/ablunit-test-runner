@@ -92,7 +92,7 @@ export class ABLResults {
 		const prom: (Promise<void> | Promise<void[]>)[] = []
 		prom[0] = this.cfg.createProfileOptions(this.cfg.ablunitConfig.profOptsUri,this.cfg.ablunitConfig.profiler)
 		prom[1] = this.cfg.createProgressIni(this.propath.toString())
-		prom[2] = this.cfg.createAblunitJson(this.cfg.ablunitConfig.config_uri, this.cfg.ablunitConfig.options, this.testQueue)
+		prom[2] = this.cfg.createAblunitJson(this.cfg.ablunitConfig.options, this.testQueue)
 		prom[3] = this.cfg.createDbConnPf(this.cfg.ablunitConfig.dbConnPfUri, this.cfg.ablunitConfig.dbConns)
 
 		if(this.cfg.ablunitConfig.dbConns) {

@@ -1,26 +1,50 @@
 {
 	"compilerOptions": {
-		"module": "CommonJS",
-		"moduleResolution": "node",
+		// "module": "CommonJS",
+		"module": "commonjs",
 		"target": "ES2019",
-		"lib": [
-			"ESNext", "DOM"
-		],
+		// "moduleResolution": "NodeNext",
+		// "target": "ESNext",
+		// "lib": [
+		// 	"ESNext",
+		// 	"DOM",
+		// 	"ES6"
+		// ],
 		"sourceMap": true,
 		"strict": true,
 		"alwaysStrict": true,
 		"rootDir": "src",
 		"outDir": "out",
 		"baseUrl": ".",
-		"esModuleInterop": true
+		"esModuleInterop": true,
+
+		"isolatedModules": true,
+		"experimentalDecorators": true,
+		"allowSyntheticDefaultImports": true,
+
+		"allowJs": true,
+		"checkJs": true,
+		"forceConsistentCasingInFileNames": true,
+		"noErrorTruncation": true,
+		"noFallthroughCasesInSwitch": true,
+		"noImplicitAny": true,
+		"noImplicitOverride": true,
+		// "noImplicitReturns": true,
+		"noImplicitThis": true,
+		"noUnusedLocals": true,
+		"noUnusedParameters": true,
+		"removeComments": true,
+		"strictFunctionTypes": true,
+		"strictNullChecks": true,
+		"strictPropertyInitialization": true,
 	},
-	"parseOptions": {
-		"ecmaVersion": "latest",
-		"project": "tsconfig.json",
-		"tsconfigRootDir": "."
-	},
+	// "parseOptions": {
+		// "ecmaVersion": "latest",
+		// "project": "tsconfig.json",
+		// "tsconfigRootDir": "."
+	// },
 	"include": [
-		"src/**/*.ts"
+		"./src/**/*.ts"
 	],
 	"exclude": [
 		"dist",
