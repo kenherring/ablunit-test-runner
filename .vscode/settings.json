@@ -1,6 +1,4 @@
 {
-	"eslint.enable": true,
-	"eslint.lintTask.enable": false,
 	"eslint.run": "onType",
 	"extension-test-runner.debugOptions": {},
 	"git.branchProtection": [

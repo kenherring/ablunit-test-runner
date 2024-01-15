@@ -1,9 +1,7 @@
 {
 	"env": {
 		"node": true,
-		"esnext": true,
 		"commonjs": true
-		// "browser": false
 	},
 	"extends": [
 		"eslint:recommended",
@@ -12,28 +10,19 @@
 		"plugin:@typescript-eslint/recommended-type-checked"
 	],
 	"parser": "@typescript-eslint/parser",
+	"parserOptions": {
+		"project": "./tsconfig.json"
+	},
 	"plugins": [
 		"@typescript-eslint"
 	],
-	// "parserOptions": {
-	// 	"project": [
-	// 		"package.json",
-	// 		"tsconfig.json"
-	// 	],
-	// 	"ecmaVersion": "latest",
-	// 	"module": true
-	// },
 	"root": true,
-	"ignorePatterns": [
-		"dummy-ext",
-		"out",
-		"test_projects"
-	],
 	"rules": {
 		// TODO: enable and fix theese
 		// "@typescript-eslint/interface-name-prefix": ["error", "always"],
 		// "quotes": ["warn", "single"]
 		// "no-console": "warn",
+		// "comma-dangle": [ "never", "always" ]
 
 		"@typescript-eslint/indent": ["error", "tab"],
 		"@typescript-eslint/restrict-plus-operands": "off",
@@ -44,7 +33,6 @@
 		"space-before-blocks": ["error", "always"],
 		"space-before-function-paren": ["warn", "always"],
 		"space-in-parens": ["warn", "never"],
-		"spaced-comment": ["error", "warn"],
-		"comma-dangle": [ "never" ]
+		"spaced-comment": ["error", "always", { "markers": ["/"] }]
 	}
 }

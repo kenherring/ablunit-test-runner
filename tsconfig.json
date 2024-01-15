@@ -1,15 +1,7 @@
 {
 	"compilerOptions": {
-		// "module": "CommonJS",
-		"module": "commonjs",
+		"module": "CommonJS",
 		"target": "ES2019",
-		// "moduleResolution": "NodeNext",
-		// "target": "ESNext",
-		// "lib": [
-		// 	"ESNext",
-		// 	"DOM",
-		// 	"ES6"
-		// ],
 		"sourceMap": true,
 		"strict": true,
 		"alwaysStrict": true,
@@ -38,17 +30,14 @@
 		"strictNullChecks": true,
 		"strictPropertyInitialization": true,
 	},
-	// "parseOptions": {
-		// "ecmaVersion": "latest",
-		// "project": "tsconfig.json",
-		// "tsconfigRootDir": "."
-	// },
 	"include": [
 		"./src/**/*.ts"
 	],
 	"exclude": [
 		"dist",
+		"dummy-ext",
 		"node_modules",
-		"out"
+		"out",
+		"test_projects"
 	]
 }
