@@ -1,19 +1,20 @@
 
 import { strict as assert } from 'assert'
-import { WorkspaceFolder, workspace } from 'vscode'
-import { parseRunProfiles } from '../../parse/TestProfileParser'
+import { Uri, WorkspaceFolder, workspace } from 'vscode'
+import { IConfigurations, parseRunProfiles } from '../../parse/TestProfileParser'
 
-// function readValidationFile (filename: string) {
-// 	const uri = Uri.joinPath(workspace.workspaceFolders![0].uri, 'validation', filename)
-// 	return workspace.fs.readFile(uri).then((content) => {
-// 		const data = Buffer.from(content.buffer).toString().trim().replace(/[\r\t\n]/g,'').replace(/\/\/.*/g,'').replace(/^$/g,'')
-// 		const conf = <IConfigurations>JSON.parse(data)
-// 		return JSON.stringify(conf.configurations)
-// 	}, (err) => {
-// 		console.error("Reading validation file failed: " + err)
-// 		throw err
-// 	})
-// }
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function readValidationFile (filename: string) {
+	const uri = Uri.joinPath(workspace.workspaceFolders![0].uri, 'validation', filename)
+	return workspace.fs.readFile(uri).then((content) => {
+		const data = Buffer.from(content.buffer).toString().trim().replace(/[\r\t\n]/g,'').replace(/\/\/.*/g,'').replace(/^$/g,'')
+		const conf = <IConfigurations>JSON.parse(data)
+		return JSON.stringify(conf.configurations)
+	}, (err) => {
+		console.error("Reading validation file failed: " + err)
+		throw err
+	})
+}
 
 function getWorkspaceFolders () {
 	const workspaceFolders: WorkspaceFolder[] = []

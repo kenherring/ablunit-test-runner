@@ -11,18 +11,18 @@ export async function waitForExtensionActive () {
 	}
 	if (!ext.isActive) {
 		await ext.activate().then(() => {
-			log.info("activated kherring.ablunit-test-runner")
+			console.log("activated kherring.ablunit-test-runner")
 		}, (err) => {
 			throw new Error("failed to activate kherring.ablunit-test-runner: " + err)
 		})
 	}
 
 	if(!ext.isActive) {
-		log.info("waiting for extension to activate - should never be here!")
+		console.log("waiting for extension to activate - should never be here!")
 		for (let i=0; i<50; i++) {
 			await sleep(100)
 			if (ext.isActive) {
-				log.info("waitied " + ((i + 1) * 100) + "ms for extension to activate")
+				console.log("waitied " + ((i + 1) * 100) + "ms for extension to activate")
 				break
 			}
 		}
@@ -71,7 +71,7 @@ export function sleep (time: number = 2000, msg?: string) {
 	if (msg) {
 		status = status + " [" + msg + "]"
 	}
-	log.info(status)
+	console.log(status)
 	return new Promise(resolve => setTimeout(resolve, time))
 }
 
@@ -121,12 +121,11 @@ export async function getTestCount (resultsJson: Uri, status: string = 'tests') 
 			throw new Error("[getTestCount] unknown status: " + status)
 		}
 	})
-	log.info("getTestCount: " + status + " = " + count)
+	console.log("getTestCount: " + status + " = " + count)
 	return count
 }
 
 export function getDefaultDLC () {
-	log.info("process.platform=" + process.platform)
 	if (process.platform === 'linux') {
 		return "/psc/dlc"
 	}
@@ -194,11 +193,11 @@ export async function setRuntimes (runtimes: IRuntime[]) {
 
 export async function runAllTests (doRefresh: boolean = true) {
 
-	log.info("running all tests")
+	console.log("running all tests")
 	if (doRefresh) {
-		log.info("testing.refreshTests starting")
+		console.log("testing.refreshTests starting")
 		await commands.executeCommand('testing.refreshTests').then(() => {
-			log.info("testing.refreshTests complete!")
+			console.log("testing.refreshTests complete!")
 		}, (err) => {
 			throw new Error("testing.refreshTests failed: " + err)
 		})
@@ -207,9 +206,9 @@ export async function runAllTests (doRefresh: boolean = true) {
 		await sleep(250)
 	}
 
-	log.info("testing.runAll starting")
+	console.log("testing.runAll starting")
 	return commands.executeCommand('testing.runAll').then(() => {
-		log.info("testing.runAll complete!")
+		console.log("testing.runAll complete!")
 	} , (err) => {
 		throw new Error("testing.runAll failed: " + err)
 	})
@@ -217,7 +216,7 @@ export async function runAllTests (doRefresh: boolean = true) {
 
 export function updateConfig (key: string, value: string | string[] | undefined) {
 	return workspace.getConfiguration('ablunit').update(key, value, ConfigurationTarget.Workspace).then(() => {
-		log.info("ablunit." + key + " set successfully (value='" + value + "')")
+		console.log("ablunit." + key + " set successfully (value='" + value + "')")
 		return sleep(100, "sleep after updateConfig")
 	}, (err) => {
 		throw new Error("failed to set ablunit." + key + ": " + err)

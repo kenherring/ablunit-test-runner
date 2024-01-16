@@ -3,8 +3,6 @@ import * as path from 'path'
 import { runTests } from '@vscode/test-electron'
 import { ITestConfig } from './createTestConfig'
 
-
-
 async function main () {
 	console.log('[runTest.ts main] starting...')
 	const testConfig: ITestConfig[] = <ITestConfig[]>JSON.parse(fs.readFileSync('./.vscode-test.config.json', 'utf8'))
