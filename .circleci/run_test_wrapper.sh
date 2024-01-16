@@ -39,21 +39,20 @@ run_tests () {
 	EXIT_CODE=0
 
 	xvfb-run -a npm test || EXIT_CODE=$?
+	save_and_print_debug_output
 	if [ "$EXIT_CODE" = "0" ]; then
 		echo "xvfb-run success"
 	else
 		echo "xvfb-run failed (EXIT_CODE=$EXIT_CODE)"
-		print_debug_output
 		exit $EXIT_CODE
 	fi
-
-	find .vscode-test -name "1-ABL.log" -exec cp {} artifacts \;
-	find .vscode-test -name "2-ABL Language Server.log" -exec cp {} artifacts \;
 }
 
 print_debug_output () {
-	$VERBOSE || return 0
 	echo "[$0 print_debug_output]"
+	find .vscode-test -name "1-ABL.log" -exec cp {} artifacts \;
+	find .vscode-test -name "2-ABL Language Server.log" -exec cp {} artifacts \;
+	$VERBOSE || return 0
 
 	echo "[$0 print_debug_output]"
 	echo "********** '1-ABL.log' **********"
