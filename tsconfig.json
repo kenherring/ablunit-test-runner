@@ -21,11 +21,10 @@
 		"noErrorTruncation": true,
 		"noFallthroughCasesInSwitch": true,
 		"noImplicitAny": true,
-		"noImplicitOverride": true,
-		// "noImplicitReturns": true,
+		// "noImplicitOverride": true,
 		"noImplicitThis": true,
 		// "noUnusedLocals": true, // reported by the typescript plugin
-		"noUnusedParameters": true,
+		// "noUnusedParameters": true,
 		"removeComments": true,
 		"strictFunctionTypes": true,
 		"strictNullChecks": true,

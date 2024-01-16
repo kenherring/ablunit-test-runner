@@ -29,7 +29,6 @@ suite(projName + ' - Extension Test Suite', () => {
 
 	test(projName + '.2 - getEnvVars confirm PATH is set correctly', async () => {
 		await runAllTests()
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		const recentResults = await getRecentResults()
 		const res = recentResults?.[0]
 		if (!res) {

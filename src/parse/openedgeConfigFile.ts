@@ -147,7 +147,7 @@ class ProfileConfig {
 class OpenEdgeProjectConfig extends ProfileConfig {
 	activeProfile?: string
 	rootDir: string = '.'
-	_buildDirectory: string = '.' // TODO use this
+	buildDirectory: string = '.'
 	profiles: Map<string, ProfileConfig> = new Map<string, ProfileConfig>()
 }
 

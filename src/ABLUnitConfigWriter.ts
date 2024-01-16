@@ -53,7 +53,7 @@ export class ABLUnitConfig  {
 		return workspace.fs.writeFile(this.ablunitConfig.progressIniUri, iniBytes)
 	}
 
-	async createAblunitJson (cfg: CoreOptions, testQueue: ITestObj[]) {
+	async createAblunitJson (uri: Uri, cfg: CoreOptions, testQueue: ITestObj[]) {
 		log.info("creating ablunit.json: '" + this.ablunitConfig.config_uri.fsPath + "'")
 		const promarr: PromiseLike<void>[] = []
 		promarr.push(

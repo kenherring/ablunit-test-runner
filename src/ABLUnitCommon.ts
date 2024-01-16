@@ -41,11 +41,7 @@ class Logger {
 	}
 
 	private decorateMessage (message: string) {
-		const prefix = this.getPrefix()
-		if (prefix) {
-			return prefix + ' ' + message
-		}
-		return message
+		return this.getPrefix() + ' ' + message
 	}
 
 	private logTestConsole (message: string, testRun: TestRun | undefined) {
@@ -55,9 +51,7 @@ class Logger {
 	}
 
 	private getPrefix () {
-		let prefix =  '[' + path.normalize(__dirname + "/..").replace(/\\/g, '/') + ']'
-		prefix = prefix.replace(__dirname, '')
-		return prefix
+		return '[' + path.normalize(__dirname + "/..").replace(/\\/g, '/') + ']'
 	}
 }
 
