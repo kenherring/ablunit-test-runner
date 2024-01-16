@@ -172,6 +172,7 @@ export async function setRuntimes (runtimes: IRuntime[]) {
 			await sleep(500)
 			return commands.executeCommand('abl.restart.langserv').then(() => {
 				console.log("[indexCommon.ts] abl.restart.langserv complete!")
+				return sleep(500)
 			})
 		})
 	})

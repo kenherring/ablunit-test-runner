@@ -1,7 +1,7 @@
 import { strict as assert } from 'assert'
 import { before } from 'mocha'
 import { Uri, commands, workspace } from 'vscode'
-import { getDefaultDLC, getWorkspaceUri, setRuntimes, waitForExtensionActive } from '../testCommon'
+import { getDefaultDLC, getWorkspaceUri, setRuntimes, sleep, waitForExtensionActive } from '../testCommon'
 import { getSourceMapFromRCode } from '../../parse/RCodeParser'
 import { PropathParser } from '../../ABLPropath'
 import { GlobSync } from 'glob'
@@ -9,7 +9,7 @@ import { GlobSync } from 'glob'
 const projName = 'DebugLines'
 const workspaceFolder = workspace.workspaceFolders![0]
 
-async function awaitRCode () {
+async function awaitRCode (rcodeCount: number = 1) {
 	const buildWaitTime = 10
 	console.log("ablunit rebuild started. waiting up to" + buildWaitTime + " seconds for r-code")
 	for (let i = 0; i < buildWaitTime; i++) {
@@ -17,7 +17,7 @@ async function awaitRCode () {
 
 		const g = new GlobSync('**/*.r', { cwd: workspaceFolder.uri.fsPath })
 		console.log("(" + i + "/" + buildWaitTime + ") found " + g.found.length + " r-code files...")
-		if (g.found.length > 5) {
+		if (g.found.length > rcodeCount) {
 			console.log("found " + g.found.length + " r-code files! ready to test")
 			return
 		}
@@ -40,17 +40,11 @@ before(async () => {
 	await waitForExtensionActive()
 	console.log("getDefaultDLC=" + getDefaultDLC())
 	await setRuntimes([{name: "12.2", path: getDefaultDLC(), default: true}])
-
-	const langClientWait = 2
-	console.log("waiting " + langClientWait + "s for language client ready...")
-	await new Promise((resolve) => setTimeout(resolve, langClientWait * 1000)).then(() => {
-		console.log("language client ready? continuing...")
-	})
-
 	await commands.executeCommand('abl.project.rebuild').then(() => {
 		console.log("abl project rebuild started")
+		return sleep(500)
 	})
-	const waiting = awaitRCode()
+	const waiting = awaitRCode(5)
 	await waiting.then(() => {
 		console.log("abl project rebuild complete!")
 	})
