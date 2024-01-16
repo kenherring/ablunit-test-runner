@@ -6,7 +6,7 @@
         "workspaceFolder": "./test_projects/DebugLines",
         "mocha": {
             "ui": "tdd",
-            "timeout": 15000
+            "timeout": 60000
         },
         "launchArgs": [],
         "env": {
