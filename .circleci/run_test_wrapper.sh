@@ -48,9 +48,11 @@ run_tests () {
 	fi
 }
 
-print_debug_output () {
+save_and_print_debug_output: () {
 	echo "[$0 print_debug_output]"
+	find .vscode-test -name "1-ABL.log"
 	find .vscode-test -name "1-ABL.log" -exec cp {} artifacts \;
+	find .vscode-test -name "2-ABL Language Server.log"
 	find .vscode-test -name "2-ABL Language Server.log" -exec cp {} artifacts \;
 	$VERBOSE || return 0
 
