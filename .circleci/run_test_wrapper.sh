@@ -48,7 +48,7 @@ run_tests () {
 	fi
 }
 
-save_and_print_debug_output: () {
+save_and_print_debug_output () {
 	echo "[$0 print_debug_output]"
 	find .vscode-test -name "1-ABL.log"
 	find .vscode-test -name "1-ABL.log" -exec cp {} artifacts \;
