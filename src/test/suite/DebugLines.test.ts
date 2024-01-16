@@ -46,11 +46,11 @@ before(async () => {
 	v = await setRuntimes([{name: "12.2", path: getDefaultDLC(), default: true}]).then(async () => {
 		log.info("before-3")
 		console.log("setRuntimes complete!")
-		await sleep(100)
+		await sleep(250)
 		return true
 	})
 	log.info("before 4.1: v=" + v)
-	await sleep(100)
+	await sleep(250)
 	// v = await commands.executeCommand('abl.project.rebuild').then(() => {
 	// 	log.info("before-5")
 	// 	console.log("abl project rebuild started")

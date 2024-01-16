@@ -150,7 +150,7 @@ async function installOpenedgeABLExtension () {
 	await extensions.getExtension("riversidesoftware.openedge-abl-lsp")?.activate()
 	while(!extensions.getExtension("riversidesoftware.openedge-abl-lsp")?.isActive) {
 		log.info(extensions.getExtension("riversidesoftware.openedge-abl-lsp") + " " + extensions.getExtension("riversidesoftware.openedge-abl-lsp")?.isActive)
-		await sleep(500)
+		await sleep(1000)
 	}
 	log.info("openedge-abl active? " + !extensions.getExtension("riversidesoftware.openedge-abl-lsp")?.isActive)
 }
@@ -163,9 +163,7 @@ interface IRuntime {
 
 export async function setRuntimes (runtimes: IRuntime[]) {
 	return installOpenedgeABLExtension().then(async () => {
-
 		log.info("[testCommon.ts] setting abl.configuration.runtimes")
-		await sleep(100)
 		return workspace.getConfiguration('abl.configuration').update('runtimes', runtimes, ConfigurationTarget.Global).then(async () =>{
 			log.info("[testCommon.ts] abl.configuration.runtimes set successfully")
 			await sleep(1000)
