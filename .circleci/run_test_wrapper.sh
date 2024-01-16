@@ -3,17 +3,17 @@ set -eou pipefail
 
 initialize () {
 	echo "[$0 initialize]"
-	RUNCMD=${1:-webpack}
+	# RUNCMD=${1:-webpack}
 	VERBOSE=${VERBOSE:-false}
 	npm install
 
-	RUNCMD="build" ## always build so the *.test.ts are compiled
-	if [ -n "$RUNCMD" ]; then
-		RUNCMD="webpack"
-	fi
-	rm -rf dist out
-	npm run "$RUNCMD"
-	echo "npm run $RUNCMD - success"
+	# RUNCMD="build" ## always build so the *.test.ts are compiled
+	# if [ -n "$RUNCMD" ]; then
+	# 	RUNCMD="webpack"
+	# fi
+	# rm -rf dist out
+	# npm run "$RUNCMD"
+	# echo "npm run $RUNCMD - success"
 }
 
 dbus_config () {
@@ -62,6 +62,7 @@ save_and_print_debug_output () {
 	find . -name "1-ABL.log" -exec cat {} \;
 	echo "********** '2-ABL Language Server.log' **********"
 	find . -name "2-ABL Language Server.log" -exec cat {} \;
+	echo '********** logs done **********'
 }
 
 run_lint () {

@@ -5,7 +5,7 @@ import { getDefaultDLC, getWorkspaceUri, setRuntimes, sleep, waitForExtensionAct
 import { getSourceMapFromRCode } from '../../parse/RCodeParser'
 import { PropathParser } from '../../ABLPropath'
 import { GlobSync } from 'glob'
-import { log } from 'src/ABLUnitCommon'
+import { log } from '../../ABLUnitCommon'
 
 const projName = 'DebugLines'
 const workspaceFolder = workspace.workspaceFolders![0]
@@ -38,29 +38,32 @@ async function awaitRCode (rcodeCount: number = 1) {
 }
 
 before(async () => {
+	let v
 	log.info("before-1")
-	await waitForExtensionActive()
-	log.info("before-2")
+	v = await waitForExtensionActive()
+	log.info("before-2: v=" + v)
 	console.log("getDefaultDLC=" + getDefaultDLC())
-	await setRuntimes([{name: "12.2", path: getDefaultDLC(), default: true}]).then(() => {
+	v = await setRuntimes([{name: "12.2", path: getDefaultDLC(), default: true}]).then(() => {
 		log.info("before-3")
 		console.log("setRuntimes complete!")
 	})
-	log.info("before-4")
-	await commands.executeCommand('abl.project.rebuild').then(() => {
+	log.info("before 4.1: v=" + v)
+	await sleep(500)
+	log.info("before-4.2")
+	v = await commands.executeCommand('abl.project.rebuild').then(() => {
 		log.info("before-5")
 		console.log("abl project rebuild started")
 		log.info("before-6")
 		return sleep(500)
 	})
-	log.info("before-7")
+	log.info("before-7: v=" + v)
 	const prom = awaitRCode(5)
 	log.info("before-8")
-	await prom.then((rcodeCount) => {
+	v = await prom.then((rcodeCount) => {
 		log.info("before-9")
 		console.log("abl project rebuild complete! rcode count = " + rcodeCount)
 	})
-	log.info("before-10")
+	log.info("before-10: v=" + v)
 	console.log("before complete!")
 })
 

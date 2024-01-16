@@ -125,9 +125,13 @@ export function run (): Promise <void> {
 	if (fs.existsSync('./.vscode-test.config.json')) {
 		configFilename = './.vscode-test.config.json'
 	} else if (fs.existsSync('../.vscode-test.config.json')) {
-		configFilename = '../.vscode-test.config.json'
+		configFilename =     '../.vscode-test.config.json'
 	} else if (fs.existsSync('../../.vscode-test.config.json')) {
-		configFilename = './.vscode-test.config.json'
+		configFilename =     '../../.vscode-test.config.json'
+	} else if (fs.existsSync('../../../.vscode-test.config.json')) {
+		configFilename =     '../../../.vscode-test.config.json'
+	} else if (fs.existsSync('../../../../.vscode-test.config.json')) {
+		configFilename =     '../../../../.vscode-test.config.json'
 	} else {
 		throw new Error("Could not find .vscode-test.config.json")
 	}

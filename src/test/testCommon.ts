@@ -2,6 +2,7 @@ import { ConfigurationTarget, FileType, Uri, commands, extensions, workspace } f
 import { ITestSuites } from '../parse/ResultsParser'
 import { strict as assert } from 'assert'
 import { ABLResults } from 'src/ABLResults'
+import { log } from '../ABLUnitCommon'
 
 export async function waitForExtensionActive () {
 	const ext = extensions.getExtension("kherring.ablunit-test-runner")
@@ -10,18 +11,18 @@ export async function waitForExtensionActive () {
 	}
 	if (!ext.isActive) {
 		await ext.activate().then(() => {
-			console.log("activated kherring.ablunit-test-runner")
+			log.info("activated kherring.ablunit-test-runner")
 		}, (err) => {
 			throw new Error("failed to activate kherring.ablunit-test-runner: " + err)
 		})
 	}
 
 	if(!ext.isActive) {
-		console.log("waiting for extension to activate - should never be here!")
+		log.info("waiting for extension to activate - should never be here!")
 		for (let i=0; i<50; i++) {
 			await sleep(100)
 			if (ext.isActive) {
-				console.log("waitied " + ((i + 1) * 100) + "ms for extension to activate")
+				log.info("waitied " + ((i + 1) * 100) + "ms for extension to activate")
 				break
 			}
 		}
@@ -70,7 +71,7 @@ export function sleep (time: number = 2000, msg?: string) {
 	if (msg) {
 		status = status + " [" + msg + "]"
 	}
-	console.log(status)
+	log.info(status)
 	return new Promise(resolve => setTimeout(resolve, time))
 }
 
@@ -120,12 +121,12 @@ export async function getTestCount (resultsJson: Uri, status: string = 'tests') 
 			throw new Error("[getTestCount] unknown status: " + status)
 		}
 	})
-	console.log("getTestCount: " + status + " = " + count)
+	log.info("getTestCount: " + status + " = " + count)
 	return count
 }
 
 export function getDefaultDLC () {
-	console.log("process.platform=" + process.platform)
+	log.info("process.platform=" + process.platform)
 	if (process.platform === 'linux') {
 		return "/psc/dlc"
 	}
@@ -134,24 +135,24 @@ export function getDefaultDLC () {
 
 async function installOpenedgeABLExtension () {
 	if (!extensions.getExtension("riversidesoftware.openedge-abl-lsp")) {
-		console.log("[indexCommon.ts] installing riversidesoftware.openedge-abl-lsp extension")
+		log.info("[testCommon.ts] installing riversidesoftware.openedge-abl-lsp extension")
 		await commands.executeCommand('workbench.extensions.installExtension', 'riversidesoftware.openedge-abl-lsp').then(() => {
 		}, (err: Error) => {
 			if (err.toString() === 'Error: Missing gallery') {
-				console.log("[indexCommon.ts] triggered installed extension, but caught '" + err + "'")
+				log.info("[testCommon.ts] triggered installed extension, but caught '" + err + "'")
 			} else {
-				throw new Error("[indexCommon.ts] failed to install extension: " + err)
+				throw new Error("[testCommon.ts] failed to install extension: " + err)
 			}
 		})
 	}
 
-	console.log("[indexCommon.ts] activating riversidesoftware.openedge-abl-lsp extension")
+	log.info("[testCommon.ts] activating riversidesoftware.openedge-abl-lsp extension")
 	await extensions.getExtension("riversidesoftware.openedge-abl-lsp")?.activate()
 	while(!extensions.getExtension("riversidesoftware.openedge-abl-lsp")?.isActive) {
-		console.log(extensions.getExtension("riversidesoftware.openedge-abl-lsp") + " " + extensions.getExtension("riversidesoftware.openedge-abl-lsp")?.isActive)
+		log.info(extensions.getExtension("riversidesoftware.openedge-abl-lsp") + " " + extensions.getExtension("riversidesoftware.openedge-abl-lsp")?.isActive)
 		await sleep(500)
 	}
-	console.log("openedge-abl active? " + !extensions.getExtension("riversidesoftware.openedge-abl-lsp")?.isActive)
+	log.info("openedge-abl active? " + !extensions.getExtension("riversidesoftware.openedge-abl-lsp")?.isActive)
 }
 
 interface IRuntime {
@@ -163,15 +164,15 @@ interface IRuntime {
 export async function setRuntimes (runtimes: IRuntime[]) {
 	return installOpenedgeABLExtension().then(() => {
 
-		console.log("[indexCommon.ts] setting abl.configuration.runtimes")
+		log.info("[testCommon.ts] setting abl.configuration.runtimes")
 		return workspace.getConfiguration('abl.configuration').update('runtimes', runtimes, ConfigurationTarget.Global).then(() =>{
-			console.log("[indexCommon.ts] abl.configuration.runtimes set successfully")
+			log.info("[testCommon.ts] abl.configuration.runtimes set successfully")
 		}, (err) => {
-			throw new Error("[indexCommon.ts] failed to set runtimes: " + err)
+			throw new Error("[testCommon.ts] failed to set runtimes: " + err)
 		}).then(async () => {
 			await sleep(500)
 			return commands.executeCommand('abl.restart.langserv').then(() => {
-				console.log("[indexCommon.ts] abl.restart.langserv complete!")
+				log.info("[testCommon.ts] abl.restart.langserv complete!")
 				return sleep(500)
 			})
 		})
@@ -180,11 +181,11 @@ export async function setRuntimes (runtimes: IRuntime[]) {
 
 export async function runAllTests (doRefresh: boolean = true) {
 
-	console.log("running all tests")
+	log.info("running all tests")
 	if (doRefresh) {
-		console.log("testing.refreshTests starting")
+		log.info("testing.refreshTests starting")
 		await commands.executeCommand('testing.refreshTests').then(() => {
-			console.log("testing.refreshTests complete!")
+			log.info("testing.refreshTests complete!")
 		}, (err) => {
 			throw new Error("testing.refreshTests failed: " + err)
 		})
@@ -193,9 +194,9 @@ export async function runAllTests (doRefresh: boolean = true) {
 		await sleep(250)
 	}
 
-	console.log("testing.runAll starting")
+	log.info("testing.runAll starting")
 	return commands.executeCommand('testing.runAll').then(() => {
-		console.log("testing.runAll complete!")
+		log.info("testing.runAll complete!")
 	} , (err) => {
 		throw new Error("testing.runAll failed: " + err)
 	})
@@ -203,7 +204,7 @@ export async function runAllTests (doRefresh: boolean = true) {
 
 export function updateConfig (key: string, value: string | string[] | undefined) {
 	return workspace.getConfiguration('ablunit').update(key, value, ConfigurationTarget.Workspace).then(() => {
-		console.log("ablunit." + key + " set successfully (value='" + value + "')")
+		log.info("ablunit." + key + " set successfully (value='" + value + "')")
 		return sleep(100, "sleep after updateConfig")
 	}, (err) => {
 		throw new Error("failed to set ablunit." + key + ": " + err)
@@ -297,7 +298,7 @@ export async function getRecentResults () {
 		}
 		throw new Error('no recent results returned from \'ablunit.getRecentResults\' command')
 	}, (err) => {
-		console.log("---- err=" + err)
+		log.info("---- err=" + err)
 		throw new Error('error calling \'ablunit.getRecentResults\' command')
 	})
 }
