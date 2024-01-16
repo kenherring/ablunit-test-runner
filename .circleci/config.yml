@@ -5,6 +5,9 @@ orbs:
   sonarcloud: sonarsource/sonarcloud@2.0.0
 
 parameters:
+  cache-version:
+    type: string
+    default: v4
   vscode-version:
     type: string
     default: 1.84.2
@@ -23,7 +26,7 @@ setup: &setup
       - checkout
       - restore_cache:
           keys:
-            - v3-cache-<< parameters.oe-version >>-{{ checksum "package.json" }}
+            - << pipeline.parameters.cache-version >>-cache-<< parameters.oe-version >>-{{ checksum "package.json" }}
 context-and-filters: &context-and-filters
   context:
     - DockerHub
@@ -95,7 +98,7 @@ jobs:
                 cache_version: 3
       - run: .circleci/validate.sh
       - save_cache:
-          key: v3-cache-<< parameters.oe-version >>-{{ checksum "package.json" }}
+          key: << pipeline.parameters.cache-version >>-cache-<< parameters.oe-version >>-{{ checksum "package.json" }}
           paths:
             - cache
   test-with-bundle:
