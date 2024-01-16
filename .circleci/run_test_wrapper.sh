@@ -50,13 +50,14 @@ run_tests () {
 
 save_and_print_debug_output () {
 	echo "[$0 print_debug_output]"
-	find .vscode-test -name "1-ABL.log"
+	find .vscode-test -name "1-ABL*.log"
 	find .vscode-test -name "1-ABL.log" -exec cp {} artifacts \;
-	find .vscode-test -name "2-ABL Language Server.log"
-	find .vscode-test -name "2-ABL Language Server.log" -exec cp {} artifacts \;
+
+	echo "[$0 print_debug_output] r-code"
+	find . -name '*.r'
 	$VERBOSE || return 0
 
-	echo "[$0 print_debug_output]"
+	echo "[$0 print_debug_output] OpenEdge ABL Extension Logs"
 	echo "********** '1-ABL.log' **********"
 	find . -name "1-ABL.log" -exec cat {} \;
 	echo "********** '2-ABL Language Server.log' **********"
