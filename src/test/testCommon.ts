@@ -148,11 +148,20 @@ async function installOpenedgeABLExtension () {
 
 	log.info("[testCommon.ts] activating riversidesoftware.openedge-abl-lsp extension")
 	await extensions.getExtension("riversidesoftware.openedge-abl-lsp")?.activate()
-	while(!extensions.getExtension("riversidesoftware.openedge-abl-lsp")?.isActive) {
-		log.info(extensions.getExtension("riversidesoftware.openedge-abl-lsp") + " " + extensions.getExtension("riversidesoftware.openedge-abl-lsp")?.isActive)
-		await sleep(1000)
+
+	const maxWait = 20
+	for (let i=0; i<maxWait; i++) {
+		const isActive = extensions.getExtension("riversidesoftware.openedge-abl-lsp")?.isActive
+		if (isActive) { break }
+
+		log.info("(" + i + "/" + maxWait + ") extension info: " + extensions.getExtension("riversidesoftware.openedge-abl-lsp") + " " + extensions.getExtension("riversidesoftware.openedge-abl-lsp")?.isActive)
+		await sleep(500)
 	}
-	log.info("openedge-abl active? " + !extensions.getExtension("riversidesoftware.openedge-abl-lsp")?.isActive)
+	const isActive = extensions.getExtension("riversidesoftware.openedge-abl-lsp")?.isActive
+	if (!isActive) {
+		throw new Error("[testCommon.ts] failed to activate extension")
+	}
+	log.info("openedge-abl active!")
 }
 
 interface IRuntime {
