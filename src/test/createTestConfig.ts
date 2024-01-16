@@ -30,12 +30,16 @@ export interface ITestConfig {
 
 function createTestConfig (projName: string, workspaceFolder?: string, timeout?: number) {
 	if (!workspaceFolder) {
-		workspaceFolder = projName
+		workspaceFolder = './test_projects/' + projName
 	}
 
 	const g = new GlobSync(projName + '*', { cwd: './test_projects' })
 	if (g.found.length === 1) {
-		workspaceFolder = g.found[0]
+		workspaceFolder = './test_projects/' + g.found[0]
+	}
+	if (! fs.existsSync(workspaceFolder)) {
+		console.log("skipping config create for " + projName + ", workspaceFolder=" + workspaceFolder + " does not exist")
+		return
 	}
 
 	if (!timeout || timeout == 0) {
@@ -55,7 +59,7 @@ function createTestConfig (projName: string, workspaceFolder?: string, timeout?:
 		projName: projName,
 		label: 'extension tests - ' + projName,
 		files: 'out/test/**/*' + projName + '.test.js',
-		workspaceFolder: './test_projects/' + workspaceFolder,
+		workspaceFolder: workspaceFolder,
 		mocha: {
 			ui: 'tdd',
 			timeout: timeout
@@ -80,11 +84,13 @@ export function getTestConfig () {
 	for (const f of g.found) {
 		let maxTimeout = 15000
 		const projName = f.replace('.test.ts', '').split('/').reverse()[0]
-		console.log('projName=' + projName + ", f=" + f)
 		if (projName === 'proj7') {
 			maxTimeout = 60000
 		}
-		testConfig.push(createTestConfig(projName, undefined, maxTimeout))
+		const conf = createTestConfig(projName, undefined, maxTimeout)
+		if (conf) {
+			testConfig.push(conf)
+		}
 	}
 	fs.writeFileSync('./.vscode-test.config.json', formatWithOptions({ colors: true }, JSON.stringify(testConfig, null, 4)))
 	console.log('created .vscode-test.config.json succesfully!')

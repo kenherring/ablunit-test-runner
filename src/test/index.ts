@@ -18,9 +18,10 @@ function setupNyc (projName: string) {
 		reportDir: path.join(__dirname, "..", "..", 'coverage', "coverage_" + projName),
 		tempDir:   path.join(__dirname, "..", "..", 'coverage', "coverage_" + projName, ".nyc_output"),
 		exclude: [
-			"node_modules",
-			"out/test/**",
-			".vscode-test",
+			"**/dist/test/**",
+			"**/node_modules/**",
+			"**/out/test/**",
+			"**/.vscode-test/**"
 		],
 		extension: [
 			".ts",
@@ -120,7 +121,7 @@ export function run (): Promise <void> {
 	proj = proj.replace(/\\/g, '/').split('/').reverse()[0].replace(".code-workspace", '')
 	proj = proj.split('_')[0]
 
-	const testConfig: ITestConfig[] = JSON.parse(fs.readFileSync('./.vscode-test.config.json', 'utf8'))
+	const testConfig: ITestConfig[] = JSON.parse(fs.readFileSync('../../.vscode-test.config.json', 'utf8'))
 	const config = testConfig.filter((config: ITestConfig) => { return config.projName === proj })[0]
 
 	// eslint-disable-next-line @typescript-eslint/no-unsafe-argument

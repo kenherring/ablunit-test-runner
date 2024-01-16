@@ -1,22 +1,5 @@
 [
     {
-        "projName": "installAndRun",
-        "label": "extension tests - installAndRun",
-        "files": "out/test/**/*installAndRun.test.js",
-        "workspaceFolder": "./test_projects/installAndRun",
-        "mocha": {
-            "ui": "tdd",
-            "timeout": 15000
-        },
-        "launchArgs": [
-            "--disable-extensions"
-        ],
-        "env": {
-            "ABLUNIT_TEST_RUNNER_UNIT_TESTING": "true",
-            "ABLUNIT_TEST_RUNNER_PROJECT_NAME": "installAndRun"
-        }
-    },
-    {
         "projName": "DebugLines",
         "label": "extension tests - DebugLines",
         "files": "out/test/**/*DebugLines.test.js",

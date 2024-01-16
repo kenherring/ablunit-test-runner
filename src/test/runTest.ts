@@ -6,6 +6,7 @@ import { ITestConfig } from './createTestConfig'
 
 
 async function main () {
+	console.log('[runTest.ts main] starting...')
 	const testConfig: ITestConfig[] = <ITestConfig[]>JSON.parse(fs.readFileSync('./.vscode-test.config.json', 'utf8'))
 
 	let projToRun: string | undefined = undefined

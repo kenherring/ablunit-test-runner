@@ -8,7 +8,7 @@ initialize () {
 	CACHE_BASE=/home/circleci/cache
 	REPO_VOLUME=/home/circleci/ablunit-test-runner
 	STAGED_ONLY=${STAGED_ONLY:-true}
-	RUN_CMD=${RUN_CMD:-webpack}
+	RUNCMD=${RUNCMD:-webpack}
 	export npm_config_cache=$CACHE_BASE/node_modules_cache
 	mkdir -p $CACHE_BASE/node_modules_cache
 
