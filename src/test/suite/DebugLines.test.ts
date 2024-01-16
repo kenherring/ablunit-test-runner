@@ -11,20 +11,21 @@ const workspaceFolder = workspace.workspaceFolders![0]
 
 async function awaitRCode (rcodeCount: number = 1) {
 	const buildWaitTime = 10
+	let fileCount = 0
 	console.log("ablunit rebuild started. waiting up to" + buildWaitTime + " seconds for r-code")
 	for (let i = 0; i < buildWaitTime; i++) {
 		await new Promise((resolve) => setTimeout(resolve, 1000))
 
 		const g = new GlobSync('**/*.r', { cwd: workspaceFolder.uri.fsPath })
-		console.log("(" + i + "/" + buildWaitTime + ") found " + g.found.length + " r-code files...")
-		if (g.found.length > rcodeCount) {
-			console.log("found " + g.found.length + " r-code files! ready to test")
-			return
+		fileCount = g.found.length
+		console.log("(" + i + "/" + buildWaitTime + ") found " + fileCount + " r-code files...")
+		if (fileCount > rcodeCount) {
+			console.log("found " + fileCount + " r-code files! ready to test")
+			return fileCount
 		}
-		console.log("found " + g.found.length + " r-code files. waiting...")
+		console.log("found " + fileCount + " r-code files. waiting...")
 		console.log("found files: " + JSON.stringify(g.found,null,2))
 	}
-
 
 	await commands.executeCommand('abl.dumpFileStatus').then(() => {
 		console.log("abl.dumpFileStatus complete!")
@@ -32,22 +33,25 @@ async function awaitRCode (rcodeCount: number = 1) {
 	await commands.executeCommand('abl.dumpLangServStatus').then(() => {
 		console.log("abl.dumpLangServStatus complete!")
 	})
-
 	throw new Error("r-code files not found")
 }
 
 before(async () => {
 	await waitForExtensionActive()
 	console.log("getDefaultDLC=" + getDefaultDLC())
-	await setRuntimes([{name: "12.2", path: getDefaultDLC(), default: true}])
+	await setRuntimes([{name: "12.2", path: getDefaultDLC(), default: true}]).then(() => {
+		console.log("setRuntimes complete!")
+	})
 	await commands.executeCommand('abl.project.rebuild').then(() => {
 		console.log("abl project rebuild started")
 		return sleep(500)
+
 	})
-	const waiting = awaitRCode(5)
-	await waiting.then(() => {
-		console.log("abl project rebuild complete!")
+	const prom = awaitRCode(5)
+	await prom.then((rcodeCount) => {
+		console.log("abl project rebuild complete! rcode count = " + rcodeCount)
 	})
+	console.log("before complete!")
 })
 
 suite(projName + ' - Extension Test Suite', () => {
