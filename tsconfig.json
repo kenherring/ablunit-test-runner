@@ -24,7 +24,7 @@
 		"noImplicitOverride": true,
 		// "noImplicitReturns": true,
 		"noImplicitThis": true,
-		"noUnusedLocals": true,
+		// "noUnusedLocals": true, // reported by the typescript plugin
 		"noUnusedParameters": true,
 		"removeComments": true,
 		"strictFunctionTypes": true,

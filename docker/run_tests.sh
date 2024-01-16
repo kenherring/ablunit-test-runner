@@ -58,7 +58,6 @@ initialize () {
 run_tests_in_docker () {
 	echo "[$0 ${FUNCNAME[0]}] pwd=$(pwd)"
 	## run tests inside the container
-	echo "RUNCMD=$RUNCMD"
 	time docker run --rm -it \
 		-e PROGRESS_CFG_BASE64 \
 		-e GIT_BRANCH \

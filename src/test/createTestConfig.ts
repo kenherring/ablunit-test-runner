@@ -1,5 +1,21 @@
+import { GlobSync } from 'glob'
+import { formatWithOptions } from 'util'
+import * as fs from 'fs'
 
-interface TestConfig {
+/* ********** Notes **********
+/* This file generates '.vscode-test.config.json'
+/*
+/* The generated file is used by these programs:
+/* - .vscode-test.js
+/* - src/test/index.ts
+/* - src/test/runTest.ts
+/*
+/* Build:  `npm run build-tsc`
+/* Run:    `node ./out/test/createTestConfig.js`
+/* ********** End Notes ********** */
+
+
+export interface ITestConfig {
 	projName: string
 	label: string
 	files: string
@@ -8,12 +24,18 @@ interface TestConfig {
 		ui: string
 		timeout: number
 	}
-	launchArgs: string[]
+	launchArgs: string[],
+	env: { [key: string]: string | undefined }
 }
 
 function createTestConfig (projName: string, workspaceFolder?: string, timeout?: number) {
-	if (!workspaceFolder || workspaceFolder == '') {
+	if (!workspaceFolder) {
 		workspaceFolder = projName
+	}
+
+	const g = new GlobSync(projName + '*', { cwd: './test_projects' })
+	if (g.found.length === 1) {
+		workspaceFolder = g.found[0]
 	}
 
 	if (!timeout || timeout == 0) {
@@ -29,7 +51,7 @@ function createTestConfig (projName: string, workspaceFolder?: string, timeout?:
 		launchArgs.push('--disable-extensions')
 	}
 
-	const retVal: TestConfig = {
+	const retVal: ITestConfig = {
 		projName: projName,
 		label: 'extension tests - ' + projName,
 		files: 'out/test/**/*' + projName + '.test.js',
@@ -38,34 +60,35 @@ function createTestConfig (projName: string, workspaceFolder?: string, timeout?:
 			ui: 'tdd',
 			timeout: timeout
 		},
-		launchArgs: launchArgs
+		launchArgs: launchArgs,
+		env: {
+			ABLUNIT_TEST_RUNNER_UNIT_TESTING: 'true',
+			ABLUNIT_TEST_RUNNER_PROJECT_NAME: projName
+		}
 	}
 
 	return retVal
 }
 
 export function getTestConfig () {
-	const testConfig: TestConfig[] = []
-	// Unit Tests
-	testConfig.push(createTestConfig('DebugLines', undefined, 45000))
-	testConfig.push(createTestConfig('TestProfileParser'))
+	const testConfig: ITestConfig[] = []
 
-	// Folders
-	testConfig.push(createTestConfig('proj0'))
-	testConfig.push(createTestConfig('proj1'))
-	testConfig.push(createTestConfig('proj2'))
-	testConfig.push(createTestConfig('proj3', 'proj3_debugLines'))
-	testConfig.push(createTestConfig('proj4'))
-	testConfig.push(createTestConfig('proj5', 'proj5_suites'))
-	testConfig.push(createTestConfig('proj6', 'proj6_dot_dir'))
-	testConfig.push(createTestConfig('proj7', 'proj7_load_performance', 50000))
-	testConfig.push(createTestConfig('proj8', 'proj8_custom_command'))
-	testConfig.push(createTestConfig('proj9'))
-	testConfig.push(createTestConfig('projA'))
-
-	// // Workspaces
-	testConfig.push(createTestConfig('workspace0', 'workspace0.code-workspace'))
-	testConfig.push(createTestConfig('workspace1', 'workspace1.code-workspace'))
-
+	const g = new GlobSync('**/*.test.ts', { cwd: '.' })
+	if (g.found.length === 0) {
+		throw new Error('No test files found')
+	}
+	for (const f of g.found) {
+		let maxTimeout = 15000
+		const projName = f.replace('.test.ts', '').split('/').reverse()[0]
+		console.log('projName=' + projName + ", f=" + f)
+		if (projName === 'proj7') {
+			maxTimeout = 60000
+		}
+		testConfig.push(createTestConfig(projName, undefined, maxTimeout))
+	}
+	fs.writeFileSync('./.vscode-test.config.json', formatWithOptions({ colors: true }, JSON.stringify(testConfig, null, 4)))
+	console.log('created .vscode-test.config.json succesfully!')
 	return testConfig
 }
+
+getTestConfig()

@@ -2,16 +2,10 @@
 const path = require('path');
 
 const outputDir = path.resolve(__dirname, 'dist');
-let mode = 'development';
-if (process.argv.indexOf('--mode=production') !== -1) {
-  mode = 'production';
-}
-
-console.log('webpack mode: ' + mode);
 
 /**@type {import('webpack').Configuration}*/
 const config = {
-  target: 'node',
+  target: 'node', // recommended: 'webworker'
   node: false,
   entry: {
     'extension': './src/extension.ts'
@@ -40,7 +34,7 @@ const config = {
       }]
     }]
   },
-  mode: mode
+  mode: 'development'
 }
 
 module.exports = config;

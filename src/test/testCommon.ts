@@ -1,7 +1,7 @@
 import { ConfigurationTarget, FileType, Uri, commands, extensions, workspace } from 'vscode'
 import { ITestSuites } from '../parse/ResultsParser'
 import { strict as assert } from 'assert'
-import { recentResults } from '../decorator'
+import { ABLResults } from 'src/ABLResults'
 
 export async function waitForExtensionActive () {
 	const ext = extensions.getExtension("kherring.ablunit-test-runner")
@@ -252,9 +252,10 @@ export async function selectProfile (profile: string) {
 }
 
 class AssertResults {
-	assertResultsCountByStatus (expectedCount: number, status: 'passed' | 'failed' | 'errored' | 'all') {
+	async assertResultsCountByStatus (expectedCount: number, status: 'passed' | 'failed' | 'errored' | 'all') {
+		const recentResults = await getRecentResults()
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-		const res = recentResults?.[0].ablResults?.resultsJson[0]
+		const res = recentResults[0].ablResults?.resultsJson[0]
 		if (!res) {
 			assert.fail('No results found. Expected ' + expectedCount + ' ' + status + ' tests')
 		}
@@ -287,3 +288,15 @@ class AssertResults {
 }
 
 export const assertResults = new AssertResults()
+
+export async function getRecentResults () {
+	return commands.executeCommand('_ablunit.getRecentResults').then((resp) => {
+		if (resp) {
+			return <ABLResults[]>resp
+		}
+		throw new Error('no recent results returned from \'ablunit.getRecentResults\' command')
+	}, (err) => {
+		console.log("---- err=" + err)
+		throw new Error('error calling \'ablunit.getRecentResults\' command')
+	})
+}

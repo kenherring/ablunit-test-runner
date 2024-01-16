@@ -1,8 +1,7 @@
 import { strict as assert } from 'assert'
 import { before } from 'mocha'
 import { Uri } from 'vscode'
-import { assertResults, doesFileExist, getWorkspaceUri, runAllTests, waitForExtensionActive } from '../testCommon'
-import { recentResults } from '../../decorator'
+import { assertResults, doesFileExist, getRecentResults, getWorkspaceUri, runAllTests, waitForExtensionActive } from '../testCommon'
 import { getEnvVars } from '../../ABLUnitRun'
 
 const projName = 'proj8'
@@ -22,14 +21,16 @@ suite(projName + ' - Extension Test Suite', () => {
 		assert(await doesFileExist(resultsXml), "missing results.xml (" + resultsXml.fsPath + ")")
 		assert(await doesFileExist(resultsJson), "missing results.json (" + resultsJson.fsPath + ")")
 
-		assertResults.count(2)
-		assertResults.errored(0)
-		assertResults.failed(0)
-		assertResults.passed(2)
+		await assertResults.count(2)
+		await assertResults.errored(0)
+		await assertResults.failed(0)
+		await assertResults.passed(2)
 	})
 
 	test(projName + '.2 - getEnvVars confirm PATH is set correctly', async () => {
 		await runAllTests()
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+		const recentResults = await getRecentResults()
 		const res = recentResults?.[0]
 		if (!res) {
 			assert.fail("res is null")

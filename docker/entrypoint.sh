@@ -42,10 +42,11 @@ initialize_repo () {
 	git config --global init.defaultBranch main
 	git init
 	git remote add origin "$REPO_VOLUME"
-	git fetch origin
 	if [ "$GIT_BRANCH" = "$(git branch --show-current)" ]; then
+		git pull
 		git reset --hard "origin/$GIT_BRANCH"
 	else
+		git fetch origin "$GIT_BRANCH":"$GIT_BRANCH"
 		git checkout "$GIT_BRANCH"
 	fi
 }

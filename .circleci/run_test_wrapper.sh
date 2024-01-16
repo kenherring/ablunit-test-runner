@@ -7,16 +7,12 @@ initialize () {
 	VERBOSE=${VERBOSE:-false}
 	npm install
 
-	# RUNCMD="build" ## always build so the *.test.ts are compiled
-	# if [ "$RUNCMD" = "webpack" ]; then
-	# 	RUNCMD="webpack"
-	# fi
-	# rm -rf dist out
-	# npm run "$RUNCMD"
-
+	RUNCMD="build" ## always build so the *.test.ts are compiled
+	if [ -n "$RUNCMD" ]; then
+		RUNCMD="webpack"
+	fi
 	rm -rf dist out
-	npm run build
-	npm run webpack
+	npm run "$RUNCMD"
 	echo "npm run $RUNCMD - success"
 }
 

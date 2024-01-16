@@ -1,3 +1,6 @@
+## Ignore anything with 'test' in the name
+**test**
+
 ## Keep these files
 !CHANGELOG.md
 !docs/coverage.png

@@ -16,6 +16,9 @@
 	"plugins": [
 		"@typescript-eslint"
 	],
+	"ignorePatterns": [
+		"src/test/createTestConfig.js"
+	],
 	"root": true,
 	"rules": {
 		// TODO: enable and fix theese

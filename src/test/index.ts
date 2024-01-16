@@ -3,11 +3,12 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-call */
-import { getTestConfig } from './createTestConfig'
 import { GlobSync } from 'glob'
 import { workspace } from 'vscode'
 import Mocha from 'mocha'
 import * as path from 'path'
+import * as fs from 'fs'
+import { ITestConfig } from './createTestConfig.js'
 const NYC = require('nyc')
 
 function setupNyc (projName: string) {
@@ -118,8 +119,10 @@ export function run (): Promise <void> {
 
 	proj = proj.replace(/\\/g, '/').split('/').reverse()[0].replace(".code-workspace", '')
 	proj = proj.split('_')[0]
-	const tc = getTestConfig()
-	const config = tc.filter((config) => { return config.projName === proj })[0]
 
+	const testConfig: ITestConfig[] = JSON.parse(fs.readFileSync('./.vscode-test.config.json', 'utf8'))
+	const config = testConfig.filter((config: ITestConfig) => { return config.projName === proj })[0]
+
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 	return runTestsForProject(proj, config.mocha.timeout)
 }
