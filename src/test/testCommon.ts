@@ -162,20 +162,26 @@ interface IRuntime {
 }
 
 export async function setRuntimes (runtimes: IRuntime[]) {
-	return installOpenedgeABLExtension().then(() => {
+	return installOpenedgeABLExtension().then(async () => {
 
 		log.info("[testCommon.ts] setting abl.configuration.runtimes")
-		return workspace.getConfiguration('abl.configuration').update('runtimes', runtimes, ConfigurationTarget.Global).then(() =>{
+		await sleep(100)
+		return workspace.getConfiguration('abl.configuration').update('runtimes', runtimes, ConfigurationTarget.Global).then(async () =>{
 			log.info("[testCommon.ts] abl.configuration.runtimes set successfully")
+			await sleep(1000)
+			return true
 		}, (err) => {
 			throw new Error("[testCommon.ts] failed to set runtimes: " + err)
-		}).then(async () => {
-			await sleep(500)
-			return commands.executeCommand('abl.restart.langserv').then(() => {
-				log.info("[testCommon.ts] abl.restart.langserv complete!")
-				return sleep(500)
-			})
 		})
+		// }).then(async () => {
+		// 	await sleep(500)
+		// 	// return commands.executeCommand('abl.restart.langserv').then(async () => {
+		// 	// 	log.info("[testCommon.ts] abl.restart.langserv complete!")
+		// 	// 	await sleep(500)
+		// 	// 	return true
+		// 	// })
+		// 	return true
+		// })
 	})
 }
 

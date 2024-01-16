@@ -13,7 +13,7 @@ const workspaceFolder = workspace.workspaceFolders![0]
 async function awaitRCode (rcodeCount: number = 1) {
 	const buildWaitTime = 10
 	let fileCount = 0
-	console.log("ablunit rebuild started. waiting up to" + buildWaitTime + " seconds for r-code")
+	console.log("waiting up to" + buildWaitTime + " seconds for r-code")
 	for (let i = 0; i < buildWaitTime; i++) {
 		await new Promise((resolve) => setTimeout(resolve, 1000))
 
@@ -43,10 +43,11 @@ before(async () => {
 	v = await waitForExtensionActive()
 	log.info("before-2: v=" + v)
 	console.log("getDefaultDLC=" + getDefaultDLC())
-	v = await setRuntimes([{name: "12.2", path: getDefaultDLC(), default: true}]).then(() => {
+	v = await setRuntimes([{name: "12.2", path: getDefaultDLC(), default: true}]).then(async () => {
 		log.info("before-3")
 		console.log("setRuntimes complete!")
-		return sleep(100)
+		await sleep(100)
+		return true
 	})
 	log.info("before 4.1: v=" + v)
 	await sleep(100)
@@ -61,7 +62,7 @@ before(async () => {
 	log.info("before-8")
 	v = await prom.then((rcodeCount) => {
 		log.info("before-9")
-		console.log("abl project rebuild complete! rcode count = " + rcodeCount)
+		console.log("compile complete! rcode count = " + rcodeCount)
 	})
 	log.info("before-10: v=" + v)
 	console.log("before complete!")
