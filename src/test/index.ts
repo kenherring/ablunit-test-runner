@@ -121,7 +121,18 @@ export function run (): Promise <void> {
 	proj = proj.replace(/\\/g, '/').split('/').reverse()[0].replace(".code-workspace", '')
 	proj = proj.split('_')[0]
 
-	const testConfig: ITestConfig[] = JSON.parse(fs.readFileSync('../../.vscode-test.config.json', 'utf8'))
+	let configFilename: string
+	if (fs.existsSync('./.vscode-test.config.json')) {
+		configFilename = './.vscode-test.config.json'
+	} else if (fs.existsSync('../.vscode-test.config.json')) {
+		configFilename = '../.vscode-test.config.json'
+	} else if (fs.existsSync('../../.vscode-test.config.json')) {
+		configFilename = './.vscode-test.config.json'
+	} else {
+		throw new Error("Could not find .vscode-test.config.json")
+	}
+
+	const testConfig: ITestConfig[] = JSON.parse(fs.readFileSync(configFilename, 'utf8'))
 	const config = testConfig.filter((config: ITestConfig) => { return config.projName === proj })[0]
 
 	// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
