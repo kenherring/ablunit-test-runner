@@ -52,6 +52,10 @@ save_and_print_debug_output () {
 	echo "[$0 print_debug_output]"
 	find .vscode-test -name '*-ABL*.log'
 	find .vscode-test -name '*-ABL*.log' -exec cp {} artifacts \;
+	find .vscode-test -name '*ABLUnit.log'
+	find .vscode-test -name '*ABLUnit.log' -exec cp {} artifacts \;
+	find .vscode-test -name '*-ABL*.log'
+	find .vscode-test -name '*-ABL*.log' -exec cp {} artifacts \;
 
 	echo "[$0 print_debug_output] r-code"
 	find . -name '*.r'
