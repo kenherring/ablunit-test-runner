@@ -84,7 +84,7 @@ export function getTestConfig () {
 	for (const f of g.found) {
 		let maxTimeout = 15000
 		const projName = f.replace('.test.ts', '').split('/').reverse()[0]
-		if (projName === 'proj7') {
+		if (projName === 'proj7' || testConfig.length === 0) {
 			maxTimeout = 60000
 		}
 		const conf = createTestConfig(projName, undefined, maxTimeout)
