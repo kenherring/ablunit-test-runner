@@ -1,15 +1,18 @@
+import * as fs from 'fs'
 import * as path from 'path'
-import { getTestConfig } from './createTestConfig'
 import { runTests } from '@vscode/test-electron'
+import { ITestConfig } from './createTestConfig'
 
 async function main () {
-	const config = getTestConfig()
+	console.log('[runTest.ts main] starting...')
+	const testConfig: ITestConfig[] = <ITestConfig[]>JSON.parse(fs.readFileSync('./.vscode-test.config.json', 'utf8'))
 
-	for (const conf of config) {
-		await testProject(conf.projName, conf.workspaceFolder, conf.launchArgs)
-		// if (conf.projName === 'proj8') {
-		// 	await testProject(conf.projName, conf.workspaceFolder, conf.launchArgs)
-		// }
+	let projToRun: string | undefined = undefined
+	projToRun = process.env.ABLUNIT_TEST_RUNNER_PROJECT_NAME
+	for (const conf of testConfig) {
+		if (!projToRun || conf.projName === projToRun) {
+			await testProject(conf.projName, conf.workspaceFolder, conf.launchArgs)
+		}
 	}
 }
 
@@ -18,8 +21,13 @@ async function testProject (projName: string, projDir?: string, launchArgs: stri
 		projDir = projName
 	}
 
-	const extensionDevelopmentPath = path.resolve(__dirname, '../../')
+	const extensionDevelopmentPath: string = path.resolve(__dirname, '../../')
 	const extensionTestsPath = path.resolve(__dirname)
+	const testingEnv: { [key: string]: string | undefined } = {
+		ABLUNIT_TEST_RUNNER_UNIT_TESTING: 'true',
+		ABLUNIT_TEST_RUNNER_PROJECT_NAME: projName
+	}
+
 	try {
 		const args: string[] = [
 			projDir,
@@ -29,11 +37,16 @@ async function testProject (projName: string, projDir?: string, launchArgs: stri
 		]
 		args.push(...launchArgs)
 
-		console.log('[runTest.ts testProject] (projName=' + projName + ') running tests with args=' + args)
+		console.log('[runTest.ts testProject] (projName=' + projName + ') running tests with args=')
+		console.debug(" -- extensionDevelopmentPath=" + extensionDevelopmentPath)
+		console.debug(" -- extensionTestsPath=" + extensionTestsPath)
+		console.debug(" -- testingEnv=" + JSON.stringify(testingEnv))
+
 		await runTests({
 			extensionDevelopmentPath,
 			extensionTestsPath,
-			launchArgs: args
+			launchArgs: args,
+			extensionTestsEnv: testingEnv
 		})
 		console.log("[runTest.ts testProject] (projName=" + projName + ") tests completed successfully!")
 	} catch (err) {

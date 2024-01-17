@@ -1,7 +1,8 @@
 import { ConfigurationTarget, FileType, Uri, commands, extensions, workspace } from 'vscode'
 import { ITestSuites } from '../parse/ResultsParser'
 import { strict as assert } from 'assert'
-import { recentResults } from '../decorator'
+import { ABLResults } from '../ABLResults'
+import { log } from '../ABLUnitCommon'
 
 export async function waitForExtensionActive () {
 	const ext = extensions.getExtension("kherring.ablunit-test-runner")
@@ -133,24 +134,33 @@ export function getDefaultDLC () {
 
 async function installOpenedgeABLExtension () {
 	if (!extensions.getExtension("riversidesoftware.openedge-abl-lsp")) {
-		console.log("[indexCommon.ts] installing riversidesoftware.openedge-abl-lsp extension")
+		log.info("[testCommon.ts] installing riversidesoftware.openedge-abl-lsp extension")
 		await commands.executeCommand('workbench.extensions.installExtension', 'riversidesoftware.openedge-abl-lsp').then(() => {
 		}, (err: Error) => {
 			if (err.toString() === 'Error: Missing gallery') {
-				console.log("[indexCommon.ts] triggered installed extension, but caught '" + err + "'")
+				log.info("[testCommon.ts] triggered installed extension, but caught '" + err + "'")
 			} else {
-				throw new Error("[indexCommon.ts] failed to install extension: " + err)
+				throw new Error("[testCommon.ts] failed to install extension: " + err)
 			}
 		})
 	}
 
-	console.log("[indexCommon.ts] activating riversidesoftware.openedge-abl-lsp extension")
+	log.info("[testCommon.ts] activating riversidesoftware.openedge-abl-lsp extension")
 	await extensions.getExtension("riversidesoftware.openedge-abl-lsp")?.activate()
-	while(!extensions.getExtension("riversidesoftware.openedge-abl-lsp")?.isActive) {
-		console.log(extensions.getExtension("riversidesoftware.openedge-abl-lsp") + " " + extensions.getExtension("riversidesoftware.openedge-abl-lsp")?.isActive)
+
+	const maxWait = 20
+	for (let i=0; i<maxWait; i++) {
+		const isActive = extensions.getExtension("riversidesoftware.openedge-abl-lsp")?.isActive
+		if (isActive) { break }
+
+		log.info("(" + i + "/" + maxWait + ") extension info: " + extensions.getExtension("riversidesoftware.openedge-abl-lsp") + " " + extensions.getExtension("riversidesoftware.openedge-abl-lsp")?.isActive)
 		await sleep(500)
 	}
-	console.log("openedge-abl active? " + !extensions.getExtension("riversidesoftware.openedge-abl-lsp")?.isActive)
+	const isActive = extensions.getExtension("riversidesoftware.openedge-abl-lsp")?.isActive
+	if (!isActive) {
+		throw new Error("[testCommon.ts] failed to activate extension")
+	}
+	log.info("openedge-abl active!")
 }
 
 interface IRuntime {
@@ -160,13 +170,15 @@ interface IRuntime {
 }
 
 export async function setRuntimes (runtimes: IRuntime[]) {
-	await installOpenedgeABLExtension()
-
-	console.log("[indexCommon.ts] setting abl.configuration.runtimes")
-	await workspace.getConfiguration('abl.configuration').update('runtimes', runtimes, ConfigurationTarget.Global).then(() =>{
-		console.log("[indexCommon.ts] abl.configuration.runtimes set successfully")
-	}, (err) => {
-		throw new Error("[indexCommon.ts] failed to set runtimes: " + err)
+	return installOpenedgeABLExtension().then(async () => {
+		log.info("[testCommon.ts] setting abl.configuration.runtimes")
+		return workspace.getConfiguration('abl.configuration').update('runtimes', runtimes, ConfigurationTarget.Global).then(async () =>{
+			log.info("[testCommon.ts] abl.configuration.runtimes set successfully")
+			await sleep(1000)
+			return true
+		}, (err) => {
+			throw new Error("[testCommon.ts] failed to set runtimes: " + err)
+		})
 	})
 }
 
@@ -245,17 +257,23 @@ export async function selectProfile (profile: string) {
 }
 
 class AssertResults {
-	assertResultsCountByStatus (expectedCount: number, status: 'passed' | 'failed' | 'errored' | 'all') {
-		const res = recentResults?.[0].ablResults?.resultsJson[0]
+	async assertResultsCountByStatus (expectedCount: number, status: 'passed' | 'failed' | 'errored' | 'all') {
+		const recentResults = await getRecentResults()
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+		const res = recentResults[0].ablResults?.resultsJson[0]
 		if (!res) {
 			assert.fail('No results found. Expected ' + expectedCount + ' ' + status + ' tests')
 		}
 
 		let actualCount: number = -1
 		switch (status) {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
 			case 'passed': actualCount = res.passed; break
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
 			case 'failed': actualCount = res.failures; break
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
 			case 'errored': actualCount = res.errors; break
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
 			case 'all': actualCount = res.tests; break
 		}
 		assert.equal(expectedCount, actualCount, "test count != " + expectedCount)
@@ -275,3 +293,15 @@ class AssertResults {
 }
 
 export const assertResults = new AssertResults()
+
+export async function getRecentResults () {
+	return commands.executeCommand('_ablunit.getRecentResults').then((resp) => {
+		if (resp) {
+			return <ABLResults[]>resp
+		}
+		throw new Error('no recent results returned from \'ablunit.getRecentResults\' command')
+	}, (err) => {
+		log.info("---- err=" + err)
+		throw new Error('error calling \'ablunit.getRecentResults\' command')
+	})
+}

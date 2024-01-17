@@ -1,7 +1,7 @@
 import { DecorationOptions, Range, TextEditor, window, workspace } from "vscode"
 import { ABLResults } from "./ABLResults"
 
-export let recentResults: ABLResults[] | undefined
+let recentResults: ABLResults[] | undefined
 
 const backgroundExecutable = window.createTextEditorDecorationType({
 	backgroundColor: 'rgba(255,0,0,0.1)',
@@ -12,6 +12,10 @@ const backgroundExecuted = window.createTextEditorDecorationType({
 
 export function setRecentResults (results: ABLResults[]) {
 	recentResults = results
+}
+
+export function getRecentResults () {
+	return recentResults
 }
 
 export function decorate (editor: TextEditor) {

@@ -7,7 +7,7 @@ import { ABLTestSuite, ABLTestClass, ABLTestProgram, ABLTestFile, ABLTestCase, A
 import { GlobSync } from 'glob'
 import { log } from './ABLUnitCommon'
 import { readFileSync } from 'fs'
-import { decorate, setRecentResults } from './decorator'
+import { decorate, getRecentResults, setRecentResults } from './decorator'
 
 export async function activate (context: ExtensionContext) {
 	log.info('ACTIVATE!')
@@ -27,6 +27,10 @@ export async function activate (context: ExtensionContext) {
 		workspace.onDidOpenTextDocument(updateNodeForDocument),
 		workspace.onDidChangeTextDocument(e => { updateNodeForDocument(e.document) }),
 	)
+
+	if (process.env.ABLUNIT_TEST_RUNNER_UNIT_TESTING === 'true') {
+		context.subscriptions.push(commands.registerCommand('_ablunit.getRecentResults', getRecentResults))
+	}
 
 	const fileChangedEmitter = new EventEmitter<Uri>()
 
