@@ -38,41 +38,21 @@ async function awaitRCode (rcodeCount: number = 1) {
 }
 
 before(async () => {
-	let v
-	log.info("before-1")
-	v = await waitForExtensionActive()
-	log.info("before-2: v=" + v)
-	console.log("getDefaultDLC=" + getDefaultDLC())
-	v = await setRuntimes([{name: "12.2", path: getDefaultDLC(), default: true}]).then(async () => {
-		log.info("before-3")
+	await waitForExtensionActive()
+	await setRuntimes([{name: "12.2", path: getDefaultDLC(), default: true}]).then(async () => {
 		console.log("setRuntimes complete!")
 		await sleep(250)
 		return true
 	})
-	log.info("before 4.1: v=" + v)
 	await sleep(250)
-	// v = await commands.executeCommand('abl.project.rebuild').then(() => {
-	// 	log.info("before-5")
-	// 	console.log("abl project rebuild started")
-	// 	log.info("before-6")
-	// 	return sleep(500)
-	// })
-	log.info("before-7: v=" + v)
 	const prom = awaitRCode(5)
-	log.info("before-8")
-	v = await prom.then((rcodeCount) => {
-		log.info("before-9")
+	await prom.then((rcodeCount) => {
 		console.log("compile complete! rcode count = " + rcodeCount)
 	})
-	log.info("before-10: v=" + v)
 	console.log("before complete!")
 })
 
 suite(projName + ' - Extension Test Suite', () => {
-
-	// test(projName + '.0 - DEBUG', () => {
-	// 	assert.equal(true, true)
-	// })
 
 	test(projName + '.1 - read debug line map from r-code', async () => {
 		const propath = new PropathParser(workspaceFolder)

@@ -179,15 +179,6 @@ export async function setRuntimes (runtimes: IRuntime[]) {
 		}, (err) => {
 			throw new Error("[testCommon.ts] failed to set runtimes: " + err)
 		})
-		// }).then(async () => {
-		// 	await sleep(500)
-		// 	// return commands.executeCommand('abl.restart.langserv').then(async () => {
-		// 	// 	log.info("[testCommon.ts] abl.restart.langserv complete!")
-		// 	// 	await sleep(500)
-		// 	// 	return true
-		// 	// })
-		// 	return true
-		// })
 	})
 }
 

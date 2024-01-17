@@ -9,5 +9,9 @@
 	},
 	"terminal.integrated.env.windows": {
 		"ENV_VAR_1": "THISisTHEvalue",
-	}
+	},
+	"ablunit.files.exclude": [
+		".builder/**",
+		"compileError.p"
+	]
 }
