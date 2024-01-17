@@ -123,7 +123,7 @@ async function runTestsForProject (projName: string, timeout: number) {
 	console.log('[runTestsForProject] coverage outputted successfully!')
 }
 
-function findConfigFile() {
+function findConfigFile () {
 	// search up to 5 levels back for .vscode-test.config.json
 	let configFilename: string = './.vscode-test.config.json'
 	for (let i = 0; i < 5; i++) {

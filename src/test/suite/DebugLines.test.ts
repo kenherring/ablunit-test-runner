@@ -5,7 +5,6 @@ import { getDefaultDLC, getWorkspaceUri, setRuntimes, sleep, waitForExtensionAct
 import { getSourceMapFromRCode } from '../../parse/RCodeParser'
 import { PropathParser } from '../../ABLPropath'
 import { GlobSync } from 'glob'
-import { log } from '../../ABLUnitCommon'
 
 const projName = 'DebugLines'
 const workspaceFolder = workspace.workspaceFolders![0]
