@@ -50,7 +50,6 @@ function createTestConfig (projName: string, workspaceFolder?: string, timeout?:
 	if (projName != "DebugLines" &&
 		projName != "proj3" &&
 		projName != "proj4" &&
-		projName != "proj7" &&
 		projName != "proj9" &&
 		projName != "projA") {
 		launchArgs.push('--disable-extensions')

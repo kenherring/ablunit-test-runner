@@ -5,7 +5,6 @@
 	"tasks": [
 		{
 			"type": "npm",
-			"hide": true,
 			"script": "watch",
 			"problemMatcher": "$tsc-watch",
 			"isBackground": true,

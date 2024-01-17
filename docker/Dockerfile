@@ -37,4 +37,4 @@ WORKDIR /
 RUN mkdir -p ~/.vscode-test
 
 ## install vscode packaging dependency
-RUN npm install -g --save-dev @vscode/vsce
+RUN npm install -g @vscode/vsce
