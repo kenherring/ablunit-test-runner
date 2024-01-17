@@ -37,7 +37,11 @@ async function testProject (projName: string, projDir?: string, launchArgs: stri
 		]
 		args.push(...launchArgs)
 
-		console.log('[runTest.ts testProject] (projName=' + projName + ') running tests with args=' + args)
+		console.log('[runTest.ts testProject] (projName=' + projName + ') running tests with args=')
+		console.debug(" -- extensionDevelopmentPath=" + extensionDevelopmentPath)
+		console.debug(" -- extensionTestsPath=" + extensionTestsPath)
+		console.debug(" -- testingEnv=" + JSON.stringify(testingEnv))
+
 		await runTests({
 			extensionDevelopmentPath,
 			extensionTestsPath,

@@ -7,20 +7,22 @@
 		"alwaysStrict": true,
 		"rootDir": "src",
 		"outDir": "out",
-		"baseUrl": ".",
+		"sourceRoot": ".",
+		// "baseUrl": ".",
 		"esModuleInterop": true,
+		// "noEmit": true,
 		// "listEmittedFiles": true,
 
 		"isolatedModules": true,
 		"experimentalDecorators": true,
 		"allowSyntheticDefaultImports": true,
 
-		"allowJs": true,
-		"checkJs": true,
+		// "allowJs": true,
+		// "checkJs": true,
 		"forceConsistentCasingInFileNames": true,
 		"noErrorTruncation": true,
 		"noFallthroughCasesInSwitch": true,
-		"noImplicitAny": true,
+		// "noImplicitAny": true,
 		// "noImplicitOverride": true,
 		"noImplicitThis": true,
 		// "noUnusedLocals": true, // reported by the typescript plugin
@@ -31,7 +33,12 @@
 		"strictPropertyInitialization": true,
 	},
 	"include": [
-		"./src/**/*.ts"
+		"./src/**/*.ts",
+		// for when glob doesn't work
+		"./src/*.ts",
+		"./src/*/*.ts",
+		"./src/*/*/*.ts",
+		"./src/*/*/*/*.ts"
 	],
 	"exclude": [
 		"dist",

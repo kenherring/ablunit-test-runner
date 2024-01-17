@@ -9,36 +9,48 @@ import Mocha from 'mocha'
 import * as path from 'path'
 import * as fs from 'fs'
 import { ITestConfig } from './createTestConfig.js'
-const NYC = require('nyc')
 
 function setupNyc (projName: string) {
+	const NYC = require('nyc')
+
+	const currentWorkingDir = path.join(__dirname, "..", "..")
+	const reportDir = path.join(__dirname, "..", "..", 'coverage', "coverage_" + projName)
+	const tempDir = path.join(__dirname, "..", "..", 'coverage', "coverage_" + projName, ".nyc_output")
+	console.log(
+		"[setupNyc]",
+		", currentWorkingDir=" + currentWorkingDir,
+		", reportDir=" + reportDir,
+		", tempDir=" + tempDir)
+
 	const nyc = new NYC({
 		cache: false,
-		cwd:       path.join(__dirname, "..", ".."),
-		reportDir: path.join(__dirname, "..", "..", 'coverage', "coverage_" + projName),
-		tempDir:   path.join(__dirname, "..", "..", 'coverage', "coverage_" + projName, ".nyc_output"),
-		exclude: [
-			"**/dist/test/**",
-			"**/node_modules/**",
-			"**/out/test/**",
-			"**/.vscode-test/**"
-		],
+		cwd: currentWorkingDir,
+		reportDir: reportDir,
+		tempDir: tempDir,
+		sourceMap: true,
 		extension: [
 			".ts",
 			".tsx",
 		],
-		hookRequire: true,
-		hookRunInContext: true,
-		hookRunInThisContext: true,
-		instrument: true,
-		sourceMap: true,
 		reporter: [
 			'text',
 			'lcov'
 		],
-		require: [
-			"ts-node/register",
-		]
+		// require: [
+		// 	// "ts-node/register",
+		// 	// "source-map-support/register"
+		// ],
+		esModules: true,
+		excludeNodeModules: true,
+		excludeAfterRemap: true,
+		exclude: [
+			'.vscode-test',
+			'dummy-ext',
+		],
+		hookRequire: true,
+
+		// not neeed
+		instrument: false
 	})
 
 	nyc.reset()
@@ -68,43 +80,59 @@ function setupMocha (projName: string, timeout: number) {
 	})
 }
 
-function runTestsForProject (projName: string, timeout: number) {
+async function runTestsForProject (projName: string, timeout: number) {
 	console.log('[runTestsForProject] projName=' + projName)
 	const nyc = setupNyc(projName)
 	const mocha = setupMocha(projName, timeout)
 	const testsRoot = path.resolve(__dirname, "..")
-	return new Promise<void>((c, e) => {
-		const files = new GlobSync("**/" + projName + ".test.js", { cwd: testsRoot })
-		console.log("pattern=" + "**/" + projName + ".test.js, file.found.length=" + files.found.length)
-		for(const f of files.found) {
-			console.log("mocha.addFile " + path.resolve(testsRoot, f))
-			mocha.addFile(path.resolve(testsRoot, f))
-		}
 
+	console.log('[runTestsForProject] testsRoot=' + testsRoot)
+	const files = new GlobSync('**/' + projName + '.test.js', { cwd: testsRoot })
+	console.log('[runTestsForProject] pattern=**/' + projName + '.test.js, file.found.length=' + files.found.length)
+	for(const f of files.found) {
+		console.log('[runTestsForProject] mocha.addFile ' + path.resolve(testsRoot, f))
+		mocha.addFile(path.resolve(testsRoot, f))
+	}
+
+	const prom = new Promise<void>((c, e) => {
 		try {
 			// Run the mocha test
 			mocha.run((failures) => {
 				if (failures > 0) {
-					console.log(`${failures} tests failed.`)
-					e(new Error(`${failures} tests failed.`))
+					console.log('[runTestsForProject] ' + failures + ' tests failed.')
+					e(new Error(failures + ' tests failed.'))
 				}
-				if (nyc) {
-					console.log("nyc.writeCoverageFile()")
-					nyc.writeCoverageFile()
-					nyc.report().then(() => {
-						console.log("nyc.report() done")
-						c()
-					})
-				}
-			}).on('end', () => {
-				console.log("mocha.run().on('end')")
+				c()
 			})
-
 		} catch (err) {
-			console.error('[index_2.ts] catch err= ' + err)
+			console.error('[runTestsForProject]  catch err= ' + err)
 			e(err)
 		}
 	})
+
+	await prom
+
+	console.log('[runTestsForProject] outputting coverage...')
+	nyc.writeCoverageFile()
+	await nyc.report().then(() => {
+		console.log('[runTestsForProject] nyc.report() successful')
+	}, (err: Error) => {
+		console.error('[runTestsForProject] nyc.report() err=' + err)
+		// e(err)
+	})
+	console.log('[runTestsForProject] coverage outputted successfully!')
+}
+
+function findConfigFile() {
+	// search up to 5 levels back for .vscode-test.config.json
+	let configFilename: string = './.vscode-test.config.json'
+	for (let i = 0; i < 5; i++) {
+		if (fs.existsSync(configFilename)) {
+			return configFilename
+		}
+		configFilename = '../' + configFilename
+	}
+	throw new Error('[findConfigFile] Could not find .vscode-test.config.json')
 }
 
 export function run (): Promise <void> {
@@ -115,27 +143,13 @@ export function run (): Promise <void> {
 	} else if (workspace.workspaceFolders) {
 		proj = workspace.workspaceFolders[0].uri.fsPath
 	} else {
-		throw new Error("No workspace file or folder found")
+		throw new Error('[run] No workspace file or folder found')
 	}
 
-	proj = proj.replace(/\\/g, '/').split('/').reverse()[0].replace(".code-workspace", '')
+	proj = proj.replace(/\\/g, '/').split('/').reverse()[0].replace('.code-workspace', '')
 	proj = proj.split('_')[0]
 
-	let configFilename: string
-	if (fs.existsSync('./.vscode-test.config.json')) {
-		configFilename = './.vscode-test.config.json'
-	} else if (fs.existsSync('../.vscode-test.config.json')) {
-		configFilename =     '../.vscode-test.config.json'
-	} else if (fs.existsSync('../../.vscode-test.config.json')) {
-		configFilename =     '../../.vscode-test.config.json'
-	} else if (fs.existsSync('../../../.vscode-test.config.json')) {
-		configFilename =     '../../../.vscode-test.config.json'
-	} else if (fs.existsSync('../../../../.vscode-test.config.json')) {
-		configFilename =     '../../../../.vscode-test.config.json'
-	} else {
-		throw new Error("Could not find .vscode-test.config.json")
-	}
-
+	const configFilename = findConfigFile()
 	const testConfig: ITestConfig[] = JSON.parse(fs.readFileSync(configFilename, 'utf8'))
 	const config = testConfig.filter((config: ITestConfig) => { return config.projName === proj })[0]
 

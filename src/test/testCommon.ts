@@ -1,7 +1,7 @@
 import { ConfigurationTarget, FileType, Uri, commands, extensions, workspace } from 'vscode'
 import { ITestSuites } from '../parse/ResultsParser'
 import { strict as assert } from 'assert'
-import { ABLResults } from 'src/ABLResults'
+import { ABLResults } from '../ABLResults'
 import { log } from '../ABLUnitCommon'
 
 export async function waitForExtensionActive () {
