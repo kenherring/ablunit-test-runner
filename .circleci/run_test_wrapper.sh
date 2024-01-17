@@ -3,17 +3,17 @@ set -eou pipefail
 
 initialize () {
 	echo "[$0 initialize]"
+	# RUNCMD=${1:-webpack}
+	VERBOSE=${VERBOSE:-false}
 	npm install
 
-	echo "\$1=${1:-}"
-	if [ "${1:-}" = "bundle" ]; then
-		RUNCMD="esbuild-bundle"
-	else
-		RUNCMD="build"
-	fi
-	rm -rf out
-	npm run "$RUNCMD"
-	echo "npm run $RUNCMD - success"
+	# RUNCMD="build" ## always build so the *.test.ts are compiled
+	# if [ -n "$RUNCMD" ]; then
+	# 	RUNCMD="webpack"
+	# fi
+	# rm -rf dist out
+	# npm run "$RUNCMD"
+	# echo "npm run $RUNCMD - success"
 }
 
 dbus_config () {
@@ -39,12 +39,34 @@ run_tests () {
 	EXIT_CODE=0
 
 	xvfb-run -a npm test || EXIT_CODE=$?
+	save_and_print_debug_output
 	if [ "$EXIT_CODE" = "0" ]; then
 		echo "xvfb-run success"
 	else
 		echo "xvfb-run failed (EXIT_CODE=$EXIT_CODE)"
 		exit $EXIT_CODE
 	fi
+}
+
+save_and_print_debug_output () {
+	echo "[$0 print_debug_output]"
+	find .vscode-test -name '*-ABL*.log'
+	find .vscode-test -name '*-ABL*.log' -exec cp {} artifacts \;
+	find .vscode-test -name '*ABLUnit.log'
+	find .vscode-test -name '*ABLUnit.log' -exec cp {} artifacts \;
+	find .vscode-test -name '*-ABL*.log'
+	find .vscode-test -name '*-ABL*.log' -exec cp {} artifacts \;
+
+	echo "[$0 print_debug_output] r-code"
+	find . -name '*.r'
+	$VERBOSE || return 0
+
+	echo "[$0 print_debug_output] OpenEdge ABL Extension Logs"
+	echo "********** '1-ABL.log' **********"
+	find . -name "1-ABL.log" -exec cat {} \;
+	echo "********** '2-ABL Language Server.log' **********"
+	find . -name "2-ABL Language Server.log" -exec cat {} \;
+	echo '********** logs done **********'
 }
 
 run_lint () {

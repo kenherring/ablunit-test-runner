@@ -1,9 +1,21 @@
 {
-	"eslint.enable": true,
+	"eslint.run": "onType",
 	"extension-test-runner.debugOptions": {},
 	"git.branchProtection": [
 		"main"
 	],
+	"files.watcherExclude": {
+		"**/.git/objects/**": true,
+		"**/.git/subtree-cache/**": true,
+		"dist/**": true,
+		"out/**": true,
+		"**/node_modules/*/**": true
+	},
+	"search.exclude": {
+		"dist/**": true,
+		"out/**": true,
+		"**/node_modules": true,
+	},
 	"npm.autoDetect": "on",
 	"redhat.telemetry.enabled": false,
 	"shellcheck.useWorkspaceRootAsCwd": true,
@@ -12,12 +24,7 @@
 		"projectKey": "kenherring_ablunit-test-runner"
 	},
 	"sonarlint.disableTelemetry": true,
-	// "task.autoDetect": "off",
-	// "task.saveBeforeRun": "always",
-	"task.quickOpen.showAll": true,
-	"tslint.enable": false,
-	"typescript.format.insertSpaceBeforeFunctionParenthesis": true,
-	"typescript.format.semicolons": "remove",
-	"typescript.tsc.autoDetect": "off",
+	"task.autoDetect": "on",
 	"typescript.preferences.quoteStyle": "single",
+	"typescript.validate.enable": true,
 }

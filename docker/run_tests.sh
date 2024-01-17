@@ -9,8 +9,8 @@ options:
   -b            drop to bash shell inside container on failure
   -d            run development test
   -i            run install and run test
-  -p            run esbuild-bundle instead of build
-  -s            run staged tests only
+  -w            run webpack instead of build
+  -m            copy modified files and staged files
   -h            show this help message and exit
 " >&2
 }
@@ -20,18 +20,19 @@ initialize () {
 	OPTS=
 	SCRIPT=entrypoint
 	TEST_PROJECT=base
-	STAGED_ONLY=false
+	STAGED_ONLY=true
 	OE_VERSION=12.2.12
 	RUNCMD='build'
 
-	while getopts "bdipso:h" OPT; do
+	while getopts "bdipmwso:h" OPT; do
 		case $OPT in
 			o) 	OE_VERSION=$OPTARG ;;
 			b)	OPTS='-b' ;;
 			d)	SCRIPT=development_test ;;
 			i)	TEST_PROJECT=dummy-ext ;;
-			p)	RUNCMD='esbuild-bundle' ;;
-			s)	STAGED_ONLY=true ;;
+			p)	RUNCMD='webpack' ;;
+			w)	RUNCMD='webpack' ;;
+			m)	STAGED_ONLY=true ;;
 			h) 	usage && exit 0 ;;
 			?) 	usage && exit 1 ;;
 			*)	echo "Invalid option: -$OPT" >&2 && usage && exit 1 ;;
@@ -57,7 +58,6 @@ initialize () {
 run_tests_in_docker () {
 	echo "[$0 ${FUNCNAME[0]}] pwd=$(pwd)"
 	## run tests inside the container
-	echo "RUNCMD=$RUNCMD"
 	time docker run --rm -it \
 		-e PROGRESS_CFG_BASE64 \
 		-e GIT_BRANCH \

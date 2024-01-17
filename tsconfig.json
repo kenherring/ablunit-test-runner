@@ -1,29 +1,49 @@
 {
 	"compilerOptions": {
-		"module": "commonjs",
+		"module": "CommonJS",
 		"target": "ES2019",
-		"lib": [
-			"ES2019"
-		],
-		"outDir": "out",
 		"sourceMap": true,
 		"strict": true,
-		"rootDir": "src"
-	},
-	"parseOptions": {
-		"project": "tsconfig.json",
-		"tsconfigRootDir": "."
+		"alwaysStrict": true,
+		"outDir": "out",
+		// "rootDir": ".",
+		// "sourceRoot": "src",
+		// "baseUrl": ".",
+		"esModuleInterop": true,
+		// "noEmit": true,
+		// "listEmittedFiles": true,
+
+		"isolatedModules": true,
+		"experimentalDecorators": true,
+		"allowSyntheticDefaultImports": true,
+
+		// "allowJs": true,
+		// "checkJs": true,
+		"forceConsistentCasingInFileNames": true,
+		"noErrorTruncation": true,
+		"noFallthroughCasesInSwitch": true,
+		// "noImplicitAny": true,
+		// "noImplicitOverride": true,
+		"noImplicitThis": true,
+		// "noUnusedLocals": true, // reported by the typescript plugin
+		// "noUnusedParameters": true,
+		"removeComments": true,
+		"strictFunctionTypes": true,
+		"strictNullChecks": true,
+		"strictPropertyInitialization": true,
 	},
 	"include": [
-		"src/**/*.ts",
-		"src/*.ts",
-		"src/*/*.ts",
-		"src/*/*/*.ts",
-		"src/*/*/*/*.ts",
-		"src/*/*/*/*/*.ts"
+		"./src/**/*.ts",
+		// for when glob doesn't work
+		"./src/*.ts",
+		"./src/*/*.ts",
+		"./src/*/*/*.ts"
 	],
 	"exclude": [
+		"dist",
+		"dummy-ext",
 		"node_modules",
-		"out"
+		"out",
+		"test_projects",
 	]
 }

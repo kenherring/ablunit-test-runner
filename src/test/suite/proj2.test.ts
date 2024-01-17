@@ -1,8 +1,7 @@
 import { strict as assert } from 'assert'
 import { before } from 'mocha'
 import { Uri, commands } from 'vscode'
-import { doesFileExist, getWorkspaceUri, runAllTests, sleep, waitForExtensionActive } from '../testCommon'
-import { recentResults } from '../../decorator'
+import { doesFileExist, getRecentResults, getWorkspaceUri, runAllTests, sleep, waitForExtensionActive } from '../testCommon'
 
 
 const projName = 'proj2'
@@ -25,6 +24,7 @@ suite(projName + ' - Extension Test Suite', () => {
 		await commands.executeCommand('vscode.open', Uri.joinPath(workspaceUri,'src/classes/testClass2.cls'))
 		await sleep(200)
 		await commands.executeCommand('testing.runCurrentFile')
+		const recentResults = await getRecentResults()
 
 		const tc = recentResults?.[0].ablResults?.resultsJson[0].testsuite?.[0].testcases?.[0]
 		const mdText = tc?.failure?.callstack?.items?.[1].markdownText
@@ -40,6 +40,7 @@ suite(projName + ' - Extension Test Suite', () => {
 		await commands.executeCommand('vscode.open', Uri.joinPath(workspaceUri,'src/testSuite.cls'))
 		await sleep(200)
 		await commands.executeCommand('testing.runCurrentFile')
+		const recentResults = await getRecentResults()
 
 		const res = recentResults?.[0].ablResults?.resultsJson[0]
 		if (!res) {
