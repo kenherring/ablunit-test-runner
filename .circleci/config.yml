@@ -121,6 +121,11 @@ jobs:
             npm run compile
             export DONT_PROMPT_WSL_INSTALL=No_Prompt_please
             xvfb-run -a npm run test:install-and-run
+      - run:
+          environment:
+            ABLUNIT_TEST_RUNNER_PROJECT_NAME: proj0
+          command:
+            xvfb-run -a npm run test
       - store_test_results:
           when: always
           path: dummy-ext/artifacts

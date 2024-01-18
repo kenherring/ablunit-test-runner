@@ -1,16 +1,15 @@
 #!/bin/bash
-set -eou pipefail
+set -euo pipefail
 
 usage () {
 	echo "
-usage: $0 [ -o 12.2.12 | 12.7.0 ] [-b] [-d] [-i] [-s] [-h]
+usage: $0 [ -o 12.2.12 | 12.7.0 ] [ -p <project_name> ] [-b] [-i] [-m] [-h]
 options:
   -o <version>  OE version (default: 12.2.12)
   -b            drop to bash shell inside container on failure
-  -d            run development test
   -i            run install and run test
-  -w            run webpack instead of build
   -m            copy modified files and staged files
+  -p <project>  run tests for a specific test project
   -h            show this help message and exit
 " >&2
 }
@@ -22,18 +21,16 @@ initialize () {
 	TEST_PROJECT=base
 	STAGED_ONLY=true
 	OE_VERSION=12.2.12
-	RUNCMD='build'
+	ABLUNIT_TEST_RUNNER_PROJECT_NAME=
 
-	while getopts "bdipmwso:h" OPT; do
+	while getopts "bdimso:p:h" OPT; do
 		case $OPT in
 			o) 	OE_VERSION=$OPTARG ;;
 			b)	OPTS='-b' ;;
-			d)	SCRIPT=development_test ;;
 			i)	TEST_PROJECT=dummy-ext ;;
-			p)	RUNCMD='webpack' ;;
-			w)	RUNCMD='webpack' ;;
 			m)	STAGED_ONLY=true ;;
 			h) 	usage && exit 0 ;;
+			p)  ABLUNIT_TEST_RUNNER_PROJECT_NAME=$OPTARG ;;
 			?) 	usage && exit 1 ;;
 			*)	echo "Invalid option: -$OPT" >&2 && usage && exit 1 ;;
 		esac
@@ -42,10 +39,11 @@ initialize () {
 	GIT_BRANCH=$(git branch --show-current)
 	PROGRESS_CFG_BASE64=$(base64 "$DLC/progress.cfg" | tr '\n' ' ')
 	PWD=$(pwd -W 2>/dev/null || pwd)
-	export GIT_BRANCH PROGRESS_CFG_BASE64 STAGED_ONLY OE_VERSION RUNCMD TEST_PROJECT
+	export GIT_BRANCH PROGRESS_CFG_BASE64 STAGED_ONLY OE_VERSION TEST_PROJECT ABLUNIT_TEST_RUNNER_PROJECT_NAME
 
 	## create volume for .vscode-test directory to persist vscode application downloads
 	if ! docker volume ls | grep -q test-runner-cache; then
+		echo "creating test-runner-cache volume"
 		docker volume create --name test-runner-cache
 	fi
 
@@ -57,18 +55,26 @@ initialize () {
 
 run_tests_in_docker () {
 	echo "[$0 ${FUNCNAME[0]}] pwd=$(pwd)"
-	## run tests inside the container
-	time docker run --rm -it \
-		-e PROGRESS_CFG_BASE64 \
-		-e GIT_BRANCH \
-		-e STAGED_ONLY \
-		-e OE_VERSION \
-		-e RUNCMD \
-		-e TEST_PROJECT \
-		-v "$PWD":/home/circleci/ablunit-test-runner:ro \
-		-v test-runner-cache:/home/circleci/cache \
-		kherring/ablunit-test-runner:"$OE_VERSION" \
+
+	local ARGS=(
+		--rm
+		-it
+		-e PROGRESS_CFG_BASE64
+		-e GIT_BRANCH
+		-e STAGED_ONLY
+		-e OE_VERSION
+		-e TEST_PROJECT
+	)
+	[ -n "$ABLUNIT_TEST_RUNNER_PROJECT_NAME" ] && ARGS+=(-e ABLUNIT_TEST_RUNNER_PROJECT_NAME)
+	ARGS+=(
+		-v "$PWD":/home/circleci/ablunit-test-runner:ro
+		-v test-runner-cache:/home/circleci/cache
+		kherring/ablunit-test-runner:"$OE_VERSION"
 		bash -c "/home/circleci/ablunit-test-runner/docker/$SCRIPT.sh $OPTS;"
+	)
+
+	## run tests inside the container
+	time docker run "${ARGS[@]}"
 }
 
 ########## MAIN BLOCK ##########

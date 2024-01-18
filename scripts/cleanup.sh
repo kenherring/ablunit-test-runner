@@ -1,5 +1,5 @@
 #!/bin/bash
-set -eou pipefail
+set -euo pipefail
 
 # shellcheck disable=SC3030
 DIRS=(listings .builder build ablunit-output workspaceAblunit)

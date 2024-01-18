@@ -27,6 +27,7 @@ export function run(): Promise <void> {
 				if (failures > 0) {
 					console.log(`${failures} tests failed.`)
 					e(new Error(`${failures} tests failed.`))
+					return
 				}
 				console.log("all test(s) passed!")
 				c()

@@ -1,5 +1,5 @@
 #!/bin/bash
-set -eou pipefail
+set -euo pipefail
 
 . scripts/common.sh
 
@@ -11,7 +11,7 @@ validate_compile () {
 
 validate_compile () {
 	echo "compiling..." >&2
-	
+
 	npm run build
 }
 

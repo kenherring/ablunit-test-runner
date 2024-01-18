@@ -1,4 +1,4 @@
-import { ConfigurationTarget, FileType, Uri, commands, extensions, workspace } from 'vscode'
+import { ConfigurationTarget, FileType, TestController, Uri, commands, extensions, workspace } from 'vscode'
 import { ITestSuites } from '../parse/ResultsParser'
 import { strict as assert } from 'assert'
 import { ABLResults } from '../ABLResults'
@@ -247,9 +247,10 @@ export async function selectProfile (profile: string) {
 		profile: profile
 	}
 	const profileUri = Uri.joinPath(getWorkspaceUri(), '.vscode', 'profile.json')
-	return workspace.fs.writeFile(profileUri, Buffer.from(JSON.stringify(profileJson))).then(() => {
+	return workspace.fs.writeFile(profileUri, Buffer.from(JSON.stringify(profileJson))).then(async () => {
+		await sleep(100)
 		return commands.executeCommand('abl.restart.langserv').then(() => {
-			return true
+			return sleep(500)
 		}, (err) => {
 			throw new Error("failed to restart langserv: " + err)
 		})
@@ -301,7 +302,17 @@ export async function getRecentResults () {
 		}
 		throw new Error('no recent results returned from \'ablunit.getRecentResults\' command')
 	}, (err) => {
-		log.info("---- err=" + err)
-		throw new Error('error calling \'ablunit.getRecentResults\' command')
+		throw new Error('error calling \'ablunit.getRecentResults\' command. err=' + err)
+	})
+}
+
+export async function getTestController () {
+	return commands.executeCommand('_ablunit.getTestController').then((resp) => {
+		if (resp) {
+			return <TestController>resp
+		}
+		throw new Error('no recent results returned from \'ablunit.getTestController\' command')
+	}, (err) => {
+		throw new Error('error calling \'ablunit.getTestController\' command. err=' + err)
 	})
 }

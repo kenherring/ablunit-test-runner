@@ -1,0 +1,122 @@
+[33mcommit cb54b5ccffa0eec29de8874c68f7a35c7b4a63de[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mcancel-test-run[m[33m)[m
+Author: kenherring <kennethherring@gmail.com>
+Date:   Thu Jan 18 02:39:45 2024 -0500
+
+    cleanup && test_project param
+
+[33mcommit 0db007d1f4090aea72c969a156e4f393f872640f[m[33m ([m[1;31morigin/cancel-test-run[m[33m)[m
+Author: kenherring <kennethherring@gmail.com>
+Date:   Thu Jan 18 02:22:53 2024 -0500
+
+    cleanup
+
+[33mcommit ff9de0491820cbff5a8c332463cb546afdfc10e6[m
+Author: kenherring <kennethherring@gmail.com>
+Date:   Thu Jan 18 02:09:02 2024 -0500
+
+    cleanup
+
+[33mcommit 91f95d0feb4dd629859ac70b412adb68bb1b33ab[m
+Author: kenherring <kennethherring@gmail.com>
+Date:   Thu Jan 18 01:56:52 2024 -0500
+
+    cleanup
+
+[33mcommit 28f6ab529d4811bc68be1602cd12a892fa6a2764[m
+Author: kenherring <kennethherring@gmail.com>
+Date:   Thu Jan 18 00:46:48 2024 -0500
+
+    working installAndRun
+
+[33mcommit 2af903aeca0c445eed5e23b32219a448e675282c[m
+Author: kenherring <kennethherring@gmail.com>
+Date:   Wed Jan 17 23:56:58 2024 -0500
+
+    almost working
+
+[33mcommit 69d66bd2fabcf9d354c52497a90b2eb8544d5d17[m
+Author: kenherring <kennethherring@gmail.com>
+Date:   Wed Jan 17 02:20:35 2024 -0500
+
+    cleanup
+
+[33mcommit 51ef77d4c75ca6563162c83b2fc9f059b437676c[m
+Author: kenherring <kennethherring@gmail.com>
+Date:   Wed Jan 17 02:05:02 2024 -0500
+
+    cleanup
+
+[33mcommit cdfe5450a6ccae6cdefb36e7141b1e684762d0e6[m
+Author: kenherring <kennethherring@gmail.com>
+Date:   Wed Jan 17 02:03:08 2024 -0500
+
+    cleanup
+
+[33mcommit d746245fb61a6932210aa3f3dd067b71ab9d9a45[m
+Author: kenherring <kennethherring@gmail.com>
+Date:   Wed Jan 17 01:36:13 2024 -0500
+
+    cleanup
+
+[33mcommit 809eb2b63d12254d4ad5cccacb710242760fc962[m
+Author: kenherring <kennethherring@gmail.com>
+Date:   Wed Jan 17 01:13:42 2024 -0500
+
+    incremental
+
+[33mcommit 72a7d79ae72caf860f893bc3587cb212f246c815[m
+Merge: 3269432 3d1124b
+Author: kenherring <kennethherring@gmail.com>
+Date:   Wed Jan 17 00:13:25 2024 -0500
+
+    Merge remote-tracking branch 'origin/main' into cancel-test-run
+
+[33mcommit 3d1124b19a17ea696cce3a794ca0299ff6ed6d68[m[33m ([m[1;31morigin/main[m[33m, [m[1;32mmain[m[33m)[m
+Author: Ken Herring <kennethherring@gmail.com>
+Date:   Wed Jan 17 00:04:21 2024 -0500
+
+    Use tsc and webpack instead of esbuild (#104)
+    
+    Esbuild doesn't have great VSCode support, so I'm reverting back to tsc.
+
+[33mcommit 326943295a9618705b3c16896864a65b8d87837f[m
+Author: kenherring <kennethherring@gmail.com>
+Date:   Sun Jan 14 08:43:07 2024 -0500
+
+    cancel tests refresh sort of working
+
+[33mcommit a0f863135b85acd0f055d0a1bc16f702e9fc9545[m
+Author: kenherring <kennethherring@gmail.com>
+Date:   Sat Jan 13 16:37:12 2024 -0500
+
+    Ensure timely response when cancelling a test run
+
+[33mcommit 93b642229566f4bf5b1fd93be13c3b8594a8444a[m
+Author: kenherring <kennethherring@gmail.com>
+Date:   Sat Jan 13 16:36:51 2024 -0500
+
+    Ensure timely response when cancelling a test run
+
+[33mcommit 879ef128f3641e8134d17cce60905cec998e38a6[m
+Author: Ken Herring <kennethherring@gmail.com>
+Date:   Sat Jan 13 12:18:42 2024 -0500
+
+    Logger consistency: use logging class (#102)
+
+[33mcommit 754a4314dfb1bf895637413df07aed2702b3a89a[m
+Author: Ken Herring <kennethherring@gmail.com>
+Date:   Fri Jan 12 01:11:18 2024 -0500
+
+    Eslint and sonar config (#101)
+
+[33mcommit 9cf4f18aceb06a6a25c6d7a2c3226e201d7df7e6[m
+Author: Ken Herring <kennethherring@gmail.com>
+Date:   Thu Jan 11 19:33:26 2024 -0500
+
+    Tagge builds: skip version update (#99)
+
+[33mcommit c566c6951a54b70ddf6033408dbf61f6ccf997e0[m
+Author: Ken Herring <kennethherring@gmail.com>
+Date:   Thu Jan 11 03:55:47 2024 -0500
+
+    Cleanup console.log statements (#98)

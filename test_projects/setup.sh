@@ -1,5 +1,5 @@
 #!/bin/bash
-set -eou pipefail
+set -euo pipefail
 
 initialize () {
 	echo "[$0 ${FUNCNAME[0]}] pwd=$(pwd)"
@@ -48,7 +48,7 @@ get_pct () {
 }
 
 create_dbs () {
-	echo "[$0 ${FUNCNAME[0]} pwd=$(pwd)"
+	echo "[$0 ${FUNCNAME[0]}] pwd=$(pwd)"
 	if [ ! -d test_projects/proj0/target/db ]; then
 		cd test_projects/proj0
 		if command -v ant; then
@@ -60,10 +60,17 @@ create_dbs () {
 	fi
 }
 
+doBuild () {
+	echo "[$0 ${FUNCNAME[0]}] pwd=$(pwd)"
+	npm run build
+	node ./out/test/createTestConfig.js
+}
+
 ########## MAIN BLOCK ##########
 initialize "$@"
 scripts/cleanup.sh
 get_performance_test_code
 get_pct
 create_dbs
+doBuild
 echo "$0: completed successfully!"

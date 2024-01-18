@@ -1,4 +1,4 @@
-import { FileType, MarkdownString, Range, TestItem, TestItemCollection, TestMessage, TestRun, Uri, workspace, WorkspaceFolder } from 'vscode'
+import { CancellationError, CancellationToken, Disposable, FileType, MarkdownString, Range, TestItem, TestItemCollection, TestMessage, TestRun, Uri, workspace, WorkspaceFolder } from 'vscode'
 import { ABLUnitConfig } from './ABLUnitConfigWriter'
 import { ABLResultsParser, ITestCaseFailure, ITestCase, ITestSuite } from './parse/ResultsParser'
 import { ABLTestSuite, ABLTestData } from './testTree'
@@ -32,7 +32,7 @@ export interface IABLUnitJson {
 	tests: ITestObj[]
 }
 
-export class ABLResults {
+export class ABLResults implements Disposable {
 	workspaceFolder: WorkspaceFolder
 	storageUri: Uri
 	globalStorageUri: Uri
@@ -57,9 +57,16 @@ export class ABLResults {
 	coverage: FileCoverage[] = []
 	dlc: IDlc | undefined
 	public testCoverage: Map<string, FileCoverage> = new Map<string, FileCoverage>()
+	private cancellation: CancellationToken | undefined
 
-	constructor (workspaceFolder: WorkspaceFolder, storageUri: Uri, globalStorageUri: Uri, extensionResourcesUri: Uri) {
+	constructor (workspaceFolder: WorkspaceFolder, storageUri: Uri, globalStorageUri: Uri, extensionResourcesUri: Uri, cancellation?: CancellationToken) {
 		log.info("workspaceFolder=" + workspaceFolder.uri.fsPath)
+		if(cancellation) {
+			cancellation.onCancellationRequested(() => {
+				log.info("cancellation requested")
+				throw new CancellationError()
+			})
+		}
 		this.startTime = new Date()
 		this.workspaceFolder = workspaceFolder
 		this.storageUri = storageUri
@@ -68,6 +75,14 @@ export class ABLResults {
 		this.wrapperUri = Uri.joinPath(this.extensionResourcesUri, 'ABLUnitCore-wrapper.p')
 		this.cfg = new ABLUnitConfig()
 		this.setStatus("constructed")
+	}
+
+	dispose () {
+		this.setStatus("run cancelled - disposing ABLResults object")
+		delete this.profileJson
+		delete this.ablResults
+		delete this.debugLines
+		delete this.profileJson
 	}
 
 	setStatus (status: string) {
@@ -89,12 +104,6 @@ export class ABLResults {
 		this.propath = this.cfg.readPropathFromJson()
 		this.debugLines = new ABLDebugLines(this.propath)
 
-		const prom: (Promise<void> | Promise<void[]>)[] = []
-		prom[0] = this.cfg.createProfileOptions(this.cfg.ablunitConfig.profOptsUri,this.cfg.ablunitConfig.profiler)
-		prom[1] = this.cfg.createProgressIni(this.propath.toString())
-		prom[2] = this.cfg.createAblunitJson(this.cfg.ablunitConfig.config_uri, this.cfg.ablunitConfig.options, this.testQueue)
-		prom[3] = this.cfg.createDbConnPf(this.cfg.ablunitConfig.dbConnPfUri, this.cfg.ablunitConfig.dbConns)
-
 		if(this.cfg.ablunitConfig.dbConns) {
 			this.cfg.ablunitConfig.dbAliases = []
 			for (const conn of this.cfg.ablunitConfig.dbConns) {
@@ -103,6 +112,12 @@ export class ABLResults {
 				}
 			}
 		}
+
+		const prom: (Promise<void> | Promise<void[]>)[] = []
+		prom[0] = this.cfg.createProfileOptions(this.cfg.ablunitConfig.profOptsUri,this.cfg.ablunitConfig.profiler)
+		prom[1] = this.cfg.createProgressIni(this.propath.toString())
+		prom[2] = this.cfg.createAblunitJson(this.cfg.ablunitConfig.config_uri, this.cfg.ablunitConfig.options, this.testQueue)
+		prom[3] = this.cfg.createDbConnPf(this.cfg.ablunitConfig.dbConnPfUri, this.cfg.ablunitConfig.dbConns)
 
 		return Promise.all(prom).then(() => {
 			log.info("done creating config files for run")
@@ -190,10 +205,11 @@ export class ABLResults {
 
 	async run (options: TestRun) {
 		await this.deleteResultsXml()
-		return ablunitRun(options, this).then(() => {
+		return ablunitRun(options, this, this.cancellation).then(() => {
 			if(!this.ablResults!.resultsJson) {
 				throw new Error("no results available")
 			}
+			return true
 		}, (err) => {
 			throw new Error("[ABLResults run] Exception: " + err)
 		})
@@ -204,9 +220,11 @@ export class ABLResults {
 		log.info("parsing results from " + this.cfg.ablunitConfig.optionsUri.filenameUri.fsPath, options)
 
 		this.endTime = new Date()
+		const parseStartTime = new Date()
 
 		this.ablResults = new ABLResultsParser(this.propath!, this.debugLines!)
 		await this.ablResults.parseResults(this.cfg.ablunitConfig.optionsUri.filenameUri, this.cfg.ablunitConfig.optionsUri.jsonUri).then(() => {
+			log.debug('parsing complete (time=' + (Number(new Date()) - Number(parseStartTime)) + ')')
 			if(!this.ablResults!.resultsJson) {
 				log.error("No results found in " + this.cfg.ablunitConfig.optionsUri.filenameUri.fsPath, options)
 				throw (new Error("[ABLResults parseOutput] No results found in " + this.cfg.ablunitConfig.optionsUri.filenameUri.fsPath + "\r\n"))
@@ -230,9 +248,9 @@ export class ABLResults {
 			})
 		}
 
-		this.setStatus("parsing output complete")
-		log.info("parsing output complete")
-		options.appendOutput("parsing output complete\r\n")
+		const parseTime = (Number(new Date()) - Number(parseStartTime))
+		this.setStatus("parsing output complete (time=" + parseTime + ")")
+		log.info("parsing output complete (time=" + parseTime + ")", options)
 	}
 
 	async assignTestResults (item: TestItem, options: TestRun) {
@@ -443,11 +461,12 @@ export class ABLResults {
 	}
 
 	async parseProfile () {
+		const startTime = new Date()
 		const profParser = new ABLProfile()
 		return profParser.parseData(this.cfg.ablunitConfig.profFilenameUri, this.cfg.ablunitConfig.profiler.writeJson, this.debugLines!).then(() => {
 			this.profileJson = profParser.profJSON
 			return this.assignProfileResults().then(() => {
-				log.info("assignProfileResults complete")
+				log.debug("assignProfileResults complete (time=" + (Number(new Date()) - Number(startTime)) + ")")
 			}, (err) => {
 				throw new Error("assignProfileResults error: " + err)
 			})
@@ -472,7 +491,7 @@ export class ABLResults {
 		const fileinfo = await this.propath!.search(module.SourceName)
 		const moduleUri = fileinfo?.uri
 		if (!moduleUri) {
-			if (!module.SourceName.startsWith("OpenEdge.")) {
+			if (!module.SourceName.startsWith("OpenEdge.") && module.SourceName !== 'ABLUnitCore.p') {
 				log.error("could not find moduleUri for " + module.SourceName)
 			}
 			return
