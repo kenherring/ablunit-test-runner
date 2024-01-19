@@ -8,31 +8,27 @@ This project strictly enforces the [GitHub Community Code of Conduct](https://do
 
 ## Pull Requests
 
-All pull requests must have corresponding tests and appropriate test coverage.  The CirlceCI build and SonarCloud scan do a good job of ensuring this, but PRs may still be rejected when all build steps pass if the code appears deficient in some way.
+All pull requests must have corresponding tests and appropriate test coverage.  The CirlceCI build and SonarCloud scan generally ensure this, but PRs may still be rejected when all build steps pass if the code appears deficient in some way.
+
+In most situations it's a good idea to create a failing test case first, and then update the code with a fix.
 
 ## Development
 
 ### Prerequisites
 
 * Install the workspace recommended extensions
-* Enable the git pre-commit hook: `git config core.hooksPath .git-hooks`
+* Optional: enable the pre-commit hook: `git config core.hooksPath .git-hooks`
 
 ### Running the Project
 
-- Run `npm install` in terminal to install dependencies
-- Run the `Run Extension` target in the Debug View. This will:
-	- Start a task `npm: watch` to compile the code
-	- Run the extension in a new VS Code window
-- Run a test in the new VS Code window
+* Run `npm install` in terminal to install dependencies
+* Use the **Run Extension** target in the Debug View to launch a new VSCode window with the extension loaded.
 
 ### Testing the Project
 
-* Using the CLI.  Two options:
-  * `npm test`
-  * `vscode-test`
-* Using the native VSCode API: install the [Extension Test Runner](https://marketplace.visualstudio.com/items?itemName=ms-vscode.extension-test-runner) extension
-* Using docker:
-    ```bash
-	docker/docker_build.sh # run once to build the container
-	docker/run_tests.sh # run each time you want the tests to execute
-	```
+Any of the following options will run the automated tests.
+
+* `npm test`
+* Install the [Extension Test Runner](https://marketplace.visualstudio.com/items?itemName=ms-vscode.extension-test-runner) extension and use the **Test Explorer** view
+* `docker/run_tests.sh` - run all tests via docker, nearly identical to the CI/CD pipeline
+  * `docker/docker_build.sh` - run once to build the container

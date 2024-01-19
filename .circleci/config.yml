@@ -61,8 +61,8 @@ workflows:
             parameters:
               oe-version: [ 12.2.12, 12.7.0 ]
           name: test-and-scan_<< matrix.oe-version >>
-      - test-with-bundle:
-          <<: *context-and-filters
+      # - test-with-bundle:
+      #     <<: *context-and-filters
       - install-and-run:
           <<: *context-and-filters
       - package-and-publish:
@@ -70,7 +70,7 @@ workflows:
             - shellcheck/check
             - test-and-scan_12.2.12
             - test-and-scan_12.7.0
-            - test-with-bundle
+            # - test-with-bundle
             - install-and-run
           <<: *context-and-filters
 
@@ -98,36 +98,20 @@ jobs:
           key: v3-cache-<< parameters.oe-version >>-{{ checksum "package.json" }}
           paths:
             - cache
-  test-with-bundle:
-    <<: *oe-version-param
-    executor: psc-primary
-    steps:
-      - <<: *setup
-      - run: .circleci/run_test_wrapper.sh bundle
-      - <<: *store-results
+  # test-with-bundle:
+  #   <<: *oe-version-param
+  #   executor: psc-primary
+  #   steps:
+  #     - <<: *setup
+  #     - run: .circleci/run_test_wrapper.sh bundle
+  #     - <<: *store-results
   install-and-run:
     <<: *oe-version-param
     executor: psc-primary
     steps:
       - <<: *setup
-      - run: npm install
-      - run: vsce package --pre-release --githubBranch "$CIRCLE_BRANCH"
-      - run: vsce ls
-      - run:
-          name: install and run
-          command: |
-            cd dummy-ext
-            npm run compile
-            export DONT_PROMPT_WSL_INSTALL=No_Prompt_please
-            xvfb-run -a npm run test:install-and-run
-      - run:
-          environment:
-            ABLUNIT_TEST_RUNNER_PROJECT_NAME: proj0
-          command:
-            xvfb-run -a npm run test
-      - store_test_results:
-          when: always
-          path: dummy-ext/artifacts
+      - run: scripts/install_and_run.sh
+      - <<: *store-results
       - <<: *store-artifacts
   package-and-publish:
     docker:

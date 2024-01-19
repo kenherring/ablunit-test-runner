@@ -1,0 +1,27 @@
+{
+	"configurations": [
+		{
+			"tempDir": "${workspaceFolder}",
+			"command": {
+				"executable": "_progres",
+				"progressIni": "progress.ini",
+			},
+			"options": {
+				"output": {
+					"location": "${tempDir}",
+					"filename": "results",
+					"format": "xml"
+				},
+				"quitOnEnd": true,
+				"showErrorMessage": true,
+				"throwError": true
+			},
+			"profiler": {
+				"enabled": true,
+				"coverage": true,
+				"description": "Run via VSCode - ABLUnit Test Provider Extension",
+				"filename": "prof.out"
+			}
+		}
+	]
+}

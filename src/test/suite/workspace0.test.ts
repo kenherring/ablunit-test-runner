@@ -22,7 +22,6 @@ suite(projName + ' - Extension Test Suite', () => {
 		const resultsJson = Uri.joinPath(workspaceFolder,'results.json')
 		const listingsDir = Uri.joinPath(workspaceFolder,'listings')
 
-		console.log("storageUri= " + workspaceFolder.fsPath)
 		assert(await doesFileExist(ablunitJson), "missing ablunit.json (" + ablunitJson.fsPath + ")")
 		assert(await doesFileExist(resultsXml), "missing results.xml (" + resultsXml.fsPath + ")")
 		assert(!await doesFileExist(resultsJson), "results.json exists and should not (" + resultsJson.fsPath + ")")

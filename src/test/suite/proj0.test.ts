@@ -1,7 +1,7 @@
 import { strict as assert } from 'assert'
 import { before } from 'mocha'
 import { Uri, workspace } from 'vscode'
-import { doesDirExist, doesFileExist, runAllTests, waitForExtensionActive } from '../testCommon'
+import { doesDirExist, doesFileExist, getRecentResults, runAllTests, waitForExtensionActive } from '../testCommon'
 
 const projName = 'proj0'
 
@@ -20,8 +20,12 @@ suite(projName + ' - Extension Test Suite', () => {
 		const resultsXml = Uri.joinPath(workspaceFolder,'results.xml')
 		const resultsJson = Uri.joinPath(workspaceFolder,'results.json')
 		const listingsDir = Uri.joinPath(workspaceFolder,'listings')
+		const recentResults = await getRecentResults()
+		if (!recentResults || recentResults.length === 0) {
+			assert.fail("cannot find test run results")
+		}
 
-		console.log("workspaceFolder= " + workspaceFolder.fsPath)
+		assert.equal(recentResults[0].cfg.ablunitConfig.config_uri.fsPath, ablunitJson.fsPath, "ablunit.json path mismatch (1)")
 		assert(await doesFileExist(ablunitJson), "missing ablunit.json (" + ablunitJson.fsPath + ")")
 		assert(await doesFileExist(resultsXml), "missing results.xml (" + resultsXml.fsPath + ")")
 		assert(!await doesFileExist(resultsJson), "results.json exists and should not (" + resultsJson.fsPath + ")")

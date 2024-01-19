@@ -2,7 +2,6 @@
 	"recommendations": [
 		"circleci.circleci",
 		"dbaeumer.vscode-eslint",
-		"editorconfig.editorconfig",
 		"github.vscode-pull-request-github",
 		"ms-vscode.extension-test-runner",
 		"redhat.vscode-xml",

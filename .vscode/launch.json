@@ -17,6 +17,18 @@
 			],
 			"outFiles": [
 				"${workspaceFolder}/out/**/*.js"
+			],
+			"preLaunchTask": "npm: build"
+		},
+		{
+			"name": "Install Packaged Extension - Select Workspace",
+			"type": "extensionHost",
+			"request": "launch",
+			"runtimeExecutable": "${execPath}",
+			"args": [
+				"--extensionDevelopmentPath=${workspaceFolder}/dummy-ext",
+				"--install-extension=ablunit-test-runner-0.1.10.vsix",
+				"${workspaceFolder}/test_projects/${input:workspaceName}"
 			]
 		},
 		{
@@ -30,17 +42,6 @@
 			],
 			"outFiles": [
 				"${workspaceFolder}/out/**/*.js"
-			]
-		},
-		{
-			"name": "Install Packaged Extension - Select Workspace",
-			"type": "extensionHost",
-			"request": "launch",
-			"runtimeExecutable": "${execPath}",
-			"args": [
-				"--extensionDevelopmentPath=${workspaceFolder}/dummy-ext",
-				"--install-extension=ablunit-test-runner-0.1.10.vsix",
-				"${workspaceFolder}/test_projects/${input:workspaceName}"
 			]
 		}
 	],

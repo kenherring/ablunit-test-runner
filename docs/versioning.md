@@ -22,15 +22,11 @@
 
 ## Scripts / Commands
 
-```
-scripts/update_version.sh
-scripts/update_version.sh --pre-release
-scripts/update_version.sh --version patch
-scripts/update_version.sh -v minor
-```
+This script bumps the version and update the necessary files.
 
-```
-rm -rf out node_modules .vscode-test ;
-CIRCLE_BUILD_NUM=15 scripts/update_version.sh --pre-release ;
-scripts/install_and_run.sh ;
+```bash
+scripts/update_version.sh
+scripts/update_version.sh --pre-release ## append the $CIRCLE_BUILD_NUM to the current tag
+scripts/update_version.sh --version patch ## bump the patch version
+scripts/update_version.sh -v minor ## bump the minor version
 ```

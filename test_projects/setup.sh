@@ -68,7 +68,7 @@ doBuild () {
 
 ########## MAIN BLOCK ##########
 initialize "$@"
-scripts/cleanup.sh
+scripts/clean.sh
 get_performance_test_code
 get_pct
 create_dbs

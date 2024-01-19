@@ -1,10 +1,10 @@
-# ABLUnit Test Runner 🏃‍♂️🏃🏃‍♀️ [![CircleCI](https://img.shields.io/circleci/build/github/kenherring/ablunit-test-runner/main?logo=circleci)](https://dl.circleci.com/status-badge/redirect/gh/kenherring/ablunit-test-runner/tree/main) [![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=kenherring_ablunit-test-runner&metric=sqale_rating)](https://sonarcloud.io/summary/new_code?id=kenherring_ablunit-test-runner) [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=kenherring_ablunit-test-runner&metric=coverage)](https://sonarcloud.io/summary/new_code?id=kenherring_ablunit-test-runner)
+# ABLUnit Test Runner 🏃‍♂️🏃🏃‍♀️
 
-The [ABLUnit Test Runner](https://github.com/kenherring/ablunit-test-runner/) VSCode extension integrates [ABLUnit tests](https://docs.progress.com/bundle/openedge-developer-studio-help-122/page/Learn-About-ABLUnit-Test-Framework.html) into the VSCode test explorer.
+[![CircleCI](https://img.shields.io/circleci/build/github/kenherring/ablunit-test-runner/main?logo=circleci)](https://dl.circleci.com/status-badge/redirect/gh/kenherring/ablunit-test-runner/tree/main)
+[![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=kenherring_ablunit-test-runner&metric=sqale_rating)](https://sonarcloud.io/summary/new_code?id=kenherring_ablunit-test-runner)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=kenherring_ablunit-test-runner&metric=coverage)](https://sonarcloud.io/summary/new_code?id=kenherring_ablunit-test-runner)
 
-This is my first VSCode extension, and my first TypeScript project. I'm sure there are many ways to improve the code, and I welcome any feedback.  I'm also open to collaboration for anyone who might wish to contribute.
-
-Quality code is my passion.  Unit testing is an important component of ensuring code remains functional when future changes are made.  I hope this extension helps others to embrace [TDD](https://en.wikipedia.org/wiki/Test-driven_development) and improve their code.
+The [ABLUnit Test Runner](https://github.com/kenherring/ablunit-test-runner/) extension for VSCode integrates [ablunit tests](https://docs.progress.com/bundle/openedge-developer-studio-help-122/page/Learn-About-ABLUnit-Test-Framework.html) into the test explorer.
 
 ## 🌴 Features
 
@@ -12,7 +12,7 @@ Quality code is my passion.  Unit testing is an important component of ensuring 
 * Display test results in the VSCode **Test Results View**
 * Color coded line coverage highlighting in the editor
 
-### Code Coverage Example Screenshot
+### 📷 Code Coverage Screenshot
 
 ![code coverage example screenshot](https://github.com/kenherring/ablunit-test-runner/raw/main/docs/coverage.png)
 
@@ -22,16 +22,27 @@ This project was developed using the [Progress OpenEdge Developers Kit: Classroo
 
 ## ⛺ Configuration
 
-The configuration is broken into two sections.
+Configuration is optional.  Many workspaces will work without any configuration.  However, there are advanced options available via the VSCode settings and a test profile configuration file (`.vscode/ablunit-test-profile.json`).
 
-1.  The first section shows configuration options that users are most likely to change.
-2.  Additional configuration options available that are not likely to be change by most users.
+### 📐 Settings Configuration
 
-### Configuration - Sample Config
+The settings config allows for a few global options, described in more detail below.  This example shows a test file glob pattern and another with a path to a dbconnections `.pf` file.  The `ablunit.files.include` setting is required for the extension to find tests.
 
-This config searches the `test/` directory for test files, named `*Test.cls` or `*Test.p`.  It also passes a database connection to `_progres` via the `-pf` parameter.
 
-**`.vscode/settings.json`**:
+**`.vscode/settings.json` with include and exclude patterns**:
+
+```json
+{
+  "ablunit.files.include": [
+    "test/**/*Test.{cls,p}"
+  ],
+  "ablunit.files.exclude": [
+    "src/sandbox/**"
+  ]
+}
+```
+
+**`.vscode/settings.json` with dbconnections `.pf` file**:
 
 ```json
 {
@@ -42,20 +53,24 @@ This config searches the `test/` directory for test files, named `*Test.cls` or 
 }
 ```
 
-### Configuration - VSCode Configuration (`.vscode/settings.json`, et al.)
+The following table gives a brief description of the available settings via the UI or `settings.json` files.
 
 | Setting | Default | Description |
 | --- | --- | --- |
-| `ablunit.discoverFilesOnActivate` | `true` | Search all workspace files for test cases.  It may be beneficial to disable this for large workspaces, in which case the extension will find tests as files are accessed. |
-| `ablunit.files.include` | `[ "**/*.{cls,p}" ]` | Glob pattern array to include test files |
-| `ablunit.files.exclude` | `[ "**/.builder/**" ]` | Glob pattern array to exclude test files |
-| `ablunit.importOpenedgeProjectJson` | `true` | Import configuration settings from \`openedge-project.json\` when possible |
-| `ablunit.notificationsEnabled` | `true` | Enable/disable notifications |
-| `ablunit.test.classlabel` | `classname` | The label to display for test classes. Example for class with path \`com/example/myClass.cls\`\:<br><br>* class-type-name example\: \`com.example.myClass\`<br>* filename example\: \`myClass.cls\` |
+| `ablunit.discoverFilesOnActivate` | `true` | Search all workspace files for tests on extension activation.  It may be beneficial to disable this for large workspaces, in which case the extension will find tests as files are accessed. |
+| `ablunit.files.include` | `[ "**/*.{cls,p}" ]` | Glob pattern array matching test files. |
+| `ablunit.files.exclude` | `[ "**/.builder/**" ]` | Glob pattern array to exclude test files. |
+| `ablunit.importOpenedgeProjectJson` | `true` | Import configuration settings from \`openedge-project.json\` when possible. |
+| `ablunit.notificationsEnabled` | `true` | Enable/disable notifications. |
+| `ablunit.test.classlabel` | `classname` | The label format for test classes. Example for class with path `com/example/myClass.cls`:<ul><li>class-type-name example: `com.example.myClass`</li><li>filename example: `myClass.cls`</li></ul> |
 
-### Configuration - Test Run Configuration (`.vscode/ablunit-test-profile.json`)
+### 🧪 Test Profile Configuration
 
-Running tests will work for most users without any configuration.  However, there are some advanced options available which can be configured via `.vscode/ablunit-test-profile.json`.
+The `.vscode/ablunit-test-profile.json` has additional configuration similar to [launch configurations](https://code.visualstudio.com/docs/editor/debugging#_launch-configurations).
+
+A default profile is created when using the **ABLUnit: Configure Test Profile** command and selecting **ABLUnit - Run Tests**.  This configuration has comments describing the options available.
+
+**Note**: Only the first test profile will be imported.  In the future this extension will allow for multiple entries.
 
 ## 👷‍♂️ Contributing
 
@@ -65,6 +80,7 @@ See [CONTRIBUTING.md](.github/CONTRIBUTING.md)
 
 * `npm install`
 * Make any changes you wish
+* `npm install -g --save-dev @vscode/vsce"`
 * `npm test` or use the [Extension Test Runner](https://marketplace.visualstudio.com/items?itemName=ms-vscode.extension-test-runner)
 
 ## 🔗 Links
@@ -78,3 +94,9 @@ See [CONTRIBUTING.md](.github/CONTRIBUTING.md)
   * [Profiler (-profile) startup parameter](https://docs.progress.com/bundle/openedge-startup-and-parameter-reference/page/Profiler-profile.html)
 * GitHub Repo - [progress/ade](https://github.com/progress/ADE) - OpenEdge Source Files
 * Docker Hub - Progress Software Corporation - [progresssoftware/prgs-oedb](https://hub.docker.com/r/progresssoftware/prgs-oedb)
+
+## 🤓 About Me
+
+This is my first VSCode extension, and my first TypeScript project. I am sure there are many ways to improve the code, and I welcome any feedback.  I'm also open to collaboration for anyone who might wish to contribute.
+
+Quality code is my passion.  Unit testing is an important component of ensuring code remains functional when future changes are made.  I hope this extension helps others to embrace [TDD](https://en.wikipedia.org/wiki/Test-driven_development) and improve their code.
