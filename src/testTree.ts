@@ -1,4 +1,4 @@
-import { CancellationToken, Range, TestController, TestItem, TestRun, TestTag, Uri, workspace } from 'vscode'
+import { CancellationError, CancellationToken, Range, TestController, TestItem, TestRun, TestTag, Uri, workspace } from 'vscode'
 import { ABLResults } from './ABLResults'
 import { ITestSuite, parseABLTestSuite } from './parse/TestSuiteParser'
 import { IClassRet, ITestCase, parseABLTestClass } from './parse/TestClassParser'
@@ -111,24 +111,22 @@ export class ABLTestFile extends TestTypeObj {
 	public children: ABLTestCase[] = []
 	public cancelled: boolean = false
 
-	public async updateFromDisk (controller: TestController, item: TestItem, isCancelled?: () => boolean, token?: CancellationToken) {
-		log.debug("updateFromDisk: " + item.id + " " + this.cancelled + " " + token?.isCancellationRequested)
-		if (this.cancelled) {
-			throw new Error("cancellation detected. skpping updateFromDisk for " + item.id)
+	cancellationRequested () {
+		log.info("cancellation requested")
+		throw new CancellationError()
+	}
+
+	public async updateFromDisk (controller: TestController, item: TestItem, token?: CancellationToken) {
+		if (token) {
+			token.onCancellationRequested(() => { this.cancellationRequested() })
 		}
 
 		return getContentFromFilesystem(item.uri!).then((content) => {
 			item.error = 'Error parsing test file from disk: no content'
-			// if(!content) {
-			// 	log.error("Error updating " + item.id + " from disk: no content")
-			// 	this.deleteItem(controller,item)
-			// 	return false
-			// }
 			item.error = undefined
 			item.canResolveChildren = true
 			return this.updateFromContents(controller, content, item)
 		}, (e) => {
-			// log.error("Error updating " + item.id + " from disk: " + e)
 			item.error = (e as Error).stack
 			throw e
 		})
@@ -143,7 +141,7 @@ export class ABLTestFile extends TestTypeObj {
 
 	startParsing (item: TestItem) {
 		this.relativePath = workspace.asRelativePath(item.uri!.fsPath)
-		log.debug("parsing test file " + this.relativePath + " as " + this.description)
+		log.trace("parsing test file " + this.relativePath + " as " + this.description)
 		this.didResolve = true
 		item.tags = [new TestTag("runnable"), new TestTag(this.description)]
 		item.description = this.description
@@ -289,7 +287,7 @@ export class ABLTestSuite extends ABLTestFile {
 		}
 
 		this.removeUnusedChildren(controller, item, originalChildren)
-		return item.children.size > 0
+		return (item.children.size ?? 0) > 0
 	}
 
 	updateChildProgram (controller: TestController, item: TestItem, response: ITestSuite, id: string, label: string, type: "ABLTestClass" | "ABLTestProgram") {
@@ -333,7 +331,7 @@ export class ABLTestClass extends ABLTestFile {
 		this.updateItem(controller, item, response, "Method")
 
 		this.setClassInfo(response?.classname)
-		return item.children.size > 0
+		return (item.children.size ?? 0) > 0
 	}
 }
 
@@ -347,6 +345,6 @@ export class ABLTestProgram extends ABLTestFile {
 		this.startParsing(item)
 		const response = parseABLTestProgram(content, this.relativePath)
 		this.updateItem(controller, item, response, "Procedure")
-		return item.children.size > 0
+		return (item.children.size ?? 0) > 0
 	}
 }

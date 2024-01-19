@@ -37,8 +37,7 @@
 		// for when glob doesn't work
 		"./src/*.ts",
 		"./src/*/*.ts",
-		"./src/*/*/*.ts",
-		"./src/*/*/*/*.ts"
+		"./src/*/*/*.ts"
 	],
 	"exclude": [
 		"dist",

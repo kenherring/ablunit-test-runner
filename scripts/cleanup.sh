@@ -1,5 +1,5 @@
 #!/bin/bash
-set -eou pipefail
+set -euo pipefail
 
 # shellcheck disable=SC3030
 DIRS=(listings .builder build ablunit-output workspaceAblunit)
@@ -27,7 +27,6 @@ echo "deleting file patterns..."
 for PATTERN in "${PATTERNS[@]}"; do
 	find test_projects -type f -name "$PATTERN" -delete &
 done
-find . -name "*.vsix" -delete
 
 wait
 echo "cleanup complete"

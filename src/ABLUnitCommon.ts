@@ -1,38 +1,48 @@
 /* eslint-disable no-console */
-import { TestRun, Uri, window } from 'vscode'
+import { LogLevel, TestRun, Uri, window } from 'vscode'
 import path from 'path'
 import * as fs from 'fs'
 // @ts-expect-error 123
 import JSON_minify from 'node-json-minify'
 
-const logOutputChannel = window.createOutputChannel('ABLUnit', {log: true })
+const logOutputChannel = window.createOutputChannel('ABLUnit', { log: true })
 logOutputChannel.clear()
+logOutputChannel.appendLine('ABLUnit output channel created')
+console.log("ABLUnit output channel created")
 
 class Logger {
-	info (message: string, testRun?: TestRun) {
-		message = this._decorateMessage(message)
-		this._logTestConsole(message, testRun)
+
+	level: LogLevel = logOutputChannel.logLevel
+	consoleLogLevel = LogLevel.Debug
+	testResultsLogLevel = LogLevel.Info
+
+	constructor () {
+		logOutputChannel.onDidChangeLogLevel((e) => this.setLogLevel(e))
+		this.level = logOutputChannel.logLevel
+	}
+
+	setLogLevel (e: LogLevel) {
+		const message = 'logLevel changed from ' + this.level + ' to ' + e
 		console.log(message)
-		logOutputChannel.info(message)
+		logOutputChannel.appendLine(message)
 	}
-	warn (message: string, testRun?: TestRun) {
-		message = this._decorateMessage(message)
-		this._logTestConsole(message, testRun)
-		console.warn(message)
-		logOutputChannel.warn(message)
-	}
-	debug (message: string, testRun?: TestRun) {
-		message = this._decorateMessage(message)
-		this._logTestConsole(message, testRun)
-		console.debug(message)
-		logOutputChannel.debug(message)
-	}
+
 	trace (message: string, testRun?: TestRun) {
-		message = this._decorateMessage(message)
-		this._logTestConsole(message, testRun)
-		console.trace(message)
-		logOutputChannel.trace(message)
+		this.writeMessage(LogLevel.Trace, message, testRun)
 	}
+
+	debug (message: string, testRun?: TestRun) {
+		this.writeMessage(LogLevel.Debug, message, testRun)
+	}
+
+	info (message: string, testRun?: TestRun) {
+		this.writeMessage(LogLevel.Info, message, testRun)
+	}
+
+	warn (message: string, testRun?: TestRun) {
+		this.writeMessage(LogLevel.Warning, message, testRun)
+	}
+
 	error (message: string | Error, testRun?: TestRun) {
 		if (message instanceof Error) {
 			if (message.stack) {
@@ -41,63 +51,84 @@ class Logger {
 				message = '[' + message.name + '] ' +  message.message
 			}
 		}
-		message = this._decorateMessage(message)
-		this._logTestConsole(message, testRun)
-		console.error(message)
-		logOutputChannel.error(message)
+		this.writeMessage(LogLevel.Error, message, testRun)
 	}
 
-	private _getCallerSourceLine () {
+
+	private writeMessage (messageLevel: LogLevel, message: string, testRun?: TestRun) {
+		if (messageLevel <= this.level) { return }
+		this.writeToChannel(messageLevel, message)
+
+		if (testRun && messageLevel <= this.testResultsLogLevel) {
+			this.writeToTestResults(messageLevel, message, testRun)
+		}
+
+		if (messageLevel <= this.consoleLogLevel) {
+			this.writeToConsole(messageLevel, message)
+		}
+	}
+
+	private writeToChannel (messageLevel: LogLevel, message: string) {
+		switch (messageLevel) {
+			case LogLevel.Error:    logOutputChannel.error(message); break
+			case LogLevel.Warning:  logOutputChannel.warn(message); break
+			case LogLevel.Info:     logOutputChannel.info(message); break
+			case LogLevel.Debug:    logOutputChannel.debug(message); break
+			case LogLevel.Trace:    logOutputChannel.appendLine(message); break
+			default:                throw new Error("invalid log level for message! level=" + messageLevel + ", message=" + message)
+		}
+	}
+
+	private writeToTestResults (messageLevel: LogLevel, message: string, testRun: TestRun) {
+		message = '[' + messageLevel.toString() + '] [' + (new Date()).toISOString() + '] ' + message
+		const optMsg = message.replace(/\r/g, '').replace(/\n/g, '\r\n')
+		testRun.appendOutput(optMsg + "\r\n")
+	}
+
+	private writeToConsole (messageLevel: LogLevel, message: string) {
+		message = this.decorateMessage(message)
+		switch (messageLevel) {
+			case LogLevel.Error:    console.error(message); break
+			case LogLevel.Warning:  console.warn(message); break
+			case LogLevel.Info:     console.info(message); break
+			case LogLevel.Debug:    console.debug(message); break
+			case LogLevel.Trace:    console.trace(message); break
+			default:                console.log(message); break
+		}
+	}
+
+	private getCallerSourceLine () {
 		const prepareStackTraceOrg = Error.prepareStackTrace
 		const err = new Error()
 		Error.prepareStackTrace = (_, stack) => stack
 		const stack = err.stack as unknown as NodeJS.CallSite[]
 		Error.prepareStackTrace = prepareStackTraceOrg
 
-		let ret: string | undefined = undefined
 		for (const s of stack) {
-			const fileName = s.getFileName()
-			if (fileName && fileName !== __filename) {
-				ret = fileName.replace(path.normalize(__dirname),'').substring(1).replace(/\\/g, '/')
-				ret = ret + ' ' + s.getFunctionName() + ':' + s.getLineNumber()
+			const filename = s.getFileName()
+			if (filename && filename !== __filename) {
+				const funcname = s.getFunctionName()
+				let ret = filename.replace(path.normalize(__dirname),'').substring(1).replace(/\\/g, '/')
+				ret = filename + ':' + s.getLineNumber()
+				if (funcname) {
+					ret = ret + ' ' + funcname
+				}
 				return ret
 			}
 		}
 	}
 
-	private _decorateMessage (message: string) {
-		const callerSourceLine = this._getCallerSourceLine()
+	private decorateMessage (message: string) {
+		const callerSourceLine = this.getCallerSourceLine()
 		if (callerSourceLine) {
 			return '[' + callerSourceLine + '] ' + message
 		}
 		return message
 	}
 
-	private _logTestConsole (message: string, testRun: TestRun | undefined) {
-		if (!testRun) { return }
-		const optMsg = message.replace(/\r/g, '').replace(/\n/g, '\r\n')
-		testRun.appendOutput(optMsg + "\r\n")
-	}
-
-	// getPrefix () {
-	// 	let source = path.normalize(__filename)
-	// 	source = source.replace(path.normalize(__dirname),'')
-	// 	source = source.substring(1)
-	// 	return '[' + source + ']'
-	// 	// return '[' + path.normalize(__filename).replace(/\\/g, '/') + ']'
-	// }
-}
-
-export const getPrefix = () => {
-	let source = path.normalize(__filename)
-	source = source.replace(path.normalize(__dirname),'')
-	source = source.substring(1)
-	return '[' + source + ']'
 }
 
 export const log: Logger = new Logger()
-
-// module.exports = new Logger()
 
 export const readStrippedJsonFile = (uri: Uri | string): JSON => {
 	if (typeof uri === 'string') {

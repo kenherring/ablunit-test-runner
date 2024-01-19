@@ -1,4 +1,4 @@
-import { CancellationToken, Disposable, FileType, MarkdownString, Range, TestItem, TestItemCollection, TestMessage, TestRun, Uri, workspace, WorkspaceFolder } from 'vscode'
+import { CancellationError, CancellationToken, Disposable, FileType, MarkdownString, Range, TestItem, TestItemCollection, TestMessage, TestRun, Uri, workspace, WorkspaceFolder } from 'vscode'
 import { ABLUnitConfig } from './ABLUnitConfigWriter'
 import { ABLResultsParser, ITestCaseFailure, ITestCase, ITestSuite } from './parse/ResultsParser'
 import { ABLTestSuite, ABLTestData } from './testTree'
@@ -63,7 +63,8 @@ export class ABLResults implements Disposable {
 		log.info("workspaceFolder=" + workspaceFolder.uri.fsPath)
 		if(cancellation) {
 			cancellation.onCancellationRequested(() => {
-				log.info("[ABLResults] test run cancellation detected")
+				log.info("cancellation requested")
+				throw new CancellationError()
 			})
 		}
 		this.startTime = new Date()
@@ -77,7 +78,7 @@ export class ABLResults implements Disposable {
 	}
 
 	dispose () {
-		this.setStatus("cancelled")
+		this.setStatus("run cancelled - disposing ABLResults object")
 		delete this.profileJson
 		delete this.ablResults
 		delete this.debugLines
@@ -208,6 +209,7 @@ export class ABLResults implements Disposable {
 			if(!this.ablResults!.resultsJson) {
 				throw new Error("no results available")
 			}
+			return true
 		}, (err) => {
 			throw new Error("[ABLResults run] Exception: " + err)
 		})
@@ -218,12 +220,13 @@ export class ABLResults implements Disposable {
 		log.info("parsing results from " + this.cfg.ablunitConfig.optionsUri.filenameUri.fsPath, options)
 
 		this.endTime = new Date()
+		const parseStartTime = new Date()
 
 		const parseStartTime = new Date()
 
 		this.ablResults = new ABLResultsParser(this.propath!, this.debugLines!)
 		await this.ablResults.parseResults(this.cfg.ablunitConfig.optionsUri.filenameUri, this.cfg.ablunitConfig.optionsUri.jsonUri).then(() => {
-			log.debug('[parseOutput] parsing complete (time=' + (Number(new Date()) - Number(parseStartTime)) + ')')
+			log.debug('parsing complete (time=' + (Number(new Date()) - Number(parseStartTime)) + ')')
 			if(!this.ablResults!.resultsJson) {
 				log.error("No results found in " + this.cfg.ablunitConfig.optionsUri.filenameUri.fsPath, options)
 				throw (new Error("[ABLResults parseOutput] No results found in " + this.cfg.ablunitConfig.optionsUri.filenameUri.fsPath + "\r\n"))
@@ -465,7 +468,7 @@ export class ABLResults implements Disposable {
 		return profParser.parseData(this.cfg.ablunitConfig.profFilenameUri, this.cfg.ablunitConfig.profiler.writeJson, this.debugLines!).then(() => {
 			this.profileJson = profParser.profJSON
 			return this.assignProfileResults().then(() => {
-				log.info("assignProfileResults complete (time=" + (Number(new Date()) - Number(startTime)) + ")")
+				log.debug("assignProfileResults complete (time=" + (Number(new Date()) - Number(startTime)) + ")")
 			}, (err) => {
 				throw new Error("assignProfileResults error: " + err)
 			})

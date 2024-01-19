@@ -397,7 +397,8 @@ export class ABLProfileJson {
 
 			const lineinfo = await this.debugLines.getSourceLine(sourceName, sum.LineNo)
 			if(!lineinfo) {
-				log.debug("Unable to find source/debug line info for " + sourceName + " " + sum.LineNo)
+				log.debug("unable to find source/debug line info for " + sourceName + " " + sum.LineNo)
+				// throw new Error("Unable to find source/debug line info for " + sourceName + " " + sum.LineNo)
 			} else {
 				sum.srcLine = lineinfo.debugLine
 				sum.srcUri = lineinfo.debugUri
@@ -645,8 +646,10 @@ export class ABLProfileJson {
 				if (mod) {
 					mod.ISectionTwelve.push(ISectionTwelve)
 				} else {
-					log.error("Unable to find module " + ISectionTwelve.ModuleID + " in section 12")
-					log.error("  - line='" + element + "'")
+					// TODO
+					if (ISectionTwelve.ModuleID != 0) {
+						log.error('Unable to find module " + ISectionTwelve.ModuleID + " in section 12 (line=' + element + ')')
+					}
 				}
 			}
 		}

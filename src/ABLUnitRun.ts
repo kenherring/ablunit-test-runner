@@ -11,7 +11,7 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 
 	if (cancellation) {
 		cancellation.onCancellationRequested(() => {
-			log.info("[ablunitRun] cancellation requested")
+			log.info("cancellation requested")
 			abort.abort()
 		})
 	}
@@ -99,8 +99,8 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 	}
 
 	const runCommand = () => {
-		const args = getCommand()
 		log.info("ABLUnit Command Execution Started - dir='" + res.cfg.ablunitConfig.workspaceFolder.uri.fsPath + "'")
+		const args = getCommand()
 
 		const cmd = args[0]
 		args.shift()
@@ -109,6 +109,7 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 			res.setStatus("running command")
 
 			const runenv = getEnvVars(res.dlc!.uri)
+			log.debug("cmd=" + cmd + ' ' + args.join(' '))
 
 			exec(cmd + ' ' + args.join(' '), {env: runenv, cwd: res.cfg.ablunitConfig.workspaceFolder.uri.fsPath, signal: signal}, (err: ExecException | null, stdout: string, stderr: string) => {
 				const duration = Date.now() - start
@@ -125,7 +126,7 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 					reject(new Error ("ABLUnit Command Execution Failed - duration: " + duration))
 				}
 				log.info("ABLUnit Command Execution Completed - duration: " + duration)
-				resolve("resolve _progres promise")
+				resolve("ABLUnit Command Execution Completed - duration: " + duration)
 			})
 		})
 	}

@@ -1,5 +1,6 @@
 {
 	"buildPath": [
-		{ "type": "source", "path": "src" }
+		{ "type": "source", "path": "src" },
+		{ "type": "source", "path": "src/ADE-12.2.12.0/corelib" }
 	]
 }

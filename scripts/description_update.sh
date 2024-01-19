@@ -1,5 +1,5 @@
 #!/bin/bash
-set -eou pipefail
+set -euo pipefail
 
 jq () {
 	jq-windows-amd64.exe "$@"

@@ -138,7 +138,9 @@ function findConfigFile () {
 export function run (): Promise <void> {
 
 	let proj: string
-	if (workspace.workspaceFile) {
+	if (process.env.ABLUNIT_TEST_RUNNER_PROJECT_NAME) {
+		proj = process.env.ABLUNIT_TEST_RUNNER_PROJECT_NAME
+	} else if (workspace.workspaceFile) {
 		proj = workspace.workspaceFile.fsPath
 	} else if (workspace.workspaceFolders) {
 		proj = workspace.workspaceFolders[0].uri.fsPath
@@ -152,7 +154,9 @@ export function run (): Promise <void> {
 	const configFilename = findConfigFile()
 	const testConfig: ITestConfig[] = JSON.parse(fs.readFileSync(configFilename, 'utf8'))
 	const config = testConfig.filter((config: ITestConfig) => { return config.projName === proj })[0]
-
+	if (!config) {
+		throw new Error('[run] Could not find config for project ' + proj)
+	}
 	// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 	return runTestsForProject(proj, config.mocha.timeout)
 }

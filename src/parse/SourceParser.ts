@@ -32,8 +32,9 @@ async function readXrefFile (xrefUri: Uri) {
 	return await workspace.fs.readFile(xrefUri).then((content) => {
 		const str = Buffer.from(content.buffer).toString()
 		return str
-	}, (reason) => {
-		log.warn("xref file not found '" + xrefUri.fsPath + "\n  - reason=" + reason)
+	}, (err) => {
+		log.debug('xref file not found \'' + xrefUri.fsPath + '\'')
+		log.trace(' -- err=' + err)
 		return undefined // don't rethrow, just return undefined because we don't want to stop processing
 	})
 }

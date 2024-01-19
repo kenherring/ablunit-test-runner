@@ -9,10 +9,18 @@ async function main () {
 
 	let projToRun: string | undefined = undefined
 	projToRun = process.env.ABLUNIT_TEST_RUNNER_PROJECT_NAME
+	console.log("[runTest.ts main] projToRun=" + projToRun)
+	let testCount = 0
 	for (const conf of testConfig) {
 		if (!projToRun || conf.projName === projToRun) {
+			testCount++
 			await testProject(conf.projName, conf.workspaceFolder, conf.launchArgs)
 		}
+	}
+	console.log("[runTest.ts main] testCount=" + testCount)
+	if (testCount === 0) {
+		console.error('[runTest.ts main] no tests found!')
+		process.exit(1)
 	}
 }
 
@@ -38,6 +46,7 @@ async function testProject (projName: string, projDir?: string, launchArgs: stri
 		args.push(...launchArgs)
 
 		console.log('[runTest.ts testProject] (projName=' + projName + ') running tests with args=')
+		console.debug(" -- cwd=" + __dirname)
 		console.debug(" -- extensionDevelopmentPath=" + extensionDevelopmentPath)
 		console.debug(" -- extensionTestsPath=" + extensionTestsPath)
 		console.debug(" -- testingEnv=" + JSON.stringify(testingEnv))

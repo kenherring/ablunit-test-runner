@@ -3,7 +3,7 @@ import { before } from 'mocha'
 import { Uri, workspace } from 'vscode'
 import { getTestCount, getWorkspaceUri, runAllTests, waitForExtensionActive } from '../testCommon'
 
-const projName = 'proj7'
+const projName = 'proj7A'
 const workspaceUri = getWorkspaceUri()
 
 function getUri (path: string) {
