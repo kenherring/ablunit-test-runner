@@ -1,40 +1,12 @@
 import { strict as assert } from 'assert'
 import { before } from 'mocha'
-import { Uri, commands, workspace } from 'vscode'
-import { getDefaultDLC, getWorkspaceUri, setRuntimes, sleep, waitForExtensionActive } from '../testCommon'
+import { Uri, workspace } from 'vscode'
+import { awaitRCode, getDefaultDLC, getWorkspaceUri, setRuntimes, sleep, waitForExtensionActive } from '../testCommon'
 import { getSourceMapFromRCode } from '../../parse/RCodeParser'
 import { PropathParser } from '../../ABLPropath'
-import { GlobSync } from 'glob'
 
 const projName = 'DebugLines'
 const workspaceFolder = workspace.workspaceFolders![0]
-
-async function awaitRCode (rcodeCount: number = 1) {
-	const buildWaitTime = 10
-	let fileCount = 0
-	console.log("waiting up to" + buildWaitTime + " seconds for r-code")
-	for (let i = 0; i < buildWaitTime; i++) {
-		await new Promise((resolve) => setTimeout(resolve, 1000))
-
-		const g = new GlobSync('**/*.r', { cwd: workspaceFolder.uri.fsPath })
-		fileCount = g.found.length
-		console.log("(" + i + "/" + buildWaitTime + ") found " + fileCount + " r-code files...")
-		if (fileCount > rcodeCount) {
-			console.log("found " + fileCount + " r-code files! ready to test")
-			return fileCount
-		}
-		console.log("found " + fileCount + " r-code files. waiting...")
-		console.log("found files: " + JSON.stringify(g.found,null,2))
-	}
-
-	await commands.executeCommand('abl.dumpFileStatus').then(() => {
-		console.log("abl.dumpFileStatus complete!")
-	})
-	await commands.executeCommand('abl.dumpLangServStatus').then(() => {
-		console.log("abl.dumpLangServStatus complete!")
-	})
-	throw new Error("r-code files not found")
-}
 
 before(async () => {
 	await waitForExtensionActive()
@@ -44,7 +16,7 @@ before(async () => {
 		return true
 	})
 	await sleep(250)
-	const prom = awaitRCode(5)
+	const prom = awaitRCode(workspaceFolder, 8)
 	await prom.then((rcodeCount) => {
 		console.log("compile complete! rcode count = " + rcodeCount)
 	})

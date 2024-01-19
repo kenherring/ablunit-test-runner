@@ -1,17 +1,18 @@
-import { ConfigurationTarget, FileType, TestController, Uri, commands, extensions, workspace } from 'vscode'
+import { ConfigurationTarget, FileType, TestController, Uri, WorkspaceFolder, commands, extensions, workspace } from 'vscode'
 import { ITestSuites } from '../parse/ResultsParser'
 import { strict as assert } from 'assert'
 import { ABLResults } from '../ABLResults'
 import { log } from '../ABLUnitCommon'
+import { GlobSync } from 'glob'
 
-export async function waitForExtensionActive () {
-	const ext = extensions.getExtension("kherring.ablunit-test-runner")
+export async function waitForExtensionActive (extensionId: string = 'kherring.ablunit-test-runner') {
+	const ext = extensions.getExtension(extensionId)
 	if (!ext) {
-		throw new Error("kherring.ablunit-test-runner is not installed")
+		throw new Error(extensionId + " is not installed")
 	}
 	if (!ext.isActive) {
 		await ext.activate().then(() => {
-			console.log("activated kherring.ablunit-test-runner")
+			console.log("activated " + extensionId)
 		}, (err) => {
 			throw new Error("failed to activate kherring.ablunit-test-runner: " + err)
 		})
@@ -29,8 +30,85 @@ export async function waitForExtensionActive () {
 	}
 
 	if (!ext.isActive) {
-		throw new Error("kherring.ablunit-test-runner is not active")
+		throw new Error(extensionId + " is not active")
 	}
+	console.log(extensionId + " is active!")
+}
+
+async function installOpenedgeABLExtension () {
+	if (!extensions.getExtension("riversidesoftware.openedge-abl-lsp")) {
+		log.debug("[testCommon.ts] installing riversidesoftware.openedge-abl-lsp extension...")
+		await commands.executeCommand('workbench.extensions.installExtension', 'riversidesoftware.openedge-abl-lsp').then(() => {
+			log.trace("[testCommon.ts] installed riversidesoftware.openedge-abl-lsp extension!")
+		}, (err: Error) => {
+			if (err.toString() === 'Error: Missing gallery') {
+				log.trace("[testCommon.ts] triggered installed extension, but caught '" + err + "'")
+			} else {
+				throw new Error("[testCommon.ts] failed to install extension: " + err)
+			}
+		})
+		await sleep(500)
+	}
+
+	const ext = extensions.getExtension("riversidesoftware.openedge-abl-lsp")
+	if (!ext) {
+		throw new Error("[testCommon.ts] failed to get extension")
+	}
+	log.trace('[testCommon.ts] activating riversidesoftware.openedge-abl-lsp extension...')
+	await ext.activate().then(() => waitForExtensionActive('riversidesoftware.openedge-abl-lsp')).then(() => {
+		log.trace('[testCommon.ts] activated riversidesoftware.openedge-abl-lsp extension!')
+	})
+
+	log.trace('[testCommon.ts] riversidesoftware.openedge-abl-lsp active=' + ext.isActive)
+	if (!ext.isActive) {
+		throw new Error("[testCommon.ts] failed to activate extension")
+	}
+}
+
+interface IRuntime {
+	name: string,
+	path: string,
+	default?: boolean
+}
+
+export async function setRuntimes (runtimes: IRuntime[]) {
+	return installOpenedgeABLExtension().then(async () => {
+		log.info("[testCommon.ts] setting abl.configuration.runtimes")
+		return workspace.getConfiguration('abl.configuration').update('runtimes', runtimes, ConfigurationTarget.Global).then(async () =>{
+			log.info("[testCommon.ts] abl.configuration.runtimes set successfully")
+			await sleep(1000)
+			return true
+		}, (err) => {
+			throw new Error("[testCommon.ts] failed to set runtimes: " + err)
+		})
+	})
+}
+
+export async function awaitRCode (workspaceFolder: WorkspaceFolder, rcodeCountMinimum: number = 1) {
+	const buildWaitTime = 20
+	let fileCount = 0
+	console.log("waiting up to" + buildWaitTime + " seconds for r-code")
+	for (let i = 0; i < buildWaitTime; i++) {
+		await new Promise((resolve) => setTimeout(resolve, 1000))
+
+		const g = new GlobSync('**/*.r', { cwd: workspaceFolder.uri.fsPath })
+		fileCount = g.found.length
+		console.log("(" + i + "/" + buildWaitTime + ") found " + fileCount + " r-code files...")
+		if (fileCount >= rcodeCountMinimum) {
+			console.log("found " + fileCount + " r-code files! ready to test")
+			return fileCount
+		}
+		console.log("found " + fileCount + " r-code files. waiting...")
+		console.log("found files: " + JSON.stringify(g.found,null,2))
+	}
+
+	await commands.executeCommand('abl.dumpFileStatus').then(() => {
+		console.log("abl.dumpFileStatus complete!")
+	})
+	await commands.executeCommand('abl.dumpLangServStatus').then(() => {
+		console.log("abl.dumpLangServStatus complete!")
+	})
+	throw new Error("r-code files not found")
 }
 
 export function getWorkspaceUri () {
@@ -130,56 +208,6 @@ export function getDefaultDLC () {
 		return "/psc/dlc"
 	}
 	return "C:\\Progress\\OpenEdge"
-}
-
-async function installOpenedgeABLExtension () {
-	if (!extensions.getExtension("riversidesoftware.openedge-abl-lsp")) {
-		log.info("[testCommon.ts] installing riversidesoftware.openedge-abl-lsp extension")
-		await commands.executeCommand('workbench.extensions.installExtension', 'riversidesoftware.openedge-abl-lsp').then(() => {
-		}, (err: Error) => {
-			if (err.toString() === 'Error: Missing gallery') {
-				log.info("[testCommon.ts] triggered installed extension, but caught '" + err + "'")
-			} else {
-				throw new Error("[testCommon.ts] failed to install extension: " + err)
-			}
-		})
-	}
-
-	log.info("[testCommon.ts] activating riversidesoftware.openedge-abl-lsp extension")
-	await extensions.getExtension("riversidesoftware.openedge-abl-lsp")?.activate()
-
-	const maxWait = 20
-	for (let i=0; i<maxWait; i++) {
-		const isActive = extensions.getExtension("riversidesoftware.openedge-abl-lsp")?.isActive
-		if (isActive) { break }
-
-		log.info("(" + i + "/" + maxWait + ") extension info: " + extensions.getExtension("riversidesoftware.openedge-abl-lsp") + " " + extensions.getExtension("riversidesoftware.openedge-abl-lsp")?.isActive)
-		await sleep(500)
-	}
-	const isActive = extensions.getExtension("riversidesoftware.openedge-abl-lsp")?.isActive
-	if (!isActive) {
-		throw new Error("[testCommon.ts] failed to activate extension")
-	}
-	log.info("openedge-abl active!")
-}
-
-interface IRuntime {
-	name: string,
-	path: string,
-	default?: boolean
-}
-
-export async function setRuntimes (runtimes: IRuntime[]) {
-	return installOpenedgeABLExtension().then(async () => {
-		log.info("[testCommon.ts] setting abl.configuration.runtimes")
-		return workspace.getConfiguration('abl.configuration').update('runtimes', runtimes, ConfigurationTarget.Global).then(async () =>{
-			log.info("[testCommon.ts] abl.configuration.runtimes set successfully")
-			await sleep(1000)
-			return true
-		}, (err) => {
-			throw new Error("[testCommon.ts] failed to set runtimes: " + err)
-		})
-	})
 }
 
 export async function runAllTests (doRefresh: boolean = true) {

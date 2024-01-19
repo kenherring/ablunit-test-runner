@@ -109,6 +109,7 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 			res.setStatus("running command")
 
 			const runenv = getEnvVars(res.dlc!.uri)
+			log.debug("cmd=" + cmd + ' ' + args.join(' '))
 
 			exec(cmd + ' ' + args.join(' '), {env: runenv, cwd: res.cfg.ablunitConfig.workspaceFolder.uri.fsPath, signal: signal}, (err: ExecException | null, stdout: string, stderr: string) => {
 				const duration = Date.now() - start

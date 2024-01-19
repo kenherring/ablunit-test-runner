@@ -198,17 +198,22 @@ run_packaged_tests () {
 
 save_cache () {
 	echo "[$0 ${FUNCNAME[0]}] pwd=$(pwd)"
+
+	npm run clean
+
 	if [ -d .vscode-test ]; then
 		echo "saving .vscode-test to cache"
 		mkdir -p "$CACHE_BASE/.vscode-test"
 		rsync -aR ./.vscode-test "$CACHE_BASE"
 	fi
+
 	if [ -d ./dummy-ext/.vscode-test ]; then
 		echo "saving dummy-ext/.vscode-test to cache"
 		mkdir -p "$CACHE_BASE/dummy-ext/.vscode-test"
 		rsync -aR ./dummy-ext/.vscode-test "$CACHE_BASE"
 	elif [ "$TEST_PROJECT" = "dummy-ext" ]; then
 		echo "WARNING: dummy-ext/.vscode-test not found.  cannot save cache"
+		exit 1
 	fi
 }
 
