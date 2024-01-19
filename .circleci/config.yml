@@ -134,8 +134,8 @@ jobs:
       - image: cimg/node:20.8
     steps:
       - checkout
-      - run: npm install
       - run: sudo npm install -g @vscode/vsce
+      - run: npm install
       - run: '[ -n "<< pipeline.git.tag >>" ] || scripts/update_version.sh --pre-release'
       - run: vsce package --pre-release --githubBranch "$CIRCLE_BRANCH"
       - when:

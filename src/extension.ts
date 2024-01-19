@@ -10,7 +10,7 @@ import { readFileSync } from 'fs'
 import { decorate, getRecentResults, setRecentResults } from './decorator'
 
 export async function activate (context: ExtensionContext) {
-	log.info('ACTIVATE!')
+	log.info('activating extension!')
 
 	const ctrl = tests.createTestController('ablunitTestController', 'ABLUnit Test')
 	const contextStorageUri = context.storageUri ?? Uri.parse('file://' + process.env.TEMP) // will always be defined as context.storageUri
@@ -257,7 +257,7 @@ export async function activate (context: ExtensionContext) {
 		})
 	}
 
-	ctrl.refreshHandler = async (token: CancellationToken) => { return refreshTestTree(ctrl, token) }
+	ctrl.refreshHandler = async (token: CancellationToken) => refreshTestTree(ctrl, token)
 
 	ctrl.resolveHandler = async item => {
 		if (!item) {
@@ -670,6 +670,7 @@ function removeExcludedChildren (parent: TestItem, excludePatterns: RelativePatt
 }
 
 async function refreshTestTree (controller: TestController, token: CancellationToken) {
+	log.info('refreshing test tree..')
 	const startTime = Date.now()
 	let searchCount = 0
 	let resolvedCount = 0
@@ -677,7 +678,7 @@ async function refreshTestTree (controller: TestController, token: CancellationT
 	const filelist: Uri[] = []
 	const elapsedTime = () => { return '(time=' + (Date.now() - startTime) + 'ms)' }
 	const logResults = () => {
-		log.info('found ' + getControllerTestFileCount(controller) + ' files with test cases ' + elapsedTime())
+		log.info('refresh test tree complete! found ' + getControllerTestFileCount(controller) + ' files with test cases ' + elapsedTime())
 		log.debug(' - ' + searchCount + ' files matching glob pattern(s)')
 		log.debug(' - ' + filelist.length + ' files with potential test case(s)')
 		log.debug(' - ' + resolvedCount + ' files parsed had one or more test case(s)')
@@ -728,7 +729,7 @@ async function refreshTestTree (controller: TestController, token: CancellationT
 	}
 
 	if (token.isCancellationRequested) {
-		log.warn('cancellation requested! ... but we\'re already done ' + elapsedTime())
+		log.debug('cancellation requested! ... but we\'re already done ' + elapsedTime())
 	}
 
 	logResults()

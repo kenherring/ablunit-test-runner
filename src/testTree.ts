@@ -110,7 +110,7 @@ export class ABLTestFile extends TestTypeObj {
 	currentResults?: ABLResults
 	public children: ABLTestCase[] = []
 
-	cancellationRequested() {
+	cancellationRequested () {
 		log.info("cancellation requested")
 		throw new CancellationError()
 	}

@@ -7,48 +7,43 @@ import JSON_minify from 'node-json-minify'
 
 const logOutputChannel = window.createOutputChannel('ABLUnit', { log: true })
 logOutputChannel.clear()
+logOutputChannel.appendLine('ABLUnit output channel created')
+console.log("ABLUnit output channel created")
 
 class Logger {
 
-	level = logOutputChannel.logLevel
+	level: LogLevel = logOutputChannel.logLevel
+	consoleLogLevel = LogLevel.Debug
+	testResultsLogLevel = LogLevel.Info
 
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars
-	trace (message: string, testRun?: TestRun) {
-		if (this.level < LogLevel.Trace) { return }
-		message = this.decorateMessage(message)
-		// this.logTestConsole(message, testRun)
-		// console.trace(message)
-		logOutputChannel.trace(message)
+	constructor () {
+		logOutputChannel.onDidChangeLogLevel((e) => this.setLogLevel(e))
+		this.level = logOutputChannel.logLevel
 	}
 
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars
+	setLogLevel (e: LogLevel) {
+		const message = 'logLevel changed from ' + this.level + ' to ' + e
+		console.log(message)
+		logOutputChannel.appendLine(message)
+	}
+
+	trace (message: string, testRun?: TestRun) {
+		this.writeMessage(LogLevel.Trace, message, testRun)
+	}
+
 	debug (message: string, testRun?: TestRun) {
-		if (this.level < LogLevel.Debug) { return }
-		message = this.decorateMessage(message)
-		// this.logTestConsole(message, testRun)
-		console.debug(message)
-		logOutputChannel.debug(message)
+		this.writeMessage(LogLevel.Debug, message, testRun)
 	}
 
 	info (message: string, testRun?: TestRun) {
-		if (this.level < LogLevel.Info) { return }
-		message = this.decorateMessage(message)
-		this.logTestConsole(message, testRun)
-		console.log(message)
-		logOutputChannel.info(message)
+		this.writeMessage(LogLevel.Info, message, testRun)
 	}
 
 	warn (message: string, testRun?: TestRun) {
-		if (this.level < LogLevel.Warning) { return }
-		message = this.decorateMessage(message)
-		this.logTestConsole(message, testRun)
-		console.warn(message)
-		logOutputChannel.warn(message)
+		this.writeMessage(LogLevel.Warning, message, testRun)
 	}
 
-
 	error (message: string | Error, testRun?: TestRun) {
-		if (this.level < LogLevel.Error) { return }
 		if (message instanceof Error) {
 			if (message.stack) {
 				message = '[' + message.name + '] ' +  message.message + "\r\r" + message.stack
@@ -56,10 +51,46 @@ class Logger {
 				message = '[' + message.name + '] ' +  message.message
 			}
 		}
+		this.writeMessage(LogLevel.Error, message, testRun)
+	}
+
+
+	private writeMessage (messageLevel: LogLevel, message: string, testRun?: TestRun) {
+		if (messageLevel <= this.level) { return }
+		switch (messageLevel) {
+			case LogLevel.Error:    logOutputChannel.error(message); break
+			case LogLevel.Warning:  logOutputChannel.warn(message); break
+			case LogLevel.Info:     logOutputChannel.info(message); break
+			case LogLevel.Debug:    logOutputChannel.debug(message); break
+			case LogLevel.Trace:    logOutputChannel.appendLine(message); break
+			default:                throw new Error("invalid log level for message! level=" + messageLevel + ", message=" + message)
+		}
+
+		if (testRun && messageLevel <= this.testResultsLogLevel) {
+			this.writeToTestResults(messageLevel, message, testRun)
+		}
+
+		if (messageLevel <= this.consoleLogLevel) {
+			this.writeToConsole(messageLevel, message)
+		}
+	}
+
+	private writeToTestResults (messageLevel: LogLevel, message: string, testRun: TestRun) {
+		message = '[' + messageLevel.toString() + '] [' + (new Date()).toISOString() + '] ' + message
+		const optMsg = message.replace(/\r/g, '').replace(/\n/g, '\r\n')
+		testRun.appendOutput(optMsg + "\r\n")
+	}
+
+	private writeToConsole (messageLevel: LogLevel, message: string) {
 		message = this.decorateMessage(message)
-		this.logTestConsole(message, testRun)
-		console.error(message)
-		logOutputChannel.error(message)
+		switch (messageLevel) {
+			case LogLevel.Error:    console.error(message); break
+			case LogLevel.Warning:  console.warn(message); break
+			case LogLevel.Info:     console.info(message); break
+			case LogLevel.Debug:    console.debug(message); break
+			case LogLevel.Trace:    console.trace(message); break
+			default:                console.log(message); break
+		}
 	}
 
 	private getCallerSourceLine () {
@@ -86,17 +117,11 @@ class Logger {
 	private decorateMessage (message: string) {
 		const callerSourceLine = this.getCallerSourceLine()
 		if (callerSourceLine) {
-			const now = new Date()
-			return '[' + now.toISOString() + '] [' + callerSourceLine + '] ' + message
+			return '[' + callerSourceLine + '] ' + message
 		}
 		return message
 	}
 
-	private logTestConsole (message: string, testRun: TestRun | undefined) {
-		if (!testRun) { return }
-		const optMsg = message.replace(/\r/g, '').replace(/\n/g, '\r\n')
-		testRun.appendOutput(optMsg + "\r\n")
-	}
 }
 
 export const log: Logger = new Logger()

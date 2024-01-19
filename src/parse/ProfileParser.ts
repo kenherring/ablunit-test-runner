@@ -646,8 +646,10 @@ export class ABLProfileJson {
 				if (mod) {
 					mod.ISectionTwelve.push(ISectionTwelve)
 				} else {
-					log.error("Unable to find module " + ISectionTwelve.ModuleID + " in section 12")
-					log.error("  - line='" + element + "'")
+					// TODO
+					if (ISectionTwelve.ModuleID != 0) {
+						log.error('Unable to find module " + ISectionTwelve.ModuleID + " in section 12 (line=' + element + ')')
+					}
 				}
 			}
 		}
