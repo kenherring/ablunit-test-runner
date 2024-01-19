@@ -2,7 +2,7 @@
     {
         "projName": "DebugLines",
         "label": "extension tests - DebugLines",
-        "files": "out/test/**/*DebugLines.test.js",
+        "files": "src/test/suite/DebugLines.test.ts",
         "workspaceFolder": "./test_projects/DebugLines",
         "mocha": {
             "ui": "tdd",
@@ -17,7 +17,7 @@
     {
         "projName": "proj0",
         "label": "extension tests - proj0",
-        "files": "out/test/**/*proj0.test.js",
+        "files": "src/test/suite/proj0.test.ts",
         "workspaceFolder": "./test_projects/proj0",
         "mocha": {
             "ui": "tdd",
@@ -34,7 +34,7 @@
     {
         "projName": "proj1",
         "label": "extension tests - proj1",
-        "files": "out/test/**/*proj1.test.js",
+        "files": "src/test/suite/proj1.test.ts",
         "workspaceFolder": "./test_projects/proj1",
         "mocha": {
             "ui": "tdd",
@@ -51,7 +51,7 @@
     {
         "projName": "proj2",
         "label": "extension tests - proj2",
-        "files": "out/test/**/*proj2.test.js",
+        "files": "src/test/suite/proj2.test.ts",
         "workspaceFolder": "./test_projects/proj2",
         "mocha": {
             "ui": "tdd",
@@ -68,7 +68,7 @@
     {
         "projName": "proj3",
         "label": "extension tests - proj3",
-        "files": "out/test/**/*proj3.test.js",
+        "files": "src/test/suite/proj3.test.ts",
         "workspaceFolder": "./test_projects/proj3_debugLines",
         "mocha": {
             "ui": "tdd",
@@ -83,7 +83,7 @@
     {
         "projName": "proj4",
         "label": "extension tests - proj4",
-        "files": "out/test/**/*proj4.test.js",
+        "files": "src/test/suite/proj4.test.ts",
         "workspaceFolder": "./test_projects/proj4",
         "mocha": {
             "ui": "tdd",
@@ -98,7 +98,7 @@
     {
         "projName": "proj5",
         "label": "extension tests - proj5",
-        "files": "out/test/**/*proj5.test.js",
+        "files": "src/test/suite/proj5.test.ts",
         "workspaceFolder": "./test_projects/proj5_suites",
         "mocha": {
             "ui": "tdd",
@@ -115,7 +115,7 @@
     {
         "projName": "proj6",
         "label": "extension tests - proj6",
-        "files": "out/test/**/*proj6.test.js",
+        "files": "src/test/suite/proj6.test.ts",
         "workspaceFolder": "./test_projects/proj6_dot_dir",
         "mocha": {
             "ui": "tdd",
@@ -130,26 +130,39 @@
         }
     },
     {
-        "projName": "proj7",
-        "label": "extension tests - proj7",
-        "files": "out/test/**/*proj7.test.js",
+        "projName": "proj7A",
+        "label": "extension tests - proj7A",
+        "files": "src/test/suite/proj7A.test.ts",
         "workspaceFolder": "./test_projects/proj7_load_performance",
         "mocha": {
             "ui": "tdd",
             "timeout": 60000
         },
-        "launchArgs": [
-            "--disable-extensions"
-        ],
+        "launchArgs": [],
         "env": {
             "ABLUNIT_TEST_RUNNER_UNIT_TESTING": "true",
-            "ABLUNIT_TEST_RUNNER_PROJECT_NAME": "proj7"
+            "ABLUNIT_TEST_RUNNER_PROJECT_NAME": "proj7A"
+        }
+    },
+    {
+        "projName": "proj7B",
+        "label": "extension tests - proj7B",
+        "files": "src/test/suite/proj7B.test.ts",
+        "workspaceFolder": "./test_projects/proj7_load_performance",
+        "mocha": {
+            "ui": "tdd",
+            "timeout": 15000
+        },
+        "launchArgs": [],
+        "env": {
+            "ABLUNIT_TEST_RUNNER_UNIT_TESTING": "true",
+            "ABLUNIT_TEST_RUNNER_PROJECT_NAME": "proj7B"
         }
     },
     {
         "projName": "proj8",
         "label": "extension tests - proj8",
-        "files": "out/test/**/*proj8.test.js",
+        "files": "src/test/suite/proj8.test.ts",
         "workspaceFolder": "./test_projects/proj8_custom_command",
         "mocha": {
             "ui": "tdd",
@@ -166,7 +179,7 @@
     {
         "projName": "proj9",
         "label": "extension tests - proj9",
-        "files": "out/test/**/*proj9.test.js",
+        "files": "src/test/suite/proj9.test.ts",
         "workspaceFolder": "./test_projects/proj9",
         "mocha": {
             "ui": "tdd",
@@ -181,7 +194,7 @@
     {
         "projName": "projA",
         "label": "extension tests - projA",
-        "files": "out/test/**/*projA.test.js",
+        "files": "src/test/suite/projA.test.ts",
         "workspaceFolder": "./test_projects/projA",
         "mocha": {
             "ui": "tdd",
@@ -196,7 +209,7 @@
     {
         "projName": "TestProfileParser",
         "label": "extension tests - TestProfileParser",
-        "files": "out/test/**/*TestProfileParser.test.js",
+        "files": "src/test/suite/TestProfileParser.test.ts",
         "workspaceFolder": "./test_projects/TestProfileParser",
         "mocha": {
             "ui": "tdd",
@@ -213,7 +226,7 @@
     {
         "projName": "workspace0",
         "label": "extension tests - workspace0",
-        "files": "out/test/**/*workspace0.test.js",
+        "files": "src/test/suite/workspace0.test.ts",
         "workspaceFolder": "./test_projects/workspace0.code-workspace",
         "mocha": {
             "ui": "tdd",
@@ -230,7 +243,7 @@
     {
         "projName": "workspace1",
         "label": "extension tests - workspace1",
-        "files": "out/test/**/*workspace1.test.js",
+        "files": "src/test/suite/workspace1.test.ts",
         "workspaceFolder": "./test_projects/workspace1.code-workspace",
         "mocha": {
             "ui": "tdd",

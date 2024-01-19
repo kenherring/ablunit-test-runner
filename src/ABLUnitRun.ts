@@ -1,11 +1,20 @@
-import { TestRun, Uri, workspace } from 'vscode'
+import { CancellationToken, TestRun, Uri, workspace } from 'vscode'
 import { ABLResults } from './ABLResults'
 import { isRelativePath } from './ABLUnitConfigWriter'
 import { ExecException, exec } from "child_process"
 import { log } from './ABLUnitCommon'
 
-export const ablunitRun = async (options: TestRun, res: ABLResults) => {
+export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation?: CancellationToken) => {
 	const start = Date.now()
+	const abort = new AbortController()
+	const { signal } = abort
+
+	if (cancellation) {
+		cancellation.onCancellationRequested(() => {
+			log.info("cancellation requested")
+			abort.abort()
+		})
+	}
 
 	await res.cfg.createAblunitJson(res.cfg.ablunitConfig.config_uri, res.cfg.ablunitConfig.options, res.testQueue)
 
@@ -90,8 +99,8 @@ export const ablunitRun = async (options: TestRun, res: ABLResults) => {
 	}
 
 	const runCommand = () => {
-		const args = getCommand()
 		log.info("ABLUnit Command Execution Started - dir='" + res.cfg.ablunitConfig.workspaceFolder.uri.fsPath + "'")
+		const args = getCommand()
 
 		const cmd = args[0]
 		args.shift()
@@ -100,8 +109,9 @@ export const ablunitRun = async (options: TestRun, res: ABLResults) => {
 			res.setStatus("running command")
 
 			const runenv = getEnvVars(res.dlc!.uri)
+			log.debug("cmd=" + cmd + ' ' + args.join(' '))
 
-			exec(cmd + ' ' + args.join(' '), {env: runenv, cwd: res.cfg.ablunitConfig.workspaceFolder.uri.fsPath }, (err: ExecException | null, stdout: string, stderr: string) => {
+			exec(cmd + ' ' + args.join(' '), {env: runenv, cwd: res.cfg.ablunitConfig.workspaceFolder.uri.fsPath, signal: signal}, (err: ExecException | null, stdout: string, stderr: string) => {
 				const duration = Date.now() - start
 				if (stdout) {
 					log.info("_progres stdout=" + stdout, options)
@@ -116,7 +126,7 @@ export const ablunitRun = async (options: TestRun, res: ABLResults) => {
 					reject(new Error ("ABLUnit Command Execution Failed - duration: " + duration))
 				}
 				log.info("ABLUnit Command Execution Completed - duration: " + duration)
-				resolve("resolve _progres promise")
+				resolve("ABLUnit Command Execution Completed - duration: " + duration)
 			})
 		})
 	}

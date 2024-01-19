@@ -1,0 +1,7 @@
+{
+    "ablunit.discoverFilesOnActivate": false,
+    // "ablunit.files.include": [
+    //     // "**/*.{cls,p}",
+    //     "**/*.z"
+    // ]
+}

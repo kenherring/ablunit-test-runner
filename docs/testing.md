@@ -25,3 +25,15 @@ npm run test:install-and-run
 The following tooling is configured for development in this repo.
 
 * [typescript-eslint](https://typescript-eslint.io/)
+
+
+<!--
+## Commands that should always pass
+docker/docker-build.sh
+docker/run_tests.sh
+docker/run_tests.sh -i
+docker/run_tests.sh -d
+docker/run_tests.sh -o 12.2
+docker/run_tests.sh -o 12.2 -i
+docker/run_tests.sh -o 12.2 -d
+-->

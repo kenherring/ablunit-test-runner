@@ -6,8 +6,10 @@
 	"ablunit.notificationsEnabled": false,
 	"terminal.integrated.env.linux": {
 		"ENV_VAR_1": "THISisTHEvalue",
+		"ATTR_ABLUNIT_EVENT_FILE": "ablunit_event_file" //TODO
 	},
 	"terminal.integrated.env.windows": {
 		"ENV_VAR_1": "THISisTHEvalue",
+		"ATTR_ABLUNIT_EVENT_FILE": "ablunit_event_file"
 	}
 }

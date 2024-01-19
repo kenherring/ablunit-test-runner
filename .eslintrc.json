@@ -17,8 +17,8 @@
 		"@typescript-eslint"
 	],
 	"ignorePatterns": [
-		"webpack.config.js",
-		"src/test/createTestConfig.js"
+		"dummy-ext/",
+		"webpack.config.js"
 	],
 	"root": true,
 	"rules": {

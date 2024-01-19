@@ -26,32 +26,26 @@ async function runTest(version: string) {
 		if (!existsSync(packagedExtensionPath)) {
 			throw new Error("Extension bundle does not exist! '" + packagedExtensionPath + "'")
 		}
-		const projDir = path.resolve(__dirname, '../../../test_projects/proj0')
+		// const projDir = path.resolve(__dirname, '../../../test_projects/proj0')
 		// const projDir = path.resolve(__dirname, '../../../test_projects/proj1')
+		const projDir = path.resolve(__dirname, '../../../test_projects/proj4')
 
 		console.log("[installAndRun.ts runTest] cp.spawnSync")
 		// Use cp.spawn / cp.exec for custom setup
 		cp.spawnSync(
 			cliPath,
-			[...args, '--trace-deprecation', '--install-extension', packagedExtensionPath],
-			// [...args, '--install-extension', packagedExtensionPath],
-			{
-				encoding: 'utf-8',
-				stdio: 'inherit'
-			}
+			[...args, '--install-extension', packagedExtensionPath],
+			{ encoding: 'utf-8', stdio: 'inherit' }
 		)
 
-		// Run the extension test
-		console.log("[installAndRun.ts runTest] await runTests")
+		console.log('[installAndRun.ts runTest] await runTests (projDir=' + projDir + ')')
+		console.log('[installAndRun.ts runTest] -- extensionDevelopmentPath=' + extensionDevelopmentPath)
+		console.log('[installAndRun.ts runTest] -- extensionTestsPath=' + extensionTestsPath)
 		await runTests({
-			// Use the specified `code` executable
 			vscodeExecutablePath,
 			extensionDevelopmentPath,
 			extensionTestsPath,
-			launchArgs: [
-				projDir,
-				'--trace-deprecation'
-			]
+			launchArgs: [ projDir, '--log', 'debug' ]
 		})
 	} catch (err) {
 		console.error('Failed to run tests! err=' + err)

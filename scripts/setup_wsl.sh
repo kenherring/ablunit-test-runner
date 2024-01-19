@@ -1,5 +1,5 @@
 #!/bin/bash
-set -eou pipefail
+set -euo pipefail
 
 if [ -z "${WSL_DISTRO_NAME:-}" ]; then
 	echo "this script is meant to run under wsl only"

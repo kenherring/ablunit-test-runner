@@ -1,14 +1,14 @@
 #!/bin/bash
-set -eou pipefail
+set -euo pipefail
 
 initialize () {
 	local OPT OPTARG OPTIND
 	echo "[$0 ${FUNCNAME[0]}] pwd=$(pwd)"
 	BASH_AFTER=false
+	VERBOSE=false
 	CACHE_BASE=/home/circleci/cache
 	REPO_VOLUME=/home/circleci/ablunit-test-runner
 	STAGED_ONLY=${STAGED_ONLY:-true}
-	RUNCMD=${RUNCMD:-webpack}
 	export npm_config_cache=$CACHE_BASE/node_modules_cache
 	mkdir -p $CACHE_BASE/node_modules_cache
 
@@ -110,7 +110,7 @@ run_tests () {
 run_tests_base () {
 	echo "[$0 ${FUNCNAME[0]}] pwd=$(pwd)"
 
-	if ! .circleci/run_test_wrapper.sh "$RUNCMD"; then
+	if ! .circleci/run_test_wrapper.sh; then
 		echo "run_tests failed"
 		$BASH_AFTER && bash
 		exit 1
@@ -145,29 +145,46 @@ analyze_results () {
 
 run_tests_dummy_ext () {
 	echo "[$0 ${FUNCNAME[0]}] pwd = $(pwd)"
-	npm run test:setup
 	package_extension
 	run_packaged_tests
 }
 
 package_extension () {
 	echo "[$0 ${FUNCNAME[0]}] pwd = $(pwd)"
+	local VSIX_COUNT
+
 	npm install
-	vsce package --pre-release --githubBranch "$(git branch --show-current)"
+	npm run pretest
+	vsce package --githubBranch "$(git branch --show-current)"
+	# vsce package --pre-release --githubBranch "$(git branch --show-current)"
 
 	echo "find packages: $(find . -name "ablunit-test-runner-*.vsix")"
-	if [ "$(find . -name "ablunit-test-runner-*.vsix" | wc -l )" = "0" ]; then
+	VSIX_COUNT=$(find . -name "ablunit-test-runner-*.vsix" | wc -l )
+	if [ "$VSIX_COUNT" = "0" ]; then
 		echo "ERROR: could not find .vsix after packaging extension!"
 		exit 1
+	elif [ "$VSIX_COUNT" != "1" ]; then
+		echo "ERROR: found multiple ablunit-test-runner-*.vsix files!"
+		exit 2
 	fi
+	echo "found $(find . -name "ablunit-test-runner-*.vsix") extension file"
 }
 
 run_packaged_tests () {
 	echo "[$0 ${FUNCNAME[0]}] pwd=$(pwd)"
+	local ABLUNIT_LOG
+
 	cd dummy-ext
 	npm run compile
+
 	export DONT_PROMPT_WSL_INSTALL=No_Prompt_please
 	if ! xvfb-run -a npm run test:install-and-run; then
+		ABLUNIT_LOG=$(find . -name 'ABLUnit.log')
+		if $VERBOSE; then
+			echo "---------- $ABLUNIT_LOG ----------"
+			cat "$ABLUNIT_LOG"
+		fi
+		echo "ERROR: test:install-and-run failed"
 		$BASH_AFTER && bash
 		exit 1
 	fi
@@ -181,13 +198,22 @@ run_packaged_tests () {
 
 save_cache () {
 	echo "[$0 ${FUNCNAME[0]}] pwd=$(pwd)"
+
+	npm run clean
+
 	if [ -d .vscode-test ]; then
+		echo "saving .vscode-test to cache"
 		mkdir -p "$CACHE_BASE/.vscode-test"
 		rsync -aR ./.vscode-test "$CACHE_BASE"
 	fi
-	if [ -d dummy-ext/.vscode-test ]; then
+
+	if [ -d ./dummy-ext/.vscode-test ]; then
+		echo "saving dummy-ext/.vscode-test to cache"
 		mkdir -p "$CACHE_BASE/dummy-ext/.vscode-test"
 		rsync -aR ./dummy-ext/.vscode-test "$CACHE_BASE"
+	elif [ "$TEST_PROJECT" = "dummy-ext" ]; then
+		echo "WARNING: dummy-ext/.vscode-test not found.  cannot save cache"
+		exit 1
 	fi
 }
 
@@ -198,10 +224,15 @@ restore_cache () {
 
 	cd "$CACHE_BASE"
 	if [ -d "$CACHE_BASE/.vscode-test" ]; then
-		rsync -aR .vscode-test "$BASE_DIR"
+		echo "restoring .vscode-test from cache"
+		rsync -aR ./.vscode-test "$BASE_DIR"
 	fi
 	if [ -d "$CACHE_BASE/dummy-ext/.vscode-test" ]; then
-		rsync -aR dummy-ext/.vscode-test "$BASE_DIR"
+		echo "restoring dummy-ext/.vscode-test from cache"
+		rsync -aR ./dummy-ext/.vscode-test "$BASE_DIR"
+	elif [ "$TEST_PROJECT" = "dummy-ext" ]; then
+		echo "WARNING: dummy-ext/.vscode-test not found in cache"
+		$BASH_AFTER && bash
 	fi
 	cd -
 }

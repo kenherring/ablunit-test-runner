@@ -1,5 +1,4 @@
 import { GlobSync } from 'glob'
-import { formatWithOptions } from 'util'
 import * as fs from 'fs'
 
 /* ********** Notes **********
@@ -10,7 +9,6 @@ import * as fs from 'fs'
 /* - src/test/index.ts
 /* - src/test/runTest.ts
 /*
-/* Build:  `npm run build-tsc`
 /* Run:    `node ./out/test/createTestConfig.js`
 /* ********** End Notes ********** */
 
@@ -28,12 +26,16 @@ export interface ITestConfig {
 	env: { [key: string]: string | undefined }
 }
 
-function createTestConfig (projName: string, workspaceFolder?: string, timeout?: number) {
+function createTestConfig (projName: string, testFile: string, workspaceFolder?: string, timeout?: number) {
 	if (!workspaceFolder) {
 		workspaceFolder = './test_projects/' + projName
 	}
+	let searchProj = projName
+	if (projName.startsWith('proj7')) {
+		searchProj = 'proj7'
+	}
 
-	const g = new GlobSync(projName + '*', { cwd: './test_projects' })
+	const g = new GlobSync(searchProj + '*', { cwd: './test_projects' })
 	if (g.found.length === 1) {
 		workspaceFolder = './test_projects/' + g.found[0]
 	}
@@ -50,6 +52,8 @@ function createTestConfig (projName: string, workspaceFolder?: string, timeout?:
 	if (projName != "DebugLines" &&
 		projName != "proj3" &&
 		projName != "proj4" &&
+		projName != "proj7A" &&
+		projName != "proj7B" &&
 		projName != "proj9" &&
 		projName != "projA") {
 		launchArgs.push('--disable-extensions')
@@ -58,7 +62,7 @@ function createTestConfig (projName: string, workspaceFolder?: string, timeout?:
 	const retVal: ITestConfig = {
 		projName: projName,
 		label: 'extension tests - ' + projName,
-		files: 'out/test/**/*' + projName + '.test.js',
+		files: testFile,
 		workspaceFolder: workspaceFolder,
 		mocha: {
 			ui: 'tdd',
@@ -84,15 +88,15 @@ export function getTestConfig () {
 	for (const f of g.found) {
 		let maxTimeout = 15000
 		const projName = f.replace('.test.ts', '').split('/').reverse()[0]
-		if (projName === 'proj7' || testConfig.length === 0) {
+		if (projName.startsWith('proj7A') || testConfig.length === 0) {
 			maxTimeout = 60000
 		}
-		const conf = createTestConfig(projName, undefined, maxTimeout)
+		const conf = createTestConfig(projName, f, undefined, maxTimeout)
 		if (conf) {
 			testConfig.push(conf)
 		}
 	}
-	fs.writeFileSync('./.vscode-test.config.json', formatWithOptions({ colors: true }, JSON.stringify(testConfig, null, 4)))
+	fs.writeFileSync('./.vscode-test.config.json', JSON.stringify(testConfig, null, 4) + '\n')
 	console.log('created .vscode-test.config.json succesfully!')
 	return testConfig
 }

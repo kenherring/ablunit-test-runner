@@ -1,27 +1,16 @@
 #!/bin/bash
-set -eou pipefail
+set -euo pipefail
 
 initialize () {
-	echo "[$0 initialize]"
-	# RUNCMD=${1:-webpack}
+	echo "[$0 ${FUNCNAME[0]}]"
 	VERBOSE=${VERBOSE:-false}
 	npm install
-
-	# RUNCMD="build" ## always build so the *.test.ts are compiled
-	# if [ -n "$RUNCMD" ]; then
-	# 	RUNCMD="webpack"
-	# fi
-	# rm -rf dist out
-	# npm run "$RUNCMD"
-	# echo "npm run $RUNCMD - success"
 }
 
 dbus_config () {
-	echo "[$0 dbus_config]"
+	echo "[$0 ${FUNCNAME[0]}]"
 	## These lines fix dbus errors in the logs related to the next section
 	## However, they also create new errors
-	# apt update
-	# apt install -y xdg-desktop-portal
 
 	## These lines fix dbus errors in the logs: https://github.com/microsoft/vscode/issues/190345#issuecomment-1676291938
 	service dbus start
@@ -35,33 +24,31 @@ dbus_config () {
 }
 
 run_tests () {
-	echo "[$0 run_tests]"
+	echo "[$0 ${FUNCNAME[0]}]"
 	EXIT_CODE=0
 
 	xvfb-run -a npm test || EXIT_CODE=$?
-	save_and_print_debug_output
 	if [ "$EXIT_CODE" = "0" ]; then
 		echo "xvfb-run success"
 	else
 		echo "xvfb-run failed (EXIT_CODE=$EXIT_CODE)"
+		save_and_print_debug_output
 		exit $EXIT_CODE
 	fi
 }
 
 save_and_print_debug_output () {
-	echo "[$0 print_debug_output]"
+	echo "[$0 ${FUNCNAME[0]}]"
 	find .vscode-test -name '*-ABL*.log'
 	find .vscode-test -name '*-ABL*.log' -exec cp {} artifacts \;
 	find .vscode-test -name '*ABLUnit.log'
 	find .vscode-test -name '*ABLUnit.log' -exec cp {} artifacts \;
-	find .vscode-test -name '*-ABL*.log'
-	find .vscode-test -name '*-ABL*.log' -exec cp {} artifacts \;
 
-	echo "[$0 print_debug_output] r-code"
+	echo "[$0 ${FUNCNAME[0]}] r-code"
 	find . -name '*.r'
 	$VERBOSE || return 0
 
-	echo "[$0 print_debug_output] OpenEdge ABL Extension Logs"
+	echo "[$0 ${FUNCNAME[0]}] OpenEdge ABL Extension Logs"
 	echo "********** '1-ABL.log' **********"
 	find . -name "1-ABL.log" -exec cat {} \;
 	echo "********** '2-ABL Language Server.log' **********"
@@ -70,7 +57,7 @@ save_and_print_debug_output () {
 }
 
 run_lint () {
-	echo "[$0 run_lint]"
+	echo "[$0 ${FUNCNAME[0]}]"
 
 	mkdir -p artifacts
 	rm -rf test_projects/proj7_load_performance/src/ADE-12.2.13.0

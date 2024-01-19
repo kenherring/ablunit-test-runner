@@ -31,8 +31,6 @@ suite(projName + ' - Extension Test Suite', () => {
 	})
 
 	test(projName + '.2 - second profile passes', async () => {
-		// command: abl.project.switch.profile
-		// command: abl.restart.langserv
 		await selectProfile('profile2')
 		await runAllTests()
 
