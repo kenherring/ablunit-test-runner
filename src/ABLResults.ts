@@ -222,8 +222,6 @@ export class ABLResults implements Disposable {
 		this.endTime = new Date()
 		const parseStartTime = new Date()
 
-		const parseStartTime = new Date()
-
 		this.ablResults = new ABLResultsParser(this.propath!, this.debugLines!)
 		await this.ablResults.parseResults(this.cfg.ablunitConfig.optionsUri.filenameUri, this.cfg.ablunitConfig.optionsUri.jsonUri).then(() => {
 			log.debug('parsing complete (time=' + (Number(new Date()) - Number(parseStartTime)) + ')')
