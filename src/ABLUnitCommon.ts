@@ -57,14 +57,7 @@ class Logger {
 
 	private writeMessage (messageLevel: LogLevel, message: string, testRun?: TestRun) {
 		if (messageLevel <= this.level) { return }
-		switch (messageLevel) {
-			case LogLevel.Error:    logOutputChannel.error(message); break
-			case LogLevel.Warning:  logOutputChannel.warn(message); break
-			case LogLevel.Info:     logOutputChannel.info(message); break
-			case LogLevel.Debug:    logOutputChannel.debug(message); break
-			case LogLevel.Trace:    logOutputChannel.appendLine(message); break
-			default:                throw new Error("invalid log level for message! level=" + messageLevel + ", message=" + message)
-		}
+		this.writeToChannel(messageLevel, message)
 
 		if (testRun && messageLevel <= this.testResultsLogLevel) {
 			this.writeToTestResults(messageLevel, message, testRun)
@@ -72,6 +65,17 @@ class Logger {
 
 		if (messageLevel <= this.consoleLogLevel) {
 			this.writeToConsole(messageLevel, message)
+		}
+	}
+
+	private writeToChannel (messageLevel: LogLevel, message: string) {
+		switch (messageLevel) {
+			case LogLevel.Error:    logOutputChannel.error(message); break
+			case LogLevel.Warning:  logOutputChannel.warn(message); break
+			case LogLevel.Info:     logOutputChannel.info(message); break
+			case LogLevel.Debug:    logOutputChannel.debug(message); break
+			case LogLevel.Trace:    logOutputChannel.appendLine(message); break
+			default:                throw new Error("invalid log level for message! level=" + messageLevel + ", message=" + message)
 		}
 	}
 
