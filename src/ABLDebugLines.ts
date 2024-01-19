@@ -32,7 +32,7 @@ export class ABLDebugLines {
 			try {
 				map = await getSourceMapFromRCode(this.propath, await this.propath.getRCodeUri(debugSource))
 			} catch (e) {
-				log.warn("cannot parse source map from rcode, falling back to source parser (" + debugSource + ")")
+				log.debug("cannot parse source map from rcode, falling back to source parser (" + debugSource + ")")
 				map = await getSourceMapFromSource(this.propath, debugSource)
 			}
 

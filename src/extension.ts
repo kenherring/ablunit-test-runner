@@ -166,7 +166,6 @@ export async function activate (context: ExtensionContext) {
 
 			if(!ret) {
 				for (const { test } of queue) {
-					log.error('ablunit run failed')
 					run.errored(test,new TestMessage('ablunit run failed'))
 					for (const childTest of gatherTestItems(test.children)) {
 						run.errored(childTest,new TestMessage('ablunit run failed'))
@@ -266,9 +265,9 @@ export async function activate (context: ExtensionContext) {
 
 			// find initial items
 			if(workspace.getConfiguration('ablunit').get('discoverFilesOnActivate', false)) {
-				log.debug('discoverFilesOnActivate is true. refreshing test tree...')
+				log.trace('discoverFilesOnActivate is true. refreshing test tree...')
 				commands.executeCommand('testing.refreshTests').then(() => {
-					log.debug('tests tree successfully refreshed on workspace startup')
+					log.trace('tests tree successfully refreshed on workspace startup')
 				}, (err) => {
 					log.error('failed to refresh test tree. err=' + err)
 				})
@@ -670,7 +669,7 @@ function removeExcludedChildren (parent: TestItem, excludePatterns: RelativePatt
 }
 
 async function refreshTestTree (controller: TestController, token: CancellationToken) {
-	log.info('refreshing test tree..')
+	log.info('refreshing test tree...')
 	const startTime = Date.now()
 	let searchCount = 0
 	let resolvedCount = 0
