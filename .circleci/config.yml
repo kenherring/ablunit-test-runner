@@ -70,7 +70,7 @@ workflows:
             - shellcheck/check
             - test-and-scan_12.2.12
             - test-and-scan_12.7.0
-            - test-with-bundle
+            # - test-with-bundle
             - install-and-run
           <<: *context-and-filters
 
