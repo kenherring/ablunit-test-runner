@@ -111,7 +111,6 @@ jobs:
     steps:
       - <<: *setup
       - run: npm install
-      - run: npm run test:setup
       - run: vsce package --pre-release --githubBranch "$CIRCLE_BRANCH"
       - run: vsce ls
       - run:

@@ -82,7 +82,7 @@
 		"build": "npm run build-webpack && npm run build-tsc",
 		"build-webpack": "npm run webpack",
 		"build-tsc": "tsc -p ./",
-		"clean": "rm -rf .nyc_output artifacts coverage dist out && sh -c scripts/cleanup.sh",
+		"clean": "rm -rf .nyc_output artifacts coverage dist out *.vsix && sh -c scripts/cleanup.sh",
 		"clean-and-build": "npm run clean && npm run build",
 		"lint": "npx eslint ./src --ext .ts,.js",
 		"vscode:prepublish": "npm run package",
