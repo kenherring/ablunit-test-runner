@@ -10,8 +10,11 @@ import { existsSync } from 'fs'
 import { downloadAndUnzipVSCode, resolveCliArgsFromVSCodeExecutablePath, runTests } from '@vscode/test-electron'
 
 async function main() {
+	console.log("[main] starting tests in vscode, version='stable'")
 	await runTest('stable')
+	console.log("[main] starting tests in vscode, version='insiders'")
 	await runTest('insiders')
+	console.log("[main] tests completed successfully!")
 }
 
 async function runTest(version: string) {
@@ -48,8 +51,7 @@ async function runTest(version: string) {
 			launchArgs: [ projDir, '--log', 'debug' ]
 		})
 	} catch (err) {
-		console.error('Failed to run tests! err=' + err)
-		process.exit(1)
+		throw new Error("Failed to run tests! err=" + err)
 	}
 	console.log("[installAndRun] success!  version=" + version)
 }

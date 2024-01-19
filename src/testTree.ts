@@ -109,7 +109,6 @@ export class ABLTestFile extends TestTypeObj {
 	public relativePath: string = ''
 	currentResults?: ABLResults
 	public children: ABLTestCase[] = []
-	public cancelled: boolean = false
 
 	cancellationRequested () {
 		log.info("cancellation requested")

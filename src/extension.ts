@@ -276,6 +276,7 @@ export async function activate (context: ExtensionContext) {
 					updateNodeForDocument(e.document)
 				}
 			}
+
 			return
 		}
 		const data = testData.get(item)

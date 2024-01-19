@@ -26,9 +26,23 @@ Configuration is optional.  Many workspaces will work without any configuration.
 
 ### 📐 Settings Configuration
 
-The settings config allows for a few global options, described in more detail below.  This example shows a test file glob pattern and `-pf` parameter which contains database connection options.
+The settings config allows for a few global options, described in more detail below.  This example shows a test file glob pattern and another with a path to a dbconnections `.pf` file.  The `ablunit.files.include` setting is required for the extension to find tests.
 
-**`.vscode/settings.json`**:
+
+**`.vscode/settings.json` with include and exclude patterns**:
+
+```json
+{
+  "ablunit.files.include": [
+    "test/**/*Test.{cls,p}"
+  ],
+  "ablunit.files.exclude": [
+    "src/sandbox/**"
+  ]
+}
+```
+
+**`.vscode/settings.json` with dbconnections `.pf` file**:
 
 ```json
 {
@@ -82,6 +96,7 @@ See [CONTRIBUTING.md](.github/CONTRIBUTING.md)
 * Docker Hub - Progress Software Corporation - [progresssoftware/prgs-oedb](https://hub.docker.com/r/progresssoftware/prgs-oedb)
 
 ## 🤓 About Me
+
 This is my first VSCode extension, and my first TypeScript project. I am sure there are many ways to improve the code, and I welcome any feedback.  I'm also open to collaboration for anyone who might wish to contribute.
 
 Quality code is my passion.  Unit testing is an important component of ensuring code remains functional when future changes are made.  I hope this extension helps others to embrace [TDD](https://en.wikipedia.org/wiki/Test-driven_development) and improve their code.

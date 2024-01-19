@@ -27,7 +27,6 @@ get_performance_test_code () {
 	if [ "${OS:-}" = "Windows_NT" ] || [ -n "${WSL_DISTRO_NAME:-}" ]; then
 		mkdir -p .vscode-test
 		TO_FILE=.vscode-test/v${OE_VERSION}.0.tar.gz
-		mkdir -p .vscode-test
 	fi
 	if [ ! -f "$TO_FILE" ]; then
 		if [ -n "${DOCKER_IMAGE:-}" ]; then
@@ -69,7 +68,7 @@ doBuild () {
 
 ########## MAIN BLOCK ##########
 initialize "$@"
-scripts/cleanup.sh
+scripts/clean.sh
 get_performance_test_code
 get_pct
 create_dbs

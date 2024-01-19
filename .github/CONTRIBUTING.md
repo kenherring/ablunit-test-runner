@@ -22,7 +22,7 @@ In most situations it's a good idea to create a failing test case first, and the
 ### Running the Project
 
 * Run `npm install` in terminal to install dependencies
-* Use the **Run Extension** target in the Debug View. This will launch a new VSCode window with the extension loaded.
+* Use the **Run Extension** target in the Debug View to launch a new VSCode window with the extension loaded.
 
 ### Testing the Project
 

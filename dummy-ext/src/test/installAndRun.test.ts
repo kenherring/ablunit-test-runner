@@ -19,10 +19,6 @@ before(async () => {
 	console.log("before complete!")
 })
 
-afterEach(async () => {
-	await restoreTestProfile()
-})
-
 suite('install and run', () => {
 
 	test("install and run - does package extension work?", async () => {
@@ -30,7 +26,8 @@ suite('install and run', () => {
 			console.log("runAllTests complete!")
 		}, (err) => { throw new Error("runAllTests failed: " + err) })
 
-		const workspaceFolder = getWorkspaceUri()
+		const workspaceFolder = workspace.workspaceFolders![0].uri
+
 		const ablunitJson = Uri.joinPath(workspaceFolder, 'target', 'ablunit.json')
 		const resultsXml = Uri.joinPath(workspaceFolder, 'target', 'results.xml')
 		const resultsJson = Uri.joinPath(workspaceFolder, 'target', 'results.json')
@@ -106,19 +103,4 @@ function updateTestProfileTempDir (value: string | string[] | boolean): Thenable
 	}, (err) => {
 		throw new Error("error reading " + testProfileUri.fsPath + ": " + err)
 	})
-}
-
-function createRestoreFile (src: Uri) {
-	const dest = Uri.file(src.fsPath + '.restore')
-	if (!existsSync(dest.fsPath)) {
-		console.log("creating restore file: " + dest.fsPath)
-		copyFileSync(src.fsPath, dest.fsPath)
-	}
-}
-
-function restoreTestProfile () {
-	const settingsFile = Uri.joinPath(getWorkspaceUri(), '.vscode', 'ablunit-test-profile.json')
-	const restoreFile = Uri.joinPath(getWorkspaceUri(), '.vscode', 'ablunit-test-profile.json.restore')
-	console.log("restoring " + workspace.asRelativePath(settingsFile) + " from " + workspace.asRelativePath(restoreFile) + "...")
-	return workspace.fs.rename(restoreFile, settingsFile, { overwrite: true })
 }
