@@ -13,6 +13,7 @@ usage () {
 }
 
 initialize () {
+	echo "[$0 ${FUNCNAME[0]}]"
 	local OPT OPTARG OPTIND
 	PRE_RELEASE=false
 	CIRCLECI=${CIRCLECI:-false}
@@ -56,7 +57,7 @@ initialize () {
 }
 
 update_version () {
-	echo "starting version validation/update..."
+	echo "[$0 ${FUNCNAME[0]}]"
 	echo "CURRENT_VERSION=$CURRENT_VERSION, CIRCLE_BUILD_NUM=${CIRCLE_BUILD_NUM:-}"
 
 	if [ -z "$CURRENT_VERSION" ]; then
@@ -65,24 +66,25 @@ update_version () {
 	fi
 
 	if [ -n "${PIPELINE_GIT_TAG:-}" ]; then
-		create-package-for-tag
-	elif [ "${NEW_VERSION:-}" = "minor" ] || [ "${NEW_VERSION:-}" = "patch" ]; then
+		create_package_for_tag
+	elif [ "${NEW_VERSION:-}" = "major" ] || [ "${NEW_VERSION:-}" = "minor" ] || [ "${NEW_VERSION:-}" = "patch" ]; then
 		npm version "$NEW_VERSION" --no-git-tag-version
 	else
 		npm version "$CURRENT_VERSION-${CIRCLE_BUILD_NUM:-}" --no-git-tag-version
 	fi
 
 	NEW_VER=$(jq -r '.version' package.json)
-	echo  "updated package version from '$CURRENT_VERSION' to '$NEW_VER'"
+	echo  "[$0 ${FUNCNAME[0]}] updated package version from '$CURRENT_VERSION' to '$NEW_VER'"
 
 	if [ "${NEW_VERSION:-}" = "minor" ] || [ "${NEW_VERSION:-}" = "patch" ]; then
-		update-changelog
+		update_changelog
 	fi
 
-	update-other-files "$NEW_VER"
+	update_other_files "$NEW_VER"
 }
 
-create-package-for-tag () {
+create_package_for_tag () {
+	echo "[$0 ${FUNCNAME[0]}]"
 	if [ "$PRE_RELEASE" = true ]; then
 		echo "pre-release detected..."
 		exit 0
@@ -92,23 +94,28 @@ create-package-for-tag () {
 	echo "[create-package-for-tag] FUNCTION NOT IMPLEMENTED YET"
 }
 
-update-other-files () {
-	echo "updating sonar-project.properties..."
+update_other_files () {
+	echo "[$0 ${FUNCNAME[0]}] updating sonar-project.properties..."
 	sed -i "s/sonar.projectVersion=.*/sonar.projectVersion=$1/" sonar-project.properties
-	echo "updating src/version.ts..."
-	sed -i "s/const LIB_VERSION = '[0-9]+.[0-9]+.[0-9]+'/const LIB_VERSION = '$1'/" src/version.ts
-	echo "updating .vscode/launch.json..."
+
+	echo "[$0 ${FUNCNAME[0]}] updating src/version.ts..."
+	echo "export const LIB_VERSION = '$1'" > src/version.ts
+
+	echo "[$0 ${FUNCNAME[0]}] updating .vscode/launch.json..."
 	sed -i "s/ablunit-test-runner-.*.vsix/ablunit-test-runner-$1.vsix/" .vscode/launch.json dummy-ext/src/test/installAndRun.ts
 }
 
-update-changelog () {
+update_changelog () {
+	echo "[$0 ${FUNCNAME[0]}]"
 	local PACKAGE_VERSION=$NEW_VER
 	local PREVIOUS_VERSION
 	PREVIOUS_VERSION=$(grep -Eo '\[v[0-9]+\.[0-9]+\.[0-9]+\]' CHANGELOG.md | cut -dv -f2 | cut -d] -f1 | head -1)
-	echo "update_changelog from $PREVIOUS_VERSION to $PACKAGE_VERSION"
+	echo "[$0 ${FUNCNAME[0]}] update_changelog from $PREVIOUS_VERSION to $PACKAGE_VERSION"
 	MAJOR=$(echo "$PACKAGE_VERSION" | awk -F. '{print $1}')
 	MINOR=$(echo "$PACKAGE_VERSION" | awk -F. '{print $2}')
 	PATCH=$(echo "$PACKAGE_VERSION" | awk -F. '{print $3}')
+
+	#TODO
 	echo "MAJOR=$MAJOR, MINOR=$MINOR, PATCH=$PATCH" >&2
 
 
@@ -133,4 +140,4 @@ update-changelog () {
 ########## MAIN BLOCK ##########
 initialize "$@"
 update_version
-echo "$0 completed successfully!"
+echo "[$0] completed successfully!"

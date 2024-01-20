@@ -1,3 +1,17 @@
+# [v0.1.10](https://github.com/kenherring/ablunit-test-runner/releases/tag/v0.1.10) - 2024-01-20 (pre-release)
+
+ * Ensure timely response when cancelling a test run (#103)
+ * Set path environment var to test run with `terminal.integrated.env` settings (#97)
+ * Pass `terminal.integrated.env` configuation to ABLUnit process (#91)
+ * Rename repo: replace 'ablunit-test-provider' references with 'ablunit-test-runner' (#96)
+ * Rework snippets to remove language competition (#95)
+ * Write progress.ini to the proper location (#94)
+ * Call stack show line number instead of uri (#93)
+ * Allow tests to run with no ablunit-test-profile.json file (#92)
+ * Update `workspaceDir` -> `workspaceFolder` (#88)
+
+**Full Changelog**: [v0.1.9...v0.1.10](https://github.com/kenherring/ablunit-test-runner/compare/v0.1.9...v0.1.10)
+
 # [v0.1.9](https://github.com/kenherring/ablunit-test-runner/releases/tag/v0.1.9) - 2024-01-05 (pre-release)
 
 * Import DB connections from openedge-project.json
@@ -45,4 +59,4 @@
 
 # [v0.0.1](https://github.com/kenherring/ablunit-test-runner/releases/tag/v0.0.1) - 2023-11-05 (pre-release)
 
-Initial release to marketplace
+Initial pre-release to marketplace

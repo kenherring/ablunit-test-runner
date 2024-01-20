@@ -25,7 +25,7 @@ async function runTest(version: string) {
 		const vscodeExecutablePath = await downloadAndUnzipVSCode(version)
 		const [cliPath, ...args] = resolveCliArgsFromVSCodeExecutablePath(vscodeExecutablePath)
 
-		const packagedExtensionPath = path.resolve(__dirname, '../../../ablunit-test-runner-0.1.9.vsix')
+		const packagedExtensionPath = path.resolve(__dirname, '../../../ablunit-test-runner-0.1.10.vsix')
 		if (!existsSync(packagedExtensionPath)) {
 			throw new Error("Extension bundle does not exist! '" + packagedExtensionPath + "'")
 		}
