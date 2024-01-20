@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 set -euo pipefail
 
 jq () {
@@ -14,26 +14,33 @@ jq () {
 }
 
 validate_version_updated() {
-	echo "validating version matches throughout the project..." >&2
+	echo "[$0 ${FUNCNAME[0]}] validating version matches throughout the project..." >&2
 	PACKAGE_VERSION=$(jq -r '.version' package.json)
-	TAG_VERSION=$(git tag | tail -1)
+	TAG_VERSION=$(git tag --sort | tail -1)
 	SONAR_PROJECT_VERSION=$(grep -E '^sonar.projectVersion=' sonar-project.properties | cut -d'=' -f2)
 
 	if [ "$PACKAGE_VERSION" = "$TAG_VERSION" ]; then
-		echo "ERROR: package.json version ($PACKAGE_VERSION) matches latest git tag ($TAG_VERSION) and should be updated" >&2
+		echo "[$0 ${FUNCNAME[0]}] ERROR: package.json version ($PACKAGE_VERSION) matches latest git tag ($TAG_VERSION) and should be updated" >&2
 		exit 1
 	fi
 	if [ "$PACKAGE_VERSION" != "$SONAR_PROJECT_VERSION" ]; then
-		echo "ERROR: package.json version ($PACKAGE_VERSION) does not match 'sonar.projectVersion' ($SONAR_PROJECT_VERSION) in sonar-project.properties" >&2
+		echo "[$0 ${FUNCNAME[0]}] ERROR: package.json version ($PACKAGE_VERSION) does not match 'sonar.projectVersion' ($SONAR_PROJECT_VERSION) in sonar-project.properties" >&2
+		exit 1
+	fi
+
+	CHANGELOG_VER=$(head CHANGELOG.md -n 1 | cut -d' ' -f2 | sed 's/[\[\]]//g')
+	if [ "${CIRCLE_TAG:-}" != "$TAG_VERSION" ] && [ "$CHANGELOG_VER" != "$TAG_VERSION" ]; then
+		echo "[$0 ${FUNCNAME[0]}] ERROR: CHANGELOG.md version ($CHANGELOG_VER) does not match latest git tag ($TAG_VERSION)" >&2
 		exit 1
 	fi
 
 	if ! head CHANGELOG.md -n 1 | grep "$TAG_VERSION" >/dev/null 2>&1; then
-		if [ "${CIRCLE_TAG:-}" != "" ]; then
-			echo "ERROR: CHANGELOG.md does not match the latest git tag ($TAG_VERSION)" >&2
+		if [ -n "${CIRCLE_TAG:-}" ]; then
+			echo "[$0 ${FUNCNAME[0]}] ERROR: CHANGELOG.md does not match the latest git tag ($TAG_VERSION)" >&2
 			exit 1
 		else
-			echo "WARNING: changelog first line matches latest git tag ($TAG_VERSION) and should be updated" >&2
+			echo "[$0 ${FUNCNAME[0]}] WARNING: changelog first line matches latest git tag ($TAG_VERSION) and should be updated" >&2
 		fi
 	fi
+
 }

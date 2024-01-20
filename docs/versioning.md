@@ -25,8 +25,6 @@
 This script bumps the version and update the necessary files.
 
 ```bash
-scripts/update_version.sh
-scripts/update_version.sh --pre-release ## append the $CIRCLE_BUILD_NUM to the current tag
-scripts/update_version.sh --version patch ## bump the patch version
-scripts/update_version.sh -v minor ## bump the minor version
+npm version patch -m "v%s"
+npm version minor -m "v%s"
 ```

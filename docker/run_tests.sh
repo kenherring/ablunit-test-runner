@@ -83,7 +83,7 @@ run_tests_in_docker () {
 	)
 
 	## run tests inside the container
-	time docker run "${ARGS[@]}"
+	docker run "${ARGS[@]}"
 }
 
 ########## MAIN BLOCK ##########

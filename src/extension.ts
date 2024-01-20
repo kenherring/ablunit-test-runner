@@ -9,11 +9,14 @@ import { log } from './ABLUnitCommon'
 import { readFileSync } from 'fs'
 import { decorate, getRecentResults, setRecentResults } from './decorator'
 import { LIB_VERSION } from './version'
+import { versions } from 'process'
 
 export async function activate (context: ExtensionContext) {
 
 	const ctrl = tests.createTestController('ablunitTestController', 'ABLUnit Test')
 	log.info('activating extension!')
+	console.log("versions=" + JSON.stringify(versions))
+	log.info("versions=" + JSON.stringify(versions))
 	log.info('activating extension! (version=' + LIB_VERSION + ')')
 	const contextStorageUri = context.storageUri ?? Uri.parse('file://' + process.env['TEMP']) // will always be defined as context.storageUri
 	const contextResourcesUri = Uri.joinPath(context.extensionUri,'resources')
