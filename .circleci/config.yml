@@ -149,7 +149,7 @@ jobs:
       - setup
       - run:
           name: vsce publish
-          command:
+          command: |
             ## CIRCLE_BRANCH=$(git branch --show-current)
             ## CIRCLE_TAG=$(git describe --tags --abbrev=0)
             if [ ! -f ablunit-test-runner-${CIRCLE_TAG#v}.vsix ]; then
