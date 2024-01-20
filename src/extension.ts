@@ -11,9 +11,10 @@ import { decorate, getRecentResults, setRecentResults } from './decorator'
 import { LIB_VERSION } from './version'
 
 export async function activate (context: ExtensionContext) {
-	log.info('activating extension! (version=' + LIB_VERSION + ')')
 
 	const ctrl = tests.createTestController('ablunitTestController', 'ABLUnit Test')
+	log.info('activating extension!')
+	log.info('activating extension! (version=' + LIB_VERSION + ')')
 	const contextStorageUri = context.storageUri ?? Uri.parse('file://' + process.env['TEMP']) // will always be defined as context.storageUri
 	const contextResourcesUri = Uri.joinPath(context.extensionUri,'resources')
 	setContextPaths(contextStorageUri, contextResourcesUri, ctrl)
