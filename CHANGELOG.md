@@ -1,14 +1,9 @@
-# [v0.1.12](https://github.com/kenherring/ablunit-test-runner/releases/tag/v0.1.12) - 2024-01-20 (pre-release)
+# [v0.1.13](https://github.com/kenherring/ablunit-test-runner/releases/tag/v0.1.13) - 2024-01-20 (pre-release)
 
+ * Bump version to 0.1.11 (#108)
 
+**Full Changelog**: [v0.1.10...v0.1.13](https://github.com/kenherring/ablunit-test-runner/compare/v0.1.10...v0.1.13)
 
-**Full Changelog**: [v0.1.11...v0.1.12](https://github.com/kenherring/ablunit-test-runner/compare/v0.1.11...v0.1.12)
-
-# [v0.1.11](https://github.com/kenherring/ablunit-test-runner/releases/tag/v0.1.11) - 2024-01-20 (pre-release)
-
-
-
-**Full Changelog**: [v0.1.10...v0.1.11](https://github.com/kenherring/ablunit-test-runner/compare/v0.1.10...v0.1.11)
 
 # [v0.1.10](https://github.com/kenherring/ablunit-test-runner/releases/tag/v0.1.10) - 2024-01-20 (pre-release)
 
