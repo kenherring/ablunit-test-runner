@@ -100,7 +100,7 @@ jobs:
   package:
     docker:
       - image: cimg/node:20.8
-    steps:
+    steps:f
       - setup
       - run:
           name: vsce package
@@ -150,5 +150,11 @@ jobs:
       - run:
           name: vsce publish
           command:
+            ## CIRCLE_BRANCH=$(git branch --show-current)
+            ## CIRCLE_TAG=$(git describe --tags --abbrev=0)
+            if [ ! -f ablunit-test-runner-${CIRCLE_TAG#v}.vsix ]; then
+              echo "WARNING: ablunit-test-runner-${CIRCLE_TAG#v}.vsix not found, creating it now..." ## TODO
+              vsce package --githubBranch "$CIRCLE_BRANCH" --no-git-tag-version --pre-release
+            fi
             vsce publish --pre-release --githubBranch "$CIRCLE_BRANCH" --packagePath ablunit-test-runner-${CIRCLE_TAG#v}.vsix
       - <<: *store-artifacts
