@@ -15,6 +15,7 @@ usage () {
 initialize () {
 	local OPT OPTARG OPTIND
 	PRE_RELEASE=false
+	CIRCLECI=${CIRCLECI:-false}
 
 	while getopts "hpv:-:" OPT; do
 		case "$OPT" in
@@ -36,7 +37,7 @@ initialize () {
 	CURRENT_VERSION=$(jq -r '.version' package.json | cut -d'-' -f1)
 
 	if [ "${NEW_VERSION:-}" = "patch" ] || $PRE_RELEASE; then
-		if [ -z "${CIRCLE_BUILD_NUM:-}" ]; then
+		if $CIRCLECI && [ -z "${CIRCLE_BUILD_NUM:-}" ]; then
 			echo "ERROR: environment variable \$CIRCLE_BUILD_NUM not set" >&2
 			exit 1
 		fi
@@ -52,12 +53,11 @@ initialize () {
 			NEW_VERSION="patch"
 		fi
 	fi
-	CIRCLE_BUILD_NUM=${CIRCLE_BUILD_NUM:-}
 }
 
 update_version () {
 	echo "starting version validation/update..."
-	echo "CURRENT_VERSION=$CURRENT_VERSION, CIRCLE_BUILD_NUM=$CIRCLE_BUILD_NUM"
+	echo "CURRENT_VERSION=$CURRENT_VERSION, CIRCLE_BUILD_NUM=${CIRCLE_BUILD_NUM:-}"
 
 	if [ -z "$CURRENT_VERSION" ]; then
 		echo "ERROR: could not determine current version from package.json... exiting" >&2
@@ -69,7 +69,7 @@ update_version () {
 	elif [ "${NEW_VERSION:-}" = "minor" ] || [ "${NEW_VERSION:-}" = "patch" ]; then
 		npm version "$NEW_VERSION" --no-git-tag-version
 	else
-		npm version "$CURRENT_VERSION-$CIRCLE_BUILD_NUM" --no-git-tag-version
+		npm version "$CURRENT_VERSION-${CIRCLE_BUILD_NUM:-}" --no-git-tag-version
 	fi
 
 	NEW_VER=$(jq -r '.version' package.json)
@@ -106,7 +106,11 @@ update-changelog () {
 	local PREVIOUS_VERSION
 	PREVIOUS_VERSION=$(grep -Eo '\[v[0-9]+\.[0-9]+\.[0-9]+\]' CHANGELOG.md | cut -dv -f2 | cut -d] -f1 | head -1)
 	echo "update_changelog from $PREVIOUS_VERSION to $PACKAGE_VERSION"
+	MAJOR=$(echo "$PACKAGE_VERSION" | awk -F. '{print $1}')
 	MINOR=$(echo "$PACKAGE_VERSION" | awk -F. '{print $2}')
+	PATCH=$(echo "$PACKAGE_VERSION" | awk -F. '{print $3}')
+	echo "MAJOR=$MAJOR, MINOR=$MINOR, PATCH=$PATCH" >&2
+
 
 	PRE_RELEASE=
 	echo "MINOR-modulo-1=$((MINOR % 1))" >&2
