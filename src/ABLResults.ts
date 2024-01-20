@@ -57,7 +57,7 @@ export class ABLResults implements Disposable {
 	coverage: FileCoverage[] = []
 	dlc: IDlc | undefined
 	public testCoverage: Map<string, FileCoverage> = new Map<string, FileCoverage>()
-	private cancellation: CancellationToken | undefined
+	private readonly cancellation: CancellationToken | undefined
 
 	constructor (workspaceFolder: WorkspaceFolder, storageUri: Uri, globalStorageUri: Uri, extensionResourcesUri: Uri, cancellation?: CancellationToken) {
 		log.info("workspaceFolder=" + workspaceFolder.uri.fsPath)

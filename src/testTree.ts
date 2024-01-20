@@ -11,7 +11,7 @@ export type TestFile = ABLTestSuite | ABLTestClass | ABLTestProgram
 export const resultData = new WeakMap<TestRun, ABLResults[]>()
 
 class TestData {
-	private td: WeakMap<TestItem, ABLTestData> = new WeakMap<TestItem, ABLTestData>()
+	private readonly td: WeakMap<TestItem, ABLTestData> = new WeakMap<TestItem, ABLTestData>()
 
 	get (item: TestItem) {
 		// log.info("testData.get: " + item.id + " " + this.td.get(item) + " " + this.td.get(item)?.description)
