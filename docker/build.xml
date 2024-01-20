@@ -16,16 +16,21 @@
 
 	<target name="compile">
 		<echo>compiling ablunit...</echo>
-		<PCTCompile basedir="." destDir="rcode/ablunit" relativePaths="true" tempDir="/tmp">
+		<property name="numSize" value="false" />
+		<path id="compilation.propath">
+			<pathelement path="ADE/ablunit" />
+		</path>
+		<PCTCompile basedir="." destDir="rcode/ablunit" relativePaths="true" tempDir="/tmp" minSize="${minSize}">
 			<fileset dir="ADE/ablunit" includes="**/*.p,**/*.cls" excludes="**/.builder/**" />
-			<propath>
-				<pathelement path="ADE/ablunit" />
-			</propath>
+			<propath refid="compilation.propath" />
 		</PCTCompile>
+
+		<echo>packaging abunit...</echo>
+		<path id="rcode.propath">
+			<pathelement path="rcode/ablunit" />
+		</path>
 		<PCTLibrary destfile="ablunit.pl">
-			<fileset dir="rcode/ablunit">
-				<include name="**/*.r" />
-			</fileset>
+			<fileset dir="rcode/ablunit" includes="**/*.r" />
 		</PCTLibrary>
 		<delete dir="rcode" />
 		<echo>compile successful!</echo>

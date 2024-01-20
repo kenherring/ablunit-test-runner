@@ -3,7 +3,7 @@ import { ABLUnitConfig } from './ABLUnitConfigWriter'
 import { ABLResultsParser, ITestCaseFailure, ITestCase, ITestSuite } from './parse/ResultsParser'
 import { ABLTestSuite, ABLTestData } from './testTree'
 import { parseCallstack } from './parse/CallStackParser'
-import { ABLProfile, ABLProfileJson, Module } from './parse/ProfileParser'
+import { ABLProfile, ABLProfileJson, IModule } from './parse/ProfileParser'
 import { ABLDebugLines } from './ABLDebugLines'
 import { ABLPromsgs, getPromsgText } from './ABLPromsgs'
 import { PropathParser } from './ABLPropath'
@@ -57,7 +57,7 @@ export class ABLResults implements Disposable {
 	coverage: FileCoverage[] = []
 	dlc: IDlc | undefined
 	public testCoverage: Map<string, FileCoverage> = new Map<string, FileCoverage>()
-	private cancellation: CancellationToken | undefined
+	private readonly cancellation: CancellationToken | undefined
 
 	constructor (workspaceFolder: WorkspaceFolder, storageUri: Uri, globalStorageUri: Uri, extensionResourcesUri: Uri, cancellation?: CancellationToken) {
 		log.info("workspaceFolder=" + workspaceFolder.uri.fsPath)
@@ -113,6 +113,7 @@ export class ABLResults implements Disposable {
 			}
 		}
 
+		// eslint-disable-next-line @typescript-eslint/no-invalid-void-type
 		const prom: (Promise<void> | Promise<void[]>)[] = []
 		prom[0] = this.cfg.createProfileOptions(this.cfg.ablunitConfig.profOptsUri,this.cfg.ablunitConfig.profiler)
 		prom[1] = this.cfg.createProgressIni(this.propath.toString())
@@ -150,7 +151,7 @@ export class ABLResults implements Disposable {
 		this.tests.push(test)
 
 		let testCase = undefined
-		if (test.id.indexOf("#") > -1) {
+		if (test.id.includes("#")) {
 			testCase = test.id.split("#")[1]
 		}
 
@@ -255,7 +256,7 @@ export class ABLResults implements Disposable {
 
 	async assignTestResults (item: TestItem, options: TestRun) {
 
-		if (this.skippedTests.indexOf(item) > -1) {
+		if (this.skippedTests.includes(item)) {
 			options.skipped(item)
 			return
 		}
@@ -357,7 +358,7 @@ export class ABLResults implements Disposable {
 		let suitePath = workspace.asRelativePath(item.uri!, false)
 
 		if(suitePath) {
-			const propathRelativePath = this.propath!.search(suitePath)!
+			const propathRelativePath = this.propath!.search(suitePath)
 			suitePath = await propathRelativePath.then((res) => {
 				if (res?.propathRelativeFile) {
 					return res?.propathRelativeFile
@@ -477,7 +478,7 @@ export class ABLResults implements Disposable {
 		if (!this.profileJson) {
 			throw (new Error("no profile data available..."))
 		}
-		const mods: Module[] = this.profileJson.modules
+		const mods: IModule[] = this.profileJson.modules
 		for (let idx=1; idx < mods.length; idx++) {
 			const module = mods[idx]
 			if (!module.SourceName) {
@@ -487,7 +488,7 @@ export class ABLResults implements Disposable {
 		}
 	}
 
-	async setCoverage (module: Module) {
+	async setCoverage (module: IModule) {
 		const fileinfo = await this.propath!.search(module.SourceName)
 		const moduleUri = fileinfo?.uri
 		if (!moduleUri) {

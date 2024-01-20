@@ -8,12 +8,13 @@ import { GlobSync } from 'glob'
 import { log } from './ABLUnitCommon'
 import { readFileSync } from 'fs'
 import { decorate, getRecentResults, setRecentResults } from './decorator'
+import { LIB_VERSION } from './version'
 
 export async function activate (context: ExtensionContext) {
-	log.info('activating extension!')
+	log.info('activating extension! (version=' + LIB_VERSION + ')')
 
 	const ctrl = tests.createTestController('ablunitTestController', 'ABLUnit Test')
-	const contextStorageUri = context.storageUri ?? Uri.parse('file://' + process.env.TEMP) // will always be defined as context.storageUri
+	const contextStorageUri = context.storageUri ?? Uri.parse('file://' + process.env['TEMP']) // will always be defined as context.storageUri
 	const contextResourcesUri = Uri.joinPath(context.extensionUri,'resources')
 	setContextPaths(contextStorageUri, contextResourcesUri, ctrl)
 	await createDir(contextStorageUri)
@@ -31,7 +32,7 @@ export async function activate (context: ExtensionContext) {
 		workspace.onDidChangeTextDocument(e => { updateNodeForDocument(e.document) }),
 	)
 
-	if (process.env.ABLUNIT_TEST_RUNNER_UNIT_TESTING === 'true') {
+	if (process.env['ABLUNIT_TEST_RUNNER_UNIT_TESTING'] === 'true') {
 		context.subscriptions.push(commands.registerCommand('_ablunit.getRecentResults', getRecentResults))
 		context.subscriptions.push(commands.registerCommand('_ablunit.getTestController', getTestController))
 	}
@@ -65,7 +66,7 @@ export async function activate (context: ExtensionContext) {
 
 
 		const uri = Uri.joinPath(workspaceFolder.uri, '.vscode', 'ablunit-test-profile.json')
-		const det = Uri.joinPath(context.extensionUri, 'resources', 'ablunit-test-profile.details.jsonc')
+		const det = Uri.joinPath(context.extensionUri, 'resources', 'ablunit-test-profile.detail.jsonc')
 		const dir = Uri.joinPath(workspaceFolder.uri, '.vscode')
 
 		const exists = await doesFileExist(uri)
@@ -281,7 +282,7 @@ export async function activate (context: ExtensionContext) {
 		}
 		const data = testData.get(item)
 		if (data instanceof ABLTestFile) {
-			return data.updateFromDisk(ctrl, item).then(() => {}, (err) => { throw err })
+			return data.updateFromDisk(ctrl, item).then(() => { return }, (err) => { throw err })
 		}
 	}
 
@@ -372,7 +373,7 @@ function getExistingTestItem (controller: TestController, uri: Uri) {
 	return undefined
 }
 
-function getOrCreateFile (controller: TestController, uri: Uri, token?: CancellationToken, excludePatterns?: RelativePattern[]) {
+function getOrCreateFile (controller: TestController, uri: Uri, excludePatterns?: RelativePattern[]) {
 	const existing = getExistingTestItem(controller, uri)
 
 	if (excludePatterns && excludePatterns.length > 0 && isFileExcluded(uri, excludePatterns)) {
@@ -716,7 +717,7 @@ async function refreshTestTree (controller: TestController, token: CancellationT
 		searchCount++
 		checkCancellationToken()
 
-		const { item, data } = getOrCreateFile(controller, file, token, excludePatterns)
+		const { item, data } = getOrCreateFile(controller, file, excludePatterns)
 		if (item && data instanceof ABLTestFile) {
 			const foundTestCase = data.updateFromDisk(controller, item, token)
 			if (await foundTestCase) {
@@ -777,8 +778,8 @@ function startWatchingWorkspace (controller: TestController, fileChangedEmitter:
 
 	for (const includePattern of includePatterns) {
 		const watcher = workspace.createFileSystemWatcher(includePattern)
-		watcher.onDidCreate(uri => createOrUpdateFile(controller, uri))
-		watcher.onDidChange(uri => createOrUpdateFile(controller, uri))
+		watcher.onDidCreate(uri => { createOrUpdateFile(controller, uri) })
+		watcher.onDidChange(uri => { createOrUpdateFile(controller, uri) })
 		watcher.onDidDelete(uri => { controller.items.delete(uri.fsPath) })
 		watchers.push(watcher)
 	}

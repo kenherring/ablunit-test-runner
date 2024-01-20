@@ -1,6 +1,6 @@
 import { CancellationError, CancellationToken, Range, TestController, TestItem, TestRun, TestTag, Uri, workspace } from 'vscode'
 import { ABLResults } from './ABLResults'
-import { ITestSuite, parseABLTestSuite } from './parse/TestSuiteParser'
+import { parseABLTestSuite } from './parse/TestSuiteParser'
 import { IClassRet, ITestCase, parseABLTestClass } from './parse/TestClassParser'
 import { IProgramRet, parseABLTestProgram } from './parse/TestProgramParser'
 import { getContentFromFilesystem } from './parse/TestParserCommon'
@@ -11,7 +11,7 @@ export type TestFile = ABLTestSuite | ABLTestClass | ABLTestProgram
 export const resultData = new WeakMap<TestRun, ABLResults[]>()
 
 class TestData {
-	private td: WeakMap<TestItem, ABLTestData> = new WeakMap<TestItem, ABLTestData>()
+	private readonly td: WeakMap<TestItem, ABLTestData> = new WeakMap<TestItem, ABLTestData>()
 
 	get (item: TestItem) {
 		// log.info("testData.get: " + item.id + " " + this.td.get(item) + " " + this.td.get(item)?.description)
@@ -103,9 +103,9 @@ export class ABLTestCase extends TestTypeObj {
 }
 
 export class ABLTestFile extends TestTypeObj {
-	public isFile: boolean = true
-	public runnable: boolean = true
-	public canResolveChildren: boolean = false
+	public override isFile: boolean = true
+	public override runnable: boolean = true
+	public override canResolveChildren: boolean = false
 	public relativePath: string = ''
 	currentResults?: ABLResults
 	public children: ABLTestCase[] = []
@@ -132,7 +132,7 @@ export class ABLTestFile extends TestTypeObj {
 	}
 
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars
-	updateFromContents (controller: TestController, content: string, item: TestItem) {
+	updateFromContents (_controller: TestController, _content: string, item: TestItem) {
 		log.error("updateFromContents not implemented - should be calling implementation in subclass (item=" + item.id + ")")
 		return false
 		// throw new Error("Method not implemented - should be calling implementation in subclass")
@@ -251,7 +251,7 @@ export class ABLTestSuite extends ABLTestFile {
 		super("ABL Test Suite", label)
 	}
 
-	public updateFromContents (controller: TestController, content: string, item: TestItem) {
+	public override updateFromContents (controller: TestController, content: string, item: TestItem) {
 		this.startParsing(item)
 		const response = parseABLTestSuite(content)
 
@@ -272,7 +272,7 @@ export class ABLTestSuite extends ABLTestFile {
 		for (const cls of response.classes) {
 			if(!cls) { continue }
 			const id = item.uri!.fsPath + "#" + cls
-			if(this.updateChildProgram(controller, item, response, id, cls, "ABLTestClass")) {
+			if(this.updateChildProgram(controller, item, id, cls, "ABLTestClass")) {
 				originalChildren.splice(originalChildren.indexOf(id), 1)
 			}
 		}
@@ -280,7 +280,7 @@ export class ABLTestSuite extends ABLTestFile {
 		for (const proc of response.procedures) {
 			if(!proc) { continue }
 			const id = item.uri!.fsPath + "#" + proc
-			if(this.updateChildProgram(controller, item, response, id, proc, "ABLTestProgram")) {
+			if(this.updateChildProgram(controller, item, id, proc, "ABLTestProgram")) {
 				originalChildren.splice(originalChildren.indexOf(id), 1)
 			}
 		}
@@ -289,7 +289,7 @@ export class ABLTestSuite extends ABLTestFile {
 		return (item.children.size ?? 0) > 0
 	}
 
-	updateChildProgram (controller: TestController, item: TestItem, response: ITestSuite, id: string, label: string, type: "ABLTestClass" | "ABLTestProgram") {
+	updateChildProgram (controller: TestController, item: TestItem, id: string, label: string, type: "ABLTestClass" | "ABLTestProgram") {
 		const child = item.children.get(id)
 
 		if(child) {
@@ -324,7 +324,7 @@ export class ABLTestClass extends ABLTestFile {
 		}
 	}
 
-	public updateFromContents (controller: TestController, content: string, item: TestItem) {
+	public override updateFromContents (controller: TestController, content: string, item: TestItem) {
 		this.startParsing(item)
 		const response = parseABLTestClass(displayClassLabel, content, this.relativePath)
 		this.updateItem(controller, item, response, "Method")
@@ -340,7 +340,7 @@ export class ABLTestProgram extends ABLTestFile {
 		super("ABL Test Program", label)
 	}
 
-	public updateFromContents (controller: TestController, content: string, item: TestItem) {
+	public override updateFromContents (controller: TestController, content: string, item: TestItem) {
 		this.startParsing(item)
 		const response = parseABLTestProgram(content, this.relativePath)
 		this.updateItem(controller, item, response, "Procedure")

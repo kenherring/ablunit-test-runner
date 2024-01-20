@@ -147,7 +147,7 @@ class ProfileConfig {
 class OpenEdgeProjectConfig extends ProfileConfig {
 	activeProfile?: string
 	rootDir: string = '.'
-	buildDirectory: string = '.'
+	override buildDirectory: string = '.'
 	profiles: Map<string, ProfileConfig> = new Map<string, ProfileConfig>()
 }
 
@@ -156,8 +156,12 @@ export function getActiveProfile (rootDir: string) {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		const txt = JSON.parse(fs.readFileSync(path.join(rootDir, ".vscode", "profile.json"), { encoding: 'utf8' }).replace(/\r/g,''))
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-		const actProf = <string>txt['profile']
-		return actProf
+		if (typeof txt['profile'] === 'string') {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+			const actProf: string = txt['profile']
+			return actProf
+		}
+		return undefined
 	}
 	return "default"
 }
@@ -172,7 +176,7 @@ function loadConfigFile (filename: string): IOpenEdgeMainConfig | undefined {
 	}
 	try {
 		const data = readStrippedJsonFile(filename)
-		return <IOpenEdgeMainConfig><unknown>data
+		return data as unknown as IOpenEdgeMainConfig
 	} catch (caught) {
 		log.error("[loadConfigFile] Failed to parse " + filename + ": " + caught)
 		throw new Error("Failed to parse " + filename + ": " + caught)
@@ -230,7 +234,7 @@ function getDlcDirectory (version: string): string {
 		if (runtime.name === version) {
 			dlc = runtime.path
 		}
-		if (runtime.default === true) {
+		if (runtime.default) {
 			dfltDlc = runtime.path
 			dfltName = runtime.name
 		}
@@ -242,7 +246,7 @@ function getDlcDirectory (version: string): string {
 	}
 
 	if (dlc === '') {
-		dlc = process.env.DLC ?? ''
+		dlc = process.env['DLC'] ?? ''
 	}
 
 	if (dlc === '' && dfltDlc != '') {

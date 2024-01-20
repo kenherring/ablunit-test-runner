@@ -54,7 +54,7 @@ export const getSourceMapFromSource = async (propath: PropathParser, debugSource
 	}
 
 	const readIncludeLineCount = async (uri: Uri) => {
-		return await workspace.fs.readFile(uri).then((content) => {
+		return workspace.fs.readFile(uri).then((content) => {
 			const lines = Buffer.from(content.buffer).toString().replace(/\r/g,'').split("\n")
 
 			let lc = lines.length
@@ -161,7 +161,7 @@ export const getSourceMapFromSource = async (propath: PropathParser, debugSource
 			const fileinfo = await propath.search(debugSourceName)
 			if (!fileinfo) {
 				if (!debugSourceName.startsWith("OpenEdge.") && debugSourceName != "ABLUnitCore.p") {
-					if (warnings.indexOf(debugSourceName) < 0) {
+					if (!warnings.includes(debugSourceName)) {
 						log.error("[getSourceMap] WARNING: cannot find " + debugSourceName + " in propath.")
 						warnings.push(debugSourceName)
 					}

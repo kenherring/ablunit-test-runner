@@ -32,7 +32,7 @@ export function decorate (editor: TextEditor) {
 	if (!tc) { return }
 
 	tc.detailedCoverage?.forEach(element => {
-		const range = <Range> element.location
+		const range = element.location as Range
 		const decoration = { range }
 		if (element.executionCount > 0) {
 			executedArray.push(decoration)

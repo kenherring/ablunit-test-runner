@@ -1,5 +1,4 @@
 {
-	"eslint.run": "onType",
 	"extension-test-runner.debugOptions": {},
 	"git.branchProtection": [
 		"main"

@@ -37,7 +37,7 @@ export async function parseCallstack (debugLines: ABLDebugLines, callstackRaw: s
 		const debugFile = arr[3]
 
 		let moduleParent = module
-		if (moduleParent.indexOf(" ") != -1) {
+		if (moduleParent.includes(" ")) {
 			moduleParent = moduleParent.split(" ")[1]
 		}
 

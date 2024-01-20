@@ -60,7 +60,7 @@ export function parseTestClass (lines: string[], configClassLabel: string, relat
 			continue
 		}
 
-		if (lastNonBlankLineHasAnnotation || lines[lineNo].toLowerCase().indexOf("@test.") != -1) {
+		if (lastNonBlankLineHasAnnotation || lines[lineNo].toLowerCase().includes("@test.")) {
 			const method = methodRE.exec(lines[lineNo])
 			if (method) {
 				const [, , , , methodname] = method

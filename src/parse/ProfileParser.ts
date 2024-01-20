@@ -75,7 +75,7 @@ export class ABLProfile {
 	}
 
 	writeJsonToFile (uri: Uri) {
-		const data: ProfileData = {
+		const data: IProfileData = {
 			modules: this.profJSON!.modules,
 			userData: this.profJSON!.userData,
 		}
@@ -100,7 +100,7 @@ const tracingRE = /^(\d+) (\d+) (\d+\.\d+) (\d+\.\d+)$/
 // COVERAGE:
 const coverageRE = /^(\d+) "([^"]*)" (\d+)$/
 
-interface UserData { // Section 9
+interface IUserData { // Section 9
 	time: number,
 	data: string
 }
@@ -132,38 +132,38 @@ interface ISectionTwelve {
 	remainder: string
 }
 
-interface Trace { // Section 5
+interface ITrace { // Section 5
 	StartTime: number,
 	ActualTime: number
 }
 
-export interface LineSummary { // Section 4
+export interface ILineSummary { // Section 4
 	LineNo: number
 	ExecCount?: number
 	ActualTime?: number
 	CumulativeTime?: number
 	Executable: boolean
-	trace?: Trace[]
+	trace?: ITrace[]
 	srcLine?: number
 	srcUri?: Uri
 	incLine?: number
 	incUri?: Uri
 }
 
-interface CalledBy{ // Section 3
+interface ICalledBy{ // Section 3
 	CallerModuleID: number
 	CallerLineNo: number
 	CallCount: number
 }
 
-interface CalledTo{ // Section 3
+interface ICalledTo{ // Section 3
 	CalleeModuleID: number
 	CallerLineNo: number
 	CallCount: number
 }
 
 // Split module and child module?
-export interface Module { // Section 2
+export interface IModule { // Section 2
 	ModuleID: number
 	ModuleName: string
 	EntityName?: string // function/procedure/method name
@@ -179,19 +179,19 @@ export interface Module { // Section 2
 	executedLines: number
 	coveragePct: number
 	lineCount: number
-	calledBy: CalledBy[]
-	calledTo: CalledTo[]
-	childModules: Module[]
-	lines: LineSummary[]
+	calledBy: ICalledBy[]
+	calledTo: ICalledTo[]
+	childModules: IModule[]
+	lines: ILineSummary[]
 	ISectionEight: ISectionEight[]
 	ISectionNine: ISectionNine[]
 	ISectionTen: ISectionTen[]
 	ISectionTwelve: ISectionTwelve[]
 }
 
-export interface ProfileData {
-	modules: Module[]
-	userData: UserData[]
+export interface IProfileData {
+	modules: IModule[]
+	userData: IUserData[]
 }
 
 interface IProps {
@@ -207,8 +207,8 @@ export class ABLProfileJson {
 	properties?: IProps
 	// otherInfo: string
 	// StmtCnt: string | undefined
-	modules: Module[] = []
-	userData: UserData[] = []
+	modules: IModule[] = []
+	userData: IUserData[] = []
 	debugLines: ABLDebugLines
 
 	constructor (lines: string[], debugLines: ABLDebugLines) {
@@ -223,7 +223,7 @@ export class ABLProfileJson {
 			this.systemTime = test[4]
 			this.description = test[3]
 			this.userID = test[5]
-			this.properties = <IProps>JSON.parse(test[6].replace(/\\/g,'/'))
+			this.properties = JSON.parse(test[6].replace(/\\/g,'/')) as IProps
 		} else {
 			throw (new Error("Unable to parse profile data in section 1"))
 		}
@@ -231,7 +231,7 @@ export class ABLProfileJson {
 
 	addModules (lines: string[]) {
 		this.modules = []
-		const childModules: Module[] = []
+		const childModules: IModule[] = []
 		for(const element of lines) {
 			const test = moduleRE.exec(element)
 
@@ -258,7 +258,7 @@ export class ABLProfileJson {
 				}
 			}
 
-			const mod: Module = {
+			const mod: IModule = {
 				ModuleID: Number(test![1]),
 				ModuleName: moduleName,
 				EntityName: entityName,
@@ -293,7 +293,7 @@ export class ABLProfileJson {
 		this.addChildModulesToParents(childModules)
 	}
 
-	addChildModulesToParents (childModules: Module[]) {
+	addChildModulesToParents (childModules: IModule[]) {
 		childModules.forEach(child => {
 			const parent = this.modules.find(p => p.SourceName === child.SourceName)
 
@@ -308,7 +308,7 @@ export class ABLProfileJson {
 		})
 	}
 
-	getModule (modID: number): Module | undefined {
+	getModule (modID: number): IModule | undefined {
 		for(const element of this.modules) {
 			if(element.ModuleID === modID)
 				return element
@@ -318,14 +318,14 @@ export class ABLProfileJson {
 			return parent.childModules?.find(child => child.ModuleID == modID)
 	}
 
-	getChildModule (modID: number, entityName: string): Module | undefined {
+	getChildModule (modID: number, entityName: string): IModule | undefined {
 		const parent = this.getModule(modID)
 		if(parent) {
 			return parent.childModules?.find(child => child.EntityName == entityName)
 		}
 	}
 
-	getModuleLine (modID: number, lineNo: number): LineSummary | undefined {
+	getModuleLine (modID: number, lineNo: number): ILineSummary | undefined {
 		const mod = this.getModule(modID)
 		if(mod) {
 			for(const element of mod.lines) {
@@ -335,7 +335,7 @@ export class ABLProfileJson {
 		}
 	}
 
-	getLine (mod: Module, lineNo: number): LineSummary | undefined {
+	getLine (mod: IModule, lineNo: number): ILineSummary | undefined {
 		for(const element of mod.lines) {
 			if(element.LineNo == lineNo)
 				return element
@@ -383,7 +383,7 @@ export class ABLProfileJson {
 			const modID = Number(test[1])
 			const sourceName = this.getModule(modID)?.SourceName
 			if (sourceName?.startsWith("OpenEdge.")) continue
-			const sum: LineSummary = {
+			const sum: ILineSummary = {
 				LineNo: Number(test[2]),
 				ExecCount: Number(test[3]),
 				Executable: true,
@@ -488,7 +488,7 @@ export class ABLProfileJson {
 
 	addCoverageNextSection (line: string) {
 		const test = coverageRE.exec(line)
-		let mod: Module | undefined
+		let mod: IModule | undefined
 		if (!test) {
 			throw new Error("Unable to parse coverage data in section 6")
 		}

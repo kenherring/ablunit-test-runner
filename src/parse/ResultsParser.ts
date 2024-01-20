@@ -66,6 +66,7 @@ export class ABLResultsParser {
 	async parseResults (configUri: Uri, jsonUri: Uri | undefined) {
 		const resultsBits = await workspace.fs.readFile(configUri)
 		const resultsXml = Buffer.from(resultsBits.toString()).toString('utf8')
+		// eslint-disable-next-line @typescript-eslint/no-confusing-void-expression
 		const resultsXmlJson = this.parseXml(resultsXml)
 		try {
 			this.resultsJson = [ await this.parseSuites(resultsXmlJson) ]
@@ -100,7 +101,7 @@ export class ABLResultsParser {
 
 		const testsuite = await this.parseSuite(res.testsuite)
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-call
-		let namePathSep = <string>res['$'].name.replace(/\\/g, '/')
+		let namePathSep = res['$'].name.replace(/\\/g, '/') as string
 		if (!isRelativePath(namePathSep)) {
 			namePathSep = workspace.asRelativePath(namePathSep, false)
 		}
@@ -123,7 +124,7 @@ export class ABLResultsParser {
 			const testsuite = await this.parseSuite(res[idx].testsuite).then()
 			const testcases = await this.parseTestCases(res[idx].testcase).then()
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-call
-			let namePathSep = <string>res[idx]['$'].name.replace(/\\/g, '/') ?? undefined
+			let namePathSep = res[idx]['$'].name.replace(/\\/g, '/') as string ?? undefined
 			if (!isRelativePath(namePathSep)) {
 				namePathSep = workspace.asRelativePath(namePathSep, false)
 			}

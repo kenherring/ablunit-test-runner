@@ -95,6 +95,8 @@ create-package-for-tag () {
 update-other-files () {
 	echo "updating sonar-project.properties..."
 	sed -i "s/sonar.projectVersion=.*/sonar.projectVersion=$1/" sonar-project.properties
+	echo "updating src/version.ts..."
+	sed -i "s/const LIB_VERSION = '[0-9]+.[0-9]+.[0-9]+'/const LIB_VERSION = '$1'/" src/version.ts
 	echo "updating .vscode/launch.json..."
 	sed -i "s/ablunit-test-runner-.*.vsix/ablunit-test-runner-$1.vsix/" .vscode/launch.json dummy-ext/src/test/installAndRun.ts
 }

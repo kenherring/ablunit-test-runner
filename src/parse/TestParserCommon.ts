@@ -35,7 +35,7 @@ export function getLines (text: string, annotation: string): [ string[], boolean
 		if (lines[i].trim() == "") {
 			// set empty lines to empty string
 			lines[i] = ''
-		} else if (!foundAnnotation && lines[i].toLowerCase().indexOf("@test") > -1) {
+		} else if (!foundAnnotation && lines[i].toLowerCase().includes("@test")) {
 			foundAnnotation = true
 		}
 	}

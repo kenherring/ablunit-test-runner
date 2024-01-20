@@ -38,7 +38,7 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 		}
 		const testlist = testarr.join(',')
 
-		if (cmd.indexOf('${testlist}') === -1) {
+		if (!cmd.includes('${testlist}')) {
 			log.error("command does not contain ${testlist}", options)
 			throw (new Error("command does not contain ${testlist}"))
 		}
@@ -62,7 +62,7 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 		if (process.platform === 'win32') {
 			cmd.push('-basekey', 'INI', '-ininame', workspace.asRelativePath(res.cfg.ablunitConfig.progressIniUri.fsPath, false))
 		} else if (process.platform === 'linux') {
-			process.env.PROPATH = res.propath!.toString()
+			process.env['PROPATH'] = res.propath!.toString()
 		} else {
 			throw new Error("unsupported platform: " + process.platform)
 		}
@@ -148,8 +148,8 @@ export const getEnvVars = (dlcUri: Uri | undefined) => {
 	}
 	if (envConfig) {
 		for (const key of Object.keys(envConfig)) {
-			if (key === 'PATH' && process.env.PATH) {
-				runenv[key] = envConfig[key].replace("${env:PATH}", process.env.PATH)
+			if (key === 'PATH' && process.env['PATH']) {
+				runenv[key] = envConfig[key].replace("${env:PATH}", process.env['PATH'])
 			} else {
 				runenv[key] = envConfig[key]
 			}
