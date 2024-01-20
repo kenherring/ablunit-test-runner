@@ -15,15 +15,6 @@ oe-version-param: &oe-version-param
       type: string
       enum: [ '12.2.12', '12.7.0' ]
       default: '12.2.12'
-setup: &setup
-  when:
-    condition: true
-    steps:
-      - run: tr ' ' '\n' \<<< "$PROGRESS_CFG_BASE64" | base64 --decode > /psc/dlc/progress.cfg
-      - checkout
-      - restore_cache:
-          keys:
-            - v3-cache-<< parameters.oe-version >>-{{ checksum "package.json" }}
 context-and-filters: &context-and-filters
   context:
     - DockerHub
@@ -42,6 +33,11 @@ store-results: &store-results
   - store_test_results:
       when: always
       path: artifacts
+persist-to-workspace: &persist-to-workspace
+  - persist_to_workspace:
+      root: .
+      paths:
+        - .
 
 executors:
   psc-primary:
@@ -51,30 +47,69 @@ executors:
           username: $DOCKERHUB_USERNAME
           password: $DOCKERHUB_TOKEN
 
+commands:
+  setup:
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - run: npm install
+      - run: npm install -g @vscode/vsce || sudo npm install -g @vscode/vsce
+  restore-test-cache:
+    parameters:
+      oe-version:
+        type: string
+        default: none
+    steps:
+      - when:
+          condition: true
+          steps:
+            - run: tr ' ' '\n' \<<< "$PROGRESS_CFG_BASE64" | base64 --decode > /psc/dlc/progress.cfg
+            - restore_cache:
+                keys:
+                  - v3-cache-<< parameters.oe-version >>-{{ checksum "package.json" }}
+
 workflows:
   build:
     jobs:
       - shellcheck/check
+      - package:
+          <<: *context-and-filters
       - test-and-scan:
           <<: *context-and-filters
           matrix:
             parameters:
               oe-version: [ 12.2.12, 12.7.0 ]
-          name: test-and-scan_<< matrix.oe-version >>
-      # - test-with-bundle:
-      #     <<: *context-and-filters
+          # name: test-and-scan_<< matrix.oe-version >>
+          requires: [ 'package' ]
       - install-and-run:
           <<: *context-and-filters
-      - package-and-publish:
+          requires: [ 'package' ]
+      - publish:
+          filters:
+            tags: { only: /^v.*/ }
+            branches: { only: main }
           requires:
             - shellcheck/check
-            - test-and-scan_12.2.12
-            - test-and-scan_12.7.0
-            # - test-with-bundle
+            # - test-and-scan_12.2.12
+            # - test-and-scan_12.7.0
+            - test-and-scan
             - install-and-run
-          <<: *context-and-filters
 
 jobs:
+  package:
+    docker:
+      - image: cimg/node:20.8
+    steps:
+      - setup
+      - run:
+          name: vsce package
+          command: |
+            if [ "$(git branch --show-current)" = "main" ]; then
+              vsce package --githubBranch "$CIRCLE_BRANCH" --no-git-tag-version
+            else
+              vsce package --githubBranch "$CIRCLE_BRANCH" --no-git-tag-version --pre-release
+            fi
   test-and-scan:
     <<: *oe-version-param
     docker:
@@ -83,7 +118,9 @@ jobs:
           username: $DOCKERHUB_USERNAME
           password: $DOCKERHUB_TOKEN
     steps:
-      - <<: *setup
+      - setup
+      - restore-test-cache:
+          oe-version: << parameters.oe-version >>
       - run: .circleci/run_test_wrapper.sh
       - <<: *store-results
       - <<: *store-artifacts
@@ -93,45 +130,25 @@ jobs:
           steps:
             - sonarcloud/scan:
                 cache_version: 3
-      - run: .circleci/validate.sh
       - save_cache:
           key: v3-cache-<< parameters.oe-version >>-{{ checksum "package.json" }}
-          paths:
-            - cache
-  # test-with-bundle:
-  #   <<: *oe-version-param
-  #   executor: psc-primary
-  #   steps:
-  #     - <<: *setup
-  #     - run: .circleci/run_test_wrapper.sh bundle
-  #     - <<: *store-results
+          paths: [ cache ]
   install-and-run:
     <<: *oe-version-param
     executor: psc-primary
     steps:
-      - <<: *setup
+      - setup
+      - restore-test-cache
       - run: scripts/install_and_run.sh
       - <<: *store-results
       - <<: *store-artifacts
-  package-and-publish:
+  publish:
     docker:
       - image: cimg/node:20.8
     steps:
-      - checkout
-      - run: sudo npm install -g @vscode/vsce
-      - run: npm install
-      - run: '[ -n "<< pipeline.git.tag >>" ] || scripts/update_version.sh --pre-release'
-      - run: vsce package --pre-release --githubBranch "$CIRCLE_BRANCH"
-      - when:
-          condition: << pipeline.git.tag >>
-          steps:
-          - run:
-              name: validate version matches tag
-              command: |
-                if [ "$(jq -r .version package.json)" != "${CIRCLE_TAG#v}" ]; then
-                  echo "Version in package.json does not match tag"
-                  exit 1
-                fi
-          - run: vsce publish --pre-release --githubBranch "$CIRCLE_BRANCH" --packagePath ablunit-test-runner-${CIRCLE_TAG#v}.vsix
-      - run: mkdir -p artifacts && cp ablunit-test-runner-*.vsix artifacts
+      - setup
+      - run:
+          name: vsce publish
+          command:
+            vsce publish --pre-release --githubBranch "$CIRCLE_BRANCH" --packagePath ablunit-test-runner-${CIRCLE_TAG#v}.vsix
       - <<: *store-artifacts

@@ -7,10 +7,12 @@ initialize () {
 	BASH_AFTER=false
 	VERBOSE=false
 	CACHE_BASE=/home/circleci/cache
+	CIRCLECI=${CIRCLECI:-false}
 	REPO_VOLUME=/home/circleci/ablunit-test-runner
 	STAGED_ONLY=${STAGED_ONLY:-true}
 	export npm_config_cache=$CACHE_BASE/node_modules_cache
 	mkdir -p $CACHE_BASE/node_modules_cache
+
 
 	while getopts 'b' OPT; do
 		case "$OPT" in
@@ -25,14 +27,17 @@ initialize () {
 		exit 1
 	fi
 
-	## save my license from the environment variable at runtime
+	## save license from the environment variable at runtime
 	tr ' ' '\n' <<< "$PROGRESS_CFG_BASE64" | base64 --decode > /psc/dlc/progress.cfg
 
 	echo 'copying files from local'
 	initialize_repo
-	copy_files_from_volume
 	restore_cache
 	npm install
+
+	if [ -z "${CIRCLE_BRANCH:-}" ]; then
+		CIRCLE_BRANCH=$(git branch --show-current)
+	fi
 }
 
 initialize_repo () {
@@ -49,6 +54,7 @@ initialize_repo () {
 		git fetch origin "$GIT_BRANCH":"$GIT_BRANCH"
 		git checkout "$GIT_BRANCH"
 	fi
+	copy_files_from_volume
 }
 
 copy_files_from_volume () {
@@ -78,7 +84,7 @@ find_files_to_copy () {
 	echo "file counts:"
 	echo "   staged=$(wc -l /tmp/staged_files)"
 	echo "  deleted=$(wc -l /tmp/deleted_files)"
-	echo " modified=$(wc -l /tmp/modified_files)"
+	echo " modified=$(wc -l /tmp/modified_files 2>/dev/null || echo 0)"
 
 	cd "$BASE_DIR"
 }
@@ -97,6 +103,7 @@ copy_files () {
 
 run_tests () {
 	echo "[$0 ${FUNCNAME[0]}] pwd=$(pwd)"
+
 	if [ "$TEST_PROJECT" = "base" ]; then
 		run_tests_base
 	elif [ "$TEST_PROJECT" = "dummy-ext" ]; then
@@ -105,6 +112,8 @@ run_tests () {
 		echo "ERROR: unknown test project"
 		exit 1
 	fi
+
+	scripts/validate.sh
 }
 
 run_tests_base () {
@@ -153,13 +162,14 @@ package_extension () {
 	echo "[$0 ${FUNCNAME[0]}] pwd = $(pwd)"
 	local VSIX_COUNT
 
-	npm install
-	npm run pretest
-	vsce package --githubBranch "$(git branch --show-current)"
-	# vsce package --pre-release --githubBranch "$(git branch --show-current)"
+	if ! $CIRCLECI; then
+		vsce package --githubBranch "$CIRCLE_BRANCH" --no-git-tag-version --pre-release
+	fi
 
 	echo "find packages: $(find . -name "ablunit-test-runner-*.vsix")"
-	VSIX_COUNT=$(find . -name "ablunit-test-runner-*.vsix" | wc -l )
+	if ! VSIX_COUNT=$(find . -name "ablunit-test-runner-*.vsix" | wc -l); then
+		VSIX_COUNT=0
+	fi
 	if [ "$VSIX_COUNT" = "0" ]; then
 		echo "ERROR: could not find .vsix after packaging extension!"
 		exit 1

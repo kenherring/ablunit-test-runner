@@ -6,6 +6,7 @@
 
 import * as cp from 'child_process'
 import * as path from 'path'
+import { GlobSync } from 'glob'
 import { existsSync } from 'fs'
 import { downloadAndUnzipVSCode, resolveCliArgsFromVSCodeExecutablePath, runTests } from '@vscode/test-electron'
 
@@ -25,7 +26,12 @@ async function runTest(version: string) {
 		const vscodeExecutablePath = await downloadAndUnzipVSCode(version)
 		const [cliPath, ...args] = resolveCliArgsFromVSCodeExecutablePath(vscodeExecutablePath)
 
-		const packagedExtensionPath = path.resolve(__dirname, '../../../ablunit-test-runner-0.1.10.vsix')
+		const g = new GlobSync(path.resolve(__dirname, '../../../', 'ablunit-test-runner-*.vsix'))
+		if (g.found.length != 1) {
+			throw new Error("Expected exactly one ablunit-test-runner-*.vsix file, found " + g.found.length)
+		}
+
+		const packagedExtensionPath = g.found[0]
 		if (!existsSync(packagedExtensionPath)) {
 			throw new Error("Extension bundle does not exist! '" + packagedExtensionPath + "'")
 		}

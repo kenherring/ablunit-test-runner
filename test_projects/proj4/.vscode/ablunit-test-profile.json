@@ -1,7 +1,7 @@
 {
     "configurations": [
         {
-            "tempDir": "target",
+            "tempDir": "c:\\temp\\ablunit\\tempDir",
             "options": {
                 "output": {
                     "writeLog": true,

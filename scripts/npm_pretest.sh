@@ -68,7 +68,7 @@ doBuild () {
 
 ########## MAIN BLOCK ##########
 initialize "$@"
-scripts/clean.sh
+scripts/npm_clean.sh
 get_performance_test_code
 get_pct
 create_dbs
