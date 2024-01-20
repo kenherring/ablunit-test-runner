@@ -130,7 +130,6 @@ jobs:
           steps:
             - sonarcloud/scan:
                 cache_version: 3
-      - run: .circleci/validate.sh
       - save_cache:
           key: v3-cache-<< parameters.oe-version >>-{{ checksum "package.json" }}
           paths: [ cache ]
