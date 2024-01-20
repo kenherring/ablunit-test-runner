@@ -147,6 +147,10 @@ analyze_results () {
 
 	echo "[$0 ${FUNCNAME[0]}] artifacts to be saved:"
 	ls -al artifacts
+
+	if ! $CIRCLECI; then
+		.circleci/validate.sh
+	fi
 }
 
 run_tests_dummy_ext () {

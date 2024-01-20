@@ -15,8 +15,8 @@ jq () {
 
 validate_version_updated() {
 	echo "[$0 ${FUNCNAME[0]}] validating version matches throughout the project..." >&2
-	PACKAGE_VERSION=$(jq -r '.version' package.json)
-	TAG_VERSION=$(git tag --sort | tail -1)
+	PACKAGE_VERSION=$(jq -r '.version' package.json | cut -d'-' -f1)
+	TAG_VERSION=$(git tag | grep "$PACKAGE_VERSION" | tail -1)
 	SONAR_PROJECT_VERSION=$(grep -E '^sonar.projectVersion=' sonar-project.properties | cut -d'=' -f2)
 
 	if [ "$PACKAGE_VERSION" = "$TAG_VERSION" ]; then
@@ -28,7 +28,7 @@ validate_version_updated() {
 		exit 1
 	fi
 
-	CHANGELOG_VER=$(head CHANGELOG.md -n 1 | cut -d' ' -f2 | sed 's/[\[\]]//g')
+	CHANGELOG_VER=$(head CHANGELOG.md -n 1 | cut -d'[' -f2 | cut -d']' -f1)
 	if [ "${CIRCLE_TAG:-}" != "$TAG_VERSION" ] && [ "$CHANGELOG_VER" != "$TAG_VERSION" ]; then
 		echo "[$0 ${FUNCNAME[0]}] ERROR: CHANGELOG.md version ($CHANGELOG_VER) does not match latest git tag ($TAG_VERSION)" >&2
 		exit 1
