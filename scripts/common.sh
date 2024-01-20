@@ -15,8 +15,9 @@ jq () {
 
 validate_version_updated() {
 	echo "[$0 ${FUNCNAME[0]}] validating version matches throughout the project..." >&2
-	PACKAGE_VERSION=$(jq -r '.version' package.json | cut -d'-' -f1)
-	TAG_VERSION=$(git tag | grep "$PACKAGE_VERSION" | tail -1)
+	set -x
+	PACKAGE_VERSION=$(jq -r '.version' package.json)
+	TAG_VERSION=$(git --no-pager tag | grep "$PACKAGE_VERSION" | tail -1)
 	SONAR_PROJECT_VERSION=$(grep -E '^sonar.projectVersion=' sonar-project.properties | cut -d'=' -f2)
 
 	if [ "$PACKAGE_VERSION" = "$TAG_VERSION" ]; then

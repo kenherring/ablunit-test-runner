@@ -84,7 +84,7 @@ find_files_to_copy () {
 	echo "file counts:"
 	echo "   staged=$(wc -l /tmp/staged_files)"
 	echo "  deleted=$(wc -l /tmp/deleted_files)"
-	echo " modified=$(wc -l /tmp/modified_files)"
+	echo " modified=$(wc -l /tmp/modified_files 2>/dev/null || echo 0)"
 
 	cd "$BASE_DIR"
 }
@@ -104,8 +104,6 @@ copy_files () {
 run_tests () {
 	echo "[$0 ${FUNCNAME[0]}] pwd=$(pwd)"
 
-	scripts/validate.sh
-
 	if [ "$TEST_PROJECT" = "base" ]; then
 		run_tests_base
 	elif [ "$TEST_PROJECT" = "dummy-ext" ]; then
@@ -114,6 +112,8 @@ run_tests () {
 		echo "ERROR: unknown test project"
 		exit 1
 	fi
+
+	scripts/validate.sh
 }
 
 run_tests_base () {
