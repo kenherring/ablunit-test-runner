@@ -26,7 +26,6 @@ async function runTest(version: string) {
 		const vscodeExecutablePath = await downloadAndUnzipVSCode(version)
 		const [cliPath, ...args] = resolveCliArgsFromVSCodeExecutablePath(vscodeExecutablePath)
 
-		console.log("globSync=" + path.resolve(__dirname, '../../../', 'ablunit-test-runner-*.vsix'))
 		const g = new GlobSync(path.resolve(__dirname, '../../../', 'ablunit-test-runner-*.vsix'))
 		if (g.found.length != 1) {
 			throw new Error("Expected exactly one ablunit-test-runner-*.vsix file, found " + g.found.length)

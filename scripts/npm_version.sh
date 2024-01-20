@@ -42,18 +42,6 @@ update_version () {
 	git add .
 }
 
-update_other_files () {
-	echo "[$0 ${FUNCNAME[0]}] updating sonar-project.properties..."
-	sed -i "s/sonar.projectVersion=.*/sonar.projectVersion=$PACKAGE_VERSION/" sonar-project.properties
-
-	## TODO
-	echo "[$0 ${FUNCNAME[0]}] updating src/version.ts..."
-	echo "export const LIB_VERSION = '$PACKAGE_VERSION'" > src/version.ts
-
-	echo "[$0 ${FUNCNAME[0]}] updating .vscode/launch.json..."
-	sed -i "s/ablunit-test-runner-.*.vsix/ablunit-test-runner-$PACKAGE_VERSION.vsix/" .vscode/launch.json dummy-ext/src/test/installAndRun.ts
-}
-
 update_changelog () {
 	echo "[$0 ${FUNCNAME[0]}]"
 	local PREVIOUS_VERSION
@@ -75,6 +63,18 @@ update_changelog () {
 
 	rm CHANGELOG.md
 	mv "changelog_$PACKAGE_VERSION.md" CHANGELOG.md
+}
+
+update_other_files () {
+	echo "[$0 ${FUNCNAME[0]}] updating sonar-project.properties..."
+	sed -i "s/sonar.projectVersion=.*/sonar.projectVersion=$PACKAGE_VERSION/" sonar-project.properties
+
+	## TODO
+	echo "[$0 ${FUNCNAME[0]}] updating src/version.ts..."
+	echo "export const LIB_VERSION = '$PACKAGE_VERSION'" > src/version.ts
+
+	echo "[$0 ${FUNCNAME[0]}] updating .vscode/launch.json..."
+	sed -i "s/ablunit-test-runner-.*.vsix/ablunit-test-runner-$PACKAGE_VERSION.vsix/" .vscode/launch.json
 }
 
 ########## MAIN BLOCK ##########
