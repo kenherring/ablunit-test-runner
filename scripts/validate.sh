@@ -32,4 +32,4 @@ validate_results_count() {
 ########## MAIN BLOCK ##########
 validate_version_updated
 validate_results_count
-echo "[$0 ${FUNCNAME[0]}] completed successfully!"
+echo "[$0] completed successfully!"
