@@ -1,3 +1,4 @@
+.ssh/
 .vscode-test/
 .vscode-test-docker/
 artifacts/

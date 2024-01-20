@@ -19,7 +19,7 @@ export const ablunitConfig = new WeakMap<WorkspaceFolder, RunConfig>()
 export class ABLUnitConfig  {
 
 	// ablunitConfig: IABLUnitConfig = <IABLUnitConfig>{}
-	ablunitConfig: RunConfig = <RunConfig>{}
+	ablunitConfig: RunConfig = {} as RunConfig
 
 	setup (workspaceFolder: WorkspaceFolder) {
 		log.info("[ABLUnitConfigWriter setup] workspaceUri=" + workspaceFolder.uri.fsPath)
@@ -40,7 +40,7 @@ export class ABLUnitConfig  {
 	}
 
 	async createDir (uri: Uri) {
-		return workspace.fs.stat(uri).then(() => {}, () => {
+		return workspace.fs.stat(uri).then(() => { return }, () => {
 			return workspace.fs.createDirectory(uri)
 		})
 	}
@@ -53,7 +53,7 @@ export class ABLUnitConfig  {
 		return workspace.fs.writeFile(this.ablunitConfig.progressIniUri, iniBytes)
 	}
 
-	async createAblunitJson (uri: Uri, cfg: CoreOptions, testQueue: ITestObj[]) {
+	async createAblunitJson (_uri: Uri, cfg: CoreOptions, testQueue: ITestObj[]) {
 		log.info("creating ablunit.json: '" + this.ablunitConfig.config_uri.fsPath + "'")
 		const promarr: PromiseLike<void>[] = []
 		promarr.push(
@@ -70,10 +70,10 @@ export class ABLUnitConfig  {
 			promarr.push(this.deleteFile(this.ablunitConfig.optionsUri.jsonUri))
 		}
 
-		const out = <IABLUnitJson>{
+		const out = {
 			options: cfg,
 			tests: testQueue
-		}
+		} as IABLUnitJson
 
 		promarr.push(workspace.fs.writeFile(this.ablunitConfig.config_uri, Uint8Array.from(Buffer.from(JSON.stringify(out, null, 4)))))
 		return Promise.all(promarr)

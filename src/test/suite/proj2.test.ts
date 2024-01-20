@@ -31,7 +31,7 @@ suite(projName + ' - Extension Test Suite', () => {
 		if (!mdText) {
 			assert.fail("mdText is null")
 		}
-		if (mdText.indexOf("testClass2.cls:file:///") > -1) {
+		if (mdText.includes("testClass2.cls:file:///")) {
 			assert.fail("mdText should be testClasse.cls:6")
 		}
 	})

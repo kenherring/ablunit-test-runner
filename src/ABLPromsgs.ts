@@ -2,7 +2,7 @@ import { Uri, workspace } from "vscode"
 import { log } from "./ABLUnitCommon"
 import { IDlc } from "./parse/OpenedgeProjectParser"
 
-interface Promsg {
+interface IPromsg {
 	msgnum: number
 	msgtext: string[]
 }
@@ -11,7 +11,7 @@ let promsgsObj: ABLPromsgs
 
 export class ABLPromsgs {
 	dlc: IDlc
-	promsgs: Promsg[] = []
+	promsgs: IPromsg[] = []
 
 	constructor (dlc: IDlc, storageUri: Uri) {
 		this.dlc = dlc
@@ -24,7 +24,7 @@ export class ABLPromsgs {
 		}, () => {
 			log.info("reading promsgs from DLC")
 			this.loadFromDLC(dlc).then(() => {
-				this.saveCache(cacheUri).then(() => {}, (err) => {
+				this.saveCache(cacheUri).then(() => { return }, (err) => {
 					throw(err)
 				})
 			}, (err) => {
@@ -104,7 +104,7 @@ export class ABLPromsgs {
 	async loadFromCache (cacheUri: Uri) {
 		log.info("load promsgs from cache") // REMOVEME
 		await workspace.fs.readFile(cacheUri).then((buffer) => {
-			this.promsgs.push(<Promsg>JSON.parse(Buffer.from(buffer).toString('utf8')))
+			this.promsgs.push((JSON.parse(Buffer.from(buffer).toString('utf8')) as IPromsg))
 		}, (err) => {
 			throw new Error("Cannot read promsgs file '" + cacheUri.fsPath + "', err=" + err)
 		})

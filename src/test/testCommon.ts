@@ -5,6 +5,15 @@ import { ABLResults } from '../ABLResults'
 import { log } from '../ABLUnitCommon'
 import { GlobSync } from 'glob'
 
+export function sleep (time: number = 2000, msg?: string) {
+	let status = "sleeping for " + time + "ms"
+	if (msg) {
+		status = status + " [" + msg + "]"
+	}
+	console.log(status)
+	return new Promise(resolve => setTimeout(resolve, time))
+}
+
 export async function waitForExtensionActive (extensionId: string = 'kherring.ablunit-test-runner') {
 	const ext = extensions.getExtension(extensionId)
 	if (!ext) {
@@ -121,38 +130,6 @@ export function getWorkspaceUri () {
 	}
 }
 
-export async function deleteTestFiles () {
-	const workspaceUri = getWorkspaceUri()
-	await deleteFile(Uri.joinPath(workspaceUri, "ablunit.json"))
-	await deleteFile(Uri.joinPath(workspaceUri, "results.json"))
-	await deleteFile(Uri.joinPath(workspaceUri, "results.xml"))
-}
-
-export async function deleteFile (file: Uri) {
-	if (await doesFileExist(file)) {
-		return workspace.fs.delete(file)
-	}
-}
-
-export function getSessionTempDir () {
-	if (process.platform === 'win32') {
-		return "file:///c:/temp/ablunit"
-	} else if(process.platform === 'linux') {
-		return "file:///tmp/ablunit"
-	} else {
-		throw new Error("Unsupported platform: " + process.platform)
-	}
-}
-
-export function sleep (time: number = 2000, msg?: string) {
-	let status = "sleeping for " + time + "ms"
-	if (msg) {
-		status = status + " [" + msg + "]"
-	}
-	console.log(status)
-	return new Promise(resolve => setTimeout(resolve, time))
-}
-
 export async function doesFileExist (uri: Uri) {
 	const ret = await workspace.fs.stat(uri).then((stat) => {
 		if (stat.type === FileType.File) {
@@ -163,6 +140,29 @@ export async function doesFileExist (uri: Uri) {
 		return false
 	})
 	return ret
+}
+
+export async function deleteFile (file: Uri) {
+	if (await doesFileExist(file)) {
+		return workspace.fs.delete(file)
+	}
+}
+
+export async function deleteTestFiles () {
+	const workspaceUri = getWorkspaceUri()
+	await deleteFile(Uri.joinPath(workspaceUri, "ablunit.json"))
+	await deleteFile(Uri.joinPath(workspaceUri, "results.json"))
+	await deleteFile(Uri.joinPath(workspaceUri, "results.xml"))
+}
+
+export function getSessionTempDir () {
+	if (process.platform === 'win32') {
+		return "file:///c:/temp/ablunit"
+	} else if(process.platform === 'linux') {
+		return "file:///tmp/ablunit"
+	} else {
+		throw new Error("Unsupported platform: " + process.platform)
+	}
 }
 
 export async function doesDirExist (uri: Uri) {
@@ -181,7 +181,7 @@ export async function getTestCount (resultsJson: Uri, status: string = 'tests') 
 	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 	const count = await workspace.fs.readFile(resultsJson).then((content) => {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-		const results = <ITestSuites[]>JSON.parse(Buffer.from(content.buffer).toString())
+		const results: ITestSuites[] = JSON.parse(Buffer.from(content.buffer).toString())
 
 		if (!results || results.length === 0) {
 			throw new Error("[getTestCount] no testsuite found in results")
@@ -326,7 +326,7 @@ export const assertResults = new AssertResults()
 export async function getRecentResults () {
 	return commands.executeCommand('_ablunit.getRecentResults').then((resp) => {
 		if (resp) {
-			return <ABLResults[]>resp
+			return resp as ABLResults[]
 		}
 		throw new Error('no recent results returned from \'ablunit.getRecentResults\' command')
 	}, (err) => {
@@ -337,7 +337,7 @@ export async function getRecentResults () {
 export async function getTestController () {
 	return commands.executeCommand('_ablunit.getTestController').then((resp) => {
 		if (resp) {
-			return <TestController>resp
+			return resp as TestController
 		}
 		throw new Error('no recent results returned from \'ablunit.getTestController\' command')
 	}, (err) => {

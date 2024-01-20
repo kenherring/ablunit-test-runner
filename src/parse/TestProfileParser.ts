@@ -23,7 +23,7 @@ function getConfigurations (uri: Uri) {
 		if (str === '' || str === '{}') {
 			str = '{ "configurations":[] }'
 		}
-		return <IConfigurations>JSON.parse(str)
+		return JSON.parse(str) as IConfigurations
 	} catch (err) {
 		log.error("Failed to parse ablunit-test-profile: " + err)
 		throw err
@@ -62,7 +62,7 @@ function mergeObjects (from: object, into: object) {
 }
 
 function getDefaultConfig () {
-	return <IConfigurations> { configurations: [ new DefaultRunProfile ] }
+	return { configurations: [ new DefaultRunProfile ] } as IConfigurations
 }
 
 export function parseRunProfiles (workspaceFolders: WorkspaceFolder[], wsFilename: string = runProfileFilename) {
@@ -101,7 +101,7 @@ export function parseRunProfiles (workspaceFolders: WorkspaceFolder[], wsFilenam
 				continue
 			}
 
-			const merged = <IRunProfile>mergeObjects(folderProfile, dfltProfile)
+			const merged = mergeObjects(folderProfile, dfltProfile) as IRunProfile
 			if (!merged.hide) {
 				runProfiles.push(merged)
 			}
@@ -132,7 +132,7 @@ function getUri (dir: string | undefined, workspaceFolderUri: Uri, tempDir?: Uri
 	dir = dir.replace('${workspaceFolder}', workspaceFolderUri.fsPath)
 
 	if (isRelativePath(dir)) {
-		if (dir.indexOf('/') > -1 || dir.indexOf('\\') > -1) {
+		if (dir.includes('/') || dir.includes('\\')) {
 			return Uri.joinPath(workspaceFolderUri, dir)
 		} else {
 			return Uri.joinPath(tempDir ?? workspaceFolderUri, dir)
@@ -192,7 +192,7 @@ export class RunConfig extends DefaultRunProfile {
 		}
 
 		if (typeof this.profiler.listings === 'boolean') {
-			if (this.profiler.listings === true) {
+			if (this.profiler.listings) {
 				this.profListingsUri = Uri.joinPath(this.tempDirUri, 'listings')
 			}
 		} else if (this.profiler.listings) {

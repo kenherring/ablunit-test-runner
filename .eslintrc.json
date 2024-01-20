@@ -1,16 +1,25 @@
 {
+	"root": true,
 	"env": {
-		"node": true,
-		"commonjs": true
+		"browser": true,
+		"commonjs": true,
+		"node": true
 	},
 	"extends": [
 		"eslint:recommended",
 		"plugin:@typescript-eslint/recommended",
 		"plugin:@typescript-eslint/eslint-recommended",
+		"plugin:@typescript-eslint/strict-type-checked",
 		"plugin:@typescript-eslint/recommended-type-checked"
 	],
+	"globals": {
+		"Atomics": "readonly",
+		"SharedArrayBuffer": "readonly"
+	},
 	"parser": "@typescript-eslint/parser",
 	"parserOptions": {
+		"ecmaVersion": 2020,
+		"sourceType": "module",
 		"project": "./tsconfig.json"
 	},
 	"plugins": [
@@ -20,23 +29,55 @@
 		"dummy-ext/",
 		"webpack.config.js"
 	],
-	"root": true,
 	"rules": {
 		// TODO: enable and fix theese
-		// "@typescript-eslint/interface-name-prefix": ["error", "always"],
 		// "quotes": ["warn", "single"]
 		// "no-console": "warn",
 		// "comma-dangle": [ "never", "always" ]
 
-		"@typescript-eslint/indent": ["error", "tab"],
+		// "@typescript-eslint/no-use-before-define": [ "warn", {
+		// 	/* "functions": true, */
+		// 	"classes": true
+		// }],
+
+		"@typescript-eslint/adjacent-overload-signatures": "error",
+		"@typescript-eslint/ban-types": [ "error", {
+			"types": {
+				"Object": "Use {} instead.",
+				"String": "Use 'string' instead.",
+				"Number": "Use 'number' instead.",
+				"Boolean": "Use 'boolean' instead."
+			}
+		}],
+		"@typescript-eslint/consistent-type-assertions": [ "error", { "assertionStyle": "as" } ],
+		"@typescript-eslint/consistent-type-definitions": [ "error", "interface" ],
+		"@typescript-eslint/indent": [ "error", "tab" ],
+		"@typescript-eslint/naming-convention": [ "error", {
+			"selector": "interface",
+			"format": [ "PascalCase" ],
+			"custom": { "regex": "^I[A-Z]", "match": true }
+		}],
+		// "@typescript-eslint/no-confusing-non-null-assertion": 1,
+		"@typescript-eslint/no-inferrable-types": 0,
+		"@typescript-eslint/no-empty-function": 1,
+		"@typescript-eslint/no-non-null-assertion": 0,
+		"@typescript-eslint/no-unnecessary-condition": 0,
+		"@typescript-eslint/no-unused-vars": [ "warn", {
+			"vars": "all",
+			"args": "none",
+			"ignoreRestSiblings": false
+		}],
+		"@typescript-eslint/prefer-readonly": "warn",
+		"@typescript-eslint/prefer-string-starts-ends-with": "warn",
 		"@typescript-eslint/restrict-plus-operands": "off",
+		"@typescript-eslint/switch-exhaustiveness-check": "warn",
 		"no-empty": "warn",
 		"no-mixed-spaces-and-tabs": ["error", "smart-tabs"],
-		"no-trailing-spaces": ["error", { "skipBlankLines": false }],
-		"semi": ["error", "never"],
-		"space-before-blocks": ["error", "always"],
+		"no-trailing-spaces": [ "error", { "skipBlankLines": false }],
+		"semi": [ "error", "never"],
+		"space-before-blocks": [ "error", "always"],
 		"space-before-function-paren": ["warn", "always"],
-		"space-in-parens": ["warn", "never"],
-		"spaced-comment": ["error", "always", { "markers": ["/"] }]
+		"space-in-parens": [ "warn", "never"],
+		"spaced-comment": [ "error", "always", { "markers": [ "/" ] }]
 	}
 }

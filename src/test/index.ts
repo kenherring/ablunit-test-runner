@@ -106,7 +106,10 @@ async function runTestsForProject (projName: string, timeout: number) {
 			})
 		} catch (err) {
 			console.error('[runTestsForProject]  catch err= ' + err)
-			e(err)
+			if (err instanceof Error) {
+				e(err)
+			}
+			e(new Error("non error type:" + err + ", typeof=" + typeof err))
 		}
 	})
 
@@ -138,8 +141,8 @@ function findConfigFile () {
 export function run (): Promise <void> {
 
 	let proj: string
-	if (process.env.ABLUNIT_TEST_RUNNER_PROJECT_NAME) {
-		proj = process.env.ABLUNIT_TEST_RUNNER_PROJECT_NAME
+	if (process.env['ABLUNIT_TEST_RUNNER_PROJECT_NAME']) {
+		proj = process.env['ABLUNIT_TEST_RUNNER_PROJECT_NAME']
 	} else if (workspace.workspaceFile) {
 		proj = workspace.workspaceFile.fsPath
 	} else if (workspace.workspaceFolders) {

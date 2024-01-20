@@ -1,14 +1,15 @@
+import * as cp from 'child_process'
 import * as fs from 'fs'
 import * as path from 'path'
-import { runTests } from '@vscode/test-electron'
+import { downloadAndUnzipVSCode, resolveCliArgsFromVSCodeExecutablePath, runTests } from '@vscode/test-electron'
 import { ITestConfig } from './createTestConfig'
 
 async function main () {
 	console.log('[runTest.ts main] starting...')
-	const testConfig: ITestConfig[] = <ITestConfig[]>JSON.parse(fs.readFileSync('./.vscode-test.config.json', 'utf8'))
+	const testConfig: ITestConfig[] = JSON.parse(fs.readFileSync('./.vscode-test.config.json', 'utf8')) as ITestConfig[]
 
 	let projToRun: string | undefined = undefined
-	projToRun = process.env.ABLUNIT_TEST_RUNNER_PROJECT_NAME
+	projToRun = process.env['ABLUNIT_TEST_RUNNER_PROJECT_NAME']
 	console.log("[runTest.ts main] projToRun=" + projToRun)
 	let testCount = 0
 	for (const conf of testConfig) {
@@ -24,19 +25,34 @@ async function main () {
 	}
 }
 
+function installOpenEdgeExtension (vscodeExecutablePath: string) {
+	console.log('[installAndRun.ts runTest] installing OpenEdge extensions...')
+	const [cliPath, ...args] = resolveCliArgsFromVSCodeExecutablePath(vscodeExecutablePath)
+	// Use cp.spawn / cp.exec for custom setup
+	cp.spawnSync(
+		cliPath,
+		[...args, '--install-extension', 'riversidesoftware.openedge-abl'],
+		{ encoding: 'utf-8', stdio: 'inherit' }
+	)
+}
+
 async function testProject (projName: string, projDir?: string, launchArgs: string[] = []) {
 	if(!projDir) {
 		projDir = projName
 	}
 
+	const version = 'stable'
 	const extensionDevelopmentPath: string = path.resolve(__dirname, '../../')
 	const extensionTestsPath = path.resolve(__dirname)
+	const vscodeExecutablePath = await downloadAndUnzipVSCode(version)
 	const testingEnv: { [key: string]: string | undefined } = {
 		ABLUNIT_TEST_RUNNER_UNIT_TESTING: 'true',
 		ABLUNIT_TEST_RUNNER_PROJECT_NAME: projName
 	}
 
 	try {
+		installOpenEdgeExtension(vscodeExecutablePath)
+
 		const args: string[] = [
 			projDir,
 			'--disable-gpu',

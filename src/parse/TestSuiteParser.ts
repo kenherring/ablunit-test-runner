@@ -39,7 +39,7 @@ export function parseSuiteLines (lines: string[]) {
 			continue
 		}
 
-		if(lines[lineNo].toLowerCase().indexOf("@testsuite") != -1) {
+		if(lines[lineNo].toLowerCase().includes("@testsuite")) {
 			const suiteRes = suiteRE.exec(lines[lineNo])
 
 			const r = parseAnnotation(suiteRes)

@@ -44,7 +44,7 @@ export function parseTestProgram (lines: string[], label: string) {
 		}
 
 		if(lastNonBlankLineHasAnnotation ||
-			lines[lineNo].toLowerCase().indexOf("@test.") != -1) {
+			lines[lineNo].toLowerCase().includes("@test.")) {
 			const proc = procedureRE.exec(lines[lineNo])
 			if (proc) {
 				const [ , , procedureName] = proc

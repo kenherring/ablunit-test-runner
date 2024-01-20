@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 import { TextDecoder } from "util"
 import { Uri, workspace } from "vscode"
 import { PropathParser } from "../ABLPropath"
@@ -151,15 +150,15 @@ export const getSourceMapFromRCode = async (propath: PropathParser, uri: Uri) =>
 		return name2
 	}
 
-	const parseVar = (bytes: Uint32Array, pos: number, prefix: string = '') => {
+	const parseVar = (_bytes: Uint32Array, _pos: number, prefix: string = '') => {
 		log.trace(prefix + " TODO - implement rcode parsing function parseVar")
 	}
 
-	const parseParam = (bytes: Uint32Array, pos: number, prefix: string = '') => {
+	const parseParam = (_bytes: Uint32Array, _pos: number, prefix: string = '') => {
 		log.trace(prefix + " TODO - implement rcode parsing function parseParam")
 	}
 
-	const parseProcTT = (bytes: Uint32Array, pos: number, prefix: string = '') => {
+	const parseProcTT = (_bytes: Uint32Array, _pos: number, prefix: string = '') => {
 		log.trace(prefix + " TODO - implement rcode parsing function parseProcTT")
 	}
 
@@ -281,21 +280,21 @@ export const getSourceMapFromRCode = async (propath: PropathParser, uri: Uri) =>
 		return map
 	}
 
-	const parse4 = (bytes: Uint32Array, pos: number, prefix: string = '') => {
+	const parse4 = (_bytes: Uint32Array, _pos: number, prefix: string = '') => {
 		log.trace(prefix + "TODO - implement rcode parsing function parse4")
 		throw new Error("parse4 not implemented")
 	}
 
 	const getMapLine = (map: IIncludeMap[], linenum: number) => {
 		if (map[0].debugLine > linenum) {
-			return <IIncludeMap>{
+			return {
 				sourceLine: linenum,
 				debugLine: linenum,
 				sourceNum: 0,
 				sourcePath: getSourceName(0),
 				sourceUri: getSourceUri(0),
 				debugUri: getSourceUri(0)
-			}
+			} as IIncludeMap
 		}
 		let lastMap: IIncludeMap = map[0]
 		for (let i=1; i < map.length; i++) {

@@ -43,8 +43,8 @@ export function getDLC (workspaceFolder: WorkspaceFolder, projectJson?: string) 
 			runtimeDlc = Uri.file(runtime.path)
 		}
 	}
-	if (!runtimeDlc && process.env.DLC) {
-		runtimeDlc = Uri.file(process.env.DLC)
+	if (!runtimeDlc && process.env['DLC']) {
+		runtimeDlc = Uri.file(process.env['DLC'])
 	}
 	if (runtimeDlc) {
 		log.info("using DLC = " + runtimeDlc.fsPath)

@@ -17,7 +17,7 @@ class Logger {
 	testResultsLogLevel = LogLevel.Info
 
 	constructor () {
-		logOutputChannel.onDidChangeLogLevel((e) => this.setLogLevel(e))
+		logOutputChannel.onDidChangeLogLevel((e) => { this.setLogLevel(e) })
 		this.level = logOutputChannel.logLevel
 	}
 

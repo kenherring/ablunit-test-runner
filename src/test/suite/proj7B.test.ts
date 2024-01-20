@@ -20,7 +20,7 @@ suite(projName + ' - Extension Test Suite', () => {
 		const startRefreshTime = Date.now()
 		const refresh = commands.executeCommand('testing.refreshTests')
 
-		let testCount = await getTestControllerItemCount('ABLTestFile')
+		let testCount = await getTestControllerItemCount('ABLTestFile').then()
 		log.info("testCount-1=" + testCount)
 		while(testCount < 10) {
 			await sleep(250)
@@ -67,7 +67,7 @@ suite(projName + ' - Extension Test Suite', () => {
 
 
 	test(projName + '.2 - cancel test run', async () => {
-		runAllTests().then(() => {}, (err) => { throw err })
+		runAllTests().then(() => { return }, (err) => { throw err })
 
 		console.log("pausing 5 seconds")
 		await new Promise((resolve) => { setTimeout(resolve, 5000) })
