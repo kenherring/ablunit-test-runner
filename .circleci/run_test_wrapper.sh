@@ -4,7 +4,7 @@ set -euo pipefail
 initialize () {
 	echo "[$0 ${FUNCNAME[0]}]"
 	VERBOSE=${VERBOSE:-false}
-    export DONT_PROMPT_WSL_INSTALL=No_Prompt_please
+	export DONT_PROMPT_WSL_INSTALL=No_Prompt_please
 	npm install
 }
 
