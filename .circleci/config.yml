@@ -181,6 +181,16 @@ jobs:
     executor: psc-primary
     steps:
       - checkout
+      - attach_workspace: { at: . }
+      - run:
+          command: |
+            set -x
+            pwd
+            ls -al ./
+            ls -al /root
+            ls -al /root/project
+            ls -al /home/circleci
+            ls -al /home/circleci/project
       - restore-test-cache
       - run:
           command: |
