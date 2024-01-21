@@ -36,18 +36,6 @@ store-results: &store-results
   - store_test_results:
       when: always
       path: artifacts
-persist-to-workspace: &persist-to-workspace
-  - persist_to_workspace:
-      root: .
-      paths:
-        - ablunit-test-runner-*.vsix
-        - ablunit-test-runner-*.*.*.vsix
-        - '*.vsix'
-        - dist
-        - out
-        - ./*.vsix
-        - ./dist/
-        - ./out/
 
 executors:
   psc-primary:
@@ -91,6 +79,21 @@ commands:
       - save_cache:
           key: << pipeline.parameters.cache-version >>-cache-<< parameters.oe-version >>-{{ checksum "package.json" }}
           paths: [ cache ]
+  persist-to-workspace:
+    steps:
+      - persist_to_workspace:
+          root: .
+          paths:
+            - ablunit-test-runner-*.vsix
+            - ablunit-test-runner-*.*.*.vsix
+            - "*.vsix"
+            - '*.vsix'
+            - dist
+            - out
+            - ./*.vsix
+            - "./*.vsix"
+            - ./dist/
+            - ./out/
 
 workflows:
   build:
@@ -147,7 +150,7 @@ jobs:
             ls -al ablunit-test-runner-*.vsix
             ls -al ablunit-test-runner-*.*.*.vsix
             ls -al *.vsix
-      - <<: *persist-to-workspace
+      - persist-to-workspace
       - save-package-cache
   test-and-scan:
     <<: *oe-version-param
