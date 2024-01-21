@@ -144,7 +144,7 @@ analyze_results () {
 		echo 'ERROR: mocha_results_*.xml not found'
 		HAS_ERROR=true
 	fi
-	if [ "$LCOV_COUNT" = 0 ]; then
+	if [ "$TEST_PROJECT" = "base" ] && [ "$LCOV_COUNT" = 0 ]; then
 		echo 'ERROR: lcov.info not found'
 		HAS_ERROR=true
 	fi
@@ -153,64 +153,18 @@ analyze_results () {
 		$BASH_AFTER && bash
 		exit 1
 	fi
-
-	echo "[$0 ${FUNCNAME[0]}] artifacts to be saved:"
-	ls -al artifacts
 }
 
 run_tests_dummy_ext () {
 	echo "[$0 ${FUNCNAME[0]}] pwd = $(pwd)"
-	package_extension
-	run_packaged_tests
-}
 
-package_extension () {
-	echo "[$0 ${FUNCNAME[0]}] pwd = $(pwd)"
-	local VSIX_COUNT
-
-	if ! $CIRCLECI; then
-		npm install
-		vsce package --githubBranch "$CIRCLE_BRANCH" --no-git-tag-version --pre-release
-	fi
-
-	echo "find packages: $(find . -name "ablunit-test-runner-*.vsix")"
-	if ! VSIX_COUNT=$(find . -name "ablunit-test-runner-*.vsix" | wc -l); then
-		VSIX_COUNT=0
-	fi
-	if [ "$VSIX_COUNT" = "0" ]; then
-		echo "ERROR: could not find .vsix after packaging extension!"
-		exit 1
-	elif [ "$VSIX_COUNT" != "1" ]; then
-		echo "ERROR: found multiple ablunit-test-runner-*.vsix files!"
-		exit 2
-	fi
-	echo "found $(find . -name "ablunit-test-runner-*.vsix") extension file"
-}
-
-run_packaged_tests () {
-	echo "[$0 ${FUNCNAME[0]}] pwd=$(pwd)"
-	local ABLUNIT_LOG
-
-	cd dummy-ext
-	npm run compile
-
-	export DONT_PROMPT_WSL_INSTALL=No_Prompt_please
-	if ! xvfb-run -a npm run test:install-and-run; then
-		ABLUNIT_LOG=$(find . -name 'ABLUnit.log')
-		if $VERBOSE; then
-			echo "---------- $ABLUNIT_LOG ----------"
-			cat "$ABLUNIT_LOG"
-		fi
-		echo "ERROR: test:install-and-run failed"
+	if ! scripts/install_and_run.sh; then
+		echo "run_tests failed"
 		$BASH_AFTER && bash
 		exit 1
 	fi
-	if ! ls -al "$(pwd)"/artifacts/*.xml; then
-		echo "ERROR: no test results found"
-		$BASH_AFTER && bash
-		exit 1
-	fi
-	cd ..
+	echo "run_tests success"
+	analyze_results
 }
 
 save_cache () {
