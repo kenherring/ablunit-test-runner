@@ -5,6 +5,9 @@ orbs:
   sonarcloud: sonarsource/sonarcloud@2.0.0
 
 parameters:
+  cache-version:
+    type: string
+    default: v4
   vscode-version:
     type: string
     default: 1.84.2
@@ -58,13 +61,13 @@ commands:
     steps:
       - restore_cache:
           keys:
-            - v2-cache-{{ checksum "package.json" }}
-            - v2-cache-
+            - << pipeline.parameters.cache-version >>-cache-{{ checksum "package.json" }}
+            - << pipeline.parameters.cache-version >>-cache-
       - run: npm install
   save-package-cache:
     steps:
       - save_cache:
-          key: v2-cache-{{ checksum "package.json" }}
+          key: << pipeline.parameters.cache-version >>-cache-{{ checksum "package.json" }}
           paths: [ /home/circleci/cache/node_modules_cache ]
   restore-test-cache:
     parameters:
@@ -78,7 +81,16 @@ commands:
             - run: tr ' ' '\n' \<<< "$PROGRESS_CFG_BASE64" | base64 --decode > /psc/dlc/progress.cfg
             - restore_cache:
                 keys:
-                  - v3-cache-<< parameters.oe-version >>-{{ checksum "package.json" }}
+                  - << pipeline.parameters.cache-version >>-cache-<< parameters.oe-version >>-{{ checksum "package.json" }}
+  save-test-cache:
+    parameters:
+      oe-version:
+        type: string
+        default: none
+    steps:
+      - save_cache:
+          key: << pipeline.parameters.cache-version >>-cache-<< parameters.oe-version >>-{{ checksum "package.json" }}
+          paths: [ cache ]
 
 workflows:
   build:
@@ -147,9 +159,8 @@ jobs:
             - sonarcloud/scan:
                 cache_version: 3
       - run: npm run clean
-      - save_cache:
-          key: v3-cache-<< parameters.oe-version >>-{{ checksum "package.json" }}
-          paths: [ cache ]
+      - save-test-cache:
+          oe-version: << parameters.oe-version >>
   install-and-run:
     <<: *oe-version-param
     executor: psc-primary
