@@ -128,10 +128,17 @@ jobs:
             set -x
             set +e
             ls -al './'
+            ls -al './ablunit-test-runner-0.1.16.vsix'
             ls -al './ablunit-test-runner-*'
             ls -al './ablunit-test-runner-**'
             ls -al './ablunit-test-runner-*.vsix'
             ls -al './ablunit-test-runner-*.*.*.vsix'
+
+            ls -al 'ablunit-test-runner-0.1.16.vsix'
+            ls -al 'ablunit-test-runner-*'
+            ls -al 'ablunit-test-runner-**'
+            ls -al 'ablunit-test-runner-*.vsix'
+            ls -al 'ablunit-test-runner-*.*.*.vsix'
             exit 1
       - <<: *persist-to-workspace
       - save-package-cache
