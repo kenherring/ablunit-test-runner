@@ -15,7 +15,6 @@ package () {
     echo "[$0 ${FUNCNAME[0]}]"
 
     vsce package --githubBranch "$CIRCLE_BRANCH" --no-git-tag-version --pre-release
-    exit 1
 
     # if [ "$(git branch --show-current)" = "main" ]; then
     #     vsce package --githubBranch "$CIRCLE_BRANCH" --no-git-tag-version
@@ -24,7 +23,10 @@ package () {
     # fi
 
     ## TODO remove me
-    ls -al
+    if ${VERBOSE:-false}; then
+        echo "files in $(pwd):"
+        ls -al
+    fi
 }
 
 ########## MAIN BLOCK ##########
