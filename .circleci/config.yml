@@ -37,7 +37,8 @@ persist-to-workspace: &persist-to-workspace
   - persist_to_workspace:
       root: .
       paths:
-        - .
+        - dist
+        - ablunit-test-runner-*.vsix
 
 executors:
   psc-primary:
@@ -108,6 +109,7 @@ jobs:
             else
               vsce package --githubBranch "$CIRCLE_BRANCH" --no-git-tag-version --pre-release
             fi
+      - <<: *persist-to-workspace
   test-and-scan:
     <<: *oe-version-param
     docker:
@@ -128,6 +130,7 @@ jobs:
           steps:
             - sonarcloud/scan:
                 cache_version: 3
+      - run: npm run clean
       - save_cache:
           key: v3-cache-<< parameters.oe-version >>-{{ checksum "package.json" }}
           paths: [ cache ]
@@ -151,12 +154,12 @@ jobs:
           command: |
             ## CIRCLE_BRANCH=$(git branch --show-current)
             ## CIRCLE_TAG=$(git describe --tags --abbrev=0)
-            if [ ! -f ablunit-test-runner-${CIRCLE_TAG#v}.vsix ]; then
-              echo "WARNING: ablunit-test-runner-${CIRCLE_TAG#v}.vsix not found, creating it now..." ## TODO
-              vsce package --githubBranch "$CIRCLE_BRANCH" --no-git-tag-version --pre-release
-            fi
             if [ -z "$CIRCLE_TAG" ]; then
               echo "exit: CIRCLE_TAG is empty, cannot publish release..."
+              exit 1
+            fi
+            if [ ! -f ablunit-test-runner-${CIRCLE_TAG#v}.vsix ]; then
+              echo "ERROR: ablunit-test-runner-${CIRCLE_TAG#v}.vsix not found, creating it now..."
               exit 1
             fi
             vsce publish --pre-release --githubBranch "main" --packagePath ablunit-test-runner-v${CIRCLE_TAG}.vsix

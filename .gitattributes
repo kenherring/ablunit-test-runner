@@ -2,6 +2,7 @@
 *.png binary
 *.sh eol=lf
 .shellcheckrc eol=lf
+.git-hooks/* eol=lf
 
 *.cls linguist-language=OpenEdge-ABL
 *.i linguist-language=OpenEdge-ABL

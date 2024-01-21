@@ -13,6 +13,9 @@ initialize () {
 	export npm_config_cache=$CACHE_BASE/node_modules_cache
 	mkdir -p $CACHE_BASE/node_modules_cache
 
+	cd "$REPO_VOLUME"
+	GIT_BRANCH=$(git branch --show-current)
+	cd -
 
 	while getopts 'b' OPT; do
 		case "$OPT" in
@@ -33,7 +36,6 @@ initialize () {
 	echo 'copying files from local'
 	initialize_repo
 	restore_cache
-	npm install
 
 	if [ -z "${CIRCLE_BRANCH:-}" ]; then
 		CIRCLE_BRANCH=$(git branch --show-current)
@@ -45,11 +47,9 @@ initialize_repo () {
 	mkdir -p /home/circleci/project
 	cd /home/circleci/project
 	git config --global init.defaultBranch main
-	git init
-	git remote add origin "$REPO_VOLUME"
-	if [ "$GIT_BRANCH" = "$(git branch --show-current)" ]; then
+	git clone "$REPO_VOLUME" .
+	if [ "$GIT_BRANCH" = "main" ]; then
 		git pull
-		git reset --hard "origin/$GIT_BRANCH"
 	else
 		git fetch origin "$GIT_BRANCH":"$GIT_BRANCH"
 		git checkout "$GIT_BRANCH"
@@ -106,6 +106,7 @@ run_tests () {
 
 	if [ "$TEST_PROJECT" = "base" ]; then
 		run_tests_base
+		scripts/validate.sh
 	elif [ "$TEST_PROJECT" = "dummy-ext" ]; then
 		run_tests_dummy_ext
 	else
@@ -113,7 +114,6 @@ run_tests () {
 		exit 1
 	fi
 
-	scripts/validate.sh
 }
 
 run_tests_base () {
@@ -163,6 +163,7 @@ package_extension () {
 	local VSIX_COUNT
 
 	if ! $CIRCLECI; then
+		npm install
 		vsce package --githubBranch "$CIRCLE_BRANCH" --no-git-tag-version --pre-release
 	fi
 
@@ -251,10 +252,10 @@ finish () {
 	echo "[$0 ${FUNCNAME[0]}] pwd=$(pwd)"
 	save_cache
 	$BASH_AFTER && bash
+	echo "[$0] completed successfully!"
 }
 
 ########## MAIN BLOCK ##########
 initialize "$@"
 run_tests
 finish
-echo "[$0] completed successfully!"

@@ -13,8 +13,10 @@ initialize() {
 
 build_extension() {
     echo "[$0 ${FUNCNAME[0]}]"
-    npm install
-    vsce package --pre-release --githubBranch "$CIRCLE_BRANCH"
+    if ! $CIRCLECI; then
+        npm install
+        vsce package --pre-release --githubBranch "$CIRCLE_BRANCH"
+    fi
     cd dummy-ext
     npm run compile
 }
