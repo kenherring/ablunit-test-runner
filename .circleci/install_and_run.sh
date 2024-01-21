@@ -3,22 +3,29 @@ set -euo pipefail
 
 initialize() {
     echo "[$0 ${FUNCNAME[0]}] pwd=$(pwd)"
+    local VSIX_COUNT
+
+    set -x
+    pwd
+    ls -al
+    echo "VSIX_COUNT=$VSIX_COUNT"
 
     CIRCLECI=${CIRCLECI:-false}
     PACKAGE_VERSION=$(node -p "require('./package.json').version")
+    export DONT_PROMPT_WSL_INSTALL=No_Prompt_please
 
-    rm -f ./*.vsix
     if [ -z "${CIRCLE_BRANCH:-}" ]; then
         CIRCLE_BRANCH="$(git branch --show-current)"
     fi
 
-    export DONT_PROMPT_WSL_INSTALL=No_Prompt_please
     if ! $CIRCLECI; then
-        npm install
-        vsce package --pre-release --githubBranch "$CIRCLE_BRANCH"
+        VSIX_COUNT=$(find . -name 'ablunit-test-runner-*.vsix' | wc -l)
+        if  [ "$VSIX_COUNT" = "0" ]; then
+            npm install
+            vsce package --pre-release --githubBranch "$CIRCLE_BRANCH"
+        fi
     fi
 
-    local VSIX_COUNT
     VSIX_COUNT=$(find . -name 'ablunit-test-runner-*.vsix' | wc -l)
     if [ "$VSIX_COUNT" != "1" ]; then
         echo "ERROR: expected 1 vsix file, found $VSIX_COUNT" >&2
