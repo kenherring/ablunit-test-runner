@@ -31,6 +31,7 @@
 		}
 	},
 	"devDependencies": {
+		"@types/glob": "^8.1.0",
 		"@types/node": "^20.11.5",
 		"@types/vscode": "^1.85.0",
 		"@vscode/test-cli": "^0.0.4",
