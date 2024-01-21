@@ -63,7 +63,6 @@ commands:
           keys:
             - << pipeline.parameters.cache-version >>-cache-{{ checksum "package.json" }}
             - << pipeline.parameters.cache-version >>-cache-
-      - run: npm install
   save-package-cache:
     steps:
       - save_cache:
@@ -126,18 +125,7 @@ jobs:
     steps:
       - setup
       - restore-package-cache
-      - run: npm install
-      - run: npm install -g @vscode/vsce || sudo npm install -g @vscode/vsce
-      - run:
-          name: vsce package
-          command: |
-            if [ "$(git branch --show-current)" = "main" ]; then
-              vsce package --githubBranch "$CIRCLE_BRANCH" --no-git-tag-version
-            else
-              vsce package --githubBranch "$CIRCLE_BRANCH" --no-git-tag-version --pre-release
-            fi
-            ## TODO remove me
-            ls -al
+      - run: .circleci/package.sh
       - <<: *persist-to-workspace
       - save-package-cache
   test-and-scan:
