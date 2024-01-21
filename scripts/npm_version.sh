@@ -46,7 +46,7 @@ update_changelog () {
 	echo "[$0 ${FUNCNAME[0]}]"
 	local PREVIOUS_VERSION
 	PREVIOUS_VERSION=$(grep -Eo '\[v[0-9]+\.[0-9]+\.[0-9]+\]' CHANGELOG.md | cut -dv -f2 | cut -d] -f1 | head -1)
-	echo "[$0 ${FUNCNAME[0]}] update_changelog from $PREVIOUS_VERSION to $PACKAGE_VERSION"
+	echo "[$0 ${FUNCNAME[0]}] update CHANGELOG.md from $PREVIOUS_VERSION to $PACKAGE_VERSION"
 
 	local PRE_RELEASE_TEXT=
 	if $PRE_RELEASE; then
@@ -56,7 +56,7 @@ update_changelog () {
 	rm "changelog_$PACKAGE_VERSION.md" 2>/dev/null || true
 	{
 		echo -e "# [v${PACKAGE_VERSION}](https://github.com/kenherring/ablunit-test-runner/releases/tag/v${PACKAGE_VERSION}) - $(date +%Y-%m-%d)${PRE_RELEASE_TEXT}\n"
-		git log --pretty=format:' * %s' "v${PREVIOUS_VERSION}..HEAD"
+		git log --pretty=format:' * %s' "v${PREVIOUS_VERSION}...HEAD"
 		echo -e "\n\n**Full Changelog**: [v${PREVIOUS_VERSION}...v${PACKAGE_VERSION}](https://github.com/kenherring/ablunit-test-runner/compare/v${PREVIOUS_VERSION}...v${PACKAGE_VERSION})\n"
 		cat CHANGELOG.md
 	} > "changelog_$PACKAGE_VERSION.md"
