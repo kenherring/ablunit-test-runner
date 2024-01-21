@@ -44,15 +44,21 @@ initialize () {
 
 initialize_repo () {
 	echo "[$0 ${FUNCNAME[0]}] pwd=$(pwd)"
-	mkdir -p /home/circleci/project
-	cd /home/circleci/project
 	git config --global init.defaultBranch main
-	git clone "$REPO_VOLUME" .
+
+	mkdir -p /home/circleci/project
+	git clone "$REPO_VOLUME" "/home/circleci/project"
+
+	cd /home/circleci/project
 	if [ "$GIT_BRANCH" = "main" ]; then
 		git pull
 	else
-		git fetch origin "$GIT_BRANCH":"$GIT_BRANCH"
-		git checkout "$GIT_BRANCH"
+		if [ "$(git branch --show-current)" = "$GIT_BRANCH" ]; then
+			git pull
+		else
+			git fetch origin "$GIT_BRANCH":"$GIT_BRANCH"
+			git checkout "$GIT_BRANCH"
+		fi
 	fi
 	copy_files_from_volume
 }

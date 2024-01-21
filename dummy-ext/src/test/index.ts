@@ -1,5 +1,5 @@
-import * as path from "path"
-import * as Mocha from "mocha"
+import * as path from 'path'
+import Mocha from 'mocha'
 
 function setupMocha(projName: string, timeout: number) {
 	return new Mocha({
