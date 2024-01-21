@@ -153,6 +153,11 @@ analyze_results () {
 		$BASH_AFTER && bash
 		exit 1
 	fi
+
+	if $VERBOSE; then
+		echo "artifacts to be saved:"
+		ls -al artifacts || true
+	fi
 }
 
 run_tests_dummy_ext () {
