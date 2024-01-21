@@ -56,7 +56,7 @@ update_changelog () {
 	rm "changelog_$PACKAGE_VERSION.md" 2>/dev/null || true
 	{
 		echo -e "# [v${PACKAGE_VERSION}](https://github.com/kenherring/ablunit-test-runner/releases/tag/v${PACKAGE_VERSION}) - $(date +%Y-%m-%d)${PRE_RELEASE_TEXT}\n"
-		git log --pretty=format:' * %s' "v${PREVIOUS_VERSION}...HEAD"
+		git log --pretty=format:' * %s' "${PREVIOUS_VERSION}" "$(git merge-base origin/main HEAD)"
 		echo -e "\n\n**Full Changelog**: [v${PREVIOUS_VERSION}...v${PACKAGE_VERSION}](https://github.com/kenherring/ablunit-test-runner/compare/v${PREVIOUS_VERSION}...v${PACKAGE_VERSION})\n"
 		cat CHANGELOG.md
 	} > "changelog_$PACKAGE_VERSION.md"
