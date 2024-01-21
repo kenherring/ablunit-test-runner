@@ -168,7 +168,7 @@ analyze_results () {
 run_tests_dummy_ext () {
 	echo "[$0 ${FUNCNAME[0]}] pwd = $(pwd)"
 
-	if ! scripts/install_and_run.sh; then
+	if ! .circleci/install_and_run.sh; then
 		echo "run_tests failed"
 		$BASH_AFTER && bash
 		exit 1

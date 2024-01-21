@@ -123,8 +123,8 @@ jobs:
     environment:
       npm_config_cache: /home/circleci/cache/node_modules_cache
     steps:
-      - setup
       - restore-package-cache
+      - setup
       - run: .circleci/package.sh
       - <<: *persist-to-workspace
       - save-package-cache
@@ -136,9 +136,9 @@ jobs:
           username: $DOCKERHUB_USERNAME
           password: $DOCKERHUB_TOKEN
     steps:
-      - setup
       - restore-test-cache:
           oe-version: << parameters.oe-version >>
+      - setup
       - run: .circleci/run_test_wrapper.sh
       - <<: *store-results
       - <<: *store-artifacts
@@ -155,9 +155,9 @@ jobs:
     <<: *oe-version-param
     executor: psc-primary
     steps:
-      - setup
       - restore-test-cache
-      - run: scripts/install_and_run.sh
+      - setup
+      - run: .circleci/install_and_run.sh
       - <<: *store-results
       - <<: *store-artifacts
   publish:
@@ -165,20 +165,5 @@ jobs:
       - image: cimg/node:20.8
     steps:
       - setup
-      - run: git describe --tags
-      - run:
-          name: vsce publish
-          command: |
-            ## CIRCLE_BRANCH=$(git branch --show-current)
-            ## CIRCLE_TAG=$(git describe --tags --abbrev=0)
-            if [ -z "$CIRCLE_TAG" ]; then
-              echo "exit: CIRCLE_TAG is empty, cannot publish release..."
-              exit 1
-            fi
-            if [ ! -f ablunit-test-runner-${CIRCLE_TAG#v}.vsix ]; then
-              echo "ERROR: ablunit-test-runner-${CIRCLE_TAG#v}.vsix not found, creating it now..."
-              exit 1
-            fi
-            vsce publish --pre-release --githubBranch "main" --packagePath ablunit-test-runner-v${CIRCLE_TAG}.vsix
-            ## TODO attach *.vsix to github release
+      - run: .circleci/publish.sh
       - <<: *store-artifacts
