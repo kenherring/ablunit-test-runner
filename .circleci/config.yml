@@ -8,9 +8,6 @@ parameters:
   cache-version:
     type: string
     default: v4
-  vscode-version:
-    type: string
-    default: 1.84.2
 
 oe-version-param: &oe-version-param
   parameters:
@@ -103,7 +100,6 @@ workflows:
           matrix:
             parameters:
               oe-version: [ 12.2.12, 12.7.0 ]
-          # name: test-and-scan_<< matrix.oe-version >>
           requires: [ 'package' ]
       - install-and-run:
           <<: *context-and-filters
@@ -127,26 +123,6 @@ jobs:
       - checkout
       - restore-package-cache
       - run: .circleci/package.sh
-      - run:
-          command: |
-            set -x
-            set +e
-            pwd
-            ls -al ./
-
-            ls -al ./ablunit-test-runner-0.1.16.vsix
-            ls -al ./ablunit-test-runner-*.*.*.vsix
-            ls -al ./ablunit-test-runner-*
-            ls -al ./ablunit-test-runner-**
-            ls -al ./ablunit-test-runner-*.vsix
-            ls -al ./*.vsix
-
-            ls -al ablunit-test-runner-0.1.16.vsix
-            ls -al ablunit-test-runner-*
-            ls -al ablunit-test-runner-**
-            ls -al ablunit-test-runner-*.vsix
-            ls -al ablunit-test-runner-*.*.*.vsix
-            ls -al *.vsix
       - persist-to-workspace
       - save-package-cache
   test-and-scan:
@@ -178,36 +154,8 @@ jobs:
     executor: psc-primary
     steps:
       - checkout
-      - attach_workspace: { at: . }
-      - run:
-          command: |
-            set -x
-            pwd
-            ls -al ./
-            ls -al /root
-            ls -al /root/project
-            ls -al /home/circleci
-            ls -al /home/circleci/project
       - restore-test-cache
-      - run:
-          command: |
-            set -x
-            pwd
-            ls -al ./
-            ls -al /root
-            ls -al /root/project
-            ls -al /home/circleci
-            ls -al /home/circleci/project
       - attach_workspace: { at: . }
-      - run:
-          command: |
-            set -x
-            pwd
-            ls -al ./
-            ls -al /root
-            ls -al /root/project
-            ls -al /home/circleci
-            ls -al /home/circleci/project
       - run: .circleci/install_and_run.sh
       - store-test-results:
           directory: dummy-ext/artifacts
