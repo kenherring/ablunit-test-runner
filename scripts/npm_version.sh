@@ -45,7 +45,7 @@ update_version () {
 update_changelog () {
 	echo "[$0 ${FUNCNAME[0]}]"
 	local PREVIOUS_VERSION
-	PREVIOUS_VERSION=$(grep -Eo '\[v?[0-9]+\.[0-9]+\.[0-9]+\]' CHANGELOG.md | cut -d[-f2 | cut -d] -f1 | head -1)
+	PREVIOUS_VERSION=$(grep -Eo '\[v?[0-9]+\.[0-9]+\.[0-9]+\]' CHANGELOG.md | cut -d[ -f2 | cut -d] -f1 | head -1)
 	echo "[$0 ${FUNCNAME[0]}] update CHANGELOG.md from $PREVIOUS_VERSION to $PACKAGE_VERSION"
 
 	local PRE_RELEASE_TEXT=
