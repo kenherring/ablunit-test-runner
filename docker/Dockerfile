@@ -38,3 +38,5 @@ RUN mkdir -p ~/.vscode-test
 
 ## install vscode packaging dependency
 RUN npm install -g @vscode/vsce
+
+WORKDIR /home/circleci/project

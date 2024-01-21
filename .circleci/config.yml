@@ -91,8 +91,6 @@ workflows:
             branches: { only: main }
           requires:
             - shellcheck/check
-            # - test-and-scan_12.2.12
-            # - test-and-scan_12.7.0
             - test-and-scan
             - install-and-run
 
@@ -147,6 +145,7 @@ jobs:
       - image: cimg/node:20.8
     steps:
       - setup
+      - run: git describe --tags
       - run:
           name: vsce publish
           command: |
@@ -156,5 +155,10 @@ jobs:
               echo "WARNING: ablunit-test-runner-${CIRCLE_TAG#v}.vsix not found, creating it now..." ## TODO
               vsce package --githubBranch "$CIRCLE_BRANCH" --no-git-tag-version --pre-release
             fi
-            vsce publish --pre-release --githubBranch "$CIRCLE_BRANCH" --packagePath ablunit-test-runner-${CIRCLE_TAG#v}.vsix
+            if [ -z "$CIRCLE_TAG" ]; then
+              echo "exit: CIRCLE_TAG is empty, cannot publish release..."
+              exit 1
+            fi
+            vsce publish --pre-release --githubBranch "main" --packagePath ablunit-test-runner-v${CIRCLE_TAG}.vsix
+            ## TODO attach *.vsix to github release
       - <<: *store-artifacts
