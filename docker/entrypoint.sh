@@ -30,6 +30,10 @@ initialize () {
 		exit 1
 	fi
 
+	if ${CREATE_PACKAGE:-false}; then
+		TEST_PROJECT=package
+	fi
+
 	## save license from the environment variable at runtime
 	tr ' ' '\n' <<< "$PROGRESS_CFG_BASE64" | base64 --decode > /psc/dlc/progress.cfg
 
@@ -115,11 +119,12 @@ run_tests () {
 		scripts/validate.sh
 	elif [ "$TEST_PROJECT" = "dummy-ext" ]; then
 		run_tests_dummy_ext
+	elif [ "$TEST_PROJECT" = "package" ]; then
+		.circleci/package.sh
 	else
 		echo "ERROR: unknown test project"
 		exit 1
 	fi
-
 }
 
 run_tests_base () {

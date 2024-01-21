@@ -3,6 +3,9 @@ set -euo pipefail
 
 initialize () {
     echo "[$0 ${FUNCNAME[0]}]"
+    if [ -z "${CIRCLE_BRANCH:-}" ]; then
+        CIRCLE_BRANCH=$(git branch --show-current)
+    fi
 
     npm install
     npm install -g @vscode/vsce || sudo npm install -g @vscode/vsce
@@ -11,11 +14,15 @@ initialize () {
 package () {
     echo "[$0 ${FUNCNAME[0]}]"
 
-    if [ "$(git branch --show-current)" = "main" ]; then
-        vsce package --githubBranch "$CIRCLE_BRANCH" --no-git-tag-version
-    else
-        vsce package --githubBranch "$CIRCLE_BRANCH" --no-git-tag-version --pre-release
-    fi
+    vsce package --githubBranch "$CIRCLE_BRANCH" --no-git-tag-version --pre-release
+    exit 1
+
+    # if [ "$(git branch --show-current)" = "main" ]; then
+    #     vsce package --githubBranch "$CIRCLE_BRANCH" --no-git-tag-version
+    # else
+    #     vsce package --githubBranch "$CIRCLE_BRANCH" --no-git-tag-version --pre-release
+    # fi
+
     ## TODO remove me
     ls -al
 }
