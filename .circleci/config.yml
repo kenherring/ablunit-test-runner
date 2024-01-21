@@ -80,16 +80,9 @@ commands:
       - persist_to_workspace:
           root: .
           paths:
-            - ablunit-test-runner-*.vsix
-            - ablunit-test-runner-*.*.*.vsix
-            - "*.vsix"
-            - '*.vsix'
-            - dist
-            - out
             - ./*.vsix
-            - "./*.vsix"
-            - ./dist/
-            - ./out/
+            - ./dist
+            - ./out
   store-test-results:
     parameters:
       directory:
