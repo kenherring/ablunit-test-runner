@@ -54,8 +54,6 @@ commands:
       - checkout
       - attach_workspace:
           at: .
-      - run: npm install
-      - run: npm install -g @vscode/vsce || sudo npm install -g @vscode/vsce
   restore-test-cache:
     parameters:
       oe-version:
@@ -101,6 +99,8 @@ jobs:
       - image: cimg/node:20.8
     steps:
       - setup
+      - run: npm install
+      - run: npm install -g @vscode/vsce || sudo npm install -g @vscode/vsce
       - run:
           name: vsce package
           command: |
