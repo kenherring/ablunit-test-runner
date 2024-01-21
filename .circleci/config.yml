@@ -41,7 +41,7 @@ persist-to-workspace: &persist-to-workspace
       root: .
       paths:
         - dist
-        - ablunit-test-runner-*.vsix
+        - ./ablunit-test-runner-*.vsix
 
 executors:
   psc-primary:
@@ -136,6 +136,8 @@ jobs:
             else
               vsce package --githubBranch "$CIRCLE_BRANCH" --no-git-tag-version --pre-release
             fi
+            ## TODO remove me
+            ls -al
       - <<: *persist-to-workspace
       - save-package-cache
   test-and-scan:
