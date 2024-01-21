@@ -5,11 +5,6 @@ initialize() {
     echo "[$0 ${FUNCNAME[0]}] pwd=$(pwd)"
     local VSIX_COUNT
 
-    set -x
-    pwd
-    ls -al
-    echo "VSIX_COUNT=$VSIX_COUNT"
-
     CIRCLECI=${CIRCLECI:-false}
     PACKAGE_VERSION=$(node -p "require('./package.json').version")
     export DONT_PROMPT_WSL_INSTALL=No_Prompt_please
@@ -18,29 +13,34 @@ initialize() {
         CIRCLE_BRANCH="$(git branch --show-current)"
     fi
 
-    if ! $CIRCLECI; then
-        VSIX_COUNT=$(find . -name 'ablunit-test-runner-*.vsix' | wc -l)
-        if  [ "$VSIX_COUNT" = "0" ]; then
-            npm install
-            vsce package --pre-release --githubBranch "$CIRCLE_BRANCH"
-        fi
-    fi
+    $CIRCLECI || create_package
 
     VSIX_COUNT=$(find . -name 'ablunit-test-runner-*.vsix' | wc -l)
+    echo "VSIX_COUNT=$VSIX_COUNT"
     if [ "$VSIX_COUNT" != "1" ]; then
         echo "ERROR: expected 1 vsix file, found $VSIX_COUNT" >&2
         if [ "$VSIX_COUNT" = "0" ]; then
-            echo "No vsix files found. files" >&2
+            echo "No vsix files found. file listing:" >&2
             ls -al >&2
-        elif [ "$VSIX_COUNT" != "0" ]; then
+        else
             echo "*.vsix files found:" >&2
             find . -name 'ablunit-test-runner-*.vsix' >&2
         fi
         exit 1
     fi
     if [ ! -f "./ablunit-test-runner-$PACKAGE_VERSION.vsix" ]; then
-        echo "ERROR: expected vsix file to be named 'ablunit-test-runner-$PACKAGE_VERSION.vsix'" >&2
+        echo "ERROR: expected vsix file with name 'ablunit-test-runner-$PACKAGE_VERSION.vsix'" >&2
         exit 1
+    fi
+}
+
+create_package () {
+    local VSIX_COUNT
+    VSIX_COUNT=$(find . -name 'ablunit-test-runner-*.vsix' | wc -l)
+    echo "VSIX_COUNT=$VSIX_COUNT"
+    if  [ "$VSIX_COUNT" = "0" ]; then
+        npm install
+        vsce package --pre-release --githubBranch "$CIRCLE_BRANCH"
     fi
 }
 
