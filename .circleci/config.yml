@@ -32,10 +32,6 @@ store-artifacts: &store-artifacts
   - store_artifacts:
       when: always
       path: artifacts
-store-results: &store-results
-  - store_test_results:
-      when: always
-      path: artifacts
 
 executors:
   psc-primary:
@@ -94,6 +90,14 @@ commands:
             - "./*.vsix"
             - ./dist/
             - ./out/
+  store-test-results:
+    parameters:
+      directory:
+        type: string
+        default: artifacts
+    steps:
+      - store_test_results:
+          path: << parameters.directory >>
 
 workflows:
   build:
@@ -165,7 +169,7 @@ jobs:
           oe-version: << parameters.oe-version >>
       - attach_workspace: { at: . }
       - run: .circleci/run_test_wrapper.sh
-      - <<: *store-results
+      - store-test-results
       - <<: *store-artifacts
       - when:
           condition:
@@ -212,7 +216,8 @@ jobs:
             ls -al /home/circleci
             ls -al /home/circleci/project
       - run: .circleci/install_and_run.sh
-      - <<: *store-results
+      - store-test-results:
+          directory: dummy-ext/artifacts
       - <<: *store-artifacts
   publish:
     docker:
