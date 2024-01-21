@@ -18,6 +18,7 @@ build_extension() {
         vsce package --pre-release --githubBranch "$CIRCLE_BRANCH"
     fi
     cd dummy-ext
+    npm install
     npm run compile
 }
 
