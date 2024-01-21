@@ -179,7 +179,25 @@ jobs:
     steps:
       - checkout
       - restore-test-cache
+      - run:
+          command: |
+            set -x
+            pwd
+            ls -al ./
+            ls -al /root
+            ls -al /root/project
+            ls -al /home/circleci
+            ls -al /home/circleci/project
       - attach_workspace: { at: . }
+      - run:
+          command: |
+            set -x
+            pwd
+            ls -al ./
+            ls -al /root
+            ls -al /root/project
+            ls -al /home/circleci
+            ls -al /home/circleci/project
       - run: .circleci/install_and_run.sh
       - <<: *store-results
       - <<: *store-artifacts
