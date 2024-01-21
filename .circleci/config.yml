@@ -54,6 +54,18 @@ commands:
       - checkout
       - attach_workspace:
           at: .
+  restore-package-cache:
+    steps:
+      - restore_cache:
+          keys:
+            - v2-cache-{{ checksum "package.json" }}
+            - v2-cache-
+      - run: npm install
+  save-package-cache:
+    steps:
+      - save_cache:
+          key: v2-cache-{{ checksum "package.json" }}
+          paths: [ /home/circleci/cache/node_modules_cache ]
   restore-test-cache:
     parameters:
       oe-version:
@@ -97,8 +109,11 @@ jobs:
   package:
     docker:
       - image: cimg/node:20.8
+    environment:
+      npm_config_cache: /home/circleci/cache/node_modules_cache
     steps:
       - setup
+      - restore-package-cache
       - run: npm install
       - run: npm install -g @vscode/vsce || sudo npm install -g @vscode/vsce
       - run:
@@ -110,6 +125,7 @@ jobs:
               vsce package --githubBranch "$CIRCLE_BRANCH" --no-git-tag-version --pre-release
             fi
       - <<: *persist-to-workspace
+      - save-package-cache
   test-and-scan:
     <<: *oe-version-param
     docker:
