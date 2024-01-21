@@ -1,3 +1,9 @@
+# [v0.1.15](https://github.com/kenherring/ablunit-test-runner/releases/tag/v0.1.15) - 2024-01-21 (pre-release)
+
+ * Bump version to v0.1.12 (#109)
+
+**Full Changelog**: [v0.1.14...v0.1.15](https://github.com/kenherring/ablunit-test-runner/compare/v0.1.14...v0.1.15)
+
 # [v0.1.14](https://github.com/kenherring/ablunit-test-runner/releases/tag/v0.1.14) - 2024-01-20 (pre-release)
 
 
