@@ -3,8 +3,6 @@ set -euo pipefail
 
 initialize() {
     echo "[$0 ${FUNCNAME[0]}] pwd=$(pwd)"
-    cd /home/circleci/project
-    echo "[$0 ${FUNCNAME[0]}] pwd=$(pwd)"
 
     CIRCLECI=${CIRCLECI:-false}
     PACKAGE_VERSION=$(node -p "require('./package.json').version")
