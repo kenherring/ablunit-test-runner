@@ -26,7 +26,7 @@ validate_version_updated() {
 	fi
 
 	CHANGELOG_VERSION=$(head CHANGELOG.md -n 1 | cut -d'[' -f2 | cut -d']' -f1)
-	if [ "$PACKAGE_VERSION" != "$CHANGELOG_VERSION"]; then
+	if [ "$PACKAGE_VERSION" != "$CHANGELOG_VERSION" ]; then
 		echo "[$0 ${FUNCNAME[0]}] ERROR: package.json version ($PACKAGE_VERSION) does not match most recent entry in ($CHANGELOG_VERSION) in 'CHANGELOG.md'" >&2
 		exit 1
 	fi
