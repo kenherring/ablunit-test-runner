@@ -18,6 +18,8 @@ main_block () {
         echo "ERROR: ablunit-test-runner-${CIRCLE_TAG}.vsix not found, creating it now..."
         exit 1
     fi
+
+    npm install -g @vscode/vsce || sudo npm install -g @vscode/vsce
     vsce publish --pre-release --githubBranch "main" --packagePath "ablunit-test-runner-${CIRCLE_TAG}.vsix"
 }
 
