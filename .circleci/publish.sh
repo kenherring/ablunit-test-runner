@@ -3,6 +3,7 @@ set -euo pipefail
 
 main_block () {
     echo "[$0 ${FUNCNAME[0]}]"
+    PRERELEASE=false
 
     if ! $CIRCLECI; then
         [ -z "${CIRCLE_BRANCH:-}" ] && CIRCLE_BRANCH=$(git branch --show-current)
