@@ -5,26 +5,32 @@ import * as fs from 'fs'
 // @ts-expect-error 123
 import JSON_minify from 'node-json-minify'
 
-const logOutputChannel = window.createOutputChannel('ABLUnit', { log: true })
-logOutputChannel.clear()
-logOutputChannel.appendLine('ABLUnit output channel created')
-console.log("ABLUnit output channel created")
-
 class Logger {
 
-	level: LogLevel = logOutputChannel.logLevel
-	consoleLogLevel = LogLevel.Debug
-	testResultsLogLevel = LogLevel.Info
+	private readonly logOutputChannel
+	private readonly consoleLogLevel = LogLevel.Debug
+	private readonly testResultsLogLevel = LogLevel.Info
+	private logLevel: number
+	private testResultsTimestamp = false
 
 	constructor () {
-		logOutputChannel.onDidChangeLogLevel((e) => { this.setLogLevel(e) })
-		this.level = logOutputChannel.logLevel
+		this.logOutputChannel = window.createOutputChannel('ABLUnit', { log: true })
+		this.logOutputChannel.clear()
+		this.logOutputChannel.appendLine('ABLUnit output channel created')
+		this.logOutputChannel.onDidChangeLogLevel((e) => { this.setLogLevel(e) })
+		console.log('ABLUnit output channel created (logLevel=' + this.logOutputChannel.logLevel + ')')
+		this.logLevel = LogLevel.Info
 	}
 
 	setLogLevel (e: LogLevel) {
-		const message = 'logLevel changed from ' + this.level + ' to ' + e
+		const message = 'ABLUnit ogLevel changed from ' + this.logLevel + ' to ' + e
 		console.log(message)
-		logOutputChannel.appendLine(message)
+		this.logOutputChannel.appendLine(message)
+		this.logLevel = e
+	}
+
+	setTestResultsTimestamp (e: boolean) {
+		this.testResultsTimestamp = e
 	}
 
 	trace (message: string, testRun?: TestRun) {
@@ -56,11 +62,11 @@ class Logger {
 
 
 	private writeMessage (messageLevel: LogLevel, message: string, testRun?: TestRun) {
-		if (messageLevel <= this.level) { return }
+		if (messageLevel <= this.logOutputChannel.logLevel) { return }
 		this.writeToChannel(messageLevel, message)
 
 		if (testRun && messageLevel <= this.testResultsLogLevel) {
-			this.writeToTestResults(messageLevel, message, testRun)
+			this.writeToTestResults(message, testRun)
 		}
 
 		if (messageLevel <= this.consoleLogLevel) {
@@ -70,17 +76,19 @@ class Logger {
 
 	private writeToChannel (messageLevel: LogLevel, message: string) {
 		switch (messageLevel) {
-			case LogLevel.Error:    logOutputChannel.error(message); break
-			case LogLevel.Warning:  logOutputChannel.warn(message); break
-			case LogLevel.Info:     logOutputChannel.info(message); break
-			case LogLevel.Debug:    logOutputChannel.debug(message); break
-			case LogLevel.Trace:    logOutputChannel.appendLine(message); break
+			case LogLevel.Error:    this.logOutputChannel.error(message); break
+			case LogLevel.Warning:  this.logOutputChannel.warn(message); break
+			case LogLevel.Info:     this.logOutputChannel.info(message); break
+			case LogLevel.Debug:    this.logOutputChannel.debug(message); break
+			case LogLevel.Trace:    this.logOutputChannel.appendLine(message); break
 			default:                throw new Error("invalid log level for message! level=" + messageLevel + ", message=" + message)
 		}
 	}
 
-	private writeToTestResults (messageLevel: LogLevel, message: string, testRun: TestRun) {
-		message = '[' + messageLevel.toString() + '] [' + (new Date()).toISOString() + '] ' + message
+	private writeToTestResults (message: string, testRun: TestRun) {
+		if (this.testResultsTimestamp) {
+			message = '[' + (new Date()).toISOString() + '] ' + message
+		}
 		const optMsg = message.replace(/\r/g, '').replace(/\n/g, '\r\n')
 		testRun.appendOutput(optMsg + "\r\n")
 	}
@@ -108,8 +116,7 @@ class Logger {
 			const filename = s.getFileName()
 			if (filename && filename !== __filename) {
 				const funcname = s.getFunctionName()
-				let ret = filename.replace(path.normalize(__dirname),'').substring(1).replace(/\\/g, '/')
-				ret = filename + ':' + s.getLineNumber()
+				let ret = filename.replace(path.normalize(__dirname),'').substring(1).replace(/\\/g, '/') + ':' + s.getLineNumber()
 				if (funcname) {
 					ret = ret + ' ' + funcname
 				}

@@ -2,10 +2,11 @@
 	"name": "ablunit-test-runner",
 	"displayName": "ABLUnit Test Runner",
 	"description": "OpenEdge ABLUnit test runner for VSCode",
-	"version": "0.1.22",
+	"version": "0.2.0",
 	"preview": true,
 	"engineStrict": true,
 	"galleryBanner": {
+		"color": "#007ACC",
 		"theme": "dark"
 	},
 	"publisher": "kherring",

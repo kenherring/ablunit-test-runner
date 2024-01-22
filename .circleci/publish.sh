@@ -15,12 +15,26 @@ main_block () {
     fi
 
     if [ ! -f "ablunit-test-runner-${CIRCLE_TAG}.vsix" ]; then
-        echo "ERROR: ablunit-test-runner-${CIRCLE_TAG}.vsix not found, creating it now..."
+        echo "ERROR: ablunit-test-runner-${CIRCLE_TAG}.vsix not found"
         exit 1
     fi
 
+    MINOR=$(echo "$CIRCLE_TAG" | cut -d. -f2)
+    if [ "$(( MINOR % 2 ))" = "1" ]; then
+        echo "minor tag is odd. packaging as pre-release. (MINOR=$MINOR)"
+        PRERELEASE=true
+    fi
+
     npm install -g @vscode/vsce || sudo npm install -g @vscode/vsce
-    vsce publish --pre-release --githubBranch "main" --packagePath "ablunit-test-runner-${CIRCLE_TAG}.vsix"
+    echo "publishing file 'ablunit-test-runner-${CIRCLE_TAG}.vsix'"
+
+    local ARGS=()
+    ARGS+=("--githubBranch" "main")
+    ARGS+=("--packagePath" "ablunit-test-runner-${CIRCLE_TAG}.vsix")
+    if $PRERELEASE; then
+        ARGS+=("--pre-release")
+    fi
+    vsce publish "${ARGS[@]}"
 }
 
 attach_to_github_release () {

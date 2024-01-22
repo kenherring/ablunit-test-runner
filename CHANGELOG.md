@@ -1,3 +1,8 @@
+# [0.2.0](https://github.com/kenherring/ablunit-test-runner/releases/tag/0.2.0) - 2024-01-22
+
+Initial release to marketplace
+
+<!--
 # [0.1.22](https://github.com/kenherring/ablunit-test-runner/releases/tag/0.1.22) - 2024-01-21 (pre-release)
 
  * Various pipeline, versioning, and release updates
@@ -61,3 +66,4 @@
 # [v0.0.1](https://github.com/kenherring/ablunit-test-runner/releases/tag/v0.0.1) - 2023-11-05 (pre-release)
 
 Initial pre-release to marketplace
+-->

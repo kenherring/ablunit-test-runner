@@ -3,6 +3,7 @@ set -euo pipefail
 
 initialize () {
     echo "[$0 ${FUNCNAME[0]}]"
+    PRERELEASE=false
     PACKAGE_VERSION=$(node -p "require('./package.json').version")
     if [ -z "${CIRCLE_BRANCH:-}" ]; then
         CIRCLE_BRANCH=$(git branch --show-current)
