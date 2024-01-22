@@ -22,9 +22,9 @@ context-and-filters: &context-and-filters
     - SonarCloud
     - Azure_PAT
   filters:
-    tags: ## all tags starting with 'v' (all branches also included by default)
+    tags: ## all tags
       only:
-        - /^v.*/
+        - /^.*#/
 store-artifacts: &store-artifacts
   - store_artifacts:
       when: always
