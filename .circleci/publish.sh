@@ -4,10 +4,10 @@ set -euo pipefail
 main_block () {
     echo "[$0 ${FUNCNAME[0]}]"
 
-    if ! $CIRCLECI && [ -z "${CIRCLE_BRANCH:-}" ]; then
-        CIRCLE_BRANCH=$(git branch --show-current)
+    if ! $CIRCLECI; then
+        [ -z "${CIRCLE_BRANCH:-}" ] && CIRCLE_BRANCH=$(git branch --show-current)
+        [ -z "${CIRCLE_TAG:-}" ] && CIRCLE_TAG=$(git describe --tags --abbrev=0)
     fi
-    ## CIRCLE_TAG=$(git describe --tags --abbrev=0)
 
     if [ -z "$CIRCLE_TAG" ]; then
         echo "exit: CIRCLE_TAG is empty, cannot publish release..."

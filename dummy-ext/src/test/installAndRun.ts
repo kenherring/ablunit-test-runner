@@ -52,7 +52,7 @@ async function runTest(version: string) {
 		console.log('[installAndRun.ts runTest] -- extensionTestsPath=' + extensionTestsPath)
 		await runTests({
 			vscodeExecutablePath,
-		extensionDevelopmentPath,
+			extensionDevelopmentPath,
 			extensionTestsPath,
 			launchArgs: [ projDir, '--log', 'debug' ]
 		})

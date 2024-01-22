@@ -5,17 +5,19 @@ initialize () {
 	local OPT OPTARG OPTIND
 	echo "[$0 ${FUNCNAME[0]}] pwd=$(pwd)"
 	BASH_AFTER=false
-	VERBOSE=false
 	CACHE_BASE=/home/circleci/cache
 	CIRCLECI=${CIRCLECI:-false}
+	GIT_BRANCH=$(cd "$REPO_VOLUME" && git branch --show-current)
+	npm_config_cache=$CACHE_BASE/node_modules_cache
+	PROJECT_DIR=/home/circleci/project
 	REPO_VOLUME=/home/circleci/ablunit-test-runner
 	STAGED_ONLY=${STAGED_ONLY:-true}
-	export npm_config_cache=$CACHE_BASE/node_modules_cache
-	mkdir -p $CACHE_BASE/node_modules_cache
-
-	cd "$REPO_VOLUME"
-	GIT_BRANCH=$(git branch --show-current)
-	cd -
+	VERBOSE=false
+	${CREATE_PACKAGE:-false} && TEST_PROJECT=package
+	
+	git config --global init.defaultBranch main
+	mkdir -p "$npm_config_cache" "$PROJECT_DIR"
+	export npm_config_cache
 
 	while getopts 'b' OPT; do
 		case "$OPT" in
@@ -28,10 +30,6 @@ initialize () {
 	if [ -z "${TEST_PROJECT:-}" ]; then
 		echo "ERROR: \$TEST_PROJECT not set (values: base, dummy-ext)"
 		exit 1
-	fi
-
-	if ${CREATE_PACKAGE:-false}; then
-		TEST_PROJECT=package
 	fi
 
 	## save license from the environment variable at runtime
@@ -48,21 +46,13 @@ initialize () {
 
 initialize_repo () {
 	echo "[$0 ${FUNCNAME[0]}] pwd=$(pwd)"
-	git config --global init.defaultBranch main
-
-	mkdir -p /home/circleci/project
-	git clone "$REPO_VOLUME" "/home/circleci/project"
-
-	cd /home/circleci/project
-	if [ "$GIT_BRANCH" = "main" ]; then
+	git clone "$REPO_VOLUME" "$PROJECT_DIR"
+	cd "$PROJECT_DIR"
+	if [ "$(git branch --show-current)" = "$GIT_BRANCH" ]; then
 		git pull
 	else
-		if [ "$(git branch --show-current)" = "$GIT_BRANCH" ]; then
-			git pull
-		else
-			git fetch origin "$GIT_BRANCH":"$GIT_BRANCH"
-			git checkout "$GIT_BRANCH"
-		fi
+		git fetch origin "$GIT_BRANCH":"$GIT_BRANCH"
+		git checkout "$GIT_BRANCH"
 	fi
 	copy_files_from_volume
 }

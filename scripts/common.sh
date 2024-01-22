@@ -2,7 +2,6 @@
 set -euo pipefail
 
 jq () {
-
 	if command -v jq >/dev/null 2>&1; then
 		command jq "$@"
 	elif command -v jq.exe >/dev/null 2>&1; then
