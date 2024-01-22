@@ -17,7 +17,7 @@ initialize () {
 	echo "args=" "$@"
 
 	set -x
-	PRE_RELEASE=false
+	PRERELEASE=false
 	CIRCLE_BUILD_NUM=${CIRCLE_BUILD_NUM:-}
     PACKAGE_VERSION=$(node -p "require('./package.json').version")
 
@@ -25,8 +25,8 @@ initialize () {
 	MINOR=$(echo "$PACKAGE_VERSION" | awk -F. '{print $2}')
 	# PATCH=$(echo "$PACKAGE_VERSION" | awk -F. '{print $3}')
 
-	if [ "$(( MINOR % 1 ))" = "0" ]; then
-		PRE_RELEASE=true
+	if [ "$(( MINOR % 2 ))" = "0" ]; then
+		PRERELEASE=true
 	fi
 	# remove_unpushed_tags ##TODO
 }
@@ -50,14 +50,14 @@ update_changelog () {
 	PREVIOUS_VERSION=$(grep -Eo '\[v?[0-9]+\.[0-9]+\.[0-9]+\]' CHANGELOG.md | cut -d[ -f2 | cut -d] -f1 | head -1)
 	echo "[$0 ${FUNCNAME[0]}] update CHANGELOG.md from $PREVIOUS_VERSION to $PACKAGE_VERSION"
 
-	local PRE_RELEASE_TEXT=
-	if $PRE_RELEASE; then
-		PRE_RELEASE_TEXT=" (pre-release)"
+	local PRERELEASE_TEXT=
+	if $PRERELEASE; then
+		PRERELEASE_TEXT=" (pre-release)"
 	fi
 
 	rm "changelog_$PACKAGE_VERSION.md" 2>/dev/null || true
 	{
-		echo -e "# [${PACKAGE_VERSION}](https://github.com/kenherring/ablunit-test-runner/releases/tag/${PACKAGE_VERSION}) - $(date +%Y-%m-%d)${PRE_RELEASE_TEXT}\n"
+		echo -e "# [${PACKAGE_VERSION}](https://github.com/kenherring/ablunit-test-runner/releases/tag/${PACKAGE_VERSION}) - $(date +%Y-%m-%d)${PRERELEASE_TEXT}\n"
 		if ! git --no-pager log --pretty=format:' * %s' "${PREVIOUS_VERSION}...$(git merge-base origin/main HEAD)"; then
 			## todo while we start removing the 'v' prefix from tags
 			git --no-pager log --pretty=format:' * %s' "v${PREVIOUS_VERSION}...$(git merge-base origin/main HEAD)"
