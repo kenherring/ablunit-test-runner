@@ -6,12 +6,6 @@ set -euo pipefail
 validate_compile () {
 	echo "compiling..." >&2
 
-	npm run compile
-}
-
-validate_compile () {
-	echo "compiling..." >&2
-
 	npm run build
 }
 

@@ -3,15 +3,17 @@ set -euo pipefail
 
 usage () {
 	echo "
-usage: $0 [ -o 12.2.12 | 12.7.0 ] [ -p <project_name> ] [-b] [-i] [-m] [-h]
+usage: $0 [ -o 12.2.12 | 12.7.0 ] [ -p <project_name> ] [-bimPv]
 options:
   -o <version>  OE version (default: 12.2.12)
   -b            drop to bash shell inside container on failure
   -C            delete cache volume before running tests
   -i            run install and run test
   -m            copy modified files and staged files
+  -P            package extension
   -p <project>  run tests for a specific test project
                 alternative: set the  ABLUNIT_TEST_RUNNER_PROJECT_NAME environment variable
+  -v            verbose
   -h            show this help message and exit
 " >&2
 }
@@ -26,7 +28,7 @@ initialize () {
 	OE_VERSION=12.2.12
 	ABLUNIT_TEST_RUNNER_PROJECT_NAME=${ABLUNIT_TEST_RUNNER_PROJECT_NAME:-}
 
-	while getopts "bCdimso:p:h" OPT; do
+	while getopts "bCdimso:p:Pvh" OPT; do
 		case $OPT in
 			o)	OE_VERSION=$OPTARG ;;
 			b)	OPTS='-b' ;;
@@ -34,7 +36,9 @@ initialize () {
 			i)	TEST_PROJECT=dummy-ext ;;
 			m)	STAGED_ONLY=true ;;
 			h)	usage && exit 0 ;;
+			P)	CREATE_PACKAGE=true ;;
 			p)	ABLUNIT_TEST_RUNNER_PROJECT_NAME=$OPTARG ;;
+			v)	VERBOSE=true ;;
 			?)	usage && exit 1 ;;
 			*)	echo "Invalid option: -$OPT" >&2 && usage && exit 1 ;;
 		esac
@@ -43,7 +47,7 @@ initialize () {
 	GIT_BRANCH=$(git branch --show-current)
 	PROGRESS_CFG_BASE64=$(base64 "$DLC/progress.cfg" | tr '\n' ' ')
 	PWD=$(pwd -W 2>/dev/null || pwd)
-	export GIT_BRANCH PROGRESS_CFG_BASE64 STAGED_ONLY OE_VERSION TEST_PROJECT ABLUNIT_TEST_RUNNER_PROJECT_NAME
+	export GIT_BRANCH PROGRESS_CFG_BASE64 STAGED_ONLY OE_VERSION TEST_PROJECT ABLUNIT_TEST_RUNNER_PROJECT_NAME CREATE_PACKAGE VERBOSE
 
 	if $DELETE_CACHE_VOLUME; then
 		echo "deleting test-runner-cache volume"
@@ -73,6 +77,8 @@ run_tests_in_docker () {
 		-e STAGED_ONLY
 		-e OE_VERSION
 		-e TEST_PROJECT
+		-e CREATE_PACKAGE
+		-e VERBOSE
 	)
 	[ -n "$ABLUNIT_TEST_RUNNER_PROJECT_NAME" ] && ARGS+=(-e ABLUNIT_TEST_RUNNER_PROJECT_NAME)
 	ARGS+=(
@@ -89,4 +95,4 @@ run_tests_in_docker () {
 ########## MAIN BLOCK ##########
 initialize "$@"
 run_tests_in_docker
-echo "$0 completed successfully! [script=docker/$SCRIPT.sh]"
+echo "[$0] completed successfully! (script=docker/$SCRIPT.sh)"

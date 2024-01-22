@@ -5,14 +5,19 @@ initialize () {
 	local OPT OPTARG OPTIND
 	echo "[$0 ${FUNCNAME[0]}] pwd=$(pwd)"
 	BASH_AFTER=false
-	VERBOSE=false
 	CACHE_BASE=/home/circleci/cache
 	CIRCLECI=${CIRCLECI:-false}
+	GIT_BRANCH=$(cd "$REPO_VOLUME" && git branch --show-current)
+	npm_config_cache=$CACHE_BASE/node_modules_cache
+	PROJECT_DIR=/home/circleci/project
 	REPO_VOLUME=/home/circleci/ablunit-test-runner
 	STAGED_ONLY=${STAGED_ONLY:-true}
-	export npm_config_cache=$CACHE_BASE/node_modules_cache
-	mkdir -p $CACHE_BASE/node_modules_cache
-
+	VERBOSE=false
+	${CREATE_PACKAGE:-false} && TEST_PROJECT=package
+	
+	git config --global init.defaultBranch main
+	mkdir -p "$npm_config_cache" "$PROJECT_DIR"
+	export npm_config_cache
 
 	while getopts 'b' OPT; do
 		case "$OPT" in
@@ -33,7 +38,6 @@ initialize () {
 	echo 'copying files from local'
 	initialize_repo
 	restore_cache
-	npm install
 
 	if [ -z "${CIRCLE_BRANCH:-}" ]; then
 		CIRCLE_BRANCH=$(git branch --show-current)
@@ -42,14 +46,10 @@ initialize () {
 
 initialize_repo () {
 	echo "[$0 ${FUNCNAME[0]}] pwd=$(pwd)"
-	mkdir -p /home/circleci/project
-	cd /home/circleci/project
-	git config --global init.defaultBranch main
-	git init
-	git remote add origin "$REPO_VOLUME"
-	if [ "$GIT_BRANCH" = "$(git branch --show-current)" ]; then
+	git clone "$REPO_VOLUME" "$PROJECT_DIR"
+	cd "$PROJECT_DIR"
+	if [ "$(git branch --show-current)" = "$GIT_BRANCH" ]; then
 		git pull
-		git reset --hard "origin/$GIT_BRANCH"
 	else
 		git fetch origin "$GIT_BRANCH":"$GIT_BRANCH"
 		git checkout "$GIT_BRANCH"
@@ -106,14 +106,15 @@ run_tests () {
 
 	if [ "$TEST_PROJECT" = "base" ]; then
 		run_tests_base
+		scripts/validate.sh
 	elif [ "$TEST_PROJECT" = "dummy-ext" ]; then
 		run_tests_dummy_ext
+	elif [ "$TEST_PROJECT" = "package" ]; then
+		.circleci/package.sh
 	else
 		echo "ERROR: unknown test project"
 		exit 1
 	fi
-
-	scripts/validate.sh
 }
 
 run_tests_base () {
@@ -138,7 +139,7 @@ analyze_results () {
 		echo 'ERROR: mocha_results_*.xml not found'
 		HAS_ERROR=true
 	fi
-	if [ "$LCOV_COUNT" = 0 ]; then
+	if [ "$TEST_PROJECT" = "base" ] && [ "$LCOV_COUNT" = 0 ]; then
 		echo 'ERROR: lcov.info not found'
 		HAS_ERROR=true
 	fi
@@ -148,62 +149,22 @@ analyze_results () {
 		exit 1
 	fi
 
-	echo "[$0 ${FUNCNAME[0]}] artifacts to be saved:"
-	ls -al artifacts
+	if $VERBOSE; then
+		echo "artifacts to be saved:"
+		ls -al artifacts || true
+	fi
 }
 
 run_tests_dummy_ext () {
 	echo "[$0 ${FUNCNAME[0]}] pwd = $(pwd)"
-	package_extension
-	run_packaged_tests
-}
 
-package_extension () {
-	echo "[$0 ${FUNCNAME[0]}] pwd = $(pwd)"
-	local VSIX_COUNT
-
-	if ! $CIRCLECI; then
-		vsce package --githubBranch "$CIRCLE_BRANCH" --no-git-tag-version --pre-release
-	fi
-
-	echo "find packages: $(find . -name "ablunit-test-runner-*.vsix")"
-	if ! VSIX_COUNT=$(find . -name "ablunit-test-runner-*.vsix" | wc -l); then
-		VSIX_COUNT=0
-	fi
-	if [ "$VSIX_COUNT" = "0" ]; then
-		echo "ERROR: could not find .vsix after packaging extension!"
-		exit 1
-	elif [ "$VSIX_COUNT" != "1" ]; then
-		echo "ERROR: found multiple ablunit-test-runner-*.vsix files!"
-		exit 2
-	fi
-	echo "found $(find . -name "ablunit-test-runner-*.vsix") extension file"
-}
-
-run_packaged_tests () {
-	echo "[$0 ${FUNCNAME[0]}] pwd=$(pwd)"
-	local ABLUNIT_LOG
-
-	cd dummy-ext
-	npm run compile
-
-	export DONT_PROMPT_WSL_INSTALL=No_Prompt_please
-	if ! xvfb-run -a npm run test:install-and-run; then
-		ABLUNIT_LOG=$(find . -name 'ABLUnit.log')
-		if $VERBOSE; then
-			echo "---------- $ABLUNIT_LOG ----------"
-			cat "$ABLUNIT_LOG"
-		fi
-		echo "ERROR: test:install-and-run failed"
+	if ! .circleci/install_and_run.sh; then
+		echo "run_tests failed"
 		$BASH_AFTER && bash
 		exit 1
 	fi
-	if ! ls -al "$(pwd)"/artifacts/*.xml; then
-		echo "ERROR: no test results found"
-		$BASH_AFTER && bash
-		exit 1
-	fi
-	cd ..
+	echo "run_tests success"
+	analyze_results
 }
 
 save_cache () {
@@ -251,10 +212,10 @@ finish () {
 	echo "[$0 ${FUNCNAME[0]}] pwd=$(pwd)"
 	save_cache
 	$BASH_AFTER && bash
+	echo "[$0] completed successfully!"
 }
 
 ########## MAIN BLOCK ##########
 initialize "$@"
 run_tests
 finish
-echo "[$0] completed successfully!"
