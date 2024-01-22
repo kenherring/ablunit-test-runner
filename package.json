@@ -6,6 +6,7 @@
 	"preview": true,
 	"engineStrict": true,
 	"galleryBanner": {
+		"color": "#007ACC",
 		"theme": "dark"
 	},
 	"publisher": "kherring",

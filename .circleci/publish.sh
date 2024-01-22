@@ -20,6 +20,7 @@ main_block () {
     fi
 
     npm install -g @vscode/vsce || sudo npm install -g @vscode/vsce
+    echo "publishing file 'ablunit-test-runner-${CIRCLE_TAG}.vsix'"
     vsce publish --pre-release --githubBranch "main" --packagePath "ablunit-test-runner-${CIRCLE_TAG}.vsix"
 }
 

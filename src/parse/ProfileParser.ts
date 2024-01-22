@@ -391,7 +391,9 @@ export class ABLProfileJson {
 				CumulativeTime: Number(test[5])
 			}
 			if (!sourceName) {
-				log.error('could not find source name for module ' + modID)
+				if (modID !== 0) {
+					log.trace('could not find source name for module ' + modID)
+				}
 				return
 			}
 
