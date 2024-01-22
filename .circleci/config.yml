@@ -107,7 +107,6 @@ workflows:
       - publish:
           filters:
             tags: { only: /^v.*/ }
-            branches: { only: main }
           requires:
             - shellcheck/check
             - test-and-scan
