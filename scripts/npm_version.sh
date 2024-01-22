@@ -15,6 +15,8 @@ usage () {
 initialize () {
 	echo "[$0 ${FUNCNAME[0]}]"
 	echo "args=" "$@"
+
+	set -x
 	PRE_RELEASE=false
 	CIRCLE_BUILD_NUM=${CIRCLE_BUILD_NUM:-}
     PACKAGE_VERSION=$(node -p "require('./package.json').version")
@@ -56,9 +58,9 @@ update_changelog () {
 	rm "changelog_$PACKAGE_VERSION.md" 2>/dev/null || true
 	{
 		echo -e "# [${PACKAGE_VERSION}](https://github.com/kenherring/ablunit-test-runner/releases/tag/${PACKAGE_VERSION}) - $(date +%Y-%m-%d)${PRE_RELEASE_TEXT}\n"
-		if ! git log --pretty=format:' * %s' "${PREVIOUS_VERSION}...$(git merge-base origin/main HEAD)"; then
+		if ! git --no-pager log --pretty=format:' * %s' "${PREVIOUS_VERSION}...$(git merge-base origin/main HEAD)"; then
 			## todo while we start removing the 'v' prefix from tags
-			git log --pretty=format:' * %s' "v${PREVIOUS_VERSION}...$(git merge-base origin/main HEAD)"
+			git --no-pager log --pretty=format:' * %s' "v${PREVIOUS_VERSION}...$(git merge-base origin/main HEAD)"
 		fi
 		echo -e "\n\n**Full Changelog**: [${PREVIOUS_VERSION}...${PACKAGE_VERSION}](https://github.com/kenherring/ablunit-test-runner/compare/${PREVIOUS_VERSION}...${PACKAGE_VERSION})\n"
 		cat CHANGELOG.md
