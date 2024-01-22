@@ -3,7 +3,7 @@
 [![CircleCI](https://img.shields.io/circleci/build/github/kenherring/ablunit-test-runner/main?logo=circleci)](https://dl.circleci.com/status-badge/redirect/gh/kenherring/ablunit-test-runner/tree/main)
 [![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=kenherring_ablunit-test-runner&metric=sqale_rating)](https://sonarcloud.io/summary/new_code?id=kenherring_ablunit-test-runner)
 [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=kenherring_ablunit-test-runner&metric=coverage)](https://sonarcloud.io/summary/new_code?id=kenherring_ablunit-test-runner)
-![Visual Studio Marketplace Version (including pre-releases)](https://img.shields.io/visual-studio-marketplace/v/kherring.ablunit-test-runner?color=blue&link=https%3A%2F%2Fmarketplace.visualstudio.com%2Fitems%3FitemName%3Dkherring.ablunit-test-runner)
+[![VSCode Marketplace Version](https://img.shields.io/visual-studio-marketplace/v/kherring.ablunit-test-runner?include_prereleases&logo=visual%20studio%20code&logoColor=blue&color=blue)](https://marketplace.visualstudio.com/items?itemName=kherring.ablunit-test-runner)
 
 The [ABLUnit Test Runner](https://github.com/kenherring/ablunit-test-runner/) extension for VSCode integrates [ablunit tests](https://docs.progress.com/bundle/openedge-developer-studio-help-122/page/Learn-About-ABLUnit-Test-Framework.html) into the test explorer.
 
