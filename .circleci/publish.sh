@@ -9,15 +9,16 @@ main_block () {
         [ -z "${CIRCLE_TAG:-}" ] && CIRCLE_TAG=$(git describe --tags --abbrev=0)
     fi
 
-    if [ -z "$CIRCLE_TAG" ]; then
-        echo "exit: CIRCLE_TAG is empty, cannot publish release..."
+    if [ -z "${CIRCLE_TAG:-}" ]; then
+        echo "ERROR: missing CIRCLE_TAG environment var"
         exit 1
     fi
-    if [ ! -f "ablunit-test-runner-${CIRCLE_TAG#v}.vsix" ]; then
-        echo "ERROR: ablunit-test-runner-${CIRCLE_TAG#v}.vsix not found, creating it now..."
+
+    if [ ! -f "ablunit-test-runner-${CIRCLE_TAG}.vsix" ]; then
+        echo "ERROR: ablunit-test-runner-${CIRCLE_TAG}.vsix not found, creating it now..."
         exit 1
     fi
-    vsce publish --pre-release --githubBranch "main" --packagePath "ablunit-test-runner-v${CIRCLE_TAG}.vsix"
+    vsce publish --pre-release --githubBranch "main" --packagePath "ablunit-test-runner-${CIRCLE_TAG}.vsix"
 }
 
 attach_to_github_release () {

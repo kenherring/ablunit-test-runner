@@ -8,10 +8,10 @@ initialize () {
         CIRCLE_BRANCH=$(git branch --show-current)
     fi
 
-    if ! $CIRCLECI && [ -z "${CIRCLE_TAG:-}" ]; then
+    if [ -z "${CIRCLE_TAG:-}" ]; then
         CIRCLE_TAG=$PACKAGE_VERSION
     fi
-    if [ -z "$CIRCLE_TAG" ]; then
+    if [ -z "${CIRCLE_TAG:-}" ]; then
         echo "ERROR: missing CIRCLE_TAG environment var"
         exit 1
     fi
