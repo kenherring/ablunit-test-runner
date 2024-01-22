@@ -105,9 +105,9 @@ workflows:
           <<: *context-and-filters
           requires: [ 'package' ]
       - publish:
-          filters:
-            tags: { only: /^v.*/ }
-            branches: { only: main }
+          filters: ## ignore branches; build only tags
+            branches: { ignore: /^.*$/ }
+            tags: { only: /^v.*$/ }
           requires:
             - shellcheck/check
             - test-and-scan
