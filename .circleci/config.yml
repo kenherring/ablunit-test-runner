@@ -20,7 +20,6 @@ context-and-filters: &context-and-filters
     - DockerHub
     - PROGRESS_CFG
     - SonarCloud
-    - Azure_PAT
   filters:
     tags: ## all tags
       only: [ /^.*$/ ]
@@ -104,6 +103,8 @@ workflows:
           <<: *context-and-filters
           requires: [ 'package' ]
       - publish:
+          context:
+            - Azure_PAT
           filters: ## ignore branches; build only tags
             branches: { ignore: /^.*$/ }
             tags: { only: /^.*$/ }
