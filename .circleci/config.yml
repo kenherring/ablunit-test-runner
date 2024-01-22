@@ -107,7 +107,7 @@ workflows:
       - publish:
           filters: ## ignore branches; build only tags
             branches: { ignore: /^.*$/ }
-            tags: { only: /^v.*$/ }
+            tags: { only: /^.*$/ }
           requires:
             - shellcheck/check
             - test-and-scan
