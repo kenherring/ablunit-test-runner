@@ -1,4 +1,4 @@
-# [0.1.18](https://github.com/kenherring/ablunit-test-runner/releases/tag/0.1.18) - 2024-01-21 (pre-release)
+# [0.1.19](https://github.com/kenherring/ablunit-test-runner/releases/tag/0.1.19) - 2024-01-21 (pre-release)
 
  * Various pipeline, versioning, and release updates
  * Ensure timely response when cancelling a test run (#103)
@@ -11,7 +11,7 @@
  * Allow tests to run with no ablunit-test-profile.json file (#92)
  * Update `workspaceDir` -> `workspaceFolder` (#88)
 
-**Full Changelog**: [v0.1.9...v0.1.18](https://github.com/kenherring/ablunit-test-runner/compare/v0.1.9...v0.1.18)
+**Full Changelog**: [v0.1.9...v0.1.19](https://github.com/kenherring/ablunit-test-runner/compare/v0.1.9...v0.1.19)
 
 # [v0.1.9](https://github.com/kenherring/ablunit-test-runner/releases/tag/v0.1.9) - 2024-01-05 (pre-release)
 
