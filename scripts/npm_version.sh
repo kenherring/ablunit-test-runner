@@ -17,7 +17,7 @@ initialize () {
 	echo "args=" "$@"
 	PRE_RELEASE=false
 	CIRCLE_BUILD_NUM=${CIRCLE_BUILD_NUM:-}
-	PACKAGE_VERSION=$(jq -r '.version' package.json | cut -d'-' -f1)
+    PACKAGE_VERSION=$(node -p "require('./package.json').version")
 
 	# MAJOR=$(echo "$PACKAGE_VERSION" | awk -F. '{print $1}')
 	MINOR=$(echo "$PACKAGE_VERSION" | awk -F. '{print $2}')

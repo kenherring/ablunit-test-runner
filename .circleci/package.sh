@@ -3,12 +3,13 @@ set -euo pipefail
 
 initialize () {
     echo "[$0 ${FUNCNAME[0]}]"
+    PACKAGE_VERSION=$(node -p "require('./package.json').version")
     if [ -z "${CIRCLE_BRANCH:-}" ]; then
         CIRCLE_BRANCH=$(git branch --show-current)
     fi
 
-    if ! $CIRCLECI && [ -z "$CIRCLE_TAG" ]; then
-        CIRCLE_TAG=$(git describe --tags --abbrev=0)
+    if ! $CIRCLECI && [ -z "${CIRCLE_TAG:-}" ]; then
+        CIRCLE_TAG=$PACKAGE_VERSION
     fi
     if [ -z "$CIRCLE_TAG" ]; then
         echo "ERROR: missing CIRCLE_TAG environment var"
