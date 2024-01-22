@@ -23,8 +23,7 @@ context-and-filters: &context-and-filters
     - Azure_PAT
   filters:
     tags: ## all tags
-      only:
-        - /^.*#/
+      only: [ /^.*$/ ]
 store-artifacts: &store-artifacts
   - store_artifacts:
       when: always
