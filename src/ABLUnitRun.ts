@@ -2,7 +2,7 @@ import { CancellationToken, TestRun, Uri, workspace } from 'vscode'
 import { ABLResults } from './ABLResults'
 import { isRelativePath } from './ABLUnitConfigWriter'
 import { ExecException, exec } from "child_process"
-import { log } from './ABLUnitCommon'
+import { log } from './ChannelLogger'
 
 export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation?: CancellationToken) => {
 	const start = Date.now()

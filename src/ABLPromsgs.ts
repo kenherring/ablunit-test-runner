@@ -1,6 +1,6 @@
-import { Uri, workspace } from "vscode"
-import { log } from "./ABLUnitCommon"
-import { IDlc } from "./parse/OpenedgeProjectParser"
+import { Uri, workspace } from 'vscode'
+import { log } from './ChannelLogger'
+import { IDlc } from './parse/OpenedgeProjectParser'
 
 interface IPromsg {
 	msgnum: number

@@ -1,7 +1,7 @@
 import { Uri, workspace, WorkspaceFolder } from 'vscode'
 import { IProjectJson } from './parse/OpenedgeProjectParser'
 import { isRelativePath } from './ABLUnitConfigWriter'
-import { log } from './ABLUnitCommon'
+import { log } from './ChannelLogger'
 
 interface IPropathEntry {
 	uri: Uri

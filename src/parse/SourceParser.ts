@@ -1,6 +1,6 @@
 import { Uri, workspace } from 'vscode'
 import { PropathParser } from '../ABLPropath'
-import { log } from '../ABLUnitCommon'
+import { log } from '../ChannelLogger'
 
 interface IXrefInclude {
 	incUri: Uri

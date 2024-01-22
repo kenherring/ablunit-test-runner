@@ -1,7 +1,7 @@
 import { TextDecoder } from "util"
 import { Uri, workspace } from "vscode"
 import { PropathParser } from "../ABLPropath"
-import { log } from '../ABLUnitCommon'
+import { log } from '../ChannelLogger'
 
 const headerLength = 68
 

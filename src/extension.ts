@@ -1,23 +1,20 @@
 import { commands, tests, window, workspace,
 	CancellationToken, ConfigurationChangeEvent, EventEmitter, ExtensionContext, Position, Range, RelativePattern, Selection,
 	TestController, TestItem, TestItemCollection, TestMessage, TestTag, TestRunProfileKind, TestRunRequest,
-	TextDocument, Uri, WorkspaceFolder, FileType, CancellationError, TestRun } from 'vscode'
+	TextDocument, Uri, WorkspaceFolder, FileType, CancellationError, TestRun, extensions } from 'vscode'
 import { ABLResults } from './ABLResults'
 import { ABLTestSuite, ABLTestClass, ABLTestProgram, ABLTestFile, ABLTestCase, ABLTestDir, ABLTestData, resultData, testData } from './testTree'
 import { GlobSync } from 'glob'
-import { log } from './ABLUnitCommon'
+import { log } from './ChannelLogger'
 import { readFileSync } from 'fs'
 import { decorate, getRecentResults, setRecentResults } from './decorator'
-import { LIB_VERSION } from './version'
-import { versions } from 'process'
 
 export async function activate (context: ExtensionContext) {
 
 	const ctrl = tests.createTestController('ablunitTestController', 'ABLUnit Test')
-	log.info('activating extension!')
-	console.log("versions=" + JSON.stringify(versions))
-	log.info("versions=" + JSON.stringify(versions))
-	log.info('activating extension! (version=' + LIB_VERSION + ')')
+
+	logActivationEvent()
+
 	const contextStorageUri = context.storageUri ?? Uri.parse('file://' + process.env['TEMP']) // will always be defined as context.storageUri
 	const contextResourcesUri = Uri.joinPath(context.extensionUri,'resources')
 	setContextPaths(contextStorageUri, contextResourcesUri, ctrl)
@@ -860,4 +857,26 @@ async function createDir (uri: Uri) {
 	}, () => {
 		return workspace.fs.createDirectory(uri)
 	})
+}
+
+function logActivationEvent () {
+	const extensionVersion = getExtensionVersion()
+	console.log('activating extension! (version=' + extensionVersion + ')')
+	if (log) {
+		log.info('activating extension! (version=' + extensionVersion + ')')
+	}
+	if (!log) {
+		throw new Error('log is undefined')
+	}
+	log.info('activating extension! (version=' + extensionVersion + ')')
+}
+
+function getExtensionVersion () {
+	const ext = extensions.getExtension('kherring.ablunit-test-runner')
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+	if (ext?.packageJSON && (typeof ext.packageJSON['version'] === 'string')) {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+		return ext.packageJSON.version as string
+	}
+	throw new Error('unable to get extension version')
 }
