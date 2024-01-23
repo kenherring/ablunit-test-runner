@@ -86,7 +86,6 @@ class Logger {
 			default:
 				this.logOutputChannel.appendLine(message)
 				throw new Error("invalid log level for message! level=" + messageLevel + ", message=" + message)
-				break
 		}
 	}
 
