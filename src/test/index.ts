@@ -160,6 +160,9 @@ export function run (): Promise <void> {
 	if (!config) {
 		throw new Error('[run] Could not find config for project ' + proj)
 	}
+	if (typeof config.mocha.timeout !== 'number') {
+		throw new Error('[run] config.mocha.timeout is not a number')
+	}
 	// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 	return runTestsForProject(proj, config.mocha.timeout)
 }

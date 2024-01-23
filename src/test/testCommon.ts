@@ -5,6 +5,12 @@ import { ABLResults } from '../ABLResults'
 import log from '../ChannelLogger'
 import { GlobSync } from 'glob'
 
+interface IRuntime {
+	name: string,
+	path: string,
+	default?: boolean
+}
+
 export function sleep (time: number = 2000, msg?: string) {
 	let status = "sleeping for " + time + "ms"
 	if (msg) {
@@ -72,12 +78,6 @@ async function installOpenedgeABLExtension () {
 	if (!ext.isActive) {
 		throw new Error("[testCommon.ts] failed to activate extension")
 	}
-}
-
-interface IRuntime {
-	name: string,
-	path: string,
-	default?: boolean
 }
 
 export async function setRuntimes (runtimes: IRuntime[]) {

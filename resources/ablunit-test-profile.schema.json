@@ -33,6 +33,11 @@
 						"default": true,
 						"description": "Import the propath and database connection settings from 'openedge-project.json' possible."
 					},
+					"openedgeProjectProfile": {
+						"type": "string",
+						"default": "default",
+						"description": "The profile to use from 'openedge-project.json'.  Only used when 'importOpenedgeProjectJson' is true."
+					},
 					"options": {
 						"type": [ "object", "null" ],
 						"description": "Options passed to the OE test runner via the 'ablunit.json' file.  Set to null to prevent the creation of 'ablunit.json' or related args passed to the command line.",

@@ -1,5 +1,7 @@
 import { GlobSync } from 'glob'
+import { IDesktopTestConfiguration } from '@vscode/test-cli'
 import * as fs from 'fs'
+import { MochaOptions } from 'mocha'
 
 /* ********** Notes **********
 /* This file generates '.vscode-test.config.json'
@@ -13,15 +15,12 @@ import * as fs from 'fs'
 /* ********** End Notes ********** */
 
 
-export interface ITestConfig {
+export interface ITestConfig extends IDesktopTestConfiguration {
 	projName: string
 	label: string
 	files: string
 	workspaceFolder: string
-	mocha: {
-		ui: string
-		timeout: number
-	}
+	mocha: MochaOptions
 	launchArgs: string[],
 	env: { [key: string]: string | undefined }
 }

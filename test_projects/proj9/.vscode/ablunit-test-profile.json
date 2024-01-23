@@ -33,7 +33,7 @@
 
 		////# When true read 'openedge-project.json' to determine proper configuration
 		////# including DLC, propath, and database connections.
-		// "importOpenEdgeProjectJson": true,
+		// "importOpenedgeProjectJson": true,
 
 		////# Configuration object related to the command line run to execute tests.
 		"command": {

@@ -1,7 +1,7 @@
 import { strict as assert } from 'assert'
 import { before } from 'mocha'
 import { Uri, workspace } from 'vscode'
-import { deleteFile, doesFileExist, getTestCount, runAllTests, selectProfile, waitForExtensionActive } from '../testCommon'
+import { deleteFile, doesFileExist, getTestCount, runAllTests, selectProfile, updateTestProfile, waitForExtensionActive } from '../testCommon'
 
 // const projName = __dirname.split(/[\\/]/).pop()!
 const projName = "proj9"
@@ -30,7 +30,7 @@ suite(projName + ' - Extension Test Suite', () => {
 		assert.equal(0,await getTestCount(resultsJson,'error'),"error test count")
 	})
 
-	test(projName + '.2 - second profile passes', async () => {
+	test(projName + '.2 - second profile passes (project)', async () => {
 		await selectProfile('profile2')
 		await runAllTests()
 
@@ -60,6 +60,19 @@ suite(projName + ' - Extension Test Suite', () => {
 		await selectProfile('default')
 		await runAllTests()
 		await selectProfile('profile3')
+		await runAllTests()
+
+		const workspaceFolder = workspace.workspaceFolders![0].uri
+		const resultsJson = Uri.joinPath(workspaceFolder,'results.json')
+
+		assert(await doesFileExist(resultsJson), "missing results.json (" + resultsJson.fsPath + ")")
+		assert.equal(2,await getTestCount(resultsJson,'pass'),"passed test count")
+		assert.equal(0,await getTestCount(resultsJson,'fail'),"failed test count")
+		assert.equal(0,await getTestCount(resultsJson,'error'),"error test count")
+	})
+
+	test(projName + '.12 - second profile passes (config)', async () => {
+		await updateTestProfile('openedgeProjectProfile', 'profile2')
 		await runAllTests()
 
 		const workspaceFolder = workspace.workspaceFolders![0].uri
