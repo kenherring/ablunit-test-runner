@@ -6,7 +6,7 @@ import { parseCallstack, ICallStack } from './CallStackParser'
 import { PropathParser } from '../ABLPropath'
 import { parseString } from 'xml2js'
 import { ABLDebugLines } from '../ABLDebugLines'
-import { log } from '../ABLUnitCommon'
+import log from '../ChannelLogger'
 import { isRelativePath } from '../ABLUnitConfigWriter'
 
 

@@ -1,8 +1,8 @@
 import { CancellationToken, TestRun, Uri, workspace } from 'vscode'
 import { ABLResults } from './ABLResults'
 import { isRelativePath } from './ABLUnitConfigWriter'
-import { ExecException, exec } from "child_process"
-import { log } from './ABLUnitCommon'
+import { ExecException, ExecOptions, exec } from "child_process"
+import log from './ChannelLogger'
 
 export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation?: CancellationToken) => {
 	const start = Date.now()
@@ -99,7 +99,8 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 	}
 
 	const runCommand = () => {
-		log.info("ABLUnit Command Execution Started - dir='" + res.cfg.ablunitConfig.workspaceFolder.uri.fsPath + "'")
+		log.debug("ablunit command dir='" + res.cfg.ablunitConfig.workspaceFolder.uri.fsPath + "'")
+		log.info("----- ABLUnit Command Execution Started -----", options)
 		const args = getCommand()
 
 		const cmd = args[0]
@@ -111,21 +112,32 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 			const runenv = getEnvVars(res.dlc!.uri)
 			log.debug("cmd=" + cmd + ' ' + args.join(' '))
 
-			exec(cmd + ' ' + args.join(' '), {env: runenv, cwd: res.cfg.ablunitConfig.workspaceFolder.uri.fsPath, signal: signal}, (err: ExecException | null, stdout: string, stderr: string) => {
+			const execOpts: ExecOptions = {
+				env: runenv,
+				cwd: res.cfg.ablunitConfig.workspaceFolder.uri.fsPath,
+				signal: signal,
+				timeout: 120000
+			}
+
+			exec(cmd + ' ' + args.join(' ') + ' 2>&1', execOpts, (err: ExecException | null, stdout: string, stderr: string) => {
 				const duration = Date.now() - start
+				if (err) {
+					log.error("Error = " + err.name + " (ExecExcetion)\r\n   " + err.message, options)
+					log.error("err=" + JSON.stringify(err))
+					reject(err)
+				}
 				if (stdout) {
-					log.info("_progres stdout=" + stdout, options)
+					// stdout = '[stdout] ' + stdout.replace(/\n/g, '\n[stdout] ')
+					log.info(stdout, options)
 				}
 				if (stderr) {
-					log.error("_progres stderr=" + stderr, options)
+					stderr = '[stderr] ' + stderr.replace(/\n/g, '\n[stderr] ')
+					log.error(stderr, options)
 				}
-				if (err) {
-					log.error("_progres err=" + err.name + " (ExecExcetion)\r\n   " + err.message, options)
-				}
-				if(err || stderr) {
-					reject(new Error ("ABLUnit Command Execution Failed - duration: " + duration))
-				}
-				log.info("ABLUnit Command Execution Completed - duration: " + duration)
+				// if(stderr) {
+				// 	reject(new Error ("ABLUnit Command Execution Failed - duration: " + duration))
+				// }
+				log.info("----- ABLUnit Command Execution Completed -----", options)
 				resolve("ABLUnit Command Execution Completed - duration: " + duration)
 			})
 		})
@@ -133,6 +145,8 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 
 	return runCommand().then(() => {
 		return res.parseOutput(options).then()
+	}, (err) => {
+		log.error("Err=" + err)
 	})
 }
 

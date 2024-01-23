@@ -1,6 +1,6 @@
 import { Uri, workspace } from 'vscode'
 import { TextDecoder } from 'util'
-import { log } from '../ABLUnitCommon'
+import log from '../ChannelLogger'
 
 const textDecoder = new TextDecoder('utf-8')
 

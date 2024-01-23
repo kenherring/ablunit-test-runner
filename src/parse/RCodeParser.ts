@@ -1,7 +1,7 @@
 import { TextDecoder } from "util"
 import { Uri, workspace } from "vscode"
 import { PropathParser } from "../ABLPropath"
-import { log } from '../ABLUnitCommon'
+import log from '../ChannelLogger'
 
 const headerLength = 68
 
@@ -150,16 +150,16 @@ export const getSourceMapFromRCode = async (propath: PropathParser, uri: Uri) =>
 		return name2
 	}
 
-	const parseVar = (_bytes: Uint32Array, _pos: number, prefix: string = '') => {
-		log.trace(prefix + " TODO - implement rcode parsing function parseVar")
+	const parseVar = (_bytes: Uint32Array, _pos: number, _prefix: string = '') => {
+		// log.trace(prefix + " TODO - implement rcode parsing function parseVar")
 	}
 
-	const parseParam = (_bytes: Uint32Array, _pos: number, prefix: string = '') => {
-		log.trace(prefix + " TODO - implement rcode parsing function parseParam")
+	const parseParam = (_bytes: Uint32Array, _pos: number, _prefix: string = '') => {
+		// log.trace(prefix + " TODO - implement rcode parsing function parseParam")
 	}
 
-	const parseProcTT = (_bytes: Uint32Array, _pos: number, prefix: string = '') => {
-		log.trace(prefix + " TODO - implement rcode parsing function parseProcTT")
+	const parseProcTT = (_bytes: Uint32Array, _pos: number, _prefix: string = '') => {
+		// log.trace(prefix + " TODO - implement rcode parsing function parseProcTT")
 	}
 
 	const parseProcs = (bytes: Uint32Array, pos: number, prefix: string = '') => {

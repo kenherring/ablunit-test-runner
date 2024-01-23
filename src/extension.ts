@@ -1,23 +1,20 @@
 import { commands, tests, window, workspace,
 	CancellationToken, ConfigurationChangeEvent, EventEmitter, ExtensionContext, Position, Range, RelativePattern, Selection,
 	TestController, TestItem, TestItemCollection, TestMessage, TestTag, TestRunProfileKind, TestRunRequest,
-	TextDocument, Uri, WorkspaceFolder, FileType, CancellationError, TestRun } from 'vscode'
+	TextDocument, Uri, WorkspaceFolder, FileType, CancellationError, TestRun, extensions } from 'vscode'
 import { ABLResults } from './ABLResults'
 import { ABLTestSuite, ABLTestClass, ABLTestProgram, ABLTestFile, ABLTestCase, ABLTestDir, ABLTestData, resultData, testData } from './testTree'
 import { GlobSync } from 'glob'
-import { log } from './ABLUnitCommon'
+import log from './ChannelLogger'
 import { readFileSync } from 'fs'
 import { decorate, getRecentResults, setRecentResults } from './decorator'
-import { LIB_VERSION } from './version'
-import { versions } from 'process'
 
 export async function activate (context: ExtensionContext) {
 
 	const ctrl = tests.createTestController('ablunitTestController', 'ABLUnit Test')
-	log.info('activating extension!')
-	console.log("versions=" + JSON.stringify(versions))
-	log.info("versions=" + JSON.stringify(versions))
-	log.info('activating extension! (version=' + LIB_VERSION + ')')
+
+	logActivationEvent()
+
 	const contextStorageUri = context.storageUri ?? Uri.parse('file://' + process.env['TEMP']) // will always be defined as context.storageUri
 	const contextResourcesUri = Uri.joinPath(context.extensionUri,'resources')
 	setContextPaths(contextStorageUri, contextResourcesUri, ctrl)
@@ -130,7 +127,7 @@ export async function activate (context: ExtensionContext) {
 				}
 			}
 
-			log.info('starting ablunit run', run)
+			log.info('starting ablunit run')
 
 			let ret = false
 			for (const r of res) {
@@ -142,7 +139,7 @@ export async function activate (context: ExtensionContext) {
 				ret = await r.run(run).then(() => {
 					return true
 				}, (err) => {
-					log.error('ablunit run failed with exception: ' + err, run)
+					log.error('ablunit run failed parsing results with exception: ' + err, run)
 					return false
 				})
 				if (!ret) {
@@ -151,9 +148,13 @@ export async function activate (context: ExtensionContext) {
 
 				if (r.ablResults) {
 					const p = r.ablResults.resultsJson[0]
-					const totals = 'Totals - ' + p.tests + ' tests, ' + p.passed + ' passed, ' + p.errors + ' errors, ' + p.failures + ' failures'
+					const totals = 'Totals - '
+								+ p.tests + ' tests, '
+								+ p.passed + ' passed, '
+								+ p.errors + ' errors, '
+								+ p.failures + ' failures, '
+								+ ' (duration=' + r.duration() + 'ms)'
 					log.info(totals, run)
-					log.info('Duration - ' + r.duration() + 's', run)
 				} else {
 					log.debug('cannot print totals - missing ablResults object')
 				}
@@ -180,7 +181,7 @@ export async function activate (context: ExtensionContext) {
 				return
 			}
 
-			log.info('ablunit test run complete', run)
+			log.debug('ablunit test run complete', run)
 
 			if (run.token.isCancellationRequested) {
 				for (const { test } of queue) {
@@ -406,7 +407,7 @@ function getOrCreateFile (controller: TestController, uri: Uri, excludePatterns?
 
 	const data = createFileNode(uri)
 	if(!data) {
-		log.trace('No tests found in file: ' + uri.fsPath)
+		log.trace('No tests found in file: ' +workspace.asRelativePath(uri))
 		return { item: undefined, data: undefined }
 	}
 	const file = controller.createTestItem(uri.fsPath, workspace.asRelativePath(uri.fsPath), uri)
@@ -860,4 +861,22 @@ async function createDir (uri: Uri) {
 	}, () => {
 		return workspace.fs.createDirectory(uri)
 	})
+}
+
+function logActivationEvent () {
+	const extensionVersion = getExtensionVersion()
+	if (!log) {
+		throw new Error('log is undefined')
+	}
+	log.info('activating extension! (version=' + extensionVersion + ')')
+}
+
+function getExtensionVersion () {
+	const ext = extensions.getExtension('kherring.ablunit-test-runner')
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+	if (ext?.packageJSON && (typeof ext.packageJSON['version'] === 'string')) {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+		return ext.packageJSON.version as string
+	}
+	throw new Error('unable to get extension version')
 }
