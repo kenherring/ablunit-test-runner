@@ -2,19 +2,28 @@ import { LogLevel, TestRun, window } from 'vscode'
 import path from 'path'
 
 class Logger {
+	private static instance: Logger
 
-	private readonly logOutputChannel = window.createOutputChannel('ABLUnit', { log: true })
+	private readonly logOutputChannel
 	private readonly consoleLogLevel = LogLevel.Debug
 	private readonly testResultsLogLevel = LogLevel.Info
 	private logLevel: number
 	private testResultsTimestamp = false
 
-	constructor () {
+	private constructor () {
 		this.logLevel = LogLevel.Info
+		this.logOutputChannel = window.createOutputChannel('ABLUnit', { log: true })
 		this.logOutputChannel.clear()
 		this.logOutputChannel.appendLine('ABLUnit output channel created')
 		console.log('ABLUnit output channel created (logLevel=' + this.logOutputChannel.logLevel + ')')
 		this.logOutputChannel.onDidChangeLogLevel((e) => { this.setLogLevel(e) })
+	}
+
+	public static getInstance () {
+		if (!Logger.instance) {
+			Logger.instance = new Logger()
+		}
+		return Logger.instance
 	}
 
 	setLogLevel (e: LogLevel) {
@@ -55,28 +64,29 @@ class Logger {
 		this.writeMessage(LogLevel.Error, message, testRun)
 	}
 
-
 	private writeMessage (messageLevel: LogLevel, message: string, testRun?: TestRun) {
-		if (messageLevel <= this.logOutputChannel.logLevel) { return }
 		this.writeToChannel(messageLevel, message)
 
-		if (testRun && messageLevel <= this.testResultsLogLevel) {
+		if (testRun && messageLevel >= this.testResultsLogLevel) {
 			this.writeToTestResults(message, testRun)
 		}
 
-		if (messageLevel <= this.consoleLogLevel) {
+		if (messageLevel >= this.consoleLogLevel) {
 			this.writeToConsole(messageLevel, message)
 		}
 	}
 
 	private writeToChannel (messageLevel: LogLevel, message: string) {
 		switch (messageLevel) {
-			case LogLevel.Error:    this.logOutputChannel.error(message); break
-			case LogLevel.Warning:  this.logOutputChannel.warn(message); break
-			case LogLevel.Info:     this.logOutputChannel.info(message); break
+			case LogLevel.Trace:    this.logOutputChannel.trace(message); break
 			case LogLevel.Debug:    this.logOutputChannel.debug(message); break
-			case LogLevel.Trace:    this.logOutputChannel.appendLine(message); break
-			default:                throw new Error("invalid log level for message! level=" + messageLevel + ", message=" + message)
+			case LogLevel.Info:     this.logOutputChannel.info(message); break
+			case LogLevel.Warning:  this.logOutputChannel.warn(message); break
+			case LogLevel.Error:    this.logOutputChannel.error(message); break
+			default:
+				this.logOutputChannel.appendLine(message)
+				throw new Error("invalid log level for message! level=" + messageLevel + ", message=" + message)
+				break
 		}
 	}
 
@@ -91,11 +101,11 @@ class Logger {
 	private writeToConsole (messageLevel: LogLevel, message: string) {
 		message = this.decorateMessage(message)
 		switch (messageLevel) {
-			case LogLevel.Error:    console.error(message); break
-			case LogLevel.Warning:  console.warn(message); break
-			case LogLevel.Info:     console.info(message); break
-			case LogLevel.Debug:    console.debug(message); break
 			case LogLevel.Trace:    console.trace(message); break
+			case LogLevel.Debug:    console.debug(message); break
+			case LogLevel.Info:     console.info(message); break
+			case LogLevel.Warning:  console.warn(message); break
+			case LogLevel.Error:    console.error(message); break
 			default:                console.log(message); break
 		}
 	}
@@ -130,4 +140,4 @@ class Logger {
 
 }
 
-export const log: Logger = new Logger()
+export default Logger.getInstance()

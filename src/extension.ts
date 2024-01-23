@@ -5,7 +5,7 @@ import { commands, tests, window, workspace,
 import { ABLResults } from './ABLResults'
 import { ABLTestSuite, ABLTestClass, ABLTestProgram, ABLTestFile, ABLTestCase, ABLTestDir, ABLTestData, resultData, testData } from './testTree'
 import { GlobSync } from 'glob'
-import { log } from './ChannelLogger'
+import log from './ChannelLogger'
 import { readFileSync } from 'fs'
 import { decorate, getRecentResults, setRecentResults } from './decorator'
 
@@ -127,7 +127,7 @@ export async function activate (context: ExtensionContext) {
 				}
 			}
 
-			log.info('starting ablunit run', run)
+			log.info('starting ablunit run')
 
 			let ret = false
 			for (const r of res) {
@@ -139,7 +139,7 @@ export async function activate (context: ExtensionContext) {
 				ret = await r.run(run).then(() => {
 					return true
 				}, (err) => {
-					log.error('ablunit run failed with exception: ' + err, run)
+					log.error('ablunit run failed parsing results with exception: ' + err, run)
 					return false
 				})
 				if (!ret) {
@@ -148,9 +148,13 @@ export async function activate (context: ExtensionContext) {
 
 				if (r.ablResults) {
 					const p = r.ablResults.resultsJson[0]
-					const totals = 'Totals - ' + p.tests + ' tests, ' + p.passed + ' passed, ' + p.errors + ' errors, ' + p.failures + ' failures'
+					const totals = 'Totals - '
+								+ p.tests + ' tests, '
+								+ p.passed + ' passed, '
+								+ p.errors + ' errors, '
+								+ p.failures + ' failures, '
+								+ ' (duration=' + r.duration() + 'ms)'
 					log.info(totals, run)
-					log.info('Duration - ' + r.duration() + 's', run)
 				} else {
 					log.debug('cannot print totals - missing ablResults object')
 				}
@@ -177,7 +181,7 @@ export async function activate (context: ExtensionContext) {
 				return
 			}
 
-			log.info('ablunit test run complete', run)
+			log.debug('ablunit test run complete', run)
 
 			if (run.token.isCancellationRequested) {
 				for (const { test } of queue) {
@@ -403,7 +407,7 @@ function getOrCreateFile (controller: TestController, uri: Uri, excludePatterns?
 
 	const data = createFileNode(uri)
 	if(!data) {
-		log.trace('No tests found in file: ' + uri.fsPath)
+		log.trace('No tests found in file: ' +workspace.asRelativePath(uri))
 		return { item: undefined, data: undefined }
 	}
 	const file = controller.createTestItem(uri.fsPath, workspace.asRelativePath(uri.fsPath), uri)
@@ -861,10 +865,6 @@ async function createDir (uri: Uri) {
 
 function logActivationEvent () {
 	const extensionVersion = getExtensionVersion()
-	console.log('activating extension! (version=' + extensionVersion + ')')
-	if (log) {
-		log.info('activating extension! (version=' + extensionVersion + ')')
-	}
 	if (!log) {
 		throw new Error('log is undefined')
 	}

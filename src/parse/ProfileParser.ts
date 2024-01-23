@@ -2,7 +2,7 @@ import { Uri, workspace } from 'vscode'
 import { getContentFromFilesystem } from './TestParserCommon'
 import { PropathParser } from '../ABLPropath'
 import { ABLDebugLines } from '../ABLDebugLines'
-import { log } from '../ChannelLogger'
+import log from '../ChannelLogger'
 
 export class ABLProfile {
 	profJSON?: ABLProfileJson
@@ -64,7 +64,7 @@ export class ABLProfile {
 		}
 
 		this.profJSON.modules.sort((a,b) => a.ModuleID - b.ModuleID)
-		log.info("parsing profiler data complete")
+		log.debug("parsing profiler data complete")
 		if (writeJson) {
 			const jsonUri = Uri.parse(uri.fsPath.replace(/\.[a-zA-Z]+$/,'.json'))
 			this.writeJsonToFile(jsonUri).then(null, (err: Error) => {
@@ -537,7 +537,9 @@ export class ABLProfileJson {
 	}
 
 	addSection7 (lines: string[]) {
-		log.trace("section 7 not implemented.  line count = " + lines.length)
+		if (lines.length !== 0) {
+			log.trace("section 7 not implemented.  line count = " + lines.length)
+		}
 	}
 
 	// //// https://docs.progress.com/bundle/abl-reference/page/STATISTICS-attribute.html

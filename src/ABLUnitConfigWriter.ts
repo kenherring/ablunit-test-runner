@@ -1,5 +1,5 @@
 import { FileType, Uri, workspace, WorkspaceFolder } from 'vscode'
-import { log } from './ChannelLogger'
+import log from './ChannelLogger'
 import { PropathParser } from './ABLPropath'
 import { platform } from 'os'
 import { getProfileConfig, RunConfig } from './parse/TestProfileParser'

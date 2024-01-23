@@ -28,7 +28,7 @@
 import * as path from 'path'
 import * as fs from 'fs'
 import { Uri, workspace } from 'vscode'
-import { log } from '../ChannelLogger'
+import log from '../ChannelLogger'
 import { readStrippedJsonFile } from '../ABLUnitCommon'
 
 interface IOERuntime {

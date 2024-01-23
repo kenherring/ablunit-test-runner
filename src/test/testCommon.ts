@@ -2,7 +2,7 @@ import { ConfigurationTarget, FileType, TestController, Uri, WorkspaceFolder, co
 import { ITestSuites } from '../parse/ResultsParser'
 import { strict as assert } from 'assert'
 import { ABLResults } from '../ABLResults'
-import { log } from '../ChannelLogger'
+import log from '../ChannelLogger'
 import { GlobSync } from 'glob'
 
 export function sleep (time: number = 2000, msg?: string) {

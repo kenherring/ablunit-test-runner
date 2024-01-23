@@ -1,6 +1,6 @@
 import { Uri, workspace, WorkspaceFolder } from 'vscode'
 import { readStrippedJsonFile } from '../ABLUnitCommon'
-import { log } from '../ChannelLogger'
+import log from '../ChannelLogger'
 import { getOpenEdgeProfileConfig, IBuildPathEntry } from './openedgeConfigFile'
 
 interface IRuntime {

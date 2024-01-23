@@ -7,7 +7,7 @@ import { ABLProfile, ABLProfileJson, IModule } from './parse/ProfileParser'
 import { ABLDebugLines } from './ABLDebugLines'
 import { ABLPromsgs, getPromsgText } from './ABLPromsgs'
 import { PropathParser } from './ABLPropath'
-import { log } from './ChannelLogger'
+import log from './ChannelLogger'
 import { FileCoverage, CoveredCount, StatementCoverage } from './TestCoverage'
 import { ablunitRun } from './ABLUnitRun'
 import { getDLC, IDlc } from './parse/OpenedgeProjectParser'
@@ -218,7 +218,7 @@ export class ABLResults implements Disposable {
 
 	async parseOutput (options: TestRun) {
 		this.setStatus("parsing results")
-		log.info("parsing results from " + this.cfg.ablunitConfig.optionsUri.filenameUri.fsPath, options)
+		log.debug("parsing results from " + this.cfg.ablunitConfig.optionsUri.filenameUri.fsPath, options)
 
 		this.endTime = new Date()
 		const parseStartTime = new Date()
@@ -239,7 +239,7 @@ export class ABLResults implements Disposable {
 
 		if (this.cfg.ablunitConfig.profiler.enabled) {
 			this.setStatus("parsing profiler data")
-			log.info("parsing profiler data from " + this.cfg.ablunitConfig.profFilenameUri.fsPath, options)
+			log.debug("parsing profiler data from " + this.cfg.ablunitConfig.profFilenameUri.fsPath, options)
 			await this.parseProfile().then(() => {
 				return true
 			}, (err) => {
@@ -251,7 +251,7 @@ export class ABLResults implements Disposable {
 
 		const parseTime = (Number(new Date()) - Number(parseStartTime))
 		this.setStatus("parsing output complete (time=" + parseTime + ")")
-		log.info("parsing output complete (time=" + parseTime + ")", options)
+		log.debug("parsing output complete (time=" + parseTime + ")", options)
 	}
 
 	async assignTestResults (item: TestItem, options: TestRun) {

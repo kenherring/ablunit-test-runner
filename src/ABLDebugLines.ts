@@ -1,6 +1,6 @@
 
 import { PropathParser } from "./ABLPropath"
-import { log } from './ChannelLogger'
+import log from './ChannelLogger'
 import { ISourceMap, getSourceMapFromRCode } from "./parse/RCodeParser"
 import { getSourceMapFromSource } from "./parse/SourceParser"
 

@@ -2,7 +2,7 @@ import { strict as assert } from 'assert'
 import { before } from 'mocha'
 import { CancellationError, TestItemCollection, commands } from 'vscode'
 import { getTestController, runAllTests, sleep, waitForExtensionActive } from '../testCommon'
-import { log } from '../../ChannelLogger'
+import log from '../../ChannelLogger'
 
 const projName = 'proj7B'
 
