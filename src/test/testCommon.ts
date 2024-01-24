@@ -4,12 +4,7 @@ import { strict as assert } from 'assert'
 import { ABLResults } from '../ABLResults'
 import log from '../ChannelLogger'
 import { GlobSync } from 'glob'
-
-interface IRuntime {
-	name: string,
-	path: string,
-	default?: boolean
-}
+import { readStrippedJsonFile } from '../ABLUnitCommon'
 
 export function sleep (time: number = 2000, msg?: string) {
 	let status = "sleeping for " + time + "ms"
@@ -78,6 +73,12 @@ async function installOpenedgeABLExtension () {
 	if (!ext.isActive) {
 		throw new Error("[testCommon.ts] failed to activate extension")
 	}
+}
+
+interface IRuntime {
+	name: string,
+	path: string,
+	default?: boolean
 }
 
 export async function setRuntimes (runtimes: IRuntime[]) {
@@ -243,31 +244,30 @@ export function updateConfig (key: string, value: string | string[] | undefined)
 }
 
 export function updateTestProfile (key: string, value: string | string[] | boolean): Thenable<void> {
-	return workspace.fs.readFile(Uri.joinPath(getWorkspaceUri(), '.vscode', 'ablunit-test-profile.json')).then((content) => {
-		const str = Buffer.from(content.buffer).toString()
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-		const profile = JSON.parse(str)
-		const keys = key.split('.')
+	const profile = readStrippedJsonFile(Uri.joinPath(getWorkspaceUri(), '.vscode', 'ablunit-test-profile.json'))
+	const keys = key.split('.')
 
-		if (keys.length === 3) {
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-			profile["configurations"][0][keys[0]][keys[1]][keys[2]] = value
-		} else if (keys.length ===2) {
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-			profile["configurations"][0][keys[0]][keys[1]] = value
-		} else {
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-			profile["configurations"][0][keys[0]] = value
-		}
+	if (keys.length === 3) {
+		// @ts-expect-error 123
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+		profile['configurations'][0][keys[0]][keys[1]][keys[2]] = value
+	} else if (keys.length ===2) {
+		// @ts-expect-error 123
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+		profile['configurations'][0][keys[0]][keys[1]] = value
+	} else {
+		// @ts-expect-error 123
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+		profile['configurations'][0][keys[0]] = value
+	}
 
-		// profile.configurations[0][key] = value
-		let newtext = JSON.stringify(profile,null,4) + "\n"
-		if (process.platform === 'win32') {
-			newtext = newtext.replace(/\n/g,'\r\n')
-		}
-		const newjson = Buffer.from(newtext)
-		return workspace.fs.writeFile(Uri.joinPath(getWorkspaceUri(), '.vscode', 'ablunit-test-profile.json'), newjson)
-	})
+	// profile.configurations[0][key] = value
+	let newtext = JSON.stringify(profile,null,4) + "\n"
+	if (process.platform === 'win32') {
+		newtext = newtext.replace(/\n/g,'\r\n')
+	}
+	const newjson = Buffer.from(newtext)
+	return workspace.fs.writeFile(Uri.joinPath(getWorkspaceUri(), '.vscode', 'ablunit-test-profile.json'), newjson)
 }
 
 export async function selectProfile (profile: string) {

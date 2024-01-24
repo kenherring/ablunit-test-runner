@@ -98,11 +98,12 @@ export class ABLResults implements Disposable {
 		log.info("[start] workspaceFolder=" + this.workspaceFolder.uri.fsPath)
 		this.cfg.setup(this.workspaceFolder)
 
-		this.dlc = getDLC(this.workspaceFolder)
+		this.dlc = getDLC(this.workspaceFolder, this.cfg.ablunitConfig.openedgeProjectProfile)
 		this.promsgs = new ABLPromsgs(this.dlc, this.globalStorageUri)
 
-		const impOEJson = workspace.getConfiguration('ablunit').get('importOpenedgeProjectJson', true)
-		this.propath = this.cfg.readPropathFromJson(impOEJson)
+		// TODO - check profile first
+		// const impOEJson = workspace.getConfiguration('ablunit').get('importOpenedgeProjectJson', true)
+		this.propath = this.cfg.readPropathFromJson()
 		this.debugLines = new ABLDebugLines(this.propath)
 
 		if(this.cfg.ablunitConfig.dbConns) {

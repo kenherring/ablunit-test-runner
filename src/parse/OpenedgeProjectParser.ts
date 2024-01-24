@@ -25,14 +25,14 @@ function getProjectJson (workspaceFolder: WorkspaceFolder) {
 	return data
 }
 
-export function getDLC (workspaceFolder: WorkspaceFolder, projectJson?: string) {
+export function getDLC (workspaceFolder: WorkspaceFolder, openedgeProjectProfile?: string, projectJson?: string) {
 	const dlc = dlcMap.get(workspaceFolder)
 	if (dlc) {
 		return dlc
 	}
 
 	let runtimeDlc: Uri | undefined = undefined
-	const oeversion = getOEVersion(workspaceFolder, projectJson)
+	const oeversion = getOEVersion(workspaceFolder, openedgeProjectProfile, projectJson)
 	const runtimes: IRuntime[] = workspace.getConfiguration("abl.configuration").get("runtimes",[])
 
 	for (const runtime of runtimes) {
@@ -56,8 +56,8 @@ export function getDLC (workspaceFolder: WorkspaceFolder, projectJson?: string) 
 	throw new Error("unable to determine DLC")
 }
 
-export function getOEVersion (workspaceFolder: WorkspaceFolder, projectJson?: string) {
-	const profileJson = getOpenEdgeProfileConfig(workspaceFolder.uri)
+export function getOEVersion (workspaceFolder: WorkspaceFolder, openedgeProjectProfile?: string, projectJson?: string) {
+	const profileJson = getOpenEdgeProfileConfig(workspaceFolder.uri, openedgeProjectProfile)
 	if (!profileJson) {
 		log.debug("[getOEVersion] profileJson not found")
 		return undefined

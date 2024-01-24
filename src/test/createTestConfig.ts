@@ -1,7 +1,5 @@
 import { GlobSync } from 'glob'
-import { IDesktopTestConfiguration } from '@vscode/test-cli'
 import * as fs from 'fs'
-import { MochaOptions } from 'mocha'
 
 /* ********** Notes **********
 /* This file generates '.vscode-test.config.json'
@@ -15,12 +13,15 @@ import { MochaOptions } from 'mocha'
 /* ********** End Notes ********** */
 
 
-export interface ITestConfig extends IDesktopTestConfiguration {
+export interface ITestConfig {
 	projName: string
 	label: string
 	files: string
 	workspaceFolder: string
-	mocha: MochaOptions
+	mocha: {
+		ui: string
+		timeout: number
+	}
 	launchArgs: string[],
 	env: { [key: string]: string | undefined }
 }
@@ -80,13 +81,13 @@ function createTestConfig (projName: string, testFile: string, workspaceFolder?:
 export function getTestConfig () {
 	const testConfig: ITestConfig[] = []
 
-	const g = new GlobSync('**/*.test.ts', { cwd: '.' })
+	const g = new GlobSync('**/*.test.js', { cwd: '.' })
 	if (g.found.length === 0) {
 		throw new Error('No test files found')
 	}
 	for (const f of g.found) {
 		let maxTimeout = 15000
-		const projName = f.replace('.test.ts', '').split('/').reverse()[0]
+		const projName = f.replace('.test.js', '').split('/').reverse()[0]
 		if (projName.startsWith('proj7A') || testConfig.length === 0) {
 			maxTimeout = 60000
 		}

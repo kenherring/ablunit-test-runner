@@ -121,13 +121,15 @@ export class ABLUnitConfig  {
 		}
 	}
 
-	readPropathFromJson (impOEJson: boolean) {
+	readPropathFromJson () {
 		log.info("reading propath from openedge-project.json")
 		const parser: PropathParser = new PropathParser(this.ablunitConfig.workspaceFolder)
 
 		let conf = undefined
-		if (impOEJson) {
-			conf = getOpenEdgeProfileConfig(this.ablunitConfig.workspaceFolder.uri)
+		if (this.ablunitConfig.importOpenedgeProjectJson) {
+			console.log("----- " + this.ablunitConfig.openedgeProjectProfile)
+			conf = getOpenEdgeProfileConfig(this.ablunitConfig.workspaceFolder.uri, this.ablunitConfig.openedgeProjectProfile)
+			console.log("----- " + JSON.stringify(conf))
 		}
 		if (conf && conf.buildPath.length > 0) {
 			const pathObj: IBuildPathEntry[] = []
