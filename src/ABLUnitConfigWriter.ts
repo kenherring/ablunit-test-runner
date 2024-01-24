@@ -6,7 +6,7 @@ import { getProfileConfig, RunConfig } from './parse/TestProfileParser'
 import { IABLUnitJson, ITestObj } from './ABLResults'
 import { CoreOptions } from './parse/config/CoreOptions'
 import { ProfilerOptions } from './parse/config/ProfilerOptions'
-import { getOpenEdgeProfileConfig, IBuildPathEntry, IDatabaseConnection } from './parse/openedgeConfigFile'
+import { getOpenEdgeProfileConfig, IBuildPathEntry, IDatabaseConnection } from './parse/OpenedgeProjectParser'
 
 
 // KEEP IN REPO CONFIG:
