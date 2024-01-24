@@ -81,13 +81,13 @@ function createTestConfig (projName: string, testFile: string, workspaceFolder?:
 export function getTestConfig () {
 	const testConfig: ITestConfig[] = []
 
-	const g = new GlobSync('**/*.test.ts', { cwd: '.' })
+	const g = new GlobSync('**/*.test.js', { cwd: '.' })
 	if (g.found.length === 0) {
 		throw new Error('No test files found')
 	}
 	for (const f of g.found) {
 		let maxTimeout = 15000
-		const projName = f.replace('.test.ts', '').split('/').reverse()[0]
+		const projName = f.replace('.test.js', '').split('/').reverse()[0]
 		if (projName.startsWith('proj7A') || testConfig.length === 0) {
 			maxTimeout = 60000
 		}

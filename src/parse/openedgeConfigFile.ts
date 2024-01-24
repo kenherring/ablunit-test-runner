@@ -324,14 +324,16 @@ function parseOpenEdgeProjectConfig (uri: Uri, workspaceUri: Uri, config: IOpenE
 	return prjConfig
 }
 
-function readOEConfigFile (uri: Uri, workspaceUri: Uri) {
+function readOEConfigFile (uri: Uri, workspaceUri: Uri, openedgeProjectProfile?: string) {
 	log.debug("[readOEConfigFile] uri = " + uri.fsPath)
 	const projects: OpenEdgeProjectConfig[] = []
 
 	log.info("[readOEConfigFile] OpenEdge project config file found: " + uri.fsPath)
 	const config = loadConfigFile(uri.fsPath)
 	if (!config) {
-		return new OpenEdgeProjectConfig()
+		const ret = new OpenEdgeProjectConfig()
+		ret.activeProfile = openedgeProjectProfile
+		return ret
 	}
 
 	const prjConfig = parseOpenEdgeProjectConfig(uri, workspaceUri, config)
@@ -349,19 +351,21 @@ function readOEConfigFile (uri: Uri, workspaceUri: Uri) {
 		} else {
 			projects.push(prjConfig)
 		}
-		return prjConfig
 	} else {
 		log.info("[readOEConfigFile] Skip OpenEdge project in " + prjConfig.rootDir + " -- OpenEdge install not found")
 	}
+	return prjConfig
 }
 
-function getWorkspaceProfileConfig (workspaceUri: Uri) {
+function getWorkspaceProfileConfig (workspaceUri: Uri, openedgeProjectProfile?: string) {
 	const uri = Uri.joinPath(workspaceUri, 'openedge-project.json')
 	log.debug("[getWorkspaceProfileConfig] uri = " + uri.fsPath)
-	const prjConfig = readOEConfigFile(uri, workspaceUri)
+	const prjConfig = readOEConfigFile(uri, workspaceUri, openedgeProjectProfile)
 
-	if (prjConfig?.activeProfile) {
-		const prf =  prjConfig.profiles.get(prjConfig.activeProfile)
+	const activeProfile = openedgeProjectProfile ?? prjConfig?.activeProfile
+
+	if (activeProfile) {
+		const prf =  prjConfig.profiles.get(activeProfile)
 		if (prf) {
 			if (!prf.buildPath)
 				prf.buildPath = prjConfig.buildPath
@@ -373,24 +377,24 @@ function getWorkspaceProfileConfig (workspaceUri: Uri) {
 			return prf
 		}
 	}
-	if (prjConfig) {
-		return prjConfig.profiles.get("default")
+	if (prjConfig && openedgeProjectProfile) {
+		return prjConfig.profiles.get(openedgeProjectProfile) ?? prjConfig.profiles.get('default')
 	}
 	return undefined
 }
 
-export function getOpenEdgeProfileConfig (workspaceUri: Uri) {
-	const profileConfig = getWorkspaceProfileConfig(workspaceUri)
+export function getOpenEdgeProfileConfig (workspaceUri: Uri, openedgeProjectProfile?: string) {
+	const profileConfig = getWorkspaceProfileConfig(workspaceUri, openedgeProjectProfile)
 	if (profileConfig) {
 		return profileConfig
 	}
 	return undefined
 }
 
-export function getProfileDbConns (workspaceUri: Uri) {
+export function getProfileDbConns (workspaceUri: Uri, openedgeProjectProfile?: string) {
 	log.debug("[getProfileDbConns] workspaceUri = " + workspaceUri.fsPath)
 
-	const profileConfig = getWorkspaceProfileConfig(workspaceUri)
+	const profileConfig = getWorkspaceProfileConfig(workspaceUri, openedgeProjectProfile)
 	if (!profileConfig) {
 		log.info("[getProfileDbConns] profileConfig is undefined")
 		return []

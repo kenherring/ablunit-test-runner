@@ -2,7 +2,7 @@
 	"configurations": [
 		{
 			"tempDir": "${workspaceFolder}",
-			"importOpenEdgeProjectJson": true,
+			"importOpenedgeProjectJson": true,
 			"command": {
 				"executable": "_progres",
 				"progressIni": "progress.ini",

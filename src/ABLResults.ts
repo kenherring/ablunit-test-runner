@@ -98,7 +98,7 @@ export class ABLResults implements Disposable {
 		log.info("[start] workspaceFolder=" + this.workspaceFolder.uri.fsPath)
 		this.cfg.setup(this.workspaceFolder)
 
-		this.dlc = getDLC(this.workspaceFolder)
+		this.dlc = getDLC(this.workspaceFolder, this.cfg.ablunitConfig.openedgeProjectProfile)
 		this.promsgs = new ABLPromsgs(this.dlc, this.globalStorageUri)
 
 		this.propath = this.cfg.readPropathFromJson()

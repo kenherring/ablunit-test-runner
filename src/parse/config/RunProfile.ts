@@ -8,7 +8,8 @@ export interface IRunProfile {
 	hide?: boolean
 	workspaceFolder?: WorkspaceFolder
 	tempDir?: string
-	importOpenEdgeProjectJson: boolean
+	importOpenedgeProjectJson: boolean
+	openedgeProjectProfile: string | undefined
 	command?: ICommandOptions
 	options?: ICoreOptions
 	profiler?: IProfilerOptions
@@ -16,8 +17,9 @@ export interface IRunProfile {
 
 export class DefaultRunProfile implements IRunProfile {
 	hide: boolean = false
-	tempDir: string = "${workspaceFolder}"
-	importOpenEdgeProjectJson: boolean = true
+	tempDir: string = '${workspaceFolder}'
+	importOpenedgeProjectJson: boolean = true
+	openedgeProjectProfile: string | undefined = undefined
 	command: CommandOptions = new CommandOptions()
 	options: CoreOptions = new CoreOptions()
 	profiler: ProfilerOptions = new ProfilerOptions()
