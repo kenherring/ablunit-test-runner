@@ -99,4 +99,14 @@ suite(projName + ' - Extension Test Suite', () => {
 		assert.equal(await getTestCount(resultsJson,'error'),0,"error test count")
 	})
 
+	test(projName + '.20 - do not import openedge-project.json', async () => {
+		await updateTestProfile('importOpenedgeProjectJson', false)
+		await updateTestProfile('openedgeProjectProfile', 'profile2')
+
+		await runAllTests()
+		const workspaceFolder = workspace.workspaceFolders![0].uri
+		const resultsJson = Uri.joinPath(workspaceFolder,'results.json')
+		assert(! await doesFileExist(resultsJson), "missing results.json (" + resultsJson.fsPath + ")")
+	})
+
 })
