@@ -6,7 +6,7 @@ import { ProfilerOptions } from './config/ProfilerOptions'
 import { CommandOptions } from './config/CommandOptions'
 import { readStrippedJsonFile } from '../ABLUnitCommon'
 import log from '../ChannelLogger'
-import { IDatabaseConnection, getProfileDbConns } from './openedgeConfigFile'
+import { IDatabaseConnection, getProfileDbConns } from './OpenedgeProjectParser'
 
 const runProfileFilename: string = 'ablunit-test-profile.json'
 
