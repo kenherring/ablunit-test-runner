@@ -127,9 +127,7 @@ export class ABLUnitConfig  {
 
 		let conf = undefined
 		if (this.ablunitConfig.importOpenedgeProjectJson) {
-			console.log("----- " + this.ablunitConfig.openedgeProjectProfile)
 			conf = getOpenEdgeProfileConfig(this.ablunitConfig.workspaceFolder.uri, this.ablunitConfig.openedgeProjectProfile)
-			console.log("----- " + JSON.stringify(conf))
 		}
 		if (conf && conf.buildPath.length > 0) {
 			const pathObj: IBuildPathEntry[] = []

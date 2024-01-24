@@ -40,5 +40,4 @@
 	"task.autoDetect": "on",
 	"typescript.preferences.quoteStyle": "single",
 	"typescript.validate.enable": true,
-
 }
