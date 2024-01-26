@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { LogLevel, TestRun, window } from 'vscode'
 import path from 'path'
 
@@ -14,8 +15,7 @@ class Logger {
 		this.logLevel = LogLevel.Info
 		this.logOutputChannel = window.createOutputChannel('ABLUnit', { log: true })
 		this.logOutputChannel.clear()
-		this.logOutputChannel.appendLine('ABLUnit output channel created')
-		console.log('ABLUnit output channel created (logLevel=' + this.logOutputChannel.logLevel + ')')
+		this.info('ABLUnit output channel created (logLevel=' + this.logOutputChannel.logLevel + ')')
 		this.logOutputChannel.onDidChangeLogLevel((e) => { this.setLogLevel(e) })
 	}
 
@@ -23,7 +23,12 @@ class Logger {
 		if (!Logger.instance) {
 			Logger.instance = new Logger()
 		}
+		Logger.instance.clearOutputChannel()
 		return Logger.instance
+	}
+
+	clearOutputChannel () {
+		this.logOutputChannel.clear()
 	}
 
 	setLogLevel (e: LogLevel) {
@@ -78,7 +83,7 @@ class Logger {
 
 	private writeToChannel (messageLevel: LogLevel, message: string) {
 		switch (messageLevel) {
-			case LogLevel.Trace:    this.logOutputChannel.trace(message); break
+			case LogLevel.Trace:    this.logOutputChannel.debug('Trace: ' + message); break
 			case LogLevel.Debug:    this.logOutputChannel.debug(message); break
 			case LogLevel.Info:     this.logOutputChannel.info(message); break
 			case LogLevel.Warning:  this.logOutputChannel.warn(message); break
