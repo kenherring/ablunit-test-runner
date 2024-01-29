@@ -4,6 +4,7 @@
 	"version": "2.0.0",
 	"tasks": [
 		{
+			"label": "npm watch",
 			"type": "npm",
 			"script": "watch",
 			"problemMatcher": "$tsc-watch",
@@ -14,14 +15,16 @@
 			},
 			"group": {
 				"kind": "build",
-				"isDefault": true
+				"isDefault": false
 			},
 			"runOptions": {
 				"runOn": "folderOpen"
 			}
 		},
 		{
+			"label": "npm watch webpack",
 			"type": "npm",
+			"hide": true,
 			"script": "watch-webpack",
 			"problemMatcher": "$tsc-watch",
 			"isBackground": true,
@@ -31,7 +34,7 @@
 			},
 			"group": {
 				"kind": "build",
-				"isDefault": false
+				"isDefault": true
 			},
 			"runOptions": {
 				"runOn": "folderOpen"

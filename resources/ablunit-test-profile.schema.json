@@ -45,7 +45,8 @@
 							"output": {
 								"location": "${tempDir}",
 								"filename": "results.xml",
-								"format": "xml"
+								"format": "xml",
+								"WriteJson": false
 							},
 							"quitOnEnd": true,
 							"writeLog": false,
@@ -53,6 +54,7 @@
 							"throwError": true
 						},
 						"additionalProperties": false,
+						"additionalItems": false,
 						"properties": {
 							"output": {
 								"type": "object",

@@ -1,7 +1,8 @@
 import { strict as assert } from 'assert'
 import { before } from 'mocha'
 import { Uri, workspace } from 'vscode'
-import { doesDirExist, doesFileExist, runAllTests, waitForExtensionActive } from '../testCommon'
+import { runAllTests, waitForExtensionActive } from '../testCommon'
+import { doesDirExist, doesFileExist } from '../../ABLUnitCommon'
 
 
 const projName = 'workspace0'
@@ -22,10 +23,10 @@ suite(projName + ' - Extension Test Suite', () => {
 		const resultsJson = Uri.joinPath(workspaceFolder,'results.json')
 		const listingsDir = Uri.joinPath(workspaceFolder,'listings')
 
-		assert(await doesFileExist(ablunitJson), "missing ablunit.json (" + ablunitJson.fsPath + ")")
-		assert(await doesFileExist(resultsXml), "missing results.xml (" + resultsXml.fsPath + ")")
-		assert(!await doesFileExist(resultsJson), "results.json exists and should not (" + resultsJson.fsPath + ")")
-		assert(!await doesDirExist(listingsDir), "listings dir exists and should not (" + listingsDir.fsPath + ")")
+		assert(doesFileExist(ablunitJson), "missing ablunit.json (" + ablunitJson.fsPath + ")")
+		assert(doesFileExist(resultsXml), "missing results.xml (" + resultsXml.fsPath + ")")
+		assert(!doesFileExist(resultsJson), "results.json exists and should not (" + resultsJson.fsPath + ")")
+		assert(!doesDirExist(listingsDir), "listings dir exists and should not (" + listingsDir.fsPath + ")")
 	})
 
 })

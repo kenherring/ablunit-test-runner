@@ -7,10 +7,11 @@ import { ABLProfile, ABLProfileJson, IModule } from './parse/ProfileParser'
 import { ABLDebugLines } from './ABLDebugLines'
 import { ABLPromsgs, getPromsgText } from './ABLPromsgs'
 import { PropathParser } from './ABLPropath'
-import log from './ChannelLogger'
+import { log } from './ChannelLogger'
 import { FileCoverage, CoveredCount, StatementCoverage } from './TestCoverage'
 import { ablunitRun } from './ABLUnitRun'
 import { getDLC, IDlc } from './parse/OpenedgeProjectParser'
+import { isRelativePath } from './ABLUnitCommon'
 
 export interface ITestObj {
 	test: string
@@ -147,7 +148,11 @@ export class ABLResults implements Disposable {
 			return
 		}
 
-		log.debug("addTest: " + test.id + ", propathEntry=" + testPropath.propathEntry.path)
+		let propathEntryTestFile = testPropath.propathEntry.path
+		if (isRelativePath(testPropath.propathEntry.path)) {
+			propathEntryTestFile = workspace.asRelativePath(Uri.joinPath(this.workspaceFolder.uri, testPropath.propathEntry.path))
+		}
+		log.debug("addTest: " + test.id + ", propathEntry=" + propathEntryTestFile)
 		this.tests.push(test)
 
 		let testCase = undefined

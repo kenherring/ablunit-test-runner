@@ -7,7 +7,8 @@ class Logger {
 
 	private readonly logOutputChannel
 	private readonly consoleLogLevel = LogLevel.Debug
-	private readonly testResultsLogLevel = LogLevel.Info
+	// private readonly testResultsLogLevel = LogLevel.Info
+	private readonly testResultsLogLevel = LogLevel.Trace
 	private logLevel: number
 	private testResultsTimestamp = false
 
@@ -21,6 +22,7 @@ class Logger {
 
 	public static getInstance () {
 		if (!Logger.instance) {
+			console.info('new Logger()')
 			Logger.instance = new Logger()
 		}
 		Logger.instance.clearOutputChannel()
@@ -42,8 +44,8 @@ class Logger {
 		this.testResultsTimestamp = e
 	}
 
-	trace (message: string, testRun?: TestRun) {
-		this.writeMessage(LogLevel.Trace, message, testRun)
+	trace (message: string, testRun?: TestRun, stackTrace: boolean = true) {
+		this.writeMessage(LogLevel.Trace, message, testRun, stackTrace)
 	}
 
 	debug (message: string, testRun?: TestRun) {
@@ -69,43 +71,57 @@ class Logger {
 		this.writeMessage(LogLevel.Error, message, testRun)
 	}
 
-	private writeMessage (messageLevel: LogLevel, message: string, testRun?: TestRun) {
-		this.writeToChannel(messageLevel, message)
+	private writeMessage (messageLevel: LogLevel, message: string, testRun?: TestRun, includeStack: boolean = false) {
+		this.writeToChannel(messageLevel, message, includeStack)
 
 		if (testRun && messageLevel >= this.testResultsLogLevel) {
-			this.writeToTestResults(message, testRun)
+			this.writeToTestResults(message, testRun, includeStack)
 		}
 
 		if (messageLevel >= this.consoleLogLevel) {
-			this.writeToConsole(messageLevel, message)
+			this.writeToConsole(messageLevel, message, includeStack)
 		}
 	}
 
-	private writeToChannel (messageLevel: LogLevel, message: string) {
+	private writeToChannel (messageLevel: LogLevel, message: string, includeStack: boolean) {
 		switch (messageLevel) {
-			case LogLevel.Trace:    this.logOutputChannel.debug('Trace: ' + message); break
-			case LogLevel.Debug:    this.logOutputChannel.debug(message); break
-			case LogLevel.Info:     this.logOutputChannel.info(message); break
-			case LogLevel.Warning:  this.logOutputChannel.warn(message); break
-			case LogLevel.Error:    this.logOutputChannel.error(message); break
+			case LogLevel.Trace:
+				if(includeStack) { this.logOutputChannel.debug('Trace: ' + message); break }
+				else { this.logOutputChannel.trace(message); break }
+			case LogLevel.Debug:	this.logOutputChannel.debug(message); break
+			case LogLevel.Info:		this.logOutputChannel.info(message); break
+			case LogLevel.Warning:	this.logOutputChannel.warn(message); break
+			case LogLevel.Error:	this.logOutputChannel.error(message); break
 			default:
 				this.logOutputChannel.appendLine(message)
 				throw new Error("invalid log level for message! level=" + messageLevel + ", message=" + message)
 		}
 	}
 
-	private writeToTestResults (message: string, testRun: TestRun) {
+	private writeToTestResults (message: string, testRun: TestRun, includeStack: boolean) {
 		if (this.testResultsTimestamp) {
 			message = '[' + (new Date()).toISOString() + '] ' + message
 		}
-		const optMsg = message.replace(/\r/g, '').replace(/\n/g, '\r\n')
+		let optMsg = message.replace(/\r/g, '').replace(/\n/g, '\r\n')
+
+		if (includeStack) {
+			const prepareStackTraceOrg = Error.prepareStackTrace
+			const err = new Error()
+			Error.prepareStackTrace = (_, stack) => stack
+			const stack = err.stack as unknown as NodeJS.CallSite[]
+			Error.prepareStackTrace = prepareStackTraceOrg
+			optMsg = optMsg + '\r\n' + stack
+		}
+
 		testRun.appendOutput(optMsg + "\r\n")
 	}
 
-	private writeToConsole (messageLevel: LogLevel, message: string) {
-		message = this.decorateMessage(message)
+	private writeToConsole (messageLevel: LogLevel, message: string, includeStack: boolean) {
+		message = this.decorateMessage(message, includeStack)
 		switch (messageLevel) {
-			case LogLevel.Trace:    console.trace(message); break
+			case LogLevel.Trace:
+				if (includeStack) { console.trace(message); break }
+				else { console.debug('Trace: ' + message); break }
 			case LogLevel.Debug:    console.debug(message); break
 			case LogLevel.Info:     console.info(message); break
 			case LogLevel.Warning:  console.warn(message); break
@@ -134,7 +150,10 @@ class Logger {
 		}
 	}
 
-	private decorateMessage (message: string) {
+	private decorateMessage (message: string, includeStack: boolean = false) {
+		if (includeStack) {
+			return message
+		}
 		const callerSourceLine = this.getCallerSourceLine()
 		if (callerSourceLine) {
 			return '[' + callerSourceLine + '] ' + message
@@ -144,4 +163,4 @@ class Logger {
 
 }
 
-export default Logger.getInstance()
+export const log = Logger.getInstance()

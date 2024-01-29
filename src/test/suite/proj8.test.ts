@@ -1,8 +1,8 @@
-import { strict as assert } from 'assert'
 import { before } from 'mocha'
 import { Uri } from 'vscode'
-import { assertResults, doesFileExist, getRecentResults, getWorkspaceUri, runAllTests, waitForExtensionActive } from '../testCommon'
+import { assert, getWorkspaceUri, runAllTests, waitForExtensionActive } from '../testCommon'
 import { getEnvVars } from '../../ABLUnitRun'
+import { decorator } from '../../Decorator'
 
 const projName = 'proj8'
 
@@ -18,26 +18,27 @@ suite(projName + ' - Extension Test Suite', () => {
 		const resultsXml = Uri.joinPath(getWorkspaceUri(),'target','results.xml')
 		const resultsJson = Uri.joinPath(getWorkspaceUri(),'target','results.json')
 
-		assert(await doesFileExist(resultsXml), "missing results.xml (" + resultsXml.fsPath + ")")
-		assert(await doesFileExist(resultsJson), "missing results.json (" + resultsJson.fsPath + ")")
+		assert.fileExists(resultsXml)
+		assert.fileExists(resultsJson)
 
-		await assertResults.count(2)
-		await assertResults.errored(0)
-		await assertResults.failed(0)
-		await assertResults.passed(2)
+		assert.count(2)
+		assert.errored(0)
+		assert.failed(0)
+		assert.passed(2)
 	})
 
 	test(projName + '.2 - getEnvVars confirm PATH is set correctly', async () => {
 		await runAllTests()
-		const recentResults = await getRecentResults()
+		const recentResults = decorator.getRecentResults()
 		const res = recentResults?.[0]
 		if (!res) {
 			assert.fail("res is null")
+			return
 		}
 		const envVars = getEnvVars(res.dlc?.uri)
 		const envPath = envVars['PATH']
 		if (envPath) {
-			assert(!envPath.includes('${env:PATH}'), 'env should not contain ${env.PATH}, but does')
+			assert.assert(!envPath.includes('${env:PATH}'), 'env should not contain ${env.PATH}, but does')
 		} else {
 			assert.fail("env is undefined")
 		}

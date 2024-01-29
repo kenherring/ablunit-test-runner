@@ -1,11 +1,10 @@
 import { Uri, WorkspaceFolder, workspace } from 'vscode'
-import { isRelativePath } from '../ABLUnitConfigWriter'
 import { CoreOptions } from './config/CoreOptions'
 import { IRunProfile, DefaultRunProfile } from './config/RunProfile'
 import { ProfilerOptions } from './config/ProfilerOptions'
 import { CommandOptions } from './config/CommandOptions'
-import { readStrippedJsonFile } from '../ABLUnitCommon'
-import log from '../ChannelLogger'
+import { isRelativePath, readStrippedJsonFile } from '../ABLUnitCommon'
+import { log } from '../ChannelLogger'
 import { IDatabaseConnection, getProfileDbConns } from './OpenedgeProjectParser'
 
 const runProfileFilename: string = 'ablunit-test-profile.json'

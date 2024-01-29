@@ -1,12 +1,11 @@
 import { strict as assert } from 'assert'
 import { after, before, beforeEach } from 'mocha'
 import { Uri } from 'vscode'
-import { deleteFile, doesDirExist, doesFileExist, getDefaultDLC, getSessionTempDir, getWorkspaceUri, runAllTests, setRuntimes, updateTestProfile, waitForExtensionActive } from '../testCommon'
-
+import { deleteFile, doesFileExist, getDefaultDLC, getSessionTempDir, getWorkspaceUri, runAllTests, setRuntimes, updateTestProfile, waitForExtensionActive } from '../testCommon'
+import { doesDirExist } from '../../ABLUnitCommon'
 
 const projName = 'proj4'
-const sessionTempDir = Uri.parse(getSessionTempDir())
-
+const sessionTempDir = Uri.file(getSessionTempDir())
 
 before(async () => {
 	await waitForExtensionActive()
@@ -35,8 +34,8 @@ suite(projName + ' - Extension Test Suite', () => {
 
 		await runAllTests()
 
-		assert(await doesFileExist(resultsXml),"missing results file (" + resultsXml.fsPath + ")")
-		assert(await doesDirExist(listingsDir),"missing listings directory (" + listingsDir.fsPath + ")")
+		assert(doesFileExist(resultsXml),"missing results file (" + resultsXml.fsPath + ")")
+		assert(doesDirExist(listingsDir),"missing listings directory (" + listingsDir.fsPath + ")")
 	})
 
 	test(projName + '.2 - tempDir=.builder/ablunit', async () => {
@@ -44,7 +43,7 @@ suite(projName + ' - Extension Test Suite', () => {
 		const workspaceUri = getWorkspaceUri()
 		await runAllTests()
 		const ablunitJson = Uri.joinPath(workspaceUri,'.builder', 'ablunit','ablunit.json')
-		assert(await doesFileExist(ablunitJson), "missing ablunit.json (" + ablunitJson.fsPath + ")")
+		assert(doesFileExist(ablunitJson), "missing ablunit.json (" + ablunitJson.fsPath + ")")
 	})
 
 	test(projName + '.3 - tempDir=.builder/.ablunit', async () => {
@@ -54,20 +53,20 @@ suite(projName + ' - Extension Test Suite', () => {
 		await runAllTests()
 		const ablunitJson = Uri.joinPath(workspaceUri,'.builder', '.ablunit', 'ablunit.json')
 		const listingsDir = Uri.joinPath(workspaceUri,'.builder', '.ablunit', '.listings')
-		assert(await doesFileExist(ablunitJson), "missing ablunit.json (" + ablunitJson.fsPath + ")")
-		assert(await doesDirExist(listingsDir),"missing listings directory (" + listingsDir.fsPath + ")")
+		assert(doesFileExist(ablunitJson), "missing ablunit.json (" + ablunitJson.fsPath + ")")
+		assert(doesDirExist(listingsDir),"missing listings directory (" + listingsDir.fsPath + ")")
 	})
 
 	test(projName + '.4 - tempDir=target', async () => {
 		const workspaceUri = getWorkspaceUri()
 		const ablunitJson = Uri.joinPath(workspaceUri,'target', 'ablunit.json')
 		const progressIni = Uri.joinPath(workspaceUri,'target','progress.ini')
-		await deleteFile(progressIni)
+		deleteFile(progressIni)
 		await updateTestProfile('tempDir','target')
 		await runAllTests()
-		assert(await doesFileExist(ablunitJson), "missing ablunit.json (" + ablunitJson.fsPath + ")")
+		assert(doesFileExist(ablunitJson), "missing ablunit.json (" + ablunitJson.fsPath + ")")
 		if (process.platform === 'win32') {
-			assert(await doesFileExist(progressIni), "missing progress.ini (" + progressIni.fsPath + ")")
+			assert(doesFileExist(progressIni), "missing progress.ini (" + progressIni.fsPath + ")")
 		}
 	})
 

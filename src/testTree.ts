@@ -4,7 +4,7 @@ import { parseABLTestSuite } from './parse/TestSuiteParser'
 import { IClassRet, ITestCase, parseABLTestClass } from './parse/TestClassParser'
 import { IProgramRet, parseABLTestProgram } from './parse/TestProgramParser'
 import { getContentFromFilesystem } from './parse/TestParserCommon'
-import log from './ChannelLogger'
+import { log } from './ChannelLogger'
 
 export type ABLTestData = ABLTestDir | ABLTestFile | ABLTestCase
 export type TestFile = ABLTestSuite | ABLTestClass | ABLTestProgram

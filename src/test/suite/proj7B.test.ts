@@ -2,7 +2,7 @@ import { strict as assert } from 'assert'
 import { before } from 'mocha'
 import { CancellationError, TestItemCollection, commands } from 'vscode'
 import { getTestController, runAllTests, sleep, waitForExtensionActive } from '../testCommon'
-import log from '../../ChannelLogger'
+import { log } from '../../ChannelLogger'
 
 const projName = 'proj7B'
 
@@ -20,11 +20,11 @@ suite(projName + ' - Extension Test Suite', () => {
 		const startRefreshTime = Date.now()
 		const refresh = commands.executeCommand('testing.refreshTests')
 
-		let testCount = await getTestControllerItemCount('ABLTestFile').then()
+		let testCount = getTestControllerItemCount('ABLTestFile')
 		log.info("testCount-1=" + testCount)
 		while(testCount < 10) {
 			await sleep(250)
-			testCount = await getTestControllerItemCount('ABLTestFile')
+			testCount = getTestControllerItemCount('ABLTestFile')
 		}
 		log.info("testCount-2=" + testCount)
 
@@ -47,7 +47,7 @@ suite(projName + ' - Extension Test Suite', () => {
 			assert.fail('unexpected error: ' + err)
 		}
 
-		const ablfileCount = await getTestControllerItemCount('ABLTestFile')
+		const ablfileCount = getTestControllerItemCount('ABLTestFile')
 		log.info("controller file count after refresh = " + ablfileCount)
 		assert(ablfileCount > 1 && ablfileCount < 1000, "ablfileCount should be > 1 and < 500, but is " + ablfileCount)
 
@@ -83,8 +83,8 @@ suite(projName + ' - Extension Test Suite', () => {
 
 })
 
-async function getTestControllerItemCount (type?: 'ABLTestFile' | undefined) {
-	const ctrl = await getTestController()
+function getTestControllerItemCount (type?: 'ABLTestFile' | undefined) {
+	const ctrl = getTestController()
 	return ctrl.items.size + getChildTestCount(type, ctrl.items)
 }
 

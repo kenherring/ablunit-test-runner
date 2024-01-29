@@ -2,7 +2,7 @@ import { Uri, workspace } from 'vscode'
 import { getContentFromFilesystem } from './TestParserCommon'
 import { PropathParser } from '../ABLPropath'
 import { ABLDebugLines } from '../ABLDebugLines'
-import log from '../ChannelLogger'
+import { log } from '../ChannelLogger'
 
 export class ABLProfile {
 	profJSON?: ABLProfileJson
@@ -66,7 +66,7 @@ export class ABLProfile {
 		this.profJSON.modules.sort((a,b) => a.ModuleID - b.ModuleID)
 		log.debug("parsing profiler data complete")
 		if (writeJson) {
-			const jsonUri = Uri.parse(uri.fsPath.replace(/\.[a-zA-Z]+$/,'.json'))
+			const jsonUri = Uri.file(uri.fsPath.replace(/\.[a-zA-Z]+$/,'.json'))
 			this.writeJsonToFile(jsonUri).then(null, (err: Error) => {
 				log.error("Error writing profile output json file: " + err)
 			})

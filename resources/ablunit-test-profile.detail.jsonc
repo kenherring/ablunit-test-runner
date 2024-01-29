@@ -70,7 +70,8 @@
 			"output": {
 				"location": "${tempDir}",
 				"filename": "results",
-				"format": "xml"
+				"format": "xml",
+				"writeJson": true
 			},
 			"quitOnEnd": true,
 			"writeLog":  false,
