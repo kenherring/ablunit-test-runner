@@ -524,14 +524,15 @@ export class ABLResults implements Disposable {
 				if (!fc) {
 					// create a new FileCoverage object if one didn't already exist
 					fc = new FileCoverage(dbg.sourceUri, new CoveredCount(0, 0))
-					fc.detailedCoverage = []
 					this.coverage.push(fc)
 					this.testCoverage.set(dbg.sourceUri.fsPath, fc)
 				}
 			}
 
-			fc.detailedCoverage!.push(new StatementCoverage(line.ExecCount ?? 0,
-				new Range(dbg.sourceLine - 1, 0, dbg.sourceLine, 0)))
+			// TODO: end of range should be the end of the line, not the beginning of the next line
+			const coverageRange = new Range(dbg.sourceLine - 1, 0, dbg.sourceLine, 0)
+			const coverageStatement = new StatementCoverage(line.ExecCount ?? 0, coverageRange)
+			fc.detailedCoverage.push(coverageStatement)
 		}
 	}
 }

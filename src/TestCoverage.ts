@@ -17,7 +17,7 @@ export class CoveredCount {
 export class FileCoverage {
 	readonly uri: Uri
 	statementCoverage: CoveredCount
-	detailedCoverage?: StatementCoverage[]
+	detailedCoverage: StatementCoverage[] = []
 
 	constructor (uri: Uri, statementCoverage: CoveredCount) {
 		this.uri = uri

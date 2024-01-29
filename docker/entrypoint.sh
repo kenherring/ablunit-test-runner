@@ -7,14 +7,14 @@ initialize () {
 	BASH_AFTER=false
 	CACHE_BASE=/home/circleci/cache
 	CIRCLECI=${CIRCLECI:-false}
-	GIT_BRANCH=$(cd "$REPO_VOLUME" && git branch --show-current)
 	npm_config_cache=$CACHE_BASE/node_modules_cache
 	PROJECT_DIR=/home/circleci/project
 	REPO_VOLUME=/home/circleci/ablunit-test-runner
+	GIT_BRANCH=$(cd "$REPO_VOLUME" && git branch --show-current)
 	STAGED_ONLY=${STAGED_ONLY:-true}
 	VERBOSE=false
 	${CREATE_PACKAGE:-false} && TEST_PROJECT=package
-	
+
 	git config --global init.defaultBranch main
 	mkdir -p "$npm_config_cache" "$PROJECT_DIR"
 	export npm_config_cache

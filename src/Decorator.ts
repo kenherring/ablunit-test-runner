@@ -249,21 +249,21 @@ window.onDidChangeActiveTextEditor((editor) => {
 	}
 })
 
-window.onDidChangeWindowState((_windowState) => {
-	log.info('onDidChangeWindowState')
-})
-window.onDidChangeTextEditorOptions((_event) => {
-	log.info('onDidChangeTextEditorOptions')
-})
-window.onDidChangeVisibleTextEditors((_editors) => {
-	log.info('onDidChangeVisibleTextEditors')
-})
-window.onDidChangeTextEditorViewColumn((_event) => {
-	log.info('onDidChangeTextEditorViewColumn')
-})
-window.onDidChangeTextEditorVisibleRanges((event) => {
-	if (event.textEditor.document.uri.scheme === 'file') {
-		log.info('onDidChangeTextEditorVisibleRanges')
-		log.info('event=' + JSON.stringify(event,null,2))
-	}
-})
+// window.onDidChangeWindowState((_windowState) => {
+// 	log.info('onDidChangeWindowState')
+// })
+// window.onDidChangeTextEditorOptions((_event) => {
+// 	log.info('onDidChangeTextEditorOptions')
+// })
+// window.onDidChangeVisibleTextEditors((_editors) => {
+// 	log.info('onDidChangeVisibleTextEditors')
+// })
+// window.onDidChangeTextEditorViewColumn((_event) => {
+// 	log.info('onDidChangeTextEditorViewColumn')
+// })
+// window.onDidChangeTextEditorVisibleRanges((event) => {
+// 	if (event.textEditor.document.uri.scheme === 'file') {
+// 		log.info('onDidChangeTextEditorVisibleRanges')
+// 		log.info('event=' + JSON.stringify(event,null,2))
+// 	}
+// })
