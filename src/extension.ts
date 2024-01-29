@@ -24,7 +24,7 @@ export async function activate (context: ExtensionContext) {
 
 	logActivationEvent()
 
-	const contextStorageUri = context.storageUri ?? Uri.parse('file://' + process.env['TEMP']) // will always be defined as context.storageUri
+	const contextStorageUri = context.storageUri ?? Uri.file(process.env['TEMP'] ?? '') // will always be defined as context.storageUri
 	const contextResourcesUri = Uri.joinPath(context.extensionUri,'resources')
 	setContextPaths(contextStorageUri, contextResourcesUri)
 	await createDir(contextStorageUri)
@@ -64,23 +64,9 @@ export async function activate (context: ExtensionContext) {
 		// }),
 
 		workspace.onDidOpenTextDocument(async e => {
-			log.info('onDidOpenTextDocument')
-			log.info('updateNodeForDocument start - onDidOpenTextDocument')
+			log.trace('onDidOpenTextDocument for ' + e.uri)
 			await updateNodeForDocument(e,'didOpen').then(() => {
-				log.info('updateNodeForDocument end - onDidOpenTextDocument')
-				log.info('decorating editor start - onDidOpenTextDocument')
-				log.info('decorating editor start - onDidOpenTextDocument ' + JSON.stringify(e))
 				decorator.decorate(undefined, e)
-				// const prom = decorator.decorate(e)
-				// if (!prom) {
-				// 	log.warn('decorator.decorate returned undefined promise')
-				// 	return
-				// }
-				// prom.then(() => {
-				// 	log.info('decorating editor end - onDidOpenTextDocument')
-				// }, (err) => {
-				// 	log.error('failed to decoratte editor \'' + e.uri.fsPath + '\'. err=' + err)
-				// })
 			}, (err) => {
 				log.error('failed updateNodeForDocument onDidTextDocument! err=' + err)
 			})

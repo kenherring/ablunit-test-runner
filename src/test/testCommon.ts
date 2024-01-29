@@ -2,11 +2,11 @@ import * as fs from 'fs'
 import { ABLResults } from '../ABLResults'
 import { ConfigurationTarget, TestController, WorkspaceFolder, commands, extensions, Uri, workspace } from 'vscode'
 import { Decorator } from '../Decorator'
-import { Duration, deleteFile, isRelativePath, readStrippedJsonFile } from '../ABLUnitCommon'
+import { deleteFile, isRelativePath, readStrippedJsonFile } from '../ABLUnitCommon'
 import { GlobSync } from 'glob'
 import { IExtensionTestReferences } from '../extension'
 import { ITestSuites } from '../parse/ResultsParser'
-import { log } from '../ChannelLogger'
+import { log as logObj } from '../ChannelLogger'
 import { strict as assertParent } from 'assert'
 
 interface IRuntime {
@@ -19,9 +19,10 @@ class TestInfo {
 	get projName () { return __filename.split('\\').pop()!.split('/').pop()!.split('.')[0] }
 }
 export const info = new TestInfo()
+export const log = logObj
 
 let recentResults: ABLResults[]
-export let decorator: Decorator
+let decorator: Decorator
 let testController: TestController
 
 export {
@@ -46,14 +47,11 @@ export function getAblunitExt () {
 }
 
 export async function waitForExtensionActive (extensionId: string = 'kherring.ablunit-test-runner') {
-	const d = new Duration()
-	log.info('waitForExtensionActive-10 ' + d.toString())
 	const ext = extensions.getExtension(extensionId)
 	if (!ext) {
 		throw new Error(extensionId + " is not installed")
 	}
 
-	log.info('waitForExtensionActive-20 ' + d.toString())
 	if (!ext.isActive) {
 		await ext.activate().then(() => {
 			console.log("activated " + extensionId)
@@ -62,7 +60,6 @@ export async function waitForExtensionActive (extensionId: string = 'kherring.ab
 		})
 	}
 
-	log.info('waitForExtensionActive-30 ' + d.toString())
 	if(!ext.isActive) {
 		console.log("waiting for extension to activate - should never be here!")
 		for (let i=0; i<50; i++) {
@@ -74,16 +71,11 @@ export async function waitForExtensionActive (extensionId: string = 'kherring.ab
 		}
 	}
 
-	log.info('waitForExtensionActive-40 ' + d.toString())
 	if (!ext.isActive) {
 		throw new Error(extensionId + " is not active")
 	}
 	console.log(extensionId + " is active!")
-
-	log.info('waitForExtensionActive-50 ' + d.toString())
-	return refreshData().then(() => {
-		log.debug('got extension references... ready for tests ' + d.toString())
-	})
+	return refreshData()
 }
 
 async function installOpenedgeABLExtension () {
@@ -189,6 +181,18 @@ export function doesFileExist (uri: Uri | string) {
 	return false
 }
 
+export function doesDirExist (uri: Uri | string) {
+	try {
+		const stat = fs.statSync(toUri(uri).fsPath)
+		if (stat.isDirectory()) {
+			return true
+		}
+	} catch {
+		// do nothing - file does not exist
+	}
+	return false
+}
+
 export function deleteTestFiles () {
 	const workspaceUri = getWorkspaceUri()
 	deleteFile(Uri.joinPath(workspaceUri, "ablunit.json"))
@@ -198,11 +202,11 @@ export function deleteTestFiles () {
 
 export function getSessionTempDir () {
 	if (process.platform === 'win32') {
-		return "file:///c:/temp/ablunit"
+		return Uri.file('c:/temp/ablunit')
 	} else if(process.platform === 'linux') {
-		return "file:///tmp/ablunit"
+		return Uri.file('/tmp/ablunit')
 	} else {
-		throw new Error("Unsupported platform: " + process.platform)
+		throw new Error('Unsupported platform: ' + process.platform)
 	}
 }
 
@@ -317,13 +321,21 @@ export async function selectProfile (profile: string) {
 export async function refreshData () {
 	return commands.executeCommand('_ablunit.getExtensionTestReferences').then((resp) => {
 		const refs = resp as IExtensionTestReferences
-		recentResults = refs.recentResults
 		decorator = refs.decorator
-		log.info('waitForExtensionActive51 decorator=' + JSON.stringify(decorator))
 		testController = refs.testController
+		recentResults = refs.recentResults
+		log.debug('refreshData complete!')
 	}, (err) => {
 		throw new Error("failed to refresh test results: " + err)
 	})
+}
+
+export function getDecorator () {
+	return decorator
+}
+
+export function getTestController () {
+	return testController
 }
 
 export function getResults (len: number = 1) {
@@ -337,21 +349,6 @@ export function getResults (len: number = 1) {
 		throw new Error('recent results should be ' + len + ' but is ' + recentResults.length)
 	}
 	return recentResults
-}
-
-export async function getExtensionReferences () {
-	return commands.executeCommand('_ablunit.getExe').then((resp) => {
-		if (resp) {
-			return resp as ABLResults[]
-		}
-		throw new Error('no recent results returned from \'ablunit.getExtensionReferences\' command')
-	}, (err) => {
-		throw new Error('error calling \'ablunit.getExtensionReferences\' command. err=' + err)
-	})
-}
-
-export function getTestController () {
-	return testController
 }
 
 class AssertResults {
@@ -424,12 +421,12 @@ class AssertResults {
 	}
 	public dirExists = (...dirs: string[] | Uri[]) => {
 		for (const dir of dirs) {
-			this.assert(doesFileExist(dir), "dir does not exist: " + workspace.asRelativePath(dir))
+			this.assert(doesDirExist(dir), "dir does not exist: " + workspace.asRelativePath(dir))
 		}
 	}
 	public notDirExists = (...dirs: string[] | Uri[]) => {
 		for (const dir of dirs) {
-			this.assert(!doesFileExist(dir), "dir exists: " + workspace.asRelativePath(dir))
+			this.assert(!doesDirExist(dir), "dir exists: " + workspace.asRelativePath(dir))
 		}
 	}
 }

@@ -5,7 +5,7 @@ import { deleteFile, doesFileExist, getDefaultDLC, getSessionTempDir, getWorkspa
 import { doesDirExist } from '../../ABLUnitCommon'
 
 const projName = 'proj4'
-const sessionTempDir = Uri.file(getSessionTempDir())
+const sessionTempDir = getSessionTempDir()
 
 before(async () => {
 	await waitForExtensionActive()

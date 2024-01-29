@@ -1,4 +1,4 @@
-import { assert, decorator, getResults, runAllTests, toUri, waitForExtensionActive } from '../testCommon'
+import { assert, getDecorator, getResults, runAllTests, toUri, waitForExtensionActive } from '../testCommon'
 import { before } from 'mocha'
 import { log } from '../../ChannelLogger'
 import { Uri, commands, window, workspace } from 'vscode'
@@ -30,6 +30,7 @@ suite(projName + ' - Extension Test Suite', () => {
 		const testFileUri = Uri.joinPath(workspace.workspaceFolders![0].uri, 'src', 'dirA', 'dir1', 'testInDir.p')
 		await window.showTextDocument(testFileUri).then()
 
+		const decorator = getDecorator()
 		const lines = decorator.getDecorations(testFileUri)
 		assert.assert(lines.executed, 'no executed lines found for ' + workspace.asRelativePath(testFileUri))
 		assert.assert(lines.executed!.find((d) => d.range.start.line === 5), 'line 5 should display as executable')
@@ -42,6 +43,7 @@ suite(projName + ' - Extension Test Suite', () => {
 
 		await runAllTests()
 
+		const decorator = getDecorator()
 		const lines = decorator.getDecorations(testFileUri)
 		assert.assert(lines.executed, 'no executed lines found for ' + workspace.asRelativePath(testFileUri))
 		assert.assert(lines.executed!.find((d) => d.range.start.line === 5), 'line 5 should display as executable')

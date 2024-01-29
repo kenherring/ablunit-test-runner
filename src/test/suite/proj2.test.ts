@@ -1,6 +1,6 @@
 import { before } from 'mocha'
 import { Uri, commands } from 'vscode'
-import { assert, getResults, getWorkspaceUri, runAllTests, sleep, waitForExtensionActive } from '../testCommon'
+import { assert, getResults, getWorkspaceUri, refreshData, runAllTests, sleep, waitForExtensionActive } from '../testCommon'
 
 
 const projName = 'proj2'
@@ -23,9 +23,11 @@ suite(projName + ' - Extension Test Suite', () => {
 		await commands.executeCommand('vscode.open', Uri.joinPath(workspaceUri,'src/classes/testClass2.cls'))
 		await sleep(200)
 		await commands.executeCommand('testing.runCurrentFile')
+		await refreshData()
 		const recentResults = getResults()
+		console.log("recentResults = " + recentResults + " " + recentResults.length)
 
-		const tc = recentResults?.[0].ablResults?.resultsJson[0].testsuite?.[0].testcases?.[0]
+		const tc = recentResults[0].ablResults?.resultsJson[0].testsuite?.[0].testcases?.[0]
 		const mdText = tc?.failure?.callstack?.items?.[1].markdownText
 		if (!mdText) {
 			assert.fail("mdText is null")
@@ -39,6 +41,7 @@ suite(projName + ' - Extension Test Suite', () => {
 		await commands.executeCommand('vscode.open', Uri.joinPath(workspaceUri,'src/testSuite.cls'))
 		await sleep(200)
 		await commands.executeCommand('testing.runCurrentFile')
+		await refreshData()
 		const recentResults = getResults()
 
 		const res = recentResults?.[0].ablResults?.resultsJson[0]
