@@ -6,25 +6,17 @@ import { ABLResults } from './ABLResults'
 import { ABLTestSuite, ABLTestClass, ABLTestProgram, ABLTestFile, ABLTestCase, ABLTestDir, ABLTestData, resultData, testData } from './testTree'
 import { getContentFromFilesystem } from './parse/TestParserCommon'
 import { GlobSync } from 'glob'
+import { log } from './ChannelLogger'
 import { readFileSync } from 'fs'
 import { DecorationProvider, Decorator, decorator } from './Decorator'
-import { log } from './ChannelLogger'
 
 export interface IExtensionTestReferences {
 	testController: TestController,
 	decorator: Decorator
+	recentResults: ABLResults[]
 }
 
-// const fileDecorationProvider = () => {
-
-// 	onDidChangeFileDecorations (e: Uri) {
-// 		log.info('onDidChangeFileDecorations'd)
-// 	}
-
-// 	*/
-// 	// onDidChangeFileDecorations?: Event<undefined | Uri | Uri[]>;
-// 	// provideFileDecoration(uri: Uri, token: CancellationToken): ProviderResult<FileDecoration>;
-// }
+let recentResults: ABLResults[] = []
 
 export async function activate (context: ExtensionContext) {
 
@@ -38,36 +30,26 @@ export async function activate (context: ExtensionContext) {
 	await createDir(contextStorageUri)
 	const decorationProvider = new DecorationProvider()
 
-	// const getTestController = () => { return ctrl }
-	// const getDecorator = () => { return decorator }
-
-	// const getExtensionReferences = () => {
-	// 	return {
-	// 		testController: getTestController(),
-	// 		decorator: getDecorator()
-	// 	} as IExtensionTestReferences
-	// }
-
 	const getExtensionReferences = () => {
 		return {
 			testController: ctrl,
-			decorator: decorator
+			decorator: decorator,
+			recentResults: recentResults
 		} as IExtensionTestReferences
 	}
 
 	if (process.env['ABLUNIT_TEST_RUNNER_UNIT_TESTING'] === 'true') {
-		// context.subscriptions.push(commands.registerCommand('_ablunit.getRecentResults', () => { decorator.getRecentResults() }))
-		// context.subscriptions.push(commands.registerCommand('_ablunit.getTestController', getTestController))
 		context.subscriptions.push(commands.registerCommand('_ablunit.getExtensionTestReferences', getExtensionReferences))
 	}
 
 	context.subscriptions.push(ctrl)
 
-	console.log('context.subscriptions.push')
 	context.subscriptions.push(
 		commands.registerCommand('_ablunit.openCallStackItem', openCallStackItem),
 		workspace.onDidChangeConfiguration(e => { updateConfiguration(e) }),
 		window.registerFileDecorationProvider(decorationProvider),
+
+		// TODO
 		// window.onDidChangeActiveTextEditor(e => {
 		// 	if (e && createOrUpdateFile(ctrl, e.document.uri)) {
 		// 		return decorator.decorate(e)
@@ -257,9 +239,9 @@ export async function activate (context: ExtensionContext) {
 				}
 			}
 
-			log.info("----- setRecentResults-1", run)
-			decorator.setRecentResults(resultData.get(run) ?? [])
-			log.info("----- setRecentResults-2", run)
+			const data = resultData.get(run) ?? []
+			recentResults = data
+			decorator.setRecentResults(recentResults)
 
 			if (window.activeTextEditor) {
 				log.info('decorating editor - activeTextEditor')
@@ -359,16 +341,6 @@ export async function activate (context: ExtensionContext) {
 				throw new Error('updateNode failed for \'' + u?.fsPath + '\' - no promise returned')
 			}
 			return prom.then(() => { return })
-
-			// .catch((err) => {
-			// 	// log.error('updateNode failed for \'' + u?.fsPath + '\'. err=' + err)
-			// 	// if (err instanceof Error) {
-			// 	// 	throw new Error('updateNode failed for \'' + u?.fsPath + '\'. err=' + err)
-			// 	// } else {
-			// 	// 	throw new Error('udpateNode failed for \'' + u?.fsPath + '\'.')
-			// 	// }
-			// 	throw new Error('udpateNode failed for \'' + u?.fsPath + '\'.')
-			// })
 		}
 	}
 

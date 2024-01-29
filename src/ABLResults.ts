@@ -244,13 +244,13 @@ export class ABLResults implements Disposable {
 
 		if (this.cfg.ablunitConfig.profiler.enabled) {
 			this.setStatus("parsing profiler data")
-			log.debug("parsing profiler data from " + this.cfg.ablunitConfig.profFilenameUri.fsPath, options)
+			log.debug("parsing profiler data from " + workspace.asRelativePath(this.cfg.ablunitConfig.profFilenameUri.fsPath), options)
 			await this.parseProfile().then(() => {
 				return true
 			}, (err) => {
 				this.setStatus("error parsing profiler data")
 				log.error("Error parsing profiler data from " + this.cfg.ablunitConfig.profFilenameUri.fsPath + ".  err=" + err, options)
-				throw new Error("[ABLResults parseOutput] Error parsing profiler data from " + this.cfg.ablunitConfig.profFilenameUri.fsPath + "\r\nerr=" + err)
+				throw new Error("Error parsing profiler data from " + workspace.asRelativePath(this.cfg.ablunitConfig.profFilenameUri) + "\r\nerr=" + err)
 			})
 		}
 

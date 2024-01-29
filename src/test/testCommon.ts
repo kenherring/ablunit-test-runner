@@ -20,6 +20,7 @@ class TestInfo {
 }
 export const info = new TestInfo()
 
+let recentResults: ABLResults[]
 export let decorator: Decorator
 let testController: TestController
 
@@ -80,17 +81,9 @@ export async function waitForExtensionActive (extensionId: string = 'kherring.ab
 	console.log(extensionId + " is active!")
 
 	log.info('waitForExtensionActive-50 ' + d.toString())
-	const refs = await commands.executeCommand('_ablunit.getExtensionTestReferences').then((resp) => {
-		log.info('waitForExtensionActive-51')
-		return resp as IExtensionTestReferences
+	return refreshData().then(() => {
+		log.debug('got extension references... ready for tests ' + d.toString())
 	})
-	log.info('waitForExtensionActive-52 ' + d.toString())
-
-	decorator = refs.decorator
-	log.info('waitForExtensionActive51 decorator=' + JSON.stringify(decorator))
-	testController = refs.testController
-	log.info('waitForExtensionActive51 testController=' + JSON.stringify(testController))
-	log.debug('got extension references... ready for tests ' + d.toString())
 }
 
 async function installOpenedgeABLExtension () {
@@ -264,6 +257,7 @@ export async function runAllTests (doRefresh: boolean = true) {
 	console.log("testing.runAll starting")
 	return commands.executeCommand('testing.runAll').then(() => {
 		console.log("testing.runAll complete!")
+		return refreshData()
 	} , (err) => {
 		throw new Error("testing.runAll failed: " + err)
 	})
@@ -320,16 +314,25 @@ export async function selectProfile (profile: string) {
 	})
 }
 
-export function getRecentResults (len: number = 1) {
-	const recentResults = decorator.getRecentResults()
+export async function refreshData () {
+	return commands.executeCommand('_ablunit.getExtensionTestReferences').then((resp) => {
+		const refs = resp as IExtensionTestReferences
+		recentResults = refs.recentResults
+		decorator = refs.decorator
+		log.info('waitForExtensionActive51 decorator=' + JSON.stringify(decorator))
+		testController = refs.testController
+	}, (err) => {
+		throw new Error("failed to refresh test results: " + err)
+	})
+}
+
+export function getResults (len: number = 1) {
 	if (!recentResults) {
 		throw new Error('recent results is undefined!')
 	}
-
 	if (recentResults.length === 0) {
 		throw new Error('recent results should be > 0')
 	}
-
 	if (recentResults.length !== len) {
 		throw new Error('recent results should be ' + len + ' but is ' + recentResults.length)
 	}
@@ -375,7 +378,7 @@ class AssertResults {
 	doesNotThrow = (block: () => void, message?: string) => { assertParent.doesNotThrow(block, message) }
 
 	assertResultsCountByStatus (expectedCount: number, status: 'passed' | 'failed' | 'errored' | 'all') {
-		const recentResults = getRecentResults()
+		const recentResults = getResults()
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
 		const res = recentResults[0].ablResults?.resultsJson[0]
 		if (!res) {

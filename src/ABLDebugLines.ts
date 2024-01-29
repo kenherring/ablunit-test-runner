@@ -24,7 +24,6 @@ export class ABLDebugLines {
 
 		const debugSourceObj = await this.propath.search(debugSource)
 		if (!debugSourceObj) {
-			log.error("cannot find debug source in propath (" + debugSource + ")")
 			log.trace("cannot find debug source in propath (" + debugSource + ")")
 			return undefined
 		}

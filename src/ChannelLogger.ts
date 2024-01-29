@@ -22,7 +22,6 @@ class Logger {
 
 	public static getInstance () {
 		if (!Logger.instance) {
-			console.info('new Logger()')
 			Logger.instance = new Logger()
 		}
 		Logger.instance.clearOutputChannel()

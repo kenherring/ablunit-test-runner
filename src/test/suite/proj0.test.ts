@@ -1,9 +1,9 @@
-import { assert, decorator, getRecentResults, runAllTests, toUri, waitForExtensionActive } from '../testCommon'
+import { assert, decorator, getResults, runAllTests, toUri, waitForExtensionActive } from '../testCommon'
 import { before } from 'mocha'
 import { log } from '../../ChannelLogger'
 import { Uri, commands, window, workspace } from 'vscode'
 
-const projName = __filename.split('\\').pop()!.split('/').pop()!.split('.')[0]
+const projName = 'proj0'
 
 before(async () => {
 	log.debug('before start')
@@ -17,7 +17,7 @@ suite(projName + ' - Extension Test Suite', () => {
 	test(projName + '.1 - ${workspaceFolder}/ablunit.json file exists', async () => {
 		await runAllTests()
 
-		const recentResults = getRecentResults()
+		const recentResults = getResults()
 		assert.equal(recentResults[0].cfg.ablunitConfig.config_uri, toUri('ablunit.json'), "ablunit.json path mismatch")
 		assert.fileExists('ablunit.json', 'results.xml')
 		assert.notFileExists('results.json')

@@ -1,8 +1,7 @@
 import { before } from 'mocha'
 import { Uri } from 'vscode'
-import { assert, getWorkspaceUri, runAllTests, waitForExtensionActive } from '../testCommon'
+import { assert, getResults, getWorkspaceUri, runAllTests, waitForExtensionActive } from '../testCommon'
 import { getEnvVars } from '../../ABLUnitRun'
-import { decorator } from '../../Decorator'
 
 const projName = 'proj8'
 
@@ -29,7 +28,7 @@ suite(projName + ' - Extension Test Suite', () => {
 
 	test(projName + '.2 - getEnvVars confirm PATH is set correctly', async () => {
 		await runAllTests()
-		const recentResults = decorator.getRecentResults()
+		const recentResults = getResults()
 		const res = recentResults?.[0]
 		if (!res) {
 			assert.fail("res is null")
