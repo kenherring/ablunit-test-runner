@@ -1,8 +1,7 @@
 import { strict as assert } from 'assert'
 import { after, before, beforeEach } from 'mocha'
 import { Uri, workspace } from 'vscode'
-import { runAllTests, updateConfig, waitForExtensionActive } from '../testCommon'
-import { doesDirExist, doesFileExist } from '../../ABLUnitCommon'
+import { doesDirExist, doesFileExist, runAllTests, updateConfig, waitForExtensionActive } from '../testCommon'
 
 
 const projName = 'workspace1'

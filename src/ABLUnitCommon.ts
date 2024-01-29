@@ -29,6 +29,8 @@ export function doesDirExist (uri: Uri) {
 }
 
 export function doesFileExist (uri: Uri) {
+	log.info('uri=' + uri.fsPath)
+	log.info('statSync=' + JSON.stringify(fs.statSync(uri.fsPath),null,2))
 	if (fs.statSync(uri.fsPath).isFile()) {
 		return true
 	}
