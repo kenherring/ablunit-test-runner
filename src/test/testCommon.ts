@@ -255,7 +255,7 @@ export async function runAllTests (doRefresh: boolean = true) {
 		})
 		await sleep(500)
 	} else {
-		await sleep(250)
+		await sleep(250, 'sleep after testing.refreshTests and before testing.runAll')
 	}
 
 	console.log("testing.runAll starting")

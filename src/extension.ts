@@ -8,7 +8,8 @@ import { getContentFromFilesystem } from './parse/TestParserCommon'
 import { GlobSync } from 'glob'
 import { log } from './ChannelLogger'
 import { readFileSync } from 'fs'
-import { DecorationProvider, Decorator, decorator } from './Decorator'
+// import { DecorationProvider, Decorator, decorator } from './Decorator'
+import { Decorator, decorator } from './Decorator'
 
 export interface IExtensionTestReferences {
 	testController: TestController,
@@ -28,7 +29,7 @@ export async function activate (context: ExtensionContext) {
 	const contextResourcesUri = Uri.joinPath(context.extensionUri,'resources')
 	setContextPaths(contextStorageUri, contextResourcesUri)
 	await createDir(contextStorageUri)
-	const decorationProvider = new DecorationProvider()
+	// const decorationProvider = new DecorationProvider()
 
 	const getExtensionReferences = () => {
 		return {
@@ -47,7 +48,7 @@ export async function activate (context: ExtensionContext) {
 	context.subscriptions.push(
 		commands.registerCommand('_ablunit.openCallStackItem', openCallStackItem),
 		workspace.onDidChangeConfiguration(e => { updateConfiguration(e) }),
-		window.registerFileDecorationProvider(decorationProvider),
+		// window.registerFileDecorationProvider(decorationProvider),
 
 		// TODO
 		// window.onDidChangeActiveTextEditor(e => {
@@ -330,14 +331,17 @@ export async function activate (context: ExtensionContext) {
 		}
 	}
 
-	function resolveHandlerFunc (item: TestItem | undefined) {
+	async function resolveHandlerFunc (item: TestItem | undefined) {
 		if (!item) {
-			log.info("resolveHandler called with undefined item - should we refresh the tree")
-			// await refreshTestTree(ctrl, undefined).catch((err) => {
-			// 	log.error('refreshTestTree failed inital load. err=' + err)
-			// })
-			// const watchers = startWatchingWorkspace(ctrl)
-			// context.subscriptions.push(...watchers)
+			log.debug("resolveHandlerFunc called with undefined item - refresh tests?")
+			if (workspace.getConfiguration('ablunit').get('discoverFilesOnActivate', false)) {
+				log.debug('discoverFilesOnActivate is true. refreshing test tree...')
+				return commands.executeCommand('testing.refreshTests').then(() => {
+					log.trace('tests tree successfully refreshed on workspace startup')
+				}, (err) => {
+					log.error('failed to refresh test tree. err=' + err)
+				})
+			}
 			return
 		}
 
@@ -353,7 +357,10 @@ export async function activate (context: ExtensionContext) {
 
 	ctrl.refreshHandler = async (token: CancellationToken) => {
 		log.info('ctrl.refreshHandler')
-		return refreshTestTree(ctrl, token)
+		return refreshTestTree(ctrl, token).catch((err) => {
+			log.error('refreshTestTree failed. err=' + err)
+			throw err
+		})
 	}
 
 	ctrl.resolveHandler = async item => {
@@ -382,15 +389,6 @@ export async function activate (context: ExtensionContext) {
 	// testCoverageProfile.configureHandler = configureHandler
 	// const testDebugProfile = ctrl.createRunProfile('Debug ABLUnit Tests', TestRunProfileKind.Debug, runHandler, false, new TestTag("runnable"), false)
 	// testDebugProfile.configureHandler = configureHandler
-
-	if(workspace.getConfiguration('ablunit').get('discoverFilesOnActivate', false)) {
-		log.trace('discoverFilesOnActivate is true. refreshing test tree...')
-		commands.executeCommand('testing.refreshTests').then(() => {
-			log.trace('tests tree successfully refreshed on workspace startup')
-		}, (err) => {
-			log.error('failed to refresh test tree. err=' + err)
-		})
-	}
 }
 
 let contextStorageUri: Uri
@@ -772,27 +770,35 @@ async function refreshTestTree (controller: TestController, token: CancellationT
 	const elapsedTime = () => { return '(time=' + (Date.now() - startTime) + 'ms)' }
 	const logResults = () => {
 		log.info('refresh test tree complete! found ' + getControllerTestFileCount(controller) + ' files with test cases ' + elapsedTime())
-		log.debug(' - ' + searchCount + ' files matching glob pattern(s)')
-		log.debug(' - ' + filelist.length + ' files with potential test case(s)')
-		log.debug(' - ' + resolvedCount + ' files parsed had one or more test case(s)')
-		log.debug(' - ' + rejectedCount + ' files parsed had zero test case(s)')
+		log.trace(' - ' + searchCount + ' files matching glob pattern(s)')
+		log.trace(' - ' + filelist.length + ' files with potential test case(s)')
+		log.trace(' - ' + resolvedCount + ' files parsed had one or more test case(s)')
+		log.trace(' - ' + rejectedCount + ' files parsed had zero test case(s)')
 	}
 
-	token.onCancellationRequested(() => {
-		log.info('cancellation requested ' + elapsedTime())
-		throw new CancellationError()
-	})
+	// token.onCancellationRequested(() => {
+	// 	log.info('cancellation requested ' + elapsedTime())
+	// 	throw new CancellationError()
+	// })
 
 	const checkCancellationToken = () => {
-		if (token.isCancellationRequested) {
-			log.warn('cancellation requested ' + elapsedTime())
-			logResults()
-			throw new CancellationError()
-		}
+		if (!token.isCancellationRequested) { return }
+		log.warn('cancellation requested ' + elapsedTime())
+		logResults()
+		throw new CancellationError()
 	}
 	const { includePatterns, excludePatterns } = getWorkspaceTestPatterns()
+	log.info('includePatterns=' + includePatterns.length + ', excludePatterns=' + excludePatterns.length)
+	for (const pattern of includePatterns) {
+		log.debug('includePattern=' + pattern.pattern)
+	}
+	for (const pattern of excludePatterns) {
+		log.debug('excludePattern=' + pattern.pattern)
+	}
+
 	removeExcludedFiles(controller, excludePatterns, token)
 
+	log.debug("finding files...")
 	for (const includePattern of includePatterns) {
 		const prom = workspace.findFiles(includePattern, undefined, undefined, token).then((foundFiles) => {
 			foundFiles =  foundFiles.filter(uri => !isFileExcluded(uri, excludePatterns))
@@ -806,14 +812,15 @@ async function refreshTestTree (controller: TestController, token: CancellationT
 		checkCancellationToken()
 	}
 
+	log.debug('parsing files... (count=' + filelist.length + ')')
 	for (const file of filelist) {
 		searchCount++
 		checkCancellationToken()
 
 		const { item, data } = getOrCreateFile(controller, file, excludePatterns)
 		if (item && data instanceof ABLTestFile) {
-			const foundTestCase = data.updateFromDisk(controller, item, token)
-			if (await foundTestCase) {
+			const foundTestCase = await data.updateFromDisk(controller, item, token).then()
+			if (foundTestCase) {
 				resolvedCount++
 			} else {
 				rejectedCount++

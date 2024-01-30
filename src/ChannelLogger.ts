@@ -83,6 +83,7 @@ class Logger {
 	}
 
 	private writeToChannel (messageLevel: LogLevel, message: string, includeStack: boolean) {
+		message = '[' + this.getFunction() + '] ' + message
 		switch (messageLevel) {
 			case LogLevel.Trace:
 				if(includeStack) { this.logOutputChannel.debug('Trace: ' + message); break }
@@ -119,13 +120,28 @@ class Logger {
 		message = this.decorateMessage(message, includeStack)
 		switch (messageLevel) {
 			case LogLevel.Trace:
-				if (includeStack) { console.trace(message); break }
-				else { console.debug('Trace: ' + message); break }
+				if (includeStack) { console.trace(message) }
+				else { console.debug('Trace: ' + message) }
+				break
 			case LogLevel.Debug:    console.debug(message); break
 			case LogLevel.Info:     console.info(message); break
 			case LogLevel.Warning:  console.warn(message); break
 			case LogLevel.Error:    console.error(message); break
 			default:                console.log(message); break
+		}
+	}
+
+	private getFunction () {
+		const prepareStackTraceOrg = Error.prepareStackTrace
+		const err = new Error()
+		Error.prepareStackTrace = (_, stack) => stack
+		const stack = err.stack as unknown as NodeJS.CallSite[]
+		Error.prepareStackTrace = prepareStackTraceOrg
+
+		for (const s of stack) {
+			if (s.getTypeName() !== 'Logger') {
+				return (s.getMethodName() ?? s.getFunctionName()) + ':' + s.getLineNumber()
+			}
 		}
 	}
 

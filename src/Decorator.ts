@@ -114,13 +114,10 @@ export class Decorator {
 
 		const tc = this.recentCoverage.get(editor.document.uri.fsPath)
 		if (!tc) {
-			log.warn("No coverage for " + editor.document.uri.fsPath + ', coverage.size=' + this.recentCoverage?.size + ', decorations.size=' + this.recentDecorations?.size)
-			log.warn('  -     have: ' + editor.document.uri.fsPath)
+			log.trace("No coverage for " + editor.document.uri.fsPath + ', coverage.size=' + this.recentCoverage?.size + ', decorations.size=' + this.recentDecorations?.size)
+			log.trace('  -     have: ' + editor.document.uri.fsPath)
 			for (const [k, v] of this.recentCoverage || []) {
-				log.warn('  - found cov: ' + k + ' ' + v.detailedCoverage?.length)
-			}
-			for (const [k, v] of this.recentDecorations || []) {
-				log.warn('  - found dec: ' + k + ' ' + v.executed?.length + ' ' + v.executable?.length)
+				log.trace('  - found coverage: ' + k + ' ' + v.detailedCoverage?.length)
 			}
 			return false
 		}

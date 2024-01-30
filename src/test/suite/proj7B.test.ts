@@ -3,11 +3,13 @@ import { before } from 'mocha'
 import { CancellationError, TestItemCollection, commands } from 'vscode'
 import { getTestController, runAllTests, sleep, waitForExtensionActive } from '../testCommon'
 import { log } from '../../ChannelLogger'
+import { beforeProj7 } from './proj7A.test'
 
 const projName = 'proj7B'
 
 before(async () => {
 	await waitForExtensionActive()
+	await beforeProj7()
 })
 
 suite(projName + ' - Extension Test Suite', () => {
@@ -18,12 +20,18 @@ suite(projName + ' - Extension Test Suite', () => {
 
 		log.info('refreshing tests')
 		const startRefreshTime = Date.now()
-		const refresh = commands.executeCommand('testing.refreshTests')
+		const refresh = commands.executeCommand('testing.refreshTests').then(() => {
+			console.log('testing.refreshTests completed!')
+		}, (err) => {
+			console.log('testing.refreshTests caught an exception. err=' + err)
+			throw err
+		})
+
 
 		let testCount = getTestControllerItemCount('ABLTestFile')
 		log.info("testCount-1=" + testCount)
 		while(testCount < 10) {
-			await sleep(250)
+			await sleep(250, 'waiting for getTestControllerItemCount to return > 10 (got ' + testCount + ')')
 			testCount = getTestControllerItemCount('ABLTestFile')
 		}
 		log.info("testCount-2=" + testCount)
@@ -64,7 +72,6 @@ suite(projName + ' - Extension Test Suite', () => {
 		})
 		log.info('testing.cancelTestRefresh completed successfully')
 	})
-
 
 	test(projName + '.2 - cancel test run', async () => {
 		runAllTests().then(() => { return }, (err) => { throw err })

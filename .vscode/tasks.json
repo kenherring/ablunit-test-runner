@@ -41,10 +41,28 @@
 			}
 		},
 		{
-			"label": "run unit tests in docker",
+			"label": "run all tests in docker",
 			"type": "shell",
 			"command": "docker/run_tests.sh",
+			"args": [
+				"-m"
+			],
 			"problemMatcher": []
+		},
+		{
+			"label": "run test in docker",
+			"type": "shell",
+			"command": "docker/run_tests.sh",
+			"args": [
+				"-p",
+				"'${relativeFile}'",
+				"-m"
+			],
+			"problemMatcher": []
+
+		},
+		{
+			"label": "run unit test in docker"
 		}
 	]
 }

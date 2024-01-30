@@ -106,7 +106,6 @@ run_tests () {
 
 	if [ "$TEST_PROJECT" = "base" ]; then
 		run_tests_base
-		scripts/validate.sh
 	elif [ "$TEST_PROJECT" = "dummy-ext" ]; then
 		run_tests_dummy_ext
 	elif [ "$TEST_PROJECT" = "package" ]; then
@@ -126,7 +125,11 @@ run_tests_base () {
 		exit 1
 	fi
 	echo "run_tests success"
-	analyze_results
+
+	if [ -z "$ABLUNIT_TEST_RUNNER_PROJECT_NAME" ]; then
+		analyze_results
+		scripts/validate.sh
+	fi
 }
 
 analyze_results () {
@@ -175,13 +178,17 @@ save_cache () {
 	if [ -d .vscode-test ]; then
 		echo "saving .vscode-test to cache"
 		mkdir -p "$CACHE_BASE/.vscode-test"
+		mkdir -p "$CACHE_BASE/node_modules"
 		rsync -aR ./.vscode-test "$CACHE_BASE"
+		rsync -aR ./node_modules "$CACHE_BASE"
 	fi
 
 	if [ -d ./dummy-ext/.vscode-test ]; then
 		echo "saving dummy-ext/.vscode-test to cache"
 		mkdir -p "$CACHE_BASE/dummy-ext/.vscode-test"
+		mkdir -p "$CACHE_BASE/dummy-ext/node_modules"
 		rsync -aR ./dummy-ext/.vscode-test "$CACHE_BASE"
+		rsync -aR ./dummy-ext/node_modules "$CACHE_BASE"
 	elif [ "$TEST_PROJECT" = "dummy-ext" ]; then
 		echo "WARNING: dummy-ext/.vscode-test not found.  cannot save cache"
 		exit 1

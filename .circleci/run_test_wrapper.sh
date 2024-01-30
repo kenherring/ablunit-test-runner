@@ -59,6 +59,10 @@ save_and_print_debug_output () {
 
 run_lint () {
 	echo "[$0 ${FUNCNAME[0]}]"
+	if [ -n "$ABLUNIT_TEST_RUNNER_PROJECT_NAME" ]; then
+		echo "[$0 ${FUNCNAME[0]}] skipping lint for single ABLUnit test runner project test"
+		return 0
+	fi
 
 	mkdir -p artifacts
 	rm -rf test_projects/proj7_load_performance/src/ADE-12.2.13.0

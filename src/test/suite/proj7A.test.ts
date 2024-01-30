@@ -10,7 +10,7 @@ function getUri (path: string) {
 	return Uri.joinPath(workspaceUri, path)
 }
 
-before(async () => {
+export async function beforeProj7 () {
 	await waitForExtensionActive()
 	const templateProc = Uri.joinPath(getUri('src/template_proc.p'))
 	const templateClass = Uri.joinPath(getUri('src/template_class.cls'))
@@ -28,6 +28,10 @@ before(async () => {
 			await workspace.fs.writeFile(getUri(`src/classes/dir${i}/testClass${j}.cls`), writeContent)
 		}
 	}
+}
+
+before(async () => {
+	await beforeProj7()
 })
 
 suite(projName + ' - Extension Test Suite', () => {
