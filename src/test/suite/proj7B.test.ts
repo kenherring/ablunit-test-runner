@@ -1,8 +1,7 @@
 import { strict as assert } from 'assert'
 import { before } from 'mocha'
 import { CancellationError, TestItemCollection, commands } from 'vscode'
-import { beforeProj7, getTestController, runAllTests, sleep } from '../testCommon'
-import { log } from '../../ChannelLogger'
+import { beforeProj7, getTestController, log, runAllTests, sleep } from '../testCommon'
 
 const projName = 'proj7B'
 
@@ -19,9 +18,9 @@ suite(projName + ' - Extension Test Suite', () => {
 		log.info('refreshing tests')
 		const startRefreshTime = Date.now()
 		const refresh = commands.executeCommand('testing.refreshTests').then(() => {
-			console.log('testing.refreshTests completed!')
+			log.info('testing.refreshTests completed!')
 		}, (err) => {
-			console.log('testing.refreshTests caught an exception. err=' + err)
+			log.info('testing.refreshTests caught an exception. err=' + err)
 			throw err
 		})
 

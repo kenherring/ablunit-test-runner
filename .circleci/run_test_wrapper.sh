@@ -59,7 +59,7 @@ save_and_print_debug_output () {
 
 run_lint () {
 	echo "[$0 ${FUNCNAME[0]}]"
-	if [ -n "$ABLUNIT_TEST_RUNNER_PROJECT_NAME" ]; then
+	if [ -n "${ABLUNIT_TEST_RUNNER_PROJECT_NAME:-}" ]; then
 		echo "[$0 ${FUNCNAME[0]}] skipping lint for single ABLUnit test runner project test"
 		return 0
 	fi

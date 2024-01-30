@@ -1,15 +1,12 @@
-import { assert, getDecorator, getResults, runAllTests, toUri, waitForExtensionActive } from '../testCommon'
 import { before } from 'mocha'
-import { log } from '../../ChannelLogger'
 import { Uri, commands, window, workspace } from 'vscode'
+import { assert, getDecorator, getResults, runAllTests, toUri, waitForExtensionActive } from '../testCommon'
 
 const projName = 'proj0'
 
 before(async () => {
-	log.debug('before start')
 	await waitForExtensionActive().then()
 	await commands.executeCommand('testing.clearTestResults').then()
-	log.debug('before end')
 })
 
 suite(projName + ' - Extension Test Suite', () => {
@@ -54,6 +51,3 @@ suite(projName + ' - Extension Test Suite', () => {
 	// done: open and run
 
 })
-
-// d:\ablunit-test-runner\test_projects\proj0\src\dirA\dir1\testInDir.p
-// d:\ablunit-test-runner\test_projects\proj0\src\dirA\dir1\testInDir.p
