@@ -1,14 +1,12 @@
 import { strict as assert } from 'assert'
 import { before } from 'mocha'
 import { CancellationError, TestItemCollection, commands } from 'vscode'
-import { getTestController, runAllTests, sleep, waitForExtensionActive } from '../testCommon'
+import { beforeProj7, getTestController, runAllTests, sleep } from '../testCommon'
 import { log } from '../../ChannelLogger'
-import { beforeProj7 } from './proj7A.test'
 
 const projName = 'proj7B'
 
 before(async () => {
-	await waitForExtensionActive()
 	await beforeProj7()
 })
 
