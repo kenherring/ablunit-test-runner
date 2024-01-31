@@ -497,7 +497,9 @@ export class ABLResults implements Disposable {
 		const fileinfo = await this.propath!.search(module.SourceName)
 		const moduleUri = fileinfo?.uri
 		if (!moduleUri) {
-			if (!module.SourceName.startsWith("OpenEdge.") && module.SourceName !== 'ABLUnitCore.p') {
+			if (!module.SourceName.startsWith("OpenEdge.") &&
+				module.SourceName !== 'ABLUnitCore.p' &&
+				module.SourceName !== 'Ccs.Common.Application') {
 				log.error("could not find moduleUri for " + module.SourceName)
 			}
 			return

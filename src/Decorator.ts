@@ -1,8 +1,8 @@
-import { ABLResults } from "./ABLResults"
-import { CancellationToken, DecorationOptions, FileDecoration, FileDecorationProvider, ProviderResult, Range, TextDocument, TextEditor, TextEditorDecorationType, Uri, window, workspace } from 'vscode'
 import { existsSync } from 'fs'
+import { CancellationToken, DecorationOptions, FileDecoration, FileDecorationProvider, ProviderResult, Range, TextDocument, TextEditor, TextEditorDecorationType, Uri, window, workspace } from 'vscode'
+import { ABLResults } from './ABLResults'
+import { log } from './ChannelLogger'
 import { FileCoverage } from './TestCoverage'
-import { log } from "./ChannelLogger"
 
 interface IExecLines {
 	count?: number,
@@ -145,6 +145,11 @@ export class Decorator {
 		tc.detailedCoverage?.filter(element => element.executionCount=== 0).forEach(element => {
 			executableArray.push({ range: element.location as Range })
 		})
+		log.info('setDecorations ' + editor.document.uri.fsPath)
+		log.info('  - executedArray.length=' + executedArray.length)
+		log.info('  - executableArray.length=' + executableArray.length)
+		// log.info('  - executedArray=' + JSON.stringify(executedArray,null,2))
+		// log.info('  - executableArray=' + JSON.stringify(executableArray,null,2))
 		this.setDecorations(editor, {executed: executedArray, executable: executableArray})
 
 		log.info("add recentDecorations " + editor.document.uri.fsPath)
@@ -185,9 +190,9 @@ export class Decorator {
 		log.debug("--- getDecorations-10 recentDecorations=" + this.instanceCount + ' ' + this.recentDecorations?.size)
 		log.debug("--- getDecorations-12 instanceCount=" + this.instanceCount + ' ' + Decorator.instCount)
 
-		for (const [d, k]  of this.recentCoverage || []) {
-			log.debug("--- getDecorations-13 Cov: d=" + d + ' ' + k.detailedCoverage?.length)
-		}
+		// for (const [d, k]  of this.recentCoverage || []) {
+		// 	log.debug("--- getDecorations-13 Cov: d=" + d + ' ' + k.detailedCoverage?.length)
+		// }
 		for (const [d, k] of this.recentDecorations || []) {
 			log.debug("--- getDecorations-14 Dec: d=" + d + ' ' + k.executed?.length + ' ' + k.executable?.length)
 		}

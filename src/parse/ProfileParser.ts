@@ -28,38 +28,38 @@ export class ABLProfile {
 			}
 		}
 
-		// log.info("section1 " + sectionLines[1].length)
+		log.debug("section1 " + sectionLines[1].length)
 		this.profJSON = new ABLProfileJson(sectionLines[1], debugLines)
-		// log.info("section2 " + sectionLines[2].length)
+		log.debug("section2 " + sectionLines[2].length)
 		this.profJSON.addModules(sectionLines[2])
-		// log.info("section3 " + sectionLines[3].length)
+		log.debug("section3 " + sectionLines[3].length)
 		this.profJSON.addCallTree(sectionLines[3])
-		// log.info("section4 " + sectionLines[4].length)
+		log.debug("section4 " + sectionLines[4].length)
 		await this.profJSON.addLineSummary(sectionLines[4])
-		// log.info("section5 " + sectionLines[5].length)
+		log.debug("section5 " + sectionLines[5].length)
 		this.profJSON.addTracing(sectionLines[5])
-		// log.info("section6 " + sectionLines[6].length)
+		log.debug("section6 " + sectionLines[6].length)
 		this.profJSON.addCoverage(sectionLines[6])
-		// log.info("section7 " + sectionLines[7].length)
+		log.debug("section7 " + sectionLines[7].length)
 		this.profJSON.addSection7(sectionLines[7])
-		// log.info("sectionLines.length=" + sectionLines.length)
+		log.debug("sectionLines.length=" + sectionLines.length)
 		if(sectionLines.length > 11) {
-			// log.info("section8 " + sectionLines[8].length)
+			log.debug("section8 " + sectionLines[8].length)
 			this.profJSON.addSection8(sectionLines[8])
-			// log.info("section9 " + sectionLines[9].length)
+			log.debug("section9 " + sectionLines[9].length)
 			this.profJSON.addSection9(sectionLines[9])
-			// log.info("section10 " + sectionLines[10].length)
+			log.debug("section10 " + sectionLines[10].length)
 			this.profJSON.addSection10(sectionLines[10])
-			// log.info("section11 " + sectionLines[11].length)
+			log.debug("section11 " + sectionLines[11].length)
 			this.profJSON.addSection11(sectionLines[11])
-			// log.info("section12 " + sectionLines[12].length)
+			log.debug("section12 " + sectionLines[12].length)
 			this.profJSON.addSection12(sectionLines[12])
-			// log.info("section13 - User Data" + sectionLines[13].length)
+			log.debug("section13 - User Data" + sectionLines[13].length)
 			this.profJSON.addUserData(sectionLines[13])
 		} else {
-			// log.info("section12 " + sectionLines[8].length)
+			log.debug("section12 " + sectionLines[8].length)
 			this.profJSON.addSection12(sectionLines[8])
-			// log.info("section13 - User Data" + sectionLines[9].length)
+			log.debug("section13 - User Data" + sectionLines[9].length)
 			this.profJSON.addUserData(sectionLines[9])
 		}
 
@@ -71,7 +71,7 @@ export class ABLProfile {
 				log.error("Error writing profile output json file: " + err)
 			})
 		}
-		// log.info("[parseData] returning")
+		log.debug("parseData returning")
 	}
 
 	writeJsonToFile (uri: Uri) {
@@ -80,9 +80,9 @@ export class ABLProfile {
 			userData: this.profJSON!.userData,
 		}
 		return workspace.fs.writeFile(uri, Uint8Array.from(Buffer.from(JSON.stringify(data, null, 2)))).then(() => {
-			log.info("wrote profile output json file: " + uri.fsPath)
+			log.info("wrote profile output json file: " + workspace.asRelativePath(uri))
 		}, (err) => {
-			log.error("failed to write profile output json file " + uri.fsPath + " - " + err)
+			log.error("failed to write profile output json file " + workspace.asRelativePath(uri) + " - " + err)
 		})
 	}
 }
@@ -378,7 +378,9 @@ export class ABLProfileJson {
 	async addLineSummary (lines: string[]) {
 		for(const element of lines) {
 			const test = lineSummaryRE.exec(element)
-			if (!test) continue
+			if (!test) {
+				continue
+			}
 
 			const modID = Number(test[1])
 			const sourceName = this.getModule(modID)?.SourceName
@@ -392,14 +394,14 @@ export class ABLProfileJson {
 			}
 			if (!sourceName) {
 				if (modID !== 0) {
-					log.trace('could not find source name for module ' + modID)
+					log.debug('could not find source name for module ' + modID)
 				}
-				return
+				continue
 			}
 
 			const lineinfo = await this.debugLines.getSourceLine(sourceName, sum.LineNo)
 			if(!lineinfo) {
-				log.trace("unable to find source/debug line info for " + sourceName + " " + sum.LineNo)
+				log.debug("could not find source/debug line info for " + sourceName + " " + sum.LineNo)
 				// throw new Error("Unable to find source/debug line info for " + sourceName + " " + sum.LineNo)
 			} else {
 				sum.srcLine = lineinfo.debugLine

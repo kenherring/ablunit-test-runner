@@ -29,6 +29,17 @@ run_tests () {
 	EXIT_CODE=0
 
 	xvfb-run -a npm test || EXIT_CODE=$?
+	if [ -f /home/circleci/project/test_projects/proj0/prof.out ]; then
+		echo "[$0 ${FUNCNAME[0]}] copying profile output prof_${OE_VERSION}.out"
+		cp /home/circleci/project/test_projects/proj0/prof.out "/home/circleci/artifacts/prof_${OE_VERSION}.out"
+		if [ -f /home/circleci/project/test_projects/proj0/prof.json ]; then
+			echo "[$0 ${FUNCNAME[0]}] copying profile output prof_${OE_VERSION}.json"
+			cp /home/circleci/project/test_projects/proj0/prof.json "/home/circleci/artifacts/prof_${OE_VERSION}.json"
+		fi
+	else
+		echo "----- COULD NOT FIND PROFILE OUTPUT -----"
+		exit 1
+	fi
 	if [ "$EXIT_CODE" = "0" ]; then
 		echo "xvfb-run success"
 	else

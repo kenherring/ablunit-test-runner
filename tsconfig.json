@@ -27,7 +27,7 @@
 		"noImplicitReturns": false,
 		"noImplicitThis": true,
 		"noPropertyAccessFromIndexSignature": true,
-		"noUnusedLocals": true,
+		// "noUnusedLocals": true,
 		"noUnusedParameters": true,
 		"removeComments": true,
 		"strictFunctionTypes": true,
