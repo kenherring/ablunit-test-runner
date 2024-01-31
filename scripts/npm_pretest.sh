@@ -49,15 +49,19 @@ get_pct () {
 
 create_dbs () {
 	echo "[$0 ${FUNCNAME[0]}] pwd=$(pwd)"
-	if [ ! -d test_projects/proj0/target/db ]; then
-		cd test_projects/proj0
-		if command -v ant; then
-			ant
-		else
-			"$DLC"/ant/bin/ant
-		fi
-		cd -
+	if [ -d test_projects/proj0/target/db ]; then
+		return 0
 	fi
+
+	local COMMAND=ant
+	cd test_projects/proj0
+	COMMAND=ant
+	if ! command -v $COMMAND; then
+		COMMAND="$DLC/ant/bin/ant"
+	fi
+	mkdir -p artifacts
+	$COMMAND > artifacts/pretest_ant.log >&1
+	cd -
 }
 
 doBuild () {

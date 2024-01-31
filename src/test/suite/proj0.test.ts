@@ -1,11 +1,11 @@
 import { after, before } from 'mocha'
 import { Uri, commands, window, workspace } from 'vscode'
-import { assert, deleteFile, getDecorator, getResults, log, runAllTests, toUri, updateTestProfile, waitForExtensionActive } from '../testCommon'
+import { assert, deleteFile, getDecorator, getResults, log, runAllTests, sleep, toUri, updateTestProfile, waitForExtensionActive } from '../testCommon'
 
 const projName = 'proj0'
 
 before(async () => {
-	await waitForExtensionActive().then()
+	await waitForExtensionActive().then(() => { return sleep(250) })
 	await commands.executeCommand('testing.clearTestResults').then()
 	deleteFile('.vscode/ablunit-test-profile.json')
 })

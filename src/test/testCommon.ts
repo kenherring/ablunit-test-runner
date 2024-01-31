@@ -77,7 +77,7 @@ export async function waitForExtensionActive (extensionId: string = 'kherring.ab
 		throw new Error(extensionId + " is not active")
 	}
 	console.log(extensionId + " is active!")
-	return refreshData()
+	// return refreshData()
 }
 
 async function installOpenedgeABLExtension () {
@@ -85,6 +85,7 @@ async function installOpenedgeABLExtension () {
 		log.debug("[testCommon.ts] installing riversidesoftware.openedge-abl-lsp extension...")
 		await commands.executeCommand('workbench.extensions.installExtension', 'riversidesoftware.openedge-abl-lsp').then(() => {
 			log.trace("[testCommon.ts] installed riversidesoftware.openedge-abl-lsp extension!")
+			return setRuntimes([{name: "12.2", path: getDefaultDLC(), default: true}])
 		}, (err: Error) => {
 			if (err.toString() === 'Error: Missing gallery') {
 				log.trace("[testCommon.ts] triggered installed extension, but caught '" + err + "'")
@@ -115,8 +116,7 @@ export async function setRuntimes (runtimes: IRuntime[]) {
 		log.info("[testCommon.ts] setting abl.configuration.runtimes")
 		return workspace.getConfiguration('abl.configuration').update('runtimes', runtimes, ConfigurationTarget.Global).then(async () =>{
 			log.info("[testCommon.ts] abl.configuration.runtimes set successfully")
-			await sleep(1000)
-			return true
+			return sleep(500)
 		}, (err) => {
 			throw new Error("[testCommon.ts] failed to set runtimes: " + err)
 		})
