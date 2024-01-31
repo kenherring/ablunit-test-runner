@@ -50,6 +50,25 @@
 			"problemMatcher": []
 		},
 		{
+			"label": "npm lint",
+			"type": "npm",
+			"script": "lint",
+			"problemMatcher": "$eslint-stylish",
+			"group": {
+				"kind": "build",
+				"isDefault": false
+			}
+		},
+		{
+			"label": "npm lint --fix",
+			"type": "npm",
+			"script": "lint-fix-all",
+			"group": {
+				"kind": "build",
+				"isDefault": false
+			}
+		},
+		{
 			"label": "run test in docker",
 			"type": "shell",
 			"command": "docker/run_tests.sh",
@@ -60,9 +79,6 @@
 			],
 			"problemMatcher": []
 
-		},
-		{
-			"label": "run unit test in docker"
 		}
 	]
 }

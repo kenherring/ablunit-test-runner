@@ -82,6 +82,7 @@
 		"clean": "rm -rf .nyc_output artifacts coverage dist out *.vsix && sh -c scripts/npm_clean.sh",
 		"clean-and-build": "npm run clean && npm run build",
 		"lint": "npx eslint ./src --ext .ts,.js",
+		"lint-fix-all": "npx eslint ./src --ext .ts,.js --fix",
 		"vscode:prepublish": "npm run package",
 		"package": "webpack --mode production --devtool hidden-source-map",
 		"pretest": "sh -c scripts/npm_pretest.sh",
