@@ -36,9 +36,6 @@ run_tests () {
 			echo "[$0 ${FUNCNAME[0]}] copying profile output prof_${OE_VERSION}.json"
 			cp /home/circleci/project/test_projects/proj0/prof.json "/home/circleci/artifacts/prof_${OE_VERSION}.json"
 		fi
-	else
-		echo "----- COULD NOT FIND PROFILE OUTPUT -----"
-		exit 1
 	fi
 	if [ "$EXIT_CODE" = "0" ]; then
 		echo "xvfb-run success"

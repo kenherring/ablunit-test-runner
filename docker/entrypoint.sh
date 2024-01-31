@@ -129,7 +129,7 @@ run_tests_base () {
 	fi
 	echo "run_tests success"
 
-	if [ -z "$ABLUNIT_TEST_RUNNER_PROJECT_NAME" ]; then
+	if [ -z "${ABLUNIT_TEST_RUNNER_PROJECT_NAME:-}" ]; then
 		analyze_results
 		scripts/validate.sh
 	fi

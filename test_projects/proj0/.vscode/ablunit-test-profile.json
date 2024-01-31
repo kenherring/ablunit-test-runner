@@ -1,9 +1,0 @@
-{
-	"configurations": [
-		{
-			"profiler": {
-				"writeJson": true
-			}
-		}
-	]
-}

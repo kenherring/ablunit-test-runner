@@ -8,6 +8,8 @@ import { IExtensionTestReferences } from '../extension'
 import { ITestSuites } from '../parse/ResultsParser'
 import { log as logObj } from '../ChannelLogger'
 import { strict as assertParent } from 'assert'
+import { DefaultRunProfile } from '../parse/config/RunProfile'
+import { IConfigurations } from '../parse/TestProfileParser'
 
 interface IRuntime {
 	name: string,
@@ -247,15 +249,9 @@ export async function runAllTests (doRefresh: boolean = true) {
 
 	console.log("running all tests")
 	if (doRefresh) {
-		console.log("testing.refreshTests starting")
-		await commands.executeCommand('testing.refreshTests').then(() => {
-			console.log("testing.refreshTests complete!")
-		}, (err) => {
-			throw new Error("testing.refreshTests failed: " + err)
-		})
-		await sleep(500)
+		await refreshTests().then(() => { return sleep(500, 'after refreshTests') })
 	} else {
-		await sleep(250, 'sleep after testing.refreshTests and before testing.runAll')
+		await sleep(250, 'sleep before testing.runAll')
 	}
 
 	console.log("testing.runAll starting")
@@ -264,6 +260,15 @@ export async function runAllTests (doRefresh: boolean = true) {
 		return refreshData()
 	} , (err) => {
 		throw new Error("testing.runAll failed: " + err)
+	})
+}
+
+export function refreshTests () {
+	return commands.executeCommand('testing.refreshTests').then(() => {
+		log.info('testing.refreshTests completed!')
+	}, (err) => {
+		log.info('testing.refreshTests caught an exception. err=' + err)
+		throw err
 	})
 }
 
@@ -276,8 +281,14 @@ export function updateConfig (key: string, value: string | string[] | undefined)
 	})
 }
 
-export function updateTestProfile (key: string, value: string | string[] | boolean): Thenable<void> {
-	const profile = readStrippedJsonFile(Uri.joinPath(getWorkspaceUri(), '.vscode', 'ablunit-test-profile.json'))
+export async function updateTestProfile (key: string, value: string | string[] | boolean) {
+	const testProfileUri = Uri.joinPath(getWorkspaceUri(), '.vscode', 'ablunit-test-profile.json')
+	if (!doesFileExist(testProfileUri)) {
+		log.info("creating ablunit-test-profile.json")
+		const newProfile = { configurations: [ new DefaultRunProfile ] } as IConfigurations
+		await workspace.fs.writeFile(testProfileUri, Buffer.from(JSON.stringify(newProfile)))
+	}
+	const profile = readStrippedJsonFile(testProfileUri)
 	const keys = key.split('.')
 
 	if (keys.length === 3) {

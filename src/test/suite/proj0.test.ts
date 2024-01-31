@@ -1,12 +1,17 @@
-import { before } from 'mocha'
+import { after, before } from 'mocha'
 import { Uri, commands, window, workspace } from 'vscode'
-import { assert, getDecorator, getResults, runAllTests, toUri, waitForExtensionActive } from '../testCommon'
+import { assert, deleteFile, getDecorator, getResults, log, runAllTests, toUri, updateTestProfile, waitForExtensionActive } from '../testCommon'
 
 const projName = 'proj0'
 
 before(async () => {
 	await waitForExtensionActive().then()
 	await commands.executeCommand('testing.clearTestResults').then()
+	deleteFile('.vscode/ablunit-test-profile.json')
+})
+
+after(() => {
+	deleteFile('.vscode/ablunit-test-profile.json')
 })
 
 suite(projName + ' - Extension Test Suite', () => {
@@ -21,7 +26,7 @@ suite(projName + ' - Extension Test Suite', () => {
 		assert.notDirExists('listings')
 	})
 
-	test(projName + '.2 - open file, run test, validate coverage displays', async () => {
+	test(projName + '.2 - run test, open file, validate coverage displays', async () => {
 		await runAllTests()
 
 		const testFileUri = Uri.joinPath(workspace.workspaceFolders![0].uri, 'src', 'dirA', 'dir1', 'testInDir.p')
@@ -30,24 +35,38 @@ suite(projName + ' - Extension Test Suite', () => {
 		const decorator = getDecorator()
 		const lines = decorator.getDecorations(testFileUri)
 		assert.assert(lines.executed, 'no executed lines found for ' + workspace.asRelativePath(testFileUri))
-		assert.assert(lines.executed!.find((d) => d.range.start.line === 5), 'line 5 should display as executable')
-		assert.assert(lines.executed!.find((d) => d.range.start.line === 6), 'line 6 should display as executable')
+		assert.assert(lines.executed!.find((d) => d.range.start.line === 5), 'line 5 should display as executed')
+		assert.assert(lines.executed!.find((d) => d.range.start.line === 6), 'line 6 should display as executed')
 	})
 
-	test(projName + '.3 - run test, open file, validate coverage displays', async () => {
+	test(projName + '.3 - open file, run test, validate coverage displays', async () => {
 		const testFileUri = Uri.joinPath(workspace.workspaceFolders![0].uri, 'src', 'dirA', 'dir1', 'testInDir.p')
 		await window.showTextDocument(testFileUri).then()
-
 		await runAllTests()
 
 		const decorator = getDecorator()
 		const lines = decorator.getDecorations(testFileUri)
 		assert.assert(lines.executed, 'no executed lines found for ' + workspace.asRelativePath(testFileUri))
-		assert.assert(lines.executed!.find((d) => d.range.start.line === 5), 'line 5 should display as executable')
-		assert.assert(lines.executed!.find((d) => d.range.start.line === 6), 'line 6 should display as executable')
+		assert.assert(lines.executed!.find((d) => d.range.start.line === 5), 'line 5 should display as executed')
+		assert.assert(lines.executed!.find((d) => d.range.start.line === 6), 'line 6 should display as executed')
 	})
 
-	// done: run and open
-	// done: open and run
+	test(projName + '.4 - coverage=false, open file, run test, validate no coverage displays', async () => {
+		await updateTestProfile('profiler.coverage', false)
+		const testFileUri = Uri.joinPath(workspace.workspaceFolders![0].uri, 'src', 'dirA', 'dir1', 'testInDir.p')
+		await window.showTextDocument(testFileUri).then()
+		await runAllTests()
+
+		const decorator = getDecorator()
+		const lines = decorator.getDecorations(testFileUri)
+
+		log.info("lines.executed.length=" + lines.executed?.length)
+		log.info("lines.executable.length=" + lines.executable?.length)
+		assert.assert(!lines.executed, 'executed lines found for ' + workspace.asRelativePath(testFileUri) + '. should be empty')
+		assert.assert(!lines.executable, 'no executable lines found for ' + workspace.asRelativePath(testFileUri))
+		assert.assert(!lines.executed?.find((d) => d.range.start.line === 5), 'line 5 should display as executed')
+		assert.assert(!lines.executed?.find((d) => d.range.start.line === 6), 'line 6 should display as executed')
+		assert.assert(!lines.executable?.find((d) => d.range.start.line === 6), 'line 6 should display as executable')
+	})
 
 })

@@ -81,7 +81,6 @@
 			},
 			"quitOnEnd": true,
 			"writeLog":  false,
-			"writeJson": false,
 			"showErrorMessage": true,
 			"throwError": true
 		},
