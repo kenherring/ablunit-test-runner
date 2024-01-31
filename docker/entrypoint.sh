@@ -5,23 +5,26 @@ initialize () {
 	local OPT OPTARG OPTIND
 	echo "[$0 ${FUNCNAME[0]}] pwd=$(pwd)"
 	BASH_AFTER=false
+	BASH_AFTER_ERROR=false
 	CACHE_BASE=/home/circleci/cache
 	CIRCLECI=${CIRCLECI:-false}
-	GIT_BRANCH=$(cd "$REPO_VOLUME" && git branch --show-current)
 	npm_config_cache=$CACHE_BASE/node_modules_cache
 	PROJECT_DIR=/home/circleci/project
 	REPO_VOLUME=/home/circleci/ablunit-test-runner
+	GIT_BRANCH=$(cd "$REPO_VOLUME" && git branch --show-current)
 	STAGED_ONLY=${STAGED_ONLY:-true}
 	VERBOSE=false
 	${CREATE_PACKAGE:-false} && TEST_PROJECT=package
-	
+
 	git config --global init.defaultBranch main
 	mkdir -p "$npm_config_cache" "$PROJECT_DIR"
 	export npm_config_cache
 
-	while getopts 'b' OPT; do
+	while getopts 'bB' OPT; do
 		case "$OPT" in
-			b)	BASH_AFTER=true ;;
+			b)	BASH_AFTER=true
+				BASH_AFTER_ERROR=true ;;
+			B)	BASH_AFTER_ERROR=true ;;
 			?)	echo "script usage: $(basename "$0") [-b]" >&2
 				exit 1 ;;
 		esac
@@ -106,7 +109,6 @@ run_tests () {
 
 	if [ "$TEST_PROJECT" = "base" ]; then
 		run_tests_base
-		scripts/validate.sh
 	elif [ "$TEST_PROJECT" = "dummy-ext" ]; then
 		run_tests_dummy_ext
 	elif [ "$TEST_PROJECT" = "package" ]; then
@@ -122,11 +124,15 @@ run_tests_base () {
 
 	if ! .circleci/run_test_wrapper.sh; then
 		echo "run_tests failed"
-		$BASH_AFTER && bash
+		$BASH_AFTER_ERROR && bash
 		exit 1
 	fi
 	echo "run_tests success"
-	analyze_results
+
+	if [ -z "${ABLUNIT_TEST_RUNNER_PROJECT_NAME:-}" ]; then
+		analyze_results
+		scripts/validate.sh
+	fi
 }
 
 analyze_results () {
@@ -145,7 +151,7 @@ analyze_results () {
 	fi
 
 	if $HAS_ERROR; then
-		$BASH_AFTER && bash
+		$BASH_AFTER_ERROR && bash
 		exit 1
 	fi
 
@@ -160,7 +166,7 @@ run_tests_dummy_ext () {
 
 	if ! .circleci/install_and_run.sh; then
 		echo "run_tests failed"
-		$BASH_AFTER && bash
+		$BASH_AFTER_ERROR && bash
 		exit 1
 	fi
 	echo "run_tests success"
@@ -175,13 +181,21 @@ save_cache () {
 	if [ -d .vscode-test ]; then
 		echo "saving .vscode-test to cache"
 		mkdir -p "$CACHE_BASE/.vscode-test"
+		mkdir -p "$CACHE_BASE/node_modules"
 		rsync -aR ./.vscode-test "$CACHE_BASE"
+		rsync -aR ./node_modules "$CACHE_BASE"
 	fi
 
 	if [ -d ./dummy-ext/.vscode-test ]; then
 		echo "saving dummy-ext/.vscode-test to cache"
 		mkdir -p "$CACHE_BASE/dummy-ext/.vscode-test"
-		rsync -aR ./dummy-ext/.vscode-test "$CACHE_BASE"
+		mkdir -p "$CACHE_BASE/dummy-ext/node_modules"
+		if [ -d ./dummy-ext/.vscode-test ]; then
+			rsync -aR ./dummy-ext/.vscode-test "$CACHE_BASE"
+		fi
+		if [ -d ./dummy-ext/node_modules ]; then
+			rsync -aR ./dummy-ext/node_modules "$CACHE_BASE"
+		fi
 	elif [ "$TEST_PROJECT" = "dummy-ext" ]; then
 		echo "WARNING: dummy-ext/.vscode-test not found.  cannot save cache"
 		exit 1
@@ -203,7 +217,6 @@ restore_cache () {
 		rsync -aR ./dummy-ext/.vscode-test "$BASE_DIR"
 	elif [ "$TEST_PROJECT" = "dummy-ext" ]; then
 		echo "WARNING: dummy-ext/.vscode-test not found in cache"
-		$BASH_AFTER && bash
 	fi
 	cd -
 }

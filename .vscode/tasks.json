@@ -4,25 +4,9 @@
 	"version": "2.0.0",
 	"tasks": [
 		{
+			"label": "npm watch",
 			"type": "npm",
 			"script": "watch",
-			"problemMatcher": "$tsc-watch",
-			"isBackground": true,
-			"presentation": {
-				"reveal": "never",
-				"group": "build-task"
-			},
-			"group": {
-				"kind": "build",
-				"isDefault": true
-			},
-			"runOptions": {
-				"runOn": "folderOpen"
-			}
-		},
-		{
-			"type": "npm",
-			"script": "watch-webpack",
 			"problemMatcher": "$tsc-watch",
 			"isBackground": true,
 			"presentation": {
@@ -38,10 +22,47 @@
 			}
 		},
 		{
-			"label": "run unit tests in docker",
+			"label": "npm watch webpack",
+			"type": "npm",
+			"hide": true,
+			"script": "watch-webpack",
+			"problemMatcher": "$tsc-watch",
+			"isBackground": true,
+			"presentation": {
+				"reveal": "never",
+				"group": "build-task"
+			},
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
+			"runOptions": {
+				"runOn": "folderOpen"
+			}
+		},
+		{
+			"label": "run all tests in docker",
 			"type": "shell",
 			"command": "docker/run_tests.sh",
+			"args": [
+				"-m"
+			],
 			"problemMatcher": []
+		},
+		{
+			"label": "run test in docker",
+			"type": "shell",
+			"command": "docker/run_tests.sh",
+			"args": [
+				"-p",
+				"'${relativeFile}'",
+				"-m"
+			],
+			"problemMatcher": []
+
+		},
+		{
+			"label": "run unit test in docker"
 		}
 	]
 }

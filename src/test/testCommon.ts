@@ -1,10 +1,35 @@
-import { ConfigurationTarget, FileType, TestController, Uri, WorkspaceFolder, commands, extensions, workspace } from 'vscode'
-import { ITestSuites } from '../parse/ResultsParser'
-import { strict as assert } from 'assert'
+import * as fs from 'fs'
 import { ABLResults } from '../ABLResults'
-import log from '../ChannelLogger'
+import { ConfigurationTarget, TestController, WorkspaceFolder, commands, extensions, Uri, workspace } from 'vscode'
+import { Decorator } from '../Decorator'
+import { deleteFile, isRelativePath, readStrippedJsonFile } from '../ABLUnitCommon'
 import { GlobSync } from 'glob'
-import { readStrippedJsonFile } from '../ABLUnitCommon'
+import { IExtensionTestReferences } from '../extension'
+import { ITestSuites } from '../parse/ResultsParser'
+import { log as logObj } from '../ChannelLogger'
+import { strict as assertParent } from 'assert'
+import { DefaultRunProfile } from '../parse/config/RunProfile'
+import { IConfigurations } from '../parse/TestProfileParser'
+
+interface IRuntime {
+	name: string,
+	path: string,
+	default?: boolean
+}
+
+class TestInfo {
+	get projName () { return __filename.split('\\').pop()!.split('/').pop()!.split('.')[0] }
+}
+export const info = new TestInfo()
+export const log = logObj
+
+let recentResults: ABLResults[]
+let decorator: Decorator
+let testController: TestController
+
+export {
+	deleteFile
+}
 
 export function sleep (time: number = 2000, msg?: string) {
 	let status = "sleeping for " + time + "ms"
@@ -15,11 +40,20 @@ export function sleep (time: number = 2000, msg?: string) {
 	return new Promise(resolve => setTimeout(resolve, time))
 }
 
+export function getAblunitExt () {
+	const ext = extensions.getExtension('kherring.ablunit-test-runner')
+	if (!ext) {
+		throw new Error("kherring.ablunit-test-runner is not installed")
+	}
+	return ext
+}
+
 export async function waitForExtensionActive (extensionId: string = 'kherring.ablunit-test-runner') {
 	const ext = extensions.getExtension(extensionId)
 	if (!ext) {
 		throw new Error(extensionId + " is not installed")
 	}
+
 	if (!ext.isActive) {
 		await ext.activate().then(() => {
 			console.log("activated " + extensionId)
@@ -43,6 +77,7 @@ export async function waitForExtensionActive (extensionId: string = 'kherring.ab
 		throw new Error(extensionId + " is not active")
 	}
 	console.log(extensionId + " is active!")
+	return refreshData()
 }
 
 async function installOpenedgeABLExtension () {
@@ -73,12 +108,6 @@ async function installOpenedgeABLExtension () {
 	if (!ext.isActive) {
 		throw new Error("[testCommon.ts] failed to activate extension")
 	}
-}
-
-interface IRuntime {
-	name: string,
-	path: string,
-	default?: boolean
 }
 
 export async function setRuntimes (runtimes: IRuntime[]) {
@@ -131,51 +160,56 @@ export function getWorkspaceUri () {
 	}
 }
 
-export async function doesFileExist (uri: Uri) {
-	const ret = await workspace.fs.stat(uri).then((stat) => {
-		if (stat.type === FileType.File) {
+export function toUri (uri: string | Uri) {
+	if (uri instanceof Uri) {
+		return uri
+	}
+
+	if (isRelativePath(uri)) {
+		return Uri.joinPath(getWorkspaceUri(), uri)
+	}
+	return Uri.file(uri)
+}
+
+export function doesFileExist (uri: Uri | string) {
+	try {
+		const stat = fs.statSync(toUri(uri).fsPath)
+		if (stat.isFile()) {
 			return true
 		}
-		return false
-	}, () => {
-		return false
-	})
-	return ret
-}
-
-export async function deleteFile (file: Uri) {
-	if (await doesFileExist(file)) {
-		return workspace.fs.delete(file)
+	} catch {
+		// do nothing - file does not exist
 	}
+	return false
 }
 
-export async function deleteTestFiles () {
+export function doesDirExist (uri: Uri | string) {
+	try {
+		const stat = fs.statSync(toUri(uri).fsPath)
+		if (stat.isDirectory()) {
+			return true
+		}
+	} catch {
+		// do nothing - file does not exist
+	}
+	return false
+}
+
+export function deleteTestFiles () {
 	const workspaceUri = getWorkspaceUri()
-	await deleteFile(Uri.joinPath(workspaceUri, "ablunit.json"))
-	await deleteFile(Uri.joinPath(workspaceUri, "results.json"))
-	await deleteFile(Uri.joinPath(workspaceUri, "results.xml"))
+	deleteFile(Uri.joinPath(workspaceUri, "ablunit.json"))
+	deleteFile(Uri.joinPath(workspaceUri, "results.json"))
+	deleteFile(Uri.joinPath(workspaceUri, "results.xml"))
 }
 
 export function getSessionTempDir () {
 	if (process.platform === 'win32') {
-		return "file:///c:/temp/ablunit"
+		return Uri.file('c:/temp/ablunit')
 	} else if(process.platform === 'linux') {
-		return "file:///tmp/ablunit"
+		return Uri.file('/tmp/ablunit')
 	} else {
-		throw new Error("Unsupported platform: " + process.platform)
+		throw new Error('Unsupported platform: ' + process.platform)
 	}
-}
-
-export async function doesDirExist (uri: Uri) {
-	const ret = await workspace.fs.stat(uri).then((stat) => {
-		if (stat.type === FileType.Directory) {
-			return true
-		}
-		return false
-	}, () => {
-		return false
-	})
-	return ret
 }
 
 export async function getTestCount (resultsJson: Uri, status: string = 'tests') {
@@ -215,22 +249,26 @@ export async function runAllTests (doRefresh: boolean = true) {
 
 	console.log("running all tests")
 	if (doRefresh) {
-		console.log("testing.refreshTests starting")
-		await commands.executeCommand('testing.refreshTests').then(() => {
-			console.log("testing.refreshTests complete!")
-		}, (err) => {
-			throw new Error("testing.refreshTests failed: " + err)
-		})
-		await sleep(500)
+		await refreshTests().then(() => { return sleep(500, 'after refreshTests') })
 	} else {
-		await sleep(250)
+		await sleep(250, 'sleep before testing.runAll')
 	}
 
 	console.log("testing.runAll starting")
 	return commands.executeCommand('testing.runAll').then(() => {
 		console.log("testing.runAll complete!")
+		return refreshData()
 	} , (err) => {
 		throw new Error("testing.runAll failed: " + err)
+	})
+}
+
+export function refreshTests () {
+	return commands.executeCommand('testing.refreshTests').then(() => {
+		log.info('testing.refreshTests completed!')
+	}, (err) => {
+		log.info('testing.refreshTests caught an exception. err=' + err)
+		throw err
 	})
 }
 
@@ -243,8 +281,14 @@ export function updateConfig (key: string, value: string | string[] | undefined)
 	})
 }
 
-export function updateTestProfile (key: string, value: string | string[] | boolean): Thenable<void> {
-	const profile = readStrippedJsonFile(Uri.joinPath(getWorkspaceUri(), '.vscode', 'ablunit-test-profile.json'))
+export async function updateTestProfile (key: string, value: string | string[] | boolean) {
+	const testProfileUri = Uri.joinPath(getWorkspaceUri(), '.vscode', 'ablunit-test-profile.json')
+	if (!doesFileExist(testProfileUri)) {
+		log.info("creating ablunit-test-profile.json")
+		const newProfile = { configurations: [ new DefaultRunProfile ] } as IConfigurations
+		await workspace.fs.writeFile(testProfileUri, Buffer.from(JSON.stringify(newProfile)))
+	}
+	const profile = readStrippedJsonFile(testProfileUri)
 	const keys = key.split('.')
 
 	if (keys.length === 3) {
@@ -285,13 +329,69 @@ export async function selectProfile (profile: string) {
 	})
 }
 
+export async function refreshData () {
+	return commands.executeCommand('_ablunit.getExtensionTestReferences').then((resp) => {
+		const refs = resp as IExtensionTestReferences
+		decorator = refs.decorator
+		testController = refs.testController
+		recentResults = refs.recentResults
+		log.debug('refreshData complete!')
+	}, (err) => {
+		throw new Error("failed to refresh test results: " + err)
+	})
+}
+
+export function getDecorator () {
+	return decorator
+}
+
+export function getTestController () {
+	return testController
+}
+
+export function getResults (len: number = 1) {
+	if (!recentResults) {
+		throw new Error('recent results is undefined!')
+	}
+	if (recentResults.length === 0) {
+		throw new Error('recent results should be > 0')
+	}
+	if (recentResults.length !== len) {
+		throw new Error('recent results should be ' + len + ' but is ' + recentResults.length)
+	}
+	return recentResults
+}
+
 class AssertResults {
-	async assertResultsCountByStatus (expectedCount: number, status: 'passed' | 'failed' | 'errored' | 'all') {
-		const recentResults = await getRecentResults()
+
+	assert = (value: unknown, message?: string) => { assertParent(value, message) }
+	equal = (actual: unknown, expected: unknown, message?: string) => {
+		if (actual instanceof Uri) {
+			actual = actual.fsPath
+		}
+		if (expected instanceof Uri) {
+			expected = expected.fsPath
+		}
+		assertParent.equal(actual, expected, message)
+	}
+	notEqual = (actual: unknown, expected: unknown, message?: string) => { assertParent.notEqual(actual, expected, message) }
+	strictEqual = (actual: unknown, expected: unknown, message?: string) => { assertParent.strictEqual(actual, expected, message) }
+	notStrictEqual = (actual: unknown, expected: unknown, message?: string) => { assertParent.notStrictEqual(actual, expected, message) }
+	deepEqual = (actual: unknown, expected: unknown, message?: string) => { assertParent.deepEqual(actual, expected, message) }
+	notDeepEqual = (actual: unknown, expected: unknown, message?: string) => { assertParent.notDeepEqual(actual, expected, message) }
+	fail (message?: string): never { assertParent.fail(message) }
+	ok = (value: unknown, message?: string) => { assertParent.ok(value, message) }
+	ifError = (value: unknown) => { assertParent.ifError(value) }
+	throws = (block: () => void, message?: string) => { assertParent.throws(block, message) }
+	doesNotThrow = (block: () => void, message?: string) => { assertParent.doesNotThrow(block, message) }
+
+	assertResultsCountByStatus (expectedCount: number, status: 'passed' | 'failed' | 'errored' | 'all') {
+		const recentResults = getResults()
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
 		const res = recentResults[0].ablResults?.resultsJson[0]
 		if (!res) {
-			assert.fail('No results found. Expected ' + expectedCount + ' ' + status + ' tests')
+			assertParent.fail('No results found. Expected ' + expectedCount + ' ' + status + ' tests')
+			return
 		}
 
 		let actualCount: number = -1
@@ -308,39 +408,58 @@ class AssertResults {
 		assert.equal(expectedCount, actualCount, "test count != " + expectedCount)
 	}
 	public count = (expectedCount: number) => {
-		return this.assertResultsCountByStatus(expectedCount, 'all')
+		this.assertResultsCountByStatus(expectedCount, 'all')
 	}
-	passed (expectedCount: number) {
-		return this.assertResultsCountByStatus(expectedCount, 'passed')
+	public passed (expectedCount: number) {
+		this.assertResultsCountByStatus(expectedCount, 'passed')
 	}
-	errored (expectedCount: number) {
-		return this.assertResultsCountByStatus(expectedCount, 'errored')
+	public errored (expectedCount: number) {
+		this.assertResultsCountByStatus(expectedCount, 'errored')
 	}
-	failed (expectedCount: number) {
-		return this.assertResultsCountByStatus(expectedCount, 'failed')
+	public failed (expectedCount: number) {
+		this.assertResultsCountByStatus(expectedCount, 'failed')
+	}
+
+	public fileExists = (...files: string[] | Uri[]) => {
+		for (const file of files) {
+			this.assert(doesFileExist(file), "file does not exist: " + workspace.asRelativePath(file))
+		}
+	}
+	public notFileExists = (...files: string[] | Uri[]) => {
+		for (const file of files) {
+			this.assert(!doesFileExist(file), "file exists: " + workspace.asRelativePath(file))
+		}
+	}
+	public dirExists = (...dirs: string[] | Uri[]) => {
+		for (const dir of dirs) {
+			this.assert(doesDirExist(dir), "dir does not exist: " + workspace.asRelativePath(dir))
+		}
+	}
+	public notDirExists = (...dirs: string[] | Uri[]) => {
+		for (const dir of dirs) {
+			this.assert(!doesDirExist(dir), "dir exists: " + workspace.asRelativePath(dir))
+		}
 	}
 }
 
-export const assertResults = new AssertResults()
+export const assert = new AssertResults()
 
-export async function getRecentResults () {
-	return commands.executeCommand('_ablunit.getRecentResults').then((resp) => {
-		if (resp) {
-			return resp as ABLResults[]
-		}
-		throw new Error('no recent results returned from \'ablunit.getRecentResults\' command')
-	}, (err) => {
-		throw new Error('error calling \'ablunit.getRecentResults\' command. err=' + err)
+export async function beforeProj7 () {
+	await waitForExtensionActive()
+	const templateProc = Uri.joinPath(toUri('src/template_proc.p'))
+	const templateClass = Uri.joinPath(toUri('src/template_class.cls'))
+	const classContent = await workspace.fs.readFile(templateClass).then((data) => {
+		return data.toString()
 	})
-}
 
-export async function getTestController () {
-	return commands.executeCommand('_ablunit.getTestController').then((resp) => {
-		if (resp) {
-			return resp as TestController
+	for (let i = 0; i < 10; i++) {
+		await workspace.fs.createDirectory(toUri('src/procs/dir' + i))
+		await workspace.fs.createDirectory(toUri('src/classes/dir' + i))
+		for (let j = 0; j < 10; j++) {
+			await workspace.fs.copy(templateProc, toUri(`src/procs/dir${i}/testProc${j}.p`), { overwrite: true })
+
+			const writeContent = Uint8Array.from(Buffer.from(classContent.replace(/template_class/, `classes.dir${i}.testClass${j}`)))
+			await workspace.fs.writeFile(toUri(`src/classes/dir${i}/testClass${j}.cls`), writeContent)
 		}
-		throw new Error('no recent results returned from \'ablunit.getTestController\' command')
-	}, (err) => {
-		throw new Error('error calling \'ablunit.getTestController\' command. err=' + err)
-	})
+	}
 }

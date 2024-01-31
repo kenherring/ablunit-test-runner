@@ -1,8 +1,6 @@
-import { strict as assert } from 'assert'
 import { before } from 'mocha'
 import { Uri } from 'vscode'
-import { doesDirExist, doesFileExist, getDefaultDLC, getWorkspaceUri, runAllTests, setRuntimes, waitForExtensionActive } from '../testCommon'
-
+import { assert, getDefaultDLC, getWorkspaceUri, runAllTests, setRuntimes, waitForExtensionActive } from '../testCommon'
 
 const projName = 'proj3'
 const workspaceUri = getWorkspaceUri()
@@ -21,9 +19,9 @@ suite(projName + ' - Extension Test Suite', () => {
 		const resultsXml = Uri.joinPath(workspaceUri,'ablunit-output','results.xml')
 		const listingsDir = Uri.joinPath(workspaceUri,'target','listings')
 
-		assert(await doesFileExist(ablunitJson), "missing ablunit.json (" + ablunitJson.fsPath + ")")
-		assert(await doesFileExist(resultsXml), "missing results.xml (" + resultsXml.fsPath + ")")
-		assert(await doesDirExist(listingsDir),"missing listings directory (" + listingsDir.fsPath + ")")
+		assert.fileExists(ablunitJson)
+		assert.fileExists(resultsXml)
+		assert.dirExists(listingsDir)
 	})
 
 })

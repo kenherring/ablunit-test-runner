@@ -1,7 +1,6 @@
-import { strict as assert } from 'assert'
 import { afterEach, before, beforeEach } from 'mocha'
 import { Selection, Uri, commands, window } from 'vscode'
-import { deleteTestFiles, doesFileExist, getTestCount, getWorkspaceUri, runAllTests, sleep, updateConfig, waitForExtensionActive } from '../testCommon'
+import { assert, deleteTestFiles, getTestCount, getWorkspaceUri, runAllTests, sleep, updateConfig, waitForExtensionActive } from '../testCommon'
 
 
 const projName = 'proj1'
@@ -12,8 +11,8 @@ before(async () => {
 	await updateConfig("files.exclude", undefined)
 })
 
-beforeEach(async () => {
-	await deleteTestFiles()
+beforeEach(() => {
+	deleteTestFiles()
 })
 
 afterEach(async () => {
@@ -26,20 +25,18 @@ suite(projName + ' - Extension Test Suite', () => {
 		const ablunitJson = Uri.joinPath(workspaceUri,'ablunit.json')
 		const resultsXml = Uri.joinPath(workspaceUri,'results.xml')
 		const resultsJson = Uri.joinPath(workspaceUri,'results.json')
-
-		if (await doesFileExist(resultsXml)) {
-			assert.fail("results.xml should not exist before test runs (" + resultsXml.fsPath + ")")
-		}
+		assert.notFileExists(ablunitJson)
+		assert.notFileExists(resultsXml)
 
 		await runAllTests()
 
-		assert(await doesFileExist(ablunitJson),"missing ablunit.json (" + ablunitJson.fsPath + ")")
+		assert.fileExists(ablunitJson)
 		if (process.platform === 'win32' || process.env['WSL_DISTRO_NAME'] !== undefined) {
-			assert(await doesFileExist(resultsXml),"missing results.xml (" + resultsXml.fsPath + "), progress.platform=" + process.platform)
+			assert.fileExists(resultsXml)
 		} else {
-			assert(! await doesFileExist(resultsXml),"missing results.xml (" + resultsXml.fsPath + "), progress.platform=" + process.platform)
+			assert.notFileExists(resultsXml)
 		}
-		assert(! await doesFileExist(resultsJson),"unexpected results.json (" + resultsJson.fsPath + ")")
+		assert.notFileExists(resultsJson)
 	})
 
 	test(projName + '.2 - output files exist 2 - exclude compileError.p', async () => {

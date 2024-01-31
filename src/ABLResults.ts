@@ -7,10 +7,11 @@ import { ABLProfile, ABLProfileJson, IModule } from './parse/ProfileParser'
 import { ABLDebugLines } from './ABLDebugLines'
 import { ABLPromsgs, getPromsgText } from './ABLPromsgs'
 import { PropathParser } from './ABLPropath'
-import log from './ChannelLogger'
+import { log } from './ChannelLogger'
 import { FileCoverage, CoveredCount, StatementCoverage } from './TestCoverage'
 import { ablunitRun } from './ABLUnitRun'
 import { getDLC, IDlc } from './parse/OpenedgeProjectParser'
+import { isRelativePath } from './ABLUnitCommon'
 
 export interface ITestObj {
 	test: string
@@ -147,7 +148,11 @@ export class ABLResults implements Disposable {
 			return
 		}
 
-		log.debug("addTest: " + test.id + ", propathEntry=" + testPropath.propathEntry.path)
+		let propathEntryTestFile = testPropath.propathEntry.path
+		if (isRelativePath(testPropath.propathEntry.path)) {
+			propathEntryTestFile = workspace.asRelativePath(Uri.joinPath(this.workspaceFolder.uri, testPropath.propathEntry.path))
+		}
+		log.debug("addTest: " + test.id + ", propathEntry=" + propathEntryTestFile)
 		this.tests.push(test)
 
 		let testCase = undefined
@@ -237,15 +242,15 @@ export class ABLResults implements Disposable {
 			throw (new Error("[ABLResults parseOutput] Error parsing ablunit results from " + this.cfg.ablunitConfig.optionsUri.filenameUri.fsPath + "\r\nerr=" + err))
 		})
 
-		if (this.cfg.ablunitConfig.profiler.enabled) {
+		if (this.cfg.ablunitConfig.profiler.enabled && this.cfg.ablunitConfig.profiler.coverage) {
 			this.setStatus("parsing profiler data")
-			log.debug("parsing profiler data from " + this.cfg.ablunitConfig.profFilenameUri.fsPath, options)
+			log.debug("parsing profiler data from " + workspace.asRelativePath(this.cfg.ablunitConfig.profFilenameUri.fsPath), options)
 			await this.parseProfile().then(() => {
 				return true
 			}, (err) => {
 				this.setStatus("error parsing profiler data")
 				log.error("Error parsing profiler data from " + this.cfg.ablunitConfig.profFilenameUri.fsPath + ".  err=" + err, options)
-				throw new Error("[ABLResults parseOutput] Error parsing profiler data from " + this.cfg.ablunitConfig.profFilenameUri.fsPath + "\r\nerr=" + err)
+				throw new Error("Error parsing profiler data from " + workspace.asRelativePath(this.cfg.ablunitConfig.profFilenameUri) + "\r\nerr=" + err)
 			})
 		}
 
@@ -492,7 +497,9 @@ export class ABLResults implements Disposable {
 		const fileinfo = await this.propath!.search(module.SourceName)
 		const moduleUri = fileinfo?.uri
 		if (!moduleUri) {
-			if (!module.SourceName.startsWith("OpenEdge.") && module.SourceName !== 'ABLUnitCore.p') {
+			if (!module.SourceName.startsWith("OpenEdge.") &&
+				module.SourceName !== 'ABLUnitCore.p' &&
+				module.SourceName !== 'Ccs.Common.Application') {
 				log.error("could not find moduleUri for " + module.SourceName)
 			}
 			return
@@ -519,14 +526,15 @@ export class ABLResults implements Disposable {
 				if (!fc) {
 					// create a new FileCoverage object if one didn't already exist
 					fc = new FileCoverage(dbg.sourceUri, new CoveredCount(0, 0))
-					fc.detailedCoverage = []
 					this.coverage.push(fc)
 					this.testCoverage.set(dbg.sourceUri.fsPath, fc)
 				}
 			}
 
-			fc.detailedCoverage!.push(new StatementCoverage(line.ExecCount ?? 0,
-				new Range(dbg.sourceLine - 1, 0, dbg.sourceLine, 0)))
+			// TODO: end of range should be the end of the line, not the beginning of the next line
+			const coverageRange = new Range(dbg.sourceLine - 1, 0, dbg.sourceLine, 0)
+			const coverageStatement = new StatementCoverage(line.ExecCount ?? 0, coverageRange)
+			fc.detailedCoverage.push(coverageStatement)
 		}
 	}
 }

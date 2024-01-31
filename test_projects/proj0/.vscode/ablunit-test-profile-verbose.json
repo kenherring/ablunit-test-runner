@@ -72,12 +72,12 @@
 		////# See the OpenEdge documentation for more information about these values.
 		////#   * https://docs.progress.com/bundle/openedge-developer-studio-help/page/Run-test-cases-from-the-command-prompt.html
 		////#
-		////# NOTE: 'ablunit.json will not be created when "options": null
 		"options": {
 			"output": {
 				"location": "${tempDir}",
 				"filename": "results",
-				"format": "xml"
+				"format": "xml",
+				"writeJson": false
 			},
 			"quitOnEnd": true,
 			"writeLog":  false,

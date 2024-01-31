@@ -1,5 +1,5 @@
 import { FileType, Uri, workspace, WorkspaceFolder } from 'vscode'
-import log from './ChannelLogger'
+import { log } from './ChannelLogger'
 import { PropathParser } from './ABLPropath'
 import { platform } from 'os'
 import { getProfileConfig, RunConfig } from './parse/TestProfileParser'
@@ -151,13 +151,5 @@ export class ABLUnitConfig  {
 
 		log.info("using propath='" + parser.toString() + "'")
 		return parser
-	}
-}
-
-export function isRelativePath (path: string) {
-	if(path.startsWith('/') || RegExp(/^[a-zA-Z]:[\\/]/).exec(path)) {
-		return false
-	} else {
-		return true
 	}
 }

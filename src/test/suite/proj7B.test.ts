@@ -1,13 +1,12 @@
 import { strict as assert } from 'assert'
 import { before } from 'mocha'
 import { CancellationError, TestItemCollection, commands } from 'vscode'
-import { getTestController, runAllTests, sleep, waitForExtensionActive } from '../testCommon'
-import log from '../../ChannelLogger'
+import { beforeProj7, getTestController, log, refreshTests, runAllTests, sleep } from '../testCommon'
 
 const projName = 'proj7B'
 
 before(async () => {
-	await waitForExtensionActive()
+	await beforeProj7()
 })
 
 suite(projName + ' - Extension Test Suite', () => {
@@ -18,13 +17,19 @@ suite(projName + ' - Extension Test Suite', () => {
 
 		log.info('refreshing tests')
 		const startRefreshTime = Date.now()
-		const refresh = commands.executeCommand('testing.refreshTests')
+		const refresh = refreshTests().then(() => {
+			// need this "then" to confirm test timing
+			log.info('testing.refreshTests completed')
+		}, (err) => {
+			log.error('testing.refreshTests caught an exception. err=' + err)
+			throw err
+		})
 
-		let testCount = await getTestControllerItemCount('ABLTestFile').then()
+		let testCount = getTestControllerItemCount('ABLTestFile')
 		log.info("testCount-1=" + testCount)
 		while(testCount < 10) {
-			await sleep(250)
-			testCount = await getTestControllerItemCount('ABLTestFile')
+			await sleep(250, 'waiting for getTestControllerItemCount to return > 10 (got ' + testCount + ')')
+			testCount = getTestControllerItemCount('ABLTestFile')
 		}
 		log.info("testCount-2=" + testCount)
 
@@ -47,7 +52,7 @@ suite(projName + ' - Extension Test Suite', () => {
 			assert.fail('unexpected error: ' + err)
 		}
 
-		const ablfileCount = await getTestControllerItemCount('ABLTestFile')
+		const ablfileCount = getTestControllerItemCount('ABLTestFile')
 		log.info("controller file count after refresh = " + ablfileCount)
 		assert(ablfileCount > 1 && ablfileCount < 1000, "ablfileCount should be > 1 and < 500, but is " + ablfileCount)
 
@@ -64,7 +69,6 @@ suite(projName + ' - Extension Test Suite', () => {
 		})
 		log.info('testing.cancelTestRefresh completed successfully')
 	})
-
 
 	test(projName + '.2 - cancel test run', async () => {
 		runAllTests().then(() => { return }, (err) => { throw err })
@@ -83,8 +87,8 @@ suite(projName + ' - Extension Test Suite', () => {
 
 })
 
-async function getTestControllerItemCount (type?: 'ABLTestFile' | undefined) {
-	const ctrl = await getTestController()
+function getTestControllerItemCount (type?: 'ABLTestFile' | undefined) {
+	const ctrl = getTestController()
 	return ctrl.items.size + getChildTestCount(type, ctrl.items)
 }
 

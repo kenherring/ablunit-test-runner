@@ -1,6 +1,6 @@
 import { Uri, workspace, WorkspaceFolder } from 'vscode'
 import { readStrippedJsonFile } from '../ABLUnitCommon'
-import log from '../ChannelLogger'
+import { log } from '../ChannelLogger'
 import * as path from 'path'
 import * as fs from 'fs'
 
@@ -335,7 +335,7 @@ function parseOpenEdgeProjectConfig (uri: Uri, workspaceUri: Uri, config: IOpenE
 	const prjConfig = new OpenEdgeProjectConfig()
 	prjConfig.name = config.name
 	prjConfig.version = config.version
-	prjConfig.rootDir = Uri.parse(path.dirname(uri.path)).fsPath
+	prjConfig.rootDir = Uri.file(path.dirname(uri.path)).fsPath
 	readGlobalOpenEdgeRuntimes(workspaceUri)
 	prjConfig.dlc = getDlcDirectory(config.oeversion)
 	prjConfig.extraParameters = config.extraParameters ? config.extraParameters : ""
@@ -453,7 +453,7 @@ export function getProfileDbConns (workspaceUri: Uri, openedgeProjectProfile?: s
 		log.info("[getProfileDbConns] profileConfig is undefined")
 		return []
 	}
-	log.debug("[getProfileDbConns] profileConfig.dbConnections = " + JSON.stringify(profileConfig.dbConnections, null, 2))
+	log.trace("[getProfileDbConns] profileConfig.dbConnections = " + JSON.stringify(profileConfig.dbConnections, null, 2))
 	return profileConfig.dbConnections
 }
 

@@ -1,5 +1,5 @@
 import { Uri, workspace } from 'vscode'
-import log from './ChannelLogger'
+import { log } from './ChannelLogger'
 import { IDlc } from './parse/OpenedgeProjectParser'
 
 interface IPromsg {

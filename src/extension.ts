@@ -1,13 +1,33 @@
-import { commands, tests, window, workspace,
-	CancellationToken, ConfigurationChangeEvent, EventEmitter, ExtensionContext, Position, Range, RelativePattern, Selection,
-	TestController, TestItem, TestItemCollection, TestMessage, TestTag, TestRunProfileKind, TestRunRequest,
-	TextDocument, Uri, WorkspaceFolder, FileType, CancellationError, TestRun, extensions } from 'vscode'
-import { ABLResults } from './ABLResults'
-import { ABLTestSuite, ABLTestClass, ABLTestProgram, ABLTestFile, ABLTestCase, ABLTestDir, ABLTestData, resultData, testData } from './testTree'
-import { GlobSync } from 'glob'
-import log from './ChannelLogger'
 import { readFileSync } from 'fs'
-import { decorate, getRecentResults, setRecentResults } from './decorator'
+import { GlobSync } from 'glob'
+import {
+	CancellationError,
+	CancellationToken, ConfigurationChangeEvent, ExtensionContext,
+	FileType,
+	Position, Range, RelativePattern, Selection,
+	TestController, TestItem, TestItemCollection, TestMessage,
+	TestRun,
+	TestRunProfileKind, TestRunRequest,
+	TestTag,
+	TextDocument, Uri, WorkspaceFolder,
+	commands,
+	extensions,
+	tests, window, workspace
+} from 'vscode'
+import { ABLResults } from './ABLResults'
+import { log } from './ChannelLogger'
+import { getContentFromFilesystem } from './parse/TestParserCommon'
+import { ABLTestCase, ABLTestClass, ABLTestData, ABLTestDir, ABLTestFile, ABLTestProgram, ABLTestSuite, resultData, testData } from './testTree'
+// import { DecorationProvider, Decorator, decorator } from './Decorator'
+import { Decorator, decorator } from './Decorator'
+
+export interface IExtensionTestReferences {
+	testController: TestController,
+	decorator: Decorator
+	recentResults: ABLResults[]
+}
+
+let recentResults: ABLResults[] = []
 
 export async function activate (context: ExtensionContext) {
 
@@ -15,28 +35,61 @@ export async function activate (context: ExtensionContext) {
 
 	logActivationEvent()
 
-	const contextStorageUri = context.storageUri ?? Uri.parse('file://' + process.env['TEMP']) // will always be defined as context.storageUri
+	const contextStorageUri = context.storageUri ?? Uri.file(process.env['TEMP'] ?? '') // will always be defined as context.storageUri
 	const contextResourcesUri = Uri.joinPath(context.extensionUri,'resources')
-	setContextPaths(contextStorageUri, contextResourcesUri, ctrl)
+	setContextPaths(contextStorageUri, contextResourcesUri)
 	await createDir(contextStorageUri)
+	// const decorationProvider = new DecorationProvider()
 
-	const getTestController = () => { return ctrl }
-	const fileChangedEmitter = new EventEmitter<Uri>()
+	const getExtensionReferences = () => {
+		return {
+			testController: ctrl,
+			decorator: decorator,
+			recentResults: recentResults
+		} as IExtensionTestReferences
+	}
+
+	if (process.env['ABLUNIT_TEST_RUNNER_UNIT_TESTING'] === 'true') {
+		context.subscriptions.push(commands.registerCommand('_ablunit.getExtensionTestReferences', getExtensionReferences))
+	}
 
 	context.subscriptions.push(ctrl)
 
 	context.subscriptions.push(
 		commands.registerCommand('_ablunit.openCallStackItem', openCallStackItem),
-		window.onDidChangeActiveTextEditor(e => { decorate(e!) }),
 		workspace.onDidChangeConfiguration(e => { updateConfiguration(e) }),
-		workspace.onDidOpenTextDocument(updateNodeForDocument),
-		workspace.onDidChangeTextDocument(e => { updateNodeForDocument(e.document) }),
+		// window.registerFileDecorationProvider(decorationProvider),
+
+		// TODO
+		// window.onDidChangeActiveTextEditor(e => {
+		// 	if (e && createOrUpdateFile(ctrl, e.document.uri)) {
+		// 		return decorator.decorate(e)
+		// 	}
+		// }),
+		// window.onDidChangeActiveTextEditor(e => {
+		// 	if (!e) { return }
+		// 	log.info("decorating editor - onDidChangeActiveTextEditor")
+		// 	decorator.decorate(e).catch((err) => {
+		// 		log.error('failed to decorate editor. err=' + err)
+		// 	})
+		// }),
+
+		workspace.onDidOpenTextDocument(async e => {
+			log.trace('onDidOpenTextDocument for ' + e.uri)
+			await updateNodeForDocument(e,'didOpen').then(() => {
+				decorator.decorate(undefined, e)
+			}, (err) => {
+				log.error('failed updateNodeForDocument onDidTextDocument! err=' + err)
+			})
+		})
+		// workspace.onDidChangeTextDocument(e => { return updateNodeForDocument(e.document,'didChange') }),
+
+
+		// watcher.onDidCreate(uri => { createOrUpdateFile(controller, uri) })
+		// watcher.onDidChange(uri => { createOrUpdateFile(controller, uri) })
+		// watcher.onDidDelete(uri => { controller.items.delete(uri.fsPath) })
 	)
 
-	if (process.env['ABLUNIT_TEST_RUNNER_UNIT_TESTING'] === 'true') {
-		context.subscriptions.push(commands.registerCommand('_ablunit.getRecentResults', getRecentResults))
-		context.subscriptions.push(commands.registerCommand('_ablunit.getTestController', getTestController))
-	}
 
 	const runHandler = (request: TestRunRequest, cancellation: CancellationToken) => {
 		if (! request.continuous) {
@@ -49,12 +102,6 @@ export async function activate (context: ExtensionContext) {
 		}
 		log.error('continuous test runs not implemented')
 		throw new Error('continuous test runs not implemented')
-	}
-
-	const configureHandler = () => {
-		openTestRunConfig().catch((err) => {
-			log.error("Failed to open '.vscode/ablunit-test-profile.json'. err=" + err)
-		})
 	}
 
 	async function openTestRunConfig () {
@@ -189,14 +236,18 @@ export async function activate (context: ExtensionContext) {
 				}
 			}
 
-			setRecentResults(resultData.get(run) ?? [])
+			const data = resultData.get(run) ?? []
+			recentResults = data
+			decorator.setRecentResults(recentResults)
 
 			if (window.activeTextEditor) {
-				decorate(window.activeTextEditor)
+				log.info('decorating editor - activeTextEditor')
+				decorator.decorate(window.activeTextEditor)
 			}
 
 			showNotification('ablunit tests complete')
 			run.end()
+			log.trace("run.end()")
 			return
 		}
 
@@ -229,8 +280,11 @@ export async function activate (context: ExtensionContext) {
 			}
 			return await Promise.all(proms).then(() => {
 				resultData.set(run, res)
-				log.debug('all tests added to test run results object')
+				log.debug('all tests added to test run results object, preparing test run')
 				return res
+			}, (err) => {
+				// log.error('failed to add test to test run results object. err=' + err)
+				throw (err)
 			})
 		}
 
@@ -240,6 +294,7 @@ export async function activate (context: ExtensionContext) {
 		cancellation.onCancellationRequested(() => {
 			log.debug("cancellation requested")
 			run.end()
+			log.trace('run.end()')
 			throw new CancellationError()
 		})
 		const tests = request.include ?? gatherTestItems(ctrl.items)
@@ -257,59 +312,70 @@ export async function activate (context: ExtensionContext) {
 			})
 		}).catch((err) => {
 			run.end()
-			console.log('err')
+			log.error('run.end() - ablunit run failed with exception: ' + err)
 			throw (err)
 		})
 	}
 
-	ctrl.refreshHandler = async (token: CancellationToken) => refreshTestTree(ctrl, token)
+	function updateNodeForDocument (e: TextDocument | TestItem | Uri, r: string) {
+		log.info("r=" + r)
+		let u: Uri | undefined
+		if (e instanceof Uri) {
+			u = e
+		} else if (e?.uri) {
+			u = e.uri
+		}
+		if (!u) {
+			throw new Error('updateNodeForDocument called with undefined uri')
+		}
+		log.info('updateNodeForDocument uri=' + u.fsPath)
+		const prom = updateNode(u, ctrl)
 
-	ctrl.resolveHandler = async item => {
+		if (typeof prom === 'boolean') {
+			return new Promise(() => { return })
+		} else {
+			if (!prom) {
+				throw new Error('updateNode failed for \'' + u?.fsPath + '\' - no promise returned')
+			}
+			return prom.then(() => { return })
+		}
+	}
+
+	async function resolveHandlerFunc (item: TestItem | undefined) {
 		if (!item) {
-			const watchers = startWatchingWorkspace(ctrl, fileChangedEmitter)
-			context.subscriptions.push(...watchers)
-
-			// find initial items
-			if(workspace.getConfiguration('ablunit').get('discoverFilesOnActivate', false)) {
-				log.trace('discoverFilesOnActivate is true. refreshing test tree...')
-				commands.executeCommand('testing.refreshTests').then(() => {
+			log.debug("resolveHandlerFunc called with undefined item - refresh tests?")
+			if (workspace.getConfiguration('ablunit').get('discoverFilesOnActivate', false)) {
+				log.debug('discoverFilesOnActivate is true. refreshing test tree...')
+				return commands.executeCommand('testing.refreshTests').then(() => {
 					log.trace('tests tree successfully refreshed on workspace startup')
 				}, (err) => {
 					log.error('failed to refresh test tree. err=' + err)
 				})
-			} else {
-				for (const e of window.visibleTextEditors) {
-					updateNodeForDocument(e.document)
-				}
 			}
-
 			return
 		}
+
+		if (item.uri) {
+			return updateNodeForDocument(item, 'resolve').then(() => { return })
+		}
+
 		const data = testData.get(item)
 		if (data instanceof ABLTestFile) {
 			return data.updateFromDisk(ctrl, item).then(() => { return }, (err) => { throw err })
 		}
 	}
 
-	function updateNodeForDocument (e: TextDocument) {
-		const openEditors = window.visibleTextEditors.filter(editor => editor.document.uri === e.uri)
-		openEditors.forEach(editor => {
-			decorate(editor)})
+	ctrl.refreshHandler = async (token: CancellationToken) => {
+		log.info('ctrl.refreshHandler')
+		return refreshTestTree(ctrl, token).catch((err) => {
+			log.error('refreshTestTree failed. err=' + err)
+			throw err
+		})
+	}
 
-		if (e.uri.scheme !== 'file') { return }
-		if (!e.uri.path.endsWith('.cls') && !e.uri.path.endsWith('.p')) { return }
-
-		if(isFileExcluded(e.uri, getExcludePatterns())) {
-			return
-		}
-
-		const { item, data } = getOrCreateFile(ctrl, e.uri)
-		if(item) {
-			ctrl.invalidateTestResults(item)
-			if (data) {
-				data.updateFromContents(ctrl, e.getText(), item)
-			}
-		}
+	ctrl.resolveHandler = async item => {
+		log.info('ctrl.resolveHandler')
+		return resolveHandlerFunc(item)?.then(() => { return })
 	}
 
 	function updateConfiguration (e: ConfigurationChangeEvent) {
@@ -322,7 +388,13 @@ export async function activate (context: ExtensionContext) {
 	}
 
 	const testRunProfile = ctrl.createRunProfile('ABLUnit - Run Tests', TestRunProfileKind.Run, runHandler, false, new TestTag('runnable'), false)
-	testRunProfile.configureHandler = configureHandler
+	testRunProfile.configureHandler = () => {
+		log.info('testRunProfiler.configureHandler')
+		openTestRunConfig().catch((err) => {
+			log.error("Failed to open '.vscode/ablunit-test-profile.json'. err=" + err)
+		})
+	}
+
 	// const testCoverageProfile = ctrl.createRunProfile('Run ABLUnit Tests w/ Coverage', TestRunProfileKind.Coverage, runHandler, true, new TestTag('runnable'), false)
 	// testCoverageProfile.configureHandler = configureHandler
 	// const testDebugProfile = ctrl.createRunProfile('Debug ABLUnit Tests', TestRunProfileKind.Debug, runHandler, false, new TestTag("runnable"), false)
@@ -331,12 +403,40 @@ export async function activate (context: ExtensionContext) {
 
 let contextStorageUri: Uri
 let contextResourcesUri: Uri
-let testController: TestController
 
-export function setContextPaths (storageUri: Uri, resourcesUri: Uri, controller: TestController) {
+function updateNode (uri: Uri, ctrl: TestController) {
+	log.trace('updateNode uri=' + uri.fsPath)
+	// const openEditors = window.visibleTextEditors.filter(editor => editor.document.uri === uri)
+	// openEditors.filter(editor => editor.document.uri === uri).forEach(editor => {
+	// 	log.info('decorating editor - updateNodeForDocument')
+	// 	decorator.decorate(editor).catch((err) => {
+	// 		log.error('failed to decorate editor. err=' + err)
+	// 	})
+	// })
+
+	if (uri.scheme !== 'file') { return false }
+	if (!uri.path.endsWith('.cls') && !uri.path.endsWith('.p')) { return false }
+
+	if(isFileExcluded(uri, getExcludePatterns())) {
+		return false
+	}
+
+	const { item, data } = getOrCreateFile(ctrl, uri)
+	if(item) {
+		ctrl.invalidateTestResults(item)
+		if (data) {
+			return getContentFromFilesystem(uri).then((contents) => {
+				data.updateFromContents(ctrl, contents , item)
+			}).then(() => {
+				return decorator.decorate()
+			})
+		}
+	}
+}
+
+export function setContextPaths (storageUri: Uri, resourcesUri: Uri) {
 	contextStorageUri = storageUri
 	contextResourcesUri = resourcesUri
-	testController = controller
 }
 
 export function getContextStorageUri () {
@@ -345,10 +445,6 @@ export function getContextStorageUri () {
 
 export function getContextResourcesUri () {
 	return contextResourcesUri
-}
-
-export function getTestController () {
-	return testController
 }
 
 export function checkCancellationRequested (run: TestRun) {
@@ -684,27 +780,35 @@ async function refreshTestTree (controller: TestController, token: CancellationT
 	const elapsedTime = () => { return '(time=' + (Date.now() - startTime) + 'ms)' }
 	const logResults = () => {
 		log.info('refresh test tree complete! found ' + getControllerTestFileCount(controller) + ' files with test cases ' + elapsedTime())
-		log.debug(' - ' + searchCount + ' files matching glob pattern(s)')
-		log.debug(' - ' + filelist.length + ' files with potential test case(s)')
-		log.debug(' - ' + resolvedCount + ' files parsed had one or more test case(s)')
-		log.debug(' - ' + rejectedCount + ' files parsed had zero test case(s)')
+		log.trace(' - ' + searchCount + ' files matching glob pattern(s)')
+		log.trace(' - ' + filelist.length + ' files with potential test case(s)')
+		log.trace(' - ' + resolvedCount + ' files parsed had one or more test case(s)')
+		log.trace(' - ' + rejectedCount + ' files parsed had zero test case(s)')
 	}
 
-	token.onCancellationRequested(() => {
-		log.info('cancellation requested ' + elapsedTime())
-		throw new CancellationError()
-	})
+	// token.onCancellationRequested(() => {
+	// 	log.info('cancellation requested ' + elapsedTime())
+	// 	throw new CancellationError()
+	// })
 
 	const checkCancellationToken = () => {
-		if (token.isCancellationRequested) {
-			log.warn('cancellation requested ' + elapsedTime())
-			logResults()
-			throw new CancellationError()
-		}
+		if (!token.isCancellationRequested) { return }
+		log.warn('cancellation requested ' + elapsedTime())
+		logResults()
+		throw new CancellationError()
 	}
 	const { includePatterns, excludePatterns } = getWorkspaceTestPatterns()
+	log.info('includePatterns=' + includePatterns.length + ', excludePatterns=' + excludePatterns.length)
+	for (const pattern of includePatterns) {
+		log.debug('includePattern=' + pattern.pattern)
+	}
+	for (const pattern of excludePatterns) {
+		log.debug('excludePattern=' + pattern.pattern)
+	}
+
 	removeExcludedFiles(controller, excludePatterns, token)
 
+	log.debug("finding files...")
 	for (const includePattern of includePatterns) {
 		const prom = workspace.findFiles(includePattern, undefined, undefined, token).then((foundFiles) => {
 			foundFiles =  foundFiles.filter(uri => !isFileExcluded(uri, excludePatterns))
@@ -718,14 +822,15 @@ async function refreshTestTree (controller: TestController, token: CancellationT
 		checkCancellationToken()
 	}
 
+	log.debug('parsing files... (count=' + filelist.length + ')')
 	for (const file of filelist) {
 		searchCount++
 		checkCancellationToken()
 
 		const { item, data } = getOrCreateFile(controller, file, excludePatterns)
 		if (item && data instanceof ABLTestFile) {
-			const foundTestCase = data.updateFromDisk(controller, item, token)
-			if (await foundTestCase) {
+			const foundTestCase = await data.updateFromDisk(controller, item, token).then()
+			if (foundTestCase) {
 				resolvedCount++
 			} else {
 				rejectedCount++
@@ -764,43 +869,51 @@ function getControllerTestFileCount (controller: TestController) {
 	return count
 }
 
-function startWatchingWorkspace (controller: TestController, fileChangedEmitter: EventEmitter<Uri>) {
-	const { includePatterns, excludePatterns } = getWorkspaceTestPatterns()
-	const watchers = []
+// const createOrUpdateFile = (controller: TestController, uri: Uri) => {
+// 	// const { includePatterns, excludePatterns } = getWorkspaceTestPatterns()
+// 	// if (isFileExcluded(uri, excludePatterns))  {
+// 	// 	return
+// 	// }
+// 	const { item, data } = getOrCreateFile(controller, uri)
+// 	if (data?.didResolve) {
+// 		controller.invalidateTestResults(item)
+// 		data.updateFromDisk(controller, item).catch((err) => {
+// 			log.error('failed to update file from disk. err=' + err)
+// 			return false
+// 		})
+// 	}
+// 	return true
+// }
 
-	const createOrUpdateFile = (controller: TestController, uri: Uri) => {
-		if (isFileExcluded(uri, excludePatterns))  {
-			return
-		}
-		const { item, data } = getOrCreateFile(controller, uri)
-		if (data?.didResolve) {
-			controller.invalidateTestResults(item)
-			// todo - the fileChangeEmitter might make this unneccessary
-			// await data.updateFromDisk(controller, file)
-		}
-		fileChangedEmitter.fire(uri)
-	}
 
-	for (const includePattern of includePatterns) {
-		const watcher = workspace.createFileSystemWatcher(includePattern)
-		watcher.onDidCreate(uri => { createOrUpdateFile(controller, uri) })
-		watcher.onDidChange(uri => { createOrUpdateFile(controller, uri) })
-		watcher.onDidDelete(uri => { controller.items.delete(uri.fsPath) })
-		watchers.push(watcher)
-	}
-	return watchers
+// function startWatchingWorkspace (controller: TestController) {
+// 	log.info('start watching workspace')
+// 	// const { includePatterns, excludePatterns } = getWorkspaceTestPatterns()
+// 	// log.debug('includePatterns=' + includePatterns.length + ', excludePatterns=' + excludePatterns.length)
+// 	// const watchers = []
 
-}
+
+// 	// for (const includePattern of includePatterns) {
+// 	// 	log.info("create watcher for: " + includePattern.pattern)
+// 	// 	const watcher = workspace.createFileSystemWatcher(includePattern)
+// 	// 	// watcher.onDidCreate(uri => { createOrUpdateFile(controller, uri) })
+// 	// 	// watcher.onDidChange(uri => { createOrUpdateFile(controller, uri) })
+// 	// 	// watcher.onDidDelete(uri => { controller.items.delete(uri.fsPath) })
+// 	// 	watchers.push(watcher)
+// 	// }
+// 	// return watchers
+// }
 
 function openCallStackItem (traceUriStr: string) {
-	const traceUri = Uri.parse(traceUriStr.split('&')[0])
+	const traceUri = Uri.file(traceUriStr.split('&')[0])
 	const traceLine = Number(traceUriStr.split('&')[1])
 	return window.showTextDocument(traceUri).then(editor => {
 		const lineToGoBegin = new Position(traceLine,0)
 		const lineToGoEnd = new Position(traceLine + 1,0)
 		editor.selections = [new Selection(lineToGoBegin, lineToGoEnd)]
 		const range = new Range(lineToGoBegin, lineToGoEnd)
-		decorate(editor)
+		log.info('decorating editor - openCallStackItem')
+		decorator.decorate(editor)
 		editor.revealRange(range)
 	})
 }

@@ -18,8 +18,8 @@
 	"json.schemas": [
 		{
 			"fileMatch": [
-				"ablunit-test-profile.*.json",
-				"ablunit-test-profile.*.jsonc",
+				"ablunit-test-profile*.json",
+				"ablunit-test-profile*.jsonc",
 			],
 			"url": "./resources/ablunit-test-profile.schema.json"
 		}
