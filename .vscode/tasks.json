@@ -50,25 +50,6 @@
 			"problemMatcher": []
 		},
 		{
-			"label": "npm lint",
-			"type": "npm",
-			"script": "lint",
-			"problemMatcher": "$eslint-stylish",
-			"group": {
-				"kind": "build",
-				"isDefault": false
-			}
-		},
-		{
-			"label": "npm lint --fix",
-			"type": "npm",
-			"script": "lint-fix-all",
-			"group": {
-				"kind": "build",
-				"isDefault": false
-			}
-		},
-		{
 			"label": "run test in docker",
 			"type": "shell",
 			"command": "docker/run_tests.sh",
@@ -78,7 +59,15 @@
 				"-m"
 			],
 			"problemMatcher": []
-
+		},
+		{
+			"type": "npm",
+			"script": "lint-fix-all",
+			"problemMatcher": [
+				"$eslint-stylish"
+			],
+			"label": "npm: lint-fix-all",
+			"detail": "npx eslint ./src --ext .ts,.js --fix"
 		}
 	]
 }
