@@ -13,14 +13,14 @@ import { ITestConfig } from './createTestConfig.js'
 function setupNyc (projName: string) {
 	const NYC = require('nyc')
 
-	const currentWorkingDir = path.join(__dirname, "..", "..")
-	const reportDir = path.join(__dirname, "..", "..", 'coverage', "coverage_" + projName)
-	const tempDir = path.join(__dirname, "..", "..", 'coverage', "coverage_" + projName, ".nyc_output")
+	const currentWorkingDir = path.join(__dirname, '..', '..')
+	const reportDir = path.join(__dirname, '..', '..', 'coverage', 'coverage_' + projName)
+	const tempDir = path.join(__dirname, '..', '..', 'coverage', 'coverage_' + projName, '.nyc_output')
 	console.log(
-		"[setupNyc]",
-		", currentWorkingDir=" + currentWorkingDir,
-		", reportDir=" + reportDir,
-		", tempDir=" + tempDir)
+		'[setupNyc]',
+		', currentWorkingDir=' + currentWorkingDir,
+		', reportDir=' + reportDir,
+		', tempDir=' + tempDir)
 
 	const nyc = new NYC({
 		cache: false,
@@ -29,8 +29,8 @@ function setupNyc (projName: string) {
 		tempDir: tempDir,
 		sourceMap: true,
 		extension: [
-			".ts",
-			".tsx",
+			'.ts',
+			'.tsx',
 		],
 		reporter: [
 			'text',
@@ -68,7 +68,7 @@ function setupNyc (projName: string) {
 function setupMocha (projName: string, timeout: number) {
 	return new Mocha({
 		color: true,
-		ui: "tdd",
+		ui: 'tdd',
 		timeout: timeout,
 		reporter: 'mocha-multi-reporters',
 		reporterOptions: {
@@ -84,7 +84,7 @@ async function runTestsForProject (projName: string, timeout: number) {
 	console.log('[runTestsForProject] projName=' + projName)
 	const nyc = setupNyc(projName)
 	const mocha = setupMocha(projName, timeout)
-	const testsRoot = path.resolve(__dirname, "..")
+	const testsRoot = path.resolve(__dirname, '..')
 
 	console.log('[runTestsForProject] testsRoot=' + testsRoot)
 	const files = new GlobSync('**/' + projName + '.test.js', { cwd: testsRoot })
@@ -109,7 +109,7 @@ async function runTestsForProject (projName: string, timeout: number) {
 			if (err instanceof Error) {
 				e(err)
 			}
-			e(new Error("non error type:" + err + ", typeof=" + typeof err))
+			e(new Error('non error type:' + err + ', typeof=' + typeof err))
 		}
 	})
 

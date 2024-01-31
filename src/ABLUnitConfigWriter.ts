@@ -22,14 +22,14 @@ export class ABLUnitConfig  {
 	ablunitConfig: RunConfig = {} as RunConfig
 
 	setup (workspaceFolder: WorkspaceFolder) {
-		log.info("[ABLUnitConfigWriter setup] workspaceUri=" + workspaceFolder.uri.fsPath)
+		log.info('[ABLUnitConfigWriter setup] workspaceUri=' + workspaceFolder.uri.fsPath)
 		this.ablunitConfig = getProfileConfig(workspaceFolder)
-		log.info("[ABLUnitConfigWriter constructor] setup complete! tempDir=" + this.ablunitConfig.tempDirUri.fsPath)
+		log.info('[ABLUnitConfigWriter constructor] setup complete! tempDir=' + this.ablunitConfig.tempDirUri.fsPath)
 	}
 
 	async deleteFile (uri: Uri) {
 		return workspace.fs.delete(uri).then(() => {
-			log.info("deleted file: " + uri.fsPath)
+			log.info('deleted file: ' + uri.fsPath)
 		}, () => {
 			// do nothing.  if the file doesn't exist we can just continue on.
 		})
@@ -47,19 +47,19 @@ export class ABLUnitConfig  {
 
 	async createProgressIni (propath: string) {
 		if (platform() != 'win32') { return }
-		log.info("creating progress.ini: '" + this.ablunitConfig.progressIniUri.fsPath + "'")
-		const iniData = ["[WinChar Startup]", "PROPATH=" + propath]
-		const iniBytes = Uint8Array.from(Buffer.from(iniData.join("\n")))
+		log.info('creating progress.ini: \'' + this.ablunitConfig.progressIniUri.fsPath + '\'')
+		const iniData = ['[WinChar Startup]', 'PROPATH=' + propath]
+		const iniBytes = Uint8Array.from(Buffer.from(iniData.join('\n')))
 		return workspace.fs.writeFile(this.ablunitConfig.progressIniUri, iniBytes)
 	}
 
 	async createAblunitJson (_uri: Uri, cfg: CoreOptions, testQueue: ITestObj[]) {
-		log.info("creating ablunit.json: '" + this.ablunitConfig.config_uri.fsPath + "'")
+		log.info('creating ablunit.json: \'' + this.ablunitConfig.config_uri.fsPath + '\'')
 		const promarr: PromiseLike<void>[] = []
 		promarr.push(
 			workspace.fs.stat(this.ablunitConfig.optionsUri.locationUri).then((stat) => {
 				if (stat.type != FileType.Directory) {
-					throw new Error("configJson.output.location is not a Directory: " + this.ablunitConfig.optionsUri.locationUri.fsPath)
+					throw new Error('configJson.output.location is not a Directory: ' + this.ablunitConfig.optionsUri.locationUri.fsPath)
 				}
 			}, () => {
 				return this.createDir(this.ablunitConfig.optionsUri.locationUri)
@@ -110,7 +110,7 @@ export class ABLUnitConfig  {
 	}
 
 	async createDbConnPf (uri: Uri, dbConns: IDatabaseConnection[]) {
-		log.info("creating dbconn.pf: '" + this.ablunitConfig.dbConnPfUri.fsPath + "'")
+		log.info('creating dbconn.pf: \'' + this.ablunitConfig.dbConnPfUri.fsPath + '\'')
 		const lines: string[] = []
 
 		for (const conn of dbConns) {
@@ -122,7 +122,7 @@ export class ABLUnitConfig  {
 	}
 
 	readPropathFromJson () {
-		log.info("reading propath from openedge-project.json")
+		log.info('reading propath from openedge-project.json')
 		const parser: PropathParser = new PropathParser(this.ablunitConfig.workspaceFolder)
 
 		let conf = undefined
@@ -149,7 +149,7 @@ export class ABLUnitConfig  {
 			}]})
 		}
 
-		log.info("using propath='" + parser.toString() + "'")
+		log.info('using propath=\'' + parser.toString() + '\'')
 		return parser
 	}
 }

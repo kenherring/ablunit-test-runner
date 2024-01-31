@@ -18,7 +18,7 @@ export interface IProgramRet {
 export function parseABLTestProgram (text: string, relativePath: string) {
 	relativePath = relativePath.replace(/\\/g, '/')
 
-	const [ lines, foundAnnotation ] = getLines(text, "@test")
+	const [ lines, foundAnnotation ] = getLines(text, '@test')
 	if(!foundAnnotation) {
 		return
 	}
@@ -39,12 +39,12 @@ export function parseTestProgram (lines: string[], label: string) {
 	const regexTest = /@test\./i
 
 	for (let lineNo = 0; lineNo < lines.length; lineNo++) {
-		if (lines[lineNo].trim() === "") {
+		if (lines[lineNo].trim() === '') {
 			continue
 		}
 
 		if(lastNonBlankLineHasAnnotation ||
-			lines[lineNo].toLowerCase().includes("@test.")) {
+			lines[lineNo].toLowerCase().includes('@test.')) {
 			const proc = procedureRE.exec(lines[lineNo])
 			if (proc) {
 				const [ , , procedureName] = proc

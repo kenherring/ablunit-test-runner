@@ -96,7 +96,7 @@ export async function activate (context: ExtensionContext) {
 			return startTestRun(request, cancellation)
 				.then(() => { return })
 				.catch((err) => {
-					log.error("startTestRun failed. err=" + err)
+					log.error('startTestRun failed. err=' + err)
 					throw err
 				})
 		}
@@ -129,7 +129,7 @@ export async function activate (context: ExtensionContext) {
 		}
 
 		window.showTextDocument(Uri.joinPath(workspaceFolder.uri, '.vscode', 'ablunit-test-profile.json')).then(() => {
-			log.info("Opened .vscode/ablunit-test-profile.json")
+			log.info('Opened .vscode/ablunit-test-profile.json')
 		}, (err) => {
 			log.error('Failed to open .vscode/ablunit-test-profile.json! err=' + err)
 		})
@@ -247,7 +247,7 @@ export async function activate (context: ExtensionContext) {
 
 			showNotification('ablunit tests complete')
 			run.end()
-			log.trace("run.end()")
+			log.trace('run.end()')
 			return
 		}
 
@@ -292,7 +292,7 @@ export async function activate (context: ExtensionContext) {
 		const queue: { test: TestItem; data: ABLTestData }[] = []
 		const run = ctrl.createTestRun(request)
 		cancellation.onCancellationRequested(() => {
-			log.debug("cancellation requested")
+			log.debug('cancellation requested')
 			run.end()
 			log.trace('run.end()')
 			throw new CancellationError()
@@ -318,7 +318,7 @@ export async function activate (context: ExtensionContext) {
 	}
 
 	function updateNodeForDocument (e: TextDocument | TestItem | Uri, r: string) {
-		log.info("r=" + r)
+		log.info('r=' + r)
 		let u: Uri | undefined
 		if (e instanceof Uri) {
 			u = e
@@ -343,7 +343,7 @@ export async function activate (context: ExtensionContext) {
 
 	async function resolveHandlerFunc (item: TestItem | undefined) {
 		if (!item) {
-			log.debug("resolveHandlerFunc called with undefined item - refresh tests?")
+			log.debug('resolveHandlerFunc called with undefined item - refresh tests?')
 			if (workspace.getConfiguration('ablunit').get('discoverFilesOnActivate', false)) {
 				log.debug('discoverFilesOnActivate is true. refreshing test tree...')
 				return commands.executeCommand('testing.refreshTests').then(() => {
@@ -391,7 +391,7 @@ export async function activate (context: ExtensionContext) {
 	testRunProfile.configureHandler = () => {
 		log.info('testRunProfiler.configureHandler')
 		openTestRunConfig().catch((err) => {
-			log.error("Failed to open '.vscode/ablunit-test-profile.json'. err=" + err)
+			log.error('Failed to open \'.vscode/ablunit-test-profile.json\'. err=' + err)
 		})
 	}
 
@@ -449,7 +449,7 @@ export function getContextResourcesUri () {
 
 export function checkCancellationRequested (run: TestRun) {
 	if (run.token.isCancellationRequested) {
-		log.info("test run cancellation requested")
+		log.info('test run cancellation requested')
 		run.end()
 		throw new CancellationError()
 	}
@@ -808,7 +808,7 @@ async function refreshTestTree (controller: TestController, token: CancellationT
 
 	removeExcludedFiles(controller, excludePatterns, token)
 
-	log.debug("finding files...")
+	log.debug('finding files...')
 	for (const includePattern of includePatterns) {
 		const prom = workspace.findFiles(includePattern, undefined, undefined, token).then((foundFiles) => {
 			foundFiles =  foundFiles.filter(uri => !isFileExcluded(uri, excludePatterns))
@@ -944,7 +944,7 @@ export async function doesDirExist (uri: Uri) {
 		}
 		return false
 	}, (err) => {
-		log.info("caught: " + err)
+		log.info('caught: ' + err)
 		return false
 	})
 	return ret
@@ -957,7 +957,7 @@ export async function doesFileExist (uri: Uri) {
 		}
 		return false
 	}, (err) => {
-		log.info("caught: " + err)
+		log.info('caught: ' + err)
 		return false
 	})
 	return ret

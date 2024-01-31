@@ -25,14 +25,14 @@ function getConfigurations (uri: Uri) {
 		}
 		return JSON.parse(str) as IConfigurations
 	} catch (err) {
-		log.error("Failed to parse ablunit-test-profile: " + err)
+		log.error('Failed to parse ablunit-test-profile: ' + err)
 		throw err
 	}
 }
 
 function mergeObjects (from: object, into: object) {
 	if(typeof from !== typeof into) {
-		throw new Error("Merge objects must be the same type! (from=" + typeof from + ", into=" + typeof into + ")")
+		throw new Error('Merge objects must be the same type! (from=' + typeof from + ', into=' + typeof into + ')')
 	}
 
 	Object.entries(from).forEach(([key,]) => {
@@ -67,7 +67,7 @@ function getDefaultConfig () {
 
 export function parseRunProfiles (workspaceFolders: WorkspaceFolder[], wsFilename: string = runProfileFilename) {
 	if (workspaceFolders.length === 0) {
-		throw new Error("Workspace has no open folders")
+		throw new Error('Workspace has no open folders')
 	}
 	const defaultConfig = getDefaultConfig()
 
@@ -161,7 +161,7 @@ export class RunConfig extends DefaultRunProfile {
 	constructor (private readonly profile: IRunProfile, public workspaceFolder: WorkspaceFolder) {
 		super()
 		this.tempDirUri = this.getUri(this.profile.tempDir)
-		log.debug("tempDirUri=" + this.tempDirUri.fsPath)
+		log.debug('tempDirUri=' + this.tempDirUri.fsPath)
 		this.config_uri = Uri.joinPath(this.tempDirUri, 'ablunit.json')
 		this.profOptsUri = Uri.joinPath(this.tempDirUri, 'profile.options')
 		this.dbConnPfUri = Uri.joinPath(this.tempDirUri, 'dbconn.pf')

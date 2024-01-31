@@ -61,7 +61,7 @@ class Logger {
 	error (message: string | Error, testRun?: TestRun) {
 		if (message instanceof Error) {
 			if (message.stack) {
-				message = '[' + message.name + '] ' +  message.message + "\r\r" + message.stack
+				message = '[' + message.name + '] ' +  message.message + '\r\r' + message.stack
 			} else {
 				message = '[' + message.name + '] ' +  message.message
 			}
@@ -93,7 +93,7 @@ class Logger {
 			case LogLevel.Error:	this.logOutputChannel.error(message); break
 			default:
 				this.logOutputChannel.appendLine(message)
-				throw new Error("invalid log level for message! level=" + messageLevel + ", message=" + message)
+				throw new Error('invalid log level for message! level=' + messageLevel + ', message=' + message)
 		}
 	}
 
@@ -112,7 +112,7 @@ class Logger {
 			optMsg = optMsg + '\r\n' + stack
 		}
 
-		testRun.appendOutput(optMsg + "\r\n")
+		testRun.appendOutput(optMsg + '\r\n')
 	}
 
 	private writeToConsole (messageLevel: LogLevel, message: string, includeStack: boolean) {

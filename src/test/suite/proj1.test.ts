@@ -8,7 +8,7 @@ const workspaceUri = getWorkspaceUri()
 
 before(async () => {
 	await waitForExtensionActive()
-	await updateConfig("files.exclude", undefined)
+	await updateConfig('files.exclude', undefined)
 })
 
 beforeEach(() => {
@@ -16,7 +16,7 @@ beforeEach(() => {
 })
 
 afterEach(async () => {
-	await updateConfig("files.exclude", undefined)
+	await updateConfig('files.exclude', undefined)
 })
 
 suite(projName + ' - Extension Test Suite', () => {
@@ -40,7 +40,7 @@ suite(projName + ' - Extension Test Suite', () => {
 	})
 
 	test(projName + '.2 - output files exist 2 - exclude compileError.p', async () => {
-		await updateConfig("files.exclude", [ ".builder/**", "compileError.p" ])
+		await updateConfig('files.exclude', [ '.builder/**', 'compileError.p' ])
 		await runAllTests()
 
 		const resultsJson = Uri.joinPath(workspaceUri,'results.json')
@@ -50,7 +50,7 @@ suite(projName + ' - Extension Test Suite', () => {
 
 	test(projName + '.3 - output files exist 3 - exclude compileError.p as string', async () => {
 		// this isn't officially supported and won't syntac check in the settings.json file(s), but it works
-		await updateConfig("files.exclude", "compileError.p")
+		await updateConfig('files.exclude', 'compileError.p')
 		await runAllTests()
 
 		const resultsJson = Uri.joinPath(workspaceUri,'results.json')
@@ -68,10 +68,10 @@ suite(projName + ' - Extension Test Suite', () => {
 		const pass = await getTestCount(resultsJson, 'pass')
 		const fail = await getTestCount(resultsJson, 'fail')
 		const error = await getTestCount(resultsJson, 'error')
-		assert.equal(6,testCount,"test count")
-		assert.equal(2,pass,"pass count")
-		assert.equal(2,fail,"fail count")
-		assert.equal(2,error,"error count")
+		assert.equal(6,testCount,'test count')
+		assert.equal(2,pass,'pass count')
+		assert.equal(2,fail,'fail count')
+		assert.equal(2,error,'error count')
 	})
 
 	test(projName + '.5 - run test case at cursor', async () => {
@@ -79,7 +79,7 @@ suite(projName + ' - Extension Test Suite', () => {
 		if(window.activeTextEditor) {
 			window.activeTextEditor.selection = new Selection(21, 0, 21, 0)
 		} else {
-			assert.fail("vscode.window.activeTextEditor is undefined")
+			assert.fail('vscode.window.activeTextEditor is undefined')
 		}
 		await commands.executeCommand('testing.runAtCursor')
 

@@ -25,7 +25,7 @@ export class Decorator {
 
 	private constructor () {
 		this.instanceCount = Decorator.instCount
-		log.info("Decorator constructor instanceCount=" + this.instanceCount + ' ' + Decorator.instCount)
+		log.info('Decorator constructor instanceCount=' + this.instanceCount + ' ' + Decorator.instCount)
 		this.backgroundExecutable = window.createTextEditorDecorationType({
 			backgroundColor: 'rgba(255,0,0,0.1)',
 			isWholeLine: true,
@@ -74,7 +74,7 @@ export class Decorator {
 	}
 
 	getRecentCoverage () {
-		log.debug("--- getRecentResults-1 instanceCount=" + this.instanceCount + ' ' + Decorator.instCount + ' ' + this.recentCoverage.size)
+		log.debug('--- getRecentResults-1 instanceCount=' + this.instanceCount + ' ' + Decorator.instCount + ' ' + this.recentCoverage.size)
 		return this.recentCoverage
 	}
 
@@ -95,7 +95,7 @@ export class Decorator {
 	}
 
 	private decorateEditor (editor: TextEditor) {
-		log.debug("--- decorate-1 instanceCount=" + this.instanceCount + ' ' + Decorator.instCount)
+		log.debug('--- decorate-1 instanceCount=' + this.instanceCount + ' ' + Decorator.instCount)
 		const executedArray: DecorationOptions[] = []
 		const executableArray: DecorationOptions[] = []
 		this.decorateCount++
@@ -105,7 +105,7 @@ export class Decorator {
 			return false
 		}
 
-		log.debug("Decorate? " + editor.document.uri.fsPath + ' (count=' + this.decorateCount + ', results=' + this.recentCoverage.size + ')')
+		log.debug('Decorate? ' + editor.document.uri.fsPath + ' (count=' + this.decorateCount + ', results=' + this.recentCoverage.size + ')')
 
 		const rc = this.recentDecorations.get(editor.document.uri.fsPath)
 		if (rc) {
@@ -114,7 +114,7 @@ export class Decorator {
 
 		const tc = this.recentCoverage.get(editor.document.uri.fsPath)
 		if (!tc) {
-			log.trace("No coverage for " + editor.document.uri.fsPath + ', coverage.size=' + this.recentCoverage?.size + ', decorations.size=' + this.recentDecorations?.size)
+			log.trace('No coverage for ' + editor.document.uri.fsPath + ', coverage.size=' + this.recentCoverage?.size + ', decorations.size=' + this.recentDecorations?.size)
 			log.trace('  -     have: ' + editor.document.uri.fsPath)
 			for (const [k, v] of this.recentCoverage || []) {
 				log.trace('  - found coverage: ' + k + ' ' + v.detailedCoverage?.length)
@@ -152,7 +152,7 @@ export class Decorator {
 		// log.info('  - executableArray=' + JSON.stringify(executableArray,null,2))
 		this.setDecorations(editor, {executed: executedArray, executable: executableArray})
 
-		log.info("add recentDecorations " + editor.document.uri.fsPath)
+		log.info('add recentDecorations ' + editor.document.uri.fsPath)
 		this.recentDecorations.set(editor.document.uri.fsPath, {executed: executedArray, executable: executableArray})
 		return true
 	}
@@ -186,23 +186,23 @@ export class Decorator {
 	}
 
 	getDecorations (uri: Uri) {
-		log.debug("--- getDecorations-1 instanceCount=" + this.instanceCount + ' ' + Decorator.instCount)
-		log.debug("--- getDecorations-10 recentDecorations=" + this.instanceCount + ' ' + this.recentDecorations?.size)
-		log.debug("--- getDecorations-12 instanceCount=" + this.instanceCount + ' ' + Decorator.instCount)
+		log.debug('--- getDecorations-1 instanceCount=' + this.instanceCount + ' ' + Decorator.instCount)
+		log.debug('--- getDecorations-10 recentDecorations=' + this.instanceCount + ' ' + this.recentDecorations?.size)
+		log.debug('--- getDecorations-12 instanceCount=' + this.instanceCount + ' ' + Decorator.instCount)
 
 		// for (const [d, k]  of this.recentCoverage || []) {
 		// 	log.debug("--- getDecorations-13 Cov: d=" + d + ' ' + k.detailedCoverage?.length)
 		// }
 		for (const [d, k] of this.recentDecorations || []) {
-			log.debug("--- getDecorations-14 Dec: d=" + d + ' ' + k.executed?.length + ' ' + k.executable?.length)
+			log.debug('--- getDecorations-14 Dec: d=' + d + ' ' + k.executed?.length + ' ' + k.executable?.length)
 		}
 
 		const lines = this.recentDecorations?.get(uri.fsPath)
 		if (!lines) {
-			log.debug("--- getDecorations-20 count=" + this.decorateCount)
+			log.debug('--- getDecorations-20 count=' + this.decorateCount)
 			return  { count: this.decorateCount }
 		}
-		log.debug("--- getDecorations-30")
+		log.debug('--- getDecorations-30')
 		lines.count = this.decorateCount
 		return lines
 	}
@@ -229,22 +229,22 @@ export class DecorationProvider implements FileDecorationProvider {
 		if (token.isCancellationRequested) {
 			log.debug('file decoration cancelled')
 		}
-		log.info("provideFileDecoration " + uri.fsPath)
+		log.info('provideFileDecoration ' + uri.fsPath)
 		return undefined
 	}
 }
 
 window.onDidChangeActiveTextEditor((editor) => {
 	if (!editor) {
-		log.debug("--- onDidChangeActiveTextEditor-0 no editor")
+		log.debug('--- onDidChangeActiveTextEditor-0 no editor')
 		return
 	}
 
-	log.debug("--- onDidChangeActiveTextEditor-1 start " + editor.document.uri)
+	log.debug('--- onDidChangeActiveTextEditor-1 start ' + editor.document.uri)
 
 	const didDecorate = decorator.decorate(editor)
 	if (didDecorate) {
-		log.info("decorate complete")
+		log.info('decorate complete')
 		decorator.getDecorations(editor.document.uri)
 	} else {
 		log.warn('decorate failed')

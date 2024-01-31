@@ -7,7 +7,7 @@ const workspaceUri = getWorkspaceUri()
 
 before(async () => {
 	await waitForExtensionActive()
-	await setRuntimes([{name: "11.7", path: "/psc/dlc_11.7"}, {name: "12.2", path: getDefaultDLC(), default: true}])
+	await setRuntimes([{name: '11.7', path: '/psc/dlc_11.7'}, {name: '12.2', path: getDefaultDLC(), default: true}])
 })
 
 suite(projName + ' - Extension Test Suite', () => {

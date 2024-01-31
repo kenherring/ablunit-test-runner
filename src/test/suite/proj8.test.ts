@@ -31,7 +31,7 @@ suite(projName + ' - Extension Test Suite', () => {
 		const recentResults = getResults()
 		const res = recentResults?.[0]
 		if (!res) {
-			assert.fail("res is null")
+			assert.fail('res is null')
 			return
 		}
 		const envVars = getEnvVars(res.dlc?.uri)
@@ -39,7 +39,7 @@ suite(projName + ' - Extension Test Suite', () => {
 		if (envPath) {
 			assert.assert(!envPath.includes('${env:PATH}'), 'env should not contain ${env.PATH}, but does')
 		} else {
-			assert.fail("env is undefined")
+			assert.fail('env is undefined')
 		}
 	})
 

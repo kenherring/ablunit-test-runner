@@ -69,7 +69,7 @@ export const getSourceMapFromRCode = async (propath: PropathParser, uri: Uri) =>
 		} else if (items.length === 1) {
 			return items[0]
 		}
-		throw new Error("invalid length=" + items.length)
+		throw new Error('invalid length=' + items.length)
 	}
 
 
@@ -123,7 +123,7 @@ export const getSourceMapFromRCode = async (propath: PropathParser, uri: Uri) =>
 
 	const nextDelim = (bytes: Uint32Array, pos: number, count: number = 2, prefix: string = '') => {
 		if (debug) {
-			log.info(prefix + " count=" + count)
+			log.info(prefix + ' count=' + count)
 		}
 		let next = bytes.indexOf(0,pos/4)
 
@@ -140,7 +140,7 @@ export const getSourceMapFromRCode = async (propath: PropathParser, uri: Uri) =>
 
 	const parseProcName = (bytes: Uint32Array, pos: number, prefix: string = '') => {
 		if (debug) {
-			log.info(prefix + " [parseProcName] pos=" + pos)
+			log.info(prefix + ' [parseProcName] pos=' + pos)
 		}
 		const childBytes = bytes.subarray(pos/4,nextDelim(bytes,pos,1))
 
@@ -214,7 +214,7 @@ export const getSourceMapFromRCode = async (propath: PropathParser, uri: Uri) =>
 				return src.sourceName
 			}
 		}
-		throw new Error("[getSourceName] could not find source name for num=" + num + ", uri=" + uri.fsPath)
+		throw new Error('[getSourceName] could not find source name for num=' + num + ', uri=' + uri.fsPath)
 	}
 
 
@@ -224,7 +224,7 @@ export const getSourceMapFromRCode = async (propath: PropathParser, uri: Uri) =>
 				return src.sourceUri
 			}
 		}
-		throw new Error("[getSourceUri] could not find source name for num=" + num + ", uri=" + uri.fsPath)
+		throw new Error('[getSourceUri] could not find source name for num=' + num + ', uri=' + uri.fsPath)
 	}
 
 
@@ -238,7 +238,7 @@ export const getSourceMapFromRCode = async (propath: PropathParser, uri: Uri) =>
 
 		const sourceName = dec.decode(b.subarray(2)).replace(/\0/g,'')
 		if (sourceNum == undefined) {
-			throw new Error("invalid source number: " + sourceNum + " " + sourceName)
+			throw new Error('invalid source number: ' + sourceNum + ' ' + sourceName)
 		}
 		const sourceUri = Uri.joinPath(propath.workspaceFolder.uri, sourceName)
 
@@ -255,7 +255,7 @@ export const getSourceMapFromRCode = async (propath: PropathParser, uri: Uri) =>
 	}
 
 	const parseTT = (bytes: Uint32Array, pos: number, prefix: string = '') => {
-		log.trace(prefix + " TODO - implement rcode parsing function  parseTT (bytes.length=" + bytes.length + ", pos=" + pos + ", byte[" + pos/4 + "]=" + bytes[pos/4] + ")")
+		log.trace(prefix + ' TODO - implement rcode parsing function  parseTT (bytes.length=' + bytes.length + ', pos=' + pos + ', byte[' + pos/4 + ']=' + bytes[pos/4] + ')')
 	}
 
 	const parseMap = async (bytes: Uint32Array, pos: number, prefix: string = '') => {
@@ -281,8 +281,8 @@ export const getSourceMapFromRCode = async (propath: PropathParser, uri: Uri) =>
 	}
 
 	const parse4 = (_bytes: Uint32Array, _pos: number, prefix: string = '') => {
-		log.trace(prefix + "TODO - implement rcode parsing function parse4")
-		throw new Error("parse4 not implemented")
+		log.trace(prefix + 'TODO - implement rcode parsing function parse4')
+		throw new Error('parse4 not implemented')
 	}
 
 	const getMapLine = (map: IIncludeMap[], linenum: number) => {

@@ -15,7 +15,7 @@ export async function getContentFromFilesystem (uri: Uri) {
 }
 
 export function getLines (text: string, annotation: string): [ string[], boolean ] {
-	const annotationRegex = new RegExp(annotation, "i")
+	const annotationRegex = new RegExp(annotation, 'i')
 
 	if (!annotationRegex.test(text)) {
 		// no annotation found
@@ -32,10 +32,10 @@ export function getLines (text: string, annotation: string): [ string[], boolean
 	for (let i = 0; i < lines.length; i++) {
 		lines[i] = removeComments(lines[i])
 
-		if (lines[i].trim() == "") {
+		if (lines[i].trim() == '') {
 			// set empty lines to empty string
 			lines[i] = ''
-		} else if (!foundAnnotation && lines[i].toLowerCase().includes("@test")) {
+		} else if (!foundAnnotation && lines[i].toLowerCase().includes('@test')) {
 			foundAnnotation = true
 		}
 	}

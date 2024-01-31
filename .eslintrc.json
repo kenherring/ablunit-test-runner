@@ -32,7 +32,6 @@
 	],
 	"rules": {
 		// TODO: enable and fix theese
-		// "quotes": ["warn", "single"]
 		// "no-console": "warn",
 		// "comma-dangle": [ "never", "always" ]
 
@@ -75,6 +74,7 @@
 		"no-empty": "warn",
 		"no-mixed-spaces-and-tabs": ["error", "smart-tabs"],
 		"no-trailing-spaces": [ "error", { "skipBlankLines": false }],
+		"quotes": ["warn", "single"],
 		"semi": [ "error", "never"],
 		"space-before-blocks": [ "error", "always"],
 		"space-before-function-paren": ["warn", "always"],

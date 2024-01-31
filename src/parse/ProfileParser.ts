@@ -28,50 +28,50 @@ export class ABLProfile {
 			}
 		}
 
-		log.debug("section1 " + sectionLines[1].length)
+		log.debug('section1 ' + sectionLines[1].length)
 		this.profJSON = new ABLProfileJson(sectionLines[1], debugLines)
-		log.debug("section2 " + sectionLines[2].length)
+		log.debug('section2 ' + sectionLines[2].length)
 		this.profJSON.addModules(sectionLines[2])
-		log.debug("section3 " + sectionLines[3].length)
+		log.debug('section3 ' + sectionLines[3].length)
 		this.profJSON.addCallTree(sectionLines[3])
-		log.debug("section4 " + sectionLines[4].length)
+		log.debug('section4 ' + sectionLines[4].length)
 		await this.profJSON.addLineSummary(sectionLines[4])
-		log.debug("section5 " + sectionLines[5].length)
+		log.debug('section5 ' + sectionLines[5].length)
 		this.profJSON.addTracing(sectionLines[5])
-		log.debug("section6 " + sectionLines[6].length)
+		log.debug('section6 ' + sectionLines[6].length)
 		this.profJSON.addCoverage(sectionLines[6])
-		log.debug("section7 " + sectionLines[7].length)
+		log.debug('section7 ' + sectionLines[7].length)
 		this.profJSON.addSection7(sectionLines[7])
-		log.debug("sectionLines.length=" + sectionLines.length)
+		log.debug('sectionLines.length=' + sectionLines.length)
 		if(sectionLines.length > 11) {
-			log.debug("section8 " + sectionLines[8].length)
+			log.debug('section8 ' + sectionLines[8].length)
 			this.profJSON.addSection8(sectionLines[8])
-			log.debug("section9 " + sectionLines[9].length)
+			log.debug('section9 ' + sectionLines[9].length)
 			this.profJSON.addSection9(sectionLines[9])
-			log.debug("section10 " + sectionLines[10].length)
+			log.debug('section10 ' + sectionLines[10].length)
 			this.profJSON.addSection10(sectionLines[10])
-			log.debug("section11 " + sectionLines[11].length)
+			log.debug('section11 ' + sectionLines[11].length)
 			this.profJSON.addSection11(sectionLines[11])
-			log.debug("section12 " + sectionLines[12].length)
+			log.debug('section12 ' + sectionLines[12].length)
 			this.profJSON.addSection12(sectionLines[12])
-			log.debug("section13 - User Data" + sectionLines[13].length)
+			log.debug('section13 - User Data' + sectionLines[13].length)
 			this.profJSON.addUserData(sectionLines[13])
 		} else {
-			log.debug("section12 " + sectionLines[8].length)
+			log.debug('section12 ' + sectionLines[8].length)
 			this.profJSON.addSection12(sectionLines[8])
-			log.debug("section13 - User Data" + sectionLines[9].length)
+			log.debug('section13 - User Data' + sectionLines[9].length)
 			this.profJSON.addUserData(sectionLines[9])
 		}
 
 		this.profJSON.modules.sort((a,b) => a.ModuleID - b.ModuleID)
-		log.debug("parsing profiler data complete")
+		log.debug('parsing profiler data complete')
 		if (writeJson) {
 			const jsonUri = Uri.file(uri.fsPath.replace(/\.[a-zA-Z]+$/,'.json'))
 			this.writeJsonToFile(jsonUri).then(null, (err: Error) => {
-				log.error("Error writing profile output json file: " + err)
+				log.error('Error writing profile output json file: ' + err)
 			})
 		}
-		log.debug("parseData returning")
+		log.debug('parseData returning')
 	}
 
 	writeJsonToFile (uri: Uri) {
@@ -80,9 +80,9 @@ export class ABLProfile {
 			userData: this.profJSON!.userData,
 		}
 		return workspace.fs.writeFile(uri, Uint8Array.from(Buffer.from(JSON.stringify(data, null, 2)))).then(() => {
-			log.info("wrote profile output json file: " + workspace.asRelativePath(uri))
+			log.info('wrote profile output json file: ' + workspace.asRelativePath(uri))
 		}, (err) => {
-			log.error("failed to write profile output json file " + workspace.asRelativePath(uri) + " - " + err)
+			log.error('failed to write profile output json file ' + workspace.asRelativePath(uri) + ' - ' + err)
 		})
 	}
 }
@@ -214,7 +214,7 @@ export class ABLProfileJson {
 	constructor (lines: string[], debugLines: ABLDebugLines) {
 		this.debugLines = debugLines
 		if (lines.length > 1) {
-			throw new Error("Invalid profile data - section 1 should have exactly one line")
+			throw new Error('Invalid profile data - section 1 should have exactly one line')
 		}
 		const test = summaryRE.exec(lines[0])
 		if(test) {
@@ -225,7 +225,7 @@ export class ABLProfileJson {
 			this.userID = test[5]
 			this.properties = JSON.parse(test[6].replace(/\\/g,'/')) as IProps
 		} else {
-			throw (new Error("Unable to parse profile data in section 1"))
+			throw (new Error('Unable to parse profile data in section 1'))
 		}
 	}
 
@@ -237,13 +237,13 @@ export class ABLProfileJson {
 
 			const moduleName = test![2]
 			let entityName: string | undefined = undefined
-			let sourceName: string = ""
+			let sourceName: string = ''
 			let parentName: string | undefined
-			const destructor: boolean = (moduleName.startsWith("~"))
-			const split = moduleName.split(" ")
+			const destructor: boolean = (moduleName.startsWith('~'))
+			const split = moduleName.split(' ')
 
 			if (split.length >= 4) {
-				throw new Error("Unable to parse module name - has 4 sections which is more than expected: " + moduleName)
+				throw new Error('Unable to parse module name - has 4 sections which is more than expected: ' + moduleName)
 			}
 
 			entityName = split[0]
@@ -303,7 +303,7 @@ export class ABLProfileJson {
 					parent.SourceName = child.SourceName
 				}
 			} else {
-				throw new Error("Unable to find parent module for " + child.SourceName + " " + child.ModuleName)
+				throw new Error('Unable to find parent module for ' + child.SourceName + ' ' + child.ModuleName)
 			}
 		})
 	}
@@ -384,7 +384,7 @@ export class ABLProfileJson {
 
 			const modID = Number(test[1])
 			const sourceName = this.getModule(modID)?.SourceName
-			if (sourceName?.startsWith("OpenEdge.")) continue
+			if (sourceName?.startsWith('OpenEdge.')) continue
 			const sum: ILineSummary = {
 				LineNo: Number(test[2]),
 				ExecCount: Number(test[3]),
@@ -401,7 +401,7 @@ export class ABLProfileJson {
 
 			const lineinfo = await this.debugLines.getSourceLine(sourceName, sum.LineNo)
 			if(!lineinfo) {
-				log.debug("could not find source/debug line info for " + sourceName + " " + sum.LineNo)
+				log.debug('could not find source/debug line info for ' + sourceName + ' ' + sum.LineNo)
 				// throw new Error("Unable to find source/debug line info for " + sourceName + " " + sum.LineNo)
 			} else {
 				sum.srcLine = lineinfo.debugLine
@@ -471,7 +471,7 @@ export class ABLProfileJson {
 					continue
 				}
 
-				if(!mod) { throw new Error("invalid data in section 6") }
+				if(!mod) { throw new Error('invalid data in section 6') }
 
 				const line = this.getLine(mod,Number(lines[lineNo]))
 				if (line) {
@@ -485,7 +485,7 @@ export class ABLProfileJson {
 				}
 			}
 		} catch (error) {
-			log.error("Error parsing coverage data in section 6 [module=" + mod + "]: error=" + error)
+			log.error('Error parsing coverage data in section 6 [module=' + mod + ']: error=' + error)
 		}
 		this.assignParentCoverage()
 	}
@@ -494,10 +494,10 @@ export class ABLProfileJson {
 		const test = coverageRE.exec(line)
 		let mod: IModule | undefined
 		if (!test) {
-			throw new Error("Unable to parse coverage data in section 6")
+			throw new Error('Unable to parse coverage data in section 6')
 		}
 
-		if (test[2] != "") {
+		if (test[2] != '') {
 			mod = this.getChildModule(Number(test[1]), test[2])
 			if (mod) {
 				mod.executableLines = Number(test[3])
@@ -510,7 +510,7 @@ export class ABLProfileJson {
 			}
 		}
 		if (!mod) {
-			throw new Error("Unable to find module " + test[1] + " " + test[2] + " in section 6")
+			throw new Error('Unable to find module ' + test[1] + ' ' + test[2] + ' in section 6')
 		}
 		return mod
 	}
@@ -540,7 +540,7 @@ export class ABLProfileJson {
 
 	addSection7 (lines: string[]) {
 		if (lines.length !== 0) {
-			log.trace("section 7 not implemented.  line count = " + lines.length)
+			log.trace('section 7 not implemented.  line count = ' + lines.length)
 		}
 	}
 
@@ -573,12 +573,12 @@ export class ABLProfileJson {
 				if (mod) {
 					mod.ISectionEight.push(ISectionEight)
 				} else {
-					log.error("Unable to find module " + ISectionEight.ModuleID + " in section 8")
-					log.error("  - line='" + lines[lineNo] + "'")
+					log.error('Unable to find module ' + ISectionEight.ModuleID + ' in section 8')
+					log.error('  - line=\'' + lines[lineNo] + '\'')
 				}
 			} else {
-				log.error("Unable to parse section 8 line " + lineNo + ": " + lines[lineNo])
-				log.error("  - line='" + lines[lineNo] + "'")
+				log.error('Unable to parse section 8 line ' + lineNo + ': ' + lines[lineNo])
+				log.error('  - line=\'' + lines[lineNo] + '\'')
 			}
 		}
 	}
@@ -591,14 +591,14 @@ export class ABLProfileJson {
 			if (test) {
 				const ISectionNine: ISectionNine = {
 					ModuleID: Number(test[1]),
-					fields: test[2].trim().split(" ").filter(f => f.length > 0)
+					fields: test[2].trim().split(' ').filter(f => f.length > 0)
 				}
 				const mod = this.getModule(ISectionNine.ModuleID)
 				if (mod) {
 					mod.ISectionNine.push(ISectionNine)
 				} else {
-					log.error("Unable to find module " + ISectionNine.ModuleID + " in section 9")
-					log.error("  - line='" + element + "'")
+					log.error('Unable to find module ' + ISectionNine.ModuleID + ' in section 9')
+					log.error('  - line=\'' + element + '\'')
 				}
 			}
 		}
@@ -618,15 +618,15 @@ export class ABLProfileJson {
 				if (mod) {
 					mod.ISectionTen.push(ISectionTen)
 				} else {
-					log.error("Unable to find module " + ISectionTen.ModuleID + " in section 10")
-					log.error("  - line='" + element + "'")
+					log.error('Unable to find module ' + ISectionTen.ModuleID + ' in section 10')
+					log.error('  - line=\'' + element + '\'')
 				}
 			}
 		}
 	}
 
 	addSection11 (lines: string[]) {
-		log.error("section 11 not implemented.  line count = " + lines.length)
+		log.error('section 11 not implemented.  line count = ' + lines.length)
 	}
 
 	addSection12 (lines: string[]) {
@@ -662,7 +662,7 @@ export class ABLProfileJson {
 	}
 
 	addSection13 (lines: string[]) {
-		log.error("section 13 not implemented.  line count = " + lines.length)
+		log.error('section 13 not implemented.  line count = ' + lines.length)
 	}
 
 	addUserData (lines: string[]) {
@@ -676,7 +676,7 @@ export class ABLProfileJson {
 					data: test[2]
 				})
 			} else {
-				throw new Error("Unable to parse user data")
+				throw new Error('Unable to parse user data')
 			}
 		}
 	}

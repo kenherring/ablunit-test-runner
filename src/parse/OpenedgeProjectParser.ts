@@ -74,7 +74,7 @@ let oeRuntimes: IOERuntime[] = []
 const dlcMap = new Map<WorkspaceFolder, IDlc>()
 
 function getProjectJson (workspaceFolder: WorkspaceFolder) {
-	const data = JSON.stringify(readStrippedJsonFile(Uri.joinPath(workspaceFolder.uri,"openedge-project.json")))
+	const data = JSON.stringify(readStrippedJsonFile(Uri.joinPath(workspaceFolder.uri,'openedge-project.json')))
 	return data
 }
 
@@ -86,7 +86,7 @@ export function getDLC (workspaceFolder: WorkspaceFolder, openedgeProjectProfile
 
 	let runtimeDlc: Uri | undefined = undefined
 	const oeversion = getOEVersion(workspaceFolder, openedgeProjectProfile, projectJson)
-	const runtimes: IRuntime[] = workspace.getConfiguration("abl.configuration").get("runtimes",[])
+	const runtimes: IRuntime[] = workspace.getConfiguration('abl.configuration').get('runtimes',[])
 
 	for (const runtime of runtimes) {
 		if (runtime.name === oeversion) {
@@ -101,23 +101,23 @@ export function getDLC (workspaceFolder: WorkspaceFolder, openedgeProjectProfile
 		runtimeDlc = Uri.file(process.env['DLC'])
 	}
 	if (runtimeDlc) {
-		log.info("using DLC = " + runtimeDlc.fsPath)
+		log.info('using DLC = ' + runtimeDlc.fsPath)
 		const dlcObj: IDlc = { uri: runtimeDlc }
 		dlcMap.set(workspaceFolder, dlcObj)
 		return dlcObj
 	}
-	throw new Error("unable to determine DLC")
+	throw new Error('unable to determine DLC')
 }
 
 export function getOEVersion (workspaceFolder: WorkspaceFolder, openedgeProjectProfile?: string, projectJson?: string) {
 	const profileJson = getOpenEdgeProfileConfig(workspaceFolder.uri, openedgeProjectProfile)
 	if (!profileJson) {
-		log.debug("[getOEVersion] profileJson not found")
+		log.debug('[getOEVersion] profileJson not found')
 		return undefined
 	}
 
 	if (profileJson.oeversion) {
-		log.debug("[getOEVersion] profileJson.value.oeversion = " + profileJson.oeversion)
+		log.debug('[getOEVersion] profileJson.value.oeversion = ' + profileJson.oeversion)
 		return profileJson.oeversion
 	}
 
@@ -207,9 +207,9 @@ class OpenEdgeProjectConfig extends ProfileConfig {
 }
 
 export function getActiveProfile (rootDir: string) {
-	if (fs.existsSync(path.join(rootDir, ".vscode", "profile.json"))) {
+	if (fs.existsSync(path.join(rootDir, '.vscode', 'profile.json'))) {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-		const txt = JSON.parse(fs.readFileSync(path.join(rootDir, ".vscode", "profile.json"), { encoding: 'utf8' }).replace(/\r/g,''))
+		const txt = JSON.parse(fs.readFileSync(path.join(rootDir, '.vscode', 'profile.json'), { encoding: 'utf8' }).replace(/\r/g,''))
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 		if (typeof txt['profile'] === 'string') {
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
@@ -218,13 +218,13 @@ export function getActiveProfile (rootDir: string) {
 		}
 		return undefined
 	}
-	return "default"
+	return 'default'
 }
 
 function loadConfigFile (filename: string): IOpenEdgeMainConfig | undefined {
-	log.debug("[loadConfigFile] filename = " + filename)
+	log.debug('[loadConfigFile] filename = ' + filename)
 	if (!filename) {
-		throw new Error("filename is undefined")
+		throw new Error('filename is undefined')
 	}
 	if (!fs.existsSync(filename)) {
 		return undefined
@@ -233,8 +233,8 @@ function loadConfigFile (filename: string): IOpenEdgeMainConfig | undefined {
 		const data = readStrippedJsonFile(filename)
 		return data as unknown as IOpenEdgeMainConfig
 	} catch (caught) {
-		log.error("[loadConfigFile] Failed to parse " + filename + ": " + caught)
-		throw new Error("Failed to parse " + filename + ": " + caught)
+		log.error('[loadConfigFile] Failed to parse ' + filename + ': ' + caught)
+		throw new Error('Failed to parse ' + filename + ': ' + caught)
 	}
 }
 
@@ -245,7 +245,7 @@ function readGlobalOpenEdgeRuntimes (workspaceUri: Uri) {
 
 	if (!workspace.workspaceFolders) return
 
-	if (oeRuntimesDefault != "") {
+	if (oeRuntimesDefault != '') {
 		// set default flag on the runtime that matches the defaultRuntime setting
 		oeRuntimes.forEach(runtime => {
 			// we have a default set, so ignore the default in the array
@@ -282,9 +282,9 @@ function readGlobalOpenEdgeRuntimes (workspaceUri: Uri) {
 }
 
 function getDlcDirectory (version: string): string {
-	let dlc: string = ""
-	let dfltDlc: string = ""
-	let dfltName: string = ""
+	let dlc: string = ''
+	let dfltDlc: string = ''
+	let dfltName: string = ''
 	oeRuntimes.forEach(runtime => {
 		if (runtime.name === version) {
 			dlc = runtime.path
@@ -306,13 +306,13 @@ function getDlcDirectory (version: string): string {
 
 	if (dlc === '' && dfltDlc != '') {
 		dlc = dfltDlc
-		log.info("OpenEdge version not configured in workspace settings, using default version (" + dfltName + ") in user settings.")
+		log.info('OpenEdge version not configured in workspace settings, using default version (' + dfltName + ') in user settings.')
 	}
 	return dlc
 }
 
 function parseOpenEdgeConfig (cfg: IOpenEdgeConfig): ProfileConfig {
-	log.debug("[parseOpenEdgeConfig] cfg = " + JSON.stringify(cfg, null, 2))
+	log.debug('[parseOpenEdgeConfig] cfg = ' + JSON.stringify(cfg, null, 2))
 	const retVal = new ProfileConfig()
 	retVal.dlc = getDlcDirectory(cfg.oeversion)
 	retVal.extraParameters = cfg.extraParameters ?? ''
@@ -331,14 +331,14 @@ function parseOpenEdgeConfig (cfg: IOpenEdgeConfig): ProfileConfig {
 }
 
 function parseOpenEdgeProjectConfig (uri: Uri, workspaceUri: Uri, config: IOpenEdgeMainConfig): OpenEdgeProjectConfig {
-	log.debug("[parseOpenEdgeProjectConfig] uri = " + uri.fsPath)
+	log.debug('[parseOpenEdgeProjectConfig] uri = ' + uri.fsPath)
 	const prjConfig = new OpenEdgeProjectConfig()
 	prjConfig.name = config.name
 	prjConfig.version = config.version
 	prjConfig.rootDir = Uri.file(path.dirname(uri.path)).fsPath
 	readGlobalOpenEdgeRuntimes(workspaceUri)
 	prjConfig.dlc = getDlcDirectory(config.oeversion)
-	prjConfig.extraParameters = config.extraParameters ? config.extraParameters : ""
+	prjConfig.extraParameters = config.extraParameters ? config.extraParameters : ''
 	prjConfig.oeversion = config.oeversion
 	prjConfig.gui = config.graphicalMode
 	if (config.buildPath && config.buildPath.length > 0) {
@@ -352,7 +352,7 @@ function parseOpenEdgeProjectConfig (uri: Uri, workspaceUri: Uri, config: IOpenE
 	prjConfig.dbConnections = config.dbConnections
 	prjConfig.procedures = config.procedures
 
-	prjConfig.profiles.set("default", prjConfig)
+	prjConfig.profiles.set('default', prjConfig)
 	if (config.profiles) {
 		config.profiles.forEach(profile => {
 			const p = parseOpenEdgeConfig(profile.value)
@@ -370,19 +370,19 @@ function parseOpenEdgeProjectConfig (uri: Uri, workspaceUri: Uri, config: IOpenE
 		if (prjConfig.profiles.has(actProf)) {
 			prjConfig.activeProfile = actProf
 		} else {
-			prjConfig.activeProfile = "default"
+			prjConfig.activeProfile = 'default'
 		}
 	} else {
-		prjConfig.activeProfile = "default"
+		prjConfig.activeProfile = 'default'
 	}
 	return prjConfig
 }
 
 function readOEConfigFile (uri: Uri, workspaceUri: Uri, openedgeProjectProfile?: string) {
-	log.debug("[readOEConfigFile] uri = " + uri.fsPath)
+	log.debug('[readOEConfigFile] uri = ' + uri.fsPath)
 	const projects: OpenEdgeProjectConfig[] = []
 
-	log.info("[readOEConfigFile] OpenEdge project config file found: " + uri.fsPath)
+	log.info('[readOEConfigFile] OpenEdge project config file found: ' + uri.fsPath)
 	const config = loadConfigFile(uri.fsPath)
 	if (!config) {
 		const ret = new OpenEdgeProjectConfig()
@@ -391,8 +391,8 @@ function readOEConfigFile (uri: Uri, workspaceUri: Uri, openedgeProjectProfile?:
 	}
 
 	const prjConfig = parseOpenEdgeProjectConfig(uri, workspaceUri, config)
-	if (prjConfig.dlc != "") {
-		log.info("OpenEdge project configured in " + prjConfig.rootDir + " -- DLC: " + prjConfig.dlc)
+	if (prjConfig.dlc != '') {
+		log.info('OpenEdge project configured in ' + prjConfig.rootDir + ' -- DLC: ' + prjConfig.dlc)
 		const idx: number = projects.findIndex((element) =>
 			(element.name == prjConfig.name) && (element.version == prjConfig.version)
 		)
@@ -400,20 +400,20 @@ function readOEConfigFile (uri: Uri, workspaceUri: Uri, openedgeProjectProfile?:
 			if (projects[idx].rootDir == prjConfig.rootDir)
 				projects[idx] = prjConfig
 			else {
-				log.info("Duplicate project " + prjConfig.name + " " + prjConfig.version + " found in " + prjConfig.rootDir + " and " + projects[idx].rootDir)
+				log.info('Duplicate project ' + prjConfig.name + ' ' + prjConfig.version + ' found in ' + prjConfig.rootDir + ' and ' + projects[idx].rootDir)
 			}
 		} else {
 			projects.push(prjConfig)
 		}
 	} else {
-		log.info("[readOEConfigFile] Skip OpenEdge project in " + prjConfig.rootDir + " -- OpenEdge install not found")
+		log.info('[readOEConfigFile] Skip OpenEdge project in ' + prjConfig.rootDir + ' -- OpenEdge install not found')
 	}
 	return prjConfig
 }
 
 function getWorkspaceProfileConfig (workspaceUri: Uri, openedgeProjectProfile?: string) {
 	const uri = Uri.joinPath(workspaceUri, 'openedge-project.json')
-	log.debug("[getWorkspaceProfileConfig] uri = " + uri.fsPath)
+	log.debug('[getWorkspaceProfileConfig] uri = ' + uri.fsPath)
 	const prjConfig = readOEConfigFile(uri, workspaceUri, openedgeProjectProfile)
 
 	const activeProfile = openedgeProjectProfile ?? prjConfig?.activeProfile
@@ -446,14 +446,14 @@ export function getOpenEdgeProfileConfig (workspaceUri: Uri, openedgeProjectProf
 }
 
 export function getProfileDbConns (workspaceUri: Uri, openedgeProjectProfile?: string) {
-	log.debug("[getProfileDbConns] workspaceUri = " + workspaceUri.fsPath)
+	log.debug('[getProfileDbConns] workspaceUri = ' + workspaceUri.fsPath)
 
 	const profileConfig = getWorkspaceProfileConfig(workspaceUri, openedgeProjectProfile)
 	if (!profileConfig) {
-		log.info("[getProfileDbConns] profileConfig is undefined")
+		log.info('[getProfileDbConns] profileConfig is undefined')
 		return []
 	}
-	log.trace("[getProfileDbConns] profileConfig.dbConnections = " + JSON.stringify(profileConfig.dbConnections, null, 2))
+	log.trace('[getProfileDbConns] profileConfig.dbConnections = ' + JSON.stringify(profileConfig.dbConnections, null, 2))
 	return profileConfig.dbConnections
 }
 

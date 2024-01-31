@@ -3,7 +3,7 @@ import { Uri, workspace } from 'vscode'
 import { assert, deleteFile, getTestCount, getWorkspaceUri, runAllTests, selectProfile, updateTestProfile, waitForExtensionActive } from '../testCommon'
 
 // const projName = __dirname.split(/[\\/]/).pop()!
-const projName = "proj9"
+const projName = 'proj9'
 const testProfileJson = Uri.joinPath(getWorkspaceUri(), '.vscode/ablunit-test-profile.json')
 const testProfileBackup = Uri.joinPath(getWorkspaceUri(), '.vscode/ablunit-test-profile.json.backup')
 
@@ -39,9 +39,9 @@ suite(projName + ' - Extension Test Suite', () => {
 		assert.fileExists(resultsXml)
 		assert.fileExists(resultsJson)
 
-		assert.equal(await getTestCount(resultsJson,'pass'),7,"passed test count")
-		assert.equal(await getTestCount(resultsJson,'fail'),0,"failed test count")
-		assert.equal(await getTestCount(resultsJson,'error'),0,"error test count")
+		assert.equal(await getTestCount(resultsJson,'pass'),7,'passed test count')
+		assert.equal(await getTestCount(resultsJson,'fail'),0,'failed test count')
+		assert.equal(await getTestCount(resultsJson,'error'),0,'error test count')
 	})
 
 	test(projName + '.2 - second profile passes (project)', async () => {
@@ -52,9 +52,9 @@ suite(projName + ' - Extension Test Suite', () => {
 		const resultsJson = Uri.joinPath(workspaceFolder,'results.json')
 
 		assert.fileExists(resultsJson)
-		assert.equal(await getTestCount(resultsJson,'pass'),2,"passed test count")
-		assert.equal(await getTestCount(resultsJson,'fail'),0,"failed test count")
-		assert.equal(await getTestCount(resultsJson,'error'),0,"error test count")
+		assert.equal(await getTestCount(resultsJson,'pass'),2,'passed test count')
+		assert.equal(await getTestCount(resultsJson,'fail'),0,'failed test count')
+		assert.equal(await getTestCount(resultsJson,'error'),0,'error test count')
 	})
 
 	test(projName + '.3 - third profile passes (inherits propath from 2)', async () => {
@@ -65,9 +65,9 @@ suite(projName + ' - Extension Test Suite', () => {
 		const resultsJson = Uri.joinPath(workspaceFolder,'results.json')
 
 		assert.fileExists(resultsJson)
-		assert.equal(await getTestCount(resultsJson,'pass'),2,"passed test count")
-		assert.equal(await getTestCount(resultsJson,'fail'),0,"failed test count")
-		assert.equal(await getTestCount(resultsJson,'error'),0,"error test count")
+		assert.equal(await getTestCount(resultsJson,'pass'),2,'passed test count')
+		assert.equal(await getTestCount(resultsJson,'fail'),0,'failed test count')
+		assert.equal(await getTestCount(resultsJson,'error'),0,'error test count')
 	})
 
 	test(projName + '.4 - run default profile, then profile 3', async () => {
@@ -80,9 +80,9 @@ suite(projName + ' - Extension Test Suite', () => {
 		const resultsJson = Uri.joinPath(workspaceFolder,'results.json')
 
 		assert.fileExists(resultsJson)
-		assert.equal(await getTestCount(resultsJson,'pass'),2,"passed test count")
-		assert.equal(await getTestCount(resultsJson,'fail'),0,"failed test count")
-		assert.equal(await getTestCount(resultsJson,'error'),0,"error test count")
+		assert.equal(await getTestCount(resultsJson,'pass'),2,'passed test count')
+		assert.equal(await getTestCount(resultsJson,'fail'),0,'failed test count')
+		assert.equal(await getTestCount(resultsJson,'error'),0,'error test count')
 	})
 
 	test(projName + '.12 - second profile passes (config)', async () => {
@@ -93,9 +93,9 @@ suite(projName + ' - Extension Test Suite', () => {
 		const resultsJson = Uri.joinPath(workspaceFolder,'results.json')
 
 		assert.fileExists(resultsJson)
-		assert.equal(await getTestCount(resultsJson,'pass'),2,"passed test count")
-		assert.equal(await getTestCount(resultsJson,'fail'),0,"failed test count")
-		assert.equal(await getTestCount(resultsJson,'error'),0,"error test count")
+		assert.equal(await getTestCount(resultsJson,'pass'),2,'passed test count')
+		assert.equal(await getTestCount(resultsJson,'fail'),0,'failed test count')
+		assert.equal(await getTestCount(resultsJson,'error'),0,'error test count')
 	})
 
 	test(projName + '.20 - do not import openedge-project.json', async () => {

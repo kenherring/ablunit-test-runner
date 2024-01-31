@@ -20,43 +20,43 @@ export class ABLPromsgs {
 		promsgsObj = this
 
 		this.loadFromCache(cacheUri).then(() => {
-			log.info("promsgs loaded from cache '" + cacheUri.fsPath + "'")
+			log.info('promsgs loaded from cache \'' + cacheUri.fsPath + '\'')
 		}, () => {
-			log.info("reading promsgs from DLC")
+			log.info('reading promsgs from DLC')
 			this.loadFromDLC(dlc).then(() => {
 				this.saveCache(cacheUri).then(() => { return }, (err) => {
 					throw(err)
 				})
 			}, (err) => {
-				log.info("Cannot load promsgs from DLC, err=" + err)
+				log.info('Cannot load promsgs from DLC, err=' + err)
 			})
 		})
 	}
 
 	async loadFromDLC (dlc: IDlc) {
 		return workspace.fs.stat(dlc.uri).then(() => {
-			const promsgDir = Uri.joinPath(dlc.uri, "prohelp/msgdata")
+			const promsgDir = Uri.joinPath(dlc.uri, 'prohelp/msgdata')
 			return workspace.fs.readDirectory(promsgDir).then((dirFiles) => {
 
 				const promArr: Promise<void>[] = []
 				for (const file of dirFiles) {
 					promArr.push(this.loadPromsgFile(Uri.joinPath(promsgDir,file[0])).then().catch(err => {
-						throw new Error("Cannot load promsgs file '" + file + "', err=" + err)
+						throw new Error('Cannot load promsgs file \'' + file + '\', err=' + err)
 					}))
 				}
 
 				return Promise.all(promArr).then(() => {
-					log.info("promsgs loaded from DLC")
+					log.info('promsgs loaded from DLC')
 				}, (err) => {
-					throw new Error("Cannot load promsgs from DLC, err=" + err)
+					throw new Error('Cannot load promsgs from DLC, err=' + err)
 				})
 
 			}, (err) => {
-				throw new Error("Cannot read promsgs directory '" + promsgDir + "', err=" + err)
+				throw new Error('Cannot read promsgs directory \'' + promsgDir + '\', err=' + err)
 			})
 		}, (err) => {
-			log.info("Cannot find DLC directory '" + this.dlc.uri.fsPath + '"')
-			throw new Error("Cannot find DLC directory '" + this.dlc.uri.fsPath + '", err=' + err)
+			log.info('Cannot find DLC directory \'' + this.dlc.uri.fsPath + '"')
+			throw new Error('Cannot find DLC directory \'' + this.dlc.uri.fsPath + '", err=' + err)
 		})
 	}
 
@@ -64,7 +64,7 @@ export class ABLPromsgs {
 		const lines = await workspace.fs.readFile(msgfile).then((buffer) => {
 			return Buffer.from(buffer).toString('utf8').split('\n')
 		}, (err) => {
-			throw new Error("Cannot read promsgs file '" + msgfile + "', err=" + err)
+			throw new Error('Cannot read promsgs file \'' + msgfile + '\', err=' + err)
 		})
 
 
@@ -75,7 +75,7 @@ export class ABLPromsgs {
 			if(RegExp(/^(\d+) /).exec(lines[idx])) {
 				newlines.push(currLine)
 				currLine = lines[idx]
-			} else  if(lines[idx].trim() !== '"' && lines[idx].trim() !== '' && lines[idx].trim() !== "\" \"\" \"\"") {
+			} else  if(lines[idx].trim() !== '"' && lines[idx].trim() !== '' && lines[idx].trim() !== '" "" ""') {
 				currLine += '\\n' + lines[idx]
 			}
 		}
@@ -102,24 +102,24 @@ export class ABLPromsgs {
 	}
 
 	async loadFromCache (cacheUri: Uri) {
-		log.info("load promsgs from cache") // REMOVEME
+		log.info('load promsgs from cache') // REMOVEME
 		await workspace.fs.readFile(cacheUri).then((buffer) => {
 			this.promsgs.push((JSON.parse(Buffer.from(buffer).toString('utf8')) as IPromsg))
 		}, (err) => {
-			throw new Error("Cannot read promsgs file '" + cacheUri.fsPath + "', err=" + err)
+			throw new Error('Cannot read promsgs file \'' + cacheUri.fsPath + '\', err=' + err)
 		})
 	}
 
 	saveCache (cacheUri: Uri) {
-		log.info("[saveCache] promsgs.length=" + this.promsgs.length)
+		log.info('[saveCache] promsgs.length=' + this.promsgs.length)
 		if (this.promsgs.length === 0) {
-			throw new Error("promsgs not loaded, cannot save cache - zero records found")
+			throw new Error('promsgs not loaded, cannot save cache - zero records found')
 		}
-		log.info("save promsgs cache file='" + cacheUri.fsPath + "'")
+		log.info('save promsgs cache file=\'' + cacheUri.fsPath + '\'')
 		return workspace.fs.writeFile(cacheUri, Buffer.from(JSON.stringify(this.promsgs))).then(() => {
-			log.info("saved promsgs cache successfully '" + cacheUri.fsPath + "'")
+			log.info('saved promsgs cache successfully \'' + cacheUri.fsPath + '\'')
 		}, (err) => {
-			throw new Error("error writing promsgs cache file: " + err)
+			throw new Error('error writing promsgs cache file: ' + err)
 		})
 	}
 
@@ -142,7 +142,7 @@ export function getPromsgText (text: string) {
 			if (count === 0) {
 				count++
 			} else {
-				stackString += "\n\n" + text.replace(/\\n/g,"\n\n")
+				stackString += '\n\n' + text.replace(/\\n/g,'\n\n')
 			}
 		})
 		return stackString
