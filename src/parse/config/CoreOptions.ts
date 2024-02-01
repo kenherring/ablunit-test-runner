@@ -26,10 +26,10 @@ export class CoreOptions implements ICoreOptions {
 		format: 'xml',
 		writeJson: false
 	}
-	quitOnEnd: boolean = true
-	writeLog: boolean = false
-	showErrorMessage: boolean = true
-	throwError: boolean = true
+	quitOnEnd = true
+	writeLog = false
+	showErrorMessage = true
+	throwError = true
 
 	constructor (from?: ICoreOptions) {
 		if (from === undefined) {

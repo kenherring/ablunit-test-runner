@@ -95,7 +95,7 @@ export const getSourceMapFromRCode = async (propath: PropathParser, uri: Uri) =>
 		}
 	}
 
-	const getShort = (num: number, half: number = 1) => {
+	const getShort = (num: number, half = 1) => {
 		if (half === 1) {
 			return num & 0x0000ffff
 		} else if (half === 2) {
@@ -112,7 +112,7 @@ export const getSourceMapFromRCode = async (propath: PropathParser, uri: Uri) =>
 		return lines
 	}
 
-	const hasZeroBytes = (bytes: Uint32Array, idx: number, count: number = 2) => {
+	const hasZeroBytes = (bytes: Uint32Array, idx: number, count = 2) => {
 		for (let i=0; i < count; i++) {
 			if (bytes[idx + i] != 0) {
 				return false
@@ -121,7 +121,7 @@ export const getSourceMapFromRCode = async (propath: PropathParser, uri: Uri) =>
 		return true
 	}
 
-	const nextDelim = (bytes: Uint32Array, pos: number, count: number = 2, prefix: string = '') => {
+	const nextDelim = (bytes: Uint32Array, pos: number, count = 2, prefix = '') => {
 		if (debug) {
 			log.info(prefix + ' count=' + count)
 		}
@@ -138,7 +138,7 @@ export const getSourceMapFromRCode = async (propath: PropathParser, uri: Uri) =>
 		return next
 	}
 
-	const parseProcName = (bytes: Uint32Array, pos: number, prefix: string = '') => {
+	const parseProcName = (bytes: Uint32Array, pos: number, prefix = '') => {
 		if (debug) {
 			log.info(prefix + ' [parseProcName] pos=' + pos)
 		}
@@ -150,19 +150,19 @@ export const getSourceMapFromRCode = async (propath: PropathParser, uri: Uri) =>
 		return name2
 	}
 
-	const parseVar = (_bytes: Uint32Array, _pos: number, _prefix: string = '') => {
+	const parseVar = (_bytes: Uint32Array, _pos: number, _prefix = '') => {
 		// log.trace(prefix + " TODO - implement rcode parsing function parseVar")
 	}
 
-	const parseParam = (_bytes: Uint32Array, _pos: number, _prefix: string = '') => {
+	const parseParam = (_bytes: Uint32Array, _pos: number, _prefix = '') => {
 		// log.trace(prefix + " TODO - implement rcode parsing function parseParam")
 	}
 
-	const parseProcTT = (_bytes: Uint32Array, _pos: number, _prefix: string = '') => {
+	const parseProcTT = (_bytes: Uint32Array, _pos: number, _prefix = '') => {
 		// log.trace(prefix + " TODO - implement rcode parsing function parseProcTT")
 	}
 
-	const parseProcs = (bytes: Uint32Array, pos: number, prefix: string = '') => {
+	const parseProcs = (bytes: Uint32Array, pos: number, prefix = '') => {
 		const end = nextDelim(bytes, pos + 20, 4, prefix)
 		const childBytes = bytes.subarray(pos/4, end)
 
@@ -228,7 +228,7 @@ export const getSourceMapFromRCode = async (propath: PropathParser, uri: Uri) =>
 	}
 
 
-	const parseSources = async (bytes: Uint32Array, pos: number, prefix: string = '') => {
+	const parseSources = async (bytes: Uint32Array, pos: number, prefix = '') => {
 		const end = nextDelim(bytes, pos + 4, 1, prefix)
 		const childBytes = bytes.subarray(pos/4, end)
 
@@ -254,11 +254,11 @@ export const getSourceMapFromRCode = async (propath: PropathParser, uri: Uri) =>
 		return sources
 	}
 
-	const parseTT = (bytes: Uint32Array, pos: number, prefix: string = '') => {
+	const parseTT = (bytes: Uint32Array, pos: number, prefix = '') => {
 		log.trace(prefix + ' TODO - implement rcode parsing function  parseTT (bytes.length=' + bytes.length + ', pos=' + pos + ', byte[' + pos/4 + ']=' + bytes[pos/4] + ')')
 	}
 
-	const parseMap = async (bytes: Uint32Array, pos: number, prefix: string = '') => {
+	const parseMap = async (bytes: Uint32Array, pos: number, prefix = '') => {
 		const end = pos/4 + 4
 		const childBytes = bytes.subarray(pos/4, end)
 
@@ -280,7 +280,7 @@ export const getSourceMapFromRCode = async (propath: PropathParser, uri: Uri) =>
 		return map
 	}
 
-	const parse4 = (_bytes: Uint32Array, _pos: number, prefix: string = '') => {
+	const parse4 = (_bytes: Uint32Array, _pos: number, prefix = '') => {
 		log.trace(prefix + 'TODO - implement rcode parsing function parse4')
 		throw new Error('parse4 not implemented')
 	}

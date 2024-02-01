@@ -39,7 +39,7 @@ export class ABLResults implements Disposable {
 	globalStorageUri: Uri
 	extensionResourcesUri: Uri
 	wrapperUri: Uri
-	status: string = 'none'
+	status = 'none'
 	cfg: ABLUnitConfig
 	startTime: Date
 	endTime!: Date

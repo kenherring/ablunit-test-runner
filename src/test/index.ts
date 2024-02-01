@@ -129,7 +129,7 @@ async function runTestsForProject (projName: string, timeout: number) {
 
 function findConfigFile () {
 	// search up to 5 levels back for .vscode-test.config.json
-	let configFilename: string = './.vscode-test.config.json'
+	let configFilename = './.vscode-test.config.json'
 	for (let i = 0; i < 5; i++) {
 		if (fs.existsSync(configFilename)) {
 			return configFilename

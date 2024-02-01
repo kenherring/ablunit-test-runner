@@ -237,7 +237,7 @@ export class ABLProfileJson {
 
 			const moduleName = test![2]
 			let entityName: string | undefined = undefined
-			let sourceName: string = ''
+			let sourceName = ''
 			let parentName: string | undefined
 			const destructor: boolean = (moduleName.startsWith('~'))
 			const split = moduleName.split(' ')

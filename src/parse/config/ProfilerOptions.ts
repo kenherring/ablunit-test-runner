@@ -12,15 +12,15 @@ export interface IProfilerOptions {
 }
 
 export class ProfilerOptions implements IProfilerOptions {
-	public enabled: boolean = true
-	public coverage: boolean = true
-	public description: string = 'Run via VSCode - ABLUnit Test Provider Extension'
-	public filename: string = 'prof.out'
+	public enabled = true
+	public coverage = true
+	public description = 'Run via VSCode - ABLUnit Test Provider Extension'
+	public filename = 'prof.out'
 	public listings: string | boolean = ''
-	public statistics: boolean = false
-	public traceFilter: string = ''
-	public tracing: string = ''
-	public writeJson: boolean = false
+	public statistics = false
+	public traceFilter = ''
+	public tracing = ''
+	public writeJson = false
 
 	merge (from?: IProfilerOptions) {
 		if (from === undefined) {

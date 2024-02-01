@@ -42,7 +42,7 @@ class Logger {
 		this.testResultsTimestamp = e
 	}
 
-	trace (message: string, testRun?: TestRun, stackTrace: boolean = true) {
+	trace (message: string, testRun?: TestRun, stackTrace = true) {
 		this.writeMessage(LogLevel.Trace, message, testRun, stackTrace)
 	}
 
@@ -69,7 +69,7 @@ class Logger {
 		this.writeMessage(LogLevel.Error, message, testRun)
 	}
 
-	private writeMessage (messageLevel: LogLevel, message: string, testRun?: TestRun, includeStack: boolean = false) {
+	private writeMessage (messageLevel: LogLevel, message: string, testRun?: TestRun, includeStack = false) {
 		this.writeToChannel(messageLevel, message, includeStack)
 
 		if (testRun && messageLevel >= this.testResultsLogLevel) {
@@ -164,7 +164,7 @@ class Logger {
 		}
 	}
 
-	private decorateMessage (message: string, includeStack: boolean = false) {
+	private decorateMessage (message: string, includeStack = false) {
 		if (includeStack) {
 			return message
 		}

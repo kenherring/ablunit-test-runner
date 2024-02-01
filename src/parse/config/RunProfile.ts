@@ -16,9 +16,9 @@ export interface IRunProfile {
 }
 
 export class DefaultRunProfile implements IRunProfile {
-	hide: boolean = false
-	tempDir: string = '${workspaceFolder}'
-	importOpenedgeProjectJson: boolean = true
+	hide = false
+	tempDir = '${workspaceFolder}'
+	importOpenedgeProjectJson = true
 	openedgeProjectProfile: string | undefined = undefined
 	command: CommandOptions = new CommandOptions()
 	options: CoreOptions = new CoreOptions()

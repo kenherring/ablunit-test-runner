@@ -49,10 +49,11 @@
 			"format": [ "PascalCase" ],
 			"custom": { "regex": "^I[A-Z]", "match": true }
 		}],
-		// "@typescript-eslint/no-confusing-non-null-assertion": 1,
-		"@typescript-eslint/no-inferrable-types": 0,
-		"@typescript-eslint/no-empty-function": 1,
+		// "@typescript-eslint/no-confusing-non-null-assertion": "error",
+		"@typescript-eslint/no-inferrable-types": "error",
+		// "@typescript-eslint/no-empty-function": "error",
 		"@typescript-eslint/no-non-null-assertion": 0,
+		// "@typescript-eslint/no-unnecessary-condition": "error",
 		"@typescript-eslint/no-unnecessary-condition": 0,
 		"@typescript-eslint/no-unused-vars": [ "warn", {
 			"vars": "all",
@@ -64,7 +65,6 @@
 		"@typescript-eslint/restrict-plus-operands": "off",
 		"@typescript-eslint/switch-exhaustiveness-check": "warn",
 
-		// "no-class-assign": "error",
 		"no-console": "warn",
 		"no-empty": "warn",
 		"no-mixed-spaces-and-tabs": ["error", "smart-tabs"],

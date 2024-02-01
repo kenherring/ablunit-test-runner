@@ -7,7 +7,7 @@ import { isRelativePath, readStrippedJsonFile } from '../ABLUnitCommon'
 import { log } from '../ChannelLogger'
 import { IDatabaseConnection, getProfileDbConns } from './OpenedgeProjectParser'
 
-const runProfileFilename: string = 'ablunit-test-profile.json'
+const runProfileFilename = 'ablunit-test-profile.json'
 
 export interface IConfigurations {
 	// Import the json from .vscode/ablunit-test-profile.json and cast to this interface

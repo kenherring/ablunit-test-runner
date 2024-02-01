@@ -44,7 +44,7 @@ export const getSourceMapFromSource = async (propath: PropathParser, debugSource
 	const incLengths: IIncLength[] = []
 	const includes: IXrefInclude[] = []
 	const warnings: string[] = []
-	let lineCount: number = 0
+	let lineCount = 0
 
 
 	const readLineCount = (uri: Uri) => {

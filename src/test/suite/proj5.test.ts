@@ -81,7 +81,7 @@ suite(projName + ' - Extension Test Suite', () => {
 })
 
 
-async function readLinesFromFile (relativeFile: string, annotation: string = '@test') {
+async function readLinesFromFile (relativeFile: string, annotation = '@test') {
 	const uri = Uri.joinPath(workspaceUri, relativeFile)
 	return getContentFromFilesystem(uri).then((content) => {
 		const [ lines, ] = getLines(content, annotation)

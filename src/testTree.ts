@@ -82,7 +82,7 @@ export class ABLTestDir implements ITestType {
 	public canResolveChildren = false
 	public description: string
 	public relativePath: string
-	public label: string = ''
+	public label = ''
 
 	constructor (desc: string, label: string, path: Uri | string) {
 		this.description = desc
@@ -103,10 +103,10 @@ export class ABLTestCase extends TestTypeObj {
 }
 
 export class ABLTestFile extends TestTypeObj {
-	public override isFile: boolean = true
-	public override runnable: boolean = true
-	public override canResolveChildren: boolean = false
-	public relativePath: string = ''
+	public override isFile = true
+	public override runnable = true
+	public override canResolveChildren = false
+	public relativePath = ''
 	currentResults?: ABLResults
 	public children: ABLTestCase[] = []
 
@@ -312,7 +312,7 @@ export class ABLTestSuite extends ABLTestFile {
 }
 
 export class ABLTestClass extends ABLTestFile {
-	public classTypeName: string = ''
+	public classTypeName = ''
 
 	constructor (label: string) {
 		super('ABL Test Class', label)

@@ -141,11 +141,11 @@ class ProfileConfig {
 	name?: string
 	version?: string
 	oeversion?: string
-	dlc: string = ''
+	dlc = ''
 	extraParameters?: string
-	gui: boolean = false
+	gui = false
 	buildPath: IBuildPathEntry[] = []
-	buildDirectory: string = '.'
+	buildDirectory = '.'
 	propath: string[] = []
 	dbConnections: IDatabaseConnection[] = []
 	procedures: IProcedure[] = []
@@ -201,8 +201,8 @@ class ProfileConfig {
 
 class OpenEdgeProjectConfig extends ProfileConfig {
 	activeProfile?: string
-	rootDir: string = '.'
-	override buildDirectory: string = '.'
+	rootDir = '.'
+	override buildDirectory = '.'
 	profiles: Map<string, ProfileConfig> = new Map<string, ProfileConfig>()
 }
 
@@ -282,9 +282,9 @@ function readGlobalOpenEdgeRuntimes (workspaceUri: Uri) {
 }
 
 function getDlcDirectory (version: string): string {
-	let dlc: string = ''
-	let dfltDlc: string = ''
-	let dfltName: string = ''
+	let dlc = ''
+	let dfltDlc = ''
+	let dfltName = ''
 	oeRuntimes.forEach(runtime => {
 		if (runtime.name === version) {
 			dlc = runtime.path

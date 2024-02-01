@@ -31,7 +31,7 @@ export {
 	deleteFile
 }
 
-export function sleep (time: number = 2000, msg?: string) {
+export function sleep (time = 2000, msg?: string) {
 	let status = 'sleeping for ' + time + 'ms'
 	if (msg) {
 		status = status + ' [' + msg + ']'
@@ -48,7 +48,7 @@ export function getAblunitExt () {
 	return ext
 }
 
-export async function waitForExtensionActive (extensionId: string = 'kherring.ablunit-test-runner') {
+export async function waitForExtensionActive (extensionId = 'kherring.ablunit-test-runner') {
 	const ext = extensions.getExtension(extensionId)
 	if (!ext) {
 		throw new Error(extensionId + ' is not installed')
@@ -123,7 +123,7 @@ export async function setRuntimes (runtimes: IRuntime[]) {
 	})
 }
 
-export async function awaitRCode (workspaceFolder: WorkspaceFolder, rcodeCountMinimum: number = 1) {
+export async function awaitRCode (workspaceFolder: WorkspaceFolder, rcodeCountMinimum = 1) {
 	const buildWaitTime = 20
 	let fileCount = 0
 	log.info('waiting up to' + buildWaitTime + ' seconds for r-code')
@@ -212,7 +212,7 @@ export function getSessionTempDir () {
 	}
 }
 
-export async function getTestCount (resultsJson: Uri, status: string = 'tests') {
+export async function getTestCount (resultsJson: Uri, status = 'tests') {
 	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 	const count = await workspace.fs.readFile(resultsJson).then((content) => {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
@@ -245,7 +245,7 @@ export function getDefaultDLC () {
 	return 'C:\\Progress\\OpenEdge'
 }
 
-export async function runAllTests (doRefresh: boolean = true) {
+export async function runAllTests (doRefresh = true) {
 
 	log.info('running all tests')
 	if (doRefresh) {
@@ -349,7 +349,7 @@ export function getTestController () {
 	return testController
 }
 
-export function getResults (len: number = 1) {
+export function getResults (len = 1) {
 	if (!recentResults) {
 		throw new Error('recent results is undefined!')
 	}
@@ -394,7 +394,7 @@ class AssertResults {
 			return
 		}
 
-		let actualCount: number = -1
+		let actualCount = -1
 		switch (status) {
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
 			case 'passed': actualCount = res.passed; break

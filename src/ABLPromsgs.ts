@@ -84,7 +84,7 @@ export class ABLPromsgs {
 		newlines.forEach(line => {
 			const s = line.split(' "')
 
-			let msgnum: number = 0
+			let msgnum = 0
 			const msgtext: string[] = []
 			s.forEach((element, index) => {
 				if (index === 0) {
