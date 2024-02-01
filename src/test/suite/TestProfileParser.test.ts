@@ -2,6 +2,7 @@
 import { strict as assert } from 'assert'
 import { WorkspaceFolder, workspace } from 'vscode'
 import { parseRunProfiles } from '../../parse/TestProfileParser'
+import { log } from '../testCommon'
 
 // ----------TODO---------- //
 // function readValidationFile (filename: string) {
@@ -37,7 +38,7 @@ suite('TestProfileParser.test', () => {
 		try{
 			profiles = parseRunProfiles(workspaceFolders)
 		} catch (err) {
-			console.error('Caught error in parseRunProfiles! err = ' + err)
+			log.error('Caught error in parseRunProfiles! err = ' + err)
 			assert.fail('Caught error in parseRunProfiles! err = ' + err)
 		}
 		assert.equal(profiles.length, 1, 'profiles.length = 1')

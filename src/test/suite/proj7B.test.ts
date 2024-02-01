@@ -73,13 +73,13 @@ suite(projName + ' - Extension Test Suite', () => {
 	test(projName + '.2 - cancel test run', async () => {
 		runAllTests().then(() => { return }, (err) => { throw err })
 
-		console.log('pausing 5 seconds')
+		log.info('pausing 5 seconds')
 		await new Promise((resolve) => { setTimeout(resolve, 5000) })
 		const startCancelTime = Date.now()
-		console.log('cancelling test run')
+		log.info('cancelling test run')
 		await commands.executeCommand('testing.cancelRun').then(() => {
 			const elapsedCancelTime = Date.now() - startCancelTime
-			console.log('elapsedCancelTime=' + elapsedCancelTime)
+			log.info('elapsedCancelTime=' + elapsedCancelTime)
 			assert(elapsedCancelTime < 1000, 'cancelTime should be < 1 second, but is ' + elapsedCancelTime)
 		})
 		assert(true, 'testing.cancelRun completed successfully')

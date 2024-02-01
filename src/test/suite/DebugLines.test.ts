@@ -1,7 +1,7 @@
 import { strict as assert } from 'assert'
 import { before } from 'mocha'
 import { Uri, workspace } from 'vscode'
-import { awaitRCode, getDefaultDLC, getWorkspaceUri, setRuntimes, sleep, waitForExtensionActive } from '../testCommon'
+import { awaitRCode, getDefaultDLC, getWorkspaceUri, log, setRuntimes, sleep, waitForExtensionActive } from '../testCommon'
 import { getSourceMapFromRCode } from '../../parse/RCodeParser'
 import { PropathParser } from '../../ABLPropath'
 
@@ -11,16 +11,16 @@ const workspaceFolder = workspace.workspaceFolders![0]
 before(async () => {
 	await waitForExtensionActive()
 	await setRuntimes([{name: '12.2', path: getDefaultDLC(), default: true}]).then(async () => {
-		console.log('setRuntimes complete!')
+		log.info('setRuntimes complete!')
 		await sleep(250)
 		return true
 	})
 	await sleep(250)
 	const prom = awaitRCode(workspaceFolder, 8)
 	await prom.then((rcodeCount) => {
-		console.log('compile complete! rcode count = ' + rcodeCount)
+		log.info('compile complete! rcode count = ' + rcodeCount)
 	})
-	console.log('before complete!')
+	log.info('before complete!')
 })
 
 suite(projName + ' - Extension Test Suite', () => {

@@ -4,7 +4,7 @@ import { Uri } from 'vscode'
 import { parseSuiteLines } from '../../parse/TestSuiteParser'
 import { parseTestClass } from '../../parse/TestClassParser'
 import { parseTestProgram } from '../../parse/TestProgramParser'
-import { getTestCount, getWorkspaceUri, runAllTests, waitForExtensionActive } from '../testCommon'
+import { getTestCount, getWorkspaceUri, log, runAllTests, waitForExtensionActive } from '../testCommon'
 import { getContentFromFilesystem, getLines } from '../../parse/TestParserCommon'
 
 
@@ -87,7 +87,7 @@ async function readLinesFromFile (relativeFile: string, annotation: string = '@t
 		const [ lines, ] = getLines(content, annotation)
 		return lines
 	}, (err) => {
-		console.error('Error reading file (' + relativeFile + '): ' + err)
+		log.error('Error reading file (' + relativeFile + '): ' + err)
 		throw err
 	})
 }

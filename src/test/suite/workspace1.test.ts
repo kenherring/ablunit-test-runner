@@ -1,7 +1,7 @@
 import { strict as assert } from 'assert'
 import { after, before, beforeEach } from 'mocha'
 import { Uri, workspace } from 'vscode'
-import { doesDirExist, doesFileExist, runAllTests, updateConfig, waitForExtensionActive } from '../testCommon'
+import { doesDirExist, doesFileExist, log, runAllTests, updateConfig, waitForExtensionActive } from '../testCommon'
 
 
 const projName = 'workspace1'
@@ -11,12 +11,12 @@ before(async () => {
 })
 
 beforeEach(async () => {
-	console.log('before')
+	log.info('before')
 	await updateConfig('tempDir', undefined)
 })
 
 after(async () => {
-	console.log('after')
+	log.info('after')
 	await updateConfig('tempDir', undefined)
 })
 
@@ -34,7 +34,7 @@ suite(projName + ' - Extension Test Suite', () => {
 			assert.fail('storage uri not defined')
 		}
 
-		console.log('___ validate proj0 ___ [' + workspaceFolderUri[0] + ']')
+		log.info('___ validate proj0 ___ [' + workspaceFolderUri[0] + ']')
 		let ablunitJson = Uri.joinPath(workspaceFolderUri[0],'ablunit.json')
 		let resultsXml = Uri.joinPath(workspaceFolderUri[0],'results.xml')
 		let resultsJson = Uri.joinPath(workspaceFolderUri[0],'results.json')
@@ -44,7 +44,7 @@ suite(projName + ' - Extension Test Suite', () => {
 		assert(!doesFileExist(resultsJson), 'results.json exists and should not (' + resultsJson.fsPath + ')')
 		assert(!doesDirExist(listingsDir), 'listings dir exists and should not (' + listingsDir.fsPath + ')')
 
-		console.log('___ validate proj3 ___ [' + workspaceFolderUri[1] + ']')
+		log.info('___ validate proj3 ___ [' + workspaceFolderUri[1] + ']')
 		ablunitJson = Uri.joinPath(workspaceFolderUri[1],'ablunit.json')
 		resultsXml = Uri.joinPath(workspaceFolderUri[1],'..','ablunit-output', 'results.xml')
 		resultsJson = Uri.joinPath(workspaceFolderUri[1],'..', 'ablunit-output', 'results.json')
@@ -54,7 +54,7 @@ suite(projName + ' - Extension Test Suite', () => {
 		assert(!doesFileExist(resultsJson), 'results.json exists and should not (' + resultsJson.fsPath + ')')
 		assert(doesDirExist(listingsDir), 'listings dir exists and should not (' + listingsDir.fsPath + ')')
 
-		console.log('___ validate projX has no ablunit.json ___ [' + workspaceFolderUri[2] + ']')
+		log.info('___ validate projX has no ablunit.json ___ [' + workspaceFolderUri[2] + ']')
 		ablunitJson = Uri.joinPath(workspaceFolderUri[2],'ablunit.json')
 		assert(!doesFileExist(ablunitJson), 'ablunit.json exists and should not (' + ablunitJson.fsPath + ')')
 	})
@@ -64,7 +64,7 @@ suite(projName + ' - Extension Test Suite', () => {
 	// 	await runAllTests()
 
 	// 	for (let i = 0; i < 2; i++) {
-	// 		console.log("___ validate folder #" + i + " success [" + workspace.workspaceFolders![i].name + "] ___")
+	// 		log.info("___ validate folder #" + i + " success [" + workspace.workspaceFolders![i].name + "] ___")
 	// 		const ablunitJson = Uri.joinPath(workspace.workspaceFolders![i].uri,'workspaceAblunit','ablunit.json')
 	// 		const resultsXml = Uri.joinPath(workspace.workspaceFolders![i].uri,'workspaceAblunit','results.xml')
 	// 		const resultsJson = Uri.joinPath(workspace.workspaceFolders![i].uri,'workspaceAblunit','results.json')

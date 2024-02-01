@@ -32,7 +32,6 @@
 	],
 	"rules": {
 		// TODO: enable and fix theese
-		// "no-console": "warn",
 		// "comma-dangle": [ "never", "always" ]
 
 		// "@typescript-eslint/no-use-before-define": [ "warn", {
@@ -71,6 +70,8 @@
 		"@typescript-eslint/prefer-string-starts-ends-with": "warn",
 		"@typescript-eslint/restrict-plus-operands": "off",
 		"@typescript-eslint/switch-exhaustiveness-check": "warn",
+
+		"no-console": "warn",
 		"no-empty": "warn",
 		"no-mixed-spaces-and-tabs": ["error", "smart-tabs"],
 		"no-trailing-spaces": [ "error", { "skipBlankLines": false }],

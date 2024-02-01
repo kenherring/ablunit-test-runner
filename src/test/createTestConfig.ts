@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { GlobSync } from 'glob'
 import * as fs from 'fs'
 

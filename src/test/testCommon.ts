@@ -36,7 +36,7 @@ export function sleep (time: number = 2000, msg?: string) {
 	if (msg) {
 		status = status + ' [' + msg + ']'
 	}
-	console.log(status)
+	log.info(status)
 	return new Promise(resolve => setTimeout(resolve, time))
 }
 
@@ -56,18 +56,18 @@ export async function waitForExtensionActive (extensionId: string = 'kherring.ab
 
 	if (!ext.isActive) {
 		await ext.activate().then(() => {
-			console.log('activated ' + extensionId)
+			log.info('activated ' + extensionId)
 		}, (err) => {
 			throw new Error('failed to activate kherring.ablunit-test-runner: ' + err)
 		})
 	}
 
 	if(!ext.isActive) {
-		console.log('waiting for extension to activate - should never be here!')
+		log.info('waiting for extension to activate - should never be here!')
 		for (let i=0; i<50; i++) {
 			await sleep(100)
 			if (ext.isActive) {
-				console.log('waitied ' + ((i + 1) * 100) + 'ms for extension to activate')
+				log.info('waitied ' + ((i + 1) * 100) + 'ms for extension to activate')
 				break
 			}
 		}
@@ -76,7 +76,7 @@ export async function waitForExtensionActive (extensionId: string = 'kherring.ab
 	if (!ext.isActive) {
 		throw new Error(extensionId + ' is not active')
 	}
-	console.log(extensionId + ' is active!')
+	log.info(extensionId + ' is active!')
 	// return refreshData()
 }
 
@@ -126,26 +126,26 @@ export async function setRuntimes (runtimes: IRuntime[]) {
 export async function awaitRCode (workspaceFolder: WorkspaceFolder, rcodeCountMinimum: number = 1) {
 	const buildWaitTime = 20
 	let fileCount = 0
-	console.log('waiting up to' + buildWaitTime + ' seconds for r-code')
+	log.info('waiting up to' + buildWaitTime + ' seconds for r-code')
 	for (let i = 0; i < buildWaitTime; i++) {
 		await new Promise((resolve) => setTimeout(resolve, 1000))
 
 		const g = new GlobSync('**/*.r', { cwd: workspaceFolder.uri.fsPath })
 		fileCount = g.found.length
-		console.log('(' + i + '/' + buildWaitTime + ') found ' + fileCount + ' r-code files...')
+		log.info('(' + i + '/' + buildWaitTime + ') found ' + fileCount + ' r-code files...')
 		if (fileCount >= rcodeCountMinimum) {
-			console.log('found ' + fileCount + ' r-code files! ready to test')
+			log.info('found ' + fileCount + ' r-code files! ready to test')
 			return fileCount
 		}
-		console.log('found ' + fileCount + ' r-code files. waiting...')
-		console.log('found files: ' + JSON.stringify(g.found,null,2))
+		log.info('found ' + fileCount + ' r-code files. waiting...')
+		log.info('found files: ' + JSON.stringify(g.found,null,2))
 	}
 
 	await commands.executeCommand('abl.dumpFileStatus').then(() => {
-		console.log('abl.dumpFileStatus complete!')
+		log.info('abl.dumpFileStatus complete!')
 	})
 	await commands.executeCommand('abl.dumpLangServStatus').then(() => {
-		console.log('abl.dumpLangServStatus complete!')
+		log.info('abl.dumpLangServStatus complete!')
 	})
 	throw new Error('r-code files not found')
 }
@@ -234,7 +234,7 @@ export async function getTestCount (resultsJson: Uri, status: string = 'tests') 
 			throw new Error('[getTestCount] unknown status: ' + status)
 		}
 	})
-	console.log('getTestCount: ' + status + ' = ' + count)
+	log.info('getTestCount: ' + status + ' = ' + count)
 	return count
 }
 
@@ -247,16 +247,16 @@ export function getDefaultDLC () {
 
 export async function runAllTests (doRefresh: boolean = true) {
 
-	console.log('running all tests')
+	log.info('running all tests')
 	if (doRefresh) {
 		await refreshTests().then(() => { return sleep(500, 'after refreshTests') })
 	} else {
 		await sleep(250, 'sleep before testing.runAll')
 	}
 
-	console.log('testing.runAll starting')
+	log.info('testing.runAll starting')
 	return commands.executeCommand('testing.runAll').then(() => {
-		console.log('testing.runAll complete!')
+		log.info('testing.runAll complete!')
 		return refreshData()
 	} , (err) => {
 		throw new Error('testing.runAll failed: ' + err)
@@ -274,7 +274,7 @@ export function refreshTests () {
 
 export function updateConfig (key: string, value: string | string[] | undefined) {
 	return workspace.getConfiguration('ablunit').update(key, value, ConfigurationTarget.Workspace).then(() => {
-		console.log('ablunit.' + key + ' set successfully (value=\'' + value + '\')')
+		log.info('ablunit.' + key + ' set successfully (value=\'' + value + '\')')
 		return sleep(100, 'sleep after updateConfig')
 	}, (err) => {
 		throw new Error('failed to set ablunit.' + key + ': ' + err)

@@ -1,6 +1,6 @@
 import { before } from 'mocha'
 import { Uri, commands } from 'vscode'
-import { assert, getResults, getWorkspaceUri, refreshData, runAllTests, sleep, waitForExtensionActive } from '../testCommon'
+import { assert, getResults, getWorkspaceUri, log, refreshData, runAllTests, sleep, waitForExtensionActive } from '../testCommon'
 
 
 const projName = 'proj2'
@@ -25,7 +25,7 @@ suite(projName + ' - Extension Test Suite', () => {
 		await commands.executeCommand('testing.runCurrentFile')
 		await refreshData()
 		const recentResults = getResults()
-		console.log('recentResults = ' + recentResults + ' ' + recentResults.length)
+		log.info('recentResults = ' + recentResults + ' ' + recentResults.length)
 
 		const tc = recentResults[0].ablResults?.resultsJson[0].testsuite?.[0].testcases?.[0]
 		const mdText = tc?.failure?.callstack?.items?.[1].markdownText
