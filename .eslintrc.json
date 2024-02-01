@@ -49,12 +49,11 @@
 			"format": [ "PascalCase" ],
 			"custom": { "regex": "^I[A-Z]", "match": true }
 		}],
-		// "@typescript-eslint/no-confusing-non-null-assertion": "error",
+		"@typescript-eslint/no-confusing-non-null-assertion": "error",
 		"@typescript-eslint/no-inferrable-types": "error",
-		// "@typescript-eslint/no-empty-function": "error",
+		"@typescript-eslint/no-empty-function": "error",
 		"@typescript-eslint/no-non-null-assertion": 0,
-		// "@typescript-eslint/no-unnecessary-condition": "error",
-		"@typescript-eslint/no-unnecessary-condition": 0,
+		"@typescript-eslint/no-unnecessary-condition": 1,
 		"@typescript-eslint/no-unused-vars": [ "warn", {
 			"vars": "all",
 			"args": "none",

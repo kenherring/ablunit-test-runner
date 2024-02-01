@@ -178,7 +178,7 @@ export class RunConfig extends DefaultRunProfile {
 		this.options.output.location = workspace.asRelativePath(this.optionsUri.locationUri, false)
 		this.optionsUri.filenameUri = Uri.joinPath(this.optionsUri.locationUri, tmpFilename)
 
-		if (this.options.output?.writeJson) {
+		if (this.options.output.writeJson) {
 			this.optionsUri.jsonUri = Uri.joinPath(this.optionsUri.locationUri, tmpFilename.replace(/\.xml$/, '') + '.json')
 		}
 

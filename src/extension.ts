@@ -322,7 +322,7 @@ export async function activate (context: ExtensionContext) {
 		let u: Uri | undefined
 		if (e instanceof Uri) {
 			u = e
-		} else if (e?.uri) {
+		} else if (e.uri) {
 			u = e.uri
 		}
 		if (!u) {
@@ -335,7 +335,7 @@ export async function activate (context: ExtensionContext) {
 			return new Promise(() => { return })
 		} else {
 			if (!prom) {
-				throw new Error('updateNode failed for \'' + u?.fsPath + '\' - no promise returned')
+				throw new Error('updateNode failed for \'' + u.fsPath + '\' - no promise returned')
 			}
 			return prom.then(() => { return })
 		}
@@ -375,7 +375,7 @@ export async function activate (context: ExtensionContext) {
 
 	ctrl.resolveHandler = async item => {
 		log.info('ctrl.resolveHandler')
-		return resolveHandlerFunc(item)?.then(() => { return })
+		return resolveHandlerFunc(item).then(() => { return })
 	}
 
 	function updateConfiguration (e: ConfigurationChangeEvent) {
@@ -497,7 +497,7 @@ function getOrCreateFile (controller: TestController, uri: Uri, excludePatterns?
 			throw new Error('unexpected data type.' +
 								' file=' + workspace.asRelativePath(uri) +
 								', existing.id=' + existing.id +
-								', data.description=' + data?.description)
+								', data.description=' + data.description)
 		}
 	}
 

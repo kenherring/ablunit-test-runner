@@ -313,15 +313,15 @@ export class ABLProfileJson {
 			if(element.ModuleID === modID)
 				return element
 		}
-		const parent = this.modules.find(mod => mod.childModules?.find(child => child.ModuleID == modID))
+		const parent = this.modules.find(mod => mod.childModules.find(child => child.ModuleID == modID))
 		if(parent)
-			return parent.childModules?.find(child => child.ModuleID == modID)
+			return parent.childModules.find(child => child.ModuleID == modID)
 	}
 
 	getChildModule (modID: number, entityName: string): IModule | undefined {
 		const parent = this.getModule(modID)
 		if(parent) {
-			return parent.childModules?.find(child => child.EntityName == entityName)
+			return parent.childModules.find(child => child.EntityName == entityName)
 		}
 	}
 
@@ -517,7 +517,7 @@ export class ABLProfileJson {
 
 	assignParentCoverage () {
 		this.modules.forEach(parent => {
-			parent.childModules?.forEach(child => {
+			parent.childModules.forEach(child => {
 				parent.executableLines += child.executableLines
 				parent.executedLines += child.executedLines
 				child.lines.forEach(line => {

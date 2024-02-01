@@ -366,7 +366,7 @@ export class ABLResults implements Disposable {
 			const propathRelativePath = this.propath!.search(suitePath)
 			suitePath = await propathRelativePath.then((res) => {
 				if (res?.propathRelativeFile) {
-					return res?.propathRelativeFile
+					return res.propathRelativeFile
 				}
 				return suitePath
 			})

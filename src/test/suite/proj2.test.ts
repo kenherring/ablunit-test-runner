@@ -28,7 +28,7 @@ suite(projName + ' - Extension Test Suite', () => {
 		log.info('recentResults = ' + recentResults + ' ' + recentResults.length)
 
 		const tc = recentResults[0].ablResults?.resultsJson[0].testsuite?.[0].testcases?.[0]
-		const mdText = tc?.failure?.callstack?.items?.[1].markdownText
+		const mdText = tc?.failure?.callstack.items[1].markdownText
 		if (!mdText) {
 			assert.fail('mdText is null')
 		}
@@ -44,7 +44,7 @@ suite(projName + ' - Extension Test Suite', () => {
 		await refreshData()
 		const recentResults = getResults()
 
-		const res = recentResults?.[0].ablResults?.resultsJson[0]
+		const res = recentResults[0].ablResults?.resultsJson[0]
 		if (!res) {
 			assert.fail('res is null')
 		} else {

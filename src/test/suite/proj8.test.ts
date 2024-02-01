@@ -29,7 +29,7 @@ suite(projName + ' - Extension Test Suite', () => {
 	test(projName + '.2 - getEnvVars confirm PATH is set correctly', async () => {
 		await runAllTests()
 		const recentResults = getResults()
-		const res = recentResults?.[0]
+		const res = recentResults[0]
 		if (!res) {
 			assert.fail('res is null')
 			return

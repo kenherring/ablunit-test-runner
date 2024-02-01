@@ -62,7 +62,7 @@ export class Decorator {
 			for (const [k, v] of r.testCoverage) {
 				if (existsSync(k)) {
 					const uri = Uri.file(k)
-					log.debug('recentCoverage.set ' + uri.fsPath + ', detailedCoverage.length=' + v.detailedCoverage?.length)
+					log.debug('recentCoverage.set ' + uri.fsPath + ', detailedCoverage.length=' + v.detailedCoverage.length)
 					this.recentCoverage.set(uri.fsPath, v)
 					covCount++
 				}
@@ -114,15 +114,15 @@ export class Decorator {
 
 		const tc = this.recentCoverage.get(editor.document.uri.fsPath)
 		if (!tc) {
-			log.trace('No coverage for ' + editor.document.uri.fsPath + ', coverage.size=' + this.recentCoverage?.size + ', decorations.size=' + this.recentDecorations?.size)
+			log.trace('No coverage for ' + editor.document.uri.fsPath + ', coverage.size=' + this.recentCoverage.size + ', decorations.size=' + this.recentDecorations.size)
 			log.trace('  -     have: ' + editor.document.uri.fsPath)
 			for (const [k, v] of this.recentCoverage || []) {
-				log.trace('  - found coverage: ' + k + ' ' + v.detailedCoverage?.length)
+				log.trace('  - found coverage: ' + k + ' ' + v.detailedCoverage.length)
 			}
 			return false
 		}
 
-		tc.detailedCoverage?.filter(element => element.executionCount > 0).forEach(element => {
+		tc.detailedCoverage.filter(element => element.executionCount > 0).forEach(element => {
 			const opts: DecorationOptions = {
 				hoverMessage: 'Executed ' + element.executionCount + ' times',
 				range: element.location as Range,
@@ -142,7 +142,7 @@ export class Decorator {
 			}
 			executedArray.push(opts)
 		})
-		tc.detailedCoverage?.filter(element => element.executionCount=== 0).forEach(element => {
+		tc.detailedCoverage.filter(element => element.executionCount=== 0).forEach(element => {
 			executableArray.push({ range: element.location as Range })
 		})
 		log.info('setDecorations ' + editor.document.uri.fsPath)
@@ -187,7 +187,7 @@ export class Decorator {
 
 	getDecorations (uri: Uri) {
 		log.debug('--- getDecorations-1 instanceCount=' + this.instanceCount + ' ' + Decorator.instCount)
-		log.debug('--- getDecorations-10 recentDecorations=' + this.instanceCount + ' ' + this.recentDecorations?.size)
+		log.debug('--- getDecorations-10 recentDecorations=' + this.instanceCount + ' ' + this.recentDecorations.size)
 		log.debug('--- getDecorations-12 instanceCount=' + this.instanceCount + ' ' + Decorator.instCount)
 
 		// for (const [d, k]  of this.recentCoverage || []) {
@@ -197,7 +197,7 @@ export class Decorator {
 			log.debug('--- getDecorations-14 Dec: d=' + d + ' ' + k.executed?.length + ' ' + k.executable?.length)
 		}
 
-		const lines = this.recentDecorations?.get(uri.fsPath)
+		const lines = this.recentDecorations.get(uri.fsPath)
 		if (!lines) {
 			log.debug('--- getDecorations-20 count=' + this.decorateCount)
 			return  { count: this.decorateCount }

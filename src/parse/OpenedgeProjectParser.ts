@@ -416,7 +416,7 @@ function getWorkspaceProfileConfig (workspaceUri: Uri, openedgeProjectProfile?: 
 	log.debug('[getWorkspaceProfileConfig] uri = ' + uri.fsPath)
 	const prjConfig = readOEConfigFile(uri, workspaceUri, openedgeProjectProfile)
 
-	const activeProfile = openedgeProjectProfile ?? prjConfig?.activeProfile
+	const activeProfile = openedgeProjectProfile ?? prjConfig.activeProfile
 
 	if (activeProfile) {
 		const prf =  prjConfig.profiles.get(activeProfile)
