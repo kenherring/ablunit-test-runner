@@ -52,6 +52,7 @@
 		"@typescript-eslint/no-confusing-non-null-assertion": "error",
 		"@typescript-eslint/no-inferrable-types": "error",
 		"@typescript-eslint/no-empty-function": "error",
+		"@typescript-eslint/no-extra-parens": "warn",
 		"@typescript-eslint/no-non-null-assertion": 0,
 		"@typescript-eslint/no-unnecessary-condition": 1,
 		"@typescript-eslint/no-unused-vars": [ "warn", {
@@ -63,10 +64,9 @@
 		"@typescript-eslint/prefer-string-starts-ends-with": "warn",
 		"@typescript-eslint/restrict-plus-operands": "off",
 		"@typescript-eslint/switch-exhaustiveness-check": "warn",
-		// "typescript-eslint/adjacent-overload-signatures": "error",
-		// "typescript-eslint/no-extra-parens": "warn",
-		// "typescript-eslint/no-useless-constructor": "warn",
-		// "typescript-eslint/space-before-blocks": "warn",
+
+		// "@typescript-eslint/no-useless-constructor": "warn",
+		// "@typescript-eslint/space-before-blocks": "warn",
 
 		"no-console": "warn",
 		"no-empty": "warn",

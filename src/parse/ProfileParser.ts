@@ -225,7 +225,7 @@ export class ABLProfileJson {
 			this.userID = test[5]
 			this.properties = JSON.parse(test[6].replace(/\\/g, '/')) as IProps
 		} else {
-			throw (new Error('Unable to parse profile data in section 1'))
+			throw new Error('Unable to parse profile data in section 1')
 		}
 	}
 
@@ -239,7 +239,7 @@ export class ABLProfileJson {
 			let entityName: string | undefined = undefined
 			let sourceName = ''
 			let parentName: string | undefined
-			const destructor: boolean = (moduleName.startsWith('~'))
+			const destructor: boolean = moduleName.startsWith('~')
 			const split = moduleName.split(' ')
 
 			if (split.length >= 4) {
@@ -460,7 +460,7 @@ export class ABLProfileJson {
 				if (lines[lineNo] === '.') {
 					// set info for the previous section
 					if (mod && mod.executableLines > 0) {
-						mod.coveragePct = (mod.executedLines / mod.executableLines) * 100
+						mod.coveragePct = mod.executedLines / mod.executableLines * 100
 					}
 					continue
 				}
@@ -532,7 +532,7 @@ export class ABLProfileJson {
 				})
 				child.lines.sort((a, b) => a.LineNo - b.LineNo)
 			})
-			parent.coveragePct = (parent.executedLines / parent.executableLines) * 100
+			parent.coveragePct = parent.executedLines / parent.executableLines * 100
 			parent.lines.sort((a, b) => a.LineNo - b.LineNo)
 			parent.childModules.sort((a, b) => a.ModuleID - b.ModuleID)
 		})

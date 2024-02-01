@@ -25,7 +25,7 @@ export class ABLPromsgs {
 			log.info('reading promsgs from DLC')
 			this.loadFromDLC(dlc).then(() => {
 				this.saveCache(cacheUri).then(() => { return }, (err) => {
-					throw(err)
+					throw err
 				})
 			}, (err) => {
 				log.info('Cannot load promsgs from DLC, err=' + err)
@@ -104,7 +104,7 @@ export class ABLPromsgs {
 	async loadFromCache (cacheUri: Uri) {
 		log.info('load promsgs from cache') // REMOVEME
 		await workspace.fs.readFile(cacheUri).then((buffer) => {
-			this.promsgs.push((JSON.parse(Buffer.from(buffer).toString('utf8')) as IPromsg))
+			this.promsgs.push(JSON.parse(Buffer.from(buffer).toString('utf8')) as IPromsg)
 		}, (err) => {
 			throw new Error('Cannot read promsgs file \'' + cacheUri.fsPath + '\', err=' + err)
 		})

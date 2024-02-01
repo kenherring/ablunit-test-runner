@@ -67,7 +67,7 @@ export async function waitForExtensionActive (extensionId = 'kherring.ablunit-te
 		for (let i=0; i<50; i++) {
 			await sleep(100)
 			if (ext.isActive) {
-				log.info('waitied ' + ((i + 1) * 100) + 'ms for extension to activate')
+				log.info('waitied ' + (i + 1) * 100 + 'ms for extension to activate')
 				break
 			}
 		}

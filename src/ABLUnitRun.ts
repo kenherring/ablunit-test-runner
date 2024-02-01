@@ -40,7 +40,7 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 
 		if (!cmd.includes('${testlist}')) {
 			log.error('command does not contain ${testlist}', options)
-			throw (new Error('command does not contain ${testlist}'))
+			throw new Error('command does not contain ${testlist}')
 		}
 		cmd = cmd.replace(/\$\{testlist\}/, testlist)
 		cmd = cmd.replace(/\$\{tempDir\}/, workspace.asRelativePath(res.cfg.ablunitConfig.tempDirUri, false))
@@ -52,7 +52,7 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 
 	const getDefaultCommand = () => {
 		if (!res.cfg.ablunitConfig.tempDirUri) {
-			throw (new Error('temp directory not set'))
+			throw new Error('temp directory not set')
 		}
 
 		const executable = res.dlc!.uri.fsPath.replace(/\\/g, '/') + '/bin/' + res.cfg.ablunitConfig.command.executable

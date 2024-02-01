@@ -394,7 +394,7 @@ function readOEConfigFile (uri: Uri, workspaceUri: Uri, openedgeProjectProfile?:
 	if (prjConfig.dlc != '') {
 		log.info('OpenEdge project configured in ' + prjConfig.rootDir + ' -- DLC: ' + prjConfig.dlc)
 		const idx: number = projects.findIndex((element) =>
-			(element.name == prjConfig.name) && (element.version == prjConfig.version)
+			element.name == prjConfig.name && element.version == prjConfig.version
 		)
 		if (idx > -1) {
 			if (projects[idx].rootDir == prjConfig.rootDir)

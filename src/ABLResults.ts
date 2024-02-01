@@ -43,7 +43,7 @@ export class ABLResults implements Disposable {
 	cfg: ABLUnitConfig
 	startTime: Date
 	endTime!: Date
-	duration = () => { return (Number(this.endTime) - Number(this.startTime)) }
+	duration = () => { return Number(this.endTime) - Number(this.startTime) }
 
 	ablResults: ABLResultsParser | undefined
 	tests: TestItem[] = []
@@ -233,13 +233,13 @@ export class ABLResults implements Disposable {
 			log.debug('parsing complete (time=' + (Number(new Date()) - Number(parseStartTime)) + ')')
 			if(!this.ablResults!.resultsJson) {
 				log.error('No results found in ' + this.cfg.ablunitConfig.optionsUri.filenameUri.fsPath, options)
-				throw (new Error('[ABLResults parseOutput] No results found in ' + this.cfg.ablunitConfig.optionsUri.filenameUri.fsPath + '\r\n'))
+				throw new Error('[ABLResults parseOutput] No results found in ' + this.cfg.ablunitConfig.optionsUri.filenameUri.fsPath + '\r\n')
 			}
 			return true
 		}, (err) => {
 			this.setStatus('error parsing results data')
 			log.error('Error parsing ablunit results from ' + this.cfg.ablunitConfig.optionsUri.filenameUri.fsPath + '.  err=' + err, options)
-			throw (new Error('[ABLResults parseOutput] Error parsing ablunit results from ' + this.cfg.ablunitConfig.optionsUri.filenameUri.fsPath + '\r\nerr=' + err))
+			throw new Error('[ABLResults parseOutput] Error parsing ablunit results from ' + this.cfg.ablunitConfig.optionsUri.filenameUri.fsPath + '\r\nerr=' + err)
 		})
 
 		if (this.cfg.ablunitConfig.profiler.enabled && this.cfg.ablunitConfig.profiler.coverage) {
@@ -254,7 +254,7 @@ export class ABLResults implements Disposable {
 			})
 		}
 
-		const parseTime = (Number(new Date()) - Number(parseStartTime))
+		const parseTime = Number(new Date()) - Number(parseStartTime)
 		this.setStatus('parsing output complete (time=' + parseTime + ')')
 		log.debug('parsing output complete (time=' + parseTime + ')', options)
 	}
@@ -481,7 +481,7 @@ export class ABLResults implements Disposable {
 
 	async assignProfileResults () {
 		if (!this.profileJson) {
-			throw (new Error('no profile data available...'))
+			throw new Error('no profile data available...')
 		}
 		const mods: IModule[] = this.profileJson.modules
 		for (let idx=1; idx < mods.length; idx++) {

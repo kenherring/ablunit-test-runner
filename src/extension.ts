@@ -124,7 +124,7 @@ export async function activate (context: ExtensionContext) {
 				log.info('successfully created .vscode/ablunit-test-profile.json')
 			}, (err) => {
 				log.error('failed to create .vscode/ablunit-test-profile.json. err=' + err)
-				throw(err)
+				throw err
 			})
 		}
 
@@ -284,7 +284,7 @@ export async function activate (context: ExtensionContext) {
 				return res
 			}, (err) => {
 				// log.error('failed to add test to test run results object. err=' + err)
-				throw (err)
+				throw err
 			})
 		}
 
@@ -313,7 +313,7 @@ export async function activate (context: ExtensionContext) {
 		}).catch((err) => {
 			run.end()
 			log.error('run.end() - ablunit run failed with exception: ' + err)
-			throw (err)
+			throw err
 		})
 	}
 
@@ -512,7 +512,7 @@ function getOrCreateFile (controller: TestController, uri: Uri, excludePatterns?
 	file.description = 'To be parsed...'
 	file.tags = [ new TestTag('runnable') ]
 
-	const parent = getOrCreateDirNodeForFile(controller, uri, (data instanceof ABLTestSuite))
+	const parent = getOrCreateDirNodeForFile(controller, uri, data instanceof ABLTestSuite)
 	if (parent) {
 		parent.children.add(file)
 	} else {
@@ -743,7 +743,7 @@ function removeExcludedFiles (controller: TestController, excludePatterns: Relat
 				deleteTest(controller, item)
 			}
 		}
-		if (item.children.size == 0 && (data instanceof ABLTestDir)) {
+		if (item.children.size == 0 && data instanceof ABLTestDir) {
 			deleteTest(controller, item)
 		}
 	}
@@ -987,7 +987,7 @@ function logActivationEvent () {
 function getExtensionVersion () {
 	const ext = extensions.getExtension('kherring.ablunit-test-runner')
 	// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-	if (ext?.packageJSON && (typeof ext.packageJSON['version'] === 'string')) {
+	if (ext?.packageJSON && typeof ext.packageJSON['version'] === 'string') {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 		return ext.packageJSON.version as string
 	}

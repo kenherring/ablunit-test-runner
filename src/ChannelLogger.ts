@@ -99,7 +99,7 @@ class Logger {
 
 	private writeToTestResults (message: string, testRun: TestRun, includeStack: boolean) {
 		if (this.testResultsTimestamp) {
-			message = '[' + (new Date()).toISOString() + '] ' + message
+			message = '[' + new Date().toISOString() + '] ' + message
 		}
 		let optMsg = message.replace(/\r/g, '').replace(/\n/g, '\r\n')
 
