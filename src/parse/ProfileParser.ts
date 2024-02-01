@@ -10,7 +10,7 @@ export class ABLProfile {
 
 	async parseData (uri: Uri, writeJson: boolean, debugLines: ABLDebugLines) {
 		const text = await getContentFromFilesystem(uri)
-		const lines = text.replace(/\r/g,'').split('\n')
+		const lines = text.replace(/\r/g, '').split('\n')
 
 		const sectionLines: string[][] = []
 		let linesArr: string[] = []
@@ -63,10 +63,10 @@ export class ABLProfile {
 			this.profJSON.addUserData(sectionLines[9])
 		}
 
-		this.profJSON.modules.sort((a,b) => a.ModuleID - b.ModuleID)
+		this.profJSON.modules.sort((a, b) => a.ModuleID - b.ModuleID)
 		log.debug('parsing profiler data complete')
 		if (writeJson) {
-			const jsonUri = Uri.file(uri.fsPath.replace(/\.[a-zA-Z]+$/,'.json'))
+			const jsonUri = Uri.file(uri.fsPath.replace(/\.[a-zA-Z]+$/, '.json'))
 			this.writeJsonToFile(jsonUri).then(null, (err: Error) => {
 				log.error('Error writing profile output json file: ' + err)
 			})
@@ -223,7 +223,7 @@ export class ABLProfileJson {
 			this.systemTime = test[4]
 			this.description = test[3]
 			this.userID = test[5]
-			this.properties = JSON.parse(test[6].replace(/\\/g,'/')) as IProps
+			this.properties = JSON.parse(test[6].replace(/\\/g, '/')) as IProps
 		} else {
 			throw (new Error('Unable to parse profile data in section 1'))
 		}
@@ -430,7 +430,7 @@ export class ABLProfileJson {
 					StartTime: Number(test[4]),
 					ActualTime: Number(test[3])
 				}
-				const line = this.getModuleLine(modID,lineNo)
+				const line = this.getModuleLine(modID, lineNo)
 				if (line) {
 					if(! line.trace) line.trace = []
 					line.trace[line.trace.length] = trace
@@ -473,7 +473,7 @@ export class ABLProfileJson {
 
 				if(!mod) { throw new Error('invalid data in section 6') }
 
-				const line = this.getLine(mod,Number(lines[lineNo]))
+				const line = this.getLine(mod, Number(lines[lineNo]))
 				if (line) {
 					line.Executable = true
 					mod.executedLines++
@@ -530,11 +530,11 @@ export class ABLProfileJson {
 						parent.lines[parent.lines.length] = line
 					}
 				})
-				child.lines.sort((a,b) => a.LineNo - b.LineNo)
+				child.lines.sort((a, b) => a.LineNo - b.LineNo)
 			})
 			parent.coveragePct = (parent.executedLines / parent.executableLines) * 100
-			parent.lines.sort((a,b) => a.LineNo - b.LineNo)
-			parent.childModules.sort((a,b) => a.ModuleID - b.ModuleID)
+			parent.lines.sort((a, b) => a.LineNo - b.LineNo)
+			parent.childModules.sort((a, b) => a.ModuleID - b.ModuleID)
 		})
 	}
 

@@ -75,7 +75,7 @@ export function parseRunProfiles (workspaceFolders: WorkspaceFolder[], wsFilenam
 	for (const workspaceFolder of workspaceFolders) {
 		let wfConfig: IConfigurations
 		try {
-			wfConfig = getConfigurations(Uri.joinPath(workspaceFolder.uri,'.vscode',wsFilename))
+			wfConfig = getConfigurations(Uri.joinPath(workspaceFolder.uri, '.vscode', wsFilename))
 		} catch (err) {
 			log.error('could not import ablunit-test-profile.json.  reverting to default profile')
 			log.debug('err=' + err)
@@ -170,7 +170,7 @@ export class RunConfig extends DefaultRunProfile {
 		this.dbConns = getProfileDbConns(this.workspaceFolder.uri, this.profile.openedgeProjectProfile)
 
 		this.options = new CoreOptions(this.profile.options)
-		const tmpFilename = (this.profile.options?.output?.filename?.replace(/\.xml$/,'') ?? 'results') + '.xml'
+		const tmpFilename = (this.profile.options?.output?.filename?.replace(/\.xml$/, '') ?? 'results') + '.xml'
 		this.optionsUri = {
 			locationUri: this.getUri(this.profile.options?.output?.location + '/'),
 			filenameUri: Uri.joinPath(this.tempDirUri, tmpFilename),
@@ -179,7 +179,7 @@ export class RunConfig extends DefaultRunProfile {
 		this.optionsUri.filenameUri = Uri.joinPath(this.optionsUri.locationUri, tmpFilename)
 
 		if (this.options.output?.writeJson) {
-			this.optionsUri.jsonUri = Uri.joinPath(this.optionsUri.locationUri, tmpFilename.replace(/\.xml$/,'') + '.json')
+			this.optionsUri.jsonUri = Uri.joinPath(this.optionsUri.locationUri, tmpFilename.replace(/\.xml$/, '') + '.json')
 		}
 
 		this.command = new CommandOptions(this.profile.command)

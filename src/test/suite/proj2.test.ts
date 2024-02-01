@@ -15,12 +15,12 @@ suite(projName + ' - Extension Test Suite', () => {
 	test(projName + '.1 - temp/ablunit.json file exists', async () => {
 		await runAllTests()
 
-		const ablunitJson = Uri.joinPath(workspaceUri,'temp','ablunit.json')
+		const ablunitJson = Uri.joinPath(workspaceUri, 'temp', 'ablunit.json')
 		assert.fileExists(ablunitJson)
 	})
 
 	test(projName + '.2 - call stack', async () => {
-		await commands.executeCommand('vscode.open', Uri.joinPath(workspaceUri,'src/classes/testClass2.cls'))
+		await commands.executeCommand('vscode.open', Uri.joinPath(workspaceUri, 'src/classes/testClass2.cls'))
 		await sleep(200)
 		await commands.executeCommand('testing.runCurrentFile')
 		await refreshData()
@@ -38,7 +38,7 @@ suite(projName + ' - Extension Test Suite', () => {
 	})
 
 	test(projName + '.3 - run current test suite', async () => {
-		await commands.executeCommand('vscode.open', Uri.joinPath(workspaceUri,'src/testSuite.cls'))
+		await commands.executeCommand('vscode.open', Uri.joinPath(workspaceUri, 'src/testSuite.cls'))
 		await sleep(200)
 		await commands.executeCommand('testing.runCurrentFile')
 		await refreshData()
@@ -48,10 +48,10 @@ suite(projName + ' - Extension Test Suite', () => {
 		if (!res) {
 			assert.fail('res is null')
 		} else {
-			assert.equal(1,res.errors,'res.errors should be 0')
-			assert.equal(3,res.failures,'res.failures should be 0')
-			assert.equal(5,res.passed,'res.passed should be 0')
-			assert.equal(9,res.tests,'res.tests should be 1')
+			assert.equal(1, res.errors, 'res.errors should be 0')
+			assert.equal(3, res.failures, 'res.failures should be 0')
+			assert.equal(5, res.passed, 'res.passed should be 0')
+			assert.equal(9, res.tests, 'res.tests should be 1')
 		}
 	})
 

@@ -15,7 +15,7 @@ export class ABLPromsgs {
 
 	constructor (dlc: IDlc, storageUri: Uri) {
 		this.dlc = dlc
-		const cacheUri = Uri.joinPath(storageUri,'promsgs.json')
+		const cacheUri = Uri.joinPath(storageUri, 'promsgs.json')
 		// eslint-disable-next-line @typescript-eslint/no-this-alias
 		promsgsObj = this
 
@@ -40,7 +40,7 @@ export class ABLPromsgs {
 
 				const promArr: Promise<void>[] = []
 				for (const file of dirFiles) {
-					promArr.push(this.loadPromsgFile(Uri.joinPath(promsgDir,file[0])).then().catch(err => {
+					promArr.push(this.loadPromsgFile(Uri.joinPath(promsgDir, file[0])).then().catch(err => {
 						throw new Error('Cannot load promsgs file \'' + file + '\', err=' + err)
 					}))
 				}
@@ -142,7 +142,7 @@ export function getPromsgText (text: string) {
 			if (count === 0) {
 				count++
 			} else {
-				stackString += '\n\n' + text.replace(/\\n/g,'\n\n')
+				stackString += '\n\n' + text.replace(/\\n/g, '\n\n')
 			}
 		})
 		return stackString

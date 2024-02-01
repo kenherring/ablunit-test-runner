@@ -35,7 +35,7 @@ class TestData {
 
 export const testData = new TestData()
 
-const displayClassLabel = workspace.getConfiguration('ablunit').get('explorer.classlabel','')
+const displayClassLabel = workspace.getConfiguration('ablunit').get('explorer.classlabel', '')
 
 function createTestItem (
 	controller: TestController,
@@ -256,7 +256,7 @@ export class ABLTestSuite extends ABLTestFile {
 		const response = parseABLTestSuite(content)
 
 		if (!response) {
-			this.deleteItem(controller,item)
+			this.deleteItem(controller, item)
 			return false
 		}
 

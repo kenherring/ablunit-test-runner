@@ -31,14 +31,6 @@
 		"webpack.config.js"
 	],
 	"rules": {
-		// TODO: enable and fix theese
-		// "comma-dangle": [ "never", "always" ]
-
-		// "@typescript-eslint/no-use-before-define": [ "warn", {
-		// 	/* "functions": true, */
-		// 	"classes": true
-		// }],
-
 		"@typescript-eslint/adjacent-overload-signatures": "error",
 		"@typescript-eslint/ban-types": [ "error", {
 			"types": {
@@ -48,6 +40,7 @@
 				"Boolean": "Use 'boolean' instead."
 			}
 		}],
+		"@typescript-eslint/comma-spacing": [ "error", { "before": false, "after": true }],
 		"@typescript-eslint/consistent-type-assertions": [ "error", { "assertionStyle": "as" } ],
 		"@typescript-eslint/consistent-type-definitions": [ "error", "interface" ],
 		"@typescript-eslint/indent": [ "error", "tab" ],
@@ -71,6 +64,7 @@
 		"@typescript-eslint/restrict-plus-operands": "off",
 		"@typescript-eslint/switch-exhaustiveness-check": "warn",
 
+		// "no-class-assign": "error",
 		"no-console": "warn",
 		"no-empty": "warn",
 		"no-mixed-spaces-and-tabs": ["error", "smart-tabs"],

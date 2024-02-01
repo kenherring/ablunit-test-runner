@@ -74,7 +74,7 @@ let oeRuntimes: IOERuntime[] = []
 const dlcMap = new Map<WorkspaceFolder, IDlc>()
 
 function getProjectJson (workspaceFolder: WorkspaceFolder) {
-	const data = JSON.stringify(readStrippedJsonFile(Uri.joinPath(workspaceFolder.uri,'openedge-project.json')))
+	const data = JSON.stringify(readStrippedJsonFile(Uri.joinPath(workspaceFolder.uri, 'openedge-project.json')))
 	return data
 }
 
@@ -86,7 +86,7 @@ export function getDLC (workspaceFolder: WorkspaceFolder, openedgeProjectProfile
 
 	let runtimeDlc: Uri | undefined = undefined
 	const oeversion = getOEVersion(workspaceFolder, openedgeProjectProfile, projectJson)
-	const runtimes: IRuntime[] = workspace.getConfiguration('abl.configuration').get('runtimes',[])
+	const runtimes: IRuntime[] = workspace.getConfiguration('abl.configuration').get('runtimes', [])
 
 	for (const runtime of runtimes) {
 		if (runtime.name === oeversion) {
@@ -209,7 +209,7 @@ class OpenEdgeProjectConfig extends ProfileConfig {
 export function getActiveProfile (rootDir: string) {
 	if (fs.existsSync(path.join(rootDir, '.vscode', 'profile.json'))) {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-		const txt = JSON.parse(fs.readFileSync(path.join(rootDir, '.vscode', 'profile.json'), { encoding: 'utf8' }).replace(/\r/g,''))
+		const txt = JSON.parse(fs.readFileSync(path.join(rootDir, '.vscode', 'profile.json'), { encoding: 'utf8' }).replace(/\r/g, ''))
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 		if (typeof txt['profile'] === 'string') {
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
@@ -254,7 +254,7 @@ function readGlobalOpenEdgeRuntimes (workspaceUri: Uri) {
 			} else {
 				runtime.default = false
 			}
-			runtime.path = runtime.path.replace(/\\/g,'/')
+			runtime.path = runtime.path.replace(/\\/g, '/')
 			runtime.pathExists = fs.existsSync(runtime.path)
 		})
 		oeRuntimes = oeRuntimes.filter(runtime => runtime.pathExists)

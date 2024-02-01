@@ -27,7 +27,7 @@ export function getLines (text: string, annotation: string): [ string[], boolean
 	// the file could still not contain tests because the matched text is in
 	// comments, strings, etc.  so, we'll parse the file to find out.
 
-	const lines = text.replace(/\r/g,'').split('\n')
+	const lines = text.replace(/\r/g, '').split('\n')
 	let foundAnnotation = false
 	for (let i = 0; i < lines.length; i++) {
 		lines[i] = removeComments(lines[i])
@@ -48,13 +48,13 @@ export function getLines (text: string, annotation: string): [ string[], boolean
 const blockCommentRE = /\/\*.*\*\//g
 
 function removeComments (line: string) {
-	line = line.replace(/\/\/.*/g,'') // trim end of line comments
+	line = line.replace(/\/\/.*/g, '') // trim end of line comments
 
 	const matches = blockCommentRE.exec(line)
 	if(!matches) { return line }
 
 	for(const element of matches) {
-		line = line.replace(element,' '.repeat(element.length))
+		line = line.replace(element, ' '.repeat(element.length))
 	}
 	return line
 }

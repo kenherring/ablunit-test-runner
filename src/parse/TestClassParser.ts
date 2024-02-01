@@ -37,7 +37,7 @@ export function parseTestClass (lines: string[], configClassLabel: string, relat
 	const classRet: IClassRet = {
 		classname: '',
 		label: '',
-		range: new Range(0,0,0,0),
+		range: new Range(0, 0, 0, 0),
 		testcases: []
 	}
 
@@ -54,7 +54,7 @@ export function parseTestClass (lines: string[], configClassLabel: string, relat
 			const classResult = classRE.exec(lines[lineNo])
 			if (!classResult) { continue }
 
-			classRet.classname = classResult[1].replace(/:$/,'').trim()
+			classRet.classname = classResult[1].replace(/:$/, '').trim()
 			classRet.range = new Range(lineNo, lines[lineNo].indexOf(classRet.classname), lineNo, classRet.classname.length)
 			classRet.label = getClassLabel(configClassLabel, classRet.classname, relativePath)
 			continue

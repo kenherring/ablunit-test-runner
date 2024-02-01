@@ -14,8 +14,8 @@ suite(projName + ' - Extension Test Suite', () => {
 		await runAllTests()
 
 		const workspaceFolder = workspace.workspaceFolders![0].uri
-		const ablunitJson = Uri.joinPath(workspaceFolder,'ablunit.json')
-		const resultsXml = Uri.joinPath(workspaceFolder,'results.xml')
+		const ablunitJson = Uri.joinPath(workspaceFolder, 'ablunit.json')
+		const resultsXml = Uri.joinPath(workspaceFolder, 'results.xml')
 
 		assert.fileExists(ablunitJson)
 		assert.fileExists(resultsXml)

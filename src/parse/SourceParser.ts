@@ -55,7 +55,7 @@ export const getSourceMapFromSource = async (propath: PropathParser, debugSource
 
 	const readIncludeLineCount = async (uri: Uri) => {
 		return workspace.fs.readFile(uri).then((content) => {
-			const lines = Buffer.from(content.buffer).toString().replace(/\r/g,'').split('\n')
+			const lines = Buffer.from(content.buffer).toString().replace(/\r/g, '').split('\n')
 
 			let lc = lines.length
 			if (lines[lines.length] != '') {

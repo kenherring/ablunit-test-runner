@@ -20,7 +20,7 @@ suite(projName + ' - Extension Test Suite', () => {
 	test(projName + '.1 - test count', async () => {
 		await runAllTests()
 
-		const resultsJson = Uri.joinPath(workspaceUri,'ablunit','results.json')
+		const resultsJson = Uri.joinPath(workspaceUri, 'ablunit', 'results.json')
 		const testCount = await getTestCount(resultsJson)
 		assert(testCount > 100)
 	})
@@ -29,7 +29,7 @@ suite(projName + ' - Extension Test Suite', () => {
 	// //////// TEST SUITES //////////
 
 	test(projName + '.2 - TestSuite - suite1.cls', async () => {
-		const lines = await readLinesFromFile('test/suites/suite1.cls','@testsuite')
+		const lines = await readLinesFromFile('test/suites/suite1.cls', '@testsuite')
 		const suiteRet = parseSuiteLines(lines)
 		assert.strictEqual(suiteRet.name, 'suites.suite1')
 		assert.strictEqual(suiteRet.classes.length, 4, 'expected 4 classes in suite1.cls')

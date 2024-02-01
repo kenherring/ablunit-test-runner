@@ -23,7 +23,7 @@ export interface ICallStack {
 export async function parseCallstack (debugLines: ABLDebugLines, callstackRaw: string) {
 
 	const regex = /^(.*) at line (\d+) *\((.*)\)$/
-	const lines = callstackRaw.replace(/\r/g,'').replace(/\\/g,'/').split('\n')
+	const lines = callstackRaw.replace(/\r/g, '').replace(/\\/g, '/').split('\n')
 
 	const callstack: ICallStack = { items: [] }
 

@@ -14,7 +14,7 @@ before(async () => {
 beforeEach(async () => {
 	const workspaceFolder = workspace.workspaceFolders![0].uri
 	await waitForExtensionActive()
-	deleteFile(Uri.joinPath(workspaceFolder,'.vscode/profile.json'))
+	deleteFile(Uri.joinPath(workspaceFolder, '.vscode/profile.json'))
 })
 
 afterEach(async () => {
@@ -31,17 +31,17 @@ suite(projName + ' - Extension Test Suite', () => {
 	test(projName + '.1 - ${workspaceFolder}/ablunit.json file exists', async () => {
 		await runAllTests()
 		const workspaceFolder = workspace.workspaceFolders![0].uri
-		const ablunitJson = Uri.joinPath(workspaceFolder,'ablunit.json')
-		const resultsXml = Uri.joinPath(workspaceFolder,'results.xml')
-		const resultsJson = Uri.joinPath(workspaceFolder,'results.json')
+		const ablunitJson = Uri.joinPath(workspaceFolder, 'ablunit.json')
+		const resultsXml = Uri.joinPath(workspaceFolder, 'results.xml')
+		const resultsJson = Uri.joinPath(workspaceFolder, 'results.json')
 
 		assert.fileExists(ablunitJson)
 		assert.fileExists(resultsXml)
 		assert.fileExists(resultsJson)
 
-		assert.equal(await getTestCount(resultsJson,'pass'),7,'passed test count')
-		assert.equal(await getTestCount(resultsJson,'fail'),0,'failed test count')
-		assert.equal(await getTestCount(resultsJson,'error'),0,'error test count')
+		assert.equal(await getTestCount(resultsJson, 'pass'), 7, 'passed test count')
+		assert.equal(await getTestCount(resultsJson, 'fail'), 0, 'failed test count')
+		assert.equal(await getTestCount(resultsJson, 'error'), 0, 'error test count')
 	})
 
 	test(projName + '.2 - second profile passes (project)', async () => {
@@ -49,12 +49,12 @@ suite(projName + ' - Extension Test Suite', () => {
 		await runAllTests()
 
 		const workspaceFolder = workspace.workspaceFolders![0].uri
-		const resultsJson = Uri.joinPath(workspaceFolder,'results.json')
+		const resultsJson = Uri.joinPath(workspaceFolder, 'results.json')
 
 		assert.fileExists(resultsJson)
-		assert.equal(await getTestCount(resultsJson,'pass'),2,'passed test count')
-		assert.equal(await getTestCount(resultsJson,'fail'),0,'failed test count')
-		assert.equal(await getTestCount(resultsJson,'error'),0,'error test count')
+		assert.equal(await getTestCount(resultsJson, 'pass'), 2, 'passed test count')
+		assert.equal(await getTestCount(resultsJson, 'fail'), 0, 'failed test count')
+		assert.equal(await getTestCount(resultsJson, 'error'), 0, 'error test count')
 	})
 
 	test(projName + '.3 - third profile passes (inherits propath from 2)', async () => {
@@ -62,12 +62,12 @@ suite(projName + ' - Extension Test Suite', () => {
 		await runAllTests()
 
 		const workspaceFolder = workspace.workspaceFolders![0].uri
-		const resultsJson = Uri.joinPath(workspaceFolder,'results.json')
+		const resultsJson = Uri.joinPath(workspaceFolder, 'results.json')
 
 		assert.fileExists(resultsJson)
-		assert.equal(await getTestCount(resultsJson,'pass'),2,'passed test count')
-		assert.equal(await getTestCount(resultsJson,'fail'),0,'failed test count')
-		assert.equal(await getTestCount(resultsJson,'error'),0,'error test count')
+		assert.equal(await getTestCount(resultsJson, 'pass'), 2, 'passed test count')
+		assert.equal(await getTestCount(resultsJson, 'fail'), 0, 'failed test count')
+		assert.equal(await getTestCount(resultsJson, 'error'), 0, 'error test count')
 	})
 
 	test(projName + '.4 - run default profile, then profile 3', async () => {
@@ -77,12 +77,12 @@ suite(projName + ' - Extension Test Suite', () => {
 		await runAllTests()
 
 		const workspaceFolder = workspace.workspaceFolders![0].uri
-		const resultsJson = Uri.joinPath(workspaceFolder,'results.json')
+		const resultsJson = Uri.joinPath(workspaceFolder, 'results.json')
 
 		assert.fileExists(resultsJson)
-		assert.equal(await getTestCount(resultsJson,'pass'),2,'passed test count')
-		assert.equal(await getTestCount(resultsJson,'fail'),0,'failed test count')
-		assert.equal(await getTestCount(resultsJson,'error'),0,'error test count')
+		assert.equal(await getTestCount(resultsJson, 'pass'), 2, 'passed test count')
+		assert.equal(await getTestCount(resultsJson, 'fail'), 0, 'failed test count')
+		assert.equal(await getTestCount(resultsJson, 'error'), 0, 'error test count')
 	})
 
 	test(projName + '.12 - second profile passes (config)', async () => {
@@ -90,12 +90,12 @@ suite(projName + ' - Extension Test Suite', () => {
 		await runAllTests()
 
 		const workspaceFolder = workspace.workspaceFolders![0].uri
-		const resultsJson = Uri.joinPath(workspaceFolder,'results.json')
+		const resultsJson = Uri.joinPath(workspaceFolder, 'results.json')
 
 		assert.fileExists(resultsJson)
-		assert.equal(await getTestCount(resultsJson,'pass'),2,'passed test count')
-		assert.equal(await getTestCount(resultsJson,'fail'),0,'failed test count')
-		assert.equal(await getTestCount(resultsJson,'error'),0,'error test count')
+		assert.equal(await getTestCount(resultsJson, 'pass'), 2, 'passed test count')
+		assert.equal(await getTestCount(resultsJson, 'fail'), 0, 'failed test count')
+		assert.equal(await getTestCount(resultsJson, 'error'), 0, 'error test count')
 	})
 
 	test(projName + '.20 - do not import openedge-project.json', async () => {
@@ -104,7 +104,7 @@ suite(projName + ' - Extension Test Suite', () => {
 
 		await runAllTests()
 		const workspaceFolder = workspace.workspaceFolders![0].uri
-		const resultsJson = Uri.joinPath(workspaceFolder,'results.json')
+		const resultsJson = Uri.joinPath(workspaceFolder, 'results.json')
 		assert.notFileExists(resultsJson)
 	})
 

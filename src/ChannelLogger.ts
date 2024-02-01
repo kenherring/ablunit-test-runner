@@ -155,7 +155,7 @@ class Logger {
 			const filename = s.getFileName()
 			if (filename && filename !== __filename && !filename.endsWith('extensionHostProcess.js')) {
 				const funcname = s.getFunctionName()
-				let ret = filename.replace(path.normalize(__dirname),'').substring(1).replace(/\\/g, '/') + ':' + s.getLineNumber()
+				let ret = filename.replace(path.normalize(__dirname), '').substring(1).replace(/\\/g, '/') + ':' + s.getLineNumber()
 				if (funcname) {
 					ret = ret + ' ' + funcname
 				}

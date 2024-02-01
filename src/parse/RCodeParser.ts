@@ -74,9 +74,9 @@ export const getSourceMapFromRCode = async (propath: PropathParser, uri: Uri) =>
 
 
 	const parseHeader = (raw: Uint8Array) => {
-		const rcodeHeader = raw.subarray(0,headerLength)
-		const sizeOfSegmentTable = toBase10(rcodeHeader.subarray(30,32))
-		const sizeOfSignatures = toBase10(rcodeHeader.subarray(56,58))
+		const rcodeHeader = raw.subarray(0, headerLength)
+		const sizeOfSegmentTable = toBase10(rcodeHeader.subarray(30, 32))
+		const sizeOfSignatures = toBase10(rcodeHeader.subarray(56, 58))
 
 		return {
 			segmentTableLoc: headerLength + sizeOfSignatures + 16,
@@ -86,8 +86,8 @@ export const getSourceMapFromRCode = async (propath: PropathParser, uri: Uri) =>
 	}
 
 	const parseSegmentTable = (segmentTable: Uint8Array) => {
-		const debug = segmentTable.subarray(12,16)
-		const debugsize = segmentTable.subarray(28,32)
+		const debug = segmentTable.subarray(12, 16)
+		const debugsize = segmentTable.subarray(28, 32)
 		const debugLoc = toBase10(debug) + segmentTable.byteOffset + segmentTable.length
 		return {
 			debugLoc: debugLoc,
@@ -125,14 +125,14 @@ export const getSourceMapFromRCode = async (propath: PropathParser, uri: Uri) =>
 		if (debug) {
 			log.info(prefix + ' count=' + count)
 		}
-		let next = bytes.indexOf(0,pos/4)
+		let next = bytes.indexOf(0, pos/4)
 
 		if (count === 1) {
 			return next
 		}
 		let foundZeroBytes = hasZeroBytes(bytes, next, count)
 		while (!foundZeroBytes) {
-			next = bytes.indexOf(0,next + 1)
+			next = bytes.indexOf(0, next + 1)
 			foundZeroBytes = hasZeroBytes(bytes, next, count)
 		}
 		return next
@@ -142,9 +142,9 @@ export const getSourceMapFromRCode = async (propath: PropathParser, uri: Uri) =>
 		if (debug) {
 			log.info(prefix + ' [parseProcName] pos=' + pos)
 		}
-		const childBytes = bytes.subarray(pos/4,nextDelim(bytes,pos,1))
+		const childBytes = bytes.subarray(pos/4, nextDelim(bytes, pos, 1))
 
-		const arr8 = rawBytes.subarray(childBytes.byteOffset, rawBytes.indexOf(0,childBytes.byteOffset + 1))
+		const arr8 = rawBytes.subarray(childBytes.byteOffset, rawBytes.indexOf(0, childBytes.byteOffset + 1))
 		const name2 = dec.decode(arr8)
 
 		return name2
@@ -236,14 +236,14 @@ export const getSourceMapFromRCode = async (propath: PropathParser, uri: Uri) =>
 		const sourceNum = getShort(b[2])
 		b[2] = b[2] & 0xff000000
 
-		const sourceName = dec.decode(b.subarray(2)).replace(/\0/g,'')
+		const sourceName = dec.decode(b.subarray(2)).replace(/\0/g, '')
 		if (sourceNum == undefined) {
 			throw new Error('invalid source number: ' + sourceNum + ' ' + sourceName)
 		}
 		const sourceUri = Uri.joinPath(propath.workspaceFolder.uri, sourceName)
 
 		sources.push({
-			sourceName: sourceName.replace(/\\/g,'/'),
+			sourceName: sourceName.replace(/\\/g, '/'),
 			sourceNum: sourceNum,
 			sourceUri: sourceUri
 		})
@@ -339,17 +339,17 @@ export const getSourceMapFromRCode = async (propath: PropathParser, uri: Uri) =>
 			}
 		}
 
-		debugLines.sort((a,b) => a.debugLine - b.debugLine)
+		debugLines.sort((a, b) => a.debugLine - b.debugLine)
 		return debugLines
 	}
 
 	const parseDebugSegment = async (raw: Uint8Array) => {
 		const bytes = new Uint32Array(raw.length / 4)
 		for (let i=0; i < raw.length; i=i+4) {
-			bytes[i/4] = toBase10(raw.subarray(i,i+4))
+			bytes[i/4] = toBase10(raw.subarray(i, i+4))
 		}
 
-		const children = bytes.subarray(0,5)
+		const children = bytes.subarray(0, 5)
 
 		if (children[0]) {
 			parseProcs(bytes, children[0], children[0].toString())
@@ -377,7 +377,7 @@ export const getSourceMapFromRCode = async (propath: PropathParser, uri: Uri) =>
 
 
 	return workspace.fs.readFile(uri).then(async (raw) => {
-		const headerInfo = parseHeader(raw.subarray(0,68))
+		const headerInfo = parseHeader(raw.subarray(0, 68))
 		const segmentInfo = parseSegmentTable(raw.subarray(headerInfo.segmentTableLoc, headerInfo.segmentTableLoc + headerInfo.segmentTableSize))
 		rawBytes = raw.slice(segmentInfo.debugLoc, segmentInfo.debugLoc + segmentInfo.debugSize)
 		const debugInfo = await parseDebugSegment(raw.subarray(segmentInfo.debugLoc, segmentInfo.debugLoc + segmentInfo.debugSize))

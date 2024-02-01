@@ -14,7 +14,7 @@ export interface ITestSuite {
 }
 
 export function parseABLTestSuite (text: string) {
-	const [ lines, foundAnnotation ] = getLines(text,'@testsuite')
+	const [ lines, foundAnnotation ] = getLines(text, '@testsuite')
 	if (!foundAnnotation) {
 		return
 	}
@@ -29,7 +29,7 @@ export function parseABLTestSuite (text: string) {
 export function parseSuiteLines (lines: string[]) {
 	const suiteRet: ITestSuite = {
 		name: '',
-		range: new Range(new Position(0,0), new Position(0,0)),
+		range: new Range(new Position(0, 0), new Position(0, 0)),
 		classes: [],
 		procedures: []
 	}

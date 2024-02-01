@@ -31,7 +31,7 @@ export function parseTestProgram (lines: string[], label: string) {
 
 	const programRet: IProgramRet = {
 		label: label,
-		range: new Range(0,0,0,0),
+		range: new Range(0, 0, 0, 0),
 		testcases: []
 	}
 

@@ -14,8 +14,8 @@ suite(projName + ' - Extension Test Suite', () => {
 	test(projName + '.1 - test count', async () => {
 		await runAllTests()
 
-		const resultsXml = Uri.joinPath(getWorkspaceUri(),'target','results.xml')
-		const resultsJson = Uri.joinPath(getWorkspaceUri(),'target','results.json')
+		const resultsXml = Uri.joinPath(getWorkspaceUri(), 'target', 'results.xml')
+		const resultsJson = Uri.joinPath(getWorkspaceUri(), 'target', 'results.json')
 
 		assert.fileExists(resultsXml)
 		assert.fileExists(resultsJson)

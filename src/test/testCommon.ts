@@ -138,7 +138,7 @@ export async function awaitRCode (workspaceFolder: WorkspaceFolder, rcodeCountMi
 			return fileCount
 		}
 		log.info('found ' + fileCount + ' r-code files. waiting...')
-		log.info('found files: ' + JSON.stringify(g.found,null,2))
+		log.info('found files: ' + JSON.stringify(g.found, null, 2))
 	}
 
 	await commands.executeCommand('abl.dumpFileStatus').then(() => {
@@ -258,7 +258,7 @@ export async function runAllTests (doRefresh: boolean = true) {
 	return commands.executeCommand('testing.runAll').then(() => {
 		log.info('testing.runAll complete!')
 		return refreshData()
-	} , (err) => {
+	}, (err) => {
 		throw new Error('testing.runAll failed: ' + err)
 	})
 }
@@ -306,9 +306,9 @@ export async function updateTestProfile (key: string, value: string | string[] |
 	}
 
 	// profile.configurations[0][key] = value
-	let newtext = JSON.stringify(profile,null,4) + '\n'
+	let newtext = JSON.stringify(profile, null, 4) + '\n'
 	if (process.platform === 'win32') {
-		newtext = newtext.replace(/\n/g,'\r\n')
+		newtext = newtext.replace(/\n/g, '\r\n')
 	}
 	const newjson = Buffer.from(newtext)
 	return workspace.fs.writeFile(Uri.joinPath(getWorkspaceUri(), '.vscode', 'ablunit-test-profile.json'), newjson)

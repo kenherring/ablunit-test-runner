@@ -116,7 +116,7 @@ export class ABLResults implements Disposable {
 
 		// eslint-disable-next-line @typescript-eslint/no-invalid-void-type
 		const prom: (Promise<void> | Promise<void[]>)[] = []
-		prom[0] = this.cfg.createProfileOptions(this.cfg.ablunitConfig.profOptsUri,this.cfg.ablunitConfig.profiler)
+		prom[0] = this.cfg.createProfileOptions(this.cfg.ablunitConfig.profOptsUri, this.cfg.ablunitConfig.profiler)
 		prom[1] = this.cfg.createProgressIni(this.propath.toString())
 		prom[2] = this.cfg.createAblunitJson(this.cfg.ablunitConfig.config_uri, this.cfg.ablunitConfig.options, this.testQueue)
 		prom[3] = this.cfg.createDbConnPf(this.cfg.ablunitConfig.dbConnPfUri, this.cfg.ablunitConfig.dbConns)
@@ -301,7 +301,7 @@ export class ABLResults implements Disposable {
 			} else {
 				if (s.errors > 0) {
 					log.error('errors = ' + s.errors + ', failures = ' + s.failures + ', passed = ' + s.passed + ' (item=' + item.label + ')')
-					options.errored(item,new TestMessage('errors = ' + s.errors + ', failures = ' + s.failures + ', passed = ' + s.passed))
+					options.errored(item, new TestMessage('errors = ' + s.errors + ', failures = ' + s.failures + ', passed = ' + s.passed))
 				} else if (s.failures) {
 					log.error('failures = ' + s.failures + ', passed = ' + s.passed + ' (item=' + item.label + ')')
 					options.failed(item, new TestMessage('failures = ' + s.failures + ', passed = ' + s.passed))
@@ -447,7 +447,7 @@ export class ABLResults implements Disposable {
 				}
 			}
 		} else {
-			md.appendMarkdown(promsg + '\n\n**ABL Call Stack**\n\n<code>\n' + failure.callstackRaw.replace(/\r/g,'\n') + '\n</code>')
+			md.appendMarkdown(promsg + '\n\n**ABL Call Stack**\n\n<code>\n' + failure.callstackRaw.replace(/\r/g, '\n') + '\n</code>')
 		}
 		md.supportHtml = true
 		return md

@@ -112,16 +112,16 @@ export class PropathParser {
 			throw new Error('cannot find build dir for ' + filepath)
 		}
 
-		const rpath = Uri.joinPath(Uri.file(bd), filepath.replace(/\.(p|cls)$/,'.r'))
+		const rpath = Uri.joinPath(Uri.file(bd), filepath.replace(/\.(p|cls)$/, '.r'))
 		return rpath
 	}
 
 	private searchUri (uri: Uri) {
 		for (const e of this.propath.entry) {
-			if(uri.fsPath.replace(/\\/g,'/').startsWith(e.uri.fsPath.replace(/\\/g,'/') + '/')) {
-				const propathRelativeFile = uri.fsPath.replace(e.uri.fsPath,'').substring(1)
+			if(uri.fsPath.replace(/\\/g, '/').startsWith(e.uri.fsPath.replace(/\\/g, '/') + '/')) {
+				const propathRelativeFile = uri.fsPath.replace(e.uri.fsPath, '').substring(1)
 				const relativeFile = workspace.asRelativePath(uri, false)
-				const rcodeUri = Uri.joinPath(e.buildDirUri, relativeFile.replace(/\.(p|cls)$/,'.r'))
+				const rcodeUri = Uri.joinPath(e.buildDirUri, relativeFile.replace(/\.(p|cls)$/, '.r'))
 
 				const fileObj: IABLFile = {
 					uri: uri,
@@ -130,10 +130,10 @@ export class PropathParser {
 					relativeFile: relativeFile,
 					propathEntry: e,
 					propathRelativeFile: propathRelativeFile,
-					xrefUri: Uri.joinPath(e.xrefDirUri,propathRelativeFile + '.xref')
+					xrefUri: Uri.joinPath(e.xrefDirUri, propathRelativeFile + '.xref')
 				}
 				this.files.push(fileObj)
-				this.filemap.set(relativeFile,fileObj)
+				this.filemap.set(relativeFile, fileObj)
 				this.buildMap.set(relativeFile, e.buildDirUri.fsPath)
 				return fileObj
 			}
@@ -147,7 +147,7 @@ export class PropathParser {
 		}
 		let relativeFile = file
 		if (!relativeFile.endsWith('.cls') && !relativeFile.endsWith('.p') && !relativeFile.endsWith('.w') && !relativeFile.endsWith('.i')) {
-			relativeFile = relativeFile.replace(/\./g,'/') + '.cls'
+			relativeFile = relativeFile.replace(/\./g, '/') + '.cls'
 		}
 
 		const got = this.filemap.get(relativeFile)
@@ -160,21 +160,21 @@ export class PropathParser {
 			const exists = await workspace.fs.stat(fileInPropathUri).then(() => { return true }, () => { return false })
 
 			if (exists) {
-				let propathRelativeFile = fileInPropathUri.fsPath.replace(e.uri.fsPath,'')
+				let propathRelativeFile = fileInPropathUri.fsPath.replace(e.uri.fsPath, '')
 				if (propathRelativeFile != fileInPropathUri.fsPath) {
 					propathRelativeFile = propathRelativeFile.substring(1)
 				}
 				const fileObj: IABLFile = {
 					uri: fileInPropathUri,
 					file: file,
-					rcodeUri: Uri.joinPath(e.buildDirUri, relativeFile.replace(/\.(p|cls)$/,'.r')),
+					rcodeUri: Uri.joinPath(e.buildDirUri, relativeFile.replace(/\.(p|cls)$/, '.r')),
 					relativeFile: relativeFile,
 					propathEntry: e,
 					propathRelativeFile: propathRelativeFile,
-					xrefUri: Uri.joinPath(e.xrefDirUri,propathRelativeFile + '.xref')
+					xrefUri: Uri.joinPath(e.xrefDirUri, propathRelativeFile + '.xref')
 				}
 				this.files.push(fileObj)
-				this.filemap.set(relativeFile,fileObj)
+				this.filemap.set(relativeFile, fileObj)
 				this.buildMap.set(relativeFile, e.buildDirUri.fsPath)
 				return fileObj
 			}

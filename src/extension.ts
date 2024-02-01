@@ -36,7 +36,7 @@ export async function activate (context: ExtensionContext) {
 	logActivationEvent()
 
 	const contextStorageUri = context.storageUri ?? Uri.file(process.env['TEMP'] ?? '') // will always be defined as context.storageUri
-	const contextResourcesUri = Uri.joinPath(context.extensionUri,'resources')
+	const contextResourcesUri = Uri.joinPath(context.extensionUri, 'resources')
 	setContextPaths(contextStorageUri, contextResourcesUri)
 	await createDir(contextStorageUri)
 	// const decorationProvider = new DecorationProvider()
@@ -76,7 +76,7 @@ export async function activate (context: ExtensionContext) {
 
 		workspace.onDidOpenTextDocument(async e => {
 			log.trace('onDidOpenTextDocument for ' + e.uri)
-			await updateNodeForDocument(e,'didOpen').then(() => {
+			await updateNodeForDocument(e, 'didOpen').then(() => {
 				decorator.decorate(undefined, e)
 			}, (err) => {
 				log.error('failed updateNodeForDocument onDidTextDocument! err=' + err)
@@ -219,9 +219,9 @@ export async function activate (context: ExtensionContext) {
 
 			if(!ret) {
 				for (const { test } of queue) {
-					run.errored(test,new TestMessage('ablunit run failed'))
+					run.errored(test, new TestMessage('ablunit run failed'))
 					for (const childTest of gatherTestItems(test.children)) {
-						run.errored(childTest,new TestMessage('ablunit run failed'))
+						run.errored(childTest, new TestMessage('ablunit run failed'))
 					}
 				}
 				run.end()
@@ -426,7 +426,7 @@ function updateNode (uri: Uri, ctrl: TestController) {
 		ctrl.invalidateTestResults(item)
 		if (data) {
 			return getContentFromFilesystem(uri).then((contents) => {
-				data.updateFromContents(ctrl, contents , item)
+				data.updateFromContents(ctrl, contents, item)
 			}).then(() => {
 				return decorator.decorate()
 			})
@@ -459,7 +459,7 @@ async function getStorageUri (workspaceFolder: WorkspaceFolder) {
 	if (!getContextStorageUri) { throw new Error('contextStorageUri is undefined') }
 
 	const dirs = workspaceFolder.uri.path.split('/')
-	const ret = Uri.joinPath(getContextStorageUri(),dirs[dirs.length - 1])
+	const ret = Uri.joinPath(getContextStorageUri(), dirs[dirs.length - 1])
 	await createDir(ret)
 	return ret
 }
@@ -557,7 +557,7 @@ function getTestSuiteNode (controller: TestController, workspaceFolder: Workspac
 	suiteGroup.canResolveChildren = false
 	suiteGroup.description = 'ABLTestSuiteGroup'
 	suiteGroup.tags = [ new TestTag('runnable'), new TestTag('ABLTestSuiteGroup') ]
-	testData.set(suiteGroup, new ABLTestDir('TestSuiteGroup', '[ABL Test Suites]' , groupId))
+	testData.set(suiteGroup, new ABLTestDir('TestSuiteGroup', '[ABL Test Suites]', groupId))
 	siblings.add(suiteGroup)
 
 	return suiteGroup
@@ -908,8 +908,8 @@ function openCallStackItem (traceUriStr: string) {
 	const traceUri = Uri.file(traceUriStr.split('&')[0])
 	const traceLine = Number(traceUriStr.split('&')[1])
 	return window.showTextDocument(traceUri).then(editor => {
-		const lineToGoBegin = new Position(traceLine,0)
-		const lineToGoEnd = new Position(traceLine + 1,0)
+		const lineToGoBegin = new Position(traceLine, 0)
+		const lineToGoEnd = new Position(traceLine + 1, 0)
 		editor.selections = [new Selection(lineToGoBegin, lineToGoEnd)]
 		const range = new Range(lineToGoBegin, lineToGoEnd)
 		log.info('decorating editor - openCallStackItem')

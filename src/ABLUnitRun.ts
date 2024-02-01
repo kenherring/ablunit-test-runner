@@ -57,7 +57,7 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 
 		const executable = res.dlc!.uri.fsPath.replace(/\\/g, '/') + '/bin/' + res.cfg.ablunitConfig.command.executable
 
-		let cmd = [ executable, '-b', '-p', res.wrapperUri.fsPath.replace(/\\/g,'/') ]
+		let cmd = [ executable, '-b', '-p', res.wrapperUri.fsPath.replace(/\\/g, '/') ]
 
 		if (process.platform === 'win32') {
 			cmd.push('-basekey', 'INI', '-ininame', workspace.asRelativePath(res.cfg.ablunitConfig.progressIniUri.fsPath, false))
@@ -71,7 +71,7 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 		if (isRelativePath(tempPath)) {
 			tempPath = './' + tempPath
 		}
-		cmd.push('-T',tempPath)
+		cmd.push('-T', tempPath)
 
 		if (res.cfg.ablunitConfig.dbConnPfUri && res.cfg.ablunitConfig.dbConns && res.cfg.ablunitConfig.dbConns.length > 0) {
 			cmd.push('-pf', workspace.asRelativePath(res.cfg.ablunitConfig.dbConnPfUri.fsPath, false))

@@ -19,7 +19,7 @@ export class ABLDebugLines {
 		}
 
 		if (!debugSource.endsWith('.p') && !debugSource.endsWith('.cls')) {
-			debugSource = debugSource.replace(/\./g,'/') + '.cls'
+			debugSource = debugSource.replace(/\./g, '/') + '.cls'
 		}
 
 		const debugSourceObj = await this.propath.search(debugSource)
