@@ -25,7 +25,7 @@ export const log = logObj
 
 let recentResults: ABLResults[]
 let decorator: Decorator
-let testController: TestController
+let testController: TestController | undefined = undefined
 
 export {
 	deleteFile
@@ -218,7 +218,7 @@ export async function getTestCount (resultsJson: Uri, status = 'tests') {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		const results: ITestSuites[] = JSON.parse(Buffer.from(content.buffer).toString())
 
-		if (!results || results.length === 0) {
+		if (results.length === 0) {
 			throw new Error('[getTestCount] no testsuite found in results')
 		}
 
@@ -345,14 +345,14 @@ export function getDecorator () {
 	return decorator
 }
 
-export function getTestController () {
+export async function getTestController () {
+	if (!testController) {
+		await refreshData()
+	}
 	return testController
 }
 
 export function getResults (len = 1) {
-	if (!recentResults) {
-		throw new Error('recent results is undefined!')
-	}
 	if (recentResults.length === 0) {
 		throw new Error('recent results should be > 0')
 	}

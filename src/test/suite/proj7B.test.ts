@@ -25,11 +25,11 @@ suite(projName + ' - Extension Test Suite', () => {
 			throw err
 		})
 
-		let testCount = getTestControllerItemCount('ABLTestFile')
+		let testCount = await getTestControllerItemCount('ABLTestFile')
 		log.info('testCount-1=' + testCount)
 		while(testCount < 10) {
 			await sleep(250, 'waiting for getTestControllerItemCount to return > 10 (got ' + testCount + ')')
-			testCount = getTestControllerItemCount('ABLTestFile')
+			testCount = await getTestControllerItemCount('ABLTestFile')
 		}
 		log.info('testCount-2=' + testCount)
 
@@ -52,7 +52,7 @@ suite(projName + ' - Extension Test Suite', () => {
 			assert.fail('unexpected error: ' + err)
 		}
 
-		const ablfileCount = getTestControllerItemCount('ABLTestFile')
+		const ablfileCount = await getTestControllerItemCount('ABLTestFile')
 		log.info('controller file count after refresh = ' + ablfileCount)
 		assert(ablfileCount > 1 && ablfileCount < 1000, 'ablfileCount should be > 1 and < 500, but is ' + ablfileCount)
 
@@ -87,13 +87,18 @@ suite(projName + ' - Extension Test Suite', () => {
 
 })
 
-function getTestControllerItemCount (type?: 'ABLTestFile' | undefined) {
-	const ctrl = getTestController()
+async function getTestControllerItemCount (type?: 'ABLTestFile' | undefined) {
+	const ctrl = await getTestController()
+	if (!ctrl?.items) {
+		return 0
+	}
 	return ctrl.items.size + getChildTestCount(type, ctrl.items)
 }
 
 function getChildTestCount (type: string | undefined, items: TestItemCollection) {
-	if (items.size === 0) { return 0 }
+	if (items.size === 0) {
+		return 0
+	}
 	let count = 0
 
 	for (const [id, item] of items) {
