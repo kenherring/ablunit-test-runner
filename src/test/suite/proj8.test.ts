@@ -30,10 +30,6 @@ suite(projName + ' - Extension Test Suite', () => {
 		await runAllTests()
 		const recentResults = getResults()
 		const res = recentResults[0]
-		if (!res) {
-			assert.fail('res is null')
-			return
-		}
 		const envVars = getEnvVars(res.dlc?.uri)
 		const envPath = envVars['PATH']
 		if (envPath) {

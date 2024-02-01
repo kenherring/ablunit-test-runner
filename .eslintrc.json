@@ -54,7 +54,7 @@
 		"@typescript-eslint/no-empty-function": "error",
 		"@typescript-eslint/no-extra-parens": "warn",
 		"@typescript-eslint/no-non-null-assertion": 0,
-		"@typescript-eslint/no-unnecessary-condition": 1,
+		"@typescript-eslint/no-unnecessary-condition": 0,
 		"@typescript-eslint/no-unused-vars": [ "warn", {
 			"vars": "all",
 			"args": "none",
@@ -64,7 +64,6 @@
 		"@typescript-eslint/prefer-readonly": "warn",
 		"@typescript-eslint/prefer-string-starts-ends-with": "warn",
 		"@typescript-eslint/restrict-plus-operands": "off",
-		"@typescript-eslint/space-before-blocks": "error",
 		"@typescript-eslint/switch-exhaustiveness-check": "warn",
 
 		"no-console": "warn",

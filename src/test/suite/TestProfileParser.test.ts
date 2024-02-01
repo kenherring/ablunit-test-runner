@@ -19,7 +19,10 @@ import { log } from '../testCommon'
 
 function getWorkspaceFolders () {
 	const workspaceFolders: WorkspaceFolder[] = []
-	for (const workspaceFolder of workspace.workspaceFolders!) {
+	if (!workspace.workspaceFolders) {
+		throw new Error('No workspaceFolders found')
+	}
+	for (const workspaceFolder of workspace.workspaceFolders) {
 		workspaceFolders.push(workspaceFolder)
 	}
 	return workspaceFolders
@@ -29,9 +32,6 @@ suite('TestProfileParser.test', () => {
 
 	// //////// SETUP
 	const workspaceFolders = getWorkspaceFolders()
-	if (!workspaceFolders) {
-		throw new Error('Unable to find workspaceFolders - failing test1')
-	}
 
 	test('test1', () => {
 		let profiles
