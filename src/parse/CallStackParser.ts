@@ -23,22 +23,22 @@ export interface ICallStack {
 export async function parseCallstack (debugLines: ABLDebugLines, callstackRaw: string) {
 
 	const regex = /^(.*) at line (\d+) *\((.*)\)$/
-	const lines = callstackRaw.replace(/\r/g,'').replace(/\\/g,'/').split("\n")
+	const lines = callstackRaw.replace(/\r/g, '').replace(/\\/g, '/').split('\n')
 
 	const callstack: ICallStack = { items: [] }
 
 	for (const line of lines) {
 		const arr = regex.exec(line)
 		if(arr?.length != 4) {
-			throw new Error("cannot parse callstack line: " + line)
+			throw new Error('cannot parse callstack line: ' + line)
 		}
 		const module = arr[1]
 		const debugLine = Number(arr[2])
 		const debugFile = arr[3]
 
 		let moduleParent = module
-		if (moduleParent.includes(" ")) {
-			moduleParent = moduleParent.split(" ")[1]
+		if (moduleParent.includes(' ')) {
+			moduleParent = moduleParent.split(' ')[1]
 		}
 
 		const callstackItem: ICallStackItem = {
@@ -52,13 +52,13 @@ export async function parseCallstack (debugLines: ABLDebugLines, callstackRaw: s
 		try {
 			lineinfo = await debugLines.getSourceLine(moduleParent, debugLine)
 		} catch {
-			log.info("could not find source line for " + moduleParent + " at line " + debugLine + ".  using raw callstack data")
+			log.info('could not find source line for ' + moduleParent + ' at line ' + debugLine + '.  using raw callstack data')
 		}
 
 		if(lineinfo) {
-			const markdownText = module + " at line " + debugLine + " " +
-				"([" + workspace.asRelativePath(lineinfo.sourceUri, false) + ":" + (lineinfo.sourceLine) + "]" +
-				"(command:_ablunit.openCallStackItem?" + encodeURIComponent(JSON.stringify(lineinfo.sourceUri + "&" + (lineinfo.sourceLine - 1))) + "))"
+			const markdownText = module + ' at line ' + debugLine + ' ' +
+				'([' + workspace.asRelativePath(lineinfo.sourceUri, false) + ':' + lineinfo.sourceLine + ']' +
+				'(command:_ablunit.openCallStackItem?' + encodeURIComponent(JSON.stringify(lineinfo.sourceUri + '&' + (lineinfo.sourceLine - 1))) + '))'
 
 			callstackItem.lineinfo = lineinfo
 			callstackItem.markdownText = markdownText
@@ -68,7 +68,7 @@ export async function parseCallstack (debugLines: ABLDebugLines, callstackRaw: s
 				new Position(lineinfo.sourceLine, 0)
 			))
 		} else {
-			callstackItem.markdownText = module + " at line " + debugLine + " (" + debugFile + ")"
+			callstackItem.markdownText = module + ' at line ' + debugLine + ' (' + debugFile + ')'
 		}
 		callstack.items.push(callstackItem)
 	}
@@ -77,17 +77,17 @@ export async function parseCallstack (debugLines: ABLDebugLines, callstackRaw: s
 }
 
 function buildFullMarkdownText (callstack: ICallStack) {
-	let markdown: string = "## ABL Stack Trace\n\n"
+	let markdown = '## ABL Stack Trace\n\n'
 	let firstItem = true
-	markdown += "<style>code { white-space: pre }</style>\n\n"
+	markdown += '<style>code { white-space: pre }</style>\n\n'
 	for (const item of callstack.items) {
 		if (firstItem) {
 			firstItem = false
-			markdown += "--> "
+			markdown += '--> '
 		} else {
-			markdown += "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"
+			markdown += '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'
 		}
-		markdown += "<code>" + item.markdownText + "</code></br>\n"
+		markdown += '<code>' + item.markdownText + '</code></br>\n'
 	}
 	return markdown
 }

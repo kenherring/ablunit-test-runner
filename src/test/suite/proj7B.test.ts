@@ -25,15 +25,15 @@ suite(projName + ' - Extension Test Suite', () => {
 			throw err
 		})
 
-		let testCount = getTestControllerItemCount('ABLTestFile')
-		log.info("testCount-1=" + testCount)
+		let testCount = await getTestControllerItemCount('ABLTestFile')
+		log.info('testCount-1=' + testCount)
 		while(testCount < 10) {
 			await sleep(250, 'waiting for getTestControllerItemCount to return > 10 (got ' + testCount + ')')
-			testCount = getTestControllerItemCount('ABLTestFile')
+			testCount = await getTestControllerItemCount('ABLTestFile')
 		}
-		log.info("testCount-2=" + testCount)
+		log.info('testCount-2=' + testCount)
 
-		log.info("cancelling test refresh")
+		log.info('cancelling test refresh')
 		const startCancelTime = Date.now()
 		try {
 			await commands.executeCommand('testing.cancelTestRefresh').then(() => {
@@ -44,7 +44,7 @@ suite(projName + ' - Extension Test Suite', () => {
 			})
 			const elapsedCancelTime = Date.now() - startCancelTime
 			const elapsedRefreshTime = Date.now() - startRefreshTime
-			log.info(' - elapsedCancelTime=' + elapsedCancelTime + ", elapsedRefreshTime=" +  elapsedRefreshTime)
+			log.info(' - elapsedCancelTime=' + elapsedCancelTime + ', elapsedRefreshTime=' +  elapsedRefreshTime)
 			assert(elapsedCancelTime < maxCancelTime, 'elapsedCancelTime should be < ' + maxCancelTime + 'ms, but is ' + elapsedCancelTime)
 			assert(elapsedRefreshTime < maxRefreshTime, 'elapsedRefreshTime should be < ' + maxRefreshTime + 'ms, but is ' + elapsedRefreshTime)
 			await sleep(100)
@@ -52,9 +52,9 @@ suite(projName + ' - Extension Test Suite', () => {
 			assert.fail('unexpected error: ' + err)
 		}
 
-		const ablfileCount = getTestControllerItemCount('ABLTestFile')
-		log.info("controller file count after refresh = " + ablfileCount)
-		assert(ablfileCount > 1 && ablfileCount < 1000, "ablfileCount should be > 1 and < 500, but is " + ablfileCount)
+		const ablfileCount = await getTestControllerItemCount('ABLTestFile')
+		log.info('controller file count after refresh = ' + ablfileCount)
+		assert(ablfileCount > 1 && ablfileCount < 1000, 'ablfileCount should be > 1 and < 500, but is ' + ablfileCount)
 
 		log.info('testing refreshTests throws an error after cancelTestRefresh')
 		await refresh.then(() => {
@@ -73,27 +73,32 @@ suite(projName + ' - Extension Test Suite', () => {
 	test(projName + '.2 - cancel test run', async () => {
 		runAllTests().then(() => { return }, (err) => { throw err })
 
-		console.log("pausing 5 seconds")
+		log.info('pausing 5 seconds')
 		await new Promise((resolve) => { setTimeout(resolve, 5000) })
 		const startCancelTime = Date.now()
-		console.log("cancelling test run")
+		log.info('cancelling test run')
 		await commands.executeCommand('testing.cancelRun').then(() => {
 			const elapsedCancelTime = Date.now() - startCancelTime
-			console.log("elapsedCancelTime=" + elapsedCancelTime)
-			assert(elapsedCancelTime < 1000, "cancelTime should be < 1 second, but is " + elapsedCancelTime)
+			log.info('elapsedCancelTime=' + elapsedCancelTime)
+			assert(elapsedCancelTime < 1000, 'cancelTime should be < 1 second, but is ' + elapsedCancelTime)
 		})
-		assert(true, "testing.cancelRun completed successfully")
+		assert(true, 'testing.cancelRun completed successfully')
 	})
 
 })
 
-function getTestControllerItemCount (type?: 'ABLTestFile' | undefined) {
-	const ctrl = getTestController()
+async function getTestControllerItemCount (type?: 'ABLTestFile' | undefined) {
+	const ctrl = await getTestController()
+	if (!ctrl?.items) {
+		return 0
+	}
 	return ctrl.items.size + getChildTestCount(type, ctrl.items)
 }
 
 function getChildTestCount (type: string | undefined, items: TestItemCollection) {
-	if (items.size === 0) { return 0 }
+	if (items.size === 0) {
+		return 0
+	}
 	let count = 0
 
 	for (const [id, item] of items) {

@@ -21,7 +21,7 @@ export interface IClassRet {
 export function parseABLTestClass (displayClassLabel: string, text: string, relativePath: string) {
 	relativePath = relativePath.replace(/\\/g, '/')
 
-	const [lines, foundAnnotation] = getLines(text, "@test")
+	const [lines, foundAnnotation] = getLines(text, '@test')
 	if(!foundAnnotation) {
 		return
 	}
@@ -35,9 +35,9 @@ export function parseABLTestClass (displayClassLabel: string, text: string, rela
 
 export function parseTestClass (lines: string[], configClassLabel: string, relativePath: string) {
 	const classRet: IClassRet = {
-		classname: "",
-		label: "",
-		range: new Range(0,0,0,0),
+		classname: '',
+		label: '',
+		range: new Range(0, 0, 0, 0),
 		testcases: []
 	}
 
@@ -45,22 +45,22 @@ export function parseTestClass (lines: string[], configClassLabel: string, relat
 	const regexTest = /@test\./i
 
 	for (let lineNo = 0; lineNo < lines.length; lineNo++) {
-		if (lines[lineNo].trim() === "") {
+		if (lines[lineNo].trim() === '') {
 			continue
 		}
 
 		// first find the class statement
-		if (classRet.classname === "") {
+		if (classRet.classname === '') {
 			const classResult = classRE.exec(lines[lineNo])
 			if (!classResult) { continue }
 
-			classRet.classname = classResult[1].replace(/:$/,'').trim()
+			classRet.classname = classResult[1].replace(/:$/, '').trim()
 			classRet.range = new Range(lineNo, lines[lineNo].indexOf(classRet.classname), lineNo, classRet.classname.length)
 			classRet.label = getClassLabel(configClassLabel, classRet.classname, relativePath)
 			continue
 		}
 
-		if (lastNonBlankLineHasAnnotation || lines[lineNo].toLowerCase().includes("@test.")) {
+		if (lastNonBlankLineHasAnnotation || lines[lineNo].toLowerCase().includes('@test.')) {
 			const method = methodRE.exec(lines[lineNo])
 			if (method) {
 				const [, , , , methodname] = method
@@ -77,7 +77,7 @@ export function parseTestClass (lines: string[], configClassLabel: string, relat
 }
 
 function getClassLabel (configClassLabel: string, classname: string, relativePath: string) {
-	if (configClassLabel == "class-type-name") {
+	if (configClassLabel == 'class-type-name') {
 		return classname
 	} else {
 		return relativePath.split('/').pop() ?? 'UNDEFINED'

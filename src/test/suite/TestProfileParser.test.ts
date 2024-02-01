@@ -2,6 +2,7 @@
 import { strict as assert } from 'assert'
 import { WorkspaceFolder, workspace } from 'vscode'
 import { parseRunProfiles } from '../../parse/TestProfileParser'
+import { log } from '../testCommon'
 
 // ----------TODO---------- //
 // function readValidationFile (filename: string) {
@@ -18,7 +19,10 @@ import { parseRunProfiles } from '../../parse/TestProfileParser'
 
 function getWorkspaceFolders () {
 	const workspaceFolders: WorkspaceFolder[] = []
-	for (const workspaceFolder of workspace.workspaceFolders!) {
+	if (!workspace.workspaceFolders) {
+		throw new Error('No workspaceFolders found')
+	}
+	for (const workspaceFolder of workspace.workspaceFolders) {
 		workspaceFolders.push(workspaceFolder)
 	}
 	return workspaceFolders
@@ -28,20 +32,17 @@ suite('TestProfileParser.test', () => {
 
 	// //////// SETUP
 	const workspaceFolders = getWorkspaceFolders()
-	if (!workspaceFolders) {
-		throw new Error("Unable to find workspaceFolders - failing test1")
-	}
 
-	test("test1", () => {
+	test('test1', () => {
 		let profiles
 		try{
 			profiles = parseRunProfiles(workspaceFolders)
 		} catch (err) {
-			console.error("Caught error in parseRunProfiles! err = " + err)
-			assert.fail("Caught error in parseRunProfiles! err = " + err)
+			log.error('Caught error in parseRunProfiles! err = ' + err)
+			assert.fail('Caught error in parseRunProfiles! err = ' + err)
 		}
-		assert.equal(profiles.length, 1, "profiles.length = 1")
-		assert.equal(profiles[0].hide, false, "hide=false")
+		assert.equal(profiles.length, 1, 'profiles.length = 1')
+		assert.equal(profiles[0].hide, false, 'hide=false')
 	})
 
 	// ----------TODO---------- //

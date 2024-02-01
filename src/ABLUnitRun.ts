@@ -1,7 +1,7 @@
 import { CancellationToken, TestRun, Uri, workspace } from 'vscode'
 import { ABLResults } from './ABLResults'
 import { isRelativePath } from './ABLUnitCommon'
-import { ExecException, ExecOptions, exec } from "child_process"
+import { ExecException, ExecOptions, exec } from 'child_process'
 import { log } from './ChannelLogger'
 
 export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation?: CancellationToken) => {
@@ -11,7 +11,7 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 
 	if (cancellation) {
 		cancellation.onCancellationRequested(() => {
-			log.info("cancellation requested")
+			log.info('cancellation requested')
 			abort.abort()
 		})
 	}
@@ -19,16 +19,16 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 	await res.cfg.createAblunitJson(res.cfg.ablunitConfig.config_uri, res.cfg.ablunitConfig.options, res.testQueue)
 
 	const getCommand = () => {
-		if (res.cfg.ablunitConfig.command.executable != "_progres" &&
-			res.cfg.ablunitConfig.command.executable != "prowin" &&
-			res.cfg.ablunitConfig.command.executable != "prowin32") {
+		if (res.cfg.ablunitConfig.command.executable != '_progres' &&
+			res.cfg.ablunitConfig.command.executable != 'prowin' &&
+			res.cfg.ablunitConfig.command.executable != 'prowin32') {
 			return getCustomCommand()
 		}
 		return getDefaultCommand()
 	}
 
 	const getCustomCommand = () => {
-		let cmd = res.cfg.ablunitConfig.command.executable.replace("${DLC}", res.dlc!.uri.fsPath.replace(/\\/g, '/'))
+		let cmd = res.cfg.ablunitConfig.command.executable.replace('${DLC}', res.dlc!.uri.fsPath.replace(/\\/g, '/'))
 
 		const testarr: string[] = []
 		for (const test of res.testQueue) {
@@ -39,39 +39,39 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 		const testlist = testarr.join(',')
 
 		if (!cmd.includes('${testlist}')) {
-			log.error("command does not contain ${testlist}", options)
-			throw (new Error("command does not contain ${testlist}"))
+			log.error('command does not contain ${testlist}', options)
+			throw new Error('command does not contain ${testlist}')
 		}
 		cmd = cmd.replace(/\$\{testlist\}/, testlist)
 		cmd = cmd.replace(/\$\{tempDir\}/, workspace.asRelativePath(res.cfg.ablunitConfig.tempDirUri, false))
 		const cmdSanitized = cmd.split(' ')
 
-		log.info("ABLUnit Command: " + cmdSanitized.join(' '))
+		log.info('ABLUnit Command: ' + cmdSanitized.join(' '))
 		return cmdSanitized
 	}
 
 	const getDefaultCommand = () => {
 		if (!res.cfg.ablunitConfig.tempDirUri) {
-			throw (new Error("temp directory not set"))
+			throw new Error('temp directory not set')
 		}
 
 		const executable = res.dlc!.uri.fsPath.replace(/\\/g, '/') + '/bin/' + res.cfg.ablunitConfig.command.executable
 
-		let cmd = [ executable, '-b', '-p', res.wrapperUri.fsPath.replace(/\\/g,'/') ]
+		let cmd = [ executable, '-b', '-p', res.wrapperUri.fsPath.replace(/\\/g, '/') ]
 
 		if (process.platform === 'win32') {
 			cmd.push('-basekey', 'INI', '-ininame', workspace.asRelativePath(res.cfg.ablunitConfig.progressIniUri.fsPath, false))
 		} else if (process.platform === 'linux') {
 			process.env['PROPATH'] = res.propath!.toString()
 		} else {
-			throw new Error("unsupported platform: " + process.platform)
+			throw new Error('unsupported platform: ' + process.platform)
 		}
 
 		let tempPath = workspace.asRelativePath(res.cfg.ablunitConfig.tempDirUri, false)
 		if (isRelativePath(tempPath)) {
 			tempPath = './' + tempPath
 		}
-		cmd.push('-T',tempPath)
+		cmd.push('-T', tempPath)
 
 		if (res.cfg.ablunitConfig.dbConnPfUri && res.cfg.ablunitConfig.dbConns && res.cfg.ablunitConfig.dbConns.length > 0) {
 			cmd.push('-pf', workspace.asRelativePath(res.cfg.ablunitConfig.dbConnPfUri.fsPath, false))
@@ -84,33 +84,33 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 		const cmdSanitized: string[] = []
 		cmd = cmd.concat(res.cfg.ablunitConfig.command.additionalArgs)
 
-		let params = "CFG=" + workspace.asRelativePath(res.cfg.ablunitConfig.config_uri.fsPath, false)
+		let params = 'CFG=' + workspace.asRelativePath(res.cfg.ablunitConfig.config_uri.fsPath, false)
 		if (res.cfg.ablunitConfig.dbAliases.length > 0) {
-			params = params + "= ALIASES=" + res.cfg.ablunitConfig.dbAliases.join(';')
+			params = params + '= ALIASES=' + res.cfg.ablunitConfig.dbAliases.join(';')
 		}
-		cmd.push("-param", '"' + params + '"')
+		cmd.push('-param', '"' + params + '"')
 
 		cmd.forEach(element => {
 			cmdSanitized.push(element.replace(/\\/g, '/'))
 		})
 
-		log.info("ABLUnit Command: " + cmdSanitized.join(' '))
+		log.info('ABLUnit Command: ' + cmdSanitized.join(' '))
 		return cmdSanitized
 	}
 
 	const runCommand = () => {
-		log.debug("ablunit command dir='" + res.cfg.ablunitConfig.workspaceFolder.uri.fsPath + "'")
-		log.info("----- ABLUnit Command Execution Started -----", options)
+		log.debug('ablunit command dir=\'' + res.cfg.ablunitConfig.workspaceFolder.uri.fsPath + '\'')
+		log.info('----- ABLUnit Command Execution Started -----', options)
 		const args = getCommand()
 
 		const cmd = args[0]
 		args.shift()
 
 		return new Promise<string>((resolve, reject) => {
-			res.setStatus("running command")
+			res.setStatus('running command')
 
 			const runenv = getEnvVars(res.dlc!.uri)
-			log.debug("cmd=" + cmd + ' ' + args.join(' '))
+			log.debug('cmd=' + cmd + ' ' + args.join(' '))
 
 			const execOpts: ExecOptions = {
 				env: runenv,
@@ -122,8 +122,8 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 			exec(cmd + ' ' + args.join(' ') + ' 2>&1', execOpts, (err: ExecException | null, stdout: string, stderr: string) => {
 				const duration = Date.now() - start
 				if (err) {
-					log.error("Error = " + err.name + " (ExecExcetion)\r\n   " + err.message, options)
-					log.error("err=" + JSON.stringify(err))
+					log.error('Error = ' + err.name + ' (ExecExcetion)\r\n   ' + err.message, options)
+					log.error('err=' + JSON.stringify(err))
 					reject(err)
 				}
 				if (stdout) {
@@ -137,8 +137,8 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 				// if(stderr) {
 				// 	reject(new Error ("ABLUnit Command Execution Failed - duration: " + duration))
 				// }
-				log.info("----- ABLUnit Command Execution Completed -----", options)
-				resolve("ABLUnit Command Execution Completed - duration: " + duration)
+				log.info('----- ABLUnit Command Execution Completed -----', options)
+				resolve('ABLUnit Command Execution Completed - duration: ' + duration)
 			})
 		})
 	}
@@ -146,7 +146,7 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 	return runCommand().then(() => {
 		return res.parseOutput(options).then()
 	}, (err) => {
-		log.error("Err=" + err)
+		log.error('Err=' + err)
 	})
 }
 
@@ -163,7 +163,7 @@ export const getEnvVars = (dlcUri: Uri | undefined) => {
 	if (envConfig) {
 		for (const key of Object.keys(envConfig)) {
 			if (key === 'PATH' && process.env['PATH']) {
-				runenv[key] = envConfig[key].replace("${env:PATH}", process.env['PATH'])
+				runenv[key] = envConfig[key].replace('${env:PATH}', process.env['PATH'])
 			} else {
 				runenv[key] = envConfig[key]
 			}

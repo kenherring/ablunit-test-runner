@@ -36,7 +36,7 @@ export async function activate (context: ExtensionContext) {
 	logActivationEvent()
 
 	const contextStorageUri = context.storageUri ?? Uri.file(process.env['TEMP'] ?? '') // will always be defined as context.storageUri
-	const contextResourcesUri = Uri.joinPath(context.extensionUri,'resources')
+	const contextResourcesUri = Uri.joinPath(context.extensionUri, 'resources')
 	setContextPaths(contextStorageUri, contextResourcesUri)
 	await createDir(contextStorageUri)
 	// const decorationProvider = new DecorationProvider()
@@ -76,7 +76,7 @@ export async function activate (context: ExtensionContext) {
 
 		workspace.onDidOpenTextDocument(async e => {
 			log.trace('onDidOpenTextDocument for ' + e.uri)
-			await updateNodeForDocument(e,'didOpen').then(() => {
+			await updateNodeForDocument(e, 'didOpen').then(() => {
 				decorator.decorate(undefined, e)
 			}, (err) => {
 				log.error('failed updateNodeForDocument onDidTextDocument! err=' + err)
@@ -96,7 +96,7 @@ export async function activate (context: ExtensionContext) {
 			return startTestRun(request, cancellation)
 				.then(() => { return })
 				.catch((err) => {
-					log.error("startTestRun failed. err=" + err)
+					log.error('startTestRun failed. err=' + err)
 					throw err
 				})
 		}
@@ -124,12 +124,12 @@ export async function activate (context: ExtensionContext) {
 				log.info('successfully created .vscode/ablunit-test-profile.json')
 			}, (err) => {
 				log.error('failed to create .vscode/ablunit-test-profile.json. err=' + err)
-				throw(err)
+				throw err
 			})
 		}
 
 		window.showTextDocument(Uri.joinPath(workspaceFolder.uri, '.vscode', 'ablunit-test-profile.json')).then(() => {
-			log.info("Opened .vscode/ablunit-test-profile.json")
+			log.info('Opened .vscode/ablunit-test-profile.json')
 		}, (err) => {
 			log.error('Failed to open .vscode/ablunit-test-profile.json! err=' + err)
 		})
@@ -219,9 +219,9 @@ export async function activate (context: ExtensionContext) {
 
 			if(!ret) {
 				for (const { test } of queue) {
-					run.errored(test,new TestMessage('ablunit run failed'))
+					run.errored(test, new TestMessage('ablunit run failed'))
 					for (const childTest of gatherTestItems(test.children)) {
-						run.errored(childTest,new TestMessage('ablunit run failed'))
+						run.errored(childTest, new TestMessage('ablunit run failed'))
 					}
 				}
 				run.end()
@@ -247,7 +247,7 @@ export async function activate (context: ExtensionContext) {
 
 			showNotification('ablunit tests complete')
 			run.end()
-			log.trace("run.end()")
+			log.trace('run.end()')
 			return
 		}
 
@@ -284,7 +284,7 @@ export async function activate (context: ExtensionContext) {
 				return res
 			}, (err) => {
 				// log.error('failed to add test to test run results object. err=' + err)
-				throw (err)
+				throw err
 			})
 		}
 
@@ -292,7 +292,7 @@ export async function activate (context: ExtensionContext) {
 		const queue: { test: TestItem; data: ABLTestData }[] = []
 		const run = ctrl.createTestRun(request)
 		cancellation.onCancellationRequested(() => {
-			log.debug("cancellation requested")
+			log.debug('cancellation requested')
 			run.end()
 			log.trace('run.end()')
 			throw new CancellationError()
@@ -313,16 +313,16 @@ export async function activate (context: ExtensionContext) {
 		}).catch((err) => {
 			run.end()
 			log.error('run.end() - ablunit run failed with exception: ' + err)
-			throw (err)
+			throw err
 		})
 	}
 
 	function updateNodeForDocument (e: TextDocument | TestItem | Uri, r: string) {
-		log.info("r=" + r)
+		log.info('r=' + r)
 		let u: Uri | undefined
 		if (e instanceof Uri) {
 			u = e
-		} else if (e?.uri) {
+		} else if (e.uri) {
 			u = e.uri
 		}
 		if (!u) {
@@ -335,7 +335,7 @@ export async function activate (context: ExtensionContext) {
 			return new Promise(() => { return })
 		} else {
 			if (!prom) {
-				throw new Error('updateNode failed for \'' + u?.fsPath + '\' - no promise returned')
+				throw new Error('updateNode failed for \'' + u.fsPath + '\' - no promise returned')
 			}
 			return prom.then(() => { return })
 		}
@@ -343,7 +343,7 @@ export async function activate (context: ExtensionContext) {
 
 	async function resolveHandlerFunc (item: TestItem | undefined) {
 		if (!item) {
-			log.debug("resolveHandlerFunc called with undefined item - refresh tests?")
+			log.debug('resolveHandlerFunc called with undefined item - refresh tests?')
 			if (workspace.getConfiguration('ablunit').get('discoverFilesOnActivate', false)) {
 				log.debug('discoverFilesOnActivate is true. refreshing test tree...')
 				return commands.executeCommand('testing.refreshTests').then(() => {
@@ -375,7 +375,7 @@ export async function activate (context: ExtensionContext) {
 
 	ctrl.resolveHandler = async item => {
 		log.info('ctrl.resolveHandler')
-		return resolveHandlerFunc(item)?.then(() => { return })
+		return resolveHandlerFunc(item).then(() => { return })
 	}
 
 	function updateConfiguration (e: ConfigurationChangeEvent) {
@@ -391,7 +391,7 @@ export async function activate (context: ExtensionContext) {
 	testRunProfile.configureHandler = () => {
 		log.info('testRunProfiler.configureHandler')
 		openTestRunConfig().catch((err) => {
-			log.error("Failed to open '.vscode/ablunit-test-profile.json'. err=" + err)
+			log.error('Failed to open \'.vscode/ablunit-test-profile.json\'. err=' + err)
 		})
 	}
 
@@ -426,7 +426,7 @@ function updateNode (uri: Uri, ctrl: TestController) {
 		ctrl.invalidateTestResults(item)
 		if (data) {
 			return getContentFromFilesystem(uri).then((contents) => {
-				data.updateFromContents(ctrl, contents , item)
+				data.updateFromContents(ctrl, contents, item)
 			}).then(() => {
 				return decorator.decorate()
 			})
@@ -449,7 +449,7 @@ export function getContextResourcesUri () {
 
 export function checkCancellationRequested (run: TestRun) {
 	if (run.token.isCancellationRequested) {
-		log.info("test run cancellation requested")
+		log.info('test run cancellation requested')
 		run.end()
 		throw new CancellationError()
 	}
@@ -459,7 +459,7 @@ async function getStorageUri (workspaceFolder: WorkspaceFolder) {
 	if (!getContextStorageUri) { throw new Error('contextStorageUri is undefined') }
 
 	const dirs = workspaceFolder.uri.path.split('/')
-	const ret = Uri.joinPath(getContextStorageUri(),dirs[dirs.length - 1])
+	const ret = Uri.joinPath(getContextStorageUri(), dirs[dirs.length - 1])
 	await createDir(ret)
 	return ret
 }
@@ -497,7 +497,7 @@ function getOrCreateFile (controller: TestController, uri: Uri, excludePatterns?
 			throw new Error('unexpected data type.' +
 								' file=' + workspace.asRelativePath(uri) +
 								', existing.id=' + existing.id +
-								', data.description=' + data?.description)
+								', data.description=' + data.description)
 		}
 	}
 
@@ -512,7 +512,7 @@ function getOrCreateFile (controller: TestController, uri: Uri, excludePatterns?
 	file.description = 'To be parsed...'
 	file.tags = [ new TestTag('runnable') ]
 
-	const parent = getOrCreateDirNodeForFile(controller, uri, (data instanceof ABLTestSuite))
+	const parent = getOrCreateDirNodeForFile(controller, uri, data instanceof ABLTestSuite)
 	if (parent) {
 		parent.children.add(file)
 	} else {
@@ -557,7 +557,7 @@ function getTestSuiteNode (controller: TestController, workspaceFolder: Workspac
 	suiteGroup.canResolveChildren = false
 	suiteGroup.description = 'ABLTestSuiteGroup'
 	suiteGroup.tags = [ new TestTag('runnable'), new TestTag('ABLTestSuiteGroup') ]
-	testData.set(suiteGroup, new ABLTestDir('TestSuiteGroup', '[ABL Test Suites]' , groupId))
+	testData.set(suiteGroup, new ABLTestDir('TestSuiteGroup', '[ABL Test Suites]', groupId))
 	siblings.add(suiteGroup)
 
 	return suiteGroup
@@ -743,7 +743,7 @@ function removeExcludedFiles (controller: TestController, excludePatterns: Relat
 				deleteTest(controller, item)
 			}
 		}
-		if (item.children.size == 0 && (data instanceof ABLTestDir)) {
+		if (item.children.size == 0 && data instanceof ABLTestDir) {
 			deleteTest(controller, item)
 		}
 	}
@@ -808,7 +808,7 @@ async function refreshTestTree (controller: TestController, token: CancellationT
 
 	removeExcludedFiles(controller, excludePatterns, token)
 
-	log.debug("finding files...")
+	log.debug('finding files...')
 	for (const includePattern of includePatterns) {
 		const prom = workspace.findFiles(includePattern, undefined, undefined, token).then((foundFiles) => {
 			foundFiles =  foundFiles.filter(uri => !isFileExcluded(uri, excludePatterns))
@@ -908,8 +908,8 @@ function openCallStackItem (traceUriStr: string) {
 	const traceUri = Uri.file(traceUriStr.split('&')[0])
 	const traceLine = Number(traceUriStr.split('&')[1])
 	return window.showTextDocument(traceUri).then(editor => {
-		const lineToGoBegin = new Position(traceLine,0)
-		const lineToGoEnd = new Position(traceLine + 1,0)
+		const lineToGoBegin = new Position(traceLine, 0)
+		const lineToGoEnd = new Position(traceLine + 1, 0)
 		editor.selections = [new Selection(lineToGoBegin, lineToGoEnd)]
 		const range = new Range(lineToGoBegin, lineToGoEnd)
 		log.info('decorating editor - openCallStackItem')
@@ -944,7 +944,7 @@ export async function doesDirExist (uri: Uri) {
 		}
 		return false
 	}, (err) => {
-		log.info("caught: " + err)
+		log.info('caught: ' + err)
 		return false
 	})
 	return ret
@@ -957,7 +957,7 @@ export async function doesFileExist (uri: Uri) {
 		}
 		return false
 	}, (err) => {
-		log.info("caught: " + err)
+		log.info('caught: ' + err)
 		return false
 	})
 	return ret
@@ -987,7 +987,7 @@ function logActivationEvent () {
 function getExtensionVersion () {
 	const ext = extensions.getExtension('kherring.ablunit-test-runner')
 	// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-	if (ext?.packageJSON && (typeof ext.packageJSON['version'] === 'string')) {
+	if (ext?.packageJSON && typeof ext.packageJSON['version'] === 'string') {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 		return ext.packageJSON.version as string
 	}

@@ -39,11 +39,11 @@ export class ABLResults implements Disposable {
 	globalStorageUri: Uri
 	extensionResourcesUri: Uri
 	wrapperUri: Uri
-	status: string = "none"
+	status = 'none'
 	cfg: ABLUnitConfig
 	startTime: Date
 	endTime!: Date
-	duration = () => { return (Number(this.endTime) - Number(this.startTime)) }
+	duration = () => { return Number(this.endTime) - Number(this.startTime) }
 
 	ablResults: ABLResultsParser | undefined
 	tests: TestItem[] = []
@@ -61,10 +61,10 @@ export class ABLResults implements Disposable {
 	private readonly cancellation: CancellationToken | undefined
 
 	constructor (workspaceFolder: WorkspaceFolder, storageUri: Uri, globalStorageUri: Uri, extensionResourcesUri: Uri, cancellation?: CancellationToken) {
-		log.info("workspaceFolder=" + workspaceFolder.uri.fsPath)
+		log.info('workspaceFolder=' + workspaceFolder.uri.fsPath)
 		if(cancellation) {
 			cancellation.onCancellationRequested(() => {
-				log.info("cancellation requested")
+				log.info('cancellation requested')
 				throw new CancellationError()
 			})
 		}
@@ -75,11 +75,11 @@ export class ABLResults implements Disposable {
 		this.extensionResourcesUri = extensionResourcesUri
 		this.wrapperUri = Uri.joinPath(this.extensionResourcesUri, 'ABLUnitCore-wrapper.p')
 		this.cfg = new ABLUnitConfig()
-		this.setStatus("constructed")
+		this.setStatus('constructed')
 	}
 
 	dispose () {
-		this.setStatus("run cancelled - disposing ABLResults object")
+		this.setStatus('run cancelled - disposing ABLResults object')
 		delete this.profileJson
 		delete this.ablResults
 		delete this.debugLines
@@ -88,7 +88,7 @@ export class ABLResults implements Disposable {
 
 	setStatus (status: string) {
 		this.status = status
-		log.info("STATUS: " + status)
+		log.info('STATUS: ' + status)
 	}
 
 	setTestData (testData: WeakMap<TestItem, ABLTestData>) {
@@ -96,7 +96,7 @@ export class ABLResults implements Disposable {
 	}
 
 	async start () {
-		log.info("[start] workspaceFolder=" + this.workspaceFolder.uri.fsPath)
+		log.info('[start] workspaceFolder=' + this.workspaceFolder.uri.fsPath)
 		this.cfg.setup(this.workspaceFolder)
 
 		this.dlc = getDLC(this.workspaceFolder, this.cfg.ablunitConfig.openedgeProjectProfile)
@@ -109,22 +109,22 @@ export class ABLResults implements Disposable {
 			this.cfg.ablunitConfig.dbAliases = []
 			for (const conn of this.cfg.ablunitConfig.dbConns) {
 				if (conn.aliases.length > 0) {
-					this.cfg.ablunitConfig.dbAliases.push(conn.name + ',' + conn.aliases.join(","))
+					this.cfg.ablunitConfig.dbAliases.push(conn.name + ',' + conn.aliases.join(','))
 				}
 			}
 		}
 
 		// eslint-disable-next-line @typescript-eslint/no-invalid-void-type
 		const prom: (Promise<void> | Promise<void[]>)[] = []
-		prom[0] = this.cfg.createProfileOptions(this.cfg.ablunitConfig.profOptsUri,this.cfg.ablunitConfig.profiler)
+		prom[0] = this.cfg.createProfileOptions(this.cfg.ablunitConfig.profOptsUri, this.cfg.ablunitConfig.profiler)
 		prom[1] = this.cfg.createProgressIni(this.propath.toString())
 		prom[2] = this.cfg.createAblunitJson(this.cfg.ablunitConfig.config_uri, this.cfg.ablunitConfig.options, this.testQueue)
 		prom[3] = this.cfg.createDbConnPf(this.cfg.ablunitConfig.dbConnPfUri, this.cfg.ablunitConfig.dbConns)
 
 		return Promise.all(prom).then(() => {
-			log.info("done creating config files for run")
+			log.info('done creating config files for run')
 		}, (err) => {
-			log.error("ABLResults.start() did not complete promises. err=" + err)
+			log.error('ABLResults.start() did not complete promises. err=' + err)
 		})
 	}
 
@@ -138,13 +138,13 @@ export class ABLResults implements Disposable {
 			return
 		}
 		if (!this.propath) {
-			throw new Error("propath is undefined")
+			throw new Error('propath is undefined')
 		}
 
 		const testPropath = await this.propath.search(test.uri)
 		if (!testPropath) {
 			this.skippedTests.push(test)
-			log.warn("skipping test, not found in propath: " + workspace.asRelativePath(test.uri), options)
+			log.warn('skipping test, not found in propath: ' + workspace.asRelativePath(test.uri), options)
 			return
 		}
 
@@ -152,12 +152,12 @@ export class ABLResults implements Disposable {
 		if (isRelativePath(testPropath.propathEntry.path)) {
 			propathEntryTestFile = workspace.asRelativePath(Uri.joinPath(this.workspaceFolder.uri, testPropath.propathEntry.path))
 		}
-		log.debug("addTest: " + test.id + ", propathEntry=" + propathEntryTestFile)
+		log.debug('addTest: ' + test.id + ', propathEntry=' + propathEntryTestFile)
 		this.tests.push(test)
 
 		let testCase = undefined
-		if (test.id.includes("#")) {
-			testCase = test.id.split("#")[1]
+		if (test.id.includes('#')) {
+			testCase = test.id.split('#')[1]
 		}
 
 		const testUri = test.uri
@@ -182,7 +182,7 @@ export class ABLResults implements Disposable {
 		}
 
 		if (this.testQueue.find((t: ITestObj) => t.test === testRel)) {
-			log.warn("test already exists in configJson.tests: " + testRel)
+			log.warn('test already exists in configJson.tests: ' + testRel)
 		} else {
 			this.testQueue.push(testObj)
 		}
@@ -193,7 +193,7 @@ export class ABLResults implements Disposable {
 			const jsonUri = this.cfg.ablunitConfig.optionsUri.jsonUri
 			await workspace.fs.stat(jsonUri).then((stat) => {
 				if (stat.type === FileType.File) {
-					log.info("delete " + jsonUri.fsPath)
+					log.info('delete ' + jsonUri.fsPath)
 					return workspace.fs.delete(jsonUri)
 				}
 			}, () => {
@@ -213,17 +213,17 @@ export class ABLResults implements Disposable {
 		await this.deleteResultsXml()
 		return ablunitRun(options, this, this.cancellation).then(() => {
 			if(!this.ablResults!.resultsJson) {
-				throw new Error("no results available")
+				throw new Error('no results available')
 			}
 			return true
 		}, (err) => {
-			throw new Error("[ABLResults run] Exception: " + err)
+			throw new Error('[ABLResults run] Exception: ' + err)
 		})
 	}
 
 	async parseOutput (options: TestRun) {
-		this.setStatus("parsing results")
-		log.debug("parsing results from " + this.cfg.ablunitConfig.optionsUri.filenameUri.fsPath, options)
+		this.setStatus('parsing results')
+		log.debug('parsing results from ' + this.cfg.ablunitConfig.optionsUri.filenameUri.fsPath, options)
 
 		this.endTime = new Date()
 		const parseStartTime = new Date()
@@ -232,31 +232,31 @@ export class ABLResults implements Disposable {
 		await this.ablResults.parseResults(this.cfg.ablunitConfig.optionsUri.filenameUri, this.cfg.ablunitConfig.optionsUri.jsonUri).then(() => {
 			log.debug('parsing complete (time=' + (Number(new Date()) - Number(parseStartTime)) + ')')
 			if(!this.ablResults!.resultsJson) {
-				log.error("No results found in " + this.cfg.ablunitConfig.optionsUri.filenameUri.fsPath, options)
-				throw (new Error("[ABLResults parseOutput] No results found in " + this.cfg.ablunitConfig.optionsUri.filenameUri.fsPath + "\r\n"))
+				log.error('No results found in ' + this.cfg.ablunitConfig.optionsUri.filenameUri.fsPath, options)
+				throw new Error('[ABLResults parseOutput] No results found in ' + this.cfg.ablunitConfig.optionsUri.filenameUri.fsPath + '\r\n')
 			}
 			return true
 		}, (err) => {
-			this.setStatus("error parsing results data")
-			log.error("Error parsing ablunit results from " + this.cfg.ablunitConfig.optionsUri.filenameUri.fsPath + ".  err=" + err, options)
-			throw (new Error("[ABLResults parseOutput] Error parsing ablunit results from " + this.cfg.ablunitConfig.optionsUri.filenameUri.fsPath + "\r\nerr=" + err))
+			this.setStatus('error parsing results data')
+			log.error('Error parsing ablunit results from ' + this.cfg.ablunitConfig.optionsUri.filenameUri.fsPath + '.  err=' + err, options)
+			throw new Error('[ABLResults parseOutput] Error parsing ablunit results from ' + this.cfg.ablunitConfig.optionsUri.filenameUri.fsPath + '\r\nerr=' + err)
 		})
 
 		if (this.cfg.ablunitConfig.profiler.enabled && this.cfg.ablunitConfig.profiler.coverage) {
-			this.setStatus("parsing profiler data")
-			log.debug("parsing profiler data from " + workspace.asRelativePath(this.cfg.ablunitConfig.profFilenameUri.fsPath), options)
+			this.setStatus('parsing profiler data')
+			log.debug('parsing profiler data from ' + workspace.asRelativePath(this.cfg.ablunitConfig.profFilenameUri.fsPath), options)
 			await this.parseProfile().then(() => {
 				return true
 			}, (err) => {
-				this.setStatus("error parsing profiler data")
-				log.error("Error parsing profiler data from " + this.cfg.ablunitConfig.profFilenameUri.fsPath + ".  err=" + err, options)
-				throw new Error("Error parsing profiler data from " + workspace.asRelativePath(this.cfg.ablunitConfig.profFilenameUri) + "\r\nerr=" + err)
+				this.setStatus('error parsing profiler data')
+				log.error('Error parsing profiler data from ' + this.cfg.ablunitConfig.profFilenameUri.fsPath + '.  err=' + err, options)
+				throw new Error('Error parsing profiler data from ' + workspace.asRelativePath(this.cfg.ablunitConfig.profFilenameUri) + '\r\nerr=' + err)
 			})
 		}
 
-		const parseTime = (Number(new Date()) - Number(parseStartTime))
-		this.setStatus("parsing output complete (time=" + parseTime + ")")
-		log.debug("parsing output complete (time=" + parseTime + ")", options)
+		const parseTime = Number(new Date()) - Number(parseStartTime)
+		this.setStatus('parsing output complete (time=' + parseTime + ')')
+		log.debug('parsing output complete (time=' + parseTime + ')', options)
 	}
 
 	async assignTestResults (item: TestItem, options: TestRun) {
@@ -266,47 +266,47 @@ export class ABLResults implements Disposable {
 			return
 		}
 		if(!this.ablResults) {
-			throw new Error("no ABLResults object initialized")
+			throw new Error('no ABLResults object initialized')
 		}
 
 		if(this.ablResults.resultsJson.length > 1) {
-			log.info("multiple results files found - this is not supported (item=" + item.label + ")")
-			options.errored(item, new TestMessage("multiple results files found - this is not supported"), this.duration())
+			log.info('multiple results files found - this is not supported (item=' + item.label + ')')
+			options.errored(item, new TestMessage('multiple results files found - this is not supported'), this.duration())
 			return
 		}
 
 		if (!this.ablResults.resultsJson[0].testsuite) {
-			log.info("no tests results available, check the configuration for accuracy (item=" + item.label + ")")
-			options.errored(item, new TestMessage("no tests results available, check the configuration for accuracy"), this.duration())
+			log.info('no tests results available, check the configuration for accuracy (item=' + item.label + ')')
+			options.errored(item, new TestMessage('no tests results available, check the configuration for accuracy'), this.duration())
 			return
 		}
 
 		const suiteName = await this.getSuiteName(item)
 		const s = this.ablResults.resultsJson[0].testsuite.find((s: ITestSuite) => s.classname === suiteName || s.name === suiteName)
 		if (!s) {
-			log.error("could not find test suite for '" + suiteName + "' in results (item=" + item.label + ")")
-			options.errored(item, new TestMessage("could not find test suite for '" + suiteName + "' in results"), this.duration())
+			log.error('could not find test suite for \'' + suiteName + '\' in results (item=' + item.label + ')')
+			options.errored(item, new TestMessage('could not find test suite for \'' + suiteName + '\' in results'), this.duration())
 			return
 		}
 
 		const data = this.testData.get(item)
 		if (data instanceof ABLTestSuite) {
 			if (!s.testsuite) {
-				log.error("no child testsuites found (item=" + item.label + ")")
-				options.errored(item, new TestMessage("no child testsuites found for " + suiteName), this.duration())
+				log.error('no child testsuites found (item=' + item.label + ')')
+				options.errored(item, new TestMessage('no child testsuites found for ' + suiteName), this.duration())
 				return
 			}
 			if (item.children.size > 0) {
 				await this.parseChildSuites(item, s.testsuite, options)
 			} else {
 				if (s.errors > 0) {
-					log.error("errors = " + s.errors + ", failures = " + s.failures + ", passed = " + s.passed + " (item=" + item.label + ")")
-					options.errored(item,new TestMessage("errors = " + s.errors + ", failures = " + s.failures + ", passed = " + s.passed))
+					log.error('errors = ' + s.errors + ', failures = ' + s.failures + ', passed = ' + s.passed + ' (item=' + item.label + ')')
+					options.errored(item, new TestMessage('errors = ' + s.errors + ', failures = ' + s.failures + ', passed = ' + s.passed))
 				} else if (s.failures) {
-					log.error("failures = " + s.failures + ", passed = " + s.passed + " (item=" + item.label + ")")
-					options.failed(item, new TestMessage("failures = " + s.failures + ", passed = " + s.passed))
+					log.error('failures = ' + s.failures + ', passed = ' + s.passed + ' (item=' + item.label + ')')
+					options.failed(item, new TestMessage('failures = ' + s.failures + ', passed = ' + s.passed))
 				} else if (s.skipped) {
-					log.warn("skipped = " + s.skipped + ", passed = " + s.passed + " (item=" + item.label + ")")
+					log.warn('skipped = ' + s.skipped + ', passed = ' + s.passed + ' (item=' + item.label + ')')
 					options.skipped(item)
 				} else {
 					options.passed(item)
@@ -329,7 +329,7 @@ export class ABLResults implements Disposable {
 			if (child) {
 				await this.parseFinalSuite(child, t, options)
 			} else {
-				log.error("could not find child test item for " + t.name + " or " + t.classname)
+				log.error('could not find child test item for ' + t.name + ' or ' + t.classname)
 				// throw new Error("could not find child test item for " + t.name + " or " + t.classname)
 			}
 		}
@@ -345,14 +345,14 @@ export class ABLResults implements Disposable {
 				// // This should be populated automatically by the child messages filtering up
 				// options.failed(item, new vscode.TestMessage("one or more tests failed"), s.time)
 			} else {
-				log.error("unknown error - test results are all zero (item: " + item.label + ")")
-				options.errored(item, new TestMessage("unknown error - test results are all zero"), s.time)
+				log.error('unknown error - test results are all zero (item: ' + item.label + ')')
+				options.errored(item, new TestMessage('unknown error - test results are all zero'), s.time)
 			}
 		}
 
 		if (!s.testcases) {
-			log.error("no test cases discovered or run - check the configuration for accuracy (item: " + item.label + ")")
-			options.errored(item, new TestMessage("no test cases discovered or run - check the configuration for accuracy"), this.duration())
+			log.error('no test cases discovered or run - check the configuration for accuracy (item: ' + item.label + ')')
+			options.errored(item, new TestMessage('no test cases discovered or run - check the configuration for accuracy'), this.duration())
 			return
 		}
 
@@ -366,7 +366,7 @@ export class ABLResults implements Disposable {
 			const propathRelativePath = this.propath!.search(suitePath)
 			suitePath = await propathRelativePath.then((res) => {
 				if (res?.propathRelativeFile) {
-					return res?.propathRelativeFile
+					return res.propathRelativeFile
 				}
 				return suitePath
 			})
@@ -380,8 +380,8 @@ export class ABLResults implements Disposable {
 		children.forEach(child => {
 			const tc = testcases.find((t: ITestCase) => t.name === child.label)
 			if (!tc) {
-				log.error("could not find result for test case (item=" + child.label + ")")
-				options.errored(child, new TestMessage("could not find result for test case '" + child.label + "'"))
+				log.error('could not find result for test case (item=' + child.label + ')')
+				options.errored(child, new TestMessage('could not find result for test case \'' + child.label + '\''))
 				return
 			}
 			promArr.push(this.setChildResults(child, options, tc))
@@ -392,11 +392,11 @@ export class ABLResults implements Disposable {
 
 	private async setChildResults (item: TestItem, options: TestRun, tc: ITestCase) {
 		switch (tc.status) {
-			case "Success": {
+			case 'Success': {
 				options.passed(item, tc.time)
 				return
 			}
-			case "Failure": {
+			case 'Failure': {
 				if (tc.failure) {
 					const diff = this.getDiffMessage(tc.failure)
 					return this.getFailureMarkdownMessage(item, options, tc.failure).then((msg) => {
@@ -407,26 +407,26 @@ export class ABLResults implements Disposable {
 						options.failed(item, tmArr, tc.time)
 					})
 				}
-				log.error("unexpected failure for '" + tc.name + "'")
-				throw new Error("unexpected failure for '" + tc.name)
+				log.error('unexpected failure for \'' + tc.name + '\'')
+				throw new Error('unexpected failure for \'' + tc.name)
 			}
-			case "Error": {
+			case 'Error': {
 				if (tc.failure) {
 					return this.getFailureMarkdownMessage(item, options, tc.failure).then((msg) => {
 						const tm = new TestMessage(msg)
 						options.failed(item, [ tm ], tc.time)
 					})
 				}
-				log.error("unexpected error for " + tc.name)
-				throw new Error("unexpected error for " + tc.name)
+				log.error('unexpected error for ' + tc.name)
+				throw new Error('unexpected error for ' + tc.name)
 			}
-			case "Skpped": {
+			case 'Skpped': {
 				options.skipped(item)
 				return
 			}
 			default: {
-				log.error("unexpected test status " + tc.status + " for " + tc.name)
-				throw new Error("unexpected test status " + tc.status + " for " + tc.name)
+				log.error('unexpected test status ' + tc.status + ' for ' + tc.name)
+				throw new Error('unexpected test status ' + tc.status + ' for ' + tc.name)
 			}
 		}
 	}
@@ -434,20 +434,20 @@ export class ABLResults implements Disposable {
 	private async getFailureMarkdownMessage (item: TestItem, options: TestRun, failure: ITestCaseFailure): Promise<MarkdownString> {
 		const stack = await parseCallstack(this.debugLines!, failure.callstackRaw)
 		const promsg = getPromsgText(failure.message)
-		const md = new MarkdownString(promsg + "\n\n")
+		const md = new MarkdownString(promsg + '\n\n')
 
 		if (stack.markdownText) {
 			md.appendMarkdown(stack.markdownText)
 			md.isTrusted = {
-				enabledCommands: [ "_ablunit.openCallStackItem" ]
+				enabledCommands: [ '_ablunit.openCallStackItem' ]
 			}
 			for(const stackItem of stack.items) {
 				if(stackItem.loc) {
-					options.appendOutput(item.label + " failed! " + failure.message + "\r\n", stackItem.loc)
+					options.appendOutput(item.label + ' failed! ' + failure.message + '\r\n', stackItem.loc)
 				}
 			}
 		} else {
-			md.appendMarkdown(promsg + "\n\n**ABL Call Stack**\n\n<code>\n" + failure.callstackRaw.replace(/\r/g,'\n') + "\n</code>")
+			md.appendMarkdown(promsg + '\n\n**ABL Call Stack**\n\n<code>\n' + failure.callstackRaw.replace(/\r/g, '\n') + '\n</code>')
 		}
 		md.supportHtml = true
 		return md
@@ -457,7 +457,7 @@ export class ABLResults implements Disposable {
 		if (!failure.diff) {
 			return undefined
 		}
-		const tm = TestMessage.diff("Assert failed! ", failure.diff.expectedOutput, failure.diff.actualOutput)
+		const tm = TestMessage.diff('Assert failed! ', failure.diff.expectedOutput, failure.diff.actualOutput)
 		for (const line of failure.callstack.items) {
 			if (line.loc) {
 				tm.location = line.loc
@@ -472,16 +472,16 @@ export class ABLResults implements Disposable {
 		return profParser.parseData(this.cfg.ablunitConfig.profFilenameUri, this.cfg.ablunitConfig.profiler.writeJson, this.debugLines!).then(() => {
 			this.profileJson = profParser.profJSON
 			return this.assignProfileResults().then(() => {
-				log.debug("assignProfileResults complete (time=" + (Number(new Date()) - Number(startTime)) + ")")
+				log.debug('assignProfileResults complete (time=' + (Number(new Date()) - Number(startTime)) + ')')
 			}, (err) => {
-				throw new Error("assignProfileResults error: " + err)
+				throw new Error('assignProfileResults error: ' + err)
 			})
 		})
 	}
 
 	async assignProfileResults () {
 		if (!this.profileJson) {
-			throw (new Error("no profile data available..."))
+			throw new Error('no profile data available...')
 		}
 		const mods: IModule[] = this.profileJson.modules
 		for (let idx=1; idx < mods.length; idx++) {
@@ -497,10 +497,10 @@ export class ABLResults implements Disposable {
 		const fileinfo = await this.propath!.search(module.SourceName)
 		const moduleUri = fileinfo?.uri
 		if (!moduleUri) {
-			if (!module.SourceName.startsWith("OpenEdge.") &&
+			if (!module.SourceName.startsWith('OpenEdge.') &&
 				module.SourceName !== 'ABLUnitCore.p' &&
 				module.SourceName !== 'Ccs.Common.Application') {
-				log.error("could not find moduleUri for " + module.SourceName)
+				log.error('could not find moduleUri for ' + module.SourceName)
 			}
 			return
 		}

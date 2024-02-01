@@ -2,7 +2,7 @@
 interface ICoreOutput {
 	location?: string
 	filename?: string
-	format?: "xml"
+	format?: 'xml'
 	writeJson: boolean
 }
 
@@ -10,7 +10,7 @@ export interface ICoreOptions {
 	output?: {
 		location?: string
 		filename?: string
-		format?: "xml"
+		format?: 'xml'
 		writeJson: boolean
 	}
 	quitOnEnd?: boolean // = true
@@ -21,15 +21,15 @@ export interface ICoreOptions {
 
 export class CoreOptions implements ICoreOptions {
 	output: ICoreOutput = {
-		location: "${tempDir}",
-		filename: "results",
-		format: "xml",
+		location: '${tempDir}',
+		filename: 'results',
+		format: 'xml',
 		writeJson: false
 	}
-	quitOnEnd: boolean = true
-	writeLog: boolean = false
-	showErrorMessage: boolean = true
-	throwError: boolean = true
+	quitOnEnd = true
+	writeLog = false
+	showErrorMessage = true
+	throwError = true
 
 	constructor (from?: ICoreOptions) {
 		if (from === undefined) {

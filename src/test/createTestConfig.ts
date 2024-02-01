@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { GlobSync } from 'glob'
 import * as fs from 'fs'
 
@@ -40,7 +41,7 @@ function createTestConfig (projName: string, testFile: string, workspaceFolder?:
 		workspaceFolder = './test_projects/' + g.found[0]
 	}
 	if (! fs.existsSync(workspaceFolder)) {
-		console.log("skipping config create for " + projName + ", workspaceFolder=" + workspaceFolder + " does not exist")
+		console.log('skipping config create for ' + projName + ', workspaceFolder=' + workspaceFolder + ' does not exist')
 		return
 	}
 
@@ -49,13 +50,13 @@ function createTestConfig (projName: string, testFile: string, workspaceFolder?:
 	}
 
 	const launchArgs: string[] = []
-	if (projName != "DebugLines" &&
-		projName != "proj3" &&
-		projName != "proj4" &&
-		projName != "proj7A" &&
-		projName != "proj7B" &&
-		projName != "proj9" &&
-		projName != "projA") {
+	if (projName != 'DebugLines' &&
+		projName != 'proj3' &&
+		projName != 'proj4' &&
+		projName != 'proj7A' &&
+		projName != 'proj7B' &&
+		projName != 'proj9' &&
+		projName != 'projA') {
 		launchArgs.push('--disable-extensions')
 	}
 

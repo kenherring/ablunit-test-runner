@@ -27,6 +27,7 @@
 		"noImplicitReturns": false,
 		"noImplicitThis": true,
 		"noPropertyAccessFromIndexSignature": true,
+		// DISABLED - total bummer when testing, gets in the way
 		// "noUnusedLocals": true,
 		"noUnusedParameters": true,
 		"removeComments": true,

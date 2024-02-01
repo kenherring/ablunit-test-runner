@@ -71,7 +71,7 @@ export class ABLResultsParser {
 		try {
 			this.resultsJson = [ await this.parseSuites(resultsXmlJson) ]
 		} catch (err) {
-			log.error("[parseResults] error parsing results.xml file: " + err)
+			log.error('[parseResults] error parsing results.xml file: ' + err)
 			throw err
 		}
 		if (jsonUri) {
@@ -84,7 +84,7 @@ export class ABLResultsParser {
 
 		parseString(xmlData, function (err: Error | null, resultsRaw: any) {
 			if (err) {
-				throw new Error("error parsing XML file: " + err)
+				throw new Error('error parsing XML file: ' + err)
 			}
 			res = resultsRaw
 			return String(resultsRaw)
@@ -94,8 +94,8 @@ export class ABLResultsParser {
 
 	async parseSuites (res: any) {
 		if(!res.testsuites) {
-			log.error("malformed results file (1) - could not find top-level 'testsuites' node")
-			throw new Error("malformed results file (1) - could not find top-level 'testsuites' node")
+			log.error('malformed results file (1) - could not find top-level \'testsuites\' node')
+			throw new Error('malformed results file (1) - could not find top-level \'testsuites\' node')
 		}
 		res = res.testsuites
 
@@ -175,19 +175,19 @@ export class ABLResultsParser {
 	}
 
 	async parseFailOrError (res: any) {
-		if (res['$'].status === "Success" || res['$'].status === "Skipped") {
+		if (res['$'].status === 'Success' || res['$'].status === 'Skipped') {
 			return undefined
 		}
 		let type = ''
 
 		if (res['failure']) {
-			type = "failure"
+			type = 'failure'
 		} else if (res['error']) {
-			type = "error"
+			type = 'error'
 		} else {
-			throw new Error("malformed results  file (3) - could not find 'failure' or 'error' node")
+			throw new Error('malformed results  file (3) - could not find \'failure\' or \'error\' node')
 		}
-		if (res[type].length > 1) { throw new Error("more than one failure or error in testcase - use case not handled") }
+		if (res[type].length > 1) { throw new Error('more than one failure or error in testcase - use case not handled') }
 
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 		const callstack = await parseCallstack(this.debugLines, res[type][0]['_'])
@@ -211,11 +211,11 @@ export class ABLResultsParser {
 
 	writeJsonToFile (uri: Uri) {
 		const data = this.resultsJson
-		log.info("writing results json file: " + uri.fsPath)
+		log.info('writing results json file: ' + uri.fsPath)
 		return workspace.fs.writeFile(uri, Uint8Array.from(Buffer.from(JSON.stringify(data, null, 2)))).then(() => {
-			log.info("wrote results json file: " + uri.fsPath)
+			log.info('wrote results json file: ' + uri.fsPath)
 		}, (err) => {
-			log.error("failed to write profile output json file " + uri.fsPath + " - " + err)
+			log.error('failed to write profile output json file ' + uri.fsPath + ' - ' + err)
 		})
 	}
 }

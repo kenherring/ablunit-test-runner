@@ -42,7 +42,7 @@ class Logger {
 		this.testResultsTimestamp = e
 	}
 
-	trace (message: string, testRun?: TestRun, stackTrace: boolean = true) {
+	trace (message: string, testRun?: TestRun, stackTrace = true) {
 		this.writeMessage(LogLevel.Trace, message, testRun, stackTrace)
 	}
 
@@ -61,7 +61,7 @@ class Logger {
 	error (message: string | Error, testRun?: TestRun) {
 		if (message instanceof Error) {
 			if (message.stack) {
-				message = '[' + message.name + '] ' +  message.message + "\r\r" + message.stack
+				message = '[' + message.name + '] ' +  message.message + '\r\r' + message.stack
 			} else {
 				message = '[' + message.name + '] ' +  message.message
 			}
@@ -69,7 +69,7 @@ class Logger {
 		this.writeMessage(LogLevel.Error, message, testRun)
 	}
 
-	private writeMessage (messageLevel: LogLevel, message: string, testRun?: TestRun, includeStack: boolean = false) {
+	private writeMessage (messageLevel: LogLevel, message: string, testRun?: TestRun, includeStack = false) {
 		this.writeToChannel(messageLevel, message, includeStack)
 
 		if (testRun && messageLevel >= this.testResultsLogLevel) {
@@ -93,13 +93,13 @@ class Logger {
 			case LogLevel.Error:	this.logOutputChannel.error(message); break
 			default:
 				this.logOutputChannel.appendLine(message)
-				throw new Error("invalid log level for message! level=" + messageLevel + ", message=" + message)
+				throw new Error('invalid log level for message! level=' + messageLevel + ', message=' + message)
 		}
 	}
 
 	private writeToTestResults (message: string, testRun: TestRun, includeStack: boolean) {
 		if (this.testResultsTimestamp) {
-			message = '[' + (new Date()).toISOString() + '] ' + message
+			message = '[' + new Date().toISOString() + '] ' + message
 		}
 		let optMsg = message.replace(/\r/g, '').replace(/\n/g, '\r\n')
 
@@ -112,7 +112,7 @@ class Logger {
 			optMsg = optMsg + '\r\n' + stack
 		}
 
-		testRun.appendOutput(optMsg + "\r\n")
+		testRun.appendOutput(optMsg + '\r\n')
 	}
 
 	private writeToConsole (messageLevel: LogLevel, message: string, includeStack: boolean) {
@@ -155,7 +155,7 @@ class Logger {
 			const filename = s.getFileName()
 			if (filename && filename !== __filename && !filename.endsWith('extensionHostProcess.js')) {
 				const funcname = s.getFunctionName()
-				let ret = filename.replace(path.normalize(__dirname),'').substring(1).replace(/\\/g, '/') + ':' + s.getLineNumber()
+				let ret = filename.replace(path.normalize(__dirname), '').substring(1).replace(/\\/g, '/') + ':' + s.getLineNumber()
 				if (funcname) {
 					ret = ret + ' ' + funcname
 				}
@@ -164,7 +164,7 @@ class Logger {
 		}
 	}
 
-	private decorateMessage (message: string, includeStack: boolean = false) {
+	private decorateMessage (message: string, includeStack = false) {
 		if (includeStack) {
 			return message
 		}

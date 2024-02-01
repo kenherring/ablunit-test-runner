@@ -35,7 +35,7 @@ class TestData {
 
 export const testData = new TestData()
 
-const displayClassLabel = workspace.getConfiguration('ablunit').get('explorer.classlabel','')
+const displayClassLabel = workspace.getConfiguration('ablunit').get('explorer.classlabel', '')
 
 function createTestItem (
 	controller: TestController,
@@ -49,7 +49,7 @@ function createTestItem (
 	const thead = controller.createTestItem(item.uri!.fsPath, label, item.uri)
 	thead.description = description
 	thead.range = range
-	thead.tags = [new TestTag("runnable"), new TestTag(tag)]
+	thead.tags = [new TestTag('runnable'), new TestTag(tag)]
 	return thead
 }
 
@@ -82,7 +82,7 @@ export class ABLTestDir implements ITestType {
 	public canResolveChildren = false
 	public description: string
 	public relativePath: string
-	public label: string = ''
+	public label = ''
 
 	constructor (desc: string, label: string, path: Uri | string) {
 		this.description = desc
@@ -103,15 +103,15 @@ export class ABLTestCase extends TestTypeObj {
 }
 
 export class ABLTestFile extends TestTypeObj {
-	public override isFile: boolean = true
-	public override runnable: boolean = true
-	public override canResolveChildren: boolean = false
-	public relativePath: string = ''
+	public override isFile = true
+	public override runnable = true
+	public override canResolveChildren = false
+	public relativePath = ''
 	currentResults?: ABLResults
 	public children: ABLTestCase[] = []
 
 	cancellationRequested () {
-		log.info("cancellation requested")
+		log.info('cancellation requested')
 		throw new CancellationError()
 	}
 
@@ -133,16 +133,16 @@ export class ABLTestFile extends TestTypeObj {
 
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	updateFromContents (_controller: TestController, _content: string, item: TestItem) {
-		log.error("updateFromContents not implemented - should be calling implementation in subclass (item=" + item.id + ")")
+		log.error('updateFromContents not implemented - should be calling implementation in subclass (item=' + item.id + ')')
 		return false
 		// throw new Error("Method not implemented - should be calling implementation in subclass")
 	}
 
 	startParsing (item: TestItem) {
 		this.relativePath = workspace.asRelativePath(item.uri!.fsPath)
-		log.trace("parsing test file " + this.relativePath + " as " + this.description)
+		log.trace('parsing test file ' + this.relativePath + ' as ' + this.description)
 		this.didResolve = true
-		item.tags = [new TestTag("runnable"), new TestTag(this.description)]
+		item.tags = [new TestTag('runnable'), new TestTag(this.description)]
 		item.description = this.description
 	}
 
@@ -158,7 +158,7 @@ export class ABLTestFile extends TestTypeObj {
 		}
 	}
 
-	updateItem (controller: TestController, item: TestItem, response: IClassRet | IProgramRet | undefined, childType: "Method" | "Procedure") {
+	updateItem (controller: TestController, item: TestItem, response: IClassRet | IProgramRet | undefined, childType: 'Method' | 'Procedure') {
 		if (!response) {
 			this.deleteItem(controller, item)
 			return
@@ -174,14 +174,14 @@ export class ABLTestFile extends TestTypeObj {
 		controller.items.delete(item.id)
 	}
 
-	updateChildren (controller: TestController, item: TestItem, testcases: ITestCase[], type: "Method" | "Procedure") {
+	updateChildren (controller: TestController, item: TestItem, testcases: ITestCase[], type: 'Method' | 'Procedure') {
 		const originalChildren: string[] = []
 		for (const [childId,] of item.children) {
 			originalChildren.push(childId)
 		}
 
 		for (const tc of testcases) {
-			const id = item.uri!.fsPath + "#" + tc.label
+			const id = item.uri!.fsPath + '#' + tc.label
 			const child = item.children.get(id)
 
 			if (child) {
@@ -204,11 +204,11 @@ export class ABLTestFile extends TestTypeObj {
 		uri: Uri,
 		type: string) {
 		const child = controller.createTestItem(id, label, uri)
-		const data = new ABLTestCase(id, label, "ABL Test " + type)
+		const data = new ABLTestCase(id, label, 'ABL Test ' + type)
 		child.range = range
-		child.tags = [new TestTag("runnable"), new TestTag("ABLTest" + type)]
+		child.tags = [new TestTag('runnable'), new TestTag('ABLTest' + type)]
 		child.canResolveChildren = false
-		child.description = "ABL Test " + type
+		child.description = 'ABL Test ' + type
 
 		testData.set(child, data)
 		this.children.push(data)
@@ -248,7 +248,7 @@ export class ABLTestFile extends TestTypeObj {
 export class ABLTestSuite extends ABLTestFile {
 
 	constructor (label: string) {
-		super("ABL Test Suite", label)
+		super('ABL Test Suite', label)
 	}
 
 	public override updateFromContents (controller: TestController, content: string, item: TestItem) {
@@ -256,7 +256,7 @@ export class ABLTestSuite extends ABLTestFile {
 		const response = parseABLTestSuite(content)
 
 		if (!response) {
-			this.deleteItem(controller,item)
+			this.deleteItem(controller, item)
 			return false
 		}
 
@@ -271,16 +271,16 @@ export class ABLTestSuite extends ABLTestFile {
 
 		for (const cls of response.classes) {
 			if(!cls) { continue }
-			const id = item.uri!.fsPath + "#" + cls
-			if(this.updateChildProgram(controller, item, id, cls, "ABLTestClass")) {
+			const id = item.uri!.fsPath + '#' + cls
+			if(this.updateChildProgram(controller, item, id, cls, 'ABLTestClass')) {
 				originalChildren.splice(originalChildren.indexOf(id), 1)
 			}
 		}
 
 		for (const proc of response.procedures) {
 			if(!proc) { continue }
-			const id = item.uri!.fsPath + "#" + proc
-			if(this.updateChildProgram(controller, item, id, proc, "ABLTestProgram")) {
+			const id = item.uri!.fsPath + '#' + proc
+			if(this.updateChildProgram(controller, item, id, proc, 'ABLTestProgram')) {
 				originalChildren.splice(originalChildren.indexOf(id), 1)
 			}
 		}
@@ -289,7 +289,7 @@ export class ABLTestSuite extends ABLTestFile {
 		return (item.children.size ?? 0) > 0
 	}
 
-	updateChildProgram (controller: TestController, item: TestItem, id: string, label: string, type: "ABLTestClass" | "ABLTestProgram") {
+	updateChildProgram (controller: TestController, item: TestItem, id: string, label: string, type: 'ABLTestClass' | 'ABLTestProgram') {
 		const child = item.children.get(id)
 
 		if(child) {
@@ -297,7 +297,7 @@ export class ABLTestSuite extends ABLTestFile {
 			return true
 		} else {
 			const thead = createTestItem(controller, item, undefined, label, label, type)
-			if (type === "ABLTestClass") {
+			if (type === 'ABLTestClass') {
 				const tData = new ABLTestClass(label)
 				tData.setClassInfo(label)
 				testData.set(thead, tData)
@@ -312,10 +312,10 @@ export class ABLTestSuite extends ABLTestFile {
 }
 
 export class ABLTestClass extends ABLTestFile {
-	public classTypeName: string = ''
+	public classTypeName = ''
 
 	constructor (label: string) {
-		super("ABL Test Class", label)
+		super('ABL Test Class', label)
 	}
 
 	setClassInfo (classTypeName?: string) {
@@ -327,7 +327,7 @@ export class ABLTestClass extends ABLTestFile {
 	public override updateFromContents (controller: TestController, content: string, item: TestItem) {
 		this.startParsing(item)
 		const response = parseABLTestClass(displayClassLabel, content, this.relativePath)
-		this.updateItem(controller, item, response, "Method")
+		this.updateItem(controller, item, response, 'Method')
 
 		this.setClassInfo(response?.classname)
 		return (item.children.size ?? 0) > 0
@@ -337,13 +337,13 @@ export class ABLTestClass extends ABLTestFile {
 export class ABLTestProgram extends ABLTestFile {
 
 	constructor (label: string) {
-		super("ABL Test Program", label)
+		super('ABL Test Program', label)
 	}
 
 	public override updateFromContents (controller: TestController, content: string, item: TestItem) {
 		this.startParsing(item)
 		const response = parseABLTestProgram(content, this.relativePath)
-		this.updateItem(controller, item, response, "Procedure")
+		this.updateItem(controller, item, response, 'Procedure')
 		return (item.children.size ?? 0) > 0
 	}
 }

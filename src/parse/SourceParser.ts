@@ -44,21 +44,21 @@ export const getSourceMapFromSource = async (propath: PropathParser, debugSource
 	const incLengths: IIncLength[] = []
 	const includes: IXrefInclude[] = []
 	const warnings: string[] = []
-	let lineCount: number = 0
+	let lineCount = 0
 
 
 	const readLineCount = (uri: Uri) => {
 		return workspace.fs.readFile(uri).then((content) => {
-			return Buffer.from(content.buffer).toString().split("\n").length
+			return Buffer.from(content.buffer).toString().split('\n').length
 		})
 	}
 
 	const readIncludeLineCount = async (uri: Uri) => {
 		return workspace.fs.readFile(uri).then((content) => {
-			const lines = Buffer.from(content.buffer).toString().replace(/\r/g,'').split("\n")
+			const lines = Buffer.from(content.buffer).toString().replace(/\r/g, '').split('\n')
 
 			let lc = lines.length
-			if (lines[lines.length] != "") {
+			if (lines[lines.length] != '') {
 				lc++
 			}
 			incLengths.push({
@@ -73,7 +73,7 @@ export const getSourceMapFromSource = async (propath: PropathParser, debugSource
 		if (inc) {
 			const incLen = incLengths.find((incLen) => incLen.incUri.fsPath === inc.incUri.fsPath)
 			if (!incLen) {
-				throw new Error("cannot find include length for " + inc.incUri + " [should not hit this!! (3)]")
+				throw new Error('cannot find include length for ' + inc.incUri + ' [should not hit this!! (3)]')
 			}
 			for(let incLine=1; incLine<=incLen.lineCount; incLine++) {
 				if (incLine === incLen.lineCount) {
@@ -119,12 +119,12 @@ export const getSourceMapFromSource = async (propath: PropathParser, debugSource
 		const content = await readXrefFile(xrefUri)
 
 		if (content) {
-			const lines = content.split("\n")
+			const lines = content.split('\n')
 			for(let idx=0; idx < lines.length; idx++) { // NOSONAR
 				const line = lines[idx]
 				const xref = incRE.exec(line)
 
-				if (xref && xref.length >= 5 && xref[4] == "INCLUDE") {
+				if (xref && xref.length >= 5 && xref[4] == 'INCLUDE') {
 					const [, relativePath, ,lineNumStr, ,includeNameRaw] = xref
 					const pinfo = await propath.search(relativePath)
 					const lineNum = Number(lineNumStr)
@@ -160,9 +160,9 @@ export const getSourceMapFromSource = async (propath: PropathParser, debugSource
 		if (!debugLines) {
 			const fileinfo = await propath.search(debugSourceName)
 			if (!fileinfo) {
-				if (!debugSourceName.startsWith("OpenEdge.") && debugSourceName != "ABLUnitCore.p") {
+				if (!debugSourceName.startsWith('OpenEdge.') && debugSourceName != 'ABLUnitCore.p') {
 					if (!warnings.includes(debugSourceName)) {
-						log.error("[getSourceMap] WARNING: cannot find " + debugSourceName + " in propath.")
+						log.error('[getSourceMap] WARNING: cannot find ' + debugSourceName + ' in propath.')
 						warnings.push(debugSourceName)
 					}
 				}
@@ -171,7 +171,7 @@ export const getSourceMapFromSource = async (propath: PropathParser, debugSource
 			try {
 				debugLines = await importDebugLines(debugSourceName, fileinfo.uri, fileinfo.xrefUri)
 			} catch (e) {
-				log.warn("cannot read: " + fileinfo.uri.fsPath)
+				log.warn('cannot read: ' + fileinfo.uri.fsPath)
 				return undefined
 			}
 		}

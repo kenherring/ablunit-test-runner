@@ -7,7 +7,7 @@ import { isRelativePath, readStrippedJsonFile } from '../ABLUnitCommon'
 import { log } from '../ChannelLogger'
 import { IDatabaseConnection, getProfileDbConns } from './OpenedgeProjectParser'
 
-const runProfileFilename: string = 'ablunit-test-profile.json'
+const runProfileFilename = 'ablunit-test-profile.json'
 
 export interface IConfigurations {
 	// Import the json from .vscode/ablunit-test-profile.json and cast to this interface
@@ -25,14 +25,14 @@ function getConfigurations (uri: Uri) {
 		}
 		return JSON.parse(str) as IConfigurations
 	} catch (err) {
-		log.error("Failed to parse ablunit-test-profile: " + err)
+		log.error('Failed to parse ablunit-test-profile: ' + err)
 		throw err
 	}
 }
 
 function mergeObjects (from: object, into: object) {
 	if(typeof from !== typeof into) {
-		throw new Error("Merge objects must be the same type! (from=" + typeof from + ", into=" + typeof into + ")")
+		throw new Error('Merge objects must be the same type! (from=' + typeof from + ', into=' + typeof into + ')')
 	}
 
 	Object.entries(from).forEach(([key,]) => {
@@ -67,7 +67,7 @@ function getDefaultConfig () {
 
 export function parseRunProfiles (workspaceFolders: WorkspaceFolder[], wsFilename: string = runProfileFilename) {
 	if (workspaceFolders.length === 0) {
-		throw new Error("Workspace has no open folders")
+		throw new Error('Workspace has no open folders')
 	}
 	const defaultConfig = getDefaultConfig()
 
@@ -75,7 +75,7 @@ export function parseRunProfiles (workspaceFolders: WorkspaceFolder[], wsFilenam
 	for (const workspaceFolder of workspaceFolders) {
 		let wfConfig: IConfigurations
 		try {
-			wfConfig = getConfigurations(Uri.joinPath(workspaceFolder.uri,'.vscode',wsFilename))
+			wfConfig = getConfigurations(Uri.joinPath(workspaceFolder.uri, '.vscode', wsFilename))
 		} catch (err) {
 			log.error('could not import ablunit-test-profile.json.  reverting to default profile')
 			log.debug('err=' + err)
@@ -161,16 +161,16 @@ export class RunConfig extends DefaultRunProfile {
 	constructor (private readonly profile: IRunProfile, public workspaceFolder: WorkspaceFolder) {
 		super()
 		this.tempDirUri = this.getUri(this.profile.tempDir)
-		log.debug("tempDirUri=" + this.tempDirUri.fsPath)
+		log.debug('tempDirUri=' + this.tempDirUri.fsPath)
 		this.config_uri = Uri.joinPath(this.tempDirUri, 'ablunit.json')
 		this.profOptsUri = Uri.joinPath(this.tempDirUri, 'profile.options')
 		this.dbConnPfUri = Uri.joinPath(this.tempDirUri, 'dbconn.pf')
-		this.importOpenedgeProjectJson = (this.profile.importOpenedgeProjectJson ?? true)
-		this.openedgeProjectProfile = (this.profile.openedgeProjectProfile ?? undefined)
+		this.importOpenedgeProjectJson = this.profile.importOpenedgeProjectJson ?? true
+		this.openedgeProjectProfile = this.profile.openedgeProjectProfile ?? undefined
 		this.dbConns = getProfileDbConns(this.workspaceFolder.uri, this.profile.openedgeProjectProfile)
 
 		this.options = new CoreOptions(this.profile.options)
-		const tmpFilename = (this.profile.options?.output?.filename?.replace(/\.xml$/,'') ?? 'results') + '.xml'
+		const tmpFilename = (this.profile.options?.output?.filename?.replace(/\.xml$/, '') ?? 'results') + '.xml'
 		this.optionsUri = {
 			locationUri: this.getUri(this.profile.options?.output?.location + '/'),
 			filenameUri: Uri.joinPath(this.tempDirUri, tmpFilename),
@@ -178,8 +178,8 @@ export class RunConfig extends DefaultRunProfile {
 		this.options.output.location = workspace.asRelativePath(this.optionsUri.locationUri, false)
 		this.optionsUri.filenameUri = Uri.joinPath(this.optionsUri.locationUri, tmpFilename)
 
-		if (this.options.output?.writeJson) {
-			this.optionsUri.jsonUri = Uri.joinPath(this.optionsUri.locationUri, tmpFilename.replace(/\.xml$/,'') + '.json')
+		if (this.options.output.writeJson) {
+			this.optionsUri.jsonUri = Uri.joinPath(this.optionsUri.locationUri, tmpFilename.replace(/\.xml$/, '') + '.json')
 		}
 
 		this.command = new CommandOptions(this.profile.command)

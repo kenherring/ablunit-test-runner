@@ -14,7 +14,7 @@ export interface ITestSuite {
 }
 
 export function parseABLTestSuite (text: string) {
-	const [ lines, foundAnnotation ] = getLines(text,"@testsuite")
+	const [ lines, foundAnnotation ] = getLines(text, '@testsuite')
 	if (!foundAnnotation) {
 		return
 	}
@@ -28,18 +28,18 @@ export function parseABLTestSuite (text: string) {
 
 export function parseSuiteLines (lines: string[]) {
 	const suiteRet: ITestSuite = {
-		name: "",
-		range: new Range(new Position(0,0), new Position(0,0)),
+		name: '',
+		range: new Range(new Position(0, 0), new Position(0, 0)),
 		classes: [],
 		procedures: []
 	}
 
 	for (let lineNo = 0; lineNo < lines.length; lineNo++) {
-		if (lines[lineNo] === "") {
+		if (lines[lineNo] === '') {
 			continue
 		}
 
-		if(lines[lineNo].toLowerCase().includes("@testsuite")) {
+		if(lines[lineNo].toLowerCase().includes('@testsuite')) {
 			const suiteRes = suiteRE.exec(lines[lineNo])
 
 			const r = parseAnnotation(suiteRes)

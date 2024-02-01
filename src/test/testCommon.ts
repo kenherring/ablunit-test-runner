@@ -25,79 +25,80 @@ export const log = logObj
 
 let recentResults: ABLResults[]
 let decorator: Decorator
-let testController: TestController
+let testController: TestController | undefined = undefined
 
 export {
 	deleteFile
 }
 
-export function sleep (time: number = 2000, msg?: string) {
-	let status = "sleeping for " + time + "ms"
+export function sleep (time = 2000, msg?: string) {
+	let status = 'sleeping for ' + time + 'ms'
 	if (msg) {
-		status = status + " [" + msg + "]"
+		status = status + ' [' + msg + ']'
 	}
-	console.log(status)
+	log.info(status)
 	return new Promise(resolve => setTimeout(resolve, time))
 }
 
 export function getAblunitExt () {
 	const ext = extensions.getExtension('kherring.ablunit-test-runner')
 	if (!ext) {
-		throw new Error("kherring.ablunit-test-runner is not installed")
+		throw new Error('kherring.ablunit-test-runner is not installed')
 	}
 	return ext
 }
 
-export async function waitForExtensionActive (extensionId: string = 'kherring.ablunit-test-runner') {
+export async function waitForExtensionActive (extensionId = 'kherring.ablunit-test-runner') {
 	const ext = extensions.getExtension(extensionId)
 	if (!ext) {
-		throw new Error(extensionId + " is not installed")
+		throw new Error(extensionId + ' is not installed')
 	}
 
 	if (!ext.isActive) {
 		await ext.activate().then(() => {
-			console.log("activated " + extensionId)
+			log.info('activated ' + extensionId)
 		}, (err) => {
-			throw new Error("failed to activate kherring.ablunit-test-runner: " + err)
+			throw new Error('failed to activate kherring.ablunit-test-runner: ' + err)
 		})
 	}
 
 	if(!ext.isActive) {
-		console.log("waiting for extension to activate - should never be here!")
+		log.info('waiting for extension to activate - should never be here!')
 		for (let i=0; i<50; i++) {
 			await sleep(100)
 			if (ext.isActive) {
-				console.log("waitied " + ((i + 1) * 100) + "ms for extension to activate")
+				log.info('waitied ' + (i + 1) * 100 + 'ms for extension to activate')
 				break
 			}
 		}
 	}
 
 	if (!ext.isActive) {
-		throw new Error(extensionId + " is not active")
+		throw new Error(extensionId + ' is not active')
 	}
-	console.log(extensionId + " is active!")
-	return refreshData()
+	log.info(extensionId + ' is active!')
+	// return refreshData()
 }
 
 async function installOpenedgeABLExtension () {
-	if (!extensions.getExtension("riversidesoftware.openedge-abl-lsp")) {
-		log.debug("[testCommon.ts] installing riversidesoftware.openedge-abl-lsp extension...")
+	if (!extensions.getExtension('riversidesoftware.openedge-abl-lsp')) {
+		log.debug('[testCommon.ts] installing riversidesoftware.openedge-abl-lsp extension...')
 		await commands.executeCommand('workbench.extensions.installExtension', 'riversidesoftware.openedge-abl-lsp').then(() => {
-			log.trace("[testCommon.ts] installed riversidesoftware.openedge-abl-lsp extension!")
+			log.trace('[testCommon.ts] installed riversidesoftware.openedge-abl-lsp extension!')
+			return setRuntimes([{name: '12.2', path: getDefaultDLC(), default: true}])
 		}, (err: Error) => {
 			if (err.toString() === 'Error: Missing gallery') {
-				log.trace("[testCommon.ts] triggered installed extension, but caught '" + err + "'")
+				log.trace('[testCommon.ts] triggered installed extension, but caught \'' + err + '\'')
 			} else {
-				throw new Error("[testCommon.ts] failed to install extension: " + err)
+				throw new Error('[testCommon.ts] failed to install extension: ' + err)
 			}
 		})
 		await sleep(500)
 	}
 
-	const ext = extensions.getExtension("riversidesoftware.openedge-abl-lsp")
+	const ext = extensions.getExtension('riversidesoftware.openedge-abl-lsp')
 	if (!ext) {
-		throw new Error("[testCommon.ts] failed to get extension")
+		throw new Error('[testCommon.ts] failed to get extension')
 	}
 	log.trace('[testCommon.ts] activating riversidesoftware.openedge-abl-lsp extension...')
 	await ext.activate().then(() => waitForExtensionActive('riversidesoftware.openedge-abl-lsp')).then(() => {
@@ -106,57 +107,56 @@ async function installOpenedgeABLExtension () {
 
 	log.trace('[testCommon.ts] riversidesoftware.openedge-abl-lsp active=' + ext.isActive)
 	if (!ext.isActive) {
-		throw new Error("[testCommon.ts] failed to activate extension")
+		throw new Error('[testCommon.ts] failed to activate extension')
 	}
 }
 
 export async function setRuntimes (runtimes: IRuntime[]) {
 	return installOpenedgeABLExtension().then(async () => {
-		log.info("[testCommon.ts] setting abl.configuration.runtimes")
+		log.info('[testCommon.ts] setting abl.configuration.runtimes')
 		return workspace.getConfiguration('abl.configuration').update('runtimes', runtimes, ConfigurationTarget.Global).then(async () =>{
-			log.info("[testCommon.ts] abl.configuration.runtimes set successfully")
-			await sleep(1000)
-			return true
+			log.info('[testCommon.ts] abl.configuration.runtimes set successfully')
+			return sleep(500)
 		}, (err) => {
-			throw new Error("[testCommon.ts] failed to set runtimes: " + err)
+			throw new Error('[testCommon.ts] failed to set runtimes: ' + err)
 		})
 	})
 }
 
-export async function awaitRCode (workspaceFolder: WorkspaceFolder, rcodeCountMinimum: number = 1) {
+export async function awaitRCode (workspaceFolder: WorkspaceFolder, rcodeCountMinimum = 1) {
 	const buildWaitTime = 20
 	let fileCount = 0
-	console.log("waiting up to" + buildWaitTime + " seconds for r-code")
+	log.info('waiting up to' + buildWaitTime + ' seconds for r-code')
 	for (let i = 0; i < buildWaitTime; i++) {
 		await new Promise((resolve) => setTimeout(resolve, 1000))
 
 		const g = new GlobSync('**/*.r', { cwd: workspaceFolder.uri.fsPath })
 		fileCount = g.found.length
-		console.log("(" + i + "/" + buildWaitTime + ") found " + fileCount + " r-code files...")
+		log.info('(' + i + '/' + buildWaitTime + ') found ' + fileCount + ' r-code files...')
 		if (fileCount >= rcodeCountMinimum) {
-			console.log("found " + fileCount + " r-code files! ready to test")
+			log.info('found ' + fileCount + ' r-code files! ready to test')
 			return fileCount
 		}
-		console.log("found " + fileCount + " r-code files. waiting...")
-		console.log("found files: " + JSON.stringify(g.found,null,2))
+		log.info('found ' + fileCount + ' r-code files. waiting...')
+		log.info('found files: ' + JSON.stringify(g.found, null, 2))
 	}
 
 	await commands.executeCommand('abl.dumpFileStatus').then(() => {
-		console.log("abl.dumpFileStatus complete!")
+		log.info('abl.dumpFileStatus complete!')
 	})
 	await commands.executeCommand('abl.dumpLangServStatus').then(() => {
-		console.log("abl.dumpLangServStatus complete!")
+		log.info('abl.dumpLangServStatus complete!')
 	})
-	throw new Error("r-code files not found")
+	throw new Error('r-code files not found')
 }
 
 export function getWorkspaceUri () {
 	if (workspace.workspaceFolders === undefined || workspace.workspaceFolders.length === 0) {
-		throw new Error("workspace.workspaceFolders is undefined")
+		throw new Error('workspace.workspaceFolders is undefined')
 	} else if (workspace.workspaceFolders.length === 1) {
 		return workspace.workspaceFolders[0].uri
 	} else {
-		throw new Error("workspace.workspaceFolders has more than one entry")
+		throw new Error('workspace.workspaceFolders has more than one entry')
 	}
 }
 
@@ -197,9 +197,9 @@ export function doesDirExist (uri: Uri | string) {
 
 export function deleteTestFiles () {
 	const workspaceUri = getWorkspaceUri()
-	deleteFile(Uri.joinPath(workspaceUri, "ablunit.json"))
-	deleteFile(Uri.joinPath(workspaceUri, "results.json"))
-	deleteFile(Uri.joinPath(workspaceUri, "results.xml"))
+	deleteFile(Uri.joinPath(workspaceUri, 'ablunit.json'))
+	deleteFile(Uri.joinPath(workspaceUri, 'results.json'))
+	deleteFile(Uri.joinPath(workspaceUri, 'results.xml'))
 }
 
 export function getSessionTempDir () {
@@ -212,14 +212,14 @@ export function getSessionTempDir () {
 	}
 }
 
-export async function getTestCount (resultsJson: Uri, status: string = 'tests') {
+export async function getTestCount (resultsJson: Uri, status = 'tests') {
 	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 	const count = await workspace.fs.readFile(resultsJson).then((content) => {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		const results: ITestSuites[] = JSON.parse(Buffer.from(content.buffer).toString())
 
-		if (!results || results.length === 0) {
-			throw new Error("[getTestCount] no testsuite found in results")
+		if (results.length === 0) {
+			throw new Error('[getTestCount] no testsuite found in results')
 		}
 
 		if (status === 'tests') {
@@ -231,35 +231,35 @@ export async function getTestCount (resultsJson: Uri, status: string = 'tests') 
 		} else if (status === 'error') {
 			return results[0].errors
 		} else {
-			throw new Error("[getTestCount] unknown status: " + status)
+			throw new Error('[getTestCount] unknown status: ' + status)
 		}
 	})
-	console.log("getTestCount: " + status + " = " + count)
+	log.info('getTestCount: ' + status + ' = ' + count)
 	return count
 }
 
 export function getDefaultDLC () {
 	if (process.platform === 'linux') {
-		return "/psc/dlc"
+		return '/psc/dlc'
 	}
-	return "C:\\Progress\\OpenEdge"
+	return 'C:\\Progress\\OpenEdge'
 }
 
-export async function runAllTests (doRefresh: boolean = true) {
+export async function runAllTests (doRefresh = true) {
 
-	console.log("running all tests")
+	log.info('running all tests')
 	if (doRefresh) {
 		await refreshTests().then(() => { return sleep(500, 'after refreshTests') })
 	} else {
 		await sleep(250, 'sleep before testing.runAll')
 	}
 
-	console.log("testing.runAll starting")
+	log.info('testing.runAll starting')
 	return commands.executeCommand('testing.runAll').then(() => {
-		console.log("testing.runAll complete!")
+		log.info('testing.runAll complete!')
 		return refreshData()
-	} , (err) => {
-		throw new Error("testing.runAll failed: " + err)
+	}, (err) => {
+		throw new Error('testing.runAll failed: ' + err)
 	})
 }
 
@@ -274,17 +274,17 @@ export function refreshTests () {
 
 export function updateConfig (key: string, value: string | string[] | undefined) {
 	return workspace.getConfiguration('ablunit').update(key, value, ConfigurationTarget.Workspace).then(() => {
-		console.log("ablunit." + key + " set successfully (value='" + value + "')")
-		return sleep(100, "sleep after updateConfig")
+		log.info('ablunit.' + key + ' set successfully (value=\'' + value + '\')')
+		return sleep(100, 'sleep after updateConfig')
 	}, (err) => {
-		throw new Error("failed to set ablunit." + key + ": " + err)
+		throw new Error('failed to set ablunit.' + key + ': ' + err)
 	})
 }
 
 export async function updateTestProfile (key: string, value: string | string[] | boolean) {
 	const testProfileUri = Uri.joinPath(getWorkspaceUri(), '.vscode', 'ablunit-test-profile.json')
 	if (!doesFileExist(testProfileUri)) {
-		log.info("creating ablunit-test-profile.json")
+		log.info('creating ablunit-test-profile.json')
 		const newProfile = { configurations: [ new DefaultRunProfile ] } as IConfigurations
 		await workspace.fs.writeFile(testProfileUri, Buffer.from(JSON.stringify(newProfile)))
 	}
@@ -306,9 +306,9 @@ export async function updateTestProfile (key: string, value: string | string[] |
 	}
 
 	// profile.configurations[0][key] = value
-	let newtext = JSON.stringify(profile,null,4) + "\n"
+	let newtext = JSON.stringify(profile, null, 4) + '\n'
 	if (process.platform === 'win32') {
-		newtext = newtext.replace(/\n/g,'\r\n')
+		newtext = newtext.replace(/\n/g, '\r\n')
 	}
 	const newjson = Buffer.from(newtext)
 	return workspace.fs.writeFile(Uri.joinPath(getWorkspaceUri(), '.vscode', 'ablunit-test-profile.json'), newjson)
@@ -324,7 +324,7 @@ export async function selectProfile (profile: string) {
 		return commands.executeCommand('abl.restart.langserv').then(() => {
 			return sleep(500)
 		}, (err) => {
-			throw new Error("failed to restart langserv: " + err)
+			throw new Error('failed to restart langserv: ' + err)
 		})
 	})
 }
@@ -337,7 +337,7 @@ export async function refreshData () {
 		recentResults = refs.recentResults
 		log.debug('refreshData complete!')
 	}, (err) => {
-		throw new Error("failed to refresh test results: " + err)
+		throw new Error('failed to refresh test results: ' + err)
 	})
 }
 
@@ -345,14 +345,14 @@ export function getDecorator () {
 	return decorator
 }
 
-export function getTestController () {
+export async function getTestController () {
+	if (!testController) {
+		await refreshData()
+	}
 	return testController
 }
 
-export function getResults (len: number = 1) {
-	if (!recentResults) {
-		throw new Error('recent results is undefined!')
-	}
+export function getResults (len = 1) {
 	if (recentResults.length === 0) {
 		throw new Error('recent results should be > 0')
 	}
@@ -394,7 +394,7 @@ class AssertResults {
 			return
 		}
 
-		let actualCount: number = -1
+		let actualCount = -1
 		switch (status) {
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
 			case 'passed': actualCount = res.passed; break
@@ -405,7 +405,7 @@ class AssertResults {
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
 			case 'all': actualCount = res.tests; break
 		}
-		assert.equal(expectedCount, actualCount, "test count != " + expectedCount)
+		assert.equal(expectedCount, actualCount, 'test count != ' + expectedCount)
 	}
 	public count = (expectedCount: number) => {
 		this.assertResultsCountByStatus(expectedCount, 'all')
@@ -422,22 +422,22 @@ class AssertResults {
 
 	public fileExists = (...files: string[] | Uri[]) => {
 		for (const file of files) {
-			this.assert(doesFileExist(file), "file does not exist: " + workspace.asRelativePath(file))
+			this.assert(doesFileExist(file), 'file does not exist: ' + workspace.asRelativePath(file))
 		}
 	}
 	public notFileExists = (...files: string[] | Uri[]) => {
 		for (const file of files) {
-			this.assert(!doesFileExist(file), "file exists: " + workspace.asRelativePath(file))
+			this.assert(!doesFileExist(file), 'file exists: ' + workspace.asRelativePath(file))
 		}
 	}
 	public dirExists = (...dirs: string[] | Uri[]) => {
 		for (const dir of dirs) {
-			this.assert(doesDirExist(dir), "dir does not exist: " + workspace.asRelativePath(dir))
+			this.assert(doesDirExist(dir), 'dir does not exist: ' + workspace.asRelativePath(dir))
 		}
 	}
 	public notDirExists = (...dirs: string[] | Uri[]) => {
 		for (const dir of dirs) {
-			this.assert(!doesDirExist(dir), "dir exists: " + workspace.asRelativePath(dir))
+			this.assert(!doesDirExist(dir), 'dir exists: ' + workspace.asRelativePath(dir))
 		}
 	}
 }

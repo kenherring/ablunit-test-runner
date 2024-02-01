@@ -1,11 +1,11 @@
 import { after, before } from 'mocha'
 import { Uri, commands, window, workspace } from 'vscode'
-import { assert, deleteFile, getDecorator, getResults, log, runAllTests, toUri, updateTestProfile, waitForExtensionActive } from '../testCommon'
+import { assert, deleteFile, getDecorator, getResults, log, runAllTests, sleep, toUri, updateTestProfile, waitForExtensionActive } from '../testCommon'
 
 const projName = 'proj0'
 
 before(async () => {
-	await waitForExtensionActive().then()
+	await waitForExtensionActive().then(() => { return sleep(250) })
 	await commands.executeCommand('testing.clearTestResults').then()
 	deleteFile('.vscode/ablunit-test-profile.json')
 })
@@ -20,7 +20,7 @@ suite(projName + ' - Extension Test Suite', () => {
 		await runAllTests()
 
 		const recentResults = getResults()
-		assert.equal(recentResults[0].cfg.ablunitConfig.config_uri, toUri('ablunit.json'), "ablunit.json path mismatch")
+		assert.equal(recentResults[0].cfg.ablunitConfig.config_uri, toUri('ablunit.json'), 'ablunit.json path mismatch')
 		assert.fileExists('ablunit.json', 'results.xml')
 		assert.notFileExists('results.json')
 		assert.notDirExists('listings')
@@ -60,8 +60,8 @@ suite(projName + ' - Extension Test Suite', () => {
 		const decorator = getDecorator()
 		const lines = decorator.getDecorations(testFileUri)
 
-		log.info("lines.executed.length=" + lines.executed?.length)
-		log.info("lines.executable.length=" + lines.executable?.length)
+		log.info('lines.executed.length=' + lines.executed?.length)
+		log.info('lines.executable.length=' + lines.executable?.length)
 		assert.assert(!lines.executed, 'executed lines found for ' + workspace.asRelativePath(testFileUri) + '. should be empty')
 		assert.assert(!lines.executable, 'no executable lines found for ' + workspace.asRelativePath(testFileUri))
 		assert.assert(!lines.executed?.find((d) => d.range.start.line === 5), 'line 5 should display as executed')

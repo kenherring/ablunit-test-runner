@@ -31,16 +31,6 @@
 		"webpack.config.js"
 	],
 	"rules": {
-		// TODO: enable and fix theese
-		// "quotes": ["warn", "single"]
-		// "no-console": "warn",
-		// "comma-dangle": [ "never", "always" ]
-
-		// "@typescript-eslint/no-use-before-define": [ "warn", {
-		// 	/* "functions": true, */
-		// 	"classes": true
-		// }],
-
 		"@typescript-eslint/adjacent-overload-signatures": "error",
 		"@typescript-eslint/ban-types": [ "error", {
 			"types": {
@@ -50,6 +40,7 @@
 				"Boolean": "Use 'boolean' instead."
 			}
 		}],
+		"@typescript-eslint/comma-spacing": [ "error", { "before": false, "after": true }],
 		"@typescript-eslint/consistent-type-assertions": [ "error", { "assertionStyle": "as" } ],
 		"@typescript-eslint/consistent-type-definitions": [ "error", "interface" ],
 		"@typescript-eslint/indent": [ "error", "tab" ],
@@ -58,9 +49,10 @@
 			"format": [ "PascalCase" ],
 			"custom": { "regex": "^I[A-Z]", "match": true }
 		}],
-		// "@typescript-eslint/no-confusing-non-null-assertion": 1,
-		"@typescript-eslint/no-inferrable-types": 0,
-		"@typescript-eslint/no-empty-function": 1,
+		"@typescript-eslint/no-confusing-non-null-assertion": "error",
+		"@typescript-eslint/no-inferrable-types": "error",
+		"@typescript-eslint/no-empty-function": "error",
+		"@typescript-eslint/no-extra-parens": "warn",
 		"@typescript-eslint/no-non-null-assertion": 0,
 		"@typescript-eslint/no-unnecessary-condition": 0,
 		"@typescript-eslint/no-unused-vars": [ "warn", {
@@ -68,13 +60,17 @@
 			"args": "none",
 			"ignoreRestSiblings": false
 		}],
+		"@typescript-eslint/no-useless-constructor": "error",
 		"@typescript-eslint/prefer-readonly": "warn",
 		"@typescript-eslint/prefer-string-starts-ends-with": "warn",
 		"@typescript-eslint/restrict-plus-operands": "off",
 		"@typescript-eslint/switch-exhaustiveness-check": "warn",
+
+		"no-console": "warn",
 		"no-empty": "warn",
 		"no-mixed-spaces-and-tabs": ["error", "smart-tabs"],
 		"no-trailing-spaces": [ "error", { "skipBlankLines": false }],
+		"quotes": ["warn", "single"],
 		"semi": [ "error", "never"],
 		"space-before-blocks": [ "error", "always"],
 		"space-before-function-paren": ["warn", "always"],
