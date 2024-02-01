@@ -150,13 +150,13 @@ export interface ILineSummary { // Section 4
 	incUri?: Uri
 }
 
-interface ICalledBy{ // Section 3
+interface ICalledBy { // Section 3
 	CallerModuleID: number
 	CallerLineNo: number
 	CallCount: number
 }
 
-interface ICalledTo{ // Section 3
+interface ICalledTo { // Section 3
 	CalleeModuleID: number
 	CallerLineNo: number
 	CallCount: number
