@@ -79,7 +79,7 @@ suite(projName + ' - Extension Test Suite', () => {
 		const res = resArr[0]
 
 
-		await refreshTests().then((ret) => {
+		await refreshTests().then(() => {
 			if (res.status.startsWith('run cancelled')) {
 				log.debug('runAllTests completed with status=\'run cancelled\'')
 			} else {
