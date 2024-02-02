@@ -28,7 +28,7 @@ suite(projName + ' - Extension Test Suite', () => {
 
 	test(projName + '.2 - getEnvVars confirm PATH is set correctly', async () => {
 		await runAllTests()
-		const recentResults = getResults()
+		const recentResults = await getResults()
 		const res = recentResults[0]
 		const envVars = getEnvVars(res.dlc?.uri)
 		const envPath = envVars['PATH']

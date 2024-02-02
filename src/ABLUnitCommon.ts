@@ -58,14 +58,24 @@ export function deleteFile (file: Uri | Uri[] | string) {
 export class Duration {
 	start: number
 	end: number
+	private stopped = false
 	constructor () {
 		this.start = Date.now()
 		this.end = this.start
 	}
+
 	elapsed () {
-		this.end = Date.now()
+		if (!this.stopped) {
+			this.end = Date.now()
+		}
 		return this.end - this.start
 	}
+
+	stop () {
+		this.stopped = true
+		this.end = Date.now()
+	}
+
 	toString () {
 		return '(duration=' + this.elapsed() + 'ms)'
 	}

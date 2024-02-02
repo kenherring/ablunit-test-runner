@@ -11,7 +11,7 @@ import { log } from './ChannelLogger'
 import { FileCoverage, CoveredCount, StatementCoverage } from './TestCoverage'
 import { ablunitRun } from './ABLUnitRun'
 import { getDLC, IDlc } from './parse/OpenedgeProjectParser'
-import { isRelativePath } from './ABLUnitCommon'
+import { Duration, isRelativePath } from './ABLUnitCommon'
 
 export interface ITestObj {
 	test: string
@@ -41,10 +41,7 @@ export class ABLResults implements Disposable {
 	wrapperUri: Uri
 	status = 'none'
 	cfg: ABLUnitConfig
-	startTime: Date
-	endTime!: Date
-	duration = () => { return Number(this.endTime) - Number(this.startTime) }
-
+	duration: Duration
 	ablResults: ABLResultsParser | undefined
 	tests: TestItem[] = []
 	testQueue: ITestObj[] = []
@@ -64,11 +61,11 @@ export class ABLResults implements Disposable {
 		log.info('workspaceFolder=' + workspaceFolder.uri.fsPath)
 		if(cancellation) {
 			cancellation.onCancellationRequested(() => {
-				log.info('cancellation requested')
+				log.debug('cancellation requested - ABLResults')
 				throw new CancellationError()
 			})
 		}
-		this.startTime = new Date()
+		this.duration = new Duration()
 		this.workspaceFolder = workspaceFolder
 		this.storageUri = storageUri
 		this.globalStorageUri = globalStorageUri
@@ -87,6 +84,10 @@ export class ABLResults implements Disposable {
 	}
 
 	setStatus (status: string) {
+		if (this.status.startsWith('run cancelled')) {
+			log.debug('cancellation requested - ignoring setStatus() call')
+			throw new CancellationError()
+		}
 		this.status = status
 		log.info('STATUS: ' + status)
 	}
@@ -105,12 +106,10 @@ export class ABLResults implements Disposable {
 		this.propath = this.cfg.readPropathFromJson()
 		this.debugLines = new ABLDebugLines(this.propath)
 
-		if(this.cfg.ablunitConfig.dbConns) {
-			this.cfg.ablunitConfig.dbAliases = []
-			for (const conn of this.cfg.ablunitConfig.dbConns) {
-				if (conn.aliases.length > 0) {
-					this.cfg.ablunitConfig.dbAliases.push(conn.name + ',' + conn.aliases.join(','))
-				}
+		this.cfg.ablunitConfig.dbAliases = []
+		for (const conn of this.cfg.ablunitConfig.dbConns) {
+			if (conn.aliases.length > 0) {
+				this.cfg.ablunitConfig.dbAliases.push(conn.name + ',' + conn.aliases.join(','))
 			}
 		}
 
@@ -225,12 +224,12 @@ export class ABLResults implements Disposable {
 		this.setStatus('parsing results')
 		log.debug('parsing results from ' + this.cfg.ablunitConfig.optionsUri.filenameUri.fsPath, options)
 
-		this.endTime = new Date()
-		const parseStartTime = new Date()
+		this.duration.stop()
+		const parseTime = new Duration()
 
 		this.ablResults = new ABLResultsParser(this.propath!, this.debugLines!)
 		await this.ablResults.parseResults(this.cfg.ablunitConfig.optionsUri.filenameUri, this.cfg.ablunitConfig.optionsUri.jsonUri).then(() => {
-			log.debug('parsing complete (time=' + (Number(new Date()) - Number(parseStartTime)) + ')')
+			log.debug('parsing complete ' + parseTime.toString())
 			if(!this.ablResults!.resultsJson) {
 				log.error('No results found in ' + this.cfg.ablunitConfig.optionsUri.filenameUri.fsPath, options)
 				throw new Error('[ABLResults parseOutput] No results found in ' + this.cfg.ablunitConfig.optionsUri.filenameUri.fsPath + '\r\n')
@@ -254,9 +253,8 @@ export class ABLResults implements Disposable {
 			})
 		}
 
-		const parseTime = Number(new Date()) - Number(parseStartTime)
-		this.setStatus('parsing output complete (time=' + parseTime + ')')
-		log.debug('parsing output complete (time=' + parseTime + ')', options)
+		this.setStatus('parsing output complete ' + parseTime.toString())
+		log.debug('parsing output complete ' + parseTime.toString(), options)
 	}
 
 	async assignTestResults (item: TestItem, options: TestRun) {
@@ -271,13 +269,13 @@ export class ABLResults implements Disposable {
 
 		if(this.ablResults.resultsJson.length > 1) {
 			log.info('multiple results files found - this is not supported (item=' + item.label + ')')
-			options.errored(item, new TestMessage('multiple results files found - this is not supported'), this.duration())
+			options.errored(item, new TestMessage('multiple results files found - this is not supported'), this.duration.elapsed())
 			return
 		}
 
 		if (!this.ablResults.resultsJson[0].testsuite) {
 			log.info('no tests results available, check the configuration for accuracy (item=' + item.label + ')')
-			options.errored(item, new TestMessage('no tests results available, check the configuration for accuracy'), this.duration())
+			options.errored(item, new TestMessage('no tests results available, check the configuration for accuracy'), this.duration.elapsed())
 			return
 		}
 
@@ -285,7 +283,7 @@ export class ABLResults implements Disposable {
 		const s = this.ablResults.resultsJson[0].testsuite.find((s: ITestSuite) => s.classname === suiteName || s.name === suiteName)
 		if (!s) {
 			log.error('could not find test suite for \'' + suiteName + '\' in results (item=' + item.label + ')')
-			options.errored(item, new TestMessage('could not find test suite for \'' + suiteName + '\' in results'), this.duration())
+			options.errored(item, new TestMessage('could not find test suite for \'' + suiteName + '\' in results'), this.duration.elapsed())
 			return
 		}
 
@@ -293,7 +291,7 @@ export class ABLResults implements Disposable {
 		if (data instanceof ABLTestSuite) {
 			if (!s.testsuite) {
 				log.error('no child testsuites found (item=' + item.label + ')')
-				options.errored(item, new TestMessage('no child testsuites found for ' + suiteName), this.duration())
+				options.errored(item, new TestMessage('no child testsuites found for ' + suiteName), this.duration.elapsed())
 				return
 			}
 			if (item.children.size > 0) {
@@ -352,7 +350,7 @@ export class ABLResults implements Disposable {
 
 		if (!s.testcases) {
 			log.error('no test cases discovered or run - check the configuration for accuracy (item: ' + item.label + ')')
-			options.errored(item, new TestMessage('no test cases discovered or run - check the configuration for accuracy'), this.duration())
+			options.errored(item, new TestMessage('no test cases discovered or run - check the configuration for accuracy'), this.duration.elapsed())
 			return
 		}
 

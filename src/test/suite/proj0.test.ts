@@ -19,7 +19,7 @@ suite(projName + ' - Extension Test Suite', () => {
 	test(projName + '.1 - ${workspaceFolder}/ablunit.json file exists', async () => {
 		await runAllTests()
 
-		const recentResults = getResults()
+		const recentResults = await getResults()
 		assert.equal(recentResults[0].cfg.ablunitConfig.config_uri, toUri('ablunit.json'), 'ablunit.json path mismatch')
 		assert.fileExists('ablunit.json', 'results.xml')
 		assert.notFileExists('results.json')

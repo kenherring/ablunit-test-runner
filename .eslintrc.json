@@ -40,7 +40,7 @@
 				"Boolean": "Use 'boolean' instead."
 			}
 		}],
-		"@typescript-eslint/comma-spacing": [ "error", { "before": false, "after": true }],
+		"@typescript-eslint/comma-spacing": [ "warn", { "before": false, "after": true }],
 		"@typescript-eslint/consistent-type-assertions": [ "error", { "assertionStyle": "as" } ],
 		"@typescript-eslint/consistent-type-definitions": [ "error", "interface" ],
 		"@typescript-eslint/indent": [ "error", "tab" ],
