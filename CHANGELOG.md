@@ -1,3 +1,10 @@
+# [0.2.1](https://github.com/kenherring/ablunit-test-runner/releases/tag/0.2.1) - 2024-02-02 (pre-release)
+
+ * Stop refresh/test run - improving process abort (#129)
+ * Decorator: stop runaway events; add unit tests (#126)
+
+**Full Changelog**: [0.2.0...0.2.1](https://github.com/kenherring/ablunit-test-runner/compare/0.2.0...0.2.1)
+
 # [0.2.0](https://github.com/kenherring/ablunit-test-runner/releases/tag/0.2.0) - 2024-01-22
 
 Initial release to marketplace
