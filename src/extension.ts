@@ -22,9 +22,10 @@ import { ABLTestCase, ABLTestClass, ABLTestData, ABLTestDir, ABLTestFile, ABLTes
 import { Decorator, decorator } from './Decorator'
 
 export interface IExtensionTestReferences {
-	testController: TestController,
+	testController: TestController
 	decorator: Decorator
 	recentResults: ABLResults[]
+	currentRunData: ABLResults[]
 }
 
 let recentResults: ABLResults[] = []
@@ -32,6 +33,7 @@ let recentResults: ABLResults[] = []
 export async function activate (context: ExtensionContext) {
 
 	const ctrl = tests.createTestController('ablunitTestController', 'ABLUnit Test')
+	let currentTestRun: TestRun | undefined = undefined
 
 	logActivationEvent()
 
@@ -42,11 +44,18 @@ export async function activate (context: ExtensionContext) {
 	// const decorationProvider = new DecorationProvider()
 
 	const getExtensionReferences = () => {
-		return {
+		let data: ABLResults[] = []
+		if (currentTestRun) {
+			data = resultData.get(currentTestRun) ?? []
+		}
+		const ret = {
 			testController: ctrl,
 			decorator: decorator,
-			recentResults: recentResults
+			recentResults: recentResults,
+			currentRunData: data
 		} as IExtensionTestReferences
+		log.debug('_ablunit.getExtensionTestReferences currentRunData.length=' + ret.currentRunData?.length + ', recentResults.length=' + ret.recentResults?.length)
+		return ret
 	}
 
 	if (process.env['ABLUNIT_TEST_RUNNER_UNIT_TESTING'] === 'true') {
@@ -93,12 +102,32 @@ export async function activate (context: ExtensionContext) {
 
 	const runHandler = (request: TestRunRequest, cancellation: CancellationToken) => {
 		if (! request.continuous) {
-			return startTestRun(request, cancellation)
+			const runProm = startTestRun(request, cancellation)
 				.then(() => { return })
 				.catch((err) => {
 					log.error('startTestRun failed. err=' + err)
 					throw err
 				})
+			const cancelProm = new Promise((resolve) => {
+				cancellation.onCancellationRequested(() => {
+					log.debug('cancellation requested - runHandler cancelProm')
+					resolve('cancelled')
+				})
+			})
+			const ret = Promise.race([ runProm, cancelProm ]).then((res) => {
+				if (res === 'cancelled') {
+					log.error('test run cancelled')
+					throw new CancellationError()
+				}
+				log.debug('test run completed successfully')
+				return
+			}, (err) => {
+				log.error('test run failed. err=' + err)
+				throw err
+
+			})
+
+			return ret
 		}
 		log.error('continuous test runs not implemented')
 		throw new Error('continuous test runs not implemented')
@@ -136,6 +165,7 @@ export async function activate (context: ExtensionContext) {
 	}
 
 	const startTestRun = (request: TestRunRequest, cancellation: CancellationToken) => {
+		recentResults = []
 
 		const discoverTests = async (tests: Iterable<TestItem>) => {
 			for (const test of tests) {
@@ -165,12 +195,12 @@ export async function activate (context: ExtensionContext) {
 		const runTestQueue = async (res: ABLResults[]) => {
 			for (const { test } of queue) {
 				if (run.token.isCancellationRequested) {
-					run.skipped(test)
-				} else {
-					run.started(test)
-					for(const childTest of gatherTestItems(test.children)) {
-						run.started(childTest)
-					}
+					log.debug('cancellation requested - runTestQueue-1')
+					throw new CancellationError()
+				}
+				run.started(test)
+				for(const childTest of gatherTestItems(test.children)) {
+					run.started(childTest)
 				}
 			}
 
@@ -200,7 +230,7 @@ export async function activate (context: ExtensionContext) {
 								+ p.passed + ' passed, '
 								+ p.errors + ' errors, '
 								+ p.failures + ' failures, '
-								+ ' (duration=' + r.duration() + 'ms)'
+								+ r.duration.elapsed()
 					log.info(totals, run)
 				} else {
 					log.debug('cannot print totals - missing ablResults object')
@@ -209,9 +239,8 @@ export async function activate (context: ExtensionContext) {
 				for (const { test } of queue) {
 					if (workspace.getWorkspaceFolder(test.uri!) === r.workspaceFolder) {
 						if (run.token.isCancellationRequested) {
-							run.skipped(test)
-						} else {
-							await r.assignTestResults(test, run)
+							log.debug('cancellation requested - runTestQueue-2')
+							throw new CancellationError()
 						}
 					}
 				}
@@ -231,9 +260,8 @@ export async function activate (context: ExtensionContext) {
 			log.debug('ablunit test run complete', run)
 
 			if (run.token.isCancellationRequested) {
-				for (const { test } of queue) {
-					run.skipped(test)
-				}
+				log.debug('cancellation requested - test run complete')
+				throw new CancellationError()
 			}
 
 			const data = resultData.get(run) ?? []
@@ -253,7 +281,6 @@ export async function activate (context: ExtensionContext) {
 
 		const createABLResults = async () => {
 			const res: ABLResults[] = []
-			const proms: Promise<void>[] = []
 
 			for(const itemData of queue) {
 				if (run.token.isCancellationRequested) {
@@ -267,32 +294,30 @@ export async function activate (context: ExtensionContext) {
 				}
 				let r = res.find(r => r.workspaceFolder === wf)
 				if (!r) {
-					r = new ABLResults(wf, await getStorageUri(wf) ?? wf.uri, contextStorageUri, contextResourcesUri)
+					r = new ABLResults(wf, await getStorageUri(wf) ?? wf.uri, contextStorageUri, contextResourcesUri, cancellation)
 					cancellation.onCancellationRequested(() => {
-						log.debug('cancellation requested')
+						log.debug('cancellation requested - createABLResults-1')
 						r?.dispose()
 						throw new CancellationError()
 					})
 					await r.start()
 					res.push(r)
 				}
-				proms.push(r.addTest(itemData.test, run))
+				await r.addTest(itemData.test, run)
+				// proms.push(r.addTest(itemData.test, run))
 			}
-			return await Promise.all(proms).then(() => {
-				resultData.set(run, res)
-				log.debug('all tests added to test run results object, preparing test run')
-				return res
-			}, (err) => {
-				// log.error('failed to add test to test run results object. err=' + err)
-				throw err
-			})
+
+			resultData.set(run, res)
+			log.debug('all tests added to test run results object, preparing test run ' + res[0].duration.toString())
+			return res
 		}
 
 		showNotification('running ablunit tests')
 		const queue: { test: TestItem; data: ABLTestData }[] = []
 		const run = ctrl.createTestRun(request)
+		currentTestRun = run
 		cancellation.onCancellationRequested(() => {
-			log.debug('cancellation requested')
+			log.debug('cancellation requested - createABLResults-2')
 			run.end()
 			log.trace('run.end()')
 			throw new CancellationError()
@@ -303,8 +328,9 @@ export async function activate (context: ExtensionContext) {
 			return createABLResults().then((res) => {
 				if (!res) {
 					throw new Error('createABLResults failed')
-				} else
+				} else {
 					checkCancellationRequested(run)
+				}
 				return runTestQueue(res).then(() => {
 					log.debug('runTestQueue complete')
 					return true
@@ -312,7 +338,13 @@ export async function activate (context: ExtensionContext) {
 			})
 		}).catch((err) => {
 			run.end()
-			log.error('run.end() - ablunit run failed with exception: ' + err)
+			if (err instanceof CancellationError) {
+				log.error('ablunit run failed with exception: CancellationError')
+			} else if (err instanceof Error) {
+				log.error('ablunit run failed with error: ' + err.message + ' - ' + err.stack)
+			} else {
+				log.error('ablunit run failed with non-error: ' + err)
+			}
 			throw err
 		})
 	}
@@ -449,7 +481,7 @@ export function getContextResourcesUri () {
 
 export function checkCancellationRequested (run: TestRun) {
 	if (run.token.isCancellationRequested) {
-		log.info('test run cancellation requested')
+		log.debug('cancellation requested - chcekCancellationRequested')
 		run.end()
 		throw new CancellationError()
 	}
@@ -725,7 +757,7 @@ function deleteChildren (controller: TestController | undefined, item: TestItem)
 function removeExcludedFiles (controller: TestController, excludePatterns: RelativePattern[], token?: CancellationToken) {
 	if (excludePatterns.length === 0) { return }
 	token?.onCancellationRequested(() => {
-		log.info('cancellation requested')
+		log.debug('cancellation requested - removeExcludedFiles')
 		throw new CancellationError()
 	})
 
@@ -793,7 +825,7 @@ async function refreshTestTree (controller: TestController, token: CancellationT
 
 	const checkCancellationToken = () => {
 		if (!token.isCancellationRequested) { return }
-		log.warn('cancellation requested ' + elapsedTime())
+		log.debug('cancellation requested - checkCancellationToken ' + elapsedTime())
 		logResults()
 		throw new CancellationError()
 	}

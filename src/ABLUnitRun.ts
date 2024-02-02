@@ -1,4 +1,4 @@
-import { CancellationToken, TestRun, Uri, workspace } from 'vscode'
+import { CancellationError, CancellationToken, TestRun, Uri, workspace } from 'vscode'
 import { ABLResults } from './ABLResults'
 import { isRelativePath } from './ABLUnitCommon'
 import { ExecException, ExecOptions, exec } from 'child_process'
@@ -11,8 +11,9 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 
 	if (cancellation) {
 		cancellation.onCancellationRequested(() => {
-			log.info('cancellation requested')
+			log.debug('cancellation requested - ablunitRun')
 			abort.abort()
+			throw new CancellationError()
 		})
 	}
 
@@ -100,6 +101,10 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 
 	const runCommand = () => {
 		log.debug('ablunit command dir=\'' + res.cfg.ablunitConfig.workspaceFolder.uri.fsPath + '\'')
+		if (cancellation?.isCancellationRequested) {
+			log.info('cancellation requested - runCommand')
+			throw new CancellationError()
+		}
 		log.info('----- ABLUnit Command Execution Started -----', options)
 		const args = getCommand()
 

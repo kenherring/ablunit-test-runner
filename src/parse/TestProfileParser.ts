@@ -167,7 +167,7 @@ export class RunConfig extends DefaultRunProfile {
 		this.dbConnPfUri = Uri.joinPath(this.tempDirUri, 'dbconn.pf')
 		this.importOpenedgeProjectJson = this.profile.importOpenedgeProjectJson ?? true
 		this.openedgeProjectProfile = this.profile.openedgeProjectProfile ?? undefined
-		this.dbConns = getProfileDbConns(this.workspaceFolder.uri, this.profile.openedgeProjectProfile)
+		this.dbConns = getProfileDbConns(this.workspaceFolder.uri, this.profile.openedgeProjectProfile) ?? []
 
 		this.options = new CoreOptions(this.profile.options)
 		const tmpFilename = (this.profile.options?.output?.filename?.replace(/\.xml$/, '') ?? 'results') + '.xml'
