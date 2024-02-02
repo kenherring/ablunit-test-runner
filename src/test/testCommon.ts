@@ -1,8 +1,8 @@
 import * as fs from 'fs'
 import { ABLResults } from '../ABLResults'
-import { ConfigurationTarget, TestController, WorkspaceFolder, commands, extensions, Uri, workspace } from 'vscode'
+import { ConfigurationTarget, TestController, WorkspaceFolder, commands, extensions, Uri, workspace, TestItemCollection } from 'vscode'
 import { Decorator } from '../Decorator'
-import { deleteFile, isRelativePath, readStrippedJsonFile } from '../ABLUnitCommon'
+import { Duration, deleteFile, isRelativePath, readStrippedJsonFile } from '../ABLUnitCommon'
 import { GlobSync } from 'glob'
 import { IExtensionTestReferences } from '../extension'
 import { ITestSuites } from '../parse/ResultsParser'
@@ -23,9 +23,17 @@ class TestInfo {
 export const info = new TestInfo()
 export const log = logObj
 
-let recentResults: ABLResults[]
-let decorator: Decorator
-let testController: TestController | undefined = undefined
+let recentResults: ABLResults[] | undefined
+let decorator: Decorator | undefined
+let testController: TestController | undefined
+let currentRunData: ABLResults[] | undefined
+
+export function beforeCommon () {
+	recentResults = undefined
+	decorator = undefined
+	testController = undefined
+	currentRunData = undefined
+}
 
 export {
 	deleteFile
@@ -272,6 +280,50 @@ export function refreshTests () {
 	})
 }
 
+export async function waitForTestRunStatus (waitForStatusStartsWith: string) {
+	const waitTime = new Duration()
+	let runData: ABLResults[] = []
+	let runStatus = 'not found'
+
+	log.debug('waiting for test run status = \'running\'')
+
+	setTimeout(() => { throw new Error('waitForTestRunStatus timeout') }, 20000)
+	while (!runStatus.startsWith(waitForStatusStartsWith))
+	{
+		await sleep(100, 'waitForTestRunStatus runStatus=\'' + runStatus + '\'')
+		runData = await getCurrentRunData()
+		runStatus = runData[0].status
+	}
+
+	log.debug('found test run status = \'' + runStatus + '\'' + waitTime.toString())
+	if (!runStatus.startsWith(waitForStatusStartsWith)) {
+		throw new Error('test run status should start with ' + waitForStatusStartsWith + ' but is ' + runStatus)
+	}
+}
+
+export async function cancelTestRun (resolveCurrentRunData = true) {
+	const startCancelTime = Date.now()
+	if (resolveCurrentRunData) {
+		const status = getCurrentRunData().then((resArr) => {
+			if (resArr && resArr.length > 0) {
+				return resArr[0].status
+			}
+			return 'results.length=0'
+		}, () => {
+			return 'not found'
+		})
+		log.debug('cancelling test run (STATUS=' + await status + ')')
+	} else {
+		log.debug('cancelling test run')
+	}
+
+	return commands.executeCommand('testing.cancelRun').then(() => {
+		const elapsedCancelTime = Date.now() - startCancelTime
+		log.debug('elapsedCancelTime=' + elapsedCancelTime)
+		return elapsedCancelTime
+	})
+}
+
 export function updateConfig (key: string, value: string | string[] | undefined) {
 	return workspace.getConfiguration('ablunit').update(key, value, ConfigurationTarget.Workspace).then(() => {
 		log.info('ablunit.' + key + ' set successfully (value=\'' + value + '\')')
@@ -335,13 +387,18 @@ export async function refreshData () {
 		decorator = refs.decorator
 		testController = refs.testController
 		recentResults = refs.recentResults
-		log.debug('refreshData complete!')
+		if (refs.currentRunData) {
+			currentRunData = refs.currentRunData
+		}
 	}, (err) => {
 		throw new Error('failed to refresh test results: ' + err)
 	})
 }
 
 export function getDecorator () {
+	if (!decorator) {
+		throw new Error('decorator is null')
+	}
 	return decorator
 }
 
@@ -352,12 +409,76 @@ export async function getTestController () {
 	return testController
 }
 
-export function getResults (len = 1) {
-	if (recentResults.length === 0) {
+export async function getTestControllerItemCount (type?: 'ABLTestFile' | undefined) {
+	const ctrl = await getTestController()
+	if (!ctrl?.items) {
+		return 0
+	}
+	return ctrl.items.size + getChildTestCount(type, ctrl.items)
+}
+
+export function getChildTestCount (type: string | undefined, items: TestItemCollection) {
+	if (items.size === 0) {
+		return 0
+	}
+	let count = 0
+
+	for (const [id, item] of items) {
+		if (id.endsWith('.p') || id.endsWith('.cls')) {
+			count ++
+		} else {
+			count += getChildTestCount(type, item.children)
+		}
+	}
+	return count
+}
+
+export async function getCurrentRunData (len = 1) {
+	log.debug('100')
+	await refreshData()
+	if (!currentRunData || currentRunData.length === 0) {
+		log.debug('currentRunData not set, refreshing...')
+		for (let i=0; i<200; i++) {
+			await sleep(100, 'still no currentRunData, sleep before trying again').then(() => {
+				return refreshData()
+			})
+			log.debug('currentRunData.length=' + currentRunData?.length)
+			if ((currentRunData?.length ?? 0) > 0) {
+				break
+			}
+		}
+		log.debug('found currentRunData.length=' + currentRunData?.length)
+	}
+	if (!currentRunData) {
+		throw new Error('currentRunData is null')
+	}
+	if (currentRunData.length === 0) {
 		throw new Error('recent results should be > 0')
 	}
-	if (recentResults.length !== len) {
-		throw new Error('recent results should be ' + len + ' but is ' + recentResults.length)
+	if (currentRunData.length !== len) {
+		throw new Error('recent results should be ' + len + ' but is ' + currentRunData.length)
+	}
+	return currentRunData
+}
+
+export async function getResults (len = 1) {
+	if ((!recentResults || recentResults.length === 0) && len > 0) {
+		log.debug('recentResults not set, refreshing...')
+		for (let i=0; i<15; i++) {
+			await sleep(100, 'still no recentResults, sleep before trying again').then(() => {
+				return refreshData()
+			})
+			if ((recentResults?.length ?? 0) > 0) {
+				continue
+			}
+		}
+	}
+	log.debug('107')
+	if (!recentResults) {
+		throw new Error('recentResults is null')
+	}
+	if (recentResults.length < len) {
+		throw new Error('recent results should be >= ' + len + ' but is ' + recentResults.length)
 	}
 	return recentResults
 }
@@ -385,8 +506,8 @@ class AssertResults {
 	throws = (block: () => void, message?: string) => { assertParent.throws(block, message) }
 	doesNotThrow = (block: () => void, message?: string) => { assertParent.doesNotThrow(block, message) }
 
-	assertResultsCountByStatus (expectedCount: number, status: 'passed' | 'failed' | 'errored' | 'all') {
-		const recentResults = getResults()
+	async assertResultsCountByStatus (expectedCount: number, status: 'passed' | 'failed' | 'errored' | 'all') {
+		const recentResults = await getResults()
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
 		const res = recentResults[0].ablResults?.resultsJson[0]
 		if (!res) {
@@ -408,16 +529,16 @@ class AssertResults {
 		assert.equal(expectedCount, actualCount, 'test count != ' + expectedCount)
 	}
 	public count = (expectedCount: number) => {
-		this.assertResultsCountByStatus(expectedCount, 'all')
+		this.assertResultsCountByStatus(expectedCount, 'all').catch((err) => { throw err })
 	}
 	public passed (expectedCount: number) {
-		this.assertResultsCountByStatus(expectedCount, 'passed')
+		this.assertResultsCountByStatus(expectedCount, 'passed').catch((err) => { throw err })
 	}
 	public errored (expectedCount: number) {
-		this.assertResultsCountByStatus(expectedCount, 'errored')
+		this.assertResultsCountByStatus(expectedCount, 'errored').catch((err) => { throw err })
 	}
 	public failed (expectedCount: number) {
-		this.assertResultsCountByStatus(expectedCount, 'failed')
+		this.assertResultsCountByStatus(expectedCount, 'failed').catch((err) => { throw err })
 	}
 
 	public fileExists = (...files: string[] | Uri[]) => {
@@ -462,4 +583,5 @@ export async function beforeProj7 () {
 			await workspace.fs.writeFile(toUri(`src/classes/dir${i}/testClass${j}.cls`), writeContent)
 		}
 	}
+	return sleep(100)
 }

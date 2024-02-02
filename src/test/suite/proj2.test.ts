@@ -24,7 +24,7 @@ suite(projName + ' - Extension Test Suite', () => {
 		await sleep(200)
 		await commands.executeCommand('testing.runCurrentFile')
 		await refreshData()
-		const recentResults = getResults()
+		const recentResults = await getResults()
 		log.info('recentResults = ' + recentResults + ' ' + recentResults.length)
 
 		const tc = recentResults[0].ablResults?.resultsJson[0].testsuite?.[0].testcases?.[0]
@@ -42,7 +42,7 @@ suite(projName + ' - Extension Test Suite', () => {
 		await sleep(200)
 		await commands.executeCommand('testing.runCurrentFile')
 		await refreshData()
-		const recentResults = getResults()
+		const recentResults = await getResults()
 
 		const res = recentResults[0].ablResults?.resultsJson[0]
 		if (!res) {
