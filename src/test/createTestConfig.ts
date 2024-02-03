@@ -25,6 +25,7 @@ export interface ITestConfig {
 		timeout: number
 	}
 	launchArgs: string[],
+	version: 'insiders' | 'stable',
 	env: { [key: string]: string | undefined }
 }
 
@@ -76,6 +77,7 @@ function createTestConfig (projName: string, testFile: string, workspaceFolder?:
 			timeout: timeout
 		},
 		launchArgs: launchArgs,
+		version: 'insiders',
 		env: {
 			ABLUNIT_TEST_RUNNER_UNIT_TESTING: 'true',
 			ABLUNIT_TEST_RUNNER_PROJECT_NAME: projName

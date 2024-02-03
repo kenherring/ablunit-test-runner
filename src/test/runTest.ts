@@ -42,13 +42,14 @@ async function testProject (projName: string, projDir?: string, launchArgs: stri
 		projDir = projName
 	}
 
-	const version = 'stable'
+	const version = 'insiders'
 	const extensionDevelopmentPath: string = path.resolve(__dirname, '../../')
 	const extensionTestsPath = path.resolve(__dirname)
 	const vscodeExecutablePath = await downloadAndUnzipVSCode(version)
 	const testingEnv: { [key: string]: string | undefined } = {
 		ABLUNIT_TEST_RUNNER_UNIT_TESTING: 'true',
-		ABLUNIT_TEST_RUNNER_PROJECT_NAME: projName
+		ABLUNIT_TEST_RUNNER_PROJECT_NAME: projName,
+		ABLUNIT_TEST_RUNNER_VSCODE_VERSION: version
 	}
 
 	try {
@@ -74,7 +75,8 @@ async function testProject (projName: string, projDir?: string, launchArgs: stri
 			extensionDevelopmentPath,
 			extensionTestsPath,
 			launchArgs: args,
-			extensionTestsEnv: testingEnv
+			extensionTestsEnv: testingEnv,
+			version: version
 		})
 		console.log('[runTest.ts testProject] (projName=' + projName + ') tests completed successfully!')
 	} catch (err) {
