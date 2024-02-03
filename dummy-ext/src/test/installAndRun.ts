@@ -10,65 +10,109 @@ import { GlobSync } from 'glob'
 import { existsSync } from 'fs'
 import { downloadAndUnzipVSCode, resolveCliArgsFromVSCodeExecutablePath, runTests } from '@vscode/test-electron'
 
+
+const file = 'installAndRun.ts'
+const insidersBuild = true
+let packagedExtensionPath = path.resolve(__dirname, '../../../ablunit-test-runner-*.vsix')
+
 async function main() {
-	console.log("[main] starting tests in vscode, version='stable'")
-	await runTest('stable')
-	console.log("[main] starting tests in vscode, version='insiders'")
-	await runTest('insiders')
-	console.log("[main] tests completed successfully!")
+	console.log('[' + file + ' main] starting...')
+
+	const projName = getProjName()
+
+
+	let testCount = 0
+	for(const version of ['stable', 'insiders']) {
+		testCount++
+		console.log('[' + file + ' main] starting tests in vscode, version=\'' + version + '\'')
+		await runTest(version, projName)
+	}
+	console.log('[' + file + ' main] tests completed successfully! testCount=' + testCount)
+
+	if (testCount === 0) {
+		console.error('[' + file + ' main] no tests found!')
+		process.exit(1)
+	}
 }
 
-async function runTest(version: string) {
-	console.log("[installAndRun] start test run.  version=" + version)
+function getProjName() {
+	const g = new GlobSync(packagedExtensionPath)
+	if (g.found.length != 1) {
+		throw new Error('Expected exactly one ablunit-test-runner-*.vsix file, found ' + g.found.length)
+	}
+
+	packagedExtensionPath = g.found[0]
+	if (!existsSync(packagedExtensionPath)) {
+		throw new Error('Extension bundle does not exist! path=' + packagedExtensionPath)
+	}
+	return path.resolve(__dirname, '../../../test_projects/proj4')
+}
+
+function installOpenEdgeExtension (vscodeExecutablePath: string, extensionId: string) {
+	console.log('[runTest.ts runTest] installing OpenEdge extensions...')
+	const [cliPath, ...args] = resolveCliArgsFromVSCodeExecutablePath(vscodeExecutablePath)
+	// Use cp.spawn / cp.exec for custom setup
+	cp.spawnSync(
+		cliPath,
+		[...args, '--install-extension', extensionId],
+		{ encoding: 'utf-8', stdio: 'inherit' }
+	)
+}
+
+async function runTest(version: string, projName: string, projDir?: string) {
+	if(!projDir) {
+		projDir = projName
+	}
+
+	console.log('[installAndRun] start test run.  version=' + version)
+
+	const extensionDevelopmentPath = path.resolve(__dirname, '../../')
+	const extensionTestsPath = path.resolve(__dirname, './index')
+	const vscodeExecutablePath = await downloadAndUnzipVSCode(version)
+	const testingEnv: { [key: string]: string | undefined } = {}
+
 	try {
-		const extensionDevelopmentPath = path.resolve(__dirname, '../../')
-		const extensionTestsPath = path.resolve(__dirname, './index')
-		const vscodeExecutablePath = await downloadAndUnzipVSCode(version)
-		const [cliPath, ...args] = resolveCliArgsFromVSCodeExecutablePath(vscodeExecutablePath)
+		installOpenEdgeExtension(vscodeExecutablePath, packagedExtensionPath)
 
-		const g = new GlobSync(path.resolve(__dirname, '../../../', 'ablunit-test-runner-*.vsix'))
-		if (g.found.length != 1) {
-			throw new Error("Expected exactly one ablunit-test-runner-*.vsix file, found " + g.found.length)
+		const launchArgs: string[] = []
+		launchArgs.push(projDir)
+		launchArgs.push('--log=debug')
+		// launchArgs.push('--verbose')
+		// launchArgs.push('--telemetry')
+		// launchArgs.push('--disable-gpu')
+		// launchArgs.push('--trace-deprecation')
+		if (version === 'insiders') {
+			launchArgs.push('--enable-proposed-api=kherring.ablunit-test-runner')
 		}
+		// launchArgs.push('--disable-extensions')
 
-		const packagedExtensionPath = g.found[0]
-		if (!existsSync(packagedExtensionPath)) {
-			throw new Error("Extension bundle does not exist! '" + packagedExtensionPath + "'")
-		}
-		// const projDir = path.resolve(__dirname, '../../../test_projects/proj0')
-		// const projDir = path.resolve(__dirname, '../../../test_projects/proj1')
-		const projDir = path.resolve(__dirname, '../../../test_projects/proj4')
+		console.log('[' + file + ' runTest] (projName=' + projName + ') running tests with args=')
+		console.debug(' -- cwd=' + __dirname)
+		console.debug(' -- extensionDevelopmentPath=' + extensionDevelopmentPath)
+		console.debug(' -- extensionTestsPath=' + extensionTestsPath)
+		console.debug(' -- testingEnv=' + JSON.stringify(testingEnv))
 
-		console.log("[installAndRun.ts runTest] cp.spawnSync")
-		// Use cp.spawn / cp.exec for custom setup
-		cp.spawnSync(
-			cliPath,
-			[...args, '--install-extension', packagedExtensionPath],
-			{ encoding: 'utf-8', stdio: 'inherit' }
-		)
-
-		console.log('[installAndRun.ts runTest] await runTests (projDir=' + projDir + ')')
-		console.log('[installAndRun.ts runTest] -- extensionDevelopmentPath=' + extensionDevelopmentPath)
-		console.log('[installAndRun.ts runTest] -- extensionTestsPath=' + extensionTestsPath)
 		await runTests({
 			vscodeExecutablePath,
 			extensionDevelopmentPath,
 			extensionTestsPath,
-			launchArgs: [
-				projDir,
-				'--log=debug',
-				// '--disable-gpu',
-				'--trace-deprecation',
-				'--enable-proposed-api=kherring.ablunit-test-runner'
-			]
+			launchArgs: launchArgs,
+			extensionTestsEnv: testingEnv,
+			version: version
 		})
+		console.log('[' + file + ' runTest] (projName=' + projName + ') tests completed successfully!')
 	} catch (err) {
-		throw new Error("Failed to run tests! err=" + err)
+		console.error('[' + file + ' runTest] (projName=' + projName + ') failed to run tests, err=' + err)
+		throw new Error('Failed to run tests! err=' + err)
+	} finally {
+		console.log('[' + file + ' runTest] (projName=' + projName + ') finally')
 	}
-	console.log("[installAndRun] success!  version=" + version)
+	console.log('[' + file + ' runTest] success!  version=' + version)
 }
 
-main().catch(err => {
-	console.error("ERROR running tests:" + err)
+main().then(() => {
+	console.log('[' + file + ' main] completed successfully!')
+}, (err) => {
+	console.error('[' + file + ' main] Failed to run tests, err=' + err)
 	process.exit(1)
 })

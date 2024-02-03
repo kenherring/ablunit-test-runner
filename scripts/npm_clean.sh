@@ -29,8 +29,4 @@ for PATTERN in "${PATTERNS[@]}"; do
 done
 
 wait
-
-## pull proposed APIs
-# npx @vscode/dts dev
-
 echo "cleanup complete"

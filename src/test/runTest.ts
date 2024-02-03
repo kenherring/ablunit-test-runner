@@ -5,44 +5,47 @@ import * as path from 'path'
 import { downloadAndUnzipVSCode, resolveCliArgsFromVSCodeExecutablePath, runTests } from '@vscode/test-electron'
 import { ITestConfig } from './createTestConfig'
 
+const file = 'runTest.ts'
+
 async function main () {
-	console.log('[runTest.ts main] starting...')
+	console.log('[' + file + ' main] starting...')
+	const version = 'insiders'
 	const testConfig: ITestConfig[] = JSON.parse(fs.readFileSync('./.vscode-test.config.json', 'utf8')) as ITestConfig[]
 
 	let projToRun: string | undefined = undefined
 	projToRun = process.env['ABLUNIT_TEST_RUNNER_PROJECT_NAME']
-	console.log('[runTest.ts main] projToRun=' + projToRun)
+	console.log('[' + file + ' main] projToRun=' + projToRun)
 	let testCount = 0
 	for (const conf of testConfig) {
 		if (!projToRun || conf.projName === projToRun) {
 			testCount++
-			await testProject(conf.projName, conf.workspaceFolder, conf.launchArgs)
+			console.log('[' + file + ' main] starting tests in vscode, version=\'' + version + '\'')
+			await runTest(version, conf.projName, conf.workspaceFolder)
 		}
 	}
-	console.log('[runTest.ts main] testCount=' + testCount)
+	console.log('[' + file + ' main] tests completed successfully! testCount=' + testCount)
 	if (testCount === 0) {
-		console.error('[runTest.ts main] no tests found!')
+		console.error('[' + file + ' main] no tests found!')
 		process.exit(1)
 	}
 }
 
-function installOpenEdgeExtension (vscodeExecutablePath: string) {
-	console.log('[installAndRun.ts runTest] installing OpenEdge extensions...')
+function installOpenEdgeExtension (vscodeExecutablePath: string, extensionId: string) {
+	console.log('[' + file + ' runTest] installing OpenEdge extensions...')
 	const [cliPath, ...args] = resolveCliArgsFromVSCodeExecutablePath(vscodeExecutablePath)
 	// Use cp.spawn / cp.exec for custom setup
 	cp.spawnSync(
 		cliPath,
-		[...args, '--install-extension', 'riversidesoftware.openedge-abl'],
+		[...args, '--install-extension', extensionId],
 		{ encoding: 'utf-8', stdio: 'inherit' }
 	)
 }
 
-async function testProject (projName: string, projDir?: string, launchArgs: string[] = []) {
+async function runTest (version: string, projName: string, projDir?: string) {
 	if(!projDir) {
 		projDir = projName
 	}
 
-	const version = 'insiders'
 	const extensionDevelopmentPath: string = path.resolve(__dirname, '../../')
 	const extensionTestsPath = path.resolve(__dirname)
 	const vscodeExecutablePath = await downloadAndUnzipVSCode(version)
@@ -53,43 +56,48 @@ async function testProject (projName: string, projDir?: string, launchArgs: stri
 	}
 
 	try {
-		installOpenEdgeExtension(vscodeExecutablePath)
+		installOpenEdgeExtension(vscodeExecutablePath, 'riversidesoftware.openedge-abl')
 
-		const args: string[] = [
-			projDir,
-			// '--log=debug',
-			'--disable-gpu',
-			'--enable-proposed-api=kherring.ablunit-test-runner'
-			// '--verbose',
-			// '--telemetry'
-		]
-		args.push(...launchArgs)
+		const launchArgs: string[] = []
+		launchArgs.push(projDir)
+		launchArgs.push('--log=debug')
+		// launchArgs.push('--verbose')
+		// launchArgs.push('--telemetry')
+		// launchArgs.push('--disable-gpu')
+		// launchArgs.push('--trace-deprecation')
+		if (version === 'insiders') {
+			launchArgs.push('--enable-proposed-api=kherring.ablunit-test-runner')
+		}
+		// launchArgs.push('--disable-extensions')
+		launchArgs.push(...launchArgs)
 
-		console.log('[runTest.ts testProject] (projName=' + projName + ') running tests with args=')
+		console.log('[' + file + ' runTest] (projName=' + projName + ') running tests with args=')
 		console.debug(' -- cwd=' + __dirname)
 		console.debug(' -- extensionDevelopmentPath=' + extensionDevelopmentPath)
 		console.debug(' -- extensionTestsPath=' + extensionTestsPath)
 		console.debug(' -- testingEnv=' + JSON.stringify(testingEnv))
 
 		await runTests({
+			vscodeExecutablePath,
 			extensionDevelopmentPath,
 			extensionTestsPath,
-			launchArgs: args,
+			launchArgs: launchArgs,
 			extensionTestsEnv: testingEnv,
 			version: version
 		})
-		console.log('[runTest.ts testProject] (projName=' + projName + ') tests completed successfully!')
+		console.log('[' + file + ' runTest] (projName=' + projName + ') tests completed successfully!')
 	} catch (err) {
-		console.error('[runTest.ts testProject] (projName=' + projName + ') failed to run tests, err=' + err)
-		process.exit(1)
+		console.error('[' + file + ' runTest] (projName=' + projName + ') failed to run tests, err=' + err)
+		throw new Error('Failed to run tests! err=' + err)
 	} finally {
-		console.log('[runTest.ts testProject] (projName=' + projName + ') finally')
+		console.log('[' + file + ' runTest] (projName=' + projName + ') finally')
 	}
+	console.log('[' + file + ' runTest] success!  version=' + version)
 }
 
 main().then(() => {
-	console.log('[runTest.ts main] completed successfully!')
+	console.log('[' + file + ' main] completed successfully!')
 }, (err) => {
-	console.error('[runTest.ts main] Failed to run tests, err=' + err)
+	console.error('[' + file + ' main] Failed to run tests, err=' + err)
 	process.exit(1)
 })

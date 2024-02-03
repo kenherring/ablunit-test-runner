@@ -52,7 +52,12 @@ function createTestConfig (projName: string, testFile: string, workspaceFolder?:
 	}
 
 	const launchArgs: string[] = []
+	launchArgs.push('--log=debug')
 	// launchArgs.push('--disable-gpu')
+	launchArgs.push('--trace-deprecation')
+	if (insidersBuild) {
+		launchArgs.push('--enable-proposed-api=kherring.ablunit-test-runner')
+	}
 	if (projName != 'DebugLines' &&
 		projName != 'proj3' &&
 		projName != 'proj4' &&
@@ -61,10 +66,6 @@ function createTestConfig (projName: string, testFile: string, workspaceFolder?:
 		projName != 'proj9' &&
 		projName != 'projA') {
 		launchArgs.push('--disable-extensions')
-	}
-
-	if (insidersBuild) {
-		launchArgs.push('--enable-proposed-api=kherring.ablunit-test-runner')
 	}
 
 	const retVal: ITestConfig = {
