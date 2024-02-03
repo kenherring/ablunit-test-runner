@@ -11,7 +11,7 @@ import { existsSync } from 'fs'
 import { downloadAndUnzipVSCode, resolveCliArgsFromVSCodeExecutablePath, runTests } from '@vscode/test-electron'
 
 
-const file = 'installAndRun.ts'
+const file = 'dummy-ext/runTest.ts'
 const insidersBuild = true
 let packagedExtensionPath = path.resolve(__dirname, '../../../ablunit-test-runner-*.vsix')
 
