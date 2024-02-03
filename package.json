@@ -122,7 +122,7 @@
 			"type": "object",
 			"title": "ABLUnit Test Runner",
 			"properties": {
-				"ablunit.discoverFilesOnActivate": {
+				"ablunit.discoverAllTestsOnActivate": {
 					"type": "boolean",
 					"default": true,
 					"markdownDescription": "For large workspaces this may improve performance by loading test files as they are used instead of all at once"
