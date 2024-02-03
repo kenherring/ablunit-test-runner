@@ -222,39 +222,40 @@ export class ABLResults implements Disposable {
 
 	async parseOutput (options: TestRun) {
 		this.setStatus('parsing results')
-		log.debug('parsing results from ' + this.cfg.ablunitConfig.optionsUri.filenameUri.fsPath, options)
+		log.debug('parsing results from ' + workspace.asRelativePath(this.cfg.ablunitConfig.optionsUri.filenameUri), options)
 
 		this.duration.stop()
 		const parseTime = new Duration()
 
 		this.ablResults = new ABLResultsParser(this.propath!, this.debugLines!)
 		await this.ablResults.parseResults(this.cfg.ablunitConfig.optionsUri.filenameUri, this.cfg.ablunitConfig.optionsUri.jsonUri).then(() => {
-			log.debug('parsing complete ' + parseTime.toString())
+			log.info('parsing results complete ' + parseTime.toString())
 			if(!this.ablResults!.resultsJson) {
 				log.error('No results found in ' + this.cfg.ablunitConfig.optionsUri.filenameUri.fsPath, options)
-				throw new Error('[ABLResults parseOutput] No results found in ' + this.cfg.ablunitConfig.optionsUri.filenameUri.fsPath + '\r\n')
+				throw new Error('No results found in ' + this.cfg.ablunitConfig.optionsUri.filenameUri.fsPath + '\r\n')
 			}
 			return true
 		}, (err) => {
-			this.setStatus('error parsing results data')
-			log.error('Error parsing ablunit results from ' + this.cfg.ablunitConfig.optionsUri.filenameUri.fsPath + '.  err=' + err, options)
-			throw new Error('[ABLResults parseOutput] Error parsing ablunit results from ' + this.cfg.ablunitConfig.optionsUri.filenameUri.fsPath + '\r\nerr=' + err)
+			this.setStatus('Error parsing results')
+			log.error('Error parsing results from ' + this.cfg.ablunitConfig.optionsUri.filenameUri.fsPath + '.  err=' + err, options)
+			throw new Error('Error parsing results from ' + this.cfg.ablunitConfig.optionsUri.filenameUri.fsPath + '\r\nerr=' + err)
 		})
 
 		if (this.cfg.ablunitConfig.profiler.enabled && this.cfg.ablunitConfig.profiler.coverage) {
 			this.setStatus('parsing profiler data')
 			log.debug('parsing profiler data from ' + workspace.asRelativePath(this.cfg.ablunitConfig.profFilenameUri.fsPath), options)
 			await this.parseProfile().then(() => {
+				log.info('parsing profiler data complete ' + parseTime.toString())
 				return true
 			}, (err) => {
-				this.setStatus('error parsing profiler data')
+				this.setStatus('Error parsing profiler data')
 				log.error('Error parsing profiler data from ' + this.cfg.ablunitConfig.profFilenameUri.fsPath + '.  err=' + err, options)
 				throw new Error('Error parsing profiler data from ' + workspace.asRelativePath(this.cfg.ablunitConfig.profFilenameUri) + '\r\nerr=' + err)
 			})
 		}
 
 		this.setStatus('parsing output complete ' + parseTime.toString())
-		log.debug('parsing output complete ' + parseTime.toString(), options)
+		log.info('parsing output complete ' + parseTime.toString())
 	}
 
 	async assignTestResults (item: TestItem, options: TestRun) {

@@ -384,7 +384,7 @@ export async function selectProfile (profile: string) {
 export async function refreshData () {
 	return commands.executeCommand('_ablunit.getExtensionTestReferences').then((resp) => {
 		const refs = resp as IExtensionTestReferences
-		decorator = refs.decorator
+		// decorator = refs.decorator
 		testController = refs.testController
 		recentResults = refs.recentResults
 		if (refs.currentRunData) {

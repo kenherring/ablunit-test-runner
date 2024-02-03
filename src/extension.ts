@@ -20,11 +20,11 @@ import { log } from './ChannelLogger'
 import { getContentFromFilesystem } from './parse/TestParserCommon'
 import { ABLTestCase, ABLTestClass, ABLTestData, ABLTestDir, ABLTestFile, ABLTestProgram, ABLTestSuite, resultData, testData } from './testTree'
 // import { DecorationProvider, Decorator, decorator } from './Decorator'
-import { Decorator, decorator } from './Decorator'
+// import { Decorator, decorator } from './Decorator'
 
 export interface IExtensionTestReferences {
 	testController: TestController
-	decorator: Decorator
+	// decorator: Decorator
 	recentResults: ABLResults[]
 	currentRunData: ABLResults[]
 }
@@ -51,7 +51,7 @@ export async function activate (context: ExtensionContext) {
 		}
 		const ret = {
 			testController: ctrl,
-			decorator: decorator,
+			// decorator: decorator,
 			recentResults: recentResults,
 			currentRunData: data
 		} as IExtensionTestReferences
@@ -87,7 +87,7 @@ export async function activate (context: ExtensionContext) {
 		workspace.onDidOpenTextDocument(async e => {
 			log.trace('onDidOpenTextDocument for ' + e.uri)
 			await updateNodeForDocument(e, 'didOpen').then(() => {
-				decorator.decorate(undefined, e)
+				// decorator.decorate(undefined, e)
 			}, (err) => {
 				log.error('failed updateNodeForDocument onDidTextDocument! err=' + err)
 			})
@@ -214,12 +214,14 @@ export async function activate (context: ExtensionContext) {
 					log.info('starting ablunit tests for folder: ' + r.workspaceFolder.uri.fsPath, run)
 				}
 
+				log.debug('r.run start')
 				ret = await r.run(run).then(() => {
 					return true
 				}, (err) => {
 					log.error('ablunit run failed parsing results with exception: ' + err, run)
 					return false
 				})
+				log.debug('r.run after ret=' + ret)
 				if (!ret) {
 					continue
 				}
@@ -242,10 +244,14 @@ export async function activate (context: ExtensionContext) {
 						if (run.token.isCancellationRequested) {
 							log.debug('cancellation requested - runTestQueue-2')
 							throw new CancellationError()
+						} else {
+							await r.assignTestResults(test, run)
 						}
 					}
 				}
 			}
+
+			log.debug('ret=' + ret)
 
 			if(!ret) {
 				for (const { test } of queue) {
@@ -267,12 +273,12 @@ export async function activate (context: ExtensionContext) {
 
 			const data = resultData.get(run) ?? []
 			recentResults = data
-			decorator.setRecentResults(recentResults)
+			// decorator.setRecentResults(recentResults)
 
-			if (window.activeTextEditor) {
-				log.info('decorating editor - activeTextEditor')
-				decorator.decorate(window.activeTextEditor)
-			}
+			// if (window.activeTextEditor) {
+			// 	log.info('decorating editor - activeTextEditor')
+			// 	decorator.decorate(window.activeTextEditor)
+			// }
 
 			run.coverageProvider = {
 				provideFileCoverage: () => {
@@ -288,6 +294,7 @@ export async function activate (context: ExtensionContext) {
 					return coverage
 				},
 				resolveFileCoverage: (coverage: FileCoverage, cancellation: CancellationToken) => {
+					log.info('---------- resolveFileCoverage ----------')
 					log.error('resolveFileCoverage not implemented')
 
 					cancellation.onCancellationRequested(() => {
@@ -388,11 +395,11 @@ export async function activate (context: ExtensionContext) {
 		const prom = updateNode(u, ctrl)
 
 		if (typeof prom === 'boolean') {
-			return new Promise(() => { return })
+			return new Promise(() => { return prom })
 		} else {
-			if (!prom) {
-				throw new Error('updateNode failed for \'' + u.fsPath + '\' - no promise returned')
-			}
+			// if (!prom) {
+			// 	throw new Error('updateNode failed for \'' + u.fsPath + '\' - no promise returned')
+			// }
 			return prom.then(() => { return })
 		}
 	}
@@ -487,10 +494,11 @@ function updateNode (uri: Uri, ctrl: TestController) {
 			return getContentFromFilesystem(uri).then((contents) => {
 				data.updateFromContents(ctrl, contents, item)
 			}).then(() => {
-				return decorator.decorate()
+				// return decorator.decorate()
 			})
 		}
 	}
+	return true
 }
 
 export function setContextPaths (storageUri: Uri, resourcesUri: Uri) {
@@ -972,7 +980,7 @@ function openCallStackItem (traceUriStr: string) {
 		editor.selections = [new Selection(lineToGoBegin, lineToGoEnd)]
 		const range = new Range(lineToGoBegin, lineToGoEnd)
 		log.info('decorating editor - openCallStackItem')
-		decorator.decorate(editor)
+		// decorator.decorate(editor)
 		editor.revealRange(range)
 	})
 }
