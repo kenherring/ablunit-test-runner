@@ -376,8 +376,8 @@ export async function activate (context: ExtensionContext) {
 	async function resolveHandlerFunc (item: TestItem | undefined) {
 		if (!item) {
 			log.debug('resolveHandlerFunc called with undefined item - refresh tests?')
-			if (workspace.getConfiguration('ablunit').get('discoverFilesOnActivate', false)) {
-				log.debug('discoverFilesOnActivate is true. refreshing test tree...')
+			if (workspace.getConfiguration('ablunit').get('discoverAllTestsOnActivate', false)) {
+				log.debug('discoverAllTestsOnActivate is true. refreshing test tree...')
 				return commands.executeCommand('testing.refreshTests').then(() => {
 					log.trace('tests tree successfully refreshed on workspace startup')
 				}, (err) => {

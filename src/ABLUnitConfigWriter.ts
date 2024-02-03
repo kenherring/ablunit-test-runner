@@ -11,7 +11,7 @@ import { getOpenEdgeProfileConfig, IBuildPathEntry, IDatabaseConnection } from '
 
 // KEEP IN REPO CONFIG:
 //  * notificationsEnabled
-//  * discoverFilesOnActivate
+//  * discoverAllTestsOnActivate
 //  * importOpenedgeProjectJson
 
 export const ablunitConfig = new WeakMap<WorkspaceFolder, RunConfig>()
