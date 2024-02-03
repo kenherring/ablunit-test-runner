@@ -199,7 +199,7 @@ export class ABLResults implements Disposable {
 				// do nothing, can't delete a file that doesn't exist
 			})
 		}
-		return workspace.fs.stat(this.cfg.ablunitConfig.optionsUri.filenameUri).then((stat: FileStat) => {
+		return workspace.fs.stat(this.cfg.ablunitConfig.optionsUri.filenameUri).then((stat) => {
 			if (stat.type === FileType.File) {
 				return workspace.fs.delete(this.cfg.ablunitConfig.optionsUri.filenameUri)
 			}
@@ -503,7 +503,7 @@ export class ABLResults implements Disposable {
 			return
 		}
 		module.SourceUri = fileinfo.uri
-		let fc: FileCoverage | undefined = undefined
+		let fc: FileCoverage | undefined
 
 		for (let idx=0; idx < module.lines.length; idx++) { // NOSONAR
 			const line = module.lines[idx]
@@ -518,7 +518,7 @@ export class ABLResults implements Disposable {
 				return
 			}
 
-			if (!fc || fc.uri.fsPath != dbg.sourceUri.fsPath) {
+			if (fc?.uri.fsPath != dbg.sourceUri.fsPath) {
 				// get existing FileCoverage object
 				fc = this.testCoverage.get(dbg.sourceUri.fsPath)
 				if (!fc) {

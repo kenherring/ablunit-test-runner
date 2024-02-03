@@ -120,6 +120,7 @@ export class Decorator {
 		}
 		tc.detailedCoverage.filter(element => element.executed).forEach(element => {
 			const opts: DecorationOptions = {
+				hoverMessage: 'Executed line',
 				range: element.location as Range,
 				// renderOptions: {
 				// 	before: {

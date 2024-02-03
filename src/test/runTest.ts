@@ -56,8 +56,8 @@ async function testProject (projName: string, projDir?: string, launchArgs: stri
 
 		const args: string[] = [
 			projDir,
-			'--log=debug',
-			// '--disable-gpu',
+			// '--log=debug',
+			'--disable-gpu',
 			'--enable-proposed-api=kherring.ablunit-test-runner'
 			// '--verbose',
 			// '--telemetry'

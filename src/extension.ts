@@ -453,15 +453,11 @@ export async function activate (context: ExtensionContext) {
 	const testProfileRun = ctrl.createRunProfile('Run Tests', TestRunProfileKind.Run, runHandler, true, new TestTag('runnable'), false)
 	const testProfileDebug = ctrl.createRunProfile('Debug Tests', TestRunProfileKind.Debug, runHandler, false, new TestTag('runnable'), false)
 	const testProfileCoverage = ctrl.createRunProfile('Run Tests w/ Coverage', TestRunProfileKind.Debug, runHandler, false, new TestTag('runnable'), false)
-	const testProfileDebugCoverage = ctrl.createRunProfile('Debug Tests w/ Coverage', TestRunProfileKind.Debug, runHandler, false, new TestTag('runnable'), false)
+	// const testProfileDebugCoverage = ctrl.createRunProfile('Debug Tests w/ Coverage', TestRunProfileKind.Debug, runHandler, false, new TestTag('runnable'), false)
 	testProfileRun.configureHandler = configHandler
 	testProfileDebug.configureHandler = configHandler
 	testProfileCoverage.configureHandler = configHandler
-	testProfileDebugCoverage.configureHandler = configHandler
-
-	if(workspace.getConfiguration('ablunit').get('discoverFilesOnActivate', false)) {
-		await commands.executeCommand('testing.refreshTests')
-	}
+	// testProfileDebugCoverage.configureHandler = configHandler
 }
 
 let contextStorageUri: Uri
