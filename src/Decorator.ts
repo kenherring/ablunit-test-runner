@@ -109,6 +109,9 @@ export class Decorator {
 		if (!tc) {
 			log.trace('No coverage for ' + editor.document.uri.fsPath + ', coverage.size=' + this.recentCoverage.size + ', decorations.size=' + this.recentDecorations.size)
 			log.trace('  -       have: ' + editor.document.uri.fsPath)
+			// for (const [k, v] of this.recentCoverage) {
+			// 	log.trace('  - found coverage: ' + k + ' ' + v.detailedCoverage.length)
+			// }
 			return false
 		}
 

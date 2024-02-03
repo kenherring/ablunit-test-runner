@@ -30,6 +30,6 @@ done
 wait
 
 ## pull proposed APIs
-npx @vscode/dts dev
+# npx @vscode/dts dev
 
 echo "cleanup complete"

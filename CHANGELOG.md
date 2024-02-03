@@ -1,3 +1,7 @@
+# [insiders]() - YYYY-MM-DD (pre-release)
+
+This is the insiders build which showcases the proposed API.  Functionality in this build is subject to change based on any changes made to the VSCode API.
+
 # [0.2.1](https://github.com/kenherring/ablunit-test-runner/releases/tag/0.2.1) - 2024-02-02 (pre-release)
 
  * Stop refresh/test run - improving process abort (#129)
@@ -16,7 +20,7 @@ Initial release to marketplace
  * Ensure timely response when cancelling a test run (#103)
  * Set path environment var to test run with `terminal.integrated.env` settings (#97)
  * Pass `terminal.integrated.env` configuation to ABLUnit process (#91)
- * Rename repo: replace 'ablunit-test-runnerreferences with 'ablunit-test-runner' (#96)
+ * Rename repo: replace 'ablunit-test-runner' references with 'ablunit-test-runner' (#96)
  * Rework snippets to remove language competition (#95)
  * Write progress.ini to the proper location (#94)
  * Call stack show line number instead of uri (#93)

@@ -274,6 +274,29 @@ export async function activate (context: ExtensionContext) {
 				decorator.decorate(window.activeTextEditor)
 			}
 
+			run.coverageProvider = {
+				provideFileCoverage: () => {
+					log.info('---------- provideFileCoverage ----------')
+					const results = resultData.get(run)
+					if (!results) { return [] }
+
+					const coverage: FileCoverage[] = []
+					for (const r of results ?? []) {
+						coverage.push(...r.coverage)
+					}
+					log.info('coverage.length=' + coverage.length)
+					return coverage
+				},
+				resolveFileCoverage: (coverage: FileCoverage, cancellation: CancellationToken) => {
+					log.error('resolveFileCoverage not implemented')
+
+					cancellation.onCancellationRequested(() => {
+						log.info('cancellation requested!')
+					})
+					return coverage
+				}
+			}
+
 			void log.notification('ablunit tests complete')
 			run.end()
 			log.trace('run.end()')
@@ -338,32 +361,16 @@ export async function activate (context: ExtensionContext) {
 				})
 			})
 		}).catch((err) => {
-			log.error('discoverTests failed. err=' + err)
 			run.end()
-		})
-
-		run.coverageProvider = {
-			provideFileCoverage: () => {
-				log.info('---------- provideFileCoverage ----------')
-				const results = resultData.get(run)
-				if (!results) { return [] }
-
-				const coverage: FileCoverage[] = []
-				for (const r of results ?? []) {
-					coverage.push(...r.coverage)
-				}
-				log.info('coverage.length=' + coverage.length)
-				return coverage
-			},
-			resolveFileCoverage: (coverage: FileCoverage, cancellation: CancellationToken) => {
-				log.error('resolveFileCoverage not implemented')
-
-				cancellation.onCancellationRequested(() => {
-					log.info('cancellation requested!')
-				})
-				return coverage
+			if (err instanceof CancellationError) {
+				log.error('ablunit run failed with exception: CancellationError')
+			} else if (err instanceof Error) {
+				log.error('ablunit run failed with error: ' + err.message + ' - ' + err.stack)
+			} else {
+				log.error('ablunit run failed with non-error: ' + err)
 			}
-		}
+			throw err
+		})
 	}
 
 	function updateNodeForDocument (e: TextDocument | TestItem | Uri, r: string) {

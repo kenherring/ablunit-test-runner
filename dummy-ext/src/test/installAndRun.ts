@@ -57,6 +57,7 @@ async function runTest(version: string) {
 			launchArgs: [
 				projDir,
 				'--log=debug',
+				// '--disable-gpu',
 				'--trace-deprecation',
 				'--enable-proposed-api=kherring.ablunit-test-runner'
 			]
@@ -68,6 +69,6 @@ async function runTest(version: string) {
 }
 
 main().catch(err => {
-	log.error("ERROR running tests:" + err)
+	console.error("ERROR running tests:" + err)
 	process.exit(1)
 })

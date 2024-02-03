@@ -51,7 +51,7 @@ function createTestConfig (projName: string, testFile: string, workspaceFolder?:
 	}
 
 	const launchArgs: string[] = []
-	launchArgs.push('--disable-gpu')
+	// launchArgs.push('--disable-gpu')
 	if (projName != 'DebugLines' &&
 		projName != 'proj3' &&
 		projName != 'proj4' &&
