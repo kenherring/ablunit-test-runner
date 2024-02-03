@@ -5,5 +5,4 @@
 	// "ablunit.files.include": "**/*.cls,**/*.p"
 	// "ablunit.files.include": "**/*.p",
 	// "ablunit.files.include": "**/*.cls"
-	"ablunit.notificationsEnabled": false,
 }

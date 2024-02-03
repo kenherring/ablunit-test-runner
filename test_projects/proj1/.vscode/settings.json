@@ -3,7 +3,6 @@
 	"abl.debugAdapterTrace": true,
 	"abl.langServerDebug": true,
 	"abl.langServerTrace": true,
-	"ablunit.notificationsEnabled": false,
 	"terminal.integrated.env.linux": {
 		"ENV_VAR_1": "THISisTHEvalue",
 		"ATTR_ABLUNIT_EVENT_FILE": "ablunit_event_file" //TODO

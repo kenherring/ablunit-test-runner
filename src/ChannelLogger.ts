@@ -69,6 +69,16 @@ class Logger {
 		this.writeMessage(LogLevel.Error, message, testRun)
 	}
 
+	notification (message: string) {
+		log.info(message)
+		return window.showInformationMessage(message)
+	}
+
+	notificationError (message: string) {
+		log.error(message)
+		return window.showErrorMessage(message)
+	}
+
 	private writeMessage (messageLevel: LogLevel, message: string, testRun?: TestRun, includeStack = false) {
 		this.writeToChannel(messageLevel, message, includeStack)
 

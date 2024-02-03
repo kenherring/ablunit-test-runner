@@ -163,11 +163,6 @@
 					"type": "boolean",
 					"default": true,
 					"markdownDescription": "Import configuration from `openedge-project.json` when possible"
-				},
-				"ablunit.notificationsEnabled": {
-					"type": "boolean",
-					"default": true,
-					"markdownDescription": "Show notifications for test run events"
 				}
 			}
 		},

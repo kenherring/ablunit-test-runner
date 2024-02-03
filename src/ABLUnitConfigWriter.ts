@@ -8,12 +8,6 @@ import { CoreOptions } from './parse/config/CoreOptions'
 import { ProfilerOptions } from './parse/config/ProfilerOptions'
 import { getOpenEdgeProfileConfig, IBuildPathEntry, IDatabaseConnection } from './parse/OpenedgeProjectParser'
 
-
-// KEEP IN REPO CONFIG:
-//  * notificationsEnabled
-//  * discoverAllTestsOnActivate
-//  * importOpenedgeProjectJson
-
 export const ablunitConfig = new WeakMap<WorkspaceFolder, RunConfig>()
 
 export class ABLUnitConfig  {
