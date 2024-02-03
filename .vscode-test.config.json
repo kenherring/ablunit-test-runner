@@ -9,6 +9,7 @@
             "timeout": 60000
         },
         "launchArgs": [
+            "--disable-gpu",
             "--enable-proposed-api=kherring.ablunit-test-runner"
         ],
         "env": {
@@ -26,6 +27,7 @@
             "timeout": 15000
         },
         "launchArgs": [
+            "--disable-gpu",
             "--disable-extensions",
             "--enable-proposed-api=kherring.ablunit-test-runner"
         ],
@@ -44,6 +46,7 @@
             "timeout": 15000
         },
         "launchArgs": [
+            "--disable-gpu",
             "--disable-extensions",
             "--enable-proposed-api=kherring.ablunit-test-runner"
         ],
@@ -62,6 +65,7 @@
             "timeout": 15000
         },
         "launchArgs": [
+            "--disable-gpu",
             "--disable-extensions",
             "--enable-proposed-api=kherring.ablunit-test-runner"
         ],
@@ -80,6 +84,7 @@
             "timeout": 15000
         },
         "launchArgs": [
+            "--disable-gpu",
             "--enable-proposed-api=kherring.ablunit-test-runner"
         ],
         "env": {
@@ -97,6 +102,7 @@
             "timeout": 15000
         },
         "launchArgs": [
+            "--disable-gpu",
             "--enable-proposed-api=kherring.ablunit-test-runner"
         ],
         "env": {
@@ -114,6 +120,7 @@
             "timeout": 15000
         },
         "launchArgs": [
+            "--disable-gpu",
             "--disable-extensions",
             "--enable-proposed-api=kherring.ablunit-test-runner"
         ],
@@ -132,6 +139,7 @@
             "timeout": 15000
         },
         "launchArgs": [
+            "--disable-gpu",
             "--disable-extensions",
             "--enable-proposed-api=kherring.ablunit-test-runner"
         ],
@@ -150,7 +158,8 @@
             "timeout": 60000
         },
         "launchArgs": [
-            "--enable-proposed-api=kherring.ablunit-test-runner
+            "--disable-gpu",
+            "--enable-proposed-api=kherring.ablunit-test-runner"
         ],
         "env": {
             "ABLUNIT_TEST_RUNNER_UNIT_TESTING": "true",
@@ -167,6 +176,7 @@
             "timeout": 15000
         },
         "launchArgs": [
+            "--disable-gpu",
             "--enable-proposed-api=kherring.ablunit-test-runner"
         ],
         "env": {
@@ -184,6 +194,7 @@
             "timeout": 15000
         },
         "launchArgs": [
+            "--disable-gpu",
             "--disable-extensions",
             "--enable-proposed-api=kherring.ablunit-test-runner"
         ],
@@ -202,6 +213,7 @@
             "timeout": 15000
         },
         "launchArgs": [
+            "--disable-gpu",
             "--enable-proposed-api=kherring.ablunit-test-runner"
         ],
         "env": {
@@ -219,6 +231,7 @@
             "timeout": 15000
         },
         "launchArgs": [
+            "--disable-gpu",
             "--enable-proposed-api=kherring.ablunit-test-runner"
         ],
         "env": {
@@ -236,6 +249,7 @@
             "timeout": 15000
         },
         "launchArgs": [
+            "--disable-gpu",
             "--disable-extensions",
             "--enable-proposed-api=kherring.ablunit-test-runner"
         ],
@@ -254,6 +268,7 @@
             "timeout": 15000
         },
         "launchArgs": [
+            "--disable-gpu",
             "--disable-extensions",
             "--enable-proposed-api=kherring.ablunit-test-runner"
         ],
@@ -272,6 +287,7 @@
             "timeout": 15000
         },
         "launchArgs": [
+            "--disable-gpu",
             "--disable-extensions",
             "--enable-proposed-api=kherring.ablunit-test-runner"
         ],

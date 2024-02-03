@@ -28,8 +28,7 @@
 	],
 	"ignorePatterns": [
 		"dummy-ext/",
-		"webpack.config.js",
-		"*.d.ts"
+		"webpack.config.js"
 	],
 	"rules": {
 		"@typescript-eslint/adjacent-overload-signatures": "error",

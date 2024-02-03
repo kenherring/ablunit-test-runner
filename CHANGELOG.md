@@ -16,7 +16,7 @@ Initial release to marketplace
  * Ensure timely response when cancelling a test run (#103)
  * Set path environment var to test run with `terminal.integrated.env` settings (#97)
  * Pass `terminal.integrated.env` configuation to ABLUnit process (#91)
- * Rename repo: replace 'ablunit-test-provider' references with 'ablunit-test-runner' (#96)
+ * Rename repo: replace 'ablunit-test-runnerreferences with 'ablunit-test-runner' (#96)
  * Rework snippets to remove language competition (#95)
  * Write progress.ini to the proper location (#94)
  * Call stack show line number instead of uri (#93)

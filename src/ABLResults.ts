@@ -503,7 +503,7 @@ export class ABLResults implements Disposable {
 			return
 		}
 		module.SourceUri = fileinfo.uri
-		let fc: FileCoverage | undefined
+		let fc: FileCoverage | undefined = undefined
 
 		for (let idx=0; idx < module.lines.length; idx++) { // NOSONAR
 			const line = module.lines[idx]
@@ -518,7 +518,7 @@ export class ABLResults implements Disposable {
 				return
 			}
 
-			if (fc?.uri.fsPath != dbg.sourceUri.fsPath) {
+			if (!fc || fc.uri.fsPath != dbg.sourceUri.fsPath) {
 				// get existing FileCoverage object
 				fc = this.testCoverage.get(dbg.sourceUri.fsPath)
 				if (!fc) {

@@ -58,7 +58,7 @@ async function runTest(version: string) {
 				projDir,
 				'--log=debug',
 				'--trace-deprecation',
-				'--enable-proposed-api=kherring.ablunit-test-provider'
+				'--enable-proposed-api=kherring.ablunit-test-runner'
 			]
 		})
 	} catch (err) {
