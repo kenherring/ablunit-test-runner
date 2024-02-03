@@ -58,7 +58,7 @@ The following table gives a brief description of the available settings via the 
 
 | Setting | Default | Description |
 | --- | --- | --- |
-| `ablunit.discoverFilesOnActivate` | `true` | Search all workspace files for tests on extension activation.  It may be beneficial to disable this for large workspaces, in which case the extension will find tests as files are accessed. |
+| `ablunit.discoverAllTestsOnActivate` | `true` | Search all workspace files for tests on extension activation.  It may be beneficial to disable this for large workspaces, in which case the extension will find tests as files are accessed. |
 | `ablunit.files.include` | `[ "**/*.{cls,p}" ]` | Glob pattern array matching test files. |
 | `ablunit.files.exclude` | `[ "**/.builder/**" ]` | Glob pattern array to exclude test files. |
 | `ablunit.importOpenedgeProjectJson` | `true` | Import configuration settings from \`openedge-project.json\` when possible. |
