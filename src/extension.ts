@@ -19,12 +19,9 @@ import { ABLResults } from './ABLResults'
 import { log } from './ChannelLogger'
 import { getContentFromFilesystem } from './parse/TestParserCommon'
 import { ABLTestCase, ABLTestClass, ABLTestData, ABLTestDir, ABLTestFile, ABLTestProgram, ABLTestSuite, resultData, testData } from './testTree'
-// import { DecorationProvider, Decorator, decorator } from './Decorator'
-// import { Decorator, decorator } from './Decorator'
 
 export interface IExtensionTestReferences {
 	testController: TestController
-	// decorator: Decorator
 	recentResults: ABLResults[]
 	currentRunData: ABLResults[]
 }
@@ -51,7 +48,6 @@ export async function activate (context: ExtensionContext) {
 		}
 		const ret = {
 			testController: ctrl,
-			// decorator: decorator,
 			recentResults: recentResults,
 			currentRunData: data
 		} as IExtensionTestReferences
@@ -68,32 +64,16 @@ export async function activate (context: ExtensionContext) {
 	context.subscriptions.push(
 		commands.registerCommand('_ablunit.openCallStackItem', openCallStackItem),
 		workspace.onDidChangeConfiguration(e => { updateConfiguration(e) }),
-		// window.registerFileDecorationProvider(decorationProvider),
-
-		// TODO
-		// window.onDidChangeActiveTextEditor(e => {
-		// 	if (e && createOrUpdateFile(ctrl, e.document.uri)) {
-		// 		return decorator.decorate(e)
-		// 	}
-		// }),
-		// window.onDidChangeActiveTextEditor(e => {
-		// 	if (!e) { return }
-		// 	log.info("decorating editor - onDidChangeActiveTextEditor")
-		// 	decorator.decorate(e).catch((err) => {
-		// 		log.error('failed to decorate editor. err=' + err)
-		// 	})
-		// }),
 
 		workspace.onDidOpenTextDocument(async e => {
 			log.trace('onDidOpenTextDocument for ' + e.uri)
 			await updateNodeForDocument(e, 'didOpen').then(() => {
-				// decorator.decorate(undefined, e)
+				log.debug('updateNodeForDocument complete for ' + e.uri)
 			}, (err) => {
 				log.error('failed updateNodeForDocument onDidTextDocument! err=' + err)
 			})
 		})
 		// workspace.onDidChangeTextDocument(e => { return updateNodeForDocument(e.document,'didChange') }),
-
 
 		// watcher.onDidCreate(uri => { createOrUpdateFile(controller, uri) })
 		// watcher.onDidChange(uri => { createOrUpdateFile(controller, uri) })
@@ -273,12 +253,6 @@ export async function activate (context: ExtensionContext) {
 
 			const data = resultData.get(run) ?? []
 			recentResults = data
-			// decorator.setRecentResults(recentResults)
-
-			// if (window.activeTextEditor) {
-			// 	log.info('decorating editor - activeTextEditor')
-			// 	decorator.decorate(window.activeTextEditor)
-			// }
 
 			run.coverageProvider = {
 				provideFileCoverage: () => {
@@ -472,33 +446,15 @@ let contextResourcesUri: Uri
 
 function updateNode (uri: Uri, ctrl: TestController) {
 	log.trace('updateNode uri=' + uri.fsPath)
-	// const openEditors = window.visibleTextEditors.filter(editor => editor.document.uri === uri)
-	// openEditors.filter(editor => editor.document.uri === uri).forEach(editor => {
-	// 	log.info('decorating editor - updateNodeForDocument')
-	// 	decorator.decorate(editor).catch((err) => {
-	// 		log.error('failed to decorate editor. err=' + err)
-	// 	})
-	// })
-
-	if (uri.scheme !== 'file') { return false }
-	if (!uri.path.endsWith('.cls') && !uri.path.endsWith('.p')) { return false }
-
-	if(isFileExcluded(uri, getExcludePatterns())) {
-		return false
-	}
+	if(uri.scheme !== 'file' || isFileExcluded(uri, getExcludePatterns())) {	return false }
 
 	const { item, data } = getOrCreateFile(ctrl, uri)
-	if(item) {
-		ctrl.invalidateTestResults(item)
-		if (data) {
-			return getContentFromFilesystem(uri).then((contents) => {
-				data.updateFromContents(ctrl, contents, item)
-			}).then(() => {
-				// return decorator.decorate()
-			})
-		}
-	}
-	return true
+	if(!item || !data) {	return false }
+
+	ctrl.invalidateTestResults(item)
+	return getContentFromFilesystem(uri).then((contents) => {
+		return data.updateFromContents(ctrl, contents, item)
+	})
 }
 
 export function setContextPaths (storageUri: Uri, resourcesUri: Uri) {
@@ -980,7 +936,6 @@ function openCallStackItem (traceUriStr: string) {
 		editor.selections = [new Selection(lineToGoBegin, lineToGoEnd)]
 		const range = new Range(lineToGoBegin, lineToGoEnd)
 		log.info('decorating editor - openCallStackItem')
-		// decorator.decorate(editor)
 		editor.revealRange(range)
 	})
 }
