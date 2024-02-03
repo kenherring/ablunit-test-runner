@@ -371,9 +371,6 @@ export async function activate (context: ExtensionContext) {
 		if (typeof prom === 'boolean') {
 			return new Promise(() => { return prom })
 		} else {
-			// if (!prom) {
-			// 	throw new Error('updateNode failed for \'' + u.fsPath + '\' - no promise returned')
-			// }
 			return prom.then(() => { return })
 		}
 	}

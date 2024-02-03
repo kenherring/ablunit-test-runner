@@ -60,6 +60,7 @@
 		{
 			"label": "npm watch webpack",
 			"type": "npm",
+			"hide": true,
 			"script": "watch-webpack",
 			"problemMatcher": "$tsc-watch",
 			"isBackground": true,
