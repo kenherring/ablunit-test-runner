@@ -3,7 +3,6 @@
 	// "ablunit.tempDir": "ablunit",
 	"ablunit.explorer.classlabel": "class-type-name",
 	"ablunit.discoverAllTestsOnActivate": true,
-	"ablunit.notificationsEnabled": false,
 	"ablunit.files.exclude": [
 		".builder/**",
 		"src/dirA/dir1/testInDir2.p"

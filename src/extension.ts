@@ -273,7 +273,7 @@ export async function activate (context: ExtensionContext) {
 				decorator.decorate(window.activeTextEditor)
 			}
 
-			showNotification('ablunit tests complete')
+			void log.notification('ablunit tests complete')
 			run.end()
 			log.trace('run.end()')
 			return
@@ -312,7 +312,7 @@ export async function activate (context: ExtensionContext) {
 			return res
 		}
 
-		showNotification('running ablunit tests')
+		void log.notification('running ablunit tests')
 		const queue: { test: TestItem; data: ABLTestData }[] = []
 		const run = ctrl.createTestRun(request)
 		currentTestRun = run
@@ -948,13 +948,6 @@ function openCallStackItem (traceUriStr: string) {
 		decorator.decorate(editor)
 		editor.revealRange(range)
 	})
-}
-
-function showNotification (message: string) {
-	log.info(message)
-	if (workspace.getConfiguration('ablunit').get('notificationsEnabled', true)) {
-		void window.showInformationMessage(message)
-	}
 }
 
 function isFileExcluded (uri: Uri, excludePatterns: RelativePattern[]) {
