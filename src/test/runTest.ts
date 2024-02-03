@@ -4,7 +4,6 @@ import * as fs from 'fs'
 import * as path from 'path'
 import { downloadAndUnzipVSCode, resolveCliArgsFromVSCodeExecutablePath, runTests } from '@vscode/test-electron'
 import { ITestConfig } from './createTestConfig'
-import { totalmem } from 'os'
 
 async function main () {
 	console.log('[runTest.ts main] starting...')
@@ -13,27 +12,16 @@ async function main () {
 	let projToRun: string | undefined = undefined
 	projToRun = process.env['ABLUNIT_TEST_RUNNER_PROJECT_NAME']
 	console.log('[runTest.ts main] projToRun=' + projToRun)
-	let suiteCount = 0
-	let passedCount = 0
-	let failedCount = 0
+	let testCount = 0
 	for (const conf of testConfig) {
 		if (!projToRun || conf.projName === projToRun) {
-			suiteCount++
-			const passed = await testProject(conf.projName, conf.workspaceFolder, conf.launchArgs)
-			if (passed) {
-				passedCount++
-			} else {
-				failedCount++
-			}
+			testCount++
+			await testProject(conf.projName, conf.workspaceFolder, conf.launchArgs)
 		}
 	}
-	console.log('[runTest.ts main] suiteCount=' + suiteCount + ', passedCount=' + passedCount + ', failedCount=' + failedCount)
-	if (suiteCount === 0) {
+	console.log('[runTest.ts main] testCount=' + testCount)
+	if (testCount === 0) {
 		console.error('[runTest.ts main] no tests found!')
-		process.exit(1)
-	}
-	if (failedCount != 0) {
-		console.error('[runTest.ts main] ' + failedCount + '/' + suiteCount + ' test suites failed!')
 		process.exit(1)
 	}
 }
@@ -89,11 +77,10 @@ async function testProject (projName: string, projDir?: string, launchArgs: stri
 		console.log('[runTest.ts testProject] (projName=' + projName + ') tests completed successfully!')
 	} catch (err) {
 		console.error('[runTest.ts testProject] (projName=' + projName + ') failed to run tests, err=' + err)
-		return false
+		process.exit(1)
 	} finally {
 		console.log('[runTest.ts testProject] (projName=' + projName + ') finally')
 	}
-	return true
 }
 
 main().then(() => {
