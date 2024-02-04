@@ -10,7 +10,6 @@
         },
         "launchArgs": [
             "--log=debug",
-            "--trace-deprecation",
             "--enable-proposed-api=kherring.ablunit-test-runner"
         ],
         "version": "insiders",
@@ -30,7 +29,6 @@
         },
         "launchArgs": [
             "--log=debug",
-            "--trace-deprecation",
             "--enable-proposed-api=kherring.ablunit-test-runner",
             "--disable-extensions"
         ],
@@ -51,7 +49,6 @@
         },
         "launchArgs": [
             "--log=debug",
-            "--trace-deprecation",
             "--enable-proposed-api=kherring.ablunit-test-runner",
             "--disable-extensions"
         ],
@@ -72,7 +69,6 @@
         },
         "launchArgs": [
             "--log=debug",
-            "--trace-deprecation",
             "--enable-proposed-api=kherring.ablunit-test-runner",
             "--disable-extensions"
         ],
@@ -93,7 +89,6 @@
         },
         "launchArgs": [
             "--log=debug",
-            "--trace-deprecation",
             "--enable-proposed-api=kherring.ablunit-test-runner"
         ],
         "version": "insiders",
@@ -113,7 +108,6 @@
         },
         "launchArgs": [
             "--log=debug",
-            "--trace-deprecation",
             "--enable-proposed-api=kherring.ablunit-test-runner"
         ],
         "version": "insiders",
@@ -133,7 +127,6 @@
         },
         "launchArgs": [
             "--log=debug",
-            "--trace-deprecation",
             "--enable-proposed-api=kherring.ablunit-test-runner",
             "--disable-extensions"
         ],
@@ -154,7 +147,6 @@
         },
         "launchArgs": [
             "--log=debug",
-            "--trace-deprecation",
             "--enable-proposed-api=kherring.ablunit-test-runner",
             "--disable-extensions"
         ],
@@ -175,7 +167,6 @@
         },
         "launchArgs": [
             "--log=debug",
-            "--trace-deprecation",
             "--enable-proposed-api=kherring.ablunit-test-runner"
         ],
         "version": "insiders",
@@ -195,7 +186,6 @@
         },
         "launchArgs": [
             "--log=debug",
-            "--trace-deprecation",
             "--enable-proposed-api=kherring.ablunit-test-runner"
         ],
         "version": "insiders",
@@ -215,7 +205,6 @@
         },
         "launchArgs": [
             "--log=debug",
-            "--trace-deprecation",
             "--enable-proposed-api=kherring.ablunit-test-runner",
             "--disable-extensions"
         ],
@@ -236,7 +225,6 @@
         },
         "launchArgs": [
             "--log=debug",
-            "--trace-deprecation",
             "--enable-proposed-api=kherring.ablunit-test-runner"
         ],
         "version": "insiders",
@@ -256,7 +244,6 @@
         },
         "launchArgs": [
             "--log=debug",
-            "--trace-deprecation",
             "--enable-proposed-api=kherring.ablunit-test-runner"
         ],
         "version": "insiders",
@@ -276,7 +263,6 @@
         },
         "launchArgs": [
             "--log=debug",
-            "--trace-deprecation",
             "--enable-proposed-api=kherring.ablunit-test-runner",
             "--disable-extensions"
         ],
@@ -297,7 +283,6 @@
         },
         "launchArgs": [
             "--log=debug",
-            "--trace-deprecation",
             "--enable-proposed-api=kherring.ablunit-test-runner",
             "--disable-extensions"
         ],
@@ -318,7 +303,6 @@
         },
         "launchArgs": [
             "--log=debug",
-            "--trace-deprecation",
             "--enable-proposed-api=kherring.ablunit-test-runner",
             "--disable-extensions"
         ],

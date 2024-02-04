@@ -78,7 +78,7 @@
 		"build": "npm run build-webpack && npm run build-tsc",
 		"rebuild": "npm run clean && npm run build",
 		"build-webpack": "npm run webpack",
-		"build-tsc": "tsc -p ./",
+		"build-tsc": "tsc -p ./ && node ./out/test/createTestConfig.js",
 		"clean": "rm -rf .nyc_output artifacts coverage dist out *.vsix && sh -c scripts/npm_clean.sh",
 		"clean-and-build": "npm run clean && npm run build",
 		"lint": "npx eslint ./src --ext .ts,.js",

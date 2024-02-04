@@ -27,6 +27,10 @@ VSCode is working to improve the testing runner by adding code coverage support.
 
 See [VSCode Documentation -> Using Proposed API](https://code.visualstudio.com/api/advanced-topics/using-proposed-api) for more information.
 
+### 📦 Screnshot with Proposed Test API
+
+![proposed test api example screenshot](https://github.com/kenherring/ablunit-test-runner/raw/main/docs/insiders.png)
+
 ## ⛺ Configuration
 
 Configuration is optional.  Many workspaces will work without any configuration.  However, there are advanced options available via the VSCode settings and a test profile configuration file (`.vscode/ablunit-test-profile.json`).

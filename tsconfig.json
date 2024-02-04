@@ -37,11 +37,14 @@
 		"strictFunctionTypes": true,
 		"strictNullChecks": true,
 		"strictPropertyInitialization": true,
-		"useUnknownInCatchVariables": false
+		"useUnknownInCatchVariables": false,
 	},
 	"include": [
-		"./src/test/*.ts",
-		"./src/test/*/*.ts",
+		"./src/**/*.ts",
+		// for when glob doesn't work
+		"./src/*.ts",
+		"./src/*/*.ts",
+		"./src/*/*/*.ts"
 	],
 	"exclude": [
 		"dist",

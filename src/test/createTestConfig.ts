@@ -31,7 +31,7 @@ function createLaunchArgs (projName: string, version: 'stable' | 'insiders') {
 	const launchArgs: string[] = []
 	launchArgs.push('--log=debug')
 	// launchArgs.push('--disable-gpu')
-	launchArgs.push('--trace-deprecation')
+	// launchArgs.push('--trace-deprecation')
 	if (version === 'insiders') {
 		launchArgs.push('--enable-proposed-api=kherring.ablunit-test-runner')
 	}

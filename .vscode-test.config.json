@@ -9,8 +9,7 @@
             "timeout": 60000
         },
         "launchArgs": [
-            "--log=debug",
-            "--trace-deprecation"
+            "--log=debug"
         ],
         "version": "stable",
         "env": {
@@ -29,7 +28,6 @@
         },
         "launchArgs": [
             "--log=debug",
-            "--trace-deprecation",
             "--disable-extensions"
         ],
         "version": "stable",
@@ -49,7 +47,6 @@
         },
         "launchArgs": [
             "--log=debug",
-            "--trace-deprecation",
             "--disable-extensions"
         ],
         "version": "stable",
@@ -69,7 +66,6 @@
         },
         "launchArgs": [
             "--log=debug",
-            "--trace-deprecation",
             "--disable-extensions"
         ],
         "version": "stable",
@@ -88,8 +84,7 @@
             "timeout": 15000
         },
         "launchArgs": [
-            "--log=debug",
-            "--trace-deprecation"
+            "--log=debug"
         ],
         "version": "stable",
         "env": {
@@ -107,8 +102,7 @@
             "timeout": 15000
         },
         "launchArgs": [
-            "--log=debug",
-            "--trace-deprecation"
+            "--log=debug"
         ],
         "version": "stable",
         "env": {
@@ -127,7 +121,6 @@
         },
         "launchArgs": [
             "--log=debug",
-            "--trace-deprecation",
             "--disable-extensions"
         ],
         "version": "stable",
@@ -147,7 +140,6 @@
         },
         "launchArgs": [
             "--log=debug",
-            "--trace-deprecation",
             "--disable-extensions"
         ],
         "version": "stable",
@@ -166,8 +158,7 @@
             "timeout": 60000
         },
         "launchArgs": [
-            "--log=debug",
-            "--trace-deprecation"
+            "--log=debug"
         ],
         "version": "stable",
         "env": {
@@ -185,8 +176,7 @@
             "timeout": 15000
         },
         "launchArgs": [
-            "--log=debug",
-            "--trace-deprecation"
+            "--log=debug"
         ],
         "version": "stable",
         "env": {
@@ -205,7 +195,6 @@
         },
         "launchArgs": [
             "--log=debug",
-            "--trace-deprecation",
             "--disable-extensions"
         ],
         "version": "stable",
@@ -224,8 +213,7 @@
             "timeout": 15000
         },
         "launchArgs": [
-            "--log=debug",
-            "--trace-deprecation"
+            "--log=debug"
         ],
         "version": "stable",
         "env": {
@@ -243,8 +231,7 @@
             "timeout": 15000
         },
         "launchArgs": [
-            "--log=debug",
-            "--trace-deprecation"
+            "--log=debug"
         ],
         "version": "stable",
         "env": {
@@ -263,7 +250,6 @@
         },
         "launchArgs": [
             "--log=debug",
-            "--trace-deprecation",
             "--disable-extensions"
         ],
         "version": "stable",
@@ -283,7 +269,6 @@
         },
         "launchArgs": [
             "--log=debug",
-            "--trace-deprecation",
             "--disable-extensions"
         ],
         "version": "stable",
@@ -303,7 +288,6 @@
         },
         "launchArgs": [
             "--log=debug",
-            "--trace-deprecation",
             "--disable-extensions"
         ],
         "version": "stable",

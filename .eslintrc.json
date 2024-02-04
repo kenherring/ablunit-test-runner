@@ -27,7 +27,6 @@
 		"@typescript-eslint"
 	],
 	"ignorePatterns": [
-		"insiders/",
 		"dummy-ext/",
 		"webpack.config.js"
 	],

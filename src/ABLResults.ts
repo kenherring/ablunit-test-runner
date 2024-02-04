@@ -55,6 +55,7 @@ export class ABLResults implements Disposable {
 	profileJson?: ABLProfileJson
 	coverageJson: [] = []
 	dlc: IDlc | undefined
+
 	public coverage: Map<string, FileCoverageCustom> = new Map<string, FileCoverageCustom>()
 	// public coverage: Map<string, FileCoverageCustom | FileCoverage> = new Map<string, FileCoverageCustom>()
 	private readonly cancellation: CancellationToken | undefined

@@ -283,9 +283,10 @@ export async function activate (context: ExtensionContext) {
 					if (!results) { return [] }
 
 					const coverage: FileCoverageCustom[] = []
-					// for (const r of results ?? []) {
-					// 	coverage.push(...r.coverage)
-					// }
+
+					for(const r of results) {
+						r.coverage.forEach((c) => { coverage.push(c) })
+					}
 					log.info('coverage.length=' + coverage.length)
 					return coverage
 				},
