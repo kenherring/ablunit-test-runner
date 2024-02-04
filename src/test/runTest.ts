@@ -45,11 +45,6 @@ async function runTest (conf: ITestConfig) {
 	const extensionDevelopmentPath: string = path.resolve(__dirname, '../../')
 	const extensionTestsPath = path.resolve(__dirname)
 	const vscodeExecutablePath = await downloadAndUnzipVSCode(version)
-	const extensionTestsEnv: { [key: string]: string | undefined } = {
-		ABLUNIT_TEST_RUNNER_UNIT_TESTING: 'true',
-		ABLUNIT_TEST_RUNNER_PROJECT_NAME: conf.projName,
-		ABLUNIT_TEST_RUNNER_VSCODE_VERSION: conf.version
-	}
 
 	installOpenEdgeExtension(vscodeExecutablePath, 'riversidesoftware.openedge-abl')
 
@@ -60,14 +55,14 @@ async function runTest (conf: ITestConfig) {
 		console.debug(' -- testProjetDir=' + conf.launchArgs[0])
 		console.debug(' -- extensionDevelopmentPath=' + extensionDevelopmentPath)
 		console.debug(' -- extensionTestsPath=' + extensionTestsPath)
-		console.debug(' -- testingEnv=' + JSON.stringify(extensionTestsEnv))
+		console.debug(' -- testingEnv=' + JSON.stringify(conf.env))
 		console.debug(' -- version=' + conf.version)
 
 		const config: TestOptions = {
 			vscodeExecutablePath,
 			extensionDevelopmentPath,
 			extensionTestsPath, // index.ts
-			extensionTestsEnv,
+			extensionTestsEnv: conf.env,
 			launchArgs: conf.launchArgs,
 			version: conf.version
 		}

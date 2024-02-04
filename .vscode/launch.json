@@ -44,14 +44,7 @@
 			"outFiles": [
 				"${workspaceFolder}/out/**/*.js"
 			]
-		},
-		// { //extension-test-runner
-		// 	"name": "Launch TypeScript",
-		// 	"type": "node",
-		// 	"request": "launch",
-		// 	"program": "app.ts",
-		// 	"outFiles": ["${workspaceFolder}/bin/**/*.js"]
-		// }
+		}
 	],
 	"inputs": [
 		{

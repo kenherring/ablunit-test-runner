@@ -1,5 +1,4 @@
 import * as fs from 'fs'
-import path from 'path'
 import { createLaunchArgs } from './runTestUtils'
 import { GlobSync } from 'glob'
 
@@ -73,7 +72,8 @@ function createTestConfigJson (version: 'stable' | 'insiders', projName: string,
 		version: version,
 		env: {
 			ABLUNIT_TEST_RUNNER_UNIT_TESTING: 'true',
-			ABLUNIT_TEST_RUNNER_PROJECT_NAME: projName
+			ABLUNIT_TEST_RUNNER_PROJECT_NAME: projName,
+			ABLUNIT_TEST_RUNNER_VSCODE_VERSION: version
 		}
 	}
 

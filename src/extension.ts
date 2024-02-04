@@ -22,6 +22,8 @@ import { ABLTestCase, ABLTestClass, ABLTestData, ABLTestDir, ABLTestFile, ABLTes
 import { Decorator, decorator } from 'Decorator'
 import { FileCoverageCustom } from 'TestCoverage'
 
+class FileCoverage extends FileCoverageCustom {}
+
 export interface IExtensionTestReferences {
 	testController: TestController
 	decorator: Decorator
@@ -34,10 +36,11 @@ let recentResults: ABLResults[] = []
 export async function activate (context: ExtensionContext) {
 	// eslint-disable-next-line no-console
 	console.log('activating extension! (version=' + getExtensionVersion() + ')')
-
 	const ctrl = tests.createTestController('ablunitTestController', 'ABLUnit Test')
-	logActivationEvent()
 	let currentTestRun: TestRun | undefined = undefined
+
+	logActivationEvent()
+
 	const contextStorageUri = context.storageUri ?? Uri.file(process.env['TEMP'] ?? '') // will always be defined as context.storageUri
 	const contextResourcesUri = Uri.joinPath(context.extensionUri, 'resources')
 	setContextPaths(contextStorageUri, contextResourcesUri)
@@ -282,7 +285,7 @@ export async function activate (context: ExtensionContext) {
 					const results = resultData.get(run)
 					if (!results) { return [] }
 
-					const coverage: FileCoverageCustom[] = []
+					const coverage: FileCoverage[] = []
 
 					for(const r of results) {
 						r.coverage.forEach((c) => { coverage.push(c) })
@@ -290,7 +293,7 @@ export async function activate (context: ExtensionContext) {
 					log.info('coverage.length=' + coverage.length)
 					return coverage
 				},
-				resolveFileCoverage: (coverage: FileCoverageCustom, cancellation: CancellationToken) => {
+				resolveFileCoverage: (coverage: FileCoverage, cancellation: CancellationToken) => {
 					log.info('---------- resolveFileCoverage ----------')
 					log.error('resolveFileCoverage not implemented')
 

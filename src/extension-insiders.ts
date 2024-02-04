@@ -21,7 +21,7 @@ import { log } from 'ChannelLogger'
 import { getContentFromFilesystem } from 'parse/TestParserCommon'
 import { ABLTestCase, ABLTestClass, ABLTestData, ABLTestDir, ABLTestFile, ABLTestProgram, ABLTestSuite, resultData, testData } from 'testTree'
 
-class FileCoverage extends FileCoverageCustom {}
+// class FileCoverage extends FileCoverageCustom {}
 
 export interface IExtensionTestReferences {
 	testController: TestController

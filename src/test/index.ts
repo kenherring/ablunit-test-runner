@@ -80,6 +80,8 @@ export function run (): Promise <void> {
 	// const config = testConfig.filter((config: ITestConfig) => { return config.projName === projName})[0]
 	// const config = createTestConfig().find((config: ITestConfig) => { return config.projName === projName})
 	const config = createTestConfig().filter((config: ITestConfig) => { return config.projName === projName})[0]
+	console.log('config=' + JSON.stringify(config, null, 2))
+
 	if (!config) {
 		throw new Error('[' + file + ' run] Could not find config for project ' + projName)
 	}

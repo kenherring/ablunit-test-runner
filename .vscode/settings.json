@@ -1,4 +1,5 @@
 {
+	// "extension-test-runner.debugOptions": {},
 	"git.branchProtection": [
 		"main"
 	],
