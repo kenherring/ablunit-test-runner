@@ -20,6 +20,7 @@ import { getContentFromFilesystem } from './parse/TestParserCommon'
 import { ABLTestCase, ABLTestClass, ABLTestData, ABLTestDir, ABLTestFile, ABLTestProgram, ABLTestSuite, resultData, testData } from './testTree'
 // import { DecorationProvider, Decorator, decorator } from './Decorator'
 import { Decorator, decorator } from './Decorator'
+import { FileCoverage } from './TestCoverage'
 
 export interface IExtensionTestReferences {
 	testController: TestController
@@ -241,6 +242,8 @@ export async function activate (context: ExtensionContext) {
 						if (run.token.isCancellationRequested) {
 							log.debug('cancellation requested - runTestQueue-2')
 							throw new CancellationError()
+						} else {
+							await r.assignTestResults(test, run)
 						}
 					}
 				}
@@ -271,6 +274,30 @@ export async function activate (context: ExtensionContext) {
 			if (window.activeTextEditor) {
 				log.info('decorating editor - activeTextEditor')
 				decorator.decorate(window.activeTextEditor)
+			}
+
+			const coverageProvider = {
+				provideFileCoverage: () => {
+					log.info('---------- provideFileCoverage ----------')
+					const results = resultData.get(run)
+					if (!results) { return [] }
+
+					const coverage: FileCoverage[] = []
+					for (const r of results ?? []) {
+						coverage.push(...r.coverage)
+					}
+					log.info('coverage.length=' + coverage.length)
+					return coverage
+				},
+				resolveFileCoverage: (coverage: FileCoverage, cancellation: CancellationToken) => {
+					log.info('---------- resolveFileCoverage ----------')
+					log.error('resolveFileCoverage not implemented')
+
+					cancellation.onCancellationRequested(() => {
+						log.info('cancellation requested!')
+					})
+					return coverage
+				}
 			}
 
 			void log.notification('ablunit tests complete')
@@ -364,11 +391,8 @@ export async function activate (context: ExtensionContext) {
 		const prom = updateNode(u, ctrl)
 
 		if (typeof prom === 'boolean') {
-			return new Promise(() => { return })
+			return new Promise(() => { return prom })
 		} else {
-			if (!prom) {
-				throw new Error('updateNode failed for \'' + u.fsPath + '\' - no promise returned')
-			}
 			return prom.then(() => { return })
 		}
 	}
@@ -419,18 +443,21 @@ export async function activate (context: ExtensionContext) {
 		}
 	}
 
-	const testRunProfile = ctrl.createRunProfile('ABLUnit - Run Tests', TestRunProfileKind.Run, runHandler, false, new TestTag('runnable'), false)
-	testRunProfile.configureHandler = () => {
+	const configHandler = () => {
 		log.info('testRunProfiler.configureHandler')
 		openTestRunConfig().catch((err) => {
 			log.error('Failed to open \'.vscode/ablunit-test-profile.json\'. err=' + err)
 		})
 	}
 
-	// const testCoverageProfile = ctrl.createRunProfile('Run ABLUnit Tests w/ Coverage', TestRunProfileKind.Coverage, runHandler, true, new TestTag('runnable'), false)
-	// testCoverageProfile.configureHandler = configureHandler
-	// const testDebugProfile = ctrl.createRunProfile('Debug ABLUnit Tests', TestRunProfileKind.Debug, runHandler, false, new TestTag("runnable"), false)
-	// testDebugProfile.configureHandler = configureHandler
+	const testProfileRun = ctrl.createRunProfile('Run Tests', TestRunProfileKind.Run, runHandler, true, new TestTag('runnable'), false)
+	const testProfileDebug = ctrl.createRunProfile('Debug Tests', TestRunProfileKind.Debug, runHandler, false, new TestTag('runnable'), false)
+	const testProfileCoverage = ctrl.createRunProfile('Run Tests w/ Coverage', TestRunProfileKind.Debug, runHandler, false, new TestTag('runnable'), false)
+	// const testProfileDebugCoverage = ctrl.createRunProfile('Debug Tests w/ Coverage', TestRunProfileKind.Debug, runHandler, false, new TestTag('runnable'), false)
+	testProfileRun.configureHandler = configHandler
+	testProfileDebug.configureHandler = configHandler
+	testProfileCoverage.configureHandler = configHandler
+	// testProfileDebugCoverage.configureHandler = configHandler
 }
 
 let contextStorageUri: Uri
@@ -438,32 +465,15 @@ let contextResourcesUri: Uri
 
 function updateNode (uri: Uri, ctrl: TestController) {
 	log.trace('updateNode uri=' + uri.fsPath)
-	// const openEditors = window.visibleTextEditors.filter(editor => editor.document.uri === uri)
-	// openEditors.filter(editor => editor.document.uri === uri).forEach(editor => {
-	// 	log.info('decorating editor - updateNodeForDocument')
-	// 	decorator.decorate(editor).catch((err) => {
-	// 		log.error('failed to decorate editor. err=' + err)
-	// 	})
-	// })
-
-	if (uri.scheme !== 'file') { return false }
-	if (!uri.path.endsWith('.cls') && !uri.path.endsWith('.p')) { return false }
-
-	if(isFileExcluded(uri, getExcludePatterns())) {
-		return false
-	}
+	if(uri.scheme !== 'file' || isFileExcluded(uri, getExcludePatterns())) {	return false }
 
 	const { item, data } = getOrCreateFile(ctrl, uri)
-	if(item) {
-		ctrl.invalidateTestResults(item)
-		if (data) {
-			return getContentFromFilesystem(uri).then((contents) => {
-				data.updateFromContents(ctrl, contents, item)
-			}).then(() => {
-				return decorator.decorate()
-			})
-		}
-	}
+	if(!item || !data) {	return false }
+
+	ctrl.invalidateTestResults(item)
+	return getContentFromFilesystem(uri).then((contents) => {
+		return data.updateFromContents(ctrl, contents, item)
+	})
 }
 
 export function setContextPaths (storageUri: Uri, resourcesUri: Uri) {

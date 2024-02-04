@@ -401,7 +401,9 @@ export class ABLProfileJson {
 
 			const lineinfo = await this.debugLines.getSourceLine(sourceName, sum.LineNo)
 			if(!lineinfo) {
-				log.debug('could not find source/debug line info for ' + sourceName + ' ' + sum.LineNo)
+				if (sourceName !== 'ABLUnitCore.p') {
+					log.debug('could not find source/debug line info for ' + sourceName + ' ' + sum.LineNo)
+				}
 				// throw new Error("Unable to find source/debug line info for " + sourceName + " " + sum.LineNo)
 			} else {
 				sum.srcLine = lineinfo.debugLine

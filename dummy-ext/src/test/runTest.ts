@@ -1,37 +1,51 @@
-/* eslint-disable no-console */
+// This file was adapted from the VSCode docs:
+//    * https://code.visualstudio.com/api/working-with-extensions/testing-extension#the-test-runner-script
+// Instead of testing as a development extension this loads a dummy extension,
+// installs the packaged ablunit-test-runner extension, and runs a test.
+// This gives confidence that the packaged extension is functional.
+
 import * as cp from 'child_process'
-import * as fs from 'fs'
 import * as path from 'path'
+import { GlobSync } from 'glob'
+import { existsSync } from 'fs'
 import { downloadAndUnzipVSCode, resolveCliArgsFromVSCodeExecutablePath, runTests } from '@vscode/test-electron'
-import { ITestConfig } from './createTestConfig'
 
-const file = 'runTest.ts'
-const version: 'stable' | 'insiders' = 'stable'
+const file = 'dummy-ext/runTest.ts'
+let packagedExtensionPath = path.resolve(__dirname, '../../../ablunit-test-runner-*.vsix')
 
-async function main () {
-	console.log('[' + file + ' main] starting...')
-	const testConfig: ITestConfig[] = JSON.parse(fs.readFileSync('./.vscode-test.config.json', 'utf8')) as ITestConfig[]
+async function main() {
+	const projName = getProjName()
+	console.log('[' + file + ' main] starting... (projName=' + projName + ')')
 
-	let projToRun: string | undefined = undefined
-	projToRun = process.env['ABLUNIT_TEST_RUNNER_PROJECT_NAME']
-	console.log('[' + file + ' main] projToRun=' + projToRun)
 	let testCount = 0
-	for (const conf of testConfig) {
-		if (!projToRun || conf.projName === projToRun) {
-			testCount++
-			console.log('[' + file + ' main] starting tests in vscode, version=\'' + version + '\'')
-			await runTest(version, conf.projName, conf.workspaceFolder)
-		}
+	for(const version of ['stable', 'insiders']) {
+		testCount++
+		console.log('[' + file + ' main] starting tests in vscode, version=\'' + version + '\'')
+		await runTest(version, projName)
 	}
 	console.log('[' + file + ' main] tests completed successfully! testCount=' + testCount)
+
 	if (testCount === 0) {
 		console.error('[' + file + ' main] no tests found!')
 		process.exit(1)
 	}
 }
 
+function getProjName() {
+	const g = new GlobSync(packagedExtensionPath)
+	if (g.found.length != 1) {
+		throw new Error('Expected exactly one ablunit-test-runner-*.vsix file, found ' + g.found.length)
+	}
+
+	packagedExtensionPath = g.found[0]
+	if (!existsSync(packagedExtensionPath)) {
+		throw new Error('Extension bundle does not exist! path=' + packagedExtensionPath)
+	}
+	return path.resolve(__dirname, '../../../test_projects/proj4')
+}
+
 function installOpenEdgeExtension (vscodeExecutablePath: string, extensionId: string) {
-	console.log('[' + file + ' runTest] installing OpenEdge extensions...')
+	console.log('[runTest.ts runTest] installing OpenEdge extensions...')
 	const [cliPath, ...args] = resolveCliArgsFromVSCodeExecutablePath(vscodeExecutablePath)
 	// Use cp.spawn / cp.exec for custom setup
 	cp.spawnSync(
@@ -41,22 +55,20 @@ function installOpenEdgeExtension (vscodeExecutablePath: string, extensionId: st
 	)
 }
 
-async function runTest (version: string, projName: string, projDir?: string) {
+async function runTest(version: string, projName: string, projDir?: string) {
 	if(!projDir) {
 		projDir = projName
 	}
 
-	const extensionDevelopmentPath: string = path.resolve(__dirname, '../../')
-	const extensionTestsPath = path.resolve(__dirname)
+	console.log('[installAndRun] start test run.  version=' + version)
+
+	const extensionDevelopmentPath = path.resolve(__dirname, '../../')
+	const extensionTestsPath = path.resolve(__dirname, './index')
 	const vscodeExecutablePath = await downloadAndUnzipVSCode(version)
-	const testingEnv: { [key: string]: string | undefined } = {
-		ABLUNIT_TEST_RUNNER_UNIT_TESTING: 'true',
-		ABLUNIT_TEST_RUNNER_PROJECT_NAME: projName,
-		ABLUNIT_TEST_RUNNER_VSCODE_VERSION: version
-	}
+	const testingEnv: { [key: string]: string | undefined } = {}
 
 	try {
-		installOpenEdgeExtension(vscodeExecutablePath, 'riversidesoftware.openedge-abl')
+		installOpenEdgeExtension(vscodeExecutablePath, packagedExtensionPath)
 
 		const launchArgs: string[] = []
 		launchArgs.push(projDir)
@@ -69,7 +81,6 @@ async function runTest (version: string, projName: string, projDir?: string) {
 			launchArgs.push('--enable-proposed-api=kherring.ablunit-test-runner')
 		}
 		// launchArgs.push('--disable-extensions')
-		launchArgs.push(...launchArgs)
 
 		console.log('[' + file + ' runTest] (projName=' + projName + ') running tests with args=')
 		console.debug(' -- cwd=' + __dirname)

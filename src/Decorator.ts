@@ -2,13 +2,7 @@ import { existsSync } from 'fs'
 import { CancellationToken, DecorationOptions, FileDecoration, FileDecorationProvider, ProviderResult, Range, TextDocument, TextEditor, TextEditorDecorationType, Uri, window, workspace } from 'vscode'
 import { ABLResults } from './ABLResults'
 import { log } from './ChannelLogger'
-import { FileCoverage } from './TestCoverage'
-
-interface IExecLines {
-	count?: number,
-	executed?: DecorationOptions[]
-	executable?: DecorationOptions[]
-}
+import { FileCoverage, IExecLines } from './TestCoverage'
 
 export class Decorator {
 	// static instance
@@ -144,10 +138,11 @@ export class Decorator {
 		// log.info('  - executableArray.length=' + executableArray.length)
 		// log.info('  - executedArray=' + JSON.stringify(executedArray,null,2))
 		// log.info('  - executableArray=' + JSON.stringify(executableArray,null,2))
-		this.setDecorations(editor, {executed: executedArray, executable: executableArray})
+		const lines = executedArray.concat(executableArray)
+		this.setDecorations(editor, {lines: lines, executed: executedArray, executable: executableArray})
 
 		// log.info('add recentDecorations ' + editor.document.uri.fsPath)
-		this.recentDecorations.set(editor.document.uri.fsPath, {executed: executedArray, executable: executableArray})
+		this.recentDecorations.set(editor.document.uri.fsPath, {lines: lines, executed: executedArray, executable: executableArray})
 		return true
 	}
 
