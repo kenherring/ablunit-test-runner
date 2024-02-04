@@ -7,4 +7,6 @@ const { createTestConfig } = require('./out/test/createTestConfig')
 const testConfig = createTestConfig()
 
 const { defineConfig } = require('@vscode/test-cli')
+// const fs = require('fs')
+// fs.writeFileSync('./.vscode-test.defined.json', JSON.stringify(defineConfig(testConfig), null, 4) + '\n')
 module.exports = defineConfig(testConfig)

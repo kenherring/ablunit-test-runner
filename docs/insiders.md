@@ -20,7 +20,6 @@ git rebase origin/main
 
 ## fix up
 npm uninstall @types/vscode
-node ./src/test/createTestConfig.ts
 
 git rebase --continue
 git checkout -b rebase-insiders

@@ -5,8 +5,7 @@
 import { GlobSync } from 'glob'
 import { workspace } from 'vscode'
 import * as path from 'path'
-import * as fs from 'fs'
-import { ITestConfig } from './createTestConfig'
+import { ITestConfig, createTestConfig } from './createTestConfig'
 import { setupMocha, setupNyc } from './runTestUtils'
 
 const file = 'index.ts'
@@ -57,43 +56,33 @@ async function runTestsForProject (projName: string, timeout: number) {
 	console.log('[' + file + ' runTestsForProject] coverage outputted successfully!')
 }
 
-function findConfigFile () {
-	// search up to 5 levels back for .vscode-test.config.json
-	let configFilename = './.vscode-test.config.json'
-	for (let i = 0; i < 5; i++) {
-		if (fs.existsSync(configFilename)) {
-			return configFilename
-		}
-		configFilename = '../' + configFilename
-	}
-	throw new Error('[' + file + ' findConfigFile] Could not find .vscode-test.config.json')
-}
-
 export function run (): Promise <void> {
 
-	let proj: string
+	let projName: string
 	if (process.env['ABLUNIT_TEST_RUNNER_PROJECT_NAME']) {
-		proj = process.env['ABLUNIT_TEST_RUNNER_PROJECT_NAME']
-		console.log('[' + file + ' run] proj=' + proj + ' (from env)')
+		projName = process.env['ABLUNIT_TEST_RUNNER_PROJECT_NAME']
+		console.log('[' + file + ' run] projName=' + projName + ' (from env)')
 	} else if (workspace.workspaceFile) {
-		proj = workspace.workspaceFile.fsPath
-		console.log('[' + file + ' run] proj=' + proj + ' (from workspaceFile)')
+		projName = workspace.workspaceFile.fsPath
+		console.log('[' + file + ' run] projName=' + projName + ' (from workspaceFile)')
 	} else if (workspace.workspaceFolders) {
-		proj = workspace.workspaceFolders[0].uri.fsPath
-		console.log('[' + file + ' run] proj=' + proj + ' (from workspaceFolders)')
+		projName = workspace.workspaceFolders[0].uri.fsPath
+		console.log('[' + file + ' run] projName=' + projName + ' (from workspaceFolders)')
 	} else {
 		throw new Error('[' + file + ' run] No workspace file or folder found')
 	}
 
-	proj = proj.replace(/\\/g, '/').split('/').reverse()[0].replace('.code-workspace', '')
-	proj = proj.split('_')[0]
+	projName = projName.replace(/\\/g, '/').split('/').reverse()[0].replace('.code-workspace', '')
+	projName = projName.split('_')[0]
 
-	const configFilename = findConfigFile()
-	const testConfig: ITestConfig[] = JSON.parse(fs.readFileSync(configFilename, 'utf8'))
-	const config = testConfig.filter((config: ITestConfig) => { return config.projName === proj })[0]
+	// const configFilename = findConfigFile()
+	// const testConfig: ITestConfig[] = JSON.parse(fs.readFileSync(configFilename, 'utf8'))
+	// const config = testConfig.filter((config: ITestConfig) => { return config.projName === projName})[0]
+	// const config = createTestConfig().find((config: ITestConfig) => { return config.projName === projName})
+	const config = createTestConfig().filter((config: ITestConfig) => { return config.projName === projName})[0]
 	if (!config) {
-		throw new Error('[' + file + ' run] Could not find config for project ' + proj)
+		throw new Error('[' + file + ' run] Could not find config for project ' + projName)
 	}
 	// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-	return runTestsForProject(proj, config.mocha.timeout)
+	return runTestsForProject(projName, config.mocha.timeout)
 }

@@ -1,9 +1,8 @@
 /* eslint-disable no-console */
 import * as cp from 'child_process'
-import * as fs from 'fs'
 import * as path from 'path'
 import { downloadAndUnzipVSCode, resolveCliArgsFromVSCodeExecutablePath, runTests } from '@vscode/test-electron'
-import { ITestConfig } from './createTestConfig'
+import { ITestConfig, createTestConfig } from './createTestConfig'
 import { TestOptions } from '@vscode/test-electron/out/runTest'
 
 const file = 'runTest.ts'
@@ -11,7 +10,7 @@ const version: 'stable' | 'insiders' = 'stable'
 
 async function main () {
 	console.log('[' + file + ' main] starting...')
-	const testConfig: ITestConfig[] = JSON.parse(fs.readFileSync('./.vscode-test.config.json', 'utf8')) as ITestConfig[]
+	const testConfig = createTestConfig()
 
 	let projToRun: string | undefined = undefined
 	projToRun = process.env['ABLUNIT_TEST_RUNNER_PROJECT_NAME']
@@ -46,7 +45,7 @@ async function runTest (conf: ITestConfig) {
 	const extensionDevelopmentPath: string = path.resolve(__dirname, '../../')
 	const extensionTestsPath = path.resolve(__dirname)
 	const vscodeExecutablePath = await downloadAndUnzipVSCode(version)
-	const testingEnv: { [key: string]: string | undefined } = {
+	const extensionTestsEnv: { [key: string]: string | undefined } = {
 		ABLUNIT_TEST_RUNNER_UNIT_TESTING: 'true',
 		ABLUNIT_TEST_RUNNER_PROJECT_NAME: conf.projName,
 		ABLUNIT_TEST_RUNNER_VSCODE_VERSION: conf.version
@@ -61,15 +60,15 @@ async function runTest (conf: ITestConfig) {
 		console.debug(' -- testProjetDir=' + conf.launchArgs[0])
 		console.debug(' -- extensionDevelopmentPath=' + extensionDevelopmentPath)
 		console.debug(' -- extensionTestsPath=' + extensionTestsPath)
-		console.debug(' -- testingEnv=' + JSON.stringify(testingEnv))
+		console.debug(' -- testingEnv=' + JSON.stringify(extensionTestsEnv))
 		console.debug(' -- version=' + conf.version)
 
 		const config: TestOptions = {
 			vscodeExecutablePath,
 			extensionDevelopmentPath,
 			extensionTestsPath, // index.ts
+			extensionTestsEnv,
 			launchArgs: conf.launchArgs,
-			extensionTestsEnv: testingEnv,
 			version: conf.version
 		}
 		await runTests(config)

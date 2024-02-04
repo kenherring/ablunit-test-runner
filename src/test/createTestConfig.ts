@@ -1,19 +1,21 @@
-import { GlobSync } from 'glob'
 import * as fs from 'fs'
+import path from 'path'
 import { createLaunchArgs } from './runTestUtils'
+import { GlobSync } from 'glob'
 
-/* ********** Notes **********
-/* This file generates '.vscode-test.config.json'
-/*
-/* The generated file is used by these programs:
-/* - .vscode-test.js
-/* - src/test/runTest.ts
-/*
-/* Run:    `node ./out/test/createTestConfig.js`
-/* ********** End Notes ********** */
+// /* ********** Notes **********
+// /* This file generates '.vscode-test.config.json'
+// /*
+// /* The generated file is used by these programs:
+// /* - .vscode-test.js
+// /* - src/test/runTest.ts
+// /*
+// /* Run:    `node ./out/test/createTestConfig.js`
+// /* ********** End Notes ********** */
 
 // disable console output when running via the extension-test-runner
 let consoleEnabled = false
+const outputDebugFiles = false
 
 export interface ITestConfig {
 	projName: string
@@ -80,10 +82,7 @@ function createTestConfigJson (version: 'stable' | 'insiders', projName: string,
 
 export function createTestConfigForVersion (version: 'stable' | 'insiders') {
 	const testConfig: ITestConfig[] = []
-	let outputfile = './.vscode-test.config.json'
-	if (version === 'insiders') {
-		outputfile = './.vscode-test.config.insiders.json'
-	}
+
 
 	const g = new GlobSync('**/*.test.js', { cwd: '.' })
 	if (g.found.length === 0) {
@@ -100,8 +99,15 @@ export function createTestConfigForVersion (version: 'stable' | 'insiders') {
 			testConfig.push(conf)
 		}
 	}
-	// fs.writeFileSync(outputfile, JSON.stringify(testConfig, null, 4) + '\n')
-	// log('created ' + outputfile + ' succesfully!')
+
+	if (outputDebugFiles) {
+		let outputfile = './.vscode-test.config.json'
+		if (version === 'insiders') {
+			outputfile = './.vscode-test.config.insiders.json'
+		}
+		fs.writeFileSync(outputfile, JSON.stringify(testConfig, null, 4) + '\n')
+		log('created ' + outputfile + ' succesfully!')
+	}
 	return testConfig
 }
 

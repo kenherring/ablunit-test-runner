@@ -67,7 +67,6 @@ create_dbs () {
 doBuild () {
 	echo "[$0 ${FUNCNAME[0]}] pwd=$(pwd)"
 	npm run build
-	node ./out/test/createTestConfig.js
 }
 
 ########## MAIN BLOCK ##########
