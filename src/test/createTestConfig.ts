@@ -100,8 +100,8 @@ export function createTestConfigForVersion (version: 'stable' | 'insiders') {
 			testConfig.push(conf)
 		}
 	}
-	fs.writeFileSync(outputfile, JSON.stringify(testConfig, null, 4) + '\n')
-	log('created ' + outputfile + ' succesfully!')
+	// fs.writeFileSync(outputfile, JSON.stringify(testConfig, null, 4) + '\n')
+	// log('created ' + outputfile + ' succesfully!')
 	return testConfig
 }
 
@@ -109,7 +109,8 @@ export function createTestConfig () {
 	log('creating test config...')
 	const returnConfig = createTestConfigForVersion('stable')
 	createTestConfigForVersion('insiders')
-	log('created both test config files succesfully!')
+	// log('created both test config files succesfully!')
+	log('returning test config...')
 	return returnConfig
 }
 

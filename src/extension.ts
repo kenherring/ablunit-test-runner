@@ -32,12 +32,12 @@ export interface IExtensionTestReferences {
 let recentResults: ABLResults[] = []
 
 export async function activate (context: ExtensionContext) {
+	// eslint-disable-next-line no-console
+	console.log('activating extension! (version=' + getExtensionVersion() + ')')
 
 	const ctrl = tests.createTestController('ablunitTestController', 'ABLUnit Test')
-	let currentTestRun: TestRun | undefined = undefined
-
 	logActivationEvent()
-
+	let currentTestRun: TestRun | undefined = undefined
 	const contextStorageUri = context.storageUri ?? Uri.file(process.env['TEMP'] ?? '') // will always be defined as context.storageUri
 	const contextResourcesUri = Uri.joinPath(context.extensionUri, 'resources')
 	setContextPaths(contextStorageUri, contextResourcesUri)
@@ -1013,11 +1013,10 @@ async function createDir (uri: Uri) {
 }
 
 function logActivationEvent () {
-	const extensionVersion = getExtensionVersion()
 	if (!log) {
 		throw new Error('log is undefined')
 	}
-	log.info('activating extension! (version=' + extensionVersion + ')')
+	log.info('activating extension! (version=' + getExtensionVersion() + ')')
 }
 
 function getExtensionVersion () {

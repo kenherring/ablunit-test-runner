@@ -1,14 +1,4 @@
 {
-	// "extension-test-runner.debugOptions": {
-	// 	// "args": [
-	// 	// 	"--extensionDevelopmentPath=${workspaceFolder}",
-	// 	// 	"${workspaceFolder}/test_projects/${input:workspaceName}"
-	// 	// ],
-	// 	// "outFiles": [
-	// 	// 	"${workspaceFolder}/out/**/*.js"
-	// 	// ],
-	// 	// "preLaunchTask": "node ./out/test/createTestConfig.js"
-	// },
 	"git.branchProtection": [
 		"main"
 	],
