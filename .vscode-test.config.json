@@ -12,7 +12,7 @@
             "--log=debug",
             "--trace-deprecation"
         ],
-        "version": "insiders",
+        "version": "stable",
         "env": {
             "ABLUNIT_TEST_RUNNER_UNIT_TESTING": "true",
             "ABLUNIT_TEST_RUNNER_PROJECT_NAME": "DebugLines"
@@ -32,7 +32,7 @@
             "--trace-deprecation",
             "--disable-extensions"
         ],
-        "version": "insiders",
+        "version": "stable",
         "env": {
             "ABLUNIT_TEST_RUNNER_UNIT_TESTING": "true",
             "ABLUNIT_TEST_RUNNER_PROJECT_NAME": "proj0"
@@ -52,7 +52,7 @@
             "--trace-deprecation",
             "--disable-extensions"
         ],
-        "version": "insiders",
+        "version": "stable",
         "env": {
             "ABLUNIT_TEST_RUNNER_UNIT_TESTING": "true",
             "ABLUNIT_TEST_RUNNER_PROJECT_NAME": "proj1"
@@ -72,7 +72,7 @@
             "--trace-deprecation",
             "--disable-extensions"
         ],
-        "version": "insiders",
+        "version": "stable",
         "env": {
             "ABLUNIT_TEST_RUNNER_UNIT_TESTING": "true",
             "ABLUNIT_TEST_RUNNER_PROJECT_NAME": "proj2"
@@ -91,7 +91,7 @@
             "--log=debug",
             "--trace-deprecation"
         ],
-        "version": "insiders",
+        "version": "stable",
         "env": {
             "ABLUNIT_TEST_RUNNER_UNIT_TESTING": "true",
             "ABLUNIT_TEST_RUNNER_PROJECT_NAME": "proj3"
@@ -110,7 +110,7 @@
             "--log=debug",
             "--trace-deprecation"
         ],
-        "version": "insiders",
+        "version": "stable",
         "env": {
             "ABLUNIT_TEST_RUNNER_UNIT_TESTING": "true",
             "ABLUNIT_TEST_RUNNER_PROJECT_NAME": "proj4"
@@ -130,7 +130,7 @@
             "--trace-deprecation",
             "--disable-extensions"
         ],
-        "version": "insiders",
+        "version": "stable",
         "env": {
             "ABLUNIT_TEST_RUNNER_UNIT_TESTING": "true",
             "ABLUNIT_TEST_RUNNER_PROJECT_NAME": "proj5"
@@ -150,7 +150,7 @@
             "--trace-deprecation",
             "--disable-extensions"
         ],
-        "version": "insiders",
+        "version": "stable",
         "env": {
             "ABLUNIT_TEST_RUNNER_UNIT_TESTING": "true",
             "ABLUNIT_TEST_RUNNER_PROJECT_NAME": "proj6"
@@ -169,7 +169,7 @@
             "--log=debug",
             "--trace-deprecation"
         ],
-        "version": "insiders",
+        "version": "stable",
         "env": {
             "ABLUNIT_TEST_RUNNER_UNIT_TESTING": "true",
             "ABLUNIT_TEST_RUNNER_PROJECT_NAME": "proj7A"
@@ -188,7 +188,7 @@
             "--log=debug",
             "--trace-deprecation"
         ],
-        "version": "insiders",
+        "version": "stable",
         "env": {
             "ABLUNIT_TEST_RUNNER_UNIT_TESTING": "true",
             "ABLUNIT_TEST_RUNNER_PROJECT_NAME": "proj7B"
@@ -208,7 +208,7 @@
             "--trace-deprecation",
             "--disable-extensions"
         ],
-        "version": "insiders",
+        "version": "stable",
         "env": {
             "ABLUNIT_TEST_RUNNER_UNIT_TESTING": "true",
             "ABLUNIT_TEST_RUNNER_PROJECT_NAME": "proj8"
@@ -227,7 +227,7 @@
             "--log=debug",
             "--trace-deprecation"
         ],
-        "version": "insiders",
+        "version": "stable",
         "env": {
             "ABLUNIT_TEST_RUNNER_UNIT_TESTING": "true",
             "ABLUNIT_TEST_RUNNER_PROJECT_NAME": "proj9"
@@ -246,7 +246,7 @@
             "--log=debug",
             "--trace-deprecation"
         ],
-        "version": "insiders",
+        "version": "stable",
         "env": {
             "ABLUNIT_TEST_RUNNER_UNIT_TESTING": "true",
             "ABLUNIT_TEST_RUNNER_PROJECT_NAME": "projA"
@@ -266,7 +266,7 @@
             "--trace-deprecation",
             "--disable-extensions"
         ],
-        "version": "insiders",
+        "version": "stable",
         "env": {
             "ABLUNIT_TEST_RUNNER_UNIT_TESTING": "true",
             "ABLUNIT_TEST_RUNNER_PROJECT_NAME": "TestProfileParser"
@@ -286,7 +286,7 @@
             "--trace-deprecation",
             "--disable-extensions"
         ],
-        "version": "insiders",
+        "version": "stable",
         "env": {
             "ABLUNIT_TEST_RUNNER_UNIT_TESTING": "true",
             "ABLUNIT_TEST_RUNNER_PROJECT_NAME": "workspace0"
@@ -306,7 +306,7 @@
             "--trace-deprecation",
             "--disable-extensions"
         ],
-        "version": "insiders",
+        "version": "stable",
         "env": {
             "ABLUNIT_TEST_RUNNER_UNIT_TESTING": "true",
             "ABLUNIT_TEST_RUNNER_PROJECT_NAME": "workspace1"

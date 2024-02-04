@@ -6,10 +6,10 @@ import { downloadAndUnzipVSCode, resolveCliArgsFromVSCodeExecutablePath, runTest
 import { ITestConfig } from './createTestConfig'
 
 const file = 'runTest.ts'
+const version: 'stable' | 'insiders' = 'stable'
 
 async function main () {
 	console.log('[' + file + ' main] starting...')
-	const version = 'insiders'
 	const testConfig: ITestConfig[] = JSON.parse(fs.readFileSync('./.vscode-test.config.json', 'utf8')) as ITestConfig[]
 
 	let projToRun: string | undefined = undefined

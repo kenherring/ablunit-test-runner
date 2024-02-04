@@ -1,7 +1,6 @@
 import { after, before } from 'mocha'
-import { Uri, commands, Range, window, workspace, Position, DecorationOptions } from 'vscode'
+import { Uri, commands, window, workspace, DecorationOptions } from 'vscode'
 import { assert, deleteFile, getDecorator, getResults, log, runAllTests, sleep, toUri, updateTestProfile, waitForExtensionActive } from '../testCommon'
-import { IExecLines, FileCoverage } from '../../TestCoverage'
 
 const projName = 'proj0'
 
@@ -34,9 +33,9 @@ suite(projName + ' - Extension Test Suite', () => {
 
 	test(projName + '.2 - run test, open file, validate coverage displays', async () => {
 		await runAllTests()
-
 		const testFileUri = Uri.joinPath(workspace.workspaceFolders![0].uri, 'src', 'dirA', 'dir1', 'testInDir.p')
 		await window.showTextDocument(testFileUri).then()
+
 		const decorator = getDecorator()
 		const lines = decorator.getDecorations(testFileUri)
 		assert.assert(lines.lines?.length ?? 0, 'no coverage found for ' + workspace.asRelativePath(testFileUri))
@@ -64,7 +63,6 @@ suite(projName + ' - Extension Test Suite', () => {
 
 		const decorator = getDecorator()
 		const lines = decorator.getDecorations(testFileUri)
-
 		const executedLines = lines.executed ?? []
 		log.debug('executedLines.length=' + executedLines.length)
 		assert.equal(0, executedLines.length, 'executed lines found for ' + workspace.asRelativePath(testFileUri) + '. should be empty')

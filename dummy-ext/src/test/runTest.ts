@@ -10,16 +10,12 @@ import { GlobSync } from 'glob'
 import { existsSync } from 'fs'
 import { downloadAndUnzipVSCode, resolveCliArgsFromVSCodeExecutablePath, runTests } from '@vscode/test-electron'
 
-
 const file = 'dummy-ext/runTest.ts'
-const insidersBuild = false
 let packagedExtensionPath = path.resolve(__dirname, '../../../ablunit-test-runner-*.vsix')
 
 async function main() {
-	console.log('[' + file + ' main] starting...')
-
 	const projName = getProjName()
-
+	console.log('[' + file + ' main] starting... (projName=' + projName + ')')
 
 	let testCount = 0
 	for(const version of ['stable', 'insiders']) {
