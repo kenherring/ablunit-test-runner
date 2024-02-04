@@ -6,8 +6,8 @@ import { GlobSync } from 'glob'
 import { workspace } from 'vscode'
 import * as path from 'path'
 import * as fs from 'fs'
-import { ITestConfig } from './createTestConfig.js'
-import { setupMocha, setupNyc } from './runTestUtils.js'
+import { ITestConfig } from './createTestConfig'
+import { setupMocha, setupNyc } from './runTestUtils'
 
 const file = 'index.ts'
 

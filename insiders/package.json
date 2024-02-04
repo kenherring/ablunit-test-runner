@@ -1,0 +1,212 @@
+{
+	"name": "ablunit-test-runner-insiders",
+	"displayName": "ABLUnit Test Runner (Insiders)",
+	"description": "OpenEdge ABLUnit test runner for VSCode, build to run with the insiders edition to use the proposed TestCoverage API",
+	"version": "0.2.1",
+	"preview": true,
+	"engineStrict": true,
+	"galleryBanner": {
+		"color": "#007ACC",
+		"theme": "dark"
+	},
+	"publisher": "kherring",
+	"pricing": "Free",
+	"private": true,
+	"icon": "resources/images/icon_128.png",
+	"author": "Ken Herring",
+	"qna": false,
+	"homepage": "https://github.com/kenherring/ablunit-test-runner/blob/main/README.md",
+	"repository": {
+		"url": "https://github.com/kenherring/ablunit-test-runner"
+	},
+	"bugs": {
+		"url": "https://github.com/kenherring/ablunit-test-runner/issues"
+	},
+	"license": "MIT",
+	"licenses": [
+		{
+			"type": "MIT",
+			"url": "https://github.com/kenherring/ablunit-test-runner/blob/main/LICENSE"
+		}
+	],
+	"badges": [
+		{
+			"href": "https://dl.circleci.com/status-badge/redirect/gh/kenherring/ablunit-test-runner/tree/main",
+			"url": "https://img.shields.io/circleci/build/github/kenherring/ablunit-test-runner/main?logo=circleci",
+			"description": "CircleCI Build Status"
+		},
+		{
+			"href": "https://sonarcloud.io/summary/new_code?id=kenherring_ablunit-test-runner",
+			"url": "https://sonarcloud.io/api/project_badges/measure?project=kenherring_ablunit-test-runner&metric=sqale_rating",
+			"description": "SonarCloud Maintainability Rating"
+		},
+		{
+			"href": "https://sonarcloud.io/summary/new_code?id=kenherring_ablunit-test-runner",
+			"url": "https://sonarcloud.io/api/project_badges/measure?project=kenherring_ablunit-test-runner&metric=coverage",
+			"description": "SonarCloud Coverage"
+		}
+	],
+	"capabilities": {
+		"untrustedWorkspaces": {
+			"supported": false
+		}
+	},
+	"keywords": [
+		"4gl",
+		"abl",
+		"ablunit",
+		"oeunit",
+		"openedge",
+		"pdsoe",
+		"progress"
+	],
+	"enabledApiProposals": [
+		"testCoverage"
+	],
+	"engines": {
+		"vscode": "^1.83.0"
+	},
+	"categories": [
+		"Testing"
+	],
+	"activationEvents-other": [
+		"onStartupFinished",
+		"workspaceContains:{**/*.cls,**/*.p,.vscode/ablunit-test-profile.json}"
+	],
+	"activationEvents": [
+		"onStartupFinished"
+	],
+	"main": "./dist/extension-insiders.js",
+	"scripts": {
+		"build": "npm run build-webpack && npm run build-tsc",
+		"rebuild": "npm run clean && npm run build",
+		"build-webpack": "npm run webpack",
+		"build-tsc": "tsc -p ./",
+		"clean": "rm -rf .nyc_output artifacts coverage dist out *.vsix && sh -c scripts/npm_clean.sh",
+		"clean-and-build": "npm run clean && npm run build",
+		"lint": "npx eslint ./src --ext .ts,.js",
+		"lint-fix-all": "npx eslint ./src --ext .ts,.js --fix",
+		"vscode:prepublish": "npm run package",
+		"package": "webpack --mode production --devtool hidden-source-map",
+		"pretest": "sh -c scripts/npm_pretest.sh",
+		"test": "node ./out/test/runTest.js",
+		"test:install-and-run": "cd dummy-ext && npm run test:install-and-run",
+		"watch": "tsc -watch -p ./",
+		"watch-webpack": "webpack --mode development --watch",
+		"webpack": "webpack --mode development",
+		"test-new": "mocha -u tdd ./out/test",
+		"version": "sh -c scripts/npm_version.sh"
+	},
+	"dependencies": {
+		"node-json-minify": "^3.0.0",
+		"xml2js": "^0.6.2"
+	},
+	"devDependencies": {
+		"@types/glob": "^8.1.0",
+		"@types/node": "^16.18.34",
+		"@types/vscode": "^1.83.0",
+		"@types/xml2js": "^0.4.14",
+		"@typescript-eslint/eslint-plugin": "^6.13.2",
+		"@typescript-eslint/parser": "^6.13.2",
+		"@vscode/test-cli": "^0.0.4",
+		"@vscode/test-electron": "^2.3.8",
+		"eslint": "^8.55.0",
+		"mocha": "^10.2.0",
+		"mocha-junit-reporter": "^2.2.1",
+		"mocha-multi-reporters": "^1.5.1",
+		"nyc": "^15.1.0",
+		"ts-loader": "^9.5.1",
+		"typescript": "^5.3.3",
+		"webpack": "^5.89.0",
+		"webpack-cli": "^5.1.4"
+	},
+	"contributes": {
+		"configuration": {
+			"type": "object",
+			"title": "ABLUnit Test Runner",
+			"properties": {
+				"ablunit.discoverAllTestsOnActivate": {
+					"type": "boolean",
+					"default": true,
+					"markdownDescription": "For large workspaces this may improve performance by loading test files as they are used instead of all at once"
+				},
+				"ablunit.explorer.classlabel": {
+					"type": "string",
+					"title": "Class Label",
+					"default": "filepath",
+					"enum": [
+						"class-type-name",
+						"filepath"
+					],
+					"markdownEnumDescriptions": [
+						"**example:** `class.path.className`",
+						"**example:** `class/path/className.cls`"
+					],
+					"markdownDescription": "Label style for test class files in the test explorer view. <br><br>Example styles for `com/example/myClass.cls`:\n<ul><li>class-type-name\\: `com.example.myClass`</li><li>filename\\: `myClass.cls`</li></ul>"
+				},
+				"ablunit.files.include": {
+					"type": "array",
+					"default": [
+						"**/*.{cls,p}"
+					],
+					"markdownDescription": "Glob patterns to include test files"
+				},
+				"ablunit.files.exclude": {
+					"type": "array",
+					"default": [
+						".builder/**",
+						".pct/**"
+					],
+					"markdownDescription": "Glob patterns to exclude test files"
+				},
+				"ablunit.importOpenedgeProjectJson": {
+					"type": "boolean",
+					"default": true,
+					"markdownDescription": "Import configuration from `openedge-project.json` when possible"
+				}
+			}
+		},
+		"languages": [
+			{
+				"id": "abl",
+				"aliases": [
+					"OpenEdge ABL"
+				],
+				"extensions": [
+					".cls",
+					".i",
+					".p",
+					".w"
+				]
+			},
+			{
+				"id": "jsonc",
+				"filenamePatterns": [
+					"**/ablunit-test-profile*.json"
+				]
+			}
+		],
+		"jsonValidation": [
+			{
+				"fileMatch": [
+					"**/ablunit-test-profile*.json"
+				],
+				"url": "./resources/ablunit-test-profile.schema.json"
+			}
+		],
+		"snippets": [
+			{
+				"language": "abl",
+				"path": "./snippets/snippets-abl.json"
+			},
+			{
+				"language": "abl",
+				"path": "./snippets/snippets-abl-procedure.json"
+			},
+			{
+				"language": "abl",
+				"path": "./snippets/snippets-abl-class.json"
+			}
+		]
+	}
+}

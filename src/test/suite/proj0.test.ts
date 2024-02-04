@@ -1,6 +1,8 @@
 import { after, before } from 'mocha'
-import { Uri, commands, window, workspace, DecorationOptions } from 'vscode'
-import { assert, deleteFile, getDecorator, getResults, log, runAllTests, sleep, toUri, updateTestProfile, waitForExtensionActive } from '../testCommon'
+import { Uri, commands, window, workspace, Range } from 'vscode'
+// import { Uri, commands, window, workspace, DetailedCoverage, Range } from 'vscode'
+import { assert, deleteFile, getResults, log, runAllTests, sleep, toUri, updateTestProfile, waitForExtensionActive } from '../testCommon'
+import { DetailedCoverageCustom } from '../../TestCoverage'
 
 const projName = 'proj0'
 
@@ -14,9 +16,12 @@ after(() => {
 	deleteFile('.vscode/ablunit-test-profile.json')
 })
 
-function getDetailLine (coverage: DecorationOptions[], lineNum: number) {
+function getDetailLine (coverage: DetailedCoverageCustom[], lineNum: number) {
 	if (!coverage) return undefined
-	return coverage.find((d) => d.range.start.line === lineNum)
+	return coverage.find((d) => {
+		const r = d.location as Range
+		return r.start.line === lineNum
+	})
 }
 
 suite(projName + ' - Extension Test Suite', () => {
@@ -36,11 +41,10 @@ suite(projName + ' - Extension Test Suite', () => {
 		const testFileUri = Uri.joinPath(workspace.workspaceFolders![0].uri, 'src', 'dirA', 'dir1', 'testInDir.p')
 		await window.showTextDocument(testFileUri).then()
 
-		const decorator = getDecorator()
-		const lines = decorator.getDecorations(testFileUri)
-		assert.assert(lines.lines, 'no coverage found for ' + workspace.asRelativePath(testFileUri))
-		assert.assert(getDetailLine(lines.executed ?? [], 5), 'line 5 should display as executed')
-		assert.assert(getDetailLine(lines.executed ?? [], 6), 'line 5 should display as executed')
+		const lines = (await getResults())[0].coverage.get(testFileUri.fsPath)?.detailedCoverage ?? []
+		assert.assert(lines, 'no coverage found for ' + workspace.asRelativePath(testFileUri))
+		assert.assert(getDetailLine(lines, 5), 'line 5 should display as executed')
+		assert.assert(getDetailLine(lines, 6), 'line 5 should display as executed')
 	})
 
 	test(projName + '.3 - open file, run test, validate coverage displays', async () => {
@@ -48,11 +52,10 @@ suite(projName + ' - Extension Test Suite', () => {
 		await window.showTextDocument(testFileUri).then()
 		await runAllTests()
 
-		const decorator = getDecorator()
-		const lines = decorator.getDecorations(testFileUri)
-		assert.assert(lines.lines, 'no coverage found for ' + workspace.asRelativePath(testFileUri))
-		assert.assert(getDetailLine(lines.executed ?? [], 5), 'line 5 should display as executed')
-		assert.assert(getDetailLine(lines.executed ?? [], 6), 'line 5 should display as executed')
+		const lines = (await getResults())[0].coverage.get(testFileUri.fsPath)?.detailedCoverage ?? []
+		assert.assert(lines, 'no coverage found for ' + workspace.asRelativePath(testFileUri))
+		assert.assert(getDetailLine(lines, 5), 'line 5 should display as executed')
+		assert.assert(getDetailLine(lines, 6), 'line 5 should display as executed')
 	})
 
 	test(projName + '.4 - coverage=false, open file, run test, validate no coverage displays', async () => {
@@ -61,9 +64,8 @@ suite(projName + ' - Extension Test Suite', () => {
 		await window.showTextDocument(testFileUri).then()
 		await runAllTests()
 
-		const decorator = getDecorator()
-		const lines = decorator.getDecorations(testFileUri)
-		const executedLines = lines.executed ?? []
+		const lines = (await getResults())[0].coverage.get(testFileUri.fsPath)?.detailedCoverage ?? []
+		const executedLines = lines.filter((d) => d.executed)
 		log.debug('executedLines.length=' + executedLines.length)
 		assert.equal(0, executedLines.length, 'executed lines found for ' + workspace.asRelativePath(testFileUri) + '. should be empty')
 		assert.assert(!getDetailLine(executedLines, 5), 'line 5 should display as not executed')

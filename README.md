@@ -21,6 +21,12 @@ The [ABLUnit Test Runner](https://github.com/kenherring/ablunit-test-runner/) ex
 
 This project was developed using the [Progress OpenEdge Developers Kit: Classroom Edition](https://www.progress.com/openedge/classroom-edition).  It was primarily tested with 12.2.12, but the unit tests are run for 12.7.0 during the CI builds too.
 
+## 🧪 VSCode Proposed TestCoverage API
+
+VSCode is working to improve the testing runner by adding code coverage support.  This extension is designed to work with the proposed API and will fully integrate it when officially available.  The current implementation mimics some of the proposed functionality where easily possible.  For a sneak peak at the new functionality install `ablunit-test-runner-insiders.vsix` (see [releases](https://github.com/kenherring/ablunit-test-runner/releases))vsco into a [VSCode Insiders](https://code.visualstudio.com/insiders/) installation.  Then, relaunch VSCode with the `--enable-proposed-api=kherring.ablunit-test-runner-insiders` flag.
+
+See [VSCode Documentation -> Using Proposed API](https://code.visualstudio.com/api/advanced-topics/using-proposed-api) for more information.
+
 ## ⛺ Configuration
 
 Configuration is optional.  Many workspaces will work without any configuration.  However, there are advanced options available via the VSCode settings and a test profile configuration file (`.vscode/ablunit-test-profile.json`).

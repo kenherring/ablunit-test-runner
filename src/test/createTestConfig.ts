@@ -13,8 +13,6 @@ import * as fs from 'fs'
 /* Run:    `node ./out/test/createTestConfig.js`
 /* ********** End Notes ********** */
 
-const version: 'stable' | 'insiders' = 'stable'
-
 export interface ITestConfig {
 	projName: string
 	label: string
@@ -29,7 +27,27 @@ export interface ITestConfig {
 	env: { [key: string]: string | undefined }
 }
 
-function createTestConfig (projName: string, testFile: string, workspaceFolder?: string, timeout?: number) {
+function createLaunchArgs (projName: string, version: 'stable' | 'insiders') {
+	const launchArgs: string[] = []
+	launchArgs.push('--log=debug')
+	// launchArgs.push('--disable-gpu')
+	launchArgs.push('--trace-deprecation')
+	if (version === 'insiders') {
+		launchArgs.push('--enable-proposed-api=kherring.ablunit-test-runner')
+	}
+	if (projName != 'DebugLines' &&
+		projName != 'proj3' &&
+		projName != 'proj4' &&
+		projName != 'proj7A' &&
+		projName != 'proj7B' &&
+		projName != 'proj9' &&
+		projName != 'projA') {
+		launchArgs.push('--disable-extensions')
+	}
+	return launchArgs
+}
+
+function createTestConfig (version: 'stable' | 'insiders', projName: string, testFile: string, workspaceFolder?: string, timeout?: number) {
 	if (!workspaceFolder) {
 		workspaceFolder = './test_projects/' + projName
 	}
@@ -51,23 +69,6 @@ function createTestConfig (projName: string, testFile: string, workspaceFolder?:
 		timeout = 15000
 	}
 
-	const launchArgs: string[] = []
-	launchArgs.push('--log=debug')
-	// launchArgs.push('--disable-gpu')
-	launchArgs.push('--trace-deprecation')
-	if (version === 'insiders') {
-		launchArgs.push('--enable-proposed-api=kherring.ablunit-test-runner')
-	}
-	if (projName != 'DebugLines' &&
-		projName != 'proj3' &&
-		projName != 'proj4' &&
-		projName != 'proj7A' &&
-		projName != 'proj7B' &&
-		projName != 'proj9' &&
-		projName != 'projA') {
-		launchArgs.push('--disable-extensions')
-	}
-
 	const retVal: ITestConfig = {
 		projName: projName,
 		label: 'extension tests - ' + projName,
@@ -77,7 +78,7 @@ function createTestConfig (projName: string, testFile: string, workspaceFolder?:
 			ui: 'tdd',
 			timeout: timeout
 		},
-		launchArgs: launchArgs,
+		launchArgs: createLaunchArgs(projName, version),
 		version: version,
 		env: {
 			ABLUNIT_TEST_RUNNER_UNIT_TESTING: 'true',
@@ -101,14 +102,22 @@ export function getTestConfig () {
 		if (projName.startsWith('proj7A') || testConfig.length === 0) {
 			maxTimeout = 60000
 		}
-		const conf = createTestConfig(projName, f, undefined, maxTimeout)
+		const conf = createTestConfig('stable', projName, f, undefined, maxTimeout)
 		if (conf) {
 			testConfig.push(conf)
 		}
 	}
 	fs.writeFileSync('./.vscode-test.config.json', JSON.stringify(testConfig, null, 4) + '\n')
-	console.log('created .vscode-test.config.json succesfully!')
-	return testConfig
+	console.log('created ./.vscode-test.config.json succesfully!')
+
+	for (const t of testConfig) {
+		t.version = 'insiders'
+		t.launchArgs = createLaunchArgs(t.projName, t.version)
+	}
+	fs.writeFileSync('./.vscode-test.config.insiders.json', JSON.stringify(testConfig, null, 4) + '\n')
+	console.log('created ./.vscode-test.config.insiders.json succesfully!')
 }
 
+console.log('creating test config...')
 getTestConfig()
+console.log('created both test config files succesfully!')
