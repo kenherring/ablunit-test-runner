@@ -12,6 +12,7 @@
 			"runtimeExecutable": "${execPath}",
 			"args": [
 				"--extensionDevelopmentPath=${workspaceFolder}",
+				"--enable-proposed-api=kherring.ablunit-test-runner",
 				"${input:disable-extensions}",
 				"${workspaceFolder}/test_projects/${input:workspaceName}"
 			],
@@ -28,6 +29,7 @@
 			"args": [
 				"--extensionDevelopmentPath=${workspaceFolder}/dummy-ext",
 				"--install-extension=ablunit-test-runner-0.2.1.vsix",
+				"--enable-proposed-api=kherring.ablunit-test-runner",
 				"${workspaceFolder}/test_projects/${input:workspaceName}"
 			]
 		},
@@ -38,6 +40,7 @@
 			"runtimeExecutable": "${execPath}",
 			"args": [
 				"--extensionDevelopmentPath=${workspaceFolder}",
+				"--enable-proposed-api=kherring.ablunit-test-runner",
 				"c:/git/pug-challenge"
 			],
 			"outFiles": [

@@ -1,5 +1,5 @@
-import { FileStat, FileType, MarkdownString, Range, TestItem, TestItemCollection, TestMessage, TestRun, Uri, workspace, WorkspaceFolder,
-	Disposable, CancellationToken, CancellationError } from 'vscode'
+import { FileType, MarkdownString, Range, TestItem, TestItemCollection, TestMessage, TestRun, Uri, workspace, WorkspaceFolder,
+	CoveredCount, FileCoverage, StatementCoverage, Disposable, CancellationToken, CancellationError } from 'vscode'
 import { ABLUnitConfig } from './ABLUnitConfigWriter'
 import { ABLResultsParser, ITestCaseFailure, ITestCase, ITestSuite } from './parse/ResultsParser'
 import { ABLTestSuite, ABLTestData } from './testTree'
@@ -9,7 +9,6 @@ import { ABLDebugLines } from './ABLDebugLines'
 import { ABLPromsgs, getPromsgText } from './ABLPromsgs'
 import { PropathParser } from './ABLPropath'
 import { log } from './ChannelLogger'
-import { FileCoverage, CoveredCount, StatementCoverage } from './TestCoverage'
 import { ablunitRun } from './ABLUnitRun'
 import { getDLC, IDlc } from './parse/OpenedgeProjectParser'
 import { Duration, isRelativePath } from './ABLUnitCommon'
@@ -53,9 +52,8 @@ export class ABLResults implements Disposable {
 	promsgs?: ABLPromsgs
 	profileJson?: ABLProfileJson
 	coverageJson: [] = []
-	coverage: FileCoverage[] = []
 	dlc: IDlc | undefined
-	public testCoverage: Map<string, FileCoverage> = new Map<string, FileCoverage>()
+	public coverage: Map<string, FileCoverage> = new Map<string, FileCoverage>()
 	private readonly cancellation: CancellationToken | undefined
 
 	constructor (workspaceFolder: WorkspaceFolder, storageUri: Uri, globalStorageUri: Uri, extensionResourcesUri: Uri, cancellation?: CancellationToken) {
@@ -505,7 +503,6 @@ export class ABLResults implements Disposable {
 			return
 		}
 		module.SourceUri = fileinfo.uri
-		let fc: FileCoverage | undefined
 
 		for (let idx=0; idx < module.lines.length; idx++) { // NOSONAR
 			const line = module.lines[idx]
@@ -519,16 +516,11 @@ export class ABLResults implements Disposable {
 			if (!dbg) {
 				return
 			}
-
-			if (fc?.uri.fsPath != dbg.sourceUri.fsPath) {
-				// get existing FileCoverage object
-				fc = this.testCoverage.get(dbg.sourceUri.fsPath)
-				if (!fc) {
-					// create a new FileCoverage object if one didn't already exist
-					fc = new FileCoverage(dbg.sourceUri, new CoveredCount(0, 0))
-					this.coverage.push(fc)
-					this.testCoverage.set(dbg.sourceUri.fsPath, fc)
-				}
+			let fc = this.coverage.get(dbg.sourceUri.fsPath)
+			if (!fc) {
+				// create a new FileCoverage object if one didn't already exist
+				fc = new FileCoverage(dbg.sourceUri, new CoveredCount(0, 0))
+				this.coverage.set(dbg.sourceUri.fsPath, fc)
 			}
 
 			// TODO: end of range should be the end of the line, not the beginning of the next line

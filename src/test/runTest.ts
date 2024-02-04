@@ -6,7 +6,7 @@ import { downloadAndUnzipVSCode, resolveCliArgsFromVSCodeExecutablePath, runTest
 import { ITestConfig } from './createTestConfig'
 
 const file = 'runTest.ts'
-const version: 'stable' | 'insiders' = 'stable'
+const version: 'stable' | 'insiders' = 'insiders'
 
 async function main () {
 	console.log('[' + file + ' main] starting...')

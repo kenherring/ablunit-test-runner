@@ -1,7 +1,6 @@
 import * as fs from 'fs'
 import { ABLResults } from '../ABLResults'
 import { ConfigurationTarget, TestController, WorkspaceFolder, commands, extensions, Uri, workspace, TestItemCollection } from 'vscode'
-import { Decorator } from '../Decorator'
 import { Duration, deleteFile, isRelativePath, readStrippedJsonFile } from '../ABLUnitCommon'
 import { GlobSync } from 'glob'
 import { IExtensionTestReferences } from '../extension'
@@ -24,13 +23,11 @@ export const info = new TestInfo()
 export const log = logObj
 
 let recentResults: ABLResults[] | undefined
-let decorator: Decorator | undefined
 let testController: TestController | undefined
 let currentRunData: ABLResults[] | undefined
 
 export function beforeCommon () {
 	recentResults = undefined
-	decorator = undefined
 	testController = undefined
 	currentRunData = undefined
 }
@@ -384,7 +381,6 @@ export async function selectProfile (profile: string) {
 export async function refreshData () {
 	return commands.executeCommand('_ablunit.getExtensionTestReferences').then((resp) => {
 		const refs = resp as IExtensionTestReferences
-		decorator = refs.decorator
 		testController = refs.testController
 		recentResults = refs.recentResults
 		if (refs.currentRunData) {
@@ -393,13 +389,6 @@ export async function refreshData () {
 	}, (err) => {
 		throw new Error('failed to refresh test results: ' + err)
 	})
-}
-
-export function getDecorator () {
-	if (!decorator) {
-		throw new Error('decorator is null')
-	}
-	return decorator
 }
 
 export async function getTestController () {

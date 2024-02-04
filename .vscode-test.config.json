@@ -10,9 +10,10 @@
         },
         "launchArgs": [
             "--log=debug",
-            "--trace-deprecation"
+            "--trace-deprecation",
+            "--enable-proposed-api=kherring.ablunit-test-runner"
         ],
-        "version": "stable",
+        "version": "insiders",
         "env": {
             "ABLUNIT_TEST_RUNNER_UNIT_TESTING": "true",
             "ABLUNIT_TEST_RUNNER_PROJECT_NAME": "DebugLines"
@@ -30,9 +31,10 @@
         "launchArgs": [
             "--log=debug",
             "--trace-deprecation",
+            "--enable-proposed-api=kherring.ablunit-test-runner",
             "--disable-extensions"
         ],
-        "version": "stable",
+        "version": "insiders",
         "env": {
             "ABLUNIT_TEST_RUNNER_UNIT_TESTING": "true",
             "ABLUNIT_TEST_RUNNER_PROJECT_NAME": "proj0"
@@ -50,9 +52,10 @@
         "launchArgs": [
             "--log=debug",
             "--trace-deprecation",
+            "--enable-proposed-api=kherring.ablunit-test-runner",
             "--disable-extensions"
         ],
-        "version": "stable",
+        "version": "insiders",
         "env": {
             "ABLUNIT_TEST_RUNNER_UNIT_TESTING": "true",
             "ABLUNIT_TEST_RUNNER_PROJECT_NAME": "proj1"
@@ -70,9 +73,10 @@
         "launchArgs": [
             "--log=debug",
             "--trace-deprecation",
+            "--enable-proposed-api=kherring.ablunit-test-runner",
             "--disable-extensions"
         ],
-        "version": "stable",
+        "version": "insiders",
         "env": {
             "ABLUNIT_TEST_RUNNER_UNIT_TESTING": "true",
             "ABLUNIT_TEST_RUNNER_PROJECT_NAME": "proj2"
@@ -89,9 +93,10 @@
         },
         "launchArgs": [
             "--log=debug",
-            "--trace-deprecation"
+            "--trace-deprecation",
+            "--enable-proposed-api=kherring.ablunit-test-runner"
         ],
-        "version": "stable",
+        "version": "insiders",
         "env": {
             "ABLUNIT_TEST_RUNNER_UNIT_TESTING": "true",
             "ABLUNIT_TEST_RUNNER_PROJECT_NAME": "proj3"
@@ -108,9 +113,10 @@
         },
         "launchArgs": [
             "--log=debug",
-            "--trace-deprecation"
+            "--trace-deprecation",
+            "--enable-proposed-api=kherring.ablunit-test-runner"
         ],
-        "version": "stable",
+        "version": "insiders",
         "env": {
             "ABLUNIT_TEST_RUNNER_UNIT_TESTING": "true",
             "ABLUNIT_TEST_RUNNER_PROJECT_NAME": "proj4"
@@ -128,9 +134,10 @@
         "launchArgs": [
             "--log=debug",
             "--trace-deprecation",
+            "--enable-proposed-api=kherring.ablunit-test-runner",
             "--disable-extensions"
         ],
-        "version": "stable",
+        "version": "insiders",
         "env": {
             "ABLUNIT_TEST_RUNNER_UNIT_TESTING": "true",
             "ABLUNIT_TEST_RUNNER_PROJECT_NAME": "proj5"
@@ -148,9 +155,10 @@
         "launchArgs": [
             "--log=debug",
             "--trace-deprecation",
+            "--enable-proposed-api=kherring.ablunit-test-runner",
             "--disable-extensions"
         ],
-        "version": "stable",
+        "version": "insiders",
         "env": {
             "ABLUNIT_TEST_RUNNER_UNIT_TESTING": "true",
             "ABLUNIT_TEST_RUNNER_PROJECT_NAME": "proj6"
@@ -167,9 +175,10 @@
         },
         "launchArgs": [
             "--log=debug",
-            "--trace-deprecation"
+            "--trace-deprecation",
+            "--enable-proposed-api=kherring.ablunit-test-runner"
         ],
-        "version": "stable",
+        "version": "insiders",
         "env": {
             "ABLUNIT_TEST_RUNNER_UNIT_TESTING": "true",
             "ABLUNIT_TEST_RUNNER_PROJECT_NAME": "proj7A"
@@ -186,9 +195,10 @@
         },
         "launchArgs": [
             "--log=debug",
-            "--trace-deprecation"
+            "--trace-deprecation",
+            "--enable-proposed-api=kherring.ablunit-test-runner"
         ],
-        "version": "stable",
+        "version": "insiders",
         "env": {
             "ABLUNIT_TEST_RUNNER_UNIT_TESTING": "true",
             "ABLUNIT_TEST_RUNNER_PROJECT_NAME": "proj7B"
@@ -206,9 +216,10 @@
         "launchArgs": [
             "--log=debug",
             "--trace-deprecation",
+            "--enable-proposed-api=kherring.ablunit-test-runner",
             "--disable-extensions"
         ],
-        "version": "stable",
+        "version": "insiders",
         "env": {
             "ABLUNIT_TEST_RUNNER_UNIT_TESTING": "true",
             "ABLUNIT_TEST_RUNNER_PROJECT_NAME": "proj8"
@@ -225,9 +236,10 @@
         },
         "launchArgs": [
             "--log=debug",
-            "--trace-deprecation"
+            "--trace-deprecation",
+            "--enable-proposed-api=kherring.ablunit-test-runner"
         ],
-        "version": "stable",
+        "version": "insiders",
         "env": {
             "ABLUNIT_TEST_RUNNER_UNIT_TESTING": "true",
             "ABLUNIT_TEST_RUNNER_PROJECT_NAME": "proj9"
@@ -244,9 +256,10 @@
         },
         "launchArgs": [
             "--log=debug",
-            "--trace-deprecation"
+            "--trace-deprecation",
+            "--enable-proposed-api=kherring.ablunit-test-runner"
         ],
-        "version": "stable",
+        "version": "insiders",
         "env": {
             "ABLUNIT_TEST_RUNNER_UNIT_TESTING": "true",
             "ABLUNIT_TEST_RUNNER_PROJECT_NAME": "projA"
@@ -264,9 +277,10 @@
         "launchArgs": [
             "--log=debug",
             "--trace-deprecation",
+            "--enable-proposed-api=kherring.ablunit-test-runner",
             "--disable-extensions"
         ],
-        "version": "stable",
+        "version": "insiders",
         "env": {
             "ABLUNIT_TEST_RUNNER_UNIT_TESTING": "true",
             "ABLUNIT_TEST_RUNNER_PROJECT_NAME": "TestProfileParser"
@@ -284,9 +298,10 @@
         "launchArgs": [
             "--log=debug",
             "--trace-deprecation",
+            "--enable-proposed-api=kherring.ablunit-test-runner",
             "--disable-extensions"
         ],
-        "version": "stable",
+        "version": "insiders",
         "env": {
             "ABLUNIT_TEST_RUNNER_UNIT_TESTING": "true",
             "ABLUNIT_TEST_RUNNER_PROJECT_NAME": "workspace0"
@@ -304,9 +319,10 @@
         "launchArgs": [
             "--log=debug",
             "--trace-deprecation",
+            "--enable-proposed-api=kherring.ablunit-test-runner",
             "--disable-extensions"
         ],
-        "version": "stable",
+        "version": "insiders",
         "env": {
             "ABLUNIT_TEST_RUNNER_UNIT_TESTING": "true",
             "ABLUNIT_TEST_RUNNER_PROJECT_NAME": "workspace1"

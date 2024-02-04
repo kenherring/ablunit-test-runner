@@ -60,6 +60,9 @@
 		"pdsoe",
 		"progress"
 	],
+	"enabledApiProposals": [
+		"testCoverage"
+	],
 	"engines": {
 		"vscode": "^1.83.0"
 	},

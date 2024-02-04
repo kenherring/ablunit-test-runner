@@ -33,7 +33,7 @@ class Logger {
 
 	setLogLevel (e: LogLevel) {
 		const message = 'ABLUnit ogLevel changed from ' + this.logLevel + ' to ' + e
-		console.log(message)
+		console.info(message)
 		this.logOutputChannel.appendLine(message)
 		this.logLevel = e
 	}

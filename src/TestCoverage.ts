@@ -1,14 +1,8 @@
 // This has been adopted from the proposed API for test coverage in VSCode
 // It's just a skeleton used by this extension as a holdover until the API is finalized
 
-import { DecorationOptions, Position, Range, Uri } from 'vscode'
+import { Position, Range, Uri } from 'vscode'
 
-export interface IExecLines {
-	count?: number,
-	lines?: DecorationOptions[]
-	executed?: DecorationOptions[]
-	executable?: DecorationOptions[]
-}
 
 export class CoveredCount {
 	covered: number // Number of items covered in the file.

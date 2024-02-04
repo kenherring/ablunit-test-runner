@@ -13,7 +13,7 @@ import * as fs from 'fs'
 /* Run:    `node ./out/test/createTestConfig.js`
 /* ********** End Notes ********** */
 
-const version: 'stable' | 'insiders' = 'stable'
+const version: 'stable' | 'insiders' = 'insiders'
 
 export interface ITestConfig {
 	projName: string
