@@ -38,7 +38,7 @@ suite(projName + ' - Extension Test Suite', () => {
 
 		const decorator = getDecorator()
 		const lines = decorator.getDecorations(testFileUri)
-		assert.assert(lines.lines?.length ?? 0, 'no coverage found for ' + workspace.asRelativePath(testFileUri))
+		assert.assert(lines.lines, 'no coverage found for ' + workspace.asRelativePath(testFileUri))
 		assert.assert(getDetailLine(lines.executed ?? [], 5), 'line 5 should display as executed')
 		assert.assert(getDetailLine(lines.executed ?? [], 6), 'line 5 should display as executed')
 	})
@@ -50,7 +50,7 @@ suite(projName + ' - Extension Test Suite', () => {
 
 		const decorator = getDecorator()
 		const lines = decorator.getDecorations(testFileUri)
-		assert.assert(lines, 'no coverage found for ' + workspace.asRelativePath(testFileUri))
+		assert.assert(lines.lines, 'no coverage found for ' + workspace.asRelativePath(testFileUri))
 		assert.assert(getDetailLine(lines.executed ?? [], 5), 'line 5 should display as executed')
 		assert.assert(getDetailLine(lines.executed ?? [], 6), 'line 5 should display as executed')
 	})

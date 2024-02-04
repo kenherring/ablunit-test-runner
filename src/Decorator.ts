@@ -142,7 +142,7 @@ export class Decorator {
 		this.setDecorations(editor, {lines: lines, executed: executedArray, executable: executableArray})
 
 		// log.info('add recentDecorations ' + editor.document.uri.fsPath)
-		this.recentDecorations.set(editor.document.uri.fsPath, {executed: executedArray, executable: executableArray})
+		this.recentDecorations.set(editor.document.uri.fsPath, {lines: lines, executed: executedArray, executable: executableArray})
 		return true
 	}
 
