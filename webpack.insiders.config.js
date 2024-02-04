@@ -7,15 +7,14 @@ const config = {
 	target: 'node', // TODO: recommended: 'webworker'
 	node: false,
 	entry: {
-		'extension': './src/extension.ts',
-		'extension-insiders': './src/extension-insiders.ts'
+		'extension': './src/extension.ts'
 	},
 	output: {
 		path: outputDir,
 		filename: '[name].js',
 		// libraryTarget: "commonjs2",
 		libraryTarget: "commonjs",
-		devtoolModuleFilenameTemplate: "../[resource-path]",
+		// devtoolModuleFilenameTemplate: ".../[resource-path]",
 	},
 	devtool: 'source-map',
 	externals: {
@@ -25,8 +24,11 @@ const config = {
 	resolve: {
 		mainFields: ['browser', 'module', 'main'],
 		extensions: ['.ts', '.js'],
-		modules: ['node_modules', 'src']
-	},
+        descriptionFiles: [
+            'package.json',
+            'package.inisiders.json'
+        ]
+    },
 	module: {
 		rules: [{
 			test: /\.ts$/,

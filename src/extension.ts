@@ -14,13 +14,13 @@ import {
 	extensions,
 	tests, window, workspace
 } from 'vscode'
-import { ABLResults } from './ABLResults'
-import { log } from './ChannelLogger'
-import { getContentFromFilesystem } from './parse/TestParserCommon'
+import { ABLResults } from 'ABLResults'
+import { log } from 'ChannelLogger'
+import { getContentFromFilesystem } from 'parse/TestParserCommon'
 import { ABLTestCase, ABLTestClass, ABLTestData, ABLTestDir, ABLTestFile, ABLTestProgram, ABLTestSuite, resultData, testData } from './testTree'
 // import { DecorationProvider, Decorator, decorator } from './Decorator'
-import { Decorator, decorator } from './Decorator'
-import { FileCoverageCustom } from './TestCoverage'
+import { Decorator, decorator } from 'Decorator'
+import { FileCoverageCustom } from 'TestCoverage'
 
 export interface IExtensionTestReferences {
 	testController: TestController

@@ -92,7 +92,12 @@
 		"watch-webpack": "webpack --mode development --watch",
 		"webpack": "webpack --mode development",
 		"test-new": "mocha -u tdd ./out/test",
-		"version": "sh -c scripts/npm_version.sh"
+		"version": "sh -c scripts/npm_version.sh",
+
+		"insiders:build": "npm run insiders:build-webpack && npm run insiders:build-tsc",
+		"insiders:build-webpack": "npm run webpack",
+		"insiders:build-tsc": "tsc -p ./tsconfig.insiders.json",
+		"insiders:package": "webpack --mode production --devtool hidden-source-map"
 	},
 	"dependencies": {
 		"node-json-minify": "^3.0.0",
