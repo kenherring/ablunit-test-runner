@@ -286,7 +286,6 @@ export async function activate (context: ExtensionContext) {
 					if (!results) { return [] }
 
 					const coverage: FileCoverage[] = []
-
 					for(const r of results) {
 						r.coverage.forEach((c) => { coverage.push(c) })
 					}

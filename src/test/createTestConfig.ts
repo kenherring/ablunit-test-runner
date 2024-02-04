@@ -3,13 +3,7 @@ import { GlobSync } from 'glob'
 import path from 'path'
 
 // /* ********** Notes **********
-// /* This file generates '.vscode-test.config.json'
-// /*
-// /* The generated file is used by these programs:
-// /* - .vscode-test.js
-// /* - src/test/runTest.ts
-// /*
-// /* Run:    `node ./out/test/createTestConfig.js`
+// /* This file generates config for testing at runtime
 // /* ********** End Notes ********** */
 
 // disable console output when running via the extension-test-runner
@@ -73,7 +67,6 @@ function getConfigForProject (version: 'stable' | 'insiders', projName: string, 
 
 	log('path = ' + path.resolve(__dirname, '../../test_projects'))
 	const g = new GlobSync(searchProj + '*', { cwd: path.resolve(__dirname, '../../test_projects') })
-	log('g.found.length=' + g.found.length)
 	let workspaceFolder = projName
 	if (g.found.length === 1) {
 		workspaceFolder = path.resolve(__dirname, '../../test_projects/', g.found[0])
@@ -119,8 +112,6 @@ function getConfigForProject (version: 'stable' | 'insiders', projName: string, 
 		}
 	}
 
-	log('retVal = ' + JSON.stringify(retVal, null, 2))
-
 	return retVal
 }
 
@@ -133,15 +124,9 @@ export function createConfigForVersion (version: 'stable' | 'insiders') {
 		throw new Error('No test files found')
 	}
 	for (const f of g.found) {
-		log('g.found = ' + f)
 		const projName = f.replace('.test.js', '').split('/').reverse()[0]
-		log('projName = ' + projName)
-
-		log('400 - getConfigForProject')
 		const conf = getConfigForProject(version, projName, f)
-		log('401 - getConfigForProject')
 		if (conf) {
-			log('402 - getConfigForProject - conf.projName=' + conf.projName)
 			testConfig.push(conf)
 		}
 	}
@@ -166,24 +151,3 @@ export function getTestConfig (version: 'stable' | 'insiders' = 'stable') {
 	}
 	return testConfigStable
 }
-
-// export function getTestConfig (version: 'stable' | 'insiders' = 'stable') {
-// 	log('creating test config...')
-// 	const returnConfigStable = createConfigForVersion('stable')
-// 	const returnConfigInsiders = createConfigForVersion('insiders')
-// 	// log('created both test config files succesfully!')
-// 	log('returning test config for version \'' + version + '\'...')
-// 	if (version === 'insiders') {
-// 		return returnConfigInsiders
-// 	}
-// 	return returnConfigStable
-// }
-
-// console.debug('[' + __filename + '] starting... (require.main=' + JSON.stringify(require.main) + ')')
-// if (require.main === module) {
-// 	console.debug('[' + __filename + '] require.main === module')
-// 	consoleEnabled = true
-// 	createTestConfig()
-// } else {
-
-// }

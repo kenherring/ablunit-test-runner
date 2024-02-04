@@ -27,16 +27,11 @@ async function runTestsForProject (projName: string, timeout: number) {
 	const prom = new Promise<void>((c, e) => {
 		try {
 			// Run the mocha test
-			console.log('500')
 			mocha.run((failures) => {
-				console.log('501')
 				if (failures > 0) {
-					console.log('502')
 					console.log('[' + file + ' runTestsForProject] ' + failures + ' tests failed.')
-					console.log('503')
 					e(new Error(failures + ' tests failed.'))
 				}
-				console.log('504')
 				c()
 			})
 		} catch (err) {
@@ -48,9 +43,7 @@ async function runTestsForProject (projName: string, timeout: number) {
 		}
 	})
 
-	console.log('600')
 	await prom
-	console.log('601')
 
 	console.log('[' + file + ' runTestsForProject] outputting coverage...')
 	nyc.writeCoverageFile()
@@ -82,14 +75,8 @@ export function run (): Promise <void> {
 	projName = projName.replace(/\\/g, '/').split('/').reverse()[0].replace('.code-workspace', '')
 	projName = projName.split('_')[0]
 
-	// const configFilename = findConfigFile()
-	// const testConfig: ITestConfig[] = JSON.parse(fs.readFileSync(configFilename, 'utf8'))
-	// const config = createTestConfig().find((config: ITestConfig) => { return config.projName === projName})
-	console.log('300')
 	const testConfig = getTestConfig()
-	console.log('301 length=' + testConfig.length + ', testConfig=' + JSON.stringify(testConfig, null, 2))
 	const config = testConfig.filter((config) => { return config.projName === projName})[0]
-	console.log('302 config=' + JSON.stringify(config, null, 2))
 	if (!config) {
 		throw new Error('[' + file + ' run] Could not find config for project ' + projName)
 	}

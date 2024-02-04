@@ -15,13 +15,10 @@ import {
 	extensions,
 	tests, window, workspace
 } from 'vscode'
-import { FileCoverageCustom } from 'TestCoverage'
 import { ABLResults } from 'ABLResults'
 import { log } from 'ChannelLogger'
 import { getContentFromFilesystem } from 'parse/TestParserCommon'
 import { ABLTestCase, ABLTestClass, ABLTestData, ABLTestDir, ABLTestFile, ABLTestProgram, ABLTestSuite, resultData, testData } from 'testTree'
-
-// class FileCoverage extends FileCoverageCustom {}
 
 export interface IExtensionTestReferences {
 	testController: TestController
