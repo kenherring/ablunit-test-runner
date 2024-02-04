@@ -76,7 +76,7 @@
 	"activationEvents": [
 		"onStartupFinished"
 	],
-	"main": "./dist/extension",
+	"main": "./dist/extension-insiders.js",
 	"scripts": {
 		"build": "npm run build-webpack && npm run build-tsc",
 		"rebuild": "npm run clean && npm run build",
