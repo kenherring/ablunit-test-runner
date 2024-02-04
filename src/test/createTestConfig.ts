@@ -13,6 +13,7 @@ import * as fs from 'fs'
 /* Run:    `node ./out/test/createTestConfig.js`
 /* ********** End Notes ********** */
 
+const insidersBuild = false
 
 export interface ITestConfig {
 	projName: string
@@ -24,6 +25,7 @@ export interface ITestConfig {
 		timeout: number
 	}
 	launchArgs: string[],
+	version: 'insiders' | 'stable',
 	env: { [key: string]: string | undefined }
 }
 
@@ -50,6 +52,12 @@ function createTestConfig (projName: string, testFile: string, workspaceFolder?:
 	}
 
 	const launchArgs: string[] = []
+	launchArgs.push('--log=debug')
+	// launchArgs.push('--disable-gpu')
+	launchArgs.push('--trace-deprecation')
+	if (insidersBuild) {
+		launchArgs.push('--enable-proposed-api=kherring.ablunit-test-runner')
+	}
 	if (projName != 'DebugLines' &&
 		projName != 'proj3' &&
 		projName != 'proj4' &&
@@ -70,6 +78,7 @@ function createTestConfig (projName: string, testFile: string, workspaceFolder?:
 			timeout: timeout
 		},
 		launchArgs: launchArgs,
+		version: 'insiders',
 		env: {
 			ABLUNIT_TEST_RUNNER_UNIT_TESTING: 'true',
 			ABLUNIT_TEST_RUNNER_PROJECT_NAME: projName

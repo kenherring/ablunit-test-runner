@@ -8,7 +8,11 @@
             "ui": "tdd",
             "timeout": 60000
         },
-        "launchArgs": [],
+        "launchArgs": [
+            "--log=debug",
+            "--trace-deprecation"
+        ],
+        "version": "insiders",
         "env": {
             "ABLUNIT_TEST_RUNNER_UNIT_TESTING": "true",
             "ABLUNIT_TEST_RUNNER_PROJECT_NAME": "DebugLines"
@@ -24,8 +28,11 @@
             "timeout": 15000
         },
         "launchArgs": [
+            "--log=debug",
+            "--trace-deprecation",
             "--disable-extensions"
         ],
+        "version": "insiders",
         "env": {
             "ABLUNIT_TEST_RUNNER_UNIT_TESTING": "true",
             "ABLUNIT_TEST_RUNNER_PROJECT_NAME": "proj0"
@@ -41,8 +48,11 @@
             "timeout": 15000
         },
         "launchArgs": [
+            "--log=debug",
+            "--trace-deprecation",
             "--disable-extensions"
         ],
+        "version": "insiders",
         "env": {
             "ABLUNIT_TEST_RUNNER_UNIT_TESTING": "true",
             "ABLUNIT_TEST_RUNNER_PROJECT_NAME": "proj1"
@@ -58,8 +68,11 @@
             "timeout": 15000
         },
         "launchArgs": [
+            "--log=debug",
+            "--trace-deprecation",
             "--disable-extensions"
         ],
+        "version": "insiders",
         "env": {
             "ABLUNIT_TEST_RUNNER_UNIT_TESTING": "true",
             "ABLUNIT_TEST_RUNNER_PROJECT_NAME": "proj2"
@@ -74,7 +87,11 @@
             "ui": "tdd",
             "timeout": 15000
         },
-        "launchArgs": [],
+        "launchArgs": [
+            "--log=debug",
+            "--trace-deprecation"
+        ],
+        "version": "insiders",
         "env": {
             "ABLUNIT_TEST_RUNNER_UNIT_TESTING": "true",
             "ABLUNIT_TEST_RUNNER_PROJECT_NAME": "proj3"
@@ -89,7 +106,11 @@
             "ui": "tdd",
             "timeout": 15000
         },
-        "launchArgs": [],
+        "launchArgs": [
+            "--log=debug",
+            "--trace-deprecation"
+        ],
+        "version": "insiders",
         "env": {
             "ABLUNIT_TEST_RUNNER_UNIT_TESTING": "true",
             "ABLUNIT_TEST_RUNNER_PROJECT_NAME": "proj4"
@@ -105,8 +126,11 @@
             "timeout": 15000
         },
         "launchArgs": [
+            "--log=debug",
+            "--trace-deprecation",
             "--disable-extensions"
         ],
+        "version": "insiders",
         "env": {
             "ABLUNIT_TEST_RUNNER_UNIT_TESTING": "true",
             "ABLUNIT_TEST_RUNNER_PROJECT_NAME": "proj5"
@@ -122,8 +146,11 @@
             "timeout": 15000
         },
         "launchArgs": [
+            "--log=debug",
+            "--trace-deprecation",
             "--disable-extensions"
         ],
+        "version": "insiders",
         "env": {
             "ABLUNIT_TEST_RUNNER_UNIT_TESTING": "true",
             "ABLUNIT_TEST_RUNNER_PROJECT_NAME": "proj6"
@@ -138,7 +165,11 @@
             "ui": "tdd",
             "timeout": 60000
         },
-        "launchArgs": [],
+        "launchArgs": [
+            "--log=debug",
+            "--trace-deprecation"
+        ],
+        "version": "insiders",
         "env": {
             "ABLUNIT_TEST_RUNNER_UNIT_TESTING": "true",
             "ABLUNIT_TEST_RUNNER_PROJECT_NAME": "proj7A"
@@ -153,7 +184,11 @@
             "ui": "tdd",
             "timeout": 15000
         },
-        "launchArgs": [],
+        "launchArgs": [
+            "--log=debug",
+            "--trace-deprecation"
+        ],
+        "version": "insiders",
         "env": {
             "ABLUNIT_TEST_RUNNER_UNIT_TESTING": "true",
             "ABLUNIT_TEST_RUNNER_PROJECT_NAME": "proj7B"
@@ -169,8 +204,11 @@
             "timeout": 15000
         },
         "launchArgs": [
+            "--log=debug",
+            "--trace-deprecation",
             "--disable-extensions"
         ],
+        "version": "insiders",
         "env": {
             "ABLUNIT_TEST_RUNNER_UNIT_TESTING": "true",
             "ABLUNIT_TEST_RUNNER_PROJECT_NAME": "proj8"
@@ -185,7 +223,11 @@
             "ui": "tdd",
             "timeout": 15000
         },
-        "launchArgs": [],
+        "launchArgs": [
+            "--log=debug",
+            "--trace-deprecation"
+        ],
+        "version": "insiders",
         "env": {
             "ABLUNIT_TEST_RUNNER_UNIT_TESTING": "true",
             "ABLUNIT_TEST_RUNNER_PROJECT_NAME": "proj9"
@@ -200,7 +242,11 @@
             "ui": "tdd",
             "timeout": 15000
         },
-        "launchArgs": [],
+        "launchArgs": [
+            "--log=debug",
+            "--trace-deprecation"
+        ],
+        "version": "insiders",
         "env": {
             "ABLUNIT_TEST_RUNNER_UNIT_TESTING": "true",
             "ABLUNIT_TEST_RUNNER_PROJECT_NAME": "projA"
@@ -216,8 +262,11 @@
             "timeout": 15000
         },
         "launchArgs": [
+            "--log=debug",
+            "--trace-deprecation",
             "--disable-extensions"
         ],
+        "version": "insiders",
         "env": {
             "ABLUNIT_TEST_RUNNER_UNIT_TESTING": "true",
             "ABLUNIT_TEST_RUNNER_PROJECT_NAME": "TestProfileParser"
@@ -233,8 +282,11 @@
             "timeout": 15000
         },
         "launchArgs": [
+            "--log=debug",
+            "--trace-deprecation",
             "--disable-extensions"
         ],
+        "version": "insiders",
         "env": {
             "ABLUNIT_TEST_RUNNER_UNIT_TESTING": "true",
             "ABLUNIT_TEST_RUNNER_PROJECT_NAME": "workspace0"
@@ -250,8 +302,11 @@
             "timeout": 15000
         },
         "launchArgs": [
+            "--log=debug",
+            "--trace-deprecation",
             "--disable-extensions"
         ],
+        "version": "insiders",
         "env": {
             "ABLUNIT_TEST_RUNNER_UNIT_TESTING": "true",
             "ABLUNIT_TEST_RUNNER_PROJECT_NAME": "workspace1"

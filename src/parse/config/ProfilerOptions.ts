@@ -14,7 +14,7 @@ export interface IProfilerOptions {
 export class ProfilerOptions implements IProfilerOptions {
 	public enabled = true
 	public coverage = true
-	public description = 'Run via VSCode - ABLUnit Test Provider Extension'
+	public description = 'Run via VSCode - ABLUnit Test Runner Extension'
 	public filename = 'prof.out'
 	public listings: string | boolean = ''
 	public statistics = false

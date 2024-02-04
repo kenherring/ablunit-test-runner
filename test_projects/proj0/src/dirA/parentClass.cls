@@ -6,4 +6,12 @@ class dirA.parentClass :
 		return true.
 	end method.
 
+	@Test.
+	method public logical testMessage2 () :
+		if true then
+			message 100.
+		else
+			message 200.
+	end method.
+
 end class.
