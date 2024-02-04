@@ -9,6 +9,7 @@
             "timeout": 60000
         },
         "launchArgs": [
+            "./test_projects/DebugLines",
             "--log=debug",
             "--enable-proposed-api=kherring.ablunit-test-runner"
         ],
@@ -28,6 +29,7 @@
             "timeout": 15000
         },
         "launchArgs": [
+            "./test_projects/proj0",
             "--log=debug",
             "--enable-proposed-api=kherring.ablunit-test-runner",
             "--disable-extensions"
@@ -48,6 +50,7 @@
             "timeout": 15000
         },
         "launchArgs": [
+            "./test_projects/proj1",
             "--log=debug",
             "--enable-proposed-api=kherring.ablunit-test-runner",
             "--disable-extensions"
@@ -68,6 +71,7 @@
             "timeout": 15000
         },
         "launchArgs": [
+            "./test_projects/proj2",
             "--log=debug",
             "--enable-proposed-api=kherring.ablunit-test-runner",
             "--disable-extensions"
@@ -88,6 +92,7 @@
             "timeout": 15000
         },
         "launchArgs": [
+            "./test_projects/proj3_debugLines",
             "--log=debug",
             "--enable-proposed-api=kherring.ablunit-test-runner"
         ],
@@ -107,6 +112,7 @@
             "timeout": 15000
         },
         "launchArgs": [
+            "./test_projects/proj4",
             "--log=debug",
             "--enable-proposed-api=kherring.ablunit-test-runner"
         ],
@@ -126,6 +132,7 @@
             "timeout": 15000
         },
         "launchArgs": [
+            "./test_projects/proj5_suites",
             "--log=debug",
             "--enable-proposed-api=kherring.ablunit-test-runner",
             "--disable-extensions"
@@ -146,6 +153,7 @@
             "timeout": 15000
         },
         "launchArgs": [
+            "./test_projects/proj6_dot_dir",
             "--log=debug",
             "--enable-proposed-api=kherring.ablunit-test-runner",
             "--disable-extensions"
@@ -166,6 +174,7 @@
             "timeout": 60000
         },
         "launchArgs": [
+            "./test_projects/proj7_load_performance",
             "--log=debug",
             "--enable-proposed-api=kherring.ablunit-test-runner"
         ],
@@ -185,6 +194,7 @@
             "timeout": 15000
         },
         "launchArgs": [
+            "./test_projects/proj7_load_performance",
             "--log=debug",
             "--enable-proposed-api=kherring.ablunit-test-runner"
         ],
@@ -204,6 +214,7 @@
             "timeout": 15000
         },
         "launchArgs": [
+            "./test_projects/proj8_custom_command",
             "--log=debug",
             "--enable-proposed-api=kherring.ablunit-test-runner",
             "--disable-extensions"
@@ -224,6 +235,7 @@
             "timeout": 15000
         },
         "launchArgs": [
+            "./test_projects/proj9",
             "--log=debug",
             "--enable-proposed-api=kherring.ablunit-test-runner"
         ],
@@ -243,6 +255,7 @@
             "timeout": 15000
         },
         "launchArgs": [
+            "./test_projects/projA",
             "--log=debug",
             "--enable-proposed-api=kherring.ablunit-test-runner"
         ],
@@ -262,6 +275,7 @@
             "timeout": 15000
         },
         "launchArgs": [
+            "./test_projects/TestProfileParser",
             "--log=debug",
             "--enable-proposed-api=kherring.ablunit-test-runner",
             "--disable-extensions"
@@ -282,6 +296,7 @@
             "timeout": 15000
         },
         "launchArgs": [
+            "./test_projects/workspace0.code-workspace",
             "--log=debug",
             "--enable-proposed-api=kherring.ablunit-test-runner",
             "--disable-extensions"
@@ -302,6 +317,7 @@
             "timeout": 15000
         },
         "launchArgs": [
+            "./test_projects/workspace1.code-workspace",
             "--log=debug",
             "--enable-proposed-api=kherring.ablunit-test-runner",
             "--disable-extensions"

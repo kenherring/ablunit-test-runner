@@ -17,7 +17,7 @@ const config = {
 		libraryTarget: "commonjs",
 		devtoolModuleFilenameTemplate: "../[resource-path]",
 	},
-	devtool: 'source-map',
+	devtool: 'source-map', // https://code.visualstudio.com/docs/nodejs/nodejs-debugging#_tool-configuration
 	externals: {
 		// the vscode-module is created on-the-fly and must be excluded. Add other modules that cannot be webpack'ed -> https://webpack.js.org/configuration/externals/
 		vscode: "commonjs vscode"

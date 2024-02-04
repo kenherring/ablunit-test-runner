@@ -9,6 +9,7 @@
             "timeout": 60000
         },
         "launchArgs": [
+            "./test_projects/DebugLines",
             "--log=debug"
         ],
         "version": "stable",
@@ -27,6 +28,7 @@
             "timeout": 15000
         },
         "launchArgs": [
+            "./test_projects/proj0",
             "--log=debug",
             "--disable-extensions"
         ],
@@ -46,6 +48,7 @@
             "timeout": 15000
         },
         "launchArgs": [
+            "./test_projects/proj1",
             "--log=debug",
             "--disable-extensions"
         ],
@@ -65,6 +68,7 @@
             "timeout": 15000
         },
         "launchArgs": [
+            "./test_projects/proj2",
             "--log=debug",
             "--disable-extensions"
         ],
@@ -84,6 +88,7 @@
             "timeout": 15000
         },
         "launchArgs": [
+            "./test_projects/proj3_debugLines",
             "--log=debug"
         ],
         "version": "stable",
@@ -102,6 +107,7 @@
             "timeout": 15000
         },
         "launchArgs": [
+            "./test_projects/proj4",
             "--log=debug"
         ],
         "version": "stable",
@@ -120,6 +126,7 @@
             "timeout": 15000
         },
         "launchArgs": [
+            "./test_projects/proj5_suites",
             "--log=debug",
             "--disable-extensions"
         ],
@@ -139,6 +146,7 @@
             "timeout": 15000
         },
         "launchArgs": [
+            "./test_projects/proj6_dot_dir",
             "--log=debug",
             "--disable-extensions"
         ],
@@ -158,6 +166,7 @@
             "timeout": 60000
         },
         "launchArgs": [
+            "./test_projects/proj7_load_performance",
             "--log=debug"
         ],
         "version": "stable",
@@ -176,6 +185,7 @@
             "timeout": 15000
         },
         "launchArgs": [
+            "./test_projects/proj7_load_performance",
             "--log=debug"
         ],
         "version": "stable",
@@ -194,6 +204,7 @@
             "timeout": 15000
         },
         "launchArgs": [
+            "./test_projects/proj8_custom_command",
             "--log=debug",
             "--disable-extensions"
         ],
@@ -213,6 +224,7 @@
             "timeout": 15000
         },
         "launchArgs": [
+            "./test_projects/proj9",
             "--log=debug"
         ],
         "version": "stable",
@@ -231,6 +243,7 @@
             "timeout": 15000
         },
         "launchArgs": [
+            "./test_projects/projA",
             "--log=debug"
         ],
         "version": "stable",
@@ -249,6 +262,7 @@
             "timeout": 15000
         },
         "launchArgs": [
+            "./test_projects/TestProfileParser",
             "--log=debug",
             "--disable-extensions"
         ],
@@ -268,6 +282,7 @@
             "timeout": 15000
         },
         "launchArgs": [
+            "./test_projects/workspace0.code-workspace",
             "--log=debug",
             "--disable-extensions"
         ],
@@ -287,6 +302,7 @@
             "timeout": 15000
         },
         "launchArgs": [
+            "./test_projects/workspace1.code-workspace",
             "--log=debug",
             "--disable-extensions"
         ],

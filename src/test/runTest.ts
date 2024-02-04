@@ -4,6 +4,7 @@ import * as fs from 'fs'
 import * as path from 'path'
 import { downloadAndUnzipVSCode, resolveCliArgsFromVSCodeExecutablePath, runTests } from '@vscode/test-electron'
 import { ITestConfig } from './createTestConfig'
+import { TestOptions } from '@vscode/test-electron/out/runTest'
 
 const file = 'runTest.ts'
 const version: 'stable' | 'insiders' = 'stable'
@@ -19,8 +20,8 @@ async function main () {
 	for (const conf of testConfig) {
 		if (!projToRun || conf.projName === projToRun) {
 			testCount++
-			console.log('[' + file + ' main] starting tests in vscode, version=\'' + version + '\'')
-			await runTest(version, conf.projName, conf.workspaceFolder)
+			console.log('[' + file + ' main] starting tests in vscode')
+			await runTest(conf)
 		}
 	}
 	console.log('[' + file + ' main] tests completed successfully! testCount=' + testCount)
@@ -31,7 +32,7 @@ async function main () {
 }
 
 function installOpenEdgeExtension (vscodeExecutablePath: string, extensionId: string) {
-	console.log('[' + file + ' runTest] installing OpenEdge extensions...')
+	console.log('[' + file + ' installOpenEdgeExtension] installing OpenEdge extensions...')
 	const [cliPath, ...args] = resolveCliArgsFromVSCodeExecutablePath(vscodeExecutablePath)
 	// Use cp.spawn / cp.exec for custom setup
 	cp.spawnSync(
@@ -41,63 +42,50 @@ function installOpenEdgeExtension (vscodeExecutablePath: string, extensionId: st
 	)
 }
 
-async function runTest (version: string, projName: string, projDir?: string) {
-	if(!projDir) {
-		projDir = projName
-	}
-
+async function runTest (conf: ITestConfig) {
 	const extensionDevelopmentPath: string = path.resolve(__dirname, '../../')
 	const extensionTestsPath = path.resolve(__dirname)
 	const vscodeExecutablePath = await downloadAndUnzipVSCode(version)
 	const testingEnv: { [key: string]: string | undefined } = {
 		ABLUNIT_TEST_RUNNER_UNIT_TESTING: 'true',
-		ABLUNIT_TEST_RUNNER_PROJECT_NAME: projName,
-		ABLUNIT_TEST_RUNNER_VSCODE_VERSION: version
+		ABLUNIT_TEST_RUNNER_PROJECT_NAME: conf.projName,
+		ABLUNIT_TEST_RUNNER_VSCODE_VERSION: conf.version
 	}
 
+	installOpenEdgeExtension(vscodeExecutablePath, 'riversidesoftware.openedge-abl')
+
 	try {
-		installOpenEdgeExtension(vscodeExecutablePath, 'riversidesoftware.openedge-abl')
-
-		const launchArgs: string[] = []
-		launchArgs.push(projDir)
-		launchArgs.push('--log=debug')
-		// launchArgs.push('--verbose')
-		// launchArgs.push('--telemetry')
-		// launchArgs.push('--disable-gpu')
-		// launchArgs.push('--trace-deprecation')
-		if (version === 'insiders') {
-			launchArgs.push('--enable-proposed-api=kherring.ablunit-test-runner')
-		}
-		// launchArgs.push('--disable-extensions')
-		launchArgs.push(...launchArgs)
-
-		console.log('[' + file + ' runTest] (projName=' + projName + ') running tests with args=')
+		console.log('[' + file + ' runTest] running tests with args=')
 		console.debug(' -- cwd=' + __dirname)
+		console.debug(' -- testName=' + conf.projName)
+		console.debug(' -- testProjetDir=' + conf.launchArgs[0])
 		console.debug(' -- extensionDevelopmentPath=' + extensionDevelopmentPath)
 		console.debug(' -- extensionTestsPath=' + extensionTestsPath)
 		console.debug(' -- testingEnv=' + JSON.stringify(testingEnv))
+		console.debug(' -- version=' + conf.version)
 
-		await runTests({
+		const config: TestOptions = {
 			vscodeExecutablePath,
 			extensionDevelopmentPath,
-			extensionTestsPath,
-			launchArgs: launchArgs,
+			extensionTestsPath, // index.ts
+			launchArgs: conf.launchArgs,
 			extensionTestsEnv: testingEnv,
-			version: version
-		})
-		console.log('[' + file + ' runTest] (projName=' + projName + ') tests completed successfully!')
+			version: conf.version
+		}
+		await runTests(config)
+		console.log('[' + file + ' runTest] (projName=' + conf.projName + ') tests completed successfully!')
 	} catch (err) {
-		console.error('[' + file + ' runTest] (projName=' + projName + ') failed to run tests, err=' + err)
+		console.error('[' + file + ' runTest] (projName=' + conf.projName + ') failed to run tests, err=' + err)
 		throw new Error('Failed to run tests! err=' + err)
 	} finally {
-		console.log('[' + file + ' runTest] (projName=' + projName + ') finally')
+		console.log('[' + file + ' runTest] (projName=' + conf.projName + ') finally')
 	}
-	console.log('[' + file + ' runTest] success!  version=' + version)
+	console.log('[' + file + ' runTest] (projName=' + conf.projName + ') success!  version=' + version)
 }
 
 main().then(() => {
-	console.log('[' + file + ' main] completed successfully!')
+	console.log('[' + file + '] completed successfully!')
 }, (err) => {
-	console.error('[' + file + ' main] Failed to run tests, err=' + err)
+	console.error('[' + file + '] failed to run tests, err=' + err)
 	process.exit(1)
 })

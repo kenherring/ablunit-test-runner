@@ -37,3 +37,14 @@ docker/run_tests.sh -o 12.2
 docker/run_tests.sh -o 12.2 -i
 docker/run_tests.sh -o 12.2 -d
 -->
+
+## Test Files
+
+* `runTest.ts` -
+  * `src/test/runTest.ts`
+* `index.ts` -
+
+## Test Methods
+
+* `npm test`
+* `npm vscode-test`

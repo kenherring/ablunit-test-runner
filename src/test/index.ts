@@ -74,10 +74,13 @@ export function run (): Promise <void> {
 	let proj: string
 	if (process.env['ABLUNIT_TEST_RUNNER_PROJECT_NAME']) {
 		proj = process.env['ABLUNIT_TEST_RUNNER_PROJECT_NAME']
+		console.log('[' + file + ' run] proj=' + proj + ' (from env)')
 	} else if (workspace.workspaceFile) {
 		proj = workspace.workspaceFile.fsPath
+		console.log('[' + file + ' run] proj=' + proj + ' (from workspaceFile)')
 	} else if (workspace.workspaceFolders) {
 		proj = workspace.workspaceFolders[0].uri.fsPath
+		console.log('[' + file + ' run] proj=' + proj + ' (from workspaceFolders)')
 	} else {
 		throw new Error('[' + file + ' run] No workspace file or folder found')
 	}

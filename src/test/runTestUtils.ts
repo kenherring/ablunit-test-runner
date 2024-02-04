@@ -8,17 +8,35 @@
 import Mocha from 'mocha'
 import * as path from 'path'
 
+const file = 'runTest.ts'
+
+export function createLaunchArgs (version: 'stable' | 'insiders', projName: string, projDir: string) {
+	const launchArgs: string[] = [projDir]
+	launchArgs.push('--log=debug')
+	// launchArgs.push('--disable-gpu')
+	// launchArgs.push('--trace-deprecation')
+	if (version === 'insiders') {
+		launchArgs.push('--enable-proposed-api=kherring.ablunit-test-runner')
+	}
+	if (projName != 'DebugLines' &&
+		projName != 'proj3' &&
+		projName != 'proj4' &&
+		projName != 'proj7A' &&
+		projName != 'proj7B' &&
+		projName != 'proj9' &&
+		projName != 'projA') {
+		launchArgs.push('--disable-extensions')
+	}
+	return launchArgs
+}
+
 export function setupNyc (projName: string) {
 	const NYC = require('nyc')
 
 	const currentWorkingDir = path.join(__dirname, '..', '..')
 	const reportDir = path.join(__dirname, '..', '..', 'coverage', 'coverage_' + projName)
 	const tempDir = path.join(__dirname, '..', '..', 'coverage', 'coverage_' + projName, '.nyc_output')
-	console.log(
-		'[setupNyc]',
-		', currentWorkingDir=' + currentWorkingDir,
-		', reportDir=' + reportDir,
-		', tempDir=' + tempDir)
+	console.log('[' + file + '] currentWorkingDir=' + currentWorkingDir + ', reportDir=' + reportDir + ', tempDir=' + tempDir)
 
 	const nyc = new NYC({
 		cache: false,
@@ -56,7 +74,7 @@ export function setupNyc (projName: string) {
 
 	// log.warn('Invalidating require cache...')
 	// Object.keys(require.cache).filter(f => nyc.exclude.shouldInstrument(f)).forEach(m => {
-	// 	console.debug('Invalidate require cache for ' + m)
+	// 	console.debug('[' + file + '] Invalidate require cache for ' + m)
 	// 	delete require.cache[m]
 	// 	require(m)
 	// })

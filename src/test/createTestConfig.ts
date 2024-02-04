@@ -1,53 +1,42 @@
-/* eslint-disable no-console */
 import { GlobSync } from 'glob'
 import * as fs from 'fs'
+import { createLaunchArgs } from './runTestUtils'
 
 /* ********** Notes **********
 /* This file generates '.vscode-test.config.json'
 /*
 /* The generated file is used by these programs:
 /* - .vscode-test.js
-/* - src/test/index.ts
 /* - src/test/runTest.ts
 /*
 /* Run:    `node ./out/test/createTestConfig.js`
 /* ********** End Notes ********** */
 
+// disable console output when running via the extension-test-runner
+let consoleEnabled = false
+
 export interface ITestConfig {
 	projName: string
 	label: string
 	files: string
-	workspaceFolder: string
+	workspaceFolder: string,
 	mocha: {
 		ui: string
 		timeout: number
 	}
 	launchArgs: string[],
-	version: 'insiders' | 'stable',
+	version: 'stable' | 'insiders',
 	env: { [key: string]: string | undefined }
 }
 
-function createLaunchArgs (projName: string, version: 'stable' | 'insiders') {
-	const launchArgs: string[] = []
-	launchArgs.push('--log=debug')
-	// launchArgs.push('--disable-gpu')
-	// launchArgs.push('--trace-deprecation')
-	if (version === 'insiders') {
-		launchArgs.push('--enable-proposed-api=kherring.ablunit-test-runner')
+function log (message: string) {
+	if (consoleEnabled) {
+		// eslint-disable-next-line no-console
+		console.log(message)
 	}
-	if (projName != 'DebugLines' &&
-		projName != 'proj3' &&
-		projName != 'proj4' &&
-		projName != 'proj7A' &&
-		projName != 'proj7B' &&
-		projName != 'proj9' &&
-		projName != 'projA') {
-		launchArgs.push('--disable-extensions')
-	}
-	return launchArgs
 }
 
-function createTestConfig (version: 'stable' | 'insiders', projName: string, testFile: string, workspaceFolder?: string, timeout?: number) {
+function createTestConfigJson (version: 'stable' | 'insiders', projName: string, testFile: string, workspaceFolder?: string, timeout?: number) {
 	if (!workspaceFolder) {
 		workspaceFolder = './test_projects/' + projName
 	}
@@ -61,7 +50,7 @@ function createTestConfig (version: 'stable' | 'insiders', projName: string, tes
 		workspaceFolder = './test_projects/' + g.found[0]
 	}
 	if (! fs.existsSync(workspaceFolder)) {
-		console.log('skipping config create for ' + projName + ', workspaceFolder=' + workspaceFolder + ' does not exist')
+		log('skipping config create for ' + projName + ', workspaceFolder=' + workspaceFolder + ' does not exist')
 		return
 	}
 
@@ -78,7 +67,7 @@ function createTestConfig (version: 'stable' | 'insiders', projName: string, tes
 			ui: 'tdd',
 			timeout: timeout
 		},
-		launchArgs: createLaunchArgs(projName, version),
+		launchArgs: createLaunchArgs(version, projName, workspaceFolder),
 		version: version,
 		env: {
 			ABLUNIT_TEST_RUNNER_UNIT_TESTING: 'true',
@@ -89,8 +78,12 @@ function createTestConfig (version: 'stable' | 'insiders', projName: string, tes
 	return retVal
 }
 
-export function getTestConfig () {
+export function createTestConfigForVersion (version: 'stable' | 'insiders') {
 	const testConfig: ITestConfig[] = []
+	let outputfile = './.vscode-test.config.json'
+	if (version === 'insiders') {
+		outputfile = './.vscode-test.config.insiders.json'
+	}
 
 	const g = new GlobSync('**/*.test.js', { cwd: '.' })
 	if (g.found.length === 0) {
@@ -102,22 +95,25 @@ export function getTestConfig () {
 		if (projName.startsWith('proj7A') || testConfig.length === 0) {
 			maxTimeout = 60000
 		}
-		const conf = createTestConfig('stable', projName, f, undefined, maxTimeout)
+		const conf = createTestConfigJson(version, projName, f, undefined, maxTimeout)
 		if (conf) {
 			testConfig.push(conf)
 		}
 	}
-	fs.writeFileSync('./.vscode-test.config.json', JSON.stringify(testConfig, null, 4) + '\n')
-	console.log('created ./.vscode-test.config.json succesfully!')
-
-	for (const t of testConfig) {
-		t.version = 'insiders'
-		t.launchArgs = createLaunchArgs(t.projName, t.version)
-	}
-	fs.writeFileSync('./.vscode-test.config.insiders.json', JSON.stringify(testConfig, null, 4) + '\n')
-	console.log('created ./.vscode-test.config.insiders.json succesfully!')
+	fs.writeFileSync(outputfile, JSON.stringify(testConfig, null, 4) + '\n')
+	log('created ' + outputfile + ' succesfully!')
+	return testConfig
 }
 
-console.log('creating test config...')
-getTestConfig()
-console.log('created both test config files succesfully!')
+export function createTestConfig () {
+	log('creating test config...')
+	const returnConfig = createTestConfigForVersion('stable')
+	createTestConfigForVersion('insiders')
+	log('created both test config files succesfully!')
+	return returnConfig
+}
+
+if (require.main === module) {
+	consoleEnabled = true
+	createTestConfig()
+}

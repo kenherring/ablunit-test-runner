@@ -13,17 +13,18 @@ main_block () {
 initialize () {
 	echo "[$0 ${FUNCNAME[0]}] intiailizing..."
 
-	DIRS=(".builder/" "artifacts/" "coverage/" "dist/" "out/" "out-insiders/" "kherring.ablunit-test-runner")
+	DIRS=(".builder" ".nyc_output" "artifacts" "coverage" "dist" "out" "kherring.ablunit-test-runner")
 	if [ "${OS:-}" = "Windows_NT" ]; then
 		DIRS+=("C:/temp/ablunit/")
 	else
 		DIRS+=("/tmp/ablunit/")
 	fi
 
-	TEST_PROJECT_DIRS=("listings" ".builder" "build" "ablunit-output" "workspaceAblunit")
+	TEST_PROJECT_DIRS=("listings" ".builder" "build" "ablunit-output" "workspaceAblunit" "target")
 
-	FILE_PATTERNS=("ablunit.json" "ablunit.log" "progress.ini" "prof.out" "prof.json" "profile.json" "protrace.*" "results.json"
+	TEST_PROJECT_PATTERNS=("ablunit.json" "ablunit.log" "progress.ini" "prof.out" "prof.json" "profile.json" "protrace.*" "results.json"
 				"results.xml" "dbg_*" "*.r" "*.restore" "*.xref" "results.prof" "profiler.json" "profile.options")
+	FILE_PATTERNS=("*.vsix")
 }
 
 delete_directories () {
@@ -31,11 +32,11 @@ delete_directories () {
 	local DIR LOOP_COUNT=0 DIR_COUNT=0
 
 	for DIR in "${DIRS[@]}"; do
-		LOOP_COUNT=$(find . -type d -name "$DIR" | wc -l)
-		[ "$LOOP_COUNT" = "0" ] && continue
+		[ -d "$DIR" ] || continue
+		LOOP_COUNT=1
 		echo "delete DIR=$DIR (LOOP_COUNT=$LOOP_COUNT)"
 		DIR_COUNT=$((DIR_COUNT+LOOP_COUNT))
-		find . -type d -name "$DIR" -exec rm -rf {} + &
+		rm -rf "$DIR" &
 	done
 
 	for DIR in "${TEST_PROJECT_DIRS[@]}"; do
@@ -57,7 +58,15 @@ delete_files () {
 	for PATTERN in "${FILE_PATTERNS[@]}"; do
 		LOOP_COUNT=$(find . -type f -name "$PATTERN" | wc -l)
 		[ "$LOOP_COUNT" = "0" ] && continue
-		echo "delete PATTERN=test_projects/$PATTERN (LOOP_COUNT=$LOOP_COUNT)"
+		echo "delete PATTERN=$PATTERN (LOOP_COUNT=$LOOP_COUNT)"
+		FILE_COUNT=$((FILE_COUNT+LOOP_COUNT))
+		find . -type f -name "$PATTERN" -delete &
+	done
+
+	for PATTERN in "${TEST_PROJECT_PATTERNS[@]}"; do
+		LOOP_COUNT=$(find . -type f -name "$PATTERN" | wc -l)
+		[ "$LOOP_COUNT" = "0" ] && continue
+		echo "delete TEST_PROJECT_PATTERN=test_projects/$PATTERN (LOOP_COUNT=$LOOP_COUNT)"
 		FILE_COUNT=$((FILE_COUNT+LOOP_COUNT))
 		find test_projects -type f -name "$PATTERN" -delete &
 	done
