@@ -5,14 +5,10 @@ import { awaitRCode, getDefaultDLC, getWorkspaceUri, log, setRuntimes, sleep, wa
 import { getSourceMapFromRCode } from '../../parse/RCodeParser'
 import { PropathParser } from '../../ABLPropath'
 
-console.log('100')
 const projName = 'DebugLines'
-console.log('101 projName=' + projName)
 const workspaceFolder = workspace.workspaceFolders![0]
-console.log('102 workspaceFolder=' + workspaceFolder.uri.fsPath)
 
 before(async () => {
-	console.log('200 before')
 	await waitForExtensionActive()
 	await setRuntimes([{name: '12.2', path: getDefaultDLC(), default: true}]).then(async () => {
 		log.info('setRuntimes complete!')

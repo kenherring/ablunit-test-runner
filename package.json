@@ -87,7 +87,7 @@
 		"package": "webpack --mode production --devtool hidden-source-map",
 		"pretest": "sh -c scripts/npm_pretest.sh",
 		"test": "node ./out/test/runTest.js",
-		"vscode-test:TODO": "vscode-test",
+		"vscode-test": "vscode-test",
 		"test:install-and-run": "cd dummy-ext && npm run test:install-and-run",
 		"watch": "tsc -watch -p ./",
 		"watch-webpack": "webpack --mode development --watch",

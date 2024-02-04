@@ -2,15 +2,15 @@
 import * as cp from 'child_process'
 import * as path from 'path'
 import { downloadAndUnzipVSCode, resolveCliArgsFromVSCodeExecutablePath, runTests } from '@vscode/test-electron'
-import { ITestConfig, createTestConfig } from './createTestConfig'
+import { ITestConfig, getTestConfig } from './createTestConfig'
 import { TestOptions } from '@vscode/test-electron/out/runTest'
 
 const file = 'runTest.ts'
 const version: 'stable' | 'insiders' = 'stable'
 
 async function main () {
-	console.log('[' + file + ' main] starting...')
-	const testConfig = createTestConfig()
+	console.log('[' + file + ' main] starting... (version=' + version + ')')
+	const testConfig = getTestConfig(version)
 
 	let projToRun: string | undefined = undefined
 	projToRun = process.env['ABLUNIT_TEST_RUNNER_PROJECT_NAME']

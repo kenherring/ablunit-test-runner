@@ -2,10 +2,10 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable no-console */
+import * as path from 'path'
 import { GlobSync } from 'glob'
 import { workspace } from 'vscode'
-import * as path from 'path'
-import { ITestConfig, createTestConfig } from './createTestConfig'
+import { getTestConfig } from './createTestConfig'
 import { setupMocha, setupNyc } from './runTestUtils'
 
 const file = 'index.ts'
@@ -18,20 +18,25 @@ async function runTestsForProject (projName: string, timeout: number) {
 
 	console.log('[' + file + ' runTestsForProject] testsRoot=' + testsRoot)
 	const files = new GlobSync('**/' + projName + '.test.js', { cwd: testsRoot })
-	console.log('[' + file + ' runTestsForProject] pattern=**/' + projName + '.test.js, file.found.length=' + files.found.length)
+	console.log('[' + file + ' runTestsForProject] pattern=**/' + projName + '.test.js, file.found.length=' + files.found.length + ' ' + files.found[0])
 	for(const f of files.found) {
-		console.log('[' + file + ' runTestsForProject] mocha.addFile ' + path.resolve(testsRoot, f))
+		console.log('[' + file + ' runTestsForProject] mocha.addFile ' + path.resolve(testsRoot, f) + ' ' + testsRoot + ' ' + f)
 		mocha.addFile(path.resolve(testsRoot, f))
 	}
 
 	const prom = new Promise<void>((c, e) => {
 		try {
 			// Run the mocha test
+			console.log('500')
 			mocha.run((failures) => {
+				console.log('501')
 				if (failures > 0) {
+					console.log('502')
 					console.log('[' + file + ' runTestsForProject] ' + failures + ' tests failed.')
+					console.log('503')
 					e(new Error(failures + ' tests failed.'))
 				}
+				console.log('504')
 				c()
 			})
 		} catch (err) {
@@ -43,7 +48,9 @@ async function runTestsForProject (projName: string, timeout: number) {
 		}
 	})
 
+	console.log('600')
 	await prom
+	console.log('601')
 
 	console.log('[' + file + ' runTestsForProject] outputting coverage...')
 	nyc.writeCoverageFile()
@@ -77,11 +84,12 @@ export function run (): Promise <void> {
 
 	// const configFilename = findConfigFile()
 	// const testConfig: ITestConfig[] = JSON.parse(fs.readFileSync(configFilename, 'utf8'))
-	// const config = testConfig.filter((config: ITestConfig) => { return config.projName === projName})[0]
 	// const config = createTestConfig().find((config: ITestConfig) => { return config.projName === projName})
-	const config = createTestConfig().filter((config: ITestConfig) => { return config.projName === projName})[0]
-	console.log('config=' + JSON.stringify(config, null, 2))
-
+	console.log('300')
+	const testConfig = getTestConfig()
+	console.log('301 length=' + testConfig.length + ', testConfig=' + JSON.stringify(testConfig, null, 2))
+	const config = testConfig.filter((config) => { return config.projName === projName})[0]
+	console.log('302 config=' + JSON.stringify(config, null, 2))
 	if (!config) {
 		throw new Error('[' + file + ' run] Could not find config for project ' + projName)
 	}
