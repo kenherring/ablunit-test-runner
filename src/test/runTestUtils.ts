@@ -10,13 +10,13 @@ import * as path from 'path'
 
 const file = 'runTest.ts'
 
-export function setupNyc (projName: string) {
+export function setupNyc (version: 'stable' | 'insiders', projName: string) {
 	const NYC = require('nyc')
 
 	const currentWorkingDir = path.join(__dirname, '..', '..')
-	const reportDir = path.join(__dirname, '..', '..', 'coverage', 'coverage_' + projName)
-	const tempDir = path.join(__dirname, '..', '..', 'coverage', 'coverage_' + projName, '.nyc_output')
-	console.log('[' + file + '] currentWorkingDir=' + currentWorkingDir + ', reportDir=' + reportDir + ', tempDir=' + tempDir)
+	const reportDir = path.join(__dirname, '..', '..', 'coverage', 'coverage_' + projName + '-' + version)
+	const tempDir = path.join(__dirname, '..', '..', 'coverage', '.nyc_output', projName + '-' + version)
+	console.log('[' + file + ' setupNyc] currentWorkingDir=' + currentWorkingDir + ', reportDir=' + reportDir + ', tempDir=' + tempDir)
 
 	const nyc = new NYC({
 		cache: false,
@@ -61,7 +61,7 @@ export function setupNyc (projName: string) {
 	return nyc
 }
 
-export function setupMocha (projName: string, timeout: number) {
+export function setupMocha (version: 'stable' | 'insiders', projName: string, timeout: number) {
 	return new Mocha({
 		color: true,
 		ui: 'tdd',
@@ -70,7 +70,7 @@ export function setupMocha (projName: string, timeout: number) {
 		reporterOptions: {
 			reporterEnabled: 'spec, mocha-junit-reporter',
 			mochaJunitReporterReporterOptions: {
-				mochaFile: 'artifacts/mocha_results_' + projName + '.xml'
+				mochaFile: 'artifacts/mocha/' + projName + '-' + version + '.xml'
 			}
 		}
 	})

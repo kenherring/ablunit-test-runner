@@ -21,7 +21,7 @@ initialize () {
 
 # load lots of code for a performance test
 get_performance_test_code () {
-	echo "[$0 ${FUNCNAME[0]}] pwd=$(pwd) OE_VERSION=$OE_VERSION"
+	echo "[$0 ${FUNCNAME[0]}] pwd=$(pwd) OE_VERSION=$OE_VERSION VSCODE_VERSION=${ABLUNIT_TEST_RUNNER_VSCODE_VERSION:-}"
 
 	local TO_FILE="/home/circleci/v${OE_VERSION}.0.tar.gz"
 	if [ "${OS:-}" = "Windows_NT" ] || [ -n "${WSL_DISTRO_NAME:-}" ]; then

@@ -6,14 +6,21 @@ import { ITestConfig, getTestConfig } from './createTestConfig'
 import { TestOptions } from '@vscode/test-electron/out/runTest'
 
 const file = 'runTest.ts'
-const version: 'stable' | 'insiders' = 'stable'
 
 async function main () {
-	console.log('[' + file + ' main] starting... (version=' + version + ')')
+	console.log('[' + file + ' main] starting...')
+
+	let version: 'stable' | 'insiders' = 'stable'
+	if (process.env['ABLUNIT_TEST_RUNNER_VSCODE_VERSION']) {
+		version = process.env['ABLUNIT_TEST_RUNNER_VSCODE_VERSION'] as 'stable' | 'insiders'
+	}
+
+	console.log('[' + file + ' main] get config for version=' + version)
 	const testConfig = getTestConfig(version)
 
 	let projToRun: string | undefined = undefined
 	projToRun = process.env['ABLUNIT_TEST_RUNNER_PROJECT_NAME']
+
 	console.log('[' + file + ' main] projToRun=' + projToRun)
 	let testCount = 0
 	for (const conf of testConfig) {
@@ -44,7 +51,7 @@ function installOpenEdgeExtension (vscodeExecutablePath: string, extensionId: st
 async function runTest (conf: ITestConfig) {
 	const extensionDevelopmentPath: string = path.resolve(__dirname, '../../')
 	const extensionTestsPath = path.resolve(__dirname)
-	const vscodeExecutablePath = await downloadAndUnzipVSCode(version)
+	const vscodeExecutablePath = await downloadAndUnzipVSCode(conf.version)
 
 	installOpenEdgeExtension(vscodeExecutablePath, 'riversidesoftware.openedge-abl')
 
@@ -74,7 +81,7 @@ async function runTest (conf: ITestConfig) {
 	} finally {
 		console.log('[' + file + ' runTest] (projName=' + conf.projName + ') finally')
 	}
-	console.log('[' + file + ' runTest] (projName=' + conf.projName + ') success!  version=' + version)
+	console.log('[' + file + ' runTest] (projName=' + conf.projName + ') success!  version=' + conf.version)
 }
 
 main().then(() => {

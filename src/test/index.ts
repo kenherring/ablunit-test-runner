@@ -10,10 +10,10 @@ import { setupMocha, setupNyc } from './runTestUtils'
 
 const file = 'index.ts'
 
-async function runTestsForProject (projName: string, timeout: number) {
+async function runTestsForProject (version: 'stable' | 'insiders', projName: string, timeout: number) {
 	console.log('[' + file + ' runTestsForProject] projName=' + projName)
-	const nyc = setupNyc(projName)
-	const mocha = setupMocha(projName, timeout)
+	const nyc = setupNyc(version, projName)
+	const mocha = setupMocha(version, projName, timeout)
 	const testsRoot = path.resolve(__dirname, '..')
 
 	console.log('[' + file + ' runTestsForProject] testsRoot=' + testsRoot)
@@ -71,6 +71,13 @@ export function run (): Promise <void> {
 	} else {
 		throw new Error('[' + file + ' run] No workspace file or folder found')
 	}
+	let version: 'stable' | 'insiders' = 'stable'
+	if (process.env['ABLUNIT_TEST_RUNNER_VSCODE_VERSION'] === 'insiders') {
+		version = process.env['ABLUNIT_TEST_RUNNER_VSCODE_VERSION']
+	} else if (process.env['ABLUNIT_TEST_RUNNER_VSCODE_VERSION'] !== 'stable') {
+		throw new Error('[' + file + ' run] ABLUNIT_TEST_RUNNER_VSCODE_VERSION=' + process.env['ABLUNIT_TEST_RUNNER_VSCODE_VERSION'] + ' (from env) is not supported')
+	}
+	console.log('[' + file + ' run] version=' + version + ' (from env)')
 
 	projName = projName.replace(/\\/g, '/').split('/').reverse()[0].replace('.code-workspace', '')
 	projName = projName.split('_')[0]
@@ -81,5 +88,5 @@ export function run (): Promise <void> {
 		throw new Error('[' + file + ' run] Could not find config for project ' + projName)
 	}
 	// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-	return runTestsForProject(projName, config.mocha.timeout)
+	return runTestsForProject(version, projName, config.mocha.timeout)
 }

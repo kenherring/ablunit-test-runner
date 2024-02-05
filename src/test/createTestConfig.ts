@@ -35,7 +35,7 @@ function log (message: string) {
 
 function getLaunchArgs (version: 'stable' | 'insiders', projName: string, projDir: string, devPath?: string, testsPath?: string) {
 	const launchArgs: string[] = [projDir]
-	launchArgs.push('--log=debug')
+	// launchArgs.push('--log=debug')
 	// launchArgs.push('--disable-gpu')
 	// launchArgs.push('--trace-deprecation')
 	if (devPath) {

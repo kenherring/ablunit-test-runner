@@ -78,6 +78,10 @@ commands:
             - ./*.vsix
             - ./dist
             - ./out
+  attach-workspace:
+    steps:
+      - attach_workspace:
+          at: .
   store-test-results:
     parameters:
       directory:
@@ -93,12 +97,20 @@ workflows:
       - shellcheck/check
       - package:
           <<: *context-and-filters
-      - test-and-scan:
+      - test:
           <<: *context-and-filters
           matrix:
             parameters:
               oe-version: [ 12.2.12, 12.7.0 ]
+              vscode-version: [ stable, insiders ]
           requires: [ 'package' ]
+      - sonarcloud/scan:
+          <<: *context-and-filters
+          requires:
+            - test-12.2.12-stable
+            - test-12.7.0-stable
+            - test-12.2.12-insiders
+          cache_version: 4
       - install-and-run:
           <<: *context-and-filters
           requires: [ 'package' ]
@@ -110,7 +122,7 @@ workflows:
             tags: { only: /^.*$/ }
           requires:
             - shellcheck/check
-            - test-and-scan
+            - test
             - install-and-run
 
 jobs:
@@ -125,35 +137,38 @@ jobs:
       - run: .circleci/package.sh
       - persist-to-workspace
       - save-package-cache
-  test-and-scan:
+  test:
     <<: *oe-version-param
+      vscode-version:
+        type: enum
+        default: stable
+        enum: [ stable, insiders ]
     docker:
       - image: kherring/ablunit-test-runner:<< parameters.oe-version >>
         auth:
           username: $DOCKERHUB_USERNAME
           password: $DOCKERHUB_TOKEN
+    environment:
+      ABLUNIT_TEST_RUNNER_VSCODE_VERSION: << parameters.vscode-version >>
     steps:
-      - checkout
       - restore-test-cache:
           oe-version: << parameters.oe-version >>
       - attach_workspace: { at: . }
       - run: .circleci/run_test_wrapper.sh
       - store-test-results
+      - persist-to-workspace:
+          paths:
+            - ./artifacts
       - <<: *store-artifacts
-      - when:
-          condition:
-            equal: [ << parameters.oe-version >>, '12.2.12' ]
-          steps:
-            - sonarcloud/scan:
-                cache_version: 3
-      - run: npm run clean
-      - save-test-cache:
-          oe-version: << parameters.oe-version >>
+  sonar:
+    steps:
+      - attach_workspace: { at: . }
+      - sonarcloud/scan:
+          cache_version: 4
   install-and-run:
     <<: *oe-version-param
     executor: psc-primary
     steps:
-      - checkout
       - restore-test-cache
       - attach_workspace: { at: . }
       - run: .circleci/install_and_run.sh
