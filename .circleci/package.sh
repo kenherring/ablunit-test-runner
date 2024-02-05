@@ -29,6 +29,12 @@ initialize () {
 
 package () {
     echo "[$0 ${FUNCNAME[0]}]"
+    package_stable
+    package_insiders
+}
+
+package_stable () {
+    echo "[$0 ${FUNCNAME[0]}]"
 
     local ARGS=()
     ARGS+=("--githubBranch" "$CIRCLE_BRANCH")
@@ -36,8 +42,33 @@ package () {
     if $PRERELEASE; then
         ARGS+=("--pre-release")
     fi
+
+    cp package.stable.json package.json
     vsce package "${ARGS[@]}"
 }
+
+package_insiders () {
+    echo "[$0 ${FUNCNAME[0]}]"
+
+    local ARGS=()
+    ARGS+=("--githubBranch" "$CIRCLE_BRANCH")
+    ARGS+=("--no-git-tag-version")
+    if $PRERELEASE; then
+        ARGS+=("--pre-release")
+    fi
+
+    ARGS+=("--ignoreFile" ".vscodeignore.insiders")
+
+    PACKAGE_VERSION=$(node -p "require('./package.json').version")
+    echo "PACKAGE_VERSION=$PACKAGE_VERSION"
+
+    cp package.insiders.json package.json
+    vsce package "${ARGS[@]}"
+    mv package.stable.json package.json
+    rm package.stable.json
+}
+
+
 
 ########## MAIN BLOCK ##########
 initialize
