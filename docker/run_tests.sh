@@ -57,9 +57,7 @@ initialize () {
 	GIT_BRANCH=$(git branch --show-current)
 	PROGRESS_CFG_BASE64=$(base64 "$DLC/progress.cfg" | tr '\n' ' ')
 	PWD=$(pwd -W 2>/dev/null || pwd)
-	ABLUNIT_TEST_RUNNER_PROJECT_NAME=${ABLUNIT_TEST_RUNNER_PROJECT_NAME//cccccbkbtfuknunlvhghdievncibtjtdtldfcbtvflht
-	cccccbkbtfukrklnnkcfvtevcuudiiidlecbtehdegcj
-	\\/\/}
+	ABLUNIT_TEST_RUNNER_PROJECT_NAME=${ABLUNIT_TEST_RUNNER_PROJECT_NAME//\\/\/}
 	ABLUNIT_TEST_RUNNER_PROJECT_NAME=${ABLUNIT_TEST_RUNNER_PROJECT_NAME//*\/}
 	ABLUNIT_TEST_RUNNER_PROJECT_NAME=${ABLUNIT_TEST_RUNNER_PROJECT_NAME//.test.ts}
 
