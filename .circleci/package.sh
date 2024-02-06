@@ -67,8 +67,6 @@ package_insiders () {
     cp package.stable.json package.json
 }
 
-
-
 ########## MAIN BLOCK ##########
 initialize
 package
