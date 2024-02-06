@@ -7,26 +7,26 @@ const projName = 'proj9'
 const testProfileJson = Uri.joinPath(getWorkspaceUri(), '.vscode/ablunit-test-profile.json')
 const testProfileBackup = Uri.joinPath(getWorkspaceUri(), '.vscode/ablunit-test-profile.json.backup')
 
-before(async () => {
-	await workspace.fs.copy(testProfileJson, testProfileBackup, { overwrite: true }).then()
-})
-
-beforeEach(async () => {
-	const workspaceFolder = workspace.workspaceFolders![0].uri
-	await waitForExtensionActive()
-	deleteFile(Uri.joinPath(workspaceFolder, '.vscode/profile.json'))
-})
-
-afterEach(async () => {
-	deleteFile(testProfileJson)
-	await workspace.fs.copy(testProfileBackup, testProfileJson, { overwrite: true }).then()
-})
-
-after(async () => {
-	await workspace.fs.delete(testProfileBackup)
-})
-
 suite(projName + ' - Extension Test Suite', () => {
+
+	before(projName + ' - before', async () => {
+		await workspace.fs.copy(testProfileJson, testProfileBackup, { overwrite: true }).then()
+	})
+
+	beforeEach(projName + ' - beforeEach', async () => {
+		const workspaceFolder = workspace.workspaceFolders![0].uri
+		await waitForExtensionActive()
+		deleteFile(Uri.joinPath(workspaceFolder, '.vscode/profile.json'))
+	})
+
+	afterEach(projName + ' - afterEach', async () => {
+		deleteFile(testProfileJson)
+		await workspace.fs.copy(testProfileBackup, testProfileJson, { overwrite: true }).then()
+	})
+
+	afterEach(projName + ' - afterEach', async () => {
+		await workspace.fs.delete(testProfileBackup)
+	})
 
 	test(projName + '.1 - ${workspaceFolder}/ablunit.json file exists', async () => {
 		await runAllTests()

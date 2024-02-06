@@ -5,11 +5,11 @@ import { getEnvVars } from '../../ABLUnitRun'
 
 const projName = 'proj8'
 
-before(async () => {
-	await waitForExtensionActive()
-})
-
 suite(projName + ' - Extension Test Suite', () => {
+
+	before(projName + ' - before', async () => {
+		await waitForExtensionActive()
+	})
 
 	test(projName + '.1 - test count', async () => {
 		await runAllTests()

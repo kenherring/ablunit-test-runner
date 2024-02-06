@@ -6,16 +6,6 @@ import { DetailedCoverageCustom } from '../../TestCoverage'
 
 const projName = 'proj0'
 
-before(async () => {
-	await waitForExtensionActive().then(() => { return sleep(250) })
-	await commands.executeCommand('testing.clearTestResults').then()
-	deleteFile('.vscode/ablunit-test-profile.json')
-})
-
-after(() => {
-	deleteFile('.vscode/ablunit-test-profile.json')
-})
-
 function getDetailLine (coverage: DetailedCoverageCustom[], lineNum: number) {
 	if (!coverage) return undefined
 	return coverage.find((d) => {
@@ -25,6 +15,16 @@ function getDetailLine (coverage: DetailedCoverageCustom[], lineNum: number) {
 }
 
 suite(projName + ' - Extension Test Suite', () => {
+
+	before(projName + ' - before', async () => {
+		await waitForExtensionActive().then(() => { return sleep(250) })
+		await commands.executeCommand('testing.clearTestResults').then()
+		deleteFile('.vscode/ablunit-test-profile.json')
+	})
+
+	afterEach(projName + ' - afterEach', () => {
+		deleteFile('.vscode/ablunit-test-profile.json')
+	})
 
 	test(projName + '.1 - ${workspaceFolder}/ablunit.json file exists', async () => {
 		await runAllTests()

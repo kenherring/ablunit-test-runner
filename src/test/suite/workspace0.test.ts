@@ -6,11 +6,11 @@ import { doesDirExist, doesFileExist, runAllTests, waitForExtensionActive } from
 
 const projName = 'workspace0'
 
-before(async () => {
-	await waitForExtensionActive()
-})
-
 suite(projName + ' - Extension Test Suite', () => {
+
+	before(projName + ' - before', async () => {
+		await waitForExtensionActive()
+	})
 
 	test(projName + '.1 - <workspaceFolder>/ablunit.json file exists', async () => {
 		await runAllTests()

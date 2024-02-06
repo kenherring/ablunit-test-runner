@@ -8,23 +8,23 @@ import { PropathParser } from '../../ABLPropath'
 const projName = 'DebugLines'
 const workspaceFolder = workspace.workspaceFolders![0]
 
-before(async () => {
-	await waitForExtensionActive()
-	await setRuntimes([{name: '12.2', path: getDefaultDLC(), default: true}]).then(async () => {
-		log.info('setRuntimes complete!')
-		await sleep(250)
-		return true
-	})
-	await sleep(250)
-	const prom = awaitRCode(workspaceFolder, 8)
-	await prom.then((rcodeCount) => {
-		log.info('compile complete! rcode count = ' + rcodeCount)
-	})
-	log.info('before complete!')
-})
-
 const allTests = (version: 'stable' | 'insiders' = 'stable') => {
 	return suite(projName + ' - ' + version + ' Extension Test Suite', () => {
+
+		before(projName + ' - before', async () => {
+			await waitForExtensionActive()
+			await setRuntimes([{name: '12.2', path: getDefaultDLC(), default: true}]).then(async () => {
+				log.info('setRuntimes complete!')
+				await sleep(250)
+				return true
+			})
+			await sleep(250)
+			const prom = awaitRCode(workspaceFolder, 8)
+			await prom.then((rcodeCount) => {
+				log.info('compile complete! rcode count = ' + rcodeCount)
+			})
+			log.info('before complete!')
+		})
 
 		test(projName + '.1 - read debug line map from r-code', async () => {
 			const propath = new PropathParser(workspaceFolder)
