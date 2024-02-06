@@ -15,6 +15,10 @@ oe-version-param: &oe-version-param
       type: string
       enum: [ '12.2.12', '12.7.0' ]
       default: '12.2.12'
+    vscode-version:
+      type: enum
+      default: stable
+      enum: [ stable, insiders ]
 context-and-filters: &context-and-filters
   context:
     - DockerHub
@@ -76,6 +80,8 @@ commands:
           root: .
           paths:
             - ./*.vsix
+            - ./artifacts
+            - ./coverage
             - ./dist
             - ./out
   store-test-results:
@@ -100,13 +106,12 @@ workflows:
               oe-version: [ 12.2.12, 12.7.0 ]
               vscode-version: [ stable, insiders ]
           requires: [ 'package' ]
-      - sonarcloud/scan:
+      - sonar:
           <<: *context-and-filters
           requires:
             - test-12.2.12-stable
             - test-12.7.0-stable
             - test-12.2.12-insiders
-          cache_version: 4
       - install-and-run:
           <<: *context-and-filters
           requires: [ 'package' ]
@@ -136,10 +141,6 @@ jobs:
       - run: '[ "$(find . --maxdepth 1 -type f -name "*.vsix" | wc -l)" = "2" ] || exit 1'
   test:
     <<: *oe-version-param
-      vscode-version:
-        type: enum
-        default: stable
-        enum: [ stable, insiders ]
     docker:
       - image: kherring/ablunit-test-runner:<< parameters.oe-version >>
         auth:
@@ -153,11 +154,10 @@ jobs:
       - attach_workspace: { at: . }
       - run: .circleci/run_test_wrapper.sh
       - store-test-results
-      - persist-to-workspace:
-          paths:
-            - ./artifacts
+      - persist-to-workspace
       - <<: *store-artifacts
   sonar:
+    executor: psc-primary
     steps:
       - attach_workspace: { at: . }
       - sonarcloud/scan:
