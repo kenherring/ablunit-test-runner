@@ -64,8 +64,7 @@ package_insiders () {
 
     cp package.insiders.json package.json
     vsce package "${ARGS[@]}"
-    mv package.stable.json package.json
-    rm package.stable.json
+    cp package.stable.json package.json
 }
 
 
