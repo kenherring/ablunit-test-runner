@@ -1,5 +1,5 @@
 import { strict as assert } from 'assert'
-import { after, before, beforeEach } from 'mocha'
+import { afterEach, before } from 'mocha'
 import { Uri, workspace } from 'vscode'
 import { doesDirExist, doesFileExist, log, runAllTests, updateConfig, waitForExtensionActive } from '../testCommon'
 
@@ -10,10 +10,6 @@ suite(projName + ' - Extension Test Suite', () => {
 
 	before(projName + ' - before', async () => {
 		await waitForExtensionActive()
-	})
-
-	beforeEach(projName + ' - beforeEach', async () => {
-		log.info('before')
 		await updateConfig('tempDir', undefined)
 	})
 

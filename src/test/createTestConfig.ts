@@ -8,21 +8,23 @@ import path from 'path'
 
 // disable console output when running via the extension-test-runner
 const consoleEnabled = false
-const outputDebugFiles = false
+const outputDebugFiles = true
 
 export interface ITestConfig {
 	projName: string
 	label: string
 	files: string
+	newWindow?: boolean
 	workspaceFolder: string
 	extensionDevelopmentPath: string
 	extensionTestsPath: string
+	version: 'stable' | 'insiders'
 	mocha: {
 		ui: string
+		retries?: number
 		timeout: number
 	}
 	launchArgs: string[]
-	version: 'stable' | 'insiders'
 	env: { [key: string]: string | undefined }
 }
 
@@ -35,9 +37,21 @@ function log (message: string) {
 
 function getLaunchArgs (version: 'stable' | 'insiders', projName: string, projDir: string, devPath?: string, testsPath?: string) {
 	const launchArgs: string[] = [projDir]
-	// launchArgs.push('--log=debug')
+	// launchArgs.push('--crash-reporter-directory=/Users/brian/Code/vscode/.build/crashes')
+	// launchArgs.push('--disable-extensions')
 	// launchArgs.push('--disable-gpu')
+	// launchArgs.push('--disable-telemetry')
+	// launchArgs.push('--disable-updates')
+	// launchArgs.push('--disable-workspace-trust')
+	launchArgs.push('--log=debug')
+	// launchArgs.push('--logsPath=./artifacts/logs')
+	// launchArgs.push('--no-cached-data')
+	// launchArgs.push('--skip-release-notes')
+	// launchArgs.push('--skip-welcome')
 	// launchArgs.push('--trace-deprecation')
+	// launchArgs.push('--use-inmemory-secretstorage')
+	launchArgs.push('--install-extension=riversidesoftware.openedge-abl-lsp')
+
 	if (devPath) {
 		launchArgs.push('--extensionDevelopmentPath=' + devPath)
 	}
@@ -96,19 +110,23 @@ function getConfigForProject (version: 'stable' | 'insiders', projName: string, 
 		projName: projName,
 		label: 'extension tests - ' + projName,
 		files: testFile,
+		// newWindow: true,
 		workspaceFolder: workspaceFolder,
 		extensionDevelopmentPath: extensionDevelopmentPath,
 		extensionTestsPath: extensionTestsPath,
 		mocha: {
 			ui: 'tdd',
+			retries: 1,
 			timeout: timeout
 		},
-		launchArgs: getLaunchArgs(version, projName, workspaceFolder, extensionDevelopmentPath, extensionTestsPath),
+		launchArgs: getLaunchArgs(version, projName, workspaceFolder),
+		// launchArgs: getLaunchArgs(version, projName, workspaceFolder, extensionDevelopmentPath, extensionTestsPath),
 		version: version,
 		env: {
 			ABLUNIT_TEST_RUNNER_UNIT_TESTING: 'true',
 			ABLUNIT_TEST_RUNNER_PROJECT_NAME: projName,
-			ABLUNIT_TEST_RUNNER_VSCODE_VERSION: version
+			ABLUNIT_TEST_RUNNER_VSCODE_VERSION: version,
+			// VSCODE_SKIP_PRELAUNCH: 1
 		}
 	}
 

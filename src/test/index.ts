@@ -7,6 +7,7 @@ import { GlobSync } from 'glob'
 import { workspace } from 'vscode'
 import { getTestConfig } from './createTestConfig'
 import { setupMocha, setupNyc } from './runTestUtils'
+import { log } from 'console'
 
 const file = 'index.ts'
 
@@ -72,10 +73,13 @@ export function run (): Promise <void> {
 		throw new Error('[' + file + ' run] No workspace file or folder found')
 	}
 	let version: 'stable' | 'insiders' = 'stable'
-	if (process.env['ABLUNIT_TEST_RUNNER_VSCODE_VERSION'] === 'insiders') {
-		version = process.env['ABLUNIT_TEST_RUNNER_VSCODE_VERSION']
-	} else if (process.env['ABLUNIT_TEST_RUNNER_VSCODE_VERSION'] !== 'stable') {
-		throw new Error('[' + file + ' run] ABLUNIT_TEST_RUNNER_VSCODE_VERSION=' + process.env['ABLUNIT_TEST_RUNNER_VSCODE_VERSION'] + ' (from env) is not supported')
+	log('[' + file + ' run] ABLUNIT_TEST_RUNNER_VSCODE_VERSION=' + process.env['ABLUNIT_TEST_RUNNER_VSCODE_VERSION'])
+	if (process.env['ABLUNIT_TEST_RUNNER_VSCODE_VERSION']) {
+		if (process.env['ABLUNIT_TEST_RUNNER_VSCODE_VERSION'] === 'insiders') {
+			version = process.env['ABLUNIT_TEST_RUNNER_VSCODE_VERSION']
+		} else if (process.env['ABLUNIT_TEST_RUNNER_VSCODE_VERSION'] !== 'stable') {
+			throw new Error('[' + file + ' run] ABLUNIT_TEST_RUNNER_VSCODE_VERSION=' + process.env['ABLUNIT_TEST_RUNNER_VSCODE_VERSION'] + ' (from env) is not supported')
+		}
 	}
 	console.log('[' + file + ' run] version=' + version + ' (from env)')
 
