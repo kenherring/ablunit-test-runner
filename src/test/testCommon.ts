@@ -113,6 +113,12 @@ async function installOpenedgeABLExtension () {
 		log.trace('[testCommon.ts] activated riversidesoftware.openedge-abl-lsp extension!')
 	})
 
+	await sleep(500)
+	log.trace('[testCommon.ts] rebuilding abl project...')
+	await commands.executeCommand('abl.project.rebuild').then(() => {
+		log.trace('[testCommon.ts] abl.project.rebuild command complete!')
+	})
+
 	log.trace('[testCommon.ts] riversidesoftware.openedge-abl-lsp active=' + ext.isActive)
 	if (!ext.isActive) {
 		throw new Error('[testCommon.ts] failed to activate extension')
