@@ -79,6 +79,7 @@ jobs:
       - persist_to_workspace: { root: ".", paths: [ . ] }
       - save-package-cache
       - run: '[ "$(find . -type f -name "*.vsix" | wc -l)" = "2" ] || exit 1'
+      - run: ls -al
   test:
     <<: *oe-version-param
     docker:
@@ -92,6 +93,7 @@ jobs:
       - restore-test-cache:
           oe-version: << parameters.oe-version >>
       - attach_workspace: { at: . }
+      - run: ls -al
       - run: .circleci/run_test_wrapper.sh
       - store_test_results: { path: artifacts }
       - persist_to_workspace: { root: ".", paths: [ artifacts, coverage ]}

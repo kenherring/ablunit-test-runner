@@ -24,7 +24,7 @@ suite(projName + ' - Extension Test Suite', () => {
 		await workspace.fs.copy(testProfileBackup, testProfileJson, { overwrite: true }).then()
 	})
 
-	afterEach(projName + ' - afterEach', async () => {
+	after(projName + ' - after', async () => {
 		await workspace.fs.delete(testProfileBackup)
 	})
 

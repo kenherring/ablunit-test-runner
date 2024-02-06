@@ -1,6 +1,6 @@
 import { strict as assert } from 'assert'
 import { before } from 'mocha'
-import { Uri, workspace } from 'vscode'
+import { Uri, commands, workspace } from 'vscode'
 import { awaitRCode, getDefaultDLC, getWorkspaceUri, log, setRuntimes, sleep, waitForExtensionActive } from '../testCommon'
 import { getSourceMapFromRCode } from '../../parse/RCodeParser'
 import { PropathParser } from '../../ABLPropath'
@@ -8,22 +8,53 @@ import { PropathParser } from '../../ABLPropath'
 const projName = 'DebugLines'
 const workspaceFolder = workspace.workspaceFolders![0]
 
+before(projName + ' - before', async () => {
+	try {
+		await waitForExtensionActive()
+		log.info('b1-1')
+		log.info('b1 getDefaultDLC=' + getDefaultDLC())
+		log.info('b1-2')
+		await setRuntimes([{name: '12.2', path: getDefaultDLC(), default: true}]).then(async () => {
+			log.info('b1 setRuntimes complete!')
+			await sleep(250)
+			return true
+		})
+		await sleep(1000)
+		log.info('abl.restart.langserv')
+		await commands.executeCommand('abl.restart.langserv').then(() => {
+			log.info('abl.restart.langserv complete')
+		})
+		await sleep(1000)
+		log.info('awaitRCode')
+		const prom = awaitRCode(workspaceFolder, 8)
+		await sleep(1000)
+		await prom.then((rcodeCount) => {
+			log.info('b1 compile complete! rcode count = ' + rcodeCount)
+		})
+		log.info('b1 before complete!')
+	} catch (err) {
+		log.error('b1 before error: ' + err)
+		throw err
+	}
+})
+
 const allTests = (version: 'stable' | 'insiders' = 'stable') => {
 	return suite(projName + ' - ' + version + ' Extension Test Suite', () => {
 
 		before(projName + ' - before', async () => {
 			await waitForExtensionActive()
+			log.debug('b2 getDefaultDLC=' + getDefaultDLC())
 			await setRuntimes([{name: '12.2', path: getDefaultDLC(), default: true}]).then(async () => {
-				log.info('setRuntimes complete!')
+				log.info('b2 setRuntimes complete!')
 				await sleep(250)
 				return true
 			})
 			await sleep(250)
 			const prom = awaitRCode(workspaceFolder, 8)
 			await prom.then((rcodeCount) => {
-				log.info('compile complete! rcode count = ' + rcodeCount)
+				log.info('b2 compile complete! rcode count = ' + rcodeCount)
 			})
-			log.info('before complete!')
+			log.info('b2 before complete!')
 		})
 
 		test(projName + '.1 - read debug line map from r-code', async () => {

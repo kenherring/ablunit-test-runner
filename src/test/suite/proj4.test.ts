@@ -1,5 +1,5 @@
 import { strict as assert } from 'assert'
-import { after, before, beforeEach } from 'mocha'
+import { afterEach, before, beforeEach } from 'mocha'
 import { Uri } from 'vscode'
 import { deleteFile, doesFileExist, getDefaultDLC, getSessionTempDir, getWorkspaceUri, runAllTests, setRuntimes, updateTestProfile, waitForExtensionActive } from '../testCommon'
 import { doesDirExist } from '../../ABLUnitCommon'

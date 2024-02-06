@@ -1,6 +1,5 @@
 /* eslint-disable no-console */
 import * as cp from 'child_process'
-import * as path from 'path'
 import { downloadAndUnzipVSCode, resolveCliArgsFromVSCodeExecutablePath, runTests } from '@vscode/test-electron'
 import { ITestConfig, getTestConfig } from './createTestConfig'
 import { TestOptions } from '@vscode/test-electron/out/runTest'

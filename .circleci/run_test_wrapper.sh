@@ -6,6 +6,11 @@ initialize () {
 	VERBOSE=${VERBOSE:-false}
 	export DONT_PROMPT_WSL_INSTALL=No_Prompt_please
 	npm install
+
+	if [ ! -f /root/.rssw/oedoc.bin ]; then
+		echo "ERROR: /root/.rssw/oedoc.bin not found"
+		exit 1
+	fi
 }
 
 dbus_config () {
@@ -52,6 +57,8 @@ save_and_print_debug_output () {
 	find .vscode-test -name '*-ABL*.log' -exec cp {} artifacts \;
 	find .vscode-test -name '*ABLUnit.log'
 	find .vscode-test -name '*ABLUnit.log' -exec cp {} artifacts \;
+	find .vscode-test -name 'settings.json'
+	find .vscode-test -name 'settings.json' -exec cp {} artifacts \;
 
 	echo "[$0 ${FUNCNAME[0]}] r-code"
 	find . -name '*.r'

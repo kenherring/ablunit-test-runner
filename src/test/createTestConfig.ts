@@ -39,15 +39,15 @@ function getLaunchArgs (version: 'stable' | 'insiders', projName: string, projDi
 	const launchArgs: string[] = [projDir]
 	// launchArgs.push('--crash-reporter-directory=/Users/brian/Code/vscode/.build/crashes')
 	// launchArgs.push('--disable-extensions')
-	// launchArgs.push('--disable-gpu')
-	// launchArgs.push('--disable-telemetry')
-	// launchArgs.push('--disable-updates')
+	launchArgs.push('--disable-gpu')
+	launchArgs.push('--disable-telemetry')
+	launchArgs.push('--disable-updates')
 	// launchArgs.push('--disable-workspace-trust')
 	launchArgs.push('--log=debug')
 	// launchArgs.push('--logsPath=./artifacts/logs')
-	// launchArgs.push('--no-cached-data')
-	// launchArgs.push('--skip-release-notes')
-	// launchArgs.push('--skip-welcome')
+	launchArgs.push('--no-cached-data')
+	launchArgs.push('--skip-release-notes')
+	launchArgs.push('--skip-welcome')
 	// launchArgs.push('--trace-deprecation')
 	// launchArgs.push('--use-inmemory-secretstorage')
 	launchArgs.push('--install-extension=riversidesoftware.openedge-abl-lsp')
@@ -99,7 +99,7 @@ function getConfigForProject (version: 'stable' | 'insiders', projName: string, 
 	}
 
 	let timeout = 15000
-	if (projName.startsWith('proj7A')) {
+	if (projName === 'DebugLines' || projName.startsWith('proj7A')) {
 		timeout = 60000
 	}
 
@@ -143,6 +143,9 @@ export function createConfigForVersion (version: 'stable' | 'insiders') {
 	}
 	for (const f of g.found) {
 		const projName = f.replace('.test.js', '').split('/').reverse()[0]
+		// if (projName === 'DebugLines') {
+		// 	continue
+		// }
 		const conf = getConfigForProject(version, projName, f)
 		if (conf) {
 			testConfig.push(conf)

@@ -35,12 +35,16 @@ initialize () {
 		DOCKER_TAGS=("12.2.12" "12.7.0")
 	fi
 	DOCKER_TAGS=("12.2.12" "12.7.0")
+
+	mkdir -p docker/.rssw
+	cp ~/.rssw/oedoc.bin docker/.rssw/oedoc.bin
 }
 
 build_images () {
-	echo "building images..."
+	echo "building images... (pwd=$(pwd))"
 	for DOCKER_TAG in "${DOCKER_TAGS[@]}"; do
 		echo "Building docker image for OE $DOCKER_TAG"
+		ls -al docker/.rssw
 		docker build docker \
 			--build-arg OE_VERSION="$DOCKER_TAG" \
 			--secret id=license,src="$DLC/progress.cfg" \
