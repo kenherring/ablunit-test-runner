@@ -130,7 +130,12 @@ export async function setRuntimes (runtimes: IRuntime[]) {
 		log.info('[testCommon.ts] setting abl.configuration.runtimes')
 		return workspace.getConfiguration('abl.configuration').update('runtimes', runtimes, ConfigurationTarget.Global).then(async () =>{
 			log.info('[testCommon.ts] abl.configuration.runtimes set successfully')
-			return sleep(500)
+			await sleep(500)
+			log.trace('[testCommon.ts] rebuilding abl project...')
+			return commands.executeCommand('abl.project.rebuild').then(() => {
+				log.trace('[testCommon.ts] abl.project.rebuild command complete!')
+			})
+
 		}, (err) => {
 			throw new Error('[testCommon.ts] failed to set runtimes: ' + err)
 		})
