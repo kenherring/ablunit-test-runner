@@ -15,6 +15,9 @@ initialize() {
 
     $CIRCLECI || create_package
 
+    echo "vsix files packaged:"
+    find . -name 'ablunit-test-runner-*.vsix'
+
     VSIX_COUNT=$(find . -name 'ablunit-test-runner-*.vsix' | wc -l)
     echo "VSIX_COUNT=$VSIX_COUNT"
     if [ "$VSIX_COUNT" != "1" ] && [ "$VSIX_COUNT" != 2 ] && [ "$VSIX_COUNT" != 3 ]; then
