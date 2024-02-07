@@ -43,6 +43,10 @@ package_stable () {
         ARGS+=("--pre-release")
     fi
 
+    cp package.proposedapi.json package.json
+    vsce package "${ARGS[@]}" -o "ablunit-test-runner-proposedapi-${PACKAGE_VERSION}.vsix"
+    cp package.stable.json package.json
+
     cp package.stable.json package.json
     vsce package "${ARGS[@]}"
 }
@@ -61,10 +65,6 @@ package_insiders () {
 
     PACKAGE_VERSION=$(node -p "require('./package.json').version")
     echo "PACKAGE_VERSION=$PACKAGE_VERSION"
-
-    cp package.proposedapi.json package.json
-    vsce package "${ARGS[@]}" -o "ablunit-test-runner-proposedapi-${PACKAGE_VERSION}.vsix"
-    cp package.stable.json package.json
 
     cp package.insiders.json package.json
     vsce package "${ARGS[@]}" -o "ablunit-test-runner-insiders-${PACKAGE_VERSION}.vsix"
