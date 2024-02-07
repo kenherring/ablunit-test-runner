@@ -3,9 +3,10 @@
 
 ## Keep these files
 !CHANGELOG.md
+!dist/extension-insiders.js
+!dist/extension-insiders.js*
 !docs/coverage.png
 !LICENSE
-!dist/extension.js*
 !package.json
 !resources/ablunit-test-profile.details.jsonc
 !resources/ablunit-test-profile.schema.json

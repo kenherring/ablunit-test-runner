@@ -4,11 +4,11 @@ import { assert, runAllTests, waitForExtensionActive } from '../testCommon'
 
 const projName = 'projA'
 
-before(async () => {
-	await waitForExtensionActive()
-})
-
 suite(projName + ' - Extension Test Suite', () => {
+
+	before(projName + ' - before', async () => {
+		await waitForExtensionActive()
+	})
 
 	test(projName + '.1 - no .vscode/ablunit-test-profile.json exists in project', async () => {
 		await runAllTests()

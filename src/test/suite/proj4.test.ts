@@ -1,5 +1,5 @@
 import { strict as assert } from 'assert'
-import { after, before, beforeEach } from 'mocha'
+import { afterEach, before, beforeEach } from 'mocha'
 import { Uri } from 'vscode'
 import { deleteFile, doesFileExist, getDefaultDLC, getSessionTempDir, getWorkspaceUri, runAllTests, setRuntimes, updateTestProfile, waitForExtensionActive } from '../testCommon'
 import { doesDirExist } from '../../ABLUnitCommon'
@@ -7,24 +7,24 @@ import { doesDirExist } from '../../ABLUnitCommon'
 const projName = 'proj4'
 const sessionTempDir = getSessionTempDir()
 
-before(async () => {
-	await waitForExtensionActive()
-	if (process.platform === 'linux') {
-		await updateTestProfile('tempDir', '/tmp/ablunit')
-		await updateTestProfile('profiler.listings', '/tmp/ablunit-local/listings')
-	}
-})
-
-beforeEach(async () => {
-	await setRuntimes([{name: '11.7', path: '/psc/dlc_11.7'}, {name: '12.2', path: getDefaultDLC()}])
-})
-
-after(async () => {
-	await updateTestProfile('tempDir', 'c:\\temp\\ablunit\\tempDir')
-	await updateTestProfile('profiler.listings', 'c:\\temp\\ablunit-local\\listings')
-})
-
 suite(projName + ' - Extension Test Suite', () => {
+
+	before(projName + ' - before', async () => {
+		await waitForExtensionActive()
+		if (process.platform === 'linux') {
+			await updateTestProfile('tempDir', '/tmp/ablunit')
+			await updateTestProfile('profiler.listings', '/tmp/ablunit-local/listings')
+		}
+	})
+
+	beforeEach(projName + ' - beforeEach', async () => {
+		await setRuntimes([{name: '11.7', path: '/psc/dlc_11.7'}, {name: '12.2', path: getDefaultDLC()}])
+	})
+
+	afterEach(projName + ' - afterEach', async () => {
+		await updateTestProfile('tempDir', 'c:\\temp\\ablunit\\tempDir')
+		await updateTestProfile('profiler.listings', 'c:\\temp\\ablunit-local\\listings')
+	})
 
 	test(projName + '.1 - Absolute Paths', async () => {
 		const listingsDir = Uri.joinPath(sessionTempDir, 'listings')

@@ -6,20 +6,20 @@ import { assert, deleteTestFiles, getTestCount, getWorkspaceUri, runAllTests, sl
 const projName = 'proj1'
 const workspaceUri = getWorkspaceUri()
 
-before(async () => {
-	await waitForExtensionActive()
-	await updateConfig('files.exclude', undefined)
-})
-
-beforeEach(() => {
-	deleteTestFiles()
-})
-
-afterEach(async () => {
-	await updateConfig('files.exclude', undefined)
-})
-
 suite(projName + ' - Extension Test Suite', () => {
+
+	before(projName + ' - before', async () => {
+		await waitForExtensionActive()
+		await updateConfig('files.exclude', undefined)
+	})
+
+	beforeEach(projName + ' - beforeEach', () => {
+		deleteTestFiles()
+	})
+
+	afterEach(projName + ' - afterEach', async () => {
+		await updateConfig('files.exclude', undefined)
+	})
 
 	test(projName + '.1 - output files exist - 1', async () => {
 		const ablunitJson = Uri.joinPath(workspaceUri, 'ablunit.json')

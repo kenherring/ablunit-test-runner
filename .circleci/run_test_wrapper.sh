@@ -5,7 +5,13 @@ initialize () {
 	echo "[$0 ${FUNCNAME[0]}]"
 	VERBOSE=${VERBOSE:-false}
 	export DONT_PROMPT_WSL_INSTALL=No_Prompt_please
-	npm install
+
+	if [ ! -f /root/.rssw/oedoc.bin ]; then
+		echo "ERROR: /root/.rssw/oedoc.bin not found"
+		exit 1
+	fi
+
+	echo "ABLUNIT_TEST_RUNNER_VSCODE_VERSION=$ABLUNIT_TEST_RUNNER_VSCODE_VERSION"
 }
 
 dbus_config () {
@@ -28,7 +34,10 @@ run_tests () {
 	echo "[$0 ${FUNCNAME[0]}]"
 	EXIT_CODE=0
 
-	xvfb-run -a npm test || EXIT_CODE=$?
+	cp "package.$ABLUNIT_TEST_RUNNER_VSCODE_VERSION.json" package.json
+	xvfb-run -a npm run test-no-build || EXIT_CODE=$?
+	cp package.stable.json package.json
+
 	if [ -f /home/circleci/project/test_projects/proj0/prof.out ]; then
 		echo "[$0 ${FUNCNAME[0]}] copying profile output prof_${OE_VERSION}.out"
 		cp /home/circleci/project/test_projects/proj0/prof.out "/home/circleci/artifacts/prof_${OE_VERSION}.out"
@@ -37,6 +46,7 @@ run_tests () {
 			cp /home/circleci/project/test_projects/proj0/prof.json "/home/circleci/artifacts/prof_${OE_VERSION}.json"
 		fi
 	fi
+
 	if [ "$EXIT_CODE" = "0" ]; then
 		echo "xvfb-run success"
 	else
@@ -52,6 +62,8 @@ save_and_print_debug_output () {
 	find .vscode-test -name '*-ABL*.log' -exec cp {} artifacts \;
 	find .vscode-test -name '*ABLUnit.log'
 	find .vscode-test -name '*ABLUnit.log' -exec cp {} artifacts \;
+	find .vscode-test -name 'settings.json'
+	find .vscode-test -name 'settings.json' -exec cp {} artifacts \;
 
 	echo "[$0 ${FUNCNAME[0]}] r-code"
 	find . -name '*.r'
@@ -65,33 +77,8 @@ save_and_print_debug_output () {
 	echo '********** logs done **********'
 }
 
-run_lint () {
-	echo "[$0 ${FUNCNAME[0]}]"
-	if [ -n "${ABLUNIT_TEST_RUNNER_PROJECT_NAME:-}" ]; then
-		echo "[$0 ${FUNCNAME[0]}] skipping lint for single ABLUnit test runner project test"
-		return 0
-	fi
-
-	mkdir -p artifacts
-	rm -rf test_projects/proj7_load_performance/src/ADE-12.2.13.0
-
-	if ! npm run lint -o artifacts/eslint_report.txt; then
-		echo "eslint failed"
-	fi
-	if ! npm run lint -- -f json -o artifacts/eslint_report.json; then
-		echo "eslint plain failed"
-	fi
-	if [ -f artifacts/eslint_report.json ]; then
-		jq '.' < artifacts/eslint_report.json > artifacts/eslint_report_pretty.json
-	else
-		echo "ERROR: eslint_report.txt not found"
-		exit 1
-	fi
-}
-
 ########## MAIN BLOCK ##########
 initialize "$@"
 dbus_config
 run_tests
-run_lint
 echo "$0 completed successfully!"

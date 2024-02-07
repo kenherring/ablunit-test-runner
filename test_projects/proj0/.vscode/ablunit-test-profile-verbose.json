@@ -105,7 +105,7 @@
 		"profiler": {
 			"enabled": true,
 			"coverage": true,
-			"description": "Run via VSCode - ABLUnit Test Provider Extension",
+			"description": "Run via VSCode - ABLUnit Test Runner Extension",
 			"filename": "prof.out",
 			"listings": false,
 			"statistics": false,

@@ -1,23 +1,19 @@
 #!/bin/bash
 set -euo pipefail
 
+## Enable this hook with: git config
+## git config core.hooksPath .git-hooks/
+
 . scripts/common.sh
-
-validate_compile () {
-	echo "compiling..." >&2
-
-	npm run build
-}
 
 validate_circleci_config () {
 	echo "validating CircleCI config..." >&2
 
-	if ! git diff --name-only --staged | grep -q 'circleci/config.yml'; then
-		echo "circleci/config.yml is not staged for commit, skipping validation..." >&2
-		return 0
-	fi
+	# if ! git diff --name-only --staged | grep -q 'circleci/config.yml'; then
+	# 	echo "circleci/config.yml is not staged for commit, skipping validation..." >&2
+	# 	return 0
+	# fi
 
-	echo "validing CircleCI config..." >&2
 	if command -v circleci; then
 		circleci config validate
 	else
@@ -25,8 +21,14 @@ validate_circleci_config () {
 	fi
 }
 
+validate_compile () {
+	echo "compiling..." >&2
+
+	npm run build
+}
+
 ########## MAIN BLOCK ##########
-validate_compile
 validate_circleci_config
+validate_compile
 validate_version_updated
 echo "pre-commit checks successful!" >&2

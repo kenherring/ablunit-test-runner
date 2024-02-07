@@ -107,6 +107,8 @@ copy_files () {
 run_tests () {
 	echo "[$0 ${FUNCNAME[0]}] pwd=$(pwd)"
 
+	.circleci/package.sh
+
 	if [ "$TEST_PROJECT" = "base" ]; then
 		run_tests_base
 	elif [ "$TEST_PROJECT" = "dummy-ext" ]; then
@@ -176,7 +178,7 @@ run_tests_dummy_ext () {
 save_cache () {
 	echo "[$0 ${FUNCNAME[0]}] pwd=$(pwd)"
 
-	npm run clean
+	# npm run clean
 
 	if [ -d .vscode-test ]; then
 		echo "saving .vscode-test to cache"

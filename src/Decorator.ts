@@ -2,13 +2,7 @@ import { existsSync } from 'fs'
 import { CancellationToken, DecorationOptions, FileDecoration, FileDecorationProvider, ProviderResult, Range, TextDocument, TextEditor, TextEditorDecorationType, Uri, window, workspace } from 'vscode'
 import { ABLResults } from './ABLResults'
 import { log } from './ChannelLogger'
-import { FileCoverage } from './TestCoverage'
-
-interface IExecLines {
-	count?: number,
-	executed?: DecorationOptions[]
-	executable?: DecorationOptions[]
-}
+import { FileCoverageCustom, IExecLines } from './TestCoverage'
 
 export class Decorator {
 	// static instance
@@ -20,7 +14,7 @@ export class Decorator {
 	private readonly backgroundExecuted: TextEditorDecorationType
 	private readonly instanceCount: number
 	private decorateCount = 0
-	private recentCoverage: Map<string, FileCoverage> = new Map<string, FileCoverage>
+	private recentCoverage: Map<string, FileCoverageCustom> = new Map<string, FileCoverageCustom>
 	private recentDecorations: Map<string, IExecLines> = new Map<string, IExecLines>
 
 	private constructor () {
@@ -50,7 +44,7 @@ export class Decorator {
 	}
 
 	setRecentResults (results: ABLResults[] | undefined) {
-		this.recentCoverage = new Map<string, FileCoverage>
+		this.recentCoverage = new Map<string, FileCoverageCustom>
 		this.recentDecorations = new Map<string, IExecLines>
 		const recentResults = results
 		if (!recentResults) {
@@ -59,7 +53,7 @@ export class Decorator {
 
 		let covCount = 0
 		for (const r of recentResults) {
-			for (const [k, v] of r.testCoverage) {
+			for (const [k, v] of r.coverage) {
 				if (existsSync(k)) {
 					const uri = Uri.file(k)
 					// log.debug('recentCoverage.set ' + uri.fsPath + ', detailedCoverage.length=' + v.detailedCoverage.length)
@@ -144,10 +138,11 @@ export class Decorator {
 		// log.info('  - executableArray.length=' + executableArray.length)
 		// log.info('  - executedArray=' + JSON.stringify(executedArray,null,2))
 		// log.info('  - executableArray=' + JSON.stringify(executableArray,null,2))
-		this.setDecorations(editor, {executed: executedArray, executable: executableArray})
+		const lines = executedArray.concat(executableArray)
+		this.setDecorations(editor, {lines: lines, executed: executedArray, executable: executableArray})
 
 		// log.info('add recentDecorations ' + editor.document.uri.fsPath)
-		this.recentDecorations.set(editor.document.uri.fsPath, {executed: executedArray, executable: executableArray})
+		this.recentDecorations.set(editor.document.uri.fsPath, {lines: lines, executed: executedArray, executable: executableArray})
 		return true
 	}
 

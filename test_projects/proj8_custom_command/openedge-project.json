@@ -1,4 +1,5 @@
 {
+	"name": "proj8",
 	"oeversion": "12.2",
 	"buildPath": [ { "type": "source", "path": "." } ],
 	/* this is

@@ -4,14 +4,18 @@
 	"version": "2.0.0",
 	"tasks": [
 		{
-			"label": "npm watch",
-			"type": "npm",
-			"script": "watch",
-			"problemMatcher": "$tsc-watch",
-			"isBackground": true,
+			"label": "folderOpen",
+			"hide": true,
+			"type": "shell",
+			"dependsOn": [
+				"npm clean",
+				"npm watch",
+				"npm watch webpack"
+			],
+			"dependsOrder": "sequence",
 			"presentation": {
-				"reveal": "never",
-				"group": "build-task"
+				"reveal": "always",
+				"group": "build-task",
 			},
 			"group": {
 				"kind": "build",
@@ -22,6 +26,38 @@
 			}
 		},
 		{
+			"label": "npm clean",
+			"hide": true,
+			"type": "npm",
+			"script": "clean",
+			"isBackground": true,
+			"presentation": {
+				"reveal": "always",
+				"group": "build-task",
+				"close": true
+			},
+			"group": {
+				"kind": "build",
+				"isDefault": false
+			}
+		},
+		{
+			"label": "npm watch",
+			"hide": true,
+			"type": "npm",
+			"script": "watch",
+			"problemMatcher": "$tsc-watch",
+			"isBackground": true,
+			"presentation": {
+				"reveal": "always",
+				"group": "build-task"
+			},
+			"group": {
+				"kind": "build",
+				"isDefault": false
+			}
+		},
+		{
 			"label": "npm watch webpack",
 			"type": "npm",
 			"hide": true,
@@ -29,15 +65,12 @@
 			"problemMatcher": "$tsc-watch",
 			"isBackground": true,
 			"presentation": {
-				"reveal": "never",
+				"reveal": "always",
 				"group": "build-task"
 			},
 			"group": {
 				"kind": "build",
 				"isDefault": true
-			},
-			"runOptions": {
-				"runOn": "folderOpen"
 			}
 		},
 		{

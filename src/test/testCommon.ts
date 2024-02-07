@@ -89,24 +89,29 @@ export async function waitForExtensionActive (extensionId = 'kherring.ablunit-te
 }
 
 async function installOpenedgeABLExtension () {
-	if (!extensions.getExtension('riversidesoftware.openedge-abl-lsp')) {
-		log.debug('[testCommon.ts] installing riversidesoftware.openedge-abl-lsp extension...')
-		await commands.executeCommand('workbench.extensions.installExtension', 'riversidesoftware.openedge-abl-lsp').then(() => {
-			log.trace('[testCommon.ts] installed riversidesoftware.openedge-abl-lsp extension!')
-			return setRuntimes([{name: '12.2', path: getDefaultDLC(), default: true}])
-		}, (err: Error) => {
-			if (err.toString() === 'Error: Missing gallery') {
-				log.trace('[testCommon.ts] triggered installed extension, but caught \'' + err + '\'')
-			} else {
-				throw new Error('[testCommon.ts] failed to install extension: ' + err)
-			}
-		})
-		await sleep(500)
-	}
+	log.debug('skipping install - extension should be pre-installed')
+	// if (!extensions.getExtension('riversidesoftware.openedge-abl-lsp')) {
+	// 	log.debug('[testCommon.ts] installing riversidesoftware.openedge-abl-lsp extension...')
+	// 	await commands.executeCommand('workbench.extensions.installExtension', 'riversidesoftware.openedge-abl-lsp').then(() => {
+	// 		log.trace('[testCommon.ts] installed riversidesoftware.openedge-abl-lsp extension!')
+	// 		return setRuntimes([{name: '12.2', path: getDefaultDLC(), default: true}])
+	// 	}, (err: Error) => {
+	// 		if (err.toString() === 'Error: Missing gallery') {
+	// 			log.trace('[testCommon.ts] triggered installed extension, but caught \'' + err + '\'')
+	// 		} else {
+	// 			throw new Error('[testCommon.ts] failed to install extension: ' + err)
+	// 		}
+	// 	})
+	// 	await sleep(500)
+	// }
 
 	const ext = extensions.getExtension('riversidesoftware.openedge-abl-lsp')
 	if (!ext) {
 		throw new Error('[testCommon.ts] failed to get extension')
+	}
+	if (ext.isActive) {
+		log.debug('[testCommon.ts] extension is already active')
+		return
 	}
 	log.trace('[testCommon.ts] activating riversidesoftware.openedge-abl-lsp extension...')
 	await ext.activate().then(() => waitForExtensionActive('riversidesoftware.openedge-abl-lsp')).then(() => {
@@ -120,13 +125,45 @@ async function installOpenedgeABLExtension () {
 }
 
 export async function setRuntimes (runtimes: IRuntime[]) {
+	log.info('[testCommon.ts setRuntimes] setting abl.configuration.runtimes')
+	log.info('[testCommon.ts setRuntimes] runtimes=' + JSON.stringify(runtimes))
+	return workspace.getConfiguration('abl.configuration').update('runtimes', runtimes, ConfigurationTarget.Global).then(async () =>{
+		log.info('[testCommon.ts setRuntimes] abl.configuration.runtimes set successfully')
+		await sleep(500)
+		log.info('[testCommon.ts setRuntimes] rebuilding abl project...')
+		await  commands.executeCommand('abl.project.rebuild').then(() => {
+			log.info('[testCommon.ts setRuntimes] abl.project.rebuild command complete!')
+		})
+		const rt = workspace.getConfiguration('abl.configuration').get('runtimes')
+		log.info('runtimes=' + JSON.stringify(rt, null, 2))
+	}, (err) => {
+		throw new Error('[testCommon.ts setRuntimes] failed to set runtimes: ' + err)
+	})
+}
+
+export async function installAndSetRuntimes (runtimes: IRuntime[]) {
 	return installOpenedgeABLExtension().then(async () => {
-		log.info('[testCommon.ts] setting abl.configuration.runtimes')
+		log.info('[testCommon.ts setRuntimes] setting abl.configuration.runtimes')
 		return workspace.getConfiguration('abl.configuration').update('runtimes', runtimes, ConfigurationTarget.Global).then(async () =>{
-			log.info('[testCommon.ts] abl.configuration.runtimes set successfully')
-			return sleep(500)
+			log.info('[testCommon.ts setRuntimes] abl.configuration.runtimes set successfully')
+			await commands.executeCommand('abl.restart.langserv').then(() => {
+				log.info('abl.restart.langserv complete')
+			})
+			await sleep(500)
+			log.trace('[testCommon.ts setRuntimes] rebuilding abl project...')
+			await commands.executeCommand('abl.project.rebuild').then(() => {
+				log.trace('[testCommon.ts setRuntimes] abl.project.rebuild command complete!')
+			})
+
+			await sleep(500)
+			await commands.executeCommand('abl.dumpFileStatus').then(() => {
+				log.info('abl.dumpFileStatus complete!')
+			})
+			await commands.executeCommand('abl.dumpLangServStatus').then(() => {
+				log.info('abl.dumpLangServStatus complete!')
+			})
 		}, (err) => {
-			throw new Error('[testCommon.ts] failed to set runtimes: ' + err)
+			throw new Error('[testCommon.ts setRuntimes] failed to set runtimes: ' + err)
 		})
 	})
 }

@@ -1,4 +1,6 @@
-import { CancellationError, CancellationToken, Disposable, FileType, MarkdownString, Range, TestItem, TestItemCollection, TestMessage, TestRun, Uri, workspace, WorkspaceFolder } from 'vscode'
+import { FileType, MarkdownString, Range, TestItem, TestItemCollection, TestMessage, TestRun, Uri, workspace, WorkspaceFolder,
+	// CoveredCount, FileCoverage, StatementCoverage,
+	Disposable, CancellationToken, CancellationError } from 'vscode'
 import { ABLUnitConfig } from './ABLUnitConfigWriter'
 import { ABLResultsParser, ITestCaseFailure, ITestCase, ITestSuite } from './parse/ResultsParser'
 import { ABLTestSuite, ABLTestData } from './testTree'
@@ -8,7 +10,7 @@ import { ABLDebugLines } from './ABLDebugLines'
 import { ABLPromsgs, getPromsgText } from './ABLPromsgs'
 import { PropathParser } from './ABLPropath'
 import { log } from './ChannelLogger'
-import { FileCoverage, CoveredCount, StatementCoverage } from './TestCoverage'
+import { FileCoverageCustom, CoveredCountCustom, StatementCoverageCustom } from './TestCoverage'
 import { ablunitRun } from './ABLUnitRun'
 import { getDLC, IDlc } from './parse/OpenedgeProjectParser'
 import { Duration, isRelativePath } from './ABLUnitCommon'
@@ -52,9 +54,10 @@ export class ABLResults implements Disposable {
 	promsgs?: ABLPromsgs
 	profileJson?: ABLProfileJson
 	coverageJson: [] = []
-	coverage: FileCoverage[] = []
 	dlc: IDlc | undefined
-	public testCoverage: Map<string, FileCoverage> = new Map<string, FileCoverage>()
+
+	public coverage: Map<string, FileCoverageCustom> = new Map<string, FileCoverageCustom>()
+	// public coverage: Map<string, FileCoverageCustom | FileCoverage> = new Map<string, FileCoverageCustom>()
 	private readonly cancellation: CancellationToken | undefined
 
 	constructor (workspaceFolder: WorkspaceFolder, storageUri: Uri, globalStorageUri: Uri, extensionResourcesUri: Uri, cancellation?: CancellationToken) {
@@ -222,39 +225,40 @@ export class ABLResults implements Disposable {
 
 	async parseOutput (options: TestRun) {
 		this.setStatus('parsing results')
-		log.debug('parsing results from ' + this.cfg.ablunitConfig.optionsUri.filenameUri.fsPath, options)
+		log.debug('parsing results from ' + workspace.asRelativePath(this.cfg.ablunitConfig.optionsUri.filenameUri), options)
 
 		this.duration.stop()
 		const parseTime = new Duration()
 
 		this.ablResults = new ABLResultsParser(this.propath!, this.debugLines!)
 		await this.ablResults.parseResults(this.cfg.ablunitConfig.optionsUri.filenameUri, this.cfg.ablunitConfig.optionsUri.jsonUri).then(() => {
-			log.debug('parsing complete ' + parseTime.toString())
+			log.info('parsing results complete ' + parseTime.toString())
 			if(!this.ablResults!.resultsJson) {
 				log.error('No results found in ' + this.cfg.ablunitConfig.optionsUri.filenameUri.fsPath, options)
-				throw new Error('[ABLResults parseOutput] No results found in ' + this.cfg.ablunitConfig.optionsUri.filenameUri.fsPath + '\r\n')
+				throw new Error('No results found in ' + this.cfg.ablunitConfig.optionsUri.filenameUri.fsPath + '\r\n')
 			}
 			return true
 		}, (err) => {
-			this.setStatus('error parsing results data')
-			log.error('Error parsing ablunit results from ' + this.cfg.ablunitConfig.optionsUri.filenameUri.fsPath + '.  err=' + err, options)
-			throw new Error('[ABLResults parseOutput] Error parsing ablunit results from ' + this.cfg.ablunitConfig.optionsUri.filenameUri.fsPath + '\r\nerr=' + err)
+			this.setStatus('Error parsing results')
+			log.error('Error parsing results from ' + this.cfg.ablunitConfig.optionsUri.filenameUri.fsPath + '.  err=' + err, options)
+			throw new Error('Error parsing results from ' + this.cfg.ablunitConfig.optionsUri.filenameUri.fsPath + '\r\nerr=' + err)
 		})
 
 		if (this.cfg.ablunitConfig.profiler.enabled && this.cfg.ablunitConfig.profiler.coverage) {
 			this.setStatus('parsing profiler data')
 			log.debug('parsing profiler data from ' + workspace.asRelativePath(this.cfg.ablunitConfig.profFilenameUri.fsPath), options)
 			await this.parseProfile().then(() => {
+				log.info('parsing profiler data complete ' + parseTime.toString())
 				return true
 			}, (err) => {
-				this.setStatus('error parsing profiler data')
+				this.setStatus('Error parsing profiler data')
 				log.error('Error parsing profiler data from ' + this.cfg.ablunitConfig.profFilenameUri.fsPath + '.  err=' + err, options)
 				throw new Error('Error parsing profiler data from ' + workspace.asRelativePath(this.cfg.ablunitConfig.profFilenameUri) + '\r\nerr=' + err)
 			})
 		}
 
 		this.setStatus('parsing output complete ' + parseTime.toString())
-		log.debug('parsing output complete ' + parseTime.toString(), options)
+		log.info('parsing output complete ' + parseTime.toString())
 	}
 
 	async assignTestResults (item: TestItem, options: TestRun) {
@@ -503,7 +507,6 @@ export class ABLResults implements Disposable {
 			return
 		}
 		module.SourceUri = fileinfo.uri
-		let fc: FileCoverage | undefined
 
 		for (let idx=0; idx < module.lines.length; idx++) { // NOSONAR
 			const line = module.lines[idx]
@@ -517,21 +520,19 @@ export class ABLResults implements Disposable {
 			if (!dbg) {
 				return
 			}
-
-			if (fc?.uri.fsPath != dbg.sourceUri.fsPath) {
-				// get existing FileCoverage object
-				fc = this.testCoverage.get(dbg.sourceUri.fsPath)
-				if (!fc) {
-					// create a new FileCoverage object if one didn't already exist
-					fc = new FileCoverage(dbg.sourceUri, new CoveredCount(0, 0))
-					this.coverage.push(fc)
-					this.testCoverage.set(dbg.sourceUri.fsPath, fc)
-				}
+			let fc = this.coverage.get(dbg.sourceUri.fsPath)
+			if (!fc) {
+				// create a new FileCoverage object if one didn't already exist
+				fc = new FileCoverageCustom(dbg.sourceUri, new CoveredCountCustom(0, 0))
+				this.coverage.set(dbg.sourceUri.fsPath, fc)
 			}
 
 			// TODO: end of range should be the end of the line, not the beginning of the next line
 			const coverageRange = new Range(dbg.sourceLine - 1, 0, dbg.sourceLine, 0)
-			const coverageStatement = new StatementCoverage(line.ExecCount ?? 0, coverageRange)
+			const coverageStatement = new StatementCoverageCustom(line.ExecCount ?? 0, coverageRange)
+			if (!fc.detailedCoverage) {
+				fc.detailedCoverage = []
+			}
 			fc.detailedCoverage.push(coverageStatement)
 		}
 	}

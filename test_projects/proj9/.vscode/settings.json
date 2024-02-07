@@ -2,7 +2,7 @@
 	// "ablunit.params": "-pf test.pf",
 	// "ablunit.tempDir": "ablunit",
 	"ablunit.explorer.classlabel": "class-type-name",
-	"ablunit.discoverFilesOnActivate": true,
+	"ablunit.discoverAllTestsOnActivate": true,
 	"ablunit.files.exclude": [
 		".builder/**",
 		"src/dirA/dir1/testInDir2.p"

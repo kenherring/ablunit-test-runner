@@ -6,12 +6,12 @@ import { Duration } from '../../ABLUnitCommon'
 
 const projName = 'proj7B'
 
-before(async () => {
-	beforeCommon()
-	await beforeProj7()
-})
-
 suite(projName + ' - Extension Test Suite', () => {
+
+	before(projName + ' - before', async () => {
+		beforeCommon()
+		await beforeProj7()
+	})
 
 	test(projName + '.1 - cancel test refresh', async () => {
 		const maxCancelTime = 250

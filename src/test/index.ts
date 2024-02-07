@@ -1,97 +1,28 @@
-/* eslint-disable no-console */
-/* eslint-disable @typescript-eslint/no-unsafe-return */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-var-requires */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable no-console */
+import * as path from 'path'
 import { GlobSync } from 'glob'
 import { workspace } from 'vscode'
-import Mocha from 'mocha'
-import * as path from 'path'
-import * as fs from 'fs'
-import { ITestConfig } from './createTestConfig.js'
+import { getTestConfig } from './createTestConfig'
+import { setupMocha, setupNyc } from './runTestUtils'
+import { log } from 'console'
+import { vscodeVersion } from 'ABLUnitCommon'
 
-function setupNyc (projName: string) {
-	const NYC = require('nyc')
+const file = 'index.ts'
 
-	const currentWorkingDir = path.join(__dirname, '..', '..')
-	const reportDir = path.join(__dirname, '..', '..', 'coverage', 'coverage_' + projName)
-	const tempDir = path.join(__dirname, '..', '..', 'coverage', 'coverage_' + projName, '.nyc_output')
-	console.log(
-		'[setupNyc]',
-		', currentWorkingDir=' + currentWorkingDir,
-		', reportDir=' + reportDir,
-		', tempDir=' + tempDir)
-
-	const nyc = new NYC({
-		cache: false,
-		cwd: currentWorkingDir,
-		reportDir: reportDir,
-		tempDir: tempDir,
-		sourceMap: true,
-		extension: [
-			'.ts',
-			'.tsx',
-		],
-		reporter: [
-			'text',
-			'lcov'
-		],
-		// require: [
-		// 	// "ts-node/register",
-		// 	// "source-map-support/register"
-		// ],
-		esModules: true,
-		excludeNodeModules: true,
-		excludeAfterRemap: true,
-		exclude: [
-			'.vscode-test',
-			'dummy-ext',
-		],
-		hookRequire: true,
-
-		// not neeed
-		instrument: false
-	})
-
-	nyc.reset()
-	nyc.wrap()
-
-	// log.warn('Invalidating require cache...')
-	// Object.keys(require.cache).filter(f => nyc.exclude.shouldInstrument(f)).forEach(m => {
-	// 	console.debug('Invalidate require cache for ' + m)
-	// 	delete require.cache[m]
-	// 	require(m)
-	// })
-	return nyc
-}
-
-function setupMocha (projName: string, timeout: number) {
-	return new Mocha({
-		color: true,
-		ui: 'tdd',
-		timeout: timeout,
-		reporter: 'mocha-multi-reporters',
-		reporterOptions: {
-			reporterEnabled: 'spec, mocha-junit-reporter',
-			mochaJunitReporterReporterOptions: {
-				mochaFile: 'artifacts/mocha_results_' + projName + '.xml'
-			}
-		}
-	})
-}
-
-async function runTestsForProject (projName: string, timeout: number) {
-	console.log('[runTestsForProject] projName=' + projName)
-	const nyc = setupNyc(projName)
-	const mocha = setupMocha(projName, timeout)
+async function runTestsForProject (version: vscodeVersion, projName: string, timeout: string | number | undefined) {
+	console.log('[' + file + ' runTestsForProject] projName=' + projName)
+	const nyc = setupNyc(version, projName)
+	const mocha = setupMocha(version, projName, path.resolve(__dirname, '..', '..'), timeout)
 	const testsRoot = path.resolve(__dirname, '..')
 
-	console.log('[runTestsForProject] testsRoot=' + testsRoot)
+	console.log('[' + file + ' runTestsForProject] testsRoot=' + testsRoot)
 	const files = new GlobSync('**/' + projName + '.test.js', { cwd: testsRoot })
-	console.log('[runTestsForProject] pattern=**/' + projName + '.test.js, file.found.length=' + files.found.length)
+	console.log('[' + file + ' runTestsForProject] pattern=**/' + projName + '.test.js, file.found.length=' + files.found.length + ' ' + files.found[0])
 	for(const f of files.found) {
-		console.log('[runTestsForProject] mocha.addFile ' + path.resolve(testsRoot, f))
+		console.log('[' + file + ' runTestsForProject] mocha.addFile ' + path.resolve(testsRoot, f) + ' ' + testsRoot + ' ' + f)
 		mocha.addFile(path.resolve(testsRoot, f))
 	}
 
@@ -100,13 +31,13 @@ async function runTestsForProject (projName: string, timeout: number) {
 			// Run the mocha test
 			mocha.run((failures) => {
 				if (failures > 0) {
-					console.log('[runTestsForProject] ' + failures + ' tests failed.')
+					console.log('[' + file + ' runTestsForProject] ' + failures + ' tests failed.')
 					e(new Error(failures + ' tests failed.'))
 				}
 				c()
 			})
 		} catch (err) {
-			console.error('[runTestsForProject]  catch err= ' + err)
+			console.error('[' + file + ' runTestsForProject]  catch err= ' + err)
 			if (err instanceof Error) {
 				e(err)
 			}
@@ -116,51 +47,51 @@ async function runTestsForProject (projName: string, timeout: number) {
 
 	await prom
 
-	console.log('[runTestsForProject] outputting coverage...')
+	console.log('[' + file + ' runTestsForProject] outputting coverage...')
 	nyc.writeCoverageFile()
 	await nyc.report().then(() => {
-		console.log('[runTestsForProject] nyc.report() successful')
+		console.log('[' + file + ' runTestsForProject] nyc.report() successful')
 	}, (err: Error) => {
-		console.error('[runTestsForProject] nyc.report() err=' + err)
+		console.error('[' + file + ' runTestsForProject] nyc.report() err=' + err)
 		// e(err)
 	})
-	console.log('[runTestsForProject] coverage outputted successfully!')
-}
-
-function findConfigFile () {
-	// search up to 5 levels back for .vscode-test.config.json
-	let configFilename = './.vscode-test.config.json'
-	for (let i = 0; i < 5; i++) {
-		if (fs.existsSync(configFilename)) {
-			return configFilename
-		}
-		configFilename = '../' + configFilename
-	}
-	throw new Error('[findConfigFile] Could not find .vscode-test.config.json')
+	console.log('[' + file + ' runTestsForProject] coverage outputted successfully!')
 }
 
 export function run (): Promise <void> {
 
-	let proj: string
+	let projName: string
 	if (process.env['ABLUNIT_TEST_RUNNER_PROJECT_NAME']) {
-		proj = process.env['ABLUNIT_TEST_RUNNER_PROJECT_NAME']
+		projName = process.env['ABLUNIT_TEST_RUNNER_PROJECT_NAME']
+		console.log('[' + file + ' run] projName=' + projName + ' (from env)')
 	} else if (workspace.workspaceFile) {
-		proj = workspace.workspaceFile.fsPath
+		projName = workspace.workspaceFile.fsPath
+		console.log('[' + file + ' run] projName=' + projName + ' (from workspaceFile)')
 	} else if (workspace.workspaceFolders) {
-		proj = workspace.workspaceFolders[0].uri.fsPath
+		projName = workspace.workspaceFolders[0].uri.fsPath
+		console.log('[' + file + ' run] projName=' + projName + ' (from workspaceFolders)')
 	} else {
-		throw new Error('[run] No workspace file or folder found')
+		throw new Error('[' + file + ' run] No workspace file or folder found')
 	}
+	let version: vscodeVersion = 'stable'
+	log('[' + file + ' run] ABLUNIT_TEST_RUNNER_VSCODE_VERSION=' + process.env['ABLUNIT_TEST_RUNNER_VSCODE_VERSION'])
+	if (process.env['ABLUNIT_TEST_RUNNER_VSCODE_VERSION']) {
+		if (process.env['ABLUNIT_TEST_RUNNER_VSCODE_VERSION']) {
+			version = process.env['ABLUNIT_TEST_RUNNER_VSCODE_VERSION'] as vscodeVersion
+		} else if (process.env['ABLUNIT_TEST_RUNNER_VSCODE_VERSION'] !== 'stable') {
+			throw new Error('[' + file + ' run] ABLUNIT_TEST_RUNNER_VSCODE_VERSION=' + process.env['ABLUNIT_TEST_RUNNER_VSCODE_VERSION'] + ' (from env) is not supported')
+		}
+	}
+	console.log('[' + file + ' run] version=' + version + ' (from env)')
 
-	proj = proj.replace(/\\/g, '/').split('/').reverse()[0].replace('.code-workspace', '')
-	proj = proj.split('_')[0]
+	projName = projName.replace(/\\/g, '/').split('/').reverse()[0].replace('.code-workspace', '')
+	projName = projName.split('_')[0]
 
-	const configFilename = findConfigFile()
-	const testConfig: ITestConfig[] = JSON.parse(fs.readFileSync(configFilename, 'utf8'))
-	const config = testConfig.filter((config: ITestConfig) => { return config.projName === proj })[0]
+	const testConfig = getTestConfig(version)
+	const config = testConfig.filter((config) => { return config.projName === projName})[0]
 	if (!config) {
-		throw new Error('[run] Could not find config for project ' + proj)
+		throw new Error('[' + file + ' run] Could not find config for project ' + projName)
 	}
 	// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-	return runTestsForProject(proj, config.mocha.timeout)
+	return runTestsForProject(version, projName, config.mocha.timeout)
 }

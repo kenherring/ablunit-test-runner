@@ -1,4 +1,5 @@
 {
+	"name": "proj9",
 	"buildPath": [
 		{ "type": "source", "path": "src", "excludes": "emptyClass.cls"},
 		{ "type": "source", "path": "test" }
