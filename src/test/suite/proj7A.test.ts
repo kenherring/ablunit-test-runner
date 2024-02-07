@@ -6,11 +6,11 @@ import { beforeProj7, getTestCount, getWorkspaceUri, runAllTests } from '../test
 const projName = 'proj7A'
 const workspaceUri = getWorkspaceUri()
 
-before(async () => {
-	await beforeProj7()
-})
-
 suite(projName + ' - Extension Test Suite', () => {
+
+	before(projName + ' - before', async () => {
+		await beforeProj7()
+	})
 
 	test(projName + '.1 - test count', async () => {
 		await runAllTests()

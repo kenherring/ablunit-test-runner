@@ -3,6 +3,7 @@ import { GlobSync } from 'glob'
 import {
 	CancellationError,
 	CancellationToken, ConfigurationChangeEvent, ExtensionContext,
+	// FileCoverage,
 	FileType,
 	Position, Range, RelativePattern, Selection,
 	TestController, TestItem, TestItemCollection, TestMessage,
@@ -17,16 +18,10 @@ import {
 import { ABLResults } from 'ABLResults'
 import { log } from 'ChannelLogger'
 import { getContentFromFilesystem } from 'parse/TestParserCommon'
-import { ABLTestCase, ABLTestClass, ABLTestData, ABLTestDir, ABLTestFile, ABLTestProgram, ABLTestSuite, resultData, testData } from './testTree'
-// import { DecorationProvider, Decorator, decorator } from './Decorator'
-import { Decorator, decorator } from 'Decorator'
-import { FileCoverageCustom } from 'TestCoverage'
-
-class FileCoverage extends FileCoverageCustom {}
+import { ABLTestCase, ABLTestClass, ABLTestData, ABLTestDir, ABLTestFile, ABLTestProgram, ABLTestSuite, resultData, testData } from 'testTree'
 
 export interface IExtensionTestReferences {
 	testController: TestController
-	decorator: Decorator
 	recentResults: ABLResults[]
 	currentRunData: ABLResults[]
 }
@@ -34,8 +29,7 @@ export interface IExtensionTestReferences {
 let recentResults: ABLResults[] = []
 
 export async function activate (context: ExtensionContext) {
-	// eslint-disable-next-line no-console
-	console.log('activating extension! (version=' + getExtensionVersion() + ')')
+
 	const ctrl = tests.createTestController('ablunitTestController', 'ABLUnit Test')
 	let currentTestRun: TestRun | undefined = undefined
 
@@ -54,7 +48,6 @@ export async function activate (context: ExtensionContext) {
 		}
 		const ret = {
 			testController: ctrl,
-			decorator: decorator,
 			recentResults: recentResults,
 			currentRunData: data
 		} as IExtensionTestReferences
@@ -71,32 +64,16 @@ export async function activate (context: ExtensionContext) {
 	context.subscriptions.push(
 		commands.registerCommand('_ablunit.openCallStackItem', openCallStackItem),
 		workspace.onDidChangeConfiguration(e => { updateConfiguration(e) }),
-		// window.registerFileDecorationProvider(decorationProvider),
-
-		// TODO
-		// window.onDidChangeActiveTextEditor(e => {
-		// 	if (e && createOrUpdateFile(ctrl, e.document.uri)) {
-		// 		return decorator.decorate(e)
-		// 	}
-		// }),
-		// window.onDidChangeActiveTextEditor(e => {
-		// 	if (!e) { return }
-		// 	log.info("decorating editor - onDidChangeActiveTextEditor")
-		// 	decorator.decorate(e).catch((err) => {
-		// 		log.error('failed to decorate editor. err=' + err)
-		// 	})
-		// }),
 
 		workspace.onDidOpenTextDocument(async e => {
 			log.trace('onDidOpenTextDocument for ' + e.uri)
 			await updateNodeForDocument(e, 'didOpen').then(() => {
-				decorator.decorate(undefined, e)
+				log.trace('updateNodeForDocument complete for ' + e.uri)
 			}, (err) => {
 				log.error('failed updateNodeForDocument onDidTextDocument! err=' + err)
 			})
 		})
 		// workspace.onDidChangeTextDocument(e => { return updateNodeForDocument(e.document,'didChange') }),
-
 
 		// watcher.onDidCreate(uri => { createOrUpdateFile(controller, uri) })
 		// watcher.onDidChange(uri => { createOrUpdateFile(controller, uri) })
@@ -217,12 +194,14 @@ export async function activate (context: ExtensionContext) {
 					log.info('starting ablunit tests for folder: ' + r.workspaceFolder.uri.fsPath, run)
 				}
 
+				log.debug('r.run start')
 				ret = await r.run(run).then(() => {
 					return true
 				}, (err) => {
 					log.error('ablunit run failed parsing results with exception: ' + err, run)
 					return false
 				})
+				log.debug('r.run after ret=' + ret)
 				if (!ret) {
 					continue
 				}
@@ -252,6 +231,8 @@ export async function activate (context: ExtensionContext) {
 				}
 			}
 
+			log.debug('ret=' + ret)
+
 			if(!ret) {
 				for (const { test } of queue) {
 					run.errored(test, new TestMessage('ablunit run failed'))
@@ -272,36 +253,30 @@ export async function activate (context: ExtensionContext) {
 
 			const data = resultData.get(run) ?? []
 			recentResults = data
-			decorator.setRecentResults(recentResults)
 
-			if (window.activeTextEditor) {
-				log.info('decorating editor - activeTextEditor')
-				decorator.decorate(window.activeTextEditor)
-			}
+			// run.coverageProvider = {
+			// 	provideFileCoverage: () => {
+			// 		log.debug('---------- provideFileCoverage ----------')
+			// 		const results = resultData.get(run)
+			// 		if (!results) { return [] }
 
-			const coverageProvider = {
-				provideFileCoverage: () => {
-					log.info('---------- provideFileCoverage ----------')
-					const results = resultData.get(run)
-					if (!results) { return [] }
+			// 		const coverage: FileCoverage[] = []
+			// 		for (const r of results ?? []) {
+			// 			r.coverage.forEach((fc) => coverage.push(fc))
+			// 		}
+			// 		log.debug('coverage.length=' + coverage.length)
+			// 		return coverage
+			// 	},
+			// 	resolveFileCoverage: (coverage: FileCoverage, cancellation: CancellationToken) => {
+			// 		log.debug('---------- resolveFileCoverage ----------')
+			// 		log.warn('resolveFileCoverage not implemented')
 
-					const coverage: FileCoverage[] = []
-					for(const r of results) {
-						r.coverage.forEach((c) => { coverage.push(c) })
-					}
-					log.info('coverage.length=' + coverage.length)
-					return coverage
-				},
-				resolveFileCoverage: (coverage: FileCoverage, cancellation: CancellationToken) => {
-					log.info('---------- resolveFileCoverage ----------')
-					log.error('resolveFileCoverage not implemented')
-
-					cancellation.onCancellationRequested(() => {
-						log.info('cancellation requested!')
-					})
-					return coverage
-				}
-			}
+			// 		cancellation.onCancellationRequested(() => {
+			// 			log.info('cancellation requested!')
+			// 		})
+			// 		return coverage
+			// 	}
+			// }
 
 			void log.notification('ablunit tests complete')
 			run.end()
@@ -461,6 +436,10 @@ export async function activate (context: ExtensionContext) {
 	testProfileDebug.configureHandler = configHandler
 	testProfileCoverage.configureHandler = configHandler
 	// testProfileDebugCoverage.configureHandler = configHandler
+
+	if(workspace.getConfiguration('ablunit').get('discoverAllTestsOnActivate', false)) {
+		await commands.executeCommand('testing.refreshTests')
+	}
 }
 
 let contextStorageUri: Uri
@@ -958,7 +937,6 @@ function openCallStackItem (traceUriStr: string) {
 		editor.selections = [new Selection(lineToGoBegin, lineToGoEnd)]
 		const range = new Range(lineToGoBegin, lineToGoEnd)
 		log.info('decorating editor - openCallStackItem')
-		decorator.decorate(editor)
 		editor.revealRange(range)
 	})
 }
@@ -1015,10 +993,11 @@ async function createDir (uri: Uri) {
 }
 
 function logActivationEvent () {
+	const extensionVersion = getExtensionVersion()
 	if (!log) {
 		throw new Error('log is undefined')
 	}
-	log.info('activating extension! (version=' + getExtensionVersion() + ')')
+	log.info('activating extension! (version=' + extensionVersion + ')')
 }
 
 function getExtensionVersion () {

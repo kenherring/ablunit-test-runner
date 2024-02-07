@@ -11,11 +11,11 @@ import { getContentFromFilesystem, getLines } from '../../parse/TestParserCommon
 const projName = 'proj5'
 const workspaceUri = getWorkspaceUri()
 
-before(async () => {
-	await waitForExtensionActive()
-})
-
 suite(projName + ' - Extension Test Suite', () => {
+
+	before(projName + ' - before', async () => {
+		await waitForExtensionActive()
+	})
 
 	test(projName + '.1 - test count', async () => {
 		await runAllTests()

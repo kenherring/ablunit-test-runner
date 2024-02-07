@@ -3,9 +3,10 @@ set -euo pipefail
 
 usage () {
 	echo "
-usage: $0 [ -o (12.2.12 | 12.7.0 | all) ] [ -p <project_name> ] [-bBimPv]
+usage: $0 [ -o (12.2.12 | 12.7.0 | all) ] [ -V (stable | proposedapi | insiders)] [ -p <project_name> ] [-bBimPv]
 options:
   -o <version>  OE version (default: 12.2.12)
+  -V <version>  VSCode version (default: stable)
   -b            drop to bash shell inside container on failure
   -B            same as -b, but only on error
   -C            delete cache volume before running tests
@@ -27,9 +28,10 @@ initialize () {
 	TEST_PROJECT=base
 	STAGED_ONLY=true
 	local OE_VERSION=12.2.12
+	ABLUNIT_TEST_RUNNER_VSCODE_VERSION=stable
 	ABLUNIT_TEST_RUNNER_PROJECT_NAME=${ABLUNIT_TEST_RUNNER_PROJECT_NAME:-}
 
-	while getopts "bBCdimso:p:Pvh" OPT; do
+	while getopts "bBCdimso:p:PvV:h" OPT; do
 		case $OPT in
 			o)	OE_VERSION=$OPTARG ;;
 			b)	OPTS='-b' ;;
@@ -41,6 +43,7 @@ initialize () {
 			P)	CREATE_PACKAGE=true ;;
 			p)	ABLUNIT_TEST_RUNNER_PROJECT_NAME=$OPTARG ;;
 			v)	VERBOSE=true ;;
+			V)	ABLUNIT_TEST_RUNNER_VSCODE_VERSION=$OPTARG ;;
 			?)	usage && exit 1 ;;
 			*)	echo "Invalid option: -$OPT" >&2 && usage && exit 1 ;;
 		esac
@@ -57,7 +60,16 @@ initialize () {
 	ABLUNIT_TEST_RUNNER_PROJECT_NAME=${ABLUNIT_TEST_RUNNER_PROJECT_NAME//\\/\/}
 	ABLUNIT_TEST_RUNNER_PROJECT_NAME=${ABLUNIT_TEST_RUNNER_PROJECT_NAME//*\/}
 	ABLUNIT_TEST_RUNNER_PROJECT_NAME=${ABLUNIT_TEST_RUNNER_PROJECT_NAME//.test.ts}
-	export GIT_BRANCH PROGRESS_CFG_BASE64 STAGED_ONLY OE_VERSION TEST_PROJECT ABLUNIT_TEST_RUNNER_PROJECT_NAME CREATE_PACKAGE VERBOSE
+
+	if  [ "$ABLUNIT_TEST_RUNNER_VSCODE_VERSION" != 'stable' ] &&
+		[ "$ABLUNIT_TEST_RUNNER_VSCODE_VERSION" != 'proposedapi' ] &&
+		[ "$ABLUNIT_TEST_RUNNER_VSCODE_VERSION" != 'insiders' ]; then
+		echo "ERROR: Invalid VSCode version: $ABLUNIT_TEST_RUNNER_VSCODE_VERSION" >&2
+		usage && exit 1
+	fi
+
+	export GIT_BRANCH PROGRESS_CFG_BASE64 STAGED_ONLY OE_VERSION TEST_PROJECT CREATE_PACKAGE VERBOSE
+	export ABLUNIT_TEST_RUNNER_PROJECT_NAME ABLUNIT_TEST_RUNNER_VSCODE_VERSION
 
 	if $DELETE_CACHE_VOLUME; then
 		echo "deleting test-runner-cache volume"
@@ -102,6 +114,7 @@ run_tests_in_docker () {
 			-e TEST_PROJECT
 			-e CREATE_PACKAGE
 			-e VERBOSE
+			-e ABLUNIT_TEST_RUNNER_VSCODE_VERSION
 			-v "$PWD/docker/artifacts":/home/circleci/artifacts
 		)
 		[ -n "$ABLUNIT_TEST_RUNNER_PROJECT_NAME" ] && ARGS+=(-e ABLUNIT_TEST_RUNNER_PROJECT_NAME)

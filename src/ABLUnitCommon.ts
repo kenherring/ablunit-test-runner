@@ -4,6 +4,8 @@ import { Uri } from 'vscode'
 import JSON_minify from 'node-json-minify'
 import { getWorkspaceUri } from './test/testCommon'
 
+export type vscodeVersion = 'stable' | 'insiders' | 'proposedapi'
+
 export const readStrippedJsonFile = (uri: Uri | string): JSON => {
 	if (typeof uri === 'string') {
 		uri = Uri.file(uri)

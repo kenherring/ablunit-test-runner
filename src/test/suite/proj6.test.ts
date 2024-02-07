@@ -5,11 +5,11 @@ import { assert, getWorkspaceUri, runAllTests, waitForExtensionActive } from '..
 const projName = 'proj6'
 const workspaceUri = getWorkspaceUri()
 
-before(async () => {
-	await waitForExtensionActive()
-})
-
 suite(projName + ' - Extension Test Suite', () => {
+
+	before(projName + ' - before', async () => {
+		await waitForExtensionActive()
+	})
 
 	test(projName + '.1 - tempDir=.ablunit', async () => {
 		await runAllTests()

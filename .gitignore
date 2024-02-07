@@ -4,6 +4,7 @@
 artifacts/
 coverage/
 dist/
+docker/.rssw/
 node_modules
 out/
 target/

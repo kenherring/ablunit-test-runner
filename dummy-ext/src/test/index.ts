@@ -1,24 +1,31 @@
 import * as path from 'path'
 import Mocha from 'mocha'
 
-function setupMocha(projName: string, timeout: number) {
+type vscodeVersion = 'stable' | 'insiders' | 'proposedapi'
+
+function setupMocha(version: vscodeVersion, projName: string, basedir: string, timeout: number) {
+	const oeVersion = process.env['OE_VERSION'] || '0.0.0'
 	return new Mocha({
 		color: true,
 		ui: "tdd",
 		timeout: timeout,
 		reporter: 'mocha-multi-reporters',
 		reporterOptions: {
-			reporterEnabled: 'spec, mocha-junit-reporter',
+			reporterEnabled: 'spec, mocha-junit-reporter, mocha-reporter-sonarqube',
 			mochaJunitReporterReporterOptions: {
-				mochaFile: 'artifacts/mocha_results_' + projName + '.xml'
+				mochaFile: basedir + '/artifacts/' + version + '-' + oeVersion + '/mocha_results_junit_' + projName + '.xml'
+			},
+			mochaReporterSonarqubeReporterOptions: {
+				filename: basedir + '/artifacts/' + version + '-' + oeVersion + '/mocha_results_sonar_' + projName + '.xml',
+				useFullFilePath: 'true'
 			}
 		}
 	})
 }
 
 export function run(): Promise <void> {
-	const testsRoot = path.resolve(__dirname, "..")
-	const mocha = setupMocha('installAndRun', 10000)
+	const testsRoot = path.resolve(__dirname, '..')
+	const mocha = setupMocha('stable', 'installAndRun', path.resolve(__dirname, '..', '..'), 15000)
 	return new Promise<void>((c, e) => {
 		mocha.addFile(path.resolve(testsRoot, './test/installAndRun.test.js'))
 		try {

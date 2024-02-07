@@ -1,7 +1,7 @@
 {
 	"name": "ablunit-test-runner",
-	"displayName": "ABLUnit Test Runner",
-	"description": "OpenEdge ABLUnit test runner for VSCode",
+	"displayName": "ABLUnit Test Runner (insiders)",
+	"description": "OpenEdge ABLUnit test runner for VSCode, build to run with the proposed TestCoverage API from the insiders build of VSCode",
 	"version": "0.2.1",
 	"preview": true,
 	"engineStrict": true,
@@ -60,6 +60,9 @@
 		"pdsoe",
 		"progress"
 	],
+	"enabledApiProposals": [
+		"testCoverage"
+	],
 	"engines": {
 		"vscode": "^1.83.0"
 	},
@@ -73,7 +76,7 @@
 	"activationEvents": [
 		"onStartupFinished"
 	],
-	"main": "./dist/extension.js",
+	"main": "./dist/extension-insiders.js",
 	"files": [
 		"src",
 		"../src"

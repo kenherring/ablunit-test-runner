@@ -6,11 +6,11 @@ import { assert, getResults, getWorkspaceUri, log, refreshData, runAllTests, sle
 const projName = 'proj2'
 const workspaceUri = getWorkspaceUri()
 
-before(async () => {
-	await waitForExtensionActive()
-})
-
 suite(projName + ' - Extension Test Suite', () => {
+
+	before(projName + ' - before', async () => {
+		await waitForExtensionActive()
+	})
 
 	test(projName + '.1 - temp/ablunit.json file exists', async () => {
 		await runAllTests()
