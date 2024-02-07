@@ -1,32 +1,79 @@
 #!/bin/bash
 set -euo pipefail
 
-# shellcheck disable=SC3030
-DIRS=(listings .builder build ablunit-output workspaceAblunit)
-# shellcheck disable=SC3030
-PATTERNS=("ablunit.json" "ablunit.log" "progress.ini" "prof.out" "prof.json" "profile.json" "protrace.*" "results.json"
-			 "results.xml" "dbg_*" "*.r" "*.restore" "*.xref" "results.prof" "profiler.json" "profile.options")
+main_block () {
+	echo "[$0 main_block] starting script (pwd=$(pwd))"
+	initialize
+	delete_directories &
+	delete_files &
+	wait
+	echo "[$0 main_block] cleanup complete!"
+}
 
+initialize () {
+	echo "[$0 ${FUNCNAME[0]}] intiailizing..."
 
-echo "deleting directories..."
-rm -rf artifacts/ coverage/
-find . -type d -name "kherring.ablunit-test-runner" -exec rm -rf {} + &
-if [ "${OS:-}" = "Windows_NT" ]; then
-	rm -rf C:/temp/ablunit/ &
-else
-	rm -rf /tmp/ablunit/ &
-fi
-# shellcheck disable=SC3054
-for DIR in "${DIRS[@]}"; do
-	find test_projects -type d -name "$DIR" -exec rm -rv {} + &
-done
+	DIRS=(".builder" ".nyc_output" "artifacts" "coverage" "dist" "out" "kherring.ablunit-test-runner")
+	if [ "${OS:-}" = "Windows_NT" ]; then
+		DIRS+=("C:/temp/ablunit/")
+	else
+		DIRS+=("/tmp/ablunit/")
+	fi
 
+	TEST_PROJECT_DIRS=("listings" ".builder" "build" "ablunit-output" "workspaceAblunit" "target")
 
-echo "deleting file patterns..."
-# shellcheck disable=SC3054
-for PATTERN in "${PATTERNS[@]}"; do
-	find test_projects -type f -name "$PATTERN" -delete &
-done
+	TEST_PROJECT_PATTERNS=("ablunit.json" "ablunit.log" "progress.ini" "prof.out" "prof.json" "profile.json" "protrace.*" "results.json"
+				"results.xml" "dbg_*" "*.r" "*.restore" "*.xref" "results.prof" "profiler.json" "profile.options")
+	FILE_PATTERNS=("*.vsix")
+}
 
-wait
-echo "cleanup complete"
+delete_directories () {
+	echo "[$0 ${FUNCNAME[0]}] deleting directories..."
+	local DIR LOOP_COUNT=0 DIR_COUNT=0
+
+	for DIR in "${DIRS[@]}"; do
+		[ -d "$DIR" ] || continue
+		LOOP_COUNT=1
+		echo "delete DIR=$DIR (LOOP_COUNT=$LOOP_COUNT)"
+		DIR_COUNT=$((DIR_COUNT+LOOP_COUNT))
+		rm -rf "$DIR" &
+	done
+
+	for DIR in "${TEST_PROJECT_DIRS[@]}"; do
+		LOOP_COUNT=$(find test_projects -type d -name "$DIR" | wc -l)
+		[ "$LOOP_COUNT" = "0" ] && continue
+		echo "delete DIR=test_projects/$DIR (LOOP_COUNT=$LOOP_COUNT)"
+		DIR_COUNT=$((DIR_COUNT+LOOP_COUNT))
+		find test_projects -type d -name "$DIR" -exec rm -rv {} + &
+	done
+
+	echo "deleted $DIR_COUNT directories"
+	wait
+}
+
+delete_files () {
+	echo "[$0 ${FUNCNAME[0]}] deleting files..."
+	local PATTERN LOOP_COUNT=0 FILE_COUNT=0
+
+	for PATTERN in "${FILE_PATTERNS[@]}"; do
+		LOOP_COUNT=$(find . -type f -name "$PATTERN" | wc -l)
+		[ "$LOOP_COUNT" = "0" ] && continue
+		echo "delete PATTERN=$PATTERN (LOOP_COUNT=$LOOP_COUNT)"
+		FILE_COUNT=$((FILE_COUNT+LOOP_COUNT))
+		find . -type f -name "$PATTERN" -delete &
+	done
+
+	for PATTERN in "${TEST_PROJECT_PATTERNS[@]}"; do
+		LOOP_COUNT=$(find . -type f -name "$PATTERN" | wc -l)
+		[ "$LOOP_COUNT" = "0" ] && continue
+		echo "delete TEST_PROJECT_PATTERN=test_projects/$PATTERN (LOOP_COUNT=$LOOP_COUNT)"
+		FILE_COUNT=$((FILE_COUNT+LOOP_COUNT))
+		find test_projects -type f -name "$PATTERN" -delete &
+	done
+
+	echo "deleted $FILE_COUNT files"
+	wait
+}
+
+########## MAIN BLOCK ##########
+main_block

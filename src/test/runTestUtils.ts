@@ -5,20 +5,21 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 
+import { vscodeVersion } from 'ABLUnitCommon'
 import Mocha from 'mocha'
 import * as path from 'path'
 
-export function setupNyc (projName: string) {
+const file = 'runTest.ts'
+
+export function setupNyc (version: vscodeVersion, projName: string) {
 	const NYC = require('nyc')
 
 	const currentWorkingDir = path.join(__dirname, '..', '..')
-	const reportDir = path.join(__dirname, '..', '..', 'coverage', 'coverage_' + projName)
-	const tempDir = path.join(__dirname, '..', '..', 'coverage', 'coverage_' + projName, '.nyc_output')
-	console.log(
-		'[setupNyc]',
-		', currentWorkingDir=' + currentWorkingDir,
-		', reportDir=' + reportDir,
-		', tempDir=' + tempDir)
+	const oeVersion = process.env['OE_VERSION'] || '0.0.0'
+	// const tempDir = path.join(__dirname, '..', '..', 'coverage', '.nyc_output')
+	const tempDir = path.join(__dirname, '..', '..', 'coverage', '.nyc_output', version + '-' + oeVersion + '-' + projName)
+	const reportDir = path.join(__dirname, '..', '..', 'coverage', 'coverage_' + version + '-' + oeVersion + '-' + projName)
+	console.log('[' + file + ' setupNyc] currentWorkingDir=' + currentWorkingDir + ', reportDir=' + reportDir + ', tempDir=' + tempDir)
 
 	const nyc = new NYC({
 		cache: false,
@@ -56,23 +57,27 @@ export function setupNyc (projName: string) {
 
 	// log.warn('Invalidating require cache...')
 	// Object.keys(require.cache).filter(f => nyc.exclude.shouldInstrument(f)).forEach(m => {
-	// 	console.debug('Invalidate require cache for ' + m)
+	// 	console.debug('[' + file + '] Invalidate require cache for ' + m)
 	// 	delete require.cache[m]
 	// 	require(m)
 	// })
 	return nyc
 }
 
-export function setupMocha (projName: string, timeout: number) {
+export function setupMocha (version: vscodeVersion, projName: string, basedir: string, timeout: string | number | undefined) {
+	const oeVersion = process.env['OE_VERSION'] || '0.0.0'
 	return new Mocha({
 		color: true,
 		ui: 'tdd',
 		timeout: timeout,
 		reporter: 'mocha-multi-reporters',
 		reporterOptions: {
-			reporterEnabled: 'spec, mocha-junit-reporter',
+			reporterEnabled: 'spec, mocha-junit-reporter, mocha-reporter-sonarqube',
 			mochaJunitReporterReporterOptions: {
-				mochaFile: 'artifacts/mocha_results_' + projName + '.xml'
+				mochaFile: basedir + '/artifacts/' + version + '-' + oeVersion + '/mocha_results_junit_' + projName + '.xml'
+			},
+			mochaReporterSonarqubeReporterOptions: {
+				filename: basedir + '/artifacts/' + version + '-' + oeVersion + '/mocha_results_sonar_' + projName + '.xml'
 			}
 		}
 	})

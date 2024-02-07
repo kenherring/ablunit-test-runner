@@ -1,26 +1,22 @@
 import { strict as assert } from 'assert'
-import { after, before, beforeEach } from 'mocha'
+import { afterEach, before } from 'mocha'
 import { Uri, workspace } from 'vscode'
 import { doesDirExist, doesFileExist, log, runAllTests, updateConfig, waitForExtensionActive } from '../testCommon'
 
 
 const projName = 'workspace1'
 
-before(async () => {
-	await waitForExtensionActive()
-})
-
-beforeEach(async () => {
-	log.info('before')
-	await updateConfig('tempDir', undefined)
-})
-
-after(async () => {
-	log.info('after')
-	await updateConfig('tempDir', undefined)
-})
-
 suite(projName + ' - Extension Test Suite', () => {
+
+	before(projName + ' - before', async () => {
+		await waitForExtensionActive()
+		await updateConfig('tempDir', undefined)
+	})
+
+	afterEach(projName + ' - afterEach', async () => {
+		log.info('after')
+		await updateConfig('tempDir', undefined)
+	})
 
 	test(projName + '.1 - <workspaceFolder>/ablunit.json file exists', async () => {
 		await runAllTests()

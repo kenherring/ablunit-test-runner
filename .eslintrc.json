@@ -28,6 +28,8 @@
 	],
 	"ignorePatterns": [
 		"dummy-ext/",
+		"test_projects/",
+		"vscode.proposed.testCoverage.d.ts",
 		"webpack.config.js"
 	],
 	"rules": {

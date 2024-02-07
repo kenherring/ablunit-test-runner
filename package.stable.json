@@ -109,16 +109,6 @@
 		"node-json-minify": "^3.0.0",
 		"xml2js": "^0.6.2"
 	},
-	"bundledDependencies": [
-		"node-json-minify",
-		"xml2js"
-	],
-	"maintainers": [
-		{
-			"name": "Ken Herring",
-			"url": "https://github.com/kenherring"
-		}
-	],
 	"devDependencies": {
 		"@types/glob": "^8.1.0",
 		"@types/node": "^16.18.34",
