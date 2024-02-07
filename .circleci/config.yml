@@ -78,7 +78,7 @@ jobs:
       - run: .circleci/package.sh
       - persist_to_workspace: { root: ".", paths: [ . ] }
       - save-package-cache
-      - run: '[ "$(find . -type f -name "*.vsix" | wc -l)" = "2" ] || exit 1'
+      - run: '[ "$(find . -type f -name "*.vsix" | wc -l)" = "3" ] || exit 1'
       - run: ls -al
   test:
     <<: *oe-version-param
