@@ -1,5 +1,5 @@
 {
-	"name": "ablunit-test-runner-insiders",
+	"name": "ablunit-test-runner",
 	"displayName": "ABLUnit Test Runner (insiders)",
 	"description": "OpenEdge ABLUnit test runner for VSCode, build to run with the proposed TestCoverage API from the insiders build of VSCode",
 	"version": "0.2.1",

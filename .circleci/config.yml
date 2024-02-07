@@ -145,9 +145,7 @@ workflows:
       - sonar:
           <<: *context-and-filters
           requires:
-            - test-12.2.12-stable
-            - test-12.7.0-stable
-            - test-12.2.12-insiders
+            - test
       - install-and-run:
           <<: *context-and-filters
           requires: [ 'package' ]
