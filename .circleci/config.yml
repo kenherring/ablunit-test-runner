@@ -18,7 +18,7 @@ oe-version-param: &oe-version-param
     vscode-version:
       type: string
       default: stable
-      enum: [ stable, insiders ]
+      enum: [ stable, proposedapi, insiders ]
 context-and-filters: &context-and-filters
   context:
     - DockerHub
@@ -101,6 +101,7 @@ jobs:
       - save_cache:
           key: << pipeline.parameters.cache-version >>-cache-<< parameters.oe-version >>-{{ checksum "package.json" }}
           paths: [ cache ]
+      - run: find artifacts
   install-and-run:
     <<: *oe-version-param
     executor: psc-primary
@@ -114,6 +115,9 @@ jobs:
     executor: psc-primary
     steps:
       - attach_workspace: { at: . }
+      - run: find artifacts
+      - run: cat artifacts/stable-12.2.12/mocha_results_sonar_proj1.xml
+      - run: rm artifacts/stable-12.2.12/mocha_results_junit_*.xml
       - sonarcloud/scan:
           cache_version: 4
   publish:

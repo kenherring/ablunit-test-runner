@@ -8,13 +8,14 @@ import { workspace } from 'vscode'
 import { getTestConfig } from './createTestConfig'
 import { setupMocha, setupNyc } from './runTestUtils'
 import { log } from 'console'
+import { vscodeVersion } from 'ABLUnitCommon'
 
 const file = 'index.ts'
 
-async function runTestsForProject (version: 'stable' | 'insiders', projName: string, timeout: number) {
+async function runTestsForProject (version: vscodeVersion, projName: string, timeout: string | number | undefined) {
 	console.log('[' + file + ' runTestsForProject] projName=' + projName)
 	const nyc = setupNyc(version, projName)
-	const mocha = setupMocha(version, projName, timeout)
+	const mocha = setupMocha(version, projName, path.resolve(__dirname, '..', '..'), timeout)
 	const testsRoot = path.resolve(__dirname, '..')
 
 	console.log('[' + file + ' runTestsForProject] testsRoot=' + testsRoot)
@@ -72,11 +73,11 @@ export function run (): Promise <void> {
 	} else {
 		throw new Error('[' + file + ' run] No workspace file or folder found')
 	}
-	let version: 'stable' | 'insiders' = 'stable'
+	let version: vscodeVersion = 'stable'
 	log('[' + file + ' run] ABLUNIT_TEST_RUNNER_VSCODE_VERSION=' + process.env['ABLUNIT_TEST_RUNNER_VSCODE_VERSION'])
 	if (process.env['ABLUNIT_TEST_RUNNER_VSCODE_VERSION']) {
-		if (process.env['ABLUNIT_TEST_RUNNER_VSCODE_VERSION'] === 'insiders') {
-			version = process.env['ABLUNIT_TEST_RUNNER_VSCODE_VERSION']
+		if (process.env['ABLUNIT_TEST_RUNNER_VSCODE_VERSION']) {
+			version = process.env['ABLUNIT_TEST_RUNNER_VSCODE_VERSION'] as vscodeVersion
 		} else if (process.env['ABLUNIT_TEST_RUNNER_VSCODE_VERSION'] !== 'stable') {
 			throw new Error('[' + file + ' run] ABLUNIT_TEST_RUNNER_VSCODE_VERSION=' + process.env['ABLUNIT_TEST_RUNNER_VSCODE_VERSION'] + ' (from env) is not supported')
 		}
@@ -86,7 +87,7 @@ export function run (): Promise <void> {
 	projName = projName.replace(/\\/g, '/').split('/').reverse()[0].replace('.code-workspace', '')
 	projName = projName.split('_')[0]
 
-	const testConfig = getTestConfig()
+	const testConfig = getTestConfig(version)
 	const config = testConfig.filter((config) => { return config.projName === projName})[0]
 	if (!config) {
 		throw new Error('[' + file + ' run] Could not find config for project ' + projName)

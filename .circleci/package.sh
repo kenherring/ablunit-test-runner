@@ -29,8 +29,8 @@ initialize () {
 
 package () {
     echo "[$0 ${FUNCNAME[0]}]"
-    package_stable
     package_insiders
+    package_stable
 }
 
 package_stable () {
@@ -62,12 +62,44 @@ package_insiders () {
     PACKAGE_VERSION=$(node -p "require('./package.json').version")
     echo "PACKAGE_VERSION=$PACKAGE_VERSION"
 
-    cp package.insiders.json package.json
-    vsce package "${ARGS[@]}"
+    cp package.proposedapi.json package.json
+    vsce package "${ARGS[@]}" -o "ablunit-test-runner-proposedapi-${PACKAGE_VERSION}.vsix"
     cp package.stable.json package.json
+
+    cp package.insiders.json package.json
+    vsce package "${ARGS[@]}" -o "ablunit-test-runner-insiders-${PACKAGE_VERSION}.vsix"
+    cp package.stable.json package.json
+}
+
+run_lint () {
+	echo "[$0 ${FUNCNAME[0]}]"
+	# if [ -n "${ABLUNIT_TEST_RUNNER_PROJECT_NAME:-}" ]; then
+	# 	echo "[$0 ${FUNCNAME[0]}] skipping lint for single ABLUnit test runner project test"
+	# 	return 0
+	# fi
+
+	local ESLINT_FILE=artifacts/eslint_report
+    npm install
+	mkdir -p artifacts
+
+	if ! npm run lint -- -f unix -o "${ESLINT_FILE}.txt"; then
+		echo "eslint plain failed"
+	fi
+	if ! npm run lint -- -f json -o "${ESLINT_FILE}.json"; then
+		## sonarqube report
+		echo "eslint json failed"
+	fi
+	if [ "$(find artifacts -name "eslint_report.json" | wc -l)" != "0" ]; then
+		jq '.' < "${ESLINT_FILE}.json" > "${ESLINT_FILE}_pretty.json"
+	else
+		echo "ERROR: ${ESLINT_FILE}.json not found"
+		exit 1
+	fi
+	echo 'eslint successful'
 }
 
 ########## MAIN BLOCK ##########
 initialize
 package
+run_lint
 echo "[$0] completed successfully"

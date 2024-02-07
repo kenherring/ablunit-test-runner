@@ -4,11 +4,13 @@ set -euo pipefail
 initialize () {
 	echo "[$0 ${FUNCNAME[0]}] pwd=$(pwd)"
 	export PATH=$PATH:$DLC/ant/bin
+	NO_BUILD=false
 	WSL=false
 
-	while getopts 'S' OPT; do
+	while getopts 'hN' OPT; do
 		case "$OPT" in
-			?)	echo "script usage: $(basename "$0") [-S]" >&2
+			N)	NO_BUILD=true ;;
+			?)	echo "script usage: $(basename "$0") [-h] [-N]" >&2
 				exit 1 ;;
 		esac
 	done
@@ -65,6 +67,7 @@ create_dbs () {
 }
 
 doBuild () {
+	$NO_BUILD && return 0
 	echo "[$0 ${FUNCNAME[0]}] pwd=$(pwd)"
 	npm run build
 }

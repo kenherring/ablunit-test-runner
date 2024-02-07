@@ -3,15 +3,16 @@ import * as cp from 'child_process'
 import { downloadAndUnzipVSCode, resolveCliArgsFromVSCodeExecutablePath, runTests } from '@vscode/test-electron'
 import { ITestConfig, getTestConfig } from './createTestConfig'
 import { TestOptions } from '@vscode/test-electron/out/runTest'
+import { vscodeVersion } from 'ABLUnitCommon'
 
 const file = 'runTest.ts'
 
 async function main () {
 	console.log('[' + file + ' main] starting...')
 
-	let version: 'stable' | 'insiders' = 'stable'
+	let version: vscodeVersion = 'stable'
 	if (process.env['ABLUNIT_TEST_RUNNER_VSCODE_VERSION']) {
-		version = process.env['ABLUNIT_TEST_RUNNER_VSCODE_VERSION'] as 'stable' | 'insiders'
+		version = process.env['ABLUNIT_TEST_RUNNER_VSCODE_VERSION'] as vscodeVersion
 	}
 
 	console.log('[' + file + ' main] get config for version=' + version)
@@ -36,10 +37,11 @@ async function main () {
 	}
 }
 
-function installOpenEdgeExtension (vscodeExecutablePath: string, extensionId: string) {
+function installExtension (vscodeExecutablePath: string, extensionId: string) {
 	console.log('[' + file + ' installOpenEdgeExtension] installing OpenEdge extensions...')
 	const [cliPath, ...args] = resolveCliArgsFromVSCodeExecutablePath(vscodeExecutablePath)
 	// Use cp.spawn / cp.exec for custom setup
+	// see `code --help` for cli options that can be used here
 	cp.spawnSync(
 		cliPath,
 		[...args, '--install-extension', extensionId],
@@ -52,7 +54,14 @@ async function runTest (conf: ITestConfig) {
 	// const extensionTestsPath = path.resolve(__dirname)
 	const vscodeExecutablePath = await downloadAndUnzipVSCode(conf.version)
 
-	installOpenEdgeExtension(vscodeExecutablePath, 'riversidesoftware.openedge-abl-lsp')
+	installExtension(vscodeExecutablePath, 'riversidesoftware.openedge-abl-lsp')
+	/*
+	if (conf.version === 'stable' || conf.version === 'proposedapi') {
+		installExtension(vscodeExecutablePath, 'ablunit-test-runner-' + getExtensionVersion() + '.vsix')
+	} else if (conf.version === 'insiders') {
+		installExtension(vscodeExecutablePath, 'ablunit-test-runner-insiders-' + getExtensionVersion() + '.vsix')
+	}
+	*/
 
 	try {
 		console.log('[' + file + ' runTest] running tests with args=')
@@ -67,8 +76,6 @@ async function runTest (conf: ITestConfig) {
 
 		const config: TestOptions = {
 			vscodeExecutablePath,
-			// extensionDevelopmentPath,
-			// extensionTestsPath, // index.ts
 			extensionDevelopmentPath: conf.extensionDevelopmentPath,
 			extensionTestsPath: conf.extensionTestsPath, // index.ts
 			extensionTestsEnv: conf.env,

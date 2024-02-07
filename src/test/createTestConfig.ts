@@ -1,6 +1,8 @@
 import * as fs from 'fs'
 import { GlobSync } from 'glob'
+import { MochaOptions } from 'mocha'
 import path from 'path'
+import { vscodeVersion } from 'ABLUnitCommon'
 
 // /* ********** Notes **********
 // /* This file generates config for testing at runtime
@@ -19,11 +21,7 @@ export interface ITestConfig {
 	extensionDevelopmentPath: string
 	extensionTestsPath: string
 	version: 'stable' | 'insiders'
-	mocha: {
-		ui: string
-		retries?: number
-		timeout: number
-	}
+	mocha: MochaOptions
 	launchArgs: string[]
 	env: { [key: string]: string | undefined }
 }
@@ -35,7 +33,7 @@ function log (message: string) {
 	}
 }
 
-function getLaunchArgs (version: 'stable' | 'insiders', projName: string, projDir: string, devPath?: string, testsPath?: string) {
+function getLaunchArgs (version: vscodeVersion, projName: string, projDir: string, devPath?: string, testsPath?: string) {
 	const launchArgs: string[] = [projDir]
 	// launchArgs.push('--crash-reporter-directory=/Users/brian/Code/vscode/.build/crashes')
 	// launchArgs.push('--disable-extensions')
@@ -58,7 +56,7 @@ function getLaunchArgs (version: 'stable' | 'insiders', projName: string, projDi
 	if (testsPath) {
 		launchArgs.push('--extensionTestsPath=' + testsPath)
 	}
-	if (version === 'insiders') {
+	if (version === 'insiders' || version === 'proposedapi') {
 		launchArgs.push('--enable-proposed-api=kherring.ablunit-test-runner')
 	}
 	if (projName != 'DebugLines' &&
@@ -73,7 +71,7 @@ function getLaunchArgs (version: 'stable' | 'insiders', projName: string, projDi
 	return launchArgs
 }
 
-function getConfigForProject (version: 'stable' | 'insiders', projName: string, testFile: string) {
+function getConfigForProject (version: vscodeVersion, projName: string, testFile: string) {
 	let searchProj = projName
 	if (projName.startsWith('proj7')) {
 		searchProj = 'proj7'
@@ -104,7 +102,9 @@ function getConfigForProject (version: 'stable' | 'insiders', projName: string, 
 	}
 
 	const extensionDevelopmentPath: string = path.resolve(__dirname, '../../')
+	const basedir = extensionDevelopmentPath
 	const extensionTestsPath = path.resolve(__dirname)
+	const oeVersion = process.env['OE_VERSION'] || '0.0.0'
 
 	const retVal: ITestConfig = {
 		projName: projName,
@@ -117,11 +117,20 @@ function getConfigForProject (version: 'stable' | 'insiders', projName: string, 
 		mocha: {
 			ui: 'tdd',
 			retries: 1,
-			timeout: timeout
+			timeout: timeout,
+			reporterOptions: {
+				reporterEnabled: 'spec, mocha-junit-reporter, mocha-reporter-sonarqube',
+				mochaJunitReporterReporterOptions: {
+					mochaFile: basedir + '/artifacts/' + version + '-' + oeVersion + '/mocha_results_junit_' + projName + '.xml'
+				},
+				mochaReporterSonarqubeReporterOptions: {
+					filename: basedir + '/artifacts/' + version + '-' + oeVersion + '/mocha_results_sonar_' + projName + '.xml'
+				}
+			}
 		},
 		launchArgs: getLaunchArgs(version, projName, workspaceFolder),
 		// launchArgs: getLaunchArgs(version, projName, workspaceFolder, extensionDevelopmentPath, extensionTestsPath),
-		version: version,
+		version: 'stable',
 		env: {
 			ABLUNIT_TEST_RUNNER_UNIT_TESTING: 'true',
 			ABLUNIT_TEST_RUNNER_PROJECT_NAME: projName,
@@ -129,11 +138,14 @@ function getConfigForProject (version: 'stable' | 'insiders', projName: string, 
 			// VSCODE_SKIP_PRELAUNCH: 1
 		}
 	}
+	if (version === 'insiders') {
+		retVal.version = 'insiders'
+	}
 
 	return retVal
 }
 
-export function createConfigForVersion (version: 'stable' | 'insiders') {
+function createConfigForVersion (version: vscodeVersion) {
 	log('creating test config for version \'' + version + '\'...')
 	const testConfig: ITestConfig[] = []
 
@@ -160,10 +172,12 @@ export function createConfigForVersion (version: 'stable' | 'insiders') {
 
 		outputfile = './' + outputfile
 
-		outputfile = './artifacts/' + outputfile
-		if (!fs.existsSync('./artifacts')) {
-			fs.mkdirSync('./artifacts')
+		const oeVersion = process.env['OE_VERSION'] || '0.0.0'
+		const outputdir = './artifacts/' + version + '-' + oeVersion
+		if (!fs.existsSync(outputdir)) {
+			fs.mkdirSync(outputdir, { recursive: true })
 		}
+		outputfile = outputdir + '/' + outputfile
 
 		fs.writeFileSync(outputfile, JSON.stringify(testConfig, null, 4) + '\n')
 		log('created ' + outputfile + ' succesfully!')
@@ -171,12 +185,10 @@ export function createConfigForVersion (version: 'stable' | 'insiders') {
 	return testConfig
 }
 
-export const testConfigStable = createConfigForVersion('stable')
-export const testConfigInsiders = createConfigForVersion('insiders')
+// export const testConfigStable = createConfigForVersion('stable')
+// export const testConfigInsiders = createConfigForVersion('proposedapi')
+// export const testConfigInsiders = createConfigForVersion('insiders')
 
-export function getTestConfig (version: 'stable' | 'insiders' = 'stable') {
-	if (version === 'insiders') {
-		return testConfigInsiders
-	}
-	return testConfigStable
+export function getTestConfig (version: vscodeVersion) {
+	return createConfigForVersion(version)
 }

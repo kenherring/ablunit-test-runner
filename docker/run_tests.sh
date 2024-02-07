@@ -3,7 +3,7 @@ set -euo pipefail
 
 usage () {
 	echo "
-usage: $0 [ -o (12.2.12 | 12.7.0 | all) ] [ -V (stable | insiders)] [ -p <project_name> ] [-bBimPv]
+usage: $0 [ -o (12.2.12 | 12.7.0 | all) ] [ -V (stable | proposedapi | insiders)] [ -p <project_name> ] [-bBimPv]
 options:
   -o <version>  OE version (default: 12.2.12)
   -V <version>  VSCode version (default: stable)
@@ -61,7 +61,9 @@ initialize () {
 	ABLUNIT_TEST_RUNNER_PROJECT_NAME=${ABLUNIT_TEST_RUNNER_PROJECT_NAME//*\/}
 	ABLUNIT_TEST_RUNNER_PROJECT_NAME=${ABLUNIT_TEST_RUNNER_PROJECT_NAME//.test.ts}
 
-	if [ "$ABLUNIT_TEST_RUNNER_VSCODE_VERSION" != 'stable' ] && [ "$ABLUNIT_TEST_RUNNER_VSCODE_VERSION" != 'insiders' ]; then
+	if  [ "$ABLUNIT_TEST_RUNNER_VSCODE_VERSION" != 'stable' ] &&
+		[ "$ABLUNIT_TEST_RUNNER_VSCODE_VERSION" != 'proposedapi' ] &&
+		[ "$ABLUNIT_TEST_RUNNER_VSCODE_VERSION" != 'insiders' ]; then
 		echo "ERROR: Invalid VSCode version: $ABLUNIT_TEST_RUNNER_VSCODE_VERSION" >&2
 		usage && exit 1
 	fi
@@ -112,6 +114,7 @@ run_tests_in_docker () {
 			-e TEST_PROJECT
 			-e CREATE_PACKAGE
 			-e VERBOSE
+			-e ABLUNIT_TEST_RUNNER_VSCODE_VERSION
 			-v "$PWD/docker/artifacts":/home/circleci/artifacts
 		)
 		[ -n "$ABLUNIT_TEST_RUNNER_PROJECT_NAME" ] && ARGS+=(-e ABLUNIT_TEST_RUNNER_PROJECT_NAME)

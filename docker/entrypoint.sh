@@ -178,7 +178,7 @@ run_tests_dummy_ext () {
 save_cache () {
 	echo "[$0 ${FUNCNAME[0]}] pwd=$(pwd)"
 
-	npm run clean
+	# npm run clean
 
 	if [ -d .vscode-test ]; then
 		echo "saving .vscode-test to cache"
