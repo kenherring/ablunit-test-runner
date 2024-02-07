@@ -90,9 +90,9 @@ jobs:
     environment:
       ABLUNIT_TEST_RUNNER_VSCODE_VERSION: << parameters.vscode-version >>
     steps:
+      - attach_workspace: { at: . }
       - restore-test-cache:
           oe-version: << parameters.oe-version >>
-      - attach_workspace: { at: . }
       - run: ls -al
       - run: .circleci/run_test_wrapper.sh
       - store_test_results: { path: artifacts }

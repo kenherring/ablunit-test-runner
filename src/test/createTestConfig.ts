@@ -153,10 +153,18 @@ export function createConfigForVersion (version: 'stable' | 'insiders') {
 	}
 
 	if (outputDebugFiles) {
-		let outputfile = './.vscode-test.config.json'
+		let outputfile = '.vscode-test.config.json'
 		if (version === 'insiders') {
-			outputfile = './.vscode-test.config.insiders.json'
+			outputfile = '.vscode-test.config.insiders.json'
 		}
+
+		outputfile = './' + outputfile
+
+		outputfile = './artifacts/' + outputfile
+		if (!fs.existsSync('./artifacts')) {
+			fs.mkdirSync('./artifacts')
+		}
+
 		fs.writeFileSync(outputfile, JSON.stringify(testConfig, null, 4) + '\n')
 		log('created ' + outputfile + ' succesfully!')
 	}
