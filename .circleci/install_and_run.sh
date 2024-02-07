@@ -17,8 +17,8 @@ initialize() {
 
     VSIX_COUNT=$(find . -name 'ablunit-test-runner-*.vsix' | wc -l)
     echo "VSIX_COUNT=$VSIX_COUNT"
-    if [ "$VSIX_COUNT" != "1" ] && [ "$VSIX_COUNT" != 2 ]; then
-        echo "ERROR: expected 1 vsix file, found $VSIX_COUNT" >&2
+    if [ "$VSIX_COUNT" != "1" ] && [ "$VSIX_COUNT" != 2 ] && [ "$VSIX_COUNT" != 3 ]; then
+        echo "ERROR: expected three vsix files, found $VSIX_COUNT" >&2
         if [ "$VSIX_COUNT" = "0" ]; then
             echo "No vsix files found. file listing:" >&2
             ls -al >&2
