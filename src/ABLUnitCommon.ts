@@ -1,8 +1,7 @@
 import * as fs from 'fs'
-import { Uri } from 'vscode'
+import { Uri, workspace } from 'vscode'
 // @ts-expect-error 123
 import JSON_minify from 'node-json-minify'
-import { getWorkspaceUri } from './test/testCommon'
 
 export type vscodeVersion = 'stable' | 'insiders' | 'proposedapi'
 
@@ -37,6 +36,17 @@ export function doesFileExist (uri: Uri) {
 	}
 	return false
 }
+
+function getWorkspaceUri () {
+	if (workspace.workspaceFolders === undefined || workspace.workspaceFolders.length === 0) {
+		throw new Error('workspace.workspaceFolders is undefined')
+	} else if (workspace.workspaceFolders.length === 1) {
+		return workspace.workspaceFolders[0].uri
+	} else {
+		throw new Error('workspace.workspaceFolders has more than one entry')
+	}
+}
+
 
 export function deleteFile (file: Uri | Uri[] | string) {
 	if (typeof file === 'string') {

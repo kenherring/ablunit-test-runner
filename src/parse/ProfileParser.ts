@@ -1,8 +1,8 @@
 import { Uri, workspace } from 'vscode'
 import { getContentFromFilesystem } from './TestParserCommon'
-import { PropathParser } from '../ABLPropath'
-import { ABLDebugLines } from '../ABLDebugLines'
-import { log } from '../ChannelLogger'
+import { PropathParser } from 'ABLPropath'
+import { ABLDebugLines } from 'ABLDebugLines'
+import { log } from 'ChannelLogger'
 
 export class ABLProfile {
 	profJSON?: ABLProfileJson

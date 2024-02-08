@@ -8,7 +8,8 @@ const config = {
 	node: false,
 	entry: {
 		'extension': './src/extension.ts',
-		'extension-insiders': './src/extension-insiders.ts'
+		'extension-insiders': './src/extension-insiders.ts',
+		'test': './test/index.ts'
 	},
 	output: {
 		path: outputDir,

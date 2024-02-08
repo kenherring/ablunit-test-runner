@@ -1,15 +1,15 @@
 import * as fs from 'fs'
-import { ABLResults } from '../ABLResults'
+import { ABLResults } from 'ABLResults'
 import { ConfigurationTarget, TestController, WorkspaceFolder, commands, extensions, Uri, workspace, TestItemCollection } from 'vscode'
-import { Decorator } from '../Decorator'
-import { Duration, deleteFile, isRelativePath, readStrippedJsonFile } from '../ABLUnitCommon'
+import { Decorator } from 'Decorator'
+import { Duration, deleteFile, isRelativePath, readStrippedJsonFile } from 'ABLUnitCommon'
 import { GlobSync } from 'glob'
-import { IExtensionTestReferences } from '../extension'
-import { ITestSuites } from '../parse/ResultsParser'
-import { log as logObj } from '../ChannelLogger'
+import { IExtensionTestReferences } from 'extension'
+import { ITestSuites } from 'parse/ResultsParser'
+import { log as logObj } from 'ChannelLogger'
 import { strict as assertParent } from 'assert'
-import { DefaultRunProfile } from '../parse/config/RunProfile'
-import { IConfigurations } from '../parse/TestProfileParser'
+import { DefaultRunProfile } from 'parse/config/RunProfile'
+import { IConfigurations } from 'parse/TestProfileParser'
 
 interface IRuntime {
 	name: string,
@@ -193,16 +193,6 @@ export async function awaitRCode (workspaceFolder: WorkspaceFolder, rcodeCountMi
 		log.info('abl.dumpLangServStatus complete!')
 	})
 	throw new Error('r-code files not found')
-}
-
-export function getWorkspaceUri () {
-	if (workspace.workspaceFolders === undefined || workspace.workspaceFolders.length === 0) {
-		throw new Error('workspace.workspaceFolders is undefined')
-	} else if (workspace.workspaceFolders.length === 1) {
-		return workspace.workspaceFolders[0].uri
-	} else {
-		throw new Error('workspace.workspaceFolders has more than one entry')
-	}
 }
 
 export function toUri (uri: string | Uri) {

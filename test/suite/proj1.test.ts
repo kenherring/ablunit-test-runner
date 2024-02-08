@@ -1,6 +1,6 @@
 import { afterEach, before, beforeEach } from 'mocha'
 import { Selection, Uri, commands, window } from 'vscode'
-import { assert, deleteTestFiles, getTestCount, getWorkspaceUri, runAllTests, sleep, updateConfig, waitForExtensionActive } from '../testCommon'
+import { assert, deleteTestFiles, getTestCount, getWorkspaceUri, runAllTests, sleep, updateConfig, waitForExtensionActive } from 'testCommon'
 
 
 const projName = 'proj1'

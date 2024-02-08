@@ -1,7 +1,7 @@
 import { strict as assert } from 'assert'
 import { before } from 'mocha'
 import { Uri } from 'vscode'
-import { beforeProj7, getTestCount, getWorkspaceUri, runAllTests } from '../testCommon'
+import { beforeProj7, getTestCount, getWorkspaceUri, runAllTests } from 'testCommon'
 
 const projName = 'proj7A'
 const workspaceUri = getWorkspaceUri()

@@ -36,8 +36,7 @@ initialize () {
 	fi
 	DOCKER_TAGS=("12.2.12" "12.7.0")
 
-	mkdir -p docker/.rssw
-	cp ~/.rssw/oedoc.bin docker/.rssw/oedoc.bin
+	cp ~/.rssw/oedoc.bin docker/oedoc.bin
 }
 
 build_images () {

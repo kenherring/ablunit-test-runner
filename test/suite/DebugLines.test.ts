@@ -1,38 +1,13 @@
 import { strict as assert } from 'assert'
 import { before } from 'mocha'
 import { Uri, commands, workspace } from 'vscode'
-import { awaitRCode, getDefaultDLC, getWorkspaceUri, log, setRuntimes, sleep, waitForExtensionActive } from '../testCommon'
-import { getSourceMapFromRCode } from '../../parse/RCodeParser'
-import { PropathParser } from '../../ABLPropath'
+import { awaitRCode, getDefaultDLC, getWorkspaceUri, log, setRuntimes, sleep, waitForExtensionActive } from 'testCommon'
+import { getSourceMapFromRCode } from '../parse/RCodeParser'
+import { PropathParser } from '../ABLPropath'
 import { vscodeVersion } from 'ABLUnitCommon'
 
 const projName = 'DebugLines'
 const workspaceFolder = workspace.workspaceFolders![0]
-
-before(projName + ' - before', async () => {
-	try {
-		await waitForExtensionActive()
-		await setRuntimes([{name: '12.2', path: getDefaultDLC(), default: true}]).then(async () => {
-			await sleep(250)
-			return true
-		})
-		await sleep(1000)
-		log.info('abl.restart.langserv')
-		await commands.executeCommand('abl.restart.langserv').then(() => {
-			log.info('abl.restart.langserv complete')
-		})
-		await sleep(1000)
-		const prom = awaitRCode(workspaceFolder, 8)
-		await sleep(1000)
-		await prom.then((rcodeCount) => {
-			log.info('compile complete! rcode count = ' + rcodeCount)
-		})
-		log.info('b1 before complete!')
-	} catch (err) {
-		log.error('before error: ' + err)
-		throw err
-	}
-})
 
 const allTests = (version: vscodeVersion = 'stable') => {
 	return suite(projName + ' - ' + version + ' Extension Test Suite', () => {

@@ -4,7 +4,9 @@
 artifacts/
 coverage/
 dist/
+dist-test/
 docker/.rssw/
+docker/oedoc.bin
 node_modules
 out/
 target/

@@ -3,11 +3,11 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { Uri, workspace } from 'vscode'
 import { parseCallstack, ICallStack } from './CallStackParser'
-import { PropathParser } from '../ABLPropath'
+import { PropathParser } from 'ABLPropath'
 import { parseString } from 'xml2js'
-import { ABLDebugLines } from '../ABLDebugLines'
-import { log } from '../ChannelLogger'
-import { isRelativePath } from '../ABLUnitCommon'
+import { ABLDebugLines } from 'ABLDebugLines'
+import { log } from 'ChannelLogger'
+import { isRelativePath } from 'ABLUnitCommon'
 
 
 export interface ITestCaseFailure {

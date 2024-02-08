@@ -1,8 +1,8 @@
 import { strict as assert } from 'assert'
 import { afterEach, before, beforeEach } from 'mocha'
 import { Uri } from 'vscode'
-import { deleteFile, doesFileExist, getDefaultDLC, getSessionTempDir, getWorkspaceUri, runAllTests, setRuntimes, updateTestProfile, waitForExtensionActive } from '../testCommon'
-import { doesDirExist } from '../../ABLUnitCommon'
+import { deleteFile, doesFileExist, getDefaultDLC, getSessionTempDir, getWorkspaceUri, runAllTests, setRuntimes, updateTestProfile, waitForExtensionActive } from 'testCommon'
+import { doesDirExist } from '../ABLUnitCommon'
 
 const projName = 'proj4'
 const sessionTempDir = getSessionTempDir()

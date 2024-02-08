@@ -1,6 +1,6 @@
 import { before } from 'mocha'
 import { Uri } from 'vscode'
-import { assert, getDefaultDLC, getWorkspaceUri, runAllTests, setRuntimes, waitForExtensionActive } from '../testCommon'
+import { assert, getDefaultDLC, getWorkspaceUri, runAllTests, setRuntimes, waitForExtensionActive } from 'testCommon'
 
 const projName = 'proj3'
 const workspaceUri = getWorkspaceUri()

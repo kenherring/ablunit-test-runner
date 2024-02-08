@@ -1,11 +1,11 @@
 import { strict as assert } from 'assert'
 import { before } from 'mocha'
 import { Uri } from 'vscode'
-import { parseSuiteLines } from '../../parse/TestSuiteParser'
-import { parseTestClass } from '../../parse/TestClassParser'
-import { parseTestProgram } from '../../parse/TestProgramParser'
-import { getTestCount, getWorkspaceUri, log, runAllTests, waitForExtensionActive } from '../testCommon'
-import { getContentFromFilesystem, getLines } from '../../parse/TestParserCommon'
+import { parseSuiteLines } from '../parse/TestSuiteParser'
+import { parseTestClass } from '../parse/TestClassParser'
+import { parseTestProgram } from '../parse/TestProgramParser'
+import { getTestCount, getWorkspaceUri, log, runAllTests, waitForExtensionActive } from 'testCommon'
+import { getContentFromFilesystem, getLines } from '../parse/TestParserCommon'
 
 
 const projName = 'proj5'

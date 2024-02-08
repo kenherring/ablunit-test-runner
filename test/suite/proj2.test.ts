@@ -1,6 +1,6 @@
 import { before } from 'mocha'
 import { Uri, commands } from 'vscode'
-import { assert, getResults, getWorkspaceUri, log, refreshData, runAllTests, sleep, waitForExtensionActive } from '../testCommon'
+import { assert, getResults, getWorkspaceUri, log, refreshData, runAllTests, sleep, waitForExtensionActive } from 'testCommon'
 
 
 const projName = 'proj2'

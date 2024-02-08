@@ -1,8 +1,8 @@
 import { afterEach, before } from 'mocha'
 import { Uri, commands, window, workspace, Range } from 'vscode'
 // import { Uri, commands, window, workspace, DetailedCoverage, Range } from 'vscode'
-import { assert, deleteFile, getResults, log, runAllTests, sleep, toUri, updateTestProfile, waitForExtensionActive } from '../testCommon'
-import { DetailedCoverageCustom } from '../../TestCoverage'
+import { assert, deleteFile, getResults, log, runAllTests, sleep, toUri, updateTestProfile, waitForExtensionActive } from 'testCommon'
+import { DetailedCoverageCustom } from 'TestCoverage'
 
 const projName = 'proj0'
 
@@ -14,7 +14,7 @@ function getDetailLine (coverage: DetailedCoverageCustom[], lineNum: number) {
 	})
 }
 
-suite(projName + ' - Extension Test Suite', () => {
+export const testSuite = suite(projName + ' - Extension Test Suite', () => {
 
 	before(projName + ' - before', async () => {
 		await waitForExtensionActive().then(() => { return sleep(250) })

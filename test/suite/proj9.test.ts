@@ -1,6 +1,6 @@
 import { after, afterEach, before, beforeEach } from 'mocha'
 import { Uri, workspace } from 'vscode'
-import { assert, deleteFile, getTestCount, getWorkspaceUri, runAllTests, selectProfile, updateTestProfile, waitForExtensionActive } from '../testCommon'
+import { assert, deleteFile, getTestCount, getWorkspaceUri, runAllTests, selectProfile, updateTestProfile, waitForExtensionActive } from 'testCommon'
 
 // const projName = __dirname.split(/[\\/]/).pop()!
 const projName = 'proj9'

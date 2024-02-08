@@ -1,6 +1,6 @@
 import { Uri, workspace, WorkspaceFolder } from 'vscode'
-import { readStrippedJsonFile } from '../ABLUnitCommon'
-import { log } from '../ChannelLogger'
+import { readStrippedJsonFile } from 'ABLUnitCommon'
+import { log } from 'ChannelLogger'
 import * as path from 'path'
 import * as fs from 'fs'
 

@@ -1,7 +1,7 @@
 import { strict as assert } from 'assert'
 import { afterEach, before } from 'mocha'
 import { Uri, workspace } from 'vscode'
-import { doesDirExist, doesFileExist, log, runAllTests, updateConfig, waitForExtensionActive } from '../testCommon'
+import { doesDirExist, doesFileExist, log, runAllTests, updateConfig, waitForExtensionActive } from 'testCommon'
 
 
 const projName = 'workspace1'

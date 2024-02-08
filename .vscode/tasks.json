@@ -10,7 +10,6 @@
 			"dependsOn": [
 				"npm clean",
 				"npm watch",
-				"npm watch webpack"
 			],
 			"dependsOrder": "sequence",
 			"presentation": {
@@ -43,25 +42,9 @@
 		},
 		{
 			"label": "npm watch",
-			"hide": true,
 			"type": "npm",
+			"hide": true,
 			"script": "watch",
-			"problemMatcher": "$tsc-watch",
-			"isBackground": true,
-			"presentation": {
-				"reveal": "always",
-				"group": "build-task"
-			},
-			"group": {
-				"kind": "build",
-				"isDefault": false
-			}
-		},
-		{
-			"label": "npm watch webpack",
-			"type": "npm",
-			"hide": true,
-			"script": "watch-webpack",
 			"problemMatcher": "$tsc-watch",
 			"isBackground": true,
 			"presentation": {
