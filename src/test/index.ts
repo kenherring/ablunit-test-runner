@@ -3,7 +3,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable no-console */
 import * as path from 'path'
-import { GlobSync } from 'glob'
+import { globSync } from 'glob'
 import { workspace } from 'vscode'
 import { getTestConfig } from './createTestConfig'
 import { setupMocha, setupNyc } from './runTestUtils'
@@ -19,9 +19,9 @@ async function runTestsForProject (version: vscodeVersion, projName: string, tim
 	const testsRoot = path.resolve(__dirname, '..')
 
 	console.log('[' + file + ' runTestsForProject] testsRoot=' + testsRoot)
-	const files = new GlobSync('**/' + projName + '.test.js', { cwd: testsRoot })
-	console.log('[' + file + ' runTestsForProject] pattern=**/' + projName + '.test.js, file.found.length=' + files.found.length + ' ' + files.found[0])
-	for(const f of files.found) {
+	const files = globSync('**/' + projName + '.test.js', { cwd: testsRoot })
+	console.log('[' + file + ' runTestsForProject] pattern=**/' + projName + '.test.js, file.found.length=' + files.length + ' ' + files[0])
+	for(const f of files) {
 		console.log('[' + file + ' runTestsForProject] mocha.addFile ' + path.resolve(testsRoot, f) + ' ' + testsRoot + ' ' + f)
 		mocha.addFile(path.resolve(testsRoot, f))
 	}

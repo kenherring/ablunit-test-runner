@@ -1,5 +1,5 @@
 import { readFileSync } from 'fs'
-import { GlobSync } from 'glob'
+import { globSync } from 'glob'
 import {
 	CancellationError,
 	CancellationToken, ConfigurationChangeEvent, ExtensionContext,
@@ -970,8 +970,8 @@ function isFileExcluded (uri: Uri, excludePatterns: RelativePattern[]) {
 	if (!workspaceFolder) {
 		return true
 	}
-	const g = new GlobSync(relativePath, { cwd: workspaceFolder.uri.fsPath, ignore: patterns })
-	return g.found.length == 0
+	const g = globSync(relativePath, { cwd: workspaceFolder.uri.fsPath, ignore: patterns })
+	return g.length == 0
 }
 
 

@@ -8,6 +8,7 @@
 		"strict": true,
 		"alwaysStrict": true,
 		"rootDir": "src",
+		"listEmittedFiles": true
 	},
 	"include": [
 		"src/**/*.ts"

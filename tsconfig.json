@@ -46,13 +46,16 @@
 		"./src/*/*.ts",
 		"./src/*/*/*.ts"
 	],
-	"exclude": [
-		"dist",
-		"dummy-ext",
-		"node_modules",
-		"out",
-		"test_projects",
-	],
+	// "exclude": [
+	// 	"dist",
+	// 	"dummy-ext",
+	// 	"node_modules",
+	// 	"node_modules/**",
+	// 	"**/node_modules/**",
+	// 	"**/node_modules",
+	// 	"out",
+	// 	"test_projects",
+	// ],
 	"watchOptions": {
 		"excludeDirectories": [
 			"dist",

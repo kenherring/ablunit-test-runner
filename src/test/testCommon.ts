@@ -3,7 +3,7 @@ import { ABLResults } from '../ABLResults'
 import { ConfigurationTarget, TestController, WorkspaceFolder, commands, extensions, Uri, workspace, TestItemCollection } from 'vscode'
 import { Decorator } from '../Decorator'
 import { Duration, deleteFile, isRelativePath, readStrippedJsonFile } from '../ABLUnitCommon'
-import { GlobSync } from 'glob'
+import { globSync } from 'glob'
 import { IExtensionTestReferences } from '../extension'
 import { ITestSuites } from '../parse/ResultsParser'
 import { log as logObj } from '../ChannelLogger'
@@ -175,15 +175,15 @@ export async function awaitRCode (workspaceFolder: WorkspaceFolder, rcodeCountMi
 	for (let i = 0; i < buildWaitTime; i++) {
 		await new Promise((resolve) => setTimeout(resolve, 1000))
 
-		const g = new GlobSync('**/*.r', { cwd: workspaceFolder.uri.fsPath })
-		fileCount = g.found.length
+		const g = globSync('**/*.r', { cwd: workspaceFolder.uri.fsPath })
+		fileCount = g.length
 		log.info('(' + i + '/' + buildWaitTime + ') found ' + fileCount + ' r-code files...')
 		if (fileCount >= rcodeCountMinimum) {
 			log.info('found ' + fileCount + ' r-code files! ready to test')
 			return fileCount
 		}
 		log.info('found ' + fileCount + ' r-code files. waiting...')
-		log.info('found files: ' + JSON.stringify(g.found, null, 2))
+		log.info('found files: ' + JSON.stringify(g, null, 2))
 	}
 
 	await commands.executeCommand('abl.dumpFileStatus').then(() => {

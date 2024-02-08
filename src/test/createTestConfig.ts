@@ -1,5 +1,5 @@
 import * as fs from 'fs'
-import { GlobSync } from 'glob'
+import { globSync } from 'glob'
 import { MochaOptions } from 'mocha'
 import path from 'path'
 import { vscodeVersion } from 'ABLUnitCommon'
@@ -78,15 +78,15 @@ function getConfigForProject (version: vscodeVersion, projName: string, testFile
 	}
 
 	log('path = ' + path.resolve(__dirname, '../../test_projects'))
-	const g = new GlobSync(searchProj + '*', { cwd: path.resolve(__dirname, '../../test_projects') })
+	const g = globSync(searchProj + '*', { cwd: path.resolve(__dirname, '../../test_projects') })
 	let workspaceFolder = projName
-	if (g.found.length === 1) {
-		workspaceFolder = path.resolve(__dirname, '../../test_projects/', g.found[0])
+	if (g.length === 1) {
+		workspaceFolder = path.resolve(__dirname, '../../test_projects/', g[0])
 		log('workspaceFolder = ' + workspaceFolder)
-	} else if (g.found.length === 0) {
+	} else if (g.length === 0) {
 		log('skipping config create for ' + projName + ', no workspaceFolder found (path=' + workspaceFolder + ')')
 		return
-	} else if (g.found.length > 1) {
+	} else if (g.length > 1) {
 		log('skipping config create for ' + projName + ', multiple workspaceFolders found (path=' + workspaceFolder + ')')
 		return
 	}
@@ -149,11 +149,11 @@ function createConfigForVersion (version: vscodeVersion) {
 	log('creating test config for version \'' + version + '\'...')
 	const testConfig: ITestConfig[] = []
 
-	const g = new GlobSync('**/*.test.js', { cwd: path.resolve(__dirname, '../../') })
-	if (g.found.length === 0) {
+	const g = globSync('**/*.test.js', { cwd: path.resolve(__dirname, '../../') })
+	if (g.length === 0) {
 		throw new Error('No test files found')
 	}
-	for (const f of g.found) {
+	for (const f of g) {
 		const projName = f.replace('.test.js', '').split('/').reverse()[0]
 		// if (projName === 'DebugLines') {
 		// 	continue
@@ -172,7 +172,7 @@ function createConfigForVersion (version: vscodeVersion) {
 
 		outputfile = './' + outputfile
 
-		const oeVersion = process.env['OE_VERSION'] || '0.0.0'
+		const oeVersion = process.env['OE_VERSION'] ?? '0.0.0'
 		const outputdir = './artifacts/' + version + '-' + oeVersion
 		if (!fs.existsSync(outputdir)) {
 			fs.mkdirSync(outputdir, { recursive: true })
