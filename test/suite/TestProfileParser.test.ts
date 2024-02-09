@@ -1,7 +1,7 @@
 
 import { strict as assert } from 'assert'
 import { WorkspaceFolder, workspace } from 'vscode'
-import { parseRunProfiles } from '../../parse/TestProfileParser'
+import { parseRunProfiles } from 'parse/TestProfileParser'
 import { log } from '../testCommon'
 
 // ----------TODO---------- //

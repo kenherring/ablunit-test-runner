@@ -23,6 +23,12 @@
 		"sourceType": "module",
 		"project": "./tsconfig.json"
 	},
+	"settings": {
+		"include": [
+			"./src/**",
+			"./test/**"
+		]
+	},
 	"plugins": [
 		"@typescript-eslint"
 	],
@@ -30,7 +36,8 @@
 		"dummy-ext/",
 		"test_projects/",
 		"vscode.proposed.testCoverage.d.ts",
-		"webpack.config.js"
+		"webpack.config.js",
+		"webpack.config.test.js"
 	],
 	"rules": {
 		"@typescript-eslint/adjacent-overload-signatures": "error",

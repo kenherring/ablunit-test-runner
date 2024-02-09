@@ -6,22 +6,22 @@
 		{
 			"label": "folderOpen",
 			"hide": true,
-			"type": "shell",
 			"dependsOn": [
 				"npm clean",
-				"npm watch",
+				"npm watch"
 			],
 			"dependsOrder": "sequence",
 			"presentation": {
 				"reveal": "always",
-				"group": "build-task",
+				"group": "build-task"
 			},
 			"group": {
 				"kind": "build",
 				"isDefault": false
 			},
 			"runOptions": {
-				"runOn": "folderOpen"
+				// "runOn": "folderOpen"
+				"runOn": "default"
 			}
 		},
 		{
@@ -31,30 +31,27 @@
 			"script": "clean",
 			"isBackground": true,
 			"presentation": {
-				"reveal": "always",
+				"reveal": "never",
 				"group": "build-task",
 				"close": true
-			},
-			"group": {
-				"kind": "build",
-				"isDefault": false
 			}
 		},
 		{
 			"label": "npm watch",
-			"type": "npm",
 			"hide": true,
+			"type": "npm",
 			"script": "watch",
 			"problemMatcher": "$tsc-watch",
 			"isBackground": true,
 			"presentation": {
-				"reveal": "always",
+				"reveal": "never",
 				"group": "build-task"
 			},
-			"group": {
-				"kind": "build",
-				"isDefault": true
-			}
+			"group": "build",
+			"runOptions": {
+				"runOn": "folderOpen"
+			},
+			"detail": "webpack --mode development --watch"
 		},
 		{
 			"label": "run all tests in docker",

@@ -2,8 +2,8 @@ import { strict as assert } from 'assert'
 import { before } from 'mocha'
 import { Uri, commands, workspace } from 'vscode'
 import { awaitRCode, getDefaultDLC, getWorkspaceUri, log, setRuntimes, sleep, waitForExtensionActive } from '../testCommon'
-import { getSourceMapFromRCode } from '../../parse/RCodeParser'
-import { PropathParser } from '../../ABLPropath'
+import { getSourceMapFromRCode } from 'parse/RCodeParser'
+import { PropathParser } from 'ABLPropath'
 import { vscodeVersion } from 'ABLUnitCommon'
 
 const projName = 'DebugLines'
@@ -34,7 +34,7 @@ before(projName + ' - before', async () => {
 	}
 })
 
-const allTests = (version: vscodeVersion = 'stable') => {
+export const DebugLinesSuite = (version: vscodeVersion = 'stable') => {
 	return suite(projName + ' - ' + version + ' Extension Test Suite', () => {
 
 		before(projName + ' - before', async () => {
@@ -128,12 +128,12 @@ const allTests = (version: vscodeVersion = 'stable') => {
 	})
 }
 
-suite(projName + ' - Debug Line Tests - insiders', () => {
-	if (process.env['ABLUNIT_TEST_RUNNER_VSCODE_VERSION'] === 'insiders' ||
-		process.env['ABLUNIT_TEST_RUNNER_VSCODE_VERSION'] === 'proposedapi' ||
-		process.env['ABLUNIT_TEST_RUNNER_VSCODE_VERSION'] === 'stable') {
-		allTests(process.env['ABLUNIT_TEST_RUNNER_VSCODE_VERSION'])
-	} else {
-		allTests()
-	}
-})
+// suite(projName + ' - Debug Line Tests - insiders', () => {
+// 	if (process.env['ABLUNIT_TEST_RUNNER_VSCODE_VERSION'] === 'insiders' ||
+// 		process.env['ABLUNIT_TEST_RUNNER_VSCODE_VERSION'] === 'proposedapi' ||
+// 		process.env['ABLUNIT_TEST_RUNNER_VSCODE_VERSION'] === 'stable') {
+// 		allTests(process.env['ABLUNIT_TEST_RUNNER_VSCODE_VERSION'])
+// 	} else {
+// 		allTests()
+// 	}
+// })

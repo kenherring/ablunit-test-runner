@@ -1,15 +1,15 @@
 import * as fs from 'fs'
-import { ABLResults } from '../ABLResults'
+import { ABLResults } from 'ABLResults'
 import { ConfigurationTarget, TestController, WorkspaceFolder, commands, extensions, Uri, workspace, TestItemCollection } from 'vscode'
-import { Decorator } from '../Decorator'
-import { Duration, deleteFile, isRelativePath, readStrippedJsonFile } from '../ABLUnitCommon'
+import { Decorator } from 'Decorator'
+import { deleteFile as deleteFileCommon, Duration, isRelativePath, readStrippedJsonFile } from 'ABLUnitCommon'
 import { globSync } from 'glob'
-import { IExtensionTestReferences } from '../extension'
-import { ITestSuites } from '../parse/ResultsParser'
-import { log as logObj } from '../ChannelLogger'
+import { IExtensionTestReferences } from 'extension'
+import { ITestSuites } from 'parse/ResultsParser'
+import { log as logObj } from 'ChannelLogger'
 import { strict as assertParent } from 'assert'
-import { DefaultRunProfile } from '../parse/config/RunProfile'
-import { IConfigurations } from '../parse/TestProfileParser'
+import { DefaultRunProfile } from 'parse/config/RunProfile'
+import { IConfigurations } from 'parse/TestProfileParser'
 
 interface IRuntime {
 	name: string,
@@ -22,6 +22,9 @@ class TestInfo {
 }
 export const info = new TestInfo()
 export const log = logObj
+export {
+	Duration
+}
 
 let recentResults: ABLResults[] | undefined
 let decorator: Decorator | undefined
@@ -35,8 +38,11 @@ export function beforeCommon () {
 	currentRunData = undefined
 }
 
-export {
-	deleteFile
+export function deleteFile (file: Uri | string) {
+	if (typeof file === 'string') {
+		file = Uri.joinPath(getWorkspaceUri(), file)
+	}
+	deleteFileCommon(file)
 }
 
 export function sleep (time = 2000, msg?: string) {

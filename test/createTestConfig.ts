@@ -1,16 +1,15 @@
+// This file generates config for testing at runtime
+
 import * as fs from 'fs'
+import path from 'path'
 import { globSync } from 'glob'
 import { MochaOptions } from 'mocha'
-import path from 'path'
 import { vscodeVersion } from 'ABLUnitCommon'
-
-// /* ********** Notes **********
-// /* This file generates config for testing at runtime
-// /* ********** End Notes ********** */
 
 // disable console output when running via the extension-test-runner
 const consoleEnabled = false
-const outputDebugFiles = true
+const debugFiles = true
+const rootDir = path.resolve(__dirname, '../../')
 
 export interface ITestConfig {
 	projName: string
@@ -77,34 +76,32 @@ function getConfigForProject (version: vscodeVersion, projName: string, testFile
 		searchProj = 'proj7'
 	}
 
-	log('path = ' + path.resolve(__dirname, '../../test_projects'))
-	const g = globSync(searchProj + '*', { cwd: path.resolve(__dirname, '../../test_projects') })
+	log('path = ' + path.resolve(rootDir, 'test_projects'))
+	const g = globSync(searchProj + '*', { cwd: path.resolve(rootDir, 'test_projects') })
 	let workspaceFolder = projName
 	if (g.length === 1) {
-		workspaceFolder = path.resolve(__dirname, '../../test_projects/', g[0])
+		workspaceFolder = path.resolve(rootDir, 'test_projects/', g[0])
 		log('workspaceFolder = ' + workspaceFolder)
-	} else if (g.length === 0) {
-		log('skipping config create for ' + projName + ', no workspaceFolder found (path=' + workspaceFolder + ')')
-		return
+	// } else if (g.length === 0) {
+	// 	log('skipping config create for ' + projName + ', no workspaceFolder found (path=' + workspaceFolder + ')')
+	// 	return
 	} else if (g.length > 1) {
 		log('skipping config create for ' + projName + ', multiple workspaceFolders found (path=' + workspaceFolder + ')')
 		return
 	}
-	log('pathexist? path=' + path.resolve(__dirname, '../../test_projects/', workspaceFolder))
-	if (! fs.existsSync(path.resolve(__dirname, '../../test_projects', workspaceFolder))) {
-		log('skipping config create for ' + projName + ', does not exist (path=' + workspaceFolder + ')')
-		return
-	}
+	// log('pathexist? path=' + path.resolve(rootDir, 'test_projects/', workspaceFolder))
+	// if (! fs.existsSync(path.resolve(rootDir, 'test_projects', workspaceFolder))) {
+	// 	log('skipping config create for ' + projName + ', does not exist (path=' + workspaceFolder + ')')
+	// 	return
+	// }
 
 	let timeout = 15000
 	if (projName === 'DebugLines' || projName.startsWith('proj7A')) {
 		timeout = 60000
 	}
 
-	const extensionDevelopmentPath: string = path.resolve(__dirname, '../../')
-	const basedir = extensionDevelopmentPath
 	const extensionTestsPath = path.resolve(__dirname)
-	const oeVersion = process.env['OE_VERSION'] || '0.0.0'
+	const oeVersion = process.env['OE_VERSION'] ?? '0.0.0'
 
 	const retVal: ITestConfig = {
 		projName: projName,
@@ -112,8 +109,8 @@ function getConfigForProject (version: vscodeVersion, projName: string, testFile
 		files: testFile,
 		// newWindow: true,
 		workspaceFolder: workspaceFolder,
-		extensionDevelopmentPath: extensionDevelopmentPath,
-		extensionTestsPath: extensionTestsPath,
+		extensionDevelopmentPath: rootDir,
+		extensionTestsPath: './dist/test/index.test',
 		mocha: {
 			ui: 'tdd',
 			retries: 1,
@@ -121,10 +118,10 @@ function getConfigForProject (version: vscodeVersion, projName: string, testFile
 			reporterOptions: {
 				reporterEnabled: 'spec, mocha-junit-reporter, mocha-reporter-sonarqube',
 				mochaJunitReporterReporterOptions: {
-					mochaFile: basedir + '/artifacts/' + version + '-' + oeVersion + '/mocha_results_junit_' + projName + '.xml'
+					mochaFile: rootDir + '/artifacts/' + version + '-' + oeVersion + '/mocha_results_junit_' + projName + '.xml'
 				},
 				mochaReporterSonarqubeReporterOptions: {
-					filename: basedir + '/artifacts/' + version + '-' + oeVersion + '/mocha_results_sonar_' + projName + '.xml'
+					filename: rootDir + '/artifacts/' + version + '-' + oeVersion + '/mocha_results_sonar_' + projName + '.xml'
 				}
 			}
 		},
@@ -149,7 +146,9 @@ function createConfigForVersion (version: vscodeVersion) {
 	log('creating test config for version \'' + version + '\'...')
 	const testConfig: ITestConfig[] = []
 
-	const g = globSync('**/*.test.js', { cwd: path.resolve(__dirname, '../../') })
+	// console.log('cwd=' + path.resolve(rootDir, 'test'))
+	const g = globSync('**/*.test.ts', { cwd: rootDir })
+	// console.log('g=' + JSON.stringify(g, null, 4))
 	if (g.length === 0) {
 		throw new Error('No test files found')
 	}
@@ -164,25 +163,29 @@ function createConfigForVersion (version: vscodeVersion) {
 		}
 	}
 
-	if (outputDebugFiles) {
-		let outputfile = '.vscode-test.config.json'
-		if (version === 'insiders') {
-			outputfile = '.vscode-test.config.insiders.json'
-		}
-
-		outputfile = './' + outputfile
-
-		const oeVersion = process.env['OE_VERSION'] ?? '0.0.0'
-		const outputdir = './artifacts/' + version + '-' + oeVersion
-		if (!fs.existsSync(outputdir)) {
-			fs.mkdirSync(outputdir, { recursive: true })
-		}
-		outputfile = outputdir + '/' + outputfile
-
-		fs.writeFileSync(outputfile, JSON.stringify(testConfig, null, 4) + '\n')
-		log('created ' + outputfile + ' succesfully!')
+	if (debugFiles) {
+		outputDebugFiles(version, testConfig)
 	}
 	return testConfig
+}
+
+function outputDebugFiles (version: string, testConfig: ITestConfig[]) {
+	let outputfile = '.vscode-test.config.json'
+	if (version === 'insiders') {
+		outputfile = '.vscode-test.config.insiders.json'
+	}
+
+	outputfile = './' + outputfile
+
+	const oeVersion = process.env['OE_VERSION'] ?? '0.0.0'
+	const outputdir = './artifacts/' + version + '-' + oeVersion
+	if (!fs.existsSync(outputdir)) {
+		fs.mkdirSync(outputdir, { recursive: true })
+	}
+	outputfile = outputdir + '/' + outputfile
+
+	fs.writeFileSync(outputfile, JSON.stringify(testConfig, null, 4) + '\n')
+	log('created ' + outputfile + ' succesfully!')
 }
 
 // export const testConfigStable = createConfigForVersion('stable')

@@ -1,7 +1,7 @@
 import { before } from 'mocha'
 import { Uri } from 'vscode'
 import { assert, getResults, getWorkspaceUri, runAllTests, waitForExtensionActive } from '../testCommon'
-import { getEnvVars } from '../../ABLUnitRun'
+import { getEnvVars } from 'ABLUnitRun'
 
 const projName = 'proj8'
 

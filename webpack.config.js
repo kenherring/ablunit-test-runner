@@ -6,21 +6,26 @@ const outputDir = path.resolve(__dirname, 'dist')
 const config = {
 	target: 'node', // TODO: recommended: 'webworker'
 	node: false,
+	mode: 'development',
 	entry: {
 		'extension': './src/extension.ts',
-		'extension-insiders': './src/extension-insiders.ts'
+		'extension-insiders': './src/extension-insiders.ts',
+		'test/index': './test/index.ts',
+		'test/createTestConfig': './test/createTestConfig.ts',
+		'test/suite/DebugLines.test': './test/suite/DebugLines.test.ts',
 	},
 	output: {
 		path: outputDir,
 		filename: '[name].js',
-		// libraryTarget: "commonjs2",
-		libraryTarget: "commonjs",
+		libraryTarget: "commonjs", // TODO: "commonjs2" ?
 		devtoolModuleFilenameTemplate: "../[resource-path]",
 	},
 	devtool: 'source-map', // https://code.visualstudio.com/docs/nodejs/nodejs-debugging#_tool-configuration
 	externals: {
 		// the vscode-module is created on-the-fly and must be excluded. Add other modules that cannot be webpack'ed -> https://webpack.js.org/configuration/externals/
-		vscode: "commonjs vscode"
+		vscode: "commonjs vscode",
+		mocha: "commonjs mocha",
+		nyc: "commonjs nyc"
 	},
 	resolve: {
 		mainFields: ['browser', 'module', 'main'],
@@ -35,8 +40,7 @@ const config = {
 				loader: 'ts-loader',
 			}]
 		}]
-	},
-	mode: 'development'
+	}
 }
 
 module.exports = config
