@@ -7,7 +7,7 @@ orbs:
 parameters:
   cache-version:
     type: string
-    default: v4
+    default: v5
 
 oe-version-param: &oe-version-param
   parameters:

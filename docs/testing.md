@@ -24,10 +24,10 @@ npm run test:install-and-run
 
 The following tooling is configured for development in this repo.
 
+* [eslint](https://typescript-eslint.io/)
 * [webpack](https://webpack.js.org/)
-* [typescript-eslint](https://typescript-eslint.io/)
-* [mocha](https://mochajs.org/) and [instanbul/nyc](https://github.com/istanbuljs/nyc)
-* VSCode [test-cli](https://github.com/microsoft/vscode-test-cli) and [Extension Test Runner](https://github.com/istanbuljs/nyc)
+* [mocha](https://mochajs.org/) and [nyc](https://github.com/istanbuljs/nyc)
+* VSCode [test-cli](https://github.com/microsoft/vscode-test-cli) and [Extension Test Runner](https://github.com/microsoft/vscode-extension-test-runner)
 
 <!--
 ## Commands that should always pass
@@ -39,7 +39,6 @@ docker/run_tests.sh -o 12.2
 docker/run_tests.sh -o 12.2 -i
 docker/run_tests.sh -o 12.2 -d
 docker/run_tests.sh -P
--->
 
 ## Test Files
 
@@ -47,9 +46,13 @@ docker/run_tests.sh -P
   * `src/test/runTest.ts`
 * `index.ts`
 
-## Test Methods
+-->
+
+## Testing Methodology
+
+The follow can be used to execute the test suites.
 
 * [VSCode Extension Test Runner](https://github.com/istanbuljs/nyc)
 * `npm test`
 * `npm vscode-test`
-* docker/run_tests.sh
+* `docker/run_tests.sh`
