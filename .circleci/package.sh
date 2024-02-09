@@ -73,13 +73,13 @@ package_insiders () {
 
 run_lint () {
 	echo "[$0 ${FUNCNAME[0]}]"
-	# if [ -n "${ABLUNIT_TEST_RUNNER_PROJECT_NAME:-}" ]; then
-	# 	echo "[$0 ${FUNCNAME[0]}] skipping lint for single ABLUnit test runner project test"
-	# 	return 0
-	# fi
+	if [ -n "${ABLUNIT_TEST_RUNNER_PROJECT_NAME:-}" ]; then
+		echo "[$0 ${FUNCNAME[0]}] skipping lint for single ABLUnit test runner project test"
+		return 0
+	fi
 
 	local ESLINT_FILE=artifacts/eslint_report
-    npm install
+    # npm install
 	mkdir -p artifacts
 
 	if ! npm run lint -- -f unix -o "${ESLINT_FILE}.txt"; then

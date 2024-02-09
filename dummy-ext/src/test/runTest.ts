@@ -6,7 +6,7 @@
 
 import * as cp from 'child_process'
 import * as path from 'path'
-import { GlobSync } from 'glob'
+import { globSync } from 'glob'
 import { existsSync } from 'fs'
 import { downloadAndUnzipVSCode, resolveCliArgsFromVSCodeExecutablePath, runTests } from '@vscode/test-electron'
 
@@ -32,12 +32,12 @@ async function main() {
 }
 
 function getProjName() {
-	const g = new GlobSync(packagedExtensionPath)
-	if (g.found.length !== 3) {
-		throw new Error('Expected exactly three ablunit-test-runner-*.vsix file, found ' + g.found.length)
+	const g = globSync(packagedExtensionPath)
+	if (g.length !== 3) {
+		throw new Error('Expected exactly three ablunit-test-runner-*.vsix file, found ' + g.length)
 	}
 
-	packagedExtensionPath = g.found[0]
+	packagedExtensionPath = g[0]
 	if (!existsSync(packagedExtensionPath)) {
 		throw new Error('Extension bundle does not exist! path=' + packagedExtensionPath)
 	}

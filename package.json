@@ -79,12 +79,9 @@
 		"../src"
 	],
 	"scripts": {
-		"build": "npm run build-webpack && npm run build-tsc",
+		"build": "npm run webpack && tsc",
 		"rebuild": "npm run clean && npm run build",
-		"build-webpack": "npm run webpack",
-		"build-tsc": "tsc -p ./",
 		"clean": "sh -c scripts/npm_clean.sh",
-		"clean-and-build": "npm run clean && npm run build",
 		"lint": "npx eslint ./src --ext .ts,.js",
 		"lint-fix-all": "npx eslint ./src --ext .ts,.js --fix",
 		"vscode:prepublish": "npm run package",
@@ -94,23 +91,16 @@
 		"test-no-build": "sh -c scripts/npm_pretest.sh -N && node ./out/test/runTest.js",
 		"vscode-test": "vscode-test",
 		"test:install-and-run": "cd dummy-ext && npm run test:install-and-run",
-		"watch": "tsc -watch -p ./",
-		"watch-webpack": "webpack --mode development --watch",
+		"watch": "webpack --mode development --watch",
 		"webpack": "webpack --mode development",
 		"test-new": "mocha -u tdd ./out/test",
-		"version": "sh -c scripts/npm_version.sh",
-		"insiders:build": "npm run insiders:build-webpack && npm run insiders:build-tsc",
-		"insiders:build-webpack": "npm run webpack",
-		"insiders:build-tsc": "tsc -p ./tsconfig.insiders.json",
-		"insiders:package": "npm run package",
-		"insiders:test": "node ./out/test/runTest.js --insiders"
+		"version": "sh -c scripts/npm_version.sh"
 	},
 	"dependencies": {
 		"node-json-minify": "^3.0.0",
 		"xml2js": "^0.6.2"
 	},
 	"devDependencies": {
-		"@types/glob": "^8.1.0",
 		"@types/node": "^16.18.34",
 		"@types/vscode": "^1.83.0",
 		"@types/xml2js": "^0.4.14",
@@ -124,6 +114,7 @@
 		"mocha-multi-reporters": "^1.5.1",
 		"mocha-reporter-sonarqube": "^2.0.6",
 		"nyc": "^15.1.0",
+		"rimraf": "^5.0.5",
 		"ts-loader": "^9.5.1",
 		"typescript": "^5.3.3",
 		"webpack": "^5.89.0",

@@ -38,11 +38,13 @@ main_block () {
     vsce publish "${ARGS[@]}"
 }
 
-attach_to_github_release () {
-    echo "[$0 ${FUNCNAME[0]}] TODO - not yet implemented"
+upload_to_github_release () {
+    echo "[$0 ${FUNCNAME[0]}]"
+    gh release upload "$CIRCLE_TAG" "ablunit-test-runner-${CIRCLE_TAG}.vsix" --clobber
+    gh release upload "$CIRCLE_TAG" "ablunit-test-runner-insiders-${CIRCLE_TAG}.vsix" --clobber
 }
 
 ########## MAIN BLOCK ##########
 main_block
-attach_to_github_release
+upload_to_github_release
 echo "[$0] completed successfully"
