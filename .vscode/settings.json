@@ -3,6 +3,11 @@
 	"git.branchProtection": [
 		"main"
 	],
+	"eslint.options": {
+		"exclude": [
+			"**/dist/**"
+		]
+	},
 	"files.associations": {
 		"ablunit-test-profile*.json": "jsonc"
 	},
@@ -25,6 +30,12 @@
 				"ablunit-test-profile*.jsonc",
 			],
 			"url": "./resources/ablunit-test-profile.schema.json"
+		},
+		{
+			"fileMatch": [
+				"webpack.config.json",
+			],
+			"url": "https://raw.githubusercontent.com/webpack/webpack/main/schemas/WebpackOptions.json"
 		}
 	],
 	"npm.autoDetect": "on",

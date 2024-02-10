@@ -25,9 +25,15 @@
 	},
 	"settings": {
 		"include": [
-			"./src/**",
-			"./test/**"
-		]
+			"./src/*.ts",
+			"./src/**/*.ts",
+			"./test/*.ts",
+			"./test/**/*.ts"
+		],
+		// "exclude": [
+		// 	"**/dist/**",
+		// 	"./dist/**"
+		// ]
 	},
 	"plugins": [
 		"@typescript-eslint"

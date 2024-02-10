@@ -1,12 +1,12 @@
-import { afterEach, before, beforeEach } from 'mocha'
-import { Selection, Uri, commands, window } from 'vscode'
+import * as vscode from 'vscode'
+// import { afterEach, before, beforeEach } from 'mocha'
 import { assert, deleteTestFiles, getTestCount, getWorkspaceUri, runAllTests, sleep, updateConfig, waitForExtensionActive } from '../testCommon'
 
 
 const projName = 'proj1'
-const workspaceUri = getWorkspaceUri()
 
-suite(projName + ' - Extension Test Suite', () => {
+export const proj1Suite = suite(projName + ' - Extension Test Suite', () => {
+	const workspaceUri = getWorkspaceUri()
 
 	before(projName + ' - before', async () => {
 		await waitForExtensionActive()
@@ -22,9 +22,9 @@ suite(projName + ' - Extension Test Suite', () => {
 	})
 
 	test(projName + '.1 - output files exist - 1', async () => {
-		const ablunitJson = Uri.joinPath(workspaceUri, 'ablunit.json')
-		const resultsXml = Uri.joinPath(workspaceUri, 'results.xml')
-		const resultsJson = Uri.joinPath(workspaceUri, 'results.json')
+		const ablunitJson = vscode.Uri.joinPath(workspaceUri, 'ablunit.json')
+		const resultsXml = vscode.Uri.joinPath(workspaceUri, 'results.xml')
+		const resultsJson = vscode.Uri.joinPath(workspaceUri, 'results.json')
 		assert.notFileExists(ablunitJson)
 		assert.notFileExists(resultsXml)
 
@@ -43,7 +43,7 @@ suite(projName + ' - Extension Test Suite', () => {
 		await updateConfig('files.exclude', [ '.builder/**', 'compileError.p' ])
 		await runAllTests()
 
-		const resultsJson = Uri.joinPath(workspaceUri, 'results.json')
+		const resultsJson = vscode.Uri.joinPath(workspaceUri, 'results.json')
 		const testCount = await getTestCount(resultsJson)
 		assert.equal(testCount, 12)
 	})
@@ -53,17 +53,17 @@ suite(projName + ' - Extension Test Suite', () => {
 		await updateConfig('files.exclude', 'compileError.p')
 		await runAllTests()
 
-		const resultsJson = Uri.joinPath(workspaceUri, 'results.json')
+		const resultsJson = vscode.Uri.joinPath(workspaceUri, 'results.json')
 		const testCount = await getTestCount(resultsJson)
 		assert.equal(testCount, 12)
 	})
 
 	test(projName + '.4 - run test case in file', async () => {
-		await commands.executeCommand('vscode.open', Uri.joinPath(workspaceUri, 'procedureTest.p'))
+		await vscode.commands.executeCommand('vscode.open', vscode.Uri.joinPath(workspaceUri, 'procedureTest.p'))
 		await sleep(200)
-		await commands.executeCommand('testing.runCurrentFile')
+		await vscode.commands.executeCommand('testing.runCurrentFile')
 
-		const resultsJson = Uri.joinPath(workspaceUri, 'results.json')
+		const resultsJson = vscode.Uri.joinPath(workspaceUri, 'results.json')
 		const testCount: number = await getTestCount(resultsJson)
 		const pass = await getTestCount(resultsJson, 'pass')
 		const fail = await getTestCount(resultsJson, 'fail')
@@ -75,15 +75,15 @@ suite(projName + ' - Extension Test Suite', () => {
 	})
 
 	test(projName + '.5 - run test case at cursor', async () => {
-		await commands.executeCommand('vscode.open', Uri.joinPath(workspaceUri, 'procedureTest.p'))
-		if(window.activeTextEditor) {
-			window.activeTextEditor.selection = new Selection(21, 0, 21, 0)
+		await vscode.commands.executeCommand('vscode.open', vscode.Uri.joinPath(workspaceUri, 'procedureTest.p'))
+		if(vscode.window.activeTextEditor) {
+			vscode.window.activeTextEditor.selection = new vscode.Selection(21, 0, 21, 0)
 		} else {
 			assert.fail('vscode.window.activeTextEditor is undefined')
 		}
-		await commands.executeCommand('testing.runAtCursor')
+		await vscode.commands.executeCommand('testing.runAtCursor')
 
-		const resultsJson = Uri.joinPath(workspaceUri, 'results.json')
+		const resultsJson = vscode.Uri.joinPath(workspaceUri, 'results.json')
 		const testCount = await getTestCount(resultsJson)
 		const pass = await getTestCount(resultsJson, 'pass')
 		const fail = await getTestCount(resultsJson, 'fail')
@@ -95,3 +95,5 @@ suite(projName + ' - Extension Test Suite', () => {
 	})
 
 })
+
+module.exports = proj1Suite

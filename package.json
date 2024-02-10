@@ -73,6 +73,7 @@
 	"activationEvents": [
 		"onStartupFinished"
 	],
+	"type-other": "module",
 	"main": "./dist/extension.js",
 	"scripts": {
 		"build": "npm run webpack",

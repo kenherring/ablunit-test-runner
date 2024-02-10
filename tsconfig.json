@@ -12,7 +12,7 @@
 		"alwaysStrict": true,
 		"esModuleInterop": true,
 		"isolatedModules": true,
-		// "listEmittedFiles": true,
+		"listEmittedFiles": true,
 
 		"allowJs": true,
 		"checkJs": true,
@@ -52,11 +52,20 @@
 	// 	"./src/*/*.ts",
 	// 	"./src/*/*/*.ts"
 	// ],
+	// "include": [
+	// 	"*.ts"
+	// ],
 	"exclude": [
-		"node_modules",
-		"**/node_modules",
-		"dist",
-		"dummy-ext",
-		"test_projects"
+		"**/node_modules/**",
+		"**/dist/**",
+		"**/dummy-ext/**",
+		"**/test_projects/**",
+		"**/test-bk/**",
+
+		"node_modules/**",
+		"dist/**",
+		"dummy-ext/**",
+		"test_projects/**",
+		"test-bk/**"
 	]
 }

@@ -1,6 +1,7 @@
 'use strict'
 const path = require('path')
 const outputDir = path.resolve(__dirname, 'dist')
+const outputDirTest = path.resolve(__dirname, 'dist-test')
 
 /** @type {import('webpack').Configuration} */
 const config = {
@@ -10,14 +11,20 @@ const config = {
 	entry: {
 		'extension': './src/extension.ts',
 		'extension-insiders': './src/extension-insiders.ts',
-		'test/index': './test/index.ts',
-		'test/createTestConfig': './test/createTestConfig.ts',
-		'test/suite/DebugLines.test': './test/suite/DebugLines.test.ts',
+		// 'extension-tests': './test/extension-tests.ts',
+		// 'extension-tests': './test/extension-tests.ts',
+		// 'runTest': './test/runTest.ts',
+		'ablunitTestSuites': './test/ablunitTestSuites.test.ts',
+		// 'test/index': './test/index.ts',
+		// 'test/createTestConfig': './test/createTestConfig.ts',
+		// 'test/suite/DebugLines.test': './test/suite/DebugLines.test.ts',
 	},
 	output: {
+		clean: true,
 		path: outputDir,
 		filename: '[name].js',
-		libraryTarget: "commonjs", // TODO: "commonjs2" ?
+		libraryTarget: "commonjs",
+		// libraryTarget: "commonjs2",
 		devtoolModuleFilenameTemplate: "../[resource-path]",
 	},
 	devtool: 'source-map', // https://code.visualstudio.com/docs/nodejs/nodejs-debugging#_tool-configuration
@@ -30,16 +37,22 @@ const config = {
 	resolve: {
 		mainFields: ['browser', 'module', 'main'],
 		extensions: ['.ts', '.js'],
-		modules: ['node_modules', 'src']
+		// alias: {
+		// 	'@': path.resolve(__dirname, 'src'),
+		// 	'@test': path.resolve(__dirname, 'test'),
+		// },
+		modules: ['node_modules', 'src', 'test']
 	},
 	module: {
-		rules: [{
-			test: /\.ts$/,
-			exclude: /node_modules/,
-			use: [{
-				loader: 'ts-loader',
-			}]
-		}]
+		rules: [
+			{
+				test: /\.ts$/,
+				exclude: /node_modules/,
+				use: [{
+					loader: 'ts-loader',
+				}]
+			}
+		]
 	}
 }
 
