@@ -1,0 +1,12 @@
+name: 🌲 Feature Request
+description: Request a feature
+title: "🌲 [Request] "
+labels: ["request", "triage"]
+# projects: ["octo-org/1", "octo-org/44"]
+# assignees:
+#   - octocat
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Describe your feature request...
