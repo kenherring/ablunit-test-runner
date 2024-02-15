@@ -1,7 +1,7 @@
 name: 🌲 Feature Request
-description: Request a feature
+description: Request a feature or enhancement to existing functionality
 title: "🌲 [Request] "
-labels: ["request", "triage"]
+labels: ["request", "enhancement", "triage"]
 # projects: ["octo-org/1", "octo-org/44"]
 # assignees:
 #   - octocat
