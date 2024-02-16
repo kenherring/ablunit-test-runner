@@ -2,7 +2,6 @@ import * as fs from 'fs'
 import { Uri } from 'vscode'
 // @ts-expect-error 123
 import JSON_minify from 'node-json-minify'
-import { getWorkspaceUri } from './test/testCommon'
 
 export type vscodeVersion = 'stable' | 'insiders' | 'proposedapi'
 
@@ -38,10 +37,7 @@ export function doesFileExist (uri: Uri) {
 	return false
 }
 
-export function deleteFile (file: Uri | Uri[] | string) {
-	if (typeof file === 'string') {
-		file = Uri.joinPath(getWorkspaceUri(), file)
-	}
+export function deleteFile (file: Uri | Uri[]) {
 	let files: Uri[]
 	if (!Array.isArray(file)) {
 		files = [file]

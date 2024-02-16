@@ -9,16 +9,13 @@
 			"type": "shell",
 			"dependsOn": [
 				"npm clean",
+				"npm pretest",
 				"npm watch",
 			],
 			"dependsOrder": "sequence",
 			"presentation": {
 				"reveal": "always",
 				"group": "build-task",
-			},
-			"group": {
-				"kind": "build",
-				"isDefault": false
 			},
 			"runOptions": {
 				"runOn": "folderOpen"
@@ -33,17 +30,22 @@
 			"presentation": {
 				"reveal": "always",
 				"group": "build-task",
-				"close": true
-			},
-			"group": {
-				"kind": "build",
-				"isDefault": false
+			}
+		},
+		{
+			"label": "npm pretest",
+			"hide": true,
+			"type": "npm",
+			"script": "pretest",
+			"isBackground": true,
+			"presentation": {
+				"reveal": "always",
+				"group": "build-task",
 			}
 		},
 		{
 			"label": "npm watch",
 			"type": "npm",
-			"hide": true,
 			"script": "watch",
 			"problemMatcher": "$tsc-watch",
 			"isBackground": true,
