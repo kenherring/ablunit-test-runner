@@ -271,7 +271,7 @@ export async function installAndSetRuntimes (runtimes: IRuntime[]) {
 export async function awaitRCode (workspaceFolder: WorkspaceFolder, rcodeCountMinimum = 1) {
 	const buildWaitTime = 20
 	let fileCount = 0
-	log.info('waiting up to' + buildWaitTime + ' seconds for r-code')
+	log.info('waiting up to ' + buildWaitTime + ' seconds for r-code')
 	for (let i = 0; i < buildWaitTime; i++) {
 		await new Promise((resolve) => setTimeout(resolve, 1000))
 

@@ -1,5 +1,4 @@
 import { readFileSync } from 'fs'
-// import * as glob from 'glob'
 import { globSync } from 'glob'
 import {
 	CancellationError,
@@ -89,26 +88,18 @@ export async function activate (context: ExtensionContext) {
 		// }),
 
 		workspace.onDidOpenTextDocument(async e => {
-			if (!e) {
-				log.error('onDidOpenTextDocument called with undefined document')
-				return
-			}
-			log.trace('onDidOpenTextDocument for ' + e.uri)
-			const prom = updateNodeForDocument(e, 'didOpen')
-			await prom.then(() => {
+			await updateNodeForDocument(e, 'didOpen').then(() => {
+				log.trace('updateNodeForDocument complete for ' + e.uri)
 				decorator.decorate(undefined, e)
 			}, (err) => {
 				log.error('failed updateNodeForDocument onDidTextDocument! err=' + err)
 			})
 		})
-		// workspace.onDidChangeTextDocument(e => { return updateNodeForDocument(e.document,'didChange') }),
-
 
 		// watcher.onDidCreate(uri => { createOrUpdateFile(controller, uri) })
 		// watcher.onDidChange(uri => { createOrUpdateFile(controller, uri) })
 		// watcher.onDidDelete(uri => { controller.items.delete(uri.fsPath) })
 	)
-
 
 	const runHandler = (request: TestRunRequest, cancellation: CancellationToken) => {
 		if (! request.continuous) {
@@ -403,7 +394,6 @@ export async function activate (context: ExtensionContext) {
 		return await updateNode(u, ctrl)
 	}
 
-
 	async function resolveHandlerFunc (item: TestItem | undefined) {
 		if (!item) {
 			log.debug('resolveHandlerFunc called with undefined item - refresh tests?')
@@ -419,8 +409,7 @@ export async function activate (context: ExtensionContext) {
 		}
 
 		if (item.uri) {
-			const prom = updateNodeForDocument(item, 'resolve')
-			return prom.then(() => { return })
+			return await updateNodeForDocument(item, 'resolve')
 		}
 
 		const data = testData.get(item)
@@ -975,7 +964,6 @@ function isFileExcluded (uri: Uri, excludePatterns: RelativePattern[]) {
 	if (!workspaceFolder) {
 		return true
 	}
-	// const g = glob.globSync(relativePath, { cwd: workspaceFolder.uri.fsPath, ignore: patterns })
 	const g = globSync(relativePath, { cwd: workspaceFolder.uri.fsPath, ignore: patterns })
 	return g.length == 0
 }

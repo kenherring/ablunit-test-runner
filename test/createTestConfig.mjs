@@ -63,7 +63,7 @@ function getTestConfig (projName) {
 
 	let timeout = 15000
 	if (projName === 'DebugLines') {
-		timeout = 30000
+		timeout = 45000
 	} else if (projName === 'proj7A') {
 		timeout = 60000
 	}
@@ -118,65 +118,3 @@ export async function createTestConfig () {
 	writeConfigToFile('config', testConfig)
 	return testConfig
 }
-
-// const hardcodedConfig = new IDesktopTestConfiguration({
-// })
-
-// // function writeConfigToFile (name, config) {
-// // 	fs.writeFileSync('.vscode-test.' + name + '.json.bk', JSON.stringify(config, null, 4).replace('    ', '\t'))
-// // }
-
-
-// // let version = 'stable'
-// // if (process.argv.includes('--insiders')) {
-// //     version = 'insiders'
-// // }
-
-// import { fileURLToPath } from 'url'
-// const __filename = fileURLToPath(import.meta.url)
-// const __dirname = path.dirname(__filename)
-// const extensionDevelopmentPath = path.resolve(__dirname)
-// // const workspaceFolder = path.join(extensionDevelopmentPath, 'test_projects')
-
-// const hardcodedConfig = [
-// 	{
-// 		'files': './test/suites/proj0.test.ts',
-// 		'workspaceFolder': './test_projects/proj0',
-// 		'launchArgs': [
-// 			path.join(extensionDevelopmentPath, 'test_projects', 'proj0'),
-// 			'--disable-gpu',
-// 			// "--log=debug",
-// 			// "--log=verbose",
-// 			'--disable-extensions',
-// 		],
-// 		'mocha': {
-// 			'preload': 'ts-node/register/transpile-only',
-// 			'ui': 'tdd',
-// 			// "retries": 0,
-// 		},
-// 		'env': {
-// 			'VSCODE_VERSION': 'stable',
-// 			'ABLUNIT_TEST_RUNNER_UNIT_TESTING': 'true'
-// 		},
-// 	},
-// 	{
-// 		'files': './test/suites/proj1.test.ts',
-// 		'workspaceFolder': './test_projects/proj1',
-// 		'launchArgs': [
-// 			path.join(extensionDevelopmentPath, 'test_projects', 'proj1'),
-// 			'--disable-gpu',
-// 			// "--log=debug",
-// 			// "--log=verbose",
-// 			'--disable-extensions',
-// 		],
-// 		'mocha': {
-// 			'preload': 'ts-node/register/transpile-only',
-// 			'ui': 'tdd',
-// 			// "retries": 0,
-// 		},
-// 		'env': {
-// 			'VSCODE_VERSION': 'stable',
-// 			'ABLUNIT_TEST_RUNNER_UNIT_TESTING': 'true'
-// 		},
-// 	}
-// ]

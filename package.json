@@ -90,7 +90,8 @@
 		"vscode-test": "vscode-test",
 		"watch": "webpack --mode development --watch",
 		"webpack": "webpack --mode development",
-		"version": "sh -c scripts/npm_version.sh"
+		"version": "sh -c scripts/npm_version.sh",
+		"test:install-and-run": "cd dummy-ext && npm run test:install-and-run"
 	},
 	"dependencies": {
 		"node-json-minify": "^3.0.0",

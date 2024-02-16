@@ -4,9 +4,6 @@ set -euo pipefail
 ## Enable this hook with: git config
 ## git config core.hooksPath .git-hooks/
 
-## TODO
-## * Validate package.json and package.stable.json are the same
-
 . scripts/common.sh
 
 validate_circleci_config () {

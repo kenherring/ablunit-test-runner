@@ -1,5 +1,4 @@
 import { readFileSync } from 'fs'
-// import * as glob from 'glob'
 import { globSync } from 'glob'
 import {
 	CancellationError,
@@ -30,7 +29,8 @@ export interface IExtensionTestReferences {
 let recentResults: ABLResults[] = []
 
 export async function activate (context: ExtensionContext) {
-
+	// eslint-disable-next-line no-console
+	console.log('activating extension! (version=' + getExtensionVersion() + ')')
 	const ctrl = tests.createTestController('ablunitTestController', 'ABLUnit Test')
 	let currentTestRun: TestRun | undefined = undefined
 
@@ -42,7 +42,7 @@ export async function activate (context: ExtensionContext) {
 	await createDir(contextStorageUri)
 	// const decorationProvider = new DecorationProvider()
 
-	const getExtensionReferences = () => {
+	const getExtensionTestReferences = () => {
 		let data: ABLResults[] = []
 		if (currentTestRun) {
 			data = resultData.get(currentTestRun) ?? []
@@ -57,7 +57,7 @@ export async function activate (context: ExtensionContext) {
 	}
 
 	if (process.env['ABLUNIT_TEST_RUNNER_UNIT_TESTING'] === 'true') {
-		context.subscriptions.push(commands.registerCommand('_ablunit.getExtensionTestReferences', getExtensionReferences))
+		context.subscriptions.push(commands.registerCommand('_ablunit.getExtensionTestReferences', getExtensionTestReferences))
 	}
 
 	context.subscriptions.push(ctrl)
@@ -67,20 +67,17 @@ export async function activate (context: ExtensionContext) {
 		workspace.onDidChangeConfiguration(e => { updateConfiguration(e) }),
 
 		workspace.onDidOpenTextDocument(async e => {
-			log.trace('onDidOpenTextDocument for ' + e.uri)
 			await updateNodeForDocument(e, 'didOpen').then(() => {
 				log.trace('updateNodeForDocument complete for ' + e.uri)
 			}, (err) => {
 				log.error('failed updateNodeForDocument onDidTextDocument! err=' + err)
 			})
 		})
-		// workspace.onDidChangeTextDocument(e => { return updateNodeForDocument(e.document,'didChange') }),
 
 		// watcher.onDidCreate(uri => { createOrUpdateFile(controller, uri) })
 		// watcher.onDidChange(uri => { createOrUpdateFile(controller, uri) })
 		// watcher.onDidDelete(uri => { controller.items.delete(uri.fsPath) })
 	)
-
 
 	const runHandler = (request: TestRunRequest, cancellation: CancellationToken) => {
 		if (! request.continuous) {
@@ -195,14 +192,12 @@ export async function activate (context: ExtensionContext) {
 					log.info('starting ablunit tests for folder: ' + r.workspaceFolder.uri.fsPath, run)
 				}
 
-				log.debug('r.run start')
 				ret = await r.run(run).then(() => {
 					return true
 				}, (err) => {
 					log.error('ablunit run failed parsing results with exception: ' + err, run)
 					return false
 				})
-				log.debug('r.run after ret=' + ret)
 				if (!ret) {
 					continue
 				}
@@ -231,8 +226,6 @@ export async function activate (context: ExtensionContext) {
 					}
 				}
 			}
-
-			log.debug('ret=' + ret)
 
 			if(!ret) {
 				for (const { test } of queue) {
@@ -355,7 +348,7 @@ export async function activate (context: ExtensionContext) {
 		})
 	}
 
-	function updateNodeForDocument (e: TextDocument | TestItem | Uri, r: string) {
+	async function updateNodeForDocument (e: TextDocument | TestItem | Uri, r: string) {
 		log.info('r=' + r)
 		let u: Uri | undefined
 		if (e instanceof Uri) {
@@ -366,14 +359,11 @@ export async function activate (context: ExtensionContext) {
 		if (!u) {
 			throw new Error('updateNodeForDocument called with undefined uri')
 		}
-		log.info('updateNodeForDocument uri=' + u.fsPath)
-		const prom = updateNode(u, ctrl)
-
-		if (typeof prom === 'boolean') {
-			return new Promise(() => { return prom })
-		} else {
-			return prom.then(() => { return })
+		if (workspace.getWorkspaceFolder(u) === undefined) {
+			log.info('skipping updateNodeForDocument for file not in workspace: ' + u.fsPath)
+			return new Promise(() => { return true })
 		}
+		return await updateNode(u, ctrl)
 	}
 
 	async function resolveHandlerFunc (item: TestItem | undefined) {
@@ -391,7 +381,7 @@ export async function activate (context: ExtensionContext) {
 		}
 
 		if (item.uri) {
-			return updateNodeForDocument(item, 'resolve').then(() => { return })
+			return await updateNodeForDocument(item, 'resolve')
 		}
 
 		const data = testData.get(item)
@@ -438,9 +428,9 @@ export async function activate (context: ExtensionContext) {
 	testProfileCoverage.configureHandler = configHandler
 	// testProfileDebugCoverage.configureHandler = configHandler
 
-	if(workspace.getConfiguration('ablunit').get('discoverAllTestsOnActivate', false)) {
-		await commands.executeCommand('testing.refreshTests')
-	}
+	// if(workspace.getConfiguration('ablunit').get('discoverAllTestsOnActivate', false)) {
+	// 	await commands.executeCommand('testing.refreshTests')
+	// }
 }
 
 let contextStorageUri: Uri
@@ -949,7 +939,6 @@ function isFileExcluded (uri: Uri, excludePatterns: RelativePattern[]) {
 	if (!workspaceFolder) {
 		return true
 	}
-	// const g = glob.globSync(relativePath, { cwd: workspaceFolder.uri.fsPath, ignore: patterns })
 	const g = globSync(relativePath, { cwd: workspaceFolder.uri.fsPath, ignore: patterns })
 	return g.length == 0
 }
@@ -995,11 +984,10 @@ async function createDir (uri: Uri) {
 }
 
 function logActivationEvent () {
-	const extensionVersion = getExtensionVersion()
 	if (!log) {
 		throw new Error('log is undefined')
 	}
-	log.info('activating extension! (version=' + extensionVersion + ')')
+	log.info('activating extension! (version=' + getExtensionVersion() + ')')
 }
 
 function getExtensionVersion () {
