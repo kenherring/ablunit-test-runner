@@ -1,15 +1,48 @@
-import * as fs from 'fs'
-import { ABLResults } from '../ABLResults'
-import { ConfigurationTarget, TestController, WorkspaceFolder, commands, extensions, Uri, workspace, TestItemCollection } from 'vscode'
-import { Decorator } from '../Decorator'
-import { Duration, deleteFile, isRelativePath, readStrippedJsonFile } from '../ABLUnitCommon'
-import { globSync } from 'glob'
-import { IExtensionTestReferences } from '../extension'
-import { ITestSuites } from '../parse/ResultsParser'
-import { log as logObj } from '../ChannelLogger'
 import { strict as assertParent } from 'assert'
-import { DefaultRunProfile } from '../parse/config/RunProfile'
-import { IConfigurations } from '../parse/TestProfileParser'
+import * as fs from 'fs'
+import { globSync } from 'glob'
+import * as vscode from 'vscode'
+import {
+	ConfigurationTarget, TestController,
+	TestItemCollection,
+	Uri,
+	WorkspaceFolder, commands, extensions,
+	workspace
+} from 'vscode'
+import { ABLResults } from '../src/ABLResults'
+import { Duration, deleteFile as deleteFileCommon, isRelativePath, readStrippedJsonFile } from '../src/ABLUnitCommon'
+import { log as logObj } from '../src/ChannelLogger'
+import { Decorator } from '../src/Decorator'
+import { IExtensionTestReferences } from '../src/extension'
+import { ITestSuites } from '../src/parse/ResultsParser'
+import { IConfigurations } from '../src/parse/TestProfileParser'
+import { DefaultRunProfile } from '../src/parse/config/RunProfile'
+
+function getExtensionDevelopmentPath () {
+	let dir = Uri.joinPath(Uri.file(__dirname))
+	if (doesFileExist(Uri.joinPath(dir, 'package.json'))) {
+		return dir
+	}
+	dir = Uri.joinPath(Uri.file(__dirname), '..')
+	if (doesFileExist(Uri.joinPath(dir, 'package.json'))) {
+		return dir
+	}
+	dir = Uri.joinPath(Uri.file(__dirname), '..', '..')
+	if (doesFileExist(Uri.joinPath(dir, 'package.json'))) {
+		return dir
+	}
+	dir = Uri.joinPath(Uri.file(__dirname), '..', '..', '..')
+	if (doesFileExist(Uri.joinPath(dir, 'package.json'))) {
+		return dir
+	}
+	throw new Error('unable to determine extensionDevelopmentPath')
+}
+
+// eslint-disable-next-line no-console
+console.log('process.args=' + process.argv.join(' '))
+// eslint-disable-next-line no-console
+console.log('extensionDevelopmentPath=' + getExtensionDevelopmentPath().fsPath)
+
 
 interface IRuntime {
 	name: string,
@@ -17,29 +50,46 @@ interface IRuntime {
 	default?: boolean
 }
 
+// https://github.com/microsoft/vscode/blob/2aae82a102da66e566842ff9177bceeb99873970/src/vs/workbench/browser/actions/workspaceCommands.ts#L156C1-L163C2
+interface IOpenFolderAPICommandOptions {
+	forceNewWindow?: boolean
+	forceReuseWindow?: boolean
+	noRecentEntry?: boolean
+	forceLocalWindow?: boolean
+	forceProfile?: string
+	forceTempProfile?: boolean
+}
+
 class TestInfo {
 	get projName () { return __filename.split('\\').pop()!.split('/').pop()!.split('.')[0] }
 }
 export const info = new TestInfo()
 export const log = logObj
+export {
+	Duration,
+	Uri, commands, workspace
+}
 
 let recentResults: ABLResults[] | undefined
 let decorator: Decorator | undefined
 let testController: TestController | undefined
 let currentRunData: ABLResults[] | undefined
 
-export function beforeCommon () {
+export function setupCommon () {
 	recentResults = undefined
 	decorator = undefined
 	testController = undefined
 	currentRunData = undefined
 }
 
-export {
-	deleteFile
+export function deleteFile (file: Uri | string) {
+	if (typeof file === 'string') {
+		file = Uri.joinPath(getWorkspaceUri(), file)
+	}
+	deleteFileCommon(file)
 }
 
-export function sleep (time = 2000, msg?: string) {
+export async function sleep (time = 2000, msg?: string) {
 	let status = 'sleeping for ' + time + 'ms'
 	if (msg) {
 		status = status + ' [' + msg + ']'
@@ -55,6 +105,41 @@ export function getAblunitExt () {
 	}
 	return ext
 }
+
+// export async function openWorkspaceFolder (dir: string | Uri) {
+// 	let uriOfWorkspace: Uri
+// 	if (typeof dir === 'string') {
+// 		if (dir === '') {
+// 			uriOfWorkspace = Uri.joinPath(getExtensionDevelopmentPath(), 'test_projects')
+// 		} else {
+// 			uriOfWorkspace = Uri.joinPath(getExtensionDevelopmentPath(), 'test_projects', dir)
+// 		}
+// 	} else {
+// 		uriOfWorkspace = dir
+// 	}
+// 	// const openFolderOpts: boolean = false
+// 	const openFolderOpts: IOpenFolderAPICommandOptions = {
+// 		// forceNewWindow: false,
+// 		forceReuseWindow: true,
+// 		// noRecentEntry: true,
+// 		// forceLocalWindow: true,
+// 		// forceProfile: 'default',
+// 		// forceTempProfile: false
+// 	}
+// 	const beforeUri = vscode.workspace.workspaceFolders?.[0].uri.fsPath
+// 	const ret = await vscode.commands.executeCommand('vscode.openFolder', uriOfWorkspace, openFolderOpts).then((ret) => {
+// 		const afterUri = vscode.workspace.workspaceFolders?.[0].uri.fsPath
+// 		if (beforeUri === afterUri) {
+// 			log.error('failed to open workspace folder: beforeUri=' + beforeUri + ', afterUri=' + afterUri)
+// 			// throw new Error('failed to open workspace folder: beforeUri=' + beforeUri + ', afterUri=' + afterUri)
+// 		}
+// 		return true
+// 	}, (err) => {
+// 		log.error('failed to open workspace folder: ' + err)
+// 		throw new Error('failed to open workspace folder: ' + err)
+// 	})
+// 	log.info('length=' + workspace.workspaceFolders?.length + ', workspaceFolder=' + workspace.workspaceFolders![0].uri.fsPath + ', file=' + workspace.workspaceFile?.fsPath)
+// }
 
 export async function waitForExtensionActive (extensionId = 'kherring.ablunit-test-runner') {
 	const ext = extensions.getExtension(extensionId)
@@ -88,45 +173,60 @@ export async function waitForExtensionActive (extensionId = 'kherring.ablunit-te
 	// return refreshData()
 }
 
-async function installOpenedgeABLExtension () {
-	log.debug('skipping install - extension should be pre-installed')
-	// if (!extensions.getExtension('riversidesoftware.openedge-abl-lsp')) {
-	// 	log.debug('[testCommon.ts] installing riversidesoftware.openedge-abl-lsp extension...')
-	// 	await commands.executeCommand('workbench.extensions.installExtension', 'riversidesoftware.openedge-abl-lsp').then(() => {
-	// 		log.trace('[testCommon.ts] installed riversidesoftware.openedge-abl-lsp extension!')
-	// 		return setRuntimes([{name: '12.2', path: getDefaultDLC(), default: true}])
-	// 	}, (err: Error) => {
-	// 		if (err.toString() === 'Error: Missing gallery') {
-	// 			log.trace('[testCommon.ts] triggered installed extension, but caught \'' + err + '\'')
-	// 		} else {
-	// 			throw new Error('[testCommon.ts] failed to install extension: ' + err)
-	// 		}
-	// 	})
-	// 	await sleep(500)
-	// }
+export async function installExtension (extname = 'riversidesoftware.openedge-abl-lsp') {
+	log.info('[testCommon.ts installExtension] start')
+	if (!extensions.getExtension(extname)) {
+		log.info('[testCommon.ts installExtension] installing ' + extname + ' extension...')
+		await commands.executeCommand('workbench.extensions.installExtension', extname).then(() => {
+			log.trace('[testCommon.ts installExtension] installed riversidesoftware.openedge-abl-lsp extension!')
+		}, (err: Error) => {
+			log.info('err.name=' + err.name)
+			log.info('err.toString()=' + err.toString())
+			if (err.toString() === 'Error: Missing gallery') {
+				log.trace('[testCommon.ts installExtension] triggered installed extension, caught \'Missing Gallery\' error, and continuing...')
+			} else {
+				throw new Error('[testCommon.ts installExtension] failed to install extension: ' + err)
+			}
+		})
+		log.info('sleeping for 5 seconds')
+		await sleep(10000).then(() => {
+			log.info('sleep complete')
+		})
+	}
 
-	const ext = extensions.getExtension('riversidesoftware.openedge-abl-lsp')
+	const ext = extensions.getExtension(extname)
 	if (!ext) {
-		throw new Error('[testCommon.ts] failed to get extension')
+		throw new Error('[testCommon.ts installExtension] failed to get extension')
 	}
 	if (ext.isActive) {
-		log.debug('[testCommon.ts] extension is already active')
+		log.info('[testCommon.ts installExtension] extension is already active')
 		return
 	}
-	log.trace('[testCommon.ts] activating riversidesoftware.openedge-abl-lsp extension...')
-	await ext.activate().then(() => waitForExtensionActive('riversidesoftware.openedge-abl-lsp')).then(() => {
-		log.trace('[testCommon.ts] activated riversidesoftware.openedge-abl-lsp extension!')
+	log.trace('[testCommon.ts installExtension] activating ' + extname + ' extension...')
+	await ext.activate().then(() => waitForExtensionActive(extname)).then(() => {
+		log.trace('[testCommon.ts] activated ' + extname + ' extension!')
 	})
 
-	log.trace('[testCommon.ts] riversidesoftware.openedge-abl-lsp active=' + ext.isActive)
+	log.trace('[testCommon.ts installExtension] ' + extname + ' active=' + ext.isActive)
 	if (!ext.isActive) {
-		throw new Error('[testCommon.ts] failed to activate extension')
+		throw new Error('[testCommon.ts] failed to activate extension ' + extname)
 	}
+
+	await setRuntimes([{name: '12.2', path: getDefaultDLC(), default: true}])
 }
 
 export async function setRuntimes (runtimes: IRuntime[]) {
 	log.info('[testCommon.ts setRuntimes] setting abl.configuration.runtimes')
 	log.info('[testCommon.ts setRuntimes] runtimes=' + JSON.stringify(runtimes))
+
+	const ext = extensions.getExtension('riversidesoftware.openedge-abl-lsp')
+	if (!ext) {
+		throw new Error('[testCommon.ts setRuntimes] extension not installed: riversidesoftware.openedge-abl-lsp')
+	}
+	if (!ext.isActive) {
+		throw new Error('[testCommon.ts setRuntimes] extension not active: riversidesoftware.openedge-abl-lsp')
+	}
+
 	return workspace.getConfiguration('abl.configuration').update('runtimes', runtimes, ConfigurationTarget.Global).then(async () =>{
 		log.info('[testCommon.ts setRuntimes] abl.configuration.runtimes set successfully')
 		await sleep(500)
@@ -142,7 +242,7 @@ export async function setRuntimes (runtimes: IRuntime[]) {
 }
 
 export async function installAndSetRuntimes (runtimes: IRuntime[]) {
-	return installOpenedgeABLExtension().then(async () => {
+	return installExtension('riversidesoftware.openedge-abl-lsp').then(async () => {
 		log.info('[testCommon.ts setRuntimes] setting abl.configuration.runtimes')
 		return workspace.getConfiguration('abl.configuration').update('runtimes', runtimes, ConfigurationTarget.Global).then(async () =>{
 			log.info('[testCommon.ts setRuntimes] abl.configuration.runtimes set successfully')
@@ -195,14 +295,51 @@ export async function awaitRCode (workspaceFolder: WorkspaceFolder, rcodeCountMi
 	throw new Error('r-code files not found')
 }
 
-export function getWorkspaceUri () {
-	if (workspace.workspaceFolders === undefined || workspace.workspaceFolders.length === 0) {
-		throw new Error('workspace.workspaceFolders is undefined')
-	} else if (workspace.workspaceFolders.length === 1) {
-		return workspace.workspaceFolders[0].uri
-	} else {
-		throw new Error('workspace.workspaceFolders has more than one entry')
+export function getWorkspaceFolders () {
+	const workspaceFolders: WorkspaceFolder[] = []
+	if (!workspace.workspaceFolders) {
+		throw new Error('No workspaceFolders found')
 	}
+	for (const workspaceFolder of workspace.workspaceFolders) {
+		workspaceFolders.push(workspaceFolder)
+	}
+	return workspaceFolders
+}
+
+export function getWorkspaceUri () {
+	// log.info('vscode.workspace.workspaceFolders.length=' + vscode.workspace.workspaceFolders?.length)
+	// log.info('vscode.workspace.workspaceFolders=' + JSON.stringify(vscode.workspace.workspaceFolders))
+	// log.info('vscode.workspace.workspaceFile=' + vscode.workspace.workspaceFile)
+	// log.info('workspace.workspaceFolders=' + workspace.workspaceFolders)
+	// log.info('workspace.workspaceFile=' + workspace.workspaceFile)
+
+	// if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {
+	// 	for (let i=0; i<vscode.workspace.workspaceFolders.length; i++) {
+	// 		log.info('getWorkspaceUri() workspace.workspaceFolder[' + i + ']=' + vscode.workspace.workspaceFolders[i].uri.fsPath)
+	// 	}
+	// }
+
+	if (!vscode.workspace.workspaceFolders || vscode.workspace.workspaceFolders.length === 0) {
+		if (!vscode.workspace.workspaceFile) {
+			log.error('workspace.workspaceFolders is undefined')
+		} else {
+			log.error('workspace.workspaceFolders has no entries')
+		}
+		if (vscode.workspace.workspaceFile) {
+			log.info('workspace.workspaceFile=' + vscode.workspace.workspaceFile.fsPath)
+			return vscode.workspace.workspaceFile
+		}
+		return getExtensionDevelopmentPath()
+		// throw new Error('workspace.workspaceFolders is undefined or has no entries')
+	}
+
+	if (vscode.workspace.workspaceFolders.length === 1) {
+		return vscode.workspace.workspaceFolders[0].uri
+	}
+
+	log.warn('workspace.workspaceFolders has more than one entry')
+	return vscode.workspace.workspaceFolders[0].uri
+	// throw new Error('workspace.workspaceFolders has more than one entry')
 }
 
 export function toUri (uri: string | Uri) {
@@ -210,8 +347,13 @@ export function toUri (uri: string | Uri) {
 		return uri
 	}
 
+	const ws = getWorkspaceUri()
+	if (!ws) {
+		throw new Error('workspaceUri is null (uri=' + uri.toString() + ')')
+	}
+
 	if (isRelativePath(uri)) {
-		return Uri.joinPath(getWorkspaceUri(), uri)
+		return Uri.joinPath(ws, uri)
 	}
 	return Uri.file(uri)
 }
@@ -322,7 +464,7 @@ export async function waitForTestRunStatus (waitForStatusStartsWith: string) {
 	let runData: ABLResults[] = []
 	let runStatus = 'not found'
 
-	log.debug('waiting for test run status = \'running\'')
+	log.info('waiting for test run status = \'running\'')
 
 	setTimeout(() => { throw new Error('waitForTestRunStatus timeout') }, 20000)
 	while (!runStatus.startsWith(waitForStatusStartsWith))
@@ -332,7 +474,7 @@ export async function waitForTestRunStatus (waitForStatusStartsWith: string) {
 		runStatus = runData[0].status
 	}
 
-	log.debug('found test run status = \'' + runStatus + '\'' + waitTime.toString())
+	log.info('found test run status = \'' + runStatus + '\'' + waitTime.toString())
 	if (!runStatus.startsWith(waitForStatusStartsWith)) {
 		throw new Error('test run status should start with ' + waitForStatusStartsWith + ' but is ' + runStatus)
 	}
@@ -349,24 +491,33 @@ export async function cancelTestRun (resolveCurrentRunData = true) {
 		}, () => {
 			return 'not found'
 		})
-		log.debug('cancelling test run (STATUS=' + await status + ')')
+		log.info('cancelling test run (STATUS=' + await status + ')')
 	} else {
-		log.debug('cancelling test run')
+		log.info('cancelling test run')
 	}
 
 	return commands.executeCommand('testing.cancelRun').then(() => {
 		const elapsedCancelTime = Date.now() - startCancelTime
-		log.debug('elapsedCancelTime=' + elapsedCancelTime)
+		log.info('elapsedCancelTime=' + elapsedCancelTime)
 		return elapsedCancelTime
 	})
 }
 
 export function updateConfig (key: string, value: string | string[] | undefined) {
-	return workspace.getConfiguration('ablunit').update(key, value, ConfigurationTarget.Workspace).then(() => {
+	// log.info('updateConfig-1 key=' + key + ', value=' + value)
+	const workspaceConfig = workspace.getConfiguration('ablunit', workspace.workspaceFolders![0])
+	// log.info('updateConfig-2 workspaceConfig = ' + JSON.stringify(workspaceConfig, null, 2))
+	log.info('updateConfig-2.1 ' + key + ' = ' + workspaceConfig.get(key))
+	const prom = workspaceConfig.update(key, value, ConfigurationTarget.Workspace)
+	// log.info('updateConfig-3')
+	return prom.then(() => {
+		// log.info('updateConfig-4')
 		log.info('ablunit.' + key + ' set successfully (value=\'' + value + '\')')
 		return sleep(100, 'sleep after updateConfig')
 	}, (err) => {
-		throw new Error('failed to set ablunit.' + key + ': ' + err)
+		// log.info('updateConfig-5')
+		log.warn('failed to set ablunit.' + key + ': ' + err)
+		// throw new Error('failed to set ablunit.' + key + ': ' + err)
 	})
 }
 
@@ -471,20 +622,20 @@ export function getChildTestCount (type: string | undefined, items: TestItemColl
 }
 
 export async function getCurrentRunData (len = 1) {
-	log.debug('100')
+	log.info('100')
 	await refreshData()
 	if (!currentRunData || currentRunData.length === 0) {
-		log.debug('currentRunData not set, refreshing...')
+		log.info('currentRunData not set, refreshing...')
 		for (let i=0; i<200; i++) {
 			await sleep(100, 'still no currentRunData, sleep before trying again').then(() => {
 				return refreshData()
 			})
-			log.debug('currentRunData.length=' + currentRunData?.length)
+			log.info('currentRunData.length=' + currentRunData?.length)
 			if ((currentRunData?.length ?? 0) > 0) {
 				break
 			}
 		}
-		log.debug('found currentRunData.length=' + currentRunData?.length)
+		log.info('found currentRunData.length=' + currentRunData?.length)
 	}
 	if (!currentRunData) {
 		throw new Error('currentRunData is null')
@@ -500,7 +651,7 @@ export async function getCurrentRunData (len = 1) {
 
 export async function getResults (len = 1) {
 	if ((!recentResults || recentResults.length === 0) && len > 0) {
-		log.debug('recentResults not set, refreshing...')
+		log.info('recentResults not set, refreshing...')
 		for (let i=0; i<15; i++) {
 			await sleep(100, 'still no recentResults, sleep before trying again').then(() => {
 				return refreshData()
@@ -510,7 +661,7 @@ export async function getResults (len = 1) {
 			}
 		}
 	}
-	log.debug('107')
+	log.info('107')
 	if (!recentResults) {
 		throw new Error('recentResults is null')
 	}

@@ -13,17 +13,48 @@ main_block () {
 initialize () {
 	echo "[$0 ${FUNCNAME[0]}] intiailizing..."
 
-	DIRS=(".builder" ".nyc_output" "artifacts" "coverage" "dist" "out" "kherring.ablunit-test-runner")
+	DIRS=(
+		".builder"
+		".nyc_output"
+		"artifacts"
+		"coverage"
+		"dist"
+		"kherring.ablunit-test-runner"
+		"out"
+	)
 	if [ "${OS:-}" = "Windows_NT" ]; then
 		DIRS+=("C:/temp/ablunit/")
 	else
 		DIRS+=("/tmp/ablunit/")
 	fi
 
-	TEST_PROJECT_DIRS=("listings" ".builder" "build" "ablunit-output" "workspaceAblunit" "target")
+	TEST_PROJECT_DIRS=(
+		".builder"
+		"ablunit-output"
+		"build"
+		"listings"
+		"target"
+		"workspaceAblunit"
+	)
 
-	TEST_PROJECT_PATTERNS=("ablunit.json" "ablunit.log" "progress.ini" "prof.out" "prof.json" "profile.json" "protrace.*" "results.json"
-				"results.xml" "dbg_*" "*.r" "*.restore" "*.xref" "results.prof" "profiler.json" "profile.options")
+	TEST_PROJECT_PATTERNS=(
+		"*.r"
+		"*.restore"
+		"*.xref"
+		"ablunit.json"
+		"ablunit.log"
+		"dbg_*"
+		"prof.json"
+		"prof.out"
+		"profile.json"
+		"profile.options"
+		"profiler.json"
+		"progress.ini"
+		"protrace.*"
+		"results.json"
+		"results.prof"
+		"results.xml"
+	)
 	FILE_PATTERNS=("*.vsix")
 }
 

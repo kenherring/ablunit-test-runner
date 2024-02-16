@@ -1,4 +1,5 @@
 import { readFileSync } from 'fs'
+// import * as glob from 'glob'
 import { globSync } from 'glob'
 import {
 	CancellationError,
@@ -948,6 +949,7 @@ function isFileExcluded (uri: Uri, excludePatterns: RelativePattern[]) {
 	if (!workspaceFolder) {
 		return true
 	}
+	// const g = glob.globSync(relativePath, { cwd: workspaceFolder.uri.fsPath, ignore: patterns })
 	const g = globSync(relativePath, { cwd: workspaceFolder.uri.fsPath, ignore: patterns })
 	return g.length == 0
 }

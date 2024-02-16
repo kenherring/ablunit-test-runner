@@ -1,16 +1,14 @@
-import { before } from 'mocha'
-import { Uri, workspace } from 'vscode'
-import { assert, runAllTests, waitForExtensionActive } from '../testCommon'
+import { Uri, assert, runAllTests, waitForExtensionActive, workspace } from '../testCommon'
 
-const projName = 'projA'
 
-suite(projName + ' - Extension Test Suite', () => {
+export default suite('projA', () => {
 
-	before(projName + ' - before', async () => {
+	suiteSetup('projA - suiteSetup', async () => {
+		// await openWorkspaceFolder('projA')
 		await waitForExtensionActive()
 	})
 
-	test(projName + '.1 - no .vscode/ablunit-test-profile.json exists in project', async () => {
+	test('projA.1 - no .vscode/ablunit-test-profile.json exists in project', async () => {
 		await runAllTests()
 
 		const workspaceFolder = workspace.workspaceFolders![0].uri

@@ -1,4 +1,5 @@
 import { readFileSync } from 'fs'
+// import * as glob from 'glob'
 import { globSync } from 'glob'
 import {
 	CancellationError,
@@ -47,7 +48,7 @@ export async function activate (context: ExtensionContext) {
 	await createDir(contextStorageUri)
 	// const decorationProvider = new DecorationProvider()
 
-	const getExtensionReferences = () => {
+	const getExtensionTestReferences = () => {
 		let data: ABLResults[] = []
 		if (currentTestRun) {
 			data = resultData.get(currentTestRun) ?? []
@@ -63,7 +64,7 @@ export async function activate (context: ExtensionContext) {
 	}
 
 	if (process.env['ABLUNIT_TEST_RUNNER_UNIT_TESTING'] === 'true') {
-		context.subscriptions.push(commands.registerCommand('_ablunit.getExtensionTestReferences', getExtensionReferences))
+		context.subscriptions.push(commands.registerCommand('_ablunit.getExtensionTestReferences', getExtensionTestReferences))
 	}
 
 	context.subscriptions.push(ctrl)
@@ -88,8 +89,13 @@ export async function activate (context: ExtensionContext) {
 		// }),
 
 		workspace.onDidOpenTextDocument(async e => {
+			if (!e) {
+				log.error('onDidOpenTextDocument called with undefined document')
+				return
+			}
 			log.trace('onDidOpenTextDocument for ' + e.uri)
-			await updateNodeForDocument(e, 'didOpen').then(() => {
+			const prom = updateNodeForDocument(e, 'didOpen')
+			await prom.then(() => {
 				decorator.decorate(undefined, e)
 			}, (err) => {
 				log.error('failed updateNodeForDocument onDidTextDocument! err=' + err)
@@ -379,7 +385,7 @@ export async function activate (context: ExtensionContext) {
 		})
 	}
 
-	function updateNodeForDocument (e: TextDocument | TestItem | Uri, r: string) {
+	async function updateNodeForDocument (e: TextDocument | TestItem | Uri, r: string) {
 		log.info('r=' + r)
 		let u: Uri | undefined
 		if (e instanceof Uri) {
@@ -390,15 +396,13 @@ export async function activate (context: ExtensionContext) {
 		if (!u) {
 			throw new Error('updateNodeForDocument called with undefined uri')
 		}
-		log.info('updateNodeForDocument uri=' + u.fsPath)
-		const prom = updateNode(u, ctrl)
-
-		if (typeof prom === 'boolean') {
-			return new Promise(() => { return prom })
-		} else {
-			return prom.then(() => { return })
+		if (workspace.getWorkspaceFolder(u) === undefined) {
+			log.info('skipping updateNodeForDocument for file not in workspace: ' + u.fsPath)
+			return new Promise(() => { return true })
 		}
+		return await updateNode(u, ctrl)
 	}
+
 
 	async function resolveHandlerFunc (item: TestItem | undefined) {
 		if (!item) {
@@ -415,7 +419,8 @@ export async function activate (context: ExtensionContext) {
 		}
 
 		if (item.uri) {
-			return updateNodeForDocument(item, 'resolve').then(() => { return })
+			const prom = updateNodeForDocument(item, 'resolve')
+			return prom.then(() => { return })
 		}
 
 		const data = testData.get(item)
@@ -970,6 +975,7 @@ function isFileExcluded (uri: Uri, excludePatterns: RelativePattern[]) {
 	if (!workspaceFolder) {
 		return true
 	}
+	// const g = glob.globSync(relativePath, { cwd: workspaceFolder.uri.fsPath, ignore: patterns })
 	const g = globSync(relativePath, { cwd: workspaceFolder.uri.fsPath, ignore: patterns })
 	return g.length == 0
 }

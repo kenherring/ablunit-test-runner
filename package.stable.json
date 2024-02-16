@@ -75,25 +75,21 @@
 	],
 	"main": "./dist/extension.js",
 	"files": [
-		"src",
-		"../src"
+		"src"
 	],
 	"scripts": {
-		"build": "npm run webpack && tsc",
-		"rebuild": "npm run clean && npm run build",
+		"build": "npm run webpack",
+		"rebuild": "npm run clean && npm run webpack",
 		"clean": "sh -c scripts/npm_clean.sh",
-		"lint": "npx eslint ./src --ext .ts,.js",
-		"lint-fix-all": "npx eslint ./src --ext .ts,.js --fix",
+		"lint": "npx eslint ./src ./test --ext .ts,.js",
+		"lint-fix-all": "npx eslint ./src ./test --ext .ts,.js --fix",
 		"vscode:prepublish": "npm run package",
 		"package": "webpack --mode production --devtool hidden-source-map",
 		"pretest": "sh -c scripts/npm_pretest.sh",
-		"test": "node ./out/test/runTest.js",
-		"test-no-build": "sh -c scripts/npm_pretest.sh -N && node ./out/test/runTest.js",
+		"test": "vscode-test",
 		"vscode-test": "vscode-test",
-		"test:install-and-run": "cd dummy-ext && npm run test:install-and-run",
 		"watch": "webpack --mode development --watch",
 		"webpack": "webpack --mode development",
-		"test-new": "mocha -u tdd ./out/test",
 		"version": "sh -c scripts/npm_version.sh"
 	},
 	"dependencies": {
@@ -101,13 +97,13 @@
 		"xml2js": "^0.6.2"
 	},
 	"devDependencies": {
-		"@types/glob": "^8.1.0",
+		"@types/mocha": "^10.0.6",
 		"@types/node": "^16.18.34",
 		"@types/vscode": "^1.83.0",
 		"@types/xml2js": "^0.4.14",
 		"@typescript-eslint/eslint-plugin": "^6.13.2",
 		"@typescript-eslint/parser": "^6.13.2",
-		"@vscode/test-cli": "^0.0.4",
+		"@vscode/test-cli": "^0.0.6",
 		"@vscode/test-electron": "^2.3.9",
 		"eslint": "^8.55.0",
 		"mocha": "^10.2.0",
@@ -115,7 +111,10 @@
 		"mocha-multi-reporters": "^1.5.1",
 		"mocha-reporter-sonarqube": "^2.0.6",
 		"nyc": "^15.1.0",
+		"rimraf": "^5.0.5",
 		"ts-loader": "^9.5.1",
+		"ts-node": "^10.9.2",
+		"tsconfig-paths": "^4.2.0",
 		"typescript": "^5.3.3",
 		"webpack": "^5.89.0",
 		"webpack-cli": "^5.1.4"

@@ -1,0 +1,27 @@
+import { Uri, assert, doesDirExist, doesFileExist, log, runAllTests, waitForExtensionActive, workspace } from '../testCommon'
+
+export default suite('workspace0', () => {
+
+	suiteSetup('workspace0 - suiteSetup', async () => {
+		// await openWorkspaceFolder('workspace0.code-workspace')
+		await waitForExtensionActive()
+	})
+
+	test('workspace0.1 - <workspaceFolder>/ablunit.json file exists', async () => {
+		await runAllTests()
+
+		const workspaceFolder = workspace.workspaceFolders![0].uri
+		log.info('workspaceFolder=' + workspaceFolder.fsPath)
+
+		const ablunitJson = Uri.joinPath(workspaceFolder, 'ablunit.json')
+		const resultsXml = Uri.joinPath(workspaceFolder, 'results.xml')
+		const resultsJson = Uri.joinPath(workspaceFolder, 'results.json')
+		const listingsDir = Uri.joinPath(workspaceFolder, 'listings')
+
+		assert.assert(doesFileExist(ablunitJson), 'missing ablunit.json (' + ablunitJson.fsPath + ')')
+		assert.assert(doesFileExist(resultsXml), 'missing results.xml (' + resultsXml.fsPath + ')')
+		assert.assert(!doesFileExist(resultsJson), 'results.json exists and should not (' + resultsJson.fsPath + ')')
+		assert.assert(!doesDirExist(listingsDir), 'listings dir exists and should not (' + listingsDir.fsPath + ')')
+	})
+
+})

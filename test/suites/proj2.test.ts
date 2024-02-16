@@ -1,26 +1,22 @@
-import { before } from 'mocha'
-import { Uri, commands } from 'vscode'
-import { assert, getResults, getWorkspaceUri, log, refreshData, runAllTests, sleep, waitForExtensionActive } from '../testCommon'
+import { Uri, assert, commands, getResults, getWorkspaceUri, installExtension, log, refreshData, runAllTests, sleep, waitForExtensionActive } from '../testCommon'
 
+export default suite('proj2Suite', () => {
 
-const projName = 'proj2'
-const workspaceUri = getWorkspaceUri()
-
-suite(projName + ' - Extension Test Suite', () => {
-
-	before(projName + ' - before', async () => {
+	suiteSetup('proj2 - suiteSetup', async () => {
 		await waitForExtensionActive()
+		await installExtension('riversidesoftware.openedge-abl-lsp').then(() => {
+			log.info('proj2 - openedge extension installed')
+		})
 	})
 
-	test(projName + '.1 - temp/ablunit.json file exists', async () => {
+	test('proj2.1 - temp/ablunit.json file exists', async () => {
 		await runAllTests()
-
-		const ablunitJson = Uri.joinPath(workspaceUri, 'temp', 'ablunit.json')
+		const ablunitJson = Uri.joinPath(getWorkspaceUri(), 'temp', 'ablunit.json')
 		assert.fileExists(ablunitJson)
 	})
 
-	test(projName + '.2 - call stack', async () => {
-		await commands.executeCommand('vscode.open', Uri.joinPath(workspaceUri, 'src/classes/testClass2.cls'))
+	test('proj2.2 - call stack', async () => {
+		await commands.executeCommand('vscode.open', Uri.joinPath(getWorkspaceUri(), 'src/classes/testClass2.cls'))
 		await sleep(200)
 		await commands.executeCommand('testing.runCurrentFile')
 		await refreshData()
@@ -37,8 +33,8 @@ suite(projName + ' - Extension Test Suite', () => {
 		}
 	})
 
-	test(projName + '.3 - run current test suite', async () => {
-		await commands.executeCommand('vscode.open', Uri.joinPath(workspaceUri, 'src/testSuite.cls'))
+	test('proj2.3 - run current test suite', async () => {
+		await commands.executeCommand('vscode.open', Uri.joinPath(getWorkspaceUri(), 'src/testSuite.cls'))
 		await sleep(200)
 		await commands.executeCommand('testing.runCurrentFile')
 		await refreshData()

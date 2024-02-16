@@ -1,19 +1,16 @@
 import { strict as assert } from 'assert'
-import { before } from 'mocha'
 import { CancellationError, commands } from 'vscode'
-import { beforeCommon, beforeProj7, cancelTestRun, getCurrentRunData, getResults, getTestControllerItemCount, log, refreshData, refreshTests, runAllTests, sleep, waitForTestRunStatus } from '../testCommon'
-import { Duration } from '../../ABLUnitCommon'
+import { Duration, beforeProj7, cancelTestRun, getCurrentRunData, getResults, getTestControllerItemCount, log, refreshData, refreshTests, runAllTests, setupCommon, sleep, waitForTestRunStatus } from '../testCommon'
 
-const projName = 'proj7B'
+export default suite('proj7BSuite', () => {
 
-suite(projName + ' - Extension Test Suite', () => {
-
-	before(projName + ' - before', async () => {
-		beforeCommon()
+	suiteSetup('proj7B - suiteSetup', async () => {
+		// await openWorkspaceFolder('proj7_load_performance')
+		setupCommon()
 		await beforeProj7()
 	})
 
-	test(projName + '.1 - cancel test refresh', async () => {
+	test('proj7B.1 - cancel test refresh', async () => {
 		const maxCancelTime = 250
 		const maxRefreshTime = 2500
 
@@ -61,7 +58,7 @@ suite(projName + ' - Extension Test Suite', () => {
 		})
 	})
 
-	test(projName + '.2 - cancel test run while adding tests', async () => {
+	test('proj7B.2 - cancel test run while adding tests', async () => {
 		const maxCancelTime = 1000
 		const runTestTime = new Duration()
 
@@ -95,13 +92,13 @@ suite(projName + ' - Extension Test Suite', () => {
 		})
 	})
 
-	test(projName + '.3 - cancel test run while _progres is running', async () => {
+	test('proj7B.3 - cancel test run while _progres is running', async () => {
 		const maxCancelTime = 1000
 		const runProm = runAllTests().then(() => { return }, (err) => { throw err })
 
 		// wait up to 60 seconds until ABLUnit is actually running, then cancel
 		// this validates the cancel will abort the spawned _progres process
-		await waitForTestRunStatus('running command').then(async () => await sleep(1000))
+		await waitForTestRunStatus('running command').then(async () => { await sleep(500) })
 		await sleep(500)
 
 		const resArr = await getCurrentRunData()

@@ -1,17 +1,14 @@
-import { before } from 'mocha'
-import { Uri } from 'vscode'
-import { assert, getResults, getWorkspaceUri, runAllTests, waitForExtensionActive } from '../testCommon'
-import { getEnvVars } from '../../ABLUnitRun'
+import { getEnvVars } from 'ABLUnitRun'
+import { Uri, assert, getResults, getWorkspaceUri, runAllTests, waitForExtensionActive } from '../testCommon'
 
-const projName = 'proj8'
+export default suite('proj8Suite', () => {
 
-suite(projName + ' - Extension Test Suite', () => {
-
-	before(projName + ' - before', async () => {
+	suiteSetup('proj8 - suiteSetup', async () => {
+		// await openWorkspaceFolder('proj8_custom_command')
 		await waitForExtensionActive()
 	})
 
-	test(projName + '.1 - test count', async () => {
+	test('proj8.1 - test count', async () => {
 		await runAllTests()
 
 		const resultsXml = Uri.joinPath(getWorkspaceUri(), 'target', 'results.xml')
@@ -26,7 +23,7 @@ suite(projName + ' - Extension Test Suite', () => {
 		assert.passed(2)
 	})
 
-	test(projName + '.2 - getEnvVars confirm PATH is set correctly', async () => {
+	test('proj8.2 - getEnvVars confirm PATH is set correctly', async () => {
 		await runAllTests()
 		const recentResults = await getResults()
 		const res = recentResults[0]
