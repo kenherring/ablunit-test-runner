@@ -1,27 +1,9 @@
 import * as fs from 'fs'
-import { Uri, workspace } from 'vscode'
+import { Uri } from 'vscode'
 // @ts-expect-error 123
 import JSON_minify from 'node-json-minify'
-import { log } from 'ChannelLogger'
 
 export type vscodeVersion = 'stable' | 'insiders' | 'proposedapi'
-
-// TODO - could testCommon import this?
-function getWorkspaceUri () {
-	log.info('getWorkspaceUri() workspace.workspaceFolders.length=' + workspace.workspaceFolders?.length)
-	if (workspace.workspaceFolders && workspace.workspaceFolders.length > 0) {
-		for (let i=0; i<workspace.workspaceFolders.length; i++) {
-			log.info('getWorkspaceUri() workspace.workspaceFolder[' + i + ']=' + workspace.workspaceFolders[i].uri.fsPath)
-		}
-	}
-	if (workspace.workspaceFolders === undefined || workspace.workspaceFolders.length === 0) {
-		throw new Error('workspace.workspaceFolders is undefined')
-	} else if (workspace.workspaceFolders.length === 1) {
-		return workspace.workspaceFolders[0].uri
-	} else {
-		throw new Error('workspace.workspaceFolders has more than one entry')
-	}
-}
 
 export const readStrippedJsonFile = (uri: Uri | string): JSON => {
 	if (typeof uri === 'string') {
