@@ -30,6 +30,7 @@ export class ABLUnitConfig  {
 	}
 
 	async writeFile (uri: Uri, data: Uint8Array) {
+		await this.createDir(uri.with({ path: uri.path.split('/').slice(0, -1).join('/') }))
 		return workspace.fs.writeFile(uri, data)
 	}
 
