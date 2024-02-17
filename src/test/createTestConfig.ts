@@ -2,7 +2,7 @@ import * as fs from 'fs'
 import { globSync } from 'glob'
 import { MochaOptions } from 'mocha'
 import path from 'path'
-import { vscodeVersion } from 'ABLUnitCommon'
+import { vscodeVersion } from '../ABLUnitCommon'
 
 // /* ********** Notes **********
 // /* This file generates config for testing at runtime

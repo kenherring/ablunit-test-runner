@@ -6,7 +6,7 @@ import { getProfileConfig, RunConfig } from './parse/TestProfileParser'
 import { IABLUnitJson, ITestObj } from './ABLResults'
 import { CoreOptions } from './parse/config/CoreOptions'
 import { ProfilerOptions } from './parse/config/ProfilerOptions'
-import { getOpenEdgeProfileConfig, IBuildPathEntry, IDatabaseConnection } from './parse/OpenedgeProjectParser'
+import { getOpenEdgeProfileConfig, IBuildPathEntry, IDatabaseConnection, ProfileConfig } from './parse/OpenedgeProjectParser'
 
 export const ablunitConfig = new WeakMap<WorkspaceFolder, RunConfig>()
 
@@ -120,7 +120,7 @@ export class ABLUnitConfig  {
 		log.info('reading propath from openedge-project.json')
 		const parser: PropathParser = new PropathParser(this.ablunitConfig.workspaceFolder)
 
-		let conf = undefined
+		let conf: ProfileConfig | undefined = undefined
 		if (this.ablunitConfig.importOpenedgeProjectJson) {
 			conf = getOpenEdgeProfileConfig(this.ablunitConfig.workspaceFolder.uri, this.ablunitConfig.openedgeProjectProfile)
 		}
