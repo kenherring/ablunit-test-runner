@@ -193,12 +193,14 @@ export async function activate (context: ExtensionContext) {
 					log.info('starting ablunit tests for folder: ' + r.workspaceFolder.uri.fsPath, run)
 				}
 
+				log.debug('r.run start')
 				ret = await r.run(run).then(() => {
 					return true
 				}, (err) => {
 					log.error('ablunit run failed parsing results with exception: ' + err, run)
 					return false
 				})
+				log.debug('r.run after ret=' + ret)
 				if (!ret) {
 					continue
 				}
@@ -228,6 +230,8 @@ export async function activate (context: ExtensionContext) {
 				}
 			}
 
+			log.debug('ret=' + ret)
+
 			if(!ret) {
 				for (const { test } of queue) {
 					run.errored(test, new TestMessage('ablunit run failed'))
@@ -253,6 +257,7 @@ export async function activate (context: ExtensionContext) {
 			void log.notification('ablunit tests complete')
 			run.end()
 			log.trace('run.end()')
+			return
 		}
 
 		const createABLResults = async () => {
@@ -408,9 +413,9 @@ export async function activate (context: ExtensionContext) {
 	testProfileCoverage.configureHandler = configHandler
 	// testProfileDebugCoverage.configureHandler = configHandler
 
-	// if(workspace.getConfiguration('ablunit').get('discoverAllTestsOnActivate', false)) {
-	// 	await commands.executeCommand('testing.refreshTests')
-	// }
+	if(workspace.getConfiguration('ablunit').get('discoverAllTestsOnActivate', false)) {
+		await commands.executeCommand('testing.refreshTests')
+	}
 }
 
 let contextStorageUri: Uri

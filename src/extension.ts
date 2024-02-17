@@ -303,6 +303,7 @@ export async function activate (context: ExtensionContext) {
 			void log.notification('ablunit tests complete')
 			run.end()
 			log.trace('run.end()')
+			return
 		}
 
 		const createABLResults = async () => {
@@ -458,9 +459,9 @@ export async function activate (context: ExtensionContext) {
 	testProfileCoverage.configureHandler = configHandler
 	// testProfileDebugCoverage.configureHandler = configHandler
 
-	// if(workspace.getConfiguration('ablunit').get('discoverAllTestsOnActivate', false)) {
-	// 	await commands.executeCommand('testing.refreshTests')
-	// }
+	if(workspace.getConfiguration('ablunit').get('discoverAllTestsOnActivate', false)) {
+		await commands.executeCommand('testing.refreshTests')
+	}
 }
 
 let contextStorageUri: Uri

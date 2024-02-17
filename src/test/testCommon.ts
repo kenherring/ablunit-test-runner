@@ -93,6 +93,7 @@ export async function waitForExtensionActive (extensionId = 'kherring.ablunit-te
 
 async function installOpenedgeABLExtension () {
 	log.debug('skipping install - extension should be pre-installed')
+	await sleep(100)
 	return
 	// if (!extensions.getExtension('riversidesoftware.openedge-abl-lsp')) {
 	// 	log.debug('[testCommon.ts] installing riversidesoftware.openedge-abl-lsp extension...')
