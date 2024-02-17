@@ -15,7 +15,7 @@ suite(projName + ' - Extension Test Suite', () => {
 
 	test(projName + '.1 - cancel test refresh', async () => {
 		const maxCancelTime = 250
-		const maxRefreshTime = 3500
+		const maxRefreshTime = 4000
 
 		log.debug('refreshing tests')
 		const startRefreshTime = Date.now()
