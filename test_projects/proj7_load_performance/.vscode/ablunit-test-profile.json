@@ -3,6 +3,7 @@
 	"options": {
 		"output": {
 			"writeJson": true
-		}
+		},
+		"writeJson": true
 	}
 }]}
