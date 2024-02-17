@@ -73,7 +73,7 @@
 	"activationEvents": [
 		"onStartupFinished"
 	],
-"main": "./dist/extension.js",
+	"main": "./dist/extension.js",
 	"files": [
 		"src",
 		"../src"
