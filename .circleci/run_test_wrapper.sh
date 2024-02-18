@@ -83,4 +83,5 @@ save_and_print_debug_output () {
 initialize "$@"
 dbus_config
 run_tests
+rm artifacts/eslint*
 echo "$0 completed successfully!"
