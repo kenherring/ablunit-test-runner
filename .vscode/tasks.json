@@ -47,7 +47,6 @@
 			"label": "npm watch",
 			"detail": "run on workspace load",
 			"type": "npm",
-			// "hide": true,
 			"script": "watch",
 			"isBackground": true,
 			"presentation": {

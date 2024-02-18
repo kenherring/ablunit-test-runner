@@ -771,5 +771,5 @@ export async function beforeProj7 () {
 			await workspace.fs.writeFile(toUri(`src/classes/dir${i}/testClass${j}.cls`), writeContent)
 		}
 	}
-	return sleep(100)
+	return sleep(250)
 }

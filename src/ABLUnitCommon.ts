@@ -1,6 +1,5 @@
 import * as fs from 'fs'
 import { Uri } from 'vscode'
-// @ts-expect-error 123
 import JSON_minify from 'node-json-minify'
 
 export type vscodeVersion = 'stable' | 'insiders' | 'proposedapi'

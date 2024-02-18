@@ -17,7 +17,7 @@ import {
 import { ABLResults } from 'ABLResults'
 import { log } from 'ChannelLogger'
 import { getContentFromFilesystem } from 'parse/TestParserCommon'
-import { ABLTestCase, ABLTestClass, ABLTestData, ABLTestDir, ABLTestFile, ABLTestProgram, ABLTestSuite, resultData, testData } from './testTree'
+import { ABLTestCase, ABLTestClass, ABLTestData, ABLTestDir, ABLTestFile, ABLTestProgram, ABLTestSuite, resultData, testData } from 'testTree'
 // import { DecorationProvider, Decorator, decorator } from './Decorator'
 import { Decorator, decorator } from 'Decorator'
 import { FileCoverageCustom } from 'TestCoverage'
@@ -34,8 +34,6 @@ export interface IExtensionTestReferences {
 let recentResults: ABLResults[] = []
 
 export async function activate (context: ExtensionContext) {
-	// eslint-disable-next-line no-console
-	console.log('activating extension! (version=' + getExtensionVersion() + ')')
 	const ctrl = tests.createTestController('ablunitTestController', 'ABLUnit Test')
 	let currentTestRun: TestRun | undefined = undefined
 
@@ -95,7 +93,6 @@ export async function activate (context: ExtensionContext) {
 				log.error('failed updateNodeForDocument onDidTextDocument! err=' + err)
 			})
 		})
-
 		// watcher.onDidCreate(uri => { createOrUpdateFile(controller, uri) })
 		// watcher.onDidChange(uri => { createOrUpdateFile(controller, uri) })
 		// watcher.onDidDelete(uri => { controller.items.delete(uri.fsPath) })
@@ -455,6 +452,10 @@ export async function activate (context: ExtensionContext) {
 	testProfileDebug.configureHandler = configHandler
 	testProfileCoverage.configureHandler = configHandler
 	// testProfileDebugCoverage.configureHandler = configHandler
+
+	if(workspace.getConfiguration('ablunit').get('discoverAllTestsOnActivate', false)) {
+		await commands.executeCommand('testing.refreshTests')
+	}
 }
 
 let contextStorageUri: Uri

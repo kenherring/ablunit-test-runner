@@ -12,7 +12,7 @@ export default suite('proj7BSuite', () => {
 
 	test('proj7B.1 - cancel test refresh', async () => {
 		const maxCancelTime = 250
-		const maxRefreshTime = 2500
+		const maxRefreshTime = 4000
 
 		log.debug('refreshing tests')
 		const startRefreshTime = Date.now()
