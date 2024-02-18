@@ -35,7 +35,7 @@ run_tests () {
 	EXIT_CODE=0
 
 	cp "package.$ABLUNIT_TEST_RUNNER_VSCODE_VERSION.json" package.json
-	xvfb-run -a npm run test-no-build || EXIT_CODE=$?
+	xvfb-run -a npm run test || EXIT_CODE=$?
 	cp package.stable.json package.json
 
 	if [ -f /home/circleci/project/test_projects/proj0/prof.out ]; then
@@ -65,6 +65,8 @@ save_and_print_debug_output () {
 	find .vscode-test -name 'settings.json'
 	find .vscode-test -name 'settings.json' -exec cp {} artifacts \;
 
+	find . > artifacts/filelist.txt
+
 	echo "[$0 ${FUNCNAME[0]}] r-code"
 	find . -name '*.r'
 	$VERBOSE || return 0
@@ -81,4 +83,5 @@ save_and_print_debug_output () {
 initialize "$@"
 dbus_config
 run_tests
+rm artifacts/eslint*
 echo "$0 completed successfully!"

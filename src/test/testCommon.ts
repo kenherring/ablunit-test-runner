@@ -1,15 +1,15 @@
+import { strict as assertParent } from 'assert'
 import * as fs from 'fs'
-import { ABLResults } from '../ABLResults'
-import { ConfigurationTarget, TestController, WorkspaceFolder, commands, extensions, Uri, workspace, TestItemCollection } from 'vscode'
-import { Decorator } from '../Decorator'
-import { Duration, deleteFile, isRelativePath, readStrippedJsonFile } from '../ABLUnitCommon'
 import { globSync } from 'glob'
+import { ConfigurationTarget, TestController, TestItemCollection, Uri, WorkspaceFolder, commands, extensions, workspace } from 'vscode'
+import { ABLResults } from '../ABLResults'
+import { Duration, deleteFile as deleteFileCommon, isRelativePath, readStrippedJsonFile } from '../ABLUnitCommon'
+import { log as logObj } from '../ChannelLogger'
+import { Decorator } from '../Decorator'
 import { IExtensionTestReferences } from '../extension'
 import { ITestSuites } from '../parse/ResultsParser'
-import { log as logObj } from '../ChannelLogger'
-import { strict as assertParent } from 'assert'
-import { DefaultRunProfile } from '../parse/config/RunProfile'
 import { IConfigurations } from '../parse/TestProfileParser'
+import { DefaultRunProfile } from '../parse/config/RunProfile'
 
 interface IRuntime {
 	name: string,
@@ -35,8 +35,11 @@ export function beforeCommon () {
 	currentRunData = undefined
 }
 
-export {
-	deleteFile
+export function deleteFile (file: Uri | string) {
+	if (typeof file === 'string') {
+		file = Uri.joinPath(getWorkspaceUri(), file)
+	}
+	deleteFileCommon(file)
 }
 
 export function sleep (time = 2000, msg?: string) {
@@ -90,38 +93,40 @@ export async function waitForExtensionActive (extensionId = 'kherring.ablunit-te
 
 async function installOpenedgeABLExtension () {
 	log.debug('skipping install - extension should be pre-installed')
+	await sleep(100)
+	return
 	// if (!extensions.getExtension('riversidesoftware.openedge-abl-lsp')) {
 	// 	log.debug('[testCommon.ts] installing riversidesoftware.openedge-abl-lsp extension...')
 	// 	await commands.executeCommand('workbench.extensions.installExtension', 'riversidesoftware.openedge-abl-lsp').then(() => {
-	// 		log.trace('[testCommon.ts] installed riversidesoftware.openedge-abl-lsp extension!')
+	// 		log.debug('[testCommon.ts] installed riversidesoftware.openedge-abl-lsp extension!')
 	// 		return setRuntimes([{name: '12.2', path: getDefaultDLC(), default: true}])
 	// 	}, (err: Error) => {
 	// 		if (err.toString() === 'Error: Missing gallery') {
-	// 			log.trace('[testCommon.ts] triggered installed extension, but caught \'' + err + '\'')
+	// 			log.debug('[testCommon.ts] triggered installed extension, but caught \'' + err + '\'')
 	// 		} else {
 	// 			throw new Error('[testCommon.ts] failed to install extension: ' + err)
 	// 		}
 	// 	})
-	// 	await sleep(500)
+	// 	await sleep(250)
 	// }
 
-	const ext = extensions.getExtension('riversidesoftware.openedge-abl-lsp')
-	if (!ext) {
-		throw new Error('[testCommon.ts] failed to get extension')
-	}
-	if (ext.isActive) {
-		log.debug('[testCommon.ts] extension is already active')
-		return
-	}
-	log.trace('[testCommon.ts] activating riversidesoftware.openedge-abl-lsp extension...')
-	await ext.activate().then(() => waitForExtensionActive('riversidesoftware.openedge-abl-lsp')).then(() => {
-		log.trace('[testCommon.ts] activated riversidesoftware.openedge-abl-lsp extension!')
-	})
+	// const ext = extensions.getExtension('riversidesoftware.openedge-abl-lsp')
+	// if (!ext) {
+	// 	throw new Error('[testCommon.ts] failed to get extension')
+	// }
+	// if (ext.isActive) {
+	// 	log.debug('[testCommon.ts] extension is already active')
+	// 	return
+	// }
+	// log.trace('[testCommon.ts] activating riversidesoftware.openedge-abl-lsp extension...')
+	// await ext.activate().then(() => waitForExtensionActive('riversidesoftware.openedge-abl-lsp')).then(() => {
+	// 	log.trace('[testCommon.ts] activated riversidesoftware.openedge-abl-lsp extension!')
+	// })
 
-	log.trace('[testCommon.ts] riversidesoftware.openedge-abl-lsp active=' + ext.isActive)
-	if (!ext.isActive) {
-		throw new Error('[testCommon.ts] failed to activate extension')
-	}
+	// log.trace('[testCommon.ts] riversidesoftware.openedge-abl-lsp active=' + ext.isActive)
+	// if (!ext.isActive) {
+	// 	throw new Error('[testCommon.ts] failed to activate extension')
+	// }
 }
 
 export async function setRuntimes (runtimes: IRuntime[]) {
@@ -620,5 +625,5 @@ export async function beforeProj7 () {
 			await workspace.fs.writeFile(toUri(`src/classes/dir${i}/testClass${j}.cls`), writeContent)
 		}
 	}
-	return sleep(100)
+	return sleep(250)
 }

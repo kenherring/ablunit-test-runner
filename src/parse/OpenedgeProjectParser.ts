@@ -137,7 +137,7 @@ export function getOEVersion (workspaceFolder: WorkspaceFolder, openedgeProjectP
 	return undefined
 }
 
-class ProfileConfig {
+export class ProfileConfig {
 	name?: string
 	version?: string
 	oeversion?: string

@@ -8,7 +8,7 @@ import { workspace } from 'vscode'
 import { getTestConfig } from './createTestConfig'
 import { setupMocha, setupNyc } from './runTestUtils'
 import { log } from 'console'
-import { vscodeVersion } from 'ABLUnitCommon'
+import { vscodeVersion } from '../ABLUnitCommon'
 
 const file = 'index.ts'
 

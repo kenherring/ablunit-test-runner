@@ -13,7 +13,7 @@ initialize () {
 	REPO_VOLUME=/home/circleci/ablunit-test-runner
 	GIT_BRANCH=$(cd "$REPO_VOLUME" && git branch --show-current)
 	STAGED_ONLY=${STAGED_ONLY:-true}
-	VERBOSE=false
+	VERBOSE=${VERBOSE:-false}
 	${CREATE_PACKAGE:-false} && TEST_PROJECT=package
 
 	git config --global init.defaultBranch main

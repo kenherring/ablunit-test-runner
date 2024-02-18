@@ -3,7 +3,7 @@ import * as cp from 'child_process'
 import { downloadAndUnzipVSCode, resolveCliArgsFromVSCodeExecutablePath, runTests } from '@vscode/test-electron'
 import { ITestConfig, getTestConfig } from './createTestConfig'
 import { TestOptions } from '@vscode/test-electron/out/runTest'
-import { vscodeVersion } from 'ABLUnitCommon'
+import { vscodeVersion } from '../ABLUnitCommon'
 
 const file = 'runTest.ts'
 
