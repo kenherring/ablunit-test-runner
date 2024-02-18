@@ -5,6 +5,7 @@
 	"tasks": [
 		{
 			"label": "folderOpen",
+			"detail": "run on workspace load",
 			"hide": true,
 			"type": "shell",
 			"dependsOn": [
@@ -45,7 +46,6 @@
 		},
 		{
 			"label": "npm watch",
-			"detail": "run on workspace load",
 			"type": "npm",
 			"script": "watch",
 			"isBackground": true,
