@@ -19,6 +19,10 @@ initialize () {
 		WSL=true
 	fi
 	OE_VERSION=${OE_VERSION:-12.2.12}
+
+	if [ ! -d node_modules ]; then
+		npm install
+	fi
 }
 
 # load lots of code for a performance test
@@ -74,9 +78,8 @@ doBuild () {
 
 ########## MAIN BLOCK ##########
 initialize "$@"
-scripts/npm_clean.sh
 get_performance_test_code
 get_pct
 create_dbs
 doBuild
-echo "$0: completed successfully!"
+echo "[$0] completed successfully!"

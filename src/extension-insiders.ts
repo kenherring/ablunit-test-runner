@@ -29,7 +29,6 @@ export interface IExtensionTestReferences {
 let recentResults: ABLResults[] = []
 
 export async function activate (context: ExtensionContext) {
-
 	const ctrl = tests.createTestController('ablunitTestController', 'ABLUnit Test')
 	let currentTestRun: TestRun | undefined = undefined
 
@@ -254,29 +253,6 @@ export async function activate (context: ExtensionContext) {
 			const data = resultData.get(run) ?? []
 			recentResults = data
 
-			// run.coverageProvider = {
-			// 	provideFileCoverage: () => {
-			// 		log.debug('---------- provideFileCoverage ----------')
-			// 		const results = resultData.get(run)
-			// 		if (!results) { return [] }
-
-			// 		const coverage: FileCoverage[] = []
-			// 		for (const r of results ?? []) {
-			// 			r.coverage.forEach((fc) => coverage.push(fc))
-			// 		}
-			// 		log.debug('coverage.length=' + coverage.length)
-			// 		return coverage
-			// 	},
-			// 	resolveFileCoverage: (coverage: FileCoverage, cancellation: CancellationToken) => {
-			// 		log.debug('---------- resolveFileCoverage ----------')
-			// 		log.warn('resolveFileCoverage not implemented')
-
-			// 		cancellation.onCancellationRequested(() => {
-			// 			log.info('cancellation requested!')
-			// 		})
-			// 		return coverage
-			// 	}
-			// }
 
 			void log.notification('ablunit tests complete')
 			run.end()
@@ -993,11 +969,10 @@ async function createDir (uri: Uri) {
 }
 
 function logActivationEvent () {
-	const extensionVersion = getExtensionVersion()
 	if (!log) {
 		throw new Error('log is undefined')
 	}
-	log.info('activating extension! (version=' + extensionVersion + ')')
+	log.info('activating extension! (version=' + getExtensionVersion() + ')')
 }
 
 function getExtensionVersion () {

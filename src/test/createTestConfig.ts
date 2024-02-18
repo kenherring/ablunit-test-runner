@@ -2,7 +2,7 @@ import * as fs from 'fs'
 import { globSync } from 'glob'
 import { MochaOptions } from 'mocha'
 import path from 'path'
-import { vscodeVersion } from 'ABLUnitCommon'
+import { vscodeVersion } from '../ABLUnitCommon'
 
 // /* ********** Notes **********
 // /* This file generates config for testing at runtime
@@ -43,7 +43,7 @@ function getLaunchArgs (version: vscodeVersion, projName: string, projDir: strin
 	// launchArgs.push('--disable-workspace-trust')
 	launchArgs.push('--log=debug')
 	// launchArgs.push('--logsPath=./artifacts/logs')
-	launchArgs.push('--no-cached-data')
+	// launchArgs.push('--no-cached-data')
 	launchArgs.push('--skip-release-notes')
 	launchArgs.push('--skip-welcome')
 	// launchArgs.push('--trace-deprecation')
@@ -98,7 +98,7 @@ function getConfigForProject (version: vscodeVersion, projName: string, testFile
 
 	let timeout = 15000
 	if (projName === 'DebugLines' || projName.startsWith('proj7A')) {
-		timeout = 60000
+		timeout = 90000
 	}
 
 	const extensionDevelopmentPath: string = path.resolve(__dirname, '../../')

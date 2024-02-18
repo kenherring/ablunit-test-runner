@@ -7,12 +7,12 @@ set -euo pipefail
 . scripts/common.sh
 
 validate_circleci_config () {
-	echo "validating CircleCI config..." >&2
+	echo "[$0 ${FUNCNAME[0]}]"
 
-	# if ! git diff --name-only --staged | grep -q 'circleci/config.yml'; then
-	# 	echo "circleci/config.yml is not staged for commit, skipping validation..." >&2
-	# 	return 0
-	# fi
+	if ! git diff --name-only --staged | grep -q 'circleci/config.yml'; then
+		echo "circleci/config.yml is not staged for commit, skipping validation..." >&2
+		return 0
+	fi
 
 	if command -v circleci; then
 		circleci config validate
@@ -21,14 +21,24 @@ validate_circleci_config () {
 	fi
 }
 
-validate_compile () {
-	echo "compiling..." >&2
+validate_package_json () {
+	echo "[$0 ${FUNCNAME[0]}]"
+	PACK1=$(md5sum package.json)
+	PACK2=$(package.stable.json)
+	if [ "$PACK1" != "$PACK2" ]; then
+		echo "package.json and package.stable.json are different and should be the same" >&2
+		exit 1
+	fi
+}
 
+validate_compile () {
+	echo "[$0 ${FUNCNAME[0]}]"
 	npm run build
 }
 
 ########## MAIN BLOCK ##########
-validate_circleci_config
-validate_compile
-validate_version_updated
+validate_circleci_config &
+validate_compile &
+validate_version_updated &
+wait
 echo "pre-commit checks successful!" >&2
