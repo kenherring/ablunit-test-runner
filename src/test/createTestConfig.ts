@@ -43,7 +43,7 @@ function getLaunchArgs (version: vscodeVersion, projName: string, projDir: strin
 	// launchArgs.push('--disable-workspace-trust')
 	launchArgs.push('--log=debug')
 	// launchArgs.push('--logsPath=./artifacts/logs')
-	launchArgs.push('--no-cached-data')
+	// launchArgs.push('--no-cached-data')
 	launchArgs.push('--skip-release-notes')
 	launchArgs.push('--skip-welcome')
 	// launchArgs.push('--trace-deprecation')
