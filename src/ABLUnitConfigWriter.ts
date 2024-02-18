@@ -31,13 +31,11 @@ export class ABLUnitConfig  {
 
 	async writeFile (uri: Uri, data: Uint8Array) {
 		await this.createDir(uri.with({ path: uri.path.split('/').slice(0, -1).join('/') }))
-		log.info('create file ' + uri.fsPath)
 		return workspace.fs.writeFile(uri, data)
 	}
 
 	async createDir (uri: Uri) {
 		return workspace.fs.stat(uri).then(() => { return }, () => {
-			log.info('create directory ' + uri.fsPath)
 			return workspace.fs.createDirectory(uri)
 		})
 	}
