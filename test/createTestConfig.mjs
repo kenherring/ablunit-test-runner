@@ -76,13 +76,14 @@ function getTestConfig (projName) {
 		timeout = 30000
 	} else if (projName === 'DebugLines') {
 		timeout = 45000
-	} else if (projName === 'proj7A') {
+	} else if (projName === 'proj7') {
 		timeout = 60000
 	}
 
 
 	const reporterDir = path.resolve(__dirname, '..', 'artifacts', vsVersion + '-' + oeVersion)
 	fs.mkdirSync(reporterDir, { recursive: true })
+	const jsonFile = path.resolve(reporterDir, 'mocha_results_' + projName + '.json')
 	const mochaFile = path.resolve(reporterDir, 'mocha_results_junit_' + projName + '.xml')
 	const sonarFile = path.resolve(reporterDir, 'mocha_results_sonar_' + projName + '.xml')
 	const xunitFile = path.resolve(reporterDir, 'mocha_results_xunit_' + projName + '.xml')
@@ -102,8 +103,11 @@ function getTestConfig (projName) {
 			reporter: 'mocha-multi-reporters',
 			reporterOptions: {
 				// reporterEnabled: 'tap,xunit,mocha-junit-reporter',
-				reporterEnabled: 'spec,xunit,mocha-junit-reporter,mocha-sonarqube-reporter',
+				reporterEnabled: 'spec,json,xunit,mocha-junit-reporter,mocha-sonarqube-reporter',
 				// reporterEnabled: 'spec,xunit,mocha-junit-reporter,mocha-sonarqube-reporter,fullJsonStreamReporter',
+				jsonReporterOptions: {
+					output: jsonFile
+				},
 				xunitReporterOptions: {
 					output: xunitFile
 				},
