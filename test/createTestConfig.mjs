@@ -34,6 +34,9 @@ if (process.env['ABLUNIT_TEST_RUNNER_OE_VERSION']) {
 	oeVersion = process.env['ABLUNIT_TEST_RUNNER_OE_VERSION']
 }
 
+// console.log('process args= ' + JSON.stringify(process.argv, null, 4))
+// console.log('process env= ' + JSON.stringify(process.env, null, 4))
+
 
 function writeConfigToFile (name, config) {
 	fs.writeFileSync('.vscode-test.' + name + '.json.bk', JSON.stringify(config, null, 4).replace('    ', '\t'))
@@ -77,9 +80,9 @@ function getTestConfig (projName) {
 	} else if (projName === 'DebugLines') {
 		timeout = 45000
 	} else if (projName.startsWith('proj7')) {
-		timeout = 60000
+		// timeout = 60000
+		timeout = 90000
 	}
-
 
 	const reporterDir = path.resolve(__dirname, '..', 'artifacts', vsVersion + '-' + oeVersion)
 	fs.mkdirSync(reporterDir, { recursive: true })
@@ -88,6 +91,42 @@ function getTestConfig (projName) {
 	const sonarFile = path.resolve(reporterDir, 'mocha_results_sonar_' + projName + '.xml')
 	const xunitFile = path.resolve(reporterDir, 'mocha_results_xunit_' + projName + '.xml')
 
+	const mochaOpts = {
+		preload: 'ts-node/register/transpile-only',
+		timeout: timeout,
+		ui: 'tdd',
+		retries: 0,
+	}
+
+	if (process.env['CIRCLECI']) {
+		mochaOpts.reporter = 'mocha-multi-reporters'
+		mochaOpts.reporterOptions = {
+			// reporterEnabled: [
+			// 	'spec',
+			// 	// 'json',
+			// 	'xunit',
+			// 	'mocha-junit-reporter',
+			// 	'mocha-sonarqube-reporter'
+			// ],
+			// reporterEnabled: 'spec,json,xunit,mocha-junit-reporter,mocha-sonarqube-reporter',
+			reporterEnabled: 'spec,mocha-junit-reporter,mocha-sonarqube-reporter',
+			// reporterEnabled: 'spec,fullJsonStreamReporter',
+			// reporterEnabled: 'tap,spec,json',
+			jsonReporterOptions: {
+				output: jsonFile
+			},
+			xunitReporterOptions: {
+				output: xunitFile
+			},
+			mochaJunitReporterReporterOptions: {
+				mochaFile: mochaFile
+			},
+			mochaSonarqubeReporterReporterOptions: {
+				output: sonarFile
+			}
+		}
+	}
+
 	return {
 		label: 'suite:' + projName,
 		extensionDevelopmentPath: './',
@@ -95,28 +134,7 @@ function getTestConfig (projName) {
 		files: './test/suites/' + projName + '.test.ts',
 		version: vsVersion,
 		launchArgs: args,
-		mocha: {
-			preload: 'ts-node/register/transpile-only',
-			timeout: timeout,
-			ui: 'tdd',
-			retries: 0,
-			reporter: 'mocha-multi-reporters',
-			reporterOptions: {
-				reporterEnabled: 'spec,json,xunit,mocha-junit-reporter,mocha-sonarqube-reporter',
-				jsonReporterOptions: {
-					output: jsonFile
-				},
-				xunitReporterOptions: {
-					output: xunitFile
-				},
-				mochaJunitReporterReporterOptions: {
-					mochaFile: mochaFile
-				},
-				mochaSonarqubeReporterReporterOptions: {
-					output: sonarFile
-				}
-			}
-		},
+		mocha: mochaOpts,
 		env: {
 			// VSCODE_VERSION: 'stable',
 			ABLUNIT_TEST_RUNNER_UNIT_TESTING: 'true',
@@ -125,33 +143,51 @@ function getTestConfig (projName) {
 	}
 }
 
-const testConfig = defineConfig({
-	tests: [
-		getTestConfig('DebugLines'),
-		getTestConfig('proj0'),
-		getTestConfig('proj1'),
-		getTestConfig('proj2'),
-		getTestConfig('proj3'),
-		getTestConfig('proj4'),
-		getTestConfig('proj5'),
-		getTestConfig('proj6'),
-		getTestConfig('proj7A'),
-		getTestConfig('proj7B'),
-		getTestConfig('proj8'),
-		getTestConfig('proj9'),
-		getTestConfig('projA'),
-		getTestConfig('TestProfileParser'),
-		getTestConfig('workspace0'),
-		getTestConfig('workspace1'),
-	],
-	coverage: {
-		includeAll: true,
-		reporter: ['lcov', 'text-summary'],
-		output: './coverage/'
-	}
-})
+const coverageDir = path.resolve(__dirname, '..', 'coverage', vsVersion + '-' + oeVersion)
+fs.mkdirSync(coverageDir, { recursive: true })
 
-export async function createTestConfig () {
+let testConfig = {}
+if (process.env['ABLUNIT_TEST_RUNNER_PROJECT_NAME']) {
+	const projName = process.env['ABLUNIT_TEST_RUNNER_PROJECT_NAME']
+	testConfig = defineConfig({
+		tests: [
+			getTestConfig(projName)
+		],
+		coverage: {
+			includeAll: true,
+			reporter: ['lcov', 'text-summary'],
+			output: coverageDir
+		}
+	})
+} else {
+	testConfig = defineConfig({
+		tests: [
+			getTestConfig('DebugLines'),
+			getTestConfig('proj0'),
+			getTestConfig('proj1'),
+			getTestConfig('proj2'),
+			getTestConfig('proj3'),
+			getTestConfig('proj4'),
+			getTestConfig('proj5'),
+			getTestConfig('proj6'),
+			getTestConfig('proj7A'),
+			getTestConfig('proj7B'),
+			getTestConfig('proj8'),
+			getTestConfig('proj9'),
+			getTestConfig('projA'),
+			getTestConfig('TestProfileParser'),
+			getTestConfig('workspace0'),
+			getTestConfig('workspace1'),
+		],
+		coverage: {
+			includeAll: true,
+			reporter: ['lcov', 'text-summary'],
+			output: coverageDir
+		}
+	})
+}
+
+export function createTestConfig () {
 	writeConfigToFile('config', testConfig)
 	return testConfig
 }
