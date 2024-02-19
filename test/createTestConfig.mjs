@@ -59,6 +59,9 @@ function getTestConfig (projName) {
 		ws = 'test_projects/proj7_load_performance'
 	} else if(projName === 'proj8') {
 		ws = ws + '_custom_command'
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+	} else if(projName.startsWith('workspace')) {
+		ws = ws + '.code-workspace'
 	}
 
 	let timeout = 15000
@@ -100,12 +103,13 @@ const testConfig = defineConfig({
 		getTestConfig('proj5'),
 		getTestConfig('proj6'),
 		getTestConfig('proj7A'),
-		// getTestConfig('proj7B'),
+		getTestConfig('proj7B'),
 		getTestConfig('proj8'),
 		getTestConfig('proj9'),
+		getTestConfig('projA'),
 		getTestConfig('TestProfileParser'),
-		getTestConfig('workspace0.code-workspace'),
-		getTestConfig('workspace1.code-workspace'),
+		getTestConfig('workspace0'),
+		getTestConfig('workspace1'),
 	],
 	coverage: {
 		includeAll: true,

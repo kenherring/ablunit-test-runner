@@ -1,7 +1,7 @@
 import { Uri, assert, runAllTests, waitForExtensionActive, workspace } from '../testCommon'
 
 
-export default suite('projA', () => {
+export default suite('projASuite', () => {
 
 	suiteSetup('projA - suiteSetup', async () => {
 		// await openWorkspaceFolder('projA')

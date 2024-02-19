@@ -1,6 +1,6 @@
 import { Uri, assert, doesDirExist, doesFileExist, log, runAllTests, waitForExtensionActive, workspace } from '../testCommon'
 
-export default suite('workspace0', () => {
+export default suite('workspace0Suite', () => {
 
 	suiteSetup('workspace0 - suiteSetup', async () => {
 		// await openWorkspaceFolder('workspace0.code-workspace')
