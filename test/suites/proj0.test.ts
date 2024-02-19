@@ -18,21 +18,7 @@ suite('proj0Suite ', () => {
 		await vscode.commands.executeCommand('testing.clearTestResults').then()
 	})
 
-	// suiteSetup('proj0 - suiteSetup', () => {
-	// 	log.info('proj0 - suiteSetup-1')
-	// 	// await openWorkspaceFolder('proj0').then(() => { log.info('proj-0A-suiteSetup-1a') })
-	// 	// await sleep(100)
-	// 	log.info('proj0 - suiteSetup-2')
-	// 	// await waitForExtensionActive().then(() => { return sleep(250) })
-	// 	// await commands.executeCommand('testing.clearTestResults').then()
-
-
-	// })
-
 	setup('proj0 - setup-1', () => {
-		log.info('proj0 - setup-1 ' + workspace.workspaceFolders?.[0].uri.fsPath)
-		// await openWorkspaceFolder('proj0')
-		log.info('proj0 - setup-2 ' + workspace.workspaceFolders?.[0].uri.fsPath)
 		deleteFile('.vscode/ablunit-test-profile.json')
 
 		const dbUri = toUri('target/db/sp2k.db')

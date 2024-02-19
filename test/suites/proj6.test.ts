@@ -3,7 +3,6 @@ import { Uri, assert, getWorkspaceUri, runAllTests, waitForExtensionActive } fro
 export default suite('proj6Suite', () => {
 
 	suiteSetup('proj6 - suiteSetup', async () => {
-		// await openWorkspaceFolder('proj6_dot_dir')
 		await waitForExtensionActive()
 	})
 

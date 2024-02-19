@@ -3,7 +3,6 @@ import { Uri, assert, doesDirExist, doesFileExist, log, runAllTests, waitForExte
 export default suite('workspace0Suite', () => {
 
 	suiteSetup('workspace0 - suiteSetup', async () => {
-		// await openWorkspaceFolder('workspace0.code-workspace')
 		await waitForExtensionActive()
 	})
 

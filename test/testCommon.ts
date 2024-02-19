@@ -106,41 +106,6 @@ export function getAblunitExt () {
 	return ext
 }
 
-// export async function openWorkspaceFolder (dir: string | Uri) {
-// 	let uriOfWorkspace: Uri
-// 	if (typeof dir === 'string') {
-// 		if (dir === '') {
-// 			uriOfWorkspace = Uri.joinPath(getExtensionDevelopmentPath(), 'test_projects')
-// 		} else {
-// 			uriOfWorkspace = Uri.joinPath(getExtensionDevelopmentPath(), 'test_projects', dir)
-// 		}
-// 	} else {
-// 		uriOfWorkspace = dir
-// 	}
-// 	// const openFolderOpts: boolean = false
-// 	const openFolderOpts: IOpenFolderAPICommandOptions = {
-// 		// forceNewWindow: false,
-// 		forceReuseWindow: true,
-// 		// noRecentEntry: true,
-// 		// forceLocalWindow: true,
-// 		// forceProfile: 'default',
-// 		// forceTempProfile: false
-// 	}
-// 	const beforeUri = vscode.workspace.workspaceFolders?.[0].uri.fsPath
-// 	const ret = await vscode.commands.executeCommand('vscode.openFolder', uriOfWorkspace, openFolderOpts).then((ret) => {
-// 		const afterUri = vscode.workspace.workspaceFolders?.[0].uri.fsPath
-// 		if (beforeUri === afterUri) {
-// 			log.error('failed to open workspace folder: beforeUri=' + beforeUri + ', afterUri=' + afterUri)
-// 			// throw new Error('failed to open workspace folder: beforeUri=' + beforeUri + ', afterUri=' + afterUri)
-// 		}
-// 		return true
-// 	}, (err) => {
-// 		log.error('failed to open workspace folder: ' + err)
-// 		throw new Error('failed to open workspace folder: ' + err)
-// 	})
-// 	log.info('length=' + workspace.workspaceFolders?.length + ', workspaceFolder=' + workspace.workspaceFolders![0].uri.fsPath + ', file=' + workspace.workspaceFile?.fsPath)
-// }
-
 export async function waitForExtensionActive (extensionId = 'kherring.ablunit-test-runner') {
 	const ext = extensions.getExtension(extensionId)
 	if (!ext) {
@@ -341,6 +306,8 @@ export function getWorkspaceUri () {
 	return vscode.workspace.workspaceFolders[0].uri
 	// throw new Error('workspace.workspaceFolders has more than one entry')
 }
+
+export const workspaceUri = () => getWorkspaceUri()
 
 export function toUri (uri: string | Uri) {
 	if (uri instanceof Uri) {

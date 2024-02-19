@@ -8,7 +8,6 @@ import { assert, getTestCount, getWorkspaceUri, log, runAllTests, waitForExtensi
 export default suite('proj5Suite', () => {
 
 	suiteSetup('proj5_suiteSetup', async () => {
-		// await openWorkspaceFolder('proj5_suites')
 		await waitForExtensionActive()
 	})
 

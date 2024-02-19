@@ -4,7 +4,6 @@ import { Uri, assert, runAllTests, waitForExtensionActive, workspace } from '../
 export default suite('projASuite', () => {
 
 	suiteSetup('projA - suiteSetup', async () => {
-		// await openWorkspaceFolder('projA')
 		await waitForExtensionActive()
 	})
 

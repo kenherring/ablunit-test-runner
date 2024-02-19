@@ -4,7 +4,6 @@ import { Uri, assert, getResults, getWorkspaceUri, runAllTests, waitForExtension
 export default suite('proj8Suite', () => {
 
 	suiteSetup('proj8 - suiteSetup', async () => {
-		// await openWorkspaceFolder('proj8_custom_command')
 		await waitForExtensionActive()
 	})
 

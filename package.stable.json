@@ -112,7 +112,6 @@
 		"mocha-multi-reporters": "^1.5.1",
 		"mocha-reporter-sonarqube": "^2.0.6",
 		"nyc": "^15.1.0",
-		"rimraf": "^5.0.5",
 		"ts-loader": "^9.5.1",
 		"ts-node": "^10.9.2",
 		"tsconfig-paths": "^4.2.0",

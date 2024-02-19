@@ -13,6 +13,7 @@ import { assert, getWorkspaceFolders, log } from '../testCommon'
 // 		throw err
 // 	})
 // }
+
 suite('TestProfileParserSuite', () => {
 
 	test('TestProfileParser test1', () => {

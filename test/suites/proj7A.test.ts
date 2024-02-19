@@ -5,7 +5,6 @@ import { beforeProj7, getTestCount, getWorkspaceUri, runAllTests } from '../test
 export default suite('proj7ASuite', () => {
 
 	suiteSetup('proj7A - suiteSetup', async () => {
-		// await openWorkspaceFolder('proj7_load_performance')
 		await beforeProj7()
 	})
 

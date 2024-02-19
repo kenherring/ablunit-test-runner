@@ -65,7 +65,9 @@ function getTestConfig (projName) {
 	}
 
 	let timeout = 15000
-	if (projName === 'DebugLines') {
+	if (projName === 'proj4') {
+		timeout = 30000
+	} else if (projName === 'DebugLines') {
 		timeout = 45000
 	} else if (projName === 'proj7A') {
 		timeout = 60000

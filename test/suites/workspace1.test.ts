@@ -3,7 +3,6 @@ import { Uri, assert, deleteFile, doesDirExist, doesFileExist, log, runAllTests,
 export default suite('workspace1Suite', () => {
 
 	suiteSetup('workspace1 - suiteSetup', async () => {
-		// await openWorkspaceFolder('workspace1.code-workspace')
 		await waitForExtensionActive()
 
 		deleteFile('.vscode/ablunit-test-profile.json')

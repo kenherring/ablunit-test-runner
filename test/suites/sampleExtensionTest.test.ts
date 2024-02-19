@@ -5,6 +5,7 @@ import * as vscode from 'vscode'
 console.log('STARTED sampleExtensionTest.test.js')
 
 export default suite('Extension Test Suite', () => {
+
 	setup(() => {
 		console.log('[setup] STARTED Extension Test Suite')
 	})

@@ -1,5 +1,5 @@
 import * as vscode from 'vscode'
-import { assert, commands, deleteTestFiles, getTestCount, getWorkspaceUri, log, runAllTests, sleep, updateConfig, workspace } from '../testCommon'
+import { assert, deleteTestFiles, getTestCount, getWorkspaceUri, log, runAllTests, sleep, updateConfig, workspace } from '../testCommon'
 log.info('LOADING ' + __filename)
 
 suite('proj1Suite', () => {
@@ -15,52 +15,6 @@ suite('proj1Suite', () => {
 	teardown('proj1 - teardown', () => {
 		deleteTestFiles()
 	})
-
-	// suiteSetup('proj1 - suiteSetup', () => {
-	// 	log.info('proj1 - suiteSetup-1')
-	// 	// await openWorkspaceFolder('proj1')
-	// 	log.info('proj1 - suiteSetup-2')
-	// 	// return sleep(100)
-	// 	// await updateConfig('files.exclude', undefined)
-	// })
-
-	// setup('proj1 - setup', async () => {
-	// 	log.info('proj1 - setup-1')
-	// 	// await openWorkspaceFolder('proj1').then(() => { console.log('proj-1-suiteSetup-1a') })
-	// 	// await openWorkspaceFolder('proj1')
-	// 	log.info('proj1 - setup-2 workspaceFolder=' + workspace.workspaceFolders?.[0].uri.fsPath)
-	// 	await sleep(500)
-	// 	log.info('proj1 - setup-3 workspaceFolder=' + workspace.workspaceFolders?.[0].uri.fsPath)
-	// 	await sleep(500)
-	// 	log.info('proj1 - setup-4 workspaceFolder=' + workspace.workspaceFolders?.[0].uri.fsPath)
-	// 	// deleteTestFiles()
-	// })
-	// setup('proj1 - setup-2', async () => {
-	// 	log.info('proj1 - setup-2-1 workspaceFolder=' + workspace.workspaceFolders?.[0].uri.fsPath)
-	// 	await sleep(500)
-	// 	log.info('proj1 - setup-2-3 workspaceFolder=' + workspace.workspaceFolders?.[0].uri.fsPath)
-	// 	await sleep(500)
-	// 	log.info('proj1 - setup-2-4 workspaceFolder=' + workspace.workspaceFolders?.[0].uri.fsPath)
-	// })
-
-	// teardown('proj1 - teardown', () => {
-	// 	log.info('proj1 - teardown-1')
-	// 	// await sleep(100).then()
-	// 	// await updateConfig('files.exclude', undefined)
-	// })
-
-	// suiteTeardown('proj1 - suiteTeardown', () => {
-	// 	log.info('proj1 - suiteTeardown-1 workspaceFolder=' + workspace.workspaceFolders?.[0].uri.fsPath)
-	// 	// await openWorkspaceFolder('').then(() => { console.log('proj-1suiteSetup-1b') })
-	// 	// log.info('proj1 - suiteTeardown-2')
-	// 	// return sleep(100)
-	// 	// await sleep(500).then(() => { console.log('proj1 - suiteTeardown-3') })
-
-	// 	// return commands.executeCommand('workbench.action.closeWindow')
-	// 	// await commands.executeCommand('workbench.action.closeWindow')
-	// 	// await sleep(100)
-	// 	// await commands.executeCommand('workbench.action.closeWindow')
-	// })
 
 	test('proj1.0 output files exist one', () => {
 		log.info('proj1.0-1 workspaceFolder=' + workspace.workspaceFolders?.[0].uri.fsPath)

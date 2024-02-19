@@ -6,7 +6,6 @@ import { Uri, assert, awaitRCode, getDefaultDLC, getWorkspaceUri, installExtensi
 export default suite('DebugLinesSuite', () => {
 
 	suiteSetup('DebugLines - suiteSetup', async () => {
-		// await openWorkspaceFolder('DebugLines')
 		await waitForExtensionActive()
 		await installExtension('riversidesoftware.openedge-abl-lsp').then(() => {
 			log.info('post install')

@@ -5,7 +5,6 @@ import { Duration, beforeProj7, cancelTestRun, getCurrentRunData, getResults, ge
 export default suite('proj7BSuite', () => {
 
 	suiteSetup('proj7B - suiteSetup', async () => {
-		// await openWorkspaceFolder('proj7_load_performance')
 		setupCommon()
 		await beforeProj7()
 	})

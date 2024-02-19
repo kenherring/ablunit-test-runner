@@ -1,12 +1,9 @@
 import { doesDirExist } from 'ABLUnitCommon'
 import { Uri, assert, deleteFile, doesFileExist, getDefaultDLC, getSessionTempDir, getWorkspaceUri, runAllTests, setRuntimes, updateTestProfile, waitForExtensionActive } from '../testCommon'
 
-
 export default suite('proj4Suite', () => {
-	const sessionTempDir = getSessionTempDir()
 
 	suiteSetup('proj4 - suiteSetup', async () => {
-		// await openWorkspaceFolder('proj4')
 		await waitForExtensionActive()
 		await setRuntimes([{name: '11.7', path: '/psc/dlc_11.7'}, {name: '12.2', path: getDefaultDLC()}])
 		if (process.platform === 'linux') {
@@ -21,6 +18,7 @@ export default suite('proj4Suite', () => {
 	})
 
 	test('proj4.1 - Absolute Paths', async () => {
+		const sessionTempDir = getSessionTempDir()
 		const listingsDir = Uri.joinPath(sessionTempDir, 'listings')
 		const resultsXml = Uri.joinPath(sessionTempDir, 'tempDir', 'results.xml')
 		await updateTestProfile('profiler.listings', listingsDir.fsPath)

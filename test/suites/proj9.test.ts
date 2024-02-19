@@ -6,7 +6,6 @@ const testProfileBackup = () => Uri.joinPath(getWorkspaceUri(), '.vscode/ablunit
 export default suite('proj9Suite', () => {
 
 	suiteSetup('proj9 - suiteSetup', async () => {
-		// await openWorkspaceFolder('proj9')
 		await workspace.fs.copy(testProfileJson(), testProfileBackup(), { overwrite: true }).then()
 		await installExtension('riversidesoftware.openedge-abl-lsp')
 	})

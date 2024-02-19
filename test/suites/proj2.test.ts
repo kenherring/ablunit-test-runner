@@ -1,22 +1,20 @@
-import { Uri, assert, commands, getResults, getWorkspaceUri, installExtension, log, refreshData, runAllTests, sleep, waitForExtensionActive } from '../testCommon'
+import { Uri, assert, commands, getResults, installExtension, log, refreshData, runAllTests, sleep, waitForExtensionActive, workspaceUri } from '../testCommon'
 
 export default suite('proj2Suite', () => {
 
 	suiteSetup('proj2 - suiteSetup', async () => {
 		await waitForExtensionActive()
-		await installExtension('riversidesoftware.openedge-abl-lsp').then(() => {
-			log.info('proj2 - openedge extension installed')
-		})
+		await installExtension('riversidesoftware.openedge-abl-lsp')
 	})
 
 	test('proj2.1 - temp/ablunit.json file exists', async () => {
 		await runAllTests()
-		const ablunitJson = Uri.joinPath(getWorkspaceUri(), 'temp', 'ablunit.json')
+		const ablunitJson = Uri.joinPath(workspaceUri(), 'temp', 'ablunit.json')
 		assert.fileExists(ablunitJson)
 	})
 
 	test('proj2.2 - call stack', async () => {
-		await commands.executeCommand('vscode.open', Uri.joinPath(getWorkspaceUri(), 'src/classes/testClass2.cls'))
+		await commands.executeCommand('vscode.open', Uri.joinPath(workspaceUri(), 'src/classes/testClass2.cls'))
 		await sleep(200)
 		await commands.executeCommand('testing.runCurrentFile')
 		await refreshData()
@@ -33,8 +31,8 @@ export default suite('proj2Suite', () => {
 		}
 	})
 
-	test('proj2.3 - run current test suite', async () => {
-		await commands.executeCommand('vscode.open', Uri.joinPath(getWorkspaceUri(), 'src/testSuite.cls'))
+	test('proj2.3 - run current test suite', async () =>{
+		await commands.executeCommand('vscode.open', Uri.joinPath(workspaceUri(), 'src/testSuite.cls'))
 		await sleep(200)
 		await commands.executeCommand('testing.runCurrentFile')
 		await refreshData()
