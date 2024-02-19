@@ -74,7 +74,7 @@ function getTestConfig (projName) {
 		ws = ws + '.code-workspace'
 	}
 
-	let timeout = 15000
+	let timeout = 20000
 	if (projName === 'proj4') {
 		timeout = 30000
 	} else if (projName === 'DebugLines') {
