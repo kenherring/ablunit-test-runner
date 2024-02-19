@@ -1,5 +1,7 @@
-/* eslint-disable no-console */
 /* eslint-disable @typescript-eslint/ban-ts-comment */
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable no-console */
 // @ts-nocheck
 
 import { defineConfig } from '@vscode/test-cli'
@@ -37,7 +39,6 @@ function writeConfigToFile (name, config) {
 	fs.writeFileSync('.vscode-test.' + name + '.json.bk', JSON.stringify(config, null, 4).replace('    ', '\t'))
 }
 
-// eslint-disable-next-line @typescript-eslint/require-await
 function getTestConfig (projName) {
 	const args = [
 		// 'test_projects/' + projName, // workspaceFolder is set in the config
@@ -66,7 +67,6 @@ function getTestConfig (projName) {
 		ws = 'test_projects/proj7_load_performance'
 	} else if(projName === 'proj8') {
 		ws = ws + '_custom_command'
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
 	} else if(projName.startsWith('workspace')) {
 		ws = ws + '.code-workspace'
 	}
@@ -76,7 +76,7 @@ function getTestConfig (projName) {
 		timeout = 30000
 	} else if (projName === 'DebugLines') {
 		timeout = 45000
-	} else if (projName === 'proj7') {
+	} else if (projName.startsWith('proj7')) {
 		timeout = 60000
 	}
 
@@ -102,9 +102,7 @@ function getTestConfig (projName) {
 			retries: 0,
 			reporter: 'mocha-multi-reporters',
 			reporterOptions: {
-				// reporterEnabled: 'tap,xunit,mocha-junit-reporter',
 				reporterEnabled: 'spec,json,xunit,mocha-junit-reporter,mocha-sonarqube-reporter',
-				// reporterEnabled: 'spec,xunit,mocha-junit-reporter,mocha-sonarqube-reporter,fullJsonStreamReporter',
 				jsonReporterOptions: {
 					output: jsonFile
 				},
