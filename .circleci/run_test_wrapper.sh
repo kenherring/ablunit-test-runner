@@ -10,8 +10,11 @@ initialize () {
 		echo "ERROR: /root/.rssw/oedoc.bin not found"
 		exit 1
 	fi
+	ABLUNIT_TEST_RUNNER_OE_VERSION=$OE_VERSION
 
+	echo "ABLUNIT_TEST_RUNNER_OE_VERSION=$ABLUNIT_TEST_RUNNER_OE_VERSION"
 	echo "ABLUNIT_TEST_RUNNER_VSCODE_VERSION=$ABLUNIT_TEST_RUNNER_VSCODE_VERSION"
+	export ABLUNIT_TEST_RUNNER_OE_VERSION ABLUNIT_TEST_RUNNER_VSCODE_VERSION
 }
 
 dbus_config () {
@@ -83,5 +86,5 @@ save_and_print_debug_output () {
 initialize "$@"
 dbus_config
 run_tests
-rm artifacts/eslint*
+rm -f artifacts/eslint*
 echo "$0 completed successfully!"
