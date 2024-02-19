@@ -3,9 +3,11 @@
 // @ts-nocheck
 
 import { defineConfig } from '@vscode/test-cli'
-// import("@vscode/test-cli").TestConfiguration
+import { fileURLToPath } from 'url'
+import * as path from 'path'
+import * as fs from 'fs'
 
-import fs from 'fs'
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const enableExtensions = []
 enableExtensions.push('DebugLines')
 enableExtensions.push('proj2')
@@ -17,12 +19,17 @@ enableExtensions.push('proj8')
 enableExtensions.push('proj9')
 
 // let version = 'insiders'
-let version = 'stable'
+let vsVersion = 'stable'
 if (process.env['ABLUNIT_TEST_RUNNER_VSCODE_VERSION']) {
-	version = process.env['ABLUNIT_TEST_RUNNER_VSCODE_VERSION']
+	vsVersion = process.env['ABLUNIT_TEST_RUNNER_VSCODE_VERSION']
 }
-if (version !== 'insiders' && version !== 'stable') {
-	throw new Error('Invalid version: ' + version)
+if (vsVersion !== 'insiders' && vsVersion !== 'stable') {
+	throw new Error('Invalid version: ' + vsVersion)
+}
+
+let oeVersion = '12.2.12'
+if (process.env['ABLUNIT_TEST_RUNNER_OE_VERSION']) {
+	oeVersion = process.env['ABLUNIT_TEST_RUNNER_OE_VERSION']
 }
 
 
@@ -73,18 +80,40 @@ function getTestConfig (projName) {
 		timeout = 60000
 	}
 
+
+	const reporterDir = path.resolve(__dirname, '..', 'artifacts', vsVersion + '-' + oeVersion)
+	fs.mkdirSync(reporterDir, { recursive: true })
+	const mochaFile = path.resolve(reporterDir, 'mocha_results_junit_' + projName + '.xml')
+	const sonarFile = path.resolve(reporterDir, 'mocha_results_sonar_' + projName + '.xml')
+	const xunitFile = path.resolve(reporterDir, 'mocha_results_xunit_' + projName + '.xml')
+
 	return {
 		label: 'suite:' + projName,
 		extensionDevelopmentPath: './',
 		workspaceFolder: ws,
 		files: './test/suites/' + projName + '.test.ts',
-		version: version,
+		version: vsVersion,
 		launchArgs: args,
 		mocha: {
 			preload: 'ts-node/register/transpile-only',
 			timeout: timeout,
 			ui: 'tdd',
 			retries: 0,
+			reporter: 'mocha-multi-reporters',
+			reporterOptions: {
+				// reporterEnabled: 'tap,xunit,mocha-junit-reporter',
+				reporterEnabled: 'spec,xunit,mocha-junit-reporter,mocha-sonarqube-reporter',
+				// reporterEnabled: 'spec,xunit,mocha-junit-reporter,mocha-sonarqube-reporter,fullJsonStreamReporter',
+				xunitReporterOptions: {
+					output: xunitFile
+				},
+				mochaJunitReporterReporterOptions: {
+					mochaFile: mochaFile
+				},
+				mochaSonarqubeReporterReporterOptions: {
+					output: sonarFile
+				}
+			}
 		},
 		env: {
 			// VSCODE_VERSION: 'stable',
