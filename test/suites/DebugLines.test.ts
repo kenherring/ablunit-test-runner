@@ -1,7 +1,7 @@
 import { PropathParser } from 'ABLPropath'
 import { getSourceMapFromRCode } from 'parse/RCodeParser'
 import * as vscode from 'vscode'
-import { Uri, assert, awaitRCode, getDefaultDLC, getWorkspaceUri, installExtension, log, setRuntimes, sleep, waitForExtensionActive, workspace } from '../testCommon'
+import { Uri, assert, awaitRCode, getDefaultDLC, getWorkspaceUri, installExtension, log, setRuntimes, waitForExtensionActive, workspace } from '../testCommon'
 
 export default suite('DebugLinesSuite', () => {
 
@@ -13,18 +13,12 @@ export default suite('DebugLinesSuite', () => {
 		log.info('post install')
 
 		try {
-			await setRuntimes([{name: '12.2', path: getDefaultDLC(), default: true}]).then(async () => {
-				await sleep(250)
-				return true
-			})
-			await sleep(500)
+			await setRuntimes([{name: '12.2', path: getDefaultDLC(), default: true}])
 			log.info('abl.restart.langserv')
 			await vscode.commands.executeCommand('abl.restart.langserv').then(() => {
 				log.info('abl.restart.langserv complete')
 			})
-			await sleep(500)
 			const prom = awaitRCode(workspace.workspaceFolders![0], 8)
-			await sleep(500)
 			await prom.then((rcodeCount) => {
 				log.info('compile complete! rcode count = ' + rcodeCount)
 			})

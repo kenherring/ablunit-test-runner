@@ -1,6 +1,6 @@
 import * as vscode from 'vscode'
 import { DetailedCoverageCustom } from '../ExtensionImports'
-import { Uri, assert, deleteFile, doesFileExist, getResults, log, runAllTests, sleep, toUri, updateTestProfile, waitForExtensionActive, workspace } from '../testCommon'
+import { Uri, assert, deleteFile, doesFileExist, getResults, log, runAllTests, sleep, sleep2, toUri, updateTestProfile, waitForExtensionActive, workspace } from '../testCommon'
 log.info('LOADING ' + __filename)
 
 function getDetailLine (coverage: DetailedCoverageCustom[], lineNum: number) {
@@ -54,7 +54,7 @@ suite('proj0Suite ', () => {
 
 	test('proj0.1 _workspaceFolder_/ablunit.json file exists', async () => {
 		log.info('proj0.1 - output files exist - 1')
-		await sleep(100)
+		await sleep2()
 		log.info('start proj0.1')
 		await runAllTests()
 		log.info('getResults')

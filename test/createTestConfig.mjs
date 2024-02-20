@@ -153,11 +153,40 @@ if (process.env['ABLUNIT_TEST_RUNNER_PROJECT_NAME']) {
 		tests: [
 			getTestConfig(projName)
 		],
+		// coverage: {
+		// 	reporter: 'lcov'
+		// }
+
 		coverage: {
-			includeAll: true,
-			reporter: ['lcov', 'text-summary'],
+			reporter: [ 'text', 'lcov' ],
 			output: coverageDir
 		}
+
+		// coverage: {
+		// 	lcov: {
+		// 		output: coverageDir
+		// 	}
+		// }
+
+		// coverage: {
+		// 	reporter: {
+		// 		'lcov': {
+		// 			output: coverageDir
+		// 		}
+		// 	}
+		// }
+
+		// coverage: {
+		// 	lcov: {
+		// 		output: coverageDir
+		// 	},
+		// 	"text-summary": true
+		// }
+
+		// coverage: {
+		// 	reporter: ['lcov', 'text-summary'],
+		// 	output: coverageDir
+		// }
 	})
 } else {
 	testConfig = defineConfig({
@@ -180,8 +209,7 @@ if (process.env['ABLUNIT_TEST_RUNNER_PROJECT_NAME']) {
 			getTestConfig('workspace1'),
 		],
 		coverage: {
-			includeAll: true,
-			reporter: ['lcov', 'text-summary'],
+			reporter: 'lcov',
 			output: coverageDir
 		}
 	})

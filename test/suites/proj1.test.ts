@@ -1,5 +1,5 @@
 import * as vscode from 'vscode'
-import { assert, deleteTestFiles, getTestCount, getWorkspaceUri, log, runAllTests, sleep, updateConfig, workspace } from '../testCommon'
+import { assert, deleteTestFiles, getTestCount, getWorkspaceUri, log, runAllTests, updateConfig, workspace } from '../testCommon'
 log.info('LOADING ' + __filename)
 
 suite('proj1Suite', () => {
@@ -35,7 +35,6 @@ suite('proj1Suite', () => {
 	test('proj1.1 output files exist two', async () => {
 		log.info('proj1.1 - output files exist - 1')
 		assert.assert(true)
-		await sleep(100)
 		const workspaceUri = getWorkspaceUri()
 		const ablunitJson = vscode.Uri.joinPath(workspaceUri, 'ablunit.json')
 		const resultsXml = vscode.Uri.joinPath(workspaceUri, 'results.xml')
@@ -75,7 +74,6 @@ suite('proj1Suite', () => {
 
 	test('proj1.4 - run test case in file', async () => {
 		await vscode.commands.executeCommand('vscode.open', vscode.Uri.joinPath(getWorkspaceUri(), 'procedureTest.p'))
-		await sleep(200)
 		await vscode.commands.executeCommand('testing.runCurrentFile')
 
 		const resultsJson = vscode.Uri.joinPath(getWorkspaceUri(), 'results.json')

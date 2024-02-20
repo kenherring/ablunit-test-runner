@@ -45,6 +45,7 @@
 				"${workspaceFolder}/out/**/*.js"
 			]
 		},
+
 		// {
 		// 	"type": "extensionHost",
 		// 	"request": "launch",
@@ -52,6 +53,7 @@
 		// 	"testConfiguration": "${workspaceFolder}/.vscode-test.js",
 		// 	"args": ["--extensionDevelopmentPath=${workspaceFolder}"]
 		// },
+
 		// { // TODO
 		// 	"name": "Extension Tests",
 		// 	"type": "extensionHost",

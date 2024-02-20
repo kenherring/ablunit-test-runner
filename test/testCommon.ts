@@ -89,7 +89,17 @@ export function deleteFile (file: Uri | string) {
 	deleteFileCommon(file)
 }
 
-export async function sleep (time = 2000, msg?: string) {
+export async function sleep2 (time = 10, msg?: string) {
+	let status = 'sleeping for ' + time + 'ms'
+	if (msg) {
+		status = status + ' [' + msg + ']'
+	}
+	log.info(status)
+	return new Promise(resolve => setTimeout(resolve, time))
+}
+
+export async function sleep (time: number, msg?: string) {
+	time = 10
 	let status = 'sleeping for ' + time + 'ms'
 	if (msg) {
 		status = status + ' [' + msg + ']'
@@ -123,7 +133,6 @@ export async function waitForExtensionActive (extensionId = 'kherring.ablunit-te
 	if(!ext.isActive) {
 		log.info('waiting for extension to activate - should never be here!')
 		for (let i=0; i<50; i++) {
-			await sleep(100)
 			if (ext.isActive) {
 				log.info('waitied ' + (i + 1) * 100 + 'ms for extension to activate')
 				break
@@ -154,7 +163,7 @@ export async function installExtension (extname = 'riversidesoftware.openedge-ab
 			}
 		})
 		log.info('sleeping for 5 seconds')
-		await sleep(10000).then(() => {
+		await sleep(5000).then(() => {
 			log.info('sleep complete')
 		})
 	}

@@ -1,4 +1,4 @@
-import { Uri, assert, commands, getResults, installExtension, log, refreshData, runAllTests, sleep, waitForExtensionActive, workspaceUri } from '../testCommon'
+import { Uri, assert, commands, getResults, installExtension, log, refreshData, runAllTests, waitForExtensionActive, workspaceUri } from '../testCommon'
 
 export default suite('proj2Suite', () => {
 
@@ -15,7 +15,6 @@ export default suite('proj2Suite', () => {
 
 	test('proj2.2 - call stack', async () => {
 		await commands.executeCommand('vscode.open', Uri.joinPath(workspaceUri(), 'src/classes/testClass2.cls'))
-		await sleep(200)
 		await commands.executeCommand('testing.runCurrentFile')
 		await refreshData()
 		const recentResults = await getResults()
@@ -33,7 +32,6 @@ export default suite('proj2Suite', () => {
 
 	test('proj2.3 - run current test suite', async () =>{
 		await commands.executeCommand('vscode.open', Uri.joinPath(workspaceUri(), 'src/testSuite.cls'))
-		await sleep(200)
 		await commands.executeCommand('testing.runCurrentFile')
 		await refreshData()
 		const recentResults = await getResults()
