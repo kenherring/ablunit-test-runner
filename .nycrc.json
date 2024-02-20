@@ -1,2 +1,29 @@
 {
+    "extends": "@istanbuljs/nyc-config-typescript",
+    "all": true,
+    "check-coverage": true,
+    "reporter": [
+        "text",
+        "text-summary",
+        "lcov"
+    ],
+    "reportDir": "coverage",
+    "zz4-require": [
+        "source-map-support/register",
+        "tsconfig-paths/register"
+    ],
+    "sourceMap": false,
+    "instrument": false,
+
+
+    "zz1-require": [ "source-map-support/register" ],
+    "zz2-require": [ "ts-node/register" ],
+    "zz3-require": [ "ts-node/register/transpile-only" ],
+    "zzz-include": [
+        "src/**",
+        "test/**"
+    ],
+    "zzz-sourceMap": false,
+    "zzz-instrument": false,
+    "zzz-excludeAfterRemap": true
 }

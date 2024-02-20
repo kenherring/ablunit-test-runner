@@ -99,13 +99,13 @@ export async function sleep2 (time = 10, msg?: string) {
 }
 
 export async function sleep (time: number, msg?: string) {
-	time = 10
-	let status = 'sleeping for ' + time + 'ms'
+	const timeActual = 50
+	let status = 'sleeping for ' + timeActual + 'ms (orig=' + time + 'ms)'
 	if (msg) {
 		status = status + ' [' + msg + ']'
 	}
 	log.info(status)
-	return new Promise(resolve => setTimeout(resolve, time))
+	return new Promise(resolve => setTimeout(resolve, timeActual))
 }
 
 export function getAblunitExt () {

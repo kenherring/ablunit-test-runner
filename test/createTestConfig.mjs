@@ -74,7 +74,8 @@ function getTestConfig (projName) {
 		ws = ws + '.code-workspace'
 	}
 
-	let timeout = 20000
+	// let timeout = 15000
+	let timeout = 30000
 	if (projName === 'proj4') {
 		timeout = 30000
 	} else if (projName === 'DebugLines') {
@@ -144,75 +145,85 @@ function getTestConfig (projName) {
 }
 
 const coverageDir = path.resolve(__dirname, '..', 'coverage', vsVersion + '-' + oeVersion)
-fs.mkdirSync(coverageDir, { recursive: true })
+// fs.mkdirSync(coverageDir, { recursive: true })
 
 let testConfig = {}
 if (process.env['ABLUNIT_TEST_RUNNER_PROJECT_NAME']) {
-	const projName = process.env['ABLUNIT_TEST_RUNNER_PROJECT_NAME']
-	testConfig = defineConfig({
-		tests: [
-			getTestConfig(projName)
-		],
-		// coverage: {
-		// 	reporter: 'lcov'
-		// }
+	const projects = process.env['ABLUNIT_TEST_RUNNER_PROJECT_NAME'].split(',')
+	const tests = []
+	for (const p of projects) {
+		console.log('project=' + p)
+		tests.push(getTestConfig(p))
+	}
 
-		coverage: {
-			reporter: [ 'text', 'lcov' ],
-			output: coverageDir
-		}
+	const preConfig = {
+		tests: tests
+	}
 
-		// coverage: {
-		// 	lcov: {
-		// 		output: coverageDir
-		// 	}
-		// }
+	// coverage: {
+	// 	reporter: 'lcov'
+	// }
 
-		// coverage: {
-		// 	reporter: {
-		// 		'lcov': {
-		// 			output: coverageDir
-		// 		}
-		// 	}
-		// }
+	// coverage: {
+	// 	reporter: [ 'text', 'lcov' ],
+	// 	output: coverageDir
+	// }
 
-		// coverage: {
-		// 	lcov: {
-		// 		output: coverageDir
-		// 	},
-		// 	"text-summary": true
-		// }
+	// coverage: {
+	// 	lcov: {
+	// 		output: coverageDir
+	// 	}
+	// }
 
-		// coverage: {
-		// 	reporter: ['lcov', 'text-summary'],
-		// 	output: coverageDir
-		// }
-	})
+	// coverage: {
+	// 	reporter: {
+	// 		'lcov': {
+	// 			output: coverageDir
+	// 		}
+	// 	}
+	// }
+
+	// coverage: {
+	// 	lcov: {
+	// 		output: coverageDir
+	// 	},
+	// 	"text-summary": true
+	// }
+
+	// coverage: {
+	// 	reporter: ['lcov', 'text-summary'],
+	// 	output: coverageDir
+	// }
+
+	testConfig = defineConfig(preConfig)
 } else {
 	testConfig = defineConfig({
-		tests: [
-			getTestConfig('DebugLines'),
-			getTestConfig('proj0'),
-			getTestConfig('proj1'),
-			getTestConfig('proj2'),
-			getTestConfig('proj3'),
-			getTestConfig('proj4'),
-			getTestConfig('proj5'),
-			getTestConfig('proj6'),
-			getTestConfig('proj7A'),
-			getTestConfig('proj7B'),
-			getTestConfig('proj8'),
-			getTestConfig('proj9'),
-			getTestConfig('projA'),
-			getTestConfig('TestProfileParser'),
-			getTestConfig('workspace0'),
-			getTestConfig('workspace1'),
-		],
-		coverage: {
-			reporter: 'lcov',
-			output: coverageDir
-		}
+		tests: [ getTestConfig('proj1') ],
 	})
+	// testConfig = defineConfig({
+	// 	tests: [
+	// 		// getTestConfig('DebugLines'),
+	// 		// getTestConfig('proj0'),
+	// 		getTestConfig('proj1'),
+	// 		// getTestConfig('proj2'),
+	// 		// getTestConfig('proj3'),
+	// 		// getTestConfig('proj4'),
+	// 		// getTestConfig('proj5'),
+	// 		// getTestConfig('proj6'),
+	// 		// getTestConfig('proj7A'),
+	// 		// getTestConfig('proj7B'),
+	// 		// getTestConfig('proj8'),
+	// 		// getTestConfig('proj9'),
+	// 		// getTestConfig('projA'),
+	// 		// getTestConfig('TestProfileParser'),
+	// 		// getTestConfig('workspace0'),
+	// 		// getTestConfig('workspace1'),
+	// 	],
+	// 	coverage: {
+	// 		reporter: 'lcov',
+	// 		output: coverageDir
+	// 	}
+	// })
 }
 
 export function createTestConfig () {

@@ -21,6 +21,7 @@ import { ABLTestCase, ABLTestClass, ABLTestData, ABLTestDir, ABLTestFile, ABLTes
 // import { DecorationProvider, Decorator, decorator } from './Decorator'
 import { Decorator, decorator } from 'Decorator'
 import { FileCoverageCustom } from 'TestCoverage'
+import 'source-map-support/register'
 
 class FileCoverage extends FileCoverageCustom {}
 

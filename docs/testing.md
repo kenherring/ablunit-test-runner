@@ -52,10 +52,17 @@ The follow can be used to execute the test suites.
 * `npm test` or `npm run vscode-test`
 * `docker/run_tests.sh`
 
-<!--
+## Test Commands
 
 ```bash
-tsc -p test/tsconfig.json
-```
+ABLUNIT_TEST_RUNNER_PROJECT_NAME=proj1 npm test
+ABLUNIT_TEST_RUNNER_PROJECT_NAME=proj1,proj2 npm test
+ABLUNIT_TEST_RUNNER_PROJECT_NAME=proj1 npm test -- --coverage
 
->
+npm test -- --coverage
+npm run test:coverage
+
+NODE_OPTIONS=--enable-source-maps \
+  ABLUNIT_TEST_RUNNER_PROJECT_NAME=proj1 \
+  npm test -- --coverage
+```

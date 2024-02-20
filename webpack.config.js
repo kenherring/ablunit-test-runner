@@ -12,7 +12,7 @@ const config = {
 		level: 'log'
 	},
 	devtool: 'source-map', // https://code.visualstudio.com/docs/nodejs/nodejs-debugging#_tool-configuration
-	// devtool: 'internal-source-map', // https://code.visualstudio.com/docs/nodejs/nodejs-debugging#_tool-configuration
+	// devtool: 'inline-source-map', // https://code.visualstudio.com/docs/nodejs/nodejs-debugging#_tool-configuration
 	entry: {
 		'extension': './src/extension.ts',
 		'extension-insiders': './src/extension-insiders.ts',
