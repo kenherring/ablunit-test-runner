@@ -15,12 +15,14 @@
 			"WebWorker"
 		],
 		"baseUrl": "./",
-		"outDir": "out",
+		"outDir": "dist",
+		// "outDir": "out",
 		"paths": {
 			"*": [ "src/*" ]
 		},
 		"sourceMap": true,
 		// "inlineSourceMap": true,
+		// "sourceRoot": "./",
 		"strict": true,
 		"alwaysStrict": true,
 		"esModuleInterop": true,

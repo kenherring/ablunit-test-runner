@@ -74,6 +74,7 @@
 		"onStartupFinished"
 	],
 	"main": "./dist/extension.js",
+	"main-2": "./src/extension.ts",
 	"files": [
 		"src"
 	],
@@ -102,12 +103,14 @@
 		"@istanbuljs/nyc-config-typescript": "^1.0.2",
 		"@types/mocha": "^10.0.6",
 		"@types/node": "^16.18.34",
+		"@types/source-map-support": "^0.5.10",
 		"@types/vscode": "^1.83.0",
 		"@types/xml2js": "^0.4.14",
 		"@typescript-eslint/eslint-plugin": "^6.13.2",
 		"@typescript-eslint/parser": "^6.13.2",
 		"@vscode/test-cli": "^0.0.6",
 		"@vscode/test-electron": "^2.3.9",
+		"cross-env": "^7.0.3",
 		"eslint": "^8.55.0",
 		"mocha": "^10.2.0",
 		"mocha-junit-reporter": "^2.2.1",

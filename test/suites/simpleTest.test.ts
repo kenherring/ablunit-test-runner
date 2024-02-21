@@ -3,7 +3,7 @@ import { assert, log, sleep } from '../testCommon'
 
 log.debug('STARTED simpleTest.test.js')
 
-export function simpleTestSuite () {
+suite ('simpleTestSuite', () => {
 
 	suiteTeardown(() => {
 		log.info('suiteTeardown - simpleSuite complete')
@@ -23,4 +23,4 @@ export function simpleTestSuite () {
 		// assert.strictEqual(-1, [1, 2, 3].indexOf(1))
 		await sleep(60).then()
 	})
-}
+})

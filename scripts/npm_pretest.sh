@@ -82,4 +82,5 @@ get_performance_test_code
 get_pct
 create_dbs
 doBuild
+rm -rf artifacts coverage
 echo "[$0] completed successfully!"

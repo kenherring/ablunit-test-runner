@@ -6,6 +6,7 @@
 
 import { defineConfig } from '@vscode/test-cli'
 import { fileURLToPath } from 'url'
+import * as glob from 'glob'
 import * as path from 'path'
 import * as fs from 'fs'
 
@@ -45,7 +46,7 @@ function writeConfigToFile (name, config) {
 function getTestConfig (projName) {
 	const args = [
 		// 'test_projects/' + projName, // workspaceFolder is set in the config
-		'--disable-gpu',
+		// '--disable-gpu',
 		// '--reuse-window',
 		// '--user-data-dir=./test_projects/' + projName + '/.vscode-data/',
 		// '--profile=' + projName,
@@ -56,8 +57,10 @@ function getTestConfig (projName) {
 		// '--verbose',
 	]
 	if (!enableExtensions.includes(projName)) {
-		args.push('--disable-extensions')
+		// args.push('--disable-extensions')
 	}
+	// args.push('--enable-source-maps')
+	// args.push('--produce-source-map')
 
 	let ws = './test_projects/' + projName
 	if (projName === 'proj3') {
@@ -93,10 +96,25 @@ function getTestConfig (projName) {
 	const xunitFile = path.resolve(reporterDir, 'mocha_results_xunit_' + projName + '.xml')
 
 	const mochaOpts = {
-		preload: 'ts-node/register/transpile-only',
+		preload: [
+			// 'source-map-support',
+			// 'ts-node/register',
+			'ts-node/register/transpile-only',
+			// 'source-map-support',
+			// 'source-map-support/register',
+			// 'source-map-support/register-hook-require',
+			// './dist/extension.js',
+		],
 		timeout: timeout,
 		ui: 'tdd',
 		retries: 0,
+		// recursive: true,
+		// require: [
+		// 	// './dist/extension.js',
+		// 	// 'ts-node/register',
+		// 	// 'source-map-support/register',
+		// 	// 	'source-map-support/register-hook-require',
+		// ]
 	}
 
 	if (process.env['CIRCLECI']) {
@@ -110,9 +128,10 @@ function getTestConfig (projName) {
 			// 	'mocha-sonarqube-reporter'
 			// ],
 			// reporterEnabled: 'spec,json,xunit,mocha-junit-reporter,mocha-sonarqube-reporter',
-			reporterEnabled: 'spec,mocha-junit-reporter,mocha-sonarqube-reporter',
+			// reporterEnabled: 'spec,mocha-junit-reporter,mocha-sonarqube-reporter',
 			// reporterEnabled: 'spec,fullJsonStreamReporter',
 			// reporterEnabled: 'tap,spec,json',
+			reporterEnabled: 'spec',
 			jsonReporterOptions: {
 				output: jsonFile
 			},
@@ -139,92 +158,60 @@ function getTestConfig (projName) {
 		env: {
 			// VSCODE_VERSION: 'stable',
 			ABLUNIT_TEST_RUNNER_UNIT_TESTING: 'true',
-			VSCODE_SKIP_PRELAUNCH: '1'
+			// VSCODE_SKIP_PRELAUNCH: '1',
+			// NODE_OPTIONS: [
+			// 	// '--enable-source-maps',
+			// 	// '--produce-source-map',
+			// 	// '--register source-map-support/register',
+			// 	'--require source-map-support/register',
+			// ],
+			// NODE_OPTIONS: '--produce-source-map',
 		}
 	}
 }
 
 const coverageDir = path.resolve(__dirname, '..', 'coverage', vsVersion + '-' + oeVersion)
-// fs.mkdirSync(coverageDir, { recursive: true })
-
-let testConfig = {}
-if (process.env['ABLUNIT_TEST_RUNNER_PROJECT_NAME']) {
-	const projects = process.env['ABLUNIT_TEST_RUNNER_PROJECT_NAME'].split(',')
-	const tests = []
-	for (const p of projects) {
-		console.log('project=' + p)
-		tests.push(getTestConfig(p))
-	}
-
-	const preConfig = {
-		tests: tests
-	}
-
-	// coverage: {
-	// 	reporter: 'lcov'
-	// }
-
-	// coverage: {
-	// 	reporter: [ 'text', 'lcov' ],
-	// 	output: coverageDir
-	// }
-
-	// coverage: {
-	// 	lcov: {
-	// 		output: coverageDir
-	// 	}
-	// }
-
-	// coverage: {
-	// 	reporter: {
-	// 		'lcov': {
-	// 			output: coverageDir
-	// 		}
-	// 	}
-	// }
-
-	// coverage: {
-	// 	lcov: {
-	// 		output: coverageDir
-	// 	},
-	// 	"text-summary": true
-	// }
-
-	// coverage: {
-	// 	reporter: ['lcov', 'text-summary'],
-	// 	output: coverageDir
-	// }
-
-	testConfig = defineConfig(preConfig)
-} else {
-	testConfig = defineConfig({
-		tests: [ getTestConfig('proj1') ],
-	})
-	// testConfig = defineConfig({
-	// 	tests: [
-	// 		// getTestConfig('DebugLines'),
-	// 		// getTestConfig('proj0'),
-	// 		getTestConfig('proj1'),
-	// 		// getTestConfig('proj2'),
-	// 		// getTestConfig('proj3'),
-	// 		// getTestConfig('proj4'),
-	// 		// getTestConfig('proj5'),
-	// 		// getTestConfig('proj6'),
-	// 		// getTestConfig('proj7A'),
-	// 		// getTestConfig('proj7B'),
-	// 		// getTestConfig('proj8'),
-	// 		// getTestConfig('proj9'),
-	// 		// getTestConfig('projA'),
-	// 		// getTestConfig('TestProfileParser'),
-	// 		// getTestConfig('workspace0'),
-	// 		// getTestConfig('workspace1'),
-	// 	],
-	// 	coverage: {
-	// 		reporter: 'lcov',
-	// 		output: coverageDir
-	// 	}
-	// })
+fs.mkdirSync(coverageDir, { recursive: true })
+const coverageOpts = {
+	// reporter: [
+	// 	'text',
+	// 	// 'lcov'
+	// ],
+	// output: coverageDir,
+	// includeAll: true,
+	// include: [
+	// 	// './**/*.js',
+	// 	// './**/*.ts',
+	// 	// '**/*.js',
+	// 	// '**/*.ts',
+	// ]
+	// cache: false,
+	// 'produce-source-map': true,
+	// 'enable-source-maps': true,
+	// sourceMap: false,
+	// instrument: false,
 }
+
+let tests = []
+if (process.env['ABLUNIT_TEST_RUNNER_PROJECT_NAME']) {
+	const projName = process.env['ABLUNIT_TEST_RUNNER_PROJECT_NAME']
+	tests.push(getTestConfig(projName))
+} else {
+	const g = glob.globSync('test/suites/*.test.ts')
+	for (const f of g) {
+		// if (path.basename(f, '.test.ts') === 'proj0' || path.basename(f, '.test.ts') === 'proj1') {
+		if (path.basename(f, '.test.ts') === 'proj1') {
+			// console.log('f=' + f + ', basename=' + path.basename(f, '.test.ts'))
+			tests.push(getTestConfig(path.basename(f, '.test.ts')))
+		}
+		// tests.push(getTestConfig(path.basename(f, '.test.ts')))
+	}
+}
+
+const testConfig = defineConfig({
+	tests: tests.reverse(),
+	// coveage: coverageOpts
+})
 
 export function createTestConfig () {
 	writeConfigToFile('config', testConfig)

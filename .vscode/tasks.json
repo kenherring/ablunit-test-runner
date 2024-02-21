@@ -19,7 +19,7 @@
 				"group": "build-task",
 			},
 			"runOptions": {
-				"runOn": "folderOpen"
+				// "runOn": "folderOpen"
 			}
 		},
 		{

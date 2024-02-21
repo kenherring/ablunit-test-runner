@@ -1,3 +1,7 @@
+// import sms from 'source-map-support'
+// // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+// sms.install({ hookRequire: true })
+
 import { readFileSync } from 'fs'
 import { globSync } from 'glob'
 import {
@@ -14,14 +18,14 @@ import {
 	extensions,
 	tests, window, workspace
 } from 'vscode'
-import { ABLResults } from 'ABLResults'
-import { log } from 'ChannelLogger'
-import { getContentFromFilesystem } from 'parse/TestParserCommon'
-import { ABLTestCase, ABLTestClass, ABLTestData, ABLTestDir, ABLTestFile, ABLTestProgram, ABLTestSuite, resultData, testData } from 'testTree'
+import { ABLResults } from './ABLResults'
+import { log } from './ChannelLogger'
+import { getContentFromFilesystem } from './parse/TestParserCommon'
+import { ABLTestCase, ABLTestClass, ABLTestData, ABLTestDir, ABLTestFile, ABLTestProgram, ABLTestSuite, resultData, testData } from './testTree'
 // import { DecorationProvider, Decorator, decorator } from './Decorator'
-import { Decorator, decorator } from 'Decorator'
-import { FileCoverageCustom } from 'TestCoverage'
-import 'source-map-support/register'
+import { Decorator, decorator } from './Decorator'
+import { FileCoverageCustom } from './TestCoverage'
+// import 'source-map-support/register'
 
 class FileCoverage extends FileCoverageCustom {}
 

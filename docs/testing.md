@@ -66,3 +66,7 @@ NODE_OPTIONS=--enable-source-maps \
   ABLUNIT_TEST_RUNNER_PROJECT_NAME=proj1 \
   npm test -- --coverage
 ```
+
+```bash
+npm run clean; export NODE_OPTIONS=['--enable-source-maps','--register=source-map-support/register','--produce-source-map']; npm test -- --coverage
+```

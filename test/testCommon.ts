@@ -98,14 +98,17 @@ export async function sleep2 (time = 10, msg?: string) {
 	return new Promise(resolve => setTimeout(resolve, time))
 }
 
-export async function sleep (time: number, msg?: string) {
-	const timeActual = 50
-	let status = 'sleeping for ' + timeActual + 'ms (orig=' + time + 'ms)'
+export async function sleep (requestedTime: number, msg?: string) {
+	const time = requestedTime
+	let status = 'sleeping for ' + time + 'ms'
+	if (time !== requestedTime) {
+		status += ' (orig=' + requestedTime + 'ms)'
+	}
 	if (msg) {
 		status = status + ' [' + msg + ']'
 	}
 	log.info(status)
-	return new Promise(resolve => setTimeout(resolve, timeActual))
+	return new Promise(resolve => setTimeout(resolve, time))
 }
 
 export function getAblunitExt () {
@@ -489,7 +492,7 @@ export function updateConfig (key: string, value: string | string[] | undefined)
 	return prom.then(() => {
 		// log.info('updateConfig-4')
 		log.info('ablunit.' + key + ' set successfully (value=\'' + value + '\')')
-		return sleep(100, 'sleep after updateConfig')
+		// return sleep2(100, 'sleep after updateConfig')
 	}, (err) => {
 		// log.info('updateConfig-5')
 		log.warn('failed to set ablunit.' + key + ': ' + err)
