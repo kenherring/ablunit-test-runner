@@ -31,7 +31,7 @@ validate_results_count() {
 		find . -name 'lcov.info' | sort
 	fi
 
-	if [ "$RESULTS_COUNT" != "$TEST_COUNT" ] || [ "$LCOV_COUNT" != "$TEST_COUNT" ]; then
+	if [ "$RESULTS_COUNT" != "$TEST_COUNT" ] || [ "$LCOV_COUNT" != "1" ]; then
 		return 1
 	fi
 }

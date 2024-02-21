@@ -74,7 +74,6 @@
 		"onStartupFinished"
 	],
 	"main": "./dist/extension.js",
-	"main-2": "./src/extension.ts",
 	"files": [
 		"src"
 	],
@@ -216,6 +215,7 @@
 		]
 	},
 	"nyc": {
-		"extension": [ ".js", ".ts" ]
+		"extension": [ ".js", ".ts" ],
+		"exclude-after-remap": true
 	}
 }

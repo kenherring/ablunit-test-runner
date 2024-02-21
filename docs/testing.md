@@ -70,3 +70,22 @@ NODE_OPTIONS=--enable-source-maps \
 ```bash
 npm run clean; export NODE_OPTIONS=['--enable-source-maps','--register=source-map-support/register','--produce-source-map']; npm test -- --coverage
 ```
+
+## Test Cases
+
+* Does the vscode-extension-test-runner work?  Validate run, debug, and coverage.
+* Does the vscode-test-cli work?
+  * `npm test`
+  * `npm run test:coverage`
+* Do tests run successfully in docker?
+  * `docker/run_tests.sh -P`
+  * `docker/run_tests.sh`
+  * `docker/run_tests.sh -i`
+  * `docker/run_tests.sh -p proj0,proj1`
+  * `docker/run_tests.sh -o 12.7`
+  * `docker/run_tests.sh -o 12.7 -i`
+  * `docker/run_tests.sh -o 12.7 -p proj0,proj1`
+* Does the repo do a clean build?
+  * `npm run clean && npm test`
+* Does the repo do a fresh setup?
+  * `git clean -fdx && npm i && npm test`

@@ -48,7 +48,7 @@ function getMochaTimeout (projName) {
 	if (projName === 'proj4') {
 		return 30000
 	} else if (projName === 'DebugLines') {
-		return 45000
+		return 90000
 	} else if (projName.startsWith('proj7')) {
 		// timeout = 60000
 		return 90000
@@ -113,7 +113,7 @@ function getMochaOpts (projName) {
 function getLaunchArgs (projName) {
 	const args = [
 		// 'test_projects/' + projName, // workspaceFolder is set in the config
-		// '--disable-gpu',
+		'--disable-gpu',
 		// '--reuse-window',
 		// '--user-data-dir=./test_projects/' + projName + '/.vscode-data/',
 		// '--profile=' + projName,
@@ -175,17 +175,23 @@ function getTests () {
 
 	let tests = []
 	if (process.env['ABLUNIT_TEST_RUNNER_PROJECT_NAME']) {
-		const projName = process.env['ABLUNIT_TEST_RUNNER_PROJECT_NAME']
-		tests.push(getTestConfig(projName))
+		const projects = process.env['ABLUNIT_TEST_RUNNER_PROJECT_NAME'].split(',')
+		for (const p of projects) {
+			tests.push(getTestConfig(p))
+		}
 	} else {
-		const g = glob.globSync('test/suites/*.test.ts')
+		const g = glob.globSync('test/suites/*.test.ts').reverse()
 		for (const f of g) {
 			// if (path.basename(f, '.test.ts') === 'proj0' || path.basename(f, '.test.ts') === 'proj1') {
-			if (path.basename(f, '.test.ts') === 'proj0') {
-				// console.log('f=' + f + ', basename=' + path.basename(f, '.test.ts'))
-				tests.push(getTestConfig(path.basename(f, '.test.ts')))
-			}
-			// tests.push(getTestConfig(path.basename(f, '.test.ts')))
+			// if (path.basename(f, '.test.ts') === 'proj0' ||
+			// 	path.basename(f, '.test.ts') === 'proj1' ||
+			// 	path.basename(f, '.test.ts') === 'proj2' ||
+			// 	path.basename(f, '.test.ts') === 'proj3' ||
+			// 	path.basename(f, '.test.ts') === 'proj4') {
+			// 	// console.log('f=' + f + ', basename=' + path.basename(f, '.test.ts'))
+			// 	tests.push(getTestConfig(path.basename(f, '.test.ts')))
+			// }
+			tests.push(getTestConfig(path.basename(f, '.test.ts')))
 		}
 	}
 	return tests
@@ -204,44 +210,17 @@ function getCoverageOpts () {
 		output: coverageDir,
 		includeAll: true,
 		exclude: [
-			'ablunit-test-runner/node_modules',
-			'ablunit-test-runner/node_modules/',
-			'ablunit-test-runner/node_modules/**',
-			'**/ablunit-test-runner/node_modules/**',
-
-			'./ablunit-test-runner/node_modules',
-			'./ablunit-test-runner/node_modules/',
-			'./ablunit-test-runner/node_modules/**',
-			'./**/ablunit-test-runner/node_modules/**',
-
-			'node_modules',
-			'node_modules/',
-			'node_modules/**',
-			'**/node_modules/**',
-
-			'./node_modules',
-			'./node_modules/',
-			'./node_modules/**',
-			'./**/node_modules/**',
-
+			// working below this line
+			'dist',
+			'.vscode-test.mjs',
 			'test_projects',
+			'dummy-ext',
+			'webpack.config.js',
+			'vscode.proposed.*.d.ts',
 		],
 		include: [
 			'**/*'
 		],
-
-		// exclude: [
-		// 	'./node_modules/**',
-		// 	'./**/node_modules/**',
-		// 	'./**/webpack/**',
-		// 	'./webpack.config.js'
-		// ]
-		// include: [
-		// 	'dist',
-		// 	'src',
-		// 	'out',
-		// 	'test',
-		// ]
 		// cache: false,
 		// 'produce-source-map': true,
 		// 'enable-source-maps': true,

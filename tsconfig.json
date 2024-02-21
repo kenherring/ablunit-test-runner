@@ -14,15 +14,15 @@
 			"es2020",
 			"WebWorker"
 		],
-		"baseUrl": "./",
+		"baseUrl": ".",
 		"outDir": "dist",
-		// "outDir": "out",
+		"rootDir": ".",
 		"paths": {
-			"*": [ "src/*" ]
+			"*": [ "./src/*" ]
 		},
+		"sourceRoot": ".",
 		"sourceMap": true,
 		// "inlineSourceMap": true,
-		// "sourceRoot": "./",
 		"strict": true,
 		"alwaysStrict": true,
 		"esModuleInterop": true,

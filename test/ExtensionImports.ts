@@ -1,4 +1,4 @@
-import { DetailedCoverageCustom } from '../src/TestCoverage'
+import { DetailedCoverageCustom } from 'TestCoverage'
 
 export type {
 	DetailedCoverageCustom
