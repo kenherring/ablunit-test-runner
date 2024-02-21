@@ -276,30 +276,6 @@ export async function activate (context: ExtensionContext) {
 				decorator.decorate(window.activeTextEditor)
 			}
 
-			const coverageProvider = {
-				provideFileCoverage: () => {
-					log.info('---------- provideFileCoverage ----------')
-					const results = resultData.get(run)
-					if (!results) { return [] }
-
-					const coverage: FileCoverage[] = []
-					for(const r of results) {
-						r.coverage.forEach((c) => { coverage.push(c) })
-					}
-					log.info('coverage.length=' + coverage.length)
-					return coverage
-				},
-				resolveFileCoverage: (coverage: FileCoverage, cancellation: CancellationToken) => {
-					log.info('---------- resolveFileCoverage ----------')
-					log.error('resolveFileCoverage not implemented')
-
-					cancellation.onCancellationRequested(() => {
-						log.info('cancellation requested!')
-					})
-					return coverage
-				}
-			}
-
 			void log.notification('ablunit tests complete')
 			run.end()
 			log.trace('run.end()')

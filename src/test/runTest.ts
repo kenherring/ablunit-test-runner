@@ -20,19 +20,28 @@ async function main () {
 
 	let projToRun: string | undefined = undefined
 	projToRun = process.env['ABLUNIT_TEST_RUNNER_PROJECT_NAME']
-
-	console.log('[' + file + ' main] projToRun=' + projToRun)
-	let testCount = 0
+	console.log('[runTest.ts main] projToRun=' + projToRun)
+	let suiteCount = 0
+	let passedCount = 0
+	let failedCount = 0
 	for (const conf of testConfig) {
 		if (!projToRun || conf.projName === projToRun) {
-			testCount++
-			console.log('[' + file + ' main] starting tests in vscode')
-			await runTest(conf)
+			suiteCount++
+			const passed = await testProject(conf.projName, conf.workspaceFolder, conf.launchArgs)
+			if (passed) {
+				passedCount++
+			} else {
+				failedCount++
+			}
 		}
 	}
-	console.log('[' + file + ' main] tests completed successfully! testCount=' + testCount)
-	if (testCount === 0) {
-		console.error('[' + file + ' main] no tests found!')
+	console.log('[runTest.ts main] suiteCount=' + suiteCount + ', passedCount=' + passedCount + ', failedCount=' + failedCount)
+	if (suiteCount === 0) {
+		console.error('[runTest.ts main] no tests found!')
+		process.exit(1)
+	}
+	if (failedCount != 0) {
+		console.error('[runTest.ts main] ' + failedCount + '/' + suiteCount + ' test suites failed!')
 		process.exit(1)
 	}
 }
@@ -85,12 +94,11 @@ async function runTest (conf: ITestConfig) {
 		await runTests(config)
 		console.log('[' + file + ' runTest] (projName=' + conf.projName + ') tests completed successfully!')
 	} catch (err) {
-		console.error('[' + file + ' runTest] (projName=' + conf.projName + ') failed to run tests, err=' + err)
-		throw new Error('Failed to run tests! err=' + err)
+		console.error('[runTest.ts testProject] (projName=' + projName + ') failed to run tests, err=' + err)
 	} finally {
 		console.log('[' + file + ' runTest] (projName=' + conf.projName + ') finally')
 	}
-	console.log('[' + file + ' runTest] (projName=' + conf.projName + ') success!  version=' + conf.version)
+	return true
 }
 
 main().then(() => {
