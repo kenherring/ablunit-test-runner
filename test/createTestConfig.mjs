@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
@@ -43,50 +44,20 @@ function writeConfigToFile (name, config) {
 	fs.writeFileSync('.vscode-test.' + name + '.json.bk', JSON.stringify(config, null, 4).replace('    ', '\t'))
 }
 
-function getTestConfig (projName) {
-	const args = [
-		// 'test_projects/' + projName, // workspaceFolder is set in the config
-		// '--disable-gpu',
-		// '--reuse-window',
-		// '--user-data-dir=./test_projects/' + projName + '/.vscode-data/',
-		// '--profile=' + projName,
-		// '--sync=off',
-		// '--telemetry',
-		// '--log=debug',
-		// '--log=verbose',
-		// '--verbose',
-	]
-	if (!enableExtensions.includes(projName)) {
-		// args.push('--disable-extensions')
-	}
-	// args.push('--enable-source-maps')
-	// args.push('--produce-source-map')
-
-	let ws = './test_projects/' + projName
-	if (projName === 'proj3') {
-		ws = ws + '_debugLines'
-	} else if(projName === 'proj5') {
-		ws = ws + '_suites'
-	} else if(projName === 'proj6') {
-		ws = ws + '_dot_dir'
-	} else if(projName === 'proj7A' || projName === 'proj7B') {
-		ws = 'test_projects/proj7_load_performance'
-	} else if(projName === 'proj8') {
-		ws = ws + '_custom_command'
-	} else if(projName.startsWith('workspace')) {
-		ws = ws + '.code-workspace'
-	}
-
-	// let timeout = 15000
-	let timeout = 30000
+function getMochaTimeout (projName) {
 	if (projName === 'proj4') {
-		timeout = 30000
+		return 30000
 	} else if (projName === 'DebugLines') {
-		timeout = 45000
+		return 45000
 	} else if (projName.startsWith('proj7')) {
 		// timeout = 60000
-		timeout = 90000
+		return 90000
 	}
+	// return 15000
+	return 30000
+}
+
+function getMochaOpts (projName) {
 
 	const reporterDir = path.resolve(__dirname, '..', 'artifacts', vsVersion + '-' + oeVersion)
 	fs.mkdirSync(reporterDir, { recursive: true })
@@ -105,7 +76,7 @@ function getTestConfig (projName) {
 			// 'source-map-support/register-hook-require',
 			// './dist/extension.js',
 		],
-		timeout: timeout,
+		timeout: getMochaTimeout(projName),
 		ui: 'tdd',
 		retries: 0,
 		// recursive: true,
@@ -117,34 +88,64 @@ function getTestConfig (projName) {
 		// ]
 	}
 
-	if (process.env['CIRCLECI']) {
-		mochaOpts.reporter = 'mocha-multi-reporters'
-		mochaOpts.reporterOptions = {
-			// reporterEnabled: [
-			// 	'spec',
-			// 	// 'json',
-			// 	'xunit',
-			// 	'mocha-junit-reporter',
-			// 	'mocha-sonarqube-reporter'
-			// ],
-			// reporterEnabled: 'spec,json,xunit,mocha-junit-reporter,mocha-sonarqube-reporter',
-			// reporterEnabled: 'spec,mocha-junit-reporter,mocha-sonarqube-reporter',
-			// reporterEnabled: 'spec,fullJsonStreamReporter',
-			// reporterEnabled: 'tap,spec,json',
-			reporterEnabled: 'spec',
-			jsonReporterOptions: {
-				output: jsonFile
-			},
-			xunitReporterOptions: {
-				output: xunitFile
-			},
-			mochaJunitReporterReporterOptions: {
-				mochaFile: mochaFile
-			},
-			mochaSonarqubeReporterReporterOptions: {
-				output: sonarFile
-			}
-		}
+	// TODO - prevents results from reporting to vscode-extension-test-runner
+	mochaOpts.reporter = 'mocha-multi-reporters'
+	mochaOpts.reporterOptions = {
+		// reporterEnabled: [
+		// 	'spec',
+		// 	// 'tap',
+		// 	// 'json',
+		// 	// 'fullJsonStreamReporter',
+		// 	// 'xunit',
+		// 	'mocha-junit-reporter',
+		// 	'mocha-sonarqube-reporter'
+		// ],
+		reporterEnabled: [ 'spec', 'mocha-junit-reporter', 'mocha-sonarqube-reporter' ],
+		jsonReporterOptions: { output: jsonFile },
+		xunitReporterOptions: { output: xunitFile },
+		mochaJunitReporterReporterOptions: { mochaFile: mochaFile },
+		mochaSonarqubeReporterReporterOptions: { output: sonarFile }
+	}
+
+	return mochaOpts
+}
+
+function getLaunchArgs (projName) {
+	const args = [
+		// 'test_projects/' + projName, // workspaceFolder is set in the config
+		// '--disable-gpu',
+		// '--reuse-window',
+		// '--user-data-dir=./test_projects/' + projName + '/.vscode-data/',
+		// '--profile=' + projName,
+		// '--sync=off',
+		// '--telemetry',
+		// '--log=debug',
+		// '--log=verbose',
+		// '--verbose',
+	]
+	if (!enableExtensions.includes(projName)) {
+		// args.push('--disable-extensions')
+	}
+	// args.push('--enable-source-maps')
+	// args.push('--produce-source-map')
+	return args
+}
+
+function getTestConfig (projName) {
+
+	let ws = './test_projects/' + projName
+	if (projName === 'proj3') {
+		ws = ws + '_debugLines'
+	} else if(projName === 'proj5') {
+		ws = ws + '_suites'
+	} else if(projName === 'proj6') {
+		ws = ws + '_dot_dir'
+	} else if(projName === 'proj7A' || projName === 'proj7B') {
+		ws = 'test_projects/proj7_load_performance'
+	} else if(projName === 'proj8') {
+		ws = ws + '_custom_command'
+	} else if(projName.startsWith('workspace')) {
+		ws = ws + '.code-workspace'
 	}
 
 	return {
@@ -153,12 +154,13 @@ function getTestConfig (projName) {
 		workspaceFolder: ws,
 		files: './test/suites/' + projName + '.test.ts',
 		version: vsVersion,
-		launchArgs: args,
-		mocha: mochaOpts,
+		launchArgs: getLaunchArgs(projName),
+		mocha: getMochaOpts(projName),
+		srcDir: './',
 		env: {
 			// VSCODE_VERSION: 'stable',
 			ABLUNIT_TEST_RUNNER_UNIT_TESTING: 'true',
-			// VSCODE_SKIP_PRELAUNCH: '1',
+			VSCODE_SKIP_PRELAUNCH: '1',
 			// NODE_OPTIONS: [
 			// 	// '--enable-source-maps',
 			// 	// '--produce-source-map',
@@ -169,51 +171,91 @@ function getTestConfig (projName) {
 		}
 	}
 }
+function getTests () {
 
-const coverageDir = path.resolve(__dirname, '..', 'coverage', vsVersion + '-' + oeVersion)
-fs.mkdirSync(coverageDir, { recursive: true })
-const coverageOpts = {
-	// reporter: [
-	// 	'text',
-	// 	// 'lcov'
-	// ],
-	// output: coverageDir,
-	// includeAll: true,
-	// include: [
-	// 	// './**/*.js',
-	// 	// './**/*.ts',
-	// 	// '**/*.js',
-	// 	// '**/*.ts',
-	// ]
-	// cache: false,
-	// 'produce-source-map': true,
-	// 'enable-source-maps': true,
-	// sourceMap: false,
-	// instrument: false,
+	let tests = []
+	if (process.env['ABLUNIT_TEST_RUNNER_PROJECT_NAME']) {
+		const projName = process.env['ABLUNIT_TEST_RUNNER_PROJECT_NAME']
+		tests.push(getTestConfig(projName))
+	} else {
+		const g = glob.globSync('test/suites/*.test.ts')
+		for (const f of g) {
+			// if (path.basename(f, '.test.ts') === 'proj0' || path.basename(f, '.test.ts') === 'proj1') {
+			if (path.basename(f, '.test.ts') === 'proj0') {
+				// console.log('f=' + f + ', basename=' + path.basename(f, '.test.ts'))
+				tests.push(getTestConfig(path.basename(f, '.test.ts')))
+			}
+			// tests.push(getTestConfig(path.basename(f, '.test.ts')))
+		}
+	}
+	return tests
 }
 
-let tests = []
-if (process.env['ABLUNIT_TEST_RUNNER_PROJECT_NAME']) {
-	const projName = process.env['ABLUNIT_TEST_RUNNER_PROJECT_NAME']
-	tests.push(getTestConfig(projName))
-} else {
-	const g = glob.globSync('test/suites/*.test.ts')
-	for (const f of g) {
-		// if (path.basename(f, '.test.ts') === 'proj0' || path.basename(f, '.test.ts') === 'proj1') {
-		if (path.basename(f, '.test.ts') === 'proj1') {
-			// console.log('f=' + f + ', basename=' + path.basename(f, '.test.ts'))
-			tests.push(getTestConfig(path.basename(f, '.test.ts')))
-		}
-		// tests.push(getTestConfig(path.basename(f, '.test.ts')))
+function getCoverageOpts () {
+	const coverageDir = path.resolve(__dirname, '..', 'coverage', vsVersion + '-' + oeVersion)
+	fs.mkdirSync(coverageDir, { recursive: true })
+	return {
+		reporter: [ 'text', 'lcov' ],
+		// reporter: [
+		// 	'text',
+		// 	'text-summary',
+		// 	'lcov'
+		// ],
+		output: coverageDir,
+		includeAll: true,
+		exclude: [
+			'ablunit-test-runner/node_modules',
+			'ablunit-test-runner/node_modules/',
+			'ablunit-test-runner/node_modules/**',
+			'**/ablunit-test-runner/node_modules/**',
+
+			'./ablunit-test-runner/node_modules',
+			'./ablunit-test-runner/node_modules/',
+			'./ablunit-test-runner/node_modules/**',
+			'./**/ablunit-test-runner/node_modules/**',
+
+			'node_modules',
+			'node_modules/',
+			'node_modules/**',
+			'**/node_modules/**',
+
+			'./node_modules',
+			'./node_modules/',
+			'./node_modules/**',
+			'./**/node_modules/**',
+
+			'test_projects',
+		],
+		include: [
+			'**/*'
+		],
+
+		// exclude: [
+		// 	'./node_modules/**',
+		// 	'./**/node_modules/**',
+		// 	'./**/webpack/**',
+		// 	'./webpack.config.js'
+		// ]
+		// include: [
+		// 	'dist',
+		// 	'src',
+		// 	'out',
+		// 	'test',
+		// ]
+		// cache: false,
+		// 'produce-source-map': true,
+		// 'enable-source-maps': true,
+		// sourceMap: false,
+		// instrument: false,
 	}
 }
 
-const testConfig = defineConfig({
-	tests: tests.reverse(),
-	// coveage: coverageOpts
-})
-
 export function createTestConfig () {
+	const testConfig = defineConfig({
+		tests: getTests(),
+		coverage: getCoverageOpts(),
+	})
+
 	writeConfigToFile('config', testConfig)
 	return testConfig
 }

@@ -24,17 +24,17 @@ const config = {
 		clean: true,
 		path: path.resolve(__dirname, 'dist'),
 		filename: '[name].js',
-		// library: { name: "extension", type: "commonjs" },
-		libraryTarget: "commonjs2",
-		// libraryTarget: "commonjs",
-		devtoolModuleFilenameTemplate: "../[resource-path]",
-		// devtoolModuleFilenameTemplate: "src/[resource-path]",
-		// devtoolModuleFilenameTemplate: "[resource-path]",
+		libraryTarget: 'commonjs2',
+		// libraryTarget: 'commonjs',
+		// devtoolNamespace: '',
+		devtoolModuleFilenameTemplate: '../[resource-path]',
+		// devtoolModuleFilenameTemplate: 'src/[resource-path]',    // "ablunit-test-runner/dist/src/extension.ts"
+		// devtoolModuleFilenameTemplate: '[resource-path]',        // "ablunit-test-runner/dist/extension.ts"
 		// devtoolModuleFilenameTemplate: '[absolute-resource-path]',
 	},
 	externals: {
 		// the vscode-module is created on-the-fly and must be excluded. Add other modules that cannot be webpack'ed -> https://webpack.js.org/configuration/externals/
-		vscode: "commonjs vscode"
+		vscode: 'commonjs vscode'
 	},
 	resolve: {
 		mainFields: ['browser', 'module', 'main'],
@@ -54,7 +54,7 @@ const config = {
 					// loader: 'istanbul-instrumenter-loader',
 					options: {
 						compilerOptions: {
-							"module": "es6" // override `tsconfig.json` so that TypeScript emits native JavaScript modules.
+							'module': 'es6' // override `tsconfig.json` so that TypeScript emits native JavaScript modules.
 						}
 					}
 				}]

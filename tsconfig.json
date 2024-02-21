@@ -56,9 +56,10 @@
 		"useUnknownInCatchVariables": false,
 	},
 	"include": [
-		".vscode-test.mjs",
-		"test/createTestConfig.mjs",
-		"**/*.ts"
+		"./.vscode-test.mjs",
+		"./test/createTestConfig.mjs",
+		"./**/*.ts",
+		"./**/*.test.ts",
 		// for when glob doesn't work
 		// "src/*.ts",
 		// "src/*/*.ts",
@@ -68,8 +69,9 @@
 		// "test/*/*.test.ts",
 	],
 	"exclude": [
-		"dummy-ext",
-		"test_projects"
+		"./dummy-ext/**",
+		"./node_modules/**",
+		"./test_projects/**",
 
 	]
 }

@@ -214,5 +214,8 @@
 				"path": "./snippets/snippets-abl-class.json"
 			}
 		]
+	},
+	"nyc": {
+		"extension": [ ".js", ".ts" ]
 	}
 }
