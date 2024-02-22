@@ -1,10 +1,10 @@
-import { doesDirExist } from 'ABLUnitCommon'
+import { doesDirExist } from '../../src/ABLUnitCommon'
 import { Uri, assert, deleteFile, doesFileExist, getDefaultDLC, getSessionTempDir, getWorkspaceUri, runAllTests, setRuntimes, updateTestProfile, waitForExtensionActive } from '../testCommon'
 
 export default suite('proj4Suite', () => {
 
 	suiteSetup('proj4 - suiteSetup', async () => {
-		await waitForExtensionActive()
+		// await waitForExtensionActive()
 		await setRuntimes([{name: '11.7', path: '/psc/dlc_11.7'}, {name: '12.2', path: getDefaultDLC()}])
 		if (process.platform === 'linux') {
 			await updateTestProfile('tempDir', '/tmp/ablunit')

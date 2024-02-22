@@ -1,5 +1,5 @@
-import { PropathParser } from 'ABLPropath'
-import { getSourceMapFromRCode } from 'parse/RCodeParser'
+import { PropathParser } from '../../src/ABLPropath'
+import { getSourceMapFromRCode } from '../../src/parse/RCodeParser'
 import * as vscode from 'vscode'
 import { Uri, assert, awaitRCode, getDefaultDLC, getWorkspaceUri, installExtension, log, setRuntimes, waitForExtensionActive, workspace } from '../testCommon'
 

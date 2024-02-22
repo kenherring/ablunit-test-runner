@@ -3,7 +3,7 @@ import { Uri, assert, getDefaultDLC, getWorkspaceUri, installExtension, runAllTe
 export default suite('proj3Suite', () => {
 
 	suiteSetup('proj3 - suiteSetup', async () => {
-		await waitForExtensionActive()
+		// await waitForExtensionActive()
 		await installExtension('riversidesoftware.openedge-abl-lsp')
 		await setRuntimes([{name: '11.7', path: '/psc/dlc_11.7'}, {name: '12.2', path: getDefaultDLC(), default: true}])
 	})

@@ -2,9 +2,9 @@ import { Uri, assert, getWorkspaceUri, runAllTests, waitForExtensionActive } fro
 
 export default suite('proj6Suite', () => {
 
-	suiteSetup('proj6 - suiteSetup', async () => {
-		await waitForExtensionActive()
-	})
+	// suiteSetup('proj6 - suiteSetup', async () => {
+	// 	await waitForExtensionActive()
+	// })
 
 	test('proj6.1 - tempDir=.ablunit', async () => {
 		await runAllTests()

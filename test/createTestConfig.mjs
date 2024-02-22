@@ -24,37 +24,44 @@ enableExtensions.push('proj9')
 
 // let version = 'insiders'
 let vsVersion = 'stable'
-if (process.env['ABLUNIT_TEST_RUNNER_VSCODE_VERSION']) {
-	vsVersion = process.env['ABLUNIT_TEST_RUNNER_VSCODE_VERSION']
-}
-if (vsVersion !== 'insiders' && vsVersion !== 'stable') {
-	throw new Error('Invalid version: ' + vsVersion)
-}
-
 let oeVersion = '12.2.12'
-if (process.env['ABLUNIT_TEST_RUNNER_OE_VERSION']) {
-	oeVersion = process.env['ABLUNIT_TEST_RUNNER_OE_VERSION']
+
+function initialize () {
+	if (process.env['ABLUNIT_TEST_RUNNER_VSCODE_VERSION']) {
+		vsVersion = process.env['ABLUNIT_TEST_RUNNER_VSCODE_VERSION']
+	}
+	if (vsVersion !== 'insiders' && vsVersion !== 'stable') {
+		throw new Error('Invalid version: ' + vsVersion)
+	}
+
+	if (process.env['ABLUNIT_TEST_RUNNER_OE_VERSION']) {
+		oeVersion = process.env['ABLUNIT_TEST_RUNNER_OE_VERSION']
+	}
 }
-
-// console.log('process args= ' + JSON.stringify(process.argv, null, 4))
-// console.log('process env= ' + JSON.stringify(process.env, null, 4))
-
 
 function writeConfigToFile (name, config) {
 	fs.writeFileSync('.vscode-test.' + name + '.json.bk', JSON.stringify(config, null, 4).replace('    ', '\t'))
 }
 
 function getMochaTimeout (projName) {
+	if (projName === 'proj0') {
+		return 20000
+	}
 	if (projName === 'proj4') {
 		return 30000
-	} else if (projName === 'DebugLines') {
-		return 90000
-	} else if (projName.startsWith('proj7')) {
-		// timeout = 60000
+	}
+	if (projName === 'proj1') {
+		return 45000
+	}
+	if (projName === 'DebugLines') {
+		return 60000
+	}
+	if (projName.startsWith('proj7')) {
+		// return 60000
 		return 90000
 	}
 	// return 15000
-	return 30000
+	return 15000
 }
 
 function getMochaOpts (projName) {
@@ -68,39 +75,38 @@ function getMochaOpts (projName) {
 
 	const mochaOpts = {
 		preload: [
-			// 'source-map-support',
-			// 'ts-node/register',
+			// './dist/extension.js',
+
 			'ts-node/register/transpile-only',
+
+			'ts-node/register',
 			// 'source-map-support',
 			// 'source-map-support/register',
 			// 'source-map-support/register-hook-require',
-			// './dist/extension.js',
 		],
+		// preload: [ 'ts-node/register/transpile-only' ],
+		// preload: [ 'ts-node/register/transpile-only' ],
 		timeout: getMochaTimeout(projName),
 		ui: 'tdd',
 		retries: 0,
-		// recursive: true,
-		// require: [
-		// 	// './dist/extension.js',
-		// 	// 'ts-node/register',
-		// 	// 'source-map-support/register',
-		// 	// 	'source-map-support/register-hook-require',
-		// ]
+		recursive: true,
+		color: true,
+		exit: true,
+		extension: [ 'js', 'ts', 'test.ts' ],
+		require: [
+			// './dist/extension.js',
+			// 'ts-node/register',
+			// 'source-map-support',
+			'source-map-support/register',
+			// 'source-map-support/register-hook-require',
+		]
 	}
 
 	// TODO - prevents results from reporting to vscode-extension-test-runner
 	mochaOpts.reporter = 'mocha-multi-reporters'
 	mochaOpts.reporterOptions = {
-		// reporterEnabled: [
-		// 	'spec',
-		// 	// 'tap',
-		// 	// 'json',
-		// 	// 'fullJsonStreamReporter',
-		// 	// 'xunit',
-		// 	'mocha-junit-reporter',
-		// 	'mocha-sonarqube-reporter'
-		// ],
 		reporterEnabled: [ 'spec', 'mocha-junit-reporter', 'mocha-sonarqube-reporter' ],
+		// reporterEnabled: [ 'spec', 'mocha-junit-reporter', 'mocha-sonarqube-reporter', 'fullJsonStreamReporter', 'xunit', 'json' ],
 		jsonReporterOptions: { output: jsonFile },
 		xunitReporterOptions: { output: xunitFile },
 		mochaJunitReporterReporterOptions: { mochaFile: mochaFile },
@@ -117,7 +123,7 @@ function getLaunchArgs (projName) {
 		// '--reuse-window',
 		// '--user-data-dir=./test_projects/' + projName + '/.vscode-data/',
 		// '--profile=' + projName,
-		// '--sync=off',
+		'--sync=off',
 		// '--telemetry',
 		// '--log=debug',
 		// '--log=verbose',
@@ -161,12 +167,12 @@ function getTestConfig (projName) {
 			// VSCODE_VERSION: 'stable',
 			ABLUNIT_TEST_RUNNER_UNIT_TESTING: 'true',
 			VSCODE_SKIP_PRELAUNCH: '1',
-			// NODE_OPTIONS: [
-			// 	// '--enable-source-maps',
-			// 	// '--produce-source-map',
-			// 	// '--register source-map-support/register',
-			// 	'--require source-map-support/register',
-			// ],
+			NODE_OPTIONS: [
+				'--enable-source-maps',
+				// 	// '--produce-source-map',
+				// 	// '--register source-map-support/register',
+				'--require source-map-support/register',
+			],
 			// NODE_OPTIONS: '--produce-source-map',
 		}
 	}
@@ -182,15 +188,6 @@ function getTests () {
 	} else {
 		const g = glob.globSync('test/suites/*.test.ts').reverse()
 		for (const f of g) {
-			// if (path.basename(f, '.test.ts') === 'proj0' || path.basename(f, '.test.ts') === 'proj1') {
-			// if (path.basename(f, '.test.ts') === 'proj0' ||
-			// 	path.basename(f, '.test.ts') === 'proj1' ||
-			// 	path.basename(f, '.test.ts') === 'proj2' ||
-			// 	path.basename(f, '.test.ts') === 'proj3' ||
-			// 	path.basename(f, '.test.ts') === 'proj4') {
-			// 	// console.log('f=' + f + ', basename=' + path.basename(f, '.test.ts'))
-			// 	tests.push(getTestConfig(path.basename(f, '.test.ts')))
-			// }
 			tests.push(getTestConfig(path.basename(f, '.test.ts')))
 		}
 	}
@@ -202,11 +199,6 @@ function getCoverageOpts () {
 	fs.mkdirSync(coverageDir, { recursive: true })
 	return {
 		reporter: [ 'text', 'lcov' ],
-		// reporter: [
-		// 	'text',
-		// 	'text-summary',
-		// 	'lcov'
-		// ],
 		output: coverageDir,
 		includeAll: true,
 		exclude: [
@@ -221,15 +213,17 @@ function getCoverageOpts () {
 		include: [
 			'**/*'
 		],
-		// cache: false,
+		require: [ 'ts-node/register' ],
+		cache: false,
 		// 'produce-source-map': true,
-		// 'enable-source-maps': true,
-		// sourceMap: false,
-		// instrument: false,
+		'enable-source-maps': true,
+		sourceMap: false,
+		instrument: false,
 	}
 }
 
-export function createTestConfig () {
+export function createTestConfig () { // NOSONAR
+	initialize()
 	const testConfig = defineConfig({
 		tests: getTests(),
 		coverage: getCoverageOpts(),

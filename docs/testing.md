@@ -68,7 +68,9 @@ NODE_OPTIONS=--enable-source-maps \
 ```
 
 ```bash
-npm run clean; export NODE_OPTIONS=['--enable-source-maps','--register=source-map-support/register','--produce-source-map']; npm test -- --coverage
+npm run clean; \
+  export NODE_OPTIONS=['--enable-source-maps','--register=source-map-support/register','--produce-source-map']; \
+  npm test:coverage
 ```
 
 ## Test Cases
@@ -76,7 +78,12 @@ npm run clean; export NODE_OPTIONS=['--enable-source-maps','--register=source-ma
 * Does the vscode-extension-test-runner work?  Validate run, debug, and coverage.
 * Does the vscode-test-cli work?
   * `npm test`
+  * `npm test -- --coverage`
+  * `npm run vscode-test`
   * `npm run test:coverage`
+  * `ABLUNIT_TEST_RUNNER_PROJECT_NAME=proj0 npm run test:coverage`
+  * `TS_NODE_COMPILER_OPTIONS='{"target":"es6"} ABLUNIT_TEST_RUNNER_PROJECT_NAME=proj0 npm run test:coverage`
+  * `TS_NODE_COMPILER_OPTIONS='{"target":"es2020"} ABLUNIT_TEST_RUNNER_PROJECT_NAME=proj0 npm run test:coverage`
 * Do tests run successfully in docker?
   * `docker/run_tests.sh -P`
   * `docker/run_tests.sh`

@@ -17,9 +17,9 @@
 		"baseUrl": ".",
 		"outDir": "dist",
 		"rootDir": ".",
-		"paths": {
-			"*": [ "./src/*" ]
-		},
+		// "paths": {
+		// 	"*": [ "./src/*" ]
+		// },
 		"sourceRoot": ".",
 		"sourceMap": true,
 		// "inlineSourceMap": true,

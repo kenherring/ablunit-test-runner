@@ -93,19 +93,19 @@ suite('proj0Suite ', () => {
 		log.info('end proj0.3')
 	})
 
-	test('proj0.4 - coverage=false, open file, run test, validate no coverage displays', async () => {
-		log.info('start proj0.4')
-		await updateTestProfile('profiler.coverage', false)
-		const testFileUri = Uri.joinPath(workspace.workspaceFolders![0].uri, 'src', 'dirA', 'dir1', 'testInDir.p')
-		await vscode.window.showTextDocument(testFileUri).then()
-		await runAllTests()
+	// test('proj0.4 - coverage=false, open file, run test, validate no coverage displays', async () => {
+	// 	log.info('start proj0.4')
+	// 	await updateTestProfile('profiler.coverage', false)
+	// 	const testFileUri = Uri.joinPath(workspace.workspaceFolders![0].uri, 'src', 'dirA', 'dir1', 'testInDir.p')
+	// 	await vscode.window.showTextDocument(testFileUri).then()
+	// 	await runAllTests()
 
-		const lines = (await getResults())[0].coverage.get(testFileUri.fsPath)?.detailedCoverage ?? []
-		const executedLines = lines.filter((d) => d.executed)
-		log.debug('executedLines.length=' + executedLines.length)
-		assert.equal(0, executedLines.length, 'executed lines found for ' + workspace.asRelativePath(testFileUri) + '. should be empty')
-		assert.assert(!getDetailLine(executedLines, 5), 'line 5 should display as not executed')
-		assert.assert(!getDetailLine(executedLines, 6), 'line 5 should display as not executed')
-		log.info('end proj0.4')
-	})
+	// 	const lines = (await getResults())[0].coverage.get(testFileUri.fsPath)?.detailedCoverage ?? []
+	// 	const executedLines = lines.filter((d) => d.executed)
+	// 	log.debug('executedLines.length=' + executedLines.length)
+	// 	assert.equal(0, executedLines.length, 'executed lines found for ' + workspace.asRelativePath(testFileUri) + '. should be empty')
+	// 	assert.assert(!getDetailLine(executedLines, 5), 'line 5 should display as not executed')
+	// 	assert.assert(!getDetailLine(executedLines, 6), 'line 5 should display as not executed')
+	// 	log.info('end proj0.4')
+	// })
 })

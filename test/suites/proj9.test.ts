@@ -10,9 +10,9 @@ export default suite('proj9Suite', () => {
 		await installExtension('riversidesoftware.openedge-abl-lsp')
 	})
 
-	setup('proj9 - setup', async () => {
+	setup('proj9 - setup', () => {
 		const workspaceFolder = workspace.workspaceFolders![0].uri
-		await waitForExtensionActive()
+		// await waitForExtensionActive()
 		deleteFile(Uri.joinPath(workspaceFolder, '.vscode/profile.json'))
 	})
 

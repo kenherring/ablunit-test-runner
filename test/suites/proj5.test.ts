@@ -1,14 +1,14 @@
-import { parseTestClass } from 'parse/TestClassParser'
-import { getContentFromFilesystem, getLines } from 'parse/TestParserCommon'
-import { parseTestProgram } from 'parse/TestProgramParser'
-import { parseSuiteLines } from 'parse/TestSuiteParser'
+import { parseTestClass } from '../../src/parse/TestClassParser'
+import { getContentFromFilesystem, getLines } from '../../src/parse/TestParserCommon'
+import { parseTestProgram } from '../../src/parse/TestProgramParser'
+import { parseSuiteLines } from '../../src/parse/TestSuiteParser'
 import { assert, getTestCount, getWorkspaceUri, log, runAllTests, waitForExtensionActive, Uri } from '../testCommon'
 
 
 export default suite('proj5Suite', () => {
 
 	suiteSetup('proj5_suiteSetup', async () => {
-		await waitForExtensionActive()
+		// await waitForExtensionActive()
 	})
 
 	test('proj5.1 - test count', async () => {

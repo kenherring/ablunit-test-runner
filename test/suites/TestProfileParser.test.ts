@@ -1,4 +1,4 @@
-import { parseRunProfiles } from 'parse/TestProfileParser'
+import { parseRunProfiles } from '../../src/parse/TestProfileParser'
 import { assert, getWorkspaceFolders, log } from '../testCommon'
 
 // ----------TODO---------- //

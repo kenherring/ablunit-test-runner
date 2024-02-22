@@ -3,9 +3,9 @@ import { Uri, assert, runAllTests, waitForExtensionActive, workspace } from '../
 
 export default suite('projASuite', () => {
 
-	suiteSetup('projA - suiteSetup', async () => {
-		await waitForExtensionActive()
-	})
+	// suiteSetup('projA - suiteSetup', async () => {
+	// 	await waitForExtensionActive()
+	// })
 
 	test('projA.1 - no .vscode/ablunit-test-profile.json exists in project', async () => {
 		await runAllTests()

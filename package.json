@@ -87,7 +87,10 @@
 		"package": "webpack --mode production --devtool hidden-source-map",
 		"pretest": "sh -c scripts/npm_pretest.sh",
 		"test": "vscode-test",
-		"test:coverage": "npm test -- --coverage",
+		"test:coverage": "npm run test -- --coverage",
+		"instrument": "nyc instrument --require source-map-support/register --exclude-after-remap --cwd=dist --in-place . .",
+		"test:coverage-2": "nnpm run test -- --coverage",
+		"test:coverage-3": "npm run pretest && npm run instrument && npm run test -- --coverage",
 		"vscode-test": "vscode-test",
 		"test:install-and-run": "cd dummy-ext && npm run test:install-and-run",
 		"watch": "webpack --mode development --watch",
@@ -101,7 +104,7 @@
 	"devDependencies": {
 		"@istanbuljs/nyc-config-typescript": "^1.0.2",
 		"@types/mocha": "^10.0.6",
-		"@types/node": "^16.18.34",
+		"@types/node": "^16.18.82",
 		"@types/source-map-support": "^0.5.10",
 		"@types/vscode": "^1.83.0",
 		"@types/xml2js": "^0.4.14",
@@ -215,7 +218,15 @@
 		]
 	},
 	"nyc": {
-		"extension": [ ".js", ".ts" ],
-		"exclude-after-remap": true
+		"extends": "@istanbuljs/nyc-config-typescript",
+		"extension": [
+			".js",
+			".ts"
+		],
+		"exclude-after-remap": false,
+		"require": [
+			"ts-node/register"
+		],
+		"sourceMap": true
 	}
 }

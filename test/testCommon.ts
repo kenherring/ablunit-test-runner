@@ -9,14 +9,14 @@ import {
 	WorkspaceFolder, commands, extensions,
 	workspace
 } from 'vscode'
-import { ABLResults } from 'ABLResults'
-import { Duration, deleteFile as deleteFileCommon, isRelativePath, readStrippedJsonFile } from 'ABLUnitCommon'
-import { log as logObj } from 'ChannelLogger'
-import { Decorator } from 'Decorator'
-import { IExtensionTestReferences } from 'extension'
-import { ITestSuites } from 'parse/ResultsParser'
-import { IConfigurations } from 'parse/TestProfileParser'
-import { DefaultRunProfile } from 'parse/config/RunProfile'
+import { ABLResults } from '../src/ABLResults'
+import { Duration, deleteFile as deleteFileCommon, isRelativePath, readStrippedJsonFile } from '../src/ABLUnitCommon'
+import { log as logObj } from '../src/ChannelLogger'
+import { Decorator } from '../src/Decorator'
+import { IExtensionTestReferences } from '../src/extension'
+import { ITestSuites } from '../src/parse/ResultsParser'
+import { IConfigurations } from '../src/parse/TestProfileParser'
+import { DefaultRunProfile } from '../src/parse/config/RunProfile'
 
 function getExtensionDevelopmentPath () {
 	let dir = Uri.joinPath(Uri.file(__dirname))

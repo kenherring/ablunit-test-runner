@@ -1,10 +1,10 @@
-import { getEnvVars } from 'ABLUnitRun'
+import { getEnvVars } from '../../src/ABLUnitRun'
 import { Uri, assert, getResults, getWorkspaceUri, runAllTests, waitForExtensionActive } from '../testCommon'
 
 export default suite('proj8Suite', () => {
 
 	suiteSetup('proj8 - suiteSetup', async () => {
-		await waitForExtensionActive()
+		// await waitForExtensionActive()
 	})
 
 	test('proj8.1 - test count', async () => {
