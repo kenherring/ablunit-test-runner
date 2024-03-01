@@ -1,13 +1,14 @@
-import { Uri, assert, deleteFile, getTestCount, getWorkspaceUri, installExtension, runAllTests, selectProfile, updateTestProfile, waitForExtensionActive, workspace } from '../testCommon'
+import { Uri, assert, deleteFile, getTestCount, getWorkspaceUri, runAllTests, selectProfile, suiteSetupCommon, updateTestProfile, workspace } from '../testCommon'
 
 const testProfileJson = () => Uri.joinPath(getWorkspaceUri(), '.vscode/ablunit-test-profile.json')
 const testProfileBackup = () => Uri.joinPath(getWorkspaceUri(), '.vscode/ablunit-test-profile.json.backup')
 
-export default suite('proj9Suite', () => {
+suite('proj9Suite', () => {
+
+	suiteSetup('proj9 - suiteSetup', suiteSetupCommon)
 
 	suiteSetup('proj9 - suiteSetup', async () => {
 		await workspace.fs.copy(testProfileJson(), testProfileBackup(), { overwrite: true }).then()
-		await installExtension('riversidesoftware.openedge-abl-lsp')
 	})
 
 	setup('proj9 - setup', () => {

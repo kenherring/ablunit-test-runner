@@ -1,5 +1,5 @@
 import { parseRunProfiles } from '../../src/parse/TestProfileParser'
-import { assert, getWorkspaceFolders, log } from '../testCommon'
+import { assert, getWorkspaceFolders, log, suiteSetupCommon } from '../testCommon'
 
 // ----------TODO---------- //
 // function readValidationFile (filename: string) {
@@ -16,6 +16,8 @@ import { assert, getWorkspaceFolders, log } from '../testCommon'
 
 suite('TestProfileParserSuite', () => {
 
+	suiteSetup('TestProfileParserSuite - suiteSetup', suiteSetupCommon)
+
 	test('TestProfileParser test1', () => {
 		try{
 			const profiles = parseRunProfiles(getWorkspaceFolders())
@@ -31,7 +33,7 @@ suite('TestProfileParserSuite', () => {
 	// test("test2 - modified files.include & files.exclude", async () => {
 	// 	const res = JSON.stringify(await parseRunProfiles(workspaceFolders, 'ablunit-test-profile.test2.json'))
 	// 	const val = await readValidationFile('ablunit-test-profile.val-test2.json')
-	// 	assert.strictEqual(res,val)
+	// 	assert.equal(res,val)
 	// 	return workspaceFolders
 	// })
 

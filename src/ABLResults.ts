@@ -219,7 +219,8 @@ export class ABLResults implements Disposable {
 			}
 			return true
 		}, (err) => {
-			throw new Error('[ABLResults run] Exception: ' + err)
+			log.debug('ABLResults.run() failed. Exception=' + err)
+			throw new Error('ablunit run failed! Exception: ' + err)
 		})
 	}
 

@@ -1,11 +1,8 @@
-import { Uri, assert, commands, getResults, installExtension, log, refreshData, runAllTests, waitForExtensionActive, workspaceUri } from '../testCommon'
+import { Uri, assert, commands, getResults, log, refreshData, runAllTests, suiteSetupCommon, workspaceUri } from '../testCommon'
 
-export default suite('proj2Suite', () => {
+suite('proj2Suite', () => {
 
-	suiteSetup('proj2 - suiteSetup', async () => {
-		await waitForExtensionActive()
-		await installExtension('riversidesoftware.openedge-abl-lsp')
-	})
+	suiteSetup('proj2 - suiteSetup', suiteSetupCommon)
 
 	test('proj2.1 - temp/ablunit.json file exists', async () => {
 		await runAllTests()
@@ -31,20 +28,34 @@ export default suite('proj2Suite', () => {
 	})
 
 	test('proj2.3 - run current test suite', async () =>{
+		log.info('proj2.3-1')
 		await commands.executeCommand('vscode.open', Uri.joinPath(workspaceUri(), 'src/testSuite.cls'))
+		log.info('proj2.3-2')
 		await commands.executeCommand('testing.runCurrentFile')
+		log.info('proj2.3-3')
 		await refreshData()
+		log.info('proj2.3-4')
 		const recentResults = await getResults()
+		log.info('proj2.3-5')
 
 		const res = recentResults[0].ablResults?.resultsJson[0]
+		log.info('proj2.3-6')
 		if (!res) {
+			log.info('proj2.3-7')
 			assert.fail('res is null')
+			log.info('proj2.3-8')
 		} else {
+			log.info('proj2.3-9')
 			assert.equal(1, res.errors, 'res.errors should be 0')
+			log.info('proj2.3-10')
 			assert.equal(3, res.failures, 'res.failures should be 0')
+			log.info('proj2.3-11')
 			assert.equal(5, res.passed, 'res.passed should be 0')
+			log.info('proj2.3-12')
 			assert.equal(9, res.tests, 'res.tests should be 1')
+			log.info('proj2.3-13')
 		}
+		log.info('proj2.3-14')
 	})
 
 })

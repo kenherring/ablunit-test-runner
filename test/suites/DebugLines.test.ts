@@ -1,39 +1,28 @@
 import { PropathParser } from '../../src/ABLPropath'
 import { getSourceMapFromRCode } from '../../src/parse/RCodeParser'
 import * as vscode from 'vscode'
-import { Uri, assert, awaitRCode, getDefaultDLC, getWorkspaceUri, installExtension, log, setRuntimes, waitForExtensionActive, workspace } from '../testCommon'
+import { Uri, assert, awaitRCode, getWorkspaceUri, log, sleep2, suiteSetupCommon, workspace } from '../testCommon'
 
-export default suite('DebugLinesSuite', () => {
+suite('DebugLinesSuite', () => {
 
-	suiteSetup('DebugLines - suiteSetup', async () => {
-		await waitForExtensionActive()
-		await installExtension('riversidesoftware.openedge-abl-lsp').then(() => {
-			log.info('post install')
-		})
-		log.info('post install')
-
-		try {
-			await setRuntimes([{name: '12.2', path: getDefaultDLC(), default: true}])
-			log.info('abl.restart.langserv')
-			await vscode.commands.executeCommand('abl.restart.langserv').then(() => {
-				log.info('abl.restart.langserv complete')
-			})
-			const prom = awaitRCode(workspace.workspaceFolders![0], 8)
-			await prom.then((rcodeCount) => {
-				log.info('compile complete! rcode count = ' + rcodeCount)
-			})
-			log.info('b1 before complete!')
-		} catch (err) {
-			log.error('suiteSetup error: ' + err)
-			throw err
-		}
-	})
+	suiteSetup('DebugLines - suiteSetup', suiteSetupCommon)
 
 	setup('DebugLines - setup', async () => {
-		const prom = awaitRCode(workspace.workspaceFolders![0], 8)
-		await prom.then((rcodeCount) => {
-			log.info('compile complete! rcode count = ' + rcodeCount)
+		log.info('abl.restart.langserv')
+		const r = await vscode.commands.executeCommand('abl.restart.langserv').then(() => {
+			log.info('abl.restart.langserv complete')
+			return sleep2(250)
 		})
+		await sleep2(250).then(() => { log.info('abl.restart.langserv complete (r=' + JSON.stringify(r) + ')') })
+
+		await awaitRCode(workspace.workspaceFolders![0], 8).then((rcodeCount) => {
+			log.info('compile complete! rcode count = ' + rcodeCount)
+			return rcodeCount
+		}, (err) => {
+			log.error('compile error! err=' + err)
+			throw err
+		})
+		log.info('setup complete!')
 	})
 
 	test('DebugLines.1 - read debug line map from r-code', async () => {

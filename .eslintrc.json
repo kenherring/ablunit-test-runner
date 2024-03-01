@@ -68,10 +68,19 @@
 		"@typescript-eslint/restrict-plus-operands": "off",
 		"@typescript-eslint/switch-exhaustiveness-check": "warn",
 
+		"@typescript-eslint/await-thenable": "warn",
+		"@typescript-eslint/no-floating-promises": "warn",
+		"@typescript-eslint/no-misused-promises": "warn",
+		"@typescript-eslint/promise-function-async": "warn",
+
+		// DNE
+		// "@eslint-plugin-unicorn/no-useless-promise-resolve-reject": "error",
+
 		"no-console": "warn",
 		"no-empty": "warn",
 		"no-mixed-spaces-and-tabs": ["error", "smart-tabs"],
 		"no-trailing-spaces": [ "error", { "skipBlankLines": false }],
+		"prefer-promise-reject-errors": "warn",
 		"quotes": ["warn", "single"],
 		"semi": [ "error", "never"],
 		"space-before-blocks": [ "error", "always"],

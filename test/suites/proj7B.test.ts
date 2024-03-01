@@ -1,10 +1,11 @@
 import { strict as assert } from 'assert'
 import { CancellationError, commands } from 'vscode'
-import { Duration, beforeProj7, cancelTestRun, getCurrentRunData, getResults, getTestControllerItemCount, log, refreshData, refreshTests, runAllTests, setupCommon, sleep, waitForTestRunStatus } from '../testCommon'
+import { Duration, beforeProj7, cancelTestRun, getCurrentRunData, getResults, getTestControllerItemCount, log, refreshData, refreshTests, runAllTests, setupCommon, sleep, suiteSetupCommon, waitForTestRunStatus } from '../testCommon'
 
-export default suite('proj7BSuite', () => {
+suite('proj7BSuite', () => {
 
 	suiteSetup('proj7B - suiteSetup', async () => {
+		await suiteSetupCommon()
 		setupCommon()
 		await beforeProj7()
 	})

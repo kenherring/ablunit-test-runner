@@ -125,6 +125,7 @@
 		"ts-node": "^10.9.2",
 		"tsconfig-paths": "^4.2.0",
 		"typescript": "^5.3.3",
+		"vscode-test": "^1.6.1",
 		"webpack": "^5.89.0",
 		"webpack-cli": "^5.1.4"
 	},
@@ -157,7 +158,8 @@
 					"default": [
 						"**/*.{cls,p}"
 					],
-					"markdownDescription": "Glob patterns to include test files"
+					"markdownDescription": "Glob patterns to include test files",
+					"scope": "machine-overridable"
 				},
 				"ablunit.files.exclude": {
 					"type": "array",
@@ -165,7 +167,8 @@
 						".builder/**",
 						".pct/**"
 					],
-					"markdownDescription": "Glob patterns to exclude test files"
+					"markdownDescription": "Glob patterns to exclude test files",
+					"scope": "machine-overridable"
 				},
 				"ablunit.importOpenedgeProjectJson": {
 					"type": "boolean",

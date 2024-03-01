@@ -1,6 +1,8 @@
-import { Uri, assert, getWorkspaceUri, runAllTests, waitForExtensionActive } from '../testCommon'
+import { Uri, assert, getWorkspaceUri, runAllTests, suiteSetupCommon } from '../testCommon'
 
-export default suite('proj6Suite', () => {
+suite('proj6Suite', () => {
+
+	suiteSetup('proj3 - suiteSetup', suiteSetupCommon)
 
 	// suiteSetup('proj6 - suiteSetup', async () => {
 	// 	await waitForExtensionActive()

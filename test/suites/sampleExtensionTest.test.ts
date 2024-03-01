@@ -4,7 +4,7 @@ import * as vscode from 'vscode'
 
 console.log('STARTED sampleExtensionTest.test.js')
 
-export default suite('Extension Test Suite', () => {
+suite('Extension Test Suite', () => {
 
 	setup(() => {
 		console.log('[setup] STARTED Extension Test Suite')
@@ -19,7 +19,7 @@ export default suite('Extension Test Suite', () => {
 	})
 
 	test('Sample test', () => {
-		assert.strictEqual(-1, [1, 2, 3].indexOf(5))
-		assert.strictEqual(-1, [1, 2, 3].indexOf(0))
+		assert.equal(-1, [1, 2, 3].indexOf(5))
+		assert.equal(-1, [1, 2, 3].indexOf(0))
 	})
 })

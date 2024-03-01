@@ -1,17 +1,23 @@
-import { Uri, assert, deleteFile, doesDirExist, doesFileExist, log, runAllTests, updateConfig, waitForExtensionActive, workspace } from '../testCommon'
+import { Uri, assert, deleteFile, doesDirExist, doesFileExist, log, runAllTests, suiteSetupCommon, updateConfig, workspace } from '../testCommon'
 
 export default suite('workspace1Suite', () => {
 
-	suiteSetup('workspace1 - suiteSetup', async () => {
-		await waitForExtensionActive()
+	suiteSetup('workspace1 - suiteSetup', suiteSetupCommon)
 
+	setup('wokspace1 - setup', () => {
 		deleteFile('.vscode/ablunit-test-profile.json')
-		await updateConfig('tempDir', undefined)
+		return updateConfig('tempDir', undefined)
 	})
 
-	teardown('workspace1 - teardown', async () => {
-		log.info('after')
-		await updateConfig('tempDir', undefined)
+	teardown('workspace1 - teardown', () => {
+		deleteFile('.vscode/ablunit-test-profile.json')
+		return updateConfig('tempDir', undefined)
+	})
+
+	test('workspace1.0 - <workspaceFolder>/ablunit.json file exists', () => {
+		log.info('START ws-0.1')
+		assert.assert('workspace1.0 - pass')
+		log.info('END ws-0.1')
 	})
 
 	test('workspace1.1 - <workspaceFolder>/ablunit.json file exists', async () => {
@@ -66,26 +72,24 @@ export default suite('workspace1Suite', () => {
 		log.info('workspace1.1 - 170')
 	})
 
-	test('workspace1.2 - log.info only', () => {
-		log.info('START 1.1')
+	test('workspace1.2 - log.info only', () => { log.info('START 1.1') })
+
+	test('workspace1.3 - <storageUri>/ablunit.json file exists', async () => {
+		await updateConfig('tempDir', 'workspaceAblunit')
+		await runAllTests()
+
+		for (let i = 0; i < 2; i++) {
+			log.info('___ validate folder #' + i + ' success [' + workspace.workspaceFolders![i].name + '] ___')
+			const ablunitJson = Uri.joinPath(workspace.workspaceFolders![i].uri, 'workspaceAblunit', 'ablunit.json')
+			const resultsXml = Uri.joinPath(workspace.workspaceFolders![i].uri, 'workspaceAblunit', 'results.xml')
+			const resultsJson = Uri.joinPath(workspace.workspaceFolders![i].uri, 'workspaceAblunit', 'results.json')
+			const listingsDir = Uri.joinPath(workspace.workspaceFolders![i].uri, 'workspaceAblunit', 'listings')
+
+			assert.assert(doesFileExist(ablunitJson), 'missing ablunit.json (' + ablunitJson.fsPath + ')')
+			assert.assert(doesFileExist(resultsXml), 'missing results.xml (' + resultsXml.fsPath + ')')
+			assert.assert(!doesFileExist(resultsJson), 'results.json exists and should not (' + resultsJson.fsPath + ')')
+			assert.assert(!doesDirExist(listingsDir), 'listings dir exists and should not (' + listingsDir.fsPath + ')')
+		}
 	})
-
-	// test('workspace1.3 - <storageUri>/ablunit.json file exists', async () => {
-	// 	await updateConfig("tempDir", "workspaceAblunit")
-	// 	await runAllTests()
-
-	// 	for (let i = 0; i < 2; i++) {
-	// 		log.info("___ validate folder #" + i + " success [" + workspace.workspaceFolders![i].name + "] ___")
-	// 		const ablunitJson = Uri.joinPath(workspace.workspaceFolders![i].uri,'workspaceAblunit','ablunit.json')
-	// 		const resultsXml = Uri.joinPath(workspace.workspaceFolders![i].uri,'workspaceAblunit','results.xml')
-	// 		const resultsJson = Uri.joinPath(workspace.workspaceFolders![i].uri,'workspaceAblunit','results.json')
-	// 		const listingsDir = Uri.joinPath(workspace.workspaceFolders![i].uri,'workspaceAblunit','listings')
-
-	// 		assert.assert(await doesFileExist(ablunitJson), "missing ablunit.json (" + ablunitJson.fsPath + ")")
-	// 		assert.assert(await doesFileExist(resultsXml), "missing results.xml (" + resultsXml.fsPath + ")")
-	// 		assert.assert(!await doesFileExist(resultsJson), "results.json exists and should not (" + resultsJson.fsPath + ")")
-	// 		assert.assert(!await doesDirExist(listingsDir), "listings dir exists and should not (" + listingsDir.fsPath + ")")
-	// 	}
-	// })
 
 })

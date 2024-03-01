@@ -1,10 +1,8 @@
-import { Uri, assert, doesDirExist, doesFileExist, log, runAllTests, waitForExtensionActive, workspace } from '../testCommon'
+import { Uri, assert, doesDirExist, doesFileExist, log, runAllTests, suiteSetupCommon, workspace } from '../testCommon'
 
-export default suite('workspace0Suite', () => {
+suite('workspace0Suite', () => {
 
-	suiteSetup('workspace0 - suiteSetup', async () => {
-		await waitForExtensionActive()
-	})
+	suiteSetup('workspace0 - suiteSetup', suiteSetupCommon)
 
 	test('workspace0.1 - <workspaceFolder>/ablunit.json file exists', async () => {
 		await runAllTests()

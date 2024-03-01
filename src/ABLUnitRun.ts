@@ -130,6 +130,7 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 					log.error('Error = ' + err.name + ' (ExecExcetion)\r\n   ' + err.message, options)
 					log.error('err=' + JSON.stringify(err))
 					reject(err)
+					return
 				}
 				if (stdout) {
 					// stdout = '[stdout] ' + stdout.replace(/\n/g, '\n[stdout] ')
@@ -152,6 +153,7 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 		return res.parseOutput(options).then()
 	}, (err) => {
 		log.error('Err=' + err)
+		throw err
 	})
 }
 

@@ -1,11 +1,9 @@
 import { getEnvVars } from '../../src/ABLUnitRun'
-import { Uri, assert, getResults, getWorkspaceUri, runAllTests, waitForExtensionActive } from '../testCommon'
+import { Uri, assert, getResults, getWorkspaceUri, runAllTests, suiteSetupCommon } from '../testCommon'
 
-export default suite('proj8Suite', () => {
+suite('proj8Suite', () => {
 
-	suiteSetup('proj8 - suiteSetup', async () => {
-		// await waitForExtensionActive()
-	})
+	suiteSetup('proj8 - suiteSetup', suiteSetupCommon)
 
 	test('proj8.1 - test count', async () => {
 		await runAllTests()
@@ -16,10 +14,10 @@ export default suite('proj8Suite', () => {
 		assert.fileExists(resultsXml)
 		assert.fileExists(resultsJson)
 
-		assert.count(2)
-		assert.errored(0)
-		assert.failed(0)
-		assert.passed(2)
+		assert.tests.count(2)
+		assert.tests.errored(0)
+		assert.tests.failed(0)
+		assert.tests.passed(2)
 	})
 
 	test('proj8.2 - getEnvVars confirm PATH is set correctly', async () => {

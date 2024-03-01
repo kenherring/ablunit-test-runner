@@ -6,7 +6,7 @@ import { readFileSync } from 'fs'
 import { globSync } from 'glob'
 import {
 	CancellationError,
-	CancellationToken, ConfigurationChangeEvent, ExtensionContext,
+	CancellationToken, ConfigurationChangeEvent, Disposable, ExtensionContext,
 	FileType,
 	Position, Range, RelativePattern, Selection,
 	TestController, TestItem, TestItemCollection, TestMessage,
@@ -73,7 +73,11 @@ export async function activate (context: ExtensionContext) {
 
 	context.subscriptions.push(
 		commands.registerCommand('_ablunit.openCallStackItem', openCallStackItem),
-		workspace.onDidChangeConfiguration(e => { updateConfiguration(e) }),
+		workspace.onDidChangeConfiguration(e => {
+			log.info('onDidChangeConfiguration start')
+			updateConfiguration(e)
+			log.info('onDidChangeConfiguration end')
+		}),
 		// window.registerFileDecorationProvider(decorationProvider),
 
 		// TODO
@@ -90,12 +94,14 @@ export async function activate (context: ExtensionContext) {
 		// 	})
 		// }),
 
-		workspace.onDidOpenTextDocument(async e => {
-			await updateNodeForDocument(e, 'didOpen').then(() => {
-				log.trace('updateNodeForDocument complete for ' + e.uri)
-				decorator.decorate(undefined, e)
-			}, (err) => {
-				log.error('failed updateNodeForDocument onDidTextDocument! err=' + err)
+		workspace.onDidOpenTextDocument(e => {
+			return new Disposable(async () => {
+				await updateNodeForDocument(e, 'didOpen').then(() => {
+					log.trace('updateNodeForDocument complete for ' + e.uri)
+					decorator.decorate(undefined, e)
+				}, (err) => {
+					log.error('failed updateNodeForDocument onDidTextDocument! err=' + err)
+				})
 			})
 		})
 		// watcher.onDidCreate(uri => { createOrUpdateFile(controller, uri) })
@@ -103,38 +109,139 @@ export async function activate (context: ExtensionContext) {
 		// watcher.onDidDelete(uri => { controller.items.delete(uri.fsPath) })
 	)
 
-	const runHandler = (request: TestRunRequest, cancellation: CancellationToken) => {
-		if (! request.continuous) {
-			const runProm = startTestRun(request, cancellation)
-				.then(() => { return })
-				.catch((err) => {
-					log.error('startTestRun failed. err=' + err)
-					throw err
-				})
-			const cancelProm = new Promise((resolve) => {
-				cancellation.onCancellationRequested(() => {
-					log.debug('cancellation requested - runHandler cancelProm')
-					resolve('cancelled')
-				})
-			})
-			const ret = Promise.race([ runProm, cancelProm ]).then((res) => {
-				if (res === 'cancelled') {
-					log.error('test run cancelled')
-					throw new CancellationError()
-				}
-				log.debug('test run completed successfully')
-				return
-			}, (err) => {
-				log.error('test run failed. err=' + err)
-				throw err
-
-			})
-
-			return ret
+	const runHandler = (request: TestRunRequest, token: CancellationToken): Promise<void> => {
+	// const runHandler = (request: TestRunRequest, token: CancellationToken) => {
+		if (request.continuous) {
+			log.error('continuous test runs not implemented')
+			throw new Error('continuous test runs not implemented')
 		}
-		log.error('continuous test runs not implemented')
-		throw new Error('continuous test runs not implemented')
+		return startTestRun(request, token)
+
+		// const runStart = startTestRun(request, token).then((r) => {
+		// 	log.debug('runHandler.startTestRun successful (r=' + r + ')')
+		// 	log.info('runHandler.startTestRun successful (r=' + r + ')')
+		// 	// resolve('success')
+		// 	// return 'success'
+		// 	return
+		// }).catch((err) => {
+		// 	log.debug('startTestRun failed. err=' + err)
+		// 	log.info('startTestRun failed. err=' + err)
+		// 	throw err
+		// })
+		// return runStart
+
+		// const runProm = new Promise<void>((resolve, reject) => {
+		// 	token.onCancellationRequested(() => {
+		// 		log.info('cancellation requested - runHandler runProm')
+		// 		// resolve('cancelled')
+		// 		resolve()
+		// 	})
+		// 	return runStart.then((res) => {
+		// 		log.info('runStart.then res=' + res)
+		// 		// resolve(res)
+		// 		resolve()
+		// 	}).catch((err) => {
+		// 		log.info('runStart.then err=' + err)
+		// 		// resolve(new Error('runStart failed with error: ' + err))
+		// 		resolve()
+		// 		reject(new Error('runStart failed with error: ' + err))
+		// 	})
+		// })
+		// log.info('return runProm=' + JSON.stringify(runProm))
+		// return runProm
+		// const cancelProm = new Promise<string>((resolve) => {
+		// 	token.onCancellationRequested(() => {
+		// 		log.debug('cancellation requested - runHandler cancelProm')
+		// 		resolve('cancelled')
+		// 	})
+		// })
+
+		// log.info('Promise.race')
+		// const prom = Promise.race([runProm, cancelProm]).then((r) => {
+		// 	log.info('then().resolve (r=' + r + ')')
+		// 	resolve()
+		// 	log.info('then().return')
+		// 	return
+		// }).catch((err) => {
+		// 	resolve()
+		// 	log.info('catch.reject err=' + err)
+		// 	if (err instanceof Error) {
+		// 		log.info('reject-10')
+		// 		// reject(err)
+		// 		resolve()
+		// 	} else {
+		// 		log.info('reject-11')
+		// 		// reject(new Error('runProm failed with non-error: ' + err))
+		// 		resolve()
+		// 	}
+		// 	log.info('catch().return')
+		// 	return
+		// })
+		// return new Promise<void>((resolve) => {
+		// 	const ret = Promise.race([runProm, cancelProm]).then((res) => {
+		// 		log.info('then(res) res=' + res)
+		// 		// return Promise.resolve()
+		// 		resolve()
+		// 	}, (err) => {
+		// 		log.error('then(err) err=' + err)
+		// 		// return Promise.resolve()
+		// 		resolve()
+		// 	}).catch((err) => {
+		// 		log.error('catch() err=' + err)
+		// 		// return Promise.resolve()
+		// 		resolve()
+		// 	})
+		// 	return
+		// })
+
+		// const ret = Promise.race([runProm, cancelProm]).then((res) => {
+		// 	log.info('then(res) res=' + res)
+		// 	// return Promise.resolve()
+		// 	// resolve()
+		// }, (err) => {
+		// 	log.error('then(err) err=' + err)
+		// 	// return Promise.resolve()
+		// 	// resolve()
+		// }).catch((err) => {
+		// 	log.error('catch() err=' + err)
+		// 	// return Promise.resolve()
+		// 	// resolve()
+		// })
+		// return ret
 	}
+
+
+
+	// 	const ret = Promise.race([ cancelProm, runProm ]).then((res) => {
+	// 		log.debug('Promise.race resolved! res=' + res)
+	// 		log.info('Promise.race resolved! res=' + res)
+	// 		if (res === 'cancelled') {
+	// 			log.error('test run cancelled')
+	// 			// throw new CancellationError()
+	// 			// return 'cancelled'
+	// 			return
+	// 		}
+	// 		if (res instanceof Error) {
+	// 			log.error('test run failed. promise returned error. res=' + res)
+	// 			// throw res
+	// 			// return 'failed'
+	// 			return
+	// 		}
+	// 		log.debug('test run completed successfully')
+	// 		log.info('test run completed successfully')
+	// 		// return 'success'
+	// 		return
+	// 	}).catch((err) => {
+	// 		log.error('test run failed. err=' + err)
+	// 		// throw err
+	// 		log.info('return void')
+	// 		// return void 0
+	// 		return
+	// 	})
+
+	// 	log.info('runHandler returning promise')
+	// 	return ret
+	// }
 
 	async function openTestRunConfig () {
 		let workspaceFolder: WorkspaceFolder
@@ -217,10 +324,11 @@ export async function activate (context: ExtensionContext) {
 				}
 
 				ret = await r.run(run).then(() => {
+					log.debug('r.run() successful')
 					return true
-				}, (err) => {
-					log.error('ablunit run failed parsing results with exception: ' + err, run)
-					return false
+				}, (e) => {
+					log.error('ablunit run failed parsing results with exception: ' + e, run)
+					throw e
 				})
 				if (!ret) {
 					continue
@@ -353,18 +461,31 @@ export async function activate (context: ExtensionContext) {
 		})
 		const tests = request.include ?? gatherTestItems(ctrl.items)
 
-		return discoverTests(tests).then(async () => {
-			return createABLResults().then((res) => {
+		const prom = discoverTests(tests).then(() => {
+			const r = createABLResults().then((res) => {
 				if (!res) {
 					throw new Error('createABLResults failed')
 				} else {
 					checkCancellationRequested(run)
 				}
-				return runTestQueue(res).then(() => {
+				const r = runTestQueue(res).then(() => {
 					log.debug('runTestQueue complete')
-					return true
-				})
-			})
+					// return
+					return
+				}).catch((e) => {throw e})
+				// }, (e) => {
+				// 	log.debug('runTestQueue failed! e=' + e)
+				// 	log.info('runTestQueue failed! e=' + e)
+				// 	throw e
+				// })
+				return r
+				// return
+			}).catch((e) => { throw e })
+			// }, (e) => {
+			// 	log.error('createABLResults failed! e=' + e)
+			// 	throw e
+			// })
+			return r
 		}).catch((err) => {
 			run.end()
 			if (err instanceof CancellationError) {
@@ -376,6 +497,7 @@ export async function activate (context: ExtensionContext) {
 			}
 			throw err
 		})
+		return prom
 	}
 
 	async function updateNodeForDocument (e: TextDocument | TestItem | Uri, r: string) {
@@ -391,7 +513,7 @@ export async function activate (context: ExtensionContext) {
 		}
 		if (workspace.getWorkspaceFolder(u) === undefined) {
 			log.info('skipping updateNodeForDocument for file not in workspace: ' + u.fsPath)
-			return new Promise(() => { return true })
+			return Promise.resolve()
 		}
 		return await updateNode(u, ctrl)
 	}
@@ -434,9 +556,10 @@ export async function activate (context: ExtensionContext) {
 	}
 
 	function updateConfiguration (e: ConfigurationChangeEvent) {
-		if (e.affectsConfiguration('ablunit')) {
-			removeExcludedFiles(ctrl, getExcludePatterns())
-		}
+		log.info('[extension.st updateConfiguration] e=' + JSON.stringify(e))
+		// if (e.affectsConfiguration('ablunit')) {
+		// 	removeExcludedFiles(ctrl, getExcludePatterns())
+		// }
 		if (e.affectsConfiguration('ablunit.files.include') || e.affectsConfiguration('ablunit.files.exclude')) {
 			removeExcludedFiles(ctrl, getExcludePatterns())
 		}
@@ -706,7 +829,7 @@ function getExcludePatterns () {
 	let excludePatterns: string[] = []
 
 	const excludePatternsConfig: string[] | undefined = workspace.getConfiguration('ablunit').get('files.exclude', [ '**/.builder/**' ])
-	if (excludePatternsConfig[0].length == 1) {
+	if (excludePatternsConfig.length == 1) {
 		excludePatterns[0] = ''
 		for (const pattern of excludePatternsConfig) {
 			excludePatterns[0] = excludePatterns[0] + pattern

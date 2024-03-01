@@ -1,4 +1,4 @@
-import { strict as assertParent } from 'assert'
+import * as assertParent from 'assert'
 import * as fs from 'fs'
 import { globSync } from 'glob'
 import * as vscode from 'vscode'
@@ -6,7 +6,8 @@ import {
 	ConfigurationTarget, TestController,
 	TestItemCollection,
 	Uri,
-	WorkspaceFolder, commands, extensions,
+	Selection,
+	WorkspaceFolder, commands, extensions, window,
 	workspace
 } from 'vscode'
 import { ABLResults } from '../src/ABLResults'
@@ -17,6 +18,53 @@ import { IExtensionTestReferences } from '../src/extension'
 import { ITestSuites } from '../src/parse/ResultsParser'
 import { IConfigurations } from '../src/parse/TestProfileParser'
 import { DefaultRunProfile } from '../src/parse/config/RunProfile'
+
+interface IRuntime {
+	name: string,
+	path: string,
+	default?: boolean
+}
+
+// https://github.com/microsoft/vscode/blob/2aae82a102da66e566842ff9177bceeb99873970/src/vs/workbench/browser/actions/workspaceCommands.ts#L156C1-L163C2
+// interface IOpenFolderAPICommandOptions {
+// 	forceNewWindow?: boolean
+// 	forceReuseWindow?: boolean
+// 	noRecentEntry?: boolean
+// 	forceLocalWindow?: boolean
+// 	forceProfile?: string
+// 	forceTempProfile?: boolean
+// }
+
+// runtime environment vars
+export const enableExtensions = process.env['ABLUNIT_TEST_RUNNER_ENABLE_EXTENSIONS'] === 'true'
+// test objects
+export const log = logObj
+export class FilesExclude {
+	exclude: {
+		[key: string]: boolean
+	} = {}
+}
+// vscode objects
+export {
+	Duration, Selection, Uri,
+	commands, extensions, window, workspace
+}
+
+const projName = () => { return getWorkspaceUri().fsPath.replace(/\\/g, '/').split('/').pop() }
+let recentResults: ABLResults[] | undefined
+let decorator: Decorator | undefined
+let testController: TestController | undefined
+let currentRunData: ABLResults[] | undefined
+
+log.info('[testCommon.ts] enableExtensions=' + enableExtensions + ', projName=' + projName())
+
+export async function newTruePromise () {
+	return new Promise(resolve => { resolve(true) })
+}
+
+export function isoDate () {
+	return '[' + new Date().toISOString() + ']'
+}
 
 function getExtensionDevelopmentPath () {
 	let dir = Uri.joinPath(Uri.file(__dirname))
@@ -38,42 +86,127 @@ function getExtensionDevelopmentPath () {
 	throw new Error('unable to determine extensionDevelopmentPath')
 }
 
-// eslint-disable-next-line no-console
-console.log('process.args=' + process.argv.join(' '))
-// eslint-disable-next-line no-console
-console.log('extensionDevelopmentPath=' + getExtensionDevelopmentPath().fsPath)
+export async function suiteSetupCommon () {
+	log.info('suiteSetupCommon-1 waitForExtensionActive - ablunit-test-runner')
+	await waitForExtensionActive()
+	const extname = 'riversidesoftware.openedge-abl-lsp'
+	log.info('suiteSetupCommon-2.1 workspaceUri=' + getWorkspaceUri())
+	log.info('suiteSetupCommon-2.2 workspaceUri=' + getWorkspaceUri().fsPath)
+	log.info('suiteSetupCommon-2.3 workspaceUri=' + getWorkspaceUri().fsPath.replace(/\\/g, '/'))
+	log.info('suiteSetupCommon-2.4 workspaceUri=' + getWorkspaceUri().fsPath.replace(/\\/g, '/').split('/'))
+	log.info('suiteSetupCommon-2.5 workspaceUri=' + getWorkspaceUri().fsPath.replace(/\\/g, '/').split('/').pop())
 
+	log.info('suiteSetupCommon-2.6 projName=' + projName)
+	log.info('suiteSetupCommon-2.7 projName=' + projName())
+	log.info('suiteSetupCommon-2.8 enableExtensions=' + enableExtensions)
 
-interface IRuntime {
-	name: string,
-	path: string,
-	default?: boolean
+	if (enableExtensions) {
+		await installExtension(extname).then((r) => {
+			if (!r) {
+				throw new Error('failed to install extension ' + extname)
+			}
+			log.info('suiteSetupCommon-3 installed extension ' + extname + ' (r=' + JSON.stringify(r) + ')')
+			return
+		}, (e) => {
+			log.error('failed to install extension ' + extname + ' (e=' + e + ')')
+			throw e
+		})
+		log.info('suiteSetupCommon-3 activateExtension ' + extname)
+		await activateExtension(extname).then((r) => {
+			log.info('suiteSetupCommon-4 activated extension ' + extname)
+			log.info('suiteSetupCommon-4 activated extension ' + extname + ' (isActive=' + r + ')')
+			return r
+		}, (e) => {
+			log.error('failed to activate extension ' + extname + ' (e=' + e + ')')
+			throw e
+		})
+		log.info('suiteSetupCommon-4 setRuntimes')
+		const r = await setRuntimes().then((r: number) => r, (e) => {
+			log.error('failed to set runtimes (e=' + e + ')')
+			throw e
+		})
+		log.info('suiteSetupCommon-5 runtimes set (r=' + r + ')')
+	}
+	log.info('suiteSetupCommon complete!')
 }
 
-// https://github.com/microsoft/vscode/blob/2aae82a102da66e566842ff9177bceeb99873970/src/vs/workbench/browser/actions/workspaceCommands.ts#L156C1-L163C2
-interface IOpenFolderAPICommandOptions {
-	forceNewWindow?: boolean
-	forceReuseWindow?: boolean
-	noRecentEntry?: boolean
-	forceLocalWindow?: boolean
-	forceProfile?: string
-	forceTempProfile?: boolean
+export async function suiteTeardownCommon () {
+	await setRuntimes()
 }
 
-class TestInfo {
-	get projName () { return __filename.split('\\').pop()!.split('/').pop()!.split('.')[0] }
-}
-export const info = new TestInfo()
-export const log = logObj
-export {
-	Duration,
-	Uri, commands, workspace
+export async function setFilesExcludePattern () {
+	log.info('[updateFilesExcludePatterns] start')
+	const files = new FilesExclude
+	log.info('[updateFilesExcludePatterns] u-1')
+	// files.exclude = workspace.getConfiguration('files', getWorkspaceUri()).get('exclude', {})
+	const filesConfig = workspace.getConfiguration('files', getWorkspaceUri())
+	files.exclude = filesConfig.get('exclude', {}) ?? {}
+	log.info('[updateFilesExcludePatterns] u-2 files.exclude=' + JSON.stringify(files.exclude))
+	files.exclude['**/.builder'] = true
+	log.info('[updateFilesExcludePatterns] u-3')
+	files.exclude['**/lbia*'] = true
+	log.info('[updateFilesExcludePatterns] u-4')
+	files.exclude['**/rcda*'] = true
+	log.info('[updateFilesExcludePatterns] u-5')
+	files.exclude['**/srta*'] = true
+	log.info('[updateFilesExcludePatterns] updating... files.exclude patterns')
+	log.info('[updateFilesExcludePatterns] u-7.1         filesConfig=' + JSON.stringify(filesConfig))
+	log.info('[updateFilesExcludePatterns] u-7.2 filesConfig.exclude=' + JSON.stringify(filesConfig['exclude']))
+	log.info('[updateFilesExcludePatterns] u-7.3       files.exclude=' + JSON.stringify(files.exclude))
+	if (JSON.stringify(filesConfig['exclude']) === JSON.stringify(files.exclude)) {
+		log.info('files.exclude already set to ' + JSON.stringify(files.exclude))
+		return newTruePromise()
+	}
+
+	return filesConfig.update('exclude', files.exclude).then(() => {
+		log.info('[updateFilesExcludePatterns] filesConfig.update success!')
+		return true
+	}, (err) => {
+		log.error('[updateFilesExcludePatterns] filesConfig.update failed! err=' + err)
+		throw err
+	})
+	// log.info('[updateFilesExcludePatterns] u-8 r=' + r)
+	// log.info('[updateFilesExcludePatterns] complete')
 }
 
-let recentResults: ABLResults[] | undefined
-let decorator: Decorator | undefined
-let testController: TestController | undefined
-let currentRunData: ABLResults[] | undefined
+export async function installExtension (extname = 'riversidesoftware.openedge-abl-lsp') {
+	log.info('[installExtension] start process.args=' + process.argv.join(' '))
+	if (extensions.getExtension(extname)) {
+		log.info('[installExtension] extension ' + extname + ' is already installed')
+		return true
+	}
+
+	log.info('[installExtension] installing ' + extname + ' extension...')
+	const installCommand = 'workbench.extensions.installExtension'
+
+	return commands.executeCommand(installCommand, extname).then(async r => {
+		log.info('post-' + installCommand + '(r=' + r + ')')
+		return sleep2(250).then(() => {
+			log.info('get extension \'' + extname + '\'...')
+			const ext = extensions.getExtension(extname)
+			if (!ext) { throw new Error('get after install failed') }
+			return ext
+		})
+	}, (e) => {
+		log.error(installCommand + ' failed to install extension \'' + extname + '\'!')
+		throw e
+	})
+}
+
+export async function activateExtension (extname = 'riversidesoftware.openedge-abl-lsp') {
+	log.info('[activateExtension] activating ' + extname + ' extension...')
+	const ext = extensions.getExtension(extname)
+	if (!ext) {
+		throw new Error('cannot activate extension, not installed: ' + extname)
+	}
+	log.info('[activateExtension] active? ' + ext.isActive)
+	if (!ext.isActive) {
+		log.info('[activateExtension] activate')
+		await ext.activate()
+	}
+	log.info('[activateExtension] activated ' + extname + ' extension!')
+	return ext.isActive
+}
 
 export function setupCommon () {
 	recentResults = undefined
@@ -99,7 +232,7 @@ export async function sleep2 (time = 10, msg?: string) {
 }
 
 export async function sleep (requestedTime: number, msg?: string) {
-	const time = requestedTime
+	const time = 25
 	let status = 'sleeping for ' + time + 'ms'
 	if (time !== requestedTime) {
 		status += ' (orig=' + requestedTime + 'ms)'
@@ -150,125 +283,124 @@ export async function waitForExtensionActive (extensionId = 'kherring.ablunit-te
 	// return refreshData()
 }
 
-export async function installExtension (extname = 'riversidesoftware.openedge-abl-lsp') {
-	log.info('[testCommon.ts installExtension] start')
-	if (!extensions.getExtension(extname)) {
-		log.info('[testCommon.ts installExtension] installing ' + extname + ' extension...')
-		await commands.executeCommand('workbench.extensions.installExtension', extname).then(() => {
-			log.trace('[testCommon.ts installExtension] installed riversidesoftware.openedge-abl-lsp extension!')
-		}, (err: Error) => {
-			log.info('err.name=' + err.name)
-			log.info('err.toString()=' + err.toString())
-			if (err.toString() === 'Error: Missing gallery') {
-				log.trace('[testCommon.ts installExtension] triggered installed extension, caught \'Missing Gallery\' error, and continuing...')
-			} else {
-				throw new Error('[testCommon.ts installExtension] failed to install extension: ' + err)
-			}
-		})
-		log.info('sleeping for 5 seconds')
-		await sleep(5000).then(() => {
-			log.info('sleep complete')
-		})
-	}
-
-	const ext = extensions.getExtension(extname)
-	if (!ext) {
-		throw new Error('[testCommon.ts installExtension] failed to get extension')
-	}
-	if (ext.isActive) {
-		log.info('[testCommon.ts installExtension] extension is already active')
-		return
-	}
-	log.trace('[testCommon.ts installExtension] activating ' + extname + ' extension...')
-	await ext.activate().then(() => waitForExtensionActive(extname)).then(() => {
-		log.trace('[testCommon.ts] activated ' + extname + ' extension!')
-	})
-
-	log.trace('[testCommon.ts installExtension] ' + extname + ' active=' + ext.isActive)
-	if (!ext.isActive) {
-		throw new Error('[testCommon.ts] failed to activate extension ' + extname)
-	}
-
-	await setRuntimes([{name: '12.2', path: getDefaultDLC(), default: true}])
-}
-
-export async function setRuntimes (runtimes: IRuntime[]) {
-	log.info('[testCommon.ts setRuntimes] setting abl.configuration.runtimes')
-	log.info('[testCommon.ts setRuntimes] runtimes=' + JSON.stringify(runtimes))
-
-	const ext = extensions.getExtension('riversidesoftware.openedge-abl-lsp')
-	if (!ext) {
-		throw new Error('[testCommon.ts setRuntimes] extension not installed: riversidesoftware.openedge-abl-lsp')
-	}
-	if (!ext.isActive) {
-		throw new Error('[testCommon.ts setRuntimes] extension not active: riversidesoftware.openedge-abl-lsp')
-	}
-
-	return workspace.getConfiguration('abl.configuration').update('runtimes', runtimes, ConfigurationTarget.Global).then(async () =>{
-		log.info('[testCommon.ts setRuntimes] abl.configuration.runtimes set successfully')
-		await sleep(500)
-		log.info('[testCommon.ts setRuntimes] rebuilding abl project...')
-		await  commands.executeCommand('abl.project.rebuild').then(() => {
-			log.info('[testCommon.ts setRuntimes] abl.project.rebuild command complete!')
-		})
-		const rt = workspace.getConfiguration('abl.configuration').get('runtimes')
-		log.info('runtimes=' + JSON.stringify(rt, null, 2))
+function rebuildAblProject () {
+	log.info('[rebuildAblProject] rebuilding abl project...')
+	return commands.executeCommand('abl.project.rebuild').then((r) => {
+		log.info('[rebuildABlProject] r=' + JSON.stringify(r))
+		const rcodeCount = getRcodeCount()
+		log.info('[rebuildAblProject] abl.project.rebuild command complete! (rcodeCount=' + rcodeCount + ')')
+		return rcodeCount
 	}, (err) => {
-		throw new Error('[testCommon.ts setRuntimes] failed to set runtimes: ' + err)
+		log.error('[rebuildAblProject] abl.project.rebuild failed! err=' + err)
+		throw err
 	})
 }
 
-export async function installAndSetRuntimes (runtimes: IRuntime[]) {
-	return installExtension('riversidesoftware.openedge-abl-lsp').then(async () => {
-		log.info('[testCommon.ts setRuntimes] setting abl.configuration.runtimes')
-		return workspace.getConfiguration('abl.configuration').update('runtimes', runtimes, ConfigurationTarget.Global).then(async () =>{
-			log.info('[testCommon.ts setRuntimes] abl.configuration.runtimes set successfully')
-			await commands.executeCommand('abl.restart.langserv').then(() => {
-				log.info('abl.restart.langserv complete')
-			})
-			await sleep(500)
-			log.trace('[testCommon.ts setRuntimes] rebuilding abl project...')
-			await commands.executeCommand('abl.project.rebuild').then(() => {
-				log.trace('[testCommon.ts setRuntimes] abl.project.rebuild command complete!')
-			})
+function getRcodeCount (workspaceFolder?: WorkspaceFolder) {
+	if (!workspaceFolder) {
+		workspaceFolder = workspace.workspaceFolders?.[0]
+	}
+	if (!workspaceFolder) {
+		throw new Error('workspaceFolder is undefined')
+	}
+	const g = globSync('**/*.r', { cwd: workspaceFolder?.uri.fsPath })
+	const fileCount = g.length
+	if (fileCount >= 0) {
+		log.info('found ' + fileCount + ' r-code files')
+		return fileCount
+	}
+	log.error('fileCount is not a number! fileCount=' + fileCount)
+	return -1
+}
 
-			await sleep(500)
-			await commands.executeCommand('abl.dumpFileStatus').then(() => {
-				log.info('abl.dumpFileStatus complete!')
-			})
-			await commands.executeCommand('abl.dumpLangServStatus').then(() => {
-				log.info('abl.dumpLangServStatus complete!')
-			})
-		}, (err) => {
-			throw new Error('[testCommon.ts setRuntimes] failed to set runtimes: ' + err)
-		})
+export async function setRuntimes (runtimes: IRuntime[] = [{name: '12.2', path: getDefaultDLC(), default: true}]): Promise<number> {
+	if (!enableExtensions) {
+		throw new Error('setRuntimes failed! extensions are disabled')
+	}
+	log.info('[setRuntimes] setting abl.configuration.runtimes=' + JSON.stringify(runtimes))
+	const ext = extensions.getExtension('riversidesoftware.openedge-abl-lsp')
+	log.info('201')
+	if (!ext) {
+		throw new Error('[setRuntimes] extension not installed: riversidesoftware.openedge-abl-lsp')
+	}
+	if (!ext.isActive) {
+		throw new Error('[setRuntimes] extension not active: riversidesoftware.openedge-abl-lsp')
+	}
+
+	const conf = workspace.getConfiguration('abl')
+	const current = conf.get('configuration.runtimes') as IRuntime[]
+	log.info('current=' + JSON.stringify(current))
+	log.info('  input=' + JSON.stringify(runtimes))
+	if (JSON.stringify(current) === JSON.stringify(runtimes)) {
+		log.info('[setRuntimes] runtmes are already set')
+		return getRcodeCount()
+	}
+
+	log.info('202.2     conf=' + JSON.stringify(conf))
+	log.info('202.3 runtimes=' + JSON.stringify(runtimes))
+
+	const prom = conf.update('configuration.runtimes', runtimes, ConfigurationTarget.Global).then(() => {
+	// const prom = conf.update('configuration.runtimes', runtimes, ConfigurationTarget.Global).then(() => {
+		log.info('202.4')
+		return rebuildAblProject().then((r) => {
+			log.info('202.5 r=' + r)
+			log.info('[setRuntimes] abl.configuration.runtimes set successfully')
+			return r
+		}, (e) => { throw e})
+		// log.info('202.6 p=' + JSON.stringify(p))
+		// return p
+	}, (e) => {
+		log.error('203 error!')
+		throw e
 	})
+	// log.info('204')
+	log.info('205 prom=' + JSON.stringify(prom))
+	log.info('206 ' + typeof prom)
+	if (! (prom instanceof Promise)) {
+		log.info('207 NOT Promise')
+		const num = await prom
+		log.info('208 prom=' + JSON.stringify(num))
+		return new Promise(resolve => { resolve(num) })
+	}
+	log.info('209 is Promise! prom=' + JSON.stringify(prom))
+	return prom as Promise<number>
+
 }
 
 export async function awaitRCode (workspaceFolder: WorkspaceFolder, rcodeCountMinimum = 1) {
+	const ext = extensions.getExtension('riversidesoftware.openedge-abl-lsp')
+	log.info('[awaitRCode] isActive=' + ext?.isActive)
+	if (!ext?.isActive) {
+		log.info('[awaitRCode] extension active! (ext=' + JSON.stringify(ext) + ')')
+		throw new Error('openedge-abl-lsp is not active! rcode cannot be created')
+	}
 	const buildWaitTime = 20
-	let fileCount = 0
-	log.info('waiting up to ' + buildWaitTime + ' seconds for r-code')
-	for (let i = 0; i < buildWaitTime; i++) {
-		await new Promise((resolve) => setTimeout(resolve, 1000))
 
-		const g = globSync('**/*.r', { cwd: workspaceFolder.uri.fsPath })
-		fileCount = g.length
-		log.info('(' + i + '/' + buildWaitTime + ') found ' + fileCount + ' r-code files...')
-		if (fileCount >= rcodeCountMinimum) {
-			log.info('found ' + fileCount + ' r-code files! ready to test')
-			return fileCount
+	for (let i = 0; i < 10; i++) {
+		const prom = commands.executeCommand('abl.project.rebuild').then(() => true, (err) => {
+			log.error('[awaitRCode] abl.project.rebuild failed! err=' + err)
+			return false
+		})
+		if (await prom) {
+			log.info('Language client is ready!')
+			break
 		}
-		log.info('found ' + fileCount + ' r-code files. waiting...')
-		log.info('found files: ' + JSON.stringify(g, null, 2))
+		await sleep2(1000)
 	}
 
-	await commands.executeCommand('abl.dumpFileStatus').then(() => {
-		log.info('abl.dumpFileStatus complete!')
-	})
-	await commands.executeCommand('abl.dumpLangServStatus').then(() => {
-		log.info('abl.dumpLangServStatus complete!')
-	})
+	log.info('waiting up to ' + buildWaitTime + ' seconds for r-code')
+	for (let i = 0; i < buildWaitTime; i++) {
+		const rcodeCount = getRcodeCount(workspaceFolder)
+		if (rcodeCount >= rcodeCountMinimum) {
+			log.info('compile complete! rcode count = ' + rcodeCount)
+			return rcodeCount
+		}
+		log.info('found ' + rcodeCount + ' r-code files. waiting... (' + i + '/' + buildWaitTime + ')')
+		await sleep2(1000)
+	}
+
+	await commands.executeCommand('abl.dumpFileStatus').then(() => { log.info('abl.dumpFileStatus complete!') })
+	await commands.executeCommand('abl.dumpLangServStatus').then(() => { log.info('abl.dumpLangServStatus complete!') })
 	throw new Error('r-code files not found')
 }
 
@@ -337,7 +469,11 @@ export function toUri (uri: string | Uri) {
 	return Uri.file(uri)
 }
 
-export function doesFileExist (uri: Uri | string) {
+export function doesFileExist (uri: Uri | string | undefined) {
+	if (!uri) {
+		log.warn('doesFileExist: uri is undefined')
+		return false
+	}
 	try {
 		const stat = fs.statSync(toUri(uri).fsPath)
 		if (stat.isFile()) {
@@ -415,18 +551,30 @@ export async function runAllTests (doRefresh = true) {
 
 	log.info('running all tests')
 	if (doRefresh) {
-		await refreshTests().then(() => { return sleep(500, 'after refreshTests') })
+		await refreshTests().then(async () => { return sleep2(500, 'after refreshTests') })
 	} else {
 		await sleep(250, 'sleep before testing.runAll')
 	}
 
 	log.info('testing.runAll starting')
-	return commands.executeCommand('testing.runAll').then(() => {
-		log.info('testing.runAll complete!')
-		return refreshData()
+	const r = await commands.executeCommand('testing.runAll').then(() => {
+		log.info('testing.runAll completed - start getResults()')
+		return getResults().then((r) => {
+			log.info('testing.runAll found results (re=' + r + ')')
+			const fUri = r?.[0]?.cfg.ablunitConfig.optionsUri.filenameUri
+			log.info('testing.runAll found results file (filename=' + fUri + ')')
+			if (doesFileExist(fUri)) {
+				return true
+			}
+			log.error('no results file found (filename=' + fUri + ')')
+			throw new Error('no results file found (filename=' + fUri + ')')
+		// })
+		}, (e) => { throw e })
 	}, (err) => {
+		log.error('testing.runAll failed: ' + err)
 		throw new Error('testing.runAll failed: ' + err)
 	})
+	log.info('[runAllTests] complete (r=' + r + ')')
 }
 
 export function refreshTests () {
@@ -482,22 +630,86 @@ export async function cancelTestRun (resolveCurrentRunData = true) {
 	})
 }
 
-export function updateConfig (key: string, value: string | string[] | undefined) {
-	// log.info('updateConfig-1 key=' + key + ', value=' + value)
-	const workspaceConfig = workspace.getConfiguration('ablunit', workspace.workspaceFolders![0])
-	// log.info('updateConfig-2 workspaceConfig = ' + JSON.stringify(workspaceConfig, null, 2))
-	log.info('updateConfig-2.1 ' + key + ' = ' + workspaceConfig.get(key))
-	const prom = workspaceConfig.update(key, value, ConfigurationTarget.Workspace)
-	// log.info('updateConfig-3')
-	return prom.then(() => {
-		// log.info('updateConfig-4')
-		log.info('ablunit.' + key + ' set successfully (value=\'' + value + '\')')
-		// return sleep2(100, 'sleep after updateConfig')
-	}, (err) => {
-		// log.info('updateConfig-5')
-		log.warn('failed to set ablunit.' + key + ': ' + err)
-		// throw new Error('failed to set ablunit.' + key + ': ' + err)
+export function setConfig (key: string, value?: unknown) {
+	log.info(isoDate() + ' [setConfig] key=' + key + ', ' + JSON.stringify(value))
+	const section1 = key.split('.').shift()
+	const section2 = key.split('.').slice(1).join('.')
+	const conf = workspace.getConfiguration(section1)
+	return conf.update(section2, value)
+}
+
+export async function updateConfig (key: string, value?: unknown) {
+	log.info(isoDate() + ' updateConfig-1.0 key=' + key + ', value=' + value)
+	const sectionArr = key.split('.')
+	log.info(isoDate() + ' updateConfig-1.1 sectionArr.length=' + sectionArr.length)
+	const section1 = sectionArr.shift()
+	log.info(isoDate() + ' updateConfig.1.2 section1=' + section1)
+	const section2 = sectionArr.join('.')
+	log.info(isoDate() + ' updateConfig-1.4 section1=' + section1 + ', section2=' + section2)
+
+	const workspaceConfig = workspace.getConfiguration(section1, getWorkspaceUri())
+	log.info(isoDate() + ' updateConfig-2.0 workspaceConfig = ' + JSON.stringify(workspaceConfig))
+
+	log.info('get currentValue')
+	const currentValue = workspaceConfig.get(section2)
+	log.info(isoDate() + ' updateConfig-2.1 ' + section1 + '.' + section2 + '=' + value + ', currentValue=' + currentValue)
+	if (JSON.stringify(value) === JSON.stringify(currentValue)) {
+		// log.debug(section1 + '.' + section2 + ' is already set to \'' + value + '\'')
+		log.info(section1 + '.' + section2 + ' is already set to \'' + value + '\'')
+		log.info(key + ' is already set to \'' + value + '\'')
+		return newTruePromise()
+	}
+
+	log.info(isoDate() + ' updateConfig-4.1 workspaceConfig=' + JSON.stringify(workspaceConfig))
+	log.info(isoDate() + ' updateConfig-4.3 currentValue=' + JSON.stringify(currentValue))
+	log.info(isoDate() + ' updateConfig-4.4        value=' + JSON.stringify(value))
+
+	if (!value) {
+		log.info(isoDate() + ' updateConfig-5.1.1 unset key=' + key + ', ' + section2)
+		const t = workspaceConfig.inspect(section2)
+		log.info(isoDate() + ' updateConfig-5.1.2 t=' + JSON.stringify(t))
+		value = t?.defaultValue
+		if (JSON.stringify(value) === JSON.stringify(currentValue)) {
+			log.info(section1 + '.' + section2 + ' is already set to default value \'' + value + '\'')
+			log.info(key + ' is already set to default value \'' + value + '\' /')
+			return newTruePromise()
+		}
+	}
+	log.info(isoDate() + ' updateConfig-5.1.3 currentValue=' + JSON.stringify(currentValue))
+	log.info(isoDate() + ' updateConfig-5.1.4        value=' + JSON.stringify(value))
+	await workspaceConfig.update(section2, value, false).then(() => {
+		log.info(isoDate() + ' then!')
+		return
+	}, (e) => {
+		log.error(isoDate() + ' error! err=' + e)
 	})
+	log.info(isoDate() + ' success!')
+
+	// {
+	// 	// log.info(isoDate() + ' prom=' + JSON.stringify(prom))
+	// 	// // const prom = workspaceConfig.update(section2, value)
+
+	// 	// log.info(isoDate() + ' updateConfig-5.1.5 await')
+	// 	// const r = await prom.then((ret) => {
+	// 	// 	log.info(isoDate() + ' prom returned (ret=' + ret + ')')
+	// 	// 	return true
+	// 	// }, (err) => {
+	// 	// 	log.error('unset failed! key=' + key + ', err=' + err)
+	// 	// 	throw err
+	// 	// })
+	// 	// log.info(isoDate() + ' updateConfig-5.1.4 r=' + r)
+	// 	return
+	// }
+
+	// log.info(isoDate() + ' updateConfig-6        value=' + JSON.stringify(value))
+	// const r = await workspaceConfig.update(section2, value).then(() => {
+	// 	log.info(isoDate() + ' updateConfig-7')
+	// 	return true
+	// }, (err) => {
+	// 	log.error('config update \'' + section1 + '.' + section2 + '\' failed with err=' + err)
+	// 	throw err
+	// })
+	// log.info(isoDate() + ' updateConfig-8 r=' + r)
 }
 
 export async function updateTestProfile (key: string, value: string | string[] | boolean) {
@@ -540,7 +752,7 @@ export async function selectProfile (profile: string) {
 	const profileUri = Uri.joinPath(getWorkspaceUri(), '.vscode', 'profile.json')
 	return workspace.fs.writeFile(profileUri, Buffer.from(JSON.stringify(profileJson))).then(async () => {
 		await sleep(100)
-		return commands.executeCommand('abl.restart.langserv').then(() => {
+		return commands.executeCommand('abl.restart.langserv').then(async () => {
 			return sleep(500)
 		}, (err) => {
 			throw new Error('failed to restart langserv: ' + err)
@@ -605,9 +817,11 @@ export async function getCurrentRunData (len = 1) {
 	await refreshData()
 	if (!currentRunData || currentRunData.length === 0) {
 		log.info('currentRunData not set, refreshing...')
-		for (let i=0; i<200; i++) {
-			await sleep(100, 'still no currentRunData, sleep before trying again').then(() => {
-				return refreshData()
+		for (let i=0; i<10; i++) {
+			await sleep2(500, 'still no currentRunData, sleep before trying again').then(async () => {
+				return refreshData().then(
+					() => { log.info('refresh succses') },
+					(err) => { log.error('refresh failed: ' + err) })
 			})
 			log.info('currentRunData.length=' + currentRunData?.length)
 			if ((currentRunData?.length ?? 0) > 0) {
@@ -631,8 +845,8 @@ export async function getCurrentRunData (len = 1) {
 export async function getResults (len = 1) {
 	if ((!recentResults || recentResults.length === 0) && len > 0) {
 		log.info('recentResults not set, refreshing...')
-		for (let i=0; i<15; i++) {
-			await sleep(100, 'still no recentResults, sleep before trying again').then(() => {
+		for (let i=0; i<10; i++) {
+			await sleep2(500, 'still no recentResults, sleep before trying again').then(() => {
 				return refreshData()
 			})
 			if ((recentResults?.length ?? 0) > 0) {
@@ -650,29 +864,7 @@ export async function getResults (len = 1) {
 	return recentResults
 }
 
-class AssertResults {
-
-	assert = (value: unknown, message?: string) => { assertParent(value, message) }
-	equal = (actual: unknown, expected: unknown, message?: string) => {
-		if (actual instanceof Uri) {
-			actual = actual.fsPath
-		}
-		if (expected instanceof Uri) {
-			expected = expected.fsPath
-		}
-		assertParent.equal(actual, expected, message)
-	}
-	notEqual = (actual: unknown, expected: unknown, message?: string) => { assertParent.notEqual(actual, expected, message) }
-	strictEqual = (actual: unknown, expected: unknown, message?: string) => { assertParent.strictEqual(actual, expected, message) }
-	notStrictEqual = (actual: unknown, expected: unknown, message?: string) => { assertParent.notStrictEqual(actual, expected, message) }
-	deepEqual = (actual: unknown, expected: unknown, message?: string) => { assertParent.deepEqual(actual, expected, message) }
-	notDeepEqual = (actual: unknown, expected: unknown, message?: string) => { assertParent.notDeepEqual(actual, expected, message) }
-	fail (message?: string): never { assertParent.fail(message) }
-	ok = (value: unknown, message?: string) => { assertParent.ok(value, message) }
-	ifError = (value: unknown) => { assertParent.ifError(value) }
-	throws = (block: () => void, message?: string) => { assertParent.throws(block, message) }
-	doesNotThrow = (block: () => void, message?: string) => { assertParent.doesNotThrow(block, message) }
-
+class AssertTestResults {
 	async assertResultsCountByStatus (expectedCount: number, status: 'passed' | 'failed' | 'errored' | 'all') {
 		const recentResults = await getResults()
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
@@ -682,19 +874,19 @@ class AssertResults {
 			return
 		}
 
-		let actualCount = -1
 		switch (status) {
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-			case 'passed': actualCount = res.passed; break
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-			case 'failed': actualCount = res.failures; break
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-			case 'errored': actualCount = res.errors; break
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-			case 'all': actualCount = res.tests; break
+			// case 'passed': actualCount = res.passed; break
+			case 'passed': assertParent.equal(expectedCount, res.passed, 'test count passed != ' + expectedCount); break
+			// case 'failed': actualCount = res.failures; break
+			case 'failed': assertParent.equal(expectedCount, res.failures, 'test count failed != ' + expectedCount); break
+			// case 'errored': actualCount = res.errors; break
+			case 'errored': assertParent.equal(expectedCount, res.errors, 'test count errored != ' + expectedCount); break
+			// case 'all': actualCount = res.tests; break
+			case 'all': assertParent.equal(expectedCount, res.tests, 'test count != ' + expectedCount); break
+			default: throw new Error('unknown status: ' + status)
 		}
-		assert.equal(expectedCount, actualCount, 'test count != ' + expectedCount)
 	}
+
 	public count = (expectedCount: number) => {
 		this.assertResultsCountByStatus(expectedCount, 'all').catch((err) => { throw err })
 	}
@@ -707,30 +899,78 @@ class AssertResults {
 	public failed (expectedCount: number) {
 		this.assertResultsCountByStatus(expectedCount, 'failed').catch((err) => { throw err })
 	}
-
-	public fileExists = (...files: string[] | Uri[]) => {
-		for (const file of files) {
-			this.assert(doesFileExist(file), 'file does not exist: ' + workspace.asRelativePath(file))
-		}
-	}
-	public notFileExists = (...files: string[] | Uri[]) => {
-		for (const file of files) {
-			this.assert(!doesFileExist(file), 'file exists: ' + workspace.asRelativePath(file))
-		}
-	}
-	public dirExists = (...dirs: string[] | Uri[]) => {
-		for (const dir of dirs) {
-			this.assert(doesDirExist(dir), 'dir does not exist: ' + workspace.asRelativePath(dir))
-		}
-	}
-	public notDirExists = (...dirs: string[] | Uri[]) => {
-		for (const dir of dirs) {
-			this.assert(!doesDirExist(dir), 'dir exists: ' + workspace.asRelativePath(dir))
-		}
-	}
 }
 
-export const assert = new AssertResults()
+export const assert = {
+
+	assert: (value: unknown, message?: string) => {
+		assertParent.ok(value, message)
+	},
+	// equal = AssertParent.equal
+	equal: (actual: unknown, expected: unknown, message?: string) => {
+		if (actual instanceof Uri) {
+			actual = actual.fsPath
+		}
+		if (expected instanceof Uri) {
+			expected = expected.fsPath
+		}
+		assertParent.equal(actual, expected, message)
+	},
+	notEqual: assertParent.notEqual,
+	strictEqual: assertParent.strictEqual,
+	notStrictEqual: assertParent.notStrictEqual,
+	deepEqual: assertParent.deepEqual,
+	notDeepEqual: assertParent.notDeepEqual,
+	fail: assertParent.fail,
+	ok: assertParent.ok,
+	ifError: assertParent.ifError,
+	throws: assertParent.throws,
+	doesNotThrow: assertParent.doesNotThrow,
+
+	throwsAsync: async (block: () => Promise<void>, message?: string) => {
+		try {
+			const r = block()
+			await r.then(() => {
+				assertParent.fail('expected exception not thrown. message=\'' + message + '\'')
+			})
+		} catch (e) {
+			assertParent.ok(true)
+		}
+	},
+	doesNotThrowAsync: async (block: () => Promise<void>, message?: string) => {
+		try {
+			const r = block()
+			await r.then(() => {
+				assertParent.ok(true)
+			})
+			assertParent.ok(true)
+		} catch (e) {
+			assertParent.fail('exception thrown: ' + e + '. message=' + message)
+		}
+	},
+
+	fileExists: (...files: string[] | Uri[]) => {
+		for (const file of files) {
+			assertParent.ok(doesFileExist(file), 'file does not exist: ' + workspace.asRelativePath(file))
+		}
+	},
+	notFileExists: (...files: string[] | Uri[]) => {
+		for (const file of files) {
+			assertParent.ok(!doesFileExist(file), 'file exists: ' + workspace.asRelativePath(file))
+		}
+	},
+	dirExists: (...dirs: string[] | Uri[]) => {
+		for (const dir of dirs) {
+			assertParent.ok(doesDirExist(dir), 'dir does not exist: ' + workspace.asRelativePath(dir))
+		}
+	},
+	notDirExists: (...dirs: string[] | Uri[]) => {
+		for (const dir of dirs) {
+			assertParent.ok(!doesDirExist(dir), 'dir exists: ' + workspace.asRelativePath(dir))
+		}
+	},
+	tests: new AssertTestResults(),
+}
 
 export async function beforeProj7 () {
 	await waitForExtensionActive()

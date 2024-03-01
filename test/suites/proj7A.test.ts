@@ -2,11 +2,9 @@ import { strict as assert } from 'assert'
 import { Uri } from 'vscode'
 import { beforeProj7, getTestCount, getWorkspaceUri, runAllTests } from '../testCommon'
 
-export default suite('proj7ASuite', () => {
+suite('proj7ASuite', () => {
 
-	suiteSetup('proj7A - suiteSetup', async () => {
-		await beforeProj7()
-	})
+	suiteSetup('proj7A - suiteSetup', beforeProj7)
 
 	test('proj7A.1 - test count', async () => {
 		await runAllTests()

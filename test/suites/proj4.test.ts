@@ -1,11 +1,18 @@
 import { doesDirExist } from '../../src/ABLUnitCommon'
-import { Uri, assert, deleteFile, doesFileExist, getDefaultDLC, getSessionTempDir, getWorkspaceUri, runAllTests, setRuntimes, updateTestProfile, waitForExtensionActive } from '../testCommon'
+import { Uri, assert, deleteFile, doesFileExist, getDefaultDLC, getSessionTempDir, getWorkspaceUri, isoDate, log, runAllTests, suiteSetupCommon, updateTestProfile, workspace } from '../testCommon'
 
-export default suite('proj4Suite', () => {
+suite('proj4Suite', () => {
 
-	suiteSetup('proj4 - suiteSetup', async () => {
-		// await waitForExtensionActive()
-		await setRuntimes([{name: '11.7', path: '/psc/dlc_11.7'}, {name: '12.2', path: getDefaultDLC()}])
+	suiteSetup('proj3 - suiteSetup', suiteSetupCommon)
+
+	setup('proj4 - setup', async () => {
+		// await setRuntimes([{name: '11.7', path: '/psc/dlc_11.7'}, {name: '12.2', path: getDefaultDLC()}])
+		const conf = workspace.getConfiguration('abl')
+		log.info(isoDate() + ' proj4.1 - 1.2 conf=' + JSON.stringify(conf))
+		await conf.update('configuration.runtimes', [{name: '11.7', path: '/psc/dlc_11.7'}, {name: '12.2', path: getDefaultDLC(), default: true}]).then(
+			() => { log.info(isoDate() + ' proj4.1 - 1.3') },
+			(e) => { log.error(isoDate() + ' proj4.1 - 1.4 e=' + e) }
+		)
 		if (process.platform === 'linux') {
 			await updateTestProfile('tempDir', '/tmp/ablunit')
 			await updateTestProfile('profiler.listings', '/tmp/ablunit-local/listings')

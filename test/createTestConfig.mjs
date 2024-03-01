@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 /* eslint-disable @typescript-eslint/no-unsafe-call */
@@ -12,30 +13,22 @@ import * as path from 'path'
 import * as fs from 'fs'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
-const enableExtensions = []
-enableExtensions.push('DebugLines')
-enableExtensions.push('proj2')
-enableExtensions.push('proj3')
-enableExtensions.push('proj4')
-enableExtensions.push('proj7A')
-enableExtensions.push('proj7B')
-enableExtensions.push('proj8')
-enableExtensions.push('proj9')
-
-// let version = 'insiders'
-let vsVersion = 'stable'
-let oeVersion = '12.2.12'
+let vsVersion = process.env['ABLUNIT_TEST_RUNNER_VSCODE_VERSION'] ?? 'stable'
+let oeVersion = process.env['ABLUNIT_TEST_RUNNER_OE_VERSION'] ?? '12.2.12'
+const enableExtensions = [
+	'DebugLines',
+	'proj2',
+	'proj3',
+	'proj4',
+	'proj7A',
+	'proj7B',
+	'proj8',
+	'proj9',
+]
 
 function initialize () {
-	if (process.env['ABLUNIT_TEST_RUNNER_VSCODE_VERSION']) {
-		vsVersion = process.env['ABLUNIT_TEST_RUNNER_VSCODE_VERSION']
-	}
 	if (vsVersion !== 'insiders' && vsVersion !== 'stable') {
 		throw new Error('Invalid version: ' + vsVersion)
-	}
-
-	if (process.env['ABLUNIT_TEST_RUNNER_OE_VERSION']) {
-		oeVersion = process.env['ABLUNIT_TEST_RUNNER_OE_VERSION']
 	}
 }
 
@@ -44,10 +37,7 @@ function writeConfigToFile (name, config) {
 }
 
 function getMochaTimeout (projName) {
-	if (projName === 'proj0') {
-		return 20000
-	}
-	if (projName === 'proj4') {
+	if (projName === 'proj3' && projName === 'proj4') {
 		return 30000
 	}
 	if (projName === 'proj1') {
@@ -61,11 +51,10 @@ function getMochaTimeout (projName) {
 		return 90000
 	}
 	// return 15000
-	return 15000
+	return 25000
 }
 
 function getMochaOpts (projName) {
-
 	const reporterDir = path.resolve(__dirname, '..', 'artifacts', vsVersion + '-' + oeVersion)
 	fs.mkdirSync(reporterDir, { recursive: true })
 	const jsonFile = path.resolve(reporterDir, 'mocha_results_' + projName + '.json')
@@ -76,15 +65,12 @@ function getMochaOpts (projName) {
 	const mochaOpts = {
 		preload: [
 			// './dist/extension.js',
-
 			'ts-node/register/transpile-only',
-
 			'ts-node/register',
 			// 'source-map-support',
 			// 'source-map-support/register',
 			// 'source-map-support/register-hook-require',
 		],
-		// preload: [ 'ts-node/register/transpile-only' ],
 		// preload: [ 'ts-node/register/transpile-only' ],
 		timeout: getMochaTimeout(projName),
 		ui: 'tdd',
@@ -95,10 +81,10 @@ function getMochaOpts (projName) {
 		extension: [ 'js', 'ts', 'test.ts' ],
 		require: [
 			// './dist/extension.js',
-			// 'ts-node/register',
 			// 'source-map-support',
 			'source-map-support/register',
 			// 'source-map-support/register-hook-require',
+			// 'ts-node/register',
 		]
 	}
 
@@ -112,7 +98,6 @@ function getMochaOpts (projName) {
 		mochaJunitReporterReporterOptions: { mochaFile: mochaFile },
 		mochaSonarqubeReporterReporterOptions: { output: sonarFile }
 	}
-
 	return mochaOpts
 }
 
@@ -123,14 +108,20 @@ function getLaunchArgs (projName) {
 		// '--reuse-window',
 		// '--user-data-dir=./test_projects/' + projName + '/.vscode-data/',
 		// '--profile=' + projName,
-		'--sync=off',
+		// '--sync=off',
 		// '--telemetry',
-		// '--log=debug',
-		// '--log=verbose',
+		'--log=debug',
+		// '--log=trace',
 		// '--verbose',
 	]
+	// if (enableExtensions.includes(projName)) {
+	// 	'--install-extension=riversidesoftware.openedge-abl-lsp'
+	// }
 	if (!enableExtensions.includes(projName)) {
-		// args.push('--disable-extensions')
+		args.push('--disable-extensions')
+	}
+	if (vsVersion === 'insiders') {
+		args.push('--enable-proposed-api=TestCoverage')
 	}
 	// args.push('--enable-source-maps')
 	// args.push('--produce-source-map')
@@ -140,18 +131,20 @@ function getLaunchArgs (projName) {
 function getTestConfig (projName) {
 
 	let ws = './test_projects/' + projName
-	if (projName === 'proj3') {
-		ws = ws + '_debugLines'
-	} else if(projName === 'proj5') {
-		ws = ws + '_suites'
-	} else if(projName === 'proj6') {
-		ws = ws + '_dot_dir'
-	} else if(projName === 'proj7A' || projName === 'proj7B') {
-		ws = 'test_projects/proj7_load_performance'
-	} else if(projName === 'proj8') {
-		ws = ws + '_custom_command'
-	} else if(projName.startsWith('workspace')) {
-		ws = ws + '.code-workspace'
+	if (projName.startsWith('proj7')) {
+		ws = './test_projects/proj7'
+	} else if (!fs.existsSync(ws)) {
+		const g = glob.globSync(ws + '_*')
+		if (g.length > 1) {
+			throw new Error('Multiple workspaces found: ' + ws)
+		} else {
+			ws = g[0] ?? './test_projects'
+		}
+	}
+
+	let useInstallation = undefined
+	if (fs.existsSync('.vscode-test/vscode-win32-x64-archive-1.86.2/Code.exe')) {
+		useInstallation = { fromPath: '.vscode-test/vscode-win32-x64-archive-1.86.2/Code.exe' }
 	}
 
 	return {
@@ -160,25 +153,28 @@ function getTestConfig (projName) {
 		workspaceFolder: ws,
 		files: './test/suites/' + projName + '.test.ts',
 		version: vsVersion,
+		// useInstallation: { fromMachine: true },
+		// TODO - glob?
+		useInstallation: useInstallation,
 		launchArgs: getLaunchArgs(projName),
 		mocha: getMochaOpts(projName),
 		srcDir: './',
 		env: {
-			// VSCODE_VERSION: 'stable',
+			ABLUNIT_TEST_RUNNER_ENABLE_EXTENSIONS: enableExtensions.includes('' + projName),
 			ABLUNIT_TEST_RUNNER_UNIT_TESTING: 'true',
+			ABLUNIT_TEST_RUNNER_VSCODE_VERSION: vsVersion,
 			VSCODE_SKIP_PRELAUNCH: '1',
-			NODE_OPTIONS: [
-				'--enable-source-maps',
-				// 	// '--produce-source-map',
-				// 	// '--register source-map-support/register',
-				'--require source-map-support/register',
-			],
+			// NODE_OPTIONS: [
+			// 	'--enable-source-maps',
+			// 	'--require source-map-support/register',
+			// 	// 	// '--produce-source-map',
+			// ],
 			// NODE_OPTIONS: '--produce-source-map',
 		}
 	}
 }
-function getTests () {
 
+function getTests () {
 	let tests = []
 	if (process.env['ABLUNIT_TEST_RUNNER_PROJECT_NAME']) {
 		const projects = process.env['ABLUNIT_TEST_RUNNER_PROJECT_NAME'].split(',')
@@ -200,25 +196,26 @@ function getCoverageOpts () {
 	return {
 		reporter: [ 'text', 'lcov' ],
 		output: coverageDir,
-		includeAll: true,
+		// includeAll: true,
 		exclude: [
-			// working below this line
 			'dist',
 			'.vscode-test.mjs',
 			'test_projects',
 			'dummy-ext',
 			'webpack.config.js',
 			'vscode.proposed.*.d.ts',
+			'vscode',
 		],
 		include: [
-			'**/*'
+			// '**/*',
+			'**/src/**',
+			'**/test/**',
 		],
 		require: [ 'ts-node/register' ],
-		cache: false,
-		// 'produce-source-map': true,
-		'enable-source-maps': true,
-		sourceMap: false,
-		instrument: false,
+		// cache: false,
+		// 'enable-source-maps': true,
+		// sourceMap: false,
+		// instrument: false,
 	}
 }
 
