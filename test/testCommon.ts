@@ -547,34 +547,39 @@ export function getDefaultDLC () {
 	return 'C:\\Progress\\OpenEdge'
 }
 
-export async function runAllTests (doRefresh = true) {
-
-	log.info('running all tests')
-	if (doRefresh) {
-		await refreshTests().then(async () => { return sleep2(500, 'after refreshTests') })
+export async function runAllTests (doRefresh = true, tag?: string) {
+	if (tag) {
+		tag = '[' + tag + '] '
 	} else {
-		await sleep(250, 'sleep before testing.runAll')
+		tag = ''
+	}
+
+	log.info(tag + 'running all tests')
+	if (doRefresh) {
+		await refreshTests().then(async () => { return sleep2(500, tag + 'after refreshTests') })
+	} else {
+		await sleep(250, tag + 'sleep before testing.runAll')
 	}
 
 	log.info('testing.runAll starting')
-	const r = await commands.executeCommand('testing.runAll').then(() => {
-		log.info('testing.runAll completed - start getResults()')
-		return getResults().then((r) => {
-			log.info('testing.runAll found results (re=' + r + ')')
+	const r = await commands.executeCommand('testing.runAll').then(async () => {
+		log.info(tag + 'testing.runAll completed - start getResults()')
+		return getResults(1, tag).then((r) => {
+			log.info(tag + 'testing.runAll found results (re=' + r + ')')
 			const fUri = r?.[0]?.cfg.ablunitConfig.optionsUri.filenameUri
-			log.info('testing.runAll found results file (filename=' + fUri + ')')
+			log.info(tag + 'testing.runAll found results file (filename=' + fUri + ')')
 			if (doesFileExist(fUri)) {
 				return true
 			}
-			log.error('no results file found (filename=' + fUri + ')')
+			log.error(tag + 'no results file found (filename=' + fUri + ')')
 			throw new Error('no results file found (filename=' + fUri + ')')
 		// })
 		}, (e) => { throw e })
 	}, (err) => {
-		log.error('testing.runAll failed: ' + err)
+		log.error(tag + 'testing.runAll failed: ' + err)
 		throw new Error('testing.runAll failed: ' + err)
 	})
-	log.info('[runAllTests] complete (r=' + r + ')')
+	log.info(tag + 'runAllTests complete (r=' + r + ')')
 }
 
 export function refreshTests () {
@@ -761,7 +766,9 @@ export async function selectProfile (profile: string) {
 }
 
 export async function refreshData () {
+	log.info(isoDate() + ' refreshData-1')
 	return commands.executeCommand('_ablunit.getExtensionTestReferences').then((resp) => {
+		log.info(isoDate() + ' refreshData-2')
 		const refs = resp as IExtensionTestReferences
 		decorator = refs.decorator
 		testController = refs.testController
@@ -770,6 +777,7 @@ export async function refreshData () {
 			currentRunData = refs.currentRunData
 		}
 	}, (err) => {
+		log.info(isoDate() + ' refreshData-4 err=' + err)
 		throw new Error('failed to refresh test results: ' + err)
 	})
 }
@@ -812,55 +820,63 @@ export function getChildTestCount (type: string | undefined, items: TestItemColl
 	return count
 }
 
-export async function getCurrentRunData (len = 1) {
-	log.info('100')
+export async function getCurrentRunData (len = 1, tag?: string) {
+	if (tag) {
+		tag = '[' + tag + '] '
+	} else {
+		tag = ''
+	}
+	log.info(tag + '100')
 	await refreshData()
 	if (!currentRunData || currentRunData.length === 0) {
-		log.info('currentRunData not set, refreshing...')
+		log.info(tag + 'currentRunData not set, refreshing...')
 		for (let i=0; i<10; i++) {
-			await sleep2(500, 'still no currentRunData, sleep before trying again').then(async () => {
+			await sleep2(500, tag + 'still no currentRunData, sleep before trying again').then(async () => {
 				return refreshData().then(
 					() => { log.info('refresh succses') },
 					(err) => { log.error('refresh failed: ' + err) })
 			})
-			log.info('currentRunData.length=' + currentRunData?.length)
+			log.info(tag + 'currentRunData.length=' + currentRunData?.length)
 			if ((currentRunData?.length ?? 0) > 0) {
 				break
 			}
 		}
-		log.info('found currentRunData.length=' + currentRunData?.length)
+		log.info(tag + 'found currentRunData.length=' + currentRunData?.length)
 	}
 	if (!currentRunData) {
 		throw new Error('currentRunData is null')
 	}
 	if (currentRunData.length === 0) {
-		throw new Error('recent results should be > 0')
+		throw new Error(tag + 'recent results should be > 0')
 	}
 	if (currentRunData.length !== len) {
-		throw new Error('recent results should be ' + len + ' but is ' + currentRunData.length)
+		throw new Error(tag + 'recent results should be ' + len + ' but is ' + currentRunData.length)
 	}
 	return currentRunData
 }
 
-export async function getResults (len = 1) {
+export async function getResults (len = 1, tag?: string) {
 	if ((!recentResults || recentResults.length === 0) && len > 0) {
-		log.info('recentResults not set, refreshing...')
+		log.info(tag + 'recentResults not set, refreshing...')
 		for (let i=0; i<10; i++) {
-			await sleep2(500, 'still no recentResults, sleep before trying again').then(() => {
-				return refreshData()
+			await sleep2(500, tag + 'still no recentResults, sleep before trying again').then(async () => {
+				return refreshData().then(async () => { return sleep2(100) })
 			})
 			if ((recentResults?.length ?? 0) > 0) {
 				continue
 			}
 		}
 	}
-	log.info('107')
+	log.info(tag + '107')
 	if (!recentResults) {
+		log.error(tag + 'recentResults is null')
 		throw new Error('recentResults is null')
 	}
 	if (recentResults.length < len) {
+		log.error(tag + 'recent results should be >= ' + len + ' but is ' + recentResults.length)
 		throw new Error('recent results should be >= ' + len + ' but is ' + recentResults.length)
 	}
+	log.info(tag + '110')
 	return recentResults
 }
 

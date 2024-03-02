@@ -53,7 +53,7 @@ suite('proj1Suite', () => {
 		log.info(isoDate() + ' proj1 - teardown-3')
 	})
 
-	test('proj1.0 output files exist one', () => {
+	test('proj1.0 output files exist one', async () => {
 		log.info(isoDate() + ' proj1.0-1 workspaceFolder=' + workspace.workspaceFolders?.[0].uri.fsPath)
 
 		if (!workspace.workspaceFolders) {
@@ -105,7 +105,7 @@ suite('proj1Suite', () => {
 	})
 
 	test('proj1.2 - output files exist 2 - exclude compileError.p', async () => {
-		await workspace.getConfiguration('ablunit').update('files.exclude', [ '.builder/**', 'compileError.p' ]).then(() => {
+		await workspace.getConfiguration('ablunit').update('files.exclude', [ '.builder/**', 'compileError.p' ]).then(async () => {
 			return runAllTests()
 		})
 		// await updateConfig('ablunit.files.exclude', [ '.builder/**', 'compileError.p' ])

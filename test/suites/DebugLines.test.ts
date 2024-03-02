@@ -9,7 +9,7 @@ suite('DebugLinesSuite', () => {
 
 	setup('DebugLines - setup', async () => {
 		log.info('abl.restart.langserv')
-		const r = await vscode.commands.executeCommand('abl.restart.langserv').then(() => {
+		const r = await vscode.commands.executeCommand('abl.restart.langserv').then(async () => {
 			log.info('abl.restart.langserv complete')
 			return sleep2(250)
 		})

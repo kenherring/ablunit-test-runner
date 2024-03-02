@@ -109,7 +109,7 @@ export async function activate (context: ExtensionContext) {
 		// watcher.onDidDelete(uri => { controller.items.delete(uri.fsPath) })
 	)
 
-	const runHandler = (request: TestRunRequest, token: CancellationToken): Promise<void> => {
+	const runHandler = async (request: TestRunRequest, token: CancellationToken): Promise<void> => {
 	// const runHandler = (request: TestRunRequest, token: CancellationToken) => {
 		if (request.continuous) {
 			log.error('continuous test runs not implemented')
@@ -274,7 +274,7 @@ export async function activate (context: ExtensionContext) {
 		})
 	}
 
-	const startTestRun = (request: TestRunRequest, cancellation: CancellationToken) => {
+	const startTestRun = async (request: TestRunRequest, cancellation: CancellationToken) => {
 		recentResults = []
 
 		const discoverTests = async (tests: Iterable<TestItem>) => {
@@ -461,8 +461,8 @@ export async function activate (context: ExtensionContext) {
 		})
 		const tests = request.include ?? gatherTestItems(ctrl.items)
 
-		const prom = discoverTests(tests).then(() => {
-			const r = createABLResults().then((res) => {
+		const prom = discoverTests(tests).then(async () => {
+			const r = createABLResults().then(async (res) => {
 				if (!res) {
 					throw new Error('createABLResults failed')
 				} else {
@@ -589,7 +589,7 @@ export async function activate (context: ExtensionContext) {
 let contextStorageUri: Uri
 let contextResourcesUri: Uri
 
-function updateNode (uri: Uri, ctrl: TestController) {
+async function updateNode (uri: Uri, ctrl: TestController) {
 	log.trace('updateNode uri=' + uri.fsPath)
 	if(uri.scheme !== 'file' || isFileExcluded(uri, getExcludePatterns())) {	return false }
 
