@@ -94,7 +94,7 @@ suite('proj1Suite', () => {
 	test('proj1.1 setFilesExcludePattern - test run pass', async () => {
 		try {
 			log.info(isoDate() + ' [proj1.3-1] workspaceFolder=' + workspace.workspaceFolders?.[0].uri.fsPath)
-			await workspace.getConfiguration('ablunit.files').update('exclude', [ '.builder/**', '.pct/**', 'compileError.p' ]).then(async () => {
+			await workspace.getConfiguration('ablunit.files').update('exclude', [ '.builder/**', '.pct/**', 'compileError.p' ]).then(() => {
 				log.info(isoDate() + ' [proj1.3-2] ablunit.files.include' + workspace.getConfiguration('ablunit.files').get('include'))
 				log.info(isoDate() + ' [proj1.3-2] ablunit.files.exclude' + workspace.getConfiguration('ablunit.files').get('exclude'))
 				// return sleep2(100, 'sleep-1')
