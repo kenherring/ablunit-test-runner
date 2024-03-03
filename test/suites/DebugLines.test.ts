@@ -8,13 +8,6 @@ suite('DebugLinesSuite', () => {
 	suiteSetup('DebugLines - suiteSetup', suiteSetupCommon)
 
 	setup('DebugLines - setup', async () => {
-		log.info('abl.restart.langserv')
-		const r = await vscode.commands.executeCommand('abl.restart.langserv').then(async () => {
-			log.info('abl.restart.langserv complete')
-			return sleep2(250)
-		})
-		await sleep2(250).then(() => { log.info('abl.restart.langserv complete (r=' + JSON.stringify(r) + ')') })
-
 		await awaitRCode(workspace.workspaceFolders![0], 8).then((rcodeCount) => {
 			log.info('compile complete! rcode count = ' + rcodeCount)
 			return rcodeCount

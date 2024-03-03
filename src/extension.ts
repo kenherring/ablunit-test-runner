@@ -555,12 +555,14 @@ export async function activate (context: ExtensionContext) {
 		return resolveHandlerFunc(item).then(() => { return })
 	}
 
-	function updateConfiguration (e: ConfigurationChangeEvent) {
-		log.info('[extension.st updateConfiguration] e=' + JSON.stringify(e))
-		// if (e.affectsConfiguration('ablunit')) {
-		// 	removeExcludedFiles(ctrl, getExcludePatterns())
-		// }
-		if (e.affectsConfiguration('ablunit.files.include') || e.affectsConfiguration('ablunit.files.exclude')) {
+	function updateConfiguration (event: ConfigurationChangeEvent) {
+		log.info('[extension.st updateConfiguration] event' + JSON.stringify(event))
+		if (!event.affectsConfiguration('ablunit')) {
+			log.warn('configuration updated but does not include ablunit settings')
+			return
+		}
+		log.info('effects ablunit.file? ' + event.affectsConfiguration('ablunit.files'))
+		if (event.affectsConfiguration('ablunit.files')) {
 			removeExcludedFiles(ctrl, getExcludePatterns())
 		}
 	}

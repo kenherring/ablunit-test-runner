@@ -222,12 +222,14 @@ export function deleteFile (file: Uri | string) {
 	deleteFileCommon(file)
 }
 
-export async function sleep2 (time = 10, msg?: string) {
-	let status = 'sleeping for ' + time + 'ms'
-	if (msg) {
-		status = status + ' [' + msg + ']'
+export async function sleep2 (time = 10, msg?: string | null) {
+	if (msg !== null) {
+		let status = 'sleeping for ' + time + 'ms'
+		if (msg) {
+			status = status + ' [' + msg + ']'
+		}
+		log.info(status)
 	}
-	log.info(status)
 	return new Promise(resolve => setTimeout(resolve, time))
 }
 
@@ -766,9 +768,9 @@ export async function selectProfile (profile: string) {
 }
 
 export async function refreshData () {
-	log.info(isoDate() + ' refreshData-1')
+	// log.info(isoDate() + ' refreshData-1')
 	return commands.executeCommand('_ablunit.getExtensionTestReferences').then((resp) => {
-		log.info(isoDate() + ' refreshData-2')
+		// log.info(isoDate() + ' refreshData-2')
 		const refs = resp as IExtensionTestReferences
 		decorator = refs.decorator
 		testController = refs.testController
@@ -777,7 +779,7 @@ export async function refreshData () {
 			currentRunData = refs.currentRunData
 		}
 	}, (err) => {
-		log.info(isoDate() + ' refreshData-4 err=' + err)
+		// log.info(isoDate() + ' refreshData-4 err=' + err)
 		throw new Error('failed to refresh test results: ' + err)
 	})
 }
@@ -860,7 +862,7 @@ export async function getResults (len = 1, tag?: string) {
 		log.info(tag + 'recentResults not set, refreshing...')
 		for (let i=0; i<10; i++) {
 			await sleep2(500, tag + 'still no recentResults, sleep before trying again').then(async () => {
-				return refreshData().then(async () => { return sleep2(100) })
+				return refreshData().then(async () => { return sleep2(100, null) })
 			})
 			if ((recentResults?.length ?? 0) > 0) {
 				continue
@@ -917,6 +919,16 @@ class AssertTestResults {
 	}
 }
 
+function fileToString (file: Uri | string) {
+	if (file instanceof Uri) {
+		return file.fsPath
+	}
+	if (isRelativePath(file)) {
+		return Uri.joinPath(getWorkspaceUri(), file).fsPath
+	}
+	return Uri.file(file)
+}
+
 export const assert = {
 
 	assert: (value: unknown, message?: string) => {
@@ -966,30 +978,33 @@ export const assert = {
 	},
 
 	fileExists: (...files: string[] | Uri[]) => {
+		if (files.length === 0) { throw new Error('no file(s) specified') }
 		for (const file of files) {
-			assertParent.ok(doesFileExist(file), 'file does not exist: ' + workspace.asRelativePath(file))
+			assertParent.ok(doesFileExist(file), 'file does not exist: ' + fileToString(file))
 		}
 	},
 	notFileExists: (...files: string[] | Uri[]) => {
+		if (files.length === 0) { throw new Error('no file(s) specified') }
 		for (const file of files) {
-			assertParent.ok(!doesFileExist(file), 'file exists: ' + workspace.asRelativePath(file))
+			assertParent.ok(!doesFileExist(file), 'file exists: ' + fileToString(file))
 		}
 	},
 	dirExists: (...dirs: string[] | Uri[]) => {
+		if (dirs.length === 0) { throw new Error('no dir(s) specified') }
 		for (const dir of dirs) {
-			assertParent.ok(doesDirExist(dir), 'dir does not exist: ' + workspace.asRelativePath(dir))
+			assertParent.ok(doesDirExist(dir), 'dir does not exist: ' + fileToString(dir))
 		}
 	},
 	notDirExists: (...dirs: string[] | Uri[]) => {
+		if (dirs.length === 0) { throw new Error('no dir(s) specified') }
 		for (const dir of dirs) {
-			assertParent.ok(!doesDirExist(dir), 'dir exists: ' + workspace.asRelativePath(dir))
+			assertParent.ok(!doesDirExist(dir), 'dir exists: ' + fileToString(dir))
 		}
 	},
 	tests: new AssertTestResults(),
 }
 
 export async function beforeProj7 () {
-	await waitForExtensionActive()
 	const templateProc = Uri.joinPath(toUri('src/template_proc.p'))
 	const templateClass = Uri.joinPath(toUri('src/template_class.cls'))
 	const classContent = await workspace.fs.readFile(templateClass).then((data) => {

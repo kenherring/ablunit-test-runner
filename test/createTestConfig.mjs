@@ -74,6 +74,7 @@ function getMochaOpts (projName) {
 		// preload: [ 'ts-node/register/transpile-only' ],
 		timeout: getMochaTimeout(projName),
 		ui: 'tdd',
+		parallel: false,
 		retries: 0,
 		recursive: true,
 		color: true,
@@ -142,7 +143,7 @@ function getTestConfig (projName) {
 		}
 	}
 
-	let useInstallation = undefined
+	let useInstallation
 	if (fs.existsSync('.vscode-test/vscode-win32-x64-archive-1.86.2/Code.exe')) {
 		useInstallation = { fromPath: '.vscode-test/vscode-win32-x64-archive-1.86.2/Code.exe' }
 	}
@@ -219,7 +220,7 @@ function getCoverageOpts () {
 	}
 }
 
-export function createTestConfig () { // NOSONAR
+export async function createTestConfig () { // NOSONAR
 	initialize()
 	const testConfig = defineConfig({
 		tests: getTests(),
