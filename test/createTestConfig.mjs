@@ -133,7 +133,9 @@ function getTestConfig (projName) {
 
 	let ws = './test_projects/' + projName
 	if (projName.startsWith('proj7')) {
-		ws = './test_projects/proj7'
+		ws = './test_projects/proj7_load_performance'
+	} else if (projName.startsWith('workspace')) {
+		ws = './test_projects/' + projName + '.code-workspace'
 	} else if (!fs.existsSync(ws)) {
 		const g = glob.globSync(ws + '_*')
 		if (g.length > 1) {

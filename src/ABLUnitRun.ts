@@ -4,6 +4,21 @@ import { isRelativePath } from './ABLUnitCommon'
 import { ExecException, ExecOptions, exec } from 'child_process'
 import { log } from './ChannelLogger'
 
+
+export enum RunStatus {
+	None,
+	Initialized,
+	Constructed,
+	WaitingForStart,
+	Running,
+	Executing,
+	Parsing,
+	Complete,
+	Cancelled,
+	Error
+}
+
+
 export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation?: CancellationToken) => {
 	const start = Date.now()
 	const abort = new AbortController()
@@ -112,7 +127,7 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 		args.shift()
 
 		return new Promise<string>((resolve, reject) => {
-			res.setStatus('running command')
+			res.setStatus(RunStatus.Executing)
 
 			const runenv = getEnvVars(res.dlc!.uri)
 			log.debug('cmd=' + cmd + ' ' + args.join(' '))

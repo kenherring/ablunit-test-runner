@@ -11,7 +11,7 @@ import { ABLPromsgs, getPromsgText } from './ABLPromsgs'
 import { PropathParser } from './ABLPropath'
 import { log } from './ChannelLogger'
 import { FileCoverageCustom, CoveredCountCustom, StatementCoverageCustom } from './TestCoverage'
-import { ablunitRun } from './ABLUnitRun'
+import { RunStatus, ablunitRun } from './ABLUnitRun'
 import { getDLC, IDlc } from './parse/OpenedgeProjectParser'
 import { Duration, isRelativePath } from './ABLUnitCommon'
 
@@ -41,7 +41,8 @@ export class ABLResults implements Disposable {
 	globalStorageUri: Uri
 	extensionResourcesUri: Uri
 	wrapperUri: Uri
-	status = 'none'
+	status = RunStatus.None
+	statusNote: string | undefined
 	cfg: ABLUnitConfig
 	duration: Duration
 	ablResults: ABLResultsParser | undefined
@@ -75,23 +76,24 @@ export class ABLResults implements Disposable {
 		this.extensionResourcesUri = extensionResourcesUri
 		this.wrapperUri = Uri.joinPath(this.extensionResourcesUri, 'ABLUnitCore-wrapper.p')
 		this.cfg = new ABLUnitConfig()
-		this.setStatus('constructed')
+		this.setStatus(RunStatus.Constructed)
 	}
 
 	dispose () {
-		this.setStatus('run cancelled - disposing ABLResults object')
+		this.setStatus(RunStatus.Cancelled, 'disposing ABLResults object')
 		delete this.profileJson
 		delete this.ablResults
 		delete this.debugLines
 		delete this.profileJson
 	}
 
-	setStatus (status: string) {
-		if (this.status.startsWith('run cancelled')) {
+	setStatus (status: RunStatus, statusNote?: string) {
+		if (this.status === RunStatus.Cancelled) {
 			log.debug('cancellation requested - ignoring setStatus() call')
 			throw new CancellationError()
 		}
 		this.status = status
+		this.statusNote = statusNote
 		log.info('STATUS: ' + status)
 	}
 
@@ -225,7 +227,7 @@ export class ABLResults implements Disposable {
 	}
 
 	async parseOutput (options: TestRun) {
-		this.setStatus('parsing results')
+		this.setStatus(RunStatus.Parsing, 'results')
 		log.debug('parsing results from ' + workspace.asRelativePath(this.cfg.ablunitConfig.optionsUri.filenameUri), options)
 
 		this.duration.stop()
@@ -240,25 +242,25 @@ export class ABLResults implements Disposable {
 			}
 			return true
 		}, (err) => {
-			this.setStatus('Error parsing results')
+			this.setStatus(RunStatus.Error, 'parsing results')
 			log.error('Error parsing results from ' + this.cfg.ablunitConfig.optionsUri.filenameUri.fsPath + '.  err=' + err, options)
 			throw new Error('Error parsing results from ' + this.cfg.ablunitConfig.optionsUri.filenameUri.fsPath + '\r\nerr=' + err)
 		})
 
 		if (this.cfg.ablunitConfig.profiler.enabled && this.cfg.ablunitConfig.profiler.coverage) {
-			this.setStatus('parsing profiler data')
+			this.setStatus(RunStatus.Parsing, 'profiler data')
 			log.debug('parsing profiler data from ' + workspace.asRelativePath(this.cfg.ablunitConfig.profFilenameUri.fsPath), options)
 			await this.parseProfile().then(() => {
 				log.info('parsing profiler data complete ' + parseTime.toString())
 				return true
 			}, (err) => {
-				this.setStatus('Error parsing profiler data')
+				this.setStatus(RunStatus.Error, 'profiler data')
 				log.error('Error parsing profiler data from ' + this.cfg.ablunitConfig.profFilenameUri.fsPath + '.  err=' + err, options)
 				throw new Error('Error parsing profiler data from ' + workspace.asRelativePath(this.cfg.ablunitConfig.profFilenameUri) + '\r\nerr=' + err)
 			})
 		}
 
-		this.setStatus('parsing output complete ' + parseTime.toString())
+		this.setStatus(RunStatus.Complete, 'parsing output complete ' + parseTime.toString())
 		log.info('parsing output complete ' + parseTime.toString())
 	}
 

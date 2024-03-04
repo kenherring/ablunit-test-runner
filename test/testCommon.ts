@@ -3,7 +3,7 @@ import * as fs from 'fs'
 import { globSync } from 'glob'
 import * as vscode from 'vscode'
 import {
-	ConfigurationTarget, TestController,
+	CancellationError, ConfigurationTarget, TestController,
 	TestItemCollection,
 	Uri,
 	Selection,
@@ -18,6 +18,7 @@ import { IExtensionTestReferences } from '../src/extension'
 import { ITestSuites } from '../src/parse/ResultsParser'
 import { IConfigurations } from '../src/parse/TestProfileParser'
 import { DefaultRunProfile } from '../src/parse/config/RunProfile'
+import { RunStatus } from 'src/ABLUnitRun'
 
 interface IRuntime {
 	name: string,
@@ -46,7 +47,7 @@ export class FilesExclude {
 }
 // vscode objects
 export {
-	Duration, Selection, Uri,
+	CancellationError, Duration, Selection, Uri,
 	commands, extensions, window, workspace
 }
 
@@ -87,7 +88,7 @@ function getExtensionDevelopmentPath () {
 }
 
 export async function suiteSetupCommon () {
-	log.info('suiteSetupCommon-1 waitForExtensionActive - ablunit-test-runner')
+	log.info('suiteSetupCommon-1 waitForExtensionActive - ablunit-test-runner (projName=' + projName() + ')')
 	await waitForExtensionActive()
 	const extname = 'riversidesoftware.openedge-abl-lsp'
 	log.info('suiteSetupCommon-2.1 workspaceUri=' + getWorkspaceUri())
@@ -128,6 +129,14 @@ export async function suiteSetupCommon () {
 		log.info('suiteSetupCommon-5 runtimes set (r=' + r + ')')
 	}
 	log.info('suiteSetupCommon complete!')
+}
+
+export let runAllTestsDuration: Duration | undefined
+export let cancelTestRunDuration: Duration | undefined
+
+export function teardownCommon () {
+	runAllTestsDuration = undefined
+	cancelTestRunDuration = undefined
 }
 
 export async function suiteTeardownCommon () {
@@ -549,7 +558,11 @@ export function getDefaultDLC () {
 	return 'C:\\Progress\\OpenEdge'
 }
 
-export async function runAllTests (doRefresh = true, tag?: string) {
+export async function runAllTests (doRefresh = true, waitForResults = true, tag?: string) {
+	runAllTestsDuration = new Duration('runAllTests')
+	if (!tag) {
+		tag = projName()
+	}
 	if (tag) {
 		tag = '[' + tag + '] '
 	} else {
@@ -563,24 +576,24 @@ export async function runAllTests (doRefresh = true, tag?: string) {
 		await sleep(250, tag + 'sleep before testing.runAll')
 	}
 
-	log.info('testing.runAll starting')
+	log.info('testing.runAll starting (waitForResults=' + waitForResults + ')')
 	const r = await commands.executeCommand('testing.runAll').then(async () => {
 		log.info(tag + 'testing.runAll completed - start getResults()')
+		if (!waitForResults) { return false }
+
 		return getResults(1, tag).then((r) => {
-			log.info(tag + 'testing.runAll found results (re=' + r + ')')
 			const fUri = r?.[0]?.cfg.ablunitConfig.optionsUri.filenameUri
-			log.info(tag + 'testing.runAll found results file (filename=' + fUri + ')')
-			if (doesFileExist(fUri)) {
-				return true
-			}
-			log.error(tag + 'no results file found (filename=' + fUri + ')')
+			log.info(tag + 'testing.runAll found results file (filename=' + fUri + ', r=' + r + ')')
+
+			if (doesFileExist(fUri)) { return true }
 			throw new Error('no results file found (filename=' + fUri + ')')
-		// })
-		}, (e) => { throw e })
+		})
 	}, (err) => {
+		runAllTestsDuration?.stop()
 		log.error(tag + 'testing.runAll failed: ' + err)
 		throw new Error('testing.runAll failed: ' + err)
 	})
+	runAllTestsDuration?.stop()
 	log.info(tag + 'runAllTests complete (r=' + r + ')')
 }
 
@@ -593,29 +606,29 @@ export function refreshTests () {
 	})
 }
 
-export async function waitForTestRunStatus (waitForStatusStartsWith: string) {
+export async function waitForTestRunStatus (waitForStatus: RunStatus) {
 	const waitTime = new Duration()
 	let runData: ABLResults[] = []
-	let runStatus = 'not found'
+	let currentStatus = RunStatus.None
 
 	log.info('waiting for test run status = \'running\'')
 
 	setTimeout(() => { throw new Error('waitForTestRunStatus timeout') }, 20000)
-	while (!runStatus.startsWith(waitForStatusStartsWith))
+	while (currentStatus < waitForStatus)
 	{
-		await sleep(100, 'waitForTestRunStatus runStatus=\'' + runStatus + '\'')
+		await sleep2(1000, 'waitForTestRunStatus currentStatus=\'' + currentStatus.toString() + '\' + , waitForStatus=\'' + waitForStatus.toString() + '\'')
 		runData = await getCurrentRunData()
-		runStatus = runData[0].status
+		currentStatus = runData[0].status
 	}
 
-	log.info('found test run status = \'' + runStatus + '\'' + waitTime.toString())
-	if (!runStatus.startsWith(waitForStatusStartsWith)) {
-		throw new Error('test run status should start with ' + waitForStatusStartsWith + ' but is ' + runStatus)
+	log.info('found test run status = \'' + currentStatus + '\'' + waitTime.toString())
+	if (currentStatus === waitForStatus) {
+		throw new Error('test run status should equal with ' + waitForStatus.toString() + ' but is ' + currentStatus.toString())
 	}
 }
 
 export async function cancelTestRun (resolveCurrentRunData = true) {
-	const startCancelTime = Date.now()
+	cancelTestRunDuration = new Duration()
 	if (resolveCurrentRunData) {
 		const status = getCurrentRunData().then((resArr) => {
 			if (resArr && resArr.length > 0) {
@@ -631,9 +644,9 @@ export async function cancelTestRun (resolveCurrentRunData = true) {
 	}
 
 	return commands.executeCommand('testing.cancelRun').then(() => {
-		const elapsedCancelTime = Date.now() - startCancelTime
-		log.info('elapsedCancelTime=' + elapsedCancelTime)
-		return elapsedCancelTime
+		cancelTestRunDuration?.stop()
+		log.info('cancelDuration=' + cancelTestRunDuration?.elapsed() + 'ms')
+		return cancelTestRunDuration
 	})
 }
 
@@ -828,14 +841,15 @@ export async function getCurrentRunData (len = 1, tag?: string) {
 	} else {
 		tag = ''
 	}
-	log.info(tag + '100')
+	log.info(tag + ' start getCurrentRunData')
+
 	await refreshData()
 	if (!currentRunData || currentRunData.length === 0) {
 		log.info(tag + 'currentRunData not set, refreshing...')
 		for (let i=0; i<10; i++) {
-			await sleep2(500, tag + 'still no currentRunData, sleep before trying again').then(async () => {
+			await sleep2(1000, tag + 'still no currentRunData, sleep before trying again').then(async () => {
 				return refreshData().then(
-					() => { log.info('refresh succses') },
+					()    => { log.info('refresh success') },
 					(err) => { log.error('refresh failed: ' + err) })
 			})
 			log.info(tag + 'currentRunData.length=' + currentRunData?.length)
@@ -858,13 +872,17 @@ export async function getCurrentRunData (len = 1, tag?: string) {
 }
 
 export async function getResults (len = 1, tag?: string) {
+	const duration = new Duration()
 	if ((!recentResults || recentResults.length === 0) && len > 0) {
 		log.info(tag + 'recentResults not set, refreshing...')
-		for (let i=0; i<10; i++) {
+		for (let i=0; i<15; i++) {
 			await sleep2(500, tag + 'still no recentResults, sleep before trying again').then(async () => {
-				return refreshData().then(async () => { return sleep2(100, null) })
+				return refreshData().then(async () => {
+					return sleep2(100, null)
+				})
 			})
-			if ((recentResults?.length ?? 0) > 0) {
+			if ((recentResults?.length ?? 0) > len) {
+				log.info('found test results ' + duration)
 				continue
 			}
 		}
@@ -955,6 +973,13 @@ export const assert = {
 	throws: assertParent.throws,
 	doesNotThrow: assertParent.doesNotThrow,
 
+	greaterOrEqual (a: number, b: number, message?: string) {
+		assertParent.ok(a >= b, message)
+	},
+	lessOrEqual (a: number, b: number, message?: string) {
+		assertParent.ok(a <= b, message)
+	},
+
 	throwsAsync: async (block: () => Promise<void>, message?: string) => {
 		try {
 			const r = block()
@@ -1000,6 +1025,12 @@ export const assert = {
 		for (const dir of dirs) {
 			assertParent.ok(!doesDirExist(dir), 'dir exists: ' + fileToString(dir))
 		}
+	},
+
+	durationLessThan (duration: Duration | undefined, limit: number) {
+		assertParent.ok(duration, 'duration is undefined')
+		const name = duration.name ?? 'duration'
+		assertParent.ok(duration.elapsed() < limit, name + ' is not less than limit (' + duration.elapsed() + ' / ' + limit + 'ms)')
 	},
 	tests: new AssertTestResults(),
 }

@@ -861,7 +861,15 @@ function getWorkspaceTestPatterns () {
 	const includePatterns: RelativePattern[] = []
 	const excludePatterns: RelativePattern[] = []
 
-	for(const workspaceFolder of workspace.workspaceFolders!) {
+	if (!workspace.workspaceFolders) {
+		let info='(workspace.name=' + workspace.name
+		if (workspace.workspaceFile) {
+			info = info + ', workspace.file=' + workspace.workspaceFile
+		}
+		info = info + ')'
+		throw new Error('workspace has no folders ' + info)
+	}
+	for(const workspaceFolder of workspace.workspaceFolders) {
 		includePatterns.push(...includePatternsConfig.map(pattern => new RelativePattern(workspaceFolder, pattern)))
 		excludePatterns.push(...excludePatternsConfig.map(pattern => new RelativePattern(workspaceFolder, pattern)))
 	}

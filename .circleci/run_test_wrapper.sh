@@ -38,7 +38,8 @@ run_tests () {
 	EXIT_CODE=0
 
 	cp "package.$ABLUNIT_TEST_RUNNER_VSCODE_VERSION.json" package.json
-	xvfb-run -a npm run test:coverage || EXIT_CODE=$?
+	# xvfb-run -a npm run test:coverage || EXIT_CODE=$?
+	xvfb-run -a npm run test || EXIT_CODE=$? ## todo
 	cp package.stable.json package.json
 
 	if [ -f /home/circleci/project/test_projects/proj0/prof.out ]; then

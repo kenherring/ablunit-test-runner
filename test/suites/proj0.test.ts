@@ -55,8 +55,6 @@ suite('proj0Suite ', () => {
 
 	test('proj0.1 workspaceFolder/ablunit.json file exists', async () => {
 		log.info('proj0.1 - output files exist - 1')
-		await sleep2()
-		log.info('start proj0.1')
 		await runAllTests()
 		log.info('getResults')
 		const prom = getResults().then((recentResults) => {

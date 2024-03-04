@@ -1,24 +1,25 @@
-import { Uri, assert, doesDirExist, doesFileExist, log, runAllTests, suiteSetupCommon, workspace } from '../testCommon'
+import { assert, getResults, log, runAllTests, sleep2, suiteSetupCommon, toUri } from '../testCommon'
 
 suite('workspace0Suite', () => {
 
 	suiteSetup('workspace0 - suiteSetup', suiteSetupCommon)
 
 	test('workspace0.1 - <workspaceFolder>/ablunit.json file exists', async () => {
-		await runAllTests()
-
-		const workspaceFolder = workspace.workspaceFolders![0].uri
-		log.info('workspaceFolder=' + workspaceFolder.fsPath)
-
-		const ablunitJson = Uri.joinPath(workspaceFolder, 'ablunit.json')
-		const resultsXml = Uri.joinPath(workspaceFolder, 'results.xml')
-		const resultsJson = Uri.joinPath(workspaceFolder, 'results.json')
-		const listingsDir = Uri.joinPath(workspaceFolder, 'listings')
-
-		assert.assert(doesFileExist(ablunitJson), 'missing ablunit.json (' + ablunitJson.fsPath + ')')
-		assert.assert(doesFileExist(resultsXml), 'missing results.xml (' + resultsXml.fsPath + ')')
-		assert.assert(!doesFileExist(resultsJson), 'results.json exists and should not (' + resultsJson.fsPath + ')')
-		assert.assert(!doesDirExist(listingsDir), 'listings dir exists and should not (' + listingsDir.fsPath + ')')
+		log.info('workspace0.1 - output files exist - 1')
+		await sleep2(500)
+		log.info('workspace0.1 - start')
+		return runAllTests().then(async () => {
+			log.info('getResults')
+			return getResults().then((recentResults) => {
+				log.info('ablunit.json = ' + recentResults[0].cfg.ablunitConfig.config_uri)
+				assert.equal(recentResults[0].cfg.ablunitConfig.config_uri, toUri('ablunit.json'), 'ablunit.json path mismatch')
+				assert.fileExists('ablunit.json', 'results.xml')
+				assert.notFileExists('results.json')
+				assert.notDirExists('listings')
+				log.info('resuls done proj0.1')
+				return true
+			})
+		})
 	})
 
 })

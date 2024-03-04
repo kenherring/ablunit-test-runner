@@ -125,7 +125,7 @@ suite('proj1Suite', () => {
 
 	test('proj1.0A CompileError - test run fail - await', async () => {
 		log.info('proj1.0A-1')
-		await assert.throwsAsync(async () => { await runAllTests(true, 'proj1.0A') }, 'failed to throw excetption')
+		await assert.throwsAsync(async () => { await runAllTests(true, true, 'proj1.0A') }, 'failed to throw excetption')
 		log.info('proj1.0A-2')
 		return newTruePromise()
 	})
@@ -135,7 +135,7 @@ suite('proj1Suite', () => {
 	// 	log.info('proj1.0B-1')
 	// 	assert.throws(async () => {
 	// 		log.info('proj1.0B-2')
-	// 		await runAllTests(true, 'proj1.0B').then(
+	// 		await runAllTests(true, true, 'proj1.0B').then(
 	// 			() => { log.info('proj1.0B-3')},
 	// 			(e) => { log.info('proj1.0B-4'); throw e })
 	// 		log.info('proj1.0B-3')
@@ -147,7 +147,7 @@ suite('proj1Suite', () => {
 	// success!
 	// test('proj1.0C setFilesExcludePattern - test run fail - catch', async () => {
 	// 	log.info('proj1.0C-1')
-	// 	return runAllTests(true, 'proj1.0C')
+	// 	return runAllTests(true, true, 'proj1.0C')
 	// 		.then(() => { throw new Error('failed to throw exception') })
 	// 		.catch(() => { return true })
 	// })
@@ -155,7 +155,7 @@ suite('proj1Suite', () => {
 	// success!
 	// test('proj1.0D setFilesExcludePattern - test run fail - catch', async () => {
 	// 	log.info('proj1.0D-1')
-	// 	return runAllTests(true, 'proj1.0D')
+	// 	return runAllTests(true, true, 'proj1.0D')
 	// 		.then(() => { throw new Error('failed to throw exception') },
 	// 			(e) => { log.info('proj1.0D caught error! e=' + e); return })
 	// })
@@ -164,7 +164,7 @@ suite('proj1Suite', () => {
 		log.info('proj1.1A-1')
 		await updateConfig('ablunit.files.exclude', [ '.builder/**', '.pct/**', 'compileError.p' ])
 		log.info('proj1.1A-2')
-		await runAllTests(true, 'proj1.1A')
+		await runAllTests(true, true, 'proj1.1A')
 		log.info('proj1.1A-3')
 	})
 
@@ -174,7 +174,7 @@ suite('proj1Suite', () => {
 		log.info('proj1.1B-3')
 		await configProm
 		log.info('proj1.1B-2')
-		await runAllTests(true, 'proj1.1A')
+		await runAllTests(true, true, 'proj1.1A')
 		log.info('proj1.1B-3')
 	})
 
@@ -183,7 +183,7 @@ suite('proj1Suite', () => {
 		return workspace.getConfiguration('ablunit').update('files.exclude', [ '.builder/**', '.pct/**', 'compileError.p' ])
 			.then(async () => {
 				log.info('proj1.1C-2')
-				return runAllTests(true, 'proj1.1B').then(() => {
+				return runAllTests(true, true, 'proj1.1B').then(() => {
 					log.info('proj1.1C-3')
 				})
 			}, (e) => {
@@ -195,7 +195,7 @@ suite('proj1Suite', () => {
 	// 	log.info('proj1.1B-1')
 	// 	try {
 	// 		log.info('proj1.1B-2')
-	// 		await runAllTests(true, 'proj1.1B')
+	// 		await runAllTests(true, true, 'proj1.1B')
 	// 		log.info('proj1.1B-3')
 
 	// 		assert.fail('Error not caught')
@@ -217,7 +217,7 @@ suite('proj1Suite', () => {
 	// 		})
 	// 		// await sleep2(100, 'sleep-3')
 	// 		log.info(isoDate() + ' [proj1.3-3]')
-	// 		await assert.doesNotThrowAsync(async () => { await runAllTests(true, 'proj1.1') })
+	// 		await assert.doesNotThrowAsync(async () => { await runAllTests(true, true, 'proj1.1') })
 	// 		log.info(isoDate() + ' [proj1.3-4]')
 	// 		// return assert.doesNotThrowAsync(() => runAllTests())
 	// 	} catch (e) {
