@@ -5,7 +5,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 
-import { vscodeVersion } from 'ABLUnitCommon'
+import { vscodeVersion } from '../ABLUnitCommon'
 import Mocha from 'mocha'
 import * as path from 'path'
 

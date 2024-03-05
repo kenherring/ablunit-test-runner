@@ -10,6 +10,7 @@ import { IExtensionTestReferences } from '../extension'
 import { ITestSuites } from '../parse/ResultsParser'
 import { IConfigurations } from '../parse/TestProfileParser'
 import { DefaultRunProfile } from '../parse/config/RunProfile'
+import { RunStatus } from '../ABLUnitRun'
 
 interface IRuntime {
 	name: string,
@@ -322,15 +323,15 @@ export function refreshTests () {
 	})
 }
 
-export async function waitForTestRunStatus (waitForStatusStartsWith: string) {
+export async function waitForTestRunStatus (waitForStatusStartsWith: RunStatus) {
 	const waitTime = new Duration()
 	let runData: ABLResults[] = []
-	let runStatus = 'not found'
+	let runStatus = RunStatus.None
 
 	log.debug('waiting for test run status = \'running\'')
 
 	setTimeout(() => { throw new Error('waitForTestRunStatus timeout') }, 20000)
-	while (!runStatus.startsWith(waitForStatusStartsWith))
+	while (runStatus !== waitForStatusStartsWith)
 	{
 		await sleep(100, 'waitForTestRunStatus runStatus=\'' + runStatus + '\'')
 		runData = await getCurrentRunData()
@@ -338,7 +339,7 @@ export async function waitForTestRunStatus (waitForStatusStartsWith: string) {
 	}
 
 	log.debug('found test run status = \'' + runStatus + '\'' + waitTime.toString())
-	if (!runStatus.startsWith(waitForStatusStartsWith)) {
+	if (runStatus !== waitForStatusStartsWith) {
 		throw new Error('test run status should start with ' + waitForStatusStartsWith + ' but is ' + runStatus)
 	}
 }

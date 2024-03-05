@@ -1,6 +1,6 @@
 {
 	"name": "ablunit-test-runner",
-	"displayName": "ABLUnit Test Runner",
+	"displayName": "ABLUnit Test Runner (proposed)",
 	"description": "OpenEdge ABLUnit test runner for VSCode",
 	"version": "0.2.1",
 	"preview": true,
@@ -95,7 +95,6 @@
 		"test:install-and-run": "cd dummy-ext && npm run test:install-and-run",
 		"watch": "webpack --mode development --watch",
 		"webpack": "webpack --mode development",
-		"test-new": "mocha -u tdd ./out/test",
 		"version": "sh -c scripts/npm_version.sh"
 	},
 	"dependencies": {
@@ -104,7 +103,7 @@
 	},
 	"devDependencies": {
 		"@types/mocha": "^10.0.6",
-		"@types/node": "^16.18.34",
+		"@types/node": "^16.18.82",
 		"@types/vscode": "^1.83.0",
 		"@types/xml2js": "^0.4.14",
 		"@typescript-eslint/eslint-plugin": "^6.13.2",
@@ -151,7 +150,8 @@
 					"default": [
 						"**/*.{cls,p}"
 					],
-					"markdownDescription": "Glob patterns to include test files"
+					"markdownDescription": "Glob patterns to include test files",
+					"scope": "machine-overridable"
 				},
 				"ablunit.files.exclude": {
 					"type": "array",
@@ -159,7 +159,8 @@
 						".builder/**",
 						".pct/**"
 					],
-					"markdownDescription": "Glob patterns to exclude test files"
+					"markdownDescription": "Glob patterns to exclude test files",
+					"scope": "machine-overridable"
 				},
 				"ablunit.importOpenedgeProjectJson": {
 					"type": "boolean",

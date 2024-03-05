@@ -146,7 +146,7 @@ function getConfigForProject (version: vscodeVersion, projName: string, testFile
 }
 
 function createConfigForVersion (version: vscodeVersion) {
-	log('creating test config for version \'' + version + '\'...')
+	log('creating test config for version \'' + version + '\', cwd=' + path.resolve(__dirname, '../../') + '\'...')
 	const testConfig: ITestConfig[] = []
 
 	const g = globSync('**/*.test.js', { cwd: path.resolve(__dirname, '../../') })
@@ -154,7 +154,7 @@ function createConfigForVersion (version: vscodeVersion) {
 		throw new Error('No test files found')
 	}
 	for (const f of g) {
-		const projName = f.replace('.test.js', '').split('/').reverse()[0]
+		const projName = f.replace('.test.js', '').replace(/\\/g, '/').split('/').reverse()[0]
 		// if (projName === 'DebugLines') {
 		// 	continue
 		// }
@@ -186,7 +186,7 @@ function createConfigForVersion (version: vscodeVersion) {
 }
 
 // export const testConfigStable = createConfigForVersion('stable')
-// export const testConfigInsiders = createConfigForVersion('proposedapi')
+// export const testConfigInsiders = createConfigForVersion('proAposedapi')
 // export const testConfigInsiders = createConfigForVersion('insiders')
 
 export function getTestConfig (version: vscodeVersion) {

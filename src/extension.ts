@@ -74,7 +74,8 @@ export async function activate (context: ExtensionContext) {
 				await updateNodeForDocument(e, 'didOpen').then(() => {
 					log.trace('updateNodeForDocument complete for ' + e.uri)
 					decorator.decorate(undefined, e)
-				}, (err) => {
+					return
+				}, (err: unknown) => {
 					log.error('failed updateNodeForDocument onDidTextDocument! err=' + err)
 				})
 			})
@@ -89,7 +90,7 @@ export async function activate (context: ExtensionContext) {
 			log.error('continuous test runs not implemented')
 			throw new Error('continuous test runs not implemented')
 		}
-		return startTestRun(request, token)
+		return startTestRun(request, token).then(() => { return })
 	}
 
 	async function openTestRunConfig () {
@@ -216,7 +217,7 @@ export async function activate (context: ExtensionContext) {
 					}
 				}
 				run.end()
-				return
+				return false
 			}
 
 			log.debug('ablunit test run complete', run)
@@ -348,7 +349,8 @@ export async function activate (context: ExtensionContext) {
 		}
 		if (workspace.getWorkspaceFolder(u) === undefined) {
 			log.info('skipping updateNodeForDocument for file not in workspace: ' + u.fsPath)
-			return Promise.resolve()
+			return Promise.resolve(() => { return false })
+			// return Promise.resolve(() => { return true })
 		}
 		return updateNode(u, ctrl)
 	}
@@ -425,10 +427,12 @@ let contextResourcesUri: Uri
 
 function updateNode (uri: Uri, ctrl: TestController) {
 	log.trace('updateNode uri=' + uri.fsPath)
-	if(uri.scheme !== 'file' || isFileExcluded(uri, getExcludePatterns())) {	return false }
+	if(uri.scheme !== 'file' || isFileExcluded(uri, getExcludePatterns())) { return new Promise(() => { return false }) }
 
 	const { item, data } = getOrCreateFile(ctrl, uri)
-	if(!item || !data) {	return false }
+	if(!item || !data) {
+		return new Promise(() => { return false })
+	}
 
 	ctrl.invalidateTestResults(item)
 	return getContentFromFilesystem(uri).then((contents) => {

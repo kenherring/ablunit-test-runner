@@ -3,6 +3,7 @@ import { before } from 'mocha'
 import { CancellationError, commands } from 'vscode'
 import { beforeCommon, beforeProj7, cancelTestRun, getCurrentRunData, getResults, getTestControllerItemCount, log, refreshData, refreshTests, runAllTests, sleep, waitForTestRunStatus } from '../testCommon'
 import { Duration } from '../../ABLUnitCommon'
+import { RunStatus } from '../../ABLUnitRun'
 
 const projName = 'proj7B'
 
@@ -70,7 +71,7 @@ suite(projName + ' - Extension Test Suite', () => {
 		}, (err) => {
 			throw err
 		})
-		await waitForTestRunStatus('constructed')
+		await waitForTestRunStatus(RunStatus.Constructed)
 
 		const elapsedCancelTime = await cancelTestRun(false)
 		assert(elapsedCancelTime < maxCancelTime, 'cancelTime should be < ' + maxCancelTime + 'ms, but is ' + elapsedCancelTime + 'ms')
@@ -80,7 +81,7 @@ suite(projName + ' - Extension Test Suite', () => {
 
 
 		await refreshTests().then(() => {
-			if (res.status.startsWith('run cancelled')) {
+			if (res.status === RunStatus.Cancelled) {
 				log.debug('runAllTests completed with status=\'run cancelled\'')
 			} else {
 				assert.fail('runAllTests completed without status=\'run cancelled\' (status=\'' + res.status + '\')')
@@ -101,7 +102,7 @@ suite(projName + ' - Extension Test Suite', () => {
 
 		// wait up to 60 seconds until ABLUnit is actually running, then cancel
 		// this validates the cancel will abort the spawned _progres process
-		await waitForTestRunStatus('running command').then(async () => await sleep(1000))
+		await waitForTestRunStatus(RunStatus.Executing).then(async () => await sleep(1000))
 		await sleep(500)
 
 		const resArr = await getCurrentRunData()
@@ -109,7 +110,7 @@ suite(projName + ' - Extension Test Suite', () => {
 		if (!res) {
 			assert.fail('getCurrentRunData returned undefined')
 		}
-		if (res.status !== 'running command') {
+		if (res.status !== RunStatus.Executing) {
 			assert.fail('test run reach status \'running command\'')
 		}
 

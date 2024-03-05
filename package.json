@@ -75,7 +75,8 @@
 	],
 	"main": "./dist/extension.js",
 	"files": [
-		"src"
+		"src",
+		"../src"
 	],
 	"scripts": {
 		"build": "npm run webpack && tsc",
@@ -112,7 +113,6 @@
 		"mocha-multi-reporters": "^1.5.1",
 		"mocha-reporter-sonarqube": "^2.0.6",
 		"nyc": "^15.1.0",
-		"rimraf": "^5.0.5",
 		"ts-loader": "^9.5.1",
 		"typescript": "^5.3.3",
 		"webpack": "^5.89.0",
