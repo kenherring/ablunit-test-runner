@@ -19,9 +19,9 @@ import { log } from './ChannelLogger'
 import { getContentFromFilesystem } from './parse/TestParserCommon'
 import { ABLTestCase, ABLTestClass, ABLTestData, ABLTestDir, ABLTestFile, ABLTestProgram, ABLTestSuite, resultData, testData } from './testTree'
 import { Decorator, decorator } from './Decorator'
-import { FileCoverageCustom } from './TestCoverage'
+// import { FileCoverageCustom } from './TestCoverage'
 
-class FileCoverage extends FileCoverageCustom {}
+// class FileCoverage extends FileCoverageCustom {}
 
 export interface IExtensionTestReferences {
 	testController: TestController
@@ -236,29 +236,29 @@ export async function activate (context: ExtensionContext) {
 				decorator.decorate(window.activeTextEditor)
 			}
 
-			const coverageProvider = {
-				provideFileCoverage: () => {
-					log.info('---------- provideFileCoverage ----------')
-					const results = resultData.get(run)
-					if (!results) { return [] }
+			// const coverageProvider = {
+			// 	provideFileCoverage: () => {
+			// 		log.info('---------- provideFileCoverage ----------')
+			// 		const results = resultData.get(run)
+			// 		if (!results) { return [] }
 
-					const coverage: FileCoverage[] = []
-					for(const r of results) {
-						r.coverage.forEach((c) => { coverage.push(c) })
-					}
-					log.info('coverage.length=' + coverage.length)
-					return coverage
-				},
-				resolveFileCoverage: (coverage: FileCoverage, cancellation: CancellationToken) => {
-					log.info('---------- resolveFileCoverage ----------')
-					log.error('resolveFileCoverage not implemented')
+			// 		const coverage: FileCoverage[] = []
+			// 		for(const r of results) {
+			// 			r.coverage.forEach((c) => { coverage.push(c) })
+			// 		}
+			// 		log.info('coverage.length=' + coverage.length)
+			// 		return coverage
+			// 	},
+			// 	resolveFileCoverage: (coverage: FileCoverage, cancellation: CancellationToken) => {
+			// 		log.info('---------- resolveFileCoverage ----------')
+			// 		log.error('resolveFileCoverage not implemented')
 
-					cancellation.onCancellationRequested(() => {
-						log.info('cancellation requested!')
-					})
-					return coverage
-				}
-			}
+			// 		cancellation.onCancellationRequested(() => {
+			// 			log.info('cancellation requested!')
+			// 		})
+			// 		return coverage
+			// 	}
+			// }
 
 			void log.notification('ablunit tests complete')
 			run.end()
