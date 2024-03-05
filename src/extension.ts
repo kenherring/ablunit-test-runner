@@ -2,7 +2,7 @@ import { readFileSync } from 'fs'
 import { globSync } from 'glob'
 import {
 	CancellationError,
-	CancellationToken, ConfigurationChangeEvent, ExtensionContext,
+	CancellationToken, ConfigurationChangeEvent, Disposable, ExtensionContext,
 	FileType,
 	Position, Range, RelativePattern, Selection,
 	TestController, TestItem, TestItemCollection, TestMessage,
@@ -14,13 +14,12 @@ import {
 	extensions,
 	tests, window, workspace
 } from 'vscode'
-import { ABLResults } from 'ABLResults'
-import { log } from 'ChannelLogger'
-import { getContentFromFilesystem } from 'parse/TestParserCommon'
-import { ABLTestCase, ABLTestClass, ABLTestData, ABLTestDir, ABLTestFile, ABLTestProgram, ABLTestSuite, resultData, testData } from 'testTree'
-// import { DecorationProvider, Decorator, decorator } from './Decorator'
-import { Decorator, decorator } from 'Decorator'
-import { FileCoverageCustom } from 'TestCoverage'
+import { ABLResults } from './ABLResults'
+import { log } from './ChannelLogger'
+import { getContentFromFilesystem } from './parse/TestParserCommon'
+import { ABLTestCase, ABLTestClass, ABLTestData, ABLTestDir, ABLTestFile, ABLTestProgram, ABLTestSuite, resultData, testData } from './testTree'
+import { Decorator, decorator } from './Decorator'
+import { FileCoverageCustom } from './TestCoverage'
 
 class FileCoverage extends FileCoverageCustom {}
 
@@ -45,7 +44,7 @@ export async function activate (context: ExtensionContext) {
 	await createDir(contextStorageUri)
 	// const decorationProvider = new DecorationProvider()
 
-	const getExtensionReferences = () => {
+	const getExtensionTestReferences = () => {
 		let data: ABLResults[] = []
 		if (currentTestRun) {
 			data = resultData.get(currentTestRun) ?? []
@@ -61,7 +60,7 @@ export async function activate (context: ExtensionContext) {
 	}
 
 	if (process.env['ABLUNIT_TEST_RUNNER_UNIT_TESTING'] === 'true') {
-		context.subscriptions.push(commands.registerCommand('_ablunit.getExtensionTestReferences', getExtensionReferences))
+		context.subscriptions.push(commands.registerCommand('_ablunit.getExtensionTestReferences', getExtensionTestReferences))
 	}
 
 	context.subscriptions.push(ctrl)
@@ -69,69 +68,28 @@ export async function activate (context: ExtensionContext) {
 	context.subscriptions.push(
 		commands.registerCommand('_ablunit.openCallStackItem', openCallStackItem),
 		workspace.onDidChangeConfiguration(e => { updateConfiguration(e) }),
-		// window.registerFileDecorationProvider(decorationProvider),
 
-		// TODO
-		// window.onDidChangeActiveTextEditor(e => {
-		// 	if (e && createOrUpdateFile(ctrl, e.document.uri)) {
-		// 		return decorator.decorate(e)
-		// 	}
-		// }),
-		// window.onDidChangeActiveTextEditor(e => {
-		// 	if (!e) { return }
-		// 	log.info("decorating editor - onDidChangeActiveTextEditor")
-		// 	decorator.decorate(e).catch((err) => {
-		// 		log.error('failed to decorate editor. err=' + err)
-		// 	})
-		// }),
-
-		workspace.onDidOpenTextDocument(async e => {
-			log.trace('onDidOpenTextDocument for ' + e.uri)
-			await updateNodeForDocument(e, 'didOpen').then(() => {
-				decorator.decorate(undefined, e)
-			}, (err) => {
-				log.error('failed updateNodeForDocument onDidTextDocument! err=' + err)
+		workspace.onDidOpenTextDocument(e => {
+			return new Disposable(async () => {
+				await updateNodeForDocument(e, 'didOpen').then(() => {
+					log.trace('updateNodeForDocument complete for ' + e.uri)
+					decorator.decorate(undefined, e)
+				}, (err) => {
+					log.error('failed updateNodeForDocument onDidTextDocument! err=' + err)
+				})
 			})
 		})
-		// workspace.onDidChangeTextDocument(e => { return updateNodeForDocument(e.document,'didChange') }),
-
 		// watcher.onDidCreate(uri => { createOrUpdateFile(controller, uri) })
 		// watcher.onDidChange(uri => { createOrUpdateFile(controller, uri) })
 		// watcher.onDidDelete(uri => { controller.items.delete(uri.fsPath) })
 	)
 
-
-	const runHandler = (request: TestRunRequest, cancellation: CancellationToken) => {
-		if (! request.continuous) {
-			const runProm = startTestRun(request, cancellation)
-				.then(() => { return })
-				.catch((err) => {
-					log.error('startTestRun failed. err=' + err)
-					throw err
-				})
-			const cancelProm = new Promise((resolve) => {
-				cancellation.onCancellationRequested(() => {
-					log.debug('cancellation requested - runHandler cancelProm')
-					resolve('cancelled')
-				})
-			})
-			const ret = Promise.race([ runProm, cancelProm ]).then((res) => {
-				if (res === 'cancelled') {
-					log.error('test run cancelled')
-					throw new CancellationError()
-				}
-				log.debug('test run completed successfully')
-				return
-			}, (err) => {
-				log.error('test run failed. err=' + err)
-				throw err
-
-			})
-
-			return ret
+	const runHandler = async (request: TestRunRequest, token: CancellationToken): Promise<void> => {
+		if (request.continuous) {
+			log.error('continuous test runs not implemented')
+			throw new Error('continuous test runs not implemented')
 		}
-		log.error('continuous test runs not implemented')
-		throw new Error('continuous test runs not implemented')
+		return startTestRun(request, token)
 	}
 
 	async function openTestRunConfig () {
@@ -165,7 +123,7 @@ export async function activate (context: ExtensionContext) {
 		})
 	}
 
-	const startTestRun = (request: TestRunRequest, cancellation: CancellationToken) => {
+	const startTestRun = async (request: TestRunRequest, cancellation: CancellationToken) => {
 		recentResults = []
 
 		const discoverTests = async (tests: Iterable<TestItem>) => {
@@ -215,10 +173,11 @@ export async function activate (context: ExtensionContext) {
 				}
 
 				ret = await r.run(run).then(() => {
+					log.debug('r.run() successful')
 					return true
-				}, (err) => {
-					log.error('ablunit run failed parsing results with exception: ' + err, run)
-					return false
+				}, (e) => {
+					log.error('ablunit run failed parsing results with exception: ' + e, run)
+					throw e
 				})
 				if (!ret) {
 					continue
@@ -351,18 +310,20 @@ export async function activate (context: ExtensionContext) {
 		})
 		const tests = request.include ?? gatherTestItems(ctrl.items)
 
-		return discoverTests(tests).then(async () => {
-			return createABLResults().then((res) => {
+		const prom = discoverTests(tests).then(async () => {
+			const r = createABLResults().then(async (res) => {
 				if (!res) {
 					throw new Error('createABLResults failed')
 				} else {
 					checkCancellationRequested(run)
 				}
-				return runTestQueue(res).then(() => {
+				const r = runTestQueue(res).then(() => {
 					log.debug('runTestQueue complete')
-					return true
-				})
-			})
+					return
+				}).catch((e) => {throw e})
+				return r
+			}).catch((e) => { throw e })
+			return r
 		}).catch((err) => {
 			run.end()
 			if (err instanceof CancellationError) {
@@ -374,9 +335,10 @@ export async function activate (context: ExtensionContext) {
 			}
 			throw err
 		})
+		return prom
 	}
 
-	function updateNodeForDocument (e: TextDocument | TestItem | Uri, r: string) {
+	async function updateNodeForDocument (e: TextDocument | TestItem | Uri, r: string) {
 		log.info('r=' + r)
 		let u: Uri | undefined
 		if (e instanceof Uri) {
@@ -387,14 +349,11 @@ export async function activate (context: ExtensionContext) {
 		if (!u) {
 			throw new Error('updateNodeForDocument called with undefined uri')
 		}
-		log.info('updateNodeForDocument uri=' + u.fsPath)
-		const prom = updateNode(u, ctrl)
-
-		if (typeof prom === 'boolean') {
-			return new Promise(() => { return prom })
-		} else {
-			return prom.then(() => { return })
+		if (workspace.getWorkspaceFolder(u) === undefined) {
+			log.info('skipping updateNodeForDocument for file not in workspace: ' + u.fsPath)
+			return Promise.resolve()
 		}
+		return await updateNode(u, ctrl)
 	}
 
 	async function resolveHandlerFunc (item: TestItem | undefined) {
@@ -412,7 +371,7 @@ export async function activate (context: ExtensionContext) {
 		}
 
 		if (item.uri) {
-			return updateNodeForDocument(item, 'resolve').then(() => { return })
+			return await updateNodeForDocument(item, 'resolve')
 		}
 
 		const data = testData.get(item)
@@ -434,11 +393,11 @@ export async function activate (context: ExtensionContext) {
 		return resolveHandlerFunc(item).then(() => { return })
 	}
 
-	function updateConfiguration (e: ConfigurationChangeEvent) {
-		if (e.affectsConfiguration('ablunit')) {
-			removeExcludedFiles(ctrl, getExcludePatterns())
+	function updateConfiguration (event: ConfigurationChangeEvent) {
+		if (!event.affectsConfiguration('ablunit')) {
+			return
 		}
-		if (e.affectsConfiguration('ablunit.files.include') || e.affectsConfiguration('ablunit.files.exclude')) {
+		if (event.affectsConfiguration('ablunit.files')) {
 			removeExcludedFiles(ctrl, getExcludePatterns())
 		}
 	}
@@ -467,7 +426,7 @@ export async function activate (context: ExtensionContext) {
 let contextStorageUri: Uri
 let contextResourcesUri: Uri
 
-function updateNode (uri: Uri, ctrl: TestController) {
+async function updateNode (uri: Uri, ctrl: TestController) {
 	log.trace('updateNode uri=' + uri.fsPath)
 	if(uri.scheme !== 'file' || isFileExcluded(uri, getExcludePatterns())) {	return false }
 
@@ -707,7 +666,7 @@ function getExcludePatterns () {
 	let excludePatterns: string[] = []
 
 	const excludePatternsConfig: string[] | undefined = workspace.getConfiguration('ablunit').get('files.exclude', [ '**/.builder/**' ])
-	if (excludePatternsConfig[0].length == 1) {
+	if (excludePatternsConfig.length == 1) {
 		excludePatterns[0] = ''
 		for (const pattern of excludePatternsConfig) {
 			excludePatterns[0] = excludePatterns[0] + pattern
@@ -737,7 +696,15 @@ function getWorkspaceTestPatterns () {
 	const includePatterns: RelativePattern[] = []
 	const excludePatterns: RelativePattern[] = []
 
-	for(const workspaceFolder of workspace.workspaceFolders!) {
+	if (!workspace.workspaceFolders) {
+		let info='(workspace.name=' + workspace.name
+		if (workspace.workspaceFile) {
+			info = info + ', workspace.file=' + workspace.workspaceFile
+		}
+		info = info + ')'
+		throw new Error('workspace has no folders ' + info)
+	}
+	for(const workspaceFolder of workspace.workspaceFolders) {
 		includePatterns.push(...includePatternsConfig.map(pattern => new RelativePattern(workspaceFolder, pattern)))
 		excludePatterns.push(...excludePatternsConfig.map(pattern => new RelativePattern(workspaceFolder, pattern)))
 	}

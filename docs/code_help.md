@@ -1,5 +1,3 @@
-## `code -h` Reference
-
 ```
 Visual Studio Code 1.86.1
 

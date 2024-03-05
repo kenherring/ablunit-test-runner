@@ -4,6 +4,20 @@ import { isRelativePath } from './ABLUnitCommon'
 import { ExecException, ExecOptions, exec } from 'child_process'
 import { log } from './ChannelLogger'
 
+export enum RunStatus {
+	None,
+	Initialized,
+	Constructed,
+	WaitingForStart,
+	Running,
+	Executing,
+	Parsing,
+	Complete,
+	Cancelled,
+	Error
+}
+
+
 export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation?: CancellationToken) => {
 	const start = Date.now()
 	const abort = new AbortController()
@@ -112,7 +126,7 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 		args.shift()
 
 		return new Promise<string>((resolve, reject) => {
-			res.setStatus('running command')
+			res.setStatus(RunStatus.Executing)
 
 			const runenv = getEnvVars(res.dlc!.uri)
 			log.debug('cmd=' + cmd + ' ' + args.join(' '))
@@ -126,10 +140,12 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 
 			exec(cmd + ' ' + args.join(' ') + ' 2>&1', execOpts, (err: ExecException | null, stdout: string, stderr: string) => {
 				const duration = Date.now() - start
+
+				const rejectErrs: string[] = []
 				if (err) {
 					log.error('Error = ' + err.name + ' (ExecExcetion)\r\n   ' + err.message, options)
 					log.error('err=' + JSON.stringify(err))
-					reject(err)
+					rejectErrs.push(err.name + ' - ' + err.message)
 				}
 				if (stdout) {
 					// stdout = '[stdout] ' + stdout.replace(/\n/g, '\n[stdout] ')
@@ -138,10 +154,21 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 				if (stderr) {
 					stderr = '[stderr] ' + stderr.replace(/\n/g, '\n[stderr] ')
 					log.error(stderr, options)
+					rejectErrs.push(stderr)
+				}
+
+				if (err) {
+					let errorText = 'ABLUnit Command Execution Failed! (duration=' + duration + ')'
+					for (const rejectErr of rejectErrs) {
+						errorText += '\r\n   ' + rejectErr
+					}
+					reject(new Error (errorText))
+					return
 				}
 				// if(stderr) {
-				// 	reject(new Error ("ABLUnit Command Execution Failed - duration: " + duration))
+				// 	reject(new Error ("ABLUnit Command Execution Failed (reject-3) - duration: " + duration))
 				// }
+
 				log.info('----- ABLUnit Command Execution Completed -----', options)
 				resolve('ABLUnit Command Execution Completed - duration: ' + duration)
 			})
@@ -152,6 +179,7 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 		return res.parseOutput(options).then()
 	}, (err) => {
 		log.error('Err=' + err)
+		throw err
 	})
 }
 

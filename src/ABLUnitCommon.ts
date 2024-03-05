@@ -53,10 +53,12 @@ export function deleteFile (file: Uri | Uri[]) {
 }
 
 export class Duration {
+	name?: string
 	start: number
 	end: number
 	private stopped = false
-	constructor () {
+	constructor (name?: string) {
+		this.name = name
 		this.start = Date.now()
 		this.end = this.start
 	}
