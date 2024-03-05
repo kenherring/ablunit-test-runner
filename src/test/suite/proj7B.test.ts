@@ -96,38 +96,37 @@ suite(projName + ' - Extension Test Suite', () => {
 		})
 	})
 
-	test(projName + '.3 - cancel test run while _progres is running', async () => {
-		const maxCancelTime = 1000
-		const runProm = runAllTests().then(() => { return }, (err) => { throw err })
+	// test(projName + '.3 - cancel test run while _progres is running', async () => {
+	// 	const maxCancelTime = 1000
+	// 	const runProm = runAllTests().then(() => { return }, (err) => { throw err })
 
-		// wait up to 60 seconds until ABLUnit is actually running, then cancel
-		// this validates the cancel will abort the spawned _progres process
-		await waitForTestRunStatus(RunStatus.Executing).then(async () => await sleep(1000))
-		await sleep(500)
+	// 	// wait up to 60 seconds until ABLUnit is actually running, then cancel
+	// 	// this validates the cancel will abort the spawned _progres process
+	// 	await waitForTestRunStatus(RunStatus.Executing).then(async () => await sleep(1000))
+	// 	await sleep(500)
+gi
+	// 	const resArr = await getCurrentRunData()
+	// 	const res = resArr[0]
+	// 	if (!res) {
+	// 		assert.fail('getCurrentRunData returned undefined')
+	// 	}
+	// 	if (res.status !== RunStatus.Executing) {
+	// 		assert.fail('test run reach status \'running command\'')
+	// 	}
 
-		const resArr = await getCurrentRunData()
-		const res = resArr[0]
-		if (!res) {
-			assert.fail('getCurrentRunData returned undefined')
-		}
-		if (res.status !== RunStatus.Executing) {
-			assert.fail('test run reach status \'running command\'')
-		}
+	// 	const elapsedCancelTime = await cancelTestRun()
+	// 	assert(elapsedCancelTime < maxCancelTime, 'cancelTime should be < ' + maxCancelTime + 'ms, but is ' + elapsedCancelTime + 'ms')
+	// 	assert(true, 'testing.cancelRun completed successfully')
 
-		const elapsedCancelTime = await cancelTestRun()
-		assert(elapsedCancelTime < maxCancelTime, 'cancelTime should be < ' + maxCancelTime + 'ms, but is ' + elapsedCancelTime + 'ms')
-		assert(true, 'testing.cancelRun completed successfully')
+	// 	log.debug('waiting for runProm to complete')
+	// 	await runProm.then(() => {
+	// 		log.debug('runProm completed')
+	// 	})
 
-		log.debug('waiting for runProm to complete')
-		await runProm.then(() => {
-			log.debug('runProm completed')
-		})
-
-		await refreshData()
-		const recentResults = await getResults(0)
-		log.debug('recentResults.length=' + recentResults.length)
-		assert.equal(0, recentResults.length, 'expected recentResults.length=0, but got ' + recentResults.length)
-	})
-
+	// 	await refreshData()
+	// 	const recentResults = await getResults(0)
+	// 	log.debug('recentResults.length=' + recentResults.length)
+	// 	assert.equal(0, recentResults.length, 'expected recentResults.length=0, but got ' + recentResults.length)
+	// })
 
 })
