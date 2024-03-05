@@ -107,8 +107,6 @@ copy_files () {
 run_tests () {
 	echo "[$0 ${FUNCNAME[0]}] pwd=$(pwd)"
 
-	# .circleci/package.sh
-
 	if [ "$TEST_PROJECT" = "base" ]; then
 		run_tests_base
 	elif [ "$TEST_PROJECT" = "dummy-ext" ]; then

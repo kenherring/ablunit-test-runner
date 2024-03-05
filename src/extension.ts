@@ -123,7 +123,7 @@ export async function activate (context: ExtensionContext) {
 		})
 	}
 
-	const startTestRun = async (request: TestRunRequest, cancellation: CancellationToken) => {
+	const startTestRun = (request: TestRunRequest, cancellation: CancellationToken) => {
 		recentResults = []
 
 		const discoverTests = async (tests: Iterable<TestItem>) => {
@@ -310,20 +310,18 @@ export async function activate (context: ExtensionContext) {
 		})
 		const tests = request.include ?? gatherTestItems(ctrl.items)
 
-		const prom = discoverTests(tests).then(async () => {
-			const r = createABLResults().then(async (res) => {
+		return discoverTests(tests).then(async () => {
+			return createABLResults().then((res) => {
 				if (!res) {
 					throw new Error('createABLResults failed')
 				} else {
 					checkCancellationRequested(run)
 				}
-				const r = runTestQueue(res).then(() => {
+				return runTestQueue(res).then(() => {
 					log.debug('runTestQueue complete')
-					return
-				}).catch((e) => {throw e})
-				return r
-			}).catch((e) => { throw e })
-			return r
+					return true
+				})
+			})
 		}).catch((err) => {
 			run.end()
 			if (err instanceof CancellationError) {
@@ -335,10 +333,9 @@ export async function activate (context: ExtensionContext) {
 			}
 			throw err
 		})
-		return prom
 	}
 
-	async function updateNodeForDocument (e: TextDocument | TestItem | Uri, r: string) {
+	function updateNodeForDocument (e: TextDocument | TestItem | Uri, r: string) {
 		log.info('r=' + r)
 		let u: Uri | undefined
 		if (e instanceof Uri) {
@@ -353,7 +350,7 @@ export async function activate (context: ExtensionContext) {
 			log.info('skipping updateNodeForDocument for file not in workspace: ' + u.fsPath)
 			return Promise.resolve()
 		}
-		return await updateNode(u, ctrl)
+		return updateNode(u, ctrl)
 	}
 
 	async function resolveHandlerFunc (item: TestItem | undefined) {
@@ -371,7 +368,7 @@ export async function activate (context: ExtensionContext) {
 		}
 
 		if (item.uri) {
-			return await updateNodeForDocument(item, 'resolve')
+			return updateNodeForDocument(item, 'resolve')
 		}
 
 		const data = testData.get(item)
@@ -426,7 +423,7 @@ export async function activate (context: ExtensionContext) {
 let contextStorageUri: Uri
 let contextResourcesUri: Uri
 
-async function updateNode (uri: Uri, ctrl: TestController) {
+function updateNode (uri: Uri, ctrl: TestController) {
 	log.trace('updateNode uri=' + uri.fsPath)
 	if(uri.scheme !== 'file' || isFileExcluded(uri, getExcludePatterns())) {	return false }
 

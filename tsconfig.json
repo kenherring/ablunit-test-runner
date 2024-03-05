@@ -4,9 +4,6 @@
 		"require": [ "tsconfig-paths/register" ]
 	},
 	"compilerOptions": {
-		// "module": "NodeNext",
-		// "moduleResolution": "NodeNext", // https://www.typescriptlang.org/tsconfig#moduleResolution
-		// "target": "ES2020",
 		"module": "commonjs",
 		"moduleResolution": "node",
 		"target": "es2020",
@@ -17,18 +14,13 @@
 		"baseUrl": ".",
 		"outDir": "dist",
 		"rootDir": ".",
-		// "paths": {
-		// 	"*": [ "./src/*" ]
-		// },
 		"sourceRoot": ".",
 		"sourceMap": true,
-		// "inlineSourceMap": true,
 		"strict": true,
 		"alwaysStrict": true,
 		"esModuleInterop": true,
 		"isolatedModules": true,
-		"listEmittedFiles": true,
-		// "traceResolution": true,
+		// "listEmittedFiles": true,
 
 		"allowJs": true,
 		"checkJs": true,
@@ -73,5 +65,14 @@
 		"./node_modules/**",
 		"./test_projects/**",
 
-	]
+	],
+	"watchOptions": {
+		"excludeDirectories": [
+			"dist",
+			"dummy-ext",
+			"**/node_modeules",
+			"out",
+			"test_projects"
+		]
+	}
 }

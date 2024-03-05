@@ -38,8 +38,7 @@ run_tests () {
 	EXIT_CODE=0
 
 	cp "package.$ABLUNIT_TEST_RUNNER_VSCODE_VERSION.json" package.json
-	# xvfb-run -a npm run test:coverage || EXIT_CODE=$?
-	xvfb-run -a npm run test || EXIT_CODE=$? ## todo
+	xvfb-run -a npm run test:coverage || EXIT_CODE=$?
 	cp package.stable.json package.json
 
 	if [ -f /home/circleci/project/test_projects/proj0/prof.out ]; then
@@ -87,5 +86,6 @@ save_and_print_debug_output () {
 initialize "$@"
 dbus_config
 run_tests
-rm -f artifacts/eslint*
+rm artifacts/eslint*
+# rm -f artifacts/eslint*
 echo "$0 completed successfully!"

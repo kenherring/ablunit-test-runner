@@ -17,7 +17,6 @@ export enum RunStatus {
 	Error
 }
 
-
 export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation?: CancellationToken) => {
 	const start = Date.now()
 	const abort = new AbortController()
