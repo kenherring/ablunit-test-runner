@@ -36,7 +36,7 @@ export class ABLPromsgs {
 	async loadFromDLC (dlc: IDlc) {
 		return workspace.fs.stat(dlc.uri).then(() => {
 			const promsgDir = Uri.joinPath(dlc.uri, 'prohelp/msgdata')
-			return workspace.fs.readDirectory(promsgDir).then((dirFiles) => {
+			return workspace.fs.readDirectory(promsgDir).then(async (dirFiles) => {
 
 				const promArr: Promise<void>[] = []
 				for (const file of dirFiles) {

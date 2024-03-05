@@ -7,7 +7,8 @@ class Logger {
 
 	private readonly logOutputChannel
 	private readonly consoleLogLevel = LogLevel.Debug
-	private readonly testResultsLogLevel = LogLevel.Info
+	// private readonly testResultsLogLevel = LogLevel.Info
+	private readonly testResultsLogLevel = LogLevel.Debug
 	private logLevel: number
 	private testResultsTimestamp = false
 

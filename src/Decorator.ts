@@ -157,6 +157,11 @@ export class Decorator {
 	}
 
 	private decorateDocument (document: TextDocument) {
+		log.info('decorateDocument ' + document.uri.fsPath)
+		if (!document.uri) {
+			log.warn('No uri for document ' + document.fileName)
+			return false
+		}
 		const editor = window.visibleTextEditors.find(editor => editor.document.uri.fsPath === document.uri.fsPath)
 		if (!editor) {
 			log.warn('No editor visible for document ' + workspace.asRelativePath(document.uri.fsPath))

@@ -15,10 +15,10 @@ import {
 	extensions,
 	tests, window, workspace
 } from 'vscode'
-import { ABLResults } from 'ABLResults'
-import { log } from 'ChannelLogger'
-import { getContentFromFilesystem } from 'parse/TestParserCommon'
-import { ABLTestCase, ABLTestClass, ABLTestData, ABLTestDir, ABLTestFile, ABLTestProgram, ABLTestSuite, resultData, testData } from 'testTree'
+import { ABLResults } from './ABLResults'
+import { log } from './ChannelLogger'
+import { getContentFromFilesystem } from './parse/TestParserCommon'
+import { ABLTestCase, ABLTestClass, ABLTestData, ABLTestDir, ABLTestFile, ABLTestProgram, ABLTestSuite, resultData, testData } from './testTree'
 
 export interface IExtensionTestReferences {
 	testController: TestController
@@ -29,6 +29,8 @@ export interface IExtensionTestReferences {
 let recentResults: ABLResults[] = []
 
 export async function activate (context: ExtensionContext) {
+	// eslint-disable-next-line no-console
+	console.log('activating extension! (version=' + getExtensionVersion() + ')')
 	const ctrl = tests.createTestController('ablunitTestController', 'ABLUnit Test')
 	let currentTestRun: TestRun | undefined = undefined
 
@@ -40,7 +42,7 @@ export async function activate (context: ExtensionContext) {
 	await createDir(contextStorageUri)
 	// const decorationProvider = new DecorationProvider()
 
-	const getExtensionReferences = () => {
+	const getExtensionTestReferences = () => {
 		let data: ABLResults[] = []
 		if (currentTestRun) {
 			data = resultData.get(currentTestRun) ?? []
@@ -55,7 +57,7 @@ export async function activate (context: ExtensionContext) {
 	}
 
 	if (process.env['ABLUNIT_TEST_RUNNER_UNIT_TESTING'] === 'true') {
-		context.subscriptions.push(commands.registerCommand('_ablunit.getExtensionTestReferences', getExtensionReferences))
+		context.subscriptions.push(commands.registerCommand('_ablunit.getExtensionTestReferences', getExtensionTestReferences))
 	}
 
 	context.subscriptions.push(ctrl)
@@ -65,22 +67,19 @@ export async function activate (context: ExtensionContext) {
 		workspace.onDidChangeConfiguration(e => { updateConfiguration(e) }),
 
 		workspace.onDidOpenTextDocument(async e => {
-			log.trace('onDidOpenTextDocument for ' + e.uri)
 			await updateNodeForDocument(e, 'didOpen').then(() => {
 				log.trace('updateNodeForDocument complete for ' + e.uri)
 			}, (err) => {
 				log.error('failed updateNodeForDocument onDidTextDocument! err=' + err)
 			})
 		})
-		// workspace.onDidChangeTextDocument(e => { return updateNodeForDocument(e.document,'didChange') }),
 
 		// watcher.onDidCreate(uri => { createOrUpdateFile(controller, uri) })
 		// watcher.onDidChange(uri => { createOrUpdateFile(controller, uri) })
 		// watcher.onDidDelete(uri => { controller.items.delete(uri.fsPath) })
 	)
 
-
-	const runHandler = (request: TestRunRequest, cancellation: CancellationToken) => {
+	const runHandler = async (request: TestRunRequest, cancellation: CancellationToken) => {
 		if (! request.continuous) {
 			const runProm = startTestRun(request, cancellation)
 				.then(() => { return })
@@ -144,7 +143,7 @@ export async function activate (context: ExtensionContext) {
 		})
 	}
 
-	const startTestRun = (request: TestRunRequest, cancellation: CancellationToken) => {
+	const startTestRun = async (request: TestRunRequest, cancellation: CancellationToken) => {
 		recentResults = []
 
 		const discoverTests = async (tests: Iterable<TestItem>) => {
@@ -193,14 +192,12 @@ export async function activate (context: ExtensionContext) {
 					log.info('starting ablunit tests for folder: ' + r.workspaceFolder.uri.fsPath, run)
 				}
 
-				log.debug('r.run start')
 				ret = await r.run(run).then(() => {
 					return true
 				}, (err) => {
 					log.error('ablunit run failed parsing results with exception: ' + err, run)
 					return false
 				})
-				log.debug('r.run after ret=' + ret)
 				if (!ret) {
 					continue
 				}
@@ -229,8 +226,6 @@ export async function activate (context: ExtensionContext) {
 					}
 				}
 			}
-
-			log.debug('ret=' + ret)
 
 			if(!ret) {
 				for (const { test } of queue) {
@@ -306,7 +301,7 @@ export async function activate (context: ExtensionContext) {
 		const tests = request.include ?? gatherTestItems(ctrl.items)
 
 		return discoverTests(tests).then(async () => {
-			return createABLResults().then((res) => {
+			return createABLResults().then(async (res) => {
 				if (!res) {
 					throw new Error('createABLResults failed')
 				} else {
@@ -330,7 +325,7 @@ export async function activate (context: ExtensionContext) {
 		})
 	}
 
-	function updateNodeForDocument (e: TextDocument | TestItem | Uri, r: string) {
+	async function updateNodeForDocument (e: TextDocument | TestItem | Uri, r: string) {
 		log.info('r=' + r)
 		let u: Uri | undefined
 		if (e instanceof Uri) {
@@ -341,14 +336,11 @@ export async function activate (context: ExtensionContext) {
 		if (!u) {
 			throw new Error('updateNodeForDocument called with undefined uri')
 		}
-		log.info('updateNodeForDocument uri=' + u.fsPath)
-		const prom = updateNode(u, ctrl)
-
-		if (typeof prom === 'boolean') {
-			return new Promise(() => { return prom })
-		} else {
-			return prom.then(() => { return })
+		if (workspace.getWorkspaceFolder(u) === undefined) {
+			log.info('skipping updateNodeForDocument for file not in workspace: ' + u.fsPath)
+			return new Promise(() => { return true })
 		}
+		return await updateNode(u, ctrl)
 	}
 
 	async function resolveHandlerFunc (item: TestItem | undefined) {
@@ -366,7 +358,7 @@ export async function activate (context: ExtensionContext) {
 		}
 
 		if (item.uri) {
-			return updateNodeForDocument(item, 'resolve').then(() => { return })
+			return await updateNodeForDocument(item, 'resolve')
 		}
 
 		const data = testData.get(item)
@@ -413,15 +405,15 @@ export async function activate (context: ExtensionContext) {
 	testProfileCoverage.configureHandler = configHandler
 	// testProfileDebugCoverage.configureHandler = configHandler
 
-	if(workspace.getConfiguration('ablunit').get('discoverAllTestsOnActivate', false)) {
-		await commands.executeCommand('testing.refreshTests')
-	}
+	// if(workspace.getConfiguration('ablunit').get('discoverAllTestsOnActivate', false)) {
+	// 	await commands.executeCommand('testing.refreshTests')
+	// }
 }
 
 let contextStorageUri: Uri
 let contextResourcesUri: Uri
 
-function updateNode (uri: Uri, ctrl: TestController) {
+async function updateNode (uri: Uri, ctrl: TestController) {
 	log.trace('updateNode uri=' + uri.fsPath)
 	if(uri.scheme !== 'file' || isFileExcluded(uri, getExcludePatterns())) {	return false }
 

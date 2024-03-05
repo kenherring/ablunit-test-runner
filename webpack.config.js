@@ -1,42 +1,71 @@
 'use strict'
 const path = require('path')
-const outputDir = path.resolve(__dirname, 'dist')
+// const webpack = require('webpack')
+// const nodeExternals = require('webpack-node-externals')
 
 /** @type {import('webpack').Configuration} */
 const config = {
 	target: 'node', // TODO: recommended: 'webworker'
 	node: false,
-	entry: {
-		'extension': './src/extension.ts',
-		'extension-insiders': './src/extension-insiders.ts'
-	},
-	output: {
-		path: outputDir,
-		filename: '[name].js',
-		// libraryTarget: "commonjs2",
-		libraryTarget: "commonjs",
-		devtoolModuleFilenameTemplate: "../[resource-path]",
+	mode: 'development',
+	infrastructureLogging: {
+		colors: false,
+		appendOnly: true,
+		level: 'log'
 	},
 	devtool: 'source-map', // https://code.visualstudio.com/docs/nodejs/nodejs-debugging#_tool-configuration
+	// devtool: 'inline-cheap-module-source-map',
+	// devtool: 'inline-source-map',
+	entry: {
+		'extension': './src/extension.ts',
+		'extension-insiders': './src/extension-insiders.ts',
+	},
+	output: {
+		clean: true,
+		path: path.resolve(__dirname, 'dist'),
+		filename: '[name].js',
+		libraryTarget: 'commonjs2',
+		// libraryTarget: 'commonjs',
+		// devtoolNamespace: '',
+		devtoolModuleFilenameTemplate: '../[resource-path]',
+		// devtoolModuleFilenameTemplate: 'src/[resource-path]',    // "ablunit-test-runner/dist/src/extension.ts"
+		// devtoolModuleFilenameTemplate: '[resource-path]',        // "ablunit-test-runner/dist/extension.ts"
+		// devtoolModuleFilenameTemplate: '[absolute-resource-path]',
+	},
 	externals: {
 		// the vscode-module is created on-the-fly and must be excluded. Add other modules that cannot be webpack'ed -> https://webpack.js.org/configuration/externals/
-		vscode: "commonjs vscode"
+		vscode: 'commonjs vscode'
 	},
 	resolve: {
 		mainFields: ['browser', 'module', 'main'],
 		extensions: ['.ts', '.js'],
-		modules: ['node_modules', 'src']
+		// modules: ['src', 'node_modules'],
+		modules: [ '.', 'src', 'node_modules'],
+
+		// alias: {
+		// 	'*': path.resolve(__dirname, 'src')
+		// }
 	},
 	module: {
-		rules: [{
-			test: /\.ts$/,
-			exclude: /node_modules/,
-			use: [{
-				loader: 'ts-loader',
-			}]
-		}]
+		rules: [
+			{
+				test: /\.ts$/,
+				exclude: /node_modules/,
+				use: [{
+					loader: 'ts-loader',
+					// loader: 'istanbul-instrumenter-loader',
+					options: {
+						compilerOptions: {
+							'module': 'es6' // override `tsconfig.json` so that TypeScript emits native JavaScript modules.
+						}
+					}
+				}]
+			}
+		]
 	},
-	mode: 'development'
+	// plugins: [
+	// 	new webpack.NamedModulesIdsPlugin()
+	// ]
 }
 
 module.exports = config

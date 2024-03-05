@@ -10,8 +10,6 @@ initialize () {
 	CIRCLECI=${CIRCLECI:-false}
 	npm_config_cache=$CACHE_BASE/node_modules_cache
 	PROJECT_DIR=/home/circleci/project
-	REPO_VOLUME=/home/circleci/ablunit-test-runner
-	GIT_BRANCH=$(cd "$REPO_VOLUME" && git branch --show-current)
 	STAGED_ONLY=${STAGED_ONLY:-true}
 	VERBOSE=${VERBOSE:-false}
 	${CREATE_PACKAGE:-false} && TEST_PROJECT=package
@@ -38,8 +36,7 @@ initialize () {
 	## save license from the environment variable at runtime
 	tr ' ' '\n' <<< "$PROGRESS_CFG_BASE64" | base64 --decode > /psc/dlc/progress.cfg
 
-	echo 'copying files from local'
-	initialize_repo
+	.circleci/sonar_checkout.sh
 	restore_cache
 
 	if [ -z "${CIRCLE_BRANCH:-}" ]; then
@@ -47,67 +44,10 @@ initialize () {
 	fi
 }
 
-initialize_repo () {
-	echo "[$0 ${FUNCNAME[0]}] pwd=$(pwd)"
-	git clone "$REPO_VOLUME" "$PROJECT_DIR"
-	cd "$PROJECT_DIR"
-	if [ "$(git branch --show-current)" = "$GIT_BRANCH" ]; then
-		git pull
-	else
-		git fetch origin "$GIT_BRANCH":"$GIT_BRANCH"
-		git checkout "$GIT_BRANCH"
-	fi
-	copy_files_from_volume
-}
-
-copy_files_from_volume () {
-	echo "[$0 ${FUNCNAME[0]}] pwd=$(pwd)"
-	find_files_to_copy
-	copy_files "staged"
-	[ -f /tmp/modified_files ] && copy_files "modified"
-	while read -r FILE; do
-		echo "deleting deleted file $FILE"
-		rm "$FILE"
-	done < /tmp/deleted_files
-}
-
-find_files_to_copy () {
-	echo "[$0 ${FUNCNAME[0]}] pwd=$(pwd)"
-	local BASE_DIR
-	BASE_DIR=$(pwd)
-
-	cd "$REPO_VOLUME"
-	git config --global --add safe.directory "$REPO_VOLUME"
-	git --no-pager diff --diff-filter=d --name-only --staged --ignore-cr-at-eol > /tmp/staged_files
-	git --no-pager diff --diff-filter=D --name-only --staged --ignore-cr-at-eol > /tmp/deleted_files
-	if ! $STAGED_ONLY; then
-		git --no-pager diff --diff-filter=d --name-only --ignore-cr-at-eol > /tmp/modified_files
-	fi
-
-	echo "file counts:"
-	echo "   staged=$(wc -l /tmp/staged_files)"
-	echo "  deleted=$(wc -l /tmp/deleted_files)"
-	echo " modified=$(wc -l /tmp/modified_files 2>/dev/null || echo 0)"
-
-	cd "$BASE_DIR"
-}
-
-copy_files () {
-	echo "[$0 ${FUNCNAME[0]}] pwd=$(pwd)"
-	local TYPE="$1"
-	while read -r FILE; do
-		echo "copying $TYPE file $FILE"
-		if [ ! -d "$(dirname "$FILE")" ]; then
-			mkdir -p "$(dirname "$FILE")"
-		fi
-		sed 's/\r//g' "$REPO_VOLUME/$FILE" > "$FILE"
-	done < "/tmp/${TYPE}_files"
-}
-
 run_tests () {
 	echo "[$0 ${FUNCNAME[0]}] pwd=$(pwd)"
 
-	# .circleci/package.sh
+	.circleci/package.sh
 
 	if [ "$TEST_PROJECT" = "base" ]; then
 		run_tests_base

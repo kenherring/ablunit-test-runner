@@ -55,10 +55,7 @@ initialize () {
 		"results.prof"
 		"results.xml"
 	)
-
-	FILE_PATTERNS=(
-		"*.vsix"
-	)
+	FILE_PATTERNS=("*.vsix")
 }
 
 delete_directories () {
