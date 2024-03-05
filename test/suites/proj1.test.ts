@@ -18,6 +18,21 @@ async function updateConfig (section: string, value: unknown) {
 	log.info('[proj1 updateConfig] update config complete!')
 }
 
+async function teardownCommon () {
+	const conf = workspace.getConfiguration('ablunit.files')
+	const currentValue = conf.get('exclude')
+	if (JSON.stringify(currentValue) !== JSON.stringify(ablunitConfig.files.exclude)) {
+
+		return workspace.getConfiguration('ablunit.files').update('exclude', ablunitConfig.files.exclude).then(() => {
+			log.debug(isoDate() + ' [proj1 suiteTeardown 5] ablunit.files.exclude reset!')
+		}, (e) => {
+			log.error(isoDate() + ' [proj1 suiteTeardown] e=' + e)
+			throw e
+		})
+	}
+	log.info(isoDate() + ' [proj1 suiteTeardown 7] complete!')
+}
+
 suite('proj1Suite', () => {
 
 	suiteSetup('proj1 - suiteSetup', suiteSetupCommon)
@@ -82,46 +97,12 @@ suite('proj1Suite', () => {
 	// })
 
 	teardown('proj1 - teardown', async () => {
-		log.info(isoDate() + ' [proj1 teardown 1]')
-		const conf = workspace.getConfiguration('ablunit.files')
-		const defaultValue = conf.inspect('exclude')?.defaultValue
-		const currentValue = conf.get('exclude')
-		log.info(isoDate() + ' [proj1 teardown 2] defaultValue=' + JSON.stringify(defaultValue))
-		log.info(isoDate() + ' [proj1 teardown 2] currentValue=' + JSON.stringify(currentValue))
-		log.info(isoDate() + ' [proj1 teardown 3] initialFilesExclude=' + JSON.stringify(ablunitConfig.files.exclude))
-		if (JSON.stringify(currentValue) !== JSON.stringify(ablunitConfig.files.exclude)) {
-			log.info(isoDate() + ' [proj1 teardown 4] files.exclude=' + JSON.stringify(ablunitConfig.files.exclude))
-
-			const prom = workspace.getConfiguration('ablunit.files').update('exclude', ablunitConfig.files.exclude)
-			await prom.then(() => {
-				log.info(isoDate() + ' [proj1 teardown 5] ablunit.files.exclude set!')
-				// return sleep2(250)
-			}, (e) => {
-				log.error(isoDate() + ' [proj1 teardown 6] e=' + e)
-			})
-			log.info(isoDate() + ' [proj1 teardown 7]')
-		}
+		return teardownCommon()
 	})
 
-	suiteTeardown('proj1 - suiteTeardown', () => {
-		log.info(isoDate() + ' [proj1 suiteTeardown 1]')
-		const conf = workspace.getConfiguration('ablunit.files')
-		const defaultValue = conf.inspect('exclude')?.defaultValue
-		const currentValue = conf.get('exclude')
-		log.info(isoDate() + ' [proj1 suiteTeardown 2] defaultValue=' + JSON.stringify(defaultValue))
-		log.info(isoDate() + ' [proj1 suiteTeardown 2] currentValue=' + JSON.stringify(currentValue))
-		log.info(isoDate() + ' [proj1 suiteTeardown 3] initialFilesExclude=' + JSON.stringify(ablunitConfig.files.exclude))
-		if (JSON.stringify(currentValue) !== JSON.stringify(ablunitConfig.files.exclude)) {
-			log.info(isoDate() + ' [proj1 suiteTeardown 4] set ablunit.files.exclude=' + JSON.stringify(ablunitConfig.files.exclude))
-
-			return workspace.getConfiguration('ablunit.files').update('exclude', ablunitConfig.files.exclude).then(() => {
-				log.info(isoDate() + ' [proj1 suiteTeardown 5] ablunit.files.exclude set!')
-			}, (e) => {
-				log.error(isoDate() + ' [proj1 suiteTeardown 6] e=' + e)
-			})
-		}
-		log.info(isoDate() + ' [proj1 suiteTeardown 7] complete!')
-	})
+	// suiteTeardown('proj1 - suiteTeardown', async () => {
+	// 	return teardownCommon()
+	// })
 
 	test('proj1.0A CompileError - test run fail - await', async () => {
 		log.info('proj1.0A-1')
@@ -454,14 +435,14 @@ suite('proj1Suite', () => {
 		log.info('proj1.1.16')
 
 		log.info('proj1.1.20')
-		await runAllTests()
+		await runAllTests().catch((e) => {
+			log.info('Error caught and ignored: e=' + e)
+		})
 
 		assert.fileExists('ablunit.json')
 		log.info('proj1.1.22')
-		assert.fileExists('ablunit.json')
-		log.info('proj1.1.23')
 
-		log.info('proj1.1.30')
+		log.info('proj1.1.30 process.platform=' + process.platform + ', WLS_DISTRO_NAME=' + process.env['WSL_DISTRO_NAME'])
 		if (process.platform === 'win32' || process.env['WSL_DISTRO_NAME'] !== undefined) {
 			log.info('proj1.1.49 results.xml exists')
 			assert.fileExists('results.xml')

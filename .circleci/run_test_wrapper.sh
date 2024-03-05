@@ -71,9 +71,9 @@ save_and_print_debug_output () {
 
 	find . > artifacts/filelist.txt
 
+	$VERBOSE || return 0
 	echo "[$0 ${FUNCNAME[0]}] r-code"
 	find . -name '*.r'
-	$VERBOSE || return 0
 
 	echo "[$0 ${FUNCNAME[0]}] OpenEdge ABL Extension Logs"
 	echo "********** '1-ABL.log' **********"
