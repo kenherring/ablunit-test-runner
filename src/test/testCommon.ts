@@ -43,7 +43,7 @@ export function deleteFile (file: Uri | string) {
 	deleteFileCommon(file)
 }
 
-export function sleep (time = 2000, msg?: string) {
+export async function sleep (time = 2000, msg?: string) {
 	let status = 'sleeping for ' + time + 'ms'
 	if (msg) {
 		status = status + ' [' + msg + ']'
@@ -300,13 +300,13 @@ export async function runAllTests (doRefresh = true) {
 
 	log.info('running all tests')
 	if (doRefresh) {
-		await refreshTests().then(() => { return sleep(500, 'after refreshTests') })
+		await refreshTests().then(async () => { return sleep(500, 'after refreshTests') })
 	} else {
 		await sleep(250, 'sleep before testing.runAll')
 	}
 
 	log.info('testing.runAll starting')
-	return commands.executeCommand('testing.runAll').then(() => {
+	return commands.executeCommand('testing.runAll').then(async () => {
 		log.info('testing.runAll complete!')
 		return refreshData()
 	}, (err) => {
@@ -368,7 +368,7 @@ export async function cancelTestRun (resolveCurrentRunData = true) {
 }
 
 export function updateConfig (key: string, value: string | string[] | undefined) {
-	return workspace.getConfiguration('ablunit').update(key, value, ConfigurationTarget.Workspace).then(() => {
+	return workspace.getConfiguration('ablunit').update(key, value, ConfigurationTarget.Workspace).then(async () => {
 		log.info('ablunit.' + key + ' set successfully (value=\'' + value + '\')')
 		return sleep(100, 'sleep after updateConfig')
 	}, (err) => {
@@ -416,7 +416,7 @@ export async function selectProfile (profile: string) {
 	const profileUri = Uri.joinPath(getWorkspaceUri(), '.vscode', 'profile.json')
 	return workspace.fs.writeFile(profileUri, Buffer.from(JSON.stringify(profileJson))).then(async () => {
 		await sleep(100)
-		return commands.executeCommand('abl.restart.langserv').then(() => {
+		return commands.executeCommand('abl.restart.langserv').then(async () => {
 			return sleep(500)
 		}, (err) => {
 			throw new Error('failed to restart langserv: ' + err)
@@ -482,7 +482,7 @@ export async function getCurrentRunData (len = 1) {
 	if (!currentRunData || currentRunData.length === 0) {
 		log.debug('currentRunData not set, refreshing...')
 		for (let i=0; i<200; i++) {
-			await sleep(100, 'still no currentRunData, sleep before trying again').then(() => {
+			await sleep(100, 'still no currentRunData, sleep before trying again').then(async () => {
 				return refreshData()
 			})
 			log.debug('currentRunData.length=' + currentRunData?.length)
@@ -508,7 +508,7 @@ export async function getResults (len = 1) {
 	if ((!recentResults || recentResults.length === 0) && len > 0) {
 		log.debug('recentResults not set, refreshing...')
 		for (let i=0; i<15; i++) {
-			await sleep(100, 'still no recentResults, sleep before trying again').then(() => {
+			await sleep(100, 'still no recentResults, sleep before trying again').then(async () => {
 				return refreshData()
 			})
 			if ((recentResults?.length ?? 0) > 0) {

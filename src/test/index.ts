@@ -58,7 +58,7 @@ async function runTestsForProject (version: vscodeVersion, projName: string, tim
 	console.log('[' + file + ' runTestsForProject] coverage outputted successfully!')
 }
 
-export function run (): Promise <void> {
+export async function run (): Promise <void> {
 
 	let projName: string
 	if (process.env['ABLUNIT_TEST_RUNNER_PROJECT_NAME']) {

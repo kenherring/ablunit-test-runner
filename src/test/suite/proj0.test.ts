@@ -17,7 +17,7 @@ function getDetailLine (coverage: DetailedCoverageCustom[], lineNum: number) {
 suite(projName + ' - Extension Test Suite', () => {
 
 	before(projName + ' - before', async () => {
-		await waitForExtensionActive().then(() => { return sleep(250) })
+		await waitForExtensionActive().then(async () => { return sleep(250) })
 		await commands.executeCommand('testing.clearTestResults').then()
 		deleteFile('.vscode/ablunit-test-profile.json')
 	})
