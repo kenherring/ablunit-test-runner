@@ -104,7 +104,7 @@ suite(projName + ' - Extension Test Suite', () => {
 	// 	// this validates the cancel will abort the spawned _progres process
 	// 	await waitForTestRunStatus(RunStatus.Executing).then(async () => await sleep(1000))
 	// 	await sleep(500)
-gi
+
 	// 	const resArr = await getCurrentRunData()
 	// 	const res = resArr[0]
 	// 	if (!res) {
