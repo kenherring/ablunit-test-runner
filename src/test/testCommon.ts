@@ -31,6 +31,10 @@ let decorator: Decorator | undefined
 let testController: TestController | undefined
 let currentRunData: ABLResults[] | undefined
 
+export function isoDate () {
+	return '[' + new Date().toISOString() + ']'
+}
+
 export function beforeCommon () {
 	recentResults = undefined
 	decorator = undefined
@@ -357,14 +361,14 @@ export async function cancelTestRun (resolveCurrentRunData = true) {
 		}, () => {
 			return 'not found'
 		})
-		log.debug('cancelling test run (STATUS=' + await status + ')')
+		log.info('cancelling test run (STATUS=' + await status + ')')
 	} else {
-		log.debug('cancelling test run')
+		log.info('cancelling test run')
 	}
 
 	return commands.executeCommand('testing.cancelRun').then(() => {
 		const elapsedCancelTime = Date.now() - startCancelTime
-		log.debug('elapsedCancelTime=' + elapsedCancelTime)
+		log.info('elapsedCancelTime=' + elapsedCancelTime)
 		return elapsedCancelTime
 	})
 }

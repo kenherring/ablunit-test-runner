@@ -37,9 +37,6 @@ export interface IABLUnitJson {
 
 export class ABLResults implements Disposable {
 	workspaceFolder: WorkspaceFolder
-	storageUri: Uri
-	globalStorageUri: Uri
-	extensionResourcesUri: Uri
 	wrapperUri: Uri
 	status = RunStatus.None
 	statusNote: string | undefined
@@ -59,21 +56,20 @@ export class ABLResults implements Disposable {
 
 	public coverage: Map<string, FileCoverageCustom> = new Map<string, FileCoverageCustom>()
 	// public coverage: Map<string, FileCoverageCustom | FileCoverage> = new Map<string, FileCoverageCustom>()
-	private readonly cancellation: CancellationToken | undefined
 
-	constructor (workspaceFolder: WorkspaceFolder, storageUri: Uri, globalStorageUri: Uri, extensionResourcesUri: Uri, cancellation?: CancellationToken) {
+	constructor (workspaceFolder: WorkspaceFolder,
+		private readonly storageUri: Uri,
+		private readonly globalStorageUri: Uri,
+		private readonly extensionResourcesUri: Uri,
+		private readonly cancellation: CancellationToken)
+	{
 		log.info('workspaceFolder=' + workspaceFolder.uri.fsPath)
-		if(cancellation) {
-			cancellation.onCancellationRequested(() => {
-				log.debug('cancellation requested - ABLResults')
-				throw new CancellationError()
-			})
-		}
+		cancellation.onCancellationRequested(() => {
+			log.debug('cancellation requested - ABLResults')
+			throw new CancellationError()
+		})
 		this.duration = new Duration()
 		this.workspaceFolder = workspaceFolder
-		this.storageUri = storageUri
-		this.globalStorageUri = globalStorageUri
-		this.extensionResourcesUri = extensionResourcesUri
 		this.wrapperUri = Uri.joinPath(this.extensionResourcesUri, 'ABLUnitCore-wrapper.p')
 		this.cfg = new ABLUnitConfig()
 		this.setStatus(RunStatus.Constructed)

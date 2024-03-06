@@ -99,6 +99,8 @@ function getConfigForProject (version: vscodeVersion, projName: string, testFile
 	let timeout = 15000
 	if (projName === 'DebugLines' || projName.startsWith('proj7A')) {
 		timeout = 90000
+	} else if (projName === 'proj7B') {
+		timeout = 30000
 	}
 
 	const extensionDevelopmentPath: string = path.resolve(__dirname, '../../')
