@@ -4,7 +4,7 @@ import Mocha from 'mocha'
 type vscodeVersion = 'stable' | 'insiders' | 'proposedapi'
 
 function setupMocha(version: vscodeVersion, projName: string, basedir: string, timeout: number) {
-	const oeVersion = process.env['OE_VERSION'] || '0.0.0'
+	const oeVersion = process.env['ABLUNIT_TEST_RUNNER_OE_VERSION'] || '0.0.0'
 	return new Mocha({
 		color: true,
 		ui: "tdd",

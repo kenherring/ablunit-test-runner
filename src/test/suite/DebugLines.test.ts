@@ -4,7 +4,7 @@ import { Uri, commands, workspace } from 'vscode'
 import { awaitRCode, getDefaultDLC, getWorkspaceUri, log, setRuntimes, sleep, waitForExtensionActive } from '../testCommon'
 import { getSourceMapFromRCode } from '../../parse/RCodeParser'
 import { PropathParser } from '../../ABLPropath'
-import { vscodeVersion } from 'ABLUnitCommon'
+import { vscodeVersion } from '../../ABLUnitCommon'
 
 const projName = 'DebugLines'
 const workspaceFolder = workspace.workspaceFolders![0]

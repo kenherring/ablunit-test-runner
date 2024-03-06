@@ -56,7 +56,7 @@ export class ABLUnitConfig  {
 				if (stat.type != FileType.Directory) {
 					throw new Error('configJson.output.location is not a Directory: ' + this.ablunitConfig.optionsUri.locationUri.fsPath)
 				}
-			}, () => {
+			}, async () => {
 				return this.createDir(this.ablunitConfig.optionsUri.locationUri)
 			})
 		)

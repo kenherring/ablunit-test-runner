@@ -18,7 +18,7 @@ initialize () {
 	if [ -n "${WSL_DISTRO_NAME:-}" ]; then
 		WSL=true
 	fi
-	OE_VERSION=${OE_VERSION:-12.2.12}
+	ABLUNIT_TEST_RUNNER_OE_VERSION=${ABLUNIT_TEST_RUNNER_OE_VERSION:-12.2.12}
 
 	if [ ! -d node_modules ]; then
 		npm install
@@ -27,19 +27,19 @@ initialize () {
 
 # load lots of code for a performance test
 get_performance_test_code () {
-	echo "[$0 ${FUNCNAME[0]}] pwd=$(pwd) OE_VERSION=$OE_VERSION VSCODE_VERSION=${ABLUNIT_TEST_RUNNER_VSCODE_VERSION:-}"
+	echo "[$0 ${FUNCNAME[0]}] pwd=$(pwd) ABLUNIT_TEST_RUNNER_OE_VERSION=$ABLUNIT_TEST_RUNNER_OE_VERSION ABLUNIT_TEST_RUNNER_VSCODE_VERSION=${ABLUNIT_TEST_RUNNER_VSCODE_VERSION:-}"
 
-	local TO_FILE="/home/circleci/v${OE_VERSION}.0.tar.gz"
+	local TO_FILE="/home/circleci/v${ABLUNIT_TEST_RUNNER_OE_VERSION}.0.tar.gz"
 	if [ "${OS:-}" = "Windows_NT" ] || [ -n "${WSL_DISTRO_NAME:-}" ]; then
 		mkdir -p .vscode-test
-		TO_FILE=.vscode-test/v${OE_VERSION}.0.tar.gz
+		TO_FILE=.vscode-test/v${ABLUNIT_TEST_RUNNER_OE_VERSION}.0.tar.gz
 	fi
 	if [ ! -f "$TO_FILE" ]; then
 		if [ -n "${DOCKER_IMAGE:-}" ]; then
 			echo "ERROR: cannot find file '$TO_FILE'"
 			echo " - HINT: this should have been fetched during docker build"
 		else
-			curl -L "https://github.com/progress/ADE/archive/refs/tags/v${OE_VERSION}.0.tar.gz" -o "$TO_FILE"
+			curl -L "https://github.com/progress/ADE/archive/refs/tags/v${ABLUNIT_TEST_RUNNER_OE_VERSION}.0.tar.gz" -o "$TO_FILE"
 		fi
 	fi
 	tar -xf "$TO_FILE" -C test_projects/proj7_load_performance/src
@@ -82,4 +82,5 @@ get_performance_test_code
 get_pct
 create_dbs
 doBuild
+rm -rf artifacts coverage
 echo "[$0] completed successfully!"

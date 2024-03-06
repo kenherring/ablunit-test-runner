@@ -1,26 +1,26 @@
 'use strict'
 const path = require('path')
-const outputDir = path.resolve(__dirname, 'dist')
 
 /** @type {import('webpack').Configuration} */
 const config = {
 	target: 'node', // TODO: recommended: 'webworker'
 	node: false,
+	mode: 'development',
+	devtool: 'source-map', // https://code.visualstudio.com/docs/nodejs/nodejs-debugging#_tool-configuration
 	entry: {
 		'extension': './src/extension.ts',
-		'extension-insiders': './src/extension-insiders.ts'
+		'extension-insiders': './src/extension-insiders.ts',
 	},
 	output: {
-		path: outputDir,
+		clean: true,
+		path: path.resolve(__dirname, 'dist'),
 		filename: '[name].js',
-		// libraryTarget: "commonjs2",
-		libraryTarget: "commonjs",
-		devtoolModuleFilenameTemplate: "../[resource-path]",
+		libraryTarget: 'commonjs2',
+		devtoolModuleFilenameTemplate: '../[resource-path]',
 	},
-	devtool: 'source-map', // https://code.visualstudio.com/docs/nodejs/nodejs-debugging#_tool-configuration
 	externals: {
 		// the vscode-module is created on-the-fly and must be excluded. Add other modules that cannot be webpack'ed -> https://webpack.js.org/configuration/externals/
-		vscode: "commonjs vscode"
+		vscode: 'commonjs vscode',
 	},
 	resolve: {
 		mainFields: ['browser', 'module', 'main'],
@@ -36,7 +36,6 @@ const config = {
 			}]
 		}]
 	},
-	mode: 'development'
 }
 
 module.exports = config

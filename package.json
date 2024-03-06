@@ -92,7 +92,6 @@
 		"test:install-and-run": "cd dummy-ext && npm run test:install-and-run",
 		"watch": "webpack --mode development --watch",
 		"webpack": "webpack --mode development",
-		"test-new": "mocha -u tdd ./out/test",
 		"version": "sh -c scripts/npm_version.sh"
 	},
 	"dependencies": {
@@ -101,7 +100,7 @@
 	},
 	"devDependencies": {
 		"@types/mocha": "^10.0.6",
-		"@types/node": "^16.18.34",
+		"@types/node": "^16.18.82",
 		"@types/vscode": "^1.83.0",
 		"@types/xml2js": "^0.4.14",
 		"@typescript-eslint/eslint-plugin": "^6.13.2",
@@ -114,7 +113,6 @@
 		"mocha-multi-reporters": "^1.5.1",
 		"mocha-reporter-sonarqube": "^2.0.6",
 		"nyc": "^15.1.0",
-		"rimraf": "^5.0.5",
 		"ts-loader": "^9.5.1",
 		"typescript": "^5.3.3",
 		"webpack": "^5.89.0",
@@ -149,7 +147,8 @@
 					"default": [
 						"**/*.{cls,p}"
 					],
-					"markdownDescription": "Glob patterns to include test files"
+					"markdownDescription": "Glob patterns to include test files",
+					"scope": "machine-overridable"
 				},
 				"ablunit.files.exclude": {
 					"type": "array",
@@ -157,7 +156,8 @@
 						".builder/**",
 						".pct/**"
 					],
-					"markdownDescription": "Glob patterns to exclude test files"
+					"markdownDescription": "Glob patterns to exclude test files",
+					"scope": "machine-overridable"
 				},
 				"ablunit.importOpenedgeProjectJson": {
 					"type": "boolean",

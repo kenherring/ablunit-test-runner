@@ -83,6 +83,7 @@ jobs:
           username: $DOCKERHUB_USERNAME
           password: $DOCKERHUB_TOKEN
     environment:
+      ABLUNIT_TEST_RUNNER_OE_VERSION: << parameters.oe-version >>
       ABLUNIT_TEST_RUNNER_VSCODE_VERSION: << parameters.vscode-version >>
     steps:
       - restore-test-cache:
@@ -99,6 +100,9 @@ jobs:
   install-and-run:
     <<: *oe-version-param
     executor: psc-primary
+    environment:
+      ABLUNIT_TEST_RUNNER_OE_VERSION: << parameters.oe-version >>
+      ABLUNIT_TEST_RUNNER_VSCODE_VERSION: << parameters.vscode-version >>
     steps:
       - restore-test-cache
       - attach_workspace: { at: . }
@@ -109,8 +113,8 @@ jobs:
     executor: psc-primary
     steps:
       - attach_workspace: { at: . }
-      - run: cat artifacts/stable-12.2.12/mocha_results_sonar_proj1.xml # debug
-      - run: rm artifacts/stable-12.2.12/mocha_results_junit_*.xml # debug
+      - run: cat artifacts/stable-12.2.12/mocha_results_sonar_proj1.xml #TODO remove me
+      - run: rm artifacts/stable-12.2.12/mocha_results_junit_*.xml
       - sonarcloud/scan:
           cache_version: 4
   publish:
