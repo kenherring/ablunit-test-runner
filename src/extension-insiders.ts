@@ -2,8 +2,7 @@ import { readFileSync } from 'fs'
 import { globSync } from 'glob'
 import {
 	CancellationError,
-	CancellationToken, ConfigurationChangeEvent, ExtensionContext,
-	// FileCoverage,
+	CancellationToken, ConfigurationChangeEvent, Disposable, ExtensionContext,
 	FileType,
 	Position, Range, RelativePattern, Selection,
 	TestController, TestItem, TestItemCollection, TestMessage,
@@ -66,50 +65,55 @@ export async function activate (context: ExtensionContext) {
 		commands.registerCommand('_ablunit.openCallStackItem', openCallStackItem),
 		workspace.onDidChangeConfiguration(e => { updateConfiguration(e) }),
 
-		workspace.onDidOpenTextDocument(async e => {
-			await updateNodeForDocument(e, 'didOpen').then(() => {
-				log.trace('updateNodeForDocument complete for ' + e.uri)
-			}, (err) => {
-				log.error('failed updateNodeForDocument onDidTextDocument! err=' + err)
+		workspace.onDidOpenTextDocument(e => {
+			return new Disposable(async () => {
+				await updateNodeForDocument(e, 'didOpen').then(() => {
+					log.trace('updateNodeForDocument complete for ' + e.uri)
+				}, (err) => {
+					log.error('failed updateNodeForDocument onDidTextDocument! err=' + err)
+				})
 			})
 		})
-
 		// watcher.onDidCreate(uri => { createOrUpdateFile(controller, uri) })
 		// watcher.onDidChange(uri => { createOrUpdateFile(controller, uri) })
 		// watcher.onDidDelete(uri => { controller.items.delete(uri.fsPath) })
 	)
 
-	const runHandler = async (request: TestRunRequest, cancellation: CancellationToken) => {
-		if (! request.continuous) {
-			const runProm = startTestRun(request, cancellation)
-				.then(() => { return })
-				.catch((err) => {
-					log.error('startTestRun failed. err=' + err)
-					throw err
-				})
-			const cancelProm = new Promise((resolve) => {
-				cancellation.onCancellationRequested(() => {
-					log.debug('cancellation requested - runHandler cancelProm')
-					resolve('cancelled')
-				})
-			})
-			const ret = Promise.race([ runProm, cancelProm ]).then((res) => {
-				if (res === 'cancelled') {
-					log.error('test run cancelled')
-					throw new CancellationError()
-				}
-				log.debug('test run completed successfully')
-				return
-			}, (err) => {
-				log.error('test run failed. err=' + err)
-				throw err
-
-			})
-
-			return ret
+	const runHandler = async (request: TestRunRequest, token: CancellationToken): Promise<void> => {
+		if (request.continuous) {
+			log.error('continuous test runs not implemented')
+			throw new Error('continuous test runs not implemented')
 		}
-		log.error('continuous test runs not implemented')
-		throw new Error('continuous test runs not implemented')
+		return startTestRun(request, token).then(() => { return }, (e) => { throw e })
+
+		// const runProm = startTestRun(request, cancellation)
+		// 	.then(() => { return })
+		// 	.catch((err) => {
+		// 		log.error('startTestRun failed. err=' + err)
+		// 		throw err
+		// 	})
+		// const cancelProm = new Promise((resolve) => {
+		// 	cancellation.onCancellationRequested(() => {
+		// 		log.debug('cancellation requested - runHandler cancelProm')
+		// 		resolve('cancelled')
+		// 	})
+		// })
+		// const ret = Promise.race([ runProm, cancelProm ]).then((res) => {
+		// 	if (res === 'cancelled') {
+		// 		log.error('test run cancelled')
+		// 		throw new CancellationError()
+		// 	}
+		// 	log.debug('test run completed successfully')
+		// 	return
+		// }, (err) => {
+		// 	log.error('test run failed. err=' + err)
+		// 	throw err
+
+		// })
+
+		// return ret
+
+		// return startTestRun(request, token).then(() => { return })
 	}
 
 	async function openTestRunConfig () {
@@ -193,10 +197,11 @@ export async function activate (context: ExtensionContext) {
 				}
 
 				ret = await r.run(run).then(() => {
+					log.debug('r.run() successful')
 					return true
-				}, (err) => {
-					log.error('ablunit run failed parsing results with exception: ' + err, run)
-					return false
+				}, (e) => {
+					log.error('ablunit run failed parsing results with exception: ' + e, run)
+					throw e
 				})
 				if (!ret) {
 					continue
@@ -252,7 +257,7 @@ export async function activate (context: ExtensionContext) {
 			void log.notification('ablunit tests complete')
 			run.end()
 			log.trace('run.end()')
-			return
+			// return
 		}
 
 		const createABLResults = async () => {
@@ -309,9 +314,8 @@ export async function activate (context: ExtensionContext) {
 				}
 				return runTestQueue(res).then(() => {
 					log.debug('runTestQueue complete')
-					return true
-				})
-			})
+				}).catch((e) => { throw e })
+			}).catch((e) => { throw e })
 		}).catch((err) => {
 			run.end()
 			if (err instanceof CancellationError) {
@@ -338,7 +342,7 @@ export async function activate (context: ExtensionContext) {
 		}
 		if (workspace.getWorkspaceFolder(u) === undefined) {
 			log.info('skipping updateNodeForDocument for file not in workspace: ' + u.fsPath)
-			return new Promise(() => { return true })
+			return Promise.resolve()
 		}
 		return await updateNode(u, ctrl)
 	}
@@ -380,11 +384,14 @@ export async function activate (context: ExtensionContext) {
 		return resolveHandlerFunc(item).then(() => { return })
 	}
 
-	function updateConfiguration (e: ConfigurationChangeEvent) {
-		if (e.affectsConfiguration('ablunit')) {
-			removeExcludedFiles(ctrl, getExcludePatterns())
+	function updateConfiguration (event: ConfigurationChangeEvent) {
+		log.debug('event' + JSON.stringify(event))
+		if (!event.affectsConfiguration('ablunit')) {
+			// log.warn('configuration updated but does not include ablunit settings')
+			return
 		}
-		if (e.affectsConfiguration('ablunit.files.include') || e.affectsConfiguration('ablunit.files.exclude')) {
+		log.debug('effects ablunit.file? ' + event.affectsConfiguration('ablunit.files'))
+		if (event.affectsConfiguration('ablunit.files')) {
 			removeExcludedFiles(ctrl, getExcludePatterns())
 		}
 	}
@@ -405,9 +412,9 @@ export async function activate (context: ExtensionContext) {
 	testProfileCoverage.configureHandler = configHandler
 	// testProfileDebugCoverage.configureHandler = configHandler
 
-	// if(workspace.getConfiguration('ablunit').get('discoverAllTestsOnActivate', false)) {
-	// 	await commands.executeCommand('testing.refreshTests')
-	// }
+	if(workspace.getConfiguration('ablunit').get('discoverAllTestsOnActivate', false)) {
+		await commands.executeCommand('testing.refreshTests')
+	}
 }
 
 let contextStorageUri: Uri
@@ -415,10 +422,12 @@ let contextResourcesUri: Uri
 
 async function updateNode (uri: Uri, ctrl: TestController) {
 	log.trace('updateNode uri=' + uri.fsPath)
-	if(uri.scheme !== 'file' || isFileExcluded(uri, getExcludePatterns())) {	return false }
+	if(uri.scheme !== 'file' || isFileExcluded(uri, getExcludePatterns())) { return new Promise(() => { return false }) }
 
 	const { item, data } = getOrCreateFile(ctrl, uri)
-	if(!item || !data) {	return false }
+	if(!item || !data) {
+		return new Promise(() => { return false })
+	}
 
 	ctrl.invalidateTestResults(item)
 	return getContentFromFilesystem(uri).then((contents) => {
@@ -653,7 +662,7 @@ function getExcludePatterns () {
 	let excludePatterns: string[] = []
 
 	const excludePatternsConfig: string[] | undefined = workspace.getConfiguration('ablunit').get('files.exclude', [ '**/.builder/**' ])
-	if (excludePatternsConfig[0].length == 1) {
+	if (excludePatternsConfig.length == 1) {
 		excludePatterns[0] = ''
 		for (const pattern of excludePatternsConfig) {
 			excludePatterns[0] = excludePatterns[0] + pattern
@@ -683,7 +692,15 @@ function getWorkspaceTestPatterns () {
 	const includePatterns: RelativePattern[] = []
 	const excludePatterns: RelativePattern[] = []
 
-	for(const workspaceFolder of workspace.workspaceFolders!) {
+	if (!workspace.workspaceFolders) {
+		let info='(workspace.name=' + workspace.name
+		if (workspace.workspaceFile) {
+			info = info + ', workspace.file=' + workspace.workspaceFile
+		}
+		info = info + ')'
+		throw new Error('workspace has no folders ' + info)
+	}
+	for(const workspaceFolder of workspace.workspaceFolders) {
 		includePatterns.push(...includePatternsConfig.map(pattern => new RelativePattern(workspaceFolder, pattern)))
 		excludePatterns.push(...excludePatternsConfig.map(pattern => new RelativePattern(workspaceFolder, pattern)))
 	}

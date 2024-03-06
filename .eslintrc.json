@@ -65,13 +65,14 @@
 		"@typescript-eslint/no-useless-constructor": "error",
 		"@typescript-eslint/prefer-readonly": "warn",
 		"@typescript-eslint/prefer-string-starts-ends-with": "warn",
+		"@typescript-eslint/promise-function-async": "warn",
 		"@typescript-eslint/restrict-plus-operands": "off",
 		"@typescript-eslint/switch-exhaustiveness-check": "warn",
 
-		"@typescript-eslint/await-thenable": "warn",
-		"@typescript-eslint/no-floating-promises": "warn",
-		"@typescript-eslint/no-misused-promises": "warn",
-		"@typescript-eslint/promise-function-async": "warn",
+		// Does not change code
+		// "@typescript-eslint/await-thenable": "warn",
+		// "@typescript-eslint/no-floating-promises": "warn",
+		// "@typescript-eslint/no-misused-promises": "warn",
 
 		// DNE
 		// "@eslint-plugin-unicorn/no-useless-promise-resolve-reject": "error",

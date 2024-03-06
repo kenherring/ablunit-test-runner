@@ -1,7 +1,3 @@
-// import sms from 'source-map-support'
-// // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-// sms.install({ hookRequire: true })
-
 import { readFileSync } from 'fs'
 import { globSync } from 'glob'
 import {
@@ -22,12 +18,7 @@ import { ABLResults } from './ABLResults'
 import { log } from './ChannelLogger'
 import { getContentFromFilesystem } from './parse/TestParserCommon'
 import { ABLTestCase, ABLTestClass, ABLTestData, ABLTestDir, ABLTestFile, ABLTestProgram, ABLTestSuite, resultData, testData } from './testTree'
-// import { DecorationProvider, Decorator, decorator } from './Decorator'
 import { Decorator, decorator } from './Decorator'
-import { FileCoverageCustom } from './TestCoverage'
-// import 'source-map-support/register'
-
-class FileCoverage extends FileCoverageCustom {}
 
 export interface IExtensionTestReferences {
 	testController: TestController
@@ -39,6 +30,8 @@ export interface IExtensionTestReferences {
 let recentResults: ABLResults[] = []
 
 export async function activate (context: ExtensionContext) {
+	// eslint-disable-next-line no-console
+	console.log('activating extension! (version=' + getExtensionVersion() + ')')
 	const ctrl = tests.createTestController('ablunitTestController', 'ABLUnit Test')
 	let currentTestRun: TestRun | undefined = undefined
 
@@ -73,26 +66,7 @@ export async function activate (context: ExtensionContext) {
 
 	context.subscriptions.push(
 		commands.registerCommand('_ablunit.openCallStackItem', openCallStackItem),
-		workspace.onDidChangeConfiguration(e => {
-			log.info('onDidChangeConfiguration start')
-			updateConfiguration(e)
-			log.info('onDidChangeConfiguration end')
-		}),
-		// window.registerFileDecorationProvider(decorationProvider),
-
-		// TODO
-		// window.onDidChangeActiveTextEditor(e => {
-		// 	if (e && createOrUpdateFile(ctrl, e.document.uri)) {
-		// 		return decorator.decorate(e)
-		// 	}
-		// }),
-		// window.onDidChangeActiveTextEditor(e => {
-		// 	if (!e) { return }
-		// 	log.info("decorating editor - onDidChangeActiveTextEditor")
-		// 	decorator.decorate(e).catch((err) => {
-		// 		log.error('failed to decorate editor. err=' + err)
-		// 	})
-		// }),
+		workspace.onDidChangeConfiguration(e => { updateConfiguration(e) }),
 
 		workspace.onDidOpenTextDocument(e => {
 			return new Disposable(async () => {
@@ -110,138 +84,41 @@ export async function activate (context: ExtensionContext) {
 	)
 
 	const runHandler = async (request: TestRunRequest, token: CancellationToken): Promise<void> => {
-	// const runHandler = (request: TestRunRequest, token: CancellationToken) => {
 		if (request.continuous) {
 			log.error('continuous test runs not implemented')
 			throw new Error('continuous test runs not implemented')
 		}
-		return startTestRun(request, token)
+		return startTestRun(request, token).then(() => { return }, (e) => { throw e })
 
-		// const runStart = startTestRun(request, token).then((r) => {
-		// 	log.debug('runHandler.startTestRun successful (r=' + r + ')')
-		// 	log.info('runHandler.startTestRun successful (r=' + r + ')')
-		// 	// resolve('success')
-		// 	// return 'success'
-		// 	return
-		// }).catch((err) => {
-		// 	log.debug('startTestRun failed. err=' + err)
-		// 	log.info('startTestRun failed. err=' + err)
-		// 	throw err
-		// })
-		// return runStart
-
-		// const runProm = new Promise<void>((resolve, reject) => {
-		// 	token.onCancellationRequested(() => {
-		// 		log.info('cancellation requested - runHandler runProm')
-		// 		// resolve('cancelled')
-		// 		resolve()
+		// const runProm = startTestRun(request, cancellation)
+		// 	.then(() => { return })
+		// 	.catch((err) => {
+		// 		log.error('startTestRun failed. err=' + err)
+		// 		throw err
 		// 	})
-		// 	return runStart.then((res) => {
-		// 		log.info('runStart.then res=' + res)
-		// 		// resolve(res)
-		// 		resolve()
-		// 	}).catch((err) => {
-		// 		log.info('runStart.then err=' + err)
-		// 		// resolve(new Error('runStart failed with error: ' + err))
-		// 		resolve()
-		// 		reject(new Error('runStart failed with error: ' + err))
-		// 	})
-		// })
-		// log.info('return runProm=' + JSON.stringify(runProm))
-		// return runProm
-		// const cancelProm = new Promise<string>((resolve) => {
-		// 	token.onCancellationRequested(() => {
+		// const cancelProm = new Promise((resolve) => {
+		// 	cancellation.onCancellationRequested(() => {
 		// 		log.debug('cancellation requested - runHandler cancelProm')
 		// 		resolve('cancelled')
 		// 	})
 		// })
-
-		// log.info('Promise.race')
-		// const prom = Promise.race([runProm, cancelProm]).then((r) => {
-		// 	log.info('then().resolve (r=' + r + ')')
-		// 	resolve()
-		// 	log.info('then().return')
-		// 	return
-		// }).catch((err) => {
-		// 	resolve()
-		// 	log.info('catch.reject err=' + err)
-		// 	if (err instanceof Error) {
-		// 		log.info('reject-10')
-		// 		// reject(err)
-		// 		resolve()
-		// 	} else {
-		// 		log.info('reject-11')
-		// 		// reject(new Error('runProm failed with non-error: ' + err))
-		// 		resolve()
+		// const ret = Promise.race([ runProm, cancelProm ]).then((res) => {
+		// 	if (res === 'cancelled') {
+		// 		log.error('test run cancelled')
+		// 		throw new CancellationError()
 		// 	}
-		// 	log.info('catch().return')
+		// 	log.debug('test run completed successfully')
 		// 	return
-		// })
-		// return new Promise<void>((resolve) => {
-		// 	const ret = Promise.race([runProm, cancelProm]).then((res) => {
-		// 		log.info('then(res) res=' + res)
-		// 		// return Promise.resolve()
-		// 		resolve()
-		// 	}, (err) => {
-		// 		log.error('then(err) err=' + err)
-		// 		// return Promise.resolve()
-		// 		resolve()
-		// 	}).catch((err) => {
-		// 		log.error('catch() err=' + err)
-		// 		// return Promise.resolve()
-		// 		resolve()
-		// 	})
-		// 	return
-		// })
-
-		// const ret = Promise.race([runProm, cancelProm]).then((res) => {
-		// 	log.info('then(res) res=' + res)
-		// 	// return Promise.resolve()
-		// 	// resolve()
 		// }, (err) => {
-		// 	log.error('then(err) err=' + err)
-		// 	// return Promise.resolve()
-		// 	// resolve()
-		// }).catch((err) => {
-		// 	log.error('catch() err=' + err)
-		// 	// return Promise.resolve()
-		// 	// resolve()
+		// 	log.error('test run failed. err=' + err)
+		// 	throw err
+
 		// })
+
 		// return ret
+
+		// return startTestRun(request, token).then(() => { return })
 	}
-
-
-
-	// 	const ret = Promise.race([ cancelProm, runProm ]).then((res) => {
-	// 		log.debug('Promise.race resolved! res=' + res)
-	// 		log.info('Promise.race resolved! res=' + res)
-	// 		if (res === 'cancelled') {
-	// 			log.error('test run cancelled')
-	// 			// throw new CancellationError()
-	// 			// return 'cancelled'
-	// 			return
-	// 		}
-	// 		if (res instanceof Error) {
-	// 			log.error('test run failed. promise returned error. res=' + res)
-	// 			// throw res
-	// 			// return 'failed'
-	// 			return
-	// 		}
-	// 		log.debug('test run completed successfully')
-	// 		log.info('test run completed successfully')
-	// 		// return 'success'
-	// 		return
-	// 	}).catch((err) => {
-	// 		log.error('test run failed. err=' + err)
-	// 		// throw err
-	// 		log.info('return void')
-	// 		// return void 0
-	// 		return
-	// 	})
-
-	// 	log.info('runHandler returning promise')
-	// 	return ret
-	// }
 
 	async function openTestRunConfig () {
 		let workspaceFolder: WorkspaceFolder
@@ -386,34 +263,34 @@ export async function activate (context: ExtensionContext) {
 				decorator.decorate(window.activeTextEditor)
 			}
 
-			const coverageProvider = {
-				provideFileCoverage: () => {
-					log.info('---------- provideFileCoverage ----------')
-					const results = resultData.get(run)
-					if (!results) { return [] }
+			// const coverageProvider = {
+			// 	provideFileCoverage: () => {
+			// 		log.info('---------- provideFileCoverage ----------')
+			// 		const results = resultData.get(run)
+			// 		if (!results) { return [] }
 
-					const coverage: FileCoverage[] = []
-					for(const r of results) {
-						r.coverage.forEach((c) => { coverage.push(c) })
-					}
-					log.info('coverage.length=' + coverage.length)
-					return coverage
-				},
-				resolveFileCoverage: (coverage: FileCoverage, cancellation: CancellationToken) => {
-					log.info('---------- resolveFileCoverage ----------')
-					log.error('resolveFileCoverage not implemented')
+			// 		const coverage: FileCoverage[] = []
+			// 		for(const r of results) {
+			// 			r.coverage.forEach((c) => { coverage.push(c) })
+			// 		}
+			// 		log.info('coverage.length=' + coverage.length)
+			// 		return coverage
+			// 	},
+			// 	resolveFileCoverage: (coverage: FileCoverage, cancellation: CancellationToken) => {
+			// 		log.info('---------- resolveFileCoverage ----------')
+			// 		log.error('resolveFileCoverage not implemented')
 
-					cancellation.onCancellationRequested(() => {
-						log.info('cancellation requested!')
-					})
-					return coverage
-				}
-			}
+			// 		cancellation.onCancellationRequested(() => {
+			// 			log.info('cancellation requested!')
+			// 		})
+			// 		return coverage
+			// 	}
+			// }
 
 			void log.notification('ablunit tests complete')
 			run.end()
 			log.trace('run.end()')
-			return
+			// return
 		}
 
 		const createABLResults = async () => {
@@ -461,31 +338,17 @@ export async function activate (context: ExtensionContext) {
 		})
 		const tests = request.include ?? gatherTestItems(ctrl.items)
 
-		const prom = discoverTests(tests).then(async () => {
-			const r = createABLResults().then(async (res) => {
+		return discoverTests(tests).then(async () => {
+			return createABLResults().then(async (res) => {
 				if (!res) {
 					throw new Error('createABLResults failed')
 				} else {
 					checkCancellationRequested(run)
 				}
-				const r = runTestQueue(res).then(() => {
+				return runTestQueue(res).then(() => {
 					log.debug('runTestQueue complete')
-					// return
-					return
-				}).catch((e) => {throw e})
-				// }, (e) => {
-				// 	log.debug('runTestQueue failed! e=' + e)
-				// 	log.info('runTestQueue failed! e=' + e)
-				// 	throw e
-				// })
-				return r
-				// return
+				}).catch((e) => { throw e })
 			}).catch((e) => { throw e })
-			// }, (e) => {
-			// 	log.error('createABLResults failed! e=' + e)
-			// 	throw e
-			// })
-			return r
 		}).catch((err) => {
 			run.end()
 			if (err instanceof CancellationError) {
@@ -497,7 +360,6 @@ export async function activate (context: ExtensionContext) {
 			}
 			throw err
 		})
-		return prom
 	}
 
 	async function updateNodeForDocument (e: TextDocument | TestItem | Uri, r: string) {
@@ -556,12 +418,12 @@ export async function activate (context: ExtensionContext) {
 	}
 
 	function updateConfiguration (event: ConfigurationChangeEvent) {
-		log.info('[extension.st updateConfiguration] event' + JSON.stringify(event))
+		log.debug('event' + JSON.stringify(event))
 		if (!event.affectsConfiguration('ablunit')) {
-			log.warn('configuration updated but does not include ablunit settings')
+			// log.warn('configuration updated but does not include ablunit settings')
 			return
 		}
-		log.info('effects ablunit.file? ' + event.affectsConfiguration('ablunit.files'))
+		log.debug('effects ablunit.file? ' + event.affectsConfiguration('ablunit.files'))
 		if (event.affectsConfiguration('ablunit.files')) {
 			removeExcludedFiles(ctrl, getExcludePatterns())
 		}
@@ -593,10 +455,12 @@ let contextResourcesUri: Uri
 
 async function updateNode (uri: Uri, ctrl: TestController) {
 	log.trace('updateNode uri=' + uri.fsPath)
-	if(uri.scheme !== 'file' || isFileExcluded(uri, getExcludePatterns())) {	return false }
+	if(uri.scheme !== 'file' || isFileExcluded(uri, getExcludePatterns())) { return new Promise(() => { return false }) }
 
 	const { item, data } = getOrCreateFile(ctrl, uri)
-	if(!item || !data) {	return false }
+	if(!item || !data) {
+		return new Promise(() => { return false })
+	}
 
 	ctrl.invalidateTestResults(item)
 	return getContentFromFilesystem(uri).then((contents) => {

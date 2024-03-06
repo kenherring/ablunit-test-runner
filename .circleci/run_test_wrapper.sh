@@ -4,7 +4,11 @@ set -euo pipefail
 initialize () {
 	echo "[$0 ${FUNCNAME[0]}]"
 	VERBOSE=${VERBOSE:-false}
-	export DONT_PROMPT_WSL_INSTALL=No_Prompt_please
+	DONT_PROMPT_WSL_INSTALL=No_Prompt_please
+	ABLUNIT_TEST_RUNNER_OE_VERSION=${ABLUNIT_TEST_RUNNER_OE_VERSION:-}
+	if [ -z "$ABLUNIT_TEST_RUNNER_OE_VERSION" ]; then
+		ABLUNIT_TEST_RUNNER_OE_VERSION=${OE_VERSION:-12.2.12}
+	fi
 
 	if [ ! -f /root/.rssw/oedoc.bin ]; then
 		echo "ERROR: /root/.rssw/oedoc.bin not found"
@@ -14,7 +18,7 @@ initialize () {
 
 	echo "ABLUNIT_TEST_RUNNER_OE_VERSION=$ABLUNIT_TEST_RUNNER_OE_VERSION"
 	echo "ABLUNIT_TEST_RUNNER_VSCODE_VERSION=$ABLUNIT_TEST_RUNNER_VSCODE_VERSION"
-	export ABLUNIT_TEST_RUNNER_OE_VERSION ABLUNIT_TEST_RUNNER_VSCODE_VERSION
+	export DONT_PROMPT_WSL_INSTALL ABLUNIT_TEST_RUNNER_OE_VERSION ABLUNIT_TEST_RUNNER_VSCODE_VERSION
 }
 
 dbus_config () {
@@ -43,11 +47,11 @@ run_tests () {
 	cp package.stable.json package.json
 
 	if [ -f /home/circleci/project/test_projects/proj0/prof.out ]; then
-		echo "[$0 ${FUNCNAME[0]}] copying profile output prof_${OE_VERSION}.out"
-		cp /home/circleci/project/test_projects/proj0/prof.out "/home/circleci/artifacts/prof_${OE_VERSION}.out"
+		echo "[$0 ${FUNCNAME[0]}] copying profile output prof_${ABLUNIT_TEST_RUNNER_OE_VERSION}.out"
+		cp /home/circleci/project/test_projects/proj0/prof.out "/home/circleci/artifacts/prof_${ABLUNIT_TEST_RUNNER_OE_VERSION}.out"
 		if [ -f /home/circleci/project/test_projects/proj0/prof.json ]; then
-			echo "[$0 ${FUNCNAME[0]}] copying profile output prof_${OE_VERSION}.json"
-			cp /home/circleci/project/test_projects/proj0/prof.json "/home/circleci/artifacts/prof_${OE_VERSION}.json"
+			echo "[$0 ${FUNCNAME[0]}] copying profile output prof_${ABLUNIT_TEST_RUNNER_OE_VERSION}.json"
+			cp /home/circleci/project/test_projects/proj0/prof.json "/home/circleci/artifacts/prof_${ABLUNIT_TEST_RUNNER_OE_VERSION}.json"
 		fi
 	fi
 
@@ -69,6 +73,7 @@ save_and_print_debug_output () {
 	find .vscode-test -name 'settings.json'
 	find .vscode-test -name 'settings.json' -exec cp {} artifacts \;
 
+	mkdir -p artifacts
 	find . > artifacts/filelist.txt
 
 	$VERBOSE || return 0

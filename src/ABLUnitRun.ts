@@ -19,18 +19,16 @@ export enum RunStatus {
 }
 
 
-export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation?: CancellationToken) => {
+export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation: CancellationToken) => {
 	const start = Date.now()
 	const abort = new AbortController()
 	const { signal } = abort
 
-	if (cancellation) {
-		cancellation.onCancellationRequested(() => {
-			log.debug('cancellation requested - ablunitRun')
-			abort.abort()
-			throw new CancellationError()
-		})
-	}
+	cancellation.onCancellationRequested(() => {
+		log.debug('cancellation requested - ablunitRun')
+		abort.abort()
+		throw new CancellationError()
+	})
 
 	await res.cfg.createAblunitJson(res.cfg.ablunitConfig.config_uri, res.cfg.ablunitConfig.options, res.testQueue)
 

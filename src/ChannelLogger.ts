@@ -39,6 +39,10 @@ class Logger {
 		this.logLevel = e
 	}
 
+	getLogLevel () {
+		return this.logLevel
+	}
+
 	setTestResultsTimestamp (e: boolean) {
 		this.testResultsTimestamp = e
 	}
