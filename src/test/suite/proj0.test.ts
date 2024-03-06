@@ -1,6 +1,5 @@
 import { afterEach, before } from 'mocha'
 import { Uri, commands, window, workspace, Range } from 'vscode'
-// import { Uri, commands, window, workspace, DetailedCoverage, Range } from 'vscode'
 import { assert, deleteFile, getResults, log, runAllTests, sleep, toUri, updateTestProfile, waitForExtensionActive } from '../testCommon'
 import { DetailedCoverageCustom } from '../../TestCoverage'
 

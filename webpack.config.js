@@ -6,11 +6,6 @@ const config = {
 	target: 'node', // TODO: recommended: 'webworker'
 	node: false,
 	mode: 'development',
-	// infrastructureLogging: {
-	// 	colors: false,
-	// 	appendOnly: true,
-	// 	level: 'log'
-	// },
 	devtool: 'source-map', // https://code.visualstudio.com/docs/nodejs/nodejs-debugging#_tool-configuration
 	entry: {
 		'extension': './src/extension.ts',
@@ -21,7 +16,6 @@ const config = {
 		path: path.resolve(__dirname, 'dist'),
 		filename: '[name].js',
 		libraryTarget: 'commonjs2',
-		// libraryTarget: 'commonjs',
 		devtoolModuleFilenameTemplate: '../[resource-path]',
 	},
 	externals: {
@@ -42,7 +36,6 @@ const config = {
 			}]
 		}]
 	},
-	mode: 'development'
 }
 
 module.exports = config

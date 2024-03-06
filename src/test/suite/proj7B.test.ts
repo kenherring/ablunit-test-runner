@@ -1,9 +1,8 @@
 import { strict as assert } from 'assert'
 import { before } from 'mocha'
 import { CancellationError, commands } from 'vscode'
-import { beforeCommon, beforeProj7, cancelTestRun, getCurrentRunData, getResults, getTestControllerItemCount, log, refreshData, refreshTests, runAllTests, sleep, waitForTestRunStatus } from '../testCommon'
+import { RunStatus, beforeCommon, beforeProj7, cancelTestRun, getCurrentRunData, getTestControllerItemCount, log, refreshTests, runAllTests, sleep, waitForTestRunStatus } from '../testCommon'
 import { Duration } from '../../ABLUnitCommon'
-import { RunStatus } from '../../ABLUnitRun'
 
 const projName = 'proj7B'
 

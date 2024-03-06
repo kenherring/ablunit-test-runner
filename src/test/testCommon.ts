@@ -24,6 +24,8 @@ class TestInfo {
 export const info = new TestInfo()
 export const log = logObj
 
+export { RunStatus }
+
 let recentResults: ABLResults[] | undefined
 let decorator: Decorator | undefined
 let testController: TestController | undefined

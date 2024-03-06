@@ -186,7 +186,7 @@ function createConfigForVersion (version: vscodeVersion) {
 }
 
 // export const testConfigStable = createConfigForVersion('stable')
-// export const testConfigInsiders = createConfigForVersion('proAposedapi')
+// export const testConfigInsiders = createConfigForVersion('proposedapi')
 // export const testConfigInsiders = createConfigForVersion('insiders')
 
 export function getTestConfig (version: vscodeVersion) {
