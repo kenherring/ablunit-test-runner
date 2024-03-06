@@ -1,0 +1,12 @@
+name: 🧹 Chore
+description: Repo configuration, tooling, and other non-feature work.
+title: "🧹 [Chore] "
+labels: ["chore"]
+# projects: ["octo-org/1", "octo-org/44"]
+assignees:
+  - kenherring
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Describe the chore...
