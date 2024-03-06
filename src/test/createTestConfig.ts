@@ -104,7 +104,7 @@ function getConfigForProject (version: vscodeVersion, projName: string, testFile
 	const extensionDevelopmentPath: string = path.resolve(__dirname, '../../')
 	const basedir = extensionDevelopmentPath
 	const extensionTestsPath = path.resolve(__dirname)
-	const oeVersion = process.env['OE_VERSION'] || '0.0.0'
+	const oeVersion = process.env['ABLUNIT_TEST_RUNNER_OE_VERSION'] ?? '0.0.0'
 
 	const retVal: ITestConfig = {
 		projName: projName,
@@ -172,7 +172,7 @@ function createConfigForVersion (version: vscodeVersion) {
 
 		outputfile = './' + outputfile
 
-		const oeVersion = process.env['OE_VERSION'] ?? '0.0.0'
+		const oeVersion = process.env['ABLUNIT_TEST_RUNNER_OE_VERSION'] ?? '0.0.0'
 		const outputdir = './artifacts/' + version + '-' + oeVersion
 		if (!fs.existsSync(outputdir)) {
 			fs.mkdirSync(outputdir, { recursive: true })

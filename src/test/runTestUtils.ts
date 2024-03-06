@@ -15,7 +15,7 @@ export function setupNyc (version: vscodeVersion, projName: string) {
 	const NYC = require('nyc')
 
 	const currentWorkingDir = path.join(__dirname, '..', '..')
-	const oeVersion = process.env['OE_VERSION'] || '0.0.0'
+	const oeVersion = process.env['ABLUNIT_TEST_RUNNER_OE_VERSION'] ?? '0.0.0'
 	// const tempDir = path.join(__dirname, '..', '..', 'coverage', '.nyc_output')
 	const tempDir = path.join(__dirname, '..', '..', 'coverage', '.nyc_output', version + '-' + oeVersion + '-' + projName)
 	const reportDir = path.join(__dirname, '..', '..', 'coverage', 'coverage_' + version + '-' + oeVersion + '-' + projName)
@@ -65,7 +65,7 @@ export function setupNyc (version: vscodeVersion, projName: string) {
 }
 
 export function setupMocha (version: vscodeVersion, projName: string, basedir: string, timeout: string | number | undefined) {
-	const oeVersion = process.env['OE_VERSION'] || '0.0.0'
+	const oeVersion = process.env['ABLUNIT_TEST_RUNNER_OE_VERSION'] ?? '0.0.0'
 	return new Mocha({
 		color: true,
 		ui: 'tdd',

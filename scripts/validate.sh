@@ -12,7 +12,7 @@ validate_results_count() {
 		exit 1
 	fi
 
-	ARTIFACT_DIR="artifacts/${ABLUNIT_TEST_RUNNER_VSCODE_VERSION}-${OE_VERSION}"
+	ARTIFACT_DIR="artifacts/${ABLUNIT_TEST_RUNNER_VSCODE_VERSION}-${ABLUNIT_TEST_RUNNER_OE_VERSION}"
 
 	RESULTS_COUNT=$(find "$ARTIFACT_DIR" -name "mocha_results_junit*.xml" | sort -u | wc -l)
 	if [ "$RESULTS_COUNT" != "$TEST_COUNT" ]; then
