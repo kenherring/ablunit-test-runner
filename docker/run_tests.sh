@@ -27,13 +27,13 @@ initialize () {
 	DELETE_CACHE_VOLUME=false
 	TEST_PROJECT=base
 	STAGED_ONLY=true
-	local OE_VERSION=12.2.12
+	ABLUNIT_TEST_RUNNER_OE_VERSION=12.2.12
 	ABLUNIT_TEST_RUNNER_VSCODE_VERSION=stable
 	ABLUNIT_TEST_RUNNER_PROJECT_NAME=${ABLUNIT_TEST_RUNNER_PROJECT_NAME:-}
 
 	while getopts "bBCdimso:p:PvV:h" OPT; do
 		case $OPT in
-			o)	OE_VERSION=$OPTARG ;;
+			o)	ABLUNIT_TEST_RUNNER_OE_VERSION=$OPTARG ;;
 			b)	OPTS='-b' ;;
 			B)  OPTS='-B' ;;
 			C)	DELETE_CACHE_VOLUME=true ;;
@@ -68,8 +68,8 @@ initialize () {
 		usage && exit 1
 	fi
 
-	export GIT_BRANCH PROGRESS_CFG_BASE64 STAGED_ONLY OE_VERSION TEST_PROJECT CREATE_PACKAGE VERBOSE
-	export ABLUNIT_TEST_RUNNER_PROJECT_NAME ABLUNIT_TEST_RUNNER_VSCODE_VERSION
+	export GIT_BRANCH PROGRESS_CFG_BASE64 STAGED_ONLY TEST_PROJECT CREATE_PACKAGE VERBOSE
+	export ABLUNIT_TEST_RUNNER_PROJECT_NAME ABLUNIT_TEST_RUNNER_OE_VERSION ABLUNIT_TEST_RUNNER_VSCODE_VERSION
 
 	if $DELETE_CACHE_VOLUME; then
 		echo "deleting test-runner-cache volume"
@@ -82,14 +82,14 @@ initialize () {
 		docker volume create --name test-runner-cache
 	fi
 
-	if [ "${OE_VERSION,,}" = "all" ]; then
+	if [ "${ABLUNIT_TEST_RUNNER_OE_VERSION,,}" = "all" ]; then
 		OE_VERSIONS=(12.2.12 12.7.0)
-	elif [ "$OE_VERSION" != "12.2.12" ] && [ "$OE_VERSION" != "12.7.0" ]; then
-		echo "Invalid OE version: $OE_VERSION" >&2
+	elif [ "$ABLUNIT_TEST_RUNNER_OE_VERSION" != "12.2.12" ] && [ "$ABLUNIT_TEST_RUNNER_OE_VERSION" != "12.7.0" ]; then
+		echo "Invalid OE version: $ABLUNIT_TEST_RUNNER_OE_VERSION" >&2
 		usage && exit 1
 	else
 		# shellcheck disable=SC2178
-		OE_VERSIONS=${OE_VERSION,,}
+		OE_VERSIONS=${ABLUNIT_TEST_RUNNER_OE_VERSION,,}
 		# shellcheck disable=SC2206
 		OE_VERSIONS=(${OE_VERSIONS//,/ })
 	fi
@@ -99,18 +99,18 @@ initialize () {
 
 run_tests_in_docker () {
 	echo "[$0 ${FUNCNAME[0]}] pwd=$(pwd)"
-	local OE_VERSION
+	local ABLUNIT_TEST_RUNNER_OE_VERSION
 
-	for OE_VERSION in "${OE_VERSIONS[@]}"; do
-		echo "[$0 ${FUNCNAME[0]}] docker run with OE_VERSION=$OE_VERSION"
-		export OE_VERSION
+	for ABLUNIT_TEST_RUNNER_OE_VERSION in "${OE_VERSIONS[@]}"; do
+		echo "[$0 ${FUNCNAME[0]}] docker run with ABLUNIT_TEST_RUNNER_OE_VERSION=$ABLUNIT_TEST_RUNNER_OE_VERSION"
+		export ABLUNIT_TEST_RUNNER_OE_VERSION
 		local ARGS=(
 			--rm
 			-it
 			-e PROGRESS_CFG_BASE64
 			-e GIT_BRANCH
 			-e STAGED_ONLY
-			-e OE_VERSION
+			-e ABLUNIT_TEST_RUNNER_OE_VERSION
 			-e TEST_PROJECT
 			-e CREATE_PACKAGE
 			-e VERBOSE
@@ -121,12 +121,12 @@ run_tests_in_docker () {
 		ARGS+=(
 			-v "$PWD":/home/circleci/ablunit-test-runner:ro
 			-v test-runner-cache:/home/circleci/cache
-			kherring/ablunit-test-runner:"$OE_VERSION"
+			kherring/ablunit-test-runner:"${ABLUNIT_TEST_RUNNER_OE_VERSION}"
 			bash -c "/home/circleci/ablunit-test-runner/docker/$SCRIPT.sh $OPTS;"
 		)
 		## run tests inside the container
 		docker run "${ARGS[@]}"
-		echo "tests completed successfully with OE_VERSION=$OE_VERSION"
+		echo "tests completed successfully with ABLUNIT_TEST_RUNNER_OE_VERSION=$ABLUNIT_TEST_RUNNER_OE_VERSION"
 	done
 }
 

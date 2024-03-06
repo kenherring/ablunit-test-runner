@@ -95,7 +95,6 @@
 		"test:install-and-run": "cd dummy-ext && npm run test:install-and-run",
 		"watch": "webpack --mode development --watch",
 		"webpack": "webpack --mode development",
-		"test-new": "mocha -u tdd ./out/test",
 		"version": "sh -c scripts/npm_version.sh"
 	},
 	"dependencies": {
@@ -104,7 +103,7 @@
 	},
 	"devDependencies": {
 		"@types/mocha": "^10.0.6",
-		"@types/node": "^16.18.34",
+		"@types/node": "^16.18.82",
 		"@types/vscode": "^1.83.0",
 		"@types/xml2js": "^0.4.14",
 		"@typescript-eslint/eslint-plugin": "^6.13.2",

@@ -99,12 +99,14 @@ function getConfigForProject (version: vscodeVersion, projName: string, testFile
 	let timeout = 15000
 	if (projName === 'DebugLines' || projName.startsWith('proj7A')) {
 		timeout = 90000
+	} else if (projName === 'proj7B') {
+		timeout = 30000
 	}
 
 	const extensionDevelopmentPath: string = path.resolve(__dirname, '../../')
 	const basedir = extensionDevelopmentPath
 	const extensionTestsPath = path.resolve(__dirname)
-	const oeVersion = process.env['OE_VERSION'] || '0.0.0'
+	const oeVersion = process.env['ABLUNIT_TEST_RUNNER_OE_VERSION'] ?? '0.0.0'
 
 	const retVal: ITestConfig = {
 		projName: projName,
@@ -146,7 +148,7 @@ function getConfigForProject (version: vscodeVersion, projName: string, testFile
 }
 
 function createConfigForVersion (version: vscodeVersion) {
-	log('creating test config for version \'' + version + '\'...')
+	log('creating test config for version \'' + version + '\', cwd=' + path.resolve(__dirname, '../../') + '\'...')
 	const testConfig: ITestConfig[] = []
 
 	const g = globSync('**/*.test.js', { cwd: path.resolve(__dirname, '../../') })
@@ -154,7 +156,7 @@ function createConfigForVersion (version: vscodeVersion) {
 		throw new Error('No test files found')
 	}
 	for (const f of g) {
-		const projName = f.replace('.test.js', '').split('/').reverse()[0]
+		const projName = f.replace('.test.js', '').replace(/\\/g, '/').split('/').reverse()[0]
 		// if (projName === 'DebugLines') {
 		// 	continue
 		// }
@@ -172,7 +174,7 @@ function createConfigForVersion (version: vscodeVersion) {
 
 		outputfile = './' + outputfile
 
-		const oeVersion = process.env['OE_VERSION'] ?? '0.0.0'
+		const oeVersion = process.env['ABLUNIT_TEST_RUNNER_OE_VERSION'] ?? '0.0.0'
 		const outputdir = './artifacts/' + version + '-' + oeVersion
 		if (!fs.existsSync(outputdir)) {
 			fs.mkdirSync(outputdir, { recursive: true })

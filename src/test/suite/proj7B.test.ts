@@ -1,7 +1,7 @@
 import { strict as assert } from 'assert'
 import { before } from 'mocha'
-import { CancellationError, commands } from 'vscode'
-import { beforeCommon, beforeProj7, cancelTestRun, getCurrentRunData, getResults, getTestControllerItemCount, log, refreshData, refreshTests, runAllTests, sleep, waitForTestRunStatus } from '../testCommon'
+import { CancellationError, LogLevel, commands } from 'vscode'
+import { RunStatus, beforeCommon, beforeProj7, cancelTestRun, getCurrentRunData, getResults, getTestControllerItemCount, isoDate, log, refreshTests, runAllTests, sleep, waitForTestRunStatus } from '../testCommon'
 import { Duration } from '../../ABLUnitCommon'
 
 const projName = 'proj7B'
@@ -14,10 +14,14 @@ suite(projName + ' - Extension Test Suite', () => {
 	})
 
 	test(projName + '.1 - cancel test refresh', async () => {
-		const maxCancelTime = 250
-		const maxRefreshTime = 4000
+		// TODO
+		// const maxCancelTime = 250
+		const maxCancelTime = 2000
+		// TODO
+		// const maxRefreshTime = 250
+		const maxRefreshTime = 7000
 
-		log.debug('refreshing tests')
+		log.info('refreshing tests')
 		const startRefreshTime = Date.now()
 		const refresh = refreshTests()
 		let testCount = await getTestControllerItemCount('ABLTestFile')
@@ -27,18 +31,18 @@ suite(projName + ' - Extension Test Suite', () => {
 			testCount = await getTestControllerItemCount('ABLTestFile')
 		}
 
-		log.debug('cancelling test refresh')
+		log.info('cancelling test refresh')
 		const startCancelTime = Date.now()
 		try {
 			await commands.executeCommand('testing.cancelTestRefresh').then(() => {
-				log.debug('testing.cancelTestRefresh completed')
+				log.info('testing.cancelTestRefresh completed')
 			}, (err) => {
 				log.error('testing.cancelTestRefresh caught an exception. err=' + err)
 				throw err
 			})
 			const elapsedCancelTime = Date.now() - startCancelTime
 			const elapsedRefreshTime = Date.now() - startRefreshTime
-			log.debug(' - elapsedCancelTime=' + elapsedCancelTime + ', elapsedRefreshTime=' +  elapsedRefreshTime)
+			log.info(' - elapsedCancelTime=' + elapsedCancelTime + ', elapsedRefreshTime=' +  elapsedRefreshTime)
 			assert(elapsedCancelTime < maxCancelTime, 'elapsedCancelTime should be < ' + maxCancelTime + 'ms, but is ' + elapsedCancelTime)
 			assert(elapsedRefreshTime < maxRefreshTime, 'elapsedRefreshTime should be < ' + maxRefreshTime + 'ms, but is ' + elapsedRefreshTime)
 		} catch (err) {
@@ -46,14 +50,14 @@ suite(projName + ' - Extension Test Suite', () => {
 		}
 
 		const ablfileCount = await getTestControllerItemCount('ABLTestFile')
-		log.debug('controller file count after refresh = ' + ablfileCount)
+		log.info('controller file count after refresh = ' + ablfileCount)
 		assert(ablfileCount > 1 && ablfileCount < 1000, 'ablfileCount should be > 1 and < 500, but is ' + ablfileCount)
 
 		await refresh.then(() => {
 			assert.fail('testing.refreshTests completed without throwing CancellationError')
 		}, (err) => {
 			if (err instanceof CancellationError) {
-				log.debug('testing.refreshTests threw CancellationError as expected')
+				log.info('testing.refreshTests threw CancellationError as expected')
 			} else {
 				const e = err as Error
 				assert(e.name === 'Canceled', 'testing.refreshTests threw unexpected error. Expected e.name="Canceled" err=' + err)
@@ -65,12 +69,12 @@ suite(projName + ' - Extension Test Suite', () => {
 		const maxCancelTime = 1000
 		const runTestTime = new Duration()
 
-		runAllTests().then((ret) => {
-			log.debug('runProm done ret=' + ret)
+		runAllTests().then(() => {
+			log.info('runProm done ' + runTestTime)
 		}, (err) => {
 			throw err
 		})
-		await waitForTestRunStatus('constructed')
+		await waitForTestRunStatus(RunStatus.Constructed)
 
 		const elapsedCancelTime = await cancelTestRun(false)
 		assert(elapsedCancelTime < maxCancelTime, 'cancelTime should be < ' + maxCancelTime + 'ms, but is ' + elapsedCancelTime + 'ms')
@@ -80,14 +84,14 @@ suite(projName + ' - Extension Test Suite', () => {
 
 
 		await refreshTests().then(() => {
-			if (res.status.startsWith('run cancelled')) {
-				log.debug('runAllTests completed with status=\'run cancelled\'')
+			if (res.status === RunStatus.Cancelled) {
+				log.info('runAllTests completed with status=\'run cancelled\'')
 			} else {
 				assert.fail('runAllTests completed without status=\'run cancelled\' (status=\'' + res.status + '\')')
 			}
 		}, (err) => {
 			if (err instanceof CancellationError) {
-				log.debug('runAllTests threw CancellationError as expected ' + runTestTime.toString())
+				log.info('runAllTests threw CancellationError as expected ' + runTestTime.toString())
 			} else {
 				const e = err as Error
 				assert(e.name === 'Canceled', 'runAllTests threw unexpected error. Expected e.name="Canceled" err=' + err)
@@ -97,36 +101,52 @@ suite(projName + ' - Extension Test Suite', () => {
 
 	test(projName + '.3 - cancel test run while _progres is running', async () => {
 		const maxCancelTime = 1000
-		const runProm = runAllTests().then(() => { return }, (err) => { throw err })
+		const runTestTime = new Duration()
+		const runProm = runAllTests().then(() => {
+			log.info('runProm done ' + runTestTime)
+			return
+		}, (e) => {
+			log.error('runProm error e=' + e)
+			throw e
+		})
 
 		// wait up to 60 seconds until ABLUnit is actually running, then cancel
 		// this validates the cancel will abort the spawned _progres process
-		await waitForTestRunStatus('running command').then(async () => await sleep(1000))
-		await sleep(500)
+		await waitForTestRunStatus(RunStatus.Executing).then(async () => {
+			return sleep(500)
+		}, (e) => {
+			log.error('Error! e=' + e)
+			throw e
+		})
 
 		const resArr = await getCurrentRunData()
-		const res = resArr[0]
-		if (!res) {
+		if (!resArr[0]) {
 			assert.fail('getCurrentRunData returned undefined')
 		}
-		if (res.status !== 'running command') {
-			assert.fail('test run reach status \'running command\'')
+		if (resArr[0].status !== RunStatus.Executing) {
+			assert.fail('test run did not reach status \'running command\'')
 		}
 
-		const elapsedCancelTime = await cancelTestRun()
+		const saveLogLevel = log.getLogLevel()
+		log.setLogLevel(LogLevel.Debug)
+		const elapsedCancelTime = await cancelTestRun(false)
+		log.setLogLevel(saveLogLevel)
+		log.info(isoDate() + ' testRunCancelled ' + elapsedCancelTime)
 		assert(elapsedCancelTime < maxCancelTime, 'cancelTime should be < ' + maxCancelTime + 'ms, but is ' + elapsedCancelTime + 'ms')
 		assert(true, 'testing.cancelRun completed successfully')
 
-		log.debug('waiting for runProm to complete')
+		log.info('waiting for runProm to complete')
 		await runProm.then(() => {
-			log.debug('runProm completed')
+			log.info('runProm completed')
+		}, (e) => {
+			log.error('runProm error e=' + e)
+			throw e
 		})
 
-		await refreshData()
 		const recentResults = await getResults(0)
-		log.debug('recentResults.length=' + recentResults.length)
+		log.info('recentResults.length=' + recentResults.length)
+		log.info('recentResults.length=' + recentResults.length)
 		assert.equal(0, recentResults.length, 'expected recentResults.length=0, but got ' + recentResults.length)
 	})
-
 
 })

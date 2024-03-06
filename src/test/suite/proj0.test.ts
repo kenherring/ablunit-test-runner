@@ -1,6 +1,5 @@
 import { afterEach, before } from 'mocha'
 import { Uri, commands, window, workspace, Range } from 'vscode'
-// import { Uri, commands, window, workspace, DetailedCoverage, Range } from 'vscode'
 import { assert, deleteFile, getResults, log, runAllTests, sleep, toUri, updateTestProfile, waitForExtensionActive } from '../testCommon'
 import { DetailedCoverageCustom } from '../../TestCoverage'
 
@@ -17,7 +16,7 @@ function getDetailLine (coverage: DetailedCoverageCustom[], lineNum: number) {
 suite(projName + ' - Extension Test Suite', () => {
 
 	before(projName + ' - before', async () => {
-		await waitForExtensionActive().then(() => { return sleep(250) })
+		await waitForExtensionActive().then(async () => { return sleep(250) })
 		await commands.executeCommand('testing.clearTestResults').then()
 		deleteFile('.vscode/ablunit-test-profile.json')
 	})
