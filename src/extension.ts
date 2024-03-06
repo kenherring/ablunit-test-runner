@@ -19,9 +19,6 @@ import { log } from './ChannelLogger'
 import { getContentFromFilesystem } from './parse/TestParserCommon'
 import { ABLTestCase, ABLTestClass, ABLTestData, ABLTestDir, ABLTestFile, ABLTestProgram, ABLTestSuite, resultData, testData } from './testTree'
 import { Decorator, decorator } from './Decorator'
-// import { FileCoverageCustom } from './TestCoverage'
-
-// class FileCoverage extends FileCoverageCustom {}
 
 export interface IExtensionTestReferences {
 	testController: TestController
@@ -75,8 +72,8 @@ export async function activate (context: ExtensionContext) {
 					log.trace('updateNodeForDocument complete for ' + e.uri)
 					decorator.decorate(undefined, e)
 					return
-				}, (err: unknown) => {
-					log.error('failed updateNodeForDocument onDidTextDocument! err=' + err)
+				}, (e: unknown) => {
+					log.error('failed updateNodeForDocument onDidTextDocument! err=' + e)
 				})
 			})
 		})
@@ -217,7 +214,7 @@ export async function activate (context: ExtensionContext) {
 					}
 				}
 				run.end()
-				return false
+				return
 			}
 
 			log.debug('ablunit test run complete', run)

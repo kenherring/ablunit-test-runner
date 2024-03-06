@@ -124,7 +124,7 @@ suite(projName + ' - Extension Test Suite', () => {
 			assert.fail('getCurrentRunData returned undefined')
 		}
 		if (resArr[0].status !== RunStatus.Executing) {
-			assert.fail('test run reach status \'running command\'')
+			assert.fail('test run did not reach status \'running command\'')
 		}
 
 		const saveLogLevel = log.getLogLevel()

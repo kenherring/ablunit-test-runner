@@ -3,7 +3,6 @@ import { globSync } from 'glob'
 import {
 	CancellationError,
 	CancellationToken, ConfigurationChangeEvent, Disposable, ExtensionContext,
-	// FileCoverage,
 	FileType,
 	Position, Range, RelativePattern, Selection,
 	TestController, TestItem, TestItemCollection, TestMessage,
@@ -68,6 +67,7 @@ export async function activate (context: ExtensionContext) {
 			return new Disposable(async () => {
 				await updateNodeForDocument(e, 'didOpen').then(() => {
 					log.trace('updateNodeForDocument complete for ' + e.uri)
+					return
 				}, (e: unknown) => {
 					log.error('failed updateNodeForDocument onDidTextDocument! err=' + e)
 				})
@@ -166,7 +166,6 @@ export async function activate (context: ExtensionContext) {
 					log.info('starting ablunit tests for folder: ' + r.workspaceFolder.uri.fsPath, run)
 				}
 
-				log.debug('r.run start')
 				ret = await r.run(run).then(() => {
 					log.debug('r.run() successful')
 					return true
@@ -174,7 +173,6 @@ export async function activate (context: ExtensionContext) {
 					log.error('ablunit run failed parsing results with exception: ' + e, run)
 					throw e
 				})
-				log.debug('r.run after ret=' + ret)
 				if (!ret) {
 					continue
 				}
@@ -315,7 +313,8 @@ export async function activate (context: ExtensionContext) {
 		}
 		if (workspace.getWorkspaceFolder(u) === undefined) {
 			log.info('skipping updateNodeForDocument for file not in workspace: ' + u.fsPath)
-			return new Promise(() => { return false })
+			return Promise.resolve(() => { return false })
+			// return Promise.resolve(() => { return true })
 		}
 		return updateNode(u, ctrl)
 	}
@@ -395,7 +394,9 @@ async function updateNode (uri: Uri, ctrl: TestController) {
 	if(uri.scheme !== 'file' || isFileExcluded(uri, getExcludePatterns())) { return new Promise(() => { return false }) }
 
 	const { item, data } = getOrCreateFile(ctrl, uri)
-	if(!item || !data) { return new Promise(() => { return false }) }
+	if(!item || !data) {
+		return new Promise(() => { return false })
+	}
 
 	ctrl.invalidateTestResults(item)
 	return getContentFromFilesystem(uri).then((contents) => {
