@@ -6,11 +6,6 @@ const config = {
 	target: 'node', // TODO: recommended: 'webworker'
 	node: false,
 	mode: 'development',
-	infrastructureLogging: {
-		colors: false,
-		appendOnly: true,
-		level: 'log'
-	},
 	devtool: 'source-map', // https://code.visualstudio.com/docs/nodejs/nodejs-debugging#_tool-configuration
 	entry: {
 		'extension': './src/extension.ts',
@@ -22,9 +17,6 @@ const config = {
 		filename: '[name].js',
 		libraryTarget: 'commonjs2',
 		devtoolModuleFilenameTemplate: '../[resource-path]',
-		// devtoolModuleFilenameTemplate: 'src/[resource-path]',    // "ablunit-test-runner/dist/src/extension.ts"
-		// devtoolModuleFilenameTemplate: '[resource-path]',        // "ablunit-test-runner/dist/extension.ts"
-		// devtoolModuleFilenameTemplate: '[absolute-resource-path]',
 	},
 	externals: {
 		// the vscode-module is created on-the-fly and must be excluded. Add other modules that cannot be webpack'ed -> https://webpack.js.org/configuration/externals/
@@ -34,21 +26,14 @@ const config = {
 		mainFields: ['browser', 'module', 'main'],
 		extensions: ['.ts', '.js'],
 		modules: ['node_modules', 'src']
-		// modules: ['src', 'node_modules'],
-		// modules: [ '.', 'src', 'node_modules'],
 	},
 	module: {
 		rules: [{
-				test: /\.ts$/,
-				exclude: /node_modules/,
-				use: [{
-					loader: 'ts-loader',
-					// options: {
-					// 	compilerOptions: {
-					// 		'module': 'es6' // override `tsconfig.json` so that TypeScript emits native JavaScript modules.
-					// 	}
-					// }
-				}]
+			test: /\.ts$/,
+			exclude: /node_modules/,
+			use: [{
+				loader: 'ts-loader',
+			}]
 		}]
 	},
 }

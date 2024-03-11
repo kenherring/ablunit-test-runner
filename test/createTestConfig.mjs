@@ -135,18 +135,23 @@ function getLaunchArgs (projName) {
 
 function getTestConfig (projName) {
 
-	let ws = './test_projects/' + projName
+	let ws = '' + projName
 	if (projName.startsWith('proj7')) {
-		ws = './test_projects/proj7_load_performance'
+		ws = 'proj7_load_performance'
 	} else if (projName.startsWith('workspace')) {
-		ws = './test_projects/' + projName + '.code-workspace'
-	} else if (!fs.existsSync(ws)) {
+		ws = projName + '.code-workspace'
+	}
+	ws = path.resolve(__dirname, '..', 'test_projects', ws)
+
+	if (!fs.existsSync(ws)) {
 		const g = glob.globSync(ws + '_*')
 		if (g.length > 1) {
 			throw new Error('Multiple workspaces found: ' + ws)
-		} else {
-			ws = g[0] ?? './test_projects'
 		}
+		if (!g[0]) {
+			throw new Error('No workspace found: ' + ws)
+		}
+		ws = g[0]
 	}
 
 	let useInstallation
@@ -154,14 +159,15 @@ function getTestConfig (projName) {
 		useInstallation = { fromPath: '.vscode-test/vscode-win32-x64-archive-' + vsVersionNum + '/Code.exe' }
 	}
 
+	const absolulteFile = path.resolve(__dirname, '..', 'test', 'suites', projName + '.test.ts')
+
 	return {
-		label: 'suite:' + projName,
+		label: 'suite_' + projName,
 		extensionDevelopmentPath: './',
 		workspaceFolder: ws,
-		files: './test/suites/' + projName + '.test.ts',
+		files: absolulteFile,
 		version: vsVersion,
 		// useInstallation: { fromMachine: true },
-		// TODO - glob?
 		useInstallation: useInstallation,
 		launchArgs: getLaunchArgs(projName),
 		mocha: getMochaOpts(projName),
@@ -171,12 +177,6 @@ function getTestConfig (projName) {
 			ABLUNIT_TEST_RUNNER_UNIT_TESTING: 'true',
 			ABLUNIT_TEST_RUNNER_VSCODE_VERSION: vsVersion,
 			VSCODE_SKIP_PRELAUNCH: '1',
-			// NODE_OPTIONS: [
-			// 	'--enable-source-maps',
-			// 	'--require source-map-support/register',
-			// 	// 	// '--produce-source-map',
-			// ],
-			// NODE_OPTIONS: '--produce-source-map',
 		}
 	}
 }

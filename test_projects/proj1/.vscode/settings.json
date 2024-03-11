@@ -3,6 +3,9 @@
 	"abl.debugAdapterTrace": true,
 	"abl.langServerDebug": true,
 	"abl.langServerTrace": true,
+	"files.exclude": {
+		"**/.git": true
+	},
 	"terminal.integrated.env.linux": {
 		"ENV_VAR_1": "THISisTHEvalue",
 		"ATTR_ABLUNIT_EVENT_FILE": "ablunit_event_file" //TODO
@@ -10,13 +13,5 @@
 	"terminal.integrated.env.windows": {
 		"ENV_VAR_1": "THISisTHEvalue",
 		"ATTR_ABLUNIT_EVENT_FILE": "ablunit_event_file"
-	},
-	"files.exclude": {
-		"**/.git": true,
-		"**/.svn": true,
-		"**/.hg": true,
-		"**/CVS": true,
-		"**/.DS_Store": true,
-		"**/Thumbs.db": true
 	}
 }

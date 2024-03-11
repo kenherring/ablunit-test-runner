@@ -663,7 +663,7 @@ function gatherTestItems (collection: TestItemCollection) {
 function getExcludePatterns () {
 	let excludePatterns: string[] = []
 
-	let excludePatternsConfig: string[] | undefined = workspace.getConfiguration('ablunit').get('files.exclude', [ '**/.builder/**' ])
+	let excludePatternsConfig: string[] | string | undefined = workspace.getConfiguration('ablunit').get('files.exclude', [ '**/.builder/**' ])
 	if (typeof excludePatternsConfig === 'string') {
 		excludePatternsConfig = [ excludePatternsConfig ]
 	}

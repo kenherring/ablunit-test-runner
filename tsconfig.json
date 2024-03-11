@@ -61,13 +61,8 @@
 	"include": [
 		"./.vscode-test.mjs",
 		"./test/createTestConfig.mjs",
-
 		"./**/*.ts",
 		"./test/suites/*.test.ts",
-
-		// "./*/*.ts",
-		// "./*/*/*.ts",
-		// "./*/*/*/*.ts",
 	],
 	"exclude": [
 		"./dummy-ext/**",

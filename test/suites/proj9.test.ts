@@ -2,36 +2,22 @@ import { Uri, workspace } from 'vscode'
 import { assert, deleteFile, deleteTestFiles, getTestCount, getWorkspaceUri, log, runAllTests, selectProfile, updateTestProfile, waitForExtensionActive } from '../testCommon'
 
 // const projName = __dirname.split(/[\\/]/).pop()!
-log.info('proj9-3')
 const projName = 'proj9'
-log.info('proj9-4')
 const testProfileJson = Uri.joinPath(getWorkspaceUri(), '.vscode/ablunit-test-profile.json')
-log.info('proj9-5')
 const testProfileBackup = Uri.joinPath(getWorkspaceUri(), '.vscode/ablunit-test-profile.json.backup')
-log.info('proj9-6')
 
 suite('proj9 - Extension Test Suite', () => {
 
 	suiteSetup('proj9 - before', async () => {
-		log.info('proj9-8')
 		await waitForExtensionActive()
 		// await suiteSetupCommon()
-		log.info('proj9-9')
-		await workspace.fs.copy(testProfileJson, testProfileBackup, { overwrite: true }).then(() => {
-			log.info('proj9-10')
-			log.info('setup return')
-			return
-		}, (e) => {
-			log.info('proj9-11')
-			log.error('setup error: e=' + e)
-			throw e
-		})
-		log.info('proj9-')
+		await workspace.fs.copy(testProfileJson, testProfileBackup, { overwrite: true })
+		log.info('suiteSetup complete!')
 	})
 
 	setup('proj9 - beforeEach', () => {
 		const workspaceFolder = workspace.workspaceFolders![0].uri
-		deleteFile(Uri.joinPath(workspaceFolder, '.vscode/profile.json'))
+		deleteFile(Uri.joinPath(workspaceFolder, '.vscode', 'profile.json'))
 		deleteTestFiles()
 	})
 
