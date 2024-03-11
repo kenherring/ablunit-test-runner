@@ -74,6 +74,7 @@ doBuild () {
 	$NO_BUILD && return 0
 	echo "[$0 ${FUNCNAME[0]}] pwd=$(pwd)"
 	npm run build
+	# npm run package
 }
 
 ########## MAIN BLOCK ##########

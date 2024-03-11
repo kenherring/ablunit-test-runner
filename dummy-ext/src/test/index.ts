@@ -11,13 +11,9 @@ function setupMocha(version: vscodeVersion, projName: string, basedir: string, t
 		timeout: timeout,
 		reporter: 'mocha-multi-reporters',
 		reporterOptions: {
-			reporterEnabled: 'spec, mocha-junit-reporter, mocha-reporter-sonarqube',
+			reporterEnabled: 'spec, mocha-junit-reporter',
 			mochaJunitReporterReporterOptions: {
 				mochaFile: basedir + '/artifacts/' + version + '-' + oeVersion + '/mocha_results_junit_' + projName + '.xml'
-			},
-			mochaReporterSonarqubeReporterOptions: {
-				filename: basedir + '/artifacts/' + version + '-' + oeVersion + '/mocha_results_sonar_' + projName + '.xml',
-				useFullFilePath: 'true'
 			}
 		}
 	})
