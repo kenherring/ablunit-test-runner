@@ -76,7 +76,7 @@ jobs:
       - save-package-cache
       - run: |
           find . -type f -name "*.vsix"
-          [ "$(find . -type f -name "*.vsix" | wc -l)" = "3" ] || exit 1
+          [ "$(find . -type f -name "*.vsix" | wc -l)" = "2" ] || exit 1
   test:
     <<: *oe-version-param
     docker:
