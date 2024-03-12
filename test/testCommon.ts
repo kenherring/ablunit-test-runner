@@ -735,38 +735,15 @@ export async function updateConfig (key: string, value: unknown) {
 	}
 	log.info(isoDate() + ' updateConfig-5.1.3 currentValue=' + JSON.stringify(currentValue))
 	log.info(isoDate() + ' updateConfig-5.1.4        value=' + JSON.stringify(value))
-	await workspaceConfig.update(section2, value, false).then(() => {
-		log.info(isoDate() + ' then!')
+	const prom = workspaceConfig.update(section2, value, null)
+	log.info(isoDate() + ' updateConfig-5.1.5 ' + JSON.stringify(prom))
+	await prom.then(() => {
+		log.info(isoDate() + ' updateConfig-5.2.1 then!')
 	}, (e) => {
-		log.error(isoDate() + ' error! err=' + e)
+		log.error(isoDate() + ' updateConfig-5.2.2 error! e=' + e)
+		throw e
 	})
-
-	// {
-	// 	// log.info(isoDate() + ' prom=' + JSON.stringify(prom))
-	// 	// // const prom = workspaceConfig.update(section2, value)
-
-	// 	// log.info(isoDate() + ' updateConfig-5.1.5 await')
-	// 	// const r = await prom.then((ret) => {
-	// 	// 	log.info(isoDate() + ' prom returned (ret=' + ret + ')')
-	// 	// 	return true
-	// 	// }, (err) => {
-	// 	// 	log.error('unset failed! key=' + key + ', err=' + err)
-	// 	// 	throw err
-	// 	// })
-	// 	// log.info(isoDate() + ' updateConfig-5.1.4 r=' + r)
-	// 	return
-	// }
-
-	// log.info(isoDate() + ' updateConfig-6        value=' + JSON.stringify(value))
-	// const r = await workspaceConfig.update(section2, value).then(() => {
-	// 	log.info(isoDate() + ' updateConfig-7')
-	// 	return true
-	// }, (err) => {
-	// 	log.error('config update \'' + section1 + '.' + section2 + '\' failed with err=' + err)
-	// 	throw err
-	// })
-	// log.info(isoDate() + ' updateConfig-8 r=' + r)
-
+	log.info(isoDate() + ' updateConfig-5.3')
 	log.info(isoDate() + ' success!')
 	return Promise.resolve(true)
 }

@@ -144,7 +144,7 @@ function getTestConfig (projName) {
 	ws = path.resolve(__dirname, '..', 'test_projects', ws)
 
 	if (!fs.existsSync(ws)) {
-		const g = glob.globSync(ws + '_*')
+		const g = glob.globSync('test_projects/' + projName + '_*')
 		if (g.length > 1) {
 			throw new Error('Multiple workspaces found: ' + ws)
 		}
