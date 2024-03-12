@@ -93,6 +93,7 @@ jobs:
       - attach_workspace: { at: . }
       - run: .circleci/run_test_wrapper.sh
       - persist_to_workspace: { root: ".", paths: [ artifacts, coverage ]}
+      - run: find . -type f -name "mocha_results_sonar_*.xml" -delete
       - store_test_results: { path: artifacts }
       - store_artifacts: { when: always, path: artifacts }
       - save_cache:
@@ -114,6 +115,7 @@ jobs:
     executor: psc-primary
     steps:
       - attach_workspace: { at: . }
+      - run: cat artifacts/stable-12.2.12/mocha_results_sonar_proj1.xml #TODO remove me
       - run: rm artifacts/stable-12.2.12/mocha_results_junit_*.xml
       - sonarcloud/scan:
           cache_version: 4

@@ -211,21 +211,21 @@ function getCoverageOpts () {
 		reporter: [ 'text', 'lcov' ],
 		output: coverageDir,
 		// includeAll: true,
-		exclude: [
-			'dist',
-			'.vscode-test*.mjs',
-			'test_projects',
-			'dummy-ext',
-			'webpack.config.js',
-			'vscode.proposed.*.d.ts',
-			'vscode',
-		],
-		include: [
-			// '**/*',
-			'**/src/**',
-			'**/test/**',
-		],
-		require: [ 'ts-node/register' ],
+		// exclude: [
+		// 	'dist',
+		// 	'.vscode-test*.mjs',
+		// 	'test_projects',
+		// 	'dummy-ext',
+		// 	'webpack.config.js',
+		// 	'vscode.proposed.*.d.ts',
+		// 	'vscode',
+		// ],
+		// include: [
+		// 	// '**/*',
+		// 	'**/src/**',
+		// 	'**/test/**',
+		// ],
+		// require: [ 'ts-node/register' ],
 		// cache: false,
 		// 'enable-source-maps': true,
 		// sourceMap: false,
@@ -235,21 +235,6 @@ function getCoverageOpts () {
 
 export async function createTestConfig () { // NOSONAR
 	initialize()
-
-	// const tests = [
-	// 	{
-	// 		label: 'suite:proj0',
-	// 		files: 'test/suites/proj0.test.ts',
-	// 	},
-	// 	{
-	// 		label: 'suite:DebugLines',
-	// 		files: 'test/suites/DebugLines.test.ts',
-	// 	},
-	// 	{
-	// 		label: 'suite:TestProfileParser',
-	// 		files: 'test/suites/TestProfileParser.test.ts',
-	// 	}
-	// ]
 
 	const testConfig = {
 		tests: getTests(),

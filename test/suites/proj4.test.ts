@@ -17,7 +17,6 @@ suite('proj4 - Extension Test Suite', () => {
 	})
 
 	setup('proj4 - beforeEach', async () => {
-		log.info('getDefaultDLC()=' + getDefaultDLC())
 		await setRuntimes([{name: '11.7', path: '/psc/dlc_11.7'}, {name: '12.2', path: getDefaultDLC()}])
 	})
 
@@ -32,10 +31,14 @@ suite('proj4 - Extension Test Suite', () => {
 		await updateTestProfile('profiler.listings', listingsDir.fsPath)
 		await updateTestProfile('tempDir', Uri.joinPath(sessionTempDir, 'tempDir').fsPath)
 
-		return runAllTests().then(() => {
-			assert(doesFileExist(resultsXml), 'missing results file (' + resultsXml.fsPath + ')')
-			assert(doesDirExist(listingsDir), 'missing listings directory (' + listingsDir.fsPath + ')')
-		})
+		await runAllTests()
+
+		assert(doesFileExist(resultsXml), 'missing results file (' + resultsXml.fsPath + ')')
+		assert(doesDirExist(listingsDir), 'missing listings directory (' + listingsDir.fsPath + ')')
+		// return runAllTests().then(() => {
+		// 	assert(doesFileExist(resultsXml), 'missing results file (' + resultsXml.fsPath + ')')
+		// 	assert(doesDirExist(listingsDir), 'missing listings directory (' + listingsDir.fsPath + ')')
+		// })
 	})
 
 	test('proj4.2 - tempDir=.builder/ablunit', async () => {

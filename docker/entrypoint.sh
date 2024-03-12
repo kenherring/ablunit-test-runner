@@ -159,8 +159,7 @@ analyze_results () {
 	fi
 	if [ "$TEST_PROJECT" = "base" ] && [ "$LCOV_COUNT" = 0 ]; then
 		echo 'ERROR: lcov.info not found'
-		## TODO
-		# HAS_ERROR=true
+		HAS_ERROR=true
 	fi
 
 	if $HAS_ERROR; then

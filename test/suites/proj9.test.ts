@@ -10,9 +10,9 @@ suite('proj9 - Extension Test Suite', () => {
 
 	suiteSetup('proj9 - before', async () => {
 		await waitForExtensionActive()
-		// await suiteSetupCommon()
-		await workspace.fs.copy(testProfileJson, testProfileBackup, { overwrite: true })
-		log.info('suiteSetup complete!')
+		await waitForExtensionActive('riverside-software.openedge-abl-lsp')
+		// await workspace.fs.copy(testProfileJson, testProfileBackup, { overwrite: true })
+		await workspace.fs.copy(testProfileJson, testProfileBackup, { overwrite: true }).then()
 	})
 
 	setup('proj9 - beforeEach', () => {
@@ -23,23 +23,25 @@ suite('proj9 - Extension Test Suite', () => {
 
 	teardown('proj9 - afterEach', async () => {
 		deleteFile(testProfileJson)
-		await workspace.fs.copy(testProfileBackup, testProfileJson, { overwrite: true }).then(() => {
-			log.info('teardown return')
-			return
-		}, (e) => {
-			log.error('teardown error: e=' + e)
-			throw e
-		})
+		await workspace.fs.copy(testProfileBackup, testProfileJson, { overwrite: true }).then()
+		// await workspace.fs.copy(testProfileBackup, testProfileJson, { overwrite: true }).then(() => {
+		// 	log.info('teardown return')
+		// 	return
+		// }, (e) => {
+		// 	log.error('teardown error: e=' + e)
+		// 	throw e
+		// })
 	})
 
 	suiteTeardown('proj9 - after', async () => {
-		await workspace.fs.delete(testProfileBackup).then(() => {
-			log.info('suiteTeardown return')
-			return
-		}, (e) => {
-			log.error('suiteTeardown error: e=' + e)
-			throw e
-		})
+		await workspace.fs.delete(testProfileBackup)
+		// await workspace.fs.delete(testProfileBackup).then(() => {
+		// 	log.info('suiteTeardown return')
+		// 	return
+		// }, (e) => {
+		// 	log.error('suiteTeardown error: e=' + e)
+		// 	throw e
+		// })
 	})
 
 	test('proj9.1 - ${workspaceFolder}/ablunit.json file exists', async () => {
@@ -59,25 +61,16 @@ suite('proj9 - Extension Test Suite', () => {
 	})
 
 	test('proj9.2 - second profile passes (project)', async () => {
-		log.info('proj9.2-1')
 		await selectProfile('profile2')
-		log.info('proj9.2-2')
 		await runAllTests(true, false)
-		log.info('proj9.2-3')
 
 		const workspaceFolder = workspace.workspaceFolders![0].uri
-		log.info('proj9.2-4')
 		const resultsJson = Uri.joinPath(workspaceFolder, 'results.json')
-		log.info('proj9.2-5')
 
 		assert.fileExists(resultsJson)
-		log.info('proj9.2-6')
 		assert.equal(await getTestCount(resultsJson, 'pass'), 2, 'passed test count')
-		log.info('proj9.2-7')
 		assert.equal(await getTestCount(resultsJson, 'fail'), 0, 'failed test count')
-		log.info('proj9.2-8')
 		assert.equal(await getTestCount(resultsJson, 'error'), 0, 'error test count')
-		log.info('proj9.2-9')
 	})
 
 	test('proj9.3 - third profile passes (inherits propath from 2)', async () => {

@@ -53,7 +53,7 @@ export const oeVersion = () => {
 		return oeVersionEnv
 	}
 	const oeVersion = getEnvVar('OE_VERSION')
-	log.info('oeVersion=' + oeVersion + oeVersion?.split('.').slice(0, 2).join('.'))
+	log.info('oeVersion=' + oeVersion + ' ' + oeVersion?.split('.').slice(0, 2).join('.'))
 	if (oeVersion?.match(/^(11|12)\.\d.\d+$/)) {
 		return oeVersion.split('.').slice(0, 2).join('.')
 	}
@@ -392,14 +392,6 @@ export async function setRuntimes (runtimes?: IRuntime[]): Promise<number> {
 	const prom = conf.update('configuration.runtimes', runtimes, true).then(() => {
 	// const prom = conf.update('configuration.runtimes', runtimes, ConfigurationTarget.Global).then(() => {
 		log.info('202.4')
-		return rebuildAblProject().then((r) => {
-			log.info('202.5 r=' + r)
-			log.info('[setRuntimes] abl.configuration.runtimes set successfully')
-			return r
-		}, (e) => {
-			log.error('202.6 error! e=' + e)
-			throw e
-		})
 		// log.info('202.6 p=' + JSON.stringify(p))
 		// return p
 	}, (e) => {
@@ -409,9 +401,17 @@ export async function setRuntimes (runtimes?: IRuntime[]): Promise<number> {
 	// log.info('204')
 	log.info('205 prom=' + JSON.stringify(prom))
 	log.info('206 ' + typeof prom + ' ' + JSON.stringify(prom))
-	const r = await prom
+	await prom.then()
+	const r = await rebuildAblProject().then((r) => {
+		log.info('202.5 r=' + r)
+		log.info('[setRuntimes] abl.configuration.runtimes set successfully')
+		return r
+	}, (e) => {
+		log.error('202.6 error! e=' + e)
+		throw e
+	})
 	log.info('207 r=' + r)
-	return getRcodeCount()
+	return r
 }
 
 export async function awaitRCode (workspaceFolder: WorkspaceFolder, rcodeCountMinimum = 1) {
