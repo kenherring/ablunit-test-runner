@@ -253,7 +253,7 @@ export async function createTestConfig () { // NOSONAR
 	}
 
 	const definedConfig = defineConfig(testConfig)
-	// writeConfigToFile('test', testConfig)
+	writeConfigToFile('testConfig', testConfig)
 	writeConfigToFile('defined', definedConfig)
 	return definedConfig
 }

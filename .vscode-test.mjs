@@ -4,7 +4,6 @@ import * as fs from 'fs'
 
 function getConfig1() {
     const config = createTestConfig()
-    fs.writeFileSync('.vscode-test.config.bk.json', JSON.stringify(config, null, 4).replace('    ', '\t'))
     return config
 }
 
