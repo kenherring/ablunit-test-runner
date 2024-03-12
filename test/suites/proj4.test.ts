@@ -1,6 +1,6 @@
 import { strict as assert } from 'assert'
 import { Uri } from 'vscode'
-import { deleteFile, doesFileExist, getDefaultDLC, getSessionTempDir, getWorkspaceUri, log, runAllTests, setRuntimes, updateTestProfile, waitForExtensionActive } from '../testCommon'
+import { deleteFile, doesFileExist, getDefaultDLC, getSessionTempDir, getWorkspaceUri, oeVersion, runAllTests, setRuntimes, updateTestProfile, waitForExtensionActive } from '../testCommon'
 import { doesDirExist } from '../../src/ABLUnitCommon'
 
 const projName = 'proj4'
@@ -17,7 +17,7 @@ suite('proj4 - Extension Test Suite', () => {
 	})
 
 	setup('proj4 - beforeEach', async () => {
-		await setRuntimes([{name: '11.7', path: '/psc/dlc_11.7'}, {name: '12.2', path: getDefaultDLC()}])
+		await setRuntimes([{name: '11.7', path: '/psc/dlc_11.7'}, {name: oeVersion(), path: getDefaultDLC()}])
 	})
 
 	teardown('proj4 - afterEach', async () => {
