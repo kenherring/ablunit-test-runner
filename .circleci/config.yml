@@ -72,7 +72,7 @@ jobs:
       - checkout
       - restore-package-cache
       - run: .circleci/package.sh
-      - run: rm node_modules
+      - run: rm -r node_modules
       - persist_to_workspace: { root: ".", paths: [ . ] }
       - save-package-cache
       - run: |
