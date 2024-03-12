@@ -10,8 +10,7 @@ suite('proj9 - Extension Test Suite', () => {
 
 	suiteSetup('proj9 - before', async () => {
 		await waitForExtensionActive()
-		await waitForExtensionActive('riverside-software.openedge-abl-lsp')
-		// await workspace.fs.copy(testProfileJson, testProfileBackup, { overwrite: true })
+		await waitForExtensionActive('riversidesoftware.openedge-abl-lsp')
 		await workspace.fs.copy(testProfileJson, testProfileBackup, { overwrite: true }).then()
 	})
 

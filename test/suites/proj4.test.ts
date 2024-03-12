@@ -35,10 +35,6 @@ suite('proj4 - Extension Test Suite', () => {
 
 		assert(doesFileExist(resultsXml), 'missing results file (' + resultsXml.fsPath + ')')
 		assert(doesDirExist(listingsDir), 'missing listings directory (' + listingsDir.fsPath + ')')
-		// return runAllTests().then(() => {
-		// 	assert(doesFileExist(resultsXml), 'missing results file (' + resultsXml.fsPath + ')')
-		// 	assert(doesDirExist(listingsDir), 'missing listings directory (' + listingsDir.fsPath + ')')
-		// })
 	})
 
 	test('proj4.2 - tempDir=.builder/ablunit', async () => {
