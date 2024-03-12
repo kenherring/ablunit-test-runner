@@ -115,6 +115,8 @@ copy_files () {
 run_tests () {
 	echo "[$0 ${FUNCNAME[0]}] pwd=$(pwd)"
 
+	npm run clean
+
 	.circleci/package.sh
 
 	if [ "$TEST_PROJECT" = "base" ]; then

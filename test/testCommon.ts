@@ -47,10 +47,17 @@ export const enableExtensions = () => {
 }
 
 export const oeVersion = () => {
-	const oeVersion = getEnvVar('ABLUNIT_TEST_RUNNER_OE_VERSION')
-	if (oeVersion?.match(/^(11|12)\.\d$/)) {
-		return oeVersion
+	const oeVersionEnv = getEnvVar('ABLUNIT_TEST_RUNNER_OE_VERSION')
+	log.info('oeVersionEnv=' + oeVersionEnv)
+	if (oeVersionEnv?.match(/^(11|12)\.\d$/)) {
+		return oeVersionEnv
 	}
+	const oeVersion = getEnvVar('OE_VERSION')
+	log.info('oeVersion=' + oeVersion + oeVersion?.split('.').slice(0, 2).join('.'))
+	if (oeVersion?.match(/^(11|12)\.\d.\d+$/)) {
+		return oeVersion.split('.').slice(0, 2).join('.')
+	}
+	// throw new Error('unknown oe version!')
 	return '12.2'
 }
 
@@ -116,7 +123,7 @@ function getExtensionDevelopmentPath () {
 	throw new Error('unable to determine extensionDevelopmentPath')
 }
 
-export async function suiteSetupCommon () {
+export async function suiteSetupCommon (runtimes?: IRuntime[]) {
 	log.info('suiteSetupCommon-1 waitForExtensionActive - ablunit-test-runner (projName=' + projName() + ')')
 	await waitForExtensionActive()
 	const extname = 'riversidesoftware.openedge-abl-lsp'
@@ -151,7 +158,7 @@ export async function suiteSetupCommon () {
 			throw e
 		})
 		log.info('suiteSetupCommon-4 setRuntimes')
-		const r = await setRuntimes().then((r: number) => r, (e) => {
+		const r = await setRuntimes(runtimes).then((r: number) => r, (e) => {
 			log.error('failed to set runtimes (e=' + e + ')')
 			throw e
 		})
@@ -358,7 +365,7 @@ export async function setRuntimes (runtimes?: IRuntime[]): Promise<number> {
 		throw new Error('setRuntimes failed! extensions are disabled')
 	}
 	if (!runtimes) {
-		runtimes = [{name: '12.2', path: getDefaultDLC(), default: true}]
+		runtimes = [{name: oeVersion(), path: getDefaultDLC(), default: true}]
 	}
 	log.info('[setRuntimes] setting abl.configuration.runtimes=' + JSON.stringify(runtimes))
 	const ext = extensions.getExtension('riversidesoftware.openedge-abl-lsp')
@@ -382,7 +389,7 @@ export async function setRuntimes (runtimes?: IRuntime[]): Promise<number> {
 	log.info('202.2     conf=' + JSON.stringify(conf))
 	log.info('202.3 runtimes=' + JSON.stringify(runtimes))
 
-	const prom = conf.update('configuration.runtimes', runtimes, ConfigurationTarget.Global).then(() => {
+	const prom = conf.update('configuration.runtimes', runtimes, true).then(() => {
 	// const prom = conf.update('configuration.runtimes', runtimes, ConfigurationTarget.Global).then(() => {
 		log.info('202.4')
 		return rebuildAblProject().then((r) => {
@@ -402,8 +409,8 @@ export async function setRuntimes (runtimes?: IRuntime[]): Promise<number> {
 	// log.info('204')
 	log.info('205 prom=' + JSON.stringify(prom))
 	log.info('206 ' + typeof prom + ' ' + JSON.stringify(prom))
-	await prom
-	log.info('207')
+	const r = await prom
+	log.info('207 r=' + r)
 	return getRcodeCount()
 }
 

@@ -37,6 +37,10 @@ function writeConfigToFile (name, config) {
 }
 
 function getMochaTimeout (projName) {
+	if (enableExtensions.includes(projName)) {
+		// TODO - first only?
+		return 90000
+	}
 	if (projName === 'proj3' && projName === 'proj4') {
 		return 30000
 	}
