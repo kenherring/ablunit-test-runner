@@ -141,6 +141,7 @@ workflows:
       - package:
           <<: *context-and-filters
       - test:
+          <<: *context-and-filters
           requires: [ package ]
           oe-version: 12.2.12
           matrix:
@@ -148,9 +149,9 @@ workflows:
               vscode-version: [ stable, insiders ]
           name: test-12.2.12-<< matrix.vscode-version >>
       - test:
+          <<: *context-and-filters
           requires: [ package, test-12.2.12-stable ]
           oe-version: 12.7.0
-          <<: *context-and-filters
           matrix:
             parameters:
               vscode-version: [ stable, insiders ]
