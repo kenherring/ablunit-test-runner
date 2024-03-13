@@ -142,19 +142,19 @@ workflows:
           <<: *context-and-filters
       - test:
           name: test-12.2.12
+          requires: [ package ]
           oe-version: 12.2.12
           matrix:
             parameters:
               vscode-version: [ stable, insiders ]
       - test:
           name: test-12.7.0
-          requires: test-12.2.12
+          requires: [ package, test-12.2.12 ]
           oe-version: 12.7.0
           <<: *context-and-filters
           matrix:
             parameters:
               vscode-version: [ stable, insiders ]
-          requires: [ 'package' ]
       - sonar:
           <<: *context-and-filters
           requires:
