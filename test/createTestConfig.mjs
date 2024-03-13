@@ -120,7 +120,7 @@ function getLaunchArgs (projName) {
 		// '--sync=off',
 		// '--telemetry',
 		// '--log=debug',
-		// '--log=trace',
+		'--log=trace',
 		// '--verbose',
 	]
 	// if (enableExtensions.includes(projName)) {

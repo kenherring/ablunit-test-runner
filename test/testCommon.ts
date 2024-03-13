@@ -138,11 +138,8 @@ export async function suiteSetupCommon (runtimes?: IRuntime[]) {
 	log.info('suiteSetupCommon-2.8 enableExtensions=' + enableExtensions)
 
 	if (enableExtensions()) {
-		await installExtension(extname).then((r) => {
-			if (!r) {
-				throw new Error('failed to install extension ' + extname)
-			}
-			log.info('suiteSetupCommon-3 installed extension ' + extname + ' (r=' + JSON.stringify(r) + ')')
+		await installExtension(extname).then(() => {
+			log.info('suiteSetupCommon-3 installed extension ' + extname)
 			return
 		}, (e) => {
 			log.error('failed to install extension ' + extname + ' (e=' + e + ')')
@@ -150,7 +147,6 @@ export async function suiteSetupCommon (runtimes?: IRuntime[]) {
 		})
 		log.info('suiteSetupCommon-3 activateExtension ' + extname)
 		await activateExtension(extname).then((r) => {
-			log.info('suiteSetupCommon-4 activated extension ' + extname)
 			log.info('suiteSetupCommon-4 activated extension ' + extname + ' (isActive=' + r + ')')
 			return r
 		}, (e) => {
@@ -218,7 +214,7 @@ export async function installExtension (extname = 'riversidesoftware.openedge-ab
 	log.info('[installExtension] start process.args=' + process.argv.join(' '))
 	if (extensions.getExtension(extname)) {
 		log.info('[installExtension] extension ' + extname + ' is already installed')
-		return true
+		return
 	}
 
 	log.info('[installExtension] installing ' + extname + ' extension...')
@@ -230,7 +226,7 @@ export async function installExtension (extname = 'riversidesoftware.openedge-ab
 			log.info('get extension \'' + extname + '\'...')
 			const ext = extensions.getExtension(extname)
 			if (!ext) { throw new Error('get after install failed') }
-			return ext
+			return
 		})
 	}, (e) => {
 		log.error(installCommand + ' failed to install extension \'' + extname + '\'!')
