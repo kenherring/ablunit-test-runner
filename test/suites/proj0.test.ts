@@ -1,7 +1,6 @@
-import { afterEach, before } from 'mocha'
 import { Uri, commands, window, workspace, Range } from 'vscode'
 import { assert, deleteFile, getResults, log, runAllTests, sleep, toUri, updateTestProfile, waitForExtensionActive } from '../testCommon'
-import { DetailedCoverageCustom } from '../../TestCoverage'
+import { DetailedCoverageCustom } from '../../src/TestCoverage'
 
 const projName = 'proj0'
 
@@ -13,19 +12,19 @@ function getDetailLine (coverage: DetailedCoverageCustom[], lineNum: number) {
 	})
 }
 
-suite(projName + ' - Extension Test Suite', () => {
+suite('proj0  - Extension Test Suite', () => {
 
-	before(projName + ' - before', async () => {
+	suiteSetup('proj0 - before', async () => {
 		await waitForExtensionActive().then(async () => { return sleep(250) })
 		await commands.executeCommand('testing.clearTestResults').then()
 		deleteFile('.vscode/ablunit-test-profile.json')
 	})
 
-	afterEach(projName + ' - afterEach', () => {
+	teardown('proj0 - afterEach', () => {
 		deleteFile('.vscode/ablunit-test-profile.json')
 	})
 
-	test(projName + '.1 - ${workspaceFolder}/ablunit.json file exists', async () => {
+	test('proj0.1 - ${workspaceFolder}/ablunit.json file exists', async () => {
 		await runAllTests()
 
 		const recentResults = await getResults()
@@ -35,7 +34,7 @@ suite(projName + ' - Extension Test Suite', () => {
 		assert.notDirExists('listings')
 	})
 
-	test(projName + '.2 - run test, open file, validate coverage displays', async () => {
+	test('proj0.2 - run test, open file, validate coverage displays', async () => {
 		await runAllTests()
 		const testFileUri = Uri.joinPath(workspace.workspaceFolders![0].uri, 'src', 'dirA', 'dir1', 'testInDir.p')
 		await window.showTextDocument(testFileUri).then()
@@ -46,7 +45,7 @@ suite(projName + ' - Extension Test Suite', () => {
 		assert.assert(getDetailLine(lines, 6), 'line 5 should display as executed')
 	})
 
-	test(projName + '.3 - open file, run test, validate coverage displays', async () => {
+	test('proj0.3 - open file, run test, validate coverage displays', async () => {
 		const testFileUri = Uri.joinPath(workspace.workspaceFolders![0].uri, 'src', 'dirA', 'dir1', 'testInDir.p')
 		await window.showTextDocument(testFileUri).then()
 		await runAllTests()
@@ -57,7 +56,7 @@ suite(projName + ' - Extension Test Suite', () => {
 		assert.assert(getDetailLine(lines, 6), 'line 5 should display as executed')
 	})
 
-	test(projName + '.4 - coverage=false, open file, run test, validate no coverage displays', async () => {
+	test('proj0.4 - coverage=false, open file, run test, validate no coverage displays', async () => {
 		await updateTestProfile('profiler.coverage', false)
 		const testFileUri = Uri.joinPath(workspace.workspaceFolders![0].uri, 'src', 'dirA', 'dir1', 'testInDir.p')
 		await window.showTextDocument(testFileUri).then()

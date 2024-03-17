@@ -4,6 +4,15 @@ set -euo pipefail
 initialize () {
 	local OPT OPTARG OPTIND
 	echo "[$0 ${FUNCNAME[0]}] pwd=$(pwd)"
+	VERBOSE=${VERBOSE:-false}
+	ABLUNIT_TEST_RUNNER_OE_VERSION=${ABLUNIT_TEST_RUNNER_OE_VERSION:-12.2.12}
+	ABLUNIT_TEST_RUNNER_VSCODE_VERSION=${ABLUNIT_TEST_RUNNER_VSCODE_VERSION:-stable}
+	ABLUNIT_TEST_RUNNER_PROJECT_NAME=${ABLUNIT_TEST_RUNNER_PROJECT_NAME:-}
+	if $VERBOSE; then
+		echo "ABLUNIT_TEST_RUNNER_OE_VERSION=$ABLUNIT_TEST_RUNNER_OE_VERSION"
+		echo "ABLUNIT_TEST_RUNNER_VSCODE_VERSION=$ABLUNIT_TEST_RUNNER_VSCODE_VERSION"
+		echo "ABLUNIT_TEST_RUNNER_PROJECT_NAME=$ABLUNIT_TEST_RUNNER_PROJECT_NAME"
+	fi
 	BASH_AFTER=false
 	BASH_AFTER_ERROR=false
 	CACHE_BASE=/home/circleci/cache
@@ -13,7 +22,6 @@ initialize () {
 	REPO_VOLUME=/home/circleci/ablunit-test-runner
 	GIT_BRANCH=$(cd "$REPO_VOLUME" && git branch --show-current)
 	STAGED_ONLY=${STAGED_ONLY:-true}
-	VERBOSE=${VERBOSE:-false}
 	${CREATE_PACKAGE:-false} && TEST_PROJECT=package
 
 	git config --global init.defaultBranch main
@@ -106,6 +114,8 @@ copy_files () {
 
 run_tests () {
 	echo "[$0 ${FUNCNAME[0]}] pwd=$(pwd)"
+
+	npm run clean
 
 	.circleci/package.sh
 

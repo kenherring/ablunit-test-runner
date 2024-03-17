@@ -6,7 +6,9 @@ usage () {
 usage: $0 [ -o (12.2.12 | 12.7.0 | all) ] [ -V (stable | proposedapi | insiders)] [ -p <project_name> ] [-bBimPv]
 options:
   -o <version>  OE version (default: 12.2.12)
+                alternative: set the ABLUNIT_TEST_RUNNER_OE_VERSION environment variable
   -V <version>  VSCode version (default: stable)
+                alternative: set the ABLUNIT_TEST_RUNNER_VSCODE_VERSION environment variable
   -b            drop to bash shell inside container on failure
   -B            same as -b, but only on error
   -C            delete cache volume before running tests
@@ -27,8 +29,8 @@ initialize () {
 	DELETE_CACHE_VOLUME=false
 	TEST_PROJECT=base
 	STAGED_ONLY=true
-	ABLUNIT_TEST_RUNNER_OE_VERSION=12.2.12
-	ABLUNIT_TEST_RUNNER_VSCODE_VERSION=stable
+	ABLUNIT_TEST_RUNNER_OE_VERSION=${ABLUNIT_TEST_RUNNER_OE_VERSION:-12.2.12}
+	ABLUNIT_TEST_RUNNER_VSCODE_VERSION=${ABLUNIT_TEST_RUNNER_VSCODE_VERSION:-stable}
 	ABLUNIT_TEST_RUNNER_PROJECT_NAME=${ABLUNIT_TEST_RUNNER_PROJECT_NAME:-}
 
 	while getopts "bBCdimso:p:PvV:h" OPT; do
@@ -103,7 +105,7 @@ run_tests_in_docker () {
 
 	for ABLUNIT_TEST_RUNNER_OE_VERSION in "${OE_VERSIONS[@]}"; do
 		echo "[$0 ${FUNCNAME[0]}] docker run with ABLUNIT_TEST_RUNNER_OE_VERSION=$ABLUNIT_TEST_RUNNER_OE_VERSION"
-		export ABLUNIT_TEST_RUNNER_OE_VERSION
+		export ABLUNIT_TEST_RUNNER_OE_VERSION ABLUNIT_TEST_RUNNER_VSCODE_VERSION ABLUNIT_TEST_RUNNER_PROJECT_NA
 		local ARGS=(
 			--rm
 			-it
@@ -117,7 +119,7 @@ run_tests_in_docker () {
 			-e ABLUNIT_TEST_RUNNER_VSCODE_VERSION
 			-v "$PWD/docker/artifacts":/home/circleci/artifacts
 		)
-		[ -n "$ABLUNIT_TEST_RUNNER_PROJECT_NAME" ] && ARGS+=(-e ABLUNIT_TEST_RUNNER_PROJECT_NAME)
+		[ -n "${ABLUNIT_TEST_RUNNER_PROJECT_NAME:-}" ] && ARGS+=(-e ABLUNIT_TEST_RUNNER_PROJECT_NAME)
 		ARGS+=(
 			-v "$PWD":/home/circleci/ablunit-test-runner:ro
 			-v test-runner-cache:/home/circleci/cache

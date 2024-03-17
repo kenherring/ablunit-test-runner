@@ -1,24 +1,23 @@
 import { strict as assert } from 'assert'
-import { afterEach, before } from 'mocha'
 import { Uri, workspace } from 'vscode'
 import { doesDirExist, doesFileExist, log, runAllTests, updateConfig, waitForExtensionActive } from '../testCommon'
 
 
 const projName = 'workspace1'
 
-suite(projName + ' - Extension Test Suite', () => {
+suite('workspace1 - Extension Test Suite', () => {
 
-	before(projName + ' - before', async () => {
+	suiteSetup('workspace1 - before', async () => {
 		await waitForExtensionActive()
 		await updateConfig('tempDir', undefined)
 	})
 
-	afterEach(projName + ' - afterEach', async () => {
+	teardown('workspace1 - afterEach', async () => {
 		log.info('after')
 		await updateConfig('tempDir', undefined)
 	})
 
-	test(projName + '.1 - <workspaceFolder>/ablunit.json file exists', async () => {
+	test('workspace1.1 - <workspaceFolder>/ablunit.json file exists', async () => {
 		await runAllTests()
 
 		const workspaceFolderUri = [
@@ -55,7 +54,7 @@ suite(projName + ' - Extension Test Suite', () => {
 		assert(!doesFileExist(ablunitJson), 'ablunit.json exists and should not (' + ablunitJson.fsPath + ')')
 	})
 
-	// test(projName + '.2 - <storageUri>/ablunit.json file exists', async () => {
+	// test('workspace1.2 - <storageUri>/ablunit.json file exists', async () => {
 	// 	await updateConfig("tempDir", "workspaceAblunit")
 	// 	await runAllTests()
 

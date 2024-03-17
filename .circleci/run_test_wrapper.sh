@@ -6,7 +6,6 @@ initialize () {
 	VERBOSE=${VERBOSE:-false}
 	DONT_PROMPT_WSL_INSTALL=No_Prompt_please
 	ABLUNIT_TEST_RUNNER_OE_VERSION=${ABLUNIT_TEST_RUNNER_OE_VERSION:-}
-	# ABLUNIT_TEST_RUNNER_OE_VERSION=${ABLUNIT_TEST_RUNNER_OE_VERSION:-$OE_VERSION}
 	if [ -z "$ABLUNIT_TEST_RUNNER_OE_VERSION" ]; then
 		ABLUNIT_TEST_RUNNER_OE_VERSION=${OE_VERSION:-12.2.12}
 	fi
@@ -21,6 +20,8 @@ initialize () {
 
 	echo "ABLUNIT_TEST_RUNNER_OE_VERSION=$ABLUNIT_TEST_RUNNER_OE_VERSION"
 	echo "ABLUNIT_TEST_RUNNER_VSCODE_VERSION=$ABLUNIT_TEST_RUNNER_VSCODE_VERSION"
+
+	npm install
 }
 
 dbus_config () {
@@ -44,7 +45,7 @@ run_tests () {
 	EXIT_CODE=0
 
 	cp "package.$ABLUNIT_TEST_RUNNER_VSCODE_VERSION.json" package.json
-	xvfb-run -a npm run test || EXIT_CODE=$?
+	xvfb-run -a npm run test:coverage || EXIT_CODE=$?
 	cp package.stable.json package.json
 
 	if [ -f /home/circleci/project/test_projects/proj0/prof.out ]; then
