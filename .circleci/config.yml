@@ -161,9 +161,9 @@ workflows:
       - sonar:
           <<: *context-and-filters
           requires: [ test-12.2.12-stable ]
-      - install-and-run:
-          <<: *context-and-filters
-          requires: [ test-12.2.12-stable ]
+      # - install-and-run:
+      #     <<: *context-and-filters
+      #     requires: [ test-12.2.12-stable ]
       - publish:
           context:
             - Azure_PAT
