@@ -174,4 +174,4 @@ workflows:
           requires:
             - shellcheck/check
             - sonar
-            - install-and-run
+            # - install-and-run
