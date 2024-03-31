@@ -154,11 +154,11 @@ export async function setRuntimes (runtimes?: IRuntime[]): Promise<void> {
 			resolve()
 		}
 
-		const ablConf = workspace.getConfiguration('abl')
-
-		conf.update('configuration.runtimes', runtimes, true).then(() => {
-			const ablConf = workspace.getConfiguration('abl')
+		log.info('setting configufarion.runtimes...')
+		const prom = conf.update('configuration.runtimes', runtimes, true).then(() => {
+			log.info('runtimes set, restarting lang server...')
 			restartLangServer().then(() => {
+				log.info('lang server restarted!')
 				resolve()
 			}, (e) => { throw e })
 		}, (e: unknown) => {
@@ -169,6 +169,5 @@ export async function setRuntimes (runtimes?: IRuntime[]): Promise<void> {
 			reject(new Error('setRuntimes failed! e=' + e))
 			return
 		})
-		return
 	})
 }

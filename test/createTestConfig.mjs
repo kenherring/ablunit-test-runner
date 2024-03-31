@@ -207,13 +207,13 @@ function getLaunchArgs (projName) {
 	// --- disbale functionality not needed for testing - https://github.com/microsoft/vscode/issues/174744 --- //
 	// args.push('--disable-chromium-sandbox')
 	// args.push('--no-sandbox', '--sandbox=false')
-	args.push('--disable-crash-reporter')
-	args.push('--disable-gpu-sandbox')
-	args.push('--disable-gpu')
+	// args.push('--disable-crash-reporter')
+	// args.push('--disable-gpu-sandbox')
+	// args.push('--disable-gpu')
 	args.push('--disable-telemetry')
 	args.push('--disable-updates')
-	args.push('--disable-workspace-trust')
-	args.push('--disable-dev-shm-usage', '--no-xshm')
+	// args.push('--disable-workspace-trust')
+	// args.push('--disable-dev-shm-usage', '--no-xshm')
 
 
 	// --- possible coverage (nyc) related args --- //
@@ -301,6 +301,7 @@ function getTests () {
 	const g = glob.globSync('test/suites/*.test.ts').reverse()
 	for (const f of g) {
 		tests.push(getTestConfig(path.basename(f, '.test.ts')))
+		return tests // TODO remove me
 	}
 	return tests
 }

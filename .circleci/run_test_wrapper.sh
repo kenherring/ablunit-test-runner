@@ -57,13 +57,18 @@ restore_vscode_test () {
 dbus_config () {
 	echo "[$0 ${FUNCNAME[0]}] ABLUNIT_TEST_RUNNER_DBUS_NUM=$ABLUNIT_TEST_RUNNER_DBUS_NUM"
 	case $ABLUNIT_TEST_RUNNER_DBUS_NUM in
+		0) dbus_config_0 ;; ## do nothing
 		1) dbus_config_1 ;; ## /sbin/start-stop-daemon: signal value must be numeric or name of signal (KILL, INT, ...)
 		2) dbus_config_2 ;; ## Failed to connect to the bus: Failed to connect to socket /run/user/0/bus: No such file or directory
 		3) dbus_config_3 ;; ## no errors!
 		4) dbus_config_4 ;; ## dbus error: Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
 		5) dbus_config_5 ;; ## Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
-		*) dbus_config_3 ;; ## no errors!
+		*) dbus_config_0 ;; ## no errors!
 	esac
+}
+
+dbug_config_0 () {
+	echo "[$0 ${FUNCNAME[0]}]"
 }
 
 dbus_config_1 () {

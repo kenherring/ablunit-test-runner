@@ -44,7 +44,31 @@
 			"outFiles": [
 				"${workspaceFolder}/out/**/*.js"
 			]
-		}
+		},
+		{
+			"name": "Extension Tests",
+			"type": "extensionHost",
+			"request": "launch",
+			"testConfiguration": "${workspaceFolder}/.vscode-test.mjs",
+			"args": [
+				"--extensionDevelopmentPath=${workspaceFolder}"
+			],
+			"sourceMaps": true,
+			"resolveSourceMapLocations": [
+				"${workspaceFolder}/**",
+				"!**/node_modules/**"
+			]
+		},
+		{
+			"name": "Extension Tests - AtStart",
+			"type": "extensionHost",
+			"request": "launch",
+			"runtimeExecutable": "${execPath}",
+			"args": [
+				"--extensionDevelopmentPath=${workspaceFolder}",
+				"--extensionTestsPath=${workspaceFolder}/test/suites/AtStart.test.ts",
+			],
+		},
 	],
 	"inputs": [
 		{
@@ -52,6 +76,7 @@
 			"description": "Enter the name of the workspace to test",
 			"type": "pickString",
 			"options": [
+				"AtStart",
 				"DebugLines",
 				"proj0",
 				"proj1",
@@ -64,6 +89,7 @@
 				"proj8_custom_command",
 				"proj9",
 				"projA",
+				"TestProfileParser",
 				"workspace0.code-workspace",
 				"workspace1.code-workspace",
 			]

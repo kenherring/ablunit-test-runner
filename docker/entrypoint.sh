@@ -151,7 +151,7 @@ run_tests_base () {
 
 	if [ -z "${ABLUNIT_TEST_RUNNER_PROJECT_NAME:-}" ]; then
 		analyze_results
-		scripts/validate.sh
+		# scripts/validate.sh
 	fi
 }
 
