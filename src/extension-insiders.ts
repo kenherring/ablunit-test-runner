@@ -18,9 +18,12 @@ import { ABLResults } from './ABLResults'
 import { log } from './ChannelLogger'
 import { getContentFromFilesystem } from './parse/TestParserCommon'
 import { ABLTestCase, ABLTestClass, ABLTestData, ABLTestDir, ABLTestFile, ABLTestProgram, ABLTestSuite, resultData, testData } from './testTree'
+import { Decorator, decorator } from './Decorator'
+import { minimatch } from 'minimatch'
 
 export interface IExtensionTestReferences {
 	testController: TestController
+	decorator: Decorator
 	recentResults: ABLResults[]
 	currentRunData: ABLResults[]
 }
@@ -46,6 +49,7 @@ export async function activate (context: ExtensionContext) {
 		}
 		const ret = {
 			testController: ctrl,
+			decorator: decorator,
 			recentResults: recentResults,
 			currentRunData: data
 		} as IExtensionTestReferences
@@ -67,6 +71,7 @@ export async function activate (context: ExtensionContext) {
 			return new Disposable(async () => {
 				await updateNodeForDocument(e, 'didOpen').then(() => {
 					log.trace('updateNodeForDocument complete for ' + e.uri)
+					// decorator.decorate(undefined, e)
 					return
 				}, (e: unknown) => {
 					log.error('failed updateNodeForDocument onDidTextDocument! err=' + e)
@@ -184,7 +189,7 @@ export async function activate (context: ExtensionContext) {
 								+ p.passed + ' passed, '
 								+ p.errors + ' errors, '
 								+ p.failures + ' failures, '
-								+ r.duration.elapsed()
+								+ r.duration
 					log.info(totals, run)
 				} else {
 					log.debug('cannot print totals - missing ablResults object')
@@ -222,7 +227,36 @@ export async function activate (context: ExtensionContext) {
 
 			const data = resultData.get(run) ?? []
 			recentResults = data
+			decorator.setRecentResults(recentResults)
 
+			// if (window.activeTextEditor) {
+			// 	log.info('decorating editor - activeTextEditor')
+			// 	decorator.decorate(window.activeTextEditor)
+			// }
+
+			// const coverageProvider = {
+			// 	provideFileCoverage: () => {
+			// 		log.info('---------- provideFileCoverage ----------')
+			// 		const results = resultData.get(run)
+			// 		if (!results) { return [] }
+
+			// 		const coverage: FileCoverage[] = []
+			// 		for(const r of results) {
+			// 			r.coverage.forEach((c) => { coverage.push(c) })
+			// 		}
+			// 		log.info('coverage.length=' + coverage.length)
+			// 		return coverage
+			// 	},
+			// 	resolveFileCoverage: (coverage: FileCoverage, cancellation: CancellationToken) => {
+			// 		log.info('---------- resolveFileCoverage ----------')
+			// 		log.error('resolveFileCoverage not implemented')
+
+			// 		cancellation.onCancellationRequested(() => {
+			// 			log.info('cancellation requested!')
+			// 		})
+			// 		return coverage
+			// 	}
+			// }
 
 			void log.notification('ablunit tests complete')
 			run.end()
@@ -630,7 +664,10 @@ function gatherTestItems (collection: TestItemCollection) {
 function getExcludePatterns () {
 	let excludePatterns: string[] = []
 
-	const excludePatternsConfig: string[] | undefined = workspace.getConfiguration('ablunit').get('files.exclude', [ '**/.builder/**' ])
+	let excludePatternsConfig: string[] | string | undefined = workspace.getConfiguration('ablunit').get('files.exclude', '**/.builder/**')
+	if (typeof excludePatternsConfig === 'string') {
+		excludePatternsConfig = excludePatternsConfig.split(',')
+	}
 	if (excludePatternsConfig.length == 1) {
 		excludePatterns[0] = ''
 		for (const pattern of excludePatternsConfig) {
@@ -709,8 +746,7 @@ function removeExcludedFiles (controller: TestController, excludePatterns: Relat
 
 	const items = gatherAllTestItems(controller.items)
 
-	for (const element of items) {
-		const item = element
+	for (const item of items) {
 		const data = testData.get(item)
 		if (item.id === 'ABLTestSuiteGroup') {
 			removeExcludedChildren(item, excludePatterns)
@@ -776,13 +812,9 @@ async function refreshTestTree (controller: TestController, token: CancellationT
 		throw new CancellationError()
 	}
 	const { includePatterns, excludePatterns } = getWorkspaceTestPatterns()
-	log.info('includePatterns=' + includePatterns.length + ', excludePatterns=' + excludePatterns.length)
-	for (const pattern of includePatterns) {
-		log.debug('includePattern=' + pattern.pattern)
-	}
-	for (const pattern of excludePatterns) {
-		log.debug('excludePattern=' + pattern.pattern)
-	}
+	log.info('includePatternslength=' + includePatterns.length + ', excludePatterns.length=' + excludePatterns.length)
+	// log.debug('includePatterns=' + includePatterns.map(pattern => pattern.pattern).join('\n'))
+	// log.debug('excludePatterns=' + excludePatterns.map(pattern => pattern.pattern).join('\n'))
 
 	removeExcludedFiles(controller, excludePatterns, token)
 
@@ -891,21 +923,24 @@ function openCallStackItem (traceUriStr: string) {
 		editor.selections = [new Selection(lineToGoBegin, lineToGoEnd)]
 		const range = new Range(lineToGoBegin, lineToGoEnd)
 		log.info('decorating editor - openCallStackItem')
+		// decorator.decorate(editor)
 		editor.revealRange(range)
 	})
 }
 
 function isFileExcluded (uri: Uri, excludePatterns: RelativePattern[]) {
-	const patterns = excludePatterns.map(pattern => pattern.pattern)
-	const relativePath = workspace.asRelativePath(uri.fsPath, false)
 	const workspaceFolder = workspace.getWorkspaceFolder(uri)
-	if (!workspaceFolder) {
-		return true
-	}
-	const g = globSync(relativePath, { cwd: workspaceFolder.uri.fsPath, ignore: patterns })
-	return g.length == 0
-}
+	if (!workspaceFolder) { return true }
 
+	const relativePath = workspace.asRelativePath(uri.fsPath, false)
+	const patterns = excludePatterns.map(pattern => pattern.pattern)
+	for (const pattern of patterns) {
+		if (minimatch(relativePath, pattern)) {
+			return true
+		}
+	}
+	return false
+}
 
 export async function doesDirExist (uri: Uri) {
 	const ret = await workspace.fs.stat(uri).then((stat) => {

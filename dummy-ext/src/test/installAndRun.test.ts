@@ -2,7 +2,7 @@ import { strict as assert } from 'assert'
 import { before } from 'mocha'
 import { FileType, Uri, commands, extensions, workspace } from 'vscode'
 
-before(async () => {
+suiteSetup(async () => {
 	console.log("[before-1] activating extension: kherring.ablunit-test-runner")
 	const ext = extensions.getExtension('kherring.ablunit-test-runner')
 	if (!ext) {

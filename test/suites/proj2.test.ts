@@ -1,4 +1,3 @@
-import { before } from 'mocha'
 import { Uri, commands } from 'vscode'
 import { assert, getResults, getWorkspaceUri, log, refreshData, runAllTests, sleep, waitForExtensionActive } from '../testCommon'
 
@@ -6,20 +5,20 @@ import { assert, getResults, getWorkspaceUri, log, refreshData, runAllTests, sle
 const projName = 'proj2'
 const workspaceUri = getWorkspaceUri()
 
-suite(projName + ' - Extension Test Suite', () => {
+suite('proj2 - Extension Test Suite', () => {
 
-	before(projName + ' - before', async () => {
+	suiteSetup('proj2 - before', async () => {
 		await waitForExtensionActive()
 	})
 
-	test(projName + '.1 - temp/ablunit.json file exists', async () => {
+	test('proj2.1 - temp/ablunit.json file exists', async () => {
 		await runAllTests()
 
 		const ablunitJson = Uri.joinPath(workspaceUri, 'temp', 'ablunit.json')
 		assert.fileExists(ablunitJson)
 	})
 
-	test(projName + '.2 - call stack', async () => {
+	test('proj2.2 - call stack', async () => {
 		await commands.executeCommand('vscode.open', Uri.joinPath(workspaceUri, 'src/classes/testClass2.cls'))
 		await sleep(200)
 		await commands.executeCommand('testing.runCurrentFile')
@@ -37,7 +36,7 @@ suite(projName + ' - Extension Test Suite', () => {
 		}
 	})
 
-	test(projName + '.3 - run current test suite', async () => {
+	test('proj2.3 - run current test suite', async () => {
 		await commands.executeCommand('vscode.open', Uri.joinPath(workspaceUri, 'src/testSuite.cls'))
 		await sleep(200)
 		await commands.executeCommand('testing.runCurrentFile')

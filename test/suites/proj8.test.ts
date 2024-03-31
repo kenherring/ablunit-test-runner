@@ -1,17 +1,16 @@
-import { before } from 'mocha'
 import { Uri } from 'vscode'
 import { assert, getResults, getWorkspaceUri, runAllTests, waitForExtensionActive } from '../testCommon'
-import { getEnvVars } from '../../ABLUnitRun'
+import { getEnvVars } from '../../src/ABLUnitRun'
 
 const projName = 'proj8'
 
-suite(projName + ' - Extension Test Suite', () => {
+suite('proj8 - Extension Test Suite', () => {
 
-	before(projName + ' - before', async () => {
+	suiteSetup('proj8 - before', async () => {
 		await waitForExtensionActive()
 	})
 
-	test(projName + '.1 - test count', async () => {
+	test('proj8.1 - test count', async () => {
 		await runAllTests()
 
 		const resultsXml = Uri.joinPath(getWorkspaceUri(), 'target', 'results.xml')
@@ -20,13 +19,13 @@ suite(projName + ' - Extension Test Suite', () => {
 		assert.fileExists(resultsXml)
 		assert.fileExists(resultsJson)
 
-		assert.count(2)
-		assert.errored(0)
-		assert.failed(0)
-		assert.passed(2)
+		assert.tests.count(2)
+		assert.tests.errored(0)
+		assert.tests.failed(0)
+		assert.tests.passed(2)
 	})
 
-	test(projName + '.2 - getEnvVars confirm PATH is set correctly', async () => {
+	test('proj8.2 - getEnvVars confirm PATH is set correctly', async () => {
 		await runAllTests()
 		const recentResults = await getResults()
 		const res = recentResults[0]

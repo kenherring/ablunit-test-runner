@@ -1,18 +1,17 @@
 import { strict as assert } from 'assert'
-import { before } from 'mocha'
 import { Uri, workspace } from 'vscode'
 import { doesDirExist, doesFileExist, runAllTests, waitForExtensionActive } from '../testCommon'
 
 
 const projName = 'workspace0'
 
-suite(projName + ' - Extension Test Suite', () => {
+suite('workspace0 - Extension Test Suite', () => {
 
-	before(projName + ' - before', async () => {
+	suiteSetup('workspace0 - before', async () => {
 		await waitForExtensionActive()
 	})
 
-	test(projName + '.1 - <workspaceFolder>/ablunit.json file exists', async () => {
+	test('workspace0.1 - <workspaceFolder>/ablunit.json file exists', async () => {
 		await runAllTests()
 
 		const workspaceFolder = workspace.workspaceFolders![0].uri
