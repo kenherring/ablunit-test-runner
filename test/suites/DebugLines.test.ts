@@ -1,56 +1,27 @@
-import { strict as assert } from 'assert'
-import { before } from 'mocha'
-import { Uri, commands, workspace } from 'vscode'
-import { awaitRCode, getDefaultDLC, getWorkspaceUri, log, setRuntimes, sleep, waitForExtensionActive } from '../testCommon'
-import { getSourceMapFromRCode } from '../../parse/RCodeParser'
-import { PropathParser } from '../../ABLPropath'
-import { vscodeVersion } from '../../ABLUnitCommon'
+import { Uri, workspace } from 'vscode'
+import { assert, awaitRCode, getWorkspaceUri, log, sleep, suiteSetupCommon } from '../testCommon'
+import { getSourceMapFromRCode } from '../../src/parse/RCodeParser'
+import { PropathParser } from '../../src/ABLPropath'
+import { vscodeVersion } from '../../src/ABLUnitCommon'
 
 const projName = 'DebugLines'
 const workspaceFolder = workspace.workspaceFolders![0]
 
-before(projName + ' - before', async () => {
-	try {
-		await waitForExtensionActive()
-		await setRuntimes([{name: '12.2', path: getDefaultDLC(), default: true}]).then(async () => {
-			await sleep(250)
-			return true
-		})
-		await sleep(1000)
-		log.info('abl.restart.langserv')
-		await commands.executeCommand('abl.restart.langserv').then(() => {
-			log.info('abl.restart.langserv complete')
-		})
-		await sleep(1000)
-		const prom = awaitRCode(workspaceFolder, 8)
-		await sleep(1000)
-		await prom.then((rcodeCount) => {
-			log.info('compile complete! rcode count = ' + rcodeCount)
-		})
-		log.info('b1 before complete!')
-	} catch (err) {
-		log.error('before error: ' + err)
-		throw err
-	}
-})
-
 const allTests = (version: vscodeVersion = 'stable') => {
-	return suite(projName + ' - ' + version + ' Extension Test Suite', () => {
+	return suite('debugLines - ' + version + ' Extension Test Suite', () => {
 
-		before(projName + ' - before', async () => {
-			await waitForExtensionActive()
-			await setRuntimes([{name: '12.2', path: getDefaultDLC(), default: true}]).then(async () => {
-				await sleep(250)
-				return true
-			})
+		suiteSetup('debugLines - before', async () => {
+			await suiteSetupCommon()
 			await sleep(250)
-			const prom = awaitRCode(workspaceFolder, 8)
-			await prom.then((rcodeCount) => {
+			return awaitRCode(workspaceFolder, 8).then((rcodeCount) => {
 				log.info('compile complete! rcode count = ' + rcodeCount)
+			}, (e) => {
+				log.error('compile failed! e=' + e)
+				throw e
 			})
 		})
 
-		test(projName + '.1 - read debug line map from r-code', async () => {
+		test('debugLines.1 - read debug line map from r-code', async () => {
 			const propath = new PropathParser(workspaceFolder)
 			const sourceMap = await getSourceMapFromRCode(propath, Uri.joinPath(getWorkspaceUri(), 'out/code/unit_test1.r'))
 			assert.equal(7, sourceMap.items.length)
@@ -64,7 +35,7 @@ const allTests = (version: vscodeVersion = 'stable') => {
 			assert.equal(13, sourceMap.items[6].debugLine)
 		})
 
-		test(projName + '.2 - read debug line map from r-code', async () => {
+		test('debugLines.2 - read debug line map from r-code', async () => {
 			const propath = new PropathParser(workspaceFolder)
 			const sourceMap = await getSourceMapFromRCode(propath, Uri.joinPath(getWorkspaceUri(), 'out/code/unit_test2.r'))
 			assert.equal(7, sourceMap.items.length)
@@ -78,7 +49,7 @@ const allTests = (version: vscodeVersion = 'stable') => {
 			assert.equal(15, sourceMap.items[6].debugLine)
 		})
 
-		test(projName + '.3 - read debug line map from r-code', async () => {
+		test('debugLines.3 - read debug line map from r-code', async () => {
 			const propath = new PropathParser(workspaceFolder)
 			const sourceMap = await getSourceMapFromRCode(propath, Uri.joinPath(getWorkspaceUri(), 'out/code/unit_test3.r'))
 			assert.equal(7, sourceMap.items.length)
@@ -92,7 +63,7 @@ const allTests = (version: vscodeVersion = 'stable') => {
 			assert.equal(15, sourceMap.items[6].debugLine)
 		})
 
-		test(projName + '.4 - read debug line map from r-code', async () => {
+		test('debugLines.4 - read debug line map from r-code', async () => {
 			const propath = new PropathParser(workspaceFolder)
 			const sourceMap = await getSourceMapFromRCode(propath, Uri.joinPath(getWorkspaceUri(), 'out/code/unit_test4.r'))
 			assert.equal(5, sourceMap.items.length)
@@ -102,7 +73,7 @@ const allTests = (version: vscodeVersion = 'stable') => {
 			assert.equal(11, sourceMap.items[4].debugLine)
 		})
 
-		test(projName + '.5 - read debug line map for class from r-code', async () => {
+		test('debugLines.5 - read debug line map for class from r-code', async () => {
 			const propath = new PropathParser(workspaceFolder)
 			const sourceMap = await getSourceMapFromRCode(propath, Uri.joinPath(getWorkspaceUri(), 'out/code/unit_test5.r'))
 			assert.equal(9, sourceMap.items.length)
@@ -128,7 +99,7 @@ const allTests = (version: vscodeVersion = 'stable') => {
 	})
 }
 
-suite(projName + ' - Debug Line Tests - insiders', () => {
+suite('debugLines - Debug Line Tests - insiders', () => {
 	if (process.env['ABLUNIT_TEST_RUNNER_VSCODE_VERSION'] === 'insiders' ||
 		process.env['ABLUNIT_TEST_RUNNER_VSCODE_VERSION'] === 'proposedapi' ||
 		process.env['ABLUNIT_TEST_RUNNER_VSCODE_VERSION'] === 'stable') {
