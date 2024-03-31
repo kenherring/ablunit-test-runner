@@ -122,8 +122,8 @@ jobs:
     executor: psc-primary
     steps:
       - attach_workspace: { at: . }
-      - run: cat artifacts/stable-12.2.12/mocha_results_sonar_proj1.xml #TODO remove me
-      - run: rm artifacts/stable-12.2.12/mocha_results_junit_*.xml
+      - run: cat artifacts/stable-12.2.12/mocha_results_sonar_proj1.xml || true #TODO remove me
+      - run: rm artifacts/stable-12.2.12/mocha_results_junit_*.xml || true
       - sonarcloud/scan:
           cache_version: 4
   publish:
