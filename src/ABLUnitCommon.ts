@@ -63,6 +63,12 @@ export class Duration {
 		this.end = this.start
 	}
 
+	reset () {
+		this.start = Date.now()
+		this.end = this.start
+		this.stopped = false
+	}
+
 	elapsed () {
 		if (!this.stopped) {
 			this.end = Date.now()

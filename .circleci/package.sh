@@ -3,6 +3,7 @@ set -euo pipefail
 
 initialize () {
     echo "[$0 ${FUNCNAME[0]}]"
+    ABLUNIT_TEST_RUNNER_VSCODE_VERSION=${ABLUNIT_TEST_RUNNER_VSCODE_VERSION:-stable}
     PRERELEASE=false
     PACKAGE_VERSION=$(node -p "require('./package.json').version")
     if [ -z "${CIRCLE_BRANCH:-}" ]; then
@@ -29,12 +30,14 @@ initialize () {
 
 package () {
     echo "[$0 ${FUNCNAME[0]}]"
-    package_insiders
-    package_stable
+    package_version stable
+    package_version insiders
 }
 
-package_stable () {
-    echo "[$0 ${FUNCNAME[0]}]"
+package_version () {
+    local VSCODE_VERSION=$1
+    # [ "$ABLUNIT_TEST_RUNNER_VSCODE_VERSION" != "$PACKAGE_VERSION" ] && [ -n "$ABLUNIT_TEST_RUNNER_VSCODE_VERSION" ] && return 0
+    echo "[$0 ${FUNCNAME[0]}] PACKAGE_VERSION=$VSCODE_VERSION"
 
     local ARGS=()
     ARGS+=("--githubBranch" "$CIRCLE_BRANCH")
@@ -42,32 +45,12 @@ package_stable () {
     if $PRERELEASE; then
         ARGS+=("--pre-release")
     fi
+    if [ "$VSCODE_VERSION" != stable ]; then
+        ARGS+=(-o "ablunit-test-runner-${VSCODE_VERSION}-${PACKAGE_VERSION}.vsix")
+    fi
 
-    cp package.proposedapi.json package.json
-    vsce package "${ARGS[@]}" -o "ablunit-test-runner-proposedapi-${PACKAGE_VERSION}.vsix"
-    cp package.stable.json package.json
-
-    cp package.stable.json package.json
+    cp "package.$VSCODE_VERSION.json" package.json
     vsce package "${ARGS[@]}"
-}
-
-package_insiders () {
-    echo "[$0 ${FUNCNAME[0]}]"
-
-    local ARGS=()
-    ARGS+=("--githubBranch" "$CIRCLE_BRANCH")
-    ARGS+=("--no-git-tag-version")
-    if $PRERELEASE; then
-        ARGS+=("--pre-release")
-    fi
-
-    ARGS+=("--ignoreFile" ".vscodeignore.insiders")
-
-    PACKAGE_VERSION=$(node -p "require('./package.json').version")
-    echo "PACKAGE_VERSION=$PACKAGE_VERSION"
-
-    cp package.insiders.json package.json
-    vsce package "${ARGS[@]}" -o "ablunit-test-runner-insiders-${PACKAGE_VERSION}.vsix"
     cp package.stable.json package.json
 }
 

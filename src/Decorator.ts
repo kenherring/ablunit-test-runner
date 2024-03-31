@@ -1,5 +1,5 @@
 import { existsSync } from 'fs'
-import { CancellationToken, DecorationOptions, FileDecoration, FileDecorationProvider, ProviderResult, Range, TextDocument, TextEditor, TextEditorDecorationType, Uri, window, workspace } from 'vscode'
+import { CancellationToken, DecorationOptions, FileDecoration, FileDecorationProvider, ProviderResult, Range, TextDocument, TextEditor, TextEditorDecorationType, Uri, window, extensions, workspace } from 'vscode'
 import { ABLResults } from './ABLResults'
 import { log } from './ChannelLogger'
 import { FileCoverageCustom, IExecLines } from './TestCoverage'
@@ -13,6 +13,7 @@ export class Decorator {
 	private readonly backgroundExecutable: TextEditorDecorationType
 	private readonly backgroundExecuted: TextEditorDecorationType
 	private readonly instanceCount: number
+	private readonly proposedApiEnabled: boolean
 	private decorateCount = 0
 	private recentCoverage: Map<string, FileCoverageCustom> = new Map<string, FileCoverageCustom>
 	private recentDecorations: Map<string, IExecLines> = new Map<string, IExecLines>
@@ -28,6 +29,7 @@ export class Decorator {
 		this.backgroundExecuted = window.createTextEditorDecorationType({
 			backgroundColor: 'rgba(0,255,0,0.1)'
 		})
+		this.proposedApiEnabled = extensions.getExtension('vscode.vscode-proposed.api')?.isActive || false
 	}
 
 	removeFromVisible () {
@@ -37,10 +39,11 @@ export class Decorator {
 		}
 	}
 
-	remove (e: TextEditor) {
+	remove (editor: TextEditor) {
+		if (this.proposedApiEnabled) { return }
 		// log.debug('removing decorations from ' + e.document.uri.fsPath)
-		e.setDecorations(this.backgroundExecutable, [])
-		e.setDecorations(this.backgroundExecuted, [])
+		editor.setDecorations(this.backgroundExecutable, [])
+		editor.setDecorations(this.backgroundExecuted, [])
 	}
 
 	setRecentResults (results: ABLResults[] | undefined) {
@@ -62,7 +65,6 @@ export class Decorator {
 				}
 			}
 		}
-		log.info('setRecentResults-11 covCount=' + covCount)
 		// TODO - decorate active editors?
 		// this.decorate(window.activeTextEditor)
 	}
@@ -147,6 +149,7 @@ export class Decorator {
 	}
 
 	private setDecorations (editor: TextEditor, lines: IExecLines) {
+		if (this.proposedApiEnabled) { return true }
 		if (lines.executable) {
 			editor.setDecorations(this.backgroundExecutable, lines.executable)
 		}

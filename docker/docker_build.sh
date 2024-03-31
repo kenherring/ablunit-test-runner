@@ -6,15 +6,17 @@ usage () {
 usage: $0 [-p] [-h]
 options:
   -p        push docker images to dockerhub after build
+  -n        no cache
   -h        show this help message and exit
 " >&2
 }
 
 initialize () {
 	local OPT OPTARG OPTIND
-	while getopts "ph" OPT; do
+	while getopts "pnh" OPT; do
 		case "$OPT" in
 			p)	DOCKER_PUSH=true ;;
+			n)  NO_CACHE=true ;;
 			h) 	usage && exit 0 ;;
 			*)	echo "Invalid option: -$OPT" >&2 && usage && exit 1 ;;
 		esac
@@ -42,9 +44,15 @@ initialize () {
 
 build_images () {
 	echo "building images... (pwd=$(pwd))"
+
+	local ARGS=()
+	if ${NO_CACHE:-false}; then
+		ARGS+=('--no-cache')
+	fi
+
 	for DOCKER_TAG in "${DOCKER_TAGS[@]}"; do
 		echo "Building docker image for OE $DOCKER_TAG"
-		docker build docker \
+		docker build docker "${ARGS[@]}" \
 			--build-arg OE_VERSION="$DOCKER_TAG" \
 			--secret id=license,src="$DLC/progress.cfg" \
 			-t "ablunit-test-runner:$DOCKER_TAG"
@@ -59,10 +67,6 @@ build_images () {
 		fi
 		## tag with the org now that we know it doesn't have an accidental license exposure
 		docker tag "ablunit-test-runner:$DOCKER_TAG" "kherring/ablunit-test-runner:$DOCKER_TAG"
-
-		if ${DOCKER_PUSH:-false}; then
-			docker push "kherring/ablunit-test-runner:$DOCKER_TAG"
-		fi
 	done
 	SUCCESS_MESSAGE="Docker image(s) built successfully!"
 }
@@ -74,7 +78,6 @@ push_images () {
 		docker push "kherring/ablunit-test-runner:$DOCKER_TAG"
 	done
 	SUCCESS_MESSAGE="Docker image(s) pushed successfully!"
-
 }
 
 ########## MAIN BLOCK ##########
