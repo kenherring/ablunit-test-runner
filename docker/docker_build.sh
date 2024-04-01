@@ -34,9 +34,8 @@ initialize () {
 	fi
 
 	if [ -z "${DOCKER_TAGS:-}" ]; then
-		DOCKER_TAGS=("12.2.12" "12.7.0")
+		DOCKER_TAGS=("12.2.12" "12.7.0" "12.8.1")
 	fi
-	DOCKER_TAGS=("12.2.12" "12.7.0")
 
 	mkdir -p docker/.rssw
 	cp ~/.rssw/oedoc.bin docker/.rssw/oedoc.bin
