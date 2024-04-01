@@ -56,8 +56,6 @@
 		"useUnknownInCatchVariables": false,
 	},
 	"include": [
-		"./.vscode-test.mjs",
-		"./test/createTestConfig.mjs",
 		"./**/*.ts",
 		"./**/*.test.ts",
 		// for when glob doesn't work

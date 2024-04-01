@@ -1,7 +1,7 @@
 {
 	"name": "ablunit-test-runner",
 	"displayName": "ABLUnit Test Runner (insiders)",
-	"description": "OpenEdge ABLUnit test runner for VSCode, build to run with the proposed TestCoverage API from the insiders build of VSCode",
+	"description": "OpenEdge ABLUnit test runner for VSCode, built to run the proposed testCoverage API",
 	"version": "0.2.1",
 	"preview": true,
 	"engineStrict": true,
@@ -76,7 +76,7 @@
 	"activationEvents": [
 		"onStartupFinished"
 	],
-	"main": "./dist/extension-insiders.js",
+	"main": "./dist/extension.js",
 	"files": [
 		"src"
 	],
@@ -87,7 +87,7 @@
 		"lint": "npx eslint ./src ./test --ext .ts,.js",
 		"lint-fix-all": "npx eslint ./src ./test --ext .ts,.js --fix",
 		"vscode:prepublish": "npm run package",
-		"package": "webpack --mode production --devtool hidden-source-map",
+		"package": "webpack --mode production",
 		"pretest": "sh -c scripts/npm_pretest.sh",
 		"test": "vscode-test",
 		"test:coverage": "npm test -- --coverage",
@@ -98,6 +98,7 @@
 		"version": "sh -c scripts/npm_version.sh"
 	},
 	"dependencies": {
+		"minimatch": "^9.0.3",
 		"node-json-minify": "^3.0.0",
 		"xml2js": "^0.6.2"
 	},
@@ -105,6 +106,7 @@
 		"@istanbuljs/nyc-config-typescript": "^1.0.2",
 		"@types/mocha": "^10.0.6",
 		"@types/node": "^16.18.82",
+		"@types/source-map-support": "^0.5.10",
 		"@types/vscode": "^1.83.0",
 		"@types/xml2js": "^0.4.14",
 		"@typescript-eslint/eslint-plugin": "^6.13.2",
@@ -156,7 +158,8 @@
 					"default": [
 						"**/*.{cls,p}"
 					],
-					"markdownDescription": "Glob patterns to include test files"
+					"markdownDescription": "Glob patterns to include test files",
+					"scope": "machine-overridable"
 				},
 				"ablunit.files.exclude": {
 					"type": "array",
@@ -164,7 +167,8 @@
 						".builder/**",
 						".pct/**"
 					],
-					"markdownDescription": "Glob patterns to exclude test files"
+					"markdownDescription": "Glob patterns to exclude test files",
+					"scope": "machine-overridable"
 				},
 				"ablunit.importOpenedgeProjectJson": {
 					"type": "boolean",

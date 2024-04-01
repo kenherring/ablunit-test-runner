@@ -4,6 +4,19 @@ set -euo pipefail
 initialize () {
 	local OPT OPTARG OPTIND
 	echo "[$0 ${FUNCNAME[0]}] pwd=$(pwd)"
+	VERBOSE=${VERBOSE:-false}
+	ABLUNIT_TEST_RUNNER_DBUS_NUM=${ABLUNIT_TEST_RUNNER_DBUS_NUM:-3}
+	ABLUNIT_TEST_RUNNER_OE_VERSION=${ABLUNIT_TEST_RUNNER_OE_VERSION:-12.2.12}
+	ABLUNIT_TEST_RUNNER_VSCODE_VERSION=${ABLUNIT_TEST_RUNNER_VSCODE_VERSION:-stable}
+	ABLUNIT_TEST_RUNNER_PROJECT_NAME=${ABLUNIT_TEST_RUNNER_PROJECT_NAME:-}
+	ABLUNIT_TEST_RUNNER_NO_COVERAGE=${ABLUNIT_TEST_RUNNER_NO_COVERAGE:-false}
+	if $VERBOSE; then
+		echo "ABLUNIT_TEST_RUNNER_DBUS_NUM=$ABLUNIT_TEST_RUNNER_DBUS_NUM"
+		echo "ABLUNIT_TEST_RUNNER_OE_VERSION=$ABLUNIT_TEST_RUNNER_OE_VERSION"
+		echo "ABLUNIT_TEST_RUNNER_VSCODE_VERSION=$ABLUNIT_TEST_RUNNER_VSCODE_VERSION"
+		echo "ABLUNIT_TEST_RUNNER_PROJECT_NAME=$ABLUNIT_TEST_RUNNER_PROJECT_NAME"
+		echo "ABLUNIT_TEST_RUNNER_NO_COVERAGE=$ABLUNIT_TEST_RUNNER_NO_COVERAGE"
+	fi
 	BASH_AFTER=false
 	BASH_AFTER_ERROR=false
 	CACHE_BASE=/home/circleci/cache
@@ -13,7 +26,6 @@ initialize () {
 	REPO_VOLUME=/home/circleci/ablunit-test-runner
 	GIT_BRANCH=$(cd "$REPO_VOLUME" && git branch --show-current)
 	STAGED_ONLY=${STAGED_ONLY:-true}
-	VERBOSE=${VERBOSE:-false}
 	${CREATE_PACKAGE:-false} && TEST_PROJECT=package
 
 	git config --global init.defaultBranch main
@@ -49,7 +61,11 @@ initialize () {
 
 initialize_repo () {
 	echo "[$0 ${FUNCNAME[0]}] pwd=$(pwd)"
-	git clone "$REPO_VOLUME" "$PROJECT_DIR"
+	if [ ! -d "$PROJECT_DIR/.git" ]; then
+		git clone "$REPO_VOLUME" "$PROJECT_DIR"
+	else
+		git pull
+	fi
 	cd "$PROJECT_DIR"
 	if [ "$(git branch --show-current)" = "$GIT_BRANCH" ]; then
 		git pull
@@ -109,12 +125,12 @@ run_tests () {
 
 	# .circleci/package.sh
 
-	if [ "$TEST_PROJECT" = "base" ]; then
+	if [ "$TEST_PROJECT" = "package" ]; then
+		.circleci/package.sh
+	elif [ "$TEST_PROJECT" = "base" ]; then
 		run_tests_base
 	elif [ "$TEST_PROJECT" = "dummy-ext" ]; then
 		run_tests_dummy_ext
-	elif [ "$TEST_PROJECT" = "package" ]; then
-		.circleci/package.sh
 	else
 		echo "ERROR: unknown test project"
 		exit 1
@@ -124,11 +140,13 @@ run_tests () {
 run_tests_base () {
 	echo "[$0 ${FUNCNAME[0]}] pwd=$(pwd)"
 
+	set -eo pipefail ## matches the behavior of CircleCI
 	if ! .circleci/run_test_wrapper.sh; then
 		echo "run_tests failed"
 		$BASH_AFTER_ERROR && bash
 		exit 1
 	fi
+	set -euo pipefail
 	echo "run_tests success"
 
 	if [ -z "${ABLUNIT_TEST_RUNNER_PROJECT_NAME:-}" ]; then

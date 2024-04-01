@@ -34,6 +34,7 @@ initialize () {
 		"build"
 		"listings"
 		"target"
+		"temp"
 		"workspaceAblunit"
 	)
 

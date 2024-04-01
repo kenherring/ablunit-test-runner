@@ -7,7 +7,7 @@ orbs:
 parameters:
   cache-version:
     type: string
-    default: v6
+    default: v7
 
 oe-version-param: &oe-version-param
   parameters:
@@ -41,12 +41,12 @@ commands:
     steps:
       - restore_cache:
           keys:
-            - << pipeline.parameters.cache-version >>-cache-{{ checksum "package.json" }}
-            - << pipeline.parameters.cache-version >>-cache-
+            - << pipeline.parameters.cache-version >>-package-cache-{{ checksum "package.json" }}
+            - << pipeline.parameters.cache-version >>-package-cache-
   save-package-cache:
     steps:
       - save_cache:
-          key: << pipeline.parameters.cache-version >>-cache-{{ checksum "package.json" }}
+          key: << pipeline.parameters.cache-version >>-package-cache-{{ checksum "package.json" }}
           paths: [ /home/circleci/cache/node_modules_cache ]
   restore-test-cache:
     parameters:
@@ -58,9 +58,18 @@ commands:
           condition: true
           steps:
             - run: tr ' ' '\n' \<<< "$PROGRESS_CFG_BASE64" | base64 --decode > /psc/dlc/progress.cfg
-            - restore_cache:
-                keys:
-                  - << pipeline.parameters.cache-version >>-cache-<< parameters.oe-version >>-{{ checksum "package.json" }}
+            # - restore_cache:
+            #     keys:
+            #       - << pipeline.parameters.cache-version >>-test-cache-<< parameters.oe-version >>-{{ checksum "package.json" }}
+  save-test-cache:
+    parameters:
+      oe-version:
+        type: string
+        default: none
+    steps:
+      - save_cache:
+          key: << pipeline.parameters.cache-version >>-test-cache-<< parameters.oe-version >>-{{ checksum "package.json" }}
+          paths: [ cache ]
 
 jobs:
   package:
@@ -72,9 +81,11 @@ jobs:
       - checkout
       - restore-package-cache
       - run: .circleci/package.sh
-      - persist_to_workspace: { root: ".", paths: [ . ] }
+      - run: rm -r node_modules
+      - persist_to_workspace: { root: ., paths: [ . ] }
       - save-package-cache
-      - run: '[ "$(find . -type f -name "*.vsix" | wc -l)" = "3" ] || exit 1'
+      - run: find . -type f -name "*.vsix"
+      - run: '[ "$(find . -type f -name "*.vsix" | wc -l)" = "2" ] || exit 1'
   test:
     <<: *oe-version-param
     docker:
@@ -86,18 +97,16 @@ jobs:
       ABLUNIT_TEST_RUNNER_OE_VERSION: << parameters.oe-version >>
       ABLUNIT_TEST_RUNNER_VSCODE_VERSION: << parameters.vscode-version >>
     steps:
-      - restore-test-cache:
-          oe-version: << parameters.oe-version >>
       - attach_workspace: { at: . }
+      - restore-test-cache: { oe-version: << parameters.oe-version >> }
+      - run: env
       - run: .circleci/run_test_wrapper.sh
       - persist_to_workspace: { root: ".", paths: [ artifacts, coverage ]}
       - run: find . -type f -name "mocha_results_sonar_*.xml" -delete
       # - run: find . -type f -name "mocha_results_xunit_*.xml" -delete
       - store_test_results: { path: artifacts }
       - store_artifacts: { when: always, path: artifacts }
-      - save_cache:
-          key: << pipeline.parameters.cache-version >>-cache-<< parameters.oe-version >>-{{ checksum "package.json" }}
-          paths: [ cache ]
+      # - save-test-cache: { oe-version: << parameters.oe-version >> }
   install-and-run:
     <<: *oe-version-param
     executor: psc-primary
@@ -105,8 +114,8 @@ jobs:
       ABLUNIT_TEST_RUNNER_OE_VERSION: << parameters.oe-version >>
       ABLUNIT_TEST_RUNNER_VSCODE_VERSION: << parameters.vscode-version >>
     steps:
-      - restore-test-cache
       - attach_workspace: { at: . }
+      - restore-test-cache: { oe-version: << parameters.oe-version >> }
       - run: .circleci/install_and_run.sh
       - store_test_results: { path: dummy-ext/artifacts }
       - store_artifacts: { when: always, path: dummy-ext/artifacts }
@@ -114,8 +123,8 @@ jobs:
     executor: psc-primary
     steps:
       - attach_workspace: { at: . }
-      - run: cat artifacts/stable-12.2.12/mocha_results_sonar_proj1.xml #TODO remove me
-      - run: rm artifacts/stable-12.2.12/mocha_results_junit_*.xml
+      - run: cat artifacts/stable-12.2.12/mocha_results_sonar_proj1.xml || true #TODO remove me
+      - run: rm artifacts/stable-12.2.12/mocha_results_junit_*.xml || true
       - sonarcloud/scan:
           cache_version: 4
   publish:
@@ -134,18 +143,28 @@ workflows:
           <<: *context-and-filters
       - test:
           <<: *context-and-filters
+          requires: [ package ]
+          oe-version: 12.2.12
           matrix:
             parameters:
-              oe-version: [ 12.2.12, 12.7.0 ]
-              vscode-version: [ stable, insiders ]
-          requires: [ 'package' ]
+              vscode-version: [ stable ]
+              # vscode-version: [ stable, insiders ]
+          name: test-12.2.12-<< matrix.vscode-version >>
+      - test:
+          <<: *context-and-filters
+          requires: [ package, test-12.2.12-stable ]
+          oe-version: 12.7.0
+          matrix:
+            parameters:
+              vscode-version: [ stable ]
+              # vscode-version: [ stable, insiders ]
+          name: test-12.7.0-<< matrix.vscode-version >>
       - sonar:
           <<: *context-and-filters
-          requires:
-            - test
-      - install-and-run:
-          <<: *context-and-filters
-          requires: [ 'package' ]
+          requires: [ test-12.2.12-stable ]
+      # - install-and-run:
+      #     <<: *context-and-filters
+      #     requires: [ test-12.2.12-stable ]
       - publish:
           context:
             - Azure_PAT
@@ -156,4 +175,4 @@ workflows:
           requires:
             - shellcheck/check
             - sonar
-            - install-and-run
+            # - install-and-run

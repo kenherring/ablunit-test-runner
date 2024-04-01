@@ -44,7 +44,7 @@ suite('proj9Suite', () => {
 
 	test('proj9.2 - second profile passes (project)', async () => {
 		await selectProfile('profile2')
-		await runAllTests()
+		await runAllTests(true, false)
 
 		const workspaceFolder = workspace.workspaceFolders![0].uri
 		const resultsJson = Uri.joinPath(workspaceFolder, 'results.json')
@@ -57,7 +57,7 @@ suite('proj9Suite', () => {
 
 	test('proj9.3 - third profile passes (inherits propath from 2)', async () => {
 		await selectProfile('profile3')
-		await runAllTests()
+		await runAllTests(true, false)
 
 		const workspaceFolder = workspace.workspaceFolders![0].uri
 		const resultsJson = Uri.joinPath(workspaceFolder, 'results.json')
@@ -70,9 +70,9 @@ suite('proj9Suite', () => {
 
 	test('proj9.4 - run default profile, then profile 3', async () => {
 		await selectProfile('default')
-		await runAllTests()
+		await runAllTests(true, false)
 		await selectProfile('profile3')
-		await runAllTests()
+		await runAllTests(true, false)
 
 		const workspaceFolder = workspace.workspaceFolders![0].uri
 		const resultsJson = Uri.joinPath(workspaceFolder, 'results.json')
@@ -100,7 +100,9 @@ suite('proj9Suite', () => {
 		await updateTestProfile('importOpenedgeProjectJson', false)
 		await updateTestProfile('openedgeProjectProfile', 'profile2')
 
-		await runAllTests()
+		await runAllTests(true, false).catch((e) => {
+			log.info('runAllTests failed, as expected: e=' + e)
+		})
 		const workspaceFolder = workspace.workspaceFolders![0].uri
 		const resultsJson = Uri.joinPath(workspaceFolder, 'results.json')
 		assert.notFileExists(resultsJson)

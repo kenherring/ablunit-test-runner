@@ -4,9 +4,9 @@ FROM node:20.8
 
 ## dependencies for running vscode extension tests
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends libasound2 libgbm1 libgtk-3-0 libnss3 \
-    && apt-get install -y --no-install-recommends xauth xvfb xauth rsync ant jq \
-    && apt-get install -y gh \
+    && apt-get install -y --no-install-recommends libasound2 libgbm1 libgtk-3-0 libnss3 vulkan-tools \
+    && apt-get install -y --no-install-recommends xauth xvfb xauth rsync ant jq dbus \
+    && apt-get install -y --no-install-recommends gh \
     && rm -rf /var/lib/apt/lists/* /var/cache/apt/archives/*
 
 ## dependencies for running ablunit tests
@@ -14,7 +14,7 @@ COPY --from=psc --chown=circleci:circleci --chmod=744 /psc /psc
 ADD .rssw/oedoc.bin /root/.rssw/oedoc.bin
 
 RUN if [ ! -f /root/.rssw/oedoc.bin ]; then echo "/root/.rssw/oedoc.bin oedoc.bin not found" && exit 1; fi
-RUN curl -v -L https://github.com/Riverside-Software/pct/releases/download/v226/PCT.jar -o /usr/share/ant/lib/PCT.jar
+RUN curl -v -L https://github.com/Riverside-Software/pct/releases/download/v228/PCT.jar -o /usr/share/ant/lib/PCT.jar
 RUN echo "JAVA_HOME=$(which java)" > /psc/dlc/properties/java.properties
 
 ENV TERM=vt100
@@ -42,5 +42,6 @@ RUN mkdir -p ~/.vscode-test
 
 ## install vscode packaging dependency
 RUN npm install -g @vscode/vsce
+RUN npm install -g typescript
 
 WORKDIR /home/circleci/project

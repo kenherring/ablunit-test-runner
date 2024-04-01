@@ -6,16 +6,30 @@ import { log } from './ChannelLogger'
 
 
 export enum RunStatus {
-	None,
-	Initialized,
-	Constructed,
-	WaitingForStart,
-	Running,
-	Executing,
-	Parsing,
-	Complete,
-	Cancelled,
-	Error
+	None = 10,
+	Initialized = 20,
+	Constructed = 30,
+	WaitingForStart = 40,
+	Running = 50,
+	Executing = 60,
+	Parsing = 70,
+	// 'done' states
+	Complete = 80,
+	Cancelled = 81,
+	Error = 82,
+}
+export enum RunStatusString {
+	'None' = 10,
+	'Initialized' = 20,
+	'Constructed' = 30,
+	'WaitingForStart' = 40,
+	'Running' = 50,
+	'Executing' = 60,
+	'Parsing' = 70,
+	// 'done' states
+	'Complete' = 80,
+	'Cancelled' = 81,
+	'Error' = 82,
 }
 
 

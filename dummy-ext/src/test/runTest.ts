@@ -33,8 +33,8 @@ async function main() {
 
 function getProjName() {
 	const g = globSync(packagedExtensionPath)
-	if (g.length !== 3) {
-		throw new Error('Expected exactly three ablunit-test-runner-*.vsix file, found ' + g.length)
+	if (g.length !== 2) {
+		throw new Error('Expected exactly two ablunit-test-runner-*.vsix file, found ' + g.length)
 	}
 
 	packagedExtensionPath = g[0]

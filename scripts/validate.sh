@@ -6,9 +6,9 @@ set -euo pipefail
 validate_results_count() {
 	echo "[$0 ${FUNCNAME[0]}] VERBOSE='${VERBOSE:-}'"
 	VERBOSE=${VERBOSE:-false}
-	TEST_COUNT=$(find src/test/suite -name "*.test.ts" | wc -l)
+	TEST_COUNT=$(find test/suites -name "*.test.ts" | wc -l)
 	if [ ! -d artifacts ]; then
-		echo "[$0 ${FUNCNAME[0]}] ERROR: no artifacts directory found"
+		echo "[$0 ${FUNCNAME[0]}] ERROR: no 'artifacts' directory found"
 		exit 1
 	fi
 
@@ -21,12 +21,13 @@ validate_results_count() {
 
 	LCOV_COUNT=$(find . -name 'lcov.info' | wc -l)
 	if [ "$LCOV_COUNT" != "$TEST_COUNT" ]; then
-		echo "[$0 ${FUNCNAME[0]}] ERROR: lcov count != test count ($LCOV_COUNT != $TEST_COUNT)"
+		echo "[$0 ${FUNCNAME[0]}] ERROR: LCOV_COUNT != 1 ($LCOV_COUNT != 1)"
+		exit 1
 	fi
 
 	if ${VERBOSE:-true}; then
 		echo "[$0 ${FUNCNAME[0]}] TEST_COUNT=${TEST_COUNT:-}, RESULTS_COUNT=${RESULTS_COUNT:-}, LCOV_COUNT=${LCOV_COUNT:-}"
-		find src/test/suite -name "*.test.ts" | sort
+		find test/suites -name "*.test.ts" | sort
 		find "$ARTIFACT_DIR" -name "mocha_results_*.xml" | sort
 		find . -name 'lcov.info' | sort
 	fi

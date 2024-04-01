@@ -10,6 +10,7 @@ class Logger {
 	// private readonly testResultsLogLevel = LogLevel.Info
 	private readonly testResultsLogLevel = LogLevel.Debug
 	private logLevel: number
+	private readonly consoleTimestamp = process.env['ABLUNIT_TEST_RUNNER_UNIT_TESTING'] === 'true'
 	private testResultsTimestamp = false
 
 	private constructor () {
@@ -85,10 +86,11 @@ class Logger {
 	}
 
 	private writeMessage (messageLevel: LogLevel, message: string, testRun?: TestRun, includeStack = false) {
+		const datetime = new Date().toISOString()
 		this.writeToChannel(messageLevel, message, includeStack)
 
 		if (testRun && messageLevel >= this.testResultsLogLevel) {
-			this.writeToTestResults(message, testRun, includeStack)
+			this.writeToTestResults(message, testRun, includeStack, datetime)
 		}
 
 		if (messageLevel >= this.consoleLogLevel) {
@@ -112,9 +114,9 @@ class Logger {
 		}
 	}
 
-	private writeToTestResults (message: string, testRun: TestRun, includeStack: boolean) {
+	private writeToTestResults (message: string, testRun: TestRun, includeStack: boolean, datetime: string) {
 		if (this.testResultsTimestamp) {
-			message = '[' + new Date().toISOString() + '] ' + message
+			message = '[' + datetime + '] ' + message
 		}
 		let optMsg = message.replace(/\r/g, '').replace(/\n/g, '\r\n')
 
@@ -131,6 +133,9 @@ class Logger {
 	}
 
 	private writeToConsole (messageLevel: LogLevel, message: string, includeStack: boolean) {
+		if (this.consoleTimestamp) {
+			message = '[' + new Date().toISOString() + '] ' + message
+		}
 		message = this.decorateMessage(message, includeStack)
 		switch (messageLevel) {
 			case LogLevel.Trace:

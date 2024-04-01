@@ -1,5 +1,4 @@
 import { readFileSync } from 'fs'
-import { globSync } from 'glob'
 import {
 	CancellationError,
 	CancellationToken, ConfigurationChangeEvent, Disposable, ExtensionContext,
@@ -19,6 +18,7 @@ import { log } from './ChannelLogger'
 import { getContentFromFilesystem } from './parse/TestParserCommon'
 import { ABLTestCase, ABLTestClass, ABLTestData, ABLTestDir, ABLTestFile, ABLTestProgram, ABLTestSuite, resultData, testData } from './testTree'
 import { Decorator, decorator } from './Decorator'
+import { minimatch } from 'minimatch'
 
 export interface IExtensionTestReferences {
 	testController: TestController
@@ -36,6 +36,7 @@ export async function activate (context: ExtensionContext) {
 	let currentTestRun: TestRun | undefined = undefined
 
 	logActivationEvent()
+	// log.info('context.workspaceState=' + JSON.stringify(context.workspaceState, null, 2))
 
 	const contextStorageUri = context.storageUri ?? Uri.file(process.env['TEMP'] ?? '') // will always be defined as context.storageUri
 	const contextResourcesUri = Uri.joinPath(context.extensionUri, 'resources')
@@ -218,7 +219,7 @@ export async function activate (context: ExtensionContext) {
 								+ p.passed + ' passed, '
 								+ p.errors + ' errors, '
 								+ p.failures + ' failures, '
-								+ r.duration.elapsed()
+								+ r.duration
 					log.info(totals, run)
 				} else {
 					log.debug('cannot print totals - missing ablResults object')
@@ -438,7 +439,7 @@ export async function activate (context: ExtensionContext) {
 
 	const testProfileRun = ctrl.createRunProfile('Run Tests', TestRunProfileKind.Run, runHandler, true, new TestTag('runnable'), false)
 	const testProfileDebug = ctrl.createRunProfile('Debug Tests', TestRunProfileKind.Debug, runHandler, false, new TestTag('runnable'), false)
-	const testProfileCoverage = ctrl.createRunProfile('Run Tests w/ Coverage', TestRunProfileKind.Debug, runHandler, false, new TestTag('runnable'), false)
+	const testProfileCoverage = ctrl.createRunProfile('Run Tests w/ Coverage', TestRunProfileKind      .Debug, runHandler, false, new TestTag('runnable'), false)
 	// const testProfileDebugCoverage = ctrl.createRunProfile('Debug Tests w/ Coverage', TestRunProfileKind.Debug, runHandler, false, new TestTag('runnable'), false)
 	testProfileRun.configureHandler = configHandler
 	testProfileDebug.configureHandler = configHandler
@@ -694,7 +695,10 @@ function gatherTestItems (collection: TestItemCollection) {
 function getExcludePatterns () {
 	let excludePatterns: string[] = []
 
-	const excludePatternsConfig: string[] | undefined = workspace.getConfiguration('ablunit').get('files.exclude', [ '**/.builder/**' ])
+	let excludePatternsConfig: string[] | string | undefined = workspace.getConfiguration('ablunit').get('files.exclude', '**/.builder/**')
+	if (typeof excludePatternsConfig === 'string') {
+		excludePatternsConfig = excludePatternsConfig.split(',')
+	}
 	if (excludePatternsConfig.length == 1) {
 		excludePatterns[0] = ''
 		for (const pattern of excludePatternsConfig) {
@@ -773,8 +777,7 @@ function removeExcludedFiles (controller: TestController, excludePatterns: Relat
 
 	const items = gatherAllTestItems(controller.items)
 
-	for (const element of items) {
-		const item = element
+	for (const item of items) {
 		const data = testData.get(item)
 		if (item.id === 'ABLTestSuiteGroup') {
 			removeExcludedChildren(item, excludePatterns)
@@ -840,13 +843,9 @@ async function refreshTestTree (controller: TestController, token: CancellationT
 		throw new CancellationError()
 	}
 	const { includePatterns, excludePatterns } = getWorkspaceTestPatterns()
-	log.info('includePatterns=' + includePatterns.length + ', excludePatterns=' + excludePatterns.length)
-	for (const pattern of includePatterns) {
-		log.debug('includePattern=' + pattern.pattern)
-	}
-	for (const pattern of excludePatterns) {
-		log.debug('excludePattern=' + pattern.pattern)
-	}
+	log.info('includePatternslength=' + includePatterns.length + ', excludePatterns.length=' + excludePatterns.length)
+	// log.debug('includePatterns=' + includePatterns.map(pattern => pattern.pattern).join('\n'))
+	// log.debug('excludePatterns=' + excludePatterns.map(pattern => pattern.pattern).join('\n'))
 
 	removeExcludedFiles(controller, excludePatterns, token)
 
@@ -961,16 +960,18 @@ function openCallStackItem (traceUriStr: string) {
 }
 
 function isFileExcluded (uri: Uri, excludePatterns: RelativePattern[]) {
-	const patterns = excludePatterns.map(pattern => pattern.pattern)
-	const relativePath = workspace.asRelativePath(uri.fsPath, false)
 	const workspaceFolder = workspace.getWorkspaceFolder(uri)
-	if (!workspaceFolder) {
-		return true
-	}
-	const g = globSync(relativePath, { cwd: workspaceFolder.uri.fsPath, ignore: patterns })
-	return g.length == 0
-}
+	if (!workspaceFolder) { return true }
 
+	const relativePath = workspace.asRelativePath(uri.fsPath, false)
+	const patterns = excludePatterns.map(pattern => pattern.pattern)
+	for (const pattern of patterns) {
+		if (minimatch(relativePath, pattern)) {
+			return true
+		}
+	}
+	return false
+}
 
 export async function doesDirExist (uri: Uri) {
 	const ret = await workspace.fs.stat(uri).then((stat) => {

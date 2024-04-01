@@ -5,6 +5,7 @@ initialize () {
 	echo "[$0 ${FUNCNAME[0]}]"
 	VERBOSE=${VERBOSE:-false}
 	DONT_PROMPT_WSL_INSTALL=No_Prompt_please
+	ABLUNIT_TEST_RUNNER_DBUS_NUM=${ABLUNIT_TEST_RUNNER_DBUS_NUM:-3}
 	ABLUNIT_TEST_RUNNER_OE_VERSION=${ABLUNIT_TEST_RUNNER_OE_VERSION:-}
 	if [ -z "$ABLUNIT_TEST_RUNNER_OE_VERSION" ]; then
 		ABLUNIT_TEST_RUNNER_OE_VERSION=${OE_VERSION:-12.2.12}
@@ -16,12 +17,30 @@ initialize () {
 	fi
 	ABLUNIT_TEST_RUNNER_OE_VERSION=$OE_VERSION
 
+	echo "ABLUNIT_TEST_RUNNER_DBUS_NUM=$ABLUNIT_TEST_RUNNER_DBUS_NUM"
 	echo "ABLUNIT_TEST_RUNNER_OE_VERSION=$ABLUNIT_TEST_RUNNER_OE_VERSION"
 	echo "ABLUNIT_TEST_RUNNER_VSCODE_VERSION=$ABLUNIT_TEST_RUNNER_VSCODE_VERSION"
 	export DONT_PROMPT_WSL_INSTALL ABLUNIT_TEST_RUNNER_OE_VERSION ABLUNIT_TEST_RUNNER_VSCODE_VERSION
 }
 
 dbus_config () {
+	echo "[$0 ${FUNCNAME[0]}] ABLUNIT_TEST_RUNNER_DBUS_NUM=$ABLUNIT_TEST_RUNNER_DBUS_NUM"
+	case $ABLUNIT_TEST_RUNNER_DBUS_NUM in
+		1) dbus_config_1 ;; ## /sbin/start-stop-daemon: signal value must be numeric or name of signal (KILL, INT, ...)
+		2) dbus_config_2 ;; ## Failed to connect to the bus: Failed to connect to socket /run/user/0/bus: No such file or directory
+		3) dbus_config_3 ;; ## no errors!
+		4) dbus_config_4 ;; ## dbus error: Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+		5) dbus_config_5 ;; ## Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+		*) dbus_config_3 ;; ## no errors!
+	esac
+}
+
+dbus_config_1 () {
+	echo "[$0 ${FUNCNAME[0]}]"
+	/sbin/start-stop-daemon --start --quiet --pidfile /tmp/custom_xvfb_99.pid --make-pidfile --background --exec /usr/bin/xvfb – :99 -ac -screen 0 1280x1024x16
+}
+
+dbus_config_2 () {
 	echo "[$0 ${FUNCNAME[0]}]"
 	## These lines fix dbus errors in the logs related to the next section
 	## However, they also create new errors
@@ -30,11 +49,46 @@ dbus_config () {
 	service dbus start
 	XDG_RUNTIME_DIR=/run/user/$(id -u)
 	export XDG_RUNTIME_DIR
-	mkdir "$XDG_RUNTIME_DIR"
+	mkdir -p "$XDG_RUNTIME_DIR"
 	chmod 700 "$XDG_RUNTIME_DIR"
 	chown "$(id -un)":"$(id -gn)" "$XDG_RUNTIME_DIR"
 	export DBUS_SESSION_BUS_ADDRESS=unix:path=$XDG_RUNTIME_DIR/bus
+	dbus-daemon --quiet --session --address="$DBUS_SESSION_BUS_ADDRESS" --nofork --nopidfile --syslog-only &
+}
+
+dbus_config_3 () {
+	echo "[$0 ${FUNCNAME[0]}]"
+	DISPLAY=$(grep nameserver /etc/resolv.conf | awk '{print $2}'):0.0
+	export DISPLAY
+	service dbus restart
+	# sudo service dbus restart
+
+	XDG_RUNTIME_DIR=/run/user/$(id -u)
+	export XDG_RUNTIME_DIR
+	if [ ! -d "$XDG_RUNTIME_DIR" ]; then
+		mkdir "$XDG_RUNTIME_DIR"
+		chmod 700 "$XDG_RUNTIME_DIR"
+		chown "$(id -un)":"$(id -gn)" "$XDG_RUNTIME_DIR"
+		# sudo mkdir "$XDG_RUNTIME_DIR"
+		# sudo chmod 700 "$XDG_RUNTIME_DIR"
+		# sudo chown "$(id -un)":"$(id -gn)" "$XDG_RUNTIME_DIR"
+	fi
+
+	DBUS_SESSION_BUS_ADDRESS=unix:path=$XDG_RUNTIME_DIR/bus
+	export DBUS_SESSION_BUS_ADDRESS
 	dbus-daemon --session --address="$DBUS_SESSION_BUS_ADDRESS" --nofork --nopidfile --syslog-only &
+}
+
+dbus_config_4 () {
+	echo "[$0 ${FUNCNAME[0]}]"
+	dbus-daemon --config-file=/usr/share/dbus-1/system.conf --print-address
+	mkdir -p /var/run/dbus
+}
+
+dbus_config_5 () {
+	echo "[$0 ${FUNCNAME[0]}]"
+	dbus-daemon --system &> /dev/null
+	# sudo dbus-daemon --system &> /dev/null
 }
 
 run_tests () {
@@ -45,15 +99,6 @@ run_tests () {
 	# xvfb-run -a npm run test:coverage || EXIT_CODE=$?
 	xvfb-run -a npm run test || EXIT_CODE=$? ## todo
 	cp package.stable.json package.json
-
-	if [ -f /home/circleci/project/test_projects/proj0/prof.out ]; then
-		echo "[$0 ${FUNCNAME[0]}] copying profile output prof_${ABLUNIT_TEST_RUNNER_OE_VERSION}.out"
-		cp /home/circleci/project/test_projects/proj0/prof.out "/home/circleci/artifacts/prof_${ABLUNIT_TEST_RUNNER_OE_VERSION}.out"
-		if [ -f /home/circleci/project/test_projects/proj0/prof.json ]; then
-			echo "[$0 ${FUNCNAME[0]}] copying profile output prof_${ABLUNIT_TEST_RUNNER_OE_VERSION}.json"
-			cp /home/circleci/project/test_projects/proj0/prof.json "/home/circleci/artifacts/prof_${ABLUNIT_TEST_RUNNER_OE_VERSION}.json"
-		fi
-	fi
 
 	if [ "$EXIT_CODE" = "0" ]; then
 		echo "xvfb-run success"
@@ -66,26 +111,24 @@ run_tests () {
 
 save_and_print_debug_output () {
 	echo "[$0 ${FUNCNAME[0]}]"
-	find .vscode-test -name '*-ABL*.log'
-	find .vscode-test -name '*-ABL*.log' -exec cp {} artifacts \;
-	find .vscode-test -name '*ABLUnit.log'
-	find .vscode-test -name '*ABLUnit.log' -exec cp {} artifacts \;
-	find .vscode-test -name 'settings.json'
-	find .vscode-test -name 'settings.json' -exec cp {} artifacts \;
 
 	mkdir -p artifacts
 	find . > artifacts/filelist.txt
 
+	find .vscode-test -name '*ABL*.log'
+	find .vscode-test -name '*ABL*.log' -exec cp {} artifacts \;
+	find .vscode-test -name 'settings.json'
+	find .vscode-test -name 'settings.json' -exec cp {} artifacts \;
+	local FROM_DIR TO_DIR
+	FROM_DIR=$(find .vscode-test  -maxdepth 1 -type d -name 'vscode-*')
+	TO_DIR=/home/circleci/.vscode-test/$(basename "$FROM_DIR")
+	if [ ! -d "$TO_DIR" ]; then
+		cp -r "$FROM_DIR" "$TO_DIR"
+	fi
+
 	$VERBOSE || return 0
 	echo "[$0 ${FUNCNAME[0]}] r-code"
 	find . -name '*.r'
-
-	echo "[$0 ${FUNCNAME[0]}] OpenEdge ABL Extension Logs"
-	echo "********** '1-ABL.log' **********"
-	find . -name "1-ABL.log" -exec cat {} \;
-	echo "********** '2-ABL Language Server.log' **********"
-	find . -name "2-ABL Language Server.log" -exec cat {} \;
-	echo '********** logs done **********'
 }
 
 ########## MAIN BLOCK ##########
