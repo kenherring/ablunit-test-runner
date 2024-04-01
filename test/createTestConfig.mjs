@@ -112,7 +112,8 @@ function getMochaOpts (projName) {
 		],
 	}
 
-	if (process.env['ABLUNIT_TEST_RUNNER_RUN_TESTS_SCRIPT']) {
+	if (process.env['ABLUNIT_TEST_RUNNER_RUN_SCRIPT_FLAG']) {
+		console.log('adding reporter...')
 		mochaOpts.reporter = 'mocha-multi-reporters'
 		mochaOpts.reporterOptions = {
 			reporterEnabled: [ 'spec', 'mocha-junit-reporter' ],
@@ -157,9 +158,7 @@ function getLaunchArgs (projName) {
 	// } else {
 	// 	args.push('--install-extension', './ablunit-test-runner-insiders-' + extVersion + '.vsix')
 	// }
-	if (enableExtensions.includes(projName)) {
-		args.push('--install-extension', 'riversidesoftware.openedge-abl-lsp')
-	}
+
 	// args.push('--pre-release')
 	// args.push('--uninstall-extension <ext-id>')
 	// args.push('--update-extensions')
@@ -174,12 +173,14 @@ function getLaunchArgs (projName) {
 	// args.push('--trace')
 	// args.push('--log', '<level>')
 	// args.push('--log', 'debug') // '<level>'
-	args.push('--log', 'trace') // '<level>'
+	// args.push('--log', 'trace') // '<level>'
 	// args.push('--log', 'kenherring.ablunit-test-runner:debug') // <extension-id>:<level>
 	// args.push('--log', 'kenherring.ablunit-test-runner:trace') // <extension-id>:<level>
 	// args.push('--status')
 	// args.push('--prof-startup')
-	if (!enableExtensions.includes(projName)) {
+	if (enableExtensions.includes(projName)) {
+		args.push('--install-extension', 'riversidesoftware.openedge-abl-lsp')
+	} else {
 		args.push('--disable-extensions')
 	}
 	args.push('--disable-extension', 'vscode.builtin-notebook-renderers')

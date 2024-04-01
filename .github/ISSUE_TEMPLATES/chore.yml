@@ -1,6 +1,6 @@
-name: 🧹 Chore
+name: Chore
 description: Repo configuration, tooling, and other non-feature work.
-title: "🧹 [Chore] "
+title: ":broom: [Chore] "
 labels: ["chore"]
 # projects: ["octo-org/1", "octo-org/44"]
 assignees:
