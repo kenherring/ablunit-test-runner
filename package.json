@@ -61,7 +61,7 @@
 		"progress"
 	],
 	"engines": {
-		"vscode": "^1.83.0"
+		"vscode": "^1.87.0"
 	},
 	"categories": [
 		"Testing"
@@ -87,10 +87,7 @@
 		"package": "webpack --mode production",
 		"pretest": "sh -c scripts/npm_pretest.sh",
 		"test": "vscode-test",
-		"test:coverage": "npm run test -- --coverage",
-		"instrument": "nyc instrument --require source-map-support/register --exclude-after-remap --cwd=dist --in-place . .",
-		"test:coverage-2": "nnpm run test -- --coverage",
-		"test:coverage-3": "npm run pretest && npm run instrument && npm run test -- --coverage",
+		"test:coverage": "npm test -- --coverage",
 		"vscode-test": "vscode-test",
 		"test:install-and-run": "cd dummy-ext && npm run test:install-and-run",
 		"watch": "webpack --mode development --watch",
@@ -98,24 +95,24 @@
 		"version": "sh -c scripts/npm_version.sh"
 	},
 	"dependencies": {
-		"minimatch": "^9.0.3",
+		"minimatch": "^9.0.4",
 		"node-json-minify": "^3.0.0",
 		"xml2js": "^0.6.2"
 	},
 	"devDependencies": {
 		"@istanbuljs/nyc-config-typescript": "^1.0.2",
 		"@types/mocha": "^10.0.6",
-		"@types/node": "^16.18.82",
+		"@types/node": "^16.18.93",
 		"@types/source-map-support": "^0.5.10",
-		"@types/vscode": "^1.83.0",
+		"@types/vscode": "^1.87.0",
 		"@types/xml2js": "^0.4.14",
-		"@typescript-eslint/eslint-plugin": "^6.13.2",
-		"@typescript-eslint/parser": "^6.13.2",
-		"@vscode/test-cli": "^0.0.6",
+		"@typescript-eslint/eslint-plugin": "^6.21.0",
+		"@typescript-eslint/parser": "^6.21.0",
+		"@vscode/test-cli": "^0.0.8",
 		"@vscode/test-electron": "^2.3.9",
 		"cross-env": "^7.0.3",
-		"eslint": "^8.55.0",
-		"mocha": "^10.2.0",
+		"eslint": "^8.57.0",
+		"mocha": "^10.4.0",
 		"mocha-junit-reporter": "^2.2.1",
 		"mocha-multi-reporters": "^1.5.1",
 		"mocha-reporter-sonarqube": "^2.0.6",
@@ -125,9 +122,8 @@
 		"ts-loader": "^9.5.1",
 		"ts-node": "^10.9.2",
 		"tsconfig-paths": "^4.2.0",
-		"typescript": "^5.3.3",
-		"vscode-test": "^1.6.1",
-		"webpack": "^5.89.0",
+		"typescript": "^5.4.3",
+		"webpack": "^5.91.0",
 		"webpack-cli": "^5.1.4"
 	},
 	"contributes": {

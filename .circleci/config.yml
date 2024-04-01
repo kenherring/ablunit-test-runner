@@ -13,7 +13,7 @@ oe-version-param: &oe-version-param
   parameters:
     oe-version:
       type: string
-      enum: [ '12.2.12', '12.7.0' ]
+      enum: [ '12.2.12', '12.7.0', '12.8.1' ]
       default: '12.2.12'
     vscode-version:
       type: string
@@ -153,12 +153,12 @@ workflows:
       - test:
           <<: *context-and-filters
           requires: [ package, test-12.2.12-stable ]
-          oe-version: 12.7.0
           matrix:
             parameters:
+              oe-version: [ 12.7.0, 12.8.1 ]
               vscode-version: [ stable ]
               # vscode-version: [ stable, insiders ]
-          name: test-12.7.0-<< matrix.vscode-version >>
+          name: test-<< matrix.oe-version>>-<< matrix.vscode-version >>
       - sonar:
           <<: *context-and-filters
           requires: [ test-12.2.12-stable ]

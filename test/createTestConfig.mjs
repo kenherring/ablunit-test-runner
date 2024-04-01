@@ -89,6 +89,11 @@ function getMochaOpts (projName) {
 		]
 	}
 
+	// console.log('process.env.CIRCLECI=' + process.env['CIRCLECI'])
+	if (process.env['CIRCLECI'] === true) {
+		mochaOpts.bail = true
+	}
+
 	// TODO - prevents results from reporting to vscode-extension-test-runner
 	mochaOpts.reporter = 'mocha-multi-reporters'
 	mochaOpts.reporterOptions = {

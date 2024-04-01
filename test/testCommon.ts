@@ -64,7 +64,9 @@ export async function newTruePromise () {
 }
 
 export function isoDate () {
-	return '[' + new Date().toISOString() + ']'
+	return ''
+	// TODO remove this function
+	// return '[' + new Date().toISOString() + ']'
 }
 
 function getExtensionDevelopmentPath () {
@@ -785,6 +787,15 @@ export async function refreshData () {
 	return commands.executeCommand('_ablunit.getExtensionTestReferences').then((resp) => {
 		// log.info(isoDate() + ' refreshData-2')
 		const refs = resp as IExtensionTestReferences
+		let passedTests = undefined
+
+		if (refs.recentResults[0]?.ablResults?.resultsJson?.[0].testsuite !== undefined) {
+			passedTests = refs.recentResults[0].ablResults?.resultsJson[0].testsuite?.[0].passed ?? undefined
+		}
+		log.debug('passedTests=' + passedTests)
+		if (passedTests && passedTests <= resultsLen) {
+			throw new Error('failed to refresh test results: results.length=' + refs.recentResults.length)
+		}
 		decorator = refs.decorator
 		testController = refs.testController
 		recentResults = refs.recentResults
@@ -845,12 +856,14 @@ export async function getCurrentRunData (len = 1, tag?: string) {
 
 	await refreshData()
 	if (!currentRunData || currentRunData.length === 0) {
-		log.info(tag + 'currentRunData not set, refreshing...')
-		for (let i=0; i<10; i++) {
-			await sleep2(1000, tag + 'still no currentRunData, sleep before trying again').then(async () => {
-				return refreshData().then(
-					()    => { log.info('refresh success') },
-					(err) => { log.error('refresh failed: ' + err) })
+		log.info(tag + 'getCurrentRunData not set, refreshing...')
+		for (let i=0; i<15; i++) {
+			const prom = sleep2(500, tag + 'still no currentRunData, sleep before trying again (' + i + '/15)').then(async () => {
+				return refreshData().then(() => {
+					log.debug('refresh success')
+				}, (err) => {
+					log.error('refresh failed: ' + err)
+				})
 			})
 			log.info(tag + 'currentRunData.length=' + currentRunData?.length)
 			if ((currentRunData?.length ?? 0) > 0) {
