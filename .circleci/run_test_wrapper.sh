@@ -46,7 +46,7 @@ update_oe_version () {
 restore_vscode_test () {
 	echo "[$0 ${FUNCNAME[0]}] ABLUNIT_TEST_RUNNER_OE_VERSION=$ABLUNIT_TEST_RUNNER_OE_VERSION"
 	local FROM_DIR TO_DIR
-	FROM_DIR='/home/circleci/.vscode-test/'
+	FROM_DIR='/home/circleci/.vscode-test'
 	TO_DIR=./.vscode-test
 	if [ "$(find "$(dirname "$FROM_DIR")" | wc -l)" -eq 0 ]; then
 		return 0
