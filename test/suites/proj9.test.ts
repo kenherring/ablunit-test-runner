@@ -1,4 +1,4 @@
-import { Uri, assert, deleteFile, getTestCount, getWorkspaceUri, runAllTests, selectProfile, suiteSetupCommon, updateTestProfile, workspace } from '../testCommon'
+import { Uri, assert, deleteFile, getTestCount, getWorkspaceUri, log, runAllTests, selectProfile, suiteSetupCommon, updateTestProfile, workspace } from '../testCommon'
 
 const testProfileJson = () => Uri.joinPath(getWorkspaceUri(), '.vscode/ablunit-test-profile.json')
 const testProfileBackup = () => Uri.joinPath(getWorkspaceUri(), '.vscode/ablunit-test-profile.json.backup')

@@ -782,17 +782,20 @@ export async function selectProfile (profile: string) {
 	})
 }
 
-export async function refreshData () {
-	// log.info(isoDate() + ' refreshData-1')
+export async function refreshData (resultsLen = 0) {
+	decorator = undefined
+	testController = undefined
+	recentResults = undefined
+	currentRunData = undefined
+
 	return commands.executeCommand('_ablunit.getExtensionTestReferences').then((resp) => {
-		// log.info(isoDate() + ' refreshData-2')
 		const refs = resp as IExtensionTestReferences
 		let passedTests = undefined
 
 		if (refs.recentResults[0]?.ablResults?.resultsJson?.[0].testsuite !== undefined) {
 			passedTests = refs.recentResults[0].ablResults?.resultsJson[0].testsuite?.[0].passed ?? undefined
 		}
-		log.debug('passedTests=' + passedTests)
+		log.info(isoDate() + ' refreshData-4 passedTests=' + passedTests)
 		if (passedTests && passedTests <= resultsLen) {
 			throw new Error('failed to refresh test results: results.length=' + refs.recentResults.length)
 		}
