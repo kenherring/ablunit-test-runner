@@ -1,5 +1,5 @@
 #!/bin/bash
-set -eou pipefail
+set -euo pipefail
 
 initialize () {
 	echo "[$0 ${FUNCNAME[0]}]"
@@ -45,10 +45,14 @@ update_oe_version () {
 
 restore_vscode_test () {
 	echo "[$0 ${FUNCNAME[0]}] ABLUNIT_TEST_RUNNER_OE_VERSION=$ABLUNIT_TEST_RUNNER_OE_VERSION"
-	local FROM_DIR TO_DIR
+	local FROM_DIR TO_DIR COUNT
 	FROM_DIR='/home/circleci/.vscode-test'
 	TO_DIR=./.vscode-test
-	if [ "$(find "$(dirname "$FROM_DIR")" | wc -l)" -eq 0 ]; then
+	if ! COUNT=$(find "$FROM_DIR" -type f 2>/dev/null | wc -l); then
+		COUNT=0
+	fi
+	$VERBOSE && echo "COUNT=$COUNT"
+	if [ "$COUNT" = 0 ]; then
 		return 0
 	fi
 	cp -r "$FROM_DIR"/* "$TO_DIR"
