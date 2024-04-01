@@ -64,7 +64,7 @@ get_pct () {
 		ARGS+=(-L)
 		ARGS+=(-o ~/.ant/lib/PCT.jar)
 		$VERBOSE && ARGS+=(-v)
-		curl "${ARGS[@]}" https://github.com/Riverside-Software/pct/releases/download/v226/PCT.jar
+		curl "${ARGS[@]}" https://github.com/Riverside-Software/pct/releases/download/v228/PCT.jar
 	fi
 }
 

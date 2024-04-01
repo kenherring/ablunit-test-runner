@@ -14,7 +14,7 @@ COPY --from=psc --chown=circleci:circleci --chmod=744 /psc /psc
 ADD .rssw/oedoc.bin /root/.rssw/oedoc.bin
 
 RUN if [ ! -f /root/.rssw/oedoc.bin ]; then echo "/root/.rssw/oedoc.bin oedoc.bin not found" && exit 1; fi
-RUN curl -v -L https://github.com/Riverside-Software/pct/releases/download/v226/PCT.jar -o /usr/share/ant/lib/PCT.jar
+RUN curl -v -L https://github.com/Riverside-Software/pct/releases/download/v228/PCT.jar -o /usr/share/ant/lib/PCT.jar
 RUN echo "JAVA_HOME=$(which java)" > /psc/dlc/properties/java.properties
 
 ENV TERM=vt100
