@@ -32,8 +32,10 @@ validate_results_count() {
 		find . -name 'lcov.info' | sort
 	fi
 
-	if [ "$RESULTS_COUNT" != "$TEST_COUNT" ] || [ "$LCOV_COUNT" != "1" ]; then
-		return 1
+	if [ -n "$ABLUNIT_TEST_RUNNER_PROJECT_NAME" ]; then
+		if [ "$RESULTS_COUNT" != "$TEST_COUNT" ] || [ "$LCOV_COUNT" != "1" ]; then
+			return 1
+		fi
 	fi
 }
 

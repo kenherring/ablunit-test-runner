@@ -30,8 +30,6 @@ export interface IExtensionTestReferences {
 let recentResults: ABLResults[] = []
 
 export async function activate (context: ExtensionContext) {
-	// eslint-disable-next-line no-console
-	console.log('activating extension! (version=' + getExtensionVersion() + ')')
 	const ctrl = tests.createTestController('ablunitTestController', 'ABLUnit Test')
 	let currentTestRun: TestRun | undefined = undefined
 
@@ -74,8 +72,9 @@ export async function activate (context: ExtensionContext) {
 				await updateNodeForDocument(e, 'didOpen').then(() => {
 					log.trace('updateNodeForDocument complete for ' + e.uri)
 					decorator.decorate(undefined, e)
-				}, (err) => {
-					log.error('failed updateNodeForDocument onDidTextDocument! err=' + err)
+					return
+				}, (e: unknown) => {
+					log.error('failed updateNodeForDocument onDidTextDocument! err=' + e)
 				})
 			})
 		})
@@ -90,35 +89,6 @@ export async function activate (context: ExtensionContext) {
 			throw new Error('continuous test runs not implemented')
 		}
 		return startTestRun(request, token).then(() => { return }, (e) => { throw e })
-
-		// const runProm = startTestRun(request, cancellation)
-		// 	.then(() => { return })
-		// 	.catch((err) => {
-		// 		log.error('startTestRun failed. err=' + err)
-		// 		throw err
-		// 	})
-		// const cancelProm = new Promise((resolve) => {
-		// 	cancellation.onCancellationRequested(() => {
-		// 		log.debug('cancellation requested - runHandler cancelProm')
-		// 		resolve('cancelled')
-		// 	})
-		// })
-		// const ret = Promise.race([ runProm, cancelProm ]).then((res) => {
-		// 	if (res === 'cancelled') {
-		// 		log.error('test run cancelled')
-		// 		throw new CancellationError()
-		// 	}
-		// 	log.debug('test run completed successfully')
-		// 	return
-		// }, (err) => {
-		// 	log.error('test run failed. err=' + err)
-		// 	throw err
-
-		// })
-
-		// return ret
-
-		// return startTestRun(request, token).then(() => { return })
 	}
 
 	async function openTestRunConfig () {
@@ -348,7 +318,7 @@ export async function activate (context: ExtensionContext) {
 				}
 				return runTestQueue(res).then(() => {
 					log.debug('runTestQueue complete')
-				}).catch((e) => { throw e })
+				})
 			}).catch((e) => { throw e })
 		}).catch((err) => {
 			run.end()
@@ -419,12 +389,11 @@ export async function activate (context: ExtensionContext) {
 	}
 
 	function updateConfiguration (event: ConfigurationChangeEvent) {
-		log.debug('event' + JSON.stringify(event))
 		if (!event.affectsConfiguration('ablunit')) {
-			// log.warn('configuration updated but does not include ablunit settings')
+			log.warn('configuration updated but does not include ablunit settings')
 			return
 		}
-		log.debug('effects ablunit.file? ' + event.affectsConfiguration('ablunit.files'))
+		log.debug('affects ablunit.file? ' + event.affectsConfiguration('ablunit.files'))
 		if (event.affectsConfiguration('ablunit.files')) {
 			removeExcludedFiles(ctrl, getExcludePatterns())
 		}

@@ -4,7 +4,6 @@ import { isRelativePath } from './ABLUnitCommon'
 import { ExecException, ExecOptions, exec } from 'child_process'
 import { log } from './ChannelLogger'
 
-
 export enum RunStatus {
 	None = 10,
 	Initialized = 20,
@@ -31,7 +30,6 @@ export enum RunStatusString {
 	'Cancelled' = 81,
 	'Error' = 82,
 }
-
 
 export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation: CancellationToken) => {
 	const start = Date.now()

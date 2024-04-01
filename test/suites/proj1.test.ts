@@ -76,7 +76,6 @@ suite('proj1Suite', () => {
 	// 	log.info(isoDate() + ' [proj1 suiteSetup 3-4] inspect=' + JSON.stringify(workspace.getConfiguration('ablunit').inspect('files.exclude')))
 	// 	const defaultValue = workspace.getConfiguration('ablunit').inspect('files.exclude')?.defaultValue
 	// 	log.info(isoDate() + ' [proj1 suiteSteup 3-5] defaultValue=' + JSON.stringify(defaultValue))
-
 	// 	if (JSON.stringify(defaultValue) === JSON.stringify(currentValue)) {
 	// 		currentValue = undefined
 	// 	}
@@ -97,7 +96,8 @@ suite('proj1Suite', () => {
 	// })
 
 	teardown('proj1 - teardown', async () => {
-		return teardownCommon()
+		await teardownCommon()
+		return
 	})
 
 	// suiteTeardown('proj1 - suiteTeardown', async () => {

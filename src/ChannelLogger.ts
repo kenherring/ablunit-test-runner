@@ -7,8 +7,7 @@ class Logger {
 
 	private readonly logOutputChannel
 	private readonly consoleLogLevel = LogLevel.Debug
-	// private readonly testResultsLogLevel = LogLevel.Info
-	private readonly testResultsLogLevel = LogLevel.Debug
+	private readonly testResultsLogLevel = LogLevel.Info
 	private logLevel: number
 	private readonly consoleTimestamp = process.env['ABLUNIT_TEST_RUNNER_UNIT_TESTING'] === 'true'
 	private testResultsTimestamp = false

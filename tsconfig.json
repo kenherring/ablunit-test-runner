@@ -57,19 +57,21 @@
 	},
 	"include": [
 		"./**/*.ts",
-		"./**/*.test.ts",
-		// for when glob doesn't work
-		// "src/*.ts",
-		// "src/*/*.ts",
-		// "src/*/*/*.ts",
-		// "test/*.ts",
-		// "test/*/*.ts",
-		// "test/*/*.test.ts",
+		"./**/*.mjs",
+		"./test/suites/*.test.ts",
 	],
 	"exclude": [
 		"./dummy-ext/**",
 		"./node_modules/**",
 		"./test_projects/**",
-
-	]
+	],
+	"watchOptions": {
+		"excludeDirectories": [
+			"dist",
+			"dummy-ext",
+			"node_modules",
+			"out",
+			"test_projects",
+		]
+	}
 }
