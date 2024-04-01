@@ -19,8 +19,9 @@ dbus_test () {
     local DBUS_NUM=$1
     echo "[$(date)] running dbus_test $ABLUNIT_TEST_RUNNER_DBUS_NUM"
     export ABLUNIT_TEST_RUNNER_DBUS_NUM=$DBUS_NUM
-    time docker/run_tests.sh -d -p proj1
-    time docker/run_tests.sh -d -p proj1 > "dbuslog_${DBUS_NUM}.log" 2>&1
+    time docker/run_tests.sh -d -p proj1,proj2 > "temp/dbuslog_${DBUS_NUM}.log" 2>&1
+
+    echo "last log line: $(tail -1 "temp/dbuslog_${DBUS_NUM}.log")"
     # docker/run_tests.sh -d -p proj1 >/dev/null 2>&1 &
     # winpty ./docker/run_tests.sh -d -p proj1 > "temp/dbus-$1.log" 2>&1 &
     # time ./docker/run_tests.sh -d -p proj1 > "temp/dbus-$1.log" 2>&1 &

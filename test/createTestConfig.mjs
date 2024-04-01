@@ -39,7 +39,6 @@ function getExtensionVersion () {
 	throw new Error('unable to get extension version')
 }
 
-
 function initialize () {
 	if (vsVersion !== 'insiders' && vsVersion !== 'stable' && !vsVersion.startsWith('1.')) {
 		throw new Error('Invalid version: ' + vsVersion)
@@ -102,13 +101,6 @@ function getMochaOpts (projName) {
 		// 	'source-map-support/register-hook-require',
 		// 	'ts-node/register',
 		// ],
-		reporter: 'mocha-multi-reporters',
-		reporterOptions: {
-			reporterEnabled: [ 'spec', 'mocha-junit-reporter' ],
-			jsonReporterOptions: { output: jsonFile },
-			xunitReporterOptions: { output: xunitFile },
-			mochaJunitReporterReporterOptions: { mochaFile: mochaFile }
-		},
 		// preload: [ 'ts-node/register/transpile-only' ],
 		preload: [
 			// './dist/extension.js',
@@ -120,19 +112,20 @@ function getMochaOpts (projName) {
 		],
 	}
 
-	// console.log('process.env.CIRCLECI=' + process.env['CIRCLECI'])
-	if (process.env['CIRCLECI'] === true) {
-	 mochaOpts.bail = true
+	if (process.env['ABLUNIT_TEST_RUNNER_RUN_TESTS_SCRIPT']) {
+		mochaOpts.reporter = 'mocha-multi-reporters'
+		mochaOpts.reporterOptions = {
+			reporterEnabled: [ 'spec', 'mocha-junit-reporter' ],
+			jsonReporterOptions: { output: jsonFile },
+			// xunitReporterOptions: { output: xunitFile },
+			mochaJunitReporterReporterOptions: { mochaFile: mochaFile }
+		}
 	}
 
-	// TODO - prevents results from reporting to vscode-extension-test-runner
-	// mochaOpts.reporter = 'mocha-multi-reporters'
-	// mochaOpts.reporterOptions = {
-	// 	reporterEnabled: [ 'spec', 'mocha-junit-reporter' ],
-	// 	jsonReporterOptions: { output: jsonFile },
-	// 	xunitReporterOptions: { output: xunitFile },
-	// 	mochaJunitReporterReporterOptions: { mochaFile: mochaFile }
-	// }
+	if (process.env['CIRCLECI']) {
+		mochaOpts.bail = true
+	}
+
 	return mochaOpts
 }
 
@@ -181,12 +174,11 @@ function getLaunchArgs (projName) {
 	// args.push('--trace')
 	// args.push('--log', '<level>')
 	// args.push('--log', 'debug') // '<level>'
-	// args.push('--log', 'trace') // '<level>'
+	args.push('--log', 'trace') // '<level>'
 	// args.push('--log', 'kenherring.ablunit-test-runner:debug') // <extension-id>:<level>
 	// args.push('--log', 'kenherring.ablunit-test-runner:trace') // <extension-id>:<level>
 	// args.push('--status')
 	// args.push('--prof-startup')
-	// args.push('--disable-extension <ext-id>')
 	if (!enableExtensions.includes(projName)) {
 		args.push('--disable-extensions')
 	}
@@ -205,15 +197,15 @@ function getLaunchArgs (projName) {
 	// args.push('--logExtensionHostCommunication')
 
 	// --- disbale functionality not needed for testing - https://github.com/microsoft/vscode/issues/174744 --- //
-	// args.push('--disable-chromium-sandbox')
-	// args.push('--no-sandbox', '--sandbox=false')
-	// args.push('--disable-crash-reporter')
-	// args.push('--disable-gpu-sandbox')
-	// args.push('--disable-gpu')
+	args.push('--disable-chromium-sandbox')
+	args.push('--no-sandbox', '--sandbox=false')
+	args.push('--disable-crash-reporter')
+	args.push('--disable-gpu-sandbox')
+	args.push('--disable-gpu')
 	args.push('--disable-telemetry')
 	args.push('--disable-updates')
-	// args.push('--disable-workspace-trust')
-	// args.push('--disable-dev-shm-usage', '--no-xshm')
+	args.push('--disable-workspace-trust')
+	args.push('--disable-dev-shm-usage', '--no-xshm')
 
 
 	// --- possible coverage (nyc) related args --- //
@@ -301,7 +293,6 @@ function getTests () {
 	const g = glob.globSync('test/suites/*.test.ts').reverse()
 	for (const f of g) {
 		tests.push(getTestConfig(path.basename(f, '.test.ts')))
-		return tests // TODO remove me
 	}
 	return tests
 }

@@ -14,9 +14,7 @@ initialize () {
 	${CIRCLECI:-false} && NO_BUILD=true
 	[ -z "${DOCKER_IMAGE:-}" ] && NO_BUILD=true
 	[ -z "${WSL_DISTRO_NAME:-}" ] && WSL=true
-	echo 101
 	PACKAGE_VERSION=$(node -p "require('./package.json').version")
-	echo 102
 
 	while getopts 'hNoVv' OPT; do
 		case "$OPT" in

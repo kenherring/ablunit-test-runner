@@ -846,9 +846,9 @@ export async function getResults (len = 1, tag?: string) {
 	if ((!recentResults || recentResults.length === 0) && len > 0) {
 		log.info(tag + 'recentResults not set, refreshing...')
 		for (let i=0; i<15; i++) {
-			const prom = sleep2(500, tag + 'still no recentResults, sleep before trying again (' + i + '/15)').then(async () => {
+			const prom = sleep2(100, tag + 'still no recentResults, sleep before trying again (' + i + '/15)').then(async () => {
 				return refreshData().then(async () => {
-					return sleep2(250, null)
+					return sleep2(100, null)
 				})
 			}, (e) => { log.error('no recentResults yet (' + i + '/15) (e=' + e + ')') })
 
@@ -1001,7 +1001,7 @@ export const assert = {
 }
 
 export async function beforeProj7 () {
-	await installExtension('riversidesoftware.openedge-abl-lsp')
+	await suiteSetupCommon()
 	const templateProc = Uri.joinPath(toUri('src/template_proc.p'))
 	const templateClass = Uri.joinPath(toUri('src/template_class.cls'))
 	const classContent = await workspace.fs.readFile(templateClass).then((data) => {
