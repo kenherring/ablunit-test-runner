@@ -27,8 +27,8 @@ async function runTest(version: string) {
 		const [cliPath, ...args] = resolveCliArgsFromVSCodeExecutablePath(vscodeExecutablePath)
 
 		const g = globSync(path.resolve(__dirname, '../../../', 'ablunit-test-runner-*.vsix'))
-		if (g.length != 3) {
-			throw new Error("Expected exactly three ablunit-test-runner-*.vsix files, found " + g.length)
+		if (g.length != 2) {
+			throw new Error("Expected exactly two ablunit-test-runner-*.vsix files, found " + g.length)
 		}
 
 		const packagedExtensionPath = g[0]

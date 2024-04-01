@@ -1,8 +1,8 @@
 {
-	// "ts-node": {
-	// 	"transpileOnly": true,
-	// 	"require": [ "tsconfig-paths/register" ]
-	// },
+	"ts-node": {
+		"transpileOnly": true,
+		"require": [ "tsconfig-paths/register" ]
+	},
 	"compilerOptions": {
 		"module": "NodeNext",
 		"moduleResolution": "NodeNext", // https://www.typescriptlang.org/tsconfig#moduleResolution
@@ -18,17 +18,20 @@
 
 		// "baseUrl": ".",
 		"outDir": "out",
+		// "outDir": "dist",
 		"paths": {
 			"*": [ "./src/*" ]
 		},
-		// "rootDir": ".",
-		// "sourceRoot": ".",
+		"rootDir": ".",
+		"sourceRoot": ".",
 		"sourceMap": true,
+		// "inlineSourceMap": true,
 		"strict": true,
 		"alwaysStrict": true,
 		"esModuleInterop": true,
 		"isolatedModules": true,
-		// "listEmittedFiles": true,
+		"listEmittedFiles": true,
+		// "traceResolution": true,
 
 		"allowJs": true,
 		"checkJs": true,
@@ -56,29 +59,24 @@
 		"useUnknownInCatchVariables": false,
 	},
 	"include": [
-		"./.vscode-test.mjs",
-		"./test/createTestConfig.mjs",
 		"./**/*.ts",
-		"./**/*.test.ts",
-		// for when glob doesn't work
-		"./src/*.ts",
-		"./src/*/*.ts",
-		"./src/*/*/*.ts",
-		"./src/test/*/*.test.ts",
+		"./**/*.mjs",
+		// "./.vscode-test.mjs",
+		// "./test/createTestConfig.mjs",
+		"./test/suites/*.test.ts",
 	],
 	"exclude": [
 		"./dummy-ext/**",
 		"./node_modules/**",
 		"./test_projects/**",
-
 	],
 	"watchOptions": {
 		"excludeDirectories": [
 			"dist",
 			"dummy-ext",
-			"**/node_modeules",
+			"node_modules",
 			"out",
-			"test_projects"
+			"test_projects",
 		]
 	}
 }

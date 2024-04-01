@@ -9,6 +9,7 @@ node_modules/
 out/
 target/
 *.bk
+*.bk.*
 *.log
 *.tmp
 *.vsix
