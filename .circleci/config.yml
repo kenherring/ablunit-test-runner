@@ -9,16 +9,6 @@ parameters:
     type: string
     default: v7
 
-oe-version-param: &oe-version-param
-  parameters:
-    oe-version:
-      type: string
-      enum: [ '12.2.12', '12.7.0', '12.8.1' ]
-      default: '12.2.12'
-    vscode-version:
-      type: string
-      default: stable
-      enum: [ stable, proposedapi, insiders ]
 context-and-filters: &context-and-filters
   context:
     - DockerHub
@@ -87,7 +77,18 @@ jobs:
       - run: find . -type f -name "*.vsix"
       - run: '[ "$(find . -type f -name "*.vsix" | wc -l)" = "2" ] || exit 1'
   test:
-    <<: *oe-version-param
+    parameters:
+      oe-version:
+        type: string
+        enum: [ '12.2.12', '12.7.0', '12.8.1' ]
+        default: '12.2.12'
+      vscode-version:
+        type: string
+        default: stable
+        enum: [ stable, proposedapi, insiders ]
+      coverage:
+        type: boolean
+        default: true
     docker:
       - image: kherring/ablunit-test-runner:<< parameters.oe-version >>
         auth:
@@ -107,7 +108,15 @@ jobs:
       - store_artifacts: { when: always, path: artifacts }
       # - save-test-cache: { oe-version: << parameters.oe-version >> }
   install-and-run:
-    <<: *oe-version-param
+    parameters:
+      oe-version:
+        type: string
+        enum: [ '12.2.12', '12.7.0', '12.8.1' ]
+        default: '12.2.12'
+      vscode-version:
+        type: string
+        default: stable
+        enum: [ stable, proposedapi, insiders ]
     executor: psc-primary
     environment:
       ABLUNIT_TEST_RUNNER_OE_VERSION: << parameters.oe-version >>
@@ -152,6 +161,7 @@ workflows:
       - test:
           <<: *context-and-filters
           requires: [ package, test-12.2.12-stable ]
+          coverage: false
           matrix:
             parameters:
               oe-version: [ 12.7.0, 12.8.1 ]
