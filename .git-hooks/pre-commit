@@ -7,7 +7,7 @@ set -euo pipefail
 . scripts/common.sh
 
 validate_circleci_config () {
-	echo "[$0 ${FUNCNAME[0]}]"
+	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}]"
 
 	if ! git diff --name-only --staged | grep -q 'circleci/config.yml'; then
 		echo "circleci/config.yml is not staged for commit, skipping validation..." >&2
@@ -22,7 +22,7 @@ validate_circleci_config () {
 }
 
 validate_package_json () {
-	echo "[$0 ${FUNCNAME[0]}]"
+	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}]"
 	PACK1=$(md5sum package.json)
 	PACK2=$(package.stable.json)
 	if [ "$PACK1" != "$PACK2" ]; then
@@ -32,7 +32,7 @@ validate_package_json () {
 }
 
 validate_compile () {
-	echo "[$0 ${FUNCNAME[0]}]"
+	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}]"
 	npm run build
 }
 

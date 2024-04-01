@@ -2,7 +2,7 @@
 set -euo pipefail
 
 initialize () {
-	echo "[$0 ${FUNCNAME[0]}]"
+	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}]"
 	VERBOSE=${VERBOSE:-false}
 	DONT_PROMPT_WSL_INSTALL=No_Prompt_please
 	ABLUNIT_TEST_RUNNER_DBUS_NUM=${ABLUNIT_TEST_RUNNER_DBUS_NUM:-3}
@@ -25,26 +25,26 @@ initialize () {
 
 	npm install
 
-	echo "[$0 ${FUNCNAME[0]}] update_oe_version start"
+	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] update_oe_version start"
 	update_oe_version
 	restore_vscode_test
-	echo "[$0 ${FUNCNAME[0]}] update_oe_version end"
+	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] update_oe_version end"
 	# exit 1
 }
 
 update_oe_version () {
 	[ "$ABLUNIT_TEST_RUNNER_OE_VERSION" = '12.2' ] && return 0
-	echo "[$0 ${FUNCNAME[0]}] ABLUNIT_TEST_RUNNER_OE_VERSION=$ABLUNIT_TEST_RUNNER_OE_VERSION"
+	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] ABLUNIT_TEST_RUNNER_OE_VERSION=$ABLUNIT_TEST_RUNNER_OE_VERSION"
 
 	local SHORT_VERSION=${ABLUNIT_TEST_RUNNER_OE_VERSION%.*}
-	echo "[$0 ${FUNCNAME[0]}] SHORT_VERSION=$SHORT_VERSION"
+	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] SHORT_VERSION=$SHORT_VERSION"
 
 	sed -i "s/\"12.2\"/\"$SHORT_VERSION\"/g" test_projects/*/openedge-project.json
 	# ls -al test_projects/*/openedge-project.json
 }
 
 restore_vscode_test () {
-	echo "[$0 ${FUNCNAME[0]}] ABLUNIT_TEST_RUNNER_OE_VERSION=$ABLUNIT_TEST_RUNNER_OE_VERSION"
+	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] ABLUNIT_TEST_RUNNER_OE_VERSION=$ABLUNIT_TEST_RUNNER_OE_VERSION"
 	local FROM_DIR TO_DIR COUNT
 	FROM_DIR='/home/circleci/.vscode-test'
 	TO_DIR=./.vscode-test
@@ -59,7 +59,7 @@ restore_vscode_test () {
 }
 
 dbus_config () {
-	echo "[$0 ${FUNCNAME[0]}] ABLUNIT_TEST_RUNNER_DBUS_NUM=$ABLUNIT_TEST_RUNNER_DBUS_NUM"
+	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] ABLUNIT_TEST_RUNNER_DBUS_NUM=$ABLUNIT_TEST_RUNNER_DBUS_NUM"
 	case $ABLUNIT_TEST_RUNNER_DBUS_NUM in
 		0) dbus_config_0 ;; ## do nothing
 		1) dbus_config_1 ;; ## /sbin/start-stop-daemon: signal value must be numeric or name of signal (KILL, INT, ...)
@@ -72,16 +72,16 @@ dbus_config () {
 }
 
 dbug_config_0 () {
-	echo "[$0 ${FUNCNAME[0]}]"
+	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}]"
 }
 
 dbus_config_1 () {
-	echo "[$0 ${FUNCNAME[0]}]"
+	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}]"
 	/sbin/start-stop-daemon --start --quiet --pidfile /tmp/custom_xvfb_99.pid --make-pidfile --background --exec /usr/bin/xvfb – :99 -ac -screen 0 1280x1024x16
 }
 
 dbus_config_2 () {
-	echo "[$0 ${FUNCNAME[0]}]"
+	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}]"
 	## These lines fix dbus errors in the logs related to the next section
 	## However, they also create new errors
 
@@ -97,7 +97,7 @@ dbus_config_2 () {
 }
 
 dbus_config_3 () {
-	echo "[$0 ${FUNCNAME[0]}]"
+	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}]"
 	DISPLAY=$(grep nameserver /etc/resolv.conf | awk '{print $2}'):0.0
 	export DISPLAY
 	service dbus restart
@@ -120,19 +120,19 @@ dbus_config_3 () {
 }
 
 dbus_config_4 () {
-	echo "[$0 ${FUNCNAME[0]}]"
+	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}]"
 	dbus-daemon --config-file=/usr/share/dbus-1/system.conf --print-address
 	mkdir -p /var/run/dbus
 }
 
 dbus_config_5 () {
-	echo "[$0 ${FUNCNAME[0]}]"
+	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}]"
 	dbus-daemon --system &> /dev/null
 	# sudo dbus-daemon --system &> /dev/null
 }
 
 run_tests () {
-	echo "[$0 ${FUNCNAME[0]}]"
+	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}]"
 	EXIT_CODE=0
 
 	cp "package.$ABLUNIT_TEST_RUNNER_VSCODE_VERSION.json" package.json
@@ -153,7 +153,7 @@ run_tests () {
 }
 
 save_and_print_debug_output () {
-	echo "[$0 ${FUNCNAME[0]}]"
+	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}]"
 
 	mkdir -p artifacts
 	find . > artifacts/filelist.txt
@@ -170,7 +170,7 @@ save_and_print_debug_output () {
 	fi
 
 	$VERBOSE || return 0
-	echo "[$0 ${FUNCNAME[0]}] r-code"
+	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] r-code"
 	find . -name '*.r'
 }
 
