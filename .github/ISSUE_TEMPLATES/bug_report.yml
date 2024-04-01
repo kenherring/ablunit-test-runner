@@ -1,0 +1,37 @@
+name: Bug Report
+description: File a bug report
+title: "🪲 [Bug] "
+labels: ["bug", "triage"]
+# projects: ["octo-org/1", "octo-org/44"]
+# assignees:
+#   - octocat
+body:
+  - type: dropdown
+    id: version
+    attributes:
+      label: OpenEdge Version
+      description: What version of our software are you running?
+      options:
+        - 12.8.0
+        - 12.7.0
+        - 12.6.0
+        - 12.5.0
+        - 12.4.0
+        - 12.3.0
+        - 12.2.13
+        - 12.2.12
+        - 12.2.X
+        - 12.1
+        - 12.0
+        - 11.7
+        - 11.6
+        - 11.X
+        - 10.X
+        - 9.X
+        - other (please specify in the description)
+    validations:
+      required: true
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this bug report!
