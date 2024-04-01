@@ -118,7 +118,9 @@ export function beforeCommon () {
 log.info('enableExtensions=' + enableExtensions() + ', projName=' + projName() + ', oeVersion=' + oeVersion())
 
 export function isoDate () {
-	return '[' + new Date().toISOString() + ']'
+	return ''
+	// TODO remove this function
+	// return '[' + new Date().toISOString() + ']'
 }
 
 function getExtensionDevelopmentPath () {
@@ -739,7 +741,7 @@ export async function refreshData (resultsLen = 0) {
 		if (refs.recentResults[0]?.ablResults?.resultsJson?.[0].testsuite !== undefined) {
 			passedTests = refs.recentResults[0].ablResults?.resultsJson[0].testsuite?.[0].passed ?? undefined
 		}
-		log.info(isoDate() + ' refreshData-4 passedTests=' + passedTests)
+		log.debug('passedTests=' + passedTests)
 		if (passedTests && passedTests <= resultsLen) {
 			throw new Error('failed to refresh test results: results.length=' + refs.recentResults.length)
 		}
@@ -805,9 +807,11 @@ export async function getCurrentRunData (len = 1, resLen = 0, tag?: string) {
 		log.info(tag + 'getCurrentRunData not set, refreshing...')
 		for (let i=0; i<15; i++) {
 			const prom = sleep2(500, tag + 'still no currentRunData, sleep before trying again (' + i + '/15)').then(async () => {
-				return refreshData(resLen).then(
-					()    => { log.info('refresh success') },
-					(err) => { log.error('refresh failed: ' + err) })
+				return refreshData(resLen).then(() => {
+					log.debug('refresh success')
+				}, (err) => {
+					log.error('refresh failed: ' + err)
+				})
 			})
 
 			log.info(tag + 'getCurrentRunData - await prom start')

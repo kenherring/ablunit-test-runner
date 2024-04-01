@@ -120,7 +120,7 @@ function getMochaOpts (projName) {
 		],
 	}
 
-	console.log('process.env.CIRCLECI=' + process.env['CIRCLECI'])
+	// console.log('process.env.CIRCLECI=' + process.env['CIRCLECI'])
 	if (process.env['CIRCLECI'] === true) {
 	 mochaOpts.bail = true
 	}

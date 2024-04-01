@@ -1,5 +1,5 @@
 #!/bin/bash
-set -euo pipefail
+set -eou pipefail
 
 initialize () {
 	echo "[$0 ${FUNCNAME[0]}]"
@@ -40,18 +40,18 @@ update_oe_version () {
 	echo "[$0 ${FUNCNAME[0]}] SHORT_VERSION=$SHORT_VERSION"
 
 	sed -i "s/\"12.2\"/\"$SHORT_VERSION\"/g" test_projects/*/openedge-project.json
-	ls -al test_projects/*/openedge-project.json
+	# ls -al test_projects/*/openedge-project.json
 }
 
 restore_vscode_test () {
 	echo "[$0 ${FUNCNAME[0]}] ABLUNIT_TEST_RUNNER_OE_VERSION=$ABLUNIT_TEST_RUNNER_OE_VERSION"
 	local FROM_DIR TO_DIR
-	FROM_DIR='/home/circleci/.vscode-test/*'
+	FROM_DIR='/home/circleci/.vscode-test/'
 	TO_DIR=./.vscode-test
-	if [ "$(find "$(basedir "$FROM_DIR")" | wc -l)" -eq 0 ]; then
+	if [ "$(find "$(dirname "$FROM_DIR")" | wc -l)" -eq 0 ]; then
 		return 0
 	fi
-	cp -r "$FROM_DIR" "$TO_DIR"
+	cp -r "$FROM_DIR"/* "$TO_DIR"
 }
 
 dbus_config () {
