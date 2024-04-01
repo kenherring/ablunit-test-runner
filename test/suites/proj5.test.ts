@@ -3,18 +3,14 @@ import { Uri } from 'vscode'
 import { parseSuiteLines } from '../../src/parse/TestSuiteParser'
 import { parseTestClass } from '../../src/parse/TestClassParser'
 import { parseTestProgram } from '../../src/parse/TestProgramParser'
-import { getTestCount, getWorkspaceUri, log, runAllTests, waitForExtensionActive } from '../testCommon'
+import { getTestCount, getWorkspaceUri, log, runAllTests, suiteSetupCommon } from '../testCommon'
 import { getContentFromFilesystem, getLines } from '../../src/parse/TestParserCommon'
 
-
-const projName = 'proj5'
 const workspaceUri = getWorkspaceUri()
 
 suite('proj5 - Extension Test Suite', () => {
 
-	suiteSetup('proj5 - before', async () => {
-		await waitForExtensionActive()
-	})
+	suiteSetup('proj5 - before', async () => suiteSetupCommon())
 
 	test('proj5.1 - test count', async () => {
 		await runAllTests()

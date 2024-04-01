@@ -4,7 +4,6 @@ import { getSourceMapFromRCode } from '../../src/parse/RCodeParser'
 import { PropathParser } from '../../src/ABLPropath'
 import { vscodeVersion } from '../../src/ABLUnitCommon'
 
-const projName = 'DebugLines'
 const workspaceFolder = workspace.workspaceFolders![0]
 
 const allTests = (version: vscodeVersion = 'stable') => {

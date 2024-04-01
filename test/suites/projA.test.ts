@@ -1,13 +1,9 @@
 import { Uri, workspace } from 'vscode'
-import { assert, runAllTests, waitForExtensionActive } from '../testCommon'
-
-const projName = 'projA'
+import { assert, runAllTests, suiteSetupCommon } from '../testCommon'
 
 suite('projA - Extension Test Suite', () => {
 
-	suiteSetup('projA - before', async () => {
-		await waitForExtensionActive()
-	})
+	suiteSetup('projA - before', async () => suiteSetupCommon())
 
 	test('projA.1 - no .vscode/ablunit-test-profile.json exists in project', async () => {
 		await runAllTests()

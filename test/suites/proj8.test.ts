@@ -1,14 +1,11 @@
 import { Uri } from 'vscode'
-import { assert, getResults, getWorkspaceUri, runAllTests, waitForExtensionActive } from '../testCommon'
+import { assert, getResults, getWorkspaceUri, runAllTests, suiteSetupCommon } from '../testCommon'
 import { getEnvVars } from '../../src/ABLUnitRun'
 
-const projName = 'proj8'
 
 suite('proj8 - Extension Test Suite', () => {
 
-	suiteSetup('proj8 - before', async () => {
-		await waitForExtensionActive()
-	})
+	suiteSetup('proj8 - before', async () => suiteSetupCommon())
 
 	test('proj8.1 - test count', async () => {
 		await runAllTests()

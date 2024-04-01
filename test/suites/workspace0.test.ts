@@ -1,15 +1,10 @@
 import { strict as assert } from 'assert'
 import { Uri, workspace } from 'vscode'
-import { doesDirExist, doesFileExist, runAllTests, waitForExtensionActive } from '../testCommon'
-
-
-const projName = 'workspace0'
+import { doesDirExist, doesFileExist, runAllTests, suiteSetupCommon } from '../testCommon'
 
 suite('workspace0 - Extension Test Suite', () => {
 
-	suiteSetup('workspace0 - before', async () => {
-		await waitForExtensionActive()
-	})
+	suiteSetup('workspace0 - before', async () => suiteSetupCommon())
 
 	test('workspace0.1 - <workspaceFolder>/ablunit.json file exists', async () => {
 		await runAllTests()

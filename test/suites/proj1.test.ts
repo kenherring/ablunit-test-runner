@@ -1,14 +1,11 @@
 import { Selection, Uri, commands, window } from 'vscode'
-import { assert, deleteTestFiles, getTestCount, getWorkspaceUri, log, runAllTests, sleep, updateConfig, waitForExtensionActive } from '../testCommon'
-
+import { assert, deleteTestFiles, getTestCount, getWorkspaceUri, log, runAllTests, sleep, suiteSetupCommon, updateConfig } from '../testCommon'
 
 const workspaceUri = getWorkspaceUri()
 
 suite('proj1 - Extension Test Suite', () => {
 
-	suiteSetup('proj1 - before', async () => {
-		await waitForExtensionActive()
-	})
+	suiteSetup('proj1 - before', async () => suiteSetupCommon())
 
 	setup('proj1 - beforeEach', async () => {
 		await updateConfig('ablunit.files.exclude', undefined)
@@ -26,16 +23,21 @@ suite('proj1 - Extension Test Suite', () => {
 		assert.notFileExists(ablunitJson)
 		assert.notFileExists(resultsXml)
 
-		await runAllTests().catch((e) => {
+		await runAllTests(true, false).then(() => {
+			// assert.fail('expected runAllTests to throw error, but no error was caught')
+		}, (e) => {
 			log.info('Error caught and ignored: e=' + e)
 		})
 
-		assert.fileExists(ablunitJson)
+
+		// Different behavior on Windows/WSL and Unix
+		// Unix does not create the results.xml file while Windows/WSL does...
 		if (process.platform === 'win32' || process.env['WSL_DISTRO_NAME'] !== undefined) {
 			assert.fileExists(resultsXml)
 		} else {
 			assert.notFileExists(resultsXml)
 		}
+		assert.fileExists(ablunitJson)
 		assert.notFileExists(resultsJson)
 	})
 

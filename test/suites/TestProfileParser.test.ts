@@ -1,5 +1,5 @@
 
-import { IRunProfile, assert, getWorkspaceFolders, log, parseRunProfiles } from '../testCommon'
+import { IRunProfile, assert, getWorkspaceFolders, log, parseRunProfiles, suiteSetupCommon } from '../testCommon'
 
 // ----------TODO---------- //
 // function readValidationFile (filename: string) {
@@ -15,6 +15,8 @@ import { IRunProfile, assert, getWorkspaceFolders, log, parseRunProfiles } from 
 // }
 
 suite('TestProfileParser suite', () => {
+
+	suiteSetup('TestProfileParser - suiteSetup', async () => suiteSetupCommon())
 
 	setup('TestProfileParser - setup', () => {
 		log.info('setup started')
