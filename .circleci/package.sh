@@ -2,7 +2,7 @@
 set -euo pipefail
 
 initialize () {
-    echo "[$0 ${FUNCNAME[0]}]"
+    echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}]"
     ABLUNIT_TEST_RUNNER_VSCODE_VERSION=${ABLUNIT_TEST_RUNNER_VSCODE_VERSION:-stable}
     PRERELEASE=false
     PACKAGE_VERSION=$(node -p "require('./package.json').version")
@@ -29,7 +29,7 @@ initialize () {
 }
 
 package () {
-    echo "[$0 ${FUNCNAME[0]}]"
+    echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}]"
     package_version stable
     package_version insiders
 }
@@ -37,7 +37,7 @@ package () {
 package_version () {
     local VSCODE_VERSION=$1
     # [ "$ABLUNIT_TEST_RUNNER_VSCODE_VERSION" != "$PACKAGE_VERSION" ] && [ -n "$ABLUNIT_TEST_RUNNER_VSCODE_VERSION" ] && return 0
-    echo "[$0 ${FUNCNAME[0]}] PACKAGE_VERSION=$VSCODE_VERSION"
+    echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] PACKAGE_VERSION=$VSCODE_VERSION"
 
     local ARGS=()
     ARGS+=("--githubBranch" "$CIRCLE_BRANCH")
@@ -55,9 +55,9 @@ package_version () {
 }
 
 run_lint () {
-	echo "[$0 ${FUNCNAME[0]}]"
+	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}]"
 	if [ -n "${ABLUNIT_TEST_RUNNER_PROJECT_NAME:-}" ]; then
-		echo "[$0 ${FUNCNAME[0]}] skipping lint for single ABLUnit test runner project test"
+		echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] skipping lint for single ABLUnit test runner project test"
 		return 0
 	fi
 

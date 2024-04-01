@@ -2,7 +2,7 @@
 set -euo pipefail
 
 initialize () {
-	echo "[$0 ${FUNCNAME[0]}] pwd=$(pwd)"
+	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] pwd=$(pwd)"
 	PATH=$PATH:$DLC/ant/bin
 	CIRCLECI=${CIRCLECI:-false}
 	NO_BUILD=${NO_BUILD:-false}
@@ -14,9 +14,7 @@ initialize () {
 	${CIRCLECI:-false} && NO_BUILD=true
 	[ -z "${DOCKER_IMAGE:-}" ] && NO_BUILD=true
 	[ -z "${WSL_DISTRO_NAME:-}" ] && WSL=true
-	echo 101
 	PACKAGE_VERSION=$(node -p "require('./package.json').version")
-	echo 102
 
 	while getopts 'hNoVv' OPT; do
 		case "$OPT" in
@@ -38,9 +36,9 @@ initialize () {
 
 # load lots of code for a performance test
 get_performance_test_code () {
-	echo "[$0 ${FUNCNAME[0]}] pwd=$(pwd) ABLUNIT_TEST_RUNNER_OE_VERSION=$ABLUNIT_TEST_RUNNER_OE_VERSION"
-	echo "[$0 ${FUNCNAME[0]}] pwd=$(pwd) ABLUNIT_TEST_RUNNER_VSCODE_VERSION=${ABLUNIT_TEST_RUNNER_VSCODE_VERSION:-}"
-	echo "[$0 ${FUNCNAME[0]}] pwd=$(pwd) OE_VERSION=$OE_VERSION"
+	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] pwd=$(pwd) ABLUNIT_TEST_RUNNER_OE_VERSION=$ABLUNIT_TEST_RUNNER_OE_VERSION"
+	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] pwd=$(pwd) ABLUNIT_TEST_RUNNER_VSCODE_VERSION=${ABLUNIT_TEST_RUNNER_VSCODE_VERSION:-}"
+	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] pwd=$(pwd) OE_VERSION=$OE_VERSION"
 
 	local TO_FILE="/home/circleci/v${ABLUNIT_TEST_RUNNER_OE_VERSION}.0.tar.gz"
 	if [ "${OS:-}" = "Windows_NT" ] || [ -n "${WSL_DISTRO_NAME:-}" ]; then
@@ -59,7 +57,7 @@ get_performance_test_code () {
 }
 
 get_pct () {
-	echo "[$0 ${FUNCNAME[0]}] pwd=$(pwd)"
+	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] pwd=$(pwd)"
 	if $WSL && [ ! -f ~/.ant/lib/PCT.jar ]; then
 		mkdir -p ~/.ant/lib
 		local ARGS=()
@@ -71,7 +69,7 @@ get_pct () {
 }
 
 create_dbs () {
-	echo "[$0 ${FUNCNAME[0]}] pwd=$(pwd)"
+	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] pwd=$(pwd)"
 	if [ -d test_projects/proj0/target/db ]; then
 		return 0
 	fi
@@ -89,7 +87,7 @@ create_dbs () {
 
 doPackage () {
 	$NO_BUILD && return 0
-	echo "[$0 ${FUNCNAME[0]}] pwd=$(pwd)"
+	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] pwd=$(pwd)"
 
 	local PACKAGE_OUT_OF_DATE=false
 	local VSIX_COUNT=0
@@ -110,7 +108,7 @@ doPackage () {
 		[ "$NEWEST_SOURCE_ROOT" -nt "$NEWEST_SOURCE" ] && NEWEST_SOURCE=$NEWEST_SOURCE_ROOT
 
 		if  [ "$NEWEST_SOURCE" -nt "ablunit-test-runner-$PACKAGE_VERSION.vsix" ]; then
-			echo "[$0 ${FUNCNAME[0]}] newer source file found: $NEWEST_SOURCE"
+			echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] newer source file found: $NEWEST_SOURCE"
 			PACKAGE_OUT_OF_DATE=true
 		fi
 	else

@@ -299,7 +299,7 @@ export async function activateExtension (extname = 'riversidesoftware.openedge-a
 	return ext.isActive
 }
 
-export async function waitForExtensionActive (extensionId = 'kherring.ablunit-test-runner') {
+async function waitForExtensionActive (extensionId = 'kherring.ablunit-test-runner') {
 	let ext = extensions.getExtension(extensionId)
 	if (!ext) {
 		await sleep2(250, 'wait and retry getExtension')
@@ -1077,6 +1077,7 @@ export const assert = {
 }
 
 export async function beforeProj7 () {
+	await suiteSetupCommon()
 	const templateProc = Uri.joinPath(toUri('src/template_proc.p'))
 	const templateClass = Uri.joinPath(toUri('src/template_class.cls'))
 	const classContent = await workspace.fs.readFile(templateClass).then((data) => {

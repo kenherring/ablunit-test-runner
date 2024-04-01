@@ -1,12 +1,10 @@
 import { assert, beforeProj7, getTestCount, getWorkspaceUri, runAllTests, suiteSetupCommon, Uri } from '../testCommon'
 
+const workspaceUri = getWorkspaceUri()
+
 suite('proj7ASuite', () => {
 
-	suiteSetup('proj7A - suiteSetup', async () => {
-		return suiteSetupCommon().then(async () => {
-			return beforeProj7()
-		})
-	})
+	suiteSetup('proj7A - suiteSetup', async () => beforeProj7())
 
 	test('proj7A.1 - test count', async () => {
 		await runAllTests()

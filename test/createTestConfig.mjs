@@ -28,6 +28,16 @@ const enableExtensions = [
 	'proj9',
 ]
 
+function getExtensionVersion () {
+	const contents = fs.readFileSync('package.json')
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+	const packageJSON = JSON.parse(contents)
+	if (packageJSON['version']) {
+		return toString(packageJSON['version'])
+	}
+	throw new Error('unable to get extension version')
+}
+
 function initialize () {
 	if (vsVersion !== 'insiders' && vsVersion !== 'stable') {
 		throw new Error('Invalid version: ' + vsVersion)
@@ -94,22 +104,22 @@ function getMochaOpts (projName) {
 		],
 	}
 
-	// console.log('process.env.CIRCLECI=' + process.env['CIRCLECI'])
-	if (process.env['CIRCLECI'] === true) {
-		mochaOpts.bail = true
-	}
-
-	if (process.env['ABLUNIT_TEST_RUNNER_SCRIPT_FLAG']) {
+	if (process.env['ABLUNIT_TEST_RUNNER_RUN_SCRIPT_FLAG']) {
+		console.log('adding reporter...')
 		mochaOpts.reporter = 'mocha-multi-reporters'
 		mochaOpts.reporterOptions = {
 			reporterEnabled: [ 'spec', 'mocha-junit-reporter', 'mocha-sonarqube-reporter' ],
-			// reporterEnabled: [ 'spec', 'mocha-junit-reporter', 'mocha-sonarqube-reporter', 'fullJsonStreamReporter', 'xunit', 'json' ],
 			jsonReporterOptions: { output: jsonFile },
-			xunitReporterOptions: { output: xunitFile },
+			// xunitReporterOptions: { output: xunitFile },
 			mochaJunitReporterReporterOptions: { mochaFile: mochaFile },
 			mochaSonarqubeReporterReporterOptions: { output: sonarFile }
 		}
 	}
+
+	if (process.env['CIRCLECI']) {
+		mochaOpts.bail = true
+	}
+
 	return mochaOpts
 }
 
@@ -186,8 +196,8 @@ function getLaunchArgs (projName) {
 	// args.push('--logExtensionHostCommunication')
 
 	// --- disbale functionality not needed for testing - https://github.com/microsoft/vscode/issues/174744 --- //
-	// args.push('--disable-chromium-sandbox')
-	// args.push('--no-sandbox', '--sandbox=false')
+	args.push('--disable-chromium-sandbox')
+	args.push('--no-sandbox', '--sandbox=false')
 	args.push('--disable-crash-reporter')
 	args.push('--disable-gpu-sandbox')
 	args.push('--disable-gpu')

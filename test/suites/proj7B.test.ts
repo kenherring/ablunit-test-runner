@@ -16,11 +16,7 @@ async function getTestCount (waitForTestCount = 1, maxWaitTime = 5000): Promise<
 
 suite('proj7BSuite', () => {
 
-	suiteSetup('proj7B - suiteSetup', async () => {
-		await suiteSetupCommon()
-		setupCommon()
-		await beforeProj7()
-	})
+	suiteSetup('proj7B - suiteSetup', async () => beforeProj7())
 
 	test('proj7B.1 - cancel test refresh', async () => {
 		const maxCancelTime = 250
@@ -73,6 +69,7 @@ suite('proj7BSuite', () => {
 		// 	throw err
 		// })
 		const runTestsProm = runAllTests(true, false, 'proj7B.2')
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
 		await waitForTestRunStatus(RunStatus.Constructed)
 
 		const cancelTestRunDuration = await cancelTestRun(false)
