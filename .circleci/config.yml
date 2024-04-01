@@ -86,9 +86,9 @@ jobs:
         type: string
         default: stable
         enum: [ stable, proposedapi, insiders ]
-      coverage:
+      no-coverage:
         type: boolean
-        default: true
+        default: false
     docker:
       - image: kherring/ablunit-test-runner:<< parameters.oe-version >>
         auth:
@@ -97,6 +97,7 @@ jobs:
     environment:
       ABLUNIT_TEST_RUNNER_OE_VERSION: << parameters.oe-version >>
       ABLUNIT_TEST_RUNNER_VSCODE_VERSION: << parameters.vscode-version >>
+      ABLUNIT_TEST_RUNNER_NO_COVERAGE: << parameters.no-coverage >>
     steps:
       - attach_workspace: { at: . }
       - restore-test-cache: { oe-version: << parameters.oe-version >> }
@@ -161,7 +162,7 @@ workflows:
       - test:
           <<: *context-and-filters
           requires: [ package, test-12.2.12-stable ]
-          coverage: false
+          no-coverage: true
           matrix:
             parameters:
               oe-version: [ 12.7.0, 12.8.1 ]
