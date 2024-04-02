@@ -51,15 +51,15 @@ commands:
             # - restore_cache:
             #     keys:
             #       - << pipeline.parameters.cache-version >>-test-cache-<< parameters.oe-version >>-{{ checksum "package.json" }}
-  save-test-cache:
-    parameters:
-      oe-version:
-        type: string
-        default: none
-    steps:
-      - save_cache:
-          key: << pipeline.parameters.cache-version >>-test-cache-<< parameters.oe-version >>-{{ checksum "package.json" }}
-          paths: [ cache ]
+  # save-test-cache:
+  #   parameters:
+  #     oe-version:
+  #       type: string
+  #       default: none
+  #   steps:
+  #     - save_cache:
+  #         key: << pipeline.parameters.cache-version >>-test-cache-<< parameters.oe-version >>-{{ checksum "package.json" }}
+  #         paths: [ cache ]
 
 jobs:
   package:
@@ -175,9 +175,9 @@ workflows:
       - sonar:
           <<: *context-and-filters
           requires: [ test-12.2.12-stable ]
-      # - install-and-run:
-      #     <<: *context-and-filters
-      #     requires: [ test-12.2.12-stable ]
+      - install-and-run:
+          <<: *context-and-filters
+          requires: [ test-12.2.12-stable ]
       - publish:
           context:
             - Azure_PAT

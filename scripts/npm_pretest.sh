@@ -57,9 +57,12 @@ get_pct () {
 	if $WSL && [ ! -f ~/.ant/lib/PCT.jar ]; then
 		mkdir -p ~/.ant/lib
 		local ARGS=()
-		ARGS+=(-L)
-		ARGS+=(-o ~/.ant/lib/PCT.jar)
-		$VERBOSE && ARGS+=(-v)
+		ARGS+=(-L -o ~/.ant/lib/PCT.jar)
+		if $VERBOSE; then
+			ARGS+=(-v)
+		else
+			ARGS+=(-s)
+		fi
 		curl "${ARGS[@]}" https://github.com/Riverside-Software/pct/releases/download/v228/PCT.jar
 	fi
 }
@@ -73,10 +76,11 @@ create_dbs () {
 	local COMMAND=ant
 	cd test_projects/proj0
 	COMMAND=ant
-	if ! command -v $COMMAND; then
+	if ! command -v $COMMAND >/dev/null; then
 		COMMAND="$DLC/ant/bin/ant"
 	fi
 	mkdir -p artifacts
+	echo "COMMAND=$COMMAND"
 	$COMMAND > artifacts/pretest_ant.log >&1
 	cd -
 }
@@ -88,7 +92,7 @@ doPackage () {
 	local PACKAGE_OUT_OF_DATE=false
 	local VSIX_COUNT=0
 	VSIX_COUNT=$(find . -maxdepth 1 -name "*.vsix" 2>/dev/null | wc -l)
-	echo "VSIX_COUNT=$VSIX_COUNT"
+	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] VSIX_COUNT=$VSIX_COUNT"
 
 	if [ -f "ablunit-test-runner-$PACKAGE_VERSION.vsix" ]; then
 		NEWEST_SOURCE=$(find src -type f -printf '%T@ %p\n' | sort -n | tail -1 | cut -d' ' -f2-)
@@ -110,7 +114,7 @@ doPackage () {
 	else
 		PACKAGE_OUT_OF_DATE=true
 	fi
-	echo "CIRCLECI=$CIRCLECI PACKAGE_OUT_OF_DATE=$PACKAGE_OUT_OF_DATE VSIX_COUNT=$VSIX_COUNT"
+	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] CIRCLECI=$CIRCLECI PACKAGE_OUT_OF_DATE=$PACKAGE_OUT_OF_DATE VSIX_COUNT=$VSIX_COUNT"
 	if $PACKAGE_OUT_OF_DATE || $CIRCLECI || [ "$VSIX_COUNT" = "0" ]; then
 		.circleci/package.sh
 	fi

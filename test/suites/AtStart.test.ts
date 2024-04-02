@@ -1,4 +1,5 @@
-import { assert, extensions, log, runAllTests, sleep2, suiteSetupCommon } from '../testCommon'
+import { doesFileExist } from 'src/ABLUnitCommon'
+import { assert, extensions, log, runAllTests, suiteSetupCommon, toUri } from '../testCommon'
 
 suite('projAtStart  - Extension Test Suite', () => {
 
@@ -17,6 +18,8 @@ suite('projAtStart  - Extension Test Suite', () => {
 			// 	assert.notFileExists('results.xml')
 			// }
 		})
+		log.info('results.xml file exists: ' + doesFileExist(toUri('results.xml')))
+		return
 	})
 
 	test('projAtStart - enable proposed api', () => {
