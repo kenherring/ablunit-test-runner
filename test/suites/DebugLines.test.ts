@@ -1,7 +1,6 @@
 import { PropathParser } from '../../src/ABLPropath'
 import { getSourceMapFromRCode } from '../../src/parse/RCodeParser'
-import * as vscode from 'vscode'
-import { Uri, assert, awaitRCode, getWorkspaceUri, log, sleep2, suiteSetupCommon, workspace } from '../testCommon'
+import { Uri, assert, awaitRCode, getWorkspaceUri, log, suiteSetupCommon, workspace } from '../testCommon'
 
 suite('DebugLinesSuite', () => {
 

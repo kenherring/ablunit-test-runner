@@ -121,7 +121,7 @@ copy_files () {
 	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] pwd=$(pwd)"
 	local TYPE="$1"
 	while read -r FILE; do
-		echo "copying $TYPE file $FILE"
+		$VERBOSE && echo "copying $TYPE file $FILE"
 		if [ ! -d "$(dirname "$FILE")" ]; then
 			mkdir -p "$(dirname "$FILE")"
 		fi

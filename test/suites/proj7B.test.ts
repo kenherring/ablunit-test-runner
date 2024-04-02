@@ -1,5 +1,5 @@
 import { RunStatus } from 'src/ABLUnitRun'
-import { assert, CancellationError, commands, Duration, beforeProj7, cancelTestRun, getCurrentRunData, getResults, getTestControllerItemCount, log, refreshData, refreshTests, runAllTests, setupCommon, sleep, suiteSetupCommon, waitForTestRunStatus, runAllTestsDuration } from '../testCommon'
+import { assert, CancellationError, commands, Duration, beforeProj7, cancelTestRun, getCurrentRunData, getResults, getTestControllerItemCount, log, refreshData, refreshTests, runAllTests, sleep, waitForTestRunStatus, runAllTestsDuration } from '../testCommon'
 
 async function getTestCount (waitForTestCount = 1, maxWaitTime = 5000): Promise<number> {
 	const timer = new Duration ('getTestCount')
@@ -69,7 +69,6 @@ suite('proj7BSuite', () => {
 		// 	throw err
 		// })
 		const runTestsProm = runAllTests(true, false, 'proj7B.2')
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
 		await waitForTestRunStatus(RunStatus.Constructed)
 
 		const cancelTestRunDuration = await cancelTestRun(false)

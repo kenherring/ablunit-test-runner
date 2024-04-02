@@ -100,7 +100,7 @@ let decorator: Decorator | undefined
 let testController: TestController | undefined
 let currentRunData: ABLResults[] | undefined
 
-log.info('[testCommon.ts] enableExtensions=' + enableExtensions + ', projName=' + projName())
+log.info('[testCommon.ts] enableExtensions=' + enableExtensions() + ', projName=' + projName())
 
 export async function newTruePromise () {
 	return new Promise(resolve => { resolve(true) })
@@ -142,7 +142,8 @@ export async function suiteSetupCommon () {
 			if (!r) {
 				throw new Error('failed to install extension ' + extname)
 			}
-			log.info('suiteSetupCommon-3 installed extension ' + extname + ' (r=' + JSON.stringify(r) + ')')
+			log.info('installed extension ' + extname)
+			log.debug('installed extension ' + extname + ' (r=' + JSON.stringify(r) + ')')
 			return
 		}, (e) => {
 			log.error('failed to install extension ' + extname + ' (e=' + e + ')')
@@ -150,19 +151,18 @@ export async function suiteSetupCommon () {
 		})
 		log.info('suiteSetupCommon-3 activateExtension ' + extname)
 		await activateExtension(extname).then((r) => {
-			log.info('suiteSetupCommon-4 activated extension ' + extname)
-			log.info('suiteSetupCommon-4 activated extension ' + extname + ' (isActive=' + r + ')')
+			log.info('activated extension ' + extname + ' (isActive=' + r + ')')
 			return r
 		}, (e) => {
 			log.error('failed to activate extension ' + extname + ' (e=' + e + ')')
 			throw e
 		})
-		log.info('suiteSetupCommon-4 setRuntimes')
+		log.debug('setRuntimes')
 		const r = await setRuntimes().then((r: number) => r, (e) => {
 			log.error('failed to set runtimes (e=' + e + ')')
 			throw e
 		})
-		log.info('suiteSetupCommon-5 runtimes set (r=' + r + ')')
+		log.debug('runtimes set (r=' + r + ')')
 	}
 	log.info('suiteSetupCommon complete!')
 }
@@ -352,55 +352,45 @@ function getRcodeCount (workspaceFolder?: WorkspaceFolder) {
 }
 
 export async function setRuntimes (runtimes: IRuntime[] = [{name: '12.2', path: getDefaultDLC(), default: true}]): Promise<number> {
-	if (!enableExtensions) {
-		throw new Error('setRuntimes failed! extensions are disabled')
+	if (!enableExtensions()) {
+		throw new Error('extensions are disabled, failed to set runtimes!')
 	}
-	log.info('[setRuntimes] setting abl.configuration.runtimes=' + JSON.stringify(runtimes))
+	log.info('setting abl.configuration.runtimes=' + JSON.stringify(runtimes))
 	const ext = extensions.getExtension('riversidesoftware.openedge-abl-lsp')
-	log.info('201')
 	if (!ext) {
-		throw new Error('[setRuntimes] extension not installed: riversidesoftware.openedge-abl-lsp')
+		throw new Error('extension not installed: riversidesoftware.openedge-abl-lsp')
 	}
 	if (!ext.isActive) {
-		throw new Error('[setRuntimes] extension not active: riversidesoftware.openedge-abl-lsp')
+		throw new Error('extension not active: riversidesoftware.openedge-abl-lsp')
 	}
 
 	const conf = workspace.getConfiguration('abl')
 	const current = conf.get('configuration.runtimes') as IRuntime[]
-	log.info('current=' + JSON.stringify(current))
-	log.info('  input=' + JSON.stringify(runtimes))
+	log.debug('current=' + JSON.stringify(current))
+	log.debug('  input=' + JSON.stringify(runtimes))
 	if (JSON.stringify(current) === JSON.stringify(runtimes)) {
-		log.info('[setRuntimes] runtmes are already set')
+		log.warn('runtmes are already set')
 		return getRcodeCount()
 	}
 
-	log.info('202.2     conf=' + JSON.stringify(conf))
-	log.info('202.3 runtimes=' + JSON.stringify(runtimes))
+	log.debug('    conf=' + JSON.stringify(conf))
+	log.debug('runtimes=' + JSON.stringify(runtimes))
 
 	const prom = conf.update('configuration.runtimes', runtimes, ConfigurationTarget.Global).then(async () => {
 	// const prom = conf.update('configuration.runtimes', runtimes, ConfigurationTarget.Global).then(() => {
-		log.info('202.4')
 		return rebuildAblProject().then((r) => {
-			log.info('202.5 r=' + r)
-			log.info('[setRuntimes] abl.configuration.runtimes set successfully')
+			log.info('abl.configuration.runtimes set successfully (r=' + r + ')')
 			return r
-		}, (e) => { throw e})
-		// log.info('202.6 p=' + JSON.stringify(p))
-		// return p
+		}, (e) => { throw e })
 	}, (e) => {
-		log.error('203 error!')
+		log.error('unexpected error updating abl.configuration.runtimes! e=' + e)
 		throw e
 	})
-	// log.info('204')
-	log.info('205 prom=' + JSON.stringify(prom))
-	log.info('206 ' + typeof prom)
+
 	if (! (prom instanceof Promise)) {
-		log.info('207 NOT Promise')
 		const num = await prom
-		log.info('208 prom=' + JSON.stringify(num))
 		return new Promise(resolve => { resolve(num) })
 	}
-	log.info('209 is Promise! prom=' + JSON.stringify(prom))
 	return prom as Promise<number>
 
 }
@@ -830,7 +820,7 @@ export async function refreshData (resultsLen = 0) {
 		if (refs.recentResults[0]?.ablResults?.resultsJson?.[0].testsuite !== undefined) {
 			passedTests = refs.recentResults[0].ablResults?.resultsJson[0].testsuite?.[0].passed ?? undefined
 		}
-		log.info(isoDate() + ' refreshData-4 passedTests=' + passedTests)
+		log.debug('passedTests=' + passedTests)
 		if (passedTests && passedTests <= resultsLen) {
 			throw new Error('failed to refresh test results: results.length=' + refs.recentResults.length)
 		}
@@ -896,7 +886,7 @@ export async function getCurrentRunData (len = 1, resLen = 0, tag?: string) {
 	if (!currentRunData || currentRunData.length === 0) {
 		log.info(tag + 'getCurrentRunData not set, refreshing...')
 		for (let i=0; i<15; i++) {
-			const prom = sleep2(500, tag + 'still no currentRunData, sleep before trying again (' + i + '/15)').then(async () => {
+			const prom = sleep2(100, tag + 'still no currentRunData, sleep before trying again (' + i + '/15)').then(async () => {
 				return refreshData(resLen).then(() => {
 					log.debug('refresh success')
 				}, (err) => {
@@ -929,7 +919,7 @@ export async function getResults (len = 1, tag?: string) {
 	if ((!recentResults || recentResults.length === 0) && len > 0) {
 		log.info(tag + 'recentResults not set, refreshing...')
 		for (let i=0; i<15; i++) {
-			await sleep2(500, tag + 'still no recentResults, sleep before trying again').then(async () => {
+			await sleep2(100, tag + 'still no recentResults, sleep before trying again').then(async () => {
 				return refreshData().then(async () => {
 					return sleep2(100, null)
 				})

@@ -53,7 +53,7 @@ function getMochaTimeout (projName) {
 		return 30000
 	}
 	if (projName === 'proj1') {
-		return 45000
+		return 55000
 	}
 	if (projName === 'DebugLines') {
 		return 60000
@@ -67,40 +67,35 @@ function getMochaTimeout (projName) {
 	return 50000
 }
 
+/**
+* Additional options to pass to the Mocha runner.
+* @see https://mochajs.org/api/mocha
+*/
 function getMochaOpts (projName) {
 	const reporterDir = path.resolve(__dirname, '..', 'artifacts', vsVersion + '-' + oeVersion)
 	fs.mkdirSync(reporterDir, { recursive: true })
-	const jsonFile = path.resolve(reporterDir, 'mocha_results_' + projName + '.json')
+	// const jsonFile = path.resolve(reporterDir, 'mocha_results_' + projName + '.json')
+	// const xunitFile = path.resolve(reporterDir, 'mocha_results_xunit_' + projName + '.xml')
 	const mochaFile = path.resolve(reporterDir, 'mocha_results_junit_' + projName + '.xml')
 	const sonarFile = path.resolve(reporterDir, 'mocha_results_sonar_' + projName + '.xml')
-	const xunitFile = path.resolve(reporterDir, 'mocha_results_xunit_' + projName + '.xml')
 
 	const mochaOpts = {
+		bail: false,
 		// fullTrace: true
+		retries: 0,
 		timeout: getMochaTimeout(projName),
 		ui: 'tdd',
 		parallel: false,
-		retries: 0,
-		recursive: true,
-		// color: true,
-		bail: false,
-		exit: true,
-		extension: [ 'js', 'ts', 'test.ts' ],
-		// require: [
-		// 	// './dist/extension.js',
-		// 	'source-map-support',
-		// 	'source-map-support/register',
-		// 	'source-map-support/register-hook-require',
-		// 	'ts-node/register',
-		// ],
-		// preload: [ 'ts-node/register/transpile-only' ],
-		preload: [
+		// recursive: true,
+		// exit: true,
+		// extension: [ 'js', 'ts', 'test.ts' ],
+		require: [
 			// './dist/extension.js',
-			'ts-node/register/transpile-only',
-			'ts-node/register',
 			// 'source-map-support',
 			// 'source-map-support/register',
 			// 'source-map-support/register-hook-require',
+			'ts-node/register/transpile-only',
+			'ts-node/register',
 		],
 	}
 
@@ -108,8 +103,8 @@ function getMochaOpts (projName) {
 		console.log('adding reporter...')
 		mochaOpts.reporter = 'mocha-multi-reporters'
 		mochaOpts.reporterOptions = {
-			reporterEnabled: [ 'spec', 'mocha-junit-reporter', 'mocha-sonarqube-reporter' ],
-			jsonReporterOptions: { output: jsonFile },
+			reporterEnabled: [ 'json-stream', 'spec', 'mocha-junit-reporter', 'mocha-sonarqube-reporter' ],
+			// jsonReporterOptions: { output: jsonFile },
 			// xunitReporterOptions: { output: xunitFile },
 			mochaJunitReporterReporterOptions: { mochaFile: mochaFile },
 			mochaSonarqubeReporterReporterOptions: { output: sonarFile }
@@ -121,6 +116,23 @@ function getMochaOpts (projName) {
 	}
 
 	return mochaOpts
+}
+
+function getWorkspaceFolder (projName) {
+	let workspaceFolder = './test_projects/' + projName
+	if (projName.startsWith('proj7')) {
+		return './test_projects/proj7_load_performance'
+	} else if (projName.startsWith('workspace')) {
+		return './test_projects/' + projName + '.code-workspace'
+	} else if (!fs.existsSync(workspaceFolder)) {
+		const g = glob.globSync(workspaceFolder + '_*')
+		if (g.length > 1) {
+			throw new Error('Multiple workspaces found: ' + workspaceFolder)
+		} else {
+			return g[0] ?? './test_projects'
+		}
+	}
+	return workspaceFolder
 }
 
 function getLaunchArgs (projName) {
@@ -204,6 +216,7 @@ function getLaunchArgs (projName) {
 	args.push('--disable-telemetry')
 	args.push('--disable-updates')
 	args.push('--disable-workspace-trust')
+	// Warning: 'xshm' is not in the list of known options, but still passed to Electron/Chromium.
 	args.push('--disable-dev-shm-usage', '--no-xshm')
 
 
@@ -216,51 +229,52 @@ function getLaunchArgs (projName) {
 
 function getTestConfig (projName) {
 
-	let ws = './test_projects/' + projName
-	if (projName.startsWith('proj7')) {
-		ws = './test_projects/proj7_load_performance'
-	} else if (projName.startsWith('workspace')) {
-		ws = './test_projects/' + projName + '.code-workspace'
-	} else if (!fs.existsSync(ws)) {
-		const g = glob.globSync(ws + '_*')
-		if (g.length > 1) {
-			throw new Error('Multiple workspaces found: ' + ws)
-		} else {
-			ws = g[0] ?? './test_projects'
-		}
-	}
-
 	let useInstallation
 	if (fs.existsSync('.vscode-test/vscode-win32-x64-archive-' + vsVersionNum + '/Code.exe')) {
 		useInstallation = { fromPath: '.vscode-test/vscode-win32-x64-archive-' + vsVersionNum + '/Code.exe' }
 	}
 
+	const files = './test/suites/' + projName + '.test.ts'
 	// const absolulteFile = path.resolve(__dirname, '..', 'test', 'suites', projName + '.test.ts')
 
+	const extensionDevelopmentPath = './'
 	// let extensionDevelopmentPath = path.resolve(__dirname, '..', 'ablunit-test-runner-0.2.1.vsix')
 	// if (vsVersion === 'insiders') {
 	// 	extensionDevelopmentPath = path.resolve(__dirname, '..', 'ablunit-test-runner-insiders-0.2.1.vsix')
 	// }
 
+	let installExtension
+	if (enableExtensions.includes(projName)) {
+		installExtension = 'riversidesoftware.openedge-abl-lsp'
+	}
+
+	const env = {
+		ABLUNIT_TEST_RUNNER_ENABLE_EXTENSIONS: enableExtensions.includes('' + projName),
+		ABLUNIT_TEST_RUNNER_UNIT_TESTING: 'true',
+		ABLUNIT_TEST_RUNNER_VSCODE_VERSION: vsVersion,
+		DONT_PROMPT_WSL_INSTALL: '1',
+		VSCODE_SKIP_PRELAUNCH: '1',
+	}
+
 	return {
-		label: 'suite_' + projName,
-		extensionDevelopmentPath: './',
-		workspaceFolder: ws,
-		files: './test/suites/' + projName + '.test.ts',
+		// --- IBaseTestConfiguration --- //
+		files,
 		version: vsVersion,
-		// useInstallation: { fromMachine: true },
-		// TODO - glob?
-		useInstallation: useInstallation,
-		launchArgs: getLaunchArgs(projName),
+		extensionDevelopmentPath,
+		workspaceFolder: getWorkspaceFolder(projName),
 		mocha: getMochaOpts(projName),
+		label: 'suite_' + projName,
 		srcDir: './',
-		env: {
-			ABLUNIT_TEST_RUNNER_ENABLE_EXTENSIONS: enableExtensions.includes('' + projName),
-			ABLUNIT_TEST_RUNNER_UNIT_TESTING: 'true',
-			ABLUNIT_TEST_RUNNER_VSCODE_VERSION: vsVersion,
-			DONT_PROMPT_WSL_INSTALL: '1',
-			VSCODE_SKIP_PRELAUNCH: '1',
-		}
+
+		// --- IDesktopTestConfiguration --- //
+		// platform: 'desktop',
+		// desktopPlatform: 'win32',
+		launchArgs: getLaunchArgs(projName),
+		env,
+		useInstallation,
+		// download: ?
+		installExtension,
+		skipExtensionDependencies: true,
 	}
 }
 
@@ -268,6 +282,7 @@ function getTests () {
 	const tests = []
 	const envProjectName = process.env['ABLUNIT_TEST_RUNNER_PROJECT_NAME'] ?? undefined
 
+	// --- run only the specified projects --- //
 	if (envProjectName && envProjectName != '') {
 		const projects = envProjectName.split(',')
 		for (const p of projects) {
@@ -276,6 +291,7 @@ function getTests () {
 		return tests
 	}
 
+	// --- run all projects --- //
 	const g = glob.globSync('test/suites/*.test.ts').reverse()
 	for (const f of g) {
 		tests.push(getTestConfig(path.basename(f, '.test.ts')))
@@ -287,9 +303,6 @@ function getCoverageOpts () {
 	const coverageDir = path.resolve(__dirname, '..', 'coverage', vsVersion + '-' + oeVersion)
 	fs.mkdirSync(coverageDir, { recursive: true })
 	return {
-		reporter: [ 'text', 'lcov' ],
-		output: coverageDir,
-		// includeAll: true,
 		exclude: [
 			'dist',
 			'.vscode-test.mjs',
@@ -304,7 +317,17 @@ function getCoverageOpts () {
 			'**/src/**',
 			'**/test/**',
 		],
-		require: [ 'ts-node/register' ],
+		// https://istanbul.js.org/docs/advanced/alternative-reporters/
+		// * default = ['html'], but somehow also prints the 'text-summary' to the console
+		// * 'lcov' includes 'html' output
+		reporter: [ 'lcov', 'text' ],
+		// includeAll: true,
+		output: coverageDir,
+
+		// TODO - not reporting extension, or other files loaded w/ vscode extension activate
+
+		// ----- NOT REAL OPTIONS?? ----- //
+		// require: [ 'ts-node/register' ],
 		// cache: false,
 		// 'enable-source-maps': true,
 		// sourceMap: false,

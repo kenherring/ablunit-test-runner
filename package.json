@@ -100,7 +100,6 @@
 		"xml2js": "^0.6.2"
 	},
 	"devDependencies": {
-		"@istanbuljs/nyc-config-typescript": "^1.0.2",
 		"@types/mocha": "^10.0.6",
 		"@types/node": "^16.18.93",
 		"@types/source-map-support": "^0.5.10",
@@ -217,7 +216,7 @@
 			}
 		]
 	},
-	"nyc": {
+	"nyc-bk": {
 		"extends": "@istanbuljs/nyc-config-typescript",
 		"extension": [
 			".js",
@@ -227,6 +226,7 @@
 		"require": [
 			"ts-node/register"
 		],
+		"cache": true,
 		"sourceMap": true
 	}
 }
