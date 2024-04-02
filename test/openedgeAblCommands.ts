@@ -65,12 +65,11 @@ export async function restartLangServer () {
 }
 
 export async function rebuildAblProject () {
-	const confRuntimes = workspace.getConfiguration('abl').get('configuration.runtimes') as IRuntime[]
-	log.info('rebuilding abl project... runtimes=' + JSON.stringify(confRuntimes))
+	log.info('rebuilding abl project...')
 
 	await waitForLangServerReady()
-
-	return commands.executeCommand('abl.project.rebuild').then(() => {
+	return commands.executeCommand('abl.project.rebuild').then((r) => {
+		log.debug('abl.project.rebuild complete! (r=' + JSON.stringify(r) + ')')
 		const rcodeCount = getRcodeCount()
 		log.info('abl.project.rebuild command complete! (rcodeCount=' + rcodeCount + ')')
 		return rcodeCount

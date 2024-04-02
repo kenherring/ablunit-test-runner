@@ -10,7 +10,6 @@ initialize () {
 	WSL=false
 	VERBOSE=${VERBOSE:-false}
 	ABLUNIT_TEST_RUNNER_OE_VERSION=${ABLUNIT_TEST_RUNNER_OE_VERSION:-12.2.12}
-	ABLUNIT_TEST_RUNNER_VSCODE_VERSION=${ABLUNIT_TEST_RUNNER_VSCODE_VERSION:-}
 	${CIRCLECI:-false} && NO_BUILD=true
 	[ -z "${DOCKER_IMAGE:-}" ] && NO_BUILD=true
 	[ -z "${WSL_DISTRO_NAME:-}" ] && WSL=true
@@ -20,14 +19,13 @@ initialize () {
 		case "$OPT" in
 			N)	NO_BUILD=true ;;
 			o)	ABLUNIT_TEST_RUNNER_OE_VERSION="$OPTARG" ;;
-			V)	ABLUNIT_TEST_RUNNER_VSCODE_VERSION="$OPTARG" ;;
 			v)	VERBOSE=true ;;
 			?)	echo "script usage: $(basename "$0") [-h] [-N]" >&2
 				exit 1 ;;
 		esac
 	done
 
-	export PATH CIRCLECI ABLUNIT_TEST_RUNNER_OE_VERSION ABLUNIT_TEST_RUNNER_VSCODE_VERSION
+	export PATH CIRCLECI ABLUNIT_TEST_RUNNER_OE_VERSION
 
 	if [ ! -d node_modules ]; then
 		npm install
@@ -36,7 +34,7 @@ initialize () {
 
 # load lots of code for a performance test
 get_performance_test_code () {
-	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] pwd=$(pwd) ABLUNIT_TEST_RUNNER_OE_VERSION=$ABLUNIT_TEST_RUNNER_OE_VERSION ABLUNIT_TEST_RUNNER_VSCODE_VERSION=${ABLUNIT_TEST_RUNNER_VSCODE_VERSION:-}"
+	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] pwd=$(pwd) ABLUNIT_TEST_RUNNER_OE_VERSION=$ABLUNIT_TEST_RUNNER_OE_VERSION"
 
 	local TO_FILE="/home/circleci/v${ABLUNIT_TEST_RUNNER_OE_VERSION}.0.tar.gz"
 	if [ "${OS:-}" = "Windows_NT" ] || [ -n "${WSL_DISTRO_NAME:-}" ]; then

@@ -44,16 +44,19 @@
 		},
 		{
 			"label": "npm watch",
+			"detail": "webpack --mode development --watch",
 			"type": "npm",
 			"script": "watch",
-			"problemMatcher": "$ts-webpack-watch",
 			"isBackground": true,
 			"presentation": {
 				"reveal": "always",
 				"group": "build-task"
 			},
-			"group": "build",
-			"detail": "webpack --mode development --watch",
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
+			"problemMatcher":  "$ts-webpack-watch",
 		},
 		{
 			"label": "run all tests in docker",

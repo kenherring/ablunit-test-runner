@@ -1,5 +1,5 @@
 import { CancellationError, LogLevel, commands } from 'vscode'
-import { assert, RunStatus, beforeCommon, beforeProj7, cancelTestRun, getCurrentRunData, getTestControllerItemCount, isoDate, log, refreshTests, runAllTests, sleep, waitForTestRunStatus, sleep2 } from '../testCommon'
+import { assert, RunStatus, beforeProj7, cancelTestRun, getCurrentRunData, getTestControllerItemCount, isoDate, log, refreshTests, runAllTests, sleep, waitForTestRunStatus, sleep2 } from '../testCommon'
 import { Duration } from '../../src/ABLUnitCommon'
 
 suite('proj7B - Extension Test Suite', () => {
@@ -7,8 +7,6 @@ suite('proj7B - Extension Test Suite', () => {
 	suiteSetup('proj7B - before', async () => {
 		await beforeProj7()
 	})
-
-	setup('proj7B - beforeEach', beforeCommon)
 
 	test('proj7B.1 - cancel test refresh', async () => {
 		// TODO

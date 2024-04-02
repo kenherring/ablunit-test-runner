@@ -6,7 +6,9 @@ class Logger {
 	private static instance: Logger
 
 	private readonly logOutputChannel
-	private readonly consoleLogLevel = LogLevel.Debug
+	// private readonly consoleLogLevel = LogLevel.Debug
+	private readonly consoleLogLevel = LogLevel.Info
+	// private readonly consoleLogLevel = LogLevel.Error
 	private readonly testResultsLogLevel = LogLevel.Info
 	private logLevel: number
 	private readonly consoleTimestamp = process.env['ABLUNIT_TEST_RUNNER_UNIT_TESTING'] === 'true'
@@ -93,7 +95,7 @@ class Logger {
 		}
 
 		if (messageLevel >= this.consoleLogLevel) {
-			this.writeToConsole(messageLevel, message, includeStack)
+			this.writeToConsole(messageLevel, message, includeStack, datetime)
 		}
 	}
 
@@ -131,11 +133,11 @@ class Logger {
 		testRun.appendOutput(optMsg + '\r\n')
 	}
 
-	private writeToConsole (messageLevel: LogLevel, message: string, includeStack: boolean) {
-		if (this.consoleTimestamp) {
-			message = '[' + new Date().toISOString() + '] ' + message
-		}
+	private writeToConsole (messageLevel: LogLevel, message: string, includeStack: boolean, datetime: string) {
 		message = this.decorateMessage(message, includeStack)
+		if (this.consoleTimestamp) {
+			message = '[' + datetime + '] ' + message
+		}
 		switch (messageLevel) {
 			case LogLevel.Trace:
 				if (includeStack) { console.trace(message) }

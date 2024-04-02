@@ -88,7 +88,7 @@ export async function activate (context: ExtensionContext) {
 			log.error('continuous test runs not implemented')
 			throw new Error('continuous test runs not implemented')
 		}
-		return startTestRun(request, token).then(() => { return })
+		return startTestRun(request, token).then(() => { return }, (e) => { throw e })
 	}
 
 	async function openTestRunConfig () {
@@ -261,7 +261,7 @@ export async function activate (context: ExtensionContext) {
 			void log.notification('ablunit tests complete')
 			run.end()
 			log.trace('run.end()')
-			return
+			// return
 		}
 
 		const createABLResults = async () => {
@@ -318,9 +318,8 @@ export async function activate (context: ExtensionContext) {
 				}
 				return runTestQueue(res).then(() => {
 					log.debug('runTestQueue complete')
-					return true
 				})
-			})
+			}).catch((e) => { throw e })
 		}).catch((err) => {
 			run.end()
 			if (err instanceof CancellationError) {
@@ -347,10 +346,9 @@ export async function activate (context: ExtensionContext) {
 		}
 		if (workspace.getWorkspaceFolder(u) === undefined) {
 			log.info('skipping updateNodeForDocument for file not in workspace: ' + u.fsPath)
-			return Promise.resolve(() => { return false })
-			// return Promise.resolve(() => { return true })
+			return Promise.resolve()
 		}
-		return updateNode(u, ctrl)
+		return await updateNode(u, ctrl)
 	}
 
 	async function resolveHandlerFunc (item: TestItem | undefined) {
@@ -368,7 +366,7 @@ export async function activate (context: ExtensionContext) {
 		}
 
 		if (item.uri) {
-			return updateNodeForDocument(item, 'resolve')
+			return await updateNodeForDocument(item, 'resolve')
 		}
 
 		const data = testData.get(item)
@@ -392,8 +390,10 @@ export async function activate (context: ExtensionContext) {
 
 	function updateConfiguration (event: ConfigurationChangeEvent) {
 		if (!event.affectsConfiguration('ablunit')) {
+			log.warn('configuration updated but does not include ablunit settings')
 			return
 		}
+		log.debug('affects ablunit.file? ' + event.affectsConfiguration('ablunit.files'))
 		if (event.affectsConfiguration('ablunit.files')) {
 			removeExcludedFiles(ctrl, getExcludePatterns())
 		}

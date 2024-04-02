@@ -103,7 +103,6 @@
 		"xml2js": "^0.6.2"
 	},
 	"devDependencies": {
-		"@istanbuljs/nyc-config-typescript": "^1.0.2",
 		"@types/mocha": "^10.0.6",
 		"@types/node": "^16.18.93",
 		"@types/source-map-support": "^0.5.10",
@@ -117,7 +116,7 @@
 		"mocha": "^10.4.0",
 		"mocha-junit-reporter": "^2.2.1",
 		"mocha-multi-reporters": "^1.5.1",
-		"mocha-reporter-sonarqube": "^2.0.6",
+		"mocha-sonarqube-reporter": "^1.0.2",
 		"nyc": "^15.1.0",
 		"source-map-support": "^0.5.21",
 		"ts-loader": "^9.5.1",
@@ -217,17 +216,5 @@
 				"path": "./snippets/snippets-abl-class.json"
 			}
 		]
-	},
-	"nyc": {
-		"extends": "@istanbuljs/nyc-config-typescript",
-		"extension": [
-			".js",
-			".ts"
-		],
-		"exclude-after-remap": false,
-		"require": [
-			"ts-node/register"
-		],
-		"sourceMap": true
 	}
 }
