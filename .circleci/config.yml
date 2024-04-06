@@ -8,6 +8,9 @@ parameters:
   cache-version:
     type: string
     default: v8 ## VSCode 1.88
+  vsix_count:
+    type: integer
+    default: 1
 
 context-and-filters: &context-and-filters
   context:
@@ -67,6 +70,7 @@ jobs:
       - image: cimg/node:20.8
     environment:
       npm_config_cache: /home/circleci/cache/node_modules_cache
+      VSIX_COUNT: << pipeline.parameters.vsix_count >>
     steps:
       - checkout
       - restore-package-cache
@@ -75,7 +79,7 @@ jobs:
       - persist_to_workspace: { root: ., paths: [ . ] }
       - save-package-cache
       - run: find . -type f -name "*.vsix"
-      - run: '[ "$(find . -type f -name "*.vsix" | wc -l)" = "2" ] || exit 1'
+      - run: '[ "$(find . -type f -name "*.vsix" | wc -l)" = "$VSIX_COUNT" ] || exit 1'
   test:
     parameters:
       oe-version:

@@ -51,7 +51,13 @@ update_oe_version () {
 restore_vscode_test () {
 	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] ABLUNIT_TEST_RUNNER_OE_VERSION=$ABLUNIT_TEST_RUNNER_OE_VERSION"
 	local FROM_DIR TO_DIR COUNT
+
 	FROM_DIR='/home/circleci/.vscode-test'
+	if [ ! -d "$FROM_DIR" ]; then
+		echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] $FROM_DIR not found, skipping restore"
+		return 0
+	fi
+
 	TO_DIR=./.vscode-test
 	if ! COUNT=$(find "$FROM_DIR" -type f 2>/dev/null | wc -l); then
 		COUNT=0
@@ -60,6 +66,8 @@ restore_vscode_test () {
 	if [ "$COUNT" = 0 ]; then
 		return 0
 	fi
+
+	mkdir -p "$TO_DIR"
 	cp -r "$FROM_DIR"/* "$TO_DIR"
 }
 
