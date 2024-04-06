@@ -142,9 +142,9 @@ run_tests () {
 
 	cp "package.$ABLUNIT_TEST_RUNNER_VSCODE_VERSION.json" package.json
 	if ${ABLUNIT_TEST_RUNNER_NO_COVERAGE:-false}; then
-		time xvfb-run -a npm test
+		xvfb-run -a npm test
 	else
-		time xvfb-run -a npm run test:coverage
+		xvfb-run -a npm run test:coverage
 	fi | sed -e 's,/?home/circleci/project/,,g' || EXIT_CODE=$?
 	cp package.stable.json package.json
 

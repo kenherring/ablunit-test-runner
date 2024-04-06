@@ -31,7 +31,7 @@ initialize () {
 package () {
     echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}]"
     package_version stable
-    package_version insiders
+    # package_version insiders
 }
 
 package_version () {

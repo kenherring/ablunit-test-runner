@@ -11,7 +11,7 @@ initialize () {
 	VERBOSE=${VERBOSE:-false}
 	ABLUNIT_TEST_RUNNER_OE_VERSION=${ABLUNIT_TEST_RUNNER_OE_VERSION:-12.2.12}
 	${CIRCLECI:-false} && NO_BUILD=true
-	[ -z "${DOCKER_IMAGE:-}" ] && NO_BUILD=true
+	[ -n "${DOCKER_IMAGE:-}" ] && NO_BUILD=true
 	[ -z "${WSL_DISTRO_NAME:-}" ] && WSL=true
 	PACKAGE_VERSION=$(node -p "require('./package.json').version")
 
@@ -86,8 +86,8 @@ create_dbs () {
 }
 
 doPackage () {
+	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] NO_BUILD=$NO_BUILD"
 	$NO_BUILD && return 0
-	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] pwd=$(pwd)"
 
 	local PACKAGE_OUT_OF_DATE=false
 	local VSIX_COUNT=0
