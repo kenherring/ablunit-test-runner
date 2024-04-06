@@ -57,7 +57,8 @@ export async function activate (context: ExtensionContext) {
 		return ret
 	}
 
-	if (process.env['ABLUNIT_TEST_RUNNER_UNIT_TESTING'] === 'true') {
+	log.info('ABLUNIT_TEST_RUNNER_UNIT_TESTING=' + process.env['ABLUNIT_TEST_RUNNER_UNIT_TESTING'])
+	if (process.env['ABLUNIT_TEST_RUNNER_UNIT_TESTING'] ?? 'false' !== 'false') {
 		context.subscriptions.push(commands.registerCommand('_ablunit.getExtensionTestReferences', getExtensionTestReferences))
 	}
 
@@ -319,8 +320,8 @@ export async function activate (context: ExtensionContext) {
 				return runTestQueue(res).then(() => {
 					log.debug('runTestQueue complete')
 				})
-			}).catch((e) => { throw e })
-		}).catch((err) => {
+			}).catch((e: unknown) => { throw e })
+		}).catch((err: unknown) => {
 			run.end()
 			if (err instanceof CancellationError) {
 				log.error('ablunit run failed with exception: CancellationError')
@@ -377,7 +378,7 @@ export async function activate (context: ExtensionContext) {
 
 	ctrl.refreshHandler = async (token: CancellationToken) => {
 		log.info('ctrl.refreshHandler')
-		return refreshTestTree(ctrl, token).catch((err) => {
+		return refreshTestTree(ctrl, token).catch((err: unknown) => {
 			log.error('refreshTestTree failed. err=' + err)
 			throw err
 		})
@@ -401,7 +402,7 @@ export async function activate (context: ExtensionContext) {
 
 	const configHandler = () => {
 		log.info('testRunProfiler.configureHandler')
-		openTestRunConfig().catch((err) => {
+		openTestRunConfig().catch((err: unknown) => {
 			log.error('Failed to open \'.vscode/ablunit-test-profile.json\'. err=' + err)
 		})
 	}

@@ -776,15 +776,15 @@ export async function updateTestProfile (key: string, value: string | string[] |
 	const keys = key.split('.')
 
 	if (keys.length === 3) {
-		// @ts-expect-error 123
+		// @ts-expect-error 1234567890
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 		profile['configurations'][0][keys[0]][keys[1]][keys[2]] = value
 	} else if (keys.length ===2) {
-		// @ts-expect-error 123
+		// @ts-expect-error 1234567890
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 		profile['configurations'][0][keys[0]][keys[1]] = value
 	} else {
-		// @ts-expect-error 123
+		// @ts-expect-error 1234567890
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 		profile['configurations'][0][keys[0]] = value
 	}
@@ -818,7 +818,7 @@ export async function refreshData (resultsLen = 0) {
 	testController = undefined
 	recentResults = undefined
 	currentRunData = undefined
-
+	log.info('ABLUNIT_TEST_RUNNER_UNIT_TESTING=' + process.env['ABLUNIT_TEST_RUNNER_UNIT_TESTING'])
 	return commands.executeCommand('_ablunit.getExtensionTestReferences').then((resp) => {
 		const refs = resp as IExtensionTestReferences
 		let passedTests = undefined
@@ -925,7 +925,7 @@ export async function getResults (len = 1, tag?: string) {
 	if ((!recentResults || recentResults.length === 0) && len > 0) {
 		log.info(tag + 'recentResults not set, refreshing...')
 		for (let i=0; i<15; i++) {
-			await sleep2(100, tag + 'still no recentResults, sleep before trying again').then(async () => {
+			await sleep2(500, tag + 'still no recentResults, sleep before trying again').then(async () => {
 				return refreshData().then(async () => {
 					return sleep2(100, null)
 				})
@@ -971,16 +971,16 @@ class AssertTestResults {
 	}
 
 	public count = (expectedCount: number) => {
-		this.assertResultsCountByStatus(expectedCount, 'all').catch((err) => { throw err })
+		this.assertResultsCountByStatus(expectedCount, 'all').catch((err: unknown) => { throw err })
 	}
 	public passed (expectedCount: number) {
-		this.assertResultsCountByStatus(expectedCount, 'passed').catch((err) => { throw err })
+		this.assertResultsCountByStatus(expectedCount, 'passed').catch((err: unknown) => { throw err })
 	}
 	public errored (expectedCount: number) {
-		this.assertResultsCountByStatus(expectedCount, 'errored').catch((err) => { throw err })
+		this.assertResultsCountByStatus(expectedCount, 'errored').catch((err: unknown) => { throw err })
 	}
 	public failed (expectedCount: number) {
-		this.assertResultsCountByStatus(expectedCount, 'failed').catch((err) => { throw err })
+		this.assertResultsCountByStatus(expectedCount, 'failed').catch((err: unknown) => { throw err })
 	}
 }
 
@@ -1084,10 +1084,10 @@ export async function beforeProj7 () {
 		await workspace.fs.createDirectory(toUri('src/procs/dir' + i))
 		await workspace.fs.createDirectory(toUri('src/classes/dir' + i))
 		for (let j = 0; j < 10; j++) {
-			await workspace.fs.copy(templateProc, toUri(`src/procs/dir${i}/testProc${j}.p`), { overwrite: true })
+			await workspace.fs.copy(templateProc, toUri('src/procs/dir' + i + '/testProc' + j + '.p'), { overwrite: true })
 
-			const writeContent = Uint8Array.from(Buffer.from(classContent.replace(/template_class/, `classes.dir${i}.testClass${j}`)))
-			await workspace.fs.writeFile(toUri(`src/classes/dir${i}/testClass${j}.cls`), writeContent)
+			const writeContent = Uint8Array.from(Buffer.from(classContent.replace(/template_class/, 'classes.dir' + i + '.testClass' + j)))
+			await workspace.fs.writeFile(toUri('src/classes/dir' + i + '/testClass' + j + '.cls'), writeContent)
 		}
 	}
 	return sleep(250)

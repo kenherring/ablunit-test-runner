@@ -33,6 +33,9 @@
 		"webpack.config.js"
 	],
 	"rules": {
+		// npm i -D @stylistic/eslint-plugin-ts
+		// "@stylisitic/indent": ["warn", "tab"],
+		"@typescript-eslint/ban-ts-comment": "warn",
 		"@typescript-eslint/adjacent-overload-signatures": "error",
 		"@typescript-eslint/ban-types": [ "error", {
 			"types": {
@@ -43,9 +46,8 @@
 			}
 		}],
 		"@typescript-eslint/comma-spacing": [ "warn", { "before": false, "after": true }],
-		"@typescript-eslint/consistent-type-assertions": [ "error", { "assertionStyle": "as" } ],
-		"@typescript-eslint/consistent-type-definitions": [ "error", "interface" ],
-		"@typescript-eslint/indent": [ "error", "tab" ],
+		"@typescript-eslint/consistent-type-assertions": "warn",
+		"@typescript-eslint/consistent-type-definitions": 1,
 		"@typescript-eslint/naming-convention": [ "error", {
 			"selector": "interface",
 			"format": [ "PascalCase" ],

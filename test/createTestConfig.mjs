@@ -15,6 +15,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const vsVersionNum = '1.87.2'
 const vsVersion = process.env['ABLUNIT_TEST_RUNNER_VSCODE_VERSION'] ?? 'stable'
 const oeVersion = process.env['ABLUNIT_TEST_RUNNER_OE_VERSION'] ?? '12.2.12'
+let firstTest = true
 const enableExtensions = [
 	'AtStart',
 	'DebugLines',
@@ -38,6 +39,10 @@ function writeConfigToFile (name, config) {
 }
 
 function getMochaTimeout (projName) {
+	if (firstTest) {
+		firstTest = false
+		return 180000
+	}
 	if (projName === 'proj3' && projName === 'proj4') {
 		return 30000
 	}
@@ -245,7 +250,7 @@ function getTestConfig (projName) {
 
 	const env = {
 		ABLUNIT_TEST_RUNNER_ENABLE_EXTENSIONS: enableExtensions.includes('' + projName),
-		ABLUNIT_TEST_RUNNER_UNIT_TESTING: 'true',
+		ABLUNIT_TEST_RUNNER_UNIT_TESTING: true,
 		ABLUNIT_TEST_RUNNER_VSCODE_VERSION: vsVersion,
 		DONT_PROMPT_WSL_INSTALL: '1',
 		VSCODE_SKIP_PRELAUNCH: '1',

@@ -115,7 +115,7 @@ export async function waitForLangServerReady () {
 			return false
 		})
 		if (r) { break }
-		await sleep2(1000)
+		await sleep2(250)
 	}
 	log.info('r=' + r)
 	if (r) {

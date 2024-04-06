@@ -114,7 +114,7 @@ suite('proj9 - Extension Test Suite', () => {
 		await updateTestProfile('importOpenedgeProjectJson', false)
 		await updateTestProfile('openedgeProjectProfile', 'profile2')
 
-		await runAllTests(true, false).catch((e) => {
+		await runAllTests(true, false).catch((e: unknown) => {
 			log.info('runAllTests failed, as expected: e=' + e)
 		})
 		const workspaceFolder = workspace.workspaceFolders![0].uri

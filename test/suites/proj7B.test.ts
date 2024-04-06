@@ -1,5 +1,5 @@
-import { CancellationError, LogLevel, commands } from 'vscode'
-import { assert, RunStatus, beforeProj7, cancelTestRun, getCurrentRunData, getTestControllerItemCount, isoDate, log, refreshTests, runAllTests, sleep, waitForTestRunStatus, sleep2 } from '../testCommon'
+import { CancellationError, commands } from 'vscode'
+import { assert, beforeProj7, getTestControllerItemCount, log, refreshTests, sleep } from '../testCommon'
 import { Duration } from '../../src/ABLUnitCommon'
 
 suite('proj7B - Extension Test Suite', () => {

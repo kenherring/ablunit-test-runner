@@ -10,8 +10,8 @@ initialize () {
 	WSL=false
 	VERBOSE=${VERBOSE:-false}
 	ABLUNIT_TEST_RUNNER_OE_VERSION=${ABLUNIT_TEST_RUNNER_OE_VERSION:-12.2.12}
-	${CIRCLECI:-false} && NO_BUILD=true
-	[ -n "${DOCKER_IMAGE:-}" ] && NO_BUILD=true
+	# ${CIRCLECI:-false} && NO_BUILD=true
+	# [ -n "${DOCKER_IMAGE:-}" ] && NO_BUILD=true
 	[ -z "${WSL_DISTRO_NAME:-}" ] && WSL=true
 	PACKAGE_VERSION=$(node -p "require('./package.json').version")
 
