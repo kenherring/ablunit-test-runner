@@ -15,11 +15,13 @@ The [ABLUnit Test Runner](https://github.com/kenherring/ablunit-test-runner/) ex
 
 ### 📷 Code Coverage Screenshot
 
-![code coverage example screenshot](https://github.com/kenherring/ablunit-test-runner/raw/main/docs/coverage.png)
+![code coverage example screenshot](https://github.com/kenherring/ablunit-test-runner/raw/main/docs/insiders.png)
 
 ## 📝 Supported OpenEdge Versions
 
 This project was developed using the [Progress OpenEdge Developers Kit: Classroom Edition](https://www.progress.com/openedge/classroom-edition).  It was primarily tested with 12.2.12, but the unit tests are run for 12.7.0 during the CI builds too.
+
+<!--
 
 ## 🧪 VSCode Proposed TestCoverage API
 
@@ -29,7 +31,9 @@ See [VSCode Documentation -> Using Proposed API](https://code.visualstudio.com/a
 
 ### 📦 Screnshot with Proposed Test API
 
-![proposed test api example screenshot](https://github.com/kenherring/ablunit-test-runner/raw/main/docs/insiders.png)
+![proposed test api example screenshot](https://github.com/kenherring/ablunit-test-runner/raw/main/docs/<INSERT_IMAGE_PATH>.png)
+
+!-->
 
 ## ⛺ Configuration
 

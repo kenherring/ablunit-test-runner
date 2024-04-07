@@ -88,7 +88,7 @@ export async function activate (context: ExtensionContext) {
 			log.error('continuous test runs not implemented')
 			throw new Error('continuous test runs not implemented')
 		}
-		return startTestRun(request, token).then(() => { return })
+		return startTestRun(request, token).then(() => { return }, (e) => { throw e })
 	}
 
 	async function openTestRunConfig () {
@@ -234,30 +234,6 @@ export async function activate (context: ExtensionContext) {
 				decorator.decorate(window.activeTextEditor)
 			}
 
-			// const coverageProvider = {
-			// 	provideFileCoverage: () => {
-			// 		log.info('---------- provideFileCoverage ----------')
-			// 		const results = resultData.get(run)
-			// 		if (!results) { return [] }
-
-			// 		const coverage: FileCoverage[] = []
-			// 		for(const r of results) {
-			// 			r.coverage.forEach((c) => { coverage.push(c) })
-			// 		}
-			// 		log.info('coverage.length=' + coverage.length)
-			// 		return coverage
-			// 	},
-			// 	resolveFileCoverage: (coverage: FileCoverage, cancellation: CancellationToken) => {
-			// 		log.info('---------- resolveFileCoverage ----------')
-			// 		log.error('resolveFileCoverage not implemented')
-
-			// 		cancellation.onCancellationRequested(() => {
-			// 			log.info('cancellation requested!')
-			// 		})
-			// 		return coverage
-			// 	}
-			// }
-
 			void log.notification('ablunit tests complete')
 			run.end()
 			log.trace('run.end()')
@@ -318,10 +294,11 @@ export async function activate (context: ExtensionContext) {
 				}
 				return runTestQueue(res).then(() => {
 					log.debug('runTestQueue complete')
-					return true
 				})
+			}).catch((e: unknown) => {
+				throw e
 			})
-		}).catch((err) => {
+		}).catch((err: unknown) => {
 			run.end()
 			if (err instanceof CancellationError) {
 				log.error('ablunit run failed with exception: CancellationError')
@@ -347,10 +324,9 @@ export async function activate (context: ExtensionContext) {
 		}
 		if (workspace.getWorkspaceFolder(u) === undefined) {
 			log.info('skipping updateNodeForDocument for file not in workspace: ' + u.fsPath)
-			return Promise.resolve(() => { return false })
-			// return Promise.resolve(() => { return true })
+			return Promise.resolve()
 		}
-		return updateNode(u, ctrl)
+		return await updateNode(u, ctrl)
 	}
 
 	async function resolveHandlerFunc (item: TestItem | undefined) {
@@ -368,7 +344,7 @@ export async function activate (context: ExtensionContext) {
 		}
 
 		if (item.uri) {
-			return updateNodeForDocument(item, 'resolve')
+			return await updateNodeForDocument(item, 'resolve')
 		}
 
 		const data = testData.get(item)
@@ -379,7 +355,7 @@ export async function activate (context: ExtensionContext) {
 
 	ctrl.refreshHandler = async (token: CancellationToken) => {
 		log.info('ctrl.refreshHandler')
-		return refreshTestTree(ctrl, token).catch((err) => {
+		return refreshTestTree(ctrl, token).catch((err: unknown) => {
 			log.error('refreshTestTree failed. err=' + err)
 			throw err
 		})
@@ -392,8 +368,10 @@ export async function activate (context: ExtensionContext) {
 
 	function updateConfiguration (event: ConfigurationChangeEvent) {
 		if (!event.affectsConfiguration('ablunit')) {
+			log.warn('configuration updated but does not include ablunit settings')
 			return
 		}
+		log.debug('effects ablunit.file? ' + event.affectsConfiguration('ablunit.files'))
 		if (event.affectsConfiguration('ablunit.files')) {
 			removeExcludedFiles(ctrl, getExcludePatterns())
 		}
@@ -401,14 +379,14 @@ export async function activate (context: ExtensionContext) {
 
 	const configHandler = () => {
 		log.info('testRunProfiler.configureHandler')
-		openTestRunConfig().catch((err) => {
+		openTestRunConfig().catch((err: unknown) => {
 			log.error('Failed to open \'.vscode/ablunit-test-profile.json\'. err=' + err)
 		})
 	}
 
 	const testProfileRun = ctrl.createRunProfile('Run Tests', TestRunProfileKind.Run, runHandler, true, new TestTag('runnable'), false)
 	const testProfileDebug = ctrl.createRunProfile('Debug Tests', TestRunProfileKind.Debug, runHandler, false, new TestTag('runnable'), false)
-	const testProfileCoverage = ctrl.createRunProfile('Run Tests w/ Coverage', TestRunProfileKind      .Debug, runHandler, false, new TestTag('runnable'), false)
+	const testProfileCoverage = ctrl.createRunProfile('Run Tests w/ Coverage', TestRunProfileKind.Debug, runHandler, false, new TestTag('runnable'), false)
 	// const testProfileDebugCoverage = ctrl.createRunProfile('Debug Tests w/ Coverage', TestRunProfileKind.Debug, runHandler, false, new TestTag('runnable'), false)
 	testProfileRun.configureHandler = configHandler
 	testProfileDebug.configureHandler = configHandler
