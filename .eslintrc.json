@@ -11,7 +11,8 @@
 		"plugin:@typescript-eslint/recommended",
 		"plugin:@typescript-eslint/eslint-recommended",
 		"plugin:@typescript-eslint/strict-type-checked",
-		"plugin:@typescript-eslint/recommended-type-checked"
+		"plugin:@typescript-eslint/recommended-type-checked",
+		"plugin:@typescript-eslint/stylistic"
 	],
 	"globals": {
 		"Atomics": "readonly",
@@ -34,7 +35,6 @@
 	],
 	"rules": {
 		"@stylistic/indent": [ "error", "tab" ],
-		"@typescript-eslint/ban-ts-comment": "warn",
 		"@typescript-eslint/adjacent-overload-signatures": "error",
 		"@typescript-eslint/ban-types": [ "error", {
 			"types": {
@@ -45,8 +45,6 @@
 			}
 		}],
 		"@typescript-eslint/comma-spacing": [ "warn", { "before": false, "after": true }],
-		"@typescript-eslint/consistent-type-assertions": "error",
-		"@typescript-eslint/consistent-type-definitions": "error",
 		"@typescript-eslint/naming-convention": [ "error", {
 			"selector": "interface",
 			"format": [ "PascalCase" ],

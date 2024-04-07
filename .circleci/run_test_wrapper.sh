@@ -57,7 +57,6 @@ restore_vscode_test () {
 		return 0
 	fi
 
-	TO_DIR=./.vscode-test
 	mkdir -p "$TO_DIR"
 	cp -r "$FROM_DIR"/* "$TO_DIR"
 }

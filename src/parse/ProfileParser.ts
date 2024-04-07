@@ -194,9 +194,7 @@ export interface IProfileData {
 	userData: IUserData[]
 }
 
-interface IProps {
-	[key: string]: string
-}
+type IProps = Record<string, string>;
 
 export class ABLProfileJson {
 	version: number

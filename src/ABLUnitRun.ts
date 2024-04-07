@@ -196,7 +196,7 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 
 export const getEnvVars = (dlcUri: Uri | undefined) => {
 	const runenv = process.env
-	let envConfig: {[key: string]: string} | undefined = undefined
+	let envConfig: Record<string, string> | undefined = undefined
 	if (process.platform === 'win32') {
 		envConfig = workspace.getConfiguration('terminal').get('integrated.env.windows')
 	} else if (process.platform === 'linux') {

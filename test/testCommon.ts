@@ -85,9 +85,7 @@ const projName = () => { return getWorkspaceUri().fsPath.replace(/\\/g, '/').spl
 // test suite objects
 export const log = logObj
 export class FilesExclude {
-	exclude: {
-		[key: string]: boolean
-	} = {}
+	exclude: Record<string, boolean> = {}
 }
 // riversidesoftware.openedge-abl-lsp extension objects
 export { setRuntimes, rebuildAblProject }

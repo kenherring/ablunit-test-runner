@@ -11,7 +11,6 @@ export const readStrippedJsonFile = (uri: Uri | string) => {
 	const contents = fs.readFileSync(uri.fsPath, 'utf8')
 	// eslint-disable-next-line
 	const ret = JSON.parse(JSON_minify(contents)) as object
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 	return ret
 }
 
