@@ -13,7 +13,6 @@ import {
 import { ABLResults } from '../src/ABLResults'
 import { Duration, deleteFile as deleteFileCommon, isRelativePath, readStrippedJsonFile } from '../src/ABLUnitCommon'
 import { log as logObj } from '../src/ChannelLogger'
-import { Decorator } from '../src/Decorator'
 import { IExtensionTestReferences } from '../src/extension'
 import { ITestSuites } from '../src/parse/ResultsParser'
 import { IConfigurations, parseRunProfiles } from '../src/parse/TestProfileParser'
@@ -101,7 +100,6 @@ export {
 }
 
 // test case objects - reset before each test
-let decorator: Decorator | undefined
 let testController: TestController | undefined
 let recentResults: ABLResults[] | undefined
 let currentRunData: ABLResults[] | undefined
@@ -110,7 +108,6 @@ export let cancelTestRunDuration: Duration | undefined
 
 export function beforeCommon () {
 	recentResults = undefined
-	decorator = undefined
 	testController = undefined
 	currentRunData = undefined
 }
@@ -157,7 +154,6 @@ export function teardownCommon () {
 	runAllTestsDuration = undefined
 	cancelTestRunDuration = undefined
 
-	decorator = undefined
 	testController = undefined
 	recentResults = undefined
 	currentRunData = undefined
@@ -689,21 +685,30 @@ export async function updateTestProfile (key: string, value: string | string[] |
 		const newProfile = { configurations: [ new DefaultRunProfile ] } as IConfigurations
 		await workspace.fs.writeFile(testProfileUri, Buffer.from(JSON.stringify(newProfile)))
 	}
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 	const profile = readStrippedJsonFile(testProfileUri)
 	const keys = key.split('.')
 
-	if (keys.length === 3) {
-		// @ts-expect-error 123
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-		profile['configurations'][0][keys[0]][keys[1]][keys[2]] = value
-	} else if (keys.length ===2) {
-		// @ts-expect-error 123
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-		profile['configurations'][0][keys[0]][keys[1]] = value
-	} else {
-		// @ts-expect-error 123
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-		profile['configurations'][0][keys[0]] = value
+	let profileConfigurations = undefined
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+	if(profile['configurations']) {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+		profileConfigurations = profile['configurations']
+	}
+	if (profileConfigurations) {
+		if (keys.length === 3) {
+			// @ts-expect-error 1234567890
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+			profileConfigurations[0][keys[0]][keys[1]][keys[2]] = value
+		} else if (keys.length ===2) {
+			// @ts-expect-error 1234567890
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+			profileConfigurations[0][keys[0]][keys[1]] = value
+		} else {
+			// @ts-expect-error 1234567890
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+			profileConfigurations[0][keys[0]] = value
+		}
 	}
 
 	// profile.configurations[0][key] = value
@@ -729,14 +734,13 @@ export async function selectProfile (profile: string) {
 }
 
 export async function refreshData (resultsLen = 0) {
-	decorator = undefined
 	testController = undefined
 	recentResults = undefined
 	currentRunData = undefined
 
 	return commands.executeCommand('_ablunit.getExtensionTestReferences').then((resp) => {
 		const refs = resp as IExtensionTestReferences
-		let passedTests = undefined
+		let passedTests: number | undefined = undefined
 
 		if (refs.recentResults[0]?.ablResults?.resultsJson?.[0].testsuite !== undefined) {
 			passedTests = refs.recentResults[0].ablResults?.resultsJson[0].testsuite?.[0].passed ?? undefined
@@ -745,7 +749,6 @@ export async function refreshData (resultsLen = 0) {
 		if (passedTests && passedTests <= resultsLen) {
 			throw new Error('failed to refresh test results: results.length=' + refs.recentResults.length)
 		}
-		decorator = refs.decorator
 		testController = refs.testController
 		recentResults = refs.recentResults
 		if (refs.currentRunData) {
@@ -754,13 +757,6 @@ export async function refreshData (resultsLen = 0) {
 	}, (err) => {
 		throw new Error('failed to refresh test results: ' + err)
 	})
-}
-
-export function getDecorator () {
-	if (!decorator) {
-		throw new Error('decorator is null')
-	}
-	return decorator
 }
 
 export async function getTestController () {
@@ -899,16 +895,16 @@ class AssertTestResults {
 	}
 
 	public count = (expectedCount: number) => {
-		this.assertResultsCountByStatus(expectedCount, 'all').catch((err) => { throw err })
+		this.assertResultsCountByStatus(expectedCount, 'all').catch((err: unknown) => { throw err })
 	}
 	public passed (expectedCount: number) {
-		this.assertResultsCountByStatus(expectedCount, 'passed').catch((err) => { throw err })
+		this.assertResultsCountByStatus(expectedCount, 'passed').catch((err: unknown) => { throw err })
 	}
 	public errored (expectedCount: number) {
-		this.assertResultsCountByStatus(expectedCount, 'errored').catch((err) => { throw err })
+		this.assertResultsCountByStatus(expectedCount, 'errored').catch((err: unknown) => { throw err })
 	}
 	public failed (expectedCount: number) {
-		this.assertResultsCountByStatus(expectedCount, 'failed').catch((err) => { throw err })
+		this.assertResultsCountByStatus(expectedCount, 'failed').catch((err: unknown) => { throw err })
 	}
 }
 
@@ -1012,10 +1008,10 @@ export async function beforeProj7 () {
 		await workspace.fs.createDirectory(toUri('src/procs/dir' + i))
 		await workspace.fs.createDirectory(toUri('src/classes/dir' + i))
 		for (let j = 0; j < 10; j++) {
-			await workspace.fs.copy(templateProc, toUri(`src/procs/dir${i}/testProc${j}.p`), { overwrite: true })
+			await workspace.fs.copy(templateProc, toUri('src/procs/dir' + i + '/testProc' + j + '.p'), { overwrite: true })
 
-			const writeContent = Uint8Array.from(Buffer.from(classContent.replace(/template_class/, `classes.dir${i}.testClass${j}`)))
-			await workspace.fs.writeFile(toUri(`src/classes/dir${i}/testClass${j}.cls`), writeContent)
+			const writeContent = Uint8Array.from(Buffer.from(classContent.replace(/template_class/, 'classes.dir' + i + '.testClass' + j)))
+			await workspace.fs.writeFile(toUri('src/classes/dir' + i + '/testClass' + j + '.cls'), writeContent)
 		}
 	}
 	return sleep(250)

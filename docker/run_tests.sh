@@ -25,7 +25,7 @@ options:
 }
 
 initialize () {
-	echo "[$0 ${FUNCNAME[0]}] pwd=$(pwd)"
+	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] pwd=$(pwd)"
 	OPTS=
 	SCRIPT=entrypoint
 	DELETE_CACHE_VOLUME=false
@@ -117,17 +117,17 @@ initialize () {
 }
 
 run_tests_in_docker () {
-	echo "[$0 ${FUNCNAME[0]}] pwd=$(pwd)"
+	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}]"
 	local ABLUNIT_TEST_RUNNER_OE_VERSION
 
 	# export NVIDIA_VISIBLE_DEVICES=none
 
 	for ABLUNIT_TEST_RUNNER_OE_VERSION in "${OE_VERSIONS[@]}"; do
-		echo "[$0 ${FUNCNAME[0]}] docker run with ABLUNIT_TEST_RUNNER_OE_VERSION=$ABLUNIT_TEST_RUNNER_OE_VERSION"
+		echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] docker run with ABLUNIT_TEST_RUNNER_OE_VERSION=$ABLUNIT_TEST_RUNNER_OE_VERSION"
 		export ABLUNIT_TEST_RUNNER_OE_VERSION ABLUNIT_TEST_RUNNER_VSCODE_VERSION ABLUNIT_TEST_RUNNER_PROJECT_PROJECT_NAME ABLUNIT_TEST_RUNNER_NO_COVERAGE
 		local ARGS=(
 			--cpus=4 ## large resource class in CircleCI
-			--memory=4g ## large resource class in CircleCI
+			--memory=8g ## large resource class in CircleCI
 			--gpus=0
 			--rm
 			-it

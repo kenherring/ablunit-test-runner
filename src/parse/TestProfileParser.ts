@@ -17,6 +17,7 @@ export interface IConfigurations {
 }
 
 function getConfigurations (uri: Uri) {
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 	const data = readStrippedJsonFile(uri)
 	try {
 		let str = JSON.stringify(data)
@@ -36,24 +37,17 @@ function mergeObjects (from: object, into: object) {
 	}
 
 	Object.entries(from).forEach(([key,]) => {
-		// @ts-expect-error 123
 		if (typeof from[key] === 'object') {
-			// @ts-expect-error 123
 			if (into[key] === undefined) {
-				// @ts-expect-error 123
 				log.error('into.' + key + ' is undefined and the value will not be merged (value = ' + JSON.stringify(from[key]) + ')')
-			// @ts-expect-error 123
 			} else if (Array.isArray(from[key])) {
-				// @ts-expect-error 123
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 				into[key] = from[key]
 			} else {
-				// @ts-expect-error 123
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 				into[key] = mergeObjects(from[key], into[key])
-			} // @ts-expect-error 123
+			}
 		} else if (from[key] != undefined) {
-			// @ts-expect-error 123
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
 			into[key] = from[key]
 		}

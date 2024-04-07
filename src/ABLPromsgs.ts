@@ -40,7 +40,7 @@ export class ABLPromsgs {
 
 				const promArr: Promise<void>[] = []
 				for (const file of dirFiles) {
-					promArr.push(this.loadPromsgFile(Uri.joinPath(promsgDir, file[0])).then().catch(err => {
+					promArr.push(this.loadPromsgFile(Uri.joinPath(promsgDir, file[0])).then(() => { return }, (err: unknown) => {
 						throw new Error('Cannot load promsgs file \'' + file + '\', err=' + err)
 					}))
 				}

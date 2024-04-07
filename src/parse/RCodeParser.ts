@@ -138,7 +138,7 @@ export const getSourceMapFromRCode = async (propath: PropathParser, uri: Uri) =>
 		return next
 	}
 
-	const parseProcName = (bytes: Uint32Array, pos: number, prefix = '') => {
+	const parseProcName = (bytes: Uint32Array, pos: number, prefix = ''): string => {
 		if (debug) {
 			log.info(prefix + ' [parseProcName] pos=' + pos)
 		}
@@ -188,7 +188,7 @@ export const getSourceMapFromRCode = async (propath: PropathParser, uri: Uri) =>
 			parseProcTT(bytes, childBytes[4], prefix + '.' + childBytes[4] + '-4')
 		}
 
-		let pname = undefined
+		let pname: string | undefined = undefined
 		if (childBytes[5] && childBytes[5] != 0) {
 			pname = parseProcName(bytes, childBytes[5], prefix + '.' + childBytes[5] + '-5')
 		}

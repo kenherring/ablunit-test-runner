@@ -1,5 +1,5 @@
 import { FileType, MarkdownString, Range, TestItem, TestItemCollection, TestMessage, TestRun, Uri, workspace, WorkspaceFolder,
-	// CoveredCount, FileCoverage, StatementCoverage,
+	FileCoverage, FileCoverageDetail, StatementCoverage,
 	Disposable, CancellationToken, CancellationError } from 'vscode'
 import { ABLUnitConfig } from './ABLUnitConfigWriter'
 import { ABLResultsParser, ITestCaseFailure, ITestCase, ITestSuite } from './parse/ResultsParser'
@@ -10,7 +10,6 @@ import { ABLDebugLines } from './ABLDebugLines'
 import { ABLPromsgs, getPromsgText } from './ABLPromsgs'
 import { PropathParser } from './ABLPropath'
 import { log } from './ChannelLogger'
-import { FileCoverageCustom, CoveredCountCustom, StatementCoverageCustom } from './TestCoverage'
 import { RunStatus, ablunitRun } from './ABLUnitRun'
 import { getDLC, IDlc } from './parse/OpenedgeProjectParser'
 import { Duration, isRelativePath } from './ABLUnitCommon'
@@ -54,8 +53,7 @@ export class ABLResults implements Disposable {
 	coverageJson: [] = []
 	dlc: IDlc | undefined
 
-	public coverage: Map<string, FileCoverageCustom> = new Map<string, FileCoverageCustom>()
-	// public coverage: Map<string, FileCoverageCustom | FileCoverage> = new Map<string, FileCoverageCustom>()
+	public coverage: Map<string, FileCoverageDetail[]> = new Map<string, FileCoverageDetail[]>()
 
 	constructor (workspaceFolder: WorkspaceFolder,
 		private readonly storageUri: Uri,
@@ -522,17 +520,20 @@ export class ABLResults implements Disposable {
 			let fc = this.coverage.get(dbg.sourceUri.fsPath)
 			if (!fc) {
 				// create a new FileCoverage object if one didn't already exist
-				fc = new FileCoverageCustom(dbg.sourceUri, new CoveredCountCustom(0, 0))
-				this.coverage.set(dbg.sourceUri.fsPath, fc)
+				// const fcd: FileCoverageDetail[] = [ new StatementCoverage(0, new Range(0, 0, 0, 0)) as FileCoverageDetail ]
+				// this.coverage.set(dbg.sourceUri.fsPath, fcd)
+				// fc = this.coverage.get(dbg.sourceUri.fsPath)
 			}
 
-			// TODO: end of range should be the end of the line, not the beginning of the next line
-			const coverageRange = new Range(dbg.sourceLine - 1, 0, dbg.sourceLine, 0)
-			const coverageStatement = new StatementCoverageCustom(line.ExecCount ?? 0, coverageRange)
-			if (!fc.detailedCoverage) {
-				fc.detailedCoverage = []
-			}
-			fc.detailedCoverage.push(coverageStatement)
+			// // TODO: end of range should be the end of the line, not the beginning of the next line
+			// const coverageRange = new Range(dbg.sourceLine - 1, 0, dbg.sourceLine, 0)
+			// fc!.push(new StatementCoverage(line.ExecCount ?? 0, coverageRange))
 		}
+
+		// this.coverage.forEach((v, k) => {
+		// 	log.debug('coverage[' + k + '].length=' + v.length)
+		// 	const fileCov = FileCoverage.fromDetails(Uri.parse(k), v)
+		// 	log.debug('Statement coverage for ' + k + ': ' + fileCov.statementCoverage)
+		// })
 	}
 }
