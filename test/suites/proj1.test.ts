@@ -26,7 +26,7 @@ suite('proj1 - Extension Test Suite', () => {
 		assert.notFileExists(ablunitJson)
 		assert.notFileExists(resultsXml)
 
-		await runAllTests().catch((e) => {
+		await runAllTests().catch((e: unknown) => {
 			log.info('Error caught and ignored: e=' + e)
 		})
 

@@ -240,7 +240,7 @@ function loadConfigFile (filename: string): IOpenEdgeMainConfig | undefined {
 
 function readGlobalOpenEdgeRuntimes (workspaceUri: Uri) {
 	log.debug('[readGlobalOpenEdgeRuntimes]')
-	oeRuntimes = workspace.getConfiguration('abl.configuration').get<Array<IOERuntime>>('runtimes') ?? []
+	oeRuntimes = workspace.getConfiguration('abl.configuration').get<IOERuntime[]>('runtimes') ?? []
 	const oeRuntimesDefault = workspace.getConfiguration('abl').get('configuration.defaultRuntime')
 
 	if (!workspace.workspaceFolders) return

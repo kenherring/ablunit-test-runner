@@ -4,13 +4,13 @@ import JSON_minify from 'node-json-minify'
 
 export type vscodeVersion = 'stable' | 'insiders' | 'proposedapi'
 
-export const readStrippedJsonFile = (uri: Uri | string): JSON => {
+export const readStrippedJsonFile = (uri: Uri | string) => {
 	if (typeof uri === 'string') {
 		uri = Uri.file(uri)
 	}
 	const contents = fs.readFileSync(uri.fsPath, 'utf8')
 	// eslint-disable-next-line
-	const ret: JSON = JSON.parse(JSON_minify(contents))
+	const ret = JSON.parse(JSON_minify(contents)) as object
 	return ret
 }
 
