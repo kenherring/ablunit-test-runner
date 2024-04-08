@@ -194,9 +194,7 @@ export interface IProfileData {
 	userData: IUserData[]
 }
 
-interface IProps {
-	[key: string]: string
-}
+type IProps = Record<string, string>;
 
 export class ABLProfileJson {
 	version: number
@@ -455,7 +453,7 @@ export class ABLProfileJson {
 	addCoverage (lines: string[]) {
 		lines.unshift('.')
 		lines.push('.')
-		let mod
+		let mod: IModule | undefined
 
 		try {
 			for(let lineNo=1; lineNo < lines.length; lineNo++) {

@@ -153,7 +153,7 @@ export class ABLResults implements Disposable {
 		log.debug('addTest: ' + test.id + ', propathEntry=' + propathEntryTestFile)
 		this.tests.push(test)
 
-		let testCase
+		let testCase: string | undefined = undefined
 		if (test.id.includes('#')) {
 			testCase = test.id.split('#')[1]
 		}
@@ -505,8 +505,7 @@ export class ABLResults implements Disposable {
 		}
 		module.SourceUri = fileinfo.uri
 
-		for (let idx=0; idx < module.lines.length; idx++) { // NOSONAR
-			const line = module.lines[idx]
+		for (const line of module.lines) {
 			if (line.LineNo <= 0) {
 				//  * -2 is a special case - need to handgle this better
 				//  *  0 is a special case - method header
@@ -517,7 +516,7 @@ export class ABLResults implements Disposable {
 			if (!dbg) {
 				return
 			}
-			let fc = this.coverage.get(dbg.sourceUri.fsPath)
+			const fc = this.coverage.get(dbg.sourceUri.fsPath)
 			if (!fc) {
 				// create a new FileCoverage object if one didn't already exist
 				// const fcd: FileCoverageDetail[] = [ new StatementCoverage(0, new Range(0, 0, 0, 0)) as FileCoverageDetail ]

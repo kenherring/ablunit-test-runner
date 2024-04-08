@@ -222,7 +222,6 @@ export async function activate (context: ExtensionContext) {
 
 			const data = resultData.get(run) ?? []
 			recentResults = data
-
 			void log.notification('ablunit tests complete')
 			run.end()
 			log.trace('run.end()')
@@ -284,7 +283,7 @@ export async function activate (context: ExtensionContext) {
 				return runTestQueue(res).then(() => {
 					log.debug('runTestQueue complete')
 				})
-			}, (e) => {
+			}).catch((e: unknown) => {
 				throw e
 			})
 		}).catch((err: unknown) => {

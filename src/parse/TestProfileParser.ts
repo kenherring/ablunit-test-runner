@@ -40,7 +40,7 @@ function mergeObjects (from: object, into: object) {
 		if (typeof from[key] === 'object') {
 			if (into[key] === undefined) {
 				log.error('into.' + key + ' is undefined and the value will not be merged (value = ' + JSON.stringify(from[key]) + ')')
-			} else if (Array.isArray(from[key])) {
+			} else if (Array.isArray(from[key]) && from[key]) {
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 				into[key] = from[key]
 			} else {

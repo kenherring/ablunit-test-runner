@@ -171,7 +171,7 @@ export const getSourceMapFromRCode = async (propath: PropathParser, uri: Uri) =>
 			numlines = bytes[childBytes[5]/4 - 2]
 		}
 
-		let lines
+		let lines: number[] | undefined = undefined
 		if(childBytes[1] && childBytes[1] != 0) {
 			lines = getLines(bytes, childBytes[1], numlines)
 		}

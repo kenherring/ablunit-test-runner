@@ -62,9 +62,9 @@ run_lint () {
 	fi
 
 	local ESLINT_FILE=artifacts/eslint_report
-    # npm install
 	mkdir -p artifacts
 
+    rm -f "${ESLINT_FILE}".*
 	if ! npm run lint -- -f unix -o "${ESLINT_FILE}.txt"; then
 		echo "eslint plain failed"
 	fi
