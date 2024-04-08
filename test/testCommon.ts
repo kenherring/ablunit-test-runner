@@ -353,7 +353,7 @@ export async function awaitRCode (workspaceFolder: WorkspaceFolder, rcodeCountMi
 			log.info('Language client is ready!')
 			break
 		}
-		await sleep2(1000)
+		await sleep2(500)
 	}
 
 	log.info('waiting up to ' + buildWaitTime + ' seconds for r-code')
@@ -364,7 +364,7 @@ export async function awaitRCode (workspaceFolder: WorkspaceFolder, rcodeCountMi
 			return rcodeCount
 		}
 		log.info('found ' + rcodeCount + ' r-code files. waiting... (' + i + '/' + buildWaitTime + ')')
-		await sleep2(1000)
+		await sleep2(500)
 	}
 
 	await commands.executeCommand('abl.dumpFileStatus').then(() => { log.info('abl.dumpFileStatus complete!') })
@@ -586,7 +586,7 @@ export async function waitForTestRunStatus (waitForStatus: RunStatus) {
 	setTimeout(() => { throw new Error('waitForTestRunStatus timeout') }, 20000)
 	while (currentStatus < waitForStatus)
 	{
-		await sleep2(1000, 'waitForTestRunStatus currentStatus=\'' + currentStatus.toString() + '\' + , waitForStatus=\'' + waitForStatus.toString() + '\'')
+		await sleep2(500, 'waitForTestRunStatus currentStatus=\'' + currentStatus.toString() + '\' + , waitForStatus=\'' + waitForStatus.toString() + '\'')
 		runData = await getCurrentRunData()
 		currentStatus = runData[0].status
 	}
