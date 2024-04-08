@@ -89,7 +89,6 @@ jobs:
       - persist_to_workspace: { root: ., paths: [ . ] }
       - save-package-cache
       - run: '[ "$(find . -type f -name "*.vsix" | tee /dev/tty | wc -l)" = "1" ] && echo "pass" || (echo "error - count does not match (expected=$EXPECTED_VSIX_COUNT)" && exit 1)'
-      - run: '[ "$(find . -type f -name "*.vsix" | tee /dev/tty | wc -l)" = "2" ] && echo "pass" || (echo "error - count does not match (expected=$EXPECTED_VSIX_COUNT)" && exit 1)'
   test:
     <<: *oe-version-param
     docker:
