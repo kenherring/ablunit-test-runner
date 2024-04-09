@@ -120,8 +120,7 @@ export const getSourceMapFromSource = async (propath: PropathParser, debugSource
 
 		if (content) {
 			const lines = content.split('\n')
-			for(let idx=0; idx < lines.length; idx++) { // NOSONAR
-				const line = lines[idx]
+			for (const line of lines) {
 				const xref = incRE.exec(line)
 
 				if (xref && xref.length >= 5 && xref[4] == 'INCLUDE') {

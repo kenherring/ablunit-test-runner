@@ -16,7 +16,7 @@ const config = {
 	// devtool: 'inline-cheap-module-source-map',
 	entry: {
 		'extension': './src/extension.ts',
-		'extension-insiders': './src/extension-insiders.ts',
+		// 'extension-insiders': './src/extension-insiders.ts',
 	},
 	output: {
 		clean: true,

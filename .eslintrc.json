@@ -11,7 +11,8 @@
 		"plugin:@typescript-eslint/recommended",
 		"plugin:@typescript-eslint/eslint-recommended",
 		"plugin:@typescript-eslint/strict-type-checked",
-		"plugin:@typescript-eslint/recommended-type-checked"
+		"plugin:@typescript-eslint/recommended-type-checked",
+		"plugin:@typescript-eslint/stylistic"
 	],
 	"globals": {
 		"Atomics": "readonly",
@@ -24,18 +25,16 @@
 		"project": "./tsconfig.json"
 	},
 	"plugins": [
+		"@stylistic",
 		"@typescript-eslint"
 	],
 	"ignorePatterns": [
 		"dummy-ext/",
 		"test_projects/",
-		"vscode.proposed.testCoverage.d.ts",
 		"webpack.config.js"
 	],
 	"rules": {
-		// npm i -D @stylistic/eslint-plugin-ts
-		// "@stylisitic/indent": ["warn", "tab"],
-		"@typescript-eslint/ban-ts-comment": "warn",
+		"@stylistic/indent": [ "error", "tab" ],
 		"@typescript-eslint/adjacent-overload-signatures": "error",
 		"@typescript-eslint/ban-types": [ "error", {
 			"types": {
@@ -47,7 +46,6 @@
 		}],
 		"@typescript-eslint/comma-spacing": [ "warn", { "before": false, "after": true }],
 		"@typescript-eslint/consistent-type-assertions": "warn",
-		"@typescript-eslint/consistent-type-definitions": 1,
 		"@typescript-eslint/naming-convention": [ "error", {
 			"selector": "interface",
 			"format": [ "PascalCase" ],

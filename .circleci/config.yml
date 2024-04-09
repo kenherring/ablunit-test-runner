@@ -8,7 +8,7 @@ parameters:
   cache-version:
     type: string
     default: v8 ## VSCode 1.88
-  vsix_count:
+  expected-vsix-count:
     type: integer
     default: 1
 
@@ -70,7 +70,7 @@ jobs:
       - image: cimg/node:20.8
     environment:
       npm_config_cache: /home/circleci/cache/node_modules_cache
-      VSIX_COUNT: << pipeline.parameters.vsix_count >>
+      EXPECTED_VSIX_COUNT: << pipeline.parameters.expected-vsix-count >>
     steps:
       - checkout
       - restore-package-cache
@@ -78,8 +78,7 @@ jobs:
       - run: rm -r node_modules
       - persist_to_workspace: { root: ., paths: [ . ] }
       - save-package-cache
-      - run: find . -type f -name "*.vsix"
-      - run: '[ "$(find . -type f -name "*.vsix" | wc -l)" = "$VSIX_COUNT" ] || exit 1'
+      - run: '[ "$(find . -type f -name "*.vsix" | tee /dev/tty | wc -l)" = "1" ] && echo "pass" || (echo "error - count does not match (expected=$EXPECTED_VSIX_COUNT)" && exit 1)'
   test:
     parameters:
       oe-version:
@@ -102,6 +101,7 @@ jobs:
       ABLUNIT_TEST_RUNNER_OE_VERSION: << parameters.oe-version >>
       ABLUNIT_TEST_RUNNER_VSCODE_VERSION: << parameters.vscode-version >>
       ABLUNIT_TEST_RUNNER_NO_COVERAGE: << parameters.no-coverage >>
+      EXPECTED_VSIX_COUNT: << pipeline.parameters.expected-vsix-count >>
     steps:
       - attach_workspace: { at: . }
       - restore-test-cache: { oe-version: << parameters.oe-version >> }

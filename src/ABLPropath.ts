@@ -29,10 +29,10 @@ export interface IPropath {
 }
 
 export class PropathParser {
-	filemap: Map<string, IABLFile> = new Map()
+	filemap: Map<string, IABLFile>
 	files: IABLFile[] = []
 	workspaceFolder: WorkspaceFolder
-	buildMap: Map<string, string> = new Map()
+	buildmap: Map<string, string>
 
 	propath: IPropath = {
 		entry: [] as IPropathEntry[]
@@ -40,6 +40,8 @@ export class PropathParser {
 
 	constructor (workspaceFolder: WorkspaceFolder) {
 		this.workspaceFolder = workspaceFolder
+		this.filemap = new Map()
+		this.buildmap = new Map()
 	}
 
 	setPropath (importedPropath: IProjectJson) {
@@ -95,16 +97,16 @@ export class PropathParser {
 	}
 
 	getBuildDir (filepath: string) {
-		return this.buildMap.get(filepath)
+		return this.buildmap.get(filepath)
 	}
 
 	async getRCodeUri (filepath: string) {
-		let bd = this.buildMap.get(filepath)
+		let bd = this.buildmap.get(filepath)
 
 		if (!bd) {
 			const found = await this.search(filepath)
 			if (found) {
-				bd = this.buildMap.get(filepath)
+				bd = this.buildmap.get(filepath)
 			}
 		}
 
@@ -134,7 +136,7 @@ export class PropathParser {
 				}
 				this.files.push(fileObj)
 				this.filemap.set(relativeFile, fileObj)
-				this.buildMap.set(relativeFile, e.buildDirUri.fsPath)
+				this.buildmap.set(relativeFile, e.buildDirUri.fsPath)
 				return fileObj
 			}
 		}
@@ -175,7 +177,7 @@ export class PropathParser {
 				}
 				this.files.push(fileObj)
 				this.filemap.set(relativeFile, fileObj)
-				this.buildMap.set(relativeFile, e.buildDirUri.fsPath)
+				this.buildmap.set(relativeFile, e.buildDirUri.fsPath)
 				return fileObj
 			}
 		}

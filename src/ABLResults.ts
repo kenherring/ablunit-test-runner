@@ -155,7 +155,7 @@ export class ABLResults implements Disposable {
 		log.debug('addTest: ' + test.id + ', propathEntry=' + propathEntryTestFile)
 		this.tests.push(test)
 
-		let testCase
+		let testCase: string | undefined
 		if (test.id.includes('#')) {
 			testCase = test.id.split('#')[1]
 		}
@@ -507,8 +507,7 @@ export class ABLResults implements Disposable {
 		}
 		module.SourceUri = fileinfo.uri
 
-		for (let idx=0; idx < module.lines.length; idx++) { // NOSONAR
-			const line = module.lines[idx]
+		for (const line of module.lines) {
 			if (line.LineNo <= 0) {
 				//  * -2 is a special case - need to handgle this better
 				//  *  0 is a special case - method header

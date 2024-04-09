@@ -40,7 +40,7 @@ export interface ITestSuite {
 	skipped: number
 	time: number
 	testsuite?: ITestSuite[]
-	properties?: { [key: string]: string }
+	properties?: Record<string, string>
 	testcases?: ITestCase[]
 }
 
@@ -150,7 +150,7 @@ export class ABLResultsParser {
 	parseProperties (res: any) {
 		if (!res) { return undefined }
 		res = res[0].property
-		const props: { [key: string]: string } = {}
+		const props: Record<string, string> = {}
 
 		for(const element of res) {
 			props[element['$'].name] = element['$'].value
