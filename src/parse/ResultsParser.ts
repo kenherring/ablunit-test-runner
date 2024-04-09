@@ -79,8 +79,8 @@ export class ABLResultsParser {
 		}
 	}
 
-	parseXml (xmlData: string) {
-		let res
+	parseXml (xmlData: string): string {
+		let res: string | undefined = undefined
 
 		parseString(xmlData, function (err: Error | null, resultsRaw: any) {
 			if (err) {

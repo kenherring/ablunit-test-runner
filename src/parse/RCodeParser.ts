@@ -138,7 +138,7 @@ export const getSourceMapFromRCode = async (propath: PropathParser, uri: Uri) =>
 		return next
 	}
 
-	const parseProcName = (bytes: Uint32Array, pos: number, prefix = ''): string => {
+	const parseProcName = (bytes: Uint32Array, pos: number, prefix = '') => {
 		if (debug) {
 			log.info(prefix + ' [parseProcName] pos=' + pos)
 		}

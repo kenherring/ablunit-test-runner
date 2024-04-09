@@ -17,7 +17,6 @@ export interface IConfigurations {
 }
 
 function getConfigurations (uri: Uri) {
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 	const data = readStrippedJsonFile(uri)
 	try {
 		let str = JSON.stringify(data)

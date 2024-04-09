@@ -1,5 +1,5 @@
-import { FileType, MarkdownString, Range, TestItem, TestItemCollection, TestMessage, TestRun, Uri, workspace, WorkspaceFolder,
-	FileCoverage, FileCoverageDetail, StatementCoverage,
+import { FileType, MarkdownString, TestItem, TestItemCollection, TestMessage, TestRun, Uri, workspace, WorkspaceFolder,
+	FileCoverageDetail,
 	Disposable, CancellationToken, CancellationError } from 'vscode'
 import { ABLUnitConfig } from './ABLUnitConfigWriter'
 import { ABLResultsParser, ITestCaseFailure, ITestCase, ITestSuite } from './parse/ResultsParser'
