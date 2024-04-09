@@ -17,12 +17,10 @@ import { ABLResults } from './ABLResults'
 import { log } from './ChannelLogger'
 import { getContentFromFilesystem } from './parse/TestParserCommon'
 import { ABLTestCase, ABLTestClass, ABLTestData, ABLTestDir, ABLTestFile, ABLTestProgram, ABLTestSuite, resultData, testData } from './testTree'
-import { Decorator, decorator } from './Decorator'
 import { minimatch } from 'minimatch'
 
 export interface IExtensionTestReferences {
 	testController: TestController
-	decorator: Decorator
 	recentResults: ABLResults[]
 	currentRunData: ABLResults[]
 }
@@ -34,7 +32,6 @@ export async function activate (context: ExtensionContext) {
 	let currentTestRun: TestRun | undefined = undefined
 
 	logActivationEvent()
-	// log.info('context.workspaceState=' + JSON.stringify(context.workspaceState, null, 2))
 
 	const contextStorageUri = context.storageUri ?? Uri.file(process.env['TEMP'] ?? '') // will always be defined as context.storageUri
 	const contextResourcesUri = Uri.joinPath(context.extensionUri, 'resources')
@@ -49,7 +46,6 @@ export async function activate (context: ExtensionContext) {
 		}
 		const ret = {
 			testController: ctrl,
-			decorator: decorator,
 			recentResults: recentResults,
 			currentRunData: data
 		} as IExtensionTestReferences
@@ -71,7 +67,6 @@ export async function activate (context: ExtensionContext) {
 			return new Disposable(async () => {
 				await updateNodeForDocument(e, 'didOpen').then(() => {
 					log.trace('updateNodeForDocument complete for ' + e.uri)
-					decorator.decorate(undefined, e)
 					return
 				}, (e: unknown) => {
 					log.error('failed updateNodeForDocument onDidTextDocument! err=' + e)
@@ -227,13 +222,6 @@ export async function activate (context: ExtensionContext) {
 
 			const data = resultData.get(run) ?? []
 			recentResults = data
-			decorator.setRecentResults(recentResults)
-
-			if (window.activeTextEditor) {
-				log.info('decorating editor - activeTextEditor')
-				decorator.decorate(window.activeTextEditor)
-			}
-
 			void log.notification('ablunit tests complete')
 			run.end()
 			log.trace('run.end()')
@@ -901,7 +889,6 @@ function openCallStackItem (traceUriStr: string) {
 		editor.selections = [new Selection(lineToGoBegin, lineToGoEnd)]
 		const range = new Range(lineToGoBegin, lineToGoEnd)
 		log.info('decorating editor - openCallStackItem')
-		decorator.decorate(editor)
 		editor.revealRange(range)
 	})
 }

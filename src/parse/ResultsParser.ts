@@ -79,8 +79,8 @@ export class ABLResultsParser {
 		}
 	}
 
-	parseXml (xmlData: string) {
-		let res
+	parseXml (xmlData: string): string {
+		let res: string | undefined = undefined
 
 		parseString(xmlData, function (err: Error | null, resultsRaw: any) {
 			if (err) {
@@ -89,7 +89,7 @@ export class ABLResultsParser {
 			res = resultsRaw
 			return String(resultsRaw)
 		})
-		return res
+		return String(res)
 	}
 
 	async parseSuites (res: any) {

@@ -1,11 +1,11 @@
 /* eslint-disable no-console */
-import { LogLevel, TestRun, window } from 'vscode'
+import { LogLevel, LogOutputChannel, TestRun, window } from 'vscode'
 import path from 'path'
 
 class Logger {
 	private static instance: Logger
 
-	private readonly logOutputChannel
+	private readonly logOutputChannel: LogOutputChannel
 	private readonly consoleLogLevel = LogLevel.Debug
 	private readonly testResultsLogLevel = LogLevel.Info
 	private logLevel: number

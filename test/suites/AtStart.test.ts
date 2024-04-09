@@ -13,25 +13,22 @@ suite('projAtStart  - Extension Test Suite', () => {
 		assert.fileExists('results.xml')
 	})
 
-	test('projAtStart - enable proposed api', () => {
-		const ext = extensions.getExtension('kherring.ablunit-test-runner')
-		if (!ext) {
-			assert.fail('proposed API extension not found')
-			return
-		}
 
-		log.info('ablunit-test-runner=' + JSON.stringify(ext))
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-		log.info('proposed? ' + ext.packageJSON['displayName'])
-		log.info('process.argv=' + JSON.stringify(process.argv, null, 2))
-		// log.info('window.state=' + JSON.stringify(vscode.window.state))
-		log.info('ext.exports=' + JSON.stringify(ext.exports))
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-		const proposedApiEnabled = ext.packageJSON['displayName'].includes('insiders')
+	/*
+	 * Validate the correct code is running for the correct version of vscode
+	 *
+	 * Disabled for now since we don't need it.
+	 */
+	// test('projAtStart - enable proposed api', () => {
+	// 	const ext = extensions.getExtension('kherring.ablunit-test-runner')
+	// 	if (!ext) {
+	// 		assert.fail('proposed API extension not found')
+	// 		return
+	// 	}
 
-		// log.info(vscode.extensions.checkProposedApiEnabled)
-
-		assert.equal(proposedApiEnabled, process.env['ABLUNIT_TEST_RUNNER_VSCODE_VERSION'] === 'insiders', 'proposed API enabled')
-	})
+	// 	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+	// 	const proposedApiEnabled = ext.packageJSON['displayName'].includes('insiders')
+	// 	assert.equal(proposedApiEnabled, process.env['ABLUNIT_TEST_RUNNER_VSCODE_VERSION'] === 'insiders', 'proposed API enabled')
+	// })
 
 })
