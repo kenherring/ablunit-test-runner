@@ -23,12 +23,13 @@ initialize () {
 	BASH_AFTER_ERROR=false
 	CACHE_BASE=/home/circleci/cache
 	CIRCLECI=${CIRCLECI:-false}
-	npm_config_cache=$CACHE_BASE/node_modules_cache
 	PROJECT_DIR=/home/circleci/project
 	REPO_VOLUME=/home/circleci/ablunit-test-runner
 	GIT_BRANCH=$(cd "$REPO_VOLUME" && git branch --show-current)
 	STAGED_ONLY=${STAGED_ONLY:-true}
 	${CREATE_PACKAGE:-false} && TEST_PROJECT=package
+	mkdir -p /home/circleci/cache/.npm
+	npm config set cache /home/circleci/cache/.npm --global
 
 	export ABLUNIT_TEST_RUNNER_DBUS_NUM \
 		ABLUNIT_TEST_RUNNER_OE_VERSION \
@@ -38,8 +39,7 @@ initialize () {
 		ABLUNIT_TEST_RUNNER_RUN_TESTS_SCRIPT
 
 	git config --global init.defaultBranch main
-	mkdir -p "$npm_config_cache" "$PROJECT_DIR"
-	export npm_config_cache
+	mkdir -p "$PROJECT_DIR"
 
 	while getopts 'bB' OPT; do
 		case "$OPT" in
@@ -208,20 +208,14 @@ save_cache () {
 	if [ -d .vscode-test ]; then
 		echo "saving .vscode-test to cache"
 		mkdir -p "$CACHE_BASE/.vscode-test"
-		mkdir -p "$CACHE_BASE/node_modules"
 		rsync -aR ./.vscode-test "$CACHE_BASE"
-		rsync -aR ./node_modules "$CACHE_BASE"
 	fi
 
 	if [ -d ./dummy-ext/.vscode-test ]; then
 		echo "saving dummy-ext/.vscode-test to cache"
 		mkdir -p "$CACHE_BASE/dummy-ext/.vscode-test"
-		mkdir -p "$CACHE_BASE/dummy-ext/node_modules"
 		if [ -d ./dummy-ext/.vscode-test ]; then
 			rsync -aR ./dummy-ext/.vscode-test "$CACHE_BASE"
-		fi
-		if [ -d ./dummy-ext/node_modules ]; then
-			rsync -aR ./dummy-ext/node_modules "$CACHE_BASE"
 		fi
 	elif [ "$TEST_PROJECT" = "dummy-ext" ]; then
 		echo "WARNING: dummy-ext/.vscode-test not found.  cannot save cache"

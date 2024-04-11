@@ -30,17 +30,17 @@ executors:
           password: $DOCKERHUB_TOKEN
 
 commands:
-  restore-package-cache:
+  restore-npm-cache:
     steps:
       - restore_cache:
           keys:
-            - << pipeline.parameters.cache-version >>-package-cache-{{ checksum "package.json" }}
-            - << pipeline.parameters.cache-version >>-package-cache-
-  save-package-cache:
+            - << pipeline.parameters.cache-version >>-npm-cache-{{ checksum "package.json" }}
+            - << pipeline.parameters.cache-version >>-npm-cache
+  save-npm-cache:
     steps:
       - save_cache:
-          key: << pipeline.parameters.cache-version >>-package-cache-{{ checksum "package.json" }}
-          paths: [ /home/circleci/cache/node_modules_cache ]
+          key: << pipeline.parameters.cache-version >>-npm-cache-{{ checksum "package.json" }}
+          paths: [ /home/circleci/cache/.npm ]
   restore-test-cache:
     parameters:
       oe-version:
@@ -51,6 +51,8 @@ commands:
           condition: true
           steps:
             - run: tr ' ' '\n' \<<< "$PROGRESS_CFG_BASE64" | base64 --decode > /psc/dlc/progress.cfg
+            - attach_workspace: { at: . }
+            - restore-npm-cache
             # - restore_cache:
             #     keys:
             #       - << pipeline.parameters.cache-version >>-test-cache-<< parameters.oe-version >>-{{ checksum "package.json" }}
@@ -62,22 +64,20 @@ commands:
   #   steps:
   #     - save_cache:
   #         key: << pipeline.parameters.cache-version >>-test-cache-<< parameters.oe-version >>-{{ checksum "package.json" }}
-  #         paths: [ cache ]
+  #         paths: [ /home/circleci/cache/.vscode-test ]
 
 jobs:
   package:
     docker:
       - image: cimg/node:20.8
     environment:
-      npm_config_cache: /home/circleci/cache/node_modules_cache
       EXPECTED_VSIX_COUNT: << pipeline.parameters.expected-vsix-count >>
     steps:
       - checkout
-      - restore-package-cache
+      - restore-npm-cache
       - run: .circleci/package.sh
-      - run: rm -r node_modules
       - persist_to_workspace: { root: ., paths: [ . ] }
-      - save-package-cache
+      - save-npm-cache
       - run: '[ "$(find . -type f -name "*.vsix" | tee /dev/tty | wc -l)" = "1" ] && echo "pass" || (echo "error - count does not match (expected=$EXPECTED_VSIX_COUNT)" && exit 1)'
   test:
     parameters:
@@ -103,18 +103,13 @@ jobs:
       ABLUNIT_TEST_RUNNER_NO_COVERAGE: << parameters.no-coverage >>
       EXPECTED_VSIX_COUNT: << pipeline.parameters.expected-vsix-count >>
     steps:
-      - attach_workspace: { at: . }
       - restore-test-cache: { oe-version: << parameters.oe-version >> }
-      - run: env
       - run: .circleci/run_test_wrapper.sh
-      - persist_to_workspace: { root: ".", paths: [ artifacts, coverage ]}
       - run: find . -type f -name "mocha_results_sonar_*.xml" || true
       - run: find . -type f -name "mocha_results_xunit_*.xml" || true
-      # - run: find . -type f -name "mocha_results_sonar_*.xml" -delete
-      # - run: find . -type f -name "mocha_results_xunit_*.xml" -delete
       - store_test_results: { path: artifacts }
       - store_artifacts: { when: always, path: artifacts }
-      # - save-test-cache: { oe-version: << parameters.oe-version >> }
+      - persist_to_workspace: { root: ".", paths: [ artifacts, coverage ]}
   install-and-run:
     parameters:
       oe-version:
@@ -130,7 +125,6 @@ jobs:
       ABLUNIT_TEST_RUNNER_OE_VERSION: << parameters.oe-version >>
       ABLUNIT_TEST_RUNNER_VSCODE_VERSION: << parameters.vscode-version >>
     steps:
-      - attach_workspace: { at: . }
       - restore-test-cache: { oe-version: << parameters.oe-version >> }
       - run: .circleci/install_and_run.sh
       - store_test_results: { path: dummy-ext/artifacts }
