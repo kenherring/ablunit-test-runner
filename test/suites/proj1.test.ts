@@ -435,7 +435,7 @@ suite('proj1Suite', () => {
 		log.info('proj1.1.16')
 
 		log.info('proj1.1.20')
-		await runAllTests().catch((e) => {
+		await runAllTests().catch((e: unknown) => {
 			log.info('Error caught and ignored: e=' + e)
 		})
 

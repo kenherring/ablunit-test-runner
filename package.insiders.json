@@ -60,11 +60,9 @@
 		"pdsoe",
 		"progress"
 	],
-	"enabledApiProposals": [
-		"testCoverage"
-	],
+	"enabledApiProposals": [],
 	"engines": {
-		"vscode": "^1.87.0"
+		"vscode": "^1.88.0"
 	},
 	"categories": [
 		"Testing"
@@ -104,14 +102,15 @@
 	},
 	"devDependencies": {
 		"@istanbuljs/nyc-config-typescript": "^1.0.2",
+		"@stylistic/eslint-plugin": "^1.7.0",
 		"@types/mocha": "^10.0.6",
-		"@types/node": "^16.18.93",
+		"@types/node": "18.X",
 		"@types/source-map-support": "^0.5.10",
-		"@types/vscode": "^1.87.0",
+		"@types/vscode": "^1.88.0",
 		"@types/xml2js": "^0.4.14",
-		"@typescript-eslint/eslint-plugin": "^6.21.0",
-		"@typescript-eslint/parser": "^6.21.0",
-		"@vscode/test-cli": "^0.0.8",
+		"@typescript-eslint/eslint-plugin": "^7.5.0",
+		"@typescript-eslint/parser": "^7.5.0",
+		"@vscode/test-cli": "^0.0.9",
 		"@vscode/test-electron": "^2.3.9",
 		"cross-env": "^7.0.3",
 		"eslint": "^8.57.0",
@@ -125,7 +124,7 @@
 		"ts-loader": "^9.5.1",
 		"ts-node": "^10.9.2",
 		"tsconfig-paths": "^4.2.0",
-		"typescript": "^5.4.3",
+		"typescript": "^5.4.4",
 		"webpack": "^5.91.0",
 		"webpack-cli": "^5.1.4"
 	},
@@ -220,7 +219,7 @@
 			}
 		]
 	},
-	"nyc": {
+	"nyc-bk": {
 		"extends": "@istanbuljs/nyc-config-typescript",
 		"extension": [
 			".js",
@@ -230,6 +229,7 @@
 		"require": [
 			"ts-node/register"
 		],
+		"cache": true,
 		"sourceMap": true
 	}
 }

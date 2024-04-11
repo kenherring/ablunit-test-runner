@@ -13,7 +13,7 @@ import * as path from 'path'
 import * as fs from 'fs'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
-const vsVersionNum = '1.87.2'
+const vsVersionNum = '1.88.0'
 const vsVersion = process.env['ABLUNIT_TEST_RUNNER_VSCODE_VERSION'] ?? 'stable'
 const oeVersion = process.env['ABLUNIT_TEST_RUNNER_OE_VERSION'] ?? '12.2.12'
 const enableExtensions = [

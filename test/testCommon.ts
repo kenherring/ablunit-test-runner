@@ -84,9 +84,7 @@ const getEnvVar = (envVar: string) => {
 // test objects
 export const log = logObj
 export class FilesExclude {
-	exclude: {
-		[key: string]: boolean
-	} = {}
+	exclude: Record<string, boolean> = {}
 }
 // vscode objects
 export {
@@ -413,7 +411,7 @@ export async function awaitRCode (workspaceFolder: WorkspaceFolder, rcodeCountMi
 			log.info('Language client is ready!')
 			break
 		}
-		await sleep2(1000)
+		await sleep2(500)
 	}
 
 	log.info('waiting up to ' + buildWaitTime + ' seconds for r-code')
@@ -424,7 +422,7 @@ export async function awaitRCode (workspaceFolder: WorkspaceFolder, rcodeCountMi
 			return rcodeCount
 		}
 		log.info('found ' + rcodeCount + ' r-code files. waiting... (' + i + '/' + buildWaitTime + ')')
-		await sleep2(1000)
+		await sleep2(500)
 	}
 
 	await commands.executeCommand('abl.dumpFileStatus').then(() => { log.info('abl.dumpFileStatus complete!') })
@@ -643,7 +641,7 @@ export async function waitForTestRunStatus (waitForStatus: RunStatus) {
 	setTimeout(() => { throw new Error('waitForTestRunStatus timeout') }, 20000)
 	while (currentStatus < waitForStatus)
 	{
-		await sleep2(1000, 'waitForTestRunStatus currentStatus=\'' + currentStatus.toString() + '\' + , waitForStatus=\'' + waitForStatus.toString() + '\'')
+		await sleep2(500, 'waitForTestRunStatus currentStatus=\'' + currentStatus.toString() + '\' + , waitForStatus=\'' + waitForStatus.toString() + '\'')
 		runData = await getCurrentRunData()
 		currentStatus = runData[0].status
 	}
@@ -770,15 +768,15 @@ export async function updateTestProfile (key: string, value: string | string[] |
 	const keys = key.split('.')
 
 	if (keys.length === 3) {
-		// @ts-expect-error 123
+		// @ts-expect-error ThisIsSafeForTesting
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 		profile['configurations'][0][keys[0]][keys[1]][keys[2]] = value
 	} else if (keys.length ===2) {
-		// @ts-expect-error 123
+		// @ts-expect-error ThisIsSafeForTesting
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 		profile['configurations'][0][keys[0]][keys[1]] = value
 	} else {
-		// @ts-expect-error 123
+		// @ts-expect-error ThisIsSafeForTesting
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 		profile['configurations'][0][keys[0]] = value
 	}
@@ -965,16 +963,16 @@ class AssertTestResults {
 	}
 
 	public count = (expectedCount: number) => {
-		this.assertResultsCountByStatus(expectedCount, 'all').catch((err) => { throw err })
+		this.assertResultsCountByStatus(expectedCount, 'all').catch((err: unknown) => { throw err })
 	}
 	public passed (expectedCount: number) {
-		this.assertResultsCountByStatus(expectedCount, 'passed').catch((err) => { throw err })
+		this.assertResultsCountByStatus(expectedCount, 'passed').catch((err: unknown) => { throw err })
 	}
 	public errored (expectedCount: number) {
-		this.assertResultsCountByStatus(expectedCount, 'errored').catch((err) => { throw err })
+		this.assertResultsCountByStatus(expectedCount, 'errored').catch((err: unknown) => { throw err })
 	}
 	public failed (expectedCount: number) {
-		this.assertResultsCountByStatus(expectedCount, 'failed').catch((err) => { throw err })
+		this.assertResultsCountByStatus(expectedCount, 'failed').catch((err: unknown) => { throw err })
 	}
 }
 
@@ -1078,10 +1076,10 @@ export async function beforeProj7 () {
 		await workspace.fs.createDirectory(toUri('src/procs/dir' + i))
 		await workspace.fs.createDirectory(toUri('src/classes/dir' + i))
 		for (let j = 0; j < 10; j++) {
-			await workspace.fs.copy(templateProc, toUri(`src/procs/dir${i}/testProc${j}.p`), { overwrite: true })
+			await workspace.fs.copy(templateProc, toUri('src/procs/dir' + i + '/testProc' + j + '.p'), { overwrite: true })
 
-			const writeContent = Uint8Array.from(Buffer.from(classContent.replace(/template_class/, `classes.dir${i}.testClass${j}`)))
-			await workspace.fs.writeFile(toUri(`src/classes/dir${i}/testClass${j}.cls`), writeContent)
+			const writeContent = Uint8Array.from(Buffer.from(classContent.replace(/template_class/, 'classes.dir' + i + '.testClass' + j)))
+			await workspace.fs.writeFile(toUri('src/classes/dir' + i + '/testClass' + j + '.cls'), writeContent)
 		}
 	}
 	return sleep(250)

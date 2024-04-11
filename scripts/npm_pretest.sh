@@ -57,9 +57,12 @@ get_pct () {
 	if $WSL && [ ! -f ~/.ant/lib/PCT.jar ]; then
 		mkdir -p ~/.ant/lib
 		local ARGS=()
-		ARGS+=(-L)
-		ARGS+=(-o ~/.ant/lib/PCT.jar)
-		$VERBOSE && ARGS+=(-v)
+		ARGS+=(-L -o ~/.ant/lib/PCT.jar)
+		if $VERBOSE; then
+			ARGS+=(-v)
+		else
+			ARGS+=(-s)
+		fi
 		curl "${ARGS[@]}" https://github.com/Riverside-Software/pct/releases/download/v228/PCT.jar
 	fi
 }

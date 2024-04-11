@@ -31,7 +31,7 @@ initialize () {
 package () {
     echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}]"
     package_version stable
-    package_version insiders
+    # package_version insiders
 }
 
 package_version () {
@@ -62,7 +62,6 @@ run_lint () {
 	fi
 
 	local ESLINT_FILE=artifacts/eslint_report
-    # npm install
 	mkdir -p artifacts
 
 	if ! npm run lint -- -f unix -o "${ESLINT_FILE}.txt"; then

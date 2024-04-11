@@ -6,6 +6,32 @@ set -euo pipefail
 
 . scripts/common.sh
 
+main_block () {
+	local PIDS=()
+	validate_circleci_config &
+	PIDS+=($!)
+	validate_compile_and_lint &
+	PIDS+=($!)
+	validate_version_updated &
+	PIDS+=($!)
+	validate_package_json &
+	PIDS+=($!)
+
+	local ERRCOUNT=0
+	for PID in "${PIDS[@]}"; do
+		if ! wait "$PID"; then
+			ERRCOUNT=$((ERRCOUNT + 1))
+		fi
+	done
+
+	if [ $ERRCOUNT -gt 0 ]; then
+		echo "pre-commit checks had $ERRCOUNT test failures!" >&2
+		exit 1
+	fi
+
+	echo "pre-commit checks successful!" >&2
+}
+
 validate_circleci_config () {
 	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}]"
 
@@ -23,22 +49,21 @@ validate_circleci_config () {
 
 validate_package_json () {
 	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}]"
-	PACK1=$(md5sum package.json)
-	PACK2=$(package.stable.json)
+	PACK1=$(md5sum < package.json)
+	PACK2=$(md5sum < package.stable.json)
+	echo "PACK1=$PACK1"
+	echo "PACK2=$PACK2"
 	if [ "$PACK1" != "$PACK2" ]; then
 		echo "package.json and package.stable.json are different and should be the same" >&2
 		exit 1
 	fi
 }
 
-validate_compile () {
+validate_compile_and_lint () {
 	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}]"
 	npm run build
+	npm run lint
 }
 
 ########## MAIN BLOCK ##########
-validate_circleci_config &
-validate_compile &
-validate_version_updated &
-wait
-echo "pre-commit checks successful!" >&2
+main_block
