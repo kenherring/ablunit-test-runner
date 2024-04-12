@@ -75,7 +75,7 @@ suite('proj1Suite', () => {
 		deleteTestFiles()
 	})
 
-	teardown('proj1 - teardown', teardownLocal)
+	teardown('proj1 - teardown', async () => { await teardownLocal() })
 
 	test('proj1.0A CompileError - test run fail - await', async () => {
 		log.info('proj1.0A-1')
