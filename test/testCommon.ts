@@ -16,8 +16,8 @@ import { log as logObj } from '../src/ChannelLogger'
 import { Decorator } from '../src/Decorator'
 import { IExtensionTestReferences } from '../src/extension'
 import { ITestSuites } from '../src/parse/ResultsParser'
-import { IConfigurations } from '../src/parse/TestProfileParser'
-import { DefaultRunProfile } from '../src/parse/config/RunProfile'
+import { IConfigurations, parseRunProfiles } from '../src/parse/TestProfileParser'
+import { DefaultRunProfile, IRunProfile as IRunProfileGlobal } from '../src/parse/config/RunProfile'
 import { RunStatus } from '../src/ABLUnitRun'
 import path from 'path'
 import { rebuildAblProject, waitForLangServerReady } from './openedgeAblCommands'
@@ -86,6 +86,11 @@ export const log = logObj
 export class FilesExclude {
 	exclude: Record<string, boolean> = {}
 }
+// riversidesoftware.openedge-abl-lsp extension objects
+export { rebuildAblProject }
+// kherring.ablunit-test-runner extension objects
+export type IRunProfile = IRunProfileGlobal
+export { RunStatus, parseRunProfiles }
 // vscode objects
 export {
 	CancellationError, Duration, Selection, Uri,
@@ -349,6 +354,7 @@ function getRcodeCount (workspaceFolder?: WorkspaceFolder) {
 	return -1
 }
 
+// TODO - duplicated in openedgeAblCommands.ts
 export async function setRuntimes (runtimes: IRuntime[] = [{name: '12.2', path: getDefaultDLC(), default: true}]): Promise<number> {
 	if (!enableExtensions()) {
 		throw new Error('extensions are disabled, failed to set runtimes!')
@@ -810,7 +816,6 @@ export async function refreshData (resultsLen = 0) {
 	testController = undefined
 	recentResults = undefined
 	currentRunData = undefined
-
 	return commands.executeCommand('_ablunit.getExtensionTestReferences').then((resp) => {
 		const refs = resp as IExtensionTestReferences
 		let passedTests = undefined
@@ -917,7 +922,7 @@ export async function getResults (len = 1, tag?: string) {
 	if ((!recentResults || recentResults.length === 0) && len > 0) {
 		log.info(tag + 'recentResults not set, refreshing...')
 		for (let i=0; i<15; i++) {
-			await sleep2(100, tag + 'still no recentResults, sleep before trying again').then(async () => {
+			await sleep2(500, tag + 'still no recentResults, sleep before trying again').then(async () => {
 				return refreshData().then(async () => {
 					return sleep2(100, null)
 				})

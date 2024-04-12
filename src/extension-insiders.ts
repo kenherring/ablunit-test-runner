@@ -1,5 +1,4 @@
 import { readFileSync } from 'fs'
-import { globSync } from 'glob'
 import {
 	CancellationError,
 	CancellationToken, ConfigurationChangeEvent, Disposable, ExtensionContext,

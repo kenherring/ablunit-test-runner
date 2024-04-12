@@ -51,8 +51,6 @@ validate_package_json () {
 	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}]"
 	PACK1=$(md5sum < package.json)
 	PACK2=$(md5sum < package.stable.json)
-	echo "PACK1=$PACK1"
-	echo "PACK2=$PACK2"
 	if [ "$PACK1" != "$PACK2" ]; then
 		echo "package.json and package.stable.json are different and should be the same" >&2
 		exit 1

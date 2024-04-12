@@ -3,7 +3,6 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable no-console */
 // @ts-nocheck
 
 import { defineConfig } from '@vscode/test-cli'
@@ -16,6 +15,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const vsVersionNum = '1.88.0'
 const vsVersion = process.env['ABLUNIT_TEST_RUNNER_VSCODE_VERSION'] ?? 'stable'
 const oeVersion = process.env['ABLUNIT_TEST_RUNNER_OE_VERSION'] ?? '12.2.12'
+let firstTest = true
 const enableExtensions = [
 	'AtStart',
 	'DebugLines',
@@ -28,16 +28,6 @@ const enableExtensions = [
 	'proj9',
 ]
 
-function getExtensionVersion () {
-	const contents = fs.readFileSync('package.json')
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-	const packageJSON = JSON.parse(contents)
-	if (packageJSON['version']) {
-		return toString(packageJSON['version'])
-	}
-	throw new Error('unable to get extension version')
-}
-
 function initialize () {
 	if (vsVersion !== 'insiders' && vsVersion !== 'stable') {
 		throw new Error('Invalid version: ' + vsVersion)
@@ -49,6 +39,10 @@ function writeConfigToFile (name, config) {
 }
 
 function getMochaTimeout (projName) {
+	if (firstTest) {
+		firstTest = false
+		return 180000
+	}
 	if (projName === 'proj3' && projName === 'proj4') {
 		return 30000
 	}
@@ -86,20 +80,16 @@ function getMochaOpts (projName) {
 		timeout: getMochaTimeout(projName),
 		ui: 'tdd',
 		parallel: false,
-		// recursive: true,
 		// exit: true,
 		// extension: [ 'js', 'ts', 'test.ts' ],
 		require: [
-			// './dist/extension.js',
-			// 'source-map-support',
-			// 'source-map-support/register',
-			// 'source-map-support/register-hook-require',
 			'ts-node/register/transpile-only',
 			'ts-node/register',
 		],
 	}
 
 	if (process.env['ABLUNIT_TEST_RUNNER_RUN_SCRIPT_FLAG']) {
+		// eslint-disable-next-line no-console
 		console.log('adding reporter...')
 		mochaOpts.reporter = 'mocha-multi-reporters'
 		mochaOpts.reporterOptions = {
@@ -207,7 +197,7 @@ function getLaunchArgs (projName) {
 	// args.push('--inspect-brk-extensions', '<port>')
 	// args.push('--logExtensionHostCommunication')
 
-	// --- disbale functionality not needed for testing - https://github.com/microsoft/vscode/issues/174744 --- //
+	// --- disable functionality not needed for testing - https://github.com/microsoft/vscode/issues/174744 --- //
 	args.push('--disable-chromium-sandbox')
 	args.push('--no-sandbox', '--sandbox=false')
 	args.push('--disable-crash-reporter')
@@ -250,7 +240,7 @@ function getTestConfig (projName) {
 
 	const env = {
 		ABLUNIT_TEST_RUNNER_ENABLE_EXTENSIONS: enableExtensions.includes('' + projName),
-		ABLUNIT_TEST_RUNNER_UNIT_TESTING: 'true',
+		ABLUNIT_TEST_RUNNER_UNIT_TESTING: true,
 		ABLUNIT_TEST_RUNNER_VSCODE_VERSION: vsVersion,
 		DONT_PROMPT_WSL_INSTALL: '1',
 		VSCODE_SKIP_PRELAUNCH: '1',

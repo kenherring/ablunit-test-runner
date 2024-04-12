@@ -8,7 +8,7 @@ initialize () {
 	ABLUNIT_TEST_RUNNER_OE_VERSION=${ABLUNIT_TEST_RUNNER_OE_VERSION:-}
 	ABLUNIT_TEST_RUNNER_PROJECT_NAME=${ABLUNIT_TEST_RUNNER_PROJECT_NAME:-}
 	ABLUNIT_TEST_RUNNER_SCRIPT_FLAG=${ABLUNIT_TEST_RUNNER_SCRIPT_FLAG:-true}
-	ABLUNIT_TEST_RUNNER_VSCODE_VERSION=${ABLUNIT_TEST_RUNNER_VSCODE_VERSION:-}
+	ABLUNIT_TEST_RUNNER_VSCODE_VERSION=${ABLUNIT_TEST_RUNNER_VSCODE_VERSION:-stable}
 	if [ -z "$ABLUNIT_TEST_RUNNER_OE_VERSION" ]; then
 		ABLUNIT_TEST_RUNNER_OE_VERSION=${OE_VERSION:-12.2.12}
 	fi
@@ -25,10 +25,6 @@ initialize () {
 		ABLUNIT_TEST_RUNNER_VSCODE_VERSION
 	export VERBOSE
 
-	if [ -z "$ABLUNIT_TEST_RUNNER_OE_VERSION" ]; then
-		ABLUNIT_TEST_RUNNER_OE_VERSION=$OE_VERSION
-	fi
-
 	echo "ABLUNIT_TEST_RUNNER_DBUS_NUM=$ABLUNIT_TEST_RUNNER_DBUS_NUM"
 	echo "ABLUNIT_TEST_RUNNER_OE_VERSION=$ABLUNIT_TEST_RUNNER_OE_VERSION"
 	echo "ABLUNIT_TEST_RUNNER_PROJECT_NAME=$ABLUNIT_TEST_RUNNER_PROJECT_NAME"
@@ -37,11 +33,8 @@ initialize () {
 
 	npm install
 
-	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] update_oe_version start"
 	update_oe_version
 	restore_vscode_test
-	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] update_oe_version end"
-	# exit 1
 }
 
 update_oe_version () {
@@ -59,6 +52,11 @@ restore_vscode_test () {
 	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] ABLUNIT_TEST_RUNNER_OE_VERSION=$ABLUNIT_TEST_RUNNER_OE_VERSION"
 	local FROM_DIR TO_DIR COUNT
 	FROM_DIR='/home/circleci/.vscode-test'
+	if [ ! -d "$FROM_DIR" ]; then
+		echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] $FROM_DIR not found, skipping restore"
+		return 0
+	fi
+
 	TO_DIR=./.vscode-test
 	if ! COUNT=$(find "$FROM_DIR" -type f 2>/dev/null | wc -l); then
 		COUNT=0
@@ -152,9 +150,9 @@ run_tests () {
 
 	cp "package.$ABLUNIT_TEST_RUNNER_VSCODE_VERSION.json" package.json
 	if ${ABLUNIT_TEST_RUNNER_NO_COVERAGE:-false}; then
-		time xvfb-run -a npm test
+		xvfb-run -a npm test
 	else
-		time xvfb-run -a npm run test:coverage
+		xvfb-run -a npm run test:coverage
 	fi | sed -e 's,/?home/circleci/project/,,g' || EXIT_CODE=$?
 	cp package.stable.json package.json
 

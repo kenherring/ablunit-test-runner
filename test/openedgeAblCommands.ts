@@ -2,7 +2,6 @@ import { globSync } from 'glob'
 import { WorkspaceFolder, commands, extensions, workspace } from 'vscode'
 import { Duration, activateExtension, enableExtensions, getDefaultDLC, installExtension, log, oeVersion, sleep, sleep2 } from './testCommon'
 
-
 interface IRuntime {
 	name: string,
 	path: string,
@@ -65,18 +64,17 @@ export async function restartLangServer () {
 	})
 }
 
-
 export async function rebuildAblProject () {
-	log.info('[setRuntimes] rebuilding abl project...')
+	log.info('rebuilding abl project...')
 
 	await waitForLangServerReady()
 	return commands.executeCommand('abl.project.rebuild').then((r) => {
-		log.info('[rebuildABlProject] r=' + JSON.stringify(r))
+		log.debug('abl.project.rebuild complete! (r=' + JSON.stringify(r) + ')')
 		const rcodeCount = getRcodeCount()
-		log.info('[setRuntimes] abl.project.rebuild command complete! (rcodeCount=' + rcodeCount + ')')
+		log.info('abl.project.rebuild command complete! (rcodeCount=' + rcodeCount + ')')
 		return rcodeCount
 	}, (err) => {
-		log.error('[setRuntimes] abl.project.rebuild failed! err=' + err)
+		log.error('abl.project.rebuild failed! err=' + err)
 		commands.executeCommand('abl.dumpFileStatus').then(() => {
 			log.info('abl.dumpFileStatus complete')
 		}, (e) => {
@@ -117,7 +115,7 @@ export async function waitForLangServerReady () {
 			return false
 		})
 		if (r) { break }
-		await sleep2(1000)
+		await sleep2(250)
 	}
 	log.info('r=' + r)
 	if (r) {

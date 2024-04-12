@@ -57,7 +57,9 @@ export async function activate (context: ExtensionContext) {
 		return ret
 	}
 
-	if (process.env['ABLUNIT_TEST_RUNNER_UNIT_TESTING'] === 'true') {
+	log.info('ABLUNIT_TEST_RUNNER_UNIT_TESTING=' + process.env['ABLUNIT_TEST_RUNNER_UNIT_TESTING']) // TODO remove me
+	log.debug('ABLUNIT_TEST_RUNNER_UNIT_TESTING=' + process.env['ABLUNIT_TEST_RUNNER_UNIT_TESTING'])
+	if ((process.env['ABLUNIT_TEST_RUNNER_UNIT_TESTING'] ?? 'false') != 'false') {
 		context.subscriptions.push(commands.registerCommand('_ablunit.getExtensionTestReferences', getExtensionTestReferences))
 	}
 
