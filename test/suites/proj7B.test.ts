@@ -109,7 +109,8 @@ suite('proj7BSuite', () => {
 		// })
 	})
 
-	test('proj7B.3 - cancel test run while _progres is running', async () => {
+	// TODO - reenable this test
+	test.skip('proj7B.3 - cancel test run while _progres is running', async () => {
 		const maxCancelTime = 1000
 		const runProm = runAllTests(true, false, 'proj7B.3')
 

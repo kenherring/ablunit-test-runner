@@ -4,7 +4,8 @@ log.info('LOADING ' + __filename)
 
 const ablunitConfig: {
 	files: {
-		exclude?: string[] | string | undefined
+		exclude?: string[] | string
+		include?: string[] | string
 	}
 } = { files: {} }
 
@@ -19,29 +20,40 @@ async function updateConfig (section: string, value: unknown) {
 }
 
 async function teardownLocal () {
-	teardownCommon()
-	log.info('200')
-	const conf = workspace.getConfiguration('ablunit.files')
-	log.info('201')
-	const currentValue = conf.get('exclude')
-	if (JSON.stringify(currentValue) !== JSON.stringify(ablunitConfig.files.exclude)) {
-		log.info('203')
-		const prom = conf.update('exclude', ablunitConfig.files.exclude ?? undefined)
-		log.info('204')
+	log.info('workspaceFolder=' + getWorkspaceFolders()[0].uri.fsPath)
+	return new Promise<void>((resolve, reject) => {
+		teardownCommon()
+		log.info('200')
+		const conf = workspace.getConfiguration('ablunit.files')
+		log.info('201 conf.ablunit=' + conf.inspect('abluint'))
+		const currentValue = conf.get('exclude')
+		log.info('202  currentValue=' + JSON.stringify(currentValue))
+		log.info('202 files.exclude=' + JSON.stringify(ablunitConfig.files.exclude))
+		if (JSON.stringify(currentValue) !== JSON.stringify(ablunitConfig.files.exclude)) {
+			log.info('203')
+			conf.update('exclude', ablunitConfig.files.exclude ?? []).then(() => {
+				log.info('205')
+				log.debug(isoDate() + ' [proj1 suiteTeardown 5] ablunit.files.exclude reset!')
+				resolve()
+				return
+			}, (e: unknown) => {
+				log.info('206')
+				log.error(isoDate() + ' [proj1 suiteTeardown] e=' + e)
+				if (e instanceof Error) {
+					log.error(isoDate() + ' [proj1 suiteTeardown] e.message=' + e.message)
+					reject(e)
+					return
+				}
+				log.error(isoDate() + ' [proj1 suiteTeardown] e=' + e)
+				reject(new Error('Error resetting ablunit.files.exclude! e=' + e))
+				return
 
-		await prom.then(() => {
-			log.info('205')
-			log.debug(isoDate() + ' [proj1 suiteTeardown 5] ablunit.files.exclude reset!')
-		}, (e) => {
-			log.info('206')
-			log.error(isoDate() + ' [proj1 suiteTeardown] e=' + e)
-			throw e
-		})
-		log.info('207')
-	}
-	log.info('208')
-	log.info(isoDate() + ' [proj1 suiteTeardown 7] complete!')
-	return Promise.resolve()
+			})
+			log.info('207 - promise is ')
+		}
+		log.info(isoDate() + ' [proj1 suiteTeardown 7] complete!')
+	})
+	return
 }
 
 suite('proj1Suite', () => {
@@ -75,7 +87,14 @@ suite('proj1Suite', () => {
 		deleteTestFiles()
 	})
 
-	teardown('proj1 - teardown', async () => { await teardownLocal() })
+	teardown('proj1 - teardown', async () => {
+		await teardownLocal()
+		return
+	})
+
+	suiteTeardown('proj1 - suiteTeardown', () => {
+		log.info('suiteTeardown')
+	})
 
 	test('proj1.0A CompileError - test run fail - await', async () => {
 		log.info('proj1.0A-1')

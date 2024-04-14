@@ -166,7 +166,7 @@ function getLaunchArgs (projName) {
 	// args.push('--verbose')
 	// args.push('--trace')
 	// args.push('--log', '<level>')
-	// args.push('--log', 'debug') // '<level>'
+	args.push('--log', 'debug') // '<level>'
 	// args.push('--log', 'trace') // '<level>'
 	// args.push('--log', 'kenherring.ablunit-test-runner:debug') // <extension-id>:<level>
 	// args.push('--log', 'kenherring.ablunit-test-runner:trace') // <extension-id>:<level>
