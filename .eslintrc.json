@@ -54,7 +54,9 @@
 		"@typescript-eslint/no-inferrable-types": "error",
 		"@typescript-eslint/no-empty-function": "error",
 		"@typescript-eslint/no-extra-parens": "warn",
+		"@typescript-eslint/no-floating-promises": "error",
 		"@typescript-eslint/no-non-null-assertion": 0,
+		"@typescript-eslint/no-misused-promises": "error",
 		"@typescript-eslint/no-unnecessary-condition": 0,
 		"@typescript-eslint/no-unused-vars": [ "warn", {
 			"vars": "all",
@@ -64,7 +66,7 @@
 		"@typescript-eslint/no-useless-constructor": "error",
 		"@typescript-eslint/prefer-readonly": "warn",
 		"@typescript-eslint/prefer-string-starts-ends-with": "warn",
-		"@typescript-eslint/promise-function-async": "warn",
+		"@typescript-eslint/promise-function-async": "error",
 		"@typescript-eslint/restrict-plus-operands": "off",
 		"@typescript-eslint/switch-exhaustiveness-check": "warn",
 

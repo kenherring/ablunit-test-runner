@@ -3,7 +3,7 @@ import * as fs from 'fs'
 import { globSync } from 'glob'
 import * as vscode from 'vscode'
 import {
-	CancellationError, ConfigurationTarget, TestController,
+	CancellationError, TestController,
 	TestItemCollection,
 	Uri,
 	Selection,
@@ -20,13 +20,13 @@ import { IConfigurations, parseRunProfiles } from '../src/parse/TestProfileParse
 import { DefaultRunProfile, IRunProfile as IRunProfileGlobal } from '../src/parse/config/RunProfile'
 import { RunStatus } from '../src/ABLUnitRun'
 import path from 'path'
-import { rebuildAblProject, waitForLangServerReady } from './openedgeAblCommands'
+import { rebuildAblProject, setRuntimes, waitForLangServerReady } from './openedgeAblCommands'
 
-interface IRuntime {
-	name: string,
-	path: string,
-	default?: boolean
-}
+// interface IRuntime {
+// 	name: string,
+// 	path: string,
+// 	default?: boolean
+// }
 
 // https://github.com/microsoft/vscode/blob/2aae82a102da66e566842ff9177bceeb99873970/src/vs/workbench/browser/actions/workspaceCommands.ts#L156C1-L163C2
 // interface IOpenFolderAPICommandOptions {
@@ -157,11 +157,11 @@ export async function suiteSetupCommon () {
 			throw e
 		})
 		log.debug('setRuntimes')
-		const r = await setRuntimes().then((r: number) => r, (e) => {
+		await setRuntimes().catch((e: unknown) => {
 			log.error('failed to set runtimes (e=' + e + ')')
 			throw e
 		})
-		log.debug('runtimes set (r=' + r + ')')
+		log.debug('runtimes set!')
 	}
 	log.info('suiteSetupCommon complete!')
 }
@@ -224,7 +224,7 @@ export async function installExtension (extname = 'riversidesoftware.openedge-ab
 	const installCommand = 'workbench.extensions.installExtension'
 
 	return commands.executeCommand(installCommand, extname).then(async r => {
-		log.info('post-' + installCommand + '(r=' + r + ')')
+		log.info('executeCommand.then (r=' + r + ')')
 		return sleep2(250).then(() => {
 			log.info('get extension \'' + extname + '\'...')
 			const ext = extensions.getExtension(extname)
@@ -351,52 +351,52 @@ function getRcodeCount (workspaceFolder?: WorkspaceFolder) {
 }
 
 // TODO - duplicated in openedgeAblCommands.ts
-export async function setRuntimes (runtimes: IRuntime[] = [{name: '12.2', path: getDefaultDLC(), default: true}]): Promise<number> {
-	if (!enableExtensions()) {
-		throw new Error('extensions are disabled, failed to set runtimes!')
-	}
-	log.info('setting abl.configuration.runtimes=' + JSON.stringify(runtimes))
-	const ext = extensions.getExtension('riversidesoftware.openedge-abl-lsp')
-	if (!ext) {
-		throw new Error('extension not installed: riversidesoftware.openedge-abl-lsp')
-	}
-	if (!ext.isActive) {
-		throw new Error('extension not active: riversidesoftware.openedge-abl-lsp')
-	}
+// export async function setRuntimes (runtimes: IRuntime[] = [{name: '12.2', path: getDefaultDLC(), default: true}]): Promise<number> {
+// 	if (!enableExtensions()) {
+// 		throw new Error('extensions are disabled, failed to set runtimes!')
+// 	}
+// 	log.info('setting abl.configuration.runtimes=' + JSON.stringify(runtimes))
+// 	const ext = extensions.getExtension('riversidesoftware.openedge-abl-lsp')
+// 	if (!ext) {
+// 		throw new Error('extension not installed: riversidesoftware.openedge-abl-lsp')
+// 	}
+// 	if (!ext.isActive) {
+// 		throw new Error('extension not active: riversidesoftware.openedge-abl-lsp')
+// 	}
 
-	const conf = workspace.getConfiguration('abl')
-	const current = conf.get('configuration.runtimes') as IRuntime[]
-	log.debug('current=' + JSON.stringify(current))
-	log.debug('  input=' + JSON.stringify(runtimes))
-	if (JSON.stringify(current) === JSON.stringify(runtimes)) {
-		log.warn('runtmes are already set')
-		log.info('ablunit.configuration.runtmes already set to ' + JSON.stringify(runtimes))
-		const rcodeCount = getRcodeCount()
-		log.info('rcodeCount=' + rcodeCount)
-		return rcodeCount
-	}
+// 	const conf = workspace.getConfiguration('abl')
+// 	const current = conf.get('configuration.runtimes') as IRuntime[]
+// 	log.debug('current=' + JSON.stringify(current))
+// 	log.debug('  input=' + JSON.stringify(runtimes))
+// 	if (JSON.stringify(current) === JSON.stringify(runtimes)) {
+// 		log.warn('runtmes are already set')
+// 		log.info('ablunit.configuration.runtmes already set to ' + JSON.stringify(runtimes))
+// 		const rcodeCount = getRcodeCount()
+// 		log.info('rcodeCount=' + rcodeCount)
+// 		return rcodeCount
+// 	}
 
-	log.info('    conf=' + JSON.stringify(conf))
-	log.info('runtimes=' + JSON.stringify(runtimes))
+// 	log.info('    conf=' + JSON.stringify(conf))
+// 	log.info('runtimes=' + JSON.stringify(runtimes))
 
-	const prom = conf.update('configuration.runtimes', runtimes, ConfigurationTarget.Global).then(async () => {
-	// const prom = conf.update('configuration.runtimes', runtimes, ConfigurationTarget.Global).then(() => {
-		return rebuildAblProject().then((r) => {
-			log.info('abl.configuration.runtimes set successfully (r=' + r + ')')
-			return r
-		}, (e) => { throw e })
-	}, (e) => {
-		log.error('unexpected error updating abl.configuration.runtimes! e=' + e)
-		throw e
-	})
+// 	const prom = conf.update('configuration.runtimes', runtimes, ConfigurationTarget.Global).then(async () => {
+// 	// const prom = conf.update('configuration.runtimes', runtimes, ConfigurationTarget.Global).then(() => {
+// 		return rebuildAblProject().then((r) => {
+// 			log.info('abl.configuration.runtimes set successfully (r=' + r + ')')
+// 			return r
+// 		}, (e) => { throw e })
+// 	}, (e) => {
+// 		log.error('unexpected error updating abl.configuration.runtimes! e=' + e)
+// 		throw e
+// 	})
 
-	if (! (prom instanceof Promise)) {
-		const num = await prom
-		return new Promise(resolve => { resolve(num) })
-	}
-	return prom as Promise<number>
+// 	if (! (prom instanceof Promise)) {
+// 		const num = await prom
+// 		return new Promise(resolve => { resolve(num) })
+// 	}
+// 	return prom as Promise<number>
 
-}
+// }
 
 export async function awaitRCode (workspaceFolder: WorkspaceFolder, rcodeCountMinimum = 1) {
 	const ext = extensions.getExtension('riversidesoftware.openedge-abl-lsp')

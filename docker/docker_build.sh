@@ -14,7 +14,7 @@ options:
 
 initialize () {
 	local OPT OPTARG OPTIND
-	while getopts "pnoh" OPT; do
+	while getopts "pno:h" OPT; do
 		case "$OPT" in
 			p)	DOCKER_PUSH=true ;;
 			n)  NO_CACHE=true ;;

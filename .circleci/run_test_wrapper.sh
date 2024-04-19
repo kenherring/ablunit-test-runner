@@ -138,7 +138,7 @@ dbus_config_3 () {
 
 	DBUS_SESSION_BUS_ADDRESS=unix:path=$XDG_RUNTIME_DIR/bus
 	export DBUS_SESSION_BUS_ADDRESS
-	dbus-daemon --session --address="$DBUS_SESSION_BUS_ADDRESS" --nofork --nopidfile --syslog-only &
+	dbus-daemon --session --address="$DBUS_SESSION_BUS_ADDRESS" --nofork --nopidfile --syslog-only
 }
 
 dbus_config_4 () {

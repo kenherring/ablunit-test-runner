@@ -11,11 +11,11 @@ FROM node:20.8
     && apt install -y libasound2 libgbm1 libgtk-3-0 libnss3 xvfb \
     # && apt install -y pkg-config dbus libxkbfile-dev libkrb5-dev rpm \
     && apt install -y xauth \
-    && apt install -y ant \
+    && apt install -y ant jq rsync \
     && rm -rf /var/lib/apt/lists/* /var/cache/apt/archives/* \
     && echo "done installing dependencies for vscode extension tests"
 
-    # && apt-get install -y --no-install-recommends ant gh jq rsync \
+    # && apt-get install -y --no-install-recommends gh \
     # && apt-get install -y --no-install-recommends vulkan-tools \
     # && apt-get install -y --no-install-recommends transport-https \
     # && rm -rf /var/lib/apt/lists/* /var/cache/apt/archives/*
