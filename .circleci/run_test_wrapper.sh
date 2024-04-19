@@ -4,6 +4,7 @@ set -euo pipefail
 initialize () {
 	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}]"
 	VERBOSE=${VERBOSE:-false}
+	TRACE=${TRACE:-false}
 	ABLUNIT_TEST_RUNNER_DBUS_NUM=${ABLUNIT_TEST_RUNNER_DBUS_NUM:-3}
 	ABLUNIT_TEST_RUNNER_OE_VERSION=${ABLUNIT_TEST_RUNNER_OE_VERSION:-}
 	ABLUNIT_TEST_RUNNER_PROJECT_NAME=${ABLUNIT_TEST_RUNNER_PROJECT_NAME:-}
@@ -11,6 +12,9 @@ initialize () {
 	ABLUNIT_TEST_RUNNER_VSCODE_VERSION=${ABLUNIT_TEST_RUNNER_VSCODE_VERSION:-stable}
 	if [ -z "$ABLUNIT_TEST_RUNNER_OE_VERSION" ]; then
 		ABLUNIT_TEST_RUNNER_OE_VERSION=${OE_VERSION:-12.2.12}
+	fi
+	if [ -z "$ABLUNIT_TEST_RUNNER_PROJECT_NAME" ]; then
+		ABLUNIT_TEST_RUNNER_PROJECT_NAME=${PROJECT_NAME:-}
 	fi
 
 	if [ ! -f /root/.rssw/oedoc.bin ]; then
@@ -23,7 +27,7 @@ initialize () {
 		ABLUNIT_TEST_RUNNER_PROJECT_NAME \
 		ABLUNIT_TEST_RUNNER_SCRIPT_FLAG \
 		ABLUNIT_TEST_RUNNER_VSCODE_VERSION
-	export VERBOSE
+	export VERBOSE TRACE
 
 	echo "ABLUNIT_TEST_RUNNER_DBUS_NUM=$ABLUNIT_TEST_RUNNER_DBUS_NUM"
 	echo "ABLUNIT_TEST_RUNNER_OE_VERSION=$ABLUNIT_TEST_RUNNER_OE_VERSION"
@@ -84,12 +88,14 @@ dbus_config () {
 	esac
 }
 
-dbug_config_0 () {
+dbus_config_0 () {
 	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}]"
 }
 
 dbus_config_1 () {
 	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}]"
+	## /sbin/start-stop-daemon: signal value must be numeric or name of signal (KILL, INT, ...)
+	## Try '/sbin/start-stop-daemon --help' for more information.
 	/sbin/start-stop-daemon --start --quiet --pidfile /tmp/custom_xvfb_99.pid --make-pidfile --background --exec /usr/bin/xvfb – :99 -ac -screen 0 1280x1024x16
 }
 
@@ -110,8 +116,11 @@ dbus_config_2 () {
 }
 
 dbus_config_3 () {
-	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}]"
+	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] DISPLAY=${DISPLAY:-}"
+	grep nameserver /etc/resolv.conf ## TODO REMOVE ME
 	DISPLAY=$(grep nameserver /etc/resolv.conf | awk '{print $2}'):0.0
+	echo "DISPLAY=$DISPLAY"
+	DISPLAY="${DISPLAY:=:99}"
 	export DISPLAY
 	service dbus restart
 	# sudo service dbus restart
@@ -148,25 +157,35 @@ run_tests () {
 	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}]"
 	EXIT_CODE=0
 
-	cp "package.$ABLUNIT_TEST_RUNNER_VSCODE_VERSION.json" package.json
+	# cp "package.${DISPLAY:-}=:99.json" package.json
+
+	# ARGS=(-a -nolisten tcp -nolisten unix)
+	ARGS=(-a)
 	if ${ABLUNIT_TEST_RUNNER_NO_COVERAGE:-false}; then
 		xvfb-run -a npm test
 	else
-		xvfb-run -a npm run test:coverage
+		xvfb-run "${ARGS[@]}" npm run test:coverage
 	fi | sed -e 's,/?home/circleci/project/,,g' || EXIT_CODE=$?
 	cp package.stable.json package.json
 
 	if [ "$EXIT_CODE" = "0" ]; then
 		echo "xvfb-run success"
 	else
-		echo "xvfb-run failed (EXIT_CODE=$EXIT_CODE)"
 		save_and_print_debug_output
 		exit $EXIT_CODE
 	fi
 }
 
 save_and_print_debug_output () {
-	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}]"
+	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] xvfb-run failed (EXIT_CODE=$EXIT_CODE)"s
+
+	$VERBOSE || return 0
+
+	echo "  - ABLUNIT_TEST_RUNNER_DBUS_NUM=$ABLUNIT_TEST_RUNNER_DBUS_NUM"
+	echo "  - ABLUNIT_TEST_RUNNER_OE_VERSION=$ABLUNIT_TEST_RUNNER_OE_VERSION"
+	echo "  - ABLUNIT_TEST_RUNNER_PROJECT_NAME=$ABLUNIT_TEST_RUNNER_PROJECT_NAME"
+	echo "  - ABLUNIT_TEST_RUNNER_SCRIPT_FLAG=$ABLUNIT_TEST_RUNNER_SCRIPT_FLAG"
+	echo "  - ABLUNIT_TEST_RUNNER_VSCODE_VERSION=$ABLUNIT_TEST_RUNNER_VSCODE_VERSION"
 
 	mkdir -p artifacts
 	find . > artifacts/filelist.txt
@@ -182,7 +201,6 @@ save_and_print_debug_output () {
 		cp -r "$FROM_DIR" "$TO_DIR"
 	fi
 
-	$VERBOSE || return 0
 	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] r-code"
 	find . -name '*.r'
 }

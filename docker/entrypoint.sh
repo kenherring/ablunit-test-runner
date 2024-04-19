@@ -5,6 +5,7 @@ initialize () {
 	local OPT OPTARG OPTIND
 	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] pwd=$(pwd)"
 	VERBOSE=${VERBOSE:-false}
+	TRACE=${TRACE:-false}
 	ABLUNIT_TEST_RUNNER_DBUS_NUM=${ABLUNIT_TEST_RUNNER_DBUS_NUM:-3}
 	ABLUNIT_TEST_RUNNER_OE_VERSION=${ABLUNIT_TEST_RUNNER_OE_VERSION:-12.2.12}
 	ABLUNIT_TEST_RUNNER_VSCODE_VERSION=${ABLUNIT_TEST_RUNNER_VSCODE_VERSION:-stable}
@@ -30,6 +31,7 @@ initialize () {
 	STAGED_ONLY=${STAGED_ONLY:-true}
 	${CREATE_PACKAGE:-false} && TEST_PROJECT=package
 
+	export VERBOSE TRACE
 	export ABLUNIT_TEST_RUNNER_DBUS_NUM \
 		ABLUNIT_TEST_RUNNER_OE_VERSION \
 		ABLUNIT_TEST_RUNNER_VSCODE_VERSION \
@@ -106,7 +108,7 @@ find_files_to_copy () {
 	git --no-pager diff --diff-filter=d --name-only --staged --ignore-cr-at-eol > /tmp/staged_files
 	git --no-pager diff --diff-filter=D --name-only --staged --ignore-cr-at-eol > /tmp/deleted_files
 	if ! $STAGED_ONLY; then
-		git --no-pager diff --diff-filter=d --name-only --ignore-cr-at-eol > /tmp/modified_files
+		git --no-pager diff --diff-filter=d --name-only --ignore-cr-at-eol > /tmp/modified_files 2>/dev/null
 	fi
 
 	echo "file counts:"

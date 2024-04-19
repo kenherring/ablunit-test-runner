@@ -20,6 +20,7 @@ options:
                 alternative: set the  ABLUNIT_TEST_RUNNER_PROJECT_NAME environment variable
   -g <pattern>  test grep pattern
   -v            verbose
+  -t            trace
   -h            show this help message and exit
 " >&2
 }
@@ -36,8 +37,11 @@ initialize () {
 	ABLUNIT_TEST_RUNNER_VSCODE_VERSION=${ABLUNIT_TEST_RUNNER_VSCODE_VERSION:-stable}
 	ABLUNIT_TEST_RUNNER_PROJECT_NAME=${ABLUNIT_TEST_RUNNER_PROJECT_NAME:-}
 	ABLUNIT_TEST_RUNNER_NO_COVERAGE=${ABLUNIT_TEST_RUNNER_NO_COVERAGE:-false}
+	if [ -z "$ABLUNIT_TEST_RUNNER_PROJECT_NAME" ]; then
+		ABLUNIT_TEST_RUNNER_PROJECT_NAME="${PROJECT_NAME:-}"
+	fi
 
-	while getopts "bBCdimnso:p:PvV:h" OPT; do
+	while getopts "bBCdimnso:p:PvtV:h" OPT; do
 		case $OPT in
 			o)	ABLUNIT_TEST_RUNNER_OE_VERSION=$OPTARG ;;
 			b)	OPTS='-b' ;;
@@ -51,6 +55,7 @@ initialize () {
 			P)	CREATE_PACKAGE=true ;;
 			p)	ABLUNIT_TEST_RUNNER_PROJECT_NAME=$OPTARG ;;
 			v)	VERBOSE=true ;;
+			t)  TRACE=true ;;
 			V)	ABLUNIT_TEST_RUNNER_VSCODE_VERSION=$OPTARG ;;
 			?)	usage && exit 1 ;;
 			*)	echo "Invalid option: -$OPT" >&2 && usage && exit 1 ;;
@@ -76,12 +81,13 @@ initialize () {
 		usage && exit 1
 	fi
 
-	export GIT_BRANCH PROGRESS_CFG_BASE64 STAGED_ONLY TEST_PROJECT CREATE_PACKAGE VERBOSE
+	export GIT_BRANCH PROGRESS_CFG_BASE64 STAGED_ONLY TEST_PROJECT CREATE_PACKAGE VERBOSE TRACE
 	export ABLUNIT_TEST_RUNNER_DBUS_NUM \
 		ABLUNIT_TEST_RUNNER_PROJECT_NAME \
 		ABLUNIT_TEST_RUNNER_OE_VERSION \
 		ABLUNIT_TEST_RUNNER_VSCODE_VERSION \
 		ABLUNIT_TEST_RUNNER_NO_COVERAGE
+	export VERBOSE
 
 	if $DELETE_CACHE_VOLUME; then
 		echo "deleting test-runner-cache volume"
@@ -134,7 +140,7 @@ run_tests_in_docker () {
 			-e PROGRESS_CFG_BASE64
 			-e GIT_BRANCH
 			-e STAGED_ONLY
-			-e ABLUNIT_TEST_RUNNER_DBUS_CONFIG
+			-e ABLUNIT_TEST_RUNNER_DBUS_NUM
 			-e ABLUNIT_TEST_RUNNER_OE_VERSION
 			-e TEST_PROJECT
 			-e CREATE_PACKAGE

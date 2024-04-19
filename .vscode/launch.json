@@ -10,15 +10,19 @@
 			"type": "extensionHost",
 			"request": "launch",
 			"runtimeExecutable": "${execPath}",
+			// "testConfiguration": "${workspaceFolder}/.vscode-test.mjs",
 			"args": [
+				"${workspaceFolder}/test_projects/${input:workspaceName}",
 				"--extensionDevelopmentPath=${workspaceFolder}",
-				"${input:disable-extensions}",
-				"${workspaceFolder}/test_projects/${input:workspaceName}"
+				"--user-data-dir=${workspaceFolder}/test/user/",
+				"--version=insiders",
+				"--disable-extensions",
+			// 	"${input:disable-extensions}",
 			],
 			"outFiles": [
-				"${workspaceFolder}/out/**/*.js"
+				"${workspaceFolder}/dist/*.js"
 			],
-			// "preLaunchTask": "npm: build"
+			"preLaunchTask": "npm: build",
 		},
 		{
 			"name": "Install Packaged Extension - Select Workspace - Proposed API Enabled",
@@ -26,11 +30,11 @@
 			"request": "launch",
 			"runtimeExecutable": "${execPath}",
 			"args": [
+				"${workspaceFolder}/test_projects/${input:workspaceName}",
 				"--extensionDevelopmentPath=${workspaceFolder}/dummy-ext",
 				"--install-extension=ablunit-test-runner-0.2.1.vsix",
 				"--enable-proposed-api=kherring.ablunit-test-runner",
-				"${workspaceFolder}/test_projects/${input:workspaceName}"
-			]
+			],
 		},
 		{
 			"name": "Run Extension - pug challenge",
@@ -44,30 +48,6 @@
 			"outFiles": [
 				"${workspaceFolder}/out/**/*.js"
 			]
-		},
-		{
-			"name": "Extension Tests",
-			"type": "extensionHost",
-			"request": "launch",
-			"testConfiguration": "${workspaceFolder}/.vscode-test.mjs",
-			"args": [
-				"--extensionDevelopmentPath=${workspaceFolder}"
-			],
-			"sourceMaps": true,
-			"resolveSourceMapLocations": [
-				"${workspaceFolder}/**",
-				"!**/node_modules/**"
-			]
-		},
-		{
-			"name": "Extension Tests - AtStart",
-			"type": "extensionHost",
-			"request": "launch",
-			"runtimeExecutable": "${execPath}",
-			"args": [
-				"--extensionDevelopmentPath=${workspaceFolder}",
-				"--extensionTestsPath=${workspaceFolder}/test/suites/AtStart.test.ts",
-			],
 		},
 	],
 	"inputs": [

@@ -34,12 +34,16 @@ export async function activate (context: ExtensionContext) {
 	let currentTestRun: TestRun | undefined = undefined
 
 	logActivationEvent()
+	log.info('ABLUNIT_TEST_RUNNER_UNIT_TESTING=' + process.env['ABLUNIT_TEST_RUNNER_UNIT_TESTING']) // TODO remove me
 	// log.info('context.workspaceState=' + JSON.stringify(context.workspaceState, null, 2))
 
 	const contextStorageUri = context.storageUri ?? Uri.file(process.env['TEMP'] ?? '') // will always be defined as context.storageUri
+	log.info('110')
 	const contextResourcesUri = Uri.joinPath(context.extensionUri, 'resources')
 	setContextPaths(contextStorageUri, contextResourcesUri)
+	log.info('111')
 	await createDir(contextStorageUri)
+	log.info('112')
 	// const decorationProvider = new DecorationProvider()
 
 	const getExtensionTestReferences = () => {
@@ -56,12 +60,18 @@ export async function activate (context: ExtensionContext) {
 		log.debug('_ablunit.getExtensionTestReferences currentRunData.length=' + ret.currentRunData?.length + ', recentResults.length=' + ret.recentResults?.length)
 		return ret
 	}
+	log.info('113')
 
 	log.info('ABLUNIT_TEST_RUNNER_UNIT_TESTING=' + process.env['ABLUNIT_TEST_RUNNER_UNIT_TESTING']) // TODO remove me
+	log.info('114')
 	log.debug('ABLUNIT_TEST_RUNNER_UNIT_TESTING=' + process.env['ABLUNIT_TEST_RUNNER_UNIT_TESTING'])
+	log.info('115')
 	if ((process.env['ABLUNIT_TEST_RUNNER_UNIT_TESTING'] ?? 'false') != 'false') {
+		log.info('116')
 		context.subscriptions.push(commands.registerCommand('_ablunit.getExtensionTestReferences', getExtensionTestReferences))
+		log.info('117')
 	}
+	log.info('118')
 
 	context.subscriptions.push(ctrl)
 

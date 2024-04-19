@@ -105,10 +105,6 @@ let currentRunData: ABLResults[] | undefined
 
 log.info('[testCommon.ts] enableExtensions=' + enableExtensions() + ', projName=' + projName())
 
-export async function newTruePromise () {
-	return new Promise(resolve => { resolve(true) })
-}
-
 export function isoDate () {
 	return ''
 	// TODO remove this function
@@ -374,11 +370,14 @@ export async function setRuntimes (runtimes: IRuntime[] = [{name: '12.2', path: 
 	log.debug('  input=' + JSON.stringify(runtimes))
 	if (JSON.stringify(current) === JSON.stringify(runtimes)) {
 		log.warn('runtmes are already set')
-		return getRcodeCount()
+		log.info('ablunit.configuration.runtmes already set to ' + JSON.stringify(runtimes))
+		const rcodeCount = getRcodeCount()
+		log.info('rcodeCount=' + rcodeCount)
+		return rcodeCount
 	}
 
-	log.debug('    conf=' + JSON.stringify(conf))
-	log.debug('runtimes=' + JSON.stringify(runtimes))
+	log.info('    conf=' + JSON.stringify(conf))
+	log.info('runtimes=' + JSON.stringify(runtimes))
 
 	const prom = conf.update('configuration.runtimes', runtimes, ConfigurationTarget.Global).then(async () => {
 	// const prom = conf.update('configuration.runtimes', runtimes, ConfigurationTarget.Global).then(() => {
@@ -698,17 +697,21 @@ export async function updateConfig (key: string, value?: unknown) {
 	const section2 = sectionArr.join('.')
 	log.info(isoDate() + ' updateConfig-1.4 section1=' + section1 + ', section2=' + section2)
 
-	const workspaceConfig = workspace.getConfiguration(section1, getWorkspaceUri())
+	log.info('getWorkspaceUri() = ' + getWorkspaceUri())
+	log.info('getWorkspaceFolder() = ' + workspace.getWorkspaceFolder(getWorkspaceUri()))
+	const workspaceConfig = workspace.getConfiguration(section1, workspace.getWorkspaceFolder(getWorkspaceUri()))
 	log.info(isoDate() + ' updateConfig-2.0 workspaceConfig = ' + JSON.stringify(workspaceConfig))
 
 	log.info('get currentValue')
 	const currentValue = workspaceConfig.get(section2)
-	log.info(isoDate() + ' updateConfig-2.1 ' + section1 + '.' + section2 + '=' + value + ', currentValue=' + currentValue)
+	log.info(isoDate() + ' updateConfig-2.1 ' + section1 + '.' + section2)
+	log.info(isoDate() + ' updateConfig-2.2  currentValue=' + currentValue)
+	log.info(isoDate() + ' updateConfig-2.2      newValue=' + value)
 	if (JSON.stringify(value) === JSON.stringify(currentValue)) {
 		// log.debug(section1 + '.' + section2 + ' is already set to \'' + value + '\'')
 		log.info(section1 + '.' + section2 + ' is already set to \'' + value + '\'')
 		log.info(key + ' is already set to \'' + value + '\'')
-		return newTruePromise()
+		return new Promise(resolve => { resolve })
 	}
 
 	log.info(isoDate() + ' updateConfig-4.1 workspaceConfig=' + JSON.stringify(workspaceConfig))
@@ -723,18 +726,34 @@ export async function updateConfig (key: string, value?: unknown) {
 		if (JSON.stringify(value) === JSON.stringify(currentValue)) {
 			log.info(section1 + '.' + section2 + ' is already set to default value \'' + value + '\'')
 			log.info(key + ' is already set to default value \'' + value + '\' /')
-			return newTruePromise()
+			return new Promise(resolve => { resolve })
 		}
 	}
 	log.info(isoDate() + ' updateConfig-5.1.3 currentValue=' + JSON.stringify(currentValue))
 	log.info(isoDate() + ' updateConfig-5.1.4        value=' + JSON.stringify(value))
-	await workspaceConfig.update(section2, value, false).then(() => {
+	log.info(isoDate() + ' ' + section1 + ' . ' + section2)
+	if (JSON.stringify(currentValue) === JSON.stringify(value)) {
+		log.info('configuration value for ' + key +  ' is already set to \'' + value + '\'')
+		// log.debug('configuration value for ' + key +  ' is already set to \'' + value + '\'')
+		return new Promise(resolve => { resolve })
+	}
+	log.info('workspaceConfig.update')
+	const prom = workspace.getConfiguration('ablunit', workspace.getWorkspaceFolder(getWorkspaceUri())).update(section2, value, false).then(() => {
 		log.info(isoDate() + ' then!')
-		return
-	}, (e) => {
+	}, (e: unknown) => {
 		log.error(isoDate() + ' error! err=' + e)
+		if (e instanceof Error) {
+			throw e
+
+		}
+		throw new Error('update workspace config failed with err=' + e)
 	})
-	log.info(isoDate() + ' success!')
+	setTimeout(() => { throw new Error('update workspace config timed out after 5s') }, 5000)
+	log.info(isoDate() + ' prom created!')
+	return prom
+	// await prom
+	// log.info(isoDate() + ' prom resolved!')
+	// return
 
 	// {
 	// 	// log.info(isoDate() + ' prom=' + JSON.stringify(prom))
@@ -896,6 +915,7 @@ export async function getCurrentRunData (len = 1, resLen = 0, tag?: string) {
 					log.error('refresh failed: ' + err)
 				})
 			})
+			await prom
 			log.info(tag + 'currentRunData.length=' + currentRunData?.length)
 			if ((currentRunData?.length ?? 0) > 0) {
 				break

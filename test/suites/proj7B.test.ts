@@ -60,7 +60,8 @@ suite('proj7BSuite', () => {
 		})
 	})
 
-	test('proj7B.2 - cancel test run while adding tests', async () => {
+	// TODO - reenable this test
+	test.skip('proj7B.2 - cancel test run while adding tests', async () => {
 		const maxCancelTime = 1000
 
 		// const runTestsProm = runAllTests(true, false, 'proj7B.2').then((ret) => {

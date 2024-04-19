@@ -53,7 +53,10 @@ get_performance_test_code () {
 }
 
 get_pct () {
-	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] pwd=$(pwd)"
+	[ ! -f /usr/share/ant/lib/PCT.jar ] || return 0
+	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}]"
+
+	ls -al ~/.ant/lib/
 	if $WSL && [ ! -f ~/.ant/lib/PCT.jar ]; then
 		mkdir -p ~/.ant/lib
 		local ARGS=()

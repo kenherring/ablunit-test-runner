@@ -7,16 +7,18 @@ usage: $0 [-p] [-h]
 options:
   -p        push docker images to dockerhub after build
   -n        no cache
+  -o        oe version [12.2.12, 12.7.0, 12.8.1]
   -h        show this help message and exit
 " >&2
 }
 
 initialize () {
 	local OPT OPTARG OPTIND
-	while getopts "pnh" OPT; do
+	while getopts "pnoh" OPT; do
 		case "$OPT" in
 			p)	DOCKER_PUSH=true ;;
 			n)  NO_CACHE=true ;;
+			o)  DOCKER_TAGS="$OPTARG" ;;
 			h) 	usage && exit 0 ;;
 			*)	echo "Invalid option: -$OPT" >&2 && usage && exit 1 ;;
 		esac

@@ -4,6 +4,7 @@ set -eou pipefail
 
 project_test_run () {
     echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] pwd=$(pwd)"
+    PROJECT_NAME=proj1 npm test
     ABLUNIT_TEST_RUNNER_PROJECT_NAME=proj1 npm test
     ABLUNIT_TEST_RUNNER_PROJECT_NAME=proj1 npm run test
     ABLUNIT_TEST_RUNNER_PROJECT_NAME=proj1 docker/run_tests.sh

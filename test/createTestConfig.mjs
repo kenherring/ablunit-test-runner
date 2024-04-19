@@ -74,7 +74,8 @@ function getMochaOpts (projName) {
 	const sonarFile = path.resolve(reporterDir, 'mocha_results_sonar_' + projName + '.xml')
 
 	const mochaOpts = {
-		bail: false,
+		// bail: false,
+		bail: true,
 		// fullTrace: true
 		retries: 0,
 		timeout: getMochaTimeout(projName),
@@ -166,8 +167,15 @@ function getLaunchArgs (projName) {
 	// args.push('--verbose')
 	// args.push('--trace')
 	// args.push('--log', '<level>')
-	args.push('--log', 'debug') // '<level>'
-	// args.push('--log', 'trace') // '<level>'
+	if (process.env['VERBOSE'] === 'true') {
+		// console.log('DEBUG=true')
+		args.push('--log', 'debug') // '<level>'
+	}
+	if (process.env['TRACE'] === 'true') {
+		// console.log('TRACE=true')
+		// args.push('--log', 'trace') // '<level>'
+		args.push('--trace')
+	}
 	// args.push('--log', 'kenherring.ablunit-test-runner:debug') // <extension-id>:<level>
 	// args.push('--log', 'kenherring.ablunit-test-runner:trace') // <extension-id>:<level>
 	// args.push('--status')
@@ -193,22 +201,25 @@ function getLaunchArgs (projName) {
 	args.push('--disable-extension', 'vscode.ipynb')
 	args.push('--disable-extension', 'vscode.tunnel-forwarding')
 	args.push('--sync', 'off') // '<on | off>'
+	args.push('--do-not-sync')
+
 	// args.push('--inspect-extensions', '<port>')
 	// args.push('--inspect-brk-extensions', '<port>')
 	// args.push('--logExtensionHostCommunication')
 
 	// --- disable functionality not needed for testing - https://github.com/microsoft/vscode/issues/174744 --- //
-	args.push('--disable-chromium-sandbox')
-	args.push('--no-sandbox', '--sandbox=false')
+	// args.push('--disable-chromium-sandbox') // enable when running as elevated user
+	args.push('--no-sandbox')
+	// args.push('--sandbox=false')
 	args.push('--disable-crash-reporter')
-	args.push('--disable-gpu-sandbox')
 	args.push('--disable-gpu')
+	// args.push('--disable-gpu-compositing')
+	// args.push('--disable-gpu-sandbox')
 	args.push('--disable-telemetry')
 	args.push('--disable-updates')
 	args.push('--disable-workspace-trust')
 	// Warning: 'xshm' is not in the list of known options, but still passed to Electron/Chromium.
 	args.push('--disable-dev-shm-usage', '--no-xshm')
-
 
 	// --- possible coverage (nyc) related args --- //
 	// args.push('--enable-source-maps')
@@ -270,7 +281,7 @@ function getTestConfig (projName) {
 
 function getTests () {
 	const tests = []
-	const envProjectName = process.env['ABLUNIT_TEST_RUNNER_PROJECT_NAME'] ?? undefined
+	const envProjectName = process.env['ABLUNIT_TEST_RUNNER_PROJECT_NAME'] ?? process.env['PROJECT_NAME'] ?? undefined
 
 	// --- run only the specified projects --- //
 	if (envProjectName && envProjectName != '') {

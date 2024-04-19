@@ -1,15 +1,27 @@
 ARG OE_VERSION
 FROM progresssoftware/prgs-oedb:${OE_VERSION}_ent AS psc
+# FROM node:18.19-buster
 FROM node:20.8
 
 ## dependencies for running vscode extension tests
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends libasound2 libgbm1 libgtk-3-0 libnss3 vulkan-tools \
-    && apt-get install -y --no-install-recommends xauth xvfb xauth rsync ant jq dbus \
-    && apt-get install -y --no-install-recommends gh \
-    && rm -rf /var/lib/apt/lists/* /var/cache/apt/archives/*
+    RUN --mount=type=cache,target=/var/cache/apt \
+    set -x \
+    && apt update \
+    ## https://code.visualstudio.com/api/working-with-extensions/continuous-integration#gitlab-ci
+    && apt install -y libasound2 libgbm1 libgtk-3-0 libnss3 xvfb \
+    # && apt install -y pkg-config dbus libxkbfile-dev libkrb5-dev rpm \
+    && apt install -y xauth \
+    && apt install -y ant \
+    && rm -rf /var/lib/apt/lists/* /var/cache/apt/archives/* \
+    && echo "done installing dependencies for vscode extension tests"
 
-## dependencies for running ablunit tests
+    # && apt-get install -y --no-install-recommends ant gh jq rsync \
+    # && apt-get install -y --no-install-recommends vulkan-tools \
+    # && apt-get install -y --no-install-recommends transport-https \
+    # && rm -rf /var/lib/apt/lists/* /var/cache/apt/archives/*
+    # && apt-get install -y --no-install-recommends dbus \
+    ## dependencies for running ablunit tests
+
 COPY --from=psc --chown=circleci:circleci --chmod=744 /psc /psc
 ADD .rssw/oedoc.bin /root/.rssw/oedoc.bin
 
