@@ -710,10 +710,10 @@ export async function updateConfig (key: string, value: string | string[] | unde
 	}
 
 	log.info('section1=' + section1 + ', section2=' + section2)
-	const confNull = workspace.getConfiguration(section1, null)
-	log.info('confNull=' + JSON.stringify(confNull, null, 4))
-	const confUndefined = workspace.getConfiguration(section1, null)
-	log.info('confUndefined=' + JSON.stringify(confUndefined, null, 4))
+	// const confNull = workspace.getConfiguration(section1, null)
+	// log.info('confNull=' + JSON.stringify(confNull, null, 4))
+	// const confUndefined = workspace.getConfiguration(section1, null)
+	// log.info('confUndefined=' + JSON.stringify(confUndefined, null, 4))
 	const conf = workspace.getConfiguration(section1, getWorkspaceFolders()[0])
 	log.info('conf=' + JSON.stringify(conf, null, 4))
 
@@ -728,17 +728,32 @@ export async function updateConfig (key: string, value: string | string[] | unde
 	}
 
 	log.info('await conf.update')
-	await conf.update(section2, value, false).then(() => {
-		const confUpdated = workspace.getConfiguration(section1)
-		log.info('new ' + key + '=' + JSON.stringify(confUpdated.get(section2)))
-		return
-		// log.info('old ' + key + '=' + JSON.stringify(conf.get(section2)))
+
+	const conf2 = workspace.getConfiguration(section1, getWorkspaceFolders()[0])
+	log.info('conf2=' + JSON.stringify(conf2, null, 4))
+	const prom = conf2.update(section2, value, null)
+	// .then(() => {
+	// 	const confUpdated = workspace.getConfiguration(section1)
+	// 	log.info('confUpdated')
+	// 	log.info('new ' + key + '=' + JSON.stringify(confUpdated.get(section2)))
+	// 	// log.info('old ' + key + '=' + JSON.stringify(conf.get(section2)))
+	// 	return
+	// }, (e: unknown) => {
+	// 	if (e instanceof Error) { throw e }
+	// 	throw new Error('update config ' + key + ' failed! e=' + e)
+	// })
+	log.info('await prom')
+	await prom.then(() => {
+		log.info('prom complete')
 	}, (e: unknown) => {
-		if (e instanceof Error) { throw e }
-		throw new Error('update config ' + key + ' failed! e=' + e)
+		throw e
 	})
-	log.info('conf.update complete')
+	log.info('await complete')
+	const conf3 = workspace.getConfiguration(section1, getWorkspaceFolders()[0])
+	log.info('conf3=' + JSON.stringify(conf3, null, 4))
 	return Promise.resolve()
+	// log.info('conf.update complete')
+	// return Promise.resolve()
 	// log.info ('waiting on prom')
 	// return prom.then(() => {
 	// 	log.info('update "' + key + '" complete! ' + duration.toString())

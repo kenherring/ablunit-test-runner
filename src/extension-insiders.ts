@@ -349,7 +349,7 @@ export async function activate (context: ExtensionContext) {
 			log.info('skipping updateNodeForDocument for file not in workspace: ' + u.fsPath)
 			return Promise.resolve()
 		}
-		return await updateNode(u, ctrl)
+		return updateNode(u, ctrl)
 	}
 
 	async function resolveHandlerFunc (item: TestItem | undefined) {
@@ -367,7 +367,7 @@ export async function activate (context: ExtensionContext) {
 		}
 
 		if (item.uri) {
-			return await updateNodeForDocument(item, 'resolve')
+			return updateNodeForDocument(item, 'resolve')
 		}
 
 		const data = testData.get(item)

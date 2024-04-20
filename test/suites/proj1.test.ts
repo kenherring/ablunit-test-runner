@@ -30,8 +30,11 @@ async function teardownLocal () {
 	const currentValue = conf.get('exclude')
 	log.info('202  currentValue=' + JSON.stringify(currentValue))
 	log.info('202 files.exclude=' + JSON.stringify(workspaceInitialConfig.files.exclude))
-	await updateConfig('ablunit.files.exclude', workspaceInitialConfig.files.exclude)
+	updateConfig('ablunit.files.exclude', workspaceInitialConfig.files.exclude)
+		.catch((e: unknown) => { throw e })
 	log.info('203 success!')
+	return Promise.resolve()
+	// log.info('203 success!')
 	// await new Promise<void>((resolve, reject) => {
 
 	// 	log.info('203.1')
@@ -103,7 +106,6 @@ suite('proj1Suite', () => {
 		log.info('setup.updateConfig')
 		return updateConfig('ablunit.files.exclude', undefined).then(() => {
 			log.info('setup.updateConfig.then()')
-			return
 		})
 	})
 

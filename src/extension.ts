@@ -77,7 +77,11 @@ export async function activate (context: ExtensionContext) {
 
 	context.subscriptions.push(
 		commands.registerCommand('_ablunit.openCallStackItem', openCallStackItem),
-		workspace.onDidChangeConfiguration(e => { updateConfiguration(e) }),
+		workspace.onDidChangeConfiguration(e => {
+			log.info('390')
+			updateConfiguration(e)
+			log.info('391')
+		}),
 
 		workspace.onDidOpenTextDocument(e => {
 			return new Disposable(async () => {
@@ -85,7 +89,7 @@ export async function activate (context: ExtensionContext) {
 					log.trace('updateNodeForDocument complete for ' + e.uri)
 					decorator.decorate(undefined, e)
 					return
-				}, (e: unknown) => {
+				}, (e: unknown) => {gi
 					log.error('failed updateNodeForDocument onDidTextDocument! err=' + e)
 				})
 			})
@@ -338,7 +342,7 @@ export async function activate (context: ExtensionContext) {
 			log.info('skipping updateNodeForDocument for file not in workspace: ' + u.fsPath)
 			return Promise.resolve()
 		}
-		return await updateNode(u, ctrl)
+		return updateNode(u, ctrl)
 	}
 
 	async function resolveHandlerFunc (item: TestItem | undefined) {
@@ -356,7 +360,7 @@ export async function activate (context: ExtensionContext) {
 		}
 
 		if (item.uri) {
-			return await updateNodeForDocument(item, 'resolve')
+			return updateNodeForDocument(item, 'resolve')
 		}
 
 		const data = testData.get(item)
@@ -379,14 +383,20 @@ export async function activate (context: ExtensionContext) {
 	}
 
 	function updateConfiguration (event: ConfigurationChangeEvent) {
+		log.info('400')
 		if (!event.affectsConfiguration('ablunit')) {
+			log.info('401')
 			log.warn('configuration updated but does not include ablunit settings')
 			return
 		}
+		log.info('402')
 		log.debug('affects ablunit.file? ' + event.affectsConfiguration('ablunit.files'))
 		if (event.affectsConfiguration('ablunit.files')) {
+			log.info('403')
 			removeExcludedFiles(ctrl, getExcludePatterns())
+			log.info('404')
 		}
+		log.info('405')
 	}
 
 	const configHandler = () => {

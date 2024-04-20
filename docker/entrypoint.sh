@@ -273,6 +273,15 @@ finish () {
 	echo "[$0] completed successfully!"
 }
 
+exit_err () {
+	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0] ERROR: $BASH_COMMAND failed"
+	log_timing_print
+	$BASH_AFTER_ERROR && bash
+	exit 1
+}
+
+trap exit_err ERR
+
 ########## MAIN BLOCK ##########
 initialize "$@"
 run_tests

@@ -121,10 +121,7 @@ dbus_config_2 () {
 
 dbus_config_3 () {
 	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] DISPLAY=${DISPLAY:-}"
-	grep nameserver /etc/resolv.conf ## TODO REMOVE ME
 	DISPLAY=$(grep nameserver /etc/resolv.conf | awk '{print $2}'):0.0
-	echo "DISPLAY=$DISPLAY"
-	DISPLAY="${DISPLAY:=:99}"
 	export DISPLAY
 	service dbus restart
 	# sudo service dbus restart
@@ -142,7 +139,7 @@ dbus_config_3 () {
 
 	DBUS_SESSION_BUS_ADDRESS=unix:path=$XDG_RUNTIME_DIR/bus
 	export DBUS_SESSION_BUS_ADDRESS
-	dbus-daemon --session --address="$DBUS_SESSION_BUS_ADDRESS" --nofork --nopidfile --syslog-only
+	dbus-daemon --session --address="$DBUS_SESSION_BUS_ADDRESS" --nofork --nopidfile --syslog-only &
 }
 
 dbus_config_4 () {
@@ -186,6 +183,7 @@ save_and_print_debug_output () {
 
 	$VERBOSE || return 0
 
+	echo "---------- ENVIRONMENT VARS ----------"
 	echo "  - ABLUNIT_TEST_RUNNER_DBUS_NUM=$ABLUNIT_TEST_RUNNER_DBUS_NUM"
 	echo "  - ABLUNIT_TEST_RUNNER_OE_VERSION=$ABLUNIT_TEST_RUNNER_OE_VERSION"
 	echo "  - ABLUNIT_TEST_RUNNER_PROJECT_NAME=$ABLUNIT_TEST_RUNNER_PROJECT_NAME"
@@ -195,6 +193,7 @@ save_and_print_debug_output () {
 	mkdir -p artifacts
 	find . > artifacts/filelist.txt
 
+	echo "---------- LOG FILES ----------"
 	find .vscode-test -name '*ABL*.log'
 	find .vscode-test -name '*ABL*.log' -exec cp {} artifacts \;
 	find .vscode-test -name 'settings.json'

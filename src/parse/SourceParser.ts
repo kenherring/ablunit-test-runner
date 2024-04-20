@@ -29,7 +29,7 @@ export interface ISourceMapItem {
 }
 
 async function readXrefFile (xrefUri: Uri) {
-	return await workspace.fs.readFile(xrefUri).then((content) => {
+	return workspace.fs.readFile(xrefUri).then((content) => {
 		const str = Buffer.from(content.buffer).toString()
 		return str
 	}, (err) => {
