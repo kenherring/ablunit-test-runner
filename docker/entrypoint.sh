@@ -1,9 +1,22 @@
 #!/bin/bash
 set -euo pipefail
 
+
+log_timing () {
+	echo "[$(date +%Y-%m-%dT%H:%M:%S%z) $0] $1" >> /tmp/timing.log
+}
+
+log_timing_print () {
+	echo "---------- TIMING INFO ----------"
+	cat /tmp/timing.log
+	echo "---------- ----------- ----------"
+}
+
 initialize () {
-	local OPT OPTARG OPTIND
 	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] pwd=$(pwd)"
+	log_timing "start"
+
+	local OPT OPTARG OPTIND
 	VERBOSE=${VERBOSE:-false}
 	TRACE=${TRACE:-false}
 	ABLUNIT_TEST_RUNNER_DBUS_NUM=${ABLUNIT_TEST_RUNNER_DBUS_NUM:-3}
@@ -62,6 +75,7 @@ initialize () {
 	tr ' ' '\n' <<< "$PROGRESS_CFG_BASE64" | base64 --decode > /psc/dlc/progress.cfg
 
 	echo 'copying files from local'
+	log_timing "init repo/restore cache"
 	initialize_repo
 	restore_cache
 
@@ -148,6 +162,7 @@ run_tests () {
 
 run_tests_base () {
 	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] pwd=$(pwd)"
+	log_timing "run_tests_base"
 
 	set -eo pipefail ## matches the behavior of CircleCI
 	if ! .circleci/run_test_wrapper.sh; then
@@ -253,6 +268,7 @@ restore_cache () {
 finish () {
 	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] pwd=$(pwd)"
 	save_cache
+	log_timing_print
 	$BASH_AFTER && bash
 	echo "[$0] completed successfully!"
 }

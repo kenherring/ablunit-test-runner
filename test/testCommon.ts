@@ -688,99 +688,170 @@ export function setConfig (key: string, value?: unknown) {
 	return conf.update(section2, value)
 }
 
-export async function updateConfig (key: string, value?: unknown) {
-	log.info(isoDate() + ' updateConfig-1.0 key=' + key + ', value=' + value)
-	const sectionArr = key.split('.')
-	log.info(isoDate() + ' updateConfig-1.1 sectionArr.length=' + sectionArr.length)
-	const section1 = sectionArr.shift()
-	log.info(isoDate() + ' updateConfig.1.2 section1=' + section1)
-	const section2 = sectionArr.join('.')
-	log.info(isoDate() + ' updateConfig-1.4 section1=' + section1 + ', section2=' + section2)
 
-	log.info('getWorkspaceUri() = ' + getWorkspaceUri())
-	log.info('getWorkspaceFolder() = ' + workspace.getWorkspaceFolder(getWorkspaceUri()))
-	const workspaceConfig = workspace.getConfiguration(section1, workspace.getWorkspaceFolder(getWorkspaceUri()))
-	log.info(isoDate() + ' updateConfig-2.0 workspaceConfig = ' + JSON.stringify(workspaceConfig))
+export async function updateConfig (key: string, value: string | string[] | undefined | null): Promise<void> {
+	const keys = key.split('.')
+	const section1 = keys.shift()
+	const section2 = keys.join('.')
 
-	log.info('get currentValue')
-	const currentValue = workspaceConfig.get(section2)
-	log.info(isoDate() + ' updateConfig-2.1 ' + section1 + '.' + section2)
-	log.info(isoDate() + ' updateConfig-2.2  currentValue=' + currentValue)
-	log.info(isoDate() + ' updateConfig-2.2      newValue=' + value)
-	if (JSON.stringify(value) === JSON.stringify(currentValue)) {
-		// log.debug(section1 + '.' + section2 + ' is already set to \'' + value + '\'')
-		log.info(section1 + '.' + section2 + ' is already set to \'' + value + '\'')
-		log.info(key + ' is already set to \'' + value + '\'')
-		return new Promise(resolve => { resolve })
+	if (value === undefined) {
+		// value = null
+		value = []
 	}
 
-	log.info(isoDate() + ' updateConfig-4.1 workspaceConfig=' + JSON.stringify(workspaceConfig))
-	log.info(isoDate() + ' updateConfig-4.3 currentValue=' + JSON.stringify(currentValue))
-	log.info(isoDate() + ' updateConfig-4.4        value=' + JSON.stringify(value))
+	const duration = new Duration('updateConfig')
+	log.info('setting ' + key + '=' + JSON.stringify(value))
+	const ext = extensions.getExtension('kherring.ablunit-test-runner')
+	if (!ext) {
+		throw new Error('extension not installed: khering.ablunit-test-runner')
+	}
+	if (!ext.isActive) {
+		throw new Error('extension not active: kherring.ablunit-test-runner')
+	}
 
-	if (!value) {
-		log.info(isoDate() + ' updateConfig-5.1.1 unset key=' + key + ', ' + section2)
-		const t = workspaceConfig.inspect(section2)
-		log.info(isoDate() + ' updateConfig-5.1.2 t=' + JSON.stringify(t))
-		value = t?.defaultValue
-		if (JSON.stringify(value) === JSON.stringify(currentValue)) {
-			log.info(section1 + '.' + section2 + ' is already set to default value \'' + value + '\'')
-			log.info(key + ' is already set to default value \'' + value + '\' /')
-			return new Promise(resolve => { resolve })
-		}
+	log.info('section1=' + section1 + ', section2=' + section2)
+	const confNull = workspace.getConfiguration(section1, null)
+	log.info('confNull=' + JSON.stringify(confNull, null, 4))
+	const confUndefined = workspace.getConfiguration(section1, null)
+	log.info('confUndefined=' + JSON.stringify(confUndefined, null, 4))
+	const conf = workspace.getConfiguration(section1, getWorkspaceFolders()[0])
+	log.info('conf=' + JSON.stringify(conf, null, 4))
+
+	const current = conf.get(section2)
+	log.info('current ' + key + '=' + JSON.stringify(current))
+	log.info('setting ' + key + '=' + JSON.stringify(value))
+	// log.info('current=' + JSON.stringify(current))
+	// log.info('  input=' + JSON.stringify(runtimes))
+	if (JSON.stringify(current) === JSON.stringify(value)) {
+		log.info(key + ' is already set to ' + JSON.stringify(value))
+		return Promise.resolve()
 	}
-	log.info(isoDate() + ' updateConfig-5.1.3 currentValue=' + JSON.stringify(currentValue))
-	log.info(isoDate() + ' updateConfig-5.1.4        value=' + JSON.stringify(value))
-	log.info(isoDate() + ' ' + section1 + ' . ' + section2)
-	if (JSON.stringify(currentValue) === JSON.stringify(value)) {
-		log.info('configuration value for ' + key +  ' is already set to \'' + value + '\'')
-		// log.debug('configuration value for ' + key +  ' is already set to \'' + value + '\'')
-		return new Promise(resolve => { resolve })
-	}
-	log.info('workspaceConfig.update')
-	const prom = workspace.getConfiguration('ablunit', workspace.getWorkspaceFolder(getWorkspaceUri())).update(section2, value, false).then(() => {
-		log.info(isoDate() + ' then!')
+
+	log.info('await conf.update')
+	await conf.update(section2, value, false).then(() => {
+		const confUpdated = workspace.getConfiguration(section1)
+		log.info('new ' + key + '=' + JSON.stringify(confUpdated.get(section2)))
+		return
+		// log.info('old ' + key + '=' + JSON.stringify(conf.get(section2)))
 	}, (e: unknown) => {
-		log.error(isoDate() + ' error! err=' + e)
-		if (e instanceof Error) {
-			throw e
-
-		}
-		throw new Error('update workspace config failed with err=' + e)
+		if (e instanceof Error) { throw e }
+		throw new Error('update config ' + key + ' failed! e=' + e)
 	})
-	setTimeout(() => { throw new Error('update workspace config timed out after 5s') }, 5000)
-	log.info(isoDate() + ' prom created!')
-	return prom
-	// await prom
-	// log.info(isoDate() + ' prom resolved!')
-	// return
-
-	// {
-	// 	// log.info(isoDate() + ' prom=' + JSON.stringify(prom))
-	// 	// // const prom = workspaceConfig.update(section2, value)
-
-	// 	// log.info(isoDate() + ' updateConfig-5.1.5 await')
-	// 	// const r = await prom.then((ret) => {
-	// 	// 	log.info(isoDate() + ' prom returned (ret=' + ret + ')')
-	// 	// 	return true
-	// 	// }, (err) => {
-	// 	// 	log.error('unset failed! key=' + key + ', err=' + err)
-	// 	// 	throw err
-	// 	// })
-	// 	// log.info(isoDate() + ' updateConfig-5.1.4 r=' + r)
-	// 	return
-	// }
-
-	// log.info(isoDate() + ' updateConfig-6        value=' + JSON.stringify(value))
-	// const r = await workspaceConfig.update(section2, value).then(() => {
-	// 	log.info(isoDate() + ' updateConfig-7')
-	// 	return true
-	// }, (err) => {
-	// 	log.error('config update \'' + section1 + '.' + section2 + '\' failed with err=' + err)
-	// 	throw err
+	log.info('conf.update complete')
+	return Promise.resolve()
+	// log.info ('waiting on prom')
+	// return prom.then(() => {
+	// 	log.info('update "' + key + '" complete! ' + duration.toString())
 	// })
-	// log.info(isoDate() + ' updateConfig-8 r=' + r)
+	// log.info('updateConfig complete!')
+	// return Promise.resolve()
 }
+
+export async function updateConfigProm (key: string, value: string | string[] | undefined | null): Promise<void> {
+	const keys = key.split('.')
+	const section1 = keys.shift()
+	const section2 = keys.join('.')
+
+	if (value === undefined) {
+		// value = null
+		value = []
+	}
+
+	return new Promise((resolve, reject) => {
+		const duration = new Duration('updateConfig')
+		log.info('setting ' + key + '=' + JSON.stringify(value))
+		const ext = extensions.getExtension('kherring.ablunit-test-runner')
+		if (!ext) {
+			throw new Error('[setRuntimes] extension not installed: khering.ablunit-test-runner')
+		}
+		if (!ext.isActive) {
+			throw new Error('[setRuntimes] extension not active: kherring.ablunit-test-runner')
+		}
+
+		log.info('section1=' + section1 + ', section2=' + section2)
+		const confNull = workspace.getConfiguration(section1, null)
+		log.info('confNull=' + JSON.stringify(confNull, null, 4))
+		const confUndefined = workspace.getConfiguration(section1, null)
+		log.info('confUndefined=' + JSON.stringify(confUndefined, null, 4))
+		const conf = workspace.getConfiguration(section1, getWorkspaceFolders()[0])
+		log.info('conf=' + JSON.stringify(conf, null, 4))
+
+		const current = conf.get(section2)
+		log.info('current ' + key + '=' + JSON.stringify(current))
+		log.info('setting ' + key + '=' + JSON.stringify(value))
+		// log.info('current=' + JSON.stringify(current))
+		// log.info('  input=' + JSON.stringify(runtimes))
+		if (JSON.stringify(current) === JSON.stringify(value)) {
+			log.info(key + ' is already set to ' + JSON.stringify(value))
+			resolve()
+			return
+		}
+
+		conf.update(section2, value, false).then(() => {
+			const confUpdated = workspace.getConfiguration(section1)
+			log.info('old ' + key + '=' + JSON.stringify(conf.get(section2)))
+			log.info('new ' + key + '=' + JSON.stringify(confUpdated.get(section2)))
+		}, (e: unknown) => {
+			if (e instanceof Error) {
+				reject(e)
+				return
+			}
+			reject(new Error('update config ' + key + ' failed! e=' + e))
+			return
+		})
+	})
+}
+
+// function getConfigDefaultValue (key: string) {
+// 	const basekey = key.split('.').shift()
+// 	log.info('key=' + key)
+// 	const workspaceConfig = workspace.getConfiguration(basekey, getWorkspaceUri())
+// 	const t = workspaceConfig.inspect(key)
+// 	if (t?.defaultValue) {
+// 		return t?.defaultValue
+// 	}
+// 	return undefined
+// }
+
+// export async function updateConfig (key: string, value: unknown) {
+// 	return new Promise<void>((resolve, reject) => {
+// 		log.info('updateConfigProm start')
+// 		updateConfigProm(key, value).then(() => {
+// 			log.info('updateConfigProm resolved!')
+// 			resolve()
+// 		}, (e: Error) => {
+// 			reject(e)
+// 		})
+// 		log.info('updateConfigProm created')
+// 	})
+// }
+
+// export async function updateConfigProm (key: string, value: unknown) {
+// 	const sectionArr = key.split('.')
+// 	const section1 = sectionArr.shift()
+// 	const section2 = sectionArr.join('.')
+
+// 	const workspaceConfig = workspace.getConfiguration(section1, getWorkspaceUri())
+
+// 	const currentValue = workspaceConfig.get(section2)
+// 	if (JSON.stringify(value) === JSON.stringify(currentValue)) {
+// 		// log.debug(section1 + '.' + section2 + ' is already set to \'' + value + '\'')
+// 		log.warn(key + ' is already set to \'' + value + '\'')
+// 		return
+// 	}
+
+// 	if (!value) {
+// 		const defaultValue = getConfigDefaultValue(key)
+// 		if (JSON.stringify(defaultValue) === JSON.stringify(currentValue)) {
+// 			log.warn(key + ' is already set to default value \'' + value + '\'')
+// 			return
+// 		}
+// 	}
+// 	return workspaceConfig.update(section2, value, null).then(() => {
+// 		log.info(isoDate() + ' success!')
+
+// 	})
+// }
 
 export async function updateTestProfile (key: string, value: string | string[] | boolean) {
 	const testProfileUri = Uri.joinPath(getWorkspaceUri(), '.vscode', 'ablunit-test-profile.json')

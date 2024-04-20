@@ -97,9 +97,14 @@ suite('proj1Suite', () => {
 		return true
 	})
 
-	setup('proj1 - setup', () => {
+	setup('proj1 - setup', async () => {
 		setupCommon()
 		deleteTestFiles()
+		log.info('setup.updateConfig')
+		return updateConfig('ablunit.files.exclude', undefined).then(() => {
+			log.info('setup.updateConfig.then()')
+			return
+		})
 	})
 
 	teardown('proj1 - teardown', async () => {
