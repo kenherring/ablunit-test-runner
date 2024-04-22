@@ -52,12 +52,12 @@
 			"custom": { "regex": "^I[A-Z]", "match": true }
 		}],
 		"@typescript-eslint/no-confusing-non-null-assertion": "error",
-		"@typescript-eslint/no-inferrable-types": "error",
 		"@typescript-eslint/no-empty-function": "error",
 		"@typescript-eslint/no-extra-parens": "warn",
 		"@typescript-eslint/no-floating-promises": "error",
-		"@typescript-eslint/no-non-null-assertion": 0,
+		"@typescript-eslint/no-inferrable-types": "error",
 		"@typescript-eslint/no-misused-promises": "error",
+		"@typescript-eslint/no-non-null-assertion": 0,
 		"@typescript-eslint/no-unnecessary-condition": 0,
 		"@typescript-eslint/no-unused-vars": [ "warn", {
 			"vars": "all",
@@ -70,19 +70,12 @@
 		"@typescript-eslint/promise-function-async": "error",
 		"@typescript-eslint/require-await": "error",
 		"@typescript-eslint/restrict-plus-operands": "off",
-		"@typescript-eslint/switch-exhaustiveness-check": "warn",
-
-		// NEW!
-		"no-return-await": "error",
 		"@typescript-eslint/return-await": "error",
-
-
-		// DNE
-		// "@eslint-plugin-unicorn/no-useless-promise-resolve-reject": "error",
-
+		"@typescript-eslint/switch-exhaustiveness-check": "warn",
 		"no-console": "warn",
 		"no-empty": "warn",
 		"no-mixed-spaces-and-tabs": ["error", "smart-tabs"],
+		"no-return-await": "error",
 		"no-trailing-spaces": [ "error", { "skipBlankLines": false }],
 		"prefer-promise-reject-errors": "warn",
 		"quotes": ["warn", "single"],

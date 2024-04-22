@@ -158,8 +158,8 @@ run_tests () {
 	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}]"
 	log_timing "run_tests start"
 	EXIT_CODE=0
-
 	cp "package.$ABLUNIT_TEST_RUNNER_VSCODE_VERSION.json" package.json
+
 	ARGS=(-a)
 	if ${ABLUNIT_TEST_RUNNER_NO_COVERAGE:-false}; then
 		xvfb-run -a npm test
@@ -167,8 +167,8 @@ run_tests () {
 		xvfb-run "${ARGS[@]}" npm run test:coverage
 	fi | sed -e 's,/?home/circleci/project/,,g' || EXIT_CODE=$?
 	cp package.stable.json package.json
-	log_timing "run_tests end"
 
+	log_timing "run_tests error"
 	if [ "$EXIT_CODE" = "0" ]; then
 		echo "xvfb-run success"
 	else

@@ -89,7 +89,7 @@ export async function activate (context: ExtensionContext) {
 					log.trace('updateNodeForDocument complete for ' + e.uri)
 					decorator.decorate(undefined, e)
 					return
-				}, (e: unknown) => {gi
+				}, (e: unknown) => {
 					log.error('failed updateNodeForDocument onDidTextDocument! err=' + e)
 				})
 			})

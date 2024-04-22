@@ -1,181 +1,25 @@
-import { setTimeout } from 'timers'
-import { assert, deleteTestFiles, getTestCount, getWorkspaceUri, log, runAllTests, suiteSetupCommon, workspace, Uri, commands, window, Selection, isoDate, getWorkspaceFolders, teardownCommon, setupCommon, updateConfig } from '../testCommon'
-// import { assert, deleteTestFiles, getTestCount, getWorkspaceUri, log, runAllTests, suiteSetupCommon, setFilesExcludePattern, workspace, Uri, commands, window, Selection, newTruePromise, isoDate, extensions, getWorkspaceFolders, sleep2, teardownCommon } from '../testCommon'
-// import { readFileSync } from 'fs'
-log.info('LOADING ' + __filename)
+import { Selection, Uri, commands, window } from 'vscode'
+import { assert, deleteTestFiles, getTestCount, getWorkspaceUri, log, runAllTests, sleep, updateConfig, waitForExtensionActive } from '../testCommon'
 
-const workspaceInitialConfig: {
-	files: {
-		exclude?: string[] | string
-		include?: string[] | string
-	}
-} = { files: {} }
 
-// async function updateConfig (section: string, value: unknown) {
-// 	log.info('updateConfig-1 update config starting... section=' + section + ' value=' + value)
-// 	const sections = section.split('.')
-// 	const firstSection = sections.shift()
-// 	const otherSections = sections.join('.')
-// 	log.info('firstSection=' + firstSection + ', otherSections=' + otherSections)
-// 	await workspace.getConfiguration(firstSection).update(otherSections, [ '.builder/**', '.pct/**', 'compileError.p' ])
-// 	log.info('[proj1 updateConfig] update config complete!')
-// }
+const workspaceUri = getWorkspaceUri()
 
-async function teardownLocal () {
-	log.info('workspaceFolder=' + getWorkspaceFolders()[0].uri.fsPath)
-	teardownCommon()
-	log.info('200')
-	const conf = workspace.getConfiguration('ablunit.files')
-	log.info('201 conf.ablunit=' + conf.inspect('abluint'))
-	const currentValue = conf.get('exclude')
-	log.info('202  currentValue=' + JSON.stringify(currentValue))
-	log.info('202 files.exclude=' + JSON.stringify(workspaceInitialConfig.files.exclude))
-	updateConfig('ablunit.files.exclude', workspaceInitialConfig.files.exclude)
-		.catch((e: unknown) => { throw e })
-	log.info('203 success!')
-	return Promise.resolve()
-	// log.info('203 success!')
-	// await new Promise<void>((resolve, reject) => {
+suite('proj1 - Extension Test Suite', () => {
 
-	// 	log.info('203.1')
-	// 	log.info('203.2 ablunit=' + JSON.stringify(workspace.getConfiguration('ablunit')))
-	// 	log.info('203.3 ablunit=' + JSON.stringify(workspace.getConfiguration('ablunit.files')))
-	// 	log.info('203.4 ablunit=' + JSON.stringify(workspace.getConfiguration('ablunit.files.exclude')))
-	// 	log.info('203.5')
-
-	// 	if (JSON.stringify(currentValue) === JSON.stringify(workspaceInitialConfig.files.exclude)) {
-	// 		log.info('204')
-	// 		log.debug(isoDate() + ' [proj1 suiteTeardown 4] ablunit.files.exclude already set to initial value')
-	// 		resolve()
-	// 		return
-	// 	}
-
-	// 	let configUpdated = false
-	// 	workspace.getConfiguration('ablunit').update('files.exclude', workspaceInitialConfig.files.exclude).then(() => {
-	// 		log.info('205')
-	// 		log.debug(isoDate() + ' [proj1 suiteTeardown 5] ablunit.files.exclude reset!')
-	// 		resolve()
-	// 		configUpdated = true
-	// 		return
-	// 	}, (e: unknown) => {
-	// 		log.info('206')
-	// 		log.error(isoDate() + ' [proj1 suiteTeardown] e=' + e)
-	// 		if (e instanceof Error) {
-	// 			log.error(isoDate() + ' [proj1 suiteTeardown] e.message=' + e.message)
-	// 			reject(e)
-	// 			return
-	// 		}
-	// 		log.error(isoDate() + ' [proj1 suiteTeardown] e=' + e)
-	// 		reject(new Error('Error resetting ablunit.files.exclude! e=' + e))
-	// 		return
-	// 	})
-	// 	log.info('210 ablunit=' + JSON.stringify(workspace.getConfiguration('ablunit.files.exclude')))
-	// 	setTimeout(() => {
-	// 		log.info('220 configUpdated=' + configUpdated)
-	// 		if(configUpdated) {
-	// 			log.info('222 succes!')
-	// 			resolve()
-	// 		} else {
-	// 			log.info('221 rejected!')
-	// 			throw new Error('failed to update config in less than 2000ms')
-	// 		}
-	// 	}, 2000)
-	// })
-	// log.info(isoDate() + ' [proj1 suiteTeardown 7] complete!')
-}
-
-suite('proj1Suite', () => {
-
-	suiteSetup('proj1 - suiteSetup', suiteSetupCommon)
-
-	suiteSetup('proj1 - suiteSetup 2', () => {
-		log.info(isoDate() + ' [proj1 suiteSetup 2.1]')
-		const defaultValue = workspace.getConfiguration('ablunit', getWorkspaceFolders()[0]).inspect('files.exclude')?.defaultValue
-
-		workspaceInitialConfig.files.exclude = workspace.getConfiguration('ablunit', getWorkspaceFolders()[0]).get('files.exclude')
-		workspaceInitialConfig.files.include = workspace.getConfiguration('ablunit', getWorkspaceFolders()[0]).get('files.include')
-		log.info(isoDate() + ' [proj1 suiteSetup2.4] ablunit.files.exclude defaultValue=' + defaultValue)
-		log.info(isoDate() + ' [proj1 suiteSetup 2.6]               initialFilesExclude=' + JSON.stringify(workspaceInitialConfig.files.exclude))
-
-		return true
+	suiteSetup('proj1 - suiteSetup', async () => {
+		await waitForExtensionActive()
 	})
 
-	setup('proj1 - setup', async () => {
-		setupCommon()
+	setup(async () => {
 		deleteTestFiles()
-		log.info('setup.updateConfig')
+	})
+
+	suiteTeardown(async () => {
+		log.info('suiteTeardown.updateConfig')
 		return updateConfig('ablunit.files.exclude', undefined).then(() => {
-			log.info('setup.updateConfig.then()')
-		})
-	})
-
-	teardown('proj1 - teardown', async () => {
-		log.info('300')
-		await teardownLocal()
-		log.info('301')
-		return Promise.resolve()
-	})
-
-	suiteTeardown('proj1 - suiteTeardown', () => {
-		log.info('suiteTeardown')
-	})
-
-	test('proj1.0A CompileError - test run fail - await', async () => {
-		log.info('proj1.0A-1')
-		await assert.throwsAsync(async () => {
-			await runAllTests(true, true, 'proj1.0A')
+			log.info('suiteTeardown.updateConfig.then()')
 			return
-		}, 'failed to throw excetption')
-		log.info('proj1.0A-2')
-	})
-
-	// @ignore
-	// test('proj1.0B CompileError - test run fail - assert.catch', (done: Mocha.Done) => {
-	// 	log.info('proj1.0B-1')
-	// 	assert.throws(async () => {
-	// 		log.info('proj1.0B-2')
-	// 		await runAllTests(true, true, 'proj1.0B').then(
-	// 			() => { log.info('proj1.0B-3')},
-	// 			(e) => { log.info('proj1.0B-4'); throw e })
-	// 		log.info('proj1.0B-3')
-	// 		done()
-	// 	})
-	// 	log.info('proj1.0B-4')
-	// })
-
-	// success!
-	// test('proj1.0C setFilesExcludePattern - test run fail - catch', async () => {
-	// 	log.info('proj1.0C-1')
-	// 	return runAllTests(true, true, 'proj1.0C')
-	// 		.then(() => { throw new Error('failed to throw exception') })
-	// 		.catch(() => { return true })
-	// })
-
-	// success!
-	// test('proj1.0D setFilesExcludePattern - test run fail - catch', async () => {
-	// 	log.info('proj1.0D-1')
-	// 	return runAllTests(true, true, 'proj1.0D')
-	// 		.then(() => { throw new Error('failed to throw exception') },
-	// 			(e) => { log.info('proj1.0D caught error! e=' + e); return })
-	// })
-
-	test('proj1.1A setFilesExcludePattern - test run fail - try await', async () => {
-		log.info('proj1.1A-1')
-		// await updateConfig('files.exclude', [ '.builder/**', '.pct/**', 'compileError.p' ])
-		await workspace.getConfiguration('ablunit').update('files.exclude', [ '.builder/**', '.pct/**', 'compileError.p' ])
-		log.info('proj1.1A-2')
-		await runAllTests(true, false, 'proj1.1A')
-		log.info('proj1.1A-3')
-	})
-
-	test('proj1.1B setFilesExcludePattern - test run fail - try await', async () => {
-		log.info('proj1.1B-1')
-		const configProm = workspace.getConfiguration('ablunit').update('files.exclude', [ '.builder/**', '.pct/**', 'compileError.p' ]).then(() => { log.info('proj1.1B-2') })
-		log.info('proj1.1B-3')
-		await configProm
-		log.info('proj1.1B-2')
-		await runAllTests(true, true, 'proj1.1B')
-		log.info('proj1.1B-3')
+		})
 	})
 
 	test('proj1.1C setFilesExcludePattern - test run fail - try await', async () => {
