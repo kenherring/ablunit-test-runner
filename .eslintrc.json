@@ -70,9 +70,10 @@
 		"@typescript-eslint/switch-exhaustiveness-check": "warn",
 
 		// Does not change code
-		// "@typescript-eslint/await-thenable": "warn",
-		// "@typescript-eslint/no-floating-promises": "warn",
-		// "@typescript-eslint/no-misused-promises": "warn",
+		"@typescript-eslint/await-thenable": "error",
+		"@typescript-eslint/no-floating-promises": "error",
+		"@typescript-eslint/no-misused-promises": "error",
+		"@typescript-eslint/require-await": "error",
 
 		// DNE
 		// "@eslint-plugin-unicorn/no-useless-promise-resolve-reject": "error",

@@ -5,15 +5,25 @@ const workspaceUri = getWorkspaceUri()
 
 suite('proj1 - Extension Test Suite', () => {
 
-	suiteSetup('proj1 - before', async () => suiteSetupCommon())
-
-	setup('proj1 - beforeEach', async () => {
-		await updateConfig('ablunit.files.exclude', undefined)
-		deleteTestFiles()
+	suiteSetup('proj1 - suiteSetup', async () => {
+		await suiteSetupCommon()
 	})
 
-	teardown('proj1 - afterEach', async () => {
-		await updateConfig('ablunit.files.exclude', undefined)
+	setup(async () => {
+		deleteTestFiles()
+		log.info('setup.updateConfig')
+		return updateConfig('ablunit.files.exclude', undefined).then(() => {
+			log.info('setup.updateConfig.then()')
+			return
+		})
+	})
+
+	suiteTeardown(async () => {
+		log.info('suiteTeardown.updateConfig')
+		return updateConfig('ablunit.files.exclude', undefined).then(() => {
+			log.info('suiteTeardown.updateConfig.then()')
+			return
+		})
 	})
 
 	test('proj1.1 - output files exist - 1', async () => {

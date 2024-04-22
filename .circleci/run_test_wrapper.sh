@@ -1,6 +1,10 @@
 #!/bin/bash
 set -euo pipefail
 
+log_timing () {
+	echo "[$(date +%Y-%m-%dT%H:%M:%S%z) $0] $1" >> /tmp/timing.log
+}
+
 initialize () {
 	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}]"
 	VERBOSE=${VERBOSE:-false}
@@ -146,17 +150,25 @@ dbus_config_5 () {
 }
 
 run_tests () {
-	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}]"
+	echo "[$0 ${FUNCNAME[0]}]"
+	log_timing "run_tests start"
 	EXIT_CODE=0
-
 	cp "package.$ABLUNIT_TEST_RUNNER_VSCODE_VERSION.json" package.json
-	if ${ABLUNIT_TEST_RUNNER_NO_COVERAGE:-false}; then
-		xvfb-run -a npm test
-	else
-		xvfb-run -a npm run test:coverage
-	fi | sed -e 's,/?home/circleci/project/,,g' || EXIT_CODE=$?
-	cp package.stable.json package.json
 
+	if ${ABLUNIT_TEST_RUNNER_NO_COVERAGE:-false}; then
+		echo 100
+		time xvfb-run -a npm test
+		echo 101
+	else
+		echo 110
+		time xvfb-run -a npm run test:coverage
+		echo 111
+	fi | sed -e 's,/?home/circleci/project/,,g' || EXIT_CODE=$?
+
+	cp package.stable.json package.json
+	cat /tmp/timing.log
+
+	log_timing "run_tests end"
 	if [ "$EXIT_CODE" = "0" ]; then
 		echo "xvfb-run success"
 	else
@@ -192,5 +204,4 @@ save_and_print_debug_output () {
 initialize "$@"
 dbus_config
 run_tests
-# rm -f artifacts/eslint*
-echo "$0 completed successfully!"
+echo "[$0] completed successfully!"

@@ -146,19 +146,26 @@ export async function setRuntimes (runtimes?: IRuntime[]): Promise<void> {
 
 		const conf = workspace.getConfiguration('abl')
 		const current = conf.get('configuration.runtimes') as IRuntime[]
+		log.info('current abl.configuration.runtimes=' + JSON.stringify(conf.get('configuration.runtimes')))
+		log.info('setting abl.configuration.runtimes=' + JSON.stringify(runtimes))
 		// log.info('current=' + JSON.stringify(current))
 		// log.info('  input=' + JSON.stringify(runtimes))
 		if (JSON.stringify(current) === JSON.stringify(runtimes)) {
 			log.info('runtmes are already set ' + duration)
 			resolve()
+			return
 		}
 
-		log.info('setting configufarion.runtimes...')
-		const prom = conf.update('configuration.runtimes', runtimes, true).then(() => {
-			log.info('runtimes set, restarting lang server...')
+		const ablConf = workspace.getConfiguration('abl')
+
+		ablConf.update('configuration.runtimes', runtimes, true).then(() => {
+			const ablConfUpdated = workspace.getConfiguration('abl')
+			log.info('       ablconf.configuration.runtimes=' + JSON.stringify(ablConfUpdated.get('configuration.runtimes')))
+			log.info('ablconfUpdated.configuration.runtimes=' + JSON.stringify(ablConfUpdated.get('configuration.runtimes')))
 			restartLangServer().then(() => {
 				log.info('lang server restarted!')
 				resolve()
+				return
 			}, (e) => { throw e })
 		}, (e: unknown) => {
 			if (e instanceof Error) {

@@ -1,6 +1,12 @@
 #!/bin/bash
 set -euo pipefail
 
+log_timing () {
+	if [ -f /tmp/timing.log ]; then
+		echo "[$(date +%Y-%m-%dT%H:%M:%S%z) $0] $1" >> /tmp/timing.log
+	fi
+}
+
 initialize () {
 	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] pwd=$(pwd)"
 	PATH=$PATH:$DLC/ant/bin
@@ -128,9 +134,14 @@ doPackage () {
 
 ########## MAIN BLOCK ##########
 initialize "$@"
+
+log_timing "get_performance_test_code"
 get_performance_test_code
 get_pct
+log_timing "create_dbs"
 create_dbs
+log_timing "doPackage"
 doPackage
 rm -rf artifacts coverage
+log_timing "package complete"
 echo "[$0] completed successfully!"
