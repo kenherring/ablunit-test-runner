@@ -9,12 +9,12 @@ suite('proj1 - Extension Test Suite', () => {
 		await suiteSetupCommon()
 	})
 
-	setup(async () => {
+	setup(async (done) => {
 		deleteTestFiles()
 		log.info('setup.updateConfig')
 		return updateConfig('ablunit.files.exclude', undefined).then(() => {
 			log.info('setup.updateConfig.then()')
-			return
+			done()
 		})
 	})
 
