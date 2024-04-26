@@ -692,8 +692,13 @@ export function setConfig (key: string, value?: unknown) {
 
 export async function updateConfig (key: string, value: string | string[] | undefined | null): Promise<void> {
 	const keys = key.split('.')
-	const section1 = keys.shift()
-	const section2 = keys.join('.')
+	// const section1 = keys.shift()
+	// const section2 = keys.join('.')
+	const section2 = keys.pop()
+	if (!section2) {
+		throw new Error('key is not formatted correctly, missing \'.\': ' + key)
+	}
+	const section1 = keys.join('.')
 
 	if (value === undefined) {
 		// value = null
@@ -730,6 +735,7 @@ export async function updateConfig (key: string, value: string | string[] | unde
 
 	log.info('await conf.update')
 	await conf.update(section2, value, false).then(() => {
+		log.info('await conf.update successful')
 		const confUpdated = workspace.getConfiguration(section1)
 		log.info('new ' + key + '=' + JSON.stringify(confUpdated.get(section2)))
 		return
@@ -750,7 +756,8 @@ export async function updateConfig (key: string, value: string | string[] | unde
 
 export async function updateConfigProm (key: string, value: string | string[] | undefined | null): Promise<void> {
 	const keys = key.split('.')
-	const section1 = keys.shift()
+	let section1 = keys.shift()
+	section1 = section1 + '.' + keys.shift()
 	const section2 = keys.join('.')
 
 	if (value === undefined) {
@@ -769,15 +776,17 @@ export async function updateConfigProm (key: string, value: string | string[] | 
 			throw new Error('[setRuntimes] extension not active: kherring.ablunit-test-runner')
 		}
 
-		log.info('section1=' + section1 + ', section2=' + section2)
-		const confNull = workspace.getConfiguration(section1, null)
-		log.info('confNull=' + JSON.stringify(confNull, null, 4))
-		const confUndefined = workspace.getConfiguration(section1, null)
-		log.info('confUndefined=' + JSON.stringify(confUndefined, null, 4))
+		// log.info('section1=' + section1 + ', section2=' + section2)
+		// const confNull = workspace.getConfiguration(section1, null)
+		// log.info('confNull=' + JSON.stringify(confNull, null, 4))
+		// const confUndefined = workspace.getConfiguration(section1, null)
+		// log.info('confUndefined=' + JSON.stringify(confUndefined, null, 4))
 		const conf = workspace.getConfiguration(section1, getWorkspaceFolders()[0])
 		log.info('conf=' + JSON.stringify(conf, null, 4))
 
 		const current = conf.get(section2)
+		log.info('current ' + section1 + ' . ' + section2 + '=' + JSON.stringify(current))
+		log.info('setting ' + section1 + ' . ' + section2 + '=' + JSON.stringify(value))
 		log.info('current ' + key + '=' + JSON.stringify(current))
 		log.info('setting ' + key + '=' + JSON.stringify(value))
 		// log.info('current=' + JSON.stringify(current))

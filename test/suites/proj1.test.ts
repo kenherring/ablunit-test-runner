@@ -12,19 +12,13 @@ suite('proj1 - Extension Test Suite', () => {
 	setup(async (done) => {
 		deleteTestFiles()
 		log.info('setup.updateConfig')
-		return updateConfig('ablunit.files.exclude', undefined).then(() => {
+		await updateConfig('ablunit.files.exclude', undefined).then(() => {
 			log.info('setup.updateConfig.then()')
 			done()
 		})
 	})
 
-	suiteTeardown(async () => {
-		log.info('suiteTeardown.updateConfig')
-		return updateConfig('ablunit.files.exclude', undefined).then(() => {
-			log.info('suiteTeardown.updateConfig.then()')
-			return
-		})
-	})
+	suiteTeardown(setup)
 
 	test('proj1.1 - output files exist - 1', async () => {
 		const ablunitJson = Uri.joinPath(workspaceUri, 'ablunit.json')

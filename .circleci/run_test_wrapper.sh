@@ -156,14 +156,20 @@ run_tests () {
 	cp "package.$ABLUNIT_TEST_RUNNER_VSCODE_VERSION.json" package.json
 
 	if ${ABLUNIT_TEST_RUNNER_NO_COVERAGE:-false}; then
-		echo 100
-		time xvfb-run -a npm test
-		echo 101
+		echo 210
+		xvfb-run -a npm test
+		echo 211
 	else
-		echo 110
-		time xvfb-run -a npm run test:coverage
-		echo 111
+		echo 220
+		xvfb-run -a npm run test:coverage
+		echo 221
 	fi | sed -e 's,/?home/circleci/project/,,g' || EXIT_CODE=$?
+	log_timing "xvfb-run end (EXIT_CODE=$EXIT_CODE)"
+
+	if ! ls ./ablunit-test-runner-*.*.*.vsix &>/dev/null; then
+		echo "ERROR: no .vsix files found, 'npm run package' failed"
+		exit 1
+	fi
 
 	cp package.stable.json package.json
 	cat /tmp/timing.log

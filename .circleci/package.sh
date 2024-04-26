@@ -30,6 +30,7 @@ initialize () {
 
 package () {
     echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}]"
+    rm -f *.vsix
     package_version stable
     # package_version insiders
 }
@@ -49,9 +50,16 @@ package_version () {
         ARGS+=(-o "ablunit-test-runner-${VSCODE_VERSION}-${PACKAGE_VERSION}.vsix")
     fi
 
+    echo 100
     cp "package.$VSCODE_VERSION.json" package.json
-    vsce package "${ARGS[@]}"
+    echo 101
+    if ! vsce package "${ARGS[@]}"; then
+        echo 102 $?
+        exit 1
+    fi
+    echo 103 $?
     cp package.stable.json package.json
+    echo 104
 }
 
 run_lint () {

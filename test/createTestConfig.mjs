@@ -74,7 +74,7 @@ function getMochaOpts (projName) {
 	const sonarFile = path.resolve(reporterDir, 'mocha_results_sonar_' + projName + '.xml')
 
 	const mochaOpts = {
-		bail: false,
+		bail: true,
 		// fullTrace: true
 		retries: 0,
 		timeout: getMochaTimeout(projName),
