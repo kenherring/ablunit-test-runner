@@ -1,5 +1,5 @@
 import { Selection, Uri, commands, window } from 'vscode'
-import { assert, deleteTestFiles, getTestCount, getWorkspaceUri, log, runAllTests, sleep, suiteSetupCommon, updateConfig, updateConfigProm } from '../testCommon'
+import { assert, deleteTestFiles, getTestCount, getWorkspaceUri, log, runAllTests, sleep, suiteSetupCommon, updateConfig } from '../testCommon'
 
 const workspaceUri = getWorkspaceUri()
 
@@ -12,9 +12,6 @@ suite('proj1 - Extension Test Suite', () => {
 	function cleanBeforeAndAfter () {
 		deleteTestFiles()
 		log.info('cleanBeforeAndAfter.updateConfig')
-		// updateConfigProm('ablunit.files.exclude', undefined).then(() => {
-		// return updateConfigProm('ablunit.files.exclude', undefined).then(() => {
-		// updateConfig('ablunit.files.exclude', undefined).then(() => {
 		return updateConfig('ablunit.files.exclude', undefined).then(() => {
 			log.info('setup.updateConfig.then()')
 		}, (e) => {
@@ -59,33 +56,23 @@ suite('proj1 - Extension Test Suite', () => {
 		assert.notFileExists(resultsJson)
 	})
 
-	test('proj1.2A - output files exist 2 - exclude compileError.p', (done) => {
+	test('proj1.2 - output files exist 2 - exclude compileError.p', (done) => {
 		log.info('updating config...')
-		return updateConfig('ablunit.files.exclude', [ '.builder/**', 'compileError.p' ]).then(() => {
-			log.info('running tests...')
-			return runAllTests()
-		}).then(() => {
-			log.info('getTestCount...')
-			return getTestCount(Uri.joinPath(workspaceUri, 'results.json'))
-		}).then((testCount) => {
-			log.info('asserting test count...')
-			assert.equal(testCount, 12)
-			done()
-		})
-	})
-
-	test('proj1.2B - output files exist 2 - exclude compileError.p', () => {
-		log.info('updating config...')
-		return updateConfigProm('ablunit.files.exclude', [ '.builder/**', 'compileError.p' ]).then(() => {
-			log.info('running tests...')
-			return runAllTests()
-		}).then(() => {
-			log.info('getTestCount...')
-			return getTestCount(Uri.joinPath(workspaceUri, 'results.json'))
-		}).then((testCount) => {
-			log.info('asserting test count...')
-			assert.equal(testCount, 12)
-		})
+		updateConfig('ablunit.files.exclude', [ '.builder/**', 'compileError.p' ])
+			.then(() => {
+				log.info('running tests...')
+				return runAllTests()
+			}).then(() => {
+				log.info('getTestCount...')
+				return getTestCount(Uri.joinPath(workspaceUri, 'results.json'))
+			}).then((testCount) => {
+				log.info('asserting test count...')
+				assert.equal(testCount, 12)
+				done()
+			}, (e) => {
+				log.info('runAllTests failed!')
+				throw e
+			})
 	})
 
 	test('proj1.3 - output files exist 3 - exclude compileError.p as string', async () => {

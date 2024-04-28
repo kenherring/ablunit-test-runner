@@ -210,6 +210,17 @@ export function setFilesExcludePattern () {
 	})
 }
 
+export function isExtensionActive (ext = 'kherring.ablunit-test-runner') {
+	const extObj = extensions.getExtension(ext)
+	if (!extObj) {
+		throw new Error('extension not installed: ' + ext)
+	}
+	if (!extObj.isActive) {
+		throw new Error('extension not active: ' + ext)
+	}
+	return true
+}
+
 export function installExtension (extname = 'riversidesoftware.openedge-abl-lsp') {
 	log.info('[installExtension] start process.args=' + process.argv.join(' '))
 	const ext = extensions.getExtension(extname)
@@ -382,7 +393,7 @@ export async function setRuntimes (runtimes: IRuntime[] = [{name: '12.2', path: 
 
 	// await updateConfig('abl.configuration.runtimes', JSON.stringify(runtimes))
 	await conf.update('configuration.runtimes', runtimes, ConfigurationTarget.Global)
-	log.info('updateConfigProm complete')
+	log.info('conf.update complete')
 
 	return rebuildAblProject().then((r) => {
 		log.info('abl.configuration.runtimes set successfully (r=' + r + ')')
@@ -699,8 +710,9 @@ export function setConfig (key: string, value?: unknown) {
 	return conf.update(section2, value)
 }
 
-
 export function updateConfig (key: string, value: string | string[] | undefined | null): Thenable<void> {
+	isExtensionActive('kherring.ablunit-test-runner')
+	const updateConfigDuration = new Duration('updateConfig')
 	const keys = key.split('.')
 	// const section1 = keys.shift()
 	// const section2 = keys.join('.')
@@ -711,33 +723,20 @@ export function updateConfig (key: string, value: string | string[] | undefined 
 	const section1 = keys.join('.')
 
 	if (value === undefined) {
+		// Why isn't undefined OK here?
 		// value = null
 		value = []
 	}
+	log.info('update configuration "' + key + '"=' + JSON.stringify(value))
 
-	const duration = new Duration('updateConfig')
-	log.info('setting ' + key + '=' + JSON.stringify(value))
-	const ext = extensions.getExtension('kherring.ablunit-test-runner')
-	if (!ext) {
-		throw new Error('extension not installed: khering.ablunit-test-runner')
-	}
-	if (!ext.isActive) {
-		throw new Error('extension not active: kherring.ablunit-test-runner')
-	}
-
-	// log.info('section1=' + section1 + ', section2=' + section2)
 	// const confNull = workspace.getConfiguration(section1, null)
 	// log.info('confNull=' + JSON.stringify(confNull, null, 4))
-	// const confUndefined = workspace.getConfiguration(section1, null)
+	// const confUndefined = workspace.getConfiguration(section1, undefined)
 	// log.info('confUndefined=' + JSON.stringify(confUndefined, null, 4))
 	const conf = workspace.getConfiguration(section1, getWorkspaceFolders()[0])
-	log.info('conf=' + JSON.stringify(conf, null, 4))
-
 	const current = conf.get(section2)
 	log.info('current ' + key + '=' + JSON.stringify(current))
-	log.info('setting ' + key + '=' + JSON.stringify(value))
-	// log.info('current=' + JSON.stringify(current))
-	// log.info('  input=' + JSON.stringify(runtimes))
+	log.info(' newval ' + key + '=' + JSON.stringify(value))
 	if (JSON.stringify(current) === JSON.stringify(value)) {
 		log.info(key + ' is already set to ' + JSON.stringify(value))
 		return Promise.resolve()
@@ -746,100 +745,99 @@ export function updateConfig (key: string, value: string | string[] | undefined 
 	log.info('await conf.update')
 	return conf.update(section2, value, false).then(() => {
 		log.info('await conf.update successful')
-		const confUpdated = workspace.getConfiguration(section1)
+		const confUpdated = workspace.getConfiguration(section1, getWorkspaceFolders()[0])
 		log.info('new ' + key + '=' + JSON.stringify(confUpdated.get(section2)))
-		// log.info('old ' + key + '=' + JSON.stringify(conf.get(section2)))
-		log.info('conf.update complete')
+		log.info('conf.update complete! ' + updateConfigDuration)
 	}, (e: unknown) => {
 		if (e instanceof Error) { throw e }
 		throw new Error('update config ' + key + ' failed! e=' + e)
 	})
 }
 
-export function updateConfigProm (key: string, value: string | string[] | undefined | null): Promise<void> {
-	const keys = key.split('.')
-	let section1 = keys.shift()
-	section1 = section1 + '.' + keys.shift()
-	const section2 = keys.join('.')
+// export function updateConfig (key: string, value: string | string[] | undefined | null): Promise<void> {
+// 	const keys = key.split('.')
+// 	let section1 = keys.shift()
+// 	section1 = section1 + '.' + keys.shift()
+// 	const section2 = keys.join('.')
 
-	if (value === undefined) {
-		// value = null
-		value = []
-	}
+// 	if (value === undefined) {
+// 		// value = null
+// 		value = []
+// 	}
 
-	return new Promise((resolve, reject) => {
-		const duration = new Duration('updateConfig')
-		log.info('setting ' + key + '=' + JSON.stringify(value))
-		const ext = extensions.getExtension('kherring.ablunit-test-runner')
-		if (!ext) {
-			throw new Error('[setRuntimes] extension not installed: khering.ablunit-test-runner')
-		}
-		if (!ext.isActive) {
-			throw new Error('[setRuntimes] extension not active: kherring.ablunit-test-runner')
-		}
+// 	return new Promise((resolve, reject) => {
+// 		const duration = new Duration('updateConfig')
+// 		log.info('setting ' + key + '=' + JSON.stringify(value))
+// 		const ext = extensions.getExtension('kherring.ablunit-test-runner')
+// 		if (!ext) {
+// 			throw new Error('[setRuntimes] extension not installed: khering.ablunit-test-runner')
+// 		}
+// 		if (!ext.isActive) {
+// 			throw new Error('[setRuntimes] extension not active: kherring.ablunit-test-runner')
+// 		}
 
-		// log.info('section1=' + section1 + ', section2=' + section2)
-		// const confNull = workspace.getConfiguration(section1, null)
-		// log.info('confNull=' + JSON.stringify(confNull, null, 4))
-		// const confUndefined = workspace.getConfiguration(section1, null)
-		// log.info('confUndefined=' + JSON.stringify(confUndefined, null, 4))
-		const conf = workspace.getConfiguration(section1, getWorkspaceFolders()[0])
-		log.info('conf=' + JSON.stringify(conf, null, 4))
+// 		// log.info('section1=' + section1 + ', section2=' + section2)
+// 		// const confNull = workspace.getConfiguration(section1, null)
+// 		// log.info('confNull=' + JSON.stringify(confNull, null, 4))
+// 		// const confUndefined = workspace.getConfiguration(section1, null)
+// 		// log.info('confUndefined=' + JSON.stringify(confUndefined, null, 4))
+// 		const conf = workspace.getConfiguration(section1, getWorkspaceFolders()[0])
+// 		log.info('conf=' + JSON.stringify(conf, null, 4))
 
-		const current = conf.get(section2)
-		log.info('current ' + section1 + ' . ' + section2 + '=' + JSON.stringify(current))
-		log.info('setting ' + section1 + ' . ' + section2 + '=' + JSON.stringify(value))
-		log.info('current ' + key + '=' + JSON.stringify(current))
-		log.info('setting ' + key + '=' + JSON.stringify(value))
-		// log.info('current=' + JSON.stringify(current))
-		// log.info('  input=' + JSON.stringify(runtimes))
-		if (JSON.stringify(current) === JSON.stringify(value)) {
-			log.info(key + ' is already set to ' + JSON.stringify(value))
-			resolve()
-			return
-		}
+// 		const current = conf.get(section2)
+// 		log.info('current ' + section1 + ' . ' + section2 + '=' + JSON.stringify(current))
+// 		log.info('setting ' + section1 + ' . ' + section2 + '=' + JSON.stringify(value))
+// 		log.info('current ' + key + '=' + JSON.stringify(current))
+// 		log.info('setting ' + key + '=' + JSON.stringify(value))
+// 		// log.info('current=' + JSON.stringify(current))
+// 		// log.info('  input=' + JSON.stringify(runtimes))
+// 		if (JSON.stringify(current) === JSON.stringify(value)) {
+// 			log.info(key + ' is already set to ' + JSON.stringify(value))
+// 			resolve()
+// 			return
+// 		}
 
-		conf.update(section2, value, false).then(() => {
-			const confUpdated = workspace.getConfiguration(section1)
-			log.info('old ' + key + '=' + JSON.stringify(conf.get(section2)))
-			log.info('new ' + key + '=' + JSON.stringify(confUpdated.get(section2)))
-		}, (e: unknown) => {
-			if (e instanceof Error) {
-				reject(e)
-				return
-			}
-			reject(new Error('update config ' + key + ' failed! e=' + e))
-			return
-		})
-	})
-	log.info(isoDate() + ' success!')
+// 		conf.update(section2, value, false).then(() => {
+// 			const confUpdated = workspace.getConfiguration(section1)
+// 			log.info('old ' + key + '=' + JSON.stringify(conf.get(section2)))
+// 			log.info('new ' + key + '=' + JSON.stringify(confUpdated.get(section2)))
+// 		}, (e: unknown) => {
+// 			if (e instanceof Error) {
+// 				reject(e)
+// 				return
+// 			}
+// 			reject(new Error('update config ' + key + ' failed! e=' + e))
+// 			return
+// 		})
+// 	})
+// 	log.info(isoDate() + ' success!')
 
-	// {
-	// 	// log.info(isoDate() + ' prom=' + JSON.stringify(prom))
-	// 	// // const prom = workspaceConfig.update(section2, value)
+// 	// {
+// 	// 	// log.info(isoDate() + ' prom=' + JSON.stringify(prom))
+// 	// 	// // const prom = workspaceConfig.update(section2, value)
 
-	// 	// log.info(isoDate() + ' updateConfig-5.1.5 await')
-	// 	// const r = await prom.then((ret) => {
-	// 	// 	log.info(isoDate() + ' prom returned (ret=' + ret + ')')
-	// 	// 	return true
-	// 	// }, (err) => {
-	// 	// 	log.error('unset failed! key=' + key + ', err=' + err)
-	// 	// 	throw err
-	// 	// })
-	// 	// log.info(isoDate() + ' updateConfig-5.1.4 r=' + r)
-	// 	return
-	// }
+// 	// 	// log.info(isoDate() + ' updateConfig-5.1.5 await')
+// 	// 	// const r = await prom.then((ret) => {
+// 	// 	// 	log.info(isoDate() + ' prom returned (ret=' + ret + ')')
+// 	// 	// 	return true
+// 	// 	// }, (err) => {
+// 	// 	// 	log.error('unset failed! key=' + key + ', err=' + err)
+// 	// 	// 	throw err
+// 	// 	// })
+// 	// 	// log.info(isoDate() + ' updateConfig-5.1.4 r=' + r)
+// 	// 	return
+// 	// }
 
-	// log.info(isoDate() + ' updateConfig-6        value=' + JSON.stringify(value))
-	// const r = await workspaceConfig.update(section2, value).then(() => {
-	// 	log.info(isoDate() + ' updateConfig-7')
-	// 	return true
-	// }, (err) => {
-	// 	log.error('config update \'' + section1 + '.' + section2 + '\' failed with err=' + err)
-	// 	throw err
-	// })
-	// log.info(isoDate() + ' updateConfig-8 r=' + r)
-}
+// 	// log.info(isoDate() + ' updateConfig-6        value=' + JSON.stringify(value))
+// 	// const r = await workspaceConfig.update(section2, value).then(() => {
+// 	// 	log.info(isoDate() + ' updateConfig-7')
+// 	// 	return true
+// 	// }, (err) => {
+// 	// 	log.error('config update \'' + section1 + '.' + section2 + '\' failed with err=' + err)
+// 	// 	throw err
+// 	// })
+// 	// log.info(isoDate() + ' updateConfig-8 r=' + r)
+// }
 
 // function getConfigDefaultValue (key: string) {
 // 	const basekey = key.split('.').shift()
@@ -945,7 +943,9 @@ export function refreshData (resultsLen = 0) {
 	testController = undefined
 	recentResults = undefined
 	currentRunData = undefined
+	log.info('100')
 	return commands.executeCommand('_ablunit.getExtensionTestReferences').then((resp) => {
+		log.info('101')
 		const refs = resp as IExtensionTestReferences
 		let passedTests = undefined
 
@@ -956,12 +956,15 @@ export function refreshData (resultsLen = 0) {
 		if (passedTests && passedTests <= resultsLen) {
 			throw new Error('failed to refresh test results: results.length=' + refs.recentResults.length)
 		}
+		log.info('102')
 		decorator = refs.decorator
 		testController = refs.testController
 		recentResults = refs.recentResults
 		if (refs.currentRunData) {
 			currentRunData = refs.currentRunData
 		}
+		log.info('103 ' + (currentRunData != undefined))
+		return currentRunData != undefined
 	}, (err) => {
 		// log.info(isoDate() + ' refreshData-4 err=' + err)
 		throw new Error('failed to refresh test results: ' + err)
@@ -1048,15 +1051,24 @@ export async function getCurrentRunData (len = 1, resLen = 0, tag?: string) {
 
 export async function getResults (len = 1, tag?: string) {
 	const duration = new Duration()
+
 	if ((!recentResults || recentResults.length === 0) && len > 0) {
 		log.info(tag + 'recentResults not set, refreshing...')
 		for (let i=0; i<15; i++) {
-			await sleep2(500, tag + 'still no recentResults, sleep before trying again')
-			await refreshData()
-			if ((recentResults?.length ?? 0) > len) {
-				log.info('found test results ' + duration)
-				break
+			const gotResults = refreshData()
+			if (await gotResults) {
+				log.info('recentResults.length=' + recentResults?.length)
+				if ((recentResults?.length ?? 0) >= len) {
+					log.info('found test results ' + duration)
+					break
+				}
+			} else {
+				await sleep2(100, tag + 'still no recentResults, sleep before trying again (' + i + '/15)')
 			}
+			// if ((recentResults?.length ?? 0) >= len) {
+			// 	log.info('found test results ' + duration)
+			// 	break
+			// }
 		}
 	}
 	if (!recentResults) {

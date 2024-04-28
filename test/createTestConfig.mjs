@@ -345,7 +345,7 @@ function getCoverageOpts () {
 	}
 }
 
-export function createTestConfig () { // NOSONAR
+export async function createTestConfig () { // NOSONAR
 	initialize()
 
 	const testConfig = {
@@ -356,5 +356,6 @@ export function createTestConfig () { // NOSONAR
 	const definedConfig = defineConfig(testConfig)
 	writeConfigToFile('testConfig', testConfig)
 	writeConfigToFile('defined', definedConfig)
+	await Promise.resolve()
 	return definedConfig
 }
