@@ -21,7 +21,7 @@ export class ABLUnitConfig  {
 		log.info('[ABLUnitConfigWriter constructor] setup complete! tempDir=' + this.ablunitConfig.tempDirUri.fsPath)
 	}
 
-	async deleteFile (uri: Uri) {
+	deleteFile (uri: Uri) {
 		return workspace.fs.delete(uri).then(() => {
 			log.info('deleted file: ' + uri.fsPath)
 		}, () => {
@@ -34,21 +34,21 @@ export class ABLUnitConfig  {
 		return workspace.fs.writeFile(uri, data)
 	}
 
-	async createDir (uri: Uri) {
+	createDir (uri: Uri) {
 		return workspace.fs.stat(uri).then(() => { return }, () => {
 			return workspace.fs.createDirectory(uri)
 		})
 	}
 
-	async createProgressIni (propath: string) {
-		if (platform() != 'win32') { return }
+	createProgressIni (propath: string) {
+		if (platform() != 'win32') { return Promise.resolve()}
 		log.info('creating progress.ini: \'' + this.ablunitConfig.progressIniUri.fsPath + '\'')
 		const iniData = ['[WinChar Startup]', 'PROPATH=' + propath]
 		const iniBytes = Uint8Array.from(Buffer.from(iniData.join('\n')))
 		return workspace.fs.writeFile(this.ablunitConfig.progressIniUri, iniBytes)
 	}
 
-	async createAblunitJson (_uri: Uri, cfg: CoreOptions, testQueue: ITestObj[]) {
+	createAblunitJson (_uri: Uri, cfg: CoreOptions, testQueue: ITestObj[]) {
 		log.info('creating ablunit.json: \'' + this.ablunitConfig.config_uri.fsPath + '\'')
 		const promarr: PromiseLike<void>[] = []
 		promarr.push(
@@ -56,7 +56,7 @@ export class ABLUnitConfig  {
 				if (stat.type != FileType.Directory) {
 					throw new Error('configJson.output.location is not a Directory: ' + this.ablunitConfig.optionsUri.locationUri.fsPath)
 				}
-			}, async () => {
+			}, () => {
 				return this.createDir(this.ablunitConfig.optionsUri.locationUri)
 			})
 		)
@@ -104,7 +104,7 @@ export class ABLUnitConfig  {
 		return this.writeFile(uri, Uint8Array.from(Buffer.from(opt.join('\n') + '\n')))
 	}
 
-	async createDbConnPf (uri: Uri, dbConns: IDatabaseConnection[]) {
+	createDbConnPf (uri: Uri, dbConns: IDatabaseConnection[]) {
 		log.info('creating dbconn.pf: \'' + this.ablunitConfig.dbConnPfUri.fsPath + '\'')
 		const lines: string[] = []
 
@@ -114,6 +114,7 @@ export class ABLUnitConfig  {
 		if (lines.length > 0) {
 			return this.writeFile(uri, Uint8Array.from(Buffer.from(lines.join('\n') + '\n')))
 		}
+		return Promise.resolve()
 	}
 
 	readPropathFromJson () {

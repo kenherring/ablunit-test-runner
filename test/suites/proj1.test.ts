@@ -1,24 +1,38 @@
 import { Selection, Uri, commands, window } from 'vscode'
-import { assert, deleteTestFiles, getTestCount, getWorkspaceUri, log, runAllTests, sleep, suiteSetupCommon, updateConfig } from '../testCommon'
+import { assert, deleteTestFiles, getTestCount, getWorkspaceUri, log, runAllTests, sleep, suiteSetupCommon, updateConfig, updateConfigProm } from '../testCommon'
 
 const workspaceUri = getWorkspaceUri()
 
 suite('proj1 - Extension Test Suite', () => {
 
-	suiteSetup('proj1 - suiteSetup', async () => {
-		await suiteSetupCommon()
+	suiteSetup('proj1 - suiteSetup', (done) => {
+		suiteSetupCommon().then(() => { done() }, (e) => { done(e) })
 	})
 
-	setup(async (done) => {
+	function cleanBeforeAndAfter () {
 		deleteTestFiles()
-		log.info('setup.updateConfig')
-		await updateConfig('ablunit.files.exclude', undefined).then(() => {
+		log.info('cleanBeforeAndAfter.updateConfig')
+		// updateConfigProm('ablunit.files.exclude', undefined).then(() => {
+		// return updateConfigProm('ablunit.files.exclude', undefined).then(() => {
+		// updateConfig('ablunit.files.exclude', undefined).then(() => {
+		return updateConfig('ablunit.files.exclude', undefined).then(() => {
 			log.info('setup.updateConfig.then()')
-			done()
+		}, (e) => {
+			log.error('setup.cleanBeforeAndAfter() error! e=' + e)
+			throw e
 		})
-	})
+	}
 
-	suiteTeardown(setup)
+	setup((done) => {
+		cleanBeforeAndAfter().then(() => { done() }, (e) => { done(e) })
+	})
+	// setup(async () => {
+	// 	return cleanBeforeAndAfter().then(() => { log.info('before each promise complete') })
+	// })
+
+	suiteTeardown((done) => {
+		cleanBeforeAndAfter().then(() => { done() }, (e) => { done(e) })
+	})
 
 	test('proj1.1 - output files exist - 1', async () => {
 		const ablunitJson = Uri.joinPath(workspaceUri, 'ablunit.json')
@@ -27,7 +41,7 @@ suite('proj1 - Extension Test Suite', () => {
 		assert.notFileExists(ablunitJson)
 		assert.notFileExists(resultsXml)
 
-		await runAllTests(true, false).then(() => {
+		await runAllTests(false).then(() => {
 			// assert.fail('expected runAllTests to throw error, but no error was caught')
 		}, (e) => {
 			log.info('Error caught and ignored: e=' + e)
@@ -45,13 +59,32 @@ suite('proj1 - Extension Test Suite', () => {
 		assert.notFileExists(resultsJson)
 	})
 
-	test('proj1.2 - output files exist 2 - exclude compileError.p', async () => {
-		await updateConfig('ablunit.files.exclude', [ '.builder/**', 'compileError.p' ])
-		await runAllTests()
+	test('proj1.2A - output files exist 2 - exclude compileError.p', () => {
+		log.info('updating config...')
+		return updateConfig('ablunit.files.exclude', [ '.builder/**', 'compileError.p' ]).then(() => {
+			log.info('running tests...')
+			return runAllTests()
+		}).then(() => {
+			log.info('getTestCount...')
+			return getTestCount(Uri.joinPath(workspaceUri, 'results.json'))
+		}).then((testCount) => {
+			log.info('asserting test count...')
+			assert.equal(testCount, 12)
+		})
+	})
 
-		const resultsJson = Uri.joinPath(workspaceUri, 'results.json')
-		const testCount = await getTestCount(resultsJson)
-		assert.equal(testCount, 12)
+	test('proj1.2B - output files exist 2 - exclude compileError.p', () => {
+		log.info('updating config...')
+		return updateConfigProm('ablunit.files.exclude', [ '.builder/**', 'compileError.p' ]).then(() => {
+			log.info('running tests...')
+			return runAllTests()
+		}).then(() => {
+			log.info('getTestCount...')
+			return getTestCount(Uri.joinPath(workspaceUri, 'results.json'))
+		}).then((testCount) => {
+			log.info('asserting test count...')
+			assert.equal(testCount, 12)
+		})
 	})
 
 	test('proj1.3 - output files exist 3 - exclude compileError.p as string', async () => {

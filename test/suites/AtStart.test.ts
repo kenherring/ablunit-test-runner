@@ -10,7 +10,7 @@ suite('projAtStart  - Extension Test Suite', () => {
 	})
 
 	test('projAtStart - ${workspaceFolder}/ablunit.json file exists', async () => {
-		await runAllTests(true, true)
+		await runAllTests(true)
 		// .then(() => {
 		// 	// TODO! fix me on windows
 		// 	// if (process.platform === 'win32' || process.env['WSL_DISTRO_NAME'] !== undefined) {

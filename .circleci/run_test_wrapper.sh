@@ -170,11 +170,12 @@ run_tests () {
 		echo "ERROR: no .vsix files found, 'npm run package' failed"
 		exit 1
 	fi
-
 	cp package.stable.json package.json
+	log_timing "run_tests end"
+
+	echo "---------- TIMING ----------"
 	cat /tmp/timing.log
 
-	log_timing "run_tests end"
 	if [ "$EXIT_CODE" = "0" ]; then
 		echo "xvfb-run success"
 	else

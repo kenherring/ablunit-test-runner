@@ -13,9 +13,21 @@ function getDetailLine (coverage: DetailedCoverageCustom[], lineNum: number) {
 suite('proj0  - Extension Test Suite', () => {
 
 	suiteSetup('proj0 - before', async () => {
-		await suiteSetupCommon()
-		await commands.executeCommand('testing.clearTestResults').then()
 		deleteFile('.vscode/ablunit-test-profile.json')
+		await commands.executeCommand('testing.clearTestResults')
+
+		await commands.executeCommand('testing.clearTestResults')
+		return
+		// log.info('100')
+		// suiteSetupCommon().then(() => {
+		// 	log.info('101')
+		// 	done()
+		// 	log.info('102')
+		// }, (e) => {
+		// 	log.info('103')
+		// 	done(e)
+		// 	log.info('104')
+		// })
 	})
 
 	teardown('proj0 - afterEach', () => {

@@ -5,7 +5,7 @@ import { getEnvVars } from '../../src/ABLUnitRun'
 
 suite('proj8 - Extension Test Suite', () => {
 
-	suiteSetup('proj8 - before', async () => suiteSetupCommon())
+	suiteSetup('proj8 - before', () => suiteSetupCommon())
 
 	test('proj8.1 - test count', async () => {
 		await runAllTests()

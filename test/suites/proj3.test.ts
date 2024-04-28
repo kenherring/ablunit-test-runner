@@ -5,7 +5,7 @@ const workspaceUri = getWorkspaceUri()
 
 suite('proj3 - Extension Test Suite', () => {
 
-	suiteSetup('proj3 - suiteSetup', async () => suiteSetupCommon())
+	suiteSetup('proj3 - suiteSetup', () => suiteSetupCommon())
 
 	setup('proj3 - beforeEach', async () => {
 		await setRuntimes([{name: '11.7', path: '/psc/dlc_11.7'}, {name: oeVersion(), path: getDefaultDLC(), default: true}]).then()

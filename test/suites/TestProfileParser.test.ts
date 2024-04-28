@@ -16,7 +16,7 @@ import { IRunProfile, assert, getWorkspaceFolders, log, parseRunProfiles, suiteS
 
 suite('TestProfileParser suite', () => {
 
-	suiteSetup('TestProfileParser - suiteSetup', async () => suiteSetupCommon())
+	suiteSetup('TestProfileParser - suiteSetup', () => suiteSetupCommon())
 
 	setup('TestProfileParser - setup', () => {
 		log.info('setup started')

@@ -5,7 +5,7 @@ const workspaceUri = getWorkspaceUri()
 
 suite('proj2 - Extension Test Suite', () => {
 
-	suiteSetup('proj2 - before', async () => suiteSetupCommon())
+	suiteSetup('proj2 - before', () => suiteSetupCommon())
 
 	test('proj2.1 - temp/ablunit.json file exists', async () => {
 		await runAllTests()

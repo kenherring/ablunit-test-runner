@@ -14,8 +14,5 @@
 		"ENV_VAR_1": "THISisTHEvalue",
 		"ATTR_ABLUNIT_EVENT_FILE": "ablunit_event_file"
 	},
-	"ablunit.files.exclude": [
-		".builder/**",
-		".pct/**"
-	]
+	"ablunit.files.exclude": []
 }

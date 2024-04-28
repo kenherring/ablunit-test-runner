@@ -4,7 +4,7 @@ import { doesDirExist, doesFileExist, runAllTests, suiteSetupCommon } from '../t
 
 suite('workspace0 - Extension Test Suite', () => {
 
-	suiteSetup('workspace0 - before', async () => suiteSetupCommon())
+	suiteSetup('workspace0 - before', () => suiteSetupCommon())
 
 	test('workspace0.1 - <workspaceFolder>/ablunit.json file exists', async () => {
 		await runAllTests()

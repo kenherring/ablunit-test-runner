@@ -39,26 +39,30 @@ function writeConfigToFile (name, config) {
 }
 
 function getMochaTimeout (projName) {
+	if (projName === 'examples') {
+		return 1000
+	}
 	if (firstTest) {
 		firstTest = false
-		return 180000
-	}
-	if (projName === 'proj3' && projName === 'proj4') {
+		// return 180000
 		return 30000
 	}
-	if (projName === 'proj1') {
-		return 55000
-	}
-	if (projName === 'DebugLines') {
-		return 60000
-	}
-	if (projName.startsWith('proj7')) {
-		// return 60000
-		return 90000
-	}
+	// if (projName === 'proj3' && projName === 'proj4') {
+	// 	return 30000
+	// }
+	// if (projName === 'proj1') {
+	// 	return 55000
+	// }
+	// if (projName === 'DebugLines') {
+	// 	return 60000
+	// }
+	// if (projName.startsWith('proj7')) {
+	// 	// return 60000
+	// 	return 90000
+	// }
 	// return 15000
 	// return 25000
-	return 50000
+	return 15000
 }
 
 /**
@@ -74,7 +78,7 @@ function getMochaOpts (projName) {
 	const sonarFile = path.resolve(reporterDir, 'mocha_results_sonar_' + projName + '.xml')
 
 	const mochaOpts = {
-		bail: true,
+		bail: process.env['CIRCLECI'] == 'true' ?? false,
 		// fullTrace: true
 		retries: 0,
 		timeout: getMochaTimeout(projName),
@@ -180,13 +184,15 @@ function getLaunchArgs (projName) {
 	// args.push('--log', 'trace') // '<level>'
 	// args.push('--log', 'kenherring.ablunit-test-runner:debug') // <extension-id>:<level>
 	// args.push('--log', 'kenherring.ablunit-test-runner:trace') // <extension-id>:<level>
+	// args.push('--logsPath', './artifacts/vscode_logs/') // undocumented
 	// args.push('--status')
 	// args.push('--prof-startup')
 	// args.push('--disable-extension <ext-id>')
 
-	if (enableExtensions.includes(projName)) {
-		args.push('--install-extension', 'riversidesoftware.openedge-abl-lsp')
-	} else {
+	// if (enableExtensions.includes(projName)) {
+	// 	args.push('--install-extension', 'riversidesoftware.openedge-abl-lsp')
+	// }
+	if (!enableExtensions.includes(projName)) {
 		args.push('--disable-extensions')
 		args.push('--disable-extension', 'riversidesoftware.openedge-abl-lsp')
 	}
@@ -209,15 +215,15 @@ function getLaunchArgs (projName) {
 
 	// --- disable functionality not needed for testing - https://github.com/microsoft/vscode/issues/174744 --- //
 	args.push('--disable-chromium-sandbox')
-	args.push('--no-sandbox', '--sandbox=false')
+	// args.push('--no-sandbox', '--sandbox=false')  ## super user only
+	// args.push('--disable-gpu-sandbox')
 	args.push('--disable-crash-reporter')
-	args.push('--disable-gpu-sandbox')
 	args.push('--disable-gpu')
+	args.push('--disable-dev-shm-usage', '--no-xshm')
 	args.push('--disable-telemetry')
 	args.push('--disable-updates')
 	args.push('--disable-workspace-trust')
 	// Warning: 'xshm' is not in the list of known options, but still passed to Electron/Chromium.
-	args.push('--disable-dev-shm-usage', '--no-xshm')
 
 
 	// --- possible coverage (nyc) related args --- //
@@ -243,17 +249,21 @@ function getTestConfig (projName) {
 	// 	extensionDevelopmentPath = path.resolve(__dirname, '..', 'ablunit-test-runner-insiders-0.2.1.vsix')
 	// }
 
-	let installExtension
+	let installExtensions
 	if (enableExtensions.includes(projName)) {
-		installExtension = 'riversidesoftware.openedge-abl-lsp'
+		installExtensions = ['riversidesoftware.openedge-abl-lsp']
 	}
 
+	process.env['ABLUNIT_TEST_RUNNER_ENABLE_EXTENSIONS'] = enableExtensions.includes('' + projName)
+	process.env['ABLUNIT_TEST_RUNNER_UNIT_TESTING'] = 'true'
+	process.env['DONT_PROMPT_WSL_INSTALL'] = 'true'
+	process.env['VSCODE_SKIP_PRELAUNCH'] = 'true'
 	const env = {
 		ABLUNIT_TEST_RUNNER_ENABLE_EXTENSIONS: enableExtensions.includes('' + projName),
-		ABLUNIT_TEST_RUNNER_UNIT_TESTING: true,
+		ABLUN7IT_TEST_RUNNER_UNIT_TESTING: 'true',
 		ABLUNIT_TEST_RUNNER_VSCODE_VERSION: vsVersion,
-		DONT_PROMPT_WSL_INSTALL: '1',
-		VSCODE_SKIP_PRELAUNCH: '1',
+		DONT_PROMPT_WSL_INSTALL: true,
+		VSCODE_SKIP_PRELAUNCH: true,
 	}
 
 	return {
@@ -273,7 +283,7 @@ function getTestConfig (projName) {
 		env,
 		useInstallation,
 		// download: ?
-		installExtension,
+		installExtensions,
 		skipExtensionDependencies: true,
 	}
 }
@@ -327,8 +337,8 @@ function getCoverageOpts () {
 		// TODO - not reporting extension, or other files loaded w/ vscode extension activate
 
 		// ----- NOT REAL OPTIONS?? ----- //
-		// require: [ 'ts-node/register' ],
-		// cache: false,
+		require: [ 'ts-node/register' ],
+		cache: false,
 		// 'enable-source-maps': true,
 		// sourceMap: false,
 		// instrument: false,

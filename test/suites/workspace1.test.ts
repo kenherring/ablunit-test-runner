@@ -1,18 +1,18 @@
-import { strict as assert } from 'assert'
-import { Uri, workspace } from 'vscode'
-import { doesDirExist, doesFileExist, log, runAllTests, suiteSetupCommon, updateConfig } from '../testCommon'
+import { assert, doesDirExist, doesFileExist, log, runAllTests, suiteSetupCommon, Uri, workspace } from '../testCommon'
 
 suite('workspace1 - Extension Test Suite', () => {
 
-	suiteSetup('workspace1 - before', async () => {
-		await suiteSetupCommon()
-		await updateConfig('tempDir', undefined)
+	suiteSetup('workspace1 - before', async (done) => {
+		await suiteSetupCommon().then(() => { done() }, (e) => { done(e) })
+		// await updateConfig('tempDir', undefined)
+		done()
 	})
 
-	teardown('workspace1 - afterEach', async () => {
-		log.info('after')
-		await updateConfig('tempDir', undefined)
-	})
+	// teardown('workspace1 - afterEach', async (done) => {
+	// 	log.info('after')
+	// 	await updateConfig('tempDir', undefined)
+	// 	done()
+	// })
 
 	test('workspace1.1 - <workspaceFolder>/ablunit.json file exists', async () => {
 		await runAllTests()
@@ -31,24 +31,24 @@ suite('workspace1 - Extension Test Suite', () => {
 		let resultsXml = Uri.joinPath(workspaceFolderUri[0], 'results.xml')
 		let resultsJson = Uri.joinPath(workspaceFolderUri[0], 'results.json')
 		let listingsDir = Uri.joinPath(workspaceFolderUri[0], 'listings')
-		assert(doesFileExist(ablunitJson), 'missing ablunit.json (' + ablunitJson.fsPath + ')')
-		assert(doesFileExist(resultsXml), 'missing results.xml (' + resultsXml.fsPath + ')')
-		assert(!doesFileExist(resultsJson), 'results.json exists and should not (' + resultsJson.fsPath + ')')
-		assert(!doesDirExist(listingsDir), 'listings dir exists and should not (' + listingsDir.fsPath + ')')
+		assert.assert(doesFileExist(ablunitJson), 'missing ablunit.json (' + ablunitJson.fsPath + ')')
+		assert.assert(doesFileExist(resultsXml), 'missing results.xml (' + resultsXml.fsPath + ')')
+		assert.assert(!doesFileExist(resultsJson), 'results.json exists and should not (' + resultsJson.fsPath + ')')
+		assert.assert(!doesDirExist(listingsDir), 'listings dir exists and should not (' + listingsDir.fsPath + ')')
 
 		log.info('___ validate proj3 ___ [' + workspaceFolderUri[1] + ']')
 		ablunitJson = Uri.joinPath(workspaceFolderUri[1], 'ablunit.json')
 		resultsXml = Uri.joinPath(workspaceFolderUri[1], '..', 'ablunit-output', 'results.xml')
 		resultsJson = Uri.joinPath(workspaceFolderUri[1], '..', 'ablunit-output', 'results.json')
 		listingsDir = Uri.joinPath(workspaceFolderUri[1], 'listings')
-		assert(doesFileExist(ablunitJson), 'missing ablunit.json (' + ablunitJson.fsPath + ')')
-		assert(doesFileExist(resultsXml), 'missing results.xml (' + resultsXml.fsPath + ')')
-		assert(!doesFileExist(resultsJson), 'results.json exists and should not (' + resultsJson.fsPath + ')')
-		assert(doesDirExist(listingsDir), 'listings dir exists and should not (' + listingsDir.fsPath + ')')
+		assert.assert(doesFileExist(ablunitJson), 'missing ablunit.json (' + ablunitJson.fsPath + ')')
+		assert.assert(doesFileExist(resultsXml), 'missing results.xml (' + resultsXml.fsPath + ')')
+		assert.assert(!doesFileExist(resultsJson), 'results.json exists and should not (' + resultsJson.fsPath + ')')
+		assert.assert(doesDirExist(listingsDir), 'listings dir exists and should not (' + listingsDir.fsPath + ')')
 
 		log.info('___ validate projX has no ablunit.json ___ [' + workspaceFolderUri[2] + ']')
 		ablunitJson = Uri.joinPath(workspaceFolderUri[2], 'ablunit.json')
-		assert(!doesFileExist(ablunitJson), 'ablunit.json exists and should not (' + ablunitJson.fsPath + ')')
+		assert.assert(!doesFileExist(ablunitJson), 'ablunit.json exists and should not (' + ablunitJson.fsPath + ')')
 	})
 
 	// test('workspace1.2 - <storageUri>/ablunit.json file exists', async () => {
@@ -62,10 +62,10 @@ suite('workspace1 - Extension Test Suite', () => {
 	// 		const resultsJson = Uri.joinPath(workspace.workspaceFolders![i].uri,'workspaceAblunit','results.json')
 	// 		const listingsDir = Uri.joinPath(workspace.workspaceFolders![i].uri,'workspaceAblunit','listings')
 
-	// 		assert(await doesFileExist(ablunitJson), "missing ablunit.json (" + ablunitJson.fsPath + ")")
-	// 		assert(await doesFileExist(resultsXml), "missing results.xml (" + resultsXml.fsPath + ")")
-	// 		assert(!await doesFileExist(resultsJson), "results.json exists and should not (" + resultsJson.fsPath + ")")
-	// 		assert(!await doesDirExist(listingsDir), "listings dir exists and should not (" + listingsDir.fsPath + ")")
+	// 		assert.assert(await doesFileExist(ablunitJson), "missing ablunit.json (" + ablunitJson.fsPath + ")")
+	// 		assert.assert(await doesFileExist(resultsXml), "missing results.xml (" + resultsXml.fsPath + ")")
+	// 		assert.assert(!await doesFileExist(resultsJson), "results.json exists and should not (" + resultsJson.fsPath + ")")
+	// 		assert.assert(!await doesDirExist(listingsDir), "listings dir exists and should not (" + listingsDir.fsPath + ")")
 	// 	}
 	// })
 

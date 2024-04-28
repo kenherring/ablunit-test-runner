@@ -3,7 +3,7 @@ import { assert, runAllTests, suiteSetupCommon } from '../testCommon'
 
 suite('projA - Extension Test Suite', () => {
 
-	suiteSetup('projA - before', async () => suiteSetupCommon())
+	suiteSetup('projA - before', () => suiteSetupCommon())
 
 	test('projA.1 - no .vscode/ablunit-test-profile.json exists in project', async () => {
 		await runAllTests()

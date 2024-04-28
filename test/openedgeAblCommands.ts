@@ -10,7 +10,7 @@ interface IRuntime {
 
 export async function enableOpenedgeAblExtension (runtimes?: IRuntime[]) {
 	const extname = 'riversidesoftware.openedge-abl-lsp'
-	await installExtension(extname).then(async () => {
+	await installExtension(extname).then(() => {
 		return sleep(250)
 	}, (e) => {
 		throw e
@@ -54,7 +54,7 @@ export function getRcodeCount (workspaceFolder?: WorkspaceFolder) {
 	return -1
 }
 
-export async function restartLangServer () {
+export function restartLangServer () {
 	return commands.executeCommand('abl.restart.langserv').then(async () => {
 		log.info('abl.restart.langserv command complete')
 		await waitForLangServerReady()
@@ -126,7 +126,7 @@ export async function waitForLangServerReady () {
 	throw new Error('lang server is not ready!')
 }
 
-export async function setRuntimes (runtimes?: IRuntime[]): Promise<void> {
+export function setRuntimes (runtimes?: IRuntime[]): Promise<void> {
 	return new Promise((resolve, reject) => {
 		const duration = new Duration('setRuntimes')
 		if (!enableExtensions()) {

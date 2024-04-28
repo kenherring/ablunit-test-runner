@@ -97,7 +97,7 @@ export class ABLResults implements Disposable {
 		this.testData = testData
 	}
 
-	async start () {
+	start () {
 		log.info('[start] workspaceFolder=' + this.workspaceFolder.uri.fsPath)
 		this.cfg.setup(this.workspaceFolder)
 
@@ -115,7 +115,7 @@ export class ABLResults implements Disposable {
 		}
 
 		// eslint-disable-next-line @typescript-eslint/no-invalid-void-type
-		const prom: (Promise<void> | Promise<void[]>)[] = []
+		const prom: (Promise<void | void[]> | Thenable<void>)[] = []
 		prom[0] = this.cfg.createProfileOptions(this.cfg.ablunitConfig.profOptsUri, this.cfg.ablunitConfig.profiler)
 		prom[1] = this.cfg.createProgressIni(this.propath.toString())
 		prom[2] = this.cfg.createAblunitJson(this.cfg.ablunitConfig.config_uri, this.cfg.ablunitConfig.options, this.testQueue)
@@ -336,7 +336,7 @@ export class ABLResults implements Disposable {
 		}
 	}
 
-	private async parseFinalSuite (item: TestItem, s: ITestSuite, options: TestRun) {
+	private parseFinalSuite (item: TestItem, s: ITestSuite, options: TestRun) {
 		if (s.tests > 0) {
 			if (s.errors === 0 && s.failures === 0) {
 				options.passed(item, s.time)
@@ -376,7 +376,7 @@ export class ABLResults implements Disposable {
 		return suitePath
 	}
 
-	private async setAllChildResults (children: TestItemCollection, testcases: ITestCase[], options: TestRun) {
+	private setAllChildResults (children: TestItemCollection, testcases: ITestCase[], options: TestRun) {
 		const promArr: Promise<void>[] = [Promise.resolve()]
 		children.forEach(child => {
 			const tc = testcases.find((t: ITestCase) => t.name === child.label)
@@ -391,11 +391,11 @@ export class ABLResults implements Disposable {
 		return Promise.all(promArr)
 	}
 
-	private async setChildResults (item: TestItem, options: TestRun, tc: ITestCase) {
+	private setChildResults (item: TestItem, options: TestRun, tc: ITestCase) {
 		switch (tc.status) {
 			case 'Success': {
 				options.passed(item, tc.time)
-				return
+				return Promise.resolve()
 			}
 			case 'Failure': {
 				if (tc.failure) {
@@ -423,7 +423,7 @@ export class ABLResults implements Disposable {
 			}
 			case 'Skpped': {
 				options.skipped(item)
-				return
+				return Promise.resolve()
 			}
 			default: {
 				log.error('unexpected test status ' + tc.status + ' for ' + tc.name)
@@ -467,10 +467,10 @@ export class ABLResults implements Disposable {
 		return tm
 	}
 
-	async parseProfile () {
+	parseProfile () {
 		const startTime = new Date()
 		const profParser = new ABLProfile()
-		return profParser.parseData(this.cfg.ablunitConfig.profFilenameUri, this.cfg.ablunitConfig.profiler.writeJson, this.debugLines!).then(async () => {
+		return profParser.parseData(this.cfg.ablunitConfig.profFilenameUri, this.cfg.ablunitConfig.profiler.writeJson, this.debugLines!).then(() => {
 			this.profileJson = profParser.profJSON
 			return this.assignProfileResults().then(() => {
 				log.debug('assignProfileResults complete (time=' + (Number(new Date()) - Number(startTime)) + ')')
