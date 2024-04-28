@@ -47,7 +47,7 @@ export interface ISourceMapItem {
  * Parse RCode (*.r) and return a source map
  * @param uri Uri of the r-code, not the source file.
  **/
-export const getSourceMapFromRCode = async (propath: PropathParser, uri: Uri) => {
+export const getSourceMapFromRCode = (propath: PropathParser, uri: Uri) => {
 	// rcode segments: https://docs.progress.com/bundle/openedge-abl-manage-applications/page/R-code-structure.html
 
 	let rawBytes: Uint8Array

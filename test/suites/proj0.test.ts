@@ -1,8 +1,6 @@
 import { Uri, commands, window, workspace, Range } from 'vscode'
-import { assert, deleteFile, getResults, log, runAllTests, sleep, toUri, updateTestProfile, waitForExtensionActive } from '../testCommon'
+import { assert, deleteFile, getResults, log, runAllTests, sleep, suiteSetupCommon, toUri, updateTestProfile } from '../testCommon'
 import { DetailedCoverageCustom } from '../../src/TestCoverage'
-
-const projName = 'proj0'
 
 function getDetailLine (coverage: DetailedCoverageCustom[], lineNum: number) {
 	if (!coverage) return undefined
@@ -15,9 +13,21 @@ function getDetailLine (coverage: DetailedCoverageCustom[], lineNum: number) {
 suite('proj0  - Extension Test Suite', () => {
 
 	suiteSetup('proj0 - before', async () => {
-		await waitForExtensionActive().then(async () => { return sleep(250) })
-		await commands.executeCommand('testing.clearTestResults').then()
 		deleteFile('.vscode/ablunit-test-profile.json')
+		await commands.executeCommand('testing.clearTestResults')
+
+		await commands.executeCommand('testing.clearTestResults')
+		return
+		// log.info('100')
+		// suiteSetupCommon().then(() => {
+		// 	log.info('101')
+		// 	done()
+		// 	log.info('102')
+		// }, (e) => {
+		// 	log.info('103')
+		// 	done(e)
+		// 	log.info('104')
+		// })
 	})
 
 	teardown('proj0 - afterEach', () => {

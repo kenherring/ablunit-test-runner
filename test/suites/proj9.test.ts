@@ -1,16 +1,13 @@
 import { Uri, workspace } from 'vscode'
-import { assert, deleteFile, deleteTestFiles, getTestCount, getWorkspaceUri, log, runAllTests, selectProfile, updateTestProfile, waitForExtensionActive } from '../testCommon'
+import { assert, deleteFile, deleteTestFiles, getTestCount, getWorkspaceUri, log, runAllTests, selectProfile, suiteSetupCommon, updateTestProfile } from '../testCommon'
 
-// const projName = __dirname.split(/[\\/]/).pop()!
-const projName = 'proj9'
 const testProfileJson = Uri.joinPath(getWorkspaceUri(), '.vscode/ablunit-test-profile.json')
 const testProfileBackup = Uri.joinPath(getWorkspaceUri(), '.vscode/ablunit-test-profile.json.backup')
 
 suite('proj9 - Extension Test Suite', () => {
 
 	suiteSetup('proj9 - before', async () => {
-		await waitForExtensionActive()
-		await waitForExtensionActive('riversidesoftware.openedge-abl-lsp')
+		await suiteSetupCommon()
 		await workspace.fs.copy(testProfileJson, testProfileBackup, { overwrite: true }).then()
 	})
 
@@ -61,7 +58,7 @@ suite('proj9 - Extension Test Suite', () => {
 
 	test('proj9.2 - second profile passes (project)', async () => {
 		await selectProfile('profile2')
-		await runAllTests(true, false)
+		await runAllTests(false)
 
 		const workspaceFolder = workspace.workspaceFolders![0].uri
 		const resultsJson = Uri.joinPath(workspaceFolder, 'results.json')
@@ -74,7 +71,7 @@ suite('proj9 - Extension Test Suite', () => {
 
 	test('proj9.3 - third profile passes (inherits propath from 2)', async () => {
 		await selectProfile('profile3')
-		await runAllTests(true, false)
+		await runAllTests(false)
 
 		const workspaceFolder = workspace.workspaceFolders![0].uri
 		const resultsJson = Uri.joinPath(workspaceFolder, 'results.json')
@@ -87,9 +84,9 @@ suite('proj9 - Extension Test Suite', () => {
 
 	test('proj9.4 - run default profile, then profile 3', async () => {
 		await selectProfile('default')
-		await runAllTests(true, false)
+		await runAllTests(false)
 		await selectProfile('profile3')
-		await runAllTests(true, false)
+		await runAllTests(false)
 
 		const workspaceFolder = workspace.workspaceFolders![0].uri
 		const resultsJson = Uri.joinPath(workspaceFolder, 'results.json')
@@ -117,7 +114,7 @@ suite('proj9 - Extension Test Suite', () => {
 		await updateTestProfile('importOpenedgeProjectJson', false)
 		await updateTestProfile('openedgeProjectProfile', 'profile2')
 
-		await runAllTests(true, false).catch((e: unknown) => {
+		await runAllTests(false).catch((e: unknown) => {
 			log.info('runAllTests failed, as expected: e=' + e)
 		})
 		const workspaceFolder = workspace.workspaceFolders![0].uri

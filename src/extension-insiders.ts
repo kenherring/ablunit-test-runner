@@ -1,5 +1,4 @@
 import { readFileSync } from 'fs'
-import { globSync } from 'glob'
 import {
 	CancellationError,
 	CancellationToken, ConfigurationChangeEvent, Disposable, ExtensionContext,
@@ -83,12 +82,12 @@ export async function activate (context: ExtensionContext) {
 		// watcher.onDidDelete(uri => { controller.items.delete(uri.fsPath) })
 	)
 
-	const runHandler = async (request: TestRunRequest, token: CancellationToken): Promise<void> => {
+	const runHandler = (request: TestRunRequest, token: CancellationToken): Promise<void> => {
 		if (request.continuous) {
 			log.error('continuous test runs not implemented')
 			throw new Error('continuous test runs not implemented')
 		}
-		return startTestRun(request, token).then(() => { return })
+		return startTestRun(request, token).then(() => { return }, (e) => { throw e })
 	}
 
 	async function openTestRunConfig () {
@@ -122,7 +121,7 @@ export async function activate (context: ExtensionContext) {
 		})
 	}
 
-	const startTestRun = async (request: TestRunRequest, cancellation: CancellationToken) => {
+	const startTestRun = (request: TestRunRequest, cancellation: CancellationToken) => {
 		recentResults = []
 
 		const discoverTests = async (tests: Iterable<TestItem>) => {
@@ -261,7 +260,7 @@ export async function activate (context: ExtensionContext) {
 			void log.notification('ablunit tests complete')
 			run.end()
 			log.trace('run.end()')
-			return
+			// return
 		}
 
 		const createABLResults = async () => {
@@ -309,8 +308,8 @@ export async function activate (context: ExtensionContext) {
 		})
 		const tests = request.include ?? gatherTestItems(ctrl.items)
 
-		return discoverTests(tests).then(async () => {
-			return createABLResults().then(async (res) => {
+		return discoverTests(tests).then(() => {
+			return createABLResults().then((res) => {
 				if (!res) {
 					throw new Error('createABLResults failed')
 				} else {
@@ -318,8 +317,9 @@ export async function activate (context: ExtensionContext) {
 				}
 				return runTestQueue(res).then(() => {
 					log.debug('runTestQueue complete')
-					return true
 				})
+			}, (e) => {
+				throw e
 			})
 		}).catch((err: unknown) => {
 			run.end()
@@ -334,7 +334,7 @@ export async function activate (context: ExtensionContext) {
 		})
 	}
 
-	async function updateNodeForDocument (e: TextDocument | TestItem | Uri, r: string) {
+	function updateNodeForDocument (e: TextDocument | TestItem | Uri, r: string) {
 		log.info('r=' + r)
 		let u: Uri | undefined
 		if (e instanceof Uri) {
@@ -347,13 +347,12 @@ export async function activate (context: ExtensionContext) {
 		}
 		if (workspace.getWorkspaceFolder(u) === undefined) {
 			log.info('skipping updateNodeForDocument for file not in workspace: ' + u.fsPath)
-			return Promise.resolve(() => { return false })
-			// return Promise.resolve(() => { return true })
+			return Promise.resolve()
 		}
 		return updateNode(u, ctrl)
 	}
 
-	async function resolveHandlerFunc (item: TestItem | undefined) {
+	function resolveHandlerFunc (item: TestItem | undefined) {
 		if (!item) {
 			log.debug('resolveHandlerFunc called with undefined item - refresh tests?')
 			if (workspace.getConfiguration('ablunit').get('discoverAllTestsOnActivate', false)) {
@@ -364,7 +363,7 @@ export async function activate (context: ExtensionContext) {
 					log.error('failed to refresh test tree. err=' + err)
 				})
 			}
-			return
+			return Promise.resolve()
 		}
 
 		if (item.uri) {
@@ -375,9 +374,10 @@ export async function activate (context: ExtensionContext) {
 		if (data instanceof ABLTestFile) {
 			return data.updateFromDisk(ctrl, item).then(() => { return }, (err) => { throw err })
 		}
+		return Promise.resolve()
 	}
 
-	ctrl.refreshHandler = async (token: CancellationToken) => {
+	ctrl.refreshHandler = (token: CancellationToken) => {
 		log.info('ctrl.refreshHandler')
 		return refreshTestTree(ctrl, token).catch((err: unknown) => {
 			log.error('refreshTestTree failed. err=' + err)
@@ -385,15 +385,17 @@ export async function activate (context: ExtensionContext) {
 		})
 	}
 
-	ctrl.resolveHandler = async item => {
+	ctrl.resolveHandler = item => {
 		log.info('ctrl.resolveHandler')
 		return resolveHandlerFunc(item).then(() => { return })
 	}
 
 	function updateConfiguration (event: ConfigurationChangeEvent) {
 		if (!event.affectsConfiguration('ablunit')) {
+			log.warn('configuration updated but does not include ablunit settings')
 			return
 		}
+		log.debug('effects ablunit.file? ' + event.affectsConfiguration('ablunit.files'))
 		if (event.affectsConfiguration('ablunit.files')) {
 			removeExcludedFiles(ctrl, getExcludePatterns())
 		}
@@ -423,7 +425,7 @@ export async function activate (context: ExtensionContext) {
 let contextStorageUri: Uri
 let contextResourcesUri: Uri
 
-async function updateNode (uri: Uri, ctrl: TestController) {
+function updateNode (uri: Uri, ctrl: TestController) {
 	log.trace('updateNode uri=' + uri.fsPath)
 	if(uri.scheme !== 'file' || isFileExcluded(uri, getExcludePatterns())) { return new Promise(() => { return false }) }
 
@@ -968,7 +970,7 @@ export async function doesFileExist (uri: Uri) {
 	return ret
 }
 
-async function createDir (uri: Uri) {
+function createDir (uri: Uri) {
 	if(!uri) {
 		return
 	}

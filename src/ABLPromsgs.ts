@@ -33,14 +33,14 @@ export class ABLPromsgs {
 		})
 	}
 
-	async loadFromDLC (dlc: IDlc) {
+	loadFromDLC (dlc: IDlc) {
 		return workspace.fs.stat(dlc.uri).then(() => {
 			const promsgDir = Uri.joinPath(dlc.uri, 'prohelp/msgdata')
-			return workspace.fs.readDirectory(promsgDir).then(async (dirFiles) => {
+			return workspace.fs.readDirectory(promsgDir).then((dirFiles) => {
 
 				const promArr: Promise<void>[] = []
 				for (const file of dirFiles) {
-					promArr.push(this.loadPromsgFile(Uri.joinPath(promsgDir, file[0])).then().catch((err: unknown) => {
+					promArr.push(this.loadPromsgFile(Uri.joinPath(promsgDir, file[0])).then(() => { return }, (err: unknown) => {
 						throw new Error('Cannot load promsgs file \'' + file + '\', err=' + err)
 					}))
 				}

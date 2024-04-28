@@ -29,7 +29,7 @@ export class Decorator {
 		this.backgroundExecuted = window.createTextEditorDecorationType({
 			backgroundColor: 'rgba(0,255,0,0.1)'
 		})
-		this.proposedApiEnabled = extensions.getExtension('vscode.vscode-proposed.api')?.isActive || false
+		this.proposedApiEnabled = extensions.getExtension('vscode.vscode-proposed.api')?.isActive ?? false
 	}
 
 	removeFromVisible () {
@@ -54,14 +54,14 @@ export class Decorator {
 			return
 		}
 
-		let covCount = 0
+		// let covCount = 0
 		for (const r of recentResults) {
 			for (const [k, v] of r.coverage) {
 				if (existsSync(k)) {
 					const uri = Uri.file(k)
 					// log.debug('recentCoverage.set ' + uri.fsPath + ', detailedCoverage.length=' + v.detailedCoverage.length)
 					this.recentCoverage.set(uri.fsPath, v)
-					covCount++
+					// covCount++
 				}
 			}
 		}
