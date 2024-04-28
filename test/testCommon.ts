@@ -623,9 +623,9 @@ export async function runAllTests (waitForResults = true, tag?: string, doRefres
 		runAllTestsDuration?.stop()
 		return getResults(1, tag).then((r) => {
 			const fUri = r?.[0]?.cfg.ablunitConfig.optionsUri.filenameUri
-			log.info(tag + 'testing.runAll found results file (filename=' + fUri + ', r=' + r + ')')
+			log.info(tag + 'testing.runAll found results file (filename=' + fUri.fsPath + ', r=' + r + ')')
 			if (!doesFileExist(fUri)) {
-				throw new Error('no results file found (filename=' + fUri + ')')
+				throw new Error('no results file found (filename=' + fUri.fsPath + ')')
 			}
 
 			log.info(tag + 'runAllTests complete (r=' + r + ')')

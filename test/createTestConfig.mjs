@@ -345,7 +345,7 @@ function getCoverageOpts () {
 	}
 }
 
-export async function createTestConfig () { // NOSONAR
+export function createTestConfig () { // NOSONAR
 	initialize()
 
 	const testConfig = {

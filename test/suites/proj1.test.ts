@@ -59,7 +59,7 @@ suite('proj1 - Extension Test Suite', () => {
 		assert.notFileExists(resultsJson)
 	})
 
-	test('proj1.2A - output files exist 2 - exclude compileError.p', () => {
+	test('proj1.2A - output files exist 2 - exclude compileError.p', (done) => {
 		log.info('updating config...')
 		return updateConfig('ablunit.files.exclude', [ '.builder/**', 'compileError.p' ]).then(() => {
 			log.info('running tests...')
@@ -70,6 +70,7 @@ suite('proj1 - Extension Test Suite', () => {
 		}).then((testCount) => {
 			log.info('asserting test count...')
 			assert.equal(testCount, 12)
+			done()
 		})
 	})
 
