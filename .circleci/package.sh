@@ -30,7 +30,7 @@ initialize () {
 
 package () {
     echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}]"
-    rm -f *.vsix
+    rm -f ./*.vsix
     package_version stable
     # package_version insiders
 }
