@@ -67,8 +67,12 @@ export class ABLProfile {
 		log.debug('parsing profiler data complete')
 		if (writeJson) {
 			const jsonUri = Uri.file(uri.fsPath.replace(/\.[a-zA-Z]+$/, '.json'))
-			this.writeJsonToFile(jsonUri).then(null, (err: Error) => {
+			// eslint-disable-next-line promise/catch-or-return
+			this.writeJsonToFile(jsonUri).then(() => {
+				return true
+			}, (err: unknown) => {
 				log.error('Error writing profile output json file: ' + err)
+				return false
 			})
 		}
 		log.debug('parseData returning')
@@ -81,6 +85,7 @@ export class ABLProfile {
 		}
 		return workspace.fs.writeFile(uri, Uint8Array.from(Buffer.from(JSON.stringify(data, null, 2)))).then(() => {
 			log.info('wrote profile output json file: ' + workspace.asRelativePath(uri))
+			return
 		}, (err) => {
 			log.error('failed to write profile output json file ' + workspace.asRelativePath(uri) + ' - ' + err)
 		})

@@ -21,9 +21,9 @@ suite('workspace1 - Extension Test Suite', () => {
 		await runAllTests()
 
 		const workspaceFolderUri = [
-			workspace.workspaceFolders![0].uri,
-			Uri.joinPath(workspace.workspaceFolders![1].uri, 'target'),
-			workspace.workspaceFolders![2].uri,
+			workspace.workspaceFolders?.[0].uri ?? undefined,
+			Uri.joinPath(workspace.workspaceFolders?.[1].uri ?? Uri.parse(__dirname), 'target'),
+			workspace.workspaceFolders?.[2].uri,
 		]
 		if (!workspaceFolderUri[0] || !workspaceFolderUri[1] || !workspaceFolderUri[2]) {
 			assert.fail('storage uri not defined')

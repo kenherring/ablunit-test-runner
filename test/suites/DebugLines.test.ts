@@ -1,5 +1,5 @@
 import { Uri, workspace } from 'vscode'
-import { assert, awaitRCode, getWorkspaceUri, log, sleep, suiteSetupCommon } from '../testCommon'
+import { assert, awaitRCode, getWorkspaceUri, log, suiteSetupCommon } from '../testCommon'
 import { getSourceMapFromRCode } from '../../src/parse/RCodeParser'
 import { PropathParser } from '../../src/ABLPropath'
 import { vscodeVersion } from '../../src/ABLUnitCommon'
@@ -10,15 +10,13 @@ const workspaceFolder = workspace.workspaceFolders![0]
 const allTests = (version: vscodeVersion = 'stable') => {
 	return suite('debugLines - ' + version + ' Extension Test Suite', () => {
 
-		suiteSetup('debugLines - before', async () => {
-			await suiteSetupCommon()
-			await sleep(250)
-			return awaitRCode(workspaceFolder, 8).then((rcodeCount) => {
-				log.info('compile complete! rcode count = ' + rcodeCount)
-			}, (e) => {
-				log.error('compile failed! e=' + e)
-				throw e
-			})
+		suiteSetup('debugLines - before', () => {
+			return suiteSetupCommon()
+				.then(() => { return awaitRCode(workspaceFolder, 8) })
+				.then((rcodeCount) => {
+					log.info('rcodeCount=' + rcodeCount)
+					return
+				}, (e) => { log.error('rcode error: ' + e) })
 		})
 
 		test('debugLines.1 - read debug line map from r-code', async () => {

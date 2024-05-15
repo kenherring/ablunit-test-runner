@@ -83,10 +83,18 @@ initialize () {
 		ABLUNIT_TEST_RUNNER_VSCODE_VERSION \
 		ABLUNIT_TEST_RUNNER_NO_COVERAGE
 
+
 	if $DELETE_CACHE_VOLUME; then
-		echo "deleting test-runner-cache volume"
-		docker volume rm test-runner-cache || true
-		# docker volume rm vscode-cli-cache || true
+		# docker system prune -f
+		local VOLS=()
+		docker volume ls | grep -q test-runner-cache && VOLS+=(test-runner-cache)
+		docker volume ls | grep -q vscode-cli-cache && VOLS+=(vscode-cli-cache)
+		if [ ${#VOLS[@]} -eq 0 ]; then
+			echo "no volumes to delete"
+		else
+			echo "deleting volume(s): ${VOLS[*]}"
+			docker volume rm "${VOLS[@]}"
+		fi
 	fi
 
 	## create volume for .vscode-test directory to persist vscode application downloads

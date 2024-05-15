@@ -10,32 +10,41 @@ suite('proj8 - Extension Test Suite', () => {
 		await waitForExtensionActive()
 	})
 
-	test('proj8.1 - test count', async () => {
-		await runAllTests()
+	test('proj8.1 - test count', () => {
+		return runAllTests()
+			.then(() => {
+				const resultsXml = Uri.joinPath(getWorkspaceUri(), 'target', 'results.xml')
+				const resultsJson = Uri.joinPath(getWorkspaceUri(), 'target', 'results.json')
 
-		const resultsXml = Uri.joinPath(getWorkspaceUri(), 'target', 'results.xml')
-		const resultsJson = Uri.joinPath(getWorkspaceUri(), 'target', 'results.json')
+				assert.fileExists(resultsXml)
+				assert.fileExists(resultsJson)
 
-		assert.fileExists(resultsXml)
-		assert.fileExists(resultsJson)
-
-		assert.tests.count(2)
-		assert.tests.errored(0)
-		assert.tests.failed(0)
-		assert.tests.passed(2)
+				assert.tests.count(2)
+				assert.tests.errored(0)
+				assert.tests.failed(0)
+				assert.tests.passed(2)
+				return
+			})
 	})
 
-	test('proj8.2 - getEnvVars confirm PATH is set correctly', async () => {
-		await runAllTests()
-		const recentResults = await getResults()
-		const res = recentResults[0]
-		const envVars = getEnvVars(res.dlc?.uri)
-		const envPath = envVars['PATH']
-		if (envPath) {
-			assert.assert(!envPath.includes('${env:PATH}'), 'env should not contain ${env.PATH}, but does')
-		} else {
-			assert.fail('env is undefined')
-		}
+	test('proj8.2 - getEnvVars confirm PATH is set correctly', () => {
+		return runAllTests()
+			.then(() => { return getResults() })
+			.then((r) => {
+				if(!r[0]) {
+					assert.fail('no results found')
+				}
+				return getEnvVars(r[0].dlc?.uri)
+			})
+			.then((envVars) => {
+				if (!envVars['PATH']) {
+					assert.fail('environment variable PATH is undefined')
+					return
+				}
+
+				assert.assert(!envVars['PATH'].includes('${env:PATH}'), 'env should not contain ${env.PATH}, but does')
+				return true
+			})
 	})
 
 })

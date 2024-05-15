@@ -29,7 +29,7 @@ export class Decorator {
 		this.backgroundExecuted = window.createTextEditorDecorationType({
 			backgroundColor: 'rgba(0,255,0,0.1)'
 		})
-		this.proposedApiEnabled = extensions.getExtension('vscode.vscode-proposed.api')?.isActive || false
+		this.proposedApiEnabled = extensions.getExtension('vscode.vscode-proposed.api')?.isActive ?? false
 	}
 
 	removeFromVisible () {

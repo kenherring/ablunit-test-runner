@@ -19,24 +19,24 @@ export class ABLPromsgs {
 		// eslint-disable-next-line @typescript-eslint/no-this-alias
 		promsgsObj = this
 
+		// eslint-disable-next-line promise/catch-or-return
 		this.loadFromCache(cacheUri).then(() => {
 			log.info('promsgs loaded from cache \'' + cacheUri.fsPath + '\'')
-		}, () => {
+			return
+		}, (_e: unknown) => {
 			log.info('reading promsgs from DLC')
-			this.loadFromDLC(dlc).then(() => {
-				this.saveCache(cacheUri).then(() => { return }, (err) => {
-					throw err
-				})
-			}, (err) => {
-				log.info('Cannot load promsgs from DLC, err=' + err)
-			})
+			return this.loadFromDLC(dlc)
+		}).then(() => {
+			return this.saveCache(cacheUri)
+		}, (e: unknown) => {
+			log.info('Cannot load promsgs from DLC, err=' + e)
 		})
 	}
 
-	async loadFromDLC (dlc: IDlc) {
+	loadFromDLC (dlc: IDlc) {
 		return workspace.fs.stat(dlc.uri).then(() => {
 			const promsgDir = Uri.joinPath(dlc.uri, 'prohelp/msgdata')
-			return workspace.fs.readDirectory(promsgDir).then(async (dirFiles) => {
+			return workspace.fs.readDirectory(promsgDir).then((dirFiles) => {
 
 				const promArr: Promise<void>[] = []
 				for (const file of dirFiles) {
@@ -47,6 +47,7 @@ export class ABLPromsgs {
 
 				return Promise.all(promArr).then(() => {
 					log.info('promsgs loaded from DLC')
+					return
 				}, (err) => {
 					throw new Error('Cannot load promsgs from DLC, err=' + err)
 				})
@@ -105,6 +106,7 @@ export class ABLPromsgs {
 		log.info('load promsgs from cache') // REMOVEME
 		await workspace.fs.readFile(cacheUri).then((buffer) => {
 			this.promsgs.push(JSON.parse(Buffer.from(buffer).toString('utf8')) as IPromsg)
+			return
 		}, (err) => {
 			throw new Error('Cannot read promsgs file \'' + cacheUri.fsPath + '\', err=' + err)
 		})
@@ -118,6 +120,7 @@ export class ABLPromsgs {
 		log.info('save promsgs cache file=\'' + cacheUri.fsPath + '\'')
 		return workspace.fs.writeFile(cacheUri, Buffer.from(JSON.stringify(this.promsgs))).then(() => {
 			log.info('saved promsgs cache successfully \'' + cacheUri.fsPath + '\'')
+			return
 		}, (err) => {
 			throw new Error('error writing promsgs cache file: ' + err)
 		})

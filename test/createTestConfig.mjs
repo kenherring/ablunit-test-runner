@@ -11,6 +11,7 @@ import { fileURLToPath } from 'url'
 import * as glob from 'glob'
 import * as path from 'path'
 import * as fs from 'fs'
+import process from 'process'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const vsVersionNum = '1.88.0'
@@ -29,17 +30,6 @@ const enableExtensions = [
 	'proj9',
 ]
 
-function getExtensionVersion () {
-	const contents = fs.readFileSync('package.json')
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-	const packageJSON = JSON.parse(contents)
-	if (packageJSON['version']) {
-		return toString(packageJSON['version'])
-	}
-	throw new Error('unable to get extension version')
-}
-
-
 function initialize () {
 	if (vsVersion !== 'insiders' && vsVersion !== 'stable' && !vsVersion.startsWith('1.')) {
 		throw new Error('Invalid version: ' + vsVersion)
@@ -55,17 +45,22 @@ function getMochaTimeout (projName) {
 	// if (enableExtensions.includes(projName)) {
 	if(isFirst) {
 		isFirst = false
-		return 180000
+		return 30000
 	}
 
-	// return 210000 // 3.5 minutes
-	return 120000 // 2.0 minutes
+
+	switch (projName) {
+		case 'DebugLines': return 120000 // install openedge-abl-lsp for the first time, so give it a moment to start
+		case 'proj1': return 30000
+		// case 'proj2': return 20000
+		case 'proj7A': return 60000
+	}
+
+	return 15000
 
 	// switch (projName) {
 	// 	case 'proj4': return 60000
 	// 	// case 'proj4': return 30000
-	// 	case 'proj1': return 90000
-	// 	// case 'proj1': return 45000
 	// 	case 'proj3':
 	// 	case 'DebugLines': return 120000
 	// 	// case 'DebugLines': return 60000
@@ -83,6 +78,9 @@ function getMochaOpts (projName) {
 	const jsonFile = path.resolve(reporterDir, 'mocha_results_' + projName + '.json')
 	const mochaFile = path.resolve(reporterDir, 'mocha_results_junit_' + projName + '.xml')
 	const xunitFile = path.resolve(reporterDir, 'mocha_results_xunit_' + projName + '.xml')
+	const bail = process.env['CIRCLECI'] != 'true' || false
+	// console.log('bail=' + bail + ', CIRCLECI=' + process.env['CIRCLECI'])
+	// process.exit(1)
 
 	const mochaOpts = {
 		// fullTrace: true
@@ -92,7 +90,7 @@ function getMochaOpts (projName) {
 		retries: 0,
 		recursive: true,
 		// color: true,
-		bail: false,
+		bail,
 		exit: true,
 		extension: [ 'js', 'ts', 'test.ts' ],
 		// require: [
@@ -164,9 +162,11 @@ function getLaunchArgs (projName) {
 	// } else {
 	// 	args.push('--install-extension', './ablunit-test-runner-insiders-' + extVersion + '.vsix')
 	// }
-	if (enableExtensions.includes(projName)) {
-		args.push('--install-extension', 'riversidesoftware.openedge-abl-lsp')
-	}
+	// if (enableExtensions.includes(projName)) {
+	// 	args.push('--install-extension', 'riversidesoftware.openedge-abl-lsp')
+	// 	// args.push('--install-extension=riversidesoftware.openedge-abl-lsp')
+	// 	// args.push('--install-extension', 'riversidesoftware.openedge-abl-lsp@1.8.0')
+	// }
 	// args.push('--pre-release')
 	// args.push('--uninstall-extension <ext-id>')
 	// args.push('--update-extensions')
@@ -271,6 +271,7 @@ function getTestConfig (projName) {
 		env: envVars,
 		useInstallation: useInstallation,
 		// useInstallation: { fromMachine: true },
+		installExtension: 'riversidesoftware.openedge-abl-lsp',
 		// download: { reporter: ProgressReporter, timeout: ? }
 
 		// --- IBaseTestConfiguration --- //
@@ -334,7 +335,7 @@ function getCoverageOpts () {
 	}
 }
 
-export async function createTestConfig () { // NOSONAR
+export function createTestConfig () { // NOSONAR
 	initialize()
 
 	const testConfig = {

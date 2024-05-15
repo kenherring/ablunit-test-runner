@@ -1,16 +1,27 @@
-import { assert, extensions, log, runAllTests, suiteSetupCommon } from '../testCommon'
+import { assert, extensions, log, runAllTests, sleep, suiteSetupCommon } from '../testCommon'
+
+function testComplete (done: Mocha.Done) {
+	done()
+	return true
+}
 
 suite('projAtStart  - Extension Test Suite', () => {
 
-	suiteSetup('proj0 - suiteSetup', async () => {
-		log.info('suiteSetup starting...')
-		await suiteSetupCommon().then()
-		log.info('suiteSetup complete!')
-	})
-
-	test('projAtStart - ${workspaceFolder}/ablunit.json file exists', async () => {
-		await runAllTests(true, false)
-		assert.fileExists('results.xml')
+	// test('projAtStart - ${workspaceFolder}/ablunit.json file exists', (done) => {
+	test('projAtStart - ${workspaceFolder}/ablunit.json file exists', () => {
+		return runAllTests()
+			.then(() => {
+				log.info('runAllTests().then() complete!')
+				assert.fileExists('results.xml')
+				log.info('assertComplete')
+				return true
+			}, (e: unknown) => { throw e })
+			// .finally(() => {
+			// 	log.info('finally()')
+			// 	// log.info('calling done()')
+			// 	// done()
+			// 	// log.info('called done()')
+			// })
 	})
 
 	test('projAtStart - enable proposed api', () => {
@@ -20,14 +31,14 @@ suite('projAtStart  - Extension Test Suite', () => {
 			return
 		}
 
-		log.info('ablunit-test-runner=' + JSON.stringify(ext))
+		// log.info('ablunit-test-runner=' + JSON.stringify(ext))
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-		log.info('proposed? ' + ext.packageJSON['displayName'])
-		log.info('process.argv=' + JSON.stringify(process.argv, null, 2))
+		log.info('proposed? ' + ext.packageJSON.displayName)
+		// log.info('process.argv=' + JSON.stringify(process.argv, null, 2))
 		// log.info('window.state=' + JSON.stringify(vscode.window.state))
-		log.info('ext.exports=' + JSON.stringify(ext.exports))
+		// log.info('ext.exports=' + JSON.stringify(ext.exports))
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-		const proposedApiEnabled = ext.packageJSON['displayName'].includes('insiders')
+		const proposedApiEnabled = ext.packageJSON.displayName.includes('insiders')
 
 		// log.info(vscode.extensions.checkProposedApiEnabled)
 
