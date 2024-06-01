@@ -66,7 +66,7 @@ export const oeVersion = () => {
 	const dlcVersion = fs.readFileSync(versionFile)
 	log.info('dlcVersion=' + dlcVersion)
 	if (dlcVersion) {
-		const match = dlcVersion.toString().match(/OpenEdge Release (\d+\.\d+)/)
+		const match = RegExp(/OpenEdge Release (\d+\.\d+)/).exec(dlcVersion.toString())
 		if (match) {
 			log.info('102 oeVersionEnv=' + match[1])
 			return match[1]
@@ -150,9 +150,9 @@ export function suiteSetupCommon (runtimes?: IRuntime[]) {
 	}
 	log.info('[suiteSetupCommon] waitForExtensionActive \'kherring.ablunit-test-runner\' (projName=' + projName() + ')')
 	return waitForExtensionActive()
-		.then(() => {
+		.then(async () => {
 			if (enableExtensions()) {
-				return enableOpenedgeAblExtension(runtimes)
+				await enableOpenedgeAblExtension(runtimes)
 			}
 			return
 		})
@@ -201,10 +201,10 @@ export function setFilesExcludePattern () {
 	})
 }
 
-export async function installExtension (extname = 'riversidesoftware.openedge-abl-lsp') {
-	log.info('[installExtension] start process.args=' + process.argv.join(' '))
+export function installExtension (extname = 'riversidesoftware.openedge-abl-lsp') {
+	log.info('start process.args=' + process.argv.join(' '))
 	if (extensions.getExtension(extname)) {
-		log.info('[installExtension] extension ' + extname + ' is already installed')
+		log.info('extension ' + extname + ' is already installed')
 		return
 	}
 	// if (extname === 'riversidesoftware.openedge-abl-lsp' && enableExtensions()) {
@@ -214,31 +214,22 @@ export async function installExtension (extname = 'riversidesoftware.openedge-ab
 	// }
 
 
-	log.info('[installExtension] installing ' + extname + ' extension...')
+	log.info('installing ' + extname + ' extension...')
 	const installCommand = 'workbench.extensions.installExtension'
-	await commands.executeCommand(installCommand, extname).then(() => {
-		log.info('[installExtension] post install command')
-		return sleep(250)
-	}, (e) => {
-		log.error('install failed e=' + e)
-	})
-	await sleep2(250)
-
-	log.info('get extension \'' + extname + '\'...')
-	let ext: vscode.Extension<unknown> | undefined = undefined
-	for (let i=0; i<10; i++) {
-		ext = extensions.getExtension(extname)
-		// if (!ext) {
-		// 	ext = extensions.getExtension('riversidesoftware.openedge-abl-lsp')
-		// }
-		if (ext) {
-			break
-		}
-		await sleep2(250, isoDate())
-	}
-	if (!ext) {
-		throw new Error('get after install failed (undefined)')
-	}
+	return commands.executeCommand(installCommand, extname)
+		.then(() => {
+			log.info('post install command')
+			return sleep2(250)
+		}).then(() => {
+			log.info('get extension \'' + extname + '\'...')
+			const ext = extensions.getExtension(extname)
+			if (!ext) {
+				throw new Error('get after install failed (undefined)')
+			}
+			return true
+		}, (e) => {
+			log.error('install failed e=' + e)
+		})
 }
 
 export function deleteFile (file: Uri | string) {
@@ -286,50 +277,48 @@ export async function activateExtension (extname = 'riversidesoftware.openedge-a
 
 	if (!ext.isActive) {
 		log.info('[activateExtension] activate')
-		await ext.activate()
+		await ext.activate().then(() => {
+			log.info('[activateExtension] activated ' + extname + ' extension!')
+		})
 	}
-	await sleep2(25)
+	await sleep2(250)
 	// if (extname === 'riversidesoftware.openedge-abl-lsp') {
 	// 	await waitForLangServerReady()
 	// }
-	log.info('[activateExtension] activated ' + extname + ' extension!')
+	log.info('[activateExtension] isActive=' + ext.isActive)
 	return ext.isActive
 }
 
 export async function waitForExtensionActive (extensionId = 'kherring.ablunit-test-runner') {
 	let ext = extensions.getExtension(extensionId)
 	if (!ext) {
-		await sleep2(250, 'wait and retry getExtension')
-		ext = extensions.getExtension(extensionId)
+		ext = await sleep2(250, 'wait and retry getExtension')
+			.then(() => { return extensions.getExtension(extensionId) })
 	}
-	if (!ext) {
-		throw new Error(extensionId + ' is not installed')
-	}
+	if (!ext) { throw new Error(extensionId + ' is not installed') }
+	if (ext.isActive) { log.info(extensionId + ' is already active'); return ext.isActive }
 
-	if (!ext.isActive) {
-		await ext.activate().then(() => {
-			log.info('activated ' + extensionId)
-			return
-		}, (err) => {
-			throw new Error('failed to activate kherring.ablunit-test-runner: ' + err)
-		})
-	}
+	ext = await ext.activate()
+		.then(() => { return sleep2(250) })
+		.then(() => {
+			log.info('activated? ' + extensionId)
+			return extensions.getExtension(extensionId)
+		}, (err) => { throw new Error('failed to activate kherring.ablunit-test-runner: ' + err) })
+	log.info('post-activate (ext.isActive=' + ext?.isActive + ')')
+	if (!ext) { throw new Error(extensionId + ' is not installed') }
 
-	if(!ext.isActive) {
-		log.info('waiting for extension to activate - should never be here!')
-		for (let i=0; i<50; i++) {
-			if (ext.isActive) {
-				log.info('waitied ' + (i + 1) * 100 + 'ms for extension to activate')
-				break
-			}
-			await sleep2(100)
+	for (let i=0; i<50; i++) {
+		if (ext.isActive) {
+			log.info(extensionId + ' is active! (i=' + i + ')')
+			return ext.isActive
 		}
+		log.info('waitied ' + (i + 1) * 100 + 'ms for extension to activate')
+		await sleep2(100)
 	}
+	if (!ext.isActive) { throw new Error(extensionId + ' is not active') }
 
-	if (!ext.isActive) {
-		throw new Error(extensionId + ' is not active')
-	}
 	log.info(extensionId + ' is active!')
+	return ext.isActive
 }
 
 function getRcodeCount (workspaceFolder?: WorkspaceFolder) {
@@ -353,7 +342,7 @@ export async function awaitRCode (workspaceFolder: WorkspaceFolder, rcodeCountMi
 	const ext = extensions.getExtension('riversidesoftware.openedge-abl-lsp')
 	log.info('[awaitRCode] isActive=' + ext?.isActive)
 	if (!ext?.isActive) {
-		log.info('[awaitRCode] extension active! (ext=' + JSON.stringify(ext) + ')')
+		log.info('[awaitRCode] extension not active! (ext=' + JSON.stringify(ext) + ')')
 		throw new Error('openedge-abl-lsp is not active! rcode cannot be created')
 	}
 	const buildWaitTime = 20
@@ -551,13 +540,11 @@ export async function runAllTests (doRefresh = true, waitForResults = true, tag?
 	if (doRefresh) {
 		log.info('refresh before run - start')
 		await refreshTests()
-			.then((r) => {
-				log.info('refresh before run - complete (r=' + r + ')')
-				return sleep(250, 'refreshTests complete!')
-			})
-			.then(() => { log.info('refreshTests complete!'); return }, (e) => { throw e })
-	} else {
-		await sleep(250, tag + 'sleep before testing.runAll')
+		// await refreshTests()
+		// 	.then(() => {
+		// 		log.info('refreshTests complete!')
+		// 		return true
+		// 	}, (e) => { throw e })
 	}
 
 	log.info('testing.runAll starting (waitForResults=' + waitForResults + ')')
@@ -596,13 +583,14 @@ function waitForRefreshComplete () {
 				reject(new Error('refresh took longer than ' + waitTime + 'ms'))
 			}
 			const p = commands.executeCommand('_ablunit.isRefreshTestsComplete')
-			p.then((r: unknown) => {
-				if (r) {
-					clearInterval(interval)
-					resolve(refreshDuration.elapsed())
-				}
-				return r
-			}, (e) => { throw e })
+				.then((r: unknown) => {
+					if (r) {
+						clearInterval(interval)
+						resolve(refreshDuration.elapsed())
+					}
+					return r
+				}, (e) => { throw e })
+			return
 		}, 500)
 	})
 
@@ -614,7 +602,7 @@ export function refreshTests () {
 		.then(() => { return waitForRefreshComplete() })
 		.then((r) => {
 			log.info('testing.refreshTests completed! (r=' + r + ')')
-			return
+			return true
 		}, (err) => {
 			log.info('testing.refreshTests caught an exception. err=' + err)
 			throw err
@@ -678,10 +666,10 @@ function getConfigDefaultValue (key: string) {
 	const keys = key.split('.')
 	const basekey = keys.shift()
 	const childkey = keys.join('.')
-	log.info('key=' + key + ', basekey=' + basekey + ', childkey=' + childkey)
+	log.debug('key=' + key + ', basekey=' + basekey + ', childkey=' + childkey)
 	const workspaceConfig = workspace.getConfiguration(basekey, getWorkspaceUri())
 	const t = workspaceConfig.inspect(childkey)
-	log.info('inspect=' + JSON.stringify(t))
+	log.debug('inspect=' + JSON.stringify(t))
 	if (t?.defaultValue) {
 		return t.defaultValue
 	}
@@ -701,7 +689,7 @@ export function updateConfig (key: string, value: unknown, configurationTarget?:
 	if (JSON.stringify(value) === JSON.stringify(currentValue)) {
 		// log.debug(section1 + '.' + section2 + ' is already set to \'' + value + '\'')
 		log.warn(key + ' is already set to \'' + value + '\'')
-		return Promise.resolve()
+		return Promise.resolve(true)
 	}
 
 	if (!value) {
@@ -709,11 +697,12 @@ export function updateConfig (key: string, value: unknown, configurationTarget?:
 		log.info('default=' + JSON.stringify(defaultValue))
 		if (JSON.stringify(defaultValue) === JSON.stringify(currentValue)) {
 			log.warn(key + ' is already set to default value \'' + value + '\'')
-			return Promise.resolve()
+			return Promise.resolve(true)
 		}
 	}
 	log.info('updating configuration section1=' + section2 + ', section2=' + section2 + ', key=' + key + ' value=' + JSON.stringify(value))
 	return workspaceConfig.update(section2, value, configurationTarget)
+		.then(() => true, (e) => { throw e })
 }
 
 export async function updateTestProfile (key: string, value: string | string[] | boolean) {
@@ -770,8 +759,9 @@ export function refreshData (resultsLen = 0) {
 
 	log.info('refreshData start')
 	return commands.executeCommand('_ablunit.getExtensionTestReferences').then((resp) => {
-		log.info('refreshData command complete')
+		log.info('refreshData command complete (resp=' + JSON.stringify(resp) + ')')
 		const refs = resp as IExtensionTestReferences
+		log.info('refs=' + JSON.stringify(refs))
 		const passedTests = refs.recentResults?.[0].ablResults?.resultsJson[0].testsuite?.[0].passed ?? undefined
 		log.info('recentResults.length=' + refs.recentResults.length)
 		log.info('recentResults[0].ablResults.=' + refs.recentResults?.[0].status)
@@ -790,6 +780,7 @@ export function refreshData (resultsLen = 0) {
 		}
 		return false
 	}, (err) => {
+		log.error('failed to refresh test results: ' + err)
 		throw new Error('failed to refresh test results: ' + err)
 	})
 }

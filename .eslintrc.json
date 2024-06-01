@@ -78,6 +78,8 @@
 		// "@typescript-eslint/promise-function-async": "warn",
 
 		"promise/catch-or-return": "warn",
+		"promise/no-callback-in-promise": "off",
+		"promise/always-return": [ "warn",  { "ignoreLastCallback": true } ],
 
 		"no-console": "warn",
 		"no-empty": "warn",

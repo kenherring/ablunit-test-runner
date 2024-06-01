@@ -1,6 +1,9 @@
-import { Selection, Uri, commands, window, workspace } from 'vscode'
-import { assert, deleteTestFiles, getTestCount, getWorkspaceUri, log, runAllTests, sleep, toUri, updateConfig, waitForExtensionActive } from '../testCommon'
+// import { Selection, Uri, commands, window, workspace } from 'vscode'
+// import { assert, deleteTestFiles, getTestCount, getWorkspaceUri, log, runAllTests, sleep, toUri, updateConfig, waitForExtensionActive } from '../testCommon'
+// import { ReadableStreamDefaultController } from 'stream/web'
 
+// import { before, beforeEach } from 'mocha'
+import { Uri, assert, deleteTestFiles, getWorkspaceUri, log, runAllTests, waitForExtensionActive, workspace } from '../testCommon'
 
 const workspaceUri = getWorkspaceUri()
 
@@ -8,21 +11,87 @@ suite('proj1 - Extension Test Suite', () => {
 
 	suiteSetup('proj1 - before', () => {
 		return waitForExtensionActive()
+			.then((r) => {
+				log.info('end waitForExtensionActive (r=' + r + ')')
+				return r
+			}, (e) => {
+				log.error('waitForExtensionActive error: ' + e)
+				throw e
+			})
 	})
 
-	setup('proj1 - beforeEach', () => {
+	// before('proj1 - before', async () => {
+	suiteSetup('proj1 - before', async () => {
+		const r = await waitForExtensionActive()
+		log.info('end waitForExtensionActive (r=' + r + ')')
+		return r
+	})
+
+	// setup('proj1 - beforeEach', () => {
+	// 	log.info('setup-1')
+	// 	deleteTestFiles()
+	// 	log.info('setup-2')
+	// 	return updateConfig('ablunit.files.exclude', undefined)
+	// 		.then(() => {
+	// 			log.info('setup-3')
+	// 			return true
+	// 		}, (e) => { throw e })
+	// })
+
+	// setup('proj1 - beforeEach', (done) => {
+	// 	log.info('setup-1')
+	// 	deleteTestFiles()
+	// 	log.info('setup-2')
+	// 	// await updateConfig('ablunit.files.exclude', undefined)
+
+	// 	// eslint-disable-next-line promise/catch-or-return
+	// 	updateConfig('ablunit.files.exclude', undefined)
+	// 		.then(() => {
+	// 			log.info('setup-4 post-updateConfig')
+	// 			setImmediate(() => { log.info('setup-4 setImmediate'); done() })
+	// 			return
+	// 		}, (e) => { throw e })
+	// 		// .finally(() => { log.info('setup-4 done'); done(); ReadableStreamDefaultController })
+	// 	log.info('setup-3')
+	// 	// return Promise.resolve()
+	// })
+
+
+
+	// beforeEach('proj1 - beforeEach', async () => {
+	setup('proj1 - beforeEach', async () => {
 		log.info('setup-1')
 		deleteTestFiles()
 		log.info('setup-2')
-		return updateConfig('ablunit.files.exclude', undefined)
-			.then(() => { log.info('setup-3'); return }, (e) => { throw e })
+		const prom = workspace.getConfiguration('ablunit').update('files.exclude', undefined)
+		log.info('setup-3')
+		await prom.then(() => { log.info('setup-4') }, () => { log.error('failed to update ablunit.files.exclude') })
+		log.info('setup-5')
+		// return
+		// return updateConfig('ablunit.files.exclude', undefined)
+		// 	.then((r) => { log.info('setup-3 (r=' + r + ')'); return }, (e) => { throw e })
+		// 	// .then((r) => { log.info('setup-3 (r=' + r + ')'); return true }, (e) => { throw e })
+		// 	// .then((r) => { log.info('setup-3 (r=' + r + ')'); return r }, (e) => { throw e })
 	})
 
-	suiteTeardown('proj1 - afterEach', () => {
-		log.info('suiteTeardown-1')
-		return updateConfig('ablunit.files.exclude', undefined)
-			.then(() => { log.info('suiteTeardown-2'); return }, (e) => { throw e })
-	})
+	// setup('proj1 - beforeEach', async () => {
+	// 	log.info('setup-1')
+	// 	deleteTestFiles()
+	// 	log.info('setup-2')
+	// 	const r = updateConfig('ablunit.files.exclude', undefined)
+	// 		.then(() => {
+	// 			log.info('setup-3')
+	// 			return
+	// 		}, (e) => { throw e })
+	// 	log.info('setup-4 (r=' + r + ')')
+	//  done()
+	// })
+
+	// suiteTeardown('proj1 - afterEach', () => {
+	// 	log.info('suiteTeardown-1')
+	// 	return updateConfig('ablunit.files.exclude', undefined)
+	// 		.then((r) => { return r }, (e) => { throw e })
+	// })
 
 	test('proj1.1 - output files exist 1 - compile error', () => {
 		const ablunitJson = Uri.joinPath(workspaceUri, 'ablunit.json')
@@ -31,18 +100,20 @@ suite('proj1 - Extension Test Suite', () => {
 		assert.notFileExists(ablunitJson)
 		assert.notFileExists(resultsXml)
 
-		return runAllTests().then(() => {
-			throw new Error('runAllTests should have thrown an error')
-		}, (e: unknown) => {
-			log.info('runAllTests error: ' + e)
-			assert.fileExists(ablunitJson)
-			if (process.platform === 'win32' || process.env['WSL_DISTRO_NAME'] !== undefined) {
-				assert.fileExists(resultsXml)
-			} else {
-				assert.notFileExists(resultsXml)
-			}
-			assert.notFileExists(resultsJson)
-		})
+		return runAllTests()
+			.then(() => {
+				throw new Error('runAllTests should have thrown an error')
+			}, (e: unknown) => {
+				log.info('runAllTests error: ' + e)
+				assert.fileExists(ablunitJson)
+				if (process.platform === 'win32' || process.env['WSL_DISTRO_NAME'] !== undefined) {
+					assert.fileExists(resultsXml)
+				} else {
+					assert.notFileExists(resultsXml)
+				}
+				assert.notFileExists(resultsJson)
+				log.info('assert proj1.1 complete!')
+			})
 	})
 
 	test('proj1.2 - output files exist 2 - exclude compileError.p', () => {
@@ -51,7 +122,7 @@ suite('proj1 - Extension Test Suite', () => {
 			.then(() => {
 				assert.tests.count(12)
 				log.info('proj1.2 complete!')
-				return
+				return true
 			}, (e) => { throw e })
 	})
 

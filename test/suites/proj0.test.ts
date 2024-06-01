@@ -1,8 +1,6 @@
-import { Uri, commands, window, workspace, Range } from 'vscode'
+import { Uri, commands, window, workspace, Range, TextEditor } from 'vscode'
 import { assert, deleteFile, getResults, getWorkspaceFolders, log, runAllTests, sleep, toUri, updateTestProfile, waitForExtensionActive } from '../testCommon'
 import { DetailedCoverageCustom } from '../../src/TestCoverage'
-
-const projName = 'proj0'
 
 function getDetailLine (coverage: DetailedCoverageCustom[], lineNum: number) {
 	if (!coverage) return undefined
@@ -44,8 +42,8 @@ suite('proj0  - Extension Test Suite', () => {
 				log.info('window.showTextDocument testFileUri=' + testFileUri.fsPath)
 				return window.showTextDocument(testFileUri)
 			})
-			.then(() => {
-				log.info('getResults')
+			.then((editor: TextEditor) => {
+				log.info('getResults (editor=' + editor.document.uri.fsPath + ')')
 				return getResults()
 			})
 			.then((recentResults) => {

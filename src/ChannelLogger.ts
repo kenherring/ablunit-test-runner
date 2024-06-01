@@ -186,7 +186,7 @@ class Logger {
 		if (includeStack) {
 			return '[' + this.getLevelText(messageLevel) + '] ' + message
 		}
-		return '[' + this.getCallerSourceLine() + '] [' + this.getLevelText(messageLevel) + '] '  + message
+		return '[' + this.getLevelText(messageLevel) + '] [' + this.getCallerSourceLine() + '] '  + message
 	}
 
 }

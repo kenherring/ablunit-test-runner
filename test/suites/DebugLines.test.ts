@@ -4,7 +4,6 @@ import { getSourceMapFromRCode } from '../../src/parse/RCodeParser'
 import { PropathParser } from '../../src/ABLPropath'
 import { vscodeVersion } from '../../src/ABLUnitCommon'
 
-const projName = 'DebugLines'
 const workspaceFolder = workspace.workspaceFolders![0]
 
 const allTests = (version: vscodeVersion = 'stable') => {
@@ -15,8 +14,11 @@ const allTests = (version: vscodeVersion = 'stable') => {
 				.then(() => { return awaitRCode(workspaceFolder, 8) })
 				.then((rcodeCount) => {
 					log.info('rcodeCount=' + rcodeCount)
-					return
-				}, (e) => { log.error('rcode error: ' + e) })
+					return rcodeCount
+				}, (e) => {
+					log.error('rcode error: ' + e)
+					throw e
+				})
 		})
 
 		test('debugLines.1 - read debug line map from r-code', async () => {

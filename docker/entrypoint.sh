@@ -128,7 +128,9 @@ run_tests () {
 	if [ "$TEST_PROJECT" = "package" ]; then
 		.circleci/package.sh
 	elif [ "$TEST_PROJECT" = "base" ]; then
-		run_tests_base
+		run_tests_base || E_CODE=$?
+		save_cache
+		[ "${E_CODE:-0}" = 0 ] || exit "$E_CODE"
 	elif [ "$TEST_PROJECT" = "dummy-ext" ]; then
 		run_tests_dummy_ext
 	else

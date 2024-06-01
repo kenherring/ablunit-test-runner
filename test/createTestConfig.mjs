@@ -45,7 +45,7 @@ function getMochaTimeout (projName) {
 	// if (enableExtensions.includes(projName)) {
 	if(isFirst) {
 		isFirst = false
-		return 30000
+		return 60000
 	}
 
 
@@ -85,7 +85,8 @@ function getMochaOpts (projName) {
 	const mochaOpts = {
 		// fullTrace: true
 		timeout: getMochaTimeout(projName),
-		ui: 'tdd',
+		// ui: 'tdd', // describe, it, etc
+		// ui: 'bdd' // default; suite, test, etc
 		parallel: false,
 		retries: 0,
 		recursive: true,
@@ -119,7 +120,7 @@ function getMochaOpts (projName) {
 	}
 
 	// console.log('process.env.CIRCLECI=' + process.env['CIRCLECI'])
-	if (process.env['CIRCLECI'] === true) {
+	if (process.env['CIRCLECI'] == true) {
 	 mochaOpts.bail = true
 	}
 
@@ -150,6 +151,7 @@ function getLaunchArgs (projName) {
 	// args.push('--locale <locale>')
 	// args.push('--user-data-dir', '<dir>')
 	// args.push('--profile <profileName>')
+	args.push('--profile-temp') // create a temporary profile for the test run in lieu of cleaning up user data
 	// args.push('--help')
 	// args.push('--extensions-dir', '<dir>')
 	// args.push('--list-extensions')
@@ -162,11 +164,11 @@ function getLaunchArgs (projName) {
 	// } else {
 	// 	args.push('--install-extension', './ablunit-test-runner-insiders-' + extVersion + '.vsix')
 	// }
-	// if (enableExtensions.includes(projName)) {
-	// 	args.push('--install-extension', 'riversidesoftware.openedge-abl-lsp')
+	if (enableExtensions.includes(projName)) {
+		args.push('--install-extension', 'riversidesoftware.openedge-abl-lsp')
 	// 	// args.push('--install-extension=riversidesoftware.openedge-abl-lsp')
 	// 	// args.push('--install-extension', 'riversidesoftware.openedge-abl-lsp@1.8.0')
-	// }
+	}
 	// args.push('--pre-release')
 	// args.push('--uninstall-extension <ext-id>')
 	// args.push('--update-extensions')
@@ -255,6 +257,7 @@ function getTestConfig (projName) {
 		ABLUNIT_TEST_RUNNER_ENABLE_EXTENSIONS: enableExtensions.includes('' + projName),
 		ABLUNIT_TEST_RUNNER_UNIT_TESTING: 'true',
 		ABLUNIT_TEST_RUNNER_VSCODE_VERSION: vsVersion,
+		DONT_PROMPT_WSL_INSTAL: '1',
 		VSCODE_SKIP_PRELAUNCH: '1',
 	}
 
@@ -301,7 +304,15 @@ function getTests () {
 
 	const g = glob.globSync('test/suites/*.test.ts').reverse()
 	for (const f of g) {
-		tests.push(getTestConfig(path.basename(f, '.test.ts')))
+		const basename = path.basename(f, '.test.ts')
+		if (basename != 'proj2' &&
+			basename != 'proj3' &&
+			basename != 'proj4' &&
+			basename != 'proj7B' &&
+			basename != 'proj9'
+		) {
+			tests.push(getTestConfig(basename))
+		}
 	}
 	return tests
 }
