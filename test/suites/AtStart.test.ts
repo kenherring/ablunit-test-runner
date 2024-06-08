@@ -2,8 +2,13 @@ import { assert, extensions, log, runAllTests, suiteSetupCommon } from '../testC
 
 suite('projAtStart  - Extension Test Suite - bdd', () => {
 
-	suiteSetup('projAtStart - before', () => {
-		return suiteSetupCommon()
+	suiteSetup('projAtStart - before', async () => {
+		// return suiteSetupCommon()
+		// return suiteSetupCommon().then(() => { return true }, (e: unknown) => { throw e })
+		log.info('suiteSetupCommon() start')
+		await suiteSetupCommon().then(() => { return true }, (e: unknown) => { throw e })
+		log.info('suiteSetupCommon() end')
+		return true
 	})
 
 	// test('projAtStart - ${workspaceFolder}/ablunit.json file exists', (done) => {

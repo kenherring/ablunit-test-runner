@@ -415,11 +415,11 @@ export async function activate (context: ExtensionContext) {
 	function updateConfiguration (event: ConfigurationChangeEvent) {
 		if (!event.affectsConfiguration('ablunit')) {
 			log.warn('configuration updated but does not include ablunit settings (event=' + JSON.stringify(event) + ')')
-			return
-		}
-		log.debug('effects ablunit.file? ' + event.affectsConfiguration('ablunit.files'))
-		if (event.affectsConfiguration('ablunit.files')) {
-			removeExcludedFiles(ctrl, getExcludePatterns())
+		} else {
+			log.debug('effects ablunit.file? ' + event.affectsConfiguration('ablunit.files'))
+			if (event.affectsConfiguration('ablunit.files')) {
+				removeExcludedFiles(ctrl, getExcludePatterns())
+			}
 		}
 	}
 

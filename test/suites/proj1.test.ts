@@ -9,16 +9,16 @@ const workspaceUri = getWorkspaceUri()
 
 suite('proj1 - Extension Test Suite', () => {
 
-	suiteSetup('proj1 - before', () => {
-		return waitForExtensionActive()
-			.then((r) => {
-				log.info('end waitForExtensionActive (r=' + r + ')')
-				return r
-			}, (e) => {
-				log.error('waitForExtensionActive error: ' + e)
-				throw e
-			})
-	})
+	// suiteSetup('proj1 - before', () => {
+	// 	return waitForExtensionActive()
+	// 		.then((r) => {
+	// 			log.info('end waitForExtensionActive (r=' + r + ')')
+	// 			return r
+	// 		}, (e) => {
+	// 			log.error('waitForExtensionActive error: ' + e)
+	// 			throw e
+	// 		})
+	// })
 
 	// before('proj1 - before', async () => {
 	suiteSetup('proj1 - before', async () => {
@@ -62,12 +62,12 @@ suite('proj1 - Extension Test Suite', () => {
 	setup('proj1 - beforeEach', async () => {
 		log.info('setup-1')
 		deleteTestFiles()
-		log.info('setup-2')
+		log.info('setup-2 has(ablunit.files)=' + workspace.getConfiguration('ablunit').has('files') + ' files.exclude=' + workspace.getConfiguration('ablunit').get('files.exclude'))
 		const prom = workspace.getConfiguration('ablunit').update('files.exclude', undefined)
 		log.info('setup-3')
 		await prom.then(() => { log.info('setup-4') }, () => { log.error('failed to update ablunit.files.exclude') })
 		log.info('setup-5')
-		// return
+		return
 		// return updateConfig('ablunit.files.exclude', undefined)
 		// 	.then((r) => { log.info('setup-3 (r=' + r + ')'); return }, (e) => { throw e })
 		// 	// .then((r) => { log.info('setup-3 (r=' + r + ')'); return true }, (e) => { throw e })

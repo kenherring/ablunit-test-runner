@@ -201,11 +201,11 @@ export function setFilesExcludePattern () {
 	})
 }
 
-export function installExtension (extname = 'riversidesoftware.openedge-abl-lsp') {
+export function installExtension (extname = 'riversidesoftware.openedge-abl-lsp'): PromiseLike<boolean> {
 	log.info('start process.args=' + process.argv.join(' '))
 	if (extensions.getExtension(extname)) {
 		log.info('extension ' + extname + ' is already installed')
-		return
+		return Promise.resolve(true)
 	}
 	// if (extname === 'riversidesoftware.openedge-abl-lsp' && enableExtensions()) {
 	// 	// throw new Error('extensions disabed, openedge-abl-lsp cannot be installed')
@@ -229,6 +229,7 @@ export function installExtension (extname = 'riversidesoftware.openedge-abl-lsp'
 			return true
 		}, (e) => {
 			log.error('install failed e=' + e)
+			return false
 		})
 }
 
@@ -264,7 +265,7 @@ export function sleep (requestedTime = 25, msg?: string) {
 }
 
 export async function activateExtension (extname = 'riversidesoftware.openedge-abl-lsp') {
-	log.info('[activateExtension] activating ' + extname + ' extension...')
+	log.info('activating ' + extname + ' extension...')
 	let ext = extensions.getExtension(extname)
 	if (!ext) {
 		await sleep2(250, 'wait and retry getExtension')
@@ -273,19 +274,19 @@ export async function activateExtension (extname = 'riversidesoftware.openedge-a
 	if (!ext) {
 		throw new Error('cannot activate extension, not installed: ' + extname)
 	}
-	log.info('[activateExtension] active? ' + ext.isActive)
+	log.info('active? ' + ext.isActive)
 
 	if (!ext.isActive) {
-		log.info('[activateExtension] activate')
+		log.info('activate')
 		await ext.activate().then(() => {
-			log.info('[activateExtension] activated ' + extname + ' extension!')
-		})
+			log.info('activated ' + extname + ' extension!')
+		}, (e: unknown) => { throw e })
 	}
 	await sleep2(250)
 	// if (extname === 'riversidesoftware.openedge-abl-lsp') {
 	// 	await waitForLangServerReady()
 	// }
-	log.info('[activateExtension] isActive=' + ext.isActive)
+	log.info('isActive=' + ext.isActive)
 	return ext.isActive
 }
 
@@ -590,7 +591,6 @@ function waitForRefreshComplete () {
 					}
 					return r
 				}, (e) => { throw e })
-			return
 		}, 500)
 	})
 
@@ -619,9 +619,12 @@ export async function waitForTestRunStatus (waitForStatus: RunStatus) {
 	setTimeout(() => { throw new Error('waitForTestRunStatus timeout') }, 20000)
 	while (currentStatus < waitForStatus)
 	{
+		log.info('loop-1')
 		await sleep2(500, 'waitForTestRunStatus currentStatus=\'' + currentStatus.toString() + '\' + , waitForStatus=\'' + waitForStatus.toString() + '\'')
+		log.info('loop-2')
 		runData = await getCurrentRunData()
 		currentStatus = runData[0].status
+		log.info('loop-4')
 	}
 
 	log.info('found test run status    = \'' + currentStatus + '\'' + waitTime.toString())

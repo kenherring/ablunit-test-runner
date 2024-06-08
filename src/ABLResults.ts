@@ -475,15 +475,17 @@ export class ABLResults implements Disposable {
 	parseProfile () {
 		const startTime = new Date()
 		const profParser = new ABLProfile()
-		return profParser.parseData(this.cfg.ablunitConfig.profFilenameUri, this.cfg.ablunitConfig.profiler.writeJson, this.debugLines!).then(() => {
-			this.profileJson = profParser.profJSON
-			return this.assignProfileResults().then(() => {
+		return profParser.parseData(this.cfg.ablunitConfig.profFilenameUri, this.cfg.ablunitConfig.profiler.writeJson, this.debugLines!)
+			.then(() => {
+				this.profileJson = profParser.profJSON
+				return this.assignProfileResults()
+			})
+			.then(() => {
 				log.debug('assignProfileResults complete (time=' + (Number(new Date()) - Number(startTime)) + ')')
 				return
 			}, (err) => {
 				throw new Error('assignProfileResults error: ' + err)
 			})
-		})
 	}
 
 	async assignProfileResults () {

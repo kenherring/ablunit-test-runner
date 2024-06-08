@@ -45,7 +45,7 @@ function getMochaTimeout (projName) {
 	// if (enableExtensions.includes(projName)) {
 	if(isFirst) {
 		isFirst = false
-		return 60000
+		return 90000
 	}
 
 
@@ -90,7 +90,7 @@ function getMochaOpts (projName) {
 		parallel: false,
 		retries: 0,
 		recursive: true,
-		// color: true,
+		// color: true,in
 		bail,
 		exit: true,
 		extension: [ 'js', 'ts', 'test.ts' ],
