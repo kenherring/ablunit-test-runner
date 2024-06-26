@@ -6,11 +6,6 @@
 	// 	"commonjs": true,
 	// 	"node": true
 	// },
-	"plugins": [
-		"@stylistic",
-		"@typescript-eslint",
-		"promise"
-	],
 	"extends": [
 		"eslint:recommended",
 		"plugin:@typescript-eslint/recommended-type-checked",
@@ -18,24 +13,28 @@
 		"plugin:@typescript-eslint/stylistic-type-checked",
 		"plugin:promise/recommended"
 	],
-	// "globals": {
-	// 	"Atomics": "readonly",
-	// 	"SharedArrayBuffer": "readonly"
-	// },
+	"globals": {
+		"Atomics": "readonly",
+		"SharedArrayBuffer": "readonly"
+	},
 	"parser": "@typescript-eslint/parser",
 	"parserOptions": {
-		// "project": true,
 		"project": "./tsconfig.json",
 		"tsconfigRootDir": "."
 	// 	"ecmaVersion": 2020,
 	// 	"sourceType": "module",
 	// 	"project": "./tsconfig.json"
 	},
-	// "ignorePatterns": [
-	// 	"dummy-ext/",
-	// 	"test_projects/",
-	// 	"webpack.config.js"
-	// ],
+	"plugins": [
+		"@stylistic",
+		"@typescript-eslint",
+		"promise"
+	],
+	"ignorePatterns": [
+		"dummy-ext/",
+		"test_projects/",
+		"webpack.config.js"
+	],
 	"rules": {
 		"@stylistic/indent": [ "error", "tab" ],
 		"@typescript-eslint/ban-types": [ "error", {

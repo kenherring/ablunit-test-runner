@@ -17,46 +17,38 @@ export async function enableOpenedgeAblExtension (runtimes?: IRuntime[]) {
 	log.info('riversidesoftware.openedge-abl-lsp extension is enabled!')
 
 
-	// // const prom = setRuntimes(runtimes)
-	// const current = workspace.getConfiguration('abl').get('configuration.runtimes')
-	// log.info('current=' + JSON.stringify(current))
-	// log.info(' set to=' + JSON.stringify(runtimes))
-	// if (JSON.stringify(current) === JSON.stringify(runtimes)) {
-	// 	log.info('runtimes are already set')
-	// 	return
-	// }
+	// const prom = setRuntimes(runtimes)
+	const current = workspace.getConfiguration('abl').get('configuration.runtimes')
+	log.info('current=' + JSON.stringify(current))
+	log.info(' set to=' + JSON.stringify(runtimes))
+	if (JSON.stringify(current) === JSON.stringify(runtimes)) {
+		log.info('runtimes are already set')
+		return
+	}
 
-	// // log.info('workspace.getConfiguration(\'abl\').update(\'configuration.runtimes\')')
-	// // const prom = workspace.getConfiguration('abl').update('configuration.runtimes', JSON.stringify(runtimes), true)
-	// log.info('workspace.getConfiguration(\'abl.configuration\').update(\'runtimes\')')
-	// const prom = workspace.getConfiguration('abl.configuration').update('runtimes', JSON.stringify(runtimes), true)
-	// 	.then(() => {
-	// 		log.info('update complete')
-	// 		return getRcodeCount()
-	// 	})
-	// 	// .then(() => { return rebuildAblProject() })
-	// 	.then(() => {
-	// 		log.info('rebuild complete!')
-	// 		return true
-	// 	}, (e) => {
-	// 		log.error('failed to set runtimes (e=' + e + ')')
-	// 		throw e
-	// 	})
-	// log.info('await prom start')
-	// const r = await prom.then(() => {
-	// 	log.info('prom complete')
-	// 	return true
-	// }, (e) => { throw e })
-	// log.info('riversidesoftware.openedge-abl-lsp extension is enabled! (r=' + r + ')')
+	// log.info('workspace.getConfiguration(\'abl\').update(\'configuration.runtimes\')')
+	// const prom = workspace.getConfiguration('abl').update('configuration.runtimes', JSON.stringify(runtimes), true)
+	log.info('workspace.getConfiguration(\'abl.configuration\').update(\'runtimes\')')
+	const prom = workspace.getConfiguration('abl.configuration').update('runtimes', JSON.stringify(runtimes), true)
+		.then(() => {
+			log.info('update complete')
+			return getRcodeCount()
+		})
+		// .then(() => { return rebuildAblProject() })
+		.then(() => {
+			log.info('rebuild complete!')
+			return true
+		}, (e) => {
+			log.error('failed to set runtimes (e=' + e + ')')
+			throw e
+		})
+	log.info('await prom start')
+	const r = await prom.then(() => {
+		log.info('prom complete')
+		return true
+	}, (e) => { throw e })
+	log.info('riversidesoftware.openedge-abl-lsp extension is enabled! (r=' + r + ')')
 }
-
-// export function getAblunitExt () {
-// 	const ext = extensions.getExtension('kherring.ablunit-test-runner')
-// 	if (!ext) {
-// 		throw new Error('kherring.ablunit-test-runner is not installed')
-// 	}
-// 	return ext
-// }
 
 export function getRcodeCount (workspaceFolder?: WorkspaceFolder) {
 	if (!workspaceFolder) {
@@ -87,7 +79,6 @@ export function restartLangServer () {
 	})
 }
 
-// TODO lint error?
 export function rebuildAblProject () {
 	const confRuntimes = workspace.getConfiguration('abl').get('configuration.runtimes')!
 	log.info('rebuilding abl project... runtimes=' + JSON.stringify(confRuntimes))

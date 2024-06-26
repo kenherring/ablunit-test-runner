@@ -24,8 +24,8 @@ initialize () {
         PRERELEASE=true
     fi
 
-    npm install -g @vscode/vsce || sudo npm install -g @vscode/vsce
     npm install
+    npm install -g @vscode/vsce || sudo npm install -g @vscode/vsce
 }
 
 package () {
@@ -64,12 +64,8 @@ run_lint () {
 	local ESLINT_FILE=artifacts/eslint_report
 	mkdir -p artifacts
 
-    ## IDEA #1
     npm install eslint-plugin-promise@latest --save-dev
-
-    # IDEA #2
     # npm i
-
     npm run build
 
 	if ! npm run lint -- -f unix -o "${ESLINT_FILE}.txt"; then

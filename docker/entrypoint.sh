@@ -68,7 +68,6 @@ initialize_repo () {
 		cd "$PROJECT_DIR"
 		git init
 		git remote add origin "$REPO_VOLUME"
-		# git checkout main -f
 	else
 		git clone "$REPO_VOLUME" "$PROJECT_DIR"
 	fi

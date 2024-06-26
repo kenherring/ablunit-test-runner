@@ -1,28 +1,10 @@
-// import { Selection, Uri, commands, window, workspace } from 'vscode'
-// import { assert, deleteTestFiles, getTestCount, getWorkspaceUri, log, runAllTests, sleep, toUri, updateConfig, waitForExtensionActive } from '../testCommon'
-// import { ReadableStreamDefaultController } from 'stream/web'
-
+import { Selection, commands, window } from 'vscode'
 import { before, beforeEach } from 'mocha'
-import { Uri, assert, deleteTestFiles, getWorkspaceUri, log, runAllTests, waitForExtensionActive, workspace } from '../testCommon'
+import { Uri, assert, deleteTestFiles, getWorkspaceUri, log, runAllTests, sleep, updateConfig, getTestCount, waitForExtensionActive, workspace } from '../testCommon'
 
 const workspaceUri = getWorkspaceUri()
 
 suite('proj1 - Extension Test Suite', () => {
-
-	// suiteSetup('proj1 - before', () => {
-	// 	return waitForExtensionActive()
-	// 		.then((r) => {
-	// 			log.info('end waitForExtensionActive (r=' + r + ')')
-	// 			return r
-	// 		}, (e) => {
-	// 			log.error('waitForExtensionActive error: ' + e)
-	// 			throw e
-	// 		})
-	// })
-
-	// before('proj1 - before', () => {
-	// 	log.info('before')
-	// })
 
 	suiteSetup('proj1 - suiteSetup', async () => {
 		const r = await waitForExtensionActive()
@@ -30,43 +12,7 @@ suite('proj1 - Extension Test Suite', () => {
 		return r
 	})
 
-	// setup('proj1 - beforeEach', () => {
-	// 	log.info('setup-1')
-	// 	deleteTestFiles()
-	// 	log.info('setup-2')
-	// 	return updateConfig('ablunit.files.exclude', undefined)
-	// 		.then(() => {
-	// 			log.info('setup-3')
-	// 			return true
-	// 		}, (e) => { throw e })
-	// })
-
-	// setup('proj1 - beforeEach', (done) => {
-	// 	log.info('setup-1')
-	// 	deleteTestFiles()
-	// 	log.info('setup-2')
-	// 	// await updateConfig('ablunit.files.exclude', undefined)
-
-	// 	// eslint-disable-next-line promise/catch-or-return
-	// 	updateConfig('ablunit.files.exclude', undefined)
-	// 		.then(() => {
-	// 			log.info('setup-4 post-updateConfig')
-	// 			setImmediate(() => { log.info('setup-4 setImmediate'); done() })
-	// 			return
-	// 		}, (e) => { throw e })
-	// 		// .finally(() => { log.info('setup-4 done'); done(); ReadableStreamDefaultController })
-	// 	log.info('setup-3')
-	// 	// return Promise.resolve()
-	// })
-
-
-
-	// beforeEach('proj1 - beforeEach-1', () => {
-	// 	log.info('beforeEach-1')
-	// })
-
-	// beforeEach('proj1 - beforeEach', async () => {
-	setup('proj1 - setup', async () => {
+	beforeEach('proj1 - beforeEach', async () => {
 		log.info('setup-1')
 		deleteTestFiles()
 		log.info('setup-2 has(ablunit.files)=' + workspace.getConfiguration('ablunit').has('files') + ' files.exclude=' + workspace.getConfiguration('ablunit').get('files.exclude'))
@@ -82,10 +28,6 @@ suite('proj1 - Extension Test Suite', () => {
 			})
 		log.info('setup-5 (r=' + r)
 		return r
-		// return updateConfig('ablunit.files.exclude', undefined)
-		// 	.then((r) => { log.info('setup-3 (r=' + r + ')'); return }, (e) => { throw e })
-		// 	// .then((r) => { log.info('setup-3 (r=' + r + ')'); return true }, (e) => { throw e })
-		// 	// .then((r) => { log.info('setup-3 (r=' + r + ')'); return r }, (e) => { throw e })
 	})
 
 	beforeEach('proj1 - beforeEach-2', () => {
@@ -95,25 +37,6 @@ suite('proj1 - Extension Test Suite', () => {
 	setup('proj1 - setup-2',  () => {
 		log.info('setup-2')
 	})
-
-	// setup('proj1 - beforeEach', async () => {
-	// 	log.info('setup-1')
-	// 	deleteTestFiles()
-	// 	log.info('setup-2')
-	// 	const r = updateConfig('ablunit.files.exclude', undefined)
-	// 		.then(() => {
-	// 			log.info('setup-3')
-	// 			return
-	// 		}, (e) => { throw e })
-	// 	log.info('setup-4 (r=' + r + ')')
-	//  done()
-	// })
-
-	// suiteTeardown('proj1 - afterEach', () => {
-	// 	log.info('suiteTeardown-1')
-	// 	return updateConfig('ablunit.files.exclude', undefined)
-	// 		.then((r) => { return r }, (e) => { throw e })
-	// })
 
 	test('proj1.1 - output files exist 1 - compile error', () => {
 		const ablunitJson = Uri.joinPath(workspaceUri, 'ablunit.json')
@@ -148,50 +71,50 @@ suite('proj1 - Extension Test Suite', () => {
 			}, (e) => { throw e })
 	})
 
-	// test('proj1.3 - output files exist 3 - exclude compileError.p as string', async () => {
-	// 	// this isn't officially supported and won't syntac check in the settings.json file(s), but it works
-	// 	await updateConfig('ablunit.files.exclude', 'compileError.p')
-	// 	await runAllTests()
+	test('proj1.3 - output files exist 3 - exclude compileError.p as string', async () => {
+		// this isn't officially supported and won't syntac check in the settings.json file(s), but it works
+		await updateConfig('ablunit.files.exclude', 'compileError.p')
+		await runAllTests()
 
-	// 	const resultsJson = Uri.joinPath(workspaceUri, 'results.json')
-	// 	const testCount = await getTestCount(resultsJson)
-	// 	assert.equal(testCount, 12)
-	// })
+		const resultsJson = Uri.joinPath(workspaceUri, 'results.json')
+		const testCount = await getTestCount(resultsJson)
+		assert.equal(testCount, 12)
+	})
 
-	// test('proj1.4 - run test case in file', async () => {
-	// 	await commands.executeCommand('vscode.open', Uri.joinPath(workspaceUri, 'procedureTest.p'))
-	// 	await sleep(200)
-	// 	await commands.executeCommand('testing.runCurrentFile')
+	test('proj1.4 - run test case in file', async () => {
+		await commands.executeCommand('vscode.open', Uri.joinPath(workspaceUri, 'procedureTest.p'))
+		await sleep(200)
+		await commands.executeCommand('testing.runCurrentFile')
 
-	// 	const resultsJson = Uri.joinPath(workspaceUri, 'results.json')
-	// 	const testCount: number = await getTestCount(resultsJson)
-	// 	const pass = await getTestCount(resultsJson, 'pass')
-	// 	const fail = await getTestCount(resultsJson, 'fail')
-	// 	const error = await getTestCount(resultsJson, 'error')
-	// 	assert.equal(6, testCount, 'test count')
-	// 	assert.equal(2, pass, 'pass count')
-	// 	assert.equal(2, fail, 'fail count')
-	// 	assert.equal(2, error, 'error count')
-	// })
+		const resultsJson = Uri.joinPath(workspaceUri, 'results.json')
+		const testCount: number = await getTestCount(resultsJson)
+		const pass = await getTestCount(resultsJson, 'pass')
+		const fail = await getTestCount(resultsJson, 'fail')
+		const error = await getTestCount(resultsJson, 'error')
+		assert.equal(6, testCount, 'test count')
+		assert.equal(2, pass, 'pass count')
+		assert.equal(2, fail, 'fail count')
+		assert.equal(2, error, 'error count')
+	})
 
-	// test('proj1.5 - run test case at cursor', async () => {
-	// 	await commands.executeCommand('vscode.open', Uri.joinPath(workspaceUri, 'procedureTest.p'))
-	// 	if(window.activeTextEditor) {
-	// 		window.activeTextEditor.selection = new Selection(21, 0, 21, 0)
-	// 	} else {
-	// 		assert.fail('vscode.window.activeTextEditor is undefined')
-	// 	}
-	// 	await commands.executeCommand('testing.runAtCursor')
+	test('proj1.5 - run test case at cursor', async () => {
+		await commands.executeCommand('vscode.open', Uri.joinPath(workspaceUri, 'procedureTest.p'))
+		if(window.activeTextEditor) {
+			window.activeTextEditor.selection = new Selection(21, 0, 21, 0)
+		} else {
+			assert.fail('vscode.window.activeTextEditor is undefined')
+		}
+		await commands.executeCommand('testing.runAtCursor')
 
-	// 	const resultsJson = Uri.joinPath(workspaceUri, 'results.json')
-	// 	const testCount = await getTestCount(resultsJson)
-	// 	const pass = await getTestCount(resultsJson, 'pass')
-	// 	const fail = await getTestCount(resultsJson, 'fail')
-	// 	const error = await getTestCount(resultsJson, 'error')
-	// 	assert.equal(1, testCount)
-	// 	assert.equal(1, pass)
-	// 	assert.equal(0, fail)
-	// 	assert.equal(0, error)
-	// })
+		const resultsJson = Uri.joinPath(workspaceUri, 'results.json')
+		const testCount = await getTestCount(resultsJson)
+		const pass = await getTestCount(resultsJson, 'pass')
+		const fail = await getTestCount(resultsJson, 'fail')
+		const error = await getTestCount(resultsJson, 'error')
+		assert.equal(1, testCount)
+		assert.equal(1, pass)
+		assert.equal(0, fail)
+		assert.equal(0, error)
+	})
 
 })

@@ -57,20 +57,8 @@ function getMochaTimeout (projName) {
 	}
 
 	return 15000
-
-	// switch (projName) {
-	// 	case 'proj4': return 60000
-	// 	// case 'proj4': return 30000
-	// 	case 'proj3':
-	// 	case 'DebugLines': return 120000
-	// 	// case 'DebugLines': return 60000
-	// 	case 'proj7A':
-	// 	case 'proj7B': return 150000
-	// 	// case 'proj7B': return 150000
-	// }
-	// // return 50000
-	// return 25000
 }
+
 
 function getMochaOpts (projName) {
 	const reporterDir = path.resolve(__dirname, '..', 'artifacts', vsVersion + '-' + oeVersion)
