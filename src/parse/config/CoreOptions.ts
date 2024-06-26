@@ -3,7 +3,7 @@ interface ICoreOutput {
 	location?: string
 	filename?: string
 	format?: 'xml'
-	writeJson: boolean
+	writeJson?: boolean
 }
 
 export interface ICoreOptions {
@@ -11,7 +11,7 @@ export interface ICoreOptions {
 		location?: string
 		filename?: string
 		format?: 'xml'
-		writeJson: boolean
+		writeJson?: boolean
 	}
 	quitOnEnd?: boolean // = true
 	writeLog?: boolean // = true

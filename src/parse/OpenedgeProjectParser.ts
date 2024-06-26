@@ -186,7 +186,7 @@ export class ProfileConfig {
 	}
 
 	getExecutable (gui?: boolean): string {
-		if (gui || this.gui) {
+		if (gui ?? this.gui) {
 			if (fs.existsSync(path.join(this.dlc, 'bin', 'prowin.exe')))
 				return path.join(this.dlc, 'bin', 'prowin.exe')
 			else
@@ -211,9 +211,9 @@ export function getActiveProfile (rootDir: string) {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		const txt = JSON.parse(fs.readFileSync(path.join(rootDir, '.vscode', 'profile.json'), { encoding: 'utf8' }).replace(/\r/g, ''))
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-		if (typeof txt['profile'] === 'string') {
+		if (typeof txt.profile === 'string') {
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-			const actProf: string = txt['profile']
+			const actProf = txt.profile as string
 			return actProf
 		}
 		return undefined
@@ -264,7 +264,13 @@ function readGlobalOpenEdgeRuntimes (workspaceUri: Uri) {
 		log.warn('[readGlobaleOpenEdgeRuntimes] No OpenEdge runtime configured on this machine')
 	}
 
-	let defaultRuntime = oeRuntimes.find(runtime => runtime.default)
+	let defaultRuntime = undefined
+	oeRuntimes.forEach(runtime => {
+		if (runtime.default) {
+			defaultRuntime = runtime
+			return
+		}
+	})
 	if (!defaultRuntime && oeRuntimes.length === 1) {
 		defaultRuntime = oeRuntimes[0]
 	}

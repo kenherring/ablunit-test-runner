@@ -11,6 +11,7 @@ import { fileURLToPath } from 'url'
 import * as glob from 'glob'
 import * as path from 'path'
 import * as fs from 'fs'
+import process from 'process'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const vsVersionNum = '1.88.0'
@@ -29,17 +30,6 @@ const enableExtensions = [
 	'proj9',
 ]
 
-function getExtensionVersion () {
-	const contents = fs.readFileSync('package.json')
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-	const packageJSON = JSON.parse(contents)
-	if (packageJSON['version']) {
-		return toString(packageJSON['version'])
-	}
-	throw new Error('unable to get extension version')
-}
-
-
 function initialize () {
 	if (vsVersion !== 'insiders' && vsVersion !== 'stable' && !vsVersion.startsWith('1.')) {
 		throw new Error('Invalid version: ' + vsVersion)
@@ -55,27 +45,20 @@ function getMochaTimeout (projName) {
 	// if (enableExtensions.includes(projName)) {
 	if(isFirst) {
 		isFirst = false
-		return 180000
+		return 120000
 	}
 
-	// return 210000 // 3.5 minutes
-	return 120000 // 2.0 minutes
 
-	// switch (projName) {
-	// 	case 'proj4': return 60000
-	// 	// case 'proj4': return 30000
-	// 	case 'proj1': return 90000
-	// 	// case 'proj1': return 45000
-	// 	case 'proj3':
-	// 	case 'DebugLines': return 120000
-	// 	// case 'DebugLines': return 60000
-	// 	case 'proj7A':
-	// 	case 'proj7B': return 150000
-	// 	// case 'proj7B': return 150000
-	// }
-	// // return 50000
-	// return 25000
+	switch (projName) {
+		case 'DebugLines': return 120000 // install openedge-abl-lsp for the first time, so give it a moment to start
+		case 'proj1': return 30000
+		// case 'proj2': return 20000
+		case 'proj7A': return 60000
+	}
+
+	return 15000
 }
+
 
 function getMochaOpts (projName) {
 	const reporterDir = path.resolve(__dirname, '..', 'artifacts', vsVersion + '-' + oeVersion)
@@ -83,25 +66,30 @@ function getMochaOpts (projName) {
 	const jsonFile = path.resolve(reporterDir, 'mocha_results_' + projName + '.json')
 	const mochaFile = path.resolve(reporterDir, 'mocha_results_junit_' + projName + '.xml')
 	const xunitFile = path.resolve(reporterDir, 'mocha_results_xunit_' + projName + '.xml')
+	const bail = process.env['CIRCLECI'] != 'true' || false
+	// console.log('bail=' + bail + ', CIRCLECI=' + process.env['CIRCLECI'])
+	// process.exit(1)
 
 	const mochaOpts = {
 		// fullTrace: true
 		timeout: getMochaTimeout(projName),
-		ui: 'tdd',
+		// ui: 'tdd', // describe, it, etc
+		// ui: 'bdd' // default; suite, test, etc
 		parallel: false,
 		retries: 0,
 		recursive: true,
-		// color: true,
-		bail: false,
+		// color: true,in
+		bail,
 		exit: true,
 		extension: [ 'js', 'ts', 'test.ts' ],
-		// require: [
+		require: [
+			'mocha',
 		// 	// './dist/extension.js',
 		// 	'source-map-support',
 		// 	'source-map-support/register',
 		// 	'source-map-support/register-hook-require',
 		// 	'ts-node/register',
-		// ],
+		],
 		reporter: 'mocha-multi-reporters',
 		reporterOptions: {
 			reporterEnabled: [ 'spec', 'mocha-junit-reporter' ],
@@ -121,7 +109,7 @@ function getMochaOpts (projName) {
 	}
 
 	// console.log('process.env.CIRCLECI=' + process.env['CIRCLECI'])
-	if (process.env['CIRCLECI'] === true) {
+	if (process.env['CIRCLECI'] == true) {
 	 mochaOpts.bail = true
 	}
 
@@ -152,6 +140,7 @@ function getLaunchArgs (projName) {
 	// args.push('--locale <locale>')
 	// args.push('--user-data-dir', '<dir>')
 	// args.push('--profile <profileName>')
+	args.push('--profile-temp') // create a temporary profile for the test run in lieu of cleaning up user data
 	// args.push('--help')
 	// args.push('--extensions-dir', '<dir>')
 	// args.push('--list-extensions')
@@ -166,6 +155,8 @@ function getLaunchArgs (projName) {
 	// }
 	if (enableExtensions.includes(projName)) {
 		args.push('--install-extension', 'riversidesoftware.openedge-abl-lsp')
+	// 	// args.push('--install-extension=riversidesoftware.openedge-abl-lsp')
+	// 	// args.push('--install-extension', 'riversidesoftware.openedge-abl-lsp@1.8.0')
 	}
 	// args.push('--pre-release')
 	// args.push('--uninstall-extension <ext-id>')
@@ -180,6 +171,10 @@ function getLaunchArgs (projName) {
 	// args.push('--verbose')
 	// args.push('--trace')
 	// args.push('--log', '<level>')
+	if (process.env['VERBOSE'] == 'true') {
+		args.push('--log', 'debug')
+		// args.push('--log', 'trace')
+	}
 	// args.push('--log', 'debug') // '<level>'
 	// args.push('--log', 'trace') // '<level>'
 	// args.push('--log', 'kenherring.ablunit-test-runner:debug') // <extension-id>:<level>
@@ -255,7 +250,8 @@ function getTestConfig (projName) {
 		ABLUNIT_TEST_RUNNER_ENABLE_EXTENSIONS: enableExtensions.includes('' + projName),
 		ABLUNIT_TEST_RUNNER_UNIT_TESTING: 'true',
 		ABLUNIT_TEST_RUNNER_VSCODE_VERSION: vsVersion,
-		VSCODE_SKIP_PRELAUNCH: '1',
+		DONT_PROMPT_WSL_INSTAL: true,
+		VSCODE_SKIP_PRELAUNCH: true,
 	}
 
 	// let extensionDevelopmentPath = path.resolve(__dirname, '..', 'ablunit-test-runner-0.2.1.vsix')
@@ -271,6 +267,7 @@ function getTestConfig (projName) {
 		env: envVars,
 		useInstallation: useInstallation,
 		// useInstallation: { fromMachine: true },
+		installExtension: 'riversidesoftware.openedge-abl-lsp',
 		// download: { reporter: ProgressReporter, timeout: ? }
 
 		// --- IBaseTestConfiguration --- //
@@ -300,7 +297,15 @@ function getTests () {
 
 	const g = glob.globSync('test/suites/*.test.ts').reverse()
 	for (const f of g) {
-		tests.push(getTestConfig(path.basename(f, '.test.ts')))
+		const basename = path.basename(f, '.test.ts')
+		if (basename != 'proj2' &&
+			basename != 'proj3' &&
+			basename != 'proj4' &&
+			basename != 'proj7B' &&
+			basename != 'proj9'
+		) {
+			tests.push(getTestConfig(basename))
+		}
 	}
 	return tests
 }
@@ -326,7 +331,7 @@ function getCoverageOpts () {
 		// 	'**/src/**',
 		// 	'**/test/**',
 		// ],
-		// require: [ 'ts-node/register' ],
+		require: [ 'ts-node/register' ],
 		// cache: false,
 		// 'enable-source-maps': true,
 		// sourceMap: false,
@@ -334,7 +339,7 @@ function getCoverageOpts () {
 	}
 }
 
-export async function createTestConfig () { // NOSONAR
+export function createTestConfig () { // NOSONAR
 	initialize()
 
 	const testConfig = {

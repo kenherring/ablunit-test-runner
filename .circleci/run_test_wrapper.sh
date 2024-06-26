@@ -27,7 +27,6 @@ initialize () {
 
 	echo "[$0 ${FUNCNAME[0]}] update_oe_version start"
 	update_oe_version
-	restore_vscode_test
 	echo "[$0 ${FUNCNAME[0]}] update_oe_version end"
 	# exit 1
 }

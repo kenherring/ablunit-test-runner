@@ -16,3 +16,9 @@ npm i -g npm-check-updates
 npx npm-check-updates -u
 npm install
 ```
+
+or
+
+```bash
+npm update --save
+```

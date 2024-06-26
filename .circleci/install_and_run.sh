@@ -7,7 +7,7 @@ initialize() {
 
     CIRCLECI=${CIRCLECI:-false}
     # PACKAGE_VERSION=$(node -p "require('./package.json').version")
-    export DONT_PROMPT_WSL_INSTALL=No_Prompt_please
+    export DONT_PROMPT_WSL_INSTALL=true
 
     if [ -z "${CIRCLE_BRANCH:-}" ]; then
         CIRCLE_BRANCH="$(git branch --show-current)"

@@ -1,6 +1,6 @@
 import { strict as assert } from 'assert'
 import { Uri, workspace } from 'vscode'
-import { doesDirExist, doesFileExist, runAllTests, waitForExtensionActive } from '../testCommon'
+import { doesDirExist, doesFileExist, getWorkspaceFolders, runAllTests, waitForExtensionActive } from '../testCommon'
 
 
 const projName = 'workspace0'
@@ -14,7 +14,7 @@ suite('workspace0 - Extension Test Suite', () => {
 	test('workspace0.1 - <workspaceFolder>/ablunit.json file exists', async () => {
 		await runAllTests()
 
-		const workspaceFolder = workspace.workspaceFolders![0].uri
+		const workspaceFolder = getWorkspaceFolders()[0].uri
 
 		const ablunitJson = Uri.joinPath(workspaceFolder, 'ablunit.json')
 		const resultsXml = Uri.joinPath(workspaceFolder, 'results.xml')

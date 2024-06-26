@@ -57,6 +57,7 @@ initialize () {
 		"results.xml"
 	)
 	FILE_PATTERNS=("*.vsix")
+	rm -f .vscode-test/user-data/User/settings.json
 }
 
 delete_directories () {

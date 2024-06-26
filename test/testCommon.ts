@@ -19,7 +19,7 @@ import { ITestSuites } from '../src/parse/ResultsParser'
 import { IConfigurations, parseRunProfiles } from '../src/parse/TestProfileParser'
 import { DefaultRunProfile, IRunProfile as IRunProfileGlobal } from '../src/parse/config/RunProfile'
 import { RunStatus } from '../src/ABLUnitRun'
-import { enableOpenedgeAblExtension, rebuildAblProject, restartLangServer, setRuntimes, waitForLangServerReady } from './openedgeAblCommands'
+import { enableOpenedgeAblExtension, rebuildAblProject, restartLangServer, setRuntimes } from './openedgeAblCommands'
 import path from 'path'
 
 interface IRuntime {
@@ -51,12 +51,14 @@ export const oeVersion = () => {
 	const oeVersionEnv = getEnvVar('ABLUNIT_TEST_RUNNER_OE_VERSION')
 	log.info('oeVersionEnv=' + oeVersionEnv)
 	if (oeVersionEnv?.match(/^(11|12)\.\d$/)) {
+		log.info('100 oeVersionEnv=' + oeVersionEnv)
 		return oeVersionEnv
 	}
 
 	const oeVersion = getEnvVar('OE_VERSION')
 	log.info('oeVersion=' + oeVersion + ' ' + oeVersion?.split('.').slice(0, 2).join('.'))
 	if (oeVersion?.match(/^(11|12)\.\d.\d+$/)) {
+		log.info('101 oeVersionEnv=' + oeVersion.split('.').slice(0, 2).join('.'))
 		return oeVersion.split('.').slice(0, 2).join('.')
 	}
 
@@ -64,8 +66,9 @@ export const oeVersion = () => {
 	const dlcVersion = fs.readFileSync(versionFile)
 	log.info('dlcVersion=' + dlcVersion)
 	if (dlcVersion) {
-		const match = dlcVersion.toString().match(/OpenEdge Release (\d+\.\d+)/)
+		const match = RegExp(/OpenEdge Release (\d+\.\d+)/).exec(dlcVersion.toString())
 		if (match) {
+			log.info('102 oeVersionEnv=' + match[1])
 			return match[1]
 		}
 	}
@@ -142,9 +145,11 @@ function getExtensionDevelopmentPath () {
 }
 
 export async function suiteSetupCommon (runtimes?: IRuntime[]) {
-	log.info('waitForExtensionActive \'kherring.ablunit-test-runner\' (projName=' + projName() + ')')
+	if (!runtimes) {
+		runtimes = [{ name: oeVersion(), path: getDefaultDLC(), default: true }]
+	}
+	log.info('[suiteSetupCommon] waitForExtensionActive \'kherring.ablunit-test-runner\' (projName=' + projName() + ')')
 	await waitForExtensionActive()
-
 	if (enableExtensions()) {
 		await enableOpenedgeAblExtension(runtimes)
 	}
@@ -161,11 +166,11 @@ export function teardownCommon () {
 	currentRunData = undefined
 }
 
-export async function suiteTeardownCommon () {
-	await setRuntimes()
+export function suiteTeardownCommon () {
+	return setRuntimes()
 }
 
-export async function setFilesExcludePattern () {
+export function setFilesExcludePattern () {
 	const files = new FilesExclude
 	// files.exclude = workspace.getConfiguration('files', getWorkspaceUri()).get('exclude', {})
 	const filesConfig = workspace.getConfiguration('files', getWorkspaceUri())
@@ -188,11 +193,11 @@ export async function setFilesExcludePattern () {
 	})
 }
 
-export async function installExtension (extname = 'riversidesoftware.openedge-abl-lsp') {
-	log.info('[installExtension] start process.args=' + process.argv.join(' '))
+export function installExtension (extname = 'riversidesoftware.openedge-abl-lsp'): PromiseLike<boolean> {
+	log.info('start process.args=' + process.argv.join(' '))
 	if (extensions.getExtension(extname)) {
-		log.info('[installExtension] extension ' + extname + ' is already installed')
-		return
+		log.info('extension ' + extname + ' is already installed')
+		return Promise.resolve(true)
 	}
 	// if (extname === 'riversidesoftware.openedge-abl-lsp' && enableExtensions()) {
 	// 	// throw new Error('extensions disabed, openedge-abl-lsp cannot be installed')
@@ -201,31 +206,23 @@ export async function installExtension (extname = 'riversidesoftware.openedge-ab
 	// }
 
 
-	log.info('[installExtension] installing ' + extname + ' extension...')
+	log.info('installing ' + extname + ' extension...')
 	const installCommand = 'workbench.extensions.installExtension'
-	await commands.executeCommand(installCommand, extname).then(async () => {
-		log.info('[installExtension] post install command')
-		return sleep(250)
-	}, (e) => {
-		log.error('install failed e=' + e)
-	})
-	await sleep2(250)
-
-	log.info('get extension \'' + extname + '\'...')
-	let ext: vscode.Extension<unknown> | undefined = undefined
-	for (let i=0; i<10; i++) {
-		ext = extensions.getExtension(extname)
-		// if (!ext) {
-		// 	ext = extensions.getExtension('riversidesoftware.openedge-abl-lsp')
-		// }
-		if (ext) {
-			break
-		}
-		await sleep2(250, isoDate())
-	}
-	if (!ext) {
-		throw new Error('get after install failed (undefined)')
-	}
+	return commands.executeCommand(installCommand, extname)
+		.then(() => {
+			log.info('post install command')
+			return sleep2(250)
+		}).then(() => {
+			log.info('get extension \'' + extname + '\'...')
+			const ext = extensions.getExtension(extname)
+			if (!ext) {
+				throw new Error('get after install failed (undefined)')
+			}
+			return true
+		}, (e) => {
+			log.error('install failed e=' + e)
+			return false
+		})
 }
 
 export function deleteFile (file: Uri | string) {
@@ -235,7 +232,7 @@ export function deleteFile (file: Uri | string) {
 	deleteFileCommon(file)
 }
 
-export async function sleep2 (time = 10, msg?: string | null) {
+export function sleep2 (time = 10, msg?: string | null) {
 	if (msg !== null) {
 		let status = 'sleeping for ' + time + 'ms'
 		if (msg) {
@@ -246,7 +243,7 @@ export async function sleep2 (time = 10, msg?: string | null) {
 	return new Promise(resolve => setTimeout(resolve, time))
 }
 
-export async function sleep (requestedTime = 25, msg?: string) {
+export function sleep (requestedTime = 25, msg?: string) {
 	const time = 25
 	let status = 'sleeping for ' + time + 'ms'
 	if (time !== requestedTime) {
@@ -260,7 +257,7 @@ export async function sleep (requestedTime = 25, msg?: string) {
 }
 
 export async function activateExtension (extname = 'riversidesoftware.openedge-abl-lsp') {
-	log.info('[activateExtension] activating ' + extname + ' extension...')
+	log.info('activating ' + extname + ' extension...')
 	let ext = extensions.getExtension(extname)
 	if (!ext) {
 		await sleep2(250, 'wait and retry getExtension')
@@ -269,53 +266,52 @@ export async function activateExtension (extname = 'riversidesoftware.openedge-a
 	if (!ext) {
 		throw new Error('cannot activate extension, not installed: ' + extname)
 	}
-	log.info('[activateExtension] active? ' + ext.isActive)
+	log.info('active? ' + ext.isActive)
 
 	if (!ext.isActive) {
-		log.info('[activateExtension] activate')
-		await ext.activate()
+		log.info('activate')
+		await ext.activate().then(() => {
+			log.info('activated ' + extname + ' extension!')
+		}, (e: unknown) => { throw e })
 	}
-	if (extname === 'riversidesoftware.openedge-abl-lsp') {
-		await waitForLangServerReady()
-	}
-	log.info('[activateExtension] activated ' + extname + ' extension!')
+	await sleep2(250)
+	// if (extname === 'riversidesoftware.openedge-abl-lsp') {
+	// 	await waitForLangServerReady()
+	// }
+	log.info('isActive=' + ext.isActive)
 	return ext.isActive
 }
 
 export async function waitForExtensionActive (extensionId = 'kherring.ablunit-test-runner') {
 	let ext = extensions.getExtension(extensionId)
 	if (!ext) {
-		await sleep2(250, 'wait and retry getExtension')
-		ext = extensions.getExtension(extensionId)
+		ext = await sleep2(250, 'wait and retry getExtension')
+			.then(() => { return extensions.getExtension(extensionId) })
 	}
-	if (!ext) {
-		throw new Error(extensionId + ' is not installed')
-	}
+	if (!ext) { throw new Error(extensionId + ' is not installed') }
+	if (ext.isActive) { log.info(extensionId + ' is already active'); return ext.isActive }
 
-	if (!ext.isActive) {
-		await ext.activate().then(() => {
-			log.info('activated ' + extensionId)
-		}, (err) => {
-			throw new Error('failed to activate kherring.ablunit-test-runner: ' + err)
-		})
-	}
+	ext = await ext.activate()
+		.then(() => { return sleep2(250) })
+		.then(() => {
+			log.info('activated? ' + extensionId)
+			return extensions.getExtension(extensionId)
+		}, (err) => { throw new Error('failed to activate kherring.ablunit-test-runner: ' + err) })
+	log.info('post-activate (ext.isActive=' + ext?.isActive + ')')
+	if (!ext) { throw new Error(extensionId + ' is not installed') }
 
-	if(!ext.isActive) {
-		log.info('waiting for extension to activate - should never be here!')
-		for (let i=0; i<50; i++) {
-			if (ext.isActive) {
-				log.info('waitied ' + (i + 1) * 100 + 'ms for extension to activate')
-				break
-			}
-			await sleep2(100)
+	for (let i=0; i<50; i++) {
+		if (ext.isActive) {
+			log.info(extensionId + ' is active! (i=' + i + ')')
+			return ext.isActive
 		}
+		log.info('waitied ' + (i + 1) * 100 + 'ms for extension to activate')
+		await sleep2(100)
 	}
+	if (!ext.isActive) { throw new Error(extensionId + ' is not active') }
 
-	if (!ext.isActive) {
-		throw new Error(extensionId + ' is not active')
-	}
 	log.info(extensionId + ' is active!')
-	// return refreshData()
+	return ext.isActive
 }
 
 function getRcodeCount (workspaceFolder?: WorkspaceFolder) {
@@ -325,7 +321,7 @@ function getRcodeCount (workspaceFolder?: WorkspaceFolder) {
 	if (!workspaceFolder) {
 		throw new Error('workspaceFolder is undefined')
 	}
-	const g = globSync('**/*.r', { cwd: workspaceFolder?.uri.fsPath })
+	const g = globSync('**/*.r', { cwd: workspaceFolder.uri.fsPath })
 	const fileCount = g.length
 	if (fileCount >= 0) {
 		log.info('found ' + fileCount + ' r-code files')
@@ -339,22 +335,19 @@ export async function awaitRCode (workspaceFolder: WorkspaceFolder, rcodeCountMi
 	const ext = extensions.getExtension('riversidesoftware.openedge-abl-lsp')
 	log.info('[awaitRCode] isActive=' + ext?.isActive)
 	if (!ext?.isActive) {
-		log.info('[awaitRCode] extension active! (ext=' + JSON.stringify(ext) + ')')
+		log.info('[awaitRCode] extension not active! (ext=' + JSON.stringify(ext) + ')')
 		throw new Error('openedge-abl-lsp is not active! rcode cannot be created')
 	}
 	const buildWaitTime = 20
 
-	for (let i = 0; i < 10; i++) {
-		const prom = commands.executeCommand('abl.project.rebuild').then(() => true, (err) => {
-			log.error('[awaitRCode] abl.project.rebuild failed! err=' + err)
-			return false
-		})
-		if (await prom) {
-			log.info('Language client is ready!')
-			break
-		}
-		await sleep2(500)
-	}
+	await commands.executeCommand('abl.project.rebuild').then(() => {
+		log.info('abl.project.rebuild command complete!')
+		return true
+	}, (e) => {
+		log.error('[awaitRCode] abl.project.rebuild failed! err=' + e)
+		return false
+	})
+
 
 	log.info('waiting up to ' + buildWaitTime + ' seconds for r-code')
 	for (let i = 0; i < buildWaitTime; i++) {
@@ -367,8 +360,8 @@ export async function awaitRCode (workspaceFolder: WorkspaceFolder, rcodeCountMi
 		await sleep2(500)
 	}
 
-	await commands.executeCommand('abl.dumpFileStatus').then(() => { log.info('abl.dumpFileStatus complete!') })
-	await commands.executeCommand('abl.dumpLangServStatus').then(() => { log.info('abl.dumpLangServStatus complete!') })
+	await commands.executeCommand('abl.dumpFileStatus').then(() => { log.info('abl.dumpFileStatus complete!'); return })
+	await commands.executeCommand('abl.dumpLangServStatus').then(() => { log.info('abl.dumpLangServStatus complete!'); return })
 	throw new Error('r-code files not found')
 }
 
@@ -538,42 +531,74 @@ export async function runAllTests (doRefresh = true, waitForResults = true, tag?
 
 	log.info(tag + 'running all tests')
 	if (doRefresh) {
-		await refreshTests().then(async () => { return sleep2(500, tag + 'after refreshTests') })
-	} else {
-		await sleep(250, tag + 'sleep before testing.runAll')
+		log.info('refresh before run - start')
+		await refreshTests()
+		// await refreshTests()
+		// 	.then(() => {
+		// 		log.info('refreshTests complete!')
+		// 		return true
+		// 	}, (e) => { throw e })
 	}
 
 	log.info('testing.runAll starting (waitForResults=' + waitForResults + ')')
-	const r = await commands.executeCommand('testing.runAll').then(async () => {
-		log.info(tag + 'testing.runAll completed - start getResults()')
-		if (!waitForResults) { return false }
-
-		return getResults(1, tag).then((r) => {
-			const fUri = r?.[0]?.cfg.ablunitConfig.optionsUri.filenameUri
-			log.info(tag + 'testing.runAll found results file (filename=' + fUri + ', r=' + r + ')')
-
-			if (doesFileExist(fUri)) { return true }
-			throw new Error('no results file found (filename=' + fUri + ')')
-		}, (e) => {
-			log.error('ERROR! e=' + e)
-			throw e
+	const r = await commands.executeCommand('testing.runAll')
+		.then(() => { return sleep(250) })
+		.then(() => {
+			log.info(tag + 'testing.runAll completed - start getResults()')
+			if (!waitForResults) { return [] }
+			return getResults(1, tag)
 		})
-	}, (err) => {
-		runAllTestsDuration?.stop()
-		log.error(tag + 'testing.runAll failed: ' + err)
-		throw new Error('testing.runAll failed: ' + err)
-	})
-	runAllTestsDuration?.stop()
+		.then((r) => {
+			if (r.length >= 0) {
+				const fUri = r[0]?.cfg.ablunitConfig.optionsUri.filenameUri
+				log.info(tag + 'testing.runAll command complete (filename=' + fUri + ', r=' + r + ')')
+				return doesFileExist(fUri)
+			}
+			return false
+		}, (err) => {
+			runAllTestsDuration?.stop()
+			log.error(tag + 'testing.runAll failed: ' + err)
+			throw new Error('testing.runAll failed: ' + err)
+		})
+	runAllTestsDuration.stop()
 	log.info(tag + 'runAllTests complete (r=' + r + ')')
+	return
+}
+
+function waitForRefreshComplete () {
+	const waitTime = 5000
+	const refreshDuration = new Duration('waitForRefreshComplete')
+	log.info('waiting for refresh to complete...')
+	return new Promise((resolve, reject) => {
+		const interval = setInterval(() => {
+			if (refreshDuration.elapsed() > waitTime) {
+				clearInterval(interval)
+				reject(new Error('refresh took longer than ' + waitTime + 'ms'))
+			}
+			const p = commands.executeCommand('_ablunit.isRefreshTestsComplete')
+				.then((r: unknown) => {
+					if (r) {
+						clearInterval(interval)
+						resolve(refreshDuration.elapsed())
+					}
+					return r
+				}, (e) => { throw e })
+		}, 500)
+	})
+
 }
 
 export function refreshTests () {
-	return commands.executeCommand('testing.refreshTests').then(() => {
-		log.info('testing.refreshTests completed!')
-	}, (err) => {
-		log.info('testing.refreshTests caught an exception. err=' + err)
-		throw err
-	})
+	log.info('testing.refreshTests starting...')
+	return commands.executeCommand('testing.refreshTests')
+		.then(() => { return waitForRefreshComplete() })
+		.then((r) => {
+			log.info('testing.refreshTests completed! (r=' + r + ')')
+			return true
+		}, (err) => {
+			log.info('testing.refreshTests caught an exception. err=' + err)
+			throw err
+		})
 }
 
 export async function waitForTestRunStatus (waitForStatus: RunStatus) {
@@ -586,9 +611,12 @@ export async function waitForTestRunStatus (waitForStatus: RunStatus) {
 	setTimeout(() => { throw new Error('waitForTestRunStatus timeout') }, 20000)
 	while (currentStatus < waitForStatus)
 	{
+		log.info('loop-1')
 		await sleep2(500, 'waitForTestRunStatus currentStatus=\'' + currentStatus.toString() + '\' + , waitForStatus=\'' + waitForStatus.toString() + '\'')
+		log.info('loop-2')
 		runData = await getCurrentRunData()
 		currentStatus = runData[0].status
+		log.info('loop-4')
 	}
 
 	log.info('found test run status    = \'' + currentStatus + '\'' + waitTime.toString())
@@ -602,7 +630,7 @@ export async function cancelTestRun (resolveCurrentRunData = true) {
 	cancelTestRunDuration = new Duration()
 	if (resolveCurrentRunData) {
 		const status = getCurrentRunData().then((resArr) => {
-			if (resArr && resArr.length > 0) {
+			if (resArr.length > 0) {
 				return resArr[0].status
 			}
 			return 'results.length=0'
@@ -630,30 +658,20 @@ export function setConfig (key: string, value?: unknown) {
 }
 
 function getConfigDefaultValue (key: string) {
-	const basekey = key.split('.').shift()
-	log.info('key=' + key)
+	const keys = key.split('.')
+	const basekey = keys.shift()
+	const childkey = keys.join('.')
+	log.debug('key=' + key + ', basekey=' + basekey + ', childkey=' + childkey)
 	const workspaceConfig = workspace.getConfiguration(basekey, getWorkspaceUri())
-	const t = workspaceConfig.inspect(key)
+	const t = workspaceConfig.inspect(childkey)
+	log.debug('inspect=' + JSON.stringify(t))
 	if (t?.defaultValue) {
-		return t?.defaultValue
+		return t.defaultValue
 	}
 	return undefined
 }
 
-export async function updateConfig (key: string, value: unknown) {
-	return new Promise<void>((resolve, reject) => {
-		log.info('updateConfigProm start')
-		updateConfigProm(key, value).then(() => {
-			log.info('updateConfigProm resolved!')
-			resolve()
-		}, (e: Error) => {
-			reject(e)
-		})
-		log.info('updateConfigProm created')
-	})
-}
-
-export async function updateConfigProm (key: string, value: unknown) {
+export function updateConfig (key: string, value: unknown, configurationTarget?: boolean | vscode.ConfigurationTarget | null | undefined) {
 	const sectionArr = key.split('.')
 	const section1 = sectionArr.shift()
 	const section2 = sectionArr.join('.')
@@ -661,23 +679,25 @@ export async function updateConfigProm (key: string, value: unknown) {
 	const workspaceConfig = workspace.getConfiguration(section1, getWorkspaceUri())
 
 	const currentValue = workspaceConfig.get(section2)
+	log.info('current=' + JSON.stringify(currentValue))
+	log.info('  value=' + JSON.stringify(value))
 	if (JSON.stringify(value) === JSON.stringify(currentValue)) {
 		// log.debug(section1 + '.' + section2 + ' is already set to \'' + value + '\'')
 		log.warn(key + ' is already set to \'' + value + '\'')
-		return
+		return Promise.resolve(true)
 	}
 
 	if (!value) {
 		const defaultValue = getConfigDefaultValue(key)
+		log.info('default=' + JSON.stringify(defaultValue))
 		if (JSON.stringify(defaultValue) === JSON.stringify(currentValue)) {
 			log.warn(key + ' is already set to default value \'' + value + '\'')
-			return
+			return Promise.resolve(true)
 		}
 	}
-	return workspaceConfig.update(section2, value, null).then(() => {
-		log.info(isoDate() + ' success!')
-
-	})
+	log.info('updating configuration section1=' + section2 + ', section2=' + section2 + ', key=' + key + ' value=' + JSON.stringify(value))
+	return workspaceConfig.update(section2, value, configurationTarget)
+		.then(() => true, (e) => { throw e })
 }
 
 export async function updateTestProfile (key: string, value: string | string[] | boolean) {
@@ -693,15 +713,15 @@ export async function updateTestProfile (key: string, value: string | string[] |
 	if (keys.length === 3) {
 		// @ts-expect-error ThisIsSafeForTesting
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-		profile['configurations'][0][keys[0]][keys[1]][keys[2]] = value
+		profile.configurations[0][keys[0]][keys[1]][keys[2]] = value
 	} else if (keys.length ===2) {
 		// @ts-expect-error ThisIsSafeForTesting
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-		profile['configurations'][0][keys[0]][keys[1]] = value
+		profile.configurations[0][keys[0]][keys[1]] = value
 	} else {
 		// @ts-expect-error ThisIsSafeForTesting
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-		profile['configurations'][0][keys[0]] = value
+		profile.configurations[0][keys[0]] = value
 	}
 
 	// profile.configurations[0][key] = value
@@ -713,7 +733,7 @@ export async function updateTestProfile (key: string, value: string | string[] |
 	return workspace.fs.writeFile(Uri.joinPath(getWorkspaceUri(), '.vscode', 'ablunit-test-profile.json'), newjson)
 }
 
-export async function selectProfile (profile: string) {
+export function selectProfile (profile: string) {
 	if (! extensions.getExtension('riversidesoftware.openedge-abl-lsp')) {
 		throw new Error('openedge-abl-lsp is not installed')
 	}
@@ -721,25 +741,28 @@ export async function selectProfile (profile: string) {
 		profile: profile
 	}
 	const profileUri = Uri.joinPath(getWorkspaceUri(), '.vscode', 'profile.json')
-	return workspace.fs.writeFile(profileUri, Buffer.from(JSON.stringify(profileJson))).then(async () => {
+	return workspace.fs.writeFile(profileUri, Buffer.from(JSON.stringify(profileJson))).then(() => {
 		return restartLangServer()
 	})
 }
 
-export async function refreshData (resultsLen = 0) {
+export function refreshData (resultsLen = 0) {
 	decorator = undefined
 	testController = undefined
 	recentResults = undefined
 	currentRunData = undefined
 
+	log.info('refreshData start')
 	return commands.executeCommand('_ablunit.getExtensionTestReferences').then((resp) => {
+		log.info('refreshData command complete (resp=' + JSON.stringify(resp) + ')')
 		const refs = resp as IExtensionTestReferences
-		let passedTests = undefined
+		log.info('refs=' + JSON.stringify(refs))
+		const passedTests = refs.recentResults?.[0].ablResults?.resultsJson[0].testsuite?.[0].passed ?? undefined
+		log.info('recentResults.length=' + refs.recentResults.length)
+		log.info('recentResults[0].ablResults.=' + refs.recentResults?.[0].status)
+		log.info('recentResults[0].ablResults.resultsJson.length=' + recentResults?.[0].ablResults?.resultsJson.length)
+		log.info('passedTests=' + passedTests)
 
-		if (refs.recentResults[0]?.ablResults?.resultsJson?.[0].testsuite !== undefined) {
-			passedTests = refs.recentResults[0].ablResults?.resultsJson[0].testsuite?.[0].passed ?? undefined
-		}
-		log.debug('passedTests=' + passedTests)
 		if (passedTests && passedTests <= resultsLen) {
 			throw new Error('failed to refresh test results: results.length=' + refs.recentResults.length)
 		}
@@ -748,8 +771,11 @@ export async function refreshData (resultsLen = 0) {
 		recentResults = refs.recentResults
 		if (refs.currentRunData) {
 			currentRunData = refs.currentRunData
+			return true
 		}
+		return false
 	}, (err) => {
+		log.error('failed to refresh test results: ' + err)
 		throw new Error('failed to refresh test results: ' + err)
 	})
 }
@@ -761,15 +787,15 @@ export function getDecorator () {
 	return decorator
 }
 
-export async function getTestController () {
-	if (!testController) {
+export async function getTestController (skipRefresh = false) {
+	if (!skipRefresh && !testController) {
 		await refreshData()
 	}
 	return testController
 }
 
 export async function getTestControllerItemCount (type?: 'ABLTestFile' | undefined) {
-	const ctrl = await getTestController()
+	const ctrl = await getTestController(type == 'ABLTestFile')
 	if (!ctrl?.items) {
 		return 0
 	}
@@ -803,20 +829,19 @@ export async function getCurrentRunData (len = 1, resLen = 0, tag?: string) {
 	await refreshData(resLen)
 	if (!currentRunData || currentRunData.length === 0) {
 		log.info(tag + 'getCurrentRunData not set, refreshing...')
-		for (let i=0; i<15; i++) {
-			const prom = sleep2(500, tag + 'still no currentRunData, sleep before trying again (' + i + '/15)').then(async () => {
-				return refreshData(resLen).then(() => {
-					log.debug('refresh success')
-				}, (err) => {
-					log.error('refresh failed: ' + err)
-				})
+		for (let i=0; i<3; i++) {
+			await sleep2(500, tag + 'still no currentRunData, sleep before trying again (' + i + '/3)')
+			const prom = refreshData(resLen).then(() => {
+				log.debug('refresh success')
+				return true
+			}, (err) => {
+				log.error('refresh failed: ' + err)
+				return false
 			})
 
 			log.info(tag + 'getCurrentRunData - await prom start')
-			const retResults = await prom.then(
-				() => { return true },
-				(e) => { log.error('ignoring error e=' + e) })
-			log.info(tag + 'getCurrentRunData - await prom end')
+			const retResults = await prom
+			log.info(tag + 'getCurrentRunData - prom.done retResults=' + retResults)
 			log.info(tag + 'currentRunData.length=' + currentRunData?.length + ', retResults=' + retResults)
 			if (retResults && (currentRunData?.length ?? 0) > len && (recentResults?.length ?? 0) > resLen) {
 				log.info(tag + ' break')
@@ -839,45 +864,36 @@ export async function getCurrentRunData (len = 1, resLen = 0, tag?: string) {
 	return currentRunData
 }
 
-export async function getResults (len = 1, tag?: string) {
-	const duration = new Duration()
+export async function getResults (len = 1, tag?: string): Promise<ABLResults[]> {
 	if ((!recentResults || recentResults.length === 0) && len > 0) {
 		log.info(tag + 'recentResults not set, refreshing...')
-		for (let i=0; i<15; i++) {
-			const prom = sleep2(500, tag + 'still no recentResults, sleep before trying again (' + i + '/15)').then(async () => {
-				return refreshData().then(async () => {
-					return sleep2(250, null)
+		for (let i=0; i<5; i++) {
+			const prom = sleep2(250, tag + 'still no recentResults, sleep before trying again (' + i + '/3)')
+				.then(() => { return refreshData() })
+				.then((gotResults) => {
+					if (gotResults) { return gotResults }
+					return sleep2(250)
 				})
-			}, (e) => { log.error('no recentResults yet (' + i + '/15) (e=' + e + ')') })
+				.catch((e: unknown) => { log.error('no recentResults yet (' + i + '/3) (e=' + e + ')') })
 
-			await prom.then(() => {
-				log.info('refresh success')
-			}, (e) => {
-				log.error('refresh failed: ' + e)
-			})
-
-			if ((recentResults?.length ?? 0) > len) {
-				log.info('found test results ' + duration)
+			if (await prom && (recentResults?.length ?? 0) > 0) {
 				break
 			}
 		}
 	}
 	if (!recentResults) {
-		log.error(tag + 'recentResults is null')
 		throw new Error('recentResults is null')
 	}
 	if (recentResults.length < len) {
-		log.error(tag + 'recent results should be >= ' + len + ' but is ' + recentResults.length)
 		throw new Error('recent results should be >= ' + len + ' but is ' + recentResults.length)
 	}
 	return recentResults
 }
 
 class AssertTestResults {
-	async assertResultsCountByStatus (expectedCount: number, status: 'passed' | 'failed' | 'errored' | 'all') {
-		const recentResults = await getResults()
+	assertResultsCountByStatus (expectedCount: number, status: 'passed' | 'failed' | 'errored' | 'all') {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-		const res = recentResults[0].ablResults?.resultsJson[0]
+		const res = recentResults?.[0].ablResults?.resultsJson[0]
 		if (!res) {
 			assertParent.fail('No results found. Expected ' + expectedCount + ' ' + status + ' tests')
 			return
@@ -897,16 +913,16 @@ class AssertTestResults {
 	}
 
 	public count = (expectedCount: number) => {
-		this.assertResultsCountByStatus(expectedCount, 'all').catch((err: unknown) => { throw err })
+		this.assertResultsCountByStatus(expectedCount, 'all')
 	}
 	public passed (expectedCount: number) {
-		this.assertResultsCountByStatus(expectedCount, 'passed').catch((err: unknown) => { throw err })
+		this.assertResultsCountByStatus(expectedCount, 'passed')
 	}
 	public errored (expectedCount: number) {
-		this.assertResultsCountByStatus(expectedCount, 'errored').catch((err: unknown) => { throw err })
+		this.assertResultsCountByStatus(expectedCount, 'errored')
 	}
 	public failed (expectedCount: number) {
-		this.assertResultsCountByStatus(expectedCount, 'failed').catch((err: unknown) => { throw err })
+		this.assertResultsCountByStatus(expectedCount, 'failed')
 	}
 }
 
@@ -948,6 +964,7 @@ export const assert = {
 			const r = block()
 			await r.then(() => {
 				assertParent.fail('expected exception not thrown. message=\'' + message + '\'')
+				return
 			})
 		} catch (e) {
 			assertParent.ok(true)
@@ -958,6 +975,7 @@ export const assert = {
 			const r = block()
 			await r.then(() => {
 				assertParent.ok(true)
+				return
 			})
 			assertParent.ok(true)
 		} catch (e) {

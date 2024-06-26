@@ -52,6 +52,7 @@
 			"description": "Enter the name of the workspace to test",
 			"type": "pickString",
 			"options": [
+				"AtStart",
 				"DebugLines",
 				"proj0",
 				"proj1",
