@@ -130,25 +130,17 @@ export async function waitForLangServerReady () {
 	const waitTime = new Duration()
 
 	// now wait until it is ready
-	let r = false
+	const r = false
 	for (let i = 0; i < maxWait; i++) {
-		const p = commands.executeCommand('abl.dumpLangServStatus').then((r) => {
-			log.info('sleep-400 start')
-			return sleep2(400).then(() => { log.info('sleep-400 end'); return })
-		}).then(() => {
-			log.info('abl.dumpLangServStatus: i=' + i + ' ' + waitTime + ' (r=' + r + ')')
-			return true
-		}, (e) => {
-			log.error('abl.dumpLangServStatus failed! i=' + i + ', e=' + e)
-			return false
-		})
-		r = await p
-
-		log.info('r=' + r)
+		await commands.executeCommand('abl.dumpLangServStatus')
+		log.info('sleep-400 start')
+		await sleep2(400)
+		log.info('sleep-400 end')
+		log.info('abl.dumpLangServStatus: i=' + i + ' ' + waitTime + ' (r=' + r + ')')
 		if (r) { break }
 		log.info('sleep500-start')
-		await sleep2(500).then(() => { log.info('sleep500-return'); return })
-		log.info('sleep500-env')
+		await sleep2(500)
+		log.info('sleep500-end')
 	}
 	log.info('r=' + r)
 	if (r) {
@@ -159,7 +151,7 @@ export async function waitForLangServerReady () {
 	throw new Error('lang server is not ready!')
 }
 
-export function setRuntimes (runtimes?: IRuntime[]): Promise<void> {
+export async function setRuntimes (runtimes?: IRuntime[]) {
 	const duration = new Duration('setRuntimes')
 	if (!enableExtensions()) {
 		throw new Error('setRuntimes failed! extensions are disabled')
@@ -183,12 +175,12 @@ export function setRuntimes (runtimes?: IRuntime[]): Promise<void> {
 	log.info('  input=' + JSON.stringify(runtimes))
 	if (JSON.stringify(current) === JSON.stringify(runtimes)) {
 		log.info('runtmes are already set ' + duration)
-		return Promise.resolve()
+		return true
 	}
 
 	log.info('workspace.getConfiguration("abl").update("configuration.runtimes") - START')
-	const hasConf = workspace.getConfiguration('abl').has('configuration')
-	log.info('hasConf=' + hasConf)
+	// const hasConf = workspace.getConfiguration('abl').has('configuration')3
+	// log.info('hasConf=' + hasConf)
 	// if (!hasConf) {
 	// 	log.info('setting abl.configuration.runtimes')
 	// 	return workspace.getConfiguration('abl').update('configuration.runtimes', runtimes, true)
@@ -206,7 +198,7 @@ export function setRuntimes (runtimes?: IRuntime[]): Promise<void> {
 	// 			throw new Error('setRuntimes failed! e=' + e)
 	// 		})
 	// }
-	const r = workspace.getConfiguration('abl').update('configuration.runtimes', runtimes, true)
+	const r = await workspace.getConfiguration('abl').update('configuration.runtimes', runtimes, true)
 		.then(() => {
 			log.info('workspace.getConfiguration("abl").update(configuration.runtimes) - END')
 			return restartLangServer()
@@ -221,5 +213,5 @@ export function setRuntimes (runtimes?: IRuntime[]): Promise<void> {
 			throw new Error('setRuntimes failed! e=' + e)
 		})
 	log.info('return r=' + JSON.stringify(r))
-	return Promise.resolve()
+	return r
 }

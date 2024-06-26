@@ -154,8 +154,8 @@ run_tests_in_docker () {
 		[ -n "${ABLUNIT_TEST_RUNNER_PROJECT_NAME:-}" ] && ARGS+=(-e ABLUNIT_TEST_RUNNER_PROJECT_NAME)
 		ARGS+=(
 			-v "$PWD":/home/circleci/ablunit-test-runner:ro
-			-v test-runner-cache:/home/circleci/cache
-			-v vscode-cli-cache:/home/circleci/.vscode-test
+			# -v test-runner-cache:/home/circleci/cache
+			-v vscode-cli-cache:/home/circleci/project/.vscode-test
 			kherring/ablunit-test-runner:"${ABLUNIT_TEST_RUNNER_OE_VERSION}"
 			bash -c "/home/circleci/ablunit-test-runner/docker/$SCRIPT.sh $OPTS;"
 		)

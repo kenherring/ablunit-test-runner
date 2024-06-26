@@ -27,7 +27,7 @@ initialize () {
 
 	echo "[$0 ${FUNCNAME[0]}] update_oe_version start"
 	update_oe_version
-	restore_vscode_test
+	# restore_vscode_test
 	echo "[$0 ${FUNCNAME[0]}] update_oe_version end"
 	# exit 1
 }
@@ -44,7 +44,7 @@ update_oe_version () {
 }
 
 restore_vscode_test () {
-	echo "[$0 ${FUNCNAME[0]}] ABLUNIT_TEST_RUNNER_OE_VERSION=$ABLUNIT_TEST_RUNNER_OE_VERSION"
+	echo "[$0 ${FUNCNAME[0]}] ABLUNIT_TEST_RUNNER_OE_VERSION=$ABLUNIT_TEST_RUNNER_saOE_VERSION"
 	local FROM_DIR TO_DIR COUNT
 	FROM_DIR='/home/circleci/.vscode-test'
 	TO_DIR=./.vscode-test

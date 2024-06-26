@@ -35,9 +35,9 @@ suite('proj0  - Extension Test Suite', () => {
 			.catch((e: unknown) => { throw e })
 	})
 
-	test('proj0.2 - run test, open file, validate coverage displays', () => {
+	test('proj0.2 - run test, open file, validate coverage displays', async () => {
 		const testFileUri = Uri.joinPath(getWorkspaceFolders()[0].uri, 'src', 'dirA', 'dir1', 'testInDir.p')
-		return runAllTests()
+		return await runAllTests()
 			.then(() => {
 				log.info('window.showTextDocument testFileUri=' + testFileUri.fsPath)
 				return window.showTextDocument(testFileUri)

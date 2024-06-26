@@ -2,7 +2,7 @@
 // import { assert, deleteTestFiles, getTestCount, getWorkspaceUri, log, runAllTests, sleep, toUri, updateConfig, waitForExtensionActive } from '../testCommon'
 // import { ReadableStreamDefaultController } from 'stream/web'
 
-// import { before, beforeEach } from 'mocha'
+import { before, beforeEach } from 'mocha'
 import { Uri, assert, deleteTestFiles, getWorkspaceUri, log, runAllTests, waitForExtensionActive, workspace } from '../testCommon'
 
 const workspaceUri = getWorkspaceUri()
@@ -20,8 +20,11 @@ suite('proj1 - Extension Test Suite', () => {
 	// 		})
 	// })
 
-	// before('proj1 - before', async () => {
-	suiteSetup('proj1 - before', async () => {
+	// before('proj1 - before', () => {
+	// 	log.info('before')
+	// })
+
+	suiteSetup('proj1 - suiteSetup', async () => {
 		const r = await waitForExtensionActive()
 		log.info('end waitForExtensionActive (r=' + r + ')')
 		return r
@@ -58,20 +61,39 @@ suite('proj1 - Extension Test Suite', () => {
 
 
 
+	// beforeEach('proj1 - beforeEach-1', () => {
+	// 	log.info('beforeEach-1')
+	// })
+
 	// beforeEach('proj1 - beforeEach', async () => {
-	setup('proj1 - beforeEach', async () => {
+	setup('proj1 - setup', async () => {
 		log.info('setup-1')
 		deleteTestFiles()
 		log.info('setup-2 has(ablunit.files)=' + workspace.getConfiguration('ablunit').has('files') + ' files.exclude=' + workspace.getConfiguration('ablunit').get('files.exclude'))
-		const prom = workspace.getConfiguration('ablunit').update('files.exclude', undefined)
+		// const prom = workspace.getConfiguration('ablunit').update('files.exclude', undefined)
+		const prom = workspace.getConfiguration('ablunit.files').update('exclude', undefined)
 		log.info('setup-3')
-		await prom.then(() => { log.info('setup-4') }, () => { log.error('failed to update ablunit.files.exclude') })
-		log.info('setup-5')
-		return
+		const r = await prom
+			.then(() => {
+				log.info('setup-4')
+				return true
+			}, (e) => {
+				throw e
+			})
+		log.info('setup-5 (r=' + r)
+		return r
 		// return updateConfig('ablunit.files.exclude', undefined)
 		// 	.then((r) => { log.info('setup-3 (r=' + r + ')'); return }, (e) => { throw e })
 		// 	// .then((r) => { log.info('setup-3 (r=' + r + ')'); return true }, (e) => { throw e })
 		// 	// .then((r) => { log.info('setup-3 (r=' + r + ')'); return r }, (e) => { throw e })
+	})
+
+	beforeEach('proj1 - beforeEach-2', () => {
+		log.info('beforeEach-2')
+	})
+
+	setup('proj1 - setup-2',  () => {
+		log.info('setup-2')
 	})
 
 	// setup('proj1 - beforeEach', async () => {

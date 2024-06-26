@@ -52,7 +52,7 @@ initialize () {
 
 	echo 'copying files from local'
 	initialize_repo
-	restore_cache
+	# restore_cache
 
 	if [ -z "${CIRCLE_BRANCH:-}" ]; then
 		CIRCLE_BRANCH=$(git branch --show-current)
@@ -61,10 +61,16 @@ initialize () {
 
 initialize_repo () {
 	echo "[$0 ${FUNCNAME[0]}] pwd=$(pwd)"
-	if [ ! -d "$PROJECT_DIR/.git" ]; then
-		git clone "$REPO_VOLUME" "$PROJECT_DIR"
-	else
+	if [ -d "$PROJECT_DIR/.git" ]; then
+		cd "$PROJECT_DIR"
 		git pull
+	elif [ -d "$PROJECT_DIR" ]; then
+		cd "$PROJECT_DIR"
+		git init
+		git remote add origin "$REPO_VOLUME"
+		# git checkout main -f
+	else
+		git clone "$REPO_VOLUME" "$PROJECT_DIR"
 	fi
 	cd "$PROJECT_DIR"
 	if [ "$(git branch --show-current)" = "$GIT_BRANCH" ]; then

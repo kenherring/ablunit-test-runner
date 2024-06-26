@@ -144,24 +144,16 @@ function getExtensionDevelopmentPath () {
 	throw new Error('unable to determine extensionDevelopmentPath')
 }
 
-export function suiteSetupCommon (runtimes?: IRuntime[]) {
+export async function suiteSetupCommon (runtimes?: IRuntime[]) {
 	if (!runtimes) {
 		runtimes = [{ name: oeVersion(), path: getDefaultDLC(), default: true }]
 	}
 	log.info('[suiteSetupCommon] waitForExtensionActive \'kherring.ablunit-test-runner\' (projName=' + projName() + ')')
-	return waitForExtensionActive()
-		.then(async () => {
-			if (enableExtensions()) {
-				await enableOpenedgeAblExtension(runtimes)
-			}
-			return
-		})
-		.then(() => {
-			log.info('suiteSetupCommon complete!')
-			return
-		}, (e) => {
-			throw e
-		})
+	await waitForExtensionActive()
+	if (enableExtensions()) {
+		await enableOpenedgeAblExtension(runtimes)
+	}
+	log.info('suiteSetupCommon complete!')
 }
 
 export function teardownCommon () {

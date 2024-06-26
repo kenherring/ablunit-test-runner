@@ -45,7 +45,7 @@ function getMochaTimeout (projName) {
 	// if (enableExtensions.includes(projName)) {
 	if(isFirst) {
 		isFirst = false
-		return 90000
+		return 120000
 	}
 
 
@@ -94,13 +94,14 @@ function getMochaOpts (projName) {
 		bail,
 		exit: true,
 		extension: [ 'js', 'ts', 'test.ts' ],
-		// require: [
+		require: [
+			'mocha',
 		// 	// './dist/extension.js',
 		// 	'source-map-support',
 		// 	'source-map-support/register',
 		// 	'source-map-support/register-hook-require',
 		// 	'ts-node/register',
-		// ],
+		],
 		reporter: 'mocha-multi-reporters',
 		reporterOptions: {
 			reporterEnabled: [ 'spec', 'mocha-junit-reporter' ],
@@ -113,6 +114,7 @@ function getMochaOpts (projName) {
 			// './dist/extension.js',
 			'ts-node/register/transpile-only',
 			'ts-node/register',
+			// 'mocha,'
 			// 'source-map-support',
 			// 'source-map-support/register',
 			// 'source-map-support/register-hook-require',
@@ -182,6 +184,10 @@ function getLaunchArgs (projName) {
 	// args.push('--verbose')
 	// args.push('--trace')
 	// args.push('--log', '<level>')
+	if (process.env['VERBOSE'] == 'true') {
+		args.push('--log', 'debug')
+		// args.push('--log', 'trace')
+	}
 	// args.push('--log', 'debug') // '<level>'
 	// args.push('--log', 'trace') // '<level>'
 	// args.push('--log', 'kenherring.ablunit-test-runner:debug') // <extension-id>:<level>
@@ -257,8 +263,8 @@ function getTestConfig (projName) {
 		ABLUNIT_TEST_RUNNER_ENABLE_EXTENSIONS: enableExtensions.includes('' + projName),
 		ABLUNIT_TEST_RUNNER_UNIT_TESTING: 'true',
 		ABLUNIT_TEST_RUNNER_VSCODE_VERSION: vsVersion,
-		DONT_PROMPT_WSL_INSTAL: '1',
-		VSCODE_SKIP_PRELAUNCH: '1',
+		DONT_PROMPT_WSL_INSTAL: true,
+		VSCODE_SKIP_PRELAUNCH: true,
 	}
 
 	// let extensionDevelopmentPath = path.resolve(__dirname, '..', 'ablunit-test-runner-0.2.1.vsix')
@@ -338,7 +344,7 @@ function getCoverageOpts () {
 		// 	'**/src/**',
 		// 	'**/test/**',
 		// ],
-		// require: [ 'ts-node/register' ],
+		require: [ 'ts-node/register' ],
 		// cache: false,
 		// 'enable-source-maps': true,
 		// sourceMap: false,
