@@ -114,7 +114,6 @@ function getMochaOpts (projName) {
 			// './dist/extension.js',
 			'ts-node/register/transpile-only',
 			'ts-node/register',
-			// 'mocha,'
 			// 'source-map-support',
 			// 'source-map-support/register',
 			// 'source-map-support/register-hook-require',
