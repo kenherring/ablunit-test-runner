@@ -31,6 +31,7 @@ suite('proj7B - Extension Test Suite', () => {
 		try {
 			await commands.executeCommand('testing.cancelTestRefresh').then(() => {
 				log.info('testing.cancelTestRefresh completed')
+				return
 			}, (err) => {
 				log.error('testing.cancelTestRefresh caught an exception. err=' + err)
 				throw err
@@ -48,6 +49,7 @@ suite('proj7B - Extension Test Suite', () => {
 
 		await refresh.then(() => {
 			assert.fail('testing.refreshTests completed without throwing CancellationError')
+			return
 		}, (err) => {
 			if (err instanceof CancellationError) {
 				log.info('testing.refreshTests threw CancellationError as expected')

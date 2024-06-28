@@ -65,6 +65,7 @@ export const getSourceMapFromSource = (propath: PropathParser, debugSourceName: 
 				incUri: uri,
 				lineCount: lc
 			})
+			return
 		})
 	}
 

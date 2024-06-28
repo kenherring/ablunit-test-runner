@@ -24,6 +24,7 @@ export class ABLUnitConfig  {
 	deleteFile (uri: Uri) {
 		return workspace.fs.delete(uri).then(() => {
 			log.info('deleted file: ' + uri.fsPath)
+			return
 		}, () => {
 			// do nothing.  if the file doesn't exist we can just continue on.
 		})

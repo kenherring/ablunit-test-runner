@@ -1,5 +1,5 @@
 import { Uri, workspace } from 'vscode'
-import { assert, awaitRCode, getWorkspaceUri, log, sleep, suiteSetupCommon } from '../testCommon'
+import { assert, awaitRCode, getWorkspaceUri, log, suiteSetupCommon, sleep } from '../testCommon'
 import { getSourceMapFromRCode } from '../../src/parse/RCodeParser'
 import { PropathParser } from '../../src/ABLPropath'
 
@@ -12,6 +12,7 @@ suite('debugLines - Debug Line Tests', () => {
 		await sleep(250)
 		return awaitRCode(workspaceFolder, 8).then((rcodeCount) => {
 			log.info('compile complete! rcode count = ' + rcodeCount)
+			return
 		}, (e) => {
 			log.error('compile failed! e=' + e)
 			throw e

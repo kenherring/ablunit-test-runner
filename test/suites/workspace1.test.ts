@@ -19,7 +19,7 @@ suite('workspace1 - Extension Test Suite', () => {
 
 		const workspaceFolderUri = [
 			workspace.workspaceFolders![0].uri,
-			Uri.joinPath(workspace.workspaceFolders![1].uri, 'target'),
+			Uri.joinPath(workspace.workspaceFolders?.[1].uri ?? Uri.parse(__dirname), 'target'),
 			workspace.workspaceFolders![2].uri,
 		]
 		if (!workspaceFolderUri[0] || !workspaceFolderUri[1] || !workspaceFolderUri[2]) {

@@ -18,7 +18,9 @@
 				"reveal": "always",
 				"group": "build-task"
 			},
-			"runOptions": {}
+			"runOptions": {
+				"runOn": "folderOpen"
+			},
 		},
 		{
 			"label": "npm clean",
@@ -29,7 +31,7 @@
 			"presentation": {
 				"reveal": "always",
 				"group": "build-task"
-			}
+			},
 		},
 		{
 			"label": "npm pretest",
@@ -40,7 +42,7 @@
 			"presentation": {
 				"reveal": "always",
 				"group": "build-task"
-			}
+			},
 		},
 		{
 			"label": "npm watch",
@@ -76,16 +78,25 @@
 				"'${relativeFile}'",
 				"-m"
 			],
-			"problemMatcher": []
+			"problemMatcher": [],
+		},
+		{
+			"type": "npm",
+			"script": "lint",
+			"problemMatcher": [
+				"$eslint-stylish"
+			],
+			"label": "npm: lint",
+			"detail": "npx eslint ./src --ext .ts,.js",
 		},
 		{
 			"type": "npm",
 			"script": "lint-fix-all",
 			"problemMatcher": [
-				"$eslint-stylish"
+				"$eslint-stylish",
 			],
 			"label": "npm: lint-fix-all",
-			"detail": "npx eslint ./src --ext .ts,.js --fix"
+			"detail": "npx eslint ./src --ext .ts,.js --fix",
 		},
 		{
 			"label": "npm: build",
@@ -94,7 +105,7 @@
 			"script": "build",
 			"group": {
 				"kind": "build",
-				"isDefault": true
+				"isDefault": true,
 			},
 			"presentation": {
 				"reveal": "always",
@@ -109,13 +120,13 @@
 			"script": "rebuild",
 			"group": {
 				"kind": "build",
-				"isDefault": true
+				"isDefault": true,
 			},
 			"presentation": {
 				"reveal": "always",
 				"group": "build-task"
 			},
 			"problemMatcher": "$ts-webpack-watch",
-		}
+		},
 	]
 }

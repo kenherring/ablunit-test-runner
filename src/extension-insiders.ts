@@ -108,16 +108,19 @@ export async function activate (context: ExtensionContext) {
 			await createDir(dir)
 			await workspace.fs.copy(det, uri, { overwrite: false }).then(() => {
 				log.info('successfully created .vscode/ablunit-test-profile.json')
+				return
 			}, (err) => {
 				log.error('failed to create .vscode/ablunit-test-profile.json. err=' + err)
 				throw err
 			})
 		}
 
-		window.showTextDocument(Uri.joinPath(workspaceFolder.uri, '.vscode', 'ablunit-test-profile.json')).then(() => {
+		return window.showTextDocument(Uri.joinPath(workspaceFolder.uri, '.vscode', 'ablunit-test-profile.json')).then(() => {
 			log.info('Opened .vscode/ablunit-test-profile.json')
-		}, (err) => {
-			log.error('Failed to open .vscode/ablunit-test-profile.json! err=' + err)
+			return true
+		}, (e: unknown) => {
+			log.error('Failed to open .vscode/ablunit-test-profile.json! err=' + e)
+			return false
 		})
 	}
 
@@ -359,6 +362,7 @@ export async function activate (context: ExtensionContext) {
 				log.debug('discoverAllTestsOnActivate is true. refreshing test tree...')
 				return commands.executeCommand('testing.refreshTests').then(() => {
 					log.trace('tests tree successfully refreshed on workspace startup')
+					return
 				}, (err) => {
 					log.error('failed to refresh test tree. err=' + err)
 				})
@@ -927,6 +931,7 @@ function openCallStackItem (traceUriStr: string) {
 		log.info('decorating editor - openCallStackItem')
 		// decorator.decorate(editor)
 		editor.revealRange(range)
+		return
 	})
 }
 
@@ -978,6 +983,7 @@ function createDir (uri: Uri) {
 		if (!stat) {
 			return workspace.fs.createDirectory(uri)
 		}
+		return
 	}, () => {
 		return workspace.fs.createDirectory(uri)
 	})
@@ -991,9 +997,9 @@ function logActivationEvent () {
 }
 
 function getExtensionVersion () {
-	const ext = extensions.getExtension('kherring.ablunit-test-runner')
+	const ext = extensions.getExtension('kherring.ablunit-tesvo-runner')
 	// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-	if (ext?.packageJSON && typeof ext.packageJSON['version'] === 'string') {
+	if (ext?.packageJSON && typeof ext.packageJSON.version === 'string') {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 		return ext.packageJSON.version as string
 	}

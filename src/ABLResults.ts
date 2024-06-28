@@ -123,6 +123,7 @@ export class ABLResults implements Disposable {
 
 		return Promise.all(prom).then(() => {
 			log.info('done creating config files for run')
+			return
 		}, (err) => {
 			log.error('ABLResults.start() did not complete promises. err=' + err)
 		})
@@ -196,6 +197,7 @@ export class ABLResults implements Disposable {
 					log.info('delete ' + jsonUri.fsPath)
 					return workspace.fs.delete(jsonUri)
 				}
+				return
 			}, () => {
 				// do nothing, can't delete a file that doesn't exist
 			})
@@ -204,6 +206,7 @@ export class ABLResults implements Disposable {
 			if (stat.type === FileType.File) {
 				return workspace.fs.delete(this.cfg.ablunitConfig.optionsUri.filenameUri)
 			}
+			return
 		}, () => {
 			// do nothing, can't delete a file that doesn't exist
 		})
@@ -212,7 +215,7 @@ export class ABLResults implements Disposable {
 	async run (options: TestRun) {
 		await this.deleteResultsXml()
 		return ablunitRun(options, this, this.cancellation).then(() => {
-			if(!this.ablResults!.resultsJson) {
+			if(!this.ablResults?.resultsJson) {
 				throw new Error('no results available')
 			}
 			return true
@@ -232,7 +235,7 @@ export class ABLResults implements Disposable {
 		this.ablResults = new ABLResultsParser(this.propath!, this.debugLines!)
 		await this.ablResults.parseResults(this.cfg.ablunitConfig.optionsUri.filenameUri, this.cfg.ablunitConfig.optionsUri.jsonUri).then(() => {
 			log.info('parsing results complete ' + parseTime.toString())
-			if(!this.ablResults!.resultsJson) {
+			if(!this.ablResults?.resultsJson) {
 				log.error('No results found in ' + this.cfg.ablunitConfig.optionsUri.filenameUri.fsPath, options)
 				throw new Error('No results found in ' + this.cfg.ablunitConfig.optionsUri.filenameUri.fsPath + '\r\n')
 			}
@@ -406,6 +409,7 @@ export class ABLResults implements Disposable {
 							tmArr.push(diff)
 						}
 						options.failed(item, tmArr, tc.time)
+						return
 					})
 				}
 				log.error('unexpected failure for \'' + tc.name + '\'')
@@ -416,6 +420,7 @@ export class ABLResults implements Disposable {
 					return this.getFailureMarkdownMessage(item, options, tc.failure).then((msg) => {
 						const tm = new TestMessage(msg)
 						options.failed(item, [ tm ], tc.time)
+						return
 					})
 				}
 				log.error('unexpected error for ' + tc.name)
@@ -470,14 +475,16 @@ export class ABLResults implements Disposable {
 	parseProfile () {
 		const startTime = new Date()
 		const profParser = new ABLProfile()
-		return profParser.parseData(this.cfg.ablunitConfig.profFilenameUri, this.cfg.ablunitConfig.profiler.writeJson, this.debugLines!).then(() => {
-			this.profileJson = profParser.profJSON
-			return this.assignProfileResults().then(() => {
+		return profParser.parseData(this.cfg.ablunitConfig.profFilenameUri, this.cfg.ablunitConfig.profiler.writeJson, this.debugLines!)
+			.then(() => {
+				this.profileJson = profParser.profJSON
+				return this.assignProfileResults()
+			}).then(() => {
 				log.debug('assignProfileResults complete (time=' + (Number(new Date()) - Number(startTime)) + ')')
-			}, (err) => {
-				throw new Error('assignProfileResults error: ' + err)
+				return
+			}, (e: unknown) => {
+				throw new Error('assignProfileResults error: ' + e)
 			})
-		})
 	}
 
 	async assignProfileResults () {
@@ -490,7 +497,8 @@ export class ABLResults implements Disposable {
 			if (!module.SourceName) {
 				continue
 			}
-			await this.setCoverage(module).then()
+			// await this.setCoverage(module).then()
+			await this.setCoverage(module)
 		}
 	}
 
@@ -528,9 +536,6 @@ export class ABLResults implements Disposable {
 			// TODO: end of range should be the end of the line, not the beginning of the next line
 			const coverageRange = new Range(dbg.sourceLine - 1, 0, dbg.sourceLine, 0)
 			const coverageStatement = new StatementCoverageCustom(line.ExecCount ?? 0, coverageRange)
-			if (!fc.detailedCoverage) {
-				fc.detailedCoverage = []
-			}
 			fc.detailedCoverage.push(coverageStatement)
 		}
 	}

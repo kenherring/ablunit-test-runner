@@ -45,8 +45,10 @@ function createTestItem (
 	tag: string,
 	description?: string)
 {
-
-	const thead = controller.createTestItem(item.uri!.fsPath, label, item.uri)
+	if (!item.uri) {
+		throw new Error('createTestItem: item.uri is undefined')
+	}
+	const thead = controller.createTestItem(item.uri.fsPath, label, item.uri)
 	thead.description = description
 	thead.range = range
 	thead.tags = [new TestTag('runnable'), new TestTag(tag)]

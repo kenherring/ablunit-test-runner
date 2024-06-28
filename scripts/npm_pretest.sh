@@ -58,6 +58,23 @@ get_performance_test_code () {
 	tar -xf "$TO_FILE" -C test_projects/proj7_load_performance/src
 }
 
+copy_user_settings () {
+	echo "[$0 ${FUNCNAME[0]}]"
+
+	if [ -d .vscode-test ]; then
+		find .vscode-test -type f -name "*.log"
+		find .vscode-test -type f -name "*.log" -delete
+		if [ -d .vscode-test/user-data ]; then
+			find .vscode-test/user-data
+			find .vscode-test/user-data -delete
+		fi
+	fi
+
+	mkdir -p .vscode-test/user-data/User
+	cp test/resources/.vscode-test/user-data/User/argv.json .vscode-test/user-data/User/argv.json
+	sed "s,\$DLC,${DLC//\\//},g;s,\$NAME,${ABLUNIT_TEST_RUNNER_OE_VERSION%.*}," test/resources/.vscode-test/user-data/User/settings.json > .vscode-test/user-data/User/settings.json
+}
+
 get_pct () {
 	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] pwd=$(pwd)"
 	if $WSL && [ ! -f ~/.ant/lib/PCT.jar ]; then
@@ -137,8 +154,8 @@ doPackage () {
 
 ########## MAIN BLOCK ##########
 initialize "$@"
-
 log_timing "get_performance_test_code"
+copy_user_settings
 get_performance_test_code
 get_pct
 log_timing "create_dbs"

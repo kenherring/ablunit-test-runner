@@ -1,7 +1,7 @@
 import { doesFileExist } from 'src/ABLUnitCommon'
 import { assert, extensions, log, runAllTests, suiteSetupCommon, toUri } from '../testCommon'
 
-suite('projAtStart  - Extension Test Suite', () => {
+suite('projAtStart  - Extension Test Suite - bdd', () => {
 
 	suiteSetup('proj0 - suiteSetup', async () => {
 		log.info('suiteSetup starting...')

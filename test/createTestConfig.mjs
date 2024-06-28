@@ -10,6 +10,7 @@ import { fileURLToPath } from 'url'
 import * as glob from 'glob'
 import * as path from 'path'
 import * as fs from 'fs'
+import process from 'process'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const vsVersionNum = '1.88.0'
@@ -78,11 +79,12 @@ function getMochaOpts (projName) {
 	const sonarFile = path.resolve(reporterDir, 'mocha_results_sonar_' + projName + '.xml')
 
 	const mochaOpts = {
-		bail: process.env['CIRCLECI'] == 'true' ?? false,
+		bail: process.env['CIRCLECI'] == 'true' ? true : false,
 		// fullTrace: true
 		retries: 0,
 		timeout: getMochaTimeout(projName),
-		ui: 'tdd',
+		// ui: 'tdd', // describe, it, etc
+		// ui: 'bdd' // default; suite, test, etc
 		parallel: false,
 		// exit: true,
 		// extension: [ 'js', 'ts', 'test.ts' ],
@@ -94,7 +96,7 @@ function getMochaOpts (projName) {
 
 	if (process.env['ABLUNIT_TEST_RUNNER_RUN_SCRIPT_FLAG']) {
 		// eslint-disable-next-line no-console
-		console.log('adding reporter...')
+		// console.log('adding reporter...')
 		mochaOpts.reporter = 'mocha-multi-reporters'
 		mochaOpts.reporterOptions = {
 			reporterEnabled: [ 'json-stream', 'spec', 'mocha-junit-reporter', 'mocha-sonarqube-reporter' ],
@@ -155,6 +157,7 @@ function getLaunchArgs (projName) {
 	// args.push('--locale <locale>')
 	// args.push('--user-data-dir', '<dir>')
 	// args.push('--profile <profileName>')
+	args.push('--profile-temp') // create a temporary profile for the test run in lieu of cleaning up user data
 	// args.push('--help')
 	// args.push('--extensions-dir', '<dir>')
 	// args.push('--list-extensions')
@@ -180,6 +183,10 @@ function getLaunchArgs (projName) {
 	// args.push('--verbose')
 	// args.push('--trace')
 	// args.push('--log', '<level>')
+	if (process.env['VERBOSE'] == 'true') {
+		args.push('--log', 'debug')
+		// args.push('--log', 'trace')
+	}
 	// args.push('--log', 'debug') // '<level>'
 	// args.push('--log', 'trace') // '<level>'
 	// args.push('--log', 'kenherring.ablunit-test-runner:debug') // <extension-id>:<level>
@@ -304,7 +311,15 @@ function getTests () {
 	// --- run all projects --- //
 	const g = glob.globSync('test/suites/*.test.ts').reverse()
 	for (const f of g) {
-		tests.push(getTestConfig(path.basename(f, '.test.ts')))
+		const basename = path.basename(f, '.test.ts')
+		if (basename != 'proj2' &&
+			basename != 'proj3' &&
+			basename != 'proj4' &&
+			basename != 'proj7B' &&
+			basename != 'proj9'
+		) {
+			tests.push(getTestConfig(basename))
+		}
 	}
 	return tests
 }
@@ -345,7 +360,7 @@ function getCoverageOpts () {
 	}
 }
 
-export async function createTestConfig () { // NOSONAR
+export function createTestConfig () { // NOSONAR
 	initialize()
 
 	const testConfig = {

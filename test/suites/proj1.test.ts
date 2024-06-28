@@ -31,7 +31,11 @@ suite('proj1 - Extension Test Suite', () => {
 		cleanBeforeAndAfter().then(() => { done() }, (e) => { done(e) })
 	})
 
-	test('proj1.1 - output files exist - 1', async () => {
+	setup('proj1 - setup-2',  () => {
+		log.info('setup-2')
+	})
+
+	test('proj1.1 - output files exist 1 - compile error', async () => {
 		const ablunitJson = Uri.joinPath(workspaceUri, 'ablunit.json')
 		const resultsXml = Uri.joinPath(workspaceUri, 'results.xml')
 		const resultsJson = Uri.joinPath(workspaceUri, 'results.json')

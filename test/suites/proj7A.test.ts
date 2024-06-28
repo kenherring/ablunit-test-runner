@@ -16,6 +16,7 @@ suite('proj7A - Extension Test Suite', () => {
 		const resultsJson = Uri.joinPath(workspaceUri, 'temp', 'results.json')
 		const testCount = await getTestCount(resultsJson)
 		assert(testCount > 1000, 'testCount should be > 1000, but is ' + testCount)
+		return
 	})
 
 })

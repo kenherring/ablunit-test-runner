@@ -75,7 +75,7 @@ initialize () {
 	echo 'copying files from local'
 	log_timing "init repo/restore cache"
 	initialize_repo
-	restore_cache
+	# restore_cache
 
 	if [ -z "${CIRCLE_BRANCH:-}" ]; then
 		CIRCLE_BRANCH=$(git branch --show-current)
@@ -83,11 +83,17 @@ initialize () {
 }
 
 initialize_repo () {
-	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] pwd=$(pwd)"
-	if [ ! -d "$PROJECT_DIR/.git" ]; then
-		git clone "$REPO_VOLUME" "$PROJECT_DIR"
-	else
+	echo "[$0 ${FUNCNAME[0]}] pwd=$(pwd)"
+	if [ -d "$PROJECT_DIR/.git" ]; then
+		cd "$PROJECT_DIR"
 		git pull
+	elif [ -d "$PROJECT_DIR" ]; then
+		mkdir -p "$PROJECT_DIR"
+		cd "$PROJECT_DIR"
+		git init
+		git remote add origin "$REPO_VOLUME"
+	else
+		git clone "$REPO_VOLUME" "$PROJECT_DIR"
 	fi
 	cd "$PROJECT_DIR"
 	if [ "$(git branch --show-current)" = "$GIT_BRANCH" ]; then
@@ -149,7 +155,9 @@ run_tests () {
 	if [ "$TEST_PROJECT" = "package" ]; then
 		.circleci/package.sh
 	elif [ "$TEST_PROJECT" = "base" ]; then
-		run_tests_base
+		run_tests_base || E_CODE=$?
+		save_cache
+		[ "${E_CODE:-0}" = 0 ] || exit "$E_CODE"
 	elif [ "$TEST_PROJECT" = "dummy-ext" ]; then
 		run_tests_dummy_ext
 	else

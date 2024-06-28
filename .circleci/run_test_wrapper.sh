@@ -38,7 +38,6 @@ initialize () {
 	npm install
 
 	update_oe_version
-	restore_vscode_test
 }
 
 update_oe_version () {

@@ -28,6 +28,11 @@
 		"isolatedModules": true,
 		"listEmittedFiles": true,
 		// "traceResolution": true,
+		// "types": [
+		// 	// "mocha",
+		// 	// "vscode",
+		// 	"node"
+		// ],
 
 		"allowJs": true,
 		"checkJs": true,
@@ -45,9 +50,9 @@
 		"noImplicitReturns": false,
 		"noImplicitThis": true,
 		"noPropertyAccessFromIndexSignature": true,
-		// DISABLED - total bummer when testing, gets in the way
+		// see eslint rule - @typescript-eslint/no-unused-vars
 		// "noUnusedLocals": true,
-		"noUnusedParameters": true,
+		// "noUnusedParameters": true,
 		"removeComments": true,
 		"strictFunctionTypes": true,
 		"strictNullChecks": true,

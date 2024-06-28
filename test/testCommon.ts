@@ -20,7 +20,7 @@ import { IConfigurations, parseRunProfiles } from '../src/parse/TestProfileParse
 import { DefaultRunProfile, IRunProfile as IRunProfileGlobal } from '../src/parse/config/RunProfile'
 import { RunStatus } from '../src/ABLUnitRun'
 import path from 'path'
-import { rebuildAblProject, waitForLangServerReady } from './openedgeAblCommands'
+import { rebuildAblProject } from './openedgeAblCommands'
 
 interface IRuntime {
 	name: string,
@@ -64,7 +64,7 @@ export const oeVersion = () => {
 	const dlcVersion = fs.readFileSync(versionFile)
 	log.info('dlcVersion=' + dlcVersion)
 	if (dlcVersion) {
-		const match = dlcVersion.toString().match(/OpenEdge Release (\d+\.\d+)/)
+		const match = RegExp(/OpenEdge Release (\d+\.\d+)/).exec(dlcVersion.toString())
 		if (match) {
 			return match[1]
 		}
@@ -183,8 +183,8 @@ export function teardownCommon () {
 	currentRunData = undefined
 }
 
-export async function suiteTeardownCommon () {
-	await setRuntimes()
+export function suiteTeardownCommon () {
+	return setRuntimes()
 }
 
 export function setFilesExcludePattern () {
@@ -235,7 +235,7 @@ export function installExtension (extname = 'riversidesoftware.openedge-abl-lsp'
 	// }
 
 
-	log.info('[installExtension] installing ' + extname + ' extension...')
+	log.info('installing ' + extname + ' extension...')
 	const installCommand = 'workbench.extensions.installExtension'
 
 	return commands.executeCommand(installCommand, extname).then((r) => {
@@ -291,7 +291,7 @@ export function sleep (requestedTime = 25, msg?: string) {
 }
 
 export async function activateExtension (extname = 'riversidesoftware.openedge-abl-lsp') {
-	log.info('[activateExtension] activating ' + extname + ' extension...')
+	log.info('activating ' + extname + ' extension...')
 	let ext = extensions.getExtension(extname)
 	if (!ext) {
 		await sleep2(250, 'wait and retry getExtension')
@@ -300,36 +300,39 @@ export async function activateExtension (extname = 'riversidesoftware.openedge-a
 	if (!ext) {
 		throw new Error('cannot activate extension, not installed: ' + extname)
 	}
-	log.info('[activateExtension] active? ' + ext.isActive)
+	log.info('active? ' + ext.isActive)
 
 	if (!ext.isActive) {
-		log.info('[activateExtension] activate')
-		await ext.activate()
+		log.info('activate')
+		await ext.activate().then(() => {
+			log.info('activated ' + extname + ' extension!')
+		}, (e: unknown) => { throw e })
 	}
-	if (extname === 'riversidesoftware.openedge-abl-lsp') {
-		await waitForLangServerReady()
-	}
-	log.info('[activateExtension] activated ' + extname + ' extension!')
+	await sleep2(250)
+	// if (extname === 'riversidesoftware.openedge-abl-lsp') {
+	// 	await waitForLangServerReady()
+	// }
+	log.info('isActive=' + ext.isActive)
 	return ext.isActive
 }
 
 async function waitForExtensionActive (extensionId = 'kherring.ablunit-test-runner') {
 	let ext = extensions.getExtension(extensionId)
 	if (!ext) {
-		await sleep2(250, 'wait and retry getExtension')
-		ext = extensions.getExtension(extensionId)
+		ext = await sleep2(250, 'wait and retry getExtension')
+			.then(() => { return extensions.getExtension(extensionId) })
 	}
-	if (!ext) {
-		throw new Error(extensionId + ' is not installed')
-	}
+	if (!ext) { throw new Error(extensionId + ' is not installed') }
+	if (ext.isActive) { log.info(extensionId + ' is already active'); return ext.isActive }
 
-	if (!ext.isActive) {
-		await ext.activate().then(() => {
-			log.info('activated ' + extensionId)
-		}, (err) => {
-			throw new Error('failed to activate kherring.ablunit-test-runner: ' + err)
-		})
-	}
+	ext = await ext.activate()
+		.then(() => { return sleep2(250) })
+		.then(() => {
+			log.info('activated? ' + extensionId)
+			return extensions.getExtension(extensionId)
+		}, (err) => { throw new Error('failed to activate kherring.ablunit-test-runner: ' + err) })
+	log.info('post-activate (ext.isActive=' + ext?.isActive + ')')
+	if (!ext) { throw new Error(extensionId + ' is not installed') }
 
 	if(!ext.isActive) {
 		log.info('waiting for extension to activate - should never be here!')
@@ -339,13 +342,12 @@ async function waitForExtensionActive (extensionId = 'kherring.ablunit-test-runn
 				break
 			}
 		}
+		await sleep2(100)
 	}
+	if (!ext.isActive) { throw new Error(extensionId + ' is not active') }
 
-	if (!ext.isActive) {
-		throw new Error(extensionId + ' is not active')
-	}
 	log.info(extensionId + ' is active!')
-	// return refreshData()
+	return ext.isActive
 }
 
 function getRcodeCount (workspaceFolder?: WorkspaceFolder) {
@@ -355,7 +357,7 @@ function getRcodeCount (workspaceFolder?: WorkspaceFolder) {
 	if (!workspaceFolder) {
 		throw new Error('workspaceFolder is undefined')
 	}
-	const g = globSync('**/*.r', { cwd: workspaceFolder?.uri.fsPath })
+	const g = globSync('**/*.r', { cwd: workspaceFolder.uri.fsPath })
 	const fileCount = g.length
 	if (fileCount >= 0) {
 		log.info('found ' + fileCount + ' r-code files')
@@ -395,10 +397,11 @@ export async function setRuntimes (runtimes: IRuntime[] = [{name: '12.2', path: 
 	await conf.update('configuration.runtimes', runtimes, ConfigurationTarget.Global)
 	log.info('conf.update complete')
 
-	return rebuildAblProject().then((r) => {
-		log.info('abl.configuration.runtimes set successfully (r=' + r + ')')
-		return r
-	}, (e) => { throw e })
+	return await rebuildAblProject()
+		.then((r) => {
+			log.info('abl.configuration.runtimes set successfully (r=' + r + ')')
+			return r ?? 0
+		}, (e) => { throw e })
 
 	// const prom = conf.update('configuration.runtimes', runtimes, ConfigurationTarget.Global).then(async () => {
 	// // const prom = conf.update('configuration.runtimes', runtimes, ConfigurationTarget.Global).then(() => {
@@ -423,22 +426,19 @@ export async function awaitRCode (workspaceFolder: WorkspaceFolder, rcodeCountMi
 	const ext = extensions.getExtension('riversidesoftware.openedge-abl-lsp')
 	log.info('[awaitRCode] isActive=' + ext?.isActive)
 	if (!ext?.isActive) {
-		log.info('[awaitRCode] extension active! (ext=' + JSON.stringify(ext) + ')')
+		log.info('[awaitRCode] extension not active! (ext=' + JSON.stringify(ext) + ')')
 		throw new Error('openedge-abl-lsp is not active! rcode cannot be created')
 	}
 	const buildWaitTime = 20
 
-	for (let i = 0; i < 10; i++) {
-		const prom = commands.executeCommand('abl.project.rebuild').then(() => true, (err) => {
-			log.error('[awaitRCode] abl.project.rebuild failed! err=' + err)
-			return false
-		})
-		if (await prom) {
-			log.info('Language client is ready!')
-			break
-		}
-		await sleep2(500)
-	}
+	await commands.executeCommand('abl.project.rebuild').then(() => {
+		log.info('abl.project.rebuild command complete!')
+		return true
+	}, (e) => {
+		log.error('[awaitRCode] abl.project.rebuild failed! err=' + e)
+		return false
+	})
+
 
 	log.info('waiting up to ' + buildWaitTime + ' seconds for r-code')
 	for (let i = 0; i < buildWaitTime; i++) {
@@ -451,8 +451,8 @@ export async function awaitRCode (workspaceFolder: WorkspaceFolder, rcodeCountMi
 		await sleep2(500)
 	}
 
-	await commands.executeCommand('abl.dumpFileStatus').then(() => { log.info('abl.dumpFileStatus complete!') })
-	await commands.executeCommand('abl.dumpLangServStatus').then(() => { log.info('abl.dumpLangServStatus complete!') })
+	await commands.executeCommand('abl.dumpFileStatus').then(() => { log.info('abl.dumpFileStatus complete!'); return })
+	await commands.executeCommand('abl.dumpLangServStatus').then(() => { log.info('abl.dumpLangServStatus complete!'); return })
 	throw new Error('r-code files not found')
 }
 
@@ -650,12 +650,15 @@ export async function runAllTests (waitForResults = true, tag?: string, doRefres
 }
 
 export function refreshTests () {
-	return commands.executeCommand('testing.refreshTests').then(() => {
-		log.info('testing.refreshTests completed!')
-	}, (err) => {
-		log.info('testing.refreshTests caught an exception. err=' + err)
-		throw err
-	})
+	log.info('testing.refreshTests starting...')
+	return commands.executeCommand('testing.refreshTests')
+		.then((r) => {
+			log.info('testing.refreshTests completed! (r=' + r + ')')
+			return true
+		}, (err) => {
+			log.info('testing.refreshTests caught an exception. err=' + err)
+			throw err
+		})
 }
 
 export async function waitForTestRunStatus (waitForStatus: RunStatus) {
@@ -668,9 +671,12 @@ export async function waitForTestRunStatus (waitForStatus: RunStatus) {
 	setTimeout(() => { throw new Error('waitForTestRunStatus timeout') }, 20000)
 	while (currentStatus < waitForStatus)
 	{
+		log.info('loop-1')
 		await sleep2(500, 'waitForTestRunStatus currentStatus=\'' + currentStatus.toString() + '\' + , waitForStatus=\'' + waitForStatus.toString() + '\'')
+		log.info('loop-2')
 		runData = await getCurrentRunData()
 		currentStatus = runData[0].status
+		log.info('loop-4')
 	}
 
 	log.info('found test run status = \'' + currentStatus + '\'' + waitTime.toString())
@@ -683,7 +689,7 @@ export async function cancelTestRun (resolveCurrentRunData = true) {
 	cancelTestRunDuration = new Duration()
 	if (resolveCurrentRunData) {
 		const status = getCurrentRunData().then((resArr) => {
-			if (resArr && resArr.length > 0) {
+			if (resArr.length > 0) {
 				return resArr[0].status
 			}
 			return 'results.length=0'
@@ -903,15 +909,15 @@ export async function updateTestProfile (key: string, value: string | string[] |
 	if (keys.length === 3) {
 		// @ts-expect-error ThisIsSafeForTesting
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-		profile['configurations'][0][keys[0]][keys[1]][keys[2]] = value
+		profile.configurations[0][keys[0]][keys[1]][keys[2]] = value
 	} else if (keys.length ===2) {
 		// @ts-expect-error ThisIsSafeForTesting
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-		profile['configurations'][0][keys[0]][keys[1]] = value
+		profile.configurations[0][keys[0]][keys[1]] = value
 	} else {
 		// @ts-expect-error ThisIsSafeForTesting
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-		profile['configurations'][0][keys[0]] = value
+		profile.configurations[0][keys[0]] = value
 	}
 
 	// profile.configurations[0][key] = value
@@ -947,12 +953,13 @@ export function refreshData (resultsLen = 0) {
 	return commands.executeCommand('_ablunit.getExtensionTestReferences').then((resp) => {
 		log.info('101')
 		const refs = resp as IExtensionTestReferences
-		let passedTests = undefined
+		log.info('refs=' + JSON.stringify(refs))
+		const passedTests = refs.recentResults?.[0].ablResults?.resultsJson[0].testsuite?.[0].passed ?? undefined
+		log.info('recentResults.length=' + refs.recentResults.length)
+		log.info('recentResults[0].ablResults.=' + refs.recentResults?.[0].status)
+		log.info('recentResults[0].ablResults.resultsJson.length=' + recentResults?.[0].ablResults?.resultsJson.length)
+		log.info('passedTests=' + passedTests)
 
-		if (refs.recentResults[0]?.ablResults?.resultsJson?.[0].testsuite !== undefined) {
-			passedTests = refs.recentResults[0].ablResults?.resultsJson[0].testsuite?.[0].passed ?? undefined
-		}
-		log.debug('passedTests=' + passedTests)
 		if (passedTests && passedTests <= resultsLen) {
 			throw new Error('failed to refresh test results: results.length=' + refs.recentResults.length)
 		}
@@ -962,6 +969,7 @@ export function refreshData (resultsLen = 0) {
 		recentResults = refs.recentResults
 		if (refs.currentRunData) {
 			currentRunData = refs.currentRunData
+			return true
 		}
 		log.info('103 ' + (currentRunData != undefined))
 		return currentRunData != undefined
@@ -978,15 +986,15 @@ export function getDecorator () {
 	return decorator
 }
 
-export async function getTestController () {
-	if (!testController) {
+export async function getTestController (skipRefresh = false) {
+	if (!skipRefresh && !testController) {
 		await refreshData()
 	}
 	return testController
 }
 
 export async function getTestControllerItemCount (type?: 'ABLTestFile' | undefined) {
-	const ctrl = await getTestController()
+	const ctrl = await getTestController(type == 'ABLTestFile')
 	if (!ctrl?.items) {
 		return 0
 	}
@@ -1072,21 +1080,18 @@ export async function getResults (len = 1, tag?: string) {
 		}
 	}
 	if (!recentResults) {
-		log.error(tag + 'recentResults is null')
 		throw new Error('recentResults is null')
 	}
 	if (recentResults.length < len) {
-		log.error(tag + 'recent results should be >= ' + len + ' but is ' + recentResults.length)
 		throw new Error('recent results should be >= ' + len + ' but is ' + recentResults.length)
 	}
 	return recentResults
 }
 
 class AssertTestResults {
-	async assertResultsCountByStatus (expectedCount: number, status: 'passed' | 'failed' | 'errored' | 'all') {
-		const recentResults = await getResults()
+	assertResultsCountByStatus (expectedCount: number, status: 'passed' | 'failed' | 'errored' | 'all') {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-		const res = recentResults[0].ablResults?.resultsJson[0]
+		const res = recentResults?.[0].ablResults?.resultsJson[0]
 		if (!res) {
 			assertParent.fail('No results found. Expected ' + expectedCount + ' ' + status + ' tests')
 			return
@@ -1106,16 +1111,16 @@ class AssertTestResults {
 	}
 
 	public count = (expectedCount: number) => {
-		this.assertResultsCountByStatus(expectedCount, 'all').catch((err: unknown) => { throw err })
+		this.assertResultsCountByStatus(expectedCount, 'all')
 	}
 	public passed (expectedCount: number) {
-		this.assertResultsCountByStatus(expectedCount, 'passed').catch((err: unknown) => { throw err })
+		this.assertResultsCountByStatus(expectedCount, 'passed')
 	}
 	public errored (expectedCount: number) {
-		this.assertResultsCountByStatus(expectedCount, 'errored').catch((err: unknown) => { throw err })
+		this.assertResultsCountByStatus(expectedCount, 'errored')
 	}
 	public failed (expectedCount: number) {
-		this.assertResultsCountByStatus(expectedCount, 'failed').catch((err: unknown) => { throw err })
+		this.assertResultsCountByStatus(expectedCount, 'failed')
 	}
 }
 
@@ -1157,6 +1162,7 @@ export const assert = {
 			const r = block()
 			await r.then(() => {
 				assertParent.fail('expected exception not thrown. message=\'' + message + '\'')
+				return
 			})
 		} catch (e) {
 			assertParent.ok(true)
@@ -1167,6 +1173,7 @@ export const assert = {
 			const r = block()
 			await r.then(() => {
 				assertParent.ok(true)
+				return
 			})
 			assertParent.ok(true)
 		} catch (e) {

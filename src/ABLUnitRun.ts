@@ -187,7 +187,7 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 	}
 
 	return runCommand().then(() => {
-		return res.parseOutput(options).then()
+		return res.parseOutput(options)
 	}, (err) => {
 		log.error('Err=' + err)
 		throw err
