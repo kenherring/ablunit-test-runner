@@ -100,7 +100,7 @@ class Logger {
 	}
 
 	private writeToChannel (messageLevel: LogLevel, message: string, includeStack: boolean) {
-		message = '[' + this.getFunction() + '] ' + message
+		message = '[' + this.getCallerSourceLine() + '] ' + message
 		switch (messageLevel) {
 			case LogLevel.Trace:
 				if(includeStack) { this.logOutputChannel.debug('Trace: ' + message); break }
@@ -117,7 +117,7 @@ class Logger {
 
 	private writeToTestResults (message: string, testRun: TestRun, includeStack: boolean, datetime: string) {
 		if (this.testResultsTimestamp) {
-			message = '[' + datetime + '] ' + message
+			message = '[' + datetime + '] [' + this.getCallerSourceLine() + '] ' + message
 		}
 		let optMsg = message.replace(/\r/g, '').replace(/\n/g, '\r\n')
 
@@ -134,7 +134,7 @@ class Logger {
 	}
 
 	private writeToConsole (messageLevel: LogLevel, message: string, includeStack: boolean, datetime: string) {
-		message = this.decorateMessage(message, includeStack)
+		message = this.decorateMessage(messageLevel, message, includeStack)
 		if (this.consoleTimestamp) {
 			message = '[' + datetime + '] ' + message
 		}
@@ -148,20 +148,6 @@ class Logger {
 			case LogLevel.Warning:  console.warn(message); break
 			case LogLevel.Error:    console.error(message); break
 			default:                console.log(message); break
-		}
-	}
-
-	private getFunction () {
-		const prepareStackTraceOrg = Error.prepareStackTrace
-		const err = new Error()
-		Error.prepareStackTrace = (_, stack) => stack
-		const stack = err.stack as unknown as NodeJS.CallSite[]
-		Error.prepareStackTrace = prepareStackTraceOrg
-
-		for (const s of stack) {
-			if (s.getTypeName() !== 'Logger') {
-				return (s.getMethodName() ?? s.getFunctionName()) + ':' + s.getLineNumber()
-			}
 		}
 	}
 
@@ -185,15 +171,23 @@ class Logger {
 		}
 	}
 
-	private decorateMessage (message: string, includeStack = false) {
+	private getLevelText (messageLevel: LogLevel) {
+		switch (messageLevel) {
+			case LogLevel.Off:		return 'Off  '
+			case LogLevel.Trace:	return 'Trace'
+			case LogLevel.Debug:	return 'Debug'
+			case LogLevel.Info:		return 'Info '
+			case LogLevel.Warning:	return 'Warn '
+			case LogLevel.Error:	return 'Error'
+		}
+	}
+
+
+	private decorateMessage (messageLevel: LogLevel, message: string, includeStack = false) {
 		if (includeStack) {
-			return message
+			return '[' + this.getLevelText(messageLevel) + '] ' + message
 		}
-		const callerSourceLine = this.getCallerSourceLine()
-		if (callerSourceLine) {
-			return '[' + callerSourceLine + '] ' + message
-		}
-		return message
+		return '[' + this.getLevelText(messageLevel) + '] [' + this.getCallerSourceLine() + '] '  + message
 	}
 
 }

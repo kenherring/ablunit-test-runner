@@ -1,36 +1,53 @@
-import { Selection, Uri, commands, window } from 'vscode'
-import { assert, deleteTestFiles, getTestCount, getWorkspaceUri, log, runAllTests, sleep, updateConfig, waitForExtensionActive } from '../testCommon'
-
+import { Selection, commands, window } from 'vscode'
+import { before, beforeEach } from 'mocha'
+import { Uri, assert, deleteTestFiles, getWorkspaceUri, log, runAllTests, updateConfig, getTestCount, workspace, suiteSetupCommon } from '../testCommon'
 
 const workspaceUri = getWorkspaceUri()
 
 suite('proj1 - Extension Test Suite', () => {
 
 	suiteSetup('proj1 - suiteSetup', async () => {
-		await waitForExtensionActive()
+		await suiteSetupCommon()
 	})
 
 	setup(async () => {
 		deleteTestFiles()
+		log.info('setup-2 has(ablunit.files)=' + workspace.getConfiguration('ablunit').has('files') + ' files.exclude=' + workspace.getConfiguration('ablunit').get('files.exclude'))
+		// const prom = workspace.getConfiguration('ablunit').update('files.exclude', undefined)
+		const prom = workspace.getConfiguration('ablunit.files').update('exclude', undefined)
+		log.info('setup-3')
+		const r = await prom
+			.then(() => {
+				log.info('setup-4')
+				return true
+			}, (e) => {
+				throw e
+			})
+		log.info('setup-5 (r=' + r)
+		return r
 	})
 
 	suiteTeardown(async () => {
 		log.info('suiteTeardown.updateConfig')
-		return updateConfig('ablunit.files.exclude', undefined).then(() => {
+		// TODO
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+		await updateConfig('ablunit.files.exclude', undefined).then(() => {
 			log.info('suiteTeardown.updateConfig.then()')
-			return
+		}, (e: unknown) => {
+			assert.fail('caught error e=' + e)
 		})
 	})
 
-	test('proj1.1C setFilesExcludePattern - test run fail - try await', async () => {
+	test('proj1.1C setFilesExcludePattern - test run fail - try await', () => {
 		log.info('proj1.1C-1')
 		return workspace.getConfiguration('ablunit').update('files.exclude', [ '.builder/**', '.pct/**', 'compileError.p' ])
-			.then(async () => {
+			.then(() => {
 				log.info('proj1.1C-2')
-				return runAllTests(true, true, 'proj1.1B').then(() => {
-					log.info('proj1.1C-3')
-				})
-			}, (e) => {
+				return runAllTests(true, true, 'proj1.1B')
+			}).then(() => {
+				log.info('proj1.1C-3')
+				log.info ('success!')
+			}, (e: unknown) => {
 				assert.fail('caught error e=' + e)
 			})
 	})
@@ -321,7 +338,7 @@ suite('proj1 - Extension Test Suite', () => {
 	})
 
 	test('proj1.21 - output files exist 2 - exclude compileError.p', async () => {
-		await workspace.getConfiguration('ablunit').update('files.exclude', [ '.builder/**', 'compileError.p' ]).then(async () => {
+		await workspace.getConfiguration('ablunit').update('files.exclude', [ '.builder/**', 'compileError.p' ]).then(() => {
 			return runAllTests()
 		})
 		// await updateConfig('ablunit.files.exclude', [ '.builder/**', 'compileError.p' ])

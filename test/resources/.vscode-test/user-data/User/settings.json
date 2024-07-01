@@ -1,0 +1,9 @@
+{
+    "abl.configuration.runtimes": [
+        {
+            "name": "$NAME",
+            "path": "$DLC",
+            "default": true
+        }
+    ]
+}

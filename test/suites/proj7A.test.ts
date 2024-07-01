@@ -4,7 +4,7 @@ const workspaceUri = getWorkspaceUri()
 
 suite('proj7ASuite', () => {
 
-	suiteSetup('proj7A - suiteSetup', async () => beforeProj7())
+	suiteSetup('proj7A - suiteSetup', () => beforeProj7())
 
 	test('proj7A.1 - test count', async () => {
 		await runAllTests()

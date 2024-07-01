@@ -73,7 +73,7 @@ suite('proj5Suite', () => {
 })
 
 
-async function readLinesFromFile (relativeFile: string, annotation = '@test') {
+function readLinesFromFile (relativeFile: string, annotation = '@test') {
 	const uri = Uri.joinPath(getWorkspaceUri(), relativeFile)
 	return getContentFromFilesystem(uri).then((content) => {
 		const [ lines, ] = getLines(content, annotation)

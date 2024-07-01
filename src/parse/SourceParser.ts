@@ -28,7 +28,7 @@ export interface ISourceMapItem {
 	procName: string
 }
 
-async function readXrefFile (xrefUri: Uri) {
+function readXrefFile (xrefUri: Uri) {
 	return workspace.fs.readFile(xrefUri).then((content) => {
 		const str = Buffer.from(content.buffer).toString()
 		return str
@@ -39,7 +39,7 @@ async function readXrefFile (xrefUri: Uri) {
 	})
 }
 
-export const getSourceMapFromSource = async (propath: PropathParser, debugSourceName: string) => {
+export const getSourceMapFromSource = (propath: PropathParser, debugSourceName: string) => {
 	const map: ISourceMap[] = []
 	const incLengths: IIncLength[] = []
 	const includes: IXrefInclude[] = []
@@ -53,7 +53,7 @@ export const getSourceMapFromSource = async (propath: PropathParser, debugSource
 		})
 	}
 
-	const readIncludeLineCount = async (uri: Uri) => {
+	const readIncludeLineCount = (uri: Uri) => {
 		return workspace.fs.readFile(uri).then((content) => {
 			const lines = Buffer.from(content.buffer).toString().replace(/\r/g, '').split('\n')
 
@@ -65,6 +65,7 @@ export const getSourceMapFromSource = async (propath: PropathParser, debugSource
 				incUri: uri,
 				lineCount: lc
 			})
+			return
 		})
 	}
 

@@ -4,12 +4,12 @@ export default suite('workspace1Suite', () => {
 
 	suiteSetup('workspace1 - suiteSetup', suiteSetupCommon)
 
-	setup('wokspace1 - setup', async () => {
+	setup('wokspace1 - setup', () => {
 		deleteFile('.vscode/ablunit-test-profile.json')
 		return updateConfig('tempDir', undefined)
 	})
 
-	teardown('workspace1 - teardown', async () => {
+	teardown('workspace1 - teardown', () => {
 		deleteFile('.vscode/ablunit-test-profile.json')
 		return updateConfig('tempDir', undefined)
 	})

@@ -16,7 +16,7 @@ async function getTestCount (waitForTestCount = 1, maxWaitTime = 5000): Promise<
 
 suite('proj7BSuite', () => {
 
-	suiteSetup('proj7B - suiteSetup', async () => beforeProj7())
+	suiteSetup('proj7B - suiteSetup', () => beforeProj7())
 
 	test('proj7B.1 - cancel test refresh', async () => {
 		const maxCancelTime = 250
@@ -49,6 +49,7 @@ suite('proj7BSuite', () => {
 
 		await refresh.then(() => {
 			assert.fail('testing.refreshTests completed without throwing CancellationError')
+			return
 		}, (err) => {
 			if (err instanceof CancellationError) {
 				log.debug('testing.refreshTests threw CancellationError as expected (refreshDuration=' + refreshDuration.elapsed() + 'ms)')

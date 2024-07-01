@@ -1,9 +1,9 @@
 
 export interface ICommandOptions {
-	executable: string
-	progressIni: string
-	batch: boolean
-	additionalArgs: string[]
+	executable: string | undefined
+	progressIni: string | undefined
+	batch: boolean | undefined
+	additionalArgs: string[] | undefined
 }
 
 export class CommandOptions implements ICommandOptions {

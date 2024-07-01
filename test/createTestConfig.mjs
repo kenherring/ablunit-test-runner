@@ -10,6 +10,7 @@ import { fileURLToPath } from 'url'
 import * as glob from 'glob'
 import * as path from 'path'
 import * as fs from 'fs'
+import process from 'process'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const vsVersionNum = '1.88.0'
@@ -39,27 +40,23 @@ function writeConfigToFile (name, config) {
 }
 
 function getMochaTimeout (projName) {
-	if (firstTest) {
-		firstTest = false
+	// if (enableExtensions.includes(projName)) {
+	if(isFirst) {
+		isFirst = false
 		return 180000
 	}
-	if (projName === 'proj3' && projName === 'proj4') {
-		return 30000
+
+
+	switch (projName) {
+		case 'DebugLines': return 120000 // install openedge-abl-lsp for the first time, so give it a moment to start
+		case 'proj1': return 30000
+		// case 'proj2': return 20000
+		case 'proj7A': return 60000
 	}
-	if (projName === 'proj1') {
-		return 55000
-	}
-	if (projName === 'DebugLines') {
-		return 60000
-	}
-	if (projName.startsWith('proj7')) {
-		// return 60000
-		return 90000
-	}
-	// return 15000
-	// return 25000
-	return 50000
+
+	return 15000
 }
+
 
 /**
 * Additional options to pass to the Mocha runner.
@@ -72,6 +69,9 @@ function getMochaOpts (projName) {
 	// const xunitFile = path.resolve(reporterDir, 'mocha_results_xunit_' + projName + '.xml')
 	const mochaFile = path.resolve(reporterDir, 'mocha_results_junit_' + projName + '.xml')
 	const sonarFile = path.resolve(reporterDir, 'mocha_results_sonar_' + projName + '.xml')
+	const bail = process.env['CIRCLECI'] != 'true' || false
+	// console.log('bail=' + bail + ', CIRCLECI=' + process.env['CIRCLECI'])
+	// process.exit(1)
 
 	const mochaOpts = {
 		// bail: false,
@@ -79,31 +79,43 @@ function getMochaOpts (projName) {
 		// fullTrace: true
 		retries: 0,
 		timeout: getMochaTimeout(projName),
-		ui: 'tdd',
+		// ui: 'tdd', // describe, it, etc
+		// ui: 'bdd' // default; suite, test, etc
 		parallel: false,
-		// exit: true,
-		// extension: [ 'js', 'ts', 'test.ts' ],
-		require: [
+		retries: 0,
+		recursive: true,
+		// color: true,
+		bail: false,
+		exit: true,
+		extension: [ 'js', 'ts', 'test.ts' ],
+		// require: [
+		// 	// './dist/extension.js',
+		// 	'source-map-support',
+		// 	'source-map-support/register',
+		// 	'source-map-support/register-hook-require',
+		// 	'ts-node/register',
+		// ],
+		reporter: 'mocha-multi-reporters',
+		reporterOptions: {
+			reporterEnabled: [ 'spec', 'mocha-junit-reporter' ],
+			jsonReporterOptions: { output: jsonFile },
+			xunitReporterOptions: { output: xunitFile },
+			mochaJunitReporterReporterOptions: { mochaFile: mochaFile }
+		},
+		// preload: [ 'ts-node/register/transpile-only' ],
+		preload: [
+			// './dist/extension.js',
 			'ts-node/register/transpile-only',
 			'ts-node/register',
+			// 'source-map-support',
+			// 'source-map-support/register',
+			// 'source-map-support/register-hook-require',
 		],
 	}
 
-	if (process.env['ABLUNIT_TEST_RUNNER_RUN_SCRIPT_FLAG']) {
-		// eslint-disable-next-line no-console
-		console.log('adding reporter...')
-		mochaOpts.reporter = 'mocha-multi-reporters'
-		mochaOpts.reporterOptions = {
-			reporterEnabled: [ 'json-stream', 'spec', 'mocha-junit-reporter', 'mocha-sonarqube-reporter' ],
-			// jsonReporterOptions: { output: jsonFile },
-			// xunitReporterOptions: { output: xunitFile },
-			mochaJunitReporterReporterOptions: { mochaFile: mochaFile },
-			mochaSonarqubeReporterReporterOptions: { output: sonarFile }
-		}
-	}
-
-	if (process.env['CIRCLECI']) {
-		mochaOpts.bail = true
+	// console.log('process.env.CIRCLECI=' + process.env['CIRCLECI'])
+	if (process.env['CIRCLECI'] === true) {
+	 mochaOpts.bail = true
 	}
 
 	return mochaOpts
@@ -142,6 +154,7 @@ function getLaunchArgs (projName) {
 	// args.push('--locale <locale>')
 	// args.push('--user-data-dir', '<dir>')
 	// args.push('--profile <profileName>')
+	args.push('--profile-temp') // create a temporary profile for the test run in lieu of cleaning up user data
 	// args.push('--help')
 	// args.push('--extensions-dir', '<dir>')
 	// args.push('--list-extensions')
@@ -154,6 +167,9 @@ function getLaunchArgs (projName) {
 	// } else {
 	// 	args.push('--install-extension', './ablunit-test-runner-insiders-' + extVersion + '.vsix')
 	// }
+	if (enableExtensions.includes(projName)) {
+		args.push('--install-extension', 'riversidesoftware.openedge-abl-lsp')
+	}
 	// args.push('--pre-release')
 	// args.push('--uninstall-extension <ext-id>')
 	// args.push('--update-extensions')
@@ -167,15 +183,8 @@ function getLaunchArgs (projName) {
 	// args.push('--verbose')
 	// args.push('--trace')
 	// args.push('--log', '<level>')
-	if (process.env['VERBOSE'] === 'true') {
-		// console.log('DEBUG=true')
-		args.push('--log', 'debug') // '<level>'
-	}
-	if (process.env['TRACE'] === 'true') {
-		// console.log('TRACE=true')
-		// args.push('--log', 'trace') // '<level>'
-		args.push('--trace')
-	}
+	// args.push('--log', 'debug') // '<level>'
+	// args.push('--log', 'trace') // '<level>'
 	// args.push('--log', 'kenherring.ablunit-test-runner:debug') // <extension-id>:<level>
 	// args.push('--log', 'kenherring.ablunit-test-runner:trace') // <extension-id>:<level>
 	// args.push('--status')
@@ -238,7 +247,13 @@ function getTestConfig (projName) {
 	const files = './test/suites/' + projName + '.test.ts'
 	// const absolulteFile = path.resolve(__dirname, '..', 'test', 'suites', projName + '.test.ts')
 
-	const extensionDevelopmentPath = './'
+	const envVars = {
+		ABLUNIT_TEST_RUNNER_ENABLE_EXTENSIONS: enableExtensions.includes('' + projName),
+		ABLUNIT_TEST_RUNNER_UNIT_TESTING: 'true',
+		ABLUNIT_TEST_RUNNER_VSCODE_VERSION: vsVersion,
+		VSCODE_SKIP_PRELAUNCH: '1',
+	}
+
 	// let extensionDevelopmentPath = path.resolve(__dirname, '..', 'ablunit-test-runner-0.2.1.vsix')
 	// if (vsVersion === 'insiders') {
 	// 	extensionDevelopmentPath = path.resolve(__dirname, '..', 'ablunit-test-runner-insiders-0.2.1.vsix')
@@ -258,6 +273,15 @@ function getTestConfig (projName) {
 	}
 
 	return {
+		//  -- IDesktopPlatform -- //
+		// platform: 'desktop',
+		// desktopPlatform: 'win32',
+		launchArgs: getLaunchArgs(projName),
+		env: envVars,
+		useInstallation: useInstallation,
+		// useInstallation: { fromMachine: true },
+		// download: { reporter: ProgressReporter, timeout: ? }
+
 		// --- IBaseTestConfiguration --- //
 		files,
 		version: vsVersion,
@@ -295,7 +319,15 @@ function getTests () {
 	// --- run all projects --- //
 	const g = glob.globSync('test/suites/*.test.ts').reverse()
 	for (const f of g) {
-		tests.push(getTestConfig(path.basename(f, '.test.ts')))
+		const basename = path.basename(f, '.test.ts')
+		if (basename != 'proj2' &&
+			basename != 'proj3' &&
+			basename != 'proj4' &&
+			basename != 'proj7B' &&
+			basename != 'proj9'
+		) {
+			tests.push(getTestConfig(basename))
+		}
 	}
 	return tests
 }
@@ -324,10 +356,21 @@ function getCoverageOpts () {
 		reporter: [ 'lcov', 'text' ],
 		// includeAll: true,
 		output: coverageDir,
-
-		// TODO - not reporting extension, or other files loaded w/ vscode extension activate
-
-		// ----- NOT REAL OPTIONS?? ----- //
+		// includeAll: true,
+		// exclude: [
+		// 	'dist',
+		// 	'.vscode-test*.mjs',
+		// 	'test_projects',
+		// 	'dummy-ext',
+		// 	'webpack.config.js',
+		// 	'vscode.proposed.*.d.ts',
+		// 	'vscode',
+		// ],
+		// include: [
+		// 	// '**/*',
+		// 	'**/src/**',
+		// 	'**/test/**',
+		// ],
 		// require: [ 'ts-node/register' ],
 		// cache: false,
 		// 'enable-source-maps': true,
@@ -336,7 +379,7 @@ function getCoverageOpts () {
 	}
 }
 
-export async function createTestConfig () { // NOSONAR
+export function createTestConfig () { // NOSONAR
 	initialize()
 
 	const testConfig = {
