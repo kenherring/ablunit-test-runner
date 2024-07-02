@@ -10,6 +10,8 @@
 
 All tests can be run in the VSCode UI via the [Extension Test Runner](https://marketplace.visualstudio.com/items?itemName=ms-vscode.extension-test-runner).
 
+<!--
+
 ## Install and Run
 
 This is a smoke test that confirms the packaged extension is functional.  This runs twice - once with the current version of VSCode and once with the insiders version.  If the insiders run fails it indicates we might have a problem with the next release of VSCode.
@@ -19,6 +21,7 @@ cd dummy-ext
 npm run compile
 npm run test:install-and-run
 ```
+-->
 
 ## Dev Tooling
 
@@ -39,13 +42,6 @@ docker/run_tests.sh -o 12.2
 docker/run_tests.sh -o 12.2 -i
 docker/run_tests.sh -o 12.2 -d
 docker/run_tests.sh -P
-
-## Test Files
-
-* `runTest.ts`
-  * `src/test/runTest.ts`
-* `index.ts`
-
 -->
 
 ## Testing Methodology
@@ -53,6 +49,50 @@ docker/run_tests.sh -P
 The follow can be used to execute the test suites.
 
 * [VSCode Extension Test Runner](https://github.com/istanbuljs/nyc)
-* `npm test`
-* `npm vscode-test`
+* `npm test` or `npm run vscode-test`
 * `docker/run_tests.sh`
+
+## Test Commands
+
+```bash
+ABLUNIT_TEST_RUNNER_PROJECT_NAME=proj1 npm test
+ABLUNIT_TEST_RUNNER_PROJECT_NAME=proj1,proj2 npm test
+ABLUNIT_TEST_RUNNER_PROJECT_NAME=proj1 npm test -- --coverage
+
+npm test -- --coverage
+npm run test:coverage
+
+NODE_OPTIONS=--enable-source-maps \
+  ABLUNIT_TEST_RUNNER_PROJECT_NAME=proj1 \
+  npm test -- --coverage
+```
+
+```bash
+npm run clean; \
+  export NODE_OPTIONS=['--enable-source-maps','--register=source-map-support/register','--produce-source-map']; \
+  npm test:coverage
+```
+
+## Test Cases
+
+* Does the vscode-extension-test-runner work?  Validate run, debug, and coverage.
+* Does the vscode-test-cli work?
+  * `npm test`
+  * `npm test -- --coverage`
+  * `npm run vscode-test`
+  * `npm run test:coverage`
+  * `ABLUNIT_TEST_RUNNER_PROJECT_NAME=proj0 npm run test:coverage`
+  * `TS_NODE_COMPILER_OPTIONS='{"target":"es6"} ABLUNIT_TEST_RUNNER_PROJECT_NAME=proj0 npm run test:coverage`
+  * `TS_NODE_COMPILER_OPTIONS='{"target":"es2020"} ABLUNIT_TEST_RUNNER_PROJECT_NAME=proj0 npm run test:coverage`
+* Do tests run successfully in docker?
+  * `docker/run_tests.sh -P`
+  * `docker/run_tests.sh`
+  * `docker/run_tests.sh -i`
+  * `docker/run_tests.sh -p proj0,proj1`
+  * `docker/run_tests.sh -o 12.7`
+  * `docker/run_tests.sh -o 12.7 -i`
+  * `docker/run_tests.sh -o 12.7 -p proj0,proj1`
+* Does the repo do a clean build?
+  * `npm run clean && npm test`
+* Does the repo do a fresh setup?
+  * `git clean -fdx && npm i && npm test`

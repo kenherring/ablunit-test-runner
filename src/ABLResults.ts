@@ -156,7 +156,7 @@ export class ABLResults implements Disposable {
 		log.debug('addTest: ' + test.id + ', propathEntry=' + propathEntryTestFile)
 		this.tests.push(test)
 
-		let testCase
+		let testCase: string | undefined
 		if (test.id.includes('#')) {
 			testCase = test.id.split('#')[1]
 		}

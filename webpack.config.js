@@ -6,6 +6,11 @@ const config = {
 	target: 'node', // TODO: recommended: 'webworker'
 	node: false,
 	mode: 'development',
+	infrastructureLogging: {
+		colors: false,
+		appendOnly: true,
+		level: 'log'
+	},
 	devtool: 'source-map', // https://code.visualstudio.com/docs/nodejs/nodejs-debugging#_tool-configuration
 	// devtool: 'inline-source-map', // https://code.visualstudio.com/docs/nodejs/nodejs-debugging#_tool-configuration
 	// devtool: 'inline-cheap-module-source-map',
@@ -18,11 +23,12 @@ const config = {
 		path: path.resolve(__dirname, 'dist'),
 		filename: '[name].js',
 		libraryTarget: 'commonjs2',
-		// devtoolModuleFilenameTemplate: '[resource-path]',
-		// devtoolModuleFilenameTemplate: '../[resource-path]',
-		// devtoolFallbackModuleFilenameTemplate: '[absolute-resource-path]',
-		devtoolModuleFilenameTemplate: '[absolute-resource-path]',
-		devtoolFallbackModuleFilenameTemplate: '[resource-path]',
+		// libraryTarget: 'commonjs',
+		// devtoolNamespace: '',
+		devtoolModuleFilenameTemplate: '../[resource-path]',
+		// devtoolModuleFilenameTemplate: 'src/[resource-path]',    // "ablunit-test-runner/dist/src/extension.ts"
+		// devtoolModuleFilenameTemplate: '[resource-path]',        // "ablunit-test-runner/dist/extension.ts"
+		// devtoolModuleFilenameTemplate: '[absolute-resource-path]',
 	},
 	externals: {
 		// the vscode-module is created on-the-fly and must be excluded. Add other modules that cannot be webpack'ed -> https://webpack.js.org/configuration/externals/
@@ -31,7 +37,11 @@ const config = {
 	resolve: {
 		mainFields: ['browser', 'module', 'main'],
 		extensions: ['.ts', '.js'],
-		modules: ['node_modules', 'src']
+		// modules: ['src', 'node_modules'],
+		modules: [ '.', 'src', 'node_modules' ],
+		// alias: {
+		// 	'*': path.resolve(__dirname, 'src')
+		// }
 	},
 	module: {
 		rules: [{
@@ -39,6 +49,11 @@ const config = {
 			exclude: /node_modules/,
 			use: [{
 				loader: 'ts-loader',
+				options: {
+					compilerOptions: {
+						'module': 'es6' // override `tsconfig.json` so that TypeScript emits native JavaScript modules.
+					}
+				}
 			}]
 		}]
 	},

@@ -47,9 +47,12 @@ export async function activate (context: ExtensionContext) {
 	// log.info('context.workspaceState=' + JSON.stringify(context.workspaceState, null, 2))
 
 	const contextStorageUri = context.storageUri ?? Uri.file(process.env['TEMP'] ?? '') // will always be defined as context.storageUri
+	log.info('110')
 	const contextResourcesUri = Uri.joinPath(context.extensionUri, 'resources')
 	setContextPaths(contextStorageUri, contextResourcesUri)
+	log.info('111')
 	await createDir(contextStorageUri)
+	log.info('112')
 	// const decorationProvider = new DecorationProvider()
 
 	log.info('ABLUNIT_TEST_RUNNER_UNIT_TESTING=' + process.env['ABLUNIT_TEST_RUNNER_UNIT_TESTING'])
@@ -65,7 +68,11 @@ export async function activate (context: ExtensionContext) {
 
 	context.subscriptions.push(
 		commands.registerCommand('_ablunit.openCallStackItem', openCallStackItem),
-		workspace.onDidChangeConfiguration(e => { updateConfiguration(e) }),
+		workspace.onDidChangeConfiguration(e => {
+			log.info('390')
+			updateConfiguration(e)
+			log.info('391')
+		}),
 
 		workspace.onDidOpenTextDocument(e => {
 			return new Disposable(async () => {
@@ -413,6 +420,7 @@ export async function activate (context: ExtensionContext) {
 	}
 
 	function updateConfiguration (event: ConfigurationChangeEvent) {
+		log.info('400')
 		if (!event.affectsConfiguration('ablunit')) {
 			log.warn('configuration updated but does not include ablunit settings (event=' + JSON.stringify(event) + ')')
 		} else {
@@ -421,6 +429,7 @@ export async function activate (context: ExtensionContext) {
 				removeExcludedFiles(ctrl, getExcludePatterns())
 			}
 		}
+		log.info('405')
 	}
 
 	const configHandler = () => {

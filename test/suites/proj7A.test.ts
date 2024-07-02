@@ -1,23 +1,17 @@
-import { strict as assert } from 'assert'
-import { Uri } from 'vscode'
-import { beforeProj7, getTestCount, getWorkspaceUri, runAllTests } from '../testCommon'
+import { assert, beforeProj7, getTestCount, getWorkspaceUri, runAllTests, suiteSetupCommon, Uri } from '../testCommon'
 
-const projName = 'proj7A'
 const workspaceUri = getWorkspaceUri()
 
-suite('proj7A - Extension Test Suite', () => {
+suite('proj7ASuite', () => {
 
-	suiteSetup('proj7A - before', async () => {
-		await beforeProj7()
-	})
+	suiteSetup('proj7A - suiteSetup', () => beforeProj7())
 
 	test('proj7A.1 - test count', async () => {
 		await runAllTests()
 
-		const resultsJson = Uri.joinPath(workspaceUri, 'temp', 'results.json')
+		const resultsJson = Uri.joinPath(getWorkspaceUri(), 'temp', 'results.json')
 		const testCount = await getTestCount(resultsJson)
-		assert(testCount > 1000, 'testCount should be > 1000, but is ' + testCount)
-		return
+		assert.assert(testCount > 1000, 'testCount should be > 100, but is ' + testCount)
 	})
 
 })

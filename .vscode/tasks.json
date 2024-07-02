@@ -5,17 +5,18 @@
 	"tasks": [
 		{
 			"label": "folderOpen",
+			"detail": "run on workspace load",
 			"hide": true,
 			"type": "shell",
 			"dependsOn": [
 				"npm clean",
 				"npm pretest",
-				"npm watch",
+				"npm watch"
 			],
 			"dependsOrder": "sequence",
 			"presentation": {
 				"reveal": "always",
-				"group": "build-task",
+				"group": "build-task"
 			},
 			// "runOptions": {
 			// 	"runOn": "folderOpen"
@@ -29,7 +30,7 @@
 			"isBackground": true,
 			"presentation": {
 				"reveal": "always",
-				"group": "build-task",
+				"group": "build-task"
 			}
 		},
 		{
@@ -40,14 +41,13 @@
 			"isBackground": true,
 			"presentation": {
 				"reveal": "always",
-				"group": "build-task",
+				"group": "build-task"
 			}
 		},
 		{
 			"label": "npm watch",
 			"type": "npm",
 			"script": "watch",
-			"problemMatcher": "$tsc-watch",
 			"isBackground": true,
 			"presentation": {
 				"reveal": "always",
@@ -56,7 +56,30 @@
 			"group": {
 				"kind": "build",
 				"isDefault": true
-			}
+			},
+			"problemMatcher":  "$ts-webpack-watch",
+			// "problemMatcher": {
+			// 	"owner": "npm watch (webpack)",
+			// 	"severity": "error",
+			// 	"fileLocation": "absolute",
+			// 	"source": "webpack-typescript",
+			// 	"background": {
+			// 		"activeOnStart": true,
+			// 	},
+			// 	"pattern": [
+			// 		{
+			// 			"regexp": "ERROR in ([^\\(]*)\\((\\d+),(\\d+)\\):",
+			// 			"file": 1,
+			// 			"line": 2,
+			// 			"column": 3
+			// 		},
+			// 		{
+			// 			"regexp": "([A-Za-z0-9-]+):(.*)",
+			// 			"message": 2,
+			// 			"code": 1
+			// 		}
+			// 	]
+			// }
 		},
 		{
 			"label": "run all tests in docker",
@@ -95,6 +118,36 @@
 			],
 			"label": "npm: lint-fix-all",
 			"detail": "npx eslint ./src --ext .ts,.js --fix"
+		},
+		{
+			"label": "npm: build",
+			"detail": "npm run webpack",
+			"type": "npm",
+			"script": "build",
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
+			"presentation": {
+				"reveal": "always",
+				"group": "build-task"
+			},
+			"problemMatcher": "$ts-webpack-watch",
+		},
+		{
+			"label": "npm: rebuild",
+			"detail": "npm run clean && npm run webpack",
+			"type": "npm",
+			"script": "rebuild",
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
+			"presentation": {
+				"reveal": "always",
+				"group": "build-task"
+			},
+			"problemMatcher": "$ts-webpack-watch",
 		},
 	]
 }

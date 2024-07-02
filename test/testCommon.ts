@@ -19,7 +19,7 @@ import { ITestSuites } from '../src/parse/ResultsParser'
 import { IConfigurations, parseRunProfiles } from '../src/parse/TestProfileParser'
 import { DefaultRunProfile, IRunProfile as IRunProfileGlobal } from '../src/parse/config/RunProfile'
 import { RunStatus } from '../src/ABLUnitRun'
-import { enableOpenedgeAblExtension, rebuildAblProject, restartLangServer, setRuntimes } from './openedgeAblCommands'
+import { rebuildAblProject, restartLangServer, setRuntimes } from './openedgeAblCommands'
 import path from 'path'
 
 interface IRuntime {
@@ -83,15 +83,14 @@ const getEnvVar = (envVar: string) => {
 	return undefined
 }
 
-const projName = () => { return getWorkspaceUri().fsPath.replace(/\\/g, '/').split('/').pop() }
 
-// test suite objects
+// test objects
 export const log = logObj
 export class FilesExclude {
 	exclude: Record<string, boolean> = {}
 }
 // riversidesoftware.openedge-abl-lsp extension objects
-export { setRuntimes, rebuildAblProject }
+export { rebuildAblProject }
 // kherring.ablunit-test-runner extension objects
 export type IRunProfile = IRunProfileGlobal
 export { RunStatus, parseRunProfiles }
@@ -101,22 +100,13 @@ export {
 	commands, extensions, window, workspace
 }
 
-// test case objects - reset before each test
+const projName = () => { return getWorkspaceUri().fsPath.replace(/\\/g, '/').split('/').pop() }
+let recentResults: ABLResults[] | undefined
 let decorator: Decorator | undefined
 let testController: TestController | undefined
-let recentResults: ABLResults[] | undefined
 let currentRunData: ABLResults[] | undefined
-export let runAllTestsDuration: Duration | undefined
-export let cancelTestRunDuration: Duration | undefined
 
-export function beforeCommon () {
-	recentResults = undefined
-	decorator = undefined
-	testController = undefined
-	currentRunData = undefined
-}
-
-log.info('enableExtensions=' + enableExtensions() + ', projName=' + projName() + ', oeVersion=' + oeVersion())
+log.info('[testCommon.ts] enableExtensions=' + enableExtensions() + ', projName=' + projName())
 
 export function isoDate () {
 	return ''
@@ -149,12 +139,40 @@ export async function suiteSetupCommon (runtimes?: IRuntime[]) {
 		runtimes = [{ name: oeVersion(), path: getDefaultDLC(), default: true }]
 	}
 	log.info('[suiteSetupCommon] waitForExtensionActive \'kherring.ablunit-test-runner\' (projName=' + projName() + ')')
+	const extname = 'kherring.ablunit-test-runner'
 	await waitForExtensionActive()
 	if (enableExtensions()) {
-		await enableOpenedgeAblExtension(runtimes)
+		await installExtension(extname).then((r) => {
+			if (!r) {
+				throw new Error('failed to install extension ' + extname)
+			}
+			log.info('installed extension ' + extname)
+			log.debug('installed extension ' + extname + ' (r=' + JSON.stringify(r) + ')')
+			return
+		}, (e) => {
+			log.error('failed to install extension ' + extname + ' (e=' + e + ')')
+			throw e
+		})
+		log.info('suiteSetupCommon-3 activateExtension ' + extname)
+		await activateExtension(extname).then((r) => {
+			log.info('activated extension ' + extname + ' (isActive=' + r + ')')
+			return r
+		}, (e) => {
+			log.error('failed to activate extension ' + extname + ' (e=' + e + ')')
+			throw e
+		})
+		log.debug('setRuntimes')
+		await setRuntimes().catch((e: unknown) => {
+			log.error('failed to set runtimes (e=' + e + ')')
+			throw e
+		})
+		log.debug('runtimes set!')
 	}
 	log.info('suiteSetupCommon complete!')
 }
+
+export let runAllTestsDuration: Duration | undefined
+export let cancelTestRunDuration: Duration | undefined
 
 export function teardownCommon () {
 	runAllTestsDuration = undefined
@@ -282,7 +300,7 @@ export async function activateExtension (extname = 'riversidesoftware.openedge-a
 	return ext.isActive
 }
 
-export async function waitForExtensionActive (extensionId = 'kherring.ablunit-test-runner') {
+async function waitForExtensionActive (extensionId = 'kherring.ablunit-test-runner') {
 	let ext = extensions.getExtension(extensionId)
 	if (!ext) {
 		ext = await sleep2(250, 'wait and retry getExtension')
@@ -330,6 +348,54 @@ function getRcodeCount (workspaceFolder?: WorkspaceFolder) {
 	log.error('fileCount is not a number! fileCount=' + fileCount)
 	return -1
 }
+
+// TODO - duplicated in openedgeAblCommands.ts
+// export async function setRuntimes (runtimes: IRuntime[] = [{name: '12.2', path: getDefaultDLC(), default: true}]): Promise<number> {
+// 	if (!enableExtensions()) {
+// 		throw new Error('extensions are disabled, failed to set runtimes!')
+// 	}
+// 	log.info('setting abl.configuration.runtimes=' + JSON.stringify(runtimes))
+// 	const ext = extensions.getExtension('riversidesoftware.openedge-abl-lsp')
+// 	if (!ext) {
+// 		throw new Error('extension not installed: riversidesoftware.openedge-abl-lsp')
+// 	}
+// 	if (!ext.isActive) {
+// 		throw new Error('extension not active: riversidesoftware.openedge-abl-lsp')
+// 	}
+
+// 	const conf = workspace.getConfiguration('abl')
+// 	const current = conf.get('configuration.runtimes') as IRuntime[]
+// 	log.debug('current=' + JSON.stringify(current))
+// 	log.debug('  input=' + JSON.stringify(runtimes))
+// 	if (JSON.stringify(current) === JSON.stringify(runtimes)) {
+// 		log.warn('runtmes are already set')
+// 		log.info('ablunit.configuration.runtmes already set to ' + JSON.stringify(runtimes))
+// 		const rcodeCount = getRcodeCount()
+// 		log.info('rcodeCount=' + rcodeCount)
+// 		return rcodeCount
+// 	}
+
+// 	log.info('    conf=' + JSON.stringify(conf))
+// 	log.info('runtimes=' + JSON.stringify(runtimes))
+
+// 	const prom = conf.update('configuration.runtimes', runtimes, ConfigurationTarget.Global).then(async () => {
+// 	// const prom = conf.update('configuration.runtimes', runtimes, ConfigurationTarget.Global).then(() => {
+// 		return rebuildAblProject().then((r) => {
+// 			log.info('abl.configuration.runtimes set successfully (r=' + r + ')')
+// 			return r
+// 		}, (e) => { throw e })
+// 	}, (e) => {
+// 		log.error('unexpected error updating abl.configuration.runtimes! e=' + e)
+// 		throw e
+// 	})
+
+// 	if (! (prom instanceof Promise)) {
+// 		const num = await prom
+// 		return new Promise(resolve => { resolve(num) })
+// 	}
+// 	return prom as Promise<number>
+
+// }
 
 export async function awaitRCode (workspaceFolder: WorkspaceFolder, rcodeCountMinimum = 1) {
 	const ext = extensions.getExtension('riversidesoftware.openedge-abl-lsp')
@@ -478,11 +544,11 @@ export function deleteTestFiles () {
 export function getSessionTempDir () {
 	if (process.platform === 'win32') {
 		return Uri.file('c:/temp/ablunit')
-	}
-	if(process.platform === 'linux') {
+	} else if(process.platform === 'linux') {
 		return Uri.file('/tmp/ablunit')
+	} else {
+		throw new Error('Unsupported platform: ' + process.platform)
 	}
-	throw new Error('Unsupported platform: ' + process.platform)
 }
 
 export async function getTestCount (resultsJson: Uri, status = 'tests') {
@@ -619,17 +685,16 @@ export async function waitForTestRunStatus (waitForStatus: RunStatus) {
 		log.info('loop-4')
 	}
 
-	log.info('found test run status    = \'' + currentStatus + '\'' + waitTime.toString())
-	log.info('comparing to run status  = \'' + waitForStatus + '\'')
-	if ((currentStatus as number) < (waitForStatus as number)) {
-		throw new Error('test run status should equal ' + waitForStatus.toString() + ' but is ' + currentStatus.toString())
+	log.info('found test run status = \'' + currentStatus + '\'' + waitTime.toString())
+	if (currentStatus === waitForStatus) {
+		throw new Error('test run status should equal with ' + waitForStatus.toString() + ' but is ' + currentStatus.toString())
 	}
 }
 
 export async function cancelTestRun (resolveCurrentRunData = true) {
 	cancelTestRunDuration = new Duration()
 	if (resolveCurrentRunData) {
-		const status = getCurrentRunData().then((resArr) => {
+		const status = getCurrentRunData().then((resArr: ABLResults[]) => {
 			if (resArr.length > 0) {
 				return resArr[0].status
 			}
@@ -676,8 +741,19 @@ export function updateConfig (key: string, value: unknown, configurationTarget?:
 	const section1 = sectionArr.shift()
 	const section2 = sectionArr.join('.')
 
-	const workspaceConfig = workspace.getConfiguration(section1, getWorkspaceUri())
+	const conf = workspace.getConfiguration(section1, getWorkspaceUri())
 
+	const current = conf.get(section2)
+	log.info('current ' + key + '=' + JSON.stringify(current))
+	log.info('setting ' + key + '=' + JSON.stringify(value))
+	// log.info('current=' + JSON.stringify(current))
+	// log.info('  input=' + JSON.stringify(runtimes))
+	if (JSON.stringify(current) === JSON.stringify(value)) {
+		log.info(key + ' is already set to ' + JSON.stringify(value))
+		return Promise.resolve()
+	}
+
+	const workspaceConfig = workspace.getConfiguration(section1, getWorkspaceUri())
 	const currentValue = workspaceConfig.get(section2)
 	log.info('current=' + JSON.stringify(currentValue))
 	log.info('  value=' + JSON.stringify(value))
@@ -699,6 +775,57 @@ export function updateConfig (key: string, value: unknown, configurationTarget?:
 	return workspaceConfig.update(section2, value, configurationTarget)
 		.then(() => true, (e) => { throw e })
 }
+
+// function getConfigDefaultValue (key: string) {
+// 	const basekey = key.split('.').shift()
+// 	log.info('key=' + key)
+// 	const workspaceConfig = workspace.getConfiguration(basekey, getWorkspaceUri())
+// 	const t = workspaceConfig.inspect(key)
+// 	if (t?.defaultValue) {
+// 		return t?.defaultValue
+// 	}
+// 	return undefined
+// }
+
+// export async function updateConfig (key: string, value: unknown) {
+// 	return new Promise<void>((resolve, reject) => {
+// 		log.info('updateConfigProm start')
+// 		updateConfigProm(key, value).then(() => {
+// 			log.info('updateConfigProm resolved!')
+// 			resolve()
+// 		}, (e: Error) => {
+// 			reject(e)
+// 		})
+// 		log.info('updateConfigProm created')
+// 	})
+// }
+
+// export async function updateConfigProm (key: string, value: unknown) {
+// 	const sectionArr = key.split('.')
+// 	const section1 = sectionArr.shift()
+// 	const section2 = sectionArr.join('.')
+
+// 	const workspaceConfig = workspace.getConfiguration(section1, getWorkspaceUri())
+
+// 	const currentValue = workspaceConfig.get(section2)
+// 	if (JSON.stringify(value) === JSON.stringify(currentValue)) {
+// 		// log.debug(section1 + '.' + section2 + ' is already set to \'' + value + '\'')
+// 		log.warn(key + ' is already set to \'' + value + '\'')
+// 		return
+// 	}
+
+// 	if (!value) {
+// 		const defaultValue = getConfigDefaultValue(key)
+// 		if (JSON.stringify(defaultValue) === JSON.stringify(currentValue)) {
+// 			log.warn(key + ' is already set to default value \'' + value + '\'')
+// 			return
+// 		}
+// 	}
+// 	return workspaceConfig.update(section2, value, null).then(() => {
+// 		log.info(isoDate() + ' success!')
+
+// 	})
+// }
 
 export async function updateTestProfile (key: string, value: string | string[] | boolean) {
 	const testProfileUri = Uri.joinPath(getWorkspaceUri(), '.vscode', 'ablunit-test-profile.json')
@@ -1017,7 +1144,7 @@ export const assert = {
 }
 
 export async function beforeProj7 () {
-	await installExtension('riversidesoftware.openedge-abl-lsp')
+	await suiteSetupCommon()
 	const templateProc = Uri.joinPath(toUri('src/template_proc.p'))
 	const templateClass = Uri.joinPath(toUri('src/template_class.cls'))
 	const classContent = await workspace.fs.readFile(templateClass).then((data) => {
@@ -1036,5 +1163,3 @@ export async function beforeProj7 () {
 	}
 	return sleep(250)
 }
-
-log.info('testCommon.ts loaded!')

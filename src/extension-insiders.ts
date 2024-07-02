@@ -1,5 +1,4 @@
 import { readFileSync } from 'fs'
-import { globSync } from 'glob'
 import {
 	CancellationError,
 	CancellationToken, ConfigurationChangeEvent, Disposable, ExtensionContext,
@@ -88,7 +87,7 @@ export async function activate (context: ExtensionContext) {
 			log.error('continuous test runs not implemented')
 			throw new Error('continuous test runs not implemented')
 		}
-		return startTestRun(request, token).then(() => { return })
+		return startTestRun(request, token).then(() => { return }, (e) => { throw e })
 	}
 
 	async function openTestRunConfig () {
@@ -264,7 +263,7 @@ export async function activate (context: ExtensionContext) {
 			void log.notification('ablunit tests complete')
 			run.end()
 			log.trace('run.end()')
-			return
+			// return
 		}
 
 		const createABLResults = async () => {
@@ -321,8 +320,9 @@ export async function activate (context: ExtensionContext) {
 				}
 				return runTestQueue(res).then(() => {
 					log.debug('runTestQueue complete')
-					return true
 				})
+			}, (e) => {
+				throw e
 			})
 		}).catch((err: unknown) => {
 			run.end()
@@ -350,8 +350,7 @@ export async function activate (context: ExtensionContext) {
 		}
 		if (workspace.getWorkspaceFolder(u) === undefined) {
 			log.info('skipping updateNodeForDocument for file not in workspace: ' + u.fsPath)
-			return Promise.resolve(() => { return false })
-			// return Promise.resolve(() => { return true })
+			return Promise.resolve()
 		}
 		return updateNode(u, ctrl)
 	}
@@ -397,8 +396,10 @@ export async function activate (context: ExtensionContext) {
 
 	function updateConfiguration (event: ConfigurationChangeEvent) {
 		if (!event.affectsConfiguration('ablunit')) {
+			log.warn('configuration updated but does not include ablunit settings')
 			return
 		}
+		log.debug('effects ablunit.file? ' + event.affectsConfiguration('ablunit.files'))
 		if (event.affectsConfiguration('ablunit.files')) {
 			removeExcludedFiles(ctrl, getExcludePatterns())
 		}

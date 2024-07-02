@@ -6,7 +6,9 @@ class Logger {
 	private static instance: Logger
 
 	private readonly logOutputChannel
+	// private readonly consoleLogLevel = LogLevel.Debug
 	private readonly consoleLogLevel = LogLevel.Info
+	// private readonly consoleLogLevel = LogLevel.Error
 	private readonly testResultsLogLevel = LogLevel.Info
 	private logLevel: number
 	private readonly consoleTimestamp = process.env['ABLUNIT_TEST_RUNNER_UNIT_TESTING'] === 'true'
@@ -18,7 +20,6 @@ class Logger {
 		this.logOutputChannel.clear()
 		this.info('ABLUnit output channel created (logLevel=' + this.logOutputChannel.logLevel + ')')
 		this.logOutputChannel.onDidChangeLogLevel((e) => { this.setLogLevel(e) })
-
 	}
 
 	public static getInstance () {
@@ -94,7 +95,7 @@ class Logger {
 		}
 
 		if (messageLevel >= this.consoleLogLevel) {
-			this.writeToConsole(messageLevel, message, includeStack)
+			this.writeToConsole(messageLevel, message, includeStack, datetime)
 		}
 	}
 
@@ -115,6 +116,9 @@ class Logger {
 	}
 
 	private writeToTestResults (message: string, testRun: TestRun, includeStack: boolean, datetime: string) {
+		if (this.testResultsTimestamp) {
+			message = '[' + datetime + '] [' + this.getCallerSourceLine() + '] ' + message
+		}
 		let optMsg = message.replace(/\r/g, '').replace(/\n/g, '\r\n')
 
 		if (includeStack) {
@@ -125,17 +129,14 @@ class Logger {
 			Error.prepareStackTrace = prepareStackTraceOrg
 			optMsg = optMsg + '\r\n' + stack
 		}
-		if (this.testResultsTimestamp) {
-			optMsg = '[' + datetime + '] [' + this.getCallerSourceLine() + '] ' + optMsg
-		}
 
 		testRun.appendOutput(optMsg + '\r\n')
 	}
 
-	private writeToConsole (messageLevel: LogLevel, message: string, includeStack: boolean) {
+	private writeToConsole (messageLevel: LogLevel, message: string, includeStack: boolean, datetime: string) {
 		message = this.decorateMessage(messageLevel, message, includeStack)
 		if (this.consoleTimestamp) {
-			message = '[' + new Date().toISOString() + '] ' + message
+			message = '[' + datetime + '] ' + message
 		}
 		switch (messageLevel) {
 			case LogLevel.Trace:

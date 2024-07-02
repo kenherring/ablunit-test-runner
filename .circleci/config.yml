@@ -12,16 +12,6 @@ parameters:
     type: integer
     default: 1
 
-oe-version-param: &oe-version-param
-  parameters:
-    oe-version:
-      type: string
-      enum: [ '12.2.12', '12.7.0', '12.8.1' ]
-      default: '12.2.12'
-    vscode-version:
-      type: string
-      default: stable
-      enum: [ stable, proposedapi, insiders ]
 context-and-filters: &context-and-filters
   context:
     - DockerHub
@@ -90,7 +80,18 @@ jobs:
       - save-package-cache
       - run: '[ "$(find . -type f -name "*.vsix" | tee /dev/tty | wc -l)" = "1" ] && echo "pass" || (echo "error - count does not match (expected=$EXPECTED_VSIX_COUNT)" && exit 1)'
   test:
-    <<: *oe-version-param
+    parameters:
+      oe-version:
+        type: string
+        enum: [ '12.2.12', '12.7.0', '12.8.1' ]
+        default: '12.2.12'
+      vscode-version:
+        type: string
+        default: stable
+        enum: [ stable, proposedapi, insiders ]
+      no-coverage:
+        type: boolean
+        default: false
     docker:
       - image: kherring/ablunit-test-runner:<< parameters.oe-version >>
         auth:
@@ -99,6 +100,7 @@ jobs:
     environment:
       ABLUNIT_TEST_RUNNER_OE_VERSION: << parameters.oe-version >>
       ABLUNIT_TEST_RUNNER_VSCODE_VERSION: << parameters.vscode-version >>
+      ABLUNIT_TEST_RUNNER_NO_COVERAGE: << parameters.no-coverage >>
       EXPECTED_VSIX_COUNT: << pipeline.parameters.expected-vsix-count >>
     steps:
       - attach_workspace: { at: . }
@@ -106,12 +108,23 @@ jobs:
       - run: env
       - run: .circleci/run_test_wrapper.sh
       - persist_to_workspace: { root: ".", paths: [ artifacts, coverage ]}
-      - run: find . -type f -name "mocha_results_sonar_*.xml" -delete
+      - run: find . -type f -name "mocha_results_sonar_*.xml" || true
+      - run: find . -type f -name "mocha_results_xunit_*.xml" || true
+      # - run: find . -type f -name "mocha_results_sonar_*.xml" -delete
+      # - run: find . -type f -name "mocha_results_xunit_*.xml" -delete
       - store_test_results: { path: artifacts }
       - store_artifacts: { when: always, path: artifacts }
       # - save-test-cache: { oe-version: << parameters.oe-version >> }
   install-and-run:
-    <<: *oe-version-param
+    parameters:
+      oe-version:
+        type: string
+        enum: [ '12.2.12', '12.7.0', '12.8.1' ]
+        default: '12.2.12'
+      vscode-version:
+        type: string
+        default: stable
+        enum: [ stable, proposedapi, insiders ]
     executor: psc-primary
     environment:
       ABLUNIT_TEST_RUNNER_OE_VERSION: << parameters.oe-version >>
@@ -156,6 +169,7 @@ workflows:
       - test:
           <<: *context-and-filters
           requires: [ package, test-12.2.12-stable ]
+          no-coverage: true
           matrix:
             parameters:
               oe-version: [ 12.7.0, 12.8.1 ]

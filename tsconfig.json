@@ -4,25 +4,22 @@
 		"require": [ "tsconfig-paths/register" ]
 	},
 	"compilerOptions": {
-		"module": "NodeNext",
-		"moduleResolution": "NodeNext", // https://www.typescriptlang.org/tsconfig#moduleResolution
-		"target": "ES2020",
-
-		// "module": "commonjs",
-		// "moduleResolution": "node",
-		// "target": "es2020",
-		// "lib": [
-		// 	"es2020",
-		// 	"WebWorker"
-		// ],
-
-		// "baseUrl": ".",
-		"outDir": "out",
-		// "outDir": "dist",
-		"paths": {
-			"*": [ "./src/*" ]
-		},
+		// "module": "NodeNext",
+		// "moduleResolution": "NodeNext", // https://www.typescriptlang.org/tsconfig#moduleResolution
+		// "target": "ES2020",
+		"module": "commonjs",
+		"moduleResolution": "node",
+		"target": "es2020",
+		"lib": [
+			"es2020",
+			"WebWorker"
+		],
+		"baseUrl": ".",
+		"outDir": "dist",
 		"rootDir": ".",
+		// "paths": {
+		// 	"*": [ "./src/*" ]
+		// },
 		"sourceRoot": ".",
 		"sourceMap": true,
 		// "inlineSourceMap": true,
@@ -66,8 +63,6 @@
 	"include": [
 		"./**/*.ts",
 		"./**/*.mjs",
-		// "./.vscode-test.mjs",
-		// "./test/createTestConfig.mjs",
 		"./test/suites/*.test.ts",
 	],
 	"exclude": [

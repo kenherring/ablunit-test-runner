@@ -10,7 +10,7 @@
             },
             "profiler": {
                 "enabled": true,
-                "listings": "c:\\temp\\ablunit-local\\listings"
+                "listings": "c:\\temp\\ablunit\\listings"
             }
         }
     ]

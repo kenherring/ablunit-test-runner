@@ -1,8 +1,14 @@
 #!/bin/bash
 set -euo pipefail
 
+log_timing () {
+	if [ -f /tmp/timing.log ]; then
+		echo "[$(date +%Y-%m-%dT%H:%M:%S%z) $0] $1" >> /tmp/timing.log
+	fi
+}
+
 initialize () {
-	echo "[$0 ${FUNCNAME[0]}] pwd=$(pwd)"
+	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] pwd=$(pwd)"
 	PATH=$PATH:$DLC/ant/bin
 	CIRCLECI=${CIRCLECI:-false}
 	NO_BUILD=${NO_BUILD:-false}
@@ -10,7 +16,6 @@ initialize () {
 	WSL=false
 	VERBOSE=${VERBOSE:-false}
 	ABLUNIT_TEST_RUNNER_OE_VERSION=${ABLUNIT_TEST_RUNNER_OE_VERSION:-12.2.12}
-	ABLUNIT_TEST_RUNNER_VSCODE_VERSION=${ABLUNIT_TEST_RUNNER_VSCODE_VERSION:-}
 	${CIRCLECI:-false} && NO_BUILD=true
 	[ -z "${DOCKER_IMAGE:-}" ] && NO_BUILD=true
 	[ -z "${WSL_DISTRO_NAME:-}" ] && WSL=true
@@ -20,14 +25,13 @@ initialize () {
 		case "$OPT" in
 			N)	NO_BUILD=true ;;
 			o)	ABLUNIT_TEST_RUNNER_OE_VERSION="$OPTARG" ;;
-			V)	ABLUNIT_TEST_RUNNER_VSCODE_VERSION="$OPTARG" ;;
 			v)	VERBOSE=true ;;
 			?)	echo "script usage: $(basename "$0") [-h] [-N]" >&2
 				exit 1 ;;
 		esac
 	done
 
-	export PATH CIRCLECI ABLUNIT_TEST_RUNNER_OE_VERSION ABLUNIT_TEST_RUNNER_VSCODE_VERSION
+	export PATH CIRCLECI ABLUNIT_TEST_RUNNER_OE_VERSION
 
 	if [ ! -d node_modules ]; then
 		npm install
@@ -36,7 +40,7 @@ initialize () {
 
 # load lots of code for a performance test
 get_performance_test_code () {
-	echo "[$0 ${FUNCNAME[0]}] pwd=$(pwd) ABLUNIT_TEST_RUNNER_OE_VERSION=$ABLUNIT_TEST_RUNNER_OE_VERSION ABLUNIT_TEST_RUNNER_VSCODE_VERSION=${ABLUNIT_TEST_RUNNER_VSCODE_VERSION:-}"
+	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] pwd=$(pwd) ABLUNIT_TEST_RUNNER_OE_VERSION=$ABLUNIT_TEST_RUNNER_OE_VERSION"
 
 	local TO_FILE="/home/circleci/v${ABLUNIT_TEST_RUNNER_OE_VERSION}.0.tar.gz"
 	if [ "${OS:-}" = "Windows_NT" ] || [ -n "${WSL_DISTRO_NAME:-}" ]; then
@@ -72,7 +76,10 @@ copy_user_settings () {
 }
 
 get_pct () {
-	echo "[$0 ${FUNCNAME[0]}] pwd=$(pwd)"
+	[ ! -f /usr/share/ant/lib/PCT.jar ] || return 0
+	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}]"
+
+	ls -al ~/.ant/lib/
 	if $WSL && [ ! -f ~/.ant/lib/PCT.jar ]; then
 		mkdir -p ~/.ant/lib
 		local ARGS=()
@@ -87,7 +94,7 @@ get_pct () {
 }
 
 create_dbs () {
-	echo "[$0 ${FUNCNAME[0]}] pwd=$(pwd)"
+	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] pwd=$(pwd)"
 	if [ -d test_projects/proj0/target/db ]; then
 		return 0
 	fi
@@ -105,7 +112,7 @@ create_dbs () {
 
 doPackage () {
 	$NO_BUILD && return 0
-	echo "[$0 ${FUNCNAME[0]}] pwd=$(pwd)"
+	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] pwd=$(pwd)"
 
 	local PACKAGE_OUT_OF_DATE=false
 	local VSIX_COUNT=0
@@ -126,7 +133,7 @@ doPackage () {
 		[ "$NEWEST_SOURCE_ROOT" -nt "$NEWEST_SOURCE" ] && NEWEST_SOURCE=$NEWEST_SOURCE_ROOT
 
 		if  [ "$NEWEST_SOURCE" -nt "ablunit-test-runner-$PACKAGE_VERSION.vsix" ]; then
-			echo "[$0 ${FUNCNAME[0]}] newer source file found: $NEWEST_SOURCE"
+			echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] newer source file found: $NEWEST_SOURCE"
 			PACKAGE_OUT_OF_DATE=true
 		fi
 	else
@@ -146,10 +153,15 @@ doPackage () {
 
 ########## MAIN BLOCK ##########
 initialize "$@"
+
+log_timing "get_performance_test_code"
 copy_user_settings
 get_performance_test_code
 get_pct
+log_timing "create_dbs"
 create_dbs
+log_timing "doPackage"
 doPackage
 rm -rf artifacts coverage
+log_timing "package complete"
 echo "[$0] completed successfully!"

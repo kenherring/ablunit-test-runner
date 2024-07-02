@@ -1,6 +1,6 @@
 import { globSync } from 'glob'
 import { WorkspaceFolder, commands, extensions, workspace } from 'vscode'
-import { Duration, activateExtension, enableExtensions, getDefaultDLC, installExtension, log, oeVersion, sleep2, updateConfig } from './testCommon'
+import { Duration, activateExtension, enableExtensions, getDefaultDLC, installExtension, log, oeVersion, sleep2 } from './testCommon'
 
 interface IRuntime {
 	name: string,
