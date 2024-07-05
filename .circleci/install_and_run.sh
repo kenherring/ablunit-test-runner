@@ -2,12 +2,12 @@
 set -euo pipefail
 
 initialize() {
-    echo "[$0 ${FUNCNAME[0]}] pwd=$(pwd)"
+    echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] pwd=$(pwd)"
     local VSIX_COUNT
 
     CIRCLECI=${CIRCLECI:-false}
     # PACKAGE_VERSION=$(node -p "require('./package.json').version")
-    export DONT_PROMPT_WSL_INSTALL=No_Prompt_please
+    export DONT_PROMPT_WSL_INSTALL=true
 
     if [ -z "${CIRCLE_BRANCH:-}" ]; then
         CIRCLE_BRANCH="$(git branch --show-current)"
@@ -23,14 +23,14 @@ initialize() {
 }
 
 build_dummy_extension() {
-    echo "[$0 ${FUNCNAME[0]}]"
+    echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}]"
     cd dummy-ext
     npm install
     npm run compile
 }
 
 compile_install_run() {
-    echo "[$0 ${FUNCNAME[0]}]"
+    echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}]"
 
     if [ -n "${DOCKER_IMAGE:-}" ]; then
         ## docker and pipeline
@@ -39,11 +39,11 @@ compile_install_run() {
         ## local
         npm run test:install-and-run
     fi
-    echo "[$0 ${FUNCNAME[0]}] test run successful"
+    echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] test run successful"
 }
 
 ########## MAIN BLOCK ##########
 initialize
 build_dummy_extension
 compile_install_run
-echo "[$0] completed successfully!"
+echo "[$(date +%Y-%m-%d:%H:%M:%S) $0] completed successfully!"

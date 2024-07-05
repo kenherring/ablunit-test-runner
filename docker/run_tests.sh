@@ -83,10 +83,17 @@ initialize () {
 		ABLUNIT_TEST_RUNNER_VSCODE_VERSION \
 		ABLUNIT_TEST_RUNNER_NO_COVERAGE
 
+
 	if $DELETE_CACHE_VOLUME; then
-		echo "deleting test-runner-cache volume"
-		docker volume rm test-runner-cache || true
-		# docker volume rm vscode-cli-cache || true
+		local VOLS=()
+		docker volume ls | grep -q test-runner-cache && VOLS+=(test-runner-cache)
+		docker volume ls | grep -q vscode-cli-cache && VOLS+=(vscode-cli-cache)
+		if [ ${#VOLS[@]} -eq 0 ]; then
+			echo "no volumes to delete"
+		else
+			echo "deleting volume(s): ${VOLS[*]}"
+			docker volume rm "${VOLS[@]}"
+		fi
 	fi
 
 	## create volume for .vscode-test directory to persist vscode application downloads
@@ -117,7 +124,7 @@ initialize () {
 }
 
 run_tests_in_docker () {
-	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}]"
+	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] pwd=$(pwd)"
 	local ABLUNIT_TEST_RUNNER_OE_VERSION
 
 	# export NVIDIA_VISIBLE_DEVICES=none
@@ -146,8 +153,7 @@ run_tests_in_docker () {
 		[ -n "${ABLUNIT_TEST_RUNNER_PROJECT_NAME:-}" ] && ARGS+=(-e ABLUNIT_TEST_RUNNER_PROJECT_NAME)
 		ARGS+=(
 			-v "$PWD":/home/circleci/ablunit-test-runner:ro
-			-v test-runner-cache:/home/circleci/cache
-			-v vscode-cli-cache:/home/circleci/.vscode-test
+			-v vscode-cli-cache:/home/circleci/project/.vscode-test
 			kherring/ablunit-test-runner:"${ABLUNIT_TEST_RUNNER_OE_VERSION}"
 			bash -c "/home/circleci/ablunit-test-runner/docker/$SCRIPT.sh $OPTS;"
 		)
@@ -160,4 +166,4 @@ run_tests_in_docker () {
 ########## MAIN BLOCK ##########
 initialize "$@"
 run_tests_in_docker
-echo "[$0] completed successfully! (script=docker/$SCRIPT.sh)"
+echo "[$(date +%Y-%m-%d:%H:%M:%S) $0] completed successfully! (script=docker/$SCRIPT.sh)"

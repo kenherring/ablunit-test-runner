@@ -13,7 +13,7 @@ usage () {
 }
 
 initialize () {
-	echo "[$0 ${FUNCNAME[0]}]"
+	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}]"
 	echo "args=" "$@"
 
 	set -x
@@ -32,12 +32,12 @@ initialize () {
 }
 
 remove_unpushed_tags () {
-	echo "[$0 ${FUNCNAME[0]}]"
+	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}]"
 	git fetch --prune origin +refs/tags/*:refs/tags/*
 }
 
 update_version () {
-	echo "[$0 ${FUNCNAME[0]}] PACKAGE_VERSION=$PACKAGE_VERSION, CIRCLE_BUILD_NUM=$CIRCLE_BUILD_NUM"
+	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] PACKAGE_VERSION=$PACKAGE_VERSION, CIRCLE_BUILD_NUM=$CIRCLE_BUILD_NUM"
 
 	update_changelog
 	update_other_files
@@ -45,10 +45,10 @@ update_version () {
 }
 
 update_changelog () {
-	echo "[$0 ${FUNCNAME[0]}]"
+	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}]"
 	local PREVIOUS_VERSION
 	PREVIOUS_VERSION=$(grep -Eo '\[v?[0-9]+\.[0-9]+\.[0-9]+\]' CHANGELOG.md | cut -d[ -f2 | cut -d] -f1 | head -1)
-	echo "[$0 ${FUNCNAME[0]}] update CHANGELOG.md from $PREVIOUS_VERSION to $PACKAGE_VERSION"
+	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] update CHANGELOG.md from $PREVIOUS_VERSION to $PACKAGE_VERSION"
 
 	local PRERELEASE_TEXT=
 	if $PRERELEASE; then
@@ -72,18 +72,18 @@ update_changelog () {
 }
 
 update_other_files () {
-	echo "[$0 ${FUNCNAME[0]}] updating sonar-project.properties..."
+	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] updating sonar-project.properties..."
 	sed -i "s/sonar.projectVersion=.*/sonar.projectVersion=$PACKAGE_VERSION/" sonar-project.properties
 
 	## TODO
-	echo "[$0 ${FUNCNAME[0]}] updating src/version.ts..."
+	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] updating src/version.ts..."
 	echo "export const LIB_VERSION = '$PACKAGE_VERSION'" > src/version.ts
 
-	echo "[$0 ${FUNCNAME[0]}] updating .vscode/launch.json..."
+	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] updating .vscode/launch.json..."
 	sed -i "s/ablunit-test-runner-.*.vsix/ablunit-test-runner-$PACKAGE_VERSION.vsix/" .vscode/launch.json
 }
 
 ########## MAIN BLOCK ##########
 initialize "$@"
 update_version
-echo "[$0] completed successfully!"
+echo "[$(date +%Y-%m-%d:%H:%M:%S) $0] completed successfully!"

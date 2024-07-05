@@ -1,4 +1,6 @@
 {
+	// "eslint.lintTask.enable": true,
+	"eslint.codeActionsOnSave.mode": "problems",
 	// "extension-test-runner.debugOptions": {},
 	"git.branchProtection": [
 		"main"
@@ -45,5 +47,9 @@
 	"sonarlint.disableTelemetry": true,
 	"task.autoDetect": "on",
 	"typescript.preferences.quoteStyle": "single",
-	"typescript.validate.enable": true,
+    "typescript.validate.enable": true,
+    "circleci.filters.branchFilter": "allBranches",
+    "circleci.persistedProjectSelection": [
+		"gh/kenherring/ablunit-test-runner"
+	],
 }

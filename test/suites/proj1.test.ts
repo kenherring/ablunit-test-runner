@@ -1,51 +1,74 @@
-import { Selection, Uri, commands, window } from 'vscode'
-import { assert, deleteTestFiles, getTestCount, getWorkspaceUri, log, runAllTests, sleep, updateConfig, waitForExtensionActive } from '../testCommon'
-
+import { Selection, commands, window } from 'vscode'
+import { before, beforeEach } from 'mocha'
+import { Uri, assert, deleteTestFiles, getWorkspaceUri, log, runAllTests, sleep, updateConfig, getTestCount, waitForExtensionActive, workspace } from '../testCommon'
 
 const workspaceUri = getWorkspaceUri()
 
 suite('proj1 - Extension Test Suite', () => {
 
-	suiteSetup('proj1 - before', async () => {
-		await waitForExtensionActive()
+	suiteSetup('proj1 - suiteSetup', async () => {
+		const r = await waitForExtensionActive()
+		log.info('end waitForExtensionActive (r=' + r + ')')
+		return r
 	})
 
-	setup('proj1 - beforeEach', async () => {
-		await updateConfig('ablunit.files.exclude', undefined)
+	beforeEach('proj1 - beforeEach', async () => {
+		log.info('setup-1')
 		deleteTestFiles()
+		log.info('setup-2 has(ablunit.files)=' + workspace.getConfiguration('ablunit').has('files') + ' files.exclude=' + workspace.getConfiguration('ablunit').get('files.exclude'))
+		// const prom = workspace.getConfiguration('ablunit').update('files.exclude', undefined)
+		const prom = workspace.getConfiguration('ablunit.files').update('exclude', undefined)
+		log.info('setup-3')
+		const r = await prom
+			.then(() => {
+				log.info('setup-4')
+				return true
+			}, (e) => {
+				throw e
+			})
+		log.info('setup-5 (r=' + r)
+		return r
 	})
 
-	teardown('proj1 - afterEach', async () => {
-		await updateConfig('ablunit.files.exclude', undefined)
+	beforeEach('proj1 - beforeEach-2', () => {
+		log.info('beforeEach-2')
 	})
 
-	test('proj1.1 - output files exist - 1', async () => {
+	setup('proj1 - setup-2',  () => {
+		log.info('setup-2')
+	})
+
+	test('proj1.1 - output files exist 1 - compile error', () => {
 		const ablunitJson = Uri.joinPath(workspaceUri, 'ablunit.json')
 		const resultsXml = Uri.joinPath(workspaceUri, 'results.xml')
 		const resultsJson = Uri.joinPath(workspaceUri, 'results.json')
 		assert.notFileExists(ablunitJson)
 		assert.notFileExists(resultsXml)
 
-		await runAllTests().catch((e: unknown) => {
-			log.info('Error caught and ignored: e=' + e)
-		})
-
-		assert.fileExists(ablunitJson)
-		if (process.platform === 'win32' || process.env['WSL_DISTRO_NAME'] !== undefined) {
-			assert.fileExists(resultsXml)
-		} else {
-			assert.notFileExists(resultsXml)
-		}
-		assert.notFileExists(resultsJson)
+		return runAllTests()
+			.then(() => {
+				throw new Error('runAllTests should have thrown an error')
+			}, (e: unknown) => {
+				log.info('runAllTests error: ' + e)
+				assert.fileExists(ablunitJson)
+				if (process.platform === 'win32' || process.env['WSL_DISTRO_NAME'] !== undefined) {
+					assert.fileExists(resultsXml)
+				} else {
+					assert.notFileExists(resultsXml)
+				}
+				assert.notFileExists(resultsJson)
+				log.info('assert proj1.1 complete!')
+			})
 	})
 
-	test('proj1.2 - output files exist 2 - exclude compileError.p', async () => {
-		await updateConfig('ablunit.files.exclude', [ '.builder/**', 'compileError.p' ])
-		await runAllTests()
-
-		const resultsJson = Uri.joinPath(workspaceUri, 'results.json')
-		const testCount = await getTestCount(resultsJson)
-		assert.equal(testCount, 12)
+	test('proj1.2 - output files exist 2 - exclude compileError.p', () => {
+		return workspace.getConfiguration('ablunit').update('files.exclude', [ '.builder/**', 'compileError.p' ])
+			.then(() => { return runAllTests() })
+			.then(() => {
+				assert.tests.count(12)
+				log.info('proj1.2 complete!')
+				return true
+			}, (e) => { throw e })
 	})
 
 	test('proj1.3 - output files exist 3 - exclude compileError.p as string', async () => {

@@ -3,7 +3,7 @@ set -euo pipefail
 
 initialize () {
 	local OPT OPTARG OPTIND
-	echo "[$0 ${FUNCNAME[0]}] pwd=$(pwd)"
+	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] pwd=$(pwd)"
 	VERBOSE=${VERBOSE:-false}
 	ABLUNIT_TEST_RUNNER_DBUS_NUM=${ABLUNIT_TEST_RUNNER_DBUS_NUM:-3}
 	ABLUNIT_TEST_RUNNER_OE_VERSION=${ABLUNIT_TEST_RUNNER_OE_VERSION:-12.2.12}
@@ -52,7 +52,7 @@ initialize () {
 
 	echo 'copying files from local'
 	initialize_repo
-	restore_cache
+	# restore_cache
 
 	if [ -z "${CIRCLE_BRANCH:-}" ]; then
 		CIRCLE_BRANCH=$(git branch --show-current)
@@ -60,11 +60,16 @@ initialize () {
 }
 
 initialize_repo () {
-	echo "[$0 ${FUNCNAME[0]}] pwd=$(pwd)"
-	if [ ! -d "$PROJECT_DIR/.git" ]; then
-		git clone "$REPO_VOLUME" "$PROJECT_DIR"
-	else
+	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] pwd=$(pwd)"
+	if [ -d "$PROJECT_DIR/.git" ]; then
+		cd "$PROJECT_DIR"
 		git pull
+	elif [ -d "$PROJECT_DIR" ]; then
+		cd "$PROJECT_DIR"
+		git init
+		git remote add origin "$REPO_VOLUME"
+	else
+		git clone "$REPO_VOLUME" "$PROJECT_DIR"
 	fi
 	cd "$PROJECT_DIR"
 	if [ "$(git branch --show-current)" = "$GIT_BRANCH" ]; then
@@ -77,7 +82,7 @@ initialize_repo () {
 }
 
 copy_files_from_volume () {
-	echo "[$0 ${FUNCNAME[0]}] pwd=$(pwd)"
+	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] pwd=$(pwd)"
 	find_files_to_copy
 	copy_files "staged"
 	[ -f /tmp/modified_files ] && copy_files "modified"
@@ -88,7 +93,7 @@ copy_files_from_volume () {
 }
 
 find_files_to_copy () {
-	echo "[$0 ${FUNCNAME[0]}] pwd=$(pwd)"
+	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] pwd=$(pwd)"
 	local BASE_DIR
 	BASE_DIR=$(pwd)
 
@@ -109,7 +114,7 @@ find_files_to_copy () {
 }
 
 copy_files () {
-	echo "[$0 ${FUNCNAME[0]}] pwd=$(pwd)"
+	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] pwd=$(pwd)"
 	local TYPE="$1"
 	while read -r FILE; do
 		echo "copying $TYPE file $FILE"
@@ -121,14 +126,16 @@ copy_files () {
 }
 
 run_tests () {
-	echo "[$0 ${FUNCNAME[0]}] pwd=$(pwd)"
+	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] pwd=$(pwd)"
 
 	npm run clean
 
 	if [ "$TEST_PROJECT" = "package" ]; then
 		.circleci/package.sh
 	elif [ "$TEST_PROJECT" = "base" ]; then
-		run_tests_base
+		run_tests_base || E_CODE=$?
+		save_cache
+		[ "${E_CODE:-0}" = 0 ] || exit "$E_CODE"
 	elif [ "$TEST_PROJECT" = "dummy-ext" ]; then
 		run_tests_dummy_ext
 	else
@@ -138,7 +145,7 @@ run_tests () {
 }
 
 run_tests_base () {
-	echo "[$0 ${FUNCNAME[0]}] pwd=$(pwd)"
+	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] pwd=$(pwd)"
 
 	set -eo pipefail ## matches the behavior of CircleCI
 	if ! .circleci/run_test_wrapper.sh; then
@@ -156,7 +163,7 @@ run_tests_base () {
 }
 
 analyze_results () {
-	echo "[$0 ${FUNCNAME[0]}] pwd=$(pwd)"
+	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] pwd=$(pwd)"
 	RESULTS_COUNT=$(find . -name 'mocha_results_*.xml' | wc -l)
 	LCOV_COUNT=$(find . -name 'lcov.info' | wc -l)
 	HAS_ERROR=false
@@ -182,7 +189,7 @@ analyze_results () {
 }
 
 run_tests_dummy_ext () {
-	echo "[$0 ${FUNCNAME[0]}] pwd = $(pwd)"
+	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] pwd = $(pwd)"
 
 	if ! .circleci/install_and_run.sh; then
 		echo "run_tests failed"
@@ -194,7 +201,7 @@ run_tests_dummy_ext () {
 }
 
 save_cache () {
-	echo "[$0 ${FUNCNAME[0]}] pwd=$(pwd)"
+	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] pwd=$(pwd)"
 
 	# npm run clean
 
@@ -223,7 +230,7 @@ save_cache () {
 }
 
 restore_cache () {
-	echo "[$0 ${FUNCNAME[0]}] pwd=$(pwd)"
+	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] pwd=$(pwd)"
 	local BASE_DIR
 	BASE_DIR=$(pwd)
 
@@ -242,10 +249,10 @@ restore_cache () {
 }
 
 finish () {
-	echo "[$0 ${FUNCNAME[0]}] pwd=$(pwd)"
+	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] pwd=$(pwd)"
 	save_cache
 	$BASH_AFTER && bash
-	echo "[$0] completed successfully!"
+	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0] completed successfully!"
 }
 
 ########## MAIN BLOCK ##########

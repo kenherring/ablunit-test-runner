@@ -1,6 +1,6 @@
 import { globSync } from 'glob'
 import { WorkspaceFolder, commands, extensions, workspace } from 'vscode'
-import { Duration, activateExtension, enableExtensions, getDefaultDLC, installExtension, log, oeVersion, sleep, sleep2 } from './testCommon'
+import { Duration, activateExtension, enableExtensions, getDefaultDLC, installExtension, log, oeVersion, sleep2, updateConfig } from './testCommon'
 
 interface IRuntime {
 	name: string,
@@ -10,32 +10,45 @@ interface IRuntime {
 
 export async function enableOpenedgeAblExtension (runtimes?: IRuntime[]) {
 	const extname = 'riversidesoftware.openedge-abl-lsp'
-	await installExtension(extname).then(async () => {
-		return sleep(250)
-	}, (e) => {
-		throw e
-	})
-
+	await installExtension(extname)
 	await activateExtension(extname)
+	await setRuntimes(runtimes)
+	await rebuildAblProject()
+	log.info('riversidesoftware.openedge-abl-lsp extension is enabled!')
 
-	const r = await setRuntimes(runtimes).then(() => {
-		return getRcodeCount()
-	}, (e) => {
-		log.error('failed to set runtimes (e=' + e + ')')
-		throw e
-	})
 
-	const c = await rebuildAblProject()
-	log.info('riversidesoftware.openedge-abl-lsp extension is enabled! r=' + r + ', c=' + c)
+	// const prom = setRuntimes(runtimes)
+	const current = workspace.getConfiguration('abl').get('configuration.runtimes')
+	log.info('current=' + JSON.stringify(current))
+	log.info(' set to=' + JSON.stringify(runtimes))
+	if (JSON.stringify(current) === JSON.stringify(runtimes)) {
+		log.info('runtimes are already set')
+		return
+	}
+
+	// log.info('workspace.getConfiguration(\'abl\').update(\'configuration.runtimes\')')
+	// const prom = workspace.getConfiguration('abl').update('configuration.runtimes', JSON.stringify(runtimes), true)
+	log.info('workspace.getConfiguration(\'abl.configuration\').update(\'runtimes\')')
+	const prom = workspace.getConfiguration('abl.configuration').update('runtimes', JSON.stringify(runtimes), true)
+		.then(() => {
+			log.info('update complete')
+			return getRcodeCount()
+		})
+		// .then(() => { return rebuildAblProject() })
+		.then(() => {
+			log.info('rebuild complete!')
+			return true
+		}, (e) => {
+			log.error('failed to set runtimes (e=' + e + ')')
+			throw e
+		})
+	log.info('await prom start')
+	const r = await prom.then(() => {
+		log.info('prom complete')
+		return true
+	}, (e) => { throw e })
+	log.info('riversidesoftware.openedge-abl-lsp extension is enabled! (r=' + r + ')')
 }
-
-// export function getAblunitExt () {
-// 	const ext = extensions.getExtension('kherring.ablunit-test-runner')
-// 	if (!ext) {
-// 		throw new Error('kherring.ablunit-test-runner is not installed')
-// 	}
-// 	return ext
-// }
 
 export function getRcodeCount (workspaceFolder?: WorkspaceFolder) {
 	if (!workspaceFolder) {
@@ -54,35 +67,37 @@ export function getRcodeCount (workspaceFolder?: WorkspaceFolder) {
 	return -1
 }
 
-export async function restartLangServer () {
-	return commands.executeCommand('abl.restart.langserv').then(async () => {
+export function restartLangServer () {
+	return commands.executeCommand('abl.restart.langserv').then(() => {
 		log.info('abl.restart.langserv command complete')
-		await waitForLangServerReady()
-		return
+		return waitForLangServerReady()
+	}).then(() => {
+		log.info('lang server is ready')
+		return true
 	}, (e) => {
 		log.error('abl.restart.langserv command failed! e=' + e)
 	})
 }
 
-export async function rebuildAblProject () {
-	const confRuntimes = workspace.getConfiguration('abl').get('configuration.runtimes') as IRuntime[]
+export function rebuildAblProject () {
+	const confRuntimes = workspace.getConfiguration('abl').get('configuration.runtimes')!
 	log.info('rebuilding abl project... runtimes=' + JSON.stringify(confRuntimes))
 
-	await waitForLangServerReady()
-
-	return commands.executeCommand('abl.project.rebuild').then(() => {
-		const rcodeCount = getRcodeCount()
-		log.info('abl.project.rebuild command complete! (rcodeCount=' + rcodeCount + ')')
-		return rcodeCount
-	}, (err) => {
-		log.error('abl.project.rebuild failed! err=' + err)
-		commands.executeCommand('abl.dumpFileStatus').then(() => {
+	return waitForLangServerReady()
+		.then(() => { return commands.executeCommand('abl.project.rebuild') })
+		.then(() => {
+			const rcodeCount = getRcodeCount()
+			log.info('abl.project.rebuild command complete! (rcodeCount=' + rcodeCount + ')')
+			return rcodeCount
+		}, (err) => {
+			log.error('abl.project.rebuild failed! err=' + err)
+			return commands.executeCommand('abl.dumpFileStatus')
+		}).then(() => {
 			log.info('abl.dumpFileStatus complete')
+			return true
 		}, (e) => {
 			log.error('abl.dumpFileStatus failed! e=' + e)
 		})
-		throw err
-	})
 }
 
 // export async function waitForLangServerReady (preWaitTime: number | undefined = 10000) {
@@ -106,17 +121,17 @@ export async function waitForLangServerReady () {
 	const waitTime = new Duration()
 
 	// now wait until it is ready
-	let r = false
+	const r = false
 	for (let i = 0; i < maxWait; i++) {
-		r = await commands.executeCommand('abl.dumpLangServStatus').then(() => {
-			log.info('abl.dumpLangServStatus: i=' + i + ' ' + waitTime)
-			return true
-		}, (e) => {
-			log.error('abl.dumpLangServStatus failed! i=' + i + ', e=' + e)
-			return false
-		})
+		await commands.executeCommand('abl.dumpLangServStatus')
+		log.info('sleep-400 start')
+		await sleep2(400)
+		log.info('sleep-400 end')
+		log.info('abl.dumpLangServStatus: i=' + i + ' ' + waitTime + ' (r=' + r + ')')
 		if (r) { break }
-		await sleep2(1000)
+		log.info('sleep500-start')
+		await sleep2(500)
+		log.info('sleep500-end')
 	}
 	log.info('r=' + r)
 	if (r) {
@@ -127,48 +142,67 @@ export async function waitForLangServerReady () {
 	throw new Error('lang server is not ready!')
 }
 
-export async function setRuntimes (runtimes?: IRuntime[]): Promise<void> {
-	return new Promise((resolve, reject) => {
-		const duration = new Duration('setRuntimes')
-		if (!enableExtensions()) {
-			reject(new Error('setRuntimes failed! extensions are disabled'))
-		}
-		if (!runtimes) {
-			runtimes = [{name: oeVersion(), path: getDefaultDLC(), default: true}]
-		}
-		log.info('setting abl.configuration.runtimes=' + JSON.stringify(runtimes))
-		const ext = extensions.getExtension('riversidesoftware.openedge-abl-lsp')
-		if (!ext) {
-			throw new Error('[setRuntimes] extension not installed: riversidesoftware.openedge-abl-lsp')
-		}
-		if (!ext.isActive) {
-			throw new Error('[setRuntimes] extension not active: riversidesoftware.openedge-abl-lsp')
-		}
+export async function setRuntimes (runtimes?: IRuntime[]) {
+	const duration = new Duration('setRuntimes')
+	if (!enableExtensions()) {
+		throw new Error('setRuntimes failed! extensions are disabled')
+	}
+	log.info('runtimes=' + JSON.stringify(runtimes))
+	if (!runtimes) {
+		runtimes = [{name: oeVersion(), path: getDefaultDLC(), default: true}]
+	}
+	log.info('setting abl.configuration.runtimes=' + JSON.stringify(runtimes))
+	const ext = extensions.getExtension('riversidesoftware.openedge-abl-lsp')
+	if (!ext) {
+		throw new Error('[setRuntimes] extension not installed: riversidesoftware.openedge-abl-lsp')
+	}
+	if (!ext.isActive) {
+		throw new Error('[setRuntimes] extension not active: riversidesoftware.openedge-abl-lsp')
+	}
 
-		const conf = workspace.getConfiguration('abl')
-		const current = conf.get('configuration.runtimes') as IRuntime[]
-		// log.info('current=' + JSON.stringify(current))
-		// log.info('  input=' + JSON.stringify(runtimes))
-		if (JSON.stringify(current) === JSON.stringify(runtimes)) {
-			log.info('runtmes are already set ' + duration)
-			resolve()
-		}
+	const conf = workspace.getConfiguration('abl')
+	const current = conf.get('configuration.runtimes')!
+	log.info('current=' + JSON.stringify(current))
+	log.info('  input=' + JSON.stringify(runtimes))
+	if (JSON.stringify(current) === JSON.stringify(runtimes)) {
+		log.info('runtmes are already set ' + duration)
+		return true
+	}
 
-		const ablConf = workspace.getConfiguration('abl')
-
-		conf.update('configuration.runtimes', runtimes, true).then(() => {
-			const ablConf = workspace.getConfiguration('abl')
-			restartLangServer().then(() => {
-				resolve()
-			}, (e) => { throw e })
+	log.info('workspace.getConfiguration("abl").update("configuration.runtimes") - START')
+	// const hasConf = workspace.getConfiguration('abl').has('configuration')3
+	// log.info('hasConf=' + hasConf)
+	// if (!hasConf) {
+	// 	log.info('setting abl.configuration.runtimes')
+	// 	return workspace.getConfiguration('abl').update('configuration.runtimes', runtimes, true)
+	// 		.then(() => {
+	// 			log.info('workspace.getConfiguration("abl").update(configuration.runtimes) - END')
+	// 			return restartLangServer()
+	// 		})
+	// 		.then(() => {
+	// 			log.info('restartLangServer complete ' + duration)
+	// 			return true
+	// 		}, (e: unknown) => {
+	// 			if (e instanceof Error) {
+	// 				throw e
+	// 			}
+	// 			throw new Error('setRuntimes failed! e=' + e)
+	// 		})
+	// }
+	const r = await workspace.getConfiguration('abl').update('configuration.runtimes', runtimes, true)
+		.then(() => {
+			log.info('workspace.getConfiguration("abl").update(configuration.runtimes) - END')
+			return restartLangServer()
+		})
+		.then(() => {
+			log.info('restartLangServer complete ' + duration)
+			return true
 		}, (e: unknown) => {
 			if (e instanceof Error) {
-				reject(e)
-				return
+				throw e
 			}
-			reject(new Error('setRuntimes failed! e=' + e))
-			return
+			throw new Error('setRuntimes failed! e=' + e)
 		})
-		return
-	})
+	log.info('return r=' + JSON.stringify(r))
+	return r
 }

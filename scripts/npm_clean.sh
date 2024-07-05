@@ -2,16 +2,16 @@
 set -euo pipefail
 
 main_block () {
-	echo "[$0 main_block] starting script (pwd=$(pwd))"
+	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 main_block] starting script (pwd=$(pwd))"
 	initialize
 	delete_directories &
 	delete_files &
 	wait
-	echo "[$0 main_block] cleanup complete!"
+	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 main_block] cleanup complete!"
 }
 
 initialize () {
-	echo "[$0 ${FUNCNAME[0]}] intiailizing..."
+	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] intiailizing..."
 
 	DIRS=(
 		".builder"
@@ -57,10 +57,11 @@ initialize () {
 		"results.xml"
 	)
 	FILE_PATTERNS=("*.vsix")
+	rm -f .vscode-test/user-data/User/settings.json
 }
 
 delete_directories () {
-	echo "[$0 ${FUNCNAME[0]}] deleting directories..."
+	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] deleting directories..."
 	local DIR LOOP_COUNT=0 DIR_COUNT=0
 
 	for DIR in "${DIRS[@]}"; do
@@ -84,7 +85,7 @@ delete_directories () {
 }
 
 delete_files () {
-	echo "[$0 ${FUNCNAME[0]}] deleting files..."
+	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] deleting files..."
 	local PATTERN LOOP_COUNT=0 FILE_COUNT=0
 
 	for PATTERN in "${FILE_PATTERNS[@]}"; do

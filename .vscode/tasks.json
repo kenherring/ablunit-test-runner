@@ -17,9 +17,9 @@
 				"reveal": "always",
 				"group": "build-task",
 			},
-			"runOptions": {
-				"runOn": "folderOpen"
-			}
+			// "runOptions": {
+			// 	"runOn": "folderOpen"
+			// }
 		},
 		{
 			"label": "npm clean",
@@ -80,12 +80,21 @@
 		},
 		{
 			"type": "npm",
+			"script": "lint",
+			"problemMatcher": [
+				"$eslint-stylish"
+			],
+			"label": "npm: lint",
+			"detail": "npx eslint ./src --ext .ts,.js"
+		},
+		{
+			"type": "npm",
 			"script": "lint-fix-all",
 			"problemMatcher": [
 				"$eslint-stylish"
 			],
 			"label": "npm: lint-fix-all",
 			"detail": "npx eslint ./src --ext .ts,.js --fix"
-		}
+		},
 	]
 }

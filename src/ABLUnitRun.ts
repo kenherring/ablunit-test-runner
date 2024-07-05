@@ -124,7 +124,7 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 		return cmdSanitized
 	}
 
-	const runCommand = async () => {
+	const runCommand = () => {
 		log.debug('ablunit command dir=\'' + res.cfg.ablunitConfig.workspaceFolder.uri.fsPath + '\'')
 		if (cancellation?.isCancellationRequested) {
 			log.info('cancellation requested - runCommand')
@@ -186,8 +186,8 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 		})
 	}
 
-	return runCommand().then(async () => {
-		return res.parseOutput(options).then()
+	return runCommand().then(() => {
+		return res.parseOutput(options)
 	}, (err) => {
 		log.error('Err=' + err)
 		throw err

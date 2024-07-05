@@ -1,5 +1,5 @@
 import { Uri, commands } from 'vscode'
-import { assert, getResults, getWorkspaceUri, log, refreshData, runAllTests, sleep, waitForExtensionActive } from '../testCommon'
+import { assert, deleteTestFiles, getResults, getWorkspaceUri, log, refreshData, runAllTests, sleep, waitForExtensionActive } from '../testCommon'
 
 
 const projName = 'proj2'
@@ -8,6 +8,7 @@ const workspaceUri = getWorkspaceUri()
 suite('proj2 - Extension Test Suite', () => {
 
 	suiteSetup('proj2 - before', async () => {
+		deleteTestFiles()
 		await waitForExtensionActive()
 	})
 
@@ -18,40 +19,43 @@ suite('proj2 - Extension Test Suite', () => {
 		assert.fileExists(ablunitJson)
 	})
 
-	test('proj2.2 - call stack', async () => {
-		await commands.executeCommand('vscode.open', Uri.joinPath(workspaceUri, 'src/classes/testClass2.cls'))
-		await sleep(200)
-		await commands.executeCommand('testing.runCurrentFile')
-		await refreshData()
-		const recentResults = await getResults()
-		log.info('recentResults = ' + recentResults + ' ' + recentResults.length)
-
-		const tc = recentResults[0].ablResults?.resultsJson[0].testsuite?.[0].testcases?.[0]
-		const mdText = tc?.failure?.callstack.items[1].markdownText
-		if (!mdText) {
-			assert.fail('mdText is null')
-		}
-		if (mdText?.includes('testClass2.cls:file:///')) {
-			assert.fail('mdText should be testClasse.cls:6')
-		}
+	test('proj2.2 - call stack', () => {
+		return commands.executeCommand('vscode.open', Uri.joinPath(workspaceUri, 'src/classes/testClass2.cls'))
+			.then(() => sleep(200))
+			.then(() => commands.executeCommand('testing.runCurrentFile'))
+			.then(() => sleep(200))
+			.then(() => getResults())
+			.then((recentResults) => {
+				log.info('recentResults = ' + recentResults + ' ' + recentResults.length)
+				const tc = recentResults[0].ablResults?.resultsJson[0].testsuite?.[0].testcases?.[0]
+				const mdText = tc?.failure?.callstack.items[1].markdownText
+				if (!mdText) {
+					assert.fail('mdText is null')
+				}
+				if (mdText?.includes('testClass2.cls:file:///')) {
+					assert.fail('mdText should be testClasse.cls:6')
+				}
+				return true
+			})
 	})
 
-	test('proj2.3 - run current test suite', async () => {
-		await commands.executeCommand('vscode.open', Uri.joinPath(workspaceUri, 'src/testSuite.cls'))
-		await sleep(200)
-		await commands.executeCommand('testing.runCurrentFile')
-		await refreshData()
-		const recentResults = await getResults()
+	test('proj2.3 - run current test suite', async (done) => {
+		const recentResults = await commands.executeCommand('vscode.open', Uri.joinPath(workspaceUri, 'src/testSuite.cls'))
+			.then(() => sleep(200))
+			.then(() => commands.executeCommand('testing.runCurrentFile'))
+			.then(() => getResults(), (e) => { throw e })
 
 		const res = recentResults[0].ablResults?.resultsJson[0]
 		if (!res) {
 			assert.fail('res is null')
 		} else {
+			log.info('res.errors=' + res.errors + ', res.failures=' + res.failures + ', res.passed=' + res.passed + ', res.tests=' + res.tests)
 			assert.equal(1, res.errors, 'res.errors should be 0')
 			assert.equal(3, res.failures, 'res.failures should be 0')
 			assert.equal(5, res.passed, 'res.passed should be 0')
 			assert.equal(9, res.tests, 'res.tests should be 1')
 		}
+		done()
 	})
 
 })

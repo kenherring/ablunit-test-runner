@@ -1,16 +1,32 @@
 import { assert, extensions, log, runAllTests, suiteSetupCommon } from '../testCommon'
 
-suite('projAtStart  - Extension Test Suite', () => {
+suite('projAtStart  - Extension Test Suite - bdd', () => {
 
-	suiteSetup('proj0 - suiteSetup', async () => {
-		log.info('suiteSetup starting...')
-		await suiteSetupCommon().then()
-		log.info('suiteSetup complete!')
+	suiteSetup('projAtStart - before', async () => {
+		// return suiteSetupCommon()
+		// return suiteSetupCommon().then(() => { return true }, (e: unknown) => { throw e })
+		log.info('suiteSetupCommon() start')
+		await suiteSetupCommon().then(() => { return true }, (e: unknown) => { throw e })
+		log.info('suiteSetupCommon() end')
+		return true
 	})
 
-	test('projAtStart - ${workspaceFolder}/ablunit.json file exists', async () => {
-		await runAllTests(true, false)
+	// test('projAtStart - ${workspaceFolder}/ablunit.json file exists', (done) => {
+	test('projAtStart - ${workspaceFolder}/ablunit.json file exists - return promise', () => {
+		return runAllTests()
+			.then(() => {
+				log.info('runAllTests().then() complete!')
+				assert.fileExists('results.xml')
+				log.info('assertComplete')
+				return true
+			}, (e: unknown) => { throw e })
+	})
+
+	test('projAtStart - ${workspaceFolder}/ablunit.json file exists - async await', async () => {
+		await runAllTests()
+		log.info('runAllTests().then() complete!')
 		assert.fileExists('results.xml')
+		log.info('assertComplete')
 	})
 
 

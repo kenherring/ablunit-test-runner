@@ -22,8 +22,8 @@ function getDetailLine (coverage: FileCoverageDetail[] | never[], lineNum: numbe
 suite('proj0  - Extension Test Suite', () => {
 
 	suiteSetup('proj0 - before', async () => {
-		await waitForExtensionActive().then(async () => { return sleep(250) })
-		await commands.executeCommand('testing.clearTestResults').then()
+		await waitForExtensionActive().then(() => sleep(250))
+		await commands.executeCommand('testing.clearTestResults')
 		deleteFile('.vscode/ablunit-test-profile.json')
 	})
 
@@ -31,14 +31,17 @@ suite('proj0  - Extension Test Suite', () => {
 		deleteFile('.vscode/ablunit-test-profile.json')
 	})
 
-	test('proj0.1 - ${workspaceFolder}/ablunit.json file exists', async () => {
-		await runAllTests()
-
-		const recentResults = await getResults()
-		assert.equal(recentResults[0].cfg.ablunitConfig.config_uri, toUri('ablunit.json'), 'ablunit.json path mismatch')
-		assert.fileExists('ablunit.json', 'results.xml')
-		assert.notFileExists('results.json')
-		assert.notDirExists('listings')
+	test('proj0.1 - ${workspaceFolder}/ablunit.json file exists', () => {
+		return runAllTests()
+			.then(() => getResults())
+			.then((recentResults) => {
+				assert.equal(recentResults[0].cfg.ablunitConfig.config_uri, toUri('ablunit.json'), 'ablunit.json path mismatch')
+				assert.fileExists('ablunit.json', 'results.xml')
+				assert.notFileExists('results.json')
+				assert.notDirExists('listings')
+				return true
+			})
+			.catch((e: unknown) => { throw e })
 	})
 
 	// TODO - fix before merge

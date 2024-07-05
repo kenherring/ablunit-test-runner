@@ -22,16 +22,15 @@ suite('TestProfileParser suite', () => {
 
 	test('TestProfileParser.test1', () => {
 		const wsf = getWorkspaceFolders()
-		// const wsf = workspace.workspaceFolders
-		if (wsf === undefined) {
-			assert.fail('wsf === undefined')
+		if (wsf.length === 0) {
+			assert.fail('wsf.length === 0')
 			return
 		}
 		for (const ws of wsf) {
 			log.info('w=' + ws.uri.fsPath)
 		}
 		const profiles: IRunProfile[] = parseRunProfiles(wsf)
-		if ((profiles?.length ?? 0) !== 1) {
+		if (profiles.length !== 1) {
 			assert.fail('profiles.length = 1 (profiles=' + JSON.stringify(profiles) + '\'')
 		}
 		assert.equal(profiles[0].hide, false, 'hide=false')

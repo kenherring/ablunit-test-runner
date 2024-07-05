@@ -101,16 +101,16 @@ export class ABLResultsParser {
 
 		const testsuite = await this.parseSuite(res.testsuite)
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-call
-		let namePathSep = res['$'].name.replace(/\\/g, '/') as string
+		let namePathSep = res.$.name.replace(/\\/g, '/') as string
 		if (!isRelativePath(namePathSep)) {
 			namePathSep = workspace.asRelativePath(namePathSep, false)
 		}
 		const jsonData: ITestSuites = {
 			name: namePathSep,
-			tests: Number(res['$'].tests),
-			passed: Number(res['$'].tests) - Number(res['$'].errors) - Number(res['$'].failures),
-			failures: Number(res['$'].failures),
-			errors: Number(res['$'].errors),
+			tests: Number(res.$.tests),
+			passed: Number(res.$.tests) - Number(res.$.errors) - Number(res.$.failures),
+			failures: Number(res.$.failures),
+			errors: Number(res.$.errors),
 			testsuite: testsuite
 		}
 		return jsonData
@@ -121,24 +121,24 @@ export class ABLResultsParser {
 		const suites: ITestSuite[] = []
 
 		for (let idx=0; idx<res.length; idx++) {
-			const testsuite = await this.parseSuite(res[idx].testsuite).then()
-			const testcases = await this.parseTestCases(res[idx].testcase).then()
+			const testsuite = await this.parseSuite(res[idx].testsuite)
+			const testcases = await this.parseTestCases(res[idx].testcase)
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-call
-			let namePathSep = res[idx]['$'].name.replace(/\\/g, '/') as string ?? undefined
+			let namePathSep = res[idx].$.name.replace(/\\/g, '/') as string ?? undefined
 			if (!isRelativePath(namePathSep)) {
 				namePathSep = workspace.asRelativePath(namePathSep, false)
 			}
 
 			suites[idx] = {
 				name: namePathSep,
-				classname: res[idx]['$'].classname ?? undefined,
-				id: res[idx]['$'].id,
-				tests: Number(res[idx]['$'].tests),
-				passed: Number(res[idx]['$'].tests) - Number(res[idx]['$'].errors) - Number(res[idx]['$'].failures) - Number(res[idx]['$'].skipped),
-				errors: Number(res[idx]['$'].errors),
-				failures: Number(res[idx]['$'].failures),
-				skipped: Number(res[idx]['$'].skipped),
-				time: Number(res[idx]['$'].time * 1000),
+				classname: res[idx].$.classname ?? undefined,
+				id: res[idx].$.id,
+				tests: Number(res[idx].$.tests),
+				passed: Number(res[idx].$.tests) - Number(res[idx].$.errors) - Number(res[idx].$.failures) - Number(res[idx].$.skipped),
+				errors: Number(res[idx].$.errors),
+				failures: Number(res[idx].$.failures),
+				skipped: Number(res[idx].$.skipped),
+				time: Number(res[idx].$.time * 1000),
 				properties: this.parseProperties(res[idx].properties),
 				testsuite: testsuite,
 				testcases: testcases
@@ -153,7 +153,7 @@ export class ABLResultsParser {
 		const props: Record<string, string> = {}
 
 		for(const element of res) {
-			props[element['$'].name] = element['$'].value
+			props[element.$.name] = element.$.value
 		}
 		return props
 	}
@@ -164,10 +164,10 @@ export class ABLResultsParser {
 
 		for (let idx=0; idx<res.length; idx++) {
 			cases[idx] = {
-				name: res[idx]['$'].name,
-				classname: res[idx]['$'].classname ?? undefined,
-				status: res[idx]['$'].status,
-				time: Number(res[idx]['$'].time),
+				name: res[idx].$.name,
+				classname: res[idx].$.classname ?? undefined,
+				status: res[idx].$.status,
+				time: Number(res[idx].$.time),
 				failure: await this.parseFailOrError(res[idx])
 			}
 		}
@@ -175,14 +175,14 @@ export class ABLResultsParser {
 	}
 
 	async parseFailOrError (res: any) {
-		if (res['$'].status === 'Success' || res['$'].status === 'Skipped') {
+		if (res.$.status === 'Success' || res.$.status === 'Skipped') {
 			return undefined
 		}
 		let type = ''
 
-		if (res['failure']) {
+		if (res.failure) {
 			type = 'failure'
-		} else if (res['error']) {
+		} else if (res.error) {
 			type = 'error'
 		} else {
 			throw new Error('malformed results  file (3) - could not find \'failure\' or \'error\' node')
@@ -190,16 +190,16 @@ export class ABLResultsParser {
 		if (res[type].length > 1) { throw new Error('more than one failure or error in testcase - use case not handled') }
 
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-		const callstack = await parseCallstack(this.debugLines, res[type][0]['_'])
+		const callstack = await parseCallstack(this.debugLines, res[type][0]._)
 		const fail: ITestCaseFailure = {
-			callstackRaw: res[type][0]['_'],
+			callstackRaw: res[type][0]._,
 			callstack: callstack,
-			message: res[type][0]['$'].message,
-			type: res[type][0]['$'].types
+			message: res[type][0].$.message,
+			type: res[type][0].$.types
 		}
 		const diffRE = /Expected: (.*) but was: (.*)/
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-		const diff = diffRE.exec(res[type][0]['$'].message)
+		const diff = diffRE.exec(res[type][0].$.message)
 		if (diff) {
 			fail.diff = {
 				expectedOutput: diff[1],
@@ -214,6 +214,7 @@ export class ABLResultsParser {
 		log.info('writing results json file: ' + uri.fsPath)
 		return workspace.fs.writeFile(uri, Uint8Array.from(Buffer.from(JSON.stringify(data, null, 2)))).then(() => {
 			log.info('wrote results json file: ' + uri.fsPath)
+			return
 		}, (err) => {
 			log.error('failed to write profile output json file ' + uri.fsPath + ' - ' + err)
 		})
