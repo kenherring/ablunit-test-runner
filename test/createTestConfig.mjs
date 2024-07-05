@@ -16,7 +16,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const vsVersionNum = '1.88.0'
 const vsVersion = process.env['ABLUNIT_TEST_RUNNER_VSCODE_VERSION'] ?? 'stable'
 const oeVersion = process.env['ABLUNIT_TEST_RUNNER_OE_VERSION'] ?? '12.2.12'
-let firstTest = true
+let isFirst = true
 const enableExtensions = [
 	'AtStart',
 	'DebugLines',
@@ -75,17 +75,15 @@ function getMochaOpts (projName) {
 
 	const mochaOpts = {
 		// bail: false,
-		bail: true,
+		bail,
 		// fullTrace: true
 		retries: 0,
 		timeout: getMochaTimeout(projName),
 		// ui: 'tdd', // describe, it, etc
 		// ui: 'bdd' // default; suite, test, etc
 		parallel: false,
-		retries: 0,
 		recursive: true,
 		// color: true,
-		bail: false,
 		exit: true,
 		extension: [ 'js', 'ts', 'test.ts' ],
 		// require: [
@@ -98,8 +96,8 @@ function getMochaOpts (projName) {
 		reporter: 'mocha-multi-reporters',
 		reporterOptions: {
 			reporterEnabled: [ 'spec', 'mocha-junit-reporter' ],
-			jsonReporterOptions: { output: jsonFile },
-			xunitReporterOptions: { output: xunitFile },
+			// jsonReporterOptions: { output: jsonFile },
+			// xunitReporterOptions: { output: xunitFile },
 			mochaJunitReporterReporterOptions: { mochaFile: mochaFile }
 		},
 		// preload: [ 'ts-node/register/transpile-only' ],
@@ -247,13 +245,6 @@ function getTestConfig (projName) {
 	const files = './test/suites/' + projName + '.test.ts'
 	// const absolulteFile = path.resolve(__dirname, '..', 'test', 'suites', projName + '.test.ts')
 
-	const envVars = {
-		ABLUNIT_TEST_RUNNER_ENABLE_EXTENSIONS: enableExtensions.includes('' + projName),
-		ABLUNIT_TEST_RUNNER_UNIT_TESTING: 'true',
-		ABLUNIT_TEST_RUNNER_VSCODE_VERSION: vsVersion,
-		VSCODE_SKIP_PRELAUNCH: '1',
-	}
-
 	// let extensionDevelopmentPath = path.resolve(__dirname, '..', 'ablunit-test-runner-0.2.1.vsix')
 	// if (vsVersion === 'insiders') {
 	// 	extensionDevelopmentPath = path.resolve(__dirname, '..', 'ablunit-test-runner-insiders-0.2.1.vsix')
@@ -277,7 +268,7 @@ function getTestConfig (projName) {
 		// platform: 'desktop',
 		// desktopPlatform: 'win32',
 		launchArgs: getLaunchArgs(projName),
-		env: envVars,
+		env,
 		useInstallation: useInstallation,
 		// useInstallation: { fromMachine: true },
 		// download: { reporter: ProgressReporter, timeout: ? }
@@ -285,7 +276,7 @@ function getTestConfig (projName) {
 		// --- IBaseTestConfiguration --- //
 		files,
 		version: vsVersion,
-		extensionDevelopmentPath,
+		// extensionDevelopmentPath,
 		workspaceFolder: getWorkspaceFolder(projName),
 		mocha: getMochaOpts(projName),
 		label: 'suite_' + projName,
@@ -294,9 +285,6 @@ function getTestConfig (projName) {
 		// --- IDesktopTestConfiguration --- //
 		// platform: 'desktop',
 		// desktopPlatform: 'win32',
-		launchArgs: getLaunchArgs(projName),
-		env,
-		useInstallation,
 		// download: ?
 		installExtension,
 		skipExtensionDependencies: true,

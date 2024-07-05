@@ -139,7 +139,8 @@ export async function suiteSetupCommon (runtimes?: IRuntime[]) {
 		runtimes = [{ name: oeVersion(), path: getDefaultDLC(), default: true }]
 	}
 	log.info('[suiteSetupCommon] waitForExtensionActive \'kherring.ablunit-test-runner\' (projName=' + projName() + ')')
-	const extname = 'kherring.ablunit-test-runner'
+	// const extname = 'kherring.ablunit-test-runner'
+	const extname = 'riversidesoftware.openedge-abl-lsp'
 	await waitForExtensionActive()
 	if (enableExtensions()) {
 		await installExtension(extname).then((r) => {

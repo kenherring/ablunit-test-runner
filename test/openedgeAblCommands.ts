@@ -154,9 +154,10 @@ export async function setRuntimes (runtimes?: IRuntime[]) {
 	log.info('setting abl.configuration.runtimes=' + JSON.stringify(runtimes))
 	const ext = extensions.getExtension('riversidesoftware.openedge-abl-lsp')
 	if (!ext) {
-		throw new Error('[setRuntimes] extension not installed: riversidesoftware.openedge-abl-lsp')
+		await installExtension('riversidesoftware.openedge-abl-lsp')
+		// throw new Error('[setRuntimes] extension not installed: riversidesoftware.openedge-abl-lsp')
 	}
-	if (!ext.isActive) {
+	if (!ext?.isActive) {
 		throw new Error('[setRuntimes] extension not active: riversidesoftware.openedge-abl-lsp')
 	}
 
