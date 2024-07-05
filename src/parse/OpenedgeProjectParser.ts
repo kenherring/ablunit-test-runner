@@ -264,7 +264,7 @@ function readGlobalOpenEdgeRuntimes (workspaceUri: Uri) {
 		log.warn('[readGlobaleOpenEdgeRuntimes] No OpenEdge runtime configured on this machine')
 	}
 
-	let defaultRuntime = undefined
+	let defaultRuntime: IOERuntime | undefined = undefined
 	oeRuntimes.forEach(runtime => {
 		if (runtime.default) {
 			defaultRuntime = runtime

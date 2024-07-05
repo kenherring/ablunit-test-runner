@@ -786,7 +786,7 @@ export async function getTestController () {
 }
 
 export async function getTestControllerItemCount (type?: 'ABLTestFile' | undefined) {
-	const ctrl = await getTestController(type == 'ABLTestFile')
+	const ctrl = await getTestController()
 	if (!ctrl?.items) {
 		return 0
 	}

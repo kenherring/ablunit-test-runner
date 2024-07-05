@@ -90,7 +90,6 @@ export async function activate (context: ExtensionContext) {
 		log.info('103')
 		const ret = {
 			testController: ctrl,
-			decorator: decorator,
 			recentResults: recentResults,
 			currentRunData: data
 		} as IExtensionTestReferences
@@ -799,7 +798,7 @@ function removeExcludedChildren (parent: TestItem, excludePatterns: RelativePatt
 
 function findMatchingFiles (includePatterns: RelativePattern[], token: CancellationToken, checkCancellationToken: () => void): Promise<Uri[]> {
 	const filelist: Uri[] = []
-	const proms = []
+	const proms: PromiseLike<boolean>[] = []
 	for (const includePattern of includePatterns) {
 		const prom = workspace.findFiles(includePattern, undefined, undefined, token)
 			.then((files) => {
@@ -818,7 +817,7 @@ function findMatchingFiles (includePatterns: RelativePattern[], token: Cancellat
 // async function parseMatchingFiles (files: Uri[], controller: TestController, excludePatterns: RelativePattern[], token: CancellationToken, checkCancellationToken: () => void, resolvedCount: number, rejectedCount: number) {
 async function parseMatchingFiles (files: Uri[], controller: TestController, excludePatterns: RelativePattern[], token: CancellationToken, checkCancellationToken: () => void): Promise<boolean> {
 	let searchCount = 0
-	const proms = []
+	const proms: Promise<boolean>[] = []
 	log.debug('parsing files... (count=' + files.length + ')')
 	for (const file of files) {
 		searchCount++
@@ -830,6 +829,7 @@ async function parseMatchingFiles (files: Uri[], controller: TestController, exc
 				return foundTestCase
 			}, (e) => {
 				log.error('failed to update file from disk. err=' + e)
+				return false
 			})
 			proms.push(prom)
 		}
