@@ -1,6 +1,6 @@
 name: Bug Report
 description: File a bug report
-title: "🪲 [Bug] "
+title: ":bug: [Bug] "
 labels: ["bug", "triage"]
 # projects: ["octo-org/1", "octo-org/44"]
 # assignees:
@@ -12,15 +12,13 @@ body:
       label: OpenEdge Version
       description: What version of our software are you running?
       options:
-        - 12.8.0
-        - 12.7.0
-        - 12.6.0
-        - 12.5.0
-        - 12.4.0
-        - 12.3.0
-        - 12.2.13
-        - 12.2.12
-        - 12.2.X
+        - 12.8
+        - 12.7
+        - 12.6
+        - 12.5
+        - 12.4
+        - 12.3
+        - 12.2
         - 12.1
         - 12.0
         - 11.7
