@@ -67,7 +67,7 @@ restore_vscode_test () {
 	fi
 	$VERBOSE && echo "COUNT=$COUNT"
 	if [ "$COUNT" = 0 ]; then
-		echo "[$0 ${FUNCNAME[0]}] WARNING: no files found in $FROM_DIR, skipping restore of cached ./.vscode-test/ directory"
+		echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] WARNING: no files found in $FROM_DIR, skipping restore of cached ./.vscode-test/ directory"
 		return 0
 	fi
 

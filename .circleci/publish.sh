@@ -47,4 +47,4 @@ upload_to_github_release () {
 ########## MAIN BLOCK ##########
 main_block
 upload_to_github_release
-echo "[$0] completed successfully"
+echo "[$(date +%Y-%m-%d:%H:%M:%S) $0] completed successfully"

@@ -86,4 +86,4 @@ update_other_files () {
 ########## MAIN BLOCK ##########
 initialize "$@"
 update_version
-echo "[$0] completed successfully!"
+echo "[$(date +%Y-%m-%d:%H:%M:%S) $0] completed successfully!"

@@ -96,4 +96,4 @@ run_lint () {
 initialize
 package
 run_lint
-echo "[$0] completed successfully"
+echo "[$(date +%Y-%m-%d:%H:%M:%S) $0] completed successfully"

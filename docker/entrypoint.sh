@@ -83,7 +83,7 @@ initialize () {
 }
 
 initialize_repo () {
-	echo "[$0 ${FUNCNAME[0]}] pwd=$(pwd)"
+	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] pwd=$(pwd)"
 	if [ -d "$PROJECT_DIR/.git" ]; then
 		cd "$PROJECT_DIR"
 		git pull
@@ -269,7 +269,7 @@ finish () {
 	save_cache
 	log_timing_print
 	$BASH_AFTER && bash
-	echo "[$0] completed successfully!"
+	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0] completed successfully!"
 }
 
 ########## MAIN BLOCK ##########

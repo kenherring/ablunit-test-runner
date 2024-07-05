@@ -166,4 +166,4 @@ run_tests_in_docker () {
 ########## MAIN BLOCK ##########
 initialize "$@"
 run_tests_in_docker
-echo "[$0] completed successfully! (script=docker/$SCRIPT.sh)"
+echo "[$(date +%Y-%m-%d:%H:%M:%S) $0] completed successfully! (script=docker/$SCRIPT.sh)"

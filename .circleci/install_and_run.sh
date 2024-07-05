@@ -46,4 +46,4 @@ compile_install_run() {
 initialize
 build_dummy_extension
 compile_install_run
-echo "[$0] completed successfully!"
+echo "[$(date +%Y-%m-%d:%H:%M:%S) $0] completed successfully!"
