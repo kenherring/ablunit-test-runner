@@ -1,49 +1,32 @@
-import { Uri, workspace } from 'vscode'
-import { assert, deleteFile, deleteTestFiles, getTestCount, getWorkspaceUri, log, runAllTests, selectProfile, updateTestProfile, waitForExtensionActive } from '../testCommon'
+import { Uri, assert, deleteFile, getTestCount, getWorkspaceUri, log, runAllTests, selectProfile, suiteSetupCommon, updateTestProfile, workspace } from '../testCommon'
 
-// const projName = __dirname.split(/[\\/]/).pop()!
-const projName = 'proj9'
-const testProfileJson = Uri.joinPath(getWorkspaceUri(), '.vscode/ablunit-test-profile.json')
-const testProfileBackup = Uri.joinPath(getWorkspaceUri(), '.vscode/ablunit-test-profile.json.backup')
+const testProfileJson = () => Uri.joinPath(getWorkspaceUri(), '.vscode/ablunit-test-profile.json')
+const testProfileBackup = () => Uri.joinPath(getWorkspaceUri(), '.vscode/ablunit-test-profile.json.backup')
 
-suite('proj9 - Extension Test Suite', () => {
+suite('proj9Suite', () => {
 
-	suiteSetup('proj9 - before', async () => {
-		await waitForExtensionActive()
-		await waitForExtensionActive('riversidesoftware.openedge-abl-lsp')
-		await workspace.fs.copy(testProfileJson, testProfileBackup, { overwrite: true }).then()
+	suiteSetup('proj9 - suiteSetup', suiteSetupCommon)
+
+	suiteSetup('proj9 - suiteSetup', async () => {
+		await workspace.fs.copy(testProfileJson(), testProfileBackup(), { overwrite: true }).then()
 	})
 
-	setup('proj9 - beforeEach', () => {
+	setup('proj9 - setup', () => {
 		const workspaceFolder = workspace.workspaceFolders![0].uri
-		deleteFile(Uri.joinPath(workspaceFolder, '.vscode', 'profile.json'))
-		deleteTestFiles()
+		// await waitForExtensionActive()
+		deleteFile(Uri.joinPath(workspaceFolder, '.vscode/profile.json'))
 	})
 
-	teardown('proj9 - afterEach', async () => {
-		deleteFile(testProfileJson)
-		await workspace.fs.copy(testProfileBackup, testProfileJson, { overwrite: true }).then()
-		// await workspace.fs.copy(testProfileBackup, testProfileJson, { overwrite: true }).then(() => {
-		// 	log.info('teardown return')
-		// 	return
-		// }, (e) => {
-		// 	log.error('teardown error: e=' + e)
-		// 	throw e
-		// })
+	teardown('proj9 - teardown', async () => {
+		deleteFile(testProfileJson())
+		await workspace.fs.copy(testProfileBackup(), testProfileJson(), { overwrite: true }).then()
 	})
 
-	suiteTeardown('proj9 - after', async () => {
-		await workspace.fs.delete(testProfileBackup)
-		// await workspace.fs.delete(testProfileBackup).then(() => {
-		// 	log.info('suiteTeardown return')
-		// 	return
-		// }, (e) => {
-		// 	log.error('suiteTeardown error: e=' + e)
-		// 	throw e
-		// })
+	suiteTeardown('proj9 - suiteTeardown', async () => {
+		await workspace.fs.delete(testProfileBackup())
 	})
 
-	test('proj9.1 - ${workspaceFolder}/ablunit.json file exists', async () => {
+	test('proj91 - ${workspaceFolder}/ablunit.json file exists', async () => {
 		await runAllTests()
 		const workspaceFolder = workspace.workspaceFolders![0].uri
 		const ablunitJson = Uri.joinPath(workspaceFolder, 'ablunit.json')

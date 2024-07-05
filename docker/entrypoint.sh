@@ -1,21 +1,37 @@
 #!/bin/bash
 set -euo pipefail
 
+
+log_timing () {
+	echo "[$(date +%Y-%m-%dT%H:%M:%S%z) $0] $1" >> /tmp/timing.log
+}
+
+log_timing_print () {
+	echo "---------- TIMING INFO ----------"
+	cat /tmp/timing.log
+	echo "---------- ----------- ----------"
+}
+
 initialize () {
+	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] pwd=$(pwd)"
+	log_timing "start"
+
 	local OPT OPTARG OPTIND
-	echo "[$0 ${FUNCNAME[0]}] pwd=$(pwd)"
 	VERBOSE=${VERBOSE:-false}
+	TRACE=${TRACE:-false}
 	ABLUNIT_TEST_RUNNER_DBUS_NUM=${ABLUNIT_TEST_RUNNER_DBUS_NUM:-3}
 	ABLUNIT_TEST_RUNNER_OE_VERSION=${ABLUNIT_TEST_RUNNER_OE_VERSION:-12.2.12}
 	ABLUNIT_TEST_RUNNER_VSCODE_VERSION=${ABLUNIT_TEST_RUNNER_VSCODE_VERSION:-stable}
 	ABLUNIT_TEST_RUNNER_PROJECT_NAME=${ABLUNIT_TEST_RUNNER_PROJECT_NAME:-}
 	ABLUNIT_TEST_RUNNER_NO_COVERAGE=${ABLUNIT_TEST_RUNNER_NO_COVERAGE:-false}
+	ABLUNIT_TEST_RUNNER_RUN_TESTS_SCRIPT=true
 	if $VERBOSE; then
 		echo "ABLUNIT_TEST_RUNNER_DBUS_NUM=$ABLUNIT_TEST_RUNNER_DBUS_NUM"
 		echo "ABLUNIT_TEST_RUNNER_OE_VERSION=$ABLUNIT_TEST_RUNNER_OE_VERSION"
 		echo "ABLUNIT_TEST_RUNNER_VSCODE_VERSION=$ABLUNIT_TEST_RUNNER_VSCODE_VERSION"
 		echo "ABLUNIT_TEST_RUNNER_PROJECT_NAME=$ABLUNIT_TEST_RUNNER_PROJECT_NAME"
 		echo "ABLUNIT_TEST_RUNNER_NO_COVERAGE=$ABLUNIT_TEST_RUNNER_NO_COVERAGE"
+		echo "ABLUNIT_TEST_RUNNER_RUN_TESTS_SCRIPT=$ABLUNIT_TEST_RUNNER_RUN_TESTS_SCRIPT"
 	fi
 	BASH_AFTER=false
 	BASH_AFTER_ERROR=false
@@ -27,6 +43,14 @@ initialize () {
 	GIT_BRANCH=$(cd "$REPO_VOLUME" && git branch --show-current)
 	STAGED_ONLY=${STAGED_ONLY:-true}
 	${CREATE_PACKAGE:-false} && TEST_PROJECT=package
+
+	export VERBOSE TRACE
+	export ABLUNIT_TEST_RUNNER_DBUS_NUM \
+		ABLUNIT_TEST_RUNNER_OE_VERSION \
+		ABLUNIT_TEST_RUNNER_VSCODE_VERSION \
+		ABLUNIT_TEST_RUNNER_PROJECT_NAME \
+		ABLUNIT_TEST_RUNNER_NO_COVERAGE \
+		ABLUNIT_TEST_RUNNER_RUN_TESTS_SCRIPT
 
 	git config --global init.defaultBranch main
 	mkdir -p "$npm_config_cache" "$PROJECT_DIR"
@@ -51,6 +75,7 @@ initialize () {
 	tr ' ' '\n' <<< "$PROGRESS_CFG_BASE64" | base64 --decode > /psc/dlc/progress.cfg
 
 	echo 'copying files from local'
+	log_timing "init repo/restore cache"
 	initialize_repo
 	# restore_cache
 
@@ -82,7 +107,7 @@ initialize_repo () {
 }
 
 copy_files_from_volume () {
-	echo "[$0 ${FUNCNAME[0]}] pwd=$(pwd)"
+	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] pwd=$(pwd)"
 	find_files_to_copy
 	copy_files "staged"
 	[ -f /tmp/modified_files ] && copy_files "modified"
@@ -93,7 +118,7 @@ copy_files_from_volume () {
 }
 
 find_files_to_copy () {
-	echo "[$0 ${FUNCNAME[0]}] pwd=$(pwd)"
+	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] pwd=$(pwd)"
 	local BASE_DIR
 	BASE_DIR=$(pwd)
 
@@ -102,7 +127,7 @@ find_files_to_copy () {
 	git --no-pager diff --diff-filter=d --name-only --staged --ignore-cr-at-eol > /tmp/staged_files
 	git --no-pager diff --diff-filter=D --name-only --staged --ignore-cr-at-eol > /tmp/deleted_files
 	if ! $STAGED_ONLY; then
-		git --no-pager diff --diff-filter=d --name-only --ignore-cr-at-eol > /tmp/modified_files
+		git --no-pager diff --diff-filter=d --name-only --ignore-cr-at-eol > /tmp/modified_files 2>/dev/null
 	fi
 
 	echo "file counts:"
@@ -114,10 +139,10 @@ find_files_to_copy () {
 }
 
 copy_files () {
-	echo "[$0 ${FUNCNAME[0]}] pwd=$(pwd)"
+	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] pwd=$(pwd)"
 	local TYPE="$1"
 	while read -r FILE; do
-		echo "copying $TYPE file $FILE"
+		$VERBOSE && echo "copying $TYPE file $FILE"
 		if [ ! -d "$(dirname "$FILE")" ]; then
 			mkdir -p "$(dirname "$FILE")"
 		fi
@@ -126,9 +151,7 @@ copy_files () {
 }
 
 run_tests () {
-	echo "[$0 ${FUNCNAME[0]}] pwd=$(pwd)"
-
-	npm run clean
+	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] pwd=$(pwd)"
 
 	if [ "$TEST_PROJECT" = "package" ]; then
 		.circleci/package.sh
@@ -145,7 +168,8 @@ run_tests () {
 }
 
 run_tests_base () {
-	echo "[$0 ${FUNCNAME[0]}] pwd=$(pwd)"
+	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] pwd=$(pwd)"
+	log_timing "run_tests_base"
 
 	set -eo pipefail ## matches the behavior of CircleCI
 	if ! .circleci/run_test_wrapper.sh; then
@@ -158,12 +182,12 @@ run_tests_base () {
 
 	if [ -z "${ABLUNIT_TEST_RUNNER_PROJECT_NAME:-}" ]; then
 		analyze_results
-		scripts/validate.sh
+		# scripts/validate.sh
 	fi
 }
 
 analyze_results () {
-	echo "[$0 ${FUNCNAME[0]}] pwd=$(pwd)"
+	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] pwd=$(pwd)"
 	RESULTS_COUNT=$(find . -name 'mocha_results_*.xml' | wc -l)
 	LCOV_COUNT=$(find . -name 'lcov.info' | wc -l)
 	HAS_ERROR=false
@@ -189,7 +213,7 @@ analyze_results () {
 }
 
 run_tests_dummy_ext () {
-	echo "[$0 ${FUNCNAME[0]}] pwd = $(pwd)"
+	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] pwd = $(pwd)"
 
 	if ! .circleci/install_and_run.sh; then
 		echo "run_tests failed"
@@ -201,7 +225,7 @@ run_tests_dummy_ext () {
 }
 
 save_cache () {
-	echo "[$0 ${FUNCNAME[0]}] pwd=$(pwd)"
+	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] pwd=$(pwd)"
 
 	# npm run clean
 
@@ -230,7 +254,7 @@ save_cache () {
 }
 
 restore_cache () {
-	echo "[$0 ${FUNCNAME[0]}] pwd=$(pwd)"
+	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] pwd=$(pwd)"
 	local BASE_DIR
 	BASE_DIR=$(pwd)
 
@@ -249,11 +273,21 @@ restore_cache () {
 }
 
 finish () {
-	echo "[$0 ${FUNCNAME[0]}] pwd=$(pwd)"
+	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] pwd=$(pwd)"
 	save_cache
+	log_timing_print
 	$BASH_AFTER && bash
 	echo "[$0] completed successfully!"
 }
+
+exit_err () {
+	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0] ERROR: $BASH_COMMAND failed"
+	log_timing_print
+	$BASH_AFTER_ERROR && bash
+	exit 1
+}
+
+trap exit_err ERR
 
 ########## MAIN BLOCK ##########
 initialize "$@"

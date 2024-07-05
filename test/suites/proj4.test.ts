@@ -1,32 +1,31 @@
-import { strict as assert } from 'assert'
-import { Uri } from 'vscode'
-import { deleteFile, doesFileExist, getDefaultDLC, getSessionTempDir, getWorkspaceUri, installExtension, oeVersion, runAllTests, setRuntimes, updateTestProfile, waitForExtensionActive } from '../testCommon'
 import { doesDirExist } from '../../src/ABLUnitCommon'
+import { Uri, assert, deleteFile, doesFileExist, getDefaultDLC, getSessionTempDir, getWorkspaceUri, isoDate, log, runAllTests, suiteSetupCommon, updateTestProfile, workspace } from '../testCommon'
 
-const projName = 'proj4'
-const sessionTempDir = getSessionTempDir()
+suite('proj4Suite', () => {
 
-suite('proj4 - Extension Test Suite', () => {
+	suiteSetup('proj3 - suiteSetup', suiteSetupCommon)
 
-	suiteSetup('proj4 - before', async () => {
-		await installExtension('riversidesoftware.openedge-abl-lsp')
-		await waitForExtensionActive()
+	setup('proj4 - setup', async () => {
+		// await setRuntimes([{name: '11.7', path: '/psc/dlc_11.7'}, {name: '12.2', path: getDefaultDLC()}])
+		const conf = workspace.getConfiguration('abl')
+		log.info(isoDate() + ' proj4.1 - 1.2 conf=' + JSON.stringify(conf))
+		await conf.update('configuration.runtimes', [{name: '11.7', path: '/psc/dlc_11.7'}, {name: '12.2', path: getDefaultDLC(), default: true}]).then(
+			() => { log.info(isoDate() + ' proj4.1 - 1.3') },
+			(e) => { log.error(isoDate() + ' proj4.1 - 1.4 e=' + e) }
+		)
 		if (process.platform === 'linux') {
 			await updateTestProfile('tempDir', '/tmp/ablunit')
 			await updateTestProfile('profiler.listings', '/tmp/ablunit-local/listings')
 		}
 	})
 
-	setup('proj4 - beforeEach', async () => {
-		await setRuntimes([{name: '11.7', path: '/psc/dlc_11.7'}, {name: oeVersion(), path: getDefaultDLC(), default: true}])
-	})
-
-	teardown('proj4 - afterEach', async () => {
+	teardown('proj4 - teardownn', async () => {
 		await updateTestProfile('tempDir', 'c:\\temp\\ablunit\\tempDir')
 		await updateTestProfile('profiler.listings', 'c:\\temp\\ablunit-local\\listings')
 	})
 
 	test('proj4.1 - Absolute Paths', async () => {
+		const sessionTempDir = getSessionTempDir()
 		const listingsDir = Uri.joinPath(sessionTempDir, 'listings')
 		const resultsXml = Uri.joinPath(sessionTempDir, 'tempDir', 'results.xml')
 		await updateTestProfile('profiler.listings', listingsDir.fsPath)
@@ -34,8 +33,8 @@ suite('proj4 - Extension Test Suite', () => {
 
 		await runAllTests()
 
-		assert(doesFileExist(resultsXml), 'missing results file (' + resultsXml.fsPath + ')')
-		assert(doesDirExist(listingsDir), 'missing listings directory (' + listingsDir.fsPath + ')')
+		assert.assert(doesFileExist(resultsXml), 'missing results file (' + resultsXml.fsPath + ')')
+		assert.assert(doesDirExist(listingsDir), 'missing listings directory (' + listingsDir.fsPath + ')')
 	})
 
 	test('proj4.2 - tempDir=.builder/ablunit', async () => {
@@ -43,7 +42,7 @@ suite('proj4 - Extension Test Suite', () => {
 		const workspaceUri = getWorkspaceUri()
 		await runAllTests()
 		const ablunitJson = Uri.joinPath(workspaceUri, '.builder', 'ablunit', 'ablunit.json')
-		assert(doesFileExist(ablunitJson), 'missing ablunit.json (' + ablunitJson.fsPath + ')')
+		assert.assert(doesFileExist(ablunitJson), 'missing ablunit.json (' + ablunitJson.fsPath + ')')
 	})
 
 	test('proj4.3 - tempDir=.builder/.ablunit', async () => {
@@ -53,8 +52,8 @@ suite('proj4 - Extension Test Suite', () => {
 		await runAllTests()
 		const ablunitJson = Uri.joinPath(workspaceUri, '.builder', '.ablunit', 'ablunit.json')
 		const listingsDir = Uri.joinPath(workspaceUri, '.builder', '.ablunit', '.listings')
-		assert(doesFileExist(ablunitJson), 'missing ablunit.json (' + ablunitJson.fsPath + ')')
-		assert(doesDirExist(listingsDir), 'missing listings directory (' + listingsDir.fsPath + ')')
+		assert.assert(doesFileExist(ablunitJson), 'missing ablunit.json (' + ablunitJson.fsPath + ')')
+		assert.assert(doesDirExist(listingsDir), 'missing listings directory (' + listingsDir.fsPath + ')')
 	})
 
 	test('proj4.4 - tempDir=target', async () => {
@@ -64,9 +63,9 @@ suite('proj4 - Extension Test Suite', () => {
 		deleteFile(progressIni)
 		await updateTestProfile('tempDir', 'target')
 		await runAllTests()
-		assert(doesFileExist(ablunitJson), 'missing ablunit.json (' + ablunitJson.fsPath + ')')
+		assert.assert(doesFileExist(ablunitJson), 'missing ablunit.json (' + ablunitJson.fsPath + ')')
 		if (process.platform === 'win32') {
-			assert(doesFileExist(progressIni), 'missing progress.ini (' + progressIni.fsPath + ')')
+			assert.assert(doesFileExist(progressIni), 'missing progress.ini (' + progressIni.fsPath + ')')
 		}
 	})
 

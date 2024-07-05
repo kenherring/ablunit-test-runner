@@ -1,5 +1,5 @@
-
-import { IRunProfile, assert, getWorkspaceFolders, log, parseRunProfiles } from '../testCommon'
+import { parseRunProfiles } from '../../src/parse/TestProfileParser'
+import { assert, getWorkspaceFolders, log, suiteSetupCommon } from '../testCommon'
 
 // ----------TODO---------- //
 // function readValidationFile (filename: string) {
@@ -14,33 +14,26 @@ import { IRunProfile, assert, getWorkspaceFolders, log, parseRunProfiles } from 
 // 	})
 // }
 
-suite('TestProfileParser suite', () => {
+suite('TestProfileParserSuite', () => {
 
-	setup('TestProfileParser - setup', () => {
-		log.info('setup started')
-	})
+	suiteSetup('TestProfileParserSuite - suiteSetup', suiteSetupCommon)
 
-	test('TestProfileParser.test1', () => {
-		const wsf = getWorkspaceFolders()
-		if (wsf.length === 0) {
-			assert.fail('wsf.length === 0')
-			return
+	test('TestProfileParser test1', () => {
+		try{
+			const profiles = parseRunProfiles(getWorkspaceFolders())
+			assert.equal(profiles.length, 1, 'profiles.length = 1')
+			assert.equal(profiles[0].hide, false, 'hide=false')
+		} catch (err) {
+			log.error('Caught error in parseRunProfiles! err = ' + err)
+			assert.fail('Caught error in parseRunProfiles! err = ' + err)
 		}
-		for (const ws of wsf) {
-			log.info('w=' + ws.uri.fsPath)
-		}
-		const profiles: IRunProfile[] = parseRunProfiles(wsf)
-		if (profiles.length !== 1) {
-			assert.fail('profiles.length = 1 (profiles=' + JSON.stringify(profiles) + '\'')
-		}
-		assert.equal(profiles[0].hide, false, 'hide=false')
 	})
 
 	// ----------TODO---------- //
 	// test("test2 - modified files.include & files.exclude", async () => {
 	// 	const res = JSON.stringify(await parseRunProfiles(workspaceFolders, 'ablunit-test-profile.test2.json'))
 	// 	const val = await readValidationFile('ablunit-test-profile.val-test2.json')
-	// 	assert.strictEqual(res,val)
+	// 	assert.equal(res,val)
 	// 	return workspaceFolders
 	// })
 

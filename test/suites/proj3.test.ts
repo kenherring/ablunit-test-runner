@@ -1,29 +1,33 @@
-import { Uri } from 'vscode'
-import { assert, getDefaultDLC, getWorkspaceUri, installExtension, oeVersion, runAllTests, setRuntimes, waitForExtensionActive } from '../testCommon'
+import { Uri, assert, getDefaultDLC, getWorkspaceUri, isoDate, log, runAllTests, suiteSetupCommon, suiteTeardownCommon, workspace } from '../testCommon'
 
-const projName = 'proj3'
-const workspaceUri = getWorkspaceUri()
+suite('proj3Suite', () => {
 
-suite('proj3 - Extension Test Suite', () => {
-
-	suiteSetup('proj3 - suiteSetup', async () => {
-		await installExtension('riversidesoftware.openedge-abl-lsp')
-		await waitForExtensionActive()
-	})
-
-	setup('proj3 - beforeEach', async () => {
-		await setRuntimes([{name: '11.7', path: '/psc/dlc_11.7'}, {name: oeVersion(), path: getDefaultDLC(), default: true}]).then()
-	})
+	suiteSetup('proj3 - suiteSetup', suiteSetupCommon)
+	suiteTeardown('proj3 - suiteTeardown', suiteTeardownCommon)
 
 	test('proj3.1 - target/ablunit.json file exists', async () => {
-		await runAllTests()
-		const ablunitJson = Uri.joinPath(workspaceUri, 'target', 'ablunit.json')
-		const resultsXml = Uri.joinPath(workspaceUri, 'ablunit-output', 'results.xml')
-		const listingsDir = Uri.joinPath(workspaceUri, 'target', 'listings')
+		log.info(isoDate() + ' proj3.1 - 1.1')
+		const conf = workspace.getConfiguration('abl')
+		log.info(isoDate() + ' proj3.1 - 1.2 conf=' + JSON.stringify(conf))
+		await conf.update('configuration.runtimes', [{name: '11.7', path: '/psc/dlc_11.7'}, {name: '12.2', path: getDefaultDLC(), default: true}]).then(
+			() => { log.info(isoDate() + ' proj3.1 - 1.3') },
+			(e) => { log.error(isoDate() + ' proj3.1 - 1.4 e=' + e) }
+		)
+		log.info(isoDate() + ' proj3.1 - 1.5')
+		await runAllTests(true)
 
+		log.info(isoDate() + ' proj3.1 - 2')
+		const ablunitJson = Uri.joinPath(getWorkspaceUri(), 'target', 'ablunit.json')
+		const resultsXml = Uri.joinPath(getWorkspaceUri(), 'ablunit-output', 'results.xml')
+		const listingsDir = Uri.joinPath(getWorkspaceUri(), 'target', 'listings')
+
+		log.info(isoDate() + ' proj3.1 - 10')
 		assert.fileExists(ablunitJson)
+		log.info(isoDate() + ' proj3.1 - 11')
 		assert.fileExists(resultsXml)
+		log.info(isoDate() + ' proj3.1 - 12')
 		assert.dirExists(listingsDir)
+		log.info(isoDate() + ' proj3.1 - 13')
 	})
 
 })

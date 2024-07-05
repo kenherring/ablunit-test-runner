@@ -1,6 +1,6 @@
 import { globSync } from 'glob'
 import { WorkspaceFolder, commands, extensions, workspace } from 'vscode'
-import { Duration, activateExtension, enableExtensions, getDefaultDLC, installExtension, log, oeVersion, sleep2, updateConfig } from './testCommon'
+import { Duration, activateExtension, enableExtensions, getDefaultDLC, installExtension, log, oeVersion, sleep2 } from './testCommon'
 
 interface IRuntime {
 	name: string,
@@ -154,9 +154,10 @@ export async function setRuntimes (runtimes?: IRuntime[]) {
 	log.info('setting abl.configuration.runtimes=' + JSON.stringify(runtimes))
 	const ext = extensions.getExtension('riversidesoftware.openedge-abl-lsp')
 	if (!ext) {
-		throw new Error('[setRuntimes] extension not installed: riversidesoftware.openedge-abl-lsp')
+		await installExtension('riversidesoftware.openedge-abl-lsp')
+		// throw new Error('[setRuntimes] extension not installed: riversidesoftware.openedge-abl-lsp')
 	}
-	if (!ext.isActive) {
+	if (!ext?.isActive) {
 		throw new Error('[setRuntimes] extension not active: riversidesoftware.openedge-abl-lsp')
 	}
 

@@ -16,6 +16,6 @@
 	},
 	"ablunit.files.exclude": [
 		".builder/**",
-		"compileError.p"
+		".pct/**"
 	]
 }

@@ -1,5 +1,5 @@
-import { Uri, commands, window, workspace, Range, TextEditor } from 'vscode'
-import { assert, deleteFile, getResults, getWorkspaceFolders, log, runAllTests, sleep, toUri, updateTestProfile, waitForExtensionActive } from '../testCommon'
+import { Uri, window, workspace, Range, TextEditor } from 'vscode'
+import { assert, deleteFile, doesFileExist, getResults, getWorkspaceFolders, log, runAllTests, suiteSetupCommon, toUri, updateTestProfile } from '../testCommon'
 import { DetailedCoverageCustom } from '../../src/TestCoverage'
 
 function getDetailLine (coverage: DetailedCoverageCustom[], lineNum: number) {
@@ -10,16 +10,29 @@ function getDetailLine (coverage: DetailedCoverageCustom[], lineNum: number) {
 	})
 }
 
-suite('proj0  - Extension Test Suite', () => {
+suite('proj0Suite ', () => {
 
 	suiteSetup('proj0 - before', async () => {
-		await waitForExtensionActive().then(() => sleep(250))
-		await commands.executeCommand('testing.clearTestResults')
+		await suiteSetupCommon()
+
 		deleteFile('.vscode/ablunit-test-profile.json')
+		log.info('proj0 - setup-3')
+
+		const dbUri = toUri('target/db/sp2k.db')
+		log.info('proj0 - setup-4')
+		log.info('dbUri=' + dbUri)
+		log.info('proj0 - setup-5')
+		if (!doesFileExist(dbUri)) {
+			log.info('proj0 - setup-6')
+			throw new Error('db file not found: ' + dbUri.fsPath + '.  Has the \'npm run pretest\' script run?')
+		}
+		log.info('proj0 - setup-8')
 	})
 
-	teardown('proj0 - afterEach', () => {
+	teardown('proj0 - teardown', () => {
+		log.info('proj0 - teardown-1')
 		deleteFile('.vscode/ablunit-test-profile.json')
+		log.info('proj0 - teardown-2')
 	})
 
 	test('proj0.1 - ${workspaceFolder}/ablunit.json file exists', () => {
@@ -35,9 +48,9 @@ suite('proj0  - Extension Test Suite', () => {
 			.catch((e: unknown) => { throw e })
 	})
 
-	test('proj0.2 - run test, open file, validate coverage displays', async () => {
+	test('proj0.2 - run test, open file, validate coverage displays', () => {
 		const testFileUri = Uri.joinPath(getWorkspaceFolders()[0].uri, 'src', 'dirA', 'dir1', 'testInDir.p')
-		return await runAllTests()
+		return runAllTests()
 			.then(() => {
 				log.info('window.showTextDocument testFileUri=' + testFileUri.fsPath)
 				return window.showTextDocument(testFileUri)
