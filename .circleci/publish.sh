@@ -2,7 +2,7 @@
 set -euo pipefail
 
 main_block () {
-    echo "[$0 ${FUNCNAME[0]}]"
+    echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}]"
     PRERELEASE=false
 
     if ! $CIRCLECI; then
@@ -39,7 +39,7 @@ main_block () {
 }
 
 upload_to_github_release () {
-    echo "[$0 ${FUNCNAME[0]}]"
+    echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}]"
     gh release upload "$CIRCLE_TAG" "ablunit-test-runner-${CIRCLE_TAG}.vsix" --clobber
     gh release upload "$CIRCLE_TAG" "ablunit-test-runner-insiders-${CIRCLE_TAG}.vsix" --clobber
 }
@@ -47,4 +47,4 @@ upload_to_github_release () {
 ########## MAIN BLOCK ##########
 main_block
 upload_to_github_release
-echo "[$0] completed successfully"
+echo "[$(date +%Y-%m-%d:%H:%M:%S) $0] completed successfully"
