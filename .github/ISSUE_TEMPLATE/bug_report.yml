@@ -1,6 +1,6 @@
-name: Bug Report
+name: ":bug: Bug Report"
 description: File a bug report
-title: ":bug: [Bug] "
+title: ":bug: [bug] <title here please>"
 labels: ["bug", "triage"]
 # projects: ["octo-org/1", "octo-org/44"]
 # assignees:
@@ -13,13 +13,7 @@ body:
       description: What version of our software are you running?
       options:
         - 12.8
-        - 12.7
-        - 12.6
-        - 12.5
-        - 12.4
-        - 12.3
         - 12.2
-        - 12.1
         - 12.0
         - 11.7
         - 11.6
@@ -33,3 +27,5 @@ body:
     attributes:
       value: |
         Thanks for taking the time to fill out this bug report!
+    validations:
+      required: true
