@@ -1,12 +1,14 @@
-name: Feature Request
+name: ":tree: Feature Request"
 description: Request a feature or enhancement to existing functionality
-title: ":tree: [Request] "
+title: ":tree: [Request] <title here>"
 labels: ["request", "enhancement", "triage"]
 # projects: ["octo-org/1", "octo-org/44"]
 # assignees:
 #   - octocat
 body:
-  - type: markdown
+  - type: textarea
     attributes:
       value: |
         Describe your feature request...
+    validations:
+      required: true
