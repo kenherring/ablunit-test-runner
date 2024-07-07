@@ -1,4 +1,4 @@
-name: :bug: Bug Report
+name: ':bug: Bug Report'
 description: File a bug report
 title: ":bug: [bug] 🐛 <title here please>"
 labels: ["bug", "triage"]
