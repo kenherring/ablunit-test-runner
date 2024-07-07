@@ -7,8 +7,8 @@ labels: ["request", "enhancement", "triage"]
 #   - octocat
 body:
   - type: textarea
-    label: Feature Request
     attributes:
+      label: Feature Request
       value: |
         Describe your feature request...
     validations:
