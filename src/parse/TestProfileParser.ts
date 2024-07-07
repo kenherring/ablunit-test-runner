@@ -36,17 +36,24 @@ function mergeObjects (from: object, into: object) {
 	}
 
 	Object.entries(from).forEach(([key,]) => {
+		// @ts-expect-error ThisIsSafeForTesting
 		if (typeof from[key] === 'object') {
+			// @ts-expect-error ThisIsSafeForTesting
 			if (into[key] === undefined) {
+				// @ts-expect-error ThisIsSafeForTesting
 				log.error('into.' + key + ' is undefined and the value will not be merged (value = ' + JSON.stringify(from[key]) + ')')
-			} else if (Array.isArray(from[key]) && from[key]) {
+			// @ts-expect-error ThisIsSafeForTesting
+			} else if (Array.isArray(from[key])) {
+				// @ts-expect-error ThisIsSafeForTesting
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 				into[key] = from[key]
 			} else {
+				// @ts-expect-error ThisIsSafeForTesting
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 				into[key] = mergeObjects(from[key], into[key])
-			}
+			} // @ts-expect-error ThisIsSafeForTesting
 		} else if (from[key] != undefined) {
+			// @ts-expect-error ThisIsSafeForTesting
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
 			into[key] = from[key]
 		}

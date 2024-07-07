@@ -80,7 +80,7 @@ export class ABLResultsParser {
 	}
 
 	parseXml (xmlData: string): string {
-		let res
+		let res: string | undefined
 
 		parseString(xmlData, function (err: Error | null, resultsRaw: any) {
 			if (err) {
