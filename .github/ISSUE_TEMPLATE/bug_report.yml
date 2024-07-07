@@ -1,4 +1,4 @@
-name: ':bug: Bug Report'
+name: ":bug: Bug Report"
 description: File a bug report
 title: ":bug: [bug] 🐛 <title here please>"
 labels: ["bug", "triage"]
@@ -10,23 +10,21 @@ body:
     attributes:
       value: |
         **Thanks for taking the time to fill out this bug report!**  Your contribution helps this extension continue to be useful for the OpenEdge community.  Issues are triaged on a regular basis, but please be patient as we work through the backlog.  Pull requests are always welcome if you'd like to tackle the issue yourself.
-    validations:
-      required: true
   - type: dropdown
     id: version
     attributes:
       label: OpenEdge Version
       description: What version of our software are you running?
       options:
-        - 12.8
-        - 12.2
-        - 12.0
-        - 11.7
-        - 11.6
-        - 11.X
-        - 10.X
-        - 9.X
-        - other (please specify in the description)
+        - '12.8'
+        - '12.2'
+        - '12.0'
+        - '11.7'
+        - '11.6'
+        - '11.X'
+        - '10.X'
+        - '9.X'
+        - 'other (please specify in the description)'
     validations:
       required: true
   - type: textarea
