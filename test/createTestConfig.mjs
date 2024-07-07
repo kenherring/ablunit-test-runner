@@ -15,7 +15,8 @@ import process from 'process'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const vsVersionNum = '1.88.0'
-const vsVersion = process.env['ABLUNIT_TEST_RUNNER_VSCODE_VERSION'] ?? vsVersionNum
+const vsVersion = process.env['ABLUNIT_TEST_RUNNER_VSCODE_VERSION'] ?? 'stable'
+// vsVersion = vsVersionNum
 const oeVersion = process.env['ABLUNIT_TEST_RUNNER_OE_VERSION'] ?? '12.2.12'
 const enableExtensions = [
 	'AtStart',
@@ -163,9 +164,9 @@ function getLaunchArgs (projName) {
 	// if (vsVersion === 'insiders') {
 	// 	args.push('--enable-proposed-api', 'TestCoverage') // '<ext-id>'
 	// }
-	// if (vsVersion === 'insiders') {
-	// 	args.push('--enable-proposed-api', 'kherring.ablunit-test-runner')
-	// }
+	if (vsVersion === 'insiders') {
+		args.push('--enable-proposed-api', 'kherring.ablunit-test-runner')
+	}
 	// args.push('--version')
 	// args.push('--verbose')
 	// args.push('--trace')

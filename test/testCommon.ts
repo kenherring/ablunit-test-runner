@@ -703,30 +703,21 @@ export async function updateTestProfile (key: string, value: string | string[] |
 		const newProfile = { configurations: [ new DefaultRunProfile ] } as IConfigurations
 		await workspace.fs.writeFile(testProfileUri, Buffer.from(JSON.stringify(newProfile)))
 	}
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 	const profile = readStrippedJsonFile(testProfileUri)
 	const keys = key.split('.')
 
-	let profileConfigurations = undefined
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-	if(profile['configurations']) {
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-		profileConfigurations = profile['configurations']
-	}
-	if (profileConfigurations) {
-		if (keys.length === 3) {
-			// @ts-expect-error 1234567890
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-			profileConfigurations[0][keys[0]][keys[1]][keys[2]] = value
-		} else if (keys.length === 2) {
-			// @ts-expect-error 1234567890
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-			profileConfigurations[0][keys[0]][keys[1]] = value
-		} else {
-			// @ts-expect-error 1234567890
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-			profileConfigurations[0][keys[0]] = value
-		}
+	if (keys.length === 3) {
+		// @ts-expect-error ThisIsSafeForTesting
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+		profile.configurations[0][keys[0]][keys[1]][keys[2]] = value
+	} else if (keys.length ===2) {
+		// @ts-expect-error ThisIsSafeForTesting
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+		profile.configurations[0][keys[0]][keys[1]] = value
+	} else {
+		// @ts-expect-error ThisIsSafeForTesting
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+		profile.configurations[0][keys[0]] = value
 	}
 
 	// profile.configurations[0][key] = value
@@ -751,7 +742,7 @@ export function selectProfile (profile: string) {
 	})
 }
 
-export async function refreshData (resultsLen = 0) {
+export function refreshData (resultsLen = 0) {
 	testController = undefined
 	recentResults = undefined
 	currentRunData = undefined
@@ -760,7 +751,12 @@ export async function refreshData (resultsLen = 0) {
 	return commands.executeCommand('_ablunit.getExtensionTestReferences').then((resp) => {
 		log.info('refreshData command complete (resp=' + JSON.stringify(resp) + ')')
 		const refs = resp as IExtensionTestReferences
-		let passedTests: number | undefined = undefined
+		log.info('refs=' + JSON.stringify(refs))
+		const passedTests = refs.recentResults?.[0].ablResults?.resultsJson[0].testsuite?.[0].passed ?? undefined
+		log.info('recentResults.length=' + refs.recentResults.length)
+		log.info('recentResults[0].ablResults.=' + refs.recentResults?.[0].status)
+		log.info('recentResults[0].ablResults.resultsJson.length=' + recentResults?.[0].ablResults?.resultsJson.length)
+		log.info('passedTests=' + passedTests)
 
 		if (passedTests && passedTests <= resultsLen) {
 			throw new Error('failed to refresh test results: results.length=' + refs.recentResults.length)
@@ -778,15 +774,15 @@ export async function refreshData (resultsLen = 0) {
 	})
 }
 
-export async function getTestController () {
-	if (!testController) {
+export async function getTestController (skipRefresh = false) {
+	if (!skipRefresh && !testController) {
 		await refreshData()
 	}
 	return testController
 }
 
 export async function getTestControllerItemCount (type?: 'ABLTestFile' | undefined) {
-	const ctrl = await getTestController()
+	const ctrl = await getTestController(type == 'ABLTestFile')
 	if (!ctrl?.items) {
 		return 0
 	}

@@ -64,8 +64,6 @@ run_lint () {
 	local ESLINT_FILE=artifacts/eslint_report
 	mkdir -p artifacts
 
-    rm -f "${ESLINT_FILE}".*
-
     npm install eslint-plugin-promise@latest --save-dev
     # npm i
     npm run build

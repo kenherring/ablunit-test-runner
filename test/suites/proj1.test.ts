@@ -1,5 +1,5 @@
 import { Selection, commands, window } from 'vscode'
-import { before, beforeEach } from 'mocha'
+import { beforeEach } from 'mocha'
 import { Uri, assert, deleteTestFiles, getWorkspaceUri, log, runAllTests, sleep, updateConfig, getTestCount, waitForExtensionActive, workspace } from '../testCommon'
 
 const workspaceUri = getWorkspaceUri()

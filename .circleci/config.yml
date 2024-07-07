@@ -109,7 +109,7 @@ jobs:
       - run: find . -type f -name "mocha_results_sonar_*.xml" -delete
       - store_test_results: { path: artifacts }
       - store_artifacts: { when: always, path: artifacts }
-      - save-test-cache: { oe-version: << parameters.oe-version >> }
+      # - save-test-cache: { oe-version: << parameters.oe-version >> }
   install-and-run:
     <<: *oe-version-param
     executor: psc-primary

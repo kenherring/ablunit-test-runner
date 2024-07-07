@@ -11,7 +11,6 @@
 			"request": "launch",
 			"runtimeExecutable": "${execPath}",
 			"args": [
-				"--install-extension=riversidesoftware.openedge-abl-lsp",
 				"--extensionDevelopmentPath=${workspaceFolder}",
 				"${input:disable-extensions}",
 				"${workspaceFolder}/test_projects/${input:workspaceName}"
@@ -27,9 +26,8 @@
 			"request": "launch",
 			"runtimeExecutable": "${execPath}",
 			"args": [
-				"--install-extension=ablunit-test-runner-0.2.1.vsix",
-				"--install-extension=riversidesoftware.openedge-abl-lsp",
 				"--extensionDevelopmentPath=${workspaceFolder}/dummy-ext",
+				"--install-extension=ablunit-test-runner-0.2.1.vsix",
 				"--enable-proposed-api=kherring.ablunit-test-runner",
 				"${workspaceFolder}/test_projects/${input:workspaceName}"
 			]
@@ -40,7 +38,6 @@
 			"request": "launch",
 			"runtimeExecutable": "${execPath}",
 			"args": [
-				"--install-extension=riversidesoftware.openedge-abl-lsp",
 				"--extensionDevelopmentPath=${workspaceFolder}",
 				"c:/git/pug-challenge"
 			],
@@ -68,7 +65,6 @@
 				"proj8_custom_command",
 				"proj9",
 				"projA",
-				"TestProfileParser",
 				"workspace0.code-workspace",
 				"workspace1.code-workspace",
 			]
