@@ -3,6 +3,8 @@ import {
 	CancellationError,
 	CancellationToken, ConfigurationChangeEvent, Disposable, ExtensionContext,
 	ExtensionMode,
+	FileCoverage,
+	FileCoverageDetail,
 	FileType,
 	LogLevel,
 	Position, Range, RelativePattern, Selection,
@@ -57,7 +59,6 @@ export async function activate (context: ExtensionContext) {
 	}
 	log.info('ABLUnit Test Controller created')
 
-
 	context.subscriptions.push(ctrl)
 
 	context.subscriptions.push(
@@ -105,6 +106,22 @@ export async function activate (context: ExtensionContext) {
 			throw new Error('continuous test runs not implemented')
 		}
 		return startTestRun(request, token).then(() => { return }, (e) => { throw e })
+	}
+
+	const loadDetailedCoverage = (testRun: TestRun, fileCoverage: FileCoverage, token: CancellationToken): Thenable<FileCoverageDetail[]> => {
+		const d = resultData.get(testRun)
+		const det: FileCoverageDetail[] = []
+
+		if (d) {
+			d.flatMap((r) => {
+				r.coverage.forEach((c) => {
+					c.forEach((d) => {
+						det.push(d)
+					})
+				})
+			})
+		}
+		return Promise.resolve(det)
 	}
 
 	async function openTestRunConfig () {
@@ -244,6 +261,13 @@ export async function activate (context: ExtensionContext) {
 			log.info('setting recentResults (data.length=' + data.length + ')')
 			log.debug('setting recentResults (data.length=' + data.length + ')')
 			recentResults = data
+
+			for (const res of data) {
+				res.filecoverage.forEach((c) => {
+					run.addCoverage(c)
+				})
+			}
+
 			void log.notification('ablunit tests complete')
 			run.end()
 			void log.notification('ablunit tests complete')
@@ -420,11 +444,12 @@ export async function activate (context: ExtensionContext) {
 
 	const testProfileRun = ctrl.createRunProfile('Run Tests', TestRunProfileKind.Run, runHandler, true, new TestTag('runnable'), false)
 	// const testProfileDebug = ctrl.createRunProfile('Debug Tests', TestRunProfileKind.Debug, runHandler, false, new TestTag('runnable'), false)
-	const testProfileCoverage = ctrl.createRunProfile('Run Tests w/ Coverage', TestRunProfileKind.Debug, runHandler, false, new TestTag('runnable'), false)
-	// const testProfileDebugCoverage = ctrl.createRunProfile('Debug Tests w/ Coverage', TestRunProfileKind.Debug, runHandler, false, new TestTag('runnable'), false)
+	const testProfileCoverage = ctrl.createRunProfile('Run Tests w/ Coverage', TestRunProfileKind.Coverage, runHandler, false, new TestTag('runnable'), false)
+	// const testProfileDebugCoverage = ctrl.createRunProfile('Debug Tests w/ Coverage', TestRunProfileKind.Coverage, runHandler, false, new TestTag('runnable'), false)
 	testProfileRun.configureHandler = configHandler
 	// testProfileDebug.configureHandler = configHandler
 	testProfileCoverage.configureHandler = configHandler
+	testProfileCoverage.loadDetailedCoverage = loadDetailedCoverage
 	// testProfileDebugCoverage.configureHandler = configHandler
 
 	if(workspace.getConfiguration('ablunit').get('discoverAllTestsOnActivate', false)) {

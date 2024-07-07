@@ -1,6 +1,7 @@
-import { FileType, MarkdownString, TestItem, TestItemCollection, TestMessage, TestRun, Uri, workspace, WorkspaceFolder,
-	FileCoverageDetail,
-	Disposable, CancellationToken, CancellationError } from 'vscode'
+import { FileType, MarkdownString, TestItem, TestItemCollection, TestMessage, TestRun, Uri, workspace, WorkspaceFolder, Range,
+	FileCoverage, FileCoverageDetail,
+	Disposable, CancellationToken, CancellationError,
+	StatementCoverage} from 'vscode'
 import { ABLUnitConfig } from './ABLUnitConfigWriter'
 import { ABLResultsParser, ITestCaseFailure, ITestCase, ITestSuite } from './parse/ResultsParser'
 import { ABLTestSuite, ABLTestData } from './testTree'
@@ -54,6 +55,7 @@ export class ABLResults implements Disposable {
 	dlc: IDlc | undefined
 
 	public coverage: Map<string, FileCoverageDetail[]> = new Map<string, FileCoverageDetail[]>()
+	public filecoverage: FileCoverage[] = []
 
 	constructor (workspaceFolder: WorkspaceFolder,
 		private readonly storageUri: Uri,
@@ -516,7 +518,7 @@ export class ABLResults implements Disposable {
 
 		for (const line of module.lines) {
 			if (line.LineNo <= 0) {
-				//  * -2 is a special case - need to handgle this better
+				//  * -2 is a special case - need to handle this better
 				//  *  0 is a special case - method header
 				continue
 			}
@@ -525,23 +527,24 @@ export class ABLResults implements Disposable {
 			if (!dbg) {
 				return
 			}
-			const fc = this.coverage.get(dbg.sourceUri.fsPath)
+			let fc = this.coverage.get(dbg.sourceUri.fsPath)
 			if (!fc) {
 				// create a new FileCoverage object if one didn't already exist
-				// const fcd: FileCoverageDetail[] = [ new StatementCoverage(0, new Range(0, 0, 0, 0)) as FileCoverageDetail ]
-				// this.coverage.set(dbg.sourceUri.fsPath, fcd)
-				// fc = this.coverage.get(dbg.sourceUri.fsPath)
+				const fcd: FileCoverageDetail[] = [ new StatementCoverage(0, new Range(0, 0, 0, 0)) as FileCoverageDetail ]
+				this.coverage.set(dbg.sourceUri.fsPath, fcd)
+				fc = this.coverage.get(dbg.sourceUri.fsPath)
 			}
 
 			// // TODO: end of range should be the end of the line, not the beginning of the next line
-			// const coverageRange = new Range(dbg.sourceLine - 1, 0, dbg.sourceLine, 0)
-			// fc!.push(new StatementCoverage(line.ExecCount ?? 0, coverageRange))
+			const coverageRange = new Range(dbg.sourceLine - 1, 0, dbg.sourceLine, 0)
+			fc!.push(new StatementCoverage(line.ExecCount ?? 0, coverageRange))
 		}
 
-		// this.coverage.forEach((v, k) => {
-		// 	log.debug('coverage[' + k + '].length=' + v.length)
-		// 	const fileCov = FileCoverage.fromDetails(Uri.parse(k), v)
-		// 	log.debug('Statement coverage for ' + k + ': ' + fileCov.statementCoverage)
-		// })
+		this.coverage.forEach((v, k) => {
+			log.debug('coverage[' + k + '].length=' + v.length)
+			const fileCov = FileCoverage.fromDetails(Uri.parse(k), v)
+			log.debug('Statement coverage for ' + k + ': ' + JSON.stringify(fileCov.statementCoverage))
+			this.filecoverage.push(fileCov)
+		})
 	}
 }
