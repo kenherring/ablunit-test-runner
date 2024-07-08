@@ -8,6 +8,7 @@ labels: ["request", "enhancement", "triage"]
 body:
   - type: textarea
     attributes:
+      label: Feature Request
       value: |
         Describe your feature request...
     validations:
