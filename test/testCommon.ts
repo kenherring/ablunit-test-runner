@@ -514,7 +514,11 @@ export function getDefaultDLC () {
 	return 'C:\\Progress\\OpenEdge'
 }
 
-export async function runAllTests (doRefresh = true, waitForResults = true, tag?: string) {
+export async function runAllTests (doRefresh = true, waitForResults = true, withCoverage = false, tag?: string) {
+	let testCommand = 'testing.runAll'
+	if (withCoverage) {
+		testCommand = 'testing.coverageAll'
+	}
 	runAllTestsDuration = new Duration('runAllTests')
 	if (!tag) {
 		tag = projName()
@@ -537,7 +541,7 @@ export async function runAllTests (doRefresh = true, waitForResults = true, tag?
 	}
 
 	log.info('testing.runAll starting (waitForResults=' + waitForResults + ')')
-	const r = await commands.executeCommand('testing.runAll')
+	const r = await commands.executeCommand(testCommand)
 		.then(() => { return sleep(250) })
 		.then(() => {
 			log.info(tag + 'testing.runAll completed - start getResults()')
@@ -559,6 +563,10 @@ export async function runAllTests (doRefresh = true, waitForResults = true, tag?
 	runAllTestsDuration.stop()
 	log.info(tag + 'runAllTests complete (r=' + r + ')')
 	return
+}
+
+export function runAllTestsWithCoverage () {
+	return runAllTests(true, true, true)
 }
 
 function waitForRefreshComplete () {

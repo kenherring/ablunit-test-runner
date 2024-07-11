@@ -45,7 +45,7 @@ suite('proj1 - Extension Test Suite', () => {
 		assert.notFileExists(ablunitJson)
 		assert.notFileExists(resultsXml)
 
-		return runAllTests()
+		const prom = runAllTests()
 			.then(() => {
 				throw new Error('runAllTests should have thrown an error')
 			}, (e: unknown) => {
@@ -59,6 +59,7 @@ suite('proj1 - Extension Test Suite', () => {
 				assert.notFileExists(resultsJson)
 				log.info('assert proj1.1 complete!')
 			})
+		return prom
 	})
 
 	test('proj1.2 - output files exist 2 - exclude compileError.p', () => {

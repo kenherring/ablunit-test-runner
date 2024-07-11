@@ -1,5 +1,5 @@
-import { Uri, commands, window, workspace, Range, FileCoverageDetail } from 'vscode'
-import { assert, deleteFile, getResults, log, runAllTests, sleep, toUri, updateTestProfile, waitForExtensionActive } from '../testCommon'
+import { Uri, commands, window, workspace, Range, TextEditor, FileCoverageDetail } from 'vscode'
+import { assert, deleteFile, getResults, getWorkspaceFolders, log, runAllTests, runAllTestsWithCoverage, sleep, toUri, updateTestProfile, waitForExtensionActive } from '../testCommon'
 
 const projName = 'proj0'
 
@@ -32,7 +32,7 @@ suite('proj0  - Extension Test Suite', () => {
 	})
 
 	test('proj0.1 - ${workspaceFolder}/ablunit.json file exists', () => {
-		return runAllTests()
+		const prom = runAllTests()
 			.then(() => getResults())
 			.then((recentResults) => {
 				assert.equal(recentResults[0].cfg.ablunitConfig.config_uri, toUri('ablunit.json'), 'ablunit.json path mismatch')
@@ -42,6 +42,7 @@ suite('proj0  - Extension Test Suite', () => {
 				return true
 			})
 			.catch((e: unknown) => { throw e })
+		return prom
 	})
 
 	// TODO - fix before merge

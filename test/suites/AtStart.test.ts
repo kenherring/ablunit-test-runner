@@ -13,13 +13,14 @@ suite('projAtStart  - Extension Test Suite - bdd', () => {
 
 	// test('projAtStart - ${workspaceFolder}/ablunit.json file exists', (done) => {
 	test('projAtStart - ${workspaceFolder}/ablunit.json file exists - return promise', () => {
-		return runAllTests()
+		const prom = runAllTests()
 			.then(() => {
 				log.info('runAllTests().then() complete!')
 				assert.fileExists('results.xml')
 				log.info('assertComplete')
 				return true
 			}, (e: unknown) => { throw e })
+		return prom
 	})
 
 	test('projAtStart - ${workspaceFolder}/ablunit.json file exists - async await', async () => {

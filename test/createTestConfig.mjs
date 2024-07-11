@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable @typescript-eslint/ban-ts-comment */
@@ -16,7 +15,6 @@ import process from 'process'
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const vsVersionNum = '1.88.0'
 const vsVersion = process.env['ABLUNIT_TEST_RUNNER_VSCODE_VERSION'] ?? 'stable'
-// vsVersion = vsVersionNum
 const oeVersion = process.env['ABLUNIT_TEST_RUNNER_OE_VERSION'] ?? '12.2.12'
 const enableExtensions = [
 	'AtStart',
@@ -63,12 +61,11 @@ function getMochaTimeout (projName) {
 function getMochaOpts (projName) {
 	const reporterDir = path.resolve(__dirname, '..', 'artifacts', vsVersion + '-' + oeVersion)
 	fs.mkdirSync(reporterDir, { recursive: true })
-	const jsonFile = path.resolve(reporterDir, 'mocha_results_' + projName + '.json')
+	// const jsonFile = path.resolve(reporterDir, 'mocha_results_' + projName + '.json')
+	// const xunitFile = path.resolve(reporterDir, 'mocha_results_xunit_' + projName + '.xml')
 	const mochaFile = path.resolve(reporterDir, 'mocha_results_junit_' + projName + '.xml')
-	const xunitFile = path.resolve(reporterDir, 'mocha_results_xunit_' + projName + '.xml')
-	const bail = process.env['CIRCLECI'] != 'true' || false
-	// console.log('bail=' + bail + ', CIRCLECI=' + process.env['CIRCLECI'])
-	// process.exit(1)
+	const sonarFile = path.resolve(reporterDir, 'mocha_results_sonar_' + projName + '.xml')
+	// const bail = process.env['CIRCLECI'] != 'true' || false
 
 	const mochaOpts = {
 		// fullTrace: true
@@ -76,51 +73,33 @@ function getMochaOpts (projName) {
 		// ui: 'tdd', // describe, it, etc
 		// ui: 'bdd' // default; suite, test, etc
 		parallel: false,
-		retries: 0,
-		recursive: true,
-		// color: true,in
-		bail,
-		exit: true,
-		extension: [ 'js', 'ts', 'test.ts' ],
+		bail: false,
 		require: [
-			'mocha',
-		// 	// './dist/extension.js',
-		// 	'source-map-support',
-		// 	'source-map-support/register',
-		// 	'source-map-support/register-hook-require',
-		// 	'ts-node/register',
+			'mocha'
 		],
-		reporter: 'mocha-multi-reporters',
-		reporterOptions: {
-			reporterEnabled: [ 'spec', 'mocha-junit-reporter' ],
-			jsonReporterOptions: { output: jsonFile },
-			xunitReporterOptions: { output: xunitFile },
-			mochaJunitReporterReporterOptions: { mochaFile: mochaFile }
-		},
-		// preload: [ 'ts-node/register/transpile-only' ],
 		preload: [
-			// './dist/extension.js',
 			'ts-node/register/transpile-only',
 			'ts-node/register',
-			// 'source-map-support',
-			// 'source-map-support/register',
-			// 'source-map-support/register-hook-require',
 		],
 	}
 
-	// console.log('process.env.CIRCLECI=' + process.env['CIRCLECI'])
-	if (process.env['CIRCLECI'] == true) {
-	 mochaOpts.bail = true
+	// if (process.env['ABLUNIT_TEST_RUNNER_RUN_SCRIPT_FLAG']) {
+	// 	// eslint-disable-next-line no-console
+	// 	// console.log('adding reporter...')
+	// 	mochaOpts.reporter = 'mocha-multi-reporters'
+	// 	mochaOpts.reporterOptions = {
+	// 		reporterEnabled: [ 'json-stream', 'spec', 'mocha-junit-reporter', 'mocha-sonarqube-reporter' ],
+	// 		// jsonReporterOptions: { output: jsonFile },
+	// 		// xunitReporterOptions: { output: xunitFile },
+	// 		mochaJunitReporterReporterOptions: { mochaFile: mochaFile },
+	// 		mochaSonarqubeReporterReporterOptions: { output: sonarFile }
+	// 	}
+	// }
+
+	if (process.env['CIRCLECI']) {
+		mochaOpts.bail = true
 	}
 
-	// TODO - prevents results from reporting to vscode-extension-test-runner
-	// mochaOpts.reporter = 'mocha-multi-reporters'
-	// mochaOpts.reporterOptions = {
-	// 	reporterEnabled: [ 'spec', 'mocha-junit-reporter' ],
-	// 	jsonReporterOptions: { output: jsonFile },
-	// 	xunitReporterOptions: { output: xunitFile },
-	// 	mochaJunitReporterReporterOptions: { mochaFile: mochaFile }
-	// }
 	return mochaOpts
 }
 
@@ -220,23 +199,23 @@ function getLaunchArgs (projName) {
 
 function getTestConfig (projName) {
 
-	let ws = '' + projName
+	let workspaceFolder = '' + projName
 	if (projName.startsWith('proj7')) {
-		ws = 'proj7_load_performance'
+		workspaceFolder = 'proj7_load_performance'
 	} else if (projName.startsWith('workspace')) {
-		ws = projName + '.code-workspace'
+		workspaceFolder = projName + '.code-workspace'
 	}
-	ws = path.resolve(__dirname, '..', 'test_projects', ws)
+	workspaceFolder = path.resolve(__dirname, '..', 'test_projects', workspaceFolder)
 
-	if (!fs.existsSync(ws)) {
+	if (!fs.existsSync(workspaceFolder)) {
 		const g = glob.globSync('test_projects/' + projName + '_*')
 		if (g.length > 1) {
-			throw new Error('Multiple workspaces found: ' + ws)
+			throw new Error('Multiple workspaces found: ' + workspaceFolder)
 		}
 		if (!g[0]) {
-			throw new Error('No workspace found: ' + ws)
+			throw new Error('No workspace found: ' + workspaceFolder)
 		}
-		ws = g[0]
+		workspaceFolder = g[0]
 	}
 
 	let useInstallation
@@ -246,7 +225,7 @@ function getTestConfig (projName) {
 
 	const absolulteFile = path.resolve(__dirname, '..', 'test', 'suites', projName + '.test.ts')
 
-	const envVars = {
+	const env = {
 		ABLUNIT_TEST_RUNNER_ENABLE_EXTENSIONS: enableExtensions.includes('' + projName),
 		ABLUNIT_TEST_RUNNER_UNIT_TESTING: 'true',
 		ABLUNIT_TEST_RUNNER_VSCODE_VERSION: vsVersion,
@@ -264,19 +243,17 @@ function getTestConfig (projName) {
 		// platform: 'desktop',
 		// desktopPlatform: 'win32',
 		launchArgs: getLaunchArgs(projName),
-		env: envVars,
-		useInstallation: useInstallation,
+		env,
+		useInstallation,
 		// useInstallation: { fromMachine: true },
-		installExtension: 'riversidesoftware.openedge-abl-lsp',
+		// installExtension: 'riversidesoftware.openedge-abl-lsp',
 		// download: { reporter: ProgressReporter, timeout: ? }
 
 		// --- IBaseTestConfiguration --- //
 		files: absolulteFile,
 		version: vsVersion,
 		extensionDevelopmentPath: './',
-		// extensionDevelopmentPath: extensionDevelopmentPath,
-		// extensionTestsPath: './',
-		workspaceFolder: ws,
+		workspaceFolder,
 		mocha: getMochaOpts(projName),
 		label: 'suite_' + projName,
 		srcDir: './',
