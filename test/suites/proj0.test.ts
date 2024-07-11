@@ -1,5 +1,5 @@
 import { Uri, commands, window, workspace, Range, TextEditor } from 'vscode'
-import { assert, deleteFile, getResults, getWorkspaceFolders, log, runAllTests, sleep, toUri, updateTestProfile, waitForExtensionActive } from '../testCommon'
+import { assert, deleteFile, getResults, getWorkspaceFolders, log, runAllTests, runAllTestsWithCoverage, sleep, toUri, updateTestProfile, waitForExtensionActive } from '../testCommon'
 import { DetailedCoverageCustom } from '../../src/TestCoverage'
 
 function getDetailLine (coverage: DetailedCoverageCustom[], lineNum: number) {
@@ -23,7 +23,7 @@ suite('proj0  - Extension Test Suite', () => {
 	})
 
 	test('proj0.1 - ${workspaceFolder}/ablunit.json file exists', () => {
-		return runAllTests()
+		const prom = runAllTests()
 			.then(() => getResults())
 			.then((recentResults) => {
 				assert.equal(recentResults[0].cfg.ablunitConfig.config_uri, toUri('ablunit.json'), 'ablunit.json path mismatch')
@@ -33,6 +33,7 @@ suite('proj0  - Extension Test Suite', () => {
 				return true
 			})
 			.catch((e: unknown) => { throw e })
+		return prom
 	})
 
 	test('proj0.2 - run test, open file, validate coverage displays', async () => {
@@ -58,7 +59,7 @@ suite('proj0  - Extension Test Suite', () => {
 	test('proj0.3 - open file, run test, validate coverage displays', () => {
 		const testFileUri = Uri.joinPath(getWorkspaceFolders()[0].uri, 'src', 'dirA', 'dir1', 'testInDir.p')
 		return window.showTextDocument(testFileUri)
-			.then(() => runAllTests())
+			.then(() => runAllTestsWithCoverage())
 			.then(() => getResults())
 			.then((recentResults) => {
 				const lines = recentResults[0].coverage.get(testFileUri.fsPath)?.detailedCoverage ?? []
