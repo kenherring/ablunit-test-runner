@@ -18,7 +18,7 @@
 			"outFiles": [
 				"${workspaceFolder}/out/**/*.js"
 			],
-			// "preLaunchTask": "npm: build"
+			"preLaunchTask": "npm package"
 		},
 		{
 			"name": "Install Packaged Extension - Select Workspace - Proposed API Enabled",

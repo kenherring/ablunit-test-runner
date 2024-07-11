@@ -542,8 +542,11 @@ export class ABLResults implements Disposable {
 
 		this.coverage.forEach((v, k) => {
 			log.debug('coverage[' + k + '].length=' + v.length)
-			const fileCov = FileCoverage.fromDetails(Uri.parse(k), v)
+			log.info('coverage[' + k + '].length=' + v.length)
+			const fileCov = FileCoverage.fromDetails(Uri.file(k), v)
 			log.debug('Statement coverage for ' + k + ': ' + JSON.stringify(fileCov.statementCoverage))
+			log.info('Statement coverage for ' + k + ': ' + JSON.stringify(fileCov.statementCoverage))
+			log.info('uri=' + Uri.file(k))
 			this.filecoverage.push(fileCov)
 		})
 	}

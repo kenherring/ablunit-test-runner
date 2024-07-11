@@ -42,6 +42,7 @@ export async function activate (context: ExtensionContext) {
 	const ctrl = tests.createTestController('ablunitTestController', 'ABLUnit Test')
 	let currentTestRun: TestRun | undefined = undefined
 	let isRefreshTestsComplete = false
+	let runWithCoverage = false
 
 	logActivationEvent(context.extensionMode)
 
@@ -108,17 +109,27 @@ export async function activate (context: ExtensionContext) {
 		return startTestRun(request, token).then(() => { return }, (e) => { throw e })
 	}
 
+	const runHandlerRun = (request: TestRunRequest, token: CancellationToken): Promise<void> => {
+		runWithCoverage = false
+		return runHandler(request, token)
+	}
+
+	const runHandlerCoverage = (request: TestRunRequest, token: CancellationToken): Promise<void> => {
+		runWithCoverage = true
+		return runHandler(request, token)
+	}
+
 	const loadDetailedCoverage = (testRun: TestRun, fileCoverage: FileCoverage, token: CancellationToken): Thenable<FileCoverageDetail[]> => {
+		log.info('loadDetailedCoverage uri=' + fileCoverage.uri.fsPath + ', testRun=' + testRun.name)
 		const d = resultData.get(testRun)
 		const det: FileCoverageDetail[] = []
 
 		if (d) {
 			d.flatMap((r) => {
-				r.coverage.forEach((c) => {
-					c.forEach((d) => {
-						det.push(d)
-					})
-				})
+				const rec = r.coverage.get(fileCoverage.uri.fsPath)
+				if (rec) {
+					det.push(...rec)
+				}
 			})
 		}
 		return Promise.resolve(det)
@@ -262,10 +273,14 @@ export async function activate (context: ExtensionContext) {
 			log.debug('setting recentResults (data.length=' + data.length + ')')
 			recentResults = data
 
-			for (const res of data) {
-				res.filecoverage.forEach((c) => {
-					run.addCoverage(c)
-				})
+			log.info('request.profile=' + request.profile)
+
+			if (runWithCoverage && data.length > 0) {
+				for (const res of data) {
+					res.filecoverage.forEach((c) => {
+						run.addCoverage(c)
+					})
+				}
 			}
 
 			void log.notification('ablunit tests complete')
@@ -442,12 +457,12 @@ export async function activate (context: ExtensionContext) {
 		})
 	}
 
-	const testProfileRun = ctrl.createRunProfile('Run Tests', TestRunProfileKind.Run, runHandler, true, new TestTag('runnable'), false)
+	const testProfileRun = ctrl.createRunProfile('Run Tests', TestRunProfileKind.Run, runHandlerRun, true, new TestTag('runnable'), false)
 	// const testProfileDebug = ctrl.createRunProfile('Debug Tests', TestRunProfileKind.Debug, runHandler, false, new TestTag('runnable'), false)
-	const testProfileCoverage = ctrl.createRunProfile('Run Tests w/ Coverage', TestRunProfileKind.Coverage, runHandler, false, new TestTag('runnable'), false)
+	const testProfileCoverage = ctrl.createRunProfile('Run Tests w/ Coverage', TestRunProfileKind.Coverage, runHandlerCoverage, true, new TestTag('runnable'), false)
 	// const testProfileDebugCoverage = ctrl.createRunProfile('Debug Tests w/ Coverage', TestRunProfileKind.Coverage, runHandler, false, new TestTag('runnable'), false)
 	testProfileRun.configureHandler = configHandler
-	// testProfileDebug.configureHandler = configHandler
+	// testProfileDebug.configureHandler = configHandlerDebug
 	testProfileCoverage.configureHandler = configHandler
 	testProfileCoverage.loadDetailedCoverage = loadDetailedCoverage
 	// testProfileDebugCoverage.configureHandler = configHandler

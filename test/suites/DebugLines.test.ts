@@ -26,6 +26,10 @@ const allTests = (version: vscodeVersion = 'stable') => {
 			const sourceMap = await getSourceMapFromRCode(propath, Uri.joinPath(getWorkspaceUri(), 'out/code/unit_test1.r'))
 			assert.equal(7, sourceMap.items.length)
 
+			log.info('sourceMap.items[0]=' + JSON.stringify(sourceMap.items[0]))
+			assert.equal('src/code/unit_test1.p', sourceMap.items[0].sourcePath)
+			assert.equal(1, sourceMap.items[0].sourceLine)
+
 			assert.equal('src/inc/unit_inc1.i', sourceMap.items[2].sourcePath)
 			assert.equal(1, sourceMap.items[2].sourceLine)
 			assert.equal(7, sourceMap.items[2].debugLine)

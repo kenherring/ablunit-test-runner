@@ -33,6 +33,15 @@
 			}
 		},
 		{
+			"label": "npm package",
+			"hide": true,
+			"type": "npm",
+			"script": "package",
+			"presentation": {
+				"reveal": "always",
+			}
+		},
+		{
 			"label": "npm pretest",
 			"hide": true,
 			"type": "npm",
