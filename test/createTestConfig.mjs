@@ -65,7 +65,7 @@ function getMochaOpts (projName) {
 	// const xunitFile = path.resolve(reporterDir, 'mocha_results_xunit_' + projName + '.xml')
 	const mochaFile = path.resolve(reporterDir, 'mocha_results_junit_' + projName + '.xml')
 	const sonarFile = path.resolve(reporterDir, 'mocha_results_sonar_' + projName + '.xml')
-	const bail = process.env['CIRCLECI'] != 'true' || false
+	// const bail = process.env['CIRCLECI'] != 'true' || false
 
 	const mochaOpts = {
 		// fullTrace: true
@@ -73,8 +73,11 @@ function getMochaOpts (projName) {
 		// ui: 'tdd', // describe, it, etc
 		// ui: 'bdd' // default; suite, test, etc
 		parallel: false,
-		bail,
+		bail: false,
 		require: [
+			'mocha'
+		],
+		preload: [
 			'ts-node/register/transpile-only',
 			'ts-node/register',
 		],
@@ -196,23 +199,23 @@ function getLaunchArgs (projName) {
 
 function getTestConfig (projName) {
 
-	let ws = '' + projName
+	let workspaceFolder = '' + projName
 	if (projName.startsWith('proj7')) {
-		ws = 'proj7_load_performance'
+		workspaceFolder = 'proj7_load_performance'
 	} else if (projName.startsWith('workspace')) {
-		ws = projName + '.code-workspace'
+		workspaceFolder = projName + '.code-workspace'
 	}
-	ws = path.resolve(__dirname, '..', 'test_projects', ws)
+	workspaceFolder = path.resolve(__dirname, '..', 'test_projects', workspaceFolder)
 
-	if (!fs.existsSync(ws)) {
+	if (!fs.existsSync(workspaceFolder)) {
 		const g = glob.globSync('test_projects/' + projName + '_*')
 		if (g.length > 1) {
-			throw new Error('Multiple workspaces found: ' + ws)
+			throw new Error('Multiple workspaces found: ' + workspaceFolder)
 		}
 		if (!g[0]) {
-			throw new Error('No workspace found: ' + ws)
+			throw new Error('No workspace found: ' + workspaceFolder)
 		}
-		ws = g[0]
+		workspaceFolder = g[0]
 	}
 
 	let useInstallation
@@ -222,7 +225,7 @@ function getTestConfig (projName) {
 
 	const absolulteFile = path.resolve(__dirname, '..', 'test', 'suites', projName + '.test.ts')
 
-	const envVars = {
+	const env = {
 		ABLUNIT_TEST_RUNNER_ENABLE_EXTENSIONS: enableExtensions.includes('' + projName),
 		ABLUNIT_TEST_RUNNER_UNIT_TESTING: 'true',
 		ABLUNIT_TEST_RUNNER_VSCODE_VERSION: vsVersion,
@@ -240,19 +243,17 @@ function getTestConfig (projName) {
 		// platform: 'desktop',
 		// desktopPlatform: 'win32',
 		launchArgs: getLaunchArgs(projName),
-		env: envVars,
-		useInstallation: useInstallation,
+		env,
+		useInstallation,
 		// useInstallation: { fromMachine: true },
-		installExtension: 'riversidesoftware.openedge-abl-lsp',
+		// installExtension: 'riversidesoftware.openedge-abl-lsp',
 		// download: { reporter: ProgressReporter, timeout: ? }
 
 		// --- IBaseTestConfiguration --- //
 		files: absolulteFile,
 		version: vsVersion,
 		extensionDevelopmentPath: './',
-		// extensionDevelopmentPath: extensionDevelopmentPath,
-		// extensionTestsPath: './',
-		workspaceFolder: ws,
+		workspaceFolder,
 		mocha: getMochaOpts(projName),
 		label: 'suite_' + projName,
 		srcDir: './',
