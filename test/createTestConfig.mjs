@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable @typescript-eslint/ban-ts-comment */
@@ -16,7 +15,6 @@ import process from 'process'
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const vsVersionNum = '1.88.0'
 const vsVersion = process.env['ABLUNIT_TEST_RUNNER_VSCODE_VERSION'] ?? 'stable'
-// vsVersion = vsVersionNum
 const oeVersion = process.env['ABLUNIT_TEST_RUNNER_OE_VERSION'] ?? '12.2.12'
 const enableExtensions = [
 	'AtStart',
@@ -63,12 +61,11 @@ function getMochaTimeout (projName) {
 function getMochaOpts (projName) {
 	const reporterDir = path.resolve(__dirname, '..', 'artifacts', vsVersion + '-' + oeVersion)
 	fs.mkdirSync(reporterDir, { recursive: true })
-	const jsonFile = path.resolve(reporterDir, 'mocha_results_' + projName + '.json')
+	// const jsonFile = path.resolve(reporterDir, 'mocha_results_' + projName + '.json')
+	// const xunitFile = path.resolve(reporterDir, 'mocha_results_xunit_' + projName + '.xml')
 	const mochaFile = path.resolve(reporterDir, 'mocha_results_junit_' + projName + '.xml')
-	const xunitFile = path.resolve(reporterDir, 'mocha_results_xunit_' + projName + '.xml')
+	const sonarFile = path.resolve(reporterDir, 'mocha_results_sonar_' + projName + '.xml')
 	const bail = process.env['CIRCLECI'] != 'true' || false
-	// console.log('bail=' + bail + ', CIRCLECI=' + process.env['CIRCLECI'])
-	// process.exit(1)
 
 	const mochaOpts = {
 		// fullTrace: true
@@ -76,51 +73,30 @@ function getMochaOpts (projName) {
 		// ui: 'tdd', // describe, it, etc
 		// ui: 'bdd' // default; suite, test, etc
 		parallel: false,
-		retries: 0,
-		recursive: true,
-		// color: true,in
 		bail,
-		exit: true,
-		extension: [ 'js', 'ts', 'test.ts' ],
 		require: [
-			'mocha',
-		// 	// './dist/extension.js',
-		// 	'source-map-support',
-		// 	'source-map-support/register',
-		// 	'source-map-support/register-hook-require',
-		// 	'ts-node/register',
-		],
-		reporter: 'mocha-multi-reporters',
-		reporterOptions: {
-			reporterEnabled: [ 'spec', 'mocha-junit-reporter' ],
-			jsonReporterOptions: { output: jsonFile },
-			xunitReporterOptions: { output: xunitFile },
-			mochaJunitReporterReporterOptions: { mochaFile: mochaFile }
-		},
-		// preload: [ 'ts-node/register/transpile-only' ],
-		preload: [
-			// './dist/extension.js',
 			'ts-node/register/transpile-only',
 			'ts-node/register',
-			// 'source-map-support',
-			// 'source-map-support/register',
-			// 'source-map-support/register-hook-require',
 		],
 	}
 
-	// console.log('process.env.CIRCLECI=' + process.env['CIRCLECI'])
-	if (process.env['CIRCLECI'] == true) {
-	 mochaOpts.bail = true
+	// if (process.env['ABLUNIT_TEST_RUNNER_RUN_SCRIPT_FLAG']) {
+	// 	// eslint-disable-next-line no-console
+	// 	// console.log('adding reporter...')
+	// 	mochaOpts.reporter = 'mocha-multi-reporters'
+	// 	mochaOpts.reporterOptions = {
+	// 		reporterEnabled: [ 'json-stream', 'spec', 'mocha-junit-reporter', 'mocha-sonarqube-reporter' ],
+	// 		// jsonReporterOptions: { output: jsonFile },
+	// 		// xunitReporterOptions: { output: xunitFile },
+	// 		mochaJunitReporterReporterOptions: { mochaFile: mochaFile },
+	// 		mochaSonarqubeReporterReporterOptions: { output: sonarFile }
+	// 	}
+	// }
+
+	if (process.env['CIRCLECI']) {
+		mochaOpts.bail = true
 	}
 
-	// TODO - prevents results from reporting to vscode-extension-test-runner
-	// mochaOpts.reporter = 'mocha-multi-reporters'
-	// mochaOpts.reporterOptions = {
-	// 	reporterEnabled: [ 'spec', 'mocha-junit-reporter' ],
-	// 	jsonReporterOptions: { output: jsonFile },
-	// 	xunitReporterOptions: { output: xunitFile },
-	// 	mochaJunitReporterReporterOptions: { mochaFile: mochaFile }
-	// }
 	return mochaOpts
 }
 
