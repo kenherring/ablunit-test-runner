@@ -2,10 +2,13 @@ import { Uri, workspace } from 'vscode'
 import { assert, awaitRCode, getWorkspaceUri, log, suiteSetupCommon } from '../testCommon'
 import { getSourceMapFromRCode } from '../../src/parse/RCodeParser'
 import { PropathParser } from '../../src/ABLPropath'
+import { vscodeVersion } from '../../src/ABLUnitCommon'
 
 const workspaceFolder = workspace.workspaceFolders![0]
 
-suite('debugLines Extension Test Suite', () => {
+
+
+suite('debugLines - Debug Line Tests - insiders', () => {
 
 	suiteSetup('debugLines - before', () => {
 		return suiteSetupCommon()
@@ -19,22 +22,22 @@ suite('debugLines Extension Test Suite', () => {
 			})
 	})
 
-	test('debugLines.1 - read debug line map from r-code', () => {
+	test('debugLines.1 - read debug line map from r-code', async () => {
 		const propath = new PropathParser(workspaceFolder)
-		const prom = getSourceMapFromRCode(propath, Uri.joinPath(getWorkspaceUri(), 'out/code/unit_test1.r'))
-			.then((sourceMap) => {
-				assert.equal(7, sourceMap.items.length)
+		const sourceMap = await getSourceMapFromRCode(propath, Uri.joinPath(getWorkspaceUri(), 'out/code/unit_test1.r'))
+		assert.equal(7, sourceMap.items.length)
 
-				assert.equal('src/inc/unit_inc1.i', sourceMap.items[2].sourcePath)
-				assert.equal(1, sourceMap.items[2].sourceLine)
-				assert.equal(7, sourceMap.items[2].debugLine)
+		log.info('sourceMap.items[0]=' + JSON.stringify(sourceMap.items[0]))
+		assert.equal('src/code/unit_test1.p', sourceMap.items[0].sourcePath)
+		assert.equal(1, sourceMap.items[0].sourceLine)
 
-				assert.equal('src/code/unit_test1.p', sourceMap.items[6].sourcePath)
-				assert.equal(10, sourceMap.items[6].sourceLine)
-				assert.equal(13, sourceMap.items[6].debugLine)
-				return
-			}, (e) => { throw e })
-		return prom
+		assert.equal('src/inc/unit_inc1.i', sourceMap.items[2].sourcePath)
+		assert.equal(1, sourceMap.items[2].sourceLine)
+		assert.equal(7, sourceMap.items[2].debugLine)
+
+		assert.equal('src/code/unit_test1.p', sourceMap.items[6].sourcePath)
+		assert.equal(10, sourceMap.items[6].sourceLine)
+		assert.equal(13, sourceMap.items[6].debugLine)
 	})
 
 	test('debugLines.2 - read debug line map from r-code', async () => {

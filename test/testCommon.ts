@@ -13,7 +13,6 @@ import {
 import { ABLResults } from '../src/ABLResults'
 import { Duration, deleteFile as deleteFileCommon, isRelativePath, readStrippedJsonFile } from '../src/ABLUnitCommon'
 import { log as logObj } from '../src/ChannelLogger'
-import { Decorator } from '../src/Decorator'
 import { IExtensionTestReferences } from '../src/extension'
 import { ITestSuites } from '../src/parse/ResultsParser'
 import { IConfigurations, parseRunProfiles } from '../src/parse/TestProfileParser'
@@ -102,7 +101,6 @@ export {
 }
 
 // test case objects - reset before each test
-let decorator: Decorator | undefined
 let testController: TestController | undefined
 let recentResults: ABLResults[] | undefined
 let currentRunData: ABLResults[] | undefined
@@ -111,7 +109,6 @@ export let cancelTestRunDuration: Duration | undefined
 
 export function beforeCommon () {
 	recentResults = undefined
-	decorator = undefined
 	testController = undefined
 	currentRunData = undefined
 }
@@ -160,7 +157,6 @@ export function teardownCommon () {
 	runAllTestsDuration = undefined
 	cancelTestRunDuration = undefined
 
-	decorator = undefined
 	testController = undefined
 	recentResults = undefined
 	currentRunData = undefined
@@ -755,7 +751,6 @@ export function selectProfile (profile: string) {
 }
 
 export function refreshData (resultsLen = 0) {
-	decorator = undefined
 	testController = undefined
 	recentResults = undefined
 	currentRunData = undefined
@@ -774,7 +769,6 @@ export function refreshData (resultsLen = 0) {
 		if (passedTests && passedTests <= resultsLen) {
 			throw new Error('failed to refresh test results: results.length=' + refs.recentResults.length)
 		}
-		decorator = refs.decorator
 		testController = refs.testController
 		recentResults = refs.recentResults
 		if (refs.currentRunData) {
@@ -786,13 +780,6 @@ export function refreshData (resultsLen = 0) {
 		log.error('failed to refresh test results: ' + err)
 		throw new Error('failed to refresh test results: ' + err)
 	})
-}
-
-export function getDecorator () {
-	if (!decorator) {
-		throw new Error('decorator is null')
-	}
-	return decorator
 }
 
 export async function getTestController (skipRefresh = false) {

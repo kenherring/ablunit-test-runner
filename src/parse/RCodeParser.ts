@@ -171,7 +171,7 @@ export const getSourceMapFromRCode = (propath: PropathParser, uri: Uri) => {
 			numlines = bytes[childBytes[5]/4 - 2]
 		}
 
-		let lines
+		let lines: number[] | undefined = undefined
 		if(childBytes[1] && childBytes[1] != 0) {
 			lines = getLines(bytes, childBytes[1], numlines)
 		}
@@ -188,7 +188,7 @@ export const getSourceMapFromRCode = (propath: PropathParser, uri: Uri) => {
 			parseProcTT(bytes, childBytes[4], prefix + '.' + childBytes[4] + '-4')
 		}
 
-		let pname = undefined
+		let pname: string | undefined = undefined
 		if (childBytes[5] && childBytes[5] != 0) {
 			pname = parseProcName(bytes, childBytes[5], prefix + '.' + childBytes[5] + '-5')
 		}
