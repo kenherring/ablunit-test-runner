@@ -1,12 +1,15 @@
-name: Chore
+name: 🧹 Chore
 description: Repo configuration, tooling, and other non-feature work.
-title: ":broom: [Chore] "
+title: ":broom: 🧹 [Chore] <title here>"
 labels: ["chore"]
 # projects: ["octo-org/1", "octo-org/44"]
 assignees:
   - kenherring
 body:
-  - type: markdown
+  - type: textarea
     attributes:
+      label: Chore Description
       value: |
         Describe the chore...
+    validations:
+      required: true

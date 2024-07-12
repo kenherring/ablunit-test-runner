@@ -73,22 +73,39 @@ function getMochaTimeout (projName) {
 function getMochaOpts (projName) {
 	const reporterDir = path.resolve(__dirname, '..', 'artifacts', vsVersion + '-' + oeVersion)
 	fs.mkdirSync(reporterDir, { recursive: true })
-	// const jsonFile = path.resolve(reporterDir, 'mocha_results_' + projName + '.json')
-	// const xunitFile = path.resolve(reporterDir, 'mocha_results_xunit_' + projName + '.xml')
+	const jsonFile = path.resolve(reporterDir, 'mocha_results_' + projName + '.json')
+	const xunitFile = path.resolve(reporterDir, 'mocha_results_xunit_' + projName + '.xml')
 	const mochaFile = path.resolve(reporterDir, 'mocha_results_junit_' + projName + '.xml')
 	const sonarFile = path.resolve(reporterDir, 'mocha_results_sonar_' + projName + '.xml')
+	// const bail = process.env['CIRCLECI'] != 'true' || false
 
 	const mochaOpts = {
-		bail: process.env['CIRCLECI'] == 'true' ? true : false,
 		// fullTrace: true
 		retries: 0,
 		timeout: getMochaTimeout(projName),
 		// ui: 'tdd', // describe, it, etc
 		// ui: 'bdd' // default; suite, test, etc
 		parallel: false,
-		// exit: true,
-		// extension: [ 'js', 'ts', 'test.ts' ],
+		bail: false,
 		require: [
+			'mocha',
+		// 	// './dist/extension.js',
+		// 	'source-map-support',
+		// 	'source-map-support/register',
+		// 	'source-map-support/register-hook-require',
+		// 	'ts-node/register',
+		],
+		reporter: 'mocha-multi-reporters',
+		reporterOptions: {
+			reporterEnabled: [ 'spec', 'mocha-junit-reporter' ],
+			jsonReporterOptions: { output: jsonFile },
+			xunitReporterOptions: { output: xunitFile },
+			mochaJunitReporterReporterOptions: { mochaFile: mochaFile },
+		},
+		// preload: [ 'ts-node/register/transpile-only' ],
+		preload: [
+			// './dist/extension.js',
+			'mocha',
 			'ts-node/register/transpile-only',
 			'ts-node/register',
 		],
@@ -242,13 +259,40 @@ function getLaunchArgs (projName) {
 
 function getTestConfig (projName) {
 
+	let workspaceFolder = '' + projName
+	if (projName.startsWith('proj7')) {
+		workspaceFolder = 'proj7_load_performance'
+	} else if (projName.startsWith('workspace')) {
+		workspaceFolder = projName + '.code-workspace'
+	}
+	workspaceFolder = path.resolve(__dirname, '..', 'test_projects', workspaceFolder)
+
+	if (!fs.existsSync(workspaceFolder)) {
+		const g = glob.globSync('test_projects/' + projName + '_*')
+		if (g.length > 1) {
+			throw new Error('Multiple workspaces found: ' + workspaceFolder)
+		}
+		if (!g[0]) {
+			throw new Error('No workspace found: ' + workspaceFolder)
+		}
+		workspaceFolder = g[0]
+	}
+
 	let useInstallation
 	if (fs.existsSync('.vscode-test/vscode-win32-x64-archive-' + vsVersionNum + '/Code.exe')) {
 		useInstallation = { fromPath: '.vscode-test/vscode-win32-x64-archive-' + vsVersionNum + '/Code.exe' }
 	}
 
 	const files = './test/suites/' + projName + '.test.ts'
-	// const absolulteFile = path.resolve(__dirname, '..', 'test', 'suites', projName + '.test.ts')
+	const absolulteFile = path.resolve(__dirname, '..', 'test', 'suites', projName + '.test.ts')
+
+	const env = {
+		ABLUNIT_TEST_RUNNER_ENABLE_EXTENSIONS: enableExtensions.includes('' + projName),
+		ABLUNIT_TEST_RUNNER_UNIT_TESTING: 'true',
+		ABLUNIT_TEST_RUNNER_VSCODE_VERSION: vsVersion,
+		DONT_PROMPT_WSL_INSTAL: true,
+		VSCODE_SKIP_PRELAUNCH: true,
+	}
 
 	const extensionDevelopmentPath = './'
 	// let extensionDevelopmentPath = path.resolve(__dirname, '..', 'ablunit-test-runner-0.2.1.vsix')
@@ -265,23 +309,17 @@ function getTestConfig (projName) {
 	process.env['ABLUNIT_TEST_RUNNER_UNIT_TESTING'] = 'true'
 	process.env['DONT_PROMPT_WSL_INSTALL'] = 'true'
 	process.env['VSCODE_SKIP_PRELAUNCH'] = 'true'
-	const env = {
-		ABLUNIT_TEST_RUNNER_ENABLE_EXTENSIONS: enableExtensions.includes('' + projName),
-		ABLUN7IT_TEST_RUNNER_UNIT_TESTING: 'true',
-		ABLUNIT_TEST_RUNNER_VSCODE_VERSION: vsVersion,
-		DONT_PROMPT_WSL_INSTALL: true,
-		VSCODE_SKIP_PRELAUNCH: true,
-	}
 
 	return {
 		// --- IBaseTestConfiguration --- //
 		files,
 		version: vsVersion,
 		extensionDevelopmentPath,
-		workspaceFolder: getWorkspaceFolder(projName),
+		workspaceFolder,
 		mocha: getMochaOpts(projName),
 		label: 'suite_' + projName,
 		srcDir: './',
+
 
 		// --- IDesktopTestConfiguration --- //
 		// platform: 'desktop',

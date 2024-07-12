@@ -13,7 +13,6 @@ import {
 import { ABLResults } from '../src/ABLResults'
 import { Duration, deleteFile as deleteFileCommon, isRelativePath, readStrippedJsonFile } from '../src/ABLUnitCommon'
 import { log as logObj } from '../src/ChannelLogger'
-import { Decorator } from '../src/Decorator'
 import { IExtensionTestReferences } from '../src/extension'
 import { ITestSuites } from '../src/parse/ResultsParser'
 import { IConfigurations, parseRunProfiles } from '../src/parse/TestProfileParser'
@@ -63,11 +62,9 @@ export const oeVersion = () => {
 	const versionFile = path.join(getDefaultDLC(), 'version')
 	const dlcVersion = fs.readFileSync(versionFile)
 	log.info('dlcVersion=' + dlcVersion)
-	if (dlcVersion) {
-		const match = RegExp(/OpenEdge Release (\d+\.\d+)/).exec(dlcVersion.toString())
-		if (match) {
-			return match[1]
-		}
+	const match = RegExp(/OpenEdge Release (\d+\.\d+)/).exec(dlcVersion.toString())
+	if (match) {
+		return match[1]
 	}
 	throw new Error('unable to determine oe version!')
 	// return '12.2'
@@ -99,7 +96,6 @@ export {
 
 const projName = () => { return getWorkspaceUri().fsPath.replace(/\\/g, '/').split('/').pop() }
 let recentResults: ABLResults[] | undefined
-let decorator: Decorator | undefined
 let testController: TestController | undefined
 let currentRunData: ABLResults[] | undefined
 
@@ -142,9 +138,9 @@ export async function suiteSetupCommon () {
 
 	if (enableExtensions()) {
 		await installExtension(extname).then((r) => {
-			if (!r) {
-				throw new Error('failed to install extension ' + extname)
-			}
+			// if (!r) {
+			// 	throw new Error('failed to install extension ' + extname)
+			// }
 			log.info('installed extension ' + extname)
 			log.debug('installed extension ' + extname + ' (r=' + JSON.stringify(r) + ')')
 			return
@@ -177,7 +173,6 @@ export function teardownCommon () {
 	runAllTestsDuration = undefined
 	cancelTestRunDuration = undefined
 
-	decorator = undefined
 	testController = undefined
 	recentResults = undefined
 	currentRunData = undefined
@@ -191,7 +186,7 @@ export function setFilesExcludePattern () {
 	const files = new FilesExclude
 	// files.exclude = workspace.getConfiguration('files', getWorkspaceUri()).get('exclude', {})
 	const filesConfig = workspace.getConfiguration('files', getWorkspaceUri())
-	files.exclude = filesConfig.get('exclude', {}) ?? {}
+	files.exclude = filesConfig.get('exclude', {})
 	files.exclude['**/.builder'] = true
 	files.exclude['**/lbia*'] = true
 	files.exclude['**/rcda*'] = true
@@ -254,7 +249,6 @@ export function installExtension (extname = 'riversidesoftware.openedge-abl-lsp'
 
 export function setupCommon () {
 	recentResults = undefined
-	decorator = undefined
 	testController = undefined
 	currentRunData = undefined
 }
@@ -337,14 +331,15 @@ async function waitForExtensionActive (extensionId = 'kherring.ablunit-test-runn
 	if(!ext.isActive) {
 		log.info('waiting for extension to activate - should never be here!')
 		for (let i=0; i<50; i++) {
-			if (ext.isActive) {
+			ext = extensions.getExtension(extensionId)
+			if (ext?.isActive) {
 				log.info('waitied ' + (i + 1) * 100 + 'ms for extension to activate')
 				break
 			}
 		}
 		await sleep2(100)
 	}
-	if (!ext.isActive) { throw new Error(extensionId + ' is not active') }
+	if (!ext?.isActive) { throw new Error(extensionId + ' is not active') }
 
 	log.info(extensionId + ' is active!')
 	return ext.isActive
@@ -382,7 +377,7 @@ export async function setRuntimes (runtimes: IRuntime[] = [{name: '12.2', path: 
 	}
 
 	const conf = workspace.getConfiguration('abl')
-	const current = conf.get('configuration.runtimes') as IRuntime[]
+	const current: IRuntime[] = conf.get('configuration.runtimes')!
 	log.debug('current=' + JSON.stringify(current))
 	log.debug('  input=' + JSON.stringify(runtimes))
 	if (JSON.stringify(current) === JSON.stringify(runtimes)) {
@@ -400,7 +395,7 @@ export async function setRuntimes (runtimes: IRuntime[] = [{name: '12.2', path: 
 	return await rebuildAblProject()
 		.then((r) => {
 			log.info('abl.configuration.runtimes set successfully (r=' + r + ')')
-			return r ?? 0
+			return r
 		}, (e) => { throw e })
 
 	// const prom = conf.update('configuration.runtimes', runtimes, ConfigurationTarget.Global).then(async () => {
@@ -511,9 +506,9 @@ export function toUri (uri: string | Uri) {
 	}
 
 	const ws = getWorkspaceUri()
-	if (!ws) {
-		throw new Error('workspaceUri is null (uri=' + uri.toString() + ')')
-	}
+	// if (!ws) {
+	// 	throw new Error('workspaceUri is null (uri=' + uri.toString() + ')')
+	// }
 
 	if (isRelativePath(uri)) {
 		return Uri.joinPath(ws, uri)
@@ -633,7 +628,7 @@ export async function runAllTests (waitForResults = true, tag?: string, doRefres
 		log.info(tag + 'testing.runAll completed - start getResults()')
 		runAllTestsDuration?.stop()
 		return getResults(1, tag).then((r) => {
-			const fUri = r?.[0]?.cfg.ablunitConfig.optionsUri.filenameUri
+			const fUri = r[0]?.cfg.ablunitConfig.optionsUri.filenameUri
 			log.info(tag + 'testing.runAll found results file (filename=' + fUri.fsPath + ', r=' + r + ')')
 			if (!doesFileExist(fUri)) {
 				throw new Error('no results file found (filename=' + fUri.fsPath + ')')
@@ -945,7 +940,6 @@ export function selectProfile (profile: string) {
 }
 
 export function refreshData (resultsLen = 0) {
-	decorator = undefined
 	testController = undefined
 	recentResults = undefined
 	currentRunData = undefined
@@ -954,9 +948,9 @@ export function refreshData (resultsLen = 0) {
 		log.info('101')
 		const refs = resp as IExtensionTestReferences
 		log.info('refs=' + JSON.stringify(refs))
-		const passedTests = refs.recentResults?.[0].ablResults?.resultsJson[0].testsuite?.[0].passed ?? undefined
+		const passedTests = refs.recentResults[0].ablResults?.resultsJson[0].testsuite?.[0].passed ?? undefined
 		log.info('recentResults.length=' + refs.recentResults.length)
-		log.info('recentResults[0].ablResults.=' + refs.recentResults?.[0].status)
+		log.info('recentResults[0].ablResults.=' + refs.recentResults[0].status)
 		log.info('recentResults[0].ablResults.resultsJson.length=' + recentResults?.[0].ablResults?.resultsJson.length)
 		log.info('passedTests=' + passedTests)
 
@@ -964,26 +958,14 @@ export function refreshData (resultsLen = 0) {
 			throw new Error('failed to refresh test results: results.length=' + refs.recentResults.length)
 		}
 		log.info('102')
-		decorator = refs.decorator
 		testController = refs.testController
 		recentResults = refs.recentResults
-		if (refs.currentRunData) {
-			currentRunData = refs.currentRunData
-			return true
-		}
 		log.info('103 ' + (currentRunData != undefined))
 		return currentRunData != undefined
 	}, (err) => {
 		// log.info(isoDate() + ' refreshData-4 err=' + err)
 		throw new Error('failed to refresh test results: ' + err)
 	})
-}
-
-export function getDecorator () {
-	if (!decorator) {
-		throw new Error('decorator is null')
-	}
-	return decorator
 }
 
 export async function getTestController (skipRefresh = false) {
