@@ -10,6 +10,17 @@
 	"git.branchProtection": [
 		"main"
 	],
+	"extension-test-runner.extractSettings": {
+		"suite": [
+			"describe",
+			"suite"
+		],
+		"test": [
+			"it",
+			"test"
+		],
+		"extractWith": "syntax"
+	},
 	"files.associations": {
 		"ablunit-test-profile*.json": "jsonc"
 	},

@@ -757,9 +757,10 @@ export function refreshData (resultsLen = 0) {
 
 	log.info('refreshData start')
 	return commands.executeCommand('_ablunit.getExtensionTestReferences').then((resp) => {
-		log.info('refreshData command complete (resp=' + JSON.stringify(resp) + ')')
+		// log.info('refreshData command complete (resp=' + JSON.stringify(resp) + ')')
+		log.info('getExtensionTestReferences command complete')
 		const refs = resp as IExtensionTestReferences
-		log.info('refs=' + JSON.stringify(refs))
+		// log.info('refs=' + JSON.stringify(refs))
 		const passedTests = refs.recentResults?.[0].ablResults?.resultsJson[0].testsuite?.[0].passed ?? undefined
 		log.info('recentResults.length=' + refs.recentResults.length)
 		log.info('recentResults[0].ablResults.=' + refs.recentResults?.[0].status)
