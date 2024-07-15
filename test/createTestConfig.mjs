@@ -22,6 +22,7 @@ const enableExtensions = [
 	'proj2',
 	'proj3',
 	'proj4',
+	'proj5',
 	'proj7A',
 	'proj7B',
 	'proj8',
@@ -83,18 +84,18 @@ function getMochaOpts (projName) {
 		],
 	}
 
-	// if (process.env['ABLUNIT_TEST_RUNNER_RUN_SCRIPT_FLAG']) {
-	// 	// eslint-disable-next-line no-console
-	// 	// console.log('adding reporter...')
-	// 	mochaOpts.reporter = 'mocha-multi-reporters'
-	// 	mochaOpts.reporterOptions = {
-	// 		reporterEnabled: [ 'json-stream', 'spec', 'mocha-junit-reporter', 'mocha-sonarqube-reporter' ],
-	// 		// jsonReporterOptions: { output: jsonFile },
-	// 		// xunitReporterOptions: { output: xunitFile },
-	// 		mochaJunitReporterReporterOptions: { mochaFile: mochaFile },
-	// 		mochaSonarqubeReporterReporterOptions: { output: sonarFile }
-	// 	}
-	// }
+	if (process.env['ABLUNIT_TEST_RUNNER_RUN_SCRIPT_FLAG']) {
+		// eslint-disable-next-line no-console
+		// console.log('adding reporter...')
+		mochaOpts.reporter = 'mocha-multi-reporters'
+		mochaOpts.reporterOptions = {
+			reporterEnabled: [ 'json-stream', 'spec', 'mocha-junit-reporter', 'mocha-sonarqube-reporter' ],
+			// jsonReporterOptions: { output: jsonFile },
+			// xunitReporterOptions: { output: xunitFile },
+			mochaJunitReporterReporterOptions: { mochaFile: mochaFile },
+			mochaSonarqubeReporterReporterOptions: { output: sonarFile },
+		}
+	}
 
 	if (process.env['CIRCLECI']) {
 		mochaOpts.bail = true

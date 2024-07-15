@@ -82,22 +82,16 @@ export async function activate (context: ExtensionContext) {
 	)
 
 	const getExtensionTestReferences = () => {
-		log.info('100')
 		let data: ABLResults[] = []
-		log.info('101')
 		if (currentTestRun) {
-			log.info('102')
 			data = resultData.get(currentTestRun) ?? []
 		}
-		log.info('103')
 		const ret = {
 			testController: ctrl,
 			recentResults: recentResults,
 			currentRunData: data
 		} as IExtensionTestReferences
-		log.info('104')
 		log.debug('_ablunit.getExtensionTestReferences currentRunData.length=' + ret.currentRunData?.length + ', recentResults.length=' + ret.recentResults?.length)
-		log.info('105')
 		return ret
 	}
 
