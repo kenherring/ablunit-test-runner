@@ -1,5 +1,5 @@
 import { Uri, commands, window, workspace, Range, TextEditor, FileCoverageDetail } from 'vscode'
-import { assert, deleteFile, getResults, getWorkspaceFolders, log, runAllTests, runAllTestsWithCoverage, sleep, toUri, updateTestProfile, waitForExtensionActive } from '../testCommon'
+import { assert, deleteFile, getResults, getWorkspaceFolders, log, runAllTests, runAllTestsWithCoverage, sleep, suiteSetupCommon, toUri, updateTestProfile } from '../testCommon'
 
 const projName = 'proj0'
 
@@ -22,7 +22,7 @@ function getDetailLine (coverage: FileCoverageDetail[] | never[], lineNum: numbe
 suite('proj0  - Extension Test Suite', () => {
 
 	suiteSetup('proj0 - before', async () => {
-		await waitForExtensionActive().then(() => sleep(250))
+		await suiteSetupCommon()
 		await commands.executeCommand('testing.clearTestResults')
 		deleteFile('.vscode/ablunit-test-profile.json')
 	})

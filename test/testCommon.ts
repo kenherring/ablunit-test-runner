@@ -278,7 +278,7 @@ export async function activateExtension (extname = 'riversidesoftware.openedge-a
 	return ext.isActive
 }
 
-export async function waitForExtensionActive (extensionId = 'kherring.ablunit-test-runner') {
+async function waitForExtensionActive (extensionId = 'kherring.ablunit-test-runner') {
 	let ext = extensions.getExtension(extensionId)
 	if (!ext) {
 		ext = await sleep2(250, 'wait and retry getExtension')

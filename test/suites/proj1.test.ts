@@ -1,16 +1,12 @@
 import { Selection, commands, window } from 'vscode'
 import { beforeEach } from 'mocha'
-import { Uri, assert, deleteTestFiles, getWorkspaceUri, log, runAllTests, sleep, updateConfig, getTestCount, waitForExtensionActive, workspace } from '../testCommon'
+import { Uri, assert, deleteTestFiles, getWorkspaceUri, log, runAllTests, sleep, updateConfig, getTestCount, workspace, suiteSetupCommon } from '../testCommon'
 
 const workspaceUri = getWorkspaceUri()
 
 suite('proj1 - Extension Test Suite', () => {
 
-	suiteSetup('proj1 - suiteSetup', async () => {
-		const r = await waitForExtensionActive()
-		log.info('end waitForExtensionActive (r=' + r + ')')
-		return r
-	})
+	suiteSetup('proj1 - suiteSetup', suiteSetupCommon)
 
 	beforeEach('proj1 - beforeEach', async () => {
 		log.info('setup-1')

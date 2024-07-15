@@ -1,5 +1,5 @@
 import { Uri, commands } from 'vscode'
-import { assert, deleteTestFiles, getResults, getWorkspaceUri, log, refreshData, runAllTests, sleep, waitForExtensionActive } from '../testCommon'
+import { assert, deleteTestFiles, getResults, getWorkspaceUri, log, refreshData, runAllTests, sleep, suiteSetupCommon } from '../testCommon'
 
 
 const projName = 'proj2'
@@ -8,8 +8,7 @@ const workspaceUri = getWorkspaceUri()
 suite('proj2 - Extension Test Suite', () => {
 
 	suiteSetup('proj2 - before', async () => {
-		deleteTestFiles()
-		await waitForExtensionActive()
+		await suiteSetupCommon()
 	})
 
 	test('proj2.1 - temp/ablunit.json file exists', async () => {
