@@ -68,6 +68,7 @@ function getMochaOpts (projName) {
 	const mochaFile = path.resolve(reporterDir, 'mocha_results_junit_' + projName + '.xml')
 	const sonarFile = path.resolve(reporterDir, 'mocha_results_sonar_' + projName + '.xml')
 	const xunitFile = path.resolve(reporterDir, 'mocha_results_xunit_' + projName + '.xml')
+	console.log('mochaFile=', mochaFile)
 	// const bail = process.env['CIRCLECI'] != 'true' || false
 
 	const mochaOpts = {
