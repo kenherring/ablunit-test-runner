@@ -131,23 +131,6 @@ function getMochaOpts (projName) {
 	return mochaOpts
 }
 
-function getWorkspaceFolder (projName) {
-	let workspaceFolder = './test_projects/' + projName
-	if (projName.startsWith('proj7')) {
-		return './test_projects/proj7_load_performance'
-	} else if (projName.startsWith('workspace')) {
-		return './test_projects/' + projName + '.code-workspace'
-	} else if (!fs.existsSync(workspaceFolder)) {
-		const g = glob.globSync(workspaceFolder + '_*')
-		if (g.length > 1) {
-			throw new Error('Multiple workspaces found: ' + workspaceFolder)
-		} else {
-			return g[0] ?? './test_projects'
-		}
-	}
-	return workspaceFolder
-}
-
 // function getExtensionVersion () {
 // 	const contents = fs.readFileSync('package.json')
 // 	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
@@ -284,7 +267,6 @@ function getTestConfig (projName) {
 	}
 
 	const files = './test/suites/' + projName + '.test.ts'
-	const absolulteFile = path.resolve(__dirname, '..', 'test', 'suites', projName + '.test.ts')
 
 	const env = {
 		ABLUNIT_TEST_RUNNER_ENABLE_EXTENSIONS: enableExtensions.includes('' + projName),
