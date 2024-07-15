@@ -50,16 +50,11 @@ package_version () {
         ARGS+=(-o "ablunit-test-runner-${VSCODE_VERSION}-${PACKAGE_VERSION}.vsix")
     fi
 
-    echo 100
     cp "package.$VSCODE_VERSION.json" package.json
-    echo 101
     if ! vsce package "${ARGS[@]}"; then
-        echo 102 $?
         exit 1
     fi
-    echo 103 $?
     cp package.stable.json package.json
-    echo 104
 }
 
 run_lint () {
