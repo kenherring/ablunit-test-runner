@@ -391,6 +391,5 @@ export function createTestConfig () { // NOSONAR
 	const definedConfig = defineConfig(testConfig)
 	writeConfigToFile('testConfig', testConfig)
 	writeConfigToFile('defined', definedConfig)
-	await Promise.resolve()
 	return definedConfig
 }
