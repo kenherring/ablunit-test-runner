@@ -43,26 +43,20 @@ function getMochaTimeout (projName) {
 	if (projName === 'examples') {
 		return 1000
 	}
+
 	if (firstTest) {
 		firstTest = false
 		// return 180000
 		return 30000
 	}
-	// if (projName === 'proj3' && projName === 'proj4') {
-	// 	return 30000
-	// }
-	// if (projName === 'proj1') {
-	// 	return 55000
-	// }
-	// if (projName === 'DebugLines') {
-	// 	return 60000
-	// }
-	// if (projName.startsWith('proj7')) {
-	// 	// return 60000
-	// 	return 90000
-	// }
-	// return 15000
-	// return 25000
+
+	switch (projName) {
+		case 'DebugLines': return 120000 // install openedge-abl-lsp for the first time, so give it a moment to start
+		case 'proj1': return 30000
+		// case 'proj2': return 20000
+		case 'proj7A': return 60000
+	}
+
 	return 15000
 }
 
@@ -88,24 +82,9 @@ function getMochaOpts (projName) {
 		parallel: false,
 		bail: false,
 		require: [
-			'mocha',
-		// 	// './dist/extension.js',
-		// 	'source-map-support',
-		// 	'source-map-support/register',
-		// 	'source-map-support/register-hook-require',
-		// 	'ts-node/register',
+			'mocha'
 		],
-		reporter: 'mocha-multi-reporters',
-		reporterOptions: {
-			reporterEnabled: [ 'spec', 'mocha-junit-reporter' ],
-			jsonReporterOptions: { output: jsonFile },
-			xunitReporterOptions: { output: xunitFile },
-			mochaJunitReporterReporterOptions: { mochaFile: mochaFile },
-		},
-		// preload: [ 'ts-node/register/transpile-only' ],
 		preload: [
-			// './dist/extension.js',
-			'mocha',
 			'ts-node/register/transpile-only',
 			'ts-node/register',
 		],
@@ -117,8 +96,8 @@ function getMochaOpts (projName) {
 		mochaOpts.reporter = 'mocha-multi-reporters'
 		mochaOpts.reporterOptions = {
 			reporterEnabled: [ 'json-stream', 'spec', 'mocha-junit-reporter', 'mocha-sonarqube-reporter' ],
-			// jsonReporterOptions: { output: jsonFile },
-			// xunitReporterOptions: { output: xunitFile },
+			jsonReporterOptions: { output: jsonFile },
+			xunitReporterOptions: { output: xunitFile },
 			mochaJunitReporterReporterOptions: { mochaFile: mochaFile },
 			mochaSonarqubeReporterReporterOptions: { output: sonarFile }
 		}
@@ -130,16 +109,6 @@ function getMochaOpts (projName) {
 
 	return mochaOpts
 }
-
-// function getExtensionVersion () {
-// 	const contents = fs.readFileSync('package.json')
-// 	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-// 	const packageJSON = JSON.parse(contents)
-// 	if (packageJSON['version']) {
-// 		return toString(packageJSON['version'])
-// 	}
-// 	throw new Error('unable to get extension version')
-// }
 
 function getLaunchArgs (projName) {
 	const args = []
@@ -170,6 +139,11 @@ function getLaunchArgs (projName) {
 	// } else {
 	// 	args.push('--install-extension', './ablunit-test-runner-insiders-' + extVersion + '.vsix')
 	// }
+	if (enableExtensions.includes(projName)) {
+		args.push('--install-extension', 'riversidesoftware.openedge-abl-lsp')
+	// 	// args.push('--install-extension=riversidesoftware.openedge-abl-lsp')
+	// 	// args.push('--install-extension', 'riversidesoftware.openedge-abl-lsp@1.8.0')
+	}
 	// args.push('--pre-release')
 	// args.push('--uninstall-extension <ext-id>')
 	// args.push('--update-extensions')
@@ -195,16 +169,9 @@ function getLaunchArgs (projName) {
 	// args.push('--status')
 	// args.push('--prof-startup')
 	// args.push('--disable-extension <ext-id>')
-
-	// if (enableExtensions.includes(projName)) {
-	// 	args.push('--install-extension', 'riversidesoftware.openedge-abl-lsp')
-	// }
 	if (!enableExtensions.includes(projName)) {
 		args.push('--disable-extensions')
 		args.push('--disable-extension', 'riversidesoftware.openedge-abl-lsp')
-	}
-	if (vsVersion === 'insiders') {
-		args.push('--enable-proposed-api=TestCoverage')
 	}
 	args.push('--disable-extension', 'vscode.builtin-notebook-renderers')
 	args.push('--disable-extension', 'vscode.emmet')
@@ -223,14 +190,14 @@ function getLaunchArgs (projName) {
 	// --- disable functionality not needed for testing - https://github.com/microsoft/vscode/issues/174744 --- //
 	args.push('--disable-chromium-sandbox')
 	// args.push('--no-sandbox', '--sandbox=false')  ## super user only
-	// args.push('--disable-gpu-sandbox')
 	args.push('--disable-crash-reporter')
+	// args.push('--disable-gpu-sandbox')
 	args.push('--disable-gpu')
-	args.push('--disable-dev-shm-usage', '--no-xshm')
 	args.push('--disable-telemetry')
 	args.push('--disable-updates')
 	args.push('--disable-workspace-trust')
 	// Warning: 'xshm' is not in the list of known options, but still passed to Electron/Chromium.
+	args.push('--disable-dev-shm-usage', '--no-xshm')
 
 
 	// --- possible coverage (nyc) related args --- //
@@ -266,7 +233,7 @@ function getTestConfig (projName) {
 		useInstallation = { fromPath: '.vscode-test/vscode-win32-x64-archive-' + vsVersionNum + '/Code.exe' }
 	}
 
-	const files = './test/suites/' + projName + '.test.ts'
+	const absolulteFile = path.resolve(__dirname, '..', 'test', 'suites', projName + '.test.ts')
 
 	const env = {
 		ABLUNIT_TEST_RUNNER_ENABLE_EXTENSIONS: enableExtensions.includes('' + projName),
@@ -275,12 +242,6 @@ function getTestConfig (projName) {
 		DONT_PROMPT_WSL_INSTAL: true,
 		VSCODE_SKIP_PRELAUNCH: true,
 	}
-
-	const extensionDevelopmentPath = './'
-	// let extensionDevelopmentPath = path.resolve(__dirname, '..', 'ablunit-test-runner-0.2.1.vsix')
-	// if (vsVersion === 'insiders') {
-	// 	extensionDevelopmentPath = path.resolve(__dirname, '..', 'ablunit-test-runner-insiders-0.2.1.vsix')
-	// }
 
 	let installExtensions
 	if (enableExtensions.includes(projName)) {
@@ -293,25 +254,26 @@ function getTestConfig (projName) {
 	process.env['VSCODE_SKIP_PRELAUNCH'] = 'true'
 
 	return {
-		// --- IBaseTestConfiguration --- //
-		files,
-		version: vsVersion,
-		extensionDevelopmentPath,
-		workspaceFolder,
-		mocha: getMochaOpts(projName),
-		label: 'suite_' + projName,
-		srcDir: './',
-
-
-		// --- IDesktopTestConfiguration --- //
+		//  -- IDesktopPlatform -- //
 		// platform: 'desktop',
 		// desktopPlatform: 'win32',
 		launchArgs: getLaunchArgs(projName),
 		env,
 		useInstallation,
-		// download: ?
+		// useInstallation: { fromMachine: true },
+		// installExtension: 'riversidesoftware.openedge-abl-lsp',
 		installExtensions,
+		// download: { reporter: ProgressReporter, timeout: ? }
 		skipExtensionDependencies: true,
+
+		// --- IBaseTestConfiguration --- //
+		files: absolulteFile,
+		version: vsVersion,
+		extensionDevelopmentPath: './',
+		workspaceFolder,
+		mocha: getMochaOpts(projName),
+		label: 'suite_' + projName,
+		srcDir: './',
 	}
 }
 
@@ -365,7 +327,7 @@ function getCoverageOpts () {
 		// https://istanbul.js.org/docs/advanced/alternative-reporters/
 		// * default = ['html'], but somehow also prints the 'text-summary' to the console
 		// * 'lcov' includes 'html' output
-		reporter: [ 'lcov', 'text' ],
+		reporter: [ 'text', 'lcov' ],
 		// includeAll: true,
 		output: coverageDir,
 
@@ -373,7 +335,7 @@ function getCoverageOpts () {
 
 		// ----- NOT REAL OPTIONS?? ----- //
 		require: [ 'ts-node/register' ],
-		cache: false,
+		// cache: false,
 		// 'enable-source-maps': true,
 		// sourceMap: false,
 		// instrument: false,

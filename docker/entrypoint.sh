@@ -88,7 +88,6 @@ initialize_repo () {
 		cd "$PROJECT_DIR"
 		git pull
 	elif [ -d "$PROJECT_DIR" ]; then
-		mkdir -p "$PROJECT_DIR"
 		cd "$PROJECT_DIR"
 		git init
 		git remote add origin "$REPO_VOLUME"
@@ -152,6 +151,8 @@ copy_files () {
 run_tests () {
 	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] pwd=$(pwd)"
 
+	npm run clean
+
 	if [ "$TEST_PROJECT" = "package" ]; then
 		.circleci/package.sh
 	elif [ "$TEST_PROJECT" = "base" ]; then
@@ -167,8 +168,9 @@ run_tests () {
 }
 
 run_tests_base () {
-	echo "[$0 ${FUNCNAME[0]}] pwd=$(pwd)"
+	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] pwd=$(pwd)"
 	log_timing "run_tests_base"
+
 	set -eo pipefail ## matches the behavior of CircleCI
 	if ! .circleci/run_test_wrapper.sh; then
 		echo "run_tests failed"

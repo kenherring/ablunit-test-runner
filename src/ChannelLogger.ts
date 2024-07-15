@@ -6,9 +6,7 @@ class Logger {
 	private static readonly instance: Logger = new Logger()
 
 	private readonly logOutputChannel
-	// private readonly consoleLogLevel = LogLevel.Debug
 	private readonly consoleLogLevel = LogLevel.Info
-	// private readonly consoleLogLevel = LogLevel.Error
 	private readonly testResultsLogLevel = LogLevel.Info
 	private logLevel: number
 	private readonly consoleTimestamp = process.env['ABLUNIT_TEST_RUNNER_UNIT_TESTING'] === 'true'
@@ -24,9 +22,6 @@ class Logger {
 	}
 
 	public static getInstance () {
-		// if (!Logger.instance) {
-		// 	Logger.instance = new Logger()
-		// }
 		Logger.instance.clearOutputChannel()
 		return Logger.instance
 	}

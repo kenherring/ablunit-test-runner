@@ -65,7 +65,7 @@ export function getRcodeCount (workspaceFolder?: WorkspaceFolder) {
 	const g = globSync('**/*.r', { cwd: workspaceFolder.uri.fsPath })
 	const fileCount = g.length
 	if (fileCount >= 0) {
-		log.info('found ' + fileCount + ' r-code files')
+		log.info('found ' + fileCount + ' rcode files')
 		return fileCount
 	}
 	log.error('fileCount is not a number! fileCount=' + fileCount)

@@ -124,7 +124,7 @@ initialize () {
 }
 
 run_tests_in_docker () {
-	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}]"
+	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] pwd=$(pwd)"
 	local ABLUNIT_TEST_RUNNER_OE_VERSION
 
 	# export NVIDIA_VISIBLE_DEVICES=none

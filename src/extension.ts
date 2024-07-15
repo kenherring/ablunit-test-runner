@@ -43,13 +43,13 @@ function unknownToError (e: unknown) {
 export async function activate (context: ExtensionContext) {
 	const ctrl = tests.createTestController('ablunitTestController', 'ABLUnit Test')
 	let currentTestRun: TestRun | undefined = undefined
-	const isRefreshTestsComplete = false
+	let isRefreshTestsComplete = false
 	let runWithCoverage = false
 
 	logActivationEvent(context.extensionMode)
 
-	contextStorageUri = context.storageUri ?? Uri.file(process.env['TEMP'] ?? '') // will always be defined as context.storageUri
-	contextResourcesUri = Uri.joinPath(context.extensionUri, 'resources')
+	const contextStorageUri = context.storageUri ?? Uri.file(process.env['TEMP'] ?? '') // will always be defined as context.storageUri
+	const contextResourcesUri = Uri.joinPath(context.extensionUri, 'resources')
 	setContextPaths(contextStorageUri, contextResourcesUri)
 	await createDir(contextStorageUri)
 	// const decorationProvider = new DecorationProvider()
@@ -60,23 +60,10 @@ export async function activate (context: ExtensionContext) {
 	log.info('DONT_PROMPT_WSL_INSTALL=' + process.env['DONT_PROMPT_WSL_INSTALL'])
 	log.info('VSCODE_SKIP_PRELAUNCH=' + process.env['VSCODE_SKIP_PRELAUNCH'])
 
-
-	const getExtensionTestReferences = () => {
-		let data: ABLResults[] = []
-		if (currentTestRun) {
-			data = resultData.get(currentTestRun) ?? []
-		}
-		const ret = {
-			testController: ctrl,
-			recentResults: recentResults,
-			currentRunData: data
-		} as IExtensionTestReferences
-		log.debug('_ablunit.getExtensionTestReferences currentRunData.length=' + ret.currentRunData.length + ', recentResults.length=' + ret.recentResults.length)
-		return ret
-	}
-
-	if ((process.env['ABLUNIT_TEST_RUNNER_UNIT_TESTING'] ?? 'false') !== 'false') {
-		context.subscriptions.push(commands.registerCommand('_ablunit.getExtensionTestReferences', getExtensionTestReferences))
+	if (process.env['ABLUNIT_TEST_RUNNER_UNIT_TESTING'] === 'true') {
+		log.info('add _ablunit.getExtensionTestReferences command')
+		context.subscriptions.push(commands.registerCommand('_ablunit.getExtensionTestReferences', () => { return getExtensionTestReferences() }))
+		context.subscriptions.push(commands.registerCommand('_ablunit.isRefreshTestsComplete', () => { return isRefreshTestsComplete }))
 	}
 	log.info('ABLUnit Test Controller created')
 
@@ -100,6 +87,20 @@ export async function activate (context: ExtensionContext) {
 		// watcher.onDidChange(uri => { createOrUpdateFile(controller, uri) })
 		// watcher.onDidDelete(uri => { controller.items.delete(uri.fsPath) })
 	)
+
+	const getExtensionTestReferences = () => {
+		let data: ABLResults[] = []
+		if (currentTestRun) {
+			data = resultData.get(currentTestRun) ?? []
+		}
+		const ret = {
+			testController: ctrl,
+			recentResults: recentResults,
+			currentRunData: data
+		} as IExtensionTestReferences
+		log.debug('_ablunit.getExtensionTestReferences currentRunData.length=' + ret.currentRunData.length + ', recentResults.length=' + ret.recentResults.length)
+		return ret
+	}
 
 	const runHandler = (request: TestRunRequest, token: CancellationToken): Promise<void> => {
 		if (request.continuous) {
@@ -393,7 +394,9 @@ export async function activate (context: ExtensionContext) {
 		}
 
 		if (item.uri) {
-			return updateNodeForDocument(item, 'resolve')
+			return updateNodeForDocument(item, 'resolve').then(() => {
+				return
+			})
 		}
 
 		const data = testData.get(item)
@@ -403,12 +406,20 @@ export async function activate (context: ExtensionContext) {
 		return Promise.resolve(undefined)
 	}
 
-	ctrl.refreshHandler = (token: CancellationToken) => {
-		log.info('ctrl.refreshHandler')
-		return refreshTestTree(ctrl, token).catch((err: unknown) => {
-			log.error('refreshTestTree failed. err=' + err)
-			throw err
-		})
+	ctrl.refreshHandler = async (token: CancellationToken) => {
+		log.info('ctrl.refreshHandler start')
+		isRefreshTestsComplete = false
+		const prom = refreshTestTree(ctrl, token)
+			.then((r) => {
+				log.info('ctrl.refreshHandler post-refreshTestTree')
+				return r
+			})
+			.catch((e: unknown) => { throw e })
+		log.info('ctrl.refreshHandler await prom')
+		const r = await prom.then((r) => { return r }, (e) => { throw e })
+		log.info('ctrl.refreshHandler return (r=' + r + ')')
+		isRefreshTestsComplete = true
+		return
 	}
 
 	ctrl.resolveHandler = item => {
@@ -853,7 +864,7 @@ async function parseMatchingFiles (files: Uri[], controller: TestController, exc
 	return r
 }
 
-function refreshTestTree (controller: TestController, token: CancellationToken) {
+function refreshTestTree (controller: TestController, token: CancellationToken): Promise<boolean> {
 	log.info('refreshing test tree...')
 	const startTime = Date.now()
 	const searchCount = 0
@@ -898,7 +909,7 @@ function refreshTestTree (controller: TestController, token: CancellationToken) 
 			log.info('return  true (r=' + r + ')')
 			return true
 		})
-	return prom1.then(() => { return }, (e: unknown) => { throw e })
+	return prom1.catch((e: unknown) => { throw e })
 }
 
 function getControllerTestFileCount (controller: TestController) {

@@ -5,6 +5,7 @@ set -euo pipefail
 
 validate_results_count() {
 	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] VERBOSE='${VERBOSE:-}'"
+	EXPECTED_VSIX_COUNT=${EXPECTED_VSIX_COUNT:-1}
 	VERBOSE=${VERBOSE:-false}
 	TEST_COUNT=$(find test/suites -name "*.test.ts" | wc -l)
 	if [ ! -d artifacts ]; then

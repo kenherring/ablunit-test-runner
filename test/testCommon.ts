@@ -355,7 +355,7 @@ function getRcodeCount (workspaceFolder?: WorkspaceFolder) {
 	const g = globSync('**/*.r', { cwd: workspaceFolder.uri.fsPath })
 	const fileCount = g.length
 	if (fileCount >= 0) {
-		log.info('found ' + fileCount + ' r-code files')
+		log.info('found ' + fileCount + ' rcode files')
 		return fileCount
 	}
 	log.error('fileCount is not a number! fileCount=' + fileCount)
@@ -435,20 +435,20 @@ export async function awaitRCode (workspaceFolder: WorkspaceFolder, rcodeCountMi
 	})
 
 
-	log.info('waiting up to ' + buildWaitTime + ' seconds for r-code')
+	log.info('waiting up to ' + buildWaitTime + ' seconds for rcode')
 	for (let i = 0; i < buildWaitTime; i++) {
 		const rcodeCount = getRcodeCount(workspaceFolder)
 		if (rcodeCount >= rcodeCountMinimum) {
 			log.info('compile complete! rcode count = ' + rcodeCount)
 			return rcodeCount
 		}
-		log.info('found ' + rcodeCount + ' r-code files. waiting... (' + i + '/' + buildWaitTime + ')')
+		log.info('found ' + rcodeCount + ' rcode files. waiting... (' + i + '/' + buildWaitTime + ')')
 		await sleep2(500)
 	}
 
 	await commands.executeCommand('abl.dumpFileStatus').then(() => { log.info('abl.dumpFileStatus complete!'); return })
 	await commands.executeCommand('abl.dumpLangServStatus').then(() => { log.info('abl.dumpLangServStatus complete!'); return })
-	throw new Error('r-code files not found')
+	throw new Error('rcode files not found')
 }
 
 export function getWorkspaceFolders () {
@@ -950,7 +950,7 @@ export function refreshData (resultsLen = 0) {
 		log.info('refs=' + JSON.stringify(refs))
 		const passedTests = refs.recentResults[0].ablResults?.resultsJson[0].testsuite?.[0].passed ?? undefined
 		log.info('recentResults.length=' + refs.recentResults.length)
-		log.info('recentResults[0].ablResults.=' + refs.recentResults[0].status)
+		log.info('recentResults[0].status=' + refs.recentResults[0].status)
 		log.info('recentResults[0].ablResults.resultsJson.length=' + recentResults?.[0].ablResults?.resultsJson.length)
 		log.info('passedTests=' + passedTests)
 
@@ -1014,10 +1014,12 @@ export async function getCurrentRunData (len = 1, resLen = 0, tag?: string) {
 			const prom = sleep2(100, tag + 'still no currentRunData, sleep before trying again (' + i + '/15)').then(() => {
 				return refreshData(resLen).then(() => {
 					log.debug('refresh success')
+					return
 				}, (err) => {
 					log.error('refresh failed: ' + err)
 				})
 			})
+			await prom
 			log.info(tag + 'currentRunData.length=' + currentRunData?.length)
 			if ((currentRunData?.length ?? 0) > 0) {
 				break

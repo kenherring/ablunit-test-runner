@@ -1,5 +1,5 @@
 import { Uri, commands, window, workspace, Range, TextEditor, FileCoverageDetail } from 'vscode'
-import { assert, deleteFile, getResults, getWorkspaceFolders, log, runAllTests, sleep, toUri, updateTestProfile } from '../testCommon'
+import { assert, deleteFile, getResults, getWorkspaceFolders, log, runAllTests, sleep, suiteSetupCommon, toUri, updateTestProfile } from '../testCommon'
 
 const projName = 'proj0'
 
@@ -21,19 +21,10 @@ function getDetailLine (coverage: FileCoverageDetail[] | never[], lineNum: numbe
 suite('proj0  - Extension Test Suite', () => {
 
 	suiteSetup('proj0 - before', async () => {
-		deleteFile('.vscode/ablunit-test-profile.json')
+		await suiteSetupCommon()
 		await commands.executeCommand('testing.clearTestResults')
+		deleteFile('.vscode/ablunit-test-profile.json')
 		return
-		// log.info('100')
-		// suiteSetupCommon().then(() => {
-		// 	log.info('101')
-		// 	done()
-		// 	log.info('102')
-		// }, (e) => {
-		// 	log.info('103')
-		// 	done(e)
-		// 	log.info('104')
-		// })
 	})
 
 	teardown('proj0 - afterEach', () => {
@@ -54,7 +45,7 @@ suite('proj0  - Extension Test Suite', () => {
 		return prom
 	})
 
-	// TODO - fix before merge !!!
+	// TODO - fix before merge
 
 	// test('proj0.2 - run test, open file, validate coverage displays', async () => {
 	// 	await runAllTests()

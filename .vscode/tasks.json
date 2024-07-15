@@ -5,22 +5,22 @@
 	"tasks": [
 		{
 			"label": "folderOpen",
-			"detail": "run on workspace load",
+			// "detail": "run on workspace load",
 			"hide": true,
 			"type": "shell",
 			"dependsOn": [
 				"npm clean",
 				"npm pretest",
-				"npm watch"
+				"npm watch",
 			],
 			"dependsOrder": "sequence",
 			"presentation": {
 				"reveal": "always",
-				"group": "build-task"
+				"group": "build-task",
 			},
-			"runOptions": {
-				"runOn": "folderOpen"
-			},
+			// "runOptions": {
+			// 	"runOn": "folderOpen"
+			// }
 		},
 		{
 			"label": "npm clean",
@@ -30,8 +30,8 @@
 			"isBackground": true,
 			"presentation": {
 				"reveal": "always",
-				"group": "build-task"
-			},
+				"group": "build-task",
+			}
 		},
 		{
 			"label": "npm package",
@@ -50,14 +50,15 @@
 			"isBackground": true,
 			"presentation": {
 				"reveal": "always",
-				"group": "build-task"
-			},
+				"group": "build-task",
+			}
 		},
 		{
 			"label": "npm watch",
 			"detail": "webpack --mode development --watch",
 			"type": "npm",
 			"script": "watch",
+			"problemMatcher": "$ts-webpack-watch",
 			"isBackground": true,
 			"presentation": {
 				"reveal": "always",
@@ -66,8 +67,7 @@
 			"group": {
 				"kind": "build",
 				"isDefault": true
-			},
-			"problemMatcher":  "$ts-webpack-watch",
+			}
 		},
 		{
 			"label": "run all tests in docker",
@@ -87,7 +87,7 @@
 				"'${relativeFile}'",
 				"-m"
 			],
-			"problemMatcher": [],
+			"problemMatcher": []
 		},
 		{
 			"type": "npm",
@@ -96,16 +96,16 @@
 				"$eslint-stylish"
 			],
 			"label": "npm: lint",
-			"detail": "npx eslint ./src --ext .ts,.js",
+			"detail": "npx eslint ./src --ext .ts,.js"
 		},
 		{
 			"type": "npm",
 			"script": "lint-fix-all",
 			"problemMatcher": [
-				"$eslint-stylish",
+				"$eslint-stylish"
 			],
 			"label": "npm: lint-fix-all",
-			"detail": "npx eslint ./src --ext .ts,.js --fix",
+			"detail": "npx eslint ./src --ext .ts,.js --fix"
 		},
 		{
 			"label": "npm: build",

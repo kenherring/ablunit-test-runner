@@ -42,7 +42,7 @@ export class ABLUnitConfig  {
 	}
 
 	createProgressIni (propath: string) {
-		if (platform() != 'win32') { return Promise.resolve()}
+		if (platform() != 'win32') { return Promise.resolve() }
 		log.info('creating progress.ini: \'' + this.ablunitConfig.progressIniUri.fsPath + '\'')
 		const iniData = ['[WinChar Startup]', 'PROPATH=' + propath]
 		const iniBytes = Uint8Array.from(Buffer.from(iniData.join('\n')))
@@ -57,6 +57,7 @@ export class ABLUnitConfig  {
 				if (stat.type != FileType.Directory) {
 					throw new Error('configJson.output.location is not a Directory: ' + this.ablunitConfig.optionsUri.locationUri.fsPath)
 				}
+				return
 			}, () => {
 				return this.createDir(this.ablunitConfig.optionsUri.locationUri)
 			})

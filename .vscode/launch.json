@@ -27,9 +27,9 @@
 			"request": "launch",
 			"runtimeExecutable": "${execPath}",
 			"args": [
+				"--extensionDevelopmentPath=${workspaceFolder}/dummy-ext",
 				"--install-extension=ablunit-test-runner-0.2.1.vsix",
 				"--install-extension=riversidesoftware.openedge-abl-lsp",
-				"--extensionDevelopmentPath=${workspaceFolder}/dummy-ext",
 				"--enable-proposed-api=kherring.ablunit-test-runner",
 				"${workspaceFolder}/test_projects/${input:workspaceName}"
 			]
@@ -48,30 +48,30 @@
 				"${workspaceFolder}/out/**/*.js"
 			]
 		},
-		{
-			"name": "Extension Tests",
-			"type": "extensionHost",
-			"request": "launch",
-			"testConfiguration": "${workspaceFolder}/.vscode-test.mjs",
-			"args": [
-				"--extensionDevelopmentPath=${workspaceFolder}"
-			],
-			"sourceMaps": true,
-			"resolveSourceMapLocations": [
-				"${workspaceFolder}/**",
-				"!**/node_modules/**"
-			]
-		},
-		{
-			"name": "Extension Tests - AtStart",
-			"type": "extensionHost",
-			"request": "launch",
-			"runtimeExecutable": "${execPath}",
-			"args": [
-				"--extensionDevelopmentPath=${workspaceFolder}",
-				"--extensionTestsPath=${workspaceFolder}/test/suites/AtStart.test.ts",
-			],
-		},
+		// {
+		// 	"name": "Extension Tests",
+		// 	"type": "extensionHost",
+		// 	"request": "launch",
+		// 	"testConfiguration": "${workspaceFolder}/.vscode-test.mjs",
+		// 	"args": [
+		// 		"--extensionDevelopmentPath=${workspaceFolder}"
+		// 	],
+		// 	"sourceMaps": true,
+		// 	"resolveSourceMapLocations": [
+		// 		"${workspaceFolder}/**",
+		// 		"!**/node_modules/**"
+		// 	]
+		// },
+		// {
+		// 	"name": "Extension Tests - AtStart",
+		// 	"type": "extensionHost",
+		// 	"request": "launch",
+		// 	"runtimeExecutable": "${execPath}",
+		// 	"args": [
+		// 		"--extensionDevelopmentPath=${workspaceFolder}",
+		// 		"--extensionTestsPath=${workspaceFolder}/test/suites/AtStart.test.ts",
+		// 	],
+		// },
 	],
 	"inputs": [
 		{
