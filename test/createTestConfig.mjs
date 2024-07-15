@@ -76,7 +76,7 @@ function getMochaOpts (projName) {
 		// ui: 'tdd', // describe, it, etc
 		// ui: 'bdd' // default; suite, test, etc
 		parallel: false,
-		bail: false,
+		bail: true,
 		require: [
 			'mocha'
 		],
