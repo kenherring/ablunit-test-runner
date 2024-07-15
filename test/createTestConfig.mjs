@@ -60,7 +60,8 @@ function getMochaTimeout (projName) {
 
 
 function getMochaOpts (projName) {
-	const reporterDir = path.resolve(__dirname, '..', 'artifacts', vsVersion + '-' + oeVersion)
+	// const reporterDir = path.resolve(__dirname, '..', 'artifacts', vsVersion + '-' + oeVersion)
+	const reporterDir = path.resolve(__dirname, '..', 'artifacts')
 	fs.mkdirSync(reporterDir, { recursive: true })
 	// const jsonFile = path.resolve(reporterDir, 'mocha_results_' + projName + '.json')
 	// const xunitFile = path.resolve(reporterDir, 'mocha_results_xunit_' + projName + '.xml')
