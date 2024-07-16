@@ -52,7 +52,8 @@ function getMochaTimeout (projName) {
 		case 'DebugLines': return 120000 // install openedge-abl-lsp for the first time, so give it a moment to start
 		case 'proj1': return 30000
 		// case 'proj2': return 20000
-		case 'proj5': return 30000
+		case 'proj5': return 45000
+		case 'proj8': return 30000
 		case 'proj7A': return 60000
 	}
 
@@ -68,7 +69,6 @@ function getMochaOpts (projName) {
 	const mochaFile = path.resolve(reporterDir, 'mocha_results_junit_' + projName + '.xml')
 	const sonarFile = path.resolve(reporterDir, 'mocha_results_sonar_' + projName + '.xml')
 	const xunitFile = path.resolve(reporterDir, 'mocha_results_xunit_' + projName + '.xml')
-	console.log('mochaFile=', mochaFile)
 	// const bail = process.env['CIRCLECI'] != 'true' || false
 
 	const mochaOpts = {
