@@ -8,7 +8,7 @@ interface IRuntime {
 	default?: boolean
 }
 
-export async function enableOpenedgeAblExtension (runtimes?: IRuntime[]) {
+export async function enableOpenedgeAblExtension (runtimes: IRuntime[]) {
 	const extname = 'riversidesoftware.openedge-abl-lsp'
 	await installExtension(extname)
 	await activateExtension(extname)
@@ -142,7 +142,7 @@ export async function waitForLangServerReady () {
 	throw new Error('lang server is not ready!')
 }
 
-export async function setRuntimes (runtimes?: IRuntime[]) {
+export async function setRuntimes (runtimes: IRuntime[] = []) {
 	const duration = new Duration('setRuntimes')
 	if (!enableExtensions()) {
 		throw new Error('setRuntimes failed! extensions are disabled')
@@ -170,25 +170,6 @@ export async function setRuntimes (runtimes?: IRuntime[]) {
 	}
 
 	log.info('workspace.getConfiguration("abl").update("configuration.runtimes") - START')
-	// const hasConf = workspace.getConfiguration('abl').has('configuration')3
-	// log.info('hasConf=' + hasConf)
-	// if (!hasConf) {
-	// 	log.info('setting abl.configuration.runtimes')
-	// 	return workspace.getConfiguration('abl').update('configuration.runtimes', runtimes, true)
-	// 		.then(() => {
-	// 			log.info('workspace.getConfiguration("abl").update(configuration.runtimes) - END')
-	// 			return restartLangServer()
-	// 		})
-	// 		.then(() => {
-	// 			log.info('restartLangServer complete ' + duration)
-	// 			return true
-	// 		}, (e: unknown) => {
-	// 			if (e instanceof Error) {
-	// 				throw e
-	// 			}
-	// 			throw new Error('setRuntimes failed! e=' + e)
-	// 		})
-	// }
 	const r = await workspace.getConfiguration('abl').update('configuration.runtimes', runtimes, true)
 		.then(() => {
 			log.info('workspace.getConfiguration("abl").update(configuration.runtimes) - END')

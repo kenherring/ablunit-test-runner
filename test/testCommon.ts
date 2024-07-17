@@ -141,7 +141,7 @@ function getExtensionDevelopmentPath () {
 	throw new Error('unable to determine extensionDevelopmentPath')
 }
 
-export async function suiteSetupCommon (runtimes?: IRuntime[]) {
+export async function suiteSetupCommon (runtimes: IRuntime[] = []) {
 	if (!runtimes) {
 		runtimes = [{ name: oeVersion(), path: getDefaultDLC(), default: true }]
 	}

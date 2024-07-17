@@ -76,6 +76,7 @@ function getMochaOpts (projName) {
 		timeout: getMochaTimeout(projName),
 		// ui: 'tdd', // describe, it, etc
 		// ui: 'bdd' // default; suite, test, etc
+		retries: 0,
 		parallel: false,
 		bail: true,
 		require: [
@@ -92,11 +93,11 @@ function getMochaOpts (projName) {
 		// console.log('adding reporter...')
 		mochaOpts.reporter = 'mocha-multi-reporters'
 		mochaOpts.reporterOptions = {
-			reporterEnabled: [ 'json-stream', 'spec', 'mocha-junit-reporter', 'mocha-sonarqube-reporter', 'mocha-xunit-reporter' ],
+			reporterEnabled: [ 'json-stream', 'spec', 'mocha-junit-reporter', 'mocha-reporter-sonarqube', 'mocha-xunit-reporter' ],
 			// jsonReporterOptions: { output: jsonFile },
 			xunitReporterOptions: { output: xunitFile },
 			mochaJunitReporterReporterOptions: { mochaFile: mochaFile },
-			mochaSonarqubeReporterReporterOptions: { output: sonarFile },
+			mochaSonarqubeReporterReporterOptions: { filename: sonarFile },
 		}
 	}
 

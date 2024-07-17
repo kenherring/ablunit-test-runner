@@ -6,9 +6,7 @@ const projName = 'proj8'
 
 suite('proj8 - Extension Test Suite', () => {
 
-	suiteSetup('proj8 - before', async () => {
-		await suiteSetupCommon()
-	})
+	suiteSetup('proj8 - before', suiteSetupCommon)
 
 	test('proj8.1 - test count', () => {
 		const prom = runAllTests()
