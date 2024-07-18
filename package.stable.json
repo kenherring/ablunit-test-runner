@@ -74,9 +74,6 @@
 		"onStartupFinished"
 	],
 	"main": "./dist/extension.js",
-	"files": [
-		"src"
-	],
 	"scripts": {
 		"build": "npm run webpack",
 		"rebuild": "npm run clean && npm run webpack",
@@ -103,7 +100,7 @@
 		"@istanbuljs/nyc-config-typescript": "^1.0.2",
 		"@stylistic/eslint-plugin": "^2.3.0",
 		"@types/mocha": "^10.0.7",
-		"@types/node": "^20.14.10",
+		"@types/node": "^18",
 		"@types/source-map-support": "^0.5.10",
 		"@types/vscode": "1.88.0",
 		"@types/xml2js": "^0.4.14",

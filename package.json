@@ -74,9 +74,6 @@
 		"onStartupFinished"
 	],
 	"main": "./dist/extension.js",
-	"files": [
-		"src"
-	],
 	"scripts": {
 		"build": "npm run webpack",
 		"rebuild": "npm run clean && npm run webpack",
