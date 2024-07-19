@@ -1,4 +1,4 @@
-import { WorkspaceFolder, cwwwaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaawaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaax ommands, extensions, workspace } from 'vscode'
+import { WorkspaceFolder, commands, extensions, workspace } from 'vscode'
 import { Duration, activateExtension, enableExtensions, getDefaultDLC, getRcodeCount, installExtension, log, oeVersion, sleep2, updateConfig } from './testCommon'
 
 interface IRuntime {
@@ -12,7 +12,7 @@ export async function enableOpenedgeAblExtension (runtimes: IRuntime[]) {
 	await installExtension(extname)
 	await activateExtension(extname)
 	await setRuntimes(runtimes)
-	awrebuildAblProject().then(() => {
+	rebuildAblProject().then(() => {
 		log.info('riversidesoftware.openedge-abl-lsp extension is enabled!')
 
 
