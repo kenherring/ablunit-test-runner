@@ -18,7 +18,7 @@ import { ITestSuites } from '../src/parse/ResultsParser'
 import { IConfigurations, parseRunProfiles } from '../src/parse/TestProfileParser'
 import { DefaultRunProfile, IRunProfile as IRunProfileGlobal } from '../src/parse/config/RunProfile'
 import { RunStatus } from '../src/ABLUnitRun'
-import { enableOpenedgeAblExtension, rebuildAblProject, restartLangServer, setRuntimes } from './openedgeAblCommands'
+import { enableOpenedgeAblExtension, rebuildAblProject, restartLangServer, setRuntimes, waitForLangServerReady } from './openedgeAblCommands'
 import path from 'path'
 
 interface IRuntime {
@@ -265,24 +265,24 @@ export async function activateExtension (extname = 'riversidesoftware.openedge-a
 	log.info('active? ' + ext.isActive)
 
 	if (!ext.isActive) {
-		log.info('activate')
+		log.info('ext.activate')
 		await ext.activate().then(() => {
 			log.info('activated ' + extname + ' extension!')
 		}, (e: unknown) => { throw e })
 	}
 	await sleep2(250)
-	// if (extname === 'riversidesoftware.openedge-abl-lsp') {
-	// 	await waitForLangServerReady()
-	// }
+	if (extname === 'riversidesoftware.openedge-abl-lsp') {
+		await waitForLangServerReady()
+	}
 	log.info('isActive=' + ext.isActive)
 	return ext.isActive
 }
 
 async function waitForExtensionActive (extensionId = 'kherring.ablunit-test-runner') {
 	let ext = extensions.getExtension(extensionId)
+
 	if (!ext) {
-		ext = await sleep2(250, 'wait and retry getExtension')
-			.then(() => { return extensions.getExtension(extensionId) })
+		throw new Error('extension not installed: ' + extensionId)
 	}
 	if (!ext) { throw new Error(extensionId + ' is not installed') }
 	if (ext.isActive) { log.info(extensionId + ' is already active'); return ext.isActive }
@@ -310,26 +310,25 @@ async function waitForExtensionActive (extensionId = 'kherring.ablunit-test-runn
 	return ext.isActive
 }
 
-function getRcodeCount (workspaceFolder?: WorkspaceFolder) {
+export function getRcodeCount (workspaceFolder?: WorkspaceFolder) {
 	if (!workspaceFolder) {
 		workspaceFolder = workspace.workspaceFolders?.[0]
 	}
 	if (!workspaceFolder) {
 		throw new Error('workspaceFolder is undefined')
 	}
+
 	const g = globSync('**/*.r', { cwd: workspaceFolder.uri.fsPath })
 	const fileCount = g.length
 	if (fileCount >= 0) {
-		log.info('found ' + fileCount + ' r-code files')
 		return fileCount
 	}
-	log.error('fileCount is not a number! fileCount=' + fileCount)
-	return -1
+	throw new Error('fileCount is not a positive number! fileCount=' + fileCount)
 }
 
 export async function awaitRCode (workspaceFolder: WorkspaceFolder, rcodeCountMinimum = 1) {
 	const ext = extensions.getExtension('riversidesoftware.openedge-abl-lsp')
-	log.info('[awaitRCode] isActive=' + ext?.isActive)
+	log.info('isActive=' + ext?.isActive)
 	if (!ext?.isActive) {
 		log.info('[awaitRCode] extension not active! (ext=' + JSON.stringify(ext) + ')')
 		throw new Error('openedge-abl-lsp is not active! rcode cannot be created')
