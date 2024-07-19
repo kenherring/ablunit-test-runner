@@ -142,7 +142,7 @@ function getExtensionDevelopmentPath () {
 }
 
 export async function suiteSetupCommon (runtimes: IRuntime[] = []) {
-	if (!runtimes) {
+	if (!runtimes || runtimes.length === 0) {
 		runtimes = [{ name: oeVersion(), path: getDefaultDLC(), default: true }]
 	}
 	log.info('[suiteSetupCommon] waitForExtensionActive \'kherring.ablunit-test-runner\' (projName=' + projName() + ')')

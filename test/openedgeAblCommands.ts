@@ -12,34 +12,15 @@ export async function enableOpenedgeAblExtension (runtimes: IRuntime[]) {
 	await installExtension(extname)
 	await activateExtension(extname)
 	await setRuntimes(runtimes)
-	rebuildAblProject().then(() => {
-		log.info('riversidesoftware.openedge-abl-lsp extension is enabled!')
-
-
-		// const prom = setRuntimes(runtimes)
-		const current = workspace.getConfiguration('abl').get('configuration.runtimes')
-		log.info('current=' + JSON.stringify(current))
-		log.info(' set to=' + JSON.stringify(runtimes))
-		if (JSON.stringify(current) === JSON.stringify(runtimes)) {
-			log.info('runtimes are already set')
-			return
-		}
-
-		// log.info('workspace.getConfiguration(\'abl\').update(\'configuration.runtimes\')')
-		// const prom = workspace.getConfiguration('abl').update('configuration.runtimes', JSON.stringify(runtimes), true)
-		log.info('workspace.getConfiguration(\'abl.configuration\').update(\'runtimes\')')
-		return workspace.getConfiguration('abl.configuration').update('runtimes', JSON.stringify(runtimes), true)
-
-	}).then(() => {
-		log.info('update complete')
-		return getRcodeCount()
-	}).then((rcodeCount) => {
-		log.info('rebuild complete! (rcodeCount=' + rcodeCount + ')')
-		return true
-	}).then((r) => {
-		log.info('riversidesoftware.openedge-abl-lsp extension is enabled! (r=' + r + ')')
-		return true
-	}, (e) => { throw e })
+	return rebuildAblProject()
+		.then(() => {
+			log.info('update complete')
+			return getRcodeCount()
+		}).then((rcodeCount) => {
+			log.info('rebuild complete! (rcodeCount=' + rcodeCount + ')')
+			log.info('riversidesoftware.openedge-abl-lsp extension is enabled!')
+			return true
+		}, (e) => { throw e})
 }
 
 export function restartLangServer () {
@@ -82,7 +63,7 @@ export async function waitForLangServerReady () {
 	// now wait until it is ready
 	let dumpSuccess = false
 	for (let i = 0; i < maxWait; i++) {
-		log.info('abl.dumpLangServStatus (i=' + i + ')')
+		log.info('start abl.dumpLangServStatus (i=' + i + ')')
 		dumpSuccess = await commands.executeCommand('abl.dumpLangServStatus').then(() => {
 			return true
 		}, (e) => {
@@ -90,7 +71,7 @@ export async function waitForLangServerReady () {
 			return false
 		})
 		await sleep2(400)
-		log.info('abl.dumpLangServStatus: i=' + i + ' ' + waitTime + ' (dumpSuccess=' + dumpSuccess + ')')
+		log.info('end abl.dumpLangServStatus:' + dumpSuccess + ', i=' + i + ' ' + waitTime + ' (dumpSuccess=' + dumpSuccess + ')')
 		if (dumpSuccess) {
 			break
 		}
