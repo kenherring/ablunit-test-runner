@@ -1,5 +1,5 @@
 import { Uri, workspace } from 'vscode'
-import { assert, deleteFile, deleteTestFiles, getTestCount, getWorkspaceUri, log, runAllTests, selectProfile, updateTestProfile, waitForExtensionActive } from '../testCommon'
+import { assert, deleteFile, deleteTestFiles, getTestCount, getWorkspaceUri, log, runAllTests, selectProfile, suiteSetupCommon, updateTestProfile } from '../testCommon'
 
 // const projName = __dirname.split(/[\\/]/).pop()!
 const projName = 'proj9'
@@ -9,8 +9,7 @@ const testProfileBackup = Uri.joinPath(getWorkspaceUri(), '.vscode/ablunit-test-
 suite('proj9 - Extension Test Suite', () => {
 
 	suiteSetup('proj9 - before', async () => {
-		await waitForExtensionActive()
-		await waitForExtensionActive('riversidesoftware.openedge-abl-lsp')
+		await suiteSetupCommon()
 		await workspace.fs.copy(testProfileJson, testProfileBackup, { overwrite: true }).then()
 	})
 

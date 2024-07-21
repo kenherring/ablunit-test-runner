@@ -1,5 +1,5 @@
 import { Uri } from 'vscode'
-import { assert, getResults, getWorkspaceUri, runAllTests, waitForExtensionActive } from '../testCommon'
+import { assert, getResults, getWorkspaceUri, runAllTests, suiteSetupCommon } from '../testCommon'
 import { getEnvVars } from '../../src/ABLUnitRun'
 
 const projName = 'proj8'
@@ -7,11 +7,11 @@ const projName = 'proj8'
 suite('proj8 - Extension Test Suite', () => {
 
 	suiteSetup('proj8 - before', async () => {
-		await waitForExtensionActive()
+		await suiteSetupCommon()
 	})
 
 	test('proj8.1 - test count', () => {
-		return runAllTests()
+		const prom = runAllTests()
 			.then(() => {
 				const resultsXml = Uri.joinPath(getWorkspaceUri(), 'target', 'results.xml')
 				const resultsJson = Uri.joinPath(getWorkspaceUri(), 'target', 'results.json')
@@ -25,6 +25,7 @@ suite('proj8 - Extension Test Suite', () => {
 				assert.tests.passed(2)
 				return
 			})
+		return prom
 	})
 
 	test('proj8.2 - getEnvVars confirm PATH is set correctly', () => {

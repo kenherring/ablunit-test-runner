@@ -1,5 +1,5 @@
 import { Uri } from 'vscode'
-import { assert, getWorkspaceUri, runAllTests, waitForExtensionActive } from '../testCommon'
+import { assert, getWorkspaceUri, runAllTests, suiteSetupCommon } from '../testCommon'
 
 const projName = 'proj6'
 const workspaceUri = getWorkspaceUri()
@@ -7,7 +7,7 @@ const workspaceUri = getWorkspaceUri()
 suite('proj6 - Extension Test Suite', () => {
 
 	suiteSetup('proj6 - before', async () => {
-		await waitForExtensionActive()
+		await suiteSetupCommon()
 	})
 
 	test('proj6.1 - tempDir=.ablunit', async () => {

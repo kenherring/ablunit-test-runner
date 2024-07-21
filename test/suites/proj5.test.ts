@@ -3,7 +3,7 @@ import { Uri } from 'vscode'
 import { parseSuiteLines } from '../../src/parse/TestSuiteParser'
 import { parseTestClass } from '../../src/parse/TestClassParser'
 import { parseTestProgram } from '../../src/parse/TestProgramParser'
-import { getTestCount, getWorkspaceUri, log, runAllTests, waitForExtensionActive } from '../testCommon'
+import { getTestCount, getWorkspaceUri, log, runAllTests, suiteSetupCommon } from '../testCommon'
 import { getContentFromFilesystem, getLines } from '../../src/parse/TestParserCommon'
 
 
@@ -13,15 +13,18 @@ const workspaceUri = getWorkspaceUri()
 suite('proj5 - Extension Test Suite', () => {
 
 	suiteSetup('proj5 - before', async () => {
-		await waitForExtensionActive()
+		await suiteSetupCommon()
 	})
 
-	test('proj5.1 - test count', async () => {
-		await runAllTests()
-
+	test('proj5.1 - test count', () => {
 		const resultsJson = Uri.joinPath(workspaceUri, 'ablunit', 'results.json')
-		const testCount = await getTestCount(resultsJson)
-		assert(testCount > 100)
+		const prom = runAllTests()
+			.then(() => { return getTestCount(resultsJson) })
+			.then((testCount) => {
+				assert(testCount > 100)
+				return
+			}, (e) => { throw e })
+		return prom
 	})
 
 

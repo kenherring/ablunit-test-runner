@@ -1,5 +1,5 @@
 import { Uri } from 'vscode'
-import { assert, getDefaultDLC, getWorkspaceUri, installExtension, oeVersion, runAllTests, setRuntimes, waitForExtensionActive } from '../testCommon'
+import { assert, getDefaultDLC, getWorkspaceUri, installExtension, oeVersion, runAllTests, setRuntimes, suiteSetupCommon } from '../testCommon'
 
 const projName = 'proj3'
 const workspaceUri = getWorkspaceUri()
@@ -7,8 +7,7 @@ const workspaceUri = getWorkspaceUri()
 suite('proj3 - Extension Test Suite', () => {
 
 	suiteSetup('proj3 - suiteSetup', async () => {
-		await installExtension('riversidesoftware.openedge-abl-lsp')
-		await waitForExtensionActive()
+		await suiteSetupCommon()
 	})
 
 	setup('proj3 - beforeEach', async () => {

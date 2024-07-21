@@ -7,7 +7,7 @@ initialize () {
 	DONT_PROMPT_WSL_INSTALL=No_Prompt_please
 	ABLUNIT_TEST_RUNNER_DBUS_NUM=${ABLUNIT_TEST_RUNNER_DBUS_NUM:-3}
 	ABLUNIT_TEST_RUNNER_OE_VERSION=${ABLUNIT_TEST_RUNNER_OE_VERSION:-}
-	# ABLUNIT_TEST_RUNNER_RUN_SCRIPT_FLAG=true
+	ABLUNIT_TEST_RUNNER_RUN_SCRIPT_FLAG=${ABLUNIT_TEST_RUNNER_RUN_SCRIPT_FLAG:-true}
 	if [ -z "$ABLUNIT_TEST_RUNNER_OE_VERSION" ]; then
 		ABLUNIT_TEST_RUNNER_OE_VERSION=${OE_VERSION:-12.2.12}
 	fi
@@ -17,8 +17,7 @@ initialize () {
 		exit 1
 	fi
 
-	export ABLUNIT_TEST_RUNNER_DBUS_NUM ABLUNIT_TEST_RUNNER_OE_VERSION ABLUNIT_TEST_RUNNER_VSCODE_VERSION
-	# export ABLUNIT_TEST_RUNNER_DBUS_NUM ABLUNIT_TEST_RUNNER_OE_VERSION ABLUNIT_TEST_RUNNER_VSCODE_VERSION ABLUNIT_TEST_RUNNER_RUN_SCRIPT_FLAG
+	export ABLUNIT_TEST_RUNNER_DBUS_NUM ABLUNIT_TEST_RUNNER_OE_VERSION ABLUNIT_TEST_RUNNER_VSCODE_VERSION ABLUNIT_TEST_RUNNER_RUN_SCRIPT_FLAG
 	export DONT_PROMPT_WSL_INSTALL VERBOSE
 
 	echo "ABLUNIT_TEST_RUNNER_DBUS_NUM=$ABLUNIT_TEST_RUNNER_DBUS_NUM"
@@ -162,9 +161,10 @@ save_and_print_debug_output () {
 	find .vscode-test -name 'settings.json'
 	find .vscode-test -name 'settings.json' -exec cp {} artifacts \;
 	local FROM_DIR TO_DIR
-	FROM_DIR=$(find .vscode-test  -maxdepth 1 -type d -name 'vscode-*')
+	FROM_DIR=$(find .vscode-test  -maxdepth 1 -type d -name 'vscode-*' | tail -1)
 	TO_DIR=/home/circleci/.vscode-test/$(basename "$FROM_DIR")
 	if [ ! -d "$TO_DIR" ]; then
+		mkdir -p /home/circleci/.vscode-test/
 		cp -r "$FROM_DIR" "$TO_DIR"
 	fi
 

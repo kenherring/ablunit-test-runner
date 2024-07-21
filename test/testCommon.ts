@@ -18,7 +18,7 @@ import { ITestSuites } from '../src/parse/ResultsParser'
 import { IConfigurations, parseRunProfiles } from '../src/parse/TestProfileParser'
 import { DefaultRunProfile, IRunProfile as IRunProfileGlobal } from '../src/parse/config/RunProfile'
 import { RunStatus } from '../src/ABLUnitRun'
-import { enableOpenedgeAblExtension, rebuildAblProject, restartLangServer, setRuntimes } from './openedgeAblCommands'
+import { enableOpenedgeAblExtension, rebuildAblProject, restartLangServer, setRuntimes, waitForLangServerReady } from './openedgeAblCommands'
 import path from 'path'
 
 interface IRuntime {
@@ -141,8 +141,8 @@ function getExtensionDevelopmentPath () {
 	throw new Error('unable to determine extensionDevelopmentPath')
 }
 
-export async function suiteSetupCommon (runtimes?: IRuntime[]) {
-	if (!runtimes) {
+export async function suiteSetupCommon (runtimes: IRuntime[] = []) {
+	if (!runtimes || runtimes.length === 0) {
 		runtimes = [{ name: oeVersion(), path: getDefaultDLC(), default: true }]
 	}
 	log.info('[suiteSetupCommon] waitForExtensionActive \'kherring.ablunit-test-runner\' (projName=' + projName() + ')')
@@ -265,24 +265,24 @@ export async function activateExtension (extname = 'riversidesoftware.openedge-a
 	log.info('active? ' + ext.isActive)
 
 	if (!ext.isActive) {
-		log.info('activate')
+		log.info('ext.activate')
 		await ext.activate().then(() => {
 			log.info('activated ' + extname + ' extension!')
 		}, (e: unknown) => { throw e })
 	}
 	await sleep2(250)
-	// if (extname === 'riversidesoftware.openedge-abl-lsp') {
-	// 	await waitForLangServerReady()
-	// }
+	if (extname === 'riversidesoftware.openedge-abl-lsp') {
+		await waitForLangServerReady()
+	}
 	log.info('isActive=' + ext.isActive)
 	return ext.isActive
 }
 
-export async function waitForExtensionActive (extensionId = 'kherring.ablunit-test-runner') {
+async function waitForExtensionActive (extensionId = 'kherring.ablunit-test-runner') {
 	let ext = extensions.getExtension(extensionId)
+
 	if (!ext) {
-		ext = await sleep2(250, 'wait and retry getExtension')
-			.then(() => { return extensions.getExtension(extensionId) })
+		throw new Error('extension not installed: ' + extensionId)
 	}
 	if (!ext) { throw new Error(extensionId + ' is not installed') }
 	if (ext.isActive) { log.info(extensionId + ' is already active'); return ext.isActive }
@@ -310,26 +310,25 @@ export async function waitForExtensionActive (extensionId = 'kherring.ablunit-te
 	return ext.isActive
 }
 
-function getRcodeCount (workspaceFolder?: WorkspaceFolder) {
+export function getRcodeCount (workspaceFolder?: WorkspaceFolder) {
 	if (!workspaceFolder) {
 		workspaceFolder = workspace.workspaceFolders?.[0]
 	}
 	if (!workspaceFolder) {
 		throw new Error('workspaceFolder is undefined')
 	}
+
 	const g = globSync('**/*.r', { cwd: workspaceFolder.uri.fsPath })
 	const fileCount = g.length
 	if (fileCount >= 0) {
-		log.info('found ' + fileCount + ' r-code files')
 		return fileCount
 	}
-	log.error('fileCount is not a number! fileCount=' + fileCount)
-	return -1
+	throw new Error('fileCount is not a positive number! fileCount=' + fileCount)
 }
 
 export async function awaitRCode (workspaceFolder: WorkspaceFolder, rcodeCountMinimum = 1) {
 	const ext = extensions.getExtension('riversidesoftware.openedge-abl-lsp')
-	log.info('[awaitRCode] isActive=' + ext?.isActive)
+	log.info('isActive=' + ext?.isActive)
 	if (!ext?.isActive) {
 		log.info('[awaitRCode] extension not active! (ext=' + JSON.stringify(ext) + ')')
 		throw new Error('openedge-abl-lsp is not active! rcode cannot be created')
@@ -757,9 +756,10 @@ export function refreshData (resultsLen = 0) {
 
 	log.info('refreshData start')
 	return commands.executeCommand('_ablunit.getExtensionTestReferences').then((resp) => {
-		log.info('refreshData command complete (resp=' + JSON.stringify(resp) + ')')
+		// log.info('refreshData command complete (resp=' + JSON.stringify(resp) + ')')
+		log.info('getExtensionTestReferences command complete')
 		const refs = resp as IExtensionTestReferences
-		log.info('refs=' + JSON.stringify(refs))
+		// log.info('refs=' + JSON.stringify(refs))
 		const passedTests = refs.recentResults?.[0].ablResults?.resultsJson[0].testsuite?.[0].passed ?? undefined
 		log.info('recentResults.length=' + refs.recentResults.length)
 		log.info('recentResults[0].ablResults.=' + refs.recentResults?.[0].status)
