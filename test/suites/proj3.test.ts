@@ -1,5 +1,6 @@
 import { Uri } from 'vscode'
-import { assert, getDefaultDLC, getWorkspaceUri, oeVersion, runAllTests, setRuntimes, suiteSetupCommon } from '../testCommon'
+import { assert, getDefaultDLC, getWorkspaceUri, oeVersion, runAllTests, suiteSetupCommon } from '../testCommon'
+import { setRuntimes } from '../openedgeAblCommands'
 
 const workspaceUri = getWorkspaceUri()
 

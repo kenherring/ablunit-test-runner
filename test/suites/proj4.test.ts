@@ -1,6 +1,7 @@
 import { strict as assert } from 'assert'
 import { Uri } from 'vscode'
-import { deleteFile, doesFileExist, getDefaultDLC, getSessionTempDir, getWorkspaceUri, oeVersion, runAllTests, setRuntimes, suiteSetupCommon, updateTestProfile } from '../testCommon'
+import { deleteFile, doesFileExist, getDefaultDLC, getSessionTempDir, getWorkspaceUri, oeVersion, runAllTests, suiteSetupCommon, updateTestProfile } from '../testCommon'
+import { setRuntimes } from '../openedgeAblCommands'
 import { doesDirExist } from '../../src/ABLUnitCommon'
 
 const sessionTempDir = getSessionTempDir()

@@ -74,9 +74,6 @@
 		"onStartupFinished"
 	],
 	"main": "./dist/extension.js",
-	"files": [
-		"src"
-	],
 	"scripts": {
 		"build": "npm run webpack",
 		"rebuild": "npm run clean && npm run webpack",
@@ -95,20 +92,21 @@
 		"version": "sh -c scripts/npm_version.sh"
 	},
 	"dependencies": {
-		"minimatch": "^9.0.4",
+		"minimatch": "^9.0.5",
 		"node-json-minify": "^3.0.0",
 		"xml2js": "^0.6.2"
 	},
 	"devDependencies": {
+		"@istanbuljs/nyc-config-typescript": "^1.0.2",
 		"@stylistic/eslint-plugin": "^2.3.0",
 		"@types/mocha": "^10.0.7",
 		"@types/node": "^18",
 		"@types/source-map-support": "^0.5.10",
-		"@types/vscode": "^1.88.0",
+		"@types/vscode": "1.88.0",
 		"@types/xml2js": "^0.4.14",
 		"@typescript-eslint/eslint-plugin": "^7.16.0",
 		"@typescript-eslint/parser": "^7.16.0",
-		"@vscode/test-cli": "^0.0.10",
+		"@vscode/test-cli": "0.0.10",
 		"@vscode/test-electron": "^2.4.1",
 		"eslint": "^8.57.0",
 		"eslint-plugin-promise": "^6.4.0",
@@ -122,7 +120,7 @@
 		"ts-node": "^10.9.2",
 		"tsconfig-paths": "^4.2.0",
 		"typescript": "^5.5.3",
-		"webpack": "^5.92.1",
+		"webpack": "^5.93.0",
 		"webpack-cli": "^5.1.4"
 	},
 	"contributes": {

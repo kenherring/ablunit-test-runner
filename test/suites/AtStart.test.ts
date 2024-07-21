@@ -12,9 +12,10 @@ suite('projAtStart  - Extension Test Suite - bdd', () => {
 	test('projAtStart - ${workspaceFolder}/ablunit.json file exists', () => {
 		return runAllTests(true).then(() => {
 			log.info('results.xml uri=' + toUri('results.xml'))
-			log.info('results.xml file exists: ' + doesFileExist(toUri('results.xml')))
+			// log.info('results.xml file exists: ' + doesFileExist(toUri('results.xml')))
 			assert.fileExists(toUri('results.xml'))
-		})
+			return
+		}, (e) => { throw e })
 		// .then(() => {
 		// 	// TODO! fix me on windows
 		// 	// if (process.platform === 'win32' || process.env['WSL_DISTRO_NAME'] !== undefined) {

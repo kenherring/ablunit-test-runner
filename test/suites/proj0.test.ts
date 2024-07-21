@@ -1,5 +1,5 @@
 import { Uri, commands, window, workspace, Range, TextEditor, FileCoverageDetail } from 'vscode'
-import { assert, deleteFile, getResults, getWorkspaceFolders, log, runAllTests, sleep, suiteSetupCommon, toUri, updateTestProfile } from '../testCommon'
+import { assert, deleteFile, getResults, getWorkspaceFolders, log, runAllTests, runAllTestsWithCoverage, sleep, suiteSetupCommon, toUri, updateTestProfile } from '../testCommon'
 
 const projName = 'proj0'
 
@@ -47,40 +47,40 @@ suite('proj0  - Extension Test Suite', () => {
 
 	// TODO - fix before merge
 
-	// test('proj0.2 - run test, open file, validate coverage displays', async () => {
-	// 	await runAllTests()
-	// 	const testFileUri = Uri.joinPath(workspace.workspaceFolders![0].uri, 'src', 'dirA', 'dir1', 'testInDir.p')
-	// 	await window.showTextDocument(testFileUri).then()
+	test('proj0.2 - run test, open file, validate coverage displays', async () => {
+		await runAllTestsWithCoverage()
+		const testFileUri = Uri.joinPath(workspace.workspaceFolders![0].uri, 'src', 'dirA', 'dir1', 'testInDir.p')
+		await window.showTextDocument(testFileUri)
 
-	// 	const lines = (await getResults())[0].coverage.get(testFileUri.fsPath) ?? []
-	// 	assert.assert(lines, 'no coverage found for ' + workspace.asRelativePath(testFileUri))
-	// 	assert.assert(getDetailLine(lines, 5), 'line 5 should display as executed')
-	// 	assert.assert(getDetailLine(lines, 6), 'line 5 should display as executed')
-	// })
+		const lines = (await getResults())[0].coverage.get(testFileUri.fsPath) ?? []
+		assert.assert(lines, 'no coverage found for ' + workspace.asRelativePath(testFileUri))
+		assert.assert(getDetailLine(lines, 5), 'line 5 should display as executed')
+		assert.assert(getDetailLine(lines, 6), 'line 5 should display as executed')
+	})
 
-	// test('proj0.3 - open file, run test, validate coverage displays', async () => {
-	// 	const testFileUri = Uri.joinPath(workspace.workspaceFolders![0].uri, 'src', 'dirA', 'dir1', 'testInDir.p')
-	// 	await window.showTextDocument(testFileUri).then()
-	// 	await runAllTests()
+	test('proj0.3 - open file, run test, validate coverage displays', async () => {
+		const testFileUri = Uri.joinPath(workspace.workspaceFolders![0].uri, 'src', 'dirA', 'dir1', 'testInDir.p')
+		await window.showTextDocument(testFileUri)
+		await runAllTestsWithCoverage()
 
-	// 	const lines = (await getResults())[0].coverage.get(testFileUri.fsPath) ?? []
-	// 	assert.assert(lines, 'no coverage found for ' + workspace.asRelativePath(testFileUri))
-	// 	assert.assert(getDetailLine(lines, 5), 'line 5 should display as executed')
-	// 	assert.assert(getDetailLine(lines, 6), 'line 5 should display as executed')
-	// })
+		const lines = (await getResults())[0].coverage.get(testFileUri.fsPath) ?? []
+		assert.assert(lines, 'no coverage found for ' + workspace.asRelativePath(testFileUri))
+		assert.assert(getDetailLine(lines, 5), 'line 5 should display as executed')
+		assert.assert(getDetailLine(lines, 6), 'line 5 should display as executed')
+	})
 
-	// test('proj0.4 - coverage=false, open file, run test, validate no coverage displays', async () => {
-	// 	await updateTestProfile('profiler.coverage', false)
-	// 	const testFileUri = Uri.joinPath(workspace.workspaceFolders![0].uri, 'src', 'dirA', 'dir1', 'testInDir.p')
-	// 	await window.showTextDocument(testFileUri).then()
-	// 	await runAllTests()
+	test.skip('proj0.4 - coverage=false, open file, run test, validate no coverage displays', async () => {
+		await updateTestProfile('profiler.coverage', false)
+		const testFileUri = Uri.joinPath(workspace.workspaceFolders![0].uri, 'src', 'dirA', 'dir1', 'testInDir.p')
+		await window.showTextDocument(testFileUri)
+		await runAllTests()
 
-	// 	const lines = (await getResults())[0].coverage.get(testFileUri.fsPath) ?? []
-	// 	const executedLines = lines.filter((d) => d)
-	// 	log.debug('executedLines.length=' + executedLines.length)
-	// 	assert.equal(0, executedLines.length, 'executed lines found for ' + workspace.asRelativePath(testFileUri) + '. should be empty')
-	// 	assert.assert(!getDetailLine(executedLines, 5), 'line 5 should display as not executed')
-	// 	assert.assert(!getDetailLine(executedLines, 6), 'line 5 should display as not executed')
-	// })
+		const lines = (await getResults())[0].coverage.get(testFileUri.fsPath) ?? []
+		const executedLines = lines.filter((d) => d)
+		log.debug('executedLines.length=' + executedLines.length)
+		assert.equal(0, executedLines.length, 'executed lines found for ' + workspace.asRelativePath(testFileUri) + '. should be empty')
+		assert.assert(!getDetailLine(executedLines, 5), 'line 5 should display as not executed')
+		assert.assert(!getDetailLine(executedLines, 6), 'line 5 should display as not executed')
+	})
 
 })

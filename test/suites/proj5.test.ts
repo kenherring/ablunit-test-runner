@@ -12,12 +12,15 @@ suite('proj5 - Extension Test Suite', () => {
 
 	suiteSetup('proj5 - before', () => suiteSetupCommon())
 
-	test('proj5.1 - test count', async () => {
-		await runAllTests()
-
+	test('proj5.1 - test count', () => {
 		const resultsJson = Uri.joinPath(workspaceUri, 'ablunit', 'results.json')
-		const testCount = await getTestCount(resultsJson)
-		assert(testCount > 100)
+		const prom = runAllTests()
+			.then(() => { return getTestCount(resultsJson) })
+			.then((testCount) => {
+				assert(testCount > 100)
+				return
+			}, (e) => { throw e })
+		return prom
 	})
 
 

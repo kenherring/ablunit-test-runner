@@ -23,6 +23,7 @@ const enableExtensions = [
 	'proj2',
 	'proj3',
 	'proj4',
+	'proj5',
 	'proj7A',
 	'proj7B',
 	'proj8',
@@ -54,6 +55,8 @@ function getMochaTimeout (projName) {
 		case 'DebugLines': return 120000 // install openedge-abl-lsp for the first time, so give it a moment to start
 		case 'proj1': return 30000
 		// case 'proj2': return 20000
+		case 'proj5': return 60000
+		case 'proj8': return 45000
 		case 'proj7A': return 60000
 	}
 
@@ -65,12 +68,13 @@ function getMochaTimeout (projName) {
 * @see https://mochajs.org/api/mocha
 */
 function getMochaOpts (projName) {
-	const reporterDir = path.resolve(__dirname, '..', 'artifacts', vsVersion + '-' + oeVersion)
+	// const reporterDir = path.resolve(__dirname, '..', 'artifacts', vsVersion + '-' + oeVersion)
+	const reporterDir = path.resolve(__dirname, '..', 'artifacts')
 	fs.mkdirSync(reporterDir, { recursive: true })
 	const jsonFile = path.resolve(reporterDir, 'mocha_results_' + projName + '.json')
-	const xunitFile = path.resolve(reporterDir, 'mocha_results_xunit_' + projName + '.xml')
 	const mochaFile = path.resolve(reporterDir, 'mocha_results_junit_' + projName + '.xml')
 	const sonarFile = path.resolve(reporterDir, 'mocha_results_sonar_' + projName + '.xml')
+	const xunitFile = path.resolve(reporterDir, 'mocha_results_xunit_' + projName + '.xml')
 	// const bail = process.env['CIRCLECI'] != 'true' || false
 
 	const mochaOpts = {
@@ -80,7 +84,7 @@ function getMochaOpts (projName) {
 		// ui: 'tdd', // describe, it, etc
 		// ui: 'bdd' // default; suite, test, etc
 		parallel: false,
-		bail: false,
+		bail: true,
 		require: [
 			'mocha'
 		],
@@ -95,11 +99,11 @@ function getMochaOpts (projName) {
 		// console.log('adding reporter...')
 		mochaOpts.reporter = 'mocha-multi-reporters'
 		mochaOpts.reporterOptions = {
-			reporterEnabled: [ 'json-stream', 'spec', 'mocha-junit-reporter', 'mocha-sonarqube-reporter' ],
+			reporterEnabled: [ 'json-stream', 'spec', 'mocha-junit-reporter', 'mocha-reporter-sonarqube', 'mocha-xunit-reporter' ],
 			jsonReporterOptions: { output: jsonFile },
 			xunitReporterOptions: { output: xunitFile },
 			mochaJunitReporterReporterOptions: { mochaFile: mochaFile },
-			mochaSonarqubeReporterReporterOptions: { output: sonarFile }
+			mochaSonarqubeReporterReporterOptions: { filename: sonarFile },
 		}
 	}
 

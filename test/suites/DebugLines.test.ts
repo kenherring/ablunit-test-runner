@@ -9,8 +9,8 @@ const workspaceFolder = workspace.workspaceFolders![0]
 
 suite('debugLines - Debug Line Tests - insiders', () => {
 
-	suiteSetup('debugLines - before', () => {
-		return suiteSetupCommon()
+	suiteSetup('debugLines - before', async () => {
+		const prom = suiteSetupCommon()
 			.then(() => { return awaitRCode(workspaceFolder, 8) })
 			.then((rcodeCount) => {
 				log.info('rcodeCount=' + rcodeCount)
@@ -19,6 +19,7 @@ suite('debugLines - Debug Line Tests - insiders', () => {
 				log.error('rcode error: ' + e)
 				throw e
 			})
+		return await prom
 	})
 
 	test('debugLines.1 - read debug line map from rcode', async () => {

@@ -74,9 +74,6 @@
 		"onStartupFinished"
 	],
 	"main": "./dist/extension.js",
-	"files": [
-		"src"
-	],
 	"scripts": {
 		"build": "npm run webpack",
 		"rebuild": "npm run clean && npm run webpack",
@@ -116,13 +113,14 @@
 		"mocha-junit-reporter": "^2.2.1",
 		"mocha-multi-reporters": "^1.5.1",
 		"mocha-reporter-sonarqube": "^2.0.6",
+		"mocha-xunit-reporter": "^2.3.0",
 		"nyc": "^17.0.0",
 		"source-map-support": "^0.5.21",
 		"ts-loader": "^9.5.1",
 		"ts-node": "^10.9.2",
 		"tsconfig-paths": "^4.2.0",
 		"typescript": "^5.5.3",
-		"webpack": "^5.92.1",
+		"webpack": "^5.93.0",
 		"webpack-cli": "^5.1.4"
 	},
 	"contributes": {
