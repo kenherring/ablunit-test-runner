@@ -54,11 +54,12 @@ export async function activate (context: ExtensionContext) {
 	await createDir(contextStorageUri)
 	// const decorationProvider = new DecorationProvider()
 
-	log.info('ABLUNIT_TEST_RUNNER_ENABLE_EXTENSIONS=' + process.env['ABLUNIT_TEST_RUNNER_ENABLE_EXTENSIONS'])
-	log.info('ABLUNIT_TEST_RUNNER_UNIT_TESTING=' + process.env['ABLUNIT_TEST_RUNNER_UNIT_TESTING'])
-	log.info('ABLUNIT_TEST_RUNNER_VSCODE_VERSION=' + process.env['ABLUNIT_TEST_RUNNER_VSCODE_VERSION'])
-	log.info('DONT_PROMPT_WSL_INSTALL=' + process.env['DONT_PROMPT_WSL_INSTALL'])
-	log.info('VSCODE_SKIP_PRELAUNCH=' + process.env['VSCODE_SKIP_PRELAUNCH'])
+	log.debug('--- Enviroment Variables ---')
+	log.debug('ABLUNIT_TEST_RUNNER_ENABLE_EXTENSIONS=' + process.env['ABLUNIT_TEST_RUNNER_ENABLE_EXTENSIONS'])
+	log.debug('ABLUNIT_TEST_RUNNER_UNIT_TESTING=' + process.env['ABLUNIT_TEST_RUNNER_UNIT_TESTING'])
+	log.debug('ABLUNIT_TEST_RUNNER_VSCODE_VERSION=' + process.env['ABLUNIT_TEST_RUNNER_VSCODE_VERSION'])
+	log.debug('DONT_PROMPT_WSL_INSTALL=' + process.env['DONT_PROMPT_WSL_INSTALL'])
+	log.debug('VSCODE_SKIP_PRELAUNCH=' + process.env['VSCODE_SKIP_PRELAUNCH'])
 
 	if (process.env['ABLUNIT_TEST_RUNNER_UNIT_TESTING'] === 'true') {
 		log.info('add _ablunit.getExtensionTestReferences command')

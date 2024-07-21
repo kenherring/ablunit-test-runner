@@ -479,11 +479,12 @@ export class ABLResults implements Disposable {
 			.then(() => {
 				this.profileJson = profParser.profJSON
 				return this.assignProfileResults()
-			}).then(() => {
+			})
+			.then(() => {
 				log.debug('assignProfileResults complete (time=' + (Number(new Date()) - Number(startTime)) + ')')
 				return
-			}, (e: unknown) => {
-				throw new Error('assignProfileResults error: ' + e)
+			}, (err) => {
+				throw new Error('assignProfileResults error: ' + err)
 			})
 	}
 

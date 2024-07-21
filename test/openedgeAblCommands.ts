@@ -32,23 +32,25 @@ export async function enableOpenedgeAblExtension (runtimes: IRuntime[]) {
 }
 
 export function restartLangServer () {
-	return commands.executeCommand('abl.restart.langserv').then(async () => {
-		log.info('abl.restart.langserv command complete')
-		return waitForLangServerReady()
-	}).then(() => {
-		log.info('lang server is ready')
-		return true
-	}, (e) => {
-		log.error('abl.restart.langserv command failed! e=' + e)
-	})
+	return commands.executeCommand('abl.restart.langserv')
+		.then(() => {
+			log.info('abl.restart.langserv command complete')
+			return waitForLangServerReady()
+		}).then(() => {
+			log.info('lang server is ready')
+			return true
+		}, (e) => {
+			log.error('abl.restart.langserv command failed! e=' + e)
+		})
 }
 
-export async function rebuildAblProject (): Promise<number> {
+export function rebuildAblProject (): Promise<number> {
 	log.info('rebuilding abl project...')
 
-	await waitForLangServerReady()
-	return commands.executeCommand('abl.project.rebuild')
-		.then((r) => {
+	return waitForLangServerReady()
+		.then(() => {
+			return commands.executeCommand('abl.project.rebuild')
+		}).then((r) => {
 			log.debug('abl.project.rebuild complete! (r=' + JSON.stringify(r) + ')')
 			const rcodeCount = getRcodeCount()
 			log.info('abl.project.rebuild command complete! (rcodeCount=' + rcodeCount + ')')

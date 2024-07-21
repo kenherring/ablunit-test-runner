@@ -76,7 +76,7 @@ suite('proj0  - Extension Test Suite', () => {
 		await runAllTests()
 
 		const lines = (await getResults())[0].coverage.get(testFileUri.fsPath) ?? []
-		const executedLines = lines.filter((d) => d)
+		const executedLines = lines.filter((d) => d.executed)
 		log.debug('executedLines.length=' + executedLines.length)
 		assert.equal(0, executedLines.length, 'executed lines found for ' + workspace.asRelativePath(testFileUri) + '. should be empty')
 		assert.assert(!getDetailLine(executedLines, 5), 'line 5 should display as not executed')

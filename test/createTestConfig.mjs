@@ -79,10 +79,10 @@ function getMochaOpts (projName) {
 
 	const mochaOpts = {
 		// fullTrace: true
-		retries: 0,
 		timeout: getMochaTimeout(projName),
 		// ui: 'tdd', // describe, it, etc
 		// ui: 'bdd' // default; suite, test, etc
+		retries: 0,
 		parallel: false,
 		bail: true,
 		require: [
@@ -192,10 +192,10 @@ function getLaunchArgs (projName) {
 	// args.push('--logExtensionHostCommunication')
 
 	// --- disable functionality not needed for testing - https://github.com/microsoft/vscode/issues/174744 --- //
-	args.push('--disable-chromium-sandbox')
+	// args.push('--disable-chromium-sandbox')
 	// args.push('--no-sandbox', '--sandbox=false')  ## super user only
 	args.push('--disable-crash-reporter')
-	// args.push('--disable-gpu-sandbox')
+	args.push('--disable-gpu-sandbox')
 	args.push('--disable-gpu')
 	args.push('--disable-telemetry')
 	args.push('--disable-updates')
@@ -268,7 +268,7 @@ function getTestConfig (projName) {
 		// installExtension: 'riversidesoftware.openedge-abl-lsp',
 		installExtensions,
 		// download: { reporter: ProgressReporter, timeout: ? }
-		skipExtensionDependencies: true,
+		// skipExtensionDependencies: true,
 
 		// --- IBaseTestConfiguration --- //
 		files: absolulteFile,

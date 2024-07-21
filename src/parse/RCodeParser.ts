@@ -45,7 +45,7 @@ export interface ISourceMapItem {
 
 /**
  * Parse RCode (*.r) and return a source map
- * @param uri Uri of the rcode, not the source file.
+ * @param uri Uri of the r-code, not the source file.
  **/
 export const getSourceMapFromRCode = (propath: PropathParser, uri: Uri) => {
 	// rcode segments: https://docs.progress.com/bundle/openedge-abl-manage-applications/page/R-code-structure.html
