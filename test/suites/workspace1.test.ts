@@ -2,11 +2,7 @@ import { assert, doesDirExist, doesFileExist, log, runAllTests, suiteSetupCommon
 
 suite('workspace1 - Extension Test Suite', () => {
 
-	suiteSetup('workspace1 - before', async (done) => {
-		await suiteSetupCommon().then(() => { done() }, (e) => { done(e) })
-		// await updateConfig('tempDir', undefined)
-		done()
-	})
+	suiteSetup('proj2 - before', () => suiteSetupCommon())
 
 	// teardown('workspace1 - afterEach', async (done) => {
 	// 	log.info('after')
