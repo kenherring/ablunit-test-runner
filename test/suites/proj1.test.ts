@@ -5,30 +5,30 @@ const workspaceUri = getWorkspaceUri()
 
 suite('proj1 - Extension Test Suite', () => {
 
-	suiteSetup('proj1 - suiteSetup', (done) => {
-		suiteSetupCommon().then(() => { done() }, (e) => { done(e) })
+	suiteSetup('proj1 - suiteSetup', async () => {
+		await suiteSetupCommon()
+		return
 	})
 
 	function cleanBeforeAndAfter () {
 		deleteTestFiles()
 		log.info('cleanBeforeAndAfter.updateConfig')
-		return updateConfig('ablunit.files.exclude', undefined).then(() => {
-			log.info('setup.updateConfig.then()')
-		}, (e) => {
-			log.error('setup.cleanBeforeAndAfter() error! e=' + e)
-			throw e
-		})
+		return updateConfig('ablunit.files.exclude', undefined)
+			.then(() => {
+				log.info('setup.updateConfig.then()')
+				return
+			}, (e) => {
+				log.error('setup.cleanBeforeAndAfter() error! e=' + e)
+				throw e
+			})
 	}
 
 	setup((done) => {
-		cleanBeforeAndAfter().then(() => { done() }, (e) => { done(e) })
+		return cleanBeforeAndAfter().then(() => { done(); return }, (e) => { done(e) })
 	})
-	// setup(async () => {
-	// 	return cleanBeforeAndAfter().then(() => { log.info('before each promise complete') })
-	// })
 
 	suiteTeardown((done) => {
-		cleanBeforeAndAfter().then(() => { done() }, (e) => { done(e) })
+		return cleanBeforeAndAfter().then(() => { done(); return }, (e) => { done(e) })
 	})
 
 	setup('proj1 - setup-2',  () => {

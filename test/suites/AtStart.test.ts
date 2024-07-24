@@ -3,7 +3,10 @@ import { assert, extensions, log, runAllTests, suiteSetupCommon, toUri } from '.
 
 suite('projAtStart  - Extension Test Suite - bdd', () => {
 
-	suiteSetup('proj2 - before', () => suiteSetupCommon())
+	suiteSetup('proj2 - before', async () => {
+		await suiteSetupCommon()
+		return
+	})
 
 	test('projAtStart - ${workspaceFolder}/ablunit.json file exists', () => {
 		return runAllTests(true).then(() => {
