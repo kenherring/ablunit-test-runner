@@ -131,22 +131,17 @@ function getExtensionDevelopmentPath () {
 	throw new Error('unable to determine extensionDevelopmentPath')
 }
 
-export function suiteSetupCommon (runtimes: IRuntime[] = []) {
+export async function suiteSetupCommon (runtimes: IRuntime[] = []) {
 	if (runtimes.length === 0) {
 		runtimes = [{ name: oeVersion(), path: getDefaultDLC(), default: true }]
 	}
 	log.info('[suiteSetupCommon] waitForExtensionActive \'kherring.ablunit-test-runner\' (projName=' + projName() + ')')
-	return waitForExtensionActive()
-		.then(() => {
-			if (enableExtensions()) {
-				return enableOpenedgeAblExtension(runtimes)
-			}
-			// eslint-disable-next-line promise/no-return-wrap
-			return Promise.resolve(true)
-		}).then (() => {
-			log.info('suiteSetupCommon complete!')
-			return
-		}, (e) => { throw e })
+	await waitForExtensionActive()
+	if (enableExtensions()) {
+		await enableOpenedgeAblExtension(runtimes)
+	}
+	log.info('suiteSetupCommon complete!')
+	return
 }
 
 export let runAllTestsDuration: Duration | undefined
@@ -213,9 +208,9 @@ export function installExtension (extname = 'riversidesoftware.openedge-abl-lsp'
 	// }
 
 
-	log.info('installing ' + extname + ' extension...')
 	const installCommand = 'workbench.extensions.installExtension'
 
+	log.info('installing ' + extname + ' extension with command \'' + installCommand + '\'')
 	return commands.executeCommand(installCommand, extname).then((r) => {
 		log.info('post-' + installCommand + '(r=' + r + ')')
 		return sleep2(250)

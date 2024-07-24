@@ -158,7 +158,13 @@ class Logger {
 			const filename = s.getFileName()
 			if (filename && filename !== __filename && !filename.endsWith('extensionHostProcess.js')) {
 				const funcname = s.getFunctionName()
-				let ret = filename.replace(path.relative(__dirname, filename), '').substring(1).replace(/\\/g, '/') + ':' + s.getLineNumber()
+				const relpath = path.relative(process.cwd(), filename)
+				// console.log('__dirname=' + __dirname)
+				// console.log(' filename=' + filename)
+				// console.log('  relpath='  + path.relative(process.cwd(), filename))
+				// console.log('os.__dirname', process.cwd())
+				// console.log('funcname=' + funcname)
+				let ret = relpath + ':' + s.getLineNumber()
 				if (funcname) {
 					ret = ret + ' ' + funcname
 				}

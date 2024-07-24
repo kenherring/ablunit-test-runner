@@ -17,7 +17,7 @@ export async function enableOpenedgeAblExtension (runtimes: IRuntime[]) {
 
 	await activateExtension(extname)
 	await setRuntimes(runtimes)
-	return rebuildAblProject()
+	return await rebuildAblProject()
 		.then(() => {
 			log.info('update complete')
 			return getRcodeCount()
@@ -48,9 +48,8 @@ export function rebuildAblProject (): Promise<number> {
 	log.info('rebuilding abl project...')
 
 	return waitForLangServerReady()
-		.then(() => {
-			return commands.executeCommand('abl.project.rebuild')
-		}).then((r) => {
+		.then(() => { return commands.executeCommand('abl.project.rebuild') })
+		.then((r) => {
 			log.debug('abl.project.rebuild complete! (r=' + JSON.stringify(r) + ')')
 			const rcodeCount = getRcodeCount()
 			log.info('abl.project.rebuild command complete! (rcodeCount=' + rcodeCount + ')')
@@ -68,13 +67,13 @@ export async function waitForLangServerReady () {
 	let dumpSuccess = false
 	for (let i = 0; i < maxWait; i++) {
 		log.info('start abl.dumpLangServStatus (i=' + i + ')')
-		dumpSuccess = await commands.executeCommand('abl.dumpLangServStatus').then(() => {
-			return true
-		}, (e) => {
-			log.info('dumpLangServStatus e=' + e)
-			return false
-		})
-		await sleep2(400)
+		dumpSuccess = await commands.executeCommand('abl.dumpLangServStatus')
+			.then(() => { return sleep(250) })
+			.then(() => { return true
+			}, (e) => {
+				log.info('dumpLangServStatus e=' + e)
+				return false
+			})
 		log.info('end abl.dumpLangServStatus:' + dumpSuccess + ', i=' + i + ' ' + waitTime + ' (dumpSuccess=' + dumpSuccess + ')')
 		if (dumpSuccess) {
 			break
@@ -89,15 +88,15 @@ export async function waitForLangServerReady () {
 	throw new Error('lang server is not ready!')
 }
 
-export async function setRuntimes (runtimes: IRuntime[] = []) {
+export async function setRuntimes (runtimes?: IRuntime[]) {
 	const duration = new Duration('setRuntimes')
 	if (!enableExtensions()) {
 		throw new Error('setRuntimes failed! extensions are disabled')
 	}
 	log.info('runtimes=' + JSON.stringify(runtimes))
-	// if (!runtimes) {
-	// 	runtimes = [{name: oeVersion(), path: getDefaultDLC(), default: true}]
-	// }
+	if (!runtimes) {
+		runtimes = [{name: oeVersion(), path: getDefaultDLC(), default: true}]
+	}
 	log.info('setting abl.configuration.runtimes=' + JSON.stringify(runtimes))
 	const ext = extensions.getExtension('riversidesoftware.openedge-abl-lsp')
 	if (!ext) {
@@ -111,11 +110,11 @@ export async function setRuntimes (runtimes: IRuntime[] = []) {
 	const current = conf.get('configuration.runtimes')!
 	log.info('current abl.configuration.runtimes=' + JSON.stringify(conf.get('configuration.runtimes')))
 	log.info('setting abl.configuration.runtimes=' + JSON.stringify(runtimes))
-	// log.info('current=' + JSON.stringify(current))
-	// log.info('  input=' + JSON.stringify(runtimes))
+	log.info('current=' + JSON.stringify(current))
+	log.info('  input=' + JSON.stringify(runtimes))
 	if (JSON.stringify(current) === JSON.stringify(runtimes)) {
 		log.info('runtmes are already set ' + duration)
-		return
+		return true
 	}
 
 	log.info('workspace.getConfiguration("abl").update("configuration.runtimes") - START')
@@ -133,4 +132,6 @@ export async function setRuntimes (runtimes: IRuntime[] = []) {
 			}
 			throw new Error('setRuntimes failed! e=' + e)
 		})
+	log.info('return r=' + JSON.stringify(r))
+	return r
 }

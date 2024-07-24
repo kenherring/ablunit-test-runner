@@ -165,7 +165,7 @@ export class RunConfig extends DefaultRunProfile {
 		this.config_uri = Uri.joinPath(this.tempDirUri, 'ablunit.json')
 		this.profOptsUri = Uri.joinPath(this.tempDirUri, 'profile.options')
 		this.dbConnPfUri = Uri.joinPath(this.tempDirUri, 'dbconn.pf')
-		this.importOpenedgeProjectJson = this.profile.importOpenedgeProjectJson ?? true
+		this.importOpenedgeProjectJson = this.profile.importOpenedgeProjectJson
 		this.openedgeProjectProfile = this.profile.openedgeProjectProfile ?? undefined
 		this.dbConns = getProfileDbConns(this.workspaceFolder.uri, this.profile.openedgeProjectProfile) ?? []
 
@@ -191,9 +191,10 @@ export class RunConfig extends DefaultRunProfile {
 		this.profiler = new ProfilerOptions()
 		this.profiler.merge(this.profile.profiler)
 		this.profFilenameUri = this.getUri(this.profiler.filename)
-		if (this.profFilenameUri) {
-			this.profiler.filename = workspace.asRelativePath(this.profFilenameUri, false)
-		}
+		// if (this.profFilenameUri) {
+		// 	this.profiler.filename = workspace.asRelativePath(this.profFilenameUri, false)
+		// }
+		this.profiler.filename = workspace.asRelativePath(this.profFilenameUri, false)
 
 		if (typeof this.profiler.listings === 'boolean') {
 			if (this.profiler.listings) {

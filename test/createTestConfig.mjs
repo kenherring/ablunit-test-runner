@@ -41,26 +41,27 @@ function writeConfigToFile (name, config) {
 }
 
 function getMochaTimeout (projName) {
+	let timeout = 15000
 	if (projName === 'examples') {
-		return 1000
+		timeout = 1000
 	}
 
 	if (firstTest) {
 		firstTest = false
 		// return 180000
-		return 30000
+		timeout = 30000
 	}
 
 	switch (projName) {
-		case 'DebugLines': return 120000 // install openedge-abl-lsp for the first time, so give it a moment to start
-		case 'proj1': return 30000
+		case 'DebugLines': timeout = 60000; break // install openedge-abl-lsp for the first time, so give it a moment to start
+		case 'proj1': timeout = 30000; break
 		// case 'proj2': return 20000
-		case 'proj5': return 60000
-		case 'proj8': return 45000
-		case 'proj7A': return 60000
+		case 'proj5': timeout = 60000; break
+		case 'proj8': timeout = 45000; break
+		case 'proj7A': timeout = 60000; break
 	}
 
-	return 15000
+	return timeout
 }
 
 /**
