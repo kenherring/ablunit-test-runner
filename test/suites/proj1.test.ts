@@ -23,12 +23,14 @@ suite('proj1 - Extension Test Suite', () => {
 			})
 	}
 
-	setup((done) => {
-		return cleanBeforeAndAfter().then(() => { done(); return }, (e) => { done(e) })
+	setup('proj1 - setup', async () => {
+		await cleanBeforeAndAfter()
+		return
 	})
 
-	suiteTeardown((done) => {
-		return cleanBeforeAndAfter().then(() => { done(); return }, (e) => { done(e) })
+	suiteTeardown('proj1 - suiteTeardown', async () => {
+		await cleanBeforeAndAfter()
+		return
 	})
 
 	setup('proj1 - setup-2',  () => {
@@ -60,9 +62,9 @@ suite('proj1 - Extension Test Suite', () => {
 		assert.notFileExists(resultsJson)
 	})
 
-	test('proj1.2 - output files exist 2 - exclude compileError.p', (done) => {
+	test('proj1.2 - output files exist 2 - exclude compileError.p', () => {
 		log.info('updating config...')
-		updateConfig('ablunit.files.exclude', [ '.builder/**', 'compileError.p' ])
+		return updateConfig('ablunit.files.exclude', [ '.builder/**', 'compileError.p' ])
 			.then(() => {
 				log.info('running tests...')
 				return runAllTests()
@@ -72,7 +74,7 @@ suite('proj1 - Extension Test Suite', () => {
 			}).then((testCount) => {
 				log.info('asserting test count...')
 				assert.equal(testCount, 12)
-				done()
+				return
 			}, (e) => {
 				log.info('runAllTests failed!')
 				throw e

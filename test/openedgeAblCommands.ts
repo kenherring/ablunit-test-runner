@@ -9,15 +9,11 @@ interface IRuntime {
 
 export async function enableOpenedgeAblExtension (runtimes: IRuntime[]) {
 	const extname = 'riversidesoftware.openedge-abl-lsp'
-	await installExtension(extname).then(() => {
-		return sleep(250)
-	}, (e) => {
-		throw e
-	})
-
-	await activateExtension(extname)
-	await setRuntimes(runtimes)
-	return await rebuildAblProject()
+	await installExtension(extname)
+		.then(() => { return sleep(250) })
+		.then(() => { return activateExtension(extname) })
+		.then(() => { return setRuntimes(runtimes) })
+		.then(() => { return rebuildAblProject() })
 		.then(() => {
 			log.info('update complete')
 			return getRcodeCount()
@@ -118,7 +114,7 @@ export async function setRuntimes (runtimes?: IRuntime[]) {
 	}
 
 	log.info('workspace.getConfiguration("abl").update("configuration.runtimes") - START')
-	const r = await workspace.getConfiguration('abl').update('configuration.runtimes', runtimes, true)
+	const r = workspace.getConfiguration('abl').update('configuration.runtimes', runtimes, true)
 		.then(() => {
 			log.info('workspace.getConfiguration("abl").update(configuration.runtimes) - END')
 			return restartLangServer()
@@ -133,5 +129,5 @@ export async function setRuntimes (runtimes?: IRuntime[]) {
 			throw new Error('setRuntimes failed! e=' + e)
 		})
 	log.info('return r=' + JSON.stringify(r))
-	return r
+	return await r
 }

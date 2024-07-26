@@ -9,7 +9,7 @@ suite('proj3 - Extension Test Suite', () => {
 	suiteSetup('proj3 - suiteSetup', () => suiteSetupCommon())
 
 	setup('proj3 - beforeEach', async () => {
-		await setRuntimes([{name: '11.7', path: '/psc/dlc_11.7'}, {name: oeVersion(), path: getDefaultDLC(), default: true}]).then()
+		await setRuntimes([{name: '11.7', path: '/psc/dlc_11.7'}, {name: oeVersion(), path: getDefaultDLC(), default: true}])
 	})
 
 	test('proj3.1 - target/ablunit.json file exists', async () => {

@@ -437,6 +437,7 @@ export async function activate (context: ExtensionContext) {
 		if (event.affectsConfiguration('ablunit.files')) {
 			removeExcludedFiles(ctrl, getExcludePatterns())
 		}
+		return
 	}
 
 	const configHandler = () => {

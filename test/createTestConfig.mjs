@@ -46,12 +46,6 @@ function getMochaTimeout (projName) {
 		timeout = 1000
 	}
 
-	if (firstTest) {
-		firstTest = false
-		// return 180000
-		timeout = 30000
-	}
-
 	switch (projName) {
 		case 'DebugLines': timeout = 60000; break // install openedge-abl-lsp for the first time, so give it a moment to start
 		case 'proj1': timeout = 30000; break
@@ -59,6 +53,11 @@ function getMochaTimeout (projName) {
 		case 'proj5': timeout = 60000; break
 		case 'proj8': timeout = 45000; break
 		case 'proj7A': timeout = 60000; break
+	}
+
+	if (firstTest) {
+		firstTest = false
+		timeout = 45000
 	}
 
 	return timeout
@@ -85,7 +84,7 @@ function getMochaOpts (projName) {
 		// ui: 'bdd' // default; suite, test, etc
 		retries: 0,
 		parallel: false,
-		bail: true,
+		bail: false,
 		require: [
 			'mocha'
 		],
@@ -100,11 +99,11 @@ function getMochaOpts (projName) {
 		// console.log('adding reporter...')
 		mochaOpts.reporter = 'mocha-multi-reporters'
 		mochaOpts.reporterOptions = {
-			reporterEnabled: [ 'json-stream', 'spec', 'mocha-junit-reporter', 'mocha-reporter-sonarqube', 'mocha-xunit-reporter' ],
-			jsonReporterOptions: { output: jsonFile },
+			reporterEnabled: [ 'json-stream', 'spec', 'json', 'xunit', 'mocha-junit-reporter', 'mocha-reporter-sonarqube' ],
+			jsonReporterOptions: { output: jsonFile, outputFile: jsonFile, mochaFile: jsonFile }, // TODO - not working
 			xunitReporterOptions: { output: xunitFile },
 			mochaJunitReporterReporterOptions: { mochaFile: mochaFile },
-			mochaSonarqubeReporterReporterOptions: { filename: sonarFile },
+			mochaReporterSonarqubeReporterOptions: { filename: sonarFile },
 		}
 	}
 
