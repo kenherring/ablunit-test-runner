@@ -70,10 +70,12 @@ function getMochaTimeout (projName) {
 function getMochaOpts (projName) {
 	// const reporterDir = path.resolve(__dirname, '..', 'artifacts', vsVersion + '-' + oeVersion)
 	const reporterDir = path.resolve(__dirname, '..', 'artifacts')
+	const sonarDir = path.resolve(__dirname, '..', 'artifacts', 'mocha_results_sonar')
 	fs.mkdirSync(reporterDir, { recursive: true })
+	fs.mkdirSync(sonarDir, { recursive: true })
 	const jsonFile = path.resolve(reporterDir, 'mocha_results_' + projName + '.json')
 	const mochaFile = path.resolve(reporterDir, 'mocha_results_junit_' + projName + '.xml')
-	const sonarFile = path.resolve(reporterDir, 'mocha_results_sonar_' + projName + '.xml')
+	const sonarFile = path.resolve(sonarDir, projName + '.xml')
 	const xunitFile = path.resolve(reporterDir, 'mocha_results_xunit_' + projName + '.xml')
 	// const bail = process.env['CIRCLECI'] != 'true' || false
 
