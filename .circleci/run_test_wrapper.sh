@@ -1,5 +1,5 @@
 #!/bin/bash
-set -euo pipefail
+set -eou pipefail
 
 log_timing () {
 	echo "[$(date +%Y-%m-%dT%H:%M:%S%z) $0] $1" >> /tmp/timing.log
@@ -150,7 +150,7 @@ dbus_config_5 () {
 
 run_tests () {
 	echo "[$0 ${FUNCNAME[0]}]"
-	log_timing "run_tests start"
+	log_timing "run_tests start (PROJECT_NAME=${ABLUNIT_TEST_RUNNER_PROJECT_NAME:-})"
 	EXIT_CODE=0
 	cp "package.$ABLUNIT_TEST_RUNNER_VSCODE_VERSION.json" package.json
 

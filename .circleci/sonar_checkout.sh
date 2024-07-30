@@ -1,5 +1,5 @@
 #!/bin/bash
-set -euo pipefail
+set -eou pipefail
 
 intialize () {
     echo "[$0 ${FUNCNAME[0]}] pwd=$(pwd)"

@@ -1,5 +1,5 @@
 #!/bin/bash
-set -euo pipefail
+set -eou pipefail
 
 ## Enable this hook with: git config
 ## git config core.hooksPath .git-hooks/
