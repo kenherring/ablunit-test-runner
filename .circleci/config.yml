@@ -7,7 +7,7 @@ orbs:
 parameters:
   cache-version:
     type: string
-    default: v8 ## VSCode 1.88
+    default: v9
   expected-vsix-count:
     type: integer
     default: 1
@@ -129,7 +129,7 @@ jobs:
       - run: cat artifacts/stable-12.2.12/mocha_results_sonar_proj1.xml || true #TODO remove me
       - run: rm artifacts/stable-12.2.12/mocha_results_junit_*.xml || true
       - sonarcloud/scan:
-          cache_version: 4
+          cache_version: 9
   publish:
     docker:
       - image: cimg/node:20.8
