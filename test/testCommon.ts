@@ -344,20 +344,20 @@ export async function awaitRCode (workspaceFolder: WorkspaceFolder, rcodeCountMi
 	})
 
 
-	log.info('waiting up to ' + buildWaitTime + ' seconds for r-code')
+	log.info('waiting up to ' + buildWaitTime + ' seconds for rcode')
 	for (let i = 0; i < buildWaitTime; i++) {
 		const rcodeCount = getRcodeCount(workspaceFolder)
 		if (rcodeCount >= rcodeCountMinimum) {
 			log.info('compile complete! rcode count = ' + rcodeCount)
 			return rcodeCount
 		}
-		log.info('found ' + rcodeCount + ' r-code files. waiting... (' + i + '/' + buildWaitTime + ')')
+		log.info('found ' + rcodeCount + ' rcode files. waiting... (' + i + '/' + buildWaitTime + ')')
 		await sleep2(500)
 	}
 
 	await commands.executeCommand('abl.dumpFileStatus').then(() => { log.info('abl.dumpFileStatus complete!'); return })
 	await commands.executeCommand('abl.dumpLangServStatus').then(() => { log.info('abl.dumpLangServStatus complete!'); return })
-	throw new Error('r-code files not found')
+	throw new Error('rcode files not found')
 }
 
 export function getWorkspaceFolders () {

@@ -169,7 +169,7 @@ save_and_print_debug_output () {
 	fi
 
 	$VERBOSE || return 0
-	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] r-code"
+	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] rcode"
 	find . -name '*.r'
 }
 
