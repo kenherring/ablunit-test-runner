@@ -68,13 +68,14 @@ function getMochaTimeout (projName, firstTest) {
 function getMochaOpts (projName, firstTest) {
 	// const reporterDir = path.resolve(__dirname, '..', 'artifacts', vsVersion + '-' + oeVersion)
 	const reporterDir = path.resolve(__dirname, '..', 'artifacts')
-	const sonarDir = path.resolve(__dirname, '..', 'artifacts', 'mocha_results_sonar')
-	fs.mkdirSync(reporterDir, { recursive: true })
-	fs.mkdirSync(sonarDir, { recursive: true })
-	const jsonFile = path.resolve(reporterDir, 'mocha_results_' + projName + '.json')
-	const mochaFile = path.resolve(reporterDir, 'mocha_results_junit_' + projName + '.xml')
-	const sonarFile = path.resolve(sonarDir, projName + '.xml')
-	const xunitFile = path.resolve(reporterDir, 'mocha_results_xunit_' + projName + '.xml')
+	fs.mkdirSync(path.resolve(reporterDir, 'mocha_results_json'))
+	fs.mkdirSync(path.resolve(reporterDir, 'mocha_results_junit'))
+	fs.mkdirSync(path.resolve(reporterDir, 'mocha_results_sonar'))
+	fs.mkdirSync(path.resolve(reporterDir, 'mocha_results_xunit'))
+	const jsonFile = path.resolve(reporterDir, 'mocha_results_json', projName + '.json')
+	const mochaFile = path.resolve(reporterDir, 'mocha_results_junit', projName + '.xml')
+	const sonarFile = path.resolve(reporterDir, 'mocha_results_sonar', projName + '.xml')
+	const xunitFile = path.resolve(reporterDir, 'mocha_results_xunit', projName + '.xml')
 	// const bail = process.env['CIRCLECI'] != 'true' || false
 
 	const mochaOpts = {
