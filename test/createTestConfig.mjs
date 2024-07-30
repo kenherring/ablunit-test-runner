@@ -68,6 +68,7 @@ function getMochaTimeout (projName, firstTest) {
 function getMochaOpts (projName, firstTest) {
 	// const reporterDir = path.resolve(__dirname, '..', 'artifacts', vsVersion + '-' + oeVersion)
 	const reporterDir = path.resolve(__dirname, '..', 'artifacts')
+	fs.mkdirSync(reporterDir)
 	fs.mkdirSync(path.resolve(reporterDir, 'mocha_results_json'))
 	fs.mkdirSync(path.resolve(reporterDir, 'mocha_results_junit'))
 	fs.mkdirSync(path.resolve(reporterDir, 'mocha_results_sonar'))

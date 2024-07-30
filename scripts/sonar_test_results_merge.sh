@@ -2,7 +2,14 @@
 set -eou pipefail
 set -x
 
-rm artifacts/mocha_results_sonar/merged.xml
+rm -f artifacts/mocha_results_sonar/merged.xml
+
+if ! find artifacts/mocha_results_sonar -type f -name "*.xml"; then
+    echo "ERROR: no *.xml files found in artifacts/mocha_results_sonar"
+    exit 1
+else
+    echo "Directory is empty"
+fi
 
 for F in artifacts/mocha_results_sonar/*.xml; do
     echo "F=$F"

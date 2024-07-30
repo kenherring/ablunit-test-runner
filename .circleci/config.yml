@@ -105,9 +105,7 @@ jobs:
     steps:
       - restore-test-cache: { oe-version: << parameters.oe-version >> }
       - run: .circleci/run_test_wrapper.sh
-      - run: find . -type f -name "mocha_results_sonar_*.xml" || true
-      - run: find . -type f -name "mocha_results_xunit_*.xml" || true
-      - store_test_results: { path: artifacts }
+      - store_test_results: { path: artifacts/mocha_results_xunit }
       - store_artifacts: { when: always, path: artifacts }
       - persist_to_workspace: { root: ".", paths: [ artifacts, coverage ]}
   install-and-run:
