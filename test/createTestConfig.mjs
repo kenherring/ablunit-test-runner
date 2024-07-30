@@ -290,7 +290,7 @@ function getTests () {
 	if (envProjectName && envProjectName != '') {
 		const projects = envProjectName.split(',')
 		for (const p of projects) {
-			tests.push(getTestConfig(p, p.length == 0))
+			tests.push(getTestConfig(p, tests.length == 0))
 		}
 		return tests
 	}
@@ -305,7 +305,7 @@ function getTests () {
 			basename != 'proj7B' &&
 			basename != 'proj9'
 		) {
-			tests.push(getTestConfig(basename))
+			tests.push(getTestConfig(basename, tests.length == 0))
 		}
 	}
 	return tests
