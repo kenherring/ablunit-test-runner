@@ -164,6 +164,6 @@ log_timing "create_dbs"
 create_dbs
 log_timing "doPackage"
 doPackage
-rm -rf artifacts coverage
+rm -rf artifacts/* coverage
 log_timing "package complete"
 echo "[$0] completed successfully!"

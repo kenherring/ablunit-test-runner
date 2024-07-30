@@ -129,6 +129,8 @@ run_tests_in_docker () {
 
 	# export NVIDIA_VISIBLE_DEVICES=none
 
+	mkdir -p artifacts
+
 	for ABLUNIT_TEST_RUNNER_OE_VERSION in "${OE_VERSIONS[@]}"; do
 		echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] docker run with ABLUNIT_TEST_RUNNER_OE_VERSION=$ABLUNIT_TEST_RUNNER_OE_VERSION"
 		export ABLUNIT_TEST_RUNNER_OE_VERSION ABLUNIT_TEST_RUNNER_VSCODE_VERSION ABLUNIT_TEST_RUNNER_PROJECT_PROJECT_NAME ABLUNIT_TEST_RUNNER_NO_COVERAGE
@@ -148,7 +150,7 @@ run_tests_in_docker () {
 			-e VERBOSE
 			-e ABLUNIT_TEST_RUNNER_VSCODE_VERSION
 			-e ABLUNIT_TEST_RUNNER_NO_COVERAGE
-			-v "$PWD/docker/artifacts":/home/circleci/artifacts
+			-v "$PWD/artifacts":/home/circleci/project/artifacts
 		)
 		[ -n "${ABLUNIT_TEST_RUNNER_PROJECT_NAME:-}" ] && ARGS+=(-e ABLUNIT_TEST_RUNNER_PROJECT_NAME)
 		ARGS+=(

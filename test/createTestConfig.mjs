@@ -16,7 +16,6 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const vsVersionNum = '1.88.0'
 const vsVersion = process.env['ABLUNIT_TEST_RUNNER_VSCODE_VERSION'] ?? 'stable'
 const oeVersion = process.env['ABLUNIT_TEST_RUNNER_OE_VERSION'] ?? '12.2.12'
-let firstTest = true
 const enableExtensions = [
 	'AtStart',
 	'DebugLines',
@@ -40,7 +39,7 @@ function writeConfigToFile (name, config) {
 	fs.writeFileSync('.vscode-test.' + name + '.bk.json', JSON.stringify(config, null, 4).replace('    ', '\t'))
 }
 
-function getMochaTimeout (projName) {
+function getMochaTimeout (projName, firstTest) {
 	let timeout = 15000
 	if (projName === 'examples') {
 		timeout = 1000
@@ -56,7 +55,6 @@ function getMochaTimeout (projName) {
 	}
 
 	if (firstTest) {
-		firstTest = false
 		timeout = 45000
 	}
 
@@ -67,7 +65,7 @@ function getMochaTimeout (projName) {
 * Additional options to pass to the Mocha runner.
 * @see https://mochajs.org/api/mocha
 */
-function getMochaOpts (projName) {
+function getMochaOpts (projName, firstTest) {
 	// const reporterDir = path.resolve(__dirname, '..', 'artifacts', vsVersion + '-' + oeVersion)
 	const reporterDir = path.resolve(__dirname, '..', 'artifacts')
 	const sonarDir = path.resolve(__dirname, '..', 'artifacts', 'mocha_results_sonar')
@@ -81,7 +79,7 @@ function getMochaOpts (projName) {
 
 	const mochaOpts = {
 		// fullTrace: true
-		timeout: getMochaTimeout(projName),
+		timeout: getMochaTimeout(projName, firstTest),
 		// ui: 'tdd', // describe, it, etc
 		// ui: 'bdd' // default; suite, test, etc
 		retries: 0,
@@ -213,7 +211,7 @@ function getLaunchArgs (projName) {
 	return args
 }
 
-function getTestConfig (projName) {
+function getTestConfig (projName, firstTest) {
 
 	let workspaceFolder = '' + projName
 	if (projName.startsWith('proj7')) {
@@ -277,7 +275,7 @@ function getTestConfig (projName) {
 		version: vsVersion,
 		extensionDevelopmentPath: './',
 		workspaceFolder,
-		mocha: getMochaOpts(projName),
+		mocha: getMochaOpts(projName, firstTest),
 		label: 'suite_' + projName,
 		srcDir: './',
 	}
@@ -291,7 +289,7 @@ function getTests () {
 	if (envProjectName && envProjectName != '') {
 		const projects = envProjectName.split(',')
 		for (const p of projects) {
-			tests.push(getTestConfig(p))
+			tests.push(getTestConfig(p, p.length == 0))
 		}
 		return tests
 	}
