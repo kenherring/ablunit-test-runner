@@ -1,6 +1,5 @@
 #!/bin/bash
 set -eou pipefail
-set -x
 
 initialize () {
 	local OPT OPTARG OPTIND
