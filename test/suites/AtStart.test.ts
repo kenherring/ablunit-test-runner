@@ -1,5 +1,4 @@
-import { doesFileExist } from 'src/ABLUnitCommon'
-import { assert, extensions, log, runAllTests, suiteSetupCommon, toUri } from '../testCommon'
+import { assert, log, runAllTests, suiteSetupCommon, toUri } from '../testCommon'
 
 suite('projAtStart  - Extension Test Suite - bdd', () => {
 
@@ -8,13 +7,15 @@ suite('projAtStart  - Extension Test Suite - bdd', () => {
 		return
 	})
 
-	test('projAtStart - ${workspaceFolder}/ablunit.json file exists', () => {
-		return runAllTests(true).then(() => {
+	test('projAtStart - ${workspaceFolder}/ablunit.json file exists', async () => {
+		await runAllTests(true).then(() => {
 			log.info('results.xml uri=' + toUri('results.xml'))
 			// log.info('results.xml file exists: ' + doesFileExist(toUri('results.xml')))
 			assert.fileExists(toUri('results.xml'))
 			return
 		}, (e) => { throw e })
+		return
+
 		// .then(() => {
 		// 	// TODO! fix me on windows
 		// 	// if (process.platform === 'win32' || process.env['WSL_DISTRO_NAME'] !== undefined) {
