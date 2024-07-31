@@ -1,5 +1,5 @@
 #!/bin/bash
-set -euo pipefail
+set -eou pipefail
 
 log_timing () {
 	if [ -f /tmp/timing.log ]; then

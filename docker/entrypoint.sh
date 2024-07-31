@@ -1,5 +1,5 @@
 #!/bin/bash
-set -euo pipefail
+set -eou pipefail
 
 
 log_timing () {
@@ -95,7 +95,7 @@ initialize_repo () {
 	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] pwd=$(pwd)"
 	if [ -d "$PROJECT_DIR/.git" ]; then
 		cd "$PROJECT_DIR"
-		git pull
+		git fetch
 	elif [ -d "$PROJECT_DIR" ]; then
 		cd "$PROJECT_DIR"
 		git init
@@ -103,10 +103,7 @@ initialize_repo () {
 	else
 		git clone "$REPO_VOLUME" "$PROJECT_DIR"
 	fi
-	cd "$PROJECT_DIR"
-	if [ "$(git branch --show-current)" = "$GIT_BRANCH" ]; then
-		git pull
-	else
+	if [ "$(git branch --show-current)" != "$GIT_BRANCH" ]; then
 		git fetch origin "$GIT_BRANCH":"$GIT_BRANCH"
 		git checkout "$GIT_BRANCH"
 	fi
@@ -186,7 +183,7 @@ run_tests_base () {
 		$BASH_AFTER_ERROR && bash
 		exit 1
 	fi
-	set -euo pipefail
+	set -eou pipefail
 	echo "run_tests success"
 
 	if [ -z "${ABLUNIT_TEST_RUNNER_PROJECT_NAME:-}" ]; then

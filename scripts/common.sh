@@ -1,5 +1,5 @@
 #!/bin/bash
-set -euo pipefail
+set -eou pipefail
 
 jq () {
 	if command -v jq >/dev/null 2>&1; then

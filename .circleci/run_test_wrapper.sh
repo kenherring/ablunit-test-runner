@@ -193,7 +193,7 @@ save_and_print_debug_output () {
 	local FROM_DIR TO_DIR
 	FROM_DIR=$(find .vscode-test  -maxdepth 1 -type d -name 'vscode-*' | tail -1)
 	TO_DIR=/home/circleci/.vscode-test/$(basename "$FROM_DIR")
-	if [ ! -d "$TO_DIR" ]; then
+	if [ ! -d "$TO_DIR" ] && [ -n "$FROM_DIR" ]; then
 		mkdir -p /home/circleci/.vscode-test/
 		cp -r "$FROM_DIR" "$TO_DIR"
 	fi
