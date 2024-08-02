@@ -1,6 +1,8 @@
 #!/bin/bash
 set -eou pipefail
 
+OE_VERSION=12.8.1
+
 if [ -z "${WSL_DISTRO_NAME:-}" ]; then
 	echo "this script is meant to run under wsl only"
 fi
@@ -21,7 +23,7 @@ if [ -d "/psc" ]; then
 fi
 
 docker rm psc
-docker run --name psc progresssoftware/prgs-oedb:12.2.12_ent bash -c "exit 0"
+docker run --name psc progresssoftware/prgs-oedb:${OE_VERSION}_ent bash -c "exit 0"
 sudo docker cp psc:/psc /psc
 docker rm psc
 
