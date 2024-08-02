@@ -17,7 +17,7 @@ RUN if [ ! -f /root/.rssw/oedoc.bin ]; then echo "/root/.rssw/oedoc.bin oedoc.bi
 RUN curl -v -L https://github.com/Riverside-Software/pct/releases/download/v228/PCT.jar -o /usr/share/ant/lib/PCT.jar
 RUN echo "JAVA_HOME=$(which java)" > /psc/dlc/properties/java.properties
 
-ENV TERM=vt100
+ENV TERM vt100
 ENV DLC /psc/dlc
 ENV PATH $PATH:$DLC/bin
 ENV PROMSGS $DLC/promsgs
@@ -26,8 +26,8 @@ ENV PROMSGS $DLC/promsgs
 ADD build.xml /psc/dlc/tty/build.xml
 WORKDIR /psc/dlc/tty
 ARG OE_VERSION
-ENV OE_VERSION=${OE_VERSION}
-ENV DOCKER_IMAGE=ablunit-test-runner-${OE_VERSION}
+ENV OE_VERSION ${OE_VERSION}
+ENV DOCKER_IMAGE ablunit-test-runner-${OE_VERSION}
 RUN --mount=type=secret,id=license,target=/psc/dlc/progress.cfg \
     echo "OE_VERSION=$OE_VERSION}" && \
     git clone --single-branch -b "v${OE_VERSION}.0" https://github.com/progress/ADE.git \

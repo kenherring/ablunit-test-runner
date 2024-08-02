@@ -11,13 +11,16 @@ parameters:
   expected-vsix-count:
     type: integer
     default: 1
+  primary-oe-version:
+    type: string
+    default: 12.8.1
 
 oe-version-param: &oe-version-param
   parameters:
     oe-version:
       type: string
-      enum: [ '12.2.12', '12.7.0', '12.8.1' ]
-      default: '12.2.12'
+      enum: [ '12.2.12', '12.7.0', '12.8.1', '12.8.3' ]
+      default: '12.8.1'
     vscode-version:
       type: string
       default: stable
@@ -34,7 +37,7 @@ context-and-filters: &context-and-filters
 executors:
   psc-primary:
     docker:
-      - image: kherring/ablunit-test-runner:12.2.12
+      - image: kherring/ablunit-test-runner:12.8.1
         auth:
           username: $DOCKERHUB_USERNAME
           password: $DOCKERHUB_TOKEN
@@ -126,8 +129,8 @@ jobs:
     executor: psc-primary
     steps:
       - attach_workspace: { at: . }
-      - run: cat artifacts/stable-12.2.12/mocha_results_sonar_proj1.xml || true #TODO remove me
-      - run: rm artifacts/stable-12.2.12/mocha_results_junit_*.xml || true
+      - run: cat artifacts/stable-12.8.1/mocha_results_sonar_proj1.xml || true #TODO remove me
+      - run: rm artifacts/stable-12.8.1/mocha_results_junit_*.xml || true
       - sonarcloud/scan:
           cache_version: 9
   publish:
@@ -147,27 +150,27 @@ workflows:
       - test:
           <<: *context-and-filters
           requires: [ package ]
-          oe-version: 12.2.12
+          oe-version: << pipeline.parameters.primary-oe-version >>
           matrix:
             parameters:
               vscode-version: [ stable ]
               # vscode-version: [ stable, insiders ]
-          name: test-12.2.12-<< matrix.vscode-version >>
+          name: test-<< pipeline.parameters.primary-oe-version >>-<< matrix.vscode-version >>
       - test:
           <<: *context-and-filters
-          requires: [ package, test-12.2.12-stable ]
+          requires: [ package, test-12.8.1-stable ]
           matrix:
             parameters:
-              oe-version: [ 12.7.0, 12.8.1 ]
+              oe-version: [ 12.2.12, 12.8.3 ]
               vscode-version: [ stable ]
               # vscode-version: [ stable, insiders ]
           name: test-<< matrix.oe-version>>-<< matrix.vscode-version >>
       - sonar:
           <<: *context-and-filters
-          requires: [ test-12.2.12-stable ]
+          requires: [ test-<< pipeline.parameters.primary-oe-version >>-stable ]
       # - install-and-run:
       #     <<: *context-and-filters
-      #     requires: [ test-12.2.12-stable ]
+      #     requires: [ test-12.8.1-stable ]
       - publish:
           context:
             - Azure_PAT
