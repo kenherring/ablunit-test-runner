@@ -6,8 +6,6 @@ import { parseTestProgram } from '../../src/parse/TestProgramParser'
 import { getTestCount, getWorkspaceUri, log, runAllTests, suiteSetupCommon } from '../testCommon'
 import { getContentFromFilesystem, getLines } from '../../src/parse/TestParserCommon'
 
-
-const projName = 'proj5'
 const workspaceUri = getWorkspaceUri()
 
 suite('proj5 - Extension Test Suite', () => {

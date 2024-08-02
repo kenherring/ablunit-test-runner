@@ -5,8 +5,6 @@ import { PropathParser } from '../../src/ABLPropath'
 
 const workspaceFolder = workspace.workspaceFolders![0]
 
-
-
 suite('debugLines - Debug Line Tests - insiders', () => {
 
 	suiteSetup('debugLines - before', async () => {

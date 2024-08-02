@@ -1,7 +1,6 @@
 import { Uri } from 'vscode'
 import { assert, getWorkspaceUri, runAllTests, suiteSetupCommon } from '../testCommon'
 
-const projName = 'proj6'
 const workspaceUri = getWorkspaceUri()
 
 suite('proj6 - Extension Test Suite', () => {

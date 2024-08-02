@@ -280,14 +280,7 @@ function getTests () {
 	const g = glob.globSync('test/suites/*.test.ts').reverse()
 	for (const f of g) {
 		const basename = path.basename(f, '.test.ts')
-		if (basename != 'proj2' &&
-			basename != 'proj3' &&
-			basename != 'proj4' &&
-			basename != 'proj7B' &&
-			basename != 'proj9'
-		) {
-			tests.push(getTestConfig(basename))
-		}
+		tests.push(getTestConfig(basename))
 	}
 	return tests
 }

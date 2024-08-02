@@ -3,7 +3,6 @@ import { Uri } from 'vscode'
 import { deleteFile, doesFileExist, getDefaultDLC, getSessionTempDir, getWorkspaceUri, installExtension, oeVersion, runAllTests, setRuntimes, suiteSetupCommon, updateTestProfile } from '../testCommon'
 import { doesDirExist } from '../../src/ABLUnitCommon'
 
-const projName = 'proj4'
 const sessionTempDir = getSessionTempDir()
 
 suite('proj4 - Extension Test Suite', () => {

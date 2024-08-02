@@ -1,7 +1,6 @@
 import { Uri } from 'vscode'
 import { assert, getDefaultDLC, getWorkspaceUri, installExtension, oeVersion, runAllTests, setRuntimes, suiteSetupCommon } from '../testCommon'
 
-const projName = 'proj3'
 const workspaceUri = getWorkspaceUri()
 
 suite('proj3 - Extension Test Suite', () => {
@@ -11,7 +10,7 @@ suite('proj3 - Extension Test Suite', () => {
 	})
 
 	setup('proj3 - beforeEach', async () => {
-		await setRuntimes([{name: '11.7', path: '/psc/dlc_11.7'}, {name: oeVersion(), path: getDefaultDLC(), default: true}]).then()
+		await setRuntimes([{name: '11.7', path: '/psc/dlc_11.7'}, {name: oeVersion(), path: getDefaultDLC(), default: true}])
 	})
 
 	test('proj3.1 - target/ablunit.json file exists', async () => {

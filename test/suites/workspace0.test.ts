@@ -1,9 +1,6 @@
 import { strict as assert } from 'assert'
-import { Uri, workspace } from 'vscode'
+import { Uri } from 'vscode'
 import { doesDirExist, doesFileExist, getWorkspaceFolders, runAllTests, suiteSetupCommon } from '../testCommon'
-
-
-const projName = 'workspace0'
 
 suite('workspace0 - Extension Test Suite', () => {
 
