@@ -39,7 +39,7 @@ update_oe_version () {
 	local SHORT_VERSION=${ABLUNIT_TEST_RUNNER_OE_VERSION%.*}
 	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] SHORT_VERSION=$SHORT_VERSION"
 
-	sed -i "s/\"12.2\"/\"$SHORT_VERSION\"/g" test_projects/*/openedge-project.json
+	sed -i "s|\"oeversion\": *\"12.[0-9]\"|\"oeversion\": \"$SHORT_VERSION\"|g" test_projects/*/openedge-project.json
 	# ls -al test_projects/*/openedge-project.json
 }
 

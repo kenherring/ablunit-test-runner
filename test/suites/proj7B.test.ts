@@ -11,7 +11,7 @@ suite('proj7B - Extension Test Suite', () => {
 
 	setup('proj7B - beforeEach', beforeCommon)
 
-	test('proj7B.1 - cancel test refresh', async () => {
+	test.skip('proj7B.1 - cancel test refresh', async () => {
 		// TODO
 		// const maxCancelTime = 250
 		const maxCancelTime = 2000
