@@ -13,7 +13,7 @@ suite('proj3 - Extension Test Suite', () => {
 		return
 	})
 
-	test('proj3.1 - target/ablunit.json file exists', async () => {
+	test('proj3.1 - target/ablunit.json file exists', () => {
 		return runAllTests().then(() => {
 			const ablunitJson = Uri.joinPath(workspaceUri, 'target', 'ablunit.json')
 			const resultsXml = Uri.joinPath(workspaceUri, 'ablunit-output', 'results.xml')
