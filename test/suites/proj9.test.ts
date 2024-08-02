@@ -1,17 +1,14 @@
-import { Uri, workspace } from 'vscode'
-import { assert, deleteFile, deleteTestFiles, getTestCount, getWorkspaceUri, log, runAllTests, selectProfile, suiteSetupCommon, updateTestProfile } from '../testCommon'
+import { assert, deleteFile, deleteTestFiles, getTestCount, getWorkspaceUri, log, runAllTests, selectProfile, suiteSetupCommon, updateTestProfile, Uri, workspace } from '../testCommon'
 
 const testProfileJson = Uri.joinPath(getWorkspaceUri(), '.vscode/ablunit-test-profile.json')
 const testProfileBackup = Uri.joinPath(getWorkspaceUri(), '.vscode/ablunit-test-profile.json.backup')
 
 suite('proj9 - Extension Test Suite', () => {
 
-	suiteSetup('proj9 - before', async () => {
-		await suiteSetupCommon()
+	suiteSetup('proj9 - before', () => {
+		return suiteSetupCommon()
 			.then(() => { return workspace.fs.copy(testProfileJson, testProfileBackup, { overwrite: true }) })
 			.then(() => { return }, (e) => { throw e })
-
-		return
 	})
 
 	setup('proj9 - beforeEach', () => {

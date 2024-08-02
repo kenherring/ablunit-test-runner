@@ -1,9 +1,8 @@
-import { strict as assert } from 'assert'
 import { Uri } from 'vscode'
 import { parseSuiteLines } from '../../src/parse/TestSuiteParser'
 import { parseTestClass } from '../../src/parse/TestClassParser'
 import { parseTestProgram } from '../../src/parse/TestProgramParser'
-import { getTestCount, getWorkspaceUri, log, runAllTests, suiteSetupCommon } from '../testCommon'
+import { assert, getTestCount, getWorkspaceUri, log, runAllTests, suiteSetupCommon } from '../testCommon'
 import { getContentFromFilesystem, getLines } from '../../src/parse/TestParserCommon'
 
 const workspaceUri = getWorkspaceUri()
@@ -19,7 +18,7 @@ suite('proj5 - Extension Test Suite', () => {
 		const prom = runAllTests()
 			.then(() => { return getTestCount(resultsJson) })
 			.then((testCount) => {
-				assert(testCount > 100)
+				assert.greater(testCount, 100)
 				return
 			}, (e) => { throw e })
 		return prom

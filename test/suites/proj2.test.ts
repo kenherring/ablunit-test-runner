@@ -1,13 +1,11 @@
-import { Uri, commands } from 'vscode'
-import { assert, getResults, getWorkspaceUri, log, runAllTests, sleep, suiteSetupCommon } from '../testCommon'
+import { assert, getResults, getWorkspaceUri, log, runAllTests, sleep, suiteSetupCommon, Uri, commands } from '../testCommon'
 
 const workspaceUri = getWorkspaceUri()
 
 suite('proj2 - Extension Test Suite', () => {
 
-	suiteSetup('proj2 - before', async () => {
-		await suiteSetupCommon()
-		return
+	suiteSetup('proj2 - before', () => {
+		return suiteSetupCommon()
 	})
 
 	test('proj2.1 - temp/ablunit.json file exists', async () => {

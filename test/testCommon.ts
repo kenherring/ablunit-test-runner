@@ -947,11 +947,14 @@ export const assert = {
 	throws: assertParent.throws,
 	doesNotThrow: assertParent.doesNotThrow,
 
-	greaterOrEqual (a: number, b: number, message?: string) {
-		assertParent.ok(a >= b, message)
+	greater (testValue: number, greaterThan: number, message?: string) {
+		assertParent.ok(testValue > greaterThan, message)
 	},
-	lessOrEqual (a: number, b: number, message?: string) {
-		assertParent.ok(a <= b, message)
+	greaterOrEqual (testValue: number, greaterThan: number, message?: string) {
+		assertParent.ok(testValue >= greaterThan, message)
+	},
+	lessOrEqual (testValue: number, lessThan: number, message?: string) {
+		assertParent.ok(testValue <= lessThan, message)
 	},
 
 	throwsAsync: async (block: () => Promise<void>, message?: string) => {

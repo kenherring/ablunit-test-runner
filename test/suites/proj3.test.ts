@@ -1,13 +1,11 @@
-import { Uri } from 'vscode'
-import { assert, getDefaultDLC, getWorkspaceUri, oeVersion, runAllTests, setRuntimes, suiteSetupCommon } from '../testCommon'
+import { assert, getDefaultDLC, getWorkspaceUri, oeVersion, runAllTests, setRuntimes, suiteSetupCommon, Uri } from '../testCommon'
 
 const workspaceUri = getWorkspaceUri()
 
 suite('proj3 - Extension Test Suite', () => {
 
-	suiteSetup('proj3 - suiteSetup', async () => {
-		await suiteSetupCommon()
-		return
+	suiteSetup('proj3 - suiteSetup', () => {
+		return suiteSetupCommon()
 	})
 
 	setup('proj3 - beforeEach', async () => {
