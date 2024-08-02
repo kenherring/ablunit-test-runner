@@ -7,6 +7,7 @@ suite('proj3 - Extension Test Suite', () => {
 
 	suiteSetup('proj3 - suiteSetup', async () => {
 		await suiteSetupCommon()
+		return
 	})
 
 	setup('proj3 - beforeEach', async () => {

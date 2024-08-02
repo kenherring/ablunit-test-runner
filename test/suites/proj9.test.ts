@@ -9,6 +9,7 @@ suite('proj9 - Extension Test Suite', () => {
 	suiteSetup('proj9 - before', async () => {
 		await suiteSetupCommon()
 		await workspace.fs.copy(testProfileJson, testProfileBackup, { overwrite: true })
+		return
 	})
 
 	setup('proj9 - beforeEach', () => {
@@ -31,6 +32,7 @@ suite('proj9 - Extension Test Suite', () => {
 
 	suiteTeardown('proj9 - after', async () => {
 		await workspace.fs.delete(testProfileBackup)
+		return
 		// await workspace.fs.delete(testProfileBackup).then(() => {
 		// 	log.info('suiteTeardown return')
 		// 	return

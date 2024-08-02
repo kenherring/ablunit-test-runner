@@ -13,6 +13,7 @@ suite('proj4 - Extension Test Suite', () => {
 			await updateTestProfile('tempDir', '/tmp/ablunit')
 			await updateTestProfile('profiler.listings', '/tmp/ablunit-local/listings')
 		}
+		return
 	})
 
 	setup('proj4 - beforeEach', async () => {
