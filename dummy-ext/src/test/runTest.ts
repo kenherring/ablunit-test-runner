@@ -7,11 +7,11 @@
 import * as cp from 'child_process'
 import * as path from 'path'
 import { globSync } from 'glob'
-import { existsSync } from 'fs'
+import { copyFileSync, existsSync } from 'fs'
 import { downloadAndUnzipVSCode, resolveCliArgsFromVSCodeExecutablePath, runTests } from '@vscode/test-electron'
 
 const file = 'dummy-ext/runTest.ts'
-let packagedExtensionPath = path.resolve(__dirname, '../../../ablunit-test-runner-*.vsix')
+let packagedExtensionPath = path.resolve(__dirname, '../../../ablunit-test-runner-*.*.*.vsix')
 
 async function main() {
 	const projName = getProjName()
@@ -32,27 +32,39 @@ async function main() {
 }
 
 function getProjName() {
-	const g = globSync(packagedExtensionPath)
-	if (g.length !== 2) {
-		throw new Error('Expected exactly two ablunit-test-runner-*.vsix file, found ' + g.length)
+	const g = globSync('ablunit-test-runner-*.vsix', { cwd: '..' })
+	if (g.length !== 1) {
+		throw new Error('Expected exactly one ablunit-test-runner-*.vsix file, found ' + g.length + ' in ' + packagedExtensionPath)
 	}
 
-	packagedExtensionPath = g[0]
+	packagedExtensionPath = path.resolve('..', g[0])
 	if (!existsSync(packagedExtensionPath)) {
 		throw new Error('Extension bundle does not exist! path=' + packagedExtensionPath)
 	}
 	return path.resolve(__dirname, '../../../test_projects/proj4')
 }
 
+function copyExtensionFile() {
+	let packagedExtensionPattern = path.resolve(__dirname, '../../../ablunit-test-runner-*.*.*.vsix')
+	const g = globSync('ablunit-test-runner-*.vsix', { cwd: '..' })
+	const packagedExtensionPath = path.resolve('..', g[0])
+	if (g.length !== 1) {
+		throw new Error('Expected exactly one ablunit-test-runner-*.vsix file, found ' + g.length + ' in ' + packagedExtensionPath)
+	}
+	console.log('copy extension file ' + packagedExtensionPath + ' to ' + path.resolve('.vscode-test', 'extensions', g[0]))
+	copyFileSync(packagedExtensionPath, path.resolve('.vscode-test', 'extensions', g[0]))
+	return packagedExtensionPath
+}
+
 function installOpenEdgeExtension (vscodeExecutablePath: string, extensionId: string) {
-	console.log('[runTest.ts runTest] installing OpenEdge extensions...')
 	const [cliPath, ...args] = resolveCliArgsFromVSCodeExecutablePath(vscodeExecutablePath)
+	console.log('[runTest.ts runTest] installing extensions ' + extensionId + '... (cliPath=' + cliPath + ')')
 	// Use cp.spawn / cp.exec for custom setup
-	cp.spawnSync(
-		cliPath,
-		[...args, '--install-extension', extensionId],
-		{ encoding: 'utf-8', stdio: 'inherit' }
-	)
+	// cp.spawnSync(cliPath, ['--install-extension', extensionId])
+	cp.execSync(cliPath + ' --list-extensions')
+	cp.execSync(cliPath + ' --install-extension=' + packagedExtensionPath)
+	cp.execSync(cliPath + ' --list-extensions')
+	console.log('[runTest.ts runTest] installed extensions ' + extensionId + '!')
 }
 
 async function runTest(version: string, projName: string, projDir?: string) {
@@ -69,21 +81,25 @@ async function runTest(version: string, projName: string, projDir?: string) {
 
 	try {
 		installOpenEdgeExtension(vscodeExecutablePath, packagedExtensionPath)
+		// copyExtensionFile()
 
 		const launchArgs: string[] = []
 		launchArgs.push(projDir)
-		launchArgs.push('--log=debug')
+		launchArgs.push('--log=verbose')
 		// launchArgs.push('--verbose')
 		// launchArgs.push('--telemetry')
 		// launchArgs.push('--disable-gpu')
 		// launchArgs.push('--trace-deprecation')
-		if (version === 'insiders') {
-			launchArgs.push('--enable-proposed-api=kherring.ablunit-test-runner')
-		}
+		// if (version === 'insiders') {
+		// 	launchArgs.push('--enable-proposed-api=kherring.ablunit-test-runner')
+		// }
 		// launchArgs.push('--disable-extensions')
 
 		console.log('[' + file + ' runTest] (projName=' + projName + ') running tests with args=')
 		console.debug(' -- cwd=' + __dirname)
+		console.debug(' -- vscodeExecutablePath=' + vscodeExecutablePath)
+		// D:\ablunit-test-runner\dummy-ext\.vscode-test\vscode-win32-x64-archive-1.92.0\bin\code.cmd
+		// D:\ablunit-test-runner\dummy-ext\.vscode-test\vscode-win32-x64-archive-1.92.0\Code.exe
 		console.debug(' -- extensionDevelopmentPath=' + extensionDevelopmentPath)
 		console.debug(' -- extensionTestsPath=' + extensionTestsPath)
 		console.debug(' -- testingEnv=' + JSON.stringify(testingEnv))
@@ -94,7 +110,7 @@ async function runTest(version: string, projName: string, projDir?: string) {
 			extensionTestsPath,
 			launchArgs: launchArgs,
 			extensionTestsEnv: testingEnv,
-			version: version
+			version: version,
 		})
 		console.log('[' + file + ' runTest] (projName=' + projName + ') tests completed successfully!')
 	} catch (err) {
