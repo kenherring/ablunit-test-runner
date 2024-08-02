@@ -1,16 +1,9 @@
 {
     "abl.configuration.runtimes": [
         {
-            "name": "12.2",
-            "path": "/psc/dlx"
-        },
-        {
-            "name": "12.7",
-            "path": "/psc/dlx"
-        },
-        {
-            "name": "12.8",
-            "path": "/psc/dlx"
+            "name": "$NAME",
+            "path": "$DLC",
+            "default": true
         }
     ]
 }
