@@ -3,7 +3,7 @@ import { LogLevel, TestRun, window } from 'vscode'
 import path from 'path'
 
 class Logger {
-	private static instance: Logger
+	private static readonly instance: Logger = new Logger()
 
 	private readonly logOutputChannel
 	private readonly consoleLogLevel = LogLevel.Info
@@ -22,9 +22,6 @@ class Logger {
 	}
 
 	public static getInstance () {
-		if (!Logger.instance) {
-			Logger.instance = new Logger()
-		}
 		Logger.instance.clearOutputChannel()
 		return Logger.instance
 	}
@@ -94,7 +91,7 @@ class Logger {
 		}
 
 		if (messageLevel >= this.consoleLogLevel) {
-			this.writeToConsole(messageLevel, message, includeStack)
+			this.writeToConsole(messageLevel, message, includeStack, datetime)
 		}
 	}
 
@@ -132,10 +129,10 @@ class Logger {
 		testRun.appendOutput(optMsg + '\r\n')
 	}
 
-	private writeToConsole (messageLevel: LogLevel, message: string, includeStack: boolean) {
+	private writeToConsole (messageLevel: LogLevel, message: string, includeStack: boolean, datetime: string) {
 		message = this.decorateMessage(messageLevel, message, includeStack)
 		if (this.consoleTimestamp) {
-			message = '[' + new Date().toISOString() + '] ' + message
+			message = '[' + datetime + '] ' + message
 		}
 		switch (messageLevel) {
 			case LogLevel.Trace:
@@ -161,7 +158,13 @@ class Logger {
 			const filename = s.getFileName()
 			if (filename && filename !== __filename && !filename.endsWith('extensionHostProcess.js')) {
 				const funcname = s.getFunctionName()
-				let ret = filename.replace(path.normalize(__dirname), '').substring(1).replace(/\\/g, '/') + ':' + s.getLineNumber()
+				const relpath = path.relative(process.cwd(), filename)
+				// console.log('__dirname=' + __dirname)
+				// console.log(' filename=' + filename)
+				// console.log('  relpath='  + path.relative(process.cwd(), filename))
+				// console.log('os.__dirname', process.cwd())
+				// console.log('funcname=' + funcname)
+				let ret = relpath + ':' + s.getLineNumber()
 				if (funcname) {
 					ret = ret + ' ' + funcname
 				}

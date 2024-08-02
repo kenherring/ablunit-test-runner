@@ -1,8 +1,9 @@
-import { Uri, commands, window, workspace, Range, FileCoverageDetail } from 'vscode'
-import { assert, deleteFile, getResults, log, runAllTests, runAllTestsWithCoverage, suiteSetupCommon, toUri, updateTestProfile } from '../testCommon'
+import { Uri, commands, window, workspace, Range, TextEditor, FileCoverageDetail } from 'vscode'
+import { assert, deleteFile, getResults, getWorkspaceFolders, log, runAllTests, runAllTestsWithCoverage, sleep, suiteSetupCommon, toUri, updateTestProfile } from '../testCommon'
+
+const projName = 'proj0'
 
 function getDetailLine (coverage: FileCoverageDetail[] | never[], lineNum: number) {
-	if (!coverage) return undefined
 	if (coverage.length === 0) {
 		return undefined
 	}
@@ -23,6 +24,7 @@ suite('proj0  - Extension Test Suite', () => {
 		await suiteSetupCommon()
 		await commands.executeCommand('testing.clearTestResults')
 		deleteFile('.vscode/ablunit-test-profile.json')
+		return
 	})
 
 	teardown('proj0 - afterEach', () => {
@@ -74,7 +76,7 @@ suite('proj0  - Extension Test Suite', () => {
 		await runAllTests()
 
 		const lines = (await getResults())[0].coverage.get(testFileUri.fsPath) ?? []
-		const executedLines = lines.filter((d) => d)
+		const executedLines = lines.filter((d) => d.executed)
 		log.debug('executedLines.length=' + executedLines.length)
 		assert.equal(0, executedLines.length, 'executed lines found for ' + workspace.asRelativePath(testFileUri) + '. should be empty')
 		assert.assert(!getDetailLine(executedLines, 5), 'line 5 should display as not executed')

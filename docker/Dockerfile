@@ -1,12 +1,12 @@
 ARG OE_VERSION
 FROM progresssoftware/prgs-oedb:${OE_VERSION}_ent AS psc
-FROM node:20.8
+FROM node:20.9
 
 ## dependencies for running vscode extension tests
 RUN apt-get update \
     && apt-get install -y --no-install-recommends libasound2 libgbm1 libgtk-3-0 libnss3 vulkan-tools \
     && apt-get install -y --no-install-recommends xauth xvfb xauth rsync ant jq dbus \
-    && apt-get install -y --no-install-recommends gh \
+    && apt-get install -y --no-install-recommends gh yq pipx \
     && rm -rf /var/lib/apt/lists/* /var/cache/apt/archives/*
 
 ## dependencies for running ablunit tests
@@ -17,7 +17,7 @@ RUN if [ ! -f /root/.rssw/oedoc.bin ]; then echo "/root/.rssw/oedoc.bin oedoc.bi
 RUN curl -v -L https://github.com/Riverside-Software/pct/releases/download/v228/PCT.jar -o /usr/share/ant/lib/PCT.jar
 RUN echo "JAVA_HOME=$(which java)" > /psc/dlc/properties/java.properties
 
-ENV TERM=vt100
+ENV TERM vt100
 ENV DLC /psc/dlc
 ENV PATH $PATH:$DLC/bin
 ENV PROMSGS $DLC/promsgs
@@ -26,8 +26,8 @@ ENV PROMSGS $DLC/promsgs
 ADD build.xml /psc/dlc/tty/build.xml
 WORKDIR /psc/dlc/tty
 ARG OE_VERSION
-ENV OE_VERSION=${OE_VERSION}
-ENV DOCKER_IMAGE=ablunit-test-runner-${OE_VERSION}
+ENV OE_VERSION ${OE_VERSION}
+ENV DOCKER_IMAGE ablunit-test-runner-${OE_VERSION}
 RUN --mount=type=secret,id=license,target=/psc/dlc/progress.cfg \
     echo "OE_VERSION=$OE_VERSION}" && \
     git clone --single-branch -b "v${OE_VERSION}.0" https://github.com/progress/ADE.git \
@@ -39,6 +39,10 @@ WORKDIR /
 
 ## create directory for vscode-test which will be a mounted volume
 RUN mkdir -p ~/.vscode-test
+
+## install xq (via yq) for xml parsing
+RUN pipx install yq
+ENV PATH $PATH:/root/.local/bin
 
 ## install vscode packaging dependency
 RUN npm install -g @vscode/vsce

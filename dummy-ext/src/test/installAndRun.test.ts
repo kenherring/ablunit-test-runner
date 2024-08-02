@@ -4,6 +4,7 @@ import { FileType, Uri, commands, extensions, workspace } from 'vscode'
 
 suiteSetup(async () => {
 	console.log("[before-1] activating extension: kherring.ablunit-test-runner")
+	await commands.executeCommand('workbench.extensions.installExtension', process.env['EXTENSION_VSIX_PATH'])
 	const ext = extensions.getExtension('kherring.ablunit-test-runner')
 	if (!ext) {
 		throw new Error("extension not found: kherring.ablunit-test-runner")

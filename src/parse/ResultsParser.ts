@@ -127,7 +127,7 @@ export class ABLResultsParser {
 			const testsuite = await this.parseSuite(res[idx].testsuite)
 			const testcases = await this.parseTestCases(res[idx].testcase)
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-call
-			let namePathSep = res[idx].$.name.replace(/\\/g, '/') as string ?? undefined
+			let namePathSep = res[idx].$.name.replace(/\\/g, '/') as string
 			if (!isRelativePath(namePathSep)) {
 				namePathSep = workspace.asRelativePath(namePathSep, false)
 			}

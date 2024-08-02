@@ -1,5 +1,5 @@
-import { WorkspaceFolder, commands, extensions, workspace } from 'vscode'
-import { Duration, activateExtension, enableExtensions, getDefaultDLC, getRcodeCount, installExtension, log, oeVersion, sleep2, updateConfig } from './testCommon'
+import { commands, extensions, workspace } from 'vscode'
+import { Duration, activateExtension, enableExtensions, getDefaultDLC, getRcodeCount, installExtension, log, oeVersion, sleep, sleep2 } from './testCommon'
 
 interface IRuntime {
 	name: string,
@@ -10,9 +10,10 @@ interface IRuntime {
 export async function enableOpenedgeAblExtension (runtimes: IRuntime[]) {
 	const extname = 'riversidesoftware.openedge-abl-lsp'
 	await installExtension(extname)
-	await activateExtension(extname)
-	await setRuntimes(runtimes)
-	return rebuildAblProject()
+		.then(() => { return sleep(250) })
+		.then(() => { return activateExtension(extname) })
+		.then(() => { return setRuntimes(runtimes) })
+		.then(() => { return rebuildAblProject() })
 		.then(() => {
 			log.info('update complete')
 			return getRcodeCount()
@@ -20,39 +21,37 @@ export async function enableOpenedgeAblExtension (runtimes: IRuntime[]) {
 			log.info('rebuild complete! (rcodeCount=' + rcodeCount + ')')
 			log.info('riversidesoftware.openedge-abl-lsp extension is enabled!')
 			return true
-		}, (e) => { throw e})
+		}, (e) => {
+			log.error('failed to set runtimes (e=' + e + ')')
+			throw e
+		})
 }
 
 export function restartLangServer () {
-	return commands.executeCommand('abl.restart.langserv').then(() => {
-		log.info('abl.restart.langserv command complete')
-		return waitForLangServerReady()
-	}).then(() => {
-		log.info('lang server is ready')
-		return true
-	}, (e) => {
-		log.error('abl.restart.langserv command failed! e=' + e)
-	})
+	return commands.executeCommand('abl.restart.langserv')
+		.then(() => {
+			log.info('abl.restart.langserv command complete')
+			return waitForLangServerReady()
+		}).then(() => {
+			log.info('lang server is ready')
+			return true
+		}, (e) => {
+			log.error('abl.restart.langserv command failed! e=' + e)
+		})
 }
 
-export function rebuildAblProject () {
-	const confRuntimes = workspace.getConfiguration('abl').get('configuration.runtimes')!
-	log.info('rebuilding abl project... runtimes=' + JSON.stringify(confRuntimes))
+export function rebuildAblProject (): Promise<number> {
+	log.info('rebuilding abl project...')
 
 	return waitForLangServerReady()
 		.then(() => { return commands.executeCommand('abl.project.rebuild') })
-		.then(() => {
+		.then((r) => {
+			log.debug('abl.project.rebuild complete! (r=' + JSON.stringify(r) + ')')
 			const rcodeCount = getRcodeCount()
 			log.info('abl.project.rebuild command complete! (rcodeCount=' + rcodeCount + ')')
 			return rcodeCount
 		}, (err) => {
-			log.error('abl.project.rebuild failed! err=' + err)
-			return commands.executeCommand('abl.dumpFileStatus')
-		}).then(() => {
-			log.info('abl.dumpFileStatus complete')
-			return true
-		}, (e) => {
-			log.error('abl.dumpFileStatus failed! e=' + e)
+			throw err
 		})
 }
 
@@ -64,13 +63,13 @@ export async function waitForLangServerReady () {
 	let dumpSuccess = false
 	for (let i = 0; i < maxWait; i++) {
 		log.info('start abl.dumpLangServStatus (i=' + i + ')')
-		dumpSuccess = await commands.executeCommand('abl.dumpLangServStatus').then(() => {
-			return true
-		}, (e) => {
-			log.info('dumpLangServStatus e=' + e)
-			return false
-		})
-		await sleep2(400)
+		dumpSuccess = await commands.executeCommand('abl.dumpLangServStatus')
+			.then(() => { return sleep(250) })
+			.then(() => { return true
+			}, (e) => {
+				log.info('dumpLangServStatus e=' + e)
+				return false
+			})
 		log.info('end abl.dumpLangServStatus:' + dumpSuccess + ', i=' + i + ' ' + waitTime + ' (dumpSuccess=' + dumpSuccess + ')')
 		if (dumpSuccess) {
 			break
@@ -85,7 +84,7 @@ export async function waitForLangServerReady () {
 	throw new Error('lang server is not ready!')
 }
 
-export async function setRuntimes (runtimes: IRuntime[] = []) {
+export async function setRuntimes (runtimes?: IRuntime[]) {
 	const duration = new Duration('setRuntimes')
 	if (!enableExtensions()) {
 		throw new Error('setRuntimes failed! extensions are disabled')
@@ -105,6 +104,8 @@ export async function setRuntimes (runtimes: IRuntime[] = []) {
 
 	const conf = workspace.getConfiguration('abl')
 	const current = conf.get('configuration.runtimes')!
+	log.info('current abl.configuration.runtimes=' + JSON.stringify(conf.get('configuration.runtimes')))
+	log.info('setting abl.configuration.runtimes=' + JSON.stringify(runtimes))
 	log.info('current=' + JSON.stringify(current))
 	log.info('  input=' + JSON.stringify(runtimes))
 	if (JSON.stringify(current) === JSON.stringify(runtimes)) {
@@ -113,7 +114,7 @@ export async function setRuntimes (runtimes: IRuntime[] = []) {
 	}
 
 	log.info('workspace.getConfiguration("abl").update("configuration.runtimes") - START')
-	const r = await workspace.getConfiguration('abl').update('configuration.runtimes', runtimes, true)
+	const r = workspace.getConfiguration('abl').update('configuration.runtimes', runtimes, true)
 		.then(() => {
 			log.info('workspace.getConfiguration("abl").update(configuration.runtimes) - END')
 			return restartLangServer()
@@ -128,5 +129,5 @@ export async function setRuntimes (runtimes: IRuntime[] = []) {
 			throw new Error('setRuntimes failed! e=' + e)
 		})
 	log.info('return r=' + JSON.stringify(r))
-	return r
+	return await r
 }

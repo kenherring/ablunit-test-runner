@@ -1,6 +1,12 @@
 #!/bin/bash
 set -eou pipefail
 
+log_timing () {
+	if [ -f /tmp/timing.log ]; then
+		echo "[$(date +%Y-%m-%dT%H:%M:%S%z) $0] $1" >> /tmp/timing.log
+	fi
+}
+
 initialize () {
 	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] pwd=$(pwd)"
 	PATH=$PATH:$DLC/ant/bin
@@ -11,8 +17,8 @@ initialize () {
 	VERBOSE=${VERBOSE:-false}
 	ABLUNIT_TEST_RUNNER_OE_VERSION=${ABLUNIT_TEST_RUNNER_OE_VERSION:-12.2.12}
 	ABLUNIT_TEST_RUNNER_VSCODE_VERSION=${ABLUNIT_TEST_RUNNER_VSCODE_VERSION:-}
-	${CIRCLECI:-false} && NO_BUILD=true
-	[ -z "${DOCKER_IMAGE:-}" ] && NO_BUILD=true
+	# ${CIRCLECI:-false} && NO_BUILD=true
+	# [ -n "${DOCKER_IMAGE:-}" ] && NO_BUILD=true
 	[ -z "${WSL_DISTRO_NAME:-}" ] && WSL=true
 	PACKAGE_VERSION=$(node -p "require('./package.json').version")
 
@@ -95,22 +101,23 @@ create_dbs () {
 	local COMMAND=ant
 	cd test_projects/proj0
 	COMMAND=ant
-	if ! command -v $COMMAND; then
+	if ! command -v $COMMAND >/dev/null; then
 		COMMAND="$DLC/ant/bin/ant"
 	fi
 	mkdir -p artifacts
+	$VERBOSE && echo "COMMAND=$COMMAND"
 	$COMMAND > artifacts/pretest_ant.log >&1
 	cd -
 }
 
 doPackage () {
+	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] NO_BUILD=$NO_BUILD"
 	$NO_BUILD && return 0
-	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] pwd=$(pwd)"
 
 	local PACKAGE_OUT_OF_DATE=false
 	local VSIX_COUNT=0
 	VSIX_COUNT=$(find . -maxdepth 1 -name "*.vsix" 2>/dev/null | wc -l)
-	echo "VSIX_COUNT=$VSIX_COUNT"
+	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] VSIX_COUNT=$VSIX_COUNT"
 
 	if [ -f "ablunit-test-runner-$PACKAGE_VERSION.vsix" ]; then
 		NEWEST_SOURCE=$(find src -type f -printf '%T@ %p\n' | sort -n | tail -1 | cut -d' ' -f2-)
@@ -132,9 +139,12 @@ doPackage () {
 	else
 		PACKAGE_OUT_OF_DATE=true
 	fi
-	echo "CIRCLECI=$CIRCLECI PACKAGE_OUT_OF_DATE=$PACKAGE_OUT_OF_DATE VSIX_COUNT=$VSIX_COUNT"
+	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] CIRCLECI=$CIRCLECI PACKAGE_OUT_OF_DATE=$PACKAGE_OUT_OF_DATE VSIX_COUNT=$VSIX_COUNT"
 	if $PACKAGE_OUT_OF_DATE || $CIRCLECI || [ "$VSIX_COUNT" = "0" ]; then
-		.circleci/package.sh
+		if ! .circleci/package.sh; then
+			echo 201 $?
+			exit 1
+		fi
 	fi
 
 	VSIX_COUNT=$(find . -maxdepth 1 -name "*.vsix" 2>/dev/null | wc -l)
@@ -146,10 +156,14 @@ doPackage () {
 
 ########## MAIN BLOCK ##########
 initialize "$@"
+log_timing "get_performance_test_code"
 copy_user_settings
 get_performance_test_code
 get_pct
+log_timing "create_dbs"
 create_dbs
+log_timing "doPackage"
 doPackage
-rm -rf artifacts coverage
-echo "[$(date +%Y-%m-%d:%H:%M:%S) $0] completed successfully!"
+rm -rf artifacts/* coverage/*
+log_timing "package complete"
+echo "[$0] completed successfully!"

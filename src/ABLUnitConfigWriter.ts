@@ -42,7 +42,7 @@ export class ABLUnitConfig  {
 	}
 
 	createProgressIni (propath: string) {
-		if (platform() != 'win32') { return }
+		if (platform() != 'win32') { return Promise.resolve() }
 		log.info('creating progress.ini: \'' + this.ablunitConfig.progressIniUri.fsPath + '\'')
 		const iniData = ['[WinChar Startup]', 'PROPATH=' + propath]
 		const iniBytes = Uint8Array.from(Buffer.from(iniData.join('\n')))
@@ -116,6 +116,7 @@ export class ABLUnitConfig  {
 		if (lines.length > 0) {
 			return this.writeFile(uri, Uint8Array.from(Buffer.from(lines.join('\n') + '\n')))
 		}
+		return Promise.resolve()
 	}
 
 	readPropathFromJson () {

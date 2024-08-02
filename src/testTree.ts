@@ -228,11 +228,9 @@ export class ABLTestFile extends TestTypeObj {
 	}
 
 	deleteChild (controller: TestController, item: TestItem, child: TestItem) {
-		if (child) {
-			item.children.delete(child.id)
-			controller.items.delete(child.id)
-			testData.delete(child)
-		}
+		item.children.delete(child.id)
+		controller.items.delete(child.id)
+		testData.delete(child)
 	}
 
 	removeUnusedChildren (controller: TestController, item: TestItem, orphans: string[]) {
@@ -288,7 +286,7 @@ export class ABLTestSuite extends ABLTestFile {
 		}
 
 		this.removeUnusedChildren(controller, item, originalChildren)
-		return (item.children.size ?? 0) > 0
+		return item.children.size > 0
 	}
 
 	updateChildProgram (controller: TestController, item: TestItem, id: string, label: string, type: 'ABLTestClass' | 'ABLTestProgram') {
@@ -332,7 +330,7 @@ export class ABLTestClass extends ABLTestFile {
 		this.updateItem(controller, item, response, 'Method')
 
 		this.setClassInfo(response?.classname)
-		return (item.children.size ?? 0) > 0
+		return item.children.size > 0
 	}
 }
 
@@ -346,6 +344,6 @@ export class ABLTestProgram extends ABLTestFile {
 		this.startParsing(item)
 		const response = parseABLTestProgram(content, this.relativePath)
 		this.updateItem(controller, item, response, 'Procedure')
-		return (item.children.size ?? 0) > 0
+		return item.children.size > 0
 	}
 }

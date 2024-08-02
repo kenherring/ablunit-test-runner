@@ -8,5 +8,6 @@
 		"riversidesoftware.openedge-abl-lsp",
 		"sonarsource.sonarlint-vscode",
 		"timonwong.shellcheck",
+		"amodio.tsl-problem-matcher",
 	]
 }

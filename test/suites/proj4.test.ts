@@ -1,9 +1,9 @@
 import { strict as assert } from 'assert'
 import { Uri } from 'vscode'
-import { deleteFile, doesFileExist, getDefaultDLC, getSessionTempDir, getWorkspaceUri, installExtension, oeVersion, runAllTests, setRuntimes, suiteSetupCommon, updateTestProfile } from '../testCommon'
+import { deleteFile, doesFileExist, getDefaultDLC, getSessionTempDir, getWorkspaceUri, oeVersion, runAllTests, suiteSetupCommon, updateTestProfile } from '../testCommon'
+import { setRuntimes } from '../openedgeAblCommands'
 import { doesDirExist } from '../../src/ABLUnitCommon'
 
-const projName = 'proj4'
 const sessionTempDir = getSessionTempDir()
 
 suite('proj4 - Extension Test Suite', () => {

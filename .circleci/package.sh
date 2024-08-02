@@ -30,6 +30,7 @@ initialize () {
 
 package () {
     echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}]"
+    rm -f ./*.vsix
     package_version stable
     # package_version insiders
 }
@@ -50,7 +51,9 @@ package_version () {
     fi
 
     cp "package.$VSCODE_VERSION.json" package.json
-    vsce package "${ARGS[@]}"
+    if ! vsce package "${ARGS[@]}"; then
+        exit 1
+    fi
     cp package.stable.json package.json
 }
 
