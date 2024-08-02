@@ -72,7 +72,7 @@ async function runTest(version: string, projName: string, projDir?: string) {
 		projDir = projName
 	}
 
-	console.log('[installAndRun] start test run.  version=' + version)
+	console.log('[runTest] start test run.  version=' + version)
 
 	const extensionDevelopmentPath = path.resolve(__dirname, '../../')
 	const extensionTestsPath = path.resolve(__dirname, './index')
@@ -80,9 +80,9 @@ async function runTest(version: string, projName: string, projDir?: string) {
 	const testingEnv: { [key: string]: string | undefined } = {}
 
 	try {
-		// installOpenEdgeExtension(vscodeExecutablePath, packagedExtensionPath)
+		installOpenEdgeExtension(vscodeExecutablePath, packagedExtensionPath)
 		// copyExtensionFile()
-		process.env['EXTENSION_VSIX_PATH'] = packagedExtensionPath
+		// process.env['EXTENSION_VSIX_PATH'] = packagedExtensionPath
 
 		const launchArgs: string[] = []
 		launchArgs.push(projDir)
