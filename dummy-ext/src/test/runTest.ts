@@ -80,8 +80,9 @@ async function runTest(version: string, projName: string, projDir?: string) {
 	const testingEnv: { [key: string]: string | undefined } = {}
 
 	try {
-		installOpenEdgeExtension(vscodeExecutablePath, packagedExtensionPath)
+		// installOpenEdgeExtension(vscodeExecutablePath, packagedExtensionPath)
 		// copyExtensionFile()
+		process.env['EXTENSION_VSIX_PATH'] = packagedExtensionPath
 
 		const launchArgs: string[] = []
 		launchArgs.push(projDir)
