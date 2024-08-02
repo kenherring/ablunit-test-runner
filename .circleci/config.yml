@@ -11,6 +11,9 @@ parameters:
   expected-vsix-count:
     type: integer
     default: 1
+  primary-oe-version:
+    type: string
+    default: 12.8.1
 
 oe-version-param: &oe-version-param
   parameters:
@@ -147,12 +150,12 @@ workflows:
       - test:
           <<: *context-and-filters
           requires: [ package ]
-          oe-version: 12.8.1
+          oe-version: << pipeline.parameters.primary-oe-version >>
           matrix:
             parameters:
               vscode-version: [ stable ]
               # vscode-version: [ stable, insiders ]
-          name: test-12.2.12-<< matrix.vscode-version >>
+          name: test-<< pipeline.parameters.primary-oe-version >>-<< matrix.vscode-version >>
       - test:
           <<: *context-and-filters
           requires: [ package, test-12.8.1-stable ]
@@ -164,7 +167,7 @@ workflows:
           name: test-<< matrix.oe-version>>-<< matrix.vscode-version >>
       - sonar:
           <<: *context-and-filters
-          requires: [ test-12.8.1-stable ]
+          requires: [ test-<< pipeline.parameters.primary-oe-version >>-stable ]
       # - install-and-run:
       #     <<: *context-and-filters
       #     requires: [ test-12.8.1-stable ]
