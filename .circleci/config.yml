@@ -131,7 +131,6 @@ jobs:
         auth:
           username: $DOCKERHUB_USERNAME
           password: $DOCKERHUB_TOKEN
-    working_directory: /home/circleci/project
     steps:
       - attach_workspace: { at: . }
       - run:
