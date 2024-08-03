@@ -5,8 +5,8 @@ const testProfileBackup = Uri.joinPath(getWorkspaceUri(), '.vscode/ablunit-test-
 
 suite('proj9 - Extension Test Suite', () => {
 
-	suiteSetup('proj9 - before', () => {
-		return suiteSetupCommon()
+	suiteSetup('proj9 - before', async () => {
+		await suiteSetupCommon()
 			.then(() => { return workspace.fs.copy(testProfileJson, testProfileBackup, { overwrite: true }) })
 			.then(() => { return }, (e) => { throw e })
 	})
