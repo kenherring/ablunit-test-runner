@@ -16,7 +16,7 @@ sonarcloud_scan () {
 
     if [[ ! -x "$SCANNER_DIRECTORY/sonar-scanner-$VERSION-$OS/bin/sonar-scanner" ]]; then
     curl -Ol https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-$VERSION-$OS.zip
-    unzip -qq -o sonar-scanner-cli-$VERSION-$OS.zip -d $SCANNER_DIRECTORY
+    unzip -qq -o sonar-scanner-cli-$VERSION-$OS.zip -d "$SCANNER_DIRECTORY"
     fi
 
     # chmod +x "$SCANNER_DIRECTORY/sonar-scanner-$VERSION-$OS/bin/sonar-scanner"
