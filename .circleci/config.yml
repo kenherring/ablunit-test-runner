@@ -106,7 +106,8 @@ jobs:
     steps:
       - attach_workspace: { at: . }
       - restore-test-cache: { oe-version: << parameters.oe-version >> }
-      - run: .circleci/run_test_wrapper.sh
+      # - run: .circleci/run_test_wrapper.sh ## TODO
+      - run: .circleci/run_test_wrapper.sh -p proj0
       - persist_to_workspace: { root: ., paths: [ artifacts, coverage ]}
       - store_test_results: { path: artifacts/mocha_results_xunit }
       - store_artifacts: { when: always, path: artifacts }

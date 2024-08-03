@@ -6,7 +6,7 @@ FROM node:20.9
 RUN apt-get update \
     && apt-get install -y --no-install-recommends libasound2 libgbm1 libgtk-3-0 libnss3 vulkan-tools \
     && apt-get install -y --no-install-recommends xauth xvfb xauth rsync ant jq dbus \
-    && apt-get install -y --no-install-recommends gh yq pipx \
+    && apt-get install -y --no-install-recommends gh pipx \
     && rm -rf /var/lib/apt/lists/* /var/cache/apt/archives/*
 
 ## dependencies for running ablunit tests
@@ -29,7 +29,6 @@ ARG OE_VERSION
 ENV OE_VERSION ${OE_VERSION}
 ENV DOCKER_IMAGE ablunit-test-runner-${OE_VERSION}
 RUN --mount=type=secret,id=license,target=/psc/dlc/progress.cfg \
-    echo "OE_VERSION=$OE_VERSION}" && \
     git clone --single-branch -b "v${OE_VERSION}.0" https://github.com/progress/ADE.git \
     && ant compile \
     && rm -rf build.xml ADE/ /tmp/*
