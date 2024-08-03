@@ -75,6 +75,8 @@ run_lint () {
 		## sonarqube report
 		echo "eslint json failed"
 	fi
+
+    sed -i 's|/home/circleci/project/|/root/project/|g' "${ESLINT_FILE}.json"
 	if [ "$(find artifacts -name "eslint_report.json" | wc -l)" != "0" ]; then
 		jq '.' < "${ESLINT_FILE}.json" > "${ESLINT_FILE}_pretty.json"
 	else
