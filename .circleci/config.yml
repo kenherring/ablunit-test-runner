@@ -137,6 +137,9 @@ jobs:
       - run: pwd  #TODO remove me
       - run: ls -a #TODO remove me
       - run: grep -r TestSuiteParser.ts artifacts #TODO remove me
+      - run: grep -r ABLPropath.ts artifacts #TODO remove me
+      # - run: sed -i 's|"/root/project/|"|g' artifacts/artifacts/eslint_report.json
+      # - run: grep -r ABLPropath.ts artifacts #TODO remove me
       - run:
           name: merge eslint test reports
           command: scripts/sonar_test_results_merge.sh
