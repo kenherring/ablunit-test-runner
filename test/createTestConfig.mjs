@@ -64,11 +64,14 @@ function getMochaTimeout (projName) {
 function getMochaOpts (projName) {
 	// const reporterDir = path.resolve(__dirname, '..', 'artifacts', vsVersion + '-' + oeVersion)
 	const reporterDir = path.resolve(__dirname, '..', 'artifacts')
-	fs.mkdirSync(reporterDir, { recursive: true })
-	// const jsonFile = path.resolve(reporterDir, 'mocha_results_' + projName + '.json')
-	const mochaFile = path.resolve(reporterDir, 'mocha_results_junit_' + projName + '.xml')
-	const sonarFile = path.resolve(reporterDir, 'mocha_results_sonar_' + projName + '.xml')
-	const xunitFile = path.resolve(reporterDir, 'mocha_results_xunit_' + projName + '.xml')
+	fs.mkdirSync(path.resolve(reporterDir, 'mocha_results_json'), {recursive: true})
+	fs.mkdirSync(path.resolve(reporterDir, 'mocha_results_junit'), {recursive: true})
+	fs.mkdirSync(path.resolve(reporterDir, 'mocha_results_sonar'), {recursive: true})
+	fs.mkdirSync(path.resolve(reporterDir, 'mocha_results_xunit'), {recursive: true})
+	const jsonFile = path.resolve(reporterDir, 'mocha_results_json', projName + '.json')
+	const mochaFile = path.resolve(reporterDir, 'mocha_results_junit', projName + '.xml')
+	const sonarFile = path.resolve(reporterDir, 'mocha_results_sonar', projName + '.xml')
+	const xunitFile = path.resolve(reporterDir, 'mocha_results_xunit', projName + '.xml')
 	// const bail = process.env['CIRCLECI'] != 'true' || false
 
 	const mochaOpts = {
@@ -93,11 +96,11 @@ function getMochaOpts (projName) {
 		// console.log('adding reporter...')
 		mochaOpts.reporter = 'mocha-multi-reporters'
 		mochaOpts.reporterOptions = {
-			reporterEnabled: [ 'json-stream', 'spec', 'mocha-junit-reporter', 'mocha-reporter-sonarqube', 'mocha-xunit-reporter' ],
-			// jsonReporterOptions: { output: jsonFile },
+			reporterEnabled: [ 'json-stream', 'spec', 'json', 'xunit', 'mocha-junit-reporter', 'mocha-reporter-sonarqube' ],
+			jsonReporterOptions: { output: jsonFile, outputFile: jsonFile, mochaFile: jsonFile }, // TODO - not working
 			xunitReporterOptions: { output: xunitFile },
 			mochaJunitReporterReporterOptions: { mochaFile: mochaFile },
-			mochaSonarqubeReporterReporterOptions: { filename: sonarFile },
+			mochaReporterSonarqubeReporterOptions: { filename: sonarFile },
 		}
 	}
 
@@ -296,23 +299,30 @@ function getCoverageOpts () {
 	const coverageDir = path.resolve(__dirname, '..', 'coverage', vsVersion + '-' + oeVersion)
 	fs.mkdirSync(coverageDir, { recursive: true })
 	return {
+		exclude: [
+			'dist',
+			'.vscode-test.mjs',
+			'test_projects',
+			'dummy-ext',
+			'webpack.config.js',
+			'vscode.proposed.*.d.ts',
+			'vscode',
+		],
+		include: [
+			// '**/*',
+			'**/src/**',
+			'**/test/**',
+		],
+		// https://istanbul.js.org/docs/advanced/alternative-reporters/
+		// * default = ['html'], but somehow also prints the 'text-summary' to the console
+		// * 'lcov' includes 'html' output
 		reporter: [ 'text', 'lcov' ],
-		output: coverageDir,
 		// includeAll: true,
-		// exclude: [
-		// 	'dist',
-		// 	'.vscode-test*.mjs',
-		// 	'test_projects',
-		// 	'dummy-ext',
-		// 	'webpack.config.js',
-		// 	'vscode.proposed.*.d.ts',
-		// 	'vscode',
-		// ],
-		// include: [
-		// 	// '**/*',
-		// 	'**/src/**',
-		// 	'**/test/**',
-		// ],
+		output: coverageDir,
+
+		// TODO - not reporting extension, or other files loaded w/ vscode extension activate
+
+		// ----- NOT REAL OPTIONS?? ----- //
 		require: [ 'ts-node/register' ],
 		// cache: false,
 		// 'enable-source-maps': true,

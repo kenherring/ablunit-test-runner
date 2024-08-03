@@ -109,7 +109,6 @@ jobs:
       - run: env
       - run: .circleci/run_test_wrapper.sh
       - persist_to_workspace: { root: ".", paths: [ artifacts, coverage ]}
-      - run: find . -type f -name "mocha_results_sonar_*.xml" -delete
       - store_test_results: { path: artifacts }
       - store_artifacts: { when: always, path: artifacts }
       # - save-test-cache: { oe-version: << parameters.oe-version >> }
@@ -129,10 +128,12 @@ jobs:
     executor: psc-primary
     steps:
       - attach_workspace: { at: . }
-      - run: cat artifacts/stable-12.8.1/mocha_results_sonar_proj1.xml || true #TODO remove me
-      - run: rm artifacts/stable-12.8.1/mocha_results_junit_*.xml || true
+      - run:
+          name: merge eslint test reports
+          command: scripts/sonar_test_results_merge.sh
       - sonarcloud/scan:
           cache_version: 9
+      - store_artifacts: { when: always, path: artifacts }
   publish:
     docker:
       - image: cimg/node:20.8
