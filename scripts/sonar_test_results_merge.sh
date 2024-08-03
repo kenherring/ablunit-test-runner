@@ -30,5 +30,5 @@ done
 } > artifacts/mocha_results_sonar/merged
 mv artifacts/mocha_results_sonar/merged artifacts/mocha_results_sonar/merged.xml
 
-${CIRCLECI:-false} && sed -i "s|/home/circleci/project|$(pwd)|g" artifacts/eslint_report.json
+# TODO - remove me
 cat artifacts/mocha_results_sonar/merged.xml

@@ -107,6 +107,7 @@ jobs:
       - attach_workspace: { at: . }
       - restore-test-cache: { oe-version: << parameters.oe-version >> }
       - run: env
+      - run: pwd
       - run: .circleci/run_test_wrapper.sh
       - persist_to_workspace: { root: ., paths: [ artifacts, coverage ]}
       - store_test_results: { path: artifacts }
@@ -133,6 +134,7 @@ jobs:
           password: $DOCKERHUB_TOKEN
     steps:
       - attach_workspace: { at: . }
+      - run: pwd
       - run:
           name: merge eslint test reports
           command: scripts/sonar_test_results_merge.sh
