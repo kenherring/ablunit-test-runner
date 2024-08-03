@@ -110,7 +110,7 @@ jobs:
       - run: pwd
       - run: .circleci/run_test_wrapper.sh
       - persist_to_workspace: { root: ., paths: [ artifacts, coverage ]}
-      - store_test_results: { path: artifacts }
+      - store_test_results: { path: artifacts/mocha_results_xunit }
       - store_artifacts: { when: always, path: artifacts }
       # - save-test-cache: { oe-version: << parameters.oe-version >> }
   install-and-run:
@@ -134,7 +134,9 @@ jobs:
           password: $DOCKERHUB_TOKEN
     steps:
       - attach_workspace: { at: . }
-      - run: pwd
+      - run: pwd  #TODO remove me
+      - run: ls -a #TODO remove me
+      - run: grep -r TestSuiteParser.ts artifacts #TODO remove me
       - run:
           name: merge eslint test reports
           command: scripts/sonar_test_results_merge.sh
