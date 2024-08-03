@@ -27,12 +27,13 @@ suite('proj4 - Extension Test Suite', () => {
 		const listingsDir = Uri.joinPath(sessionTempDir, 'listings')
 		const resultsXml = Uri.joinPath(sessionTempDir, 'tempDir', 'results.xml')
 		await updateTestProfile('profiler.listings', listingsDir.fsPath)
-		await updateTestProfile('tempDir', Uri.joinPath(sessionTempDir, 'tempDir').fsPath)
-
-		await runAllTests()
-
-		assert.dirExists(resultsXml)
-		assert.dirExists(listingsDir)
+			.then(() => { return updateTestProfile('tempDir', Uri.joinPath(sessionTempDir, 'tempDir').fsPath) })
+			.then(() => { return runAllTests() })
+			.then(() => {
+				assert.fileExists(resultsXml)
+				assert.dirExists(listingsDir)
+				return
+			}, (e) => { throw e })
 	})
 
 	test('proj4.2 - tempDir=.builder/ablunit', async () => {

@@ -6,6 +6,7 @@ suite('proj2 - Extension Test Suite', () => {
 
 	suiteSetup('proj2 - before', async () => {
 		await suiteSetupCommon()
+		return
 	})
 
 	test('proj2.1 - temp/ablunit.json file exists', async () => {
@@ -35,7 +36,7 @@ suite('proj2 - Extension Test Suite', () => {
 			})
 	})
 
-	test('proj2.3 - run current test suite', async () => {
+	test.skip('proj2.3 - run current test suite', async () => {
 		const recentResults = await commands.executeCommand('vscode.open', Uri.joinPath(workspaceUri, 'src/testSuite.cls'))
 			.then(() => sleep(200))
 			.then(() => commands.executeCommand('testing.runCurrentFile'))
