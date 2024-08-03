@@ -29,6 +29,6 @@ done
 } > artifacts/mocha_results_sonar/merged
 mv artifacts/mocha_results_sonar/merged artifacts/mocha_results_sonar/merged.xml
 
-$VERBOSE && cat artifacts/mocha_results_sonar/merged.xml
+${VERBOSE:-false} && cat artifacts/mocha_results_sonar/merged.xml
 
 echo "successfully merged test results for sonar consumption.  output: artifacts/mocha_results_sonar/merged.xml"
