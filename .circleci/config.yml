@@ -106,12 +106,13 @@ jobs:
     steps:
       - attach_workspace: { at: . }
       - restore-test-cache: { oe-version: << parameters.oe-version >> }
-      - run: env
-      - run: pwd
       - run: .circleci/run_test_wrapper.sh
       - persist_to_workspace: { root: ., paths: [ artifacts, coverage ]}
       - store_test_results: { path: artifacts/mocha_results_xunit }
       - store_artifacts: { when: always, path: artifacts }
+      - run:
+          when: on_fail
+          command: env
       # - save-test-cache: { oe-version: << parameters.oe-version >> }
   install-and-run:
     <<: *oe-version-param
@@ -134,21 +135,16 @@ jobs:
           password: $DOCKERHUB_TOKEN
     steps:
       - attach_workspace: { at: . }
-      - run: pwd  #TODO remove me
-      - run: ls -a #TODO remove me
-      - run: grep -r TestSuiteParser.ts artifacts #TODO remove me
-      - run: grep -r ABLPropath.ts artifacts #TODO remove me
-      # - run: sed -i 's|"/root/project/|"|g' artifacts/artifacts/eslint_report.json
-      # - run: grep -r ABLPropath.ts artifacts #TODO remove me
       - run:
           name: merge eslint test reports
           command: scripts/sonar_test_results_merge.sh
       - sonarcloud/scan:
           cache_version: 9
-      - store_artifacts: { when: always, path: artifacts }
-      - store_artifacts: { when: always, path: coverage }
-      # - store_artifacts: { when: on_fail, path: artifacts }
-      # - store_artifacts: { when: on_fail, path: coverage }
+      - store_artifacts: { when: on_fail, path: artifacts }
+      - store_artifacts: { when: on_fail, path: coverage }
+      - run:
+          when: on_fail
+          command: env
   publish:
     docker:
       - image: cimg/node:20.8

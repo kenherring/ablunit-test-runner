@@ -309,7 +309,6 @@ function getCoverageOpts () {
 			'vscode',
 		],
 		include: [
-			// '**/*',
 			'**/src/**',
 			'**/test/**',
 		],
@@ -317,12 +316,22 @@ function getCoverageOpts () {
 		// * default = ['html'], but somehow also prints the 'text-summary' to the console
 		// * 'lcov' includes 'html' output
 		reporter: [ 'text', 'lcov' ],
-		// includeAll: true,
 		output: coverageDir,
-
-		// TODO - not reporting extension, or other files loaded w/ vscode extension activate
-
-		// ----- NOT REAL OPTIONS?? ----- //
+		// includeAll: true,
+		// exclude: [
+		// 	'dist',
+		// 	'.vscode-test*.mjs',
+		// 	'test_projects',
+		// 	'dummy-ext',
+		// 	'webpack.config.js',
+		// 	'vscode.proposed.*.d.ts',
+		// 	'vscode',
+		// ],
+		// include: [
+		// 	// '**/*',
+		// 	'**/src/**',
+		// 	'**/test/**',
+		// ],
 		require: [ 'ts-node/register' ],
 		// cache: false,
 		// 'enable-source-maps': true,

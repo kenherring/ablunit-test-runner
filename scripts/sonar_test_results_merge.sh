@@ -1,6 +1,5 @@
 #!/bin/bash
 set -eou pipefail
-set -x
 
 rm -f artifacts/mocha_results_sonar/merged.xml
 
@@ -30,5 +29,6 @@ done
 } > artifacts/mocha_results_sonar/merged
 mv artifacts/mocha_results_sonar/merged artifacts/mocha_results_sonar/merged.xml
 
-# TODO - remove me
-cat artifacts/mocha_results_sonar/merged.xml
+$VERBOSE && cat artifacts/mocha_results_sonar/merged.xml
+
+echo "successfully merged test results for sonar consumption.  output: artifacts/mocha_results_sonar/merged.xml"
