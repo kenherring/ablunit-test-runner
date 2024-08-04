@@ -78,10 +78,8 @@
 	],
 	"watchOptions": {
 		"excludeDirectories": [
-			"dist",
 			"dummy-ext",
 			"node_modules",
-			"out",
 			"test_projects",
 		]
 	}

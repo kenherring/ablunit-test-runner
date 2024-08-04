@@ -97,7 +97,6 @@
 		"xml2js": "^0.6.2"
 	},
 	"devDependencies": {
-		"@istanbuljs/nyc-config-typescript": "^1.0.2",
 		"@stylistic/eslint-plugin": "^2.3.0",
 		"@types/mocha": "^10.0.7",
 		"@types/node": "^18.18.0",
@@ -214,17 +213,5 @@
 				"path": "./snippets/snippets-abl-class.json"
 			}
 		]
-	},
-	"nyc": {
-		"extends": "@istanbuljs/nyc-config-typescript",
-		"extension": [
-			".js",
-			".ts"
-		],
-		"exclude-after-remap": false,
-		"require": [
-			"ts-node/register"
-		],
-		"sourceMap": true
 	}
 }

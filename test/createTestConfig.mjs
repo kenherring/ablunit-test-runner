@@ -300,13 +300,7 @@ function getCoverageOpts () {
 	fs.mkdirSync(coverageDir, { recursive: true })
 	return {
 		exclude: [
-			'dist',
-			'.vscode-test.mjs',
-			'test_projects',
-			'dummy-ext',
-			'webpack.config.js',
-			'vscode.proposed.*.d.ts',
-			'vscode',
+			'dummy-ext'
 		],
 		include: [
 			// 'src',
@@ -314,8 +308,9 @@ function getCoverageOpts () {
 			// 'src/**',
 			// 'test/**',
 			// '**/*',
-			'**/src/**',
-			'**/test/**',
+			'**/*',
+			// '**/src/**',
+			// '**/test/**',
 		],
 		// https://istanbul.js.org/docs/advanced/alternative-reporters/
 		// * default = ['html'], but somehow also prints the 'text-summary' to the console
@@ -323,20 +318,6 @@ function getCoverageOpts () {
 		reporter: [ 'text', 'lcov' ],
 		output: coverageDir,
 		// includeAll: true,
-		// exclude: [
-		// 	'dist',
-		// 	'.vscode-test*.mjs',
-		// 	'test_projects',
-		// 	'dummy-ext',
-		// 	'webpack.config.js',
-		// 	'vscode.proposed.*.d.ts',
-		// 	'vscode',
-		// ],
-		// include: [
-		// 	// '**/*',
-		// 	'**/src/**',
-		// 	'**/test/**',
-		// ],
 		require: [ 'ts-node/register' ],
 		// cache: false,
 		// 'enable-source-maps': true,
