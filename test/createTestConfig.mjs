@@ -309,6 +309,11 @@ function getCoverageOpts () {
 			'vscode',
 		],
 		include: [
+			// 'src',
+			// 'test',
+			// 'src/**',
+			// 'test/**',
+			// '**/*',
 			'**/src/**',
 			'**/test/**',
 		],

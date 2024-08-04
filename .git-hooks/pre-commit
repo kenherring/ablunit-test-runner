@@ -36,6 +36,14 @@ validate_compile () {
 	npm run build
 }
 
+validate_other () {
+	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}]"
+	if grep 'set -eou'; then
+		echo "ERROR: found 'set -eou'!  Change to 'set -euo pipefail'." >&2
+		exit 1
+	fi
+}
+
 ########## MAIN BLOCK ##########
 validate_circleci_config &
 validate_compile &

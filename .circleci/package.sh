@@ -24,6 +24,8 @@ initialize () {
         PRERELEASE=true
     fi
 
+    rm -f ./*.vsix
+
     npm install
     npm install -g @vscode/vsce || sudo npm install -g @vscode/vsce
 }
