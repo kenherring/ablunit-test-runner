@@ -86,9 +86,10 @@ function getMochaOpts (projName) {
 		bail: true,
 		require: [
 			'mocha',
+			'tsconfig-paths/register',
+			// 'source-map-support/register',
 			'ts-node/register',
 			// 'ts-node/register/transpile-only',
-			// 'source-map-support/register',
 			// path.join(__dirname, '..', 'dist', 'extension.js'),
 		],
 	}
