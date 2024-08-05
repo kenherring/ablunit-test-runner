@@ -148,7 +148,7 @@ run_tests_in_docker () {
 			-e ABLUNIT_TEST_RUNNER_VSCODE_VERSION
 			-e ABLUNIT_TEST_RUNNER_NO_COVERAGE
 			-v "$PWD/artifacts":/home/circleci/project/artifacts
-			-v "$PWD/coverage":/home/circleci/coverage
+			-v "$PWD/coverage":/home/circleci/project/coverage
 		)
 		[ -n "${ABLUNIT_TEST_RUNNER_PROJECT_NAME:-}" ] && ARGS+=(-e ABLUNIT_TEST_RUNNER_PROJECT_NAME)
 		ARGS+=(

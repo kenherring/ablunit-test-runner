@@ -74,6 +74,8 @@ function getMochaOpts (projName) {
 	const xunitFile = path.resolve(reporterDir, 'mocha_results_xunit', projName + '.xml')
 	// const bail = process.env['CIRCLECI'] != 'true' || false
 
+
+	/** @type {import('mocha').MochaOptions} */
 	const mochaOpts = {
 		// fullTrace: true
 		timeout: getMochaTimeout(projName),
@@ -83,11 +85,11 @@ function getMochaOpts (projName) {
 		parallel: false,
 		bail: true,
 		require: [
-			'mocha'
-		],
-		preload: [
-			'ts-node/register/transpile-only',
+			'mocha',
 			'ts-node/register',
+			// 'ts-node/register/transpile-only',
+			// 'source-map-support/register',
+			// path.join(__dirname, '..', 'dist', 'extension.js'),
 		],
 	}
 
@@ -245,8 +247,8 @@ function getTestConfig (projName) {
 	// if (vsVersion === 'insiders') {
 	// 	extensionDevelopmentPath = path.resolve(__dirname, '..', 'ablunit-test-runner-insiders-0.2.1.vsix')
 	// }
-
-	return {
+	/** @type {import('@vscode/test-cli').IDesktopTestConfiguration} */
+	const testConfig = {
 		//  -- IDesktopPlatform -- //
 		// platform: 'desktop',
 		// desktopPlatform: 'win32',
@@ -266,6 +268,7 @@ function getTestConfig (projName) {
 		label: 'suite_' + projName,
 		srcDir: './',
 	}
+	return testConfig
 }
 
 function getTests () {
@@ -298,19 +301,25 @@ function getTests () {
 function getCoverageOpts () {
 	const coverageDir = path.resolve(__dirname, '..', 'coverage', vsVersion + '-' + oeVersion)
 	fs.mkdirSync(coverageDir, { recursive: true })
-	return {
+
+	/** @type {import('@vscode/test-cli').ICoverageConfiguration} */
+	const coverageOpts = {
 		exclude: [
-			'dummy-ext'
+			'dummy-ext',
+			'test_projects',
+			'**/node_modules/**',
+			'node_modules/**',
+			'node_modules',
 		],
 		include: [
-			// 'src',
-			// 'test',
-			// 'src/**',
-			// 'test/**',
-			// '**/*',
+		// 	// 'src',
+		// 	// 'test',
+		// 	// 'src/**',
+		// 	// 'test/**',
 			'**/*',
-			// '**/src/**',
-			// '**/test/**',
+		// 	// '**/dist/**',
+		// 	// '**/src/**',
+		// 	// '**/test/**',
 		],
 		// https://istanbul.js.org/docs/advanced/alternative-reporters/
 		// * default = ['html'], but somehow also prints the 'text-summary' to the console
@@ -318,12 +327,16 @@ function getCoverageOpts () {
 		reporter: [ 'text', 'lcov' ],
 		output: coverageDir,
 		// includeAll: true,
-		require: [ 'ts-node/register' ],
+		// require: [
+		// 	// 'source-map-support',
+		// 	'ts-node/register',
+		// ],
 		// cache: false,
 		// 'enable-source-maps': true,
 		// sourceMap: false,
 		// instrument: false,
 	}
+	return coverageOpts
 }
 
 export function createTestConfig () { // NOSONAR

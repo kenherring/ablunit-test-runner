@@ -14,12 +14,24 @@ set -eou pipefail
 ## Run with debug logging:
 ##    .circleci/sonar.sh -Dsonar.log.level=DEBUG
 
+main_block () {
+    initialize
+    package
+    pre_scan
+    sonarcloud_scan "$@"
+    echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 <main>] $0 completed successfull!"
+}
+
 initialize () {
     echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}]"
     export SONAR_HOST_URL="https://sonarcloud.io"
     ESLINT_FILE=artifacts/eslint_report.json
 
-    pre_scan
+    if [ ! -f coverage/lcov.info ]; then
+        echo "ERROR: file not found - coverage/lcov.info"
+        echo " --- hint:  run 'docker/run_tests.sh'"
+        exit 1
+    fi
 }
 
 package () {
@@ -47,6 +59,10 @@ pre_scan () {
     sed -i 's|/home/circleci/project/|/root/project/|g' "${ESLINT_FILE}"
     ## merge test results into a single file
     scripts/sonar_test_results_merge.sh
+    ## remove base dir of /home/circleci/project/
+    sed -i 's|/home/circleci/project||g' artifacts/eslint_report.json
+    jq . artifacts/eslint_report.json > artifacts/eslint_report_pretty.json
+
 }
 
 sonarcloud_scan () {
@@ -85,6 +101,4 @@ sonarcloud_scan () {
 }
 
 ########## MAIN BLOCK ##########
-initialize
-sonarcloud_scan "$@"
-echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 <main>] $0 completed successfull!"
+main_block "$@"

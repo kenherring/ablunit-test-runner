@@ -6,8 +6,8 @@ const config = {
 	target: 'node', // TODO: recommended: 'webworker'
 	node: false,
 	mode: 'development',
-	devtool: 'source-map', // https://code.visualstudio.com/docs/nodejs/nodejs-debugging#_tool-configuration
-	// devtool: 'inline-source-map', // https://code.visualstudio.com/docs/nodejs/nodejs-debugging#_tool-configuration
+	// devtool: 'source-map', // https://code.visualstudio.com/docs/nodejs/nodejs-debugging#_tool-configuration
+	devtool: 'inline-source-map', // https://code.visualstudio.com/docs/nodejs/nodejs-debugging#_tool-configuration
 	// devtool: 'inline-cheap-module-source-map',
 	entry: {
 		'extension': './src/extension.ts',
@@ -17,8 +17,10 @@ const config = {
 		clean: true,
 		path: path.resolve(__dirname, 'dist'),
 		filename: '[name].js',
-		libraryTarget: 'commonjs2',
-		devtoolModuleFilenameTemplate: '[resource-path]',
+		libraryTarget: 'commonjs',
+		devtoolModuleFilenameTemplate: '../[resource-path]',
+		// devtoolModuleFilenameTemplate: '[resource-path]',
+		// devtoolModuleFilenameTemplate: '[absolute-resource-path]',
 		// devtoolModuleFilenameTemplate: '../[resource-path]',
 		// devtoolFallbackModuleFilenameTemplate: '[absolute-resource-path]',
 		// devtoolModuleFilenameTemplate: '[absolute-resource-path]',
@@ -39,11 +41,11 @@ const config = {
 			exclude: /node_modules/,
 			use: [{
 				loader: 'ts-loader',
-				options: {
-					compilerOptions: {
-						'module': 'es6' // override `tsconfig.json` so that TypeScript emits native JavaScript modules.
-					}
-				}
+				// options: {
+				// 	compilerOptions: {
+				// 		'module': 'es6' // override `tsconfig.json` so that TypeScript emits native JavaScript modules.
+				// 	}
+				// }
 			}]
 		}]
 	},
