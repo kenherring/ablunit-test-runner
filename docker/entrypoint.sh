@@ -77,13 +77,11 @@ initialize_repo () {
 		cd "$PROJECT_DIR"
 		git init
 		git remote add origin "$REPO_VOLUME"
+		git fetch
 	else
 		git clone "$REPO_VOLUME" "$PROJECT_DIR"
 	fi
-	if [ "$(git branch --show-current)" != "$GIT_BRANCH" ]; then
-		git fetch origin "$GIT_BRANCH":"$GIT_BRANCH"
-		git checkout "$GIT_BRANCH"
-	fi
+	git checkout "$GIT_BRANCH"
 	copy_files_from_volume
 }
 
