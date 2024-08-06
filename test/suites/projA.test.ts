@@ -1,8 +1,6 @@
 import { Uri, workspace } from 'vscode'
 import { assert, runAllTests, suiteSetupCommon } from '../testCommon'
 
-const projName = 'projA'
-
 suite('projA - Extension Test Suite', () => {
 
 	suiteSetup('projA - before', async () => {

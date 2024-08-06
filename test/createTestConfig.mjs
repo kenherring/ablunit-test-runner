@@ -57,7 +57,7 @@ function getMochaTimeout (projName) {
 		case 'proj7A': return 60000
 	}
 
-	return 15000
+	return 30000
 }
 
 
@@ -143,11 +143,10 @@ function getLaunchArgs (projName) {
 	// } else {
 	// 	args.push('--install-extension', './ablunit-test-runner-insiders-' + extVersion + '.vsix')
 	// }
-	if (enableExtensions.includes(projName)) {
-		args.push('--install-extension', 'riversidesoftware.openedge-abl-lsp')
+	// if (enableExtensions.includes(projName)) {
+	// 	args.push('--install-extension', 'riversidesoftware.openedge-abl-lsp')
 	// 	// args.push('--install-extension=riversidesoftware.openedge-abl-lsp')
-	// 	// args.push('--install-extension', 'riversidesoftware.openedge-abl-lsp@1.8.0')
-	}
+	// }
 	// args.push('--pre-release')
 	// args.push('--uninstall-extension <ext-id>')
 	// args.push('--update-extensions')
@@ -244,10 +243,6 @@ function getTestConfig (projName) {
 		VSCODE_SKIP_PRELAUNCH: true,
 	}
 
-	// let extensionDevelopmentPath = path.resolve(__dirname, '..', 'ablunit-test-runner-0.2.1.vsix')
-	// if (vsVersion === 'insiders') {
-	// 	extensionDevelopmentPath = path.resolve(__dirname, '..', 'ablunit-test-runner-insiders-0.2.1.vsix')
-	// }
 	/** @type {import('@vscode/test-cli').IDesktopTestConfiguration} */
 	const testConfig = {
 		//  -- IDesktopPlatform -- //
@@ -257,8 +252,8 @@ function getTestConfig (projName) {
 		env,
 		useInstallation,
 		// useInstallation: { fromMachine: true },
-		// installExtension: 'riversidesoftware.openedge-abl-lsp',
 		// download: { reporter: ProgressReporter, timeout: ? }
+		installExtension: [ 'riversidesoftware.openedge-abl-lsp' ],
 
 		// --- IBaseTestConfiguration --- //
 		files: absolulteFile,
@@ -287,14 +282,7 @@ function getTests () {
 	const g = glob.globSync('test/suites/*.test.ts').reverse()
 	for (const f of g) {
 		const basename = path.basename(f, '.test.ts')
-		if (basename != 'proj2' &&
-			basename != 'proj3' &&
-			basename != 'proj4' &&
-			basename != 'proj7B' &&
-			basename != 'proj9'
-		) {
-			tests.push(getTestConfig(basename))
-		}
+		tests.push(getTestConfig(basename))
 	}
 	return tests
 }

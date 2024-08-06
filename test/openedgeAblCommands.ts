@@ -1,5 +1,6 @@
-import { WorkspaceFolder, commands, extensions, workspace } from 'vscode'
-import { Duration, activateExtension, enableExtensions, getDefaultDLC, getRcodeCount, installExtension, log, oeVersion, sleep2, updateConfig } from './testCommon'
+import { commands, extensions, workspace } from 'vscode'
+import { Duration, activateExtension, enableExtensions, getDefaultDLC, getRcodeCount, installExtension, log, oeVersion, sleep2 } from './testCommon'
+
 
 interface IRuntime {
 	name: string,
@@ -9,14 +10,17 @@ interface IRuntime {
 
 export async function enableOpenedgeAblExtension (runtimes: IRuntime[]) {
 	const extname = 'riversidesoftware.openedge-abl-lsp'
-	await installExtension(extname)
-	await activateExtension(extname)
+	if (!extensions.getExtension(extname)) {
+		await installExtension(extname)
+	}
+	if (!extensions.getExtension(extname)?.isActive) {
+		await activateExtension(extname)
+	}
 	await setRuntimes(runtimes)
-	return rebuildAblProject()
+		.then(() => rebuildAblProject())
 		.then(() => {
 			log.info('update complete')
-			return getRcodeCount()
-		}).then((rcodeCount) => {
+			const rcodeCount = getRcodeCount()
 			log.info('rebuild complete! (rcodeCount=' + rcodeCount + ')')
 			log.info('riversidesoftware.openedge-abl-lsp extension is enabled!')
 			return true
@@ -45,15 +49,7 @@ export function rebuildAblProject () {
 			const rcodeCount = getRcodeCount()
 			log.info('abl.project.rebuild command complete! (rcodeCount=' + rcodeCount + ')')
 			return rcodeCount
-		}, (err) => {
-			log.error('abl.project.rebuild failed! err=' + err)
-			return commands.executeCommand('abl.dumpFileStatus')
-		}).then(() => {
-			log.info('abl.dumpFileStatus complete')
-			return true
-		}, (e) => {
-			log.error('abl.dumpFileStatus failed! e=' + e)
-		})
+		}, (err) => { throw err })
 }
 
 export async function waitForLangServerReady () {
@@ -75,7 +71,7 @@ export async function waitForLangServerReady () {
 		if (dumpSuccess) {
 			break
 		}
-		await sleep2(500)
+		await sleep2(200)
 	}
 	if (dumpSuccess) {
 		log.info('lang server is ready ' + waitTime)

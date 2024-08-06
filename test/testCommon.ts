@@ -195,11 +195,9 @@ export function installExtension (extname = 'riversidesoftware.openedge-abl-lsp'
 		log.info('extension ' + extname + ' is already installed')
 		return Promise.resolve(true)
 	}
-	// if (extname === 'riversidesoftware.openedge-abl-lsp' && enableExtensions()) {
-	// 	// throw new Error('extensions disabed, openedge-abl-lsp cannot be installed')
-	// 	log.warn('extensions disabed, openedge-abl-lsp cannot be installed')
-	// 	return
-	// }
+	if (extname === 'riversidesoftware.openedge-abl-lsp' && ! enableExtensions()) {
+		throw new Error('extensions disabed, openedge-abl-lsp cannot be installed')
+	}
 
 
 	log.info('installing ' + extname + ' extension...')
@@ -299,7 +297,7 @@ async function waitForExtensionActive (extensionId = 'kherring.ablunit-test-runn
 	for (let i=0; i<50; i++) {
 		if (ext.isActive) {
 			log.info(extensionId + ' is active! (i=' + i + ')')
-			return ext.isActive
+			return Promise.resolve(ext.isActive)
 		}
 		log.info('waitied ' + (i + 1) * 100 + 'ms for extension to activate')
 		await sleep2(100)
@@ -947,11 +945,14 @@ export const assert = {
 	throws: assertParent.throws,
 	doesNotThrow: assertParent.doesNotThrow,
 
-	greaterOrEqual (a: number, b: number, message?: string) {
-		assertParent.ok(a >= b, message)
+	greater (testValue: number, greaterThan: number, message?: string) {
+		assertParent.ok(testValue > greaterThan, message)
 	},
-	lessOrEqual (a: number, b: number, message?: string) {
-		assertParent.ok(a <= b, message)
+	greaterOrEqual (testValue: number, greaterThan: number, message?: string) {
+		assertParent.ok(testValue >= greaterThan, message)
+	},
+	lessOrEqual (testValue: number, lessThan: number, message?: string) {
+		assertParent.ok(testValue <= lessThan, message)
 	},
 
 	throwsAsync: async (block: () => Promise<void>, message?: string) => {
@@ -1012,7 +1013,7 @@ export const assert = {
 }
 
 export async function beforeProj7 () {
-	await installExtension('riversidesoftware.openedge-abl-lsp')
+	await suiteSetupCommon()
 	const templateProc = Uri.joinPath(toUri('src/template_proc.p'))
 	const templateClass = Uri.joinPath(toUri('src/template_class.cls'))
 	const classContent = await workspace.fs.readFile(templateClass).then((data) => {

@@ -1,8 +1,5 @@
-import { Uri, workspace } from 'vscode'
-import { assert, deleteFile, deleteTestFiles, getTestCount, getWorkspaceUri, log, runAllTests, selectProfile, suiteSetupCommon, updateTestProfile } from '../testCommon'
+import { assert, deleteFile, deleteTestFiles, getTestCount, getWorkspaceUri, log, runAllTests, selectProfile, suiteSetupCommon, updateTestProfile, Uri, workspace } from '../testCommon'
 
-// const projName = __dirname.split(/[\\/]/).pop()!
-const projName = 'proj9'
 const testProfileJson = Uri.joinPath(getWorkspaceUri(), '.vscode/ablunit-test-profile.json')
 const testProfileBackup = Uri.joinPath(getWorkspaceUri(), '.vscode/ablunit-test-profile.json.backup')
 
@@ -10,18 +7,20 @@ suite('proj9 - Extension Test Suite', () => {
 
 	suiteSetup('proj9 - before', async () => {
 		await suiteSetupCommon()
-		await workspace.fs.copy(testProfileJson, testProfileBackup, { overwrite: true }).then()
+			.then(() => { return workspace.fs.copy(testProfileJson, testProfileBackup, { overwrite: true }) })
+			.then(() => { return }, (e) => { throw e })
 	})
 
 	setup('proj9 - beforeEach', () => {
 		const workspaceFolder = workspace.workspaceFolders![0].uri
 		deleteFile(Uri.joinPath(workspaceFolder, '.vscode', 'profile.json'))
 		deleteTestFiles()
+		return
 	})
 
 	teardown('proj9 - afterEach', async () => {
 		deleteFile(testProfileJson)
-		await workspace.fs.copy(testProfileBackup, testProfileJson, { overwrite: true }).then()
+		await workspace.fs.copy(testProfileBackup, testProfileJson, { overwrite: true })
 		// await workspace.fs.copy(testProfileBackup, testProfileJson, { overwrite: true }).then(() => {
 		// 	log.info('teardown return')
 		// 	return
@@ -31,8 +30,8 @@ suite('proj9 - Extension Test Suite', () => {
 		// })
 	})
 
-	suiteTeardown('proj9 - after', async () => {
-		await workspace.fs.delete(testProfileBackup)
+	suiteTeardown('proj9 - after', () => {
+		return workspace.fs.delete(testProfileBackup)
 		// await workspace.fs.delete(testProfileBackup).then(() => {
 		// 	log.info('suiteTeardown return')
 		// 	return

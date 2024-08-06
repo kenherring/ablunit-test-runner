@@ -1,7 +1,5 @@
-import { Uri } from 'vscode'
-import { assert, getDefaultDLC, getWorkspaceUri, installExtension, oeVersion, runAllTests, setRuntimes, suiteSetupCommon } from '../testCommon'
+import { assert, getDefaultDLC, getWorkspaceUri, oeVersion, runAllTests, setRuntimes, suiteSetupCommon, Uri } from '../testCommon'
 
-const projName = 'proj3'
 const workspaceUri = getWorkspaceUri()
 
 suite('proj3 - Extension Test Suite', () => {
@@ -11,18 +9,21 @@ suite('proj3 - Extension Test Suite', () => {
 	})
 
 	setup('proj3 - beforeEach', async () => {
-		await setRuntimes([{name: '11.7', path: '/psc/dlc_11.7'}, {name: oeVersion(), path: getDefaultDLC(), default: true}]).then()
+		await setRuntimes([{name: '11.7', path: '/psc/dlc_11.7'}, {name: oeVersion(), path: getDefaultDLC(), default: true}])
+		return
 	})
 
-	test('proj3.1 - target/ablunit.json file exists', async () => {
-		await runAllTests()
-		const ablunitJson = Uri.joinPath(workspaceUri, 'target', 'ablunit.json')
-		const resultsXml = Uri.joinPath(workspaceUri, 'ablunit-output', 'results.xml')
-		const listingsDir = Uri.joinPath(workspaceUri, 'target', 'listings')
+	test('proj3.1 - target/ablunit.json file exists', () => {
+		return runAllTests().then(() => {
+			const ablunitJson = Uri.joinPath(workspaceUri, 'target', 'ablunit.json')
+			const resultsXml = Uri.joinPath(workspaceUri, 'ablunit-output', 'results.xml')
+			const listingsDir = Uri.joinPath(workspaceUri, 'target', 'listings')
 
-		assert.fileExists(ablunitJson)
-		assert.fileExists(resultsXml)
-		assert.dirExists(listingsDir)
+			assert.fileExists(ablunitJson)
+			assert.fileExists(resultsXml)
+			assert.dirExists(listingsDir)
+			return
+		}, (e) => { throw e })
 	})
 
 })

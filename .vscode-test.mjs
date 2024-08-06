@@ -2,6 +2,9 @@ import { createTestConfig } from './test/createTestConfig.mjs'
 import { defineConfig } from '@vscode/test-cli'
 import * as fs from 'fs'
 
+delete process.env['VSCODE_IPC_HOOK_CLI']
+process.env['DONT_PROMPT_WSL_INSTALL'] = 'TRUE'
+
 function getConfig1() {
     const config = createTestConfig()
     return config
