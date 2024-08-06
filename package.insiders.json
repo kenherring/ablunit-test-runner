@@ -2,7 +2,7 @@
 	"name": "ablunit-test-runner",
 	"displayName": "ABLUnit Test Runner (insiders)",
 	"description": "OpenEdge ABLUnit test runner for VSCode, built to run the proposed testCoverage API",
-	"version": "0.2.2",
+	"version": "0.2.1",
 	"preview": true,
 	"engineStrict": true,
 	"galleryBanner": {

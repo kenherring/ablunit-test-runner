@@ -10,17 +10,12 @@ interface IRuntime {
 
 export async function enableOpenedgeAblExtension (runtimes: IRuntime[]) {
 	const extname = 'riversidesoftware.openedge-abl-lsp'
-	console.log('100: ' + JSON.stringify(extensions.getExtension(extname)))
 	if (!extensions.getExtension(extname)) {
-		console.log('101')
 		await installExtension(extname)
 	}
-	console.log('110: ' + extensions.getExtension(extname)!.isActive)
 	if (!extensions.getExtension(extname)?.isActive) {
-		console.log('111')
 		await activateExtension(extname)
 	}
-	console.log('120')
 	await setRuntimes(runtimes)
 		.then(() => rebuildAblProject())
 		.then(() => {
@@ -55,14 +50,6 @@ export function rebuildAblProject () {
 			log.info('abl.project.rebuild command complete! (rcodeCount=' + rcodeCount + ')')
 			return rcodeCount
 		}, (err) => { throw err })
-		// 	log.error('abl.project.rebuild failed! err=' + err)
-		// 	return commands.executeCommand('abl.dumpFileStatus')
-		// }).then(() => {
-		// 	log.info('abl.dumpFileStatus complete')
-		// 	return true
-		// }, (e) => {
-		// 	log.error('abl.dumpFileStatus failed! e=' + e)
-		// })
 }
 
 export async function waitForLangServerReady () {

@@ -20,10 +20,6 @@ suite('TestProfileParser suite', () => {
 		await suiteSetupCommon()
 	})
 
-	setup('TestProfileParser - setup', () => {
-		log.info('setup started')
-	})
-
 	test('TestProfileParser.test1', () => {
 		const wsf = getWorkspaceFolders()
 		if (wsf.length === 0) {

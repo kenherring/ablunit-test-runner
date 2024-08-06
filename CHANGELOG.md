@@ -1,9 +1,3 @@
-# [0.2.2](https://github.com/kenherring/ablunit-test-runner/releases/tag/0.2.2) - 2024-08-06 (pre-release)
-
-* Enable usage of VSCode built in coverage tooling
-
-[Known issues in prerelease 0.2.2](https://github.com/kenherring/ablunit-test-runner/issues/175)
-
 # [0.2.1](https://github.com/kenherring/ablunit-test-runner/releases/tag/0.2.1) - 2024-02-02 (pre-release)
 
  * Stop refresh/test run - improving process abort (#129)

@@ -10,12 +10,10 @@ suite('proj4 - Extension Test Suite', () => {
 			await updateTestProfile('tempDir', '/tmp/ablunit')
 			await updateTestProfile('profiler.listings', '/tmp/ablunit-local/listings')
 		}
-		return
 	})
 
 	setup('proj4 - beforeEach', async () => {
 		await setRuntimes([{name: '11.7', path: '/psc/dlc_11.7'}, {name: oeVersion(), path: getDefaultDLC(), default: true}])
-		return
 	})
 
 	teardown('proj4 - afterEach', async () => {
