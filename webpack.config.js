@@ -7,18 +7,15 @@ const config = {
 	node: false,
 	mode: 'development',
 	// devtool: 'source-map', // https://code.visualstudio.com/docs/nodejs/nodejs-debugging#_tool-configuration
-	devtool: 'inline-source-map', // https://code.visualstudio.com/docs/nodejs/nodejs-debugging#_tool-configuration
-	// devtool: 'inline-cheap-module-source-map',
 	entry: {
 		'extension': './src/extension.ts',
-		// 'extension-insiders': './src/extension-insiders.ts',
 	},
 	output: {
 		clean: true,
 		path: path.resolve(__dirname, 'dist'),
 		filename: '[name].js',
 		libraryTarget: 'commonjs',
-		devtoolModuleFilenameTemplate: '../[resource-path]',
+		// devtoolModuleFilenameTemplate: '../[resource-path]',
 		// devtoolModuleFilenameTemplate: '[resource-path]',
 		// devtoolModuleFilenameTemplate: '[absolute-resource-path]',
 		// devtoolModuleFilenameTemplate: '../[resource-path]',
