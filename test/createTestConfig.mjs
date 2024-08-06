@@ -244,9 +244,9 @@ function getTestConfig (projName) {
 		VSCODE_SKIP_PRELAUNCH: true,
 	}
 
-	// let extensionDevelopmentPath = path.resolve(__dirname, '..', 'ablunit-test-runner-0.2.1.vsix')
+	// let extensionDevelopmentPath = path.resolve(__dirname, '..', 'ablunit-test-runner-0.2.2.vsix')
 	// if (vsVersion === 'insiders') {
-	// 	extensionDevelopmentPath = path.resolve(__dirname, '..', 'ablunit-test-runner-insiders-0.2.1.vsix')
+	// 	extensionDevelopmentPath = path.resolve(__dirname, '..', 'ablunit-test-runner-insiders-0.2.2.vsix')
 	// }
 	/** @type {import('@vscode/test-cli').IDesktopTestConfiguration} */
 	const testConfig = {

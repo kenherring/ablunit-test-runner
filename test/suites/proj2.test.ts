@@ -9,8 +9,8 @@ suite('proj2 - Extension Test Suite', () => {
 	})
 
 	test('proj2.1 - temp/ablunit.json file exists', async () => {
-		await runAllTests()
-
+		const prom = runAllTests()
+		await prom
 		const ablunitJson = Uri.joinPath(workspaceUri, 'temp', 'ablunit.json')
 		assert.fileExists(ablunitJson)
 	})
@@ -36,10 +36,11 @@ suite('proj2 - Extension Test Suite', () => {
 	})
 
 	test.skip('proj2.3 - run current test suite', async () => {
-		const recentResults = await commands.executeCommand('vscode.open', Uri.joinPath(workspaceUri, 'src/testSuite.cls'))
+		const prom = commands.executeCommand('vscode.open', Uri.joinPath(workspaceUri, 'src/testSuite.cls'))
 			.then(() => sleep(200))
 			.then(() => commands.executeCommand('testing.runCurrentFile'))
 			.then(() => getResults(), (e) => { throw e })
+		const recentResults = await prom
 
 		const res = recentResults[0].ablResults?.resultsJson[0]
 		if (!res) {
