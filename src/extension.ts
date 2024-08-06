@@ -22,6 +22,10 @@ import { log } from './ChannelLogger'
 import { getContentFromFilesystem } from './parse/TestParserCommon'
 import { ABLTestCase, ABLTestClass, ABLTestData, ABLTestDir, ABLTestFile, ABLTestProgram, ABLTestSuite, resultData, testData } from './testTree'
 import { minimatch } from 'minimatch'
+// import 'source-map-support/register'
+// require('source-map-support').install()
+// import { install } from 'source-map-support'
+// install()
 
 export interface IExtensionTestReferences {
 	testController: TestController
@@ -30,13 +34,6 @@ export interface IExtensionTestReferences {
 }
 
 let recentResults: ABLResults[] = []
-
-function unknownToError (e: unknown) {
-	if (e instanceof Error) {
-		return e
-	}
-	return new Error('error: ' + e)
-}
 
 export async function activate (context: ExtensionContext) {
 	const ctrl = tests.createTestController('ablunitTestController', 'ABLUnit Test')
@@ -850,11 +847,9 @@ function findMatchingFiles (includePatterns: RelativePattern[], token: Cancellat
 
 // async function parseMatchingFiles (files: Uri[], controller: TestController, excludePatterns: RelativePattern[], token: CancellationToken, checkCancellationToken: () => void, resolvedCount: number, rejectedCount: number) {
 async function parseMatchingFiles (files: Uri[], controller: TestController, excludePatterns: RelativePattern[], token: CancellationToken, checkCancellationToken: () => void): Promise<boolean> {
-	let searchCount = 0
 	const proms: Promise<boolean>[] = []
 	log.debug('parsing files... (count=' + files.length + ')')
 	for (const file of files) {
-		searchCount++
 		checkCancellationToken()
 
 		const { item, data } = getOrCreateFile(controller, file, excludePatterns)

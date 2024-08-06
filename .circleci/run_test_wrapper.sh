@@ -8,6 +8,7 @@ initialize () {
 	ABLUNIT_TEST_RUNNER_DBUS_NUM=${ABLUNIT_TEST_RUNNER_DBUS_NUM:-3}
 	ABLUNIT_TEST_RUNNER_OE_VERSION=${ABLUNIT_TEST_RUNNER_OE_VERSION:-}
 	ABLUNIT_TEST_RUNNER_RUN_SCRIPT_FLAG=${ABLUNIT_TEST_RUNNER_RUN_SCRIPT_FLAG:-true}
+	ABLUNIT_TEST_RUNNER_NO_COVERAGE=${ABLUNIT_TEST_RUNNER_NO_COVERAGE:-false}
 	if [ -z "$ABLUNIT_TEST_RUNNER_OE_VERSION" ]; then
 		ABLUNIT_TEST_RUNNER_OE_VERSION=${OE_VERSION:-12.8.1}
 	fi
@@ -130,13 +131,15 @@ dbus_config_5 () {
 }
 
 run_tests () {
-	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}]"
+	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] ABLUNIT_TEST_RUNNER_NO_COVERAGE=$ABLUNIT_TEST_RUNNER_NO_COVERAGE"
 	EXIT_CODE=0
 
 	cp "package.$ABLUNIT_TEST_RUNNER_VSCODE_VERSION.json" package.json
-	if ${ABLUNIT_TEST_RUNNER_NO_COVERAGE:-false}; then
+	if $ABLUNIT_TEST_RUNNER_NO_COVERAGE; then
+		echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] starting 'npm test'"
 		time xvfb-run -a npm test
 	else
+		echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] starting 'npm test:coverage'"
 		time xvfb-run -a npm run test:coverage
 	fi | sed -e 's,/?home/circleci/project/,,g' || EXIT_CODE=$?
 	cp package.stable.json package.json

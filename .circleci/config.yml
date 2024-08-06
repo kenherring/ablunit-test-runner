@@ -106,12 +106,14 @@ jobs:
     steps:
       - attach_workspace: { at: . }
       - restore-test-cache: { oe-version: << parameters.oe-version >> }
-      - run: env
-      - run: .circleci/run_test_wrapper.sh
-      - persist_to_workspace: { root: ".", paths: [ artifacts, coverage ]}
-      - run: find . -type f -name "mocha_results_sonar_*.xml" -delete
-      - store_test_results: { path: artifacts }
+      # - run: .circleci/run_test_wrapper.sh ## TODO
+      - run: .circleci/run_test_wrapper.sh -p proj0
+      - persist_to_workspace: { root: ., paths: [ artifacts, coverage ]}
+      - store_test_results: { path: artifacts/mocha_results_xunit }
       - store_artifacts: { when: always, path: artifacts }
+      - run:
+          when: on_fail
+          command: env
       # - save-test-cache: { oe-version: << parameters.oe-version >> }
   install-and-run:
     <<: *oe-version-param
@@ -126,13 +128,24 @@ jobs:
       - store_test_results: { path: dummy-ext/artifacts }
       - store_artifacts: { when: always, path: dummy-ext/artifacts }
   sonar:
-    executor: psc-primary
+    <<: *oe-version-param
+    docker:
+      - image: kherring/ablunit-test-runner:<< parameters.oe-version >>
+        auth:
+          username: $DOCKERHUB_USERNAME
+          password: $DOCKERHUB_TOKEN
     steps:
       - attach_workspace: { at: . }
-      - run: cat artifacts/stable-12.8.1/mocha_results_sonar_proj1.xml || true #TODO remove me
-      - run: rm artifacts/stable-12.8.1/mocha_results_junit_*.xml || true
+      - run:
+          name: merge eslint test reports
+          command: scripts/sonar_test_results_merge.sh
       - sonarcloud/scan:
           cache_version: 9
+      - store_artifacts: { when: on_fail, path: artifacts }
+      - store_artifacts: { when: on_fail, path: coverage }
+      - run:
+          when: on_fail
+          command: env
   publish:
     docker:
       - image: cimg/node:20.8
@@ -158,7 +171,7 @@ workflows:
           name: test-<< pipeline.parameters.primary-oe-version >>-<< matrix.vscode-version >>
       - test:
           <<: *context-and-filters
-          requires: [ package, test-12.8.1-stable ]
+          requires: [ package, test-<< pipeline.parameters.primary-oe-version >>-stable ]
           matrix:
             parameters:
               oe-version: [ 12.2.12, 12.8.3 ]
@@ -168,6 +181,7 @@ workflows:
       - sonar:
           <<: *context-and-filters
           requires: [ test-<< pipeline.parameters.primary-oe-version >>-stable ]
+          oe-version: << pipeline.parameters.primary-oe-version >>
       # - install-and-run:
       #     <<: *context-and-filters
       #     requires: [ test-12.8.1-stable ]
