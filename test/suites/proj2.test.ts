@@ -9,10 +9,10 @@ suite('proj2 - Extension Test Suite', () => {
 	})
 
 	test('proj2.1 - temp/ablunit.json file exists', async () => {
-		const prom = runAllTests()
-		await prom
-		const ablunitJson = Uri.joinPath(workspaceUri, 'temp', 'ablunit.json')
-		assert.fileExists(ablunitJson)
+		await runAllTests().then(() => {
+			const ablunitJson = Uri.joinPath(workspaceUri, 'temp', 'ablunit.json')
+			assert.fileExists(ablunitJson)
+		})
 	})
 
 	test.skip('proj2.2 - call stack', () => {
