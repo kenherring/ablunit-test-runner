@@ -1,14 +1,15 @@
 'use strict'
 const path = require('path')
+const { sourceMapsEnabled } = require('process')
 
 /** @type {import('webpack').Configuration} */
 const config = {
 	target: 'node', // TODO: recommended: 'webworker'
-	node: false,
+	// node: false,
 	mode: 'development',
-	// devtool: 'source-map', // https://code.visualstudio.com/docs/nodejs/nodejs-debugging#_tool-configuration
+	devtool: 'source-map', // https://webpack.js.org/configuration/devtool/
 	entry: {
-		'extension': './src/extension.ts',
+		'extenson': './src/extension.ts',
 	},
 	output: {
 		clean: true,
@@ -17,7 +18,10 @@ const config = {
 		libraryTarget: 'commonjs',
 		// devtoolModuleFilenameTemplate: '../[resource-path]',
 		// devtoolModuleFilenameTemplate: '[resource-path]',
-		// devtoolModuleFilenameTemplate: '[absolute-resource-path]',
+		devtoolNamespace: '',
+		devtoolModuleFilenameTemplate: (info) => {
+			return path.relative(__dirname, info.absoluteResourcePath)
+		},
 		// devtoolModuleFilenameTemplate: '../[resource-path]',
 		// devtoolFallbackModuleFilenameTemplate: '[absolute-resource-path]',
 		// devtoolModuleFilenameTemplate: '[absolute-resource-path]',
@@ -36,14 +40,17 @@ const config = {
 		rules: [{
 			test: /\.ts$/,
 			exclude: /node_modules/,
-			use: [{
-				loader: 'ts-loader',
-				// options: {
-				// 	compilerOptions: {
-				// 		'module': 'es6' // override `tsconfig.json` so that TypeScript emits native JavaScript modules.
-				// 	}
-				// }
-			}]
+			loader: 'ts-loader',
+			// use: [{
+			// 	loader: 'ts-loader',
+			// 	// options: {
+			// 	// 	compilerOptions: {
+			// 	// 		// 'module': 'es6' // override `tsconfig.json` so that TypeScript emits native JavaScript modules.
+			// 	// 		// sourceMapsEnabled: true,
+			// 	// 		sourceMap: true
+			// 	// 	}
+			// 	// }
+			// }]
 		}]
 	},
 }

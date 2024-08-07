@@ -20,6 +20,7 @@
 			"*": [ "./src/*" ]
 		},
 		"rootDir": ".",
+		"sourceMap": true,
 		"strict": true,
 		"alwaysStrict": true,
 		"esModuleInterop": true,

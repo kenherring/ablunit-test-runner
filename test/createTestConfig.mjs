@@ -246,12 +246,12 @@ function getTestConfig (projName) {
 		useInstallation,
 		// useInstallation: { fromMachine: true },
 		// download: { reporter: ProgressReporter, timeout: ? }
-		installExtension: [ 'riversidesoftware.openedge-abl-lsp' ],
+		installExtensions: [ 'riversidesoftware.openedge-abl-lsp' ],
 
 		// --- IBaseTestConfiguration --- //
 		files: absolulteFile,
 		version: vsVersion,
-		extensionDevelopmentPath: './',
+		extensionDevelopmentPath: path.resolve(__dirname),
 		workspaceFolder,
 		mocha: getMochaOpts(projName),
 		label: 'suite_' + projName,
@@ -291,7 +291,16 @@ function getCoverageOpts () {
 		// * 'lcov' includes 'html' output
 		reporter: [ 'text', 'lcov' ],
 		output: coverageDir,
-		// includeAll: true,
+		// includeAll: false,
+		includeAll: true,
+		// include: [
+		// 	'*',
+		// 	'**/*'
+		// ],
+
+		// include: ['src/**/*.ts'],
+		// exclude: ['src/**/*.spec.ts'],
+		// sourceMap: true,
 	}
 	return coverageOpts
 }
