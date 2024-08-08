@@ -18,13 +18,19 @@ const config = {
 		libraryTarget: 'commonjs',
 		// devtoolModuleFilenameTemplate: '../[resource-path]',
 		// devtoolModuleFilenameTemplate: '[resource-path]',
-		devtoolNamespace: '',
-		devtoolModuleFilenameTemplate: (info) => {
-			return path.relative(__dirname, info.absoluteResourcePath)
-		},
+		// devtoolNamespace: '',
+		// devtoolModuleFilenameTemplate: 'short-identifier'
+		// devtoolModuleFilenameTemplate: (info) => {
+		// 	// return 'file:///' + info.absoluteResourcePath
+		// 	// return path.relative(__dirname, info.absoluteResourcePath)
+		// 	if (info.name.startsWith('external')) {
+		// 		return info.name
+		// 	}
+		// 	return info.absoluteResourcePath
+		// },
 		// devtoolModuleFilenameTemplate: '../[resource-path]',
 		// devtoolFallbackModuleFilenameTemplate: '[absolute-resource-path]',
-		// devtoolModuleFilenameTemplate: '[absolute-resource-path]',
+		devtoolModuleFilenameTemplate: '[absolute-resource-path]',
 		// devtoolFallbackModuleFilenameTemplate: '[resource-path]',
 	},
 	externals: {

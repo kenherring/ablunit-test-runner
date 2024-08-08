@@ -251,7 +251,7 @@ function getTestConfig (projName) {
 		// --- IBaseTestConfiguration --- //
 		files: absolulteFile,
 		version: vsVersion,
-		extensionDevelopmentPath: path.resolve(__dirname),
+		extensionDevelopmentPath: path.resolve(__dirname, '..'),
 		workspaceFolder,
 		mocha: getMochaOpts(projName),
 		label: 'suite_' + projName,
@@ -289,10 +289,43 @@ function getCoverageOpts () {
 		// https://istanbul.js.org/docs/advanced/alternative-reporters/
 		// * default = ['html'], but somehow also prints the 'text-summary' to the console
 		// * 'lcov' includes 'html' output
-		reporter: [ 'text', 'lcov' ],
-		output: coverageDir,
+		reporter: [ 'text', 'lcovonly' ],
+		output: coverageDir, // https://github.com/microsoft/vscode-test-cli/issues/38
 		// includeAll: false,
 		includeAll: true,
+		exclude:[
+			// 'external **',
+			// 'external commonjs "vscode"',
+			// 'external commonjs "vscode"**',
+			// '**external commonjs "vscode"**',
+			// '**external **',
+			// '**external**',
+			// 'commonjs',
+			// '**commonjs**',
+			// 'commonjs vscode',
+			// 'commonjs "vscode"',
+			// 'vscode',
+			// '"vscode"',
+			// '**vscode**',
+			// '**"vscode"**',
+			'dist',
+			'**dist**',
+			'**/dist/**',
+			'**/node_modules/**',
+			'**/test_projects/**',
+			// '**vscode**',
+		],
+		include: [
+		// 	'*',
+		// 	'**',
+			'**/*',
+		// 	'**/*.js',
+		// 	'**/*.ts',
+		// 	'**/src/**/*.js',
+		// 	'**/src/**/*.ts',
+		// 	'**/test/**/*.js',
+		// 	'**/test/**/*.ts',
+		],
 		// include: [
 		// 	'*',
 		// 	'**/*'
