@@ -9,28 +9,16 @@ const config = {
 	mode: 'development',
 	devtool: 'source-map', // https://webpack.js.org/configuration/devtool/
 	entry: {
-		'extenson': './src/extension.ts',
+		'extension': './src/extension.ts',
 	},
 	output: {
 		clean: true,
 		path: path.resolve(__dirname, 'dist'),
 		filename: '[name].js',
 		libraryTarget: 'commonjs',
-		// devtoolModuleFilenameTemplate: '../[resource-path]',
-		// devtoolModuleFilenameTemplate: '[resource-path]',
-		// devtoolNamespace: '',
-		// devtoolModuleFilenameTemplate: 'short-identifier'
-		// devtoolModuleFilenameTemplate: (info) => {
-		// 	// return 'file:///' + info.absoluteResourcePath
-		// 	// return path.relative(__dirname, info.absoluteResourcePath)
-		// 	if (info.name.startsWith('external')) {
-		// 		return info.name
-		// 	}
-		// 	return info.absoluteResourcePath
-		// },
-		// devtoolModuleFilenameTemplate: '../[resource-path]',
+		devtoolModuleFilenameTemplate: '../[resource-path]',
 		// devtoolFallbackModuleFilenameTemplate: '[absolute-resource-path]',
-		devtoolModuleFilenameTemplate: '[absolute-resource-path]',
+		// devtoolModuleFilenameTemplate: '[absolute-resource-path]',
 		// devtoolFallbackModuleFilenameTemplate: '[resource-path]',
 	},
 	externals: {
@@ -47,16 +35,6 @@ const config = {
 			test: /\.ts$/,
 			exclude: /node_modules/,
 			loader: 'ts-loader',
-			// use: [{
-			// 	loader: 'ts-loader',
-			// 	// options: {
-			// 	// 	compilerOptions: {
-			// 	// 		// 'module': 'es6' // override `tsconfig.json` so that TypeScript emits native JavaScript modules.
-			// 	// 		// sourceMapsEnabled: true,
-			// 	// 		sourceMap: true
-			// 	// 	}
-			// 	// }
-			// }]
 		}]
 	},
 }

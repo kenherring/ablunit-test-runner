@@ -20,6 +20,7 @@
 			"*": [ "./src/*" ]
 		},
 		"rootDir": ".",
+		"sourceRoot": "src",
 		"sourceMap": true,
 		"strict": true,
 		"alwaysStrict": true,
