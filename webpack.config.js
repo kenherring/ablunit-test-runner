@@ -1,17 +1,15 @@
 'use strict'
 const path = require('path')
+const { sourceMapsEnabled } = require('process')
 
 /** @type {import('webpack').Configuration} */
 const config = {
 	target: 'node', // TODO: recommended: 'webworker'
-	node: false,
+	// node: false,
 	mode: 'development',
-	// devtool: 'source-map', // https://code.visualstudio.com/docs/nodejs/nodejs-debugging#_tool-configuration
-	devtool: 'inline-source-map', // https://code.visualstudio.com/docs/nodejs/nodejs-debugging#_tool-configuration
-	// devtool: 'inline-cheap-module-source-map',
+	devtool: 'source-map', // https://webpack.js.org/configuration/devtool/
 	entry: {
 		'extension': './src/extension.ts',
-		// 'extension-insiders': './src/extension-insiders.ts',
 	},
 	output: {
 		clean: true,
@@ -19,9 +17,6 @@ const config = {
 		filename: '[name].js',
 		libraryTarget: 'commonjs',
 		devtoolModuleFilenameTemplate: '../[resource-path]',
-		// devtoolModuleFilenameTemplate: '[resource-path]',
-		// devtoolModuleFilenameTemplate: '[absolute-resource-path]',
-		// devtoolModuleFilenameTemplate: '../[resource-path]',
 		// devtoolFallbackModuleFilenameTemplate: '[absolute-resource-path]',
 		// devtoolModuleFilenameTemplate: '[absolute-resource-path]',
 		// devtoolFallbackModuleFilenameTemplate: '[resource-path]',
@@ -39,14 +34,7 @@ const config = {
 		rules: [{
 			test: /\.ts$/,
 			exclude: /node_modules/,
-			use: [{
-				loader: 'ts-loader',
-				// options: {
-				// 	compilerOptions: {
-				// 		'module': 'es6' // override `tsconfig.json` so that TypeScript emits native JavaScript modules.
-				// 	}
-				// }
-			}]
+			loader: 'ts-loader',
 		}]
 	},
 }

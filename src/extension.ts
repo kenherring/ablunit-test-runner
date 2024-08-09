@@ -22,10 +22,6 @@ import { log } from './ChannelLogger'
 import { getContentFromFilesystem } from './parse/TestParserCommon'
 import { ABLTestCase, ABLTestClass, ABLTestData, ABLTestDir, ABLTestFile, ABLTestProgram, ABLTestSuite, resultData, testData } from './testTree'
 import { minimatch } from 'minimatch'
-// import 'source-map-support/register'
-// require('source-map-support').install()
-// import { install } from 'source-map-support'
-// install()
 
 export interface IExtensionTestReferences {
 	testController: TestController

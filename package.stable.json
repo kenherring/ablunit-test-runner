@@ -113,7 +113,6 @@
 		"mocha-multi-reporters": "^1.5.1",
 		"mocha-reporter-sonarqube": "^2.0.6",
 		"mocha-xunit-reporter": "^2.3.0",
-		"nyc": "^17.0.0",
 		"ts-loader": "^9.5.1",
 		"ts-node": "^10.9.2",
 		"tsconfig-paths": "^4.2.0",

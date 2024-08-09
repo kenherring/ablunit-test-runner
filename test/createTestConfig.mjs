@@ -87,7 +87,6 @@ function getMochaOpts (projName) {
 		require: [
 			'mocha',
 			'tsconfig-paths/register',
-			// 'source-map-support/register',
 			'ts-node/register',
 			// 'ts-node/register/transpile-only',
 			// path.join(__dirname, '..', 'dist', 'extension.js'),
@@ -198,12 +197,6 @@ function getLaunchArgs (projName) {
 	args.push('--disable-updates')
 	args.push('--disable-workspace-trust')
 	args.push('--disable-dev-shm-usage', '--no-xshm')
-
-
-	// --- possible coverage (nyc) related args --- //
-	// args.push('--enable-source-maps')
-	// args.push('--produce-source-map')
-
 	return args
 }
 
@@ -253,12 +246,12 @@ function getTestConfig (projName) {
 		useInstallation,
 		// useInstallation: { fromMachine: true },
 		// download: { reporter: ProgressReporter, timeout: ? }
-		installExtension: [ 'riversidesoftware.openedge-abl-lsp' ],
+		installExtensions: [ 'riversidesoftware.openedge-abl-lsp' ],
 
 		// --- IBaseTestConfiguration --- //
 		files: absolulteFile,
 		version: vsVersion,
-		extensionDevelopmentPath: './',
+		extensionDevelopmentPath: path.resolve(__dirname, '..'),
 		workspaceFolder,
 		mocha: getMochaOpts(projName),
 		label: 'suite_' + projName,
@@ -288,42 +281,60 @@ function getTests () {
 }
 
 function getCoverageOpts () {
-	const coverageDir = path.resolve(__dirname, '..', 'coverage', vsVersion + '-' + oeVersion)
+	const coverageDir = path.resolve(__dirname, '..', 'artifacts', 'coverage')
 	fs.mkdirSync(coverageDir, { recursive: true })
 
 	/** @type {import('@vscode/test-cli').ICoverageConfiguration} */
 	const coverageOpts = {
-		exclude: [
-			'dummy-ext',
-			'test_projects',
-			'**/node_modules/**',
-			'node_modules/**',
-			'node_modules',
-		],
-		include: [
-		// 	// 'src',
-		// 	// 'test',
-		// 	// 'src/**',
-		// 	// 'test/**',
-			'**/*',
-		// 	// '**/dist/**',
-		// 	// '**/src/**',
-		// 	// '**/test/**',
-		],
 		// https://istanbul.js.org/docs/advanced/alternative-reporters/
 		// * default = ['html'], but somehow also prints the 'text-summary' to the console
 		// * 'lcov' includes 'html' output
-		reporter: [ 'text', 'lcov' ],
-		output: coverageDir,
-		// includeAll: true,
-		// require: [
-		// 	// 'source-map-support',
-		// 	'ts-node/register',
+		reporter: [ 'text', 'lcovonly' ],
+		output: coverageDir, // https://github.com/microsoft/vscode-test-cli/issues/38
+		// includeAll: false,
+		includeAll: true,
+		exclude:[
+			// 'external **',
+			// 'external commonjs "vscode"',
+			// 'external commonjs "vscode"**',
+			// '**external commonjs "vscode"**',
+			// '**external **',
+			// '**external**',
+			// 'commonjs',
+			// '**commonjs**',
+			// 'commonjs vscode',
+			// 'commonjs "vscode"',
+			// 'vscode',
+			// '"vscode"',
+			// '**vscode**',
+			// '**"vscode"**',
+			// 'dist',
+			// '**dist**',
+			// '**/dist/**',
+			'**/dummy-ext/**',
+			'**/node_modules/**',
+			'**/test_projects/**',
+			// '**vscode**',
+		],
+		include: [
+		// 	'*',
+		// 	'**',
+			'**/*',
+		// 	'**/*.js',
+		// 	'**/*.ts',
+		// 	'**/src/**/*.js',
+		// 	'**/src/**/*.ts',
+		// 	'**/test/**/*.js',
+		// 	'**/test/**/*.ts',
+		],
+		// include: [
+		// 	'*',
+		// 	'**/*'
 		// ],
-		// cache: false,
-		// 'enable-source-maps': true,
-		// sourceMap: false,
-		// instrument: false,
+
+		// include: ['src/**/*.ts'],
+		// exclude: ['src/**/*.spec.ts'],
+		// sourceMap: true,
 	}
 	return coverageOpts
 }

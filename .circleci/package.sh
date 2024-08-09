@@ -1,5 +1,6 @@
 #!/bin/bash
 set -eou pipefail
+set -x
 
 initialize () {
     echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}]"
@@ -52,6 +53,8 @@ package_version () {
     fi
 
     cp "package.$VSCODE_VERSION.json" package.json
+    npm install
+    npm run build
     vsce package "${ARGS[@]}"
     cp package.stable.json package.json
 }
@@ -67,11 +70,9 @@ run_lint () {
 	mkdir -p artifacts
 
     npm install eslint-plugin-promise@latest --save-dev
-    # npm i
-    npm run build
 
 	if ! npm run lint -- -f unix -o "${ESLINT_FILE}.txt"; then
-		echo "eslint plain failed"
+		echo "eslint plain failed"e
 	fi
 	if ! npm run lint -- -f json -o "${ESLINT_FILE}.json"; then
 		## sonarqube report
