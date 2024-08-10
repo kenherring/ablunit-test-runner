@@ -151,5 +151,5 @@ get_performance_test_code
 get_pct
 create_dbs
 doPackage
-rm -rf artifacts/*
+rm -rf artifacts/* coverage/*
 echo "[$(date +%Y-%m-%d:%H:%M:%S) $0] completed successfully!"

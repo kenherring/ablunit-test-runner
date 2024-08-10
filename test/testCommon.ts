@@ -195,7 +195,6 @@ export function setFilesExcludePattern () {
 
 export function installExtension (extname = 'riversidesoftware.openedge-abl-lsp'): PromiseLike<boolean> {
 	log.info('start process.args=' + process.argv.join(' '))
-
 	if (extensions.getExtension(extname)) {
 		log.info('extension ' + extname + ' is already installed')
 		return Promise.resolve(true)

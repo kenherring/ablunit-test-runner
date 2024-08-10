@@ -281,7 +281,7 @@ function getTests () {
 }
 
 function getCoverageOpts () {
-	const coverageDir = path.resolve(__dirname, '..', 'artifacts', 'coverage')
+	const coverageDir = path.resolve(__dirname, '..', 'coverage')
 	fs.mkdirSync(coverageDir, { recursive: true })
 
 	/** @type {import('@vscode/test-cli').ICoverageConfiguration} */
@@ -316,25 +316,6 @@ function getCoverageOpts () {
 			'**/test_projects/**',
 			// '**vscode**',
 		],
-		include: [
-		// 	'*',
-		// 	'**',
-			'**/*',
-		// 	'**/*.js',
-		// 	'**/*.ts',
-		// 	'**/src/**/*.js',
-		// 	'**/src/**/*.ts',
-		// 	'**/test/**/*.js',
-		// 	'**/test/**/*.ts',
-		],
-		// include: [
-		// 	'*',
-		// 	'**/*'
-		// ],
-
-		// include: ['src/**/*.ts'],
-		// exclude: ['src/**/*.spec.ts'],
-		// sourceMap: true,
 	}
 	return coverageOpts
 }

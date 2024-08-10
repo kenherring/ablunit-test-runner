@@ -1,6 +1,5 @@
 #!/bin/bash
 set -eou pipefail
-set -x
 
 initialize () {
     echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}]"
@@ -72,7 +71,7 @@ run_lint () {
     npm install eslint-plugin-promise@latest --save-dev
 
 	if ! npm run lint -- -f unix -o "${ESLINT_FILE}.txt"; then
-		echo "eslint plain failed"e
+		echo "eslint plain failed"
 	fi
 	if ! npm run lint -- -f json -o "${ESLINT_FILE}.json"; then
 		## sonarqube report
