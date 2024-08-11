@@ -142,7 +142,6 @@ run_tests () {
 		echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] starting 'npm test:coverage'"
 		time xvfb-run -a npm run test:coverage
 	fi | sed -e 's,/?home/circleci/project/,,g' || EXIT_CODE=$?
-	cp package.stable.json package.json
 
 	if [ "$EXIT_CODE" = "0" ]; then
 		echo "xvfb-run success"
