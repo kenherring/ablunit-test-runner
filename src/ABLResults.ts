@@ -108,9 +108,14 @@ export class ABLResults implements Disposable {
 		this.debugLines = new ABLDebugLines(this.propath)
 
 		this.cfg.ablunitConfig.dbAliases = []
-		for (const conn of this.cfg.ablunitConfig.dbConns) {
-			if (conn.aliases.length > 0) {
-				this.cfg.ablunitConfig.dbAliases.push(conn.name + ',' + conn.aliases.join(','))
+
+		log.info('dbconns=' + this.cfg.ablunitConfig.dbConns)
+		// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+		if (this.cfg.ablunitConfig.dbConns && this.cfg.ablunitConfig.dbConns.length > 0) {
+			for (const conn of this.cfg.ablunitConfig.dbConns) {
+				if (conn.aliases.length > 0) {
+					this.cfg.ablunitConfig.dbAliases.push(conn.name + ',' + conn.aliases.join(','))
+				}
 			}
 		}
 

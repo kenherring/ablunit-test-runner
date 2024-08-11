@@ -219,6 +219,7 @@ export function getActiveProfile (rootDir: string) {
 }
 
 function loadConfigFile (filename: string): IOpenEdgeMainConfig | undefined {
+	log.info('[loadConfigFile] filename = ' + filename)
 	log.debug('[loadConfigFile] filename = ' + filename)
 	if (!filename) {
 		throw new Error('filename is undefined')
@@ -394,6 +395,8 @@ function readOEConfigFile (uri: Uri, workspaceUri: Uri, openedgeProjectProfile?:
 	}
 
 	const prjConfig = parseOpenEdgeProjectConfig(uri, workspaceUri, config)
+	log.info('100 prjConfig=' + JSON.stringify(prjConfig, null, 2))
+	log.info('101 prjConfig.dbConnections=' + prjConfig.dbConnections)
 	if (prjConfig.dlc != '') {
 		log.info('OpenEdge project configured in ' + prjConfig.rootDir + ' -- DLC: ' + prjConfig.dlc)
 		const idx: number = projects.findIndex((element) =>
@@ -411,6 +414,8 @@ function readOEConfigFile (uri: Uri, workspaceUri: Uri, openedgeProjectProfile?:
 	} else {
 		log.info('[readOEConfigFile] Skip OpenEdge project in ' + prjConfig.rootDir + ' -- OpenEdge install not found')
 	}
+	log.info('110 prjConfig=' + JSON.stringify(prjConfig, null, 2))
+	log.info('111 prjConfig.dbConnections=' + prjConfig.dbConnections)
 	return prjConfig
 }
 
@@ -454,6 +459,12 @@ export function getProfileDbConns (workspaceUri: Uri, openedgeProjectProfile?: s
 		log.info('[getProfileDbConns] profileConfig is undefined')
 		return []
 	}
+	if (!profileConfig.dbConnections) {
+		log.info('[getProfileDbConns] profileConfig.dbConnections is undefined')
+		return []
+	}
+	log.info('[getProfileDbConns] profileConfig.dbConnections = ' + profileConfig.dbConnections)
+	log.info('[getProfileDbConns] profileConfig.dbConnections.length = ' + profileConfig.dbConnections.length)
 	log.trace('[getProfileDbConns] profileConfig.dbConnections = ' + JSON.stringify(profileConfig.dbConnections, null, 2))
 	return profileConfig.dbConnections
 }

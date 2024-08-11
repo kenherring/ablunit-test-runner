@@ -8,6 +8,7 @@ const config = {
 	// node: false,
 	mode: 'development',
 	devtool: 'source-map', // https://webpack.js.org/configuration/devtool/
+	// devtool: 'inline-source-map', // https://webpack.js.org/configuration/devtool/
 	entry:  './src/extension.ts',
 	output: {
 		clean: true,

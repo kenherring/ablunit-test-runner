@@ -84,11 +84,15 @@ function getMochaOpts (projName) {
 		retries: 0,
 		parallel: false,
 		bail: true,
+		// preload: 'source-map-support/register',
+		// preload: 'ts-node/register',
 		require: [
 			'mocha',
-			'tsconfig-paths/register',
+			// 'tsconfig-paths/register',
 			'ts-node/register',
-			// 'ts-node/register/transpile-only',
+			// 'ts-loader',
+			// 'source-map-support/register',
+			'ts-node/register/transpile-only',
 		],
 	}
 
@@ -289,7 +293,7 @@ function getCoverageOpts () {
 		reporter: [ 'text', 'lcovonly' ],
 		output: coverageDir, // https://github.com/microsoft/vscode-test-cli/issues/38
 		// includeAll: false,
-		// includeAll: true,
+		includeAll: true,
 		exclude:[
 			// 'external **',
 			// 'external commonjs "vscode"',

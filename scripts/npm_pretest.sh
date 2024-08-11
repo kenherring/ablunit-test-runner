@@ -11,8 +11,6 @@ initialize () {
 	VERBOSE=${VERBOSE:-false}
 	ABLUNIT_TEST_RUNNER_OE_VERSION=${ABLUNIT_TEST_RUNNER_OE_VERSION:-12.8.1}
 	ABLUNIT_TEST_RUNNER_VSCODE_VERSION=${ABLUNIT_TEST_RUNNER_VSCODE_VERSION:-}
-	${CIRCLECI:-false} && NO_BUILD=true
-	[ -z "${DOCKER_IMAGE:-}" ] && NO_BUILD=true
 	[ -z "${WSL_DISTRO_NAME:-}" ] && WSL=true
 	PACKAGE_VERSION=$(node -p "require('./package.json').version")
 
@@ -58,10 +56,10 @@ copy_user_settings () {
 	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}]"
 
 	if [ -d .vscode-test ]; then
-		find .vscode-test -type f -name "*.log"
+		$VERBOSE && find .vscode-test -type f -name "*.log"
 		find .vscode-test -type f -name "*.log" -delete
 		if [ -d .vscode-test/user-data ]; then
-			find .vscode-test/user-data
+			# find .vscode-test/user-data
 			find .vscode-test/user-data -delete
 		fi
 	fi
@@ -103,8 +101,11 @@ create_dbs () {
 	cd -
 }
 
-doPackage () {
-	$NO_BUILD && return 0
+package () {
+	if $NO_BUILD; then
+		echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] skipping package (NO_BUILD=$NO_BUILD)"
+		return 0
+	fi
 	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] pwd=$(pwd)"
 
 	local PACKAGE_OUT_OF_DATE=false
@@ -150,6 +151,6 @@ copy_user_settings
 get_performance_test_code
 get_pct
 create_dbs
-doPackage
+package
 rm -rf artifacts/* coverage/*
 echo "[$(date +%Y-%m-%d:%H:%M:%S) $0] completed successfully!"

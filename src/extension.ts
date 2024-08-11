@@ -853,7 +853,6 @@ async function parseMatchingFiles (files: Uri[], controller: TestController, exc
 			proms.push(prom)
 		}
 	}
-	log.info('330')
 	const r = await Promise.all(proms).then(() => { return true })
 	return r
 }
