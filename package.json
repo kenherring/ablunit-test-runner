@@ -210,8 +210,5 @@
 				"path": "./snippets/snippets-abl-class.json"
 			}
 		]
-	},
-	"nyc": {
-		"exclude-after-remap": false
 	}
 }
