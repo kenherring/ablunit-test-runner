@@ -122,6 +122,7 @@ export const getSourceMapFromRCode = (propath: PropathParser, uri: Uri) => {
 	}
 
 	const nextDelim = (bytes: Uint32Array, pos: number, count = 2, prefix = '') => {
+		// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
 		if (debug) {
 			log.info(prefix + ' count=' + count)
 		}
@@ -139,6 +140,7 @@ export const getSourceMapFromRCode = (propath: PropathParser, uri: Uri) => {
 	}
 
 	const parseProcName = (bytes: Uint32Array, pos: number, prefix = '') => {
+		// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
 		if (debug) {
 			log.info(prefix + ' [parseProcName] pos=' + pos)
 		}

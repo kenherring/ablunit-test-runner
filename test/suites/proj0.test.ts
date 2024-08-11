@@ -2,7 +2,6 @@ import { Uri, commands, window, workspace, Range, FileCoverageDetail } from 'vsc
 import { assert, deleteFile, getResults, log, runAllTests, runAllTestsWithCoverage, suiteSetupCommon, toUri, updateTestProfile } from '../testCommon'
 
 function getDetailLine (coverage: FileCoverageDetail[] | never[], lineNum: number) {
-	if (!coverage) return undefined
 	if (coverage.length === 0) {
 		return undefined
 	}
@@ -74,7 +73,7 @@ suite('proj0  - Extension Test Suite', () => {
 		await runAllTests()
 
 		const lines = (await getResults())[0].coverage.get(testFileUri.fsPath) ?? []
-		const executedLines = lines.filter((d) => d)
+		const executedLines = lines.filter((d) => d.executed)
 		log.debug('executedLines.length=' + executedLines.length)
 		assert.equal(0, executedLines.length, 'executed lines found for ' + workspace.asRelativePath(testFileUri) + '. should be empty')
 		assert.assert(!getDetailLine(executedLines, 5), 'line 5 should display as not executed')

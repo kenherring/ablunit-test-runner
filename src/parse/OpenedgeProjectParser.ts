@@ -165,17 +165,14 @@ export class ProfileConfig {
 			this.extraParameters = parent.extraParameters
 		if (!this.gui)
 			this.gui = parent.gui
-		if (!this.propath)
-			this.propath = parent.propath
+		this.propath = parent.propath
 		if (this.buildPath.length == 0) {
 			this.buildPath = parent.buildPath
 		}
 		if (!this.buildDirectory)
 			this.buildDirectory = parent.buildDirectory
-		if (!this.dbConnections)
-			this.dbConnections = parent.dbConnections
-		if (!this.procedures)
-			this.procedures = parent.procedures
+		this.dbConnections = parent.dbConnections
+		this.procedures = parent.procedures
 	}
 
 	getTTYExecutable (): string {
@@ -271,7 +268,7 @@ function readGlobalOpenEdgeRuntimes (workspaceUri: Uri) {
 			return
 		}
 	})
-	if (!defaultRuntime && oeRuntimes.length === 1) {
+	if (oeRuntimes.length === 1) {
 		defaultRuntime = oeRuntimes[0]
 	}
 
@@ -322,10 +319,10 @@ function parseOpenEdgeConfig (cfg: IOpenEdgeConfig): ProfileConfig {
 	const retVal = new ProfileConfig()
 	retVal.dlc = getDlcDirectory(cfg.oeversion)
 	retVal.extraParameters = cfg.extraParameters ?? ''
-	retVal.oeversion = cfg.oeversion ?? ''
-	retVal.gui = cfg.graphicalMode ?? ''
+	retVal.oeversion = cfg.oeversion
+	retVal.gui = cfg.graphicalMode
 	if (cfg.buildPath)
-		retVal.propath = cfg.buildPath.map(str => str.path.replace('${DLC}', retVal.dlc)) ?? ''
+		retVal.propath = cfg.buildPath.map(str => str.path.replace('${DLC}', retVal.dlc))
 	retVal.buildPath = cfg.buildPath ?? []
 	retVal.startupProc = ''
 	retVal.parameterFiles = []
@@ -427,17 +424,15 @@ function getWorkspaceProfileConfig (workspaceUri: Uri, openedgeProjectProfile?: 
 	if (activeProfile) {
 		const prf =  prjConfig.profiles.get(activeProfile)
 		if (prf) {
-			if (!prf.buildPath)
-				prf.buildPath = prjConfig.buildPath
-			if (!prf.propath)
-				prf.propath = prjConfig.propath
+			prf.buildPath = prjConfig.buildPath
+			prf.propath = prjConfig.propath
 			for (const e of prf.buildPath) {
-				e.buildDir = prjConfig.buildDirectory ?? workspaceUri
+				e.buildDir = prjConfig.buildDirectory
 			}
 			return prf
 		}
 	}
-	if (prjConfig && openedgeProjectProfile) {
+	if (openedgeProjectProfile) {
 		return prjConfig.profiles.get(openedgeProjectProfile) ?? prjConfig.profiles.get('default')
 	}
 	return undefined

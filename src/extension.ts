@@ -84,7 +84,7 @@ export async function activate (context: ExtensionContext) {
 			recentResults: recentResults,
 			currentRunData: data
 		} as IExtensionTestReferences
-		log.debug('_ablunit.getExtensionTestReferences currentRunData.length=' + ret.currentRunData?.length + ', recentResults.length=' + ret.recentResults?.length)
+		log.debug('_ablunit.getExtensionTestReferences currentRunData.length=' + ret.currentRunData.length + ', recentResults.length=' + ret.recentResults.length)
 		return ret
 	}
 
@@ -291,7 +291,7 @@ export async function activate (context: ExtensionContext) {
 				}
 				let r = res.find(r => r.workspaceFolder === wf)
 				if (!r) {
-					r = new ABLResults(wf, await getStorageUri(wf) ?? wf.uri, contextStorageUri, contextResourcesUri, cancellation)
+					r = new ABLResults(wf, await getStorageUri(wf), contextStorageUri, contextResourcesUri, cancellation)
 					cancellation.onCancellationRequested(() => {
 						log.debug('cancellation requested - createABLResults-1')
 						r?.dispose()
@@ -367,15 +367,15 @@ export async function activate (context: ExtensionContext) {
 	function resolveHandlerFunc (item: TestItem | undefined) {
 		if (!item) {
 			log.debug('resolveHandlerFunc called with undefined item - refresh tests?')
-			if (workspace.getConfiguration('ablunit').get('discoverAllTestsOnActivate', false)) {
-				log.debug('discoverAllTestsOnActivate is true. refreshing test tree...')
-				return commands.executeCommand('testing.refreshTests').then(() => {
-					log.trace('tests tree successfully refreshed on workspace startup')
-					return
-				}, (err) => {
-					log.error('failed to refresh test tree. err=' + err)
-				})
-			}
+			// if (workspace.getConfiguration('ablunit').get('discoverAllTestsOnActivate', false)) {
+			// 	log.debug('discoverAllTestsOnActivate is true. refreshing test tree...')
+			// 	return commands.executeCommand('testing.refreshTests').then(() => {
+			// 		log.trace('tests tree successfully refreshed on workspace startup')
+			// 		return
+			// 	}, (err) => {
+			// 		log.error('failed to refresh test tree. err=' + err)
+			// 	})
+			// }
 			return Promise.resolve()
 		}
 
@@ -454,9 +454,9 @@ export async function activate (context: ExtensionContext) {
 	testProfileCoverage.loadDetailedCoverage = loadDetailedCoverage
 	// testProfileDebugCoverage.configureHandler = configHandler
 
-	if(workspace.getConfiguration('ablunit').get('discoverAllTestsOnActivate', false)) {
-		await commands.executeCommand('testing.refreshTests')
-	}
+	// if(workspace.getConfiguration('ablunit').get('discoverAllTestsOnActivate', false)) {
+	// 	await commands.executeCommand('testing.refreshTests')
+	// }
 }
 
 let contextStorageUri: Uri
@@ -467,7 +467,7 @@ function updateNode (uri: Uri, ctrl: TestController) {
 	if(uri.scheme !== 'file' || isFileExcluded(uri, getExcludePatterns())) { return new Promise(() => { return false }) }
 
 	const { item, data } = getOrCreateFile(ctrl, uri)
-	if(!item || !data) {
+	if(!item) {
 		return new Promise(() => { return false })
 	}
 
@@ -497,10 +497,8 @@ export function checkCancellationRequested (run: TestRun) {
 		throw new CancellationError()
 	}
 }
-
+9
 async function getStorageUri (workspaceFolder: WorkspaceFolder) {
-	if (!getContextStorageUri) { throw new Error('contextStorageUri is undefined') }
-
 	const dirs = workspaceFolder.uri.path.split('/')
 	const ret = Uri.joinPath(getContextStorageUri(), dirs[dirs.length - 1])
 	await createDir(ret)
@@ -803,10 +801,6 @@ function removeExcludedFiles (controller: TestController, excludePatterns: Relat
 }
 
 function removeExcludedChildren (parent: TestItem, excludePatterns: RelativePattern[]) {
-	if (!parent.children) {
-		return
-	}
-
 	for(const [,item] of parent.children) {
 		const data = testData.get(item)
 		if (data instanceof ABLTestFile) {
@@ -1026,14 +1020,7 @@ export async function doesFileExist (uri: Uri) {
 }
 
 function createDir (uri: Uri) {
-	if(!uri) {
-		return
-	}
 	return workspace.fs.stat(uri).then((stat) => {
-		if (!stat) {
-			return workspace.fs.createDirectory(uri)
-
-		}
 		return
 	}, () => {
 		return workspace.fs.createDirectory(uri)
@@ -1041,9 +1028,6 @@ function createDir (uri: Uri) {
 }
 
 function logActivationEvent (extensionMode: ExtensionMode) {
-	if (!log) {
-		throw new Error('log is undefined')
-	}
 	if (extensionMode == ExtensionMode.Development) {
 		log.setLogLevel(LogLevel.Debug)
 	}

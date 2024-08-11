@@ -87,7 +87,7 @@ export async function setRuntimes (runtimes: IRuntime[] = []) {
 		throw new Error('setRuntimes failed! extensions are disabled')
 	}
 	log.info('runtimes=' + JSON.stringify(runtimes))
-	if (!runtimes) {
+	if (runtimes.length == 0) {
 		runtimes = [{name: oeVersion(), path: getDefaultDLC(), default: true}]
 	}
 	log.info('setting abl.configuration.runtimes=' + JSON.stringify(runtimes))

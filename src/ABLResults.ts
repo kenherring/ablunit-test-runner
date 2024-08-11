@@ -215,7 +215,7 @@ export class ABLResults implements Disposable {
 	async run (options: TestRun) {
 		await this.deleteResultsXml()
 		return ablunitRun(options, this, this.cancellation).then(() => {
-			if(!this.ablResults!.resultsJson) {
+			if(!this.ablResults?.resultsJson) {
 				throw new Error('no results available')
 			}
 			return true
@@ -235,7 +235,7 @@ export class ABLResults implements Disposable {
 		this.ablResults = new ABLResultsParser(this.propath!, this.debugLines!)
 		await this.ablResults.parseResults(this.cfg.ablunitConfig.optionsUri.filenameUri, this.cfg.ablunitConfig.optionsUri.jsonUri).then(() => {
 			log.info('parsing results complete ' + parseTime.toString())
-			if(!this.ablResults!.resultsJson) {
+			if(!this.ablResults?.resultsJson) {
 				log.error('No results found in ' + this.cfg.ablunitConfig.optionsUri.filenameUri.fsPath, options)
 				throw new Error('No results found in ' + this.cfg.ablunitConfig.optionsUri.filenameUri.fsPath + '\r\n')
 			}

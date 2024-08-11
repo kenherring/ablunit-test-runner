@@ -1,5 +1,5 @@
 import { CancellationError, LogLevel, commands } from 'vscode'
-import { assert, RunStatus, beforeCommon, beforeProj7, cancelTestRun, getCurrentRunData, getResults, getTestControllerItemCount, isoDate, log, refreshTests, runAllTests, sleep, waitForTestRunStatus, sleep2 } from '../testCommon'
+import { assert, RunStatus, beforeCommon, beforeProj7, cancelTestRun, getCurrentRunData, getTestControllerItemCount, isoDate, log, refreshTests, runAllTests, sleep, waitForTestRunStatus, sleep2 } from '../testCommon'
 import { Duration } from '../../src/ABLUnitCommon'
 
 suite('proj7B - Extension Test Suite', () => {
@@ -77,34 +77,31 @@ suite('proj7B - Extension Test Suite', () => {
 		const resArr = await getCurrentRunData()
 		const res = resArr[0]
 
-		// TODO - fix for 12.7.0
+		if (res.status == RunStatus.Cancelled) {
+			log.info('runAllTests completed with status=\'run cancelled\'')
+		} else {
+			assert.fail('runAllTests completed without status=\'run cancelled\' (status=\'' + res.status + '\')')
+		}
 
-		// if (res.status == RunStatus.Cancelled) {
-		// 	log.info('runAllTests completed with status=\'run cancelled\'')
-		// } else {
-		// 	assert.fail('runAllTests completed without status=\'run cancelled\' (status=\'' + res.status + '\')')
-		// }
-
-		// await refreshTests().then(() => {
-		// 	if (res.status == RunStatus.Cancelled) {
-		// 		log.info('runAllTests completed with status=\'run cancelled\'')
-		// 	} else {
-		// 		assert.fail('runAllTests completed without status=\'run cancelled\' (status=\'' + res.status + '\')')
-		// 	}
-		// }, (err: unknown) => {
-		// 	if (err instanceof CancellationError) {
-		// 		log.info('runAllTests threw CancellationError as expected ' + runTestTime.toString())
-		// 	} else {
-		// 		const e = err as Error
-		// 		assert.equal(e.name, 'Canceled', 'runAllTests threw unexpected error. Expected e.name="Canceled" err=' + err)
-		// 	}
-		// })
+		await refreshTests().then(() => {
+			if (res.status == RunStatus.Cancelled) {
+				log.info('runAllTests completed with status=\'run cancelled\'')
+			} else {
+				assert.fail('runAllTests completed without status=\'run cancelled\' (status=\'' + res.status + '\')')
+			}
+		}, (err: unknown) => {
+			if (err instanceof CancellationError) {
+				log.info('runAllTests threw CancellationError as expected ' + runTestTime.toString())
+			} else {
+				const e = err as Error
+				assert.equal(e.name, 'Canceled', 'runAllTests threw unexpected error. Expected e.name="Canceled" err=' + err)
+			}
+		})
 	})
 
 	// TODO - remove skip
 	test.skip('proj7B.3 - cancel test run while _progres is running', async () => {
 		const maxCancelTime = 1000
-		const runTestTime = new Duration()
 
 		runAllTests().catch((err: unknown) => { log.info('runAllTests got error: ' + err) })
 
@@ -134,19 +131,16 @@ suite('proj7B - Extension Test Suite', () => {
 		assert.durationLessThan(elapsedCancelTime, maxCancelTime)
 		assert.assert(true, 'testing.cancelRun completed successfully')
 
-		// TODO - fix for 12.7.0
-
 		// log.info('waiting for runProm to complete')
 		// await runProm.then(() => {
 		// 	log.info('runProm completed')
-		// }, (e) => {
-		// 	log.error('runProm error e=' + e)
+		// }, (e: unknown) => {
 		// 	throw e
 		// })
 
-		// 	const recentResults = await getResults(0)
-		// 	log.info('recentResults.length=' + recentResults.length)
-		// 	// assert.equal(0, recentResults.length, 'expected recentResults.length=0, but got ' + recentResults.length)
+		// const recentResults = await getResults(0)
+		// log.info('recentResults.length=' + recentResults.length)
+		// assert.equal(0, recentResults.length, 'expected recentResults.length=0, but got ' + recentResults.length)
 	})
 
 })
