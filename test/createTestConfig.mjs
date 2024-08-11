@@ -88,6 +88,7 @@ function getMochaOpts (projName) {
 		// preload: 'ts-node/register',
 		require: [
 			'mocha',
+			'source-map-support/register',
 			// 'tsconfig-paths/register',
 			'ts-node/register',
 			// 'ts-loader',
@@ -296,32 +297,32 @@ function getCoverageOpts () {
 		includeAll: true,
 		exclude:[
 			// 'external **',
-			// 'external commonjs "vscode"',
-			// 'external commonjs "vscode"**',
-			// '**external commonjs "vscode"**',
-			// '**external **',
-			// '**external**',
-			// 'commonjs',
-			// '**commonjs**',
-			// 'commonjs vscode',
-			// 'commonjs "vscode"',
-			// 'vscode',
-			// '"vscode"',
-			// '**vscode**',
-			// '**"vscode"**',
-			// 'dist',
-			// '**dist**',
-			// '**/dist/**',
-			'**/dummy-ext/**',
-			'node_modules',
-			'node_modules/**',
-			'**/node_modules',
-			'**/node_modules/**',
+		// 	// 'external commonjs "vscode"',
+		// 	// 'external commonjs "vscode"**',
+		// 	// '**external commonjs "vscode"**',
+		// 	// '**external **',
+		// 	// '**external**',
+		// 	// 'commonjs',
+		// 	// '**commonjs**',
+		// 	// 'commonjs vscode',
+		// 	// 'commonjs "vscode"',
+		// 	// 'vscode',
+		// 	// '"vscode"',
+		// 	// '**vscode**',
+		// 	// '**"vscode"**',
+		// 	// 'dist',
+		// 	// '**dist**',
+		// 	// '**/dist/**',
+		// 	'**/dummy-ext/**',
+		// 	'node_modules',
+		// 	'node_modules/**',
+		// 	'**/node_modules',
+		// 	'**/node_modules/**',
 			'**/test_projects/**',
 		],
-		include: [
-			'*/**'
-		]
+		// include: [
+		// 	'*/**'
+		// ]
 	}
 	return coverageOpts
 }
