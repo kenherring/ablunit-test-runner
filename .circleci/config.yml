@@ -24,7 +24,8 @@ oe-version-param: &oe-version-param
     vscode-version:
       type: string
       default: stable
-      enum: [ stable, proposedapi, insiders ]
+      enum: [ stable ]
+      # enum: [ stable, proposedapi, insiders ]
 context-and-filters: &context-and-filters
   context:
     - DockerHub
@@ -166,7 +167,6 @@ workflows:
           matrix:
             parameters:
               vscode-version: [ stable ]
-              # vscode-version: [ stable, insiders ]
           name: test-<< pipeline.parameters.primary-oe-version >>-<< matrix.vscode-version >>
       - test:
           <<: *context-and-filters
@@ -175,7 +175,6 @@ workflows:
             parameters:
               oe-version: [ 12.2.12, 12.8.3 ]
               vscode-version: [ stable ]
-              # vscode-version: [ stable, insiders ]
           name: test-<< matrix.oe-version>>-<< matrix.vscode-version >>
       - sonar:
           <<: *context-and-filters

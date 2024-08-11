@@ -21,6 +21,10 @@ import { RunStatus } from '../src/ABLUnitRun'
 import { enableOpenedgeAblExtension, rebuildAblProject, restartLangServer, setRuntimes, waitForLangServerReady } from './openedgeAblCommands'
 import path from 'path'
 
+// import decache from 'decache'
+// decache('./dist/extension.js')
+// decache('extension.js')
+
 interface IRuntime {
 	name: string,
 	path: string,
@@ -194,6 +198,9 @@ export function installExtension (extname = 'riversidesoftware.openedge-abl-lsp'
 	if (extensions.getExtension(extname)) {
 		log.info('extension ' + extname + ' is already installed')
 		return Promise.resolve(true)
+	}
+	if (extname == 'kherring.ablunit-test-runner') {
+		throw new Error('extension kherring.ablunit-test-runner should be loaded from the extensionDevelopmentPath')
 	}
 	if (extname === 'riversidesoftware.openedge-abl-lsp' && ! enableExtensions()) {
 		throw new Error('extensions disabed, openedge-abl-lsp cannot be installed')

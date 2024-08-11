@@ -87,16 +87,12 @@ function getMochaOpts (projName) {
 		require: [
 			'mocha',
 			'tsconfig-paths/register',
-			// 'source-map-support/register',
 			'ts-node/register',
 			// 'ts-node/register/transpile-only',
-			// path.join(__dirname, '..', 'dist', 'extension.js'),
 		],
 	}
 
 	if (process.env['ABLUNIT_TEST_RUNNER_RUN_SCRIPT_FLAG']) {
-		// eslint-disable-next-line no-console
-		// console.log('adding reporter...')
 		mochaOpts.reporter = 'mocha-multi-reporters'
 		mochaOpts.reporterOptions = {
 			reporterEnabled: [ 'json-stream', 'spec', 'json', 'xunit', 'mocha-junit-reporter', 'mocha-reporter-sonarqube' ],
@@ -198,12 +194,6 @@ function getLaunchArgs (projName) {
 	args.push('--disable-updates')
 	args.push('--disable-workspace-trust')
 	args.push('--disable-dev-shm-usage', '--no-xshm')
-
-
-	// --- possible coverage (nyc) related args --- //
-	// args.push('--enable-source-maps')
-	// args.push('--produce-source-map')
-
 	return args
 }
 
@@ -253,12 +243,12 @@ function getTestConfig (projName) {
 		useInstallation,
 		// useInstallation: { fromMachine: true },
 		// download: { reporter: ProgressReporter, timeout: ? }
-		installExtension: [ 'riversidesoftware.openedge-abl-lsp' ],
+		installExtensions: [ 'riversidesoftware.openedge-abl-lsp' ],
 
 		// --- IBaseTestConfiguration --- //
 		files: absolulteFile,
 		version: vsVersion,
-		extensionDevelopmentPath: './',
+		extensionDevelopmentPath: path.resolve(__dirname, '..'),
 		workspaceFolder,
 		mocha: getMochaOpts(projName),
 		label: 'suite_' + projName,
@@ -288,42 +278,46 @@ function getTests () {
 }
 
 function getCoverageOpts () {
-	const coverageDir = path.resolve(__dirname, '..', 'coverage', vsVersion + '-' + oeVersion)
+	const coverageDir = path.resolve(__dirname, '..', 'coverage')
 	fs.mkdirSync(coverageDir, { recursive: true })
 
 	/** @type {import('@vscode/test-cli').ICoverageConfiguration} */
 	const coverageOpts = {
-		exclude: [
-			'dummy-ext',
-			'test_projects',
-			'**/node_modules/**',
-			'node_modules/**',
-			'node_modules',
-		],
-		include: [
-		// 	// 'src',
-		// 	// 'test',
-		// 	// 'src/**',
-		// 	// 'test/**',
-			'**/*',
-		// 	// '**/dist/**',
-		// 	// '**/src/**',
-		// 	// '**/test/**',
-		],
 		// https://istanbul.js.org/docs/advanced/alternative-reporters/
 		// * default = ['html'], but somehow also prints the 'text-summary' to the console
 		// * 'lcov' includes 'html' output
-		reporter: [ 'text', 'lcov' ],
-		output: coverageDir,
+		reporter: [ 'text', 'lcovonly' ],
+		output: coverageDir, // https://github.com/microsoft/vscode-test-cli/issues/38
+		// includeAll: false,
 		// includeAll: true,
-		// require: [
-		// 	// 'source-map-support',
-		// 	'ts-node/register',
-		// ],
-		// cache: false,
-		// 'enable-source-maps': true,
-		// sourceMap: false,
-		// instrument: false,
+		exclude:[
+			// 'external **',
+			// 'external commonjs "vscode"',
+			// 'external commonjs "vscode"**',
+			// '**external commonjs "vscode"**',
+			// '**external **',
+			// '**external**',
+			// 'commonjs',
+			// '**commonjs**',
+			// 'commonjs vscode',
+			// 'commonjs "vscode"',
+			// 'vscode',
+			// '"vscode"',
+			// '**vscode**',
+			// '**"vscode"**',
+			// 'dist',
+			// '**dist**',
+			// '**/dist/**',
+			'**/dummy-ext/**',
+			'node_modules',
+			'node_modules/**',
+			'**/node_modules',
+			'**/node_modules/**',
+			'**/test_projects/**',
+		],
+		include: [
+			'*/**'
+		]
 	}
 	return coverageOpts
 }
