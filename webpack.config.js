@@ -26,19 +26,19 @@ const config = {
 		modules: ['src', 'node_modules'],
 	},
 	module: {
-        rules: [{
-            test: /\.ts$/,
-            exclude: /node_modules/,
-            use: [{
-                loader: 'ts-loader',
-                options: {
-                    compilerOptions: {
-                        "module": "es6" // override `tsconfig.json` so that TypeScript emits native JavaScript modules.
-                    }
-                }
-            }]
-        }]
-    },
+		rules: [{
+			test: /\.ts$/,
+			exclude: /node_modules/,
+			use: [{
+				loader: 'ts-loader',
+				options: {
+					compilerOptions: {
+						"module": "es6" // override `tsconfig.json` so that TypeScript emits native JavaScript modules.
+					}
+				}
+			}]
+		}]
+	},
 }
 
 module.exports = config
