@@ -134,7 +134,6 @@ run_tests () {
 	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] ABLUNIT_TEST_RUNNER_NO_COVERAGE=$ABLUNIT_TEST_RUNNER_NO_COVERAGE"
 	EXIT_CODE=0
 
-	cp "package.$ABLUNIT_TEST_RUNNER_VSCODE_VERSION.json" package.json
 	if $ABLUNIT_TEST_RUNNER_NO_COVERAGE; then
 		echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] starting 'npm test'"
 		time xvfb-run -a npm test
