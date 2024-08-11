@@ -289,7 +289,7 @@ function getCoverageOpts () {
 		reporter: [ 'text', 'lcovonly' ],
 		output: coverageDir, // https://github.com/microsoft/vscode-test-cli/issues/38
 		// includeAll: false,
-		// includeAll: true,
+		includeAll: true,
 		exclude:[
 			// 'external **',
 			// 'external commonjs "vscode"',
