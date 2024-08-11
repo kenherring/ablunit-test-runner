@@ -117,7 +117,7 @@ export class ABLTestFile extends TestTypeObj {
 		throw new CancellationError()
 	}
 
-	public updateFromDisk (controller: TestController, item: TestItem, token?: CancellationToken) {
+	public updateFromDisk (controller: TestController, item: TestItem, token?: CancellationToken): Promise<boolean> {
 		if (token) {
 			token.onCancellationRequested(() => { this.cancellationRequested() })
 		}

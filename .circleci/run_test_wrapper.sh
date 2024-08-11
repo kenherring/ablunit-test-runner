@@ -1,5 +1,5 @@
 #!/bin/bash
-set -euo pipefail
+set -eou pipefail
 
 log_timing () {
 	echo "[$(date +%Y-%m-%dT%H:%M:%S%z) $0] $1" >> /tmp/timing.log
@@ -15,7 +15,7 @@ initialize () {
 	ABLUNIT_TEST_RUNNER_SCRIPT_FLAG=${ABLUNIT_TEST_RUNNER_SCRIPT_FLAG:-true}
 	ABLUNIT_TEST_RUNNER_VSCODE_VERSION=${ABLUNIT_TEST_RUNNER_VSCODE_VERSION:-stable}
 	if [ -z "$ABLUNIT_TEST_RUNNER_OE_VERSION" ]; then
-		ABLUNIT_TEST_RUNNER_OE_VERSION=${OE_VERSION:-12.2.12}
+		ABLUNIT_TEST_RUNNER_OE_VERSION=${OE_VERSION:-12.8.1}
 	fi
 	if [ -z "$ABLUNIT_TEST_RUNNER_PROJECT_NAME" ]; then
 		ABLUNIT_TEST_RUNNER_PROJECT_NAME=${PROJECT_NAME:-}
@@ -42,7 +42,7 @@ initialize () {
 	npm install
 
 	update_oe_version
-	echo "[$0 ${FUNCNAME[0]}] update_oe_version end"
+	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] update_oe_version end"
 	# exit 1
 }
 
@@ -53,7 +53,7 @@ update_oe_version () {
 	local SHORT_VERSION=${ABLUNIT_TEST_RUNNER_OE_VERSION%.*}
 	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] SHORT_VERSION=$SHORT_VERSION"
 
-	sed -i "s/\"12.2\"/\"$SHORT_VERSION\"/g" test_projects/*/openedge-project.json
+	sed -i "s|\"oeversion\": *\"12.[0-9]\"|\"oeversion\": \"$SHORT_VERSION\"|g" test_projects/*/openedge-project.json
 	# ls -al test_projects/*/openedge-project.json
 }
 
@@ -72,7 +72,7 @@ restore_vscode_test () {
 	fi
 	$VERBOSE && echo "COUNT=$COUNT"
 	if [ "$COUNT" = 0 ]; then
-		echo "[$0 ${FUNCNAME[0]}] WARNING: no files found in $FROM_DIR, skipping restore of cached ./.vscode-test/ directory"
+		echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] WARNING: no files found in $FROM_DIR, skipping restore of cached ./.vscode-test/ directory"
 		return 0
 	fi
 
@@ -167,7 +167,6 @@ run_tests () {
 	else
 		xvfb-run "${ARGS[@]}" npm run test:coverage
 	fi | sed -e 's,/?home/circleci/project/,,g' || EXIT_CODE=$?
-	cp package.stable.json package.json
 
 	log_timing "run_tests error"
 	if [ "$EXIT_CODE" = "0" ]; then
@@ -200,9 +199,10 @@ save_and_print_debug_output () {
 	find .vscode-test -name 'settings.json'
 	find .vscode-test -name 'settings.json' -exec cp {} artifacts \;
 	local FROM_DIR TO_DIR
-	FROM_DIR=$(find .vscode-test  -maxdepth 1 -type d -name 'vscode-*')
+	FROM_DIR=$(find .vscode-test  -maxdepth 1 -type d -name 'vscode-*' | tail -1)
 	TO_DIR=/home/circleci/.vscode-test/$(basename "$FROM_DIR")
-	if [ ! -d "$TO_DIR" ]; then
+	if [ ! -d "$TO_DIR" ] && [ -n "$FROM_DIR" ]; then
+		mkdir -p /home/circleci/.vscode-test/
 		cp -r "$FROM_DIR" "$TO_DIR"
 	fi
 

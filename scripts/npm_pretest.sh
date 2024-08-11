@@ -1,5 +1,5 @@
 #!/bin/bash
-set -euo pipefail
+set -eou pipefail
 
 log_timing () {
 	if [ -f /tmp/timing.log ]; then
@@ -59,7 +59,7 @@ get_performance_test_code () {
 }
 
 copy_user_settings () {
-	echo "[$0 ${FUNCNAME[0]}]"
+	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}]"
 
 	if [ -d .vscode-test ]; then
 		find .vscode-test -type f -name "*.log"

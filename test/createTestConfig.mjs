@@ -23,6 +23,7 @@ const enableExtensions = [
 	'proj2',
 	'proj3',
 	'proj4',
+	'proj5',
 	'proj7A',
 	'proj7B',
 	'proj8',
@@ -51,10 +52,12 @@ function getMochaTimeout (projName) {
 		case 'DebugLines': return 120000 // install openedge-abl-lsp for the first time, so give it a moment to start
 		case 'proj1': return 30000
 		// case 'proj2': return 20000
+		case 'proj5': return 60000
+		case 'proj8': return 45000
 		case 'proj7A': return 60000
 	}
 
-	return 15000
+	return 30000
 }
 
 
@@ -73,6 +76,8 @@ function getMochaOpts (projName) {
 	// console.log('bail=' + bail + ', CIRCLECI=' + process.env['CIRCLECI'])
 	// process.exit(1)
 
+
+	/** @type {import('mocha').MochaOptions} */
 	const mochaOpts = {
 		// bail: false,
 		bail,
@@ -105,9 +110,7 @@ function getMochaOpts (projName) {
 			// './dist/extension.js',
 			'ts-node/register/transpile-only',
 			'ts-node/register',
-			// 'source-map-support',
-			// 'source-map-support/register',
-			// 'source-map-support/register-hook-require',
+			// 'ts-node/register/transpile-only',
 		],
 	}
 
@@ -272,6 +275,7 @@ function getTestConfig (projName) {
 		useInstallation: useInstallation,
 		// useInstallation: { fromMachine: true },
 		// download: { reporter: ProgressReporter, timeout: ? }
+		installExtensions: [ 'riversidesoftware.openedge-abl-lsp' ],
 
 		// --- IBaseTestConfiguration --- //
 		files,
@@ -289,6 +293,7 @@ function getTestConfig (projName) {
 		installExtension,
 		skipExtensionDependencies: true,
 	}
+	return testConfig
 }
 
 function getTests () {
@@ -308,20 +313,13 @@ function getTests () {
 	const g = glob.globSync('test/suites/*.test.ts').reverse()
 	for (const f of g) {
 		const basename = path.basename(f, '.test.ts')
-		if (basename != 'proj2' &&
-			basename != 'proj3' &&
-			basename != 'proj4' &&
-			basename != 'proj7B' &&
-			basename != 'proj9'
-		) {
-			tests.push(getTestConfig(basename))
-		}
+		tests.push(getTestConfig(basename))
 	}
 	return tests
 }
 
 function getCoverageOpts () {
-	const coverageDir = path.resolve(__dirname, '..', 'coverage', vsVersion + '-' + oeVersion)
+	const coverageDir = path.resolve(__dirname, '..', 'coverage')
 	fs.mkdirSync(coverageDir, { recursive: true })
 	return {
 		exclude: [
@@ -365,6 +363,7 @@ function getCoverageOpts () {
 		// sourceMap: false,
 		// instrument: false,
 	}
+	return coverageOpts
 }
 
 export function createTestConfig () { // NOSONAR

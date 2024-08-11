@@ -1,5 +1,5 @@
 #!/bin/bash
-set -euo pipefail
+set -eou pipefail
 
 ## Enable this hook with: git config
 ## git config core.hooksPath .git-hooks/
@@ -61,6 +61,14 @@ validate_compile_and_lint () {
 	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}]"
 	npm run build
 	npm run lint
+}
+
+validate_other () {
+	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}]"
+	if grep 'set -eou'; then
+		echo "ERROR: found 'set -eou'!  Change to 'set -euo pipefail'." >&2
+		exit 1
+	fi
 }
 
 ########## MAIN BLOCK ##########

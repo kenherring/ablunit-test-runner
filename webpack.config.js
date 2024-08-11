@@ -1,10 +1,11 @@
 'use strict'
 const path = require('path')
+const { sourceMapsEnabled } = require('process')
 
 /** @type {import('webpack').Configuration} */
 const config = {
 	target: 'node', // TODO: recommended: 'webworker'
-	node: false,
+	// node: false,
 	mode: 'development',
 	infrastructureLogging: {
 		colors: false,
@@ -21,7 +22,7 @@ const config = {
 	output: {
 		clean: true,
 		path: path.resolve(__dirname, 'dist'),
-		filename: '[name].js',
+		filename: 'extension.js',
 		libraryTarget: 'commonjs2',
 		// libraryTarget: 'commonjs',
 		// devtoolNamespace: '',

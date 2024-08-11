@@ -6,7 +6,10 @@ labels: ["chore"]
 assignees:
   - kenherring
 body:
-  - type: markdown
+  - type: textarea
     attributes:
+      label: Chore Description
       value: |
         Describe the chore...
+    validations:
+      required: true

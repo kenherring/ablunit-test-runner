@@ -1,13 +1,13 @@
 #!/bin/bash
-set -euo pipefail
+set -eou pipefail
 
 main_block () {
-	echo "[$0 main_block] starting script (pwd=$(pwd))"
+	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 main_block] starting script (pwd=$(pwd))"
 	initialize
 	delete_directories &
 	delete_files &
 	wait
-	echo "[$0 main_block] cleanup complete!"
+	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 main_block] cleanup complete!"
 }
 
 initialize () {

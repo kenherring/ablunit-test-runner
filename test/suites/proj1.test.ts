@@ -43,10 +43,11 @@ suite('proj1 - Extension Test Suite', () => {
 		return workspace.getConfiguration('ablunit').update('files.exclude', [ '.builder/**', '.pct/**', 'compileError.p' ])
 			.then(() => {
 				log.info('proj1.1C-2')
-				return runAllTests(true, true, 'proj1.1B')
+				return runAllTests(true, true, false, 'proj1.1B')
 			}).then(() => {
 				log.info('proj1.1C-3')
 				log.info ('success!')
+				return
 			}, (e: unknown) => {
 				assert.fail('caught error e=' + e)
 			})

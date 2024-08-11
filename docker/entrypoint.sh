@@ -1,5 +1,5 @@
 #!/bin/bash
-set -euo pipefail
+set -eou pipefail
 
 
 log_timing () {
@@ -20,7 +20,7 @@ initialize () {
 	VERBOSE=${VERBOSE:-false}
 	TRACE=${TRACE:-false}
 	ABLUNIT_TEST_RUNNER_DBUS_NUM=${ABLUNIT_TEST_RUNNER_DBUS_NUM:-3}
-	ABLUNIT_TEST_RUNNER_OE_VERSION=${ABLUNIT_TEST_RUNNER_OE_VERSION:-12.2.12}
+	ABLUNIT_TEST_RUNNER_OE_VERSION=${ABLUNIT_TEST_RUNNER_OE_VERSION:-12.8.1}
 	ABLUNIT_TEST_RUNNER_VSCODE_VERSION=${ABLUNIT_TEST_RUNNER_VSCODE_VERSION:-stable}
 	ABLUNIT_TEST_RUNNER_PROJECT_NAME=${ABLUNIT_TEST_RUNNER_PROJECT_NAME:-}
 	ABLUNIT_TEST_RUNNER_NO_COVERAGE=${ABLUNIT_TEST_RUNNER_NO_COVERAGE:-false}
@@ -85,24 +85,19 @@ initialize () {
 }
 
 initialize_repo () {
-	echo "[$0 ${FUNCNAME[0]}] pwd=$(pwd)"
+	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] pwd=$(pwd)"
 	if [ -d "$PROJECT_DIR/.git" ]; then
 		cd "$PROJECT_DIR"
-		git pull
+		git fetch
 	elif [ -d "$PROJECT_DIR" ]; then
 		cd "$PROJECT_DIR"
 		git init
 		git remote add origin "$REPO_VOLUME"
+		git fetch
 	else
 		git clone "$REPO_VOLUME" "$PROJECT_DIR"
 	fi
-	cd "$PROJECT_DIR"
-	if [ "$(git branch --show-current)" = "$GIT_BRANCH" ]; then
-		git pull
-	else
-		git fetch origin "$GIT_BRANCH":"$GIT_BRANCH"
-		git checkout "$GIT_BRANCH"
-	fi
+	git checkout "$GIT_BRANCH"
 	copy_files_from_volume
 }
 
@@ -177,7 +172,7 @@ run_tests_base () {
 		$BASH_AFTER_ERROR && bash
 		exit 1
 	fi
-	set -euo pipefail
+	set -eou pipefail
 	echo "run_tests success"
 
 	if [ -z "${ABLUNIT_TEST_RUNNER_PROJECT_NAME:-}" ]; then
@@ -277,7 +272,7 @@ finish () {
 	save_cache
 	log_timing_print
 	$BASH_AFTER && bash
-	echo "[$0] completed successfully!"
+	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0] completed successfully!"
 }
 
 exit_err () {

@@ -6,7 +6,7 @@ suite('proj8Suite', () => {
 	suiteSetup('proj8 - suiteSetup', suiteSetupCommon)
 
 	test('proj8.1 - test count', () => {
-		return runAllTests()
+		const prom = runAllTests()
 			.then(() => {
 				const resultsXml = Uri.joinPath(getWorkspaceUri(), 'target', 'results.xml')
 				const resultsJson = Uri.joinPath(getWorkspaceUri(), 'target', 'results.json')
@@ -20,6 +20,7 @@ suite('proj8Suite', () => {
 				assert.tests.passed(2)
 				return
 			})
+		return prom
 	})
 
 	test('proj8.2 - getEnvVars confirm PATH is set correctly', () => {

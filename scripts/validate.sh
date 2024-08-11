@@ -1,5 +1,5 @@
 #!/bin/bash
-set -euo pipefail
+set -eou pipefail
 
 . scripts/common.sh
 
@@ -35,7 +35,7 @@ validate_results_count() {
 
 	if [ -n "$ABLUNIT_TEST_RUNNER_PROJECT_NAME" ]; then
 		if [ "$RESULTS_COUNT" != "$TEST_COUNT" ] || [ "$LCOV_COUNT" != "$EXPECTED_VSIX_COUNT" ]; then
-			echo "[$0 ${FUNCNAME[0]}] ERROR: results count != test count ($RESULTS_COUNT != $TEST_COUNT) or LCOV_COUNT != 1 ($LCOV_COUNT != 1)"
+			echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] ERROR: results count != test count ($RESULTS_COUNT != $TEST_COUNT) or LCOV_COUNT != 1 ($LCOV_COUNT != 1)"
 			return 1
 		fi
 	fi
@@ -44,4 +44,4 @@ validate_results_count() {
 ########## MAIN BLOCK ##########
 validate_version_updated
 validate_results_count
-echo "[$0] completed successfully!"
+echo "[$(date +%Y-%m-%d:%H:%M:%S) $0] completed successfully!"

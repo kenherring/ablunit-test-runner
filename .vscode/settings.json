@@ -1,10 +1,26 @@
 {
 	// "eslint.lintTask.enable": true,
 	"eslint.codeActionsOnSave.mode": "problems",
-	// "extension-test-runner.debugOptions": {},
+	// "extension-test-runner.extractSettings": {
+	// 	"suite": [ "suite" ],
+	// 	"test": [ "test" ],
+	// 	// "extractWith": "syntax",
+	// 	"extractWith": "evaluation",
+	// },
 	"git.branchProtection": [
 		"main"
 	],
+	"extension-test-runner.extractSettings": {
+		"suite": [
+			"describe",
+			"suite"
+		],
+		"test": [
+			"it",
+			"test"
+		],
+		"extractWith": "syntax"
+	},
 	"files.associations": {
 		"ablunit-test-profile*.json": "jsonc"
 	},

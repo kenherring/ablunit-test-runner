@@ -1,7 +1,9 @@
 {
 	"ts-node": {
 		"transpileOnly": true,
-		"require": [ "tsconfig-paths/register" ]
+		"require": [
+			"tsconfig-paths/register",
+		]
 	},
 	"compilerOptions": {
 		// "module": "NodeNext",
@@ -22,7 +24,6 @@
 		// },
 		"sourceRoot": ".",
 		"sourceMap": true,
-		// "inlineSourceMap": true,
 		"strict": true,
 		"alwaysStrict": true,
 		"esModuleInterop": true,
@@ -72,10 +73,8 @@
 	],
 	"watchOptions": {
 		"excludeDirectories": [
-			"dist",
 			"dummy-ext",
 			"node_modules",
-			"out",
 			"test_projects",
 		]
 	}

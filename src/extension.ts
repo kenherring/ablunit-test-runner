@@ -3,6 +3,8 @@ import {
 	CancellationError,
 	CancellationToken, ConfigurationChangeEvent, Disposable, ExtensionContext,
 	ExtensionMode,
+	FileCoverage,
+	FileCoverageDetail,
 	FileType,
 	LogLevel,
 	Position, Range, RelativePattern, Selection,
@@ -19,32 +21,23 @@ import { ABLResults } from './ABLResults'
 import { log } from './ChannelLogger'
 import { getContentFromFilesystem } from './parse/TestParserCommon'
 import { ABLTestCase, ABLTestClass, ABLTestData, ABLTestDir, ABLTestFile, ABLTestProgram, ABLTestSuite, resultData, testData } from './testTree'
-import { Decorator, decorator } from './Decorator'
 import { minimatch } from 'minimatch'
 
 export interface IExtensionTestReferences {
 	testController: TestController
-	decorator: Decorator
 	recentResults: ABLResults[]
 	currentRunData: ABLResults[]
 }
 
 let recentResults: ABLResults[] = []
 
-function unknownToError (e: unknown) {
-	if (e instanceof Error) {
-		return e
-	}
-	return new Error('error: ' + e)
-}
-
 export async function activate (context: ExtensionContext) {
 	const ctrl = tests.createTestController('ablunitTestController', 'ABLUnit Test')
 	let currentTestRun: TestRun | undefined = undefined
 	let isRefreshTestsComplete = false
+	let runWithCoverage = false
 
 	logActivationEvent(context.extensionMode)
-	// log.info('context.workspaceState=' + JSON.stringify(context.workspaceState, null, 2))
 
 	const contextStorageUri = context.storageUri ?? Uri.file(process.env['TEMP'] ?? '') // will always be defined as context.storageUri
 	log.info('110')
@@ -63,7 +56,6 @@ export async function activate (context: ExtensionContext) {
 	}
 	log.info('ABLUnit Test Controller created')
 
-
 	context.subscriptions.push(ctrl)
 
 	context.subscriptions.push(
@@ -78,7 +70,6 @@ export async function activate (context: ExtensionContext) {
 			return new Disposable(async () => {
 				await updateNodeForDocument(e, 'didOpen').then(() => {
 					log.trace('updateNodeForDocument complete for ' + e.uri)
-					decorator.decorate(undefined, e)
 					return
 				}, (e: unknown) => {
 					log.error('failed updateNodeForDocument onDidTextDocument! err=' + e)
@@ -91,23 +82,16 @@ export async function activate (context: ExtensionContext) {
 	)
 
 	const getExtensionTestReferences = () => {
-		log.info('100')
 		let data: ABLResults[] = []
-		log.info('101')
 		if (currentTestRun) {
-			log.info('102')
 			data = resultData.get(currentTestRun) ?? []
 		}
-		log.info('103')
 		const ret = {
 			testController: ctrl,
-			decorator: decorator,
 			recentResults: recentResults,
 			currentRunData: data
 		} as IExtensionTestReferences
-		log.info('104')
 		log.debug('_ablunit.getExtensionTestReferences currentRunData.length=' + ret.currentRunData?.length + ', recentResults.length=' + ret.recentResults?.length)
-		log.info('105')
 		return ret
 	}
 
@@ -117,6 +101,32 @@ export async function activate (context: ExtensionContext) {
 			throw new Error('continuous test runs not implemented')
 		}
 		return startTestRun(request, token).then(() => { return }, (e) => { throw e })
+	}
+
+	const runHandlerRun = (request: TestRunRequest, token: CancellationToken): Promise<void> => {
+		runWithCoverage = false
+		return runHandler(request, token)
+	}
+
+	const runHandlerCoverage = (request: TestRunRequest, token: CancellationToken): Promise<void> => {
+		runWithCoverage = true
+		return runHandler(request, token)
+	}
+
+	const loadDetailedCoverage = (testRun: TestRun, fileCoverage: FileCoverage, token: CancellationToken): Thenable<FileCoverageDetail[]> => {
+		log.info('loadDetailedCoverage uri=' + fileCoverage.uri.fsPath + ', testRun=' + testRun.name)
+		const d = resultData.get(testRun)
+		const det: FileCoverageDetail[] = []
+
+		if (d) {
+			d.flatMap((r) => {
+				const rec = r.coverage.get(fileCoverage.uri.fsPath)
+				if (rec) {
+					det.push(...rec)
+				}
+			})
+		}
+		return Promise.resolve(det)
 	}
 
 	async function openTestRunConfig () {
@@ -256,14 +266,18 @@ export async function activate (context: ExtensionContext) {
 			log.info('setting recentResults (data.length=' + data.length + ')')
 			log.debug('setting recentResults (data.length=' + data.length + ')')
 			recentResults = data
-			decorator.setRecentResults(recentResults)
 
-			if (window.activeTextEditor) {
-				log.info('decorating editor - activeTextEditor')
-				decorator.decorate(window.activeTextEditor)
+			log.info('request.profile=' + request.profile)
+
+			if (runWithCoverage && data.length > 0) {
+				for (const res of data) {
+					res.filecoverage.forEach((c) => {
+						run.addCoverage(c)
+					})
+				}
 			}
 
-			log.debug('run.end()')
+			void log.notification('ablunit tests complete')
 			run.end()
 			void log.notification('ablunit tests complete')
 			return
@@ -439,13 +453,14 @@ export async function activate (context: ExtensionContext) {
 		})
 	}
 
-	const testProfileRun = ctrl.createRunProfile('Run Tests', TestRunProfileKind.Run, runHandler, true, new TestTag('runnable'), false)
-	const testProfileDebug = ctrl.createRunProfile('Debug Tests', TestRunProfileKind.Debug, runHandler, false, new TestTag('runnable'), false)
-	const testProfileCoverage = ctrl.createRunProfile('Run Tests w/ Coverage', TestRunProfileKind.Debug, runHandler, false, new TestTag('runnable'), false)
-	// const testProfileDebugCoverage = ctrl.createRunProfile('Debug Tests w/ Coverage', TestRunProfileKind.Debug, runHandler, false, new TestTag('runnable'), false)
+	const testProfileRun = ctrl.createRunProfile('Run Tests', TestRunProfileKind.Run, runHandlerRun, true, new TestTag('runnable'), false)
+	// const testProfileDebug = ctrl.createRunProfile('Debug Tests', TestRunProfileKind.Debug, runHandler, false, new TestTag('runnable'), false)
+	const testProfileCoverage = ctrl.createRunProfile('Run Tests w/ Coverage', TestRunProfileKind.Coverage, runHandlerCoverage, true, new TestTag('runnable'), false)
+	// const testProfileDebugCoverage = ctrl.createRunProfile('Debug Tests w/ Coverage', TestRunProfileKind.Coverage, runHandler, false, new TestTag('runnable'), false)
 	testProfileRun.configureHandler = configHandler
-	testProfileDebug.configureHandler = configHandler
+	// testProfileDebug.configureHandler = configHandlerDebug
 	testProfileCoverage.configureHandler = configHandler
+	testProfileCoverage.loadDetailedCoverage = loadDetailedCoverage
 	// testProfileDebugCoverage.configureHandler = configHandler
 
 	if(workspace.getConfiguration('ablunit').get('discoverAllTestsOnActivate', false)) {
@@ -819,7 +834,7 @@ function removeExcludedChildren (parent: TestItem, excludePatterns: RelativePatt
 
 function findMatchingFiles (includePatterns: RelativePattern[], token: CancellationToken, checkCancellationToken: () => void): Promise<Uri[]> {
 	const filelist: Uri[] = []
-	const proms = []
+	const proms: PromiseLike<boolean>[] = []
 	for (const includePattern of includePatterns) {
 		const prom = workspace.findFiles(includePattern, undefined, undefined, token)
 			.then((files) => {
@@ -837,11 +852,9 @@ function findMatchingFiles (includePatterns: RelativePattern[], token: Cancellat
 
 // async function parseMatchingFiles (files: Uri[], controller: TestController, excludePatterns: RelativePattern[], token: CancellationToken, checkCancellationToken: () => void, resolvedCount: number, rejectedCount: number) {
 async function parseMatchingFiles (files: Uri[], controller: TestController, excludePatterns: RelativePattern[], token: CancellationToken, checkCancellationToken: () => void): Promise<boolean> {
-	let searchCount = 0
-	const proms = []
+	const proms: Promise<boolean>[] = []
 	log.debug('parsing files... (count=' + files.length + ')')
 	for (const file of files) {
-		searchCount++
 		checkCancellationToken()
 
 		const { item, data } = getOrCreateFile(controller, file, excludePatterns)
@@ -850,6 +863,7 @@ async function parseMatchingFiles (files: Uri[], controller: TestController, exc
 				return foundTestCase
 			}, (e) => {
 				log.error('failed to update file from disk. err=' + e)
+				return false
 			})
 			proms.push(prom)
 		}
@@ -975,7 +989,6 @@ function openCallStackItem (traceUriStr: string) {
 		editor.selections = [new Selection(lineToGoBegin, lineToGoEnd)]
 		const range = new Range(lineToGoBegin, lineToGoEnd)
 		log.info('decorating editor - openCallStackItem')
-		decorator.decorate(editor)
 		editor.revealRange(range)
 		return
 	}, (e) => { throw e })

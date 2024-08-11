@@ -6,7 +6,10 @@ labels: ["request", "enhancement", "triage"]
 # assignees:
 #   - octocat
 body:
-  - type: markdown
+  - type: textarea
     attributes:
+      label: Feature Request
       value: |
         Describe your feature request...
+    validations:
+      required: true

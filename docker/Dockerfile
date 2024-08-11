@@ -29,10 +29,11 @@ RUN if [ ! -f /root/.rssw/oedoc.bin ]; then echo "/root/.rssw/oedoc.bin oedoc.bi
 RUN curl -v -L https://github.com/Riverside-Software/pct/releases/download/v228/PCT.jar -o /usr/share/ant/lib/PCT.jar
 RUN echo "JAVA_HOME=$(which java)" > /psc/dlc/properties/java.properties
 
+ENV JAVA_HOME=/usr
 ENV TERM=vt100
-ENV DLC /psc/dlc
-ENV PATH $PATH:$DLC/bin
-ENV PROMSGS $DLC/promsgs
+ENV DLC=/psc/dlc
+ENV PATH=$PATH:$DLC/bin
+ENV PROMSGS=$DLC/promsgs
 
 ## clone and build ablunit.pl for the OE version
 ADD build.xml /psc/dlc/tty/build.xml
@@ -41,7 +42,6 @@ ARG OE_VERSION
 ENV OE_VERSION=${OE_VERSION}
 ENV DOCKER_IMAGE=ablunit-test-runner-${OE_VERSION}
 RUN --mount=type=secret,id=license,target=/psc/dlc/progress.cfg \
-    echo "OE_VERSION=$OE_VERSION}" && \
     git clone --single-branch -b "v${OE_VERSION}.0" https://github.com/progress/ADE.git \
     && ant compile \
     && rm -rf build.xml ADE/ /tmp/*
@@ -51,6 +51,10 @@ WORKDIR /
 
 ## create directory for vscode-test which will be a mounted volume
 RUN mkdir -p ~/.vscode-test
+
+## install xq (via yq) for xml parsing
+RUN pipx install yq
+ENV PATH $PATH:/root/.local/bin
 
 ## install vscode packaging dependency
 RUN npm install -g @vscode/vsce

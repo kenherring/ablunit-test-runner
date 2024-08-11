@@ -1,11 +1,11 @@
 #!/bin/bash
-set -euo pipefail
+set -eou pipefail
 
 usage () {
 	echo "
-usage: $0 [ -o (12.2.12 | 12.7.0 | 12.8.1 | all) ] [ -V (stable | proposedapi | insiders | X.Y.Z] )] [ -p <project_name> ] [-bBimPv]
+usage: $0 [ -o (12.2.12 | 12.7.0 | 12.8.1 | 12.8.3 | all) ] [ -V (stable | proposedapi | insiders | X.Y.Z] )] [ -p <project_name> ] [-bBimPv]
 options:
-  -o <version>  OE version (default: 12.2.12)
+  -o <version>  OE version (default: 12.8.1)
                 alternative: set the ABLUNIT_TEST_RUNNER_OE_VERSION environment variable
   -V <version>  VSCode version (default: stable)
                 alternative: set the ABLUNIT_TEST_RUNNER_VSCODE_VERSION environment variable
@@ -33,9 +33,9 @@ initialize () {
 	TEST_PROJECT=base
 	STAGED_ONLY=true
 	ABLUNIT_TEST_RUNNER_DBUS_NUM=${ABLUNIT_TEST_RUNNER_DBUS_NUM:-3}
-	ABLUNIT_TEST_RUNNER_OE_VERSION=${ABLUNIT_TEST_RUNNER_OE_VERSION:-12.2.12}
+	ABLUNIT_TEST_RUNNER_OE_VERSION=${ABLUNIT_TEST_RUNNER_OE_VERSION:-12.8.1}
 	ABLUNIT_TEST_RUNNER_VSCODE_VERSION=${ABLUNIT_TEST_RUNNER_VSCODE_VERSION:-stable}
-	ABLUNIT_TEST_RUNNER_PROJECT_NAME=${ABLUNIT_TEST_RUNNER_PROJECT_NAME:-}
+	ABLUNIT_TEST_RUNNER_PROJECT_NAME=${ABLUNIT_TEST_RUNNER_PROJECT_NAME:-${PROJECT_NAME:-}}
 	ABLUNIT_TEST_RUNNER_NO_COVERAGE=${ABLUNIT_TEST_RUNNER_NO_COVERAGE:-false}
 	if [ -z "$ABLUNIT_TEST_RUNNER_PROJECT_NAME" ]; then
 		ABLUNIT_TEST_RUNNER_PROJECT_NAME="${PROJECT_NAME:-}"
@@ -113,10 +113,11 @@ initialize () {
 	fi
 
 	if [ "${ABLUNIT_TEST_RUNNER_OE_VERSION,,}" = "all" ]; then
-		OE_VERSIONS=(12.2.12 12.7.0 12.8.1)
-	elif [ "$ABLUNIT_TEST_RUNNER_OE_VERSION" != "12.2.12" ] &&
-		[ "$ABLUNIT_TEST_RUNNER_OE_VERSION" != "12.7.0" ] &&
-		[ "$ABLUNIT_TEST_RUNNER_OE_VERSION" != "12.8.1" ]; then
+		OE_VERSIONS=(12.2.12 12.7.0 12.8.1 12.8.3)
+	elif [ "$ABLUNIT_TEST_RUNNER_OE_VERSION" != '12.2.12' ] &&
+		[ "$ABLUNIT_TEST_RUNNER_OE_VERSION" != '12.7.0' ] &&
+		[ "$ABLUNIT_TEST_RUNNER_OE_VERSION" != '12.8.1' ] &&
+		[ "$ABLUNIT_TEST_RUNNER_OE_VERSION" != '12.8.3' ]; then
 		echo "Invalid OE version: $ABLUNIT_TEST_RUNNER_OE_VERSION" >&2
 		usage && exit 1
 	else
@@ -132,8 +133,6 @@ initialize () {
 run_tests_in_docker () {
 	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}]"
 	local ABLUNIT_TEST_RUNNER_OE_VERSION
-
-	# export NVIDIA_VISIBLE_DEVICES=none
 
 	for ABLUNIT_TEST_RUNNER_OE_VERSION in "${OE_VERSIONS[@]}"; do
 		echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] docker run with ABLUNIT_TEST_RUNNER_OE_VERSION=$ABLUNIT_TEST_RUNNER_OE_VERSION"
@@ -154,7 +153,8 @@ run_tests_in_docker () {
 			-e VERBOSE
 			-e ABLUNIT_TEST_RUNNER_VSCODE_VERSION
 			-e ABLUNIT_TEST_RUNNER_NO_COVERAGE
-			-v "$PWD/docker/artifacts":/home/circleci/artifacts
+			-v "$PWD/artifacts":/home/circleci/project/artifacts
+			-v "$PWD/coverage":/home/circleci/project/coverage
 		)
 		[ -n "${ABLUNIT_TEST_RUNNER_PROJECT_NAME:-}" ] && ARGS+=(-e ABLUNIT_TEST_RUNNER_PROJECT_NAME)
 		ARGS+=(
@@ -172,4 +172,4 @@ run_tests_in_docker () {
 ########## MAIN BLOCK ##########
 initialize "$@"
 run_tests_in_docker
-echo "[$0] completed successfully! (script=docker/$SCRIPT.sh)"
+echo "[$(date +%Y-%m-%d:%H:%M:%S) $0] completed successfully! (script=docker/$SCRIPT.sh)"

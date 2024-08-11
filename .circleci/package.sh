@@ -1,5 +1,5 @@
 #!/bin/bash
-set -euo pipefail
+set -eou pipefail
 
 initialize () {
     echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}]"
@@ -23,6 +23,8 @@ initialize () {
         echo "minor tag is odd. packaging as pre-release. (MINOR=$MINOR)"
         PRERELEASE=true
     fi
+
+    rm -f ./*.vsix
 
     npm install
     npm install -g @vscode/vsce || sudo npm install -g @vscode/vsce
@@ -49,9 +51,16 @@ package_version () {
         ARGS+=(-o "ablunit-test-runner-${VSCODE_VERSION}-${PACKAGE_VERSION}.vsix")
     fi
 
-    cp "package.$VSCODE_VERSION.json" package.json
+    if [ "$VSCODE_VERSION" != "stable" ]; then
+        mv package.json package.bkup.json
+        cp "package.$VSCODE_VERSION.json" package.json
+    fi
+    npm install
+    npm run build
     vsce package "${ARGS[@]}"
-    cp package.stable.json package.json
+    if [ "$VSCODE_VERSION" != "stable" ]; then
+        mv package.bkup.json package.json
+    fi
 }
 
 run_lint () {
@@ -64,10 +73,6 @@ run_lint () {
 	local ESLINT_FILE=artifacts/eslint_report
 	mkdir -p artifacts
 
-    npm install eslint-plugin-promise@latest --save-dev
-    # npm i
-    npm run build
-
 	if ! npm run lint -- -f unix -o "${ESLINT_FILE}.txt"; then
 		echo "eslint plain failed"
 	fi
@@ -75,6 +80,8 @@ run_lint () {
 		## sonarqube report
 		echo "eslint json failed"
 	fi
+
+    sed -i 's|/home/circleci/project/|/root/project/|g' "${ESLINT_FILE}.json"
 	if [ "$(find artifacts -name "eslint_report.json" | wc -l)" != "0" ]; then
 		jq '.' < "${ESLINT_FILE}.json" > "${ESLINT_FILE}_pretty.json"
 	else
@@ -88,4 +95,4 @@ run_lint () {
 initialize
 package
 run_lint
-echo "[$0] completed successfully"
+echo "[$(date +%Y-%m-%d:%H:%M:%S) $0] completed successfully"

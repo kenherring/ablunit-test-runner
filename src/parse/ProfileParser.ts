@@ -458,7 +458,7 @@ export class ABLProfileJson {
 	addCoverage (lines: string[]) {
 		lines.unshift('.')
 		lines.push('.')
-		let mod
+		let mod: IModule | undefined
 
 		try {
 			for(let lineNo=1; lineNo < lines.length; lineNo++) {
