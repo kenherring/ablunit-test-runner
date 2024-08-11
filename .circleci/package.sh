@@ -51,7 +51,7 @@ package_version () {
         ARGS+=(-o "ablunit-test-runner-${VSCODE_VERSION}-${PACKAGE_VERSION}.vsix")
     fi
 
-    cp "package.$VSCODE_VERSION.json" package.json
+    # cp "package.$VSCODE_VERSION.json" package.json
     npm install
     npm run build
     vsce package "${ARGS[@]}"
@@ -67,8 +67,6 @@ run_lint () {
 
 	local ESLINT_FILE=artifacts/eslint_report
 	mkdir -p artifacts
-
-    npm install eslint-plugin-promise@latest --save-dev
 
 	if ! npm run lint -- -f unix -o "${ESLINT_FILE}.txt"; then
 		echo "eslint plain failed"

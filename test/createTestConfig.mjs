@@ -86,10 +86,9 @@ function getMochaOpts (projName) {
 		bail: true,
 		require: [
 			'mocha',
-			'tsconfig-paths/register',
-			'ts-node/register',
 			// 'ts-node/register/transpile-only',
-			// path.join(__dirname, '..', 'dist', 'extension.js'),
+			'ts-node/register',
+			'tsconfig-paths/register'
 		],
 	}
 
@@ -292,7 +291,7 @@ function getCoverageOpts () {
 		reporter: [ 'text', 'lcovonly' ],
 		output: coverageDir, // https://github.com/microsoft/vscode-test-cli/issues/38
 		// includeAll: false,
-		includeAll: true,
+		// includeAll: true,
 		exclude:[
 			// 'external **',
 			// 'external commonjs "vscode"',
@@ -312,9 +311,11 @@ function getCoverageOpts () {
 			// '**dist**',
 			// '**/dist/**',
 			'**/dummy-ext/**',
+			'node_modules',
+			'node_modules/**',
+			'**/node_modules',
 			'**/node_modules/**',
 			'**/test_projects/**',
-			// '**vscode**',
 		],
 	}
 	return coverageOpts

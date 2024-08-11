@@ -14,12 +14,10 @@
 			"WebWorker"
 		],
 
-		"baseUrl": ".",
-		"outDir": "./dist",
+		"outDir": "out",
 		"paths": {
 			"*": [ "./src/*" ]
 		},
-		"rootDir": ".",
 		"sourceRoot": "src",
 		"sourceMap": true,
 		"strict": true,
