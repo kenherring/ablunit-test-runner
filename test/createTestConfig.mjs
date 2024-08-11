@@ -86,15 +86,13 @@ function getMochaOpts (projName) {
 		bail: true,
 		require: [
 			'mocha',
-			// 'ts-node/register/transpile-only',
+			'tsconfig-paths/register',
 			'ts-node/register',
-			'tsconfig-paths/register'
+			// 'ts-node/register/transpile-only',
 		],
 	}
 
 	if (process.env['ABLUNIT_TEST_RUNNER_RUN_SCRIPT_FLAG']) {
-		// eslint-disable-next-line no-console
-		// console.log('adding reporter...')
 		mochaOpts.reporter = 'mocha-multi-reporters'
 		mochaOpts.reporterOptions = {
 			reporterEnabled: [ 'json-stream', 'spec', 'json', 'xunit', 'mocha-junit-reporter', 'mocha-reporter-sonarqube' ],
@@ -317,6 +315,9 @@ function getCoverageOpts () {
 			'**/node_modules/**',
 			'**/test_projects/**',
 		],
+		include: [
+			'*/**'
+		]
 	}
 	return coverageOpts
 }
