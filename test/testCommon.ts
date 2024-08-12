@@ -267,12 +267,17 @@ export async function activateExtension (extname = 'riversidesoftware.openedge-a
 	}
 	log.info('active? ' + ext.isActive)
 
-	if (!ext.isActive) {
-		log.info('ext.activate')
-		await ext.activate().then(() => {
-			log.info('activated ' + extname + ' extension!')
+	await ext.activate()
+		.then(() => { log.info('activated ' + extname + ' extension!')
 		}, (e: unknown) => { throw e })
-	}
+
+	// if (!ext.isActive) {
+	// 	log.info('ext.activate')
+	// 	await ext.activate()
+	// 		.then(() => { log.info('activated ' + extname + ' extension!')
+	// 		}, (e: unknown) => { throw e })
+	// }
+
 	await sleep2(250)
 	if (extname === 'riversidesoftware.openedge-abl-lsp') {
 		await waitForLangServerReady()
@@ -577,7 +582,7 @@ function waitForRefreshComplete () {
 				clearInterval(interval)
 				reject(new Error('refresh took longer than ' + waitTime + 'ms'))
 			}
-			const p = commands.executeCommand('_ablunit.isRefreshTestsComplete')
+			const p = commands.executeCommand('ablunit.isRefreshTestsComplete')
 				.then((r: unknown) => {
 					if (r) {
 						clearInterval(interval)
@@ -754,7 +759,7 @@ export function refreshData (resultsLen = 0) {
 	currentRunData = undefined
 
 	log.info('refreshData start')
-	return commands.executeCommand('_ablunit.getExtensionTestReferences').then((resp) => {
+	return commands.executeCommand('ablunit.getExtensionTestReferences').then((resp) => {
 		// log.info('refreshData command complete (resp=' + JSON.stringify(resp) + ')')
 		log.info('getExtensionTestReferences command complete')
 		const refs = resp as IExtensionTestReferences

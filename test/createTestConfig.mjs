@@ -230,9 +230,10 @@ function getTestConfig (projName) {
 
 	const absolulteFile = path.resolve(__dirname, '..', 'test', 'suites', projName + '.test.ts')
 
+	process.env['ABLUNIT_TEST_RUNNER_UNIT_TESTING'] = true
 	const env = {
 		ABLUNIT_TEST_RUNNER_ENABLE_EXTENSIONS: enableExtensions.includes('' + projName),
-		ABLUNIT_TEST_RUNNER_UNIT_TESTING: 'true',
+		ABLUNIT_TEST_RUNNER_UNIT_TESTING: true,
 		ABLUNIT_TEST_RUNNER_VSCODE_VERSION: vsVersion,
 		DONT_PROMPT_WSL_INSTAL: true,
 		VSCODE_SKIP_PRELAUNCH: true,

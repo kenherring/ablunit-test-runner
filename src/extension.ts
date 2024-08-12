@@ -46,11 +46,25 @@ export async function activate (context: ExtensionContext) {
 	// const decorationProvider = new DecorationProvider()
 
 	log.info('ABLUNIT_TEST_RUNNER_UNIT_TESTING=' + process.env['ABLUNIT_TEST_RUNNER_UNIT_TESTING'])
-	if (process.env['ABLUNIT_TEST_RUNNER_UNIT_TESTING'] === 'true') {
-		log.info('add _ablunit.getExtensionTestReferences command')
-		context.subscriptions.push(commands.registerCommand('_ablunit.getExtensionTestReferences', () => { return getExtensionTestReferences() }))
-		context.subscriptions.push(commands.registerCommand('_ablunit.isRefreshTestsComplete', () => { return isRefreshTestsComplete }))
-	}
+	// if (process.env['ABLUNIT_TEST_RUNNER_UNIT_TESTING']) {
+	// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition, no-constant-condition
+	// if (true) {
+	// 	log.info('add _ablunit.getExtensionTestReferences command')
+	// 	context.subscriptions.push(commands.registerCommand('_ablunit.getExtensionTestReferences', () => { return getExtensionTestReferences() }))
+	// 	log.info('add _ablunit.isRefreshTestsComplete command')
+	// 	context.subscriptions.push(commands.registerCommand('_ablunit.isRefreshTestsComplete', () => { return isRefreshTestsComplete }))
+	// }
+
+	log.info('add _ablunit.getExtensionTestReferences command')
+	const reg1 = commands.registerCommand('_ablunit.getExtensionTestReferences', () => { return getExtensionTestReferences() })
+	context.subscriptions.push(reg1)
+	context.subscriptions.push(commands.registerCommand('ablunit.getExtensionTestReferences', () => { return getExtensionTestReferences() }))
+
+	log.info('add _ablunit.isRefreshTestsComplete command')
+	const reg2 = commands.registerCommand('_ablunit.isRefreshTestsComplete', () => { return isRefreshTestsComplete })
+	context.subscriptions.push(reg2)
+	context.subscriptions.push(commands.registerCommand('ablunit.isRefreshTestsComplete', () => { return isRefreshTestsComplete }))
+
 	log.info('ABLUnit Test Controller created')
 
 	context.subscriptions.push(ctrl)

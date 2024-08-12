@@ -16,11 +16,15 @@ initialize () {
 	DIRS=(
 		".builder"
 		".nyc_output"
+		".scannerwork"
+		".vscode-test"
 		"artifacts"
 		"coverage"
 		"dist"
 		"kherring.ablunit-test-runner"
+		"node_modules"
 		"out"
+		"tmp"
 	)
 	if [ "${OS:-}" = "Windows_NT" ]; then
 		DIRS+=("C:/temp/ablunit/")
