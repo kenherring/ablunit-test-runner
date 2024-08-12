@@ -191,7 +191,9 @@ export class RunConfig extends DefaultRunProfile {
 		this.profiler = new ProfilerOptions()
 		this.profiler.merge(this.profile.profiler)
 		this.profFilenameUri = this.getUri(this.profiler.filename)
-		this.profiler.filename = workspace.asRelativePath(this.profFilenameUri, false)
+		if (this.profFilenameUri) {
+			this.profiler.filename = workspace.asRelativePath(this.profFilenameUri, false)
+		}
 
 		if (typeof this.profiler.listings === 'boolean') {
 			if (this.profiler.listings) {

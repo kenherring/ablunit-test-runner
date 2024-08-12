@@ -84,16 +84,12 @@ function getMochaOpts (projName) {
 		retries: 0,
 		parallel: false,
 		bail: true,
-		// preload: 'source-map-support/register',
-		// preload: 'ts-node/register',
 		require: [
 			'mocha',
 			'source-map-support/register',
 			// 'tsconfig-paths/register',
-			'ts-node/register',
-			// 'ts-loader',
-			// 'source-map-support/register',
-			'ts-node/register/transpile-only',
+			// 'ts-node/register',
+			// 'ts-node/register/transpile-only',
 		],
 	}
 
@@ -230,13 +226,12 @@ function getTestConfig (projName) {
 
 	const absolulteFile = path.resolve(__dirname, '..', 'test', 'suites', projName + '.test.ts')
 
-	process.env['ABLUNIT_TEST_RUNNER_UNIT_TESTING'] = true
 	const env = {
 		ABLUNIT_TEST_RUNNER_ENABLE_EXTENSIONS: enableExtensions.includes('' + projName),
 		ABLUNIT_TEST_RUNNER_UNIT_TESTING: true,
 		ABLUNIT_TEST_RUNNER_VSCODE_VERSION: vsVersion,
 		DONT_PROMPT_WSL_INSTAL: true,
-		VSCODE_SKIP_PRELAUNCH: true,
+		// VSCODE_SKIP_PRELAUNCH: true,
 	}
 
 	/** @type {import('@vscode/test-cli').IDesktopTestConfiguration} */
@@ -295,35 +290,35 @@ function getCoverageOpts () {
 		reporter: [ 'text', 'lcovonly' ],
 		output: coverageDir, // https://github.com/microsoft/vscode-test-cli/issues/38
 		// includeAll: false,
-		includeAll: true,
+		// includeAll: true,
 		exclude:[
 			// 'external **',
-		// 	// 'external commonjs "vscode"',
-		// 	// 'external commonjs "vscode"**',
-		// 	// '**external commonjs "vscode"**',
-		// 	// '**external **',
-		// 	// '**external**',
-		// 	// 'commonjs',
-		// 	// '**commonjs**',
-		// 	// 'commonjs vscode',
-		// 	// 'commonjs "vscode"',
-		// 	// 'vscode',
-		// 	// '"vscode"',
-		// 	// '**vscode**',
-		// 	// '**"vscode"**',
-		// 	// 'dist',
-		// 	// '**dist**',
-		// 	// '**/dist/**',
-		// 	'**/dummy-ext/**',
-		// 	'node_modules',
-		// 	'node_modules/**',
-		// 	'**/node_modules',
-		// 	'**/node_modules/**',
+			// 'external commonjs "vscode"',
+			// 'external commonjs "vscode"**',
+			// '**external commonjs "vscode"**',
+			// '**external **',
+			// '**external**',
+			// 'commonjs',
+			// '**commonjs**',
+			// 'commonjs vscode',
+			// 'commonjs "vscode"',
+			// 'vscode',
+			// '"vscode"',
+			// '**vscode**',
+			// '**"vscode"**',
+			// 'dist',
+			// '**dist**',
+			// '**/dist/**',
+			'**/dummy-ext/**',
+			'node_modules',
+			'node_modules/**',
+			'**/node_modules',
+			'**/node_modules/**',
 			'**/test_projects/**',
 		],
-		// include: [
-		// 	'*/**'
-		// ]
+		include: [
+			'*/**'
+		]
 	}
 	return coverageOpts
 }

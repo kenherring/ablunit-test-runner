@@ -68,10 +68,12 @@ export const oeVersion = () => {
 	const versionFile = path.join(getDefaultDLC(), 'version')
 	const dlcVersion = fs.readFileSync(versionFile)
 	log.info('dlcVersion=' + dlcVersion)
-	const match = RegExp(/OpenEdge Release (\d+\.\d+)/).exec(dlcVersion.toString())
-	if (match) {
-		log.info('102 oeVersionEnv=' + match[1])
-		return match[1]
+	if (dlcVersion) {
+		const match = RegExp(/OpenEdge Release (\d+\.\d+)/).exec(dlcVersion.toString())
+		if (match) {
+			log.info('102 oeVersionEnv=' + match[1])
+			return match[1]
+		}
 	}
 	throw new Error('unable to determine oe version!')
 	// return '12.2'
@@ -144,7 +146,7 @@ function getExtensionDevelopmentPath () {
 }
 
 export async function suiteSetupCommon (runtimes: IRuntime[] = []) {
-	if (runtimes.length === 0) {
+	if (!runtimes || runtimes.length === 0) {
 		runtimes = [{ name: oeVersion(), path: getDefaultDLC(), default: true }]
 	}
 	log.info('[suiteSetupCommon] waitForExtensionActive \'kherring.ablunit-test-runner\' (projName=' + projName() + ')')
@@ -172,7 +174,7 @@ export function setFilesExcludePattern () {
 	const files = new FilesExclude
 	// files.exclude = workspace.getConfiguration('files', getWorkspaceUri()).get('exclude', {})
 	const filesConfig = workspace.getConfiguration('files', getWorkspaceUri())
-	files.exclude = filesConfig.get('exclude', {})
+	files.exclude = filesConfig.get('exclude', {}) ?? {}
 	files.exclude['**/.builder'] = true
 	files.exclude['**/lbia*'] = true
 	files.exclude['**/rcda*'] = true
@@ -267,17 +269,12 @@ export async function activateExtension (extname = 'riversidesoftware.openedge-a
 	}
 	log.info('active? ' + ext.isActive)
 
-	await ext.activate()
-		.then(() => { log.info('activated ' + extname + ' extension!')
+	if (!ext.isActive) {
+		log.info('ext.activate')
+		await ext.activate().then(() => {
+			log.info('activated ' + extname + ' extension!')
 		}, (e: unknown) => { throw e })
-
-	// if (!ext.isActive) {
-	// 	log.info('ext.activate')
-	// 	await ext.activate()
-	// 		.then(() => { log.info('activated ' + extname + ' extension!')
-	// 		}, (e: unknown) => { throw e })
-	// }
-
+	}
 	await sleep2(250)
 	if (extname === 'riversidesoftware.openedge-abl-lsp') {
 		await waitForLangServerReady()
@@ -292,6 +289,7 @@ async function waitForExtensionActive (extensionId = 'kherring.ablunit-test-runn
 	if (!ext) {
 		throw new Error('extension not installed: ' + extensionId)
 	}
+	if (!ext) { throw new Error(extensionId + ' is not installed') }
 	if (ext.isActive) { log.info(extensionId + ' is already active'); return ext.isActive }
 
 	ext = await ext.activate()
@@ -422,6 +420,9 @@ export function toUri (uri: string | Uri) {
 	}
 
 	const ws = getWorkspaceUri()
+	if (!ws) {
+		throw new Error('workspaceUri is null (uri=' + uri.toString() + ')')
+	}
 
 	if (isRelativePath(uri)) {
 		return Uri.joinPath(ws, uri)
@@ -582,7 +583,7 @@ function waitForRefreshComplete () {
 				clearInterval(interval)
 				reject(new Error('refresh took longer than ' + waitTime + 'ms'))
 			}
-			const p = commands.executeCommand('ablunit.isRefreshTestsComplete')
+			const p = commands.executeCommand('_ablunit.isRefreshTestsComplete')
 				.then((r: unknown) => {
 					if (r) {
 						clearInterval(interval)
@@ -759,14 +760,14 @@ export function refreshData (resultsLen = 0) {
 	currentRunData = undefined
 
 	log.info('refreshData start')
-	return commands.executeCommand('ablunit.getExtensionTestReferences').then((resp) => {
+	return commands.executeCommand('_ablunit.getExtensionTestReferences').then((resp) => {
 		// log.info('refreshData command complete (resp=' + JSON.stringify(resp) + ')')
 		log.info('getExtensionTestReferences command complete')
 		const refs = resp as IExtensionTestReferences
 		// log.info('refs=' + JSON.stringify(refs))
-		const passedTests = refs.recentResults[0].ablResults?.resultsJson[0].testsuite?.[0].passed ?? undefined
+		const passedTests = refs.recentResults?.[0].ablResults?.resultsJson[0].testsuite?.[0].passed ?? undefined
 		log.info('recentResults.length=' + refs.recentResults.length)
-		log.info('recentResults[0].ablResults.=' + refs.recentResults[0].status)
+		log.info('recentResults[0].ablResults.=' + refs.recentResults?.[0].status)
 		log.info('recentResults[0].ablResults.resultsJson.length=' + recentResults?.[0].ablResults?.resultsJson.length)
 		log.info('passedTests=' + passedTests)
 
@@ -775,7 +776,7 @@ export function refreshData (resultsLen = 0) {
 		}
 		testController = refs.testController
 		recentResults = refs.recentResults
-		if (refs.currentRunData.length != 0) {
+		if (refs.currentRunData) {
 			currentRunData = refs.currentRunData
 			return true
 		}

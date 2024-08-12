@@ -59,7 +59,7 @@ copy_user_settings () {
 		$VERBOSE && find .vscode-test -type f -name "*.log"
 		find .vscode-test -type f -name "*.log" -delete
 		if [ -d .vscode-test/user-data ]; then
-			# find .vscode-test/user-data
+			$VERBOSE && find .vscode-test/user-data
 			find .vscode-test/user-data -delete
 		fi
 	fi

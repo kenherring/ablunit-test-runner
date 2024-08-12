@@ -3,6 +3,10 @@ set -eou pipefail
 
 main_block () {
 	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 main_block] starting script (pwd=$(pwd))"
+
+	AGGRESSIVE_FLAG=false
+	[ "${1:-}" = '-a' ] && AGGRESSIVE_FLAG=true
+
 	initialize
 	delete_directories &
 	delete_files &
@@ -17,15 +21,13 @@ initialize () {
 		".builder"
 		".nyc_output"
 		".scannerwork"
-		".vscode-test"
 		"artifacts"
 		"coverage"
 		"dist"
-		"kherring.ablunit-test-runner"
-		"node_modules"
 		"out"
 		"tmp"
 	)
+	$AGGRESSIVE_FLAG && DIRS+=(".vscode-test" "node_modules")
 	if [ "${OS:-}" = "Windows_NT" ]; then
 		DIRS+=("C:/temp/ablunit/")
 	else
@@ -113,4 +115,4 @@ delete_files () {
 }
 
 ########## MAIN BLOCK ##########
-main_block
+main_block "$@"

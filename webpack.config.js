@@ -7,16 +7,14 @@ const config = {
 	target: 'node', // TODO: recommended: 'webworker'
 	// node: false,
 	mode: 'development',
-	devtool: 'source-map', // https://webpack.js.org/configuration/devtool/
-	// devtool: 'inline-source-map', // https://webpack.js.org/configuration/devtool/
+	devtool: 'inline-source-map', // https://webpack.js.org/configuration/devtool/
 	entry:  './src/extension.ts',
 	output: {
 		clean: true,
 		path: path.resolve(__dirname, 'dist'),
 		filename: 'extension.js',
-		// libraryTarget: 'commonjs2',
-		devtoolModuleFilenameTemplate: 'TEMPLATE/[resource-path]',
-		devtoolFallbackModuleFilenameTemplate: 'HASH/[resource-path]?[hash]',
+		libraryTarget: 'commonjs2',
+		devtoolModuleFilenameTemplate: '[resource-path]',
 	},
 	externals: {
 		// the vscode-module is created on-the-fly and must be excluded. Add other modules that cannot be webpack'ed -> https://webpack.js.org/configuration/externals/

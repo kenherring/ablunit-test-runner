@@ -18,12 +18,8 @@
 		"paths": {
 			"*": [ "./src/*" ]
 		},
-		"inlineSources": true,
-		"baseUrl": ".",
-		"rootDir": ".",
 		"sourceRoot": "src",
-		"sourceMap": true,
-		// "inlineSourceMap": true,
+		"inlineSourceMap": true,
 		"strict": true,
 		"alwaysStrict": true,
 		"esModuleInterop": true,
