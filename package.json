@@ -84,7 +84,7 @@
 		"package": "webpack --mode production",
 		"pretest": "sh -c scripts/npm_pretest.sh",
 		"test": "vscode-test",
-		"test:coverage": "npm run pretest && vscode-test --coverage",
+		"test:coverage": "vscode-test --coverage",
 		"test:coverage2": "npm test -- --coverage",
 		"vscode-test": "vscode-test",
 		"test:install-and-run": "cd dummy-ext && npm run test:install-and-run",

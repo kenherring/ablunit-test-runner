@@ -157,6 +157,11 @@ run_tests () {
 		save_and_print_debug_output
 		exit $EXIT_CODE
 	fi
+
+	if ! $ABLUNIT_TEST_RUNNER_NO_COVERAGE && [ ! -s coverage/lcov.info ]; then
+		echo 'ERROR: lcov.info not found'
+		exit 1
+	fi
 }
 
 save_and_print_debug_output () {

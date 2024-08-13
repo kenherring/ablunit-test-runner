@@ -89,7 +89,7 @@ function getMochaOpts (projName) {
 			'source-map-support/register',
 			// 'tsconfig-paths/register',
 			// 'ts-node/register',
-			// 'ts-node/register/transpile-only',
+			'ts-node/register/transpile-only',
 		],
 	}
 
@@ -244,7 +244,7 @@ function getTestConfig (projName) {
 		useInstallation,
 		// useInstallation: { fromMachine: true },
 		// download: { reporter: ProgressReporter, timeout: ? }
-		installExtensions: [ 'riversidesoftware.openedge-abl-lsp' ],
+		installExtensions: [ 'riversidesoftware.openedge-abl-lsp@prerelease' ],
 
 		// --- IBaseTestConfiguration --- //
 		files: absolulteFile,
@@ -290,7 +290,7 @@ function getCoverageOpts () {
 		reporter: [ 'text', 'lcovonly' ],
 		output: coverageDir, // https://github.com/microsoft/vscode-test-cli/issues/38
 		// includeAll: false,
-		// includeAll: true,
+		includeAll: true,
 		exclude:[
 			// 'external **',
 			// 'external commonjs "vscode"',
@@ -316,9 +316,9 @@ function getCoverageOpts () {
 			'**/node_modules/**',
 			'**/test_projects/**',
 		],
-		include: [
-			'*/**'
-		]
+		// include: [
+		// 	'**/*'
+		// ]
 	}
 	return coverageOpts
 }

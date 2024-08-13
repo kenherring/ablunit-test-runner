@@ -1,3 +1,4 @@
+
 {
 	"ts-node": {
 		"transpileOnly": true,
@@ -19,7 +20,8 @@
 			"*": [ "./src/*" ]
 		},
 		"sourceRoot": "src",
-		"inlineSourceMap": true,
+		"sourceMap": true,
+		// "inlineSourceMap": true,
 		"strict": true,
 		"alwaysStrict": true,
 		"esModuleInterop": true,
