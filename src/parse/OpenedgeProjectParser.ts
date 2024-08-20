@@ -167,27 +167,21 @@ export class ProfileConfig {
 		if (!this.gui) {
 			this.gui = parent.gui
 		}
-		log.info('200')
 		if (!this.buildDirectory) {
 			this.buildDirectory = parent.buildDirectory
 		}
-		log.info('201')
 		if (this.buildPath.length == 0 && parent.buildPath) {
 			this.buildPath = parent.buildPath
 		}
-		log.info('202')
 		if (this.propath.length == 0 && parent.propath) {
 			this.propath = parent.propath
 		}
-		log.info('203')
 		if (this.dbConnections.length == 0 && parent.dbConnections) {
 			this.dbConnections = parent.dbConnections
 		}
-		log.info('204')
 		if (this.procedures.length == 0 && parent.procedures) {
 			this.procedures = parent.procedures
 		}
-		log.info('205')
 	}
 
 	getTTYExecutable (): string {
@@ -402,18 +396,13 @@ function readOEConfigFile (uri: Uri, workspaceUri: Uri, openedgeProjectProfile?:
 
 	log.info('[readOEConfigFile] OpenEdge project config file found: ' + uri.fsPath)
 	const config = loadConfigFile(uri.fsPath)
-	log.info('101')
 	if (!config) {
-		log.info('102')
 		const ret = new OpenEdgeProjectConfig()
-		log.info('103')
 		ret.activeProfile = openedgeProjectProfile
 		return ret
 	}
-	log.info('110')
 
 	const prjConfig = parseOpenEdgeProjectConfig(uri, workspaceUri, config)
-	log.info('111')
 	if (prjConfig.dlc != '') {
 		log.info('OpenEdge project configured in ' + prjConfig.rootDir + ' -- DLC: ' + prjConfig.dlc)
 		const idx: number = projects.findIndex((element) =>
