@@ -47,8 +47,9 @@ export async function activate (context: ExtensionContext) {
 
 	log.info('ABLUNIT_TEST_RUNNER_UNIT_TESTING=' + process.env['ABLUNIT_TEST_RUNNER_UNIT_TESTING'])
 	if (process.env['ABLUNIT_TEST_RUNNER_UNIT_TESTING'] === 'true') {
-		log.info('add _ablunit.getExtensionTestReferences command')
+		log.debug('add _ablunit.getExtensionTestReferences command')
 		context.subscriptions.push(commands.registerCommand('_ablunit.getExtensionTestReferences', () => { return getExtensionTestReferences() }))
+		log.debug('add _ablunit.isRefreshTestsComplete command')
 		context.subscriptions.push(commands.registerCommand('_ablunit.isRefreshTestsComplete', () => { return isRefreshTestsComplete }))
 	}
 	log.info('ABLUnit Test Controller created')
@@ -291,7 +292,7 @@ export async function activate (context: ExtensionContext) {
 				}
 				let r = res.find(r => r.workspaceFolder === wf)
 				if (!r) {
-					r = new ABLResults(wf, await getStorageUri(wf) ?? wf.uri, contextStorageUri, contextResourcesUri, cancellation)
+					r = new ABLResults(wf, await getStorageUri(wf), contextStorageUri, contextResourcesUri, cancellation)
 					cancellation.onCancellationRequested(() => {
 						log.debug('cancellation requested - createABLResults-1')
 						r?.dispose()

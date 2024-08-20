@@ -22,9 +22,7 @@ class Logger {
 	}
 
 	public static getInstance () {
-		if (!Logger.instance) {
-			Logger.instance = new Logger()
-		}
+		Logger.instance = new Logger()
 		Logger.instance.clearOutputChannel()
 		return Logger.instance
 	}

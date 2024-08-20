@@ -37,7 +37,7 @@ initialize () {
 	ABLUNIT_TEST_RUNNER_PROJECT_NAME=${ABLUNIT_TEST_RUNNER_PROJECT_NAME:-${PROJECT_NAME:-}}
 	ABLUNIT_TEST_RUNNER_NO_COVERAGE=${ABLUNIT_TEST_RUNNER_NO_COVERAGE:-false}
 
-	while getopts "bBCdimnso:p:PvV:h" OPT; do
+	while getopts "bBCdimnsxo:p:PvV:h" OPT; do
 		case $OPT in
 			o)	ABLUNIT_TEST_RUNNER_OE_VERSION=$OPTARG ;;
 			b)	OPTS='-b' ;;
@@ -50,6 +50,7 @@ initialize () {
 			h)	usage && exit 0 ;;
 			P)	CREATE_PACKAGE=true ;;
 			p)	ABLUNIT_TEST_RUNNER_PROJECT_NAME=$OPTARG ;;
+			x)	OPTS='-x' ;;
 			v)	VERBOSE=true ;;
 			V)	ABLUNIT_TEST_RUNNER_VSCODE_VERSION=$OPTARG ;;
 			?)	usage && exit 1 ;;
@@ -147,6 +148,7 @@ run_tests_in_docker () {
 			-e VERBOSE
 			-e ABLUNIT_TEST_RUNNER_VSCODE_VERSION
 			-e ABLUNIT_TEST_RUNNER_NO_COVERAGE
+			-e SET_X
 			-v "$PWD/artifacts":/home/circleci/project/artifacts
 			-v "$PWD/coverage":/home/circleci/project/coverage
 		)
