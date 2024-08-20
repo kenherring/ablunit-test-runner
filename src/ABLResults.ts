@@ -109,7 +109,6 @@ export class ABLResults implements Disposable {
 
 		this.cfg.ablunitConfig.dbAliases = []
 
-		log.info('dbconns=' + this.cfg.ablunitConfig.dbConns)
 		// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
 		if (this.cfg.ablunitConfig.dbConns && this.cfg.ablunitConfig.dbConns.length > 0) {
 			for (const conn of this.cfg.ablunitConfig.dbConns) {

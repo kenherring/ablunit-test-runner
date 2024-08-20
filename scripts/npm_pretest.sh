@@ -30,13 +30,6 @@ initialize () {
 	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] ABLUNIT_TEST_RUNNER_OE_VERSION=$ABLUNIT_TEST_RUNNER_OE_VERSION rm artifacts/* coverage/*"
 	[ -d artifacts ] && rm -rf artifacts/*
 	[ -d coverage ] && rm -rf coverage/*
-	# ARTIFACTS_COUNT=$(find artifacts -type f 2>/dev/null | wc -l)
-	# COVERAGE_COUNT=$(find coverage -type f 2>/dev/null | wc -l)
-	# echo "ARTIFACTS_COUNT=$ARTIFACTS_COUNT COVERAGE_COUNT=$COVERAGE_COUNT"
-	# if [ "$ARTIFACTS_COUNT" != "0" ] || [ "$COVERAGE_COUNT" != "0" ]; then
-	# 	echo "ERROR: artifacts and/or coverage directories not empty"
-	# 	exit 1
-	# fi
 
 	if [ ! -d node_modules ]; then
 		npm install

@@ -47,9 +47,9 @@ export async function activate (context: ExtensionContext) {
 
 	log.info('ABLUNIT_TEST_RUNNER_UNIT_TESTING=' + process.env['ABLUNIT_TEST_RUNNER_UNIT_TESTING'])
 	if (process.env['ABLUNIT_TEST_RUNNER_UNIT_TESTING'] === 'true') {
-		log.info('add _ablunit.getExtensionTestReferences command')
+		log.debug('add _ablunit.getExtensionTestReferences command')
 		context.subscriptions.push(commands.registerCommand('_ablunit.getExtensionTestReferences', () => { return getExtensionTestReferences() }))
-		log.info('add _ablunit.isRefreshTestsComplete command')
+		log.debug('add _ablunit.isRefreshTestsComplete command')
 		context.subscriptions.push(commands.registerCommand('_ablunit.isRefreshTestsComplete', () => { return isRefreshTestsComplete }))
 	}
 	log.info('ABLUnit Test Controller created')

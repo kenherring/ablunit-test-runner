@@ -22,7 +22,7 @@ const config = {
 	resolve: {
 		mainFields: ['browser', 'module', 'main'],
 		extensions: ['.ts', '.js'],
-		modules: ['.', 'src', 'node_modules'],
+		modules: ['src', 'node_modules', '.'],
 	},
 	module: {
 		rules: [{

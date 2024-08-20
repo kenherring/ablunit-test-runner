@@ -110,8 +110,6 @@ export class ABLUnitConfig  {
 		log.info('creating dbconn.pf: \'' + this.ablunitConfig.dbConnPfUri.fsPath + '\'')
 		const lines: string[] = []
 
-		log.info('dbConns=' + dbConns)
-
 		// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
 		if (dbConns && dbConns.length > 0) {
 			for (const conn of dbConns) {
