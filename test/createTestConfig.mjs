@@ -86,9 +86,10 @@ function getMochaOpts (projName) {
 		bail: true,
 		require: [
 			'mocha',
-			'tsconfig-paths/register',
-			'ts-node/register',
-			// 'ts-node/register/transpile-only',
+			// 'source-map-support/register',
+			// 'tsconfig-paths/register',
+			// 'ts-node/register',
+			'ts-node/register/transpile-only',
 		],
 	}
 
@@ -227,10 +228,10 @@ function getTestConfig (projName) {
 
 	const env = {
 		ABLUNIT_TEST_RUNNER_ENABLE_EXTENSIONS: enableExtensions.includes('' + projName),
-		ABLUNIT_TEST_RUNNER_UNIT_TESTING: 'true',
+		ABLUNIT_TEST_RUNNER_UNIT_TESTING: true,
 		ABLUNIT_TEST_RUNNER_VSCODE_VERSION: vsVersion,
 		DONT_PROMPT_WSL_INSTAL: true,
-		VSCODE_SKIP_PRELAUNCH: true,
+		// VSCODE_SKIP_PRELAUNCH: true,
 	}
 
 	/** @type {import('@vscode/test-cli').IDesktopTestConfiguration} */
@@ -243,7 +244,7 @@ function getTestConfig (projName) {
 		useInstallation,
 		// useInstallation: { fromMachine: true },
 		// download: { reporter: ProgressReporter, timeout: ? }
-		installExtensions: [ 'riversidesoftware.openedge-abl-lsp' ],
+		installExtensions: [ 'riversidesoftware.openedge-abl-lsp@prerelease' ],
 
 		// --- IBaseTestConfiguration --- //
 		files: absolulteFile,
@@ -289,7 +290,7 @@ function getCoverageOpts () {
 		reporter: [ 'text', 'lcovonly' ],
 		output: coverageDir, // https://github.com/microsoft/vscode-test-cli/issues/38
 		// includeAll: false,
-		// includeAll: true,
+		includeAll: true,
 		exclude:[
 			// 'external **',
 			// 'external commonjs "vscode"',
@@ -315,9 +316,9 @@ function getCoverageOpts () {
 			'**/node_modules/**',
 			'**/test_projects/**',
 		],
-		include: [
-			'*/**'
-		]
+		// include: [
+		// 	'**/*'
+		// ]
 	}
 	return coverageOpts
 }

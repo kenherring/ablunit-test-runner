@@ -110,8 +110,11 @@ export class ABLUnitConfig  {
 		log.info('creating dbconn.pf: \'' + this.ablunitConfig.dbConnPfUri.fsPath + '\'')
 		const lines: string[] = []
 
-		for (const conn of dbConns) {
-			lines.push(conn.connect)
+		// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+		if (dbConns && dbConns.length > 0) {
+			for (const conn of dbConns) {
+				lines.push(conn.connect)
+			}
 		}
 		if (lines.length > 0) {
 			return this.writeFile(uri, Uint8Array.from(Buffer.from(lines.join('\n') + '\n')))

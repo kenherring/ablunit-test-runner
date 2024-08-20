@@ -1,4 +1,4 @@
-import { assert, extensions, log, runAllTests, suiteSetupCommon } from '../testCommon'
+import { assert, log, runAllTests, suiteSetupCommon } from '../testCommon'
 
 suite('projAtStart  - Extension Test Suite - bdd', () => {
 

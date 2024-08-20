@@ -54,14 +54,12 @@ export const oeVersion = () => {
 	const oeVersionEnv = getEnvVar('ABLUNIT_TEST_RUNNER_OE_VERSION')
 	log.info('oeVersionEnv=' + oeVersionEnv)
 	if (oeVersionEnv?.match(/^(11|12)\.\d$/)) {
-		log.info('100 oeVersionEnv=' + oeVersionEnv)
 		return oeVersionEnv
 	}
 
 	const oeVersion = getEnvVar('OE_VERSION')
 	log.info('oeVersion=' + oeVersion + ' ' + oeVersion?.split('.').slice(0, 2).join('.'))
 	if (oeVersion?.match(/^(11|12)\.\d.\d+$/)) {
-		log.info('101 oeVersionEnv=' + oeVersion.split('.').slice(0, 2).join('.'))
 		return oeVersion.split('.').slice(0, 2).join('.')
 	}
 

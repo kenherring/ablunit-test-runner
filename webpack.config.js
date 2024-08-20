@@ -1,13 +1,12 @@
 'use strict'
 const path = require('path')
-const { sourceMapsEnabled } = require('process')
 
 /** @type {import('webpack').Configuration} */
 const config = {
 	target: 'node', // TODO: recommended: 'webworker'
-	// node: false,
+	node: false,
 	mode: 'development',
-	devtool: 'source-map', // https://webpack.js.org/configuration/devtool/
+	devtool: 'inline-source-map', // https://webpack.js.org/configuration/devtool/
 	entry:  './src/extension.ts',
 	output: {
 		clean: true,
@@ -23,7 +22,7 @@ const config = {
 	resolve: {
 		mainFields: ['browser', 'module', 'main'],
 		extensions: ['.ts', '.js'],
-		modules: ['src', 'node_modules'],
+		modules: ['src', 'node_modules', '.'],
 	},
 	module: {
 		rules: [{
@@ -31,11 +30,11 @@ const config = {
 			exclude: /node_modules/,
 			use: [{
 				loader: 'ts-loader',
-				options: {
-					compilerOptions: {
-						"module": "es6" // override `tsconfig.json` so that TypeScript emits native JavaScript modules.
-					}
-				}
+				// options: {
+				// 	compilerOptions: {
+				// 		"module": "es6" // override `tsconfig.json` so that TypeScript emits native JavaScript modules.
+				// 	}
+				// }
 			}]
 		}]
 	},

@@ -108,9 +108,13 @@ export class ABLResults implements Disposable {
 		this.debugLines = new ABLDebugLines(this.propath)
 
 		this.cfg.ablunitConfig.dbAliases = []
-		for (const conn of this.cfg.ablunitConfig.dbConns) {
-			if (conn.aliases.length > 0) {
-				this.cfg.ablunitConfig.dbAliases.push(conn.name + ',' + conn.aliases.join(','))
+
+		// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+		if (this.cfg.ablunitConfig.dbConns && this.cfg.ablunitConfig.dbConns.length > 0) {
+			for (const conn of this.cfg.ablunitConfig.dbConns) {
+				if (conn.aliases.length > 0) {
+					this.cfg.ablunitConfig.dbAliases.push(conn.name + ',' + conn.aliases.join(','))
+				}
 			}
 		}
 
@@ -215,7 +219,7 @@ export class ABLResults implements Disposable {
 	async run (options: TestRun) {
 		await this.deleteResultsXml()
 		return ablunitRun(options, this, this.cancellation).then(() => {
-			if(!this.ablResults!.resultsJson) {
+			if(!this.ablResults?.resultsJson) {
 				throw new Error('no results available')
 			}
 			return true
@@ -235,7 +239,7 @@ export class ABLResults implements Disposable {
 		this.ablResults = new ABLResultsParser(this.propath!, this.debugLines!)
 		await this.ablResults.parseResults(this.cfg.ablunitConfig.optionsUri.filenameUri, this.cfg.ablunitConfig.optionsUri.jsonUri).then(() => {
 			log.info('parsing results complete ' + parseTime.toString())
-			if(!this.ablResults!.resultsJson) {
+			if(!this.ablResults?.resultsJson) {
 				log.error('No results found in ' + this.cfg.ablunitConfig.optionsUri.filenameUri.fsPath, options)
 				throw new Error('No results found in ' + this.cfg.ablunitConfig.optionsUri.filenameUri.fsPath + '\r\n')
 			}

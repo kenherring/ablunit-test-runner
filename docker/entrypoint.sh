@@ -41,11 +41,12 @@ initialize () {
 	mkdir -p "$npm_config_cache" "$PROJECT_DIR"
 	export npm_config_cache
 
-	while getopts 'bB' OPT; do
+	while getopts 'bBx' OPT; do
 		case "$OPT" in
 			b)	BASH_AFTER=true
 				BASH_AFTER_ERROR=true ;;
 			B)	BASH_AFTER_ERROR=true ;;
+			x)	set -x ;;
 			?)	echo "script usage: $(basename "$0") [-b]" >&2
 				exit 1 ;;
 		esac
@@ -106,13 +107,16 @@ find_files_to_copy () {
 	git --no-pager diff --diff-filter=d --name-only --staged --ignore-cr-at-eol > /tmp/staged_files
 	git --no-pager diff --diff-filter=D --name-only --staged --ignore-cr-at-eol > /tmp/deleted_files
 	if ! $STAGED_ONLY; then
-		git --no-pager diff --diff-filter=d --name-only --ignore-cr-at-eol > /tmp/modified_files
+		git status --porcelain | grep -E '^ (M|A)' | cut -c4- || true
+		git status --porcelain | grep -E '^ (M|A)' | cut -c4- > /tmp/modified_files || true
+	else
+		touch /tmp/modified_files
 	fi
 
 	echo "file counts:"
 	echo "   staged=$(wc -l /tmp/staged_files)"
 	echo "  deleted=$(wc -l /tmp/deleted_files)"
-	echo " modified=$(wc -l /tmp/modified_files 2>/dev/null || echo 0)"
+	echo " modified=$(wc -l /tmp/modified_files)"
 
 	cd "$BASE_DIR"
 }
@@ -120,6 +124,7 @@ find_files_to_copy () {
 copy_files () {
 	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] pwd=$(pwd)"
 	local TYPE="$1"
+	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] TYPE=$TYPE"
 	while read -r FILE; do
 		echo "copying $TYPE file $FILE"
 		if [ ! -d "$(dirname "$FILE")" ]; then
