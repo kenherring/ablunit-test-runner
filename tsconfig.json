@@ -1,10 +1,15 @@
-
 {
 	// "ts-node": {
 	// 	"transpileOnly": true,
-	// 	"require": [
-	// 		"tsconfig-paths/register",
-	// 	],
+	// 	// "require": [
+	// 	// 	"tsconfig-paths/register",
+	// 	// ],
+	// 	// "scope": true,
+	// 	// "scopeDir": "test",
+	// 	// "ignore": [
+	// 	// 	"(?:^|/)node_modules/",
+	// 	// 	"dist/extension.js$",
+	// 	// ]
 	// },
 	"compilerOptions": {
 		"module": "NodeNext",

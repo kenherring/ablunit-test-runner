@@ -15,9 +15,7 @@ const config = {
 		path: path.resolve(__dirname, 'dist'),
 		filename: 'extension.js',
 		libraryTarget: 'commonjs2',
-		// devtoolModuleFilenameTemplate: '../[resource-path]',
 		devtoolModuleFilenameTemplate: 'file:///[absolute-resource-path]',
-		// devtoolFallbackModuleFilenameTemplate: 'file:///[absolute-resource-path]',
 		devtoolFallbackModuleFilenameTemplate: 'file:///[absolute-resource-path]?[hash]',
 	},
 	externals: {
