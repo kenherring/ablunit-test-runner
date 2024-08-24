@@ -1,0 +1,9 @@
+{
+    "include": [
+      "dist/**",
+      "src/**"
+    ],
+    "exlude-after-remap": true,
+    "sourceMap": true,
+    "inlineSourceMap": true
+}

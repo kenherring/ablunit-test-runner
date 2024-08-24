@@ -1,3 +1,9 @@
+// import decache from 'decache'
+// decache('ablunit-test-runner')
+// decache('src')
+// decache('./dist/extension.js')
+// decache('extension.js')
+
 import * as assertParent from 'assert'
 import * as fs from 'fs'
 import { globSync } from 'glob'
@@ -20,10 +26,6 @@ import { DefaultRunProfile, IRunProfile as IRunProfileGlobal } from '../src/pars
 import { RunStatus } from '../src/ABLUnitRun'
 import { enableOpenedgeAblExtension, rebuildAblProject, restartLangServer, setRuntimes, waitForLangServerReady } from './openedgeAblCommands'
 import path from 'path'
-
-// import decache from 'decache'
-// decache('./dist/extension.js')
-// decache('extension.js')
 
 interface IRuntime {
 	name: string,
@@ -144,6 +146,9 @@ function getExtensionDevelopmentPath () {
 }
 
 export async function suiteSetupCommon (runtimes: IRuntime[] = []) {
+	// decache('ablunit-test-runner')
+	// decache('extension.js')
+
 	if (!runtimes || runtimes.length === 0) {
 		runtimes = [{ name: oeVersion(), path: getDefaultDLC(), default: true }]
 	}
@@ -288,7 +293,10 @@ async function waitForExtensionActive (extensionId = 'kherring.ablunit-test-runn
 		throw new Error('extension not installed: ' + extensionId)
 	}
 	if (!ext) { throw new Error(extensionId + ' is not installed') }
-	if (ext.isActive) { log.info(extensionId + ' is already active'); return ext.isActive }
+	if (ext.isActive) {
+		log.info(extensionId + ' is already active')
+		return ext.isActive
+	}
 
 	ext = await ext.activate()
 		.then(() => { return sleep2(250) })

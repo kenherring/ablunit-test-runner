@@ -56,7 +56,7 @@ package_version () {
         cp "package.$VSCODE_VERSION.json" package.json
     fi
     npm install
-    npm run build
+    # npm run build
     vsce package "${ARGS[@]}"
     if [ "$VSCODE_VERSION" != "stable" ]; then
         mv package.bkup.json package.json
@@ -66,7 +66,7 @@ package_version () {
 run_lint () {
 	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}]"
 	if [ -n "${ABLUNIT_TEST_RUNNER_PROJECT_NAME:-}" ]; then
-		echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] skipping lint for single ABLUnit test runner project test"
+		echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] skipping lint when ABLUNIT_TEST_RUNNER_PROJECT_NAME is assigned"
 		return 0
 	fi
 

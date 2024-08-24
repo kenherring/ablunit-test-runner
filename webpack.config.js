@@ -1,5 +1,7 @@
 'use strict'
 const path = require('path')
+const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
+
 
 /** @type {import('webpack').Configuration} */
 const config = {
@@ -12,8 +14,10 @@ const config = {
 		clean: true,
 		path: path.resolve(__dirname, 'dist'),
 		filename: 'extension.js',
-		libraryTarget: 'commonjs2',
-		devtoolModuleFilenameTemplate: '[resource-path]',
+		// libraryTarget: 'commonjs2',
+		// devtoolModuleFilenameTemplate: '[resource-path]',
+		// devtoolModuleFilenameTemplate: 'file:///[absolute-resource-path]',
+		// devtoolFallbackModuleFilenameTemplate: 'file:///[absolute-resource-path]?[hash]',
 	},
 	externals: {
 		// the vscode-module is created on-the-fly and must be excluded. Add other modules that cannot be webpack'ed -> https://webpack.js.org/configuration/externals/
@@ -22,7 +26,8 @@ const config = {
 	resolve: {
 		mainFields: ['browser', 'module', 'main'],
 		extensions: ['.ts', '.js'],
-		modules: ['src', 'node_modules', '.'],
+		// modules: ['src', 'node_modules'],
+		plugins: [new TsconfigPathsPlugin({})] // alteratively use 'alias' in this config
 	},
 	module: {
 		rules: [{

@@ -12,6 +12,10 @@ import * as path from 'path'
 import * as fs from 'fs'
 import process from 'process'
 
+// import decache from 'decache'
+// decache('ablunit-test-runner')
+// decache('extension.js')
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const vsVersionNum = '1.88.0'
 const vsVersion = process.env['ABLUNIT_TEST_RUNNER_VSCODE_VERSION'] ?? 'stable'
@@ -88,8 +92,8 @@ function getMochaOpts (projName) {
 			'mocha',
 			// 'source-map-support/register',
 			// 'tsconfig-paths/register',
-			// 'ts-node/register',
-			'ts-node/register/transpile-only',
+			'ts-node/register',
+			// 'ts-node/register/transpile-only',
 		],
 	}
 
@@ -168,25 +172,26 @@ function getLaunchArgs (projName) {
 	// args.push('--status')
 	// args.push('--prof-startup')
 	// args.push('--disable-extension <ext-id>')
-	if (!enableExtensions.includes(projName)) {
-		args.push('--disable-extensions')
-	}
-	args.push('--disable-extension', 'vscode.builtin-notebook-renderers')
-	args.push('--disable-extension', 'vscode.emmet')
-	args.push('--disable-extension', 'vscode.git')
-	args.push('--disable-extension', 'vscode.github')
-	args.push('--disable-extension', 'vscode.grunt')
-	args.push('--disable-extension', 'vscode.gulp')
-	args.push('--disable-extension', 'vscode.jake')
-	args.push('--disable-extension', 'vscode.ipynb')
-	args.push('--disable-extension', 'vscode.tunnel-forwarding')
+	// if (!enableExtensions.includes(projName)) {
+	// 	args.push('--disable-extensions')
+	// }
+	args.push('--disable-extensions')
+	// args.push('--disable-extension', 'vscode.builtin-notebook-renderers')
+	// args.push('--disable-extension', 'vscode.emmet')
+	// args.push('--disable-extension', 'vscode.git')
+	// args.push('--disable-extension', 'vscode.github')
+	// args.push('--disable-extension', 'vscode.grunt')
+	// args.push('--disable-extension', 'vscode.gulp')
+	// args.push('--disable-extension', 'vscode.jake')
+	// args.push('--disable-extension', 'vscode.ipynb')
+	// args.push('--disable-extension', 'vscode.tunnel-forwarding')
 	args.push('--sync', 'off') // '<on | off>'
 	// args.push('--inspect-extensions', '<port>')
 	// args.push('--inspect-brk-extensions', '<port>')
 	// args.push('--logExtensionHostCommunication')
 
 	// --- disbale functionality not needed for testing - https://github.com/microsoft/vscode/issues/174744 --- //
-	// args.push('--disable-chromium-sandbox')
+	args.push('--disable-chromium-sandbox')
 	// args.push('--no-sandbox', '--sandbox=false')
 	args.push('--disable-crash-reporter')
 	args.push('--disable-gpu-sandbox')
@@ -226,13 +231,8 @@ function getTestConfig (projName) {
 
 	const absolulteFile = path.resolve(__dirname, '..', 'test', 'suites', projName + '.test.ts')
 
-	const env = {
-		ABLUNIT_TEST_RUNNER_ENABLE_EXTENSIONS: enableExtensions.includes('' + projName),
-		ABLUNIT_TEST_RUNNER_UNIT_TESTING: true,
-		ABLUNIT_TEST_RUNNER_VSCODE_VERSION: vsVersion,
-		DONT_PROMPT_WSL_INSTAL: true,
-		// VSCODE_SKIP_PRELAUNCH: true,
-	}
+
+	process.env['ABLUNIT_TEST_RUNNER_UNIT_TESTING'] = '1'
 
 	/** @type {import('@vscode/test-cli').IDesktopTestConfiguration} */
 	const testConfig = {
@@ -240,20 +240,30 @@ function getTestConfig (projName) {
 		// platform: 'desktop',
 		// desktopPlatform: 'win32',
 		launchArgs: getLaunchArgs(projName),
-		env,
+		env: {
+			ABLUNIT_TEST_RUNNER_ENABLE_EXTENSIONS: enableExtensions.includes('' + projName),
+			ABLUNIT_TEST_RUNNER_VSCODE_VERSION: vsVersion,
+			ABLUNIT_TEST_RUNNER_UNIT_TESTING: '1',
+			DONT_PROMPT_WSL_INSTALL: '1',
+			VSCODE_SKIP_PRELAUNCH: '1',
+			// ABLUNIT_TEST_RUNNER_UNIT_TESTING: true,
+			// DONT_PROMPT_WSL_INSTALL: true,
+			// VSCODE_SKIP_PRELAUNCH: true,
+		},
 		useInstallation,
 		// useInstallation: { fromMachine: true },
 		// download: { reporter: ProgressReporter, timeout: ? }
-		installExtensions: [ 'riversidesoftware.openedge-abl-lsp@prerelease' ],
+		installExtensions: [ 'riversidesoftware.openedge-abl-lsp' ],
 
 		// --- IBaseTestConfiguration --- //
 		files: absolulteFile,
 		version: vsVersion,
-		extensionDevelopmentPath: path.resolve(__dirname, '..'),
+		extensionDevelopmentPath: [ path.resolve(__dirname, '..') ],
 		workspaceFolder,
 		mocha: getMochaOpts(projName),
 		label: 'suite_' + projName,
-		srcDir: './',
+		// srcDir: './',
+		srcDir: './src',
 	}
 	return testConfig
 }
@@ -289,35 +299,43 @@ function getCoverageOpts () {
 		// * 'lcov' includes 'html' output
 		reporter: [ 'text', 'lcovonly' ],
 		output: coverageDir, // https://github.com/microsoft/vscode-test-cli/issues/38
+
 		// includeAll: false,
-		includeAll: true,
-		exclude:[
-			// 'external **',
-			// 'external commonjs "vscode"',
-			// 'external commonjs "vscode"**',
-			// '**external commonjs "vscode"**',
-			// '**external **',
-			// '**external**',
-			// 'commonjs',
-			// '**commonjs**',
-			// 'commonjs vscode',
-			// 'commonjs "vscode"',
-			// 'vscode',
-			// '"vscode"',
-			// '**vscode**',
-			// '**"vscode"**',
-			// 'dist',
-			// '**dist**',
-			// '**/dist/**',
-			'**/dummy-ext/**',
-			'node_modules',
-			'node_modules/**',
-			'**/node_modules',
-			'**/node_modules/**',
-			'**/test_projects/**',
-		],
+		// includeAll: true,
+		// exclude: [],
+		// exclude:[
+		// 	// 'external **',
+		// 	// 'external commonjs "vscode"',
+		// 	// 'external commonjs "vscode"**',
+		// 	// '**external commonjs "vscode"**',
+		// 	// '**external **',
+		// 	// '**external**',
+		// 	// 'commonjs',
+		// 	// '**commonjs**',
+		// 	// 'commonjs vscode',
+		// 	// 'commonjs "vscode"',
+		// 	// 'vscode',
+		// 	// '"vscode"',
+		// 	// '**vscode**',
+		// 	// '**"vscode"**',
+		// 	// 'dist',
+		// 	// '**dist**',
+		// 	// '**/dist/**',
+		// 	// '**/dummy-ext/**',
+		// 	'dummy-ext',
+		// 	'test-projects',
+		// 	// 'node_modules',
+		// 	// 'node_modules/**',
+		// 	// '**/node_modules',
+		// 	// '**/node_modules/**',
+		// 	// '**/test_projects/**',
+		// 	path.resolve(__dirname, '..', 'node_modules'),
+		// 	// path.resolve(__dirname, '..', 'test_projects'),
+		// ],
 		// include: [
-		// 	'**/*'
+		// 	'**/**',
+		// 	'**/dist/**',
+		// 	'**/src/**',
 		// ]
 	}
 	return coverageOpts

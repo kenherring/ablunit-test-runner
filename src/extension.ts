@@ -1,3 +1,8 @@
+
+// import decache from 'decache'
+// decache('extension.js')
+// decache('ablunit-test-runner')
+
 import { readFileSync } from 'fs'
 import {
 	CancellationError,
@@ -23,6 +28,7 @@ import { getContentFromFilesystem } from './parse/TestParserCommon'
 import { ABLTestCase, ABLTestClass, ABLTestData, ABLTestDir, ABLTestFile, ABLTestProgram, ABLTestSuite, resultData, testData } from './testTree'
 import { minimatch } from 'minimatch'
 
+
 export interface IExtensionTestReferences {
 	testController: TestController
 	recentResults: ABLResults[]
@@ -32,21 +38,40 @@ export interface IExtensionTestReferences {
 let recentResults: ABLResults[] = []
 
 export async function activate (context: ExtensionContext) {
+
+	// decache('extension.js')
+	// decache('ablunit-test-runner')
+	console.log('100')
 	const ctrl = tests.createTestController('ablunitTestController', 'ABLUnit Test')
+	console.log('101')
 	let currentTestRun: TestRun | undefined = undefined
+	console.log('103')
 	let isRefreshTestsComplete = false
+	console.log('104')
 	let runWithCoverage = false
+	console.log('105')
 
 	logActivationEvent(context.extensionMode)
+	console.log('106')
 
+	log.info('contextStorageUri')
 	const contextStorageUri = context.storageUri ?? Uri.file(process.env['TEMP'] ?? '') // will always be defined as context.storageUri
+	log.info('contextResourcesUri')
 	const contextResourcesUri = Uri.joinPath(context.extensionUri, 'resources')
+	log.info('setContextPaths')
 	setContextPaths(contextStorageUri, contextResourcesUri)
-	await createDir(contextStorageUri)
+	log.info('creating dir ' + contextStorageUri.fsPath)
+	await createDir(contextStorageUri)?.then(() => {
+		log.info('created dir ' + contextStorageUri.fsPath)
+		log.debug('created dir ' + contextStorageUri.fsPath)
+	})
 	// const decorationProvider = new DecorationProvider()
 
-	log.info('ABLUNIT_TEST_RUNNER_UNIT_TESTING=' + process.env['ABLUNIT_TEST_RUNNER_UNIT_TESTING'])
-	if (process.env['ABLUNIT_TEST_RUNNER_UNIT_TESTING'] === 'true') {
+	log.info('context.ExtensionMode=' + context.extensionMode + '; ABLUNIT_TEST_RUNNER_UNIT_TESTING=' + process.env['ABLUNIT_TEST_RUNNER_UNIT_TESTING'])
+	if (process.env['ABLUNIT_TEST_RUNNER_PROJECT_NAME']) {
+		process.env['ABLUNIT_TEST_RUNNER_UNIT_TESTING'] = '1'
+	}
+	if (context.extensionMode == ExtensionMode.Test || process.env['ABLUNIT_TEST_RUNNER_UNIT_TESTING']) {
 		log.debug('add _ablunit.getExtensionTestReferences command')
 		context.subscriptions.push(commands.registerCommand('_ablunit.getExtensionTestReferences', () => { return getExtensionTestReferences() }))
 		log.debug('add _ablunit.isRefreshTestsComplete command')
@@ -1028,7 +1053,7 @@ export async function doesFileExist (uri: Uri) {
 
 function createDir (uri: Uri) {
 	if(!uri) {
-		return
+		return Promise.resolve()
 	}
 	return workspace.fs.stat(uri).then((stat) => {
 		if (!stat) {

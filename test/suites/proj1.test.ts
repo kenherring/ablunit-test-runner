@@ -17,14 +17,14 @@ suite('proj1 - Extension Test Suite', () => {
 		// const prom = workspace.getConfiguration('ablunit').update('files.exclude', undefined)
 		const prom = workspace.getConfiguration('ablunit.files').update('exclude', undefined)
 		log.info('setup-3')
-		const r = await prom
-			.then(() => {
-				log.info('setup-4')
+		const r = prom
+			.then((r) => {
+				log.info('setup-4 (r=' + r + ')')
 				return true
 			}, (e) => {
 				throw e
 			})
-		log.info('setup-5 (r=' + r)
+		log.info('setup-5')
 		return r
 	})
 
