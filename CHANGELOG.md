@@ -1,3 +1,10 @@
+# [0.2.4](https://github.com/kenherring/ablunit-test-runner/releases/tag/0.2.4) - 2024-08-24 (pre-release)
+
+ * Update eslint rules and related fixes (#179)
+ * Sonar coverage reporting - part 1 (#177)
+
+**Full Changelog**: [0.2.3...0.2.4](https://github.com/kenherring/ablunit-test-runner/compare/0.2.3...0.2.4)
+
 # [0.2.3](https://github.com/kenherring/ablunit-test-runner/releases/tag/0.2.3) - 2024-08-06 (pre-release)
 
  * Re-enable test cases (#172)
