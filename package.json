@@ -217,9 +217,20 @@
 	},
 	"nyc": {
 		"extends": "@istanbuljs/nyc-config-typescript",
+		"DNU_reporter": [ "text", "lcovonly" ],
+		"DNU_all": false,
 		"exclude-after-remap": true,
-		"DNU_sourceMap": true,
-		"DNU_inlineSourceMap": true
+		"DNU_include": [ "src/**", "test/**" ],
+		"DNU_exclude": [
+			"USE createTestConfig.ts !!!!!",
+			"DNU_dist",
+			"DNU_dist/**",
+			"DNU_**/dist/**",
+			"node_modules",
+			"node_modules/**",
+			"**/node_modules/**"
+		],
+		"inlineSourceMap": true
 	},
 	"nyc2": {
 		"extends": "@istanbuljs/nyc-config-typescript",

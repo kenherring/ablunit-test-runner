@@ -91,9 +91,9 @@ function getMochaOpts (projName) {
 		require: [
 			'mocha',
 			// 'source-map-support/register',
+			// 'ts-node/register', //DNU - extensions won't load
+			'ts-node/register/transpile-only',
 			// 'tsconfig-paths/register',
-			'ts-node/register',
-			// 'ts-node/register/transpile-only',
 		],
 	}
 
@@ -154,9 +154,9 @@ function getLaunchArgs (projName) {
 	// if (vsVersion === 'insiders') {
 	// 	args.push('--enable-proposed-api', 'TestCoverage') // '<ext-id>'
 	// }
-	if (vsVersion === 'insiders') {
-		args.push('--enable-proposed-api', 'kherring.ablunit-test-runner')
-	}
+	// if (vsVersion === 'insiders') {
+	// 	args.push('--enable-proposed-api', 'kherring.ablunit-test-runner')
+	// }
 	// args.push('--version')
 	// args.push('--verbose')
 	// args.push('--trace')
@@ -197,7 +197,7 @@ function getLaunchArgs (projName) {
 	args.push('--disable-gpu-sandbox')
 	args.push('--disable-gpu')
 	args.push('--disable-telemetry')
-	args.push('--disable-updates')
+	// args.push('--disable-updates')
 	args.push('--disable-workspace-trust')
 	args.push('--disable-dev-shm-usage', '--no-xshm')
 	return args
@@ -289,7 +289,7 @@ function getTests () {
 }
 
 function getCoverageOpts () {
-	const coverageDir = path.resolve(__dirname, '..', 'coverage')
+	const coverageDir = path.resolve(__dirname, '..', 'artifacts', 'coverage')
 	fs.mkdirSync(coverageDir, { recursive: true })
 
 	/** @type {import('@vscode/test-cli').ICoverageConfiguration} */
@@ -299,10 +299,14 @@ function getCoverageOpts () {
 		// * 'lcov' includes 'html' output
 		reporter: [ 'text', 'lcovonly' ],
 		output: coverageDir, // https://github.com/microsoft/vscode-test-cli/issues/38
-
 		// includeAll: false,
 		// includeAll: true,
-		// exclude: [],
+		include: [ '**' ],
+		exclude: [
+			'node_modules',
+			'node_modules/**',
+			'**/node_modules/**',
+		],
 		// exclude:[
 		// 	// 'external **',
 		// 	// 'external commonjs "vscode"',

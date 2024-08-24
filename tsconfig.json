@@ -4,7 +4,7 @@
 	// 	"transpileOnly": true,
 	// 	"require": [
 	// 		"tsconfig-paths/register",
-	// 	]
+	// 	],
 	// },
 	"compilerOptions": {
 		"module": "NodeNext",
@@ -21,8 +21,8 @@
 			"*": [ "./src/*" ]
 		},
 		"sourceRoot": "src",
-		"sourceMap": true,
-		// "inlineSourceMap": true,
+		// "sourceMap": true,
+		"inlineSourceMap": true,
 		"strict": true,
 		"alwaysStrict": true,
 		"esModuleInterop": true,

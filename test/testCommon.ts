@@ -33,6 +33,9 @@ interface IRuntime {
 	default?: boolean
 }
 
+logObj.info('ABLUNIT_TEST_RUNNER_PROJECT_NAME=' + process.env['ABLUNIT_TEST_RUNNER_PROJECT_NAME'])
+logObj.info('ABLUNIT_TEST_RUNNER_UNIT_TESTING=' + process.env['ABLUNIT_TEST_RUNNER_UNIT_TESTING'])
+
 // https://github.com/microsoft/vscode/blob/2aae82a102da66e566842ff9177bceeb99873970/src/vs/workbench/browser/actions/workspaceCommands.ts#L156C1-L163C2
 // interface IOpenFolderAPICommandOptions {
 // 	forceNewWindow?: boolean

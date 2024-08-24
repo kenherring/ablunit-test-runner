@@ -14,19 +14,20 @@ const config = {
 		clean: true,
 		path: path.resolve(__dirname, 'dist'),
 		filename: 'extension.js',
-		// libraryTarget: 'commonjs2',
-		// devtoolModuleFilenameTemplate: '[resource-path]',
-		// devtoolModuleFilenameTemplate: 'file:///[absolute-resource-path]',
-		// devtoolFallbackModuleFilenameTemplate: 'file:///[absolute-resource-path]?[hash]',
+		libraryTarget: 'commonjs2',
+		// devtoolModuleFilenameTemplate: '../[resource-path]',
+		devtoolModuleFilenameTemplate: 'file:///[absolute-resource-path]',
+		// devtoolFallbackModuleFilenameTemplate: 'file:///[absolute-resource-path]',
+		devtoolFallbackModuleFilenameTemplate: 'file:///[absolute-resource-path]?[hash]',
 	},
 	externals: {
 		// the vscode-module is created on-the-fly and must be excluded. Add other modules that cannot be webpack'ed -> https://webpack.js.org/configuration/externals/
 		vscode: 'commonjs vscode',
 	},
 	resolve: {
-		mainFields: ['browser', 'module', 'main'],
+		// mainFields: ['browser', 'module', 'main'],
 		extensions: ['.ts', '.js'],
-		// modules: ['src', 'node_modules'],
+		modules: ['src', 'node_modules'],
 		plugins: [new TsconfigPathsPlugin({})] // alteratively use 'alias' in this config
 	},
 	module: {
@@ -35,11 +36,6 @@ const config = {
 			exclude: /node_modules/,
 			use: [{
 				loader: 'ts-loader',
-				// options: {
-				// 	compilerOptions: {
-				// 		"module": "es6" // override `tsconfig.json` so that TypeScript emits native JavaScript modules.
-				// 	}
-				// }
 			}]
 		}]
 	},

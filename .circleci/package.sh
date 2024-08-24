@@ -55,8 +55,6 @@ package_version () {
         mv package.json package.bkup.json
         cp "package.$VSCODE_VERSION.json" package.json
     fi
-    npm install
-    # npm run build
     vsce package "${ARGS[@]}"
     if [ "$VSCODE_VERSION" != "stable" ]; then
         mv package.bkup.json package.json
