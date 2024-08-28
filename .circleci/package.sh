@@ -25,6 +25,7 @@ initialize () {
     fi
 
     rm -f ./*.vsix
+    npm install -g @vscode/vsce || sudo npm install -g @vscode/vsce
 }
 
 package () {
