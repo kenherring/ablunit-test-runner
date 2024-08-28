@@ -43,18 +43,16 @@ export async function activate (context: ExtensionContext) {
 	const contextResourcesUri = Uri.joinPath(context.extensionUri, 'resources')
 	setContextPaths(contextStorageUri, contextResourcesUri)
 	await createDir(contextStorageUri)
-	// const decorationProvider = new DecorationProvider()
 
-	log.info('ABLUNIT_TEST_RUNNER_UNIT_TESTING=' + process.env['ABLUNIT_TEST_RUNNER_UNIT_TESTING'])
-	if (process.env['ABLUNIT_TEST_RUNNER_UNIT_TESTING'] === 'true') {
-		log.debug('add _ablunit.getExtensionTestReferences command')
-		context.subscriptions.push(commands.registerCommand('_ablunit.getExtensionTestReferences', () => { return getExtensionTestReferences() }))
-		log.debug('add _ablunit.isRefreshTestsComplete command')
-		context.subscriptions.push(commands.registerCommand('_ablunit.isRefreshTestsComplete', () => { return isRefreshTestsComplete }))
-	}
-	log.info('ABLUnit Test Controller created')
-
+	log.info('push extension controller created')
 	context.subscriptions.push(ctrl)
+
+	log.debug('ABLUNIT_TEST_RUNNER_UNIT_TESTING=' + process.env['ABLUNIT_TEST_RUNNER_UNIT_TESTING'])
+	log.debug('pysg _ablunit.getExtensionTestReferences command')
+	context.subscriptions.push(commands.registerCommand('_ablunit.getExtensionTestReferences', () => { return getExtensionTestReferences() }))
+	log.debug('push _ablunit.isRefreshTestsComplete command')
+	context.subscriptions.push(commands.registerCommand('_ablunit.isRefreshTestsComplete', () => { return isRefreshTestsComplete }))
+
 
 	context.subscriptions.push(
 		commands.registerCommand('_ablunit.openCallStackItem', openCallStackItem),
@@ -76,6 +74,9 @@ export async function activate (context: ExtensionContext) {
 	)
 
 	const getExtensionTestReferences = () => {
+		if (!process.env['ABLUNIT_TEST_RUNNER_UNIT_TESTING']) {
+			throw new Error('command not allowed outside of unit testing')
+		}
 		let data: ABLResults[] = []
 		if (currentTestRun) {
 			data = resultData.get(currentTestRun) ?? []

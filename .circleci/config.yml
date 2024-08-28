@@ -136,9 +136,6 @@ jobs:
           password: $DOCKERHUB_TOKEN
     steps:
       - attach_workspace: { at: . }
-      - run:
-          name: merge eslint test reports
-          command: scripts/sonar_test_results_merge.sh
       - sonarcloud/scan:
           cache_version: 9
       - store_artifacts: { when: on_fail, path: artifacts }

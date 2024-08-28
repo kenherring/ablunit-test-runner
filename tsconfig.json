@@ -1,14 +1,8 @@
 
 {
-	"ts-node": {
-		"transpileOnly": true,
-		"require": [
-			"tsconfig-paths/register",
-		]
-	},
 	"compilerOptions": {
-		"module": "CommonJS",
-		"moduleResolution": "node", // https://www.typescriptlang.org/tsconfig#moduleResolution
+		"module": "NodeNext",
+		"moduleResolution": "NodeNext", // https://www.typescriptlang.org/tsconfig#moduleResolution
 		"target": "ES2020",
 		"lib": [
 			"ES2020",
@@ -19,8 +13,8 @@
 		"paths": {
 			"*": [ "./src/*" ]
 		},
+		// "rootDir": ".",
 		"sourceRoot": "src",
-		// "sourceMap": true,
 		"inlineSourceMap": true,
 		"strict": true,
 		"alwaysStrict": true,
@@ -31,7 +25,7 @@
 		// "types": [
 		// 	// "mocha",
 		// 	// "vscode",
-		// 	"node"
+		//	// 	"node"
 		// ],
 
 		"allowJs": true,

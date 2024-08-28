@@ -24,8 +24,8 @@ npm run test:install-and-run
 
 The following tooling is configured for development in this repo.
 
+* [esbuild](https://esbuild.github.io/)
 * [eslint](https://typescript-eslint.io/)
-* [webpack](https://webpack.js.org/)
 * [mocha](https://mochajs.org/) and [nyc](https://github.com/istanbuljs/nyc)
 * VSCode [test-cli](https://github.com/microsoft/vscode-test-cli) and [Extension Test Runner](https://github.com/microsoft/vscode-extension-test-runner)
 

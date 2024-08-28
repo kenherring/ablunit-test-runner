@@ -10,6 +10,7 @@ initialize () {
 	ABLUNIT_TEST_RUNNER_RUN_SCRIPT_FLAG=${ABLUNIT_TEST_RUNNER_RUN_SCRIPT_FLAG:-true}
 	ABLUNIT_TEST_RUNNER_NO_COVERAGE=${ABLUNIT_TEST_RUNNER_NO_COVERAGE:-false}
 	ABLUNIT_TEST_RUNNER_UNIT_TESTING=true
+	ABLUNIT_TEST_RUNNER_REPO_DIR=$(pwd)
 	if [ -z "$ABLUNIT_TEST_RUNNER_OE_VERSION" ]; then
 		ABLUNIT_TEST_RUNNER_OE_VERSION=${OE_VERSION:-12.8.1}
 	fi
@@ -23,7 +24,8 @@ initialize () {
 		ABLUNIT_TEST_RUNNER_OE_VERSION \
 		ABLUNIT_TEST_RUNNER_VSCODE_VERSION \
 		ABLUNIT_TEST_RUNNER_RUN_SCRIPT_FLAG \
-		ABLUNIT_TEST_RUNNER_UNIT_TESTING
+		ABLUNIT_TEST_RUNNER_UNIT_TESTING \
+		ABLUNIT_TEST_RUNNER_REPO_DIR
 	export DONT_PROMPT_WSL_INSTALL VERBOSE
 
 	echo "ABLUNIT_TEST_RUNNER_DBUS_NUM=$ABLUNIT_TEST_RUNNER_DBUS_NUM"
@@ -31,6 +33,7 @@ initialize () {
 	echo "ABLUNIT_TEST_RUNNER_VSCODE_VERSION=$ABLUNIT_TEST_RUNNER_VSCODE_VERSION"
 	echo "ABLUNIT_TEST_RUNNER_RUN_SCRIPT_FLAG=$ABLUNIT_TEST_RUNNER_RUN_SCRIPT_FLAG"
 	echo "ABLUNIT_TEST_RUNNER_UNIT_TESTING=$ABLUNIT_TEST_RUNNER_UNIT_TESTING"
+	echo "ABLUNIT_TEST_RUNNER_REPO_DIR=$ABLUNIT_TEST_RUNNER_REPO_DIR"
 
 	npm install
 
@@ -147,8 +150,10 @@ run_tests () {
 	fi
 	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] starting 'npm $RUN_SCRIPT'"
 	# time xvfb-run -a npm run "$RUN_SCRIPT" || EXIT_CODE=$?
-	xvfb-run -a npm run "$RUN_SCRIPT" || EXIT_CODE=$?
+	time xvfb-run -a npm run "$RUN_SCRIPT" || EXIT_CODE=$?
 	echo "EXIT_CODE=$EXIT_CODE"
+
+	mv coverage/lcov.info artifacts/coverage/lcov.info || true ## https://github.com/microsoft/vscode-test-cli/issues/38
 
 	if [ "$EXIT_CODE" = "0" ]; then
 		echo "xvfb-run success"
@@ -158,8 +163,8 @@ run_tests () {
 		exit $EXIT_CODE
 	fi
 
-	if ! $ABLUNIT_TEST_RUNNER_NO_COVERAGE && [ ! -s coverage/lcov.info ]; then
-		echo 'ERROR: lcov.info not found'
+	if ! $ABLUNIT_TEST_RUNNER_NO_COVERAGE && [ ! -s artifacts/coverage/lcov.info ]; then
+		echo 'ERROR: artifacts/coverage/lcov.info not found'
 		exit 1
 	fi
 }
@@ -191,4 +196,5 @@ save_and_print_debug_output () {
 initialize "$@"
 dbus_config
 run_tests
+scripts/sonar_test_results_merge.sh
 echo "$0 completed successfully!"
