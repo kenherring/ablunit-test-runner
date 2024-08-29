@@ -32,8 +32,7 @@
 	],
 	"ignorePatterns": [
 		"dummy-ext/",
-		"test_projects/",
-		"webpack.config.js"
+		"test_projects/"
 	],
 	"rules": {
 		"@stylistic/indent": [ "error", "tab" ],

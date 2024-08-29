@@ -27,9 +27,9 @@ initialize () {
 
 	export PATH CIRCLECI ABLUNIT_TEST_RUNNER_OE_VERSION ABLUNIT_TEST_RUNNER_VSCODE_VERSION
 
-	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] ABLUNIT_TEST_RUNNER_OE_VERSION=$ABLUNIT_TEST_RUNNER_OE_VERSION rm artifacts/* coverage/*"
-	[ -d artifacts ] && rm -rf artifacts/*
-	[ -d coverage ] && rm -rf coverage/*
+	if [ -d artifacts ]; then
+		rm -rf artifacts/*
+	fi
 
 	if [ ! -d node_modules ]; then
 		npm install
@@ -156,5 +156,5 @@ get_performance_test_code
 get_pct
 create_dbs
 package
-rm -rf artifacts/* coverage/*
+rm -rf artifacts/*
 echo "[$(date +%Y-%m-%d:%H:%M:%S) $0] completed successfully!"

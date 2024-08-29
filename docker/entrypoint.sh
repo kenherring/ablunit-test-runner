@@ -173,12 +173,12 @@ run_tests_base () {
 
 analyze_results () {
 	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] pwd=$(pwd)"
-	RESULTS_COUNT=$(find . -name 'mocha_results_*.xml' | wc -l)
+	RESULTS_COUNT=$(find artifacts/mocha_results_sonar/ -name '*.xml' | wc -l)
 	LCOV_COUNT=$(find . -name 'lcov.info' | wc -l)
 	HAS_ERROR=false
 
 	if [ "$RESULTS_COUNT" = 0 ]; then
-		echo 'ERROR: mocha_results_*.xml not found'
+		echo 'ERROR: artifacts/mocha_results_sonar/*.xml not found'
 		HAS_ERROR=true
 	fi
 	if [ "$TEST_PROJECT" = "base" ] && [ "$LCOV_COUNT" = 0 ]; then
