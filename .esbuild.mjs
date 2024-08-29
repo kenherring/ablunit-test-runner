@@ -8,6 +8,7 @@ await esbuild.build({
     sourcemap: 'both',
     minify: true,
     platform: 'node',
-    outdir: 'dist',
-    sourceRoot: './',
+    outfile: 'dist/extension.js',
+    // sourceRoot: '.',
+
 })
