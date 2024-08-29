@@ -69,15 +69,11 @@ function getMochaOpts (projName) {
 	// const reporterDir = path.resolve(__dirname, '..', 'artifacts', vsVersion + '-' + oeVersion)
 	const reporterDir = path.resolve(__dirname, '..', 'artifacts')
 	fs.mkdirSync(path.resolve(reporterDir, 'mocha_results_json'), {recursive: true})
-	fs.mkdirSync(path.resolve(reporterDir, 'mocha_results_junit'), {recursive: true})
 	fs.mkdirSync(path.resolve(reporterDir, 'mocha_results_sonar'), {recursive: true})
 	fs.mkdirSync(path.resolve(reporterDir, 'mocha_results_xunit'), {recursive: true})
 	const jsonFile = path.resolve(reporterDir, 'mocha_results_json', projName + '.json')
-	const mochaFile = path.resolve(reporterDir, 'mocha_results_junit', projName + '.xml')
 	const sonarFile = path.resolve(reporterDir, 'mocha_results_sonar', projName + '.xml')
 	const xunitFile = path.resolve(reporterDir, 'mocha_results_xunit', projName + '.xml')
-	// const bail = process.env['CIRCLECI'] != 'true' || false
-
 
 	/** @type {import('mocha').MochaOptions} */
 	const mochaOpts = {
@@ -90,26 +86,22 @@ function getMochaOpts (projName) {
 		bail: true,
 		require: [
 			'mocha',
-			// 'source-map-support/register',
-			// 'ts-node/register', // DNU - extensions won't load
-			'ts-node/register/transpile-only',
-			// 'tsconfig-paths/register',
+			'@swc-node/register',
 		],
 	}
 
 	if (process.env['ABLUNIT_TEST_RUNNER_RUN_SCRIPT_FLAG']) {
 		mochaOpts.reporter = 'mocha-multi-reporters'
 		mochaOpts.reporterOptions = {
-			reporterEnabled: [ 'json-stream', 'spec', 'json', 'xunit', 'mocha-junit-reporter', 'mocha-reporter-sonarqube' ],
-			jsonReporterOptions: { output: jsonFile, outputFile: jsonFile, mochaFile: jsonFile }, // TODO - not working
+			reporterEnabled: [ 'json-stream', 'spec', 'xunit', 'mocha-reporter-sonarqube' ],
+			jsonReporterOptions: { output: jsonFile }, // TODO - not working
 			xunitReporterOptions: { output: xunitFile },
-			mochaJunitReporterReporterOptions: { mochaFile: mochaFile },
 			mochaReporterSonarqubeReporterOptions: { filename: sonarFile },
 		}
 	}
 
 	if (process.env['CIRCLECI']) {
-		mochaOpts.bail = true
+		mochaOpts.bail = false
 	}
 
 	return mochaOpts
@@ -131,7 +123,7 @@ function getLaunchArgs (projName) {
 	// args.push('--locale <locale>')
 	// args.push('--user-data-dir', '<dir>')
 	// args.push('--profile <profileName>')
-	args.push('--profile-temp') // create a temporary profile for the test run in lieu of cleaning up user data
+	// args.push('--profile-temp') // create a temporary profile for the test run in lieu of cleaning up user data
 	// args.push('--help')
 	// args.push('--extensions-dir', '<dir>')
 	// args.push('--list-extensions')
@@ -254,11 +246,13 @@ function getTestConfig (projName) {
 		// useInstallation: { fromMachine: true },
 		// download: { reporter: ProgressReporter, timeout: ? }
 		installExtensions: [ 'riversidesoftware.openedge-abl-lsp' ],
+		// installExtensions: [ 'riversidesoftware.openedge-abl-lsp@prerelease' ],
 
 		// --- IBaseTestConfiguration --- //
 		files: absolulteFile,
 		version: vsVersion,
-		extensionDevelopmentPath: [ path.resolve(__dirname, '..') ],
+		extensionDevelopmentPath: path.resolve(__dirname, '..'),
+		// extensionTestsPath: path.resolve(__dirname, '..', 'test'),
 		workspaceFolder,
 		mocha: getMochaOpts(projName),
 		label: 'suite_' + projName,
@@ -297,50 +291,17 @@ function getCoverageOpts () {
 		// https://istanbul.js.org/docs/advanced/alternative-reporters/
 		// * default = ['html'], but somehow also prints the 'text-summary' to the console
 		// * 'lcov' includes 'html' output
+		// * 'lcovonly' does not include 'html' output
 		reporter: [ 'text', 'lcovonly' ],
 		output: coverageDir, // https://github.com/microsoft/vscode-test-cli/issues/38
-		// includeAll: false,
-		includeAll: true,
-		include: [ '**' ],
-		exclude: [],
-		// 	'node_modules',
-		// 	'node_modules/**',
-		// 	'**/node_modules/**',
-		// ],
-		// exclude:[
-		// 	// 'external **',
-		// 	// 'external commonjs "vscode"',
-		// 	// 'external commonjs "vscode"**',
-		// 	// '**external commonjs "vscode"**',
-		// 	// '**external **',
-		// 	// '**external**',
-		// 	// 'commonjs',
-		// 	// '**commonjs**',
-		// 	// 'commonjs vscode',
-		// 	// 'commonjs "vscode"',
-		// 	// 'vscode',
-		// 	// '"vscode"',
-		// 	// '**vscode**',
-		// 	// '**"vscode"**',
-		// 	// 'dist',
-		// 	// '**dist**',
-		// 	// '**/dist/**',
-		// 	// '**/dummy-ext/**',
-		// 	'dummy-ext',
-		// 	'test-projects',
-		// 	// 'node_modules',
-		// 	// 'node_modules/**',
-		// 	// '**/node_modules',
-		// 	// '**/node_modules/**',
-		// 	// '**/test_projects/**',
-		// 	path.resolve(__dirname, '..', 'node_modules'),
-		// 	// path.resolve(__dirname, '..', 'test_projects'),
-		// ],
-		// include: [
-		// 	'**/**',
-		// 	'**/dist/**',
-		// 	'**/src/**',
-		// ]
+		include: [
+			'**'
+		],
+		exclude: [
+			'node_modules',
+			'node_modules/**',
+			'**/node_modules/**'
+		],
 	}
 	return coverageOpts
 }

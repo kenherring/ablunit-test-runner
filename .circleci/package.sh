@@ -25,8 +25,6 @@ initialize () {
     fi
 
     rm -f ./*.vsix
-
-    npm install
     npm install -g @vscode/vsce || sudo npm install -g @vscode/vsce
 }
 
@@ -55,6 +53,7 @@ package_version () {
         mv package.json package.bkup.json
         cp "package.$VSCODE_VERSION.json" package.json
     fi
+    npm install
     vsce package "${ARGS[@]}"
     if [ "$VSCODE_VERSION" != "stable" ]; then
         mv package.bkup.json package.json

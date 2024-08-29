@@ -1,16 +1,4 @@
 {
-	// "ts-node": {
-	// 	"transpileOnly": true,
-	// 	// "require": [
-	// 	// 	"tsconfig-paths/register",
-	// 	// ],
-	// 	// "scope": true,
-	// 	// "scopeDir": "test",
-	// 	// "ignore": [
-	// 	// 	"(?:^|/)node_modules/",
-	// 	// 	"dist/extension.js$",
-	// 	// ]
-	// },
 	"compilerOptions": {
 		"module": "NodeNext",
 		// "moduleResolution": "node", // https://www.typescriptlang.org/tsconfig#moduleResolution
@@ -21,12 +9,12 @@
 			"WebWorker"
 		],
 
-		"outDir": "out",
+		"outDir": "dist",
 		"paths": {
 			"*": [ "./src/*" ]
 		},
-		"sourceRoot": "src",
-		// "sourceMap": true,
+		// "rootDir": ".",
+		// "sourceRoot": "src",
 		"inlineSourceMap": true,
 		"strict": true,
 		"alwaysStrict": true,

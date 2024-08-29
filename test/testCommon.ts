@@ -582,11 +582,14 @@ export function runAllTestsWithCoverage () {
 	return runAllTests(true, true, true)
 }
 
-function waitForRefreshComplete () {
+async function waitForRefreshComplete () {
 	const waitTime = 5000
 	const refreshDuration = new Duration('waitForRefreshComplete')
 	log.info('waiting for refresh to complete...')
-	return new Promise((resolve, reject) => {
+
+	const ext = extensions.getExtension('kherring.ablunit-test-runner')
+	await ext?.activate()
+	const p = new Promise((resolve, reject) => {
 		const interval = setInterval(() => {
 			if (refreshDuration.elapsed() > waitTime) {
 				clearInterval(interval)
@@ -602,6 +605,8 @@ function waitForRefreshComplete () {
 				}, (e) => { throw e })
 		}, 500)
 	})
+	await p
+	return
 
 }
 

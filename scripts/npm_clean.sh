@@ -21,8 +21,6 @@ initialize () {
 		".builder"
 		".nyc_output"
 		".scannerwork"
-		# "artifacts/*"
-		# "coverage/*"
 		"dist"
 		"out"
 		"tmp"

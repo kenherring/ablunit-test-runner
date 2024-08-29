@@ -6,7 +6,7 @@ set -eou pipefail
 ## configuration to get working. This script is a quick way to test the sonar scan locally.
 
 ## Prerequisites:
-##  - Coverage report in `coverage/lcov.info`
+##  - Coverage report in `artifacts/coverage/lcov.info`
 ##    - This is generate by running `docker/run_tests.sh` or `npm run test`
 
 ## Run this script:
@@ -27,8 +27,8 @@ initialize () {
     export SONAR_HOST_URL="https://sonarcloud.io"
     ESLINT_FILE=artifacts/eslint_report.json
 
-    if [ ! -f coverage/lcov.info ]; then
-        echo "ERROR: file not found - coverage/lcov.info"
+    if [ ! -f artifacts/coverage/lcov.info ]; then
+        echo "ERROR: file not found - artifacts/coverage/lcov.info"
         echo " --- hint:  run 'docker/run_tests.sh'"
         exit 1
     fi
