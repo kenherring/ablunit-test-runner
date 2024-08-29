@@ -15,7 +15,7 @@ suite('proj2 - Extension Test Suite', () => {
 		})
 	})
 
-	test.skip('proj2.2 - call stack', () => {
+	test('proj2.2 - call stack', () => {
 		return commands.executeCommand('vscode.open', Uri.joinPath(workspaceUri, 'src/classes/testClass2.cls'))
 			.then(() => sleep(200))
 			.then(() => commands.executeCommand('testing.runCurrentFile'))
@@ -35,7 +35,7 @@ suite('proj2 - Extension Test Suite', () => {
 			})
 	})
 
-	test.skip('proj2.3 - run current test suite', async () => {
+	test('proj2.3 - run current test suite', async () => {
 		const prom = commands.executeCommand('vscode.open', Uri.joinPath(workspaceUri, 'src/testSuite.cls'))
 			.then(() => sleep(200))
 			.then(() => commands.executeCommand('testing.runCurrentFile'))

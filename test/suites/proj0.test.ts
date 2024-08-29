@@ -67,7 +67,7 @@ suite('proj0  - Extension Test Suite', () => {
 		assert.assert(getDetailLine(lines, 6), 'line 5 should display as executed')
 	})
 
-	test.skip('proj0.4 - coverage=false, open file, run test, validate no coverage displays', async () => {
+	test('proj0.4 - coverage=false, open file, run test, validate no coverage displays', async () => {
 		await updateTestProfile('profiler.coverage', false)
 		const testFileUri = Uri.joinPath(workspace.workspaceFolders![0].uri, 'src', 'dirA', 'dir1', 'testInDir.p')
 		await window.showTextDocument(testFileUri)
