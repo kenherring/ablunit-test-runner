@@ -1,4 +1,4 @@
-import { commands, extensions, RelativePattern, Uri, workspace } from 'vscode'
+import { commands, extensions, Uri, workspace } from 'vscode'
 import { Duration, activateExtension, enableExtensions, getDefaultDLC, getRcodeCount, installExtension, log, oeVersion, sleep2 } from './testCommon'
 import { getContentFromFilesystem } from 'parse/TestParserCommon'
 import * as glob from 'glob'
