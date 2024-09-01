@@ -521,6 +521,7 @@ export async function runAllTests (doRefresh = true, waitForResults = true, with
 	if (withCoverage) {
 		testCommand = 'testing.coverageAll'
 	}
+	beforeCommon()
 	runAllTestsDuration = new Duration('runAllTests')
 	if (!tag) {
 		tag = projName()
@@ -553,7 +554,7 @@ export async function runAllTests (doRefresh = true, waitForResults = true, with
 		.then((r) => {
 			if (r.length >= 0) {
 				const fUri = r[0]?.cfg.ablunitConfig.optionsUri.filenameUri
-				log.info(tag + 'testing.runAll command complete (filename=' + fUri + ', r=' + r + ')')
+				log.info(tag + 'testing.runAll command complete (filename=' + fUri.fsPath + ', r=' + r + ')')
 				return doesFileExist(fUri)
 			}
 			return false
@@ -871,13 +872,13 @@ export async function getResults (len = 1, tag?: string): Promise<ABLResults[]> 
 	if ((!recentResults || recentResults.length === 0) && len > 0) {
 		log.info(tag + 'recentResults not set, refreshing...')
 		for (let i=0; i<5; i++) {
-			const prom = sleep2(250, tag + 'still no recentResults, sleep before trying again (' + i + '/3)')
+			const prom = sleep2(250, tag + 'still no recentResults, sleep before trying again (' + i + '/4)')
 				.then(() => { return refreshData() })
 				.then((gotResults) => {
 					if (gotResults) { return gotResults }
 					return sleep2(250)
 				})
-				.catch((e: unknown) => { log.error('no recentResults yet (' + i + '/3) (e=' + e + ')') })
+				.catch((e: unknown) => { log.error('no recentResults yet (' + i + '/4) (e=' + e + ')') })
 
 			if (await prom && (recentResults?.length ?? 0) > 0) {
 				break

@@ -17,9 +17,9 @@
 				"reveal": "always",
 				"group": "build-task",
 			},
-			// "runOptions": {
-			// 	"runOn": "folderOpen"
-			// }
+			"runOptions": {
+				"runOn": "folderOpen"
+			}
 		},
 		{
 			"label": "npm clean",
