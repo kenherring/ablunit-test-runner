@@ -1,4 +1,4 @@
-import { assert, getResults, getWorkspaceUri, log, runAllTests, sleep, suiteSetupCommon, Uri, commands } from '../testCommon'
+import { assert, getResults, getWorkspaceUri, log, runAllTests, sleep, suiteSetupCommon, Uri, commands, beforeCommon } from '../testCommon'
 
 const workspaceUri = getWorkspaceUri()
 
@@ -7,6 +7,8 @@ suite('proj2 - Extension Test Suite', () => {
 	suiteSetup('proj2 - before', async () => {
 		await suiteSetupCommon()
 	})
+
+	setup('proj2 - beforeEach', beforeCommon)
 
 	test('proj2.1 - temp/ablunit.json file exists', async () => {
 		await runAllTests().then(() => {
@@ -17,9 +19,7 @@ suite('proj2 - Extension Test Suite', () => {
 
 	test('proj2.2 - call stack', () => {
 		return commands.executeCommand('vscode.open', Uri.joinPath(workspaceUri, 'src/classes/testClass2.cls'))
-			.then(() => sleep(200))
 			.then(() => commands.executeCommand('testing.runCurrentFile'))
-			.then(() => sleep(200))
 			.then(() => getResults())
 			.then((recentResults) => {
 				log.info('recentResults = ' + recentResults + ' ' + recentResults.length)
@@ -36,23 +36,22 @@ suite('proj2 - Extension Test Suite', () => {
 	})
 
 	test('proj2.3 - run current test suite', async () => {
-		const prom = commands.executeCommand('vscode.open', Uri.joinPath(workspaceUri, 'src/testSuite.cls'))
-			.then(() => sleep(200))
+		return commands.executeCommand('vscode.open', Uri.joinPath(workspaceUri, 'src/testSuite.cls'))
 			.then(() => commands.executeCommand('testing.runCurrentFile'))
-			.then(() => getResults(), (e) => { throw e })
-		const recentResults = await prom
-
-		const res = recentResults[0].ablResults?.resultsJson[0]
-		if (!res) {
-			assert.fail('res is null')
-		} else {
-			log.info('res.errors=' + res.errors + ', res.failures=' + res.failures + ', res.passed=' + res.passed + ', res.tests=' + res.tests)
-			assert.equal(1, res.errors, 'res.errors should be 1 but got ' + res.errors)
-			assert.equal(3, res.failures, 'res.failures should be 3 but got ' + res.failures)
-			assert.equal(5, res.passed, 'res.passed should be 5 but got ' + res.passed)
-			assert.equal(9, res.tests, 'res.tests should be 9 but got ' + res.tests)
-		}
-		return
+			.then(() => getResults())
+			.then((recentResults) => {
+				const res = recentResults[0].ablResults?.resultsJson[0]
+				if (!res) {
+					assert.fail('res is null')
+				} else {
+					log.info('res.errors=' + res.errors + ', res.failures=' + res.failures + ', res.passed=' + res.passed + ', res.tests=' + res.tests)
+					assert.equal(1, res.errors, 'res.errors should be 1 but got ' + res.errors)
+					assert.equal(3, res.failures, 'res.failures should be 3 but got ' + res.failures)
+					assert.equal(5, res.passed, 'res.passed should be 5 but got ' + res.passed)
+					assert.equal(9, res.tests, 'res.tests should be 9 but got ' + res.tests)
+				}
+				return
+			})
 	})
 
 })
