@@ -1,7 +1,9 @@
 import { FileType, MarkdownString, TestItem, TestItemCollection, TestMessage, TestRun, Uri, workspace, WorkspaceFolder, Range,
 	FileCoverage, FileCoverageDetail,
 	Disposable, CancellationToken, CancellationError,
-	StatementCoverage} from 'vscode'
+	StatementCoverage,
+	TestRunRequest,
+	TestRunProfileKind} from 'vscode'
 import { ABLUnitConfig } from './ABLUnitConfigWriter'
 import { ABLResultsParser, ITestCaseFailure, ITestCase, ITestSuite } from './parse/ResultsParser'
 import { ABLTestSuite, ABLTestData } from './testTree'
@@ -61,6 +63,7 @@ export class ABLResults implements Disposable {
 		private readonly storageUri: Uri,
 		private readonly globalStorageUri: Uri,
 		private readonly extensionResourcesUri: Uri,
+		private readonly request: TestRunRequest,
 		private readonly cancellation: CancellationToken)
 	{
 		log.info('workspaceFolder=' + workspaceFolder.uri.fsPath)
@@ -99,7 +102,7 @@ export class ABLResults implements Disposable {
 
 	start () {
 		log.info('[start] workspaceFolder=' + this.workspaceFolder.uri.fsPath)
-		this.cfg.setup(this.workspaceFolder)
+		this.cfg.setup(this.workspaceFolder, this.request)
 
 		this.dlc = getDLC(this.workspaceFolder, this.cfg.ablunitConfig.openedgeProjectProfile)
 		this.promsgs = new ABLPromsgs(this.dlc, this.globalStorageUri)
@@ -250,7 +253,7 @@ export class ABLResults implements Disposable {
 			throw new Error('Error parsing results from ' + this.cfg.ablunitConfig.optionsUri.filenameUri.fsPath + '\r\nerr=' + err)
 		})
 
-		if (this.cfg.ablunitConfig.profiler.enabled && this.cfg.ablunitConfig.profiler.coverage) {
+		if (this.request.profile?.kind === TestRunProfileKind.Coverage && this.cfg.ablunitConfig.profiler.enabled && this.cfg.ablunitConfig.profiler.coverage) {
 			this.setStatus(RunStatus.Parsing, 'profiler data')
 			log.debug('parsing profiler data from ' + workspace.asRelativePath(this.cfg.ablunitConfig.profFilenameUri.fsPath), options)
 			await this.parseProfile().then(() => {
