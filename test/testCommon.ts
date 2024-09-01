@@ -490,7 +490,7 @@ export async function getTestCount (resultsJson: Uri, status = 'tests') {
 		const results: ITestSuites[] = JSON.parse(Buffer.from(content.buffer).toString())
 
 		if (results.length === 0) {
-			throw new Error('[getTestCount] no testsuite found in results')
+			throw new Error('no testsuite found in results')
 		}
 
 		if (status === 'tests') {
@@ -502,7 +502,7 @@ export async function getTestCount (resultsJson: Uri, status = 'tests') {
 		} else if (status === 'error') {
 			return results[0].errors
 		} else {
-			throw new Error('[getTestCount] unknown status: ' + status)
+			throw new Error('[unknown status: ' + status)
 		}
 	})
 	log.info('getTestCount: ' + status + ' = ' + count)
