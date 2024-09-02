@@ -27,6 +27,7 @@ export interface ITestCase {
 	status: string
 	time: number
 	failure?: ITestCaseFailure
+	skipped: boolean
 }
 
 export interface ITestSuite {
@@ -50,6 +51,7 @@ export interface ITestSuites {
 	passed: number
 	errors: number
 	failures: number
+	skipped: number
 	testsuite?: ITestSuite[]
 }
 
@@ -111,9 +113,10 @@ export class ABLResultsParser {
 		const jsonData: ITestSuites = {
 			name: namePathSep,
 			tests: Number(res.$.tests),
-			passed: Number(res.$.tests) - Number(res.$.errors) - Number(res.$.failures),
+			passed: Number(res.$.tests) - Number(res.$.errors) - Number(res.$.failures) - Number(res.$.ignored),
 			failures: Number(res.$.failures),
 			errors: Number(res.$.errors),
+			skipped: Number(res.$.skipped),
 			testsuite: testsuite
 		}
 		return jsonData
@@ -171,14 +174,22 @@ export class ABLResultsParser {
 				classname: res[idx].$.classname ?? undefined,
 				status: res[idx].$.status,
 				time: Number(res[idx].$.time),
-				failure: await this.parseFailOrError(res[idx])
+				failure: await this.parseFailOrError(res[idx]),
+				skipped: this.parseSkipped(res[idx]),
 			}
 		}
 		return cases
 	}
 
+	parseSkipped (res: any) {
+		if (res.$.status === 'Success' && res.$.ignored === 'true') {
+			return true
+		}
+		return false
+	}
+
 	async parseFailOrError (res: any) {
-		if (res.$.status === 'Success' || res.$.status === 'Skipped') {
+		if (res.$.status === 'Success') {
 			return undefined
 		}
 		let type = ''
@@ -187,8 +198,10 @@ export class ABLResultsParser {
 			type = 'failure'
 		} else if (res.error) {
 			type = 'error'
+		} else if (res.skipped) {
+			type = 'skipped'
 		} else {
-			throw new Error('malformed results  file (3) - could not find \'failure\' or \'error\' node')
+			throw new Error('malformed results  file (3) - could not find \'failure\' or \'error\' or \'skipped\' node')
 		}
 		if (res[type].length > 1) { throw new Error('more than one failure or error in testcase - use case not handled') }
 

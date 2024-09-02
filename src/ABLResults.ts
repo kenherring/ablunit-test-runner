@@ -348,10 +348,10 @@ export class ABLResults implements Disposable {
 
 	private parseFinalSuite (item: TestItem, s: ITestSuite, options: TestRun) {
 		if (s.tests > 0) {
-			if (s.errors === 0 && s.failures === 0) {
-				options.passed(item, s.time)
-			} else if (s.tests === s.skipped) {
+			if (s.tests === s.skipped) {
 				options.skipped(item)
+			} else if (s.errors === 0 && s.failures === 0) {
+				options.passed(item, s.time)
 			} else if (s.failures > 0 || s.errors > 0) {
 				// // This should be populated automatically by the child messages filtering up
 				// options.failed(item, new vscode.TestMessage("one or more tests failed"), s.time)
@@ -404,7 +404,11 @@ export class ABLResults implements Disposable {
 	private setChildResults (item: TestItem, options: TestRun, tc: ITestCase) {
 		switch (tc.status) {
 			case 'Success': {
-				options.passed(item, tc.time)
+				if (tc.skipped) {
+					options.skipped(item)
+				} else {
+					options.passed(item, tc.time)
+				}
 				return Promise.resolve()
 			}
 			case 'Failure': {

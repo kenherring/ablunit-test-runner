@@ -210,6 +210,7 @@ export async function activate (context: ExtensionContext) {
 								+ p.passed + ' passed, '
 								+ p.errors + ' errors, '
 								+ p.failures + ' failures, '
+								+ p.skipped + ' skipped, '
 								+ r.duration
 					log.info(totals, run)
 				} else {
@@ -249,9 +250,8 @@ export async function activate (context: ExtensionContext) {
 			const data = resultData.get(run) ?? []
 			log.info('setting recentResults (data.length=' + data.length + ')')
 			log.debug('setting recentResults (data.length=' + data.length + ')')
+			log.debug('request.profile.kind=' + request.profile?.kind)
 			recentResults = data
-
-			log.info('request.profile.kind=' + request.profile?.kind)
 
 			if (request.profile?.kind === TestRunProfileKind.Coverage) {
 				log.info('adding coverage results to test run')

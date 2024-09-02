@@ -102,7 +102,7 @@ suite('proj0  - Extension Test Suite', () => {
 		assert.assert(!getDetailLine(executedLines, 6), 'line 5 should display as not executed')
 	})
 
-	test('proj0.5 - parse test with expected error annotat', async () => {
+	test('proj0.5 - parse test with expected error annotation', async () => {
 
 		const ctrl = await refreshTests()
 			.then(() => { return getTestController() })
@@ -125,6 +125,31 @@ suite('proj0  - Extension Test Suite', () => {
 		}
 
 		assert.equal(3, testClassItem.children.size, 'testClassItem.children.size should be 3')
+	})
+
+	test('proj0.6 - parse test with skip annotation', async () => {
+
+		const ctrl = await refreshTests()
+			.then(() => { return getTestController() })
+
+		let testClassItem: TestItem | undefined
+		// find the TestItem for src/skippedMethod.cls
+		ctrl.items.forEach((item) => {
+			if (item.label === 'src') {
+				item.children.forEach(element => {
+					if (element.label === 'skippedMethod') {
+						testClassItem = element
+					}
+				})
+			}
+		})
+
+		if (!testClassItem) {
+			throw new Error('cannot find TestItem for src/skippedMethod.cls')
+		}
+
+		assert.equal(5, testClassItem.children.size, 'testClassItem.children.size should be 5')
+
 	})
 
 })
