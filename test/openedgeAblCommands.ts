@@ -61,7 +61,8 @@ export async function printLastLangServerError () {
 
 	log.info('logFiles=' + JSON.stringify(logFiles, null, 2))
 	if (logFiles.length <= 0) {
-		throw new Error('No log files found for ABL Language Server')
+		log.warn('No log files found for ABL Language Server')
+		return false
 	}
 	const uri = Uri.file(logFiles[logFiles.length - 1])
 	log.info('uri=' + uri)

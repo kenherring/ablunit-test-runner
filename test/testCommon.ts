@@ -490,7 +490,7 @@ export async function getTestCount (resultsJson: Uri, status = 'tests') {
 		const results: ITestSuites[] = JSON.parse(Buffer.from(content.buffer).toString())
 
 		if (results.length === 0) {
-			throw new Error('[getTestCount] no testsuite found in results')
+			throw new Error('no testsuite found in results')
 		}
 
 		if (status === 'tests') {
@@ -502,7 +502,7 @@ export async function getTestCount (resultsJson: Uri, status = 'tests') {
 		} else if (status === 'error') {
 			return results[0].errors
 		} else {
-			throw new Error('[getTestCount] unknown status: ' + status)
+			throw new Error('[unknown status: ' + status)
 		}
 	})
 	log.info('getTestCount: ' + status + ' = ' + count)
@@ -521,6 +521,7 @@ export async function runAllTests (doRefresh = true, waitForResults = true, with
 	if (withCoverage) {
 		testCommand = 'testing.coverageAll'
 	}
+	beforeCommon()
 	runAllTestsDuration = new Duration('runAllTests')
 	if (!tag) {
 		tag = projName()
@@ -553,7 +554,7 @@ export async function runAllTests (doRefresh = true, waitForResults = true, with
 		.then((r) => {
 			if (r.length >= 0) {
 				const fUri = r[0]?.cfg.ablunitConfig.optionsUri.filenameUri
-				log.info(tag + 'testing.runAll command complete (filename=' + fUri + ', r=' + r + ')')
+				log.info(tag + 'testing.runAll command complete (filename=' + fUri.fsPath + ', r=' + r + ')')
 				return doesFileExist(fUri)
 			}
 			return false
@@ -871,13 +872,13 @@ export async function getResults (len = 1, tag?: string): Promise<ABLResults[]> 
 	if ((!recentResults || recentResults.length === 0) && len > 0) {
 		log.info(tag + 'recentResults not set, refreshing...')
 		for (let i=0; i<5; i++) {
-			const prom = sleep2(250, tag + 'still no recentResults, sleep before trying again (' + i + '/3)')
+			const prom = sleep2(250, tag + 'still no recentResults, sleep before trying again (' + i + '/4)')
 				.then(() => { return refreshData() })
 				.then((gotResults) => {
 					if (gotResults) { return gotResults }
 					return sleep2(250)
 				})
-				.catch((e: unknown) => { log.error('no recentResults yet (' + i + '/3) (e=' + e + ')') })
+				.catch((e: unknown) => { log.error('no recentResults yet (' + i + '/4) (e=' + e + ')') })
 
 			if (await prom && (recentResults?.length ?? 0) > 0) {
 				break

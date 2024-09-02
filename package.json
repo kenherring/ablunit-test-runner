@@ -75,19 +75,20 @@
 	],
 	"main": "./dist/extension.js",
 	"scripts": {
-		"build": "node .esbuild.mjs",
-		"rebuild": "npm run clean && npm run esbuild",
+		"build": "node esbuild.js",
+		"rebuild": "npm run clean && npm run build",
 		"clean": "sh -c scripts/npm_clean.sh",
 		"lint": "npx eslint ./src ./test --ext .ts,.js",
 		"lint-fix-all": "npx eslint ./src ./test --ext .ts,.js --fix",
 		"vscode:prepublish": "npm run package",
 		"package": "npm run build",
 		"pretest": "sh -c scripts/npm_pretest.sh",
-		"test": "vscode-test",
+		"test": "sh -c scripts/npm_pretest.sh && vscode-test",
 		"test:coverage": "npm test -- --coverage",
 		"vscode-test": "vscode-test",
 		"test:install-and-run": "cd dummy-ext && npm run test:install-and-run",
-		"version": "sh -c scripts/npm_version.sh"
+		"version": "sh -c scripts/npm_version.sh",
+		"watch": "npm run build -- --watch"
 	},
 	"dependencies": {
 		"minimatch": "^9.0.5",
@@ -113,6 +114,7 @@
 		"mocha-multi-reporters": "^1.5.1",
 		"mocha-reporter-sonarqube": "^2.0.6",
 		"ts-node": "^10.9.2",
+		"tsconfig-paths": "^4.2.0",
 		"typescript": "^5.5.4"
 	},
 	"contributes": {

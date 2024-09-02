@@ -46,14 +46,35 @@ suite('proj0  - Extension Test Suite', () => {
 	// TODO - fix before merge
 
 	test('proj0.2 - run test, open file, validate coverage displays', async () => {
-		await runAllTestsWithCoverage()
 		const testFileUri = Uri.joinPath(workspace.workspaceFolders![0].uri, 'src', 'dirA', 'dir1', 'testInDir.p')
-		await window.showTextDocument(testFileUri)
+		const res = await runAllTestsWithCoverage()
+			.then(() => { return window.showTextDocument(testFileUri) })
+			.then(() => { return getResults() })
+			.catch((e: unknown) => { throw e })
 
-		const lines = (await getResults())[0].coverage.get(testFileUri.fsPath) ?? []
+		if (!res || res.length === 0) {
+			assert.fail('getResults returned undefined')
+			return
+		}
+		if (res.length > 1) {
+			assert.fail('getResults returned more than one result')
+			return
+		}
+
+		const results = res[0]
+		if (results.coverage.size === 0) {
+			assert.fail('no coverage found')
+			return
+		}
+		const lines = results.coverage.get(testFileUri.fsPath)
+		if (!lines || lines.length === 0) {
+			assert.fail('no coverage found for ' + workspace.asRelativePath(testFileUri))
+			// throw new Error('no coverage found for ' + workspace.asRelativePath(testFileUri))
+			return
+		}
 		assert.assert(lines, 'no coverage found for ' + workspace.asRelativePath(testFileUri))
 		assert.assert(getDetailLine(lines, 5), 'line 5 should display as executed')
-		assert.assert(getDetailLine(lines, 6), 'line 5 should display as executed')
+		assert.assert(getDetailLine(lines, 6), 'line 6 should display as executed')
 	})
 
 	test('proj0.3 - open file, run test, validate coverage displays', async () => {
@@ -67,7 +88,7 @@ suite('proj0  - Extension Test Suite', () => {
 		assert.assert(getDetailLine(lines, 6), 'line 5 should display as executed')
 	})
 
-	test.skip('proj0.4 - coverage=false, open file, run test, validate no coverage displays', async () => {
+	test('proj0.4 - coverage=false, open file, run test, validate no coverage displays', async () => {
 		await updateTestProfile('profiler.coverage', false)
 		const testFileUri = Uri.joinPath(workspace.workspaceFolders![0].uri, 'src', 'dirA', 'dir1', 'testInDir.p')
 		await window.showTextDocument(testFileUri)
