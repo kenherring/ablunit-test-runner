@@ -1,5 +1,5 @@
 import { Range } from 'vscode'
-import { getLines } from './TestParserCommon'
+import { getLines } from 'parse/TestParserCommon'
 
 // CLASS statement
 const classRE = /^\s*class\s+(\S+[^:])\s*/i
@@ -42,7 +42,7 @@ export function parseTestClass (lines: string[], configClassLabel: string, relat
 	}
 
 	let lastNonBlankLineHasAnnotation = false
-	const regexTest = /@test\./i
+	const regexTest = /@test/i
 
 	for (let lineNo = 0; lineNo < lines.length; lineNo++) {
 		if (lines[lineNo].trim() === '') {
@@ -60,7 +60,7 @@ export function parseTestClass (lines: string[], configClassLabel: string, relat
 			continue
 		}
 
-		if (lastNonBlankLineHasAnnotation || lines[lineNo].toLowerCase().includes('@test.')) {
+		if (lastNonBlankLineHasAnnotation || lines[lineNo].toLowerCase().includes('@test')) {
 			const method = methodRE.exec(lines[lineNo])
 			if (method) {
 				const [, , , , methodname] = method

@@ -1,5 +1,5 @@
-import { Uri, commands, window, workspace, Range, FileCoverageDetail } from 'vscode'
-import { assert, deleteFile, getResults, log, runAllTests, runAllTestsWithCoverage, suiteSetupCommon, toUri, updateTestProfile } from '../testCommon'
+import { Uri, commands, window, workspace, Range, FileCoverageDetail, TestItem } from 'vscode'
+import { assert, deleteFile, getResults, getTestController, log, refreshTests, runAllTests, runAllTestsWithCoverage, suiteSetupCommon, toUri, updateTestProfile } from '../testCommon'
 
 function getDetailLine (coverage: FileCoverageDetail[] | never[], lineNum: number) {
 	if (!coverage) return undefined
@@ -100,6 +100,31 @@ suite('proj0  - Extension Test Suite', () => {
 		assert.equal(0, executedLines.length, 'executed lines found for ' + workspace.asRelativePath(testFileUri) + '. should be empty')
 		assert.assert(!getDetailLine(executedLines, 5), 'line 5 should display as not executed')
 		assert.assert(!getDetailLine(executedLines, 6), 'line 5 should display as not executed')
+	})
+
+	test('proj0.5 - parse test with expected error annotat', async () => {
+
+		const ctrl = await refreshTests()
+			.then(() => { return getTestController() })
+
+		let testClassItem: TestItem | undefined
+		// find the TestItem for src/threeTestMethods.cls
+		ctrl.items.forEach((item) => {
+			log.info('item.label=' + item.label + '; item.id=' + item.id + '; item.uri' + item.uri)
+			if (item.label === 'src') {
+				item.children.forEach(element => {
+					if (element.label === 'threeTestMethods') {
+						testClassItem = element
+					}
+				})
+			}
+		})
+
+		if (!testClassItem) {
+			throw new Error('cannot find TestItem for src/threeTestMethods.cls')
+		}
+
+		assert.equal(3, testClassItem.children.size, 'testClassItem.children.size should be 3')
 	})
 
 })

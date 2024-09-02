@@ -791,15 +791,18 @@ export function refreshData (resultsLen = 0) {
 	})
 }
 
-export async function getTestController (skipRefresh = false) {
-	if (!skipRefresh && !testController) {
-		await refreshData()
+export async function getTestController () {
+	const ext = extensions.getExtension('kherring.ablunit-test-runner')
+	if (!ext) {
+		throw new Error('kherring.ablunit-test-runner extension not found')
 	}
+	testController = await commands.executeCommand('_ablunit.getTestController')
+		.then((ctrl: unknown) => { return ctrl as TestController }, (e) => { throw e })
 	return testController
 }
 
 export async function getTestControllerItemCount (type?: 'ABLTestFile' | undefined) {
-	const ctrl = await getTestController(type == 'ABLTestFile')
+	const ctrl = await getTestController()
 	if (!ctrl?.items) {
 		return 0
 	}
