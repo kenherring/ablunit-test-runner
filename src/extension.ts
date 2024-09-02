@@ -50,6 +50,8 @@ export async function activate (context: ExtensionContext) {
 	context.subscriptions.push(commands.registerCommand('_ablunit.getExtensionTestReferences', () => { return getExtensionTestReferences() }))
 	log.debug('push _ablunit.isRefreshTestsComplete command')
 	context.subscriptions.push(commands.registerCommand('_ablunit.isRefreshTestsComplete', () => { return isRefreshTestsComplete }))
+	log.debug('push _ablunit.getTestController command')
+	context.subscriptions.push(commands.registerCommand('_ablunit.getTestController', () => { return ctrl }))
 
 	context.subscriptions.push(
 		commands.registerCommand('_ablunit.openCallStackItem', openCallStackItem),
