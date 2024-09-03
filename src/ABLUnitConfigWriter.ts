@@ -43,6 +43,7 @@ export class ABLUnitConfig  {
 
 	createProgressIni (propath: string) {
 		if (platform() != 'win32') { return }
+		if (!this.ablunitConfig.progressIniUri) { return }
 		log.info('creating progress.ini: \'' + this.ablunitConfig.progressIniUri.fsPath + '\'')
 		const iniData = ['[WinChar Startup]', 'PROPATH=' + propath]
 		const iniBytes = Uint8Array.from(Buffer.from(iniData.join('\n')))

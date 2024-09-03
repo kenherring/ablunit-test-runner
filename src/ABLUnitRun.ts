@@ -86,7 +86,9 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 		let cmd = [ executable, '-b', '-p', res.wrapperUri.fsPath.replace(/\\/g, '/') ]
 
 		if (process.platform === 'win32') {
-			cmd.push('-basekey', 'INI', '-ininame', workspace.asRelativePath(res.cfg.ablunitConfig.progressIniUri.fsPath, false))
+			if (res.cfg.ablunitConfig.progressIniUri) {
+				cmd.push('-basekey', 'INI', '-ininame', workspace.asRelativePath(res.cfg.ablunitConfig.progressIniUri.fsPath, false))
+			}
 		} else if (process.platform === 'linux') {
 			process.env['PROPATH'] = res.propath!.toString()
 		} else {
