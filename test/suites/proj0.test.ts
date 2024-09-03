@@ -102,8 +102,7 @@ suite('proj0  - Extension Test Suite', () => {
 		assert.assert(!getDetailLine(executedLines, 6), 'line 5 should display as not executed')
 	})
 
-	test('proj0.5 - parse test with expected error annotation', async () => {
-
+	test('proj0.5 - parse test class with expected error annotation', async () => {
 		const ctrl = await refreshTests()
 			.then(() => { return getTestController() })
 
@@ -124,20 +123,20 @@ suite('proj0  - Extension Test Suite', () => {
 			throw new Error('cannot find TestItem for src/threeTestMethods.cls')
 		}
 
-		assert.equal(3, testClassItem.children.size, 'testClassItem.children.size should be 3')
+		assert.equal(testClassItem.children.size, 3, 'testClassItem.children.size should be 3')
 	})
 
-	test('proj0.6 - parse test with skip annotation', async () => {
-
+	test('proj0.6 - parse test program with expected error annotation', async () => {
 		const ctrl = await refreshTests()
 			.then(() => { return getTestController() })
 
 		let testClassItem: TestItem | undefined
-		// find the TestItem for src/skippedMethod.cls
+		// find the TestItem for src/threeTestProcedures.p
 		ctrl.items.forEach((item) => {
+			log.info('item.label=' + item.label + '; item.id=' + item.id + '; item.uri' + item.uri)
 			if (item.label === 'src') {
 				item.children.forEach(element => {
-					if (element.label === 'skippedMethod') {
+					if (element.label === 'threeTestProcedures.p') {
 						testClassItem = element
 					}
 				})
@@ -145,11 +144,53 @@ suite('proj0  - Extension Test Suite', () => {
 		})
 
 		if (!testClassItem) {
-			throw new Error('cannot find TestItem for src/skippedMethod.cls')
+			throw new Error('cannot find TestItem for src/threeTestProcedures.p')
 		}
+		assert.equal(testClassItem.children.size, 3, 'testClassItem.children.size should be 3')
+	})
 
-		assert.equal(5, testClassItem.children.size, 'testClassItem.children.size should be 5')
+	test('proj0.7 - parse test class with skip annotation', async () => {
+		const ctrl = await refreshTests()
+			.then(() => { return getTestController() })
 
+		let testClassItem: TestItem | undefined
+		// find the TestItem for src/ignoreMethod.cls
+		ctrl.items.forEach((item) => {
+			if (item.label === 'src') {
+				item.children.forEach(element => {
+					if (element.label === 'ignoreMethod') {
+						testClassItem = element
+					}
+				})
+			}
+		})
+
+		if (!testClassItem) {
+			throw new Error('cannot find TestItem for src/ignoreMethod.cls')
+		}
+		assert.equal(testClassItem.children.size, 5, 'testClassItem.children.size should be 5')
+	})
+
+	test('proj0.8 - parse test procedure with skip annotation', async () => {
+		const ctrl = await refreshTests()
+			.then(() => { return getTestController() })
+
+		let testClassItem: TestItem | undefined
+		// find the TestItem for src/ignoreProcedure.p
+		ctrl.items.forEach((item) => {
+			if (item.label === 'src') {
+				item.children.forEach(element => {
+					if (element.label === 'ignoreProcedure.p') {
+						testClassItem = element
+					}
+				})
+			}
+		})
+
+		if (!testClassItem) {
+			throw new Error('cannot find TestItem for src/ignoreProcedure.p')
+		}
+		assert.equal(testClassItem.children.size, 5, 'testClassItem.children.size should be 5')
 	})
 
 })

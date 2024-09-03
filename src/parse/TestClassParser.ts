@@ -42,7 +42,7 @@ export function parseTestClass (lines: string[], configClassLabel: string, relat
 	}
 
 	let lastNonBlankLineHasAnnotation = false
-	const regexTest = /@test\s*\./i
+	const regexTest = /@test/i
 	const regexIgnore = /^\s*@ignore\s*\.\s*$/i
 
 	for (let lineNo = 0; lineNo < lines.length; lineNo++) {
