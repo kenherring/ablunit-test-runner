@@ -1,5 +1,6 @@
 import { Uri, commands, window, workspace, Range, FileCoverageDetail, TestItem } from 'vscode'
 import { assert, deleteFile, getResults, getTestController, log, refreshTests, runAllTests, runAllTestsWithCoverage, suiteSetupCommon, toUri, updateTestProfile } from '../testCommon'
+import { ABLResultsParser } from 'parse/ResultsParser'
 
 function getDetailLine (coverage: FileCoverageDetail[] | never[], lineNum: number) {
 	if (!coverage) return undefined
@@ -191,6 +192,20 @@ suite('proj0  - Extension Test Suite', () => {
 			throw new Error('cannot find TestItem for src/ignoreProcedure.p')
 		}
 		assert.equal(testClassItem.children.size, 5, 'testClassItem.children.size should be 5')
+	})
+
+	test('proj0.9 - ABLResultsParser', async () => {
+		const rp = new ABLResultsParser()
+		await rp.parseResults(toUri('results_test1.xml'))
+			.then(() => {
+				log.info('parsed results_test1.xml successfully')
+			}, (e: unknown) => {
+				if (e instanceof Error) {
+					log.info('e.message=' + e.message)
+					log.info('e.stack=' + e.stack)
+				}
+				assert.fail('error parsing results_test1.xml: ' + e)
+			})
 	})
 
 })

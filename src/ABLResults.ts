@@ -239,7 +239,7 @@ export class ABLResults implements Disposable {
 		this.duration.stop()
 		const parseTime = new Duration()
 
-		this.ablResults = new ABLResultsParser(this.propath!, this.debugLines!)
+		this.ablResults = new ABLResultsParser(this.propath, this.debugLines)
 		await this.ablResults.parseResults(this.cfg.ablunitConfig.optionsUri.filenameUri, this.cfg.ablunitConfig.optionsUri.jsonUri).then(() => {
 			log.info('parsing results complete ' + parseTime.toString())
 			if(!this.ablResults?.resultsJson) {

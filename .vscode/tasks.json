@@ -6,12 +6,12 @@
 		{
 			"label": "folderOpen",
 			"hide": true,
-			"type": "shell",
 			"dependsOn": [
 				"npm clean",
 				"npm pretest",
 				"npm watch",
 			],
+			"isBackground": true,
 			"dependsOrder": "sequence",
 			"presentation": {
 				"reveal": "always",
@@ -28,7 +28,8 @@
 			"script": "clean",
 			"isBackground": true,
 			"presentation": {
-				"reveal": "always",
+				"reveal": "silent",
+				"focus": false,
 				"group": "build-task",
 			}
 		},
@@ -48,7 +49,8 @@
 			"script": "pretest",
 			"isBackground": true,
 			"presentation": {
-				"reveal": "always",
+				"reveal": "silent",
+				"focus": false,
 				"group": "build-task",
 			}
 		},
@@ -59,7 +61,8 @@
 			"problemMatcher": "$tsc-watch",
 			"isBackground": true,
 			"presentation": {
-				"reveal": "always",
+				"reveal": "silent",
+				"focus": false,
 				"group": "build-task"
 			},
 			"group": {

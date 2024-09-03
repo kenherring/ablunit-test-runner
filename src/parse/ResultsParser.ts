@@ -60,12 +60,20 @@ export class ABLResultsParser {
 	propath: PropathParser
 	debugLines: ABLDebugLines
 
-	constructor (propath: PropathParser, debugLines: ABLDebugLines) {
-		this.propath = propath
-		this.debugLines = debugLines
+	constructor (propath?: PropathParser, debugLines?: ABLDebugLines) {
+		if (propath) {
+			this.propath = propath
+		} else {
+			this.propath = new PropathParser(workspace.workspaceFolders![0])
+		}
+		if (debugLines) {
+			this.debugLines = debugLines
+		} else {
+			this.debugLines = new ABLDebugLines(this.propath)
+		}
 	}
 
-	async parseResults (configUri: Uri, jsonUri: Uri | undefined) {
+	async parseResults (configUri: Uri, jsonUri?: Uri) {
 		const resultsBits = await workspace.fs.readFile(configUri)
 		const resultsXml = Buffer.from(resultsBits.toString()).toString('utf8')
 		// eslint-disable-next-line @typescript-eslint/no-confusing-void-expression
@@ -73,7 +81,7 @@ export class ABLResultsParser {
 		try {
 			this.resultsJson = [ await this.parseSuites(resultsXmlJson) ]
 		} catch (err) {
-			log.error('[parseResults] error parsing results.xml file: ' + err)
+			log.error('[parseResults] error parsing ' + configUri.fsPath + ' file: ' + err)
 			throw err
 		}
 		if (jsonUri) {
@@ -199,7 +207,8 @@ export class ABLResultsParser {
 		} else if (res.error) {
 			type = 'error'
 		} else if (res.skipped) {
-			type = 'skipped'
+			// there's a 'message' atttribute in skipped we might want to parse
+			return
 		} else {
 			throw new Error('malformed results  file (3) - could not find \'failure\' or \'error\' or \'skipped\' node')
 		}
