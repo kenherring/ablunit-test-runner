@@ -121,11 +121,18 @@ export class ABLResultsParser {
 		const jsonData: ITestSuites = {
 			name: namePathSep,
 			tests: Number(res.$.tests),
-			passed: Number(res.$.tests) - Number(res.$.errors) - Number(res.$.failures) - Number(res.$.ignored),
+			passed: Number(res.$.tests) - Number(res.$.errors) - Number(res.$.failures) - Number(res.$.skipped ?? 0),
 			failures: Number(res.$.failures),
 			errors: Number(res.$.errors),
-			skipped: Number(res.$.skipped),
+			skipped: Number(res.$.skipped ?? 0),
 			testsuite: testsuite
+		}
+
+		if (jsonData.passed === null) {
+			log.info('res.$.tests=' + res.$.tests)
+			log.info('res.$.errors' + res.$.errors)
+			log.info('res.$.failures' + res.$.failures)
+			log.info('res.$.skipped' + res.$.skipped)
 		}
 		return jsonData
 	}
@@ -148,14 +155,20 @@ export class ABLResultsParser {
 				classname: res[idx].$.classname ?? undefined,
 				id: res[idx].$.id,
 				tests: Number(res[idx].$.tests),
-				passed: Number(res[idx].$.tests) - Number(res[idx].$.errors) - Number(res[idx].$.failures) - Number(res[idx].$.skipped),
+				passed: Number(res[idx].$.tests) - Number(res[idx].$.errors) - Number(res[idx].$.failures) - Number(res[idx].$.skipped ?? 0),
 				errors: Number(res[idx].$.errors),
 				failures: Number(res[idx].$.failures),
-				skipped: Number(res[idx].$.skipped),
+				skipped: Number(res[idx].$.skipped ?? 0),
 				time: Number(res[idx].$.time * 1000),
 				properties: this.parseProperties(res[idx].properties),
 				testsuite: testsuite,
 				testcases: testcases
+			}
+			if (suites[idx].passed === null) {
+				log.info('res[idx].$.tests=' + res[idx].$.tests)
+				log.info('res[idx].$.errors' + res[idx].$.errors)
+				log.info('res[idx].$.failures' + res[idx].$.failures)
+				log.info('res[idx].$.skipped' + res[idx].$.skipped)
 			}
 		}
 		return suites

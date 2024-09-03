@@ -63,13 +63,17 @@ export const oeVersion = () => {
 		return oeVersion.split('.').slice(0, 2).join('.')
 	}
 
-	const versionFile = path.join(getDefaultDLC(), 'version')
+	let useDLC = getEnvVar('DLC')
+	if (!useDLC || useDLC === '') {
+		useDLC = getDefaultDLC()
+	}
+
+	const versionFile = path.join(useDLC, 'version')
 	const dlcVersion = fs.readFileSync(versionFile)
 	log.info('dlcVersion=' + dlcVersion)
 	if (dlcVersion) {
 		const match = RegExp(/OpenEdge Release (\d+\.\d+)/).exec(dlcVersion.toString())
 		if (match) {
-			log.info('102 oeVersionEnv=' + match[1])
 			return match[1]
 		}
 	}
