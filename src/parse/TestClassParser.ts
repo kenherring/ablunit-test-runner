@@ -43,9 +43,10 @@ export function parseTestClass (lines: string[], configClassLabel: string, relat
 
 	let lastNonBlankLineHasAnnotation = false
 	const regexTest = /@test/i
+	const regexIgnore = /^\s*@ignore\s*\.\s*$/i
 
 	for (let lineNo = 0; lineNo < lines.length; lineNo++) {
-		if (lines[lineNo].trim() === '') {
+		if (lines[lineNo].trim() === '' || regexIgnore.exec(lines[lineNo])) {
 			continue
 		}
 

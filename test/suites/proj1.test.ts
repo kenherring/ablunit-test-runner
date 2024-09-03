@@ -1,6 +1,7 @@
 import { Selection, commands, window } from 'vscode'
 import { beforeEach } from 'mocha'
-import { Uri, assert, deleteTestFiles, getWorkspaceUri, log, runAllTests, sleep, updateConfig, getTestCount, workspace, suiteSetupCommon } from '../testCommon'
+import { Uri, assert, deleteTestFiles, getWorkspaceUri, log, runAllTests, sleep, updateConfig, getTestCount, workspace, suiteSetupCommon, getWorkspaceFolders, oeVersion } from '../testCommon'
+import { getOEVersion } from 'parse/OpenedgeProjectParser'
 
 const workspaceUri = getWorkspaceUri()
 
@@ -49,7 +50,9 @@ suite('proj1 - Extension Test Suite', () => {
 			}, (e: unknown) => {
 				log.info('runAllTests error: ' + e)
 				assert.fileExists(ablunitJson)
-				if (process.platform === 'win32' || process.env['WSL_DISTRO_NAME'] !== undefined) {
+				const wsFolder = getWorkspaceFolders()[0]
+				log.info('getOEVersion(wsFolder)=' + getOEVersion(wsFolder) + '; oeVersion()=' + oeVersion())
+				if (oeVersion()?.startsWith('12.2') && (process.platform === 'win32' || process.env['WSL_DISTRO_NAME'] !== undefined)) {
 					assert.fileExists(resultsXml)
 				} else {
 					assert.notFileExists(resultsXml)
