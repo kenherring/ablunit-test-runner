@@ -25,6 +25,7 @@
 This script bumps the version and update the necessary files.
 
 ```bash
-npm version patch -m "v%s"
-npm version minor -m "v%s"
+npm version 0.2.5 --no-git-tag-version
+npm version patch -m "v%s" --no-git-tag-version
+npm version minor -m "v%s" --no-git-tag-version
 ```
