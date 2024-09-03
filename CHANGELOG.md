@@ -1,3 +1,14 @@
+# [0.2.5](https://github.com/kenherring/ablunit-test-runner/releases/tag/0.2.5) - 2024-09-03 (pre-release)
+
+ * Update test parsing to find skipped/ignored tests (#184)
+ * Parse test methods using expected error annotation (#183)
+ * Unskip and fix tests (#182)
+ * Switch compile back to eslint (#180)
+ * Update eslint rules and related fixes (#179)
+ * Sonar coverage reporting - part 1 (#177)
+
+**Full Changelog**: [0.2.3...0.2.5](https://github.com/kenherring/ablunit-test-runner/compare/0.2.3...0.2.5)
+
 # [0.2.3](https://github.com/kenherring/ablunit-test-runner/releases/tag/0.2.3) - 2024-08-06 (pre-release)
 
  * Re-enable test cases (#172)
