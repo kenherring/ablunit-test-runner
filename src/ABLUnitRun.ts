@@ -51,7 +51,6 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 	await res.cfg.createAblunitJson(res.cfg.ablunitConfig.config_uri, res.cfg.ablunitConfig.options, res.testQueue)
 
 	const getCommand = () => {
-		const cmd: string[] = []
 		if (res.cfg.ablunitConfig.command.executable != '_progres' &&
 			res.cfg.ablunitConfig.command.executable != 'prowin' &&
 			res.cfg.ablunitConfig.command.executable != 'prowin32') {
@@ -97,7 +96,7 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 				cmd.push('-basekey', 'INI', '-ininame', workspace.asRelativePath(res.cfg.ablunitConfig.progressIniUri.fsPath, false))
 			}
 		} else if (process.platform === 'linux') {
-			process.env['PROPATH'] = res.propath!.toString()
+			process.env['PROPATH'] = res.propath!.toString().replace(/\$\{DLC\}/g, res.dlc!.uri.fsPath.replace(/\\/g, '/'))
 		} else {
 			throw new Error('unsupported platform: ' + process.platform)
 		}
@@ -138,9 +137,7 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 		const promsgRegex = /^.* \(\d+\)/
 		const lines = stdout.split('\n').reverse()
 
-		// log.info('lines.length=' + lines.length, options)
 		for (const line of lines) {
-			// log.info('line="' + line + '"', options)
 			if (promsgRegex.test(line)) {
 				return line
 			}
@@ -174,7 +171,6 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 			const execCommand = (cmd + ' ' + args.join(' ')).replace(/\$\{DLC\}/g, res.dlc!.uri.fsPath.replace(/\\/g, '/')) + ' 2>&1'
 
 			log.info('command=\'' + cmd + ' ' + args.join(' ') + '\'\r\n', options)
-
 			log.info('----- ABLUnit Command Execution Started -----', options)
 
 			exec(execCommand, execOpts, (err: ExecException | null, stdout: string, stderr: string) => {
@@ -189,7 +185,7 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 				if (stdout) {
 					// stdout = '[stdout] ' + stdout.replace(/\n/g, '\n[stdout] ')
 					stdout = '[stdout] ' + stdout + '[\\stdout]'
-					log.debug(stdout, options)
+					log.info(stdout, options)
 				}
 				if (stderr) {
 					stderr = '[stderr] ' + stderr.replace(/\n/g, '\n[stderr] ')
@@ -218,7 +214,6 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 	}
 
 	return runCommand().then(() => {
-		// log.info('[runCommand] done', options)
 		return res.parseOutput(options)
 	}, (err: unknown) => {
 		log.debug('runCommand() error=' + JSON.stringify(err, null, 2), options)
