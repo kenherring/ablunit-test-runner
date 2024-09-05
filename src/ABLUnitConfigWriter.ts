@@ -6,7 +6,7 @@ import { getProfileConfig, RunConfig } from './parse/TestProfileParser'
 import { IABLUnitJson, ITestObj } from './ABLResults'
 import { CoreOptions } from './parse/config/CoreOptions'
 import { ProfilerOptions } from './parse/config/ProfilerOptions'
-import { getOpenEdgeProfileConfig, IBuildPathEntry, IDatabaseConnection, ProfileConfig } from './parse/OpenedgeProjectParser'
+import { getOpenEdgeProfileConfig, IBuildPathEntry, IDatabaseConnection, IDlc, ProfileConfig } from './parse/OpenedgeProjectParser'
 
 export const ablunitConfig = new WeakMap<WorkspaceFolder, RunConfig>()
 
@@ -41,11 +41,11 @@ export class ABLUnitConfig  {
 		})
 	}
 
-	createProgressIni (propath: string) {
+	createProgressIni (propath: string, dlc: IDlc) {
 		if (platform() != 'win32') { return }
 		if (!this.ablunitConfig.progressIniUri) { return }
 		log.info('creating progress.ini: \'' + this.ablunitConfig.progressIniUri.fsPath + '\'')
-		const iniData = ['[WinChar Startup]', 'PROPATH=' + propath]
+		const iniData = ['[WinChar Startup]', 'PROPATH=' + propath.replace(/\$\{DLC\}/g, dlc.uri.fsPath.replace(/\\/g, '/'))]
 		const iniBytes = Uint8Array.from(Buffer.from(iniData.join('\n')))
 		return workspace.fs.writeFile(this.ablunitConfig.progressIniUri, iniBytes)
 	}

@@ -22,6 +22,7 @@ import { log } from './ChannelLogger'
 import { getContentFromFilesystem } from './parse/TestParserCommon'
 import { ABLTestCase, ABLTestClass, ABLTestData, ABLTestDir, ABLTestFile, ABLTestProgram, ABLTestSuite, resultData, testData } from './testTree'
 import { minimatch } from 'minimatch'
+import { ABLUnitRuntimeError } from 'ABLUnitRun'
 
 export interface IExtensionTestReferences {
 	testController: TestController
@@ -195,8 +196,31 @@ export async function activate (context: ExtensionContext) {
 				ret = await r.run(run).then(() => {
 					log.debug('r.run() successful')
 					return true
-				}, (e) => {
-					log.error('ablunit run failed parsing results with exception: ' + e, run)
+				}, (e: unknown) => {
+					if (e instanceof CancellationError) {
+						log.error('---------- ablunit run cancelled ----------', run)
+						// log.error('[runTestQueue] ablunit run cancelled!', run)
+					} else if (e instanceof ABLUnitRuntimeError) {
+						log.error('[runTestQueue] ablunit runtime error!\ne=' + JSON.stringify(e))
+					} else {
+						log.error('[runTestQueue] ablunit run failed parsing results with exception: ' + e, run)
+						// log.error('ablunit run failed parsing results with exception: ' + e, run)
+					}
+
+					for (const t of r.tests) {
+						if (e instanceof CancellationError) {
+							run.errored(t, new TestMessage('ablunit run cancelled!'))
+						} else if (e instanceof ABLUnitRuntimeError) {
+							run.failed(t, new TestMessage(e.promsgError))
+						// } else if (e instanceof ExecException) {
+						// 	run.errored(t, new TestMessage('ablunit run execution error! e=' + JSON.stringify(e)))
+						} else if (e instanceof Error) {
+							run.errored(t, new TestMessage('ablunit run failed! \ne.message=' + e.message + '\ne.name=' + e.name + '\ne.stack=' + e.stack
+							))
+						} else {
+							run.errored(t, new TestMessage('ablunit run failed! e=' + e))
+						}
+					}
 					throw e
 				})
 				if (!ret) {
@@ -331,12 +355,14 @@ export async function activate (context: ExtensionContext) {
 				return
 			}, (err: unknown) => {
 				run.end()
-				if (err instanceof CancellationError) {
-					log.error('ablunit run failed with exception: CancellationError')
+				if (err instanceof CancellationError || err instanceof ABLUnitRuntimeError) {
+					throw err
 				} else if (err instanceof Error) {
 					log.error('ablunit run failed with error: ' + err.message + ' - ' + err.stack)
+					throw err
 				} else {
 					log.error('ablunit run failed with non-error: ' + err)
+					throw new Error('ablunit run failed with non-error: ' + err)
 				}
 				throw err
 			})
