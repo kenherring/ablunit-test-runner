@@ -7,20 +7,20 @@
 			"label": "folderOpen",
 			"detail": "run on workspace load",
 			"hide": true,
-			"type": "shell",
 			"dependsOn": [
 				"npm clean",
 				"npm pretest",
 				"npm watch"
 			],
+			"isBackground": true,
 			"dependsOrder": "sequence",
 			"presentation": {
 				"reveal": "always",
 				"group": "build-task"
 			},
-			// "runOptions": {
-			// 	"runOn": "folderOpen"
-			// }
+			"runOptions": {
+				"runOn": "folderOpen"
+			}
 		},
 		{
 			"label": "npm clean",
@@ -59,7 +59,8 @@
 			"script": "watch",
 			"isBackground": true,
 			"presentation": {
-				"reveal": "always",
+				"reveal": "silent",
+				"focus": false,
 				"group": "build-task"
 			},
 			"group": {

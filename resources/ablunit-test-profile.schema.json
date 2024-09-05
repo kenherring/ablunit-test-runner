@@ -46,7 +46,7 @@
 								"location": "${tempDir}",
 								"filename": "results.xml",
 								"format": "xml",
-								"WriteJson": false
+								"writeJson": false
 							},
 							"quitOnEnd": true,
 							"writeLog": false,

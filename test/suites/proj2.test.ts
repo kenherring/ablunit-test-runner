@@ -4,6 +4,8 @@ suite('proj2Suite', () => {
 
 	suiteSetup('proj2 - suiteSetup', suiteSetupCommon)
 
+	setup('proj2 - beforeEach', beforeCommon)
+
 	test('proj2.1 - temp/ablunit.json file exists', async () => {
 		await runAllTests()
 		const ablunitJson = Uri.joinPath(workspaceUri(), 'temp', 'ablunit.json')

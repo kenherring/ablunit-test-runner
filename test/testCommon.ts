@@ -54,24 +54,26 @@ export const oeVersion = () => {
 	const oeVersionEnv = getEnvVar('ABLUNIT_TEST_RUNNER_OE_VERSION')
 	log.info('oeVersionEnv=' + oeVersionEnv)
 	if (oeVersionEnv?.match(/^(11|12)\.\d$/)) {
-		log.info('100 oeVersionEnv=' + oeVersionEnv)
 		return oeVersionEnv
 	}
 
 	const oeVersion = getEnvVar('OE_VERSION')
 	log.info('oeVersion=' + oeVersion + ' ' + oeVersion?.split('.').slice(0, 2).join('.'))
 	if (oeVersion?.match(/^(11|12)\.\d.\d+$/)) {
-		log.info('101 oeVersionEnv=' + oeVersion.split('.').slice(0, 2).join('.'))
 		return oeVersion.split('.').slice(0, 2).join('.')
 	}
 
-	const versionFile = path.join(getDefaultDLC(), 'version')
+	let useDLC = getEnvVar('DLC')
+	if (!useDLC || useDLC === '') {
+		useDLC = getDefaultDLC()
+	}
+
+	const versionFile = path.join(useDLC, 'version')
 	const dlcVersion = fs.readFileSync(versionFile)
 	log.info('dlcVersion=' + dlcVersion)
 	if (dlcVersion) {
 		const match = RegExp(/OpenEdge Release (\d+\.\d+)/).exec(dlcVersion.toString())
 		if (match) {
-			log.info('102 oeVersionEnv=' + match[1])
 			return match[1]
 		}
 	}
@@ -561,7 +563,7 @@ export async function getTestCount (resultsJson: Uri, status = 'tests') {
 		const results: ITestSuites[] = JSON.parse(Buffer.from(content.buffer).toString())
 
 		if (results.length === 0) {
-			throw new Error('[getTestCount] no testsuite found in results')
+			throw new Error('no testsuite found in results')
 		}
 
 		if (status === 'tests') {
@@ -573,7 +575,7 @@ export async function getTestCount (resultsJson: Uri, status = 'tests') {
 		} else if (status === 'error') {
 			return results[0].errors
 		} else {
-			throw new Error('[getTestCount] unknown status: ' + status)
+			throw new Error('[unknown status: ' + status)
 		}
 	})
 	log.info('getTestCount: ' + status + ' = ' + count)
@@ -592,6 +594,7 @@ export async function runAllTests (doRefresh = true, waitForResults = true, with
 	if (withCoverage) {
 		testCommand = 'testing.coverageAll'
 	}
+	beforeCommon()
 	runAllTestsDuration = new Duration('runAllTests')
 	if (!tag) {
 		tag = projName()
@@ -624,7 +627,7 @@ export async function runAllTests (doRefresh = true, waitForResults = true, with
 		.then((r) => {
 			if (r.length >= 0) {
 				const fUri = r[0]?.cfg.ablunitConfig.optionsUri.filenameUri
-				log.info(tag + 'testing.runAll command complete (filename=' + fUri + ', r=' + r + ')')
+				log.info(tag + 'testing.runAll command complete (filename=' + fUri.fsPath + ', r=' + r + ')')
 				return doesFileExist(fUri)
 			}
 			return false
@@ -642,11 +645,14 @@ export function runAllTestsWithCoverage () {
 	return runAllTests(true, true, true)
 }
 
-function waitForRefreshComplete () {
+async function waitForRefreshComplete () {
 	const waitTime = 5000
 	const refreshDuration = new Duration('waitForRefreshComplete')
 	log.info('waiting for refresh to complete...')
-	return new Promise((resolve, reject) => {
+
+	const ext = extensions.getExtension('kherring.ablunit-test-runner')
+	await ext?.activate()
+	const p = new Promise((resolve, reject) => {
 		const interval = setInterval(() => {
 			if (refreshDuration.elapsed() > waitTime) {
 				clearInterval(interval)
@@ -662,6 +668,8 @@ function waitForRefreshComplete () {
 				}, (e) => { throw e })
 		}, 500)
 	})
+	await p
+	return
 
 }
 
@@ -917,15 +925,18 @@ export function refreshData (resultsLen = 0) {
 	})
 }
 
-export async function getTestController (skipRefresh = false) {
-	if (!skipRefresh && !testController) {
-		await refreshData()
+export async function getTestController () {
+	const ext = extensions.getExtension('kherring.ablunit-test-runner')
+	if (!ext) {
+		throw new Error('kherring.ablunit-test-runner extension not found')
 	}
+	testController = await commands.executeCommand('_ablunit.getTestController')
+		.then((ctrl: unknown) => { return ctrl as TestController }, (e) => { throw e })
 	return testController
 }
 
 export async function getTestControllerItemCount (type?: 'ABLTestFile' | undefined) {
-	const ctrl = await getTestController(type == 'ABLTestFile')
+	const ctrl = await getTestController()
 	if (!ctrl?.items) {
 		return 0
 	}
@@ -998,13 +1009,13 @@ export async function getResults (len = 1, tag?: string): Promise<ABLResults[]> 
 	if ((!recentResults || recentResults.length === 0) && len > 0) {
 		log.info(tag + 'recentResults not set, refreshing...')
 		for (let i=0; i<5; i++) {
-			const prom = sleep2(250, tag + 'still no recentResults, sleep before trying again (' + i + '/3)')
+			const prom = sleep2(250, tag + 'still no recentResults, sleep before trying again (' + i + '/4)')
 				.then(() => { return refreshData() })
 				.then((gotResults) => {
 					if (gotResults) { return gotResults }
 					return sleep2(250)
 				})
-				.catch((e: unknown) => { log.error('no recentResults yet (' + i + '/3) (e=' + e + ')') })
+				.catch((e: unknown) => { log.error('no recentResults yet (' + i + '/4) (e=' + e + ')') })
 
 			if (await prom && (recentResults?.length ?? 0) > 0) {
 				break

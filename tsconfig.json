@@ -1,10 +1,4 @@
 {
-	"ts-node": {
-		"transpileOnly": true,
-		"require": [
-			"tsconfig-paths/register",
-		]
-	},
 	"compilerOptions": {
 		// "module": "NodeNext",
 		// "moduleResolution": "NodeNext", // https://www.typescriptlang.org/tsconfig#moduleResolution
@@ -65,6 +59,7 @@
 		"./**/*.ts",
 		"./**/*.mjs",
 		"./test/suites/*.test.ts",
+		"./esbuild.js",
 	],
 	"exclude": [
 		"./dummy-ext/**",

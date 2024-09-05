@@ -24,7 +24,7 @@ export async function enableOpenedgeAblExtension (runtimes: IRuntime[]) {
 			log.info('rebuild complete! (rcodeCount=' + rcodeCount + ')')
 			log.info('riversidesoftware.openedge-abl-lsp extension is enabled!')
 			return true
-		}, (e) => { throw e})
+		}, (e) => { throw e })
 }
 
 export function restartLangServer () {
@@ -52,33 +52,83 @@ export function rebuildAblProject () {
 		}, (err) => { throw err })
 }
 
-export async function waitForLangServerReady () {
-	const maxWait = 60
-	const waitTime = new Duration()
+export async function printLastLangServerError () {
+	const pattern = process.env['ABLUNIT_TEST_RUNNER_REPO_DIR'] + '/.vscode-test/user-data/logs/*/window*/exthost/output_logging_*/*-ABL Language Server.log'
+	log.info('grep for log files using pattern: ' + pattern)
+	const logFiles = glob.globSync(pattern)
 
-	// now wait until it is ready
-	let dumpSuccess = false
-	for (let i = 0; i < maxWait; i++) {
-		log.info('start abl.dumpLangServStatus (i=' + i + ')')
-		dumpSuccess = await commands.executeCommand('abl.dumpLangServStatus').then(() => {
+	log.info('logFiles=' + JSON.stringify(logFiles, null, 2))
+	if (logFiles.length <= 0) {
+		log.warn('No log files found for ABL Language Server')
+		return false
+	}
+	const uri = Uri.file(logFiles[logFiles.length - 1])
+	log.info('uri=' + uri)
+	return getContentFromFilesystem(uri)
+		.then((text) => {
+			if (text === '') {
+				throw new Error('ABL language server log file is empty (uri=' + uri + ')')
+			}
+			const lines = text.split('\n')
+			log.info('lines.length=' + lines.length)
+
+			if (lines.length == 0) {
+				throw new Error('ABL language server log file has no lines (uri=' + uri + ')')
+			}
+
+			let lastLogErrors = ''
+			let hasError = false
+			for (let i = lines.length - 1; i >= 0; i--) {
+				// read until we hit an error, then read until we don't see an error.
+				log.debug('lines[' + i + ']=' + lines[i])
+				if (lines[i].includes(' [ERROR] ')) {
+					hasError = true
+					lastLogErrors = String(i).padStart(8, ' ') + ': ' + lines[i] + '\n' + lastLogErrors
+				} else if (hasError) {
+					break
+				}
+			}
+			log.info('Last logged ABL lang server error(s):\n' + lastLogErrors)
 			return true
 		}, (e) => {
-			log.info('dumpLangServStatus e=' + e)
-			return false
+			throw e
 		})
-		await sleep2(400)
-		log.info('end abl.dumpLangServStatus:' + dumpSuccess + ', i=' + i + ' ' + waitTime + ' (dumpSuccess=' + dumpSuccess + ')')
-		if (dumpSuccess) {
-			break
-		}
-		await sleep2(200)
+}
+
+export async function waitForLangServerReady () {
+	const maxWait = 15
+	const waitTime = new Duration()
+	let dumpSuccess = false
+
+	// now wait until it is ready
+	for (let i = 0; i < maxWait; i++) {
+		log.debug('start abl.dumpLangServStatus (i=' + i + ')')
+		const dumpSuccessProm = commands.executeCommand('abl.dumpLangServStatus')
+			.then(() => { return true
+			}, (e) => {
+				log.info('dumpLangServStatus e=' + e)
+				return false
+			})
+
+		dumpSuccess = await dumpSuccessProm
+		if (dumpSuccess) { break }
+		await sleep2(250, 'language server not ready yet... (i=' + i + ' / ' + maxWait + ', dumpSuccess=' + dumpSuccess + ')')
+			.then(() => { return printLastLangServerError() })
+			.catch((e: unknown) => { throw e })
 	}
+
 	if (dumpSuccess) {
 		log.info('lang server is ready ' + waitTime)
 		return true
 	}
-	log.error('lang server is not ready! '  + waitTime)
-	throw new Error('lang server is not ready!')
+
+	return printLastLangServerError()
+		.then(() => {
+			log.error('lang server is not ready! (waitTime='  + waitTime + ')')
+			throw new Error('lang server is not ready! (waitTime='  + waitTime + ')')
+		}, (e) => {
+			throw e
+		})
 }
 
 export async function setRuntimes (runtimes: IRuntime[] = []) {
@@ -109,10 +159,14 @@ export async function setRuntimes (runtimes: IRuntime[] = []) {
 		return true
 	}
 
-	log.info('workspace.getConfiguration("abl").update("configuration.runtimes") - START')
-	const r = await workspace.getConfiguration('abl').update('configuration.runtimes', runtimes, true)
+	log.info('setting workspace configuration abl.configuration.defaultRuntime=' + oeVersion())
+	const r =  conf.update('configuration.defaultRuntime', oeVersion(), true)
 		.then(() => {
-			log.info('workspace.getConfiguration("abl").update(configuration.runtimes) - END')
+			log.info('workspace.getConfiguration("abl").update("configuration.runtimes") - START')
+			return conf.update('configuration.runtimes', runtimes, true)
+		})
+		.then(() => {
+			log.info('workspace.getConfiguration("abl").update(configuration.runtime) - END')
 			return restartLangServer()
 		})
 		.then(() => {

@@ -27,6 +27,7 @@ export interface ITestCase {
 	status: string
 	time: number
 	failure?: ITestCaseFailure
+	skipped: boolean
 }
 
 export interface ITestSuite {
@@ -50,6 +51,7 @@ export interface ITestSuites {
 	passed: number
 	errors: number
 	failures: number
+	skipped: number
 	testsuite?: ITestSuite[]
 }
 
@@ -58,12 +60,20 @@ export class ABLResultsParser {
 	propath: PropathParser
 	debugLines: ABLDebugLines
 
-	constructor (propath: PropathParser, debugLines: ABLDebugLines) {
-		this.propath = propath
-		this.debugLines = debugLines
+	constructor (propath?: PropathParser, debugLines?: ABLDebugLines) {
+		if (propath) {
+			this.propath = propath
+		} else {
+			this.propath = new PropathParser(workspace.workspaceFolders![0])
+		}
+		if (debugLines) {
+			this.debugLines = debugLines
+		} else {
+			this.debugLines = new ABLDebugLines(this.propath)
+		}
 	}
 
-	async parseResults (configUri: Uri, jsonUri: Uri | undefined) {
+	async parseResults (configUri: Uri, jsonUri?: Uri) {
 		const resultsBits = await workspace.fs.readFile(configUri)
 		const resultsXml = Buffer.from(resultsBits.toString()).toString('utf8')
 		// eslint-disable-next-line @typescript-eslint/no-confusing-void-expression
@@ -71,7 +81,7 @@ export class ABLResultsParser {
 		try {
 			this.resultsJson = [ await this.parseSuites(resultsXmlJson) ]
 		} catch (err) {
-			log.error('[parseResults] error parsing results.xml file: ' + err)
+			log.error('[parseResults] error parsing ' + configUri.fsPath + ' file: ' + err)
 			throw err
 		}
 		if (jsonUri) {
@@ -111,10 +121,18 @@ export class ABLResultsParser {
 		const jsonData: ITestSuites = {
 			name: namePathSep,
 			tests: Number(res.$.tests),
-			passed: Number(res.$.tests) - Number(res.$.errors) - Number(res.$.failures),
+			passed: Number(res.$.tests) - Number(res.$.errors) - Number(res.$.failures) - Number(res.$.skipped ?? 0),
 			failures: Number(res.$.failures),
 			errors: Number(res.$.errors),
+			skipped: Number(res.$.skipped ?? 0),
 			testsuite: testsuite
+		}
+
+		if (jsonData.passed === null) {
+			log.info('res.$.tests=' + res.$.tests)
+			log.info('res.$.errors' + res.$.errors)
+			log.info('res.$.failures' + res.$.failures)
+			log.info('res.$.skipped' + res.$.skipped)
 		}
 		return jsonData
 	}
@@ -127,7 +145,7 @@ export class ABLResultsParser {
 			const testsuite = await this.parseSuite(res[idx].testsuite)
 			const testcases = await this.parseTestCases(res[idx].testcase)
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-call
-			let namePathSep = res[idx].$.name.replace(/\\/g, '/') as string ?? undefined
+			let namePathSep = res[idx].$.name.replace(/\\/g, '/') as string
 			if (!isRelativePath(namePathSep)) {
 				namePathSep = workspace.asRelativePath(namePathSep, false)
 			}
@@ -137,14 +155,20 @@ export class ABLResultsParser {
 				classname: res[idx].$.classname ?? undefined,
 				id: res[idx].$.id,
 				tests: Number(res[idx].$.tests),
-				passed: Number(res[idx].$.tests) - Number(res[idx].$.errors) - Number(res[idx].$.failures) - Number(res[idx].$.skipped),
+				passed: Number(res[idx].$.tests) - Number(res[idx].$.errors) - Number(res[idx].$.failures) - Number(res[idx].$.skipped ?? 0),
 				errors: Number(res[idx].$.errors),
 				failures: Number(res[idx].$.failures),
-				skipped: Number(res[idx].$.skipped),
+				skipped: Number(res[idx].$.skipped ?? 0),
 				time: Number(res[idx].$.time * 1000),
 				properties: this.parseProperties(res[idx].properties),
 				testsuite: testsuite,
 				testcases: testcases
+			}
+			if (suites[idx].passed === null) {
+				log.info('res[idx].$.tests=' + res[idx].$.tests)
+				log.info('res[idx].$.errors' + res[idx].$.errors)
+				log.info('res[idx].$.failures' + res[idx].$.failures)
+				log.info('res[idx].$.skipped' + res[idx].$.skipped)
 			}
 		}
 		return suites
@@ -171,14 +195,22 @@ export class ABLResultsParser {
 				classname: res[idx].$.classname ?? undefined,
 				status: res[idx].$.status,
 				time: Number(res[idx].$.time),
-				failure: await this.parseFailOrError(res[idx])
+				failure: await this.parseFailOrError(res[idx]),
+				skipped: this.parseSkipped(res[idx]),
 			}
 		}
 		return cases
 	}
 
+	parseSkipped (res: any) {
+		if (res.$.status === 'Success' && res.$.ignored === 'true') {
+			return true
+		}
+		return false
+	}
+
 	async parseFailOrError (res: any) {
-		if (res.$.status === 'Success' || res.$.status === 'Skipped') {
+		if (res.$.status === 'Success') {
 			return undefined
 		}
 		let type = ''
@@ -187,8 +219,11 @@ export class ABLResultsParser {
 			type = 'failure'
 		} else if (res.error) {
 			type = 'error'
+		} else if (res.skipped) {
+			// there's a 'message' atttribute in skipped we might want to parse
+			return
 		} else {
-			throw new Error('malformed results  file (3) - could not find \'failure\' or \'error\' node')
+			throw new Error('malformed results  file (3) - could not find \'failure\' or \'error\' or \'skipped\' node')
 		}
 		if (res[type].length > 1) { throw new Error('more than one failure or error in testcase - use case not handled') }
 

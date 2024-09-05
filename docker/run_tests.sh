@@ -54,6 +54,7 @@ initialize () {
 			h)	usage && exit 0 ;;
 			P)	CREATE_PACKAGE=true ;;
 			p)	ABLUNIT_TEST_RUNNER_PROJECT_NAME=$OPTARG ;;
+			x)	OPTS='-x' ;;
 			v)	VERBOSE=true ;;
 			t)  TRACE=true ;;
 			V)	ABLUNIT_TEST_RUNNER_VSCODE_VERSION=$OPTARG ;;
@@ -153,6 +154,7 @@ run_tests_in_docker () {
 			-e VERBOSE
 			-e ABLUNIT_TEST_RUNNER_VSCODE_VERSION
 			-e ABLUNIT_TEST_RUNNER_NO_COVERAGE
+			-e SET_X
 			-v "$PWD/artifacts":/home/circleci/project/artifacts
 			-v "$PWD/coverage":/home/circleci/project/coverage
 		)

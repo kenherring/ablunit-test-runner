@@ -33,6 +33,10 @@ initialize () {
 
 	export PATH CIRCLECI ABLUNIT_TEST_RUNNER_OE_VERSION
 
+	if [ -d artifacts ]; then
+		rm -rf artifacts/*
+	fi
+
 	if [ ! -d node_modules ]; then
 		npm install
 	fi
@@ -62,10 +66,10 @@ copy_user_settings () {
 	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}]"
 
 	if [ -d .vscode-test ]; then
-		find .vscode-test -type f -name "*.log"
+		$VERBOSE && find .vscode-test -type f -name "*.log"
 		find .vscode-test -type f -name "*.log" -delete
 		if [ -d .vscode-test/user-data ]; then
-			find .vscode-test/user-data
+			$VERBOSE && find .vscode-test/user-data
 			find .vscode-test/user-data -delete
 		fi
 	fi
@@ -110,8 +114,11 @@ create_dbs () {
 	cd -
 }
 
-doPackage () {
-	$NO_BUILD && return 0
+package () {
+	if $NO_BUILD; then
+		echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] skipping package (NO_BUILD=$NO_BUILD)"
+		return 0
+	fi
 	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] pwd=$(pwd)"
 
 	local PACKAGE_OUT_OF_DATE=false

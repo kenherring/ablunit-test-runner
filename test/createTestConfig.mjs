@@ -155,7 +155,7 @@ function getLaunchArgs (projName) {
 	// args.push('--locale <locale>')
 	// args.push('--user-data-dir', '<dir>')
 	// args.push('--profile <profileName>')
-	args.push('--profile-temp') // create a temporary profile for the test run in lieu of cleaning up user data
+	// args.push('--profile-temp') // create a temporary profile for the test run in lieu of cleaning up user data
 	// args.push('--help')
 	// args.push('--extensions-dir', '<dir>')
 	// args.push('--list-extensions')
@@ -177,9 +177,9 @@ function getLaunchArgs (projName) {
 	// if (vsVersion === 'insiders') {
 	// 	args.push('--enable-proposed-api', 'TestCoverage') // '<ext-id>'
 	// }
-	if (vsVersion === 'insiders') {
-		args.push('--enable-proposed-api', 'kherring.ablunit-test-runner')
-	}
+	// if (vsVersion === 'insiders') {
+	// 	args.push('--enable-proposed-api', 'kherring.ablunit-test-runner')
+	// }
 	// args.push('--version')
 	// args.push('--verbose')
 	// args.push('--trace')
@@ -276,6 +276,7 @@ function getTestConfig (projName) {
 		// useInstallation: { fromMachine: true },
 		// download: { reporter: ProgressReporter, timeout: ? }
 		installExtensions: [ 'riversidesoftware.openedge-abl-lsp' ],
+		// installExtensions: [ 'riversidesoftware.openedge-abl-lsp@prerelease' ],
 
 		// --- IBaseTestConfiguration --- //
 		files,
@@ -319,7 +320,7 @@ function getTests () {
 }
 
 function getCoverageOpts () {
-	const coverageDir = path.resolve(__dirname, '..', 'coverage')
+	const coverageDir = path.resolve(__dirname, '..', 'artifacts', 'coverage')
 	fs.mkdirSync(coverageDir, { recursive: true })
 	return {
 		exclude: [

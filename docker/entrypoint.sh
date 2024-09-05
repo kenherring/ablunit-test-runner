@@ -56,11 +56,12 @@ initialize () {
 	mkdir -p "$npm_config_cache" "$PROJECT_DIR"
 	export npm_config_cache
 
-	while getopts 'bB' OPT; do
+	while getopts 'bBx' OPT; do
 		case "$OPT" in
 			b)	BASH_AFTER=true
 				BASH_AFTER_ERROR=true ;;
 			B)	BASH_AFTER_ERROR=true ;;
+			x)	set -x ;;
 			?)	echo "script usage: $(basename "$0") [-b]" >&2
 				exit 1 ;;
 		esac
@@ -128,7 +129,7 @@ find_files_to_copy () {
 	echo "file counts:"
 	echo "   staged=$(wc -l /tmp/staged_files)"
 	echo "  deleted=$(wc -l /tmp/deleted_files)"
-	echo " modified=$(wc -l /tmp/modified_files 2>/dev/null || echo 0)"
+	echo " modified=$(wc -l /tmp/modified_files)"
 
 	cd "$BASE_DIR"
 }
@@ -136,6 +137,7 @@ find_files_to_copy () {
 copy_files () {
 	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] pwd=$(pwd)"
 	local TYPE="$1"
+	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] TYPE=$TYPE"
 	while read -r FILE; do
 		$VERBOSE && echo "copying $TYPE file $FILE"
 		if [ ! -d "$(dirname "$FILE")" ]; then
@@ -183,12 +185,12 @@ run_tests_base () {
 
 analyze_results () {
 	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] pwd=$(pwd)"
-	RESULTS_COUNT=$(find . -name 'mocha_results_*.xml' | wc -l)
+	RESULTS_COUNT=$(find artifacts/mocha_results_sonar/ -name '*.xml' | wc -l)
 	LCOV_COUNT=$(find . -name 'lcov.info' | wc -l)
 	HAS_ERROR=false
 
 	if [ "$RESULTS_COUNT" = 0 ]; then
-		echo 'ERROR: mocha_results_*.xml not found'
+		echo 'ERROR: artifacts/mocha_results_sonar/*.xml not found'
 		HAS_ERROR=true
 	fi
 	if [ "$TEST_PROJECT" = "base" ] && [ "$LCOV_COUNT" = 0 ]; then

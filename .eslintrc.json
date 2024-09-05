@@ -13,6 +13,7 @@
 		"plugin:@typescript-eslint/stylistic-type-checked",
 		"plugin:promise/recommended"
 	],
+
 	"globals": {
 		"Atomics": "readonly",
 		"SharedArrayBuffer": "readonly"
@@ -33,7 +34,7 @@
 	"ignorePatterns": [
 		"dummy-ext/",
 		"test_projects/",
-		"webpack.config.js"
+		"esbuild.js"
 	],
 	"rules": {
 		"@stylistic/indent": [ "error", "tab" ],
@@ -68,16 +69,12 @@
 		],
 		"@typescript-eslint/prefer-readonly": "warn",
 		"@typescript-eslint/restrict-plus-operands": "off",
-		"require-await": "error",
-		"@typescript-eslint/require-await": "error",
-		// "no-return-await": "off", // deprecated; must be disabled to avoid conflict with "@typescript-eslint/return-await"
-		// "@typescript-eslint/return-await": "error",
+		"no-return-await": "off", // deprecated; must be disabled to avoid conflict with "@typescript-eslint/return-await"
+		"@typescript-eslint/return-await": "error",
 		"@typescript-eslint/switch-exhaustiveness-check": "warn",
 
-		// "@typescript-eslint/no-floating-promises": "error",
 		"@typescript-eslint/no-misused-promises": "error",
 		"@typescript-eslint/no-floating-promises": "error",
-		// "@typescript-eslint/promise-function-async": "warn",
 
 		"promise/catch-or-return": "warn",
 		"promise/no-callback-in-promise": "off",
