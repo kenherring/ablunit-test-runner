@@ -360,11 +360,8 @@ export async function activate (context: ExtensionContext) {
 				} else if (err instanceof Error) {
 					log.error('ablunit run failed with error: ' + err.message + ' - ' + err.stack)
 					throw err
-				} else {
-					log.error('ablunit run failed with non-error: ' + err)
-					throw new Error('ablunit run failed with non-error: ' + err)
 				}
-				throw err
+				throw new Error('ablunit run failed with non-error: ' + err)
 			})
 	}
 

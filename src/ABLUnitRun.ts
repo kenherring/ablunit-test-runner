@@ -176,21 +176,17 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 			exec(execCommand, execOpts, (err: ExecException | null, stdout: string, stderr: string) => {
 				const duration = Date.now() - start
 
-				const rejectErrs: string[] = []
 				if (err) {
-					// log.error('Error = ' + err.name + ' (ExecExcetion)\r\n   ' + err.message, options)
-					// log.error('[err] ' + JSON.stringify(err, null, 2) + '[\\err]', options)
-					rejectErrs.push(err.name + ' - ' + err.message)
+					const errStr = '[err]\r\n' + JSON.stringify(err, null, 2) + '\r\n[\\err]'
+					log.error(errStr, options)
 				}
 				if (stdout) {
-					// stdout = '[stdout] ' + stdout.replace(/\n/g, '\n[stdout] ')
 					stdout = '[stdout] ' + stdout + '[\\stdout]'
 					log.info(stdout, options)
 				}
 				if (stderr) {
 					stderr = '[stderr] ' + stderr.replace(/\n/g, '\n[stderr] ')
 					log.error(stderr, options)
-					rejectErrs.push(stderr)
 				}
 
 				if (err) {
