@@ -59,6 +59,7 @@ export interface IProjectJson {
 export interface IDatabaseConnection {
 	name: string
 	dumpFile: string
+	schemaFile: string
 	connect: string
 	aliases: string[]
 }

@@ -23,6 +23,10 @@ export interface ICallStack {
 export async function parseCallstack (debugLines: ABLDebugLines, callstackRaw: string) {
 
 	const regex = /^(.*) at line (\d+) *\((.*)\)$/
+	if (!callstackRaw) {
+		throw new Error('callstackRaw is undefined')
+	}
+
 	const lines = callstackRaw.replace(/\r/g, '').replace(/\\/g, '/').split('\n')
 
 	const callstack: ICallStack = { items: [] }

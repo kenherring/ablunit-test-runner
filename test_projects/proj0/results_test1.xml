@@ -1,0 +1,48 @@
+<?xml version="1.0" ?>
+<testsuites errors="1" failures="0" name="ABLUnit" tests="7">
+    <testsuite classname="Consultingwerk.OeraTests1.SCL3714.TestGenerator" errors="1" failures="0" id="1" name="Consultingwerk\OeraTests1\SCL3714\TestGenerator.cls" skipped="0" tests="7" time="0">
+        <properties>
+            <property name="proversion" value="12.8.1.0.1211"/>
+            <property name="process-architecture" value="64"/>
+            <property name="opsys" value="WIN32"/>
+            <property name="window-system" value="TTY"/>
+            <property name="cpinternal" value="UTF-8"/>
+            <property name="startup-parameters" value="-pf c:\Progress\OpenEdge128_64\startup.pf,-cpinternal UTF-8,-cpstream UTF-8,-cpcoll Basic,-cpcase Basic,-d mdy,-numsep 44,-numdec 46,(end .pf),-b,-p c:/Users/Peter/.vscode/extensions/kherring.ablunit-test-runner-0.2.1/resources/ABLUnitCore-wrapper.p,-basekey INI,-ininame progress.ini,-T c:/Work_STREAM/SmartComponentLibrary/Develop128/UnitTests,-pf dbconn.pf,-db c:/Work/SmartComponents4NET/128_64/DB/SmartDB/SmartDB,-db c:/Work/SmartComponents4NET/128_64/DB/sports2000/sports2000,-db c:/Work/SmartComponents4NET/128_64/DB/icfdb/icfdb,(end .pf),-profile profile.options,-param CFG=ablunit.json"/>
+        </properties>
+        <testcase classname="Consultingwerk.OeraTests1.SCL3714.TestGenerator" name="BeforeAll" status="Error" time="0">
+            <error message="System.IO.FileNotFoundException: Could not load file or assembly &apos;proparse.net, Version=4.2.0.3, Culture=neutral, PublicKeyToken=cda1b098b1034b24&apos; or one of its dependencies. The system cannot find the file specified." type="System.IO.FileNotFoundException">ProparseHelper Consultingwerk.Studio.Proparse.ProparseHelper at line 795  (..\ABL\Consultingwerk\Studio\Proparse\ProparseHelper.r)
+AnnotationParser Consultingwerk.Studio.AnnotationParser at line 736  (..\ABL\Consultingwerk\Studio\AnnotationParser.r)
+UpdateBusinessEntityCalculatedFields Consultingwerk.BusinessEntityDesigner.Generator.BusinessEntityGenerator at line 4848  (..\ABL\Consultingwerk\BusinessEntityDesigner\Generator\BusinessEntityGenerator.r)
+GenerateBusinessEntity Consultingwerk.BusinessEntityDesigner.Generator.BusinessEntityGenerator at line 2551  (..\ABL\Consultingwerk\BusinessEntityDesigner\Generator\BusinessEntityGenerator.r)
+GenerateCode Consultingwerk.BusinessEntityDesigner.Generator.BusinessEntityGenerator at line 2668  (..\ABL\Consultingwerk\BusinessEntityDesigner\Generator\BusinessEntityGenerator.r)
+GenerateCustomerBE Consultingwerk.OeraTests1.SCL3714.TestGenerator at line 770  (.\Consultingwerk\OeraTests1\SCL3714\TestGenerator.r)
+BeforeAll Consultingwerk.OeraTests1.SCL3714.TestGenerator at line 746  (.\Consultingwerk\OeraTests1\SCL3714\TestGenerator.r)
+InvokeTestMethod OpenEdge.ABLUnit.Model.TestClass at line 82  (OpenEdge/ABLUnit/Model/TestClass.r)
+RunLifecycleMethods OpenEdge.ABLUnit.Model.TestCase at line 316  (OpenEdge/ABLUnit/Model/TestCase.r)
+StartEntity OpenEdge.ABLUnit.Model.TestCase at line 216  (OpenEdge/ABLUnit/Model/TestCase.r)
+runtests OpenEdge.ABLUnit.Runner.ABLRunner at line 1604  (OpenEdge/ABLUnit/Runner/ABLRunner.r)
+runtests OpenEdge.ABLUnit.Runner.ABLRunner at line 1631  (OpenEdge/ABLUnit/Runner/ABLRunner.r)
+RunTests OpenEdge.ABLUnit.Runner.ABLRunner at line 446  (OpenEdge/ABLUnit/Runner/ABLRunner.r)
+ABLUnitCore.p at line 97  (ABLUnitCore.r)
+c:/Users/Peter/.vscode/extensions/kherring.ablunit-test-runner-0.2.1/resources/ABLUnitCore-wrapper.p at line 2  (c:\Users\Peter\.vscode\extensions\kherring.ablunit-test-runner-0.2.1\resources\ABLUnitCore-wrapper.p)</error>
+        </testcase>
+        <testcase classname="Consultingwerk.OeraTests1.SCL3714.TestGenerator" name="ValidateCustomerParameterObjects" status="Ignored" time="0">
+            <skipped message="NotStarted"/>
+        </testcase>
+        <testcase classname="Consultingwerk.OeraTests1.SCL3714.TestGenerator" name="ValidateCustomerDataAccess" status="Ignored" time="0">
+            <skipped message="NotStarted"/>
+        </testcase>
+        <testcase classname="Consultingwerk.OeraTests1.SCL3714.TestGenerator" name="ValidateCustomerDatasetModel" status="Ignored" time="0">
+            <skipped message="NotStarted"/>
+        </testcase>
+        <testcase classname="Consultingwerk.OeraTests1.SCL3714.TestGenerator" name="ValidateEmployeeParameterObjects" status="Ignored" time="0">
+            <skipped message="NotStarted"/>
+        </testcase>
+        <testcase classname="Consultingwerk.OeraTests1.SCL3714.TestGenerator" name="ValidateEmployeeDataAccess" status="Ignored" time="0">
+            <skipped message="NotStarted"/>
+        </testcase>
+        <testcase classname="Consultingwerk.OeraTests1.SCL3714.TestGenerator" name="ValidateEmployeeDatasetModel" status="Ignored" time="0">
+            <skipped message="NotStarted"/>
+        </testcase>
+    </testsuite>
+</testsuites>

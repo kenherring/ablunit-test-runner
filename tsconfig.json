@@ -57,6 +57,7 @@
 		"./**/*.ts",
 		"./**/*.mjs",
 		"./test/suites/*.test.ts",
+		"./esbuild.js",
 	],
 	"exclude": [
 		"./dummy-ext/**",

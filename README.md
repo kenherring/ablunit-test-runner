@@ -15,7 +15,7 @@ The [ABLUnit Test Runner](https://github.com/kenherring/ablunit-test-runner/) ex
 
 ### 📷 Code Coverage Screenshot
 
-![code coverage example screenshot](https://github.com/kenherring/ablunit-test-runner/raw/main/docs/insiders.png)
+![code coverage example screenshot](https://github.com/kenherring/ablunit-test-runner/raw/main/resources/images/coverage.png)
 
 ## 📝 Supported OpenEdge Versions
 

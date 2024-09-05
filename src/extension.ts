@@ -62,15 +62,15 @@ export async function activate (context: ExtensionContext) {
 	setContextPaths(contextStorageUri, contextResourcesUri)
 	await createDir(contextStorageUri)
 
-	log.info('push extension controller created')
 	context.subscriptions.push(ctrl)
 
-	log.debug('ABLUNIT_TEST_RUNNER_UNIT_TESTING=' + process.env['ABLUNIT_TEST_RUNNER_UNIT_TESTING'])
-	log.debug('pysg _ablunit.getExtensionTestReferences command')
+	log.debug('process.env[\'ABLUNIT_TEST_RUNNER_UNIT_TESTING\']=' + process.env['ABLUNIT_TEST_RUNNER_UNIT_TESTING'])
+	log.debug('push _ablunit.getExtensionTestReferences command')
 	context.subscriptions.push(commands.registerCommand('_ablunit.getExtensionTestReferences', () => { return getExtensionTestReferences() }))
 	log.debug('push _ablunit.isRefreshTestsComplete command')
 	context.subscriptions.push(commands.registerCommand('_ablunit.isRefreshTestsComplete', () => { return isRefreshTestsComplete }))
-
+	log.debug('push _ablunit.getTestController command')
+	context.subscriptions.push(commands.registerCommand('_ablunit.getTestController', () => { return ctrl }))
 
 	context.subscriptions.push(
 		commands.registerCommand('_ablunit.openCallStackItem', openCallStackItem),
@@ -114,16 +114,6 @@ export async function activate (context: ExtensionContext) {
 			throw new Error('continuous test runs not implemented')
 		}
 		return startTestRun(request, token).then(() => { return }, (e) => { throw e })
-	}
-
-	const runHandlerRun = (request: TestRunRequest, token: CancellationToken): Promise<void> => {
-		runWithCoverage = false
-		return runHandler(request, token)
-	}
-
-	const runHandlerCoverage = (request: TestRunRequest, token: CancellationToken): Promise<void> => {
-		runWithCoverage = true
-		return runHandler(request, token)
 	}
 
 	const loadDetailedCoverage = (testRun: TestRun, fileCoverage: FileCoverage, token: CancellationToken): Thenable<FileCoverageDetail[]> => {
@@ -239,6 +229,7 @@ export async function activate (context: ExtensionContext) {
 								+ p.passed + ' passed, '
 								+ p.errors + ' errors, '
 								+ p.failures + ' failures, '
+								+ p.skipped + ' skipped, '
 								+ r.duration
 					log.info(totals, run)
 				} else {
@@ -278,12 +269,16 @@ export async function activate (context: ExtensionContext) {
 			const data = resultData.get(run) ?? []
 			log.info('setting recentResults (data.length=' + data.length + ')')
 			log.debug('setting recentResults (data.length=' + data.length + ')')
+			log.debug('request.profile.kind=' + request.profile?.kind)
 			recentResults = data
 
-			log.info('request.profile=' + request.profile)
-
-			if (runWithCoverage && data.length > 0) {
+			if (request.profile?.kind === TestRunProfileKind.Coverage) {
+				log.info('adding coverage results to test run')
 				for (const res of data) {
+					log.info('res.filecoverage.length=' + res.filecoverage.length)
+					if (res.filecoverage.length === 0) {
+						log.warn('no coverage data found (profile data path=' + res.cfg.ablunitConfig.profFilenameUri + ')')
+					}
 					res.filecoverage.forEach((c) => {
 						run.addCoverage(c)
 					})
@@ -311,7 +306,7 @@ export async function activate (context: ExtensionContext) {
 				}
 				let r = res.find(r => r.workspaceFolder === wf)
 				if (!r) {
-					r = new ABLResults(wf, await getStorageUri(wf), contextStorageUri, contextResourcesUri, cancellation)
+					r = new ABLResults(wf, await getStorageUri(wf), contextStorageUri, contextResourcesUri, request, cancellation)
 					cancellation.onCancellationRequested(() => {
 						log.debug('cancellation requested - createABLResults-1')
 						r?.dispose()
@@ -464,9 +459,9 @@ export async function activate (context: ExtensionContext) {
 		})
 	}
 
-	const testProfileRun = ctrl.createRunProfile('Run Tests', TestRunProfileKind.Run, runHandlerRun, true, new TestTag('runnable'), false)
+	const testProfileRun = ctrl.createRunProfile('Run Tests', TestRunProfileKind.Run, runHandler, true, new TestTag('runnable'), false)
 	// const testProfileDebug = ctrl.createRunProfile('Debug Tests', TestRunProfileKind.Debug, runHandler, false, new TestTag('runnable'), false)
-	const testProfileCoverage = ctrl.createRunProfile('Run Tests w/ Coverage', TestRunProfileKind.Coverage, runHandlerCoverage, true, new TestTag('runnable'), false)
+	const testProfileCoverage = ctrl.createRunProfile('Run Tests w/ Coverage', TestRunProfileKind.Coverage, runHandler, true, new TestTag('runnable'), false)
 	// const testProfileDebugCoverage = ctrl.createRunProfile('Debug Tests w/ Coverage', TestRunProfileKind.Coverage, runHandler, false, new TestTag('runnable'), false)
 	testProfileRun.configureHandler = configHandler
 	// testProfileDebug.configureHandler = configHandlerDebug
@@ -879,7 +874,6 @@ async function parseMatchingFiles (files: Uri[], controller: TestController, exc
 			proms.push(prom)
 		}
 	}
-	log.info('330')
 	const r = await Promise.all(proms).then(() => { return true })
 	return r
 }
@@ -1064,10 +1058,10 @@ function logActivationEvent (extensionMode: ExtensionMode) {
 	if (!log) {
 		throw new Error('log is undefined')
 	}
-	if (extensionMode == ExtensionMode.Development) {
+	if (extensionMode == ExtensionMode.Development || extensionMode == ExtensionMode.Test) {
 		log.setLogLevel(LogLevel.Debug)
 	}
-	log.info('activating extension! (version=' + getExtensionVersion() + ')')
+	log.info('activating extension! (version=' + getExtensionVersion() + ', logLevel=' + log.getLogLevel() + ', extensionMode=' + extensionMode + ')')
 }
 
 function getExtensionVersion () {
