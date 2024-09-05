@@ -1,4 +1,4 @@
-import { FileType, Uri, workspace, WorkspaceFolder } from 'vscode'
+import { FileType, TestRunRequest, Uri, workspace, WorkspaceFolder } from 'vscode'
 import { log } from './ChannelLogger'
 import { PropathParser } from './ABLPropath'
 import { platform } from 'os'
@@ -15,7 +15,7 @@ export class ABLUnitConfig  {
 	// ablunitConfig: IABLUnitConfig = <IABLUnitConfig>{}
 	ablunitConfig: RunConfig = {} as RunConfig
 
-	setup (workspaceFolder: WorkspaceFolder) {
+	setup (workspaceFolder: WorkspaceFolder, request: TestRunRequest) {
 		log.info('[ABLUnitConfigWriter setup] workspaceUri=' + workspaceFolder.uri.fsPath)
 		this.ablunitConfig = getProfileConfig(workspaceFolder)
 		log.info('[ABLUnitConfigWriter constructor] setup complete! tempDir=' + this.ablunitConfig.tempDirUri.fsPath)
@@ -110,8 +110,11 @@ export class ABLUnitConfig  {
 		log.info('creating dbconn.pf: \'' + this.ablunitConfig.dbConnPfUri.fsPath + '\'')
 		const lines: string[] = []
 
-		for (const conn of dbConns) {
-			lines.push(conn.connect)
+		// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+		if (dbConns && dbConns.length > 0) {
+			for (const conn of dbConns) {
+				lines.push(conn.connect)
+			}
 		}
 		if (lines.length > 0) {
 			return this.writeFile(uri, Uint8Array.from(Buffer.from(lines.join('\n') + '\n')))

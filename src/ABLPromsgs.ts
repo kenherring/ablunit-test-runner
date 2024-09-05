@@ -33,34 +33,6 @@ export class ABLPromsgs {
 		})
 	}
 
-	loadFromDLC (dlc: IDlc) {
-		return workspace.fs.stat(dlc.uri).then(() => {
-			const promsgDir = Uri.joinPath(dlc.uri, 'prohelp/msgdata')
-			return workspace.fs.readDirectory(promsgDir).then((dirFiles) => {
-
-				const promArr: Promise<void>[] = []
-				for (const file of dirFiles) {
-					promArr.push(this.loadPromsgFile(Uri.joinPath(promsgDir, file[0])).then(() => { return }, (err: unknown) => {
-						throw new Error('Cannot load promsgs file \'' + file + '\', err=' + err)
-					}))
-				}
-
-				return Promise.all(promArr).then(() => {
-					log.info('promsgs loaded from DLC')
-					return
-				}, (err) => {
-					throw new Error('Cannot load promsgs from DLC, err=' + err)
-				})
-
-			}, (err) => {
-				throw new Error('Cannot read promsgs directory \'' + promsgDir + '\', err=' + err)
-			})
-		}, (err) => {
-			log.info('Cannot find DLC directory \'' + this.dlc.uri.fsPath + '"')
-			throw new Error('Cannot find DLC directory \'' + this.dlc.uri.fsPath + '", err=' + err)
-		})
-	}
-
 	async loadPromsgFile (msgfile: Uri) {
 		const lines = await workspace.fs.readFile(msgfile).then((buffer) => {
 			return Buffer.from(buffer).toString('utf8').split('\n')
@@ -100,6 +72,31 @@ export class ABLPromsgs {
 
 			this.promsgs.push({ msgnum: msgnum, msgtext: msgtext })
 		})
+	}
+
+	loadFromDLC (dlc: IDlc) {
+		const promsgDir = Uri.joinPath(dlc.uri, 'prohelp/msgdata')
+		return workspace.fs.stat(dlc.uri)
+			.then(() => {
+				return workspace.fs.readDirectory(promsgDir)
+			}).then((dirFiles) => {
+
+				const promArr: Promise<void>[] = []
+				for (const file of dirFiles) {
+					promArr.push(this.loadPromsgFile(Uri.joinPath(promsgDir, file[0])))
+				}
+
+				return Promise.all(promArr)
+			}).then(() => {
+				log.info('promsgs loaded from DLC')
+				return
+			}, (err) => {
+				throw new Error('Cannot read promsgs directory \'' + promsgDir + '\', err=' + err)
+			})
+		// }, (err) => {
+		// 	log.info('Cannot find DLC directory \'' + this.dlc.uri.fsPath + '"')
+		// 	throw new Error('Cannot find DLC directory \'' + this.dlc.uri.fsPath + '", err=' + err)
+		// })
 	}
 
 	async loadFromCache (cacheUri: Uri) {

@@ -10,7 +10,7 @@
 			"name": "sp2k",
 			"aliases": [ "dbalias", "third" ], //here's another comment.  why is this field required per the schema?
 			"connect": "-db target/db/sp2k -RO",
-			"dumpFile": "target/sp2k.df"
+			"schemaFile": "target/sp2k.df"
 		}
 	],
 	"numThreads": 1

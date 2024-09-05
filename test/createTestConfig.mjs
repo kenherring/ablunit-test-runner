@@ -15,7 +15,8 @@ import process from 'process'
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const vsVersionNum = '1.88.0'
 const vsVersion = process.env['ABLUNIT_TEST_RUNNER_VSCODE_VERSION'] ?? 'stable'
-const oeVersion = process.env['ABLUNIT_TEST_RUNNER_OE_VERSION'] ?? '12.2.12'
+const oeVersion = process.env['ABLUNIT_TEST_RUNNER_OE_VERSION'] ?? '12.8.1'
+const useOEAblPrerelease = false
 const enableExtensions = [
 	'AtStart',
 	'DebugLines',
@@ -78,6 +79,7 @@ function getMochaOpts (projName, firstTest) {
 	const xunitFile = path.resolve(reporterDir, 'mocha_results_xunit', projName + '.xml')
 	// const bail = process.env['CIRCLECI'] != 'true' || false
 
+	/** @type {import('mocha').MochaOptions} */
 	const mochaOpts = {
 		// fullTrace: true
 		timeout: getMochaTimeout(projName, firstTest),
@@ -87,17 +89,13 @@ function getMochaOpts (projName, firstTest) {
 		parallel: false,
 		bail: false,
 		require: [
-			'mocha'
-		],
-		preload: [
-			'ts-node/register/transpile-only',
-			'ts-node/register',
+			'mocha',
+			'tsconfig-paths/register',
+			'@swc-node/register',
 		],
 	}
 
 	if (process.env['ABLUNIT_TEST_RUNNER_RUN_SCRIPT_FLAG']) {
-		// eslint-disable-next-line no-console
-		// console.log('adding reporter...')
 		mochaOpts.reporter = 'mocha-multi-reporters'
 		mochaOpts.reporterOptions = {
 			reporterEnabled: [ 'json-stream', 'spec', 'json', 'xunit', 'mocha-junit-reporter', 'mocha-reporter-sonarqube' ],
@@ -109,7 +107,7 @@ function getMochaOpts (projName, firstTest) {
 	}
 
 	if (process.env['CIRCLECI']) {
-		mochaOpts.bail = true
+		mochaOpts.bail = false
 	}
 
 	return mochaOpts
@@ -131,7 +129,7 @@ function getLaunchArgs (projName) {
 	// args.push('--locale <locale>')
 	// args.push('--user-data-dir', '<dir>')
 	// args.push('--profile <profileName>')
-	args.push('--profile-temp') // create a temporary profile for the test run in lieu of cleaning up user data
+	// args.push('--profile-temp') // create a temporary profile for the test run in lieu of cleaning up user data
 	// args.push('--help')
 	// args.push('--extensions-dir', '<dir>')
 	// args.push('--list-extensions')
@@ -145,9 +143,11 @@ function getLaunchArgs (projName) {
 	// 	args.push('--install-extension', './ablunit-test-runner-insiders-' + extVersion + '.vsix')
 	// }
 	if (enableExtensions.includes(projName)) {
-		args.push('--install-extension', 'riversidesoftware.openedge-abl-lsp')
-	// 	// args.push('--install-extension=riversidesoftware.openedge-abl-lsp')
-	// 	// args.push('--install-extension', 'riversidesoftware.openedge-abl-lsp@1.8.0')
+		if (useOEAblPrerelease) {
+			args.push('--install-extension', 'riversidesoftware.openedge-abl-lsp@prerelease')
+		} else {
+			args.push('--install-extension', 'riversidesoftware.openedge-abl-lsp')
+		}
 	}
 	// args.push('--pre-release')
 	// args.push('--uninstall-extension <ext-id>')
@@ -155,9 +155,9 @@ function getLaunchArgs (projName) {
 	// if (vsVersion === 'insiders') {
 	// 	args.push('--enable-proposed-api', 'TestCoverage') // '<ext-id>'
 	// }
-	if (vsVersion === 'insiders') {
-		args.push('--enable-proposed-api', 'kherring.ablunit-test-runner')
-	}
+	// if (vsVersion === 'insiders') {
+	// 	args.push('--enable-proposed-api', 'kherring.ablunit-test-runner')
+	// }
 	// args.push('--version')
 	// args.push('--verbose')
 	// args.push('--trace')
@@ -203,12 +203,6 @@ function getLaunchArgs (projName) {
 	args.push('--disable-workspace-trust')
 	// Warning: 'xshm' is not in the list of known options, but still passed to Electron/Chromium.
 	args.push('--disable-dev-shm-usage', '--no-xshm')
-
-
-	// --- possible coverage (nyc) related args --- //
-	// args.push('--enable-source-maps')
-	// args.push('--produce-source-map')
-
 	return args
 }
 
@@ -242,10 +236,10 @@ function getTestConfig (projName, firstTest) {
 
 	const env = {
 		ABLUNIT_TEST_RUNNER_ENABLE_EXTENSIONS: enableExtensions.includes('' + projName),
-		ABLUNIT_TEST_RUNNER_UNIT_TESTING: 'true',
+		ABLUNIT_TEST_RUNNER_UNIT_TESTING: true,
 		ABLUNIT_TEST_RUNNER_VSCODE_VERSION: vsVersion,
 		DONT_PROMPT_WSL_INSTAL: true,
-		VSCODE_SKIP_PRELAUNCH: true,
+		// VSCODE_SKIP_PRELAUNCH: true,
 	}
 
 	let installExtensions
@@ -274,12 +268,14 @@ function getTestConfig (projName, firstTest) {
 		// --- IBaseTestConfiguration --- //
 		files: absolulteFile,
 		version: vsVersion,
-		extensionDevelopmentPath: './',
+		extensionDevelopmentPath: path.resolve(__dirname, '..'),
+		extensionTestsPath: path.resolve(__dirname, '..', 'test'),
 		workspaceFolder,
 		mocha: getMochaOpts(projName, firstTest),
 		label: 'suite_' + projName,
 		srcDir: './',
 	}
+	return testConfig
 }
 
 function getTests () {
@@ -312,7 +308,7 @@ function getTests () {
 }
 
 function getCoverageOpts () {
-	const coverageDir = path.resolve(__dirname, '..', 'coverage', vsVersion + '-' + oeVersion)
+	const coverageDir = path.resolve(__dirname, '..', 'artifacts', 'coverage')
 	fs.mkdirSync(coverageDir, { recursive: true })
 	return {
 		exclude: [
@@ -345,6 +341,7 @@ function getCoverageOpts () {
 		// sourceMap: false,
 		// instrument: false,
 	}
+	return coverageOpts
 }
 
 export function createTestConfig () { // NOSONAR

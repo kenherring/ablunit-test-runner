@@ -1,7 +1,9 @@
 import { FileType, MarkdownString, TestItem, TestItemCollection, TestMessage, TestRun, Uri, workspace, WorkspaceFolder, Range,
 	FileCoverage, FileCoverageDetail,
 	Disposable, CancellationToken, CancellationError,
-	StatementCoverage} from 'vscode'
+	StatementCoverage,
+	TestRunRequest,
+	TestRunProfileKind} from 'vscode'
 import { ABLUnitConfig } from './ABLUnitConfigWriter'
 import { ABLResultsParser, ITestCaseFailure, ITestCase, ITestSuite } from './parse/ResultsParser'
 import { ABLTestSuite, ABLTestData } from './testTree'
@@ -61,6 +63,7 @@ export class ABLResults implements Disposable {
 		private readonly storageUri: Uri,
 		private readonly globalStorageUri: Uri,
 		private readonly extensionResourcesUri: Uri,
+		private readonly request: TestRunRequest,
 		private readonly cancellation: CancellationToken)
 	{
 		log.info('workspaceFolder=' + workspaceFolder.uri.fsPath)
@@ -99,7 +102,7 @@ export class ABLResults implements Disposable {
 
 	start () {
 		log.info('[start] workspaceFolder=' + this.workspaceFolder.uri.fsPath)
-		this.cfg.setup(this.workspaceFolder)
+		this.cfg.setup(this.workspaceFolder, this.request)
 
 		this.dlc = getDLC(this.workspaceFolder, this.cfg.ablunitConfig.openedgeProjectProfile)
 		this.promsgs = new ABLPromsgs(this.dlc, this.globalStorageUri)
@@ -108,9 +111,13 @@ export class ABLResults implements Disposable {
 		this.debugLines = new ABLDebugLines(this.propath)
 
 		this.cfg.ablunitConfig.dbAliases = []
-		for (const conn of this.cfg.ablunitConfig.dbConns) {
-			if (conn.aliases.length > 0) {
-				this.cfg.ablunitConfig.dbAliases.push(conn.name + ',' + conn.aliases.join(','))
+
+		// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+		if (this.cfg.ablunitConfig.dbConns && this.cfg.ablunitConfig.dbConns.length > 0) {
+			for (const conn of this.cfg.ablunitConfig.dbConns) {
+				if (conn.aliases.length > 0) {
+					this.cfg.ablunitConfig.dbAliases.push(conn.name + ',' + conn.aliases.join(','))
+				}
 			}
 		}
 
@@ -232,7 +239,7 @@ export class ABLResults implements Disposable {
 		this.duration.stop()
 		const parseTime = new Duration()
 
-		this.ablResults = new ABLResultsParser(this.propath!, this.debugLines!)
+		this.ablResults = new ABLResultsParser(this.propath, this.debugLines)
 		await this.ablResults.parseResults(this.cfg.ablunitConfig.optionsUri.filenameUri, this.cfg.ablunitConfig.optionsUri.jsonUri).then(() => {
 			log.info('parsing results complete ' + parseTime.toString())
 			if(!this.ablResults?.resultsJson) {
@@ -246,7 +253,7 @@ export class ABLResults implements Disposable {
 			throw new Error('Error parsing results from ' + this.cfg.ablunitConfig.optionsUri.filenameUri.fsPath + '\r\nerr=' + err)
 		})
 
-		if (this.cfg.ablunitConfig.profiler.enabled && this.cfg.ablunitConfig.profiler.coverage) {
+		if (this.request.profile?.kind === TestRunProfileKind.Coverage && this.cfg.ablunitConfig.profiler.enabled && this.cfg.ablunitConfig.profiler.coverage) {
 			this.setStatus(RunStatus.Parsing, 'profiler data')
 			log.debug('parsing profiler data from ' + workspace.asRelativePath(this.cfg.ablunitConfig.profFilenameUri.fsPath), options)
 			await this.parseProfile().then(() => {
@@ -341,10 +348,10 @@ export class ABLResults implements Disposable {
 
 	private parseFinalSuite (item: TestItem, s: ITestSuite, options: TestRun) {
 		if (s.tests > 0) {
-			if (s.errors === 0 && s.failures === 0) {
-				options.passed(item, s.time)
-			} else if (s.tests === s.skipped) {
+			if (s.tests === s.skipped) {
 				options.skipped(item)
+			} else if (s.errors === 0 && s.failures === 0) {
+				options.passed(item, s.time)
 			} else if (s.failures > 0 || s.errors > 0) {
 				// // This should be populated automatically by the child messages filtering up
 				// options.failed(item, new vscode.TestMessage("one or more tests failed"), s.time)
@@ -397,7 +404,11 @@ export class ABLResults implements Disposable {
 	private setChildResults (item: TestItem, options: TestRun, tc: ITestCase) {
 		switch (tc.status) {
 			case 'Success': {
-				options.passed(item, tc.time)
+				if (tc.skipped) {
+					options.skipped(item)
+				} else {
+					options.passed(item, tc.time)
+				}
 				return Promise.resolve()
 			}
 			case 'Failure': {

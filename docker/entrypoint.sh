@@ -19,7 +19,7 @@ initialize () {
 	local OPT OPTARG OPTIND
 	VERBOSE=${VERBOSE:-false}
 	ABLUNIT_TEST_RUNNER_DBUS_NUM=${ABLUNIT_TEST_RUNNER_DBUS_NUM:-3}
-	ABLUNIT_TEST_RUNNER_OE_VERSION=${ABLUNIT_TEST_RUNNER_OE_VERSION:-12.2.12}
+	ABLUNIT_TEST_RUNNER_OE_VERSION=${ABLUNIT_TEST_RUNNER_OE_VERSION:-12.8.1}
 	ABLUNIT_TEST_RUNNER_VSCODE_VERSION=${ABLUNIT_TEST_RUNNER_VSCODE_VERSION:-stable}
 	ABLUNIT_TEST_RUNNER_PROJECT_NAME=${ABLUNIT_TEST_RUNNER_PROJECT_NAME:-}
 	ABLUNIT_TEST_RUNNER_NO_COVERAGE=${ABLUNIT_TEST_RUNNER_NO_COVERAGE:-false}
@@ -63,11 +63,12 @@ initialize () {
 	git config --global init.defaultBranch main
 	mkdir -p "$PROJECT_DIR"
 
-	while getopts 'bB' OPT; do
+	while getopts 'bBx' OPT; do
 		case "$OPT" in
 			b)	BASH_AFTER=true
 				BASH_AFTER_ERROR=true ;;
 			B)	BASH_AFTER_ERROR=true ;;
+			x)	set -x ;;
 			?)	echo "script usage: $(basename "$0") [-b]" >&2
 				exit 1 ;;
 		esac
@@ -100,13 +101,11 @@ initialize_repo () {
 		cd "$PROJECT_DIR"
 		git init
 		git remote add origin "$REPO_VOLUME"
+		git fetch
 	else
 		git clone "$REPO_VOLUME" "$PROJECT_DIR"
 	fi
-	if [ "$(git branch --show-current)" != "$GIT_BRANCH" ]; then
-		git fetch origin "$GIT_BRANCH":"$GIT_BRANCH"
-		git checkout "$GIT_BRANCH"
-	fi
+	git checkout "$GIT_BRANCH"
 	copy_files_from_volume
 }
 
@@ -131,13 +130,16 @@ find_files_to_copy () {
 	git --no-pager diff --diff-filter=d --name-only --staged --ignore-cr-at-eol > /tmp/staged_files
 	git --no-pager diff --diff-filter=D --name-only --staged --ignore-cr-at-eol > /tmp/deleted_files
 	if ! $STAGED_ONLY; then
-		git --no-pager diff --diff-filter=d --name-only --ignore-cr-at-eol > /tmp/modified_files
+		git status --porcelain | grep -E '^ (M|A)' | cut -c4- || true
+		git status --porcelain | grep -E '^ (M|A)' | cut -c4- > /tmp/modified_files || true
+	else
+		touch /tmp/modified_files
 	fi
 
 	echo "file counts:"
 	echo "   staged=$(wc -l /tmp/staged_files)"
 	echo "  deleted=$(wc -l /tmp/deleted_files)"
-	echo " modified=$(wc -l /tmp/modified_files 2>/dev/null || echo 0)"
+	echo " modified=$(wc -l /tmp/modified_files)"
 
 	cd "$BASE_DIR"
 }
@@ -145,6 +147,7 @@ find_files_to_copy () {
 copy_files () {
 	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] pwd=$(pwd)"
 	local TYPE="$1"
+	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] TYPE=$TYPE"
 	while read -r FILE; do
 		$VERBOSE && echo "copying $TYPE file $FILE"
 		if [ ! -d "$(dirname "$FILE")" ]; then
@@ -194,12 +197,12 @@ run_tests_base () {
 
 analyze_results () {
 	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] pwd=$(pwd)"
-	RESULTS_COUNT=$(find . -name 'mocha_results_*.xml' | wc -l)
+	RESULTS_COUNT=$(find artifacts/mocha_results_sonar/ -name '*.xml' | wc -l)
 	LCOV_COUNT=$(find . -name 'lcov.info' | wc -l)
 	HAS_ERROR=false
 
 	if [ "$RESULTS_COUNT" = 0 ]; then
-		echo 'ERROR: mocha_results_*.xml not found'
+		echo 'ERROR: artifacts/mocha_results_sonar/*.xml not found'
 		HAS_ERROR=true
 	fi
 	if [ "$TEST_PROJECT" = "base" ] && [ "$LCOV_COUNT" = 0 ]; then

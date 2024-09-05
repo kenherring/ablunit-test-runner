@@ -150,7 +150,7 @@ export class RunConfig extends DefaultRunProfile {
 		filenameUri: Uri
 		jsonUri?: Uri
 	}
-	public readonly progressIniUri: Uri
+	public readonly progressIniUri: Uri | undefined
 	public readonly profOptsUri: Uri
 	public readonly profListingsUri: Uri | undefined
 	public readonly profFilenameUri: Uri
@@ -167,7 +167,7 @@ export class RunConfig extends DefaultRunProfile {
 		this.dbConnPfUri = Uri.joinPath(this.tempDirUri, 'dbconn.pf')
 		this.importOpenedgeProjectJson = this.profile.importOpenedgeProjectJson
 		this.openedgeProjectProfile = this.profile.openedgeProjectProfile ?? undefined
-		this.dbConns = getProfileDbConns(this.workspaceFolder.uri, this.profile.openedgeProjectProfile) ?? []
+		this.dbConns = getProfileDbConns(this.workspaceFolder.uri, this.profile.openedgeProjectProfile)
 
 		this.options = new CoreOptions(this.profile.options)
 		const tmpFilename = (this.profile.options?.output?.filename?.replace(/\.xml$/, '') ?? 'results') + '.xml'
@@ -185,8 +185,12 @@ export class RunConfig extends DefaultRunProfile {
 		log.debug('this.optionsUri.jsonUri=' + this.optionsUri.jsonUri?.fsPath)
 
 		this.command = new CommandOptions(this.profile.command)
-		this.progressIniUri = this.getUri(this.command.progressIni)
-		this.command.progressIni = workspace.asRelativePath(this.progressIniUri, false)
+		if (this.command.progressIni != '') {
+			this.progressIniUri = this.getUri(this.command.progressIni)
+			this.command.progressIni = workspace.asRelativePath(this.progressIniUri, false)
+		} else {
+			this.progressIniUri = undefined
+		}
 
 		this.profiler = new ProfilerOptions()
 		this.profiler.merge(this.profile.profiler)

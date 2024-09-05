@@ -24,7 +24,7 @@ initialize () {
         PRERELEASE=true
     fi
 
-    npm install
+    rm -f ./*.vsix
     npm install -g @vscode/vsce || sudo npm install -g @vscode/vsce
 }
 
@@ -67,10 +67,6 @@ run_lint () {
 	local ESLINT_FILE=artifacts/eslint_report
 	mkdir -p artifacts
 
-    npm install eslint-plugin-promise@latest --save-dev
-    # npm i
-    npm run build
-
 	if ! npm run lint -- -f unix -o "${ESLINT_FILE}.txt"; then
 		echo "eslint plain failed"
 	fi
@@ -78,6 +74,8 @@ run_lint () {
 		## sonarqube report
 		echo "eslint json failed"
 	fi
+
+    sed -i 's|/home/circleci/project/|/root/project/|g' "${ESLINT_FILE}.json"
 	if [ "$(find artifacts -name "eslint_report.json" | wc -l)" != "0" ]; then
 		jq '.' < "${ESLINT_FILE}.json" > "${ESLINT_FILE}_pretty.json"
 	else

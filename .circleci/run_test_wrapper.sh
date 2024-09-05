@@ -14,7 +14,7 @@ initialize () {
 	ABLUNIT_TEST_RUNNER_RUN_SCRIPT_FLAG=${ABLUNIT_TEST_RUNNER_SCRIPT_FLAG:-true}
 	ABLUNIT_TEST_RUNNER_VSCODE_VERSION=${ABLUNIT_TEST_RUNNER_VSCODE_VERSION:-stable}
 	if [ -z "$ABLUNIT_TEST_RUNNER_OE_VERSION" ]; then
-		ABLUNIT_TEST_RUNNER_OE_VERSION=${OE_VERSION:-12.2.12}
+		ABLUNIT_TEST_RUNNER_OE_VERSION=${OE_VERSION:-12.8.1}
 	fi
 
 	if [ ! -f /root/.rssw/oedoc.bin ]; then
@@ -34,6 +34,9 @@ initialize () {
 	echo "ABLUNIT_TEST_RUNNER_PROJECT_NAME=$ABLUNIT_TEST_RUNNER_PROJECT_NAME"
 	echo "ABLUNIT_TEST_RUNNER_RUN_SCRIPT_FLAG=$ABLUNIT_TEST_RUNNER_RUN_SCRIPT_FLAG"
 	echo "ABLUNIT_TEST_RUNNER_VSCODE_VERSION=$ABLUNIT_TEST_RUNNER_VSCODE_VERSION"
+	echo "ABLUNIT_TEST_RUNNER_RUN_SCRIPT_FLAG=$ABLUNIT_TEST_RUNNER_RUN_SCRIPT_FLAG"
+	echo "ABLUNIT_TEST_RUNNER_UNIT_TESTING=$ABLUNIT_TEST_RUNNER_UNIT_TESTING"
+	echo "ABLUNIT_TEST_RUNNER_REPO_DIR=$ABLUNIT_TEST_RUNNER_REPO_DIR"
 
 	npm install
 
@@ -47,7 +50,7 @@ update_oe_version () {
 	local SHORT_VERSION=${ABLUNIT_TEST_RUNNER_OE_VERSION%.*}
 	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] SHORT_VERSION=$SHORT_VERSION"
 
-	sed -i "s/\"12.2\"/\"$SHORT_VERSION\"/g" test_projects/*/openedge-project.json
+	sed -i "s|\"oeversion\": *\"12.[0-9]\"|\"oeversion\": \"$SHORT_VERSION\"|g" test_projects/*/openedge-project.json
 	# ls -al test_projects/*/openedge-project.json
 }
 
@@ -177,6 +180,11 @@ run_tests () {
 		echo "xvfb-run failed (EXIT_CODE=$EXIT_CODE)"
 		save_and_print_debug_output
 		exit $EXIT_CODE
+	fi
+
+	if ! $ABLUNIT_TEST_RUNNER_NO_COVERAGE && [ ! -s artifacts/coverage/lcov.info ]; then
+		echo 'ERROR: artifacts/coverage/lcov.info not found'
+		exit 1
 	fi
 }
 

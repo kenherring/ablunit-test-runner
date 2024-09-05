@@ -12,15 +12,17 @@ suite('proj3 - Extension Test Suite', () => {
 		await setRuntimes([{name: '11.7', path: '/psc/dlc_11.7'}, {name: oeVersion(), path: getDefaultDLC(), default: true}])
 	})
 
-	test('proj3.1 - target/ablunit.json file exists', async () => {
-		await runAllTests()
-		const ablunitJson = Uri.joinPath(workspaceUri, 'target', 'ablunit.json')
-		const resultsXml = Uri.joinPath(workspaceUri, 'ablunit-output', 'results.xml')
-		const listingsDir = Uri.joinPath(workspaceUri, 'target', 'listings')
+	test('proj3.1 - target/ablunit.json file exists', () => {
+		return runAllTests().then(() => {
+			const ablunitJson = Uri.joinPath(workspaceUri, 'target', 'ablunit.json')
+			const resultsXml = Uri.joinPath(workspaceUri, 'ablunit-output', 'results.xml')
+			const listingsDir = Uri.joinPath(workspaceUri, 'target', 'listings')
 
-		assert.fileExists(ablunitJson)
-		assert.fileExists(resultsXml)
-		assert.dirExists(listingsDir)
+			assert.fileExists(ablunitJson)
+			assert.fileExists(resultsXml)
+			assert.dirExists(listingsDir)
+			return
+		}, (e) => { throw e })
 	})
 
 })

@@ -33,18 +33,10 @@ let recentResults: ABLResults[] = []
 let contextStorageUri: Uri
 let contextResourcesUri: Uri
 
-function unknownToError (e: unknown) {
-	if (e instanceof Error) {
-		return e
-	}
-	return new Error('error: ' + e)
-}
-
 export async function activate (context: ExtensionContext) {
 	const ctrl = tests.createTestController('ablunitTestController', 'ABLUnit Test')
 	let currentTestRun: TestRun | undefined = undefined
 	let isRefreshTestsComplete = false
-	let runWithCoverage = false
 
 	logActivationEvent(context.extensionMode)
 
@@ -70,6 +62,14 @@ export async function activate (context: ExtensionContext) {
 
 	context.subscriptions.push(ctrl)
 
+	log.debug('process.env[\'ABLUNIT_TEST_RUNNER_UNIT_TESTING\']=' + process.env['ABLUNIT_TEST_RUNNER_UNIT_TESTING'])
+	log.debug('push _ablunit.getExtensionTestReferences command')
+	context.subscriptions.push(commands.registerCommand('_ablunit.getExtensionTestReferences', () => { return getExtensionTestReferences() }))
+	log.debug('push _ablunit.isRefreshTestsComplete command')
+	context.subscriptions.push(commands.registerCommand('_ablunit.isRefreshTestsComplete', () => { return isRefreshTestsComplete }))
+	log.debug('push _ablunit.getTestController command')
+	context.subscriptions.push(commands.registerCommand('_ablunit.getTestController', () => { return ctrl }))
+
 	context.subscriptions.push(
 		commands.registerCommand('_ablunit.openCallStackItem', openCallStackItem),
 		workspace.onDidChangeConfiguration(e => { updateConfiguration(e) }),
@@ -90,6 +90,9 @@ export async function activate (context: ExtensionContext) {
 	)
 
 	const getExtensionTestReferences = () => {
+		if (!process.env['ABLUNIT_TEST_RUNNER_UNIT_TESTING']) {
+			throw new Error('command not allowed outside of unit testing')
+		}
 		let data: ABLResults[] = []
 		if (currentTestRun) {
 			data = resultData.get(currentTestRun) ?? []
@@ -109,16 +112,6 @@ export async function activate (context: ExtensionContext) {
 			throw new Error('continuous test runs not implemented')
 		}
 		return startTestRun(request, token).then(() => { return }, (e) => { throw e })
-	}
-
-	const runHandlerRun = (request: TestRunRequest, token: CancellationToken): Promise<void> => {
-		runWithCoverage = false
-		return runHandler(request, token)
-	}
-
-	const runHandlerCoverage = (request: TestRunRequest, token: CancellationToken): Promise<void> => {
-		runWithCoverage = true
-		return runHandler(request, token)
 	}
 
 	const loadDetailedCoverage = (testRun: TestRun, fileCoverage: FileCoverage, token: CancellationToken): Thenable<FileCoverageDetail[]> => {
@@ -234,6 +227,7 @@ export async function activate (context: ExtensionContext) {
 								+ p.passed + ' passed, '
 								+ p.errors + ' errors, '
 								+ p.failures + ' failures, '
+								+ p.skipped + ' skipped, '
 								+ r.duration
 					log.info(totals, run)
 				} else {
@@ -273,12 +267,16 @@ export async function activate (context: ExtensionContext) {
 			const data = resultData.get(run) ?? []
 			log.info('setting recentResults (data.length=' + data.length + ')')
 			log.debug('setting recentResults (data.length=' + data.length + ')')
+			log.debug('request.profile.kind=' + request.profile?.kind)
 			recentResults = data
 
-			log.info('request.profile=' + request.profile)
-
-			if (runWithCoverage && data.length > 0) {
+			if (request.profile?.kind === TestRunProfileKind.Coverage) {
+				log.info('adding coverage results to test run')
 				for (const res of data) {
+					log.info('res.filecoverage.length=' + res.filecoverage.length)
+					if (res.filecoverage.length === 0) {
+						log.warn('no coverage data found (profile data path=' + res.cfg.ablunitConfig.profFilenameUri + ')')
+					}
 					res.filecoverage.forEach((c) => {
 						run.addCoverage(c)
 					})
@@ -447,9 +445,9 @@ export async function activate (context: ExtensionContext) {
 		})
 	}
 
-	const testProfileRun = ctrl.createRunProfile('Run Tests', TestRunProfileKind.Run, runHandlerRun, true, new TestTag('runnable'), false)
+	const testProfileRun = ctrl.createRunProfile('Run Tests', TestRunProfileKind.Run, runHandler, true, new TestTag('runnable'), false)
 	// const testProfileDebug = ctrl.createRunProfile('Debug Tests', TestRunProfileKind.Debug, runHandler, false, new TestTag('runnable'), false)
-	const testProfileCoverage = ctrl.createRunProfile('Run Tests w/ Coverage', TestRunProfileKind.Coverage, runHandlerCoverage, true, new TestTag('runnable'), false)
+	const testProfileCoverage = ctrl.createRunProfile('Run Tests w/ Coverage', TestRunProfileKind.Coverage, runHandler, true, new TestTag('runnable'), false)
 	// const testProfileDebugCoverage = ctrl.createRunProfile('Debug Tests w/ Coverage', TestRunProfileKind.Coverage, runHandler, false, new TestTag('runnable'), false)
 	testProfileRun.configureHandler = configHandler
 	// testProfileDebug.configureHandler = configHandlerDebug
@@ -843,11 +841,9 @@ function findMatchingFiles (includePatterns: RelativePattern[], token: Cancellat
 
 // async function parseMatchingFiles (files: Uri[], controller: TestController, excludePatterns: RelativePattern[], token: CancellationToken, checkCancellationToken: () => void, resolvedCount: number, rejectedCount: number) {
 async function parseMatchingFiles (files: Uri[], controller: TestController, excludePatterns: RelativePattern[], token: CancellationToken, checkCancellationToken: () => void): Promise<boolean> {
-	let searchCount = 0
 	const proms: Promise<boolean>[] = []
 	log.debug('parsing files... (count=' + files.length + ')')
 	for (const file of files) {
-		searchCount++
 		checkCancellationToken()
 
 		const { item, data } = getOrCreateFile(controller, file, excludePatterns)
@@ -861,7 +857,6 @@ async function parseMatchingFiles (files: Uri[], controller: TestController, exc
 			proms.push(prom)
 		}
 	}
-	log.info('330')
 	const r = await Promise.all(proms).then(() => { return true })
 	return r
 }
@@ -1048,7 +1043,7 @@ function logActivationEvent (extensionMode: ExtensionMode) {
 	if (extensionMode == ExtensionMode.Development) {
 		log.setLogLevel(LogLevel.Debug)
 	}
-	log.info('activating extension! (version=' + getExtensionVersion() + ')')
+	log.info('activating extension! (version=' + getExtensionVersion() + ', logLevel=' + log.getLogLevel() + ', extensionMode=' + extensionMode + ')')
 }
 
 function getExtensionVersion () {

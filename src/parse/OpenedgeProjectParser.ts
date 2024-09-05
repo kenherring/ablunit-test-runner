@@ -59,6 +59,7 @@ export interface IProjectJson {
 export interface IDatabaseConnection {
 	name: string
 	dumpFile: string
+	schemaFile: string
 	connect: string
 	aliases: string[]
 }
@@ -144,7 +145,6 @@ export class ProfileConfig {
 	dlc = ''
 	extraParameters?: string
 	gui = false
-	buildPath: IBuildPathEntry[] = []
 	buildDirectory = '.'
 	propath: string[] | undefined
 	dbConnections: IDatabaseConnection[] | undefined
@@ -161,21 +161,27 @@ export class ProfileConfig {
 			this.oeversion = parent.oeversion
 			this.dlc = parent.dlc
 		}
-		if (!this.extraParameters)
+		if (!this.extraParameters) {
 			this.extraParameters = parent.extraParameters
-		if (!this.gui)
+		}
+		if (!this.gui) {
 			this.gui = parent.gui
-		if (!this.propath)
-			this.propath = parent.propath
-		if (this.buildPath.length == 0) {
+		}
+		if (!this.buildDirectory) {
+			this.buildDirectory = parent.buildDirectory
+		}
+		if (this.buildPath.length == 0 && parent.buildPath) {
 			this.buildPath = parent.buildPath
 		}
-		if (!this.buildDirectory)
-			this.buildDirectory = parent.buildDirectory
-		if (!this.dbConnections)
+		if (this.propath.length == 0 && parent.propath) {
+			this.propath = parent.propath
+		}
+		if (this.dbConnections.length == 0 && parent.dbConnections) {
 			this.dbConnections = parent.dbConnections
-		if (!this.procedures)
+		}
+		if (this.procedures.length == 0 && parent.procedures) {
 			this.procedures = parent.procedures
+		}
 	}
 
 	getTTYExecutable (): string {
@@ -331,8 +337,8 @@ function parseOpenEdgeConfig (cfg: IOpenEdgeConfig): ProfileConfig {
 	retVal.startupProc = ''
 	retVal.parameterFiles = []
 	retVal.dbDictionary = []
-	retVal.dbConnections = cfg.dbConnections
-	retVal.procedures = cfg.procedures
+	retVal.dbConnections = cfg.dbConnections ?? []
+	retVal.procedures = cfg.procedures ?? []
 
 	return retVal
 }
@@ -356,8 +362,8 @@ function parseOpenEdgeProjectConfig (uri: Uri, workspaceUri: Uri, config: IOpenE
 	}
 	prjConfig.buildPath = config.buildPath ?? []
 	prjConfig.buildDirectory = config.buildDirectory ?? workspaceUri.fsPath
-	prjConfig.dbConnections = config.dbConnections
-	prjConfig.procedures = config.procedures
+	prjConfig.dbConnections = config.dbConnections ?? []
+	prjConfig.procedures = config.procedures ?? []
 
 	prjConfig.profiles.set('default', prjConfig)
 	if (config.profiles) {

@@ -16,8 +16,7 @@ export async function enableOpenedgeAblExtension (runtimes: IRuntime[]) {
 		.then(() => { return rebuildAblProject() })
 		.then(() => {
 			log.info('update complete')
-			return getRcodeCount()
-		}).then((rcodeCount) => {
+			const rcodeCount = getRcodeCount()
 			log.info('rebuild complete! (rcodeCount=' + rcodeCount + ')')
 			log.info('riversidesoftware.openedge-abl-lsp extension is enabled!')
 			return true
@@ -56,11 +55,11 @@ export function rebuildAblProject (): Promise<number> {
 }
 
 export async function waitForLangServerReady () {
-	const maxWait = 60
+	const maxWait = 15
 	const waitTime = new Duration()
+	let dumpSuccess = false
 
 	// now wait until it is ready
-	let dumpSuccess = false
 	for (let i = 0; i < maxWait; i++) {
 		log.info('start abl.dumpLangServStatus (i=' + i + ')')
 		dumpSuccess = await commands.executeCommand('abl.dumpLangServStatus')
@@ -76,12 +75,19 @@ export async function waitForLangServerReady () {
 		}
 		await sleep2(500)
 	}
+
 	if (dumpSuccess) {
 		log.info('lang server is ready ' + waitTime)
 		return true
 	}
-	log.error('lang server is not ready! '  + waitTime)
-	throw new Error('lang server is not ready!')
+
+	return printLastLangServerError()
+		.then(() => {
+			log.error('lang server is not ready! (waitTime='  + waitTime + ')')
+			throw new Error('lang server is not ready! (waitTime='  + waitTime + ')')
+		}, (e) => {
+			throw e
+		})
 }
 
 export async function setRuntimes (runtimes?: IRuntime[]) {
@@ -96,10 +102,10 @@ export async function setRuntimes (runtimes?: IRuntime[]) {
 	log.info('setting abl.configuration.runtimes=' + JSON.stringify(runtimes))
 	const ext = extensions.getExtension('riversidesoftware.openedge-abl-lsp')
 	if (!ext) {
-		throw new Error('[setRuntimes] extension not installed: riversidesoftware.openedge-abl-lsp')
+		throw new Error('extension not installed: riversidesoftware.openedge-abl-lsp')
 	}
 	if (!ext.isActive) {
-		throw new Error('[setRuntimes] extension not active: riversidesoftware.openedge-abl-lsp')
+		throw new Error('extension not active: riversidesoftware.openedge-abl-lsp')
 	}
 
 	const conf = workspace.getConfiguration('abl')
@@ -116,7 +122,11 @@ export async function setRuntimes (runtimes?: IRuntime[]) {
 	log.info('workspace.getConfiguration("abl").update("configuration.runtimes") - START')
 	const r = workspace.getConfiguration('abl').update('configuration.runtimes', runtimes, true)
 		.then(() => {
-			log.info('workspace.getConfiguration("abl").update(configuration.runtimes) - END')
+			log.info('workspace.getConfiguration("abl").update("configuration.runtimes") - START')
+			return conf.update('configuration.runtimes', runtimes, true)
+		})
+		.then(() => {
+			log.info('workspace.getConfiguration("abl").update(configuration.runtime) - END')
 			return restartLangServer()
 		})
 		.then(() => {

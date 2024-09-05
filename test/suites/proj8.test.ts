@@ -1,7 +1,5 @@
-import { Uri } from 'vscode'
-import { assert, getResults, getWorkspaceUri, runAllTests, suiteSetupCommon } from '../testCommon'
+import { assert, getResults, getWorkspaceUri, runAllTests, suiteSetupCommon, Uri } from '../testCommon'
 import { getEnvVars } from '../../src/ABLUnitRun'
-
 
 suite('proj8 - Extension Test Suite', () => {
 

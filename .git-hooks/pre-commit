@@ -25,6 +25,10 @@ validate_package_json () {
 	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}]"
 	PACK1=$(md5sum package.json)
 	PACK2=$(package.stable.json)
+	if [ ! -f "$PACK2" ]; then
+		## If package.stable.json does not exist, nothing to compare
+		return 0
+	fi
 	if [ "$PACK1" != "$PACK2" ]; then
 		echo "package.json and package.stable.json are different and should be the same" >&2
 		exit 1
@@ -36,9 +40,16 @@ validate_compile () {
 	npm run build
 }
 
+validate_other () {
+	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}]"
+	if grep 'set -eou'; then
+		echo "ERROR: found 'set -eou'!  Change to 'set -euo pipefail'." >&2
+		exit 1
+	fi
+}
+
 ########## MAIN BLOCK ##########
-validate_circleci_config &
-validate_compile &
-validate_version_updated &
-wait
+validate_circleci_config
+validate_compile
+validate_version_updated
 echo "pre-commit checks successful!" >&2

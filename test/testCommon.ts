@@ -21,6 +21,10 @@ import { RunStatus } from '../src/ABLUnitRun'
 import { enableOpenedgeAblExtension, rebuildAblProject, restartLangServer, setRuntimes, waitForLangServerReady } from './openedgeAblCommands'
 import path from 'path'
 
+// import decache from 'decache'
+// decache('./dist/extension.js')
+// decache('extension.js')
+
 interface IRuntime {
 	name: string,
 	path: string,
@@ -59,7 +63,12 @@ export const oeVersion = () => {
 		return oeVersion.split('.').slice(0, 2).join('.')
 	}
 
-	const versionFile = path.join(getDefaultDLC(), 'version')
+	let useDLC = getEnvVar('DLC')
+	if (!useDLC || useDLC === '') {
+		useDLC = getDefaultDLC()
+	}
+
+	const versionFile = path.join(useDLC, 'version')
 	const dlcVersion = fs.readFileSync(versionFile)
 	log.info('dlcVersion=' + dlcVersion)
 	const match = RegExp(/OpenEdge Release (\d+\.\d+)/).exec(dlcVersion.toString())
@@ -201,11 +210,12 @@ export function installExtension (extname = 'riversidesoftware.openedge-abl-lsp'
 		log.info('extension ' + extname + ' is already installed')
 		return Promise.resolve(ext)
 	}
-	// if (extname === 'riversidesoftware.openedge-abl-lsp' && enableExtensions()) {
-	// 	// throw new Error('extensions disabed, openedge-abl-lsp cannot be installed')
-	// 	log.warn('extensions disabed, openedge-abl-lsp cannot be installed')
-	// 	return
-	// }
+	if (extname == 'kherring.ablunit-test-runner') {
+		throw new Error('extension kherring.ablunit-test-runner should be loaded from the extensionDevelopmentPath')
+	}
+	if (extname === 'riversidesoftware.openedge-abl-lsp' && ! enableExtensions()) {
+		throw new Error('extensions disabed, openedge-abl-lsp cannot be installed')
+	}
 
 
 	const installCommand = 'workbench.extensions.installExtension'
@@ -499,7 +509,7 @@ export async function getTestCount (resultsJson: Uri, status = 'tests') {
 		const results: ITestSuites[] = JSON.parse(Buffer.from(content.buffer).toString())
 
 		if (results.length === 0) {
-			throw new Error('[getTestCount] no testsuite found in results')
+			throw new Error('no testsuite found in results')
 		}
 
 		if (status === 'tests') {
@@ -511,7 +521,7 @@ export async function getTestCount (resultsJson: Uri, status = 'tests') {
 		} else if (status === 'error') {
 			return results[0].errors
 		} else {
-			throw new Error('[getTestCount] unknown status: ' + status)
+			throw new Error('[unknown status: ' + status)
 		}
 	})
 	log.info('getTestCount: ' + status + ' = ' + count)
@@ -530,6 +540,7 @@ export async function runAllTests (doRefresh = true, waitForResults = true, with
 	if (withCoverage) {
 		testCommand = 'testing.coverageAll'
 	}
+	beforeCommon()
 	runAllTestsDuration = new Duration('runAllTests')
 	if (!tag) {
 		tag = projName()
@@ -578,11 +589,14 @@ export function runAllTestsWithCoverage () {
 	return runAllTests(true, true, true)
 }
 
-function waitForRefreshComplete () {
+async function waitForRefreshComplete () {
 	const waitTime = 5000
 	const refreshDuration = new Duration('waitForRefreshComplete')
 	log.info('waiting for refresh to complete...')
-	return new Promise((resolve, reject) => {
+
+	const ext = extensions.getExtension('kherring.ablunit-test-runner')
+	await ext?.activate()
+	const p = new Promise((resolve, reject) => {
 		const interval = setInterval(() => {
 			if (refreshDuration.elapsed() > waitTime) {
 				clearInterval(interval)
@@ -598,6 +612,8 @@ function waitForRefreshComplete () {
 				}, (e) => { throw e })
 		}, 500)
 	})
+	await p
+	return
 
 }
 
@@ -793,15 +809,18 @@ export function refreshData (resultsLen = 0) {
 	})
 }
 
-export async function getTestController (skipRefresh = false) {
-	if (!skipRefresh && !testController) {
-		await refreshData()
+export async function getTestController () {
+	const ext = extensions.getExtension('kherring.ablunit-test-runner')
+	if (!ext) {
+		throw new Error('kherring.ablunit-test-runner extension not found')
 	}
+	testController = await commands.executeCommand('_ablunit.getTestController')
+		.then((ctrl: unknown) => { return ctrl as TestController }, (e) => { throw e })
 	return testController
 }
 
 export async function getTestControllerItemCount (type?: 'ABLTestFile' | undefined) {
-	const ctrl = await getTestController(type == 'ABLTestFile')
+	const ctrl = await getTestController()
 	if (!ctrl?.items) {
 		return 0
 	}
@@ -956,11 +975,14 @@ export const assert = {
 	throws: assertParent.throws,
 	doesNotThrow: assertParent.doesNotThrow,
 
-	greaterOrEqual (a: number, b: number, message?: string) {
-		assertParent.ok(a >= b, message)
+	greater (testValue: number, greaterThan: number, message?: string) {
+		assertParent.ok(testValue > greaterThan, message)
 	},
-	lessOrEqual (a: number, b: number, message?: string) {
-		assertParent.ok(a <= b, message)
+	greaterOrEqual (testValue: number, greaterThan: number, message?: string) {
+		assertParent.ok(testValue >= greaterThan, message)
+	},
+	lessOrEqual (testValue: number, lessThan: number, message?: string) {
+		assertParent.ok(testValue <= lessThan, message)
 	},
 
 	throwsAsync: async (block: () => Promise<void>, message?: string) => {

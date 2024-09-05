@@ -13,6 +13,7 @@
 			"args": [
 				"--install-extension=riversidesoftware.openedge-abl-lsp",
 				"--extensionDevelopmentPath=${workspaceFolder}",
+				// "--log", "khering.ablunit-test-runner:debug",
 				"${input:disable-extensions}",
 				"${workspaceFolder}/test_projects/${input:workspaceName}"
 			],

@@ -29,7 +29,6 @@ ARG OE_VERSION
 ENV OE_VERSION ${OE_VERSION}
 ENV DOCKER_IMAGE ablunit-test-runner-${OE_VERSION}
 RUN --mount=type=secret,id=license,target=/psc/dlc/progress.cfg \
-    echo "OE_VERSION=$OE_VERSION}" && \
     git clone --single-branch -b "v${OE_VERSION}.0" https://github.com/progress/ADE.git \
     && ant compile \
     && rm -rf build.xml ADE/ /tmp/*

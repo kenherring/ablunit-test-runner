@@ -1,3 +1,4 @@
+.scannerwork/
 .ssh/
 .vscode-test/
 .vscode-test-docker/
@@ -8,6 +9,7 @@ docker/.rssw/
 node_modules/
 out/
 target/
+tmp/
 *.bk
 *.bk.*
 *.log

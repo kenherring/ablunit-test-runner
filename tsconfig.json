@@ -1,27 +1,20 @@
 {
-	"ts-node": {
-		"transpileOnly": true,
-		"require": [ "tsconfig-paths/register" ]
-	},
 	"compilerOptions": {
-		// "module": "NodeNext",
-		"module": "commonjs",
-		// "moduleResolution": "NodeNext", // https://www.typescriptlang.org/tsconfig#moduleResolution
-		"moduleResolution": "node",
+		"module": "NodeNext",
+		"moduleResolution": "NodeNext", // https://www.typescriptlang.org/tsconfig#moduleResolution
 		"target": "ES2020",
 		"lib": [
 			"ES2020",
 			"WebWorker"
 		],
-		"baseUrl": ".",
+
 		"outDir": "dist",
-		"rootDir": ".",
-		// "paths": {
-		// 	"*": [ "./src/*" ]
-		// },
-		"sourceRoot": ".",
-		"sourceMap": true,
-		// "inlineSourceMap": true,
+		"paths": {
+			"*": [ "./src/*" ]
+		},
+		// "rootDir": ".",
+		// "sourceRoot": "src",
+		"inlineSourceMap": true,
 		"strict": true,
 		"alwaysStrict": true,
 		"esModuleInterop": true,
@@ -63,6 +56,7 @@
 		"./**/*.ts",
 		"./**/*.mjs",
 		"./test/suites/*.test.ts",
+		"./esbuild.js",
 	],
 	"exclude": [
 		"./dummy-ext/**",
@@ -71,10 +65,8 @@
 	],
 	"watchOptions": {
 		"excludeDirectories": [
-			"dist",
 			"dummy-ext",
 			"node_modules",
-			"out",
 			"test_projects",
 		]
 	}
