@@ -67,7 +67,7 @@ suite('proj1 - Extension Test Suite', () => {
 		return workspace.getConfiguration('ablunit').update('files.exclude', [ '.builder/**', 'compileError.p' ])
 			.then(() => { return runAllTests() })
 			.then(() => {
-				assert.tests.count(12)
+				assert.tests.count(13)
 				log.info('proj1.2 complete!')
 				return true
 			}, (e) => { throw e })
@@ -80,7 +80,7 @@ suite('proj1 - Extension Test Suite', () => {
 
 		const resultsJson = Uri.joinPath(workspaceUri, 'results.json')
 		const testCount = await getTestCount(resultsJson)
-		assert.equal(testCount, 12)
+		assert.equal(testCount, 13)
 	})
 
 	test('proj1.4 - run test case in file', async () => {

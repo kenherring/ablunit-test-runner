@@ -13,7 +13,7 @@ import { ABLDebugLines } from './ABLDebugLines'
 import { ABLPromsgs, getPromsgText } from './ABLPromsgs'
 import { PropathParser } from './ABLPropath'
 import { log } from './ChannelLogger'
-import { RunStatus, ablunitRun } from './ABLUnitRun'
+import { ABLUnitRuntimeError, RunStatus, ablunitRun } from './ABLUnitRun'
 import { getDLC, IDlc } from './parse/OpenedgeProjectParser'
 import { Duration, isRelativePath } from './ABLUnitCommon'
 
@@ -124,7 +124,7 @@ export class ABLResults implements Disposable {
 		// eslint-disable-next-line @typescript-eslint/no-invalid-void-type
 		const prom: (Thenable<void> | Promise<void> | Promise<void[]> | undefined)[] = []
 		prom[0] = this.cfg.createProfileOptions(this.cfg.ablunitConfig.profOptsUri, this.cfg.ablunitConfig.profiler)
-		prom[1] = this.cfg.createProgressIni(this.propath.toString())
+		prom[1] = this.cfg.createProgressIni(this.propath.toString(), this.dlc)
 		prom[2] = this.cfg.createAblunitJson(this.cfg.ablunitConfig.config_uri, this.cfg.ablunitConfig.options, this.testQueue)
 		prom[3] = this.cfg.createDbConnPf(this.cfg.ablunitConfig.dbConnPfUri, this.cfg.ablunitConfig.dbConns)
 
@@ -226,9 +226,13 @@ export class ABLResults implements Disposable {
 				throw new Error('no results available')
 			}
 			return true
-		}, (err) => {
-			log.debug('ABLResults.run() failed. Exception=' + err)
-			throw new Error('ablunit run failed! Exception: ' + err)
+		}, (err: unknown) => {
+			// log.info('[run] e=' + JSON.stringify(err))
+			if (err instanceof CancellationError || err instanceof ABLUnitRuntimeError) {
+				throw err
+			} else {
+				throw new Error('ablunit run failed! Exception: ' + err)
+			}
 		})
 	}
 

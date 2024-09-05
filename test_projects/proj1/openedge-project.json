@@ -10,7 +10,7 @@
 	"extraParameters": "-debugalert",
 	"buildPath": [
 		{ "type": "source", "path": ".", "excludes": "compileError.p" },
-		{ "type": "propath", "path": "${DLC}/tty/OpenEdge.BusinessLogic.pl" }
+		{ "type": "propath", "path": "${DLC}/tty/netlib/OpenEdge.Net.pl" }
 	],
 	"procedures": [],
 	"profiles": []
