@@ -5,7 +5,7 @@ import { ProfilerOptions } from './config/ProfilerOptions'
 import { CommandOptions } from './config/CommandOptions'
 import { isRelativePath, readStrippedJsonFile } from '../ABLUnitCommon'
 import { log } from '../ChannelLogger'
-import { IDatabaseConnection, getProfileDbConns } from './OpenedgeProjectParser'
+import { IDatabaseConnection, getProfileCharset, getProfileDbConns } from './OpenedgeProjectParser'
 
 const runProfileFilename = 'ablunit-test-profile.json'
 
@@ -190,6 +190,14 @@ export class RunConfig extends DefaultRunProfile {
 			this.command.progressIni = workspace.asRelativePath(this.progressIniUri, false)
 		} else {
 			this.progressIniUri = undefined
+		}
+
+		const charset = getProfileCharset(this.workspaceFolder.uri, this.profile.openedgeProjectProfile)
+		if (charset) {
+			if (this.command.additionalArgs.includes('-cpinternal')) {
+				log.warn('command.additionalArgs already contains -cpinternal.  Replacing with `-cpinternal ' + charset)
+			}
+			this.command.additionalArgs.push('-cpinternal', charset)
 		}
 
 		this.profiler = new ProfilerOptions()
