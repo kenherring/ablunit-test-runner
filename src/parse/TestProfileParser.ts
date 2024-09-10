@@ -193,11 +193,14 @@ export class RunConfig extends DefaultRunProfile {
 		}
 
 		const charset = getProfileCharset(this.workspaceFolder.uri, this.profile.openedgeProjectProfile)
+		// this.command.additionalArgs.push('-cpinternal', 'UTF-8')
 		if (charset) {
-			if (this.command.additionalArgs.includes('-cpinternal')) {
-				log.warn('command.additionalArgs already contains -cpinternal.  Replacing with `-cpinternal ' + charset)
+			if (this.command.additionalArgs.includes('-cpstream')) {
+				log.warn('command.additionalArgs already contains -cpstream.  Replacing with `-cpstream ' + charset)
+				this.command.additionalArgs.splice(this.command.additionalArgs.indexOf('-cpstream'), 2, '-cpstream', charset)
+			} else {
+				this.command.additionalArgs.push('-cpstream', charset)
 			}
-			this.command.additionalArgs.push('-cpinternal', charset)
 		}
 
 		this.profiler = new ProfilerOptions()

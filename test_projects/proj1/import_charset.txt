@@ -1,4 +1,0 @@
-## This file contains UTF-8 characters
-
-arrow character: ⬌
-gold star: ⭐
