@@ -476,6 +476,15 @@ export function getProfileCharset (workspaceUri: Uri, openedgeProjectProfile?: s
 	return profileConfig.charset
 }
 
+export function getExtraParameters (workspaceUri: Uri, openedgeProjectProfile?: string) {
+	const profileConfig = getWorkspaceProfileConfig(workspaceUri, openedgeProjectProfile)
+	if (!profileConfig) {
+		log.debug('[getExtraParameters] profileConfig is undefined')
+		return undefined
+	}
+	return profileConfig.extraParameters
+}
+
 export function getProfileDbConns (workspaceUri: Uri, openedgeProjectProfile?: string) {
 	log.debug('[getProfileDbConns] workspaceUri = ' + workspaceUri.fsPath)
 

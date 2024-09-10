@@ -5,7 +5,7 @@ import { ProfilerOptions } from './config/ProfilerOptions'
 import { CommandOptions } from './config/CommandOptions'
 import { isRelativePath, readStrippedJsonFile } from '../ABLUnitCommon'
 import { log } from '../ChannelLogger'
-import { IDatabaseConnection, getProfileCharset, getProfileDbConns } from './OpenedgeProjectParser'
+import { IDatabaseConnection, getExtraParameters, getProfileCharset, getProfileDbConns } from './OpenedgeProjectParser'
 
 const runProfileFilename = 'ablunit-test-profile.json'
 
@@ -190,6 +190,12 @@ export class RunConfig extends DefaultRunProfile {
 			this.command.progressIni = workspace.asRelativePath(this.progressIniUri, false)
 		} else {
 			this.progressIniUri = undefined
+		}
+
+		const extraParameters = getExtraParameters(this.workspaceFolder.uri, this.profile.openedgeProjectProfile)
+		log.info('extraParameters=' + extraParameters)
+		if (extraParameters) {
+			this.command.additionalArgs.push(extraParameters)
 		}
 
 		const charset = getProfileCharset(this.workspaceFolder.uri, this.profile.openedgeProjectProfile)

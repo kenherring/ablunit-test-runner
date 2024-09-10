@@ -59,3 +59,12 @@ procedure euro_symbol_in :
     OpenEdge.Core.Assert:equals(index(testVar,'?'),0).
     OpenEdge.Core.Assert:equals(index(impVal,'?'),0).
 end procedure.
+
+@Test.
+procedure has_y_parameter:
+    message 'session:startup-parameters=' + session:startup-parameters.
+    message 'lookup: ' + string(lookup('-y', session:startup-parameters)) + ', ' + string(lookup('-yx', session:startup-parameters)).
+    message 'index: ' + string(index(session:startup-parameters, '-y')) + ', ' + string(index(session:startup-parameters, '-yx')).
+    OpenEdge.Core.Assert:equals(lookup('-y', session:startup-parameters),0).
+    OpenEdge.Core.Assert:equals(lookup('-yx', session:startup-parameters),0).
+end procedure.
