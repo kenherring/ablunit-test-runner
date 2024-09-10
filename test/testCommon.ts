@@ -505,6 +505,8 @@ export async function getTestCount (resultsJson: Uri, status = 'tests') {
 			return results[0].failures
 		} else if (status === 'error') {
 			return results[0].errors
+		} else if (status === 'skipped') {
+			return results[0].skipped
 		} else {
 			throw new Error('[unknown status: ' + status)
 		}
@@ -902,7 +904,7 @@ export async function getResults (len = 1, tag?: string): Promise<ABLResults[]> 
 }
 
 class AssertTestResults {
-	assertResultsCountByStatus (expectedCount: number, status: 'passed' | 'failed' | 'errored' | 'all') {
+	assertResultsCountByStatus (expectedCount: number, status: 'passed' | 'failed' | 'errored' | 'skipped' | 'all') {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
 		const res = recentResults?.[0].ablResults?.resultsJson[0]
 		if (!res) {
@@ -917,6 +919,8 @@ class AssertTestResults {
 			case 'failed': assertParent.equal(expectedCount, res.failures, 'test count failed != ' + expectedCount); break
 			// case 'errored': actualCount = res.errors; break
 			case 'errored': assertParent.equal(expectedCount, res.errors, 'test count errored != ' + expectedCount); break
+			// case 'skipped': actualCount = res.skipped; break
+			case 'skipped': assertParent.equal(expectedCount, res.skipped, 'test count skipped != ' + expectedCount); break
 			// case 'all': actualCount = res.tests; break
 			case 'all': assertParent.equal(expectedCount, res.tests, 'test count != ' + expectedCount); break
 			default: throw new Error('unknown status: ' + status)

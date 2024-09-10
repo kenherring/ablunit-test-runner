@@ -4,7 +4,7 @@ import { getLines } from 'parse/TestParserCommon'
 // CLASS statement
 const classRE = /^\s*class\s+(\S+[^:])\s*/i
 // METHOD statement
-const methodRE = /\s*method\s(\s*public)?(\s*static)?\s*(\S+)\s*(\S+\w)/i
+const methodRE = /\s*method\s(\s*public)?(\s*static)?\s*(\S+)\s*(\S+[\w#])/i
 
 export interface ITestCase {
 	label: string

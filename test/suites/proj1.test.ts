@@ -119,4 +119,46 @@ suite('proj1 - Extension Test Suite', () => {
 		assert.equal(0, error)
 	})
 
+	test('proj1.6 - run test case at cursor (line 4)', async () => {
+		await commands.executeCommand('vscode.open', Uri.joinPath(workspaceUri, 'testNames.p'))
+		if(window.activeTextEditor) {
+			window.activeTextEditor.selection = new Selection(4, 0, 4, 0)
+		} else {
+			assert.fail('vscode.window.activeTextEditor is undefined')
+		}
+		await commands.executeCommand('testing.runAtCursor')
+
+		const resultsJson = Uri.joinPath(workspaceUri, 'results.json')
+		const testCount = await getTestCount(resultsJson)
+		const pass = await getTestCount(resultsJson, 'pass')
+		const fail = await getTestCount(resultsJson, 'fail')
+		const error = await getTestCount(resultsJson, 'error')
+		const skipped = await getTestCount(resultsJson, 'skip')
+		assert.equal(1, testCount)
+		assert.equal(1, pass)
+		assert.equal(0, fail)
+		assert.equal(0, error)
+	})
+
+	test('proj1.7 - run test case at cursor (line 8)', async () => {
+		await commands.executeCommand('vscode.open', Uri.joinPath(workspaceUri, 'testNames.p'))
+		if(window.activeTextEditor) {
+			window.activeTextEditor.selection = new Selection(8, 0, 8, 0)
+		} else {
+			assert.fail('vscode.window.activeTextEditor is undefined')
+		}
+		await commands.executeCommand('testing.runAtCursor')
+
+		const resultsJson = Uri.joinPath(workspaceUri, 'results.json')
+		const testCount = await getTestCount(resultsJson)
+		const pass = await getTestCount(resultsJson, 'pass')
+		const fail = await getTestCount(resultsJson, 'fail')
+		const error = await getTestCount(resultsJson, 'error')
+		const skipped = await getTestCount(resultsJson, 'skip')
+		assert.equal(1, testCount)
+		assert.equal(1, pass)
+		assert.equal(0, fail)
+		assert.equal(0, error)
+	})
+
 })
