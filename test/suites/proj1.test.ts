@@ -141,7 +141,7 @@ suite('proj1 - Extension Test Suite', () => {
 			})
 	})
 
-	test('proj1.8 - update charset to ISO8559-1, then read file with UTF-8 chars', async () => {
+	test('proj1.8 - check startup parmaeters for -y -yx', async () => {
 		await workspace.fs.copy(Uri.joinPath(workspaceUri, 'openedge-project.proj1.8.json'), Uri.joinPath(workspaceUri, 'openedge-project.json'), { overwrite: true })
 		await runTestAtLine('import_charset.p', 64)
 			.then(() => {
