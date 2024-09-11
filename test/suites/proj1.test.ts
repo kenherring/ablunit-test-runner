@@ -1,7 +1,9 @@
 import { FileType, Selection, commands, window } from 'vscode'
 import { after, afterEach, beforeEach } from 'mocha'
-import { Uri, assert, getWorkspaceUri, log, runAllTests, sleep, updateConfig, getTestCount, workspace, suiteSetupCommon, getWorkspaceFolders, oeVersion, runTestAtLine, beforeCommon } from '../testCommon'
+import { Uri, assert, getWorkspaceUri, log, runAllTests, sleep, updateConfig, getTestCount, workspace, suiteSetupCommon, getWorkspaceFolders, oeVersion, runTestAtLine, beforeCommon, updateTestProfile } from '../testCommon'
 import { getOEVersion } from 'parse/OpenedgeProjectParser'
+import * as glob from 'glob'
+import { restartLangServer } from '../openedgeAblCommands'
 
 const workspaceUri = getWorkspaceUri()
 
@@ -9,9 +11,9 @@ suite('proj1 - Extension Test Suite', () => {
 
 	suiteSetup('proj1 - suiteSetup', async () => {
 		await suiteSetupCommon()
-			.then(() => {
-				return workspace.fs.copy(Uri.joinPath(workspaceUri, 'openedge-project.json'), Uri.joinPath(workspaceUri, 'openedge-project.bk.json'), { overwrite: true })
-			})
+			.then(() => { return workspace.fs.copy(Uri.joinPath(workspaceUri, 'openedge-project.json'), Uri.joinPath(workspaceUri, 'openedge-project.bk.json'), { overwrite: true }) })
+			.then(() => { return workspace.fs.copy(Uri.joinPath(workspaceUri, '.vscode', 'ablunit-test-profile.json'), Uri.joinPath(workspaceUri, '.vscode', 'ablunit-test-profile.bk.json'), { overwrite: true }) })
+			.then(() => { return workspace.fs.copy(Uri.joinPath(workspaceUri, '.vscode', 'settings.json'), Uri.joinPath(workspaceUri, '.vscode', 'settings.bk.json'), { overwrite: true }) })
 	})
 
 	beforeEach('proj1 - beforeEach', async () => {
@@ -22,18 +24,16 @@ suite('proj1 - Extension Test Suite', () => {
 	})
 
 	afterEach('proj1 - afterEach', async () => {
-		await workspace.fs.stat(Uri.joinPath(workspaceUri, 'openedge-project.bk.json'))
-			.then((stat) => {
-				if (stat.type === FileType.File) {
-					return workspace.fs.copy(Uri.joinPath(workspaceUri, 'openedge-project.bk.json'), Uri.joinPath(workspaceUri, 'openedge-project.json'), { overwrite: true })
-				}
-				return
-			})
-			.then(() => { log.info('restored openedge-project.json') }, (e) => { log.error('error restoring openedge-project.json: ' + e) })
+		await workspace.fs.copy(Uri.joinPath(workspaceUri, 'openedge-project.bk.json'), Uri.joinPath(workspaceUri, 'openedge-project.json'), { overwrite: true })
+			.then(() => { return workspace.fs.copy(Uri.joinPath(workspaceUri, '.vscode', 'ablunit-test-profile.bk.json'), Uri.joinPath(workspaceUri, '.vscode', 'ablunit-test-profile.json'), { overwrite: true }) })
+			.then(() => { return workspace.fs.copy(Uri.joinPath(workspaceUri, '.vscode', 'settings.bk.json'), Uri.joinPath(workspaceUri, '.vscode', 'settings.json'), { overwrite: true })
+			}, (e) => { throw e })
 	})
 
 	after('proj1 - suiteTeardown', async () => {
 		return workspace.fs.delete(Uri.joinPath(workspaceUri, 'openedge-project.bk.json'))
+			.then(() => { return workspace.fs.delete(Uri.joinPath(workspaceUri, '.vscode', 'ablunit-test-profile.bk.json')) })
+			.then(() => { return workspace.fs.delete(Uri.joinPath(workspaceUri, '.vscode', 'settings.bk.json')) })
 	})
 
 	test('proj1.1 - output files exist 1 - compile error', () => {
@@ -67,9 +67,18 @@ suite('proj1 - Extension Test Suite', () => {
 			.then(() => { return runAllTests() })
 			.then(() => {
 				assert.tests.count(17)
+				assert.tests.passed(11)
+				assert.tests.failed(2)
+				assert.tests.errored(3)
+				assert.tests.skipped(1)
+
+
+				const xrefFiles = glob.globSync('*.xref', { cwd: workspaceUri.fsPath })
+				assert.greater(xrefFiles.length, 0, 'NOT xref count > 0')
 				log.info('proj1.2 complete!')
 				return true
 			}, (e) => { throw e })
+
 	})
 
 	test('proj1.3 - output files exist 3 - exclude compileError.p as string', async () => {
@@ -163,6 +172,42 @@ suite('proj1 - Extension Test Suite', () => {
 				assert.tests.failed(1)
 				assert.tests.errored(0)
 			})
+	})
+
+	test('proj1.10 - xref options', async () => {
+		// delete all *.xref files
+		let xrefFiles = glob.globSync('*.xref', { cwd: workspaceUri.fsPath })
+		log.info('xrefFiles.length=' + xrefFiles.length)
+		for (const xrefFile of xrefFiles) {
+			log.info('deleting ' + xrefFile)
+			await workspace.fs.delete(Uri.joinPath(workspaceUri, xrefFile))
+		}
+		xrefFiles = glob.globSync('*.xref', { cwd: workspaceUri.fsPath })
+		assert.equal(xrefFiles.length, 0, 'xref files should not exist (before)')
+
+		xrefFiles = glob.globSync('*.xref', { cwd: workspaceUri.fsPath })
+		assert.equal(xrefFiles.length, 0, 'xref files should not exist')
+
+		// exclude compileError.p
+		await workspace.getConfiguration('ablunit').update('files.exclude', [ '.builder/**', 'compileError.p' ])
+
+		// update ablunit-test-profile.json to include xref options.
+		await updateTestProfile('xref', { 'useXref': true, 'xrefLocation': '${workspaceFolder}/.builder/pct0', 'xrefExtension': 'xref', 'xrefThrowError': true })
+
+		// recompile
+		await restartLangServer()
+
+		// run tests and assert test count
+		await runAllTests()
+			.then(() => {
+				assert.tests.count(17)
+				assert.tests.passed(11)
+				assert.tests.failed(2)
+				assert.tests.errored(3)
+				assert.tests.skipped(1)
+			})
+		xrefFiles = glob.globSync('*.xref', { cwd: workspaceUri.fsPath })
+		assert.equal(xrefFiles.length, 0, 'xref files should not exist!  count=' + xrefFiles.length + ' (after)')
 	})
 
 })

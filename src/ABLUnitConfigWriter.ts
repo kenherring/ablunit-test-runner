@@ -7,6 +7,7 @@ import { IABLUnitJson, ITestObj } from './ABLResults'
 import { CoreOptions } from './parse/config/CoreOptions'
 import { ProfilerOptions } from './parse/config/ProfilerOptions'
 import { getOpenEdgeProfileConfig, IBuildPathEntry, IDatabaseConnection, IDlc, ProfileConfig } from './parse/OpenedgeProjectParser'
+import { XrefOptions } from 'parse/config/XrefOptions'
 
 export const ablunitConfig = new WeakMap<WorkspaceFolder, RunConfig>()
 
@@ -50,7 +51,7 @@ export class ABLUnitConfig  {
 		return workspace.fs.writeFile(this.ablunitConfig.progressIniUri, iniBytes)
 	}
 
-	createAblunitJson (_uri: Uri, cfg: CoreOptions, testQueue: ITestObj[]) {
+	createAblunitJson (_uri: Uri, cfg: CoreOptions, xrefOptions: XrefOptions, testQueue: ITestObj[]) {
 		log.info('creating ablunit.json: \'' + this.ablunitConfig.config_uri.fsPath + '\'')
 		const promarr: PromiseLike<void>[] = []
 		promarr.push(
@@ -70,6 +71,7 @@ export class ABLUnitConfig  {
 
 		const out = {
 			options: cfg,
+			xref: xrefOptions,
 			tests: testQueue
 		} as IABLUnitJson
 

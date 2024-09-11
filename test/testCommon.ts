@@ -738,7 +738,7 @@ export function updateConfig (key: string, value: unknown, configurationTarget?:
 		.then(() => true, (e) => { throw e })
 }
 
-export async function updateTestProfile (key: string, value: string | string[] | boolean) {
+export async function updateTestProfile (key: string, value: string | string[] | boolean | object) {
 	const testProfileUri = Uri.joinPath(getWorkspaceUri(), '.vscode', 'ablunit-test-profile.json')
 	if (!doesFileExist(testProfileUri)) {
 		log.info('creating ablunit-test-profile.json')
@@ -927,7 +927,7 @@ export async function getResults (len = 1, tag?: string): Promise<ABLResults[]> 
 }
 
 class AssertTestResults {
-	assertResultsCountByStatus (expectedCount: number, status: 'passed' | 'failed' | 'errored' | 'all') {
+	assertResultsCountByStatus (expectedCount: number, status: 'passed' | 'failed' | 'errored' | 'skipped' | 'all') {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
 		const res = recentResults?.[0].ablResults?.resultsJson[0]
 		if (!res) {
@@ -942,6 +942,8 @@ class AssertTestResults {
 			case 'failed': assertParent.equal(res.failures, expectedCount, 'test count failed != ' + expectedCount); break
 			// case 'errored': actualCount = res.errors; break
 			case 'errored': assertParent.equal(res.errors, expectedCount, 'test count errored != ' + expectedCount); break
+			// case 'skipped': actualCount = res.skipped; break
+			case 'skipped': assertParent.equal(res.skipped, expectedCount, 'test count skipped != ' + expectedCount); break
 			// case 'all': actualCount = res.tests; break
 			case 'all': assertParent.equal(res.tests, expectedCount, 'test count != ' + expectedCount); break
 			default: throw new Error('unknown status: ' + status)
@@ -956,6 +958,9 @@ class AssertTestResults {
 	}
 	public errored (expectedCount: number) {
 		this.assertResultsCountByStatus(expectedCount, 'errored')
+	}
+	public skipped (expectedCount: number) {
+		this.assertResultsCountByStatus(expectedCount, 'skipped')
 	}
 	public failed (expectedCount: number) {
 		this.assertResultsCountByStatus(expectedCount, 'failed')
