@@ -129,8 +129,20 @@ suite('proj1 - Extension Test Suite', () => {
 			})
 	})
 
-	test('proj1.7 - update charset to ISO8559-1, then read file with UTF-8 chars', async () => {
+	test('proj1.7 - read file with UTF-8 chars (charset as extra param)', async () => {
 		await workspace.fs.copy(Uri.joinPath(workspaceUri, 'openedge-project.proj1.7.json'), Uri.joinPath(workspaceUri, 'openedge-project.json'), { overwrite: true })
+		await runTestAtLine('import_charset.p', 14)
+			.then(() => {
+				log.info('testing.runAtCursor complete')
+				assert.tests.count(1)
+				assert.tests.passed(1)
+				assert.tests.failed(0)
+				assert.tests.errored(0)
+			})
+	})
+
+	test('proj1.8 - update charset to ISO8559-1, then read file with UTF-8 chars', async () => {
+		await workspace.fs.copy(Uri.joinPath(workspaceUri, 'openedge-project.proj1.8.json'), Uri.joinPath(workspaceUri, 'openedge-project.json'), { overwrite: true })
 		await runTestAtLine('import_charset.p', 14)
 			.then(() => {
 				log.info('testing.runAtCursor complete')
@@ -141,8 +153,8 @@ suite('proj1 - Extension Test Suite', () => {
 			})
 	})
 
-	test('proj1.8 - check startup parmaeters for -y -yx', async () => {
-		await workspace.fs.copy(Uri.joinPath(workspaceUri, 'openedge-project.proj1.8.json'), Uri.joinPath(workspaceUri, 'openedge-project.json'), { overwrite: true })
+	test('proj1.9 - check startup parmaeters for -y -yx', async () => {
+		await workspace.fs.copy(Uri.joinPath(workspaceUri, 'openedge-project.proj1.9.json'), Uri.joinPath(workspaceUri, 'openedge-project.json'), { overwrite: true })
 		await runTestAtLine('import_charset.p', 64)
 			.then(() => {
 				log.info('testing.runAtCursor complete')

@@ -7,7 +7,7 @@
 	"numThreads": 1,
 	"dbConnections": [],
 	"graphicalMode": false,
-	"extraParameters": "-debugalert -cpinternal ISO8859-1",
+	"extraParameters": "-y -yx",
 	"buildPath": [
 		{ "type": "source", "path": ".", "excludes": "compileError.p" },
 		{ "type": "propath", "path": "${DLC}/tty/netlib/OpenEdge.Net.pl" }
