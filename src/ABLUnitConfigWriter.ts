@@ -79,6 +79,7 @@ export class ABLUnitConfig  {
 
 	async createProfileOptions (uri: Uri, profOpts: ProfilerOptions) {
 		if (!profOpts.enabled) { return Promise.resolve() }
+		log.info('creating profiler options file: \'' + uri.fsPath + '\'')
 
 		const opt: string[] = [
 			'-profiling',

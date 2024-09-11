@@ -328,7 +328,7 @@ export class ABLResults implements Disposable {
 				}
 			}
 		} else {
-			return this.parseFinalSuite(item, s, options)
+			await this.parseFinalSuite(item, s, options)
 		}
 	}
 
@@ -351,27 +351,17 @@ export class ABLResults implements Disposable {
 	}
 
 	private parseFinalSuite (item: TestItem, s: ITestSuite, options: TestRun) {
-		if (s.tests > 0) {
-			if (s.tests === s.skipped) {
-				options.skipped(item)
-			} else if (s.errors === 0 && s.failures === 0) {
-				options.passed(item, s.time)
-			} else if (s.failures > 0 || s.errors > 0) {
-				// // This should be populated automatically by the child messages filtering up
-				// options.failed(item, new vscode.TestMessage("one or more tests failed"), s.time)
-			} else {
-				log.error('unknown error - test results are all zero (item: ' + item.label + ')')
-				options.errored(item, new TestMessage('unknown error - test results are all zero'), s.time)
-			}
-		}
-
 		if (!s.testcases) {
 			log.error('no test cases discovered or run - check the configuration for accuracy (item: ' + item.label + ')')
 			options.errored(item, new TestMessage('no test cases discovered or run - check the configuration for accuracy'), this.duration.elapsed())
 			return
 		}
 
-		return this.setAllChildResults(item.children, s.testcases, options)
+		if (item.children.size > 0) {
+			return this.setAllChildResults(item.children, s.testcases, options)
+		} else {
+			return this.setChildResults(item, options, s.testcases[0])
+		}
 	}
 
 	private async getSuiteName (item: TestItem) {
@@ -406,8 +396,8 @@ export class ABLResults implements Disposable {
 	}
 
 	private setChildResults (item: TestItem, options: TestRun, tc: ITestCase) {
-		switch (tc.status) {
-			case 'Success': {
+		switch (tc.status.toLowerCase()) {
+			case 'success': {
 				if (tc.skipped) {
 					options.skipped(item)
 				} else {
@@ -415,7 +405,7 @@ export class ABLResults implements Disposable {
 				}
 				return Promise.resolve()
 			}
-			case 'Failure': {
+			case 'failure': {
 				if (tc.failure) {
 					const diff = this.getDiffMessage(tc.failure)
 					return this.getFailureMarkdownMessage(item, options, tc.failure).then((msg) => {
@@ -430,7 +420,7 @@ export class ABLResults implements Disposable {
 				log.error('unexpected failure for \'' + tc.name + '\'')
 				throw new Error('unexpected failure for \'' + tc.name)
 			}
-			case 'Error': {
+			case 'error': {
 				if (tc.failure) {
 					return this.getFailureMarkdownMessage(item, options, tc.failure).then((msg) => {
 						const tm = new TestMessage(msg)
@@ -441,7 +431,7 @@ export class ABLResults implements Disposable {
 				log.error('unexpected error for ' + tc.name)
 				throw new Error('unexpected error for ' + tc.name)
 			}
-			case 'Skpped': {
+			case 'skpped': {
 				options.skipped(item)
 				return Promise.resolve()
 			}

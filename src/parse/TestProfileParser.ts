@@ -5,7 +5,7 @@ import { ProfilerOptions } from './config/ProfilerOptions'
 import { CommandOptions } from './config/CommandOptions'
 import { isRelativePath, readStrippedJsonFile } from '../ABLUnitCommon'
 import { log } from '../ChannelLogger'
-import { IDatabaseConnection, getProfileDbConns } from './OpenedgeProjectParser'
+import { IDatabaseConnection, getExtraParameters, getProfileCharset, getProfileDbConns } from './OpenedgeProjectParser'
 
 const runProfileFilename = 'ablunit-test-profile.json'
 
@@ -190,6 +190,23 @@ export class RunConfig extends DefaultRunProfile {
 			this.command.progressIni = workspace.asRelativePath(this.progressIniUri, false)
 		} else {
 			this.progressIniUri = undefined
+		}
+
+		const extraParameters = getExtraParameters(this.workspaceFolder.uri, this.profile.openedgeProjectProfile)
+		log.info('extraParameters=' + extraParameters)
+		if (extraParameters) {
+			this.command.additionalArgs.push(extraParameters)
+		}
+
+		const charset = getProfileCharset(this.workspaceFolder.uri, this.profile.openedgeProjectProfile)
+		// this.command.additionalArgs.push('-cpinternal', 'UTF-8')
+		if (charset) {
+			if (this.command.additionalArgs.includes('-cpstream')) {
+				log.warn('command.additionalArgs already contains -cpstream.  Replacing with `-cpstream ' + charset)
+				this.command.additionalArgs.splice(this.command.additionalArgs.indexOf('-cpstream'), 2, '-cpstream', charset)
+			} else {
+				this.command.additionalArgs.push('-cpstream', charset)
+			}
 		}
 
 		this.profiler = new ProfilerOptions()
