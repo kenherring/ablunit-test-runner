@@ -2,12 +2,12 @@
 	"name": "proj1",
 	"version": "1.0",
 	"oeversion": "12.2",
-	"charset": "ISO8859-1",
+	"charset": "UTF-8",
 	"buildDirectory": "build",
 	"numThreads": 1,
 	"dbConnections": [],
 	"graphicalMode": false,
-	"extraParameters": "-debugalert -errorstack",
+	"extraParameters": "-y -yx",
 	"buildPath": [
 		{ "type": "source", "path": ".", "excludes": "compileError.p" },
 		{ "type": "propath", "path": "${DLC}/tty/netlib/OpenEdge.Net.pl" }

@@ -1,6 +1,6 @@
-import { Selection, commands, window } from 'vscode'
-import { beforeEach } from 'mocha'
-import { Uri, assert, deleteTestFiles, getWorkspaceUri, log, runAllTests, sleep, updateConfig, getTestCount, workspace, suiteSetupCommon, getWorkspaceFolders, oeVersion } from '../testCommon'
+import { FileType, Selection, commands, window } from 'vscode'
+import { after, afterEach, beforeEach } from 'mocha'
+import { Uri, assert, getWorkspaceUri, log, runAllTests, sleep, updateConfig, getTestCount, workspace, suiteSetupCommon, getWorkspaceFolders, oeVersion, runTestAtLine, beforeCommon } from '../testCommon'
 import { getOEVersion } from 'parse/OpenedgeProjectParser'
 
 const workspaceUri = getWorkspaceUri()
@@ -9,32 +9,31 @@ suite('proj1 - Extension Test Suite', () => {
 
 	suiteSetup('proj1 - suiteSetup', async () => {
 		await suiteSetupCommon()
+			.then(() => {
+				return workspace.fs.copy(Uri.joinPath(workspaceUri, 'openedge-project.json'), Uri.joinPath(workspaceUri, 'openedge-project.bk.json'), { overwrite: true })
+			})
 	})
 
 	beforeEach('proj1 - beforeEach', async () => {
-		log.info('setup-1')
-		deleteTestFiles()
+		beforeCommon()
 		log.info('setup-2 has(ablunit.files)=' + workspace.getConfiguration('ablunit').has('files') + ' files.exclude=' + workspace.getConfiguration('ablunit').get('files.exclude'))
 		// const prom = workspace.getConfiguration('ablunit').update('files.exclude', undefined)
-		const prom = workspace.getConfiguration('ablunit.files').update('exclude', undefined)
-		log.info('setup-3')
-		const r = await prom
-			.then(() => {
-				log.info('setup-4')
-				return true
-			}, (e) => {
-				throw e
+		return workspace.getConfiguration('ablunit.files').update('exclude', undefined)
+	})
+
+	afterEach('proj1 - afterEach', async () => {
+		await workspace.fs.stat(Uri.joinPath(workspaceUri, 'openedge-project.bk.json'))
+			.then((stat) => {
+				if (stat.type === FileType.File) {
+					return workspace.fs.copy(Uri.joinPath(workspaceUri, 'openedge-project.bk.json'), Uri.joinPath(workspaceUri, 'openedge-project.json'), { overwrite: true })
+				}
+				return
 			})
-		log.info('setup-5 (r=' + r)
-		return r
+			.then(() => { log.info('restored openedge-project.json') }, (e) => { log.error('error restoring openedge-project.json: ' + e) })
 	})
 
-	beforeEach('proj1 - beforeEach-2', () => {
-		log.info('beforeEach-2')
-	})
-
-	setup('proj1 - setup-2',  () => {
-		log.info('setup-2')
+	after('proj1 - suiteTeardown', async () => {
+		return workspace.fs.delete(Uri.joinPath(workspaceUri, 'openedge-project.bk.json'))
 	})
 
 	test('proj1.1 - output files exist 1 - compile error', () => {
@@ -67,7 +66,7 @@ suite('proj1 - Extension Test Suite', () => {
 		return workspace.getConfiguration('ablunit').update('files.exclude', [ '.builder/**', 'compileError.p' ])
 			.then(() => { return runAllTests() })
 			.then(() => {
-				assert.tests.count(13)
+				assert.tests.count(17)
 				log.info('proj1.2 complete!')
 				return true
 			}, (e) => { throw e })
@@ -80,7 +79,7 @@ suite('proj1 - Extension Test Suite', () => {
 
 		const resultsJson = Uri.joinPath(workspaceUri, 'results.json')
 		const testCount = await getTestCount(resultsJson)
-		assert.equal(testCount, 13)
+		assert.equal(testCount, 17)
 	})
 
 	test('proj1.4 - run test case in file', async () => {
@@ -117,6 +116,53 @@ suite('proj1 - Extension Test Suite', () => {
 		assert.equal(1, pass)
 		assert.equal(0, fail)
 		assert.equal(0, error)
+	})
+
+	test('proj1.6 - read file with UTF-8 chars', async () => {
+		await runTestAtLine('import_charset.p', 14)
+			.then(() => {
+				log.info('testing.runAtCursor complete')
+				assert.tests.count(1)
+				assert.tests.passed(1)
+				assert.tests.failed(0)
+				assert.tests.errored(0)
+			})
+	})
+
+	test('proj1.7 - read file with UTF-8 chars (charset as extra param)', async () => {
+		await workspace.fs.copy(Uri.joinPath(workspaceUri, 'openedge-project.proj1.7.json'), Uri.joinPath(workspaceUri, 'openedge-project.json'), { overwrite: true })
+		await runTestAtLine('import_charset.p', 14)
+			.then(() => {
+				log.info('testing.runAtCursor complete')
+				assert.tests.count(1)
+				assert.tests.passed(1)
+				assert.tests.failed(0)
+				assert.tests.errored(0)
+			})
+	})
+
+	test('proj1.8 - update charset to ISO8559-1, then read file with UTF-8 chars', async () => {
+		await workspace.fs.copy(Uri.joinPath(workspaceUri, 'openedge-project.proj1.8.json'), Uri.joinPath(workspaceUri, 'openedge-project.json'), { overwrite: true })
+		await runTestAtLine('import_charset.p', 14)
+			.then(() => {
+				log.info('testing.runAtCursor complete')
+				assert.tests.count(1)
+				assert.tests.passed(0)
+				assert.tests.failed(1)
+				assert.tests.errored(0)
+			})
+	})
+
+	test('proj1.9 - check startup parmaeters for -y -yx', async () => {
+		await workspace.fs.copy(Uri.joinPath(workspaceUri, 'openedge-project.proj1.9.json'), Uri.joinPath(workspaceUri, 'openedge-project.json'), { overwrite: true })
+		await runTestAtLine('import_charset.p', 64)
+			.then(() => {
+				log.info('testing.runAtCursor complete')
+				assert.tests.count(1)
+				assert.tests.passed(0)
+				assert.tests.failed(1)
+				assert.tests.errored(0)
+			})
 	})
 
 })
