@@ -1,7 +1,7 @@
 import { Selection, commands, window } from 'vscode'
 import { after, afterEach, beforeEach } from 'mocha'
-import { Uri, assert, getWorkspaceUri, log, runAllTests, sleep, updateConfig, getTestCount, workspace, suiteSetupCommon, getWorkspaceFolders, oeVersion, runTestAtLine, beforeCommon, updateTestProfile } from '../testCommon'
-import { getOEVersion } from 'parse/OpenedgeProjectParser'
+import { Uri, assert, getWorkspaceUri, log, runAllTests, sleep, updateConfig, getTestCount, workspace, suiteSetupCommon, getWorkspaceFolders, oeVersion, runTestAtLine, beforeCommon, updateTestProfile, getDefaultDLC } from '../testCommon'
+import { getDLC, getOEVersion } from 'parse/OpenedgeProjectParser'
 import * as glob from 'glob'
 import { restartLangServer } from '../openedgeAblCommands'
 import { execSync } from 'child_process'
@@ -178,10 +178,13 @@ suite('proj1 - Extension Test Suite', () => {
 	test('proj1.10 - xref options', async () => {
 		// setup test configuration
 		await workspace.fs.copy(Uri.joinPath(workspaceUri, 'openedge-project.proj1.10.json'), Uri.joinPath(workspaceUri, 'openedge-project.json'), { overwrite: true })
-		await workspace.fs.copy(Uri.joinPath(workspaceUri, '.vscode', 'ablunit-test-profile.proj1.10.json'), Uri.joinPath(workspaceUri, '.vscode', 'ablunit-test-profile.json'), { overwrite: true })
+			.then(() => { return workspace.fs.copy(Uri.joinPath(workspaceUri, '.vscode', 'ablunit-test-profile.proj1.10.json'), Uri.joinPath(workspaceUri, '.vscode', 'ablunit-test-profile.json'), { overwrite: true }) })
+			.then(() => { log.info('test proj1.10 config setup complete') })
 
 		// compile with xref xml output
-		execSync('$DLC/ant/bin/ant compile')
+		log.info('execSync start')
+		execSync(process.env['DLC']?.replace(/\\/g, '/') + '/ant/bin/ant', { cwd: getWorkspaceUri().fsPath })
+		log.info('execSync end')
 
 		// delete all *.xref files
 		let xrefFiles = glob.globSync('*.xref', { cwd: workspaceUri.fsPath })
@@ -196,8 +199,8 @@ suite('proj1 - Extension Test Suite', () => {
 		xrefFiles = glob.globSync('*.xref', { cwd: workspaceUri.fsPath })
 		assert.equal(xrefFiles.length, 0, 'xref files should not exist')
 
-		// exclude compileError.p
-		await workspace.getConfiguration('ablunit').update('files.exclude', [ '.builder/**', 'compileError.p' ])
+		// exclude compileError.p,propathTest.p
+		await workspace.getConfiguration('ablunit').update('files.exclude', [ '.builder/**', 'compileError.p,propathTest.p' ])
 
 		// update ablunit-test-profile.json to include xref options.
 		await updateTestProfile('xref', { 'useXref': true, 'xrefLocation': '${workspaceFolder}/.builder/pct0', 'xrefExtension': 'xref', 'xrefThrowError': true })

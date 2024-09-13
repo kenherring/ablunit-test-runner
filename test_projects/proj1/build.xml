@@ -1,4 +1,4 @@
-<project name="proj1" default="test">
+<project name="proj1" default="compile">
 
   <property environment="env" />
   <property name="tempDir" value="target/temp" />
@@ -29,7 +29,7 @@
     <echo>Compiling...</echo>
 
     <PCTCompile forceCompile="true" xrefDir=".xref" keepXref="true" xmlXref="true">
-      <fileset dir="." includes="*.p,*.cls" />
+      <fileset dir="." includes="*.p,*.cls" excludes="compileError.p,propathTest.p" />
     </PCTCompile>
   </target>
 
