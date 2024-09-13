@@ -507,6 +507,8 @@ export async function getTestCount (resultsJson: Uri, status = 'tests') {
 			return results[0].failures
 		} else if (status === 'error') {
 			return results[0].errors
+		} else if (status === 'skipped') {
+			return results[0].skipped
 		} else {
 			throw new Error('[unknown status: ' + status)
 		}
@@ -941,9 +943,9 @@ class AssertTestResults {
 			// case 'failed': actualCount = res.failures; break
 			case 'failed': assertParent.equal(res.failures, expectedCount, 'test count failed != ' + expectedCount); break
 			// case 'errored': actualCount = res.errors; break
-			case 'errored': assertParent.equal(res.errors, expectedCount, 'test count errored != ' + expectedCount); break
+			case 'errored': assertParent.equal(expectedCount, res.errors, 'test count errored != ' + expectedCount); break
 			// case 'skipped': actualCount = res.skipped; break
-			case 'skipped': assertParent.equal(res.skipped, expectedCount, 'test count skipped != ' + expectedCount); break
+			case 'skipped': assertParent.equal(expectedCount, res.skipped, 'test count skipped != ' + expectedCount); break
 			// case 'all': actualCount = res.tests; break
 			case 'all': assertParent.equal(res.tests, expectedCount, 'test count != ' + expectedCount); break
 			default: throw new Error('unknown status: ' + status)

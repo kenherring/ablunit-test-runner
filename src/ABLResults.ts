@@ -164,8 +164,8 @@ export class ABLResults implements Disposable {
 		this.tests.push(test)
 
 		let testCase: string | undefined = undefined
-		if (test.id.includes('#')) {
-			testCase = test.id.split('#')[1]
+		if (test.children.size === 0) { // test method or procedure
+			testCase = test.label
 		}
 
 		const testUri = test.uri
