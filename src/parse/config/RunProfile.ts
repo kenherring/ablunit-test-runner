@@ -2,7 +2,6 @@ import { WorkspaceFolder } from 'vscode'
 import { ICommandOptions, CommandOptions } from './CommandOptions'
 import { ICoreOptions, CoreOptions } from './CoreOptions'
 import { IProfilerOptions, ProfilerOptions } from './ProfilerOptions'
-import { IXrefOptions, XrefOptions } from './XrefOptions'
 
 export interface IRunProfile {
 	runProfile?: string
@@ -14,7 +13,6 @@ export interface IRunProfile {
 	command?: ICommandOptions
 	options?: ICoreOptions
 	profiler?: IProfilerOptions
-	xref?: IXrefOptions
 }
 
 export class DefaultRunProfile implements IRunProfile {
@@ -25,5 +23,4 @@ export class DefaultRunProfile implements IRunProfile {
 	command: CommandOptions = new CommandOptions()
 	options: CoreOptions = new CoreOptions()
 	profiler: ProfilerOptions = new ProfilerOptions()
-	xref: XrefOptions = new XrefOptions()
 }

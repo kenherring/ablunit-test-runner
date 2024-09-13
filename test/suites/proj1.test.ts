@@ -1,9 +1,10 @@
-import { FileType, Selection, commands, window } from 'vscode'
+import { Selection, commands, window } from 'vscode'
 import { after, afterEach, beforeEach } from 'mocha'
 import { Uri, assert, getWorkspaceUri, log, runAllTests, sleep, updateConfig, getTestCount, workspace, suiteSetupCommon, getWorkspaceFolders, oeVersion, runTestAtLine, beforeCommon, updateTestProfile } from '../testCommon'
 import { getOEVersion } from 'parse/OpenedgeProjectParser'
 import * as glob from 'glob'
 import { restartLangServer } from '../openedgeAblCommands'
+import { execSync } from 'child_process'
 
 const workspaceUri = getWorkspaceUri()
 
@@ -175,6 +176,13 @@ suite('proj1 - Extension Test Suite', () => {
 	})
 
 	test('proj1.10 - xref options', async () => {
+		// setup test configuration
+		await workspace.fs.copy(Uri.joinPath(workspaceUri, 'openedge-project.proj1.10.json'), Uri.joinPath(workspaceUri, 'openedge-project.json'), { overwrite: true })
+		await workspace.fs.copy(Uri.joinPath(workspaceUri, '.vscode', 'ablunit-test-profile.proj1.10.json'), Uri.joinPath(workspaceUri, '.vscode', 'ablunit-test-profile.json'), { overwrite: true })
+
+		// compile with xref xml output
+		execSync('$DLC/ant/bin/ant compile')
+
 		// delete all *.xref files
 		let xrefFiles = glob.globSync('*.xref', { cwd: workspaceUri.fsPath })
 		log.info('xrefFiles.length=' + xrefFiles.length)

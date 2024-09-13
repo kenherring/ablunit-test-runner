@@ -48,7 +48,7 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 		throw new CancellationError()
 	})
 
-	await res.cfg.createAblunitJson(res.cfg.ablunitConfig.config_uri, res.cfg.ablunitConfig.options, res.cfg.ablunitConfig.xref, res.testQueue)
+	await res.cfg.createAblunitJson(res.cfg.ablunitConfig.config_uri, res.cfg.ablunitConfig.options, res.testQueue)
 
 	const getCommand = () => {
 		if (res.cfg.ablunitConfig.command.executable != '_progres' &&

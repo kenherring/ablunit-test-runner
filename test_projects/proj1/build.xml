@@ -25,4 +25,12 @@
     </ABLUnit>
   </target>
 
+  <target name="compile">
+    <echo>Compiling...</echo>
+
+    <PCTCompile forceCompile="true" xrefDir=".xref" keepXref="true" xmlXref="true">
+      <fileset dir="." includes="*.p,*.cls" />
+    </PCTCompile>
+  </target>
+
 </project>

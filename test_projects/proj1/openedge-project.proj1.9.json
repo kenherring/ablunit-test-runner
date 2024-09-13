@@ -1,7 +1,6 @@
 {
 	"name": "proj1",
 	"version": "1.0",
-	"oeversion": "12.2",
 	"charset": "UTF-8",
 	"buildDirectory": "build",
 	"numThreads": 1,
