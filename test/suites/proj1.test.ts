@@ -199,7 +199,11 @@ suite('proj1 - Extension Test Suite', () => {
 
 		// compile with xref xml output
 		log.info('execSync start')
-		execSync(process.env['DLC']?.replace(/\\/g, '/') + '/ant/bin/ant', { cwd: getWorkspaceUri().fsPath })
+		if (process.env['DLC'] == '/psc/dlc') {
+			execSync('ant', { cwd: getWorkspaceUri().fsPath })
+		} else {
+			execSync(process.env['DLC']?.replace(/\\/g, '/') + '/ant/bin/ant', { cwd: getWorkspaceUri().fsPath })
+		}
 		log.info('execSync end')
 
 		// run tests and assert test count
