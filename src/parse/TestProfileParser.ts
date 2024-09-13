@@ -1,4 +1,4 @@
-import { Uri, WorkspaceFolder, workspace } from 'vscode'
+import { FileSystemError, Uri, WorkspaceFolder, workspace } from 'vscode'
 import { CoreOptions } from './config/CoreOptions'
 import { IRunProfile, DefaultRunProfile } from './config/RunProfile'
 import { ProfilerOptions } from './config/ProfilerOptions'
@@ -81,13 +81,12 @@ export function parseRunProfiles (workspaceFolders: WorkspaceFolder[], wsFilenam
 		try {
 			wfConfig = getConfigurations(Uri.joinPath(workspaceFolder.uri, '.vscode', wsFilename))
 		} catch (err) {
-			// if (err instanceof FileNotFoundError) {
-			// 	log.warn('no .vscode/' + wsFilename + ' file found.  using default profile')
-			// 	return defaultConfig.configurations
-			// }
-			log.error('could not import .vscode/ablunit-test-profile.json.  reverting to default profile')
-			log.error('err=' + err)
-			// TODO - show a warning message to the user
+			if (err instanceof FileSystemError && err.code === 'ENOENT') {
+				log.warn('no .vscode/' + wsFilename + ' file found.  using default profile')
+				return defaultConfig.configurations
+			}
+			log.notificationWarning('Could not import .vscode/ablunit-test-profile.json.  Attempting to use default profile...')
+			log.warn('err=' + err)
 			return defaultConfig.configurations
 		}
 		if (wfConfig.configurations.length === 0) {

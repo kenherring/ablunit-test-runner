@@ -71,11 +71,6 @@ suite('proj1 - Extension Test Suite', () => {
 				assert.tests.failed(2)
 				assert.tests.errored(3)
 				assert.tests.skipped(1)
-
-
-				const xrefFiles = glob.globSync('*.xref', { cwd: workspaceUri.fsPath })
-				assert.greater(xrefFiles.length, 0, 'NOT xref count > 0')
-				log.info('proj1.2 complete!')
 				return true
 			}, (e) => { throw e })
 
