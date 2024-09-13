@@ -117,6 +117,8 @@ export function beforeCommon () {
 	recentResults = undefined
 	testController = undefined
 	currentRunData = undefined
+
+	deleteTestFiles()
 }
 
 log.info('enableExtensions=' + enableExtensions() + ', projName=' + projName() + ', oeVersion=' + oeVersion())
@@ -578,6 +580,26 @@ export function runAllTestsWithCoverage () {
 	return runAllTests(true, true, true)
 }
 
+export function runTestAtLine (filename: string, line: number) {
+	const testpath = Uri.joinPath(getWorkspaceUri(), filename)
+	log.info('running test at line ' + line + ' in ' + testpath.fsPath)
+	return refreshTests()
+		.then(() => { return commands.executeCommand('vscode.open', testpath) })
+		.then(() => {
+			if(window.activeTextEditor) {
+				window.activeTextEditor.selection = new Selection(line, 0, line, 0)
+			} else {
+				throw new Error('vscode.window.activeTextEditor is undefined')
+			}
+			return commands.executeCommand('testing.runAtCursor')
+		})
+		.then(() => { return getResults() })
+		.then(() => {
+			log.info('testing.runAtCursor complete')
+			return
+		}, (e) => { throw e })
+}
+
 async function waitForRefreshComplete () {
 	const waitTime = 5000
 	const refreshDuration = new Duration('waitForRefreshComplete')
@@ -718,7 +740,7 @@ export function updateConfig (key: string, value: unknown, configurationTarget?:
 		.then(() => true, (e) => { throw e })
 }
 
-export async function updateTestProfile (key: string, value: string | string[] | boolean) {
+export async function updateTestProfile (key: string, value: string | string[] | boolean | object) {
 	const testProfileUri = Uri.joinPath(getWorkspaceUri(), '.vscode', 'ablunit-test-profile.json')
 	if (!doesFileExist(testProfileUri)) {
 		log.info('creating ablunit-test-profile.json')
@@ -775,13 +797,16 @@ export function refreshData (resultsLen = 0) {
 		log.info('getExtensionTestReferences command complete')
 		const refs = resp as IExtensionTestReferences
 		// log.info('refs=' + JSON.stringify(refs))
-		const passedTests = refs.recentResults?.[0].ablResults?.resultsJson[0].testsuite?.[0].passed ?? undefined
+		const testCount = refs.recentResults?.[0].ablResults?.resultsJson[0].testsuite?.[0].tests ?? undefined
+		const passedCount = refs.recentResults?.[0].ablResults?.resultsJson[0].testsuite?.[0].passed ?? undefined
+		const failedCount = refs.recentResults?.[0].ablResults?.resultsJson[0].testsuite?.[0].failures ?? undefined
 		log.info('recentResults.length=' + refs.recentResults.length)
-		log.info('recentResults[0].ablResults.=' + refs.recentResults?.[0].status)
-		log.info('recentResults[0].ablResults.resultsJson.length=' + recentResults?.[0].ablResults?.resultsJson.length)
-		log.info('passedTests=' + passedTests)
+		log.info('recentResults[0].ablResults.status=' + refs.recentResults?.[0].status)
+		log.info('recentResults[0].ablResults.resultsJson.length=' + refs.recentResults?.[0].ablResults?.resultsJson.length)
+		log.info('recentResults[0].ablResults.resultsJson[0].testsuite.length=' + refs.recentResults?.[0].ablResults?.resultsJson[0].testsuite?.length)
+		log.info('testCount=' + testCount + '; passed=' + passedCount + '; failed=' + failedCount)
 
-		if (passedTests && passedTests <= resultsLen) {
+		if (testCount && testCount <= resultsLen) {
 			throw new Error('failed to refresh test results: results.length=' + refs.recentResults.length)
 		}
 		testController = refs.testController
@@ -914,15 +939,15 @@ class AssertTestResults {
 
 		switch (status) {
 			// case 'passed': actualCount = res.passed; break
-			case 'passed': assertParent.equal(expectedCount, res.passed, 'test count passed != ' + expectedCount); break
+			case 'passed': assertParent.equal(res.passed, expectedCount, 'test count passed != ' + expectedCount); break
 			// case 'failed': actualCount = res.failures; break
-			case 'failed': assertParent.equal(expectedCount, res.failures, 'test count failed != ' + expectedCount); break
+			case 'failed': assertParent.equal(res.failures, expectedCount, 'test count failed != ' + expectedCount); break
 			// case 'errored': actualCount = res.errors; break
 			case 'errored': assertParent.equal(expectedCount, res.errors, 'test count errored != ' + expectedCount); break
 			// case 'skipped': actualCount = res.skipped; break
 			case 'skipped': assertParent.equal(expectedCount, res.skipped, 'test count skipped != ' + expectedCount); break
 			// case 'all': actualCount = res.tests; break
-			case 'all': assertParent.equal(expectedCount, res.tests, 'test count != ' + expectedCount); break
+			case 'all': assertParent.equal(res.tests, expectedCount, 'test count != ' + expectedCount); break
 			default: throw new Error('unknown status: ' + status)
 		}
 	}
@@ -935,6 +960,9 @@ class AssertTestResults {
 	}
 	public errored (expectedCount: number) {
 		this.assertResultsCountByStatus(expectedCount, 'errored')
+	}
+	public skipped (expectedCount: number) {
+		this.assertResultsCountByStatus(expectedCount, 'skipped')
 	}
 	public failed (expectedCount: number) {
 		this.assertResultsCountByStatus(expectedCount, 'failed')

@@ -1,11 +1,11 @@
-import { Uri, WorkspaceFolder, workspace } from 'vscode'
+import { FileSystemError, Uri, WorkspaceFolder, workspace } from 'vscode'
 import { CoreOptions } from './config/CoreOptions'
 import { IRunProfile, DefaultRunProfile } from './config/RunProfile'
 import { ProfilerOptions } from './config/ProfilerOptions'
 import { CommandOptions } from './config/CommandOptions'
 import { isRelativePath, readStrippedJsonFile } from '../ABLUnitCommon'
 import { log } from '../ChannelLogger'
-import { IDatabaseConnection, getProfileDbConns } from './OpenedgeProjectParser'
+import { IDatabaseConnection, getExtraParameters, getProfileCharset, getProfileDbConns } from './OpenedgeProjectParser'
 
 const runProfileFilename = 'ablunit-test-profile.json'
 
@@ -40,8 +40,12 @@ function mergeObjects (from: object, into: object) {
 		if (typeof from[key] === 'object') {
 			// @ts-expect-error ThisIsSafeForTesting
 			if (into[key] === undefined) {
-				// @ts-expect-error ThisIsSafeForTesting
-				log.error('into.' + key + ' is undefined and the value will not be merged (value = ' + JSON.stringify(from[key]) + ')')
+				// @ts-expect-error ThisIsSafe
+				if (from[key]) {
+					// @ts-expect-error ThisIsSafe
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+					into[key] = from[key]
+				}
 			// @ts-expect-error ThisIsSafeForTesting
 			} else if (Array.isArray(from[key])) {
 				// @ts-expect-error ThisIsSafeForTesting
@@ -77,8 +81,12 @@ export function parseRunProfiles (workspaceFolders: WorkspaceFolder[], wsFilenam
 		try {
 			wfConfig = getConfigurations(Uri.joinPath(workspaceFolder.uri, '.vscode', wsFilename))
 		} catch (err) {
-			log.error('could not import ablunit-test-profile.json.  reverting to default profile')
-			log.debug('err=' + err)
+			if (err instanceof FileSystemError && err.code === 'ENOENT') {
+				log.warn('no .vscode/' + wsFilename + ' file found.  using default profile')
+				return defaultConfig.configurations
+			}
+			log.notificationWarning('Could not import .vscode/ablunit-test-profile.json.  Attempting to use default profile...')
+			log.warn('err=' + err)
 			return defaultConfig.configurations
 		}
 		if (wfConfig.configurations.length === 0) {
@@ -192,6 +200,23 @@ export class RunConfig extends DefaultRunProfile {
 			this.progressIniUri = undefined
 		}
 
+		const extraParameters = getExtraParameters(this.workspaceFolder.uri, this.profile.openedgeProjectProfile)
+		log.info('extraParameters=' + extraParameters)
+		if (extraParameters) {
+			this.command.additionalArgs.push(extraParameters)
+		}
+
+		const charset = getProfileCharset(this.workspaceFolder.uri, this.profile.openedgeProjectProfile)
+		// this.command.additionalArgs.push('-cpinternal', 'UTF-8')
+		if (charset) {
+			if (this.command.additionalArgs.includes('-cpstream')) {
+				log.warn('command.additionalArgs already contains -cpstream.  Replacing with `-cpstream ' + charset)
+				this.command.additionalArgs.splice(this.command.additionalArgs.indexOf('-cpstream'), 2, '-cpstream', charset)
+			} else {
+				this.command.additionalArgs.push('-cpstream', charset)
+			}
+		}
+
 		this.profiler = new ProfilerOptions()
 		this.profiler.merge(this.profile.profiler)
 		this.profFilenameUri = this.getUri(this.profiler.filename)
@@ -210,6 +235,10 @@ export class RunConfig extends DefaultRunProfile {
 		}
 		if (this.profListingsUri) {
 			this.profiler.listings = workspace.asRelativePath(this.profListingsUri, false)
+		}
+
+		if (this.options.xref) {
+			this.options.xref.xrefLocation = this.getUri(this.options.xref.xrefLocation).fsPath
 		}
 	}
 

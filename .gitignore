@@ -24,6 +24,8 @@ tmp/
 
 # OpenEdge Files
 docker/ablunit.pl
+client.mon
+proc.mon
 *.dbg
 *.listing
 *.out

@@ -6,6 +6,13 @@ interface ICoreOutput {
 	writeJson?: boolean
 }
 
+interface IXrefOptions {
+	useXref?: boolean, // default false
+	xrefLocation?: string, // default: ${workspaceFolder}
+	xrefExtension?: string, // default: xref
+	xrefThrowError?: boolean, // default: false
+}
+
 export interface ICoreOptions {
 	output?: {
 		location?: string
@@ -17,6 +24,7 @@ export interface ICoreOptions {
 	writeLog?: boolean // = true
 	showErrorMessage?: boolean // = true
 	throwError?: boolean // = true
+	xref?: IXrefOptions
 }
 
 export class CoreOptions implements ICoreOptions {
@@ -30,6 +38,7 @@ export class CoreOptions implements ICoreOptions {
 	writeLog = false
 	showErrorMessage = true
 	throwError = true
+	xref?: IXrefOptions
 
 	constructor (from?: ICoreOptions) {
 		if (from === undefined) {
@@ -49,5 +58,6 @@ export class CoreOptions implements ICoreOptions {
 		this.writeLog = from.writeLog ?? this.writeLog
 		this.showErrorMessage = from.showErrorMessage ?? this.showErrorMessage
 		this.throwError = from.throwError ?? this.throwError
+		this.xref = from.xref
 	}
 }

@@ -30,10 +30,11 @@ interface IProcedure {
 
 interface IOpenEdgeConfig {
 	// Content of a profile section in openedge-project.json
-	oeversion: string
+	oeversion?: string
 	numThreads: number
 	graphicalMode: boolean
 	extraParameters?: string
+	charset?: string
 	buildPath?: IBuildPathEntry[]
 	buildDirectory?: string
 	dbConnections: IDatabaseConnection[]
@@ -138,16 +139,19 @@ export function getOEVersion (workspaceFolder: WorkspaceFolder, openedgeProjectP
 	return undefined
 }
 
-export class ProfileConfig {
+export class ProfileConfig implements IOpenEdgeConfig {
 	name?: string
 	version?: string
-	oeversion?: string
 	dlc = ''
-	extraParameters?: string
-	gui = false
-	buildDirectory = '.'
-	buildPath: IBuildPathEntry[] = []
 	propath: string[] = []
+	// IOpenEdgeConfig properties
+	oeversion?: string
+	numThreads = 1 // unused
+	graphicalMode = false // unused
+	extraParameters?: string
+	charset?: string
+	buildPath: IBuildPathEntry[] = []
+	buildDirectory = '.'
 	dbConnections: IDatabaseConnection[] = []
 	procedures: IProcedure[] = []
 
@@ -165,8 +169,11 @@ export class ProfileConfig {
 		if (!this.extraParameters) {
 			this.extraParameters = parent.extraParameters
 		}
-		if (!this.gui) {
-			this.gui = parent.gui
+		if (!this.charset) {
+			this.charset = parent.charset
+		}
+		if (!this.graphicalMode) {
+			this.graphicalMode = parent.graphicalMode
 		}
 		if (!this.buildDirectory) {
 			this.buildDirectory = parent.buildDirectory
@@ -192,8 +199,8 @@ export class ProfileConfig {
 			return path.join(this.dlc, 'bin', '_progres')
 	}
 
-	getExecutable (gui?: boolean): string {
-		if (gui ?? this.gui) {
+	getExecutable (graphicalMode?: boolean): string {
+		if (graphicalMode ?? this.graphicalMode) {
 			if (fs.existsSync(path.join(this.dlc, 'bin', 'prowin.exe')))
 				return path.join(this.dlc, 'bin', 'prowin.exe')
 			else
@@ -289,12 +296,12 @@ function readGlobalOpenEdgeRuntimes (workspaceUri: Uri) {
 		defaultProject.rootDir = workspaceUri.fsPath
 		defaultProject.oeversion = defaultRuntime.name
 		defaultProject.extraParameters = ''
-		defaultProject.gui = false
+		defaultProject.graphicalMode = false
 		defaultProject.propath = []
 	}
 }
 
-function getDlcDirectory (version: string): string {
+function getDlcDirectory (version: string | undefined): string {
 	let dlc = ''
 	let dfltDlc = ''
 	let dfltName = ''
@@ -329,8 +336,9 @@ function parseOpenEdgeConfig (cfg: IOpenEdgeConfig): ProfileConfig {
 	const retVal = new ProfileConfig()
 	retVal.dlc = getDlcDirectory(cfg.oeversion)
 	retVal.extraParameters = cfg.extraParameters ?? ''
+	retVal.charset = cfg.charset ?? ''
 	retVal.oeversion = cfg.oeversion ?? ''
-	retVal.gui = cfg.graphicalMode ?? ''
+	retVal.graphicalMode = cfg.graphicalMode ?? ''
 	if (cfg.buildPath)
 		retVal.propath = cfg.buildPath.map(str => str.path.replace('${DLC}', retVal.dlc)) ?? ''
 	retVal.buildPath = cfg.buildPath ?? []
@@ -352,8 +360,9 @@ function parseOpenEdgeProjectConfig (uri: Uri, workspaceUri: Uri, config: IOpenE
 	readGlobalOpenEdgeRuntimes(workspaceUri)
 	prjConfig.dlc = getDlcDirectory(config.oeversion)
 	prjConfig.extraParameters = config.extraParameters ? config.extraParameters : ''
+	prjConfig.charset = config.charset
 	prjConfig.oeversion = config.oeversion
-	prjConfig.gui = config.graphicalMode
+	prjConfig.graphicalMode = config.graphicalMode
 	if (config.buildPath && config.buildPath.length > 0) {
 		prjConfig.propath = config.buildPath.map(str => str.path.replace('${DLC}', prjConfig.dlc))
 	} else {
@@ -456,6 +465,24 @@ export function getOpenEdgeProfileConfig (workspaceUri: Uri, openedgeProjectProf
 		return profileConfig
 	}
 	return undefined
+}
+
+export function getProfileCharset (workspaceUri: Uri, openedgeProjectProfile?: string) {
+	const profileConfig = getWorkspaceProfileConfig(workspaceUri, openedgeProjectProfile)
+	if (!profileConfig) {
+		log.debug('[getProfileCharset] profileConfig is undefined')
+		return undefined
+	}
+	return profileConfig.charset
+}
+
+export function getExtraParameters (workspaceUri: Uri, openedgeProjectProfile?: string) {
+	const profileConfig = getWorkspaceProfileConfig(workspaceUri, openedgeProjectProfile)
+	if (!profileConfig) {
+		log.debug('[getExtraParameters] profileConfig is undefined')
+		return undefined
+	}
+	return profileConfig.extraParameters
 }
 
 export function getProfileDbConns (workspaceUri: Uri, openedgeProjectProfile?: string) {

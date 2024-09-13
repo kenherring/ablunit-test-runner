@@ -99,6 +99,33 @@
 							"throwError": {
 								"type": "boolean",
 								"default": true
+							},
+							"xref": {
+								"type": "object",
+								"description": "Options related to xref files",
+								"additionalProperties": false,
+								"properties": {
+									"useXref": {
+										"type": "boolean",
+										"default": false,
+										"description": "Enable xref usage"
+									},
+									"xrefLocation": {
+										"type": "string",
+										"default": "${workspaceFolder}",
+										"description": "Location of xref file"
+									},
+									"xrefExtension": {
+										"type": "string",
+										"default": "xref",
+										"description": "Extension of xref file"
+									},
+									"xrefThrowError": {
+										"type": "boolean",
+										"default": false,
+										"description": "Throw an error if xref file is not found"
+									}
+								}
 							}
 						}
 					},

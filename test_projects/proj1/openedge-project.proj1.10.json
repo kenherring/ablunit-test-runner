@@ -8,7 +8,8 @@
 	"graphicalMode": false,
 	"extraParameters": "-debugalert -errorstack",
 	"buildPath": [
-		{ "type": "source", "path": ".", "excludes": "compileError.p" },
+		{ "type": "source", "path": ".", "excludes": "compileError.p,ADE/**" },
+		{ "type": "propath", "path": "ADE/ablunit/" },
 		{ "type": "propath", "path": "${DLC}/tty/netlib/OpenEdge.Net.pl" }
 	],
 	"procedures": [],
