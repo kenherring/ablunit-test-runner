@@ -78,6 +78,18 @@ class Logger {
 		return window.showInformationMessage(message)
 	}
 
+	notificationWarningSync (message: string) {
+		log.warn(message)
+		return window.showWarningMessage(message)
+	}
+
+	notificationWarning (message: string) {
+		log.warn(message)
+		// eslint-disable-next-line @typescript-eslint/no-unused-vars
+		const p = window.showWarningMessage(message).then(() => { return }, () => { return })
+		return
+	}
+
 	notificationError (message: string) {
 		log.error(message)
 		return window.showErrorMessage(message)

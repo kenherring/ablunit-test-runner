@@ -1,0 +1,21 @@
+{
+	"configurations": [
+		{
+			"tempDir": "${workspaceFolder}",
+			"options": {
+				"output": {
+					"writeJson": true
+				},
+				"xref": {
+					"useXref": true,
+					"xrefExtension": "xref",
+					"xrefLocation": "${workspaceFolder}/.xref",
+					"xrefThrowError": true
+				}
+			},
+			"profiler": {
+				"enabled": false
+			}
+		}
+	]
+}

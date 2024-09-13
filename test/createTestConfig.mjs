@@ -227,7 +227,7 @@ function getTestConfig (projName) {
 		ABLUNIT_TEST_RUNNER_ENABLE_EXTENSIONS: enableExtensions.includes('' + projName),
 		ABLUNIT_TEST_RUNNER_UNIT_TESTING: true,
 		ABLUNIT_TEST_RUNNER_VSCODE_VERSION: vsVersion,
-		DONT_PROMPT_WSL_INSTAL: true,
+		DONT_PROMPT_WSL_INSTALL: true,
 		// VSCODE_SKIP_PRELAUNCH: true,
 	}
 
