@@ -6,9 +6,6 @@
 	"files.exclude": {
 		"**/.git": true
 	},
-	"files.watcherExclude": {
-		"ADE": true,
-	},
 	"terminal.integrated.env.linux": {
 		"ENV_VAR_1": "THISisTHEvalue",
 		"ATTR_ABLUNIT_EVENT_FILE": "ablunit_event_file" //TODO

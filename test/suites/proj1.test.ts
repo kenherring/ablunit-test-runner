@@ -66,8 +66,8 @@ suite('proj1 - Extension Test Suite', () => {
 		return workspace.getConfiguration('ablunit').update('files.exclude', [ '.builder/**', 'compileError.p' ])
 			.then(() => { return runAllTests() })
 			.then(() => {
-				assert.tests.count(17)
-				assert.tests.passed(11)
+				assert.tests.count(29)
+				assert.tests.passed(23)
 				assert.tests.failed(2)
 				assert.tests.errored(3)
 				assert.tests.skipped(1)
@@ -83,7 +83,7 @@ suite('proj1 - Extension Test Suite', () => {
 
 		const resultsJson = Uri.joinPath(workspaceUri, 'results.json')
 		const testCount = await getTestCount(resultsJson)
-		assert.equal(testCount, 17)
+		assert.equal(testCount, 29)
 	})
 
 	test('proj1.4 - run test case in file', async () => {
@@ -210,8 +210,8 @@ suite('proj1 - Extension Test Suite', () => {
 		// run tests and assert test count
 		await runAllTests()
 			.then(() => {
-				assert.tests.count(16)
-				assert.tests.passed(10)
+				assert.tests.count(28)
+				assert.tests.passed(22)
 				assert.tests.failed(2)
 				assert.tests.errored(3)
 				assert.tests.skipped(1)
@@ -222,45 +222,40 @@ suite('proj1 - Extension Test Suite', () => {
 
 
 	test('proj1.11 - run test case at cursor (line 4)', async () => {
-		await commands.executeCommand('vscode.open', Uri.joinPath(workspaceUri, 'testNames.p'))
-		if(window.activeTextEditor) {
-			window.activeTextEditor.selection = new Selection(4, 0, 4, 0)
-		} else {
-			assert.fail('vscode.window.activeTextEditor is undefined')
-		}
-		await commands.executeCommand('testing.runAtCursor')
-
-		const resultsJson = Uri.joinPath(workspaceUri, 'results.json')
-		const testCount = await getTestCount(resultsJson)
-		const pass = await getTestCount(resultsJson, 'pass')
-		const fail = await getTestCount(resultsJson, 'fail')
-		const error = await getTestCount(resultsJson, 'error')
-		const skipped = await getTestCount(resultsJson, 'skip')
-		assert.equal(1, testCount)
-		assert.equal(1, pass)
-		assert.equal(0, fail)
-		assert.equal(0, error)
+		await runTestAtLine('testNames.p', 4)
+			.then(() => {
+				assert.tests.count(1)
+				assert.tests.passed(1)
+				assert.tests.failed(0)
+				assert.tests.errored(0)
+				assert.tests.skipped(0)
+			})
 	})
 
-	test('proj1.12 - run test case at cursor (line 8)', async () => {
-		await commands.executeCommand('vscode.open', Uri.joinPath(workspaceUri, 'testNames.p'))
-		if(window.activeTextEditor) {
-			window.activeTextEditor.selection = new Selection(8, 0, 8, 0)
-		} else {
-			assert.fail('vscode.window.activeTextEditor is undefined')
-		}
-		await commands.executeCommand('testing.runAtCursor')
-
-		const resultsJson = Uri.joinPath(workspaceUri, 'results.json')
-		const testCount = await getTestCount(resultsJson)
-		const pass = await getTestCount(resultsJson, 'pass')
-		const fail = await getTestCount(resultsJson, 'fail')
-		const error = await getTestCount(resultsJson, 'error')
-		const skipped = await getTestCount(resultsJson, 'skip')
-		assert.equal(1, testCount)
-		assert.equal(1, pass)
-		assert.equal(0, fail)
-		assert.equal(0, error)
+	// bug in 12.8 which prevents test names with # in the name from running individually
+	test.skip('proj1.12 - run test case at cursor (line 9)', async () => {
+		await runTestAtLine('testNames.p', 9)
+			.then(() => {
+				assert.tests.count(1)
+				assert.tests.passed(1)
+				assert.tests.failed(0)
+				assert.tests.errored(0)
+				assert.tests.skipped(0)
+			})
 	})
+
+	// bug in 12.8 which prevents test names with # in the name from running individually
+	test('proj1.13 - run test case at cursor (line 24)', async () => {
+		await runTestAtLine('testNames2.cls', 26)
+			.then(() => {
+				assert.tests.count(1)
+				assert.tests.passed(1)
+				assert.tests.failed(0)
+				assert.tests.errored(0)
+				assert.tests.skipped(0)
+			})
+	})
+
+
 
 })
