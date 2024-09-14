@@ -8,7 +8,9 @@ import {
 	Uri,
 	Selection,
 	WorkspaceFolder, commands, extensions, window,
-	workspace
+	workspace,
+	FileCoverageDetail,
+	Position
 } from 'vscode'
 import { ABLResults } from '../src/ABLResults'
 import { Duration, deleteFile as deleteFileCommon, isRelativePath, readStrippedJsonFile } from '../src/ABLUnitCommon'
@@ -969,6 +971,26 @@ class AssertTestResults {
 	}
 }
 
+function getDetailLine (coverage: FileCoverageDetail[] | never[], lineNum: number) {
+	if (!coverage) return undefined
+	if (coverage.length === 0) {
+		return undefined
+	}
+	try {
+		const l =  coverage.find((d: FileCoverageDetail) => {
+			const r = d.location as Position
+			return r
+		})
+		if (l) {
+			log.info('found line ' + lineNum + '!')
+			return l
+		}
+		throw new Error('Could not find line ' + lineNum + ' in coverage')
+	} catch (e) {
+		throw new Error('Error finding coverage info for line ' + lineNum + '. e=' + e)
+	}
+}
+
 export const assert = {
 
 	assert: (value: unknown, message?: string) => {
@@ -1060,6 +1082,48 @@ export const assert = {
 		assertParent.ok(duration.elapsed() < limit, name + ' is not less than limit (' + duration.elapsed() + ' / ' + limit + 'ms)')
 	},
 	tests: new AssertTestResults(),
+
+	linesExecuted (file: Uri | string, lines: number[] | number, notExecuted = false) {
+		if (!(file instanceof Uri)) {
+			file = toUri(file)
+		}
+		if (!Array.isArray(lines)) {
+			lines = [lines]
+		}
+		if (!recentResults || recentResults.length === 0) {
+			assert.fail('no recent results found')
+			return
+		}
+		if (recentResults.length > 1) {
+			assert.fail('expected only one result set, found ' + recentResults.length)
+			return
+		}
+
+		const coverage = recentResults[0].coverage.get(file.fsPath)
+		if (!coverage) {
+			assert.fail('no coverage found for ' + file.fsPath)
+			return
+		}
+		for (const line of lines) {
+			const lineCoverage = getDetailLine(coverage, line)
+			if (!lineCoverage) {
+				assert.fail('no coverage found for line ' + line + ' in ' + file.fsPath)
+				return
+			}
+			if (typeof lineCoverage.executed === 'boolean') {
+				assert.fail('expected number for coverage executed but got boolean (' + lineCoverage.executed + ')')
+				return
+			}
+			if (notExecuted) {
+				assert.equal(lineCoverage?.executed, 0, 'line ' + line + ' in ' + file.fsPath + ' was executed')
+			} else {
+				assert.greater(lineCoverage?.executed, 0, 'line ' + line + ' in ' + file.fsPath + ' was not executed')
+			}
+		}
+	},
+	linesNotExecuted (file: Uri | string, lines: number[] | number) {
+		assert.linesExecuted(file, lines, true)
+	}
 }
 
 export async function beforeProj7 () {
