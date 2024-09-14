@@ -1,4 +1,4 @@
-import { FileType, MarkdownString, TestItem, TestItemCollection, TestMessage, TestRun, Uri, workspace, WorkspaceFolder, Range,
+import { FileType, MarkdownString, TestItem, TestItemCollection, TestMessage, TestRun, Uri, workspace, WorkspaceFolder, Position,
 	FileCoverage, FileCoverageDetail,
 	Disposable, CancellationToken, CancellationError,
 	StatementCoverage,
@@ -535,13 +535,13 @@ export class ABLResults implements Disposable {
 			let fc = this.coverage.get(dbg.sourceUri.fsPath)
 			if (!fc) {
 				// create a new FileCoverage object if one didn't already exist
-				const fcd: FileCoverageDetail[] = [ new StatementCoverage(0, new Range(0, 0, 0, 0)) as FileCoverageDetail ]
+				const fcd: FileCoverageDetail[] = []
 				this.coverage.set(dbg.sourceUri.fsPath, fcd)
 				fc = this.coverage.get(dbg.sourceUri.fsPath)
 			}
 
 			// // TODO: end of range should be the end of the line, not the beginning of the next line
-			const coverageRange = new Range(dbg.sourceLine - 1, 0, dbg.sourceLine, 0)
+			const coverageRange = new Position(dbg.sourceLine - 1, 0)
 			fc!.push(new StatementCoverage(line.ExecCount ?? 0, coverageRange))
 		}
 
