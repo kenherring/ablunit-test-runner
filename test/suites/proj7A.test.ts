@@ -1,6 +1,5 @@
-import { strict as assert } from 'assert'
 import { Uri } from 'vscode'
-import { beforeProj7, getTestCount, getWorkspaceUri, runAllTests } from '../testCommon'
+import { assert, beforeProj7, Duration, getTestCount, getWorkspaceUri, runAllTests } from '../testCommon'
 
 const workspaceUri = getWorkspaceUri()
 
@@ -11,12 +10,11 @@ suite('proj7A - Extension Test Suite', () => {
 	})
 
 	test('proj7A.1 - test count', async () => {
-		await runAllTests()
-
-		const resultsJson = Uri.joinPath(workspaceUri, 'temp', 'results.json')
-		const testCount = await getTestCount(resultsJson)
-		assert(testCount > 1000, 'testCount should be > 1000, but is ' + testCount)
-		return
+		const duration = new Duration()
+		await runAllTests().then(() => {
+			assert.tests.count(100000)
+			assert.durationLessThan(duration, 45000)
+		})
 	})
 
 })

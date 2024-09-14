@@ -1077,10 +1077,10 @@ export const assert = {
 		}
 	},
 
-	durationLessThan (duration: Duration | undefined, limit: number) {
+	durationLessThan (duration: Duration | undefined, milliseconds: number) {
 		assertParent.ok(duration, 'duration is undefined')
 		const name = duration.name ?? 'duration'
-		assertParent.ok(duration.elapsed() < limit, name + ' is not less than limit (' + duration.elapsed() + ' / ' + limit + 'ms)')
+		assertParent.ok(duration.elapsed() < milliseconds, name + ' is not less than limit (' + duration.elapsed() + ' / ' + milliseconds + 'ms)')
 	},
 	tests: new AssertTestResults(),
 
