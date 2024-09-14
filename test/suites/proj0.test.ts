@@ -1,4 +1,4 @@
-import { Uri, commands, window, workspace, FileCoverageDetail, TestItem, Position } from 'vscode'
+import { Uri, commands, window, workspace, TestItem } from 'vscode'
 import { assert, deleteFile, getResults, getTestController, log, refreshTests, runAllTests, runAllTestsWithCoverage, suiteSetupCommon, toUri, updateTestProfile } from '../testCommon'
 import { ABLResultsParser } from 'parse/ResultsParser'
 

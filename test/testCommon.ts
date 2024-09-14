@@ -615,6 +615,7 @@ async function waitForRefreshComplete () {
 				clearInterval(interval)
 				reject(new Error('refresh took longer than ' + waitTime + 'ms'))
 			}
+			// eslint-disable-next-line @typescript-eslint/no-unused-vars
 			const p = commands.executeCommand('_ablunit.isRefreshTestsComplete')
 				.then((r: unknown) => {
 					if (r) {
