@@ -1,7 +1,4 @@
-import { Uri } from 'vscode'
-import { assert, beforeProj7, Duration, getTestCount, getWorkspaceUri, runAllTests } from '../testCommon'
-
-const workspaceUri = getWorkspaceUri()
+import { assert, beforeProj7, Duration, runAllTests } from '../testCommon'
 
 suite('proj7A - Extension Test Suite', () => {
 
@@ -12,8 +9,8 @@ suite('proj7A - Extension Test Suite', () => {
 	test('proj7A.1 - test count', async () => {
 		const duration = new Duration()
 		await runAllTests().then(() => {
-			assert.tests.count(100000)
-			assert.durationLessThan(duration, 45000)
+			assert.tests.count(2020)
+			assert.durationLessThan(duration, 10000)
 		})
 	})
 

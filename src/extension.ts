@@ -414,34 +414,21 @@ export async function activate (context: ExtensionContext) {
 	ctrl.refreshHandler = async (token: CancellationToken) => {
 		log.info('ctrl.refreshHandler start')
 		isRefreshTestsComplete = false
-		const prom = refreshTestTree(ctrl, token)
-			.then((r) => {
-				log.info('ctrl.refreshHandler post-refreshTestTree')
-				return r
-			})
+		return refreshTestTree(ctrl, token)
+			.then((r) => { isRefreshTestsComplete = true; return })
 			.catch((e: unknown) => { throw e })
-		log.info('ctrl.refreshHandler await prom')
-		const r = await prom.then((r) => { return r }, (e) => { throw e })
-		log.info('ctrl.refreshHandler return (r=' + r + ')')
-		isRefreshTestsComplete = true
-		return
-
-		// await prom
-		// await prom.then()
-		// const r = await prom.then(() => { log.info('ctrl.refreshHandler prom.then'); return true }, (e: unknown) => { throw unknownToError(e) })
-		// log.info('ctrl.refreshHandler prom resolved (r=' + r + ')')
-		// return
-		// return refreshTestTree(ctrl, token).then(() => {
-		// 	log.info('refresh tests complete!')
-		// 	return
-		// }, (err: unknown) => {
-		// 	log.error('refresh tests failed. err=' + err)
-		// 	throw err
-		// })
 	}
 
 	ctrl.resolveHandler = item => {
-		log.info('ctrl.resolveHandler')
+
+		if (item?.uri) {
+			const relativePath = workspace.asRelativePath(item.uri)
+			log.info('ctrl.resolveHandler (relativePath=' + relativePath + ')')
+		} else if (item) {
+			log.info('ctrl.resolveHandler (item.label=' + item.label + ')')
+		} else {
+			log.info('ctrl.resolveHandler (item=undefined)')
+		}
 		return resolveHandlerFunc(item)
 	}
 
@@ -920,7 +907,7 @@ function refreshTestTree (controller: TestController, token: CancellationToken):
 
 	const prom1 = findMatchingFiles(includePatterns, token, checkCancellationToken)
 		.then((r) => {
-			log.info('return parseMatchingFiles (r=' + r + ')')
+			log.info('return parseMatchingFiles (r.length=' + r.length + ')')
 			return parseMatchingFiles(r, controller, excludePatterns, token, checkCancellationToken)
 		})
 		.then((r) => {
