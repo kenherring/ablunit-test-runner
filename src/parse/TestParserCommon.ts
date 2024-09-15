@@ -1,20 +1,38 @@
 import { Uri, workspace } from 'vscode'
 import { TextDecoder } from 'util'
-import { log } from '../ChannelLogger'
+import { isRelativePath } from 'ABLUnitCommon'
 
 const textDecoder = new TextDecoder('utf-8')
 
-export async function getContentFromFilesystem (uri: Uri) {
-	try {
-		const rawContent = await workspace.fs.readFile(uri)
-		return textDecoder.decode(rawContent)
-	} catch (e) {
-		log.warn('Error providing tests for ${uri.fsPath}: ' + e)
-		return ''
+function toUri (uri: Uri | string): Uri {
+	if (typeof uri === 'string') {
+		if (isRelativePath(uri)) {
+			if (!workspace.workspaceFolders || workspace.workspaceFolders.length === 0) {
+				throw new Error('No workspace folder found')
+			}
+			uri = Uri.joinPath(workspace.workspaceFolders[0].uri, uri)
+		} else {
+			uri = Uri.file(uri)
+		}
 	}
+	return uri
 }
 
-export function getLines (text: string, annotation: string): [ string[], boolean ] {
+export function getContentFromFilesystem (uri: Uri | string) {
+	uri = toUri(uri)
+	const textDecoder = new TextDecoder('utf-8')
+	return workspace.fs.readFile(uri)
+		.then((rawContent) => { return textDecoder.decode(rawContent) },
+			(e) => { throw e })
+}
+
+export function readLinesFromFile (uri: Uri | string) {
+	uri = toUri(uri)
+	return getContentFromFilesystem(uri)
+		.then((content) => { return content.replace(/\r/g, '').split('\n') })
+}
+
+export function getAnnotationLines (text: string, annotation: string): [ string[], boolean ] {
 	const annotationRegex = new RegExp(annotation, 'i')
 
 	if (!annotationRegex.test(text)) {

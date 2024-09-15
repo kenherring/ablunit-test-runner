@@ -1,0 +1,17 @@
+import { assert } from '../testCommon'
+import { parseUpdates } from 'parse/UpdateParser'
+
+
+suite ('UpdateParser', () => {
+
+	test('parseUpdateLines - readFile', () => {
+		return parseUpdates('../../test/resources/UpdateParserTest1.txt')
+			.then((updates) => {
+				for (const item of updates) {
+					assert.equal(item.status, 'passed', 'item.id=' + item.id + '; item.name=' + item.name)
+				}
+				return
+			})
+	})
+
+})

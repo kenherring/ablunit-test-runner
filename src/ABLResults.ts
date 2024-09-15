@@ -107,7 +107,7 @@ export class ABLResults implements Disposable {
 		this.dlc = getDLC(this.workspaceFolder, this.cfg.ablunitConfig.openedgeProjectProfile)
 		this.promsgs = new ABLPromsgs(this.dlc, this.globalStorageUri)
 
-		this.propath = this.cfg.readPropathFromJson()
+		this.propath = this.cfg.readPropathFromJson(this.extensionResourcesUri.fsPath)
 		this.debugLines = new ABLDebugLines(this.propath)
 
 		this.cfg.ablunitConfig.dbAliases = []

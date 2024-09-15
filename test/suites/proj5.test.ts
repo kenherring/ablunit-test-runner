@@ -2,8 +2,8 @@ import { Uri } from 'vscode'
 import { parseSuiteLines } from '../../src/parse/TestSuiteParser'
 import { parseTestClass } from '../../src/parse/TestClassParser'
 import { parseTestProgram } from '../../src/parse/TestProgramParser'
-import { assert, getTestCount, getWorkspaceUri, log, runAllTests, suiteSetupCommon } from '../testCommon'
-import { getContentFromFilesystem, getLines } from '../../src/parse/TestParserCommon'
+import { assert, getTestCount, getWorkspaceUri, runAllTests, suiteSetupCommon } from '../testCommon'
+import { getAnnotationLines, getContentFromFilesystem, readLinesFromFile } from '../../src/parse/TestParserCommon'
 
 const workspaceUri = getWorkspaceUri()
 
@@ -28,7 +28,8 @@ suite('proj5 - Extension Test Suite', () => {
 	// //////// TEST SUITES //////////
 
 	test('proj5.2 - TestSuite - suite1.cls', async () => {
-		const lines = await readLinesFromFile('test/suites/suite1.cls', '@testsuite')
+		const [ lines, ] = await getContentFromFilesystem('test/suites/suite1.cls')
+			.then((content) => { return getAnnotationLines(content, '@testsuite') }, (e) => { throw e })
 		const suiteRet = parseSuiteLines(lines)
 		assert.equal(suiteRet.name, 'suites.suite1')
 		assert.equal(suiteRet.classes.length, 4, 'expected 4 classes in suite1.cls')
@@ -78,15 +79,3 @@ suite('proj5 - Extension Test Suite', () => {
 	})
 
 })
-
-
-function readLinesFromFile (relativeFile: string, annotation = '@test') {
-	const uri = Uri.joinPath(workspaceUri, relativeFile)
-	return getContentFromFilesystem(uri).then((content) => {
-		const [ lines, ] = getLines(content, annotation)
-		return lines
-	}, (err) => {
-		log.error('Error reading file (' + relativeFile + '): ' + err)
-		throw err
-	})
-}

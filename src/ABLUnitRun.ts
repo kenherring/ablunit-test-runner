@@ -1,8 +1,9 @@
-import { CancellationError, CancellationToken, TestRun, Uri, workspace } from 'vscode'
+import { CancellationError, CancellationToken, FileSystemWatcher, TestRun, Uri, workspace } from 'vscode'
 import { ABLResults } from './ABLResults'
 import { isRelativePath } from './ABLUnitCommon'
 import { ExecException, ExecOptions, exec } from 'child_process'
 import { log } from './ChannelLogger'
+import { parseUpdates } from 'parse/UpdateParser'
 
 export enum RunStatus {
 	None = 10,
@@ -118,9 +119,12 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 		const cmdSanitized: string[] = []
 		cmd = cmd.concat(res.cfg.ablunitConfig.command.additionalArgs)
 
-		let params = 'CFG=' + workspace.asRelativePath(res.cfg.ablunitConfig.config_uri.fsPath, false)
+		let params = 'CFG=' + workspace.asRelativePath(res.cfg.ablunitConfig.config_uri.fsPath, false) + '='
 		if (res.cfg.ablunitConfig.dbAliases.length > 0) {
-			params = params + '= ALIASES=' + res.cfg.ablunitConfig.dbAliases.join(';')
+			params = params + ' ALIASES=' + res.cfg.ablunitConfig.dbAliases.join(';')
+		}
+		if (res.cfg.ablunitConfig.optionsUri.updateUri) {
+			params = params + ' ATTR_ABLUNIT_EVENT_FILE=' + workspace.asRelativePath(res.cfg.ablunitConfig.optionsUri.updateUri)
 		}
 		cmd.push('-param', '"' + params + '"')
 
@@ -173,6 +177,13 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 			log.info('command=\'' + cmd + ' ' + args.join(' ') + '\'\r\n', options)
 			log.info('----- ABLUnit Command Execution Started -----', options)
 
+			let watcher: FileSystemWatcher
+			if (res.cfg.ablunitConfig.optionsUri.updateUri) {
+				log.info('watching ' + res.cfg.ablunitConfig.optionsUri.updateUri?.fsPath)
+				watcher = workspace.createFileSystemWatcher(res.cfg.ablunitConfig.optionsUri.updateUri.fsPath)
+				watcher.onDidChange(uri => { return parseUpdates(res.cfg.ablunitConfig.optionsUri.updateUri!.fsPath) })
+			}
+
 			exec(execCommand, execOpts, (err: ExecException | null, stdout: string, stderr: string) => {
 				const duration = Date.now() - start
 
@@ -204,8 +215,11 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 				}
 
 				log.info('----- ABLUnit Command Execution Completed -----', options)
+				watcher.dispose()
 				resolve('ABLUnit Command Execution Completed - duration: ' + duration)
 			})
+
+
 		})
 	}
 

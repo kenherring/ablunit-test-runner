@@ -154,9 +154,10 @@ export class RunConfig extends DefaultRunProfile {
 	public readonly tempDirUri: Uri
 	public readonly config_uri: Uri
 	public readonly optionsUri: {
-		locationUri: Uri,
+		locationUri: Uri
 		filenameUri: Uri
 		jsonUri?: Uri
+		updateUri?: Uri
 	}
 	public readonly progressIniUri: Uri | undefined
 	public readonly profOptsUri: Uri
@@ -191,6 +192,11 @@ export class RunConfig extends DefaultRunProfile {
 			this.optionsUri.jsonUri = Uri.joinPath(this.optionsUri.locationUri, tmpFilename.replace(/\.xml$/, '') + '.json')
 		}
 		log.debug('this.optionsUri.jsonUri=' + this.optionsUri.jsonUri?.fsPath)
+		if (this.options.output.updateFile) {
+			this.optionsUri.updateUri = Uri.joinPath(this.optionsUri.locationUri, this.options.output.updateFile)
+		}
+		log.debug('this.optionsUri.updateUri=' + this.optionsUri.updateUri?.fsPath)
+		log.info('this.optionsUri.updateUri=' + this.optionsUri.updateUri?.fsPath)
 
 		this.command = new CommandOptions(this.profile.command)
 		if (this.command.progressIni != '') {

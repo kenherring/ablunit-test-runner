@@ -1,5 +1,5 @@
 import { Position, Range } from 'vscode'
-import { getLines } from './TestParserCommon'
+import { getAnnotationLines } from './TestParserCommon'
 
 const classRE = /^\s*class\s+(\S+\w):?\s*/i
 const suiteRE = /@testsuite\s*\(((classes|procedures).*)\)/i
@@ -14,7 +14,7 @@ export interface ITestSuite {
 }
 
 export function parseABLTestSuite (text: string) {
-	const [ lines, foundAnnotation ] = getLines(text, '@testsuite')
+	const [ lines, foundAnnotation ] = getAnnotationLines(text, '@testsuite')
 	if (!foundAnnotation) {
 		return
 	}

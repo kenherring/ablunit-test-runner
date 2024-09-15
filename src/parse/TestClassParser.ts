@@ -1,5 +1,5 @@
 import { Range } from 'vscode'
-import { getLines } from 'parse/TestParserCommon'
+import { getAnnotationLines } from 'parse/TestParserCommon'
 
 // CLASS statement
 const classRE = /^\s*class\s+(\S+[^:])\s*/i
@@ -21,7 +21,7 @@ export interface IClassRet {
 export function parseABLTestClass (displayClassLabel: string, text: string, relativePath: string) {
 	relativePath = relativePath.replace(/\\/g, '/')
 
-	const [lines, foundAnnotation] = getLines(text, '@test')
+	const [lines, foundAnnotation] = getAnnotationLines(text, '@test')
 	if(!foundAnnotation) {
 		return
 	}

@@ -195,7 +195,7 @@ function getLaunchArgs (projName) {
 	return args
 }
 
-function getTestConfig (projName) {
+function getTestConfig (testDir, projName) {
 
 	let workspaceFolder = '' + projName
 	if (projName.startsWith('proj7')) {
@@ -204,6 +204,10 @@ function getTestConfig (projName) {
 		workspaceFolder = projName + '.code-workspace'
 	}
 	workspaceFolder = path.resolve(__dirname, '..', 'test_projects', workspaceFolder)
+
+	if (projName === 'UpdateParser') {
+		workspaceFolder = path.resolve(__dirname, '..', 'test_projects', 'proj1')
+	}
 
 	if (!fs.existsSync(workspaceFolder)) {
 		const g = glob.globSync('test_projects/' + projName + '_*')
@@ -221,7 +225,7 @@ function getTestConfig (projName) {
 		useInstallation = { fromPath: '.vscode-test/vscode-win32-x64-archive-' + vsVersionNum + '/Code.exe' }
 	}
 
-	const absolulteFile = path.resolve(__dirname, '..', 'test', 'suites', projName + '.test.ts')
+	const absolulteFile = path.resolve(__dirname, '..', 'test', testDir, projName + '.test.ts')
 
 	const env = {
 		ABLUNIT_TEST_RUNNER_ENABLE_EXTENSIONS: enableExtensions.includes('' + projName),
@@ -264,7 +268,7 @@ function getTests () {
 	if (envProjectName && envProjectName != '') {
 		const projects = envProjectName.split(',')
 		for (const p of projects) {
-			tests.push(getTestConfig(p))
+			tests.push(getTestConfig('suites', p))
 		}
 		return tests
 	}
@@ -272,7 +276,13 @@ function getTests () {
 	const g = glob.globSync('test/suites/*.test.ts').reverse()
 	for (const f of g) {
 		const basename = path.basename(f, '.test.ts')
-		tests.push(getTestConfig(basename))
+		tests.push(getTestConfig('suites', basename))
+	}
+
+	const p = glob.globSync('test/parse/*.test.ts')
+	for (const f of p) {
+		const basename = path.basename(f, '.test.ts')
+		tests.push(getTestConfig('parse', basename))
 	}
 	return tests
 }
