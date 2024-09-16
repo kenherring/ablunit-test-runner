@@ -11,9 +11,6 @@ initialize () {
 	ABLUNIT_TEST_RUNNER_NO_COVERAGE=${ABLUNIT_TEST_RUNNER_NO_COVERAGE:-false}
 	ABLUNIT_TEST_RUNNER_UNIT_TESTING=true
 	ABLUNIT_TEST_RUNNER_REPO_DIR=$(pwd)
-	if [ -z "$ABLUNIT_TEST_RUNNER_OE_VERSION" ]; then
-		ABLUNIT_TEST_RUNNER_OE_VERSION=${OE_VERSION:-12.8.1}
-	fi
 
 	if [ ! -f /root/.rssw/oedoc.bin ]; then
 		echo "ERROR: /root/.rssw/oedoc.bin not found"
@@ -37,10 +34,7 @@ initialize () {
 
 	npm install
 
-	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] update_oe_version start"
 	update_oe_version
-	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] update_oe_version end"
-	# exit 1
 }
 
 update_oe_version () {

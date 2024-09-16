@@ -14,12 +14,15 @@ parameters:
   primary-oe-version:
     type: string
     default: 12.8.1
+  latest-oe-version:
+    type: string
+    default: 12.8.4
 
 oe-version-param: &oe-version-param
   parameters:
     oe-version:
       type: string
-      enum: [ '12.2.12', '12.7.0', '12.8.1', '12.8.3' ]
+      enum: [ '12.2.12', '12.7.0', '12.8.1', '12.8.3', '<< pipeline.parameters.latest-oe-version >>' ]
       default: '12.8.1'
     vscode-version:
       type: string
@@ -170,7 +173,7 @@ workflows:
           requires: [ package, test-<< pipeline.parameters.primary-oe-version >>-stable ]
           matrix:
             parameters:
-              oe-version: [ 12.2.12, 12.8.3 ]
+              oe-version: [ 12.2.12, 12.8.3, << pipeline.parameters.latest-oe-version >> ]
               vscode-version: [ stable ]
           name: test-<< matrix.oe-version>>-<< matrix.vscode-version >>
       - sonar:
