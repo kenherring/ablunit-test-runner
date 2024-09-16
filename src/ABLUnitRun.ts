@@ -132,7 +132,7 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 			params = params + ' ALIASES=' + res.cfg.ablunitConfig.dbAliases.join(';')
 		}
 		if (res.cfg.ablunitConfig.optionsUri.updateUri) {
-			params = params + ' ATTR_ABLUNIT_EVENT_FILE=' + workspace.asRelativePath(res.cfg.ablunitConfig.optionsUri.updateUri)
+			params = params + ' ATTR_ABLUNIT_EVENT_FILE=' + workspace.asRelativePath(res.cfg.ablunitConfig.optionsUri.updateUri, false)
 		}
 		cmd.push('-param', '"' + params + '"')
 
@@ -185,11 +185,12 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 			log.info('command=\'' + cmd + ' ' + args.join(' ') + '\'\r\n', options)
 			log.info('----- ABLUnit Command Execution Started -----', options)
 
-			if (res.cfg.ablunitConfig.optionsUri.updateUri) {
-				deleteFile(res.cfg.ablunitConfig.optionsUri.updateUri)
-				log.info('watching ' + res.cfg.ablunitConfig.optionsUri.updateUri?.fsPath)
-				watcherUpdate = workspace.createFileSystemWatcher(res.cfg.ablunitConfig.optionsUri.updateUri.fsPath)
-				watcherDispose = watcherUpdate.onDidChange(uri => { return processUpdates(options, res, res.cfg.ablunitConfig.optionsUri.updateUri!) })
+			const updateUri = res.cfg.ablunitConfig.optionsUri.updateUri
+			if (updateUri) {
+				deleteFile(updateUri)
+				log.info('watching ' + updateUri.fsPath)
+				watcherUpdate = workspace.createFileSystemWatcher(updateUri.fsPath)
+				watcherDispose = watcherUpdate.onDidChange(uri => { return processUpdates(options, res, updateUri) })
 			}
 
 			exec(execCommand, execOpts, (err: ExecException | null, stdout: string, stderr: string) => {

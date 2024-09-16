@@ -157,7 +157,7 @@ export class RunConfig extends DefaultRunProfile {
 		locationUri: Uri
 		filenameUri: Uri
 		jsonUri?: Uri
-		updateUri?: Uri
+		updateUri: Uri | undefined
 	}
 	public readonly progressIniUri: Uri | undefined
 	public readonly profOptsUri: Uri
@@ -183,6 +183,7 @@ export class RunConfig extends DefaultRunProfile {
 		this.optionsUri = {
 			locationUri: this.getUri(this.profile.options?.output?.location + '/'),
 			filenameUri: Uri.joinPath(this.tempDirUri, tmpFilename),
+			updateUri: Uri.joinPath(this.tempDirUri, 'updates.log'),
 		}
 		this.options.output.location = workspace.asRelativePath(this.optionsUri.locationUri, false)
 		this.optionsUri.filenameUri = Uri.joinPath(this.optionsUri.locationUri, tmpFilename)

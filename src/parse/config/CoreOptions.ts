@@ -20,7 +20,7 @@ export interface ICoreOptions {
 		filename?: string
 		format?: 'xml'
 		writeJson?: boolean
-		updateFile?: string
+		updateFile: string | undefined
 	}
 	quitOnEnd?: boolean // = true
 	writeLog?: boolean // = true
