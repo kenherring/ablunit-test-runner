@@ -1,5 +1,5 @@
 import { Uri, workspace } from 'vscode'
-import { assert, doesDirExist, doesFileExist, log, runAllTests, suiteSetupCommon, updateConfig } from '../testCommon'
+import { assert, log, runAllTests, suiteSetupCommon, updateConfig } from '../testCommon'
 
 suite('workspace1 - Extension Test Suite', () => {
 

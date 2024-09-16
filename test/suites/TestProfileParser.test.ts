@@ -37,7 +37,7 @@ suite('TestProfileParser suite', () => {
 	})
 
 	test.skip('test2 - modified files.include & files.exclude', () => {
-		const res = JSON.stringify(parseRunProfiles(getWorkspaceFolders(), 'ablunit-test-profile.test2.json'))
+		// const res = JSON.stringify(parseRunProfiles(getWorkspaceFolders(), 'ablunit-test-profile.test2.json'))
 		// const val = await readValidationFile('ablunit-test-profile.val-test2.json')
 		// assert.strictEqual(res, val)
 		// return workspaceFolders
