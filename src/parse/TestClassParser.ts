@@ -50,7 +50,7 @@ export function parseTestClass (lines: string[], configClassLabel: string, relat
 			continue
 		}
 
-		// first find the class statement
+		// first find the class statement (if still needed)
 		if (classRet.classname === '') {
 			const classResult = classRE.exec(lines[lineNo])
 			if (!classResult) { continue }
@@ -61,6 +61,7 @@ export function parseTestClass (lines: string[], configClassLabel: string, relat
 			continue
 		}
 
+		// second, check for a test method on this line
 		if (lastNonBlankLineHasAnnotation || lines[lineNo].toLowerCase().includes('@test')) {
 			const method = methodRE.exec(lines[lineNo])
 			if (method) {
@@ -71,7 +72,10 @@ export function parseTestClass (lines: string[], configClassLabel: string, relat
 				})
 			}
 		}
-		lastNonBlankLineHasAnnotation = regexTest.exec(lines[lineNo]) != null
+		lastNonBlankLineHasAnnotation = false
+		if (regexTest.exec(lines[lineNo])) {
+			lastNonBlankLineHasAnnotation = true
+		}
 	}
 
 	return classRet

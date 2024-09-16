@@ -40,8 +40,13 @@ method public void NotTestMethod8 () :
 		Assert:Equals(3,3).
 	end method.
 
+	//@Test.
+method public void NotTestMethod9 () :
+		Assert:Equals(3,3).
+	end method.
+
 	@Test.
-	MeThOd pUbLic /* comment */ VoId testMethod9 () :
+	MeThOd pUbLic /* comment */ VoId testMethod10 () :
 		Assert:Equals(9,9).
 	end method.
 

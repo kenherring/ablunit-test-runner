@@ -20,7 +20,6 @@ function toUri (uri: Uri | string): Uri {
 
 export function getContentFromFilesystem (uri: Uri | string) {
 	uri = toUri(uri)
-	const textDecoder = new TextDecoder('utf-8')
 	return workspace.fs.readFile(uri)
 		.then((rawContent) => { return textDecoder.decode(rawContent) },
 			(e) => { throw e })
@@ -48,12 +47,9 @@ export function getAnnotationLines (text: string, annotation: string): [ string[
 	const lines = text.replace(/\r/g, '').split('\n')
 	let foundAnnotation = false
 	for (let i = 0; i < lines.length; i++) {
-		lines[i] = removeComments(lines[i])
+		lines[i] = removeComments(lines[i]).trim()
 
-		if (lines[i].trim() == '') {
-			// set empty lines to empty string
-			lines[i] = ''
-		} else if (!foundAnnotation && lines[i].toLowerCase().includes('@test')) {
+		if (!foundAnnotation && lines[i].toLowerCase().includes('@test')) {
 			foundAnnotation = true
 		}
 	}
@@ -66,13 +62,15 @@ export function getAnnotationLines (text: string, annotation: string): [ string[
 const blockCommentRE = /\/\*.*\*\//g
 
 function removeComments (line: string) {
-	line = line.replace(/\/\/.*/g, '') // trim end of line comments
+	line = line.replace(/\/\/.*$/g, '') // trim end of line comments
 
 	const matches = blockCommentRE.exec(line)
-	if(!matches) { return line }
+	if(!matches) {
+		return line.trim()
+	}
 
 	for(const element of matches) {
 		line = line.replace(element, ' '.repeat(element.length))
 	}
-	return line
+	return line.trim()
 }

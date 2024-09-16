@@ -1,6 +1,6 @@
 import { CancellationError, CancellationToken, FileSystemWatcher, TestRun, Uri, workspace } from 'vscode'
 import { ABLResults } from './ABLResults'
-import { isRelativePath } from './ABLUnitCommon'
+import { deleteFile, isRelativePath } from './ABLUnitCommon'
 import { ExecException, ExecOptions, exec } from 'child_process'
 import { log } from './ChannelLogger'
 import { parseUpdates } from 'parse/UpdateParser'
@@ -179,6 +179,7 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 
 			let watcher: FileSystemWatcher
 			if (res.cfg.ablunitConfig.optionsUri.updateUri) {
+				deleteFile(res.cfg.ablunitConfig.optionsUri.updateUri)
 				log.info('watching ' + res.cfg.ablunitConfig.optionsUri.updateUri?.fsPath)
 				watcher = workspace.createFileSystemWatcher(res.cfg.ablunitConfig.optionsUri.updateUri.fsPath)
 				watcher.onDidChange(uri => { return parseUpdates(res.cfg.ablunitConfig.optionsUri.updateUri!.fsPath) })

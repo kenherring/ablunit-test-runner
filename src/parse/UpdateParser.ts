@@ -21,7 +21,6 @@ function parseTestTree (line: string) {
 		if (node === '\\NULL' || node === '') {
 			continue
 		}
-		log.info('node=' + node)
 		const [ name, b, id ] = node.split('?')
 		testTree.push({
 			id: Number(id),
@@ -42,7 +41,6 @@ function parseUpdateLines (lines: string[]) {
 		}
 		lineNum++
 		const event = line.split(' ')[0]
-		log.info('line=' + lineNum + ' event=' + event)
 		if (event === 'TEST_TREE') {
 			updates = parseTestTree(line)
 			log.info('updates.length=' + updates.length)
@@ -54,7 +52,6 @@ function parseUpdateLines (lines: string[]) {
 			}
 			item.status = 'started'
 		} else if (event === 'TEST_END') {
-			log.info('line=' + lineNum + ': ' + line)
 			const [ , id, time ] = line.split(' ')
 			const item = updates.find((test) => test.id === Number(id))
 			if (!item) {
@@ -92,5 +89,5 @@ export function processUpdates (updateFile: Uri) {
 		.then((updates) => {
 			showUpdates(updates)
 			return
-		})
+		}, (e) => { throw e})
 }
