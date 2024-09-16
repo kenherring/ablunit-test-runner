@@ -38,7 +38,7 @@ initialize () {
 		DOCKER_TAGS+=('12.2.12')
 		DOCKER_TAGS+=('12.7.0')
 		DOCKER_TAGS+=('12.8.1')
-		DOCKER_TAGS+=('12.8.3')
+		DOCKER_TAGS+=('12.8.4')
 	fi
 
 	mkdir -p docker/.rssw
