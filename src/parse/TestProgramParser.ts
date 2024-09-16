@@ -56,7 +56,10 @@ export function parseTestProgram (lines: string[], label: string) {
 				})
 			}
 		}
-		lastNonBlankLineHasAnnotation = regexTest.exec(lines[lineNo]) != null
+		lastNonBlankLineHasAnnotation = false
+		if (regexTest.exec(lines[lineNo])) {
+			lastNonBlankLineHasAnnotation = true
+		}
 	}
 	return programRet
 }

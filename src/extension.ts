@@ -862,7 +862,7 @@ function findMatchingFiles (includePatterns: RelativePattern[], token: Cancellat
 
 // async function parseMatchingFiles (files: Uri[], controller: TestController, excludePatterns: RelativePattern[], token: CancellationToken, checkCancellationToken: () => void, resolvedCount: number, rejectedCount: number) {
 async function parseMatchingFiles (files: Uri[], controller: TestController, excludePatterns: RelativePattern[], token: CancellationToken, checkCancellationToken: () => void): Promise<boolean> {
-	const proms: Promise<boolean>[] = []
+	const proms: PromiseLike<boolean>[] = []
 	log.debug('parsing files... (count=' + files.length + ')')
 	for (const file of files) {
 		checkCancellationToken()
@@ -920,7 +920,7 @@ function refreshTestTree (controller: TestController, token: CancellationToken):
 
 	const prom1 = findMatchingFiles(includePatterns, token, checkCancellationToken)
 		.then((r) => {
-			log.info('return parseMatchingFiles (r=' + r + ')')
+			log.info('return parseMatchingFiles (r.length=' + r.length + ')')
 			return parseMatchingFiles(r, controller, excludePatterns, token, checkCancellationToken)
 		})
 		.then((r) => {

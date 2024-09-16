@@ -1,9 +1,9 @@
-import { CancellationError, CancellationToken, FileSystemWatcher, TestRun, Uri, workspace } from 'vscode'
+import { CancellationError, CancellationToken, Disposable, FileSystemWatcher, TestRun, Uri, workspace } from 'vscode'
 import { ABLResults } from './ABLResults'
 import { deleteFile, isRelativePath } from './ABLUnitCommon'
 import { ExecException, ExecOptions, exec } from 'child_process'
 import { log } from './ChannelLogger'
-import { parseUpdates } from 'parse/UpdateParser'
+import { processUpdates } from 'parse/UpdateParser'
 
 export enum RunStatus {
 	None = 10,
@@ -42,10 +42,18 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 	const start = Date.now()
 	const abort = new AbortController()
 	const { signal } = abort
+	let watcherDispose: Disposable | undefined = undefined
+	let watcherUpdate: FileSystemWatcher | undefined = undefined
 
 	cancellation.onCancellationRequested(() => {
 		log.debug('cancellation requested - ablunitRun')
 		abort.abort()
+		if (watcherDispose) {
+			watcherDispose.dispose()
+		}
+		if (watcherUpdate) {
+			watcherUpdate.dispose()
+		}
 		throw new CancellationError()
 	})
 
@@ -177,12 +185,11 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 			log.info('command=\'' + cmd + ' ' + args.join(' ') + '\'\r\n', options)
 			log.info('----- ABLUnit Command Execution Started -----', options)
 
-			let watcher: FileSystemWatcher
 			if (res.cfg.ablunitConfig.optionsUri.updateUri) {
 				deleteFile(res.cfg.ablunitConfig.optionsUri.updateUri)
 				log.info('watching ' + res.cfg.ablunitConfig.optionsUri.updateUri?.fsPath)
-				watcher = workspace.createFileSystemWatcher(res.cfg.ablunitConfig.optionsUri.updateUri.fsPath)
-				watcher.onDidChange(uri => { return parseUpdates(res.cfg.ablunitConfig.optionsUri.updateUri!.fsPath) })
+				watcherUpdate = workspace.createFileSystemWatcher(res.cfg.ablunitConfig.optionsUri.updateUri.fsPath)
+				watcherDispose = watcherUpdate.onDidChange(uri => { return processUpdates(options, res, res.cfg.ablunitConfig.optionsUri.updateUri!) })
 			}
 
 			exec(execCommand, execOpts, (err: ExecException | null, stdout: string, stderr: string) => {
@@ -216,7 +223,12 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 				}
 
 				log.info('----- ABLUnit Command Execution Completed -----', options)
-				watcher.dispose()
+				if (watcherUpdate) {
+					watcherUpdate.dispose()
+				}
+				if (watcherDispose) {
+					watcherDispose.dispose()
+				}
 				resolve('ABLUnit Command Execution Completed - duration: ' + duration)
 			})
 

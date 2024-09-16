@@ -110,7 +110,7 @@ jobs:
       - run: .circleci/run_test_wrapper.sh
       - persist_to_workspace: { root: ., paths: [ artifacts, coverage ]}
       - store_test_results: { path: artifacts/mocha_results_xunit }
-      - store_artifacts: { when: always, path: artifacts }
+      - store_artifacts: { path: artifacts }
       - run:
           when: on_fail
           command: env
@@ -126,7 +126,7 @@ jobs:
       - restore-test-cache: { oe-version: << parameters.oe-version >> }
       - run: .circleci/install_and_run.sh
       - store_test_results: { path: dummy-ext/artifacts }
-      - store_artifacts: { when: always, path: dummy-ext/artifacts }
+      - store_artifacts: { path: dummy-ext/artifacts }
   sonar:
     <<: *oe-version-param
     docker:
@@ -138,8 +138,8 @@ jobs:
       - attach_workspace: { at: . }
       - sonarcloud/scan:
           cache_version: 9
-      - store_artifacts: { when: on_fail, path: artifacts }
-      - store_artifacts: { when: on_fail, path: coverage }
+      - store_artifacts: { path: artifacts }
+      - store_artifacts: { path: coverage }
       - run:
           when: on_fail
           command: env
@@ -149,7 +149,7 @@ jobs:
     steps:
       - attach_workspace: { at: . }
       - run: .circleci/publish.sh
-      - store_artifacts: { when: always, path: artifacts }
+      - store_artifacts: { path: artifacts }
 
 workflows:
   build:
