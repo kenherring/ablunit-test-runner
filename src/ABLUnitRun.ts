@@ -188,7 +188,7 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 			const updateUri = res.cfg.ablunitConfig.optionsUri.updateUri
 			if (updateUri) {
 				deleteFile(updateUri)
-				log.info('watching ' + updateUri.fsPath)
+				log.info('watching test run update/event file: ' + updateUri.fsPath)
 				watcherUpdate = workspace.createFileSystemWatcher(updateUri.fsPath)
 				watcherDispose = watcherUpdate.onDidChange(uri => { return processUpdates(options, res, updateUri) })
 			}
@@ -232,8 +232,6 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 				}
 				resolve('ABLUnit Command Execution Completed - duration: ' + duration)
 			})
-
-
 		})
 	}
 

@@ -72,7 +72,7 @@
 				"filename": "results",
 				"format": "xml",
 				"writeJson": true,
-				"updateFile": "updates.log"
+				"updateFile": "updates.log" // custom for the ablunit-test-runner extension
 			},
 			"quitOnEnd": true,
 			"writeLog":  false,

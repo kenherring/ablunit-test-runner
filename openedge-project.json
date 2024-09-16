@@ -2,9 +2,7 @@
     "name": "ablunit-test-runner",
     "buildPath": [
         { "type": "source", "path": "resources", "includes": "**/*.p,**/*.cls"},
-        // { "type": "source", "path": "${DLC}/src/ablunit.pl", "includes": "**/*" },
         { "type": "propath", "path": "${DLC}/tty/ablunit.pl", "includes": "**/*" }
-        // { "type": "source", "path": "${DLC}/gui/ablunit.apl", "includes": "**/*" }
     ],
     "buildDirectory": "target"
 }

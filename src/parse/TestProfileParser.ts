@@ -197,7 +197,6 @@ export class RunConfig extends DefaultRunProfile {
 			this.optionsUri.updateUri = Uri.joinPath(this.optionsUri.locationUri, this.options.output.updateFile)
 		}
 		log.debug('this.optionsUri.updateUri=' + this.optionsUri.updateUri?.fsPath)
-		log.info('this.optionsUri.updateUri=' + this.optionsUri.updateUri?.fsPath)
 
 		this.command = new CommandOptions(this.profile.command)
 		if (this.command.progressIni != '') {

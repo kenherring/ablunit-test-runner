@@ -4,7 +4,7 @@ interface ICoreOutput {
 	filename?: string
 	format?: 'xml'
 	writeJson?: boolean
-	updateFile: string
+	updateFile: string | undefined
 }
 
 interface IXrefOptions {
