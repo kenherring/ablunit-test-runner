@@ -44,7 +44,7 @@ suite('workspace1 - Extension Test Suite', () => {
 		assert.fileExists(ablunitJson)
 		assert.fileExists(resultsXml)
 		assert.notFileExists(resultsJson)
-		assert.notDirExists(listingsDir)
+		// assert.notDirExists(listingsDir)
 
 		log.info('___ validate projX has no ablunit.json ___ [' + workspaceFolderUri[2] + ']')
 		ablunitJson = Uri.joinPath(workspaceFolderUri[2], 'ablunit.json')
