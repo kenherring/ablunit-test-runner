@@ -15,7 +15,6 @@ import process from 'process'
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const vsVersionNum = '1.88.0'
 const vsVersion = process.env['ABLUNIT_TEST_RUNNER_VSCODE_VERSION'] ?? 'stable'
-const oeVersion = process.env['ABLUNIT_TEST_RUNNER_OE_VERSION'] ?? '12.8.1'
 const useOEAblPrerelease = false
 const enableExtensions = [
 	'AtStart',
@@ -63,7 +62,6 @@ function getMochaTimeout (projName) {
 
 
 function getMochaOpts (projName) {
-	// const reporterDir = path.resolve(__dirname, '..', 'artifacts', vsVersion + '-' + oeVersion)
 	const reporterDir = path.resolve(__dirname, '..', 'artifacts')
 	fs.mkdirSync(path.resolve(reporterDir, 'mocha_results_json'), {recursive: true})
 	fs.mkdirSync(path.resolve(reporterDir, 'mocha_results_sonar'), {recursive: true})
