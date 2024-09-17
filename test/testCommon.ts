@@ -443,7 +443,7 @@ function fileToString (file: Uri | string) {
 	if (isRelativePath(file)) {
 		return Uri.joinPath(getWorkspaceUri(), file).fsPath
 	}
-	return Uri.file(file)
+	return Uri.file(file).fsPath
 }
 
 export function doesFileExist (uri: Uri | string | undefined) {

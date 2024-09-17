@@ -1,4 +1,4 @@
-import { assert, log, runAllTests, suiteSetupCommon } from '../testCommon'
+import { assert, log, runAllTests, suiteSetupCommon, extensions } from '../testCommon'
 
 suite('projAtStart  - Extension Test Suite - bdd', () => {
 
@@ -6,7 +6,6 @@ suite('projAtStart  - Extension Test Suite - bdd', () => {
 		await suiteSetupCommon()
 	})
 
-	// test('projAtStart - ${workspaceFolder}/ablunit.json file exists', (done) => {
 	test('projAtStart - ${workspaceFolder}/ablunit.json file exists - return promise', () => {
 		const prom = runAllTests()
 			.then(() => {
@@ -31,16 +30,16 @@ suite('projAtStart  - Extension Test Suite - bdd', () => {
 	 *
 	 * Disabled for now since we don't need it.
 	 */
-	// test('projAtStart - enable proposed api', () => {
-	// 	const ext = extensions.getExtension('kherring.ablunit-test-runner')
-	// 	if (!ext) {
-	// 		assert.fail('proposed API extension not found')
-	// 		return
-	// 	}
+	test.skip('projAtStart - enable proposed api', () => {
+		const ext = extensions.getExtension('kherring.ablunit-test-runner')
+		if (!ext) {
+			assert.fail('proposed API extension not found')
+			return
+		}
 
-	// 	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-	// 	const proposedApiEnabled = ext.packageJSON['displayName'].includes('insiders')
-	// 	assert.equal(proposedApiEnabled, process.env['ABLUNIT_TEST_RUNNER_VSCODE_VERSION'] === 'insiders', 'proposed API enabled')
-	// })
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/dot-notation
+		const proposedApiEnabled = ext.packageJSON['displayName'].includes('insiders')
+		assert.equal(proposedApiEnabled, process.env['ABLUNIT_TEST_RUNNER_VSCODE_VERSION'] === 'insiders', 'proposed API enabled')
+	})
 
 })
