@@ -1,7 +1,10 @@
 {
-    "ablunit.discoverAllTestsOnActivate": false,
+    // "ablunit.discoverAllTestsOnActivate": false,
     // "ablunit.files.include": [
     //     // "**/*.{cls,p}",
     //     "**/*.z"
     // ]
+    "ablunit.files.include": [
+        "**/*test*.{cls,p}"
+    ]
 }

@@ -23,6 +23,7 @@ import { getContentFromFilesystem } from './parse/TestParserCommon'
 import { ABLTestCase, ABLTestClass, ABLTestData, ABLTestDir, ABLTestFile, ABLTestProgram, ABLTestSuite, resultData, testData } from './testTree'
 import { minimatch } from 'minimatch'
 import { ABLUnitRuntimeError } from 'ABLUnitRun'
+import { basename } from 'path'
 
 export interface IExtensionTestReferences {
 	testController: TestController
@@ -41,7 +42,10 @@ export async function activate (context: ExtensionContext) {
 
 	const contextStorageUri = context.storageUri ?? Uri.file(process.env['TEMP'] ?? '') // will always be defined as context.storageUri
 	const contextResourcesUri = Uri.joinPath(context.extensionUri, 'resources')
-	setContextPaths(contextStorageUri, contextResourcesUri)
+	log.info('context.logUri=' + context.logUri)
+	log.info('context.storageUri=' + context.storageUri)
+	log.info('context.globalStorageUri=' + context.globalStorageUri)
+	setContextPaths(contextStorageUri, contextResourcesUri, context.logUri)
 	await createDir(contextStorageUri)
 
 	context.subscriptions.push(ctrl)
@@ -53,6 +57,7 @@ export async function activate (context: ExtensionContext) {
 	context.subscriptions.push(commands.registerCommand('_ablunit.isRefreshTestsComplete', () => { return isRefreshTestsComplete }))
 	log.debug('push _ablunit.getTestController command')
 	context.subscriptions.push(commands.registerCommand('_ablunit.getTestController', () => { return ctrl }))
+	context.subscriptions.push(commands.registerCommand('_ablunit.getLogUri', () => { return contextLogUri }))
 
 	context.subscriptions.push(
 		commands.registerCommand('_ablunit.openCallStackItem', openCallStackItem),
@@ -467,6 +472,7 @@ export async function activate (context: ExtensionContext) {
 
 let contextStorageUri: Uri
 let contextResourcesUri: Uri
+let contextLogUri: Uri
 
 function updateNode (uri: Uri, ctrl: TestController) {
 	log.trace('updateNode uri=' + uri.fsPath)
@@ -483,9 +489,10 @@ function updateNode (uri: Uri, ctrl: TestController) {
 	})
 }
 
-export function setContextPaths (storageUri: Uri, resourcesUri: Uri) {
+export function setContextPaths (storageUri: Uri, resourcesUri: Uri, logUri: Uri) {
 	contextStorageUri = storageUri
 	contextResourcesUri = resourcesUri
+	contextLogUri = logUri
 }
 
 export function getContextStorageUri () {
@@ -494,6 +501,10 @@ export function getContextStorageUri () {
 
 export function getContextResourcesUri () {
 	return contextResourcesUri
+}
+
+export function getContextLogUri () {
+	return contextLogUri
 }
 
 export function checkCancellationRequested (run: TestRun) {
@@ -555,7 +566,7 @@ function getOrCreateFile (controller: TestController, uri: Uri, excludePatterns?
 		log.trace('No tests found in file: ' +workspace.asRelativePath(uri))
 		return { item: undefined, data: undefined }
 	}
-	const file = controller.createTestItem(uri.fsPath, workspace.asRelativePath(uri.fsPath), uri)
+	const file = controller.createTestItem(uri.fsPath, basename(uri.fsPath), uri)
 	testData.set(file, data)
 	data.didResolve = false
 	file.description = 'To be parsed...'
@@ -847,8 +858,7 @@ function findMatchingFiles (includePatterns: RelativePattern[], token: Cancellat
 		}, (e) => { throw e })
 }
 
-// async function parseMatchingFiles (files: Uri[], controller: TestController, excludePatterns: RelativePattern[], token: CancellationToken, checkCancellationToken: () => void, resolvedCount: number, rejectedCount: number) {
-async function parseMatchingFiles (files: Uri[], controller: TestController, excludePatterns: RelativePattern[], token: CancellationToken, checkCancellationToken: () => void): Promise<boolean> {
+function parseMatchingFiles (files: Uri[], controller: TestController, excludePatterns: RelativePattern[], token: CancellationToken, checkCancellationToken: () => void) {
 	const proms: Promise<boolean>[] = []
 	log.debug('parsing files... (count=' + files.length + ')')
 	for (const file of files) {
@@ -865,8 +875,7 @@ async function parseMatchingFiles (files: Uri[], controller: TestController, exc
 			proms.push(prom)
 		}
 	}
-	const r = await Promise.all(proms).then(() => { return true })
-	return r
+	return Promise.all(proms).then(() => { return true })
 }
 
 function refreshTestTree (controller: TestController, token: CancellationToken): Promise<boolean> {
@@ -905,16 +914,21 @@ function refreshTestTree (controller: TestController, token: CancellationToken):
 
 	log.debug('finding files...')
 
-	const prom1 = findMatchingFiles(includePatterns, token, checkCancellationToken)
+	return findMatchingFiles(includePatterns, token, checkCancellationToken)
 		.then((r) => {
-			log.info('return parseMatchingFiles (r.length=' + r.length + ')')
-			return parseMatchingFiles(r, controller, excludePatterns, token, checkCancellationToken)
+			for (const file of r) {
+				checkCancellationToken()
+				const { item, data } = getOrCreateFile(controller, file, excludePatterns)
+				if (!item && !data) {
+					log.warn('could not create test item for file: ' + file.fsPath)
+				}
+			}
+			return
 		})
 		.then((r) => {
 			log.info('return  true (r=' + r + ')')
 			return true
-		})
-	return prom1.catch((e: unknown) => { throw e })
+		}, (e) => { throw e })
 }
 
 function getControllerTestFileCount (controller: TestController) {

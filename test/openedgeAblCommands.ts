@@ -3,7 +3,6 @@ import { Duration, activateExtension, enableExtensions, getDefaultDLC, getRcodeC
 import { getContentFromFilesystem } from 'parse/TestParserCommon'
 import * as glob from 'glob'
 
-
 interface IRuntime {
 	name: string,
 	path: string,
@@ -55,7 +54,11 @@ export function rebuildAblProject () {
 }
 
 export async function printLastLangServerError () {
-	const pattern = process.env['ABLUNIT_TEST_RUNNER_REPO_DIR'] + '/.vscode-test/user-data/logs/*/window*/exthost/output_logging_*/*-ABL Language Server.log'
+	const ablunitLogUri: Uri = await commands.executeCommand('_ablunit.getLogUri')
+	const logUri = Uri.joinPath(ablunitLogUri, '..', '..', '..', '..', '..', 'logs')
+	log.info('logUri=' + logUri)
+
+	const pattern = logUri.fsPath.replace(/\\/g, '/') + '/*/window*/exthost/output_logging_*/*-ABL Language Server.log'
 	log.info('grep for log files using pattern: ' + pattern)
 	const logFiles = glob.globSync(pattern)
 

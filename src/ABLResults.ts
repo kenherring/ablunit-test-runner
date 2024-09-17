@@ -352,7 +352,7 @@ export class ABLResults implements Disposable {
 
 	private parseFinalSuite (item: TestItem, s: ITestSuite, options: TestRun) {
 		if (!s.testcases) {
-			log.error('no test cases discovered or run - check the configuration for accuracy (item: ' + item.label + ')')
+			log.error('no test cases discovered or run - check the configuration for accuracy (item: ' + item.id + ')', options)
 			options.errored(item, new TestMessage('no test cases discovered or run - check the configuration for accuracy'), this.duration.elapsed())
 			return
 		}
