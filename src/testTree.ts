@@ -56,6 +56,7 @@ function createTestItem (
 }
 
 interface ITestType {
+	type: string
 	isFile: boolean
 	didResolve: boolean
 	runnable: boolean
@@ -63,7 +64,10 @@ interface ITestType {
 	description: string
 }
 
+type TestReferenceType = 'ABLTestDir' | 'ABLTestFile' | 'ABLTestCase' | 'ABLTestClass' | 'ABLTestProgram' | 'ABLTestSuite'
+
 class TestTypeObj implements ITestType {
+	public type: TestReferenceType
 	public isFile = false
 	public didResolve = false
 	public runnable = false
@@ -71,29 +75,30 @@ class TestTypeObj implements ITestType {
 	public description: string
 	public label: string
 
-	constructor (description: string, label: string) {
+	constructor (description: string, label: string, type: TestReferenceType) {
 		this.description = description
 		this.label = label
+		this.type = type
 	}
+
 }
 
-export class ABLTestDir implements ITestType {
-	public isFile = false
-	public didResolve = true
-	public runnable = true
-	public canResolveChildren = false
-	public description: string
+export class ABLTestDir extends TestTypeObj {
 	public relativePath: string
-	public label = ''
+
 
 	constructor (desc: string, label: string, path: Uri | string) {
-		this.description = desc
-		this.label = label
+		super(desc, label, 'ABLTestDir')
 		if (path instanceof Uri) {
 			this.relativePath = workspace.asRelativePath(path.fsPath, false)
 		} else {
 			this.relativePath = path
 		}
+
+		this.isFile = false
+		this.didResolve = true
+		this.runnable = true
+		this.canResolveChildren = false
 	}
 }
 
@@ -101,7 +106,7 @@ export class ABLTestCase extends TestTypeObj {
 	constructor (
 		public readonly id: string,
 		label: string,
-		description: string) { super(description, label) }
+		description: string) { super(description, label, 'ABLTestCase') }
 }
 
 export class ABLTestFile extends TestTypeObj {
@@ -248,7 +253,7 @@ export class ABLTestFile extends TestTypeObj {
 export class ABLTestSuite extends ABLTestFile {
 
 	constructor (label: string) {
-		super('ABL Test Suite', label)
+		super('ABL Test Suite', label, 'ABLTestSuite')
 	}
 
 	public override updateFromContents (controller: TestController, content: string, item: TestItem) {
@@ -315,7 +320,7 @@ export class ABLTestClass extends ABLTestFile {
 	public classTypeName = ''
 
 	constructor (label: string) {
-		super('ABL Test Class', label)
+		super('ABL Test Class', label, 'ABLTestClass')
 	}
 
 	setClassInfo (classTypeName?: string) {
@@ -337,7 +342,7 @@ export class ABLTestClass extends ABLTestFile {
 export class ABLTestProgram extends ABLTestFile {
 
 	constructor (label: string) {
-		super('ABL Test Program', label)
+		super('ABL Test Program', label, 'ABLTestProgram')
 	}
 
 	public override updateFromContents (controller: TestController, content: string, item: TestItem) {

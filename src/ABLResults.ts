@@ -6,7 +6,7 @@ import { FileType, MarkdownString, TestItem, TestItemCollection, TestMessage, Te
 	TestRunProfileKind} from 'vscode'
 import { ABLUnitConfig } from './ABLUnitConfigWriter'
 import { ABLResultsParser, ITestCaseFailure, ITestCase, ITestSuite } from './parse/ResultsParser'
-import { ABLTestSuite, ABLTestData, ABLTestDir, ABLTestCase } from './testTree'
+import { ABLTestSuite, ABLTestDir, ABLTestCase, testData} from './testTree'
 import { parseCallstack } from './parse/CallStackParser'
 import { ABLProfile, ABLProfileJson, IModule } from './parse/ProfileParser'
 import { ABLDebugLines } from './ABLDebugLines'
@@ -15,13 +15,19 @@ import { PropathParser } from './ABLPropath'
 import { log } from './ChannelLogger'
 import { ABLUnitRuntimeError, RunStatus, ablunitRun } from './ABLUnitRun'
 import { getDLC, IDlc } from './parse/OpenedgeProjectParser'
-import { Duration, isRelativePath } from './ABLUnitCommon'
+import { Duration } from './ABLUnitCommon'
 
-export interface ITestObj {
-	test?: string
-	folder?: string
+export interface ITestFile {
+	test: string
 	cases?: string[]
 }
+export interface ITestFolder {
+	folder: string
+	test?: undefined
+	cases?: undefined
+}
+
+export type ITestObj = ITestFile | ITestFolder
 
 export interface IABLUnitJson {
 	options: {
@@ -49,7 +55,6 @@ export class ABLResults implements Disposable {
 	tests: TestItem[] = []
 	topLevelTests: ITestObj[] = []
 	testQueue: ITestObj[] = []
-	testData = new WeakMap<TestItem, ABLTestData>()
 	skippedTests: TestItem[] = []
 	propath?: PropathParser
 	debugLines?: ABLDebugLines
@@ -98,10 +103,6 @@ export class ABLResults implements Disposable {
 		log.info('STATUS: ' + status)
 	}
 
-	setTestData (testData: WeakMap<TestItem, ABLTestData>) {
-		this.testData = testData
-	}
-
 	start () {
 		log.info('[start] workspaceFolder=' + this.workspaceFolder.uri.fsPath)
 		this.cfg.setup(this.workspaceFolder, this.request)
@@ -127,22 +128,18 @@ export class ABLResults implements Disposable {
 		const prom: (Thenable<void> | Promise<void> | Promise<void[]> | undefined)[] = []
 		prom[0] = this.cfg.createProfileOptions(this.cfg.ablunitConfig.profOptsUri, this.cfg.ablunitConfig.profiler)
 		prom[1] = this.cfg.createProgressIni(this.propath.toString(), this.dlc)
-		prom[2] = this.cfg.createAblunitJson(this.cfg.ablunitConfig.config_uri, this.cfg.ablunitConfig.options, this.topLevelTests)
+		// prom[2] = this.cfg.createAblunitJson(this.cfg.ablunitConfig.config_uri, this.cfg.ablunitConfig.options, this.topLevelTests)
 		prom[3] = this.cfg.createDbConnPf(this.cfg.ablunitConfig.dbConnPfUri, this.cfg.ablunitConfig.dbConns)
 
 		return Promise.all(prom).then(() => {
-			log.info('done creating config files for run')
+			log.info('done creating config files for start')
 			return
 		}, (err) => {
 			log.error('ABLResults.start() did not complete promises. err=' + err)
 		})
 	}
 
-	resetTests () {
-		this.tests = []
-	}
-
-	async addTest (test:  TestItem, data: ABLTestData, options: TestRun, isTopLevel: boolean) {
+	async addTest (test:  TestItem, options: TestRun, isTopLevel: boolean) {
 		if (!test.uri) {
 			log.error('test.uri is undefined (test.label = ' + test.label + ')', options)
 			return
@@ -151,23 +148,19 @@ export class ABLResults implements Disposable {
 			throw new Error('propath is undefined')
 		}
 
-		const testPropath = await this.propath.search(test.uri)
-		if (!testPropath) {
-			this.skippedTests.push(test)
-			log.warn('skipping test, not found in propath: ' + workspace.asRelativePath(test.uri), options)
-			return
+		log.debug('addTest: ' + test.id + '; this.tests.length=' + this.tests.length)
+		if (this.tests.includes(test)) {
+			log.info('test already exists in tests: ' + test.id)
 		}
-
-		let propathEntryTestFile = testPropath.propathEntry.path
-		if (isRelativePath(testPropath.propathEntry.path)) {
-			propathEntryTestFile = workspace.asRelativePath(Uri.joinPath(this.workspaceFolder.uri, testPropath.propathEntry.path))
-		}
-		log.debug('addTest: ' + test.id + ', propathEntry=' + propathEntryTestFile)
 		this.tests.push(test)
-		this.testData.set(test, data)
 
 		let testCase: string | undefined = undefined
-		log.info('100')
+		log.info('100 ' + test.id)
+		const data = testData.get(test)
+		if (!data) {
+			log.error('could not find test data for TestItem.id=' + test.id)
+			return
+		}
 		if (data instanceof ABLTestCase) {
 			log.info('101 test.label=' + test.label + ' is a test case')
 			testCase = test.label
@@ -177,13 +170,25 @@ export class ABLResults implements Disposable {
 		let testRel: string = workspace.asRelativePath(testUri, false)
 		log.info('102 testRel=' + testRel)
 		const p = await this.propath.search(testUri)
+		if (!p?.propathRelativeFile && data instanceof ABLTestDir) {
+			log.info('directory ' + testRel + ' not found in propath, adding children')
+			for (const [ , child ] of test.children) {
+				await this.addTest(child, options, isTopLevel)
+			}
+			return
+		}
 		testRel = (p?.propathRelativeFile ?? testRel).replace(/\\/g, '/')
 
-		log.info('103')
+		log.info('103.1')
 		let testObj: ITestObj | undefined = undefined
+		log.info('103.2')
+		log.info('103.3 ' + JSON.stringify(data))
+		log.info('104.4 ' + typeof data)
+		log.info('103.5 ' + data.label)
+		log.info('103.6 ' + data.type)
 		if (data instanceof ABLTestDir) {
 			// testObj = { folder: workspace.asRelativePath(testUri, false) }
-			testObj = { folder: p?.uri.fsPath.replace(/\\/g, '/') }
+			testObj = { folder: p?.uri.fsPath.replace(/\\/g, '/') ?? workspace.asRelativePath(test.uri) }
 		} else {
 			testObj = { test: testRel }
 			if (testCase) {
@@ -191,8 +196,12 @@ export class ABLResults implements Disposable {
 			}
 		}
 
+		if (isTopLevel) {
+			this.topLevelTests.push(testObj)
+		}
+
 		log.info('104')
-		if (testCase) {
+		if (testObj.test && testCase) {
 			log.info('105')
 			const existingTestObj = this.testQueue.find((t: ITestObj) => t.test === testRel)
 			if (existingTestObj) {
@@ -205,20 +214,26 @@ export class ABLResults implements Disposable {
 				}
 			}
 			if (isTopLevel) {
-				this.topLevelTests.push(testObj)
+				if (!this.topLevelTests.includes(testObj)) {
+					this.topLevelTests.push(testObj)
+				}
 			}
 			return
 		}
 
-		log.info('107')
+		log.info('107 ' + JSON.stringify(testObj))
 		if (this.testQueue.find((t: ITestObj) => t.test === testRel)) {
 			log.warn('test already exists in configJson.tests: ' + testRel)
+			return
 		} else {
 			log.info('108')
 			this.testQueue.push(testObj)
 			if (isTopLevel) {
-				log.info('109')
-				this.topLevelTests.push(testObj)
+				log.info('109 this.topLevelTests.length=' + this.topLevelTests.length + '; ' + JSON.stringify(testObj))
+				// if (this.tests || !this.topLevelTests.find((exist) => testObj.test == exist.test)) {
+				if (!this.topLevelTests.includes(testObj)) {
+					this.topLevelTests.push(testObj)
+				}
 			}
 		}
 	}
@@ -302,7 +317,8 @@ export class ABLResults implements Disposable {
 	}
 
 	async assignTestResults (item: TestItem, options: TestRun) {
-		if (this.testData.get(item) instanceof ABLTestDir) {
+		const itemData = testData.get(item)
+		if (itemData instanceof ABLTestDir) {
 			log.debug('assigning test results for children of directory: ' + item.label)
 			for (const [ , child ] of item.children) {
 				await this.assignTestResults(child, options)
@@ -332,12 +348,15 @@ export class ABLResults implements Disposable {
 		const suiteName = await this.getSuiteName(item)
 		const s = this.ablResults.resultsJson[0].testsuite.find((s: ITestSuite) => s.classname === suiteName || s.name === suiteName)
 		if (!s) {
+			log.info('400')
 			log.error('could not find test suite for \'' + suiteName + '\' in results (item=' + item.label + ')')
+			log.info('401')
 			options.errored(item, new TestMessage('could not find test suite for \'' + suiteName + '\' in results'), this.duration.elapsed())
+			log.info('402')
 			return
 		}
 
-		const data = this.testData.get(item)
+		const data = testData.get(item)
 		if (data instanceof ABLTestSuite) {
 			if (!s.testsuite) {
 				log.error('no child testsuites found (item=' + item.label + ')')

@@ -3,15 +3,19 @@ import { TextDecoder } from 'util'
 import { log } from '../ChannelLogger'
 
 const textDecoder = new TextDecoder('utf-8')
-
-export async function getContentFromFilesystem (uri: Uri) {
-	try {
-		const rawContent = await workspace.fs.readFile(uri)
-		return textDecoder.decode(rawContent)
-	} catch (e) {
-		log.warn('Error providing tests for ' + uri.fsPath + ': ' + e)
-		return ''
-	}
+export function getContentFromFilesystem (uri: Uri) {
+	log.info('700')
+	const v = workspace.fs.readFile(uri)
+		.then((rawContent) => {
+			log.info('701')
+			return textDecoder.decode(rawContent)
+		}, (e) => {
+			log.info('799')
+			log.warn('Error providing tests for ' + uri.fsPath + ': ' + e)
+			return ''
+		})
+	log.info('702 v=' + JSON.stringify(v))
+	return v
 }
 
 export function getLines (text: string, annotation: string): [ string[], boolean ] {
