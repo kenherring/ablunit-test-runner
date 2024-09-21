@@ -2,7 +2,6 @@
 	"tempDir": "temp",
 	"options": {
 		"output": {
-			"location": ".",
 			"writeJson": true
 		},
 		"writeLog": true
