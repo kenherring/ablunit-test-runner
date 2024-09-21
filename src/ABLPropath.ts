@@ -1,7 +1,9 @@
 import { Uri, workspace, WorkspaceFolder } from 'vscode'
-import { IProjectJson } from './parse/OpenedgeProjectParser'
+import { getActiveProfile, getOpenEdgeProfileConfig, IBuildPathEntry, IProjectJson } from './parse/OpenedgeProjectParser'
 import { isRelativePath } from './ABLUnitCommon'
 import { log } from './ChannelLogger'
+import { ablunitConfig } from 'ABLUnitConfigWriter'
+import { parseRunProfiles, RunConfig } from 'parse/TestProfileParser'
 
 interface IPropathEntry {
 	uri: Uri
@@ -42,6 +44,35 @@ export class PropathParser {
 		this.workspaceFolder = workspaceFolder
 		this.filemap = new Map()
 		this.buildmap = new Map()
+	}
+
+	setPropathFromProjectJson () {
+		if (!workspace.workspaceFolders) {
+			return
+		}
+		const conf = getOpenEdgeProfileConfig(this.workspaceFolder.uri)
+
+		if (conf && conf.buildPath.length > 0) {
+			const pathObj: IBuildPathEntry[] = []
+			for (const e of conf.buildPath) {
+				pathObj.push({
+					path: e.path,
+					type: e.type.toLowerCase(),
+					buildDir: e.buildDir,
+					xrefDir: e.xrefDir
+				})
+			}
+			this.setPropath({ propathEntry: pathObj })
+		} else {
+			this.setPropath({ propathEntry: [{
+				path: '.',
+				type: 'source',
+				buildDir: '.',
+				xrefDir: '.'
+			}]})
+		}
+
+		log.info('set propath=\'' + this.toString() + '\'')
 	}
 
 	setPropath (importedPropath: IProjectJson) {

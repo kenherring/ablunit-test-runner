@@ -1,6 +1,16 @@
-import { Uri, commands, window, workspace, TestItem } from 'vscode'
-import { assert, deleteFile, getResults, getTestController, log, refreshTests, runAllTests, runAllTestsWithCoverage, suiteSetupCommon, toUri, updateTestProfile } from '../testCommon'
+import { Uri, commands, window, workspace, TestController } from 'vscode'
+import { assert, deleteFile, getResults, getTestController, log, refreshTests, runAllTests, runAllTestsWithCoverage, sleep, suiteSetupCommon, toUri, updateTestProfile } from '../testCommon'
 import { ABLResultsParser } from 'parse/ResultsParser'
+import { gatherAllTestItems } from 'extension'
+
+function getTestItem (ctrl: TestController, uri: Uri) {
+	const testItems = gatherAllTestItems(ctrl.items)
+	const testItem = testItems.find((item) => item.uri?.fsPath === uri.fsPath)
+	if (!testItem) {
+		throw new Error('cannot find TestItem for ' + uri.fsPath)
+	}
+	return testItem
+}
 
 suite('proj0  - Extension Test Suite', () => {
 
@@ -35,7 +45,7 @@ suite('proj0  - Extension Test Suite', () => {
 
 	// is it possible to validate the line coverage displayed and not just the reported coverage?  does it matter?
 	test.skip('proj0.3 - open file, run test, validate coverage displays', async () => {
-		const testFileUri = Uri.joinPath(workspace.workspaceFolders![0].uri, 'src', 'dirA', 'dir1', 'testInDir.p')
+		const testFileUri = toUri('src/dirA/dir1/testInDir.p')
 		await window.showTextDocument(testFileUri)
 		await runAllTestsWithCoverage()
 
@@ -59,102 +69,69 @@ suite('proj0  - Extension Test Suite', () => {
 		assert.equal(0, executedLines.length, 'executed lines found for ' + workspace.asRelativePath(testFileUri) + '. should be empty')
 	})
 
-	test('proj0.5 - parse test class with expected error annotation', async () => {
-		const ctrl = await refreshTests()
+	test('proj0.5 - parse test class with expected error annotation', () => {
+		const testFileUri = toUri('src/threeTestMethods.cls')
+		return refreshTests()
+			.then(() => { return workspace.openTextDocument(testFileUri) })
+			.then((e) => {
+				log.info('e=' + JSON.stringify(e))
+				return sleep(100)
+			})
+			.then(() => { return sleep(100) })
 			.then(() => { return getTestController() })
-
-		let testClassItem: TestItem | undefined
-		// find the TestItem for src/threeTestMethods.cls
-		ctrl.items.forEach((item) => {
-			log.info('item.label=' + item.label + '; item.id=' + item.id + '; item.uri' + item.uri)
-			if (item.label === 'src') {
-				item.children.forEach(element => {
-					if (element.label === 'threeTestMethods') {
-						testClassItem = element
-					}
-				})
-			}
-		})
-
-		if (!testClassItem) {
-			throw new Error('cannot find TestItem for src/threeTestMethods.cls')
-		}
-
-		assert.equal(testClassItem.children.size, 3, 'testClassItem.children.size should be 3')
+			.then((ctrl) => {
+				const testItem = getTestItem(ctrl, testFileUri)
+				assert.equal(testItem.children.size, 3, 'testClassItem.children.size should be 3')
+				return
+			})
 	})
 
-	test('proj0.6 - parse test program with expected error annotation', async () => {
-		const ctrl = await refreshTests()
+	test('proj0.6 - parse test program with expected error annotation', () => {
+		const testFileUri = toUri('src/threeTestProcedures.p')
+		return refreshTests()
+			.then(() => { return workspace.openTextDocument(testFileUri) })
+			.then((e) => { return sleep(100) })
+			.then(() => { return sleep(100) })
 			.then(() => { return getTestController() })
-
-		let testClassItem: TestItem | undefined
-		// find the TestItem for src/threeTestProcedures.p
-		ctrl.items.forEach((item) => {
-			log.info('item.label=' + item.label + '; item.id=' + item.id + '; item.uri' + item.uri)
-			if (item.label === 'src') {
-				item.children.forEach(element => {
-					if (element.label === 'threeTestProcedures.p') {
-						testClassItem = element
-					}
-				})
-			}
-		})
-
-		if (!testClassItem) {
-			throw new Error('cannot find TestItem for src/threeTestProcedures.p')
-		}
-		assert.equal(testClassItem.children.size, 3, 'testClassItem.children.size should be 3')
+			.then((ctrl) => {
+				const testItem = getTestItem(ctrl, testFileUri)
+				assert.equal(testItem.children.size, 3, 'testClassItem.children.size should be 3')
+				return
+			})
 	})
 
-	test('proj0.7 - parse test class with skip annotation', async () => {
-		const ctrl = await refreshTests()
+	test('proj0.7 - parse test class with skip annotation', () => {
+		const testFileUri = toUri('src/ignoreMethod.cls')
+		return workspace.openTextDocument(testFileUri)
+			.then(() => { return refreshTests() })
+			.then(() => { return sleep(100) })
+			.then(() => { return sleep(100) })
 			.then(() => { return getTestController() })
-
-		let testClassItem: TestItem | undefined
-		// find the TestItem for src/ignoreMethod.cls
-		ctrl.items.forEach((item) => {
-			if (item.label === 'src') {
-				item.children.forEach(element => {
-					if (element.label === 'ignoreMethod') {
-						testClassItem = element
-					}
-				})
-			}
-		})
-
-		if (!testClassItem) {
-			throw new Error('cannot find TestItem for src/ignoreMethod.cls')
-		}
-		assert.equal(testClassItem.children.size, 5, 'testClassItem.children.size should be 5')
+			.then((ctrl) => {
+				const testItem = getTestItem(ctrl, testFileUri)
+				assert.equal(testItem.children.size, 5, 'testClassItem.children.size should be 5')
+				return
+			})
 	})
 
-	test('proj0.8 - parse test procedure with skip annotation', async () => {
-		const ctrl = await refreshTests()
+	test('proj0.8 - parse test procedure with skip annotation', () => {
+		const testFileUri = toUri('src/ignoreProcedure.p')
+		return workspace.openTextDocument(testFileUri)
+			.then(() => { return sleep(100) })
 			.then(() => { return getTestController() })
-
-		let testClassItem: TestItem | undefined
-		// find the TestItem for src/ignoreProcedure.p
-		ctrl.items.forEach((item) => {
-			if (item.label === 'src') {
-				item.children.forEach(element => {
-					if (element.label === 'ignoreProcedure.p') {
-						testClassItem = element
-					}
-				})
-			}
-		})
-
-		if (!testClassItem) {
-			throw new Error('cannot find TestItem for src/ignoreProcedure.p')
-		}
-		assert.equal(testClassItem.children.size, 5, 'testClassItem.children.size should be 5')
+			.then((ctrl) => {
+				const testItem = getTestItem(ctrl, testFileUri)
+				assert.equal(testItem.children.size, 5, 'testClassItem.children.size should be 5')
+				return
+			})
 	})
 
-	test('proj0.9 - ABLResultsParser', async () => {
+	test('proj0.9 - ABLResultsParser', () => {
 		const rp = new ABLResultsParser()
-		await rp.parseResults(toUri('results_test1.xml'))
+		return rp.parseResults(toUri('results_test1.xml'))
 			.then(() => {
 				log.info('parsed results_test1.xml successfully')
+				return
 			}, (e: unknown) => {
 				if (e instanceof Error) {
 					log.info('e.message=' + e.message)
