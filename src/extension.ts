@@ -305,6 +305,7 @@ export async function activate (context: ExtensionContext) {
 			const proms: Promise<void>[] = []
 
 			for(const {test, data } of queue) {
+				log.info('test.id=' + test.id)
 				if (run.token.isCancellationRequested) {
 					return
 				}

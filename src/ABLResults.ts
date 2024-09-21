@@ -6,7 +6,7 @@ import { FileType, MarkdownString, TestItem, TestItemCollection, TestMessage, Te
 	TestRunProfileKind} from 'vscode'
 import { ABLUnitConfig } from './ABLUnitConfigWriter'
 import { ABLResultsParser, ITestCaseFailure, ITestCase, ITestSuite } from './parse/ResultsParser'
-import { ABLTestSuite, ABLTestData, ABLTestDir } from './testTree'
+import { ABLTestSuite, ABLTestData, ABLTestDir, ABLTestCase } from './testTree'
 import { parseCallstack } from './parse/CallStackParser'
 import { ABLProfile, ABLProfileJson, IModule } from './parse/ProfileParser'
 import { ABLDebugLines } from './ABLDebugLines'
@@ -167,15 +167,19 @@ export class ABLResults implements Disposable {
 		this.testData.set(test, data)
 
 		let testCase: string | undefined = undefined
-		if (test.label === 'ABL Test Method' || test.label === 'ABL Test Proceudre') {
+		log.info('100')
+		if (data instanceof ABLTestCase) {
+			log.info('101 test.label=' + test.label + ' is a test case')
 			testCase = test.label
 		}
 
 		const testUri = test.uri
 		let testRel: string = workspace.asRelativePath(testUri, false)
+		log.info('102 testRel=' + testRel)
 		const p = await this.propath.search(testUri)
 		testRel = (p?.propathRelativeFile ?? testRel).replace(/\\/g, '/')
 
+		log.info('103')
 		let testObj: ITestObj | undefined = undefined
 		if (data instanceof ABLTestDir) {
 			// testObj = { folder: workspace.asRelativePath(testUri, false) }
@@ -187,24 +191,33 @@ export class ABLResults implements Disposable {
 			}
 		}
 
+		log.info('104')
 		if (testCase) {
+			log.info('105')
 			const existingTestObj = this.testQueue.find((t: ITestObj) => t.test === testRel)
 			if (existingTestObj) {
 				if(testObj.cases) {
 					if (!existingTestObj.cases) {
 						existingTestObj.cases = []
 					}
+					log.info('106')
 					existingTestObj.cases.push(testCase)
 				}
+			}
+			if (isTopLevel) {
+				this.topLevelTests.push(testObj)
 			}
 			return
 		}
 
+		log.info('107')
 		if (this.testQueue.find((t: ITestObj) => t.test === testRel)) {
 			log.warn('test already exists in configJson.tests: ' + testRel)
 		} else {
+			log.info('108')
 			this.testQueue.push(testObj)
 			if (isTopLevel) {
+				log.info('109')
 				this.topLevelTests.push(testObj)
 			}
 		}
