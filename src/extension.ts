@@ -24,6 +24,7 @@ import { ABLTestCase, ABLTestClass, ABLTestData, ABLTestDir, ABLTestFile, ABLTes
 import { minimatch } from 'minimatch'
 import { ABLUnitRuntimeError } from 'ABLUnitRun'
 import { basename } from 'path'
+import { PropathParser } from 'ABLPropath'
 
 export interface IExtensionTestReferences {
 	testController: TestController
@@ -32,6 +33,7 @@ export interface IExtensionTestReferences {
 }
 
 let recentResults: ABLResults[] = []
+const propathMap = new Map<string, PropathParser>()
 
 export async function activate (context: ExtensionContext) {
 	const ctrl = tests.createTestController('ablunitTestController', 'ABLUnit Test')
@@ -525,12 +527,12 @@ export async function activate (context: ExtensionContext) {
 let contextStorageUri: Uri
 let contextResourcesUri: Uri
 
-function updateNode (uri: Uri, ctrl: TestController) {
+async function updateNode (uri: Uri, ctrl: TestController) {
 	log.trace('updateNode uri=' + uri.fsPath)
 	if(uri.scheme !== 'file' || isFileExcluded(uri, getExcludePatterns())) { return new Promise(() => { return false }) }
 
 	log.info('600')
-	const { item, data } = getOrCreateFile(ctrl, uri)
+	const { item, data } = await getOrCreateFile(ctrl, uri)
 	log.info('601')
 	if(!item || !data) {
 		log.info('602')
@@ -540,7 +542,7 @@ function updateNode (uri: Uri, ctrl: TestController) {
 	log.info('603')
 	ctrl.invalidateTestResults(item)
 	log.info('604 uri=' + uri.fsPath)
-	return getContentFromFilesystem(uri).then((contents) => {
+	await getContentFromFilesystem(uri).then((contents) => {
 		log.info('605')
 		data.updateFromContents(ctrl, contents, item)
 		log.info('606')
@@ -591,7 +593,7 @@ function getExistingTestItem (controller: TestController, uri: Uri) {
 	return undefined
 }
 
-function getOrCreateFile (controller: TestController, uri: Uri, excludePatterns?: RelativePattern[]) {
+async function getOrCreateFile (controller: TestController, uri: Uri, excludePatterns?: RelativePattern[]) {
 	const existing = getExistingTestItem(controller, uri)
 
 	if (excludePatterns && excludePatterns.length > 0 && isFileExcluded(uri, excludePatterns)) {
@@ -600,6 +602,39 @@ function getOrCreateFile (controller: TestController, uri: Uri, excludePatterns?
 		}
 		return { item: undefined, data: undefined }
 	}
+
+	const wf = workspace.getWorkspaceFolder(uri)
+	log.info('wf=' + wf)
+	if (!wf) {
+		throw new Error('workspace folder not found for uri: ' + uri.fsPath)
+	}
+	let p = propathMap.get(wf.uri.fsPath)
+	log.info('p=' + p)
+	if (!p) {
+		p = new PropathParser(wf)
+		p.setPropathFromProjectJson()
+		log.info('p(2)=' + p)
+		if (!p) {
+			log.warn('unable to create propath for workspace folder: ' + wf.uri.fsPath)
+			if (existing) {
+				deleteTest(controller, existing)
+			}
+			return { item: undefined, data: undefined }
+		}
+		propathMap.set(wf.uri.fsPath, p)
+		return { item: undefined, data: undefined }
+	}
+	log.info('propath=' + JSON.stringify(p.getPropath()))
+	const pEntry = await p.search(uri)
+	log.info('pEntry=' + JSON.stringify(pEntry))
+	if (!pEntry) {
+		log.info('no propath entry found for uri: ' + uri.fsPath)
+		if (existing) {
+			deleteTest(controller, existing)
+		}
+		return { item: undefined, data: undefined }
+	}
+
 
 	if (existing) {
 		const data = testData.get(existing)
@@ -620,7 +655,7 @@ function getOrCreateFile (controller: TestController, uri: Uri, excludePatterns?
 
 	const data = createFileNode(uri)
 	if(!data) {
-		log.trace('No tests found in file: ' +workspace.asRelativePath(uri))
+		log.trace('No tests found in file: ' + workspace.asRelativePath(uri))
 		return { item: undefined, data: undefined }
 	}
 	const file = controller.createTestItem(uri.fsPath, basename(uri.fsPath), uri)
@@ -958,17 +993,21 @@ function refreshTestTree (controller: TestController, token: CancellationToken):
 
 	return findMatchingFiles(includePatterns, token, checkCancellationToken)
 		.then((r) => {
+			const proms = []
 			for (const file of r) {
 				checkCancellationToken()
-				const { item, data } = getOrCreateFile(controller, file, excludePatterns)
-				if (!item) {
-					log.warn('could not create test item for file - item undefined: ' + file.fsPath)
-				}
-				if (!data) {
-					log.warn('could not create test item for file - data undefined: ' + file.fsPath)
-				}
+				const prom = getOrCreateFile(controller, file, excludePatterns).then(({item, data}) => {
+					if (!item) {
+						log.warn('could not create test item for file - item undefined: ' + file.fsPath)
+					}
+					if (!data) {
+						log.warn('could not create test item for file - data undefined: ' + file.fsPath)
+					}
+					return
+				})
+				proms.push(prom)
 			}
-			return
+			return Promise.all(proms)
 		})
 		.then((r) => {
 			log.info('return  true (r=' + r + ')')

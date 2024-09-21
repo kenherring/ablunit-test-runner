@@ -204,7 +204,18 @@ export class ABLResults implements Disposable {
 		}
 
 		if (isTopLevel) {
-			this.topLevelTests.push(testObj)
+			if (testObj.folder) {
+				log.info('folder = ' + testObj.folder)
+				const existing = this.topLevelTests.find((exist) => testObj.folder === exist.folder)
+				log.info('existing = ' + JSON.stringify(existing))
+				if (existing) {
+					log.warn('test dir already added to test run queue: ' + testObj.folder)
+				} else {
+					this.topLevelTests.push(testObj)
+				}
+			} else {
+				this.topLevelTests.push(testObj)
+			}
 		}
 
 		log.info('104')
