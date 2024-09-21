@@ -18,6 +18,7 @@ import { getDLC, IDlc } from './parse/OpenedgeProjectParser'
 import { Duration } from './ABLUnitCommon'
 
 export interface ITestFile {
+	folder?: undefined
 	test: string
 	cases?: string[]
 }
@@ -152,6 +153,7 @@ export class ABLResults implements Disposable {
 		if (this.tests.includes(test)) {
 			log.info('test already exists in tests: ' + test.id)
 		}
+
 		this.tests.push(test)
 
 		let testCase: string | undefined = undefined
@@ -170,12 +172,17 @@ export class ABLResults implements Disposable {
 		let testRel: string = workspace.asRelativePath(testUri, false)
 		log.info('102 testRel=' + testRel)
 		const p = await this.propath.search(testUri)
-		if (!p?.propathRelativeFile && data instanceof ABLTestDir) {
-			log.info('directory ' + testRel + ' not found in propath, adding children')
-			for (const [ , child ] of test.children) {
-				await this.addTest(child, options, isTopLevel)
+		if (!p?.propathRelativeFile) {
+			if (data instanceof ABLTestDir) {
+				log.info('directory ' + testRel + ' not found in propath, adding children')
+				for (const [ , child ] of test.children) {
+					await this.addTest(child, options, isTopLevel)
+				}
+				return
+			} else {
+				log.warn('test file ' + testRel + ' not found in propath')
+				return
 			}
-			return
 		}
 		testRel = (p?.propathRelativeFile ?? testRel).replace(/\\/g, '/')
 
@@ -212,13 +219,15 @@ export class ABLResults implements Disposable {
 					log.info('106')
 					existingTestObj.cases.push(testCase)
 				}
+				return
 			}
-			if (isTopLevel) {
-				if (!this.topLevelTests.includes(testObj)) {
-					this.topLevelTests.push(testObj)
-				}
-			}
-			return
+			// }
+			// if (isTopLevel) {
+			// 	if (!this.topLevelTests.find((exist) => exist.test == testObj.test && exist.cases == testObj.cases)) {
+			// 		this.topLevelTests.push(testObj)
+			// 	}
+			// }
+			// return
 		}
 
 		log.info('107 ' + JSON.stringify(testObj))
@@ -227,14 +236,19 @@ export class ABLResults implements Disposable {
 			return
 		} else {
 			log.info('108')
-			this.testQueue.push(testObj)
-			if (isTopLevel) {
-				log.info('109 this.topLevelTests.length=' + this.topLevelTests.length + '; ' + JSON.stringify(testObj))
-				// if (this.tests || !this.topLevelTests.find((exist) => testObj.test == exist.test)) {
-				if (!this.topLevelTests.includes(testObj)) {
-					this.topLevelTests.push(testObj)
+			if (testObj.folder) {
+				if (this.testQueue.find((t: ITestObj) => t.folder === testObj.folder)) {
+					this.testQueue.push(testObj)
 				}
 			}
+			// if (isTopLevel) {
+			// 	log.info('109 this.topLevelTests.length=' + this.topLevelTests.length + '; ' + JSON.stringify(testObj))
+			// if (this.tests || !this.topLevelTests.find((exist) => testObj.test == exist.test)) {
+			// if (!this.topLevelTests.includes(testObj)) {
+			// if (this.topLevelTests.find((exist) => testObj.folder == exist.folder)) {
+			// 	this.topLevelTests.push(testObj)
+			// }
+			// }
 		}
 	}
 

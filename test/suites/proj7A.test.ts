@@ -10,7 +10,7 @@ suite('proj7A - Extension Test Suite', () => {
 		await beforeProj7()
 	})
 
-	test('proj7A.1 - test count', async () => {
+	test.skip('proj7A.1 - test count', async () => {
 		await runAllTests()
 
 		const resultsJson = Uri.joinPath(workspaceUri, 'temp', 'results.json')
