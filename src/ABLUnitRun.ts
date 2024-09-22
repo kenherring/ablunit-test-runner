@@ -80,8 +80,8 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 		const testlist = testarr.join(',')
 
 		if (!cmd.includes('${testlist}')) {
-			log.error('command does not contain ${testlist}', options)
-			throw new Error('command does not contain ${testlist}')
+			log.error('command does not contain \'${testlist}\'', options)
+			throw new Error('command does not contain \'${testlist}\'')
 		}
 		cmd = cmd.replace(/\$\{testlist\}/, testlist)
 		cmd = cmd.replace(/\$\{tempDir\}/, workspace.asRelativePath(res.cfg.ablunitConfig.tempDirUri, false))

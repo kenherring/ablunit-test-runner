@@ -1,14 +1,33 @@
-import { TestMessage, TestRun, Uri } from 'vscode'
+import { TestItem, TestMessage, TestRun, Uri } from 'vscode'
 import { readLinesFromFile } from './TestParserCommon'
 import { log } from '../ChannelLogger'
 import { ABLResults } from 'ABLResults'
+
+enum TestStatus {
+	unknown = 'unknown',
+	testTree = 'TEST_TREE',
+	stackTrace = 'STACK_TRACE',
+
+	// test statuses
+	enqueud = 'enqueued',
+	started = 'TEST_START',
+	passed = 'TEST_END',
+	failed = 'TEST_FAIL',
+	errored = 'TEST_ERROR',
+	complete = 'COMPLETE',
+
+	startedSet = 'started-set',
+	passedSet = 'passed-set',
+	failedSet = 'failed-set',
+	erroredSet = 'errored-set'
+}
 
 interface ITestTree {
 	id: number
 	parentName: string
 	name: string | undefined
 	suiteFlag: boolean
-	status: string
+	status: TestStatus
 	time?: number
 }
 
@@ -35,10 +54,7 @@ function parseTestTree (line: string) {
 	try {
 		for (const node of nodes) {
 			idx++
-			log.info('100 node[' + idx + ']=' + node)
 			if (node == '\\NULL' || node == '') {
-				log.info('101 node[' + (idx - 1) + ']=' + nodes[idx - 1])
-
 				// two nulls in a row means the next node is a parent node
 				if (idx > 0 && nodes[idx - 1] == '\\NULL') {
 					log.info('UNSET parentName')
@@ -54,7 +70,6 @@ function parseTestTree (line: string) {
 			let suiteFlag: string
 			let id: string
 			let name: string | undefined = undefined
-			// log.info('102')
 			if (!parentName) {
 				[ parentName, suiteFlag, id ] = node.split('?')
 				name = undefined
@@ -68,26 +83,22 @@ function parseTestTree (line: string) {
 			if (name && name.trim() === '') {
 				name = undefined
 			}
-			// log.info('103 parentName=' + parentName + ', name=' + name + ', suiteFlag=' + suiteFlag + ', id=' + id)
 
 			// skip suite updates for now...
 			if (suiteFlag == 'false' && parentName != 'TEST_ROOT') {
-				// log.info('110 testTree.push')
 				testTree.push({
 					id: Number(id),
 					parentName,
 					name,
 					suiteFlag: false,
 					// suiteFlag: suiteFlag ==='true',
-					status: 'unknown'
+					status: TestStatus.unknown
 				})
-				// log.info('120 parentName=' + parentName)
 			}
 		}
 	} catch (e) {
 		log.error('Error parsing test tree: ' + e)
 	}
-	// log.info('120 testTree.length=' + testTree.length)
 	return testTree
 }
 
@@ -96,14 +107,20 @@ let prevRootText = ''
 let updates: ITestTree[] = []
 
 function parseUpdateLines (lines: string[]) {
-
-	let lineNum = -1
-	for (const line of lines) {
-		lineNum++
-		if (line.trim() === '') {
-			continue
+	for (let lineNum = 0; lineNum < lines.length; lineNum++) {
+		const line = lines[lineNum]
+		const event = line.split(' ')[0] ?? 'unknown'
+		let eventStatus = event as TestStatus ?? undefined
+		if (!eventStatus) {
+			switch (event) {
+				case 'TEST_START': eventStatus = TestStatus.started; break
+				case 'TEST_END': eventStatus = TestStatus.passed; break
+				case 'TEST_FAIL': eventStatus = TestStatus.failed; break
+				case 'COMPLETE': eventStatus = TestStatus.errored; break
+				default: eventStatus = TestStatus.unknown; break
+			}
 		}
-		const event = line.split(' ')[0]
+
 		if (event === 'TEST_TREE') {
 			if (!lines[lineNum + 1]) {
 				// nothing to do, we don't have any updates
@@ -113,68 +130,89 @@ function parseUpdateLines (lines: string[]) {
 				if (prevRootText !== line) {
 					updates = parseTestTree(line)
 					prevRootText = line
-					log.info('updates.length=' + updates.length)
+					log.debug('updates.length=' + updates.length)
 				} else {
-					log.info('TEST_TREE unchanged from last parsing')
+					log.debug('TEST_TREE unchanged from last parsing')
 				}
 			}
-		} else if (event === 'TEST_START') {
-			const [ , id ] = line.split(' ')
-			const idx = updates.findIndex((test) => test.id === Number(id))
-			if (!updates[idx]) {
-				if (id != '0') {
-					log.error('Test not found for id=' + id + ' (line=' + lineNum + ')')
-				}
-				continue
-			}
-			if (updates[idx].status != 'started-set') {
-				updates[idx].status = 'started'
-			}
-		} else if (event === 'TEST_END') {
-			const [ , id, time ] = line.split(' ')
-			const idx = updates.findIndex((test) => test.id === Number(id))
-			if (!updates[idx]) {
-				if (id != '0') {
-					log.error('Test not found for id=' + id + '(line=' + lineNum + ')')
-				}
-				continue
-			}
-			log.info('TEST_END: item=' + JSON.stringify(updates[idx]))
-			if (updates[idx].status != 'passed-set') {
-				updates[idx].status = 'passed'
-				updates[idx].time = Number(time)
-			}
-		} else if (event === 'TEST_FAIL') {
-			const [ , id, time ] = line.split(' ')
-			const idx = updates.findIndex((test) => test.id === Number(id))
-			if (!updates[idx]) {
-				if (id != '0') {
-					log.error('Test not found for id=' + id + '(line=' + lineNum + ')')
-				}
-				continue
-			}
-			if (updates[idx].status != 'failed-set') {
-				updates[idx].status = 'failed'
-				updates[idx].time = Number(time)
-			}
-		} else if (event === 'COMPLETE') {
-			// nothing to do
-		} else if (event === 'STACK_TRACE') {
-			// nothing to do, for now.  we could import this
-		} else {
-			log.error('Unknown event type: ' + event + '(line[' + lineNum + ']: ' + line + ')')
-			// throw new Error('Unknown event type: ' + event + '(line=' + lineNum + ')')
+			continue
 		}
+
+		const [ , id, timeVal ] = line.split(' ')
+		const time = Number(timeVal)
+		const idx = updates.findIndex((test) => test.id === Number(id))
+		if (!updates[idx]) {
+			if (id != '0') {
+				log.error('Test not found for id=' + id + ' (line=' + lineNum + ')')
+			}
+			continue
+		}
+		if (updates[idx].status == TestStatus.startedSet ||
+			updates[idx].status == TestStatus.passedSet ||
+			updates[idx].status == TestStatus.failedSet ||
+			updates[idx].status == TestStatus.erroredSet) {
+			// skip already set values
+			continue
+		}
+
+		if (eventStatus == TestStatus.started || eventStatus == TestStatus.failed || eventStatus == TestStatus.passed) {
+			// const [ , id ] = line.split(' ')
+			// const [ , id, time ] = line.split(' ')
+			updates[idx].status = eventStatus
+			updates[idx].time = time
+			continue
+		}
+
+		if (eventStatus == TestStatus.complete) {
+			// nothing to do
+			continue
+		}
+		if (eventStatus == TestStatus.stackTrace) {
+			// TODO - import the error message and stack trace
+			continue
+		}
+
+		/* Log and move on instead of throwing ... the parsing of result.xml will overwrite this anyway */
+		log.error('Unknown event type: ' + event + '(line[' + lineNum + ']: ' + line + ')')
 	}
-	log.info('return updates.length=' + updates.length)
+	log.debug('return updates.length=' + updates.length)
 	return updates
 }
 
 export function parseUpdates (filepath: Uri | string) {
-	log.info('Parsing updates from: ' + filepath)
+	log.debug('Parsing updates from: ' + filepath)
 	const updates = readLinesFromFile(filepath)
 		.then((lines) => { return parseUpdateLines(lines) })
 	return updates
+}
+
+function getTestForItem (tests: TestItem[], item: ITestTree) {
+	for (const test of tests) {
+		if (test.id.replace(/\\/g, '/').endsWith(item.parentName)) {
+			if (item.name) {
+				// update TestMethod or TestProcedure
+				for (const [, child] of test.children) {
+					if (child.label == item.name) {
+						return child
+					}
+				}
+			} else {
+				// update TestClass or TestProgram
+				return test
+			}
+		}
+	}
+	log.info('No test found for item.id=' + item.id + '; item.parentName=' + item.parentName + '; item.name=' + item.name)
+	return undefined
+}
+
+function setTestRunTestStatus (options: TestRun, test: TestItem, item: ITestTree) {
+	switch (item.status) {
+		case TestStatus.started: options.started(test); break
+		case TestStatus.failed: options.failed(test, new TestMessage('Test case failed'), item.time); break
+		case TestStatus.passed: options.passed(test, item.time); break
+		default: log.error('unexpected item.status=' + item.status)
+	}
 }
 
 function showUpdates (options: TestRun, res: ABLResults, updates: ITestTree[] | undefined) {
@@ -182,94 +220,43 @@ function showUpdates (options: TestRun, res: ABLResults, updates: ITestTree[] | 
 		log.warn('No updates found')
 		return
 	}
-	log.info('showing updates (updates.length=' + updates.length + ')')
+	log.info('showing test run updates (updates.length=' + updates.length + ')')
 
-	let countUnknown = 0
-	let countStarted = 0
-	let countPassed = 0
-	let countFailed = 0
-	let countOther = 0
-	let prevSet = 0
+	const counts = new Map<string, number>()
 	const countError = 0
 	try {
-		updates.forEach((item) => {
-			if (item.status === 'unknown') {
-				countUnknown++
-			} else if (item.status.endsWith('-set')) {
-				prevSet++
-			} else if (item.status === 'passed' || item.status === 'started' || item.status === 'failed') {
-				// TODO - skip is previously passed
-				// log.info('item=' + JSON.stringify(item))
-				let passedFlag = false
-
-				for (const test of res.tests) {
-					// log.info('ti.label=' + ti.label + '; ti.id=' + ti.id + '; item.parentName=' + item.parentName + '; item.name=' + item.name)
-					if (test.id.replace(/\\/g, '/').endsWith(item.parentName)) {
-						// log.info('  matching parent: ' + test.id)
-						if (item.name) {
-							// update TestMethod or TestProcedure
-							for (const [, child] of test.children) {
-								if (child.label === item.name) {
-									// log.info('    matching child: ' + child.id)
-									// log.info('ti.label=' + child.label + '; ti.id=' + child.id + '; item.parentName=' + item.parentName + '; item.name=' + item.name)
-									log.info('set child test status to ' + item.status + ': ' + child.id)
-									if (item.status === 'started') {
-										options.started(child)
-										countStarted++
-										updates[updates.findIndex((test) => test.id === item.id)].status = 'started-set'
-									} else if (item.status === 'failed') {
-										options.failed(child, new TestMessage('Test case failed'), item.time)
-										countFailed++
-										updates[updates.findIndex((test) => test.id === item.id)].status = 'failed-set'
-									} else {
-										options.passed(child, item.time)
-										countPassed++
-										updates[updates.findIndex((test) => test.id === item.id)].status = 'passed-set'
-									}
-									passedFlag = true
-									break
-								}
-							}
-						} else {
-							// update TestClass or TestProgram
-							log.info('set parent test status to ' + item.status + ': ' + test.id)
-							if (item.status === 'started') {
-								options.started(test)
-								for (const [, child] of test.children) {
-									options.started(child)
-								}
-								countStarted++
-								updates[updates.findIndex((test) => test.id === item.id)].status = 'started-set'
-							} else if (item.status === 'failed') {
-								options.failed(test, new TestMessage('Test file failed!'), item.time)
-								countFailed++
-								updates[updates.findIndex((test) => test.id === item.id)].status = 'failed-set'
-							} else {
-								options.passed(test, item.time)
-								countPassed++
-								updates[updates.findIndex((test) => test.id === item.id)].status = 'passed-set'
-							}
-							passedFlag = true
-							break
-						}
-						break
-					} else {
-						// log.info('not a match for parent: ' + test.id + ' vs ' + item.parentName)
-					}
-				}
-
-				if (!passedFlag) {
-					log.warn('No matching test item found for passed test: ' + item.parentName + '#' + item.name)
-				}
-			} else {
-				countOther++
+		for(const item of updates) {
+			if (item.status === TestStatus.unknown) {
+				counts.set(TestStatus.unknown, (counts.get('unknown') ?? 0) + 1)
+				continue
+			}
+			if (item.status.endsWith('-set')) {
+				counts.set('prev-set', (counts.get('prev-set') ?? 0) + 1)
+				continue
 			}
 
-		})
+			if (item.status === TestStatus.started || item.status === TestStatus.passed || item.status === TestStatus.failed) {
+				// TODO performance
+				const test = getTestForItem(res.tests, item)
+				if (!test) {
+					log.error('No test found for item.id=' + item.id)
+					continue
+				}
+				log.info('set test status to ' + item.status + ': ' + test.id)
+				setTestRunTestStatus(options, test, item)
+				updates[updates.findIndex((test) => test.id === item.id)].status = (item.status + '-set') as TestStatus
+				continue
+			}
+			log.error('Unexpected item.status=' + item.status)
+			counts.set('unexpected', (counts.get('unexpected') ?? 0) + 1)
+		}
 	} catch (e) {
 		log.error('Error processing updates: ' + e)
 	}
-	log.info('updates: countUnknown=' + countUnknown + ', countStarted=' + countStarted + '; countFailed=' + countFailed + '; countPassed=' + countPassed + ', countOther=' + countOther + ', countError=' + countError + '; prevSet=' + prevSet)
+	log.info('test run status update summary:')
+	for (const [ key, value ] of counts) {
+		log.info('  ' + key + ': ' + value)
+	}
 }
 
 export function processUpdates (options: TestRun, res: ABLResults, updateFile: Uri) {
