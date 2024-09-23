@@ -9,7 +9,9 @@
 			"options": {
 				"output": {
 					"writeJson": true
-				}
+				},
+				"writeLog": true,
+				"showErrorMessage": true
 			}
 			//singleline comment
 		}

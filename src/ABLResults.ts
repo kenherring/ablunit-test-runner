@@ -73,7 +73,7 @@ export class ABLResults implements Disposable {
 		})
 		this.duration = new Duration()
 		this.workspaceFolder = workspaceFolder
-		this.wrapperUri = Uri.joinPath(this.extensionResourcesUri, 'ABLUnitCore-wrapper.p')
+		this.wrapperUri = Uri.joinPath(this.extensionResourcesUri, 'VSCodeTestRunner', 'ABLUnitCore-wrapper.p')
 		this.cfg = new ABLUnitConfig()
 		this.setStatus(RunStatus.Constructed)
 	}
@@ -107,7 +107,7 @@ export class ABLResults implements Disposable {
 		this.dlc = getDLC(this.workspaceFolder, this.cfg.ablunitConfig.openedgeProjectProfile)
 		this.promsgs = new ABLPromsgs(this.dlc, this.globalStorageUri)
 
-		this.propath = this.cfg.readPropathFromJson(this.extensionResourcesUri.fsPath)
+		this.propath = this.cfg.readPropathFromJson(this.extensionResourcesUri)
 		this.debugLines = new ABLDebugLines(this.propath)
 
 		this.cfg.ablunitConfig.dbAliases = []

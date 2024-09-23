@@ -123,7 +123,7 @@ export class ABLUnitConfig  {
 		}
 	}
 
-	readPropathFromJson (extensionResourcesDir?: string) {
+	readPropathFromJson (extensionResourcesDir?: Uri) {
 		log.info('reading propath from openedge-project.json')
 		const parser: PropathParser = new PropathParser(this.ablunitConfig.workspaceFolder)
 
@@ -135,10 +135,10 @@ export class ABLUnitConfig  {
 			const pathObj: IBuildPathEntry[] = []
 			if (extensionResourcesDir) {
 				pathObj.push({
-					path: extensionResourcesDir,
+					path: Uri.joinPath(extensionResourcesDir, 'VSCodeTestRunner').fsPath,
 					type: 'propath',
-					buildDir: extensionResourcesDir,
-					xrefDir: extensionResourcesDir
+					buildDir: Uri.joinPath(extensionResourcesDir, 'VSCodeTestRunner').fsPath,
+					xrefDir: Uri.joinPath(extensionResourcesDir, 'VSCodeTestRunner').fsPath,
 				})
 			}
 			for (const e of conf.buildPath) {

@@ -178,9 +178,9 @@ export async function activate (context: ExtensionContext) {
 					log.debug('cancellation requested - runTestQueue-1')
 					throw new CancellationError()
 				}
-				run.started(test)
+				run.enqueued(test)
 				for(const childTest of gatherTestItems(test.children)) {
-					run.started(childTest)
+					run.enqueued(childTest)
 				}
 			}
 

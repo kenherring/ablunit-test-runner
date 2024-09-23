@@ -1,5 +1,5 @@
 import { assert } from '../testCommon'
-import { parseUpdates } from 'parse/UpdateParser'
+import { parseUpdates, TestStatus } from 'parse/UpdateParser'
 
 
 suite ('UpdateParser', () => {
@@ -12,7 +12,7 @@ suite ('UpdateParser', () => {
 					return
 				}
 				for (const item of updates) {
-					assert.equal(item.status, 'passed', 'item.id=' + item.id + '; item.name=' + item.name)
+					assert.equal(item.status, TestStatus.passed, 'item.id=' + item.id + '; item.name=' + item.name)
 				}
 				return
 			}, (e) => { throw e })

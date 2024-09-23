@@ -7,6 +7,7 @@ procedure testProcedureName1 :
   pause 1.
 end procedure.
 
+
 @Test.
 procedure testProcedureName2 :
   Assert:Equals(2,2).
@@ -31,7 +32,7 @@ end procedure.
 		@Test.
 
 procedure testProc5 :
-	Assert:Equals(2,2).
+	Assert:Equals(2,1).
   pause 1.
 end procedure.
 
@@ -40,6 +41,7 @@ end procedure.
   pause 1.
 end procedure.
 
+@Ignore.
 @Test. //procedure testProc7:
 procedure testProc7:
   Assert:Equals(2,2).
@@ -57,14 +59,20 @@ procedure testProc10 :
   pause 1.
 end procedure.
 
-@Test. /* procedure testProc11 : */
+@Test.
 procedure testProc12 :
+  Assert:Equals(12,12).
+  pause 1.
+end procedure.
+
+@Test. /* procedure testProc11 : */
+procedure testProc13 :
   Assert:Equals(11,11).
   pause 1.
 end procedure.
 
 @Test.
-pROCeDUre /* comment */ testProc13 :
+pROCeDUre /* comment */ testProc14 :
   Assert:Equals(13,13).
   pause 1.
 end procedure.

@@ -3,7 +3,7 @@ import { ABLResults } from './ABLResults'
 import { deleteFile, isRelativePath } from './ABLUnitCommon'
 import { ExecException, ExecOptions, exec } from 'child_process'
 import { log } from './ChannelLogger'
-import { processUpdates } from 'parse/UpdateParser'
+import { processUpdates, updateParserInit } from 'parse/UpdateParser'
 
 export enum RunStatus {
 	None = 10,
@@ -80,6 +80,7 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 		const testlist = testarr.join(',')
 
 		if (!cmd.includes('${testlist}')) {
+			// this is intentionally not a string substitution.  The variable is a literal part of the string.
 			log.error('command does not contain \'${testlist}\'', options)
 			throw new Error('command does not contain \'${testlist}\'')
 		}
@@ -132,7 +133,7 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 			params = params + ' ALIASES=' + res.cfg.ablunitConfig.dbAliases.join(';')
 		}
 		if (res.cfg.ablunitConfig.optionsUri.updateUri) {
-			params = params + ' ATTR_ABLUNIT_EVENT_FILE=' + workspace.asRelativePath(res.cfg.ablunitConfig.optionsUri.updateUri, false)
+			params = params + ' ATTR_ABLUNIT_EVENT_FILE=' + res.cfg.ablunitConfig.optionsUri.updateUri.fsPath
 		}
 		cmd.push('-param', '"' + params + '"')
 
@@ -188,9 +189,10 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 			const updateUri = res.cfg.ablunitConfig.optionsUri.updateUri
 			if (updateUri) {
 				deleteFile(updateUri)
+				updateParserInit()
 				log.info('watching test run update/event file: ' + updateUri.fsPath)
 				watcherUpdate = workspace.createFileSystemWatcher(updateUri.fsPath)
-				watcherDispose = watcherUpdate.onDidChange(uri => { return processUpdates(options, res, updateUri) })
+				watcherDispose = watcherUpdate.onDidChange(uri => { return processUpdates(options, res.tests, updateUri) })
 			}
 
 			exec(execCommand, execOpts, (err: ExecException | null, stdout: string, stderr: string) => {
@@ -213,17 +215,20 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 					const promsgError = parseRuntimeError(stdout.replace(/\r/g, ''))
 					log.debug('promsgError=' + promsgError, options)
 					if (promsgError) {
+						log.error('ABLUnit Runtime Error (code=' + err.code + '):' + promsgError, options)
 						reject(new ABLUnitRuntimeError ('ABLUnit Runtime Error (code=' + err.code + ') !', promsgError, err.cmd))
 					} else {
+						log.error('Runtime error: ' + err.message + ' (code=' + err.code + ')', options)
 						reject(err)
 					}
 					return
 				}
 				if(stderr) {
+					log.error('ABLUnit Command Execution Failed (reject-3) - duration: ' + duration + '\n' + stderr, options)
 					reject(new Error ('ABLUnit Command Execution Failed (reject-3) - duration: ' + duration + '\n' + stderr))
 				}
 
-				log.info('----- ABLUnit Command Execution Completed -----', options)
+
 				if (watcherUpdate) {
 					watcherUpdate.dispose()
 				}
@@ -235,12 +240,15 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 		})
 	}
 
-	return runCommand().then(() => {
-		return res.parseOutput(options)
-	}, (err: unknown) => {
-		log.debug('runCommand() error=' + JSON.stringify(err, null, 2), options)
-		throw err
-	})
+	return runCommand()
+		.then(() => { return processUpdates(options, res.tests, res.cfg.ablunitConfig.optionsUri.updateUri) })
+		.then(() => {
+			log.info('----- ABLUnit Command Execution Completed -----', options)
+			return res.parseOutput(options)
+		}, (err: unknown) => {
+			log.debug('runCommand() error=' + JSON.stringify(err, null, 2), options)
+			throw err
+		})
 }
 
 export const getEnvVars = (dlcUri: Uri | undefined) => {
