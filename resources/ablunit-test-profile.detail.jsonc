@@ -71,7 +71,8 @@
 				"location": "${tempDir}",
 				"filename": "results",
 				"format": "xml",
-				"writeJson": true
+				"writeJson": true,
+				"updateFile": "updates.log" // custom for the ablunit-test-runner extension
 			},
 			"quitOnEnd": true,
 			"writeLog":  false,

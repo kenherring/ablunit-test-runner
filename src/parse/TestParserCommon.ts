@@ -1,20 +1,49 @@
 import { Uri, workspace } from 'vscode'
 import { TextDecoder } from 'util'
-import { log } from '../ChannelLogger'
+import { isRelativePath } from 'ABLUnitCommon'
+import * as fs from 'fs'
 
 const textDecoder = new TextDecoder('utf-8')
 
-export async function getContentFromFilesystem (uri: Uri) {
-	try {
-		const rawContent = await workspace.fs.readFile(uri)
-		return textDecoder.decode(rawContent)
-	} catch (e) {
-		log.warn('Error providing tests for ' + uri.fsPath + ': ' + e)
-		return ''
+function toUri (uri: Uri | string): Uri {
+	if (uri instanceof Uri) {
+		return uri
 	}
+	const filename = uri
+
+	if (!isRelativePath(uri)) {
+		return Uri.file(uri)
+	}
+
+	if (!workspace.workspaceFolders || workspace.workspaceFolders.length === 0) {
+		throw new Error('No workspace folder found')
+	}
+	for (const wf of workspace.workspaceFolders) {
+		uri = Uri.joinPath(wf.uri, filename)
+		if (fs.statSync(uri.fsPath).isFile()) {
+			return uri
+		}
+	}
+	throw new Error('relative file not found in any workspace: ' + filename)
 }
 
-export function getLines (text: string, annotation: string): [ string[], boolean ] {
+export function getContentFromFilesystem (uri: Uri | string) {
+	uri = toUri(uri)
+	return workspace.fs.readFile(uri)
+		.then((rawContent) => { return textDecoder.decode(rawContent) },
+			(e) => { throw e })
+}
+
+export function readLinesFromFile (uri: Uri | string) {
+	uri = toUri(uri)
+	return getContentFromFilesystem(uri)
+		.then((content) => {
+			// split lines, remove CR and filter out empty lines
+			return content.replace(/\r/g, '').split('\n').filter((line) => line.trim().length > 0)
+		})
+}
+
+export function getAnnotationLines (text: string, annotation: string): [ string[], boolean ] {
 	const annotationRegex = new RegExp(annotation, 'i')
 
 	if (!annotationRegex.test(text)) {
@@ -30,12 +59,9 @@ export function getLines (text: string, annotation: string): [ string[], boolean
 	const lines = text.replace(/\r/g, '').split('\n')
 	let foundAnnotation = false
 	for (let i = 0; i < lines.length; i++) {
-		lines[i] = removeComments(lines[i])
+		lines[i] = removeComments(lines[i]).trim()
 
-		if (lines[i].trim() == '') {
-			// set empty lines to empty string
-			lines[i] = ''
-		} else if (!foundAnnotation && lines[i].toLowerCase().includes('@test')) {
+		if (!foundAnnotation && lines[i].toLowerCase().includes('@test')) {
 			foundAnnotation = true
 		}
 	}
@@ -48,13 +74,15 @@ export function getLines (text: string, annotation: string): [ string[], boolean
 const blockCommentRE = /\/\*.*\*\//g
 
 function removeComments (line: string) {
-	line = line.replace(/\/\/.*/g, '') // trim end of line comments
+	line = line.replace(/\/\/.*$/g, '') // trim end of line comments
 
 	const matches = blockCommentRE.exec(line)
-	if(!matches) { return line }
+	if(!matches) {
+		return line.trim()
+	}
 
 	for(const element of matches) {
 		line = line.replace(element, ' '.repeat(element.length))
 	}
-	return line
+	return line.trim()
 }

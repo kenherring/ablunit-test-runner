@@ -1,10 +1,7 @@
-name: ":bug: Bug Report"
+name: "🐛 Bug Report"
 description: File a bug report
-title: ":bug: [bug] 🐛 <title here please>"
+title: "🐛 [Bug]  <title here>"
 labels: ["bug", "triage"]
-# projects: ["octo-org/1", "octo-org/44"]
-# assignees:
-#   - octocat
 body:
   - type: markdown
     attributes:

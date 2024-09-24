@@ -1,5 +1,5 @@
 import { Range } from 'vscode'
-import { getLines } from './TestParserCommon'
+import { getAnnotationLines } from './TestParserCommon'
 
 // PROCEDURE statement
 const procedureRE = /(^|\s+)procedure\s+(\S+)\s*:/i
@@ -18,7 +18,7 @@ export interface IProgramRet {
 export function parseABLTestProgram (text: string, relativePath: string) {
 	relativePath = relativePath.replace(/\\/g, '/')
 
-	const [ lines, foundAnnotation ] = getLines(text, '@test')
+	const [ lines, foundAnnotation ] = getAnnotationLines(text, '@test')
 	if(!foundAnnotation) {
 		return
 	}
@@ -56,7 +56,10 @@ export function parseTestProgram (lines: string[], label: string) {
 				})
 			}
 		}
-		lastNonBlankLineHasAnnotation = regexTest.exec(lines[lineNo]) != null
+		lastNonBlankLineHasAnnotation = false
+		if (regexTest.exec(lines[lineNo])) {
+			lastNonBlankLineHasAnnotation = true
+		}
 	}
 	return programRet
 }

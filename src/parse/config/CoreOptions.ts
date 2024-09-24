@@ -4,6 +4,7 @@ interface ICoreOutput {
 	filename?: string
 	format?: 'xml'
 	writeJson?: boolean
+	updateFile: string | undefined
 }
 
 interface IXrefOptions {
@@ -19,6 +20,7 @@ export interface ICoreOptions {
 		filename?: string
 		format?: 'xml'
 		writeJson?: boolean
+		updateFile: string | undefined,
 	}
 	quitOnEnd?: boolean // = true
 	writeLog?: boolean // = true
@@ -32,7 +34,8 @@ export class CoreOptions implements ICoreOptions {
 		location: '${tempDir}',
 		filename: 'results',
 		format: 'xml',
-		writeJson: false
+		writeJson: false,
+		updateFile: 'updates.log',
 	}
 	quitOnEnd = true
 	writeLog = false
@@ -50,7 +53,8 @@ export class CoreOptions implements ICoreOptions {
 				location: from.output.location ?? this.output.location,
 				filename: from.output.filename ?? this.output.filename,
 				format: from.output.format ?? this.output.format,
-				writeJson: from.output.writeJson ?? this.output.writeJson
+				writeJson: from.output.writeJson ?? this.output.writeJson,
+				updateFile: from.output.updateFile ?? this.output.updateFile,
 			}
 		}
 

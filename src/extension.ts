@@ -190,9 +190,9 @@ export async function activate (context: ExtensionContext) {
 					log.debug('cancellation requested - runTestQueue-1')
 					throw new CancellationError()
 				}
-				run.started(test)
+				run.enqueued(test)
 				for(const childTest of gatherTestItems(test.children)) {
-					run.started(childTest)
+					run.enqueued(childTest)
 				}
 			}
 
@@ -878,7 +878,6 @@ function findMatchingFiles (includePatterns: RelativePattern[], token: Cancellat
 // 	log.debug('parsing files... (count=' + files.length + ')')
 // 	for (const file of files) {
 // 		checkCancellationToken()
-
 // 		const { item, data } = getOrCreateFile(controller, file, excludePatterns)
 // 		if (item && data instanceof ABLTestFile) {
 // 			const prom = data.updateFromDisk(controller, item, token).then((foundTestCase) => {
