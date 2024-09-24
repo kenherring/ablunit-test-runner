@@ -5,7 +5,7 @@ import { parseUpdates, TestStatus } from 'parse/UpdateParser'
 suite ('UpdateParser', () => {
 
 	test('parseUpdateLines - readFile', () => {
-		return parseUpdates('../../test/resources/UpdateParserTest1.txt')
+		return parseUpdates('../../test/resources/UpdateParserTest1.txt', [])
 			.then((updates) => {
 				if (!updates) {
 					assert.fail('updates is undefined')

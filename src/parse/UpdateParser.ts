@@ -1,7 +1,6 @@
-import { TestItem, TestMessage, TestRun, Uri } from 'vscode'
+import { TestItem, TestRun, Uri } from 'vscode'
 import { readLinesFromFile } from './TestParserCommon'
 import { log } from '../ChannelLogger'
-import { ABLResults } from 'ABLResults'
 
 export enum TestStatus {
 	unknown = 'unknown',
@@ -171,14 +170,6 @@ function parseUpdateLines (lines: string[], tests: TestItem[]) {
 	return updates
 }
 
-export function parseUpdates (filepath: Uri | string, tests: TestItem[]) {
-	log.debug('Parsing updates from: ' + filepath)
-	// instead of reading the whole file we could buffer it and only read the new lines
-	const updates = readLinesFromFile(filepath)
-		.then((lines) => { return parseUpdateLines(lines, tests) })
-	return updates
-}
-
 function getTestForItem (tests: TestItem[], item: ITestNode) {
 	// TODO - improve performance with a map
 	if (!item.parent) {
@@ -250,6 +241,13 @@ function setTestRunTestStatus (options: TestRun, item: ITestNode) {
 	}
 }
 
+export function parseUpdates (filepath: Uri | string, tests: TestItem[]) {
+	log.debug('Parsing updates from: ' + filepath)
+	// instead of reading the whole file we could buffer it and only read the new lines
+	return readLinesFromFile(filepath)
+		.then((lines) => { return parseUpdateLines(lines, tests) }, (e) => { throw e })
+}
+
 function showUpdates (options: TestRun, updates: ITestNode[] | undefined) {
 	if (!updates) {
 		log.warn('No updates found')
@@ -257,24 +255,19 @@ function showUpdates (options: TestRun, updates: ITestNode[] | undefined) {
 	}
 	log.info('showing test run updates (updates.length=' + updates.length + ')')
 
-	try {
-		while (updates.length > 0) {
-			const item = newUpdates.shift()!
-			// if (!item) {
-			// 	log.warn('No item found')
-			// 	continue
-			// }
-			if (item.name == 'TEST_ROOT') {
-				continue
-			}
-			setTestRunTestStatus(options, item)
+	while (updates.length > 0) {
+		const item = newUpdates.shift()
+		if (!item) {
+			log.info('item is undefined (updates.length=' + updates.length + ')')
+			// end of array - shift returned undefined
+			break
 		}
-	} catch (e) {
-		log.info('Error processing updates: ' + e)
-		if (e instanceof Error) {
-			log.info(e.stack!)
+		if (item.name == 'TEST_ROOT') {
+			continue
 		}
+		setTestRunTestStatus(options, item)
 	}
+	return true
 }
 
 export function processUpdates (options: TestRun, tests: TestItem[], updateFile: Uri | undefined) {
@@ -283,9 +276,23 @@ export function processUpdates (options: TestRun, tests: TestItem[], updateFile:
 	}
 	return parseUpdates(updateFile, tests)
 		.then((updates) => {
-			showUpdates(options, updates)
-			return
+			const r = showUpdates(options, updates)
+			if (r) {
+				log.info('updates processed and displayed successfully')
+				return true
+			}
+			log.info('unexpected response from showUpdates: ' + r)
+			return true
 		}, (e) => {
-			log.info('e=' + e)
-			throw e})
+			// if (e instanceof FileSystemError.FileNotFound) {
+			// 	log.warn('Update file not found: ' + updateFile)
+			// 	return
+			// }
+			log.warn('Error processing updates: ' + e)
+			if (e instanceof Error) {
+				log.warn(e.stack!)
+			}
+			// eat this error, we don't want to stop the test run because of it
+			return true
+		})
 }

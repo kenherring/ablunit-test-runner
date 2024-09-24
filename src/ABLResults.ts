@@ -73,7 +73,7 @@ export class ABLResults implements Disposable {
 		})
 		this.duration = new Duration()
 		this.workspaceFolder = workspaceFolder
-		this.wrapperUri = Uri.joinPath(this.extensionResourcesUri, 'VSCodeTestRunner', 'ABLUnitCore-wrapper.p')
+		this.wrapperUri = Uri.joinPath(this.extensionResourcesUri, 'VSCodeTestRunner', 'ABLUnitCore.p')
 		this.cfg = new ABLUnitConfig()
 		this.setStatus(RunStatus.Constructed)
 	}

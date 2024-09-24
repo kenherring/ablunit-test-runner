@@ -1,9 +1,10 @@
-using OpenEdge.ABLUnit.Runner.ABLRunner.
-using OpenEdge.ABLUnit.Runner.TestConfig.
+// This file replaces the standard ABLUnitCore.p when the basedir is
+// included as part of the propath ahead of ablunit.pl.
+
 block-level on error undo, throw.
 create widget-pool.
 
-define variable quitOnEnd as logical no-undo init false.
+define variable quitOnEnd as logical init false no-undo.
 
 run main.
 if quitOnEnd then
@@ -12,8 +13,6 @@ else
 	return.
 
 ////////// FUNCS AND PROCS //////////
-run main.
-return.
 
 procedure createDatabaseAliases :
     define variable aliasesSessionParam as character no-undo.
@@ -52,13 +51,13 @@ function getParameter returns character (input params as character, input name a
 	return ''.
 end function.
 
-function readTestConfig returns TestConfig (filepath as character) :
-	return new TestConfig(cast((new Progress.Json.ObjectModel.ObjectModelParser()):ParseFile(filepath), Progress.Json.ObjectModel.JsonObject)).
+function readTestConfig returns OpenEdge.ABLUnit.Runner.TestConfig (filepath as character) :
+	return new OpenEdge.ABLUnit.Runner.TestConfig(cast((new Progress.Json.ObjectModel.ObjectModelParser()):ParseFile(filepath), Progress.Json.ObjectModel.JsonObject)).
 end function.
 
 procedure main :
-	define variable ablRunner as class ABLRunner no-undo.
-	define variable testConfig as class TestConfig no-undo.
+	define variable ablRunner as class OpenEdge.ABLUnit.Runner.ABLRunner no-undo.
+	define variable testConfig as class OpenEdge.ABLUnit.Runner.TestConfig no-undo.
 	define variable updateFile as character no-undo.
 
     run createDatabaseAliases.
@@ -67,7 +66,7 @@ procedure main :
 	// message "updateFile =" updateFile.
 	testConfig = readTestConfig(getParameter(trim(trim(session:parameter,'"'),"'"), 'CFG')).
 
-	ablRunner = new ABLRunner(testConfig, updateFile).
+	ablRunner = new OpenEdge.ABLUnit.Runner.ABLRunner(testConfig, updateFile).
 	ablRunner:RunTests().
 
 	catch e as Progress.Lang.Error:
@@ -100,7 +99,7 @@ procedure main :
 		if quitOnEnd then
 			quit.
 		else
-			return. /* Need to return to avoid errors when running as an ANT task. */
+			return.
 	end.
 
 end procedure.

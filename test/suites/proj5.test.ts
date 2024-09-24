@@ -69,7 +69,7 @@ suite('proj5 - Extension Test Suite', () => {
 	test('proj5.7 - TestProgram - test/proc2/proc2.p - test count', async () => {
 		const [ lines, ] = getAnnotationLines(await getContentFromFilesystem('test/proc2/proc2.p'), '@test')
 		const classRet = parseTestProgram(lines, 'filename')
-		assert.equal(classRet.testcases.length, 9, 'testcase count in test/proc2/proc2.p')
+		assert.equal(classRet.testcases.length, 10, 'testcase count in test/proc2/proc2.p')
 	})
 
 	test('proj5.8 - TestProcedure - test/proc2/test7.p - test count', async () => {
