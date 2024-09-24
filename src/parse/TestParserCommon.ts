@@ -6,32 +6,25 @@ import * as fs from 'fs'
 const textDecoder = new TextDecoder('utf-8')
 
 function toUri (uri: Uri | string): Uri {
-	if (typeof uri === 'string') {
-		const filename = uri
-
-		if (isRelativePath(uri)) {
-			if (!workspace.workspaceFolders || workspace.workspaceFolders.length === 0) {
-				throw new Error('No workspace folder found')
-			}
-			let foundUri = false
-			for (const wf of workspace.workspaceFolders) {
-				uri = Uri.joinPath(wf.uri, filename)
-				if (fs.statSync(uri.fsPath).isFile()) {
-					foundUri = true
-					break
-				}
-			}
-			if (!foundUri) {
-				throw new Error('relative file not found in any workspace: ' + filename)
-			}
-		} else {
-			uri = Uri.file(uri)
-		}
-	}
 	if (uri instanceof Uri) {
 		return uri
 	}
-	throw new Error('unable to infer uri from string: ' + uri)
+	const filename = uri
+
+	if (!isRelativePath(uri)) {
+		return Uri.file(uri)
+	}
+
+	if (!workspace.workspaceFolders || workspace.workspaceFolders.length === 0) {
+		throw new Error('No workspace folder found')
+	}
+	for (const wf of workspace.workspaceFolders) {
+		uri = Uri.joinPath(wf.uri, filename)
+		if (fs.statSync(uri.fsPath).isFile()) {
+			return uri
+		}
+	}
+	throw new Error('relative file not found in any workspace: ' + filename)
 }
 
 export function getContentFromFilesystem (uri: Uri | string) {

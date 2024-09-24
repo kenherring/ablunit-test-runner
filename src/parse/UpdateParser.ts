@@ -127,7 +127,7 @@ function parseUpdateLines (lines: string[], tests: TestItem[]) {
 		}
 
 		const [ , id, timeVal ] = line.split(' ')
-		const time = (Number(timeVal) ?? 0) * 1000
+		const time = Number(timeVal ?? 0) * 1000
 		const idx = updates.findIndex((test) => test.id === id)
 		if (!updates[idx]) {
 			log.error('Test not found for id=' + id + '; event=' + event + ' (line=' + lineNum + ')')
@@ -180,9 +180,8 @@ function getTestForItem (tests: TestItem[], item: ITestNode) {
 	}
 
 	let testId: string
-	if (item.parent.name == 'TEST_ROOT') {
-		testId = item.name
-	} else {
+	testId = item.name
+	if (item.parent.name != 'TEST_ROOT') {
 		testId = item.parent.name + '#' + item.name
 	}
 
@@ -209,17 +208,17 @@ function setTestRunTestStatus (options: TestRun, item: ITestNode) {
 	if(item.name == 'TEST_ROOT') {
 		return
 	}
+	printName = '  ' + item.name
 	if (item.parent?.name == 'TEST_ROOT') {
 		printName = item.name
-	} else {
-		printName = '  ' + item.name
 	}
+
 	switch (item.status) {
 		case TestStatus.started:
 			if (item.test) {
 				options.started(item.test)
 			}
-			if (!item.parent || item.parent.name == 'TEST_ROOT') // only print parent stated
+			if (!item.parent || item.parent.name == 'TEST_ROOT') // only print parent stated, not tests
 				log.info('\t🔵  ' + printName, options)
 			break
 		case TestStatus.failed:
@@ -284,10 +283,6 @@ export function processUpdates (options: TestRun, tests: TestItem[], updateFile:
 			log.info('unexpected response from showUpdates: ' + r)
 			return true
 		}, (e) => {
-			// if (e instanceof FileSystemError.FileNotFound) {
-			// 	log.warn('Update file not found: ' + updateFile)
-			// 	return
-			// }
 			log.warn('Error processing updates: ' + e)
 			if (e instanceof Error) {
 				log.warn(e.stack!)
