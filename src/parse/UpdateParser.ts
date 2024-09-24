@@ -253,12 +253,12 @@ function showUpdates (options: TestRun, updates: ITestNode[] | undefined) {
 		log.warn('No updates found')
 		return
 	}
-	log.info('showing test run updates (updates.length=' + updates.length + ')')
 
+	log.info('showing test run updates (updates.length=' + updates.length + ')')
 	while (updates.length > 0) {
 		const item = newUpdates.shift()
 		if (!item) {
-			log.info('item is undefined (updates.length=' + updates.length + ')')
+			log.debug('item is undefined (updates.length=' + updates.length + ')')
 			// end of array - shift returned undefined
 			break
 		}
@@ -278,7 +278,7 @@ export function processUpdates (options: TestRun, tests: TestItem[], updateFile:
 		.then((updates) => {
 			const r = showUpdates(options, updates)
 			if (r) {
-				log.info('updates processed and displayed successfully')
+				log.debug('updates processed and displayed successfully')
 				return true
 			}
 			log.info('unexpected response from showUpdates: ' + r)
