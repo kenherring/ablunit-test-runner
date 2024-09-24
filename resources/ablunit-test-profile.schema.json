@@ -46,7 +46,8 @@
 								"location": "${tempDir}",
 								"filename": "results.xml",
 								"format": "xml",
-								"writeJson": false
+								"writeJson": false,
+								"updateFile": "updates.log"
 							},
 							"quitOnEnd": true,
 							"writeLog": false,
@@ -81,6 +82,11 @@
 										"type": "boolean",
 										"default": false,
 										"description": "Write a JSON file containing the parsed results data.  The file will be written to the same directory as `results.xml`."
+									},
+									"updateFile": {
+										"type": "string",
+										"description": "Output file to monitor status of the test run.",
+										"default": "updates.log"
 									}
 								}
 							},

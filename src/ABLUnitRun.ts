@@ -1,8 +1,9 @@
-import { CancellationError, CancellationToken, TestRun, Uri, workspace } from 'vscode'
+import { CancellationError, CancellationToken, Disposable, FileSystemWatcher, TestRun, Uri, workspace } from 'vscode'
 import { ABLResults } from './ABLResults'
-import { isRelativePath } from './ABLUnitCommon'
+import { deleteFile, isRelativePath } from './ABLUnitCommon'
 import { ExecException, ExecOptions, exec } from 'child_process'
 import { log } from './ChannelLogger'
+import { processUpdates, updateParserInit } from 'parse/UpdateParser'
 
 export enum RunStatus {
 	None = 10,
@@ -41,10 +42,18 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 	const start = Date.now()
 	const abort = new AbortController()
 	const { signal } = abort
+	let watcherDispose: Disposable | undefined = undefined
+	let watcherUpdate: FileSystemWatcher | undefined = undefined
 
 	cancellation.onCancellationRequested(() => {
 		log.debug('cancellation requested - ablunitRun')
 		abort.abort()
+		if (watcherDispose) {
+			watcherDispose.dispose()
+		}
+		if (watcherUpdate) {
+			watcherUpdate.dispose()
+		}
 		throw new CancellationError()
 	})
 
@@ -71,8 +80,9 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 		const testlist = testarr.join(',')
 
 		if (!cmd.includes('${testlist}')) {
-			log.error('command does not contain ${testlist}', options)
-			throw new Error('command does not contain ${testlist}')
+			// this is intentionally not a string substitution.  The variable is a literal part of the string.
+			log.error('command does not contain \'${testlist}\'', options)
+			throw new Error('command does not contain \'${testlist}\'')
 		}
 		cmd = cmd.replace(/\$\{testlist\}/, testlist)
 		cmd = cmd.replace(/\$\{tempDir\}/, workspace.asRelativePath(res.cfg.ablunitConfig.tempDirUri, false))
@@ -118,9 +128,12 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 		const cmdSanitized: string[] = []
 		cmd = cmd.concat(res.cfg.ablunitConfig.command.additionalArgs)
 
-		let params = 'CFG=' + workspace.asRelativePath(res.cfg.ablunitConfig.config_uri.fsPath, false)
+		let params = 'CFG=' + workspace.asRelativePath(res.cfg.ablunitConfig.config_uri.fsPath, false) + '='
 		if (res.cfg.ablunitConfig.dbAliases.length > 0) {
-			params = params + '= ALIASES=' + res.cfg.ablunitConfig.dbAliases.join(';')
+			params = params + ' ALIASES=' + res.cfg.ablunitConfig.dbAliases.join(';')
+		}
+		if (res.cfg.ablunitConfig.optionsUri.updateUri) {
+			params = params + ' ATTR_ABLUNIT_EVENT_FILE=' + res.cfg.ablunitConfig.optionsUri.updateUri.fsPath
 		}
 		cmd.push('-param', '"' + params + '"')
 
@@ -173,6 +186,15 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 			log.info('command=\'' + cmd + ' ' + args.join(' ') + '\'\r\n', options)
 			log.info('----- ABLUnit Command Execution Started -----', options)
 
+			const updateUri = res.cfg.ablunitConfig.optionsUri.updateUri
+			if (updateUri) {
+				deleteFile(updateUri)
+				updateParserInit()
+				log.info('watching test run update/event file: ' + updateUri.fsPath)
+				watcherUpdate = workspace.createFileSystemWatcher(updateUri.fsPath)
+				watcherDispose = watcherUpdate.onDidChange(uri => { return processUpdates(options, res.tests, updateUri) })
+			}
+
 			exec(execCommand, execOpts, (err: ExecException | null, stdout: string, stderr: string) => {
 				const duration = Date.now() - start
 
@@ -193,28 +215,40 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 					const promsgError = parseRuntimeError(stdout.replace(/\r/g, ''))
 					log.debug('promsgError=' + promsgError, options)
 					if (promsgError) {
+						log.error('ABLUnit Runtime Error (code=' + err.code + '):' + promsgError, options)
 						reject(new ABLUnitRuntimeError ('ABLUnit Runtime Error (code=' + err.code + ') !', promsgError, err.cmd))
 					} else {
+						log.error('Runtime error: ' + err.message + ' (code=' + err.code + ')', options)
 						reject(err)
 					}
 					return
 				}
 				if(stderr) {
+					log.error('ABLUnit Command Execution Failed (reject-3) - duration: ' + duration + '\n' + stderr, options)
 					reject(new Error ('ABLUnit Command Execution Failed (reject-3) - duration: ' + duration + '\n' + stderr))
 				}
 
-				log.info('----- ABLUnit Command Execution Completed -----', options)
+
+				if (watcherUpdate) {
+					watcherUpdate.dispose()
+				}
+				if (watcherDispose) {
+					watcherDispose.dispose()
+				}
 				resolve('ABLUnit Command Execution Completed - duration: ' + duration)
 			})
 		})
 	}
 
-	return runCommand().then(() => {
-		return res.parseOutput(options)
-	}, (err: unknown) => {
-		log.debug('runCommand() error=' + JSON.stringify(err, null, 2), options)
-		throw err
-	})
+	return runCommand()
+		.then(() => { return processUpdates(options, res.tests, res.cfg.ablunitConfig.optionsUri.updateUri) })
+		.then(() => {
+			log.info('----- ABLUnit Command Execution Completed -----', options)
+			return res.parseOutput(options)
+		}, (err: unknown) => {
+			log.debug('runCommand() error=' + JSON.stringify(err, null, 2), options)
+			throw err
+		})
 }
 
 export const getEnvVars = (dlcUri: Uri | undefined) => {
