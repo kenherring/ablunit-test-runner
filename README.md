@@ -74,7 +74,7 @@ The following table gives a brief description of the available settings via the 
 | --- | --- | --- |
 | `ablunit.discoverAllTestsOnActivate` | `true` | Search all workspace files for tests on extension activation.  It may be beneficial to disable this for large workspaces, in which case the extension will find tests as files are accessed. |
 | `ablunit.files.include` | `[ "**/*.{cls,p}" ]` | Glob pattern array matching test files. |
-| `ablunit.files.exclude` | `[ "**/.builder/**" ]` | Glob pattern array to exclude test files. |
+| `ablunit.files.exclude` | `[ "**/.builder/**", "**/.pct/** ]` | Glob pattern array to exclude test files. |
 | `ablunit.importOpenedgeProjectJson` | `true` | Import configuration settings from \`openedge-project.json\` when possible. |
 | `ablunit.test.classlabel` | `classname` | The label format for test classes. Example for class with path `com/example/myClass.cls`:<ul><li>class-type-name example: `com.example.myClass`</li><li>filename example: `myClass.cls`</li></ul> |
 
