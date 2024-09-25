@@ -44,8 +44,4 @@ RUN mkdir -p ~/.vscode-test
 RUN pipx install yq
 ENV PATH $PATH:/root/.local/bin
 
-## install vscode packaging dependency
-RUN npm install -g @vscode/vsce
-RUN npm install -g typescript
-
 WORKDIR /home/circleci/project
