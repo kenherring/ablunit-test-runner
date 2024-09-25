@@ -8,7 +8,7 @@
 			"end method."
 		],
 		"description": "A method that is a test method",
-		"scope": "abl.file.program"
+		"scope": "abl"
 	},
 	"@Setup method": {
 		"prefix": "@Setup method",
