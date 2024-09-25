@@ -8,7 +8,7 @@
 			"end procedure."
 		],
 		"description": "A procedure that is a test procedure",
-		"scope": "abl.file.program"
+		"scope": "abl"
 	},
 	"@Setup procedure": {
 		"prefix": "@Setup procedure",
