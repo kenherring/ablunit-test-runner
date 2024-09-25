@@ -1,10 +1,11 @@
+import { log } from 'ChannelLogger'
 
 interface ICoreOutput {
 	location?: string
 	filename?: string
 	format?: 'xml'
 	writeJson?: boolean
-	updateFile: string | undefined
+	updateFile?: string
 }
 
 interface IXrefOptions {
@@ -20,7 +21,7 @@ export interface ICoreOptions {
 		filename?: string
 		format?: 'xml'
 		writeJson?: boolean
-		updateFile: string | undefined,
+		updateFile?: string
 	}
 	quitOnEnd?: boolean // = true
 	writeLog?: boolean // = true
@@ -39,6 +40,7 @@ export class CoreOptions implements ICoreOptions {
 	}
 	quitOnEnd = true
 	writeLog = false
+	updateFile? = 'updates.log'
 	showErrorMessage = true
 	throwError = true
 	xref?: IXrefOptions
@@ -56,6 +58,10 @@ export class CoreOptions implements ICoreOptions {
 				writeJson: from.output.writeJson ?? this.output.writeJson,
 				updateFile: from.output.updateFile ?? this.output.updateFile,
 			}
+			if (!from.output.updateFile || from.output.updateFile == '') {
+				this.output.updateFile = undefined
+			}
+
 		}
 
 		this.quitOnEnd = from.quitOnEnd ?? this.quitOnEnd

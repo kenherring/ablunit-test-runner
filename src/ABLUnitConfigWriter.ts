@@ -52,7 +52,7 @@ export class ABLUnitConfig  {
 
 	createAblunitJson (_uri: Uri, cfg: CoreOptions, testQueue: ITestObj[]) {
 		if (!this.ablunitConfig.config_uri) {
-			throw new Error('Output location no defined!')
+			throw new Error('Output location not defined!')
 		}
 		log.info('creating ablunit.json: \'' + this.ablunitConfig.config_uri.fsPath + '\'')
 		const promarr: PromiseLike<void>[] = []

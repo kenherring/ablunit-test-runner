@@ -14,6 +14,7 @@ export enum TestStatus {
 	started = 'TEST_START',
 	passed = 'TEST_END',
 	failed = 'TEST_FAIL',
+	exception = 'TEST_EXCEPTION',  // todo
 	errored = 'TEST_ERROR',
 	complete = 'COMPLETE',
 }
@@ -111,11 +112,13 @@ function parseUpdateLines (lines: string[], tests: TestItem[]) {
 				continue
 			}
 			if (lines[lineNum + 1].startsWith('TEST_TREE')) { // last TEST_TREE line
-				log.debug('TEST_TREE unchanged from last parsing')
+				// next line is another TEST_TREE line, so skip this one
 				continue
 			}
 			if (prevRootText !== line) {
+				log.info('Parsing test tree... (line=' + line + ')')
 				updates = parseTestTree(line, tests)
+				log.info('Parsing test tree complete')
 				prevRootText = line
 				log.debug('updates.length=' + updates.length)
 				continue
@@ -185,12 +188,38 @@ function getTestForItem (tests: TestItem[], item: ITestNode) {
 		testId = item.parent.name + '#' + item.name
 	}
 
+	const testFile = tests.find((test) => test.id.replace(/\\/g, '/').endsWith(testId))
+	if (testFile) {
+		return testFile
+	}
+
+	if (item.parent.name) {
+		const parentName = item.parent.name
+		const testParent = tests.find((test) => test.id.replace(/\\/g, '/').endsWith(parentName))
+		if (testParent) {
+			if (testParent.children.size == 0) {
+				log.warn('No children found for test.id=' + testParent.id)
+				return undefined
+			}
+			for(const [ id, child] of testParent.children) {
+				if (id.replace(/\\/g, '/').endsWith(testId)) {
+					log.debug('child.id=' + child.id)
+					return child
+				}
+			}
+		}
+	}
+
 	for (const test of tests) {
 		log.debug('test.id=' + test.id)
 		if (test.id.replace(/\\/g, '/').endsWith(testId)) {
 			return test
 		}
 		if (test.id.replace(/\\/g, '/').endsWith(item.parent.name)) {
+			if (test.children.size == 0) {
+				log.warn('No children found for test.id=' + test.id)
+				return undefined
+			}
 			for(const [ id, child] of test.children) {
 				if (id.replace(/\\/g, '/').endsWith(testId)) {
 					log.debug('child.id=' + child.id)
@@ -248,9 +277,9 @@ export function parseUpdates (filepath: Uri | string, tests: TestItem[]) {
 }
 
 function showUpdates (options: TestRun, updates: ITestNode[] | undefined) {
-	if (!updates) {
-		log.warn('No updates found')
-		return
+	if (!updates || updates.length == 0) {
+		log.debug('No updates found')
+		return false
 	}
 
 	log.info('showing test run updates (updates.length=' + updates.length + ')')
@@ -271,6 +300,7 @@ function showUpdates (options: TestRun, updates: ITestNode[] | undefined) {
 
 export function processUpdates (options: TestRun, tests: TestItem[], updateFile: Uri | undefined) {
 	if (!updateFile) {
+		log.info('updateFile=' + updateFile)
 		return
 	}
 	return parseUpdates(updateFile, tests)
@@ -278,9 +308,7 @@ export function processUpdates (options: TestRun, tests: TestItem[], updateFile:
 			const r = showUpdates(options, updates)
 			if (r) {
 				log.debug('updates processed and displayed successfully')
-				return true
 			}
-			log.info('unexpected response from showUpdates: ' + r)
 			return true
 		}, (e) => {
 			log.warn('Error processing updates: ' + e)
@@ -288,6 +316,6 @@ export function processUpdates (options: TestRun, tests: TestItem[], updateFile:
 				log.warn(e.stack!)
 			}
 			// eat this error, we don't want to stop the test run because of it
-			return true
+			return false
 		})
 }

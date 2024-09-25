@@ -55,43 +55,59 @@ function readTestConfig returns OpenEdge.ABLUnit.Runner.TestConfig (filepath as 
 	return new OpenEdge.ABLUnit.Runner.TestConfig(cast((new Progress.Json.ObjectModel.ObjectModelParser()):ParseFile(filepath), Progress.Json.ObjectModel.JsonObject)).
 end function.
 
+function writeErrorToLog returns logical (outputLocation as character, msg as character) :
+	// Don't change the log mid session if we're already logging...
+	if log-manager:logfile-name = ? then
+	do:
+		if outputLocation <> ? then
+			log-manager:logfile-name = outputLocation + 'ablunit.log'.
+		else
+			log-manager:logfile-name = session:temp-dir + "ablunit.log".
+	end.
+	log-manager:write-message (msg).
+	return true.
+end function.
+
 procedure main :
 	define variable ablRunner as class OpenEdge.ABLUnit.Runner.ABLRunner no-undo.
 	define variable testConfig as class OpenEdge.ABLUnit.Runner.TestConfig no-undo.
 	define variable updateFile as character no-undo.
 
+	session:suppress-warnings = true.
     run createDatabaseAliases.
 
 	assign updateFile = getParameter(trim(trim(session:parameter,'"'),"'"), 'ATTR_ABLUNIT_EVENT_FILE').
 	// message "updateFile =" updateFile.
 	testConfig = readTestConfig(getParameter(trim(trim(session:parameter,'"'),"'"), 'CFG')).
+	quitOnEnd = (testConfig = ?) or testConfig:quitOnEnd.
 
 	ablRunner = new OpenEdge.ABLUnit.Runner.ABLRunner(testConfig, updateFile).
 	ablRunner:RunTests().
 
+	// the `-catchStop 1` startup parameter is default in 11.7+
+	catch s as Progress.lang.Stop:
+		if testConfig:writeLog then
+		do:
+			writeErrorToLog(testConfig:outputLocation, 'STOP condition encountered').
+			writeErrorToLog(testConfig:outputLocation, s:CallStack).
+		end.
+		if testConfig:showErrorMessage then
+			message "STOP condition encountered" view-as alert-box error.
+		if testConfig:throwError then
+			undo, throw s.
+	end catch.
 	catch e as Progress.Lang.Error:
-		quitOnEnd = (testConfig = ?) or testConfig:quitOnEnd.
 		if testConfig = ? then
 			return error new Progress.Lang.AppError ("An error occured: " + e:GetMessage(1), 0).
-
 		if testConfig:WriteLog then
 		do:
-			// Don't change the log mid session if we're already logging...
-			if log-manager:logfile-name = ? then
-			do:
-				if testConfig:outputLocation <> ? then
-					log-manager:logfile-name = testConfig:outputLocation + 'ablunit.log'.
-				else
-					log-manager:logfile-name = session:temp-dir + "ablunit.log".
-			end.
-			log-manager:write-message (e:GetMessage(1)).
+			writeErrorToLog(testConfig:outputLocation, e:GetMessage(1)).
 			if type-of(e, Progress.Lang.AppError) then
-				log-manager:write-message (cast(e, Progress.Lang.AppError):ReturnValue).
-			log-manager:write-message (e:CallStack).
+				writeErrorToLog(testConfig:outputLocation, cast(e, Progress.Lang.AppError):ReturnValue).
+			writeErrorToLog(testConfig:outputLocation, s:CallStack).
 		end.
 		if testConfig:ShowErrorMessage then
-			message e:GetMessage(1)
-			view-as alert-box error.
+			message e:GetMessage(1) view-as alert-box error.
 		if testConfig:ThrowError then
 			undo, throw e.
 	end.

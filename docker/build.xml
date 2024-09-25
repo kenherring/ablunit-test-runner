@@ -21,7 +21,7 @@
 			<pathelement path="ADE/ablunit" />
 		</path>
 		<PCTCompile basedir="." destDir="rcode/ablunit" relativePaths="true" tempDir="/tmp" minSize="${minSize}">
-			<fileset dir="ADE/ablunit" includes="**/*.p,**/*.cls" excludes="**/.builder/**" />
+			<fileset dir="ADE/ablunit" includes="**/*.p,**/*.cls" excludes="**/.builder/**,**/.pct/**" />
 			<propath refid="compilation.propath" />
 		</PCTCompile>
 

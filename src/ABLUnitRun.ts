@@ -45,9 +45,12 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 	let watcherDispose: Disposable | undefined = undefined
 	let watcherUpdate: FileSystemWatcher | undefined = undefined
 
-	cancellation.onCancellationRequested(() => {
+	cancellation.onCancellationRequested(async () => {
 		log.debug('cancellation requested - ablunitRun')
 		abort.abort()
+		if (res.cfg.ablunitConfig.optionsUri.updateUri) {
+			await processUpdates(options, res.tests, res.cfg.ablunitConfig.optionsUri.updateUri)
+		}
 		if (watcherDispose) {
 			watcherDispose.dispose()
 		}
@@ -57,7 +60,7 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 		throw new CancellationError()
 	})
 
-	await res.cfg.createAblunitJson(res.cfg.ablunitConfig.config_uri, res.cfg.ablunitConfig.options, res.topLevelTests)
+	await res.cfg.createAblunitJson(res.cfg.ablunitConfig.config_uri, res.cfg.ablunitConfig.options, res.testQueue)
 
 	const getCommand = () => {
 		if (res.cfg.ablunitConfig.command.executable != '_progres' &&
@@ -198,6 +201,13 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 			exec(execCommand, execOpts, (err: ExecException | null, stdout: string, stderr: string) => {
 				const duration = Date.now() - start
 
+				if (watcherUpdate) {
+					watcherUpdate.dispose()
+				}
+				if (watcherDispose) {
+					watcherDispose.dispose()
+				}
+
 				if (err) {
 					const errStr = '[err]\r\n' + JSON.stringify(err, null, 2) + '\r\n[\\err]'
 					log.error(errStr, options)
@@ -228,13 +238,6 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 					reject(new Error ('ABLUnit Command Execution Failed (reject-3) - duration: ' + duration + '\n' + stderr))
 				}
 
-
-				if (watcherUpdate) {
-					watcherUpdate.dispose()
-				}
-				if (watcherDispose) {
-					watcherDispose.dispose()
-				}
 				resolve('ABLUnit Command Execution Completed - duration: ' + duration)
 			})
 		})

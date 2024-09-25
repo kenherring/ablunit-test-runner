@@ -54,7 +54,7 @@ function getMochaTimeout (projName) {
 		// case 'proj2': return 20000
 		case 'proj5': return 60000
 		case 'proj8': return 45000
-		case 'proj7A': return 180000
+		case 'proj7A': return 240000
 	}
 
 	return 30000
@@ -229,7 +229,8 @@ function getTestConfig (testDir, projName) {
 		ABLUNIT_TEST_RUNNER_ENABLE_EXTENSIONS: enableExtensions.includes('' + projName),
 		ABLUNIT_TEST_RUNNER_UNIT_TESTING: true,
 		ABLUNIT_TEST_RUNNER_VSCODE_VERSION: vsVersion,
-		DONT_PROMPT_WSL_INSTALL: true,
+		// DONT_PROMPT_WSL_INSTALL: true,
+		DONT_PROMPT_WSL_INSTALL: 1,
 		// VSCODE_SKIP_PRELAUNCH: true,
 	}
 

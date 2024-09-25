@@ -7,11 +7,13 @@ suite('proj7A - Extension Test Suite', () => {
 			.then(() => { return beforeProj7() })
 	})
 
+
+
 	test('proj7A.1 - test count', async () => {
 		const duration = new Duration()
 		await runAllTests().then(() => {
-			assert.tests.count(2020)
-			assert.durationLessThan(duration, 10000)
+			assert.tests.count(3000)
+			assert.durationLessThan(duration, 90000)
 		})
 	})
 

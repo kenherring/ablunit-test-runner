@@ -2,8 +2,12 @@
 	"tempDir": "temp",
 	"options": {
 		"output": {
-			"writeJson": true
+			"writeJson": true,
+			"updateFile": ""
 		},
 		"writeLog": true
+	},
+	"command": {
+		"additionalArgs": [ "-logfile", "temp/ablunitcore.log", "-logginglevel", "4", "-logentrytypes", "4GLMessages", "-debugalert", "-errorstack" ]
 	}
 }]}

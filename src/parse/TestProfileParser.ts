@@ -179,6 +179,7 @@ export class RunConfig extends DefaultRunProfile {
 		this.dbConns = getProfileDbConns(this.workspaceFolder.uri, this.profile.openedgeProjectProfile)
 
 		this.options = new CoreOptions(this.profile.options)
+		log.info('this.options.output.updateFile' + this.options.output.updateFile)
 		const tmpFilename = (this.profile.options?.output?.filename?.replace(/\.xml$/, '') ?? 'results') + '.xml'
 		this.optionsUri = {
 			locationUri: this.getUri(this.profile.options?.output?.location + '/'),
@@ -195,6 +196,8 @@ export class RunConfig extends DefaultRunProfile {
 		log.debug('this.optionsUri.jsonUri=' + this.optionsUri.jsonUri?.fsPath)
 		if (this.options.output.updateFile) {
 			this.optionsUri.updateUri = Uri.joinPath(this.optionsUri.locationUri, this.options.output.updateFile)
+		} else {
+			this.optionsUri.updateUri = undefined
 		}
 
 		this.command = new CommandOptions(this.profile.command)

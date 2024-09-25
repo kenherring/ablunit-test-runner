@@ -97,10 +97,9 @@ export async function activate (context: ExtensionContext) {
 
 	const runHandler = (request: TestRunRequest, token: CancellationToken): Promise<void> => {
 		if (request.continuous) {
-			log.error('continuous test runs not implemented')
 			throw new Error('continuous test runs not implemented')
 		}
-		return startTestRun(request, token).then(() => { return }, (e) => { throw e })
+		return startTestRun(request, token).catch((e: unknown) => { throw e })
 	}
 
 	const loadDetailedCoverage = (testRun: TestRun, fileCoverage: FileCoverage, token: CancellationToken): Thenable<FileCoverageDetail[]> => {
@@ -151,16 +150,9 @@ export async function activate (context: ExtensionContext) {
 
 	const startTestRun = (request: TestRunRequest, cancellation: CancellationToken) => {
 		recentResults = []
-		const topLevelTests: TestItem[] = []
 
-		const discoverTests = async (tests: Iterable<TestItem>, isTopLevel: boolean) => {
-			log.info('discoverTests start')
-
+		const discoverTests = async (tests: Iterable<TestItem>) => {
 			for (const test of tests) {
-				log.info('top-level test: ' + test.label)
-				if (isTopLevel) {
-					topLevelTests.push(test)
-				}
 				if (run.token.isCancellationRequested) {
 					return
 				}
@@ -170,7 +162,7 @@ export async function activate (context: ExtensionContext) {
 
 				const data = testData.get(test)
 
-				if (data instanceof ABLTestFile || data instanceof ABLTestCase || data instanceof ABLTestDir) {
+				if (data instanceof ABLTestFile || data instanceof ABLTestCase) {
 					run.enqueued(test)
 					queue.push({ test, data })
 
@@ -179,7 +171,7 @@ export async function activate (context: ExtensionContext) {
 					}
 
 				} else {
-					await discoverTests(gatherTestItems(test.children), false)
+					await discoverTests(gatherTestItems(test.children))
 				}
 			}
 		}
@@ -200,7 +192,6 @@ export async function activate (context: ExtensionContext) {
 
 			let ret = false
 			for (const r of res) {
-				// r.setTestData(testData.getMap())
 				if (res.length > 1) {
 					log.info('starting ablunit tests for folder: ' + r.workspaceFolder.uri.fsPath, run)
 				}
@@ -213,10 +204,10 @@ export async function activate (context: ExtensionContext) {
 						log.error('---------- ablunit run cancelled ----------', run)
 						// log.error('[runTestQueue] ablunit run cancelled!', run)
 					} else if (e instanceof ABLUnitRuntimeError) {
-						log.error('[runTestQueue] ablunit runtime error!\ne=' + JSON.stringify(e))
+						log.error('ablunit runtime error!\ne=' + JSON.stringify(e))
 					} else {
-						log.error('[runTestQueue] ablunit run failed parsing results with exception: ' + e, run)
-						// log.error('ablunit run failed parsing results with exception: ' + e, run)
+						log.error('ablunit run failed parsing results with exception: ' + e, run)
+						// log.error('ablunit run failed parsing results with exception: ' + e, run)\
 					}
 
 					for (const t of r.tests) {
@@ -310,10 +301,8 @@ export async function activate (context: ExtensionContext) {
 
 		const createABLResults = async () => {
 			const res: ABLResults[] = []
-			const proms: Promise<void>[] = []
 
 			for(const {test, data } of queue) {
-				log.info('item.label=' + test.label)
 				if (run.token.isCancellationRequested) {
 					return
 				}
@@ -334,10 +323,8 @@ export async function activate (context: ExtensionContext) {
 					await r.start()
 					res.push(r)
 				}
-				// await r.addTest(itemData.test, run, tests.includes(itemData.test))
-				proms.push(r.addTest(test, data, run, topLevelTests.includes(test)))
+				await r.addTest(test, data, run)
 			}
-			await Promise.all(proms)
 
 			resultData.set(run, res)
 			log.debug('all tests added to test run results object, preparing test run ' + res[0].duration.toString())
@@ -356,7 +343,7 @@ export async function activate (context: ExtensionContext) {
 		})
 		const tests = request.include ?? gatherTestItems(ctrl.items)
 
-		return discoverTests(tests, true)
+		return discoverTests(tests)
 			.then(() => { return createABLResults() })
 			.then((res) => {
 				if (!res) {
@@ -370,13 +357,7 @@ export async function activate (context: ExtensionContext) {
 				return
 			}, (err: unknown) => {
 				run.end()
-				if (err instanceof CancellationError || err instanceof ABLUnitRuntimeError) {
-					throw err
-				} else if (err instanceof Error) {
-					log.error('ablunit run failed with error: ' + err.message + ' - ' + err.stack)
-					throw err
-				}
-				throw new Error('ablunit run failed with non-error: ' + err)
+				throw err
 			})
 	}
 
@@ -582,6 +563,7 @@ function getOrCreateFile (controller: TestController, uri: Uri, excludePatterns?
 	file.description = 'To be parsed...'
 	if (file.label.endsWith('.cls')) {
 		file.description = 'ABL Test Class'
+		// TODO convert file.label to proper class name format
 	} else if (file.label.endsWith('.p')) {
 		file.description = 'ABL Test Program'
 	}
@@ -735,7 +717,7 @@ function gatherTestItems (collection: TestItemCollection) {
 function getExcludePatterns () {
 	let excludePatterns: string[] = []
 
-	let excludePatternsConfig: string[] | string | undefined = workspace.getConfiguration('ablunit').get('files.exclude', '**/.builder/**')
+	let excludePatternsConfig: string[] | string | undefined = workspace.getConfiguration('ablunit').get('files.exclude', '**/.builder/**,**/.pct/**')
 	if (typeof excludePatternsConfig === 'string') {
 		excludePatternsConfig = excludePatternsConfig.split(',')
 	}
@@ -757,7 +739,7 @@ function getExcludePatterns () {
 
 function getWorkspaceTestPatterns () {
 	let includePatternsConfig: string[] | string = workspace.getConfiguration('ablunit').get('files.include', [ '**/*.{cls,p}' ])
-	let excludePatternsConfig: string[] | string = workspace.getConfiguration('ablunit').get('files.exclude', [ '**/.builder/**' ])
+	let excludePatternsConfig: string[] | string = workspace.getConfiguration('ablunit').get('files.exclude', [ '**/.{builder,pct}/**' ])
 
 	if (typeof includePatternsConfig === 'string') {
 		includePatternsConfig = [ includePatternsConfig ]
@@ -873,25 +855,6 @@ function findMatchingFiles (includePatterns: RelativePattern[], token: Cancellat
 		}, (e) => { throw e })
 }
 
-// function parseMatchingFiles (files: Uri[], controller: TestController, excludePatterns: RelativePattern[], token: CancellationToken, checkCancellationToken: () => void) {
-// 	const proms: Promise<boolean>[] = []
-// 	log.debug('parsing files... (count=' + files.length + ')')
-// 	for (const file of files) {
-// 		checkCancellationToken()
-// 		const { item, data } = getOrCreateFile(controller, file, excludePatterns)
-// 		if (item && data instanceof ABLTestFile) {
-// 			const prom = data.updateFromDisk(controller, item, token).then((foundTestCase) => {
-// 				return foundTestCase
-// 			}, (e) => {
-// 				log.error('failed to update file from disk. err=' + e)
-// 				return false
-// 			})
-// 			proms.push(prom)
-// 		}
-// 	}
-// 	return Promise.all(proms).then(() => { return true })
-// }
-
 function refreshTestTree (controller: TestController, token: CancellationToken): Promise<boolean> {
 	log.info('refreshing test tree...')
 	const startTime = Date.now()
@@ -927,20 +890,18 @@ function refreshTestTree (controller: TestController, token: CancellationToken):
 	removeExcludedFiles(controller, excludePatterns, token)
 
 	log.debug('finding files...')
-
+	log.info('includePatterns=' + JSON.stringify(includePatterns))
 	return findMatchingFiles(includePatterns, token, checkCancellationToken)
 		.then((r) => {
+			log.info('r.length=' + r.length)
 			for (const file of r) {
 				checkCancellationToken()
 				const { item, data } = getOrCreateFile(controller, file, excludePatterns)
 				if (!item && !data) {
-					log.warn('could not create test item for file: ' + file.fsPath)
+					log.debug('could not create test item for file: ' + file.fsPath)
 				}
 			}
-			return
-		})
-		.then((r) => {
-			log.info('return  true (r=' + r + ')')
+			log.info('found matching files (r.length=' + r.length + ')')
 			return true
 		}, (e) => { throw e })
 }

@@ -6,7 +6,7 @@ import { FileType, MarkdownString, TestItem, TestItemCollection, TestMessage, Te
 	TestRunProfileKind} from 'vscode'
 import { ABLUnitConfig } from './ABLUnitConfigWriter'
 import { ABLResultsParser, ITestCaseFailure, ITestCase, ITestSuite } from './parse/ResultsParser'
-import { ABLTestSuite, ABLTestData, ABLTestDir } from './testTree'
+import { ABLTestSuite, ABLTestData, ABLTestCase } from './testTree'
 import { parseCallstack } from './parse/CallStackParser'
 import { ABLProfile, ABLProfileJson, IModule } from './parse/ProfileParser'
 import { ABLDebugLines } from './ABLDebugLines'
@@ -18,8 +18,7 @@ import { getDLC, IDlc } from './parse/OpenedgeProjectParser'
 import { Duration, isRelativePath } from './ABLUnitCommon'
 
 export interface ITestObj {
-	test?: string
-	folder?: string
+	test: string
 	cases?: string[]
 }
 
@@ -47,7 +46,6 @@ export class ABLResults implements Disposable {
 	duration: Duration
 	ablResults: ABLResultsParser | undefined
 	tests: TestItem[] = []
-	topLevelTests: ITestObj[] = []
 	testQueue: ITestObj[] = []
 	testData = new WeakMap<TestItem, ABLTestData>()
 	skippedTests: TestItem[] = []
@@ -127,7 +125,7 @@ export class ABLResults implements Disposable {
 		const prom: (Thenable<void> | Promise<void> | Promise<void[]> | undefined)[] = []
 		prom[0] = this.cfg.createProfileOptions(this.cfg.ablunitConfig.profOptsUri, this.cfg.ablunitConfig.profiler)
 		prom[1] = this.cfg.createProgressIni(this.propath.toString(), this.dlc)
-		prom[2] = this.cfg.createAblunitJson(this.cfg.ablunitConfig.config_uri, this.cfg.ablunitConfig.options, this.topLevelTests)
+		prom[2] = this.cfg.createAblunitJson(this.cfg.ablunitConfig.config_uri, this.cfg.ablunitConfig.options, this.testQueue)
 		prom[3] = this.cfg.createDbConnPf(this.cfg.ablunitConfig.dbConnPfUri, this.cfg.ablunitConfig.dbConns)
 
 		return Promise.all(prom).then(() => {
@@ -142,9 +140,7 @@ export class ABLResults implements Disposable {
 		this.tests = []
 	}
 
-	async addTest (test:  TestItem, data: ABLTestData, options: TestRun, isTopLevel: boolean) {
-
-		log.info('test.label=' + test.label + ', test.uri=' + test.uri?.fsPath + ', isTopLevel=' + isTopLevel, options)
+	async addTest (test:  TestItem, data: ABLTestData, options: TestRun) {
 		if (!test.uri) {
 			log.error('test.uri is undefined (test.label = ' + test.label + ')', options)
 			return
@@ -153,7 +149,6 @@ export class ABLResults implements Disposable {
 			throw new Error('propath is undefined')
 		}
 
-		log.info('100')
 		const testPropath = await this.propath.search(test.uri)
 		if (!testPropath) {
 			this.skippedTests.push(test)
@@ -161,74 +156,45 @@ export class ABLResults implements Disposable {
 			return
 		}
 
-		log.info('101.1')
 		let propathEntryTestFile = testPropath.propathEntry.path
-		log.info('101.2')
 		if (isRelativePath(testPropath.propathEntry.path)) {
-			log.info('101.3')
 			propathEntryTestFile = workspace.asRelativePath(Uri.joinPath(this.workspaceFolder.uri, testPropath.propathEntry.path))
-			log.info('101.4')
 		}
 		log.debug('addTest: ' + test.id + ', propathEntry=' + propathEntryTestFile)
-		log.info('addTest: ' + test.id + ', propathEntry=' + propathEntryTestFile)
-		log.info('101.5')
 		this.tests.push(test)
-		log.info('101.6')
 		this.testData.set(test, data)
 
-		log.info('102')
 		let testCase: string | undefined = undefined
-		if (test.label === 'ABL Test Method' || test.label === 'ABL Test Proceudre') {
+		if (data instanceof ABLTestCase) {
 			testCase = test.label
 		}
 
-		log.info('103')
 		const testUri = test.uri
 		let testRel: string = workspace.asRelativePath(testUri, false)
 		const p = await this.propath.search(testUri)
 		testRel = (p?.propathRelativeFile ?? testRel).replace(/\\/g, '/')
 
-		log.info('104')
-		let testObj: ITestObj | undefined = undefined
-		log.info('105')
-		if (data instanceof ABLTestDir) {
-			// testObj = { folder: workspace.asRelativePath(testUri, false) }
-			testObj = { folder: p?.uri.fsPath.replace(/\\/g, '/') }
-		} else {
-			testObj = { test: testRel }
-			if (testCase) {
-				testObj.cases = [ testCase ]
-			}
-		}
-		log.info('106 testObj=' + JSON.stringify(testObj))
-
+		const testObj: ITestObj = { test: testRel }
 		if (testCase) {
-			const existingTestObj = this.testQueue.find((t: ITestObj) => t.test === testRel)
-			if (existingTestObj) {
-				if(testObj.cases) {
-					if (!existingTestObj.cases) {
-						existingTestObj.cases = []
-					}
-					existingTestObj.cases.push(testCase)
+			testObj.cases = [ testCase ]
+		}
+
+		const existingTestObj = this.testQueue.find((t: ITestObj) => t.test === testRel)
+		if (testCase && existingTestObj) {
+			if(testObj.cases) {
+				if (!existingTestObj.cases) {
+					existingTestObj.cases = []
 				}
+				existingTestObj.cases.push(testCase)
 			}
 			return
 		}
-		log.info('106')
 
 		if (this.testQueue.find((t: ITestObj) => t.test === testRel)) {
-			log.info('107')
 			log.warn('test already exists in configJson.tests: ' + testRel)
 		} else {
-			log.info('108')
 			this.testQueue.push(testObj)
-			if (isTopLevel) {
-				log.info('109')
-				log.info('adding test to topLevelTests: ' + testRel)
-				this.topLevelTests.push(testObj)
-			}
 		}
-		log.info('110')
 	}
 
 	async deleteResultsXml () {
@@ -310,14 +276,7 @@ export class ABLResults implements Disposable {
 	}
 
 	async assignTestResults (item: TestItem, options: TestRun) {
-		if (this.testData.get(item) instanceof ABLTestDir) {
-			// TODO - do we need to do anything here?  i don't think so
-			log.info('assigning test results for children of directory: ' + item.label)
-			for (const [ , child ] of item.children) {
-				await this.assignTestResults(child, options)
-			}
-			return
-		}
+
 		if (this.skippedTests.includes(item)) {
 			options.skipped(item)
 			return

@@ -182,6 +182,7 @@ export function setFilesExcludePattern () {
 	const filesConfig = workspace.getConfiguration('files', getWorkspaceUri())
 	files.exclude = filesConfig.get('exclude', {}) ?? {}
 	files.exclude['**/.builder'] = true
+	files.exclude['**/.pct'] = true
 	files.exclude['**/lbia*'] = true
 	files.exclude['**/rcda*'] = true
 	files.exclude['**/srta*'] = true
@@ -555,7 +556,9 @@ export async function runAllTests (doRefresh = true, waitForResults = true, with
 
 	log.info('testing.runAll starting (waitForResults=' + waitForResults + ')')
 	const r = await commands.executeCommand(testCommand)
-		.then(() => { return sleep(250) })
+		.then((r) => {
+			log.info('command ' + testCommand +' complete! (r=' + r + ')')
+			return sleep(250) })
 		.then(() => {
 			log.info(tag + 'testing.runAll completed - start getResults()')
 			if (!waitForResults) { return [] }
@@ -570,7 +573,7 @@ export async function runAllTests (doRefresh = true, waitForResults = true, with
 			return false
 		}, (err) => {
 			runAllTestsDuration?.stop()
-			log.error(tag + 'testing.runAll failed: ' + err)
+			// log.error(tag + 'testing.runAll failed: ' + err)
 			throw new Error('testing.runAll failed: ' + err)
 		})
 	runAllTestsDuration.stop()
@@ -1128,8 +1131,8 @@ export const assert = {
 }
 
 export async function beforeProj7 () {
-	const templateProc = Uri.joinPath(toUri('src/template_proc.p'))
-	const templateClass = Uri.joinPath(toUri('src/template_class.cls'))
+	const templateProc = toUri('src/template_proc.p')
+	const templateClass = toUri('src/template_class.cls')
 	return workspace.fs.readFile(templateClass)
 		.then((data) => {
 			const classContent = data.toString()
@@ -1145,6 +1148,9 @@ export async function beforeProj7 () {
 				}
 			}
 			return Promise.all(proms)
+		}).then(() => {
+			log.info('beforeProj7 complete!')
+			return
 		})
 }
 
