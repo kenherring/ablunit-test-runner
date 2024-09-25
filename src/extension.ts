@@ -5,6 +5,7 @@ import {
 	ExtensionMode,
 	FileCoverage,
 	FileCoverageDetail,
+	FileCreateEvent,
 	FileType,
 	LogLevel,
 	Position, Range, RelativePattern, Selection,
@@ -67,10 +68,10 @@ export async function activate (context: ExtensionContext) {
 					log.error('failed updateNodeForDocument onDidTextDocument! err=' + e)
 				})
 			})
-		})
-		// watcher.onDidCreate(uri => { createOrUpdateFile(controller, uri) })
-		// watcher.onDidChange(uri => { createOrUpdateFile(controller, uri) })
-		// watcher.onDidDelete(uri => { controller.items.delete(uri.fsPath) })
+		}),
+		workspace.onDidCreateFiles(e => { return createOrUpdateFile(ctrl, e) }),
+		workspace.onDidChangeTextDocument(e => { return updateNodeForDocument(e.document, 'didChange') }),
+		workspace.onDidDeleteFiles(e => { deleteFiles(ctrl, e.files) }),
 	)
 
 	const getExtensionTestReferences = () => {
@@ -771,6 +772,15 @@ function getWorkspaceTestPatterns () {
 	return { includePatterns, excludePatterns }
 }
 
+function deleteFiles (controller: TestController, files: readonly Uri[]) {
+	for (const uri of files) {
+		const item = getExistingTestItem(controller, uri)
+		if (item) {
+			deleteTest(controller, item)
+		}
+	}
+}
+
 function deleteTest (controller: TestController | undefined, item: TestItem) {
 	deleteChildren(controller, item)
 	testData.delete(item)
@@ -954,40 +964,31 @@ function getControllerTestFileCount (controller: TestController) {
 	return count
 }
 
-// const createOrUpdateFile = (controller: TestController, uri: Uri) => {
-// 	// const { includePatterns, excludePatterns } = getWorkspaceTestPatterns()
-// 	// if (isFileExcluded(uri, excludePatterns))  {
-// 	// 	return
-// 	// }
-// 	const { item, data } = getOrCreateFile(controller, uri)
-// 	if (data?.didResolve) {
-// 		controller.invalidateTestResults(item)
-// 		data.updateFromDisk(controller, item).catch((err) => {
-// 			log.error('failed to update file from disk. err=' + err)
-// 			return false
-// 		})
-// 	}
-// 	return true
-// }
+const createOrUpdateFile = (controller: TestController, e: Uri | FileCreateEvent) => {
+	let uris: Uri[] = []
+	if (e instanceof Uri) {
+		uris.push(e)
+	} else {
+		uris = uris.concat(e.files)
+	}
 
+	const { includePatterns, excludePatterns } = getWorkspaceTestPatterns()
 
-// function startWatchingWorkspace (controller: TestController) {
-// 	log.info('start watching workspace')
-// 	// const { includePatterns, excludePatterns } = getWorkspaceTestPatterns()
-// 	// log.debug('includePatterns=' + includePatterns.length + ', excludePatterns=' + excludePatterns.length)
-// 	// const watchers = []
+	const proms: PromiseLike<boolean>[] = []
+	for (const uri of uris) {
+		if (isFileExcluded(uri, excludePatterns))  {
+			deleteTest(controller, getExistingTestItem(controller, uri)!)
+			continue
+		}
 
-
-// 	// for (const includePattern of includePatterns) {
-// 	// 	log.info("create watcher for: " + includePattern.pattern)
-// 	// 	const watcher = workspace.createFileSystemWatcher(includePattern)
-// 	// 	// watcher.onDidCreate(uri => { createOrUpdateFile(controller, uri) })
-// 	// 	// watcher.onDidChange(uri => { createOrUpdateFile(controller, uri) })
-// 	// 	// watcher.onDidDelete(uri => { controller.items.delete(uri.fsPath) })
-// 	// 	watchers.push(watcher)
-// 	// }
-// 	// return watchers
-// }
+		const { item, data } = getOrCreateFile(controller, uri, excludePatterns)
+		if (data?.didResolve) {
+			controller.invalidateTestResults(item)
+			proms.push(data.updateFromDisk(controller, item))
+		}
+	}
+	return Promise.all(proms)
+}
 
 function openCallStackItem (traceUriStr: string) {
 	const traceUri = Uri.file(traceUriStr.split('&')[0])
