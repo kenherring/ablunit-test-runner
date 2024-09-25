@@ -42,6 +42,6 @@ RUN mkdir -p ~/.vscode-test
 
 ## install xq (via yq) for xml parsing
 RUN pipx install yq
-ENV PATH $PATH:/root/.local/bin
+ENV PATH=$PATH:/root/.local/bin
 
 WORKDIR /home/circleci/project
