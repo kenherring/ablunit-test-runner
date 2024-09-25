@@ -8,14 +8,26 @@
 			"end method."
 		],
 		"description": "A method that is a test method",
-		"scope": "abl"
+		"scope": "abl.file.program"
 	},
 	"@Setup method": {
 		"prefix": "@Setup method",
 		"body": [
 			"@Setup.",
 			"method public void beforeAll () :",
-			"  //Runs before each test method",
+			"  // Executes before each test",
+			"  ${1:// do setup here}",
+			"end method."
+		],
+		"description": "Executes the method before each test. This annotation prepares the test environment such as reading input data or initializing the class.",
+		"scope": "abl"
+	},
+	"@BeforeEach method": {
+		"prefix": "@Setup method",
+		"body": [
+			"@Setup.",
+			"method public void beforeEach () :",
+			"  // Executes before each test",
 			"  ${1:// do setup here}",
 			"end method."
 		],
@@ -27,7 +39,19 @@
 		"body": [
 			"@Before.",
 			"method public void beforeEach () :",
-			"  //Executes after each test",
+			"  // Executes once per class before the start of all tests",
+			"  ${1:// do setup here}",
+			"end method."
+		],
+		"description": "Executes the method once per class, before the start of all tests. This annotation can be used to perform time-sensitive activities such as connecting to a database.",
+		"scope": "abl"
+	},
+	"@BeforeAll method": {
+		"prefix": "@BeforeAll method",
+		"body": [
+			"@All.",
+			"method public void beforeAll () :",
+			"  // Executes once per class before the start of all tests",
 			"  ${1:// do setup here}",
 			"end method."
 		],
@@ -39,7 +63,19 @@
 		"body": [
 			"@TearDown.",
 			"method public void afterEach () :",
-			"  //Executes after each test",
+			"  // Executes after each test",
+			"  ${1:// do some cleanup here}",
+			"end method."
+		],
+		"description": "Executes the method after each test. This annotation cleans up the test environment such as deleting temporary data or restoring defaults.",
+		"scope": "abl"
+	},
+	"@AfterEach method": {
+		"prefix": "@TearDown method",
+		"body": [
+			"@TearDown.",
+			"method public void afterEach () :",
+			"  // Executes after each test",
 			"  ${1:// do some cleanup here}",
 			"end method."
 		],
@@ -51,7 +87,18 @@
 		"body": [
 			"@After.",
 			"method public void afterAll () :",
-			"  //Executes after each test",
+			"  // Executes once snafter all the tests are executed",
+			"end method."
+		],
+		"description": "Executes the method once, after all the tests are executed. This annotation is used to perform clean-up activities such as disconnecting from a database.",
+		"scope": "abl"
+	},
+	"@AfterAll method": {
+		"prefix": "@After method",
+		"body": [
+			"@After.",
+			"method public void afterAll () :",
+			"  // Executes once snafter all the tests are executed",
 			"end method."
 		],
 		"description": "Executes the method once, after all the tests are executed. This annotation is used to perform clean-up activities such as disconnecting from a database.",

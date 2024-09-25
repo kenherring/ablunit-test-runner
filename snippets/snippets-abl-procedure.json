@@ -8,14 +8,26 @@
 			"end procedure."
 		],
 		"description": "A procedure that is a test procedure",
-		"scope": "abl"
+		"scope": "abl.file.program"
 	},
 	"@Setup procedure": {
 		"prefix": "@Setup procedure",
 		"body": [
 			"@Setup.",
 			"procedure beforeAll :",
-			"  //Runs before each test procedure",
+			"  // Executes before each test",
+			"  ${1:// do setup here}",
+			"end procedure."
+		],
+		"description": "Executes the procedure before each test. This annotation prepares the test environment such as reading input data or initializing the class.",
+		"scope": "abl"
+	},
+	"@BeforeAll procedure": {
+		"prefix": "@BeforeAll procedure",
+		"body": [
+			"@BeforeAll.",
+			"procedure beforeAll :",
+			"  // Executes before each test",
 			"  ${1:// do setup here}",
 			"end procedure."
 		],
@@ -25,13 +37,25 @@
 	"@Before procedure": {
 		"prefix": "@Before procedure",
 		"body": [
-			"@Before.",
+			"@BeforeEach.",
 			"procedure beforeEach :",
-			"  //Executes after each test",
+			"  // Executes once per program before the start of all tests",
 			"  ${1:// do setup here}",
 			"end procedure."
 		],
-		"description": "Executes the procedure once per class, before the start of all tests. This annotation can be used to perform time-sensitive activities such as connecting to a database.",
+		"description": "Executes the procedure once per program, before the start of all tests. This annotation can be used to perform time-sensitive activities such as connecting to a database.",
+		"scope": "abl"
+	},
+	"@BeforeEach procedure": {
+		"prefix": "@BeforeEach procedure",
+		"body": [
+			"@BeforeEach.",
+			"procedure beforeEach :",
+			"  // Executes once per program before the start of all tests",
+			"  ${1:// do setup here}",
+			"end procedure."
+		],
+		"description": "Executes the procedure once per program, before the start of all tests. This annotation can be used to perform time-sensitive activities such as connecting to a database.",
 		"scope": "abl"
 	},
 	"@TearDown procedure": {
@@ -39,19 +63,42 @@
 		"body": [
 			"@TearDown.",
 			"procedure afterEach :",
-			"  //Executes after each test",
+			"  // Executes after each test",
 			"  ${1:// do some cleanup here}",
 			"end procedure."
 		],
 		"description": "Executes the procedure after each test. This annotation cleans up the test environment such as deleting temporary data or restoring defaults.",
 		"scope": "abl"
 	},
-	"@After procedure": {
+	"@AfterEach procedure": {
+		"prefix": "@AfterEach procedure",
+		"body": [
+			"@AfterEAch.",
+			"procedure afterEach :",
+			"  // Executes after each test",
+			"  ${1:// do some cleanup here}",
+			"end procedure."
+		],
+		"description": "Executes the procedure after each test. This annotation cleans up the test environment such as deleting temporary data or restoring defaults.",
+		"scope": "abl"
+	},
+	"@AfteraLL procedure": {
 		"prefix": "@After procedure",
 		"body": [
 			"@After.",
 			"procedure afterAll :",
-			"  //Executes after each test",
+			"  // Executes once after all the tests are executed",
+			"end procedure."
+		],
+		"description": "Executes the procedure once, after all the tests are executed. This annotation is used to perform clean-up activities such as disconnecting from a database.",
+		"scope": "abl"
+	},
+	"@AfterAll procedure": {
+		"prefix": "@AfterAll procedure",
+		"body": [
+			"@AfterAll,",
+			"procedure afterAll :",
+			"  // Executes once after all the tests are executed",
 			"end procedure."
 		],
 		"description": "Executes the procedure once, after all the tests are executed. This annotation is used to perform clean-up activities such as disconnecting from a database.",
