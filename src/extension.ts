@@ -59,18 +59,9 @@ export async function activate (context: ExtensionContext) {
 		commands.registerCommand('_ablunit.openCallStackItem', openCallStackItem),
 		workspace.onDidChangeConfiguration(e => { updateConfiguration(e) }),
 
-		workspace.onDidOpenTextDocument(e => {
-			return new Disposable(async () => {
-				await updateNodeForDocument(e, 'didOpen').then(() => {
-					log.trace('updateNodeForDocument complete for ' + e.uri)
-					return
-				}, (e: unknown) => {
-					log.error('failed updateNodeForDocument onDidTextDocument! err=' + e)
-				})
-			})
-		}),
-		workspace.onDidCreateFiles(e => { return createOrUpdateFile(ctrl, e) }),
+		workspace.onDidOpenTextDocument(e => { return updateNodeForDocument(e, 'didOpen') }),
 		workspace.onDidChangeTextDocument(e => { return updateNodeForDocument(e.document, 'didChange') }),
+		workspace.onDidCreateFiles(e => { return createOrUpdateFile(ctrl, e) }),
 		workspace.onDidDeleteFiles(e => { deleteFiles(ctrl, e.files) }),
 	)
 
@@ -703,7 +694,7 @@ function getTestFileAttrs (file: Uri) {
 	return 'other'
 }
 
-function gatherAllTestItems (collection: TestItemCollection) {
+export function gatherAllTestItems (collection: TestItemCollection) {
 	const items: TestItem[] = []
 	collection.forEach(item => {
 		items.push(item)
@@ -769,7 +760,7 @@ function getWorkspaceTestPatterns () {
 		includePatterns.push(...includePatternsConfig.map(pattern => new RelativePattern(workspaceFolder, pattern)))
 		excludePatterns.push(...excludePatternsConfig.map(pattern => new RelativePattern(workspaceFolder, pattern)))
 	}
-	return { includePatterns, excludePatterns }
+	return [ includePatterns, excludePatterns ]
 }
 
 function deleteFiles (controller: TestController, files: readonly Uri[]) {
@@ -789,9 +780,11 @@ function deleteTest (controller: TestController | undefined, item: TestItem) {
 		item.parent.children.delete(item.id)
 		if(item.parent.children.size == 0) {
 			deleteTest(controller, item.parent)
+			return true
 		}
 	} else if (controller) {
 		controller.items.delete(item.id)
+		return true
 	} else {
 		throw new Error('deleteTest failed - could not find parent for item: ' + item.id)
 	}
@@ -892,6 +885,23 @@ async function parseMatchingFiles (files: Uri[], controller: TestController, exc
 	return r
 }
 
+function removeDeletedFiles (ctrl: TestController) {
+	const items = gatherAllTestItems(ctrl.items)
+	const proms: PromiseLike<void>[] = []
+	for (const item of items) {
+		if (!item.uri) { continue }
+		const p = workspace.fs.stat(item.uri)
+			.then((s) => {
+				log.debug('file still exists, doing nothing')
+				return
+			}, (e) => {
+				deleteTest(ctrl, item)
+			})
+		proms.push(p)
+	}
+	return Promise.all(proms).then(() => { return true })
+}
+
 function refreshTestTree (controller: TestController, token: CancellationToken): Promise<boolean> {
 	log.info('refreshing test tree...')
 	const startTime = Date.now()
@@ -919,7 +929,8 @@ function refreshTestTree (controller: TestController, token: CancellationToken):
 		logResults()
 		throw new CancellationError()
 	}
-	const { includePatterns, excludePatterns } = getWorkspaceTestPatterns()
+
+	const [ includePatterns, excludePatterns ] = getWorkspaceTestPatterns()
 	log.info('includePatternslength=' + includePatterns.length + ', excludePatterns.length=' + excludePatterns.length)
 	log.debug('includePatterns=' + includePatterns.map(pattern => pattern.pattern).join('\n'))
 	log.debug('excludePatterns=' + excludePatterns.map(pattern => pattern.pattern).join('\n'))
@@ -928,7 +939,8 @@ function refreshTestTree (controller: TestController, token: CancellationToken):
 
 	log.debug('finding files...')
 
-	const prom1 = findMatchingFiles(includePatterns, token, checkCancellationToken)
+	const prom1 = removeDeletedFiles(controller)
+		.then(() => { return findMatchingFiles(includePatterns, token, checkCancellationToken) })
 		.then((r) => {
 			log.info('return parseMatchingFiles (r.length=' + r.length + ')')
 			return parseMatchingFiles(r, controller, excludePatterns, token, checkCancellationToken)
@@ -937,7 +949,8 @@ function refreshTestTree (controller: TestController, token: CancellationToken):
 			log.info('return  true (r=' + r + ')')
 			return true
 		})
-	return prom1.catch((e: unknown) => { throw e })
+	return prom1
+	// return prom1.catch((e: unknown) => { throw e })
 }
 
 function getControllerTestFileCount (controller: TestController) {
@@ -972,7 +985,7 @@ const createOrUpdateFile = (controller: TestController, e: Uri | FileCreateEvent
 		uris = uris.concat(e.files)
 	}
 
-	const { includePatterns, excludePatterns } = getWorkspaceTestPatterns()
+	const [  excludePatterns ] = getWorkspaceTestPatterns()
 
 	const proms: PromiseLike<boolean>[] = []
 	for (const uri of uris) {

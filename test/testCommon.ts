@@ -15,7 +15,7 @@ import {
 import { ABLResults } from '../src/ABLResults'
 import { Duration, deleteFile as deleteFileCommon, isRelativePath, readStrippedJsonFile } from '../src/ABLUnitCommon'
 import { log as logObj } from '../src/ChannelLogger'
-import { IExtensionTestReferences } from '../src/extension'
+import { gatherAllTestItems, IExtensionTestReferences } from '../src/extension'
 import { ITestSuites } from '../src/parse/ResultsParser'
 import { IConfigurations, parseRunProfiles } from '../src/parse/TestProfileParser'
 import { DefaultRunProfile, IRunProfile as IRunProfileGlobal } from '../src/parse/config/RunProfile'
@@ -837,10 +837,8 @@ export async function getTestController () {
 
 export async function getTestControllerItemCount (type?: 'ABLTestFile' | undefined) {
 	const ctrl = await getTestController()
-	if (!ctrl?.items) {
-		return 0
-	}
-	return ctrl.items.size + getChildTestCount(type, ctrl.items)
+	const items = gatherAllTestItems(ctrl.items)
+	return items.length
 }
 
 export function getChildTestCount (type: string | undefined, items: TestItemCollection) {
