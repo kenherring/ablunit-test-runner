@@ -10,22 +10,23 @@
 		"description": "A method that is a test method",
 		"scope": "abl"
 	},
+	
 	"@Setup method": {
 		"prefix": "@Setup method",
 		"body": [
 			"@Setup.",
-			"method public void beforeAll () :",
+			"method public void beforeEach () :",
 			"  // Executes before each test",
 			"  ${1:// do setup here}",
 			"end method."
 		],
-		"description": "Executes the method before each test. This annotation prepares the test environment such as reading input data or initializing the class.",
+		"description": "To be deprecated, use @BeforeEach",
 		"scope": "abl"
 	},
 	"@BeforeEach method": {
-		"prefix": "@Setup method",
+		"prefix": "@BeforeEach method",
 		"body": [
-			"@Setup.",
+			"@BeforeEach.",
 			"method public void beforeEach () :",
 			"  // Executes before each test",
 			"  ${1:// do setup here}",
@@ -38,30 +39,18 @@
 		"prefix": "@Before method",
 		"body": [
 			"@Before.",
-			"method public void beforeEach () :",
-			"  // Executes once per class before the start of all tests",
-			"  ${1:// do setup here}",
-			"end method."
-		],
-		"description": "Executes the method once per class, before the start of all tests. This annotation can be used to perform time-sensitive activities such as connecting to a database.",
-		"scope": "abl"
-	},
-	"@BeforeAll method": {
-		"prefix": "@BeforeAll method",
-		"body": [
-			"@All.",
 			"method public void beforeAll () :",
 			"  // Executes once per class before the start of all tests",
 			"  ${1:// do setup here}",
 			"end method."
 		],
-		"description": "Executes the method once per class, before the start of all tests. This annotation can be used to perform time-sensitive activities such as connecting to a database.",
+		"description": "To be deprecated, use @Before",
 		"scope": "abl"
 	},
-	"@TearDown method": {
-		"prefix": "@TearDown method",
+	"@AfterEach method": {
+		"prefix": "@AfterEach method",
 		"body": [
-			"@TearDown.",
+			"@afterEach.",
 			"method public void afterEach () :",
 			"  // Executes after each test",
 			"  ${1:// do some cleanup here}",
