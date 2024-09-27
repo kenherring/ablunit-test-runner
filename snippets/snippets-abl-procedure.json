@@ -19,7 +19,7 @@
 			"  ${1:// do setup here}",
 			"end procedure."
 		],
-		"description": "Executes the procedure before each test. This annotation prepares the test environment such as reading input data or initializing the class.",
+		"description": "To be deprecated, use @BeforeAll",
 		"scope": "abl"
 	},
 	"@BeforeAll procedure": {
@@ -31,7 +31,7 @@
 			"  ${1:// do setup here}",
 			"end procedure."
 		],
-		"description": "Executes the procedure before each test. This annotation prepares the test environment such as reading input data or initializing the class.",
+		"description": "Executes the procedure once per program, before the start of all tests. This annotation can be used to perform time-sensitive activities such as connecting to a database.",
 		"scope": "abl"
 	},
 	"@Before procedure": {
@@ -43,7 +43,31 @@
 			"  ${1:// do setup here}",
 			"end procedure."
 		],
+		"description": "To be deprecated, use @BeforeEach",
+		"scope": "abl"
+	},
+	"@BeforeEach procedure": {
+		"prefix": "@BeforeEach procedure",
+		"body": [
+			"@BeforeEach.",
+			"procedure beforeEach :",
+			"  // Executes once per program before the start of all tests",
+			"  ${1:// do setup here}",
+			"end procedure."
+		],
 		"description": "Executes the procedure once per program, before the start of all tests. This annotation can be used to perform time-sensitive activities such as connecting to a database.",
+		"scope": "abl"
+	},
+	"@Before procedure": {
+		"prefix": "@Before procedure",
+		"body": [
+			"@BeforeEach.",
+			"procedure beforeEach :",
+			"  // Executes once per program before the start of all tests",
+			"  ${1:// do setup here}",
+			"end procedure."
+		],
+		"description": "To be deprecated, see @BeforeEAch",
 		"scope": "abl"
 	},
 	"@BeforeEach procedure": {
@@ -82,8 +106,8 @@
 		"description": "Executes the procedure after each test. This annotation cleans up the test environment such as deleting temporary data or restoring defaults.",
 		"scope": "abl"
 	},
-	"@AfteraLL procedure": {
-		"prefix": "@After procedure",
+	"@After procedure": {
+		"prefix": "@Afte procedure",
 		"body": [
 			"@After.",
 			"procedure afterAll :",
