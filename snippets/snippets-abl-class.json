@@ -71,9 +71,9 @@
 		"scope": "abl"
 	},
 	"@AfterEach method": {
-		"prefix": "@TearDown method",
+		"prefix": "@AfterEach method",
 		"body": [
-			"@TearDown.",
+			"@AfterEach.",
 			"method public void afterEach () :",
 			"  // Executes after each test",
 			"  ${1:// do some cleanup here}",
