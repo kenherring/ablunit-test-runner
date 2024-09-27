@@ -1,0 +1,12 @@
+{
+  "name": "OpenEdge ABL",
+	"scope": "source.abl.extended",
+	"uuid": "",
+	"repository": {
+		"class-body": {
+			"name": "meta.class.body",
+			"begin": "(?i)class\\s+",
+			"end": "(?i)\\s*(end)\\s+*+class"
+		}
+	}
+}

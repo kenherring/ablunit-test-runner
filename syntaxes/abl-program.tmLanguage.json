@@ -1,0 +1,8 @@
+{
+  "name": "OpenEdge ABL - Procedure",
+  "scopeName": "source.abl-program",
+  "fileTypes": [
+    "p",
+    "w"
+  ]
+}

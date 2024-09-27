@@ -12,6 +12,7 @@
 !resources/VSCodeTestRunner/
 !resources/images/icon_128.png
 !snippets/
+!syntaxes/
 
 ## Ignore everything else
 **/*

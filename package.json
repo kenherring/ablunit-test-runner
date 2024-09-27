@@ -167,22 +167,17 @@
 		},
 		"languages": [
 			{
-				"id": "abl",
-				"aliases": [
-					"OpenEdge ABL"
-				],
-				"extensions": [
-					".cls",
-					".i",
-					".p",
-					".w"
-				]
-			},
-			{
 				"id": "jsonc",
 				"filenamePatterns": [
 					"**/ablunit-test-profile*.json"
 				]
+			}
+		],
+		"grammars": [
+			{
+				"path": "./syntaxes/abl-class.tmLanguage.json",
+				"scopeName": "abl.extended",
+				"injectTo": [ "abl", "source.abl" ]
 			}
 		],
 		"jsonValidation": [
@@ -196,15 +191,15 @@
 		"snippets": [
 			{
 				"language": "abl",
-				"path": "./snippets/snippets-abl.json"
+				"path": "./snippets/snippets.abl.json"
 			},
 			{
 				"language": "abl",
-				"path": "./snippets/snippets-abl-procedure.json"
+				"path": "./snippets/snippets.abl-procedure.json"
 			},
 			{
 				"language": "abl",
-				"path": "./snippets/snippets-abl-class.json"
+				"path": "./snippets/snippets.abl-class.json"
 			}
 		]
 	}

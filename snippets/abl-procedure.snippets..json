@@ -1,4 +1,10 @@
 {
+	"IN_PROC_SNIPPET": {
+		"prefix": "IN_PROC",
+		"boxy": "IN_PROC_SNIPPET inserted",
+		"scope": "source.abl"
+	
+	},
 	"@Test procedure": {
 		"prefix": "@Test procedure",
 		"body": [

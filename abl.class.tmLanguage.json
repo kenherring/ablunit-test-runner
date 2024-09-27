@@ -1,0 +1,18 @@
+{
+    "name": "OpenEdge ABL - Class",
+    "scopeName": source
+    "fileTypes": [
+      "cls"
+    ],
+    "patterns": [
+    {
+      "comment": "Comments",
+      "match": "(#).*",
+      "name": "comment.line.number-sign.shellcheckrc",
+      "captures": {
+        "1": {
+          "name": "punctuation.definition.comment.shellcheckrc"
+        }
+      }
+    },
+}
