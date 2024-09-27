@@ -34,7 +34,7 @@ main_block () {
     if $PRERELEASE; then
         ARGS+=("--pre-release")
     fi
-    vsce publish "${ARGS[@]}"
+    npx vsce publish "${ARGS[@]}"
 }
 
 upload_to_github_release () {
