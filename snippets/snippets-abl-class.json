@@ -46,16 +46,16 @@
 		"description": "To be deprecated, use @BeforeAll",
 		"scope": "abl"
 	},
-	"@AfterEach method": {
-		"prefix": "@AfterEach method",
+	"@Teardown method": {
+		"prefix": "@Teardown method",
 		"body": [
-			"@afterEach.",
+			"@Teardown.",
 			"method public void afterEach () :",
 			"  // Executes after each test",
 			"  ${1:// do some cleanup here}",
 			"end method."
 		],
-		"description": "Executes the method after each test. This annotation cleans up the test environment such as deleting temporary data or restoring defaults.",
+		"description": "To be deprecated, use @AfterEach",
 		"scope": "abl"
 	},
 	"@AfterEach method": {
@@ -78,15 +78,15 @@
 			"  // Executes once snafter all the tests are executed",
 			"end method."
 		],
-		"description": "Executes the method once, after all the tests are executed. This annotation is used to perform clean-up activities such as disconnecting from a database.",
+		"description": "To be deprecated, use @AfterAll",
 		"scope": "abl"
 	},
 	"@AfterAll method": {
-		"prefix": "@After method",
+		"prefix": "@AfterAll method",
 		"body": [
-			"@After.",
+			"@AfterAll.",
 			"method public void afterAll () :",
-			"  // Executes once snafter all the tests are executed",
+			"  // Executes once nafter all the tests are executed",
 			"end method."
 		],
 		"description": "Executes the method once, after all the tests are executed. This annotation is used to perform clean-up activities such as disconnecting from a database.",
