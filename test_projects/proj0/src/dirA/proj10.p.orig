@@ -1,1 +1,3 @@
-@Test. procedure test1: end procedure.
+@Test.
+procedure test1:
+end procedure.

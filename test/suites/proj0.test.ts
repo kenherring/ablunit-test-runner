@@ -1,22 +1,44 @@
-import { Uri, commands, window, workspace, TestItem } from 'vscode'
+import { Uri, commands, window, workspace, TestItem, FileStat } from 'vscode'
+import * as vscode from 'vscode'
 import { assert, deleteFile, getResults, getTestController, getTestControllerItemCount, log, refreshTests, runAllTests, runAllTestsWithCoverage, sleep, sleep2, suiteSetupCommon, toUri, updateTestProfile } from '../testCommon'
 import { ABLResultsParser } from 'parse/ResultsParser'
 import * as fs from 'fs'
+import { readLinesFromFile } from 'parse/TestParserCommon'
+import { METHODS } from 'http'
+
+
+function createTempFile () {
+	const tempFile = toUri('UNIT_TEST.tmp')
+	return workspace.fs.writeFile(tempFile, Buffer.from(''))
+		.then(() => { return tempFile })
+}
 
 suite('proj0  - Extension Test Suite', () => {
+
+	const disposables: vscode.Disposable[] = []
 
 	suiteSetup('proj0 - before', async () => {
 		deleteFile('.vscode/ablunit-test-profile.json')
 		deleteFile('src/dirA/proj10.p')
 		deleteFile('src/dirA/proj11.p')
+		deleteFile('UNIT_TEST.tmp')
 		await suiteSetupCommon()
 		await commands.executeCommand('testing.clearTestResults')
 	})
 
 	teardown('proj0 - afterEach', () => {
-		deleteFile('.vscode/ablunit-test-profile.json')
-		deleteFile('src/dirA/proj10.p')
-		deleteFile('src/dirA/proj11.p')
+		// deleteFile('.vscode/ablunit-test-profile.json')
+		// deleteFile('src/dirA/proj10.p')
+		// deleteFile('src/dirA/proj11.p')
+		// deleteFile('UNIT_TEST.tmp')
+		while (disposables.length > 0) {
+			const d = disposables.pop()
+			if (d) {
+				d.dispose()
+			} else {
+				log.warn('disposables.length != 0')
+			}
+		}
 	})
 
 	test('proj0.01 - ${workspaceFolder}/ablunit.json file exists', () => {
@@ -171,71 +193,87 @@ suite('proj0  - Extension Test Suite', () => {
 		return
 	})
 
-	test('proj0.10 - Create File', () => {
-		return getTestControllerItemCount('ABLTestFile')
-			.then((count) => {
-				assert.equal(count, 44, 'initial count')
-				fs.copyFileSync(toUri('src/dirA/proj10.p.orig').fsPath, toUri('src/dirA/proj10.p').fsPath)
-				return
-				// return workspace.fs.writeFile(toUri('src/dirA/proj10.p'), Buffer.from('@Test. procedure test1: end procedure.'))
-			})
-			.then(() => { return workspace.fs.stat(toUri('src/dirA/proj10.p')) })
-			.then((stat) => {
-				if (!stat) {
-					assert.fail('file does not exist')
-				}
-				return sleep2(1000)
-			})
-			.then(() => { return sleep2(250)})
-			.then(() => { return refreshTests()})
-			.then(() => { return sleep2(250)})
-			.then(() => { return sleep2(250)})
-			.then(() => { return sleep2(250)})
-			.then(() => { return sleep2(250)})
-			.then(() => { return sleep2(250)})
-			.then(() => { return sleep2(250)})
-			.then(() => { return sleep2(250)})
-			.then(() => { return sleep2(250)})
-			.then(() => { return sleep2(250)})
-			.then(() => { return sleep2(250)})
-			.then(() => { return sleep2(250)})
-			.then(() => { return getTestControllerItemCount('ABLTestFile') })
-			.then((count) => {
-				assert.equal(count, 46, 'final count')
-				return
-			})
-	})
+	test('proj0.10A - Create File', async () => {
+		// init test
+		log.info('initializing test proj0.10A')
+		const startCount = getTestControllerItemCount()
+		// This event handler makes use wait for a second edit so we know that the first edit has been processed
+		// Inspiration: https://github.com/microsoft/vscode/blob/main/extensions/vscode-api-tests/src/singlefolder-tests/workspace.event.test.ts#L80
+		const tempFile = await createTempFile()
+		disposables.push(vscode.workspace.onWillCreateFiles(e => {
+			const ws = new vscode.WorkspaceEdit()
+			ws.insert(tempFile, new vscode.Position(0, 0), 'onWillCreate ' + e.files.length + ' ' + e.files[0].fsPath)
+			e.waitUntil(Promise.resolve(ws))
+		}))
 
-	test('proj0.11 - Update File', async () => {
-		await workspace.fs.writeFile(toUri('src/dirA/proj10.p'), Buffer.from('@Test. procedure test1: end procedure.'))
-		await refreshTests()
-		await getTestControllerItemCount('ABLTestFile')
-			.then((count) => { assert.equal(count, 46, 'initial count') })
-		await workspace.fs.writeFile(toUri('src/dirA/proj10.p'), Buffer.from('@Test. procedure test1: end procedure.\n\n@Test. procedure test2: end procedure.'))
-		await  refreshTests()
-		assert.equal(await getTestControllerItemCount(), 47, 'final count')
+		// //// create new test program
+		const edit = new vscode.WorkspaceEdit()
+		edit.createFile(toUri('src/dirA/proj10.p'), { contents: Buffer.from('@Test. procedure test1: end procedure.') })
+		const success = await workspace.applyEdit(edit)
+		assert.ok(success)
+
+		log.info('contents=\'' + fs.readFileSync(toUri('src/dirA/proj10.p').fsPath, 'utf8') + '\'')
+		await sleep2(250)
+
+		// validate test item increase
+		const endCount = getTestControllerItemCount()
+		log.info('endCount=' + endCount + '; startCount=' + startCount)
+		assert.equal(endCount - startCount, 1, 'test file count delta')
 		return
 	})
 
-	test('proj0.12 - Delete File', async () => {
-		fs.copyFileSync(toUri('src/dirA/proj10.p.orig').fsPath, toUri('src/dirA/proj11.p').fsPath)
-		await refreshTests()
-		const count = await getTestControllerItemCount('ABLTestFile')
-		assert.equal(count, 46, 'initial count')
 
+	test('proj0.10B - Update File', async () => {
+		// init test
+		log.info('initializing test proj0.10A')
+		await workspace.fs.writeFile(toUri('src/dirA/proj10.p'), Buffer.from('@Test. procedure test1: end procedure.'))
+		const tempFile = await createTempFile()
+		const startCount = await refreshTests().then(() => { return getTestControllerItemCount('ABLTestCase') })
+
+		disposables.push(vscode.workspace.onWillCreateFiles(e => {
+			const ws = new vscode.WorkspaceEdit()
+			ws.insert(tempFile, new vscode.Position(0, 0), 'onWillCreate ' + e.files.length + ' ' + e.files[0].fsPath)
+			e.waitUntil(Promise.resolve(ws))
+		}))
+		await workspace.openTextDocument(toUri('src/dirA/proj10.p'))
+
+
+		// update test program
+		const edit = new vscode.WorkspaceEdit()
+		edit.createFile(toUri('src/dirA/proj10.p'), { overwrite: true, contents: Buffer.from('@Test. procedure test1: end procedure.\n\n@Test. procedure test2: end procedure.\n\n@Test. procedure test3: end procedure.') })
+		// edit.createFile(tempFile, { overwrite: true, contents: Buffer.from('edit.create ' + tempFile.fsPath) })
+		// edit.insert(tempFile, new vscode.Position(0, 0), 'edit.insert ' + tempFile.fsPath)
+		const success = await workspace.applyEdit(edit)
+		// assert.ok(success)
+		log.info('success=' + success)
+		log.info('contents=\'' + fs.readFileSync(toUri('src/dirA/proj10.p').fsPath, 'utf8') + '\'')
+
+		// validate test items removed
+		const endCount = getTestControllerItemCount('ABLTestCase')
+		log.info('endCount=' + endCount + '; startCount=' + startCount)
+		assert.equal(endCount - startCount, 2, 'test cases added != 2 (endCount=' + endCount + '; startCount=' + startCount + ')')
+	})
+
+	test('proj0.10C - Delete File', async () => {
+		// init tests
+		fs.copyFileSync(toUri('src/dirA/proj10.p.orig').fsPath, toUri('src/dirA/proj10.p').fsPath)
+		const startCount = await refreshTests()
+			.then(() => { return getTestControllerItemCount() })
+		const tempFile = await createTempFile()
+		disposables.push(vscode.workspace.onWillDeleteFiles(e => {
+			const ws = new vscode.WorkspaceEdit()
+			ws.insert(tempFile, new vscode.Position(0, 0), 'onWillDelete ' + e.files.length + ' ' + e.files[0].fsPath)
+			e.waitUntil(Promise.resolve(ws))
+		}))
+
+		// delete test program
 		log.info('deleting src/dirA/proj11.p')
-		await workspace.fs.delete(toUri('src/dirA/proj11.p'))
-			.then(() => { return sleep2(500) })
+		await workspace.fs.delete(toUri('src/dirA/proj10.p'))
+
+		// validate test item reduction
 		await refreshTests()
-		// await commands.executeCommand('testing.viewAsList')
-		// 	.then(() => { log.info('testing.viewAsList complete'); return })
-		await getTestControllerItemCount('ABLTestFile')
-			.then((count) => {
-				assert.equal(count, 44, 'final count')
-				return
-			})
-		// count = await refreshTests().then(() => { return getTestControllerItemCount() })
-		// assert.equal(count, 44, 'final count')
+		assert.equal(getTestControllerItemCount(), startCount - 2, 'after delte file count: startCount !+ test count')
+		return
 	})
 
 })

@@ -10,9 +10,10 @@ import {
 	WorkspaceFolder, commands, extensions, window,
 	workspace,
 	FileCoverageDetail,
-	Position
+	Position,
+	TestItem
 } from 'vscode'
-import { ABLResults } from '../src/ABLResults'
+import { ABLResults, ITestObj } from '../src/ABLResults'
 import { Duration, deleteFile as deleteFileCommon, isRelativePath, readStrippedJsonFile } from '../src/ABLUnitCommon'
 import { log as logObj } from '../src/ChannelLogger'
 import { gatherAllTestItems, IExtensionTestReferences } from '../src/extension'
@@ -22,6 +23,7 @@ import { DefaultRunProfile, IRunProfile as IRunProfileGlobal } from '../src/pars
 import { RunStatus } from '../src/ABLUnitRun'
 import { enableOpenedgeAblExtension, rebuildAblProject, restartLangServer, setRuntimes, waitForLangServerReady } from './openedgeAblCommands'
 import path from 'path'
+import { ABLTestCase, ABLTestData, ABLTestDir, ABLTestFile, testData } from 'testTree'
 
 // import decache from 'decache'
 // decache('./dist/extension.js')
@@ -32,6 +34,8 @@ interface IRuntime {
 	path: string,
 	default?: boolean
 }
+
+let ctrl: TestController
 
 // https://github.com/microsoft/vscode/blob/2aae82a102da66e566842ff9177bceeb99873970/src/vs/workbench/browser/actions/workspaceCommands.ts#L156C1-L163C2
 // interface IOpenFolderAPICommandOptions {
@@ -160,6 +164,7 @@ export async function suiteSetupCommon (runtimes: IRuntime[] = []) {
 	if (enableExtensions()) {
 		await enableOpenedgeAblExtension(runtimes)
 	}
+	ctrl = await getTestController()
 	log.info('suiteSetupCommon complete!')
 }
 
@@ -826,19 +831,67 @@ export function refreshData (resultsLen = 0) {
 }
 
 export async function getTestController () {
+	if (ctrl) {
+		return ctrl
+	}
 	const ext = extensions.getExtension('kherring.ablunit-test-runner')
 	if (!ext) {
 		throw new Error('kherring.ablunit-test-runner extension not found')
 	}
-	testController = await commands.executeCommand('_ablunit.getTestController')
-		.then((ctrl: unknown) => { return ctrl as TestController }, (e) => { throw e })
-	return testController
+	ctrl = await commands.executeCommand('_ablunit.getTestController')
+	return ctrl
 }
 
-export async function getTestControllerItemCount (type?: 'ABLTestFile' | undefined) {
-	const ctrl = await getTestController()
+export async function getTestData () {
+	const ext = extensions.getExtension('kherring.ablunit-test-runner')
+	if (!ext) {
+		throw new Error('kherring.ablunit-test-runner extension not found')
+	}
+	return commands.executeCommand('_ablunit.getTestData')
+		.then((data: unknown) => { return data as WeakMap<vscode.TestItem, ABLTestData> }, (e) => { throw e })
+}
+
+function getType (item: TestItem | undefined) {
+	if (!item) {
+		return 'unknown'
+	}
+
+	switch (item.description) {
+		case 'ABL Test Dir':
+			return 'ABLTestDir'
+		case 'ABL Test Suite':
+			return 'ABLTestSuite'
+		case 'ABL Test File':
+		case 'ABL Test Program':
+		case 'ABL Test Class':
+			return 'ABLTestFile'
+		case 'ABL Test Procedure':
+		case 'ABL Test Method':
+			return 'ABLTestCase'
+		default:
+			return 'unknown'
+	}
+}
+
+export function getTestControllerItemCount (type?: 'ABLTestDir' | 'ABLTestFile' | 'ABLTestCase' | undefined) {
 	const items = gatherAllTestItems(ctrl.items)
-	return items.length
+
+	log.info('items.length=' + items.length)
+	log.info('getType? ' + type)
+
+	if (!type) {
+		return items.length
+	}
+
+	let count = 0
+	for (const item of items) {
+		// log.info('found ' + getType(item))
+		if (getType(item) === type) {
+			// log.info('MATCH! ' + item.id)
+			count++
+		}
+	}
+	return count
 }
 
 export function getChildTestCount (type: string | undefined, items: TestItemCollection) {
@@ -1011,7 +1064,9 @@ export const assert = {
 	deepEqual: assertParent.deepEqual,
 	notDeepEqual: assertParent.notDeepEqual,
 	fail: assertParent.fail,
-	ok: assertParent.ok,
+	ok: (value: unknown) => {
+		assertParent.ok(value)
+	},
 	ifError: assertParent.ifError,
 	throws: assertParent.throws,
 	doesNotThrow: assertParent.doesNotThrow,

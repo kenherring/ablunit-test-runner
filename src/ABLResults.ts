@@ -96,9 +96,9 @@ export class ABLResults implements Disposable {
 		log.info('STATUS: ' + status)
 	}
 
-	setTestData (testData: WeakMap<TestItem, ABLTestData>) {
-		this.testData = testData
-	}
+	// setTestData (testData: WeakMap<TestItem, ABLTestData>) {
+	// 	this.testData = testData
+	// }
 
 	start () {
 		log.info('[start] workspaceFolder=' + this.workspaceFolder.uri.fsPath)

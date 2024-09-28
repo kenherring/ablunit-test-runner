@@ -3,4 +3,8 @@
 	// "ablunit.tempDir": "ablunit",
 	"ablunit.explorer.classlabel": "class-type-name",
 	"ablunit.discoverAllTestsOnActivate": true,
+	"ablunit.files.include": [
+		"**/*.p",
+		"**/*.cls",
+	]
 }
