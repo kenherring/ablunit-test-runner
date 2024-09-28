@@ -19,7 +19,7 @@
 	"@Ignore": {
 		"prefix": "@Ignore",
 		"body": [
-			"@Ignore"
+			"@Ignore."
 		],
 		"description": "Ignores the test. You can use this annotation when you are still working on a code, the test case is not ready to run, or if the execution time of test is too long to be included.",
 		"scope": "abl"
