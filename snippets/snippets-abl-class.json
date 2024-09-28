@@ -43,7 +43,7 @@
 			"  ${1:// do setup here}",
 			"end method."
 		],
-		"description": "To be deprecated, use @Before",
+		"description": "To be deprecated, use @BeforeAll",
 		"scope": "abl"
 	},
 	"@AfterEach method": {
