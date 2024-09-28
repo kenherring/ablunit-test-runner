@@ -96,7 +96,7 @@
 	"@AfterAll procedure": {
 		"prefix": "@AfterAll procedure",
 		"body": [
-			"@AfterAll,",
+			"@AfterAll.",
 			"procedure afterAll :",
 			"  // Executes once after all the tests are executed",
 			"end procedure."
