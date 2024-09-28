@@ -10,7 +10,6 @@
 		"description": "A method that is a test method",
 		"scope": "abl"
 	},
-	
 	"@Setup method": {
 		"prefix": "@Setup method",
 		"body": [
