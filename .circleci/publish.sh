@@ -26,7 +26,6 @@ main_block () {
         PRERELEASE=true
     fi
 
-    npm install -g @vscode/vsce || sudo npm install -g @vscode/vsce
     echo "publishing file 'ablunit-test-runner-${CIRCLE_TAG}.vsix'"
 
     local ARGS=()
@@ -35,11 +34,12 @@ main_block () {
     if $PRERELEASE; then
         ARGS+=("--pre-release")
     fi
-    vsce publish "${ARGS[@]}"
+    npx vsce publish "${ARGS[@]}"
 }
 
 upload_to_github_release () {
     echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}]"
+    sudo apt-get install --no-install-recommends -y gh
     gh release upload "$CIRCLE_TAG" "ablunit-test-runner-${CIRCLE_TAG}.vsix" --clobber
     gh release upload "$CIRCLE_TAG" "ablunit-test-runner-insiders-${CIRCLE_TAG}.vsix" --clobber
 }
