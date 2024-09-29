@@ -13,7 +13,7 @@ import {
 	Position,
 	TestItem
 } from 'vscode'
-import { ABLResults, ITestObj } from '../src/ABLResults'
+import { ABLResults } from '../src/ABLResults'
 import { Duration, deleteFile as deleteFileCommon, isRelativePath, readStrippedJsonFile } from '../src/ABLUnitCommon'
 import { log as logObj } from '../src/ChannelLogger'
 import { gatherAllTestItems, IExtensionTestReferences } from '../src/extension'
@@ -23,7 +23,7 @@ import { DefaultRunProfile, IRunProfile as IRunProfileGlobal } from '../src/pars
 import { RunStatus } from '../src/ABLUnitRun'
 import { enableOpenedgeAblExtension, rebuildAblProject, restartLangServer, setRuntimes, waitForLangServerReady } from './openedgeAblCommands'
 import path from 'path'
-import { ABLTestCase, ABLTestData, ABLTestDir, ABLTestFile, testData } from 'testTree'
+import { ABLTestData } from 'testTree'
 
 // import decache from 'decache'
 // decache('./dist/extension.js')
@@ -842,13 +842,21 @@ export async function getTestController () {
 	return ctrl
 }
 
-export async function getTestData () {
+export async function getTestItem (uri: Uri) {
 	const ext = extensions.getExtension('kherring.ablunit-test-runner')
 	if (!ext) {
 		throw new Error('kherring.ablunit-test-runner extension not found')
 	}
-	return commands.executeCommand('_ablunit.getTestData')
-		.then((data: unknown) => { return data as WeakMap<vscode.TestItem, ABLTestData> }, (e) => { throw e })
+	return commands.executeCommand('_ablunit.getTestItem', uri)
+		.then((i) => {
+			log.info('200')
+			const item = i as TestItem
+			if (!item) {
+				throw new Error('item is null')
+			}
+			log.info('202 item.id=' + item.id)
+			return item
+		}, (e) => { throw e })
 }
 
 function getType (item: TestItem | undefined) {
@@ -874,24 +882,27 @@ function getType (item: TestItem | undefined) {
 }
 
 export function getTestControllerItemCount (type?: 'ABLTestDir' | 'ABLTestFile' | 'ABLTestCase' | undefined) {
-	const items = gatherAllTestItems(ctrl.items)
+	return getTestController()
+		.then(() => {
+			const items = gatherAllTestItems(ctrl.items)
 
-	log.info('items.length=' + items.length)
-	log.info('getType? ' + type)
+			log.info('items.length=' + items.length)
+			log.info('getType? ' + type)
 
-	if (!type) {
-		return items.length
-	}
+			if (!type) {
+				return items.length
+			}
 
-	let count = 0
-	for (const item of items) {
-		// log.info('found ' + getType(item))
-		if (getType(item) === type) {
-			// log.info('MATCH! ' + item.id)
-			count++
-		}
-	}
-	return count
+			let count = 0
+			for (const item of items) {
+				log.info('found ' + getType(item) + ' for ' + item.id)
+				if (getType(item) === type) {
+					// log.info('MATCH! ' + item.id)
+					count++
+				}
+			}
+			return count
+		})
 }
 
 export function getChildTestCount (type: string | undefined, items: TestItemCollection) {

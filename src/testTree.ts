@@ -117,14 +117,18 @@ export class ABLTestFile extends TestTypeObj {
 	}
 
 	public updateFromDisk (controller: TestController, item: TestItem, token?: CancellationToken) {
+		log.info('500')
 		if (token) {
 			token.onCancellationRequested(() => { this.cancellationRequested() })
 		}
+		log.info('501')
 
 		return getContentFromFilesystem(item.uri!).then((content) => {
+			log.info('502')
 			item.error = 'Error parsing test file from disk: no content'
 			item.error = undefined
 			item.canResolveChildren = true
+			log.info('503')
 			return this.updateFromContents(controller, content, item)
 		}, (e) => {
 			item.error = (e as Error).stack
@@ -252,6 +256,7 @@ export class ABLTestSuite extends ABLTestFile {
 
 	public override updateFromContents (controller: TestController, content: string, item: TestItem) {
 		this.startParsing(item)
+		log.info('ABLTestSuite.updateFromContents: ' + item.uri?.fsPath)
 		const response = parseABLTestSuite(content)
 
 		if (!response) {
@@ -325,6 +330,7 @@ export class ABLTestClass extends ABLTestFile {
 
 	public override updateFromContents (controller: TestController, content: string, item: TestItem) {
 		this.startParsing(item)
+		log.info('ABLTestClass.updateFromContents: ' + item.uri?.fsPath)
 		const response = parseABLTestClass(displayClassLabel, content, this.relativePath)
 		this.updateItem(controller, item, response, 'Method')
 
@@ -340,6 +346,7 @@ export class ABLTestProgram extends ABLTestFile {
 	}
 
 	public override updateFromContents (controller: TestController, content: string, item: TestItem) {
+		log.info('ABLTestProgram.updateFromContents: ' + item.uri?.fsPath)
 		this.startParsing(item)
 		const response = parseABLTestProgram(content, this.relativePath)
 		this.updateItem(controller, item, response, 'Procedure')
