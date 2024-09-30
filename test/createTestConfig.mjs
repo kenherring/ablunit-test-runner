@@ -158,8 +158,8 @@ function getLaunchArgs (projName) {
 	}
 	// args.push('--log', 'debug') // '<level>'
 	// args.push('--log', 'trace') // '<level>'
-	// args.push('--log', 'kenherring.ablunit-test-runner:debug') // <extension-id>:<level>
-	// args.push('--log', 'kenherring.ablunit-test-runner:trace') // <extension-id>:<level>
+	// args.push('--log', 'kherring.ablunit-test-runner:debug') // <extension-id>:<level>
+	// args.push('--log', 'kherring.ablunit-test-runner:trace') // <extension-id>:<level>
 	// args.push('--status')
 	// args.push('--prof-startup')
 	// args.push('--disable-extension <ext-id>')
