@@ -779,7 +779,10 @@ function deleteTest (controller: TestController | undefined, item: TestItem | Ur
 	}
 
 	if (item instanceof Uri) {
-		const tmpItem = getExistingTestItem(controller!, item)
+		if (!controller) {
+			throw new Error('deleteTest failed - controller is required for Uri item')
+		}
+		const tmpItem = getExistingTestItem(controller, item)
 		if (!tmpItem) {
 			return false
 		}
