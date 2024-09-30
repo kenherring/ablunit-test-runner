@@ -39,9 +39,11 @@ main_block () {
 
 upload_to_github_release () {
     echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}]"
-    sudo apt-get install --no-install-recommends -y gh
+    local GH_TOKEN=$GH_TOKEN_PUBLISH
+    export GH_TOKEN
+    sudo apt update
+    sudo apt install --no-install-recommends -y gh
     gh release upload "$CIRCLE_TAG" "ablunit-test-runner-${CIRCLE_TAG}.vsix" --clobber
-    gh release upload "$CIRCLE_TAG" "ablunit-test-runner-insiders-${CIRCLE_TAG}.vsix" --clobber
 }
 
 ########## MAIN BLOCK ##########
