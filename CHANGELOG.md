@@ -1,3 +1,11 @@
+# [0.2.9](https://github.com/kenherring/ablunit-test-runner/releases/tag/0.2.9) - 2024-09-30 (pre-release)
+
+ * Restore watcher for file create, update, delete (#207)
+ * Add snippets for the  `@BeforeAll`,  `@BeforeEach`,  `@AfterEach`, `@AfrerAll` annotations (#205)
+ * Use vsce as a development dependency instead of globally installing (#206)
+
+**Full Changelog**: [0.2.7...0.2.9](https://github.com/kenherring/ablunit-test-runner/compare/0.2.7...0.2.9)
+
 # [0.2.7](https://github.com/kenherring/ablunit-test-runner/releases/tag/0.2.7) - 2024-09-24 (pre-release)
 
 This is a release candidate for 1.0.0.  There is one open PR ([#194](https://github.com/kenherring/ablunit-test-runner/pull/194)), but if there are other issues reported they may be addressed as well.

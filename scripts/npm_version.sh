@@ -21,6 +21,11 @@ initialize () {
 	CIRCLE_BUILD_NUM=${CIRCLE_BUILD_NUM:-}
     PACKAGE_VERSION=$(node -p "require('./package.json').version")
 
+	if [ "$(git branch --show-current)" = "main" ]; then
+		echo "ERROR: cannot be on main branch to run $0"
+		exit 1
+	fi
+
 	# MAJOR=$(echo "$PACKAGE_VERSION" | awk -F. '{print $1}')
 	MINOR=$(echo "$PACKAGE_VERSION" | awk -F. '{print $2}')
 	# PATCH=$(echo "$PACKAGE_VERSION" | awk -F. '{print $3}')
