@@ -10,22 +10,19 @@ import {
 	WorkspaceFolder, commands, extensions, window,
 	workspace,
 	FileCoverageDetail,
-	Position
+	Position,
+	TestItem
 } from 'vscode'
 import { ABLResults } from '../src/ABLResults'
 import { Duration, deleteFile as deleteFileCommon, isRelativePath, readStrippedJsonFile } from '../src/ABLUnitCommon'
 import { log as logObj } from '../src/ChannelLogger'
-import { IExtensionTestReferences } from '../src/extension'
+import { gatherAllTestItems, IExtensionTestReferences } from '../src/extension'
 import { ITestSuites } from '../src/parse/ResultsParser'
 import { IConfigurations, parseRunProfiles } from '../src/parse/TestProfileParser'
 import { DefaultRunProfile, IRunProfile as IRunProfileGlobal } from '../src/parse/config/RunProfile'
 import { RunStatus } from '../src/ABLUnitRun'
 import { enableOpenedgeAblExtension, rebuildAblProject, restartLangServer, setRuntimes, waitForLangServerReady } from './openedgeAblCommands'
 import path from 'path'
-
-// import decache from 'decache'
-// decache('./dist/extension.js')
-// decache('extension.js')
 
 interface IRuntime {
 	name: string,
@@ -109,7 +106,6 @@ export {
 }
 
 // test case objects - reset before each test
-let testController: TestController | undefined
 let recentResults: ABLResults[] | undefined
 let currentRunData: ABLResults[] | undefined
 export let runAllTestsDuration: Duration | undefined
@@ -117,7 +113,6 @@ export let cancelTestRunDuration: Duration | undefined
 
 export function beforeCommon () {
 	recentResults = undefined
-	testController = undefined
 	currentRunData = undefined
 
 	deleteTestFiles()
@@ -167,7 +162,6 @@ export function teardownCommon () {
 	runAllTestsDuration = undefined
 	cancelTestRunDuration = undefined
 
-	testController = undefined
 	recentResults = undefined
 	currentRunData = undefined
 }
@@ -790,7 +784,6 @@ export function selectProfile (profile: string) {
 }
 
 export function refreshData (resultsLen = 0) {
-	testController = undefined
 	recentResults = undefined
 	currentRunData = undefined
 
@@ -812,7 +805,6 @@ export function refreshData (resultsLen = 0) {
 		if (testCount && testCount <= resultsLen) {
 			throw new Error('failed to refresh test results: results.length=' + refs.recentResults.length)
 		}
-		testController = refs.testController
 		recentResults = refs.recentResults
 		if (refs.currentRunData) {
 			currentRunData = refs.currentRunData
@@ -825,22 +817,76 @@ export function refreshData (resultsLen = 0) {
 	})
 }
 
-export async function getTestController () {
+export function getTestController () {
 	const ext = extensions.getExtension('kherring.ablunit-test-runner')
 	if (!ext) {
 		throw new Error('kherring.ablunit-test-runner extension not found')
 	}
-	testController = await commands.executeCommand('_ablunit.getTestController')
-		.then((ctrl: unknown) => { return ctrl as TestController }, (e) => { throw e })
-	return testController
+	return commands.executeCommand('_ablunit.getTestController')
+		.then((c: unknown) => { return c as TestController })
 }
 
-export async function getTestControllerItemCount (type?: 'ABLTestFile' | undefined) {
-	const ctrl = await getTestController()
-	if (!ctrl?.items) {
-		return 0
+export async function getTestItem (uri: Uri) {
+	const ext = extensions.getExtension('kherring.ablunit-test-runner')
+	if (!ext) {
+		throw new Error('kherring.ablunit-test-runner extension not found')
 	}
-	return ctrl.items.size + getChildTestCount(type, ctrl.items)
+	return commands.executeCommand('_ablunit.getTestItem', uri)
+		.then((i: unknown) => {
+			log.info('200')
+			if (!i) {
+				throw new Error('TestItem not found for ' + uri.fsPath)
+			}
+			const item = i as TestItem
+			log.info('202 item.id=' + item.id)
+			return item
+		}, (e) => { throw e })
+}
+
+function getType (item: TestItem | undefined) {
+	if (!item) {
+		return 'unknown'
+	}
+
+	switch (item.description) {
+		case 'ABL Test Dir':
+			return 'ABLTestDir'
+		case 'ABL Test Suite':
+			return 'ABLTestSuite'
+		case 'ABL Test File':
+		case 'ABL Test Program':
+		case 'ABL Test Class':
+			return 'ABLTestFile'
+		case 'ABL Test Procedure':
+		case 'ABL Test Method':
+			return 'ABLTestCase'
+		default:
+			return 'unknown'
+	}
+}
+
+export function getTestControllerItemCount (type?: 'ABLTestDir' | 'ABLTestFile' | 'ABLTestCase' | undefined) {
+	return getTestController()
+		.then((ctrl) => {
+			const items = gatherAllTestItems(ctrl.items)
+
+			log.info('items.length=' + items.length)
+			log.info('getType? ' + type)
+
+			if (!type) {
+				return items.length
+			}
+
+			let count = 0
+			for (const item of items) {
+				log.info('found ' + getType(item) + ' for ' + item.id)
+				if (getType(item) === type) {
+					// log.info('MATCH! ' + item.id)
+					count++
+				}
+			}
+			return count
+		})
 }
 
 export function getChildTestCount (type: string | undefined, items: TestItemCollection) {
@@ -1013,7 +1059,9 @@ export const assert = {
 	deepEqual: assertParent.deepEqual,
 	notDeepEqual: assertParent.notDeepEqual,
 	fail: assertParent.fail,
-	ok: assertParent.ok,
+	ok: (value: unknown) => {
+		assertParent.ok(value)
+	},
 	ifError: assertParent.ifError,
 	throws: assertParent.throws,
 	doesNotThrow: assertParent.doesNotThrow,

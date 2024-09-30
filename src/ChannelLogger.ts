@@ -11,14 +11,17 @@ class Logger {
 	private logLevel: number
 	private readonly consoleTimestamp = process.env['ABLUNIT_TEST_RUNNER_UNIT_TESTING'] === 'true'
 	private testResultsTimestamp = false
+	private readonly extensionCodeDir = path.normalize(__dirname + '/../..')
 
-	private constructor () {
+	private constructor (extCodeDir?: string) {
 		this.logLevel = LogLevel.Info
 		this.logOutputChannel = window.createOutputChannel('ABLUnit', { log: true })
 		this.logOutputChannel.clear()
 		this.info('ABLUnit output channel created (logLevel=' + this.logOutputChannel.logLevel + ')')
 		this.logOutputChannel.onDidChangeLogLevel((e) => { this.setLogLevel(e) })
-
+		if (extCodeDir) {
+			this.extensionCodeDir = extCodeDir
+		}
 	}
 
 	public static getInstance () {
@@ -171,7 +174,7 @@ class Logger {
 			const filename = s.getFileName()
 			if (filename && filename !== __filename && !filename.endsWith('extensionHostProcess.js')) {
 				const funcname = s.getFunctionName()
-				let ret = filename.replace(path.normalize(__dirname), '').substring(1).replace(/\\/g, '/') + ':' + s.getLineNumber()
+				let ret = path.relative(this.extensionCodeDir, filename).replace(/\\/g, '/') + ':' + s.getLineNumber()
 				if (funcname) {
 					ret = ret + ' ' + funcname
 				}
