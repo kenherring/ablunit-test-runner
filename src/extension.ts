@@ -57,6 +57,7 @@ export async function activate (context: ExtensionContext) {
 		context.subscriptions.push(
 			commands.registerCommand('_ablunit.getExtensionTestReferences', () => { return getExtensionTestReferences() }),
 			commands.registerCommand('_ablunit.isRefreshTestsComplete', () => { return isRefreshTestsComplete }),
+			commands.registerCommand('_ablunit.getLogUri', () => { return context.logUri }),
 			commands.registerCommand('_ablunit.getTestController', () => { return ctrl }),
 			commands.registerCommand('_ablunit.getTestData', () => { return testData.getMap() }),
 			commands.registerCommand('_ablunit.getTestItem', (uri: Uri) => { return getExistingTestItem(ctrl, uri) }),
@@ -66,7 +67,7 @@ export async function activate (context: ExtensionContext) {
 	context.subscriptions.push(
 		commands.registerCommand('_ablunit.openCallStackItem', openCallStackItem),
 		workspace.onDidChangeConfiguration(e => { updateConfiguration(e) }),
-		workspace.onDidOpenTextDocument(e => { log.info('workspace.onDidOpen'); return createOrUpdateFile(ctrl, e.uri) }),
+		workspace.onDidOpenTextDocument(e => { log.info('workspace.onDidOpen'); return createOrUpdateFile(ctrl, e.uri, true) }),
 		workspace.onDidChangeTextDocument(e => { log.info('workspace.onDidChange ' + e.document.fileName); return createOrUpdateFile(ctrl, e.document.uri, true) }),
 		workspace.onDidCreateFiles(e => { log.info('workspace.onDidCreate ' + e.files[0].fsPath); return createOrUpdateFile(ctrl, e, true) }),
 		workspace.onDidDeleteFiles(e => { log.info('workspace.onDidDelete ' + e.files[0].fsPath); return deleteFiles(ctrl, e.files) })
@@ -372,7 +373,7 @@ export async function activate (context: ExtensionContext) {
 		log.info('u = ' + JSON.stringify(u))
 		if (workspace.getWorkspaceFolder(u) === undefined) {
 			log.info('skipping updateNodeForDocument for file not in workspace: ' + u.fsPath)
-			return Promise.resolve()
+			return Promise.resolve(false)
 		}
 		return updateNode(u, ctrl)
 	}
@@ -416,7 +417,7 @@ export async function activate (context: ExtensionContext) {
 			}, (e) => { throw e })
 	}
 
-	ctrl.resolveHandler = item => {
+	ctrl.resolveHandler = (item) => {
 
 		if (item?.uri) {
 			const relativePath = workspace.asRelativePath(item.uri)
@@ -472,7 +473,7 @@ function updateNode (uri: Uri, ctrl: TestController) {
 
 	const { item, data } = getOrCreateFile(ctrl, uri)
 	if(!item || !data) {
-		return new Promise(() => { return false })
+		return Promise.resolve(false)
 	}
 
 	ctrl.invalidateTestResults(item)
@@ -1037,7 +1038,7 @@ function createOrUpdateFile (controller: TestController, e: Uri | FileCreateEven
 		}
 	}
 	if (proms.length === 0) {
-		return false
+		return Promise.resolve(false)
 	}
 
 	return Promise.all(proms).then(() => { return true })

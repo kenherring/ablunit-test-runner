@@ -882,7 +882,7 @@ export function getTestControllerItemCount (type?: 'ABLTestDir' | 'ABLTestFile' 
 
 			let count = 0
 			for (const item of items) {
-				log.info('found ' + getType(item) + ' for ' + item.id)
+				log.debug('found ' + getType(item) + ' for ' + item.id)
 				if (getType(item) === type) {
 					// log.info('MATCH! ' + item.id)
 					count++
@@ -977,17 +977,21 @@ export async function getResults (len = 1, tag?: string): Promise<ABLResults[]> 
 	if (recentResults.length < len) {
 		throw new Error('recent results should be >= ' + len + ' but is ' + recentResults.length)
 	}
+	log.info('found results! (recentResults.length=' + recentResults.length + ')')
 	return recentResults
 }
 
 class AssertTestResults {
 	assertResultsCountByStatus (expectedCount: number, status: 'passed' | 'failed' | 'errored' | 'skipped' | 'all') {
+		log.info('recentResults.length=' + recentResults?.length)
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
 		const res = recentResults?.[0].ablResults?.resultsJson[0]
 		if (!res) {
 			assertParent.fail('No results found. Expected ' + expectedCount + ' ' + status + ' tests')
 			return
 		}
+
+		log.info('res.passed=' + res.passed + '; res.failed=' + res.failures + '; res.errors=' + res.errors + '; res.skipped=' + res.skipped)
 
 		switch (status) {
 			// case 'passed': actualCount = res.passed; break
