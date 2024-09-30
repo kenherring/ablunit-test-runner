@@ -23,19 +23,12 @@ import { DefaultRunProfile, IRunProfile as IRunProfileGlobal } from '../src/pars
 import { RunStatus } from '../src/ABLUnitRun'
 import { enableOpenedgeAblExtension, rebuildAblProject, restartLangServer, setRuntimes, waitForLangServerReady } from './openedgeAblCommands'
 import path from 'path'
-import { ABLTestData } from 'testTree'
-
-// import decache from 'decache'
-// decache('./dist/extension.js')
-// decache('extension.js')
 
 interface IRuntime {
 	name: string,
 	path: string,
 	default?: boolean
 }
-
-let ctrl: TestController
 
 // https://github.com/microsoft/vscode/blob/2aae82a102da66e566842ff9177bceeb99873970/src/vs/workbench/browser/actions/workspaceCommands.ts#L156C1-L163C2
 // interface IOpenFolderAPICommandOptions {
@@ -113,7 +106,6 @@ export {
 }
 
 // test case objects - reset before each test
-let testController: TestController | undefined
 let recentResults: ABLResults[] | undefined
 let currentRunData: ABLResults[] | undefined
 export let runAllTestsDuration: Duration | undefined
@@ -121,7 +113,6 @@ export let cancelTestRunDuration: Duration | undefined
 
 export function beforeCommon () {
 	recentResults = undefined
-	testController = undefined
 	currentRunData = undefined
 
 	deleteTestFiles()
@@ -164,7 +155,6 @@ export async function suiteSetupCommon (runtimes: IRuntime[] = []) {
 	if (enableExtensions()) {
 		await enableOpenedgeAblExtension(runtimes)
 	}
-	ctrl = await getTestController()
 	log.info('suiteSetupCommon complete!')
 }
 
@@ -172,7 +162,6 @@ export function teardownCommon () {
 	runAllTestsDuration = undefined
 	cancelTestRunDuration = undefined
 
-	testController = undefined
 	recentResults = undefined
 	currentRunData = undefined
 }
@@ -795,7 +784,6 @@ export function selectProfile (profile: string) {
 }
 
 export function refreshData (resultsLen = 0) {
-	testController = undefined
 	recentResults = undefined
 	currentRunData = undefined
 
@@ -817,7 +805,6 @@ export function refreshData (resultsLen = 0) {
 		if (testCount && testCount <= resultsLen) {
 			throw new Error('failed to refresh test results: results.length=' + refs.recentResults.length)
 		}
-		testController = refs.testController
 		recentResults = refs.recentResults
 		if (refs.currentRunData) {
 			currentRunData = refs.currentRunData
@@ -830,16 +817,13 @@ export function refreshData (resultsLen = 0) {
 	})
 }
 
-export async function getTestController () {
-	if (ctrl) {
-		return ctrl
-	}
+export function getTestController () {
 	const ext = extensions.getExtension('kherring.ablunit-test-runner')
 	if (!ext) {
 		throw new Error('kherring.ablunit-test-runner extension not found')
 	}
-	ctrl = await commands.executeCommand('_ablunit.getTestController')
-	return ctrl
+	return commands.executeCommand('_ablunit.getTestController')
+		.then((c: unknown) => { return c as TestController })
 }
 
 export async function getTestItem (uri: Uri) {
@@ -848,12 +832,12 @@ export async function getTestItem (uri: Uri) {
 		throw new Error('kherring.ablunit-test-runner extension not found')
 	}
 	return commands.executeCommand('_ablunit.getTestItem', uri)
-		.then((i) => {
+		.then((i: unknown) => {
 			log.info('200')
-			const item = i as TestItem
-			if (!item) {
-				throw new Error('item is null')
+			if (!i) {
+				throw new Error('TestItem not found for ' + uri.fsPath)
 			}
+			const item = i as TestItem
 			log.info('202 item.id=' + item.id)
 			return item
 		}, (e) => { throw e })
@@ -883,7 +867,7 @@ function getType (item: TestItem | undefined) {
 
 export function getTestControllerItemCount (type?: 'ABLTestDir' | 'ABLTestFile' | 'ABLTestCase' | undefined) {
 	return getTestController()
-		.then(() => {
+		.then((ctrl) => {
 			const items = gatherAllTestItems(ctrl.items)
 
 			log.info('items.length=' + items.length)

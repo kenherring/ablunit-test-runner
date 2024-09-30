@@ -210,7 +210,6 @@ suite('proj0  - Extension Test Suite', () => {
 
 		// validate test item increase
 		const endCount = await getTestControllerItemCount()
-		log.info('endCount=' + endCount + '; startCount=' + startCount)
 		assert.equal(endCount - startCount, 1, 'test file count delta')
 		return
 	})
@@ -237,16 +236,8 @@ suite('proj0  - Extension Test Suite', () => {
 		assert.ok(success)
 
 		// validate test case items added
-		await sleep2(1000)
-			.then(() => { return sleep2(1000) })
-			.then(() => { return sleep2(1000) })
-			.then(() => { return sleep2(1000) })
-			.then(() => { return sleep2(1000) })
-			.then(() => { return sleep2(1000) })
-			.then(() => { return sleep2(1000) })
-
+		await sleep2(100) // TODO - remove me
 		const endCount = await getTestItem(toUri('src/dirA/proj10.p')).then((r) => { return r.children.size }, (e) => { throw e })
-		log.info('endCount=' + endCount + '; startCount=' + startCount)
 		assert.equal(endCount - startCount, 2, 'test cases added != 2 (endCount=' + endCount + '; startCount=' + startCount + ')')
 	})
 

@@ -1,5 +1,5 @@
 /* eslint-disable no-console */
-import { extensions, LogLevel, TestRun, window } from 'vscode'
+import { LogLevel, TestRun, window } from 'vscode'
 import path from 'path'
 
 class Logger {
@@ -13,19 +13,15 @@ class Logger {
 	private testResultsTimestamp = false
 	private readonly extensionCodeDir = path.normalize(__dirname + '/../..')
 
-	private constructor () {
+	private constructor (extCodeDir?: string) {
 		this.logLevel = LogLevel.Info
 		this.logOutputChannel = window.createOutputChannel('ABLUnit', { log: true })
 		this.logOutputChannel.clear()
 		this.info('ABLUnit output channel created (logLevel=' + this.logOutputChannel.logLevel + ')')
 		this.logOutputChannel.onDidChangeLogLevel((e) => { this.setLogLevel(e) })
-		const ext = extensions.getExtension('kherring.ablunit-test-runner')
-		if (ext) {
-			console.log('ext.extensionUri.fsPath=' + ext.extensionUri.fsPath)
-			this.extensionCodeDir = ext.extensionUri.fsPath
+		if (extCodeDir) {
+			this.extensionCodeDir = extCodeDir
 		}
-		console.log('this.extensionCodeDir=' + this.extensionCodeDir)
-
 	}
 
 	public static getInstance () {
