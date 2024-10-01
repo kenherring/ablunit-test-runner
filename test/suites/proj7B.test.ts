@@ -65,7 +65,7 @@ suite('proj7B - Extension Test Suite', () => {
 
 	test('proj7B.2 - cancel test run while adding tests', async () => {
 		const maxCancelTime = 1000
-		const runTestTime = new Duration()
+		// const runTestTime = new Duration()
 
 		runAllTests().catch((err: unknown) => { log.info('runAllTests got error: ' + err) })
 		await waitForTestRunStatus(RunStatus.Constructed)
@@ -73,8 +73,8 @@ suite('proj7B - Extension Test Suite', () => {
 		const elapsedCancelTime = await cancelTestRun(false)
 		assert.durationLessThan(elapsedCancelTime, maxCancelTime)
 
-		const resArr = await getCurrentRunData()
-		const res = resArr[0]
+		// const resArr = await getCurrentRunData()
+		// const res = resArr[0]
 
 		// TODO - fix for 12.7.0
 
@@ -102,7 +102,7 @@ suite('proj7B - Extension Test Suite', () => {
 
 	test('proj7B.3 - cancel test run while _progres is running', async () => {
 		const maxCancelTime = 1000
-		const runTestTime = new Duration()
+		// const runTestTime = new Duration()
 
 		runAllTests().catch((err: unknown) => { log.info('runAllTests got error: ' + err) })
 

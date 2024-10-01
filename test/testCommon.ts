@@ -604,27 +604,21 @@ async function waitForRefreshComplete () {
 	const refreshDuration = new Duration('waitForRefreshComplete')
 	log.info('waiting for refresh to complete...')
 
-	const ext = extensions.getExtension('kherring.ablunit-test-runner')
-	await ext?.activate()
-	const p = new Promise((resolve, reject) => {
-		const interval = setInterval(() => {
-			if (refreshDuration.elapsed() > waitTime) {
-				clearInterval(interval)
-				reject(new Error('refresh took longer than ' + waitTime + 'ms'))
-			}
-			// eslint-disable-next-line @typescript-eslint/no-unused-vars
-			const p = commands.executeCommand('_ablunit.isRefreshTestsComplete')
-				.then((r: unknown) => {
-					if (r) {
-						clearInterval(interval)
-						resolve(refreshDuration.elapsed())
-					}
-					return r
-				}, (e) => { throw e })
-		}, 500)
-	})
-	await p
-	return
+	while (refreshDuration.elapsed() < waitTime) {
+		const refreshComplete = await commands.executeCommand('_ablunit.isRefreshTestsComplete')
+			.then((r: unknown) => {
+				log.info('isRefreshTestsComplete=' + r)
+				return true
+			}, (e) => {
+				log.info('isRefreshTestComplete error=' + e)
+				return false
+			})
+		if (refreshComplete) {
+			return true
+		}
+		await sleep2(500)
+	}
+	throw new Error('waitForRefreshComplete timeout')
 
 }
 
@@ -829,7 +823,7 @@ export function getTestController () {
 		.then((c: unknown) => { return c as TestController })
 }
 
-export async function getTestItem (uri: Uri) {
+export function getTestItem (uri: Uri) {
 	const ext = extensions.getExtension('kherring.ablunit-test-runner')
 	if (!ext) {
 		throw new Error('kherring.ablunit-test-runner extension not found')
@@ -1182,7 +1176,7 @@ export const assert = {
 	}
 }
 
-export async function beforeProj7 () {
+export function beforeProj7 () {
 	const templateProc = toUri('src/template_proc.p')
 	const templateClass = toUri('src/template_class.cls')
 	return workspace.fs.readFile(templateClass)

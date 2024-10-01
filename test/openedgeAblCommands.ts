@@ -25,7 +25,7 @@ export async function enableOpenedgeAblExtension (runtimes: IRuntime[]) {
 			log.info('rebuild complete! (rcodeCount=' + rcodeCount + ')')
 			log.info('riversidesoftware.openedge-abl-lsp extension is enabled!')
 			return true
-		}, (e) => { throw e })
+		}, (e: unknown) => { throw e })
 }
 
 export function restartLangServer () {
@@ -136,7 +136,7 @@ export async function waitForLangServerReady () {
 		})
 }
 
-export async function setRuntimes (runtimes: IRuntime[] = []) {
+export function setRuntimes (runtimes: IRuntime[] = []) {
 	const duration = new Duration('setRuntimes')
 	if (!enableExtensions()) {
 		throw new Error('setRuntimes failed! extensions are disabled')
@@ -160,7 +160,7 @@ export async function setRuntimes (runtimes: IRuntime[] = []) {
 	log.info('  input=' + JSON.stringify(runtimes))
 	if (JSON.stringify(current) === JSON.stringify(runtimes)) {
 		log.info('runtmes are already set ' + duration)
-		return true
+		return Promise.resolve(true)
 	}
 
 	log.info('setting workspace configuration abl.configuration.defaultRuntime=' + oeVersion())

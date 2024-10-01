@@ -6,6 +6,7 @@ import {
 	FileCoverage,
 	FileCoverageDetail,
 	FileCreateEvent,
+	FileSystemWatcher,
 	FileType,
 	LogLevel,
 	Position, Range, RelativePattern, Selection,
@@ -68,9 +69,10 @@ export async function activate (context: ExtensionContext) {
 		commands.registerCommand('_ablunit.openCallStackItem', openCallStackItem),
 		workspace.onDidChangeConfiguration(e => { updateConfiguration(e) }),
 		workspace.onDidOpenTextDocument(e => { log.info('workspace.onDidOpen'); return createOrUpdateFile(ctrl, e.uri, true) }),
-		workspace.onDidChangeTextDocument(e => { log.info('workspace.onDidChange ' + e.document.fileName); return createOrUpdateFile(ctrl, e.document.uri, true) }),
+		// workspace.onDidChangeTextDocument(e => { log.info('workspace.onDidChange ' + e.document.fileName); return createOrUpdateFile(ctrl, e.document.uri, true) }),
 		workspace.onDidCreateFiles(e => { log.info('workspace.onDidCreate ' + e.files[0].fsPath); return createOrUpdateFile(ctrl, e, true) }),
-		workspace.onDidDeleteFiles(e => { log.info('workspace.onDidDelete ' + e.files[0].fsPath); return deleteFiles(ctrl, e.files) })
+		workspace.onDidDeleteFiles(e => { log.info('workspace.onDidDelete ' + e.files[0].fsPath); return deleteFiles(ctrl, e.files) }),
+		// ...startWatchingWorkspace(ctrl),
 	)
 
 
@@ -770,7 +772,7 @@ function getWorkspaceTestPatterns () {
 	return [ includePatterns, excludePatterns ]
 }
 
-async function deleteFiles (controller: TestController, files: readonly Uri[]) {
+function deleteFiles (controller: TestController, files: readonly Uri[]) {
 	log.info('deleted files detected: ' + files.length)
 	let didDelete = false
 	for (const uri of files) {
@@ -1043,26 +1045,25 @@ function createOrUpdateFile (controller: TestController, e: Uri | FileCreateEven
 
 	return Promise.all(proms).then(() => { return true })
 }
+function startWatchingWorkspace (controller: TestController) {
+	log.info('start watching workspace')
+	const [ includePatterns, excludePatterns ] = getWorkspaceTestPatterns()
+	log.debug('includePatterns=' + includePatterns.length + ', excludePatterns=' + excludePatterns.length)
 
-// function startWatchingWorkspace (controller: TestController) {
-// 	log.info('start watching workspace')
-// 	const [ includePatterns, excludePatterns ] = getWorkspaceTestPatterns()
-// 	log.debug('includePatterns=' + includePatterns.length + ', excludePatterns=' + excludePatterns.length)
+	const watchers: FileSystemWatcher[] = []
 
-// 	const watchers: FileSystemWatcher[] = []
+	// TODO - different patterns in different workspaces...
 
-// 	// TODO - different patterns in different workspaces...
-
-// 	for (const includePattern of includePatterns) {
-// 		log.info('creating watcher for: ' + includePattern.pattern)
-// 		const watcher = workspace.createFileSystemWatcher(includePattern)
-// 		watcher.onDidCreate(uri => { log.info('watcher.onDidCreate'); return createOrUpdateFile(controller, uri, true) })
-// 		watcher.onDidChange(uri => { log.info('watcher.onDidChange'); return createOrUpdateFile(controller, uri, true) })
-// 		watcher.onDidDelete(uri => { log.info('watcher.onDidDelete'); return deleteTest(controller, uri) })
-// 		watchers.push(watcher)
-// 	}
-// 	return watchers
-// }
+	for (const includePattern of includePatterns) {
+		log.info('creating watcher for: ' + includePattern.pattern)
+		const watcher = workspace.createFileSystemWatcher(includePattern)
+		watcher.onDidCreate(uri => { log.info('watcher.onDidCreate'); return createOrUpdateFile(controller, uri, true) })
+		watcher.onDidChange(uri => { log.info('watcher.onDidChange'); return createOrUpdateFile(controller, uri, true) })
+		watcher.onDidDelete(uri => { log.info('watcher.onDidDelete'); return deleteTest(controller, uri) })
+		watchers.push(watcher)
+	}
+	return watchers
+}
 
 function openCallStackItem (traceUriStr: string) {
 	const traceUri = Uri.file(traceUriStr.split('&')[0])

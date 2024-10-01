@@ -1,5 +1,3 @@
-import { log } from 'ChannelLogger'
-
 interface ICoreOutput {
 	location?: string
 	filename?: string

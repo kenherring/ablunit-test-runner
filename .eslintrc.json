@@ -37,6 +37,12 @@
 		"esbuild.js"
 	],
 	"rules": {
+		/****** @typescript-eslint/recommended-type-checked *****/
+	    // "no-return-await": "off", // deprecated; must be disabled to avoid conflict with "@typescript-eslint/return-await"
+		// "@typescript-eslint/return-await": "error",
+		// "require-await": "error",
+		// "@typescript-eslint/require-await": "error",
+
 		"@stylistic/indent": [ "error", "tab" ],
 		"@typescript-eslint/ban-types": [ "error", {
 			"types": {
@@ -66,17 +72,17 @@
 		],
 		"@typescript-eslint/prefer-readonly": "warn",
 		"@typescript-eslint/restrict-plus-operands": "off",
-		"no-return-await": "off", // deprecated; must be disabled to avoid conflict with "@typescript-eslint/return-await"
-		"@typescript-eslint/return-await": "error",
+
 		"@typescript-eslint/switch-exhaustiveness-check": "warn",
 
 		"@typescript-eslint/no-misused-promises": "error",
-		"@typescript-eslint/no-floating-promises": "error",
+		"@typescript-eslint/no-floating-promises": [ "error", { "checkThenables": true } ],
 
 		"promise/catch-or-return": "warn",
 		"promise/no-callback-in-promise": "off",
 		"promise/always-return": [ "warn",  { "ignoreLastCallback": true } ],
 
+		// "no-await-in-loop": "warn",
 		"no-console": "warn",
 		"no-empty": "warn",
 		"no-mixed-spaces-and-tabs": ["error", "smart-tabs"],

@@ -2,7 +2,7 @@ import { assert, beforeProj7, Duration, runAllTests, suiteSetupCommon } from '..
 
 suite('proj7A - Extension Test Suite', () => {
 
-	suiteSetup('proj7A - before', async () => {
+	suiteSetup('proj7A - before', () => {
 		return suiteSetupCommon()
 			.then(() => { return beforeProj7() })
 	})

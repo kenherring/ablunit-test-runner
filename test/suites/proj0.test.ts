@@ -1,6 +1,6 @@
-import { Uri, commands, window, workspace, TestItem } from 'vscode'
+import { Uri, commands, window, workspace } from 'vscode'
 import * as vscode from 'vscode'
-import { assert, deleteFile, getResults, getTestController, getTestControllerItemCount, getTestItem, log, refreshTests, runAllTests, runAllTestsWithCoverage, sleep2, suiteSetupCommon, toUri, updateTestProfile } from '../testCommon'
+import { assert, deleteFile, getResults, getTestControllerItemCount, getTestItem, log, refreshTests, runAllTests, runAllTestsWithCoverage, sleep2, suiteSetupCommon, toUri, updateTestProfile } from '../testCommon'
 import { ABLResultsParser } from 'parse/ResultsParser'
 import * as fs from 'fs'
 
@@ -214,7 +214,7 @@ suite('proj0  - Extension Test Suite', () => {
 		// init tests
 		fs.copyFileSync(toUri('src/dirA/proj10.p.orig').fsPath, toUri('src/dirA/proj10.p').fsPath)
 		const startCount = await refreshTests()
-			.then(() => { return getTestControllerItemCount() })
+			.then(() => { return getTestControllerItemCount('ABLTestFile') })
 		const tempFile = await createTempFile()
 		disposables.push(vscode.workspace.onWillDeleteFiles(e => {
 			const ws = new vscode.WorkspaceEdit()
@@ -228,7 +228,7 @@ suite('proj0  - Extension Test Suite', () => {
 
 		// validate test item reduction
 		await refreshTests()
-		assert.equal(await getTestControllerItemCount() - startCount, -2, 'after delte file count: startCount !+ test count')
+		assert.equal(await getTestControllerItemCount('ABLTestFile') - startCount, -1, 'after delte file count: startCount !+ test count')
 		return
 	})
 
