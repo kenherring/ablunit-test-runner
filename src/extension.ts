@@ -897,29 +897,28 @@ function findMatchingFiles (includePatterns: RelativePattern[], token: Cancellat
 		}, (e) => { throw e })
 }
 
-// async function parseMatchingFiles (files: Uri[], controller: TestController, excludePatterns: RelativePattern[], token: CancellationToken, checkCancellationToken: () => void, resolvedCount: number, rejectedCount: number) {
-async function parseMatchingFiles (files: Uri[], controller: TestController, excludePatterns: RelativePattern[], token: CancellationToken, checkCancellationToken: () => void): Promise<boolean> {
-	const proms: PromiseLike<boolean>[] = []
-	log.debug('parsing files... (count=' + files.length + ')')
-	for (const file of files) {
-		checkCancellationToken()
+// async function parseMatchingFiles (files: Uri[], controller: TestController, excludePatterns: RelativePattern[], token: CancellationToken, checkCancellationToken: () => void): Promise<boolean> {
+// 	const proms: PromiseLike<boolean>[] = []
+// 	log.debug('parsing files... (count=' + files.length + ')')
+// 	for (const file of files) {
+// 		checkCancellationToken()
 
-		const { item, data } = getOrCreateFile(controller, file, excludePatterns)
-		log.info('data.description=\'' + data?.description + '\'; item.id=' + item?.id)
-		if (item && data instanceof ABLTestFile) {
-			log.info('updating from disk')
-			const prom = data.updateFromDisk(controller, item, token).then((foundTestCase) => {
-				return foundTestCase
-			}, (e) => {
-				log.error('failed to update file from disk. err=' + e)
-				return false
-			})
-			proms.push(prom)
-		}
-	}
-	const r = await Promise.all(proms).then(() => { return true })
-	return r
-}
+// 		const { item, data } = getOrCreateFile(controller, file, excludePatterns)
+// 		log.info('data.description=\'' + data?.description + '\'; item.id=' + item?.id)
+// 		if (item && data instanceof ABLTestFile) {
+// 			log.info('updating from disk')
+// 			const prom = data.updateFromDisk(controller, item, token).then((foundTestCase) => {
+// 				return foundTestCase
+// 			}, (e) => {
+// 				log.error('failed to update file from disk. err=' + e)
+// 				return false
+// 			})
+// 			proms.push(prom)
+// 		}
+// 	}
+// 	const r = await Promise.all(proms).then(() => { return true })
+// 	return r
+// }
 
 function removeDeletedFiles (ctrl: TestController) {
 	const items = gatherAllTestItems(ctrl.items)
@@ -1049,25 +1048,26 @@ function createOrUpdateFile (controller: TestController, e: Uri | FileCreateEven
 
 	return Promise.all(proms).then(() => { return true })
 }
-function startWatchingWorkspace (controller: TestController) {
-	log.info('start watching workspace')
-	const [ includePatterns, excludePatterns ] = getWorkspaceTestPatterns()
-	log.debug('includePatterns=' + includePatterns.length + ', excludePatterns=' + excludePatterns.length)
 
-	const watchers: FileSystemWatcher[] = []
+// function startWatchingWorkspace (controller: TestController) {
+// 	log.info('start watching workspace')
+// 	const [ includePatterns, excludePatterns ] = getWorkspaceTestPatterns()
+// 	log.debug('includePatterns=' + includePatterns.length + ', excludePatterns=' + excludePatterns.length)
 
-	// TODO - different patterns in different workspaces...
+// 	const watchers: FileSystemWatcher[] = []
 
-	for (const includePattern of includePatterns) {
-		log.info('creating watcher for: ' + includePattern.pattern)
-		const watcher = workspace.createFileSystemWatcher(includePattern)
-		watcher.onDidCreate(uri => { log.info('watcher.onDidCreate'); return createOrUpdateFile(controller, uri, true) })
-		watcher.onDidChange(uri => { log.info('watcher.onDidChange'); return createOrUpdateFile(controller, uri, true) })
-		watcher.onDidDelete(uri => { log.info('watcher.onDidDelete'); return deleteTest(controller, uri) })
-		watchers.push(watcher)
-	}
-	return watchers
-}
+// 	// TODO - different patterns in different workspaces...
+
+// 	for (const includePattern of includePatterns) {
+// 		log.info('creating watcher for: ' + includePattern.pattern)
+// 		const watcher = workspace.createFileSystemWatcher(includePattern)
+// 		watcher.onDidCreate(uri => { log.info('watcher.onDidCreate'); return createOrUpdateFile(controller, uri, true) })
+// 		watcher.onDidChange(uri => { log.info('watcher.onDidChange'); return createOrUpdateFile(controller, uri, true) })
+// 		watcher.onDidDelete(uri => { log.info('watcher.onDidDelete'); return deleteTest(controller, uri) })
+// 		watchers.push(watcher)
+// 	}
+// 	return watchers
+// }
 
 function openCallStackItem (traceUriStr: string) {
 	const traceUri = Uri.file(traceUriStr.split('&')[0])
