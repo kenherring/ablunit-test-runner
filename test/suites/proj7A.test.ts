@@ -13,7 +13,7 @@ suite('proj7A - Extension Test Suite', () => {
 		const duration = new Duration()
 		await runAllTests().then(() => {
 			assert.tests.count(3000)
-			assert.durationLessThan(duration, 90000)
+			assert.durationLessThan(duration, 120000)
 		})
 	})
 

@@ -60,6 +60,8 @@
 		}],
 		"@typescript-eslint/no-confusing-non-null-assertion": "warn",
 		"@typescript-eslint/no-extra-parens": "warn",
+		"@typescript-eslint/no-floating-promises": [ "error", { "checkThenables": true } ],
+		"@typescript-eslint/no-misused-promises": "error",
 		"@typescript-eslint/no-non-null-assertion": 0, // strict-type-checked="error"
 		"@typescript-eslint/no-unnecessary-condition": 0, // strict-type-checked="error"
 		"no-unused-vars": "off", // must be disabled to avoid conflict with "@typescript-eslint/no-unused-vars"
@@ -72,11 +74,7 @@
 		],
 		"@typescript-eslint/prefer-readonly": "warn",
 		"@typescript-eslint/restrict-plus-operands": "off",
-
 		"@typescript-eslint/switch-exhaustiveness-check": "warn",
-
-		"@typescript-eslint/no-misused-promises": "error",
-		"@typescript-eslint/no-floating-promises": [ "error", { "checkThenables": true } ],
 
 		"promise/catch-or-return": "warn",
 		"promise/no-callback-in-promise": "off",

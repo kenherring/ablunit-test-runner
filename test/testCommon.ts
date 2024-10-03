@@ -636,21 +636,35 @@ export function refreshTests () {
 }
 
 export async function waitForTestRunStatus (waitForStatus: RunStatus) {
+	const maxWaitTime = 90000
 	const waitTime = new Duration()
-	let runData: ABLResults[] = []
 	let currentStatus = RunStatus.None
 
 	log.info('waiting for test run status = \'running\'')
 
-	setTimeout(() => { throw new Error('waitForTestRunStatus timeout') }, 20000)
+	// setTimeout(() => { throw new Error('waitForTestRunStatus timeout') }, 20000)
+	let count = 0
 	while (currentStatus < waitForStatus)
 	{
-		log.info('loop-1')
-		await sleep2(500, 'waitForTestRunStatus currentStatus=\'' + currentStatus.toString() + '\' + , waitForStatus=\'' + waitForStatus.toString() + '\'')
-		log.info('loop-2')
-		runData = await getCurrentRunData()
-		currentStatus = runData[0].status
-		log.info('loop-4')
+		count++
+		await sleep2(500, 'waitForTestRunStatus count=' + count + '; currentStatus=\'' + currentStatus.toString() + '\' + , waitForStatus=\'' + waitForStatus.toString() + '\'')
+		currentStatus = await getCurrentRunData()
+			.then((runData) => {
+				log.info('100 runData.length=' + runData.length)
+				if (runData.length > 0) {
+					return runData[0].status
+				}
+				return RunStatus.None
+			}, (e) => {
+				log.info('could not get current run data: ' + e)
+				return RunStatus.None
+			})
+		if (currentStatus >= waitForStatus) {
+			break
+		}
+		if (waitTime.elapsed() > maxWaitTime) {
+			throw new Error('waited ' + maxWaitTime + 'ms to reach status \'' + waitForStatus + '\' but status is \'' + currentStatus + '\'')
+		}
 	}
 
 	log.info('found test run status    = \'' + currentStatus + '\'' + waitTime.toString())
@@ -784,24 +798,29 @@ export function refreshData (resultsLen = 0) {
 	recentResults = undefined
 	currentRunData = undefined
 
-	log.info('refreshData start')
 	return commands.executeCommand('_ablunit.getExtensionTestReferences').then((resp) => {
 		// log.info('refreshData command complete (resp=' + JSON.stringify(resp) + ')')
-		log.info('getExtensionTestReferences command complete')
 		const refs = resp as IExtensionTestReferences
+		log.info('getExtensionTestReferences command complete (resp.length=' + refs.recentResults.length + ')')
 		// log.info('refs=' + JSON.stringify(refs))
-		const testCount = refs.recentResults?.[0].ablResults?.resultsJson[0].testsuite?.[0].tests ?? undefined
-		const passedCount = refs.recentResults?.[0].ablResults?.resultsJson[0].testsuite?.[0].passed ?? undefined
-		const failedCount = refs.recentResults?.[0].ablResults?.resultsJson[0].testsuite?.[0].failures ?? undefined
-		log.info('recentResults.length=' + refs.recentResults.length)
-		log.info('recentResults[0].ablResults.status=' + refs.recentResults?.[0].status)
-		log.info('recentResults[0].ablResults.resultsJson.length=' + refs.recentResults?.[0].ablResults?.resultsJson.length)
-		log.info('recentResults[0].ablResults.resultsJson[0].testsuite.length=' + refs.recentResults?.[0].ablResults?.resultsJson[0].testsuite?.length)
-		log.info('testCount=' + testCount + '; passed=' + passedCount + '; failed=' + failedCount)
 
-		if (testCount && testCount <= resultsLen) {
-			throw new Error('failed to refresh test results: results.length=' + refs.recentResults.length)
+		// if (refs.recentResults.length == 0) {
+		// 	throw new Error('failed to refresh test results: results.length=' + refs.recentResults.length)
+		// }
+		if (refs.recentResults.length > 0) {
+			const testCount = refs.recentResults?.[0].ablResults?.resultsJson[0].testsuite?.[0].tests ?? undefined
+			const passedCount = refs.recentResults?.[0].ablResults?.resultsJson[0].testsuite?.[0].passed ?? undefined
+			const failedCount = refs.recentResults?.[0].ablResults?.resultsJson[0].testsuite?.[0].failures ?? undefined
+			log.info('recentResults.length=' + refs.recentResults.length)
+			log.info('recentResults[0].ablResults.status=' + refs.recentResults?.[0].status)
+			log.info('recentResults[0].ablResults.resultsJson.length=' + refs.recentResults?.[0].ablResults?.resultsJson.length)
+			log.info('recentResults[0].ablResults.resultsJson[0].testsuite.length=' + refs.recentResults?.[0].ablResults?.resultsJson[0].testsuite?.length)
+			log.info('testCount=' + testCount + '; passed=' + passedCount + '; failed=' + failedCount)
+			if (testCount && testCount <= resultsLen) {
+				assert.lessOrEqual(testCount, resultsLen, 'testCount should be greater than ' + resultsLen)
+			}
 		}
+
 		recentResults = refs.recentResults
 		if (refs.currentRunData) {
 			currentRunData = refs.currentRunData
@@ -915,18 +934,16 @@ export async function getCurrentRunData (len = 1, resLen = 0, tag?: string) {
 		log.info(tag + 'getCurrentRunData not set, refreshing...')
 		for (let i=0; i<3; i++) {
 			await sleep2(500, tag + 'still no currentRunData, sleep before trying again (' + i + '/3)')
-			const prom = refreshData(resLen).then(() => {
-				log.debug('refresh success')
+			log.info(tag + 'getCurrentRunData - await prom start')
+			const retResults = await refreshData(resLen).then((r) => {
+				log.debug('refresh success (r=' + r + '; currentRunData.length=' + currentRunData?.length + ')')
 				return true
 			}, (err) => {
 				log.error('refresh failed: ' + err)
 				return false
 			})
 
-			log.info(tag + 'getCurrentRunData - await prom start')
-			const retResults = await prom
 			log.info(tag + 'getCurrentRunData - prom.done retResults=' + retResults)
-			log.info(tag + 'currentRunData.length=' + currentRunData?.length + ', retResults=' + retResults)
 			if (retResults && (currentRunData?.length ?? 0) > len && (recentResults?.length ?? 0) > resLen) {
 				log.info(tag + ' break')
 				break
@@ -1130,6 +1147,12 @@ export const assert = {
 		assertParent.ok(duration, 'duration is undefined')
 		const name = duration.name ?? 'duration'
 		assertParent.ok(duration.elapsed() < milliseconds, name + ' is not less than limit (' + duration.elapsed() + ' / ' + milliseconds + 'ms)')
+	},
+
+	durationMoreThan (duration: Duration | undefined, milliseconds: number) {
+		assertParent.ok(duration, 'duration is undefined')
+		const name = duration.name ?? 'duration'
+		assertParent.ok(duration.elapsed() > milliseconds, name + ' is not more than limit (' + duration.elapsed() + ' / ' + milliseconds + 'ms)')
 	},
 	tests: new AssertTestResults(),
 

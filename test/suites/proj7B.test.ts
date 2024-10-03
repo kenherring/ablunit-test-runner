@@ -1,4 +1,5 @@
-import { CancellationError, LogLevel, commands } from 'vscode'
+import { CancellationError, LogLevel, commands, tests, workspace } from 'vscode'
+import * as vscode from 'vscode'
 import { assert, RunStatus, beforeCommon, beforeProj7, cancelTestRun, getCurrentRunData, getTestControllerItemCount, isoDate, log, refreshTests, runAllTests, sleep, waitForTestRunStatus, sleep2 } from '../testCommon'
 import { Duration } from '../../src/ABLUnitCommon'
 
@@ -14,6 +15,7 @@ suite('proj7B - Extension Test Suite', () => {
 	test('proj7B.1 - cancel test refresh', async () => {
 		// TODO
 		// const maxCancelTime = 250
+		const minCancelTime = 25
 		const maxCancelTime = 2000
 		// TODO
 		// const maxRefreshTime = 250
@@ -25,8 +27,8 @@ suite('proj7B - Extension Test Suite', () => {
 		let testCount = await getTestControllerItemCount('ABLTestFile')
 		setTimeout(() => { throw new Error('timeout waiting for getTestControllerItemCount to return > 10 (got ' + testCount + ')') }, 5000)
 		while(testCount < 10) {
-			await sleep(250, 'waiting for getTestControllerItemCount to return > 10 (got ' + testCount + ')')
 			testCount = await getTestControllerItemCount('ABLTestFile')
+			await sleep(25, 'waiting for getTestControllerItemCount to return > 10 (got ' + testCount + ')')
 		}
 
 		log.info('cancelling test refresh')
@@ -40,6 +42,7 @@ suite('proj7B - Extension Test Suite', () => {
 				throw err
 			})
 			log.info(' - elapsedCancelTime=' + startCancelTime.elapsed() + 'ms, elapsedRefreshTime=' +  startRefreshTime.elapsed() + 'ms')
+			assert.durationMoreThan(startCancelTime, minCancelTime)
 			assert.durationLessThan(startCancelTime, maxCancelTime)
 			assert.durationLessThan(startRefreshTime, maxRefreshTime)
 		} catch (err) {
@@ -68,7 +71,8 @@ suite('proj7B - Extension Test Suite', () => {
 		// const runTestTime = new Duration()
 
 		runAllTests().catch((err: unknown) => { log.info('runAllTests got error: ' + err) })
-		await waitForTestRunStatus(RunStatus.Constructed)
+		await sleep(250)
+			.then(() => { return waitForTestRunStatus(RunStatus.Constructed) })
 
 		const elapsedCancelTime = await cancelTestRun(false)
 		assert.durationLessThan(elapsedCancelTime, maxCancelTime)
