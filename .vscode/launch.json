@@ -28,7 +28,7 @@
 			"runtimeExecutable": "${execPath}",
 			"args": [
 				"--extensionDevelopmentPath=${workspaceFolder}/dummy-ext",
-				"--install-extension=ablunit-test-runner-0.2.11.vsix",
+				"--install-extension=ablunit-test-runner-0.2.13.vsix",
 				"--enable-proposed-api=kherring.ablunit-test-runner",
 				"${workspaceFolder}/test_projects/${input:workspaceName}"
 			]

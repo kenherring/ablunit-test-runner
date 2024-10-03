@@ -1,3 +1,9 @@
+# [0.2.13](https://github.com/kenherring/ablunit-test-runner/releases/tag/0.2.13) - 2024-10-03 (pre-release)
+
+ * Unskip proj7 tests for large projects (#194)
+
+**Full Changelog**: [0.2.11...0.2.13](https://github.com/kenherring/ablunit-test-runner/compare/0.2.11...0.2.13)
+
 # [0.2.11](https://github.com/kenherring/ablunit-test-runner/releases/tag/0.2.11) - 2024-09-30 (pre-release)
 
  * Upload artifact to gh release automatically (#209)
