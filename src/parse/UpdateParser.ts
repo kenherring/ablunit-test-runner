@@ -116,9 +116,7 @@ function parseUpdateLines (lines: string[], tests: TestItem[]) {
 				continue
 			}
 			if (prevRootText !== line) {
-				log.info('Parsing test tree... (line=' + line + ')')
 				updates = parseTestTree(line, tests)
-				log.info('Parsing test tree complete')
 				prevRootText = line
 				log.debug('updates.length=' + updates.length)
 				continue
@@ -300,7 +298,6 @@ function showUpdates (options: TestRun, updates: ITestNode[] | undefined) {
 
 export function processUpdates (options: TestRun, tests: TestItem[], updateFile: Uri | undefined) {
 	if (!updateFile) {
-		log.info('updateFile=' + updateFile)
 		return
 	}
 	return parseUpdates(updateFile, tests)

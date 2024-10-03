@@ -56,7 +56,6 @@ initialize () {
 			?)	usage && exit 1 ;;
 			*)	echo "Invalid option: -$OPT" >&2 && usage && exit 1 ;;
 		esac
-		
 	done
 	shift $((OPTIND - 1))
 	if [ -n "${1:-}" ]; then

@@ -1,3 +1,4 @@
+
 interface ICoreOutput {
 	location?: string
 	filename?: string

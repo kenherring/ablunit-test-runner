@@ -3,6 +3,7 @@ import { Duration, activateExtension, enableExtensions, getDefaultDLC, getRcodeC
 import { getContentFromFilesystem } from 'parse/TestParserCommon'
 import * as glob from 'glob'
 
+
 interface IRuntime {
 	name: string,
 	path: string,
@@ -25,7 +26,7 @@ export async function enableOpenedgeAblExtension (runtimes: IRuntime[]) {
 			log.info('rebuild complete! (rcodeCount=' + rcodeCount + ')')
 			log.info('riversidesoftware.openedge-abl-lsp extension is enabled!')
 			return true
-		}, (e: unknown) => { throw e })
+		}, (e) => { throw e })
 }
 
 export function restartLangServer () {

@@ -44,9 +44,6 @@ export async function activate (context: ExtensionContext) {
 
 	const contextStorageUri = context.storageUri ?? Uri.file(process.env['TEMP'] ?? '') // will always be defined as context.storageUri
 	const contextResourcesUri = Uri.joinPath(context.extensionUri, 'resources')
-	log.info('context.logUri=' + context.logUri)
-	log.info('context.storageUri=' + context.storageUri)
-	log.info('context.globalStorageUri=' + context.globalStorageUri)
 	setContextPaths(contextStorageUri, contextResourcesUri, context.logUri)
 	await createDir(contextStorageUri)
 

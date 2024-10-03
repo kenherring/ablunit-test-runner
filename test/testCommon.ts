@@ -567,7 +567,6 @@ export async function runAllTests (doRefresh = true, waitForResults = true, with
 			return false
 		}, (err) => {
 			runAllTestsDuration?.stop()
-			// log.error(tag + 'testing.runAll failed: ' + err)
 			throw new Error('testing.runAll failed: ' + err)
 		})
 	runAllTestsDuration.stop()
@@ -804,9 +803,6 @@ export function refreshData (resultsLen = 0) {
 		log.info('getExtensionTestReferences command complete (resp.length=' + refs.recentResults.length + ')')
 		// log.info('refs=' + JSON.stringify(refs))
 
-		// if (refs.recentResults.length == 0) {
-		// 	throw new Error('failed to refresh test results: results.length=' + refs.recentResults.length)
-		// }
 		if (refs.recentResults.length > 0) {
 			const testCount = refs.recentResults?.[0].ablResults?.resultsJson[0].testsuite?.[0].tests ?? undefined
 			const passedCount = refs.recentResults?.[0].ablResults?.resultsJson[0].testsuite?.[0].passed ?? undefined
@@ -934,7 +930,6 @@ export async function getCurrentRunData (len = 1, resLen = 0, tag?: string) {
 		log.info(tag + 'getCurrentRunData not set, refreshing...')
 		for (let i=0; i<3; i++) {
 			await sleep2(500, tag + 'still no currentRunData, sleep before trying again (' + i + '/3)')
-			log.info(tag + 'getCurrentRunData - await prom start')
 			const retResults = await refreshData(resLen).then((r) => {
 				log.debug('refresh success (r=' + r + '; currentRunData.length=' + currentRunData?.length + ')')
 				return true
@@ -988,31 +983,17 @@ export async function getResults (len = 1, tag?: string): Promise<ABLResults[]> 
 	if (recentResults.length < len) {
 		throw new Error('recent results should be >= ' + len + ' but is ' + recentResults.length)
 	}
-	log.info('found results! (recentResults.length=' + recentResults.length + ')')
 	return recentResults
 }
 
 class AssertTestResults {
 	assertResultsCountByStatus (expectedCount: number, status: 'passed' | 'failed' | 'errored' | 'skipped' | 'all') {
-		log.info('recentResults.length=' + recentResults?.length)
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
 		const res = recentResults?.[0].ablResults?.resultsJson[0]
 		if (!res) {
 			assertParent.fail('No results found. Expected ' + expectedCount + ' ' + status + ' tests')
 			return
 		}
-
-		log.info('res.passed=' + res.passed + '; res.failed=' + res.failures + '; res.errors=' + res.errors + '; res.skipped=' + res.skipped)
-
-		if (res.testsuite) {
-			for (const t of res.testsuite) {
-				log.info('testsuite: ' + JSON.stringify(t.classname ?? t.name + ' ' + t.testcases?.length + ' ' + t.passed))
-				for (const c of t.testcases ?? []) {
-					log.info('testcase: ' + c.name + ' ' + c.status)
-				}
-			}
-		}
-
 
 		switch (status) {
 			// case 'passed': actualCount = res.passed; break
