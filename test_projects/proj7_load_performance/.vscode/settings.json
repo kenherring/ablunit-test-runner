@@ -1,9 +1,6 @@
 {
     // "ablunit.discoverAllTestsOnActivate": false,
     "ablunit.files.include": [
-        // TODO - run all tests performantly
-        // "**/*test*.{cls,p}",
-        "src/procs/dir{0,1,2}/*test*.{cls,p}",
-        // "**/*.z"
+        "**/*test*.{cls,p}"
     ]
 }

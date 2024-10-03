@@ -56,6 +56,7 @@ initialize () {
 			?)	usage && exit 1 ;;
 			*)	echo "Invalid option: -$OPT" >&2 && usage && exit 1 ;;
 		esac
+		
 	done
 	shift $((OPTIND - 1))
 	if [ -n "${1:-}" ]; then
@@ -68,12 +69,15 @@ initialize () {
 		exit 1
 	fi
 
-	if [ -z "$ABLUNIT_TEST_RUNNER_OE_VERSION" ]; then
+	if ${CIRCLECI:-false} && [ -z "$ABLUNIT_TEST_RUNNER_OE_VERSION" ]; then
 		cat "$DLC/version"
 		ABLUNIT_TEST_RUNNER_OE_VERSION=$(awk '{print $3}' < "$DLC/version")
 		if [[ "$ABLUNIT_TEST_RUNNER_OE_VERSION" =~ ^[0-9]+\.[0-9]+$ ]]; then
 			ABLUNIT_TEST_RUNNER_OE_VERSION="${ABLUNIT_TEST_RUNNER_OE_VERSION}.0"
 		fi
+	fi
+	if [ -z "$ABLUNIT_TEST_RUNNER_OE_VERSION" ]; then
+		ABLUNIT_TEST_RUNNER_OE_VERSION=12.8.1
 	fi
 	if [[ ! "$ABLUNIT_TEST_RUNNER_OE_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
 		echo "ERROR: invalid ABLUNIT_TEST_RUNNER_OE_VERSION: '$ABLUNIT_TEST_RUNNER_OE_VERSION'"

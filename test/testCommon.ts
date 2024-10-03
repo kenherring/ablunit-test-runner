@@ -1004,6 +1004,16 @@ class AssertTestResults {
 
 		log.info('res.passed=' + res.passed + '; res.failed=' + res.failures + '; res.errors=' + res.errors + '; res.skipped=' + res.skipped)
 
+		if (res.testsuite) {
+			for (const t of res.testsuite) {
+				log.info('testsuite: ' + JSON.stringify(t.classname ?? t.name + ' ' + t.testcases?.length + ' ' + t.passed))
+				for (const c of t.testcases ?? []) {
+					log.info('testcase: ' + c.name + ' ' + c.status)
+				}
+			}
+		}
+
+
 		switch (status) {
 			// case 'passed': actualCount = res.passed; break
 			case 'passed': assertParent.equal(res.passed, expectedCount, 'test count passed != ' + expectedCount); break

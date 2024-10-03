@@ -204,7 +204,7 @@ export async function activate (context: ExtensionContext) {
 					} else if (e instanceof ABLUnitRuntimeError) {
 						log.error('ablunit runtime error!\ne=' + JSON.stringify(e))
 					} else {
-						log.error('ablunit run failed parsing results with exception: ' + e, run)
+						log.error('ablunit run failed!: ' + e, run)
 						// log.error('ablunit run failed parsing results with exception: ' + e, run)\
 					}
 
@@ -320,6 +320,13 @@ export async function activate (context: ExtensionContext) {
 					})
 					await r.start()
 					res.push(r)
+				}
+				if (!data.didResolve) {
+					if (!test.uri) {
+						log.warn('cannot resolve test item with no uri: ' + test.id)
+					} else {
+						await updateNode(test.uri, ctrl)
+					}
 				}
 				await r.addTest(test, data, run)
 			}
