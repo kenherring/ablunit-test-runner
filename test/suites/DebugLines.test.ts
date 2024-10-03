@@ -7,7 +7,7 @@ const workspaceFolder = workspace.workspaceFolders![0]
 
 suite('debugLines - Debug Line Tests - insiders', () => {
 
-	suiteSetup('debugLines - before', async () => {
+	suiteSetup('debugLines - before', () => {
 		const prom = suiteSetupCommon()
 			.then(() => { return awaitRCode(workspaceFolder, 8) })
 			.then((rcodeCount) => {

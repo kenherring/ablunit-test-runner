@@ -1,6 +1,6 @@
-import { Uri, commands, window, workspace, TestItem } from 'vscode'
+import { Uri, commands, window, workspace } from 'vscode'
 import * as vscode from 'vscode'
-import { assert, deleteFile, getResults, getTestController, getTestControllerItemCount, getTestItem, log, refreshTests, runAllTests, runAllTestsWithCoverage, sleep2, suiteSetupCommon, toUri, updateTestProfile } from '../testCommon'
+import { assert, deleteFile, getResults, getTestControllerItemCount, getTestItem, log, refreshTests, runAllTests, runAllTestsWithCoverage, sleep2, suiteSetupCommon, toUri, updateTestProfile } from '../testCommon'
 import { ABLResultsParser } from 'parse/ResultsParser'
 import * as fs from 'fs'
 
@@ -83,21 +83,9 @@ suite('proj0  - Extension Test Suite', () => {
 	})
 
 	test('proj0.05 - parse test class with expected error annotation', async () => {
-		const ctrl = await refreshTests()
-			.then(() => { return getTestController() })
-
-		let testClassItem: TestItem | undefined
-		// find the TestItem for src/threeTestMethods.cls
-		ctrl.items.forEach((item) => {
-			log.info('item.label=' + item.label + '; item.id=' + item.id + '; item.uri' + item.uri)
-			if (item.label === 'src') {
-				item.children.forEach(element => {
-					if (element.label === 'threeTestMethods') {
-						testClassItem = element
-					}
-				})
-			}
-		})
+		const testClassItem = await commands.executeCommand('vscode.open', toUri('src/threeTestMethods.cls'))
+			.then(() => { return sleep2(250) })
+			.then(() => { return getTestItem(toUri('src/threeTestMethods.cls')) })
 
 		if (!testClassItem) {
 			throw new Error('cannot find TestItem for src/threeTestMethods.cls')
@@ -107,21 +95,9 @@ suite('proj0  - Extension Test Suite', () => {
 	})
 
 	test('proj0.06 - parse test program with expected error annotation', async () => {
-		const ctrl = await refreshTests()
-			.then(() => { return getTestController() })
-
-		let testClassItem: TestItem | undefined
-		// find the TestItem for src/threeTestProcedures.p
-		ctrl.items.forEach((item) => {
-			log.info('item.label=' + item.label + '; item.id=' + item.id + '; item.uri' + item.uri)
-			if (item.label === 'src') {
-				item.children.forEach(element => {
-					if (element.label === 'threeTestProcedures.p') {
-						testClassItem = element
-					}
-				})
-			}
-		})
+		const testClassItem = await commands.executeCommand('vscode.open', toUri('src/threeTestProcedures.p'))
+			.then(() => { return sleep2(250) })
+			.then(() => { return getTestItem(toUri('src/threeTestProcedures.p')) })
 
 		if (!testClassItem) {
 			throw new Error('cannot find TestItem for src/threeTestProcedures.p')
@@ -130,20 +106,9 @@ suite('proj0  - Extension Test Suite', () => {
 	})
 
 	test('proj0.07 - parse test class with skip annotation', async () => {
-		const ctrl = await refreshTests()
-			.then(() => { return getTestController() })
-
-		let testClassItem: TestItem | undefined
-		// find the TestItem for src/ignoreMethod.cls
-		ctrl.items.forEach((item) => {
-			if (item.label === 'src') {
-				item.children.forEach(element => {
-					if (element.label === 'ignoreMethod') {
-						testClassItem = element
-					}
-				})
-			}
-		})
+		const testClassItem = await commands.executeCommand('vscode.open', toUri('src/ignoreMethod.cls'))
+			.then(() => { return sleep2(250) })
+			.then(() => { return getTestItem(toUri('src/ignoreMethod.cls')) })
 
 		if (!testClassItem) {
 			throw new Error('cannot find TestItem for src/ignoreMethod.cls')
@@ -152,20 +117,9 @@ suite('proj0  - Extension Test Suite', () => {
 	})
 
 	test('proj0.08 - parse test procedure with skip annotation', async () => {
-		const ctrl = await refreshTests()
-			.then(() => { return getTestController() })
-
-		let testClassItem: TestItem | undefined
-		// find the TestItem for src/ignoreProcedure.p
-		ctrl.items.forEach((item) => {
-			if (item.label === 'src') {
-				item.children.forEach(element => {
-					if (element.label === 'ignoreProcedure.p') {
-						testClassItem = element
-					}
-				})
-			}
-		})
+		const testClassItem = await commands.executeCommand('vscode.open', toUri('src/ignoreProcedure.p'))
+			.then(() => { return sleep2(250) })
+			.then(() => { return getTestItem(toUri('src/ignoreProcedure.p')) })
 
 		if (!testClassItem) {
 			throw new Error('cannot find TestItem for src/ignoreProcedure.p')
@@ -216,17 +170,26 @@ suite('proj0  - Extension Test Suite', () => {
 
 	test('proj0.10B - Update File', async () => {
 		// init test
-		disposables.push(vscode.workspace.onWillCreateFiles(e => {
-			const ws = new vscode.WorkspaceEdit()
-			ws.insert(tempFile, new vscode.Position(0, 0), 'onWillCreate ' + e.files.length + ' ' + e.files[0].fsPath)
-			e.waitUntil(Promise.resolve(ws))
-		}))
+		// const tempFile = await createTempFile()
+		// disposables.push(vscode.workspace.onWillCreateFiles(e => {
+		// 	const ws = new vscode.WorkspaceEdit()
+		// 	ws.insert(tempFile, new vscode.Position(0, 0), 'onWillCreate ' + e.files.length + ' ' + e.files[0].fsPath)
+		// 	e.waitUntil(Promise.resolve(ws))
+		// }))
 		await workspace.fs.writeFile(toUri('src/dirA/proj10.p'), Buffer.from('@Test. procedure test1: end procedure.'))
-		const tempFile = await createTempFile()
-		await commands.executeCommand('vscode.open', toUri('src/dirA/proj10.p')).then((r) => { log.info('opened file (r=' + r + ')'); return })
-		await refreshTests()
-		const startCount = await getTestItem(toUri('src/dirA/proj10.p')).then((r) => { return r.children.size }, (e) => { throw e })
-		log.info('startCount=' + startCount)
+		await commands.executeCommand('vscode.open', toUri('src/dirA/proj10.p'))
+			.then((r) => {
+				log.info('opened file (r=' + r + ')')
+				return sleep2(250)
+			}, (e) => { throw e })
+
+		const startCount = await getTestItem(toUri('src/dirA/proj10.p'))
+			.then((r) => {
+				for (const [ ,c] of r.children) {
+					log.info('c.label=' + c.label + '; c.id='  + c.id)
+				}
+				return r.children.size
+			}, (e) => { throw e })
 
 
 		// update test program
@@ -236,8 +199,14 @@ suite('proj0  - Extension Test Suite', () => {
 		assert.ok(success)
 
 		// validate test case items added
-		await sleep2(100) // TODO - remove me
-		const endCount = await getTestItem(toUri('src/dirA/proj10.p')).then((r) => { return r.children.size }, (e) => { throw e })
+		await sleep2(250) // TODO - remove me
+		const endCount = await getTestItem(toUri('src/dirA/proj10.p'))
+			.then((r) => {
+				for (const [ ,c] of r.children) {
+					log.info('c.label=' + c.label + '; c.id='  + c.id)
+				}
+				return r.children.size
+			}, (e) => { throw e })
 		assert.equal(endCount - startCount, 2, 'test cases added != 2 (endCount=' + endCount + '; startCount=' + startCount + ')')
 	})
 
@@ -245,7 +214,7 @@ suite('proj0  - Extension Test Suite', () => {
 		// init tests
 		fs.copyFileSync(toUri('src/dirA/proj10.p.orig').fsPath, toUri('src/dirA/proj10.p').fsPath)
 		const startCount = await refreshTests()
-			.then(() => { return getTestControllerItemCount() })
+			.then(() => { return getTestControllerItemCount('ABLTestFile') })
 		const tempFile = await createTempFile()
 		disposables.push(vscode.workspace.onWillDeleteFiles(e => {
 			const ws = new vscode.WorkspaceEdit()
@@ -259,7 +228,7 @@ suite('proj0  - Extension Test Suite', () => {
 
 		// validate test item reduction
 		await refreshTests()
-		assert.equal(await getTestControllerItemCount(), startCount - 2, 'after delte file count: startCount !+ test count')
+		assert.equal(await getTestControllerItemCount('ABLTestFile') - startCount, -1, 'after delte file count: startCount !+ test count')
 		return
 	})
 

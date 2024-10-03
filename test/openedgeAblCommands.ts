@@ -55,7 +55,11 @@ export function rebuildAblProject () {
 }
 
 export async function printLastLangServerError () {
-	const pattern = process.env['ABLUNIT_TEST_RUNNER_REPO_DIR'] + '/.vscode-test/user-data/logs/*/window*/exthost/output_logging_*/*-ABL Language Server.log'
+	const ablunitLogUri: Uri = await commands.executeCommand('_ablunit.getLogUri')
+	const logUri = Uri.joinPath(ablunitLogUri, '..', '..', '..', '..', '..', 'logs')
+	log.info('logUri=' + logUri)
+
+	const pattern = logUri.fsPath.replace(/\\/g, '/') + '/*/window*/exthost/output_logging_*/*-ABL Language Server.log'
 	log.info('grep for log files using pattern: ' + pattern)
 	const logFiles = glob.globSync(pattern)
 
@@ -133,7 +137,7 @@ export async function waitForLangServerReady () {
 		})
 }
 
-export async function setRuntimes (runtimes: IRuntime[] = []) {
+export function setRuntimes (runtimes: IRuntime[] = []) {
 	const duration = new Duration('setRuntimes')
 	if (!enableExtensions()) {
 		throw new Error('setRuntimes failed! extensions are disabled')
@@ -157,7 +161,7 @@ export async function setRuntimes (runtimes: IRuntime[] = []) {
 	log.info('  input=' + JSON.stringify(runtimes))
 	if (JSON.stringify(current) === JSON.stringify(runtimes)) {
 		log.info('runtmes are already set ' + duration)
-		return true
+		return Promise.resolve(true)
 	}
 
 	log.info('setting workspace configuration abl.configuration.defaultRuntime=' + oeVersion())

@@ -1,7 +1,7 @@
 {
     "name": "ablunit-test-runner",
     "buildPath": [
-        { "type": "source", "path": "resources", "includes": "**/*.p,**/*.cls"},
+        { "type": "source", "path": "resources/VSCodeTestRunner", "includes": "**/*.p,**/*.cls"},
         { "type": "propath", "path": "${DLC}/tty/ablunit.pl", "includes": "**/*" }
     ],
     "buildDirectory": "target"

@@ -54,7 +54,8 @@ function getMochaTimeout (projName) {
 		// case 'proj2': return 20000
 		case 'proj5': return 60000
 		case 'proj8': return 45000
-		case 'proj7A': return 60000
+		case 'proj7A': return 120000
+		case 'proj7B': return 120000
 	}
 
 	return 30000

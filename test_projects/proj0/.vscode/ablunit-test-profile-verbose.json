@@ -77,7 +77,8 @@
 				"location": "${tempDir}",
 				"filename": "results",
 				"format": "xml",
-				"writeJson": false
+				"writeJson": false,
+				"updateFile": "updates.log" // set to "" to disable
 			},
 			"quitOnEnd": true,
 			"writeLog":  false,

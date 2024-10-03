@@ -6,7 +6,7 @@ import { FileType, MarkdownString, TestItem, TestItemCollection, TestMessage, Te
 	TestRunProfileKind} from 'vscode'
 import { ABLUnitConfig } from './ABLUnitConfigWriter'
 import { ABLResultsParser, ITestCaseFailure, ITestCase, ITestSuite } from './parse/ResultsParser'
-import { ABLTestSuite, ABLTestData } from './testTree'
+import { ABLTestSuite, ABLTestData, ABLTestCase } from './testTree'
 import { parseCallstack } from './parse/CallStackParser'
 import { ABLProfile, ABLProfileJson, IModule } from './parse/ProfileParser'
 import { ABLDebugLines } from './ABLDebugLines'
@@ -47,7 +47,7 @@ export class ABLResults implements Disposable {
 	ablResults: ABLResultsParser | undefined
 	tests: TestItem[] = []
 	testQueue: ITestObj[] = []
-	testData!: WeakMap<TestItem, ABLTestData>
+	testData = new WeakMap<TestItem, ABLTestData>()
 	skippedTests: TestItem[] = []
 	propath?: PropathParser
 	debugLines?: ABLDebugLines
@@ -140,7 +140,7 @@ export class ABLResults implements Disposable {
 		this.tests = []
 	}
 
-	async addTest (test:  TestItem, options: TestRun) {
+	async addTest (test:  TestItem, data: ABLTestData, options: TestRun) {
 		if (!test.uri) {
 			log.error('test.uri is undefined (test.label = ' + test.label + ')', options)
 			return
@@ -162,16 +162,17 @@ export class ABLResults implements Disposable {
 		}
 		log.debug('addTest: ' + test.id + ', propathEntry=' + propathEntryTestFile)
 		this.tests.push(test)
+		this.testData.set(test, data)
 
 		let testCase: string | undefined = undefined
-		if (test.children.size === 0) { // test method or procedure
+		if (data instanceof ABLTestCase) {
 			testCase = test.label
 		}
 
 		const testUri = test.uri
 		let testRel: string = workspace.asRelativePath(testUri, false)
 		const p = await this.propath.search(testUri)
-		testRel = p?.propathRelativeFile ?? testRel.replace(/\\/g, '/')
+		testRel = (p?.propathRelativeFile ?? testRel).replace(/\\/g, '/')
 
 		const testObj: ITestObj = { test: testRel }
 		if (testCase) {
@@ -352,7 +353,7 @@ export class ABLResults implements Disposable {
 
 	private parseFinalSuite (item: TestItem, s: ITestSuite, options: TestRun) {
 		if (!s.testcases) {
-			log.error('no test cases discovered or run - check the configuration for accuracy (item: ' + item.label + ')')
+			log.error('no test cases discovered or run - check the configuration for accuracy (item: ' + item.id + ')', options)
 			options.errored(item, new TestMessage('no test cases discovered or run - check the configuration for accuracy'), this.duration.elapsed())
 			return
 		}

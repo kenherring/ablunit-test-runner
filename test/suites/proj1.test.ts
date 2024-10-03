@@ -16,7 +16,7 @@ suite('proj1 - Extension Test Suite', () => {
 			.then(() => { return workspace.fs.copy(Uri.joinPath(workspaceUri, '.vscode', 'settings.json'), Uri.joinPath(workspaceUri, '.vscode', 'settings.bk.json'), { overwrite: true }) })
 	})
 
-	beforeEach('proj1 - beforeEach', async () => {
+	beforeEach('proj1 - beforeEach', () => {
 		beforeCommon()
 		log.info('setup-2 has(ablunit.files)=' + workspace.getConfiguration('ablunit').has('files') + ' files.exclude=' + workspace.getConfiguration('ablunit').get('files.exclude'))
 		// const prom = workspace.getConfiguration('ablunit').update('files.exclude', undefined)
@@ -30,7 +30,7 @@ suite('proj1 - Extension Test Suite', () => {
 			}, (e) => { throw e })
 	})
 
-	after('proj1 - suiteTeardown', async () => {
+	after('proj1 - suiteTeardown', () => {
 		return workspace.fs.delete(Uri.joinPath(workspaceUri, 'openedge-project.bk.json'))
 			.then(() => { return workspace.fs.delete(Uri.joinPath(workspaceUri, '.vscode', 'ablunit-test-profile.bk.json')) })
 			.then(() => { return workspace.fs.delete(Uri.joinPath(workspaceUri, '.vscode', 'settings.bk.json')) })
