@@ -5,7 +5,6 @@
 	"tasks": [
 		{
 			"label": "folderOpen",
-			// "detail": "run on workspace load",
 			"hide": true,
 			"dependsOn": [
 				"npm clean",
@@ -56,6 +55,22 @@
 			}
 		},
 		{
+			"label": "npm watch",
+			"type": "npm",
+			"script": "watch",
+			"problemMatcher": "$tsc-watch",
+			"isBackground": true,
+			"presentation": {
+				"reveal": "silent",
+				"focus": false,
+				"group": "build-task"
+			},
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			}
+		},
+		{
 			"label": "run all tests in docker",
 			"type": "shell",
 			"command": "docker/run_tests.sh",
@@ -92,6 +107,6 @@
 			],
 			"label": "npm: lint-fix-all",
 			"detail": "npx eslint ./src --ext .ts,.js --fix"
-		}
+		},
 	]
 }
