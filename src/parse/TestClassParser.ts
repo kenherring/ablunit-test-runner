@@ -1,10 +1,10 @@
 import { Range } from 'vscode'
-import { getLines } from 'parse/TestParserCommon'
+import { getAnnotationLines } from 'parse/TestParserCommon'
 
 // CLASS statement
 const classRE = /^\s*class\s+(\S+[^:])\s*/i
 // METHOD statement
-const methodRE = /\s*method\s(\s*public)?(\s*static)?\s*(\S+)\s*(\S+\w)/i
+const methodRE = /\s*method\s(\s*public)?(\s*static)?\s*(\S+)\s*(\S+[\w#])/i
 
 export interface ITestCase {
 	label: string
@@ -21,7 +21,7 @@ export interface IClassRet {
 export function parseABLTestClass (displayClassLabel: string, text: string, relativePath: string) {
 	relativePath = relativePath.replace(/\\/g, '/')
 
-	const [lines, foundAnnotation] = getLines(text, '@test')
+	const [lines, foundAnnotation] = getAnnotationLines(text, '@test')
 	if(!foundAnnotation) {
 		return
 	}
@@ -50,7 +50,7 @@ export function parseTestClass (lines: string[], configClassLabel: string, relat
 			continue
 		}
 
-		// first find the class statement
+		// first find the class statement (if still needed)
 		if (classRet.classname === '') {
 			const classResult = classRE.exec(lines[lineNo])
 			if (!classResult) { continue }
@@ -61,6 +61,7 @@ export function parseTestClass (lines: string[], configClassLabel: string, relat
 			continue
 		}
 
+		// second, check for a test method on this line
 		if (lastNonBlankLineHasAnnotation || lines[lineNo].toLowerCase().includes('@test')) {
 			const method = methodRE.exec(lines[lineNo])
 			if (method) {
@@ -71,7 +72,10 @@ export function parseTestClass (lines: string[], configClassLabel: string, relat
 				})
 			}
 		}
-		lastNonBlankLineHasAnnotation = regexTest.exec(lines[lineNo]) != null
+		lastNonBlankLineHasAnnotation = false
+		if (regexTest.exec(lines[lineNo])) {
+			lastNonBlankLineHasAnnotation = true
+		}
 	}
 
 	return classRet

@@ -1,4 +1,4 @@
-import { FileType, MarkdownString, TestItem, TestItemCollection, TestMessage, TestRun, Uri, workspace, WorkspaceFolder, Range,
+import { FileType, MarkdownString, TestItem, TestItemCollection, TestMessage, TestRun, Uri, workspace, WorkspaceFolder, Position,
 	FileCoverage, FileCoverageDetail,
 	Disposable, CancellationToken, CancellationError,
 	StatementCoverage,
@@ -6,14 +6,14 @@ import { FileType, MarkdownString, TestItem, TestItemCollection, TestMessage, Te
 	TestRunProfileKind} from 'vscode'
 import { ABLUnitConfig } from './ABLUnitConfigWriter'
 import { ABLResultsParser, ITestCaseFailure, ITestCase, ITestSuite } from './parse/ResultsParser'
-import { ABLTestSuite, ABLTestData } from './testTree'
+import { ABLTestSuite, ABLTestData, ABLTestCase } from './testTree'
 import { parseCallstack } from './parse/CallStackParser'
 import { ABLProfile, ABLProfileJson, IModule } from './parse/ProfileParser'
 import { ABLDebugLines } from './ABLDebugLines'
 import { ABLPromsgs, getPromsgText } from './ABLPromsgs'
 import { PropathParser } from './ABLPropath'
 import { log } from './ChannelLogger'
-import { RunStatus, ablunitRun } from './ABLUnitRun'
+import { ABLUnitRuntimeError, RunStatus, ablunitRun } from './ABLUnitRun'
 import { getDLC, IDlc } from './parse/OpenedgeProjectParser'
 import { Duration, isRelativePath } from './ABLUnitCommon'
 
@@ -47,7 +47,7 @@ export class ABLResults implements Disposable {
 	ablResults: ABLResultsParser | undefined
 	tests: TestItem[] = []
 	testQueue: ITestObj[] = []
-	testData!: WeakMap<TestItem, ABLTestData>
+	testData = new WeakMap<TestItem, ABLTestData>()
 	skippedTests: TestItem[] = []
 	propath?: PropathParser
 	debugLines?: ABLDebugLines
@@ -73,7 +73,7 @@ export class ABLResults implements Disposable {
 		})
 		this.duration = new Duration()
 		this.workspaceFolder = workspaceFolder
-		this.wrapperUri = Uri.joinPath(this.extensionResourcesUri, 'ABLUnitCore-wrapper.p')
+		this.wrapperUri = Uri.joinPath(this.extensionResourcesUri, 'VSCodeTestRunner', 'ABLUnitCore.p')
 		this.cfg = new ABLUnitConfig()
 		this.setStatus(RunStatus.Constructed)
 	}
@@ -107,7 +107,7 @@ export class ABLResults implements Disposable {
 		this.dlc = getDLC(this.workspaceFolder, this.cfg.ablunitConfig.openedgeProjectProfile)
 		this.promsgs = new ABLPromsgs(this.dlc, this.globalStorageUri)
 
-		this.propath = this.cfg.readPropathFromJson()
+		this.propath = this.cfg.readPropathFromJson(this.extensionResourcesUri)
 		this.debugLines = new ABLDebugLines(this.propath)
 
 		this.cfg.ablunitConfig.dbAliases = []
@@ -124,7 +124,7 @@ export class ABLResults implements Disposable {
 		// eslint-disable-next-line @typescript-eslint/no-invalid-void-type
 		const prom: (Promise<void | void[]> | Thenable<void>)[] = []
 		prom[0] = this.cfg.createProfileOptions(this.cfg.ablunitConfig.profOptsUri, this.cfg.ablunitConfig.profiler)
-		prom[1] = this.cfg.createProgressIni(this.propath.toString())
+		prom[1] = this.cfg.createProgressIni(this.propath.toString(), this.dlc)
 		prom[2] = this.cfg.createAblunitJson(this.cfg.ablunitConfig.config_uri, this.cfg.ablunitConfig.options, this.testQueue)
 		prom[3] = this.cfg.createDbConnPf(this.cfg.ablunitConfig.dbConnPfUri, this.cfg.ablunitConfig.dbConns)
 
@@ -140,7 +140,7 @@ export class ABLResults implements Disposable {
 		this.tests = []
 	}
 
-	async addTest (test:  TestItem, options: TestRun) {
+	async addTest (test:  TestItem, data: ABLTestData, options: TestRun) {
 		if (!test.uri) {
 			log.error('test.uri is undefined (test.label = ' + test.label + ')', options)
 			return
@@ -162,16 +162,17 @@ export class ABLResults implements Disposable {
 		}
 		log.debug('addTest: ' + test.id + ', propathEntry=' + propathEntryTestFile)
 		this.tests.push(test)
+		this.testData.set(test, data)
 
 		let testCase: string | undefined = undefined
-		if (test.id.includes('#')) {
-			testCase = test.id.split('#')[1]
+		if (data instanceof ABLTestCase) {
+			testCase = test.label
 		}
 
 		const testUri = test.uri
 		let testRel: string = workspace.asRelativePath(testUri, false)
 		const p = await this.propath.search(testUri)
-		testRel = p?.propathRelativeFile ?? testRel.replace(/\\/g, '/')
+		testRel = (p?.propathRelativeFile ?? testRel).replace(/\\/g, '/')
 
 		const testObj: ITestObj = { test: testRel }
 		if (testCase) {
@@ -226,9 +227,13 @@ export class ABLResults implements Disposable {
 				throw new Error('no results available')
 			}
 			return true
-		}, (err) => {
-			log.debug('ABLResults.run() failed. Exception=' + err)
-			throw new Error('ablunit run failed! Exception: ' + err)
+		}, (err: unknown) => {
+			// log.info('[run] e=' + JSON.stringify(err))
+			if (err instanceof CancellationError || err instanceof ABLUnitRuntimeError) {
+				throw err
+			} else {
+				throw new Error('ablunit run failed! Exception: ' + err)
+			}
 		})
 	}
 
@@ -324,7 +329,7 @@ export class ABLResults implements Disposable {
 				}
 			}
 		} else {
-			return this.parseFinalSuite(item, s, options)
+			await this.parseFinalSuite(item, s, options)
 		}
 	}
 
@@ -347,27 +352,17 @@ export class ABLResults implements Disposable {
 	}
 
 	private parseFinalSuite (item: TestItem, s: ITestSuite, options: TestRun) {
-		if (s.tests > 0) {
-			if (s.tests === s.skipped) {
-				options.skipped(item)
-			} else if (s.errors === 0 && s.failures === 0) {
-				options.passed(item, s.time)
-			} else if (s.failures > 0 || s.errors > 0) {
-				// // This should be populated automatically by the child messages filtering up
-				// options.failed(item, new vscode.TestMessage("one or more tests failed"), s.time)
-			} else {
-				log.error('unknown error - test results are all zero (item: ' + item.label + ')')
-				options.errored(item, new TestMessage('unknown error - test results are all zero'), s.time)
-			}
-		}
-
 		if (!s.testcases) {
-			log.error('no test cases discovered or run - check the configuration for accuracy (item: ' + item.label + ')')
+			log.error('no test cases discovered or run - check the configuration for accuracy (item: ' + item.id + ')', options)
 			options.errored(item, new TestMessage('no test cases discovered or run - check the configuration for accuracy'), this.duration.elapsed())
 			return
 		}
 
-		return this.setAllChildResults(item.children, s.testcases, options)
+		if (item.children.size > 0) {
+			return this.setAllChildResults(item.children, s.testcases, options)
+		} else {
+			return this.setChildResults(item, options, s.testcases[0])
+		}
 	}
 
 	private async getSuiteName (item: TestItem) {
@@ -402,8 +397,8 @@ export class ABLResults implements Disposable {
 	}
 
 	private setChildResults (item: TestItem, options: TestRun, tc: ITestCase) {
-		switch (tc.status) {
-			case 'Success': {
+		switch (tc.status.toLowerCase()) {
+			case 'success': {
 				if (tc.skipped) {
 					options.skipped(item)
 				} else {
@@ -411,7 +406,7 @@ export class ABLResults implements Disposable {
 				}
 				return Promise.resolve()
 			}
-			case 'Failure': {
+			case 'failure': {
 				if (tc.failure) {
 					const diff = this.getDiffMessage(tc.failure)
 					return this.getFailureMarkdownMessage(item, options, tc.failure).then((msg) => {
@@ -426,7 +421,7 @@ export class ABLResults implements Disposable {
 				log.error('unexpected failure for \'' + tc.name + '\'')
 				throw new Error('unexpected failure for \'' + tc.name)
 			}
-			case 'Error': {
+			case 'error': {
 				if (tc.failure) {
 					return this.getFailureMarkdownMessage(item, options, tc.failure).then((msg) => {
 						const tm = new TestMessage(msg)
@@ -437,7 +432,7 @@ export class ABLResults implements Disposable {
 				log.error('unexpected error for ' + tc.name)
 				throw new Error('unexpected error for ' + tc.name)
 			}
-			case 'Skpped': {
+			case 'skpped': {
 				options.skipped(item)
 				return Promise.resolve()
 			}
@@ -541,13 +536,13 @@ export class ABLResults implements Disposable {
 			let fc = this.coverage.get(dbg.sourceUri.fsPath)
 			if (!fc) {
 				// create a new FileCoverage object if one didn't already exist
-				const fcd: FileCoverageDetail[] = [ new StatementCoverage(0, new Range(0, 0, 0, 0)) as FileCoverageDetail ]
+				const fcd: FileCoverageDetail[] = []
 				this.coverage.set(dbg.sourceUri.fsPath, fcd)
 				fc = this.coverage.get(dbg.sourceUri.fsPath)
 			}
 
 			// // TODO: end of range should be the end of the line, not the beginning of the next line
-			const coverageRange = new Range(dbg.sourceLine - 1, 0, dbg.sourceLine, 0)
+			const coverageRange = new Position(dbg.sourceLine - 1, 0)
 			fc!.push(new StatementCoverage(line.ExecCount ?? 0, coverageRange))
 		}
 

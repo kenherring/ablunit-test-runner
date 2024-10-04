@@ -15,7 +15,6 @@ import process from 'process'
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const vsVersionNum = '1.88.0'
 const vsVersion = process.env['ABLUNIT_TEST_RUNNER_VSCODE_VERSION'] ?? 'stable'
-const oeVersion = process.env['ABLUNIT_TEST_RUNNER_OE_VERSION'] ?? '12.8.1'
 const useOEAblPrerelease = false
 const enableExtensions = [
 	'AtStart',
@@ -50,9 +49,10 @@ function getMochaTimeout (projName, firstTest) {
 		case 'DebugLines': timeout = 60000; break // install openedge-abl-lsp for the first time, so give it a moment to start
 		case 'proj1': timeout = 30000; break
 		// case 'proj2': return 20000
-		case 'proj5': timeout = 60000; break
-		case 'proj8': timeout = 45000; break
-		case 'proj7A': timeout = 60000; break
+		case 'proj5': return 60000
+		case 'proj8': return 45000
+		case 'proj7A': return 120000
+		case 'proj7B': return 120000
 	}
 
 	if (firstTest) {
@@ -66,8 +66,7 @@ function getMochaTimeout (projName, firstTest) {
 * Additional options to pass to the Mocha runner.
 * @see https://mochajs.org/api/mocha
 */
-function getMochaOpts (projName, firstTest) {
-	// const reporterDir = path.resolve(__dirname, '..', 'artifacts', vsVersion + '-' + oeVersion)
+function getMochaOpts (projName) {
 	const reporterDir = path.resolve(__dirname, '..', 'artifacts')
 	fs.mkdirSync(path.resolve(reporterDir, 'mocha_results_json'), {recursive: true})
 	fs.mkdirSync(path.resolve(reporterDir, 'mocha_results_junit'), {recursive: true})
@@ -206,7 +205,7 @@ function getLaunchArgs (projName) {
 	return args
 }
 
-function getTestConfig (projName, firstTest) {
+function getTestConfig (testDir, projName) {
 
 	let workspaceFolder = '' + projName
 	if (projName.startsWith('proj7')) {
@@ -215,6 +214,10 @@ function getTestConfig (projName, firstTest) {
 		workspaceFolder = projName + '.code-workspace'
 	}
 	workspaceFolder = path.resolve(__dirname, '..', 'test_projects', workspaceFolder)
+
+	if (projName === 'UpdateParser') {
+		workspaceFolder = path.resolve(__dirname, '..', 'test_projects', 'proj1')
+	}
 
 	if (!fs.existsSync(workspaceFolder)) {
 		const g = glob.globSync('test_projects/' + projName + '_*')
@@ -232,13 +235,13 @@ function getTestConfig (projName, firstTest) {
 		useInstallation = { fromPath: '.vscode-test/vscode-win32-x64-archive-' + vsVersionNum + '/Code.exe' }
 	}
 
-	const absolulteFile = path.resolve(__dirname, '..', 'test', 'suites', projName + '.test.ts')
+	const absolulteFile = path.resolve(__dirname, '..', 'test', testDir, projName + '.test.ts')
 
 	const env = {
 		ABLUNIT_TEST_RUNNER_ENABLE_EXTENSIONS: enableExtensions.includes('' + projName),
 		ABLUNIT_TEST_RUNNER_UNIT_TESTING: true,
 		ABLUNIT_TEST_RUNNER_VSCODE_VERSION: vsVersion,
-		DONT_PROMPT_WSL_INSTAL: true,
+		DONT_PROMPT_WSL_INSTALL: true,
 		// VSCODE_SKIP_PRELAUNCH: true,
 	}
 
@@ -286,7 +289,7 @@ function getTests () {
 	if (envProjectName && envProjectName != '') {
 		const projects = envProjectName.split(',')
 		for (const p of projects) {
-			tests.push(getTestConfig(p, tests.length == 0))
+			tests.push(getTestConfig('suites', p))
 		}
 		return tests
 	}
@@ -295,14 +298,13 @@ function getTests () {
 	const g = glob.globSync('test/suites/*.test.ts').reverse()
 	for (const f of g) {
 		const basename = path.basename(f, '.test.ts')
-		if (basename != 'proj2' &&
-			basename != 'proj3' &&
-			basename != 'proj4' &&
-			basename != 'proj7B' &&
-			basename != 'proj9'
-		) {
-			tests.push(getTestConfig(basename, tests.length == 0))
-		}
+		tests.push(getTestConfig('suites', basename))
+	}
+
+	const p = glob.globSync('test/parse/*.test.ts')
+	for (const f of p) {
+		const basename = path.basename(f, '.test.ts')
+		tests.push(getTestConfig('parse', basename))
 	}
 	return tests
 }
@@ -310,7 +312,7 @@ function getTests () {
 function getCoverageOpts () {
 	const coverageDir = path.resolve(__dirname, '..', 'artifacts', 'coverage')
 	fs.mkdirSync(coverageDir, { recursive: true })
-	return {
+	const coverageOpts = {
 		exclude: [
 			'dist',
 			'.vscode-test.mjs',

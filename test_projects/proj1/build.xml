@@ -1,4 +1,4 @@
-<project name="proj1" default="test">
+<project name="proj1" default="compile">
 
   <property environment="env" />
   <property name="tempDir" value="target/temp" />
@@ -23,6 +23,14 @@
       </propath>
       <Profiler enabled="true" outputDir="target" coverage="true" />
     </ABLUnit>
+  </target>
+
+  <target name="compile">
+    <echo>Compiling...</echo>
+
+    <PCTCompile forceCompile="true" xrefDir=".xref" keepXref="true" xmlXref="true">
+      <fileset dir="." includes="*.p,*.cls" excludes="compileError.p,propathTest.p" />
+    </PCTCompile>
   </target>
 
 </project>

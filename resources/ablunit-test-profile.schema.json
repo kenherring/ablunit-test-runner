@@ -46,7 +46,8 @@
 								"location": "${tempDir}",
 								"filename": "results.xml",
 								"format": "xml",
-								"writeJson": false
+								"writeJson": false,
+								"updateFile": "updates.log"
 							},
 							"quitOnEnd": true,
 							"writeLog": false,
@@ -81,6 +82,11 @@
 										"type": "boolean",
 										"default": false,
 										"description": "Write a JSON file containing the parsed results data.  The file will be written to the same directory as `results.xml`."
+									},
+									"updateFile": {
+										"type": "string",
+										"description": "Output file to monitor status of the test run.",
+										"default": "updates.log"
 									}
 								}
 							},
@@ -99,6 +105,33 @@
 							"throwError": {
 								"type": "boolean",
 								"default": true
+							},
+							"xref": {
+								"type": "object",
+								"description": "Options related to xref files",
+								"additionalProperties": false,
+								"properties": {
+									"useXref": {
+										"type": "boolean",
+										"default": false,
+										"description": "Enable xref usage"
+									},
+									"xrefLocation": {
+										"type": "string",
+										"default": "${workspaceFolder}",
+										"description": "Location of xref file"
+									},
+									"xrefExtension": {
+										"type": "string",
+										"default": "xref",
+										"description": "Extension of xref file"
+									},
+									"xrefThrowError": {
+										"type": "boolean",
+										"default": false,
+										"description": "Throw an error if xref file is not found"
+									}
+								}
 							}
 						}
 					},

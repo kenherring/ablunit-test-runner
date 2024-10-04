@@ -6,7 +6,7 @@ import { getProfileConfig, RunConfig } from './parse/TestProfileParser'
 import { IABLUnitJson, ITestObj } from './ABLResults'
 import { CoreOptions } from './parse/config/CoreOptions'
 import { ProfilerOptions } from './parse/config/ProfilerOptions'
-import { getOpenEdgeProfileConfig, IBuildPathEntry, IDatabaseConnection, ProfileConfig } from './parse/OpenedgeProjectParser'
+import { getOpenEdgeProfileConfig, IBuildPathEntry, IDatabaseConnection, IDlc, ProfileConfig } from './parse/OpenedgeProjectParser'
 
 export const ablunitConfig = new WeakMap<WorkspaceFolder, RunConfig>()
 
@@ -41,10 +41,11 @@ export class ABLUnitConfig  {
 		})
 	}
 
-	createProgressIni (propath: string) {
+	createProgressIni (propath: string, dlc: IDlc) {
 		if (platform() != 'win32') { return Promise.resolve() }
+		if (!this.ablunitConfig.progressIniUri) { return Promise.resolve() }
 		log.info('creating progress.ini: \'' + this.ablunitConfig.progressIniUri.fsPath + '\'')
-		const iniData = ['[WinChar Startup]', 'PROPATH=' + propath]
+		const iniData = ['[WinChar Startup]', 'PROPATH=' + propath.replace(/\$\{DLC\}/g, dlc.uri.fsPath.replace(/\\/g, '/'))]
 		const iniBytes = Uint8Array.from(Buffer.from(iniData.join('\n')))
 		return workspace.fs.writeFile(this.ablunitConfig.progressIniUri, iniBytes)
 	}
@@ -78,6 +79,7 @@ export class ABLUnitConfig  {
 
 	async createProfileOptions (uri: Uri, profOpts: ProfilerOptions) {
 		if (!profOpts.enabled) { return Promise.resolve() }
+		log.info('creating profiler options file: \'' + uri.fsPath + '\'')
 
 		const opt: string[] = [
 			'-profiling',
@@ -122,7 +124,7 @@ export class ABLUnitConfig  {
 		return Promise.resolve()
 	}
 
-	readPropathFromJson () {
+	readPropathFromJson (extensionResourcesDir?: Uri) {
 		log.info('reading propath from openedge-project.json')
 		const parser: PropathParser = new PropathParser(this.ablunitConfig.workspaceFolder)
 
@@ -130,16 +132,24 @@ export class ABLUnitConfig  {
 		if (this.ablunitConfig.importOpenedgeProjectJson) {
 			conf = getOpenEdgeProfileConfig(this.ablunitConfig.workspaceFolder.uri, this.ablunitConfig.openedgeProjectProfile)
 		}
-		if (conf && conf.buildPath.length > 0) {
+		if (conf && conf.buildDirectory.length > 0) {
 			const pathObj: IBuildPathEntry[] = []
-			for (const e of conf.buildPath) {
+			if (extensionResourcesDir) {
 				pathObj.push({
-					path: e.path,
-					type: e.type.toLowerCase(),
-					buildDir: e.buildDir,
-					xrefDir: e.xrefDir
+					path: Uri.joinPath(extensionResourcesDir, 'VSCodeTestRunner').fsPath,
+					type: 'propath',
+					buildDir: Uri.joinPath(extensionResourcesDir, 'VSCodeTestRunner').fsPath,
+					xrefDir: Uri.joinPath(extensionResourcesDir, 'VSCodeTestRunner').fsPath,
 				})
 			}
+			// for (const e of conf.buildDir) {
+			// 	pathObj.push({
+			// 		path: e.path,
+			// 		type: e.type.toLowerCase(),
+			// 		buildDir: e.buildDir,
+			// 		xrefDir: e.xrefDir
+			// 	})
+			// }
 			parser.setPropath({ propathEntry: pathObj })
 		} else {
 			parser.setPropath({ propathEntry: [{

@@ -3,8 +3,8 @@ description: Ask a question
 title: "🙋‍♀️ [Question] <title here>"
 labels: ["question"]
 # projects: ["octo-org/1", "octo-org/44"]
-# assignees:
-#   - octocat
+assignees:
+  - kherring
 body:
   - type: markdown
     attributes:

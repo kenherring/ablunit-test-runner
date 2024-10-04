@@ -1,5 +1,7 @@
-import { commands, extensions, workspace } from 'vscode'
+import { commands, extensions, Uri, workspace } from 'vscode'
 import { Duration, activateExtension, enableExtensions, getDefaultDLC, getRcodeCount, installExtension, log, oeVersion, sleep, sleep2 } from './testCommon'
+import { glob } from 'glob'
+import { getContentFromFilesystem } from 'parse/TestParserCommon'
 
 interface IRuntime {
 	name: string,
@@ -49,8 +51,53 @@ export function rebuildAblProject (): Promise<number> {
 			const rcodeCount = getRcodeCount()
 			log.info('abl.project.rebuild command complete! (rcodeCount=' + rcodeCount + ')')
 			return rcodeCount
-		}, (err) => {
-			throw err
+		}, (err) => { throw err })
+}
+
+export async function printLastLangServerError () {
+	const ablunitLogUri: Uri = await commands.executeCommand('_ablunit.getLogUri')
+	const logUri = Uri.joinPath(ablunitLogUri, '..', '..', '..', '..', '..', 'logs')
+	log.info('logUri=' + logUri)
+
+	const pattern = logUri.fsPath.replace(/\\/g, '/') + '/*/window*/exthost/output_logging_*/*-ABL Language Server.log'
+	log.info('grep for log files using pattern: ' + pattern)
+	const logFiles = glob.globSync(pattern)
+
+	log.info('logFiles=' + JSON.stringify(logFiles, null, 2))
+	if (logFiles.length <= 0) {
+		log.warn('No log files found for ABL Language Server')
+		return false
+	}
+	const uri = Uri.file(logFiles[logFiles.length - 1])
+	log.info('uri=' + uri)
+	return getContentFromFilesystem(uri)
+		.then((text) => {
+			if (text === '') {
+				throw new Error('ABL language server log file is empty (uri=' + uri + ')')
+			}
+			const lines = text.split('\n')
+			log.info('lines.length=' + lines.length)
+
+			if (lines.length == 0) {
+				throw new Error('ABL language server log file has no lines (uri=' + uri + ')')
+			}
+
+			let lastLogErrors = ''
+			let hasError = false
+			for (let i = lines.length - 1; i >= 0; i--) {
+				// read until we hit an error, then read until we don't see an error.
+				log.debug('lines[' + i + ']=' + lines[i])
+				if (lines[i].includes(' [ERROR] ')) {
+					hasError = true
+					lastLogErrors = String(i).padStart(8, ' ') + ': ' + lines[i] + '\n' + lastLogErrors
+				} else if (hasError) {
+					break
+				}
+			}
+			log.info('Last logged ABL lang server error(s):\n' + lastLogErrors)
+			return true
+		}, (e) => {
+			throw e
 		})
 }
 
@@ -90,13 +137,13 @@ export async function waitForLangServerReady () {
 		})
 }
 
-export async function setRuntimes (runtimes?: IRuntime[]) {
+export function setRuntimes (runtimes: IRuntime[] = []) {
 	const duration = new Duration('setRuntimes')
 	if (!enableExtensions()) {
 		throw new Error('setRuntimes failed! extensions are disabled')
 	}
 	log.info('runtimes=' + JSON.stringify(runtimes))
-	if (!runtimes) {
+	if (runtimes.length == 0) {
 		runtimes = [{name: oeVersion(), path: getDefaultDLC(), default: true}]
 	}
 	log.info('setting abl.configuration.runtimes=' + JSON.stringify(runtimes))
@@ -116,7 +163,7 @@ export async function setRuntimes (runtimes?: IRuntime[]) {
 	log.info('  input=' + JSON.stringify(runtimes))
 	if (JSON.stringify(current) === JSON.stringify(runtimes)) {
 		log.info('runtmes are already set ' + duration)
-		return true
+		return Promise.resolve(true)
 	}
 
 	log.info('workspace.getConfiguration("abl").update("configuration.runtimes") - START')
@@ -139,5 +186,5 @@ export async function setRuntimes (runtimes?: IRuntime[]) {
 			throw new Error('setRuntimes failed! e=' + e)
 		})
 	log.info('return r=' + JSON.stringify(r))
-	return await r
+	return r
 }

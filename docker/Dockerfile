@@ -41,10 +41,6 @@ RUN mkdir -p ~/.vscode-test
 
 ## install xq (via yq) for xml parsing
 RUN pipx install yq
-ENV PATH $PATH:/root/.local/bin
-
-## install vscode packaging dependency
-RUN npm install -g @vscode/vsce
-RUN npm install -g typescript
+ENV PATH=$PATH:/root/.local/bin
 
 WORKDIR /home/circleci/project

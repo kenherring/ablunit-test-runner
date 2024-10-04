@@ -11,14 +11,17 @@ class Logger {
 	private logLevel: number
 	private readonly consoleTimestamp = process.env['ABLUNIT_TEST_RUNNER_UNIT_TESTING'] === 'true'
 	private testResultsTimestamp = false
+	private readonly extensionCodeDir = path.normalize(__dirname + '/../..')
 
-	private constructor () {
+	private constructor (extCodeDir?: string) {
 		this.logLevel = LogLevel.Info
 		this.logOutputChannel = window.createOutputChannel('ABLUnit', { log: true })
 		this.logOutputChannel.clear()
 		this.info('ABLUnit output channel created (logLevel=' + this.logOutputChannel.logLevel + ')')
 		this.logOutputChannel.onDidChangeLogLevel((e) => { this.setLogLevel(e) })
-
+		if (extCodeDir) {
+			this.extensionCodeDir = extCodeDir
+		}
 	}
 
 	public static getInstance () {
@@ -75,6 +78,18 @@ class Logger {
 	notification (message: string) {
 		log.info(message)
 		return window.showInformationMessage(message)
+	}
+
+	notificationWarningSync (message: string) {
+		log.warn(message)
+		return window.showWarningMessage(message)
+	}
+
+	notificationWarning (message: string) {
+		log.warn(message)
+		// eslint-disable-next-line @typescript-eslint/no-unused-vars
+		const p = window.showWarningMessage(message).then(() => { return }, () => { return })
+		return
 	}
 
 	notificationError (message: string) {
@@ -158,13 +173,7 @@ class Logger {
 			const filename = s.getFileName()
 			if (filename && filename !== __filename && !filename.endsWith('extensionHostProcess.js')) {
 				const funcname = s.getFunctionName()
-				const relpath = path.relative(process.cwd(), filename)
-				// console.log('__dirname=' + __dirname)
-				// console.log(' filename=' + filename)
-				// console.log('  relpath='  + path.relative(process.cwd(), filename))
-				// console.log('os.__dirname', process.cwd())
-				// console.log('funcname=' + funcname)
-				let ret = relpath + ':' + s.getLineNumber()
+				let ret = path.relative(this.extensionCodeDir, filename).replace(/\\/g, '/') + ':' + s.getLineNumber()
 				if (funcname) {
 					ret = ret + ' ' + funcname
 				}

@@ -14,7 +14,21 @@ parameters:
   primary-oe-version:
     type: string
     default: 12.8.1
+  latest-oe-version:
+    type: string
+    default: 12.8.4
 
+oe-version-param: &oe-version-param
+  parameters:
+    oe-version:
+      type: string
+      enum: [ '12.2.12', '12.7.0', '12.8.1', '12.8.3', '<< pipeline.parameters.latest-oe-version >>' ]
+      default: '12.8.1'
+    vscode-version:
+      type: string
+      default: stable
+      enum: [ stable ]
+      # enum: [ stable, proposedapi, insiders ]
 context-and-filters: &context-and-filters
   context:
     - DockerHub
@@ -109,8 +123,11 @@ jobs:
       - restore-test-cache: { oe-version: << parameters.oe-version >> }
       - run: .circleci/run_test_wrapper.sh
       - store_test_results: { path: artifacts/mocha_results_xunit }
-      - store_artifacts: { when: always, path: artifacts }
-      - persist_to_workspace: { root: ".", paths: [ artifacts, coverage ]}
+      - store_artifacts: { path: artifacts }
+      - run:
+          when: on_fail
+          command: env
+      # - save-test-cache: { oe-version: << parameters.oe-version >> }
   install-and-run:
     parameters:
       oe-version:
@@ -129,7 +146,7 @@ jobs:
       - restore-test-cache: { oe-version: << parameters.oe-version >> }
       - run: .circleci/install_and_run.sh
       - store_test_results: { path: dummy-ext/artifacts }
-      - store_artifacts: { when: always, path: dummy-ext/artifacts }
+      - store_artifacts: { path: dummy-ext/artifacts }
   sonar:
     executor: psc-primary
     steps:
@@ -139,14 +156,18 @@ jobs:
           command: scripts/sonar_test_results_merge.sh
       - sonarcloud/scan:
           cache_version: 9
-      - store_artifacts: { when: always, path: artifacts }
+      - store_artifacts: { path: artifacts }
+      - store_artifacts: { path: coverage }
+      - run:
+          when: on_fail
+          command: env
   publish:
     docker:
       - image: cimg/node:20.8
     steps:
       - attach_workspace: { at: . }
       - run: .circleci/publish.sh
-      - store_artifacts: { when: always, path: artifacts }
+      - store_artifacts: { path: artifacts }
 
 workflows:
   build:
@@ -168,7 +189,7 @@ workflows:
           no-coverage: true
           matrix:
             parameters:
-              oe-version: [ 12.2.12, 12.8.3 ]
+              oe-version: [ 12.2.12, 12.8.3, << pipeline.parameters.latest-oe-version >> ]
               vscode-version: [ stable ]
           name: test-<< matrix.oe-version>>
       - sonar:

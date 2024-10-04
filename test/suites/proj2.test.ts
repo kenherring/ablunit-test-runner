@@ -34,7 +34,7 @@ suite('proj2 - Extension Test Suite', () => {
 			})
 	})
 
-	test('proj2.3 - run current test suite', async () => {
+	test('proj2.3 - run current test suite', () => {
 		return commands.executeCommand('vscode.open', Uri.joinPath(workspaceUri, 'src/testSuite.cls'))
 			.then(() => commands.executeCommand('testing.runCurrentFile'))
 			.then(() => getResults())

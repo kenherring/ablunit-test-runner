@@ -25,7 +25,6 @@ initialize () {
     fi
 
     rm -f ./*.vsix
-    npm install -g @vscode/vsce || sudo npm install -g @vscode/vsce
 }
 
 package () {
@@ -50,11 +49,15 @@ package_version () {
         ARGS+=(-o "ablunit-test-runner-${VSCODE_VERSION}-${PACKAGE_VERSION}.vsix")
     fi
 
-    cp "package.$VSCODE_VERSION.json" package.json
-    if ! vsce package "${ARGS[@]}"; then
-        exit 1
+    if [ "$VSCODE_VERSION" != "stable" ]; then
+        mv package.json package.bkup.json
+        cp "package.$VSCODE_VERSION.json" package.json
     fi
-    cp package.stable.json package.json
+    npm install
+    npx vsce package "${ARGS[@]}"
+    if [ "$VSCODE_VERSION" != "stable" ]; then
+        mv package.bkup.json package.json
+    fi
 }
 
 run_lint () {

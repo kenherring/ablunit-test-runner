@@ -56,23 +56,6 @@
 			}
 		},
 		{
-			"label": "npm watch",
-			"detail": "webpack --mode development --watch",
-			"type": "npm",
-			"script": "watch",
-			"problemMatcher": "$ts-webpack-watch",
-			"isBackground": true,
-			"presentation": {
-				"reveal": "silent",
-				"focus": false,
-				"group": "build-task"
-			},
-			"group": {
-				"kind": "build",
-				"isDefault": true
-			}
-		},
-		{
 			"label": "run all tests in docker",
 			"type": "shell",
 			"command": "docker/run_tests.sh",
@@ -109,36 +92,6 @@
 			],
 			"label": "npm: lint-fix-all",
 			"detail": "npx eslint ./src --ext .ts,.js --fix"
-		},
-		{
-			"label": "npm: build",
-			"detail": "npm run webpack",
-			"type": "npm",
-			"script": "build",
-			"group": {
-				"kind": "build",
-				"isDefault": true,
-			},
-			"presentation": {
-				"reveal": "always",
-				"group": "build-task"
-			},
-			"problemMatcher": "$ts-webpack-watch",
-		},
-		{
-			"label": "npm: rebuild",
-			"detail": "npm run clean && npm run webpack",
-			"type": "npm",
-			"script": "rebuild",
-			"group": {
-				"kind": "build",
-				"isDefault": true,
-			},
-			"presentation": {
-				"reveal": "always",
-				"group": "build-task"
-			},
-			"problemMatcher": "$ts-webpack-watch",
-		},
+		}
 	]
 }

@@ -8,13 +8,12 @@ suite('proj7B - Extension Test Suite', () => {
 		await beforeProj7()
 	})
 
+	setup('proj7B - beforeEach', beforeCommon)
+
 	test('proj7B.1 - cancel test refresh', async () => {
-		// TODO
-		// const maxCancelTime = 250
-		const maxCancelTime = 2000
-		// TODO
-		// const maxRefreshTime = 250
-		const maxRefreshTime = 7000
+		const minCancelTime = 10
+		const maxCancelTime = 350
+		const maxRefreshTime = 350
 
 		log.info('refreshing tests')
 		const startRefreshTime = new Duration()
@@ -22,8 +21,8 @@ suite('proj7B - Extension Test Suite', () => {
 		let testCount = await getTestControllerItemCount('ABLTestFile')
 		setTimeout(() => { throw new Error('timeout waiting for getTestControllerItemCount to return > 10 (got ' + testCount + ')') }, 5000)
 		while(testCount < 10) {
-			await sleep(250, 'waiting for getTestControllerItemCount to return > 10 (got ' + testCount + ')')
 			testCount = await getTestControllerItemCount('ABLTestFile')
+			// await sleep(5, 'waiting for getTestControllerItemCount to return > 10 (got ' + testCount + ')')
 		}
 
 		log.info('cancelling test refresh')
@@ -37,6 +36,7 @@ suite('proj7B - Extension Test Suite', () => {
 				throw err
 			})
 			log.info(' - elapsedCancelTime=' + startCancelTime.elapsed() + 'ms, elapsedRefreshTime=' +  startRefreshTime.elapsed() + 'ms')
+			assert.durationMoreThan(startCancelTime, minCancelTime)
 			assert.durationLessThan(startCancelTime, maxCancelTime)
 			assert.durationLessThan(startRefreshTime, maxRefreshTime)
 		} catch (err) {
@@ -60,11 +60,13 @@ suite('proj7B - Extension Test Suite', () => {
 		})
 	})
 
-	// TODO - reenable this test
+	test('proj7B.2 - cancel test run while adding tests', async () => {
+		const maxCancelTime = 1000
+		// const runTestTime = new Duration()
 
-	// test('proj7B.2 - cancel test run while adding tests', async () => {
-	// 	const maxCancelTime = 1000
-	// 	const runTestTime = new Duration()
+		runAllTests().catch((err: unknown) => { log.info('runAllTests got error: ' + err) })
+		await sleep(250)
+			.then(() => { return waitForTestRunStatus(RunStatus.Constructed) })
 
 	// 	runAllTests().then(() => {
 	// 		log.info('runProm done ' + runTestTime)
@@ -73,8 +75,8 @@ suite('proj7B - Extension Test Suite', () => {
 	// 	})
 	// 	await waitForTestRunStatus(RunStatus.Constructed)
 
-	// 	const elapsedCancelTime = await cancelTestRun(false)
-	// 	assert.durationLessThan(elapsedCancelTime, maxCancelTime)
+		// const resArr = await getCurrentRunData()
+		// const res = resArr[0]
 
 	// 	const resArr = await getCurrentRunData()
 	// 	const res = resArr[0]
@@ -87,21 +89,9 @@ suite('proj7B - Extension Test Suite', () => {
 	// 	// 	assert.fail('runAllTests completed without status=\'run cancelled\' (status=\'' + res.status + '\')')
 	// 	// }
 
-	// 	// await refreshTests().then(() => {
-	// 	// 	if (res.status == RunStatus.Cancelled) {
-	// 	// 		log.info('runAllTests completed with status=\'run cancelled\'')
-	// 	// 	} else {
-	// 	// 		assert.fail('runAllTests completed without status=\'run cancelled\' (status=\'' + res.status + '\')')
-	// 	// 	}
-	// 	// }, (err: unknown) => {
-	// 	// 	if (err instanceof CancellationError) {
-	// 	// 		log.info('runAllTests threw CancellationError as expected ' + runTestTime.toString())
-	// 	// 	} else {
-	// 	// 		const e = err as Error
-	// 	// 		assert.equal(e.name, 'Canceled', 'runAllTests threw unexpected error. Expected e.name="Canceled" err=' + err)
-	// 	// 	}
-	// 	// })
-	// })
+	test('proj7B.3 - cancel test run while _progres is running', async () => {
+		const maxCancelTime = 1000
+		// const runTestTime = new Duration()
 
 	// TODO - reenable this test
 	// test('proj7B.3 - cancel test run while _progres is running', async () => {

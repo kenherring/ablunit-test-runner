@@ -2,7 +2,7 @@
 	"name": "ablunit-test-runner",
 	"displayName": "ABLUnit Test Runner",
 	"description": "OpenEdge ABLUnit test runner for VSCode",
-	"version": "0.2.2",
+	"version": "0.2.13",
 	"preview": true,
 	"engineStrict": true,
 	"galleryBanner": {
@@ -97,27 +97,28 @@
 		"xml2js": "^0.6.2"
 	},
 	"devDependencies": {
-		"@stylistic/eslint-plugin": "^2.3.0",
-		"@types/mocha": "^10.0.7",
-		"@types/node": "^18.18.0",
 		"@types/source-map-support": "^0.5.10",
+		"@stylistic/eslint-plugin": "^2.8.0",
+		"@swc-node/register": "^1.10.9",
+		"@types/mocha": "^10.0.8",
+		"@types/node": "^18.19.50",
 		"@types/vscode": "^1.88.0",
 		"@types/xml2js": "^0.4.14",
 		"@typescript-eslint/eslint-plugin": "^7.16.0",
 		"@typescript-eslint/parser": "^7.16.0",
 		"@vscode/test-cli": "^0.0.10",
 		"@vscode/test-electron": "^2.4.1",
-		"@vscode/vsce": "^3.0.0",
+		"@vscode/vsce": "^3.1.0",
 		"esbuild": "^0.23.1",
 		"eslint": "^8.57.0",
 		"eslint-plugin-promise": "^7.0.0",
 		"mocha": "^10.6.0",
 		"mocha-junit-reporter": "^2.2.1",
 		"mocha-multi-reporters": "^1.5.1",
-		"mocha-reporter-sonarqube": "^2.0.6",
+		"mocha-reporter-sonarqube": "2.0.6",
 		"ts-node": "^10.9.2",
 		"tsconfig-paths": "^4.2.0",
-		"typescript": "^5.5.4"
+		"typescript": "^5.6.2"
 	},
 	"contributes": {
 		"configuration": {
@@ -154,8 +155,8 @@
 				"ablunit.files.exclude": {
 					"type": "array",
 					"default": [
-						".builder/**",
-						".pct/**"
+						"**/.builder/**",
+						"**/.pct/**"
 					],
 					"markdownDescription": "Glob patterns to exclude test files",
 					"scope": "machine-overridable"
