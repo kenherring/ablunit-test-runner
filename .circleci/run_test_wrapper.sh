@@ -153,7 +153,7 @@ dbus_config_5 () {
 
 run_tests () {
 	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] ABLUNIT_TEST_RUNNER_NO_COVERAGE=$ABLUNIT_TEST_RUNNER_NO_COVERAGE; PROJECT_NAME=${ABLUNIT_TEST_RUNNER_PROJECT_NAME:-}"
-	EXIT_CODE=0
+	local EXIT_CODE=0
 
 
 	local RUN_SCRIPT=test:coverage
@@ -161,8 +161,7 @@ run_tests () {
 		RUN_SCRIPT='test'
 	fi
 	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] starting 'npm $RUN_SCRIPT'"
-	# time xvfb-run -a npm run "$RUN_SCRIPT" || EXIT_CODE=$?
-	time xvfb-run -a npm run "$RUN_SCRIPT" || EXIT_CODE=$?
+	time xvfb-run -a npm run "$RUN_SCRIPTdoc" || EXIT_CODE=$?
 	echo "EXIT_CODE=$EXIT_CODE"
 	log_timing "xvfb-run end (EXIT_CODE=$EXIT_CODE)"
 
