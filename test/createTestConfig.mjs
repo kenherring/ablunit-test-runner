@@ -36,21 +36,22 @@ function initialize () {
 }
 
 function writeConfigToFile (name, config) {
-	fs.writeFileSync('.vscode-test.' + name + '.bk.json', JSON.stringify(config, null, 4).replace('    ', '\t'))
+	fs.writeFileSync('artifacts/.vscode-test.' + name + '.json', JSON.stringify(config, null, 4).replace('    ', '\t'))
 }
 
 let isFirst = true
 function getMochaTimeout (projName) {
-	let timeout = 15000
 	if (projName === 'examples') {
-		timeout = 1000
+		return 1000
 	}
 	if (isFirst) {
 		isFirst = false
+		return 120000
 	}
 
+
 	switch (projName) {
-		case 'DebugLines': return 60000 // install openedge-abl-lsp for the first time, so give it a moment to start
+		case 'DebugLines': return 120000 // install openedge-abl-lsp for the first time, so give it a moment to start
 		case 'proj1': return 30000
 		// case 'proj2': return 20000
 		case 'proj5': return 60000
@@ -69,14 +70,11 @@ function getMochaTimeout (projName) {
 function getMochaOpts (projName) {
 	const reporterDir = path.resolve(__dirname, '..', 'artifacts')
 	fs.mkdirSync(path.resolve(reporterDir, 'mocha_results_json'), {recursive: true})
-	fs.mkdirSync(path.resolve(reporterDir, 'mocha_results_junit'), {recursive: true})
 	fs.mkdirSync(path.resolve(reporterDir, 'mocha_results_sonar'), {recursive: true})
 	fs.mkdirSync(path.resolve(reporterDir, 'mocha_results_xunit'), {recursive: true})
 	const jsonFile = path.resolve(reporterDir, 'mocha_results_json', projName + '.json')
-	const mochaFile = path.resolve(reporterDir, 'mocha_results_junit', projName + '.xml')
 	const sonarFile = path.resolve(reporterDir, 'mocha_results_sonar', projName + '.xml')
 	const xunitFile = path.resolve(reporterDir, 'mocha_results_xunit', projName + '.xml')
-	// const bail = process.env['CIRCLECI'] != 'true' || false
 
 	/** @type {import('mocha').MochaOptions} */
 	const mochaOpts = {
@@ -86,7 +84,7 @@ function getMochaOpts (projName) {
 		// ui: 'bdd' // default; suite, test, etc
 		retries: 0,
 		parallel: false,
-		bail: false,
+		bail: true,
 		require: [
 			'mocha',
 			'tsconfig-paths/register',
@@ -97,14 +95,14 @@ function getMochaOpts (projName) {
 	if (process.env['ABLUNIT_TEST_RUNNER_RUN_SCRIPT_FLAG']) {
 		mochaOpts.reporter = 'mocha-multi-reporters'
 		mochaOpts.reporterOptions = {
-			reporterEnabled: [ 'json-stream', 'spec', 'json', 'xunit', 'mocha-junit-reporter', 'mocha-reporter-sonarqube' ],
-			jsonReporterOptions: { output: jsonFile, outputFile: jsonFile, mochaFile: jsonFile }, // TODO - not working
+			reporterEnabled: [ 'json-stream', 'spec', 'xunit', 'mocha-reporter-sonarqube' ],
+			jsonReporterOptions: { output: jsonFile }, // TODO - not working
 			xunitReporterOptions: { output: xunitFile },
-			mochaJunitReporterReporterOptions: { mochaFile: mochaFile },
 			mochaReporterSonarqubeReporterOptions: { filename: sonarFile },
 		}
 	}
 
+	// eslint-disable-next-line no-console, no-undef
 	if (process.env['CIRCLECI']) {
 		mochaOpts.bail = false
 	}
@@ -310,36 +308,23 @@ function getTests () {
 function getCoverageOpts () {
 	const coverageDir = path.resolve(__dirname, '..', 'artifacts', 'coverage')
 	fs.mkdirSync(coverageDir, { recursive: true })
+
+	/** @type {import('@vscode/test-cli').ICoverageConfiguration} */
 	const coverageOpts = {
-		exclude: [
-			'dist',
-			'.vscode-test.mjs',
-			'test_projects',
-			'dummy-ext',
-			'webpack.config.js',
-			'vscode.proposed.*.d.ts',
-			'vscode',
-		],
-		include: [
-			// '**/*',
-			'**/src/**',
-			'**/test/**',
-		],
 		// https://istanbul.js.org/docs/advanced/alternative-reporters/
 		// * default = ['html'], but somehow also prints the 'text-summary' to the console
 		// * 'lcov' includes 'html' output
-		reporter: [ 'text', 'lcov' ],
-		// includeAll: true,
-		output: coverageDir,
-
-		// TODO - not reporting extension, or other files loaded w/ vscode extension activate
-
-		// ----- NOT REAL OPTIONS?? ----- //
-		require: [ 'ts-node/register' ],
-		// cache: false,
-		// 'enable-source-maps': true,
-		// sourceMap: false,
-		// instrument: false,
+		// * 'lcovonly' does not include 'html' output
+		reporter: [ 'text', 'lcovonly' ],
+		output: coverageDir, // https://github.com/microsoft/vscode-test-cli/issues/38
+		include: [
+			'**'
+		],
+		exclude: [
+			'node_modules',
+			'node_modules/**',
+			'**/node_modules/**'
+		],
 	}
 	return coverageOpts
 }

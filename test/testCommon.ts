@@ -766,7 +766,7 @@ export function updateConfig (key: string, value: string | string[] | undefined 
 	})
 }
 
-export async function updateTestProfile (key: string, value: string | string[] | boolean | object) {
+export async function updateTestProfile (key: string, value: string | string[] | boolean | object | undefined) {
 	const testProfileUri = Uri.joinPath(getWorkspaceUri(), '.vscode', 'ablunit-test-profile.json')
 	if (!doesFileExist(testProfileUri)) {
 		log.info('creating ablunit-test-profile.json')

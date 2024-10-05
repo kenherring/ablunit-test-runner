@@ -23,9 +23,11 @@ initialize () {
 
 	export ABLUNIT_TEST_RUNNER_DBUS_NUM \
 		ABLUNIT_TEST_RUNNER_OE_VERSION \
+		ABLUNIT_TEST_RUNNER_VSCODE_VERSION \
 		ABLUNIT_TEST_RUNNER_PROJECT_NAME \
 		ABLUNIT_TEST_RUNNER_RUN_SCRIPT_FLAG \
-		ABLUNIT_TEST_RUNNER_VSCODE_VERSION
+		ABLUNIT_TEST_RUNNER_UNIT_TESTING \
+		ABLUNIT_TEST_RUNNER_REPO_DIR
 	export DONT_PROMPT_WSL_INSTALL VERBOSE
 
 	echo "ABLUNIT_TEST_RUNNER_DBUS_NUM=$ABLUNIT_TEST_RUNNER_DBUS_NUM"
@@ -56,7 +58,6 @@ update_oe_version () {
 restore_vscode_test () {
 	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] ABLUNIT_TEST_RUNNER_OE_VERSION=$ABLUNIT_TEST_RUNNER_OE_VERSION"
 	local FROM_DIR TO_DIR COUNT
-
 	FROM_DIR='/home/circleci/.vscode-test'
 	if [ ! -d "$FROM_DIR" ]; then
 		echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] $FROM_DIR not found, skipping restore"
@@ -151,26 +152,27 @@ dbus_config_5 () {
 }
 
 run_tests () {
-	echo "[$0 ${FUNCNAME[0]}]"
-	log_timing "run_tests start (PROJECT_NAME=${ABLUNIT_TEST_RUNNER_PROJECT_NAME:-})"
+	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] ABLUNIT_TEST_RUNNER_NO_COVERAGE=$ABLUNIT_TEST_RUNNER_NO_COVERAGE; PROJECT_NAME=${ABLUNIT_TEST_RUNNER_PROJECT_NAME:-}"
 	EXIT_CODE=0
-	cp "package.$ABLUNIT_TEST_RUNNER_VSCODE_VERSION.json" package.json
 
-	if ${ABLUNIT_TEST_RUNNER_NO_COVERAGE:-false}; then
-		xvfb-run -a npm test
-	else
-		xvfb-run -a npm run test:coverage
-	fi | sed -e 's,/?home/circleci/project/,,g' || EXIT_CODE=$?
+
+	local RUN_SCRIPT=test:coverage
+	if $ABLUNIT_TEST_RUNNER_NO_COVERAGE; then
+		RUN_SCRIPT='test'
+	fi
+	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] starting 'npm $RUN_SCRIPT'"
+	# time xvfb-run -a npm run "$RUN_SCRIPT" || EXIT_CODE=$?
+	time xvfb-run -a npm run "$RUN_SCRIPT" || EXIT_CODE=$?
+	echo "EXIT_CODE=$EXIT_CODE"
 	log_timing "xvfb-run end (EXIT_CODE=$EXIT_CODE)"
 
-	if ! ls ./ablunit-test-runner-*.*.*.vsix &>/dev/null; then
-		echo "ERROR: no .vsix files found, 'npm run package' failed"
-		exit 1
-	fi
-	log_timing "run_tests end"
 
-	echo "---------- TIMING ----------"
-	cat /tmp/timing.log
+	if ! scripts/sonar_test_results_merge.sh; then
+		echo "WARNING: failed to merge result rules"
+	fi
+	mv coverage/lcov.info artifacts/coverage/lcov.info || true ## https://github.com/microsoft/vscode-test-cli/issues/38
+
+	log_timing "run_tests end"
 
 	if [ "$EXIT_CODE" = "0" ]; then
 		echo "xvfb-run success"
@@ -184,6 +186,9 @@ run_tests () {
 		echo 'ERROR: artifacts/coverage/lcov.info not found'
 		exit 1
 	fi
+
+	echo "---------- TIMING ----------"
+	cat /tmp/timing.log
 }
 
 save_and_print_debug_output () {

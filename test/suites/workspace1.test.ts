@@ -1,15 +1,13 @@
 import { Uri, workspace } from 'vscode'
-import { assert, log, runAllTests, suiteSetupCommon, updateConfig } from '../testCommon'
+import { assert, log, runAllTests, suiteSetupCommon, updateConfig, updateTestProfile } from '../testCommon'
 
 suite('workspace1 - Extension Test Suite', () => {
 
 	suiteSetup('proj2 - before', () => suiteSetupCommon())
 
-	// teardown('workspace1 - afterEach', async (done) => {
-	// 	log.info('after')
-	// 	await updateConfig('tempDir', undefined)
-	// 	done()
-	// })
+	teardown('workspace1 - afterEach', () => {
+		return updateTestProfile('tempDir', undefined)
+	})
 
 	test('workspace1.1 - <workspaceFolder>/ablunit.json file exists', async () => {
 		await runAllTests()
@@ -49,22 +47,24 @@ suite('workspace1 - Extension Test Suite', () => {
 		assert.notFileExists(ablunitJson)
 	})
 
-	test.skip('workspace1.2 - <storageUri>/ablunit.json file exists', async () => {
-		await updateConfig('tempDir', 'workspaceAblunit')
-		await runAllTests()
+	test.skip('workspace1.2 - <storageUri>/ablunit.json file exists', () => {
+		return updateTestProfile('tempDir', 'workspaceAblunit')
+			.then(() => { return runAllTests() })
+			.then(() => {
+				for (let i = 0; i < 2; i++) {
+					log.info('___ validate folder #' + i + ' success [' + workspace.workspaceFolders![i].name + '] ___')
+					const ablunitJson = Uri.joinPath(workspace.workspaceFolders![i].uri, 'workspaceAblunit', 'ablunit.json')
+					const resultsXml = Uri.joinPath(workspace.workspaceFolders![i].uri, 'workspaceAblunit', 'results.xml')
+					const resultsJson = Uri.joinPath(workspace.workspaceFolders![i].uri, 'workspaceAblunit', 'results.json')
+					const listingsDir = Uri.joinPath(workspace.workspaceFolders![i].uri, 'workspaceAblunit', 'listings')
 
-		for (let i = 0; i < 2; i++) {
-			log.info('___ validate folder #' + i + ' success [' + workspace.workspaceFolders![i].name + '] ___')
-			const ablunitJson = Uri.joinPath(workspace.workspaceFolders![i].uri, 'workspaceAblunit', 'ablunit.json')
-			const resultsXml = Uri.joinPath(workspace.workspaceFolders![i].uri, 'workspaceAblunit', 'results.xml')
-			const resultsJson = Uri.joinPath(workspace.workspaceFolders![i].uri, 'workspaceAblunit', 'results.json')
-			const listingsDir = Uri.joinPath(workspace.workspaceFolders![i].uri, 'workspaceAblunit', 'listings')
-
-			assert.fileExists(ablunitJson)
-			assert.fileExists(resultsXml)
-			assert.notFileExists(resultsJson)
-			assert.notDirExists(listingsDir)
-		}
+					assert.fileExists(ablunitJson)
+					assert.fileExists(resultsXml)
+					assert.notFileExists(resultsJson)
+					assert.notDirExists(listingsDir)
+				}
+				return
+			}, (e) => { throw e })
 	})
 
 })
