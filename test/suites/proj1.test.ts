@@ -36,34 +36,35 @@ suite('proj1 - Extension Test Suite', () => {
 			.then(() => { return workspace.fs.delete(Uri.joinPath(workspaceUri, '.vscode', 'settings.bk.json')) })
 	})
 
-	test('proj1.1 - output files exist 1 - compile error', async () => {
+	test('proj1.1 - output files exist 1 - compile error', () => {
 		const ablunitJson = Uri.joinPath(workspaceUri, 'ablunit.json')
 		const resultsXml = Uri.joinPath(workspaceUri, 'results.xml')
 		const resultsJson = Uri.joinPath(workspaceUri, 'results.json')
 		assert.notFileExists(ablunitJson)
 		assert.notFileExists(resultsXml)
 
-		await runAllTests(false).then(() => {
-			// assert.fail('expected runAllTests to throw error, but no error was caught')
-		}, (e) => {
-			log.info('Error caught and ignored: e=' + e)
-		})
-
-
-		// Different behavior on Windows/WSL and Unix
-		// Unix does not create the results.xml file while Windows/WSL does...
-		if (process.platform === 'win32' || process.env['WSL_DISTRO_NAME'] !== undefined) {
-			assert.fileExists(resultsXml)
-		} else {
-			assert.notFileExists(resultsXml)
-		}
-		assert.fileExists(ablunitJson)
-		assert.notFileExists(resultsJson)
+		const prom = runAllTests()
+			.then(() => {
+				throw new Error('runAllTests should have thrown an error')
+			}, (e: unknown) => {
+				log.info('runAllTests error: ' + e)
+				assert.fileExists(ablunitJson)
+				const wsFolder = getWorkspaceFolders()[0]
+				log.info('getOEVersion(wsFolder)=' + getOEVersion(wsFolder) + '; oeVersion()=' + oeVersion())
+				if (oeVersion()?.startsWith('12.2') && (process.platform === 'win32' || process.env['WSL_DISTRO_NAME'] !== undefined)) {
+					assert.fileExists(resultsXml)
+				} else {
+					assert.notFileExists(resultsXml)
+				}
+				assert.notFileExists(resultsJson)
+				log.info('assert proj1.1 complete!')
+			})
+		return prom
 	})
 
 	test('proj1.2 - output files exist 2 - exclude compileError.p', () => {
-		log.info('updating config...')
-		return updateConfig('ablunit.files.exclude', [ '.builder/**', 'compileError.p' ])
+		return workspace.getConfiguration('ablunit').update('files.exclude', [ '.builder/**', 'compileError.p' ])
+			.then(() => { return runAllTests() })
 			.then(() => {
 				assert.tests.count(29)
 				assert.tests.passed(23)

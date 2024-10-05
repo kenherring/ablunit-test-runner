@@ -74,7 +74,7 @@ suite('proj0  - Extension Test Suite', () => {
 		await runAllTests()
 
 		const lines = (await getResults())[0].coverage.get(testFileUri.fsPath) ?? []
-		if (lines.length > 0) {
+		if (lines && lines.length > 0) {
 			assert.fail('coverage should be empty for ' + workspace.asRelativePath(testFileUri) + ' (lines.length=' + lines.length + ')')
 		}
 		const executedLines = lines.filter((d) => d.executed)
@@ -87,6 +87,10 @@ suite('proj0  - Extension Test Suite', () => {
 			.then(() => { return sleep2(250) })
 			.then(() => { return getTestItem(toUri('src/threeTestMethods.cls')) })
 
+		if (!testClassItem) {
+			throw new Error('cannot find TestItem for src/threeTestMethods.cls')
+		}
+
 		assert.equal(testClassItem.children.size, 3, 'testClassItem.children.size should be 3')
 	})
 
@@ -95,6 +99,9 @@ suite('proj0  - Extension Test Suite', () => {
 			.then(() => { return sleep2(250) })
 			.then(() => { return getTestItem(toUri('src/threeTestProcedures.p')) })
 
+		if (!testClassItem) {
+			throw new Error('cannot find TestItem for src/threeTestProcedures.p')
+		}
 		assert.equal(testClassItem.children.size, 3, 'testClassItem.children.size should be 3')
 	})
 
@@ -103,6 +110,9 @@ suite('proj0  - Extension Test Suite', () => {
 			.then(() => { return sleep2(250) })
 			.then(() => { return getTestItem(toUri('src/ignoreMethod.cls')) })
 
+		if (!testClassItem) {
+			throw new Error('cannot find TestItem for src/ignoreMethod.cls')
+		}
 		assert.equal(testClassItem.children.size, 5, 'testClassItem.children.size should be 5')
 	})
 
@@ -111,6 +121,9 @@ suite('proj0  - Extension Test Suite', () => {
 			.then(() => { return sleep2(250) })
 			.then(() => { return getTestItem(toUri('src/ignoreProcedure.p')) })
 
+		if (!testClassItem) {
+			throw new Error('cannot find TestItem for src/ignoreProcedure.p')
+		}
 		assert.equal(testClassItem.children.size, 5, 'testClassItem.children.size should be 5')
 	})
 
