@@ -96,6 +96,10 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 	}
 
 	const getDefaultCommand = () => {
+		if (!res.cfg.ablunitConfig.tempDirUri) {
+			throw new Error('temp directory not set')
+		}
+
 		const executable = res.dlc!.uri.fsPath.replace(/\\/g, '/') + '/bin/' + res.cfg.ablunitConfig.command.executable
 
 		let cmd = [ executable, '-b', '-p', res.wrapperUri.fsPath.replace(/\\/g, '/') ]
@@ -116,9 +120,11 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 		}
 		cmd.push('-T', tempPath)
 
-		if (res.cfg.ablunitConfig.dbConns.length > 0) {
+		log.info('100')
+		if (res.cfg.ablunitConfig.dbConnPfUri && res.cfg.ablunitConfig.dbConns.length > 0) {
 			cmd.push('-pf', workspace.asRelativePath(res.cfg.ablunitConfig.dbConnPfUri.fsPath, false))
 		}
+		log.info('101')
 
 		if (res.cfg.ablunitConfig.profiler.enabled) {
 			cmd.push('-profile', workspace.asRelativePath(res.cfg.ablunitConfig.profOptsUri, false))

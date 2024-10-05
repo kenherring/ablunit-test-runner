@@ -15,7 +15,7 @@ import process from 'process'
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const vsVersionNum = '1.88.0'
 const vsVersion = process.env['ABLUNIT_TEST_RUNNER_VSCODE_VERSION'] ?? 'stable'
-const useOEAblPrerelease = false
+const useOEAblPrerelease = process.env['PRERELEASE_FLAG'] ?? false;''
 const enableExtensions = [
 	'AtStart',
 	'DebugLines',
@@ -39,15 +39,19 @@ function writeConfigToFile (name, config) {
 	fs.writeFileSync('.vscode-test.' + name + '.bk.json', JSON.stringify(config, null, 4).replace('    ', '\t'))
 }
 
-function getMochaTimeout (projName, firstTest) {
+let isFirst = true
+function getMochaTimeout (projName) {
 	let timeout = 15000
 	if (projName === 'examples') {
 		timeout = 1000
 	}
+	if (isFirst) {
+		isFirst = false
+	}
 
 	switch (projName) {
-		case 'DebugLines': timeout = 60000; break // install openedge-abl-lsp for the first time, so give it a moment to start
-		case 'proj1': timeout = 30000; break
+		case 'DebugLines': return 60000 // install openedge-abl-lsp for the first time, so give it a moment to start
+		case 'proj1': return 30000
 		// case 'proj2': return 20000
 		case 'proj5': return 60000
 		case 'proj8': return 45000
@@ -55,11 +59,7 @@ function getMochaTimeout (projName, firstTest) {
 		case 'proj7B': return 120000
 	}
 
-	if (firstTest) {
-		timeout = 45000
-	}
-
-	return timeout
+	return 30000
 }
 
 /**
@@ -81,7 +81,7 @@ function getMochaOpts (projName) {
 	/** @type {import('mocha').MochaOptions} */
 	const mochaOpts = {
 		// fullTrace: true
-		timeout: getMochaTimeout(projName, firstTest),
+		timeout: getMochaTimeout(projName),
 		// ui: 'tdd', // describe, it, etc
 		// ui: 'bdd' // default; suite, test, etc
 		retries: 0,
@@ -167,15 +167,14 @@ function getLaunchArgs (projName) {
 	}
 	// args.push('--log', 'debug') // '<level>'
 	// args.push('--log', 'trace') // '<level>'
-	// args.push('--log', 'kenherring.ablunit-test-runner:debug') // <extension-id>:<level>
-	// args.push('--log', 'kenherring.ablunit-test-runner:trace') // <extension-id>:<level>
+	// args.push('--log', 'kherring\.ablunit-test-runner:debug') // <extension-id>:<level>
+	// args.push('--log', 'kherring\.ablunit-test-runner:trace') // <extension-id>:<level>
 	// args.push('--logsPath', './artifacts/vscode_logs/') // undocumented
-	// args.push('--status')
+	// args.push('--status')p
 	// args.push('--prof-startup')
 	// args.push('--disable-extension <ext-id>')
 	if (!enableExtensions.includes(projName)) {
 		args.push('--disable-extensions')
-		args.push('--disable-extension', 'riversidesoftware.openedge-abl-lsp')
 	}
 	args.push('--disable-extension', 'vscode.builtin-notebook-renderers')
 	args.push('--disable-extension', 'vscode.emmet')
@@ -274,11 +273,10 @@ function getTestConfig (testDir, projName) {
 		extensionDevelopmentPath: path.resolve(__dirname, '..'),
 		extensionTestsPath: path.resolve(__dirname, '..', 'test'),
 		workspaceFolder,
-		mocha: getMochaOpts(projName, firstTest),
+		mocha: getMochaOpts(projName),
 		label: 'suite_' + projName,
 		srcDir: './',
 	}
-	return testConfig
 }
 
 function getTests () {

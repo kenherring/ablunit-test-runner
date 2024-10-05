@@ -51,6 +51,9 @@ export class ABLUnitConfig  {
 	}
 
 	createAblunitJson (_uri: Uri, cfg: CoreOptions, testQueue: ITestObj[]) {
+		if (!this.ablunitConfig.config_uri) {
+			throw new Error('Output location not defined!')
+		}
 		log.info('creating ablunit.json: \'' + this.ablunitConfig.config_uri.fsPath + '\'')
 		const promarr: PromiseLike<void>[] = []
 		promarr.push(
@@ -132,7 +135,7 @@ export class ABLUnitConfig  {
 		if (this.ablunitConfig.importOpenedgeProjectJson) {
 			conf = getOpenEdgeProfileConfig(this.ablunitConfig.workspaceFolder.uri, this.ablunitConfig.openedgeProjectProfile)
 		}
-		if (conf && conf.buildDirectory.length > 0) {
+		if (conf && conf.buildPath.length > 0) {
 			const pathObj: IBuildPathEntry[] = []
 			if (extensionResourcesDir) {
 				pathObj.push({
@@ -142,14 +145,14 @@ export class ABLUnitConfig  {
 					xrefDir: Uri.joinPath(extensionResourcesDir, 'VSCodeTestRunner').fsPath,
 				})
 			}
-			// for (const e of conf.buildDir) {
-			// 	pathObj.push({
-			// 		path: e.path,
-			// 		type: e.type.toLowerCase(),
-			// 		buildDir: e.buildDir,
-			// 		xrefDir: e.xrefDir
-			// 	})
-			// }
+			for (const e of conf.buildPath) {
+				pathObj.push({
+					path: e.path,
+					type: e.type.toLowerCase(),
+					buildDir: e.buildDir,
+					xrefDir: e.xrefDir
+				})
+			}
 			parser.setPropath({ propathEntry: pathObj })
 		} else {
 			parser.setPropath({ propathEntry: [{

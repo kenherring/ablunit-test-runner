@@ -122,7 +122,7 @@ export class ABLResults implements Disposable {
 		}
 
 		// eslint-disable-next-line @typescript-eslint/no-invalid-void-type
-		const prom: (Promise<void | void[]> | Thenable<void>)[] = []
+		const prom: (Thenable<void> | Promise<void> | Promise<void[]> | undefined)[] = []
 		prom[0] = this.cfg.createProfileOptions(this.cfg.ablunitConfig.profOptsUri, this.cfg.ablunitConfig.profiler)
 		prom[1] = this.cfg.createProgressIni(this.propath.toString(), this.dlc)
 		prom[2] = this.cfg.createAblunitJson(this.cfg.ablunitConfig.config_uri, this.cfg.ablunitConfig.options, this.testQueue)

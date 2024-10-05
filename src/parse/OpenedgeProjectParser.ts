@@ -154,6 +154,7 @@ export class ProfileConfig implements IOpenEdgeConfig {
 	buildDirectory = '.'
 	dbConnections: IDatabaseConnection[] = []
 	procedures: IProcedure[] = []
+
 	startupProc?: string
 	parameterFiles: string[] = []
 	dbDictionary: string[] = []
@@ -177,16 +178,16 @@ export class ProfileConfig implements IOpenEdgeConfig {
 		if (!this.buildDirectory) {
 			this.buildDirectory = parent.buildDirectory
 		}
-		if (this.buildPath.length == 0) {
+		if (this.buildPath.length == 0 && parent.buildPath) {
 			this.buildPath = parent.buildPath
 		}
-		if (this.propath.length == 0) {
+		if (this.propath.length == 0 && parent.propath) {
 			this.propath = parent.propath
 		}
-		if (this.dbConnections.length == 0) {
+		if (this.dbConnections.length == 0 && parent.dbConnections) {
 			this.dbConnections = parent.dbConnections
 		}
-		if (this.procedures.length == 0) {
+		if (this.procedures.length == 0 && parent.procedures) {
 			this.procedures = parent.procedures
 		}
 	}
@@ -284,8 +285,7 @@ function readGlobalOpenEdgeRuntimes (workspaceUri: Uri) {
 			return
 		}
 	})
-	// if (!defaultRuntime && oeRuntimes.length === 1) {
-	if (oeRuntimes.length === 1) {
+	if (!defaultRuntime && oeRuntimes.length === 1) {
 		defaultRuntime = oeRuntimes[0]
 	}
 
@@ -338,15 +338,15 @@ function parseOpenEdgeConfig (cfg: IOpenEdgeConfig): ProfileConfig {
 	retVal.extraParameters = cfg.extraParameters ?? ''
 	retVal.charset = cfg.charset ?? ''
 	retVal.oeversion = cfg.oeversion ?? ''
-	retVal.graphicalMode = cfg.graphicalMode
+	retVal.graphicalMode = cfg.graphicalMode ?? ''
 	if (cfg.buildPath)
-		retVal.propath = cfg.buildPath.map(str => str.path.replace('${DLC}', retVal.dlc))
+		retVal.propath = cfg.buildPath.map(str => str.path.replace('${DLC}', retVal.dlc)) ?? ''
 	retVal.buildPath = cfg.buildPath ?? []
 	retVal.startupProc = ''
 	retVal.parameterFiles = []
 	retVal.dbDictionary = []
-	retVal.dbConnections = cfg.dbConnections
-	retVal.procedures = cfg.procedures
+	retVal.dbConnections = cfg.dbConnections ?? []
+	retVal.procedures = cfg.procedures ?? []
 
 	return retVal
 }
@@ -371,8 +371,8 @@ function parseOpenEdgeProjectConfig (uri: Uri, workspaceUri: Uri, config: IOpenE
 	}
 	prjConfig.buildPath = config.buildPath ?? []
 	prjConfig.buildDirectory = config.buildDirectory ?? workspaceUri.fsPath
-	prjConfig.dbConnections = config.dbConnections
-	prjConfig.procedures = config.procedures
+	prjConfig.dbConnections = config.dbConnections ?? []
+	prjConfig.procedures = config.procedures ?? []
 
 	prjConfig.profiles.set('default', prjConfig)
 	if (config.profiles) {
@@ -443,14 +443,17 @@ function getWorkspaceProfileConfig (workspaceUri: Uri, openedgeProjectProfile?: 
 	if (activeProfile) {
 		const prf =  prjConfig.profiles.get(activeProfile)
 		if (prf) {
+			if (prf.buildPath.length == 0)
+				prf.buildPath = prjConfig.buildPath
+			if (prf.propath.length == 0)
+				prf.propath = prjConfig.propath
 			for (const e of prf.buildPath) {
-				e.buildDir = prjConfig.buildDirectory
+				e.buildDir = prjConfig.buildDirectory ?? workspaceUri
 			}
 			return prf
 		}
 	}
-	// if (prjCo(nfig && openedgeProjectProfile) {
-	if (openedgeProjectProfile) {
+	if (prjConfig && openedgeProjectProfile) {
 		return prjConfig.profiles.get(openedgeProjectProfile) ?? prjConfig.profiles.get('default')
 	}
 	return undefined

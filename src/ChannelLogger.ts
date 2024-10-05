@@ -3,7 +3,7 @@ import { LogLevel, TestRun, window } from 'vscode'
 import path from 'path'
 
 class Logger {
-	private static readonly instance: Logger = new Logger()
+	private static instance: Logger
 
 	private readonly logOutputChannel
 	private readonly consoleLogLevel = LogLevel.Info
@@ -25,6 +25,7 @@ class Logger {
 	}
 
 	public static getInstance () {
+		Logger.instance = new Logger()
 		Logger.instance.clearOutputChannel()
 		return Logger.instance
 	}

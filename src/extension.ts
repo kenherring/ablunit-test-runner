@@ -58,11 +58,6 @@ export async function activate (context: ExtensionContext) {
 	log.debug('DONT_PROMPT_WSL_INSTALL=' + process.env['DONT_PROMPT_WSL_INSTALL'])
 	log.debug('VSCODE_SKIP_PRELAUNCH=' + process.env['VSCODE_SKIP_PRELAUNCH'])
 
-	if (process.env['ABLUNIT_TEST_RUNNER_UNIT_TESTING'] === 'true') {
-		log.info('add _ablunit.getExtensionTestReferences command')
-		context.subscriptions.push(commands.registerCommand('_ablunit.getExtensionTestReferences', () => { return getExtensionTestReferences() }))
-		context.subscriptions.push(commands.registerCommand('_ablunit.isRefreshTestsComplete', () => { return isRefreshTestsComplete }))
-	}
 	log.info('ABLUnit Test Controller created')
 
 	context.subscriptions.push(ctrl)
@@ -277,6 +272,7 @@ export async function activate (context: ExtensionContext) {
 					}
 				}
 				run.end()
+				log.debug('ablunit run failed')
 				return
 			}
 
@@ -306,10 +302,10 @@ export async function activate (context: ExtensionContext) {
 				}
 			}
 
-			void log.notification('ablunit tests complete')
 			run.end()
-			log.trace('run.end()')
-			// return
+			void log.notification('ablunit tests complete')
+			log.debug('run.end() - ablunit tests complete')
+			return
 		}
 
 		const createABLResults = async () => {
@@ -405,7 +401,7 @@ export async function activate (context: ExtensionContext) {
 	function resolveHandlerFunc (item: TestItem | undefined) {
 		if (!item) {
 			log.debug('resolveHandlerFunc called with undefined item - refresh tests?')
-			if (workspace.getConfiguration('ablunit').get('discoverAllTestsOnActivate')) {
+			if (workspace.getConfiguration('ablunit').get('discoverAllTestsOnActivate', false)) {
 				log.debug('discoverAllTestsOnActivate is true. refreshing test tree...')
 				return commands.executeCommand('testing.refreshTests').then(() => {
 					log.trace('tests tree successfully refreshed on workspace startup')
@@ -414,7 +410,7 @@ export async function activate (context: ExtensionContext) {
 					log.error('failed to refresh test tree. err=' + err)
 				})
 			}
-			return Promise.resolve(undefined)
+			return Promise.resolve()
 		}
 
 		if (item.uri) {
@@ -427,7 +423,7 @@ export async function activate (context: ExtensionContext) {
 		if (data instanceof ABLTestFile) {
 			return data.updateFromDisk(ctrl, item).then(() => { return }, (err) => { throw err })
 		}
-		return Promise.resolve(undefined)
+		return Promise.resolve()
 	}
 
 	ctrl.refreshHandler = (token: CancellationToken) => {
@@ -441,18 +437,7 @@ export async function activate (context: ExtensionContext) {
 			}, (e) => { throw e })
 	}
 
-	ctrl.resolveHandler = (item) => {
-
-		if (item?.uri) {
-			const relativePath = workspace.asRelativePath(item.uri)
-			log.info('ctrl.resolveHandler (relativePath=' + relativePath + ')')
-		} else if (item) {
-			log.info('ctrl.resolveHandler (item.label=' + item.label + ')')
-		} else {
-			log.info('ctrl.resolveHandler (item=undefined)')
-		}
-		return resolveHandlerFunc(item)
-	}
+	ctrl.resolveHandler = (item) => { return resolveHandlerFunc(item) }
 
 	function updateConfiguration (event: ConfigurationChangeEvent) {
 		if (!event.affectsConfiguration('ablunit')) {
@@ -483,9 +468,10 @@ export async function activate (context: ExtensionContext) {
 	testProfileCoverage.loadDetailedCoverage = loadDetailedCoverage
 	// testProfileDebugCoverage.configureHandler = configHandler
 
-	if(workspace.getConfiguration('ablunit').get('discoverAllTestsOnActivate')) {
+	if(workspace.getConfiguration('ablunit').get('discoverAllTestsOnActivate', false)) {
 		await commands.executeCommand('testing.refreshTests')
 	}
+	log.info('ABLUnit Test Controller activated')
 }
 
 function updateNode (uri: Uri, ctrl: TestController) {
@@ -493,7 +479,7 @@ function updateNode (uri: Uri, ctrl: TestController) {
 	if(uri.scheme !== 'file' || isFileExcluded(uri, getExcludePatterns())) { return new Promise(() => { return false }) }
 
 	const { item, data } = getOrCreateFile(ctrl, uri)
-	if(!item) {
+	if(!item || !data) {
 		return Promise.resolve(false)
 	}
 
@@ -531,7 +517,7 @@ export function checkCancellationRequested (run: TestRun) {
 }
 
 async function getStorageUri (workspaceFolder: WorkspaceFolder) {
-	// if (!getContextStorageUri) { throw new Error('contextStorageUri is undefined') }
+	if (!getContextStorageUri) { throw new Error('contextStorageUri is undefined') }
 
 	const dirs = workspaceFolder.uri.path.split('/')
 	const ret = Uri.joinPath(getContextStorageUri(), dirs[dirs.length - 1])
@@ -874,9 +860,9 @@ function removeExcludedFiles (controller: TestController, excludePatterns: Relat
 }
 
 function removeExcludedChildren (parent: TestItem, excludePatterns: RelativePattern[]) {
-	// if (!parent.children) {
-	// 	return
-	// }
+	if (!parent.children) {
+		return
+	}
 
 	for(const [,item] of parent.children) {
 		const data = testData.get(item)
@@ -997,9 +983,12 @@ function refreshTestTree (controller: TestController, token: CancellationToken):
 			log.info('r.length=' + r.length)
 			for (const file of r) {
 				checkCancellationToken()
-				const { item, } = getOrCreateFile(controller, file, excludePatterns)
+				const { item, data } = getOrCreateFile(controller, file, excludePatterns)
 				if (!item) {
 					log.debug('could not create test item for file: ' + file.fsPath)
+				}
+				if (!data) {
+					log.debug('coult not create data for file: ' + file.fsPath)
 				}
 			}
 			log.info('found matching files (r.length=' + r.length + ')')
@@ -1163,24 +1152,24 @@ export async function doesFileExist (uri: Uri) {
 }
 
 function createDir (uri: Uri) {
-	// if(!uri) {
-	// 	return Promise.resolve()
-	// }
+	if(!uri) {
+		return
+	}
 	return workspace.fs.stat(uri).then((stat) => {
-		// if (!stat) {
-		// 	return workspace.fs.createDirectory(uri)
-		// }
+		if (!stat) {
+			return workspace.fs.createDirectory(uri)
+		}
 		return
 	}, () => {
 		return workspace.fs.createDirectory(uri)
-	}).then(() => { return })
+	})
 }
 
 function logActivationEvent (extensionMode: ExtensionMode) {
-	// if (!log) {
-	// 	throw new Error('log is undefined')
-	// }
-	if (extensionMode == ExtensionMode.Development) {
+	if (!log) {
+		throw new Error('log is undefined')
+	}
+	if (extensionMode == ExtensionMode.Development || extensionMode == ExtensionMode.Test) {
 		log.setLogLevel(LogLevel.Debug)
 	}
 	log.info('activating extension! (version=' + getExtensionVersion() + ', logLevel=' + log.getLogLevel() + ', extensionMode=' + extensionMode + ')')

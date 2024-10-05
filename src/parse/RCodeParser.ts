@@ -122,9 +122,9 @@ export const getSourceMapFromRCode = (propath: PropathParser, uri: Uri) => {
 	}
 
 	const nextDelim = (bytes: Uint32Array, pos: number, count = 2, prefix = '') => {
-		// if (debug) {
-		// 	log.info(prefix + ' count=' + count)
-		// }
+		if (debug) {
+			log.info(prefix + ' count=' + count)
+		}
 		let next = bytes.indexOf(0, pos/4)
 
 		if (count === 1) {
@@ -139,9 +139,9 @@ export const getSourceMapFromRCode = (propath: PropathParser, uri: Uri) => {
 	}
 
 	const parseProcName = (bytes: Uint32Array, pos: number, prefix = '') => {
-		// if (debug) {
-		// 	log.info(prefix + ' [parseProcName] pos=' + pos)
-		// }
+		if (debug) {
+			log.info(prefix + ' [parseProcName] pos=' + pos)
+		}
 		const childBytes = bytes.subarray(pos/4, nextDelim(bytes, pos, 1))
 
 		const arr8 = rawBytes.subarray(childBytes.byteOffset, rawBytes.indexOf(0, childBytes.byteOffset + 1))

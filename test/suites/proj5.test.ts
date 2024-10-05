@@ -9,7 +9,9 @@ const workspaceUri = getWorkspaceUri()
 
 suite('proj5 - Extension Test Suite', () => {
 
-	suiteSetup('proj5 - before', () => suiteSetupCommon())
+	suiteSetup('proj5 - before', async () => {
+		await suiteSetupCommon()
+	})
 
 	test('proj5.1 - test count', () => {
 		const resultsJson = Uri.joinPath(workspaceUri, 'ablunit', 'results.json')

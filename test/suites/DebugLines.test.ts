@@ -17,8 +17,7 @@ suite('debugLines - Debug Line Tests - insiders', () => {
 				log.error('rcode error: ' + e)
 				throw e
 			})
-		await prom
-		return
+		return prom
 	})
 
 	test('debugLines.1 - read debug line map from rcode', async () => {
