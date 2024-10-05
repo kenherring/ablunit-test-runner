@@ -30,5 +30,7 @@ done
 } > artifacts/mocha_results_sonar/merged
 mv artifacts/mocha_results_sonar/merged artifacts/mocha_results_sonar/merged.xml
 
-${CIRCLECI:-false} && sed -i "s|/home/circleci/project|$(pwd)|g" artifacts/eslint_report.json
-cat artifacts/mocha_results_sonar/merged.xml
+# ${CIRCLECI:-false} && sed -i "s|/home/circleci/project|$(pwd)|g" artifacts/eslint_report.json
+
+${VERBOSE:-false} && cat artifacts/mocha_results_sonar/merged.xml
+echo "successfully merged test results for sonar consumption.  output: artifacts/mocha_results_sonar/merged.xml"

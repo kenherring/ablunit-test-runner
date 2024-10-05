@@ -17,8 +17,6 @@ initialize () {
 	VERBOSE=${VERBOSE:-false}
 	ABLUNIT_TEST_RUNNER_OE_VERSION=${ABLUNIT_TEST_RUNNER_OE_VERSION:-}
 	ABLUNIT_TEST_RUNNER_VSCODE_VERSION=${ABLUNIT_TEST_RUNNER_VSCODE_VERSION:-}
-	# ${CIRCLECI:-false} && NO_BUILD=true
-	# [ -n "${DOCKER_IMAGE:-}" ] && NO_BUILD=true
 	[ -z "${WSL_DISTRO_NAME:-}" ] && WSL=true
 	PACKAGE_VERSION=$(node -p "require('./package.json').version")
 
@@ -162,10 +160,7 @@ doPackage () {
 	fi
 	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] CIRCLECI=$CIRCLECI PACKAGE_OUT_OF_DATE=$PACKAGE_OUT_OF_DATE VSIX_COUNT=$VSIX_COUNT"
 	if $PACKAGE_OUT_OF_DATE || $CIRCLECI || [ "$VSIX_COUNT" = "0" ]; then
-		if ! .circleci/package.sh; then
-			echo 201 $?
-			exit 1
-		fi
+		.circleci/package.sh
 	fi
 
 	VSIX_COUNT=$(find . -maxdepth 1 -name "*.vsix" 2>/dev/null | wc -l)
@@ -187,4 +182,4 @@ log_timing "doPackage"
 doPackage
 rm -rf artifacts/* coverage/*
 log_timing "package complete"
-echo "[$0] completed successfully!"
+echo "[$(date +%Y-%m-%d:%H:%M:%S) $0] completed successfully!"

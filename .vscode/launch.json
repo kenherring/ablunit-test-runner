@@ -48,31 +48,7 @@
 			"outFiles": [
 				"${workspaceFolder}/out/**/*.js"
 			]
-		},
-		// {
-		// 	"name": "Extension Tests",
-		// 	"type": "extensionHost",
-		// 	"request": "launch",
-		// 	"testConfiguration": "${workspaceFolder}/.vscode-test.mjs",
-		// 	"args": [
-		// 		"--extensionDevelopmentPath=${workspaceFolder}"
-		// 	],
-		// 	"sourceMaps": true,
-		// 	"resolveSourceMapLocations": [
-		// 		"${workspaceFolder}/**",
-		// 		"!**/node_modules/**"
-		// 	]
-		// },
-		// {
-		// 	"name": "Extension Tests - AtStart",
-		// 	"type": "extensionHost",
-		// 	"request": "launch",
-		// 	"runtimeExecutable": "${execPath}",
-		// 	"args": [
-		// 		"--extensionDevelopmentPath=${workspaceFolder}",
-		// 		"--extensionTestsPath=${workspaceFolder}/test/suites/AtStart.test.ts",
-		// 	],
-		// },
+		}
 	],
 	"inputs": [
 		{

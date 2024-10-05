@@ -49,7 +49,6 @@ export async function activate (context: ExtensionContext) {
 	const contextResourcesUri = Uri.joinPath(context.extensionUri, 'resources')
 	setContextPaths(contextStorageUri, contextResourcesUri, context.logUri)
 	await createDir(contextStorageUri)
-	// const decorationProvider = new DecorationProvider()
 
 	log.debug('--- Enviroment Variables ---')
 	log.debug('ABLUNIT_TEST_RUNNER_ENABLE_EXTENSIONS=' + process.env['ABLUNIT_TEST_RUNNER_ENABLE_EXTENSIONS'])
@@ -272,7 +271,7 @@ export async function activate (context: ExtensionContext) {
 					}
 				}
 				run.end()
-				log.debug('ablunit run failed')
+				log.debug('run.end() - ablunit run failed')
 				return
 			}
 
@@ -352,9 +351,9 @@ export async function activate (context: ExtensionContext) {
 		const run = ctrl.createTestRun(request)
 		currentTestRun = run
 		cancellation.onCancellationRequested(() => {
-			log.debug('cancellation requested - createABLResults-2')
 			run.end()
-			log.trace('run.end()')
+			log.debug('run.end() cancellation requested - createABLResults-2')
+			log.notification('ABLUnit test run cancelled')
 			throw new CancellationError()
 		})
 		const tests = request.include ?? gatherTestItems(ctrl.items)

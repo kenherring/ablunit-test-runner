@@ -2,6 +2,11 @@
 import { LogLevel, TestRun, window } from 'vscode'
 import path from 'path'
 
+enum NotificationType {
+	Info = 'Info',
+	Warn = 'Warn',
+}
+
 class Logger {
 	private static instance: Logger
 
@@ -76,9 +81,12 @@ class Logger {
 		this.writeMessage(LogLevel.Error, message, testRun)
 	}
 
-	notification (message: string) {
+	notification (message: string, notificationType: NotificationType = NotificationType.Info) {
 		log.info(message)
-		return window.showInformationMessage(message)
+		switch (notificationType) {
+			case NotificationType.Info: return window.showInformationMessage(message)
+			case NotificationType.Warn: return window.showWarningMessage(message)
+		}
 	}
 
 	notificationWarningSync (message: string) {
