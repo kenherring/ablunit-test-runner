@@ -167,7 +167,6 @@ run_tests () {
 		echo "ERROR: no .vsix files found, 'npm run package' failed"
 		exit 1
 	fi
-	cp package.stable.json package.json
 	log_timing "run_tests end"
 
 	echo "---------- TIMING ----------"
