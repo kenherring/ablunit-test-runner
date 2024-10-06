@@ -161,7 +161,7 @@ run_tests () {
 		RUN_SCRIPT='test'
 	fi
 	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] starting 'npm $RUN_SCRIPT'"
-	time xvfb-run -a npm run "$RUN_SCRIPT" || EXIT_CODE=$?
+	xvfb-run -a npm run "$RUN_SCRIPT" || EXIT_CODE=$?
 	echo "EXIT_CODE=$EXIT_CODE"
 	log_timing "xvfb-run end (EXIT_CODE=$EXIT_CODE)"
 
