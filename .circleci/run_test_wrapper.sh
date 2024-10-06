@@ -156,15 +156,14 @@ run_tests () {
 	local EXIT_CODE=0
 
 
-	local RUN_SCRIPT=test:coverage
+	local RUN_SCRIPT='test:coverage'
 	if $ABLUNIT_TEST_RUNNER_NO_COVERAGE; then
 		RUN_SCRIPT='test'
 	fi
 	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] starting 'npm $RUN_SCRIPT'"
-	time xvfb-run -a npm run "$RUN_SCRIPTdoc" || EXIT_CODE=$?
+	time xvfb-run -a npm run "$RUN_SCRIPT" || EXIT_CODE=$?
 	echo "EXIT_CODE=$EXIT_CODE"
 	log_timing "xvfb-run end (EXIT_CODE=$EXIT_CODE)"
-
 
 	if ! scripts/sonar_test_results_merge.sh; then
 		echo "WARNING: failed to merge result rules"
