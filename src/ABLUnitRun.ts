@@ -120,11 +120,9 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 		}
 		cmd.push('-T', tempPath)
 
-		log.info('100')
 		if (res.cfg.ablunitConfig.dbConnPfUri && res.cfg.ablunitConfig.dbConns.length > 0) {
 			cmd.push('-pf', workspace.asRelativePath(res.cfg.ablunitConfig.dbConnPfUri.fsPath, false))
 		}
-		log.info('101')
 
 		if (res.cfg.ablunitConfig.profiler.enabled) {
 			cmd.push('-profile', workspace.asRelativePath(res.cfg.ablunitConfig.profOptsUri, false))
