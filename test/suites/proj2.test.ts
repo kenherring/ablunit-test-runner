@@ -1,14 +1,22 @@
-import { assert, getResults, getWorkspaceUri, log, runAllTests, suiteSetupCommon, Uri, commands, beforeCommon } from '../testCommon'
+import { assert, getResults, getWorkspaceUri, log, runAllTests, suiteSetupCommon, Uri, commands, workspace, beforeCommon, deleteFile, toUri, selectProfile } from '../testCommon'
 
 const workspaceUri = getWorkspaceUri()
 
 suite('proj2 - Extension Test Suite', () => {
 
-	suiteSetup('proj2 - before', async () => {
-		await suiteSetupCommon()
+	suiteSetup('proj2 - before', () => suiteSetupCommon())
+
+	setup('proj2 - beforeEach', () => {
+		deleteFile(toUri('src/compileError.cls'))
+		deleteFile(toUri('.vscode/profile.json'))
+		beforeCommon()
+		return  workspace.fs.copy(toUri('openedge-project.bk.json'), toUri('openedge-project.json'))
 	})
 
-	setup('proj2 - beforeEach', beforeCommon)
+	teardown('proj2 - afterEach', () => {
+		deleteFile(toUri('src/compileError.cls'))
+		return workspace.fs.copy(toUri('openedge-project.bk.json'), toUri('openedge-project.json'))
+	})
 
 	test('proj2.1 - temp/ablunit.json file exists', async () => {
 		await runAllTests().then(() => {
@@ -51,6 +59,35 @@ suite('proj2 - Extension Test Suite', () => {
 					assert.equal(9, res.tests, 'res.tests should be 9 but got ' + res.tests)
 				}
 				return
+			})
+	})
+
+	test('proj2.4 - compile error', () => {
+
+		return workspace.fs.copy(toUri('openedge-project.json'), toUri('openedge-project.bk.json'))
+			.then(() => workspace.fs.writeFile(toUri('src/compileError.cls'), Buffer.from('@Test.\nprocedure compileErrorProd :\nthis doen not compile\nend procedure.')))
+			.then(() => runAllTests())
+			.then(() => {
+				throw new Error('test should have failed due to compile error')
+			}, (e) => {
+				log.info('e=' + e)
+				assert.ok('test failed as expected')
+				return true
+			})
+	})
+
+	test('proj2.5 - compile error excluded', () => {
+
+		return workspace.fs.copy(toUri('openedge-project.json'), toUri('openedge-project.bk.json'))
+			.then(() => workspace.fs.writeFile(toUri('src/compileError.cls'), Buffer.from('@Test.\nprocedure compileErrorProd :\nthis doen not compile\nend procedure.')))
+			.then(() => selectProfile('exlcudeFileProfile'))
+			.then(() => runAllTests())
+			.then(() => {
+				assert.ok('test passed as expected')
+				assert.tests.count(1)
+				return
+			}, (e) => {
+				throw new Error('test should have passed, but threw error e=' + e)
 			})
 	})
 

@@ -144,8 +144,8 @@ run_tests () {
 	fi
 	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] starting 'npm $RUN_SCRIPT'"
 	# time xvfb-run -a npm run "$RUN_SCRIPT" || EXIT_CODE=$?
-	time xvfb-run -a npm run "$RUN_SCRIPT" || EXIT_CODE=$?
-	echo "EXIT_CODE=$EXIT_CODE"
+	xvfb-run -a npm run "$RUN_SCRIPT" || EXIT_CODE=$?
+	log_timing "xvfb-run end (EXIT_CODE=$EXIT_CODE)"
 
 	mv coverage/lcov.info artifacts/coverage/lcov.info || true ## https://github.com/microsoft/vscode-test-cli/issues/38
 

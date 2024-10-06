@@ -963,7 +963,7 @@ export async function getCurrentRunData (len = 1, resLen = 0, tag?: string) {
 export async function getResults (len = 1, tag?: string): Promise<ABLResults[]> {
 	if ((!recentResults || recentResults.length === 0) && len > 0) {
 		log.info(tag + 'recentResults not set, refreshing...')
-		for (let i=0; i<5; i++) {
+		for (let i=0; i<2; i++) {
 			const prom = sleep2(250, tag + 'still no recentResults, sleep before trying again (' + i + '/4)')
 				.then(() => { return refreshData() })
 				.then((gotResults) => {

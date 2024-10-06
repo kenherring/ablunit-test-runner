@@ -1,0 +1,21 @@
+{
+    "name": "sample",
+    "oeversion": "11,7",
+    "graphicalMode": false,
+    "buildPath": [
+        { "type": "source", "path": "." }
+    ],
+    "dbConnections": [],
+	"profiles": [
+		{
+			"name": "excludeFileProfile",
+			"inherits": "default",
+			"value": {
+				"oe-version": "12.2",
+				"buildPath": [
+					{ "type": "source", "path": ".", "excludes": "compileError.p" }
+				]
+			}
+		}
+	]
+}
