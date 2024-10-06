@@ -160,7 +160,7 @@ run_tests () {
 		RUN_SCRIPT='test'
 	fi
 	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] starting 'npm $RUN_SCRIPT'"
-	if ! vfb-run -a npm run "$RUN_SCRIPT"; then
+	if ! xvfb-run -a npm run "$RUN_SCRIPT"; then
 		EXIT_CODE=$?
 		echo "EXIT_CODE=$EXIT_CODE"
 	fi
