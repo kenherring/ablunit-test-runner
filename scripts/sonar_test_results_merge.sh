@@ -3,6 +3,9 @@ set -eou pipefail
 set +x
 
 VERBOSE=${VERBOSE:-false}
+if $VERBOSE; then
+    set -x
+fi
 
 rm -f artifacts/mocha_results_sonar/merged.xml
 
@@ -18,14 +21,14 @@ for F in artifacts/mocha_results_sonar/*.xml; do
     else
         cp "$F.orig" "$F"
     fi
-    xq . "$F" -ix
+    xq . "$F" -x > "$F.formatted"
     # xq . --xml-output "$F" > artifacts/mocha_results_sonar/$(basename "$F" .xml).formatted
 done
 
 {
     echo '<?xml version="1.0" encoding="UTF-8"?>'
     echo '<testExecutions version="1">'
-    cat artifacts/mocha_results_sonar/*.xml | grep -v '</*testExecutions'
+    cat artifacts/mocha_results_sonar/*.xml.formatted | grep -v '</*testExecutions' | grep -v '<\?xml version='
     echo '</testExecutions>'
 } > artifacts/mocha_results_sonar/merged.xml
 xq '.' artifacts/mocha_results_sonar/merged.xml > artifacts/mocha_results_sonar/merged.json
