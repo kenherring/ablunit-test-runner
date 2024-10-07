@@ -1,1 +1,4 @@
-.vscode-test
+.vscode-test/
+artifacts/
+node_modules/
+out/

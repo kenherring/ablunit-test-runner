@@ -193,10 +193,10 @@ workflows:
           <<: *context-and-filters
           requires:
             - test-<< pipeline.parameters.primary-oe-version >>
-      - install-and-run:
-          <<: *context-and-filters
-          requires:
-            - test-<< pipeline.parameters.primary-oe-version >>
+      # - install-and-run:
+      #     <<: *context-and-filters
+      #     requires:
+      #       - test-<< pipeline.parameters.primary-oe-version >>
       - publish:
           context:
             - Azure_PAT
