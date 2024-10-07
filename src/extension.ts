@@ -1,8 +1,3 @@
-
-// import decache from 'decache'
-// decache('extension.js')
-// decache('ablunit-test-runner')
-
 import { readFileSync } from 'fs'
 import {
 	CancellationError,
@@ -11,7 +6,6 @@ import {
 	FileCoverage,
 	FileCoverageDetail,
 	FileCreateEvent,
-	FileSystemWatcher,
 	FileType,
 	LogLevel,
 	Position, Range, RelativePattern, Selection,
@@ -43,24 +37,13 @@ let recentResults: ABLResults[] = []
 
 export async function activate (context: ExtensionContext) {
 
-	// decache('extension.js')
-	// decache('ablunit-test-runner')
-	console.log('100')
 	const ctrl = tests.createTestController('ablunitTestController', 'ABLUnit Test')
-	console.log('101')
 	let currentTestRun: TestRun | undefined = undefined
-	console.log('103')
 	let isRefreshTestsComplete = false
-	console.log('104')
-	let runWithCoverage = false
-	console.log('105')
 
 	logActivationEvent(context.extensionMode)
-	console.log('106')
 
-	log.info('contextStorageUri')
 	const contextStorageUri = context.storageUri ?? Uri.file(process.env['TEMP'] ?? '') // will always be defined as context.storageUri
-	log.info('contextResourcesUri')
 	const contextResourcesUri = Uri.joinPath(context.extensionUri, 'resources')
 	setContextPaths(contextStorageUri, contextResourcesUri, context.logUri)
 	await createDir(contextStorageUri)
