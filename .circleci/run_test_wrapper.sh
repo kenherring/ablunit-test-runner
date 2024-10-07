@@ -176,7 +176,7 @@ run_tests () {
 		echo "SUCCESS: scripts/sonar_test_results_merge.sh completed successfully"
 	fi
 
-	if [ ! -f artifacts/coverage/lcov.info ]; then
+	if ! $ABLUNIT_TEST_RUNNER_NO_COVERAGE && [ ! -f artifacts/coverage/lcov.info ]; then
 		mv coverage/lcov.info artifacts/coverage/lcov.info ## https://github.com/microsoft/vscode-test-cli/issues/38
 	fi
 
