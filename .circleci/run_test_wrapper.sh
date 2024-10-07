@@ -167,7 +167,10 @@ run_tests () {
 	log_timing "xvfb-run end (EXIT_CODE=$EXIT_CODE)"
 
 	if ! scripts/sonar_test_results_merge.sh; then
-		echo "WARNING: failed to merge result rules"
+		echo "ERROR: failed to merge result rules"
+		exit 1
+	else
+		echo "SUCCESS: scripts/sonar_test_results_merge.sh completed successfully"
 	fi
 	mv coverage/lcov.info artifacts/coverage/lcov.info || true ## https://github.com/microsoft/vscode-test-cli/issues/38
 
