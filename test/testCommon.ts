@@ -3,7 +3,7 @@ import * as fs from 'fs'
 import { globSync } from 'glob'
 import * as vscode from 'vscode'
 import {
-	CancellationError, ConfigurationTarget, TestController,
+	CancellationError, TestController,
 	TestItemCollection,
 	Uri,
 	Selection,
@@ -21,7 +21,7 @@ import { ITestSuites } from '../src/parse/ResultsParser'
 import { IConfigurations, parseRunProfiles } from '../src/parse/TestProfileParser'
 import { DefaultRunProfile, IRunProfile as IRunProfileGlobal } from '../src/parse/config/RunProfile'
 import { RunStatus } from '../src/ABLUnitRun'
-import { enableOpenedgeAblExtension, rebuildAblProject, restartLangServer, setRuntimes, waitForLangServerReady } from './openedgeAblCommands'
+import { enableOpenedgeAblExtension, rebuildAblProject, setRuntimes, waitForLangServerReady } from './openedgeAblCommands'
 import path from 'path'
 
 interface IRuntime {
@@ -105,13 +105,11 @@ export {
 const projName = () => { return getWorkspaceUri().fsPath.replace(/\\/g, '/').split('/').pop() }
 // test case objects - reset before each test
 let recentResults: ABLResults[] | undefined
-let testController: TestController | undefined
 let currentRunData: ABLResults[] | undefined
 log.info('[testCommon.ts] enableExtensions=' + enableExtensions() + ', projName=' + projName())
 
 export function beforeCommon () {
 	recentResults = undefined
-	testController = undefined
 	currentRunData = undefined
 
 	deleteTestFiles()
@@ -240,7 +238,6 @@ export function installExtension (extname = 'riversidesoftware.openedge-abl-lsp'
 
 export function setupCommon () {
 	recentResults = undefined
-	testController = undefined
 	currentRunData = undefined
 }
 
@@ -642,6 +639,7 @@ async function waitForRefreshComplete () {
 export function refreshTests () {
 	log.info('testing.refreshTests starting...')
 	return commands.executeCommand('testing.refreshTests')
+		.then(() => { return waitForRefreshComplete() })
 		.then((r) => {
 			log.info('testing.refreshTests completed! (r=' + r + ')')
 			return true

@@ -1,5 +1,5 @@
 import { CancellationError, commands } from 'vscode'
-import { assert, beforeProj7, getTestControllerItemCount, log, refreshTests, sleep } from '../testCommon'
+import { assert, beforeCommon, beforeProj7, getTestControllerItemCount, log, refreshTests, runAllTests, RunStatus, sleep, waitForTestRunStatus } from '../testCommon'
 import { Duration } from '../../src/ABLUnitCommon'
 
 suite('proj7B - Extension Test Suite', () => {
@@ -61,13 +61,13 @@ suite('proj7B - Extension Test Suite', () => {
 	})
 
 	test('proj7B.2 - cancel test run while adding tests', async () => {
-		const maxCancelTime = 1000
+		// const maxCancelTime = 1000
 		// const runTestTime = new Duration()
 
 		runAllTests().catch((err: unknown) => { log.info('runAllTests got error: ' + err) })
 		await sleep(250)
 			.then(() => { return waitForTestRunStatus(RunStatus.Constructed) })
-
+	})
 	// 	runAllTests().then(() => {
 	// 		log.info('runProm done ' + runTestTime)
 	// 	}, (err) => {
@@ -75,8 +75,8 @@ suite('proj7B - Extension Test Suite', () => {
 	// 	})
 	// 	await waitForTestRunStatus(RunStatus.Constructed)
 
-		// const resArr = await getCurrentRunData()
-		// const res = resArr[0]
+	// const resArr = await getCurrentRunData()
+	// const res = resArr[0]
 
 	// 	const resArr = await getCurrentRunData()
 	// 	const res = resArr[0]
@@ -89,9 +89,10 @@ suite('proj7B - Extension Test Suite', () => {
 	// 	// 	assert.fail('runAllTests completed without status=\'run cancelled\' (status=\'' + res.status + '\')')
 	// 	// }
 
-	test('proj7B.3 - cancel test run while _progres is running', async () => {
-		const maxCancelTime = 1000
+	test('proj7B.3 - cancel test run while _progres is running', () => {
+		// const maxCancelTime = 1000
 		// const runTestTime = new Duration()
+	})
 
 	// TODO - reenable this test
 	// test('proj7B.3 - cancel test run while _progres is running', async () => {

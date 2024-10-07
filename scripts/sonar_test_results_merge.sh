@@ -1,7 +1,6 @@
 #!/bin/bash
 set -eou pipefail
-# set +x
-set -x
+set +x
 
 VERBOSE=${VERBOSE:-false}
 
@@ -28,8 +27,7 @@ done
     echo '<testExecutions version="1">'
     cat artifacts/mocha_results_sonar/*.xml | grep -v '</*testExecutions'
     echo '</testExecutions>'
-} > artifacts/mocha_results_sonar/merged
-mv artifacts/mocha_results_sonar/merged artifacts/mocha_results_sonar/merged.xml
+} > artifacts/mocha_results_sonar/merged.xml
 xq '.' artifacts/mocha_results_sonar/merged.xml > artifacts/mocha_results_sonar/merged.json
 
 ## TODO - print totals for pass, skipped, failed, etc

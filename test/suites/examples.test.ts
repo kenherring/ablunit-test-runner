@@ -59,8 +59,9 @@ suite('test examples', () => {
 	})
 
 	test('example1.3', () => {
-		getValueOne().then((value) => {
+		return getValueOne().then((value) => {
 			assert.equal(1, value)
+			return
 		}, (e) => {
 			log.error('example1.3 error! e=' + e)
 			assert.fail('unexpected error: ' + e)
@@ -68,9 +69,10 @@ suite('test examples', () => {
 	})
 
 	test('example1.4', (done) => {
-		getValueOne().then((value) => {
+		return getValueOne().then((value) => {
 			assert.equal(1, value)
 			done()
+			return
 		}, (e) => {
 			log.error('example1.4 error! e=' + e)
 			assert.fail('unexpected error: ' + e)
@@ -86,6 +88,7 @@ suite('test examples', () => {
 	test('example1.6', () => {
 		return getValueOne().then((value) => {
 			assert.equal(1, value)
+			return
 		})
 	})
 
@@ -93,6 +96,7 @@ suite('test examples', () => {
 		return getValueOne().then((value) => {
 			assert.equal(1, value)
 			done()
+			return
 		})
 		// Error: Resolution method is overspecified. Specify a callback *or* return a Promise; not both.
 	})
@@ -101,6 +105,7 @@ suite('test examples', () => {
 		return getValueOne().then((value) => {
 			assert.equal(1, value)
 			done()
+			return
 		})
 		// Error: Resolution method is overspecified. Specify a callback *or* return a Promise; not both.
 	})
@@ -108,12 +113,14 @@ suite('test examples', () => {
 	// ---------- example 2 ----------
 
 	test('example2.1', (done) => {
-		getValueTwo().then((value) => {
+		return getValueTwo().then((value) => {
 			assert.equal(2, value)
 			done()
+			return
 		}, (e) => {
 			log.error('example1.4 error! e=' + e)
 			assert.fail('unexpected error: ' + e)
+			return
 		})
 	})
 
@@ -121,6 +128,7 @@ suite('test examples', () => {
 		return getValueTwoB().then((value) => {
 			assert.equal(2, value)
 			done()
+			return
 		}, (e) => {
 			log.error('example1.4 error! e=' + e)
 			assert.fail('unexpected error: ' + e)
@@ -131,6 +139,7 @@ suite('test examples', () => {
 	test('example2.3', () => {
 		return getValueTwo().then((value) => {
 			assert.equal(2, value)
+			return
 		}, (e) => {
 			log.error('example1.4 error! e=' + e)
 			assert.fail('unexpected error: ' + e)
@@ -141,6 +150,7 @@ suite('test examples', () => {
 		return getValueTwo().then((value) => {
 			assert.equal(2, value)
 			done()
+			return
 		}, (e) => {
 			log.error('example1.4 error! e=' + e)
 			assert.fail('unexpected error: ' + e)
@@ -169,18 +179,21 @@ suite('test examples', () => {
 	})
 
 	test('example3.3', () => {
-		getValueThree().then((value) => {
+		return getValueThree().then((value) => {
 			assert.equal(3, value)
+			return
 		}, (e) => {
 			log.error('example1.3 error! e=' + e)
 			assert.fail('unexpected error: ' + e)
+			return
 		})
 	})
 
 	test('example3.4', (done) => {
-		getValueThree().then((value) => {
+		return getValueThree().then((value) => {
 			assert.equal(3, value)
 			done()
+			return
 		}, (e) => {
 			log.error('example1.4 error! e=' + e)
 			assert.fail('unexpected error: ' + e)
@@ -196,6 +209,7 @@ suite('test examples', () => {
 	test('example3.6', () => {
 		return getValueThree().then((value) => {
 			assert.equal(3, value)
+			return
 		})
 	})
 
@@ -203,6 +217,7 @@ suite('test examples', () => {
 		return getValueThree().then((value) => {
 			assert.equal(3, value)
 			done()
+			return
 		})
 		// Error: Timeout of 1000ms exceeded. For async tests and hooks, ensure "done()" is called; if returning a Promise, ensure it resolves. (D:\ablunit-test-runner\test\suites\examples.test.ts)
 	})
@@ -211,6 +226,7 @@ suite('test examples', () => {
 		return getValueThree().then((value) => {
 			assert.equal(3, value)
 			done()
+			return
 		})
 		// Error: Timeout of 1000ms exceeded. For async tests and hooks, ensure "done()" is called; if returning a Promise, ensure it resolves. (D:\ablunit-test-runner\test\suites\examples.test.ts)
 	})
