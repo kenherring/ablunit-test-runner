@@ -19,6 +19,7 @@ suite('proj1 - Extension Test Suite', () => {
 	beforeEach('proj1 - beforeEach', () => {
 		beforeCommon()
 		log.info('setup-2 has(ablunit.files)=' + workspace.getConfiguration('ablunit').has('files') + ' files.exclude=' + workspace.getConfiguration('ablunit').get('files.exclude'))
+		// const prom = workspace.getConfiguration('ablunit').update('files.exclude', undefined)
 		return workspace.getConfiguration('ablunit.files').update('exclude', undefined)
 	})
 

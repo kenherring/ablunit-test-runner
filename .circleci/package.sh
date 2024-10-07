@@ -62,7 +62,7 @@ package_version () {
 run_lint () {
 	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}]"
 	if [ -n "${ABLUNIT_TEST_RUNNER_PROJECT_NAME:-}" ]; then
-		echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] skipping lint when ABLUNIT_TEST_RUNNER_PROJECT_NAME is assigned"
+		echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] skipping lint for single ABLUnit test runner project test"
 		return 0
 	fi
 

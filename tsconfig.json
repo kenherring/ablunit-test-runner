@@ -1,11 +1,10 @@
 {
 	"compilerOptions": {
 		"module": "NodeNext",
-		// "moduleResolution": "node", // https://www.typescriptlang.org/tsconfig#moduleResolution
-		"moduleResolution": "NodeNext",
-		"target": "ESNext",
+		"moduleResolution": "NodeNext", // https://www.typescriptlang.org/tsconfig#moduleResolution
+		"target": "ES2020",
 		"lib": [
-			"ESNext",
+			"ES2020",
 			"WebWorker"
 		],
 

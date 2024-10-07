@@ -6,6 +6,7 @@ import {
 	FileCoverage,
 	FileCoverageDetail,
 	FileCreateEvent,
+	FileSystemWatcher,
 	FileType,
 	LogLevel,
 	Position, Range, RelativePattern, Selection,
@@ -26,7 +27,6 @@ import { minimatch } from 'minimatch'
 import { ABLUnitRuntimeError } from 'ABLUnitRun'
 import { basename } from 'path'
 
-
 export interface IExtensionTestReferences {
 	testController: TestController
 	recentResults: ABLResults[]
@@ -36,7 +36,6 @@ export interface IExtensionTestReferences {
 let recentResults: ABLResults[] = []
 
 export async function activate (context: ExtensionContext) {
-
 	const ctrl = tests.createTestController('ablunitTestController', 'ABLUnit Test')
 	let currentTestRun: TestRun | undefined = undefined
 	let isRefreshTestsComplete = false

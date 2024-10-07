@@ -1,9 +1,3 @@
-// import decache from 'decache'
-// decache('ablunit-test-runner')
-// decache('src')
-// decache('./dist/extension.js')
-// decache('extension.js')
-
 import * as assertParent from 'assert'
 import * as fs from 'fs'
 import { globSync } from 'glob'
@@ -35,9 +29,6 @@ interface IRuntime {
 	path: string,
 	default?: boolean
 }
-
-logObj.info('ABLUNIT_TEST_RUNNER_PROJECT_NAME=' + process.env['ABLUNIT_TEST_RUNNER_PROJECT_NAME'])
-logObj.info('ABLUNIT_TEST_RUNNER_UNIT_TESTING=' + process.env['ABLUNIT_TEST_RUNNER_UNIT_TESTING'])
 
 // https://github.com/microsoft/vscode/blob/2aae82a102da66e566842ff9177bceeb99873970/src/vs/workbench/browser/actions/workspaceCommands.ts#L156C1-L163C2
 // interface IOpenFolderAPICommandOptions {
@@ -156,9 +147,6 @@ function getExtensionDevelopmentPath () {
 }
 
 export async function suiteSetupCommon (runtimes: IRuntime[] = []) {
-	// decache('ablunit-test-runner')
-	// decache('extension.js')
-
 	if (!runtimes || runtimes.length === 0) {
 		runtimes = [{ name: oeVersion(), path: getDefaultDLC(), default: true }]
 	}
@@ -303,10 +291,7 @@ async function waitForExtensionActive (extensionId = 'kherring.ablunit-test-runn
 		throw new Error('extension not installed: ' + extensionId)
 	}
 	if (!ext) { throw new Error(extensionId + ' is not installed') }
-	if (ext.isActive) {
-		log.info(extensionId + ' is already active')
-		return ext.isActive
-	}
+	if (ext.isActive) { log.info(extensionId + ' is already active'); return ext.isActive }
 
 	ext = await ext.activate()
 		.then(() => { return sleep2(250) })

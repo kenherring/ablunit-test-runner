@@ -12,10 +12,6 @@ import * as path from 'path'
 import * as fs from 'fs'
 import process from 'process'
 
-// import decache from 'decache'
-// decache('ablunit-test-runner')
-// decache('extension.js')
-
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const vsVersionNum = '1.88.0'
 const vsVersion = process.env['ABLUNIT_TEST_RUNNER_VSCODE_VERSION'] ?? 'stable'
@@ -168,32 +164,31 @@ function getLaunchArgs (projName) {
 	// args.push('--status')
 	// args.push('--prof-startup')
 	// args.push('--disable-extension <ext-id>')
-	// if (!enableExtensions.includes(projName)) {
-	// 	args.push('--disable-extensions')
-	// }
-	args.push('--disable-extensions')
-	// args.push('--disable-extension', 'vscode.builtin-notebook-renderers')
-	// args.push('--disable-extension', 'vscode.emmet')
-	// args.push('--disable-extension', 'vscode.git')
-	// args.push('--disable-extension', 'vscode.github')
-	// args.push('--disable-extension', 'vscode.grunt')
-	// args.push('--disable-extension', 'vscode.gulp')
-	// args.push('--disable-extension', 'vscode.jake')
-	// args.push('--disable-extension', 'vscode.ipynb')
-	// args.push('--disable-extension', 'vscode.tunnel-forwarding')
+	if (!enableExtensions.includes(projName)) {
+		args.push('--disable-extensions')
+	}
+	args.push('--disable-extension', 'vscode.builtin-notebook-renderers')
+	args.push('--disable-extension', 'vscode.emmet')
+	args.push('--disable-extension', 'vscode.git')
+	args.push('--disable-extension', 'vscode.github')
+	args.push('--disable-extension', 'vscode.grunt')
+	args.push('--disable-extension', 'vscode.gulp')
+	args.push('--disable-extension', 'vscode.jake')
+	args.push('--disable-extension', 'vscode.ipynb')
+	args.push('--disable-extension', 'vscode.tunnel-forwarding')
 	args.push('--sync', 'off') // '<on | off>'
 	// args.push('--inspect-extensions', '<port>')
 	// args.push('--inspect-brk-extensions', '<port>')
 	// args.push('--logExtensionHostCommunication')
 
 	// --- disbale functionality not needed for testing - https://github.com/microsoft/vscode/issues/174744 --- //
-	args.push('--disable-chromium-sandbox')
+	// args.push('--disable-chromium-sandbox')
 	// args.push('--no-sandbox', '--sandbox=false')
 	args.push('--disable-crash-reporter')
 	args.push('--disable-gpu-sandbox')
 	args.push('--disable-gpu')
 	args.push('--disable-telemetry')
-	// args.push('--disable-updates')
+	args.push('--disable-updates')
 	args.push('--disable-workspace-trust')
 	args.push('--disable-dev-shm-usage', '--no-xshm')
 	return args
@@ -260,8 +255,7 @@ function getTestConfig (testDir, projName) {
 		workspaceFolder,
 		mocha: getMochaOpts(projName),
 		label: 'suite_' + projName,
-		// srcDir: './',
-		srcDir: './src',
+		srcDir: './',
 	}
 	return testConfig
 }
