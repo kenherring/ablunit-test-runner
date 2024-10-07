@@ -124,6 +124,10 @@ jobs:
       - run: .circleci/run_test_wrapper.sh
       - store_test_results: { path: artifacts/mocha_results_xunit }
       - store_artifacts: { path: artifacts }
+      - persist_to_workspace:
+          root: .
+          paths:
+            - artifacts
       - run:
           when: on_fail
           command: env
