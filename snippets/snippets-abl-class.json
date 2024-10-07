@@ -14,8 +14,20 @@
 		"prefix": "@Setup method",
 		"body": [
 			"@Setup.",
-			"method public void beforeAll () :",
-			"  //Runs before each test method",
+			"method public void beforeEach () :",
+			"  // Executes before each test",
+			"  ${1:// do setup here}",
+			"end method."
+		],
+		"description": "To be deprecated, use @BeforeEach",
+		"scope": "abl"
+	},
+	"@BeforeEach method": {
+		"prefix": "@BeforeEach method",
+		"body": [
+			"@BeforeEach.",
+			"method public void beforeEach () :",
+			"  // Executes before each test",
 			"  ${1:// do setup here}",
 			"end method."
 		],
@@ -26,20 +38,32 @@
 		"prefix": "@Before method",
 		"body": [
 			"@Before.",
-			"method public void beforeEach () :",
-			"  //Executes after each test",
+			"method public void beforeAll () :",
+			"  // Executes once per class before the start of all tests",
 			"  ${1:// do setup here}",
 			"end method."
 		],
-		"description": "Executes the method once per class, before the start of all tests. This annotation can be used to perform time-sensitive activities such as connecting to a database.",
+		"description": "To be deprecated, use @BeforeAll",
 		"scope": "abl"
 	},
-	"@TearDown method": {
-		"prefix": "@TearDown method",
+	"@Teardown method": {
+		"prefix": "@Teardown method",
 		"body": [
-			"@TearDown.",
+			"@Teardown.",
 			"method public void afterEach () :",
-			"  //Executes after each test",
+			"  // Executes after each test",
+			"  ${1:// do some cleanup here}",
+			"end method."
+		],
+		"description": "To be deprecated, use @AfterEach",
+		"scope": "abl"
+	},
+	"@AfterEach method": {
+		"prefix": "@AfterEach method",
+		"body": [
+			"@AfterEach.",
+			"method public void afterEach () :",
+			"  // Executes after each test",
 			"  ${1:// do some cleanup here}",
 			"end method."
 		],
@@ -51,7 +75,18 @@
 		"body": [
 			"@After.",
 			"method public void afterAll () :",
-			"  //Executes after each test",
+			"  // Executes once snafter all the tests are executed",
+			"end method."
+		],
+		"description": "To be deprecated, use @AfterAll",
+		"scope": "abl"
+	},
+	"@AfterAll method": {
+		"prefix": "@AfterAll method",
+		"body": [
+			"@AfterAll.",
+			"method public void afterAll () :",
+			"  // Executes once nafter all the tests are executed",
 			"end method."
 		],
 		"description": "Executes the method once, after all the tests are executed. This annotation is used to perform clean-up activities such as disconnecting from a database.",

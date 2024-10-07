@@ -9,7 +9,7 @@ initialize () {
 	VERBOSE=${VERBOSE:-false}
 	WSL=false
 	VERBOSE=${VERBOSE:-false}
-	ABLUNIT_TEST_RUNNER_OE_VERSION=${ABLUNIT_TEST_RUNNER_OE_VERSION:-12.8.1}
+	ABLUNIT_TEST_RUNNER_OE_VERSION=${ABLUNIT_TEST_RUNNER_OE_VERSION:-}
 	ABLUNIT_TEST_RUNNER_VSCODE_VERSION=${ABLUNIT_TEST_RUNNER_VSCODE_VERSION:-}
 	[ -z "${WSL_DISTRO_NAME:-}" ] && WSL=true
 	PACKAGE_VERSION=$(node -p "require('./package.json').version")
@@ -24,6 +24,23 @@ initialize () {
 				exit 1 ;;
 		esac
 	done
+
+	if [ -z "$DLC" ]; then
+		echo "ERROR: DLC environment variable is not set"
+		exit 1
+	fi
+
+	if [ -z "$ABLUNIT_TEST_RUNNER_OE_VERSION" ]; then
+		cat "$DLC/version"
+		ABLUNIT_TEST_RUNNER_OE_VERSION=$(awk '{print $3}' < "$DLC/version")
+		if [[ "$ABLUNIT_TEST_RUNNER_OE_VERSION" =~ ^[0-9]+\.[0-9]+$ ]]; then
+			ABLUNIT_TEST_RUNNER_OE_VERSION="${ABLUNIT_TEST_RUNNER_OE_VERSION}.0"
+		fi
+	fi
+	if [[ ! "$ABLUNIT_TEST_RUNNER_OE_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+		echo "ERROR: invalid ABLUNIT_TEST_RUNNER_OE_VERSION: '$ABLUNIT_TEST_RUNNER_OE_VERSION'"
+		exit 1
+	fi
 
 	export PATH CIRCLECI ABLUNIT_TEST_RUNNER_OE_VERSION ABLUNIT_TEST_RUNNER_VSCODE_VERSION
 

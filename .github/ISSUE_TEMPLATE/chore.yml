@@ -1,10 +1,10 @@
 name: 🧹 Chore
 description: Repo configuration, tooling, and other non-feature work.
-title: ":broom: 🧹 [Chore] <title here>"
+title: "🧹 [Chore] <title here>"
 labels: ["chore"]
 # projects: ["octo-org/1", "octo-org/44"]
-assignees:
-  - kenherring
+# assignees:
+#   - kenherring
 body:
   - type: textarea
     attributes:

@@ -4,6 +4,14 @@ interface ICoreOutput {
 	filename?: string
 	format?: 'xml'
 	writeJson?: boolean
+	updateFile?: string
+}
+
+interface IXrefOptions {
+	useXref?: boolean, // default false
+	xrefLocation?: string, // default: ${workspaceFolder}
+	xrefExtension?: string, // default: xref
+	xrefThrowError?: boolean, // default: false
 }
 
 export interface ICoreOptions {
@@ -12,11 +20,13 @@ export interface ICoreOptions {
 		filename?: string
 		format?: 'xml'
 		writeJson?: boolean
+		updateFile?: string
 	}
 	quitOnEnd?: boolean // = true
 	writeLog?: boolean // = true
 	showErrorMessage?: boolean // = true
 	throwError?: boolean // = true
+	xref?: IXrefOptions
 }
 
 export class CoreOptions implements ICoreOptions {
@@ -24,12 +34,15 @@ export class CoreOptions implements ICoreOptions {
 		location: '${tempDir}',
 		filename: 'results',
 		format: 'xml',
-		writeJson: false
+		writeJson: false,
+		updateFile: 'updates.log',
 	}
 	quitOnEnd = true
 	writeLog = false
+	updateFile? = 'updates.log'
 	showErrorMessage = true
 	throwError = true
+	xref?: IXrefOptions
 
 	constructor (from?: ICoreOptions) {
 		if (from === undefined) {
@@ -41,13 +54,19 @@ export class CoreOptions implements ICoreOptions {
 				location: from.output.location ?? this.output.location,
 				filename: from.output.filename ?? this.output.filename,
 				format: from.output.format ?? this.output.format,
-				writeJson: from.output.writeJson ?? this.output.writeJson
+				writeJson: from.output.writeJson ?? this.output.writeJson,
+				updateFile: from.output.updateFile ?? this.output.updateFile,
 			}
+			if (!from.output.updateFile || from.output.updateFile == '') {
+				this.output.updateFile = undefined
+			}
+
 		}
 
 		this.quitOnEnd = from.quitOnEnd ?? this.quitOnEnd
 		this.writeLog = from.writeLog ?? this.writeLog
 		this.showErrorMessage = from.showErrorMessage ?? this.showErrorMessage
 		this.throwError = from.throwError ?? this.throwError
+		this.xref = from.xref
 	}
 }

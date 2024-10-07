@@ -1,0 +1,15 @@
+{
+	"name": "proj1",
+	"version": "1.0",
+	"buildDirectory": "build",
+	"numThreads": 1,
+	"dbConnections": [],
+	"graphicalMode": false,
+	"extraParameters": "-cpstream ISO8859-1",
+	"buildPath": [
+		{ "type": "source", "path": ".", "excludes": "compileError.p" },
+		{ "type": "propath", "path": "${DLC}/tty/netlib/OpenEdge.Net.pl" }
+	],
+	"procedures": [],
+	"profiles": []
+}

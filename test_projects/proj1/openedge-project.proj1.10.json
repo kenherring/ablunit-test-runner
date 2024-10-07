@@ -1,0 +1,17 @@
+{
+	"name": "proj1",
+	"version": "1.0",
+	"charset": "ISO8859-1",
+	"buildDirectory": "build",
+	"numThreads": 1,
+	"dbConnections": [],
+	"graphicalMode": false,
+	"extraParameters": "-debugalert -errorstack",
+	"buildPath": [
+		{ "type": "source", "path": ".", "excludes": "compileError.p,ADE/**" },
+		{ "type": "propath", "path": "ADE/ablunit/" },
+		{ "type": "propath", "path": "${DLC}/tty/netlib/OpenEdge.Net.pl" }
+	],
+	"procedures": [],
+	"profiles": []
+}

@@ -40,6 +40,7 @@ initialize () {
 
 	TEST_PROJECT_DIRS=(
 		".builder"
+		".pct"
 		"ablunit-output"
 		"build"
 		"listings"
