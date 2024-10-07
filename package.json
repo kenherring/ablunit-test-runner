@@ -207,31 +207,5 @@
 				"path": "./snippets/snippets-abl-class.json"
 			}
 		]
-	},
-	"nyc": {
-		"extends": "@istanbuljs/nyc-config-typescript",
-		"exclude-after-remap": true,
-		"inlineSourceMap": true
-	},
-	"nyc2": {
-		"extends": "@istanbuljs/nyc-config-typescript",
-		"extension": [
-			".js",
-			".ts"
-		],
-		"include": [
-			"**/*",
-			"**/dist/**",
-			"**/src/**",
-			"**/test/**"
-		],
-		"require": [
-			"source-map-support/register",
-			"ts-node/register",
-			"ts-node/register/transpile-only",
-			"tsconfig-paths/register"
-		],
-		"exclude-after-remap": true,
-		"inlineSourceMap": true
 	}
 }
