@@ -167,12 +167,18 @@ run_tests () {
 	log_timing "xvfb-run end (EXIT_CODE=$EXIT_CODE)"
 
 	if ! scripts/sonar_test_results_merge.sh; then
-		echo "ERROR: failed to merge result rules"
+		echo "ERROR: failed to merge test results"
+		exit 1
+	elif [ ! -f artifacts/mocha_results_sonar/merged.xml ]; then
+		echo "ERROR: artifacts/mocha_results_sonar/merged.xml not found"
 		exit 1
 	else
 		echo "SUCCESS: scripts/sonar_test_results_merge.sh completed successfully"
 	fi
-	mv coverage/lcov.info artifacts/coverage/lcov.info || true ## https://github.com/microsoft/vscode-test-cli/issues/38
+
+	if [ ! -f artifacts/coverage/lcov.info ]; then
+		mv coverage/lcov.info artifacts/coverage/lcov.info ## https://github.com/microsoft/vscode-test-cli/issues/38
+	fi
 
 	log_timing "run_tests end"
 

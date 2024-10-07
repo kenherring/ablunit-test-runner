@@ -1,13 +1,14 @@
 #!/bin/bash
 set -eou pipefail
-set +x
+# set +x
+set -x
 
 VERBOSE=${VERBOSE:-false}
 
 rm -f artifacts/mocha_results_sonar/merged.xml
 
 if ! find artifacts/mocha_results_sonar -type f -name "*.xml" &> /dev/null; then
-    echo "ERROR: no *.xml files found in artifacts/mocha_results_sonar"
+    echo "ERROR: no *.xml files found in artifacts/mocha_results_sonar" >&2
     exit 1
 fi
 
@@ -29,7 +30,7 @@ done
     echo '</testExecutions>'
 } > artifacts/mocha_results_sonar/merged
 mv artifacts/mocha_results_sonar/merged artifacts/mocha_results_sonar/merged.xml
-xq artifacts/mocha_results_sonar/merged.xml > artifacts/mocha_results_sonar/merged.json
+xq '.' artifacts/mocha_results_sonar/merged.xml > artifacts/mocha_results_sonar/merged.json
 
 ## TODO - print totals for pass, skipped, failed, etc
 # FILE_COUNT="$(jq '.testExecutions.file[] | ."@path"' artifacts/mocha_results_sonar/merged.json  | wc -l)"
