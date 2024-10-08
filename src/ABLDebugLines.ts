@@ -14,9 +14,9 @@ export class ABLDebugLines {
 	}
 
 	async getSourceLine (debugSource: string, debugLine: number) {
-		if (debugSource.startsWith('OpenEdge.') || debugSource.includes('ABLUnitCore')) {
-			return undefined
-		}
+		// if (debugSource.startsWith('OpenEdge.') || debugSource.includes('ABLUnitCore')) {
+		// 	return undefined
+		// }
 
 		if (!debugSource.endsWith('.p') && !debugSource.endsWith('.cls')) {
 			debugSource = debugSource.replace(/\./g, '/') + '.cls'

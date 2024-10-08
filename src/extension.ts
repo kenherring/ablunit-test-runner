@@ -1127,7 +1127,7 @@ export async function doesDirExist (uri: Uri) {
 		}
 		return false
 	}, (err) => {
-		log.info('caught: ' + err)
+		log.debug('caught: ' + err)
 		return false
 	})
 	return ret
@@ -1140,7 +1140,7 @@ export async function doesFileExist (uri: Uri) {
 		}
 		return false
 	}, (err) => {
-		log.info('caught: ' + err)
+		log.debug('caught: ' + err)
 		return false
 	})
 	return ret

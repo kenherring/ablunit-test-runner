@@ -22,12 +22,15 @@ export class ABLPromsgs {
 		// eslint-disable-next-line promise/catch-or-return
 		this.loadFromCache(cacheUri).then(() => {
 			log.info('promsgs loaded from cache \'' + cacheUri.fsPath + '\'')
-			return
+			return true
 		}, (_e: unknown) => {
 			log.info('reading promsgs from DLC')
 			return this.loadFromDLC(dlc)
-		}).then(() => {
-			return this.saveCache(cacheUri)
+		}).then((isCache) => {
+			if (!isCache) {
+				return this.saveCache(cacheUri)
+			}
+			return
 		}, (e: unknown) => {
 			log.info('Cannot load promsgs from DLC, err=' + e)
 		})
@@ -64,7 +67,7 @@ export class ABLPromsgs {
 					msgnum = Number(element)
 				} else {
 					const t = element.replace(/"$/g, '')
-					if (t != '') {
+					if (t.replace(/\r/g, '') != '' && t != '"\r') {
 						msgtext.push(t)
 					}
 				}
@@ -102,7 +105,7 @@ export class ABLPromsgs {
 	async loadFromCache (cacheUri: Uri) {
 		log.info('load promsgs from cache') // REMOVEME
 		await workspace.fs.readFile(cacheUri).then((buffer) => {
-			this.promsgs.push(JSON.parse(Buffer.from(buffer).toString('utf8')) as IPromsg)
+			this.promsgs = JSON.parse(Buffer.from(buffer).toString('utf8')) as IPromsg[]
 			return
 		}, (err) => {
 			throw new Error('Cannot read promsgs file \'' + cacheUri.fsPath + '\', err=' + err)
@@ -115,7 +118,7 @@ export class ABLPromsgs {
 			throw new Error('promsgs not loaded, cannot save cache - zero records found')
 		}
 		log.info('save promsgs cache file=\'' + cacheUri.fsPath + '\'')
-		return workspace.fs.writeFile(cacheUri, Buffer.from(JSON.stringify(this.promsgs))).then(() => {
+		return workspace.fs.writeFile(cacheUri, Buffer.from(JSON.stringify(this.promsgs, null, 2))).then(() => {
 			log.info('saved promsgs cache successfully \'' + cacheUri.fsPath + '\'')
 			return
 		}, (err) => {
@@ -135,7 +138,10 @@ export function getPromsg (msgnum: number) {
 export function getPromsgText (text: string) {
 	try {
 		const promsgMatch = RegExp(/\((\d+)\)$/).exec(text)
+		log.info('text = ' + text)
+		log.info('match = ' + JSON.stringify(promsgMatch))
 		const promsg = promsgsObj.getMsgNum(Number(promsgMatch![1]))
+		log.info('promsg= ' + promsg)
 		let stackString = text
 		let count = 0
 		promsg?.msgtext.forEach((text: string) => {
