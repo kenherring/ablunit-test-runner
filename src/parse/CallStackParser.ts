@@ -1,18 +1,22 @@
-import { workspace, Location, Position, Range } from 'vscode'
+import { workspace, Location, Position, Range, Uri } from 'vscode'
 import { ABLDebugLines } from '../ABLDebugLines'
 import { ISourceMapItem } from './RCodeParser'
 import { log } from '../ChannelLogger'
+import { doesFileExist } from 'extension'
 
 interface ICallStackItem {
 	rawText: string
 	module?: string
+	moduleParent?: string
 	debugLine?: number
 	debugFile?: string
+	debugUri?: Uri
 	sourceLine?: number
 	// fileinfo?: IABLFile
 	lineinfo?: ISourceMapItem
 	markdownText?: string
 	loc?: Location
+	position: Position
 }
 
 export interface ICallStack {
@@ -45,11 +49,19 @@ export async function parseCallstack (debugLines: ABLDebugLines, callstackRaw: s
 			moduleParent = moduleParent.split(' ')[1]
 		}
 
+		let debugUri: Uri | undefined = Uri.file(debugFile)
+		if (!await doesFileExist(debugUri)) {
+			debugUri = undefined
+		}
+
 		const callstackItem: ICallStackItem = {
 			rawText: line,
 			module: module,
+			moduleParent: moduleParent,
 			debugLine: debugLine,
-			debugFile: debugFile
+			debugFile: debugFile,
+			debugUri: debugUri,
+			position: new Position(debugLine - 1, 0)
 		}
 
 		let lineinfo: ISourceMapItem | undefined = undefined
@@ -73,6 +85,13 @@ export async function parseCallstack (debugLines: ABLDebugLines, callstackRaw: s
 			))
 		} else {
 			callstackItem.markdownText = module + ' at line ' + debugLine + ' (' + debugFile + ')'
+			if (debugUri) {
+				callstackItem.loc = new Location(debugUri, new Range(
+					new Position(debugLine - 1, 0),
+					new Position(debugLine, 0)
+				))
+			}
+
 		}
 		callstack.items.push(callstackItem)
 	}

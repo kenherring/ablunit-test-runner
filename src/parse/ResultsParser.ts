@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import { Uri, workspace } from 'vscode'
+import { TestMessageStackFrame, Uri, workspace } from 'vscode'
 import { parseCallstack, ICallStack } from './CallStackParser'
 import { PropathParser } from '../ABLPropath'
 import { parseString } from 'xml2js'
@@ -9,10 +9,10 @@ import { ABLDebugLines } from '../ABLDebugLines'
 import { log } from '../ChannelLogger'
 import { isRelativePath } from '../ABLUnitCommon'
 
-
 export interface ITestCaseFailure {
 	callstackRaw: string
 	callstack: ICallStack
+	stackTrace: TestMessageStackFrame[]
 	message: string
 	type: string
 	diff?: {
@@ -209,6 +209,14 @@ export class ABLResultsParser {
 		return false
 	}
 
+	callstackToStackFrame (callstack: ICallStack) {
+		const stackFrames: TestMessageStackFrame[] = []
+		for (const i of callstack.items) {
+			stackFrames.push(new TestMessageStackFrame(i.rawText, i.loc?.uri, i.position))
+		}
+		return stackFrames
+	}
+
 	async parseFailOrError (res: any) {
 		if (res.$.status === 'Success') {
 			return undefined
@@ -229,9 +237,11 @@ export class ABLResultsParser {
 
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 		const callstack = await parseCallstack(this.debugLines, res[type][0]._)
+		const stackTrace = this.callstackToStackFrame(callstack)
 		const fail: ITestCaseFailure = {
 			callstackRaw: res[type][0]._,
 			callstack: callstack,
+			stackTrace: stackTrace,
 			message: res[type][0].$.message,
 			type: res[type][0].$.types
 		}
