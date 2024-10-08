@@ -1,9 +1,25 @@
 {
     "name": "sample",
-    "oeversion": "12.2",
     "graphicalMode": false,
     "buildPath": [
         { "type": "source", "path": "." }
     ],
-    "dbConnections": []
+    "dbConnections": [],
+	"profiles": [
+		{
+			"name": "profileWithDBConn",
+			"inherits": "default",
+			"value": {
+				"oeversion": "12.2",
+				"dbConnections": [
+					{
+						"name": "sp2k",
+						"aliases": [ "dbalias", "third" ],
+						"connect": "-db ../proj0/target/db/sp2k -RO",
+						"schemaFile": "../proj0/target/sp2k.df"
+					}
+				]
+			}
+		}
+	]
 }

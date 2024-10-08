@@ -1,0 +1,9 @@
+
+@Test.
+procedure compileErrorProd :
+  // this does not compile unless the DB is connected
+
+  for each customer no-lock:
+    message "100 found customer: " + customer.name.
+  end.
+end procedure.

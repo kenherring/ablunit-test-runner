@@ -1,27 +1,24 @@
-import { assert, getResults, getWorkspaceUri, log, runAllTests, suiteSetupCommon, Uri, commands, workspace, beforeCommon, deleteFile, toUri, selectProfile } from '../testCommon'
+import { assert, getResults, getWorkspaceUri, log, runAllTests, suiteSetupCommon, Uri, commands, workspace, beforeCommon, deleteFile, toUri, selectProfile, runTestAtLine, runTestsInFile } from '../testCommon'
 
 const workspaceUri = getWorkspaceUri()
 
 suite('proj2 - Extension Test Suite', () => {
 
-	suiteSetup('proj2 - before', () => suiteSetupCommon())
+	suiteSetup('proj2 - before', async () => {
+		await suiteSetupCommon()
+	})
 
 	setup('proj2 - beforeEach', () => {
-		deleteFile(toUri('src/compileError.cls'))
-		deleteFile(toUri('.vscode/profile.json'))
 		beforeCommon()
-		return  workspace.fs.copy(toUri('openedge-project.bk.json'), toUri('openedge-project.json'))
+		deleteFile(toUri('src/compileError.p'))
+		deleteFile(toUri('.vscode/profile.json'))
 	})
 
-	teardown('proj2 - afterEach', () => {
-		deleteFile(toUri('src/compileError.cls'))
-		return workspace.fs.copy(toUri('openedge-project.bk.json'), toUri('openedge-project.json'))
-	})
-
-	test('proj2.1 - temp/ablunit.json file exists', async () => {
-		await runAllTests().then(() => {
+	test('proj2.1 - temp/ablunit.json file exists', () => {
+		return runAllTests().then(() => {
 			const ablunitJson = Uri.joinPath(workspaceUri, 'temp', 'ablunit.json')
 			assert.fileExists(ablunitJson)
+			return true
 		})
 	})
 
@@ -58,15 +55,13 @@ suite('proj2 - Extension Test Suite', () => {
 					assert.equal(5, res.passed, 'res.passed should be 5 but got ' + res.passed)
 					assert.equal(9, res.tests, 'res.tests should be 9 but got ' + res.tests)
 				}
-				return
+				return true
 			})
 	})
 
-	test('proj2.4 - compile error', () => {
-
-		return workspace.fs.copy(toUri('openedge-project.json'), toUri('openedge-project.bk.json'))
-			.then(() => workspace.fs.writeFile(toUri('src/compileError.cls'), Buffer.from('@Test.\nprocedure compileErrorProd :\nthis doen not compile\nend procedure.')))
-			.then(() => runAllTests())
+	test('proj2.4 - compile error - run all tests', () => {
+		return workspace.fs.copy(toUri('src/compileError.p.saveme'), toUri('src/compileError.p'), { overwrite: true })
+			.then(() => { return runAllTests() }, (e) => { throw e })
 			.then(() => {
 				throw new Error('test should have failed due to compile error')
 			}, (e) => {
@@ -76,12 +71,22 @@ suite('proj2 - Extension Test Suite', () => {
 			})
 	})
 
-	test('proj2.5 - compile error excluded', () => {
+	test('proj2.5 - compile error - run tests in file', () => {
+		return workspace.fs.copy(toUri('src/compileError.p.saveme'), toUri('src/compileError.p'), { overwrite: true })
+			.then(() => runTestsInFile('src/compileError.p'))
+			.then(() => {
+				throw new Error('test should have failed due to compile error')
+			}, (e) => {
+				log.info('e=' + e)
+				assert.ok('tests failed as expected')
+				return true
+			})
+	})
 
-		return workspace.fs.copy(toUri('openedge-project.json'), toUri('openedge-project.bk.json'))
-			.then(() => workspace.fs.writeFile(toUri('src/compileError.cls'), Buffer.from('@Test.\nprocedure compileErrorProd :\nthis doen not compile\nend procedure.')))
-			.then(() => selectProfile('exlcudeFileProfile'))
-			.then(() => runAllTests())
+	test('proj2.6 - compile error - run with db conn', () => {
+		return workspace.fs.copy(toUri('src/compileError.p.saveme'), toUri('src/compileError.p'), { overwrite: true })
+			.then(() => selectProfile('profileWithDBConn'))
+			.then(() => runTestsInFile('src/compileError.p'))
 			.then(() => {
 				assert.ok('test passed as expected')
 				assert.tests.count(1)
