@@ -6,7 +6,6 @@ import {
 	FileCoverage,
 	FileCoverageDetail,
 	FileCreateEvent,
-	FileSystemWatcher,
 	FileType,
 	LogLevel,
 	Position, Range, RelativePattern, Selection,

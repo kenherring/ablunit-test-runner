@@ -22,8 +22,11 @@ suite('proj7B - Extension Test Suite', () => {
 		let testCount = await getTestControllerItemCount('ABLTestFile')
 		setTimeout(() => { throw new Error('timeout waiting for getTestControllerItemCount to return > 10 (got ' + testCount + ')') }, 5000)
 		while(testCount < 10) {
-			testCount = await getTestControllerItemCount('ABLTestFile')
+			testCount = await sleep2(5).then(() => { return getTestControllerItemCount('ABLTestFile') })
 			// await sleep(5, 'waiting for getTestControllerItemCount to return > 10 (got ' + testCount + ')')
+			if (startRefreshTime.elapsed() > 45000) {
+				throw new Error('timeout waiting for getTestControllerItemCount to return > 10 (got ' + testCount + ')')
+			}
 		}
 
 		log.info('cancelling test refresh')
