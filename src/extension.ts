@@ -1152,7 +1152,7 @@ export async function doesFileExist (uri: Uri) {
 
 function createDir (uri: Uri) {
 	if(!uri) {
-		return
+		return Promise.resolve()
 	}
 	return workspace.fs.stat(uri).then((stat) => {
 		if (!stat) {
