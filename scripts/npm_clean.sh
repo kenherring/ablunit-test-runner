@@ -32,6 +32,13 @@ initialize () {
 		DIRS+=("/tmp/ablunit/")
 	fi
 
+	FILES=(
+		"artifacts/*"
+		"coverage/*"
+		".vscode-test/user-data/User/settings.json"
+		"*.vsix"
+	)
+
 	TEST_PROJECT_DIRS=(
 		".builder"
 		".pct"
@@ -61,8 +68,6 @@ initialize () {
 		"results.prof"
 		"results.xml"
 	)
-	FILE_PATTERNS=("*.vsix")
-	rm -f .vscode-test/user-data/User/settings.json
 }
 
 delete_directories () {
@@ -93,12 +98,16 @@ delete_files () {
 	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] deleting files..."
 	local PATTERN LOOP_COUNT=0 FILE_COUNT=0
 
-	for PATTERN in "${FILE_PATTERNS[@]}"; do
-		LOOP_COUNT=$(find . -type f -name "$PATTERN" | wc -l)
+	for PATTERN in "${FILES[@]}"; do
+		# shellcheck disable=SC2012,SC2086
+		if !  LOOP_COUNT=$(ls -al $PATTERN 2>/dev/null | wc -l); then
+			LOOP_COUNT=0
+		fi
 		[ "$LOOP_COUNT" = "0" ] && continue
 		echo "delete PATTERN=$PATTERN (LOOP_COUNT=$LOOP_COUNT)"
 		FILE_COUNT=$((FILE_COUNT+LOOP_COUNT))
-		find . -type f -name "$PATTERN" -delete &
+		# shellcheck disable=SC2086
+		rm -rf $PATTERN &
 	done
 
 	for PATTERN in "${TEST_PROJECT_PATTERNS[@]}"; do

@@ -231,7 +231,7 @@ function getTestConfig (testDir, projName) {
 		ABLUNIT_TEST_RUNNER_UNIT_TESTING: true,
 		ABLUNIT_TEST_RUNNER_VSCODE_VERSION: vsVersion,
 		DONT_PROMPT_WSL_INSTALL: true,
-		// VSCODE_SKIP_PRELAUNCH: true,
+		VSCODE_SKIP_PRELAUNCH: true,
 	}
 
 	/** @type {import('@vscode/test-cli').IDesktopTestConfiguration} */
