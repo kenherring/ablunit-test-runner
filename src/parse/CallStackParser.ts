@@ -65,11 +65,11 @@ export async function parseCallstack (debugLines: ABLDebugLines, callstackRaw: s
 		}
 
 		let lineinfo: ISourceMapItem | undefined = undefined
-		lineinfo = await debugLines.getSourceLine(moduleParent, debugLine)
-			.catch((e: unknown) => {
-				log.info('could not find source line for ' + moduleParent + ' at line ' + debugLine + '.  using raw callstack data')
-				return undefined
-			})
+		try {
+			lineinfo = await debugLines.getSourceLine(moduleParent, debugLine)
+		} catch {
+			log.info('could not find source line for ' + moduleParent + ' at line ' + debugLine + '.  using raw callstack data')
+		}
 
 		if(lineinfo) {
 			const markdownText = module + ' at line ' + debugLine + ' ' +
