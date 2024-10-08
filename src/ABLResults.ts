@@ -313,7 +313,7 @@ export class ABLResults implements Disposable {
 				return
 			}
 			if (item.children.size > 0) {
-				await this.parseChildSuites(item, s.testsuite, options)
+				this.parseChildSuites(item, s.testsuite, options)
 			} else {
 				if (s.errors > 0) {
 					log.error('errors = ' + s.errors + ', failures = ' + s.failures + ', passed = ' + s.passed + ' (item=' + item.label + ')')
@@ -329,11 +329,11 @@ export class ABLResults implements Disposable {
 				}
 			}
 		} else {
-			await this.parseFinalSuite(item, s, options)
+			this.parseFinalSuite(item, s, options)
 		}
 	}
 
-	async parseChildSuites (item: TestItem, s: ITestSuite[], options: TestRun) {
+	parseChildSuites (item: TestItem, s: ITestSuite[], options: TestRun) {
 		for (const t of s) {
 			// find matching child TestItem
 			let child = item.children.get(t.name!)
@@ -343,7 +343,7 @@ export class ABLResults implements Disposable {
 
 			// parse results for the child TestItem, if it exists
 			if (child) {
-				await this.parseFinalSuite(child, t, options)
+				this.parseFinalSuite(child, t, options)
 			} else {
 				log.error('could not find child test item for ' + t.name + ' or ' + t.classname)
 				// throw new Error("could not find child test item for " + t.name + " or " + t.classname)
@@ -359,9 +359,9 @@ export class ABLResults implements Disposable {
 		}
 
 		if (item.children.size > 0) {
-			return this.setAllChildResults(item.children, s.testcases, options)
+			this.setAllChildResults(item.children, s.testcases, options)
 		} else {
-			return this.setChildResults(item, options, s.testcases[0])
+			this.setChildResults(item, options, s.testcases[0])
 		}
 	}
 
@@ -382,7 +382,6 @@ export class ABLResults implements Disposable {
 	}
 
 	private setAllChildResults (children: TestItemCollection, testcases: ITestCase[], options: TestRun) {
-		const promArr: Promise<void>[] = [Promise.resolve()]
 		children.forEach(child => {
 			const tc = testcases.find((t: ITestCase) => t.name === child.label)
 			if (!tc) {
@@ -390,10 +389,8 @@ export class ABLResults implements Disposable {
 				options.errored(child, new TestMessage('could not find result for test case \'' + child.label + '\''))
 				return
 			}
-			promArr.push(this.setChildResults(child, options, tc))
+			this.setChildResults(child, options, tc)
 		})
-
-		return Promise.all(promArr)
 	}
 
 	private setChildResults (item: TestItem, options: TestRun, tc: ITestCase) {
@@ -404,37 +401,27 @@ export class ABLResults implements Disposable {
 				} else {
 					options.passed(item, tc.time)
 				}
-				return Promise.resolve()
+				return
 			}
-			case 'failure': {
-				if (tc.failure) {
-					const diff = this.getDiffMessage(tc.failure)
-					return this.getFailureMarkdownMessage(item, options, tc.failure).then((msg) => {
-						const tmArr: TestMessage[] = [ new TestMessage(msg) ]
-						if (diff) {
-							tmArr.push(diff)
-						}
-						options.failed(item, tmArr, tc.time)
-						return
-					})
-				}
-				log.error('unexpected failure for \'' + tc.name + '\'')
-				throw new Error('unexpected failure for \'' + tc.name)
-			}
+			case 'failure':
 			case 'error': {
 				if (tc.failure) {
-					return this.getFailureMarkdownMessage(item, options, tc.failure).then((msg) => {
-						const tm = new TestMessage(msg)
-						options.failed(item, [ tm ], tc.time)
-						return
-					})
+					const diff = this.getDiffMessage(tc.failure)
+					if (diff) {
+						options.failed(item, diff, tc.time)
+					} else {
+						const testMessage = new TestMessage(getPromsgText(tc.failure.message))
+						testMessage.stackTrace = tc.failure.stackTrace
+						options.failed(item, testMessage, tc.time)
+					}
+					return
 				}
-				log.error('unexpected error for ' + tc.name)
-				throw new Error('unexpected error for ' + tc.name)
+				log.error('unexpected ' + tc.status.toLowerCase() + ' for \'' + tc.name + '\'')
+				throw new Error('unexpected ' + tc.status.toLowerCase() + ' for \'' + tc.name + '\'')
 			}
 			case 'skpped': {
 				options.skipped(item)
-				return Promise.resolve()
+				return
 			}
 			default: {
 				log.error('unexpected test status ' + tc.status + ' for ' + tc.name)
@@ -469,12 +456,13 @@ export class ABLResults implements Disposable {
 		if (!failure.diff) {
 			return undefined
 		}
-		const tm = TestMessage.diff('Assert failed! ', failure.diff.expectedOutput, failure.diff.actualOutput)
+		const tm = TestMessage.diff(failure.message, failure.diff.expectedOutput, failure.diff.actualOutput)
 		for (const line of failure.callstack.items) {
-			if (line.loc) {
+			if (!tm.location && line.loc) {
 				tm.location = line.loc
 			}
 		}
+		tm.stackTrace = failure.stackTrace
 		return tm
 	}
 
