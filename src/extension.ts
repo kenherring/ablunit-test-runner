@@ -6,7 +6,6 @@ import {
 	FileCoverage,
 	FileCoverageDetail,
 	FileCreateEvent,
-	FileSystemWatcher,
 	FileType,
 	LogLevel,
 	Position, Range, RelativePattern, Selection,
@@ -166,7 +165,7 @@ export async function activate (context: ExtensionContext) {
 					}
 
 				} else {
-					await discoverTests(gatherTestItems(test.children))
+					await discoverTests(gatherAllTestItems(test.children))
 				}
 			}
 		}
@@ -178,7 +177,7 @@ export async function activate (context: ExtensionContext) {
 					throw new CancellationError()
 				}
 				run.enqueued(test)
-				for(const childTest of gatherTestItems(test.children)) {
+				for(const childTest of gatherAllTestItems(test.children)) {
 					run.enqueued(childTest)
 				}
 			}
@@ -254,7 +253,7 @@ export async function activate (context: ExtensionContext) {
 			if(!ret) {
 				for (const { test } of queue) {
 					run.errored(test, new TestMessage('ablunit run failed'))
-					for (const childTest of gatherTestItems(test.children)) {
+					for (const childTest of gatherAllTestItems(test.children)) {
 						run.errored(childTest, new TestMessage('ablunit run failed'))
 					}
 				}
@@ -343,7 +342,7 @@ export async function activate (context: ExtensionContext) {
 			log.trace('run.end()')
 			throw new CancellationError()
 		})
-		const tests = request.include ?? gatherTestItems(ctrl.items)
+		const tests = request.include ?? gatherAllTestItems(ctrl.items)
 
 		return discoverTests(tests)
 			.then(() => { return createABLResults() })
@@ -715,15 +714,6 @@ export function gatherAllTestItems (collection: TestItemCollection) {
 	return items
 }
 
-// TODO - deprecate this function
-function gatherTestItems (collection: TestItemCollection) {
-	const items: TestItem[] = []
-	for(const [, item] of collection) {
-		items.push(item)
-	}
-	return items
-}
-
 function getExcludePatterns () {
 	let excludePatterns: string[] = []
 
@@ -793,7 +783,7 @@ function deleteFiles (controller: TestController, files: readonly Uri[]) {
 
 function deleteTest (controller: TestController | undefined, item: TestItem | Uri) {
 	const deleteChildren = (controller: TestController | undefined, item: TestItem) => {
-		for (const child of gatherTestItems(item.children)) {
+		for (const child of gatherAllTestItems(item.children)) {
 			deleteChildren(controller, child)
 			child.children.delete(item.id)
 			testData.delete(child)
