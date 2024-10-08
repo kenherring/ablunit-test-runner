@@ -1,5 +1,5 @@
 import { Uri, commands } from 'vscode'
-import { assert, getResults, getWorkspaceUri, log, refreshData, runAllTests, sleep, suiteSetupCommon } from '../testCommon'
+import { assert, beforeCommon, getResults, getWorkspaceUri, log, runAllTests, suiteSetupCommon } from '../testCommon'
 
 const workspaceUri = getWorkspaceUri()
 

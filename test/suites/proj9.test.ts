@@ -73,9 +73,6 @@ suite('proj9 - Extension Test Suite', () => {
 	})
 
 	test('proj9.3 - third profile passes (inherits propath from 2)', async () => {
-		// const workspaceFolder = workspace.workspaceFolders![0].uri
-		const resultsJsonUri = Uri.joinPath(workspace.workspaceFolders![0].uri, 'results.json')
-
 		await selectProfile('profile3')
 		await runAllTests(false)
 
