@@ -36,6 +36,7 @@ initialize () {
 		"artifacts/*"
 		"coverage/*"
 		".vscode-test/user-data/User/settings.json"
+		"*.vsix"
 	)
 
 	TEST_PROJECT_DIRS=(
@@ -66,10 +67,6 @@ initialize () {
 		"results.json"
 		"results.prof"
 		"results.xml"
-	)
-
-	FILE_PATTERNS=(
-		"*.vsix"
 	)
 }
 
@@ -111,14 +108,6 @@ delete_files () {
 		FILE_COUNT=$((FILE_COUNT+LOOP_COUNT))
 		# shellcheck disable=SC2086
 		rm -rf $PATTERN &
-	done
-
-	for PATTERN in "${FILE_PATTERNS[@]}"; do
-		LOOP_COUNT=$(find . -type f -name "$PATTERN" | wc -l)
-		[ "$LOOP_COUNT" = "0" ] && continue
-		echo "delete PATTERN=$PATTERN (LOOP_COUNT=$LOOP_COUNT)"
-		FILE_COUNT=$((FILE_COUNT+LOOP_COUNT))
-		find . -type f -name "$PATTERN" -delete &
 	done
 
 	for PATTERN in "${TEST_PROJECT_PATTERNS[@]}"; do
