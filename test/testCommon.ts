@@ -552,7 +552,8 @@ export async function runAllTests (doRefresh = true, waitForResults = true, with
 	const r = await commands.executeCommand(testCommand)
 		.then((r) => {
 			log.info('command ' + testCommand +' complete! (r=' + r + ')')
-			return sleep(250) })
+			return sleep(250)
+		}, (e) => { throw e	})
 		.then(() => {
 			log.info(tag + 'testing.runAll completed - start getResults()')
 			if (!waitForResults) { return [] }
@@ -576,6 +577,19 @@ export async function runAllTests (doRefresh = true, waitForResults = true, with
 
 export function runAllTestsWithCoverage () {
 	return runAllTests(true, true, true)
+}
+
+export function runTestsInFile (filename: string) {
+	const testpath = toUri(filename)
+	log.info('runnings tests in file ' + testpath.fsPath)
+	return refreshTests()
+		.then(() => { return commands.executeCommand('vscode.open', testpath) })
+		.then(() => { return commands.executeCommand('testing.runCurrentFile') })
+		.then(() => { return getResults() })
+		.then(() => {
+			log.info('testing.runCurrentFile complete!')
+			return
+		}, (e) => { throw e })
 }
 
 export function runTestAtLine (filename: string, line: number) {
@@ -997,15 +1011,15 @@ class AssertTestResults {
 
 		switch (status) {
 			// case 'passed': actualCount = res.passed; break
-			case 'passed': assertParent.equal(res.passed, expectedCount, 'test count passed != ' + expectedCount); break
+			case 'passed': assertParent.equal(res.passed, expectedCount, 'test count passed (' + res.passed + ') != ' + expectedCount); break
 			// case 'failed': actualCount = res.failures; break
-			case 'failed': assertParent.equal(res.failures, expectedCount, 'test count failed != ' + expectedCount); break
+			case 'failed': assertParent.equal(res.failures, expectedCount, 'test count failed (' + res.failures + ') != ' + expectedCount); break
 			// case 'errored': actualCount = res.errors; break
-			case 'errored': assertParent.equal(expectedCount, res.errors, 'test count errored != ' + expectedCount); break
+			case 'errored': assertParent.equal(res.errors, expectedCount, 'test count errored (' + res.errors + ') != ' + expectedCount); break
 			// case 'skipped': actualCount = res.skipped; break
-			case 'skipped': assertParent.equal(expectedCount, res.skipped, 'test count skipped != ' + expectedCount); break
+			case 'skipped': assertParent.equal(res.skipped, expectedCount, 'test count skipped (' + res.skipped + ') != ' + expectedCount); break
 			// case 'all': actualCount = res.tests; break
-			case 'all': assertParent.equal(res.tests, expectedCount, 'test count != ' + expectedCount); break
+			case 'all': assertParent.equal(res.tests, expectedCount, 'test count (' + res.tests + ') != ' + expectedCount); break
 			default: throw new Error('unknown status: ' + status)
 		}
 	}
