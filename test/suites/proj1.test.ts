@@ -105,7 +105,7 @@ suite('proj1 - Extension Test Suite', () => {
 	test('proj1.5 - run test case at cursor', async () => {
 		await commands.executeCommand('vscode.open', Uri.joinPath(workspaceUri, 'procedureTest.p'))
 		if(window.activeTextEditor) {
-			window.activeTextEditor.selection = new Selection(21, 0, 21, 0)
+			window.activeTextEditor.selection = new Selection(25, 0, 25, 0)
 		} else {
 			assert.fail('vscode.window.activeTextEditor is undefined')
 		}

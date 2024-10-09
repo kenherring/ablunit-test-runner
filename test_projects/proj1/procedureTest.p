@@ -3,8 +3,12 @@ block-level on error undo, throw.
 
 @Test.
 procedure test_proc :
-    log-manager:write-message("1").
+    run called_proc.
     Assert:Equals(1,1).
+end procedure.
+
+procedure called_proc :
+    log-manager:write-message("1").
 end procedure.
 
 @Test.
@@ -25,7 +29,7 @@ end procedure.
 procedure test_call_fail_1 :
     define variable val as integer no-undo.
     val = someFunc("1").
-    Assert:Equals(val,2).
+    Assert:Equals(2,val).
     Assert:Equals(true,false).
 end procedure.
 
