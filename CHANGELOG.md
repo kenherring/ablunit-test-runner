@@ -1,3 +1,10 @@
+# [0.2.15](https://github.com/kenherring/ablunit-test-runner/releases/tag/0.2.15) - 2024-10-08 (pre-release)
+
+ * Use `TestMesssage.stackTrace` instead of custom display (#213)
+ * Minor script and test cleanup (#178)
+
+**Full Changelog**: [0.2.13...0.2.15](https://github.com/kenherring/ablunit-test-runner/compare/0.2.13...0.2.15)
+
 # [0.2.13](https://github.com/kenherring/ablunit-test-runner/releases/tag/0.2.13) - 2024-10-03 (pre-release)
 
  * Unskip proj7 tests for large projects (#194)
