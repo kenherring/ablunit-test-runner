@@ -558,7 +558,8 @@ export async function runAllTests (doRefresh = true, waitForResults = true, with
 			log.info(tag + 'testing.runAll completed - start getResults()')
 			if (!waitForResults) { return [] }
 			return getResults(1, tag)
-		}).then((r) => {
+		})
+		.then((r) => {
 			if (r.length >= 0) {
 				const fUri = r[0]?.cfg.ablunitConfig.optionsUri.filenameUri
 				log.info(tag + 'testing.runAll command complete (filename=' + fUri.fsPath + ', r=' + r + ')')
