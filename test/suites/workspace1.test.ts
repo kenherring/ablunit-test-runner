@@ -51,7 +51,7 @@ suite('workspace1 - Extension Test Suite', () => {
 		assert.notFileExists(ablunitJson)
 	})
 
-	test.skip('workspace1.2 - <storageUri>/ablunit.json file exists', async () => {
+	test('workspace1.2 - <storageUri>/ablunit.json file exists', async () => {
 		await updateConfig('tempDir', 'workspaceAblunit')
 		await runAllTests()
 
