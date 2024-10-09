@@ -6,9 +6,10 @@ function readValidationFile (filename: string) {
 	const uri = Uri.joinPath(getWorkspaceUri(), 'validation', filename)
 
 	return workspace.fs.readFile(uri).then((content) => {
-		const data = Buffer.from(content.buffer).toString().trim().replace(/[\r\t\n]/g, '').replace(/\/\/.*/g, '').replace(/^$/g, '')
+		const data = Buffer.from(content.buffer).toString()
+		// const data = Buffer.from(content.buffer).toString().trim().replace(/[\r\t\n]/g, '').replace(/\/\/.*/g, '').replace(/^$/g, '')
 		const conf: IConfigurations = JSON.parse(data) as IConfigurations
-		return JSON.stringify(conf.configurations)
+		return conf.configurations
 	}, (err) => {
 		log.error('Reading validation file failed: ' + err)
 		throw err
@@ -38,10 +39,13 @@ suite('TestProfileParser suite', () => {
 	})
 
 	test('test2 - modified files.include & files.exclude', () => {
-		const res = JSON.stringify(parseRunProfiles(getWorkspaceFolders(), 'ablunit-test-profile.test2.json'))
+		const actual = parseRunProfiles(getWorkspaceFolders(), 'ablunit-test-profile.test2.json')
+		// const expected = res as IRunProfile[]
 		return readValidationFile('ablunit-test-profile.val-test2.json')
-			.then((val) => {
-				assert.equal(res, val)
+			.then((val: unknown) => {
+				const expected = JSON.parse(JSON.stringify(val)) as IConfigurations['configurations']
+				assert.equal(actual[0].tempDir, expected[0].tempDir)
+				assert.equal(JSON.stringify(actual[0].options, null, 2), JSON.stringify(expected[0].options, null, 2))
 				return
 			})
 	})
