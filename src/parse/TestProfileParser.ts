@@ -174,6 +174,7 @@ export class RunConfig extends DefaultRunProfile {
 	constructor (private readonly profile: IRunProfile, public workspaceFolder: WorkspaceFolder) {
 		super()
 		this.tempDirUri = this.getUri(this.profile.tempDir)
+		this.timeout = this.profile.timeout
 		log.debug('tempDirUri=' + this.tempDirUri.fsPath)
 		this.config_uri = Uri.joinPath(this.tempDirUri, 'ablunit.json')
 		this.profOptsUri = Uri.joinPath(this.tempDirUri, 'profile.options')

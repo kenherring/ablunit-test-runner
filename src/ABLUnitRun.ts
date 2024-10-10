@@ -1,9 +1,9 @@
 import { CancellationError, CancellationToken, Disposable, FileSystemWatcher, TestRun, Uri, workspace } from 'vscode'
 import { ABLResults } from './ABLResults'
-import { deleteFile, isRelativePath } from './ABLUnitCommon'
-import { ExecException, ExecOptions, exec } from 'child_process'
+import { deleteFile, Duration, isRelativePath } from './ABLUnitCommon'
+import { ExecException, ExecOptions, SendHandle, Serializable, SpawnOptions, exec, spawn } from 'child_process'
 import { log } from './ChannelLogger'
-import { processUpdates, updateParserInit } from 'parse/UpdateParser'
+import { processUpdates, setTimeoutTestStatus, updateParserInit } from 'parse/UpdateParser'
 
 export enum RunStatus {
 	None = 10,
@@ -17,6 +17,9 @@ export enum RunStatus {
 	Complete = 80,
 	Cancelled = 81,
 	Error = 82,
+	Killed = 83,
+	Timeout = 84,
+	Unknown = 99,
 }
 export enum RunStatusString {
 	'None' = 10,
@@ -39,7 +42,6 @@ export class ABLUnitRuntimeError extends Error {
 }
 
 export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation: CancellationToken) => {
-	const start = Date.now()
 	const abort = new AbortController()
 	const { signal } = abort
 	let watcherDispose: Disposable | undefined = undefined
@@ -172,22 +174,11 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 		const cmd = args[0]
 		args.shift()
 
+
+
 		return new Promise<string>((resolve, reject) => {
-			res.setStatus(RunStatus.Executing)
-
+			res.setStatus(RunStatus.Running)
 			const runenv = getEnvVars(res.dlc!.uri)
-
-			const execOpts: ExecOptions = {
-				env: runenv,
-				cwd: res.cfg.ablunitConfig.workspaceFolder.uri.fsPath,
-				signal: signal,
-				timeout: 120000
-			}
-
-			const execCommand = (cmd + ' ' + args.join(' ')).replace(/\$\{DLC\}/g, res.dlc!.uri.fsPath.replace(/\\/g, '/')) + ' 2>&1'
-
-			log.info('command=\'' + cmd + ' ' + args.join(' ') + '\'\r\n', options)
-			log.info('----- ABLUnit Command Execution Started -----', options)
 
 			const updateUri = res.cfg.ablunitConfig.optionsUri.updateUri
 			if (updateUri) {
@@ -195,58 +186,99 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 				updateParserInit()
 				log.info('watching test run update/event file: ' + updateUri.fsPath)
 				watcherUpdate = workspace.createFileSystemWatcher(updateUri.fsPath)
-				watcherDispose = watcherUpdate.onDidChange(uri => { return processUpdates(options, res.tests, updateUri) })
+				watcherDispose = watcherUpdate.onDidChange((uri) => { return processUpdates(options, res.tests, uri) })
 			}
 
-			exec(execCommand, execOpts, (err: ExecException | null, stdout: string, stderr: string) => {
-				const duration = Date.now() - start
+			const spawnOpts: SpawnOptions = {
+				signal: signal,
+				// killSignal: 'SIGKILL', // DEFAULT
+				// killSignal: 'SIGABRT', // does not actually kill the process
+				killSignal: 'SIGINT',
+				timeout: res.cfg.ablunitConfig.timeout,
+				env: runenv,
+				cwd: res.cfg.ablunitConfig.workspaceFolder.uri.fsPath,
+			}
 
-				if (watcherUpdate) {
-					watcherUpdate.dispose()
-				}
-				if (watcherDispose) {
-					watcherDispose.dispose()
-				}
+			log.info('command=\'' + cmd + ' ' + args.join(' ') + '\'\r\n', options)
+			const testRunDuration = new Duration('TestRun')
+			const process = spawn(cmd, args, spawnOpts)
 
-				if (err) {
-					const errStr = '[err]\r\n' + JSON.stringify(err, null, 2) + '\r\n[\\err]'
-					log.error(errStr, options)
-				}
-				if (stdout) {
-					stdout = '[stdout] ' + stdout + '[\\stdout]'
-					log.info(stdout, options)
-				}
-				if (stderr) {
-					stderr = '[stderr] ' + stderr.replace(/\n/g, '\n[stderr] ')
-					log.error(stderr, options)
-				}
+			let lastError: string | undefined = undefined
 
-				if (err) {
-					const promsgError = parseRuntimeError(stdout.replace(/\r/g, ''))
-					log.debug('promsgError=' + promsgError, options)
-					if (promsgError) {
-						log.error('ABLUnit Runtime Error (code=' + err.code + '):' + promsgError, options)
-						reject(new ABLUnitRuntimeError ('ABLUnit Runtime Error (code=' + err.code + ') !', promsgError, err.cmd))
-					} else {
-						log.error('Runtime error: ' + err.message + ' (code=' + err.code + ')', options)
-						reject(err)
-					}
+			process.stderr?.on('data', (data: Buffer) => {
+				void processUpdates(options, res.tests, updateUri)
+				log.error('\t\t[stderr]' + data.toString().trim().replace(/\n/g, '\n\t\t[stderr]'), options)
+				lastError = data.toString().trim()
+			})
+			process.stdout?.on('data', (data: Buffer) => {
+				void processUpdates(options, res.tests, updateUri)
+				log.info('\t\t[stdout]' + data.toString().trim().replace(/\n/g, '\n\t\t[stdout]'), options)
+				lastError = undefined
+			})
+			process.once('spawn', () => {
+				log.info('----- ABLUnit Test Run Started -----', options)
+				res.setStatus(RunStatus.Executing)
+			}).on('error', (e: unknown) => {
+				log.error('----- ABLUnit Test Run Error ----- (e=' + e + ')', options)
+				if (e instanceof Error) {
+					reject(e)
+				}
+			}).on('exit', (code) => {
+				if (code && code != 0) {
+					log.info('----- ABLUnit Test Run Failed (exit_code=' + code + ') ----- ' + testRunDuration, options)
+					reject(new ABLUnitRuntimeError('ABLUnit exit_code= ' + code, 'ABLUnit exit_code= ' + code, cmd))
+					res.setStatus(RunStatus.Error)
 					return
 				}
-				if(stderr) {
-					log.error('ABLUnit Command Execution Failed (reject-3) - duration: ' + duration + '\n' + stderr, options)
-					reject(new Error ('ABLUnit Command Execution Failed (reject-3) - duration: ' + duration + '\n' + stderr))
+				if (process.killed) {
+					if (process.signalCode == 'SIGINT') {
+						log.info('----- ABLUnit Test Run Timeout - ' + res.cfg.ablunitConfig.timeout + 'ms ----- ' + testRunDuration, options)
+						res.setStatus(RunStatus.Timeout)
+						setTimeoutTestStatus(options, res.cfg.ablunitConfig.timeout)
+						reject(new ABLUnitRuntimeError('ABLUnit process timeout', 'ABLUnit exit_code= ' + code, cmd))
+						return
+					}
+					log.info('----- ABLUnit Test Run Killed - ' + process.signalCode + ' ----- ' + testRunDuration, options)
+					res.setStatus(RunStatus.Killed)
+					reject(new ABLUnitRuntimeError('ABLUnit process killed', 'signalCode=' + process.signalCode, cmd))
+					return
 				}
 
-				resolve('ABLUnit Command Execution Completed - duration: ' + duration)
+				log.info('----- ABLUnit Test Run Complete ----- ' + testRunDuration, options)
+				res.setStatus(RunStatus.Complete)
+				resolve
+			}).on('close', (code: unknown, signal: unknown) => {
+				watcherDispose?.dispose()
+				watcherUpdate?.dispose()
+				void processUpdates(options, res.tests, updateUri)
+
+				log.info('process.close event')
+				log.info('\tcode=' + code)
+				log.info('\tsignal=' + signal)
+				log.info('\tprocess.exitCode=' + process.exitCode)
+				log.info('\tprocess.signalCode=' + process.signalCode)
+				log.info('\tprocess.killed=' + process.killed)
+				log.info('\tprocess.pid=' + process.pid)
+				log.info('\tprocess.connected' + process.connected)
+				log.info('\tprocess.channel=' + process.channel)
+
+				if (res.status < RunStatus.Complete) {
+					res.setStatus(RunStatus.Unknown, 'ABLUnit process closed unexpectedly, should have called exit already')
+				}
+			}).on('message', (m: Serializable, h: SendHandle) => {
+				// eslint-disable-next-line @typescript-eslint/no-base-to-string
+				log.info('process.on.message m=' + m.toString())
 			})
+
+
+			log.info('process.eventNames=' + JSON.stringify(process.eventNames()))
+
+
 		})
 	}
 
 	return runCommand()
-		.then(() => { return processUpdates(options, res.tests, res.cfg.ablunitConfig.optionsUri.updateUri) })
 		.then(() => {
-			log.info('----- ABLUnit Command Execution Completed -----', options)
 			return res.parseOutput(options)
 		}, (err: unknown) => {
 			log.debug('runCommand() error=' + JSON.stringify(err, null, 2), options)
