@@ -31,6 +31,9 @@
 		"importOpenedgeProjectJson": true,
 		"openedgeProjectProfile": "default",
 
+		////# Timeout in milliseconds for the ablunit command to complete.  Set to 0 for no timeout.p
+		"timeout": 30000,
+
 		////# Configuration object related to the command line run to execute tests.
 		"command": {
 
@@ -113,8 +116,8 @@
 			"filename": "prof.out",
 			"listings": false,
 			"statistics": false,
-			"traceFilter": "",
-			"tracing": false,
+			"traceFilter": null,
+			"tracing": null,
 			"writeJson": false
 		}
 

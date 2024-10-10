@@ -38,6 +38,12 @@
 						"default": "default",
 						"description": "The profile to use from 'openedge-project.json'.  Only used when 'importOpenedgeProjectJson' is true."
 					},
+					"timeout": {
+						"type": "number",
+						"default": 30000,
+						"minimum": 0,
+						"description": "Timeout in milliseconds for the test run.  Set to 0 to disable."
+					},
 					"options": {
 						"type": [ "object", "null" ],
 						"description": "Options passed to the OE test runner via the 'ablunit.json' file.  Set to null to prevent the creation of 'ablunit.json' or related args passed to the command line.",

@@ -11,8 +11,13 @@
 			"request": "launch",
 			"runtimeExecutable": "${execPath}",
 			"args": [
+				"--profile-temp",
 				"--extensionDevelopmentPath=${workspaceFolder}",
-				// "--log", "khering.ablunit-test-runner:debug",
+				// "--log", "kherring.ablunit-test-runner:debug",
+				// "--log", "kenherring.ablunit-test-runner:debug",
+				// "--log=debug",
+				"--log",
+				"debug",
 				"${input:disable-extensions}",
 				"${workspaceFolder}/test_projects/${input:workspaceName}"
 			],
@@ -27,6 +32,7 @@
 			"request": "launch",
 			"runtimeExecutable": "${execPath}",
 			"args": [
+				"--profile-temp",
 				"--extensionDevelopmentPath=${workspaceFolder}/dummy-ext",
 				"--install-extension=ablunit-test-runner-0.2.15.vsix",
 				"--enable-proposed-api=kherring.ablunit-test-runner",

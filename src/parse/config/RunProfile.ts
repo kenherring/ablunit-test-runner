@@ -10,6 +10,7 @@ export interface IRunProfile {
 	tempDir?: string
 	importOpenedgeProjectJson: boolean
 	openedgeProjectProfile: string | undefined
+	timeout: number
 	command?: ICommandOptions
 	options?: ICoreOptions
 	profiler?: IProfilerOptions
@@ -20,6 +21,7 @@ export class DefaultRunProfile implements IRunProfile {
 	tempDir = '${workspaceFolder}'
 	importOpenedgeProjectJson = true
 	openedgeProjectProfile: string | undefined = undefined
+	timeout = 30000
 	command: CommandOptions = new CommandOptions()
 	options: CoreOptions = new CoreOptions()
 	profiler: ProfilerOptions = new ProfilerOptions()
