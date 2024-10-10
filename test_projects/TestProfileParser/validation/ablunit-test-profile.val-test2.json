@@ -2,7 +2,7 @@
 	"configurations": [
 		{
 			"hide": false,
-			"tempDir": "${workspaceFolder}",
+			"tempDir": ".",
 			"importOpenedgeProjectJson": true,
 			"command": {
 				"executable": "_progres",
@@ -12,9 +12,11 @@
 			},
 			"options": {
 				"output": {
-					"location": "${tempDir}",
+					"location": ".",
 					"filename": "results",
-					"format": "xml"
+					"format": "xml",
+					"writeJson": false,
+					"updateFile": "updates.log"
 				},
 				"quitOnEnd": true,
 				"writeLog":  false,

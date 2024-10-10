@@ -1,5 +1,4 @@
-import { Uri, commands } from 'vscode'
-import { assert, beforeCommon, getResults, getWorkspaceUri, log, runAllTests, suiteSetupCommon } from '../testCommon'
+import { assert, getResults, getWorkspaceUri, log, runAllTests, suiteSetupCommon, Uri, commands, workspace, beforeCommon, deleteFile, toUri, selectProfile, runTestsInFile } from '../testCommon'
 
 const workspaceUri = getWorkspaceUri()
 
@@ -7,12 +6,17 @@ suite('proj2 - Extension Test Suite', () => {
 
 	suiteSetup('proj2 - before', () => suiteSetupCommon())
 
-	setup('proj2 - beforeEach', beforeCommon)
+	setup('proj2 - beforeEach', () => {
+		beforeCommon()
+		deleteFile(toUri('src/compileError.p'))
+		deleteFile(toUri('.vscode/profile.json'))
+	})
 
-	test('proj2.1 - temp/ablunit.json file exists', async () => {
-		await runAllTests().then(() => {
+	test('proj2.1 - temp/ablunit.json file exists', () => {
+		return runAllTests().then(() => {
 			const ablunitJson = Uri.joinPath(workspaceUri, 'temp', 'ablunit.json')
 			assert.fileExists(ablunitJson)
+			return true
 		})
 	})
 
@@ -49,7 +53,44 @@ suite('proj2 - Extension Test Suite', () => {
 					assert.equal(5, res.passed, 'res.passed should be 5 but got ' + res.passed)
 					assert.equal(9, res.tests, 'res.tests should be 9 but got ' + res.tests)
 				}
+				return true
+			})
+	})
+
+	test('proj2.4 - compile error - run all tests', () => {
+		return workspace.fs.copy(toUri('src/compileError.p.saveme'), toUri('src/compileError.p'), { overwrite: true })
+			.then(() => { return runAllTests() }, (e) => { throw e })
+			.then(() => {
+				throw new Error('test should have failed due to compile error')
+			}, (e) => {
+				log.info('e=' + e)
+				assert.ok('test failed as expected')
+				return true
+			})
+	})
+
+	test('proj2.5 - compile error - run tests in file', () => {
+		return workspace.fs.copy(toUri('src/compileError.p.saveme'), toUri('src/compileError.p'), { overwrite: true })
+			.then(() => runTestsInFile('src/compileError.p'))
+			.then(() => {
+				throw new Error('test should have failed due to compile error')
+			}, (e) => {
+				log.info('e=' + e)
+				assert.ok('tests failed as expected')
+				return true
+			})
+	})
+
+	test('proj2.6 - compile error - run with db conn', () => {
+		return workspace.fs.copy(toUri('src/compileError.p.saveme'), toUri('src/compileError.p'), { overwrite: true })
+			.then(() => selectProfile('profileWithDBConn'))
+			.then(() => runTestsInFile('src/compileError.p'))
+			.then(() => {
+				assert.ok('test passed as expected')
+				assert.tests.count(1)
 				return
+			}, (e) => {
+				throw new Error('test should have passed, but threw error e=' + e)
 			})
 	})
 

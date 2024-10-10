@@ -393,7 +393,7 @@ export function getWorkspaceFolders () {
 	return workspaceFolders
 }
 
-export function getWorkspaceUri () {
+export function getWorkspaceUri (idx = 0) {
 	// log.info('vscode.workspace.workspaceFolders.length=' + vscode.workspace.workspaceFolders?.length)
 	// log.info('vscode.workspace.workspaceFolders=' + JSON.stringify(vscode.workspace.workspaceFolders))
 	// log.info('vscode.workspace.workspaceFile=' + vscode.workspace.workspaceFile)
@@ -420,13 +420,11 @@ export function getWorkspaceUri () {
 		// throw new Error('workspace.workspaceFolders is undefined or has no entries')
 	}
 
-	if (vscode.workspace.workspaceFolders.length === 1) {
-		return vscode.workspace.workspaceFolders[0].uri
+	if (vscode.workspace.workspaceFolders.length > idx) {
+		return vscode.workspace.workspaceFolders[idx].uri
 	}
 
-	log.warn('workspace.workspaceFolders has more than one entry')
-	return vscode.workspace.workspaceFolders[0].uri
-	// throw new Error('workspace.workspaceFolders has more than one entry')
+	throw new Error('workspace.workspaceFolders.length=' + vscode.workspace.workspaceFolders.length + ' for which idx=' + idx + ' is not valid')
 }
 
 export const workspaceUri = () => getWorkspaceUri()
@@ -564,8 +562,9 @@ export async function runAllTests (doRefresh = true, waitForResults = true, with
 	log.info('testing.runAll starting (waitForResults=' + waitForResults + ')')
 	const r = await commands.executeCommand(testCommand)
 		.then((r) => {
-			log.info('command ' + testCommand +' complete! (r=' + r + ')')
-			return sleep(250) })
+			log.info(tag + 'command ' + testCommand +' complete! (r=' + r + ')')
+			return sleep(250)
+		}, (e) => { throw e	})
 		.then(() => {
 			log.info(tag + 'testing.runAll completed - start getResults()')
 			if (!waitForResults) { return [] }
@@ -591,6 +590,19 @@ export async function runAllTests (doRefresh = true, waitForResults = true, with
 
 export function runAllTestsWithCoverage () {
 	return runAllTests(true, true, true)
+}
+
+export function runTestsInFile (filename: string) {
+	const testpath = toUri(filename)
+	log.info('runnings tests in file ' + testpath.fsPath)
+	return refreshTests()
+		.then(() => { return commands.executeCommand('vscode.open', testpath) })
+		.then(() => { return commands.executeCommand('testing.runCurrentFile') })
+		.then(() => { return getResults() })
+		.then(() => {
+			log.info('testing.runCurrentFile complete!')
+			return
+		}, (e) => { throw e })
 }
 
 export function runTestAtLine (filename: string, line: number) {
@@ -719,59 +731,61 @@ export function setConfig (key: string, value?: unknown) {
 	return conf.update(section2, value)
 }
 
-export function updateConfig (key: string, value: string | string[] | undefined | null): Thenable<void> {
-	isExtensionActive('kherring.ablunit-test-runner')
-	const updateConfigDuration = new Duration('updateConfig')
+function getConfigDefaultValue (key: string) {
 	const keys = key.split('.')
-	// const section1 = keys.shift()
-	// const section2 = keys.join('.')
-	const section2 = keys.pop()
-	if (!section2) {
-		throw new Error('key is not formatted correctly, missing \'.\': ' + key)
+	const basekey = keys.shift()
+	const childkey = keys.join('.')
+	log.debug('key=' + key + ', basekey=' + basekey + ', childkey=' + childkey)
+	const workspaceConfig = workspace.getConfiguration(basekey, getWorkspaceUri())
+	const t = workspaceConfig.inspect(childkey)
+	log.debug('inspect=' + JSON.stringify(t))
+	if (t?.defaultValue) {
+		return t.defaultValue
 	}
-	const section1 = keys.join('.')
-
-	if (value === undefined) {
-		// Why isn't undefined OK here?
-		// value = null
-		value = []
-	}
-	log.info('update configuration "' + key + '"=' + JSON.stringify(value))
-
-	// const confNull = workspace.getConfiguration(section1, null)
-	// log.info('confNull=' + JSON.stringify(confNull, null, 4))
-	// const confUndefined = workspace.getConfiguration(section1, undefined)
-	// log.info('confUndefined=' + JSON.stringify(confUndefined, null, 4))
-	const conf = workspace.getConfiguration(section1, getWorkspaceFolders()[0])
-	const current = conf.get(section2)
-	log.info('current ' + key + '=' + JSON.stringify(current))
-	log.info(' newval ' + key + '=' + JSON.stringify(value))
-	if (JSON.stringify(current) === JSON.stringify(value)) {
-		log.info(key + ' is already set to ' + JSON.stringify(value))
-		return Promise.resolve()
-	}
-
-	log.info('await conf.update')
-	return conf.update(section2, value, false).then(() => {
-		log.info('await conf.update successful')
-		const confUpdated = workspace.getConfiguration(section1, getWorkspaceFolders()[0])
-		log.info('new ' + key + '=' + JSON.stringify(confUpdated.get(section2)))
-		log.info('conf.update complete! ' + updateConfigDuration)
-		return
-	}, (e: unknown) => {
-		if (e instanceof Error) { throw e }
-		throw new Error('update config ' + key + ' failed! e=' + e)
-	})
+	return undefined
 }
 
-export async function updateTestProfile (key: string, value: string | string[] | boolean | object | undefined) {
-	const testProfileUri = Uri.joinPath(getWorkspaceUri(), '.vscode', 'ablunit-test-profile.json')
+export function updateConfig (key: string, value: unknown, configurationTarget?: boolean | vscode.ConfigurationTarget | null | undefined) {
+	const sectionArr = key.split('.')
+	const section1 = sectionArr.shift()
+	const section2 = sectionArr.join('.')
+
+	const workspaceConfig = workspace.getConfiguration(section1, getWorkspaceUri())
+
+	const currentValue = workspaceConfig.get(section2)
+	log.info('current=' + JSON.stringify(currentValue))
+	log.info('  value=' + JSON.stringify(value))
+	if (JSON.stringify(value) === JSON.stringify(currentValue)) {
+		// log.debug(section1 + '.' + section2 + ' is already set to \'' + value + '\'')
+		log.warn(key + ' is already set to \'' + value + '\'')
+		return Promise.resolve(true)
+	}
+
+	if (!value) {
+		const defaultValue = getConfigDefaultValue(key)
+		log.info('default=' + JSON.stringify(defaultValue))
+		if (JSON.stringify(defaultValue) === JSON.stringify(currentValue)) {
+			log.warn(key + ' is already set to default value \'' + value + '\'')
+			return Promise.resolve(true)
+		}
+	}
+	log.info('updating configuration section1=' + section2 + ', section2=' + section2 + ', key=' + key + ' value=' + JSON.stringify(value))
+	return workspaceConfig.update(section2, value, configurationTarget)
+		.then(() => true, (e) => { throw e })
+}
+
+export async function updateTestProfile (key: string, value: string | string[] | boolean | object | undefined, workspaceUri?: Uri) {
+	if (!workspaceUri) {
+		workspaceUri = getWorkspaceUri()
+	}
+	const testProfileUri = Uri.joinPath(workspaceUri, '.vscode', 'ablunit-test-profile.json')
+	let profile: IConfigurations
 	if (!doesFileExist(testProfileUri)) {
 		log.info('creating ablunit-test-profile.json')
-		const newProfile = { configurations: [ new DefaultRunProfile ] } as IConfigurations
-		await workspace.fs.writeFile(testProfileUri, Buffer.from(JSON.stringify(newProfile)))
+		profile = { configurations: [ new DefaultRunProfile ] } as IConfigurations
+	} else {
+		profile = (readStrippedJsonFile(testProfileUri)) as IConfigurations
 	}
-	const profile = readStrippedJsonFile(testProfileUri)
 	const keys = key.split('.')
 
 	if (keys.length === 3) {
@@ -794,7 +808,8 @@ export async function updateTestProfile (key: string, value: string | string[] |
 		newtext = newtext.replace(/\n/g, '\r\n')
 	}
 	const newjson = Buffer.from(newtext)
-	return workspace.fs.writeFile(Uri.joinPath(getWorkspaceUri(), '.vscode', 'ablunit-test-profile.json'), newjson)
+	await workspace.fs.writeFile(testProfileUri, newjson)
+	return
 }
 
 export function selectProfile (profile: string) {
@@ -1015,15 +1030,15 @@ class AssertTestResults {
 
 		switch (status) {
 			// case 'passed': actualCount = res.passed; break
-			case 'passed': assertParent.equal(res.passed, expectedCount, 'test count passed != ' + expectedCount); break
+			case 'passed': assertParent.equal(res.passed, expectedCount, 'test count passed (' + res.passed + ') != ' + expectedCount); break
 			// case 'failed': actualCount = res.failures; break
-			case 'failed': assertParent.equal(res.failures, expectedCount, 'test count failed != ' + expectedCount); break
+			case 'failed': assertParent.equal(res.failures, expectedCount, 'test count failed (' + res.failures + ') != ' + expectedCount); break
 			// case 'errored': actualCount = res.errors; break
-			case 'errored': assertParent.equal(expectedCount, res.errors, 'test count errored != ' + expectedCount); break
+			case 'errored': assertParent.equal(res.errors, expectedCount, 'test count errored (' + res.errors + ') != ' + expectedCount); break
 			// case 'skipped': actualCount = res.skipped; break
-			case 'skipped': assertParent.equal(expectedCount, res.skipped, 'test count skipped != ' + expectedCount); break
+			case 'skipped': assertParent.equal(res.skipped, expectedCount, 'test count skipped (' + res.skipped + ') != ' + expectedCount); break
 			// case 'all': actualCount = res.tests; break
-			case 'all': assertParent.equal(res.tests, expectedCount, 'test count != ' + expectedCount); break
+			case 'all': assertParent.equal(res.tests, expectedCount, 'test count (' + res.tests + ') != ' + expectedCount); break
 			default: throw new Error('unknown status: ' + status)
 		}
 	}

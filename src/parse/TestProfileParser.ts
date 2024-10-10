@@ -73,7 +73,7 @@ export function parseRunProfiles (workspaceFolders: WorkspaceFolder[], wsFilenam
 	if (workspaceFolders.length === 0) {
 		throw new Error('Workspace has no open folders')
 	}
-	const defaultConfig = getDefaultConfig()
+	const defaultConfig = (JSON.parse(JSON.stringify(getDefaultConfig())) as unknown) as IConfigurations
 
 	const runProfiles: IRunProfile[] = []
 	for (const workspaceFolder of workspaceFolders) {
@@ -122,6 +122,10 @@ export function parseRunProfiles (workspaceFolders: WorkspaceFolder[], wsFilenam
 
 			const wsFolder = profile.workspaceFolder?.uri.fsPath ?? '.'
 			profile.tempDir = profile.tempDir.replace('${workspaceFolder}', wsFolder)
+			if (profile.options?.output?.location) {
+				profile.options.output.location = profile.options.output.location.replace('${workspaceFolder}', wsFolder)
+				profile.options.output.location = profile.options.output.location.replace('${tempDir}', profile.tempDir)
+			}
 		})
 	}
 

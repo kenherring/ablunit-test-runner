@@ -39,7 +39,6 @@ export class CoreOptions implements ICoreOptions {
 	}
 	quitOnEnd = true
 	writeLog = false
-	updateFile? = 'updates.log'
 	showErrorMessage = true
 	throwError = true
 	xref?: IXrefOptions

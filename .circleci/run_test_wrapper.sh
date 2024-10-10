@@ -160,11 +160,9 @@ run_tests () {
 		RUN_SCRIPT='test'
 	fi
 	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] starting 'npm $RUN_SCRIPT'"
-	if ! xvfb-run -a npm run "$RUN_SCRIPT"; then
-		EXIT_CODE=$?
-		echo "EXIT_CODE=$EXIT_CODE"
-	fi
-	log_timing "xvfb-run end (EXIT_CODE=$EXIT_CODE)"
+	# time xvfb-run -a npm run "$RUN_SCRIPT" || EXIT_CODE=$?
+	xvfb-run -a npm run "$RUN_SCRIPT" || EXIT_CODE=$?
+	echo "xvfb-run end (EXIT_CODE=$EXIT_CODE)"
 
 	if ! scripts/sonar_test_results_merge.sh; then
 		echo "ERROR: failed to merge test results"
