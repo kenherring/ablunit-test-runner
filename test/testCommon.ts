@@ -764,7 +764,6 @@ export async function updateTestProfile (key: string, value: string | string[] |
 		workspaceUri = getWorkspaceUri()
 	}
 	const testProfileUri = Uri.joinPath(workspaceUri, '.vscode', 'ablunit-test-profile.json')
-	log.info('testProfileUri=' + testProfileUri.fsPath)
 	let profile: IConfigurations
 	if (!doesFileExist(testProfileUri)) {
 		log.info('creating ablunit-test-profile.json')
@@ -772,7 +771,6 @@ export async function updateTestProfile (key: string, value: string | string[] |
 	} else {
 		profile = (readStrippedJsonFile(testProfileUri)) as IConfigurations
 	}
-	log.info('profile=' + JSON.stringify(profile))
 	const keys = key.split('.')
 
 	if (keys.length === 3) {
@@ -795,11 +793,7 @@ export async function updateTestProfile (key: string, value: string | string[] |
 		newtext = newtext.replace(/\n/g, '\r\n')
 	}
 	const newjson = Buffer.from(newtext)
-	log.info('newjson=' + newjson)
 	await workspace.fs.writeFile(testProfileUri, newjson)
-	log.info('profile.configurations=' + JSON.stringify(profile.configurations))
-	log.info('profile.configurations[0]=' + JSON.stringify(profile.configurations[0]))
-	log.info('profile.configurations[0].tempDir=' + JSON.stringify(profile.configurations[0].tempDir))
 	return
 }
 

@@ -24,17 +24,13 @@ suite('workspace1 - Extension Test Suite', () => {
 				})
 		}
 
-		log.info('copy ' + Uri.joinPath(getWorkspaceUri(1), '.vscode', 'ablunit-test-profile.json') + ' tp ' + Uri.joinPath(getWorkspaceUri(1), '.vscode', 'ablunit-test-profile.json.bk'))
 		await workspace.fs.copy(Uri.joinPath(getWorkspaceUri(1), '.vscode', 'ablunit-test-profile.json'), Uri.joinPath(getWorkspaceUri(1), '.vscode', 'ablunit-test-profile.json.bk'), { overwrite: true })
-		log.info('copy complete')
 	})
 
 	teardown('workspace1 - afterEach', async () => {
 		log.info('after')
 		await workspace.fs.delete(Uri.joinPath(getWorkspaceUri(0), '.vscode', 'ablunit-test-profile.json')).then(() => { return }, (e) => { return })
 		await workspace.fs.copy(Uri.joinPath(getWorkspaceUri(1), '.vscode', 'ablunit-test-profile.json.bk'), Uri.joinPath(getWorkspaceUri(1), '.vscode', 'ablunit-test-profile.json'), { overwrite: true })
-		log.info('getWorkspaceUri(0)=' + getWorkspaceUri(0))
-		log.info('getWorkspaceUri(1)=' + getWorkspaceUri(1))
 	})
 
 	test('workspace1.1 - <workspaceFolder>/ablunit.json file exists', async () => {
@@ -55,15 +51,10 @@ suite('workspace1 - Extension Test Suite', () => {
 		let resultsXml = Uri.joinPath(workspaceFolderUri[0], 'results.xml')
 		let resultsJson = Uri.joinPath(workspaceFolderUri[0], 'results.json')
 		let listingsDir = Uri.joinPath(workspaceFolderUri[0], 'listings')
-		log.info('100')
 		assert.fileExists(ablunitJson)
-		log.info('101')
 		assert.fileExists(resultsXml)
-		log.info('102')
 		assert.notFileExists(resultsJson)
-		log.info('103')
 		assert.notDirExists(listingsDir)
-		log.info('104')
 
 		log.info('___ validate proj3 ___ [' + workspaceFolderUri[1].fsPath + ']')
 		ablunitJson = Uri.joinPath(workspaceFolderUri[1], 'ablunit.json')
