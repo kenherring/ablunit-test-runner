@@ -57,7 +57,7 @@ suite('proj0  - Extension Test Suite', () => {
 	})
 
 	// is it possible to validate the line coverage displayed and not just the reported coverage?  does it matter?
-	test.skip('proj0.03 - open file, run test, validate coverage displays', async () => {
+	test('proj0.03 - open file, run test, validate coverage displays', async () => {
 		const testFileUri = Uri.joinPath(workspace.workspaceFolders![0].uri, 'src', 'dirA', 'dir1', 'testInDir.p')
 		await window.showTextDocument(testFileUri)
 		await runAllTestsWithCoverage()

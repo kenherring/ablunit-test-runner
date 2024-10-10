@@ -7,7 +7,7 @@ export interface IProfilerOptions {
 	listings?: string | boolean
 	statistics?: boolean
 	traceFilter?: string
-	tracing?: string
+	tracing?: boolean
 	writeJson?: boolean
 }
 
@@ -16,10 +16,10 @@ export class ProfilerOptions implements IProfilerOptions {
 	public coverage = true
 	public description = 'Run via VSCode - ABLUnit Test Runner Extension'
 	public filename = 'prof.out'
-	public listings: string | boolean = ''
+	public listings: string | boolean = false
 	public statistics = false
 	public traceFilter = ''
-	public tracing = ''
+	public tracing = false
 	public writeJson = false
 
 	merge (from?: IProfilerOptions) {

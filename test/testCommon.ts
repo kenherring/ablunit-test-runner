@@ -377,7 +377,7 @@ export function getWorkspaceFolders () {
 	return workspaceFolders
 }
 
-export function getWorkspaceUri () {
+export function getWorkspaceUri (idx = 0) {
 	// log.info('vscode.workspace.workspaceFolders.length=' + vscode.workspace.workspaceFolders?.length)
 	// log.info('vscode.workspace.workspaceFolders=' + JSON.stringify(vscode.workspace.workspaceFolders))
 	// log.info('vscode.workspace.workspaceFile=' + vscode.workspace.workspaceFile)
@@ -404,13 +404,11 @@ export function getWorkspaceUri () {
 		// throw new Error('workspace.workspaceFolders is undefined or has no entries')
 	}
 
-	if (vscode.workspace.workspaceFolders.length === 1) {
-		return vscode.workspace.workspaceFolders[0].uri
+	if (vscode.workspace.workspaceFolders.length > idx) {
+		return vscode.workspace.workspaceFolders[idx].uri
 	}
 
-	log.warn('workspace.workspaceFolders has more than one entry')
-	return vscode.workspace.workspaceFolders[0].uri
-	// throw new Error('workspace.workspaceFolders has more than one entry')
+	throw new Error('workspace.workspaceFolders.length=' + vscode.workspace.workspaceFolders.length + ' for which idx=' + idx + ' is not valid')
 }
 
 export const workspaceUri = () => getWorkspaceUri()
@@ -551,7 +549,7 @@ export async function runAllTests (doRefresh = true, waitForResults = true, with
 	log.info('testing.runAll starting (waitForResults=' + waitForResults + ')')
 	const r = await commands.executeCommand(testCommand)
 		.then((r) => {
-			log.info('command ' + testCommand +' complete! (r=' + r + ')')
+			log.info(tag + 'command ' + testCommand +' complete! (r=' + r + ')')
 			return sleep(250)
 		}, (e) => { throw e	})
 		.then(() => {
@@ -761,14 +759,18 @@ export function updateConfig (key: string, value: unknown, configurationTarget?:
 		.then(() => true, (e) => { throw e })
 }
 
-export async function updateTestProfile (key: string, value: string | string[] | boolean | object) {
-	const testProfileUri = Uri.joinPath(getWorkspaceUri(), '.vscode', 'ablunit-test-profile.json')
+export async function updateTestProfile (key: string, value: string | string[] | boolean | object | undefined, workspaceUri?: Uri) {
+	if (!workspaceUri) {
+		workspaceUri = getWorkspaceUri()
+	}
+	const testProfileUri = Uri.joinPath(workspaceUri, '.vscode', 'ablunit-test-profile.json')
+	let profile: IConfigurations
 	if (!doesFileExist(testProfileUri)) {
 		log.info('creating ablunit-test-profile.json')
-		const newProfile = { configurations: [ new DefaultRunProfile ] } as IConfigurations
-		await workspace.fs.writeFile(testProfileUri, Buffer.from(JSON.stringify(newProfile)))
+		profile = { configurations: [ new DefaultRunProfile ] } as IConfigurations
+	} else {
+		profile = (readStrippedJsonFile(testProfileUri)) as IConfigurations
 	}
-	const profile = readStrippedJsonFile(testProfileUri)
 	const keys = key.split('.')
 
 	if (keys.length === 3) {
@@ -791,7 +793,8 @@ export async function updateTestProfile (key: string, value: string | string[] |
 		newtext = newtext.replace(/\n/g, '\r\n')
 	}
 	const newjson = Buffer.from(newtext)
-	return workspace.fs.writeFile(Uri.joinPath(getWorkspaceUri(), '.vscode', 'ablunit-test-profile.json'), newjson)
+	await workspace.fs.writeFile(testProfileUri, newjson)
+	return
 }
 
 export function selectProfile (profile: string) {
