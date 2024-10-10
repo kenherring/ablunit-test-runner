@@ -15,7 +15,7 @@ import process from 'process'
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const vsVersionNum = '1.88.0'
 const vsVersion = process.env['ABLUNIT_TEST_RUNNER_VSCODE_VERSION'] ?? 'stable'
-const useOEAblPrerelease = false
+const useOEAblPrerelease = process.env['PRERELEASE_FLAG'] ?? false;''
 const enableExtensions = [
 	'AtStart',
 	'DebugLines',
@@ -30,19 +30,21 @@ const enableExtensions = [
 ]
 
 function initialize () {
-	if (vsVersion !== 'insiders' && vsVersion !== 'stable' && !vsVersion.startsWith('1.')) {
+	if (vsVersion !== 'insiders' && vsVersion !== 'stable') {
 		throw new Error('Invalid version: ' + vsVersion)
 	}
 }
 
 function writeConfigToFile (name, config) {
-	fs.writeFileSync('.vscode-test.' + name + '.bk.json', JSON.stringify(config, null, 4).replace('    ', '\t'))
+	fs.writeFileSync('artifacts/.vscode-test.' + name + '.json', JSON.stringify(config, null, 4).replace('    ', '\t'))
 }
 
 let isFirst = true
 function getMochaTimeout (projName) {
-	// if (enableExtensions.includes(projName)) {
-	if(isFirst) {
+	if (projName === 'examples') {
+		return 1000
+	}
+	if (isFirst) {
 		isFirst = false
 		return 120000
 	}
@@ -61,7 +63,10 @@ function getMochaTimeout (projName) {
 	return 30000
 }
 
-
+/**
+* Additional options to pass to the Mocha runner.
+* @see https://mochajs.org/api/mocha
+*/
 function getMochaOpts (projName) {
 	const reporterDir = path.resolve(__dirname, '..', 'artifacts')
 	fs.mkdirSync(path.resolve(reporterDir, 'mocha_results_json'), {recursive: true})
@@ -97,6 +102,7 @@ function getMochaOpts (projName) {
 		}
 	}
 
+	// eslint-disable-next-line no-console, no-undef
 	if (process.env['CIRCLECI']) {
 		mochaOpts.bail = false
 	}
@@ -159,9 +165,10 @@ function getLaunchArgs (projName) {
 	}
 	// args.push('--log', 'debug') // '<level>'
 	// args.push('--log', 'trace') // '<level>'
-	// args.push('--log', 'kherring.ablunit-test-runner:debug') // <extension-id>:<level>
-	// args.push('--log', 'kherring.ablunit-test-runner:trace') // <extension-id>:<level>
-	// args.push('--status')
+	// args.push('--log', 'kherring\.ablunit-test-runner:debug') // <extension-id>:<level>
+	// args.push('--log', 'kherring\.ablunit-test-runner:trace') // <extension-id>:<level>
+	// args.push('--logsPath', './artifacts/vscode_logs/') // undocumented
+	// args.push('--status')p
 	// args.push('--prof-startup')
 	// args.push('--disable-extension <ext-id>')
 	if (!enableExtensions.includes(projName)) {
@@ -181,15 +188,16 @@ function getLaunchArgs (projName) {
 	// args.push('--inspect-brk-extensions', '<port>')
 	// args.push('--logExtensionHostCommunication')
 
-	// --- disbale functionality not needed for testing - https://github.com/microsoft/vscode/issues/174744 --- //
+	// --- disable functionality not needed for testing - https://github.com/microsoft/vscode/issues/174744 --- //
 	// args.push('--disable-chromium-sandbox')
-	// args.push('--no-sandbox', '--sandbox=false')
+	// args.push('--no-sandbox', '--sandbox=false')  ## super user only
 	args.push('--disable-crash-reporter')
 	args.push('--disable-gpu-sandbox')
 	args.push('--disable-gpu')
 	args.push('--disable-telemetry')
 	args.push('--disable-updates')
 	args.push('--disable-workspace-trust')
+	// Warning: 'xshm' is not in the list of known options, but still passed to Electron/Chromium.
 	args.push('--disable-dev-shm-usage', '--no-xshm')
 	return args
 }
@@ -234,8 +242,17 @@ function getTestConfig (testDir, projName) {
 		VSCODE_SKIP_PRELAUNCH: true,
 	}
 
-	/** @type {import('@vscode/test-cli').IDesktopTestConfiguration} */
-	const testConfig = {
+	let installExtensions
+	if (enableExtensions.includes(projName)) {
+		installExtensions = ['riversidesoftware.openedge-abl-lsp']
+	}
+
+	process.env['ABLUNIT_TEST_RUNNER_ENABLE_EXTENSIONS'] = enableExtensions.includes('' + projName)
+	process.env['ABLUNIT_TEST_RUNNER_UNIT_TESTING'] = 'true'
+	process.env['DONT_PROMPT_WSL_INSTALL'] = 'true'
+	process.env['VSCODE_SKIP_PRELAUNCH'] = 'true'
+
+	return {
 		//  -- IDesktopPlatform -- //
 		// platform: 'desktop',
 		// desktopPlatform: 'win32',
@@ -243,9 +260,10 @@ function getTestConfig (testDir, projName) {
 		env,
 		useInstallation,
 		// useInstallation: { fromMachine: true },
+		// installExtension: 'riversidesoftware.openedge-abl-lsp',
+		installExtensions,
 		// download: { reporter: ProgressReporter, timeout: ? }
-		installExtensions: [ 'riversidesoftware.openedge-abl-lsp' ],
-		// installExtensions: [ 'riversidesoftware.openedge-abl-lsp@prerelease' ],
+		// skipExtensionDependencies: true,
 
 		// --- IBaseTestConfiguration --- //
 		files: absolulteFile,
@@ -257,13 +275,13 @@ function getTestConfig (testDir, projName) {
 		label: 'suite_' + projName,
 		srcDir: './',
 	}
-	return testConfig
 }
 
 function getTests () {
 	const tests = []
 	const envProjectName = process.env['ABLUNIT_TEST_RUNNER_PROJECT_NAME'] ?? undefined
 
+	// --- run only the specified projects --- //
 	if (envProjectName && envProjectName != '') {
 		const projects = envProjectName.split(',')
 		for (const p of projects) {
@@ -272,6 +290,7 @@ function getTests () {
 		return tests
 	}
 
+	// --- run all projects --- //
 	const g = glob.globSync('test/suites/*.test.ts').reverse()
 	for (const f of g) {
 		const basename = path.basename(f, '.test.ts')

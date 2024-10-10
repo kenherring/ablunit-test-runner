@@ -1,15 +1,29 @@
 #!/bin/bash
 set -eou pipefail
 
+
+log_timing () {
+	echo "[$(date +%Y-%m-%dT%H:%M:%S%z) $0] $1" >> /tmp/timing.log
+}
+
+log_timing_print () {
+	echo "---------- TIMING INFO ----------"
+	cat /tmp/timing.log
+	echo "---------- ----------- ----------"
+}
+
 initialize () {
+	echo "[$0 ${FUNCNAME[0]}] pwd=$(pwd)"
+	log_timing "start"
+
 	local OPT OPTARG OPTIND
-	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] pwd=$(pwd)"
 	VERBOSE=${VERBOSE:-false}
 	ABLUNIT_TEST_RUNNER_DBUS_NUM=${ABLUNIT_TEST_RUNNER_DBUS_NUM:-3}
 	ABLUNIT_TEST_RUNNER_OE_VERSION=${ABLUNIT_TEST_RUNNER_OE_VERSION:-}
 	ABLUNIT_TEST_RUNNER_VSCODE_VERSION=${ABLUNIT_TEST_RUNNER_VSCODE_VERSION:-stable}
 	ABLUNIT_TEST_RUNNER_PROJECT_NAME=${ABLUNIT_TEST_RUNNER_PROJECT_NAME:-}
 	ABLUNIT_TEST_RUNNER_NO_COVERAGE=${ABLUNIT_TEST_RUNNER_NO_COVERAGE:-false}
+	ABLUNIT_TEST_RUNNER_RUN_TESTS_SCRIPT=true
 	ABLUNIT_TEST_RUNNER_RUN_SCRIPT_FLAG=true
 	if $VERBOSE; then
 		echo "ABLUNIT_TEST_RUNNER_DBUS_NUM=$ABLUNIT_TEST_RUNNER_DBUS_NUM"
@@ -17,18 +31,27 @@ initialize () {
 		echo "ABLUNIT_TEST_RUNNER_VSCODE_VERSION=$ABLUNIT_TEST_RUNNER_VSCODE_VERSION"
 		echo "ABLUNIT_TEST_RUNNER_PROJECT_NAME=$ABLUNIT_TEST_RUNNER_PROJECT_NAME"
 		echo "ABLUNIT_TEST_RUNNER_NO_COVERAGE=$ABLUNIT_TEST_RUNNER_NO_COVERAGE"
+		echo "ABLUNIT_TEST_RUNNER_RUN_TESTS_SCRIPT=$ABLUNIT_TEST_RUNNER_RUN_TESTS_SCRIPT"
 		echo "ABLUNIT_TEST_RUNNER_RUN_SCRIPT_FLAG=$ABLUNIT_TEST_RUNNER_RUN_SCRIPT_FLAG"
 	fi
 	BASH_AFTER=false
 	BASH_AFTER_ERROR=false
 	CACHE_BASE=/home/circleci/cache
 	CIRCLECI=${CIRCLECI:-false}
-	npm_config_cache=$CACHE_BASE/node_modules_cache
 	PROJECT_DIR=/home/circleci/project
 	REPO_VOLUME=/home/circleci/ablunit-test-runner
 	GIT_BRANCH=$(cd "$REPO_VOLUME" && git branch --show-current)
 	STAGED_ONLY=${STAGED_ONLY:-true}
 	${CREATE_PACKAGE:-false} && TEST_PROJECT=package
+	mkdir -p /home/circleci/cache/.npm
+	npm config set cache /home/circleci/cache/.npm --global
+
+	export ABLUNIT_TEST_RUNNER_DBUS_NUM \
+		ABLUNIT_TEST_RUNNER_OE_VERSION \
+		ABLUNIT_TEST_RUNNER_VSCODE_VERSION \
+		ABLUNIT_TEST_RUNNER_PROJECT_NAME \
+		ABLUNIT_TEST_RUNNER_NO_COVERAGE \
+		ABLUNIT_TEST_RUNNER_RUN_TESTS_SCRIPT
 
 	export ABLUNIT_TEST_RUNNER_DBUS_NUM \
 		ABLUNIT_TEST_RUNNER_OE_VERSION \
@@ -38,8 +61,7 @@ initialize () {
 		ABLUNIT_TEST_RUNNER_RUN_SCRIPT_FLAG
 
 	git config --global init.defaultBranch main
-	mkdir -p "$npm_config_cache" "$PROJECT_DIR"
-	export npm_config_cache
+	mkdir -p "$PROJECT_DIR"
 
 	while getopts 'bBx' OPT; do
 		case "$OPT" in
@@ -61,6 +83,7 @@ initialize () {
 	tr ' ' '\n' <<< "$PROGRESS_CFG_BASE64" | base64 --decode > /psc/dlc/progress.cfg
 
 	echo 'copying files from local'
+	log_timing "init repo/restore cache"
 	initialize_repo
 	# restore_cache
 
@@ -126,7 +149,7 @@ copy_files () {
 	local TYPE="$1"
 	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] TYPE=$TYPE"
 	while read -r FILE; do
-		echo "copying $TYPE file $FILE"
+		$VERBOSE && echo "copying $TYPE file $FILE"
 		if [ ! -d "$(dirname "$FILE")" ]; then
 			mkdir -p "$(dirname "$FILE")"
 		fi
@@ -155,6 +178,7 @@ run_tests () {
 
 run_tests_base () {
 	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] pwd=$(pwd)"
+	log_timing "run_tests_base"
 
 	set -eo pipefail ## matches the behavior of CircleCI
 	if ! .circleci/run_test_wrapper.sh; then
@@ -217,20 +241,14 @@ save_cache () {
 	if [ -d .vscode-test ]; then
 		echo "saving .vscode-test to cache"
 		mkdir -p "$CACHE_BASE/.vscode-test"
-		mkdir -p "$CACHE_BASE/node_modules"
 		rsync -aR ./.vscode-test "$CACHE_BASE"
-		rsync -aR ./node_modules "$CACHE_BASE"
 	fi
 
 	if [ -d ./dummy-ext/.vscode-test ]; then
 		echo "saving dummy-ext/.vscode-test to cache"
 		mkdir -p "$CACHE_BASE/dummy-ext/.vscode-test"
-		mkdir -p "$CACHE_BASE/dummy-ext/node_modules"
 		if [ -d ./dummy-ext/.vscode-test ]; then
 			rsync -aR ./dummy-ext/.vscode-test "$CACHE_BASE"
-		fi
-		if [ -d ./dummy-ext/node_modules ]; then
-			rsync -aR ./dummy-ext/node_modules "$CACHE_BASE"
 		fi
 	elif [ "$TEST_PROJECT" = "dummy-ext" ]; then
 		echo "WARNING: dummy-ext/.vscode-test not found.  cannot save cache"
@@ -260,6 +278,7 @@ restore_cache () {
 finish () {
 	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] pwd=$(pwd)"
 	save_cache
+	log_timing_print
 	$BASH_AFTER && bash
 	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0] completed successfully!"
 }

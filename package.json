@@ -86,7 +86,7 @@
 		"test": "sh -c scripts/npm_pretest.sh && vscode-test",
 		"test:coverage": "npm test -- --coverage",
 		"vscode-test": "vscode-test",
-		"test:install-and-run": "cd dummy-ext && npm run test:install-and-run",
+		"test:install-and-run": "npm run package && cd dummy-ext && npm run test:install-and-run",
 		"version": "sh -c scripts/npm_version.sh",
 		"watch": "npm run build -- --watch"
 	},
@@ -96,6 +96,7 @@
 		"xml2js": "^0.6.2"
 	},
 	"devDependencies": {
+		"@types/source-map-support": "^0.5.10",
 		"@stylistic/eslint-plugin": "^2.8.0",
 		"@swc-node/register": "^1.10.9",
 		"@types/mocha": "^10.0.8",

@@ -2,11 +2,14 @@ import { assert, log, runAllTests, suiteSetupCommon, extensions } from '../testC
 
 suite('projAtStart  - Extension Test Suite - bdd', () => {
 
-	suiteSetup('projAtStart - before', async () => {
+	suiteSetup('pronAtStart - before', async () => {
 		await suiteSetupCommon()
+		log.info('suiteSetupCommon complete')
+		return
 	})
 
 	test('projAtStart - ${workspaceFolder}/ablunit.json file exists - return promise', () => {
+		log.info('start test 1')
 		const prom = runAllTests()
 			.then(() => {
 				log.info('runAllTests().then() complete!')

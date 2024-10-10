@@ -41,23 +41,23 @@ context-and-filters: &context-and-filters
 executors:
   psc-primary:
     docker:
-      - image: kherring/ablunit-test-runner:12.8.1
+      - image: kherring/ablunit-test-runner:<< pipeline.parameters.primary-oe-version >>
         auth:
           username: $DOCKERHUB_USERNAME
           password: $DOCKERHUB_TOKEN
 
 commands:
-  restore-package-cache:
+  restore-npm-cache:
     steps:
       - restore_cache:
           keys:
-            - << pipeline.parameters.cache-version >>-package-cache-{{ checksum "package.json" }}
-            - << pipeline.parameters.cache-version >>-package-cache-
-  save-package-cache:
+            - << pipeline.parameters.cache-version >>-npm-cache-{{ checksum "package.json" }}
+            - << pipeline.parameters.cache-version >>-npm-cache
+  save-npm-cache:
     steps:
       - save_cache:
-          key: << pipeline.parameters.cache-version >>-package-cache-{{ checksum "package.json" }}
-          paths: [ /home/circleci/cache/node_modules_cache ]
+          key: << pipeline.parameters.cache-version >>-npm-cache-{{ checksum "package.json" }}
+          paths: [ /home/circleci/cache/.npm ]
   restore-test-cache:
     parameters:
       oe-version:
@@ -68,36 +68,47 @@ commands:
           condition: true
           steps:
             - run: tr ' ' '\n' \<<< "$PROGRESS_CFG_BASE64" | base64 --decode > /psc/dlc/progress.cfg
+            - attach_workspace: { at: . }
+            - restore-npm-cache
             # - restore_cache:
             #     keys:
             #       - << pipeline.parameters.cache-version >>-test-cache-<< parameters.oe-version >>-{{ checksum "package.json" }}
-  save-test-cache:
-    parameters:
-      oe-version:
-        type: string
-        default: none
-    steps:
-      - save_cache:
-          key: << pipeline.parameters.cache-version >>-test-cache-<< parameters.oe-version >>-{{ checksum "package.json" }}
-          paths: [ cache ]
+  # save-test-cache:
+  #   parameters:
+  #     oe-version:
+  #       type: string
+  #       default: none
+  #   steps:
+  #     - save_cache:
+  #         key: << pipeline.parameters.cache-version >>-test-cache-<< parameters.oe-version >>-{{ checksum "package.json" }}
+  #         paths: [ /home/circleci/cache/.vscode-test ]
 
 jobs:
   package:
     docker:
       - image: cimg/node:20.8
     environment:
-      npm_config_cache: /home/circleci/cache/node_modules_cache
       EXPECTED_VSIX_COUNT: << pipeline.parameters.expected-vsix-count >>
     steps:
       - checkout
-      - restore-package-cache
+      - restore-npm-cache
       - run: .circleci/package.sh
-      - run: rm -r node_modules
       - persist_to_workspace: { root: ., paths: [ . ] }
-      - save-package-cache
+      - save-npm-cache
       - run: '[ "$(find . -type f -name "*.vsix" | tee /dev/tty | wc -l)" = "1" ] && echo "pass" || (echo "error - count does not match (expected=$EXPECTED_VSIX_COUNT)" && exit 1)'
   test:
-    <<: *oe-version-param
+    parameters:
+      oe-version:
+        type: string
+        enum: [ '12.2.12', '12.7.0', '12.8.1' ]
+        default: '12.2.12'
+      vscode-version:
+        type: string
+        default: stable
+        enum: [ stable, proposedapi, insiders ]
+      no-coverage:
+        type: boolean
+        default: false
     docker:
       - image: kherring/ablunit-test-runner:<< parameters.oe-version >>
         auth:
@@ -106,37 +117,42 @@ jobs:
     environment:
       ABLUNIT_TEST_RUNNER_OE_VERSION: << parameters.oe-version >>
       ABLUNIT_TEST_RUNNER_VSCODE_VERSION: << parameters.vscode-version >>
+      ABLUNIT_TEST_RUNNER_NO_COVERAGE: << parameters.no-coverage >>
       EXPECTED_VSIX_COUNT: << pipeline.parameters.expected-vsix-count >>
     steps:
-      - attach_workspace: { at: . }
       - restore-test-cache: { oe-version: << parameters.oe-version >> }
       - run: .circleci/run_test_wrapper.sh
-      - persist_to_workspace: { root: ., paths: [ artifacts, coverage ]}
       - store_test_results: { path: artifacts/mocha_results_xunit }
       - store_artifacts: { path: artifacts }
+      - persist_to_workspace:
+          root: .
+          paths:
+            - artifacts
       - run:
           when: on_fail
           command: env
       # - save-test-cache: { oe-version: << parameters.oe-version >> }
   install-and-run:
-    <<: *oe-version-param
+    parameters:
+      oe-version:
+        type: string
+        enum: [ '12.2.12', '12.7.0', '12.8.1' ]
+        default: << pipeline.parameters.primary-oe-version >>
+      vscode-version:
+        type: string
+        default: stable
+        enum: [ stable, proposedapi, insiders ]
     executor: psc-primary
     environment:
       ABLUNIT_TEST_RUNNER_OE_VERSION: << parameters.oe-version >>
       ABLUNIT_TEST_RUNNER_VSCODE_VERSION: << parameters.vscode-version >>
     steps:
-      - attach_workspace: { at: . }
       - restore-test-cache: { oe-version: << parameters.oe-version >> }
       - run: .circleci/install_and_run.sh
       - store_test_results: { path: dummy-ext/artifacts }
       - store_artifacts: { path: dummy-ext/artifacts }
   sonar:
-    <<: *oe-version-param
-    docker:
-      - image: kherring/ablunit-test-runner:<< parameters.oe-version >>
-        auth:
-          username: $DOCKERHUB_USERNAME
-          password: $DOCKERHUB_TOKEN
+    executor: psc-primary
     steps:
       - attach_workspace: { at: . }
       - sonarcloud/scan:
@@ -167,22 +183,24 @@ workflows:
           matrix:
             parameters:
               vscode-version: [ stable ]
-          name: test-<< pipeline.parameters.primary-oe-version >>-<< matrix.vscode-version >>
+          name: test-<< pipeline.parameters.primary-oe-version >>
       - test:
           <<: *context-and-filters
-          requires: [ package, test-<< pipeline.parameters.primary-oe-version >>-stable ]
+          requires: [ package, test-<< pipeline.parameters.primary-oe-version >> ]
+          no-coverage: true
           matrix:
             parameters:
               oe-version: [ 12.2.12, 12.8.3, << pipeline.parameters.latest-oe-version >> ]
               vscode-version: [ stable ]
-          name: test-<< matrix.oe-version>>-<< matrix.vscode-version >>
+          name: test-<< matrix.oe-version>>
       - sonar:
           <<: *context-and-filters
-          requires: [ test-<< pipeline.parameters.primary-oe-version >>-stable ]
-          oe-version: << pipeline.parameters.primary-oe-version >>
+          requires:
+            - test-<< pipeline.parameters.primary-oe-version >>
       # - install-and-run:
       #     <<: *context-and-filters
-      #     requires: [ test-12.8.1-stable ]
+      #     requires:
+      #       - test-<< pipeline.parameters.primary-oe-version >>
       - publish:
           context:
             - Azure_PAT

@@ -1,13 +1,17 @@
 #!/bin/bash
 set -eou pipefail
 
+log_timing () {
+	echo "[$(date +%Y-%m-%dT%H:%M:%S%z) $0] $1" >> /tmp/timing.log
+}
+
 initialize () {
 	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}]"
 	VERBOSE=${VERBOSE:-false}
-	DONT_PROMPT_WSL_INSTALL=No_Prompt_please
 	ABLUNIT_TEST_RUNNER_DBUS_NUM=${ABLUNIT_TEST_RUNNER_DBUS_NUM:-3}
-	ABLUNIT_TEST_RUNNER_OE_VERSION=${ABLUNIT_TEST_RUNNER_OE_VERSION:-}
-	ABLUNIT_TEST_RUNNER_RUN_SCRIPT_FLAG=${ABLUNIT_TEST_RUNNER_RUN_SCRIPT_FLAG:-true}
+	ABLUNIT_TEST_RUNNER_OE_VERSION=${ABLUNIT_TEST_RUNNER_OE_VERSION:-12.8.1}
+	ABLUNIT_TEST_RUNNER_PROJECT_NAME=${ABLUNIT_TEST_RUNNER_PROJECT_NAME:-}
+	ABLUNIT_TEST_RUNNER_RUN_SCRIPT_FLAG=${ABLUNIT_TEST_RUNNER_SCRIPT_FLAG:-true}
 	ABLUNIT_TEST_RUNNER_NO_COVERAGE=${ABLUNIT_TEST_RUNNER_NO_COVERAGE:-false}
 	ABLUNIT_TEST_RUNNER_UNIT_TESTING=true
 	ABLUNIT_TEST_RUNNER_REPO_DIR=$(pwd)
@@ -20,6 +24,7 @@ initialize () {
 	export ABLUNIT_TEST_RUNNER_DBUS_NUM \
 		ABLUNIT_TEST_RUNNER_OE_VERSION \
 		ABLUNIT_TEST_RUNNER_VSCODE_VERSION \
+		ABLUNIT_TEST_RUNNER_PROJECT_NAME \
 		ABLUNIT_TEST_RUNNER_RUN_SCRIPT_FLAG \
 		ABLUNIT_TEST_RUNNER_UNIT_TESTING \
 		ABLUNIT_TEST_RUNNER_REPO_DIR
@@ -27,6 +32,8 @@ initialize () {
 
 	echo "ABLUNIT_TEST_RUNNER_DBUS_NUM=$ABLUNIT_TEST_RUNNER_DBUS_NUM"
 	echo "ABLUNIT_TEST_RUNNER_OE_VERSION=$ABLUNIT_TEST_RUNNER_OE_VERSION"
+	echo "ABLUNIT_TEST_RUNNER_PROJECT_NAME=$ABLUNIT_TEST_RUNNER_PROJECT_NAME"
+	echo "ABLUNIT_TEST_RUNNER_RUN_SCRIPT_FLAG=$ABLUNIT_TEST_RUNNER_RUN_SCRIPT_FLAG"
 	echo "ABLUNIT_TEST_RUNNER_VSCODE_VERSION=$ABLUNIT_TEST_RUNNER_VSCODE_VERSION"
 	echo "ABLUNIT_TEST_RUNNER_RUN_SCRIPT_FLAG=$ABLUNIT_TEST_RUNNER_RUN_SCRIPT_FLAG"
 	echo "ABLUNIT_TEST_RUNNER_UNIT_TESTING=$ABLUNIT_TEST_RUNNER_UNIT_TESTING"
@@ -52,6 +59,11 @@ restore_vscode_test () {
 	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] ABLUNIT_TEST_RUNNER_OE_VERSION=$ABLUNIT_TEST_RUNNER_OE_VERSION"
 	local FROM_DIR TO_DIR COUNT
 	FROM_DIR='/home/circleci/.vscode-test'
+	if [ ! -d "$FROM_DIR" ]; then
+		echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] $FROM_DIR not found, skipping restore"
+		return 0
+	fi
+
 	TO_DIR=./.vscode-test
 	if ! COUNT=$(find "$FROM_DIR" -type f 2>/dev/null | wc -l); then
 		COUNT=0
@@ -69,13 +81,18 @@ restore_vscode_test () {
 dbus_config () {
 	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] ABLUNIT_TEST_RUNNER_DBUS_NUM=$ABLUNIT_TEST_RUNNER_DBUS_NUM"
 	case $ABLUNIT_TEST_RUNNER_DBUS_NUM in
+		0) dbus_config_0 ;; ## do nothing
 		1) dbus_config_1 ;; ## /sbin/start-stop-daemon: signal value must be numeric or name of signal (KILL, INT, ...)
 		2) dbus_config_2 ;; ## Failed to connect to the bus: Failed to connect to socket /run/user/0/bus: No such file or directory
 		3) dbus_config_3 ;; ## no errors!
 		4) dbus_config_4 ;; ## dbus error: Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
 		5) dbus_config_5 ;; ## Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
-		*) dbus_config_3 ;; ## no errors!
+		*) dbus_config_0 ;; ## no errors!
 	esac
+}
+
+dbug_config_0 () {
+	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}]"
 }
 
 dbus_config_1 () {
@@ -135,10 +152,10 @@ dbus_config_5 () {
 }
 
 run_tests () {
-	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] ABLUNIT_TEST_RUNNER_NO_COVERAGE=$ABLUNIT_TEST_RUNNER_NO_COVERAGE"
-	EXIT_CODE=0
+	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] ABLUNIT_TEST_RUNNER_NO_COVERAGE=$ABLUNIT_TEST_RUNNER_NO_COVERAGE; PROJECT_NAME=${ABLUNIT_TEST_RUNNER_PROJECT_NAME:-}"
+	local EXIT_CODE=0
 
-	local RUN_SCRIPT=test:coverage
+	local RUN_SCRIPT='test:coverage'
 	if $ABLUNIT_TEST_RUNNER_NO_COVERAGE; then
 		RUN_SCRIPT='test'
 	fi
@@ -147,7 +164,21 @@ run_tests () {
 	xvfb-run -a npm run "$RUN_SCRIPT" || EXIT_CODE=$?
 	echo "xvfb-run end (EXIT_CODE=$EXIT_CODE)"
 
-	mv coverage/lcov.info artifacts/coverage/lcov.info || true ## https://github.com/microsoft/vscode-test-cli/issues/38
+	if ! scripts/sonar_test_results_merge.sh; then
+		echo "ERROR: failed to merge test results"
+		exit 1
+	elif [ ! -f artifacts/mocha_results_sonar/merged.xml ]; then
+		echo "ERROR: artifacts/mocha_results_sonar/merged.xml not found"
+		exit 1
+	else
+		echo "SUCCESS: scripts/sonar_test_results_merge.sh completed successfully"
+	fi
+
+	if ! $ABLUNIT_TEST_RUNNER_NO_COVERAGE && [ ! -f artifacts/coverage/lcov.info ]; then
+		mv coverage/lcov.info artifacts/coverage/lcov.info ## https://github.com/microsoft/vscode-test-cli/issues/38
+	fi
+
+	log_timing "run_tests end"
 
 	if [ "$EXIT_CODE" = "0" ]; then
 		echo "xvfb-run success"
@@ -161,6 +192,9 @@ run_tests () {
 		echo 'ERROR: artifacts/coverage/lcov.info not found'
 		exit 1
 	fi
+
+	echo "---------- TIMING ----------"
+	cat /tmp/timing.log
 }
 
 save_and_print_debug_output () {
@@ -190,5 +224,4 @@ save_and_print_debug_output () {
 initialize "$@"
 dbus_config
 run_tests
-scripts/sonar_test_results_merge.sh
-echo "$0 completed successfully!"
+echo "[$0] completed successfully!"
