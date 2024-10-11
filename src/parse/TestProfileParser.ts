@@ -212,10 +212,11 @@ export class RunConfig extends DefaultRunProfile {
 			this.progressIniUri = undefined
 		}
 
-		const extraParameters = getExtraParameters(this.workspaceFolder.uri, this.profile.openedgeProjectProfile)
-		log.info('extraParameters=' + extraParameters)
+		const extraParameters = getExtraParameters(this.workspaceFolder.uri, this.profile.openedgeProjectProfile)?.split(' ')
+		// TODO - re-join quoted strings
+		log.info('extraParameters=' + JSON.stringify(extraParameters))
 		if (extraParameters) {
-			this.command.additionalArgs.push(extraParameters)
+			this.command.additionalArgs.push(...extraParameters)
 		}
 
 		const charset = getProfileCharset(this.workspaceFolder.uri, this.profile.openedgeProjectProfile)

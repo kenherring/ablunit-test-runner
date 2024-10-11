@@ -978,6 +978,7 @@ export async function getCurrentRunData (len = 1, resLen = 0, tag?: string) {
 }
 
 export async function getResults (len = 1, tag?: string): Promise<ABLResults[]> {
+	tag = tag ?? ''
 	if ((!recentResults || recentResults.length === 0) && len > 0) {
 		log.info(tag + 'recentResults not set, refreshing...')
 		for (let i=0; i<5; i++) {

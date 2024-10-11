@@ -90,7 +90,7 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 			throw new Error('command does not contain \'${testlist}\'')
 		}
 		cmd = cmd.replace(/\$\{testlist\}/, testlist)
-		cmd = cmd.replace(/\$\{tempDir\}/, workspace.asRelativePath(res.cfg.ablunitConfig.tempDirUri, false))
+		cmd = cmd.replace(/\$\{tempDir\}/, res.cfg.ablunitConfig.tempDirUri.fsPath)
 		const cmdSanitized = cmd.split(' ')
 
 		log.info('ABLUnit Command: ' + cmdSanitized.join(' '))
@@ -104,11 +104,11 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 
 		const executable = res.dlc!.uri.fsPath.replace(/\\/g, '/') + '/bin/' + res.cfg.ablunitConfig.command.executable
 
-		let cmd = [ executable, '-b', '-p', res.wrapperUri.fsPath.replace(/\\/g, '/') ]
+		const cmd = [ executable, '-b', '-p', res.wrapperUri.fsPath.replace(/\\/g, '/') ]
 
 		if (process.platform === 'win32') {
 			if (res.cfg.ablunitConfig.progressIniUri) {
-				cmd.push('-basekey', 'INI', '-ininame', workspace.asRelativePath(res.cfg.ablunitConfig.progressIniUri.fsPath, false))
+				cmd.push('-basekey', 'INI', '-ininame', res.cfg.ablunitConfig.progressIniUri.fsPath)
 			}
 		} else if (process.platform === 'linux') {
 			process.env['PROPATH'] = res.propath!.toString().replace(/\$\{DLC\}/g, res.dlc!.uri.fsPath.replace(/\\/g, '/'))
@@ -116,24 +116,24 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 			throw new Error('unsupported platform: ' + process.platform)
 		}
 
-		let tempPath = workspace.asRelativePath(res.cfg.ablunitConfig.tempDirUri, false)
+		let tempPath = res.cfg.ablunitConfig.tempDirUri.fsPath
 		if (isRelativePath(tempPath)) {
 			tempPath = './' + tempPath
 		}
 		cmd.push('-T', tempPath)
 
 		if (res.cfg.ablunitConfig.dbConnPfUri && res.cfg.ablunitConfig.dbConns && res.cfg.ablunitConfig.dbConns.length > 0) {
-			cmd.push('-pf', workspace.asRelativePath(res.cfg.ablunitConfig.dbConnPfUri.fsPath, false))
+			cmd.push('-pf', res.cfg.ablunitConfig.dbConnPfUri.fsPath)
 		}
 
 		if (res.cfg.ablunitConfig.profiler.enabled) {
-			cmd.push('-profile', workspace.asRelativePath(res.cfg.ablunitConfig.profOptsUri, false))
+			cmd.push('-profile', res.cfg.ablunitConfig.profOptsUri.fsPath)
 		}
 
 		const cmdSanitized: string[] = []
-		cmd = cmd.concat(res.cfg.ablunitConfig.command.additionalArgs)
+		cmd.push(...res.cfg.ablunitConfig.command.additionalArgs)
 
-		let params = 'CFG=' + workspace.asRelativePath(res.cfg.ablunitConfig.config_uri.fsPath, false) + '='
+		let params = 'CFG=' + res.cfg.ablunitConfig.config_uri.fsPath + '='
 		if (res.cfg.ablunitConfig.dbAliases.length > 0) {
 			params = params + ' ALIASES=' + res.cfg.ablunitConfig.dbAliases.join(';')
 		}
@@ -199,7 +199,7 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 				cwd: res.cfg.ablunitConfig.workspaceFolder.uri.fsPath,
 			}
 
-			log.info('command=\'' + cmd + ' ' + args.join(' ') + '\'\r\n', options)
+			log.info('command=\'' + cmd + ' ' + JSON.stringify(args) + '\'\r\n', options)
 			const testRunDuration = new Duration('TestRun')
 			const process = spawn(cmd, args, spawnOpts)
 
@@ -207,12 +207,12 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 
 			process.stderr?.on('data', (data: Buffer) => {
 				void processUpdates(options, res.tests, updateUri)
-				log.error('\t\t[stderr]' + data.toString().trim().replace(/\n/g, '\n\t\t[stderr]'), options)
+				log.error('\t\t[stderr] ' + data.toString().trim().replace(/\n/g, '\n\t\t[stderr]'), options)
 				lastError = data.toString().trim()
 			})
 			process.stdout?.on('data', (data: Buffer) => {
 				void processUpdates(options, res.tests, updateUri)
-				log.info('\t\t[stdout]' + data.toString().trim().replace(/\n/g, '\n\t\t[stdout]'), options)
+				log.info('\t\t[stdout] ' + data.toString().trim().replace(/\n/g, '\n\t\t[stdout]'), options)
 				lastError = undefined
 			})
 			process.once('spawn', () => {
