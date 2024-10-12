@@ -13,7 +13,7 @@ import {
 	TestRun,
 	TestRunProfileKind, TestRunRequest,
 	TestTag,
-	TextDocument, Uri, WorkspaceFolder,
+	TextDocument, TextDocumentChangeEvent, Uri, WorkspaceFolder,
 	commands,
 	extensions,
 	tests, window, workspace
@@ -64,11 +64,14 @@ export async function activate (context: ExtensionContext) {
 	context.subscriptions.push(
 		commands.registerCommand('_ablunit.openCallStackItem', openCallStackItem),
 		workspace.onDidChangeConfiguration(e => { updateConfiguration(e) }),
-		workspace.onDidOpenTextDocument(e => { log.info('workspace.onDidOpen'); return createOrUpdateFile(ctrl, e.uri, true) }),
-		// workspace.onDidChangeTextDocument(e => { log.info('workspace.onDidChange ' + e.document.fileName); return createOrUpdateFile(ctrl, e.document.uri, true) }),
+		workspace.onDidOpenTextDocument(e => { log.info('workspace.onDidOpenTextDocument'); return createOrUpdateFile(ctrl, e.uri, true) }),
+		workspace.onDidChangeTextDocument(e => didChangeTextDocument(e, ctrl)),
 		workspace.onDidCreateFiles(e => { log.info('workspace.onDidCreate ' + e.files[0].fsPath); return createOrUpdateFile(ctrl, e, true) }),
 		workspace.onDidDeleteFiles(e => { log.info('workspace.onDidDelete ' + e.files[0].fsPath); return deleteFiles(ctrl, e.files) }),
 		// ...startWatchingWorkspace(ctrl),
+
+		// TESTING
+		workspace.onDidChangeWorkspaceFolders(e => { log.info('workspace.onDidChangeWorkspaceFolders ' + e.added.length  + ' ' + e.removed.length) }),
 	)
 
 
@@ -287,9 +290,9 @@ export async function activate (context: ExtensionContext) {
 				}
 			}
 
-			void log.notification('ablunit tests complete')
+			log.notification('ablunit tests complete')
 			run.end()
-			void log.notification('ablunit tests complete')
+			log.notification('ablunit tests complete')
 			return
 		}
 
@@ -332,7 +335,7 @@ export async function activate (context: ExtensionContext) {
 			return res
 		}
 
-		void log.notification('running ablunit tests')
+		log.notification('running ablunit tests')
 		const queue: { test: TestItem; data: ABLTestData }[] = []
 		const run = ctrl.createTestRun(request)
 		currentTestRun = run
@@ -436,12 +439,13 @@ export async function activate (context: ExtensionContext) {
 	}
 
 	function updateConfiguration (event: ConfigurationChangeEvent) {
+
 		if (!event.affectsConfiguration('ablunit')) {
 			log.warn('configuration updated but does not include ablunit settings (event=' + JSON.stringify(event) + ')')
 		} else {
-			log.debug('effects ablunit.file? ' + event.affectsConfiguration('ablunit.files'))
+			log.debug('affects ablunit.file? ' + event.affectsConfiguration('ablunit.files'))
 			if (event.affectsConfiguration('ablunit.files')) {
-				removeExcludedFiles(ctrl, getExcludePatterns())
+				removeExcludedFiles(ctrl, getWorkspaceTestPatterns()[1])
 			}
 		}
 	}
@@ -474,7 +478,9 @@ let contextLogUri: Uri
 
 function updateNode (uri: Uri, ctrl: TestController) {
 	log.trace('updateNode uri=' + uri.fsPath)
-	if(uri.scheme !== 'file' || isFileExcluded(uri, getExcludePatterns())) { return new Promise(() => { return false }) }
+	if(uri.scheme !== 'file' || isFileExcluded(uri, getWorkspaceTestPatterns()[1])) {
+		return Promise.resolve(false)
+	}
 
 	const { item, data } = getOrCreateFile(ctrl, uri)
 	if(!item || !data) {
@@ -486,6 +492,15 @@ function updateNode (uri: Uri, ctrl: TestController) {
 		log.debug('updateFromContents item.id=' + item.id)
 		return data.updateFromContents(ctrl, contents, item)
 	})
+}
+
+function didChangeTextDocument (e: TextDocumentChangeEvent, ctrl: TestController) {
+	if (e.document.languageId == 'log') {
+		return Promise.resolve()
+	}
+
+	log.info('workspace.onDidChange ' + e.document.uri.fsPath + ' ' + e.reason)
+	return updateNode(e.document.uri, ctrl)
 }
 
 export function setContextPaths (storageUri: Uri, resourcesUri: Uri, logUri: Uri) {
@@ -723,52 +738,25 @@ function gatherTestItems (collection: TestItemCollection) {
 	return items
 }
 
-function getExcludePatterns () {
-	let excludePatterns: string[] = []
-
-	let excludePatternsConfig: string[] | string | undefined = workspace.getConfiguration('ablunit').get('files.exclude', '**/.builder/**,**/.pct/**')
-	if (typeof excludePatternsConfig === 'string') {
-		excludePatternsConfig = excludePatternsConfig.split(',')
-	}
-	if (excludePatternsConfig.length == 1) {
-		excludePatterns[0] = ''
-		for (const pattern of excludePatternsConfig) {
-			excludePatterns[0] = excludePatterns[0] + pattern
-		}
-	} else {
-		excludePatterns = excludePatternsConfig
-	}
-
-	let retVal: RelativePattern[] = []
-	for(const workspaceFolder of workspace.workspaceFolders!) {
-		retVal = retVal.concat(excludePatterns.map(pattern => new RelativePattern(workspaceFolder, pattern)))
-	}
-	return retVal
-}
-
 function getWorkspaceTestPatterns () {
-	let includePatternsConfig: string[] | string = workspace.getConfiguration('ablunit').get('files.include', [ '**/*.{cls,p}' ])
-	let excludePatternsConfig: string[] | string = workspace.getConfiguration('ablunit').get('files.exclude', [ '**/.{builder,pct}/**' ])
-
-	if (typeof includePatternsConfig === 'string') {
-		includePatternsConfig = [ includePatternsConfig ]
-	}
-	if (typeof excludePatternsConfig === 'string') {
-		excludePatternsConfig = [ excludePatternsConfig ]
-	}
-
 	const includePatterns: RelativePattern[] = []
 	const excludePatterns: RelativePattern[] = []
 
-	if (!workspace.workspaceFolders) {
-		let info='(workspace.name=' + workspace.name
-		if (workspace.workspaceFile) {
-			info = info + ', workspace.file=' + workspace.workspaceFile
+	for (const workspaceFolder of workspace.workspaceFolders ?? []) {
+		let includePatternsConfig: string[] | string =
+			workspace.getConfiguration('ablunit', workspaceFolder.uri).get('files.include') ??
+			workspace.getConfiguration('ablunit').get('files.include', [ '**/*.{cls,p}' ])
+		let excludePatternsConfig: string[] | string =
+			workspace.getConfiguration('ablunit', workspaceFolder.uri).get('files.exclude') ??
+			workspace.getConfiguration('ablunit').get('files.exclude', [ '**/.{builder,pct}/**' ])
+
+		if (typeof includePatternsConfig === 'string') {
+			includePatternsConfig = includePatternsConfig.split(',')
 		}
-		info = info + ')'
-		throw new Error('workspace has no folders ' + info)
-	}
-	for(const workspaceFolder of workspace.workspaceFolders) {
+		if (typeof excludePatternsConfig === 'string') {
+			excludePatternsConfig = excludePatternsConfig.split(',')
+		}
+
 		includePatterns.push(...includePatternsConfig.map(pattern => new RelativePattern(workspaceFolder, pattern)))
 		excludePatterns.push(...excludePatternsConfig.map(pattern => new RelativePattern(workspaceFolder, pattern)))
 	}
@@ -952,10 +940,10 @@ function refreshTestTree (controller: TestController, token: CancellationToken):
 		log.trace(' - ' + rejectedCount + ' files parsed had zero test case(s)')
 	}
 
-	// token.onCancellationRequested(() => {
-	// 	log.info('cancellation requested ' + elapsedTime())
-	// 	throw new CancellationError()
-	// })
+	token.onCancellationRequested(() => {
+		log.debug('cancellation requested  - refreshTestTree.onCancellationRequested' + elapsedTime())
+		throw new CancellationError()
+	})
 
 	const checkCancellationToken = () => {
 		if (!token.isCancellationRequested) { return }

@@ -1,7 +1,7 @@
 import { CancellationError, CancellationToken, Disposable, FileSystemWatcher, TestRun, Uri, workspace } from 'vscode'
 import { ABLResults } from './ABLResults'
 import { deleteFile, Duration, isRelativePath } from './ABLUnitCommon'
-import { ExecException, ExecOptions, SendHandle, Serializable, SpawnOptions, exec, spawn } from 'child_process'
+import { SendHandle, Serializable, SpawnOptions, spawn } from 'child_process'
 import { log } from './ChannelLogger'
 import { processUpdates, setTimeoutTestStatus, updateParserInit } from 'parse/UpdateParser'
 

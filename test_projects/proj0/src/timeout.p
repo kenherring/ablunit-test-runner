@@ -4,7 +4,7 @@ using OpenEdge.Core.Assert.
 
 @BeforeEach.
 procedure beforeAll :
-  message "301 beforeAll"
+  message "301 beforeAll".
 end procedure
 .
 @BeforeEach.
