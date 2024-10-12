@@ -71,12 +71,12 @@ export async function printLastLangServerError () {
 	return getContentFromFilesystem(uri)
 		.then((text) => {
 			if (text === '') {
-				throw new Error('ABL language server log file is empty (uri= ' + uri.fsPath + ' )')
+				throw new Error('ABL language server log file is empty (uri="' + uri.fsPath + '")')
 			}
 			const lines = text.split('\n')
 
 			if (lines.length == 0) {
-				throw new Error('ABL language server log file has no lines (uri= ' + uri.fsPath + ' )')
+				throw new Error('ABL language server log file has no lines (uri="' + uri.fsPath + '")')
 			}
 
 			let lastLogErrors = ''
@@ -90,7 +90,7 @@ export async function printLastLangServerError () {
 					break
 				}
 			}
-			log.info('Last logged ABL lang server error (uri= ' + uri.fsPath + '; lines.length=' + lines.length + '):\n"' + lastLogErrors + '"')
+			log.info('Last logged ABL lang server error (uri="' + uri.fsPath + '"; lines.length=' + lines.length + '):\n"' + lastLogErrors + '"')
 			return hasError
 		}, (e) => {
 			throw e
