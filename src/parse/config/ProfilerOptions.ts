@@ -7,7 +7,7 @@ export interface IProfilerOptions {
 	listings?: string | boolean
 	statistics?: boolean
 	traceFilter?: string
-	tracing?: boolean
+	tracing?: string | boolean
 	writeJson?: boolean
 }
 
@@ -19,7 +19,7 @@ export class ProfilerOptions implements IProfilerOptions {
 	public listings: string | boolean = false
 	public statistics = false
 	public traceFilter = ''
-	public tracing = false
+	public tracing: string | boolean = false
 	public writeJson = false
 
 	merge (from?: IProfilerOptions) {

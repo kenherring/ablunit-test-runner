@@ -175,7 +175,7 @@ export class RunConfig extends DefaultRunProfile {
 		super()
 		this.tempDirUri = this.getUri(this.profile.tempDir)
 		this.timeout = this.profile.timeout
-		log.debug('tempDirUri=' + this.tempDirUri.fsPath)
+		log.debug('tempDirUri= ' + this.tempDirUri.fsPath)
 		this.config_uri = Uri.joinPath(this.tempDirUri, 'ablunit.json')
 		this.profOptsUri = Uri.joinPath(this.tempDirUri, 'profile.options')
 		this.dbConnPfUri = Uri.joinPath(this.tempDirUri, 'dbconn.pf')
@@ -197,7 +197,7 @@ export class RunConfig extends DefaultRunProfile {
 		if (this.options.output.writeJson) {
 			this.optionsUri.jsonUri = Uri.joinPath(this.optionsUri.locationUri, tmpFilename.replace(/\.xml$/, '') + '.json')
 		}
-		log.debug('this.optionsUri.jsonUri=' + this.optionsUri.jsonUri?.fsPath)
+		log.debug('this.optionsUri.jsonUri= ' + this.optionsUri.jsonUri?.fsPath)
 		if (this.options.output.updateFile) {
 			this.optionsUri.updateUri = Uri.joinPath(this.optionsUri.locationUri, this.options.output.updateFile)
 		} else {

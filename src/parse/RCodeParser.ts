@@ -214,7 +214,7 @@ export const getSourceMapFromRCode = (propath: PropathParser, uri: Uri) => {
 				return src.sourceName
 			}
 		}
-		throw new Error('[getSourceName] could not find source name for num=' + num + ', uri=' + uri.fsPath)
+		throw new Error('[getSourceName] could not find source name for num=' + num + ', uri= ' + uri.fsPath)
 	}
 
 
@@ -224,7 +224,7 @@ export const getSourceMapFromRCode = (propath: PropathParser, uri: Uri) => {
 				return src.sourceUri
 			}
 		}
-		throw new Error('[getSourceUri] could not find source name for num=' + num + ', uri=' + uri.fsPath)
+		throw new Error('[getSourceUri] could not find source name for num=' + num + ', uri= ' + uri.fsPath)
 	}
 
 

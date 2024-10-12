@@ -16,7 +16,7 @@ export class ABLUnitConfig  {
 	ablunitConfig: RunConfig = {} as RunConfig
 
 	setup (workspaceFolder: WorkspaceFolder, request: TestRunRequest) {
-		log.info('[ABLUnitConfigWriter setup] workspaceUri=' + workspaceFolder.uri.fsPath)
+		log.info('[ABLUnitConfigWriter setup] workspaceUri= ' + workspaceFolder.uri.fsPath)
 		this.ablunitConfig = getProfileConfig(workspaceFolder)
 		log.info('[ABLUnitConfigWriter constructor] setup complete! tempDir=' + this.ablunitConfig.tempDirUri.fsPath)
 	}

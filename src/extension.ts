@@ -100,7 +100,7 @@ export async function activate (context: ExtensionContext) {
 	}
 
 	const loadDetailedCoverage = (testRun: TestRun, fileCoverage: FileCoverage, token: CancellationToken): Thenable<FileCoverageDetail[]> => {
-		log.info('loadDetailedCoverage uri=' + fileCoverage.uri.fsPath + ', testRun=' + testRun.name)
+		log.info('loadDetailedCoverage uri= ' + fileCoverage.uri.fsPath + ', testRun=' + testRun.name)
 		const d = resultData.get(testRun)
 		const det: FileCoverageDetail[] = []
 
@@ -477,7 +477,7 @@ let contextResourcesUri: Uri
 let contextLogUri: Uri
 
 function updateNode (uri: Uri, ctrl: TestController) {
-	log.trace('updateNode uri=' + uri.fsPath)
+	log.trace('updateNode uri= ' + uri.fsPath)
 	if(uri.scheme !== 'file' || isFileExcluded(uri, getWorkspaceTestPatterns()[1])) {
 		return Promise.resolve(false)
 	}
@@ -751,10 +751,14 @@ function getWorkspaceTestPatterns () {
 			workspace.getConfiguration('ablunit').get('files.exclude', [ '**/.{builder,pct}/**' ])
 
 		if (typeof includePatternsConfig === 'string') {
-			includePatternsConfig = includePatternsConfig.split(',')
+			includePatternsConfig = [ includePatternsConfig ]
 		}
 		if (typeof excludePatternsConfig === 'string') {
-			excludePatternsConfig = excludePatternsConfig.split(',')
+			if (excludePatternsConfig == '') {
+				excludePatternsConfig = []
+			} else {
+				excludePatternsConfig = [ excludePatternsConfig ]
+			}
 		}
 
 		includePatterns.push(...includePatternsConfig.map(pattern => new RelativePattern(workspaceFolder, pattern)))
@@ -954,10 +958,8 @@ function refreshTestTree (controller: TestController, token: CancellationToken):
 
 	const [ includePatterns, excludePatterns ] = getWorkspaceTestPatterns()
 	log.info('includePatternslength=' + includePatterns.length + ', excludePatterns.length=' + excludePatterns.length)
-	log.info('includePatterns=' + includePatterns.map(pattern => pattern.pattern).join('\n'))
-	log.debug('includePatterns=' + includePatterns.map(pattern => pattern.pattern).join('\n'))
-	log.info('excludePatterns=' + excludePatterns.map(pattern => pattern.pattern).join('\n'))
-	log.debug('excludePatterns=' + excludePatterns.map(pattern => pattern.pattern).join('\n'))
+	log.info('includePatterns=' + JSON.stringify(includePatterns))
+	log.info('excludePatterns=' + JSON.stringify(excludePatterns))
 
 	removeExcludedFiles(controller, excludePatterns, token)
 
@@ -966,7 +968,6 @@ function refreshTestTree (controller: TestController, token: CancellationToken):
 	const prom1 = removeDeletedFiles(controller)
 		.then(() => { return findMatchingFiles(includePatterns, token, checkCancellationToken) })
 		.then((r) => {
-			log.info('r.length=' + r.length)
 			for (const file of r) {
 				checkCancellationToken()
 				const { item, data } = getOrCreateFile(controller, file, excludePatterns)
