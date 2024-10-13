@@ -51,6 +51,7 @@ initialize () {
 	)
 
 	TEST_PROJECT_PATTERNS=(
+		"*.bk"
 		"*.r"
 		"*.restore"
 		"*.xref"
