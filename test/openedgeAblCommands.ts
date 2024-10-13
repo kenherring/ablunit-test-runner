@@ -57,36 +57,32 @@ export function rebuildAblProject () {
 export async function printLastLangServerError () {
 	const ablunitLogUri: Uri = await commands.executeCommand('_ablunit.getLogUri')
 	const logUri = Uri.joinPath(ablunitLogUri, '..', '..', '..', '..', '..', 'logs')
-	log.info('logUri=' + logUri)
 
 	const pattern = logUri.fsPath.replace(/\\/g, '/') + '/*/window*/exthost/output_logging_*/*-ABL Language Server.log'
 	log.info('grep for log files using pattern: ' + pattern)
 	const logFiles = glob.globSync(pattern)
 
-	log.info('logFiles=' + JSON.stringify(logFiles, null, 2))
+	log.debug('logFiles=' + JSON.stringify(logFiles, null, 2))
 	if (logFiles.length <= 0) {
 		log.warn('No log files found for ABL Language Server')
 		return false
 	}
 	const uri = Uri.file(logFiles[logFiles.length - 1])
-	log.info('uri=' + uri)
 	return getContentFromFilesystem(uri)
 		.then((text) => {
 			if (text === '') {
-				throw new Error('ABL language server log file is empty (uri=' + uri + ')')
+				throw new Error('ABL language server log file is empty (uri="' + uri.fsPath + '")')
 			}
 			const lines = text.split('\n')
-			log.info('lines.length=' + lines.length)
 
 			if (lines.length == 0) {
-				throw new Error('ABL language server log file has no lines (uri=' + uri + ')')
+				throw new Error('ABL language server log file has no lines (uri="' + uri.fsPath + '")')
 			}
 
 			let lastLogErrors = ''
 			let hasError = false
 			for (let i = lines.length - 1; i >= 0; i--) {
 				// read until we hit an error, then read until we don't see an error.
-				log.debug('lines[' + i + ']=' + lines[i])
 				if (lines[i].includes(' [ERROR] ')) {
 					hasError = true
 					lastLogErrors = String(i).padStart(8, ' ') + ': ' + lines[i] + '\n' + lastLogErrors
@@ -94,8 +90,8 @@ export async function printLastLangServerError () {
 					break
 				}
 			}
-			log.info('Last logged ABL lang server error(s):\n' + lastLogErrors)
-			return true
+			log.info('Last logged ABL lang server error (uri="' + uri.fsPath + '"; lines.length=' + lines.length + '):\n"' + lastLogErrors + '"')
+			return hasError
 		}, (e) => {
 			throw e
 		})

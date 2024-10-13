@@ -13,7 +13,7 @@ import {
 	TestRun,
 	TestRunProfileKind, TestRunRequest,
 	TestTag,
-	TextDocument, Uri, WorkspaceFolder,
+	TextDocument, TextDocumentChangeEvent, Uri, WorkspaceFolder,
 	commands,
 	extensions,
 	tests, window, workspace
@@ -23,7 +23,7 @@ import { log } from './ChannelLogger'
 import { getContentFromFilesystem } from './parse/TestParserCommon'
 import { ABLTestCase, ABLTestClass, ABLTestData, ABLTestDir, ABLTestFile, ABLTestProgram, ABLTestSuite, resultData, testData } from './testTree'
 import { minimatch } from 'minimatch'
-import { ABLUnitRuntimeError } from 'ABLUnitRun'
+import { ABLUnitRuntimeError, TimeoutError } from 'ABLUnitRun'
 import { basename } from 'path'
 
 export interface IExtensionTestReferences {
@@ -33,6 +33,7 @@ export interface IExtensionTestReferences {
 }
 
 let recentResults: ABLResults[] = []
+let recentError: Error | undefined = undefined
 
 export async function activate (context: ExtensionContext) {
 	const ctrl = tests.createTestController('ablunitTestController', 'ABLUnit Test')
@@ -58,14 +59,15 @@ export async function activate (context: ExtensionContext) {
 			commands.registerCommand('_ablunit.getTestController', () => { return ctrl }),
 			commands.registerCommand('_ablunit.getTestData', () => { return testData.getMap() }),
 			commands.registerCommand('_ablunit.getTestItem', (uri: Uri) => { return getExistingTestItem(ctrl, uri) }),
+			commands.registerCommand('_ablunit.getTestRunError', () => { return recentError })
 		)
 	}
 
 	context.subscriptions.push(
 		commands.registerCommand('_ablunit.openCallStackItem', openCallStackItem),
-		workspace.onDidChangeConfiguration(e => { updateConfiguration(e) }),
-		workspace.onDidOpenTextDocument(e => { log.info('workspace.onDidOpen'); return createOrUpdateFile(ctrl, e.uri, true) }),
-		// workspace.onDidChangeTextDocument(e => { log.info('workspace.onDidChange ' + e.document.fileName); return createOrUpdateFile(ctrl, e.document.uri, true) }),
+		workspace.onDidChangeConfiguration(e => { return updateConfiguration(e) }),
+		workspace.onDidOpenTextDocument(e => { log.info('workspace.onDidOpenTextDocument'); return createOrUpdateFile(ctrl, e.uri, true) }),
+		workspace.onDidChangeTextDocument(e => { return didChangeTextDocument(e, ctrl) }),
 		workspace.onDidCreateFiles(e => { log.info('workspace.onDidCreate ' + e.files[0].fsPath); return createOrUpdateFile(ctrl, e, true) }),
 		workspace.onDidDeleteFiles(e => { log.info('workspace.onDidDelete ' + e.files[0].fsPath); return deleteFiles(ctrl, e.files) }),
 		// ...startWatchingWorkspace(ctrl),
@@ -93,7 +95,14 @@ export async function activate (context: ExtensionContext) {
 		if (request.continuous) {
 			throw new Error('continuous test runs not implemented')
 		}
-		return startTestRun(request, token).catch((e: unknown) => { throw e })
+		recentError = undefined
+		return startTestRun(request, token)
+			.catch((e: unknown) => {
+				if (e instanceof Error) {
+					recentError = e
+				}
+				throw e
+			})
 	}
 
 	const loadDetailedCoverage = (testRun: TestRun, fileCoverage: FileCoverage, token: CancellationToken): Thenable<FileCoverageDetail[]> => {
@@ -199,6 +208,8 @@ export async function activate (context: ExtensionContext) {
 						// log.error('[runTestQueue] ablunit run cancelled!', run)
 					} else if (e instanceof ABLUnitRuntimeError) {
 						log.error('ablunit runtime error!\ne=' + JSON.stringify(e))
+					} else if (e instanceof TimeoutError) {
+						log.error('ablunit run timed out!')
 					} else {
 						log.error('ablunit run failed!: ' + e, run)
 						// log.error('ablunit run failed parsing results with exception: ' + e, run)\
@@ -209,6 +220,8 @@ export async function activate (context: ExtensionContext) {
 							run.errored(t, new TestMessage('ablunit run cancelled!'))
 						} else if (e instanceof ABLUnitRuntimeError) {
 							run.failed(t, new TestMessage(e.promsgError))
+						} else if (e instanceof TimeoutError) {
+							run.failed(t, new TestMessage('ablunit run timed out!'))
 						// } else if (e instanceof ExecException) {
 						// 	run.errored(t, new TestMessage('ablunit run execution error! e=' + JSON.stringify(e)))
 						} else if (e instanceof Error) {
@@ -439,9 +452,15 @@ export async function activate (context: ExtensionContext) {
 		if (!event.affectsConfiguration('ablunit')) {
 			log.warn('configuration updated but does not include ablunit settings (event=' + JSON.stringify(event) + ')')
 		} else {
-			log.debug('effects ablunit.file? ' + event.affectsConfiguration('ablunit.files'))
+			log.debug('affects ablunit.file? ' + event.affectsConfiguration('ablunit.files'))
 			if (event.affectsConfiguration('ablunit.files')) {
-				removeExcludedFiles(ctrl, getExcludePatterns())
+				return commands.executeCommand('testing.refreshTests')
+					.then(() => {
+						log.info('tests tree successfully refreshed on configuration change')
+						return
+					}, (e) => {
+						throw e
+					})
 			}
 		}
 	}
@@ -473,8 +492,10 @@ let contextResourcesUri: Uri
 let contextLogUri: Uri
 
 function updateNode (uri: Uri, ctrl: TestController) {
-	log.trace('updateNode uri=' + uri.fsPath)
-	if(uri.scheme !== 'file' || isFileExcluded(uri, getExcludePatterns())) { return new Promise(() => { return false }) }
+	log.debug('updateNode uri="' + uri.fsPath + '"')
+	if(uri.scheme !== 'file' || isFileExcluded(uri, getWorkspaceTestPatterns()[1])) {
+		return Promise.resolve(false)
+	}
 
 	const { item, data } = getOrCreateFile(ctrl, uri)
 	if(!item || !data) {
@@ -486,6 +507,15 @@ function updateNode (uri: Uri, ctrl: TestController) {
 		log.debug('updateFromContents item.id=' + item.id)
 		return data.updateFromContents(ctrl, contents, item)
 	})
+}
+
+function didChangeTextDocument (e: TextDocumentChangeEvent, ctrl: TestController) {
+	if (e.document.languageId == 'log') {
+		return Promise.resolve()
+	}
+
+	log.info('workspace.onDidChange uri="' + e.document.uri.fsPath + '"; reason=' + e.reason)
+	return updateNode(e.document.uri, ctrl)
 }
 
 export function setContextPaths (storageUri: Uri, resourcesUri: Uri, logUri: Uri) {
@@ -723,52 +753,33 @@ function gatherTestItems (collection: TestItemCollection) {
 	return items
 }
 
-function getExcludePatterns () {
-	let excludePatterns: string[] = []
-
-	let excludePatternsConfig: string[] | string | undefined = workspace.getConfiguration('ablunit').get('files.exclude', '**/.builder/**,**/.pct/**')
-	if (typeof excludePatternsConfig === 'string') {
-		excludePatternsConfig = excludePatternsConfig.split(',')
-	}
-	if (excludePatternsConfig.length == 1) {
-		excludePatterns[0] = ''
-		for (const pattern of excludePatternsConfig) {
-			excludePatterns[0] = excludePatterns[0] + pattern
-		}
-	} else {
-		excludePatterns = excludePatternsConfig
-	}
-
-	let retVal: RelativePattern[] = []
-	for(const workspaceFolder of workspace.workspaceFolders!) {
-		retVal = retVal.concat(excludePatterns.map(pattern => new RelativePattern(workspaceFolder, pattern)))
-	}
-	return retVal
-}
-
 function getWorkspaceTestPatterns () {
-	let includePatternsConfig: string[] | string = workspace.getConfiguration('ablunit').get('files.include', [ '**/*.{cls,p}' ])
-	let excludePatternsConfig: string[] | string = workspace.getConfiguration('ablunit').get('files.exclude', [ '**/.{builder,pct}/**' ])
-
-	if (typeof includePatternsConfig === 'string') {
-		includePatternsConfig = [ includePatternsConfig ]
-	}
-	if (typeof excludePatternsConfig === 'string') {
-		excludePatternsConfig = [ excludePatternsConfig ]
-	}
-
 	const includePatterns: RelativePattern[] = []
 	const excludePatterns: RelativePattern[] = []
 
-	if (!workspace.workspaceFolders) {
-		let info='(workspace.name=' + workspace.name
-		if (workspace.workspaceFile) {
-			info = info + ', workspace.file=' + workspace.workspaceFile
+	for (const workspaceFolder of workspace.workspaceFolders ?? []) {
+		let includePatternsConfig: string[] | string =
+			workspace.getConfiguration('ablunit', workspaceFolder.uri).get('files.include') ??
+			workspace.getConfiguration('ablunit').get('files.include', [ '**/*.{cls,p}' ])
+		let excludePatternsConfig: string[] | string =
+			workspace.getConfiguration('ablunit', workspaceFolder.uri).get('files.exclude') ??
+			workspace.getConfiguration('ablunit').get('files.exclude', [ '**/.{builder,pct}/**' ])
+
+		if (typeof includePatternsConfig === 'string') {
+			if (includePatternsConfig == '') {
+				includePatternsConfig = []
+			} else {
+				includePatternsConfig = [ includePatternsConfig ]
+			}
 		}
-		info = info + ')'
-		throw new Error('workspace has no folders ' + info)
-	}
-	for(const workspaceFolder of workspace.workspaceFolders) {
+		if (typeof excludePatternsConfig === 'string') {
+			if (excludePatternsConfig == '') {
+				excludePatternsConfig = []
+			} else {
+				excludePatternsConfig = [ excludePatternsConfig ]
+			}
+		}
+
 		includePatterns.push(...includePatternsConfig.map(pattern => new RelativePattern(workspaceFolder, pattern)))
 		excludePatterns.push(...excludePatternsConfig.map(pattern => new RelativePattern(workspaceFolder, pattern)))
 	}
@@ -851,7 +862,7 @@ function removeExcludedFiles (controller: TestController, excludePatterns: Relat
 			}
 		}
 		if (item.children.size == 0 && itemHasTag(item, 'ABLTestDir')) {
-			log.info('remove empty directoyr form test tree: ' + item.id)
+			log.info('remove empty directory form test tree: ' + item.id)
 			deleteTest(controller, item)
 		}
 	}
@@ -952,10 +963,10 @@ function refreshTestTree (controller: TestController, token: CancellationToken):
 		log.trace(' - ' + rejectedCount + ' files parsed had zero test case(s)')
 	}
 
-	// token.onCancellationRequested(() => {
-	// 	log.info('cancellation requested ' + elapsedTime())
-	// 	throw new CancellationError()
-	// })
+	token.onCancellationRequested(() => {
+		log.debug('cancellation requested  - refreshTestTree.onCancellationRequested ' + elapsedTime())
+		throw new CancellationError()
+	})
 
 	const checkCancellationToken = () => {
 		if (!token.isCancellationRequested) { return }
@@ -966,10 +977,8 @@ function refreshTestTree (controller: TestController, token: CancellationToken):
 
 	const [ includePatterns, excludePatterns ] = getWorkspaceTestPatterns()
 	log.info('includePatternslength=' + includePatterns.length + ', excludePatterns.length=' + excludePatterns.length)
-	log.info('includePatterns=' + includePatterns.map(pattern => pattern.pattern).join('\n'))
-	log.debug('includePatterns=' + includePatterns.map(pattern => pattern.pattern).join('\n'))
-	log.info('excludePatterns=' + excludePatterns.map(pattern => pattern.pattern).join('\n'))
-	log.debug('excludePatterns=' + excludePatterns.map(pattern => pattern.pattern).join('\n'))
+	log.info('includePatterns=' + JSON.stringify(includePatterns.map(p => p.pattern)))
+	log.info('excludePatterns=' + JSON.stringify(excludePatterns.map(p => p.pattern)))
 
 	removeExcludedFiles(controller, excludePatterns, token)
 
@@ -978,7 +987,6 @@ function refreshTestTree (controller: TestController, token: CancellationToken):
 	const prom1 = removeDeletedFiles(controller)
 		.then(() => { return findMatchingFiles(includePatterns, token, checkCancellationToken) })
 		.then((r) => {
-			log.info('r.length=' + r.length)
 			for (const file of r) {
 				checkCancellationToken()
 				const { item, data } = getOrCreateFile(controller, file, excludePatterns)
@@ -1021,9 +1029,12 @@ function createOrUpdateFile (controller: TestController, e: Uri | FileCreateEven
 
 	let uris: Uri[] = []
 	if (e instanceof Uri) {
+		if (e.scheme !== 'file') {
+			return Promise.resolve(false)
+		}
 		uris.push(e)
 	} else {
-		uris = uris.concat(e.files)
+		uris = uris.concat(e.files.filter(f => f.scheme === 'file'))
 	}
 
 	const proms: PromiseLike<boolean>[] = []

@@ -4,6 +4,7 @@
 			"hide": false,
 			"tempDir": ".",
 			"importOpenedgeProjectJson": true,
+			"timeout": 30000,
 			"command": {
 				"executable": "_progres",
 				"progressIni": "progress.ini",

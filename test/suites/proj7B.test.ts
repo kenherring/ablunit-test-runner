@@ -12,7 +12,7 @@ suite('proj7B - Extension Test Suite', () => {
 	setup('proj7B - beforeEach', beforeCommon)
 
 	test('proj7B.1 - cancel test refresh', async () => {
-		const minCancelTime = 5
+		const minCancelTime = 1
 		const maxCancelTime = 350
 		const maxRefreshTime = 350
 

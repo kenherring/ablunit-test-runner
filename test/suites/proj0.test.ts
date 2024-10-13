@@ -1,9 +1,9 @@
 import { Uri, commands, window, workspace } from 'vscode'
 import * as vscode from 'vscode'
-import { assert, deleteFile, getResults, getTestControllerItemCount, getTestItem, log, refreshTests, runAllTests, runAllTestsWithCoverage, sleep2, suiteSetupCommon, toUri, updateTestProfile } from '../testCommon'
+import { assert, deleteFile, getResults, getTestControllerItemCount, getTestItem, log, refreshTests, runAllTests, runAllTestsWithCoverage, runTestAtLine, runTestsDuration, runTestsInFile, sleep2, suiteSetupCommon, toUri, updateConfig, updateTestProfile } from '../testCommon'
 import { ABLResultsParser } from 'parse/ResultsParser'
 import * as fs from 'fs'
-
+import { TimeoutError } from 'ABLUnitRun'
 
 function createTempFile () {
 	const tempFile = toUri('UNIT_TEST.tmp')
@@ -15,12 +15,13 @@ suite('proj0  - Extension Test Suite', () => {
 
 	const disposables: vscode.Disposable[] = []
 
-	suiteSetup('proj0 - before', async () => {
+	suiteSetup('proj0 - before', () => {
 		deleteFile('.vscode/ablunit-test-profile.json')
 		deleteFile('src/dirA/proj10.p')
 		deleteFile('UNIT_TEST.tmp')
-		await suiteSetupCommon()
-		await commands.executeCommand('testing.clearTestResults')
+		return suiteSetupCommon()
+			.then(() => { return commands.executeCommand('testing.clearTestResults') })
+			.then(() => { return workspace.fs.copy(toUri('.vscode/settings.json'), toUri('.vscode/settings.json.bk'), { overwrite: true }) })
 	})
 
 	teardown('proj0 - afterEach', () => {
@@ -35,6 +36,8 @@ suite('proj0  - Extension Test Suite', () => {
 				log.warn('disposables.length != 0')
 			}
 		}
+		return workspace.fs.copy(toUri('.vscode/settings.json.bk'), toUri('.vscode/settings.json'), { overwrite: true })
+			.then(() => { log.info('proj0 teardown --- end'); return })
 	})
 
 	test('proj0.01 - ${workspaceFolder}/ablunit.json file exists', () => {
@@ -230,6 +233,64 @@ suite('proj0  - Extension Test Suite', () => {
 		await refreshTests()
 		assert.equal(await getTestControllerItemCount('ABLTestFile') - startCount, -1, 'after delte file count: startCount !+ test count')
 		return
+	})
+
+	test('proj0.11 - timeout 5s', () => {
+		return updateConfig('ablunit.files.exclude', '**/.{builder,pct}/**')
+			.then((r) => { return updateTestProfile('timeout', 5000) })
+			.then((r) => { return sleep2(250) })
+			.then((r) => { return runTestsInFile('src/timeout.p', 0) })
+			.then(() => { return commands.executeCommand('_ablunit.getTestRunError') })
+			.then((e) => {
+				assert.tests.timeout(e)
+				return
+			})
+	})
+
+	test('proj0.12 - timeout 1500ms fail', () => {
+		return updateConfig('ablunit.files.exclude', '**/.{builder,pct}/**')
+			.then(() => { return updateTestProfile('timeout', 1500) })
+			.then(() => { return runTestAtLine('src/timeout.p', 37, 0) })
+			.then(() => { return commands.executeCommand('_ablunit.getTestRunError') })
+			.then((e) => {
+				assert.tests.timeout(e)
+				const t: TimeoutError = e as TimeoutError
+				assert.durationMoreThan(t.duration, 1500)
+				assert.durationLessThan(t.duration, 2000)
+				return
+			})
+	})
+
+	test('proj0.13 - timeout 2500ms pass', () => {
+		return updateTestProfile('timeout', 2500)
+			.then(() => { return updateConfig('ablunit.files.exclude', '**/.{builder,pct}/**') })
+			.then(() => { return sleep2(500)})
+			.then(() => { return runTestAtLine('src/timeout.p', 37, 0) })
+			.then(() => { return commands.executeCommand('_ablunit.getTestRunError') })
+			.then((e) => {
+				if (e) {
+					assert.equal(e, undefined, 'expected no error to be thrown, but got e=' + JSON.stringify(e, null, 2))
+					assert.fail('expected no error to be thrown but got e=' + JSON.stringify(e, null, 2))
+				}
+				assert.durationMoreThan(runTestsDuration, 2000)
+				assert.durationLessThan(runTestsDuration, 3000)
+				return
+			})
+	})
+
+	test('proj0.14 - timeout invalid -5s', () => {
+		return updateTestProfile('timeout', -5000)
+			.then(() => { return runTestsInFile('src/simpleTest.p', 0) })
+			.then(() => { return commands.executeCommand('_ablunit.getTestRunError') })
+			.then((e) => {
+				if (e instanceof Error) {
+					log.info('e=' + JSON.stringify(e))
+					assert.equal(e.name, 'RangeError', 'expecting RangeError due to negative timeout value. e=' + JSON.stringify(e, null, 2))
+				} else {
+					assert.fail('expected RangeError to be thrown but got e=' + JSON.stringify(e, null, 2))
+				}
+				return
+			})
 	})
 
 })

@@ -1,6 +1,10 @@
 {
-	// "ablunit.params": "-pf test.pf",
-	// "ablunit.tempDir": "ablunit",
 	"ablunit.explorer.classlabel": "class-type-name",
 	"ablunit.discoverAllTestsOnActivate": true,
+	"ablunit.files.exclude": [
+		"**/.builder/**",
+		"**/.pct/**",
+		"src/timeout.p",
+	],
+	"test": "value"
 }
