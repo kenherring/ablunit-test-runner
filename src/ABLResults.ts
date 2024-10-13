@@ -228,13 +228,11 @@ export class ABLResults implements Disposable {
 				throw new Error('no results available')
 			}
 			return true
-		}, (err: unknown) => {
-			// log.info('[run] e=' + JSON.stringify(err))
-			if (err instanceof CancellationError || err instanceof ABLUnitRuntimeError || err instanceof TimeoutError) {
-				throw err
-			} else {
-				throw new Error('ablunit run failed! Exception: ' + err)
+		}, (e: unknown) => {
+			if (e instanceof CancellationError || e instanceof ABLUnitRuntimeError || e instanceof TimeoutError || e instanceof Error) {
+				throw e
 			}
+			throw new Error('ablunit run failed! Exception not instance of Error.  e=: ' + e)
 		})
 	}
 

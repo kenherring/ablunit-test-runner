@@ -235,7 +235,7 @@ suite('proj0  - Extension Test Suite', () => {
 		return
 	})
 
-	test('proj0.11 - timeout', () => {
+	test('proj0.11 - timeout 5s', () => {
 		return updateConfig('ablunit.files.exclude', '**/.{builder,pct}/**')
 			.then((r) => { return updateTestProfile('timeout', 5000) })
 			.then((r) => { return sleep2(250) })
@@ -247,7 +247,7 @@ suite('proj0  - Extension Test Suite', () => {
 			})
 	})
 
-	test('proj0.12 - timeout 2s pass', () => {
+	test('proj0.12 - timeout 1500ms fail', () => {
 		return updateConfig('ablunit.files.exclude', '**/.{builder,pct}/**')
 			.then(() => { return updateTestProfile('timeout', 1500) })
 			.then(() => { return runTestAtLine('src/timeout.p', 37, 0) })
@@ -261,7 +261,7 @@ suite('proj0  - Extension Test Suite', () => {
 			})
 	})
 
-	test('proj0.13 - timeout 2s fail', () => {
+	test('proj0.13 - timeout 2500ms pass', () => {
 		return updateTestProfile('timeout', 2500)
 			.then(() => { return updateConfig('ablunit.files.exclude', '**/.{builder,pct}/**') })
 			.then(() => { return sleep2(500)})
@@ -274,6 +274,21 @@ suite('proj0  - Extension Test Suite', () => {
 				}
 				assert.durationMoreThan(runTestsDuration, 2000)
 				assert.durationLessThan(runTestsDuration, 3000)
+				return
+			})
+	})
+
+	test('proj0.14 - timeout invalid -5s', () => {
+		return updateTestProfile('timeout', -5000)
+			.then(() => { return runTestsInFile('src/simpleTest.p', 0) })
+			.then(() => { return commands.executeCommand('_ablunit.getTestRunError') })
+			.then((e) => {
+				if (e instanceof Error) {
+					log.info('e=' + JSON.stringify(e))
+					assert.equal(e.name, 'RangeError', 'expecting RangeError due to negative timeout value. e=' + JSON.stringify(e, null, 2))
+				} else {
+					assert.fail('expected RangeError to be thrown but got e=' + JSON.stringify(e, null, 2))
+				}
 				return
 			})
 	})
