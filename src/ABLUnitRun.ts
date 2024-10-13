@@ -38,6 +38,28 @@ export enum RunStatusString {
 export class ABLUnitRuntimeError extends Error {
 	constructor (message: string, public promsgError: string, public cmd?: string) {
 		super(message)
+		this.name = 'ABLUnitRuntimeError'
+	}
+}
+
+// eslint-disable-next-line @typescript-eslint/naming-convention
+export interface ITimeoutError extends Error {
+	duration: Duration
+	limit: number
+	cmd?: string
+}
+
+export class TimeoutError extends Error implements ITimeoutError {
+	duration: Duration
+	limit: number
+	cmd?: string
+
+	constructor (message: string, duration: Duration, limit: number, cmd: string) {
+		super(message)
+		this.name = 'TimeoutError'
+		this.duration = duration
+		this.limit = limit
+		this.cmd = cmd
 	}
 }
 
@@ -219,6 +241,7 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 					reject(e)
 				}
 			}).on('exit', (code) => {
+				testRunDuration.stop()
 				if (code && code != 0) {
 					res.setStatus(RunStatus.Error, 'exit_code=' + code)
 					log.info('----- ABLUnit Test Run Failed (exit_code=' + code + ') ----- ' + testRunDuration, options)
@@ -230,7 +253,7 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 						setTimeoutTestStatus(options, res.cfg.ablunitConfig.timeout)
 						res.setStatus(RunStatus.Timeout, 'signalCode=' + process.signalCode)
 						log.info('----- ABLUnit Test Run Timeout - ' + res.cfg.ablunitConfig.timeout + 'ms ----- ' + testRunDuration, options)
-						reject(new ABLUnitRuntimeError('ABLUnit process timeout', 'ABLUnit exit_code= ' + code, cmd))
+						reject(new TimeoutError('ABLUnit process timeout', testRunDuration, res.cfg.ablunitConfig.timeout, cmd))
 						return
 					}
 					res.setStatus(RunStatus.Killed, 'signalCode=' + process.signalCode)
@@ -279,9 +302,12 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 	return runCommand()
 		.then(() => {
 			return res.parseOutput(options)
-		}, (err: unknown) => {
-			log.debug('runCommand() error=' + JSON.stringify(err, null, 2), options)
-			throw err
+		}, (e: unknown) => {
+			log.debug('runCommand() error=' + JSON.stringify(e, null, 2), options)
+			if (e instanceof Error) {
+				res.thrownError = e
+			}
+			throw e
 		})
 }
 
