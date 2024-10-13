@@ -120,7 +120,7 @@ function getLaunchArgs (projName) {
 	// args.push('--locale <locale>')
 	// args.push('--user-data-dir', '<dir>')
 	// args.push('--profile <profileName>')
-	args.push('--profile-temp') // create a temporary profile for the test run in lieu of cleaning up user data
+	// args.push('--profile-temp') // create a temporary profile for the test run in lieu of cleaning up user data
 	// args.push('--help')
 	// args.push('--extensions-dir', '<dir>')
 	// args.push('--list-extensions')
