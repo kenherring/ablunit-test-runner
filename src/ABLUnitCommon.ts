@@ -56,6 +56,7 @@ export class Duration {
 	name?: string
 	start: number
 	end: number
+	runtime?: number
 	private stopped = false
 	constructor (name?: string) {
 		this.name = name
@@ -69,7 +70,7 @@ export class Duration {
 		this.stopped = false
 	}
 
-	elapsed () {
+	elapsed = () => {
 		if (!this.stopped) {
 			this.end = Date.now()
 		}
@@ -77,8 +78,9 @@ export class Duration {
 	}
 
 	stop () {
-		this.stopped = true
 		this.end = Date.now()
+		this.stopped = true
+		this.runtime = this.end - this.start
 	}
 
 	toString () {

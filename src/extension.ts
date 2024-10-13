@@ -23,7 +23,7 @@ import { log } from './ChannelLogger'
 import { getContentFromFilesystem } from './parse/TestParserCommon'
 import { ABLTestCase, ABLTestClass, ABLTestData, ABLTestDir, ABLTestFile, ABLTestProgram, ABLTestSuite, resultData, testData } from './testTree'
 import { minimatch } from 'minimatch'
-import { ABLUnitRuntimeError } from 'ABLUnitRun'
+import { ABLUnitRuntimeError, TimeoutError } from 'ABLUnitRun'
 import { basename } from 'path'
 
 export interface IExtensionTestReferences {
@@ -33,6 +33,7 @@ export interface IExtensionTestReferences {
 }
 
 let recentResults: ABLResults[] = []
+let recentError: Error | undefined = undefined
 
 export async function activate (context: ExtensionContext) {
 	const ctrl = tests.createTestController('ablunitTestController', 'ABLUnit Test')
@@ -58,6 +59,7 @@ export async function activate (context: ExtensionContext) {
 			commands.registerCommand('_ablunit.getTestController', () => { return ctrl }),
 			commands.registerCommand('_ablunit.getTestData', () => { return testData.getMap() }),
 			commands.registerCommand('_ablunit.getTestItem', (uri: Uri) => { return getExistingTestItem(ctrl, uri) }),
+			commands.registerCommand('_ablunit.getTestRunError', () => { return recentError })
 		)
 	}
 
@@ -93,7 +95,14 @@ export async function activate (context: ExtensionContext) {
 		if (request.continuous) {
 			throw new Error('continuous test runs not implemented')
 		}
-		return startTestRun(request, token).catch((e: unknown) => { throw e })
+		recentError = undefined
+		return startTestRun(request, token)
+			.catch((e: unknown) => {
+				if (e instanceof Error) {
+					recentError = e
+				}
+				throw e
+			})
 	}
 
 	const loadDetailedCoverage = (testRun: TestRun, fileCoverage: FileCoverage, token: CancellationToken): Thenable<FileCoverageDetail[]> => {
@@ -199,6 +208,8 @@ export async function activate (context: ExtensionContext) {
 						// log.error('[runTestQueue] ablunit run cancelled!', run)
 					} else if (e instanceof ABLUnitRuntimeError) {
 						log.error('ablunit runtime error!\ne=' + JSON.stringify(e))
+					} else if (e instanceof TimeoutError) {
+						log.error('ablunit run timed out!')
 					} else {
 						log.error('ablunit run failed!: ' + e, run)
 						// log.error('ablunit run failed parsing results with exception: ' + e, run)\
@@ -209,6 +220,8 @@ export async function activate (context: ExtensionContext) {
 							run.errored(t, new TestMessage('ablunit run cancelled!'))
 						} else if (e instanceof ABLUnitRuntimeError) {
 							run.failed(t, new TestMessage(e.promsgError))
+						} else if (e instanceof TimeoutError) {
+							run.failed(t, new TestMessage('ablunit run timed out!'))
 						// } else if (e instanceof ExecException) {
 						// 	run.errored(t, new TestMessage('ablunit run execution error! e=' + JSON.stringify(e)))
 						} else if (e instanceof Error) {
@@ -844,7 +857,7 @@ function removeExcludedFiles (controller: TestController, excludePatterns: Relat
 			}
 		}
 		if (item.children.size == 0 && itemHasTag(item, 'ABLTestDir')) {
-			log.info('remove empty directoyr form test tree: ' + item.id)
+			log.info('remove empty directory form test tree: ' + item.id)
 			deleteTest(controller, item)
 		}
 	}
@@ -1011,9 +1024,12 @@ function createOrUpdateFile (controller: TestController, e: Uri | FileCreateEven
 
 	let uris: Uri[] = []
 	if (e instanceof Uri) {
+		if (e.scheme !== 'file') {
+			return Promise.resolve(false)
+		}
 		uris.push(e)
 	} else {
-		uris = uris.concat(e.files)
+		uris = uris.concat(e.files.filter(f => f.scheme === 'file'))
 	}
 
 	const proms: PromiseLike<boolean>[] = []

@@ -77,7 +77,6 @@ export const oeVersion = () => {
 		}
 	}
 	throw new Error('unable to determine oe version!')
-	// return '12.2'
 }
 
 const getEnvVar = (envVar: string) => {
@@ -109,6 +108,7 @@ export {
 let recentResults: ABLResults[] | undefined
 let currentRunData: ABLResults[] | undefined
 export let runAllTestsDuration: Duration | undefined
+export let runTestsDuration: Duration | undefined
 export let cancelTestRunDuration: Duration | undefined
 
 export function beforeCommon () {
@@ -160,6 +160,7 @@ export async function suiteSetupCommon (runtimes: IRuntime[] = []) {
 
 export function teardownCommon () {
 	runAllTestsDuration = undefined
+	runTestsDuration = undefined
 	cancelTestRunDuration = undefined
 
 	recentResults = undefined
@@ -577,33 +578,42 @@ export function runAllTestsWithCoverage () {
 	return runAllTests(true, true, true)
 }
 
-export function runTestsInFile (filename: string) {
+export function runTestsInFile (filename: string, len = 1) {
 	const testpath = toUri(filename)
 	log.info('runnings tests in file ' + testpath.fsPath)
-	return refreshTests()
-		.then(() => { return commands.executeCommand('vscode.open', testpath) })
-		.then(() => { return commands.executeCommand('testing.runCurrentFile') })
-		.then(() => { return getResults() })
+	return commands.executeCommand('vscode.open', testpath)
 		.then(() => {
-			log.info('testing.runCurrentFile complete!')
-			return
-		}, (e) => { throw e })
+			runTestsDuration = new Duration('runTestsInFile')
+			return commands.executeCommand('testing.runCurrentFile')
+		}, (e) => {
+			throw e
+		})
+		.then((r: unknown) => {
+			runTestsDuration?.stop()
+			return getResults(len)
+		}, (e) => {
+			runTestsDuration?.stop()
+			throw e
+		})
 }
 
-export function runTestAtLine (filename: string, line: number) {
+export function runTestAtLine (filename: string, line: number, len = 1) {
 	const testpath = Uri.joinPath(getWorkspaceUri(), filename)
 	log.info('running test at line ' + line + ' in ' + testpath.fsPath)
-	return refreshTests()
-		.then(() => { return commands.executeCommand('vscode.open', testpath) })
+	return commands.executeCommand('vscode.open', testpath)
 		.then(() => {
-			if(window.activeTextEditor) {
+			if(window.activeTextEditor?.document.uri.fsPath === testpath.fsPath) {
 				window.activeTextEditor.selection = new Selection(line, 0, line, 0)
 			} else {
 				throw new Error('vscode.window.activeTextEditor is undefined')
 			}
+			runTestsDuration = new Duration('runTestsAtLine')
 			return commands.executeCommand('testing.runAtCursor')
 		})
-		.then(() => { return getResults() })
+		.then(() => {
+			runTestsDuration?.stop()
+			return getResults(len)
+		})
 		.then(() => {
 			log.info('testing.runAtCursor complete')
 			return
@@ -759,7 +769,7 @@ export function updateConfig (key: string, value: unknown, configurationTarget?:
 		.then(() => true, (e) => { throw e })
 }
 
-export async function updateTestProfile (key: string, value: string | string[] | boolean | object | undefined, workspaceUri?: Uri) {
+export async function updateTestProfile (key: string, value: string | string[] | boolean | number | object | undefined, workspaceUri?: Uri) {
 	if (!workspaceUri) {
 		workspaceUri = getWorkspaceUri()
 	}
@@ -995,13 +1005,13 @@ export async function getResults (len = 1, tag?: string): Promise<ABLResults[]> 
 			}
 		}
 	}
-	if (!recentResults) {
+	if (len !=0 && !recentResults) {
 		throw new Error('recentResults is null')
 	}
-	if (recentResults.length < len) {
+	if (recentResults && recentResults.length < len) {
 		throw new Error('recent results should be >= ' + len + ' but is ' + recentResults.length)
 	}
-	return recentResults
+	return recentResults ?? []
 }
 
 class AssertTestResults {
@@ -1042,6 +1052,17 @@ class AssertTestResults {
 	}
 	public failed (expectedCount: number) {
 		this.assertResultsCountByStatus(expectedCount, 'failed')
+	}
+
+	public timeout (e: unknown) {
+		if (!e) {
+			assert.fail('expected TimeoutError, but no error was thrown')
+		}
+		if (e instanceof Error) {
+			assert.equal(e.name, 'TimeoutError', 'expected TimeoutError, but got ' + e.name + '\n\n' + JSON.stringify(e, null, 2))
+			return
+		}
+		assert.fail('expected TimeoutError, but non-Error type detected: ' + e + '\n\n' + JSON.stringify(e, null, 2))
 	}
 }
 

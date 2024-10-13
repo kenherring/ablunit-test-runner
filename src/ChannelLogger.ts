@@ -87,9 +87,9 @@ class Logger {
 		log.info('NOTIFICATION: ' + message + ' (type=' + notificationType + ', enabled=' + this.notificationsEnabled + ')')
 		switch (notificationType) {
 			case NotificationType.Info:
-				// if (this.notificationsEnabled) {
-				// 	void window.showInformationMessage(message)
-				// }
+				if (this.notificationsEnabled) {
+					void window.showInformationMessage(message)
+				}
 				void window.showInformationMessage(message)
 				break
 			case NotificationType.Warn:
