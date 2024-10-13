@@ -27,9 +27,6 @@
 	"files.exclude": {
 		"./dist/**": true,
 		// "**/*{.js,.test.js}": { "when": "$(basename).ts" }
-		// worktrees
-		"documentation": true,
-		"timeout": true,
 	},
 	"files.watcherExclude": {
 		".git/objects": true,
@@ -38,10 +35,7 @@
 		"coverage": true,
 		"dist": true,
 		"out": true,
-		"node_modules": true,
-		// worktrees
-		"documentation/**": true,
-		"timeout/**": true,
+		"node_modules": true
 	},
 	"json.schemas": [
 		{

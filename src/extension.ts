@@ -97,7 +97,7 @@ export async function activate (context: ExtensionContext) {
 	}
 
 	const loadDetailedCoverage = (testRun: TestRun, fileCoverage: FileCoverage, token: CancellationToken): Thenable<FileCoverageDetail[]> => {
-		log.info('loadDetailedCoverage uri="' + fileCoverage.uri.fsPath + '", testRun=' + testRun.name)
+		log.info('loadDetailedCoverage uri=' + fileCoverage.uri.fsPath + ', testRun=' + testRun.name)
 		const d = resultData.get(testRun)
 		const det: FileCoverageDetail[] = []
 
@@ -287,8 +287,9 @@ export async function activate (context: ExtensionContext) {
 				}
 			}
 
+			void log.notification('ablunit tests complete')
 			run.end()
-			log.notification('ablunit tests complete')
+			void log.notification('ablunit tests complete')
 			return
 		}
 
@@ -331,7 +332,7 @@ export async function activate (context: ExtensionContext) {
 			return res
 		}
 
-		log.notification('running ablunit tests')
+		void log.notification('running ablunit tests')
 		const queue: { test: TestItem; data: ABLTestData }[] = []
 		const run = ctrl.createTestRun(request)
 		currentTestRun = run

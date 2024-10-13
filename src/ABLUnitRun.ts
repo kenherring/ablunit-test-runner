@@ -1,6 +1,6 @@
 import { CancellationError, CancellationToken, Disposable, FileSystemWatcher, TestRun, Uri, workspace } from 'vscode'
 import { ABLResults } from './ABLResults'
-import { deleteFile, Duration, isRelativePath } from './ABLUnitCommon'
+import { deleteFile, Duration } from './ABLUnitCommon'
 import { SendHandle, Serializable, SpawnOptions, spawn } from 'child_process'
 import { log } from './ChannelLogger'
 import { processUpdates, setTimeoutTestStatus, updateParserInit } from 'parse/UpdateParser'
@@ -42,6 +42,7 @@ export class ABLUnitRuntimeError extends Error {
 }
 
 export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation: CancellationToken) => {
+	const start = Date.now()
 	const abort = new AbortController()
 	const { signal } = abort
 	let watcherDispose: Disposable | undefined = undefined
@@ -116,11 +117,7 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 			throw new Error('unsupported platform: ' + process.platform)
 		}
 
-		let tempPath = res.cfg.ablunitConfig.tempDirUri.fsPath
-		if (isRelativePath(tempPath)) {
-			tempPath = './' + tempPath
-		}
-		cmd.push('-T', tempPath)
+		cmd.push('-T', res.cfg.ablunitConfig.tempDirUri.fsPath)
 
 		if (res.cfg.ablunitConfig.dbConnPfUri && res.cfg.ablunitConfig.dbConns && res.cfg.ablunitConfig.dbConns.length > 0) {
 			cmd.push('-pf', res.cfg.ablunitConfig.dbConnPfUri.fsPath)

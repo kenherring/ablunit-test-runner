@@ -116,8 +116,8 @@
 			"filename": "prof.out",
 			"listings": false,
 			"statistics": false,
-			"traceFilter": null,
-			"tracing": null,
+			"traceFilter": "",
+			"tracing": false,
 			"writeJson": false
 		}
 

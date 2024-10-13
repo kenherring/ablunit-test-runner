@@ -197,7 +197,7 @@ export class RunConfig extends DefaultRunProfile {
 		if (this.options.output.writeJson) {
 			this.optionsUri.jsonUri = Uri.joinPath(this.optionsUri.locationUri, tmpFilename.replace(/\.xml$/, '') + '.json')
 		}
-		log.debug('this.optionsUri.jsonUri="' + this.optionsUri.jsonUri?.fsPath + '"')
+		log.debug('this.optionsUri.jsonUri=' + this.optionsUri.jsonUri?.fsPath)
 		if (this.options.output.updateFile) {
 			this.optionsUri.updateUri = Uri.joinPath(this.optionsUri.locationUri, this.options.output.updateFile)
 		} else {
