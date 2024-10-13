@@ -63,9 +63,9 @@ export async function activate (context: ExtensionContext) {
 
 	context.subscriptions.push(
 		commands.registerCommand('_ablunit.openCallStackItem', openCallStackItem),
-		workspace.onDidChangeConfiguration(e => { updateConfiguration(e) }),
+		workspace.onDidChangeConfiguration(e => { return updateConfiguration(e) }),
 		workspace.onDidOpenTextDocument(e => { log.info('workspace.onDidOpenTextDocument'); return createOrUpdateFile(ctrl, e.uri, true) }),
-		workspace.onDidChangeTextDocument(e => didChangeTextDocument(e, ctrl)),
+		workspace.onDidChangeTextDocument(e => { return didChangeTextDocument(e, ctrl) }),
 		workspace.onDidCreateFiles(e => { log.info('workspace.onDidCreate ' + e.files[0].fsPath); return createOrUpdateFile(ctrl, e, true) }),
 		workspace.onDidDeleteFiles(e => { log.info('workspace.onDidDelete ' + e.files[0].fsPath); return deleteFiles(ctrl, e.files) }),
 		// ...startWatchingWorkspace(ctrl),
@@ -290,7 +290,6 @@ export async function activate (context: ExtensionContext) {
 				}
 			}
 
-			log.notification('ablunit tests complete')
 			run.end()
 			log.notification('ablunit tests complete')
 			return
@@ -445,7 +444,13 @@ export async function activate (context: ExtensionContext) {
 		} else {
 			log.debug('affects ablunit.file? ' + event.affectsConfiguration('ablunit.files'))
 			if (event.affectsConfiguration('ablunit.files')) {
-				removeExcludedFiles(ctrl, getWorkspaceTestPatterns()[1])
+				return commands.executeCommand('testing.refreshTests')
+					.then(() => {
+						log.info('tests tree successfully refreshed on configuration change')
+						return
+					}, (e) => {
+						throw e
+					})
 			}
 		}
 	}

@@ -101,10 +101,10 @@ export class ABLUnitConfig  {
 		if (profOpts.statistics) {
 			opt.push('-statistics')
 		}
-		if (profOpts.tracing != '') {
+		if (profOpts.tracing && profOpts.tracing != '') {
 			opt.push('-tracing "' + profOpts.tracing + '"')
 		}
-		if (profOpts.traceFilter != '') {
+		if (profOpts.traceFilter && profOpts.traceFilter != '') {
 			opt.push('-traceFilter "' + profOpts.traceFilter + '"')
 		}
 		await this.deleteFile(this.ablunitConfig.profFilenameUri)
