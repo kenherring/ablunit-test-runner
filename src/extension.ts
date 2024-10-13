@@ -69,9 +69,6 @@ export async function activate (context: ExtensionContext) {
 		workspace.onDidCreateFiles(e => { log.info('workspace.onDidCreate ' + e.files[0].fsPath); return createOrUpdateFile(ctrl, e, true) }),
 		workspace.onDidDeleteFiles(e => { log.info('workspace.onDidDelete ' + e.files[0].fsPath); return deleteFiles(ctrl, e.files) }),
 		// ...startWatchingWorkspace(ctrl),
-
-		// TESTING
-		workspace.onDidChangeWorkspaceFolders(e => { log.info('workspace.onDidChangeWorkspaceFolders ' + e.added.length  + ' ' + e.removed.length) }),
 	)
 
 
@@ -100,7 +97,7 @@ export async function activate (context: ExtensionContext) {
 	}
 
 	const loadDetailedCoverage = (testRun: TestRun, fileCoverage: FileCoverage, token: CancellationToken): Thenable<FileCoverageDetail[]> => {
-		log.info('loadDetailedCoverage uri= ' + fileCoverage.uri.fsPath + ', testRun=' + testRun.name)
+		log.info('loadDetailedCoverage uri="' + fileCoverage.uri.fsPath + '", testRun=' + testRun.name)
 		const d = resultData.get(testRun)
 		const det: FileCoverageDetail[] = []
 
@@ -438,7 +435,6 @@ export async function activate (context: ExtensionContext) {
 	}
 
 	function updateConfiguration (event: ConfigurationChangeEvent) {
-
 		if (!event.affectsConfiguration('ablunit')) {
 			log.warn('configuration updated but does not include ablunit settings (event=' + JSON.stringify(event) + ')')
 		} else {
@@ -482,7 +478,7 @@ let contextResourcesUri: Uri
 let contextLogUri: Uri
 
 function updateNode (uri: Uri, ctrl: TestController) {
-	log.trace('updateNode uri= ' + uri.fsPath)
+	log.debug('updateNode uri="' + uri.fsPath + '"')
 	if(uri.scheme !== 'file' || isFileExcluded(uri, getWorkspaceTestPatterns()[1])) {
 		return Promise.resolve(false)
 	}
@@ -504,7 +500,7 @@ function didChangeTextDocument (e: TextDocumentChangeEvent, ctrl: TestController
 		return Promise.resolve()
 	}
 
-	log.info('workspace.onDidChange ' + e.document.uri.fsPath + ' ' + e.reason)
+	log.info('workspace.onDidChange uri="' + e.document.uri.fsPath + '"; reason=' + e.reason)
 	return updateNode(e.document.uri, ctrl)
 }
 
@@ -950,7 +946,7 @@ function refreshTestTree (controller: TestController, token: CancellationToken):
 	}
 
 	token.onCancellationRequested(() => {
-		log.debug('cancellation requested  - refreshTestTree.onCancellationRequested' + elapsedTime())
+		log.debug('cancellation requested  - refreshTestTree.onCancellationRequested ' + elapsedTime())
 		throw new CancellationError()
 	})
 

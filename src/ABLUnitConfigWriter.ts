@@ -16,7 +16,7 @@ export class ABLUnitConfig  {
 	ablunitConfig: RunConfig = {} as RunConfig
 
 	setup (workspaceFolder: WorkspaceFolder, request: TestRunRequest) {
-		log.info('[ABLUnitConfigWriter setup] workspaceUri= ' + workspaceFolder.uri.fsPath)
+		log.info('[ABLUnitConfigWriter setup] workspaceUri="' + workspaceFolder.uri.fsPath + '"')
 		this.ablunitConfig = getProfileConfig(workspaceFolder)
 		log.info('[ABLUnitConfigWriter constructor] setup complete! tempDir=' + this.ablunitConfig.tempDirUri.fsPath)
 	}
@@ -101,10 +101,10 @@ export class ABLUnitConfig  {
 		if (profOpts.statistics) {
 			opt.push('-statistics')
 		}
-		if (profOpts.tracing && profOpts.tracing != '') {
+		if (profOpts.tracing != '') {
 			opt.push('-tracing "' + profOpts.tracing + '"')
 		}
-		if (profOpts.traceFilter && profOpts.traceFilter != '') {
+		if (profOpts.traceFilter != '') {
 			opt.push('-traceFilter "' + profOpts.traceFilter + '"')
 		}
 		await this.deleteFile(this.ablunitConfig.profFilenameUri)

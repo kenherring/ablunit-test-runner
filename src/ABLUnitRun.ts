@@ -174,8 +174,6 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 		const cmd = args[0]
 		args.shift()
 
-
-
 		return new Promise<string>((resolve, reject) => {
 			res.setStatus(RunStatus.Running)
 			const runenv = getEnvVars(res.dlc!.uri)

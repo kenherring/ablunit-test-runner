@@ -420,7 +420,7 @@ export function toUri (uri: string | Uri) {
 
 	const ws = getWorkspaceUri()
 	if (!ws) {
-		throw new Error('workspaceUri is null (uri= ' + uri.toString() + ' )')
+		throw new Error('workspaceUri is null (uri="' + uri.toString() + '")')
 	}
 
 	if (isRelativePath(uri)) {
