@@ -42,7 +42,6 @@ export class ABLUnitRuntimeError extends Error {
 }
 
 export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation: CancellationToken) => {
-	const start = Date.now()
 	const abort = new AbortController()
 	const { signal } = abort
 	let watcherDispose: Disposable | undefined = undefined
