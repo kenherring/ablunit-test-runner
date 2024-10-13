@@ -11,7 +11,8 @@
 			"request": "launch",
 			"runtimeExecutable": "${execPath}",
 			"args": [
-				"--profile-temp",
+				// "--profile-temp",
+				"--profile=ablunit-temp",
 				"--extensionDevelopmentPath=${workspaceFolder}",
 				// "--log", "kherring.ablunit-test-runner:debug",
 				// "--log", "kenherring.ablunit-test-runner:debug",
