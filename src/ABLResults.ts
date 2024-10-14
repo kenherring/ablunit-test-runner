@@ -16,26 +16,7 @@ import { log } from './ChannelLogger'
 import { ABLUnitRuntimeError, RunStatus, TimeoutError, ablunitRun } from './ABLUnitRun'
 import { getDLC, IDlc } from './parse/OpenedgeProjectParser'
 import { Duration, isRelativePath } from './ABLUnitCommon'
-
-export interface ITestObj {
-	test: string
-	cases?: string[]
-}
-
-export interface IABLUnitJson {
-	options: {
-		output: {
-			location: string // results.xml directory
-			filename: string // <filename>.xml
-			format: 'xml'
-		}
-		quitOnEnd: boolean
-		writeLog: boolean
-		showErrorMessage: boolean
-		throwError: boolean
-	}
-	tests: ITestObj[]
-}
+import { ITestObj } from 'parse/config/CoreOptions'
 
 export class ABLResults implements Disposable {
 	workspaceFolder: WorkspaceFolder

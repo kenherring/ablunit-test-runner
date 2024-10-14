@@ -2,6 +2,12 @@
 import { LogLevel, TestRun, window } from 'vscode'
 import path from 'path'
 
+enum NotificationType {
+	Info = 'Info',
+	Warn = 'Warn',
+	Error = 'Error',
+}
+
 class Logger {
 	private static instance: Logger
 
@@ -12,6 +18,7 @@ class Logger {
 	private readonly consoleTimestamp = process.env['ABLUNIT_TEST_RUNNER_UNIT_TESTING'] === 'true'
 	private testResultsTimestamp = false
 	private readonly extensionCodeDir = path.normalize(__dirname + '/../..')
+	notificationsEnabled = true
 
 	private constructor (extCodeDir?: string) {
 		this.logLevel = LogLevel.Info
@@ -76,9 +83,25 @@ class Logger {
 		this.writeMessage(LogLevel.Error, message, testRun)
 	}
 
-	notification (message: string) {
-		log.info(message)
-		return window.showInformationMessage(message)
+	notification (message: string, notificationType: NotificationType = NotificationType.Info) {
+		const logMessage = 'NOTIFICATION: ' + message + ' (type=' + notificationType + ', enabled=' + this.notificationsEnabled + ')'
+		switch (notificationType) {
+			case NotificationType.Info:
+				log.info(logMessage)
+				if (this.notificationsEnabled) {
+					void window.showInformationMessage(message)
+				}
+				void window.showInformationMessage(message)
+				break
+			case NotificationType.Warn:
+				log.warn(logMessage)
+				void window.showWarningMessage(message)
+				break
+			case NotificationType.Error:
+				log.error(logMessage)
+				void window.showErrorMessage(message)
+				break
+		}
 	}
 
 	notificationWarningSync (message: string) {
