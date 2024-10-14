@@ -37,7 +37,7 @@
 						"type": "string",
 						"default": "default",
 						"description": "The profile to use from 'openedge-project.json'.  Only used when 'importOpenedgeProjectJson' is true.  When not defined the selected profile for the OpenEdge ABL extension is used (`.vscode/profile.json`)",
-						"markdownDescription": "The profile to use from 'openedge-project.json'.  Only used when 'importOpenedgeProjectJson' is true.  When not defined the selected profile for the OpenEdge ABL extension is used (`.vscode/profile.json`)"
+						"markdownDescription": "The profile to use from `openedge-project.json`.  Only used when 'importOpenedgeProjectJson' is true.  When not defined the selected profile for the OpenEdge ABL extension is used (`.vscode/profile.json`)"
 					},
 					"timeout": {
 						"type": "number",
@@ -48,6 +48,7 @@
 					"options": {
 						"type": [ "object", "null" ],
 						"description": "Options passed to the OE test runner via the 'ablunit.json' file.  Set to null to prevent the creation of 'ablunit.json' or related args passed to the command line.\n\n*[Run test cases from the command prompt](https://docs.progress.com/bundle/openedge-developer-studio-help/page/Run-test-cases-from-the-command-prompt.html)",
+						"markdownDescription": "Options passed to the OE test runner via the `ablunit.json` file.  Set to null to prevent the creation of `ablunit.json` or related args passed to the command line.\n\n*[Run test cases from the command prompt](https://docs.progress.com/bundle/openedge-developer-studio-help/page/Run-test-cases-from-the-command-prompt.html)",
 						"default": {
 							"output": {
 								"location": "${tempDir}",
@@ -242,7 +243,7 @@
 							"additionalArgs": {
 								"type": "array",
 								"default": [],
-								"description": "Additional args passed to the command line.  Appended to ``extraParameters` defined in `openedge-project.json`.",
+								"description": "Additional args passed to the command line. Appended to ``extraParameters` defined in `openedge-project.json`.",
 								"items": { "type": "string" }
 							}
 						}

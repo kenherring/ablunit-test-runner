@@ -765,7 +765,11 @@ function getWorkspaceTestPatterns () {
 			workspace.getConfiguration('ablunit').get('files.exclude', [ '**/.{builder,pct}/**' ])
 
 		if (typeof includePatternsConfig === 'string') {
-			includePatternsConfig = [ includePatternsConfig ]
+			if (includePatternsConfig == '') {
+				includePatternsConfig = []
+			} else {
+				includePatternsConfig = [ includePatternsConfig ]
+			}
 		}
 		if (typeof excludePatternsConfig === 'string') {
 			if (excludePatternsConfig == '') {
@@ -972,8 +976,8 @@ function refreshTestTree (controller: TestController, token: CancellationToken):
 
 	const [ includePatterns, excludePatterns ] = getWorkspaceTestPatterns()
 	log.info('includePatternslength=' + includePatterns.length + ', excludePatterns.length=' + excludePatterns.length)
-	log.info('includePatterns=' + JSON.stringify(includePatterns))
-	log.info('excludePatterns=' + JSON.stringify(excludePatterns))
+	log.info('includePatterns=' + JSON.stringify(includePatterns.map(p => p.pattern)))
+	log.info('excludePatterns=' + JSON.stringify(excludePatterns.map(p => p.pattern)))
 
 	removeExcludedFiles(controller, excludePatterns, token)
 

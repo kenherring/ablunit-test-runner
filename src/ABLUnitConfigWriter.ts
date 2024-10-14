@@ -3,8 +3,7 @@ import { log } from './ChannelLogger'
 import { PropathParser } from './ABLPropath'
 import { platform } from 'os'
 import { getProfileConfig, RunConfig } from './parse/TestProfileParser'
-import { IABLUnitJson, ITestObj } from './ABLResults'
-import { CoreOptions } from './parse/config/CoreOptions'
+import { CoreOptions, IABLUnitJson, ITestObj } from './parse/config/CoreOptions'
 import { ProfilerOptions } from './parse/config/ProfilerOptions'
 import { getOpenEdgeProfileConfig, IBuildPathEntry, IDatabaseConnection, IDlc, ProfileConfig } from './parse/OpenedgeProjectParser'
 
@@ -71,10 +70,10 @@ export class ABLUnitConfig  {
 			promarr.push(this.deleteFile(this.ablunitConfig.optionsUri.jsonUri))
 		}
 
-		const out = {
+		const out: IABLUnitJson = {
 			options: cfg,
 			tests: testQueue
-		} as IABLUnitJson
+		}
 
 		promarr.push(workspace.fs.writeFile(this.ablunitConfig.config_uri, Uint8Array.from(Buffer.from(JSON.stringify(out, null, 4)))))
 		return Promise.all(promarr)
@@ -101,7 +100,7 @@ export class ABLUnitConfig  {
 		if (profOpts.statistics) {
 			opt.push('-statistics')
 		}
-		if (profOpts.tracing != '') {
+		if (profOpts.tracing) {
 			opt.push('-tracing "' + profOpts.tracing + '"')
 		}
 		if (profOpts.traceFilter != '') {

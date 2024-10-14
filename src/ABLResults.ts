@@ -16,11 +16,7 @@ import { log } from './ChannelLogger'
 import { ABLUnitRuntimeError, RunStatus, TimeoutError, ablunitRun } from './ABLUnitRun'
 import { getDLC, IDlc } from './parse/OpenedgeProjectParser'
 import { Duration, isRelativePath } from './ABLUnitCommon'
-
-export interface ITestObj {
-	test: string
-	cases?: string[]
-}
+import { ITestObj } from 'parse/config/CoreOptions'
 
 export class ABLResults implements Disposable {
 	workspaceFolder: WorkspaceFolder

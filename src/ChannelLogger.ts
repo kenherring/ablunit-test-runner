@@ -84,18 +84,21 @@ class Logger {
 	}
 
 	notification (message: string, notificationType: NotificationType = NotificationType.Info) {
-		log.info('NOTIFICATION: ' + message + ' (type=' + notificationType + ', enabled=' + this.notificationsEnabled + ')')
+		const logMessage = 'NOTIFICATION: ' + message + ' (type=' + notificationType + ', enabled=' + this.notificationsEnabled + ')'
 		switch (notificationType) {
 			case NotificationType.Info:
+				log.info(logMessage)
 				if (this.notificationsEnabled) {
 					void window.showInformationMessage(message)
 				}
 				void window.showInformationMessage(message)
 				break
 			case NotificationType.Warn:
+				log.warn(logMessage)
 				void window.showWarningMessage(message)
 				break
 			case NotificationType.Error:
+				log.error(logMessage)
 				void window.showErrorMessage(message)
 				break
 		}
