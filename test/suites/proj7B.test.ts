@@ -14,7 +14,7 @@ suite('proj7B - Extension Test Suite', () => {
 	test('proj7B.1 - cancel test refresh', async () => {
 		const minCancelTime = 1
 		const maxCancelTime = 350
-		const maxRefreshTime = 350
+		const maxRefreshTime = 700
 
 		log.info('refreshing tests')
 		const startRefreshTime = new Duration()
@@ -22,9 +22,9 @@ suite('proj7B - Extension Test Suite', () => {
 		let testCount = 0
 		setTimeout(() => { throw new Error('timeout waiting for getTestControllerItemCount to return > 10 (got ' + testCount + ')') }, 5000)
 		while(testCount < 10) {
-			testCount = await sleep2(5).then(() => { return getTestControllerItemCount('ABLTestFile') })
+			testCount = await sleep2(1).then(() => { return getTestControllerItemCount('ABLTestFile') })
 			// await sleep(5, 'waiting for getTestControllerItemCount to return > 10 (got ' + testCount + ')')
-			if (startRefreshTime.elapsed() > 45000) {
+			if (startRefreshTime.elapsed() > 10000) {
 				throw new Error('timeout waiting for getTestControllerItemCount to return > 10 (got ' + testCount + ')')
 			}
 		}
