@@ -22,21 +22,6 @@ export interface ITestObj {
 	cases?: string[]
 }
 
-export interface IABLUnitJson {
-	options: {
-		output: {
-			location: string // results.xml directory
-			filename: string // <filename>.xml
-			format: 'xml'
-		}
-		quitOnEnd: boolean
-		writeLog: boolean
-		showErrorMessage: boolean
-		throwError: boolean
-	}
-	tests: ITestObj[]
-}
-
 export class ABLResults implements Disposable {
 	workspaceFolder: WorkspaceFolder
 	wrapperUri: Uri
