@@ -91,9 +91,9 @@
 		"watch": "npm run build -- --watch"
 	},
 	"dependencies": {
-		"minimatch": "^3.0.4",
+		"minimatch": "^9.0.5",
 		"node-json-minify": "^3.0.0",
-		"xml2js": "0.5.0"
+		"xml2js": "^0.6.2"
 	},
 	"devDependencies": {
 		"@stylistic/eslint-plugin": "^2.9.0",

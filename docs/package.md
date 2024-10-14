@@ -4,7 +4,9 @@
 
 Not in [microsoft/vscode](https://github.com/microsoft/vscode/blob/1.94.2/package.json#L74):
 
+* `minimatch`
 * `node-json-minify`
+* `xml2js`
 
 ## Dev Dependencies
 
