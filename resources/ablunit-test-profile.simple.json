@@ -17,10 +17,17 @@
 					"format": "xml",
 					"updateFile": "updates.log"
 				},
+				"debug": false,
 				"quitOnEnd": true,
 				"writeLog": false,
 				"showErrorMessage": true,
-				"throwError": true
+				"throwError": true,
+				"xref": {
+					"useXref": false,
+					"xrefLocation": "${tempDir}",
+					"xrefExtension": "xml.xref",
+					"xrefThrowError": false
+				}
 			},
 			"profiler": {
 				"enabled": true,
