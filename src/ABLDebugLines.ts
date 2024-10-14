@@ -1,4 +1,3 @@
-
 import { PropathParser } from './ABLPropath'
 import { log } from './ChannelLogger'
 import { ISourceMap, getSourceMapFromRCode } from './parse/RCodeParser'
@@ -32,7 +31,7 @@ export class ABLDebugLines {
 			try {
 				map = await getSourceMapFromRCode(this.propath, await this.propath.getRCodeUri(debugSource))
 			} catch (e) {
-				log.debug('cannot parse source map from rcode, falling back to source parser (' + debugSource + ')')
+				log.debug('cannot parse source map from rcode, falling back to source parser (debugSource=' + debugSource + ', e=' + e + ')')
 				map = await getSourceMapFromSource(this.propath, debugSource)
 			}
 
