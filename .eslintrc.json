@@ -44,7 +44,9 @@
 		// "@typescript-eslint/require-await": "error",
 
 		"@stylistic/indent": [ "error", "tab" ],
-		"@typescript-eslint/ban-types": [ "error", {
+		"@stylistic/comma-spacing": [ "warn", { "before": false, "after": true }],
+		"@stylistic/no-extra-parens": "warn",
+		"@typescript-eslint/no-restricted-types": [ "error", {
 			"types": {
 				"Object": "Use {} instead.",
 				"String": "Use 'string' instead.",
@@ -52,14 +54,12 @@
 				"Boolean": "Use 'boolean' instead."
 			}
 		}],
-		"@typescript-eslint/comma-spacing": [ "warn", { "before": false, "after": true }],
 		"@typescript-eslint/naming-convention": [ "error", {
 			"selector": "interface",
 			"format": [ "PascalCase" ],
 			"custom": { "regex": "^I[A-Z]", "match": true }
 		}],
 		"@typescript-eslint/no-confusing-non-null-assertion": "warn",
-		"@typescript-eslint/no-extra-parens": "warn",
 		"@typescript-eslint/no-floating-promises": [ "error", { "checkThenables": true } ],
 		"@typescript-eslint/no-misused-promises": "error",
 		"@typescript-eslint/no-non-null-assertion": 0, // strict-type-checked="error"
