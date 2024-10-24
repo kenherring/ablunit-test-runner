@@ -33,6 +33,9 @@ export interface IExtensionTestReferences {
 }
 
 let recentResults: ABLResults[] = []
+let contextStorageUri: Uri
+let contextResourcesUri: Uri
+let contextLogUri: Uri
 let recentError: Error | undefined = undefined
 
 export async function activate (context: ExtensionContext) {
@@ -46,6 +49,15 @@ export async function activate (context: ExtensionContext) {
 	const contextResourcesUri = Uri.joinPath(context.extensionUri, 'resources')
 	setContextPaths(contextStorageUri, contextResourcesUri, context.logUri)
 	await createDir(contextStorageUri)
+
+	log.debug('--- Enviroment Variables ---')
+	log.debug('ABLUNIT_TEST_RUNNER_ENABLE_EXTENSIONS=' + process.env['ABLUNIT_TEST_RUNNER_ENABLE_EXTENSIONS'])
+	log.debug('ABLUNIT_TEST_RUNNER_UNIT_TESTING=' + process.env['ABLUNIT_TEST_RUNNER_UNIT_TESTING'])
+	log.debug('ABLUNIT_TEST_RUNNER_VSCODE_VERSION=' + process.env['ABLUNIT_TEST_RUNNER_VSCODE_VERSION'])
+	log.debug('DONT_PROMPT_WSL_INSTALL=' + process.env['DONT_PROMPT_WSL_INSTALL'])
+	log.debug('VSCODE_SKIP_PRELAUNCH=' + process.env['VSCODE_SKIP_PRELAUNCH'])
+
+	log.info('ABLUnit Test Controller created')
 
 	context.subscriptions.push(ctrl)
 
@@ -87,7 +99,7 @@ export async function activate (context: ExtensionContext) {
 			recentResults: recentResults,
 			currentRunData: data
 		} as IExtensionTestReferences
-		log.debug('_ablunit.getExtensionTestReferences currentRunData.length=' + ret.currentRunData?.length + ', recentResults.length=' + ret.recentResults?.length)
+		log.debug('_ablunit.getExtensionTestReferences currentRunData.length=' + ret.currentRunData.length + ', recentResults.length=' + ret.recentResults.length)
 		return ret
 	}
 
@@ -271,6 +283,7 @@ export async function activate (context: ExtensionContext) {
 					}
 				}
 				run.end()
+				log.debug('run.end() - ablunit run failed')
 				return
 			}
 
@@ -349,9 +362,9 @@ export async function activate (context: ExtensionContext) {
 		const run = ctrl.createTestRun(request)
 		currentTestRun = run
 		cancellation.onCancellationRequested(() => {
-			log.debug('cancellation requested - createABLResults-2')
 			run.end()
-			log.trace('run.end()')
+			log.debug('run.end() cancellation requested - createABLResults-2')
+			log.notification('ABLUnit test run cancelled')
 			throw new CancellationError()
 		})
 		const tests = request.include ?? gatherTestItems(ctrl.items)
@@ -434,18 +447,7 @@ export async function activate (context: ExtensionContext) {
 			}, (e) => { throw e })
 	}
 
-	ctrl.resolveHandler = (item) => {
-
-		if (item?.uri) {
-			const relativePath = workspace.asRelativePath(item.uri)
-			log.info('ctrl.resolveHandler (relativePath=' + relativePath + ')')
-		} else if (item) {
-			log.info('ctrl.resolveHandler (item.label=' + item.label + ')')
-		} else {
-			log.info('ctrl.resolveHandler (item=undefined)')
-		}
-		return resolveHandlerFunc(item)
-	}
+	ctrl.resolveHandler = (item) => { return resolveHandlerFunc(item) }
 
 	function updateConfiguration (event: ConfigurationChangeEvent) {
 		if (!event.affectsConfiguration('ablunit')) {
@@ -462,6 +464,11 @@ export async function activate (context: ExtensionContext) {
 					})
 			}
 		}
+		log.debug('affects ablunit.file? ' + event.affectsConfiguration('ablunit.files'))
+		if (event.affectsConfiguration('ablunit.files')) {
+			removeExcludedFiles(ctrl, getExcludePatterns())
+		}
+		return
 	}
 
 	const configHandler = () => {
@@ -484,11 +491,8 @@ export async function activate (context: ExtensionContext) {
 	if(workspace.getConfiguration('ablunit').get('discoverAllTestsOnActivate', false)) {
 		await commands.executeCommand('testing.refreshTests')
 	}
+	log.info('ABLUnit Test Controller activated')
 }
-
-let contextStorageUri: Uri
-let contextResourcesUri: Uri
-let contextLogUri: Uri
 
 function updateNode (uri: Uri, ctrl: TestController) {
 	log.debug('updateNode uri="' + uri.fsPath + '"')
@@ -989,8 +993,11 @@ function refreshTestTree (controller: TestController, token: CancellationToken):
 			for (const file of r) {
 				checkCancellationToken()
 				const { item, data } = getOrCreateFile(controller, file, excludePatterns)
-				if (!item && !data) {
+				if (!item) {
 					log.debug('could not create test item for file: ' + file.fsPath)
+				}
+				if (!data) {
+					log.debug('coult not create data for file: ' + file.fsPath)
 				}
 			}
 			log.info('found matching files (r.length=' + r.length + ')')
@@ -1163,7 +1170,6 @@ function createDir (uri: Uri) {
 	return workspace.fs.stat(uri).then((stat) => {
 		if (!stat) {
 			return workspace.fs.createDirectory(uri)
-
 		}
 		return
 	}, () => {

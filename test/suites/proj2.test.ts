@@ -4,9 +4,7 @@ const workspaceUri = getWorkspaceUri()
 
 suite('proj2 - Extension Test Suite', () => {
 
-	suiteSetup('proj2 - before', async () => {
-		await suiteSetupCommon()
-	})
+	suiteSetup('proj2 - before', () => suiteSetupCommon())
 
 	setup('proj2 - beforeEach', () => {
 		beforeCommon()

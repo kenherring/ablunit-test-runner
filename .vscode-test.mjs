@@ -28,7 +28,7 @@ function getConfig2() {
         ],
         coverage: {}
     })
-    fs.writeFileSync('.vscode-test.defined.bk.json', JSON.stringify(config, null, 4).replace('    ', '\t'))
+    fs.writeFileSync('artifacts/.vscode-test.json', JSON.stringify(config, null, 4).replace('    ', '\t'))
     return config
 }
 

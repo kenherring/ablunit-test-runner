@@ -41,8 +41,8 @@ export class ABLUnitConfig  {
 	}
 
 	createProgressIni (propath: string, dlc: IDlc) {
-		if (platform() != 'win32') { return }
-		if (!this.ablunitConfig.progressIniUri) { return }
+		if (platform() != 'win32') { return Promise.resolve() }
+		if (!this.ablunitConfig.progressIniUri) { return Promise.resolve() }
 		log.info('creating progress.ini: \'' + this.ablunitConfig.progressIniUri.fsPath + '\'')
 		const iniData = ['[WinChar Startup]', 'PROPATH=' + propath.replace(/\$\{DLC\}/g, dlc.uri.fsPath.replace(/\\/g, '/'))]
 		const iniBytes = Uint8Array.from(Buffer.from(iniData.join('\n')))
@@ -123,6 +123,7 @@ export class ABLUnitConfig  {
 		if (lines.length > 0) {
 			return this.writeFile(uri, Uint8Array.from(Buffer.from(lines.join('\n') + '\n')))
 		}
+		return Promise.resolve()
 	}
 
 	readPropathFromJson (extensionResourcesDir?: Uri) {

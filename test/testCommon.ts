@@ -21,7 +21,7 @@ import { ITestSuites } from '../src/parse/ResultsParser'
 import { IConfigurations, parseRunProfiles } from '../src/parse/TestProfileParser'
 import { DefaultRunProfile, IRunProfile as IRunProfileGlobal } from '../src/parse/config/RunProfile'
 import { RunStatus } from '../src/ABLUnitRun'
-import { enableOpenedgeAblExtension, rebuildAblProject, restartLangServer, setRuntimes, waitForLangServerReady } from './openedgeAblCommands'
+import { enableOpenedgeAblExtension, rebuildAblProject, setRuntimes, waitForLangServerReady } from './openedgeAblCommands'
 import path from 'path'
 
 interface IRuntime {
@@ -70,11 +70,9 @@ export const oeVersion = () => {
 	const versionFile = path.join(useDLC, 'version')
 	const dlcVersion = fs.readFileSync(versionFile)
 	log.info('dlcVersion=' + dlcVersion)
-	if (dlcVersion) {
-		const match = RegExp(/OpenEdge Release (\d+\.\d+)/).exec(dlcVersion.toString())
-		if (match) {
-			return match[1]
-		}
+	const match = RegExp(/OpenEdge Release (\d+\.\d+)/).exec(dlcVersion.toString())
+	if (match) {
+		return match[1]
 	}
 	throw new Error('unable to determine oe version!')
 }
@@ -86,15 +84,14 @@ const getEnvVar = (envVar: string) => {
 	return undefined
 }
 
-const projName = () => { return getWorkspaceUri().fsPath.replace(/\\/g, '/').split('/').pop() }
 
-// test suite objects
+// test objects
 export const log = logObj
 export class FilesExclude {
 	exclude: Record<string, boolean> = {}
 }
 // riversidesoftware.openedge-abl-lsp extension objects
-export { setRuntimes, rebuildAblProject }
+export { rebuildAblProject }
 // kherring.ablunit-test-runner extension objects
 export type IRunProfile = IRunProfileGlobal
 export { RunStatus, parseRunProfiles }
@@ -104,6 +101,7 @@ export {
 	commands, extensions, window, workspace
 }
 
+const projName = () => { return getWorkspaceUri().fsPath.replace(/\\/g, '/').split('/').pop() }
 // test case objects - reset before each test
 let recentResults: ABLResults[] | undefined
 let currentRunData: ABLResults[] | undefined
@@ -117,8 +115,6 @@ export function beforeCommon () {
 
 	deleteTestFiles()
 }
-
-log.info('enableExtensions=' + enableExtensions() + ', projName=' + projName() + ', oeVersion=' + oeVersion())
 
 export function isoDate () {
 	return ''
@@ -147,7 +143,7 @@ function getExtensionDevelopmentPath () {
 }
 
 export async function suiteSetupCommon (runtimes: IRuntime[] = []) {
-	if (!runtimes || runtimes.length === 0) {
+	if (runtimes.length === 0) {
 		runtimes = [{ name: oeVersion(), path: getDefaultDLC(), default: true }]
 	}
 	log.info('[suiteSetupCommon] waitForExtensionActive \'kherring.ablunit-test-runner\' (projName=' + projName() + ')')
@@ -156,6 +152,7 @@ export async function suiteSetupCommon (runtimes: IRuntime[] = []) {
 		await enableOpenedgeAblExtension(runtimes)
 	}
 	log.info('suiteSetupCommon complete!')
+	return
 }
 
 export function teardownCommon () {
@@ -175,7 +172,7 @@ export function setFilesExcludePattern () {
 	const files = new FilesExclude
 	// files.exclude = workspace.getConfiguration('files', getWorkspaceUri()).get('exclude', {})
 	const filesConfig = workspace.getConfiguration('files', getWorkspaceUri())
-	files.exclude = filesConfig.get('exclude', {}) ?? {}
+	files.exclude = filesConfig.get('exclude', {})
 	files.exclude['**/.builder'] = true
 	files.exclude['**/.pct'] = true
 	files.exclude['**/lbia*'] = true
@@ -195,11 +192,23 @@ export function setFilesExcludePattern () {
 	})
 }
 
-export function installExtension (extname = 'riversidesoftware.openedge-abl-lsp'): PromiseLike<boolean> {
+export function isExtensionActive (ext = 'kherring.ablunit-test-runner') {
+	const extObj = extensions.getExtension(ext)
+	if (!extObj) {
+		throw new Error('extension not installed: ' + ext)
+	}
+	if (!extObj.isActive) {
+		throw new Error('extension not active: ' + ext)
+	}
+	return true
+}
+
+export function installExtension (extname = 'riversidesoftware.openedge-abl-lsp') {
 	log.info('start process.args=' + process.argv.join(' '))
-	if (extensions.getExtension(extname)) {
+	const ext = extensions.getExtension(extname)
+	if (ext) {
 		log.info('extension ' + extname + ' is already installed')
-		return Promise.resolve(true)
+		return Promise.resolve(ext)
 	}
 	if (extname == 'kherring.ablunit-test-runner') {
 		throw new Error('extension kherring.ablunit-test-runner should be loaded from the extensionDevelopmentPath')
@@ -209,23 +218,26 @@ export function installExtension (extname = 'riversidesoftware.openedge-abl-lsp'
 	}
 
 
-	log.info('installing ' + extname + ' extension...')
 	const installCommand = 'workbench.extensions.installExtension'
-	return commands.executeCommand(installCommand, extname)
-		.then(() => {
-			log.info('post install command')
-			return sleep2(250)
-		}).then(() => {
-			log.info('get extension \'' + extname + '\'...')
-			const ext = extensions.getExtension(extname)
-			if (!ext) {
-				throw new Error('get after install failed (undefined)')
-			}
-			return true
-		}, (e) => {
-			log.error('install failed e=' + e)
-			return false
-		})
+
+	log.info('installing ' + extname + ' extension with command \'' + installCommand + '\'')
+	return commands.executeCommand(installCommand, extname).then((r) => {
+		log.info('post-' + installCommand + '(r=' + r + ')')
+		return sleep2(250)
+	}).then(() => {
+		log.info('get extension \'' + extname + '\'...')
+		const ext = extensions.getExtension(extname)
+		if (!ext) { throw new Error('get after install failed') }
+		return ext
+	}, (e) => {
+		log.error(installCommand + ' failed to install extension \'' + extname + '\'!')
+		throw e
+	})
+}
+
+export function setupCommon () {
+	recentResults = undefined
+	currentRunData = undefined
 }
 
 export function deleteFile (file: Uri | string) {
@@ -291,7 +303,6 @@ async function waitForExtensionActive (extensionId = 'kherring.ablunit-test-runn
 	if (!ext) {
 		throw new Error('extension not installed: ' + extensionId)
 	}
-	if (!ext) { throw new Error(extensionId + ' is not installed') }
 	if (ext.isActive) { log.info(extensionId + ' is already active'); return ext.isActive }
 
 	ext = await ext.activate()
@@ -303,15 +314,18 @@ async function waitForExtensionActive (extensionId = 'kherring.ablunit-test-runn
 	log.info('post-activate (ext.isActive=' + ext?.isActive + ')')
 	if (!ext) { throw new Error(extensionId + ' is not installed') }
 
-	for (let i=0; i<50; i++) {
-		if (ext.isActive) {
-			log.info(extensionId + ' is active! (i=' + i + ')')
-			return Promise.resolve(ext.isActive)
+	if(!ext.isActive) {
+		log.info('waiting for extension to activate - should never be here!')
+		for (let i=0; i<50; i++) {
+			ext = extensions.getExtension(extensionId)
+			if (ext?.isActive) {
+				log.info('waitied ' + (i + 1) * 100 + 'ms for extension to activate')
+				break
+			}
 		}
-		log.info('waitied ' + (i + 1) * 100 + 'ms for extension to activate')
 		await sleep2(100)
 	}
-	if (!ext.isActive) { throw new Error(extensionId + ' is not active') }
+	if (!ext?.isActive) { throw new Error(extensionId + ' is not active') }
 
 	log.info(extensionId + ' is active!')
 	return ext.isActive
@@ -420,9 +434,9 @@ export function toUri (uri: string | Uri) {
 	}
 
 	const ws = getWorkspaceUri()
-	if (!ws) {
-		throw new Error('workspaceUri is null (uri="' + uri.toString() + '")')
-	}
+	// if (!ws) {
+	// 	throw new Error('workspaceUri is null (uri=' + uri.toString() + ')')
+	// }
 
 	if (isRelativePath(uri)) {
 		return Uri.joinPath(ws, uri)
@@ -540,11 +554,8 @@ export async function runAllTests (doRefresh = true, waitForResults = true, with
 	if (doRefresh) {
 		log.info('refresh before run - start')
 		await refreshTests()
-		// await refreshTests()
-		// 	.then(() => {
-		// 		log.info('refreshTests complete!')
-		// 		return true
-		// 	}, (e) => { throw e })
+	} else {
+		await sleep(250, tag + 'sleep before testing.runAll')
 	}
 
 	log.info('testing.runAll starting (waitForResults=' + waitForResults + ')')
@@ -556,15 +567,17 @@ export async function runAllTests (doRefresh = true, waitForResults = true, with
 		.then(() => {
 			log.info(tag + 'testing.runAll completed - start getResults()')
 			if (!waitForResults) { return [] }
+			runAllTestsDuration?.stop()
 			return getResults(1, tag)
-		})
-		.then((r) => {
-			if (r.length >= 0) {
-				const fUri = r[0]?.cfg.ablunitConfig.optionsUri.filenameUri
-				log.info(tag + 'testing.runAll command complete (filename=' + fUri.fsPath + ', r=' + r + ')')
-				return doesFileExist(fUri)
+		}).then((r) => {
+			const fUri = r[0]?.cfg.ablunitConfig.optionsUri.filenameUri
+			log.info(tag + 'testing.runAll found results file (filename=' + fUri.fsPath + ', r=' + r + ')')
+			if (!doesFileExist(fUri)) {
+				throw new Error('no results file found (filename=' + fUri.fsPath + ')')
 			}
-			return false
+
+			log.info(tag + 'runAllTests complete (r=' + r + ')')
+			return true
 		}, (err) => {
 			runAllTestsDuration?.stop()
 			throw new Error('testing.runAll failed: ' + err)
@@ -815,9 +828,13 @@ export function selectProfile (profile: string) {
 		profile: profile
 	}
 	const profileUri = Uri.joinPath(getWorkspaceUri(), '.vscode', 'profile.json')
-	return workspace.fs.writeFile(profileUri, Buffer.from(JSON.stringify(profileJson))).then(() => {
-		return restartLangServer()
-	})
+	return workspace.fs.writeFile(profileUri, Buffer.from(JSON.stringify(profileJson)))
+		.then(async () => {
+			await sleep(100)
+			return commands.executeCommand('abl.restart.langserv')
+		}, (err) => {
+			throw new Error('failed to restart langserv: ' + err)
+		})
 }
 
 export function refreshData (resultsLen = 0) {
@@ -831,13 +848,13 @@ export function refreshData (resultsLen = 0) {
 		// log.info('refs=' + JSON.stringify(refs))
 
 		if (refs.recentResults.length > 0) {
-			const testCount = refs.recentResults?.[0].ablResults?.resultsJson[0].testsuite?.[0].tests ?? undefined
-			const passedCount = refs.recentResults?.[0].ablResults?.resultsJson[0].testsuite?.[0].passed ?? undefined
-			const failedCount = refs.recentResults?.[0].ablResults?.resultsJson[0].testsuite?.[0].failures ?? undefined
+			const testCount = refs.recentResults[0].ablResults?.resultsJson[0].testsuite?.[0].tests ?? undefined
+			const passedCount = refs.recentResults[0].ablResults?.resultsJson[0].testsuite?.[0].passed ?? undefined
+			const failedCount = refs.recentResults[0].ablResults?.resultsJson[0].testsuite?.[0].failures ?? undefined
 			log.info('recentResults.length=' + refs.recentResults.length)
-			log.info('recentResults[0].ablResults.status=' + refs.recentResults?.[0].status)
-			log.info('recentResults[0].ablResults.resultsJson.length=' + refs.recentResults?.[0].ablResults?.resultsJson.length)
-			log.info('recentResults[0].ablResults.resultsJson[0].testsuite.length=' + refs.recentResults?.[0].ablResults?.resultsJson[0].testsuite?.length)
+			log.info('recentResults[0].ablResults.status=' + refs.recentResults[0].status)
+			log.info('recentResults[0].ablResults.resultsJson.length=' + refs.recentResults[0].ablResults?.resultsJson.length)
+			log.info('recentResults[0].ablResults.resultsJson[0].testsuite.length=' + refs.recentResults[0].ablResults?.resultsJson[0].testsuite?.length)
 			log.info('testCount=' + testCount + '; passed=' + passedCount + '; failed=' + failedCount)
 			if (testCount && testCount <= resultsLen) {
 				assert.lessOrEqual(testCount, resultsLen, 'testCount should be greater than ' + resultsLen)
@@ -845,11 +862,7 @@ export function refreshData (resultsLen = 0) {
 		}
 
 		recentResults = refs.recentResults
-		if (refs.currentRunData) {
-			currentRunData = refs.currentRunData
-			return true
-		}
-		return false
+		return currentRunData != undefined
 	}, (err) => {
 		log.error('failed to refresh test results: ' + err)
 		throw new Error('failed to refresh test results: ' + err)
@@ -991,17 +1004,16 @@ export async function getResults (len = 1, tag?: string): Promise<ABLResults[]> 
 	tag = tag ?? ''
 	if ((!recentResults || recentResults.length === 0) && len > 0) {
 		log.info(tag + 'recentResults not set, refreshing...')
-		for (let i=0; i<5; i++) {
-			const prom = sleep2(250, tag + 'still no recentResults, sleep before trying again (' + i + '/4)')
-				.then(() => { return refreshData() })
-				.then((gotResults) => {
-					if (gotResults) { return gotResults }
-					return sleep2(250)
-				})
-				.catch((e: unknown) => { log.error('no recentResults yet (' + i + '/4) (e=' + e + ')') })
-
-			if (await prom && (recentResults?.length ?? 0) > 0) {
-				break
+		for (let i=0; i<15; i++) {
+			const gotResults = refreshData()
+			if (await gotResults) {
+				log.info('recentResults.length=' + recentResults?.length)
+				if ((recentResults?.length ?? 0) >= len) {
+					log.info('found test results ' + duration)
+					break
+				}
+			} else {
+				await sleep2(100, tag + 'still no recentResults, sleep before trying again (' + i + '/15)')
 			}
 		}
 	}
@@ -1067,14 +1079,13 @@ class AssertTestResults {
 }
 
 function getDetailLine (coverage: FileCoverageDetail[] | never[], lineNum: number) {
-	if (!coverage) return undefined
 	if (coverage.length === 0) {
 		return undefined
 	}
 	try {
 		const l =  coverage.find((d: FileCoverageDetail) => {
 			const r = d.location as Position
-			return r
+			return r.line
 		})
 		if (l) {
 			log.info('found line ' + lineNum + '!')
@@ -1218,9 +1229,9 @@ export const assert = {
 				return
 			}
 			if (notExecuted) {
-				assert.equal(lineCoverage?.executed, 0, 'line ' + line + ' in ' + file.fsPath + ' was executed')
+				assert.equal(lineCoverage.executed, 0, 'line ' + line + ' in ' + file.fsPath + ' was executed')
 			} else {
-				assert.greater(lineCoverage?.executed, 0, 'line ' + line + ' in ' + file.fsPath + ' was not executed')
+				assert.greater(lineCoverage.executed, 0, 'line ' + line + ' in ' + file.fsPath + ' was not executed')
 			}
 		}
 	},
