@@ -1,3 +1,12 @@
+# 🥳 [1.0.0](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.0.0) - 2024-10-24
+
+* Finally, a non-preview release!
+* Various fixes and updates
+* Improved test run output, including call stacks with test failure messages
+
+**Full Changelog**: [0.2.0...1.0.0](https://github.com/kenherring/ablunit-test-runner/compare/0.2.17...1.0.0)
+
+<!--
 # [0.2.17](https://github.com/kenherring/ablunit-test-runner/releases/tag/0.2.17) - 2024-10-14 (pre-release)
 
  * add `timeout` key to test config (#217)
@@ -96,7 +105,9 @@ This is a release candidate for 1.0.0.  There is one open PR ([#194](https://git
 
 **Full Changelog**: [0.2.0...0.2.1](https://github.com/kenherring/ablunit-test-runner/compare/0.2.0...0.2.1)
 
-# [0.2.0](https://github.com/kenherring/ablunit-test-runner/releases/tag/0.2.0) - 2024-01-22
+-->
+
+# 🥇 [0.2.0](https://github.com/kenherring/ablunit-test-runner/releases/tag/0.2.0) - 2024-01-22
 
 Initial release to marketplace
 
