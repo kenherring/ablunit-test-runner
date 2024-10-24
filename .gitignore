@@ -2,6 +2,7 @@
 .ssh/
 .vscode-test/
 .vscode-test-docker/
+.worktrees/
 artifacts/
 coverage/
 dist/

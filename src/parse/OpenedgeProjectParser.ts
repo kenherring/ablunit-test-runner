@@ -389,7 +389,9 @@ function parseOpenEdgeProjectConfig (uri: Uri, workspaceUri: Uri, config: IOpenE
 	// Active profile
 	const actProf = getActiveProfile(prjConfig.rootDir)
 	if (actProf) {
-		if (prjConfig.profiles.has(actProf)) {
+		if (prjConfig.profiles.has('ablunit')) {
+			prjConfig.activeProfile = 'ablunit'
+		} else if (prjConfig.profiles.has(actProf)) {
 			prjConfig.activeProfile = actProf
 		} else {
 			prjConfig.activeProfile = 'default'
