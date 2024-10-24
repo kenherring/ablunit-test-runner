@@ -13,29 +13,10 @@ import { ABLDebugLines } from './ABLDebugLines'
 import { ABLPromsgs, getPromsgText } from './ABLPromsgs'
 import { PropathParser } from './ABLPropath'
 import { log } from './ChannelLogger'
-import { ABLUnitRuntimeError, RunStatus, ablunitRun } from './ABLUnitRun'
+import { ABLUnitRuntimeError, RunStatus, TimeoutError, ablunitRun } from './ABLUnitRun'
 import { getDLC, IDlc } from './parse/OpenedgeProjectParser'
 import { Duration, isRelativePath } from './ABLUnitCommon'
-
-export interface ITestObj {
-	test: string
-	cases?: string[]
-}
-
-export interface IABLUnitJson {
-	options: {
-		output: {
-			location: string // results.xml directory
-			filename: string // <filename>.xml
-			format: 'xml'
-		}
-		quitOnEnd: boolean
-		writeLog: boolean
-		showErrorMessage: boolean
-		throwError: boolean
-	}
-	tests: ITestObj[]
-}
+import { ITestObj } from 'parse/config/CoreOptions'
 
 export class ABLResults implements Disposable {
 	workspaceFolder: WorkspaceFolder
@@ -55,6 +36,7 @@ export class ABLResults implements Disposable {
 	profileJson?: ABLProfileJson
 	coverageJson: [] = []
 	dlc: IDlc | undefined
+	thrownError: Error | undefined
 
 	public coverage: Map<string, FileCoverageDetail[]> = new Map<string, FileCoverageDetail[]>()
 	public filecoverage: FileCoverage[] = []
@@ -227,13 +209,11 @@ export class ABLResults implements Disposable {
 				throw new Error('no results available')
 			}
 			return true
-		}, (err: unknown) => {
-			// log.info('[run] e=' + JSON.stringify(err))
-			if (err instanceof CancellationError || err instanceof ABLUnitRuntimeError) {
-				throw err
-			} else {
-				throw new Error('ablunit run failed! Exception: ' + err)
+		}, (e: unknown) => {
+			if (e instanceof CancellationError || e instanceof ABLUnitRuntimeError || e instanceof TimeoutError || e instanceof Error) {
+				throw e
 			}
+			throw new Error('ablunit run failed! Exception not instance of Error.  e=: ' + e)
 		})
 	}
 

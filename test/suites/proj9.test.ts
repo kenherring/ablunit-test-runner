@@ -31,7 +31,7 @@ suite('proj9 - Extension Test Suite', () => {
 	})
 
 	suiteTeardown('proj9 - after', () => {
-		return workspace.fs.delete(testProfileBackup)
+		return workspace.fs.delete(testProfileBackup).then(() => { return }, (e) => { return })
 		// await workspace.fs.delete(testProfileBackup).then(() => {
 		// 	log.info('suiteTeardown return')
 		// 	return

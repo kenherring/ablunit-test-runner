@@ -7,7 +7,7 @@ orbs:
 parameters:
   cache-version:
     type: string
-    default: v10
+    default: v11
   expected-vsix-count:
     type: integer
     default: 1

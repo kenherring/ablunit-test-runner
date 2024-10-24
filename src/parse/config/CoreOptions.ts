@@ -1,3 +1,7 @@
+export interface ITestObj {
+	test: string
+	cases?: string[]
+}
 
 interface ICoreOutput {
 	location?: string
@@ -28,6 +32,12 @@ export interface ICoreOptions {
 	throwError?: boolean // = true
 	xref?: IXrefOptions
 }
+
+export interface IABLUnitJson {
+	options: ICoreOptions
+	tests: ITestObj[]
+}
+
 
 export class CoreOptions implements ICoreOptions {
 	output: ICoreOutput = {

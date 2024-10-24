@@ -183,14 +183,13 @@ run_tests () {
 	if [ "$EXIT_CODE" = "0" ]; then
 		echo "xvfb-run success"
 	else
-		echo "xvfb-run failed (EXIT_CODE=$EXIT_CODE)"
+		echo "ERROR: xvfb-run failed (EXIT_CODE=$EXIT_CODE)"
 		save_and_print_debug_output
-		exit $EXIT_CODE
 	fi
 
 	if ! $ABLUNIT_TEST_RUNNER_NO_COVERAGE && [ ! -s artifacts/coverage/lcov.info ]; then
 		echo 'ERROR: artifacts/coverage/lcov.info not found'
-		exit 1
+		EXIT_CODE=90
 	fi
 
 	echo "---------- TIMING ----------"
@@ -220,8 +219,18 @@ save_and_print_debug_output () {
 	find . -name '*.r'
 }
 
+process_exit_code () {
+	if [ "${EXIT_CODE:-0}" = 0 ]; then
+		echo "$0 all tests completed successfully!"
+		exit 0
+	fi
+	echo "$0 failed with exit code $EXIT_CODE"
+	exit ${EXIT_CODE:-255}
+}
+
 ########## MAIN BLOCK ##########
 initialize "$@"
 dbus_config
 run_tests
-echo "[$0] completed successfully!"
+scripts/sonar_test_results_merge.sh
+process_exit_code

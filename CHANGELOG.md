@@ -1,3 +1,11 @@
+# [0.2.17](https://github.com/kenherring/ablunit-test-runner/releases/tag/0.2.17) - 2024-10-14 (pre-release)
+
+ * add `timeout` key to test config (#217)
+ * Unskip tests and ensure they pass (#216)
+ * Read `openedge-project.json` profile by name consistently (#212)
+
+**Full Changelog**: [0.2.15...0.2.17](https://github.com/kenherring/ablunit-test-runner/compare/0.2.15...0.2.17)
+
 # [0.2.15](https://github.com/kenherring/ablunit-test-runner/releases/tag/0.2.15) - 2024-10-08 (pre-release)
 
  * Use `TestMesssage.stackTrace` instead of custom display (#213)

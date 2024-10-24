@@ -2,7 +2,7 @@
 	"name": "ablunit-test-runner",
 	"displayName": "ABLUnit Test Runner",
 	"description": "OpenEdge ABLUnit test runner for VSCode",
-	"version": "0.2.15",
+	"version": "0.2.17",
 	"preview": true,
 	"engineStrict": true,
 	"galleryBanner": {
@@ -61,7 +61,7 @@
 		"progress"
 	],
 	"engines": {
-		"vscode": "^1.88.0"
+		"vscode": "^1.94.0"
 	},
 	"categories": [
 		"Testing"
@@ -78,8 +78,8 @@
 		"build": "node esbuild.js",
 		"rebuild": "npm run clean && npm run build",
 		"clean": "sh -c scripts/npm_clean.sh",
-		"lint": "npx eslint ./src ./test --ext .ts,.js",
-		"lint-fix-all": "npx eslint ./src ./test --ext .ts,.js --fix",
+		"lint": "npx eslint ./{src,test}/**/*.ts",
+		"lint-fix-all": "npx eslint ./{src,test}/**/*.ts --fix",
 		"vscode:prepublish": "npm run package",
 		"package": "npm run build",
 		"pretest": "sh -c scripts/npm_pretest.sh",
@@ -97,26 +97,25 @@
 	},
 	"devDependencies": {
 		"@types/source-map-support": "^0.5.10",
-		"@stylistic/eslint-plugin": "^2.8.0",
+		"@stylistic/eslint-plugin": "^2.9.0",
 		"@swc-node/register": "^1.10.9",
-		"@types/mocha": "^10.0.8",
-		"@types/node": "^18.19.50",
-		"@types/vscode": "^1.88.0",
-		"@types/xml2js": "^0.4.14",
-		"@typescript-eslint/eslint-plugin": "^7.18.0",
-		"@typescript-eslint/parser": "^7.18.0",
+		"@types/mocha": "^9.1.1",
+		"@types/node": "20.X",
+		"@types/vscode": "^1.94.0",
+		"@typescript-eslint/eslint-plugin": "^8.8.1",
+		"@typescript-eslint/parser": "^8.8.1",
 		"@vscode/test-cli": "^0.0.10",
-		"@vscode/test-electron": "^2.4.1",
-		"@vscode/vsce": "^3.1.0",
-		"esbuild": "^0.23.1",
+		"@vscode/test-electron": "^2.4.0",
+		"@vscode/vsce": "^3.1.1",
+		"esbuild": "^0.24.0",
 		"eslint": "^8.57.0",
 		"eslint-plugin-promise": "^7.1.0",
-		"mocha": "^10.7.3",
+		"mocha": "^10.2.0",
 		"mocha-multi-reporters": "^1.5.1",
 		"mocha-reporter-sonarqube": "2.0.6",
-		"ts-node": "^10.9.2",
+		"ts-node": "^10.9.1",
 		"tsconfig-paths": "^4.2.0",
-		"typescript": "^5.6.2"
+		"typescript": "^5.6.3"
 	},
 	"contributes": {
 		"configuration": {

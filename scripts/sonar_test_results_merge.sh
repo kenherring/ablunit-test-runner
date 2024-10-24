@@ -7,12 +7,52 @@ if $VERBOSE; then
     set -x
 fi
 
-rm -f artifacts/mocha_results_sonar/merged.xml
+initialize () {
+    rm -f artifacts/mocha_results_sonar/merged*.xml
+    if ! find artifacts/mocha_results_sonar -type f -name "*.xml"; then
+        echo "ERROR: no *.xml files found in artifacts/mocha_results_sonar"
+        exit 1
+    else
+        echo "Directory is empty"
+    fi
+}
 
-if ! find artifacts/mocha_results_sonar -type f -name "*.xml" &> /dev/null; then
-    echo "ERROR: no *.xml files found in artifacts/mocha_results_sonar" >&2
-    exit 1
-fi
+convert_and_merge_xml () {
+    {
+        echo '<?xml version="1.0" encoding="UTF-8"?>'
+        echo '<testExecutions version="1">'
+        cat artifacts/mocha_results_sonar/*.xml | grep -v '</*testExecutions'
+        echo '</testExecutions>'
+    } > artifacts/mocha_results_sonar/merged
+
+    mv artifacts/mocha_results_sonar/merged artifacts/mocha_results_sonar/merged.xml
+    xq '.' artifacts/mocha_results_sonar/merged.xml > artifacts/mocha_results_sonar/merged.json
+
+    ${VERBOSE:-false} && cat artifacts/mocha_results_sonar/merged.xml
+
+    echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] merged test results for sonar consumption.  output: artifacts/mocha_results_sonar/merged.xml"
+
+}
+
+show_summary () {
+    jq '[ .testExecutions
+            | .file     | if type=="array" then .[] else . end
+            | .testCase | if type=="array" then .[] else . end
+        ]' artifacts/mocha_results_sonar/merged.json > artifacts/mocha_results_sonar/merged_flat.json
+
+    TEST_COUNT="$(jq '. | length' < artifacts/mocha_results_sonar/merged_flat.json)"
+    echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] $TEST_COUNT total tests"
+
+    SKIP_COUNT="$(jq '.[] | select(has("skipped")) | length' < artifacts/mocha_results_sonar/merged_flat.json || echo 0)"
+    echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] $SKIP_COUNT/$TEST_COUNT tests skipped"
+
+    FAILURE_COUNT="$(jq '.[] | select(has("failure")) | length' < artifacts/mocha_results_sonar/merged_flat.json)"
+    if [ "$FAILURE_COUNT" != "0" ]; then
+        echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] ERROR: $FAILURE_COUNT/$TEST_COUNT tests failed"
+        jq '.[] | select(has("failure"))' < artifacts/mocha_results_sonar/merged_flat.json
+    fi
+}
+
 
 for F in artifacts/mocha_results_sonar/*.xml; do
     $VERBOSE && echo "F=$F"
@@ -21,31 +61,11 @@ for F in artifacts/mocha_results_sonar/*.xml; do
     else
         cp "$F.orig" "$F"
     fi
-    xq . "$F" -x > "$F.formatted"
-    # xq . --xml-output "$F" > artifacts/mocha_results_sonar/$(basename "$F" .xml).formatted
+    xq . "$F" -ix
+    xq . "$F" > "artifacts/mocha_results_sonar/$(basename "$F" .xml).json"
 done
 
-{
-    echo '<?xml version="1.0" encoding="UTF-8"?>'
-    echo '<testExecutions version="1">'
-    cat artifacts/mocha_results_sonar/*.xml.formatted | grep -v '</*testExecutions' | grep -v '<\?xml version='
-    echo '</testExecutions>'
-} > artifacts/mocha_results_sonar/merged.xml
-xq '.' artifacts/mocha_results_sonar/merged.xml > artifacts/mocha_results_sonar/merged.json
-
-## TODO - print totals for pass, skipped, failed, etc
-# FILE_COUNT="$(jq '.testExecutions.file[] | ."@path"' artifacts/mocha_results_sonar/merged.json  | wc -l)"
-# TEST_COUNT=-1
-# SKIPPED_COUNT=$(xq '.testExecutions.file[].testCase[] | select(.skipped != null) | ."@name"' artifacts/mocha_results_sonar/merged.xml | wc -l)
-# ERROR_COUNT=-1
-
-# echo "ERROR TESTS: TBD"
-
-# ${CIRCLECI:-false} && sed -i "s|/home/circleci/project|$(pwd)|g" artifacts/eslint_report.json
-
-if $VERBOSE; then
-  echo "--------- 📁 artifacts/mpocha_results_sonar/merged.xml 📁 ----------"
-  cat artifacts/mocha_results_sonar/merged.xml
-  echo "----------   -----------------------------------------   ----------"
-fi
-echo "successfully merged test results for sonar consumption.  output: artifacts/mocha_results_sonar/merged.xml"
+########## MAIN BLOCK ##########
+initialize
+convert_and_merge_xml
+show_summary

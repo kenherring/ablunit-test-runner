@@ -1,4 +1,4 @@
-import { TestItem, TestRun, Uri } from 'vscode'
+import { FileSystemError, TestItem, TestMessage, TestRun, Uri } from 'vscode'
 import { readLinesFromFile } from './TestParserCommon'
 import { log } from '../ChannelLogger'
 
@@ -13,6 +13,7 @@ export enum TestStatus {
 	skipped = 'TEST_IGNORED',
 	started = 'TEST_START',
 	passed = 'TEST_END',
+	timeout = 'timeout',
 	failed = 'TEST_FAIL',
 	exception = 'TEST_EXCEPTION',  // todo
 	errored = 'TEST_ERROR',
@@ -308,11 +309,26 @@ export function processUpdates (options: TestRun, tests: TestItem[], updateFile:
 			}
 			return true
 		}, (e) => {
-			log.warn('Error processing updates: ' + e)
-			if (e instanceof Error) {
-				log.warn(e.stack!)
+			if (e instanceof FileSystemError) {
+				log.warn('could not find update file: ' + updateFile.fsPath)
+			} else if (e instanceof Error) {
+				log.warn('error processing updates: ' + e.stack! + ' (e=' + e + ')')
 			}
 			// eat this error, we don't want to stop the test run because of it
 			return false
 		})
+}
+
+export function setTimeoutTestStatus (options: TestRun, timeout: number) {
+	for (const u of updates) {
+		if (!u.test) {
+			continue
+		}
+		if (u.status == TestStatus.started) {
+			u.status = TestStatus.timeout
+			options.failed(u.test, new TestMessage('timeout!\nThe ABLUnit process timed out after ' + timeout + 'ms'))
+		} else if (u.status == TestStatus.enqueud) {
+			options.skipped(u.test)
+		}
+	}
 }

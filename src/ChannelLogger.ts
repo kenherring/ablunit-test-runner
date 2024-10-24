@@ -5,6 +5,7 @@ import path from 'path'
 enum NotificationType {
 	Info = 'Info',
 	Warn = 'Warn',
+	Error = 'Error',
 }
 
 class Logger {
@@ -17,6 +18,7 @@ class Logger {
 	private readonly consoleTimestamp = process.env['ABLUNIT_TEST_RUNNER_UNIT_TESTING'] === 'true'
 	private testResultsTimestamp = false
 	private readonly extensionCodeDir = path.normalize(__dirname + '/../..')
+	notificationsEnabled = true
 
 	private constructor (extCodeDir?: string) {
 		this.logLevel = LogLevel.Info
@@ -82,10 +84,23 @@ class Logger {
 	}
 
 	notification (message: string, notificationType: NotificationType = NotificationType.Info) {
-		log.info(message)
+		const logMessage = 'NOTIFICATION: ' + message + ' (type=' + notificationType + ', enabled=' + this.notificationsEnabled + ')'
 		switch (notificationType) {
-			case NotificationType.Info: return window.showInformationMessage(message)
-			case NotificationType.Warn: return window.showWarningMessage(message)
+			case NotificationType.Info:
+				log.info(logMessage)
+				if (this.notificationsEnabled) {
+					void window.showInformationMessage(message)
+				}
+				void window.showInformationMessage(message)
+				break
+			case NotificationType.Warn:
+				log.warn(logMessage)
+				void window.showWarningMessage(message)
+				break
+			case NotificationType.Error:
+				log.error(logMessage)
+				void window.showErrorMessage(message)
+				break
 		}
 	}
 
