@@ -331,22 +331,26 @@ function getDlcDirectory (version: string | undefined): string {
 	return dlc
 }
 
-function parseOpenEdgeConfig (cfg: IOpenEdgeConfig): ProfileConfig {
+function parseOpenEdgeConfig (cfg: IOpenEdgeConfig | undefined): ProfileConfig {
 	log.debug('[parseOpenEdgeConfig] cfg = ' + JSON.stringify(cfg, null, 2))
 	const retVal = new ProfileConfig()
-	retVal.dlc = getDlcDirectory(cfg.oeversion)
-	retVal.extraParameters = cfg.extraParameters ?? ''
-	retVal.charset = cfg.charset ?? ''
-	retVal.oeversion = cfg.oeversion ?? ''
-	retVal.graphicalMode = cfg.graphicalMode ?? ''
-	if (cfg.buildPath)
+	if (cfg?.oeversion) {
+		retVal.dlc = getDlcDirectory(cfg.oeversion)
+	} else if (process.env['DLC']) {
+		retVal.dlc = process.env['DLC']
+	}
+	retVal.extraParameters = cfg?.extraParameters ?? ''
+	retVal.charset = cfg?.charset ?? ''
+	retVal.oeversion = cfg?.oeversion ?? ''
+	retVal.graphicalMode = cfg?.graphicalMode ?? false
+	if (cfg?.buildPath)
 		retVal.propath = cfg.buildPath.map(str => str.path.replace('${DLC}', retVal.dlc)) ?? ''
-	retVal.buildPath = cfg.buildPath ?? []
+	retVal.buildPath = cfg?.buildPath ?? []
 	retVal.startupProc = ''
 	retVal.parameterFiles = []
 	retVal.dbDictionary = []
-	retVal.dbConnections = cfg.dbConnections ?? []
-	retVal.procedures = cfg.procedures ?? []
+	retVal.dbConnections = cfg?.dbConnections ?? []
+	retVal.procedures = cfg?.procedures ?? []
 
 	return retVal
 }
@@ -387,17 +391,19 @@ function parseOpenEdgeProjectConfig (uri: Uri, workspaceUri: Uri, config: IOpenE
 	}
 
 	// Active profile
-	const actProf = getActiveProfile(prjConfig.rootDir)
-	if (actProf) {
-		if (prjConfig.profiles.has('ablunit')) {
-			prjConfig.activeProfile = 'ablunit'
-		} else if (prjConfig.profiles.has(actProf)) {
-			prjConfig.activeProfile = actProf
+	if (prjConfig.profiles.has('ablunit')) {
+		prjConfig.activeProfile = 'ablunit'
+	} else {
+		const actProf = getActiveProfile(prjConfig.rootDir)
+		if (actProf) {
+			if (prjConfig.profiles.has(actProf)) {
+				prjConfig.activeProfile = actProf
+			} else {
+				prjConfig.activeProfile = 'default'
+			}
 		} else {
 			prjConfig.activeProfile = 'default'
 		}
-	} else {
-		prjConfig.activeProfile = 'default'
 	}
 	return prjConfig
 }

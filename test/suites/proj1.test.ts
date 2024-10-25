@@ -1,6 +1,6 @@
 import { Selection, commands, window } from 'vscode'
 import { after, afterEach, beforeEach } from 'mocha'
-import { Uri, assert, getWorkspaceUri, log, runAllTests, sleep, updateConfig, getTestCount, workspace, suiteSetupCommon, getWorkspaceFolders, oeVersion, runTestAtLine, beforeCommon, updateTestProfile } from '../testCommon'
+import { Uri, assert, getWorkspaceUri, log, runAllTests, sleep, updateConfig, getTestCount, workspace, suiteSetupCommon, getWorkspaceFolders, oeVersion, runTestAtLine, beforeCommon, updateTestProfile, runTestsInFile } from '../testCommon'
 import { getOEVersion } from 'parse/OpenedgeProjectParser'
 import { execSync } from 'child_process'
 import * as glob from 'glob'
@@ -27,7 +27,7 @@ suite('proj1 - Extension Test Suite', () => {
 		await workspace.fs.copy(Uri.joinPath(workspaceUri, 'openedge-project.bk.json'), Uri.joinPath(workspaceUri, 'openedge-project.json'), { overwrite: true })
 			.then(() => { return workspace.fs.copy(Uri.joinPath(workspaceUri, '.vscode', 'ablunit-test-profile.bk.json'), Uri.joinPath(workspaceUri, '.vscode', 'ablunit-test-profile.json'), { overwrite: true }) })
 			.then(() => { return workspace.fs.copy(Uri.joinPath(workspaceUri, '.vscode', 'settings.bk.json'), Uri.joinPath(workspaceUri, '.vscode', 'settings.json'), { overwrite: true })
-			}, (e) => { throw e })
+			}, (e: unknown) => { throw e })
 	})
 
 	after('proj1 - suiteTeardown', () => {
@@ -66,13 +66,13 @@ suite('proj1 - Extension Test Suite', () => {
 		return workspace.getConfiguration('ablunit').update('files.exclude', [ '.builder/**', 'compileError.p' ])
 			.then(() => { return runAllTests() })
 			.then(() => {
-				assert.tests.count(29)
-				assert.tests.passed(23)
+				assert.tests.count(30)
+				assert.tests.passed(24)
 				assert.tests.failed(2)
 				assert.tests.errored(3)
 				assert.tests.skipped(1)
 				return true
-			}, (e) => { throw e })
+			}, (e: unknown) => { throw e })
 
 	})
 
@@ -83,7 +83,7 @@ suite('proj1 - Extension Test Suite', () => {
 
 		const resultsJson = Uri.joinPath(workspaceUri, 'results.json')
 		const testCount = await getTestCount(resultsJson)
-		assert.equal(testCount, 29)
+		assert.equal(testCount, 30)
 	})
 
 	test('proj1.4 - run test case in file', async () => {
@@ -210,8 +210,8 @@ suite('proj1 - Extension Test Suite', () => {
 		// run tests and assert test count
 		await runAllTests()
 			.then(() => {
-				assert.tests.count(28)
-				assert.tests.passed(22)
+				assert.tests.count(29)
+				assert.tests.passed(23)
 				assert.tests.failed(2)
 				assert.tests.errored(3)
 				assert.tests.skipped(1)
@@ -256,6 +256,22 @@ suite('proj1 - Extension Test Suite', () => {
 			})
 	})
 
+	// default profile passes, but there is an 'ablunit' profile which is used first
+	test('proj1.14 - run profile \'ablunit\'', async () => {
+		return workspace.fs.copy(Uri.joinPath(workspaceUri, 'openedge-project.proj1.14.json'), Uri.joinPath(workspaceUri, 'openedge-project.json'), { overwrite: true })
+			.then(() => { return runTestsInFile('test_14.p') })
+			.then(() => {
+				assert.tests.count(1)
+				assert.tests.passed(0)
+				assert.tests.failed(1)
+				assert.tests.errored(0)
+				assert.tests.skipped(0)
+				return true
+			}, (e: unknown) => {
+				log.error('e=' + e)
+				throw e
+			})
 
+	})
 
 })
