@@ -36,7 +36,10 @@ export function doesFileExist (uri: Uri) {
 	return false
 }
 
-export function deleteFile (file: Uri | Uri[]) {
+export function deleteFile (file: Uri | Uri[] | undefined) {
+	if (!file) {
+		return
+	}
 	let files: Uri[]
 	if (!Array.isArray(file)) {
 		files = [file]
@@ -48,7 +51,7 @@ export function deleteFile (file: Uri | Uri[]) {
 			if (doesFileExist(file)) {
 				fs.rmSync(file.fsPath)
 			}
-		} catch (err) { /* do nothing */ }
+		} catch (e) { /* do nothing */ }
 	}
 }
 

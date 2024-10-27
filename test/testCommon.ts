@@ -228,21 +228,30 @@ export function installExtension (extname = 'riversidesoftware.openedge-abl-lsp'
 		})
 }
 
-export function deleteFile (files: Uri | Uri[] | string | string[]) {
+export function deleteFile (file: Uri | string) {
+	deleteFiles(file)
+}
+
+export function deleteFiles (files: Uri | Uri[] | string | string[]) {
 	const uris: Uri[] = []
-	if (!(files instanceof Array)) {
-		files = [files]
-	}
-	for (const file of files) {
-		if (file instanceof Uri) {
-			uris.push(file)
-		} else {
+	if (files instanceof Array) {
+		for (const file of files) {
+			if (file instanceof Uri) {
+				uris.push(file)
+				continue
+			}
 			if (isRelativePath(file)) {
 				uris.push(Uri.joinPath(getWorkspaceUri(), file))
-			} else {
-				uris.push(Uri.file(file))
+				continue
 			}
+			uris.push(Uri.file(file))
 		}
+	} else if (files instanceof Uri) {
+		uris.push(files)
+	} else if (isRelativePath(files)) {
+		uris.push(Uri.joinPath(getWorkspaceUri(), files))
+	} else {
+		uris.push(Uri.file(files))
 	}
 
 	for (const uri of uris) {
@@ -1205,6 +1214,24 @@ export const assert = {
 	},
 	tests: new AssertTestResults(),
 
+	coverageProcessingMethod (debugSourceFile: string, expected: 'rcode' | 'parse') {
+		log.info('200')
+		if (! recentResults) {
+			log.info('201')
+			assert.fail('recentResults is undefined')
+			log.info('202')
+			return
+		}
+
+		const res = recentResults[recentResults.length - 1].ablResults
+		if (!res) {
+			throw new Error('no results found')
+		}
+
+		const actual = res.debugLines?.getProcessingMethod(debugSourceFile)
+		assert.equal(actual, expected)
+	},
+
 	coveredFiles (expected: number) {
 		if (!recentResults) {
 			assert.fail('recentResults is undefined')
@@ -1216,7 +1243,15 @@ export const assert = {
 		}
 
 		const actual = recentResults[recentResults.length - 1].coverage.size
-		assert.equal(actual, expected, 'covered files (' + actual + ') != ' + expected)
+		let msg = 'covered files (' + actual + ') != ' + expected
+		if (actual != expected) {
+			msg += '\nfound:'
+			for (const c of recentResults[recentResults.length - 1].coverage) {
+				msg += '\n  * ' + c[0]
+				// log.info('covered file: ' + c[0])
+			}
+		}
+		assert.equal(actual, expected, msg)
 	},
 
 	linesExecuted (file: Uri | string, lines: number[] | number, executed = true) {
@@ -1251,9 +1286,9 @@ export const assert = {
 				return
 			}
 			if (!executed) {
-				assert.equal(lineCoverage?.executed, 0, 'line ' + line + ' in ' + file.fsPath + ' was executed')
+				assert.equal(lineCoverage?.executed, 0, 'line ' + line + ' in ' + file.fsPath + ' was executed (lineCoverage.executed=' + lineCoverage?.executed + ')')
 			} else {
-				assert.greater(lineCoverage?.executed, 0, 'line ' + line + ' in ' + file.fsPath + ' was not executed')
+				assert.greater(lineCoverage?.executed, 0, 'line ' + line + ' in ' + file.fsPath + ' was not executed (lineCoverage.executed=' + lineCoverage?.executed + ')')
 			}
 		}
 	},

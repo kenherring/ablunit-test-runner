@@ -144,7 +144,6 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 			cmd.push('-pf', res.cfg.ablunitConfig.dbConnPfUri.fsPath)
 		}
 
-		deleteFile(res.cfg.ablunitConfig.profFilenameUri)
 		if (res.cfg.ablunitConfig.profiler.enabled) {
 			cmd.push('-profile', res.cfg.ablunitConfig.profOptsUri.fsPath)
 		}
@@ -183,6 +182,14 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 	}
 
 	const runCommand = () => {
+		deleteFile(res.cfg.ablunitConfig.profFilenameUri)
+		// deleteFile(res.cfg.ablunitConfig.config_uri)
+		deleteFile(res.cfg.ablunitConfig.optionsUri.filenameUri)
+		deleteFile(res.cfg.ablunitConfig.optionsUri.jsonUri)
+		deleteFile(res.cfg.ablunitConfig.optionsUri.updateUri)
+		deleteFile(res.cfg.ablunitConfig.profFilenameUri)
+		// deleteFile(res.cfg.ablunitConfig.profOptsUri)
+
 		log.debug('ablunit command dir=\'' + res.cfg.ablunitConfig.workspaceFolder.uri.fsPath + '\'')
 		if (cancellation?.isCancellationRequested) {
 			log.info('cancellation requested - runCommand')
@@ -199,7 +206,6 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 
 			const updateUri = res.cfg.ablunitConfig.optionsUri.updateUri
 			if (updateUri) {
-				deleteFile(updateUri)
 				updateParserInit()
 				log.info('watching test run update/event file: ' + updateUri.fsPath)
 				watcherUpdate = workspace.createFileSystemWatcher(updateUri.fsPath)
