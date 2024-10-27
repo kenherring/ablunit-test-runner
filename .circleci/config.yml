@@ -94,8 +94,11 @@ jobs:
       - run: .circleci/package.sh
       - run: rm -r node_modules
       - persist_to_workspace: { root: ., paths: [ . ] }
+      - run: cp *.vsix artifacts/
+      - store_artifacts:
+          path: artifacts
       - save-package-cache
-      - run: '[ "$(find . -type f -name "*.vsix" | tee /dev/tty | wc -l)" = "1" ] && echo "pass" || (echo "error - count does not match (expected=$EXPECTED_VSIX_COUNT)" && exit 1)'
+      - run: '[ "$(find . -type f -name "*.vsix" | grep -v "^./artifacts" | tee /dev/tty | wc -l)" = "1" ] && echo "pass" || (echo "error - count does not match (expected=$EXPECTED_VSIX_COUNT)" && exit 1)'
   test:
     <<: *oe-version-param
     docker:
@@ -113,6 +116,9 @@ jobs:
       - run: .circleci/run_test_wrapper.sh
       - persist_to_workspace: { root: ., paths: [ artifacts, coverage ]}
       - store_test_results: { path: artifacts/mocha_results_xunit }
+      - run: ## remove artifacts so we don't waste space
+          when: on_success
+          command: rm -rf artifacts/*
       - store_artifacts: { path: artifacts }
       - run:
           when: on_fail
@@ -141,6 +147,9 @@ jobs:
       - attach_workspace: { at: . }
       - sonarcloud/scan:
           cache_version: 9
+      - run: ## remove artifacts so we don't waste space
+          when: on_success
+          command: rm -rf artifacts/* coverage/*
       - store_artifacts: { path: artifacts }
       - store_artifacts: { path: coverage }
       - run:
@@ -152,6 +161,9 @@ jobs:
     steps:
       - attach_workspace: { at: . }
       - run: .circleci/publish.sh
+      - run: ## remove artifacts so we don't waste space
+          when: on_success
+          command: rm -rf artifacts/* coverage/*
       - store_artifacts: { path: artifacts }
 
 workflows:
@@ -162,15 +174,18 @@ workflows:
           <<: *context-and-filters
       - test:
           <<: *context-and-filters
-          requires: [ package ]
+          requires:
+            - package
           oe-version: << pipeline.parameters.primary-oe-version >>
           matrix:
             parameters:
               vscode-version: [ stable ]
-          name: test-<< pipeline.parameters.primary-oe-version >>-<< matrix.vscode-version >>
+          name: test-primary
       - test:
           <<: *context-and-filters
-          requires: [ package, test-<< pipeline.parameters.primary-oe-version >>-stable ]
+          requires:
+            - package
+            - test-primary
           matrix:
             parameters:
               oe-version: [ 12.2.12, 12.8.3, << pipeline.parameters.latest-oe-version >> ]
@@ -178,11 +193,13 @@ workflows:
           name: test-<< matrix.oe-version>>-<< matrix.vscode-version >>
       - sonar:
           <<: *context-and-filters
-          requires: [ test-<< pipeline.parameters.primary-oe-version >>-stable ]
+          requires:
+            - test-primary
           oe-version: << pipeline.parameters.primary-oe-version >>
       # - install-and-run:
       #     <<: *context-and-filters
-      #     requires: [ test-12.8.1-stable ]
+      #     requires:
+      #       - test
       - publish:
           context:
             - Azure_PAT
