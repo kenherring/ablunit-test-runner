@@ -1,6 +1,6 @@
-import { Selection, commands, window } from 'vscode'
+import { Selection, commands, tasks, window } from 'vscode'
 import { after, afterEach, beforeEach } from 'mocha'
-import { Uri, assert, getWorkspaceUri, log, runAllTests, sleep, updateConfig, getTestCount, workspace, suiteSetupCommon, getWorkspaceFolders, oeVersion, runTestAtLine, beforeCommon, updateTestProfile, runTestsInFile } from '../testCommon'
+import { Uri, assert, getWorkspaceUri, log, runAllTests, sleep, updateConfig, getTestCount, workspace, suiteSetupCommon, getWorkspaceFolders, oeVersion, runTestAtLine, beforeCommon, updateTestProfile, runTestsInFile, sleep2, deleteFile } from '../testCommon'
 import { getOEVersion } from 'parse/OpenedgeProjectParser'
 import { execSync } from 'child_process'
 import * as glob from 'glob'
@@ -258,7 +258,7 @@ suite('proj1 - Extension Test Suite', () => {
 
 	// default profile passes, but there is an 'ablunit' profile which is used first
 	test('proj1.14 - run profile \'ablunit\'', async () => {
-		return workspace.fs.copy(Uri.joinPath(workspaceUri, 'openedge-project.proj1.14.json'), Uri.joinPath(workspaceUri, 'openedge-project.json'), { overwrite: true })
+		const p = workspace.fs.copy(Uri.joinPath(workspaceUri, 'openedge-project.proj1.14.json'), Uri.joinPath(workspaceUri, 'openedge-project.json'), { overwrite: true })
 			.then(() => { return runTestsInFile('test_14.p') })
 			.then(() => {
 				assert.tests.count(1)
@@ -271,7 +271,64 @@ suite('proj1 - Extension Test Suite', () => {
 				log.error('e=' + e)
 				throw e
 			})
+		return p
+	})
 
+	test('proj1.15A - compile option without MIN-SIZE without xref', () => {
+		return compileWithTaskAndCoverage('ant build')
+	})
+
+	test('proj1.15A - compile option with MIN-SIZE without xref', () => {
+		return compileWithTaskAndCoverage('ant build min-size')
 	})
 
 })
+
+async function compileWithTaskAndCoverage (taskName: string) {
+	await workspace.fs.copy(Uri.joinPath(workspaceUri, 'openedge-project.proj1.10.json'), Uri.joinPath(workspaceUri, 'openedge-project.json'), { overwrite: true })
+	deleteFile([Uri.joinPath(workspaceUri, 'test_15.r'),
+				Uri.joinPath(workspaceUri, 'openedge-project.json')])
+	await tasks.fetchTasks()
+		.then((r) => {
+			log.info('fetchTasks complete')
+			for (const task of r) {
+				log.info('task.name=' + task.name)
+			}
+			const task = r.find((t) => t.name === taskName)
+			log.info('task=' + task?.name)
+			if (!task) {
+				throw new Error('task not found')
+			}
+			return tasks.executeTask(task)
+		}).then((r) => {
+			log.info('executeTask started (r=' + JSON.stringify(r) + ')')
+		}, (e: unknown) => {
+			log.error('error=' + e)
+			throw e
+		})
+
+	await new Promise((resolve) => {
+		tasks.onDidEndTask((t) => {
+			log.info('task complete t.name=' + t.execution.task.name)
+			resolve(true)
+		})
+	})
+	await sleep2(500)
+	const testRcode = Uri.joinPath(workspaceUri, 'test_15.r')
+	log.info('testRcode=' + testRcode.fsPath)
+	assert.fileExists(testRcode)
+	log.info('compile complete!')
+
+	await runTestsInFile('test_15.p', 1, true)
+		.then(() => {
+			assert.tests.count(1)
+			assert.tests.passed(1)
+			assert.tests.failed(0)
+			assert.tests.errored(0)
+			assert.tests.skipped(0)
+		})
+
+	assert.linesExecuted('test_15.p', [9, 10, 13], false)
+	// assert.linesExecuted('test_15.p', [13], true)
+	assert.coveredFiles(0)
+}

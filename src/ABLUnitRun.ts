@@ -144,6 +144,7 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 			cmd.push('-pf', res.cfg.ablunitConfig.dbConnPfUri.fsPath)
 		}
 
+		deleteFile(res.cfg.ablunitConfig.profFilenameUri)
 		if (res.cfg.ablunitConfig.profiler.enabled) {
 			cmd.push('-profile', res.cfg.ablunitConfig.profOptsUri.fsPath)
 		}

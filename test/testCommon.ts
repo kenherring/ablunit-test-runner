@@ -228,11 +228,26 @@ export function installExtension (extname = 'riversidesoftware.openedge-abl-lsp'
 		})
 }
 
-export function deleteFile (file: Uri | string) {
-	if (typeof file === 'string') {
-		file = Uri.joinPath(getWorkspaceUri(), file)
+export function deleteFile (files: Uri | Uri[] | string | string[]) {
+	const uris: Uri[] = []
+	if (!(files instanceof Array)) {
+		files = [files]
 	}
-	deleteFileCommon(file)
+	for (const file of files) {
+		if (file instanceof Uri) {
+			uris.push(file)
+		} else {
+			if (isRelativePath(file)) {
+				uris.push(Uri.joinPath(getWorkspaceUri(), file))
+			} else {
+				uris.push(Uri.file(file))
+			}
+		}
+	}
+
+	for (const uri of uris) {
+		deleteFileCommon(uri)
+	}
 }
 
 export function sleep2 (time = 10, msg?: string | null) {
@@ -578,12 +593,15 @@ export function runAllTestsWithCoverage () {
 	return runAllTests(true, true, true)
 }
 
-export function runTestsInFile (filename: string, len = 1) {
+export function runTestsInFile (filename: string, len = 1, coverage = false) {
 	const testpath = toUri(filename)
 	log.info('runnings tests in file ' + testpath.fsPath)
 	return commands.executeCommand('vscode.open', testpath)
 		.then(() => {
 			runTestsDuration = new Duration('runTestsInFile')
+			if (coverage) {
+				return commands.executeCommand('testing.coverageCurrentFile')
+			}
 			return commands.executeCommand('testing.runCurrentFile')
 		}, (e) => {
 			throw e
@@ -740,7 +758,7 @@ function getConfigDefaultValue (key: string) {
 	return undefined
 }
 
-export function updateConfig (key: string, value: unknown, configurationTarget?: boolean | vscode.ConfigurationTarget | null | undefined) {
+export function updateConfig (key: string, value: unknown, configurationTarget?: boolean | vscode.ConfigurationTarget | null) {
 	const sectionArr = key.split('.')
 	const section1 = sectionArr.shift()
 	const section2 = sectionArr.join('.')
@@ -904,7 +922,7 @@ function getType (item: TestItem | undefined) {
 	}
 }
 
-export function getTestControllerItemCount (type?: 'ABLTestDir' | 'ABLTestFile' | 'ABLTestCase' | undefined) {
+export function getTestControllerItemCount (type?: 'ABLTestDir' | 'ABLTestFile' | 'ABLTestCase') {
 	return getTestController()
 		.then((ctrl) => {
 			const items = gatherAllTestItems(ctrl.items)
@@ -1106,7 +1124,7 @@ export const assert = {
 	notStrictEqual: assertParent.notStrictEqual,
 	deepEqual: assertParent.deepEqual,
 	notDeepEqual: assertParent.notDeepEqual,
-	fail: assertParent.fail,
+	fail: (message: string) => { assertParent.fail(message) },
 	ok: (value: unknown) => {
 		assertParent.ok(value)
 	},
@@ -1132,6 +1150,7 @@ export const assert = {
 				return
 			})
 		} catch (e) {
+			log.info('exception thrown as expected: ' + e + '. message=' + message)
 			assertParent.ok(true)
 		}
 	},
@@ -1186,7 +1205,21 @@ export const assert = {
 	},
 	tests: new AssertTestResults(),
 
-	linesExecuted (file: Uri | string, lines: number[] | number, notExecuted = false) {
+	coveredFiles (expected: number) {
+		if (!recentResults) {
+			assert.fail('recentResults is undefined')
+			return
+		}
+		if (recentResults.length == 0) {
+			assert.fail('recentResults.length is 0')
+			return
+		}
+
+		const actual = recentResults[recentResults.length - 1].coverage.size
+		assert.equal(actual, expected, 'covered files (' + actual + ') != ' + expected)
+	},
+
+	linesExecuted (file: Uri | string, lines: number[] | number, executed = true) {
 		if (!(file instanceof Uri)) {
 			file = toUri(file)
 		}
@@ -1202,7 +1235,7 @@ export const assert = {
 			return
 		}
 
-		const coverage = recentResults[0].coverage.get(file.fsPath)
+		const coverage = recentResults[recentResults.length - 1].coverage.get(file.fsPath)
 		if (!coverage) {
 			assert.fail('no coverage found for ' + file.fsPath)
 			return
@@ -1217,15 +1250,16 @@ export const assert = {
 				assert.fail('expected number for coverage executed but got boolean (' + lineCoverage.executed + ')')
 				return
 			}
-			if (notExecuted) {
+			if (!executed) {
 				assert.equal(lineCoverage?.executed, 0, 'line ' + line + ' in ' + file.fsPath + ' was executed')
 			} else {
 				assert.greater(lineCoverage?.executed, 0, 'line ' + line + ' in ' + file.fsPath + ' was not executed')
 			}
 		}
 	},
+
 	linesNotExecuted (file: Uri | string, lines: number[] | number) {
-		assert.linesExecuted(file, lines, true)
+		assert.linesExecuted(file, lines, false)
 	}
 }
 
@@ -1249,7 +1283,7 @@ export function beforeProj7 () {
 			return Promise.all(proms)
 		}).then(() => {
 			log.info('beforeProj7 complete!')
-			return
+			return true
 		})
 }
 
