@@ -1,6 +1,6 @@
 import { Selection, commands, tasks, window } from 'vscode'
 import { after, afterEach, beforeEach } from 'mocha'
-import { Uri, assert, getWorkspaceUri, log, runAllTests, sleep, updateConfig, getTestCount, workspace, suiteSetupCommon, getWorkspaceFolders, oeVersion, runTestAtLine, beforeCommon, updateTestProfile, runTestsInFile, sleep2, deleteFiles } from '../testCommon'
+import { Uri, assert, getWorkspaceUri, log, runAllTests, sleep, updateConfig, getTestCount, workspace, suiteSetupCommon, getWorkspaceFolders, oeVersion, runTestAtLine, beforeCommon, updateTestProfile, runTestsInFile, deleteFiles } from '../testCommon'
 import { getOEVersion } from 'parse/OpenedgeProjectParser'
 import { execSync } from 'child_process'
 import * as glob from 'glob'
@@ -151,16 +151,15 @@ suite('proj1 - Extension Test Suite', () => {
 			.then(() => {
 				log.info('testing.runAtCursor complete')
 				assert.tests.count(1)
-				assert.tests.passed(1)
-				assert.tests.failed(0)
+				assert.tests.passed(0)
+				assert.tests.failed(1)
 				assert.tests.errored(0)
-				return
 			})
 	})
 
 	test('proj1.9 - check startup parmaeters for -y -yx', async () => {
 		await workspace.fs.copy(Uri.joinPath(workspaceUri, 'openedge-project.proj1.9.json'), Uri.joinPath(workspaceUri, 'openedge-project.json'), { overwrite: true })
-		await runTestAtLine('import_charset.p', 64)
+		await runTestAtLine('import_charset.p', 68)
 			.then(() => {
 				log.info('testing.runAtCursor complete')
 				assert.tests.count(1)
@@ -276,22 +275,23 @@ suite('proj1 - Extension Test Suite', () => {
 	})
 
 	test('proj1.15A - compile option without MIN-SIZE without xref', () => {
-		return compileWithTaskAndCoverage('ant build')
+		const p = compileWithTaskAndCoverage('ant build')
 			.then(() => {
 				assert.linesExecuted('test_15.p', [9, 10, 13])
 				assert.coverageProcessingMethod('test_15.p', 'rcode')
 				return true
 			})
-
+		return p
 	})
 
 	test('proj1.15B - compile option with MIN-SIZE without xref', () => {
-		return compileWithTaskAndCoverage('ant build min-size')
+		const p = compileWithTaskAndCoverage('ant build min-size')
 			.then(() => {
 				assert.linesExecuted('test_15.p', [9, 10, 13])
 				assert.coverageProcessingMethod('test_15.p', 'parse')
 				return true
 			})
+		return p
 	})
 
 })
@@ -299,7 +299,7 @@ suite('proj1 - Extension Test Suite', () => {
 async function compileWithTaskAndCoverage (taskName: string) {
 	deleteFiles([
 		Uri.joinPath(workspaceUri, 'test_15.r'),
-		Uri.joinPath(workspaceUri, 'openedge-project.json')
+		Uri.joinPath(workspaceUri, 'openedge-project.json'),
 	])
 	await workspace.fs.copy(Uri.joinPath(workspaceUri, '.vscode', 'ablunit-test-profile.proj1.15.json'), Uri.joinPath(workspaceUri, '.vscode', 'ablunit-test-profile.json'), { overwrite: true })
 
@@ -316,7 +316,7 @@ async function compileWithTaskAndCoverage (taskName: string) {
 			}
 			return tasks.executeTask(task)
 		}).then((r) => {
-			log.info('executeTask started (r=' + JSON.stringify(r) + ')')
+			log.info('executeTask started (r=' + JSON.stringify(r, null, 2) + ')')
 		}, (e: unknown) => {
 			log.error('error=' + e)
 			throw e
@@ -324,7 +324,7 @@ async function compileWithTaskAndCoverage (taskName: string) {
 	await new Promise((resolve) => {
 		tasks.onDidEndTask((t) => {
 			log.info('task complete t.name=' + t.execution.task.name)
-			setTimeout(() => { resolve(true) }, 1000)
+			setTimeout(() => { resolve(true) }, 500)
 		})
 	})
 

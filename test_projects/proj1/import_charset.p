@@ -15,14 +15,18 @@ procedure euro_symbol_out_and_in :
     define variable testVar as character no-undo.
     define variable impVal as character no-undo.
 
-    message "session:cpinternal=" + session:cpinternal.
-    message "session:cpstream=" + session:cpstream.
+    message "1 session:cpinternal=" + session:cpinternal.
+    message "1 session:cpstream=" + session:cpstream.
 
     testVar = "euro symbol: €".
 
     output stream oStream to "./import_charset.out".
     put stream oStream unformatted testVar.
     output stream oStream close.
+
+    // session:cpstream = session:cpinternal.
+    message "2 session:cpinternal=" + session:cpinternal.
+    message "2 session:cpstream=" + session:cpstream.
 
     input stream iStream from "./import_charset.out".
     import stream iStream unformatted impVal.

@@ -4,6 +4,9 @@
             "label": "ant build",
             "type": "shell",
             "command": "${env:DLC}/ant/bin/ant compile -Dxref=false",
+            "linux": {
+                "command": "ant compile -Dxref=false"
+            },
             "args": [],
             "group": {
                 "kind": "build",
@@ -15,6 +18,9 @@
             "label": "ant build min-size",
             "type": "shell",
             "command": "${env:DLC}/ant/bin/ant compile -DminSize=true -Dxref=false",
+            "linux": {
+                "command": "ant compile -DminSize=true -Dxref=false"
+            },
             "args": [],
             "group": {
                 "kind": "build",
