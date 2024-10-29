@@ -51,7 +51,8 @@ export function deleteFile (file: Uri | Uri[] | undefined) {
 			if (doesFileExist(file)) {
 				fs.rmSync(file.fsPath)
 			}
-		} catch (e) { /* do nothing */ }
+		// eslint-disable-next-line @typescript-eslint/no-unused-vars
+		} catch (err) { /* do nothing */ }
 	}
 }
 
