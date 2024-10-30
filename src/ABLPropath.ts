@@ -147,7 +147,7 @@ export class PropathParser {
 		if (file instanceof Uri) {
 			return this.searchUri(file)
 		}
-		let relativeFile = file
+		let relativeFile = isRelativePath(file) ? file : workspace.asRelativePath(Uri.file(file), false)
 		if (!relativeFile.endsWith('.cls') && !relativeFile.endsWith('.p') && !relativeFile.endsWith('.w') && !relativeFile.endsWith('.i')) {
 			relativeFile = relativeFile.replace(/\./g, '/') + '.cls'
 		}

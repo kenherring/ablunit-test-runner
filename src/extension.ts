@@ -121,7 +121,6 @@ export async function activate (context: ExtensionContext) {
 		log.info('loadDetailedCoverage uri="' + fileCoverage.uri.fsPath + '", testRun=' + testRun.name)
 		const d = resultData.get(testRun)
 		const det: FileCoverageDetail[] = []
-
 		if (d) {
 			d.flatMap((r) => {
 				const rec = r.coverage.get(fileCoverage.uri.fsPath)
@@ -305,7 +304,7 @@ export async function activate (context: ExtensionContext) {
 				for (const res of data) {
 					log.info('res.filecoverage.length=' + res.filecoverage.length)
 					if (res.filecoverage.length === 0) {
-						log.warn('no coverage data found (profile data path=' + res.cfg.ablunitConfig.profFilenameUri + ')')
+						log.warn('no coverage data found (profile data path=' + res.cfg.ablunitConfig.profFilenameUri.fsPath + ')')
 					}
 					res.filecoverage.forEach((c) => {
 						run.addCoverage(c)

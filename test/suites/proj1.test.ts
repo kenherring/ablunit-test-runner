@@ -1,6 +1,6 @@
-import { Selection, commands, window } from 'vscode'
+import { Selection, commands, tasks, window } from 'vscode'
 import { after, afterEach, beforeEach } from 'mocha'
-import { Uri, assert, getWorkspaceUri, log, runAllTests, sleep, updateConfig, getTestCount, workspace, suiteSetupCommon, getWorkspaceFolders, oeVersion, runTestAtLine, beforeCommon, updateTestProfile } from '../testCommon'
+import { Uri, assert, getWorkspaceUri, log, runAllTests, sleep, updateConfig, getTestCount, workspace, suiteSetupCommon, getWorkspaceFolders, oeVersion, runTestAtLine, beforeCommon, updateTestProfile, runTestsInFile, deleteFiles } from '../testCommon'
 import { getOEVersion } from 'parse/OpenedgeProjectParser'
 import { execSync } from 'child_process'
 import * as glob from 'glob'
@@ -27,7 +27,7 @@ suite('proj1 - Extension Test Suite', () => {
 		await workspace.fs.copy(Uri.joinPath(workspaceUri, 'openedge-project.bk.json'), Uri.joinPath(workspaceUri, 'openedge-project.json'), { overwrite: true })
 			.then(() => { return workspace.fs.copy(Uri.joinPath(workspaceUri, '.vscode', 'ablunit-test-profile.bk.json'), Uri.joinPath(workspaceUri, '.vscode', 'ablunit-test-profile.json'), { overwrite: true }) })
 			.then(() => { return workspace.fs.copy(Uri.joinPath(workspaceUri, '.vscode', 'settings.bk.json'), Uri.joinPath(workspaceUri, '.vscode', 'settings.json'), { overwrite: true })
-			}, (e) => { throw e })
+			}, (e: unknown) => { throw e })
 	})
 
 	after('proj1 - suiteTeardown', () => {
@@ -63,27 +63,27 @@ suite('proj1 - Extension Test Suite', () => {
 	})
 
 	test('proj1.2 - output files exist 2 - exclude compileError.p', () => {
-		return workspace.getConfiguration('ablunit').update('files.exclude', [ '.builder/**', 'compileError.p' ])
+		const p = workspace.getConfiguration('ablunit').update('files.exclude', [ '.builder/**', 'compileError.p' ])
 			.then(() => { return runAllTests() })
 			.then(() => {
-				assert.tests.count(29)
-				assert.tests.passed(23)
+				assert.tests.count(31)
+				assert.tests.passed(25)
 				assert.tests.failed(2)
 				assert.tests.errored(3)
 				assert.tests.skipped(1)
 				return true
-			}, (e) => { throw e })
-
+			},
+			(e: unknown) => {
+				throw e
+			})
+		return p
 	})
 
 	test('proj1.3 - output files exist 3 - exclude compileError.p as string', async () => {
 		// this isn't officially supported and won't syntac check in the settings.json file(s), but it works
 		await updateConfig('ablunit.files.exclude', 'compileError.p')
 		await runAllTests()
-
-		const resultsJson = Uri.joinPath(workspaceUri, 'results.json')
-		const testCount = await getTestCount(resultsJson)
-		assert.equal(testCount, 29)
+		assert.tests.count(31)
 	})
 
 	test('proj1.4 - run test case in file', async () => {
@@ -159,7 +159,7 @@ suite('proj1 - Extension Test Suite', () => {
 
 	test('proj1.9 - check startup parmaeters for -y -yx', async () => {
 		await workspace.fs.copy(Uri.joinPath(workspaceUri, 'openedge-project.proj1.9.json'), Uri.joinPath(workspaceUri, 'openedge-project.json'), { overwrite: true })
-		await runTestAtLine('import_charset.p', 64)
+		await runTestAtLine('import_charset.p', 68)
 			.then(() => {
 				log.info('testing.runAtCursor complete')
 				assert.tests.count(1)
@@ -210,8 +210,8 @@ suite('proj1 - Extension Test Suite', () => {
 		// run tests and assert test count
 		await runAllTests()
 			.then(() => {
-				assert.tests.count(28)
-				assert.tests.passed(22)
+				assert.tests.count(30)
+				assert.tests.passed(24)
 				assert.tests.failed(2)
 				assert.tests.errored(3)
 				assert.tests.skipped(1)
@@ -256,6 +256,89 @@ suite('proj1 - Extension Test Suite', () => {
 			})
 	})
 
+	// default profile passes, but there is an 'ablunit' profile which is used first
+	test('proj1.14 - run profile \'ablunit\'', async () => {
+		const p = workspace.fs.copy(Uri.joinPath(workspaceUri, 'openedge-project.proj1.14.json'), Uri.joinPath(workspaceUri, 'openedge-project.json'), { overwrite: true })
+			.then(() => { return runTestsInFile('test_14.p') })
+			.then(() => {
+				assert.tests.count(1)
+				assert.tests.passed(0)
+				assert.tests.failed(1)
+				assert.tests.errored(0)
+				assert.tests.skipped(0)
+				return true
+			}, (e: unknown) => {
+				log.error('e=' + e)
+				throw e
+			})
+		return p
+	})
 
+	test('proj1.15A - compile option without MIN-SIZE without xref', () => {
+		const p = compileWithTaskAndCoverage('ant build')
+			.then(() => {
+				assert.linesExecuted('test_15.p', [9, 10, 13])
+				assert.coverageProcessingMethod('test_15.p', 'rcode')
+				return true
+			})
+		return p
+	})
+
+	test('proj1.15B - compile option with MIN-SIZE without xref', () => {
+		const p = compileWithTaskAndCoverage('ant build min-size')
+			.then(() => {
+				assert.linesExecuted('test_15.p', [9, 10, 13])
+				assert.coverageProcessingMethod('test_15.p', 'parse')
+				return true
+			})
+		return p
+	})
 
 })
+
+async function compileWithTaskAndCoverage (taskName: string) {
+	deleteFiles([
+		Uri.joinPath(workspaceUri, 'test_15.r'),
+		Uri.joinPath(workspaceUri, 'openedge-project.json'),
+	])
+	await workspace.fs.copy(Uri.joinPath(workspaceUri, '.vscode', 'ablunit-test-profile.proj1.15.json'), Uri.joinPath(workspaceUri, '.vscode', 'ablunit-test-profile.json'), { overwrite: true })
+
+	await tasks.fetchTasks()
+		.then((r) => {
+			log.info('fetchTasks complete')
+			for (const task of r) {
+				log.info('task.name=' + task.name)
+			}
+			const task = r.find((t) => t.name === taskName)
+			log.info('task=' + task?.name)
+			if (!task) {
+				throw new Error('task not found')
+			}
+			return tasks.executeTask(task)
+		}).then((r) => {
+			log.info('executeTask started (r=' + JSON.stringify(r, null, 2) + ')')
+		}, (e: unknown) => {
+			log.error('error=' + e)
+			throw e
+		})
+	await new Promise((resolve) => {
+		tasks.onDidEndTask((t) => {
+			log.info('task complete t.name=' + t.execution.task.name)
+			setTimeout(() => { resolve(true) }, 500)
+		})
+	})
+
+	const testRcode = Uri.joinPath(workspaceUri, 'test_15.r')
+	log.info('testRcode=' + testRcode.fsPath)
+	assert.fileExists(testRcode)
+	log.info('compile complete!')
+
+	await runTestsInFile('test_15.p', 1, true)
+		.then(() => {
+			assert.tests.count(1)
+			assert.tests.passed(1)
+			assert.tests.failed(0)
+			assert.tests.errored(0)
+			assert.tests.skipped(0)
+		})
+}

@@ -92,12 +92,20 @@ export class ABLResultsParser {
 	parseXml (xmlData: string): string {
 		let res: string | undefined
 
-		parseString(xmlData, function (err: Error | null, resultsRaw: any) {
-			if (err) {
-				throw new Error('error parsing XML file: ' + err)
+		parseString(xmlData, function (e: Error | null, resultsRaw: unknown) {
+			if (e) {
+				log.info('error parsing XML file: ' + e)
+				throw e
 			}
-			res = resultsRaw
-			return String(resultsRaw)
+			if (!resultsRaw) {
+				throw new Error('malformed results file (2) - could not parse XML - resultsRaw is null')
+			}
+			if (typeof resultsRaw === 'object' && resultsRaw !== null) {
+				res = JSON.stringify(resultsRaw)
+				return JSON.stringify(resultsRaw)
+			}
+			log.error('resultsRaw=' + JSON.stringify(resultsRaw))
+			throw new Error('malformed results file (2) - could not parse XML - resultsRaw is not an object')
 		})
 		if (!res) {
 			throw new Error('malformed results file (2) - could not parse XML')
@@ -105,7 +113,11 @@ export class ABLResultsParser {
 		return res
 	}
 
-	async parseSuites (res: any) {
+	async parseSuites (results: string) {
+		if (!results) {
+			throw new Error('malformed results file (1) - res is null')
+		}
+		let res = JSON.parse(results)
 		if(!res.testsuites) {
 			log.error('malformed results file (1) - could not find top-level \'testsuites\' node')
 			throw new Error('malformed results file (1) - could not find top-level \'testsuites\' node')
