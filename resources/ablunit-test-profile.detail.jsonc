@@ -106,6 +106,8 @@
 		////#     the command line, and the "profiler.options" file will not be created.
 		////#   * When the "profiler" key is set to null the 'profile.options' file will not
 		////#     be created and the `-profile` option will not be passed to the command line.
+		////#   * When "enabled" is false, the profiler information is not collection and coverage cannot
+		////#     be reported.  This is not recommended.  The option is included here for completeness.
 		////#
 		////# See the OpenEdge documentation for more information about these values.
 		////#   * https://docs.progress.com/bundle/openedge-startup-and-parameter-reference/page/Profiler-profile.html

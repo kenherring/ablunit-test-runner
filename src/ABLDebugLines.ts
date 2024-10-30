@@ -3,13 +3,18 @@ import { log } from './ChannelLogger'
 import { ISourceMap, getSourceMapFromRCode } from './parse/RCodeParser'
 import { getSourceMapFromSource } from './parse/SourceParser'
 
-const maps = new Map<string, ISourceMap>()
 
 export class ABLDebugLines {
+	private readonly maps = new Map<string, ISourceMap>()
+	private readonly processingMethodMap = new Map<string, 'rcode' | 'parse'>()
 	propath: PropathParser
 
 	constructor (propath: PropathParser) {
 		this.propath = propath
+	}
+
+	getProcessingMethod (debugSource: string) {
+		return this.processingMethodMap.get(debugSource)
 	}
 
 	async getSourceLine (debugSource: string, debugLine: number) {
@@ -26,19 +31,22 @@ export class ABLDebugLines {
 			log.trace('cannot find debug source in propath (' + debugSource + ')')
 			return undefined
 		}
-		let map = maps.get(debugSource)
+
+		let map = this.maps.get(debugSource)
 		if (!map) {
 			try {
 				map = await getSourceMapFromRCode(this.propath, await this.propath.getRCodeUri(debugSource))
+				this.processingMethodMap.set(debugSource, 'rcode')
 			} catch (e) {
-				log.debug('cannot parse source map from rcode, falling back to source parser (debugSource=' + debugSource + ', e=' + e + ')')
+				log.warn('cannot parse source map from rcode, falling back to source parser (debugSource=' + debugSource + ', e=' + e + ')')
 				map = await getSourceMapFromSource(this.propath, debugSource)
+				this.processingMethodMap.set(debugSource, 'parse')
 			}
 
 			if (!map) {
 				throw new Error('failed to parse source map (' + debugSource + ')')
 			} else {
-				maps.set(debugSource, map)
+				this.maps.set(debugSource, map)
 			}
 		}
 		const ret = map.items.find((line) => line.debugLine === debugLine)
