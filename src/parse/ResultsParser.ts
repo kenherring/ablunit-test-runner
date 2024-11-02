@@ -26,7 +26,7 @@ export interface ITestCase {
 	classname?: string
 	status: string
 	time: number
-	failure?: ITestCaseFailure
+	failures?: ITestCaseFailure[]
 	skipped: boolean
 }
 
@@ -207,7 +207,7 @@ export class ABLResultsParser {
 				classname: res[idx].$.classname ?? undefined,
 				status: res[idx].$.status,
 				time: Number(res[idx].$.time),
-				failure: await this.parseFailOrError(res[idx]),
+				failures: await this.parseFailOrError(res[idx]),
 				skipped: this.parseSkipped(res[idx]),
 			}
 		}
@@ -245,28 +245,31 @@ export class ABLResultsParser {
 		} else {
 			throw new Error('malformed results  file (3) - could not find \'failure\' or \'error\' or \'skipped\' node')
 		}
-		if (res[type].length > 1) { throw new Error('more than one failure or error in testcase - use case not handled') }
 
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-		const callstack = await parseCallstack(this.debugLines, res[type][0]._)
-		const stackTrace = this.callstackToStackFrame(callstack)
-		const fail: ITestCaseFailure = {
-			callstackRaw: res[type][0]._,
-			callstack: callstack,
-			stackTrace: stackTrace,
-			message: res[type][0].$.message,
-			type: res[type][0].$.types
-		}
-		const diffRE = /Expected: (.*) but was: (.*)/
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-		const diff = diffRE.exec(res[type][0].$.message)
-		if (diff) {
-			fail.diff = {
-				expectedOutput: diff[1],
-				actualOutput: diff[2]
+		const fails: ITestCaseFailure[] = []
+		for (const result of res[type]) {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+			const callstack = await parseCallstack(this.debugLines, result._)
+			const stackTrace = this.callstackToStackFrame(callstack)
+			const fail: ITestCaseFailure = {
+				callstackRaw: result._,
+				callstack: callstack,
+				stackTrace: stackTrace,
+				message: result.$.message,
+				type: result.$.types
 			}
+			const diffRE = /Expected: (.*) but was: (.*)/
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+			const diff = diffRE.exec(result.$.message)
+			if (diff) {
+				fail.diff = {
+					expectedOutput: diff[1],
+					actualOutput: diff[2]
+				}
+			}
+			fails.push(fail)
 		}
-		return fail
+		return fails
 	}
 
 	writeJsonToFile (uri: Uri) {

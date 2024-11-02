@@ -1080,6 +1080,27 @@ class AssertTestResults {
 	public failed (expectedCount: number) {
 		this.assertResultsCountByStatus(expectedCount, 'failed')
 	}
+	public errorCount (expectedCount: number) {
+		const res = recentResults?.[0].ablResults?.resultsJson[0]
+		if (!res) {
+			assertParent.fail('No results found. Expected ' + expectedCount + ' errors')
+			return
+		}
+		if (!res.testsuite) {
+			assertParent.fail('No testsuite found in results')
+			return
+		}
+		let actualCount = 0
+		for (const s of res.testsuite ?? []) {
+			for (const t of s.testcases ?? []) {
+				actualCount += t.failures?.length ?? 0
+			}
+			if (s.testsuite) {
+				throw new Error('nested testsuites not yet supported when asserting error count')
+			}
+		}
+		assert.equal(actualCount, expectedCount, 'error count (' + actualCount + ') != ' + expectedCount)
+	}
 
 	public timeout (e: unknown) {
 		if (!e) {

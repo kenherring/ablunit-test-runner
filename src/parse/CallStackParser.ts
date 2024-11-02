@@ -26,7 +26,7 @@ export interface ICallStack {
 
 export async function parseCallstack (debugLines: ABLDebugLines, callstackRaw: string) {
 
-	const regex = /^(.*) at line (\d+) *\((.*)\)$/
+	const regex = /^(.*) at line (-?\d+) *\((.*)\)$/
 	if (!callstackRaw) {
 		throw new Error('callstackRaw is undefined')
 	}
@@ -38,10 +38,10 @@ export async function parseCallstack (debugLines: ABLDebugLines, callstackRaw: s
 	for (const line of lines) {
 		const arr = regex.exec(line)
 		if(arr?.length != 4) {
-			throw new Error('cannot parse callstack line: ' + line)
+			throw new Error('cannot parse callstack line: "' + line + '"')
 		}
 		const module = arr[1]
-		const debugLine = Number(arr[2])
+		let debugLine = Number(arr[2])
 		const debugFile = arr[3]
 
 		let moduleParent = module
@@ -52,6 +52,10 @@ export async function parseCallstack (debugLines: ABLDebugLines, callstackRaw: s
 		let debugUri: Uri | undefined = Uri.file(debugFile)
 		if (!await doesFileExist(debugUri)) {
 			debugUri = undefined
+		}
+
+		if (debugLine <= 0) {
+			debugLine = 1
 		}
 
 		const callstackItem: ICallStackItem = {
@@ -72,6 +76,9 @@ export async function parseCallstack (debugLines: ABLDebugLines, callstackRaw: s
 			})
 
 		if(lineinfo) {
+			if (lineinfo.sourceLine <= 0) {
+				lineinfo.sourceLine = 1
+			}
 			const markdownText = module + ' at line ' + debugLine + ' ' +
 				'([' + workspace.asRelativePath(lineinfo.sourceUri, false) + ':' + lineinfo.sourceLine + ']' +
 				'(command:_ablunit.openCallStackItem?' + encodeURIComponent(JSON.stringify(lineinfo.sourceUri + '&' + (lineinfo.sourceLine - 1))) + '))'

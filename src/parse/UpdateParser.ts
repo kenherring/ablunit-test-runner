@@ -297,9 +297,9 @@ function showUpdates (options: TestRun, updates: ITestNode[] | undefined) {
 	return true
 }
 
-export function processUpdates (options: TestRun, tests: TestItem[], updateFile: Uri | undefined) {
+export function processUpdates (options: TestRun, tests: TestItem[], updateFile?: Uri) {
 	if (!updateFile) {
-		return
+		return Promise.resolve(false)
 	}
 	return parseUpdates(updateFile, tests)
 		.then((updates) => {

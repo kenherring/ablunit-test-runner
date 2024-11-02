@@ -294,6 +294,19 @@ suite('proj1 - Extension Test Suite', () => {
 		return p
 	})
 
+	test('proj1.16 - multiple errors in test case', () => {
+		const p = workspace.fs.copy(Uri.joinPath(workspaceUri, '.vscode', 'ablunit-test-profile.proj1.16.json'), Uri.joinPath(workspaceUri, '.vscode', 'ablunit-test-profile.json'), { overwrite: true })
+			.then(() => { return runTestsInFile('test_16.p') })
+			.then(() => {
+				assert.tests.count(1)
+				assert.tests.failed(0)
+				assert.tests.errored(2)
+				assert.tests.errorCount(2)
+				return true
+			})
+		return p
+	})
+
 })
 
 async function compileWithTaskAndCoverage (taskName: string) {
