@@ -30,10 +30,14 @@ export function doesDirExist (uri: Uri) {
 }
 
 export function doesFileExist (uri: Uri) {
-	if (fs.statSync(uri.fsPath).isFile()) {
-		return true
+	try {
+		if (fs.statSync(uri.fsPath).isFile()) {
+			return true
+		}
+		return false
+	} catch (e: unknown) {
+		return false
 	}
-	return false
 }
 
 export function deleteFile (file: Uri | Uri[] | undefined) {

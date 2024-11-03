@@ -279,20 +279,18 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 				// eslint-disable-next-line promise/catch-or-return
 				processUpdates(options, res.tests, updateUri).then(() => {
 					log.info('final ingest from updates file completed successfully')
+					res.setStatus(RunStatus.Complete, 'success')
+					log.info('----- ABLUnit Test Run Complete ----- ' + testRunDuration, options)
 				}, (e: unknown) => {
 					throw e
 				})
-
-				res.setStatus(RunStatus.Complete, 'success')
-				log.info('----- ABLUnit Test Run Complete ----- ' + testRunDuration, options)
 				resolve('success')
-				return
-
 			}).on('close', (code: number | null, signal: NodeJS.Signals | null) => {
 				log.debug('process.close code=' + code + '; signal=' + signal + '; process.exitCode=' + process.exitCode + '; process.signalCode=' + process.signalCode + '; killed=' + process.killed)
 
 				watcherDispose?.dispose()
 				watcherUpdate?.dispose()
+				void processUpdates(options, res.tests, updateUri)
 
 				log.info('process.close event')
 				log.info('\tcode=' + code)
