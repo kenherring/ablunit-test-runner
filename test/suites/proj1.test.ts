@@ -68,9 +68,15 @@ suite('proj1 - Extension Test Suite', () => {
 			.then(() => { return runAllTests() })
 			.then(() => {
 				assert.tests.count(32)
-				assert.tests.passed(24)
+				if (oeVersion()?.startsWith('12.2')) {
+					// only 1 error in 12.2 as it doesn't capture the destruct error
+					assert.tests.passed(25)
+					assert.tests.errored(4)
+				} else {
+					assert.tests.passed(24)
+					assert.tests.errored(5)
+				}
 				assert.tests.failed(2)
-				assert.tests.errored(5)
 				assert.tests.skipped(1)
 				return true
 			},
@@ -301,8 +307,15 @@ suite('proj1 - Extension Test Suite', () => {
 			.then(() => {
 				assert.tests.count(1)
 				assert.tests.failed(0)
-				assert.tests.errored(2)
-				assert.tests.errorCount(2)
+				if (oeVersion()?.startsWith('12.2')) {
+					// only 1 error in 12.2 as it doesn't capture the destruct error
+					assert.tests.errorCount(1)
+					assert.tests.errored(1)
+				} else {
+					assert.tests.errorCount(2)
+					// Reported directly by OE in results.xml as TestSuite errors, but is sort of odd as it's total errors and not errored tests
+					assert.tests.errored(2)
+				}
 				return true
 			})
 		return p
