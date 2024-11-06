@@ -269,6 +269,9 @@ export class ABLResultsParser {
 			}
 			fails.push(fail)
 		}
+		if (fails.length === 0) {
+			return undefined
+		}
 		return fails
 	}
 

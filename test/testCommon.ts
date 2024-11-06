@@ -50,18 +50,6 @@ export const enableExtensions = () => {
 }
 
 export const oeVersion = () => {
-	const oeVersionEnv = getEnvVar('ABLUNIT_TEST_RUNNER_OE_VERSION')
-	log.info('oeVersionEnv=' + oeVersionEnv)
-	if (oeVersionEnv?.match(/^(11|12)\.\d$/)) {
-		return oeVersionEnv
-	}
-
-	const oeVersion = getEnvVar('OE_VERSION')
-	log.info('oeVersion=' + oeVersion + ' ' + oeVersion?.split('.').slice(0, 2).join('.'))
-	if (oeVersion?.match(/^(11|12)\.\d.\d+$/)) {
-		return oeVersion.split('.').slice(0, 2).join('.')
-	}
-
 	let useDLC = getEnvVar('DLC')
 	if (!useDLC || useDLC === '') {
 		useDLC = getDefaultDLC()
@@ -76,6 +64,19 @@ export const oeVersion = () => {
 			return match[1]
 		}
 	}
+
+	// const oeVersionEnv = getEnvVar('ABLUNIT_TEST_RUNNER_OE_VERSION')
+	// log.info('oeVersionEnv=' + oeVersionEnv)
+	// if (oeVersionEnv?.match(/^(11|12)\.\d$/)) {
+	// 	return oeVersionEnv
+	// }
+
+	// const oeVersion = getEnvVar('OE_VERSION')
+	// log.info('oeVersion=' + oeVersion + ' ' + oeVersion?.split('.').slice(0, 2).join('.'))
+	// if (oeVersion?.match(/^(11|12)\.\d.\d+$/)) {
+	// 	return oeVersion.split('.').slice(0, 2).join('.')
+	// }
+
 	throw new Error('unable to determine oe version!')
 }
 
