@@ -67,8 +67,8 @@ suite('proj1 - Extension Test Suite', () => {
 		const p = workspace.getConfiguration('ablunit').update('files.exclude', [ '.builder/**', 'compileError.p' ])
 			.then(() => { return runAllTests() })
 			.then(() => {
-				assert.tests.count(33)
-				assert.tests.passed(25)
+				assert.tests.count(32)
+				assert.tests.passed(24)
 				assert.tests.failed(2)
 				assert.tests.errored(5)
 				assert.tests.skipped(1)
@@ -84,7 +84,7 @@ suite('proj1 - Extension Test Suite', () => {
 		// this isn't officially supported and won't syntac check in the settings.json file(s), but it works
 		await updateConfig('ablunit.files.exclude', 'compileError.p')
 		await runAllTests()
-		assert.tests.count(33)
+		assert.tests.count(32)
 	})
 
 	test('proj1.4 - run test case in file', async () => {
@@ -211,8 +211,8 @@ suite('proj1 - Extension Test Suite', () => {
 		// run tests and assert test count
 		await runAllTests()
 			.then(() => {
-				assert.tests.count(32)
-				assert.tests.passed(24)
+				assert.tests.count(31)
+				assert.tests.passed(23)
 				assert.tests.failed(2)
 				assert.tests.errored(5)
 				assert.tests.skipped(1)

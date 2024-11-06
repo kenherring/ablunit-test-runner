@@ -29,7 +29,7 @@ suite('proj2 - Extension Test Suite', () => {
 			.then((recentResults) => {
 				log.info('recentResults = ' + recentResults + ' ' + recentResults.length)
 				const tc = recentResults[0].ablResults?.resultsJson[0].testsuite?.[0].testcases?.[0]
-				const mdText = tc?.failure?.callstack.items[1].markdownText
+				const mdText = tc?.failures?.[0].callstack.items[1].markdownText
 				if (!mdText) {
 					assert.fail('mdText is null')
 				}
