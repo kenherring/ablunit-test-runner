@@ -50,18 +50,6 @@ export const enableExtensions = () => {
 }
 
 export const oeVersion = () => {
-	const oeVersionEnv = getEnvVar('ABLUNIT_TEST_RUNNER_OE_VERSION')
-	log.info('oeVersionEnv=' + oeVersionEnv)
-	if (oeVersionEnv?.match(/^(11|12)\.\d$/)) {
-		return oeVersionEnv
-	}
-
-	const oeVersion = getEnvVar('OE_VERSION')
-	log.info('oeVersion=' + oeVersion + ' ' + oeVersion?.split('.').slice(0, 2).join('.'))
-	if (oeVersion?.match(/^(11|12)\.\d.\d+$/)) {
-		return oeVersion.split('.').slice(0, 2).join('.')
-	}
-
 	let useDLC = getEnvVar('DLC')
 	if (!useDLC || useDLC === '') {
 		useDLC = getDefaultDLC()
@@ -76,6 +64,19 @@ export const oeVersion = () => {
 			return match[1]
 		}
 	}
+
+	// const oeVersionEnv = getEnvVar('ABLUNIT_TEST_RUNNER_OE_VERSION')
+	// log.info('oeVersionEnv=' + oeVersionEnv)
+	// if (oeVersionEnv?.match(/^(11|12)\.\d$/)) {
+	// 	return oeVersionEnv
+	// }
+
+	// const oeVersion = getEnvVar('OE_VERSION')
+	// log.info('oeVersion=' + oeVersion + ' ' + oeVersion?.split('.').slice(0, 2).join('.'))
+	// if (oeVersion?.match(/^(11|12)\.\d.\d+$/)) {
+	// 	return oeVersion.split('.').slice(0, 2).join('.')
+	// }
+
 	throw new Error('unable to determine oe version!')
 }
 
@@ -1079,6 +1080,27 @@ class AssertTestResults {
 	}
 	public failed (expectedCount: number) {
 		this.assertResultsCountByStatus(expectedCount, 'failed')
+	}
+	public errorCount (expectedCount: number) {
+		const res = recentResults?.[0].ablResults?.resultsJson[0]
+		if (!res) {
+			assertParent.fail('No results found. Expected ' + expectedCount + ' errors')
+			return
+		}
+		if (!res.testsuite) {
+			assertParent.fail('No testsuite found in results')
+			return
+		}
+		let actualCount = 0
+		for (const s of res.testsuite ?? []) {
+			for (const t of s.testcases ?? []) {
+				actualCount += t.failures?.length ?? 0
+			}
+			if (s.testsuite) {
+				throw new Error('nested testsuites not yet supported when asserting error count')
+			}
+		}
+		assert.equal(actualCount, expectedCount, 'error count (' + actualCount + ') != ' + expectedCount)
 	}
 
 	public timeout (e: unknown) {

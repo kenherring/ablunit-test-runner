@@ -385,14 +385,16 @@ export class ABLResults implements Disposable {
 			}
 			case 'failure':
 			case 'error': {
-				if (tc.failure) {
-					const diff = this.getDiffMessage(tc.failure)
-					if (diff) {
-						options.failed(item, diff, tc.time)
-					} else {
-						const testMessage = new TestMessage(getPromsgText(tc.failure.message))
-						testMessage.stackTrace = tc.failure.stackTrace
-						options.failed(item, testMessage, tc.time)
+				if (tc.failures && tc.failures.length > 0) {
+					for (const failure of tc.failures) {
+						const diff = this.getDiffMessage(failure)
+						if (diff) {
+							options.failed(item, diff, tc.time)
+						} else {
+							const testMessage = new TestMessage(getPromsgText(failure.message))
+							testMessage.stackTrace = failure.stackTrace
+							options.failed(item, testMessage, tc.time)
+						}
 					}
 					return
 				}
