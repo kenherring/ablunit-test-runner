@@ -130,7 +130,7 @@ class Logger {
 		}
 
 		if (messageLevel >= this.consoleLogLevel) {
-			this.writeToConsole(messageLevel, message, includeStack)
+			this.writeToConsole(messageLevel, message, includeStack, datetime)
 		}
 	}
 
@@ -168,10 +168,10 @@ class Logger {
 		testRun.appendOutput(optMsg + '\r\n')
 	}
 
-	private writeToConsole (messageLevel: LogLevel, message: string, includeStack: boolean) {
+	private writeToConsole (messageLevel: LogLevel, message: string, includeStack: boolean, datetime: string) {
 		message = this.decorateMessage(messageLevel, message, includeStack)
 		if (this.consoleTimestamp) {
-			message = '[' + new Date().toISOString() + '] ' + message
+			message = '[' + datetime + '] ' + message
 		}
 		switch (messageLevel) {
 			case LogLevel.Trace:

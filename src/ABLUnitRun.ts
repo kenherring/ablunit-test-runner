@@ -191,7 +191,7 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 		// deleteFile(res.cfg.ablunitConfig.profOptsUri)
 
 		log.debug('ablunit command dir=\'' + res.cfg.ablunitConfig.workspaceFolder.uri.fsPath + '\'')
-		if (cancellation?.isCancellationRequested) {
+		if (cancellation.isCancellationRequested) {
 			log.info('cancellation requested - runCommand')
 			throw new CancellationError()
 		}

@@ -1,5 +1,11 @@
 #!/bin/bash
 set -eou pipefail
+set +x
+
+VERBOSE=${VERBOSE:-false}
+if $VERBOSE; then
+    set -x
+fi
 
 initialize () {
     rm -f artifacts/mocha_results_sonar/merged*.xml
@@ -49,7 +55,7 @@ show_summary () {
 
 
 for F in artifacts/mocha_results_sonar/*.xml; do
-    echo "F=$F"
+    $VERBOSE && echo "F=$F"
     if [ ! -f "$F.orig" ]; then
         cp "$F" "$F.orig"
     else

@@ -22,13 +22,10 @@ validate_circleci_config () {
 }
 
 validate_package_json () {
+	[ ! -f package.stable.json ] && return 0
 	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}]"
 	PACK1=$(md5sum package.json)
-	PACK2=$(package.stable.json)
-	if [ ! -f "$PACK2" ]; then
-		## If package.stable.json does not exist, nothing to compare
-		return 0
-	fi
+	PACK2=$(md5sum package.stable.json)
 	if [ "$PACK1" != "$PACK2" ]; then
 		echo "package.json and package.stable.json are different and should be the same" >&2
 		exit 1
@@ -50,6 +47,7 @@ validate_other () {
 
 ########## MAIN BLOCK ##########
 validate_circleci_config
+validate_package_json
 validate_compile
 validate_version_updated
 echo "pre-commit checks successful!" >&2

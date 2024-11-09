@@ -1,5 +1,4 @@
 import { Uri, commands, window, workspace } from 'vscode'
-import * as vscode from 'vscode'
 import { assert, deleteFile, getResults, getTestControllerItemCount, getTestItem, log, refreshTests, runAllTests, runAllTestsWithCoverage, runTestAtLine, runTestsDuration, runTestsInFile, sleep2, suiteSetupCommon, toUri, updateConfig, updateTestProfile } from '../testCommon'
 import { ABLResultsParser } from 'parse/ResultsParser'
 import * as fs from 'fs'
@@ -13,7 +12,7 @@ function createTempFile () {
 
 suite('proj0  - Extension Test Suite', () => {
 
-	const disposables: vscode.Disposable[] = []
+	const disposables: Disposable[] = []
 
 	suiteSetup('proj0 - before', () => {
 		deleteFile('.vscode/ablunit-test-profile.json')
@@ -80,7 +79,7 @@ suite('proj0  - Extension Test Suite', () => {
 		if (lines && lines.length > 0) {
 			assert.fail('coverage should be empty for ' + workspace.asRelativePath(testFileUri) + ' (lines.length=' + lines.length + ')')
 		}
-		const executedLines = lines.filter((d) => d)
+		const executedLines = lines.filter((d) => d.executed)
 		log.debug('executedLines.length=' + executedLines.length)
 		assert.equal(0, executedLines.length, 'executed lines found for ' + workspace.asRelativePath(testFileUri) + '. should be empty')
 	})
@@ -153,14 +152,14 @@ suite('proj0  - Extension Test Suite', () => {
 		const tempFile = await createTempFile()
 		// This event handler makes use wait for a second edit so we know that the first edit has been processed
 		// Inspiration: https://github.com/microsoft/vscode/blob/main/extensions/vscode-api-tests/src/singlefolder-tests/workspace.event.test.ts#L80
-		disposables.push(vscode.workspace.onWillCreateFiles(e => {
-			const ws = new vscode.WorkspaceEdit()
-			ws.insert(tempFile, new vscode.Position(0, 0), 'onWillCreate ' + e.files.length + ' ' + e.files[0].fsPath)
+		disposables.push(workspace.onWillCreateFiles(e => {
+			const ws = new WorkspaceEdit()
+			ws.insert(tempFile, new Position(0, 0), 'onWillCreate ' + e.files.length + ' ' + e.files[0].fsPath)
 			e.waitUntil(Promise.resolve(ws))
 		}))
 
 		// create new test program
-		const edit = new vscode.WorkspaceEdit()
+		const edit = new WorkspaceEdit()
 		edit.createFile(toUri('src/dirA/proj10.p'), { contents: Buffer.from('@Test. procedure test1: end procedure.') })
 		const success = await workspace.applyEdit(edit)
 		assert.ok(success)
@@ -196,7 +195,7 @@ suite('proj0  - Extension Test Suite', () => {
 
 
 		// update test program
-		const edit = new vscode.WorkspaceEdit()
+		const edit = new WorkspaceEdit()
 		edit.createFile(toUri('src/dirA/proj10.p'), { overwrite: true, contents: Buffer.from('@Test. procedure test1: end procedure.\n\n@Test. procedure test2: end procedure.\n\n@Test. procedure test3: end procedure.') })
 		const success = await workspace.applyEdit(edit)
 		assert.ok(success)
@@ -219,9 +218,9 @@ suite('proj0  - Extension Test Suite', () => {
 		const startCount = await refreshTests()
 			.then(() => { return getTestControllerItemCount('ABLTestFile') })
 		const tempFile = await createTempFile()
-		disposables.push(vscode.workspace.onWillDeleteFiles(e => {
-			const ws = new vscode.WorkspaceEdit()
-			ws.insert(tempFile, new vscode.Position(0, 0), 'onWillDelete ' + e.files.length + ' ' + e.files[0].fsPath)
+		disposables.push(workspace.onWillDeleteFiles(e => {
+			const ws = new WorkspaceEdit()
+			ws.insert(tempFile, new Position(0, 0), 'onWillDelete ' + e.files.length + ' ' + e.files[0].fsPath)
 			e.waitUntil(Promise.resolve(ws))
 		}))
 

@@ -1,4 +1,5 @@
-import { assert, deleteFile, getDefaultDLC, getSessionTempDir, getWorkspaceUri, oeVersion, runAllTests, setRuntimes, suiteSetupCommon, updateTestProfile, Uri } from '../testCommon'
+import { assert, deleteFile, getDefaultDLC, getSessionTempDir, getWorkspaceUri, oeVersion, runAllTests, suiteSetupCommon, updateTestProfile, Uri } from '../testCommon'
+import { setRuntimes } from '../openedgeAblCommands'
 
 const sessionTempDir = getSessionTempDir()
 
