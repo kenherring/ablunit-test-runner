@@ -204,8 +204,8 @@ workflows:
             - test-primary
           no-coverage: true
           matrix:
+            alias: test-matrix
             parameters:
-              oe-version: [ 12.2.12, 12.8.3, << pipeline.parameters.latest-oe-version >> ]
               vscode-version: [ stable ]
           name: test-<< matrix.oe-version>>
       - sonar:
@@ -227,4 +227,5 @@ workflows:
           requires:
             - shellcheck/check
             - sonar
+            - test-matrix
             # - install-and-run

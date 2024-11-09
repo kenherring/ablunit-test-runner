@@ -1,9 +1,10 @@
-import { Selection, commands, tasks, window } from 'vscode'
+import { Selection, TaskEndEvent, TaskExecution, commands, tasks, window } from 'vscode'
 import { after, afterEach, beforeEach } from 'mocha'
-import { Uri, assert, getWorkspaceUri, log, runAllTests, sleep, updateConfig, getTestCount, workspace, suiteSetupCommon, getWorkspaceFolders, oeVersion, runTestAtLine, beforeCommon, updateTestProfile, runTestsInFile, deleteFiles } from '../testCommon'
+import { Uri, assert, getWorkspaceUri, log, runAllTests, sleep, updateConfig, getTestCount, workspace, suiteSetupCommon, getWorkspaceFolders, oeVersion, runTestAtLine, beforeCommon, updateTestProfile, runTestsInFile, deleteFiles, sleep2 } from '../testCommon'
 import { getOEVersion } from 'parse/OpenedgeProjectParser'
 import { execSync } from 'child_process'
 import * as glob from 'glob'
+import { doesFileExist } from 'ABLUnitCommon'
 
 const workspaceUri = getWorkspaceUri()
 
@@ -66,10 +67,16 @@ suite('proj1 - Extension Test Suite', () => {
 		const p = workspace.getConfiguration('ablunit').update('files.exclude', [ '.builder/**', 'compileError.p' ])
 			.then(() => { return runAllTests() })
 			.then(() => {
-				assert.tests.count(31)
-				assert.tests.passed(25)
+				assert.tests.count(32)
+				if (oeVersion()?.startsWith('12.2')) {
+					// only 1 error in 12.2 as it doesn't capture the destruct error
+					assert.tests.passed(25)
+					assert.tests.errored(4)
+				} else {
+					assert.tests.passed(24)
+					assert.tests.errored(5)
+				}
 				assert.tests.failed(2)
-				assert.tests.errored(3)
 				assert.tests.skipped(1)
 				return true
 			},
@@ -83,7 +90,7 @@ suite('proj1 - Extension Test Suite', () => {
 		// this isn't officially supported and won't syntac check in the settings.json file(s), but it works
 		await updateConfig('ablunit.files.exclude', 'compileError.p')
 		await runAllTests()
-		assert.tests.count(31)
+		assert.tests.count(32)
 	})
 
 	test('proj1.4 - run test case in file', async () => {
@@ -210,10 +217,10 @@ suite('proj1 - Extension Test Suite', () => {
 		// run tests and assert test count
 		await runAllTests()
 			.then(() => {
-				assert.tests.count(30)
-				assert.tests.passed(24)
+				assert.tests.count(31)
+				assert.tests.passed(23)
 				assert.tests.failed(2)
-				assert.tests.errored(3)
+				assert.tests.errored(5)
 				assert.tests.skipped(1)
 			})
 		xrefFiles = glob.globSync('*.xref', { cwd: workspaceUri.fsPath })
@@ -294,6 +301,26 @@ suite('proj1 - Extension Test Suite', () => {
 		return p
 	})
 
+	test('proj1.16 - multiple errors in test case', () => {
+		const p = workspace.fs.copy(Uri.joinPath(workspaceUri, '.vscode', 'ablunit-test-profile.proj1.16.json'), Uri.joinPath(workspaceUri, '.vscode', 'ablunit-test-profile.json'), { overwrite: true })
+			.then(() => { return runTestsInFile('test_16.p') })
+			.then(() => {
+				assert.tests.count(1)
+				assert.tests.failed(0)
+				if (oeVersion()?.startsWith('12.2')) {
+					// only 1 error in 12.2 as it doesn't capture the destruct error
+					assert.tests.errorCount(1)
+					assert.tests.errored(1)
+				} else {
+					assert.tests.errorCount(2)
+					// Reported directly by OE in results.xml as TestSuite errors, but is sort of odd as it's total errors and not errored tests
+					assert.tests.errored(2)
+				}
+				return true
+			})
+		return p
+	})
+
 })
 
 async function compileWithTaskAndCoverage (taskName: string) {
@@ -303,35 +330,42 @@ async function compileWithTaskAndCoverage (taskName: string) {
 	])
 	await workspace.fs.copy(Uri.joinPath(workspaceUri, '.vscode', 'ablunit-test-profile.proj1.15.json'), Uri.joinPath(workspaceUri, '.vscode', 'ablunit-test-profile.json'), { overwrite: true })
 
+	const p2 = new Promise<TaskEndEvent>((resolve) => {
+		tasks.onDidEndTask((t) => {
+			log.info('task complete t.name=' + t.execution.task.name)
+			resolve(t)
+		})
+	})
+
 	await tasks.fetchTasks()
 		.then((r) => {
-			log.info('fetchTasks complete')
-			for (const task of r) {
-				log.info('task.name=' + task.name)
-			}
 			const task = r.find((t) => t.name === taskName)
-			log.info('task=' + task?.name)
 			if (!task) {
 				throw new Error('task not found')
 			}
+			log.info('starting task: ' + task.name)
 			return tasks.executeTask(task)
-		}).then((r) => {
+		}).then((r: TaskExecution) => {
 			log.info('executeTask started (r=' + JSON.stringify(r, null, 2) + ')')
+			return p2
+		}).then((t: TaskEndEvent) => {
+			log.info('task complete! t=' + JSON.stringify(t))
 		}, (e: unknown) => {
 			log.error('error=' + e)
 			throw e
 		})
-	await new Promise((resolve) => {
-		tasks.onDidEndTask((t) => {
-			log.info('task complete t.name=' + t.execution.task.name)
-			setTimeout(() => { resolve(true) }, 500)
-		})
-	})
 
 	const testRcode = Uri.joinPath(workspaceUri, 'test_15.r')
-	log.info('testRcode=' + testRcode.fsPath)
+	for (let i=0; i<20; i++) {
+		if (doesFileExist(testRcode)) {
+			log.info('file exists! (i=' + i + ')')
+			break
+		}
+		await sleep2(250, 'awaiting rcode: ' + testRcode.fsPath + ' (i=' + i + ')')
+	}
+
 	assert.fileExists(testRcode)
-	log.info('compile complete!')
+	log.info('compile complete! starting tests...')
 
 	await runTestsInFile('test_15.p', 1, true)
 		.then(() => {
@@ -341,4 +375,5 @@ async function compileWithTaskAndCoverage (taskName: string) {
 			assert.tests.errored(0)
 			assert.tests.skipped(0)
 		})
+	return
 }
