@@ -9,7 +9,7 @@
 !package.json
 !resources/ablunit-test-profile.details.jsonc
 !resources/ablunit-test-profile.schema.json
-!resources/ABLUnitCore-wrapper.p
+!resources/VSCodeTestRunner/
 !resources/images/icon_128.png
 !snippets/
 

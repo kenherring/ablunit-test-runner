@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import { Uri, workspace } from 'vscode'
+import { TestMessageStackFrame, Uri, workspace } from 'vscode'
 import { parseCallstack, ICallStack } from './CallStackParser'
 import { PropathParser } from '../ABLPropath'
 import { parseString } from 'xml2js'
@@ -9,10 +9,10 @@ import { ABLDebugLines } from '../ABLDebugLines'
 import { log } from '../ChannelLogger'
 import { isRelativePath } from '../ABLUnitCommon'
 
-
 export interface ITestCaseFailure {
 	callstackRaw: string
 	callstack: ICallStack
+	stackTrace: TestMessageStackFrame[]
 	message: string
 	type: string
 	diff?: {
@@ -26,7 +26,7 @@ export interface ITestCase {
 	classname?: string
 	status: string
 	time: number
-	failure?: ITestCaseFailure
+	failures?: ITestCaseFailure[]
 	skipped: boolean
 }
 
@@ -92,12 +92,20 @@ export class ABLResultsParser {
 	parseXml (xmlData: string): string {
 		let res: string | undefined
 
-		parseString(xmlData, function (err: Error | null, resultsRaw: any) {
-			if (err) {
-				throw new Error('error parsing XML file: ' + err)
+		parseString(xmlData, function (e: Error | null, resultsRaw: unknown) {
+			if (e) {
+				log.info('error parsing XML file: ' + e)
+				throw e
 			}
-			res = resultsRaw
-			return String(resultsRaw)
+			if (!resultsRaw) {
+				throw new Error('malformed results file (2) - could not parse XML - resultsRaw is null')
+			}
+			if (typeof resultsRaw === 'object' && resultsRaw !== null) {
+				res = JSON.stringify(resultsRaw)
+				return JSON.stringify(resultsRaw)
+			}
+			log.error('resultsRaw=' + JSON.stringify(resultsRaw))
+			throw new Error('malformed results file (2) - could not parse XML - resultsRaw is not an object')
 		})
 		if (!res) {
 			throw new Error('malformed results file (2) - could not parse XML')
@@ -105,7 +113,11 @@ export class ABLResultsParser {
 		return res
 	}
 
-	async parseSuites (res: any) {
+	async parseSuites (results: string) {
+		if (!results) {
+			throw new Error('malformed results file (1) - res is null')
+		}
+		let res = JSON.parse(results)
 		if(!res.testsuites) {
 			log.error('malformed results file (1) - could not find top-level \'testsuites\' node')
 			throw new Error('malformed results file (1) - could not find top-level \'testsuites\' node')
@@ -195,7 +207,7 @@ export class ABLResultsParser {
 				classname: res[idx].$.classname ?? undefined,
 				status: res[idx].$.status,
 				time: Number(res[idx].$.time),
-				failure: await this.parseFailOrError(res[idx]),
+				failures: await this.parseFailOrError(res[idx]),
 				skipped: this.parseSkipped(res[idx]),
 			}
 		}
@@ -207,6 +219,14 @@ export class ABLResultsParser {
 			return true
 		}
 		return false
+	}
+
+	callstackToStackFrame (callstack: ICallStack) {
+		const stackFrames: TestMessageStackFrame[] = []
+		for (const i of callstack.items) {
+			stackFrames.push(new TestMessageStackFrame(i.rawText, i.loc?.uri, i.position))
+		}
+		return stackFrames
 	}
 
 	async parseFailOrError (res: any) {
@@ -225,26 +245,34 @@ export class ABLResultsParser {
 		} else {
 			throw new Error('malformed results  file (3) - could not find \'failure\' or \'error\' or \'skipped\' node')
 		}
-		if (res[type].length > 1) { throw new Error('more than one failure or error in testcase - use case not handled') }
 
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-		const callstack = await parseCallstack(this.debugLines, res[type][0]._)
-		const fail: ITestCaseFailure = {
-			callstackRaw: res[type][0]._,
-			callstack: callstack,
-			message: res[type][0].$.message,
-			type: res[type][0].$.types
-		}
-		const diffRE = /Expected: (.*) but was: (.*)/
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-		const diff = diffRE.exec(res[type][0].$.message)
-		if (diff) {
-			fail.diff = {
-				expectedOutput: diff[1],
-				actualOutput: diff[2]
+		const fails: ITestCaseFailure[] = []
+		for (const result of res[type]) {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+			const callstack = await parseCallstack(this.debugLines, result._)
+			const stackTrace = this.callstackToStackFrame(callstack)
+			const fail: ITestCaseFailure = {
+				callstackRaw: result._,
+				callstack: callstack,
+				stackTrace: stackTrace,
+				message: result.$.message,
+				type: result.$.types
 			}
+			const diffRE = /Expected: (.*) but was: (.*)/
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+			const diff = diffRE.exec(result.$.message)
+			if (diff) {
+				fail.diff = {
+					expectedOutput: diff[1],
+					actualOutput: diff[2]
+				}
+			}
+			fails.push(fail)
 		}
-		return fail
+		if (fails.length === 0) {
+			return undefined
+		}
+		return fails
 	}
 
 	writeJsonToFile (uri: Uri) {

@@ -2,6 +2,12 @@
 import { LogLevel, TestRun, window } from 'vscode'
 import path from 'path'
 
+enum NotificationType {
+	Info = 'Info',
+	Warn = 'Warn',
+	Error = 'Error',
+}
+
 class Logger {
 	private static instance: Logger
 
@@ -11,14 +17,18 @@ class Logger {
 	private logLevel: number
 	private readonly consoleTimestamp = process.env['ABLUNIT_TEST_RUNNER_UNIT_TESTING'] === 'true'
 	private testResultsTimestamp = false
+	private readonly extensionCodeDir = path.normalize(__dirname + '/../..')
+	notificationsEnabled = true
 
-	private constructor () {
+	private constructor (extCodeDir?: string) {
 		this.logLevel = LogLevel.Info
 		this.logOutputChannel = window.createOutputChannel('ABLUnit', { log: true })
 		this.logOutputChannel.clear()
 		this.info('ABLUnit output channel created (logLevel=' + this.logOutputChannel.logLevel + ')')
 		this.logOutputChannel.onDidChangeLogLevel((e) => { this.setLogLevel(e) })
-
+		if (extCodeDir) {
+			this.extensionCodeDir = extCodeDir
+		}
 	}
 
 	public static getInstance () {
@@ -73,9 +83,25 @@ class Logger {
 		this.writeMessage(LogLevel.Error, message, testRun)
 	}
 
-	notification (message: string) {
-		log.info(message)
-		return window.showInformationMessage(message)
+	notification (message: string, notificationType: NotificationType = NotificationType.Info) {
+		const logMessage = 'NOTIFICATION: ' + message + ' (type=' + notificationType + ', enabled=' + this.notificationsEnabled + ')'
+		switch (notificationType) {
+			case NotificationType.Info:
+				log.info(logMessage)
+				if (this.notificationsEnabled) {
+					void window.showInformationMessage(message)
+				}
+				void window.showInformationMessage(message)
+				break
+			case NotificationType.Warn:
+				log.warn(logMessage)
+				void window.showWarningMessage(message)
+				break
+			case NotificationType.Error:
+				log.error(logMessage)
+				void window.showErrorMessage(message)
+				break
+		}
 	}
 
 	notificationWarningSync (message: string) {
@@ -171,7 +197,7 @@ class Logger {
 			const filename = s.getFileName()
 			if (filename && filename !== __filename && !filename.endsWith('extensionHostProcess.js')) {
 				const funcname = s.getFunctionName()
-				let ret = filename.replace(path.normalize(__dirname), '').substring(1).replace(/\\/g, '/') + ':' + s.getLineNumber()
+				let ret = path.relative(this.extensionCodeDir, filename).replace(/\\/g, '/') + ':' + s.getLineNumber()
 				if (funcname) {
 					ret = ret + ' ' + funcname
 				}

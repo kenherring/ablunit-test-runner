@@ -30,13 +30,20 @@ export function doesDirExist (uri: Uri) {
 }
 
 export function doesFileExist (uri: Uri) {
-	if (fs.statSync(uri.fsPath).isFile()) {
-		return true
+	try {
+		if (fs.statSync(uri.fsPath).isFile()) {
+			return true
+		}
+		return false
+	} catch (e: unknown) {
+		return false
 	}
-	return false
 }
 
-export function deleteFile (file: Uri | Uri[]) {
+export function deleteFile (file: Uri | Uri[] | undefined) {
+	if (!file) {
+		return
+	}
 	let files: Uri[]
 	if (!Array.isArray(file)) {
 		files = [file]
@@ -48,6 +55,7 @@ export function deleteFile (file: Uri | Uri[]) {
 			if (doesFileExist(file)) {
 				fs.rmSync(file.fsPath)
 			}
+		// eslint-disable-next-line @typescript-eslint/no-unused-vars
 		} catch (err) { /* do nothing */ }
 	}
 }
@@ -56,6 +64,7 @@ export class Duration {
 	name?: string
 	start: number
 	end: number
+	runtime?: number
 	private stopped = false
 	constructor (name?: string) {
 		this.name = name
@@ -69,7 +78,7 @@ export class Duration {
 		this.stopped = false
 	}
 
-	elapsed () {
+	elapsed = () => {
 		if (!this.stopped) {
 			this.end = Date.now()
 		}
@@ -77,8 +86,9 @@ export class Duration {
 	}
 
 	stop () {
-		this.stopped = true
 		this.end = Date.now()
+		this.stopped = true
+		this.runtime = this.end - this.start
 	}
 
 	toString () {

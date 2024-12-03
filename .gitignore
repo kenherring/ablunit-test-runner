@@ -2,6 +2,7 @@
 .ssh/
 .vscode-test/
 .vscode-test-docker/
+.worktrees/
 artifacts/
 coverage/
 dist/
@@ -26,6 +27,7 @@ tmp/
 docker/ablunit.pl
 client.mon
 proc.mon
+procore.*
 *.dbg
 *.listing
 *.out
@@ -48,6 +50,9 @@ results.xml
 lbia*
 rcda*
 srta*
+
+# Test files
+test_projects/proj2/src/compileError.p
 
 # Generated test files
 test_projects/proj7_load_performance/src/procs

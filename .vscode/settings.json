@@ -54,6 +54,7 @@
 		"dist": true,
 		"out": true,
 		"node_modules": true,
+		"dummy-ext/.vscode-test/**": true,
 	},
 	"shellcheck.useWorkspaceRootAsCwd": true,
 	"sonarlint.connectedMode.project": {

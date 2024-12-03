@@ -11,22 +11,24 @@ suite('proj7B - Extension Test Suite', () => {
 
 	setup('proj7B - beforeEach', beforeCommon)
 
-	test.skip('proj7B.1 - cancel test refresh', async () => {
-		// TODO
-		// const maxCancelTime = 250
-		const maxCancelTime = 2000
-		// TODO
-		// const maxRefreshTime = 250
-		const maxRefreshTime = 7000
+	test('proj7B.1 - cancel test refresh', async () => {
+		const minCancelTime = 1
+		const maxCancelTime = 350
+		const maxRefreshTime = 700
 
 		log.info('refreshing tests')
 		const startRefreshTime = new Duration()
 		const refresh = refreshTests()
-		let testCount = await getTestControllerItemCount('ABLTestFile')
-		setTimeout(() => { throw new Error('timeout waiting for getTestControllerItemCount to return > 10 (got ' + testCount + ')') }, 5000)
-		while(testCount < 10) {
-			await sleep(250, 'waiting for getTestControllerItemCount to return > 10 (got ' + testCount + ')')
+		let testCount = 0
+		setTimeout(() => { throw new Error('timeout waiting for getTestControllerItemCount to return > 2 (got ' + testCount + ')') }, 5000)
+		while(testCount < 2) {
 			testCount = await getTestControllerItemCount('ABLTestFile')
+			if (testCount >= 2) { break }
+			await sleep2(2)
+			// await sleep(5, 'waiting for getTestControllerItemCount to return > 10 (got ' + testCount + ')')
+			if (startRefreshTime.elapsed() > 10000) {
+				throw new Error('timeout waiting for getTestControllerItemCount to return > 2 (got ' + testCount + ')')
+			}
 		}
 
 		log.info('cancelling test refresh')
@@ -40,6 +42,7 @@ suite('proj7B - Extension Test Suite', () => {
 				throw err
 			})
 			log.info(' - elapsedCancelTime=' + startCancelTime.elapsed() + 'ms, elapsedRefreshTime=' +  startRefreshTime.elapsed() + 'ms')
+			assert.durationMoreThan(startCancelTime, minCancelTime)
 			assert.durationLessThan(startCancelTime, maxCancelTime)
 			assert.durationLessThan(startRefreshTime, maxRefreshTime)
 		} catch (err) {
@@ -63,19 +66,19 @@ suite('proj7B - Extension Test Suite', () => {
 		})
 	})
 
-	// TODO - remove skip
-	test.skip('proj7B.2 - cancel test run while adding tests', async () => {
+	test('proj7B.2 - cancel test run while adding tests', async () => {
 		const maxCancelTime = 1000
-		const runTestTime = new Duration()
+		// const runTestTime = new Duration()
 
 		runAllTests().catch((err: unknown) => { log.info('runAllTests got error: ' + err) })
-		await waitForTestRunStatus(RunStatus.Constructed)
+		await sleep(250)
+			.then(() => { return waitForTestRunStatus(RunStatus.Constructed) })
 
 		const elapsedCancelTime = await cancelTestRun(false)
 		assert.durationLessThan(elapsedCancelTime, maxCancelTime)
 
-		const resArr = await getCurrentRunData()
-		const res = resArr[0]
+		// const resArr = await getCurrentRunData()
+		// const res = resArr[0]
 
 		// TODO - fix for 12.7.0
 
@@ -101,10 +104,9 @@ suite('proj7B - Extension Test Suite', () => {
 		// })
 	})
 
-	// TODO - remove skip
-	test.skip('proj7B.3 - cancel test run while _progres is running', async () => {
+	test('proj7B.3 - cancel test run while _progres is running', async () => {
 		const maxCancelTime = 1000
-		const runTestTime = new Duration()
+		// const runTestTime = new Duration()
 
 		runAllTests().catch((err: unknown) => { log.info('runAllTests got error: ' + err) })
 

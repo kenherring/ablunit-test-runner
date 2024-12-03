@@ -1,9 +1,14 @@
+export interface ITestObj {
+	test: string
+	cases?: string[]
+}
 
 interface ICoreOutput {
 	location?: string
 	filename?: string
 	format?: 'xml'
 	writeJson?: boolean
+	updateFile?: string
 }
 
 interface IXrefOptions {
@@ -19,6 +24,7 @@ export interface ICoreOptions {
 		filename?: string
 		format?: 'xml'
 		writeJson?: boolean
+		updateFile?: string
 	}
 	quitOnEnd?: boolean // = true
 	writeLog?: boolean // = true
@@ -27,12 +33,19 @@ export interface ICoreOptions {
 	xref?: IXrefOptions
 }
 
+export interface IABLUnitJson {
+	options: ICoreOptions
+	tests: ITestObj[]
+}
+
+
 export class CoreOptions implements ICoreOptions {
 	output: ICoreOutput = {
 		location: '${tempDir}',
 		filename: 'results',
 		format: 'xml',
-		writeJson: false
+		writeJson: false,
+		updateFile: 'updates.log',
 	}
 	quitOnEnd = true
 	writeLog = false
@@ -50,8 +63,13 @@ export class CoreOptions implements ICoreOptions {
 				location: from.output.location ?? this.output.location,
 				filename: from.output.filename ?? this.output.filename,
 				format: from.output.format ?? this.output.format,
-				writeJson: from.output.writeJson ?? this.output.writeJson
+				writeJson: from.output.writeJson ?? this.output.writeJson,
+				updateFile: from.output.updateFile ?? this.output.updateFile,
 			}
+			if (!from.output.updateFile || from.output.updateFile == '') {
+				this.output.updateFile = undefined
+			}
+
 		}
 
 		this.quitOnEnd = from.quitOnEnd ?? this.quitOnEnd

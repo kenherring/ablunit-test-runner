@@ -8,3 +8,5 @@
 *.i linguist-language=OpenEdge-ABL
 *.p linguist-language=OpenEdge-ABL
 *.w linguist-language=OpenEdge-ABL
+
+test_projects/proj1/import_charset.p text working-tree-encoding=UTF-8

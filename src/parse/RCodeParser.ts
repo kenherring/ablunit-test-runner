@@ -2,6 +2,7 @@ import { TextDecoder } from 'util'
 import { Uri, workspace } from 'vscode'
 import { PropathParser } from '../ABLPropath'
 import { log } from '../ChannelLogger'
+import { isRelativePath } from 'ABLUnitCommon'
 
 const headerLength = 68
 
@@ -214,7 +215,7 @@ export const getSourceMapFromRCode = (propath: PropathParser, uri: Uri) => {
 				return src.sourceName
 			}
 		}
-		throw new Error('[getSourceName] could not find source name for num=' + num + ', uri=' + uri.fsPath)
+		throw new Error('could not find source name for num=' + num + ', uri="' + uri.fsPath + '"')
 	}
 
 
@@ -224,7 +225,7 @@ export const getSourceMapFromRCode = (propath: PropathParser, uri: Uri) => {
 				return src.sourceUri
 			}
 		}
-		throw new Error('[getSourceUri] could not find source name for num=' + num + ', uri=' + uri.fsPath)
+		throw new Error('could not find source name for num=' + num + ', uri="' + uri.fsPath + '"')
 	}
 
 
@@ -240,7 +241,7 @@ export const getSourceMapFromRCode = (propath: PropathParser, uri: Uri) => {
 		if (sourceNum == undefined) {
 			throw new Error('invalid source number: ' + sourceNum + ' ' + sourceName)
 		}
-		const sourceUri = Uri.joinPath(propath.workspaceFolder.uri, sourceName)
+		const sourceUri = isRelativePath(sourceName) ? Uri.joinPath(propath.workspaceFolder.uri, sourceName) : Uri.file(sourceName)
 
 		sources.push({
 			sourceName: sourceName.replace(/\\/g, '/'),

@@ -144,22 +144,21 @@ run_tests () {
 	fi
 	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] starting 'npm $RUN_SCRIPT'"
 	# time xvfb-run -a npm run "$RUN_SCRIPT" || EXIT_CODE=$?
-	time xvfb-run -a npm run "$RUN_SCRIPT" || EXIT_CODE=$?
-	echo "EXIT_CODE=$EXIT_CODE"
+	xvfb-run -a npm run "$RUN_SCRIPT" || EXIT_CODE=$?
+	echo "xvfb-run end (EXIT_CODE=$EXIT_CODE)"
 
 	mv coverage/lcov.info artifacts/coverage/lcov.info || true ## https://github.com/microsoft/vscode-test-cli/issues/38
 
 	if [ "$EXIT_CODE" = "0" ]; then
 		echo "xvfb-run success"
 	else
-		echo "xvfb-run failed (EXIT_CODE=$EXIT_CODE)"
+		echo "ERROR: xvfb-run failed (EXIT_CODE=$EXIT_CODE)"
 		save_and_print_debug_output
-		exit $EXIT_CODE
 	fi
 
 	if ! $ABLUNIT_TEST_RUNNER_NO_COVERAGE && [ ! -s artifacts/coverage/lcov.info ]; then
 		echo 'ERROR: artifacts/coverage/lcov.info not found'
-		exit 1
+		EXIT_CODE=90
 	fi
 }
 
@@ -186,9 +185,18 @@ save_and_print_debug_output () {
 	find . -name '*.r'
 }
 
+process_exit_code () {
+	if [ "${EXIT_CODE:-0}" = 0 ]; then
+		echo "$0 all tests completed successfully!"
+		exit 0
+	fi
+	echo "$0 failed with exit code $EXIT_CODE"
+	exit ${EXIT_CODE:-255}
+}
+
 ########## MAIN BLOCK ##########
 initialize "$@"
 dbus_config
 run_tests
 scripts/sonar_test_results_merge.sh
-echo "$0 completed successfully!"
+process_exit_code

@@ -4,13 +4,14 @@
 			"tempDir": "${workspaceFolder}",
 			"command": {
 				"executable": "_progres",
-				"progressIni": "progress.ini",
+				"progressIni": "progress.ini"
 			},
 			"options": {
 				"output": {
 					"location": "${tempDir}",
 					"filename": "results",
-					"format": "xml"
+					"format": "xml",
+					"updateFile": "updates.log"
 				},
 				"quitOnEnd": true,
 				"showErrorMessage": true,

@@ -54,7 +54,8 @@ function getMochaTimeout (projName) {
 		// case 'proj2': return 20000
 		case 'proj5': return 60000
 		case 'proj8': return 45000
-		case 'proj7A': return 60000
+		case 'proj7A': return 120000
+		case 'proj7B': return 120000
 	}
 
 	return 30000
@@ -119,6 +120,7 @@ function getLaunchArgs (projName) {
 	// args.push('--locale <locale>')
 	// args.push('--user-data-dir', '<dir>')
 	// args.push('--profile <profileName>')
+	// args.oush('--profile=ablunit-test')
 	// args.push('--profile-temp') // create a temporary profile for the test run in lieu of cleaning up user data
 	// args.push('--help')
 	// args.push('--extensions-dir', '<dir>')
@@ -158,8 +160,8 @@ function getLaunchArgs (projName) {
 	}
 	// args.push('--log', 'debug') // '<level>'
 	// args.push('--log', 'trace') // '<level>'
-	// args.push('--log', 'kenherring.ablunit-test-runner:debug') // <extension-id>:<level>
-	// args.push('--log', 'kenherring.ablunit-test-runner:trace') // <extension-id>:<level>
+	// args.push('--log', 'kherring.ablunit-test-runner:debug') // <extension-id>:<level>
+	// args.push('--log', 'kherring.ablunit-test-runner:trace') // <extension-id>:<level>
 	// args.push('--status')
 	// args.push('--prof-startup')
 	// args.push('--disable-extension <ext-id>')
@@ -193,7 +195,7 @@ function getLaunchArgs (projName) {
 	return args
 }
 
-function getTestConfig (projName) {
+function getTestConfig (testDir, projName) {
 
 	let workspaceFolder = '' + projName
 	if (projName.startsWith('proj7')) {
@@ -202,6 +204,10 @@ function getTestConfig (projName) {
 		workspaceFolder = projName + '.code-workspace'
 	}
 	workspaceFolder = path.resolve(__dirname, '..', 'test_projects', workspaceFolder)
+
+	if (projName === 'UpdateParser') {
+		workspaceFolder = path.resolve(__dirname, '..', 'test_projects', 'proj1')
+	}
 
 	if (!fs.existsSync(workspaceFolder)) {
 		const g = glob.globSync('test_projects/' + projName + '_*')
@@ -219,14 +225,14 @@ function getTestConfig (projName) {
 		useInstallation = { fromPath: '.vscode-test/vscode-win32-x64-archive-' + vsVersionNum + '/Code.exe' }
 	}
 
-	const absolulteFile = path.resolve(__dirname, '..', 'test', 'suites', projName + '.test.ts')
+	const absolulteFile = path.resolve(__dirname, '..', 'test', testDir, projName + '.test.ts')
 
 	const env = {
 		ABLUNIT_TEST_RUNNER_ENABLE_EXTENSIONS: enableExtensions.includes('' + projName),
 		ABLUNIT_TEST_RUNNER_UNIT_TESTING: true,
 		ABLUNIT_TEST_RUNNER_VSCODE_VERSION: vsVersion,
 		DONT_PROMPT_WSL_INSTALL: true,
-		// VSCODE_SKIP_PRELAUNCH: true,
+		VSCODE_SKIP_PRELAUNCH: true,
 	}
 
 	/** @type {import('@vscode/test-cli').IDesktopTestConfiguration} */
@@ -262,7 +268,7 @@ function getTests () {
 	if (envProjectName && envProjectName != '') {
 		const projects = envProjectName.split(',')
 		for (const p of projects) {
-			tests.push(getTestConfig(p))
+			tests.push(getTestConfig('suites', p))
 		}
 		return tests
 	}
@@ -270,7 +276,13 @@ function getTests () {
 	const g = glob.globSync('test/suites/*.test.ts').reverse()
 	for (const f of g) {
 		const basename = path.basename(f, '.test.ts')
-		tests.push(getTestConfig(basename))
+		tests.push(getTestConfig('suites', basename))
+	}
+
+	const p = glob.globSync('test/parse/*.test.ts')
+	for (const f of p) {
+		const basename = path.basename(f, '.test.ts')
+		tests.push(getTestConfig('parse', basename))
 	}
 	return tests
 }

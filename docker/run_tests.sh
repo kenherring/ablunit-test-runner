@@ -50,7 +50,8 @@ initialize () {
 			h)	usage && exit 0 ;;
 			P)	CREATE_PACKAGE=true ;;
 			p)	ABLUNIT_TEST_RUNNER_PROJECT_NAME=$OPTARG ;;
-			x)	OPTS='-x' ;;
+			x)	OPTS='-x'
+				set -x ;;
 			v)	VERBOSE=true ;;
 			V)	ABLUNIT_TEST_RUNNER_VSCODE_VERSION=$OPTARG ;;
 			?)	usage && exit 1 ;;
@@ -68,12 +69,15 @@ initialize () {
 		exit 1
 	fi
 
-	if [ -z "$ABLUNIT_TEST_RUNNER_OE_VERSION" ]; then
+	if ${CIRCLECI:-false} && [ -z "$ABLUNIT_TEST_RUNNER_OE_VERSION" ]; then
 		cat "$DLC/version"
 		ABLUNIT_TEST_RUNNER_OE_VERSION=$(awk '{print $3}' < "$DLC/version")
 		if [[ "$ABLUNIT_TEST_RUNNER_OE_VERSION" =~ ^[0-9]+\.[0-9]+$ ]]; then
 			ABLUNIT_TEST_RUNNER_OE_VERSION="${ABLUNIT_TEST_RUNNER_OE_VERSION}.0"
 		fi
+	fi
+	if [ -z "$ABLUNIT_TEST_RUNNER_OE_VERSION" ]; then
+		ABLUNIT_TEST_RUNNER_OE_VERSION=12.8.1
 	fi
 	if [[ ! "$ABLUNIT_TEST_RUNNER_OE_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
 		echo "ERROR: invalid ABLUNIT_TEST_RUNNER_OE_VERSION: '$ABLUNIT_TEST_RUNNER_OE_VERSION'"
@@ -83,6 +87,7 @@ initialize () {
 	GIT_BRANCH=$(git branch --show-current)
 	PROGRESS_CFG_BASE64=$(base64 "$DLC/progress.cfg" | tr '\n' ' ')
 	PWD=$(pwd -W 2>/dev/null || pwd)
+	PWD=${PWD//\//\\}
 	ABLUNIT_TEST_RUNNER_PROJECT_NAME=${ABLUNIT_TEST_RUNNER_PROJECT_NAME//\\/\/}
 	ABLUNIT_TEST_RUNNER_PROJECT_NAME=${ABLUNIT_TEST_RUNNER_PROJECT_NAME//*\/}
 	ABLUNIT_TEST_RUNNER_PROJECT_NAME=${ABLUNIT_TEST_RUNNER_PROJECT_NAME//.test.ts}
@@ -167,12 +172,12 @@ run_tests_in_docker () {
 			-e ABLUNIT_TEST_RUNNER_VSCODE_VERSION
 			-e ABLUNIT_TEST_RUNNER_NO_COVERAGE
 			-e SET_X
-			-v "$PWD/artifacts":/home/circleci/project/artifacts
-			-v "$PWD/coverage":/home/circleci/project/coverage
+			-v "${PWD}/artifacts":/home/circleci/project/artifacts
+			-v "${PWD}/coverage":/home/circleci/project/coverage
 		)
 		[ -n "${ABLUNIT_TEST_RUNNER_PROJECT_NAME:-}" ] && ARGS+=(-e ABLUNIT_TEST_RUNNER_PROJECT_NAME)
 		ARGS+=(
-			-v "$PWD":/home/circleci/ablunit-test-runner:ro
+			-v "${PWD}":/home/circleci/ablunit-test-runner:ro
 			-v vscode-cli-cache:/home/circleci/project/.vscode-test
 			kherring/ablunit-test-runner:"${ABLUNIT_TEST_RUNNER_OE_VERSION}"
 			bash -c "/home/circleci/ablunit-test-runner/docker/$SCRIPT.sh $OPTS;"

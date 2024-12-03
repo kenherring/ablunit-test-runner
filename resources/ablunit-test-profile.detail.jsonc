@@ -31,6 +31,9 @@
 		"importOpenedgeProjectJson": true,
 		"openedgeProjectProfile": "default",
 
+		////# Timeout in milliseconds for the ablunit command to complete.  Set to 0 for no timeout.p
+		"timeout": 30000,
+
 		////# Configuration object related to the command line run to execute tests.
 		"command": {
 
@@ -71,8 +74,10 @@
 				"location": "${tempDir}",
 				"filename": "results",
 				"format": "xml",
-				"writeJson": true
+				"writeJson": true,
+				"updateFile": "updates.log" // custom for the ablunit-test-runner extension
 			},
+			"debug": false,
 			"quitOnEnd": true,
 			"writeLog":  false,
 			"showErrorMessage": true,
@@ -101,6 +106,8 @@
 		////#     the command line, and the "profiler.options" file will not be created.
 		////#   * When the "profiler" key is set to null the 'profile.options' file will not
 		////#     be created and the `-profile` option will not be passed to the command line.
+		////#   * When "enabled" is false, the profiler information is not collection and coverage cannot
+		////#     be reported.  This is not recommended.  The option is included here for completeness.
 		////#
 		////# See the OpenEdge documentation for more information about these values.
 		////#   * https://docs.progress.com/bundle/openedge-startup-and-parameter-reference/page/Profiler-profile.html
@@ -113,7 +120,7 @@
 			"listings": false,
 			"statistics": false,
 			"traceFilter": "",
-			"tracing": false,
+			"tracing": "",
 			"writeJson": false
 		}
 

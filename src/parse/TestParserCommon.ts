@@ -1,6 +1,7 @@
 import { Uri, workspace } from 'vscode'
 import { TextDecoder } from 'util'
-import { log } from '../ChannelLogger'
+import { isRelativePath } from 'ABLUnitCommon'
+import * as fs from 'fs'
 
 const textDecoder = new TextDecoder('utf-8')
 export function getContentFromFilesystem (uri: Uri) {
@@ -18,7 +19,23 @@ export function getContentFromFilesystem (uri: Uri) {
 	return v
 }
 
-export function getLines (text: string, annotation: string): [ string[], boolean ] {
+export function getContentFromFilesystem (uri: Uri | string) {
+	uri = toUri(uri)
+	return workspace.fs.readFile(uri)
+		.then((rawContent) => { return textDecoder.decode(rawContent) },
+			(e) => { throw e })
+}
+
+export function readLinesFromFile (uri: Uri | string) {
+	uri = toUri(uri)
+	return getContentFromFilesystem(uri)
+		.then((content) => {
+			// split lines, remove CR and filter out empty lines
+			return content.replace(/\r/g, '').split('\n').filter((line) => line.trim().length > 0)
+		})
+}
+
+export function getAnnotationLines (text: string, annotation: string): [ string[], boolean ] {
 	const annotationRegex = new RegExp(annotation, 'i')
 
 	if (!annotationRegex.test(text)) {
@@ -34,12 +51,9 @@ export function getLines (text: string, annotation: string): [ string[], boolean
 	const lines = text.replace(/\r/g, '').split('\n')
 	let foundAnnotation = false
 	for (let i = 0; i < lines.length; i++) {
-		lines[i] = removeComments(lines[i])
+		lines[i] = removeComments(lines[i]).trim()
 
-		if (lines[i].trim() == '') {
-			// set empty lines to empty string
-			lines[i] = ''
-		} else if (!foundAnnotation && lines[i].toLowerCase().includes('@test')) {
+		if (!foundAnnotation && lines[i].toLowerCase().includes('@test')) {
 			foundAnnotation = true
 		}
 	}
@@ -52,13 +66,15 @@ export function getLines (text: string, annotation: string): [ string[], boolean
 const blockCommentRE = /\/\*.*\*\//g
 
 function removeComments (line: string) {
-	line = line.replace(/\/\/.*/g, '') // trim end of line comments
+	line = line.replace(/\/\/.*$/g, '') // trim end of line comments
 
 	const matches = blockCommentRE.exec(line)
-	if(!matches) { return line }
+	if(!matches) {
+		return line.trim()
+	}
 
 	for(const element of matches) {
 		line = line.replace(element, ' '.repeat(element.length))
 	}
-	return line
+	return line.trim()
 }

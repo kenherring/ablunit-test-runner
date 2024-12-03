@@ -36,17 +36,26 @@
 					"openedgeProjectProfile": {
 						"type": "string",
 						"default": "default",
-						"description": "The profile to use from 'openedge-project.json'.  Only used when 'importOpenedgeProjectJson' is true."
+						"description": "The profile to use from 'openedge-project.json'.  Only used when 'importOpenedgeProjectJson' is true.  When not defined the selected profile for the OpenEdge ABL extension is used (`.vscode/profile.json`)",
+						"markdownDescription": "The profile to use from `openedge-project.json`.  Only used when 'importOpenedgeProjectJson' is true.  When not defined the selected profile for the OpenEdge ABL extension is used (`.vscode/profile.json`)"
+					},
+					"timeout": {
+						"type": "number",
+						"default": 30000,
+						"minimum": 0,
+						"description": "Timeout in milliseconds for the test run.  Set to 0 to disable."
 					},
 					"options": {
 						"type": [ "object", "null" ],
-						"description": "Options passed to the OE test runner via the 'ablunit.json' file.  Set to null to prevent the creation of 'ablunit.json' or related args passed to the command line.",
+						"description": "Options passed to the OE test runner via the 'ablunit.json' file.  Set to null to prevent the creation of 'ablunit.json' or related args passed to the command line.\n\n*[Run test cases from the command prompt](https://docs.progress.com/bundle/openedge-developer-studio-help/page/Run-test-cases-from-the-command-prompt.html)",
+						"markdownDescription": "Options passed to the OE test runner via the `ablunit.json` file.  Set to null to prevent the creation of `ablunit.json` or related args passed to the command line.\n\n*[Run test cases from the command prompt](https://docs.progress.com/bundle/openedge-developer-studio-help/page/Run-test-cases-from-the-command-prompt.html)",
 						"default": {
 							"output": {
 								"location": "${tempDir}",
 								"filename": "results.xml",
 								"format": "xml",
-								"writeJson": false
+								"writeJson": false,
+								"updateFile": "updates.log"
 							},
 							"quitOnEnd": true,
 							"writeLog": false,
@@ -81,8 +90,17 @@
 										"type": "boolean",
 										"default": false,
 										"description": "Write a JSON file containing the parsed results data.  The file will be written to the same directory as `results.xml`."
+									},
+									"updateFile": {
+										"type": "string",
+										"description": "Output file to monitor status of the test run.",
+										"default": "updates.log"
 									}
 								}
+							},
+							"debug": {
+								"type": "boolean",
+								"default": false
 							},
 							"quitOnEnd": {
 								"type": "boolean",
@@ -132,7 +150,9 @@
 					"profiler": {
 						"type": [ "object", "null" ],
 						"description": "Options passed to the OE test runner via `-profile <options-file>`.  Set to null to prevent the creation of the options file or args passed to the command line.",
+						"markdownDescription": "Options passed to the OE test runner via `-profile <options-file>`.  Set to null to prevent the creation of the options file or args passed to the command line.\n\n* [`PROFILER` system handle](https://docs.progress.com/bundle/abl-reference/page/PROFILER-system-handle.html)\n* [Profiler (`-profile`) startup parameter](https://docs.progress.com/bundle/openedge-startup-and-parameter-reference/page/Profiler-profile.html)",
 						"default": {
+							// When running tests w/ coverage the following options are automatically added.
 							"enabled": true,
 							"coverage": true
 						},
@@ -141,22 +161,26 @@
 							"enabled": {
 								"type": "boolean",
 								"default": true,
-								"description": "Enable the profiler by passing `-profile <options-file>` to the OE test runner."
+								"description": "Enable the profiler by passing `-profile <options-file>` to the OE test runner.",
+								"markdownDescription": "Enable the profiler by passing `-profile <options-file>` to the OE test runner.\n\n* [`ENABLED` attribute](https://docs.progress.com/bundle/abl-reference/page/ENABLED-attribute.html)"
 							},
 							"coverage": {
 								"type": "boolean",
 								"default": true,
-								"description": "Enable code coverage logging by the profiler."
+								"description": "Enable code coverage logging by the profiler.",
+								"markdownDescription": "Enable code coverage logging by the profiler.\n\n* [`COVERAGE` attribute](https://docs.progress.com/bundle/abl-reference/page/COVERAGE-attribute.html)"
 							},
 							"description": {
 								"type": "string",
 								"default": "VSCode Test Run - ABLUnit Test Runner",
-								"description": "Description outputted as header information by the `PROFILER` system handle."
+								"description": "Description outputted as header information by the `PROFILER` system handle.",
+								"markdownDescription": "Description outputted as header information by the `PROFILER` system handle.\n\n* [`DESCRIPTION` attribute](https://docs.progress.com/bundle/abl-reference/page/DESCRIPTION-attribute.html)"
 							},
 							"filename": {
 								"type": "string",
 								"default": "${tempDir}/prof.out",
-								"description": "Filepath where profiler data is written by the `PROFILER` system handle.  When the value is a directory a filename of 'prof.out' will be used."
+								"description": "Filepath where profiler data is written by the `PROFILER` system handle.  When the value is a directory a filename of 'prof.out' will be used.",
+								"markdownDescription": "Filepath where profiler data is written by the [`PROFILER` system handle](https://docs.progress.com/bundle/abl-reference/page/PROFILER-system-handle.html).  When the value is a directory a filename of 'prof.out' will be used.\n\n* [`FILENAME` attribute](https://docs.progress.com/bundle/abl-reference/page/FILENAME-attribute.html)"
 							},
 							"listings": {
 								"anyOf": [
@@ -164,27 +188,32 @@
 									{ "type": "string" }
 								],
 								"default": false,
-								"description": "Include source code listings in the profiler output.  Output directory: `\"{tempDir}/listings\"`"
+								"description": "Include source code listings in the profiler output.  Output directory: `\"{tempDir}/listings\"`",
+								"markdownDescription": "Include source code listings in the profiler output.  Output directory: `\"{tempDir}/listings\"`\n\n* [`LISTINGS` attribute](https://docs.progress.com/bundle/abl-reference/page/LISTINGS-attribute.html)"
 							},
 							"statistics": {
 								"type": "boolean",
 								"default": false,
-								"description": "Include statistics in the profiler output."
+								"description": "Include statistics in the profiler output.",
+								"markdownDescription": "Include statistics in the profiler output.\n\n* [`STATISTICS` attribute](https://docs.progress.com/bundle/abl-reference/page/STATISTICS-attribute.html)"
 							},
 							"traceFilter": {
 								"type": "string",
 								"default": "",
-								"description": "Filter for tracing.  See OpenEdge documentation for details."
+								"description": "Filter for tracing.  See OpenEdge documentation for details.",
+								"markdownDescription": "Filter for tracing.\n\n* [`TRACE-FILTER` attribute](https://docs.progress.com/bundle/abl-reference/page/TRACE-FILTER-attribute.html)"
 							},
 							"tracing": {
-								"type": "boolean",
+								"type": "string",
 								"default": false,
-								"description": "Include tracing in the profiler output."
+								"description": "Include tracing in the profiler output.",
+								"markdownDescription": "Include tracing in the profiler output.\n\n* [`TRACING` attribute](https://docs.progress.com/bundle/abl-reference/page/TRACING-attribute.html)"
 							},
 							"writeJson": {
 								"type": "boolean",
 								"default": false,
-								"description": "Write a JSON file containing the parsed profiler data.  The file will be written to the same directorye `filename` property."
+								"description": "Write a JSON file containing the parsed profiler data.  The file will be written to the same directory `filename` property.",
+								"markdownDescription": "Write a JSON file containing the parsed profiler data.  The file will be written to the same directory `filename` property."
 							}
 						}
 					},
@@ -208,12 +237,13 @@
 								"type": "string",
 								"default": "${tempDir}/progress.ini",
 								"nullable": true,
-								"description": "Windows only. Path to ini configuration file. Appended to test run execution with command line arguments: `-basekey INI -basename <progressIni>`.  Set to \"null\" to disable."
+								"description": "Windows only. Path to ini configuration file. Appended to test run execution with command line arguments: `-basekey INI -basename <progressIni>`.  Set to \"null\" to disable.",
+								"markdownDescription": "Windows only. Path to ini configuration file. Appended to test run execution with command line arguments: `-basekey INI -basename <progressIni>`.  Set to `null` to disable."
 							},
 							"additionalArgs": {
 								"type": "array",
 								"default": [],
-								"description": "Additional args passed to the command line.",
+								"description": "Additional args passed to the command line. Appended to ``extraParameters` defined in `openedge-project.json`.",
 								"items": { "type": "string" }
 							}
 						}

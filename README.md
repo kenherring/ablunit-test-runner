@@ -74,7 +74,7 @@ The following table gives a brief description of the available settings via the 
 | --- | --- | --- |
 | `ablunit.discoverAllTestsOnActivate` | `true` | Search all workspace files for tests on extension activation.  It may be beneficial to disable this for large workspaces, in which case the extension will find tests as files are accessed. |
 | `ablunit.files.include` | `[ "**/*.{cls,p}" ]` | Glob pattern array matching test files. |
-| `ablunit.files.exclude` | `[ "**/.builder/**" ]` | Glob pattern array to exclude test files. |
+| `ablunit.files.exclude` | `[ "**/.builder/**", "**/.pct/** ]` | Glob pattern array to exclude test files. |
 | `ablunit.importOpenedgeProjectJson` | `true` | Import configuration settings from \`openedge-project.json\` when possible. |
 | `ablunit.test.classlabel` | `classname` | The label format for test classes. Example for class with path `com/example/myClass.cls`:<ul><li>class-type-name example: `com.example.myClass`</li><li>filename example: `myClass.cls`</li></ul> |
 
@@ -86,6 +86,11 @@ A default profile is created when using the **ABLUnit: Configure Test Profile** 
 
 **Note**: Only the first test profile will be imported.  In the future this extension will allow for multiple entries.
 
+### VSCode Configuration - Snippets
+
+This extension includes a few snippets for test annotations and other related code you may find helpful.  These can be removed from intellisense with standard VSCode functionality.  See: [**VSCode Docs -> Snippets in Visual Studio Code
+ -> Can I remove snippets from intellisense?**](https://code.visualstudio.com/docs/editor/userdefinedsnippets#_can-i-remove-snippets-from-intellisense)
+
 ## 👷‍♂️ Contributing
 
 See [CONTRIBUTING.md](.github/CONTRIBUTING.md)
@@ -94,7 +99,6 @@ See [CONTRIBUTING.md](.github/CONTRIBUTING.md)
 
 * `npm install`
 * Make any changes you wish
-* `npm install -g --save-dev @vscode/vsce"`
 * `npm test` or use the [Extension Test Runner](https://marketplace.visualstudio.com/items?itemName=ms-vscode.extension-test-runner)
 
 ## 🔗 Links

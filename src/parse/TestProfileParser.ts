@@ -73,7 +73,7 @@ export function parseRunProfiles (workspaceFolders: WorkspaceFolder[], wsFilenam
 	if (workspaceFolders.length === 0) {
 		throw new Error('Workspace has no open folders')
 	}
-	const defaultConfig = getDefaultConfig()
+	const defaultConfig = (JSON.parse(JSON.stringify(getDefaultConfig())) as unknown) as IConfigurations
 
 	const runProfiles: IRunProfile[] = []
 	for (const workspaceFolder of workspaceFolders) {
@@ -122,6 +122,10 @@ export function parseRunProfiles (workspaceFolders: WorkspaceFolder[], wsFilenam
 
 			const wsFolder = profile.workspaceFolder?.uri.fsPath ?? '.'
 			profile.tempDir = profile.tempDir.replace('${workspaceFolder}', wsFolder)
+			if (profile.options?.output?.location) {
+				profile.options.output.location = profile.options.output.location.replace('${workspaceFolder}', wsFolder)
+				profile.options.output.location = profile.options.output.location.replace('${tempDir}', profile.tempDir)
+			}
 		})
 	}
 
@@ -154,9 +158,10 @@ export class RunConfig extends DefaultRunProfile {
 	public readonly tempDirUri: Uri
 	public readonly config_uri: Uri
 	public readonly optionsUri: {
-		locationUri: Uri,
+		locationUri: Uri
 		filenameUri: Uri
 		jsonUri?: Uri
+		updateUri: Uri | undefined
 	}
 	public readonly progressIniUri: Uri | undefined
 	public readonly profOptsUri: Uri
@@ -169,7 +174,8 @@ export class RunConfig extends DefaultRunProfile {
 	constructor (private readonly profile: IRunProfile, public workspaceFolder: WorkspaceFolder) {
 		super()
 		this.tempDirUri = this.getUri(this.profile.tempDir)
-		log.debug('tempDirUri=' + this.tempDirUri.fsPath)
+		this.timeout = this.profile.timeout
+		log.debug('tempDirUri="' + this.tempDirUri.fsPath + '"')
 		this.config_uri = Uri.joinPath(this.tempDirUri, 'ablunit.json')
 		this.profOptsUri = Uri.joinPath(this.tempDirUri, 'profile.options')
 		this.dbConnPfUri = Uri.joinPath(this.tempDirUri, 'dbconn.pf')
@@ -182,6 +188,7 @@ export class RunConfig extends DefaultRunProfile {
 		this.optionsUri = {
 			locationUri: this.getUri(this.profile.options?.output?.location + '/'),
 			filenameUri: Uri.joinPath(this.tempDirUri, tmpFilename),
+			updateUri: Uri.joinPath(this.tempDirUri, 'updates.log'),
 		}
 		this.options.output.location = workspace.asRelativePath(this.optionsUri.locationUri, false)
 		this.optionsUri.filenameUri = Uri.joinPath(this.optionsUri.locationUri, tmpFilename)
@@ -190,7 +197,12 @@ export class RunConfig extends DefaultRunProfile {
 		if (this.options.output.writeJson) {
 			this.optionsUri.jsonUri = Uri.joinPath(this.optionsUri.locationUri, tmpFilename.replace(/\.xml$/, '') + '.json')
 		}
-		log.debug('this.optionsUri.jsonUri=' + this.optionsUri.jsonUri?.fsPath)
+		log.debug('this.optionsUri.jsonUri="' + this.optionsUri.jsonUri?.fsPath + '"')
+		if (this.options.output.updateFile) {
+			this.optionsUri.updateUri = Uri.joinPath(this.optionsUri.locationUri, this.options.output.updateFile)
+		} else {
+			this.optionsUri.updateUri = undefined
+		}
 
 		this.command = new CommandOptions(this.profile.command)
 		if (this.command.progressIni != '') {
@@ -200,10 +212,11 @@ export class RunConfig extends DefaultRunProfile {
 			this.progressIniUri = undefined
 		}
 
-		const extraParameters = getExtraParameters(this.workspaceFolder.uri, this.profile.openedgeProjectProfile)
-		log.info('extraParameters=' + extraParameters)
+		const extraParameters = getExtraParameters(this.workspaceFolder.uri, this.profile.openedgeProjectProfile)?.split(' ')
+		// TODO - re-join quoted strings
+		log.info('extraParameters=' + JSON.stringify(extraParameters))
 		if (extraParameters) {
-			this.command.additionalArgs.push(extraParameters)
+			this.command.additionalArgs.push(...extraParameters)
 		}
 
 		const charset = getProfileCharset(this.workspaceFolder.uri, this.profile.openedgeProjectProfile)

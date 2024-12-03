@@ -3,6 +3,7 @@
 		{
 			"tempDir": "${workspaceFolder}",
 			"importOpenedgeProjectJson": true,
+			"timeout": 30000,
 			"command": {
 				"executable": "_progres",
 				"progressIni": "progress.ini",
@@ -13,12 +14,20 @@
 				"output": {
 					"location": "${tempDir}",
 					"filename": "results",
-					"format": "xml"
+					"format": "xml",
+					"updateFile": "updates.log"
 				},
+				"debug": false,
 				"quitOnEnd": true,
 				"writeLog": false,
 				"showErrorMessage": true,
-				"throwError": true
+				"throwError": true,
+				"xref": {
+					"useXref": false,
+					"xrefLocation": "${tempDir}",
+					"xrefExtension": "xml.xref",
+					"xrefThrowError": false
+				}
 			},
 			"profiler": {
 				"enabled": true,

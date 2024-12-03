@@ -2,6 +2,6 @@
 	"name": "proj7",
 	"buildPath": [
 		{ "type": "source", "path": "src" },
-		{ "type": "source", "path": "src/ADE-12.8.1.0/corelib" }
+		{ "type": "source", "path": "src/ADE-12.8.0.0" }
 	]
 }
