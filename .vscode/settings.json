@@ -26,7 +26,7 @@
 	},
 	"files.exclude": {
 		"./dist/**": true,
-		// "**/*{.js,.test.js}": { "when": "$(basename).ts" }
+		"**/.worktrees": true,
 	},
 	"files.watcherExclude": {
 		".git/objects": true,
