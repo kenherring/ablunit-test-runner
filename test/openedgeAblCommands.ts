@@ -51,7 +51,7 @@ export function rebuildAblProject () {
 			const rcodeCount = getRcodeCount()
 			log.info('abl.project.rebuild command complete! (rcodeCount=' + rcodeCount + ')')
 			return rcodeCount
-		}, (err) => { throw err })
+		}, (e: unknown) => { throw e })
 }
 
 export async function printLastLangServerError () {

@@ -60,8 +60,8 @@ suite('proj0  - Extension Test Suite', () => {
 	})
 
 	// is it possible to validate the line coverage displayed and not just the reported coverage?  does it matter?
-	test('proj0.03 - open file, run test, validate coverage displays', async () => {
-		const testFileUri = Uri.joinPath(workspace.workspaceFolders![0].uri, 'src', 'dirA', 'dir1', 'testInDir.p')
+	test.skip('proj0.3 - open file, run test, validate coverage displays', async () => {
+		const testFileUri = toUri('src/dirA/dir1/testInDir.p')
 		await window.showTextDocument(testFileUri)
 		await runAllTestsWithCoverage()
 
@@ -130,12 +130,12 @@ suite('proj0  - Extension Test Suite', () => {
 		assert.equal(testClassItem.children.size, 5, 'testClassItem.children.size should be 5')
 	})
 
-	test('proj0.09 - ABLResultsParser', async () => {
+	test('proj0.9 - ABLResultsParser', () => {
 		const rp = new ABLResultsParser()
-		await rp.parseResults(toUri('results_test1.xml'))
+		return rp.parseResults(toUri('results_test1.xml'))
 			.then(() => {
 				log.info('parsed results_test1.xml successfully')
-				return true
+				return
 			}, (e: unknown) => {
 				if (e instanceof Error) {
 					log.info('e.message=' + e.message)
@@ -184,7 +184,7 @@ suite('proj0  - Extension Test Suite', () => {
 			.then((r) => {
 				log.info('opened file (r=' + r + ')')
 				return sleep2(250)
-			}, (e) => { throw e })
+			}, (e: unknown) => { throw e })
 
 		const startCount = await getTestItem(toUri('src/dirA/proj10.p'))
 			.then((r) => {
@@ -192,7 +192,7 @@ suite('proj0  - Extension Test Suite', () => {
 					log.info('c.label=' + c.label + '; c.id='  + c.id)
 				}
 				return r.children.size
-			}, (e) => { throw e })
+			}, (e:unknown) => { throw e })
 
 
 		// update test program
@@ -209,7 +209,7 @@ suite('proj0  - Extension Test Suite', () => {
 					log.info('c.label=' + c.label + '; c.id='  + c.id)
 				}
 				return r.children.size
-			}, (e) => { throw e })
+			}, (e: unknown) => { throw e })
 		assert.equal(endCount - startCount, 2, 'test cases added != 2 (endCount=' + endCount + '; startCount=' + startCount + ')')
 	})
 

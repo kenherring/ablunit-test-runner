@@ -1,58 +1,3 @@
-# 🥳 [1.0.0](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.0.0) - 2024-10-24
-
-* Finally, a non-preview release!
-* Various fixes and updates
-* Improved test run output, including call stacks with test failure messages
-
-**Full Changelog**: [0.2.0...1.0.0](https://github.com/kenherring/ablunit-test-runner/compare/0.2.17...1.0.0)
-
-<!--
-# [0.2.17](https://github.com/kenherring/ablunit-test-runner/releases/tag/0.2.17) - 2024-10-14 (pre-release)
-
- * add `timeout` key to test config (#217)
- * Unskip tests and ensure they pass (#216)
- * Read `openedge-project.json` profile by name consistently (#212)
-
-**Full Changelog**: [0.2.15...0.2.17](https://github.com/kenherring/ablunit-test-runner/compare/0.2.15...0.2.17)
-
-# [0.2.15](https://github.com/kenherring/ablunit-test-runner/releases/tag/0.2.15) - 2024-10-08 (pre-release)
-
- * Use `TestMesssage.stackTrace` instead of custom display (#213)
- * Minor script and test cleanup (#178)
-
-**Full Changelog**: [0.2.13...0.2.15](https://github.com/kenherring/ablunit-test-runner/compare/0.2.13...0.2.15)
-
-# [0.2.13](https://github.com/kenherring/ablunit-test-runner/releases/tag/0.2.13) - 2024-10-03 (pre-release)
-
- * Unskip proj7 tests for large projects (#194)
-
-**Full Changelog**: [0.2.11...0.2.13](https://github.com/kenherring/ablunit-test-runner/compare/0.2.11...0.2.13)
-
-# [0.2.11](https://github.com/kenherring/ablunit-test-runner/releases/tag/0.2.11) - 2024-09-30 (pre-release)
-
- * Upload artifact to gh release automatically (#209)
- * Restore watcher for file create, update, delete (#207)
- * Add snippets for the  `@BeforeAll`,  `@BeforeEach`,  `@AfterEach`, `@AfrerAll` annotations (#205)
- * Use vsce as a development dependency instead of globally installing (#206)
-
-**Full Changelog**: [0.2.7...0.2.11](https://github.com/kenherring/ablunit-test-runner/compare/0.2.7...0.2.11)
-
-# [0.2.7](https://github.com/kenherring/ablunit-test-runner/releases/tag/0.2.7) - 2024-09-24 (pre-release)
-
-This is a release candidate for 1.0.0.  There is one open PR ([#194](https://github.com/kenherring/ablunit-test-runner/pull/194)), but if there are other issues reported they may be addressed as well.
-
- * Show incremental test results during test run (#195)
- * Chore: fix emoji use in issue templates (#197)
- * Add OE 12.8.4 test target (#196)
- * Fix coverage reporting on first line and line after executed line (#193)
- * Improve test name parsing when using `#` character (#190)
- * npm update (#192)
- * Add xref options to test profile configuration (#191)
- * Use `charset` and `extraParameters` from `openedge-project.json` (#189)
- * Replace `${DLC}` in executed command and generated ini file (#188)
-
-**Full Changelog**: [0.2.5...0.2.7](https://github.com/kenherring/ablunit-test-runner/compare/0.2.5...0.2.7)
-
 # [0.2.5](https://github.com/kenherring/ablunit-test-runner/releases/tag/0.2.5) - 2024-09-03 (pre-release)
 
  * Update test parsing to find skipped/ignored tests (#184)
@@ -105,9 +50,7 @@ This is a release candidate for 1.0.0.  There is one open PR ([#194](https://git
 
 **Full Changelog**: [0.2.0...0.2.1](https://github.com/kenherring/ablunit-test-runner/compare/0.2.0...0.2.1)
 
--->
-
-# 🥇 [0.2.0](https://github.com/kenherring/ablunit-test-runner/releases/tag/0.2.0) - 2024-01-22
+# [0.2.0](https://github.com/kenherring/ablunit-test-runner/releases/tag/0.2.0) - 2024-01-22
 
 Initial release to marketplace
 

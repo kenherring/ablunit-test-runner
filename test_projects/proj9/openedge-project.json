@@ -1,7 +1,7 @@
 {
 	"name": "proj9",
 	"buildPath": [
-		{ "type": "source", "path": "src", "excludes": "emptyClass.cls"},
+		{ "type": "source", "path": "src", "excludes": "emptyClass.cls,dirA/dir1/testInDir2.p"},
 		{ "type": "source", "path": "test" }
 	],
 	"numThreads": 1,

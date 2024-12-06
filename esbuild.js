@@ -5,7 +5,7 @@ const watch = process.argv.includes('--watch')
 
 let logtag = '[build]'
 if (watch) {
-    logtag = '[watch]'
+	logtag = '[watch]'
 }
 
 async function main () {
@@ -26,7 +26,7 @@ async function main () {
 		]
 	})
 	if (watch) {
-        console.log(logtag + ' watching...')
+		console.log(logtag + ' watching...')
 		await ctx.watch()
 	} else {
 		await ctx.rebuild()
@@ -47,11 +47,11 @@ const esbuildProblemMatcherPlugin = {
 		build.onEnd(result => {
 			result.errors.forEach(({ text, location }) => {
 				console.error(`✘ [ERROR] ${text}`)
-                if (location) {
-				    console.error(`    ${location.file}:${location.line}:${location.column}:`)
-                } else {
-                    console.error('    location unknown')
-                }
+				if (location) {
+					console.error(`    ${location.file}:${location.line}:${location.column}:`)
+				} else {
+					console.error('    location unknown')
+				}
 			})
 			console.log(logtag + ' build finished')
 		})

@@ -61,3 +61,5 @@ test_projects/proj7_load_performance/src/classes
 # Dowloaded test files
 test_projects/proj7_load_performance/v*.tar.gz
 test_projects/proj7_load_performance/src/ADE-*
+
+.worktrees/
