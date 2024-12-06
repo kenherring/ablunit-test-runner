@@ -37,9 +37,9 @@ suite('proj7B - Extension Test Suite', () => {
 			await commands.executeCommand('testing.cancelTestRefresh').then(() => {
 				log.info('testing.cancelTestRefresh completed')
 				return
-			}, (err) => {
-				log.error('testing.cancelTestRefresh caught an exception. err=' + err)
-				throw err
+			}, (e: unknown) => {
+				log.error('testing.cancelTestRefresh caught an exception. err=' + e)
+				throw e
 			})
 			log.info(' - elapsedCancelTime=' + startCancelTime.elapsed() + 'ms, elapsedRefreshTime=' +  startRefreshTime.elapsed() + 'ms')
 			assert.durationMoreThan(startCancelTime, minCancelTime)
@@ -56,12 +56,12 @@ suite('proj7B - Extension Test Suite', () => {
 		await refresh.then(() => {
 			assert.fail('testing.refreshTests completed without throwing CancellationError')
 			return
-		}, (err) => {
-			if (err instanceof CancellationError) {
+		}, (e: unknown) => {
+			if (e instanceof CancellationError) {
 				log.info('testing.refreshTests threw CancellationError as expected')
 			} else {
-				const e = err as Error
-				assert.equal(e.name, 'Canceled', 'testing.refreshTests threw unexpected error. Expected e.name="Canceled" err=' + err)
+				const err = e as Error
+				assert.equal(err.name, 'Canceled', 'testing.refreshTests threw unexpected error. Expected e.name="Canceled" err=' + err)
 			}
 		})
 	})

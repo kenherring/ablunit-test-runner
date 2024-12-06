@@ -7,10 +7,6 @@ suite('proj7A - Extension Test Suite', () => {
 			.then(() => { return beforeProj7() })
 	})
 
-	test.skip('proj7A.1 - test count', async () => {
-		await runAllTests()
-
-
 	test('proj7A.1 - test count', async () => {
 		const duration = new Duration()
 		await runAllTests().then(() => {

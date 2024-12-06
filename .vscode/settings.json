@@ -26,7 +26,7 @@
 	},
 	"files.exclude": {
 		"./dist/**": true,
-		"**/.worktrees": true,
+		"**/.worktrees": true
 	},
 	"files.watcherExclude": {
 		".git/objects": true,

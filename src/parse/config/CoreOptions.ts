@@ -1,5 +1,6 @@
 export interface ITestObj {
-	test: string
+	folder?: string
+	test?: string
 	cases?: string[]
 }
 

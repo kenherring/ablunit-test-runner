@@ -92,7 +92,8 @@ export class ABLResultsParser {
 	parseXml (xmlData: string): string {
 		let res: string | undefined
 
-		parseString(xmlData, function (e: Error | null, resultsRaw: unknown) {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-call
+		parseString(xmlData, (e: Error | null, resultsRaw: unknown) => {
 			if (e) {
 				log.info('error parsing XML file: ' + e)
 				throw e
@@ -281,8 +282,8 @@ export class ABLResultsParser {
 		return workspace.fs.writeFile(uri, Uint8Array.from(Buffer.from(JSON.stringify(data, null, 2)))).then(() => {
 			log.info('wrote results json file: ' + uri.fsPath)
 			return
-		}, (err) => {
-			log.error('failed to write profile output json file ' + uri.fsPath + ' - ' + err)
+		}, (e: unknown) => {
+			log.error('failed to write profile output json file ' + uri.fsPath + ' - ' + e)
 		})
 	}
 }

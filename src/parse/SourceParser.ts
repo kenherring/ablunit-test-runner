@@ -32,9 +32,9 @@ function readXrefFile (xrefUri: Uri) {
 	return workspace.fs.readFile(xrefUri).then((content) => {
 		const str = Buffer.from(content.buffer).toString()
 		return str
-	}, (err) => {
+	}, (e: unknown) => {
 		log.trace('xref file not found \'' + xrefUri.fsPath + '\'')
-		log.trace(' -- err=' + err)
+		log.trace(' -- err=' + e)
 		return undefined // don't rethrow, just return undefined because we don't want to stop processing
 	})
 }
@@ -170,7 +170,7 @@ export const getSourceMapFromSource = (propath: PropathParser, debugSourceName: 
 			}
 			try {
 				debugLines = await importDebugLines(debugSourceName, fileinfo.uri, fileinfo.xrefUri)
-			} catch (e) {
+			} catch (_e: unknown) {
 				log.warn('cannot read: ' + fileinfo.uri.fsPath)
 				return undefined
 			}

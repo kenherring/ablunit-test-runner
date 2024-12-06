@@ -1,15 +1,14 @@
-import { Uri, commands, window, workspace, TestController } from 'vscode'
-import { assert, deleteFile, getResults, getTestController, log, refreshTests, runAllTests, runAllTestsWithCoverage, sleep, suiteSetupCommon, toUri, updateTestProfile } from '../testCommon'
+import { Uri, commands, window, workspace } from 'vscode'
+import * as vscode from 'vscode'
+import { assert, deleteFile, getResults, getTestControllerItemCount, getTestItem, log, refreshTests, runAllTests, runAllTestsWithCoverage, runTestAtLine, runTestsDuration, runTestsInFile, sleep2, suiteSetupCommon, toUri, updateConfig, updateTestProfile } from '../testCommon'
 import { ABLResultsParser } from 'parse/ResultsParser'
-import { gatherAllTestItems } from 'extension'
+import * as fs from 'fs'
+import { TimeoutError } from 'ABLUnitRun'
 
-function getTestItem (ctrl: TestController, uri: Uri) {
-	const testItems = gatherAllTestItems(ctrl.items)
-	const testItem = testItems.find((item) => item.uri?.fsPath === uri.fsPath)
-	if (!testItem) {
-		throw new Error('cannot find TestItem for ' + uri.fsPath)
-	}
-	return testItem
+function createTempFile () {
+	const tempFile = toUri('UNIT_TEST.tmp')
+	return workspace.fs.writeFile(tempFile, Buffer.from(''))
+		.then(() => { return tempFile })
 }
 
 suite('proj0  - Extension Test Suite', () => {
@@ -86,61 +85,49 @@ suite('proj0  - Extension Test Suite', () => {
 		assert.equal(0, executedLines.length, 'executed lines found for ' + workspace.asRelativePath(testFileUri) + '. should be empty')
 	})
 
-	test('proj0.5 - parse test class with expected error annotation', () => {
-		const testFileUri = toUri('src/threeTestMethods.cls')
-		return refreshTests()
-			.then(() => { return workspace.openTextDocument(testFileUri) })
-			.then((e) => {
-				log.info('e=' + JSON.stringify(e))
-				return sleep(100)
-			})
-			.then(() => { return sleep(100) })
-			.then(() => { return getTestController() })
-			.then((ctrl) => {
-				const testItem = getTestItem(ctrl, testFileUri)
-				assert.equal(testItem.children.size, 3, 'testClassItem.children.size should be 3')
-				return
-			})
+	test('proj0.05 - parse test class with expected error annotation', async () => {
+		const testClassItem = await commands.executeCommand('vscode.open', toUri('src/threeTestMethods.cls'))
+			.then(() => { return sleep2(250) })
+			.then(() => { return getTestItem(toUri('src/threeTestMethods.cls')) })
+
+		if (!testClassItem) {
+			throw new Error('cannot find TestItem for src/threeTestMethods.cls')
+		}
+
+		assert.equal(testClassItem.children.size, 3, 'testClassItem.children.size should be 3')
 	})
 
-	test('proj0.6 - parse test program with expected error annotation', () => {
-		const testFileUri = toUri('src/threeTestProcedures.p')
-		return refreshTests()
-			.then(() => { return workspace.openTextDocument(testFileUri) })
-			.then((e) => { return sleep(100) })
-			.then(() => { return sleep(100) })
-			.then(() => { return getTestController() })
-			.then((ctrl) => {
-				const testItem = getTestItem(ctrl, testFileUri)
-				assert.equal(testItem.children.size, 3, 'testClassItem.children.size should be 3')
-				return
-			})
+	test('proj0.06 - parse test program with expected error annotation', async () => {
+		const testClassItem = await commands.executeCommand('vscode.open', toUri('src/threeTestProcedures.p'))
+			.then(() => { return sleep2(250) })
+			.then(() => { return getTestItem(toUri('src/threeTestProcedures.p')) })
+
+		if (!testClassItem) {
+			throw new Error('cannot find TestItem for src/threeTestProcedures.p')
+		}
+		assert.equal(testClassItem.children.size, 3, 'testClassItem.children.size should be 3')
 	})
 
-	test('proj0.7 - parse test class with skip annotation', () => {
-		const testFileUri = toUri('src/ignoreMethod.cls')
-		return workspace.openTextDocument(testFileUri)
-			.then(() => { return refreshTests() })
-			.then(() => { return sleep(100) })
-			.then(() => { return sleep(100) })
-			.then(() => { return getTestController() })
-			.then((ctrl) => {
-				const testItem = getTestItem(ctrl, testFileUri)
-				assert.equal(testItem.children.size, 5, 'testClassItem.children.size should be 5')
-				return
-			})
+	test('proj0.07 - parse test class with skip annotation', async () => {
+		const testClassItem = await commands.executeCommand('vscode.open', toUri('src/ignoreMethod.cls'))
+			.then(() => { return sleep2(250) })
+			.then(() => { return getTestItem(toUri('src/ignoreMethod.cls')) })
+
+		if (!testClassItem) {
+			throw new Error('cannot find TestItem for src/ignoreMethod.cls')
+		}
+		assert.equal(testClassItem.children.size, 5, 'testClassItem.children.size should be 5')
 	})
 
-	test('proj0.8 - parse test procedure with skip annotation', () => {
-		const testFileUri = toUri('src/ignoreProcedure.p')
-		return workspace.openTextDocument(testFileUri)
-			.then(() => { return sleep(100) })
-			.then(() => { return getTestController() })
-			.then((ctrl) => {
-				const testItem = getTestItem(ctrl, testFileUri)
-				assert.equal(testItem.children.size, 5, 'testClassItem.children.size should be 5')
-				return
-			})
+	test('proj0.08 - parse test procedure with skip annotation', async () => {
+		const testClassItem = await commands.executeCommand('vscode.open', toUri('src/ignoreProcedure.p'))
+			.then(() => { return sleep2(250) })
+			.then(() => { return getTestItem(toUri('src/ignoreProcedure.p')) })
+
+		if (!testClassItem) {
+			throw new Error('cannot find TestItem for src/ignoreProcedure.p')
+		}
+		assert.equal(testClassItem.children.size, 5, 'testClassItem.children.size should be 5')
 	})
 
 	test('proj0.9 - ABLResultsParser', () => {
@@ -197,7 +184,7 @@ suite('proj0  - Extension Test Suite', () => {
 			.then((r) => {
 				log.info('opened file (r=' + r + ')')
 				return sleep2(250)
-			}, (e) => { throw e })
+			}, (e: unknown) => { throw e })
 
 		const startCount = await getTestItem(toUri('src/dirA/proj10.p'))
 			.then((r) => {
@@ -205,7 +192,7 @@ suite('proj0  - Extension Test Suite', () => {
 					log.info('c.label=' + c.label + '; c.id='  + c.id)
 				}
 				return r.children.size
-			}, (e) => { throw e })
+			}, (e:unknown) => { throw e })
 
 
 		// update test program
@@ -222,7 +209,7 @@ suite('proj0  - Extension Test Suite', () => {
 					log.info('c.label=' + c.label + '; c.id='  + c.id)
 				}
 				return r.children.size
-			}, (e) => { throw e })
+			}, (e: unknown) => { throw e })
 		assert.equal(endCount - startCount, 2, 'test cases added != 2 (endCount=' + endCount + '; startCount=' + startCount + ')')
 	})
 

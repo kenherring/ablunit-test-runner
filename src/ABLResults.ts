@@ -6,7 +6,7 @@ import { FileType, MarkdownString, TestItem, TestItemCollection, TestMessage, Te
 	TestRunProfileKind} from 'vscode'
 import { ABLUnitConfig } from './ABLUnitConfigWriter'
 import { ABLResultsParser, ITestCaseFailure, ITestCase, ITestSuite } from './parse/ResultsParser'
-import { ABLTestSuite, ABLTestDir, ABLTestCase, testData} from './testTree'
+import { ABLTestSuite, ABLTestDir, ABLTestCase, testData, ABLTestData} from './testTree'
 import { parseCallstack } from './parse/CallStackParser'
 import { ABLProfile, ABLProfileJson, IModule } from './parse/ProfileParser'
 import { ABLDebugLines } from './ABLDebugLines'
@@ -15,34 +15,8 @@ import { PropathParser } from './ABLPropath'
 import { log } from './ChannelLogger'
 import { ABLUnitRuntimeError, RunStatus, TimeoutError, ablunitRun } from './ABLUnitRun'
 import { getDLC, IDlc } from './parse/OpenedgeProjectParser'
-
-export interface ITestFile {
-	folder?: undefined
-	test: string
-	cases?: string[]
-}
-export interface ITestFolder {
-	folder: string
-	test?: undefined
-	cases?: undefined
-}
-
-export type ITestObj = ITestFile | ITestFolder
-
-export interface IABLUnitJson {
-	options: {
-		output: {
-			location: string // results.xml directory
-			filename: string // <filename>.xml
-			format: 'xml'
-		}
-		quitOnEnd: boolean
-		writeLog: boolean
-		showErrorMessage: boolean
-		throwError: boolean
-	}
-	tests: ITestObj[]
-}
+import { Duration } from './ABLUnitCommon'
+import { ITestObj } from 'parse/config/CoreOptions'
 
 export class ABLResults implements Disposable {
 	workspaceFolder: WorkspaceFolder
@@ -55,6 +29,7 @@ export class ABLResults implements Disposable {
 	tests: TestItem[] = []
 	topLevelTests: ITestObj[] = []
 	testQueue: ITestObj[] = []
+	testData = new WeakMap<TestItem, ABLTestData>()
 	skippedTests: TestItem[] = []
 	propath?: PropathParser
 	debugLines?: ABLDebugLines
@@ -104,6 +79,10 @@ export class ABLResults implements Disposable {
 		log.info('STATUS: ' + status)
 	}
 
+	setTestData (testData: WeakMap<TestItem, ABLTestData>) {
+		this.testData = testData
+	}
+
 	start () {
 		log.info('[start] workspaceFolder=' + this.workspaceFolder.uri.fsPath)
 		this.cfg.setup(this.workspaceFolder, this.request)
@@ -135,12 +114,12 @@ export class ABLResults implements Disposable {
 		return Promise.all(prom).then(() => {
 			log.info('done creating config files for start')
 			return
-		}, (err) => {
+		}, (err: unknown) => {
 			log.error('ABLResults.start() did not complete promises. err=' + err)
 		})
 	}
 
-	async addTest (test:  TestItem, options: TestRun, isTopLevel: boolean) {
+	async addTest (test: TestItem, data: ABLTestData, options: TestRun, isTopLevel: boolean) {
 		if (!test.uri) {
 			log.error('test.uri is undefined (test.label = ' + test.label + ')', options)
 			return
@@ -158,8 +137,6 @@ export class ABLResults implements Disposable {
 		this.testData.set(test, data)
 
 		let testCase: string | undefined = undefined
-		log.info('100 ' + test.id)
-		const data = testData.get(test)
 		if (!data) {
 			log.error('could not find test data for TestItem.id=' + test.id)
 			return
@@ -177,7 +154,7 @@ export class ABLResults implements Disposable {
 			if (data instanceof ABLTestDir) {
 				log.info('directory ' + testRel + ' not found in propath, adding children')
 				for (const [ , child ] of test.children) {
-					await this.addTest(child, options, isTopLevel)
+					await this.addTest(child, data, options, isTopLevel)
 				}
 				return
 			} else {
@@ -317,10 +294,10 @@ export class ABLResults implements Disposable {
 				throw new Error('No results found in ' + this.cfg.ablunitConfig.optionsUri.filenameUri.fsPath + '\r\n')
 			}
 			return true
-		}, (err) => {
+		}, (e: unknown) => {
 			this.setStatus(RunStatus.Error, 'parsing results')
-			log.error('Error parsing results from ' + this.cfg.ablunitConfig.optionsUri.filenameUri.fsPath + '.  err=' + err, options)
-			throw new Error('Error parsing results from ' + this.cfg.ablunitConfig.optionsUri.filenameUri.fsPath + '\r\nerr=' + err)
+			log.error('Error parsing results from ' + this.cfg.ablunitConfig.optionsUri.filenameUri.fsPath + '.  err=' + e, options)
+			throw new Error('Error parsing results from ' + this.cfg.ablunitConfig.optionsUri.filenameUri.fsPath + '\r\nerr=' + e)
 		})
 
 		if (this.request.profile?.kind === TestRunProfileKind.Coverage && this.cfg.ablunitConfig.profiler.enabled && this.cfg.ablunitConfig.profiler.coverage) {
@@ -329,10 +306,10 @@ export class ABLResults implements Disposable {
 			await this.parseProfile().then(() => {
 				log.info('parsing profiler data complete ' + parseTime.toString())
 				return true
-			}, (err) => {
+			}, (e: unknown) => {
 				this.setStatus(RunStatus.Error, 'profiler data')
-				log.error('Error parsing profiler data from ' + this.cfg.ablunitConfig.profFilenameUri.fsPath + '.  err=' + err, options)
-				throw new Error('Error parsing profiler data from ' + workspace.asRelativePath(this.cfg.ablunitConfig.profFilenameUri) + '\r\nerr=' + err)
+				log.error('Error parsing profiler data from ' + this.cfg.ablunitConfig.profFilenameUri.fsPath + '.  err=' + e, options)
+				throw new Error('Error parsing profiler data from ' + workspace.asRelativePath(this.cfg.ablunitConfig.profFilenameUri) + '\r\nerr=' + e)
 			})
 		}
 
@@ -554,8 +531,8 @@ export class ABLResults implements Disposable {
 			.then(() => {
 				log.debug('assignProfileResults complete (time=' + (Number(new Date()) - Number(startTime)) + ')')
 				return
-			}, (err) => {
-				throw new Error('assignProfileResults error: ' + err)
+			}, (e: unknown) => {
+				throw new Error('assignProfileResults error: ' + e)
 			})
 	}
 

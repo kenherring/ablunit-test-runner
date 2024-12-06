@@ -1,9 +1,7 @@
 import { Uri, workspace, WorkspaceFolder } from 'vscode'
-import { getActiveProfile, getOpenEdgeProfileConfig, IBuildPathEntry, IProjectJson } from './parse/OpenedgeProjectParser'
+import { getOpenEdgeProfileConfig, IBuildPathEntry, IProjectJson } from './parse/OpenedgeProjectParser'
 import { isRelativePath } from './ABLUnitCommon'
 import { log } from './ChannelLogger'
-import { ablunitConfig } from 'ABLUnitConfigWriter'
-import { parseRunProfiles, RunConfig } from 'parse/TestProfileParser'
 
 interface IPropathEntry {
 	uri: Uri

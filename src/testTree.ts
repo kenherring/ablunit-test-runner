@@ -79,15 +79,21 @@ class TestTypeObj implements ITestType {
 		this.label = label
 		this.type = type
 	}
-
 }
 
-export class ABLTestDir extends TestTypeObj {
+export class ABLTestDir implements ITestType {
+	public type: TestReferenceType
+	public isFile = false
+	public didResolve = true
+	public runnable = true
+	public canResolveChildren = false
+	public description: string
 	public relativePath: string
+	public label = ''
 
-
-	constructor (desc: string, label: string, path: Uri | string) {
-		super(desc, label, 'ABLTestDir')
+	constructor (desc: string, label: string, path: Uri | string, type: TestReferenceType) {
+		this.description = desc
+		this.label = label
 		if (path instanceof Uri) {
 			this.relativePath = workspace.asRelativePath(path.fsPath, false)
 		} else {
@@ -98,6 +104,7 @@ export class ABLTestDir extends TestTypeObj {
 		this.didResolve = true
 		this.runnable = true
 		this.canResolveChildren = false
+		this.type = type
 	}
 }
 
@@ -131,7 +138,7 @@ export class ABLTestFile extends TestTypeObj {
 			item.error = undefined
 			item.canResolveChildren = true
 			return this.updateFromContents(controller, content, item)
-		}, (e) => {
+		}, (e: unknown) => {
 			item.error = (e as Error).stack
 			throw e
 		})
