@@ -96,7 +96,7 @@
 		"xml2js": "^0.6.2"
 	},
 	"devDependencies": {
-		"@stylistic/eslint-plugin-ts": "^2.12.1",
+		"@stylistic/eslint-plugin": "^2.12.1",
 		"@swc-node/register": "^1.10.9",
 		"@types/mocha": "^9.1.1",
 		"@types/node": "^20.X",
