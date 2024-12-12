@@ -108,7 +108,7 @@ async function runTest(version: string, projName: string, projDir?: string) {
 
 main().then(() => {
 	console.log('[' + file + ' main] completed successfully!')
-}, (err) => {
+}, (e: unknown) => {
 	console.error('[' + file + ' main] Failed to run tests, err=' + err)
 	process.exit(1)
 })

@@ -300,7 +300,6 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 				log.info('\tprocess.killed=' + process.killed)
 				log.info('\tprocess.pid=' + process.pid)
 				log.info('\tprocess.connected' + process.connected)
-				log.info('\tprocess.channel=' + process.channel)
 
 				if (lastError && res.status < RunStatus.Complete) {
 					if (lastError) {

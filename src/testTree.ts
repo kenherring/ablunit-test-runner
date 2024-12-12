@@ -126,7 +126,7 @@ export class ABLTestFile extends TestTypeObj {
 			item.error = undefined
 			item.canResolveChildren = true
 			return this.updateFromContents(controller, content, item)
-		}, (e) => {
+		}, (e: unknown) => {
 			item.error = (e as Error).stack
 			throw e
 		})

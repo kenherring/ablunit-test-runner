@@ -113,8 +113,8 @@ export class ABLResults implements Disposable {
 		return Promise.all(prom).then(() => {
 			log.info('done creating config files for run')
 			return
-		}, (err) => {
-			log.error('ABLResults.start() did not complete promises. err=' + err)
+		}, (e: unknown) => {
+			log.error('ABLResults.start() did not complete promises. err=' + e)
 		})
 	}
 
@@ -232,10 +232,10 @@ export class ABLResults implements Disposable {
 				throw new Error('No results found in ' + this.cfg.ablunitConfig.optionsUri.filenameUri.fsPath + '\r\n')
 			}
 			return true
-		}, (err) => {
+		}, (e: unknown) => {
 			this.setStatus(RunStatus.Error, 'parsing results')
-			log.error('Error parsing results from ' + this.cfg.ablunitConfig.optionsUri.filenameUri.fsPath + '.  err=' + err, options)
-			throw new Error('Error parsing results from ' + this.cfg.ablunitConfig.optionsUri.filenameUri.fsPath + '\r\nerr=' + err)
+			log.error('Error parsing results from ' + this.cfg.ablunitConfig.optionsUri.filenameUri.fsPath + '.  err=' + e, options)
+			throw new Error('Error parsing results from ' + this.cfg.ablunitConfig.optionsUri.filenameUri.fsPath + '\r\nerr=' + e)
 		})
 
 		if (this.request.profile?.kind === TestRunProfileKind.Coverage && this.cfg.ablunitConfig.profiler.enabled && this.cfg.ablunitConfig.profiler.coverage) {
@@ -244,10 +244,10 @@ export class ABLResults implements Disposable {
 			await this.parseProfile().then(() => {
 				log.info('parsing profiler data complete ' + parseTime.toString())
 				return true
-			}, (err) => {
+			}, (e: unknown) => {
 				this.setStatus(RunStatus.Error, 'profiler data')
-				log.error('Error parsing profiler data from ' + this.cfg.ablunitConfig.profFilenameUri.fsPath + '.  err=' + err, options)
-				throw new Error('Error parsing profiler data from ' + workspace.asRelativePath(this.cfg.ablunitConfig.profFilenameUri) + '\r\nerr=' + err)
+				log.error('Error parsing profiler data from ' + this.cfg.ablunitConfig.profFilenameUri.fsPath + '.  err=' + e, options)
+				throw new Error('Error parsing profiler data from ' + workspace.asRelativePath(this.cfg.ablunitConfig.profFilenameUri) + '\r\nerr=' + e)
 			})
 		}
 
@@ -459,8 +459,8 @@ export class ABLResults implements Disposable {
 			.then(() => {
 				log.debug('assignProfileResults complete (time=' + (Number(new Date()) - Number(startTime)) + ')')
 				return
-			}, (err) => {
-				throw new Error('assignProfileResults error: ' + err)
+			}, (e: unknown) => {
+				throw new Error('assignProfileResults error: ' + e)
 			})
 	}
 

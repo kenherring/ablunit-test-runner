@@ -281,8 +281,8 @@ export class ABLResultsParser {
 		return workspace.fs.writeFile(uri, Uint8Array.from(Buffer.from(JSON.stringify(data, null, 2)))).then(() => {
 			log.info('wrote results json file: ' + uri.fsPath)
 			return
-		}, (err) => {
-			log.error('failed to write profile output json file ' + uri.fsPath + ' - ' + err)
+		}, (e: unknown) => {
+			log.error('failed to write profile output json file ' + uri.fsPath + ' - ' + e)
 		})
 	}
 }

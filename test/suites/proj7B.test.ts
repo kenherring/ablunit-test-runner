@@ -37,7 +37,7 @@ suite('proj7B - Extension Test Suite', () => {
 			await commands.executeCommand('testing.cancelTestRefresh').then(() => {
 				log.info('testing.cancelTestRefresh completed')
 				return
-			}, (err) => {
+			}, (e: unknown) => {
 				log.error('testing.cancelTestRefresh caught an exception. err=' + err)
 				throw err
 			})
@@ -56,7 +56,7 @@ suite('proj7B - Extension Test Suite', () => {
 		await refresh.then(() => {
 			assert.fail('testing.refreshTests completed without throwing CancellationError')
 			return
-		}, (err) => {
+		}, (e: unknown) => {
 			if (err instanceof CancellationError) {
 				log.info('testing.refreshTests threw CancellationError as expected')
 			} else {
@@ -141,7 +141,7 @@ suite('proj7B - Extension Test Suite', () => {
 		// log.info('waiting for runProm to complete')
 		// await runProm.then(() => {
 		// 	log.info('runProm completed')
-		// }, (e) => {
+		// }, (e: unknown) => {
 		// 	log.error('runProm error e=' + e)
 		// 	throw e
 		// })

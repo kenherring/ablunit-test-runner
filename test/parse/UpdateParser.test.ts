@@ -15,7 +15,7 @@ suite ('UpdateParser', () => {
 					assert.equal(item.status, TestStatus.passed, 'item.id=' + item.id + '; item.name=' + item.name)
 				}
 				return
-			}, (e) => { throw e })
+			}, (e: unknown) => { throw e })
 	})
 
 })

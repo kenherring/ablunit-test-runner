@@ -184,7 +184,7 @@ suite('proj0  - Extension Test Suite', () => {
 			.then((r) => {
 				log.info('opened file (r=' + r + ')')
 				return sleep2(250)
-			}, (e) => { throw e })
+			}, (e: unknown) => { throw e })
 
 		const startCount = await getTestItem(toUri('src/dirA/proj10.p'))
 			.then((r) => {
@@ -192,7 +192,7 @@ suite('proj0  - Extension Test Suite', () => {
 					log.info('c.label=' + c.label + '; c.id='  + c.id)
 				}
 				return r.children.size
-			}, (e) => { throw e })
+			}, (e: unknown) => { throw e })
 
 
 		// update test program
@@ -209,7 +209,7 @@ suite('proj0  - Extension Test Suite', () => {
 					log.info('c.label=' + c.label + '; c.id='  + c.id)
 				}
 				return r.children.size
-			}, (e) => { throw e })
+			}, (e: unknown) => { throw e })
 		assert.equal(endCount - startCount, 2, 'test cases added != 2 (endCount=' + endCount + '; startCount=' + startCount + ')')
 	})
 
