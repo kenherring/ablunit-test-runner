@@ -272,7 +272,7 @@ export function parseUpdates (filepath: Uri | string, tests: TestItem[]) {
 	log.debug('Parsing updates from: ' + filepath)
 	// instead of reading the whole file we could buffer it and only read the new lines
 	return readLinesFromFile(filepath)
-		.then((lines) => { return parseUpdateLines(lines, tests) }, (e) => { throw e })
+		.then((lines) => { return parseUpdateLines(lines, tests) }, (e: unknown) => { throw e })
 }
 
 function showUpdates (options: TestRun, updates: ITestNode[] | undefined) {
@@ -308,7 +308,7 @@ export function processUpdates (options: TestRun, tests: TestItem[], updateFile?
 				log.debug('updates processed and displayed successfully')
 			}
 			return true
-		}, (e) => {
+		}, (e: unknown) => {
 			if (e instanceof FileSystemError) {
 				log.warn('could not find update file: ' + updateFile.fsPath)
 			} else if (e instanceof Error) {

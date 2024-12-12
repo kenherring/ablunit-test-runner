@@ -67,6 +67,7 @@
 		"no-unused-vars": "off", // must be disabled to avoid conflict with "@typescript-eslint/no-unused-vars"
 		"@typescript-eslint/no-unused-vars": [ // strict-type-checked="error"
 			"warn", {
+				"argsIgnorePattern": "^_",
 				"vars": "all",
 				"args": "none",
 				"ignoreRestSiblings": false

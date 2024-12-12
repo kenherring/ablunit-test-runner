@@ -13,7 +13,7 @@ suite('debugLines - Debug Line Tests - insiders', () => {
 			.then((rcodeCount) => {
 				log.info('rcodeCount=' + rcodeCount)
 				return rcodeCount
-			}, (e) => {
+			}, (e: unknown) => {
 				log.error('rcode error: ' + e)
 				throw e
 			})

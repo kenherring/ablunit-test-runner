@@ -26,7 +26,7 @@ export async function enableOpenedgeAblExtension (runtimes: IRuntime[]) {
 			log.info('rebuild complete! (rcodeCount=' + rcodeCount + ')')
 			log.info('riversidesoftware.openedge-abl-lsp extension is enabled!')
 			return true
-		}, (e) => { throw e })
+		}, (e: unknown) => { throw e })
 }
 
 export function restartLangServer () {
@@ -36,7 +36,7 @@ export function restartLangServer () {
 	}).then(() => {
 		log.info('lang server is ready')
 		return true
-	}, (e) => {
+	}, (e: unknown) => {
 		log.error('abl.restart.langserv command failed! e=' + e)
 	})
 }
@@ -51,7 +51,7 @@ export function rebuildAblProject () {
 			const rcodeCount = getRcodeCount()
 			log.info('abl.project.rebuild command complete! (rcodeCount=' + rcodeCount + ')')
 			return rcodeCount
-		}, (err) => { throw err })
+		}, (e: unknown) => { throw err })
 }
 
 export async function printLastLangServerError () {
@@ -92,7 +92,7 @@ export async function printLastLangServerError () {
 			}
 			log.info('Last logged ABL lang server error (uri="' + uri.fsPath + '"; lines.length=' + lines.length + '):\n"' + lastLogErrors + '"')
 			return hasError
-		}, (e) => {
+		}, (e: unknown) => {
 			throw e
 		})
 }
@@ -107,7 +107,7 @@ export async function waitForLangServerReady () {
 		log.debug('start abl.dumpLangServStatus (i=' + i + ')')
 		const dumpSuccessProm = commands.executeCommand('abl.dumpLangServStatus')
 			.then(() => { return true
-			}, (e) => {
+			}, (e: unknown) => {
 				log.info('dumpLangServStatus e=' + e)
 				return false
 			})
@@ -128,7 +128,7 @@ export async function waitForLangServerReady () {
 		.then(() => {
 			log.error('lang server is not ready! (waitTime='  + waitTime + ')')
 			throw new Error('lang server is not ready! (waitTime='  + waitTime + ')')
-		}, (e) => {
+		}, (e: unknown) => {
 			throw e
 		})
 }

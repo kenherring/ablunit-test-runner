@@ -8,7 +8,7 @@ suite('proj9 - Extension Test Suite', () => {
 	suiteSetup('proj9 - before', async () => {
 		await suiteSetupCommon()
 			.then(() => { return workspace.fs.copy(testProfileJson, testProfileBackup, { overwrite: true }) })
-			.then(() => { return }, (e) => { throw e })
+			.then(() => { return }, (e: unknown) => { throw e })
 	})
 
 	setup('proj9 - beforeEach', () => {
@@ -24,18 +24,18 @@ suite('proj9 - Extension Test Suite', () => {
 		// await workspace.fs.copy(testProfileBackup, testProfileJson, { overwrite: true }).then(() => {
 		// 	log.info('teardown return')
 		// 	return
-		// }, (e) => {
+		// }, (e: unknown) => {
 		// 	log.error('teardown error: e=' + e)
 		// 	throw e
 		// })
 	})
 
 	suiteTeardown('proj9 - after', () => {
-		return workspace.fs.delete(testProfileBackup).then(() => { return }, (e) => { return })
+		return workspace.fs.delete(testProfileBackup).then(() => { return }, (e: unknown) => { return })
 		// await workspace.fs.delete(testProfileBackup).then(() => {
 		// 	log.info('suiteTeardown return')
 		// 	return
-		// }, (e) => {
+		// }, (e: unknown) => {
 		// 	log.error('suiteTeardown error: e=' + e)
 		// 	throw e
 		// })

@@ -13,8 +13,8 @@ suiteSetup(async () => {
 
 	await ext.activate().then(async () => {
 		console.log("[before-5] extension activated!'")
-	}, (err) => {
-		throw new Error("failed to activate extension: " + err)
+	}, (e: unknown) => {
+		throw new Error("failed to activate extension: " + e)
 	})
 	console.log("before complete!")
 })
@@ -24,7 +24,7 @@ suite('install and run', () => {
 	test("install and run - does package extension work?", async () => {
 		await runAllTests().then(() => {
 			console.log("runAllTests complete!")
-		}, (err) => { throw new Error("runAllTests failed: " + err) })
+		}, (e: unknown) => { throw new Error("runAllTests failed: " + e) })
 
 		const workspaceFolder = workspace.workspaceFolders![0].uri
 
@@ -68,8 +68,8 @@ async function runAllTests () {
 				console.log("[installAndRun.test.ts runAllTests] done sleeping after runAll")
 				return true
 			})
-		} , (err) => {
-			throw new Error("testing.runAll failed: " + err)
+		} , (e: unknown) => {
+			throw new Error("testing.runAll failed: " + e)
 		})
 	})
 }
@@ -80,8 +80,8 @@ async function doesFileExist(uri: Uri) {
 			return true
 		}
 		throw new Error("not a file: " + uri.fsPath)
-	}, (err) => {
-		throw new Error("failed to stat file: " + uri.fsPath + ", err=" + err)
+	}, (e: unknown) => {
+		throw new Error("failed to stat file: " + uri.fsPath + ", err=" + e)
 	})
 }
 
@@ -100,7 +100,7 @@ function updateTestProfileTempDir (value: string | string[] | boolean): Thenable
 		return workspace.fs.writeFile(testProfileUri, Buffer.from(str)).then(() => {
 			console.log("[installAndRun.test.ts updateTestProfile] wrote " + testProfileUri.fsPath + " successfully")
 		})
-	}, (err) => {
-		throw new Error("error reading " + testProfileUri.fsPath + ": " + err)
+	}, (e: unknown) => {
+		throw new Error("error reading " + testProfileUri.fsPath + ": " + e)
 	})
 }
