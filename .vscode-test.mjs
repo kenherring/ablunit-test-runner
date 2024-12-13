@@ -6,6 +6,7 @@ import * as fs from 'fs'
 import { env } from 'process'
 delete env['VSCODE_IPC_HOOK_CLI']
 env['DONT_PROMPT_WSL_INSTALL'] = true
+env['ABLUNIT_TEST_RUNNER_UNIT_TESTING'] = true
 
 // console.log('sourceMapsEnabled:', sourceMapsEnabled)
 // if (process.sourceMapsEnabled == false) {

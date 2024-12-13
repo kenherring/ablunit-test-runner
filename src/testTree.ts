@@ -126,13 +126,12 @@ export class ABLTestFile extends TestTypeObj {
 			item.error = undefined
 			item.canResolveChildren = true
 			return this.updateFromContents(controller, content, item)
-		}, (e) => {
+		}, (e: unknown) => {
 			item.error = (e as Error).stack
 			throw e
 		})
 	}
 
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	updateFromContents (_controller: TestController, _content: string, item: TestItem) {
 		log.error('updateFromContents not implemented - should be calling implementation in subclass (item=' + item.id + ')')
 		return false

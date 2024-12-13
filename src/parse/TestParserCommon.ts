@@ -30,8 +30,8 @@ function toUri (uri: Uri | string): Uri {
 export function getContentFromFilesystem (uri: Uri | string) {
 	uri = toUri(uri)
 	return workspace.fs.readFile(uri)
-		.then((rawContent) => { return textDecoder.decode(rawContent) },
-			(e) => { throw e })
+		.then((rawContent) => { return textDecoder.decode(rawContent)
+		}, (e: unknown) => { throw e })
 }
 
 export function readLinesFromFile (uri: Uri | string) {

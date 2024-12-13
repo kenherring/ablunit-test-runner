@@ -24,9 +24,9 @@ function getConfigurations (uri: Uri) {
 			str = '{ "configurations":[] }'
 		}
 		return JSON.parse(str) as IConfigurations
-	} catch (err) {
-		log.error('Failed to parse ablunit-test-profile: ' + err)
-		throw err
+	} catch (e: unknown) {
+		log.error('Failed to parse ablunit-test-profile: ' + e)
+		throw e
 	}
 }
 
@@ -49,7 +49,6 @@ function mergeObjects (from: object, into: object) {
 			// @ts-expect-error ThisIsSafeForTesting
 			} else if (Array.isArray(from[key])) {
 				// @ts-expect-error ThisIsSafeForTesting
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 				into[key] = from[key]
 			} else {
 				// @ts-expect-error ThisIsSafeForTesting
@@ -58,7 +57,7 @@ function mergeObjects (from: object, into: object) {
 			} // @ts-expect-error ThisIsSafeForTesting
 		} else if (from[key] != undefined) {
 			// @ts-expect-error ThisIsSafeForTesting
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 			into[key] = from[key]
 		}
 	})
@@ -80,13 +79,13 @@ export function parseRunProfiles (workspaceFolders: WorkspaceFolder[], wsFilenam
 		let wfConfig: IConfigurations
 		try {
 			wfConfig = getConfigurations(Uri.joinPath(workspaceFolder.uri, '.vscode', wsFilename))
-		} catch (err) {
-			if (err instanceof FileSystemError && err.code === 'ENOENT') {
+		} catch (e: unknown) {
+			if (e instanceof FileSystemError && e.code === 'ENOENT') {
 				log.warn('no .vscode/' + wsFilename + ' file found.  using default profile')
 				return defaultConfig.configurations
 			}
 			log.notificationWarning('Could not import .vscode/ablunit-test-profile.json.  Attempting to use default profile...')
-			log.warn('err=' + err)
+			log.warn('e=' + e)
 			return defaultConfig.configurations
 		}
 		if (wfConfig.configurations.length === 0) {

@@ -31,7 +31,7 @@ suite('proj4 - Extension Test Suite', () => {
 				assert.fileExists(resultsXml)
 				assert.dirExists(listingsDir)
 				return
-			}, (e) => { throw e })
+			}, (e: unknown) => { throw e })
 	})
 
 	test('proj4.2 - tempDir=.builder/ablunit', async () => {

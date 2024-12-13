@@ -144,6 +144,7 @@ class Logger {
 			case LogLevel.Info:		this.logOutputChannel.info(message); break
 			case LogLevel.Warning:	this.logOutputChannel.warn(message); break
 			case LogLevel.Error:	this.logOutputChannel.error(message); break
+			case LogLevel.Off:		break
 			default:
 				this.logOutputChannel.appendLine(message)
 				throw new Error('invalid log level for message! level=' + messageLevel + ', message=' + message)
@@ -182,6 +183,7 @@ class Logger {
 			case LogLevel.Info:     console.info(message); break
 			case LogLevel.Warning:  console.warn(message); break
 			case LogLevel.Error:    console.error(message); break
+			case LogLevel.Off:	  	break
 			default:                console.log(message); break
 		}
 	}

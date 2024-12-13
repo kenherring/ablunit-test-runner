@@ -39,9 +39,9 @@ export function run(): Promise <void> {
 				console.log("all test(s) passed!")
 				c()
 			})
-		} catch (err) {
-			console.error('[index.ts] catch err= ' + err)
-			e(err)
+		} catch (e: unknown) {
+			console.error('[index.ts] catch e=' + e)
+			throw e
 		}
 	})
 }

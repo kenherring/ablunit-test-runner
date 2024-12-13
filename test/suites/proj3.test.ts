@@ -23,7 +23,7 @@ suite('proj3 - Extension Test Suite', () => {
 			assert.fileExists(resultsXml)
 			assert.dirExists(listingsDir)
 			return
-		}, (e) => { throw e })
+		}, (e: unknown) => { throw e })
 	})
 
 })

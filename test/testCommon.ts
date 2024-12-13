@@ -190,9 +190,9 @@ export function setFilesExcludePattern () {
 	return filesConfig.update('exclude', files.exclude).then(() => {
 		log.info('[updateFilesExcludePatterns] filesConfig.update success!')
 		return true
-	}, (err) => {
-		log.error('[updateFilesExcludePatterns] filesConfig.update failed! err=' + err)
-		throw err
+	}, (e: unknown) => {
+		log.error('[updateFilesExcludePatterns] filesConfig.update failed! e=' + e)
+		throw e
 	})
 }
 
@@ -223,7 +223,7 @@ export function installExtension (extname = 'riversidesoftware.openedge-abl-lsp'
 				throw new Error('get after install failed (undefined)')
 			}
 			return true
-		}, (e) => {
+		}, (e: unknown) => {
 			log.error('install failed e=' + e)
 			return false
 		})
@@ -324,7 +324,7 @@ async function waitForExtensionActive (extensionId = 'kherring.ablunit-test-runn
 		.then(() => {
 			log.info('activated? ' + extensionId)
 			return extensions.getExtension(extensionId)
-		}, (err) => { throw new Error('failed to activate kherring.ablunit-test-runner: ' + err) })
+		}, (e: unknown) => { throw new Error('failed to activate kherring.ablunit-test-runner: ' + e) })
 	log.info('post-activate (ext.isActive=' + ext?.isActive + ')')
 	if (!ext) { throw new Error(extensionId + ' is not installed') }
 
@@ -370,8 +370,8 @@ export async function awaitRCode (workspaceFolder: WorkspaceFolder, rcodeCountMi
 	await commands.executeCommand('abl.project.rebuild').then(() => {
 		log.info('abl.project.rebuild command complete!')
 		return true
-	}, (e) => {
-		log.error('[awaitRCode] abl.project.rebuild failed! err=' + e)
+	}, (e: unknown) => {
+		log.error('[awaitRCode] abl.project.rebuild failed! e=' + e)
 		return false
 	})
 
@@ -511,7 +511,6 @@ export function getSessionTempDir () {
 }
 
 export async function getTestCount (resultsJson: Uri, status = 'tests') {
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 	const count = await workspace.fs.readFile(resultsJson).then((content) => {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		const results: ITestSuites[] = JSON.parse(Buffer.from(content.buffer).toString())
@@ -569,7 +568,7 @@ export async function runAllTests (doRefresh = true, waitForResults = true, with
 		// 	.then(() => {
 		// 		log.info('refreshTests complete!')
 		// 		return true
-		// 	}, (e) => { throw e })
+		// 	}, (e: unknown) => { throw e })
 	}
 
 	log.info('testing.runAll starting (waitForResults=' + waitForResults + ')')
@@ -577,7 +576,7 @@ export async function runAllTests (doRefresh = true, waitForResults = true, with
 		.then((r) => {
 			log.info(tag + 'command ' + testCommand +' complete! (r=' + r + ')')
 			return sleep(250)
-		}, (e) => { throw e	})
+		}, (e: unknown) => { throw e	})
 		.then(() => {
 			log.info(tag + 'testing.runAll completed - start getResults()')
 			if (!waitForResults) { return [] }
@@ -590,9 +589,9 @@ export async function runAllTests (doRefresh = true, waitForResults = true, with
 				return doesFileExist(fUri)
 			}
 			return false
-		}, (err) => {
+		}, (e: unknown) => {
 			runAllTestsDuration?.stop()
-			throw new Error('testing.runAll failed: ' + err)
+			throw new Error('testing.runAll failed: ' + e)
 		})
 	runAllTestsDuration.stop()
 	log.info(tag + 'runAllTests complete (r=' + r + ')')
@@ -613,13 +612,13 @@ export function runTestsInFile (filename: string, len = 1, coverage = false) {
 				return commands.executeCommand('testing.coverageCurrentFile')
 			}
 			return commands.executeCommand('testing.runCurrentFile')
-		}, (e) => {
+		}, (e: unknown) => {
 			throw e
 		})
 		.then((r: unknown) => {
 			runTestsDuration?.stop()
 			return getResults(len)
-		}, (e) => {
+		}, (e: unknown) => {
 			runTestsDuration?.stop()
 			throw e
 		})
@@ -645,7 +644,7 @@ export function runTestAtLine (filename: string, line: number, len = 1) {
 		.then(() => {
 			log.info('testing.runAtCursor complete')
 			return
-		}, (e) => { throw e })
+		}, (e: unknown) => { throw e })
 }
 
 async function waitForRefreshComplete () {
@@ -658,7 +657,7 @@ async function waitForRefreshComplete () {
 			.then((r: unknown) => {
 				log.info('isRefreshTestsComplete=' + r)
 				return true
-			}, (e) => {
+			}, (e: unknown) => {
 				log.info('isRefreshTestComplete error=' + e)
 				return false
 			})
@@ -678,9 +677,9 @@ export function refreshTests () {
 		.then((r) => {
 			log.info('testing.refreshTests completed! (r=' + r + ')')
 			return true
-		}, (err) => {
-			log.info('testing.refreshTests caught an exception. err=' + err)
-			throw err
+		}, (e: unknown) => {
+			log.error('testing.refreshTests caught an exception. e=' + e)
+			throw e
 		})
 }
 
@@ -704,7 +703,7 @@ export async function waitForTestRunStatus (waitForStatus: RunStatus) {
 					return runData[0].status
 				}
 				return RunStatus.None
-			}, (e) => {
+			}, (e: unknown) => {
 				log.info('could not get current run data: ' + e)
 				return RunStatus.None
 			})
@@ -794,7 +793,7 @@ export function updateConfig (key: string, value: unknown, configurationTarget?:
 	}
 	log.info('updating configuration section1=' + section2 + ', section2=' + section2 + ', key=' + key + ' value=' + JSON.stringify(value))
 	return workspaceConfig.update(section2, value, configurationTarget)
-		.then(() => true, (e) => { throw e })
+		.then(() => true, (e: unknown) => { throw e })
 }
 
 export async function updateTestProfile (key: string, value: string | string[] | boolean | number | object | undefined, workspaceUri?: Uri) {
@@ -821,7 +820,6 @@ export async function updateTestProfile (key: string, value: string | string[] |
 		profile.configurations[0][keys[0]][keys[1]] = value
 	} else {
 		// @ts-expect-error ThisIsSafeForTesting
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 		profile.configurations[0][keys[0]] = value
 	}
 
@@ -878,9 +876,9 @@ export function refreshData (resultsLen = 0) {
 			return true
 		}
 		return false
-	}, (err) => {
-		log.error('failed to refresh test results: ' + err)
-		throw new Error('failed to refresh test results: ' + err)
+	}, (e: unknown) => {
+		log.error('failed to refresh test results: ' + e)
+		throw new Error('failed to refresh test results: ' + e)
 	})
 }
 
@@ -907,7 +905,7 @@ export function getTestItem (uri: Uri) {
 			const item = i as TestItem
 			log.info('202 item.id=' + item.id)
 			return item
-		}, (e) => { throw e })
+		}, (e: unknown) => { throw e })
 }
 
 function getType (item: TestItem | undefined) {
@@ -927,6 +925,7 @@ function getType (item: TestItem | undefined) {
 		case 'ABL Test Procedure':
 		case 'ABL Test Method':
 			return 'ABLTestCase'
+		case undefined:
 		default:
 			return 'unknown'
 	}
@@ -988,8 +987,8 @@ export async function getCurrentRunData (len = 1, resLen = 0, tag?: string) {
 			const retResults = await refreshData(resLen).then((r) => {
 				log.debug('refresh success (r=' + r + '; currentRunData.length=' + currentRunData?.length + ')')
 				return true
-			}, (err) => {
-				log.error('refresh failed: ' + err)
+			}, (e: unknown) => {
+				log.error('refresh failed: ' + e)
 				return false
 			})
 
@@ -1044,7 +1043,6 @@ export async function getResults (len = 1, tag?: string): Promise<ABLResults[]> 
 
 class AssertTestResults {
 	assertResultsCountByStatus (expectedCount: number, status: 'passed' | 'failed' | 'errored' | 'skipped' | 'all') {
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
 		const res = recentResults?.[0].ablResults?.resultsJson[0]
 		if (!res) {
 			assertParent.fail('No results found. Expected ' + expectedCount + ' ' + status + ' tests')

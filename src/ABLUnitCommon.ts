@@ -35,7 +35,7 @@ export function doesFileExist (uri: Uri) {
 			return true
 		}
 		return false
-	} catch (e: unknown) {
+	} catch (_e: unknown) {
 		return false
 	}
 }
@@ -56,7 +56,7 @@ export function deleteFile (file: Uri | Uri[] | undefined) {
 				fs.rmSync(file.fsPath)
 			}
 		// eslint-disable-next-line @typescript-eslint/no-unused-vars
-		} catch (err) { /* do nothing */ }
+		} catch (e: unknown) { /* do nothing */ }
 	}
 }
 

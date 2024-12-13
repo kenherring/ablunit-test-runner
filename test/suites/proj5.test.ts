@@ -20,7 +20,7 @@ suite('proj5 - Extension Test Suite', () => {
 			.then((testCount) => {
 				assert.greater(testCount, 100)
 				return
-			}, (e) => { throw e })
+			}, (e: unknown) => { throw e })
 		return prom
 	})
 
@@ -29,7 +29,7 @@ suite('proj5 - Extension Test Suite', () => {
 
 	test('proj5.2 - TestSuite - suite1.cls', async () => {
 		const [ lines, ] = await getContentFromFilesystem('test/suites/suite1.cls')
-			.then((content) => { return getAnnotationLines(content, '@testsuite') }, (e) => { throw e })
+			.then((content) => { return getAnnotationLines(content, '@testsuite') }, (e: unknown) => { throw e })
 		const suiteRet = parseSuiteLines(lines)
 		assert.equal(suiteRet.name, 'suites.suite1')
 		assert.equal(suiteRet.classes.length, 4, 'expected 4 classes in suite1.cls')

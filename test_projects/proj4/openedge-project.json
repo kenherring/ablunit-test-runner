@@ -1,6 +1,6 @@
 {
 	"name": "proj4",
-	"oeversion": "12.2",
+	"oeversion": "12.8",
 	"buildPath": [ { "type": "source", "path": "." } ],
 	"buildDirectory": "build"
 }

@@ -1,6 +1,6 @@
 {
 	"name": "DebugLines",
-	"oeversion": "12.2",
+	"oeversion": "12.8",
 	"charset": "UTF-8",
 	"dbConnections": [],
 	"graphicalMode": false,
