@@ -19,6 +19,9 @@ convert_and_merge_xml () {
         echo '</testExecutions>'
     } > artifacts/mocha_results_sonar/merged
 
+    sed -i 's,<skipped></skipped>,<skipped/>,g' artifacts/mocha_results_sonar/merged
+    sed -i 's,<skipped/>,<skipped message="skipped"/>,g' artifacts/mocha_results_sonar/merged
+
     mv artifacts/mocha_results_sonar/merged artifacts/mocha_results_sonar/merged.xml
     xq '.' artifacts/mocha_results_sonar/merged.xml > artifacts/mocha_results_sonar/merged.json
 
