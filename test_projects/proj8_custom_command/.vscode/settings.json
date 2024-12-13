@@ -3,6 +3,6 @@
         "PATH": "${env:PATH}:/psc/dlc/ant/bin"
     },
     "terminal.integrated.env.windows": {
-        "PATH": "${env:PATH};C:\\Progress\\OpenEdge\\ant\\bin"
+        "PATH": "${env:PATH};C:\\Progress\\OpenEdge-12.8\\ant\\bin"
     }
 }

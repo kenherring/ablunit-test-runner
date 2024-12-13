@@ -56,13 +56,13 @@ async function runTest(version: string) {
 			extensionTestsPath,
 			launchArgs: [ projDir, '--log', 'debug' ]
 		})
-	} catch (err) {
-		throw new Error("Failed to run tests! err=" + err)
+	} catch (e: unknown) {
+		throw new Error("Failed to run tests! err=" + e)
 	}
 	console.log("[installAndRun] success!  version=" + version)
 }
 
-main().catch(err => {
-	console.error("ERROR running tests:" + err)
+main().catch((e) => {
+	console.error("ERROR running tests:" + e)
 	process.exit(1)
 })

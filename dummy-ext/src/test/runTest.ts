@@ -97,9 +97,9 @@ async function runTest(version: string, projName: string, projDir?: string) {
 			version: version
 		})
 		console.log('[' + file + ' runTest] (projName=' + projName + ') tests completed successfully!')
-	} catch (err) {
-		console.error('[' + file + ' runTest] (projName=' + projName + ') failed to run tests, err=' + err)
-		throw new Error('Failed to run tests! err=' + err)
+	} catch (e: unknown) {
+		console.error('[' + file + ' runTest] (projName=' + projName + ') failed to run tests, e=' + e)
+		throw new Error('Failed to run tests! e=' + e)
 	} finally {
 		console.log('[' + file + ' runTest] (projName=' + projName + ') finally')
 	}
@@ -108,7 +108,7 @@ async function runTest(version: string, projName: string, projDir?: string) {
 
 main().then(() => {
 	console.log('[' + file + ' main] completed successfully!')
-}, (err) => {
-	console.error('[' + file + ' main] Failed to run tests, err=' + err)
+}, (e: unknown) => {
+	console.error('[' + file + ' main] Failed to run tests, e=' + e)
 	process.exit(1)
 })

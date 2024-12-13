@@ -37,16 +37,16 @@ suite('proj7B - Extension Test Suite', () => {
 			await commands.executeCommand('testing.cancelTestRefresh').then(() => {
 				log.info('testing.cancelTestRefresh completed')
 				return
-			}, (err) => {
-				log.error('testing.cancelTestRefresh caught an exception. err=' + err)
-				throw err
+			}, (e: unknown) => {
+				log.error('testing.cancelTestRefresh caught an exception. e=' + e)
+				throw e
 			})
 			log.info(' - elapsedCancelTime=' + startCancelTime.elapsed() + 'ms, elapsedRefreshTime=' +  startRefreshTime.elapsed() + 'ms')
 			assert.durationMoreThan(startCancelTime, minCancelTime)
 			assert.durationLessThan(startCancelTime, maxCancelTime)
 			assert.durationLessThan(startRefreshTime, maxRefreshTime)
-		} catch (err) {
-			assert.fail('unexpected error: ' + err)
+		} catch (e: unknown) {
+			assert.fail('unexpected error: ' + e)
 		}
 
 		const ablfileCount = await getTestControllerItemCount('ABLTestFile')
@@ -56,12 +56,12 @@ suite('proj7B - Extension Test Suite', () => {
 		await refresh.then(() => {
 			assert.fail('testing.refreshTests completed without throwing CancellationError')
 			return
-		}, (err) => {
-			if (err instanceof CancellationError) {
+		}, (e: unknown) => {
+			if (e instanceof CancellationError) {
 				log.info('testing.refreshTests threw CancellationError as expected')
 			} else {
-				const e = err as Error
-				assert.equal(e.name, 'Canceled', 'testing.refreshTests threw unexpected error. Expected e.name="Canceled" err=' + err)
+				const err = e as Error
+				assert.equal(err.name, 'Canceled', 'testing.refreshTests threw unexpected error. Expected e.name="Canceled" e=' + e)
 			}
 		})
 	})
@@ -70,7 +70,7 @@ suite('proj7B - Extension Test Suite', () => {
 		const maxCancelTime = 1000
 		// const runTestTime = new Duration()
 
-		runAllTests().catch((err: unknown) => { log.info('runAllTests got error: ' + err) })
+		runAllTests().catch((e: unknown) => { log.info('runAllTests got error: ' + e) })
 		await sleep(250)
 			.then(() => { return waitForTestRunStatus(RunStatus.Constructed) })
 
@@ -94,12 +94,12 @@ suite('proj7B - Extension Test Suite', () => {
 		// 	} else {
 		// 		assert.fail('runAllTests completed without status=\'run cancelled\' (status=\'' + res.status + '\')')
 		// 	}
-		// }, (err: unknown) => {
-		// 	if (err instanceof CancellationError) {
+		// }, (e: unknown) => {
+		// 	if (e instanceof CancellationError) {
 		// 		log.info('runAllTests threw CancellationError as expected ' + runTestTime.toString())
 		// 	} else {
-		// 		const e = err as Error
-		// 		assert.equal(e.name, 'Canceled', 'runAllTests threw unexpected error. Expected e.name="Canceled" err=' + err)
+		// 		const e = e as Error
+		// 		assert.equal(e.name, 'Canceled', 'runAllTests threw unexpected error. Expected e.name="Canceled" e=' + e)
 		// 	}
 		// })
 	})
@@ -108,7 +108,7 @@ suite('proj7B - Extension Test Suite', () => {
 		const maxCancelTime = 1000
 		// const runTestTime = new Duration()
 
-		runAllTests().catch((err: unknown) => { log.info('runAllTests got error: ' + err) })
+		runAllTests().catch((e: unknown) => { log.info('runAllTests got error: ' + e) })
 
 		// wait up to 60 seconds until ABLUnit is actually running, then cancel
 		// this validates the cancel will abort the spawned _progres process
@@ -141,7 +141,7 @@ suite('proj7B - Extension Test Suite', () => {
 		// log.info('waiting for runProm to complete')
 		// await runProm.then(() => {
 		// 	log.info('runProm completed')
-		// }, (e) => {
+		// }, (e: unknown) => {
 		// 	log.error('runProm error e=' + e)
 		// 	throw e
 		// })

@@ -32,15 +32,15 @@ export class ABLPromsgs {
 			}
 			return
 		}, (e: unknown) => {
-			log.info('Cannot load promsgs from DLC, err=' + e)
+			log.info('Cannot load promsgs from DLC, e=' + e)
 		})
 	}
 
 	async loadPromsgFile (msgfile: Uri) {
 		const lines = await workspace.fs.readFile(msgfile).then((buffer) => {
 			return Buffer.from(buffer).toString('utf8').split('\n')
-		}, (err) => {
-			throw new Error('Cannot read promsgs file \'' + msgfile + '\', err=' + err)
+		}, (e: unknown) => {
+			throw new Error('Cannot read promsgs file \'' + msgfile + '\', e=' + e)
 		})
 
 
@@ -93,12 +93,12 @@ export class ABLPromsgs {
 			}).then(() => {
 				log.info('promsgs loaded from DLC')
 				return
-			}, (err) => {
-				throw new Error('Cannot read promsgs directory \'' + promsgDir + '\', err=' + err)
+			}, (e: unknown) => {
+				throw new Error('Cannot read promsgs directory \'' + promsgDir + '\', e=' + e)
 			})
-		// }, (err) => {
+		// }, (e: unknown) => {
 		// 	log.info('Cannot find DLC directory \'' + this.dlc.uri.fsPath + '"')
-		// 	throw new Error('Cannot find DLC directory \'' + this.dlc.uri.fsPath + '", err=' + err)
+		// 	throw new Error('Cannot find DLC directory \'' + this.dlc.uri.fsPath + '", e=' + e)
 		// })
 	}
 
@@ -107,8 +107,8 @@ export class ABLPromsgs {
 		await workspace.fs.readFile(cacheUri).then((buffer) => {
 			this.promsgs = JSON.parse(Buffer.from(buffer).toString('utf8')) as IPromsg[]
 			return
-		}, (err) => {
-			throw new Error('Cannot read promsgs file \'' + cacheUri.fsPath + '\', err=' + err)
+		}, (e: unknown) => {
+			throw new Error('Cannot read promsgs file \'' + cacheUri.fsPath + '\', e=' + e)
 		})
 	}
 
@@ -121,8 +121,8 @@ export class ABLPromsgs {
 		return workspace.fs.writeFile(cacheUri, Buffer.from(JSON.stringify(this.promsgs, null, 2))).then(() => {
 			log.info('saved promsgs cache successfully \'' + cacheUri.fsPath + '\'')
 			return
-		}, (err) => {
-			throw new Error('error writing promsgs cache file: ' + err)
+		}, (e: unknown) => {
+			throw new Error('error writing promsgs cache file: ' + e)
 		})
 	}
 
@@ -141,7 +141,7 @@ export function getPromsgText (text: string) {
 		log.info('text = ' + text)
 		log.info('match = ' + JSON.stringify(promsgMatch))
 		const promsg = promsgsObj.getMsgNum(Number(promsgMatch![1]))
-		log.info('promsg= ' + promsg)
+		log.info('promsg= ' + promsg?.msgnum + ' ' + promsg?.msgtext)
 		let stackString = text
 		let count = 0
 		promsg?.msgtext.forEach((text: string) => {
@@ -152,7 +152,7 @@ export function getPromsgText (text: string) {
 			}
 		})
 		return stackString
-	} catch (e) {
+	} catch (_e) {
 		return text
 	}
 }

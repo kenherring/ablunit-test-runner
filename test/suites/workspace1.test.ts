@@ -29,7 +29,7 @@ suite('workspace1 - Extension Test Suite', () => {
 
 	teardown('workspace1 - afterEach', async () => {
 		log.info('after')
-		await workspace.fs.delete(Uri.joinPath(getWorkspaceUri(0), '.vscode', 'ablunit-test-profile.json')).then(() => { return }, (e) => { return })
+		await workspace.fs.delete(Uri.joinPath(getWorkspaceUri(0), '.vscode', 'ablunit-test-profile.json')).then(() => { return }, (e: unknown) => { return })
 		await workspace.fs.copy(Uri.joinPath(getWorkspaceUri(1), '.vscode', 'ablunit-test-profile.json.bk'), Uri.joinPath(getWorkspaceUri(1), '.vscode', 'ablunit-test-profile.json'), { overwrite: true })
 	})
 

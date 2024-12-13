@@ -38,11 +38,14 @@ show_summary () {
     echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] $TEST_COUNT total tests"
 
     SKIP_COUNT="$(jq '.[] | select(has("skipped")) | length' < artifacts/mocha_results_sonar/merged_flat.json || echo 0)"
+    [ "$SKIP_COUNT" = "" ] && SKIP_COUNT=0
     echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] $SKIP_COUNT/$TEST_COUNT tests skipped"
 
     FAILURE_COUNT="$(jq '.[] | select(has("failure")) | length' < artifacts/mocha_results_sonar/merged_flat.json)"
+    [ "$FAILURE_COUNT" = "" ] && FAILURE_COUNT=0
+    echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] ERROR: $FAILURE_COUNT/$TEST_COUNT tests failed"
+
     if [ "$FAILURE_COUNT" != "0" ]; then
-        echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] ERROR: $FAILURE_COUNT/$TEST_COUNT tests failed"
         jq '.[] | select(has("failure"))' < artifacts/mocha_results_sonar/merged_flat.json
     fi
 }

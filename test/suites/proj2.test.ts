@@ -61,10 +61,10 @@ suite('proj2 - Extension Test Suite', () => {
 
 	test('proj2.4 - compile error - run all tests', () => {
 		return workspace.fs.copy(toUri('src/compileError.p.saveme'), toUri('src/compileError.p'), { overwrite: true })
-			.then(() => { return runAllTests() }, (e) => { throw e })
+			.then(() => { return runAllTests() }, (e: unknown) => { throw e })
 			.then(() => {
 				throw new Error('test should have failed due to compile error')
-			}, (e) => {
+			}, (e: unknown) => {
 				log.info('e=' + e)
 				assert.ok('test failed as expected')
 				return true
@@ -76,7 +76,7 @@ suite('proj2 - Extension Test Suite', () => {
 			.then(() => runTestsInFile('src/compileError.p'))
 			.then(() => {
 				throw new Error('test should have failed due to compile error')
-			}, (e) => {
+			}, (e: unknown) => {
 				log.info('e=' + e)
 				assert.ok('tests failed as expected')
 				return true
@@ -91,7 +91,7 @@ suite('proj2 - Extension Test Suite', () => {
 				assert.ok('test passed as expected')
 				assert.tests.count(1)
 				return
-			}, (e) => {
+			}, (e: unknown) => {
 				throw new Error('test should have passed, but threw error e=' + e)
 			})
 	})

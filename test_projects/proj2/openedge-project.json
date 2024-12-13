@@ -10,7 +10,7 @@
 			"name": "profileWithDBConn",
 			"inherits": "default",
 			"value": {
-				"oeversion": "12.2",
+				"oeversion": "12.8",
 				"dbConnections": [
 					{
 						"name": "sp2k",

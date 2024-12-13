@@ -76,13 +76,12 @@ export class ABLResultsParser {
 	async parseResults (configUri: Uri, jsonUri?: Uri) {
 		const resultsBits = await workspace.fs.readFile(configUri)
 		const resultsXml = Buffer.from(resultsBits.toString()).toString('utf8')
-		// eslint-disable-next-line @typescript-eslint/no-confusing-void-expression
 		const resultsXmlJson = this.parseXml(resultsXml)
 		try {
 			this.resultsJson = [ await this.parseSuites(resultsXmlJson) ]
-		} catch (err) {
-			log.error('[parseResults] error parsing ' + configUri.fsPath + ' file: ' + err)
-			throw err
+		} catch (e: unknown) {
+			log.error('[parseResults] error parsing ' + configUri.fsPath + ' file: ' + e)
+			throw e
 		}
 		if (jsonUri) {
 			return this.writeJsonToFile(jsonUri)
@@ -281,8 +280,8 @@ export class ABLResultsParser {
 		return workspace.fs.writeFile(uri, Uint8Array.from(Buffer.from(JSON.stringify(data, null, 2)))).then(() => {
 			log.info('wrote results json file: ' + uri.fsPath)
 			return
-		}, (err) => {
-			log.error('failed to write profile output json file ' + uri.fsPath + ' - ' + err)
+		}, (e: unknown) => {
+			log.error('failed to write profile output json file ' + uri.fsPath + ' - ' + e)
 		})
 	}
 }

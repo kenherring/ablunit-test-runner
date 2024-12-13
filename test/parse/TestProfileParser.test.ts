@@ -10,7 +10,7 @@ function readValidationFile (filename: string) {
 		// const data = Buffer.from(content.buffer).toString().trim().replace(/[\r\t\n]/g, '').replace(/\/\/.*/g, '').replace(/^$/g, '')
 		const conf: IConfigurations = JSON.parse(data) as IConfigurations
 		return conf.configurations
-	}, (err) => {
+	}, (e: unknown) => {
 		log.error('Reading validation file failed: ' + err)
 		throw err
 	})

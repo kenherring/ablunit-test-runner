@@ -144,8 +144,8 @@ export async function activate (context: ExtensionContext) {
 		return window.showTextDocument(Uri.joinPath(workspaceFolder.uri, '.vscode', 'ablunit-test-profile.json')).then(() => {
 			log.info('Opened .vscode/ablunit-test-profile.json')
 			return
-		}, (err) => {
-			log.error('Failed to open .vscode/ablunit-test-profile.json! err=' + err)
+		}, (e: unknown) => {
+			log.error('Failed to open .vscode/ablunit-test-profile.json! e=' + e)
 			return
 		})
 	}
@@ -367,9 +367,9 @@ export async function activate (context: ExtensionContext) {
 			.then(() => {
 				log.debug('runTestQueue complete')
 				return
-			}, (err: unknown) => {
+			}, (e: unknown) => {
 				run.end()
-				throw err
+				throw e
 			})
 	}
 
@@ -402,8 +402,8 @@ export async function activate (context: ExtensionContext) {
 				return commands.executeCommand('testing.refreshTests').then(() => {
 					log.trace('tests tree successfully refreshed on workspace startup')
 					return
-				}, (err) => {
-					log.error('failed to refresh test tree. err=' + err)
+				}, (e: unknown) => {
+					log.error('failed to refresh test tree. e=' + e)
 				})
 			}
 			return Promise.resolve()
@@ -417,7 +417,7 @@ export async function activate (context: ExtensionContext) {
 
 		const data = testData.get(item)
 		if (data instanceof ABLTestFile) {
-			return data.updateFromDisk(ctrl, item).then(() => { return }, (err) => { throw err })
+			return data.updateFromDisk(ctrl, item).then(() => { return }, (e: unknown) => { throw e })
 		}
 		return Promise.resolve()
 	}
@@ -430,7 +430,7 @@ export async function activate (context: ExtensionContext) {
 				log.info('ctrl.refreshHandler post-refreshTestTree (r=' + r + ')')
 				isRefreshTestsComplete = true
 				return
-			}, (e) => { throw e })
+			}, (e: unknown) => { throw e })
 	}
 
 	ctrl.resolveHandler = (item) => {
@@ -456,7 +456,7 @@ export async function activate (context: ExtensionContext) {
 					.then(() => {
 						log.info('tests tree successfully refreshed on configuration change')
 						return
-					}, (e) => {
+					}, (e: unknown) => {
 						throw e
 					})
 			}
@@ -465,8 +465,8 @@ export async function activate (context: ExtensionContext) {
 
 	const configHandler = () => {
 		log.info('testRunProfiler.configureHandler')
-		openTestRunConfig().catch((err: unknown) => {
-			log.error('Failed to open \'.vscode/ablunit-test-profile.json\'. err=' + err)
+		openTestRunConfig().catch((e: unknown) => {
+			log.error('Failed to open \'.vscode/ablunit-test-profile.json\'. e=' + e)
 		})
 	}
 
@@ -895,14 +895,14 @@ function findMatchingFiles (includePatterns: RelativePattern[], token: Cancellat
 			.then((files) => {
 				filelist.push(...files)
 				return true
-			}, (e) => { throw e })
+			}, (e: unknown) => { throw e })
 		proms.push(prom)
 		checkCancellationToken()
 	}
 	return Promise.all(proms)
 		.then(() => {
 			return filelist
-		}, (e) => { throw e })
+		}, (e: unknown) => { throw e })
 }
 
 // async function parseMatchingFiles (files: Uri[], controller: TestController, excludePatterns: RelativePattern[], token: CancellationToken, checkCancellationToken: () => void): Promise<boolean> {
@@ -917,8 +917,8 @@ function findMatchingFiles (includePatterns: RelativePattern[], token: Cancellat
 // 			log.info('updating from disk')
 // 			const prom = data.updateFromDisk(controller, item, token).then((foundTestCase) => {
 // 				return foundTestCase
-// 			}, (e) => {
-// 				log.error('failed to update file from disk. err=' + e)
+// 			}, (e: unknown) => {
+// 				log.error('failed to update file from disk. e=' + e)
 // 				return false
 // 			})
 // 			proms.push(prom)
@@ -937,7 +937,7 @@ function removeDeletedFiles (ctrl: TestController) {
 			.then((s) => {
 				log.debug('file still exists, skipping delete (item.id=' + item.id + ')')
 				return
-			}, (e) => {
+			}, (e: unknown) => {
 				deleteTest(ctrl, item)
 			})
 		proms.push(p)
@@ -1088,7 +1088,7 @@ function openCallStackItem (traceUriStr: string) {
 		log.info('decorating editor - openCallStackItem')
 		editor.revealRange(range)
 		return
-	}, (e) => { throw e })
+	}, (e: unknown) => { throw e })
 }
 
 function isFileIncluded (uri: Uri, includePatterns: RelativePattern[], excludePatterns: RelativePattern[]) {
@@ -1135,8 +1135,8 @@ export async function doesDirExist (uri: Uri) {
 			return true
 		}
 		return false
-	}, (err) => {
-		log.debug('caught: ' + err)
+	}, (e: unknown) => {
+		log.debug('caught: ' + e)
 		return false
 	})
 	return ret
@@ -1148,8 +1148,8 @@ export async function doesFileExist (uri: Uri) {
 			return true
 		}
 		return false
-	}, (err) => {
-		log.debug('caught: ' + err)
+	}, (e: unknown) => {
+		log.debug('caught: ' + e)
 		return false
 	})
 	return ret

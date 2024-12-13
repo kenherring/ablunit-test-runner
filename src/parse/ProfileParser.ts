@@ -70,8 +70,8 @@ export class ABLProfile {
 			// eslint-disable-next-line promise/catch-or-return
 			this.writeJsonToFile(jsonUri).then(() => {
 				return true
-			}, (err: unknown) => {
-				log.error('Error writing profile output json file: ' + err)
+			}, (e: unknown) => {
+				log.error('Error writing profile output json file: ' + e)
 				return false
 			})
 		}
@@ -86,8 +86,8 @@ export class ABLProfile {
 		return workspace.fs.writeFile(uri, Uint8Array.from(Buffer.from(JSON.stringify(data, null, 2)))).then(() => {
 			log.info('wrote profile output json file: ' + workspace.asRelativePath(uri))
 			return
-		}, (err) => {
-			log.error('failed to write profile output json file ' + workspace.asRelativePath(uri) + ' - ' + err)
+		}, (e: unknown) => {
+			log.error('failed to write profile output json file ' + workspace.asRelativePath(uri) + ' - ' + e)
 		})
 	}
 }
@@ -490,7 +490,7 @@ export class ABLProfileJson {
 				}
 			}
 		} catch (error) {
-			log.error('Error parsing coverage data in section 6 [module=' + mod + ']: error=' + error)
+			log.error('Error parsing coverage data in section 6 [module=' + mod?.ModuleName + ']: error=' + error)
 		}
 		this.assignParentCoverage()
 	}

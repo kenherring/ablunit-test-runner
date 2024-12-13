@@ -1,5 +1,4 @@
 import { Selection, TaskEndEvent, TaskExecution, commands, tasks, window } from 'vscode'
-import { after, afterEach, beforeEach } from 'mocha'
 import { Uri, assert, getWorkspaceUri, log, runAllTests, sleep, updateConfig, getTestCount, workspace, suiteSetupCommon, getWorkspaceFolders, oeVersion, runTestAtLine, beforeCommon, updateTestProfile, runTestsInFile, deleteFiles, sleep2 } from '../testCommon'
 import { getOEVersion } from 'parse/OpenedgeProjectParser'
 import { execSync } from 'child_process'
@@ -17,21 +16,21 @@ suite('proj1 - Extension Test Suite', () => {
 			.then(() => { return workspace.fs.copy(Uri.joinPath(workspaceUri, '.vscode', 'settings.json'), Uri.joinPath(workspaceUri, '.vscode', 'settings.bk.json'), { overwrite: true }) })
 	})
 
-	beforeEach('proj1 - beforeEach', () => {
+	setup('proj1 - beforeEach', () => {
 		beforeCommon()
 		log.info('setup-2 has(ablunit.files)=' + workspace.getConfiguration('ablunit').has('files') + ' files.exclude=' + workspace.getConfiguration('ablunit').get('files.exclude'))
 		// const prom = workspace.getConfiguration('ablunit').update('files.exclude', undefined)
 		return workspace.getConfiguration('ablunit.files').update('exclude', undefined)
 	})
 
-	afterEach('proj1 - afterEach', async () => {
+	teardown('proj1 - afterEach', async () => {
 		await workspace.fs.copy(Uri.joinPath(workspaceUri, 'openedge-project.bk.json'), Uri.joinPath(workspaceUri, 'openedge-project.json'), { overwrite: true })
 			.then(() => { return workspace.fs.copy(Uri.joinPath(workspaceUri, '.vscode', 'ablunit-test-profile.bk.json'), Uri.joinPath(workspaceUri, '.vscode', 'ablunit-test-profile.json'), { overwrite: true }) })
 			.then(() => { return workspace.fs.copy(Uri.joinPath(workspaceUri, '.vscode', 'settings.bk.json'), Uri.joinPath(workspaceUri, '.vscode', 'settings.json'), { overwrite: true })
 			}, (e: unknown) => { throw e })
 	})
 
-	after('proj1 - suiteTeardown', () => {
+	suiteTeardown('proj1 - suiteTeardown', () => {
 		return workspace.fs.delete(Uri.joinPath(workspaceUri, 'openedge-project.bk.json'))
 			.then(() => { return workspace.fs.delete(Uri.joinPath(workspaceUri, '.vscode', 'ablunit-test-profile.bk.json')) })
 			.then(() => { return workspace.fs.delete(Uri.joinPath(workspaceUri, '.vscode', 'settings.bk.json')) })
