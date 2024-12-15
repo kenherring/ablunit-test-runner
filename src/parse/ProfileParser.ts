@@ -76,6 +76,7 @@ export class ABLProfile {
 			})
 		}
 		log.debug('parseData returning')
+		return this.profJSON
 	}
 
 	writeJsonToFile (uri: Uri) {

@@ -6,7 +6,7 @@ import { FileType, MarkdownString, TestItem, TestItemCollection, TestMessage, Te
 	TestRunProfileKind} from 'vscode'
 import { ABLUnitConfig } from './ABLUnitConfigWriter'
 import { ABLResultsParser, ITestCaseFailure, ITestCase, ITestSuite } from './parse/ResultsParser'
-import { ABLTestSuite, ABLTestData, ABLTestCase } from './testTree'
+import { ABLTestSuite, ABLTestData, ABLTestCase, testData } from './testTree'
 import { parseCallstack } from './parse/CallStackParser'
 import { ABLProfile, ABLProfileJson, IModule } from './parse/ProfileParser'
 import { ABLDebugLines } from './ABLDebugLines'
@@ -17,6 +17,9 @@ import { ABLUnitRuntimeError, RunStatus, TimeoutError, ablunitRun } from './ABLU
 import { getDLC, IDlc } from './parse/OpenedgeProjectParser'
 import { Duration, isRelativePath } from './ABLUnitCommon'
 import { ITestObj } from 'parse/config/CoreOptions'
+import { globSync } from 'glob'
+import { basename, dirname } from 'node:path'
+import { gatherAllTestItems } from 'extension'
 
 export class ABLResults implements Disposable {
 	workspaceFolder: WorkspaceFolder
@@ -33,13 +36,14 @@ export class ABLResults implements Disposable {
 	propath?: PropathParser
 	debugLines?: ABLDebugLines
 	promsgs?: ABLPromsgs
-	profileJson?: ABLProfileJson
+	profileJson: ABLProfileJson[] = []
 	coverageJson: [] = []
 	dlc: IDlc | undefined
 	thrownError: Error | undefined
 
-	public coverage: Map<string, FileCoverageDetail[]> = new Map<string, FileCoverageDetail[]>()
+	public coverage = new Map<string, FileCoverageDetail[]>()
 	public filecoverage: FileCoverage[] = []
+	public filecoveragedetail = new Map<FileCoverage, FileCoverageDetail[]>()
 
 	constructor (workspaceFolder: WorkspaceFolder,
 		private readonly storageUri: Uri,
@@ -62,10 +66,8 @@ export class ABLResults implements Disposable {
 
 	dispose () {
 		this.setStatus(RunStatus.Cancelled, 'disposing ABLResults object')
-		delete this.profileJson
 		delete this.ablResults
 		delete this.debugLines
-		delete this.profileJson
 	}
 
 	setStatus (status: RunStatus, statusNote?: string) {
@@ -256,10 +258,14 @@ export class ABLResults implements Disposable {
 
 	async assignTestResults (item: TestItem, options: TestRun) {
 
+		log.info('[assignTestResults] item=' + item.label)
+
 		if (this.skippedTests.includes(item)) {
+			log.warn('skipped test item \'' + item.label + '\'')
 			options.skipped(item)
 			return
 		}
+
 		if(!this.ablResults) {
 			throw new Error('no ABLResults object initialized')
 		}
@@ -293,22 +299,36 @@ export class ABLResults implements Disposable {
 			}
 			if (item.children.size > 0) {
 				this.parseChildSuites(item, s.testsuite, options)
+			}
+			if (s.errors > 0) {
+				log.error('errors = ' + s.errors + ', failures = ' + s.failures + ', passed = ' + s.passed + ' (item=' + item.label + ')')
+				options.errored(item, new TestMessage('errors = ' + s.errors + ', failures = ' + s.failures + ', passed = ' + s.passed))
+			} else if (s.failures) {
+				log.error('failures = ' + s.failures + ', passed = ' + s.passed + ' (item=' + item.label + ')')
+				options.failed(item, new TestMessage('failures = ' + s.failures + ', passed = ' + s.passed))
+			} else if (s.skipped) {
+				log.warn('skipped = ' + s.skipped + ', passed = ' + s.passed + ' (item=' + item.label + ')')
+				options.skipped(item)
 			} else {
-				if (s.errors > 0) {
-					log.error('errors = ' + s.errors + ', failures = ' + s.failures + ', passed = ' + s.passed + ' (item=' + item.label + ')')
-					options.errored(item, new TestMessage('errors = ' + s.errors + ', failures = ' + s.failures + ', passed = ' + s.passed))
-				} else if (s.failures) {
-					log.error('failures = ' + s.failures + ', passed = ' + s.passed + ' (item=' + item.label + ')')
-					options.failed(item, new TestMessage('failures = ' + s.failures + ', passed = ' + s.passed))
-				} else if (s.skipped) {
-					log.warn('skipped = ' + s.skipped + ', passed = ' + s.passed + ' (item=' + item.label + ')')
-					options.skipped(item)
-				} else {
-					options.passed(item)
-				}
+				log.info('passed = ' + s.passed + ' (item=' + item.label + ')')
+				options.passed(item)
 			}
 		} else {
 			this.parseFinalSuite(item, s, options)
+
+			if (s.errors > 0) {
+				log.error('s.errors=' + s.errors)
+				options.failed(item, new TestMessage(s.errors + ' errors'), this.duration.elapsed())
+			} else if (s.failures > 0) {
+				log.error('s.failures=' + s.failures)
+				options.failed(item, new TestMessage(s.failures + ' failures'), this.duration.elapsed())
+			} else if (s.skipped > 0) {
+				log.warn('skipped test case \'' + item.label + '\'')
+				options.skipped(item)
+			} else if (s.passed > 0 && s.errors == 0 && s.failures == 0) {
+				log.info('passed test case \'' + item.label + '\'')
+				options.passed(item)
+			}
 		}
 	}
 
@@ -373,11 +393,14 @@ export class ABLResults implements Disposable {
 	}
 
 	private setChildResults (item: TestItem, options: TestRun, tc: ITestCase) {
+		log.info('[setChildResults] item=' + item.label)
 		switch (tc.status.toLowerCase()) {
 			case 'success': {
 				if (tc.skipped) {
+					log.warn('skipped test case \'' + tc.name + '\'')
 					options.skipped(item)
 				} else {
+					log.info('passed test case \'' + tc.name + '\'')
 					options.passed(item, tc.time)
 				}
 				return
@@ -388,10 +411,12 @@ export class ABLResults implements Disposable {
 					for (const failure of tc.failures) {
 						const diff = this.getDiffMessage(failure)
 						if (diff) {
+							log.error('failed test case \'' + tc.name + '\'')
 							options.failed(item, diff, tc.time)
 						} else {
 							const testMessage = new TestMessage(getPromsgText(failure.message))
 							testMessage.stackTrace = failure.stackTrace
+							log.error('failed test case \'' + tc.name + '\'')
 							options.failed(item, testMessage, tc.time)
 						}
 					}
@@ -401,6 +426,7 @@ export class ABLResults implements Disposable {
 				throw new Error('unexpected ' + tc.status.toLowerCase() + ' for \'' + tc.name + '\'')
 			}
 			case 'skpped': {
+				log.warn('skipped test case \'' + tc.name + '\'')
 				options.skipped(item)
 				return
 			}
@@ -447,40 +473,83 @@ export class ABLResults implements Disposable {
 		return tm
 	}
 
-	parseProfile () {
-		const startTime = new Date()
-		const profParser = new ABLProfile()
-		return profParser.parseData(this.cfg.ablunitConfig.profFilenameUri, this.cfg.ablunitConfig.profiler.writeJson, this.debugLines!)
-			.then(() => {
-				this.profileJson = profParser.profJSON
-				return this.assignProfileResults()
-			})
-			.then(() => {
-				log.debug('assignProfileResults complete (time=' + (Number(new Date()) - Number(startTime)) + ')')
-				return
-			}, (e: unknown) => {
-				throw new Error('assignProfileResults error: ' + e)
-			})
+	findTest (testName: string) {
+		for (const test of this.tests) {
+			log.info('test.label=' + test.label)
+			for (const [, child] of test.children) {
+				log.info('test.label=' + test.label + ', child.label=' + child.label)
+				if (child.label == testName) {
+					return child
+				}
+			}
+			if (test.label == testName) {
+				return test
+			}
+		}
+		return undefined
 	}
 
-	async assignProfileResults () {
-		if (!this.profileJson) {
-			throw new Error('no profile data available...')
+	async parseProfile () {
+		const startTime = new Date()
+		const profParser = new ABLProfile()
+
+		const profDir = dirname(this.cfg.ablunitConfig.profFilenameUri.fsPath)
+		const profFile = basename(this.cfg.ablunitConfig.profFilenameUri.fsPath)
+		const globPattern = profFile.replace(/(.*)\.([a-zA-Z]+)$/, '$1_*.$2')
+		log.info('globPattern=' + globPattern + ', profDir=' + profDir)
+
+		const dataFiles = globSync(globPattern, { cwd: profDir })
+		dataFiles.push(basename(this.cfg.ablunitConfig.profFilenameUri.fsPath))
+		log.info('dataFiles.length=' + dataFiles.length)
+
+		let item: TestItem | undefined = undefined
+		for (const dataFile of dataFiles) {
+			log.info('dataFile = ' + dataFile)
+			if (dataFile != this.cfg.ablunitConfig.profFilenameUri.fsPath) {
+				const testName = dataFile.replace(/(.*)_(.*)\.(.*)$/, '$2')
+				log.info('testName=' + testName)
+				item = this.findTest(testName)
+				log.info('item=' + item?.label)
+			}
+
+			const profJson = await profParser.parseData(Uri.joinPath(Uri.file(profDir), dataFile), this.cfg.ablunitConfig.profiler.writeJson, this.debugLines!)
+			this.profileJson.push(profJson)
+			log.info('assigning profile results')
+			await this.assignProfileResults(profJson, item)
 		}
-		const mods: IModule[] = this.profileJson.modules
+
+		// return profParser.parseData(this.cfg.ablunitConfig.profFilenameUri, this.cfg.ablunitConfig.profiler.writeJson, this.debugLines!)
+		// 	.then((profJson) => {
+		// 		this.profileJson = [profJson]
+		// 		return this.assignProfileResults(profJson)
+
+
+		// 	})
+		// 	.then(() => {
+		// 		log.debug('assignProfileResults complete (time=' + (Number(new Date()) - Number(startTime)) + ')')
+		// 		return
+		// 	}, (e: unknown) => {
+		// 		throw new Error('assignProfileResults error: ' + e)
+		// 	})
+	}
+
+	async assignProfileResults (profJson: ABLProfileJson, item?: TestItem) {
+		const mods: IModule[] = profJson.modules
 		for (let idx=1; idx < mods.length; idx++) {
 			const module = mods[idx]
 			if (!module.SourceName) {
 				continue
 			}
 			// await this.setCoverage(module).then()
-			await this.setCoverage(module)
+			await this.setCoverage(module, undefined)
 		}
 	}
 
-	async setCoverage (module: IModule) {
+	async setCoverage (module: IModule, item?: TestItem) {
 		const fileinfo = await this.propath!.search(module.SourceName)
 		const moduleUri = fileinfo?.uri
+		const coverage = new Map<string, FileCoverageDetail[]>()
+		const coverageByFile = new Map<string, FileCoverageDetail[]>()
 		if (!moduleUri) {
 			if (!module.SourceName.startsWith('OpenEdge.') &&
 				module.SourceName !== 'ABLUnitCore.p' &&
@@ -502,24 +571,52 @@ export class ABLResults implements Disposable {
 			if (!dbg) {
 				return
 			}
-			let fc = this.coverage.get(dbg.sourceUri.fsPath)
+			// let fc = this.coverage.get(dbg.sourceUri.fsPath)
+			let fc = coverage.get(dbg.sourceUri.fsPath)
+			let fc2
+			if (item) {
+				fc2 = coverageByFile.get(dbg.sourceUri.fsPath + ' ' + item.id)
+			}
 			if (!fc) {
 				// create a new FileCoverage object if one didn't already exist
 				const fcd: FileCoverageDetail[] = []
-				this.coverage.set(dbg.sourceUri.fsPath, fcd)
-				fc = this.coverage.get(dbg.sourceUri.fsPath)
+				coverage.set(dbg.sourceUri.fsPath, fcd)
+				fc = coverage.get(dbg.sourceUri.fsPath)
+				if (item) {
+					const fcd2: FileCoverageDetail[] = []
+					coverageByFile.set(dbg.sourceUri.fsPath + ' ' + item.id, fcd2)
+					fc2 = coverageByFile.get(dbg.sourceUri.fsPath + ' ' + item.id)
+				}
+				// this.coverage.set(dbg.sourceUri.fsPath, fcd)
+				// fc = this.coverage.get(dbg.sourceUri.fsPath)
 			}
 
 			// // TODO: end of range should be the end of the line, not the beginning of the next line
 			const coverageRange = new Position(dbg.sourceLine - 1, 0)
-			fc!.push(new StatementCoverage(line.ExecCount ?? 0, coverageRange))
+			const sc = new StatementCoverage(line.ExecCount ?? 0, coverageRange)
+			fc!.push(sc)
+			if (item && fc2) {
+				fc2.push(sc)
+			}
 		}
 
-		this.coverage.forEach((v, k) => {
-			log.debug('coverage[' + k + '].length=' + v.length)
+		for (const [k, v] of coverage) {
+			log.info('set this')
+			log.info('coverage[' + k + '].length=' + v.length)
 			const fileCov = FileCoverage.fromDetails(Uri.file(k), v)
 			log.debug('Statement coverage for ' + k + ': ' + JSON.stringify(fileCov.statementCoverage))
 			this.filecoverage.push(fileCov)
-		})
+		}
+
+		if (item) {
+			log.info('set this item='  + item.label)
+			for (const [k, v] of coverageByFile) {
+				log.info('coverageByFile[' + k + '].length=' + v.length)
+				const fileCov = FileCoverage.fromDetails(Uri.file(k.split(' ')[1]), v)
+				log.debug('Statement coverage for ' + k + ': ' + JSON.stringify(fileCov.statementCoverage))
+				fileCov.includesTests = [item]
+				this.filecoveragedetail.set(fileCov, v)
+			}
+		}
 	}
 }
