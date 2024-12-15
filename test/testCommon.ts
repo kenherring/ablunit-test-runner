@@ -573,26 +573,40 @@ export async function runAllTests (doRefresh = true, waitForResults = true, with
 
 	log.info('testing.runAll starting (waitForResults=' + waitForResults + ')')
 	const r = await commands.executeCommand(testCommand)
-		.then((r) => {
-			log.info(tag + 'command ' + testCommand +' complete! (r=' + r + ')')
-			return sleep(250)
-		}, (e: unknown) => { throw e	})
-		.then(() => {
-			log.info(tag + 'testing.runAll completed - start getResults()')
-			if (!waitForResults) { return [] }
-			return getResults(1, tag)
-		})
-		.then((r) => {
-			if (r.length >= 0) {
-				const fUri = r[0]?.cfg.ablunitConfig.optionsUri.filenameUri
-				log.info(tag + 'testing.runAll command complete (filename=' + fUri.fsPath + ', r=' + r + ')')
-				return doesFileExist(fUri)
-			}
-			return false
-		}, (e: unknown) => {
-			runAllTestsDuration?.stop()
-			throw new Error('testing.runAll failed: ' + e)
-		})
+	log.info(tag + 'command ' + testCommand +' complete! (r=' + r + ')')
+	await sleep(250)
+	if (waitForResults) {
+		const r = await getResults(1, tag)
+		if (r.length >= 0) {
+			const fUri = r[0]?.cfg.ablunitConfig.optionsUri.filenameUri
+			log.info(tag + 'testing.runAll command complete (filename=' + fUri.fsPath + ', r=' + r + ')')
+			return doesFileExist(fUri)
+		}
+	}
+	// const r = await commands.executeCommand(testCommand)
+	// 	.then((r) => {
+	// 		log.info(tag + 'command ' + testCommand +' complete! (r=' + r + ')')
+	// 		return sleep(250)
+	// 	}, (e: unknown) => {
+	// 		log.error('command ' + testCommand + ' failed! e=' + e)
+	// 		throw e
+	// 	})
+	// 	.then(() => {
+	// 		log.info(tag + 'testing.runAll completed - start getResults()')
+	// 		if (!waitForResults) { return [] }
+	// 		return getResults(1, tag)
+	// 	})
+	// 	.then((r) => {
+	// 		if (r.length >= 0) {
+	// 			const fUri = r[0]?.cfg.ablunitConfig.optionsUri.filenameUri
+	// 			log.info(tag + 'testing.runAll command complete (filename=' + fUri.fsPath + ', r=' + r + ')')
+	// 			return doesFileExist(fUri)
+	// 		}
+	// 		return false
+	// 	}, (e: unknown) => {
+	// 		runAllTestsDuration?.stop()
+	// 		throw new Error('testing.runAll failed: ' + e)
+	// 	})
 	runAllTestsDuration.stop()
 	log.info(tag + 'runAllTests complete (r=' + r + ')')
 	return
@@ -853,7 +867,7 @@ export function refreshData (resultsLen = 0) {
 	return commands.executeCommand('_ablunit.getExtensionTestReferences').then((resp) => {
 		// log.info('refreshData command complete (resp=' + JSON.stringify(resp) + ')')
 		const refs = resp as IExtensionTestReferences
-		log.info('getExtensionTestReferences command complete (resp.length=' + refs.recentResults.length + ')')
+		// log.info('getExtensionTestReferences command complete (resp.length=' + refs.recentResults.length + ')')
 		// log.info('refs=' + JSON.stringify(refs))
 
 		if (refs.recentResults.length > 0) {
@@ -1019,7 +1033,7 @@ export async function getResults (len = 1, tag?: string): Promise<ABLResults[]> 
 	if ((!recentResults || recentResults.length === 0) && len > 0) {
 		log.info(tag + 'recentResults not set, refreshing...')
 		for (let i=0; i<5; i++) {
-			const prom = sleep2(250, tag + 'still no recentResults, sleep before trying again (' + i + '/4)')
+			const prom = sleep2(250, tag + 'still no recentResults (' + i + '/4)')
 				.then(() => { return refreshData() })
 				.then((gotResults) => {
 					if (gotResults) { return gotResults }

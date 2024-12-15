@@ -43,6 +43,12 @@ export function readLinesFromFile (uri: Uri | string) {
 		})
 }
 
+export function readLinesFromFileSync (uri: Uri | string) {
+	uri = toUri(uri)
+	const content = textDecoder.decode(fs.readFileSync(uri.fsPath))
+	return content.replace(/\r/g, '').split('\n').filter((line) => line.trim().length > 0)
+}
+
 export function getAnnotationLines (text: string, annotation: string): [ string[], boolean ] {
 	const annotationRegex = new RegExp(annotation, 'i')
 

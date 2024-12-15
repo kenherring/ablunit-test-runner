@@ -91,33 +91,82 @@ export async function activate (context: ExtensionContext) {
 		return ret
 	}
 
-	const runHandler = (request: TestRunRequest, token: CancellationToken): Promise<void> => {
+	const runHandler = async (request: TestRunRequest, token: CancellationToken): Promise<void> => {
 		if (request.continuous) {
 			throw new Error('continuous test runs not implemented')
 		}
 		recentError = undefined
-		return startTestRun(request, token)
-			.catch((e: unknown) => {
-				if (e instanceof Error) {
-					recentError = e
-				}
-				throw e
-			})
+		await startTestRun(request, token)
+		log.info('runHandler return')
+		return
+		// .catch((e: unknown) => {
+		// 	if (e instanceof Error) {
+		// 		recentError = e
+		// 	}
+		// 	log.error('startTestRun failed! e=' + e)
+		// 	throw e
+		// })
 	}
 
-	const loadDetailedCoverage = (testRun: TestRun, fileCoverage: FileCoverage, token: CancellationToken): Thenable<FileCoverageDetail[]> => {
+
+	const loadDetailedCoverageForTest = (testRun: TestRun, fileCoverage: FileCoverage, fromTestItem: TestItem, token: CancellationToken) => {
 		log.info('loadDetailedCoverage uri="' + fileCoverage.uri.fsPath + '", testRun=' + testRun.name)
-		const d = resultData.get(testRun)
-		const det: FileCoverageDetail[] = []
-		if (d) {
-			d.flatMap((r) => {
-				const rec = r.coverage.get(fileCoverage.uri.fsPath)
-				if (rec) {
-					det.push(...rec)
-				}
-			})
+		const ret: FileCoverageDetail[] = []
+		let results = resultData.get(testRun)
+		if (!results && !testRun) {
+			results = recentResults
 		}
-		return Promise.resolve(det)
+		if (!results) {
+			log.warn('no results found')
+			return Promise.resolve([])
+		}
+
+		log.info('results.length=' + results.length)
+		for (const result of results) {
+			log.info('result.path=' + result.workspaceFolder.uri.fsPath)
+			log.info('result.filecoverage.length=' + result.filecoverage.size)
+			const det = result.statementcoverageByTest.get(fileCoverage.uri.fsPath + ' ' + fromTestItem.id)
+			if (det) {
+				log.info('found matching file coverage detail (det.length=' + det.length + ', path=' + fileCoverage.uri.fsPath + ')')
+				ret.push(...det)
+			}
+		}
+
+		log.info('ret.length=' + ret.length)
+		return Promise.resolve(ret)
+	}
+
+	const loadDetailedCoverage = (testRun: TestRun, fileCoverage: FileCoverage, token: CancellationToken) => {
+		log.info('loadDetailedCoverage uri="' + fileCoverage.uri.fsPath + '", testRun=' + testRun.name)
+		const ret: FileCoverageDetail[] = []
+		let results = resultData.get(testRun)
+		if (!results && !testRun) {
+			results = recentResults
+		}
+		if (!results) {
+			log.warn('no results found')
+			return Promise.resolve([])
+		}
+
+		log.info('results.length=' + results.length)
+		for (const result of results) {
+			log.info('result.path=' + result.workspaceFolder.uri.fsPath)
+			log.info('result.filecoverage.length=' + result.filecoverage.size)
+			// const det = result.statementcoverage.get(fileCoverage.uri.fsPath)
+			const sc = result.statementcoverage.get(fileCoverage.uri.fsPath)
+			if (sc) {
+				log.info('found matching statement coverage (sc.length=' + sc.length + ', path=' + fileCoverage.uri.fsPath + ')')
+				ret.push(...sc)
+			}
+			const dc = result.declarationcoverage.get(fileCoverage.uri.fsPath)
+			if (dc) {
+				log.info('found matching declaration coverage (dc.length=' + dc.length + ', path=' + fileCoverage.uri.fsPath + ')')
+				ret.push(...dc)
+			}
+		}
+
+		log.info('ret.length=' + ret.length)
+		return Promise.resolve(ret)
 	}
 
 	async function openTestRunConfig () {
@@ -269,6 +318,7 @@ export async function activate (context: ExtensionContext) {
 						run.errored(childTest, new TestMessage('ablunit run failed'))
 					}
 				}
+				log.info('run.end(1)')
 				run.end()
 				return
 			}
@@ -289,16 +339,22 @@ export async function activate (context: ExtensionContext) {
 			if (request.profile?.kind === TestRunProfileKind.Coverage) {
 				log.info('adding coverage results to test run')
 				for (const res of data) {
-					log.info('res.filecoverage.length=' + res.filecoverage.length)
-					if (res.filecoverage.length === 0) {
+					log.info('res.filecoverage.length=' + res.filecoverage.size)
+					if (res.filecoverage.size === 0) {
 						log.warn('no coverage data found (profile data path=' + res.cfg.ablunitConfig.profFilenameUri.fsPath + ')')
 					}
-					res.filecoverage.forEach((c) => {
+					log.info('addCoverage ' + res.filecoverage.size + ' ' + res.filecoverage.size)
+					for (const [, c] of res.filecoverage) {
+						log.info('run.addCoverage ' + JSON.stringify(c.statementCoverage) + ', ' + c.uri.fsPath)
 						run.addCoverage(c)
-					})
+					}
+					// for (const [c, ] of res.filecoveragedetail) {
+					// 	run.addCoverage(c)
+					// }
 				}
 			}
 
+			log.info('run.end(2)')
 			run.end()
 			log.notification('ablunit tests complete')
 			return
@@ -350,7 +406,7 @@ export async function activate (context: ExtensionContext) {
 		cancellation.onCancellationRequested(() => {
 			log.debug('cancellation requested - createABLResults-2')
 			run.end()
-			log.trace('run.end()')
+			log.trace('run.end(3)')
 			throw new CancellationError()
 		})
 		const tests = request.include ?? gatherTestItems(ctrl.items)
@@ -368,7 +424,9 @@ export async function activate (context: ExtensionContext) {
 				log.debug('runTestQueue complete')
 				return
 			}, (e: unknown) => {
+				log.info('run.end(4)')
 				run.end()
+				log.error('[discoverTests] e=' + e)
 				throw e
 			})
 	}
@@ -478,6 +536,7 @@ export async function activate (context: ExtensionContext) {
 	// testProfileDebug.configureHandler = configHandlerDebug
 	testProfileCoverage.configureHandler = configHandler
 	testProfileCoverage.loadDetailedCoverage = loadDetailedCoverage
+	testProfileCoverage.loadDetailedCoverageForTest = loadDetailedCoverageForTest
 	// testProfileDebugCoverage.configureHandler = configHandler
 
 	if(workspace.getConfiguration('ablunit').get('discoverAllTestsOnActivate', false)) {
@@ -537,6 +596,7 @@ export function getContextLogUri () {
 export function checkCancellationRequested (run: TestRun) {
 	if (run.token.isCancellationRequested) {
 		log.debug('cancellation requested - chcekCancellationRequested')
+		log.info('run.end(5)')
 		run.end()
 		throw new CancellationError()
 	}
