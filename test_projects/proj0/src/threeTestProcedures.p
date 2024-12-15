@@ -4,7 +4,10 @@ block-level on error undo, throw.
 
 @Test.
 procedure CustomerFormTest :
-    message 100.
+    if false then
+        message 100.
+    else
+        message 101.
 end procedure.
 
 @Test.

@@ -119,6 +119,12 @@ export class PropathParser {
 	}
 
 	private searchUri (uri: Uri) {
+		const relativeFile = workspace.asRelativePath(uri, false)
+		const got = this.filemap.get(relativeFile)
+		if (got) {
+			return got
+		}
+
 		for (const e of this.propath.entry) {
 			if(uri.fsPath.replace(/\\/g, '/').startsWith(e.uri.fsPath.replace(/\\/g, '/') + '/')) {
 				const propathRelativeFile = uri.fsPath.replace(e.uri.fsPath, '').substring(1)

@@ -204,9 +204,10 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 			log.info('globPattern=' + globPattern + ', profDir=' + profDir)
 
 			const dataFiles = globSync(globPattern, { cwd: profDir })
+			dataFiles.push(...globSync(globPattern.replace(/\.[a-zA-Z]+$/, '.json'), { cwd: profDir }))
 			log.info('dataFiles.length=' + dataFiles.length)
 			for (const dataFile of dataFiles) {
-				log.info('dataFile=' + dataFile)
+				log.info('deleteFile=' + Uri.joinPath(Uri.file(profDir), dataFile))
 				deleteFile(Uri.joinPath(Uri.file(profDir), dataFile))
 			}
 		}
