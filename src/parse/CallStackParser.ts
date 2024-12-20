@@ -2,7 +2,7 @@ import { workspace, Location, Position, Range, Uri } from 'vscode'
 import { ABLDebugLines } from '../ABLDebugLines'
 import { ISourceMapItem } from './RCodeParser'
 import { log } from '../ChannelLogger'
-import { doesFileExist } from 'extension'
+import { doesFileExist } from 'ABLUnitCommon'
 
 interface ICallStackItem {
 	rawText: string
@@ -50,7 +50,7 @@ export async function parseCallstack (debugLines: ABLDebugLines, callstackRaw: s
 		}
 
 		let debugUri: Uri | undefined = Uri.file(debugFile)
-		if (!await doesFileExist(debugUri)) {
+		if (!doesFileExist(debugUri)) {
 			debugUri = undefined
 		}
 

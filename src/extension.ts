@@ -6,7 +6,6 @@ import {
 	FileCoverage,
 	FileCoverageDetail,
 	FileCreateEvent,
-	FileType,
 	LogLevel,
 	Position, Range, RelativePattern, Selection,
 	TestController, TestItem, TestItemCollection, TestMessage,
@@ -25,12 +24,7 @@ import { ABLTestCase, ABLTestClass, ABLTestData, ABLTestDir, ABLTestFile, ABLTes
 import { minimatch } from 'minimatch'
 import { ABLUnitRuntimeError, TimeoutError } from 'ABLUnitRun'
 import { basename } from 'path'
-
-export interface IExtensionTestReferences {
-	testController: TestController
-	recentResults: ABLResults[]
-	currentRunData: ABLResults[]
-}
+import { createDir, doesFileExist, gatherAllTestItems, IExtensionTestReferences } from 'ABLUnitCommon'
 
 let recentResults: ABLResults[] = []
 let recentError: Error | undefined = undefined
@@ -41,27 +35,32 @@ export async function activate (context: ExtensionContext) {
 	let isRefreshTestsComplete = false
 
 	logActivationEvent(context.extensionMode)
+	if (context.extensionMode !== ExtensionMode.Production) {
+		log.setLogLevel(LogLevel.Debug)
+	}
 
 	const contextStorageUri = context.storageUri ?? Uri.file(process.env['TEMP'] ?? '') // will always be defined as context.storageUri
 	const contextResourcesUri = Uri.joinPath(context.extensionUri, 'resources')
 	setContextPaths(contextStorageUri, contextResourcesUri, context.logUri)
-	await createDir(contextStorageUri)
+	createDir(contextStorageUri)
 
 	context.subscriptions.push(ctrl)
 
 	log.info('process.env[\'ABLUNIT_TEST_RUNNER_UNIT_TESTING\']=' + process.env['ABLUNIT_TEST_RUNNER_UNIT_TESTING'])
-	if (process.env['ABLUNIT_TEST_RUNNER_UNIT_TESTING']) {
-		log.info('push internal commands')
-		context.subscriptions.push(
-			commands.registerCommand('_ablunit.getExtensionTestReferences', () => { return getExtensionTestReferences() }),
-			commands.registerCommand('_ablunit.isRefreshTestsComplete', () => { return isRefreshTestsComplete }),
-			commands.registerCommand('_ablunit.getLogUri', () => { return context.logUri }),
-			commands.registerCommand('_ablunit.getTestController', () => { return ctrl }),
-			commands.registerCommand('_ablunit.getTestData', () => { return testData.getMap() }),
-			commands.registerCommand('_ablunit.getTestItem', (uri: Uri) => { return getExistingTestItem(ctrl, uri) }),
-			commands.registerCommand('_ablunit.getTestRunError', () => { return recentError })
-		)
-	}
+	log.info('context.extensionMode=' + context.extensionMode)
+	// console.log('process.env[\'ABLUNIT_TEST_RUNNER_UNIT_TESTING\']=' + process.env['ABLUNIT_TEST_RUNNER_UNIT_TESTING'])
+	// if (process.env['ABLUNIT_TEST_RUNNER_UNIT_TESTING'] || context.extensionMode == ExtensionMode.Test || context.extensionMode == ExtensionMode.Development) {
+	log.info('push internal commands')
+	context.subscriptions.push(
+		commands.registerCommand('_ablunit.getExtensionTestReferences', () => { return getExtensionTestReferences() }),
+		commands.registerCommand('_ablunit.isRefreshTestsComplete', () => { return isRefreshTestsComplete }),
+		commands.registerCommand('_ablunit.getLogUri', () => { return context.logUri }),
+		commands.registerCommand('_ablunit.getTestController', () => { return ctrl }),
+		commands.registerCommand('_ablunit.getTestData', () => { return testData.getMap() }),
+		commands.registerCommand('_ablunit.getTestItem', (uri: Uri) => { return getExistingTestItem(ctrl, uri) }),
+		commands.registerCommand('_ablunit.getTestRunError', () => { return recentError })
+	)
+	// }
 
 	context.subscriptions.push(
 		commands.registerCommand('_ablunit.openCallStackItem', openCallStackItem),
@@ -91,23 +90,19 @@ export async function activate (context: ExtensionContext) {
 		return ret
 	}
 
-	const runHandler = async (request: TestRunRequest, token: CancellationToken): Promise<void> => {
+	const runHandler = (request: TestRunRequest, token: CancellationToken): Promise<void> => {
 		if (request.continuous) {
 			throw new Error('continuous test runs not implemented')
 		}
 		recentError = undefined
-		await startTestRun(request, token)
-		log.info('runHandler return')
-		return
-		// .catch((e: unknown) => {
-		// 	if (e instanceof Error) {
-		// 		recentError = e
-		// 	}
-		// 	log.error('startTestRun failed! e=' + e)
-		// 	throw e
-		// })
+		return startTestRun(request, token)
+			.catch((e: unknown) => {
+				if (e instanceof Error) {
+					recentError = e
+				}
+				throw e
+			})
 	}
-
 
 	const loadDetailedCoverageForTest = (testRun: TestRun, fileCoverage: FileCoverage, fromTestItem: TestItem, token: CancellationToken) => {
 		log.info('loadDetailedCoverage uri="' + fileCoverage.uri.fsPath + '", testRun=' + testRun.name)
@@ -183,9 +178,8 @@ export async function activate (context: ExtensionContext) {
 		const det = Uri.joinPath(context.extensionUri, 'resources', 'ablunit-test-profile.detail.jsonc')
 		const dir = Uri.joinPath(workspaceFolder.uri, '.vscode')
 
-		const exists = await doesFileExist(uri)
-		if (!exists) {
-			await createDir(dir)
+		if (!doesFileExist(uri)) {
+			createDir(dir)
 			await workspace.fs.copy(det, uri, { overwrite: false })
 			log.info('successfully created .vscode/ablunit-test-profile.json')
 		}
@@ -375,7 +369,7 @@ export async function activate (context: ExtensionContext) {
 				}
 				let r = res.find(r => r.workspaceFolder === wf)
 				if (!r) {
-					r = new ABLResults(wf, await getStorageUri(wf), contextStorageUri, contextResourcesUri, request, cancellation)
+					r = new ABLResults(wf, getStorageUri(wf), contextStorageUri, contextResourcesUri, request, cancellation)
 					cancellation.onCancellationRequested(() => {
 						log.debug('cancellation requested - createABLResults-1')
 						r?.dispose()
@@ -424,9 +418,8 @@ export async function activate (context: ExtensionContext) {
 				log.debug('runTestQueue complete')
 				return
 			}, (e: unknown) => {
-				log.info('run.end(4)')
+				log.debug('run.end() on error=' + e)
 				run.end()
-				log.error('[discoverTests] e=' + e)
 				throw e
 			})
 	}
@@ -542,6 +535,7 @@ export async function activate (context: ExtensionContext) {
 	if(workspace.getConfiguration('ablunit').get('discoverAllTestsOnActivate', false)) {
 		await commands.executeCommand('testing.refreshTests')
 	}
+	return true
 }
 
 let contextStorageUri: Uri
@@ -602,12 +596,12 @@ export function checkCancellationRequested (run: TestRun) {
 	}
 }
 
-async function getStorageUri (workspaceFolder: WorkspaceFolder) {
+function getStorageUri (workspaceFolder: WorkspaceFolder) {
 	if (!getContextStorageUri) { throw new Error('contextStorageUri is undefined') }
 
 	const dirs = workspaceFolder.uri.path.split('/')
 	const ret = Uri.joinPath(getContextStorageUri(), dirs[dirs.length - 1])
-	await createDir(ret)
+	createDir(ret)
 	return ret
 }
 
@@ -792,14 +786,6 @@ function getTestFileAttrs (file: Uri) {
 		return 'suite'
 	}
 	return 'other'
-}
-
-export function gatherAllTestItems (collection: TestItemCollection) {
-	const items: TestItem[] = []
-	collection.forEach(item => {
-		items.push(item, ...gatherAllTestItems(item.children))
-	})
-	return items
 }
 
 // TODO - deprecate this function
@@ -1187,47 +1173,6 @@ function isFileExcluded (uri: Uri, excludePatterns: RelativePattern[]) {
 		}
 	}
 	return false
-}
-
-export async function doesDirExist (uri: Uri) {
-	const ret = await workspace.fs.stat(uri).then((stat) => {
-		if (stat.type === FileType.Directory) {
-			return true
-		}
-		return false
-	}, (e: unknown) => {
-		log.debug('caught: ' + e)
-		return false
-	})
-	return ret
-}
-
-export async function doesFileExist (uri: Uri) {
-	const ret = await workspace.fs.stat(uri).then((stat) => {
-		if (stat.type === FileType.File) {
-			return true
-		}
-		return false
-	}, (e: unknown) => {
-		log.debug('caught: ' + e)
-		return false
-	})
-	return ret
-}
-
-function createDir (uri: Uri) {
-	if(!uri) {
-		return Promise.resolve()
-	}
-	return workspace.fs.stat(uri).then((stat) => {
-		if (!stat) {
-			return workspace.fs.createDirectory(uri)
-
-		}
-		return
-	}, () => {
-		return workspace.fs.createDirectory(uri)
-	})
 }
 
 function logActivationEvent (extensionMode: ExtensionMode) {

@@ -1,9 +1,9 @@
 import { Selection, TaskEndEvent, TaskExecution, commands, tasks, window } from 'vscode'
-import { Uri, assert, getWorkspaceUri, log, runAllTests, sleep, updateConfig, getTestCount, workspace, suiteSetupCommon, getWorkspaceFolders, oeVersion, runTestAtLine, beforeCommon, updateTestProfile, runTestsInFile, deleteFiles, sleep2 } from '../testCommon'
+import { Uri, assert, getWorkspaceUri, log, runAllTests, sleep, updateConfig, getTestCount, workspace, suiteSetupCommon, getWorkspaceFolders, oeVersion, runTestAtLine, beforeCommon, updateTestProfile, runTestsInFile, sleep2 } from '../testCommon'
 import { getOEVersion } from 'parse/OpenedgeProjectParser'
 import { execSync } from 'child_process'
 import * as glob from 'glob'
-import { doesFileExist } from 'ABLUnitCommon'
+import { deleteFile, doesFileExist } from 'ABLUnitCommon'
 
 const workspaceUri = getWorkspaceUri()
 
@@ -323,7 +323,7 @@ suite('proj1 - Extension Test Suite', () => {
 })
 
 async function compileWithTaskAndCoverage (taskName: string) {
-	deleteFiles([
+	deleteFile([
 		Uri.joinPath(workspaceUri, 'test_15.r'),
 		Uri.joinPath(workspaceUri, 'openedge-project.json'),
 	])

@@ -60,7 +60,7 @@ suite('proj2 - Extension Test Suite', () => {
 	})
 
 	test('proj2.4 - compile error - run all tests', () => {
-		return workspace.fs.copy(toUri('src/compileError.p.saveme'), toUri('src/compileError.p'), { overwrite: true })
+		const prom =  workspace.fs.copy(toUri('src/compileError.p.saveme'), toUri('src/compileError.p'), { overwrite: true })
 			.then(() => { return runAllTests() }, (e: unknown) => { throw e })
 			.then(() => {
 				throw new Error('test should have failed due to compile error')
@@ -69,10 +69,11 @@ suite('proj2 - Extension Test Suite', () => {
 				assert.ok('test failed as expected')
 				return true
 			})
+		return prom
 	})
 
 	test('proj2.5 - compile error - run tests in file', () => {
-		return workspace.fs.copy(toUri('src/compileError.p.saveme'), toUri('src/compileError.p'), { overwrite: true })
+		const prom = workspace.fs.copy(toUri('src/compileError.p.saveme'), toUri('src/compileError.p'), { overwrite: true })
 			.then(() => runTestsInFile('src/compileError.p'))
 			.then(() => {
 				throw new Error('test should have failed due to compile error')
@@ -81,10 +82,11 @@ suite('proj2 - Extension Test Suite', () => {
 				assert.ok('tests failed as expected')
 				return true
 			})
+		return prom
 	})
 
 	test('proj2.6 - compile error - run with db conn', () => {
-		return workspace.fs.copy(toUri('src/compileError.p.saveme'), toUri('src/compileError.p'), { overwrite: true })
+		const prom = workspace.fs.copy(toUri('src/compileError.p.saveme'), toUri('src/compileError.p'), { overwrite: true })
 			.then(() => selectProfile('profileWithDBConn'))
 			.then(() => runTestsInFile('src/compileError.p'))
 			.then(() => {
@@ -94,6 +96,7 @@ suite('proj2 - Extension Test Suite', () => {
 			}, (e: unknown) => {
 				throw new Error('test should have passed, but threw error e=' + e)
 			})
+		return prom
 	})
 
 })

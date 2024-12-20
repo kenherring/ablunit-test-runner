@@ -103,36 +103,60 @@ export function updateParserInit () {
 }
 
 function parseUpdateLines (lines: string[], tests: TestItem[]) {
+	log.info('parseUpdateLines-10')
 	newUpdates = []
+	log.info('parseUpdateLines-11')
+	if (lines.length == 0) {
+		log.info('parseUpdateLines-12')
+		return updates
+	}
+
+	log.info('parseUpdateLines-13 lines.length=' + lines.length)
 	for (let lineNum = 0; lineNum < lines.length; lineNum++) {
+		log.info('parseUpdateLines-14 line[' + lineNum + ']="' + lines[lineNum] + '"')
 		const line = lines[lineNum]
 		const event = line.split(' ')[0] ?? 'unknown'
 		const eventStatus = event as TestStatus ?? TestStatus.unknown
 
 
+		log.info('parseUpdateLines-20')
 		if (event === 'TEST_TREE') {
+			log.info('parseUpdateLines-21')
 			if (!lines[lineNum + 1]) {
+				log.info('parseUpdateLines-22')
 				// nothing to do, we don't have any updates and only the tree, which might not be complete
 				continue
 			}
+			log.info('parseUpdateLines-23')
 			if (lines[lineNum + 1].startsWith('TEST_TREE')) { // last TEST_TREE line
+				log.info('parseUpdateLines-24')
 				// next line is another TEST_TREE line, so skip this one
 				continue
 			}
+			log.info('parseUpdateLines-25')
 			if (prevRootText !== line) {
+				log.info('parseUpdateLines-26')
 
 				log.info('event=' + event + '; line=' + lineNum + '; line=' + line)
+				log.info('parseUpdateLines-27')
 				updates = parseTestTree(line, tests)
+				log.info('parseUpdateLines-28')
 				prevRootText = line
+				log.info('parseUpdateLines-29')
 				log.debug('updates.length=' + updates.length)
+				log.info('updates.length=' + updates.length)
 				continue
 			}
+			log.info('parseUpdateLines-29.1')
 			continue
 		}
+		log.info('parseUpdateLines-29.2')
 		if (event === 'COMPLETE') {
+			log.info('parseUpdateLines-29.3')
 			continue
 		}
 
+		log.info('parseUpdateLines-30')
 		const [ , id, timeVal ] = line.split(' ')
 		const time = Number(timeVal ?? 0) * 1000
 		const idx = updates.findIndex((test) => test.id === id)
@@ -147,6 +171,7 @@ function parseUpdateLines (lines: string[], tests: TestItem[]) {
 			continue
 		}
 
+		log.info('parseUpdateLines-40')
 		if (eventStatus == TestStatus.complete) {
 			// nothing to do
 			continue
@@ -160,6 +185,7 @@ function parseUpdateLines (lines: string[], tests: TestItem[]) {
 		// 	continue
 		// }
 
+		log.info('parseUpdateLines-50')
 		if (eventStatus == TestStatus.started ||
 			eventStatus == TestStatus.failed ||
 			eventStatus == TestStatus.passed ||
@@ -182,7 +208,14 @@ function parseUpdateLines (lines: string[], tests: TestItem[]) {
 		/* Log and move on instead of throwing ... the parsing of result.xml will overwrite this anyway */
 		log.error('Unknown event type: ' + event + '(line[' + lineNum + ']: ' + line + ')')
 	}
+	log.info('parseUpdateLines-90')
+	if (!updates) {
+		updates = []
+	}
 	log.debug('return updates.length=' + updates.length)
+	log.info('parseUpdateLines-91')
+	log.info('return updates.length=' + updates.length)
+	log.info('parseUpdateLines-99')
 	return updates
 }
 
@@ -290,9 +323,12 @@ function setTestRunTestStatus (options: TestRun, item: ITestNode) {
 }
 
 export function parseUpdates (filepath: Uri | string, tests: TestItem[]) {
+	log.info('parseUpdates-10')
 	log.debug('Parsing updates from: ' + filepath)
 	// instead of reading the whole file we could buffer it and only read the new lines
+	log.info('parseUpdates-11')
 	const lines = readLinesFromFileSync(filepath)
+	log.info('parseUpdates-12')
 	return parseUpdateLines(lines, tests)
 }
 
@@ -327,11 +363,16 @@ export function processUpdates (options: TestRun, tests: TestItem[], updateFile?
 	if (!updateFile) {
 		return
 	}
+	log.info('processUpdates-10')
 	const updates = parseUpdates(updateFile, tests)
+	log.info('processUpdates-20')
 	const r = showUpdates(options, updates)
+	log.info('processUpdates-30')
 	if (r) {
+		log.info('processUpdates-40')
 		log.debug('updates processed and displayed successfully')
 	}
+	log.info('processUpdates-50')
 	return true
 	// }, (e: unknown) => {
 	// 	if (e instanceof FileSystemError) {

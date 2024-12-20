@@ -1,6 +1,5 @@
-import { strict as assert } from 'assert'
 import { Uri } from 'vscode'
-import { doesDirExist, doesFileExist, getWorkspaceFolders, runAllTests, suiteSetupCommon } from '../testCommon'
+import { assert, doesDirExist, doesFileExist, getWorkspaceFolders, runAllTests, suiteSetupCommon } from '../testCommon'
 
 suite('workspace0 - Extension Test Suite', () => {
 
@@ -18,10 +17,10 @@ suite('workspace0 - Extension Test Suite', () => {
 		const resultsJson = Uri.joinPath(workspaceFolder, 'results.json')
 		const listingsDir = Uri.joinPath(workspaceFolder, 'listings')
 
-		assert(doesFileExist(ablunitJson), 'missing ablunit.json (' + ablunitJson.fsPath + ')')
-		assert(doesFileExist(resultsXml), 'missing results.xml (' + resultsXml.fsPath + ')')
-		assert(!doesFileExist(resultsJson), 'results.json exists and should not (' + resultsJson.fsPath + ')')
-		assert(!doesDirExist(listingsDir), 'listings dir exists and should not (' + listingsDir.fsPath + ')')
+		assert.fileExists(ablunitJson)
+		assert.fileExists(resultsXml)
+		assert.ok(!doesFileExist(resultsJson), 'results.json exists and should not (' + resultsJson.fsPath + ')')
+		assert.ok(!doesDirExist(listingsDir), 'listings dir exists and should not (' + listingsDir.fsPath + ')')
 	})
 
 })

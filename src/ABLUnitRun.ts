@@ -248,6 +248,7 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 				timeout: res.cfg.ablunitConfig.timeout,
 				env: runenv,
 				cwd: res.cfg.ablunitConfig.workspaceFolder.uri.fsPath,
+				shell: true,
 			}
 
 			log.info('command=\'' + cmd + ' ' + JSON.stringify(args) + '\'\r\n', options)
@@ -257,87 +258,108 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 			let lastError: string | undefined = undefined
 
 			process.stderr?.on('data', (data: Buffer) => {
-				if (watcher) {
-					log.info(watcher.listeners.length + ' listeners [stderr]', options)
-				}
-
 				log.error('\t\t[stderr] ' + data.toString().trim().replace(/\n/g, '\n\t\t[stderr]'), options)
 				lastError = data.toString().trim()
 				processUpdates(options, res.tests, updateUri)
 			})
 			process.stdout?.on('data', (data: Buffer) => {
-				if (watcher) {
-					log.info(watcher.listeners.length + ' listeners [stdout]', options)
-				}
-
 				log.error('\t\t[stdout] ' + data.toString().trim().replace(/\n/g, '\n\t\t[stderr]'), options)
 				processUpdates(options, res.tests, updateUri)
 			})
 			process.once('spawn', () => {
 				res.setStatus(RunStatus.Executing)
 				log.info('----- ABLUnit Test Run Started -----', options)
+			}).on('disconnect', () => {
+				log.debug('process.disconnect', options)
+				log.info('process.disconnect', options)
 			}).on('error', (e: Error) => {
 				log.debug('process.error e=' + e)
+				log.info('process.error e=' + e)
 				res.setStatus(RunStatus.Error, 'e=' + e)
-				log.error('----- ABLUnit Test Run Error ----- (e=' + e + ')', options)
+				log.error('----- ABLUnit Test Run Error -----', options)
+				log.info('e=' + JSON.stringify(e, null, 2), options)
 				if (e instanceof Error) {
 					reject(e)
 				}
 			}).on('exit', (code: number | null, signal: NodeJS.Signals | null) => {
+				log.info('process.exit-10')
 				testRunDuration.stop()
+				log.info('process.exit-11')
 				log.debug('process.exit code=' + code + '; signal=' + signal + '; process.exitCode=' + process.exitCode + '; process.signalCode=' + process.signalCode + '; killed=' + process.killed)
+				log.info('process.exit-12')
+				log.info('process.exit code=' + code + '; signal=' + signal + '; process.exitCode=' + process.exitCode + '; process.signalCode=' + process.signalCode + '; killed=' + process.killed)
+				log.info('process.exit-13')
 				processUpdates(options, res.tests, updateUri)
+				log.info('process.exit-20')
 				if (process.killed || signal) {
+					log.info('process.exit-21')
 					setTimeoutTestStatus(options, res.cfg.ablunitConfig.timeout)
+					log.info('process.exit-22')
 					res.setStatus(RunStatus.Timeout, 'signal=' + signal)
 					log.info('----- ABLUnit Test Run Timeout - ' + res.cfg.ablunitConfig.timeout + 'ms ----- ' + testRunDuration, options)
 					reject(new TimeoutError('ABLUnit process timeout', testRunDuration, res.cfg.ablunitConfig.timeout, cmd))
+					log.info('process.exit-29')
 					return
 				}
+				log.info('process.exit-30')
 				if (process.killed) {
+					log.info('process.exit-31')
 					res.setStatus(RunStatus.Killed, 'signal=' + signal)
+					log.info('process.exit-32')
 					log.info('----- ABLUnit Test Run Killed - (signal=' + signal + ') ----- ' + testRunDuration, options)
+					log.info('process.exit-33')
 					reject(new ABLUnitRuntimeError('ABLUnit process killed', 'exit_code=' + code + '; signal=' + signal, cmd))
+					log.info('process.exit-34')
 					return
 				}
 
+				log.info('process.exit-40')
 				if (code && code != 0) {
+					log.info('process.exit-41')
 					res.setStatus(RunStatus.Error, 'exit_code=' + code)
+					log.info('process.exit-42')
 					log.info('----- ABLUnit Test Run Failed (exit_code=' + code + ') ----- ' + testRunDuration, options)
+					log.info('process.exit-43')
 					reject(new ABLUnitRuntimeError('ABLUnit exit_code= ' + code, 'ABLUnit exit_code= ' + code + '; signal=' + signal, cmd))
+					log.info('process.exit-44')
 					return
 				}
+				log.info('process.exit-50')
 
 				processUpdates(options, res.tests, updateUri)
+				log.info('process.exit-51')
 				res.setStatus(RunStatus.Complete, 'success')
+				log.info('process.exit-52')
 				log.info('----- ABLUnit Test Run Complete ----- ' + testRunDuration, options)
+				log.info('process.exit-53')
 				resolve('success')
+				log.info('process.exit-54')
 			}).on('close', (code: number | null, signal: NodeJS.Signals | null) => {
 				log.debug('process.close code=' + code + '; signal=' + signal + '; process.exitCode=' + process.exitCode + '; process.signalCode=' + process.signalCode + '; killed=' + process.killed)
-				log.info('process.close event')
-				log.info('\tcode=' + code)
-				log.info('\tsignal=' + signal)
-				log.info('\tprocess.exitCode=' + process.exitCode)
-				log.info('\tprocess.signalCode=' + process.signalCode)
-				log.info('\tprocess.killed=' + process.killed)
-				log.info('\tprocess.pid=' + process.pid)
-				log.info('\tprocess.connected' + process.connected)
+				log.info('process.close code=' + code + '; signal=' + signal + '; process.exitCode=' + process.exitCode + '; process.signalCode=' + process.signalCode + '; killed=' + process.killed)
+				// log.info('\tcode=' + code)
+				// log.info('\tsignal=' + signal)
+				// log.info('\tprocess.exitCode=' + process.exitCode)
+				// log.info('\tprocess.signalCode=' + process.signalCode)
+				// log.info('\tprocess.killed=' + process.killed)
+				// log.info('\tprocess.pid=' + process.pid)
+				// log.info('\tprocess.connected' + process.connected)
 
-				if (lastError && res.status < RunStatus.Complete) {
-					if (lastError) {
-						res.setStatus(RunStatus.Error)
-						log.info('----- ABLUnit Test Run Runtime Error (exit_code=' + code + ') ----- ' + testRunDuration, options)
-						reject(new ABLUnitRuntimeError('ABLUnit runtime error', lastError, cmd))
-						return
-					}
-				}
-				if (res.status < RunStatus.Complete) {
-					const currentStatus = res.status
-					res.setStatus(RunStatus.Unknown, 'ABLUnit process closed unexpectedly, should have called exit already (RunStatus=' + currentStatus + ')')
-					reject(new ABLUnitRuntimeError('ABLUnit process closed unexpectedly', 'RunStatus=' + currentStatus + '; code=' + code + '; signal=' + signal, cmd))
-					return
-				}
-				reject(new Error('Unknown error - ABLUnit process closed but was not processed correctly'))
+				// if (lastError && res.status < RunStatus.Complete) {
+				// 	if (lastError) {
+				// 		res.setStatus(RunStatus.Error)
+				// 		log.info('----- ABLUnit Test Run Runtime Error (exit_code=' + code + ') ----- ' + testRunDuration, options)
+				// 		reject(new ABLUnitRuntimeError('ABLUnit runtime error', lastError, cmd))
+				// 		return
+				// 	}
+				// }
+				// if (res.status < RunStatus.Complete) {
+				// 	const currentStatus = res.status
+				// 	res.setStatus(RunStatus.Unknown, 'ABLUnit process closed unexpectedly, should have called exit already (RunStatus=' + currentStatus + ')')
+				// 	reject(new ABLUnitRuntimeError('ABLUnit process closed unexpectedly', 'RunStatus=' + currentStatus + '; code=' + code + '; signal=' + signal, cmd))
+				// 	return
+				// }
+				// reject(new Error('Unknown error - ABLUnit process closed but was not processed correctly'))
 			}).on('message', (m: Serializable, h: SendHandle) => {
 				// eslint-disable-next-line @typescript-eslint/no-base-to-string
 				log.info('process.on.message m=' + m.toString())

@@ -1,7 +1,7 @@
 import * as assertParent from 'assert'
 import * as fs from 'fs'
-import { globSync } from 'glob'
 import * as vscode from 'vscode'
+import path from 'path'
 import {
 	CancellationError, TestController,
 	TestItemCollection,
@@ -13,16 +13,15 @@ import {
 	Position,
 	TestItem
 } from 'vscode'
+import { globSync } from 'glob'
 import { ABLResults } from '../src/ABLResults'
-import { Duration, deleteFile as deleteFileCommon, isRelativePath, readStrippedJsonFile } from '../src/ABLUnitCommon'
+import { gatherAllTestItems, Duration, deleteFile, isRelativePath, readStrippedJsonFile, IExtensionTestReferences, doesFileExist, doesDirExist, copyFile } from '../src/ABLUnitCommon'
 import { log as logObj } from '../src/ChannelLogger'
-import { gatherAllTestItems, IExtensionTestReferences } from '../src/extension'
 import { ITestSuites } from '../src/parse/ResultsParser'
 import { IConfigurations, parseRunProfiles } from '../src/parse/TestProfileParser'
 import { DefaultRunProfile, IRunProfile as IRunProfileGlobal } from '../src/parse/config/RunProfile'
 import { RunStatus } from '../src/ABLUnitRun'
 import { enableOpenedgeAblExtension, rebuildAblProject, restartLangServer, setRuntimes, waitForLangServerReady } from './openedgeAblCommands'
-import path from 'path'
 
 interface IRuntime {
 	name: string,
@@ -99,6 +98,7 @@ export { setRuntimes, rebuildAblProject }
 // kherring.ablunit-test-runner extension objects
 export type IRunProfile = IRunProfileGlobal
 export { RunStatus, parseRunProfiles }
+export { deleteFile, copyFile, doesFileExist, doesDirExist }
 // vscode objects
 export {
 	CancellationError, Duration, Selection, Uri,
@@ -229,37 +229,6 @@ export function installExtension (extname = 'riversidesoftware.openedge-abl-lsp'
 		})
 }
 
-export function deleteFile (file: Uri | string) {
-	deleteFiles(file)
-}
-
-export function deleteFiles (files: Uri | Uri[] | string | string[]) {
-	const uris: Uri[] = []
-	if (files instanceof Array) {
-		for (const file of files) {
-			if (file instanceof Uri) {
-				uris.push(file)
-				continue
-			}
-			if (isRelativePath(file)) {
-				uris.push(Uri.joinPath(getWorkspaceUri(), file))
-				continue
-			}
-			uris.push(Uri.file(file))
-		}
-	} else if (files instanceof Uri) {
-		uris.push(files)
-	} else if (isRelativePath(files)) {
-		uris.push(Uri.joinPath(getWorkspaceUri(), files))
-	} else {
-		uris.push(Uri.file(files))
-	}
-
-	for (const uri of uris) {
-		deleteFileCommon(uri)
-	}
-}
-
 export function sleep2 (time = 10, msg?: string | null) {
 	if (msg !== null) {
 		let status = 'sleeping for ' + time + 'ms'
@@ -317,7 +286,10 @@ async function waitForExtensionActive (extensionId = 'kherring.ablunit-test-runn
 		throw new Error('extension not installed: ' + extensionId)
 	}
 	if (!ext) { throw new Error(extensionId + ' is not installed') }
-	if (ext.isActive) { log.info(extensionId + ' is already active'); return ext.isActive }
+	// if (ext.isActive) {
+	// 	log.info(extensionId + ' is already active');
+	// 	return ext.isActive
+	// }
 
 	ext = await ext.activate()
 		.then(() => { return sleep2(250) })
@@ -465,34 +437,6 @@ function fileToString (file: Uri | string) {
 	return Uri.file(file).fsPath
 }
 
-export function doesFileExist (uri: Uri | string | undefined) {
-	if (!uri) {
-		log.warn('doesFileExist: uri is undefined')
-		return false
-	}
-	try {
-		const stat = fs.statSync(toUri(uri).fsPath)
-		if (stat.isFile()) {
-			return true
-		}
-	} catch {
-		// do nothing - file does not exist
-	}
-	return false
-}
-
-export function doesDirExist (uri: Uri | string) {
-	try {
-		const stat = fs.statSync(toUri(uri).fsPath)
-		if (stat.isDirectory()) {
-			return true
-		}
-	} catch {
-		// do nothing - file does not exist
-	}
-	return false
-}
-
 export function deleteTestFiles () {
 	const workspaceUri = getWorkspaceUri()
 	deleteFile(Uri.joinPath(workspaceUri, 'ablunit.json'))
@@ -530,7 +474,7 @@ export async function getTestCount (resultsJson: Uri, status = 'tests') {
 		} else if (status === 'skipped') {
 			return results[0].skipped
 		} else {
-			throw new Error('[unknown status: ' + status)
+			throw new Error('unknown status: ' + status)
 		}
 	})
 	log.info('getTestCount: ' + status + ' = ' + count)
@@ -540,6 +484,16 @@ export async function getTestCount (resultsJson: Uri, status = 'tests') {
 export function getDefaultDLC () {
 	if (process.platform === 'linux') {
 		return '/psc/dlc'
+	}
+	log.info('OE_VERSION=' + getEnvVar('OE_VERSION'))
+	log.info('ABLUNIT_TEST_RUNNER_OE_VERSION=' + getEnvVar('ABLUNIT_TEST_RUNNER_OE_VERSION'))
+	log.info('DLC=' + getEnvVar('DLC'))
+	if (getEnvVar('OE_VERSION') === '12.8' || getEnvVar('ABLUNIT_TEST_RUNNER_OE_VERSION') === '12.8') {
+		return 'C:\\Progress\\OpenEdge-12.8'
+	}
+	const dlc = getEnvVar('DLC')
+	if (dlc) {
+		return dlc
 	}
 	return 'C:\\Progress\\OpenEdge'
 }
@@ -1168,8 +1122,8 @@ export const assert = {
 	deepEqual: assertParent.deepEqual,
 	notDeepEqual: assertParent.notDeepEqual,
 	fail: (message: string) => { assertParent.fail(message) },
-	ok: (value: unknown) => {
-		assertParent.ok(value)
+	ok: (value: unknown, message?: string) => {
+		assertParent.ok(value, message)
 	},
 	ifError: assertParent.ifError,
 	throws: assertParent.throws,
@@ -1210,27 +1164,39 @@ export const assert = {
 		}
 	},
 
-	fileExists: (...files: string[] | Uri[]) => {
+	fileExists: (...files: Uri[] | string[]) => {
 		if (files.length === 0) { throw new Error('no file(s) specified') }
-		for (const file of files) {
+		for (let file of files) {
+			if (typeof file === 'string') {
+				file = toUri(file)
+			}
 			assertParent.ok(doesFileExist(file), 'file does not exist: ' + fileToString(file))
 		}
 	},
 	notFileExists: (...files: string[] | Uri[]) => {
 		if (files.length === 0) { throw new Error('no file(s) specified') }
-		for (const file of files) {
+		for (let file of files) {
+			if (typeof file === 'string') {
+				file = toUri(file)
+			}
 			assertParent.ok(!doesFileExist(file), 'file exists: ' + fileToString(file))
 		}
 	},
 	dirExists: (...dirs: string[] | Uri[]) => {
 		if (dirs.length === 0) { throw new Error('no dir(s) specified') }
-		for (const dir of dirs) {
+		for (let dir of dirs) {
+			if (typeof dir === 'string') {
+				dir = toUri(dir)
+			}
 			assertParent.ok(doesDirExist(dir), 'dir does not exist: ' + fileToString(dir))
 		}
 	},
 	notDirExists: (...dirs: string[] | Uri[]) => {
 		if (dirs.length === 0) { throw new Error('no dir(s) specified') }
-		for (const dir of dirs) {
+		for (let dir of dirs) {
+			if (typeof dir === 'string') {
+				dir = toUri(dir)
+			}
 			assertParent.ok(!doesDirExist(dir), 'dir exists: ' + fileToString(dir))
 		}
 	},
@@ -1276,11 +1242,11 @@ export const assert = {
 			return
 		}
 
-		const actual = recentResults[recentResults.length - 1].coverage.size
+		const actual = recentResults[recentResults.length - 1].filecoveragedetail.size
 		let msg = 'covered files (' + actual + ') != ' + expected
 		if (actual != expected) {
 			msg += '\nfound:'
-			for (const c of recentResults[recentResults.length - 1].coverage) {
+			for (const c of recentResults[recentResults.length - 1].filecoveragedetail) {
 				msg += '\n  * ' + c[0]
 				// log.info('covered file: ' + c[0])
 			}
@@ -1304,7 +1270,7 @@ export const assert = {
 			return
 		}
 
-		const coverage = recentResults[recentResults.length - 1].coverage.get(file.fsPath)
+		const coverage = recentResults[recentResults.length - 1].filecoveragedetail.get(file.fsPath)
 		if (!coverage) {
 			assert.fail('no coverage found for ' + file.fsPath)
 			return

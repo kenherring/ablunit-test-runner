@@ -10,5 +10,5 @@
         { "type": "propath", "path": "${DLC}/tty/ablunit.pl", "includes": "**/*" },
         { "type": "propath", "path": "${DLC}/gui/ablunit.pl", "includes": "**/*" }
     ],
-    "buildDirectory": "target"
+    "buildDirectory": "resources/VSCodeTestRunner"
 }

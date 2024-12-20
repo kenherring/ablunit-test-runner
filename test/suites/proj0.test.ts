@@ -1,6 +1,6 @@
 import { Uri, commands, window, workspace } from 'vscode'
 import * as vscode from 'vscode'
-import { assert, deleteFile, getResults, getTestControllerItemCount, getTestItem, log, refreshTests, runAllTests, runAllTestsWithCoverage, runTestAtLine, runTestsDuration, runTestsInFile, sleep2, suiteSetupCommon, toUri, updateConfig, updateTestProfile } from '../testCommon'
+import { assert, copyFile, deleteFile, getResults, getTestControllerItemCount, getTestItem, log, refreshTests, runAllTests, runAllTestsWithCoverage, runTestAtLine, runTestsDuration, runTestsInFile, sleep2, suiteSetupCommon, toUri, updateConfig, updateTestProfile } from '../testCommon'
 import { ABLResultsParser } from 'parse/ResultsParser'
 import * as fs from 'fs'
 import { TimeoutError } from 'ABLUnitRun'
@@ -15,19 +15,20 @@ suite('proj0  - Extension Test Suite', () => {
 
 	const disposables: vscode.Disposable[] = []
 
-	suiteSetup('proj0 - before', () => {
-		deleteFile('.vscode/ablunit-test-profile.json')
-		deleteFile('src/dirA/proj10.p')
-		deleteFile('UNIT_TEST.tmp')
-		return suiteSetupCommon()
-			.then(() => { return commands.executeCommand('testing.clearTestResults') })
-			.then(() => { return workspace.fs.copy(toUri('.vscode/settings.json'), toUri('.vscode/settings.json.bk'), { overwrite: true }) })
+	suiteSetup('proj0 - before', async () => {
+		deleteFile(toUri('.vscode/ablunit-test-profile.json'))
+		deleteFile(toUri('src/dirA/proj10.p'))
+		deleteFile(toUri('UNIT_TEST.tmp'))
+		await suiteSetupCommon()
+		await commands.executeCommand('testing.clearTestResults')
+		copyFile(toUri('.vscode/settings.json'), toUri('.vscode/settings.json.bk'), { force: true})
+		log.info('suiteSetup complete')
 	})
 
 	teardown('proj0 - afterEach', () => {
-		deleteFile('.vscode/ablunit-test-profile.json')
-		deleteFile('src/dirA/proj10.p')
-		deleteFile('UNIT_TEST.tmp')
+		deleteFile(toUri('.vscode/ablunit-test-profile.json'))
+		deleteFile(toUri('src/dirA/proj10.p'))
+		deleteFile(toUri('UNIT_TEST.tmp'))
 		while (disposables.length > 0) {
 			const d = disposables.pop()
 			if (d) {
@@ -65,7 +66,7 @@ suite('proj0  - Extension Test Suite', () => {
 		await window.showTextDocument(testFileUri)
 		await runAllTestsWithCoverage()
 
-		const lines = (await getResults())[0].coverage.get(testFileUri.fsPath) ?? []
+		const lines = (await getResults())[0].filecoveragedetail.get(testFileUri.fsPath) ?? []
 		assert.assert(lines, 'no coverage found for ' + workspace.asRelativePath(testFileUri))
 		assert.linesExecuted(testFileUri, [5, 6])
 	})
@@ -76,7 +77,7 @@ suite('proj0  - Extension Test Suite', () => {
 		await window.showTextDocument(testFileUri)
 		await runAllTests()
 
-		const lines = (await getResults())[0].coverage.get(testFileUri.fsPath) ?? []
+		const lines = (await getResults())[0].filecoveragedetail.get(testFileUri.fsPath) ?? []
 		if (lines && lines.length > 0) {
 			assert.fail('coverage should be empty for ' + workspace.asRelativePath(testFileUri) + ' (lines.length=' + lines.length + ')')
 		}
@@ -105,7 +106,9 @@ suite('proj0  - Extension Test Suite', () => {
 		if (!testClassItem) {
 			throw new Error('cannot find TestItem for src/threeTestProcedures.p')
 		}
-		assert.equal(testClassItem.children.size, 3, 'testClassItem.children.size should be 3')
+		// size=3 would not include the TestResultList.cls in resources
+		// assert.equal(testClassItem.children.size, 3, 'testClassItem.children.size should be 3')
+		assert.equal(testClassItem.children.size, 4, 'testClassItem.children.size should be 4')
 	})
 
 	test('proj0.07 - parse test class with skip annotation', async () => {
