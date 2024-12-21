@@ -1,6 +1,6 @@
 import { Uri, workspace, WorkspaceFolder } from 'vscode'
-import { readStrippedJsonFile } from '../ABLUnitCommon'
 import { log } from '../ChannelLogger'
+import * as FileUtils from '../FileUtils'
 import * as path from 'path'
 import * as fs from 'fs'
 
@@ -76,7 +76,7 @@ let oeRuntimes: IOERuntime[] = []
 const dlcMap = new Map<WorkspaceFolder, IDlc>()
 
 function getProjectJson (workspaceFolder: WorkspaceFolder) {
-	const data = JSON.stringify(readStrippedJsonFile(Uri.joinPath(workspaceFolder.uri, 'openedge-project.json')))
+	const data = JSON.stringify(FileUtils.readStrippedJsonFile(Uri.joinPath(workspaceFolder.uri, 'openedge-project.json')))
 	return data
 }
 
@@ -244,7 +244,7 @@ function loadConfigFile (filename: string): IOpenEdgeMainConfig | undefined {
 		return undefined
 	}
 	try {
-		const data = readStrippedJsonFile(filename)
+		const data = FileUtils.readStrippedJsonFile(filename)
 		return data as unknown as IOpenEdgeMainConfig
 	} catch (caught) {
 		log.error('[loadConfigFile] Failed to parse ' + filename + ': ' + caught)

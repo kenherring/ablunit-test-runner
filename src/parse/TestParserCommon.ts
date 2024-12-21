@@ -1,7 +1,7 @@
 import { Uri, workspace } from 'vscode'
 import { TextDecoder } from 'util'
-import { isRelativePath } from 'ABLUnitCommon'
 import * as fs from 'fs'
+import * as FileUtils from '../FileUtils'
 
 const textDecoder = new TextDecoder('utf-8')
 
@@ -11,7 +11,7 @@ function toUri (uri: Uri | string): Uri {
 	}
 	const filename = uri
 
-	if (!isRelativePath(uri)) {
+	if (!FileUtils.isRelativePath(uri)) {
 		return Uri.file(uri)
 	}
 

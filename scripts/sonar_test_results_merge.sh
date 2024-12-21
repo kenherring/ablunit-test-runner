@@ -44,12 +44,13 @@ show_summary () {
     [ "$SKIP_COUNT" = "" ] && SKIP_COUNT=0
     echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] $SKIP_COUNT/$TEST_COUNT tests skipped"
 
-    FAILURE_COUNT="$(jq '.[] | select(has("failure")) | length' < artifacts/mocha_results_sonar/merged_flat.json)"
+    FAILURE_COUNT="$(jq '.[] | select(has("failure") and .failure != null) | length' < artifacts/mocha_results_sonar/merged_flat.json)"
     [ "$FAILURE_COUNT" = "" ] && FAILURE_COUNT=0
-    echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] ERROR: $FAILURE_COUNT/$TEST_COUNT tests failed"
-
-    if [ "$FAILURE_COUNT" != "0" ]; then
-        jq '.[] | select(has("failure"))' < artifacts/mocha_results_sonar/merged_flat.json
+    if [ "$FAILURE_COUNT" = "0" ]; then
+        echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] $FAILURE_COUNT/$TEST_COUNT tests failed"
+    else
+        echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] ERROR! $FAILURE_COUNT/$TEST_COUNT tests failed"
+        jq '.[] | select(has("failure") and .failure != null)' < artifacts/mocha_results_sonar/merged_flat.json
     fi
 }
 

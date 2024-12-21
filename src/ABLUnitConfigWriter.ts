@@ -1,4 +1,4 @@
-import { FileType, TestRunRequest, Uri, workspace, WorkspaceFolder } from 'vscode'
+import { TestRunRequest, Uri, workspace, WorkspaceFolder } from 'vscode'
 import { log } from './ChannelLogger'
 import { PropathParser } from './ABLPropath'
 import { platform } from 'os'
@@ -6,6 +6,7 @@ import { getProfileConfig, RunConfig } from './parse/TestProfileParser'
 import { CoreOptions, IABLUnitJson, ITestObj } from './parse/config/CoreOptions'
 import { ProfilerOptions } from './parse/config/ProfilerOptions'
 import { getOpenEdgeProfileConfig, IBuildPathEntry, IDatabaseConnection, IDlc, ProfileConfig } from './parse/OpenedgeProjectParser'
+import * as FileUtils from './FileUtils'
 
 export const ablunitConfig = new WeakMap<WorkspaceFolder, RunConfig>()
 
@@ -20,24 +21,9 @@ export class ABLUnitConfig  {
 		log.info('[ABLUnitConfigWriter constructor] setup complete! tempDir=' + this.ablunitConfig.tempDirUri.fsPath)
 	}
 
-	deleteFile (uri: Uri) {
-		return workspace.fs.delete(uri).then(() => {
-			log.info('deleted file: ' + uri.fsPath)
-			return
-		}, () => {
-			// do nothing.  if the file doesn't exist we can just continue on.
-		})
-	}
-
 	async writeFile (uri: Uri, data: Uint8Array) {
-		await this.createDir(uri.with({ path: uri.path.split('/').slice(0, -1).join('/') }))
+		FileUtils.createDir(uri.with({ path: uri.path.split('/').slice(0, -1).join('/') }))
 		return workspace.fs.writeFile(uri, data)
-	}
-
-	createDir (uri: Uri) {
-		return workspace.fs.stat(uri).then(() => { return }, () => {
-			return workspace.fs.createDirectory(uri)
-		})
 	}
 
 	createProgressIni (propath: string, dlc: IDlc) {
@@ -55,20 +41,9 @@ export class ABLUnitConfig  {
 		}
 		log.info('creating ablunit.json: \'' + this.ablunitConfig.config_uri.fsPath + '\'')
 		const promarr: PromiseLike<void>[] = []
-		promarr.push(
-			workspace.fs.stat(this.ablunitConfig.optionsUri.locationUri).then((stat) => {
-				if (stat.type != FileType.Directory) {
-					throw new Error('configJson.output.location is not a Directory: ' + this.ablunitConfig.optionsUri.locationUri.fsPath)
-				}
-				return
-			}, () => {
-				return this.createDir(this.ablunitConfig.optionsUri.locationUri)
-			})
-		)
-		promarr.push(this.deleteFile(this.ablunitConfig.optionsUri.filenameUri))
-		if (this.ablunitConfig.optionsUri.jsonUri) {
-			promarr.push(this.deleteFile(this.ablunitConfig.optionsUri.jsonUri))
-		}
+		FileUtils.createDir(this.ablunitConfig.optionsUri.locationUri)
+		FileUtils.deleteFile(this.ablunitConfig.optionsUri.filenameUri)
+		FileUtils.deleteFile(this.ablunitConfig.optionsUri.jsonUri)
 
 		const out: IABLUnitJson = {
 			options: cfg,
@@ -95,7 +70,7 @@ export class ABLUnitConfig  {
 
 		if (this.ablunitConfig.profListingsUri) {
 			opt.push('-listings "' + profOpts.listings + '"')
-			await this.createDir(this.ablunitConfig.profListingsUri)
+			FileUtils.createDir(this.ablunitConfig.profListingsUri)
 		}
 		if (profOpts.statistics) {
 			opt.push('-statistics')
@@ -106,7 +81,7 @@ export class ABLUnitConfig  {
 		if (profOpts.traceFilter != '') {
 			opt.push('-traceFilter "' + profOpts.traceFilter + '"')
 		}
-		await this.deleteFile(this.ablunitConfig.profFilenameUri)
+		FileUtils.deleteFile(this.ablunitConfig.profFilenameUri)
 		return this.writeFile(uri, Uint8Array.from(Buffer.from(opt.join('\n') + '\n')))
 	}
 

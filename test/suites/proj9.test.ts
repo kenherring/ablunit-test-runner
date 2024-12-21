@@ -1,4 +1,5 @@
-import { assert, deleteFile, deleteTestFiles, getTestCount, getWorkspaceUri, log, runAllTests, selectProfile, suiteSetupCommon, updateTestProfile, Uri, workspace } from '../testCommon'
+import { assert, deleteTestFiles, getTestCount, getWorkspaceUri, log, runAllTests, selectProfile, suiteSetupCommon, updateTestProfile, Uri, workspace } from '../testCommon'
+import * as FileUtils from '../../src/FileUtils'
 
 const testProfileJson = Uri.joinPath(getWorkspaceUri(), '.vscode/ablunit-test-profile.json')
 const testProfileBackup = Uri.joinPath(getWorkspaceUri(), '.vscode/ablunit-test-profile.json.backup')
@@ -13,13 +14,13 @@ suite('proj9 - Extension Test Suite', () => {
 
 	setup('proj9 - beforeEach', () => {
 		const workspaceFolder = workspace.workspaceFolders![0].uri
-		deleteFile(Uri.joinPath(workspaceFolder, '.vscode', 'profile.json'))
+		FileUtils.deleteFile(Uri.joinPath(workspaceFolder, '.vscode', 'profile.json'))
 		deleteTestFiles()
 		return
 	})
 
 	teardown('proj9 - afterEach', async () => {
-		deleteFile(testProfileJson)
+		FileUtils.deleteFile(testProfileJson)
 		await workspace.fs.copy(testProfileBackup, testProfileJson, { overwrite: true })
 		// await workspace.fs.copy(testProfileBackup, testProfileJson, { overwrite: true }).then(() => {
 		// 	log.info('teardown return')
