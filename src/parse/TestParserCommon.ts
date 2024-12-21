@@ -1,7 +1,7 @@
 import { Uri, workspace } from 'vscode'
 import { TextDecoder } from 'util'
-import * as fs from 'fs'
 import * as FileUtils from '../FileUtils'
+import * as fs from 'fs'
 
 const textDecoder = new TextDecoder('utf-8')
 
@@ -41,6 +41,12 @@ export function readLinesFromFile (uri: Uri | string) {
 			// split lines, remove CR and filter out empty lines
 			return content.replace(/\r/g, '').split('\n').filter((line) => line.trim().length > 0)
 		})
+}
+
+export function readLinesFromFileSync (uri: Uri | string) {
+	uri = toUri(uri)
+	const content = textDecoder.decode(FileUtils.readFileSync(uri.fsPath))
+	return content.replace(/\r/g, '').split('\n').filter((line) => line.trim().length > 0)
 }
 
 export function getAnnotationLines (text: string, annotation: string): [ string[], boolean ] {

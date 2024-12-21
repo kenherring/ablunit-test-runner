@@ -4,15 +4,18 @@ import { Uri } from 'vscode'
 import { log } from 'ChannelLogger'
 
 
-export function readFileSync (path: string | Uri) {
-	return fs.readFileSync(path instanceof Uri ? path.fsPath : path, 'utf8')
+export function readFileSync (path: string | Uri, opts?: { encoding?: null; flag?: string; } | null) {
+	return fs.readFileSync(path instanceof Uri ? path.fsPath : path, opts)
 }
 
-export function readStrippedJsonFile (uri: Uri | string) {
-	if (typeof uri === 'string') {
-		uri = Uri.file(uri)
+export function readStrippedJsonFile (uriOrPath: Uri | string) {
+	let path: string
+	if (uriOrPath instanceof Uri) {
+		path = uriOrPath.fsPath
+	} else {
+		path = uriOrPath
 	}
-	const contents = fs.readFileSync(uri.fsPath, 'utf8')
+	const contents = fs.readFileSync(path, 'utf8')
 	// eslint-disable-next-line
 	const ret = JSON.parse(JSON_minify(contents)) as object
 	return ret
@@ -35,7 +38,7 @@ function doesPathExist (uri: Uri, type?: 'file' | 'directory') {
 	if (type === 'file') {
 		return fs.statSync(uri.fsPath).isFile()
 	} else if (type === 'directory') {
-		return fs.statSync
+		return fs.statSync(uri.fsPath).isDirectory()
 	}
 	log.debug('unknown path type=' + type)
 	return false
@@ -87,7 +90,8 @@ export function deleteDir (...dirs: (Uri | undefined)[]) {
 }
 
 export function copyFile (source: Uri, target: Uri, opts?: fs.CopySyncOptions) {
-	log.info('cpSYnc: ' + source.fsPath + ' -> ' + target.fsPath)
-	log.info(' -- opts=' + JSON.stringify(opts))
+	if (!doesFileExist(source)) {
+		log.warn('source file does not exist: ' + source.fsPath)
+	}
 	fs.cpSync(source.fsPath, target.fsPath, opts)
 }

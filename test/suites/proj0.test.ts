@@ -5,6 +5,7 @@ import { TimeoutError } from 'ABLUnitRun'
 import * as vscode from 'vscode'
 import * as FileUtils from '../../src/FileUtils'
 import * as fs from 'fs'
+import { deleteFile } from '../../src/FileUtils'
 
 function createTempFile () {
 	const tempFile = toUri('UNIT_TEST.tmp')
@@ -16,13 +17,17 @@ suite('proj0  - Extension Test Suite', () => {
 
 	const disposables: vscode.Disposable[] = []
 
-	suiteSetup('proj0 - before', () => {
+	suiteSetup('proj0 - before', async () => {
 		FileUtils.deleteFile(toUri('.vscode/ablunit-test-profile.json'))
 		FileUtils.deleteFile(toUri('src/dirA/proj10.p'))
 		FileUtils.deleteFile(toUri('UNIT_TEST.tmp'))
-		return suiteSetupCommon()
-			.then(() => { return commands.executeCommand('testing.clearTestResults') })
-			.then(() => { return workspace.fs.copy(toUri('.vscode/settings.json'), toUri('.vscode/settings.json.bk'), { overwrite: true }) })
+		await suiteSetupCommon()
+		await commands.executeCommand('testing.clearTestResults')
+		FileUtils.copyFile(
+			toUri('.vscode/settings.json'),
+			toUri('.vscode/settings.json.bk'),
+			{ force: true })
+		return
 	})
 
 	teardown('proj0 - afterEach', () => {
@@ -37,8 +42,11 @@ suite('proj0  - Extension Test Suite', () => {
 				log.warn('disposables.length != 0')
 			}
 		}
-		return workspace.fs.copy(toUri('.vscode/settings.json.bk'), toUri('.vscode/settings.json'), { overwrite: true })
-			.then(() => { log.info('proj0 teardown --- end'); return })
+		if (FileUtils.doesFileExist(toUri('.vscode/settings.json.bk'))) {
+			FileUtils.deleteFile(toUri('.vscode/settings.json'))
+			FileUtils.copyFile(toUri('.vscode/settings.json.bk'), toUri('.vscode/settings.json'), { force: true })
+		}
+		log.info('proj0 teardown/afterEach --- end')
 	})
 
 	test('proj0.01 - ${workspaceFolder}/ablunit.json file exists', () => {
@@ -66,7 +74,7 @@ suite('proj0  - Extension Test Suite', () => {
 		await window.showTextDocument(testFileUri)
 		await runAllTestsWithCoverage()
 
-		const lines = (await getResults())[0].coverage.get(testFileUri.fsPath) ?? []
+		const lines = (await getResults())[0].filecoveragedetail.get(testFileUri.fsPath) ?? []
 		assert.assert(lines, 'no coverage found for ' + workspace.asRelativePath(testFileUri))
 		assert.linesExecuted(testFileUri, [5, 6])
 	})
@@ -77,7 +85,7 @@ suite('proj0  - Extension Test Suite', () => {
 		await window.showTextDocument(testFileUri)
 		await runAllTests()
 
-		const lines = (await getResults())[0].coverage.get(testFileUri.fsPath) ?? []
+		const lines = (await getResults())[0].filecoveragedetail.get(testFileUri.fsPath) ?? []
 		if (lines && lines.length > 0) {
 			assert.fail('coverage should be empty for ' + workspace.asRelativePath(testFileUri) + ' (lines.length=' + lines.length + ')')
 		}
@@ -99,14 +107,24 @@ suite('proj0  - Extension Test Suite', () => {
 	})
 
 	test('proj0.06 - parse test program with expected error annotation', async () => {
-		const testClassItem = await commands.executeCommand('vscode.open', toUri('src/threeTestProcedures.p'))
-			.then(() => { return sleep2(250) })
-			.then(() => { return getTestItem(toUri('src/threeTestProcedures.p')) })
+		await commands.executeCommand('vscode.open', toUri('src/threeTestProcedures.p'))
+		await sleep2(250)
+		const testClassItem = await getTestItem(toUri('src/threeTestProcedures.p'))
+
+		// log.info('testClassItem = ' + JSON.stringify(testClassItem, null, 2))
+		log.info('testClassItem = ' + testClassItem.id)
+		for (const [id, child] of testClassItem.children) {
+			log.info('    child.id=' + id)
+		}
+
 
 		if (!testClassItem) {
 			throw new Error('cannot find TestItem for src/threeTestProcedures.p')
 		}
+
+		// size=3 would not include the TestResultList.cls in resources
 		assert.equal(testClassItem.children.size, 3, 'testClassItem.children.size should be 3')
+		// assert.equal(testClassItem.children.size, 4, 'testClassItem.children.size should be 4')
 	})
 
 	test('proj0.07 - parse test class with skip annotation', async () => {

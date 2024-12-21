@@ -3,6 +3,14 @@ set -eou pipefail
 
 initialize () {
 	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] pwd=$(pwd)"
+
+
+	if [ -z "$DLC" ]; then
+		echo "ERROR: DLC environment variable is not set"
+		exit 1
+	fi
+	echo "DLC=$DLC"
+
 	PATH=$PATH:$DLC/ant/bin
 	CIRCLECI=${CIRCLECI:-false}
 	NO_BUILD=${NO_BUILD:-false}
@@ -25,10 +33,6 @@ initialize () {
 		esac
 	done
 
-	if [ -z "$DLC" ]; then
-		echo "ERROR: DLC environment variable is not set"
-		exit 1
-	fi
 
 	if [ -z "$ABLUNIT_TEST_RUNNER_OE_VERSION" ]; then
 		cat "$DLC/version"

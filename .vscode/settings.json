@@ -10,6 +10,7 @@
 	"git.branchProtection": [
 		"main"
 	],
+	"editor.inlayHints.enabled": "on",
 	"extension-test-runner.extractSettings": {
 		"suite": [
 			"describe",
@@ -55,6 +56,7 @@
 		"out": true,
 		"node_modules": true,
 		"dummy-ext/.vscode-test/**": true,
+		"resources/ADE": true,
 	},
 	"shellcheck.useWorkspaceRootAsCwd": true,
 	"sonarlint.connectedMode.project": {

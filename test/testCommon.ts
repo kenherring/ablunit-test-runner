@@ -1,5 +1,4 @@
 import * as assertParent from 'assert'
-import * as fs from 'fs'
 import * as vscode from 'vscode'
 import * as FileUtils from '../src/FileUtils'
 import {
@@ -56,7 +55,7 @@ export const oeVersion = () => {
 	}
 
 	const versionFile = path.join(useDLC, 'version')
-	const dlcVersion = fs.readFileSync(versionFile)
+	const dlcVersion = FileUtils.readFileSync(versionFile)
 	log.info('dlcVersion=' + dlcVersion)
 	if (dlcVersion) {
 		const match = RegExp(/OpenEdge Release (\d+\.\d+)/).exec(dlcVersion.toString())
@@ -286,7 +285,10 @@ async function waitForExtensionActive (extensionId = 'kherring.ablunit-test-runn
 		throw new Error('extension not installed: ' + extensionId)
 	}
 	if (!ext) { throw new Error(extensionId + ' is not installed') }
-	if (ext.isActive) { log.info(extensionId + ' is already active'); return ext.isActive }
+	// if (ext.isActive) {
+	// 	log.info(extensionId + ' is already active');
+	// 	return ext.isActive
+	// }
 
 	ext = await ext.activate()
 		.then(() => { return sleep2(250) })
@@ -471,7 +473,7 @@ export async function getTestCount (resultsJson: Uri, status = 'tests') {
 		} else if (status === 'skipped') {
 			return results[0].skipped
 		} else {
-			throw new Error('[unknown status: ' + status)
+			throw new Error('unknown status: ' + status)
 		}
 	})
 	log.info('getTestCount: ' + status + ' = ' + count)
@@ -481,6 +483,16 @@ export async function getTestCount (resultsJson: Uri, status = 'tests') {
 export function getDefaultDLC () {
 	if (process.platform === 'linux') {
 		return '/psc/dlc'
+	}
+	log.info('OE_VERSION=' + getEnvVar('OE_VERSION'))
+	log.info('ABLUNIT_TEST_RUNNER_OE_VERSION=' + getEnvVar('ABLUNIT_TEST_RUNNER_OE_VERSION'))
+	log.info('DLC=' + getEnvVar('DLC'))
+	if (getEnvVar('OE_VERSION') === '12.8' || getEnvVar('ABLUNIT_TEST_RUNNER_OE_VERSION') === '12.8') {
+		return 'C:\\Progress\\OpenEdge-12.8'
+	}
+	const dlc = getEnvVar('DLC')
+	if (dlc) {
+		return dlc
 	}
 	return 'C:\\Progress\\OpenEdge'
 }
@@ -794,7 +806,7 @@ export function refreshData (resultsLen = 0) {
 	return commands.executeCommand('_ablunit.getExtensionTestReferences').then((resp) => {
 		// log.info('refreshData command complete (resp=' + JSON.stringify(resp) + ')')
 		const refs = resp as IExtensionTestReferences
-		log.info('getExtensionTestReferences command complete (resp.length=' + refs.recentResults.length + ')')
+		// log.info('getExtensionTestReferences command complete (resp.length=' + refs.recentResults.length + ')')
 		// log.info('refs=' + JSON.stringify(refs))
 
 		if (refs.recentResults.length > 0) {
@@ -960,7 +972,7 @@ export async function getResults (len = 1, tag?: string): Promise<ABLResults[]> 
 	if ((!recentResults || recentResults.length === 0) && len > 0) {
 		log.info(tag + 'recentResults not set, refreshing...')
 		for (let i=0; i<5; i++) {
-			const prom = sleep2(250, tag + 'still no recentResults, sleep before trying again (' + i + '/4)')
+			const prom = sleep2(250, tag + 'still no recentResults (' + i + '/4)')
 				.then(() => { return refreshData() })
 				.then((gotResults) => {
 					if (gotResults) { return gotResults }
@@ -1095,8 +1107,8 @@ export const assert = {
 	deepEqual: assertParent.deepEqual,
 	notDeepEqual: assertParent.notDeepEqual,
 	fail: (message: string) => { assertParent.fail(message) },
-	ok: (value: unknown) => {
-		assertParent.ok(value)
+	ok: (value: unknown, message?: string) => {
+		assertParent.ok(value, message)
 	},
 	ifError: assertParent.ifError,
 	throws: assertParent.throws,
@@ -1215,11 +1227,11 @@ export const assert = {
 			return
 		}
 
-		const actual = recentResults[recentResults.length - 1].coverage.size
+		const actual = recentResults[recentResults.length - 1].filecoveragedetail.size
 		let msg = 'covered files (' + actual + ') != ' + expected
 		if (actual != expected) {
 			msg += '\nfound:'
-			for (const c of recentResults[recentResults.length - 1].coverage) {
+			for (const c of recentResults[recentResults.length - 1].filecoveragedetail) {
 				msg += '\n  * ' + c[0]
 				// log.info('covered file: ' + c[0])
 			}
@@ -1243,7 +1255,7 @@ export const assert = {
 			return
 		}
 
-		const coverage = recentResults[recentResults.length - 1].coverage.get(file.fsPath)
+		const coverage = recentResults[recentResults.length - 1].filecoveragedetail.get(file.fsPath)
 		if (!coverage) {
 			assert.fail('no coverage found for ' + file.fsPath)
 			return

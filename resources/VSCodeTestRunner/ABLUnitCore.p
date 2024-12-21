@@ -2,6 +2,10 @@
 // included as part of the propath ahead of ablunit.pl.
 
 block-level on error undo, throw.
+// using VSCode.ABLUnit.Runner.ABLRunner.
+using OpenEdge.ABLUnit.Runner.ABLRunner.
+using OpenEdge.ABLUnit.Runner.TestConfig.
+using Progress.Json.ObjectModel.ObjectModelParser.
 create widget-pool.
 
 define variable quitOnEnd as logical init false no-undo.
@@ -13,6 +17,40 @@ else
 	return.
 
 ////////// FUNCS AND PROCS //////////
+
+procedure compileExtensionSource :
+	define variable rcode as character no-undo.
+	message 100.
+	rcode = search("OpenEdge/ABLUnit/Results/TestResultList.r") no-error.
+	message 101.
+	if rcode <> ? and index(rcode, 'VSCodeTestRunner') <> 0 then
+	do:
+		message 102.
+		message "rcode = " rcode.
+		file-info:file-name = rcode.
+		message file-info:file-mod-time file-info:file-type.
+		message "deleting " + rcode.
+		os-delete value(rcode).
+		file-info:file-name = rcode.
+		message file-info:file-mod-time file-info:file-type.
+	end.
+
+	message "PROPATH=" + propath.
+	// os-delete value(search("OpenEdge/ABLUnit/Results/TestResultList.r")).
+	compiler:multi-compile = true.
+	message "compiling OpenEdge/ABLUnit/Results/TestResultList.cls (PROVERSION=" + proversion + ")".
+	compile OpenEdge/ABLUnit/Results/TestResultList.cls save.
+	message "compile complete".
+	catch e as Progress.Lang.Error:
+		message e:GetMessage(1) view-as alert-box error.
+		message "PROPATH:".
+		define variable cnt as integer no-undo.
+		do cnt = 1 to num-entries(propath, ','):
+			message ' - '+ entry(cnt, propath).
+		end.
+		return error e.
+	end catch.
+end procedure.
 
 procedure createDatabaseAliases :
 	define variable aliasesSessionParam as character no-undo.
@@ -51,8 +89,8 @@ function getParameter returns character (input params as character, input name a
 	return ''.
 end function.
 
-function readTestConfig returns OpenEdge.ABLUnit.Runner.TestConfig (filepath as character) :
-	return new OpenEdge.ABLUnit.Runner.TestConfig(cast((new Progress.Json.ObjectModel.ObjectModelParser()):ParseFile(filepath), Progress.Json.ObjectModel.JsonObject)).
+function readTestConfig returns TestConfig (filepath as character) :
+	return new TestConfig(cast((new ObjectModelParser()):ParseFile(filepath), Progress.Json.ObjectModel.JsonObject)).
 end function.
 
 function writeErrorToLog returns logical (outputLocation as character, msg as character) :
@@ -69,11 +107,12 @@ function writeErrorToLog returns logical (outputLocation as character, msg as ch
 end function.
 
 procedure main :
-	define variable ablRunner as class OpenEdge.ABLUnit.Runner.ABLRunner no-undo.
-	define variable testConfig as class OpenEdge.ABLUnit.Runner.TestConfig no-undo.
+	define variable ablRunner as class ABLRunner no-undo.
+	define variable testConfig as class TestConfig no-undo.
 	define variable updateFile as character no-undo.
 
 	session:suppress-warnings = true.
+	run compileExtensionSource.
 	run createDatabaseAliases.
 
 	assign updateFile = getParameter(trim(trim(session:parameter,'"'),"'"), 'ATTR_ABLUNIT_EVENT_FILE').
@@ -81,7 +120,8 @@ procedure main :
 	testConfig = readTestConfig(getParameter(trim(trim(session:parameter,'"'),"'"), 'CFG')).
 	quitOnEnd = (testConfig = ?) or testConfig:quitOnEnd.
 
-	ablRunner = new OpenEdge.ABLUnit.Runner.ABLRunner(testConfig, updateFile).
+	ablRunner = new ABLRunner(testConfig, updateFile).
+	ablRunner = new ABLRunner(testConfig, updateFile).
 	ablRunner:RunTests().
 
 	// the `-catchStop 1` startup parameter is default in 11.7+

@@ -1,8 +1,14 @@
 {
     "name": "ablunit-test-runner",
+    "version": "0",
+    "oeversion": "12.8",
+    "charset": "UTF-8",
+
     "buildPath": [
         { "type": "source", "path": "resources/VSCodeTestRunner", "includes": "**/*.p,**/*.cls"},
-        { "type": "propath", "path": "${DLC}/tty/ablunit.pl", "includes": "**/*" }
+        { "type": "propath", "path": "${DLC}/src/ablunit.pl", "includes": "**/*" },
+        { "type": "propath", "path": "${DLC}/tty/ablunit.pl", "includes": "**/*" },
+        { "type": "propath", "path": "${DLC}/gui/ablunit.pl", "includes": "**/*" }
     ],
-    "buildDirectory": "target"
+    "buildDirectory": "resources/VSCodeTestRunner"
 }
