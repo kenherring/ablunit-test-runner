@@ -189,7 +189,7 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 			res.cfg.ablunitConfig.optionsUri.jsonUri,
 			res.cfg.ablunitConfig.optionsUri.updateUri,
 			res.cfg.ablunitConfig.profFilenameUri,
-			res.cfg.ablunitConfig.profOptsUri,
+			// res.cfg.ablunitConfig.profOptsUri,
 		)
 
 		log.debug('ablunit command dir=\'' + res.cfg.ablunitConfig.workspaceFolder.uri.fsPath + '\'')
