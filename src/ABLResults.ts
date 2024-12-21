@@ -17,10 +17,11 @@ import { PropathParser } from './ABLPropath'
 import { log } from './ChannelLogger'
 import { ABLUnitRuntimeError, RunStatus, TimeoutError, ablunitRun } from './ABLUnitRun'
 import { getDLC, IDlc } from './parse/OpenedgeProjectParser'
-import { Duration, isRelativePath } from './ABLUnitCommon'
+import { Duration } from './ABLUnitCommon'
 import { ITestObj } from 'parse/config/CoreOptions'
 import { globSync } from 'glob'
 import { basename, dirname } from 'node:path'
+import * as FileUtils from './FileUtils'
 
 export class ABLResults implements Disposable {
 	workspaceFolder: WorkspaceFolder
@@ -144,7 +145,7 @@ export class ABLResults implements Disposable {
 		}
 
 		let propathEntryTestFile = testPropath.propathEntry.path
-		if (isRelativePath(testPropath.propathEntry.path)) {
+		if (FileUtils.isRelativePath(testPropath.propathEntry.path)) {
 			propathEntryTestFile = workspace.asRelativePath(Uri.joinPath(this.workspaceFolder.uri, testPropath.propathEntry.path))
 		}
 		log.debug('addTest: ' + test.id + ', propathEntry=' + propathEntryTestFile)

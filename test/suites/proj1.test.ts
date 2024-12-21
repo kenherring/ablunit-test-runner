@@ -3,7 +3,7 @@ import { Uri, assert, getWorkspaceUri, log, runAllTests, sleep, updateConfig, ge
 import { getOEVersion } from 'parse/OpenedgeProjectParser'
 import { execSync } from 'child_process'
 import * as glob from 'glob'
-import { deleteFile, doesFileExist } from 'ABLUnitCommon'
+import * as FileUtils from '../../src/FileUtils'
 
 const workspaceUri = getWorkspaceUri()
 
@@ -323,10 +323,10 @@ suite('proj1 - Extension Test Suite', () => {
 })
 
 async function compileWithTaskAndCoverage (taskName: string) {
-	deleteFile([
+	FileUtils.deleteFile(
 		Uri.joinPath(workspaceUri, 'test_15.r'),
 		Uri.joinPath(workspaceUri, 'openedge-project.json'),
-	])
+	)
 	await workspace.fs.copy(Uri.joinPath(workspaceUri, '.vscode', 'ablunit-test-profile.proj1.15.json'), Uri.joinPath(workspaceUri, '.vscode', 'ablunit-test-profile.json'), { overwrite: true })
 
 	const p2 = new Promise<TaskEndEvent>((resolve) => {
@@ -356,7 +356,7 @@ async function compileWithTaskAndCoverage (taskName: string) {
 
 	const testRcode = Uri.joinPath(workspaceUri, 'test_15.r')
 	for (let i=0; i<20; i++) {
-		if (doesFileExist(testRcode)) {
+		if (FileUtils.doesFileExist(testRcode)) {
 			log.info('file exists! (i=' + i + ')')
 			break
 		}

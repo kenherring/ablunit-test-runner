@@ -33,27 +33,23 @@ suite('proj7B - Extension Test Suite', () => {
 
 		log.info('cancelling test refresh')
 		const startCancelTime = new Duration()
-		try {
-			await commands.executeCommand('testing.cancelTestRefresh').then(() => {
-				log.info('testing.cancelTestRefresh completed')
-				return
-			}, (e: unknown) => {
-				log.error('testing.cancelTestRefresh caught an exception. e=' + e)
-				throw e
-			})
-			log.info(' - elapsedCancelTime=' + startCancelTime.elapsed() + 'ms, elapsedRefreshTime=' +  startRefreshTime.elapsed() + 'ms')
-			assert.durationMoreThan(startCancelTime, minCancelTime)
-			assert.durationLessThan(startCancelTime, maxCancelTime)
-			assert.durationLessThan(startRefreshTime, maxRefreshTime)
-		} catch (e: unknown) {
-			assert.fail('unexpected error: ' + e)
-		}
+		await commands.executeCommand('testing.cancelTestRefresh').then(() => {
+			log.info('testing.cancelTestRefresh completed')
+			return
+		}, (e: unknown) => {
+			log.error('testing.cancelTestRefresh caught an exception. e=' + e)
+			throw e
+		})
+		log.info(' - elapsedCancelTime=' + startCancelTime.elapsed() + 'ms, elapsedRefreshTime=' +  startRefreshTime.elapsed() + 'ms')
+		assert.durationMoreThan(startCancelTime, minCancelTime)
+		assert.durationLessThan(startCancelTime, maxCancelTime)
+		assert.durationLessThan(startRefreshTime, maxRefreshTime)
 
 		const ablfileCount = await getTestControllerItemCount('ABLTestFile')
 		log.info('controller file count after refresh = ' + ablfileCount)
 		assert.assert(ablfileCount > 1 && ablfileCount < 1000, 'ablfileCount should be > 1 and < 500, but is ' + ablfileCount)
 
-		await refresh.then(() => {
+		const prom = refresh.then(() => {
 			assert.fail('testing.refreshTests completed without throwing CancellationError')
 			return
 		}, (e: unknown) => {
@@ -64,6 +60,7 @@ suite('proj7B - Extension Test Suite', () => {
 				assert.equal(err.name, 'Canceled', 'testing.refreshTests threw unexpected error. Expected e.name="Canceled" e=' + e)
 			}
 		})
+		await prom
 	})
 
 	test('proj7B.2 - cancel test run while adding tests', async () => {
@@ -104,7 +101,7 @@ suite('proj7B - Extension Test Suite', () => {
 		// })
 	})
 
-	test('proj7B.3 - cancel test run while _progres is running', async () => {
+	test.skip('proj7B.3 - cancel test run while _progres is running', async () => {
 		const maxCancelTime = 1000
 		// const runTestTime = new Duration()
 

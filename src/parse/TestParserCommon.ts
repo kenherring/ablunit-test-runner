@@ -1,6 +1,6 @@
 import { Uri, workspace } from 'vscode'
 import { TextDecoder } from 'util'
-import { isRelativePath } from 'ABLUnitCommon'
+import * as FileUtils from '../FileUtils'
 import * as fs from 'fs'
 
 const textDecoder = new TextDecoder('utf-8')
@@ -11,7 +11,7 @@ function toUri (uri: Uri | string): Uri {
 	}
 	const filename = uri
 
-	if (!isRelativePath(uri)) {
+	if (!FileUtils.isRelativePath(uri)) {
 		return Uri.file(uri)
 	}
 
@@ -45,7 +45,7 @@ export function readLinesFromFile (uri: Uri | string) {
 
 export function readLinesFromFileSync (uri: Uri | string) {
 	uri = toUri(uri)
-	const content = textDecoder.decode(fs.readFileSync(uri.fsPath))
+	const content = textDecoder.decode(FileUtils.readFileSync(uri.fsPath))
 	return content.replace(/\r/g, '').split('\n').filter((line) => line.trim().length > 0)
 }
 

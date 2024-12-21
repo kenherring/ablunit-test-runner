@@ -3,9 +3,9 @@ import { CoreOptions } from './config/CoreOptions'
 import { IRunProfile, DefaultRunProfile } from './config/RunProfile'
 import { ProfilerOptions } from './config/ProfilerOptions'
 import { CommandOptions } from './config/CommandOptions'
-import { isRelativePath, readStrippedJsonFile } from '../ABLUnitCommon'
 import { log } from '../ChannelLogger'
 import { IDatabaseConnection, getExtraParameters, getProfileCharset, getProfileDbConns } from './OpenedgeProjectParser'
+import * as FileUtils from '../FileUtils'
 
 const runProfileFilename = 'ablunit-test-profile.json'
 
@@ -17,7 +17,7 @@ export interface IConfigurations {
 }
 
 function getConfigurations (uri: Uri) {
-	const data = readStrippedJsonFile(uri)
+	const data = FileUtils.readStrippedJsonFile(uri)
 	try {
 		let str = JSON.stringify(data)
 		if (str === '' || str === '{}') {
@@ -142,7 +142,7 @@ function getUri (dir: string | undefined, workspaceFolderUri: Uri, tempDir?: Uri
 	}
 	dir = dir.replace('${workspaceFolder}', workspaceFolderUri.fsPath)
 
-	if (isRelativePath(dir)) {
+	if (FileUtils.isRelativePath(dir)) {
 		if (dir.includes('/') || dir.includes('\\')) {
 			return Uri.joinPath(workspaceFolderUri, dir)
 		} else {

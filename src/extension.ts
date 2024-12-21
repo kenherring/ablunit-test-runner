@@ -1,4 +1,3 @@
-import { readFileSync } from 'fs'
 import {
 	CancellationError,
 	CancellationToken, ConfigurationChangeEvent, ExtensionContext,
@@ -24,7 +23,8 @@ import { ABLTestCase, ABLTestClass, ABLTestData, ABLTestDir, ABLTestFile, ABLTes
 import { minimatch } from 'minimatch'
 import { ABLUnitRuntimeError, TimeoutError } from 'ABLUnitRun'
 import { basename } from 'path'
-import { createDir, doesFileExist, gatherAllTestItems, IExtensionTestReferences } from 'ABLUnitCommon'
+import { gatherAllTestItems, IExtensionTestReferences } from 'ABLUnitCommon'
+import * as FileUtils from './FileUtils'
 
 let recentResults: ABLResults[] = []
 let recentError: Error | undefined = undefined
@@ -42,7 +42,7 @@ export async function activate (context: ExtensionContext) {
 	const contextStorageUri = context.storageUri ?? Uri.file(process.env['TEMP'] ?? '') // will always be defined as context.storageUri
 	const contextResourcesUri = Uri.joinPath(context.extensionUri, 'resources')
 	setContextPaths(contextStorageUri, contextResourcesUri, context.logUri)
-	createDir(contextStorageUri)
+	FileUtils.createDir(contextStorageUri)
 
 	context.subscriptions.push(ctrl)
 
@@ -178,9 +178,9 @@ export async function activate (context: ExtensionContext) {
 		const det = Uri.joinPath(context.extensionUri, 'resources', 'ablunit-test-profile.detail.jsonc')
 		const dir = Uri.joinPath(workspaceFolder.uri, '.vscode')
 
-		if (!doesFileExist(uri)) {
-			createDir(dir)
-			await workspace.fs.copy(det, uri, { overwrite: false })
+		if (!FileUtils.doesFileExist(uri)) {
+			FileUtils.createDir(dir)
+			FileUtils.copyFile(det, uri, { force: false })
 			log.info('successfully created .vscode/ablunit-test-profile.json')
 		}
 
@@ -601,7 +601,7 @@ function getStorageUri (workspaceFolder: WorkspaceFolder) {
 
 	const dirs = workspaceFolder.uri.path.split('/')
 	const ret = Uri.joinPath(getContextStorageUri(), dirs[dirs.length - 1])
-	createDir(ret)
+	FileUtils.createDir(ret)
 	return ret
 }
 
@@ -777,7 +777,7 @@ function getTestFileAttrs (file: Uri) {
 	const testRegex = /@test/i
 	const suiteRegex = /@testsuite/i
 
-	const contents = readFileSync(file.fsPath).toString()
+	const contents = FileUtils.readFileSync(file).toString()
 	if (!contents || contents.length < 1 || !testRegex.test(contents)) {
 		return 'none'
 	}
@@ -951,29 +951,6 @@ function findMatchingFiles (includePatterns: RelativePattern[], token: Cancellat
 		}, (e: unknown) => { throw e })
 }
 
-// async function parseMatchingFiles (files: Uri[], controller: TestController, excludePatterns: RelativePattern[], token: CancellationToken, checkCancellationToken: () => void): Promise<boolean> {
-// 	const proms: PromiseLike<boolean>[] = []
-// 	log.debug('parsing files... (count=' + files.length + ')')
-// 	for (const file of files) {
-// 		checkCancellationToken()
-
-// 		const { item, data } = getOrCreateFile(controller, file, excludePatterns)
-// 		log.info('data.description=\'' + data?.description + '\'; item.id=' + item?.id)
-// 		if (item && data instanceof ABLTestFile) {
-// 			log.info('updating from disk')
-// 			const prom = data.updateFromDisk(controller, item, token).then((foundTestCase) => {
-// 				return foundTestCase
-// 			}, (e: unknown) => {
-// 				log.error('failed to update file from disk. e=' + e)
-// 				return false
-// 			})
-// 			proms.push(prom)
-// 		}
-// 	}
-// 	const r = await Promise.all(proms).then(() => { return true })
-// 	return r
-// }
-
 function removeDeletedFiles (ctrl: TestController) {
 	const items = gatherAllTestItems(ctrl.items)
 	const proms: PromiseLike<void>[] = []
@@ -1102,26 +1079,6 @@ function createOrUpdateFile (controller: TestController, e: Uri | FileCreateEven
 
 	return Promise.all(proms).then(() => { return true })
 }
-
-// function startWatchingWorkspace (controller: TestController) {
-// 	log.info('start watching workspace')
-// 	const [ includePatterns, excludePatterns ] = getWorkspaceTestPatterns()
-// 	log.debug('includePatterns=' + includePatterns.length + ', excludePatterns=' + excludePatterns.length)
-
-// 	const watchers: FileSystemWatcher[] = []
-
-// 	// TODO - different patterns in different workspaces...
-
-// 	for (const includePattern of includePatterns) {
-// 		log.info('creating watcher for: ' + includePattern.pattern)
-// 		const watcher = workspace.createFileSystemWatcher(includePattern)
-// 		watcher.onDidCreate(uri => { log.info('watcher.onDidCreate'); return createOrUpdateFile(controller, uri, true) })
-// 		watcher.onDidChange(uri => { log.info('watcher.onDidChange'); return createOrUpdateFile(controller, uri, true) })
-// 		watcher.onDidDelete(uri => { log.info('watcher.onDidDelete'); return deleteTest(controller, uri) })
-// 		watchers.push(watcher)
-// 	}
-// 	return watchers
-// }
 
 function openCallStackItem (traceUriStr: string) {
 	const traceUri = Uri.file(traceUriStr.split('&')[0])

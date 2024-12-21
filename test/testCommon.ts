@@ -1,7 +1,6 @@
 import * as assertParent from 'assert'
-import * as fs from 'fs'
 import * as vscode from 'vscode'
-import path from 'path'
+import * as FileUtils from '../src/FileUtils'
 import {
 	CancellationError, TestController,
 	TestItemCollection,
@@ -13,15 +12,16 @@ import {
 	Position,
 	TestItem
 } from 'vscode'
-import { globSync } from 'glob'
 import { ABLResults } from '../src/ABLResults'
-import { gatherAllTestItems, Duration, deleteFile, isRelativePath, readStrippedJsonFile, IExtensionTestReferences, doesFileExist, doesDirExist, copyFile } from '../src/ABLUnitCommon'
+import { Duration, gatherAllTestItems, IExtensionTestReferences } from '../src/ABLUnitCommon'
 import { log as logObj } from '../src/ChannelLogger'
 import { ITestSuites } from '../src/parse/ResultsParser'
 import { IConfigurations, parseRunProfiles } from '../src/parse/TestProfileParser'
 import { DefaultRunProfile, IRunProfile as IRunProfileGlobal } from '../src/parse/config/RunProfile'
 import { RunStatus } from '../src/ABLUnitRun'
 import { enableOpenedgeAblExtension, rebuildAblProject, restartLangServer, setRuntimes, waitForLangServerReady } from './openedgeAblCommands'
+import { globSync } from 'glob'
+import path from 'path'
 
 interface IRuntime {
 	name: string,
@@ -55,7 +55,7 @@ export const oeVersion = () => {
 	}
 
 	const versionFile = path.join(useDLC, 'version')
-	const dlcVersion = fs.readFileSync(versionFile)
+	const dlcVersion = FileUtils.readFileSync(versionFile)
 	log.info('dlcVersion=' + dlcVersion)
 	if (dlcVersion) {
 		const match = RegExp(/OpenEdge Release (\d+\.\d+)/).exec(dlcVersion.toString())
@@ -98,7 +98,6 @@ export { setRuntimes, rebuildAblProject }
 // kherring.ablunit-test-runner extension objects
 export type IRunProfile = IRunProfileGlobal
 export { RunStatus, parseRunProfiles }
-export { deleteFile, copyFile, doesFileExist, doesDirExist }
 // vscode objects
 export {
 	CancellationError, Duration, Selection, Uri,
@@ -129,19 +128,19 @@ export function isoDate () {
 
 function getExtensionDevelopmentPath () {
 	let dir = Uri.joinPath(Uri.file(__dirname))
-	if (doesFileExist(Uri.joinPath(dir, 'package.json'))) {
+	if (FileUtils.doesFileExist(Uri.joinPath(dir, 'package.json'))) {
 		return dir
 	}
 	dir = Uri.joinPath(Uri.file(__dirname), '..')
-	if (doesFileExist(Uri.joinPath(dir, 'package.json'))) {
+	if (FileUtils.doesFileExist(Uri.joinPath(dir, 'package.json'))) {
 		return dir
 	}
 	dir = Uri.joinPath(Uri.file(__dirname), '..', '..')
-	if (doesFileExist(Uri.joinPath(dir, 'package.json'))) {
+	if (FileUtils.doesFileExist(Uri.joinPath(dir, 'package.json'))) {
 		return dir
 	}
 	dir = Uri.joinPath(Uri.file(__dirname), '..', '..', '..')
-	if (doesFileExist(Uri.joinPath(dir, 'package.json'))) {
+	if (FileUtils.doesFileExist(Uri.joinPath(dir, 'package.json'))) {
 		return dir
 	}
 	throw new Error('unable to determine extensionDevelopmentPath')
@@ -421,7 +420,7 @@ export function toUri (uri: string | Uri) {
 		throw new Error('workspaceUri is null (uri="' + uri.toString() + '")')
 	}
 
-	if (isRelativePath(uri)) {
+	if (FileUtils.isRelativePath(uri)) {
 		return Uri.joinPath(ws, uri)
 	}
 	return Uri.file(uri)
@@ -431,7 +430,7 @@ function fileToString (file: Uri | string) {
 	if (file instanceof Uri) {
 		return file.fsPath
 	}
-	if (isRelativePath(file)) {
+	if (FileUtils.isRelativePath(file)) {
 		return Uri.joinPath(getWorkspaceUri(), file).fsPath
 	}
 	return Uri.file(file).fsPath
@@ -439,9 +438,9 @@ function fileToString (file: Uri | string) {
 
 export function deleteTestFiles () {
 	const workspaceUri = getWorkspaceUri()
-	deleteFile(Uri.joinPath(workspaceUri, 'ablunit.json'))
-	deleteFile(Uri.joinPath(workspaceUri, 'results.json'))
-	deleteFile(Uri.joinPath(workspaceUri, 'results.xml'))
+	FileUtils.deleteFile(Uri.joinPath(workspaceUri, 'ablunit.json'))
+	FileUtils.deleteFile(Uri.joinPath(workspaceUri, 'results.json'))
+	FileUtils.deleteFile(Uri.joinPath(workspaceUri, 'results.xml'))
 }
 
 export function getSessionTempDir () {
@@ -527,40 +526,26 @@ export async function runAllTests (doRefresh = true, waitForResults = true, with
 
 	log.info('testing.runAll starting (waitForResults=' + waitForResults + ')')
 	const r = await commands.executeCommand(testCommand)
-	log.info(tag + 'command ' + testCommand +' complete! (r=' + r + ')')
-	await sleep(250)
-	if (waitForResults) {
-		const r = await getResults(1, tag)
-		if (r.length >= 0) {
-			const fUri = r[0]?.cfg.ablunitConfig.optionsUri.filenameUri
-			log.info(tag + 'testing.runAll command complete (filename=' + fUri.fsPath + ', r=' + r + ')')
-			return doesFileExist(fUri)
-		}
-	}
-	// const r = await commands.executeCommand(testCommand)
-	// 	.then((r) => {
-	// 		log.info(tag + 'command ' + testCommand +' complete! (r=' + r + ')')
-	// 		return sleep(250)
-	// 	}, (e: unknown) => {
-	// 		log.error('command ' + testCommand + ' failed! e=' + e)
-	// 		throw e
-	// 	})
-	// 	.then(() => {
-	// 		log.info(tag + 'testing.runAll completed - start getResults()')
-	// 		if (!waitForResults) { return [] }
-	// 		return getResults(1, tag)
-	// 	})
-	// 	.then((r) => {
-	// 		if (r.length >= 0) {
-	// 			const fUri = r[0]?.cfg.ablunitConfig.optionsUri.filenameUri
-	// 			log.info(tag + 'testing.runAll command complete (filename=' + fUri.fsPath + ', r=' + r + ')')
-	// 			return doesFileExist(fUri)
-	// 		}
-	// 		return false
-	// 	}, (e: unknown) => {
-	// 		runAllTestsDuration?.stop()
-	// 		throw new Error('testing.runAll failed: ' + e)
-	// 	})
+		.then((r) => {
+			log.info(tag + 'command ' + testCommand +' complete! (r=' + r + ')')
+			return sleep(250)
+		}, (e: unknown) => { throw e	})
+		.then(() => {
+			log.info(tag + 'testing.runAll completed - start getResults()')
+			if (!waitForResults) { return [] }
+			return getResults(1, tag)
+		})
+		.then((r) => {
+			if (r.length >= 0) {
+				const fUri = r[0]?.cfg.ablunitConfig.optionsUri.filenameUri
+				log.info(tag + 'testing.runAll command complete (filename=' + fUri.fsPath + ', r=' + r + ')')
+				return FileUtils.doesFileExist(fUri)
+			}
+			return false
+		}, (e: unknown) => {
+			runAllTestsDuration?.stop()
+			throw new Error('testing.runAll failed: ' + e)
+		})
 	runAllTestsDuration.stop()
 	log.info(tag + 'runAllTests complete (r=' + r + ')')
 	return
@@ -770,11 +755,11 @@ export async function updateTestProfile (key: string, value: string | string[] |
 	}
 	const testProfileUri = Uri.joinPath(workspaceUri, '.vscode', 'ablunit-test-profile.json')
 	let profile: IConfigurations
-	if (!doesFileExist(testProfileUri)) {
+	if (!FileUtils.doesFileExist(testProfileUri)) {
 		log.info('creating ablunit-test-profile.json')
 		profile = { configurations: [ new DefaultRunProfile ] } as IConfigurations
 	} else {
-		profile = (readStrippedJsonFile(testProfileUri)) as IConfigurations
+		profile = (FileUtils.readStrippedJsonFile(testProfileUri)) as IConfigurations
 	}
 	const keys = key.split('.')
 
@@ -1164,40 +1149,40 @@ export const assert = {
 		}
 	},
 
-	fileExists: (...files: Uri[] | string[]) => {
+	fileExists: (...files: (string | Uri)[]) => {
 		if (files.length === 0) { throw new Error('no file(s) specified') }
 		for (let file of files) {
-			if (typeof file === 'string') {
+			if (!(file instanceof Uri)) {
 				file = toUri(file)
 			}
-			assertParent.ok(doesFileExist(file), 'file does not exist: ' + fileToString(file))
+			assertParent.ok(FileUtils.doesFileExist(file), 'file does not exist: ' + fileToString(file))
 		}
 	},
 	notFileExists: (...files: string[] | Uri[]) => {
 		if (files.length === 0) { throw new Error('no file(s) specified') }
 		for (let file of files) {
-			if (typeof file === 'string') {
+			if (!(file instanceof Uri)) {
 				file = toUri(file)
 			}
-			assertParent.ok(!doesFileExist(file), 'file exists: ' + fileToString(file))
+			assertParent.ok(!FileUtils.doesFileExist(file), 'file exists: ' + fileToString(file))
 		}
 	},
-	dirExists: (...dirs: string[] | Uri[]) => {
+	dirExists: (...dirs: (string | Uri)[]) => {
 		if (dirs.length === 0) { throw new Error('no dir(s) specified') }
 		for (let dir of dirs) {
-			if (typeof dir === 'string') {
+			if (!(dir instanceof Uri)) {
 				dir = toUri(dir)
 			}
-			assertParent.ok(doesDirExist(dir), 'dir does not exist: ' + fileToString(dir))
+			assertParent.ok(FileUtils.doesDirExist(dir), 'dir does not exist: ' + fileToString(dir))
 		}
 	},
 	notDirExists: (...dirs: string[] | Uri[]) => {
 		if (dirs.length === 0) { throw new Error('no dir(s) specified') }
 		for (let dir of dirs) {
-			if (typeof dir === 'string') {
+			if (!(dir instanceof Uri)) {
 				dir = toUri(dir)
 			}
-			assertParent.ok(!doesDirExist(dir), 'dir exists: ' + fileToString(dir))
+			assertParent.ok(!FileUtils.doesDirExist(dir), 'dir exists: ' + fileToString(dir))
 		}
 	},
 
@@ -1306,8 +1291,8 @@ export function beforeProj7 () {
 			const classContent = data.toString()
 			const proms = []
 			for (let i = 0; i < 10; i++) {
-				proms.push(workspace.fs.createDirectory(toUri('src/procs/dir' + i)))
-				proms.push(workspace.fs.createDirectory(toUri('src/classes/dir' + i)))
+				FileUtils.createDir(toUri('src/procs/dir' + i))
+				FileUtils.createDir(toUri('src/classes/dir' + i))
 				for (let j = 0; j < 10; j++) {
 					proms.push(workspace.fs.copy(templateProc, toUri('src/procs/dir' + i + '/testProc' + j + '.p'), { overwrite: true }))
 

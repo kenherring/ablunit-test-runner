@@ -1,4 +1,5 @@
-import { assert, deleteFile, getDefaultDLC, getSessionTempDir, getWorkspaceUri, oeVersion, runAllTests, setRuntimes, suiteSetupCommon, updateTestProfile, Uri } from '../testCommon'
+import { assert, getDefaultDLC, getSessionTempDir, getWorkspaceUri, oeVersion, runAllTests, setRuntimes, suiteSetupCommon, updateTestProfile, Uri } from '../testCommon'
+import * as FileUtils from '../../src/FileUtils'
 
 const sessionTempDir = getSessionTempDir()
 
@@ -57,7 +58,7 @@ suite('proj4 - Extension Test Suite', () => {
 		const workspaceUri = getWorkspaceUri()
 		const ablunitJson = Uri.joinPath(workspaceUri, 'target', 'ablunit.json')
 		const progressIni = Uri.joinPath(workspaceUri, 'target', 'progress.ini')
-		deleteFile(progressIni)
+		FileUtils.deleteFile(progressIni)
 		await updateTestProfile('tempDir', 'target')
 		await runAllTests()
 		assert.fileExists(ablunitJson)

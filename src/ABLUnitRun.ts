@@ -1,12 +1,13 @@
 import { CancellationError, CancellationToken, TestRun, Uri, workspace } from 'vscode'
 import { ABLResults } from './ABLResults'
-import { deleteFile, Duration } from './ABLUnitCommon'
+import { Duration } from './ABLUnitCommon'
 import { SendHandle, Serializable, SpawnOptions, spawn } from 'child_process'
 import { log } from './ChannelLogger'
 import { processUpdates, setTimeoutTestStatus } from 'parse/UpdateParser'
 import * as fs from 'fs'
 import { basename, dirname } from 'path'
 import { globSync } from 'glob'
+import * as FileUtils from './FileUtils'
 
 export enum RunStatus {
 	None = 10,
@@ -68,23 +69,15 @@ export class TimeoutError extends Error implements ITimeoutError {
 export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation: CancellationToken) => {
 	const abort = new AbortController()
 	const { signal } = abort
-	// let watcherDispose: Disposable | undefined = undefined
-	// let watcherUpdate: FileSystemWatcher | undefined = undefined
-
 	let watcher: fs.StatWatcher
 
 	cancellation.onCancellationRequested(() => {
 		log.debug('cancellation requested - ablunitRun')
 		abort.abort()
 		if (res.cfg.ablunitConfig.optionsUri.updateUri) {
+			watcher.removeAllListeners()
 			processUpdates(options, res.tests, res.cfg.ablunitConfig.optionsUri.updateUri)
 		}
-		// if (watcherDispose) {
-		// 	watcherDispose.dispose()
-		// }
-		// if (watcherUpdate) {
-		// 	watcherUpdate.dispose()
-		// }
 		throw new CancellationError()
 	})
 
@@ -186,16 +179,19 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 	}
 
 	const runCommand = () => {
-		deleteFile(res.cfg.ablunitConfig.profFilenameUri)
-		// deleteFile(res.cfg.ablunitConfig.config_uri)
-		deleteFile(res.cfg.ablunitConfig.optionsUri.filenameUri)
-		deleteFile(res.cfg.ablunitConfig.optionsUri.jsonUri)
-		deleteFile(res.cfg.ablunitConfig.optionsUri.updateUri)
+		FileUtils.deleteFile(
+			res.cfg.ablunitConfig.profFilenameUri,
+			// res.cfg.ablunitConfig.config_uri,
+			res.cfg.ablunitConfig.optionsUri.filenameUri,
+			res.cfg.ablunitConfig.optionsUri.jsonUri,
+			res.cfg.ablunitConfig.optionsUri.updateUri,
+			res.cfg.ablunitConfig.profFilenameUri,
+			// res.cfg.ablunitConfig.profOptsUri,
+		)
+
 		if (res.cfg.ablunitConfig.optionsUri.updateUri) {
 			fs.writeFileSync(res.cfg.ablunitConfig.optionsUri.updateUri.fsPath, '')
 		}
-		deleteFile(res.cfg.ablunitConfig.profFilenameUri)
-		// deleteFile(res.cfg.ablunitConfig.profOptsUri)
 
 		if (res.cfg.ablunitConfig.profFilenameUri) {
 			const profDir = dirname(res.cfg.ablunitConfig.profFilenameUri.fsPath)
@@ -208,7 +204,7 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 			log.info('dataFiles.length=' + dataFiles.length)
 			for (const dataFile of dataFiles) {
 				log.info('deleteFile=' + Uri.joinPath(Uri.file(profDir), dataFile))
-				deleteFile(Uri.joinPath(Uri.file(profDir), dataFile))
+				FileUtils.deleteFile(Uri.joinPath(Uri.file(profDir), dataFile))
 			}
 		}
 
@@ -225,11 +221,9 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 		args.shift()
 
 		if (res.cfg.ablunitConfig.optionsUri.updateUri) {
-			log.info('watching for updates: ' + res.cfg.ablunitConfig.optionsUri.updateUri, options)
 			watcher = fs.watchFile(res.cfg.ablunitConfig.optionsUri.updateUri.fsPath, (curr, prev) => {
 				log.info('watcher event: curr=' + JSON.stringify(curr) + '; prev=' + JSON.stringify(prev), options)
-				// void processUpdates(options, res.tests, res.cfg.ablunitConfig.optionsUri.updateUri)
-				// await processUpdates(options, res.tests, res.cfg.ablunitConfig.optionsUri.updateUri)
+				processUpdates(options, res.tests, res.cfg.ablunitConfig.optionsUri.updateUri)
 			})
 		}
 
@@ -255,16 +249,13 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 			const testRunDuration = new Duration('TestRun')
 			const process = spawn(cmd, args, spawnOpts)
 
-			let lastError: string | undefined = undefined
-
 			process.stderr?.on('data', (data: Buffer) => {
 				log.error('\t\t[stderr] ' + data.toString().trim().replace(/\n/g, '\n\t\t[stderr]'), options)
-				lastError = data.toString().trim()
-				processUpdates(options, res.tests, updateUri)
+				// processUpdates(options, res.tests, updateUri)
 			})
 			process.stdout?.on('data', (data: Buffer) => {
 				log.error('\t\t[stdout] ' + data.toString().trim().replace(/\n/g, '\n\t\t[stderr]'), options)
-				processUpdates(options, res.tests, updateUri)
+				// processUpdates(options, res.tests, updateUri)
 			})
 			process.once('spawn', () => {
 				res.setStatus(RunStatus.Executing)
@@ -289,6 +280,7 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 				log.info('process.exit-12')
 				log.info('process.exit code=' + code + '; signal=' + signal + '; process.exitCode=' + process.exitCode + '; process.signalCode=' + process.signalCode + '; killed=' + process.killed)
 				log.info('process.exit-13')
+				watcher.removeAllListeners()
 				processUpdates(options, res.tests, updateUri)
 				log.info('process.exit-20')
 				if (process.killed || signal) {
@@ -326,7 +318,7 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 				}
 				log.info('process.exit-50')
 
-				processUpdates(options, res.tests, updateUri)
+				// processUpdates(options, res.tests, updateUri)
 				log.info('process.exit-51')
 				res.setStatus(RunStatus.Complete, 'success')
 				log.info('process.exit-52')

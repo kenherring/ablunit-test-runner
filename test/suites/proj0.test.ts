@@ -1,9 +1,11 @@
 import { Uri, commands, window, workspace } from 'vscode'
-import * as vscode from 'vscode'
-import { assert, copyFile, deleteFile, getResults, getTestControllerItemCount, getTestItem, log, refreshTests, runAllTests, runAllTestsWithCoverage, runTestAtLine, runTestsDuration, runTestsInFile, sleep2, suiteSetupCommon, toUri, updateConfig, updateTestProfile } from '../testCommon'
+import { assert, getResults, getTestControllerItemCount, getTestItem, log, refreshTests, runAllTests, runAllTestsWithCoverage, runTestAtLine, runTestsDuration, runTestsInFile, sleep2, suiteSetupCommon, toUri, updateConfig, updateTestProfile } from '../testCommon'
 import { ABLResultsParser } from 'parse/ResultsParser'
-import * as fs from 'fs'
 import { TimeoutError } from 'ABLUnitRun'
+import * as vscode from 'vscode'
+import * as FileUtils from '../../src/FileUtils'
+import * as fs from 'fs'
+import { deleteFile } from '../../src/FileUtils'
 
 function createTempFile () {
 	const tempFile = toUri('UNIT_TEST.tmp')
@@ -16,19 +18,22 @@ suite('proj0  - Extension Test Suite', () => {
 	const disposables: vscode.Disposable[] = []
 
 	suiteSetup('proj0 - before', async () => {
-		deleteFile(toUri('.vscode/ablunit-test-profile.json'))
-		deleteFile(toUri('src/dirA/proj10.p'))
-		deleteFile(toUri('UNIT_TEST.tmp'))
+		FileUtils.deleteFile(toUri('.vscode/ablunit-test-profile.json'))
+		FileUtils.deleteFile(toUri('src/dirA/proj10.p'))
+		FileUtils.deleteFile(toUri('UNIT_TEST.tmp'))
 		await suiteSetupCommon()
 		await commands.executeCommand('testing.clearTestResults')
-		copyFile(toUri('.vscode/settings.json'), toUri('.vscode/settings.json.bk'), { force: true})
-		log.info('suiteSetup complete')
+		FileUtils.copyFile(
+			toUri('.vscode/settings.json'),
+			toUri('.vscode/settings.json.bk'),
+			{ force: true })
+		return
 	})
 
 	teardown('proj0 - afterEach', () => {
-		deleteFile(toUri('.vscode/ablunit-test-profile.json'))
-		deleteFile(toUri('src/dirA/proj10.p'))
-		deleteFile(toUri('UNIT_TEST.tmp'))
+		FileUtils.deleteFile(toUri('.vscode/ablunit-test-profile.json'))
+		FileUtils.deleteFile(toUri('src/dirA/proj10.p'))
+		FileUtils.deleteFile(toUri('UNIT_TEST.tmp'))
 		while (disposables.length > 0) {
 			const d = disposables.pop()
 			if (d) {
@@ -37,8 +42,11 @@ suite('proj0  - Extension Test Suite', () => {
 				log.warn('disposables.length != 0')
 			}
 		}
-		return workspace.fs.copy(toUri('.vscode/settings.json.bk'), toUri('.vscode/settings.json'), { overwrite: true })
-			.then(() => { log.info('proj0 teardown --- end'); return })
+		if (FileUtils.doesFileExist(toUri('.vscode/settings.json.bk'))) {
+			FileUtils.deleteFile(toUri('.vscode/settings.json'))
+			FileUtils.copyFile(toUri('.vscode/settings.json.bk'), toUri('.vscode/settings.json'), { force: true })
+		}
+		log.info('proj0 teardown/afterEach --- end')
 	})
 
 	test('proj0.01 - ${workspaceFolder}/ablunit.json file exists', () => {
@@ -99,16 +107,24 @@ suite('proj0  - Extension Test Suite', () => {
 	})
 
 	test('proj0.06 - parse test program with expected error annotation', async () => {
-		const testClassItem = await commands.executeCommand('vscode.open', toUri('src/threeTestProcedures.p'))
-			.then(() => { return sleep2(250) })
-			.then(() => { return getTestItem(toUri('src/threeTestProcedures.p')) })
+		await commands.executeCommand('vscode.open', toUri('src/threeTestProcedures.p'))
+		await sleep2(250)
+		const testClassItem = await getTestItem(toUri('src/threeTestProcedures.p'))
+
+		// log.info('testClassItem = ' + JSON.stringify(testClassItem, null, 2))
+		log.info('testClassItem = ' + testClassItem.id)
+		for (const [id, child] of testClassItem.children) {
+			log.info('    child.id=' + id)
+		}
+
 
 		if (!testClassItem) {
 			throw new Error('cannot find TestItem for src/threeTestProcedures.p')
 		}
+
 		// size=3 would not include the TestResultList.cls in resources
-		// assert.equal(testClassItem.children.size, 3, 'testClassItem.children.size should be 3')
-		assert.equal(testClassItem.children.size, 4, 'testClassItem.children.size should be 4')
+		assert.equal(testClassItem.children.size, 3, 'testClassItem.children.size should be 3')
+		// assert.equal(testClassItem.children.size, 4, 'testClassItem.children.size should be 4')
 	})
 
 	test('proj0.07 - parse test class with skip annotation', async () => {

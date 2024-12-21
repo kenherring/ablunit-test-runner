@@ -1,5 +1,4 @@
-import { Uri } from 'vscode'
-import { assert, doesDirExist, doesFileExist, getWorkspaceFolders, runAllTests, suiteSetupCommon } from '../testCommon'
+import { assert, getWorkspaceFolders, runAllTests, suiteSetupCommon, Uri } from '../testCommon'
 
 suite('workspace0 - Extension Test Suite', () => {
 
@@ -19,8 +18,8 @@ suite('workspace0 - Extension Test Suite', () => {
 
 		assert.fileExists(ablunitJson)
 		assert.fileExists(resultsXml)
-		assert.ok(!doesFileExist(resultsJson), 'results.json exists and should not (' + resultsJson.fsPath + ')')
-		assert.ok(!doesDirExist(listingsDir), 'listings dir exists and should not (' + listingsDir.fsPath + ')')
+		assert.notFileExists(resultsJson)
+		assert.notDirExists(listingsDir)
 	})
 
 })
