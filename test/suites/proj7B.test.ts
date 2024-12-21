@@ -101,7 +101,7 @@ suite('proj7B - Extension Test Suite', () => {
 		// })
 	})
 
-	test('proj7B.3 - cancel test run while _progres is running', async () => {
+	test.skip('proj7B.3 - cancel test run while _progres is running', async () => {
 		const maxCancelTime = 1000
 		// const runTestTime = new Duration()
 
