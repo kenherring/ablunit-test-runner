@@ -18,8 +18,8 @@ suite('workspace0 - Extension Test Suite', () => {
 
 		assert.fileExists(ablunitJson)
 		assert.fileExists(resultsXml)
-		assert.fileExists(resultsJson, 'results.json exists and should not (' + resultsJson.fsPath + ')')
-		assert.dirExists(listingsDir, 'listings dir exists and should not (' + listingsDir.fsPath + ')')
+		assert.notFileExists(resultsJson)
+		assert.notDirExists(listingsDir)
 	})
 
 })
