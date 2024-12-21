@@ -1,4 +1,5 @@
-import { assert, getResults, getWorkspaceUri, log, runAllTests, suiteSetupCommon, Uri, commands, workspace, beforeCommon, deleteFile, toUri, selectProfile, runTestsInFile } from '../testCommon'
+import { assert, getResults, getWorkspaceUri, log, runAllTests, suiteSetupCommon, Uri, commands, workspace, beforeCommon, toUri, selectProfile, runTestsInFile } from '../testCommon'
+import * as FileUtils from '../../src/FileUtils'
 
 const workspaceUri = getWorkspaceUri()
 
@@ -10,8 +11,8 @@ suite('proj2 - Extension Test Suite', () => {
 
 	setup('proj2 - beforeEach', () => {
 		beforeCommon()
-		deleteFile(toUri('src/compileError.p'))
-		deleteFile(toUri('.vscode/profile.json'))
+		FileUtils.deleteFile(toUri('src/compileError.p'))
+		FileUtils.deleteFile(toUri('.vscode/profile.json'))
 	})
 
 	test('proj2.1 - temp/ablunit.json file exists', () => {

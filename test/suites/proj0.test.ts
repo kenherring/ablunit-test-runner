@@ -1,9 +1,10 @@
 import { Uri, commands, window, workspace } from 'vscode'
-import * as vscode from 'vscode'
-import { assert, deleteFile, getResults, getTestControllerItemCount, getTestItem, log, refreshTests, runAllTests, runAllTestsWithCoverage, runTestAtLine, runTestsDuration, runTestsInFile, sleep2, suiteSetupCommon, toUri, updateConfig, updateTestProfile } from '../testCommon'
+import { assert, getResults, getTestControllerItemCount, getTestItem, log, refreshTests, runAllTests, runAllTestsWithCoverage, runTestAtLine, runTestsDuration, runTestsInFile, sleep2, suiteSetupCommon, toUri, updateConfig, updateTestProfile } from '../testCommon'
 import { ABLResultsParser } from 'parse/ResultsParser'
-import * as fs from 'fs'
 import { TimeoutError } from 'ABLUnitRun'
+import * as vscode from 'vscode'
+import * as FileUtils from '../../src/FileUtils'
+import * as fs from 'fs'
 
 function createTempFile () {
 	const tempFile = toUri('UNIT_TEST.tmp')
@@ -16,18 +17,18 @@ suite('proj0  - Extension Test Suite', () => {
 	const disposables: vscode.Disposable[] = []
 
 	suiteSetup('proj0 - before', () => {
-		deleteFile('.vscode/ablunit-test-profile.json')
-		deleteFile('src/dirA/proj10.p')
-		deleteFile('UNIT_TEST.tmp')
+		FileUtils.deleteFile(toUri('.vscode/ablunit-test-profile.json'))
+		FileUtils.deleteFile(toUri('src/dirA/proj10.p'))
+		FileUtils.deleteFile(toUri('UNIT_TEST.tmp'))
 		return suiteSetupCommon()
 			.then(() => { return commands.executeCommand('testing.clearTestResults') })
 			.then(() => { return workspace.fs.copy(toUri('.vscode/settings.json'), toUri('.vscode/settings.json.bk'), { overwrite: true }) })
 	})
 
 	teardown('proj0 - afterEach', () => {
-		deleteFile('.vscode/ablunit-test-profile.json')
-		deleteFile('src/dirA/proj10.p')
-		deleteFile('UNIT_TEST.tmp')
+		FileUtils.deleteFile(toUri('.vscode/ablunit-test-profile.json'))
+		FileUtils.deleteFile(toUri('src/dirA/proj10.p'))
+		FileUtils.deleteFile(toUri('UNIT_TEST.tmp'))
 		while (disposables.length > 0) {
 			const d = disposables.pop()
 			if (d) {

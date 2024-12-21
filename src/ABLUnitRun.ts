@@ -1,9 +1,10 @@
 import { CancellationError, CancellationToken, Disposable, FileSystemWatcher, TestRun, Uri, workspace } from 'vscode'
 import { ABLResults } from './ABLResults'
-import { deleteFile, Duration } from './ABLUnitCommon'
+import { Duration } from './ABLUnitCommon'
 import { SendHandle, Serializable, SpawnOptions, spawn } from 'child_process'
 import { log } from './ChannelLogger'
 import { processUpdates, setTimeoutTestStatus, updateParserInit } from 'parse/UpdateParser'
+import * as FileUtils from './FileUtils'
 
 export enum RunStatus {
 	None = 10,
@@ -181,13 +182,15 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 	}
 
 	const runCommand = () => {
-		deleteFile(res.cfg.ablunitConfig.profFilenameUri)
-		// deleteFile(res.cfg.ablunitConfig.config_uri)
-		deleteFile(res.cfg.ablunitConfig.optionsUri.filenameUri)
-		deleteFile(res.cfg.ablunitConfig.optionsUri.jsonUri)
-		deleteFile(res.cfg.ablunitConfig.optionsUri.updateUri)
-		deleteFile(res.cfg.ablunitConfig.profFilenameUri)
-		// deleteFile(res.cfg.ablunitConfig.profOptsUri)
+		FileUtils.deleteFile(
+			res.cfg.ablunitConfig.profFilenameUri,
+			// res.cfg.ablunitConfig.config_uri,
+			res.cfg.ablunitConfig.optionsUri.filenameUri,
+			res.cfg.ablunitConfig.optionsUri.jsonUri,
+			res.cfg.ablunitConfig.optionsUri.updateUri,
+			res.cfg.ablunitConfig.profFilenameUri,
+			// res.cfg.ablunitConfig.profOptsUri,
+		)
 
 		log.debug('ablunit command dir=\'' + res.cfg.ablunitConfig.workspaceFolder.uri.fsPath + '\'')
 		if (cancellation?.isCancellationRequested) {

@@ -7,7 +7,7 @@ import { PropathParser } from '../ABLPropath'
 import { parseString } from 'xml2js'
 import { ABLDebugLines } from '../ABLDebugLines'
 import { log } from '../ChannelLogger'
-import { isRelativePath } from '../ABLUnitCommon'
+import * as FileUtils from '../FileUtils'
 
 export interface ITestCaseFailure {
 	callstackRaw: string
@@ -126,7 +126,7 @@ export class ABLResultsParser {
 		const testsuite = await this.parseSuite(res.testsuite)
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-call
 		let namePathSep = res.$.name.replace(/\\/g, '/') as string
-		if (!isRelativePath(namePathSep)) {
+		if (!FileUtils.isRelativePath(namePathSep)) {
 			namePathSep = workspace.asRelativePath(namePathSep, false)
 		}
 		const jsonData: ITestSuites = {
@@ -157,7 +157,7 @@ export class ABLResultsParser {
 			const testcases = await this.parseTestCases(res[idx].testcase)
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-call
 			let namePathSep = res[idx].$.name.replace(/\\/g, '/') as string
-			if (!isRelativePath(namePathSep)) {
+			if (!FileUtils.isRelativePath(namePathSep)) {
 				namePathSep = workspace.asRelativePath(namePathSep, false)
 			}
 

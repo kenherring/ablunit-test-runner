@@ -1,7 +1,7 @@
 import { Uri, workspace, WorkspaceFolder } from 'vscode'
 import { IProjectJson } from './parse/OpenedgeProjectParser'
-import { isRelativePath } from './ABLUnitCommon'
 import { log } from './ChannelLogger'
+import * as FileUtils from './FileUtils'
 
 interface IPropathEntry {
 	uri: Uri
@@ -50,14 +50,14 @@ export class PropathParser {
 		for (const entry of importedPropath.propathEntry) {
 			log.debug('found propath entry: ' + entry.path + ' ' + entry.type + ' ' + entry.buildDir)
 			let uri: Uri = Uri.file(entry.path)
-			if(isRelativePath(entry.path)) {
+			if(FileUtils.isRelativePath(entry.path)) {
 				uri = Uri.joinPath(this.workspaceFolder.uri, entry.path)
 			}
 
 			let buildUri: Uri = uri
 			if (entry.buildDir) {
 				buildUri = Uri.file(entry.buildDir)
-				if(isRelativePath(entry.buildDir)) {
+				if(FileUtils.isRelativePath(entry.buildDir)) {
 					buildUri = Uri.joinPath(this.workspaceFolder.uri, entry.buildDir)
 				}
 			}
@@ -65,7 +65,7 @@ export class PropathParser {
 			let xrefDirUri: Uri = uri
 			if (entry.xrefDir) {
 				xrefDirUri = Uri.file(entry.xrefDir)
-				if(isRelativePath(entry.xrefDir)) {
+				if(FileUtils.isRelativePath(entry.xrefDir)) {
 					xrefDirUri = Uri.joinPath(this.workspaceFolder.uri, entry.xrefDir)
 				}
 			}
@@ -147,7 +147,7 @@ export class PropathParser {
 		if (file instanceof Uri) {
 			return this.searchUri(file)
 		}
-		let relativeFile = isRelativePath(file) ? file : workspace.asRelativePath(Uri.file(file), false)
+		let relativeFile = FileUtils.isRelativePath(file) ? file : workspace.asRelativePath(Uri.file(file), false)
 		if (!relativeFile.endsWith('.cls') && !relativeFile.endsWith('.p') && !relativeFile.endsWith('.w') && !relativeFile.endsWith('.i')) {
 			relativeFile = relativeFile.replace(/\./g, '/') + '.cls'
 		}

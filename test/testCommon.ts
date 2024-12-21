@@ -1,7 +1,7 @@
 import * as assertParent from 'assert'
 import * as fs from 'fs'
-import { globSync } from 'glob'
 import * as vscode from 'vscode'
+import * as FileUtils from '../src/FileUtils'
 import {
 	CancellationError, TestController,
 	TestItemCollection,
@@ -14,14 +14,14 @@ import {
 	TestItem
 } from 'vscode'
 import { ABLResults } from '../src/ABLResults'
-import { Duration, deleteFile as deleteFileCommon, isRelativePath, readStrippedJsonFile } from '../src/ABLUnitCommon'
+import { Duration, gatherAllTestItems, IExtensionTestReferences } from '../src/ABLUnitCommon'
 import { log as logObj } from '../src/ChannelLogger'
-import { gatherAllTestItems, IExtensionTestReferences } from '../src/extension'
 import { ITestSuites } from '../src/parse/ResultsParser'
 import { IConfigurations, parseRunProfiles } from '../src/parse/TestProfileParser'
 import { DefaultRunProfile, IRunProfile as IRunProfileGlobal } from '../src/parse/config/RunProfile'
 import { RunStatus } from '../src/ABLUnitRun'
 import { enableOpenedgeAblExtension, rebuildAblProject, restartLangServer, setRuntimes, waitForLangServerReady } from './openedgeAblCommands'
+import { globSync } from 'glob'
 import path from 'path'
 
 interface IRuntime {
@@ -129,19 +129,19 @@ export function isoDate () {
 
 function getExtensionDevelopmentPath () {
 	let dir = Uri.joinPath(Uri.file(__dirname))
-	if (doesFileExist(Uri.joinPath(dir, 'package.json'))) {
+	if (FileUtils.doesFileExist(Uri.joinPath(dir, 'package.json'))) {
 		return dir
 	}
 	dir = Uri.joinPath(Uri.file(__dirname), '..')
-	if (doesFileExist(Uri.joinPath(dir, 'package.json'))) {
+	if (FileUtils.doesFileExist(Uri.joinPath(dir, 'package.json'))) {
 		return dir
 	}
 	dir = Uri.joinPath(Uri.file(__dirname), '..', '..')
-	if (doesFileExist(Uri.joinPath(dir, 'package.json'))) {
+	if (FileUtils.doesFileExist(Uri.joinPath(dir, 'package.json'))) {
 		return dir
 	}
 	dir = Uri.joinPath(Uri.file(__dirname), '..', '..', '..')
-	if (doesFileExist(Uri.joinPath(dir, 'package.json'))) {
+	if (FileUtils.doesFileExist(Uri.joinPath(dir, 'package.json'))) {
 		return dir
 	}
 	throw new Error('unable to determine extensionDevelopmentPath')
@@ -227,37 +227,6 @@ export function installExtension (extname = 'riversidesoftware.openedge-abl-lsp'
 			log.error('install failed e=' + e)
 			return false
 		})
-}
-
-export function deleteFile (file: Uri | string) {
-	deleteFiles(file)
-}
-
-export function deleteFiles (files: Uri | Uri[] | string | string[]) {
-	const uris: Uri[] = []
-	if (files instanceof Array) {
-		for (const file of files) {
-			if (file instanceof Uri) {
-				uris.push(file)
-				continue
-			}
-			if (isRelativePath(file)) {
-				uris.push(Uri.joinPath(getWorkspaceUri(), file))
-				continue
-			}
-			uris.push(Uri.file(file))
-		}
-	} else if (files instanceof Uri) {
-		uris.push(files)
-	} else if (isRelativePath(files)) {
-		uris.push(Uri.joinPath(getWorkspaceUri(), files))
-	} else {
-		uris.push(Uri.file(files))
-	}
-
-	for (const uri of uris) {
-		deleteFileCommon(uri)
-	}
 }
 
 export function sleep2 (time = 10, msg?: string | null) {
@@ -449,7 +418,7 @@ export function toUri (uri: string | Uri) {
 		throw new Error('workspaceUri is null (uri="' + uri.toString() + '")')
 	}
 
-	if (isRelativePath(uri)) {
+	if (FileUtils.isRelativePath(uri)) {
 		return Uri.joinPath(ws, uri)
 	}
 	return Uri.file(uri)
@@ -459,45 +428,17 @@ function fileToString (file: Uri | string) {
 	if (file instanceof Uri) {
 		return file.fsPath
 	}
-	if (isRelativePath(file)) {
+	if (FileUtils.isRelativePath(file)) {
 		return Uri.joinPath(getWorkspaceUri(), file).fsPath
 	}
 	return Uri.file(file).fsPath
 }
 
-export function doesFileExist (uri: Uri | string | undefined) {
-	if (!uri) {
-		log.warn('doesFileExist: uri is undefined')
-		return false
-	}
-	try {
-		const stat = fs.statSync(toUri(uri).fsPath)
-		if (stat.isFile()) {
-			return true
-		}
-	} catch {
-		// do nothing - file does not exist
-	}
-	return false
-}
-
-export function doesDirExist (uri: Uri | string) {
-	try {
-		const stat = fs.statSync(toUri(uri).fsPath)
-		if (stat.isDirectory()) {
-			return true
-		}
-	} catch {
-		// do nothing - file does not exist
-	}
-	return false
-}
-
 export function deleteTestFiles () {
 	const workspaceUri = getWorkspaceUri()
-	deleteFile(Uri.joinPath(workspaceUri, 'ablunit.json'))
-	deleteFile(Uri.joinPath(workspaceUri, 'results.json'))
-	deleteFile(Uri.joinPath(workspaceUri, 'results.xml'))
+	FileUtils.deleteFile(Uri.joinPath(workspaceUri, 'ablunit.json'))
+	FileUtils.deleteFile(Uri.joinPath(workspaceUri, 'results.json'))
+	FileUtils.deleteFile(Uri.joinPath(workspaceUri, 'results.xml'))
 }
 
 export function getSessionTempDir () {
@@ -586,7 +527,7 @@ export async function runAllTests (doRefresh = true, waitForResults = true, with
 			if (r.length >= 0) {
 				const fUri = r[0]?.cfg.ablunitConfig.optionsUri.filenameUri
 				log.info(tag + 'testing.runAll command complete (filename=' + fUri.fsPath + ', r=' + r + ')')
-				return doesFileExist(fUri)
+				return FileUtils.doesFileExist(fUri)
 			}
 			return false
 		}, (e: unknown) => {
@@ -802,11 +743,11 @@ export async function updateTestProfile (key: string, value: string | string[] |
 	}
 	const testProfileUri = Uri.joinPath(workspaceUri, '.vscode', 'ablunit-test-profile.json')
 	let profile: IConfigurations
-	if (!doesFileExist(testProfileUri)) {
+	if (!FileUtils.doesFileExist(testProfileUri)) {
 		log.info('creating ablunit-test-profile.json')
 		profile = { configurations: [ new DefaultRunProfile ] } as IConfigurations
 	} else {
-		profile = (readStrippedJsonFile(testProfileUri)) as IConfigurations
+		profile = (FileUtils.readStrippedJsonFile(testProfileUri)) as IConfigurations
 	}
 	const keys = key.split('.')
 
@@ -1196,28 +1137,40 @@ export const assert = {
 		}
 	},
 
-	fileExists: (...files: string[] | Uri[]) => {
+	fileExists: (...files: (string | Uri)[]) => {
 		if (files.length === 0) { throw new Error('no file(s) specified') }
-		for (const file of files) {
-			assertParent.ok(doesFileExist(file), 'file does not exist: ' + fileToString(file))
+		for (let file of files) {
+			if (!(file instanceof Uri)) {
+				file = toUri(file)
+			}
+			assertParent.ok(FileUtils.doesFileExist(file), 'file does not exist: ' + fileToString(file))
 		}
 	},
 	notFileExists: (...files: string[] | Uri[]) => {
 		if (files.length === 0) { throw new Error('no file(s) specified') }
-		for (const file of files) {
-			assertParent.ok(!doesFileExist(file), 'file exists: ' + fileToString(file))
+		for (let file of files) {
+			if (!(file instanceof Uri)) {
+				file = toUri(file)
+			}
+			assertParent.ok(!FileUtils.doesFileExist(file), 'file exists: ' + fileToString(file))
 		}
 	},
-	dirExists: (...dirs: string[] | Uri[]) => {
+	dirExists: (...dirs: (string | Uri)[]) => {
 		if (dirs.length === 0) { throw new Error('no dir(s) specified') }
-		for (const dir of dirs) {
-			assertParent.ok(doesDirExist(dir), 'dir does not exist: ' + fileToString(dir))
+		for (let dir of dirs) {
+			if (!(dir instanceof Uri)) {
+				dir = toUri(dir)
+			}
+			assertParent.ok(FileUtils.doesDirExist(dir), 'dir does not exist: ' + fileToString(dir))
 		}
 	},
 	notDirExists: (...dirs: string[] | Uri[]) => {
 		if (dirs.length === 0) { throw new Error('no dir(s) specified') }
-		for (const dir of dirs) {
-			assertParent.ok(!doesDirExist(dir), 'dir exists: ' + fileToString(dir))
+		for (let dir of dirs) {
+			if (!(dir instanceof Uri)) {
+				dir = toUri(dir)
+			}
+			assertParent.ok(!FileUtils.doesDirExist(dir), 'dir exists: ' + fileToString(dir))
 		}
 	},
 
@@ -1326,8 +1279,8 @@ export function beforeProj7 () {
 			const classContent = data.toString()
 			const proms = []
 			for (let i = 0; i < 10; i++) {
-				proms.push(workspace.fs.createDirectory(toUri('src/procs/dir' + i)))
-				proms.push(workspace.fs.createDirectory(toUri('src/classes/dir' + i)))
+				FileUtils.createDir(toUri('src/procs/dir' + i))
+				FileUtils.createDir(toUri('src/classes/dir' + i))
 				for (let j = 0; j < 10; j++) {
 					proms.push(workspace.fs.copy(templateProc, toUri('src/procs/dir' + i + '/testProc' + j + '.p'), { overwrite: true }))
 
