@@ -1,6 +1,7 @@
 {
 	"configurations": [
 		{
+			"name": "proj1",
 			"tempDir": "${workspaceFolder}",
 			"options": {
 				"output": {
@@ -8,7 +9,7 @@
 				}
 			},
 			"profiler": {
-				"enabled": false
+				"enabled": true
 			}
 		}
 	]

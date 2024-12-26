@@ -55,6 +55,7 @@
 			"options": [
 				"AtStart",
 				"DebugLines",
+				"ProfileParser",
 				"proj0",
 				"proj1",
 				"proj2",
@@ -66,6 +67,7 @@
 				"proj8_custom_command",
 				"proj9",
 				"projA",
+				"SourceMapXrefParser",
 				"workspace0.code-workspace",
 				"workspace1.code-workspace",
 			]

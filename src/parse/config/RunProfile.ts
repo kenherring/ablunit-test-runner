@@ -7,6 +7,7 @@ export interface IRunProfile {
 	runProfile?: string
 	hide?: boolean
 	workspaceFolder?: WorkspaceFolder
+	name?: string
 	tempDir?: string
 	importOpenedgeProjectJson: boolean
 	openedgeProjectProfile: string | undefined
@@ -18,6 +19,7 @@ export interface IRunProfile {
 
 export class DefaultRunProfile implements IRunProfile {
 	hide = false
+	name: string | undefined = 'Default'
 	tempDir = '${workspaceFolder}'
 	importOpenedgeProjectJson = true
 	openedgeProjectProfile: string | undefined = undefined

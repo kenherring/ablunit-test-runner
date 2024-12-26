@@ -1,12 +1,12 @@
-import { TestController, TestItem, TestItemCollection } from 'vscode'
+import { TestController, TestItem, TestItemCollection, Uri } from 'vscode'
 import { ABLResults } from './ABLResults'
+import * as FileUtils from './FileUtils'
 
 export interface IExtensionTestReferences {
 	testController: TestController
 	recentResults: ABLResults[]
 	currentRunData: ABLResults[]
 }
-
 export class Duration {
 	name?: string
 	start: number
@@ -41,6 +41,28 @@ export class Duration {
 	toString () {
 		return '(duration=' + this.elapsed() + 'ms)'
 	}
+}
+
+export function readOEVersionFile (useDLC: string) {
+	const dlcUri = Uri.file(useDLC)
+	const versionFileUri = Uri.joinPath(dlcUri, 'version')
+	if (!FileUtils.doesFileExist(versionFileUri)) {
+		// log.debug('version file does not exist: ' + versionFile)
+		return undefined
+	}
+	const dlcVersion = FileUtils.readFileSync(versionFileUri)
+	if (!dlcVersion) {
+		// log.debug('failed to read version file: ' + versionFile)
+		return undefined
+	}
+
+	const match = RegExp(/OpenEdge Release (\d+\.\d+)/).exec(dlcVersion.toString())
+	if (match) {
+		// log.info('oeversion from DLC is ' + match[1] + ' (file=' + versionFile + ')')
+		return match[1]
+	}
+	// log.debug('failed to parse version file: ' + versionFile + ' (content=' + dlcVersion + ')')
+	return undefined
 }
 
 export function gatherAllTestItems (collection: TestItemCollection) {

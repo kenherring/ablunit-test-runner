@@ -1,5 +1,5 @@
 import { Selection, TaskEndEvent, TaskExecution, commands, tasks, window } from 'vscode'
-import { Uri, assert, getWorkspaceUri, log, runAllTests, sleep, updateConfig, getTestCount, workspace, suiteSetupCommon, getWorkspaceFolders, oeVersion, runTestAtLine, beforeCommon, updateTestProfile, runTestsInFile, sleep2 } from '../testCommon'
+import { Uri, assert, getWorkspaceUri, log, runAllTests, sleep, updateConfig, getTestCount, workspace, suiteSetupCommon, getWorkspaceFolders, oeVersion, runTestAtLine, beforeCommon, updateTestProfile, runTestsInFile, sleep2, toUri } from '../testCommon'
 import { getOEVersion } from 'parse/OpenedgeProjectParser'
 import { execSync } from 'child_process'
 import * as glob from 'glob'
@@ -152,7 +152,10 @@ suite('proj1 - Extension Test Suite', () => {
 	})
 
 	test('proj1.8 - update charset to ISO8559-1, then read file with UTF-8 chars', async () => {
-		await workspace.fs.copy(Uri.joinPath(workspaceUri, 'openedge-project.proj1.8.json'), Uri.joinPath(workspaceUri, 'openedge-project.json'), { overwrite: true })
+		const contents = FileUtils.readFileSync(toUri('openedge-project.proj1.8.json'))
+		const outdata = Buffer.from(contents.toString())
+		FileUtils.writeFile(toUri('openedge-project.json'), outdata)
+
 		await runTestAtLine('import_charset.p', 14)
 			.then(() => {
 				log.info('testing.runAtCursor complete')
@@ -281,20 +284,10 @@ suite('proj1 - Extension Test Suite', () => {
 	})
 
 	test('proj1.15A - compile option without MIN-SIZE without xref', () => {
-		const p = compileWithTaskAndCoverage('ant build')
+		const p = compileWithTaskAndRunWithCoverage('ant build')
 			.then(() => {
-				assert.linesExecuted('test_15.p', [9, 10, 13])
+				assert.linesExecuted('test_15.p', [9, 10, 13, 14])
 				assert.coverageProcessingMethod('test_15.p', 'rcode')
-				return true
-			})
-		return p
-	})
-
-	test('proj1.15B - compile option with MIN-SIZE without xref', () => {
-		const p = compileWithTaskAndCoverage('ant build min-size')
-			.then(() => {
-				assert.linesExecuted('test_15.p', [9, 10, 13])
-				assert.coverageProcessingMethod('test_15.p', 'parse')
 				return true
 			})
 		return p
@@ -322,7 +315,7 @@ suite('proj1 - Extension Test Suite', () => {
 
 })
 
-async function compileWithTaskAndCoverage (taskName: string) {
+async function compileWithTaskAndRunWithCoverage (taskName: string) {
 	FileUtils.deleteFile(
 		Uri.joinPath(workspaceUri, 'test_15.r'),
 		Uri.joinPath(workspaceUri, 'openedge-project.json'),

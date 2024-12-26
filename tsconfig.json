@@ -57,6 +57,9 @@
 		"./**/*.mjs",
 		"./test/suites/*.test.ts",
 		"./esbuild.js",
+		"./esbuild.config.mjs",
+		"./eslint.config.mjs",
+		"./.vscode-test.mjs",
 	],
 	"exclude": [
 		"./dummy-ext/**",

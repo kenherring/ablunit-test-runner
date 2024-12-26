@@ -1,6 +1,7 @@
 {
 	"configurations": [
 		{
+			"name": "proj1.16",
 			"tempDir": "${workspaceFolder}",
 			"options": {
 				"output": {

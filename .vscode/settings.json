@@ -55,6 +55,7 @@
 		"out": true,
 		"node_modules": true,
 		"dummy-ext/.vscode-test/**": true,
+		"resources/ADE": true,
 	},
 	"shellcheck.useWorkspaceRootAsCwd": true,
 	"sonarlint.connectedMode.project": {

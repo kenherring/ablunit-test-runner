@@ -1,0 +1,44 @@
+<project name="SourceMapXrefParser" default="compile-and-test">
+
+  <property environment="env" />
+
+  <taskdef resource="PCT.properties" classpath="${user.home}/.ant/lib/PCT.jar;/usr/share/ant/lib/PCT.jar" />
+  <typedef resource="types.properties" classpath="${user.home}/.ant/lib/PCT.jar;/usr/share/ant/lib/PCT.jar" />
+  <DlcHome value="${env.DLC}" />
+  <echo>DLC=${env.DLC}</echo>
+
+  <target name="compile-and-test">
+    <antcall target="compile" />
+    <antcall target="test">
+      <param name="testdir" value="test_1" />
+    </antcall>
+    <antcall target="test">
+      <param name="testdir" value="test_2" />
+    </antcall>
+    <antcall target="test">
+      <param name="testdir" value="test_3" />
+    </antcall>
+
+  </target>
+
+  <target name="test">
+    <echo>running tests from ${testdir}/</echo>
+    <ABLUnit writeLog="true" destDir="${testdir}" failOnError="false" haltOnFailure="false">
+      <!-- <propath>
+        <path location="." />
+      </propath> -->
+      <fileset dir="." includes="${testdir}/*.p" />
+      <Profiler enabled="true" outputFile="${testdir}/prof.out" coverage="true" />
+    </ABLUnit>
+  </target>
+
+  <target name="compile">
+    <echo>Compiling...</echo>
+    <echo>minSize=${minSize}</echo>
+
+    <PCTCompile forceCompile="true" listing="false" keepXref="true" xrefDir="." debugListing="true" minSize="true" flattenDebugListing="false">
+      <fileset dir="." includes="test_*/*.p" />
+    </PCTCompile>
+  </target>
+
+</project>

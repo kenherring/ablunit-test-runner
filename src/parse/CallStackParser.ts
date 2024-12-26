@@ -1,6 +1,6 @@
 import { workspace, Location, Position, Range, Uri } from 'vscode'
 import { ABLDebugLines } from '../ABLDebugLines'
-import { ISourceMapItem } from './RCodeParser'
+import { SourceMapItem } from './SourceMapParser'
 import { log } from '../ChannelLogger'
 import * as FileUtils from '../FileUtils'
 
@@ -13,7 +13,7 @@ interface ICallStackItem {
 	debugUri?: Uri
 	sourceLine?: number
 	// fileinfo?: IABLFile
-	lineinfo?: ISourceMapItem
+	lineinfo?: SourceMapItem
 	markdownText?: string
 	loc?: Location
 	position: Position
@@ -68,7 +68,7 @@ export async function parseCallstack (debugLines: ABLDebugLines, callstackRaw: s
 			position: new Position(debugLine - 1, 0)
 		}
 
-		let lineinfo: ISourceMapItem | undefined = undefined
+		let lineinfo: SourceMapItem | undefined = undefined
 		lineinfo = await debugLines.getSourceLine(moduleParent, debugLine)
 			.catch((e: unknown) => {
 				log.info('could not find source line for ' + moduleParent + ' at line ' + debugLine + '.  using raw callstack data')

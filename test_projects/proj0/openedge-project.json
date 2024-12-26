@@ -1,7 +1,7 @@
 {
 	"buildPath": [
 		// { "type": "propath", "documentation": "docs/ablunit.json", "path": "${DLC}/tty/ablunit.pl" },
-		{ "type": "source", "documentation": "docs/src.json", "path": "src", "excludes": "emptyClass.cls" },
+		{ "type": "source", "documentation": "docs/src.json", "path": "src", "excludes": "emptyClass.cls", "xref": ".xref" },
 		{ "type": "source", "documentation": "docs/test.json", "path": "test" }
 	],
 	//this is a comment!

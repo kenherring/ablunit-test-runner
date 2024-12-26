@@ -1,12 +1,19 @@
 {
 	"configurations": [
 		{
+			"name": "proj1.15",
 			"tempDir": "${workspaceFolder}",
 			"options": {
+				"showErrorMessage": true,
+				"writeLog": true,
 				"output": {
 					"writeJson": true
 				}
+			},
+			"profiler": {
+				"writeJson": true
 			}
+
 		}
 	]
 }

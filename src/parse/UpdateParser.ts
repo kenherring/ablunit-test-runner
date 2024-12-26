@@ -1,6 +1,6 @@
-import { FileSystemError, TestItem, TestMessage, TestRun, Uri } from 'vscode'
-import { readLinesFromFile } from './TestParserCommon'
+import { TestItem, TestMessage, TestRun, Uri } from 'vscode'
 import { log } from '../ChannelLogger'
+import * as FileUtils from 'FileUtils'
 
 export enum TestStatus {
 	unknown = 'unknown',
@@ -51,7 +51,7 @@ interface ITestNode {
 }
 
 let prevRootText: string
-let updates: ITestNode[]
+let updates: ITestNode[] = []
 let newUpdates: ITestNode[]
 
 function parseTestTree (line: string, tests: TestItem[]) {
@@ -104,8 +104,15 @@ export function updateParserInit () {
 
 function parseUpdateLines (lines: string[], tests: TestItem[]) {
 	newUpdates = []
+	if (lines.length == 0) {
+		return updates
+	}
+
 	for (let lineNum = 0; lineNum < lines.length; lineNum++) {
 		const line = lines[lineNum]
+		if (line == '') {
+			continue
+		}
 		const event = line.split(' ')[0] ?? 'unknown'
 		const eventStatus = event as TestStatus ?? TestStatus.unknown
 
@@ -132,7 +139,7 @@ function parseUpdateLines (lines: string[], tests: TestItem[]) {
 
 		const [ , id, timeVal ] = line.split(' ')
 		const time = Number(timeVal ?? 0) * 1000
-		const idx = updates.findIndex((test) => test.id === id)
+		const idx = updates.findIndex((test) => { return test.id === id })
 		if (!updates[idx]) {
 			log.error('Test not found for id=' + id + '; event=' + event + ' (line=' + lineNum + ')')
 			continue
@@ -152,8 +159,16 @@ function parseUpdateLines (lines: string[], tests: TestItem[]) {
 			// TODO - import the error message and stack trace
 			continue
 		}
+		// if (eventStatus == TestStatus.exception) {
+		// 	// TODO - import the error message and stack trace
+		// 	continue
+		// }
 
-		if (eventStatus == TestStatus.started || eventStatus == TestStatus.failed || eventStatus == TestStatus.passed || eventStatus == TestStatus.skipped) {
+		if (eventStatus == TestStatus.started ||
+			eventStatus == TestStatus.failed ||
+			eventStatus == TestStatus.passed ||
+			eventStatus == TestStatus.skipped ||
+			eventStatus == TestStatus.exception) {
 			updates[idx].status = eventStatus
 			updates[idx].time = time
 			// remove any previous updates for this test
@@ -166,9 +181,11 @@ function parseUpdateLines (lines: string[], tests: TestItem[]) {
 			continue
 		}
 
-
 		/* Log and move on instead of throwing ... the parsing of result.xml will overwrite this anyway */
 		log.error('Unknown event type: ' + event + '(line[' + lineNum + ']: ' + line + ')')
+	}
+	if (!updates) {
+		updates = []
 	}
 	log.debug('return updates.length=' + updates.length)
 	return updates
@@ -266,15 +283,20 @@ function setTestRunTestStatus (options: TestRun, item: ITestNode) {
 			if (item.test) { options.skipped(item.test) }
 			log.info('\t❔  ' + printName, options)
 			break
-		default: log.error('unexpected item.status=' + item.status + '; item.id=' + item.id + '; item.name=' + item.name)
+		case TestStatus.exception:
+			if (item.test) { options.failed(item.test, [], item.time) }
+			log.info('\t⚠️  ' + printName, options)
+			break
+		default:
+			log.error('unexpected item.status=' + item.status + '; item.id=' + item.id + '; item.name=' + item.name)
 	}
 }
 
-export function parseUpdates (filepath: Uri | string, tests: TestItem[]) {
+export function parseUpdates (filepath: Uri, tests: TestItem[]) {
 	log.debug('Parsing updates from: ' + filepath)
 	// instead of reading the whole file we could buffer it and only read the new lines
-	return readLinesFromFile(filepath)
-		.then((lines) => { return parseUpdateLines(lines, tests) }, (e: unknown) => { throw e })
+	const lines = FileUtils.readLinesFromFileSync(filepath)
+	return parseUpdateLines(lines, tests)
 }
 
 function showUpdates (options: TestRun, updates: ITestNode[] | undefined) {
@@ -294,6 +316,9 @@ function showUpdates (options: TestRun, updates: ITestNode[] | undefined) {
 		if (item.name == 'TEST_ROOT') {
 			continue
 		}
+
+		const children = updates.filter((test) => test.parent?.id == item.id)
+		showUpdates(options, children)
 		setTestRunTestStatus(options, item)
 	}
 	return true
@@ -301,24 +326,14 @@ function showUpdates (options: TestRun, updates: ITestNode[] | undefined) {
 
 export function processUpdates (options: TestRun, tests: TestItem[], updateFile?: Uri) {
 	if (!updateFile) {
-		return Promise.resolve(false)
+		return
 	}
-	return parseUpdates(updateFile, tests)
-		.then((updates) => {
-			const r = showUpdates(options, updates)
-			if (r) {
-				log.debug('updates processed and displayed successfully')
-			}
-			return true
-		}, (e: unknown) => {
-			if (e instanceof FileSystemError) {
-				log.warn('could not find update file: ' + updateFile.fsPath)
-			} else if (e instanceof Error) {
-				log.warn('error processing updates: ' + e.stack! + ' (e=' + e + ')')
-			}
-			// eat this error, we don't want to stop the test run because of it
-			return false
-		})
+	const updates = parseUpdates(updateFile, tests)
+	const r = showUpdates(options, updates)
+	if (r) {
+		log.debug('updates processed and displayed successfully')
+	}
+	return true
 }
 
 export function setTimeoutTestStatus (options: TestRun, timeout: number) {

@@ -1,5 +1,4 @@
 import * as assertParent from 'assert'
-import * as fs from 'fs'
 import * as vscode from 'vscode'
 import * as FileUtils from '../src/FileUtils'
 import {
@@ -56,7 +55,7 @@ export const oeVersion = () => {
 	}
 
 	const versionFile = path.join(useDLC, 'version')
-	const dlcVersion = fs.readFileSync(versionFile)
+	const dlcVersion = FileUtils.readFileSync(versionFile)
 	log.info('dlcVersion=' + dlcVersion)
 	if (dlcVersion) {
 		const match = RegExp(/OpenEdge Release (\d+\.\d+)/).exec(dlcVersion.toString())
@@ -286,7 +285,10 @@ async function waitForExtensionActive (extensionId = 'kherring.ablunit-test-runn
 		throw new Error('extension not installed: ' + extensionId)
 	}
 	if (!ext) { throw new Error(extensionId + ' is not installed') }
-	if (ext.isActive) { log.info(extensionId + ' is already active'); return ext.isActive }
+	if (ext.isActive) {
+		log.info(extensionId + ' is already active')
+		return ext.isActive
+	}
 
 	ext = await ext.activate()
 		.then(() => { return sleep2(250) })
@@ -471,7 +473,7 @@ export async function getTestCount (resultsJson: Uri, status = 'tests') {
 		} else if (status === 'skipped') {
 			return results[0].skipped
 		} else {
-			throw new Error('[unknown status: ' + status)
+			throw new Error('unknown status: ' + status)
 		}
 	})
 	log.info('getTestCount: ' + status + ' = ' + count)
@@ -481,6 +483,13 @@ export async function getTestCount (resultsJson: Uri, status = 'tests') {
 export function getDefaultDLC () {
 	if (process.platform === 'linux') {
 		return '/psc/dlc'
+	}
+	const dlc = getEnvVar('DLC')
+	if (dlc) {
+		return dlc
+	}
+	if (getEnvVar('OE_VERSION') === '12.8' || getEnvVar('ABLUNIT_TEST_RUNNER_OE_VERSION') === '12.8') {
+		return 'C:\\Progress\\OpenEdge-12.8'
 	}
 	return 'C:\\Progress\\OpenEdge'
 }
@@ -794,7 +803,7 @@ export function refreshData (resultsLen = 0) {
 	return commands.executeCommand('_ablunit.getExtensionTestReferences').then((resp) => {
 		// log.info('refreshData command complete (resp=' + JSON.stringify(resp) + ')')
 		const refs = resp as IExtensionTestReferences
-		log.info('getExtensionTestReferences command complete (resp.length=' + refs.recentResults.length + ')')
+		// log.info('getExtensionTestReferences command complete (resp.length=' + refs.recentResults.length + ')')
 		// log.info('refs=' + JSON.stringify(refs))
 
 		if (refs.recentResults.length > 0) {
@@ -960,7 +969,7 @@ export async function getResults (len = 1, tag?: string): Promise<ABLResults[]> 
 	if ((!recentResults || recentResults.length === 0) && len > 0) {
 		log.info(tag + 'recentResults not set, refreshing...')
 		for (let i=0; i<5; i++) {
-			const prom = sleep2(250, tag + 'still no recentResults, sleep before trying again (' + i + '/4)')
+			const prom = sleep2(250, tag + 'still no recentResults (' + i + '/4)')
 				.then(() => { return refreshData() })
 				.then((gotResults) => {
 					if (gotResults) { return gotResults }
@@ -1054,24 +1063,29 @@ class AssertTestResults {
 	}
 }
 
-function getDetailLine (coverage: FileCoverageDetail[] | never[], lineNum: number) {
-	if (!coverage) return undefined
+function getLineExecutions (coverage: FileCoverageDetail[] | never[], lineNum: number) {
+	log.info('coverage.length=' + coverage.length)
 	if (coverage.length === 0) {
-		return undefined
+		throw new Error('coverage is undefined')
 	}
-	try {
-		const l =  coverage.find((d: FileCoverageDetail) => {
-			const r = d.location as Position
-			return r
-		})
-		if (l) {
-			log.info('found line ' + lineNum + '!')
-			return l
-		}
+
+	const details =  coverage.filter((d: FileCoverageDetail) => {
+		const r = d.location as Position
+		return r.line == lineNum
+	})
+	if (details.length === 0) {
 		throw new Error('Could not find line ' + lineNum + ' in coverage')
-	} catch (e) {
-		throw new Error('Error finding coverage info for line ' + lineNum + '. e=' + e)
 	}
+
+	let executed = 0
+	for (const l of details) {
+		if (typeof l.executed === 'number') {
+			executed += l.executed
+		} else {
+			throw new Error('executed is not a number! details=' + JSON.stringify(details))
+		}
+	}
+	return executed
 }
 
 export const assert = {
@@ -1095,8 +1109,8 @@ export const assert = {
 	deepEqual: assertParent.deepEqual,
 	notDeepEqual: assertParent.notDeepEqual,
 	fail: (message: string) => { assertParent.fail(message) },
-	ok: (value: unknown) => {
-		assertParent.ok(value)
+	ok: (value: unknown, message?: string) => {
+		assertParent.ok(value, message)
 	},
 	ifError: assertParent.ifError,
 	throws: assertParent.throws,
@@ -1188,11 +1202,8 @@ export const assert = {
 	tests: new AssertTestResults(),
 
 	coverageProcessingMethod (debugSourceFile: string, expected: 'rcode' | 'parse') {
-		log.info('200')
 		if (! recentResults) {
-			log.info('201')
 			assert.fail('recentResults is undefined')
-			log.info('202')
 			return
 		}
 
@@ -1202,7 +1213,7 @@ export const assert = {
 		}
 
 		const actual = res.debugLines?.getProcessingMethod(debugSourceFile)
-		assert.equal(actual, expected)
+		assert.equal(actual, expected, 'processing method actual: ' + actual + ' != expected: ' + expected)
 	},
 
 	coveredFiles (expected: number) {
@@ -1213,6 +1224,14 @@ export const assert = {
 		if (recentResults.length == 0) {
 			assert.fail('recentResults.length is 0')
 			return
+		}
+
+		log.info('recentResults.length=' + recentResults.length)
+		// eslint-disable-next-line @typescript-eslint/prefer-for-of
+		for (let i=0; i<recentResults.length; i++) {
+			const r = recentResults[i]
+			const startDate = new Date(r.duration.start)
+			log.info('r.duration.name=' + r.duration.name + ', startDate=' + startDate)
 		}
 
 		const actual = recentResults[recentResults.length - 1].coverage.size
@@ -1243,25 +1262,46 @@ export const assert = {
 			return
 		}
 
+		log.info('file=' + file)
+		log.info('recentResults.length=' + recentResults.length)
+
+		// eslint-disable-next-line @typescript-eslint/prefer-for-of
+		for (let i=0; i<recentResults.length; i++) {
+			log.info(' - recentResults[i].coverage.size=' + recentResults[i].coverage.size)
+
+			for (let j=0; j<recentResults[i].coverage.size; j++) {
+				log.info('    - cov.size' + recentResults[i].coverage.size)
+
+				const data = recentResults[i].coverage.get(file.fsPath)
+				if (!data) {
+					log.info('      - not found: ' + file.fsPath)
+					continue
+				}
+				log.info('    - data.length=' + data.length)
+				for (const d of data) {
+					log.info('      - d=' + JSON.stringify(d))
+				}
+			}
+		}
+
 		const coverage = recentResults[recentResults.length - 1].coverage.get(file.fsPath)
 		if (!coverage) {
 			assert.fail('no coverage found for ' + file.fsPath)
 			return
 		}
+		for (const c of coverage) {
+			log.info('c=' + JSON.stringify(c))
+		}
+		log.info('450')
 		for (const line of lines) {
-			const lineCoverage = getDetailLine(coverage, line)
-			if (!lineCoverage) {
-				assert.fail('no coverage found for line ' + line + ' in ' + file.fsPath)
-				return
-			}
-			if (typeof lineCoverage.executed === 'boolean') {
-				assert.fail('expected number for coverage executed but got boolean (' + lineCoverage.executed + ')')
-				return
-			}
+			log.info('checking line ' + line + ' in ' + file.fsPath)
+			const executions = getLineExecutions(coverage, line)
 			if (!executed) {
-				assert.equal(lineCoverage?.executed, 0, 'line ' + line + ' in ' + file.fsPath + ' was executed (lineCoverage.executed=' + lineCoverage?.executed + ')')
+				log.info(' - not executed')
+				assert.equal(executions, 0, 'line ' + line + ' in ' + file.fsPath + ' was executed (lineCoverage.executed=' + executions + ')')
 			} else {
-				assert.greater(lineCoverage?.executed, 0, 'line ' + line + ' in ' + file.fsPath + ' was not executed (lineCoverage.executed=' + lineCoverage?.executed + ')')
+				log.info(' - executed')
+				assert.greater(executions, 0, 'line ' + line + ' in ' + file.fsPath + ' was not executed (lineCoverage.executed=' + executions + ')')
 			}
 		}
 	},
