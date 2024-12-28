@@ -25,6 +25,7 @@ import { ABLUnitRuntimeError, TimeoutError } from 'ABLUnitRun'
 import { basename } from 'path'
 import { gatherAllTestItems, IExtensionTestReferences } from 'ABLUnitCommon'
 import * as FileUtils from './FileUtils'
+import { NotImplementedError } from 'Errors'
 
 let recentResults: ABLResults[] = []
 let recentError: Error | undefined = undefined
@@ -103,30 +104,31 @@ export async function activate (context: ExtensionContext) {
 	}
 
 	const loadDetailedCoverageForTest = (testRun: TestRun, fileCoverage: FileCoverage, fromTestItem: TestItem, token: CancellationToken) => {
-		log.info('loadDetailedCoverage uri="' + fileCoverage.uri.fsPath + '", testRun=' + testRun.name)
-		const ret: FileCoverageDetail[] = []
-		let results = resultData.get(testRun)
-		if (!results && !testRun) {
-			results = recentResults
-		}
-		if (!results) {
-			log.warn('no results found')
-			return Promise.resolve([])
-		}
+		throw new NotImplementedError('loadDetailedCoverageForTest not implemented')
+		// log.info('loadDetailedCoverage uri="' + fileCoverage.uri.fsPath + '", testRun=' + testRun.name)
+		// const ret: FileCoverageDetail[] = []
+		// let results = resultData.get(testRun)
+		// if (!results && !testRun) {
+		// 	results = recentResults
+		// }
+		// if (!results) {
+		// 	log.warn('no results found')
+		// 	return Promise.resolve([])
+		// }
 
-		log.info('results.length=' + results.length)
-		for (const result of results) {
-			log.info('result.path=' + result.workspaceFolder.uri.fsPath)
-			log.info('result.filecoverage.length=' + result.filecoverage.size)
-			const det = result.statementcoverageByTest.get(fileCoverage.uri.fsPath + ' ' + fromTestItem.id)
-			if (det) {
-				log.info('found matching file coverage detail (det.length=' + det.length + ', path=' + fileCoverage.uri.fsPath + ')')
-				ret.push(...det)
-			}
-		}
+		// log.info('results.length=' + results.length)
+		// for (const result of results) {
+		// 	log.info('result.path=' + result.workspaceFolder.uri.fsPath)
+		// 	log.info('result.filecoverage.length=' + result.filecoverage.size)
+		// 	const det = result.statementcoverageByTest.get(fileCoverage.uri.fsPath + ' ' + fromTestItem.id)
+		// 	if (det) {
+		// 		log.info('found matching file coverage detail (det.length=' + det.length + ', path=' + fileCoverage.uri.fsPath + ')')
+		// 		ret.push(...det)
+		// 	}
+		// }
 
-		log.info('ret.length=' + ret.length)
-		return Promise.resolve(ret)
+		// log.info('ret.length=' + ret.length)
+		// return Promise.resolve(ret)
 	}
 
 	const loadDetailedCoverage = (testRun: TestRun, fileCoverage: FileCoverage, token: CancellationToken) => {
@@ -144,13 +146,13 @@ export async function activate (context: ExtensionContext) {
 		log.info('results.length=' + results.length)
 		for (const result of results) {
 			log.info('result.path=' + result.workspaceFolder.uri.fsPath)
-			log.info('result.filecoverage.length=' + result.filecoverage.size)
+			log.info('result.filecoverage.length=' + result.filecoverage.length)
 			// const det = result.statementcoverage.get(fileCoverage.uri.fsPath)
-			const sc = result.statementcoverage.get(fileCoverage.uri.fsPath)
-			if (sc) {
-				log.info('found matching statement coverage (sc.length=' + sc.length + ', path=' + fileCoverage.uri.fsPath + ')')
-				ret.push(...sc)
-			}
+			// const sc = result.statementcoverage.get(fileCoverage.uri.fsPath)
+			// if (sc) {
+			// 	log.info('found matching statement coverage (sc.length=' + sc.length + ', path=' + fileCoverage.uri.fsPath + ')')
+			// 	ret.push(...sc)
+			// }
 			const dc = result.declarationcoverage.get(fileCoverage.uri.fsPath)
 			if (dc) {
 				log.info('found matching declaration coverage (dc.length=' + dc.length + ', path=' + fileCoverage.uri.fsPath + ')')
@@ -330,15 +332,13 @@ export async function activate (context: ExtensionContext) {
 			if (request.profile?.kind === TestRunProfileKind.Coverage) {
 				log.info('adding coverage results to test run')
 				for (const res of data) {
-					log.info('res.filecoverage.length=' + res.filecoverage.size)
-					if (res.filecoverage.size === 0) {
+					log.info('res.filecoverage.length=' + res.filecoverage.length)
+					if (res.filecoverage.length === 0) {
 						log.warn('no coverage data found (profile data path=' + res.cfg.ablunitConfig.profFilenameUri.fsPath + ')')
 					}
-					log.info('addCoverage ' + res.filecoverage.size + ' ' + res.filecoverage.size)
-					for (const [, c] of res.filecoverage) {
-						log.info('run.addCoverage ' + JSON.stringify(c.statementCoverage) + ', ' + c.uri.fsPath)
+					res.filecoverage.forEach((c) => {
 						run.addCoverage(c)
-					}
+					})
 				}
 			}
 

@@ -66,7 +66,7 @@ suite('proj2 - Extension Test Suite', () => {
 			toUri('src/compileError.p'),
 			{ force: true }
 		)
-		const prom = runAllTests()
+		return runAllTests()
 			.then(() => {
 				throw new Error('test should have failed due to compile error')
 			}, (e: unknown) => {
@@ -74,7 +74,6 @@ suite('proj2 - Extension Test Suite', () => {
 				assert.ok('test failed as expected')
 				return true
 			})
-		return prom
 	})
 
 	test('proj2.5 - compile error - run tests in file', () => {
@@ -83,7 +82,7 @@ suite('proj2 - Extension Test Suite', () => {
 			toUri('src/compileError.p'),
 			{ force: true }
 		)
-		const prom = runTestsInFile('src/compileError.p')
+		return runTestsInFile('src/compileError.p')
 			.then(() => {
 				throw new Error('test should have failed due to compile error')
 			}, (e: unknown) => {
@@ -91,7 +90,6 @@ suite('proj2 - Extension Test Suite', () => {
 				assert.ok('tests failed as expected')
 				return true
 			})
-		return prom
 	})
 
 	test('proj2.6 - compile error - run with db conn', () => {
@@ -100,7 +98,7 @@ suite('proj2 - Extension Test Suite', () => {
 			toUri('src/compileError.p'),
 			{ force: true }
 		)
-		const prom = selectProfile('profileWithDBConn')
+		return selectProfile('profileWithDBConn')
 			.then(() => runTestsInFile('src/compileError.p'))
 			.then(() => {
 				assert.ok('test passed as expected')
@@ -109,7 +107,6 @@ suite('proj2 - Extension Test Suite', () => {
 			}, (e: unknown) => {
 				throw new Error('test should have passed, but threw error e=' + e)
 			})
-		return prom
 	})
 
 })

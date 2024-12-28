@@ -271,44 +271,29 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 				}
 				processUpdates(options, res.tests, updateUri)
 				if (process.killed || signal) {
-					log.info('process.exit-21')
 					setTimeoutTestStatus(options, res.cfg.ablunitConfig.timeout)
-					log.info('process.exit-22')
 					res.setStatus(RunStatus.Timeout, 'signal=' + signal)
 					log.info('----- ABLUnit Test Run Timeout - ' + res.cfg.ablunitConfig.timeout + 'ms ----- ' + testRunDuration, options)
 					reject(new TimeoutError('ABLUnit process timeout', testRunDuration, res.cfg.ablunitConfig.timeout, cmd))
-					log.info('process.exit-29')
 					return
 				}
-				log.info('process.exit-30')
 				if (process.killed) {
-					log.info('process.exit-31')
 					res.setStatus(RunStatus.Killed, 'signal=' + signal)
-					log.info('process.exit-32')
 					log.info('----- ABLUnit Test Run Killed - (signal=' + signal + ') ----- ' + testRunDuration, options)
-					log.info('process.exit-33')
 					reject(new ABLUnitRuntimeError('ABLUnit process killed', 'exit_code=' + code + '; signal=' + signal, cmd))
-					log.info('process.exit-34')
 					return
 				}
 
-				log.info('process.exit-40')
 				if (code && code != 0) {
-					log.info('process.exit-41')
 					res.setStatus(RunStatus.Error, 'exit_code=' + code)
-					log.info('process.exit-42')
 					log.info('----- ABLUnit Test Run Failed (exit_code=' + code + ') ----- ' + testRunDuration, options)
-					log.info('process.exit-43')
 					reject(new ABLUnitRuntimeError('ABLUnit exit_code= ' + code, 'ABLUnit exit_code= ' + code + '; signal=' + signal, cmd))
-					log.info('process.exit-44')
 					return
 				}
-				log.info('process.exit-50')
 
 				res.setStatus(RunStatus.Complete, 'success')
 				log.info('----- ABLUnit Test Run Complete ----- ' + testRunDuration, options)
 				resolve('success')
-				log.info('process.exit-54')
 			}).on('close', (code: number | null, signal: NodeJS.Signals | null) => {
 				log.info('process.close code=' + code + '; signal=' + signal + '; process.exitCode=' + process.exitCode + '; process.signalCode=' + process.signalCode + '; killed=' + process.killed)
 			}).on('message', (m: Serializable, h: SendHandle) => {

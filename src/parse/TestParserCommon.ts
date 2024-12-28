@@ -1,7 +1,7 @@
 import { Uri, workspace } from 'vscode'
 import { TextDecoder } from 'util'
-import * as FileUtils from '../FileUtils'
 import * as fs from 'fs'
+import * as FileUtils from '../FileUtils'
 
 const textDecoder = new TextDecoder('utf-8')
 

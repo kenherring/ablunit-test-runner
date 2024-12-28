@@ -161,6 +161,7 @@ export function setRuntimes (runtimes?: IRuntime[]) {
 	if (JSON.stringify(current) === JSON.stringify(runtimes)) {
 		log.info('runtmes are already set ' + duration)
 		return Promise.resolve(true)
+		// return restartLangServer()
 	}
 
 	log.info('setting workspace configuration abl.configuration.defaultRuntime=' + oeVersion())

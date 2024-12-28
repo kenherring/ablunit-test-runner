@@ -812,7 +812,7 @@ export function refreshData (resultsLen = 0) {
 	return commands.executeCommand('_ablunit.getExtensionTestReferences').then((resp) => {
 		// log.info('refreshData command complete (resp=' + JSON.stringify(resp) + ')')
 		const refs = resp as IExtensionTestReferences
-		// log.info('getExtensionTestReferences command complete (resp.length=' + refs.recentResults.length + ')')
+		log.info('getExtensionTestReferences command complete (resp.length=' + refs.recentResults.length + ')')
 		// log.info('refs=' + JSON.stringify(refs))
 
 		if (refs.recentResults.length > 0) {
@@ -1159,38 +1159,26 @@ export const assert = {
 
 	fileExists: (...files: (string | Uri)[]) => {
 		if (files.length === 0) { throw new Error('no file(s) specified') }
-		for (let file of files) {
-			if (!(file instanceof Uri)) {
-				file = toUri(file)
-			}
-			assertParent.ok(FileUtils.doesFileExist(file), 'file does not exist: ' + fileToString(file))
+		for (const file of files) {
+			assertParent.ok(FileUtils.doesFileExist(toUri(file)), 'file does not exist: ' + fileToString(file))
 		}
 	},
 	notFileExists: (...files: string[] | Uri[]) => {
 		if (files.length === 0) { throw new Error('no file(s) specified') }
-		for (let file of files) {
-			if (!(file instanceof Uri)) {
-				file = toUri(file)
-			}
-			assertParent.ok(!FileUtils.doesFileExist(file), 'file exists: ' + fileToString(file))
+		for (const file of files) {
+			assertParent.ok(!FileUtils.doesFileExist(toUri(file)), 'file exists: ' + fileToString(file))
 		}
 	},
 	dirExists: (...dirs: (string | Uri)[]) => {
 		if (dirs.length === 0) { throw new Error('no dir(s) specified') }
-		for (let dir of dirs) {
-			if (!(dir instanceof Uri)) {
-				dir = toUri(dir)
-			}
-			assertParent.ok(FileUtils.doesDirExist(dir), 'dir does not exist: ' + fileToString(dir))
+		for (const dir of dirs) {
+			assertParent.ok(FileUtils.doesDirExist(toUri(dir)), 'dir does not exist: ' + fileToString(dir))
 		}
 	},
 	notDirExists: (...dirs: string[] | Uri[]) => {
 		if (dirs.length === 0) { throw new Error('no dir(s) specified') }
-		for (let dir of dirs) {
-			if (!(dir instanceof Uri)) {
-				dir = toUri(dir)
-			}
-			assertParent.ok(!FileUtils.doesDirExist(dir), 'dir exists: ' + fileToString(dir))
+		for (const dir of dirs) {
+			assertParent.ok(!FileUtils.doesDirExist(toUri(dir)), 'dir exists: ' + fileToString(dir))
 		}
 	},
 
@@ -1232,11 +1220,11 @@ export const assert = {
 			return
 		}
 
-		const actual = recentResults[recentResults.length - 1].filecoveragedetail.size
+		const actual = recentResults[recentResults.length - 1].coverage.size
 		let msg = 'covered files (' + actual + ') != ' + expected
 		if (actual != expected) {
 			msg += '\nfound:'
-			for (const c of recentResults[recentResults.length - 1].filecoveragedetail) {
+			for (const c of recentResults[recentResults.length - 1].coverage) {
 				msg += '\n  * ' + c[0]
 				// log.info('covered file: ' + c[0])
 			}
@@ -1260,7 +1248,7 @@ export const assert = {
 			return
 		}
 
-		const coverage = recentResults[recentResults.length - 1].filecoveragedetail.get(file.fsPath)
+		const coverage = recentResults[recentResults.length - 1].coverage.get(file.fsPath)
 		if (!coverage) {
 			assert.fail('no coverage found for ' + file.fsPath)
 			return

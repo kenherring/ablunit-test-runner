@@ -80,57 +80,11 @@ function getProjectJson (workspaceFolder: WorkspaceFolder) {
 	return data
 }
 
-// function getDlcPathFromOEExtension (workspaceFolder: WorkspaceFolder) {
-// 	const ablExt = extensions.getExtension('riverside-software.openedge-abl-lsp')
-// 	if (!ablExt) {
-// 		log.debug('riversidesoftware.openedge-abl-lsp extension not found')
-// 		return undefined
-// 	}
-// 	if (!ablExt.isActive) {
-// 		log.debug('riversidesoftware.openedge-abl-lsp extension found but is not active')
-// 		return undefined
-// 	}
-
-// 	return commands.executeCommand('abl.getDlcDirectory').then((dlcPath: unknown) => {
-// 		if (!dlcPath) {
-// 			log.debug('abl.getDlcDirectory command returned undefined')
-// 			return undefined
-// 		}
-// 		if (typeof dlcPath !== 'string') {
-// 			log.debug('abl.getDlcDirectory command returned non-string ' + typeof dlcPath)
-// 			return undefined
-// 		}
-// 		const dlcUri = Uri.file(dlcPath)
-// 		if (!doesDirExist(dlcUri)) {
-// 			log.debug('abl.getDlcDirectory command returned non-existent directory ' + dlcPath)
-// 		}
-
-// 		const oeversion = readOEVersionFile(dlcPath)
-// 		if (!oeversion) {
-// 			log.debug('unable to determine OpenEdge version from ' + dlcPath)
-// 			return undefined
-// 		}
-
-// 		const dlc: IDlc = {
-// 			uri: dlcUri,
-// 			version: oeversion
-// 		}
-// 		dlcMap.set(workspaceFolder, dlc)
-// 		return dlc
-// 	})
-// }
-
 export function getDLC (workspaceFolder: WorkspaceFolder, openedgeProjectProfile?: string, projectJson?: string) {
 	const dlc = dlcMap.get(workspaceFolder)
 	if (dlc) {
-		log.info('  --- dlc=' + dlc.uri.fsPath)
 		return dlc
 	}
-
-	// const dlcFromExt = await getDlcPathFromOEExtension(workspaceFolder)
-	// if (dlcFromExt) {
-	// 	return dlcFromExt
-	// }
 
 	let runtimeDlc: Uri | undefined = undefined
 	const oeversion = getOEVersion(workspaceFolder, openedgeProjectProfile, projectJson)
@@ -139,17 +93,14 @@ export function getDLC (workspaceFolder: WorkspaceFolder, openedgeProjectProfile
 	for (const runtime of runtimes) {
 		if (runtime.name === oeversion) {
 			runtimeDlc = Uri.file(runtime.path)
-			log.info('  ---1--- runtimeDlc=' + runtimeDlc.fsPath + ', oeversion=' + oeversion)
 			break
 		}
 		if (runtime.default) {
 			runtimeDlc = Uri.file(runtime.path)
-			log.info('  ---2--- runtimeDlc=' + runtimeDlc.fsPath)
 		}
 	}
 	if (!runtimeDlc && process.env['DLC']) {
 		runtimeDlc = Uri.file(process.env['DLC'])
-		log.info('  ---3--- runtimeDlc=' + runtimeDlc.fsPath)
 	}
 	if (runtimeDlc) {
 		log.info('using DLC = ' + runtimeDlc.fsPath)
@@ -190,7 +141,6 @@ export function getOEVersion (workspaceFolder: WorkspaceFolder, openedgeProjectP
 			return ver
 		}
 	}
-	log.debug('oeversion not found, returning undefined')
 	return undefined
 }
 
@@ -524,9 +474,7 @@ function getWorkspaceProfileConfig (workspaceUri: Uri, openedgeProjectProfile?: 
 			if (prf.propath.length == 0)
 				prf.propath = prjConfig.propath
 			for (const e of prf.buildPath) {
-				if (!e.buildDir) {
-					e.buildDir = e.path
-				}
+				e.buildDir = e.buildDir ?? e.path
 			}
 			return prf
 		}

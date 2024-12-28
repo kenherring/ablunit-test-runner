@@ -103,14 +103,12 @@ export function updateParserInit () {
 }
 
 function parseUpdateLines (lines: string[], tests: TestItem[]) {
-	log.info('parseUpdateLines-10')
 	newUpdates = []
 	if (lines.length == 0) {
 		return updates
 	}
 
 	for (let lineNum = 0; lineNum < lines.length; lineNum++) {
-		log.info('parseUpdateLines-14 line[' + lineNum + ']="' + lines[lineNum] + '"')
 		const line = lines[lineNum]
 		if (line == '') {
 			continue
@@ -118,45 +116,27 @@ function parseUpdateLines (lines: string[], tests: TestItem[]) {
 		const event = line.split(' ')[0] ?? 'unknown'
 		const eventStatus = event as TestStatus ?? TestStatus.unknown
 
-
-		log.info('parseUpdateLines-20')
 		if (event === 'TEST_TREE') {
-			log.info('parseUpdateLines-21')
 			if (!lines[lineNum + 1]) {
-				log.info('parseUpdateLines-22')
 				// nothing to do, we don't have any updates and only the tree, which might not be complete
 				continue
 			}
-			log.info('parseUpdateLines-23')
 			if (lines[lineNum + 1].startsWith('TEST_TREE')) { // last TEST_TREE line
-				log.info('parseUpdateLines-24')
 				// next line is another TEST_TREE line, so skip this one
 				continue
 			}
-			log.info('parseUpdateLines-25')
 			if (prevRootText !== line) {
-				log.info('parseUpdateLines-26')
-
-				log.info('event=' + event + '; line=' + lineNum + '; line=' + line)
-				log.info('parseUpdateLines-27')
 				updates = parseTestTree(line, tests)
-				log.info('parseUpdateLines-28')
 				prevRootText = line
-				log.info('parseUpdateLines-29')
 				log.debug('updates.length=' + updates.length)
-				log.info('updates.length=' + updates.length)
 				continue
 			}
-			log.info('parseUpdateLines-29.1')
 			continue
 		}
-		log.info('parseUpdateLines-29.2')
 		if (event === 'COMPLETE') {
-			log.info('parseUpdateLines-29.3')
 			continue
 		}
 
-		log.info('parseUpdateLines-30')
 		const [ , id, timeVal ] = line.split(' ')
 		const time = Number(timeVal ?? 0) * 1000
 		const idx = updates.findIndex((test) => { return test.id === id })
@@ -171,7 +151,6 @@ function parseUpdateLines (lines: string[], tests: TestItem[]) {
 			continue
 		}
 
-		log.info('parseUpdateLines-40')
 		if (eventStatus == TestStatus.complete) {
 			// nothing to do
 			continue
@@ -196,7 +175,6 @@ function parseUpdateLines (lines: string[], tests: TestItem[]) {
 			newUpdates = newUpdates.filter((test) => test.id != id)
 			// add the new update
 			if (updates[idx].name != 'TEST_ROOT') {
-				log.info('[newUpdate.push] updates[' + idx + '].status=' + eventStatus + '; time=' + time + '; parentName=' + updates[idx].parent?.name + '; name=' + updates[idx].name)
 				newUpdates.push(updates[idx])
 			}
 			log.debug('set updates[' + idx + '].status=' + eventStatus + '; time=' + time + '; parentName=' + updates[idx].parent?.name + '; name=' + updates[idx].name)
@@ -210,9 +188,6 @@ function parseUpdateLines (lines: string[], tests: TestItem[]) {
 		updates = []
 	}
 	log.debug('return updates.length=' + updates.length)
-	log.info('parseUpdateLines-91')
-	log.info('return updates.length=' + updates.length)
-	log.info('parseUpdateLines-99')
 	return updates
 }
 
@@ -284,8 +259,6 @@ function setTestRunTestStatus (options: TestRun, item: ITestNode) {
 	if (item.parent?.name == 'TEST_ROOT') {
 		printName = item.name
 	}
-
-	log.info('item.status=' + item.status + '; item.label=' + item.name + '; item.id=' + item.id +  '; item.parent=' + item.parent?.name)
 
 	switch (item.status) {
 		case TestStatus.started:

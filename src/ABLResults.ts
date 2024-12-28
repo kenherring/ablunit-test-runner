@@ -1,11 +1,10 @@
-import { FileType, MarkdownString, TestItem, TestItemCollection, TestMessage, TestRun, Uri, workspace, WorkspaceFolder, Position,
+import { FileType, MarkdownString, TestItem, TestItemCollection, TestMessage, TestRun, Uri, workspace, WorkspaceFolder,
 	FileCoverage, FileCoverageDetail,
 	Disposable, CancellationToken, CancellationError,
-	StatementCoverage,
+	Position, Range,
+	DeclarationCoverage, StatementCoverage,
 	TestRunRequest,
-	TestRunProfileKind,
-	DeclarationCoverage,
-	Range} from 'vscode'
+	TestRunProfileKind} from 'vscode'
 import { ABLUnitConfig } from './ABLUnitConfigWriter'
 import { ABLResultsParser, ITestCaseFailure, ITestCase, ITestSuite } from './parse/ResultsParser'
 import { ABLTestSuite, ABLTestData, ABLTestCase } from './testTree'
@@ -19,8 +18,6 @@ import { ABLUnitRuntimeError, RunStatus, TimeoutError, ablunitRun } from './ABLU
 import { getDLC, IDlc } from './parse/OpenedgeProjectParser'
 import { Duration } from './ABLUnitCommon'
 import { ITestObj } from 'parse/config/CoreOptions'
-import { globSync } from 'glob'
-import { basename, dirname } from 'node:path'
 import * as FileUtils from './FileUtils'
 
 export class ABLResults implements Disposable {
@@ -47,7 +44,7 @@ export class ABLResults implements Disposable {
 	public filecoverage: FileCoverage[] = []
 	// public filecoverage = new Map<string, FileCoverage>()
 	// public filecoveragedetail = new Map<string, FileCoverageDetail[]>()
-	// public declarationcoverage = new Map<string, DeclarationCoverage[]>()
+	public declarationcoverage = new Map<string, DeclarationCoverage[]>()
 	// public statementcoverage = new Map<string, StatementCoverage[]>()
 	// public filecoverageByTest = new Map<string, FileCoverage>()
 	// public statementcoverageByTest = new Map<string, FileCoverageDetail[]>()
@@ -170,10 +167,9 @@ export class ABLResults implements Disposable {
 		if (testCase && existingTestObj) {
 			if(testObj.cases) {
 				if (!existingTestObj.cases) {
-					existingTestObj.cases = [testCase]
-				} else {
-					this.testQueue.push({ test: testRel, cases: [testCase] })
+					existingTestObj.cases = []
 				}
+				existingTestObj.cases.push(testCase)
 			}
 			return
 		}
@@ -253,7 +249,7 @@ export class ABLResults implements Disposable {
 			}, (e: unknown) => {
 				this.setStatus(RunStatus.Error, 'profiler data')
 				log.error('Error parsing profiler data from ' + this.cfg.ablunitConfig.profFilenameUri.fsPath + '.  e=' + e, options)
-				// throw new Error('Error parsing profiler data from ' + workspace.asRelativePath(this.cfg.ablunitConfig.profFilenameUri) + '\r\ne=' + e)
+				throw new Error('Error parsing profiler data from ' + workspace.asRelativePath(this.cfg.ablunitConfig.profFilenameUri) + '\r\ne=' + e)
 			})
 		}
 
@@ -263,14 +259,11 @@ export class ABLResults implements Disposable {
 
 	async assignTestResults (item: TestItem, options: TestRun) {
 
-		log.info('[assignTestResults] item=' + item.label)
-
 		if (this.skippedTests.includes(item)) {
 			log.warn('skipped test item \'' + item.label + '\'')
 			options.skipped(item)
 			return
 		}
-
 		if(!this.ablResults) {
 			throw new Error('no ABLResults object initialized')
 		}
@@ -398,14 +391,11 @@ export class ABLResults implements Disposable {
 	}
 
 	private setChildResults (item: TestItem, options: TestRun, tc: ITestCase) {
-		log.info('[setChildResults] item=' + item.label)
 		switch (tc.status.toLowerCase()) {
 			case 'success': {
 				if (tc.skipped) {
-					log.warn('skipped test case \'' + tc.name + '\'')
 					options.skipped(item)
 				} else {
-					log.info('passed test case \'' + tc.name + '\'')
 					options.passed(item, tc.time)
 				}
 				return
@@ -416,12 +406,10 @@ export class ABLResults implements Disposable {
 					for (const failure of tc.failures) {
 						const diff = this.getDiffMessage(failure)
 						if (diff) {
-							log.error('failed test case \'' + tc.name + '\'')
 							options.failed(item, diff, tc.time)
 						} else {
 							const testMessage = new TestMessage(getPromsgText(failure.message))
 							testMessage.stackTrace = failure.stackTrace
-							log.error('failed test case \'' + tc.name + '\'')
 							options.failed(item, testMessage, tc.time)
 						}
 					}
@@ -431,7 +419,6 @@ export class ABLResults implements Disposable {
 				throw new Error('unexpected ' + tc.status.toLowerCase() + ' for \'' + tc.name + '\'')
 			}
 			case 'skpped': {
-				log.warn('skipped test case \'' + tc.name + '\'')
 				options.skipped(item)
 				return
 			}
@@ -488,6 +475,7 @@ export class ABLResults implements Disposable {
 					return this.assignProfileResults(json)
 				}
 				log.warn('no profile data returned')
+				// return Promise.resolve()
 				return
 			})
 			.then(() => {
@@ -499,6 +487,9 @@ export class ABLResults implements Disposable {
 	}
 
 	async assignProfileResults (profJson: ABLProfileJson, item?: TestItem) {
+		if (!profJson) {
+			throw new Error('no profile data available...')
+		}
 		const mods: IModule[] = profJson.modules
 		for (let idx=1; idx < mods.length; idx++) {
 			const module = mods[idx]
@@ -514,8 +505,6 @@ export class ABLResults implements Disposable {
 		const fileinfo = await this.propath.search(module.SourceName)
 
 		const moduleUri = fileinfo?.uri
-		// const coverage = new Map<string, FileCoverageDetail[]>()
-		// const coverageByFile = new Map<string, FileCoverageDetail[]>()
 		if (!moduleUri) {
 			if (!module.SourceName.startsWith('OpenEdge.') &&
 				module.SourceName !== 'ABLUnitCore.p' &&
@@ -594,14 +583,13 @@ export class ABLResults implements Disposable {
 			let fc = this.coverage.get(dbg.sourceUri.fsPath)
 			if (!fc) {
 				// create a new FileCoverage object if one didn't already exist
-				const fcd: FileCoverageDetail[] = []
-				this.coverage.set(dbg.sourceUri.fsPath, fcd)
-				fc = this.coverage.get(dbg.sourceUri.fsPath)
+				fc = []
+				this.coverage.set(dbg.sourceUri.fsPath, fc)
 			}
 
 			// // TODO: end of range should be the end of the line, not the beginning of the next line
 			const coverageRange = new Position(dbg.sourceLine - 1, 0)
-			fc!.push(new StatementCoverage(line.ExecCount ?? 0, coverageRange))
+			fc.push(new StatementCoverage(line.ExecCount ?? 0, coverageRange))
 		}
 
 		this.coverage.forEach((v, k) => {

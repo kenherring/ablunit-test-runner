@@ -357,6 +357,7 @@ export class ABLProfileJson {
 				ISectionTwelve: []
 			}
 
+
 			if (Number(test![4]) != 0) {
 				this.modules[this.modules.length] = mod
 			} else {
@@ -573,19 +574,6 @@ export class ABLProfileJson {
 						sum.incLine = lineinfo.sourceLine
 						sum.incUri = lineinfo.sourceUri
 					}
-
-
-					if (mod.SourceUri) {
-						const lineinfo = await this.debugLines.getSourceLine(mod.SourceUri.fsPath, lineNo)
-						if (lineinfo) {
-							sum.srcLine = lineinfo.debugLine
-							sum.srcUri = lineinfo.debugUri
-							sum.incLine = lineinfo.sourceLine
-							sum.incUri = lineinfo.sourceUri
-						}
-					}
-
-					mod.lines.push(sum)
 				}
 
 				mod.lines.push(sum)

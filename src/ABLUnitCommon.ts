@@ -7,6 +7,7 @@ export interface IExtensionTestReferences {
 	recentResults: ABLResults[]
 	currentRunData: ABLResults[]
 }
+
 export class Duration {
 	name?: string
 	start: number

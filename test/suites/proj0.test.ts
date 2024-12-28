@@ -88,7 +88,7 @@ suite('proj0  - Extension Test Suite', () => {
 		await window.showTextDocument(testFileUri)
 		await runAllTestsWithCoverage()
 
-		const lines = (await getResults())[0].filecoveragedetail.get(testFileUri.fsPath) ?? []
+		const lines = (await getResults())[0].coverage.get(testFileUri.fsPath) ?? []
 		assert.assert(lines, 'no coverage found for ' + workspace.asRelativePath(testFileUri))
 		assert.linesExecuted(testFileUri, [5, 6])
 	})
@@ -99,7 +99,7 @@ suite('proj0  - Extension Test Suite', () => {
 		await window.showTextDocument(testFileUri)
 		await runAllTests()
 
-		const lines = (await getResults())[0].filecoveragedetail.get(testFileUri.fsPath) ?? []
+		const lines = (await getResults())[0].coverage.get(testFileUri.fsPath) ?? []
 		if (lines && lines.length > 0) {
 			assert.fail('coverage should be empty for ' + workspace.asRelativePath(testFileUri) + ' (lines.length=' + lines.length + ')')
 		}
@@ -128,10 +128,7 @@ suite('proj0  - Extension Test Suite', () => {
 		if (!testClassItem) {
 			throw new Error('cannot find TestItem for src/threeTestProcedures.p')
 		}
-
-		// size=3 would not include the TestResultList.cls in resources
 		assert.equal(testClassItem.children.size, 3, 'testClassItem.children.size should be 3')
-		// assert.equal(testClassItem.children.size, 4, 'testClassItem.children.size should be 4')
 	})
 
 	test('proj0.07 - parse test class with skip annotation', async () => {

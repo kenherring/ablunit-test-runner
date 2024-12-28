@@ -94,8 +94,7 @@ export class ABLDebugLines {
 		let map = this.maps.get(debugSource)
 		if (!map) {
 			try {
-				const rcode = await this.propath.getRCodeUri(debugSource)
-				map = await getSourceMapFromRCode(this.propath, rcode)
+				map = await getSourceMapFromRCode(this.propath, await this.propath.getRCodeUri(debugSource))
 				this.processingMethodMap.set(debugSource, 'rcode')
 			} catch (e) {
 				log.warn('cannot parse source map from rcode, falling back to source parser (debugSource=' + debugSource + ', e=' + e + ')')
