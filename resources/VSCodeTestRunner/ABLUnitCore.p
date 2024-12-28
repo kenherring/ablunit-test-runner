@@ -76,18 +76,12 @@ procedure main :
 	session:suppress-warnings = true.
 	run createDatabaseAliases.
 
-	message 100.
 	assign updateFile = getParameter(trim(trim(session:parameter,'"'),"'"), 'ATTR_ABLUNIT_EVENT_FILE').
-	message 101.
 	testConfig = readTestConfig(getParameter(trim(trim(session:parameter,'"'),"'"), 'CFG')).
-	message 102.
 	quitOnEnd = (testConfig = ?) or testConfig:quitOnEnd.
-	message 103.
 
 	ablRunner = new OpenEdge.ABLUnit.Runner.ABLRunner(testConfig, updateFile).
-	message 104.
 	ablRunner:RunTests().
-	message 105.
 
 	// the `-catchStop 1` startup parameter is default in 11.7+
 	catch s as Progress.lang.Stop:
@@ -98,7 +92,7 @@ procedure main :
 			writeErrorToLog(testConfig:outputLocation, 'STOP condition encountered').
 			writeErrorToLog(testConfig:outputLocation, s:CallStack).
 		end.
-		if testConfig:throwError then
+		if testConfig = ? or testConfig:throwError then
 			undo, throw s.
 	end catch.
 	catch e as Progress.Lang.Error:

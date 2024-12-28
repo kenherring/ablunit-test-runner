@@ -55,7 +55,6 @@
 			"options": [
 				"AtStart",
 				"DebugLines",
-				"ProfileParser",
 				"proj0",
 				"proj1",
 				"proj2",

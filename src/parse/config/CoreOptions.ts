@@ -34,8 +34,6 @@ export interface ICoreOptions {
 }
 
 export interface IABLUnitJson {
-	// $comment: string
-	// $name?: string
 	options: ICoreOptions
 	tests: ITestObj[]
 }

@@ -22,12 +22,6 @@
 				],
 				"additionalProperties": false,
 				"properties": {
-					"name": {
-						"type": "string",
-						"default": "default",
-						"description": "Name of the configuration",
-						"minLength": 1
-					},
 					"tempDir": {
 						"type": "string",
 						"minLength": 1,

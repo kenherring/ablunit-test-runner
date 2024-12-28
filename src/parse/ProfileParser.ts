@@ -8,7 +8,6 @@ export class ABLProfile {
 	profJSON?: ABLProfileJson
 
 	async parseData (uri: Uri, writeJson: boolean, debugLines?: ABLDebugLines, propath?: PropathParser) {
-		log.info('uri=' + uri)
 		if (!debugLines) {
 			// unit testing setup
 			debugLines = new ABLDebugLines()
@@ -19,11 +18,8 @@ export class ABLProfile {
 			}
 		}
 
-		log.info('vadlidateFile')
 		FileUtils.validateFile(uri)
-		log.info('getContentFromFilesystem')
 		const lines = FileUtils.readLinesFromFileSync(uri)
-		log.info('lines.length=' + lines.length)
 
 		const sectionLines: string[][] = []
 		let linesArr: string[] = []
@@ -33,7 +29,6 @@ export class ABLProfile {
 
 		for (let lineNo = 0; lineNo < lines.length; lineNo++) {
 			if(lines[lineNo] === '.' && (currentSection != 6 || lines[lineNo + 1] === '.')) {
-				log.info('section ' + currentSection + ' lines=' + linesArr.length)
 				sectionLines[currentSection] = linesArr
 				currentSection++
 				linesArr = []
@@ -362,7 +357,9 @@ export class ABLProfileJson {
 			}
 
 			const fileinfo = await this.debugLines.propath.search(mod.SourceName)
-			mod.SourceUri = fileinfo?.uri
+			if (fileinfo) {
+				mod.SourceUri = fileinfo?.uri
+			}
 
 			if (Number(test![4]) != 0) {
 				this.modules[this.modules.length] = mod
@@ -568,7 +565,6 @@ export class ABLProfileJson {
 						CumulativeTime: 0,
 					}
 
-
 					if (mod.SourceUri) {
 						const lineinfo = await this.debugLines.getSourceLine(mod.SourceUri.fsPath, lineNo)
 						if (lineinfo) {
@@ -625,9 +621,9 @@ export class ABLProfileJson {
 						lines: [],
 					}
 					if (child.SourceName) {
-						const found = await this.debugLines.propath.search(child.SourceName)
-						if (found?.uri) {
-							child.SourceUri = found.uri
+						const fileinfo = await this.debugLines.propath.search(child.SourceName)
+						if (fileinfo?.uri) {
+							child.SourceUri = fileinfo.uri
 						}
 					}
 					mod.childModules.push(child)

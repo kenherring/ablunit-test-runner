@@ -172,7 +172,6 @@ export class RunConfig extends DefaultRunProfile {
 
 	constructor (private readonly profile: IRunProfile, public workspaceFolder: WorkspaceFolder) {
 		super()
-		this.name = this.profile.name
 		this.tempDirUri = this.getUri(this.profile.tempDir)
 		this.timeout = this.profile.timeout
 		log.debug('tempDirUri="' + this.tempDirUri.fsPath + '"')

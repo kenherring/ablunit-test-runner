@@ -9,6 +9,7 @@ dist/
 docker/.rssw/
 node_modules/
 out/
+resources/ADE/
 target/
 tmp/
 *.bk

@@ -1,4 +1,4 @@
-import { Uri, workspace } from 'vscode'
+import { Uri } from 'vscode'
 
 interface ISourceMap {
 	sourceUri: Uri,
