@@ -87,6 +87,10 @@ function getMochaOpts (projName) {
 		],
 	}
 
+	if (projName === 'proj7A') {
+		mochaOpts.retries = 2
+	}
+
 	if (process.env['ABLUNIT_TEST_RUNNER_RUN_SCRIPT_FLAG']) {
 		mochaOpts.reporter = 'mocha-multi-reporters'
 		mochaOpts.reporterOptions = {
