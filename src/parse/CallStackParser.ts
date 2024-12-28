@@ -86,19 +86,16 @@ export async function parseCallstack (debugLines: ABLDebugLines, callstackRaw: s
 			callstackItem.lineinfo = lineinfo
 			callstackItem.markdownText = markdownText
 
-			callstackItem.loc = new Location(lineinfo.sourceUri, new Range(
-				new Position(lineinfo.sourceLine - 1, 0),
-				new Position(lineinfo.sourceLine, 0)
-			))
+			const posStart = new Position(lineinfo.sourceLine - 1, 0)
+			const posEnd = new Position(lineinfo.sourceLine, 0)
+			callstackItem.loc = new Location(lineinfo.sourceUri, new Range(posStart, posEnd))
 		} else {
 			callstackItem.markdownText = module + ' at line ' + debugLine + ' (' + debugFile + ')'
 			if (debugUri) {
-				callstackItem.loc = new Location(debugUri, new Range(
-					new Position(debugLine - 1, 0),
-					new Position(debugLine, 0)
-				))
+				const posStart = new Position(debugLine - 1, 0)
+				const posEnd = new Position(debugLine, 0)
+				callstackItem.loc = new Location(debugUri, new Range(posStart, posEnd))
 			}
-
 		}
 		callstack.items.push(callstackItem)
 	}

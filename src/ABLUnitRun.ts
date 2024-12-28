@@ -294,7 +294,6 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 				res.setStatus(RunStatus.Complete, 'success')
 				log.info('----- ABLUnit Test Run Complete ----- ' + testRunDuration, options)
 				resolve('success')
-				return
 			}).on('close', (code: number | null, signal: NodeJS.Signals | null) => {
 				log.info('process.close code=' + code + '; signal=' + signal + '; process.exitCode=' + process.exitCode + '; process.signalCode=' + process.signalCode + '; killed=' + process.killed)
 			}).on('message', (m: Serializable, h: SendHandle) => {

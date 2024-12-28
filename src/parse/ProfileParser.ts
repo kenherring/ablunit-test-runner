@@ -330,12 +330,13 @@ export class ABLProfileJson {
 				}
 			}
 
+			const fileinfo = await this.debugLines.propath.search(sourceName)
 			const mod: IModule = {
 				ModuleID: Number(test![1]),
 				ModuleName: moduleName,
 				EntityName: entityName,
 				SourceName: sourceName,
-				SourceUri: undefined,
+				SourceUri: fileinfo?.uri,
 				ParentName: parentName,
 				ListingFile: test![3],
 				CrcValue: Number(test![4]),
@@ -356,10 +357,6 @@ export class ABLProfileJson {
 				ISectionTwelve: []
 			}
 
-			const fileinfo = await this.debugLines.propath.search(mod.SourceName)
-			if (fileinfo) {
-				mod.SourceUri = fileinfo?.uri
-			}
 
 			if (Number(test![4]) != 0) {
 				this.modules[this.modules.length] = mod
@@ -552,31 +549,34 @@ export class ABLProfileJson {
 
 				if(!mod) { throw new Error('invalid data in section 6') }
 
+				// add exec count to existing line
 				const line = this.getLine(mod, Number(lines[lineNo]))
 				if (line) {
 					line.Executable = true
 					mod.executedLines++
-				} else {
-					const sum: ILineSummary = {
-						LineNo: Number(lines[lineNo]),
-						ExecCount: 0,
-						Executable: true,
-						ActualTime: 0,
-						CumulativeTime: 0,
-					}
-
-					if (mod.SourceUri) {
-						const lineinfo = await this.debugLines.getSourceLine(mod.SourceUri.fsPath, lineNo)
-						if (lineinfo) {
-							sum.srcLine = lineinfo.debugLine
-							sum.srcUri = lineinfo.debugUri
-							sum.incLine = lineinfo.sourceLine
-							sum.incUri = lineinfo.sourceUri
-						}
-					}
-
-					mod.lines.push(sum)
+					continue
 				}
+
+				// create object for first encounter of this line num
+				const sum: ILineSummary = {
+					LineNo: Number(lines[lineNo]),
+					ExecCount: 0,
+					Executable: true,
+					ActualTime: 0,
+					CumulativeTime: 0,
+				}
+
+				if (mod.SourceUri) {
+					const lineinfo = await this.debugLines.getSourceLine(mod.SourceUri.fsPath, lineNo)
+					if (lineinfo) {
+						sum.srcLine = lineinfo.debugLine
+						sum.srcUri = lineinfo.debugUri
+						sum.incLine = lineinfo.sourceLine
+						sum.incUri = lineinfo.sourceUri
+					}
+				}
+
+				mod.lines.push(sum)
 			}
 		} catch (error) {
 			log.error('Error parsing coverage data in section 6 [module=' + mod?.ModuleName + ']: error=' + error)
@@ -597,42 +597,43 @@ export class ABLProfileJson {
 				mod.executableLines = Number(test[3])
 			}
 		}
-		if (!mod) {
-			mod = this.getModule(Number(test[1]))
-			if (mod) {
-				mod.executableLines += Number(test[3])
-
-				if (this.excludeSourceName(test[2])) {
-					const child: IModule = {
-						ModuleID: Number(test[1]),
-						ModuleName: test[2] + ' ' + mod.SourceName,
-						EntityName: test[2],
-						SourceName: mod.SourceName,
-						CrcValue: 0,
-						ModuleLineNum: 0,
-						UnknownString1: '',
-						executableLines: Number(test[3]),
-						executedLines: 0,
-						coveragePct: 0,
-						lineCount: 0,
-						calledBy: [],
-						calledTo: [],
-						childModules: [],
-						lines: [],
-					}
-					if (child.SourceName) {
-						const fileinfo = await this.debugLines.propath.search(child.SourceName)
-						if (fileinfo?.uri) {
-							child.SourceUri = fileinfo.uri
-						}
-					}
-					mod.childModules.push(child)
-					return child
-				}
-			}
+		if (mod) {
+			return mod
 		}
+
+		mod = this.getModule(Number(test[1]))
 		if (!mod) {
 			throw new Error('Unable to find module ' + test[1] + ' ' + test[2] + ' in section 6')
+		}
+
+		mod.executableLines += Number(test[3])
+
+		if (test[2] != '') {
+			const child: IModule = {
+				ModuleID: Number(test[1]),
+				ModuleName: test[2] + ' ' + mod.SourceName,
+				EntityName: test[2],
+				SourceName: mod.SourceName,
+				CrcValue: 0,
+				ModuleLineNum: 0,
+				UnknownString1: '',
+				executableLines: Number(test[3]),
+				executedLines: 0,
+				coveragePct: 0,
+				lineCount: 0,
+				calledBy: [],
+				calledTo: [],
+				childModules: [],
+				lines: [],
+			}
+			if (child.SourceName) {
+				const fileinfo = await this.debugLines.propath.search(child.SourceName)
+				if (fileinfo?.uri) {
+					child.SourceUri = fileinfo.uri
+				}
+			}
+			mod.childModules.push(child)
+			return child
 		}
 		return mod
 	}
@@ -759,29 +760,26 @@ export class ABLProfileJson {
 		const sectRE2 = /^(\d+) (\d+) (\d+) (\d+) (\d+) (\d+\.\d+)$/
 		if (!lines.length) { return }
 		for(const element of lines) {
-			let test = sectRE1.exec(element)
-			if (!test) {
-				test = sectRE2.exec(element)
+			const test = sectRE1.exec(element) ?? sectRE2.exec(element)
+			if (!test) { continue }
+
+			const ISectionTwelve: ISectionTwelve = {
+				ModuleID: Number(test[3]),
+				field1: Number(test[1]),
+				field2: Number(test[2]),
+				field4: Number(test[4]),
+				field5: Number(test[5]),
+				field6: Number(test[6]),
+				remainder: test[7]
 			}
-			if (test) {
-				const ISectionTwelve: ISectionTwelve = {
-					ModuleID: Number(test[3]),
-					field1: Number(test[1]),
-					field2: Number(test[2]),
-					field4: Number(test[4]),
-					field5: Number(test[5]),
-					field6: Number(test[6]),
-					remainder: test[7]
-				}
-				const mod = this.getModule(ISectionTwelve.ModuleID)
-				if (mod) {
-					if (!mod.ISectionTwelve) mod.ISectionTwelve = []
-					mod.ISectionTwelve.push(ISectionTwelve)
-				} else {
-					// TODO
-					if (ISectionTwelve.ModuleID != 0) {
-						log.error('Unable to find module " + ISectionTwelve.ModuleID + " in section 12 (line=' + element + ')')
-					}
+			const mod = this.getModule(ISectionTwelve.ModuleID)
+			if (mod) {
+				if (!mod.ISectionTwelve) mod.ISectionTwelve = []
+				mod.ISectionTwelve.push(ISectionTwelve)
+			} else {
+				// TODO
+				if (ISectionTwelve.ModuleID != 0) {
+					log.error('Unable to find module " + ISectionTwelve.ModuleID + " in section 12 (line=' + element + ')')
 				}
 			}
 		}

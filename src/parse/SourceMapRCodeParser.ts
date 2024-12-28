@@ -254,6 +254,7 @@ export const getSourceMapFromRCode = (propath: PropathParser, uri: Uri) => {
 		try {
 			sourceUri = getSourceUri(childBytes[3])
 		} catch(e: unknown) {
+			log.debug('getSourceUri(' + childBytes[3] + ') failed. attempting getSourceName(' + childBytes[3] + ') instead. (e=' + e + ')')
 			const srcName = getSourceName(childBytes[3])
 			if (FileUtils.isRelativePath(srcName)) {
 				sourceUri = Uri.joinPath(propath.workspaceFolder.uri, srcName)

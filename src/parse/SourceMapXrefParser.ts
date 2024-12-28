@@ -37,7 +37,6 @@ export const getSourceMapFromXref = (propath: PropathParser, debugSourceName: st
 			lineCount: lc
 		})
 		log.info('incLengths.push ' + JSON.stringify(incLengths[incLengths.length-1]))
-		return
 	}
 
 	const injectInclude = (m: SourceMap, parentUri: Uri, sourceLine: number, incLine: number, dbgLine: number) => {
@@ -79,35 +78,26 @@ export const getSourceMapFromXref = (propath: PropathParser, debugSourceName: st
 				log.info('line="' + line + '"')
 				const xref = incRE.exec(line)
 
-				if (xref) {
-					log.info('xref.length=' + xref.length)
+				if (!xref || xref.length < 5 || xref[4] != 'INCLUDE') {
+					continue
 				}
-				// log.warn('xref=' + JSON.stringify(xref))
 
-				if (xref && xref.length >= 5 && xref[4] == 'INCLUDE') {
-					log.info('xref=' + JSON.stringify(xref))
-					const [, path, ,lineNumStr, ,includeNameRaw] = xref
+				const [, path, ,lineNumStr, ,includeNameRaw] = xref
 
-					log.info('path=' + path)
-					const uri = Uri.file(path)
-					let pinfo
-					if (FileUtils.doesFileExist(uri)) {
-						log.info('pinfo seraching for uri=' + uri.fsPath)
-						pinfo = await propath.search(uri)
-					} else {
-						log.info('pinfo seraching for path=' + path)
-						pinfo = await propath.search(path)
-					}
+				const uri = Uri.file(path)
+				let pinfo
+				if (FileUtils.doesFileExist(uri)) {
+					pinfo = await propath.search(uri)
+				} else {
+					pinfo = await propath.search(path)
+				}
 
-					const lineNum = Number(lineNumStr)
-					const includeName = includeNameRaw.replace(/^"(.*)"$/, '$1').trim()
-					const incinfo = await propath.search(includeName)
-					log.info('pinfo=' + JSON.stringify(pinfo, null, 2))
-					log.info('incInfo=' + JSON.stringify(incinfo, null, 2))
-					if (pinfo && incinfo) {
-						includes.push({incUri: incinfo.uri, srcUri: pinfo.uri, srcLine: lineNum})
-						readIncludeLineCount(incinfo.uri)
-					}
+				const lineNum = Number(lineNumStr)
+				const includeName = includeNameRaw.replace(/^"(.*)"$/, '$1').trim()
+				const incinfo = await propath.search(includeName)
+				if (pinfo && incinfo) {
+					includes.push({incUri: incinfo.uri, srcUri: pinfo.uri, srcLine: lineNum})
+					readIncludeLineCount(incinfo.uri)
 				}
 			}
 		}

@@ -13,6 +13,8 @@ suite('proj1 - Extension Test Suite', () => {
 		FileUtils.copyFile(Uri.joinPath(workspaceUri, 'openedge-project.json'), Uri.joinPath(workspaceUri, 'openedge-project.bk.json'), { force: true })
 		FileUtils.copyFile(Uri.joinPath(workspaceUri, '.vscode', 'ablunit-test-profile.json'), Uri.joinPath(workspaceUri, '.vscode', 'ablunit-test-profile.bk.json'), { force: true })
 		FileUtils.copyFile(Uri.joinPath(workspaceUri, '.vscode', 'settings.json'), Uri.joinPath(workspaceUri, '.vscode', 'settings.bk.json'), { force: true })
+		await suiteSetupCommon()
+		log.info('suiteSetup complete')
 	})
 
 	setup('proj1 - beforeEach', () => {
@@ -21,7 +23,7 @@ suite('proj1 - Extension Test Suite', () => {
 		return workspace.getConfiguration('ablunit.files').update('exclude', undefined)
 	})
 
-	teardown('proj1 - afterEach', async () => {
+	teardown('proj1 - afterEach', () => {
 		FileUtils.copyFile(Uri.joinPath(workspaceUri, 'openedge-project.bk.json'), Uri.joinPath(workspaceUri, 'openedge-project.json'), { force: true })
 		FileUtils.copyFile(Uri.joinPath(workspaceUri, '.vscode', 'ablunit-test-profile.bk.json'), Uri.joinPath(workspaceUri, '.vscode', 'ablunit-test-profile.json'), { force: true })
 		FileUtils.copyFile(Uri.joinPath(workspaceUri, '.vscode', 'settings.bk.json'), Uri.joinPath(workspaceUri, '.vscode', 'settings.json'), { force: true })
