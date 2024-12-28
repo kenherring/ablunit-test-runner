@@ -35,20 +35,22 @@ export class ABLResults implements Disposable {
 	testQueue: ITestObj[] = []
 	testData = new WeakMap<TestItem, ABLTestData>()
 	skippedTests: TestItem[] = []
-	propath?: PropathParser
-	debugLines?: ABLDebugLines
-	promsgs?: ABLPromsgs
+	propath: PropathParser
+	debugLines: ABLDebugLines
+	promsgs: ABLPromsgs
 	profileJson: ABLProfileJson[] = []
 	coverageJson: [] = []
-	dlc: IDlc | undefined
+	dlc: IDlc
 	thrownError: Error | undefined
 
-	public filecoverage = new Map<string, FileCoverage>()
-	public filecoveragedetail = new Map<string, FileCoverageDetail[]>()
-	public declarationcoverage = new Map<string, DeclarationCoverage[]>()
-	public statementcoverage = new Map<string, StatementCoverage[]>()
-	public filecoverageByTest = new Map<string, FileCoverage>()
-	public statementcoverageByTest = new Map<string, FileCoverageDetail[]>()
+	public coverage: Map<string, FileCoverageDetail[]> = new Map<string, FileCoverageDetail[]>()
+	public filecoverage: FileCoverage[] = []
+	// public filecoverage = new Map<string, FileCoverage>()
+	// public filecoveragedetail = new Map<string, FileCoverageDetail[]>()
+	// public declarationcoverage = new Map<string, DeclarationCoverage[]>()
+	// public statementcoverage = new Map<string, StatementCoverage[]>()
+	// public filecoverageByTest = new Map<string, FileCoverage>()
+	// public statementcoverageByTest = new Map<string, FileCoverageDetail[]>()
 
 	constructor (workspaceFolder: WorkspaceFolder,
 		private readonly storageUri: Uri,
@@ -66,13 +68,27 @@ export class ABLResults implements Disposable {
 		this.workspaceFolder = workspaceFolder
 		this.wrapperUri = Uri.joinPath(this.extensionResourcesUri, 'VSCodeTestRunner', 'ABLUnitCore.p')
 		this.cfg = new ABLUnitConfig()
+		this.cfg.setup(this.workspaceFolder, this.request)
+		this.dlc = getDLC(this.workspaceFolder, this.cfg.ablunitConfig.openedgeProjectProfile)
+		this.promsgs = new ABLPromsgs(this.dlc, this.globalStorageUri)
+		this.propath = this.cfg.readPropathFromJson(this.extensionResourcesUri)
+		this.debugLines = new ABLDebugLines(this.propath)
+
+		this.cfg.ablunitConfig.dbAliases = []
+		if (this.cfg.ablunitConfig.dbConns && this.cfg.ablunitConfig.dbConns.length > 0) {
+			for (const conn of this.cfg.ablunitConfig.dbConns) {
+				if (conn.aliases.length > 0) {
+					this.cfg.ablunitConfig.dbAliases.push(conn.name + ',' + conn.aliases.join(','))
+				}
+			}
+		}
+
 		this.setStatus(RunStatus.Constructed)
 	}
 
 	dispose () {
 		this.setStatus(RunStatus.Cancelled, 'disposing ABLResults object')
 		delete this.ablResults
-		delete this.debugLines
 	}
 
 	setStatus (status: RunStatus, statusNote?: string) {
@@ -91,23 +107,6 @@ export class ABLResults implements Disposable {
 
 	start () {
 		log.info('[start] workspaceFolder=' + this.workspaceFolder.uri.fsPath)
-		this.cfg.setup(this.workspaceFolder, this.request)
-
-		this.dlc = getDLC(this.workspaceFolder, this.cfg.ablunitConfig.openedgeProjectProfile)
-		this.promsgs = new ABLPromsgs(this.dlc, this.globalStorageUri)
-
-		this.propath = this.cfg.readPropathFromJson(this.extensionResourcesUri)
-		this.debugLines = new ABLDebugLines(this.propath)
-
-		this.cfg.ablunitConfig.dbAliases = []
-
-		if (this.cfg.ablunitConfig.dbConns && this.cfg.ablunitConfig.dbConns.length > 0) {
-			for (const conn of this.cfg.ablunitConfig.dbConns) {
-				if (conn.aliases.length > 0) {
-					this.cfg.ablunitConfig.dbAliases.push(conn.name + ',' + conn.aliases.join(','))
-				}
-			}
-		}
 
 		// eslint-disable-next-line @typescript-eslint/no-invalid-void-type
 		const prom: (Thenable<void> | Promise<void> | Promise<void[]> | undefined)[] = []
@@ -374,7 +373,7 @@ export class ABLResults implements Disposable {
 		let suitePath = workspace.asRelativePath(item.uri!, false)
 
 		if(suitePath) {
-			const propathRelativePath = this.propath!.search(suitePath)
+			const propathRelativePath = this.propath.search(suitePath)
 			suitePath = await propathRelativePath.then((res) => {
 				if (res?.propathRelativeFile) {
 					return res.propathRelativeFile
@@ -444,7 +443,7 @@ export class ABLResults implements Disposable {
 	}
 
 	private async getFailureMarkdownMessage (item: TestItem, options: TestRun, failure: ITestCaseFailure): Promise<MarkdownString> {
-		const stack = await parseCallstack(this.debugLines!, failure.callstackRaw)
+		const stack = await parseCallstack(this.debugLines, failure.callstackRaw)
 		const promsg = getPromsgText(failure.message)
 		const md = new MarkdownString(promsg + '\n\n')
 
@@ -479,53 +478,24 @@ export class ABLResults implements Disposable {
 		return tm
 	}
 
-	findTest (testName: string) {
-		for (const test of this.tests) {
-			log.info('test.label=' + test.label)
-			for (const [, child] of test.children) {
-				log.info('test.label=' + test.label + ', child.label=' + child.label)
-				if (child.label == testName) {
-					return child
-				}
-			}
-			if (test.label == testName) {
-				return test
-			}
-		}
-		return undefined
-	}
-
-	async parseProfile () {
-		const duration = new Duration()
+	parseProfile () {
+		const startTime = new Date()
 		const profParser = new ABLProfile()
-
-		const profDir = dirname(this.cfg.ablunitConfig.profFilenameUri.fsPath)
-		const profFile = basename(this.cfg.ablunitConfig.profFilenameUri.fsPath)
-		const globPattern = profFile.replace(/(.*)\.([a-zA-Z]+)$/, '$1_*.$2')
-		log.info('globPattern=' + globPattern + ', profDir=' + profDir)
-
-		const dataFiles = globSync(globPattern, { cwd: profDir })
-		dataFiles.push(basename(this.cfg.ablunitConfig.profFilenameUri.fsPath))
-		log.info('dataFiles.length=' + dataFiles.length)
-
-		let item: TestItem | undefined = undefined
-		for (const dataFile of dataFiles) {
-			log.info('dataFile = ' + dataFile)
-			if (dataFile != basename(this.cfg.ablunitConfig.profFilenameUri.fsPath)) {
-				const testName = dataFile.replace(/(.*)_(.*)\.(.*)$/, '$2')
-				log.info('testName=' + testName)
-				item = this.findTest(testName)
-				log.info('item=' + item?.label)
-			}
-
-			const profJson = await profParser.parseData(Uri.joinPath(Uri.file(profDir), dataFile), this.cfg.ablunitConfig.profiler.writeJson, this.debugLines!)
-			if (profJson) {
-				this.profileJson.push(profJson)
-				log.info('assigning profile results')
-				await this.assignProfileResults(profJson, item)
-			}
-		}
-		log.info('parsing profile data complete ' + duration.toString())
+		return profParser.parseData(this.cfg.ablunitConfig.profFilenameUri, this.cfg.ablunitConfig.profiler.writeJson, this.debugLines)
+			.then((json) => {
+				if (json) {
+					this.profileJson.push(json)
+					return this.assignProfileResults(json)
+				}
+				log.warn('no profile data returned')
+				return
+			})
+			.then(() => {
+				log.debug('assignProfileResults complete (time=' + (Number(new Date()) - Number(startTime)) + ')')
+				return
+			}, (e: unknown) => {
+				throw new Error('assignProfileResults error: ' + e)
+			})
 	}
 
 	async assignProfileResults (profJson: ABLProfileJson, item?: TestItem) {
@@ -541,14 +511,15 @@ export class ABLResults implements Disposable {
 	}
 
 	async setCoverage (module: IModule, item?: TestItem) {
-		const fileinfo = await this.propath!.search(module.SourceName)
+		const fileinfo = await this.propath.search(module.SourceName)
+
 		const moduleUri = fileinfo?.uri
 		// const coverage = new Map<string, FileCoverageDetail[]>()
 		// const coverageByFile = new Map<string, FileCoverageDetail[]>()
 		if (!moduleUri) {
 			if (!module.SourceName.startsWith('OpenEdge.') &&
-			module.SourceName !== 'ABLUnitCore.p' &&
-			module.SourceName !== 'Ccs.Common.Application') {
+				module.SourceName !== 'ABLUnitCore.p' &&
+				module.SourceName !== 'Ccs.Common.Application') {
 				log.error('could not find moduleUri for ' + module.SourceName)
 			}
 			return
@@ -606,73 +577,38 @@ export class ABLResults implements Disposable {
 		}
 
 		for (const line of module.lines) {
+			if (!fileinfo) {
+				log.warn('file not found in propath: ' + line.srcUri)
+				continue
+			}
 			if (line.LineNo <= 0) {
 				//  * -2 is a special case - need to handle this better
 				//  *  0 is a special case - method header
 				continue
 			}
 
-			const dbg = await this.debugLines!.getSourceLine(fileinfo.propathRelativeFile, line.LineNo)
-			if (!dbg) return
-			const fc = this.statementcoverage.get(dbg.sourceUri.fsPath) ?? []
-			let sc = fc.find((c) => {
-				const e = c.location as Position
-				return e.line === dbg.sourceLine - 1
-			})
-			if (sc) {
-				if (line.ExecCount && typeof sc.executed === 'number') {
-					sc.executed += line.ExecCount
-				}
-			} else {
-				sc = new StatementCoverage(line.ExecCount ?? 0, new Position(dbg.sourceLine - 1, 0))
+			const dbg = await this.debugLines.getSourceLine(fileinfo.propathRelativeFile, line.LineNo)
+			if (!dbg) {
+				return
 			}
-			fc.push(sc)
-			this.statementcoverage.set(dbg.sourceUri.fsPath, fc)
-
-			if (!item) continue // no test item, so no need to set coverage by test
-
-			const fc2 = this.statementcoverageByTest.get(dbg.sourceUri.fsPath + ' ' + item.id) ?? []
-			let sc2 = fc.find((c) => {
-				const e = c.location as Position
-				return e.line === dbg.sourceLine - 1
-			})
-			if (sc2) {
-				if (line.ExecCount && typeof sc.executed === 'number') {
-					sc.executed += line.ExecCount
-				}
-			} else {
-				sc2 = new StatementCoverage(line.ExecCount ?? 0, new Position(dbg.sourceLine - 1, 0))
+			let fc = this.coverage.get(dbg.sourceUri.fsPath)
+			if (!fc) {
+				// create a new FileCoverage object if one didn't already exist
+				const fcd: FileCoverageDetail[] = []
+				this.coverage.set(dbg.sourceUri.fsPath, fcd)
+				fc = this.coverage.get(dbg.sourceUri.fsPath)
 			}
-			fc2.push(sc2)
-			this.statementcoverageByTest.set(dbg.sourceUri.fsPath, fc2)
+
+			// // TODO: end of range should be the end of the line, not the beginning of the next line
+			const coverageRange = new Position(dbg.sourceLine - 1, 0)
+			fc!.push(new StatementCoverage(line.ExecCount ?? 0, coverageRange))
 		}
 
-		log.info('set this')
-		for (const [k, sc] of this.statementcoverage) {
-			let execCount = 0
-			for (const w of sc) {
-				if (w.executed) execCount += 1
-			}
-			log.info('coverage[' + k + '].length=' + sc.length + ' ' + execCount)
-
-			const dc = this.declarationcoverage.get(k) ?? []
-			log.info('dc.length=' + dc.length)
-
-			const fcd: FileCoverageDetail[] = []
-			fcd.push(...dc)
-			fcd.push(...sc)
-
-			const fileCov = FileCoverage.fromDetails(Uri.file(k), fcd)
-			fileCov.includesTests = this.filecoverage.get(k)?.includesTests ?? []
-			if (item) {
-				fileCov.includesTests.push(item)
-			}
-			log.info('detail coverage for ' + k + ':\n' +
-				'\t' + JSON.stringify(fileCov.statementCoverage) + ' ' +
-				'\t' + JSON.stringify(fileCov.declarationCoverage) + ' ' +
-				'\t' + fileCov.includesTests?.length)
-			this.filecoverage.set(k, fileCov)
-			this.filecoveragedetail.set(k, fcd)
-		}
+		this.coverage.forEach((v, k) => {
+			log.debug('coverage[' + k + '].length=' + v.length)
+			const fileCov = FileCoverage.fromDetails(Uri.file(k), v)
+			log.debug('Statement coverage for ' + k + ': ' + JSON.stringify(fileCov.statementCoverage))
+			this.filecoverage.push(fileCov)
+		})
 	}
 }

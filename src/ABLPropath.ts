@@ -38,14 +38,43 @@ export class PropathParser {
 		entry: [] as IPropathEntry[]
 	}
 
-	constructor (workspaceFolder: WorkspaceFolder) {
-		this.workspaceFolder = workspaceFolder
+	constructor (workspaceFolder?: WorkspaceFolder) {
+		if (workspaceFolder) {
+			this.workspaceFolder = workspaceFolder
+		} else {
+			this.workspaceFolder = workspace.workspaceFolders![0]
+		}
 		this.filemap = new Map()
 		this.buildmap = new Map()
+
+		let uri
+		if (this.workspaceFolder) {
+			uri = this.workspaceFolder.uri
+		} else {
+			FileUtils.toUri('.')
+		}
+
+		if (!uri) {
+			log.error('uri is undefined (workspaceFolder=' + this.workspaceFolder?.uri.fsPath + ')')
+			throw new Error('uri is undefined (workspaceFolder=' + this.workspaceFolder?.uri.fsPath + ')')
+		}
+
+		this.propath.entry.push({
+			uri: uri,
+			path: uri.fsPath,
+			relativePath: '.',
+			buildDir: uri.fsPath,
+			buildDirUri: uri,
+			xrefDir: uri.fsPath,
+			xrefDirUri: uri,
+			type: 'Source',
+		})
 	}
 
 	setPropath (importedPropath: IProjectJson) {
 		log.debug('importedPropath.length=' + importedPropath.propathEntry.length)
+
+		this.propath.entry = []
 
 		for (const entry of importedPropath.propathEntry) {
 			log.debug('found propath entry: ' + entry.path + ' ' + entry.type + ' ' + entry.buildDir)
@@ -130,6 +159,7 @@ export class PropathParser {
 				const propathRelativeFile = uri.fsPath.replace(e.uri.fsPath, '').substring(1)
 				const relativeFile = workspace.asRelativePath(uri, false)
 				const rcodeUri = Uri.joinPath(e.buildDirUri, relativeFile.replace(/\.(p|cls)$/, '.r'))
+				const xrefUri = Uri.joinPath(e.xrefDirUri, propathRelativeFile + '.xref')
 
 				const fileObj: IABLFile = {
 					uri: uri,
@@ -138,7 +168,7 @@ export class PropathParser {
 					relativeFile: relativeFile,
 					propathEntry: e,
 					propathRelativeFile: propathRelativeFile,
-					xrefUri: Uri.joinPath(e.xrefDirUri, propathRelativeFile + '.xref')
+					xrefUri: xrefUri
 				}
 				this.files.push(fileObj)
 				this.filemap.set(relativeFile, fileObj)
@@ -149,10 +179,14 @@ export class PropathParser {
 		return undefined
 	}
 
-	async search (file: string | Uri) {
+	async search (file: string | Uri | undefined) {
+		if (!file) {
+			return undefined
+		}
 		if (file instanceof Uri) {
 			return this.searchUri(file)
 		}
+
 		let relativeFile = FileUtils.isRelativePath(file) ? file : workspace.asRelativePath(Uri.file(file), false)
 		if (!relativeFile.endsWith('.cls') && !relativeFile.endsWith('.p') && !relativeFile.endsWith('.w') && !relativeFile.endsWith('.i')) {
 			relativeFile = relativeFile.replace(/\./g, '/') + '.cls'
@@ -175,7 +209,7 @@ export class PropathParser {
 				const fileObj: IABLFile = {
 					uri: fileInPropathUri,
 					file: file,
-					rcodeUri: Uri.joinPath(e.buildDirUri, relativeFile.replace(/\.(p|cls)$/, '.r')),
+					rcodeUri: Uri.joinPath(e.buildDirUri, propathRelativeFile.replace(/\.(p|cls)$/, '.r')),
 					relativeFile: relativeFile,
 					propathEntry: e,
 					propathRelativeFile: propathRelativeFile,

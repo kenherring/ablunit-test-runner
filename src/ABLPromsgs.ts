@@ -24,7 +24,6 @@ export class ABLPromsgs {
 			log.info('promsgs loaded from cache \'' + cacheUri.fsPath + '\'')
 			return true
 		}, (_e: unknown) => {
-			log.info('reading promsgs from DLC')
 			return this.loadFromDLC(dlc)
 		}).then((isCache) => {
 			if (!isCache) {
@@ -78,6 +77,7 @@ export class ABLPromsgs {
 	}
 
 	loadFromDLC (dlc: IDlc) {
+		log.info('reading promsgs from DLC (dlc=' + dlc.uri.fsPath + ')')
 		const promsgDir = Uri.joinPath(dlc.uri, 'prohelp/msgdata')
 		return workspace.fs.stat(dlc.uri)
 			.then(() => {
@@ -103,7 +103,7 @@ export class ABLPromsgs {
 	}
 
 	async loadFromCache (cacheUri: Uri) {
-		log.info('load promsgs from cache') // REMOVEME
+		log.info('load promsgs from cache (cacheUri=' + cacheUri.fsPath + ')')
 		await workspace.fs.readFile(cacheUri).then((buffer) => {
 			this.promsgs = JSON.parse(Buffer.from(buffer).toString('utf8')) as IPromsg[]
 			return

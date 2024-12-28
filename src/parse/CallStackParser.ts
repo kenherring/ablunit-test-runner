@@ -1,6 +1,6 @@
 import { workspace, Location, Position, Range, Uri } from 'vscode'
 import { ABLDebugLines } from '../ABLDebugLines'
-import { ISourceMapItem } from './RCodeParser'
+import { SourceMapItem } from './SourceMapParser'
 import { log } from '../ChannelLogger'
 import * as FileUtils from '../FileUtils'
 
@@ -13,7 +13,7 @@ interface ICallStackItem {
 	debugUri?: Uri
 	sourceLine?: number
 	// fileinfo?: IABLFile
-	lineinfo?: ISourceMapItem
+	lineinfo?: SourceMapItem
 	markdownText?: string
 	loc?: Location
 	position: Position
@@ -68,7 +68,7 @@ export async function parseCallstack (debugLines: ABLDebugLines, callstackRaw: s
 			position: new Position(debugLine - 1, 0)
 		}
 
-		let lineinfo: ISourceMapItem | undefined = undefined
+		let lineinfo: SourceMapItem | undefined = undefined
 		lineinfo = await debugLines.getSourceLine(moduleParent, debugLine)
 			.catch((e: unknown) => {
 				log.info('could not find source line for ' + moduleParent + ' at line ' + debugLine + '.  using raw callstack data')
@@ -86,19 +86,16 @@ export async function parseCallstack (debugLines: ABLDebugLines, callstackRaw: s
 			callstackItem.lineinfo = lineinfo
 			callstackItem.markdownText = markdownText
 
-			callstackItem.loc = new Location(lineinfo.sourceUri, new Range(
-				new Position(lineinfo.sourceLine - 1, 0),
-				new Position(lineinfo.sourceLine, 0)
-			))
+			const posStart = new Position(lineinfo.sourceLine - 1, 0)
+			const posEnd = new Position(lineinfo.sourceLine, 0)
+			callstackItem.loc = new Location(lineinfo.sourceUri, new Range(posStart, posEnd))
 		} else {
 			callstackItem.markdownText = module + ' at line ' + debugLine + ' (' + debugFile + ')'
 			if (debugUri) {
-				callstackItem.loc = new Location(debugUri, new Range(
-					new Position(debugLine - 1, 0),
-					new Position(debugLine, 0)
-				))
+				const posStart = new Position(debugLine - 1, 0)
+				const posEnd = new Position(debugLine, 0)
+				callstackItem.loc = new Location(debugUri, new Range(posStart, posEnd))
 			}
-
 		}
 		callstack.items.push(callstackItem)
 	}

@@ -47,20 +47,18 @@ export async function activate (context: ExtensionContext) {
 	context.subscriptions.push(ctrl)
 
 	log.info('process.env[\'ABLUNIT_TEST_RUNNER_UNIT_TESTING\']=' + process.env['ABLUNIT_TEST_RUNNER_UNIT_TESTING'])
-	log.info('context.extensionMode=' + context.extensionMode)
-	// console.log('process.env[\'ABLUNIT_TEST_RUNNER_UNIT_TESTING\']=' + process.env['ABLUNIT_TEST_RUNNER_UNIT_TESTING'])
-	// if (process.env['ABLUNIT_TEST_RUNNER_UNIT_TESTING'] || context.extensionMode == ExtensionMode.Test || context.extensionMode == ExtensionMode.Development) {
-	log.info('push internal commands')
-	context.subscriptions.push(
-		commands.registerCommand('_ablunit.getExtensionTestReferences', () => { return getExtensionTestReferences() }),
-		commands.registerCommand('_ablunit.isRefreshTestsComplete', () => { return isRefreshTestsComplete }),
-		commands.registerCommand('_ablunit.getLogUri', () => { return context.logUri }),
-		commands.registerCommand('_ablunit.getTestController', () => { return ctrl }),
-		commands.registerCommand('_ablunit.getTestData', () => { return testData.getMap() }),
-		commands.registerCommand('_ablunit.getTestItem', (uri: Uri) => { return getExistingTestItem(ctrl, uri) }),
-		commands.registerCommand('_ablunit.getTestRunError', () => { return recentError })
-	)
-	// }
+	if (process.env['ABLUNIT_TEST_RUNNER_UNIT_TESTING']) {
+		log.info('push internal commands')
+		context.subscriptions.push(
+			commands.registerCommand('_ablunit.getExtensionTestReferences', () => { return getExtensionTestReferences() }),
+			commands.registerCommand('_ablunit.isRefreshTestsComplete', () => { return isRefreshTestsComplete }),
+			commands.registerCommand('_ablunit.getLogUri', () => { return context.logUri }),
+			commands.registerCommand('_ablunit.getTestController', () => { return ctrl }),
+			commands.registerCommand('_ablunit.getTestData', () => { return testData.getMap() }),
+			commands.registerCommand('_ablunit.getTestItem', (uri: Uri) => { return getExistingTestItem(ctrl, uri) }),
+			commands.registerCommand('_ablunit.getTestRunError', () => { return recentError })
+		)
+	}
 
 	context.subscriptions.push(
 		commands.registerCommand('_ablunit.openCallStackItem', openCallStackItem),
@@ -312,7 +310,6 @@ export async function activate (context: ExtensionContext) {
 						run.errored(childTest, new TestMessage('ablunit run failed'))
 					}
 				}
-				log.info('run.end(1)')
 				run.end()
 				return
 			}
@@ -342,13 +339,9 @@ export async function activate (context: ExtensionContext) {
 						log.info('run.addCoverage ' + JSON.stringify(c.statementCoverage) + ', ' + c.uri.fsPath)
 						run.addCoverage(c)
 					}
-					// for (const [c, ] of res.filecoveragedetail) {
-					// 	run.addCoverage(c)
-					// }
 				}
 			}
 
-			log.info('run.end(2)')
 			run.end()
 			log.notification('ablunit tests complete')
 			return
@@ -400,7 +393,6 @@ export async function activate (context: ExtensionContext) {
 		cancellation.onCancellationRequested(() => {
 			log.debug('cancellation requested - createABLResults-2')
 			run.end()
-			log.trace('run.end(3)')
 			throw new CancellationError()
 		})
 		const tests = request.include ?? gatherTestItems(ctrl.items)
@@ -418,7 +410,6 @@ export async function activate (context: ExtensionContext) {
 				log.debug('runTestQueue complete')
 				return
 			}, (e: unknown) => {
-				log.debug('run.end() on error=' + e)
 				run.end()
 				throw e
 			})
@@ -535,6 +526,7 @@ export async function activate (context: ExtensionContext) {
 	if(workspace.getConfiguration('ablunit').get('discoverAllTestsOnActivate', false)) {
 		await commands.executeCommand('testing.refreshTests')
 	}
+	log.info('activation complete')
 	return true
 }
 
@@ -590,7 +582,6 @@ export function getContextLogUri () {
 export function checkCancellationRequested (run: TestRun) {
 	if (run.token.isCancellationRequested) {
 		log.debug('cancellation requested - chcekCancellationRequested')
-		log.info('run.end(5)')
 		run.end()
 		throw new CancellationError()
 	}

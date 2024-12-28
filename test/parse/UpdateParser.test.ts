@@ -1,11 +1,11 @@
-import { assert } from '../testCommon'
+import { assert, toUri } from '../testCommon'
 import { parseUpdates, TestStatus } from 'parse/UpdateParser'
 
 
 suite ('UpdateParser', () => {
 
 	test('parseUpdateLines - readFile', () => {
-		const updates = parseUpdates('../../test/resources/UpdateParserTest1.txt', [])
+		const updates = parseUpdates(toUri('../../test/resources/UpdateParserTest1.txt'), [])
 		if (!updates) {
 			assert.fail('updates is undefined')
 			return

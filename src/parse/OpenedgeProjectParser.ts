@@ -153,11 +153,10 @@ export function getDLC (workspaceFolder: WorkspaceFolder, openedgeProjectProfile
 	}
 	if (runtimeDlc) {
 		log.info('using DLC = ' + runtimeDlc.fsPath)
-		log.info('  ---4--- runtimeDlc=' + runtimeDlc.fsPath)
 		const oeVer = readOEVersionFile(runtimeDlc.fsPath)
 		const dlcObj: IDlc = {
 			uri: runtimeDlc,
-			version: oeVer
+			version: oeVer,
 		}
 		dlcMap.set(workspaceFolder, dlcObj)
 		return dlcObj
@@ -169,13 +168,11 @@ export function getOEVersion (workspaceFolder: WorkspaceFolder, openedgeProjectP
 	const profileJson = getOpenEdgeProfileConfig(workspaceFolder.uri, openedgeProjectProfile)
 	if (!profileJson) {
 		log.debug('profileJson not found')
-		log.info('profileJson not found')
 		return undefined
 	}
 
 	if (profileJson.oeversion) {
 		log.debug('profileJson.value.oeversion = ' + profileJson.oeversion)
-		log.info('profileJson.value.oeversion = ' + profileJson.oeversion)
 		return profileJson.oeversion
 	}
 
@@ -291,8 +288,6 @@ export function getActiveProfile (rootDir: string) {
 	const uri = Uri.joinPath(Uri.file(rootDir), '.vscode', 'profile.json')
 	if (FileUtils.doesFileExist(uri)) {
 		const raw = FileUtils.readFileSync(uri)
-		// const raw = FileUtils.readFileSync(uri, { encoding: 'utf8' })
-
 		const contents = raw.toString().replace(/\r/g, '')
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		const txt = JSON.parse(contents)
@@ -530,7 +525,7 @@ function getWorkspaceProfileConfig (workspaceUri: Uri, openedgeProjectProfile?: 
 				prf.propath = prjConfig.propath
 			for (const e of prf.buildPath) {
 				if (!e.buildDir) {
-					e.buildDir = prjConfig.buildDirectory ?? e.path
+					e.buildDir = e.path
 				}
 			}
 			return prf

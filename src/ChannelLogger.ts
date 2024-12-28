@@ -200,11 +200,12 @@ class Logger {
 			let ret = s.toString()
 			if (ret.startsWith(this.extensionCodeDir)) {
 				ret = ret.substring(this.extensionCodeDir.length + 1)
-			}
-			if (ret.includes(' (' + this.extensionCodeDir)) {
+			} else {
 				const parts = ret.split('(')
-				parts[1] =  parts[1].substring(this.extensionCodeDir.length + 1)
-				ret = parts.join('(')
+				if (parts.length >=2 && parts[1].startsWith(this.extensionCodeDir)) {
+					parts[1] =  parts[1].substring(this.extensionCodeDir.length + 1)
+					ret = parts.join('(')
+				}
 			}
 			return ret
 		}

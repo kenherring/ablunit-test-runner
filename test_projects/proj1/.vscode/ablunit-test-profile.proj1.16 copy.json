@@ -1,0 +1,12 @@
+{
+	"configurations": [
+		{
+			"tempDir": "${workspaceFolder}",
+			"options": {
+				"output": {
+					"writeJson": true
+				}
+			}
+		}
+	]
+}

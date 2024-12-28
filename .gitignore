@@ -9,6 +9,7 @@ dist/
 docker/.rssw/
 node_modules/
 out/
+resources/ADE/
 target/
 tmp/
 *.bk
@@ -28,7 +29,10 @@ docker/ablunit.pl
 client.mon
 proc.mon
 procore.*
+*.crc
 *.dbg
+*.hierarchy
+*.inc
 *.listing
 *.out
 *.pl
@@ -37,6 +41,7 @@ procore.*
 *.r
 *.xref
 *.xref.xml
+*.warnings
 ablunit.json
 dbconn.pf
 dbg_*

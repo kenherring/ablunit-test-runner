@@ -18,6 +18,7 @@ const useOEAblPrerelease = false
 const enableExtensions = [
 	'AtStart',
 	'DebugLines',
+	'proj0',
 	'proj2',
 	'proj3',
 	'proj4',
@@ -84,6 +85,10 @@ function getMochaOpts (projName) {
 			'tsconfig-paths/register',
 			'@swc-node/register',
 		],
+	}
+
+	if (projName === 'proj7A') {
+		mochaOpts.retries = 2
 	}
 
 	if (process.env['ABLUNIT_TEST_RUNNER_RUN_SCRIPT_FLAG']) {

@@ -1,16 +1,14 @@
 import { Uri, commands, window, workspace } from 'vscode'
-import { assert, getResults, getTestControllerItemCount, getTestItem, log, refreshTests, runAllTests, runAllTestsWithCoverage, runTestAtLine, runTestsDuration, runTestsInFile, sleep2, suiteSetupCommon, toUri, updateConfig, updateTestProfile } from '../testCommon'
+import { assert, getRcodeCount, getResults, getTestControllerItemCount, getTestItem, getXrefCount, log, rebuildAblProject, refreshTests, runAllTests, runAllTestsWithCoverage, runTestAtLine, runTestsDuration, runTestsInFile, sleep2, suiteSetupCommon, toUri, updateConfig, updateTestProfile } from '../testCommon'
 import { ABLResultsParser } from 'parse/ResultsParser'
 import { TimeoutError } from 'ABLUnitRun'
 import * as vscode from 'vscode'
 import * as FileUtils from '../../src/FileUtils'
-import * as fs from 'fs'
-import { deleteFile } from '../../src/FileUtils'
 
 function createTempFile () {
 	const tempFile = toUri('UNIT_TEST.tmp')
-	return workspace.fs.writeFile(tempFile, Buffer.from(''))
-		.then(() => { return tempFile })
+	FileUtils.writeFile(tempFile, '')
+	return tempFile
 }
 
 suite('proj0  - Extension Test Suite', () => {
@@ -64,8 +62,24 @@ suite('proj0  - Extension Test Suite', () => {
 	})
 
 	test('proj0.02 - run test, open file, validate coverage displays', async () => {
-		await runAllTestsWithCoverage()
-			.then(() => { assert.linesExecuted('src/dirA/dir1/testInDir.p', [5, 6]) })
+		await rebuildAblProject()
+		let rcodeCount = getRcodeCount()
+		while (rcodeCount < 10) {
+			await sleep2(250)
+			rcodeCount = getRcodeCount()
+		}
+		if (getRcodeCount() === 0) {
+			assert.fail('no rcode files found')
+		}
+
+		if (getXrefCount() === 0) {
+			assert.fail('no xref files found')
+		}
+		await runAllTestsWithCoverage().then(() => {
+			log.info('runAllTestsWithCoverage.then')
+			return true
+		})
+		assert.linesExecuted('src/dirA/dir1/testInDir.p', [5, 6])
 	})
 
 	// is it possible to validate the line coverage displayed and not just the reported coverage?  does it matter?
@@ -111,13 +125,6 @@ suite('proj0  - Extension Test Suite', () => {
 		await sleep2(250)
 		const testClassItem = await getTestItem(toUri('src/threeTestProcedures.p'))
 
-		// log.info('testClassItem = ' + JSON.stringify(testClassItem, null, 2))
-		log.info('testClassItem = ' + testClassItem.id)
-		for (const [id, child] of testClassItem.children) {
-			log.info('    child.id=' + id)
-		}
-
-
 		if (!testClassItem) {
 			throw new Error('cannot find TestItem for src/threeTestProcedures.p')
 		}
@@ -128,23 +135,27 @@ suite('proj0  - Extension Test Suite', () => {
 	})
 
 	test('proj0.07 - parse test class with skip annotation', async () => {
-		const testClassItem = await commands.executeCommand('vscode.open', toUri('src/ignoreMethod.cls'))
-			.then(() => { return sleep2(250) })
-			.then(() => { return getTestItem(toUri('src/ignoreMethod.cls')) })
+		await commands.executeCommand('vscode.open', toUri('src/ignoreMethod.cls'))
+		await sleep2(250)
+		const testClassItem = await getTestItem(toUri('src/ignoreMethod.cls'))
 
 		if (!testClassItem) {
+			log.error('cannot find TestItem for src/ignoreMethod.cls')
+			assert.fail('cannot find TestItem for src/ignoreMethod.cls')
 			throw new Error('cannot find TestItem for src/ignoreMethod.cls')
 		}
 		assert.equal(testClassItem.children.size, 5, 'testClassItem.children.size should be 5')
 	})
 
 	test('proj0.08 - parse test procedure with skip annotation', async () => {
-		const testClassItem = await commands.executeCommand('vscode.open', toUri('src/ignoreProcedure.p'))
-			.then(() => { return sleep2(250) })
-			.then(() => { return getTestItem(toUri('src/ignoreProcedure.p')) })
+		await commands.executeCommand('vscode.open', toUri('src/ignoreProcedure.p'))
+		await sleep2(250)
+		const testClassItem = await getTestItem(toUri('src/ignoreProcedure.p'))
 
 		if (!testClassItem) {
-			throw new Error('cannot find TestItem for src/ignoreProcedure.p')
+			log.error('cannot find TestItem for src/ignoreProcedure.p')
+			assert.fail('cannot find TestItem for src/ignoreProcedure.p')
+			// throw new Error('cannot find TestItem for src/ignoreProcedure.p')
 		}
 		assert.equal(testClassItem.children.size, 5, 'testClassItem.children.size should be 5')
 	})
@@ -169,7 +180,7 @@ suite('proj0  - Extension Test Suite', () => {
 		// init test
 		await refreshTests()
 		const startCount = await getTestControllerItemCount()
-		const tempFile = await createTempFile()
+		const tempFile = createTempFile()
 		// This event handler makes use wait for a second edit so we know that the first edit has been processed
 		// Inspiration: https://github.com/microsoft/vscode/blob/main/extensions/vscode-api-tests/src/singlefolder-tests/workspace.event.test.ts#L80
 		disposables.push(vscode.workspace.onWillCreateFiles(e => {
@@ -234,10 +245,10 @@ suite('proj0  - Extension Test Suite', () => {
 
 	test('proj0.10C - Delete File', async () => {
 		// init tests
-		fs.copyFileSync(toUri('src/dirA/proj10.p.orig').fsPath, toUri('src/dirA/proj10.p').fsPath)
+		FileUtils.copyFile(toUri('src/dirA/proj10.p.orig'), toUri('src/dirA/proj10.p'))
 		const startCount = await refreshTests()
 			.then(() => { return getTestControllerItemCount('ABLTestFile') })
-		const tempFile = await createTempFile()
+		const tempFile = createTempFile()
 		disposables.push(vscode.workspace.onWillDeleteFiles(e => {
 			const ws = new vscode.WorkspaceEdit()
 			ws.insert(tempFile, new vscode.Position(0, 0), 'onWillDelete ' + e.files.length + ' ' + e.files[0].fsPath)

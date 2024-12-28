@@ -1,18 +1,25 @@
 import { Uri, workspace } from 'vscode'
-import { getContentFromFilesystem } from './TestParserCommon'
 import { PropathParser } from '../ABLPropath'
 import { ABLDebugLines } from '../ABLDebugLines'
 import { log } from '../ChannelLogger'
+import * as FileUtils from '../FileUtils'
 
 export class ABLProfile {
 	profJSON?: ABLProfileJson
-	resultsPropath?: PropathParser
 
-	async parseData (uri: Uri, writeJson: boolean, debugLines: ABLDebugLines) {
-		const text = await getContentFromFilesystem(uri)
-			.then((r) => r, (e: unknown) => { log.error('Failed parsing profile data: e=' + e); return '' })
-		if (text == '') return
-		const lines = text.replace(/\r/g, '').split('\n')
+	async parseData (uri: Uri, writeJson: boolean, debugLines?: ABLDebugLines, propath?: PropathParser) {
+		if (!debugLines) {
+			// unit testing setup
+			debugLines = new ABLDebugLines()
+			if (propath) {
+				debugLines.propath = propath
+			} else {
+				throw new Error('propath not set')
+			}
+		}
+
+		FileUtils.validateFile(uri)
+		const lines = FileUtils.readLinesFromFileSync(uri)
 
 		const sectionLines: string[][] = []
 		let linesArr: string[] = []
@@ -158,6 +165,59 @@ export interface ILineSummary { // Section 4
 	incUri?: Uri
 }
 
+class LineSummary {
+	ExecCount?: number
+	ActualTime?: number
+	CumulativeTime?: number
+	trace?: ITrace[]
+	srcLine?: number
+	srcUri?: Uri
+	incLine?: number
+	incUri?: Uri
+
+	constructor (public readonly LineNo: number, public readonly Executable: boolean) {}
+
+	get incPath () {
+		if (this.incUri) {
+			return this.incUri.fsPath
+		}
+		return undefined
+	}
+	set incPath (path: string | undefined) {
+		if (path) {
+			this.incUri = Uri.file(path)
+			return
+		}
+		this.incUri = undefined
+	}
+
+	get srcPath () {
+		return this.srcUri?.fsPath
+	}
+	set srcPath (path: string | undefined) {
+		if (path) {
+			this.srcUri = Uri.file(path)
+			return
+		}
+		this.srcUri = undefined
+	}
+
+	toJson () {
+		return {
+			LineNo: this.LineNo,
+			ExecCount: this.ExecCount,
+			ActualTime: this.ActualTime,
+			CumulativeTime: this.CumulativeTime,
+			Executable: this.Executable,
+			trace: this.trace,
+			srcLine: this.srcLine,
+			srcPath: this.srcPath,
+			incLine: this.incLine,
+			incPath: this.incPath,
+		}
+	}
+}
+
 interface ICalledBy { // Section 3
 	CallerModuleID: number
 	CallerLineNo: number
@@ -270,12 +330,13 @@ export class ABLProfileJson {
 				}
 			}
 
+			const fileinfo = await this.debugLines.propath.search(sourceName)
 			const mod: IModule = {
 				ModuleID: Number(test![1]),
 				ModuleName: moduleName,
 				EntityName: entityName,
 				SourceName: sourceName,
-				SourceUri: undefined,
+				SourceUri: fileinfo?.uri,
 				ParentName: parentName,
 				ListingFile: test![3],
 				CrcValue: Number(test![4]),
@@ -295,9 +356,6 @@ export class ABLProfileJson {
 				ISectionTen: [],
 				ISectionTwelve: []
 			}
-
-			const fileinfo = await this.debugLines.propath.search(mod.SourceName)
-			mod.SourceUri = fileinfo?.uri
 
 			if (Number(test![4]) != 0) {
 				this.modules[this.modules.length] = mod
@@ -400,13 +458,11 @@ export class ABLProfileJson {
 			const modID = Number(test[1])
 			const sourceName = this.getModule(modID)?.SourceName
 			if (this.excludeSourceName(sourceName)) continue
-			const sum: ILineSummary = {
-				LineNo: Number(test[2]),
-				ExecCount: Number(test[3]),
-				Executable: true,
-				ActualTime: Number(test[4]),
-				CumulativeTime: Number(test[5])
-			}
+			const sum = new LineSummary(Number(test[2]), true)
+			sum.ExecCount = Number(test[3])
+			sum.ActualTime = Number(test[4])
+			sum.CumulativeTime = Number(test[5])
+
 			if (!sourceName) {
 				if (modID !== 0) {
 					log.debug('could not find source name for module ' + modID)
@@ -492,17 +548,30 @@ export class ABLProfileJson {
 
 				if(!mod) { throw new Error('invalid data in section 6') }
 
+				// add exec count to existing line
 				const line = this.getLine(mod, Number(lines[lineNo]))
 				if (line) {
 					line.Executable = true
 					mod.executedLines++
-				} else {
-					const sum: ILineSummary = {
-						LineNo: Number(lines[lineNo]),
-						ExecCount: 0,
-						Executable: true,
-						ActualTime: 0,
-						CumulativeTime: 0,
+					continue
+				}
+
+				// create object for first encounter of this line num
+				const sum: ILineSummary = {
+					LineNo: Number(lines[lineNo]),
+					ExecCount: 0,
+					Executable: true,
+					ActualTime: 0,
+					CumulativeTime: 0,
+				}
+
+				if (mod.SourceUri) {
+					const lineinfo = await this.debugLines.getSourceLine(mod.SourceUri.fsPath, lineNo)
+					if (lineinfo) {
+						sum.srcLine = lineinfo.debugLine
+						sum.srcUri = lineinfo.debugUri
+						sum.incLine = lineinfo.sourceLine
+						sum.incUri = lineinfo.sourceUri
 					}
 
 
@@ -518,6 +587,8 @@ export class ABLProfileJson {
 
 					mod.lines.push(sum)
 				}
+
+				mod.lines.push(sum)
 			}
 		} catch (error) {
 			log.error('Error parsing coverage data in section 6 [module=' + mod?.ModuleName + ']: error=' + error)
@@ -538,44 +609,43 @@ export class ABLProfileJson {
 				mod.executableLines = Number(test[3])
 			}
 		}
-		if (!mod) {
-			mod = this.getModule(Number(test[1]))
-			if (mod) {
-				mod.executableLines += Number(test[3])
-
-				if (this.excludeSourceName(test[2])) {
-					const child: IModule = {
-						ModuleID: Number(test[1]),
-						ModuleName: test[2] + ' ' + mod.SourceName,
-						EntityName: test[2],
-						SourceName: mod.SourceName,
-						CrcValue: 0,
-						ModuleLineNum: 0,
-						UnknownString1: '',
-						executableLines: Number(test[3]),
-						executedLines: 0,
-						coveragePct: 0,
-						lineCount: 0,
-						calledBy: [],
-						calledTo: [],
-						childModules: [],
-						lines: [],
-					}
-					if (child.SourceName) {
-						const found = await this.debugLines.propath.search(child.SourceName)
-						if (found?.uri) {
-							child.SourceUri = found.uri
-						}
-					}
-					mod.childModules.push(child)
-					return child
-				}
-			// } else {
-			// 	log.warn('Unable to find child module ' + test[1] + ' ' + test[2] + ' in section 6')
-			}
+		if (mod) {
+			return mod
 		}
+
+		mod = this.getModule(Number(test[1]))
 		if (!mod) {
 			throw new Error('Unable to find module ' + test[1] + ' ' + test[2] + ' in section 6')
+		}
+
+		mod.executableLines += Number(test[3])
+
+		if (test[2] != '') {
+			const child: IModule = {
+				ModuleID: Number(test[1]),
+				ModuleName: test[2] + ' ' + mod.SourceName,
+				EntityName: test[2],
+				SourceName: mod.SourceName,
+				CrcValue: 0,
+				ModuleLineNum: 0,
+				UnknownString1: '',
+				executableLines: Number(test[3]),
+				executedLines: 0,
+				coveragePct: 0,
+				lineCount: 0,
+				calledBy: [],
+				calledTo: [],
+				childModules: [],
+				lines: [],
+			}
+			if (child.SourceName) {
+				const fileinfo = await this.debugLines.propath.search(child.SourceName)
+				if (fileinfo?.uri) {
+					child.SourceUri = fileinfo.uri
+				}
+			}
+			mod.childModules.push(child)
+			return child
 		}
 		return mod
 	}
@@ -702,29 +772,26 @@ export class ABLProfileJson {
 		const sectRE2 = /^(\d+) (\d+) (\d+) (\d+) (\d+) (\d+\.\d+)$/
 		if (!lines.length) { return }
 		for(const element of lines) {
-			let test = sectRE1.exec(element)
-			if (!test) {
-				test = sectRE2.exec(element)
+			const test = sectRE1.exec(element) ?? sectRE2.exec(element)
+			if (!test) { continue }
+
+			const ISectionTwelve: ISectionTwelve = {
+				ModuleID: Number(test[3]),
+				field1: Number(test[1]),
+				field2: Number(test[2]),
+				field4: Number(test[4]),
+				field5: Number(test[5]),
+				field6: Number(test[6]),
+				remainder: test[7]
 			}
-			if (test) {
-				const ISectionTwelve: ISectionTwelve = {
-					ModuleID: Number(test[3]),
-					field1: Number(test[1]),
-					field2: Number(test[2]),
-					field4: Number(test[4]),
-					field5: Number(test[5]),
-					field6: Number(test[6]),
-					remainder: test[7]
-				}
-				const mod = this.getModule(ISectionTwelve.ModuleID)
-				if (mod) {
-					if (!mod.ISectionTwelve) mod.ISectionTwelve = []
-					mod.ISectionTwelve.push(ISectionTwelve)
-				} else {
-					// TODO
-					if (ISectionTwelve.ModuleID != 0) {
-						log.error('Unable to find module " + ISectionTwelve.ModuleID + " in section 12 (line=' + element + ')')
-					}
+			const mod = this.getModule(ISectionTwelve.ModuleID)
+			if (mod) {
+				if (!mod.ISectionTwelve) mod.ISectionTwelve = []
+				mod.ISectionTwelve.push(ISectionTwelve)
+			} else {
+				// TODO
+				if (ISectionTwelve.ModuleID != 0) {
+					log.error('Unable to find module " + ISectionTwelve.ModuleID + " in section 12 (line=' + element + ')')
 				}
 			}
 		}

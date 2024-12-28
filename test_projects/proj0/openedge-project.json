@@ -1,7 +1,9 @@
 {
+	"name": "proj0",
+	"version": "0",
+	"charset": "utf-8",
 	"buildPath": [
-		// { "type": "propath", "documentation": "docs/ablunit.json", "path": "${DLC}/tty/ablunit.pl" },
-		{ "type": "source", "documentation": "docs/src.json", "path": "src", "excludes": "emptyClass.cls" },
+		{ "type": "source", "documentation": "docs/src.json", "path": "src", "includes": "**/*.p,**/*.cls", "excludes": "emptyClass.cls", "xref": "." },
 		{ "type": "source", "documentation": "docs/test.json", "path": "test" }
 	],
 	//this is a comment!

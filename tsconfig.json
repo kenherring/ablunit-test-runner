@@ -53,12 +53,13 @@
 		"useUnknownInCatchVariables": false,
 	},
 	"include": [
-		"./**/*.ts",
 		"./**/*.mjs",
-		"./test/suites/*.test.ts",
-		"./esbuild.js",
-		"./esbuild.config.mjs",
+		"./**/*.ts",
 		"./.vscode-test.mjs",
+		"./esbuild.config.mjs",
+		"./esbuild.js",
+		"./eslint.config.mjs",
+		"./test/suites/*.test.ts",
 	],
 	"exclude": [
 		"./eslint.config.mjs",

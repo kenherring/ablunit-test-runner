@@ -1,6 +1,5 @@
 import { TestController, TestItem, TestItemCollection, Uri } from 'vscode'
 import { ABLResults } from './ABLResults'
-import path from 'path'
 import * as FileUtils from './FileUtils'
 
 export interface IExtensionTestReferences {

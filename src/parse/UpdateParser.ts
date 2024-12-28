@@ -1,6 +1,6 @@
 import { TestItem, TestMessage, TestRun, Uri } from 'vscode'
-import { readLinesFromFileSync } from './TestParserCommon'
 import { log } from '../ChannelLogger'
+import * as FileUtils from 'FileUtils'
 
 export enum TestStatus {
 	unknown = 'unknown',
@@ -51,7 +51,7 @@ interface ITestNode {
 }
 
 let prevRootText: string
-let updates: ITestNode[]
+let updates: ITestNode[] = []
 let newUpdates: ITestNode[]
 
 function parseTestTree (line: string, tests: TestItem[]) {
@@ -105,16 +105,16 @@ export function updateParserInit () {
 function parseUpdateLines (lines: string[], tests: TestItem[]) {
 	log.info('parseUpdateLines-10')
 	newUpdates = []
-	log.info('parseUpdateLines-11')
 	if (lines.length == 0) {
-		log.info('parseUpdateLines-12')
 		return updates
 	}
 
-	log.info('parseUpdateLines-13 lines.length=' + lines.length)
 	for (let lineNum = 0; lineNum < lines.length; lineNum++) {
 		log.info('parseUpdateLines-14 line[' + lineNum + ']="' + lines[lineNum] + '"')
 		const line = lines[lineNum]
+		if (line == '') {
+			continue
+		}
 		const event = line.split(' ')[0] ?? 'unknown'
 		const eventStatus = event as TestStatus ?? TestStatus.unknown
 
@@ -159,7 +159,7 @@ function parseUpdateLines (lines: string[], tests: TestItem[]) {
 		log.info('parseUpdateLines-30')
 		const [ , id, timeVal ] = line.split(' ')
 		const time = Number(timeVal ?? 0) * 1000
-		const idx = updates.findIndex((test) => test.id === id)
+		const idx = updates.findIndex((test) => { return test.id === id })
 		if (!updates[idx]) {
 			log.error('Test not found for id=' + id + '; event=' + event + ' (line=' + lineNum + ')')
 			continue
@@ -185,7 +185,6 @@ function parseUpdateLines (lines: string[], tests: TestItem[]) {
 		// 	continue
 		// }
 
-		log.info('parseUpdateLines-50')
 		if (eventStatus == TestStatus.started ||
 			eventStatus == TestStatus.failed ||
 			eventStatus == TestStatus.passed ||
@@ -204,11 +203,9 @@ function parseUpdateLines (lines: string[], tests: TestItem[]) {
 			continue
 		}
 
-
 		/* Log and move on instead of throwing ... the parsing of result.xml will overwrite this anyway */
 		log.error('Unknown event type: ' + event + '(line[' + lineNum + ']: ' + line + ')')
 	}
-	log.info('parseUpdateLines-90')
 	if (!updates) {
 		updates = []
 	}
@@ -322,13 +319,10 @@ function setTestRunTestStatus (options: TestRun, item: ITestNode) {
 	}
 }
 
-export function parseUpdates (filepath: Uri | string, tests: TestItem[]) {
-	log.info('parseUpdates-10')
+export function parseUpdates (filepath: Uri, tests: TestItem[]) {
 	log.debug('Parsing updates from: ' + filepath)
 	// instead of reading the whole file we could buffer it and only read the new lines
-	log.info('parseUpdates-11')
-	const lines = readLinesFromFileSync(filepath)
-	log.info('parseUpdates-12')
+	const lines = FileUtils.readLinesFromFileSync(filepath)
 	return parseUpdateLines(lines, tests)
 }
 
@@ -352,8 +346,6 @@ function showUpdates (options: TestRun, updates: ITestNode[] | undefined) {
 
 		const children = updates.filter((test) => test.parent?.id == item.id)
 		showUpdates(options, children)
-
-		log.info('setTestRunTestStatus item.name=' + item.name)
 		setTestRunTestStatus(options, item)
 	}
 	return true
@@ -363,26 +355,12 @@ export function processUpdates (options: TestRun, tests: TestItem[], updateFile?
 	if (!updateFile) {
 		return
 	}
-	log.info('processUpdates-10')
 	const updates = parseUpdates(updateFile, tests)
-	log.info('processUpdates-20')
 	const r = showUpdates(options, updates)
-	log.info('processUpdates-30')
 	if (r) {
-		log.info('processUpdates-40')
 		log.debug('updates processed and displayed successfully')
 	}
-	log.info('processUpdates-50')
 	return true
-	// }, (e: unknown) => {
-	// 	if (e instanceof FileSystemError) {
-	// 		log.warn('could not find update file: ' + updateFile.fsPath)
-	// 	} else if (e instanceof Error) {
-	// 		log.warn('error processing updates: ' + e.stack! + ' (e=' + e + ')')
-	// 	}
-	// 	// eat this error, we don't want to stop the test run because of it
-	// 	return false
-	// })
 }
 
 export function setTimeoutTestStatus (options: TestRun, timeout: number) {

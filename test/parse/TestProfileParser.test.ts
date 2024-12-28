@@ -11,8 +11,8 @@ function readValidationFile (filename: string) {
 		const conf: IConfigurations = JSON.parse(data) as IConfigurations
 		return conf.configurations
 	}, (e: unknown) => {
-		log.error('Reading validation file failed: ' + err)
-		throw err
+		log.error('Reading validation file failed: ' + e)
+		throw e
 	})
 }
 
