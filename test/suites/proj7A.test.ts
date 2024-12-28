@@ -11,13 +11,9 @@ suite('proj7A - Extension Test Suite', () => {
 
 	test('proj7A.1 - test count', async () => {
 		const duration = new Duration()
-		log.info('300')
 		await runAllTests()
-		log.info('301')
 		assert.tests.count(2000)
-		log.info('302')
 		assert.durationLessThan(duration, 60000)
-		log.info('303')
 	})
 
 })

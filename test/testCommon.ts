@@ -146,7 +146,7 @@ function getExtensionDevelopmentPath () {
 	throw new Error('unable to determine extensionDevelopmentPath')
 }
 
-export async function suiteSetupCommon (runtimes: IRuntime[] = []) {
+export async function suiteSetupCommon (runtimes: IRuntime[]) {
 	log.info('[suiteSetupCommon] waitForExtensionActive \'kherring.ablunit-test-runner\' (projName=' + projName() + ')')
 	await waitForExtensionActive()
 	if (enableExtensions()) {
@@ -318,20 +318,12 @@ export function getRcodeCount (workspaceFolder?: WorkspaceFolder) {
 		throw new Error('workspaceFolder is undefined')
 	}
 
-	log.info('300.1 workspaceFolder.uri.fsPath=' + workspaceFolder.uri.fsPath)
 	const g = globSync('**/*.r', { cwd: workspaceFolder.uri.fsPath })
-	log.info('300.2')
-	for (const f of g) {
-		log.info(' - 301: ' + f)
-	}
-	log.info('302')
 	const fileCount = g.length
-	log.info('303 fileCount=' + fileCount)
 	if (fileCount >= 0) {
-		log.info('304')
+		log.info('rcodeCount=' + fileCount)
 		return fileCount
 	}
-	log.info('305')
 	throw new Error('fileCount is not a positive number! fileCount=' + fileCount)
 }
 
@@ -809,7 +801,7 @@ export function refreshData (resultsLen = 0) {
 	return commands.executeCommand('_ablunit.getExtensionTestReferences').then((resp) => {
 		// log.info('refreshData command complete (resp=' + JSON.stringify(resp) + ')')
 		const refs = resp as IExtensionTestReferences
-		// log.info('getExtensionTestReferences command complete (resp.length=' + refs.recentResults.length + ')')
+		log.info('getExtensionTestReferences command complete (resp.length=' + refs.recentResults.length + ')')
 		// log.info('refs=' + JSON.stringify(refs))
 
 		if (refs.recentResults.length > 0) {
@@ -1070,7 +1062,6 @@ class AssertTestResults {
 }
 
 function getLineExecutions (coverage: FileCoverageDetail[] | never[], lineNum: number) {
-	log.info('coverage.length=' + coverage.length)
 	if (coverage.length === 0) {
 		throw new Error('coverage is undefined')
 	}
@@ -1232,13 +1223,12 @@ export const assert = {
 			return
 		}
 
-		log.info('recentResults.length=' + recentResults.length)
-		// eslint-disable-next-line @typescript-eslint/prefer-for-of
-		for (let i=0; i<recentResults.length; i++) {
-			const r = recentResults[i]
-			const startDate = new Date(r.duration.start)
-			log.info('r.duration.name=' + r.duration.name + ', startDate=' + startDate)
-		}
+		// // eslint-disable-next-line @typescript-eslint/prefer-for-of
+		// for (let i=0; i<recentResults.length; i++) {
+		// 	const r = recentResults[i]
+		// 	const startDate = new Date(r.duration.start)
+		// 	log.info('r.duration.name=' + r.duration.name + ', startDate=' + startDate)
+		// }
 
 		const actual = recentResults[recentResults.length - 1].coverage.size
 		let msg = 'covered files (' + actual + ') != ' + expected
@@ -1268,37 +1258,11 @@ export const assert = {
 			return
 		}
 
-		log.info('file=' + file)
-		log.info('recentResults.length=' + recentResults.length)
-
-		// eslint-disable-next-line @typescript-eslint/prefer-for-of
-		for (let i=0; i<recentResults.length; i++) {
-			log.info(' - recentResults[i].coverage.size=' + recentResults[i].coverage.size)
-
-			for (let j=0; j<recentResults[i].coverage.size; j++) {
-				log.info('    - cov.size' + recentResults[i].coverage.size)
-
-				const data = recentResults[i].coverage.get(file.fsPath)
-				if (!data) {
-					log.info('      - not found: ' + file.fsPath)
-					continue
-				}
-				log.info('    - data.length=' + data.length)
-				for (const d of data) {
-					log.info('      - d=' + JSON.stringify(d))
-				}
-			}
-		}
-
 		const coverage = recentResults[recentResults.length - 1].coverage.get(file.fsPath)
 		if (!coverage) {
 			assert.fail('no coverage found for ' + file.fsPath)
 			return
 		}
-		for (const c of coverage) {
-			log.info('c=' + JSON.stringify(c))
-		}
-		log.info('450')
 		for (const line of lines) {
 			log.info('checking line ' + line + ' in ' + file.fsPath)
 			const executions = getLineExecutions(coverage, line)

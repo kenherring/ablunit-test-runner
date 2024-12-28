@@ -10,11 +10,8 @@ interface IRuntime {
 	default?: boolean
 }
 
-export async function enableOpenedgeAblExtension (runtimes: IRuntime[] = []) {
+export async function enableOpenedgeAblExtension (runtimes?: IRuntime[]) {
 	const extname = 'riversidesoftware.openedge-abl-lsp'
-
-	log.info('runtimes=' + JSON.stringify(runtimes))
-
 	if (!extensions.getExtension(extname)) {
 		await installExtension(extname)
 	}
@@ -136,13 +133,13 @@ export async function waitForLangServerReady () {
 		})
 }
 
-export function setRuntimes (runtimes: IRuntime[] = []) {
+export function setRuntimes (runtimes?: IRuntime[]) {
 	const duration = new Duration('setRuntimes')
 	if (!enableExtensions()) {
 		throw new Error('setRuntimes failed! extensions are disabled')
 	}
 	log.info('runtimes=' + JSON.stringify(runtimes))
-	if (!runtimes || runtimes.length == 0) {
+	if (!runtimes) {
 		runtimes = [{name: oeVersion(), path: getDefaultDLC(), default: true}]
 	}
 	log.info('setting abl.configuration.runtimes=' + JSON.stringify(runtimes))

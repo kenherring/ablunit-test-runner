@@ -104,7 +104,7 @@ export class ABLResults implements Disposable {
 		const prom: (Thenable<void> | Promise<void> | Promise<void[]> | undefined)[] = []
 		prom[0] = this.cfg.createProfileOptions(this.cfg.ablunitConfig.profOptsUri, this.cfg.ablunitConfig.profiler)
 		prom[1] = this.cfg.createProgressIni(this.propath.toString(), this.dlc)
-		prom[2] = this.cfg.createAblunitJson(this.cfg.ablunitConfig.config_uri, this.cfg.ablunitConfig.name, this.cfg.ablunitConfig.options, this.testQueue)
+		prom[2] = this.cfg.createAblunitJson(this.cfg.ablunitConfig.config_uri, this.cfg.ablunitConfig.options, this.testQueue)
 		prom[3] = this.cfg.createDbConnPf(this.cfg.ablunitConfig.dbConnPfUri, this.cfg.ablunitConfig.dbConns)
 
 		return Promise.all(prom).then(() => {
@@ -509,18 +509,11 @@ export class ABLResults implements Disposable {
 				// create a new FileCoverage object if one didn't already exist
 				fc = []
 				this.coverage.set(dbg.sourceUri.fsPath, fc)
-				log.info('set fc.length=' + fc.length + ' for ' + dbg.sourceUri.fsPath)
 			}
 
 			// // TODO: end of range should be the end of the line, not the beginning of the next line
 			const coverageRange = new Position(dbg.sourceLine - 1, 0)
 			fc.push(new StatementCoverage(line.ExecCount ?? 0, coverageRange))
-			log.info('coverage[' + dbg.sourceUri.fsPath + '].length=' + fc.length)
-			log.info('line: ' + dbg.sourceLine + ',' + dbg.debugLine + ',  execCount ' + line.ExecCount)
-			log.info('-- line.srcUri=' + line.srcUri)
-			log.info('-- line.incUri=' + line.incUri)
-			log.info('-- dbg.debugUri=' + dbg.debugUri)
-			log.info('-- dbg.sourcUri==' + dbg.sourceUri)
 		}
 
 		this.coverage.forEach((v, k) => {

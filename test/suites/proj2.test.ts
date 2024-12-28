@@ -64,8 +64,8 @@ suite('proj2 - Extension Test Suite', () => {
 		FileUtils.copyFile(
 			toUri('src/compileError.p.saveme'),
 			toUri('src/compileError.p'),
-			{ force: true })
-
+			{ force: true }
+		)
 		return runAllTests()
 			.then(() => {
 				throw new Error('test should have failed due to compile error')
@@ -98,7 +98,6 @@ suite('proj2 - Extension Test Suite', () => {
 			toUri('src/compileError.p'),
 			{ force: true }
 		)
-
 		return selectProfile('profileWithDBConn')
 			.then(() => runTestsInFile('src/compileError.p'))
 			.then(() => {
