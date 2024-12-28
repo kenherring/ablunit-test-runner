@@ -1,6 +1,5 @@
 /* eslint-disable no-console */
 import { LogLevel, TestRun, window } from 'vscode'
-import path from 'path'
 
 enum NotificationType {
 	Info = 'Info',
@@ -17,7 +16,7 @@ class Logger {
 	private logLevel: number
 	private readonly consoleTimestamp = process.env['ABLUNIT_TEST_RUNNER_UNIT_TESTING'] === 'true'
 	private testResultsTimestamp = false
-	private readonly extensionCodeDir = path.normalize(__dirname + '/../..')
+	private readonly extensionCodeDir = __dirname
 	notificationsEnabled = true
 
 	private constructor (extCodeDir?: string) {
@@ -196,15 +195,19 @@ class Logger {
 		Error.prepareStackTrace = prepareStackTraceOrg
 
 		for (const s of stack) {
-			const filename = s.getFileName()
-			if (filename && filename !== __filename && !filename.endsWith('extensionHostProcess.js')) {
-				const funcname = s.getFunctionName()
-				let ret = path.relative(this.extensionCodeDir, filename).replace(/\\/g, '/') + ':' + s.getLineNumber()
-				if (funcname) {
-					ret = ret + ' ' + funcname
+			const classname = s.getTypeName()
+			if (classname == 'Logger' || classname == '_Logger') continue
+			let ret = s.toString()
+			if (ret.startsWith(this.extensionCodeDir)) {
+				ret = ret.substring(this.extensionCodeDir.length + 1)
+			} else {
+				const parts = ret.split('(')
+				if (parts.length >=2 && parts[1].startsWith(this.extensionCodeDir)) {
+					parts[1] =  parts[1].substring(this.extensionCodeDir.length + 1)
+					ret = parts.join('(')
 				}
-				return ret
 			}
+			return ret
 		}
 	}
 

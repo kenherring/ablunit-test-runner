@@ -35,7 +35,7 @@ initialize () {
 		ABLUNIT_TEST_RUNNER_VSCODE_VERSION \
 		ABLUNIT_TEST_RUNNER_PROJECT_NAME \
 		ABLUNIT_TEST_RUNNER_NO_COVERAGE \
-		ABLUNIT_TEST_RUNNER_RUN_SCRIPT_FLAG
+		CIRCLECI
 
 	git config --global init.defaultBranch main
 	mkdir -p "$npm_config_cache" "$PROJECT_DIR"
@@ -126,11 +126,13 @@ copy_files () {
 	local TYPE="$1"
 	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] TYPE=$TYPE"
 	while read -r FILE; do
-		echo "copying $TYPE file $FILE"
-		if [ ! -d "$(dirname "$FILE")" ]; then
-			mkdir -p "$(dirname "$FILE")"
+		if [ ! -d "$FILE" ]; then
+			echo "copying $TYPE file $FILE"
+			if [ ! -d "$(dirname "$FILE")" ]; then
+				mkdir -p "$(dirname "$FILE")"
+			fi
+			sed 's/\r//g' "$REPO_VOLUME/$FILE" > "$FILE"
 		fi
-		sed 's/\r//g' "$REPO_VOLUME/$FILE" > "$FILE"
 	done < "/tmp/${TYPE}_files"
 }
 

@@ -5,26 +5,26 @@ import * as FileUtils from '../FileUtils'
 
 const textDecoder = new TextDecoder('utf-8')
 
-function toUri (uri: Uri | string): Uri {
-	if (uri instanceof Uri) {
-		return uri
+function toUri (pathOrUri: Uri | string): Uri {
+	if (pathOrUri instanceof Uri) {
+		return pathOrUri
 	}
-	const filename = uri
+	const path = pathOrUri
 
-	if (!FileUtils.isRelativePath(uri)) {
-		return Uri.file(uri)
+	if (!FileUtils.isRelativePath(path)) {
+		return Uri.file(path)
 	}
 
 	if (!workspace.workspaceFolders || workspace.workspaceFolders.length === 0) {
 		throw new Error('No workspace folder found')
 	}
 	for (const wf of workspace.workspaceFolders) {
-		uri = Uri.joinPath(wf.uri, filename)
+		const uri = Uri.joinPath(wf.uri, path)
 		if (fs.statSync(uri.fsPath).isFile()) {
 			return uri
 		}
 	}
-	throw new Error('relative file not found in any workspace: ' + filename)
+	throw new Error('Relative path not found in any workspace: ' + path)
 }
 
 export function getContentFromFilesystem (uri: Uri | string) {
@@ -32,15 +32,6 @@ export function getContentFromFilesystem (uri: Uri | string) {
 	return workspace.fs.readFile(uri)
 		.then((rawContent) => { return textDecoder.decode(rawContent)
 		}, (e: unknown) => { throw e })
-}
-
-export function readLinesFromFile (uri: Uri | string) {
-	uri = toUri(uri)
-	return getContentFromFilesystem(uri)
-		.then((content) => {
-			// split lines, remove CR and filter out empty lines
-			return content.replace(/\r/g, '').split('\n').filter((line) => line.trim().length > 0)
-		})
 }
 
 export function getAnnotationLines (text: string, annotation: string): [ string[], boolean ] {

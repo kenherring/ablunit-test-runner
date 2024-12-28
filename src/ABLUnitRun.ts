@@ -1,9 +1,12 @@
-import { CancellationError, CancellationToken, Disposable, FileSystemWatcher, TestRun, Uri, workspace } from 'vscode'
+import { CancellationError, CancellationToken, TestRun, Uri, workspace } from 'vscode'
 import { ABLResults } from './ABLResults'
 import { Duration } from './ABLUnitCommon'
 import { SendHandle, Serializable, SpawnOptions, spawn } from 'child_process'
 import { log } from './ChannelLogger'
-import { processUpdates, setTimeoutTestStatus, updateParserInit } from 'parse/UpdateParser'
+import { processUpdates, setTimeoutTestStatus } from 'parse/UpdateParser'
+import { basename, dirname } from 'path'
+import { globSync } from 'glob'
+import * as fs from 'fs'
 import * as FileUtils from './FileUtils'
 
 export enum RunStatus {
@@ -66,20 +69,16 @@ export class TimeoutError extends Error implements ITimeoutError {
 export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation: CancellationToken) => {
 	const abort = new AbortController()
 	const { signal } = abort
-	let watcherDispose: Disposable | undefined = undefined
-	let watcherUpdate: FileSystemWatcher | undefined = undefined
+	let watcher: fs.StatWatcher | undefined = undefined
 
-	cancellation.onCancellationRequested(async () => {
+	cancellation.onCancellationRequested(() => {
 		log.debug('cancellation requested - ablunitRun')
 		abort.abort()
 		if (res.cfg.ablunitConfig.optionsUri.updateUri) {
-			await processUpdates(options, res.tests, res.cfg.ablunitConfig.optionsUri.updateUri)
-		}
-		if (watcherDispose) {
-			watcherDispose.dispose()
-		}
-		if (watcherUpdate) {
-			watcherUpdate.dispose()
+			if (watcher) {
+				watcher.removeAllListeners()
+			}
+			processUpdates(options, res.tests, res.cfg.ablunitConfig.optionsUri.updateUri)
 		}
 		throw new CancellationError()
 	})
@@ -96,7 +95,7 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 	}
 
 	const getCustomCommand = () => {
-		let cmd = res.cfg.ablunitConfig.command.executable.replace('${DLC}', res.dlc!.uri.fsPath.replace(/\\/g, '/'))
+		let cmd = res.cfg.ablunitConfig.command.executable.replace('${DLC}', res.dlc.uri.fsPath.replace(/\\/g, '/'))
 
 		const testarr: string[] = []
 		for (const test of res.testQueue) {
@@ -124,7 +123,7 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 			throw new Error('temp directory not set')
 		}
 
-		const executable = res.dlc!.uri.fsPath.replace(/\\/g, '/') + '/bin/' + res.cfg.ablunitConfig.command.executable
+		const executable = res.dlc.uri.fsPath.replace(/\\/g, '/') + '/bin/' + res.cfg.ablunitConfig.command.executable
 
 		const cmd = [ executable, '-b', '-p', res.wrapperUri.fsPath.replace(/\\/g, '/') ]
 
@@ -133,7 +132,7 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 				cmd.push('-basekey', 'INI', '-ininame', res.cfg.ablunitConfig.progressIniUri.fsPath)
 			}
 		} else if (process.platform === 'linux') {
-			process.env['PROPATH'] = res.propath!.toString().replace(/\$\{DLC\}/g, res.dlc!.uri.fsPath.replace(/\\/g, '/'))
+			process.env['PROPATH'] = res.propath.toString().replace(/\$\{DLC\}/g, res.dlc.uri.fsPath.replace(/\\/g, '/'))
 		} else {
 			throw new Error('unsupported platform: ' + process.platform)
 		}
@@ -192,6 +191,22 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 			// res.cfg.ablunitConfig.profOptsUri,
 		)
 
+		if (res.cfg.ablunitConfig.optionsUri.updateUri) {
+			fs.writeFileSync(res.cfg.ablunitConfig.optionsUri.updateUri.fsPath, '')
+		}
+
+		if (res.cfg.ablunitConfig.profFilenameUri) {
+			const profDir = dirname(res.cfg.ablunitConfig.profFilenameUri.fsPath)
+			const profFile = basename(res.cfg.ablunitConfig.profFilenameUri.fsPath)
+			const globPattern = profFile.replace(/(.*)\.([a-zA-Z]+)$/, '$1_*.$2')
+
+			const dataFiles = globSync(globPattern, { cwd: profDir })
+			dataFiles.push(...globSync(globPattern.replace(/\.[a-zA-Z]+$/, '.json'), { cwd: profDir }))
+			for (const dataFile of dataFiles) {
+				FileUtils.deleteFile(Uri.joinPath(Uri.file(profDir), dataFile))
+			}
+		}
+
 		log.debug('ablunit command dir=\'' + res.cfg.ablunitConfig.workspaceFolder.uri.fsPath + '\'')
 		if (cancellation?.isCancellationRequested) {
 			log.info('cancellation requested - runCommand')
@@ -202,17 +217,16 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 		const cmd = args[0]
 		args.shift()
 
+		if (res.cfg.ablunitConfig.optionsUri.updateUri) {
+			watcher = fs.watchFile(res.cfg.ablunitConfig.optionsUri.updateUri.fsPath, (curr, prev) => {
+				processUpdates(options, res.tests, res.cfg.ablunitConfig.optionsUri.updateUri)
+			})
+		}
+
 		return new Promise<string>((resolve, reject) => {
 			res.setStatus(RunStatus.Running)
-			const runenv = getEnvVars(res.dlc!.uri)
-
+			const runenv = getEnvVars(res.dlc.uri)
 			const updateUri = res.cfg.ablunitConfig.optionsUri.updateUri
-			if (updateUri) {
-				updateParserInit()
-				log.info('watching test run update/event file: ' + updateUri.fsPath)
-				watcherUpdate = workspace.createFileSystemWatcher(updateUri.fsPath)
-				watcherDispose = watcherUpdate.onDidChange((uri) => { return processUpdates(options, res.tests, uri) })
-			}
 
 			const spawnOpts: SpawnOptions = {
 				signal: signal,
@@ -224,38 +238,38 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 				timeout: res.cfg.ablunitConfig.timeout,
 				env: runenv,
 				cwd: res.cfg.ablunitConfig.workspaceFolder.uri.fsPath,
+				shell: true,
 			}
 
-			log.info('command=\'' + cmd + ' ' + JSON.stringify(args) + '\'\r\n', options)
+			log.info('command=\'' + cmd + ' ' + args.join(' ') + '\'\r\n', options)
 			const testRunDuration = new Duration('TestRun')
 			const process = spawn(cmd, args, spawnOpts)
 
-			let lastError: string | undefined = undefined
-
 			process.stderr?.on('data', (data: Buffer) => {
-				void processUpdates(options, res.tests, updateUri)
 				log.error('\t\t[stderr] ' + data.toString().trim().replace(/\n/g, '\n\t\t[stderr]'), options)
-				lastError = data.toString().trim()
 			})
 			process.stdout?.on('data', (data: Buffer) => {
-				void processUpdates(options, res.tests, updateUri)
-				log.info('\t\t[stdout] ' + data.toString().trim().replace(/\n/g, '\n\t\t[stdout]'), options)
-				lastError = undefined
+				log.info('\t\t[stdout] ' + data.toString().trim().replace(/\n/g, '\n\t\t[stderr]'), options)
 			})
 			process.once('spawn', () => {
 				res.setStatus(RunStatus.Executing)
 				log.info('----- ABLUnit Test Run Started -----', options)
+			}).on('disconnect', () => {
+				log.info('process.disconnect')
 			}).on('error', (e: Error) => {
-				log.debug('process.error e=' + e)
+				log.info('process.error e=' + e)
 				res.setStatus(RunStatus.Error, 'e=' + e)
-				log.error('----- ABLUnit Test Run Error ----- (e=' + e + ')', options)
+				log.error('----- ABLUnit Test Run Error -----', options)
 				if (e instanceof Error) {
 					reject(e)
 				}
 			}).on('exit', (code: number | null, signal: NodeJS.Signals | null) => {
+				log.info('process.exit code=' + code + '; signal=' + signal + '; process.exitCode=' + process.exitCode + '; process.signalCode=' + process.signalCode + '; killed=' + process.killed)
 				testRunDuration.stop()
-				log.debug('process.exit code=' + code + '; signal=' + signal + '; process.exitCode=' + process.exitCode + '; process.signalCode=' + process.signalCode + '; killed=' + process.killed)
-				void processUpdates(options, res.tests, updateUri)
+				if (watcher) {
+					watcher.removeAllListeners()
+				}
+				processUpdates(options, res.tests, updateUri)
 				if (process.killed || signal) {
 					setTimeoutTestStatus(options, res.cfg.ablunitConfig.timeout)
 					res.setStatus(RunStatus.Timeout, 'signal=' + signal)
@@ -277,59 +291,23 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 					return
 				}
 
-
-				// eslint-disable-next-line promise/catch-or-return
-				processUpdates(options, res.tests, updateUri).then(() => {
-					log.info('final ingest from updates file completed successfully')
-					res.setStatus(RunStatus.Complete, 'success')
-					log.info('----- ABLUnit Test Run Complete ----- ' + testRunDuration, options)
-				}, (e: unknown) => {
-					throw e
-				})
+				res.setStatus(RunStatus.Complete, 'success')
+				log.info('----- ABLUnit Test Run Complete ----- ' + testRunDuration, options)
 				resolve('success')
 			}).on('close', (code: number | null, signal: NodeJS.Signals | null) => {
-				log.debug('process.close code=' + code + '; signal=' + signal + '; process.exitCode=' + process.exitCode + '; process.signalCode=' + process.signalCode + '; killed=' + process.killed)
-
-				watcherDispose?.dispose()
-				watcherUpdate?.dispose()
-				void processUpdates(options, res.tests, updateUri)
-
-				log.info('process.close event')
-				log.info('\tcode=' + code)
-				log.info('\tsignal=' + signal)
-				log.info('\tprocess.exitCode=' + process.exitCode)
-				log.info('\tprocess.signalCode=' + process.signalCode)
-				log.info('\tprocess.killed=' + process.killed)
-				log.info('\tprocess.pid=' + process.pid)
-				log.info('\tprocess.connected' + process.connected)
-
-				if (lastError && res.status < RunStatus.Complete) {
-					if (lastError) {
-						res.setStatus(RunStatus.Error)
-						log.info('----- ABLUnit Test Run Runtime Error (exit_code=' + code + ') ----- ' + testRunDuration, options)
-						reject(new ABLUnitRuntimeError('ABLUnit runtime error', lastError, cmd))
-						return
-					}
-				}
-				if (res.status < RunStatus.Complete) {
-					const currentStatus = res.status
-					res.setStatus(RunStatus.Unknown, 'ABLUnit process closed unexpectedly, should have called exit already (RunStatus=' + currentStatus + ')')
-					reject(new ABLUnitRuntimeError('ABLUnit process closed unexpectedly', 'RunStatus=' + currentStatus + '; code=' + code + '; signal=' + signal, cmd))
-					return
-				}
-				reject(new Error('Unknown error - ABLUnit process closed but was not processed correctly'))
+				log.info('process.close code=' + code + '; signal=' + signal + '; process.exitCode=' + process.exitCode + '; process.signalCode=' + process.signalCode + '; killed=' + process.killed)
 			}).on('message', (m: Serializable, h: SendHandle) => {
-				// eslint-disable-next-line @typescript-eslint/no-base-to-string
-				log.info('process.on.message m=' + m.toString())
+				log.info('process.on.message m=' + JSON.stringify(m))
 			})
 		})
 	}
 
 	return runCommand()
 		.then(() => {
+			log.info('runCommand() success')
 			return res.parseOutput(options)
 		}, (e: unknown) => {
-			log.debug('runCommand() error=' + JSON.stringify(e, null, 2), options)
+			log.info('runCommand() error=' + JSON.stringify(e, null, 2))
 			if (e instanceof Error) {
 				res.thrownError = e
 			}

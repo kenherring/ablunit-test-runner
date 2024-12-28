@@ -35,6 +35,9 @@ export async function activate (context: ExtensionContext) {
 	let isRefreshTestsComplete = false
 
 	logActivationEvent(context.extensionMode)
+	if (context.extensionMode !== ExtensionMode.Production) {
+		log.setLogLevel(LogLevel.Debug)
+	}
 
 	const contextStorageUri = context.storageUri ?? Uri.file(process.env['TEMP'] ?? '') // will always be defined as context.storageUri
 	const contextResourcesUri = Uri.joinPath(context.extensionUri, 'resources')
@@ -130,7 +133,7 @@ export async function activate (context: ExtensionContext) {
 
 		if (!FileUtils.doesFileExist(uri)) {
 			FileUtils.createDir(dir)
-			await workspace.fs.copy(det, uri, { overwrite: false })
+			FileUtils.copyFile(det, uri, { force: false })
 			log.info('successfully created .vscode/ablunit-test-profile.json')
 		}
 
@@ -476,6 +479,8 @@ export async function activate (context: ExtensionContext) {
 	if(workspace.getConfiguration('ablunit').get('discoverAllTestsOnActivate', false)) {
 		await commands.executeCommand('testing.refreshTests')
 	}
+	log.info('activation complete')
+	return true
 }
 
 let contextStorageUri: Uri

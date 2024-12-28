@@ -17,9 +17,9 @@
         {
             "label": "ant build min-size",
             "type": "shell",
-            "command": "${env:DLC}/ant/bin/ant compile -DminSize=true -Dxref=false",
+            "command": "${env:DLC}/ant/bin/ant compile -DminSize=true -Dxref=true",
             "linux": {
-                "command": "ant compile -DminSize=true -Dxref=false"
+                "command": "ant compile -DminSize=true -Dxref=true"
             },
             "args": [],
             "group": {

@@ -2,7 +2,7 @@ import { Uri, workspace, WorkspaceFolder } from 'vscode'
 import { log } from '../ChannelLogger'
 import * as FileUtils from '../FileUtils'
 import * as path from 'path'
-import * as fs from 'fs'
+import { readOEVersionFile } from 'ABLUnitCommon'
 
 interface IRuntime {
 	name: string,
@@ -104,7 +104,11 @@ export function getDLC (workspaceFolder: WorkspaceFolder, openedgeProjectProfile
 	}
 	if (runtimeDlc) {
 		log.info('using DLC = ' + runtimeDlc.fsPath)
-		const dlcObj: IDlc = { uri: runtimeDlc }
+		const oeVer = readOEVersionFile(runtimeDlc.fsPath)
+		const dlcObj: IDlc = {
+			uri: runtimeDlc,
+			version: oeVer,
+		}
 		dlcMap.set(workspaceFolder, dlcObj)
 		return dlcObj
 	}
@@ -114,12 +118,12 @@ export function getDLC (workspaceFolder: WorkspaceFolder, openedgeProjectProfile
 export function getOEVersion (workspaceFolder: WorkspaceFolder, openedgeProjectProfile?: string, projectJson?: string) {
 	const profileJson = getOpenEdgeProfileConfig(workspaceFolder.uri, openedgeProjectProfile)
 	if (!profileJson) {
-		log.debug('[getOEVersion] profileJson not found')
+		log.debug('profileJson not found')
 		return undefined
 	}
 
 	if (profileJson.oeversion) {
-		log.debug('[getOEVersion] profileJson.value.oeversion = ' + profileJson.oeversion)
+		log.debug('profileJson.value.oeversion = ' + profileJson.oeversion)
 		return profileJson.oeversion
 	}
 
@@ -131,9 +135,10 @@ export function getOEVersion (workspaceFolder: WorkspaceFolder, openedgeProjectP
 	}
 	if(projectJson) {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-		const tmpVer: string = JSON.parse(projectJson).oeversion
-		if(tmpVer) {
-			return tmpVer
+		const ver: string = JSON.parse(projectJson).oeversion
+		if(ver) {
+			log.debug('projectJson.oeversion = ' + ver)
+			return ver
 		}
 	}
 	return undefined
@@ -193,22 +198,31 @@ export class ProfileConfig implements IOpenEdgeConfig {
 	}
 
 	getTTYExecutable (): string {
-		if (fs.existsSync(path.join(this.dlc, 'bin', '_progres.exe')))
+		const dlcUri = Uri.file(this.dlc)
+		if (FileUtils.doesFileExist(Uri.joinPath(dlcUri, 'bin', '_progres.exe')))
 			return path.join(this.dlc, 'bin', '_progres.exe')
 		else
 			return path.join(this.dlc, 'bin', '_progres')
 	}
 
 	getExecutable (graphicalMode?: boolean): string {
-		if (graphicalMode ?? this.graphicalMode) {
-			if (fs.existsSync(path.join(this.dlc, 'bin', 'prowin.exe')))
-				return path.join(this.dlc, 'bin', 'prowin.exe')
-			else
-				return path.join(this.dlc, 'bin', 'prowin32.exe')
-		} else if (fs.existsSync(path.join(this.dlc, 'bin', '_progres.exe')))
-			return path.join(this.dlc, 'bin', '_progres.exe')
-		else
-			return path.join(this.dlc, 'bin', '_progres')
+
+		const dlcUri = Uri.file(this.dlc)
+		const execs = [
+			Uri.joinPath(dlcUri, 'bin', 'prowin.exe'),
+			Uri.joinPath(dlcUri, 'bin', 'prowin32.exe'),
+			Uri.joinPath(dlcUri, 'bin', '_progres.exe'),
+			Uri.joinPath(dlcUri, 'bin', '_progres')
+		]
+		for (const p of execs) {
+			if (!graphicalMode && !this.graphicalMode && p.fsPath.includes('prowin')) {
+				continue
+			}
+			if (FileUtils.doesFileExist(p)) {
+				return p.fsPath
+			}
+		}
+		throw new Error('Unable to find OpenEdge executable in hierarchy:\n' + execs.join('\n - '))
 	}
 
 }
@@ -221,9 +235,12 @@ class OpenEdgeProjectConfig extends ProfileConfig {
 }
 
 export function getActiveProfile (rootDir: string) {
-	if (fs.existsSync(path.join(rootDir, '.vscode', 'profile.json'))) {
+	const uri = Uri.joinPath(Uri.file(rootDir), '.vscode', 'profile.json')
+	if (FileUtils.doesFileExist(uri)) {
+		const raw = FileUtils.readFileSync(uri)
+		const contents = raw.toString().replace(/\r/g, '')
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-		const txt = JSON.parse(fs.readFileSync(path.join(rootDir, '.vscode', 'profile.json'), { encoding: 'utf8' }).replace(/\r/g, ''))
+		const txt = JSON.parse(contents)
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 		if (typeof txt.profile === 'string') {
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
@@ -240,7 +257,8 @@ function loadConfigFile (filename: string): IOpenEdgeMainConfig | undefined {
 	if (!filename) {
 		throw new Error('filename is undefined')
 	}
-	if (!fs.existsSync(filename)) {
+
+	if (!FileUtils.doesFileExist(Uri.file(filename))) {
 		return undefined
 	}
 	try {
@@ -269,7 +287,7 @@ function readGlobalOpenEdgeRuntimes (workspaceUri: Uri) {
 				runtime.default = false
 			}
 			runtime.path = runtime.path.replace(/\\/g, '/')
-			runtime.pathExists = fs.existsSync(runtime.path)
+			runtime.pathExists = FileUtils.doesDirExist(Uri.file(runtime.path))
 		})
 		oeRuntimes = oeRuntimes.filter(runtime => runtime.pathExists)
 	}
@@ -313,7 +331,7 @@ function getDlcDirectory (version: string | undefined): string {
 			dfltDlc = runtime.path
 			dfltName = runtime.name
 		}
-		runtime.pathExists = fs.existsSync(runtime.path)
+		runtime.pathExists = FileUtils.doesFileExist(Uri.file(runtime.path))
 	})
 
 	if (dlc === '' && oeRuntimes.length === 1) {
@@ -456,7 +474,9 @@ function getWorkspaceProfileConfig (workspaceUri: Uri, openedgeProjectProfile?: 
 			if (prf.propath.length == 0)
 				prf.propath = prjConfig.propath
 			for (const e of prf.buildPath) {
-				e.buildDir = prjConfig.buildDirectory ?? workspaceUri
+				if (!e.buildDir) {
+					e.buildDir = e.path
+				}
 			}
 			return prf
 		}

@@ -77,7 +77,6 @@ procedure main :
 	run createDatabaseAliases.
 
 	assign updateFile = getParameter(trim(trim(session:parameter,'"'),"'"), 'ATTR_ABLUNIT_EVENT_FILE').
-	// message "updateFile =" updateFile.
 	testConfig = readTestConfig(getParameter(trim(trim(session:parameter,'"'),"'"), 'CFG')).
 	quitOnEnd = (testConfig = ?) or testConfig:quitOnEnd.
 
@@ -86,19 +85,22 @@ procedure main :
 
 	// the `-catchStop 1` startup parameter is default in 11.7+
 	catch s as Progress.lang.Stop:
-		if testConfig:writeLog then
+		if testConfig = ? or testConfig:showErrorMessage then
+			message "STOP condition encountered" view-as alert-box error.
+		if testConfig <> ? and testConfig:writeLog then
 		do:
 			writeErrorToLog(testConfig:outputLocation, 'STOP condition encountered').
 			writeErrorToLog(testConfig:outputLocation, s:CallStack).
 		end.
-		if testConfig:showErrorMessage then
-			message "STOP condition encountered" view-as alert-box error.
-		if testConfig:throwError then
+		if testConfig = ? or testConfig:throwError then
 			undo, throw s.
 	end catch.
 	catch e as Progress.Lang.Error:
 		if testConfig = ? then
+		do:
+			message e:getMessage(1) view-as alert-box error.
 			return error new Progress.Lang.AppError ("An error occured: " + e:GetMessage(1), 0).
+		end.
 		if testConfig:WriteLog then
 		do:
 			writeErrorToLog(testConfig:outputLocation, e:GetMessage(1)).

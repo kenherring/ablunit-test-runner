@@ -1,5 +1,4 @@
 import * as assertParent from 'assert'
-import * as fs from 'fs'
 import * as vscode from 'vscode'
 import * as FileUtils from '../src/FileUtils'
 import {
@@ -56,7 +55,7 @@ export const oeVersion = () => {
 	}
 
 	const versionFile = path.join(useDLC, 'version')
-	const dlcVersion = fs.readFileSync(versionFile)
+	const dlcVersion = FileUtils.readFileSync(versionFile)
 	log.info('dlcVersion=' + dlcVersion)
 	if (dlcVersion) {
 		const match = RegExp(/OpenEdge Release (\d+\.\d+)/).exec(dlcVersion.toString())
@@ -65,17 +64,17 @@ export const oeVersion = () => {
 		}
 	}
 
-	// const oeVersionEnv = getEnvVar('ABLUNIT_TEST_RUNNER_OE_VERSION')
-	// log.info('oeVersionEnv=' + oeVersionEnv)
-	// if (oeVersionEnv?.match(/^(11|12)\.\d$/)) {
-	// 	return oeVersionEnv
-	// }
+	const oeVersionEnv = getEnvVar('ABLUNIT_TEST_RUNNER_OE_VERSION')
+	log.info('oeVersionEnv=' + oeVersionEnv)
+	if (oeVersionEnv?.match(/^(11|12)\.\d$/)) {
+		return oeVersionEnv
+	}
 
-	// const oeVersion = getEnvVar('OE_VERSION')
-	// log.info('oeVersion=' + oeVersion + ' ' + oeVersion?.split('.').slice(0, 2).join('.'))
-	// if (oeVersion?.match(/^(11|12)\.\d.\d+$/)) {
-	// 	return oeVersion.split('.').slice(0, 2).join('.')
-	// }
+	const oeVersion = getEnvVar('OE_VERSION')
+	log.info('oeVersion=' + oeVersion + ' ' + oeVersion?.split('.').slice(0, 2).join('.'))
+	if (oeVersion?.match(/^(11|12)\.\d.\d+$/)) {
+		return oeVersion.split('.').slice(0, 2).join('.')
+	}
 
 	throw new Error('unable to determine oe version!')
 }
@@ -147,10 +146,7 @@ function getExtensionDevelopmentPath () {
 	throw new Error('unable to determine extensionDevelopmentPath')
 }
 
-export async function suiteSetupCommon (runtimes: IRuntime[] = []) {
-	if (!runtimes || runtimes.length === 0) {
-		runtimes = [{ name: oeVersion(), path: getDefaultDLC(), default: true }]
-	}
+export async function suiteSetupCommon (runtimes?: IRuntime[]) {
 	log.info('[suiteSetupCommon] waitForExtensionActive \'kherring.ablunit-test-runner\' (projName=' + projName() + ')')
 	await waitForExtensionActive()
 	if (enableExtensions()) {
@@ -286,7 +282,10 @@ async function waitForExtensionActive (extensionId = 'kherring.ablunit-test-runn
 		throw new Error('extension not installed: ' + extensionId)
 	}
 	if (!ext) { throw new Error(extensionId + ' is not installed') }
-	if (ext.isActive) { log.info(extensionId + ' is already active'); return ext.isActive }
+	if (ext.isActive) {
+		log.info(extensionId + ' is already active')
+		return ext.isActive
+	}
 
 	ext = await ext.activate()
 		.then(() => { return sleep2(250) })
@@ -312,6 +311,14 @@ async function waitForExtensionActive (extensionId = 'kherring.ablunit-test-runn
 }
 
 export function getRcodeCount (workspaceFolder?: WorkspaceFolder) {
+	return getFileCountByExt('r', workspaceFolder)
+}
+
+export function getXrefCount (workspaceFolder?: WorkspaceFolder) {
+	return getFileCountByExt('xref', workspaceFolder)
+}
+
+function getFileCountByExt (ext: string, workspaceFolder?: WorkspaceFolder) {
 	if (!workspaceFolder) {
 		workspaceFolder = workspace.workspaceFolders?.[0]
 	}
@@ -319,12 +326,13 @@ export function getRcodeCount (workspaceFolder?: WorkspaceFolder) {
 		throw new Error('workspaceFolder is undefined')
 	}
 
-	const g = globSync('**/*.r', { cwd: workspaceFolder.uri.fsPath })
+	const g = globSync('**/*.' + ext, { cwd: workspaceFolder.uri.fsPath })
 	const fileCount = g.length
 	if (fileCount >= 0) {
+		log.info('.' + ext + ' count=' + fileCount)
 		return fileCount
 	}
-	throw new Error('fileCount is not a positive number! fileCount=' + fileCount)
+	throw new Error('fileCount is not a positive number! fileCount=' + fileCount + '(ext=' + ext + ')')
 }
 
 export async function awaitRCode (workspaceFolder: WorkspaceFolder, rcodeCountMinimum = 1) {
@@ -471,7 +479,7 @@ export async function getTestCount (resultsJson: Uri, status = 'tests') {
 		} else if (status === 'skipped') {
 			return results[0].skipped
 		} else {
-			throw new Error('[unknown status: ' + status)
+			throw new Error('unknown status: ' + status)
 		}
 	})
 	log.info('getTestCount: ' + status + ' = ' + count)
@@ -481,6 +489,13 @@ export async function getTestCount (resultsJson: Uri, status = 'tests') {
 export function getDefaultDLC () {
 	if (process.platform === 'linux') {
 		return '/psc/dlc'
+	}
+	const dlc = getEnvVar('DLC')
+	if (dlc) {
+		return dlc
+	}
+	if (getEnvVar('OE_VERSION') === '12.8' || getEnvVar('ABLUNIT_TEST_RUNNER_OE_VERSION') === '12.8') {
+		return 'C:\\Progress\\OpenEdge-12.8'
 	}
 	return 'C:\\Progress\\OpenEdge'
 }
@@ -517,7 +532,10 @@ export async function runAllTests (doRefresh = true, waitForResults = true, with
 		.then((r) => {
 			log.info(tag + 'command ' + testCommand +' complete! (r=' + r + ')')
 			return sleep(250)
-		}, (e: unknown) => { throw e	})
+		}, (e: unknown) => {
+			log.error('testing.runAll failed: ' + e)
+			throw e
+		})
 		.then(() => {
 			log.info(tag + 'testing.runAll completed - start getResults()')
 			if (!waitForResults) { return [] }
@@ -802,8 +820,6 @@ export function refreshData (resultsLen = 0) {
 			const passedCount = refs.recentResults?.[0].ablResults?.resultsJson[0].testsuite?.[0].passed ?? undefined
 			const failedCount = refs.recentResults?.[0].ablResults?.resultsJson[0].testsuite?.[0].failures ?? undefined
 			log.info('recentResults.length=' + refs.recentResults.length)
-			log.info('recentResults[0].ablResults.status=' + refs.recentResults?.[0].status)
-			log.info('recentResults[0].ablResults.resultsJson.length=' + refs.recentResults?.[0].ablResults?.resultsJson.length)
 			log.info('recentResults[0].ablResults.resultsJson[0].testsuite.length=' + refs.recentResults?.[0].ablResults?.resultsJson[0].testsuite?.length)
 			log.info('testCount=' + testCount + '; passed=' + passedCount + '; failed=' + failedCount)
 			if (testCount && testCount <= resultsLen) {
@@ -960,7 +976,7 @@ export async function getResults (len = 1, tag?: string): Promise<ABLResults[]> 
 	if ((!recentResults || recentResults.length === 0) && len > 0) {
 		log.info(tag + 'recentResults not set, refreshing...')
 		for (let i=0; i<5; i++) {
-			const prom = sleep2(250, tag + 'still no recentResults, sleep before trying again (' + i + '/4)')
+			const prom = sleep2(250, tag + 'still no recentResults (' + i + '/4)')
 				.then(() => { return refreshData() })
 				.then((gotResults) => {
 					if (gotResults) { return gotResults }
@@ -1054,24 +1070,28 @@ class AssertTestResults {
 	}
 }
 
-function getDetailLine (coverage: FileCoverageDetail[] | never[], lineNum: number) {
-	if (!coverage) return undefined
+function getLineExecutions (coverage: FileCoverageDetail[] | never[], lineNum: number) {
 	if (coverage.length === 0) {
-		return undefined
+		throw new Error('coverage is undefined')
 	}
-	try {
-		const l =  coverage.find((d: FileCoverageDetail) => {
-			const r = d.location as Position
-			return r
-		})
-		if (l) {
-			log.info('found line ' + lineNum + '!')
-			return l
-		}
+
+	const details =  coverage.filter((d: FileCoverageDetail) => {
+		const r = d.location as Position
+		return r.line == lineNum
+	})
+	if (details.length === 0) {
 		throw new Error('Could not find line ' + lineNum + ' in coverage')
-	} catch (e) {
-		throw new Error('Error finding coverage info for line ' + lineNum + '. e=' + e)
 	}
+
+	let executed = 0
+	for (const l of details) {
+		if (typeof l.executed === 'number') {
+			executed += l.executed
+		} else {
+			throw new Error('executed is not a number! details=' + JSON.stringify(details))
+		}
+	}
+	return executed
 }
 
 export const assert = {
@@ -1095,8 +1115,8 @@ export const assert = {
 	deepEqual: assertParent.deepEqual,
 	notDeepEqual: assertParent.notDeepEqual,
 	fail: (message: string) => { assertParent.fail(message) },
-	ok: (value: unknown) => {
-		assertParent.ok(value)
+	ok: (value: unknown, message?: string) => {
+		assertParent.ok(value, message)
 	},
 	ifError: assertParent.ifError,
 	throws: assertParent.throws,
@@ -1188,11 +1208,8 @@ export const assert = {
 	tests: new AssertTestResults(),
 
 	coverageProcessingMethod (debugSourceFile: string, expected: 'rcode' | 'parse') {
-		log.info('200')
 		if (! recentResults) {
-			log.info('201')
 			assert.fail('recentResults is undefined')
-			log.info('202')
 			return
 		}
 
@@ -1202,7 +1219,7 @@ export const assert = {
 		}
 
 		const actual = res.debugLines?.getProcessingMethod(debugSourceFile)
-		assert.equal(actual, expected)
+		assert.equal(actual, expected, 'processing method actual: ' + actual + ' != expected: ' + expected)
 	},
 
 	coveredFiles (expected: number) {
@@ -1249,19 +1266,14 @@ export const assert = {
 			return
 		}
 		for (const line of lines) {
-			const lineCoverage = getDetailLine(coverage, line)
-			if (!lineCoverage) {
-				assert.fail('no coverage found for line ' + line + ' in ' + file.fsPath)
-				return
-			}
-			if (typeof lineCoverage.executed === 'boolean') {
-				assert.fail('expected number for coverage executed but got boolean (' + lineCoverage.executed + ')')
-				return
-			}
+			log.info('checking line ' + line + ' in ' + file.fsPath)
+			const executions = getLineExecutions(coverage, line)
 			if (!executed) {
-				assert.equal(lineCoverage?.executed, 0, 'line ' + line + ' in ' + file.fsPath + ' was executed (lineCoverage.executed=' + lineCoverage?.executed + ')')
+				log.info(' - not executed')
+				assert.equal(executions, 0, 'line ' + line + ' in ' + file.fsPath + ' was executed (lineCoverage.executed=' + executions + ')')
 			} else {
-				assert.greater(lineCoverage?.executed, 0, 'line ' + line + ' in ' + file.fsPath + ' was not executed (lineCoverage.executed=' + lineCoverage?.executed + ')')
+				log.info(' - executed')
+				assert.greater(executions, 0, 'line ' + line + ' in ' + file.fsPath + ' was not executed (lineCoverage.executed=' + executions + ')')
 			}
 		}
 	},

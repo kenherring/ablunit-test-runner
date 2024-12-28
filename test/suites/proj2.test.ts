@@ -1,4 +1,4 @@
-import { assert, getResults, getWorkspaceUri, log, runAllTests, suiteSetupCommon, Uri, commands, workspace, beforeCommon, toUri, selectProfile, runTestsInFile } from '../testCommon'
+import { assert, getResults, getWorkspaceUri, log, runAllTests, suiteSetupCommon, Uri, commands, beforeCommon, toUri, selectProfile, runTestsInFile } from '../testCommon'
 import * as FileUtils from '../../src/FileUtils'
 
 const workspaceUri = getWorkspaceUri()
@@ -61,8 +61,12 @@ suite('proj2 - Extension Test Suite', () => {
 	})
 
 	test('proj2.4 - compile error - run all tests', () => {
-		return workspace.fs.copy(toUri('src/compileError.p.saveme'), toUri('src/compileError.p'), { overwrite: true })
-			.then(() => { return runAllTests() }, (e: unknown) => { throw e })
+		FileUtils.copyFile(
+			toUri('src/compileError.p.saveme'),
+			toUri('src/compileError.p'),
+			{ force: true }
+		)
+		return runAllTests()
 			.then(() => {
 				throw new Error('test should have failed due to compile error')
 			}, (e: unknown) => {
@@ -73,8 +77,12 @@ suite('proj2 - Extension Test Suite', () => {
 	})
 
 	test('proj2.5 - compile error - run tests in file', () => {
-		return workspace.fs.copy(toUri('src/compileError.p.saveme'), toUri('src/compileError.p'), { overwrite: true })
-			.then(() => runTestsInFile('src/compileError.p'))
+		FileUtils.copyFile(
+			toUri('src/compileError.p.saveme'),
+			toUri('src/compileError.p'),
+			{ force: true }
+		)
+		return runTestsInFile('src/compileError.p')
 			.then(() => {
 				throw new Error('test should have failed due to compile error')
 			}, (e: unknown) => {
@@ -85,8 +93,12 @@ suite('proj2 - Extension Test Suite', () => {
 	})
 
 	test('proj2.6 - compile error - run with db conn', () => {
-		return workspace.fs.copy(toUri('src/compileError.p.saveme'), toUri('src/compileError.p'), { overwrite: true })
-			.then(() => selectProfile('profileWithDBConn'))
+		FileUtils.copyFile(
+			toUri('src/compileError.p.saveme'),
+			toUri('src/compileError.p'),
+			{ force: true }
+		)
+		return selectProfile('profileWithDBConn')
 			.then(() => runTestsInFile('src/compileError.p'))
 			.then(() => {
 				assert.ok('test passed as expected')

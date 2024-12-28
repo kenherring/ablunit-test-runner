@@ -3,6 +3,7 @@ import { Uri, workspace } from 'vscode'
 import { PropathParser } from '../ABLPropath'
 import { log } from '../ChannelLogger'
 import * as FileUtils from '../FileUtils'
+import { SourceMap, SourceMapItem } from './SourceMapParser'
 
 const headerLength = 68
 
@@ -29,21 +30,6 @@ interface IIncludeMap {
 	debugUri: Uri,
 }
 
-export interface ISourceMap {
-	sourceUri: Uri,
-	path: string,
-	items: ISourceMapItem[]
-}
-
-export interface ISourceMapItem {
-	debugLine: number
-	debugUri: Uri
-	sourceLine: number
-	sourcePath: string
-	sourceUri: Uri
-	procName: string
-}
-
 /**
  * Parse RCode (*.r) and return a source map
  * @param uri Uri of the rcode, not the source file.
@@ -57,7 +43,7 @@ export const getSourceMapFromRCode = (propath: PropathParser, uri: Uri) => {
 	const procs: IProcedures[] = []
 	const sources: ISources[] = []
 	const map: IIncludeMap[] = []
-	const debugLines: ISourceMapItem[] = []
+	const debugLines: SourceMapItem[] = []
 
 	const toBase10 = (items: Uint8Array) => {
 		if (items.length === 4) {
@@ -263,7 +249,19 @@ export const getSourceMapFromRCode = (propath: PropathParser, uri: Uri) => {
 		const end = pos/4 + 4
 		const childBytes = bytes.subarray(pos/4, end)
 
-		const sourceUri = Uri.joinPath(propath.workspaceFolder.uri, getSourceName(childBytes[3]))
+
+		let sourceUri
+		try {
+			sourceUri = getSourceUri(childBytes[3])
+		} catch(e: unknown) {
+			log.debug('getSourceUri(' + childBytes[3] + ') failed. attempting getSourceName(' + childBytes[3] + ') instead. (e=' + e + ')')
+			const srcName = getSourceName(childBytes[3])
+			if (FileUtils.isRelativePath(srcName)) {
+				sourceUri = Uri.joinPath(propath.workspaceFolder.uri, srcName)
+			} else {
+				sourceUri = Uri.file(srcName)
+			}
+		}
 
 		map.push({
 			sourceLine: childBytes[1],
@@ -313,14 +311,13 @@ export const getSourceMapFromRCode = (propath: PropathParser, uri: Uri) => {
 		if (map.length === 0) {
 			for (const proc of procs) {
 				for (const line of proc.lines ?? []) {
-					debugLines.push({
+					debugLines.push(new SourceMapItem({
 						debugLine: line,
 						debugUri: debugUri,
 						sourceLine: line,
-						sourcePath: debugName,
 						sourceUri: debugUri,
 						procName: proc.procName
-					})
+					}))
 				}
 			}
 			return
@@ -329,14 +326,13 @@ export const getSourceMapFromRCode = (propath: PropathParser, uri: Uri) => {
 		for(const proc of procs) {
 			for (const line of proc.lines ?? []) {
 				const mapLine = getMapLine(map, line)
-				debugLines.push({
+				debugLines.push(new SourceMapItem({
 					debugLine: line,
 					debugUri: mapLine.debugUri,
 					sourceLine: mapLine.sourceLine + (line - mapLine.debugLine),
-					sourcePath: mapLine.sourcePath,
 					sourceUri: mapLine.sourceUri,
 					procName: proc.procName
-				})
+				}))
 			}
 		}
 
@@ -383,7 +379,7 @@ export const getSourceMapFromRCode = (propath: PropathParser, uri: Uri) => {
 		rawBytes = raw.slice(segmentInfo.debugLoc, segmentInfo.debugLoc + segmentInfo.debugSize)
 		const debugInfo = await parseDebugSegment(raw.subarray(segmentInfo.debugLoc, segmentInfo.debugLoc + segmentInfo.debugSize))
 
-		const sourceMap: ISourceMap = {
+		const sourceMap: SourceMap = {
 			path: uri.fsPath,
 			sourceUri: uri,
 			items: debugInfo
