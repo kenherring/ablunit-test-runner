@@ -1,6 +1,4 @@
 import { createTestConfig } from './test/createTestConfig.mjs'
-import { defineConfig } from '@vscode/test-cli'
-import * as fs from 'fs'
 
 // https://github.com/microsoft/vscode-test-cli/issues/48
 import { env } from 'process'

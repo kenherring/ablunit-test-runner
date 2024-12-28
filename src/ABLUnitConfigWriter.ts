@@ -113,7 +113,7 @@ export class ABLUnitConfig  {
 	}
 
 	readPropathFromJson (extensionResourcesDir?: Uri) {
-		log.info('reading propath from openedge-project.json')
+		log.info('reading propath from openedge-project.json (workspaceFolder=' + this.ablunitConfig.workspaceFolder.uri.fsPath + ')')
 		const parser: PropathParser = new PropathParser(this.ablunitConfig.workspaceFolder)
 
 		let conf: ProfileConfig | undefined = undefined

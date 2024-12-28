@@ -58,6 +58,16 @@ export async function activate (context: ExtensionContext) {
 			commands.registerCommand('_ablunit.getTestItem', (uri: Uri) => { return getExistingTestItem(ctrl, uri) }),
 			commands.registerCommand('_ablunit.getTestRunError', () => { return recentError })
 		)
+	} else {
+		context.subscriptions.push(
+			commands.registerCommand('_ablunit.getExtensionTestReferences', () => { return getExtensionTestReferences() }),
+			commands.registerCommand('_ablunit.isRefreshTestsComplete', () => { return isRefreshTestsComplete }),
+			commands.registerCommand('_ablunit.getLogUri', () => { return context.logUri }),
+			commands.registerCommand('_ablunit.getTestController', () => { return ctrl }),
+			commands.registerCommand('_ablunit.getTestData', () => { return testData.getMap() }),
+			commands.registerCommand('_ablunit.getTestItem', (uri: Uri) => { return getExistingTestItem(ctrl, uri) }),
+			commands.registerCommand('_ablunit.getTestRunError', () => { return recentError })
+		)
 	}
 
 	context.subscriptions.push(
@@ -479,6 +489,7 @@ export async function activate (context: ExtensionContext) {
 	if(workspace.getConfiguration('ablunit').get('discoverAllTestsOnActivate', false)) {
 		await commands.executeCommand('testing.refreshTests')
 	}
+	log.info('activation complete')
 	return true
 }
 

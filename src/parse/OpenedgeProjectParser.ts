@@ -141,7 +141,6 @@ export function getOEVersion (workspaceFolder: WorkspaceFolder, openedgeProjectP
 			return ver
 		}
 	}
-	log.info('oeversion not found, returning undefined')
 	return undefined
 }
 

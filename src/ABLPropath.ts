@@ -46,22 +46,28 @@ export class PropathParser {
 		}
 		this.filemap = new Map()
 		this.buildmap = new Map()
+		let uri
+		if (workspaceFolder) {
+			uri = workspaceFolder.uri
+		} else {
+			FileUtils.toUri('.')
+		}
 
-		this.addPropathDir({
-			uri: FileUtils.toUri('.'),
-			path: FileUtils.toUri('.').fsPath,
+		if (!uri) {
+			log.error('uri is undefined (workspaceFolder=' + workspaceFolder?.uri.fsPath + ')')
+			throw new Error('uri is undefined (workspaceFolder=' + workspaceFolder?.uri.fsPath + ')')
+		}
+
+		this.propath.entry.push({
+			uri: uri,
+			path: uri.fsPath,
 			relativePath: '.',
-			buildDir: '.',
-			buildDirUri: FileUtils.toUri('.'),
-			xrefDir: '.',
-			xrefDirUri: FileUtils.toUri('.'),
+			buildDir: uri.fsPath,
+			buildDirUri: uri,
+			xrefDir: uri.fsPath,
+			xrefDirUri: uri,
 			type: 'Source',
-
 		})
-	}
-
-	addPropathDir (entry: IPropathEntry) {
-		this.propath.entry.push(entry)
 	}
 
 	setPropath (importedPropath: IProjectJson) {

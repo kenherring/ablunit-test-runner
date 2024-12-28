@@ -26,25 +26,26 @@ convert_and_merge_xml () {
     sed -i 's,<skipped></skipped>,<skipped/>,g' artifacts/mocha_results_sonar/merged
     sed -i 's,<skipped/>,<skipped message="skipped"/>,g' artifacts/mocha_results_sonar/merged
 
-    xq '.' < artifacts/mocha_results_sonar/merged > artifacts/mocha_results_sonar_merged.xml
+    xq '.' -x < artifacts/mocha_results_sonar/merged > artifacts/mocha_results_sonar_merged.xml
+    xq '.' < artifacts/mocha_results_sonar_merged.xml > artifacts/mocha_results_sonar_merged.json
 
-    ${VERBOSE:-false} && cat artifacts/mocha_results_sonar/merged.xml
+    ${VERBOSE:-false} && cat artifacts/mocha_results_sonar_merged.xml
 
-    echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] merged test results for sonar consumption.  output: artifacts/mocha_results_sonar/merged.xml"
+    echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] merged test results for sonar consumption.  output: artifacts/mocha_results_sonar_merged.xml"
 
     ## Merge to json
-    xq -s '.' artifacts/mocha_results_xunit/proj*.xml > artifacts/mocha_results_merged.json
+    xq -s '.' artifacts/mocha_results_xunit/*.xml > artifacts/mocha_results_xunit_merged.json
 }
 
 show_summary () {
     echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}]"
-    TEST_COUNT="$(jq '[.. | objects | .testcase//empty | .. | objects] | length' < artifacts/mocha_results_merged.json)"
+    TEST_COUNT="$(jq '[.. | objects | .testcase//empty | .. | objects] | length' < artifacts/mocha_results_xunit_merged.json)"
     echo "[$(date +%Y-%m-%d:%H:%M:%S) TEST_COUNT=$TEST_COUNT"
-    SKIPPED="$(jq '[.. | objects | .testcase//empty | .. | objects | select(has("skipped")) ] | length' < artifacts/mocha_results_merged.json)"
+    SKIPPED="$(jq '[.. | objects | .testcase//empty | .. | objects | select(has("skipped")) ] | length' < artifacts/mocha_results_xunit_merged.json)"
     echo "[$(date +%Y-%m-%d:%H:%M:%S) $SKIPPED/$TEST_COUNT tests skipped"
-    FAILURES="$(jq '[.. | objects | .testcase//empty | .. | objects | select(has("failure")) ] | length' < artifacts/mocha_results_merged.json)"
+    FAILURES="$(jq '[.. | objects | .testcase//empty | .. | objects | select(has("failure")) ] | length' < artifacts/mocha_results_xunit_merged.json)"
     echo "[$(date +%Y-%m-%d:%H:%M:%S) $FAILURES/$TEST_COUNT tests failed"
-    jq '[.. | objects | .testcase//empty | .. | objects | select(has("failure")) ]' < artifacts/mocha_results_merged.json > artifacts/mocha_failures.json
+    jq '[.. | objects | .testcase//empty | .. | objects | select(has("failure")) ]' < artifacts/mocha_results_xunit_merged.json > artifacts/mocha_failures.json
     if [ "$FAILURES" -eq 0 ]; then
         echo "[$(date +%Y-%m-%d:%H:%M:%S) $FAILURES/$TEST_COUNT tests failed"
     else

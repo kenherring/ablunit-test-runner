@@ -1,5 +1,5 @@
 import { Uri, commands, window, workspace } from 'vscode'
-import { assert, getRcodeCount, getResults, getTestControllerItemCount, getTestItem, log, refreshTests, runAllTests, runAllTestsWithCoverage, runTestAtLine, runTestsDuration, runTestsInFile, sleep2, suiteSetupCommon, toUri, updateConfig, updateTestProfile } from '../testCommon'
+import { assert, getRcodeCount, getResults, getTestControllerItemCount, getTestItem, getXrefCount, log, rebuildAblProject, refreshTests, runAllTests, runAllTestsWithCoverage, runTestAtLine, runTestsDuration, runTestsInFile, sleep2, suiteSetupCommon, toUri, updateConfig, updateTestProfile } from '../testCommon'
 import { ABLResultsParser } from 'parse/ResultsParser'
 import { TimeoutError } from 'ABLUnitRun'
 import * as vscode from 'vscode'
@@ -64,11 +64,22 @@ suite('proj0  - Extension Test Suite', () => {
 
 	test('proj0.02 - run test, open file, validate coverage displays', async () => {
 		log.info('proj0.02 200 activating riversidesoftware.openedge-abl-lsp')
-		await enableOpenedgeAblExtension()
+		await rebuildAblProject()
+		let rcodeCount = getRcodeCount()
+		while (rcodeCount < 10) {
+			await sleep2(250)
+			rcodeCount = getRcodeCount()
+		}
 		log.info('proj0.02 201 getRcodeCount=' + getRcodeCount())
 		if (getRcodeCount() === 0) {
 			log.info('proj0.02 202')
 			assert.fail('no rcode files found')
+		}
+
+		log.info('pro0.02 203 getXrefCount=' + getXrefCount())
+		if (getXrefCount() === 0) {
+			log.info('proj0.02 204')
+			assert.fail('no xref files found')
 		}
 		await runAllTestsWithCoverage().then(() => {
 			log.info('proj0.02 210 - runAllTestsWithCoverage.then')

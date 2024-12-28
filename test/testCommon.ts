@@ -64,17 +64,17 @@ export const oeVersion = () => {
 		}
 	}
 
-	// const oeVersionEnv = getEnvVar('ABLUNIT_TEST_RUNNER_OE_VERSION')
-	// log.info('oeVersionEnv=' + oeVersionEnv)
-	// if (oeVersionEnv?.match(/^(11|12)\.\d$/)) {
-	// 	return oeVersionEnv
-	// }
+	const oeVersionEnv = getEnvVar('ABLUNIT_TEST_RUNNER_OE_VERSION')
+	log.info('oeVersionEnv=' + oeVersionEnv)
+	if (oeVersionEnv?.match(/^(11|12)\.\d$/)) {
+		return oeVersionEnv
+	}
 
-	// const oeVersion = getEnvVar('OE_VERSION')
-	// log.info('oeVersion=' + oeVersion + ' ' + oeVersion?.split('.').slice(0, 2).join('.'))
-	// if (oeVersion?.match(/^(11|12)\.\d.\d+$/)) {
-	// 	return oeVersion.split('.').slice(0, 2).join('.')
-	// }
+	const oeVersion = getEnvVar('OE_VERSION')
+	log.info('oeVersion=' + oeVersion + ' ' + oeVersion?.split('.').slice(0, 2).join('.'))
+	if (oeVersion?.match(/^(11|12)\.\d.\d+$/)) {
+		return oeVersion.split('.').slice(0, 2).join('.')
+	}
 
 	throw new Error('unable to determine oe version!')
 }
@@ -146,7 +146,7 @@ function getExtensionDevelopmentPath () {
 	throw new Error('unable to determine extensionDevelopmentPath')
 }
 
-export async function suiteSetupCommon (runtimes: IRuntime[]) {
+export async function suiteSetupCommon (runtimes?: IRuntime[]) {
 	log.info('[suiteSetupCommon] waitForExtensionActive \'kherring.ablunit-test-runner\' (projName=' + projName() + ')')
 	await waitForExtensionActive()
 	if (enableExtensions()) {
@@ -311,6 +311,14 @@ async function waitForExtensionActive (extensionId = 'kherring.ablunit-test-runn
 }
 
 export function getRcodeCount (workspaceFolder?: WorkspaceFolder) {
+	return getFileCountByExt('r', workspaceFolder)
+}
+
+export function getXrefCount (workspaceFolder?: WorkspaceFolder) {
+	return getFileCountByExt('xref', workspaceFolder)
+}
+
+function getFileCountByExt (ext: string, workspaceFolder?: WorkspaceFolder) {
 	if (!workspaceFolder) {
 		workspaceFolder = workspace.workspaceFolders?.[0]
 	}
@@ -318,13 +326,13 @@ export function getRcodeCount (workspaceFolder?: WorkspaceFolder) {
 		throw new Error('workspaceFolder is undefined')
 	}
 
-	const g = globSync('**/*.r', { cwd: workspaceFolder.uri.fsPath })
+	const g = globSync('**/*.' + ext, { cwd: workspaceFolder.uri.fsPath })
 	const fileCount = g.length
 	if (fileCount >= 0) {
-		log.info('rcodeCount=' + fileCount)
+		log.info('.' + ext + ' count=' + fileCount)
 		return fileCount
 	}
-	throw new Error('fileCount is not a positive number! fileCount=' + fileCount)
+	throw new Error('fileCount is not a positive number! fileCount=' + fileCount + '(ext=' + ext + ')')
 }
 
 export async function awaitRCode (workspaceFolder: WorkspaceFolder, rcodeCountMinimum = 1) {
@@ -524,7 +532,10 @@ export async function runAllTests (doRefresh = true, waitForResults = true, with
 		.then((r) => {
 			log.info(tag + 'command ' + testCommand +' complete! (r=' + r + ')')
 			return sleep(250)
-		}, (e: unknown) => { throw e	})
+		}, (e: unknown) => {
+			log.error('testing.runAll failed: ' + e)
+			throw e
+		})
 		.then(() => {
 			log.info(tag + 'testing.runAll completed - start getResults()')
 			if (!waitForResults) { return [] }
@@ -809,8 +820,6 @@ export function refreshData (resultsLen = 0) {
 			const passedCount = refs.recentResults?.[0].ablResults?.resultsJson[0].testsuite?.[0].passed ?? undefined
 			const failedCount = refs.recentResults?.[0].ablResults?.resultsJson[0].testsuite?.[0].failures ?? undefined
 			log.info('recentResults.length=' + refs.recentResults.length)
-			log.info('recentResults[0].ablResults.status=' + refs.recentResults?.[0].status)
-			log.info('recentResults[0].ablResults.resultsJson.length=' + refs.recentResults?.[0].ablResults?.resultsJson.length)
 			log.info('recentResults[0].ablResults.resultsJson[0].testsuite.length=' + refs.recentResults?.[0].ablResults?.resultsJson[0].testsuite?.length)
 			log.info('testCount=' + testCount + '; passed=' + passedCount + '; failed=' + failedCount)
 			if (testCount && testCount <= resultsLen) {
