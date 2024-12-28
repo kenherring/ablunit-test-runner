@@ -35,7 +35,7 @@ initialize () {
 		ABLUNIT_TEST_RUNNER_VSCODE_VERSION \
 		ABLUNIT_TEST_RUNNER_PROJECT_NAME \
 		ABLUNIT_TEST_RUNNER_NO_COVERAGE \
-		ABLUNIT_TEST_RUNNER_RUN_SCRIPT_FLAG
+		CIRCLECI
 
 	git config --global init.defaultBranch main
 	mkdir -p "$npm_config_cache" "$PROJECT_DIR"

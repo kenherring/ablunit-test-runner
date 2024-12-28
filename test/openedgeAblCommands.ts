@@ -51,7 +51,10 @@ export function rebuildAblProject () {
 			const rcodeCount = getRcodeCount()
 			log.info('abl.project.rebuild command complete! (rcodeCount=' + rcodeCount + ')')
 			return rcodeCount
-		}, (e: unknown) => { throw e })
+		}, (e: unknown) => {
+			log.error('abl.project.resbuild command failed! e=' + e)
+			throw e
+		})
 }
 
 export async function printLastLangServerError () {
@@ -156,8 +159,9 @@ export function setRuntimes (runtimes?: IRuntime[]) {
 	log.info('current=' + JSON.stringify(current))
 	log.info('  input=' + JSON.stringify(runtimes))
 	if (JSON.stringify(current) === JSON.stringify(runtimes)) {
-		log.info('runtimes are already set ' + duration)
-		return restartLangServer()
+		log.info('runtmes are already set ' + duration)
+		return Promise.resolve(true)
+		// return restartLangServer()
 	}
 
 	log.info('setting workspace configuration abl.configuration.defaultRuntime=' + oeVersion())

@@ -1232,13 +1232,6 @@ export const assert = {
 			return
 		}
 
-		// // eslint-disable-next-line @typescript-eslint/prefer-for-of
-		// for (let i=0; i<recentResults.length; i++) {
-		// 	const r = recentResults[i]
-		// 	const startDate = new Date(r.duration.start)
-		// 	log.info('r.duration.name=' + r.duration.name + ', startDate=' + startDate)
-		// }
-
 		const actual = recentResults[recentResults.length - 1].coverage.size
 		let msg = 'covered files (' + actual + ') != ' + expected
 		if (actual != expected) {

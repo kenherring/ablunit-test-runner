@@ -179,10 +179,6 @@ export const getSourceMapFromXref = (propath: PropathParser, debugSourceName: st
 
 		// import the source map and return it
 		try {
-			log.info('importDebugLines')
-			log.info('  - debugSourceName=' + debugSourceName)
-			log.info('  - fileinfo.uri=' + fileinfo.uri)
-			log.info('  - fileinfo.xrefUri=' + fileinfo.xrefUri)
 			debugLines = [await importDebugLines(debugSourceName, fileinfo.uri, fileinfo.xrefUri)]
 		} catch (e: unknown) {
 			log.warn('cannot find source map for ' + debugSourceName + ' (e=' + e + ')')

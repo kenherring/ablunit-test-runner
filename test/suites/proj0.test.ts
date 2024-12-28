@@ -4,7 +4,6 @@ import { ABLResultsParser } from 'parse/ResultsParser'
 import { TimeoutError } from 'ABLUnitRun'
 import * as vscode from 'vscode'
 import * as FileUtils from '../../src/FileUtils'
-import { enableOpenedgeAblExtension } from '../openedgeAblCommands'
 
 function createTempFile () {
 	const tempFile = toUri('UNIT_TEST.tmp')
@@ -63,31 +62,24 @@ suite('proj0  - Extension Test Suite', () => {
 	})
 
 	test('proj0.02 - run test, open file, validate coverage displays', async () => {
-		log.info('proj0.02 200 activating riversidesoftware.openedge-abl-lsp')
 		await rebuildAblProject()
 		let rcodeCount = getRcodeCount()
 		while (rcodeCount < 10) {
 			await sleep2(250)
 			rcodeCount = getRcodeCount()
 		}
-		log.info('proj0.02 201 getRcodeCount=' + getRcodeCount())
 		if (getRcodeCount() === 0) {
-			log.info('proj0.02 202')
 			assert.fail('no rcode files found')
 		}
 
-		log.info('pro0.02 203 getXrefCount=' + getXrefCount())
 		if (getXrefCount() === 0) {
-			log.info('proj0.02 204')
 			assert.fail('no xref files found')
 		}
 		await runAllTestsWithCoverage().then(() => {
-			log.info('proj0.02 210 - runAllTestsWithCoverage.then')
+			log.info('runAllTestsWithCoverage.then')
 			return true
 		})
-		log.info('proj0.02 220')
 		assert.linesExecuted('src/dirA/dir1/testInDir.p', [5, 6])
-		log.info('proj0.02 230')
 	})
 
 	// is it possible to validate the line coverage displayed and not just the reported coverage?  does it matter?
