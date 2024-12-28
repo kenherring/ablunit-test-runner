@@ -5,9 +5,6 @@ import { SourceMapItem } from 'parse/SourceMapParser'
 import { getSourceMapFromXref } from 'parse/SourceMapXrefParser'
 import * as FileUtils from 'FileUtils'
 
-const propath = new PropathParser()
-log.info('propath=' + JSON.stringify(propath.propath, null, 2))
-
 suiteSetup('suiteSetup', () => {
 	log.info('delete xref files')
 	FileUtils.deleteFile(toUri('test_1/test.p.xref'))
@@ -32,9 +29,12 @@ setup('setup', async () => {
 })
 
 test('SourceMapXrefParser.test_1', () => {
+	const propath = new PropathParser()
+	log.info('propath=' + JSON.stringify(propath.propath, null, 2))
+
 	const testuri = toUri('test_1/test.p')
 	const incuri = toUri('test_1/include.i')
-	return getSourceMap(testuri).then((sourceMap) => {
+	return getSourceMap(propath, testuri).then((sourceMap) => {
 
 		for (const item of sourceMap.items) {
 			log.info('item=' + item.debugLine + ',' + item.sourceLine)
@@ -56,9 +56,12 @@ test('SourceMapXrefParser.test_1', () => {
 })
 
 test('SourceMapXrefParser.test_2', () => {
+	const propath = new PropathParser()
+	log.info('propath=' + JSON.stringify(propath.propath, null, 2))
+
 	const testuri = toUri('test_2/test.p')
 	const incuri = toUri('test_2/include.i')
-	return getSourceMap(testuri).then((sourceMap) => {
+	return getSourceMap(propath, testuri).then((sourceMap) => {
 		assert.equal(sourceMap.items.length, getLineCount(toUri('.dbg/test_2/test.p')))
 		assertLines(sourceMap.items, 6, 6, testuri, testuri)
 		assertLines(sourceMap.items, 7, 1, testuri, incuri)
@@ -71,9 +74,12 @@ test('SourceMapXrefParser.test_2', () => {
 })
 
 test('SourceMapXrefParser.test_3', () => {
+	const propath = new PropathParser()
+	log.info('propath=' + JSON.stringify(propath.propath, null, 2))
+
 	const testuri = toUri('test_3/test.p')
 	const incuri = toUri('test_3/include.i')
-	return getSourceMap(testuri).then((sourceMap) => {
+	return getSourceMap(propath, testuri).then((sourceMap) => {
 		assert.equal(sourceMap.items.length, getLineCount(toUri('.dbg/test_3/test.p')))
 		assertLines(sourceMap.items, 6, 6, testuri, testuri)
 		assertLines(sourceMap.items, 7, 1, testuri, incuri)
@@ -86,7 +92,7 @@ test('SourceMapXrefParser.test_3', () => {
 	})
 })
 
-function getSourceMap (uri: Uri) {
+function getSourceMap (propath: PropathParser, uri: Uri) {
 	return getSourceMapFromXref(propath, uri.fsPath).then((sourceMap) => {
 		if (!sourceMap) {
 			throw new Error('no source map found')

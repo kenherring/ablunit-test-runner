@@ -47,15 +47,16 @@ export class PropathParser {
 		this.filemap = new Map()
 		this.buildmap = new Map()
 		let uri
-		if (workspaceFolder) {
-			uri = workspaceFolder.uri
+
+		if (this.workspaceFolder) {
+			uri = this.workspaceFolder.uri
 		} else {
 			FileUtils.toUri('.')
 		}
 
 		if (!uri) {
-			log.error('uri is undefined (workspaceFolder=' + workspaceFolder?.uri.fsPath + ')')
-			throw new Error('uri is undefined (workspaceFolder=' + workspaceFolder?.uri.fsPath + ')')
+			log.error('uri is undefined (workspaceFolder=' + this.workspaceFolder?.uri.fsPath + ')')
+			throw new Error('uri is undefined (workspaceFolder=' + this.workspaceFolder?.uri.fsPath + ')')
 		}
 
 		this.propath.entry.push({
