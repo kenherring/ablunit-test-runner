@@ -147,9 +147,6 @@ function getExtensionDevelopmentPath () {
 }
 
 export async function suiteSetupCommon (runtimes: IRuntime[] = []) {
-	if (!runtimes || runtimes.length === 0) {
-		runtimes = [{ name: oeVersion(), path: getDefaultDLC(), default: true }]
-	}
 	log.info('[suiteSetupCommon] waitForExtensionActive \'kherring.ablunit-test-runner\' (projName=' + projName() + ')')
 	await waitForExtensionActive()
 	if (enableExtensions()) {
@@ -321,11 +318,20 @@ export function getRcodeCount (workspaceFolder?: WorkspaceFolder) {
 		throw new Error('workspaceFolder is undefined')
 	}
 
+	log.info('300.1 workspaceFolder.uri.fsPath=' + workspaceFolder.uri.fsPath)
 	const g = globSync('**/*.r', { cwd: workspaceFolder.uri.fsPath })
+	log.info('300.2')
+	for (const f of g) {
+		log.info(' - 301: ' + f)
+	}
+	log.info('302')
 	const fileCount = g.length
+	log.info('303 fileCount=' + fileCount)
 	if (fileCount >= 0) {
+		log.info('304')
 		return fileCount
 	}
+	log.info('305')
 	throw new Error('fileCount is not a positive number! fileCount=' + fileCount)
 }
 

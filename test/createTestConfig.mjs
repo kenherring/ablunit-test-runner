@@ -18,6 +18,7 @@ const useOEAblPrerelease = false
 const enableExtensions = [
 	'AtStart',
 	'DebugLines',
+	'proj0',
 	'proj2',
 	'proj3',
 	'proj4',

@@ -4,6 +4,7 @@ import { ABLResultsParser } from 'parse/ResultsParser'
 import { TimeoutError } from 'ABLUnitRun'
 import * as vscode from 'vscode'
 import * as FileUtils from '../../src/FileUtils'
+import { enableOpenedgeAblExtension } from '../openedgeAblCommands'
 
 function createTempFile () {
 	const tempFile = toUri('UNIT_TEST.tmp')
@@ -62,9 +63,13 @@ suite('proj0  - Extension Test Suite', () => {
 	})
 
 	test('proj0.02 - run test, open file, validate coverage displays', async () => {
-		log.info('proj0.02 200')
+		log.info('proj0.02 200 activating riversidesoftware.openedge-abl-lsp')
+		await enableOpenedgeAblExtension()
 		log.info('proj0.02 201 getRcodeCount=' + getRcodeCount())
-		log.info('proj0.02 202')
+		if (getRcodeCount() === 0) {
+			log.info('proj0.02 202')
+			assert.fail('no rcode files found')
+		}
 		await runAllTestsWithCoverage().then(() => {
 			log.info('proj0.02 210 - runAllTestsWithCoverage.then')
 			return true

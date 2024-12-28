@@ -69,13 +69,15 @@ export class TimeoutError extends Error implements ITimeoutError {
 export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation: CancellationToken) => {
 	const abort = new AbortController()
 	const { signal } = abort
-	let watcher: fs.StatWatcher
+	let watcher: fs.StatWatcher | undefined = undefined
 
 	cancellation.onCancellationRequested(() => {
 		log.debug('cancellation requested - ablunitRun')
 		abort.abort()
 		if (res.cfg.ablunitConfig.optionsUri.updateUri) {
-			watcher.removeAllListeners()
+			if (watcher) {
+				watcher.removeAllListeners()
+			}
 			processUpdates(options, res.tests, res.cfg.ablunitConfig.optionsUri.updateUri)
 		}
 		throw new CancellationError()
@@ -272,32 +274,57 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 			}).on('exit', (code: number | null, signal: NodeJS.Signals | null) => {
 				log.debug('process.exit code=' + code + '; signal=' + signal + '; process.exitCode=' + process.exitCode + '; process.signalCode=' + process.signalCode + '; killed=' + process.killed, options)
 				log.info('process.exit code=' + code + '; signal=' + signal + '; process.exitCode=' + process.exitCode + '; process.signalCode=' + process.signalCode + '; killed=' + process.killed)
+				log.info('400')
 				testRunDuration.stop()
-				watcher.removeAllListeners()
+				log.info('401.1')
+				if (watcher) {
+					log.info('401.2')
+					watcher.removeAllListeners()
+					log.info('401.3')
+				}
+				log.info('401.4')
 				processUpdates(options, res.tests, updateUri)
+				log.info('402')
 				if (process.killed || signal) {
+					log.info('403')
 					setTimeoutTestStatus(options, res.cfg.ablunitConfig.timeout)
+					log.info('404')
 					res.setStatus(RunStatus.Timeout, 'signal=' + signal)
+					log.info('405')
 					log.info('----- ABLUnit Test Run Timeout - ' + res.cfg.ablunitConfig.timeout + 'ms ----- ' + testRunDuration, options)
+					log.info('406')
 					reject(new TimeoutError('ABLUnit process timeout', testRunDuration, res.cfg.ablunitConfig.timeout, cmd))
+					log.info('407')
 					return
 				}
+				log.info('410')
 				if (process.killed) {
+					log.info('411')
 					res.setStatus(RunStatus.Killed, 'signal=' + signal)
+					log.info('412')
 					log.info('----- ABLUnit Test Run Killed - (signal=' + signal + ') ----- ' + testRunDuration, options)
 					reject(new ABLUnitRuntimeError('ABLUnit process killed', 'exit_code=' + code + '; signal=' + signal, cmd))
+					log.info('413')
 					return
 				}
 
+				log.info('414')
 				if (code && code != 0) {
+					log.info('415')
 					res.setStatus(RunStatus.Error, 'exit_code=' + code)
+					log.info('416')
 					log.info('----- ABLUnit Test Run Failed (exit_code=' + code + ') ----- ' + testRunDuration, options)
+					log.info('417')
 					reject(new ABLUnitRuntimeError('ABLUnit exit_code= ' + code, 'ABLUnit exit_code= ' + code + '; signal=' + signal, cmd))
+					log.info('418')
 					return
 				}
 
+				log.info('420')
 				res.setStatus(RunStatus.Complete, 'success')
+				log.info('421')
 				log.info('----- ABLUnit Test Run Complete ----- ' + testRunDuration, options)
+				log.info('422')
 				resolve('success')
 				return
 			}).on('close', (code: number | null, signal: NodeJS.Signals | null) => {
@@ -312,9 +339,10 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 
 	return runCommand()
 		.then(() => {
+			log.info('runCommand() success', options)
 			return res.parseOutput(options)
 		}, (e: unknown) => {
-			log.debug('runCommand() error=' + JSON.stringify(e, null, 2), options)
+			log.info('runCommand() error=' + JSON.stringify(e, null, 2), options)
 			if (e instanceof Error) {
 				res.thrownError = e
 			}

@@ -51,6 +51,9 @@ show_summary () {
         echo "[$(date +%Y-%m-%d:%H:%M:%S) ERROR! $FAILURES/$TEST_COUNT tests failed"
         jq '.' artifacts/mocha_failures.json
     fi
+
+    echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] vscode-abl logs:"
+    ls -al ./.vscode-test/user-data/logs/*/window1/exthost/output_logging_*/* || true
 }
 
 ########## MAIN BLOCK ##########

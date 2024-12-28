@@ -154,7 +154,6 @@ export class PropathParser {
 			if(uri.fsPath.replace(/\\/g, '/').startsWith(e.uri.fsPath.replace(/\\/g, '/') + '/')) {
 				const propathRelativeFile = uri.fsPath.replace(e.uri.fsPath, '').substring(1)
 				const relativeFile = workspace.asRelativePath(uri, false)
-				log.info('e.buildDirUri=' + e.buildDirUri.fsPath)
 				const rcodeUri = Uri.joinPath(e.buildDirUri, relativeFile.replace(/\.(p|cls)$/, '.r'))
 				const xrefUri = Uri.joinPath(e.xrefDirUri, propathRelativeFile + '.xref')
 
