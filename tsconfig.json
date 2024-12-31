@@ -50,7 +50,7 @@
 		"strictFunctionTypes": true,
 		"strictNullChecks": true,
 		"strictPropertyInitialization": true,
-		"useUnknownInCatchVariables": false,
+		"useUnknownInCatchVariables": true,
 	},
 	"include": [
 		"./**/*.ts",

@@ -16,9 +16,12 @@ suite('proj0  - Extension Test Suite', () => {
 	const disposables: vscode.Disposable[] = []
 
 	suiteSetup('proj0 - before', async () => {
-		FileUtils.deleteFile(toUri('.vscode/ablunit-test-profile.json'))
-		FileUtils.deleteFile(toUri('src/dirA/proj10.p'))
-		FileUtils.deleteFile(toUri('UNIT_TEST.tmp'))
+		FileUtils.deleteFile([
+			toUri('.vscode/ablunit-test-profile.json'),
+			toUri('src/dirA/proj10.p'),
+			toUri('UNIT_TEST.tmp'),
+		], { force: true })
+
 		await suiteSetupCommon()
 		await commands.executeCommand('testing.clearTestResults')
 		FileUtils.copyFile(
@@ -29,9 +32,11 @@ suite('proj0  - Extension Test Suite', () => {
 	})
 
 	teardown('proj0 - afterEach', () => {
-		FileUtils.deleteFile(toUri('.vscode/ablunit-test-profile.json'))
-		FileUtils.deleteFile(toUri('src/dirA/proj10.p'))
-		FileUtils.deleteFile(toUri('UNIT_TEST.tmp'))
+		FileUtils.deleteFile([
+			toUri('.vscode/ablunit-test-profile.json'),
+			toUri('src/dirA/proj10.p'),
+			toUri('UNIT_TEST.tmp'),
+		], { force: true })
 		while (disposables.length > 0) {
 			const d = disposables.pop()
 			if (d) {

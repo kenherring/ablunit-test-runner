@@ -19,6 +19,8 @@ import { getDLC, IDlc } from './parse/OpenedgeProjectParser'
 import { Duration } from './ABLUnitCommon'
 import { ITestObj } from 'parse/config/CoreOptions'
 import * as FileUtils from './FileUtils'
+import { basename, dirname } from 'path'
+import { globSync } from 'glob'
 
 export class ABLResults implements Disposable {
 	workspaceFolder: WorkspaceFolder
@@ -243,6 +245,7 @@ export class ABLResults implements Disposable {
 		if (this.request.profile?.kind === TestRunProfileKind.Coverage && this.cfg.ablunitConfig.profiler.enabled && this.cfg.ablunitConfig.profiler.coverage) {
 			this.setStatus(RunStatus.Parsing, 'profiler data')
 			log.debug('parsing profiler data from ' + workspace.asRelativePath(this.cfg.ablunitConfig.profFilenameUri.fsPath), options)
+			log.info('parsing profiler data from ' + workspace.asRelativePath(this.cfg.ablunitConfig.profFilenameUri.fsPath), options)
 			await this.parseProfile().then(() => {
 				log.info('parsing profiler data complete ' + parseTime.toString())
 				return true
@@ -465,7 +468,52 @@ export class ABLResults implements Disposable {
 		return tm
 	}
 
-	parseProfile () {
+	findTest (testName: string) {
+		for (const test of this.tests) {
+			log.info('test.label=' + test.label)
+			for (const [, child] of test.children) {
+				log.info('test.label=' + test.label + ', child.label=' + child.label)
+				if (child.label == testName) {
+					return child
+				}
+			}
+			if (test.label == testName) {
+				return test
+			}
+		}
+		return undefined
+	}
+
+	async parseProfile () {
+		const duration = new Duration()
+		const profParser = new ABLProfile()
+		const profDir = dirname(this.cfg.ablunitConfig.profFilenameUri.fsPath)
+		const profFile = basename(this.cfg.ablunitConfig.profFilenameUri.fsPath)
+		const globPattern = profFile.replace(/(.*)\.([a-zA-Z]+)$/, '$1_*.$2')
+		log.info('globPattern=' + globPattern + ', profDir=' + profDir)
+		const dataFiles = globSync(globPattern, { cwd: profDir })
+		dataFiles.push(basename(this.cfg.ablunitConfig.profFilenameUri.fsPath))
+		log.info('dataFiles.length=' + dataFiles.length)
+		let item: TestItem | undefined = undefined
+		for (const dataFile of dataFiles) {
+			log.info('dataFile = ' + dataFile)
+			if (dataFile != basename(this.cfg.ablunitConfig.profFilenameUri.fsPath)) {
+				const testName = dataFile.replace(/(.*)_(.*)\.(.*)$/, '$2')
+				log.info('testName=' + testName)
+				item = this.findTest(testName)
+				log.info('item=' + item?.label)
+			}
+			const profJson = await profParser.parseData(Uri.joinPath(Uri.file(profDir), dataFile), this.cfg.ablunitConfig.profiler.writeJson, this.debugLines)
+			if (profJson) {
+				this.profileJson.push(profJson)
+				log.info('assigning profile results')
+				await this.assignProfileResults(profJson, item)
+			}
+		}
+		log.info('parsing profile data complete ' + duration.toString())
+	}
+
+	parseProfile_orig () {
 		const startTime = new Date()
 		const profParser = new ABLProfile()
 		return profParser.parseData(this.cfg.ablunitConfig.profFilenameUri, this.cfg.ablunitConfig.profiler.writeJson, this.debugLines)
@@ -502,7 +550,9 @@ export class ABLResults implements Disposable {
 	}
 
 	async setCoverage (module: IModule, item?: TestItem) {
+		log.info('module=' + module.SourceName)
 		const fileinfo = await this.propath.search(module.SourceName)
+		log.info('fileinfo=' + fileinfo?.uri)
 
 		const moduleUri = fileinfo?.uri
 		if (!moduleUri) {

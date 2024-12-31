@@ -23,8 +23,8 @@ import { ABLTestCase, ABLTestClass, ABLTestData, ABLTestDir, ABLTestFile, ABLTes
 import { minimatch } from 'minimatch'
 import { ABLUnitRuntimeError, TimeoutError } from 'ABLUnitRun'
 import { basename } from 'path'
-import { gatherAllTestItems, IExtensionTestReferences } from 'ABLUnitCommon'
 import * as FileUtils from './FileUtils'
+import { gatherAllTestItems, IExtensionTestReferences } from 'ABLUnitCommon'
 import { NotImplementedError } from 'Errors'
 
 let recentResults: ABLResults[] = []
@@ -343,7 +343,7 @@ export async function activate (context: ExtensionContext) {
 			}
 
 			run.end()
-			log.notification('ablunit tests complete')
+			log.notificationInfo('ablunit tests complete')
 			return
 		}
 
@@ -386,7 +386,7 @@ export async function activate (context: ExtensionContext) {
 			return res
 		}
 
-		log.notification('running ablunit tests')
+		log.notificationInfo('running ablunit tests')
 		const queue: { test: TestItem; data: ABLTestData }[] = []
 		const run = ctrl.createTestRun(request)
 		currentTestRun = run

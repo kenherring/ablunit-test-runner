@@ -1248,6 +1248,10 @@ export const assert = {
 			return
 		}
 
+		// const coverage = recentResults[recentResults.length - 1].filecoverage.find((c) => c.uri.fsPath === file.fsPath)
+		log.info('cov.lenth=' + recentResults[recentResults.length - 1].coverage.size)
+		const flatmap = Array.from(recentResults[recentResults.length - 1].coverage.keys())
+		log.info('flatmap=' + flatmap)
 		const coverage = recentResults[recentResults.length - 1].coverage.get(file.fsPath)
 		if (!coverage) {
 			assert.fail('no coverage found for ' + file.fsPath)
