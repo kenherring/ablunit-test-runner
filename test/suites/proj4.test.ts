@@ -1,11 +1,25 @@
-import { assert, getDefaultDLC, getSessionTempDir, getWorkspaceUri, oeVersion, runAllTests, setRuntimes, suiteSetupCommon, updateTestProfile, Uri } from '../testCommon'
+import { assert, getDefaultDLC, getWorkspaceUri, oeVersion, runAllTests, setRuntimes, suiteSetupCommon, updateTestProfile, Uri } from '../testCommon'
 import * as FileUtils from '../../src/FileUtils'
 
 const sessionTempDir = getSessionTempDir()
 
+
+function getSessionTempDir () {
+	if (process.platform === 'win32') {
+		return Uri.file('c:/temp/ablunit')
+	}
+	if(process.platform === 'linux') {
+		return Uri.file('/tmp/ablunit')
+	}
+	throw new Error('Unsupported platform: ' + process.platform)
+}
+
 suite('proj4 - Extension Test Suite', () => {
 
 	suiteSetup('proj4 - before', async () => {
+		if (!FileUtils.doesFileExist('.vscode/settings.json') && FileUtils.doesFileExist('.vscode/settings.json.bk')) {
+			FileUtils.copyFile('.vscode/settings.json.bk', '.vscode/settings.json')
+		}
 		await suiteSetupCommon()
 		if (process.platform === 'linux') {
 			await updateTestProfile('tempDir', '/tmp/ablunit')

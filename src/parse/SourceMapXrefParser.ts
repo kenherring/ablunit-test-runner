@@ -15,7 +15,7 @@ interface IIncLength {
 	lineCount: number
 }
 
-export const getSourceMapFromXref = (propath: PropathParser, debugSourceName: string) => {
+export const getSourceMapFromXref = (propath: PropathParser, debugSource: string) => {
 	const map: SourceMap[] = []
 	const incLengths: IIncLength[] = []
 	const includes: IXrefInclude[] = []
@@ -141,42 +141,19 @@ export const getSourceMapFromXref = (propath: PropathParser, debugSourceName: st
 		return m
 	}
 
-	const getSourceMap = async (debugSourceName: string) => {
-		log.info('debugSourceName=' + debugSourceName)
+	const getSourceMap = async (debugSource: string) => {
+		log.info('debugSource=' + debugSource)
 		// check for previously parsed source map
-		let debugLines = map.filter((dlm) => dlm.path === debugSourceName)
-		if (debugLines && debugLines.length > 0) {
-			log.info('debugLines found! debugLines.length=' + debugLines.length)
-			if (debugLines.length > 1) {
-				log.error('more than one source map found for ' + debugSourceName)
-				throw new Error('more than one source map found for ' + debugSourceName)
-			}
-			return debugLines[0]
-		}
-
-		// find the source file in the propath
-		log.info('searching for ' + debugSourceName)
-		const fileinfo = await propath.search(debugSourceName)
+		const fileinfo = await propath.search(debugSource)
 		if (!fileinfo) {
-			if (!debugSourceName.startsWith('OpenEdge.') && debugSourceName != 'ABLUnitCore.p') {
-				if (!warnings.includes(debugSourceName)) {
-					log.error('[getSourceMap] WARNING: cannot find ' + debugSourceName + ' in propath.')
-					warnings.push(debugSourceName)
-				}
-			}
-			return undefined
+			throw new Error('cannot find file in propath: ' + debugSource)
 		}
 
 		// import the source map and return it
-		try {
-			debugLines = [await importDebugLines(debugSourceName, fileinfo.uri, fileinfo.xrefUri)]
-		} catch (e: unknown) {
-			log.warn('cannot find source map for ' + debugSourceName + ' (e=' + e + ')')
-			return undefined
-		}
-		log.info('returning sourcemap for ' + debugSourceName)
-		return debugLines[0]
+		const debugLines = await importDebugLines(debugSource, fileinfo.uri, fileinfo.xrefUri)
+		log.info('returning sourcemap for ' + debugSource)
+		return debugLines
 	}
 
-	return getSourceMap(debugSourceName)
+	return getSourceMap(debugSource)
 }

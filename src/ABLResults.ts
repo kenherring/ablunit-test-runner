@@ -489,7 +489,8 @@ export class ABLResults implements Disposable {
 		const profParser = new ABLProfile()
 		const profDir = dirname(this.cfg.ablunitConfig.profFilenameUri.fsPath)
 		const profFile = basename(this.cfg.ablunitConfig.profFilenameUri.fsPath)
-		const globPattern = profFile.replace(/(.*)\.([a-zA-Z]+)$/, '$1_*.$2')
+		// <basename>.<ext> -> <basename>_*.<ext>
+		const globPattern = profFile.replace(/(.+)\.([a-zA-Z]+)$/, '$1_*.$2')
 		log.info('globPattern=' + globPattern + ', profDir=' + profDir)
 		const dataFiles = globSync(globPattern, { cwd: profDir })
 		dataFiles.push(basename(this.cfg.ablunitConfig.profFilenameUri.fsPath))
@@ -498,6 +499,7 @@ export class ABLResults implements Disposable {
 		for (const dataFile of dataFiles) {
 			log.info('dataFile = ' + dataFile)
 			if (dataFile != basename(this.cfg.ablunitConfig.profFilenameUri.fsPath)) {
+				// <basename>_<testName>.<ext> -> <testName>
 				const testName = dataFile.replace(/(.*)_(.*)\.(.*)$/, '$2')
 				log.info('testName=' + testName)
 				item = this.findTest(testName)

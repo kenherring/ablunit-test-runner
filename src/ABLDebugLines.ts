@@ -97,16 +97,17 @@ export class ABLDebugLines {
 				map = await getSourceMapFromRCode(this.propath, await this.propath.getRCodeUri(debugSource))
 				this.processingMethodMap.set(debugSource, 'rcode')
 			} catch (e) {
-				log.warn('cannot parse source map from rcode, falling back to source parser (debugSource=' + debugSource + ', e=' + e + ')')
+				log.warn('failed to parser source map from rcode, falling back to source parser\n\tdebugSource=' + debugSource + '\n\te=' + e)
+			}
+			try {
 				map = await getSourceMapFromXref(this.propath, debugSource)
 				this.processingMethodMap.set(debugSource, 'parse')
+			} catch(e) {
+				log.warn('failed to parser source map from xref\n\tdebugSource=' + debugSource + '\n\te=' + e)
 			}
-
-			if (!map) {
-				throw new Error('failed to parse source map (' + debugSource + ')')
-			} else {
-				this.maps.set(debugSource, map)
-			}
+		}
+		if (map) {
+			this.maps.set(debugSource, map)
 		}
 		return map
 	}

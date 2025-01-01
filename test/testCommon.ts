@@ -449,16 +449,6 @@ export function deleteTestFiles () {
 	FileUtils.deleteFile(Uri.joinPath(workspaceUri, 'results.xml'))
 }
 
-export function getSessionTempDir () {
-	if (process.platform === 'win32') {
-		return Uri.file('c:/temp/ablunit')
-	}
-	if(process.platform === 'linux') {
-		return Uri.file('/tmp/ablunit')
-	}
-	throw new Error('Unsupported platform: ' + process.platform)
-}
-
 export async function getTestCount (resultsJson: Uri, status = 'tests') {
 	const count = await workspace.fs.readFile(resultsJson).then((content) => {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
@@ -1080,6 +1070,7 @@ function getLineExecutions (coverage: FileCoverageDetail[] | never[], lineNum: n
 		return r.line == lineNum
 	})
 	if (details.length === 0) {
+		log.error('not find line ' + lineNum + ' in coverage')
 		throw new Error('Could not find line ' + lineNum + ' in coverage')
 	}
 
@@ -1088,6 +1079,7 @@ function getLineExecutions (coverage: FileCoverageDetail[] | never[], lineNum: n
 		if (typeof l.executed === 'number') {
 			executed += l.executed
 		} else {
+			log.error('executed is not a number! details=' + JSON.stringify(details))
 			throw new Error('executed is not a number! details=' + JSON.stringify(details))
 		}
 	}
@@ -1251,7 +1243,7 @@ export const assert = {
 		// const coverage = recentResults[recentResults.length - 1].filecoverage.find((c) => c.uri.fsPath === file.fsPath)
 		log.info('cov.lenth=' + recentResults[recentResults.length - 1].coverage.size)
 		const flatmap = Array.from(recentResults[recentResults.length - 1].coverage.keys())
-		log.info('flatmap=' + flatmap)
+		log.info('flatmap=' + JSON.stringify(flatmap, null, 2))
 		const coverage = recentResults[recentResults.length - 1].coverage.get(file.fsPath)
 		if (!coverage) {
 			assert.fail('no coverage found for ' + file.fsPath)
@@ -1260,7 +1252,8 @@ export const assert = {
 		for (const line of lines) {
 			log.info('checking line ' + line + ' in ' + file.fsPath)
 			const executions = getLineExecutions(coverage, line)
-			if (!executed) {
+			log.info(' - found executions=' + executions)
+			if (executions == 0) {
 				log.info(' - not executed')
 				assert.equal(executions, 0, 'line ' + line + ' in ' + file.fsPath + ' was executed (lineCoverage.executed=' + executions + ')')
 			} else {

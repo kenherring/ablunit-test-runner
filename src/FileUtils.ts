@@ -63,7 +63,10 @@ export function validateFile (path: string | Uri) {
 	return true
 }
 
-export function toUri (path: string, base?: string) {
+export function toUri (path: string | Uri, base?: string) {
+	if (path instanceof Uri) {
+		return path
+	}
 	if (base && isRelativePath(path)) {
 		let uri = Uri.file(base)
 		uri = Uri.joinPath(uri, path)
@@ -89,7 +92,10 @@ export function isRelativePath (path: string) {
 	}
 }
 
-function doesPathExist (uri: Uri, type?: 'file' | 'directory') {
+function doesPathExist (uri: Uri | string, type?: 'file' | 'directory') {
+	if (!(uri instanceof Uri)) {
+		uri = Uri.file(uri)
+	}
 	const exist = fs.existsSync(uri.fsPath)
 	if (!exist || !type) {
 		return false
@@ -103,17 +109,16 @@ function doesPathExist (uri: Uri, type?: 'file' | 'directory') {
 	return false
 }
 
-
-export function doesFileExist (uri: Uri) {
+export function doesFileExist (uri: Uri | string) {
 	return doesPathExist(uri, 'file')
 }
 
-
-export function doesDirExist (uri: Uri) {
+export function doesDirExist (uri: Uri | string) {
 	return doesPathExist(uri, 'directory')
 }
 
-export function createDir (uri: Uri) {
+export function createDir (uri: Uri | string) {
+	uri = toUri(uri)
 	if (!doesPathExist(uri, 'directory')) {
 		if (doesPathExist(uri)) {
 			throw FileSystemError.FileNotADirectory(uri)
@@ -185,7 +190,9 @@ export function deleteDir (dir: Uri | Uri[] | undefined, options?: RmOptions) {
 	deletePath('directory', dirs, options)
 }
 
-export function copyFile (source: Uri, target: Uri, opts?: fs.CopySyncOptions) {
+export function copyFile (source: Uri | string, target: Uri | string, opts?: fs.CopySyncOptions) {
+	source = toUri(source)
+	target = toUri(target)
 	if (!doesFileExist(source)) {
 		log.warn('copyFile failed! source file does not exist: ' + source.fsPath)
 	}

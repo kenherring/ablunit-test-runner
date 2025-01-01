@@ -16,6 +16,10 @@ suite('proj0  - Extension Test Suite', () => {
 	const disposables: vscode.Disposable[] = []
 
 	suiteSetup('proj0 - before', async () => {
+		if (!FileUtils.doesFileExist('.vscode/settings.json') && FileUtils.doesFileExist('.vscode/settings.json.bk')) {
+			FileUtils.copyFile('.vscode/settings.json.bk', '.vscode/settings.json')
+		}
+
 		FileUtils.deleteFile([
 			toUri('.vscode/ablunit-test-profile.json'),
 			toUri('src/dirA/proj10.p'),
