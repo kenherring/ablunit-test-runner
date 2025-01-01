@@ -25,6 +25,7 @@ import { ABLUnitRuntimeError, TimeoutError } from 'ABLUnitRun'
 import { basename } from 'path'
 import * as FileUtils from './FileUtils'
 import { gatherAllTestItems, IExtensionTestReferences } from 'ABLUnitCommon'
+import { NotImplementedError } from 'Errors'
 
 let recentResults: ABLResults[] = []
 let recentError: Error | undefined = undefined
@@ -102,19 +103,65 @@ export async function activate (context: ExtensionContext) {
 			})
 	}
 
-	const loadDetailedCoverage = (testRun: TestRun, fileCoverage: FileCoverage, token: CancellationToken): Thenable<FileCoverageDetail[]> => {
+	const loadDetailedCoverageForTest = (testRun: TestRun, fileCoverage: FileCoverage, fromTestItem: TestItem, token: CancellationToken) => {
+		throw new NotImplementedError('loadDetailedCoverageForTest not implemented')
+		// log.info('loadDetailedCoverage uri="' + fileCoverage.uri.fsPath + '", testRun=' + testRun.name)
+		// const ret: FileCoverageDetail[] = []
+		// let results = resultData.get(testRun)
+		// if (!results && !testRun) {
+		// 	results = recentResults
+		// }
+		// if (!results) {
+		// 	log.warn('no results found')
+		// 	return Promise.resolve([])
+		// }
+
+		// log.info('results.length=' + results.length)
+		// for (const result of results) {
+		// 	log.info('result.path=' + result.workspaceFolder.uri.fsPath)
+		// 	log.info('result.filecoverage.length=' + result.filecoverage.size)
+		// 	const det = result.statementcoverageByTest.get(fileCoverage.uri.fsPath + ' ' + fromTestItem.id)
+		// 	if (det) {
+		// 		log.info('found matching file coverage detail (det.length=' + det.length + ', path=' + fileCoverage.uri.fsPath + ')')
+		// 		ret.push(...det)
+		// 	}
+		// }
+
+		// log.info('ret.length=' + ret.length)
+		// return Promise.resolve(ret)
+	}
+
+	const loadDetailedCoverage = (testRun: TestRun, fileCoverage: FileCoverage, token: CancellationToken) => {
 		log.info('loadDetailedCoverage uri="' + fileCoverage.uri.fsPath + '", testRun=' + testRun.name)
-		const d = resultData.get(testRun)
-		const det: FileCoverageDetail[] = []
-		if (d) {
-			d.flatMap((r) => {
-				const rec = r.coverage.get(fileCoverage.uri.fsPath)
-				if (rec) {
-					det.push(...rec)
-				}
-			})
+		const ret: FileCoverageDetail[] = []
+		let results = resultData.get(testRun)
+		if (!results && !testRun) {
+			results = recentResults
 		}
-		return Promise.resolve(det)
+		if (!results) {
+			log.warn('no results found')
+			return Promise.resolve([])
+		}
+
+		log.info('results.length=' + results.length)
+		for (const result of results) {
+			log.info('result.path=' + result.workspaceFolder.uri.fsPath)
+			log.info('result.filecoverage.length=' + result.filecoverage.length)
+			// const det = result.statementcoverage.get(fileCoverage.uri.fsPath)
+			// const sc = result.statementcoverage.get(fileCoverage.uri.fsPath)
+			// if (sc) {
+			// 	log.info('found matching statement coverage (sc.length=' + sc.length + ', path=' + fileCoverage.uri.fsPath + ')')
+			// 	ret.push(...sc)
+			// }
+			const dc = result.declarationcoverage.get(fileCoverage.uri.fsPath)
+			if (dc) {
+				log.info('found matching declaration coverage (dc.length=' + dc.length + ', path=' + fileCoverage.uri.fsPath + ')')
+				ret.push(...dc)
+			}
+		}
+
+		log.info('ret.length=' + ret.length)
+		return Promise.resolve(ret)
 	}
 
 	async function openTestRunConfig () {
@@ -296,7 +343,7 @@ export async function activate (context: ExtensionContext) {
 			}
 
 			run.end()
-			log.notification('ablunit tests complete')
+			log.notificationInfo('ablunit tests complete')
 			return
 		}
 
@@ -339,14 +386,13 @@ export async function activate (context: ExtensionContext) {
 			return res
 		}
 
-		log.notification('running ablunit tests')
+		log.notificationInfo('running ablunit tests')
 		const queue: { test: TestItem; data: ABLTestData }[] = []
 		const run = ctrl.createTestRun(request)
 		currentTestRun = run
 		cancellation.onCancellationRequested(() => {
 			log.debug('cancellation requested - createABLResults-2')
 			run.end()
-			log.trace('run.end()')
 			throw new CancellationError()
 		})
 		const tests = request.include ?? gatherTestItems(ctrl.items)
@@ -474,6 +520,7 @@ export async function activate (context: ExtensionContext) {
 	// testProfileDebug.configureHandler = configHandlerDebug
 	testProfileCoverage.configureHandler = configHandler
 	testProfileCoverage.loadDetailedCoverage = loadDetailedCoverage
+	testProfileCoverage.loadDetailedCoverageForTest = loadDetailedCoverageForTest
 	// testProfileDebugCoverage.configureHandler = configHandler
 
 	if(workspace.getConfiguration('ablunit').get('discoverAllTestsOnActivate', false)) {

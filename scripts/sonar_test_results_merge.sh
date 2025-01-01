@@ -40,18 +40,17 @@ convert_and_merge_xml () {
 show_summary () {
     echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}]"
     TEST_COUNT="$(jq '[.. | objects | .testcase//empty | .. | objects] | length' < artifacts/mocha_results_xunit_merged.json)"
-    echo "[$(date +%Y-%m-%d:%H:%M:%S) TEST_COUNT=$TEST_COUNT"
+    echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] TEST_COUNT=$TEST_COUNT"
     SKIPPED="$(jq '[.. | objects | .testcase//empty | .. | objects | select(has("skipped")) ] | length' < artifacts/mocha_results_xunit_merged.json)"
-    echo "[$(date +%Y-%m-%d:%H:%M:%S) $SKIPPED/$TEST_COUNT tests skipped"
+    echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] $SKIPPED/$TEST_COUNT tests skipped"
     FAILURES="$(jq '[.. | objects | .testcase//empty | .. | objects | select(has("failure")) ] | length' < artifacts/mocha_results_xunit_merged.json)"
-    echo "[$(date +%Y-%m-%d:%H:%M:%S) $FAILURES/$TEST_COUNT tests failed"
     jq '[.. | objects | .testcase//empty | .. | objects | select(has("failure")) ]' < artifacts/mocha_results_xunit_merged.json > artifacts/mocha_failures.json
     if [ "$FAILURES" -eq 0 ]; then
-        echo "[$(date +%Y-%m-%d:%H:%M:%S) $FAILURES/$TEST_COUNT tests failed"
+        echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] $FAILURES/$TEST_COUNT tests failed"
     else
-        echo "[$(date +%Y-%m-%d:%H:%M:%S) ERROR! $FAILURES/$TEST_COUNT tests failed"
+        echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] ERROR! $FAILURES/$TEST_COUNT tests failed"
         jq '.' artifacts/mocha_failures.json
-        echo "[$(date +%Y-%m-%d:%H:%M:%S) exit with error code 1 due to $FAILURES failed tests"
+        echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] exit with error code 1 due to $FAILURES failed tests"
         exit 1
     fi
 }

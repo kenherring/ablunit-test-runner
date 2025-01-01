@@ -34,10 +34,10 @@ export interface ICoreOptions {
 }
 
 export interface IABLUnitJson {
+	$comment?: string
 	options: ICoreOptions
 	tests: ITestObj[]
 }
-
 
 export class CoreOptions implements ICoreOptions {
 	output: ICoreOutput = {

@@ -80,12 +80,15 @@ export function parseRunProfiles (workspaceFolders: WorkspaceFolder[], wsFilenam
 		try {
 			wfConfig = getConfigurations(Uri.joinPath(workspaceFolder.uri, '.vscode', wsFilename))
 		} catch (e: unknown) {
-			if (e instanceof FileSystemError && e.code === 'ENOENT') {
-				log.warn('no .vscode/' + wsFilename + ' file found.  using default profile')
-				return defaultConfig.configurations
+			if (e instanceof FileSystemError) {
+				if (e.name === 'FileNotFound') {
+					log.info('no .vscode/' + wsFilename + ' file found.  using default profile')
+				}else {
+					log.notificationWarning('Failed to import .vscode/ablunit-test-profile.json.  Attempting to use default profile...\n[' + e.code + ']: ' + e.message)
+				}
+			} else {
+				log.notificationError('Failed to import .vscode/ablunit-test-profile.json!  Attempting to use default profile...\n(e=' + e + ')')
 			}
-			log.notificationWarning('Could not import .vscode/ablunit-test-profile.json.  Attempting to use default profile...')
-			log.warn('e=' + e)
 			return defaultConfig.configurations
 		}
 		if (wfConfig.configurations.length === 0) {

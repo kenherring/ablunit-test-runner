@@ -14,6 +14,37 @@ else
 
 ////////// FUNCS AND PROCS //////////
 
+procedure compileExtensionSource :
+	define variable rcode as character no-undo.
+	rcode = search("OpenEdge/ABLUnit/Results/TestResultList.r") no-error.
+	if rcode <> ? and index(rcode, 'VSCodeTestRunner') <> 0 then
+	do:
+		message "rcode = " rcode.
+		file-info:file-name = rcode.
+		message file-info:file-mod-time file-info:file-type.
+		message "deleting " + rcode.
+		os-delete value(rcode).
+		file-info:file-name = rcode.
+		message file-info:file-mod-time file-info:file-type.
+	end.
+
+	message "PROPATH=" + propath.
+	// os-delete value(search("OpenEdge/ABLUnit/Results/TestResultList.r")).
+	compiler:multi-compile = true.
+	message "compiling OpenEdge/ABLUnit/Results/TestResultList.cls (PROVERSION=" + proversion + ")".
+	compile OpenEdge/ABLUnit/Results/TestResultList.cls save.
+	message "compile complete".
+	catch e as Progress.Lang.Error:
+		message e:GetMessage(1) view-as alert-box error.
+		message "PROPATH:".
+		define variable cnt as integer no-undo.
+		do cnt = 1 to num-entries(propath, ','):
+			message ' - '+ entry(cnt, propath).
+		end.
+		return error e.
+	end catch.
+end procedure.
+
 procedure createDatabaseAliases :
 	define variable aliasesSessionParam as character no-undo.
 	define variable paramStart as integer no-undo.
@@ -74,6 +105,7 @@ procedure main :
 	define variable updateFile as character no-undo.
 
 	session:suppress-warnings = true.
+	run compileExtensionSource.
 	run createDatabaseAliases.
 
 	assign updateFile = getParameter(trim(trim(session:parameter,'"'),"'"), 'ATTR_ABLUNIT_EVENT_FILE').

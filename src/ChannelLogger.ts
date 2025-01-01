@@ -82,15 +82,14 @@ class Logger {
 		this.writeMessage(LogLevel.Error, message, testRun)
 	}
 
-	notification (message: string, notificationType: NotificationType = NotificationType.Info) {
-		const logMessage = 'NOTIFICATION: ' + message + ' (type=' + notificationType + ', enabled=' + this.notificationsEnabled + ')'
+	private notification (message: string, notificationType: NotificationType = NotificationType.Info) {
+		const logMessage = 'NOTIFICATION: ' + message + ' (enabled=' + this.notificationsEnabled + ')'
 		switch (notificationType) {
 			case NotificationType.Info:
 				log.info(logMessage)
 				if (this.notificationsEnabled) {
 					void window.showInformationMessage(message)
 				}
-				void window.showInformationMessage(message)
 				break
 			case NotificationType.Warn:
 				log.warn(logMessage)
@@ -103,21 +102,16 @@ class Logger {
 		}
 	}
 
-	notificationWarningSync (message: string) {
-		log.warn(message)
-		return window.showWarningMessage(message)
+	notificationInfo (message: string) {
+		this.notification(message, NotificationType.Info)
 	}
 
 	notificationWarning (message: string) {
-		log.warn(message)
-		// eslint-disable-next-line @typescript-eslint/no-unused-vars
-		const p = window.showWarningMessage(message).then(() => { return }, () => { return })
-		return
+		this.notification(message, NotificationType.Warn)
 	}
 
 	notificationError (message: string) {
-		log.error(message)
-		return window.showErrorMessage(message)
+		this.notification(message, NotificationType.Error)
 	}
 
 	private writeMessage (messageLevel: LogLevel, message: string, testRun?: TestRun, includeStack = false) {
