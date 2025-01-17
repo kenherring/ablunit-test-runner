@@ -26,7 +26,7 @@ import { ABLUnitRuntimeError, TimeoutError } from 'Errors'
 import { basename } from 'path'
 import * as FileUtils from './FileUtils'
 import { gatherAllTestItems, IExtensionTestReferences } from 'ABLUnitCommon'
-import { IModule } from 'parse/ProfileParser'
+import { getModuleRange, IModule } from 'parse/ProfileParser'
 
 let recentResults: ABLResults[] = []
 let recentError: Error | undefined = undefined
@@ -114,23 +114,6 @@ export async function activate (context: ExtensionContext) {
 	}
 
 	// TODO
-	const getModuleRange = (module: IModule) => {
-		const lines = module.lines.filter((a) => a.LineNo > 0)
-		for (const child of module.childModules) {
-			lines.push(...child.lines.filter((a) => a.LineNo > 0))
-		}
-		lines.sort((a, b) => { return a.LineNo - b.LineNo })
-
-		if (lines.length == 0) {
-			return undefined
-		}
-
-		const start = new Position(lines[0].LineNo - 1, 0)
-		const end = new Position(lines[lines.length - 1].LineNo - 1, 0)
-		return new Range(start, end)
-	}
-
-	// TODO
 	const getDeclarationCoverage = (module: IModule) => {
 		const fdc: DeclarationCoverage[] = []
 
@@ -188,14 +171,12 @@ export async function activate (context: ExtensionContext) {
 				const sc = ret.find((a) => JSON.stringify(a.location) == JSON.stringify(coverageLocation))
 				if (!sc) {
 					ret.push(new StatementCoverage(line.ExecCount, coverageLocation))
+				} else if (typeof sc.executed == 'boolean') {
+					sc.executed = sc.executed || line.ExecCount > 0
+				} else if (typeof sc.executed == 'number') {
+					sc.executed = sc.executed + line.ExecCount
 				} else {
-					if (typeof sc.executed == 'boolean') {
-						sc.executed = sc.executed || line.ExecCount > 0
-					} else if (typeof sc.executed == 'number') {
-						sc.executed = sc.executed + line.ExecCount
-					} else {
-						throw new Error('unexpected type for sc.executed: ' + typeof sc.executed)
-					}
+					throw new Error('unexpected type for sc.executed: ' + typeof sc.executed)
 				}
 			}
 

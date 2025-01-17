@@ -1,4 +1,4 @@
-import { Uri, workspace } from 'vscode'
+import { Position, Range, Uri, workspace } from 'vscode'
 import { PropathParser } from '../ABLPropath'
 import { ABLDebugLines } from '../ABLDebugLines'
 import { log } from '../ChannelLogger'
@@ -299,15 +299,6 @@ export class ABLProfileJson {
 		}
 	}
 
-	checkSkipList (sourceName: string | undefined) {
-		return !sourceName ||
-			sourceName.startsWith('OpenEdge.') ||
-			sourceName.endsWith('ABLUnitCore.p') ||
-			sourceName == 'Ccs.Common.Application' ||
-			sourceName == 'VSCode.ABLUnit.Runner.ABLRunner' ||
-			sourceName == 'VSCodeWriteProfiler.p'
-	}
-
 	async addModules (lines: string[]) {
 		this.modules = []
 		const childModules: IModule[] = []
@@ -385,19 +376,14 @@ export class ABLProfileJson {
 
 	addChildModulesToParents (childModules: IModule[]) {
 		for(const child of childModules) {
+			if (checkSkipList(child.SourceName)) {
+				continue
+			}
 			let parent = this.modules.find(p => p.SourceUri === child.SourceUri)
 			if (!parent) {
 				parent = this.modules.find(p => p.SourceName === child.ParentName)
 			}
-
 			if (!parent) {
-				// if (!child.SourceName.startsWith('propGet_') &&
-				// 	!child.SourceName.startsWith('propSet_') &&
-				// 	!this.excludeSourceName(child.SourceName)) {
-				if (this.checkSkipList(child.SourceName)) {
-					continue
-				}
-
 				this.interpretedModuleSequence--
 				log.warn('Could not find parent module, creating interpre modude id ' + this.interpretedModuleSequence + ' for ' + child.SourceName + ' (uri=' + this.profileUri.fsPath + ')')
 				parent = {
@@ -504,7 +490,7 @@ export class ABLProfileJson {
 
 			const modID = Number(test[1])
 			const sourceName = this.getModule(modID)?.SourceName
-			if (this.checkSkipList(sourceName)) {
+			if (checkSkipList(sourceName)) {
 				continue
 			}
 
@@ -525,9 +511,7 @@ export class ABLProfileJson {
 				sum.incLine = lineinfo.sourceLine
 				sum.incUri = lineinfo.sourceUri
 			} else {
-				if (sourceName !== 'ABLUnitCore.p') {
-					log.debug('could not find source/debug line info for ' + sourceName + ' ' + sum.LineNo)
-				}
+				log.debug('could not find source/debug line info for ' + sourceName + ' ' + sum.LineNo)
 			}
 
 			const mod = this.getModule(modID)
@@ -641,34 +625,25 @@ export class ABLProfileJson {
 
 	async addCoverageNextSection (line: string) {
 		const test = coverageRE.exec(line)
-		let mod: IModule | undefined
 		if (!test) {
 			throw new Error('Unable to parse coverage data in section 6 (uri=' + this.profileUri.fsPath + ')')
 		}
+		if (checkSkipList(test[2])) {
+			return
+		}
 
 		if (test[2] != '') {
-			mod = this.getChildModule(Number(test[1]), test[2])
+			const mod = this.getChildModule(Number(test[1]), test[2])
 			if (mod) {
 				mod.executableLines = Number(test[3])
+				return mod
 			}
-		}
-		if (mod) {
-			return mod
 		}
 
-		mod = this.getModule(Number(test[1]))
+		const mod = this.getModule(Number(test[1])) ?? this.modules.find(mod => mod.SourceName == test[2])
 		if (!mod) {
-			mod = this.modules.find(mod => mod.SourceName == test[2])
-		}
-		if (!mod) {
-			if (this.checkSkipList(test[2])) {
-				return
-			} else {
-				// return
-				// throw new Error('Unable to find module ' + test[1] + ' ' + test[2] + ' in section 6 (' + this.profileUri.fsPath + ')')
-				log.warn('Unable to find module ' + test[1] + ' ' + test[2] + ' in section 6 (' + this.profileUri.fsPath + ')')
-				return
-			}
+			log.warn('Unable to find module ' + test[1] + ' ' + test[2] + ' in section 6 (' + this.profileUri.fsPath + ')')
+			return
 		}
 
 		mod.executableLines += Number(test[3])
@@ -705,7 +680,7 @@ export class ABLProfileJson {
 
 	assignParentCoverage () {
 		for (const parent of this.modules) {
-			if (this.checkSkipList(parent.SourceName)) {
+			if (checkSkipList(parent.SourceName)) {
 				continue
 			}
 			for (const child of parent.childModules) {
@@ -889,4 +864,30 @@ export class ABLProfileJson {
 			}
 		}
 	}
+}
+
+
+export function getModuleRange (module: IModule) {
+	const lines = module.lines.filter((a) => a.LineNo > 0)
+	for (const child of module.childModules) {
+		lines.push(...child.lines.filter((l) => l.LineNo > 0))
+	}
+	lines.sort((a, b) => { return a.LineNo - b.LineNo })
+
+	if (lines.length == 0) {
+		return undefined
+	}
+
+	const start = new Position(lines[0].LineNo - 1, 0)
+	const end = new Position(lines[lines.length - 1].LineNo - 1, 0)
+	return new Range(start, end)
+}
+
+export function checkSkipList (sourceName: string | undefined) {
+	return !sourceName ||
+		sourceName.startsWith('OpenEdge.') ||
+		sourceName.endsWith('ABLUnitCore.p') ||
+		sourceName == 'Ccs.Common.Application' ||
+		sourceName == 'VSCode.ABLUnit.Runner.ABLRunner' ||
+		sourceName == 'VSCodeWriteProfiler.p'
 }

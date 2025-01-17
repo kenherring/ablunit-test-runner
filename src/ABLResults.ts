@@ -8,7 +8,7 @@ import { ABLUnitConfig } from './ABLUnitConfigWriter'
 import { ABLResultsParser, ITestCaseFailure, ITestCase, ITestSuite } from './parse/ResultsParser'
 import { ABLTestSuite, ABLTestData, ABLTestCase } from './testTree'
 import { parseCallstack } from './parse/CallStackParser'
-import { ABLProfile, ABLProfileJson, IModule } from './parse/ProfileParser'
+import { ABLProfile, ABLProfileJson, checkSkipList, getModuleRange, IModule } from './parse/ProfileParser'
 import { ABLDebugLines } from './ABLDebugLines'
 import { ABLPromsgs, getPromsgText } from './ABLPromsgs'
 import { PropathParser } from './ABLPropath'
@@ -535,38 +535,12 @@ export class ABLResults implements Disposable {
 			throw new Error('no profile data available...')
 		}
 		for (const module of profJson.modules) {
-			if (this.checkSkipList(module.SourceName)) {
+			if (checkSkipList(module.SourceName)) {
 				log.debug('skipping ' + module.SourceName)
 				continue
 			}
 			await this.setCoverage(module, item)
 		}
-	}
-
-	getModuleRange (module: IModule) {
-		const lines = []
-		lines.push(...module.lines.filter((l) => l.LineNo > 0))
-		for (const child of module.childModules) {
-			lines.push(...child.lines.filter((l) => l.LineNo > 0))
-		}
-		lines.sort((a, b) => { return a.LineNo - b.LineNo })
-
-		if (lines.length == 0) {
-			return undefined
-		}
-
-		const start = lines[0].LineNo - 1
-		const end = lines[lines.length - 1].LineNo - 1
-		return new Range(start, 0, end, 0)
-	}
-
-	checkSkipList (sourceName: string | undefined) {
-		return !sourceName ||
-			sourceName.startsWith('OpenEdge.') ||
-			sourceName.endsWith('ABLUnitCore.p') ||
-			sourceName == 'Ccs.Common.Application' ||
-			sourceName == 'VSCode.ABLUnit.Runner.ABLRunner' ||
-			sourceName == 'VSCodeWriteProfiler.p'
 	}
 
 	getExecCount (module: IModule) {
@@ -579,7 +553,7 @@ export class ABLResults implements Disposable {
 
 		let dc = fdc.find((c) => c.name == (module.EntityName ?? '<main block'))
 		if (!dc) {
-			const range = this.getModuleRange(module)
+			const range = getModuleRange(module)
 			if (range) {
 				dc = new DeclarationCoverage(module.EntityName ?? '<main block>', 0, range)
 				fdc.push(dc)
@@ -628,7 +602,7 @@ export class ABLResults implements Disposable {
 	}
 
 	async setCoverage (module: IModule, item?: TestItem) {
-		if (this.checkSkipList(module.SourceName)) {
+		if (checkSkipList(module.SourceName)) {
 			return
 		}
 
@@ -646,12 +620,11 @@ export class ABLResults implements Disposable {
 		for (const child of module.childModules) {
 			this.addDeclarationFromModule(fileinfo.uri, child)
 		}
-		// this would add the main block to the declaration coverage
+		// ----- this next line would add the main block to the declaration coverage -----
 		// this.addDeclarationFromModule(fileinfo.uri, module)
 
-		let fsc = this.statementCoverage.get(fileinfo.uri.fsPath)
-		if (!fsc) {
-			fsc = []
+		const fsc = this.statementCoverage.get(fileinfo.uri.fsPath) ?? []
+		if (fsc.length === 0) {
 			this.statementCoverage.set(fileinfo.uri.fsPath, fsc)
 		}
 
@@ -686,12 +659,8 @@ export class ABLResults implements Disposable {
 		const fc = FileCoverage.fromDetails(fileinfo.uri, fcd)
 		const fcOrig = this.fileCoverage.get(fileinfo.uri.fsPath)
 		fc.includesTests = fcOrig?.includesTests ?? []
-		if (item) {
-			if (!fc.includesTests.find((i) => i.id == item.id)) {
-				fc.includesTests.push(item)
-			} else {
-				log.warn('item already exits in fc.includesTests (item.id=' + item.id + ')')
-			}
+		if (item && !fc.includesTests.find((i) => i.id == item.id)) {
+			fc.includesTests.push(item)
 		}
 
 		this.fileCoverage.set(fileinfo.uri.fsPath, fc)
