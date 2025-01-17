@@ -3,7 +3,7 @@ import { IProjectJson } from './parse/OpenedgeProjectParser'
 import { log } from './ChannelLogger'
 import * as FileUtils from './FileUtils'
 
-export interface IPropathEntry {
+interface IPropathEntry {
 	uri: Uri
 	path: string
 	relativePath?: string
@@ -32,7 +32,6 @@ export class PropathParser {
 	filemap: Map<string, IABLFile>
 	files: IABLFile[] = []
 	workspaceFolder: WorkspaceFolder
-	buildmap: Map<string, string>
 
 	propath: IPropath = {
 		entry: [] as IPropathEntry[]
@@ -45,7 +44,6 @@ export class PropathParser {
 			this.workspaceFolder = workspace.workspaceFolders![0]
 		}
 		this.filemap = new Map()
-		this.buildmap = new Map()
 		let uri
 
 		if (this.workspaceFolder) {
@@ -125,34 +123,12 @@ export class PropathParser {
 		return this.propath
 	}
 
-	getBuildDir (filepath: string) {
-		return this.buildmap.get(filepath)
-	}
-
-	async getRCodeUri (filepath: string) {
-		let bd = this.buildmap.get(filepath)
-
-		if (!bd) {
-			const found = await this.search(filepath)
-			if (found) {
-				bd = this.buildmap.get(filepath)
-			}
-		}
-
-		if (!bd) {
-			throw new Error('cannot find build dir for ' + filepath)
-		}
-
-		const rpath = Uri.joinPath(Uri.file(bd), filepath.replace(/\.(p|cls)$/, '.r'))
-		return rpath
-	}
-
 	private searchUri (uri: Uri) {
 		for (const e of this.propath.entry) {
 			if(uri.fsPath.replace(/\\/g, '/').startsWith(e.uri.fsPath.replace(/\\/g, '/') + '/')) {
 				const propathRelativeFile = uri.fsPath.replace(e.uri.fsPath, '').substring(1)
 				const relativeFile = workspace.asRelativePath(uri, false)
-				const rcodeUri = Uri.joinPath(e.buildDirUri, relativeFile.replace(/\.(p|cls)$/, '.r'))
+				const rcodeUri = Uri.joinPath(e.buildDirUri, propathRelativeFile.replace(/\.(p|cls)$/, '.r'))
 				const xrefUri = Uri.joinPath(e.xrefDirUri, propathRelativeFile + '.xref')
 
 				const fileObj: IABLFile = {
@@ -166,7 +142,6 @@ export class PropathParser {
 				}
 				this.files.push(fileObj)
 				this.filemap.set(relativeFile, fileObj)
-				this.buildmap.set(relativeFile, e.buildDirUri.fsPath)
 				return fileObj
 			}
 		}
@@ -211,7 +186,6 @@ export class PropathParser {
 				}
 				this.files.push(fileObj)
 				this.filemap.set(relativeFile, fileObj)
-				this.buildmap.set(relativeFile, e.buildDirUri.fsPath)
 				return fileObj
 			}
 		}

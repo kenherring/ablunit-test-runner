@@ -1,4 +1,4 @@
-import { CancellationError, CancellationToken, TestRun, Uri, workspace } from 'vscode'
+import { CancellationError, CancellationToken, TestRun, TestRunProfileKind, Uri, workspace } from 'vscode'
 import { ABLResults } from './ABLResults'
 import { Duration } from './ABLUnitCommon'
 import { SendHandle, Serializable, SpawnOptions, spawn } from 'child_process'
@@ -8,6 +8,7 @@ import { basename, dirname } from 'path'
 import { globSync } from 'glob'
 import * as fs from 'fs'
 import * as FileUtils from './FileUtils'
+import { ABLUnitRuntimeError, TimeoutError } from 'Errors'
 
 export enum RunStatus {
 	None = 10,
@@ -37,33 +38,6 @@ export enum RunStatusString {
 	'Complete' = 80,
 	'Cancelled' = 81,
 	'Error' = 82,
-}
-
-export class ABLUnitRuntimeError extends Error {
-	constructor (message: string, public promsgError: string, public cmd?: string) {
-		super(message)
-		this.name = 'ABLUnitRuntimeError'
-	}
-}
-
-export interface ITimeoutError extends Error {
-	duration: Duration
-	limit: number
-	cmd?: string
-}
-
-export class TimeoutError extends Error implements ITimeoutError {
-	duration: Duration
-	limit: number
-	cmd?: string
-
-	constructor (message: string, duration: Duration, limit: number, cmd: string) {
-		super(message)
-		this.name = 'TimeoutError'
-		this.duration = duration
-		this.limit = limit
-		this.cmd = cmd
-	}
 }
 
 export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation: CancellationToken) => {
@@ -143,7 +117,7 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 			cmd.push('-pf', res.cfg.ablunitConfig.dbConnPfUri.fsPath)
 		}
 
-		if (res.cfg.ablunitConfig.profiler.enabled) {
+		if (res.cfg.ablunitConfig.profiler.enabled && res.cfg.requestKind == TestRunProfileKind.Coverage) {
 			cmd.push('-profile', res.cfg.ablunitConfig.profOptsUri.fsPath)
 		}
 
@@ -167,7 +141,7 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 		return cmdSanitized
 	}
 
-	const parseRuntimeError = (stdout: string): string | false => {
+	const _parseRuntimeError = (stdout: string): string | false => {
 		// extract the last line that looks like a promsg format, assume it's an error to attach to a failing test case
 		const promsgRegex = /^.* \(\d+\)/
 		const lines = stdout.split('\n').reverse()
@@ -181,7 +155,7 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 	}
 
 	const runCommand = () => {
-		FileUtils.deleteFile(
+		FileUtils.deleteFile([
 			res.cfg.ablunitConfig.profFilenameUri,
 			// res.cfg.ablunitConfig.config_uri,
 			res.cfg.ablunitConfig.optionsUri.filenameUri,
@@ -189,7 +163,7 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 			res.cfg.ablunitConfig.optionsUri.updateUri,
 			res.cfg.ablunitConfig.profFilenameUri,
 			// res.cfg.ablunitConfig.profOptsUri,
-		)
+		])
 
 		if (res.cfg.ablunitConfig.optionsUri.updateUri) {
 			fs.writeFileSync(res.cfg.ablunitConfig.optionsUri.updateUri.fsPath, '')
@@ -218,7 +192,7 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 		args.shift()
 
 		if (res.cfg.ablunitConfig.optionsUri.updateUri) {
-			watcher = fs.watchFile(res.cfg.ablunitConfig.optionsUri.updateUri.fsPath, (curr, prev) => {
+			watcher = fs.watchFile(res.cfg.ablunitConfig.optionsUri.updateUri.fsPath, (_curr, _prev) => {
 				processUpdates(options, res.tests, res.cfg.ablunitConfig.optionsUri.updateUri)
 			})
 		}
@@ -287,7 +261,7 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 				if (code && code != 0) {
 					res.setStatus(RunStatus.Error, 'exit_code=' + code)
 					log.info('----- ABLUnit Test Run Failed (exit_code=' + code + ') ----- ' + testRunDuration, options)
-					reject(new ABLUnitRuntimeError('ABLUnit exit_code= ' + code, 'ABLUnit exit_code= ' + code + '; signal=' + signal, cmd))
+					reject(new ABLUnitRuntimeError('ABLUnit exit_code=' + code, 'ABLUnit exit_code=' + code + '; signal=' + signal, cmd))
 					return
 				}
 
@@ -296,7 +270,7 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 				resolve('success')
 			}).on('close', (code: number | null, signal: NodeJS.Signals | null) => {
 				log.info('process.close code=' + code + '; signal=' + signal + '; process.exitCode=' + process.exitCode + '; process.signalCode=' + process.signalCode + '; killed=' + process.killed)
-			}).on('message', (m: Serializable, h: SendHandle) => {
+			}).on('message', (m: Serializable, _h: SendHandle) => {
 				log.info('process.on.message m=' + JSON.stringify(m))
 			})
 		})

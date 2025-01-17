@@ -1,4 +1,4 @@
-import { assert, getDefaultDLC, getWorkspaceUri, oeVersion, runAllTests, setRuntimes, suiteSetupCommon, Uri } from '../testCommon'
+import { assert, getDefaultDLC, getWorkspaceUri, oeVersion, runAllTests, runAllTestsWithCoverage, setRuntimes, suiteSetupCommon, Uri } from '../testCommon'
 
 const workspaceUri = getWorkspaceUri()
 
@@ -14,7 +14,21 @@ suite('proj3 - Extension Test Suite', () => {
 	})
 
 	test('proj3.1 - target/ablunit.json file exists', () => {
-		return runAllTests().then(() => {
+		const prom = runAllTests().then(() => {
+			const ablunitJson = Uri.joinPath(workspaceUri, 'target', 'ablunit.json')
+			const resultsXml = Uri.joinPath(workspaceUri, 'ablunit-output', 'results.xml')
+			const listingsDir = Uri.joinPath(workspaceUri, 'target', 'listings')
+
+			assert.fileExists(ablunitJson)
+			assert.fileExists(resultsXml)
+			assert.notDirExists(listingsDir)
+			return
+		}, (e: unknown) => { throw e })
+		return prom
+	})
+
+	test('proj3.2 - target/ablunit.json file exists w/ coverage', () => {
+		return runAllTestsWithCoverage().then(() => {
 			const ablunitJson = Uri.joinPath(workspaceUri, 'target', 'ablunit.json')
 			const resultsXml = Uri.joinPath(workspaceUri, 'ablunit-output', 'results.xml')
 			const listingsDir = Uri.joinPath(workspaceUri, 'target', 'listings')

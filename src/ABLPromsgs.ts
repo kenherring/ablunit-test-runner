@@ -152,7 +152,7 @@ export function getPromsgText (text: string) {
 			}
 		})
 		return stackString
-	} catch (_e) {
+	} catch (_e: unknown) {
 		return text
 	}
 }

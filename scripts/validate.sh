@@ -13,15 +13,13 @@ validate_results_count() {
 		exit 1
 	fi
 
-	ARTIFACT_DIR="artifacts/${ABLUNIT_TEST_RUNNER_VSCODE_VERSION}-${ABLUNIT_TEST_RUNNER_OE_VERSION}"
-
-	RESULTS_COUNT=$(find "$ARTIFACT_DIR" -name "mocha_results_junit*.xml" | sort -u | wc -l)
+	RESULTS_COUNT=$(find "artifacts/mocha_results_xunit" -name "*.xml" | sort -u | wc -l)
 	if [ "$RESULTS_COUNT" != "$TEST_COUNT" ]; then
 		echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] ERROR: results count != test count ($RESULTS_COUNT != $TEST_COUNT)"
 	fi
 
 	LCOV_COUNT=$(find . -name 'lcov.info' | wc -l)
-	if [ "$LCOV_COUNT" != "$TEST_COUNT" ]; then
+	if [ "$LCOV_COUNT" != "1" ]; then
 		echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] ERROR: LCOV_COUNT != 1 ($LCOV_COUNT != 1)"
 		exit 1
 	fi

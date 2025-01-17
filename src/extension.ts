@@ -1,12 +1,13 @@
 import {
 	CancellationError,
-	CancellationToken, ConfigurationChangeEvent, ExtensionContext,
+	CancellationToken, ConfigurationChangeEvent, DeclarationCoverage, ExtensionContext,
 	ExtensionMode,
 	FileCoverage,
 	FileCoverageDetail,
 	FileCreateEvent,
 	LogLevel,
 	Position, Range, RelativePattern, Selection,
+	StatementCoverage,
 	TestController, TestItem, TestItemCollection, TestMessage,
 	TestRun,
 	TestRunProfileKind, TestRunRequest,
@@ -21,10 +22,11 @@ import { log } from './ChannelLogger'
 import { getContentFromFilesystem } from './parse/TestParserCommon'
 import { ABLTestCase, ABLTestClass, ABLTestData, ABLTestDir, ABLTestFile, ABLTestProgram, ABLTestSuite, resultData, testData } from './testTree'
 import { minimatch } from 'minimatch'
-import { ABLUnitRuntimeError, TimeoutError } from 'ABLUnitRun'
+import { ABLUnitRuntimeError, TimeoutError } from 'Errors'
 import { basename } from 'path'
 import * as FileUtils from './FileUtils'
 import { gatherAllTestItems, IExtensionTestReferences } from 'ABLUnitCommon'
+import { IModule } from 'parse/ProfileParser'
 
 let recentResults: ABLResults[] = []
 let recentError: Error | undefined = undefined
@@ -63,7 +65,15 @@ export async function activate (context: ExtensionContext) {
 	context.subscriptions.push(
 		commands.registerCommand('_ablunit.openCallStackItem', openCallStackItem),
 		workspace.onDidChangeConfiguration(e => { return updateConfiguration(e) }),
-		workspace.onDidOpenTextDocument(e => { log.info('workspace.onDidOpenTextDocument'); return createOrUpdateFile(ctrl, e.uri, true) }),
+		workspace.onDidOpenTextDocument(e => {
+			if (e.uri.scheme != 'file') {
+				return
+			}
+			if (workspace.getWorkspaceFolder(e.uri) === undefined) {
+				return
+			}
+			return createOrUpdateFile(ctrl, e.uri, true)
+		}),
 		workspace.onDidChangeTextDocument(e => { return didChangeTextDocument(e, ctrl) }),
 		workspace.onDidCreateFiles(e => { log.info('workspace.onDidCreate ' + e.files[0].fsPath); return createOrUpdateFile(ctrl, e, true) }),
 		workspace.onDidDeleteFiles(e => { log.info('workspace.onDidDelete ' + e.files[0].fsPath); return deleteFiles(ctrl, e.files) }),
@@ -81,14 +91,15 @@ export async function activate (context: ExtensionContext) {
 		}
 		const ret = {
 			testController: ctrl,
-			recentResults: recentResults,
-			currentRunData: data
+			recentResults,
+			currentRunData: data,
+			recentError
 		} as IExtensionTestReferences
 		log.debug('_ablunit.getExtensionTestReferences currentRunData.length=' + ret.currentRunData?.length + ', recentResults.length=' + ret.recentResults?.length)
 		return ret
 	}
 
-	const runHandler = (request: TestRunRequest, token: CancellationToken): Promise<void> => {
+	const runHandler = (request: TestRunRequest, token: CancellationToken) => {
 		if (request.continuous) {
 			throw new Error('continuous test runs not implemented')
 		}
@@ -102,19 +113,120 @@ export async function activate (context: ExtensionContext) {
 			})
 	}
 
-	const loadDetailedCoverage = (testRun: TestRun, fileCoverage: FileCoverage, token: CancellationToken): Thenable<FileCoverageDetail[]> => {
-		log.info('loadDetailedCoverage uri="' + fileCoverage.uri.fsPath + '", testRun=' + testRun.name)
-		const d = resultData.get(testRun)
-		const det: FileCoverageDetail[] = []
-		if (d) {
-			d.flatMap((r) => {
-				const rec = r.coverage.get(fileCoverage.uri.fsPath)
-				if (rec) {
-					det.push(...rec)
-				}
-			})
+	// TODO
+	const getModuleRange = (module: IModule) => {
+		const lines = module.lines.filter((a) => a.LineNo > 0)
+		for (const child of module.childModules) {
+			lines.push(...child.lines.filter((a) => a.LineNo > 0))
 		}
-		return Promise.resolve(det)
+		lines.sort((a, b) => { return a.LineNo - b.LineNo })
+
+		if (lines.length == 0) {
+			return undefined
+		}
+
+		const start = new Position(lines[0].LineNo - 1, 0)
+		const end = new Position(lines[lines.length - 1].LineNo - 1, 0)
+		return new Range(start, end)
+	}
+
+	// TODO
+	const getDeclarationCoverage = (module: IModule) => {
+		const fdc: DeclarationCoverage[] = []
+
+		const range = getModuleRange(module)
+		if (range) {
+			const zeroLine = module.lines.find((a) => a.LineNo == 0)
+			fdc.push(new DeclarationCoverage(module.EntityName ?? '<main block>', zeroLine?.ExecCount ?? 0, range))
+		}
+		for (const child of module.childModules) {
+			const childRange = getModuleRange(child)
+			if (childRange) {
+				const zeroLine = child.lines.find((a) => a.LineNo == 0)
+				fdc.push(new DeclarationCoverage(child.EntityName ?? '<main block>', zeroLine?.ExecCount ?? 0, childRange))
+			}
+		}
+		return fdc
+	}
+
+	const loadDetailedCoverageForTest = (
+		testRun: TestRun,
+		fileCoverage: FileCoverage,
+		fromTestItem: TestItem,
+		_token: CancellationToken): Promise<FileCoverageDetail[]> => {
+
+		const ret: FileCoverageDetail[] = []
+
+		// log.info('loadDetailedCoverageForTest uri="' + fileCoverage.uri.fsPath + '", testRun=' + testRun.name)
+		const results = resultData.get(testRun)
+		if (!results) {
+			log.error('test run has no associated results')
+			throw new Error('test run has no associated results')
+		}
+
+		for (const res of results) {
+			const profJson = res.profileJson.find((prof) => prof.testItemId == fromTestItem.id)
+			if (!profJson) {
+				log.warn('no profile data found for test item ' + fromTestItem.id)
+				continue
+			}
+			const module = profJson.modules.find((mod) => mod.SourceUri?.fsPath == fileCoverage.uri.fsPath)
+			if (!module) {
+				log.warn('no module data found for ' + fileCoverage.uri.fsPath)
+				continue
+			}
+
+			const lines = module.lines
+			for (const child of module.childModules) {
+				lines.push(...child.lines)
+			}
+			for (const line of lines) {
+				if (line.LineNo == 0) {
+					continue
+				}
+				const coverageLocation = new Position(line.LineNo - 1, 0)
+				const sc = ret.find((a) => JSON.stringify(a.location) == JSON.stringify(coverageLocation))
+				if (!sc) {
+					ret.push(new StatementCoverage(line.ExecCount, coverageLocation))
+				} else {
+					if (typeof sc.executed == 'boolean') {
+						sc.executed = sc.executed || line.ExecCount > 0
+					} else if (typeof sc.executed == 'number') {
+						sc.executed = sc.executed + line.ExecCount
+					} else {
+						throw new Error('unexpected type for sc.executed: ' + typeof sc.executed)
+					}
+				}
+			}
+
+			ret.push(...getDeclarationCoverage(module))
+		}
+		if (ret.length == 0) {
+			log.warn('no coverage data found for ' + fileCoverage.uri.fsPath + ' by test item ' + fromTestItem.id)
+		}
+		return Promise.resolve(ret)
+	}
+
+	const loadDetailedCoverage = (testRun: TestRun, fileCoverage: FileCoverage, _token: CancellationToken) => {
+		const ret: FileCoverageDetail[] = []
+		const results = resultData.get(testRun) ?? recentResults
+		if (!results) {
+			log.error('test run has no associated results')
+			throw new Error('test run has no associated results')
+		}
+
+		for (const result of results) {
+			const lc = result.statementCoverage.get(fileCoverage.uri.fsPath)
+			if (lc) {
+				ret.push(...lc)
+			}
+			const dc = result.declarationCoverage.get(fileCoverage.uri.fsPath)
+			if (dc) {
+				ret.push(...dc)
+			}
+		}
+
+		return Promise.resolve(ret)
 	}
 
 	async function openTestRunConfig () {
@@ -202,9 +314,11 @@ export async function activate (context: ExtensionContext) {
 						log.error('---------- ablunit run cancelled ----------', run)
 						// log.error('[runTestQueue] ablunit run cancelled!', run)
 					} else if (e instanceof ABLUnitRuntimeError) {
-						log.error('ablunit runtime error!\ne=' + JSON.stringify(e))
+						log.error('ablunit runtime error!\n\te=' + JSON.stringify(e))
 					} else if (e instanceof TimeoutError) {
 						log.error('ablunit run timed out!')
+					} else if (e instanceof Error) {
+						log.error('ablunit run failed! e=' + e + '\n' + e.stack)
 					} else {
 						log.error('ablunit run failed!: ' + e, run)
 						// log.error('ablunit run failed parsing results with exception: ' + e, run)\
@@ -284,19 +398,20 @@ export async function activate (context: ExtensionContext) {
 
 			if (request.profile?.kind === TestRunProfileKind.Coverage) {
 				log.info('adding coverage results to test run')
-				for (const res of data) {
-					log.info('res.filecoverage.length=' + res.filecoverage.length)
-					if (res.filecoverage.length === 0) {
-						log.warn('no coverage data found (profile data path=' + res.cfg.ablunitConfig.profFilenameUri.fsPath + ')')
+				for (let i=0; i < recentResults.length; i++) {
+					const res = recentResults[i]
+					if (res.fileCoverage.size === 0) {
+						log.warn('no coverage data found (' + (i + 1) + '/' + recentResults.length + ')' +
+								'\n\t- profile data path=' + res.cfg.ablunitConfig.profFilenameUri.fsPath + ')')
 					}
-					res.filecoverage.forEach((c) => {
+					res.fileCoverage.forEach((c) => {
 						run.addCoverage(c)
 					})
 				}
 			}
 
 			run.end()
-			log.notification('ablunit tests complete')
+			log.notificationInfo('ablunit tests complete')
 			return
 		}
 
@@ -339,14 +454,17 @@ export async function activate (context: ExtensionContext) {
 			return res
 		}
 
-		log.notification('running ablunit tests')
+		log.notificationInfo('running ablunit tests')
 		const queue: { test: TestItem; data: ABLTestData }[] = []
 		const run = ctrl.createTestRun(request)
+		run.onDidDispose(() => {
+			log.info('test run disposed run.name=' + run.name)
+			// TODO - delete ABLResults objects, delete artifacts possibly too
+		})
 		currentTestRun = run
 		cancellation.onCancellationRequested(() => {
 			log.debug('cancellation requested - createABLResults-2')
 			run.end()
-			log.trace('run.end()')
 			throw new CancellationError()
 		})
 		const tests = request.include ?? gatherTestItems(ctrl.items)
@@ -369,7 +487,7 @@ export async function activate (context: ExtensionContext) {
 			})
 	}
 
-	function updateNodeForDocument (e: TextDocument | TestItem | Uri, r: string) {
+	function updateNodeForDocument (e: TextDocument | TestItem | Uri) {
 		let u: Uri | undefined
 		if (e instanceof Uri) {
 			u = e
@@ -382,7 +500,6 @@ export async function activate (context: ExtensionContext) {
 		if (u.scheme != 'file') {
 			return Promise.resolve()
 		}
-		log.info('u = ' + JSON.stringify(u))
 		if (workspace.getWorkspaceFolder(u) === undefined) {
 			log.info('skipping updateNodeForDocument for file not in workspace: ' + u.fsPath)
 			return Promise.resolve(false)
@@ -406,7 +523,7 @@ export async function activate (context: ExtensionContext) {
 		}
 
 		if (item.uri) {
-			return updateNodeForDocument(item, 'resolve').then(() => {
+			return updateNodeForDocument(item).then(() => {
 				return
 			})
 		}
@@ -417,6 +534,20 @@ export async function activate (context: ExtensionContext) {
 		}
 		return Promise.resolve()
 	}
+
+	// ctrl.invalidateTestResults = (items?: TestItem | readonly TestItem[]) => {
+	// 	log.info('ctrl.invalidateTestResults')
+	// 	if (items instanceof Array) {
+	// 		log.info(' - items.length=' + items.length)
+	// 		for(let i=0; i < items.length; i++) {
+	// 			log.info(' - itesm[' + i + '].id=' + items[i].id)
+	// 		}
+	// 	} else {
+	// 		log.info(' - items.id=' + items?.id)
+	// 	}
+	// }
+
+
 
 	ctrl.refreshHandler = (token: CancellationToken) => {
 		log.info('ctrl.refreshHandler start')
@@ -474,6 +605,7 @@ export async function activate (context: ExtensionContext) {
 	// testProfileDebug.configureHandler = configHandlerDebug
 	testProfileCoverage.configureHandler = configHandler
 	testProfileCoverage.loadDetailedCoverage = loadDetailedCoverage
+	testProfileCoverage.loadDetailedCoverageForTest = loadDetailedCoverageForTest
 	// testProfileDebugCoverage.configureHandler = configHandler
 
 	if(workspace.getConfiguration('ablunit').get('discoverAllTestsOnActivate', false)) {
@@ -510,7 +642,6 @@ function didChangeTextDocument (e: TextDocumentChangeEvent, ctrl: TestController
 		return Promise.resolve()
 	}
 
-	log.info('workspace.onDidChange uri="' + e.document.uri.fsPath + '"; reason=' + e.reason)
 	return updateNode(e.document.uri, ctrl)
 }
 
@@ -565,6 +696,7 @@ function getOrCreateFile (controller: TestController, uri: Uri, excludePatterns?
 
 	if (excludePatterns && excludePatterns.length > 0 && isFileExcluded(uri, excludePatterns)) {
 		if (existing) {
+			log.info('560')
 			deleteTest(controller, existing)
 		}
 		return { item: undefined, data: undefined }
@@ -781,6 +913,7 @@ function deleteFiles (controller: TestController, files: readonly Uri[]) {
 		log.info('deleted file detected: ' + uri.fsPath)
 		const item = getExistingTestItem(controller, uri)
 		if (item) {
+			log.info('570')
 			didDelete = deleteTest(controller, item)
 		} else {
 			log.warn('no test file found for deleted file: ' + uri.fsPath)
@@ -794,6 +927,7 @@ function deleteTest (controller: TestController | undefined, item: TestItem | Ur
 		for (const child of gatherTestItems(item.children)) {
 			deleteChildren(controller, child)
 			child.children.delete(item.id)
+			log.info('delete child test: ' + item.id + ' (children.size=' + item.children.size + ')')
 			testData.delete(child)
 		}
 	}
@@ -866,11 +1000,13 @@ function removeExcludedChildren (parent: TestItem, excludePatterns: RelativePatt
 		if (data instanceof ABLTestFile) {
 			const excluded = isFileExcluded(item.uri!, excludePatterns)
 			if (item.uri && excluded) {
+				log.info('400')
 				deleteTest(undefined, item)
 			}
 		} else if (data?.isFile) {
 			removeExcludedChildren(item, excludePatterns)
 			if (item.children.size == 0) {
+				log.info('401')
 				deleteTest(undefined, item)
 			}
 		}
@@ -897,19 +1033,15 @@ function findMatchingFiles (includePatterns: RelativePattern[], token: Cancellat
 
 function removeDeletedFiles (ctrl: TestController) {
 	const items = gatherAllTestItems(ctrl.items)
-	const proms: PromiseLike<void>[] = []
 	for (const item of items) {
-		if (!item.uri) { continue }
-		const p = workspace.fs.stat(item.uri)
-			.then((s) => {
-				log.debug('file still exists, skipping delete (item.id=' + item.id + ')')
-				return
-			}, (e: unknown) => {
-				deleteTest(ctrl, item)
-			})
-		proms.push(p)
+		if (!item.uri) {
+			continue
+		}
+		if (!FileUtils.doesFileExist(item.uri)) {
+			log.info('500')
+			deleteTest(ctrl, item)
+		}
 	}
-	return Promise.all(proms).then(() => { return true })
 }
 
 function refreshTestTree (controller: TestController, token: CancellationToken): Promise<boolean> {
@@ -949,8 +1081,8 @@ function refreshTestTree (controller: TestController, token: CancellationToken):
 
 	log.debug('finding files...')
 
-	const prom1 = removeDeletedFiles(controller)
-		.then(() => { return findMatchingFiles(includePatterns, token, checkCancellationToken) })
+	removeDeletedFiles(controller)
+	const prom1 = findMatchingFiles(includePatterns, token, checkCancellationToken)
 		.then((r) => {
 			for (const file of r) {
 				checkCancellationToken()
@@ -1005,6 +1137,7 @@ function createOrUpdateFile (controller: TestController, e: Uri | FileCreateEven
 	const proms: PromiseLike<boolean>[] = []
 	for (const uri of uris) {
 		if (!isFileIncluded(uri, includePatterns, excludePatterns))  {
+			log.info('550')
 			deleteTest(controller, uri)
 			continue
 		}

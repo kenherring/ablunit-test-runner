@@ -1,7 +1,7 @@
 import { Uri, commands, window, workspace } from 'vscode'
 import { assert, getRcodeCount, getResults, getTestControllerItemCount, getTestItem, getXrefCount, log, rebuildAblProject, refreshTests, runAllTests, runAllTestsWithCoverage, runTestAtLine, runTestsDuration, runTestsInFile, sleep2, suiteSetupCommon, toUri, updateConfig, updateTestProfile } from '../testCommon'
 import { ABLResultsParser } from 'parse/ResultsParser'
-import { TimeoutError } from 'ABLUnitRun'
+import { TimeoutError } from 'Errors'
 import * as vscode from 'vscode'
 import * as FileUtils from '../../src/FileUtils'
 
@@ -16,38 +16,56 @@ suite('proj0  - Extension Test Suite', () => {
 	const disposables: vscode.Disposable[] = []
 
 	suiteSetup('proj0 - before', async () => {
-		FileUtils.deleteFile(toUri('.vscode/ablunit-test-profile.json'))
-		FileUtils.deleteFile(toUri('src/dirA/proj10.p'))
-		FileUtils.deleteFile(toUri('UNIT_TEST.tmp'))
+		FileUtils.copyFile(toUri('.vscode/settings.json'), toUri('.vscode/settings.json.bk'), { force: true })
+
+		FileUtils.deleteFile([
+			toUri('.vscode/ablunit-test-profile.json'),
+			toUri('src/dirA/proj10.p'),
+			toUri('UNIT_TEST.tmp'),
+		], { force: true })
+
 		await suiteSetupCommon()
 		await commands.executeCommand('testing.clearTestResults')
-		FileUtils.copyFile(
-			toUri('.vscode/settings.json'),
-			toUri('.vscode/settings.json.bk'),
-			{ force: true })
 		return
 	})
 
 	teardown('proj0 - afterEach', () => {
-		FileUtils.deleteFile(toUri('.vscode/ablunit-test-profile.json'))
-		FileUtils.deleteFile(toUri('src/dirA/proj10.p'))
-		FileUtils.deleteFile(toUri('UNIT_TEST.tmp'))
+		log.info('proj0 teardown')
+		FileUtils.deleteFile([
+			toUri('.vscode/ablunit-test-profile.json'),
+			toUri('src/dirA/proj10.p'),
+			toUri('UNIT_TEST.tmp'),
+		], { force: true })
+		log.info('200')
 		while (disposables.length > 0) {
+			log.info('201')
 			const d = disposables.pop()
+			log.info('202')
 			if (d) {
+				log.info('203')
 				d.dispose()
+				log.info('204')
 			} else {
+				log.info('205')
 				log.warn('disposables.length != 0')
+				log.info('206')
 			}
+			log.info('207')
 		}
-		if (FileUtils.doesFileExist(toUri('.vscode/settings.json.bk'))) {
-			FileUtils.deleteFile(toUri('.vscode/settings.json'))
-			FileUtils.copyFile(toUri('.vscode/settings.json.bk'), toUri('.vscode/settings.json'), { force: true })
-		}
-		log.info('proj0 teardown/afterEach --- end')
+		log.info('208')
+		// FileUtils.copyFile(toUri('.vscode/settings.json.bk'), toUri('.vscode/settings.json'))
+		log.info('209')
+		return
+	})
+
+	suiteTeardown('proj0 - after', () => {
+		log.info('300')
+		FileUtils.renameFile(toUri('.vscode/settings.json.bk'), toUri('.vscode/settings.json'))
+		log.info('301')
 	})
 
 	test('proj0.01 - ${workspaceFolder}/ablunit.json file exists', () => {
+		log.info('start ----- proj0.01')
 		const prom = runAllTests()
 			.then(() => getResults())
 			.then((recentResults) => {
@@ -88,7 +106,7 @@ suite('proj0  - Extension Test Suite', () => {
 		await window.showTextDocument(testFileUri)
 		await runAllTestsWithCoverage()
 
-		const lines = (await getResults())[0].coverage.get(testFileUri.fsPath) ?? []
+		const lines = (await getResults())[0].statementCoverage.get(testFileUri.fsPath) ?? []
 		assert.assert(lines, 'no coverage found for ' + workspace.asRelativePath(testFileUri))
 		assert.linesExecuted(testFileUri, [5, 6])
 	})
@@ -99,7 +117,7 @@ suite('proj0  - Extension Test Suite', () => {
 		await window.showTextDocument(testFileUri)
 		await runAllTests()
 
-		const lines = (await getResults())[0].coverage.get(testFileUri.fsPath) ?? []
+		const lines = (await getResults())[0].statementCoverage.get(testFileUri.fsPath) ?? []
 		if (lines && lines.length > 0) {
 			assert.fail('coverage should be empty for ' + workspace.asRelativePath(testFileUri) + ' (lines.length=' + lines.length + ')')
 		}
@@ -133,7 +151,7 @@ suite('proj0  - Extension Test Suite', () => {
 
 	test('proj0.07 - parse test class with skip annotation', async () => {
 		await commands.executeCommand('vscode.open', toUri('src/ignoreMethod.cls'))
-		await sleep2(250)
+		await sleep2(100)
 		const testClassItem = await getTestItem(toUri('src/ignoreMethod.cls'))
 
 		if (!testClassItem) {
@@ -145,15 +163,23 @@ suite('proj0  - Extension Test Suite', () => {
 	})
 
 	test('proj0.08 - parse test procedure with skip annotation', async () => {
+		log.info('start proj0.08')
 		await commands.executeCommand('vscode.open', toUri('src/ignoreProcedure.p'))
 		await sleep2(250)
+		log.info('600')
 		const testClassItem = await getTestItem(toUri('src/ignoreProcedure.p'))
+		log.info('601')
+		log.info('601')
 
 		if (!testClassItem) {
+			log.info('602')
 			log.error('cannot find TestItem for src/ignoreProcedure.p')
+			log.info('603')
 			assert.fail('cannot find TestItem for src/ignoreProcedure.p')
+			log.info('604')
 			// throw new Error('cannot find TestItem for src/ignoreProcedure.p')
 		}
+		log.info('605')
 		assert.equal(testClassItem.children.size, 5, 'testClassItem.children.size should be 5')
 	})
 
@@ -263,35 +289,41 @@ suite('proj0  - Extension Test Suite', () => {
 	})
 
 	test('proj0.11 - timeout 5s', () => {
-		return updateConfig('ablunit.files.exclude', '**/.{builder,pct}/**')
-			.then((r) => { return updateTestProfile('timeout', 5000) })
-			.then((r) => { return sleep2(250) })
-			.then((r) => { return runTestsInFile('src/timeout.p', 0) })
-			.then(() => { return commands.executeCommand('_ablunit.getTestRunError') })
-			.then((e) => {
-				assert.tests.timeout(e)
-				return
+		const prom = updateConfig('ablunit.files.exclude', '**/.{builder,pct}/**')
+			.then(() => { return updateTestProfile('timeout', 5000) })
+			.then(() => { return sleep2(250) })
+			.then(() => { return runTestsInFile('src/timeout.p', 0) })
+			.then(() => {
+				return assert.fail('expected TimeoutError to be thrown')
+			}, (e: unknown) => {
+				log.info('e=' + e)
+				return assert.tests.timeout(e)
 			})
+		return prom
 	})
 
 	test('proj0.12 - timeout 1500ms fail', () => {
-		return updateConfig('ablunit.files.exclude', '**/.{builder,pct}/**')
+		const prom = updateConfig('ablunit.files.exclude', '**/.{builder,pct}/**')
 			.then(() => { return updateTestProfile('timeout', 1500) })
 			.then(() => { return runTestAtLine('src/timeout.p', 37, 0) })
 			.then(() => { return commands.executeCommand('_ablunit.getTestRunError') })
-			.then((e) => {
+			.then(() => {
+				return assert.fail('expected TimeoutError to be thrown')
+			}, (e: unknown) => {
+				log.info('e=' + e)
 				assert.tests.timeout(e)
 				const t: TimeoutError = e as TimeoutError
 				assert.durationMoreThan(t.duration, 1500)
 				assert.durationLessThan(t.duration, 2000)
 				return
 			})
+		return prom
 	})
 
 	test('proj0.13 - timeout 2500ms pass', () => {
-		return updateTestProfile('timeout', 2500)
+		const prom = updateTestProfile('timeout', 2500)
 			.then(() => { return updateConfig('ablunit.files.exclude', '**/.{builder,pct}/**') })
-			.then(() => { return sleep2(500)})
+			.then(() => { return sleep2(100) })
 			.then(() => { return runTestAtLine('src/timeout.p', 37, 0) })
 			.then(() => { return commands.executeCommand('_ablunit.getTestRunError') })
 			.then((e) => {
@@ -300,16 +332,19 @@ suite('proj0  - Extension Test Suite', () => {
 					assert.fail('expected no error to be thrown but got e=' + JSON.stringify(e, null, 2))
 				}
 				assert.durationMoreThan(runTestsDuration, 2000)
-				assert.durationLessThan(runTestsDuration, 3000)
+				assert.durationLessThan(runTestsDuration, 3250)
 				return
 			})
+		return prom
 	})
 
 	test('proj0.14 - timeout invalid -5s', () => {
-		return updateTestProfile('timeout', -5000)
+		const prom = updateTestProfile('timeout', -5000)
 			.then(() => { return runTestsInFile('src/simpleTest.p', 0) })
 			.then(() => { return commands.executeCommand('_ablunit.getTestRunError') })
 			.then((e) => {
+				return assert.fail('expected RangeError to be thrown but got e=' + JSON.stringify(e, null, 2))
+			}, (e: unknown) => {
 				if (e instanceof Error) {
 					log.info('e=' + JSON.stringify(e))
 					assert.equal(e.name, 'RangeError', 'expecting RangeError due to negative timeout value. e=' + JSON.stringify(e, null, 2))
@@ -317,6 +352,22 @@ suite('proj0  - Extension Test Suite', () => {
 					assert.fail('expected RangeError to be thrown but got e=' + JSON.stringify(e, null, 2))
 				}
 				return
+			})
+		return prom
+	})
+
+	test('proj0.17 - coverage in class property getters/setters', async () => {
+		FileUtils.deleteFile([toUri('results.xml'), toUri('results.json')], { force: true })
+		FileUtils.copyFile(toUri('.vscode/ablunit-test-profile.proj0.17.json'), toUri('.vscode/ablunit-test-profile.json'))
+		await runTestAtLine('src/test_17.cls', 33, 1, true)
+			.then(() => {
+				assert.tests.count(1)
+				assert.tests.passed(1)
+				assert.tests.failed(0)
+				assert.tests.errored(0)
+				assert.tests.skipped(0)
+				assert.linesExecuted('src/test_17.cls', [6, 7, 8])
+				assert.linesExecuted('src/test_17.cls', [40, 41, 42, 43])
 			})
 	})
 

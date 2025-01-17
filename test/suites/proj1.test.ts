@@ -30,11 +30,11 @@ suite('proj1 - Extension Test Suite', () => {
 	})
 
 	suiteTeardown('proj1 - suiteTeardown', () => {
-		FileUtils.deleteFile(
+		FileUtils.deleteFile([
 			Uri.joinPath(workspaceUri, 'openedge-project.bk.json'),
 			Uri.joinPath(workspaceUri, '.vscode', 'ablunit-test-profile.bk.json'),
 			Uri.joinPath(workspaceUri, '.vscode', 'settings.bk.json'),
-		)
+		])
 	})
 
 	test('proj1.1 - output files exist 1 - compile error', () => {
@@ -152,31 +152,6 @@ suite('proj1 - Extension Test Suite', () => {
 			})
 	})
 
-	test('proj1.8 - update charset to ISO8559-1, then read file with UTF-8 chars', async () => {
-		FileUtils.copyFile(toUri('openedge-project.proj1.8.json'), toUri('openedge-project.json'), { force: true })
-
-		await runTestAtLine('import_charset.p', 14)
-			.then(() => {
-				log.info('testing.runAtCursor complete')
-				assert.tests.count(1)
-				assert.tests.passed(0)
-				assert.tests.failed(1)
-				assert.tests.errored(0)
-			})
-	})
-
-	test('proj1.9 - check startup parmaeters for -y -yx', async () => {
-		FileUtils.copyFile(Uri.joinPath(workspaceUri, 'openedge-project.proj1.9.json'), Uri.joinPath(workspaceUri, 'openedge-project.json'), { force: true })
-		await runTestAtLine('import_charset.p', 68)
-			.then(() => {
-				log.info('testing.runAtCursor complete')
-				assert.tests.count(1)
-				assert.tests.passed(0)
-				assert.tests.failed(1)
-				assert.tests.errored(0)
-			})
-	})
-
 	test('proj1.10 - xref options', async () => {
 
 		if (oeVersion() < '12.5') {
@@ -282,7 +257,7 @@ suite('proj1 - Extension Test Suite', () => {
 		return p
 	})
 
-	test('proj1.15A - compile option without MIN-SIZE without xref', () => {
+	test('proj1.15 - compile option without MIN-SIZE without xref', () => {
 		const p = compileWithTaskAndRunWithCoverage('ant build')
 			.then(() => {
 				assert.linesExecuted('test_15.p', [9, 10, 13, 14])
@@ -311,14 +286,39 @@ suite('proj1 - Extension Test Suite', () => {
 			})
 		return p
 	})
+
+	test('proj1.98 - check startup parmaeters for -y -yx', async () => {
+		FileUtils.copyFile(Uri.joinPath(workspaceUri, 'openedge-project.proj1.98.json'), Uri.joinPath(workspaceUri, 'openedge-project.json'), { force: true })
+		await runTestAtLine('import_charset.p', 68)
+			.then(() => {
+				log.info('testing.runAtCursor complete')
+				assert.tests.count(1)
+				assert.tests.passed(0)
+				assert.tests.failed(1)
+				assert.tests.errored(0)
+			})
+	})
+
+	test('proj1.99 - update charset to ISO8559-1, then read file with UTF-8 chars', async () => {
+		FileUtils.copyFile(toUri('openedge-project.proj1.99.json'), toUri('openedge-project.json'), { force: true })
+
+		await runTestAtLine('import_charset.p', 14)
+			.then(() => {
+				log.info('testing.runAtCursor complete')
+				assert.tests.count(1)
+				assert.tests.passed(1)
+				assert.tests.failed(0)
+				assert.tests.errored(0)
+			})
+	})
+
 })
 
-
 async function compileWithTaskAndRunWithCoverage (taskName: string) {
-	FileUtils.deleteFile(
+	FileUtils.deleteFile([
 		Uri.joinPath(workspaceUri, 'test_15.r'),
 		Uri.joinPath(workspaceUri, 'openedge-project.json'),
-	)
+	])
 	FileUtils.copyFile(Uri.joinPath(workspaceUri, '.vscode', 'ablunit-test-profile.proj1.15.json'), Uri.joinPath(workspaceUri, '.vscode', 'ablunit-test-profile.json'), { force: true })
 
 	const p2 = new Promise<TaskEndEvent>((resolve) => {

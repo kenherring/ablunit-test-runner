@@ -3,11 +3,14 @@
         {
             "label": "ant build",
             "type": "shell",
-            "command": "${env:DLC}/ant/bin/ant compile -Dxref=false",
+            "command": "${env:DLC}/ant/bin/ant",
             "linux": {
-                "command": "ant compile -Dxref=false"
+                "command": "ant",
             },
-            "args": [],
+            "args": [
+                "compile",
+                "-Dxref=false",
+            ],
             "group": {
                 "kind": "build",
                 "isDefault": true
@@ -17,11 +20,15 @@
         {
             "label": "ant build min-size",
             "type": "shell",
-            "command": "${env:DLC}/ant/bin/ant compile -DminSize=true -Dxref=true",
+            "command": "${env:DLC}/ant/bin/ant",
             "linux": {
-                "command": "ant compile -DminSize=true -Dxref=true"
+                "command": "ant"
             },
-            "args": [],
+            "args": [
+                "compile",
+                "-DminSize=true",
+                "-Dxref=true",
+            ],
             "group": {
                 "kind": "build",
                 "isDefault": true

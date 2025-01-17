@@ -12,6 +12,8 @@ import * as fs from 'fs'
 import process from 'process'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
+const DLC = undefined
+// const DLC = 'C:/Progress/OpenEdge'
 const vsVersionNum = '1.88.0'
 const vsVersion = process.env['ABLUNIT_TEST_RUNNER_VSCODE_VERSION'] ?? 'stable'
 const useOEAblPrerelease = false
@@ -50,6 +52,7 @@ function getMochaTimeout (projName) {
 
 	switch (projName) {
 		case 'DebugLines': return 120000 // install openedge-abl-lsp for the first time, so give it a moment to start
+		case 'proj0': return 60000
 		case 'proj1': return 30000
 		// case 'proj2': return 20000
 		case 'proj5': return 60000
@@ -78,8 +81,11 @@ function getMochaOpts (projName) {
 		// ui: 'tdd', // describe, it, etc
 		// ui: 'bdd' // default; suite, test, etc
 		retries: 0,
-		parallel: false,
+		// parallel: false,
+		// dryRun: true,
 		bail: true,
+		isWorker: true,
+		// parallel: true,
 		require: [
 			'mocha',
 			'tsconfig-paths/register',
@@ -101,7 +107,7 @@ function getMochaOpts (projName) {
 		}
 	}
 
-	if (process.env['CIRCLECI']) {
+	if (process.env['CIRCLECI'] == 'true') {
 		mochaOpts.bail = false
 	}
 
@@ -123,6 +129,7 @@ function getLaunchArgs (projName) {
 	// args.push('--wait')
 	// args.push('--locale <locale>')
 	// args.push('--user-data-dir', '<dir>')
+	args.push('--user-data-dir', '.vscode-test/user-data_' + projName)
 	// args.push('--profile <profileName>')
 	// args.oush('--profile=ablunit-test')
 	// args.push('--profile-temp') // create a temporary profile for the test run in lieu of cleaning up user data
@@ -237,6 +244,10 @@ function getTestConfig (testDir, projName) {
 		ABLUNIT_TEST_RUNNER_VSCODE_VERSION: vsVersion,
 		DONT_PROMPT_WSL_INSTALL: true,
 		VSCODE_SKIP_PRELAUNCH: true,
+	}
+
+	if (DLC) {
+		env.DLC = DLC
 	}
 
 	/** @type {import('@vscode/test-cli').IDesktopTestConfiguration} */
