@@ -1129,6 +1129,9 @@ export const assert = {
 	greaterOrEqual (testValue: number, greaterThan: number, message?: string) {
 		assertParent.ok(testValue >= greaterThan, message)
 	},
+	less (testValue: number, lessThan: number, message?: string) {
+		assertParent.ok(testValue < lessThan, message)
+	},
 	lessOrEqual (testValue: number, lessThan: number, message?: string) {
 		assertParent.ok(testValue <= lessThan, message)
 	},

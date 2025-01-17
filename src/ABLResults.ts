@@ -502,20 +502,19 @@ export class ABLResults implements Disposable {
 		const profFile = basename(this.cfg.ablunitConfig.profFilenameUri.fsPath)
 		// <basename>.<ext> -> <basename>_*_*.<ext>
 		const globPattern = profFile.replace(/(.+)\.([a-zA-Z]+)$/, '$1_*.$2')
-		const dataFiles = []
+		const dataFiles = [ basename(this.cfg.ablunitConfig.profFilenameUri.fsPath) ]
 		try {
 			dataFiles.push(...globSync(globPattern, { cwd: profDir }))
 		} catch(e) {
 			log.warn('globSync failed for ' + globPattern + '\n\te=' + e)
 		}
-		dataFiles.push(basename(this.cfg.ablunitConfig.profFilenameUri.fsPath))
+		dataFiles.sort((a, b) => { return a.localeCompare(b) })
 
 		for (let i=0; i < dataFiles.length; i++) {
-			const dataFile = dataFiles[i]
-
-			const uri = Uri.joinPath(Uri.file(profDir), dataFile)
+			const uri = Uri.joinPath(Uri.file(profDir), dataFiles[i])
 			log.info('parsing profile data ' + i + '/' + dataFiles.length + ' from ' + uri.fsPath, options)
-			const prom = profParser.parseData(Uri.joinPath(Uri.file(profDir), dataFile), this.cfg.ablunitConfig.profiler.writeJson, this.debugLines).then((profJson) => {
+
+			const prom = profParser.parseData(uri, this.cfg.ablunitConfig.profiler.writeJson, this.debugLines).then((profJson) => {
 				const item = this.findTest(profJson.description)
 				profJson.testItemId = item?.id
 				this.profileJson.push(profJson)

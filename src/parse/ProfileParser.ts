@@ -576,7 +576,8 @@ export class ABLProfileJson {
 					// prepare the next section by finding the correct module
 					mod = await this.addCoverageNextSection(lines[lineNo])
 					if (!mod) {
-						log.warn('addCoverageNextSection returned undefined (lineNo=' + lineNo + ', uri=' + this.profileUri.fsPath + ')')
+						log.warn('addCoverageNextSection returned undefined (lineNo=' + lineNo + ', uri=' + this.profileUri.fsPath + ')' +
+							'\tlines[' + lineNo + ']=' + lines[lineNo])
 					}
 					continue
 				}
@@ -884,7 +885,7 @@ export function getModuleRange (module: IModule) {
 }
 
 export function checkSkipList (sourceName: string | undefined) {
-	return !sourceName ||
+	return sourceName == undefined ||
 		sourceName.startsWith('OpenEdge.') ||
 		sourceName.endsWith('ABLUnitCore.p') ||
 		sourceName == 'Ccs.Common.Application' ||

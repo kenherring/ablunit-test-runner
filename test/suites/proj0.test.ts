@@ -371,4 +371,26 @@ suite('proj0  - Extension Test Suite', () => {
 			})
 	})
 
+	test('proj0.18 - not 100% coverage', async () => {
+		await runTestsInFile('src/threeTestProcedures.p', 1, true)
+		const res = await getResults()
+		assert.equal(res.length, 1, 'ABLResults[].length')
+		assert.equal(res[0].profileJson.length, 5, 'ABLResults[0].profileJson[].length')
+
+		const fc = res[0].fileCoverage.get(toUri('src/threeTestProcedures.p').fsPath)
+		const sc = res[0].statementCoverage.get(toUri('src/threeTestProcedures.p').fsPath) ?? []
+		const dc = res[0].declarationCoverage.get(toUri('src/threeTestProcedures.p').fsPath) ?? []
+		assert.ok(fc, 'fileCoverage')
+		assert.greater(sc.length, 10, 'statementCoverage[].length')
+		assert.equal(dc.length, 5, 'declarationCoverage[].length')
+
+		assert.ok(fc?.branchCoverage == undefined, 'branchCoverage')
+		assert.equal(fc?.declarationCoverage?.total, 5, 'fc.declarationCoverage.total')
+		assert.equal(fc?.statementCoverage?.total, 19, 'fc.statementCoverage.total')
+		assert.less(fc?.declarationCoverage?.covered ?? 0, fc?.declarationCoverage?.total ?? 0,
+			'declarationCoverage not 100% (' + (fc?.declarationCoverage?.covered ?? 0) + ' >= ' + (fc?.declarationCoverage?.total ?? 0) + ')')
+		assert.less(fc?.statementCoverage?.covered ?? 0, fc?.statementCoverage?.total ?? 0,
+			'statementCoverage not 100% (' + (fc?.statementCoverage?.covered ?? 0) + ' >= ' + (fc?.statementCoverage?.total ?? 0) + ')')
+	})
+
 })
