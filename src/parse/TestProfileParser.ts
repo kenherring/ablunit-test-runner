@@ -80,12 +80,22 @@ export function parseRunProfiles (workspaceFolders: WorkspaceFolder[], wsFilenam
 		try {
 			wfConfig = getConfigurations(Uri.joinPath(workspaceFolder.uri, '.vscode', wsFilename))
 		} catch (e: unknown) {
-			if (e instanceof FileSystemError && e.code === 'ENOENT') {
-				log.warn('no .vscode/' + wsFilename + ' file found.  using default profile')
-				return defaultConfig.configurations
+			if (e instanceof FileSystemError) {
+				if (e.name === 'FileNotFound') {
+					log.info('no .vscode/' + wsFilename + ' file found.  using default profile (e=' + e.name + ')')
+				}else {
+					log.notificationWarning('Failed to import .vscode/ablunit-test-profile.json.  Attempting to use default profile...\n[' + e.code + ']: ' + e.message)
+				}
+			} else if (e instanceof Error) {
+				// @ts-expect-error ThisIsSafeForTesting
+				if (e.code == 'ENOENT') {
+					log.info('no .vscode/' + wsFilename + ' file found.  using default profile (e=' + e + ')')
+				} else {
+					log.notificationWarning('Failed to import .vscode/ablunit-test-profile.json!  Attempting to use default profile...\n(e=' + e + ')')
+				}
+			} else {
+				log.notificationError('Failed to import .vscode/ablunit-test-profile.json!  Attempting to use default profile...\n(e=' + e + ')')
 			}
-			log.notificationWarning('Could not import .vscode/ablunit-test-profile.json.  Attempting to use default profile...')
-			log.warn('e=' + e)
 			return defaultConfig.configurations
 		}
 		if (wfConfig.configurations.length === 0) {
@@ -184,8 +194,15 @@ export class RunConfig extends DefaultRunProfile {
 
 		this.options = new CoreOptions(this.profile.options)
 		const tmpFilename = (this.profile.options?.output?.filename?.replace(/\.xml$/, '') ?? 'results') + '.xml'
+		if (this.options?.output?.location) {
+			this.options.output.location = this.options.output.location.replace(/\\\\/g, '/')
+			if (!this.options.output.location.endsWith('/')) {
+				// adding a trailing slash to indicate this is a drirectory to this.getUri
+				this.options.output.location += '/'
+			}
+		}
 		this.optionsUri = {
-			locationUri: this.getUri(this.profile.options?.output?.location + '/'),
+			locationUri: this.getUri(this.options?.output?.location),
 			filenameUri: Uri.joinPath(this.tempDirUri, tmpFilename),
 			updateUri: Uri.joinPath(this.tempDirUri, 'updates.log'),
 		}

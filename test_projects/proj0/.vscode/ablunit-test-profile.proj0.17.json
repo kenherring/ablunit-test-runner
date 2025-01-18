@@ -1,0 +1,14 @@
+{
+    "configurations": [
+        {
+            "options": {
+                "output": {
+                    "writeJson": true
+                }
+            },
+            "profiler": {
+                "writeJson": true
+            }
+        }
+    ]
+}

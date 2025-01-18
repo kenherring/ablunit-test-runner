@@ -214,7 +214,6 @@ export const getSourceMapFromRCode = (propath: PropathParser, uri: Uri) => {
 		throw new Error('could not find source name for num=' + num + ', uri="' + uri.fsPath + '"')
 	}
 
-
 	const parseSources = async (bytes: Uint32Array, pos: number, prefix = '') => {
 		const end = nextDelim(bytes, pos + 4, 1, prefix)
 		const childBytes = bytes.subarray(pos/4, end)
@@ -248,7 +247,6 @@ export const getSourceMapFromRCode = (propath: PropathParser, uri: Uri) => {
 	const parseMap = async (bytes: Uint32Array, pos: number, prefix = '') => {
 		const end = pos/4 + 4
 		const childBytes = bytes.subarray(pos/4, end)
-
 
 		let sourceUri
 		try {
@@ -307,7 +305,6 @@ export const getSourceMapFromRCode = (propath: PropathParser, uri: Uri) => {
 
 	const buildDebugLines = () => {
 		const debugUri = getSourceUri(0)
-		const debugName = getSourceName(0)
 		if (map.length === 0) {
 			for (const proc of procs) {
 				for (const line of proc.lines ?? []) {
@@ -371,7 +368,6 @@ export const getSourceMapFromRCode = (propath: PropathParser, uri: Uri) => {
 		buildDebugLines()
 		return debugLines
 	}
-
 
 	return workspace.fs.readFile(uri).then(async (raw) => {
 		const headerInfo = parseHeader(raw.subarray(0, 68))

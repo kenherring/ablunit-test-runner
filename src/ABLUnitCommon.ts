@@ -6,6 +6,7 @@ export interface IExtensionTestReferences {
 	testController: TestController
 	recentResults: ABLResults[]
 	currentRunData: ABLResults[]
+	recentError: Error | undefined
 }
 
 export class Duration {

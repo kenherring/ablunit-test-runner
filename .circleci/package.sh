@@ -69,22 +69,26 @@ run_lint () {
 	local ESLINT_FILE=artifacts/eslint_report
 	mkdir -p artifacts
 
-	if ! npm run lint -- -f unix -o "${ESLINT_FILE}.txt"; then
-		echo "eslint plain failed"
-	fi
-	if ! npm run lint -- -f json -o "${ESLINT_FILE}.json"; then
-		## sonarqube report
-		echo "eslint json failed"
-	fi
+    ESLINT_RETURN_CODE=0
+	npm run lint -- -f json -o "${ESLINT_FILE}.json.tmp" || ESLINT_RETURN_CODE=$?
+    echo "eslint returned code=$ESLINT_RETURN_CODE"
 
+    jq '.' < "${ESLINT_FILE}.json.tmp" > "${ESLINT_FILE}.json"
     sed -i 's|/home/circleci/project/|/root/project/|g' "${ESLINT_FILE}.json"
-	if [ "$(find artifacts -name "eslint_report.json" | wc -l)" != "0" ]; then
-		jq '.' < "${ESLINT_FILE}.json" > "${ESLINT_FILE}_pretty.json"
-	else
-		echo "ERROR: ${ESLINT_FILE}.json not found"
-		exit 1
-	fi
-	echo 'eslint successful'
+
+    if [ ! -f "${ESLINT_FILE}.json" ]; then
+        echo "ERROR: ${ESLINT_FILE}.json not found"
+        exit 1
+    fi
+
+    MESSAGE_COUNT=$(jq '[.[] | .messages | length] | add' < ${ESLINT_FILE}.json.tmp)
+    ERROR_COUNT=$(jq '[.[] | .errorCount] | add' < ${ESLINT_FILE}.json.tmp)
+    WARNING_COUNT=$(jq '[.[] | .warningCount] | add' < ${ESLINT_FILE}.json.tmp)
+
+    echo 'eslint summary:'
+    echo " - message count:  $MESSAGE_COUNT"
+    echo " - error count:    $ERROR_COUNT"
+    echo " - warning count:  $WARNING_COUNT"
 }
 
 ########## MAIN BLOCK ##########

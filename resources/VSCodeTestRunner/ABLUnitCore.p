@@ -1,11 +1,17 @@
 // This file replaces the standard ABLUnitCore.p when the basedir is
 // included as part of the propath ahead of ablunit.pl.
 
+using VSCode.ABLUnit.Runner.ABLRunner.
+
 block-level on error undo, throw.
 create widget-pool.
 
 define variable quitOnEnd as logical init false no-undo.
+define variable VERBOSE as logical no-undo.
+VERBOSE = (os-getenv('VERBOSE') = 'true' or os-getenv('VERBOSE') = '1').
 
+if VERBOSE then
+	run printPropath.
 run main.
 if quitOnEnd then
 	quit.
@@ -13,6 +19,13 @@ else
 	return.
 
 ////////// FUNCS AND PROCS //////////
+procedure printPropath :
+	message "PROPATH:~n" + replace(PROPATH, ',', '~n - ').
+	define variable cnt as integer no-undo.
+	do cnt = 1 to num-entries(propath, ','):
+		message ' - '+ entry(cnt, propath).
+	end.
+end procedure.
 
 procedure createDatabaseAliases :
 	define variable aliasesSessionParam as character no-undo.
@@ -34,6 +47,7 @@ procedure createDatabaseAliases :
 	do dbCount = 1 to num-entries(aliasesSessionParam,';'):
 		assign aliasList = entry(dbCount, aliasesSessionParam,';').
 		assign databaseName = entry(1,aliasList).
+		if VERBOSE then message "databaseName=" + databaseName.
 
 		do aliasCount = 2 to num-entries(aliaslist,','):
 			assign aliasName = entry(aliasCount, aliasList).
@@ -64,12 +78,12 @@ function writeErrorToLog returns logical (outputLocation as character, msg as ch
 		else
 			log-manager:logfile-name = session:temp-dir + "ablunit.log".
 	end.
-	log-manager:write-message (msg).
+	log-manager:write-message(msg).
 	return true.
 end function.
 
 procedure main :
-	define variable ablRunner as class OpenEdge.ABLUnit.Runner.ABLRunner no-undo.
+	define variable ablRunner as class ABLRunner no-undo.
 	define variable testConfig as class OpenEdge.ABLUnit.Runner.TestConfig no-undo.
 	define variable updateFile as character no-undo.
 
@@ -80,7 +94,7 @@ procedure main :
 	testConfig = readTestConfig(getParameter(trim(trim(session:parameter,'"'),"'"), 'CFG')).
 	quitOnEnd = (testConfig = ?) or testConfig:quitOnEnd.
 
-	ablRunner = new OpenEdge.ABLUnit.Runner.ABLRunner(testConfig, updateFile).
+	ablRunner = new ABLRunner(testConfig, updateFile).
 	ablRunner:RunTests().
 
 	// the `-catchStop 1` startup parameter is default in 11.7+
@@ -109,7 +123,10 @@ procedure main :
 			writeErrorToLog(testConfig:outputLocation, s:CallStack).
 		end.
 		if testConfig:ShowErrorMessage then
+		do:
 			message e:GetMessage(1) view-as alert-box error.
+			message e:CallStack.
+		end.
 		if testConfig:ThrowError then
 			undo, throw e.
 	end.

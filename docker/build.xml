@@ -36,4 +36,12 @@
 		<echo>compile successful!</echo>
 	</target>
 
+	<target name="extract">
+		<echo>extracting ${env.DLC}/tty/ablunit.pl</echo>
+  		<copy todir="../resources/tty/ablunit/">
+    		<plfileset src="${env.DLC}/tty/ablunit.pl" includes="**/*" />
+  		</copy>
+		<echo>extract complete</echo>
+	</target>
+
 </project>

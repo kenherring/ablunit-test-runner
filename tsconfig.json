@@ -28,7 +28,7 @@
 		// ],
 
 		"allowJs": true,
-		"checkJs": true,
+		// "checkJs": true,
 
 		// "allowSyntheticDefaultImports": true, // enabled by "esModuleInterop"
 		// "allowUnreachableCode": false, // editor warning when undefined
@@ -50,7 +50,7 @@
 		"strictFunctionTypes": true,
 		"strictNullChecks": true,
 		"strictPropertyInitialization": true,
-		"useUnknownInCatchVariables": false,
+		"useUnknownInCatchVariables": true,
 	},
 	"include": [
 		"./**/*.ts",

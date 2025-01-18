@@ -30,3 +30,11 @@ validate_version_updated() {
 		exit 1
 	fi
 }
+
+log_it () {
+	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}]" "$@"
+}
+
+log_error () {
+	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] ERROR:" "$@" >&2
+}

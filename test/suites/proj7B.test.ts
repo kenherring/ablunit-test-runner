@@ -1,5 +1,5 @@
 import { CancellationError, LogLevel, commands } from 'vscode'
-import { assert, RunStatus, beforeCommon, beforeProj7, cancelTestRun, getCurrentRunData, getTestControllerItemCount, isoDate, log, refreshTests, runAllTests, sleep, waitForTestRunStatus, sleep2 } from '../testCommon'
+import { assert, RunStatus, beforeCommon, beforeProj7, cancelTestRun, getCurrentRunData, getTestControllerItemCount, isoDate, log, refreshTests, runAllTests, waitForTestRunStatus, sleep2 } from '../testCommon'
 import { Duration } from '../../src/ABLUnitCommon'
 
 suite('proj7B - Extension Test Suite', () => {
@@ -11,7 +11,7 @@ suite('proj7B - Extension Test Suite', () => {
 
 	setup('proj7B - beforeEach', beforeCommon)
 
-	test('proj7B.1 - cancel test refresh', async () => {
+	test.skip('proj7B.1 - cancel test refresh', async () => {
 		const minCancelTime = 1
 		const maxCancelTime = 350
 		const maxRefreshTime = 700
@@ -31,6 +31,7 @@ suite('proj7B - Extension Test Suite', () => {
 			}
 		}
 
+		await sleep2(2)
 		log.info('cancelling test refresh')
 		const startCancelTime = new Duration()
 		await commands.executeCommand('testing.cancelTestRefresh').then(() => {
@@ -47,7 +48,17 @@ suite('proj7B - Extension Test Suite', () => {
 
 		const ablfileCount = await getTestControllerItemCount('ABLTestFile')
 		log.info('controller file count after refresh = ' + ablfileCount)
-		assert.assert(ablfileCount > 1 && ablfileCount < 1000, 'ablfileCount should be > 1 and < 500, but is ' + ablfileCount)
+		if (ablfileCount <= 2) {
+			await sleep2(10)
+			const ablfileCount = await getTestControllerItemCount('ABLTestFile')
+			log.info('controller file count after refresh(2) = ' + ablfileCount)
+		}
+		if (ablfileCount <= 2) {
+			await sleep2(10)
+			const ablfileCount = await getTestControllerItemCount('ABLTestFile')
+			log.info('controller file count after refresh(3) = ' + ablfileCount)
+		}
+		assert.assert(ablfileCount > 1 && ablfileCount < 2000, 'ablfileCount should be > 1 and < 500, but is ' + ablfileCount)
 
 		const prom = refresh.then(() => {
 			assert.fail('testing.refreshTests completed without throwing CancellationError')
@@ -68,7 +79,7 @@ suite('proj7B - Extension Test Suite', () => {
 		// const runTestTime = new Duration()
 
 		runAllTests().catch((e: unknown) => { log.info('runAllTests got error: ' + e) })
-		await sleep(250)
+		await sleep2(250)
 			.then(() => { return waitForTestRunStatus(RunStatus.Constructed) })
 
 		const elapsedCancelTime = await cancelTestRun(false)

@@ -69,6 +69,8 @@ initialize () {
 		"results.prof"
 		"results.xml"
 	)
+
+	find resources -type f -name "*.r" -delete
 }
 
 delete_directories () {

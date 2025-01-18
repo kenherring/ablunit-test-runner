@@ -9,7 +9,6 @@ import {
 	WorkspaceFolder, commands, extensions, window,
 	workspace,
 	FileCoverageDetail,
-	Position,
 	TestItem
 } from 'vscode'
 import { ABLResults } from '../src/ABLResults'
@@ -449,16 +448,6 @@ export function deleteTestFiles () {
 	FileUtils.deleteFile(Uri.joinPath(workspaceUri, 'results.xml'))
 }
 
-export function getSessionTempDir () {
-	if (process.platform === 'win32') {
-		return Uri.file('c:/temp/ablunit')
-	}
-	if(process.platform === 'linux') {
-		return Uri.file('/tmp/ablunit')
-	}
-	throw new Error('Unsupported platform: ' + process.platform)
-}
-
 export async function getTestCount (resultsJson: Uri, status = 'tests') {
 	const count = await workspace.fs.readFile(resultsJson).then((content) => {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
@@ -518,7 +507,7 @@ export async function runAllTests (doRefresh = true, waitForResults = true, with
 
 	log.info(tag + 'running all tests')
 	if (doRefresh) {
-		log.info('refresh before run - start')
+		log.info(tag + ' refresh before run - start')
 		await refreshTests()
 		// await refreshTests()
 		// 	.then(() => {
@@ -527,30 +516,30 @@ export async function runAllTests (doRefresh = true, waitForResults = true, with
 		// 	}, (e: unknown) => { throw e })
 	}
 
-	log.info('testing.runAll starting (waitForResults=' + waitForResults + ')')
+	log.info(testCommand + ' starting (waitForResults=' + waitForResults + ')')
 	const r = await commands.executeCommand(testCommand)
 		.then((r) => {
 			log.info(tag + 'command ' + testCommand +' complete! (r=' + r + ')')
 			return sleep(250)
 		}, (e: unknown) => {
-			log.error('testing.runAll failed: ' + e)
+			log.error(tag + testCommand + ' failed: ' + e)
 			throw e
 		})
 		.then(() => {
-			log.info(tag + 'testing.runAll completed - start getResults()')
+			log.info(tag + testCommand + ' completed - start getResults()')
 			if (!waitForResults) { return [] }
 			return getResults(1, tag)
 		})
 		.then((r) => {
 			if (r.length >= 0) {
 				const fUri = r[0]?.cfg.ablunitConfig.optionsUri.filenameUri
-				log.info(tag + 'testing.runAll command complete (filename=' + fUri.fsPath + ', r=' + r + ')')
+				log.info(tag + testCommand + ' command complete (filename=' + fUri.fsPath + ', r.length=' + r.length + ')')
 				return FileUtils.doesFileExist(fUri)
 			}
 			return false
 		}, (e: unknown) => {
 			runAllTestsDuration?.stop()
-			throw new Error('testing.runAll failed: ' + e)
+			throw new Error(testCommand + ' failed: ' + e)
 		})
 	runAllTestsDuration.stop()
 	log.info(tag + 'runAllTests complete (r=' + r + ')')
@@ -564,26 +553,29 @@ export function runAllTestsWithCoverage () {
 export function runTestsInFile (filename: string, len = 1, coverage = false) {
 	const testpath = toUri(filename)
 	log.info('runnings tests in file ' + testpath.fsPath)
+	let command = 'testing.runCurrentFile'
+	if (coverage) {
+		command = 'testing.coverageCurrentFile'
+	}
+
 	return commands.executeCommand('vscode.open', testpath)
 		.then(() => {
 			runTestsDuration = new Duration('runTestsInFile')
-			if (coverage) {
-				return commands.executeCommand('testing.coverageCurrentFile')
-			}
-			return commands.executeCommand('testing.runCurrentFile')
-		}, (e: unknown) => {
-			throw e
+			return commands.executeCommand(command)
 		})
 		.then((r: unknown) => {
+			log.debug('executeCommand(' + command + ').then completed successfully (r=' + JSON.stringify(r, null, 2) + ')')
 			runTestsDuration?.stop()
-			return getResults(len)
+			return refreshData(len)
 		}, (e: unknown) => {
+			log.debug('executeCOmmand(' + command + ').catch failed: ' + e)
 			runTestsDuration?.stop()
 			throw e
 		})
 }
 
-export function runTestAtLine (filename: string, line: number, len = 1) {
+export function runTestAtLine (filename: string, line: number, len = 1, withCoverage = false) {
+	const command = withCoverage ? 'testing.coverageAtCursor' : 'testing.runAtCursor'
 	const testpath = Uri.joinPath(getWorkspaceUri(), filename)
 	log.info('running test at line ' + line + ' in ' + testpath.fsPath)
 	return commands.executeCommand('vscode.open', testpath)
@@ -593,15 +585,15 @@ export function runTestAtLine (filename: string, line: number, len = 1) {
 			} else {
 				throw new Error('vscode.window.activeTextEditor is undefined')
 			}
-			runTestsDuration = new Duration('runTestsAtLine')
-			return commands.executeCommand('testing.runAtCursor')
+			runTestsDuration = new Duration(command)
+			return commands.executeCommand(command)
 		})
 		.then(() => {
 			runTestsDuration?.stop()
-			return getResults(len)
+			return refreshData(len)
 		})
 		.then(() => {
-			log.info('testing.runAtCursor complete')
+			log.info(command + ' complete')
 			return
 		}, (e: unknown) => { throw e })
 }
@@ -657,7 +649,6 @@ export async function waitForTestRunStatus (waitForStatus: RunStatus) {
 		await sleep2(500, 'waitForTestRunStatus count=' + count + '; currentStatus=\'' + currentStatus.toString() + '\' + , waitForStatus=\'' + waitForStatus.toString() + '\'')
 		currentStatus = await getCurrentRunData()
 			.then((runData) => {
-				log.info('100 runData.length=' + runData.length)
 				if (runData.length > 0) {
 					return runData[0].status
 				}
@@ -682,6 +673,7 @@ export async function waitForTestRunStatus (waitForStatus: RunStatus) {
 }
 
 export async function cancelTestRun (resolveCurrentRunData = true) {
+	log.info('cancelling test run')
 	cancelTestRunDuration = new Duration()
 	if (resolveCurrentRunData) {
 		const status = getCurrentRunData().then((resArr) => {
@@ -813,6 +805,9 @@ export function refreshData (resultsLen = 0) {
 		// log.info('refreshData command complete (resp=' + JSON.stringify(resp) + ')')
 		const refs = resp as IExtensionTestReferences
 		log.info('getExtensionTestReferences command complete (resp.length=' + refs.recentResults.length + ')')
+		if (refs.recentError) {
+			throw refs.recentError
+		}
 		// log.info('refs=' + JSON.stringify(refs))
 
 		if (refs.recentResults.length > 0) {
@@ -855,12 +850,10 @@ export function getTestItem (uri: Uri) {
 	}
 	return commands.executeCommand('_ablunit.getTestItem', uri)
 		.then((i: unknown) => {
-			log.info('200')
 			if (!i) {
 				throw new Error('TestItem not found for ' + uri.fsPath)
 			}
 			const item = i as TestItem
-			log.info('202 item.id=' + item.id)
 			return item
 		}, (e: unknown) => { throw e })
 }
@@ -1000,11 +993,12 @@ export async function getResults (len = 1, tag?: string): Promise<ABLResults[]> 
 
 class AssertTestResults {
 	assertResultsCountByStatus (expectedCount: number, status: 'passed' | 'failed' | 'errored' | 'skipped' | 'all') {
-		const res = recentResults?.[0].ablResults?.resultsJson[0]
-		if (!res) {
+		const resJson = recentResults?.[recentResults.length - 1].ablResults?.resultsJson
+		if (!resJson || resJson.length === 0) {
 			assertParent.fail('No results found. Expected ' + expectedCount + ' ' + status + ' tests')
 			return
 		}
+		const res = resJson[resJson.length - 1]
 
 		switch (status) {
 			// case 'passed': actualCount = res.passed; break
@@ -1063,10 +1057,11 @@ class AssertTestResults {
 			assert.fail('expected TimeoutError, but no error was thrown')
 		}
 		if (e instanceof Error) {
-			assert.equal(e.name, 'TimeoutError', 'expected TimeoutError, but got ' + e.name + '\n\n' + JSON.stringify(e, null, 2))
-			return
+			assert.equal(e.name, 'TimeoutError', 'expected TimeoutError, but got e=' + e + '\n\n' + JSON.stringify(e, null, 2))
+		} else {
+			assert.fail('expected TimeoutError, but got e=' + e + '\n\n' + JSON.stringify(e, null, 2))
 		}
-		assert.fail('expected TimeoutError, but non-Error type detected: ' + e + '\n\n' + JSON.stringify(e, null, 2))
+		return true
 	}
 }
 
@@ -1075,12 +1070,16 @@ function getLineExecutions (coverage: FileCoverageDetail[] | never[], lineNum: n
 		throw new Error('coverage is undefined')
 	}
 
-	const details =  coverage.filter((d: FileCoverageDetail) => {
-		const r = d.location as Position
-		return r.line == lineNum
+	const details = coverage.filter((d: FileCoverageDetail) => {
+		if (d.location instanceof vscode.Range) {
+			return d.location.start.line == lineNum
+		} else if (d.location instanceof vscode.Position) {
+			return d.location.line == lineNum
+		}
 	})
 	if (details.length === 0) {
-		throw new Error('Could not find line ' + lineNum + ' in coverage')
+		log.error('not find line ' + lineNum + ' in coverage (details.length=' + details.length + ')')
+		throw new Error('Could not find line ' + lineNum + ' in coverage (details.length=' + details.length + ')')
 	}
 
 	let executed = 0
@@ -1088,6 +1087,7 @@ function getLineExecutions (coverage: FileCoverageDetail[] | never[], lineNum: n
 		if (typeof l.executed === 'number') {
 			executed += l.executed
 		} else {
+			log.error('executed is not a number! details=' + JSON.stringify(details))
 			throw new Error('executed is not a number! details=' + JSON.stringify(details))
 		}
 	}
@@ -1128,6 +1128,9 @@ export const assert = {
 	greaterOrEqual (testValue: number, greaterThan: number, message?: string) {
 		assertParent.ok(testValue >= greaterThan, message)
 	},
+	less (testValue: number, lessThan: number, message?: string) {
+		assertParent.ok(testValue < lessThan, message)
+	},
 	lessOrEqual (testValue: number, lessThan: number, message?: string) {
 		assertParent.ok(testValue <= lessThan, message)
 	},
@@ -1159,38 +1162,26 @@ export const assert = {
 
 	fileExists: (...files: (string | Uri)[]) => {
 		if (files.length === 0) { throw new Error('no file(s) specified') }
-		for (let file of files) {
-			if (!(file instanceof Uri)) {
-				file = toUri(file)
-			}
-			assertParent.ok(FileUtils.doesFileExist(file), 'file does not exist: ' + fileToString(file))
+		for (const file of files) {
+			assertParent.ok(FileUtils.doesFileExist(toUri(file)), 'file does not exist: ' + fileToString(file))
 		}
 	},
 	notFileExists: (...files: string[] | Uri[]) => {
 		if (files.length === 0) { throw new Error('no file(s) specified') }
-		for (let file of files) {
-			if (!(file instanceof Uri)) {
-				file = toUri(file)
-			}
-			assertParent.ok(!FileUtils.doesFileExist(file), 'file exists: ' + fileToString(file))
+		for (const file of files) {
+			assertParent.ok(!FileUtils.doesFileExist(toUri(file)), 'file exists: ' + fileToString(file))
 		}
 	},
 	dirExists: (...dirs: (string | Uri)[]) => {
 		if (dirs.length === 0) { throw new Error('no dir(s) specified') }
-		for (let dir of dirs) {
-			if (!(dir instanceof Uri)) {
-				dir = toUri(dir)
-			}
-			assertParent.ok(FileUtils.doesDirExist(dir), 'dir does not exist: ' + fileToString(dir))
+		for (const dir of dirs) {
+			assertParent.ok(FileUtils.doesDirExist(toUri(dir)), 'dir does not exist: ' + fileToString(dir))
 		}
 	},
 	notDirExists: (...dirs: string[] | Uri[]) => {
 		if (dirs.length === 0) { throw new Error('no dir(s) specified') }
-		for (let dir of dirs) {
-			if (!(dir instanceof Uri)) {
-				dir = toUri(dir)
-			}
-			assertParent.ok(!FileUtils.doesDirExist(dir), 'dir exists: ' + fileToString(dir))
+		for (const dir of dirs) {
+			assertParent.ok(!FileUtils.doesDirExist(toUri(dir)), 'dir exists: ' + fileToString(dir))
 		}
 	},
 
@@ -1232,11 +1223,11 @@ export const assert = {
 			return
 		}
 
-		const actual = recentResults[recentResults.length - 1].coverage.size
+		const actual = recentResults[recentResults.length - 1].statementCoverage.size
 		let msg = 'covered files (' + actual + ') != ' + expected
 		if (actual != expected) {
 			msg += '\nfound:'
-			for (const c of recentResults[recentResults.length - 1].coverage) {
+			for (const c of recentResults[recentResults.length - 1].statementCoverage) {
 				msg += '\n  * ' + c[0]
 				// log.info('covered file: ' + c[0])
 			}
@@ -1260,7 +1251,7 @@ export const assert = {
 			return
 		}
 
-		const coverage = recentResults[recentResults.length - 1].coverage.get(file.fsPath)
+		const coverage = recentResults[recentResults.length - 1].statementCoverage.get(file.fsPath)
 		if (!coverage) {
 			assert.fail('no coverage found for ' + file.fsPath)
 			return
@@ -1268,12 +1259,10 @@ export const assert = {
 		for (const line of lines) {
 			log.info('checking line ' + line + ' in ' + file.fsPath)
 			const executions = getLineExecutions(coverage, line)
-			if (!executed) {
-				log.info(' - not executed')
-				assert.equal(executions, 0, 'line ' + line + ' in ' + file.fsPath + ' was executed (lineCoverage.executed=' + executions + ')')
-			} else {
-				log.info(' - executed')
+			if (executed) {
 				assert.greater(executions, 0, 'line ' + line + ' in ' + file.fsPath + ' was not executed (lineCoverage.executed=' + executions + ')')
+			} else {
+				assert.equal(executions, 0, 'line ' + line + ' in ' + file.fsPath + ' was executed (lineCoverage.executed=' + executions + ')')
 			}
 		}
 	},

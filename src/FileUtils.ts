@@ -1,39 +1,39 @@
 import * as fs from 'fs'
+import * as fsp from 'fs/promises'
 import JSON_minify from 'node-json-minify'
-import { Uri, workspace } from 'vscode'
+import { FileSystemError, Uri, workspace } from 'vscode'
 import { log } from 'ChannelLogger'
+import { RmOptions } from 'fs'
 
-class FileNotFoundError extends Error {
-	public uri: Uri | undefined = undefined
-
-	constructor (public readonly path: string | Uri) {
-		super('file not found: ' + path)
-		this.name = 'ABLUnitRuntimeError'
-		if (path instanceof Uri) {
-			this.uri = path
-			this.path = path.fsPath
-		} else {
-			this.path = path
-			if (isRelativePath(path)) {
-				this.uri = Uri.joinPath(workspace.workspaceFolders![0].uri, path)
-			} else {
-				this.uri = Uri.file(path)
-			}
+export function readFileSync (path: string | Uri, opts?: { encoding?: null; flag?: string; } | null): Buffer {
+	try {
+		return fs.readFileSync(path instanceof Uri ? path.fsPath : path, opts)
+	} catch (e: unknown) {
+		// @ts-expect-error this is safe
+		switch (e.code) {
+			case 'ENOENT':
+				throw FileSystemError.FileNotFound(path)
+			case 'EACCES':
+				throw FileSystemError.NoPermissions('permission denied: ' + path)
+			case 'EISDIR':
+				throw FileSystemError.FileIsADirectory(path)
+			default:
+				if (e instanceof Error) {
+					const err = e as FileSystemError
+					throw err
+				}
+				throw new FileSystemError('Uncategorized error! e=' + e)
 		}
 	}
 }
 
-export function readFileSync (path: string | Uri, opts?: { encoding?: null; flag?: string; } | null) {
-	return fs.readFileSync(path instanceof Uri ? path.fsPath : path, opts)
-}
-
-export function readLinesFromFileSync (uri: Uri) {
+export function readLinesFromFileSync (uri: Uri): string[] {
 	const content = readFileSync(uri).toString()
 	const lines = content.replace(/\r/g, '').split('\n')
 	return lines
 }
 
-export function readStrippedJsonFile (uriOrPath: Uri | string) {
+export function readStrippedJsonFile (uriOrPath: Uri | string): object {
 	let path: string
 	if (uriOrPath instanceof Uri) {
 		path = uriOrPath.fsPath
@@ -46,25 +46,28 @@ export function readStrippedJsonFile (uriOrPath: Uri | string) {
 	return ret
 }
 
-export function writeFile (path: string | Uri, data: string | Uint8Array, options?: fs.WriteFileOptions) {
+export function writeFile (path: string | Uri, data: string | Uint8Array, options?: fs.WriteFileOptions): void {
 	if (path instanceof Uri) {
 		path = path.fsPath
 	}
 	fs.writeFileSync(path, data, options)
 }
 
-export function validateFile (path: string | Uri) {
+export function validateFile (path: string | Uri): boolean {
 
 	if (path instanceof Uri) {
 		if (!doesFileExist(path)) {
-			throw new FileNotFoundError(path)
+			throw FileSystemError.FileNotFound(path)
 		}
 		return true
 	}
 	return true
 }
 
-export function toUri (path: string, base?: string) {
+export function toUri (path: string | Uri, base?: string): Uri {
+	if (path instanceof Uri) {
+		return path
+	}
 	if (base && isRelativePath(path)) {
 		let uri = Uri.file(base)
 		uri = Uri.joinPath(uri, path)
@@ -77,22 +80,22 @@ export function toUri (path: string, base?: string) {
 			}
 			return Uri.joinPath(workspace.workspaceFolders[0].uri, path)
 		}
-		throw new Error('path is relative but no base provided: ' + path)
+		throw new FileSystemError('No basedir provided for relative path: ' + path)
 	}
-
 	return Uri.file(path)
 }
 
-export function isRelativePath (path: string) {
+export function isRelativePath (path: string): boolean {
 	if(path.startsWith('/') || RegExp(/^[a-zA-Z]:[\\/]/).exec(path)) {
 		return false
-	} else {
-		return true
 	}
+	return true
 }
 
-
-function doesPathExist (uri: Uri, type?: 'file' | 'directory') {
+function doesPathExist (uri: Uri | string, type?: 'file' | 'directory'): boolean {
+	if (!(uri instanceof Uri)) {
+		uri = Uri.file(uri)
+	}
 	const exist = fs.existsSync(uri.fsPath)
 	if (!exist || !type) {
 		return false
@@ -106,54 +109,100 @@ function doesPathExist (uri: Uri, type?: 'file' | 'directory') {
 	return false
 }
 
-
-export function doesFileExist (uri: Uri) {
+export function doesFileExist (uri: Uri | string): boolean {
 	return doesPathExist(uri, 'file')
 }
 
-
-export function doesDirExist (uri: Uri) {
+export function doesDirExist (uri: Uri | string): boolean {
 	return doesPathExist(uri, 'directory')
 }
 
-export function createDir (uri: Uri) {
+export function createDir (uri: Uri | string): void {
+	uri = toUri(uri)
 	if (!doesPathExist(uri, 'directory')) {
 		if (doesPathExist(uri)) {
-			throw new Error('path exists but is not a directory: ' + uri.fsPath)
+			throw FileSystemError.FileNotADirectory(uri)
 		}
 		fs.mkdirSync(uri.fsPath, { recursive: true })
 	}
 }
 
-function deletePath (type: 'directory' | 'file', uris: (Uri | undefined)[]) {
-	if (uris.length == 0) {
+function deletePath (type: 'directory' | 'file', uris: Uri[], options: RmOptions = { force: true, recursive: true }): void {
+	if (!uris || uris.length == 0) {
 		return
 	}
+
+	if (options.recursive !== undefined) {
+		options.recursive = true
+	}
+
 	for (const uri of uris) {
 		if (!uri) {
 			continue
 		}
-		if (doesPathExist(uri, type)) {
-			fs.rmSync(uri.fsPath, { recursive: true })
-			continue
-		}
-		if (doesPathExist(uri)) {
-			throw new Error('path exists but is not a ' + type + ': ' + uri.fsPath)
+		try {
+			fs.rmSync(uri.fsPath, options)
+		} catch (e: unknown) {
+			if (e instanceof Error) {
+				const err = e as FileSystemError
+				if (err.code != 'ENOENT') {
+					throw err
+				}
+				log.debug('deletePath: ' + type + ' does not exist: ' + uri.fsPath)
+			} else {
+				throw e
+			}
 		}
 	}
 }
 
-export function deleteFile (...files: (Uri | undefined)[]) {
-	deletePath('file', files)
+export function deleteFile (file: Uri | undefined | (Uri | undefined)[], options?: RmOptions): void {
+	if (!file) return
+	let files: Uri[] = []
+	if (file instanceof Uri) {
+		files = [file]
+	} else if (file) {
+		files = file.filter((f) => f != undefined)
+	}
+	deletePath('file', files, options)
 }
 
-export function deleteDir (...dirs: (Uri | undefined)[]) {
-	deletePath('directory', dirs)
+export function deleteDir (dir: Uri | undefined | (Uri | undefined)[], options?: RmOptions): void {
+	if (!dir) return
+	let dirs: Uri[] = []
+	if (dir instanceof Uri) {
+		dirs = [dir]
+	} else if (dir) {
+		dirs = dir.filter((d) => d != undefined)
+	}
+	deletePath('directory', dirs, options)
 }
 
-export function copyFile (source: Uri, target: Uri, opts?: fs.CopySyncOptions) {
+export function copyFile (source: Uri | string, target: Uri | string, _opts?: fs.CopySyncOptions): void {
+	source = toUri(source)
+	target = toUri(target)
 	if (!doesFileExist(source)) {
-		log.warn('source file does not exist: ' + source.fsPath)
+		log.warn('copyFile failed! source file does not exist: ' + source.fsPath)
 	}
-	fs.cpSync(source.fsPath, target.fsPath, opts)
+	fs.copyFileSync(source.fsPath, target.fsPath)
+}
+
+export function copyFileAsync (source: Uri | string, target: Uri | string): Promise<void> {
+	source = toUri(source)
+	target = toUri(target)
+	if (!doesFileExist(source)) {
+		log.warn('copyFile failed! source file does not exist: ' + source.fsPath)
+		return Promise.resolve()
+	}
+	return fsp.copyFile(source.fsPath, target.fsPath)
+}
+
+export function renameFile (source: Uri | string, target: Uri | string): void {
+	source = toUri(source)
+	target = toUri(target)
+	if (!doesFileExist(source)) {
+		log.warn('renameFile failed! source file does not exist: ' + source.fsPath)
+		return
+	}
+	fs.renameSync(source.fsPath, target.fsPath)
 }

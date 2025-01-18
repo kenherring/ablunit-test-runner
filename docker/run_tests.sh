@@ -11,7 +11,7 @@ options:
                 alternative: set the ABLUNIT_TEST_RUNNER_VSCODE_VERSION environment variable
   -b            drop to bash shell inside container on failure
   -B            same as -b, but only on error
-  -C | -d       delete volume 'test-runner-cache' before running tests
+  -C | -d       delete volumes 'vscode-cli-cache' and 'test-runner-cache' before running tests
   -i            run install and run test
   -m            copy modified files and staged files
   -n            run tests without coverage
@@ -120,10 +120,10 @@ initialize () {
 	fi
 
 	## create volume for .vscode-test directory to persist vscode application downloads
-	if ! docker volume ls | grep -q test-runner-cache; then
-		echo "creating test-runner-cache volume"
-		docker volume create --name test-runner-cache
-	fi
+	# if ! docker volume ls | grep -q test-runner-cache; then
+	# 	echo "creating test-runner-cache volume"
+	# 	docker volume create --name test-runner-cache
+	# fi
 	if ! docker volume ls | grep -q vscode-cli-cache; then
 		echo "creating vscode-cli-cache"
 		docker volume create --name vscode-cli-cache
@@ -149,7 +149,7 @@ initialize () {
 }
 
 run_tests_in_docker () {
-	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] pwd=$(pwd)"
+	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] pwd=$(pwd) ABLUNIT_TEST_RUNNER_OE_VERSION=$ABLUNIT_TEST_RUNNER_OE_VERSION"
 	local ABLUNIT_TEST_RUNNER_OE_VERSION
 
 	for ABLUNIT_TEST_RUNNER_OE_VERSION in "${OE_VERSIONS[@]}"; do
@@ -178,7 +178,7 @@ run_tests_in_docker () {
 		[ -n "${ABLUNIT_TEST_RUNNER_PROJECT_NAME:-}" ] && ARGS+=(-e ABLUNIT_TEST_RUNNER_PROJECT_NAME)
 		ARGS+=(
 			-v "${PWD}":/home/circleci/ablunit-test-runner:ro
-			-v vscode-cli-cache:/home/circleci/project/.vscode-test
+			-v "vscode-cli-cache-$ABLUNIT_TEST_RUNNER_OE_VERSION":/home/circleci/project/.vscode-test
 			kherring/ablunit-test-runner:"${ABLUNIT_TEST_RUNNER_OE_VERSION}"
 			bash -c "/home/circleci/ablunit-test-runner/docker/$SCRIPT.sh $OPTS;"
 		)

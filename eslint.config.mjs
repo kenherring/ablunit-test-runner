@@ -86,21 +86,29 @@ export default [{
 		'@typescript-eslint/no-unnecessary-condition': 0,
 		'no-unused-vars': 'off',
 
-		'@typescript-eslint/no-unused-vars': ['warn', {
-			argsIgnorePattern: '^_',
-			vars: 'all',
-			args: 'none',
-			ignoreRestSiblings: false,
-		}],
+		'@typescript-eslint/no-unused-vars': [
+			'error',
+			{
+				'args': 'all',
+				'argsIgnorePattern': '^_',
+				'caughtErrors': 'all',
+				'caughtErrorsIgnorePattern': '^_',
+				'destructuredArrayIgnorePattern': '^_',
+				'varsIgnorePattern': '^_',
+				'ignoreRestSiblings': true,
+			}
+		],
 
 		'@typescript-eslint/prefer-readonly': 'warn',
 		'@typescript-eslint/restrict-plus-operands': 'off',
-		'@typescript-eslint/switch-exhaustiveness-check': 'warn',
+		'@typescript-eslint/switch-exhaustiveness-check': ['warn', {
+			considerDefaultExhaustiveForUnions: true,
+		}],
 		'promise/catch-or-return': 'warn',
 		'promise/no-callback-in-promise': 'off',
 
 		'promise/always-return': ['warn', {
-			ignoreLastCallback: true,
+			ignoreLastCallback: true
 		}],
 
 		'no-console': 'warn',

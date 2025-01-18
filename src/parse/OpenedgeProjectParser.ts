@@ -474,9 +474,7 @@ function getWorkspaceProfileConfig (workspaceUri: Uri, openedgeProjectProfile?: 
 			if (prf.propath.length == 0)
 				prf.propath = prjConfig.propath
 			for (const e of prf.buildPath) {
-				if (!e.buildDir) {
-					e.buildDir = e.path
-				}
+				e.buildDir = e.buildDir ?? e.path
 			}
 			return prf
 		}

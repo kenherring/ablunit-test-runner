@@ -1,11 +1,13 @@
 #!/bin/bash
 set -eou pipefail
 
+. scripts/common.sh
+
 initialize () {
-    echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}]"
+    log_it
     rm -f artifacts/mocha_results_sonar/merged*.xml
     if ! find artifacts/mocha_results_sonar -type f -name "*.xml"; then
-        echo "ERROR: no *.xml files found in artifacts/mocha_results_sonar"
+        log_error "no *.xml files found in artifacts/mocha_results_sonar"
         exit 1
     else
         echo "Directory is empty"
@@ -31,27 +33,26 @@ convert_and_merge_xml () {
 
     ${VERBOSE:-false} && cat artifacts/mocha_results_sonar_merged.xml
 
-    echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] merged test results for sonar consumption.  output: artifacts/mocha_results_sonar_merged.xml"
+    log_it 'merged test results for sonar consumption.  output: artifacts/mocha_results_sonar_merged.xml'
 
     ## Merge to json
     xq -s '.' artifacts/mocha_results_xunit/*.xml > artifacts/mocha_results_xunit_merged.json
 }
 
 show_summary () {
-    echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}]"
+    log_it
     TEST_COUNT="$(jq '[.. | objects | .testcase//empty | .. | objects] | length' < artifacts/mocha_results_xunit_merged.json)"
-    echo "[$(date +%Y-%m-%d:%H:%M:%S) TEST_COUNT=$TEST_COUNT"
+    log_it "TEST_COUNT=$TEST_COUNT"
     SKIPPED="$(jq '[.. | objects | .testcase//empty | .. | objects | select(has("skipped")) ] | length' < artifacts/mocha_results_xunit_merged.json)"
-    echo "[$(date +%Y-%m-%d:%H:%M:%S) $SKIPPED/$TEST_COUNT tests skipped"
+    log_it "$SKIPPED/$TEST_COUNT tests skipped"
     FAILURES="$(jq '[.. | objects | .testcase//empty | .. | objects | select(has("failure")) ] | length' < artifacts/mocha_results_xunit_merged.json)"
-    echo "[$(date +%Y-%m-%d:%H:%M:%S) $FAILURES/$TEST_COUNT tests failed"
     jq '[.. | objects | .testcase//empty | .. | objects | select(has("failure")) ]' < artifacts/mocha_results_xunit_merged.json > artifacts/mocha_failures.json
     if [ "$FAILURES" -eq 0 ]; then
-        echo "[$(date +%Y-%m-%d:%H:%M:%S) $FAILURES/$TEST_COUNT tests failed"
+        log_it "$FAILURES/$TEST_COUNT tests failed"
     else
-        echo "[$(date +%Y-%m-%d:%H:%M:%S) ERROR! $FAILURES/$TEST_COUNT tests failed"
+        log_it "ERROR! $FAILURES/$TEST_COUNT tests failed"
         jq '.' artifacts/mocha_failures.json
-        echo "[$(date +%Y-%m-%d:%H:%M:%S) exit with error code 1 due to $FAILURES failed tests"
+        log_it "exit with error code 1 due to $FAILURES failed tests"
         exit 1
     fi
 }
