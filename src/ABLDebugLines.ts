@@ -23,51 +23,8 @@ export class ABLDebugLines {
 		return this.maps.size
 	}
 
-	getSourceLines (debugSource: string | Uri) {
-		if (debugSource instanceof Uri) {
-			debugSource = debugSource.fsPath
-		}
-		log.info('debugSource=' + debugSource)
-		const map = this.maps.get(debugSource)
-		if (!map) {
-			throw new Error('no source map found (' + debugSource + ')')
-		}
-		return map.items
-	}
-
 	getProcessingMethod (debugSource: string) {
 		return this.processingMethodMap.get(debugSource)
-	}
-
-	async getFuncRange (debugSource: string, name: string) {
-		const map = await this.getSourceMap(debugSource)
-		if (!map) return
-		const lines = map.items.filter((line) => {
-			return line.procName == name
-		})
-		if (!lines) {
-			log.warn('cannot find function range (' + debugSource + ', ' + name + ')')
-			return
-		}
-		const maxLineNum = Math.max(...lines.map((line) => line.debugLine))
-		const minLineNum = Math.min(...lines.map((line) => {
-			if (line.debugLine > 0) {
-				return line.debugLine
-			}
-			return 999999999
-		}))
-		return { minLineNum, maxLineNum }
-	}
-
-	async getSourceZeroLines (debugSource: string) {
-		const map = await this.getSourceMap(debugSource)
-		if (!map) return
-		const lines = map.items.filter((line) => line.debugLine === 0)
-		if (!lines) {
-			log.warn('cannot find zero line (' + debugSource + ')')
-			return
-		}
-		return lines
 	}
 
 	async getSourceLine (debugSource: string, debugLine: number) {
