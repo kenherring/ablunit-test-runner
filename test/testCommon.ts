@@ -507,7 +507,7 @@ export async function runAllTests (doRefresh = true, waitForResults = true, with
 
 	log.info(tag + 'running all tests')
 	if (doRefresh) {
-		log.info('refresh before run - start')
+		log.info(tag + ' refresh before run - start')
 		await refreshTests()
 		// await refreshTests()
 		// 	.then(() => {
@@ -522,7 +522,7 @@ export async function runAllTests (doRefresh = true, waitForResults = true, with
 			log.info(tag + 'command ' + testCommand +' complete! (r=' + r + ')')
 			return sleep(250)
 		}, (e: unknown) => {
-			log.error(testCommand + ' failed: ' + e)
+			log.error(tag + testCommand + ' failed: ' + e)
 			throw e
 		})
 		.then(() => {
@@ -577,7 +577,6 @@ export function runTestsInFile (filename: string, len = 1, coverage = false) {
 export function runTestAtLine (filename: string, line: number, len = 1, withCoverage = false) {
 	const command = withCoverage ? 'testing.coverageAtCursor' : 'testing.runAtCursor'
 	const testpath = Uri.joinPath(getWorkspaceUri(), filename)
-
 	log.info('running test at line ' + line + ' in ' + testpath.fsPath)
 	return commands.executeCommand('vscode.open', testpath)
 		.then(() => {
@@ -586,7 +585,7 @@ export function runTestAtLine (filename: string, line: number, len = 1, withCove
 			} else {
 				throw new Error('vscode.window.activeTextEditor is undefined')
 			}
-			runTestsDuration = new Duration('runTestAtLine command=' + command)
+			runTestsDuration = new Duration(command)
 			return commands.executeCommand(command)
 		})
 		.then(() => {
@@ -594,7 +593,7 @@ export function runTestAtLine (filename: string, line: number, len = 1, withCove
 			return refreshData(len)
 		})
 		.then(() => {
-			log.info('testing.runAtCursor complete')
+			log.info(command + ' complete')
 			return
 		}, (e: unknown) => { throw e })
 }

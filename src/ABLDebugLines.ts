@@ -75,7 +75,9 @@ export class ABLDebugLines {
 		// 	return undefined
 		// }
 		const map = await this.getSourceMap(debugSource)
-		if (!map) return
+		if (!map) {
+			return
+		}
 		const ret = map.items.find((line) => line.debugLine === debugLine)
 		return ret
 	}

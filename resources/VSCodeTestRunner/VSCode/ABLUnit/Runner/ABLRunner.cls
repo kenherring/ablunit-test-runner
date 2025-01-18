@@ -6,6 +6,13 @@ using OpenEdge.Core.Collections.Array.
 
 class VSCode.ABLUnit.Runner.ABLRunner inherits OpenEdge.ABLUnit.Runner.ABLRunner :
 
+
+    define temp-table ttEntityMap no-undo
+        field entityId as integer
+        field entityName as character
+        field entityParent as character
+        index idx-1 is primary unique entityId.
+    
     define variable VERBOSE as logical no-undo.
 
     constructor public ABLRunner ():
@@ -17,12 +24,6 @@ class VSCode.ABLUnit.Runner.ABLRunner inherits OpenEdge.ABLUnit.Runner.ABLRunner
         super(inputConfig, updateFile).
         VERBOSE = (os-getenv('VERBOSE') = 'true' or os-getenv('VERBOSE') = '1').
     end constructor.
-
-    define temp-table ttEntityMap no-undo
-        field entityId as integer
-        field entityName as character
-        field entityParent as character
-        index idx-1 is primary unique entityId.
 
     method public void createEntityMapRecord(entityId as integer, entityName as character, parentName as character):
         if VERBOSE then message "createEntityMapRecord".

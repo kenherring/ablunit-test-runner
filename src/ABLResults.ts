@@ -104,13 +104,13 @@ export class ABLResults implements Disposable {
 		log.info('[start] workspaceFolder=' + this.workspaceFolder.uri.fsPath)
 
 		// eslint-disable-next-line @typescript-eslint/no-invalid-void-type
-		const prom: (Thenable<void> | Promise<void> | Promise<void[]> | undefined)[] = []
-		prom[0] = this.cfg.createProfileOptions(this.cfg.ablunitConfig.profOptsUri, this.cfg.ablunitConfig.profiler)
-		prom[1] = this.cfg.createProgressIni(this.propath.toString(), this.dlc)
-		prom[2] = this.cfg.createAblunitJson(this.cfg.ablunitConfig.config_uri, this.cfg.ablunitConfig.options, this.testQueue)
-		prom[3] = this.cfg.createDbConnPf(this.cfg.ablunitConfig.dbConnPfUri, this.cfg.ablunitConfig.dbConns)
+		const proms: (Thenable<void> | Promise<void> | Promise<void[]> | undefined)[] = []
+		this.cfg.createProfileOptions(this.cfg.ablunitConfig.profOptsUri, this.cfg.ablunitConfig.profiler)
+		this.cfg.createDbConnPf(this.cfg.ablunitConfig.dbConnPfUri, this.cfg.ablunitConfig.dbConns)
+		proms.push(this.cfg.createProgressIni(this.propath.toString(), this.dlc))
+		proms.push(this.cfg.createAblunitJson(this.cfg.ablunitConfig.config_uri, this.cfg.ablunitConfig.options, this.testQueue))
 
-		return Promise.all(prom).then(() => {
+		return Promise.all(proms).then(() => {
 			log.info('done creating config files for run')
 			return
 		}, (e: unknown) => {
@@ -528,14 +528,13 @@ export class ABLResults implements Disposable {
 		log.info('parsing profile data complete ' + duration.toString(), options)
 	}
 
-	async assignProfileResults (profJson: ABLProfileJson, item?: TestItem) {
+	async assignProfileResults (profJson: ABLProfileJson, item: TestItem | undefined) {
 		if (!profJson) {
 			log.error('no profile data available...')
 			throw new Error('no profile data available...')
 		}
 		for (const module of profJson.modules) {
 			if (checkSkipList(module.SourceName)) {
-				log.debug('skipping ' + module.SourceName)
 				continue
 			}
 			await this.setCoverage(module, item)
@@ -573,31 +572,34 @@ export class ABLResults implements Disposable {
 	}
 
 	sortLocation (a: DeclarationCoverage | StatementCoverage, b: DeclarationCoverage | StatementCoverage) {
+		let startPosA: Position
+		let startPosB: Position
+		let endPosA: Position | undefined
+		let endPosB: Position | undefined
 
-		const getBoundaries = (location: Range | Position) => {
-			if (location instanceof Range) {
-				return [location.start.line, location.start.character, location.end.line, location.end.character]
-			} else {
-				return [location.line, 0, location.line + 1, 0]
-			}
+		if (a.location instanceof Position) {
+			startPosA = a.location
+		} else {
+			startPosA = a.location.start
+		}
+		if (b.location instanceof Position) {
+			startPosB = b.location
+		} else {
+			startPosB = b.location.start
 		}
 
-		const [ startLineA, startColA, endLineA, endColA ] = getBoundaries(a.location)
-		const [ startLineB, startColB, endLineB, endColB ] = getBoundaries(b.location)
-
-		// sort the first starting location first
-		if (startLineA != startLineB) {
-			return startLineA - startLineB
-		}
-		if (startColA != startColB) {
-			return startColA - startColB
+		const compStart = startPosA.compareTo(startPosB)
+		if (compStart != 0) {
+			return compStart
 		}
 
-		// for nested blocks with same starting line, put the bigger block first
-		if (endLineA != endLineB) {
-			return endLineB - endLineA
+		if (a.location instanceof Range) {
+			endPosA = a.location.end
 		}
-		return endColB - endColA
+		if (b.location instanceof Range) {
+			endPosB = b.location.end
+		}
+		return endPosA?.compareTo(endPosB ?? startPosB) ?? 0
 	}
 
 	async setCoverage (module: IModule, item?: TestItem) {

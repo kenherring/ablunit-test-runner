@@ -14,7 +14,6 @@
 		},
 		// "rootDir": ".",
 		// "sourceRoot": "src",
-		// "sourceMap": true,
 		"inlineSourceMap": true,
 		"strict": true,
 		"alwaysStrict": true,

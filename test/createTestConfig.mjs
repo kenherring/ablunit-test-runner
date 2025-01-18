@@ -52,7 +52,7 @@ function getMochaTimeout (projName) {
 
 	switch (projName) {
 		case 'DebugLines': return 120000 // install openedge-abl-lsp for the first time, so give it a moment to start
-		case 'proj0': return 60000
+		case 'proj0': return 30000
 		case 'proj1': return 30000
 		// case 'proj2': return 20000
 		case 'proj5': return 60000
@@ -81,11 +81,8 @@ function getMochaOpts (projName) {
 		// ui: 'tdd', // describe, it, etc
 		// ui: 'bdd' // default; suite, test, etc
 		retries: 0,
-		// parallel: false,
-		// dryRun: true,
+		parallel: false,
 		bail: true,
-		isWorker: true,
-		// parallel: true,
 		require: [
 			'mocha',
 			'tsconfig-paths/register',
@@ -129,7 +126,7 @@ function getLaunchArgs (projName) {
 	// args.push('--wait')
 	// args.push('--locale <locale>')
 	// args.push('--user-data-dir', '<dir>')
-	args.push('--user-data-dir', '.vscode-test/user-data_' + projName)
+	// args.push('--user-data-dir', '.vscode-test/user-data_' + projName)
 	// args.push('--profile <profileName>')
 	// args.oush('--profile=ablunit-test')
 	// args.push('--profile-temp') // create a temporary profile for the test run in lieu of cleaning up user data

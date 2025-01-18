@@ -24,9 +24,9 @@ export class ABLUnitConfig  {
 		this.requestKind = request.profile?.kind
 	}
 
-	async writeFile (uri: Uri, data: Uint8Array) {
+	writeFile (uri: Uri, data: Uint8Array) {
 		FileUtils.createDir(dirname(uri.fsPath))
-		return workspace.fs.writeFile(uri, data)
+		FileUtils.writeFile(uri, data)
 	}
 
 	createProgressIni (propath: string, dlc: IDlc) {
@@ -69,13 +69,13 @@ export class ABLUnitConfig  {
 
 	createProfileOptions (uri: Uri, profOpts: ProfilerOptions) {
 		if (!profOpts.enabled) {
-			return Promise.resolve()
+			return
 		}
 		log.info('creating profiler options file: \'' + uri.fsPath + '\'')
 
 		FileUtils.deleteFile(this.ablunitConfig.profFilenameUri)
 		if (this.requestKind != TestRunProfileKind.Coverage) {
-			return Promise.resolve()
+			return
 		}
 
 		const opt: string[] = [
@@ -102,7 +102,7 @@ export class ABLUnitConfig  {
 		if (profOpts.traceFilter != '') {
 			opt.push('-traceFilter "' + profOpts.traceFilter + '"')
 		}
-		return this.writeFile(uri, Uint8Array.from(Buffer.from(opt.join('\n') + '\n')))
+		this.writeFile(uri, Uint8Array.from(Buffer.from(opt.join('\n') + '\n')))
 	}
 
 	createDbConnPf (uri: Uri, dbConns: IDatabaseConnection[]) {
@@ -117,7 +117,8 @@ export class ABLUnitConfig  {
 			lines.push(conn.connect)
 		}
 		if (lines.length > 0) {
-			return this.writeFile(uri, Uint8Array.from(Buffer.from(lines.join('\n') + '\n')))
+			this.writeFile(uri, Uint8Array.from(Buffer.from(lines.join('\n') + '\n')))
+			return
 		}
 		throw new Error('unexpected error writing dbconns to ' + uri.fsPath)
 	}

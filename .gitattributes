@@ -10,4 +10,4 @@
 *.w linguist-language=OpenEdge-ABL
 
 test_projects/proj1/import_charset.p text working-tree-encoding=UTF-8
-# test_projects/proj1/openedge-project.proj1.8.json working-tree-encoding=ISO-8859-1
+test_projects/proj1/openedge-project.proj1.8.json working-tree-encoding=ISO-8859-1

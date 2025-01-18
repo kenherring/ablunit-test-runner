@@ -36,36 +36,22 @@ suite('proj0  - Extension Test Suite', () => {
 			toUri('src/dirA/proj10.p'),
 			toUri('UNIT_TEST.tmp'),
 		], { force: true })
-		log.info('200')
 		while (disposables.length > 0) {
-			log.info('201')
 			const d = disposables.pop()
-			log.info('202')
 			if (d) {
-				log.info('203')
 				d.dispose()
-				log.info('204')
 			} else {
-				log.info('205')
 				log.warn('disposables.length != 0')
-				log.info('206')
 			}
-			log.info('207')
 		}
-		log.info('208')
-		// FileUtils.copyFile(toUri('.vscode/settings.json.bk'), toUri('.vscode/settings.json'))
-		log.info('209')
 		return
 	})
 
 	suiteTeardown('proj0 - after', () => {
-		log.info('300')
 		FileUtils.renameFile(toUri('.vscode/settings.json.bk'), toUri('.vscode/settings.json'))
-		log.info('301')
 	})
 
 	test('proj0.01 - ${workspaceFolder}/ablunit.json file exists', () => {
-		log.info('start ----- proj0.01')
 		const prom = runAllTests()
 			.then(() => getResults())
 			.then((recentResults) => {
@@ -163,23 +149,15 @@ suite('proj0  - Extension Test Suite', () => {
 	})
 
 	test('proj0.08 - parse test procedure with skip annotation', async () => {
-		log.info('start proj0.08')
 		await commands.executeCommand('vscode.open', toUri('src/ignoreProcedure.p'))
 		await sleep2(250)
-		log.info('600')
 		const testClassItem = await getTestItem(toUri('src/ignoreProcedure.p'))
-		log.info('601')
-		log.info('601')
 
 		if (!testClassItem) {
-			log.info('602')
 			log.error('cannot find TestItem for src/ignoreProcedure.p')
-			log.info('603')
 			assert.fail('cannot find TestItem for src/ignoreProcedure.p')
-			log.info('604')
 			// throw new Error('cannot find TestItem for src/ignoreProcedure.p')
 		}
-		log.info('605')
 		assert.equal(testClassItem.children.size, 5, 'testClassItem.children.size should be 5')
 	})
 
@@ -191,8 +169,8 @@ suite('proj0  - Extension Test Suite', () => {
 				return true
 			}, (e: unknown) => {
 				if (e instanceof Error) {
-					log.info('e.message=' + e.message)
-					log.info('e.stack=' + e.stack)
+					log.error('e.message=' + e.message)
+					log.error('e.stack=' + e.stack)
 				}
 				assert.fail('error parsing results_test1.xml: ' + e)
 			})
@@ -240,13 +218,7 @@ suite('proj0  - Extension Test Suite', () => {
 			}, (e: unknown) => { throw e })
 
 		const startCount = await getTestItem(toUri('src/dirA/proj10.p'))
-			.then((r) => {
-				for (const [ ,c] of r.children) {
-					log.info('c.label=' + c.label + '; c.id='  + c.id)
-				}
-				return r.children.size
-			}, (e: unknown) => { throw e })
-
+			.then((r) => r.children.size)
 
 		// update test program
 		const edit = new vscode.WorkspaceEdit()
@@ -257,12 +229,7 @@ suite('proj0  - Extension Test Suite', () => {
 		// validate test case items added
 		await sleep2(250) // TODO - remove me
 		const endCount = await getTestItem(toUri('src/dirA/proj10.p'))
-			.then((r) => {
-				for (const [ ,c] of r.children) {
-					log.info('c.label=' + c.label + '; c.id='  + c.id)
-				}
-				return r.children.size
-			}, (e: unknown) => { throw e })
+			.then((r) => r.children.size)
 		assert.equal(endCount - startCount, 2, 'test cases added != 2 (endCount=' + endCount + '; startCount=' + startCount + ')')
 	})
 
@@ -402,8 +369,7 @@ suite('proj0  - Extension Test Suite', () => {
 
 		let cnt = 0
 		res[0].declarationCoverage.forEach((dc, path) => {
-			log.info('dc uri=' + path + ', dc=' + JSON.stringify(dc))
-			assert.equal(dc.length, 3, 'dc.length')
+			assert.equal(dc.length, 3, 'dc.length (path=' + path + ')')
 			cnt++
 		})
 		assert.equal(cnt, 1, 'declarationCoverage count')

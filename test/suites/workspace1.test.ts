@@ -19,7 +19,6 @@ suite('workspace1 - Extension Test Suite', () => {
 	})
 
 	teardown('workspace1 - afterEach', () => {
-		log.info('after')
 		FileUtils.deleteFile(Uri.joinPath(getWorkspaceUri(0), '.vscode', 'ablunit-test-profile.json'))
 		FileUtils.copyFile(Uri.joinPath(getWorkspaceUri(1), '.vscode', 'ablunit-test-profile.json.bk'), Uri.joinPath(getWorkspaceUri(1), '.vscode', 'ablunit-test-profile.json'))
 	})

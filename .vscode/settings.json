@@ -1,26 +1,10 @@
 {
-	// "eslint.lintTask.enable": true,
-	"eslint.codeActionsOnSave.mode": "problems",
-	// "extension-test-runner.extractSettings": {
-	// 	"suite": [ "suite" ],
-	// 	"test": [ "test" ],
-	// 	// "extractWith": "syntax",
-	// 	"extractWith": "evaluation",
-	// },
-	"git.branchProtection": [
-		"main"
+	"circleci.filters.branchFilter": "allBranches",
+    "circleci.persistedProjectSelection": [
+		"gh/kenherring/ablunit-test-runner"
 	],
-	// "extension-test-runner.extractSettings": {
-	// 	"suite": [
-	// 		"describe",
-	// 		"suite"
-	// 	],
-	// 	"test": [
-	// 		"it",
-	// 		"test"
-	// 	],
-	// 	"extractWith": "syntax"
-	// },
+	"eslint.lintTask.enable": true,
+	"eslint.codeActionsOnSave.mode": "problems",
 	"files.associations": {
 		"ablunit-test-profile*.json": "jsonc"
 	},
@@ -37,6 +21,9 @@
 		"out": true,
 		"node_modules": true
 	},
+	"git.branchProtection": [
+		"main"
+	],
 	"json.schemas": [
 		{
 			"fileMatch": [
@@ -66,8 +53,4 @@
 	"task.autoDetect": "on",
 	"typescript.preferences.quoteStyle": "single",
     "typescript.validate.enable": true,
-    "circleci.filters.branchFilter": "allBranches",
-    "circleci.persistedProjectSelection": [
-		"gh/kenherring/ablunit-test-runner"
-	],
 }

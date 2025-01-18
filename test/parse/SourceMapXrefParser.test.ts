@@ -51,7 +51,7 @@ test('SourceMapXrefParser.test_1', () => {
 		assertLines(sourceMap.items, 11, 7, testuri, testuri)
 		assertLines(sourceMap.items, 12, 8, testuri, testuri)
 		assertLines(sourceMap.items, 13, 9, testuri, testuri)
-		return // NOSONAR
+		return
 	})
 })
 
