@@ -113,7 +113,6 @@ export async function activate (context: ExtensionContext) {
 			})
 	}
 
-	// TODO
 	const getDeclarationCoverage = (module: IModule) => {
 		const fdc: DeclarationCoverage[] = []
 
@@ -159,10 +158,7 @@ export async function activate (context: ExtensionContext) {
 				continue
 			}
 
-			const lines = module.lines
-			for (const child of module.childModules) {
-				lines.push(...child.lines)
-			}
+			const lines = module.childModules.map((a) => a.lines).flat()
 			for (const line of lines) {
 				if (line.LineNo == 0) {
 					continue

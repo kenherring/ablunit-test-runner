@@ -37,7 +37,7 @@ test('SourceMapXrefParser.test_1', () => {
 	return getSourceMap(propath, testuri).then((sourceMap) => {
 
 		for (const item of sourceMap.items) {
-			log.info('item=' + item.debugLine + ',' + item.sourceLine)
+			log.info('item=' + JSON.stringify(item, null, 2))
 		}
 
 		assert.equal(sourceMap.items.length, getLineCount(toUri('.dbg/test_1/test.p')))
@@ -51,7 +51,7 @@ test('SourceMapXrefParser.test_1', () => {
 		assertLines(sourceMap.items, 11, 7, testuri, testuri)
 		assertLines(sourceMap.items, 12, 8, testuri, testuri)
 		assertLines(sourceMap.items, 13, 9, testuri, testuri)
-		return
+		return // NOSONAR
 	})
 })
 

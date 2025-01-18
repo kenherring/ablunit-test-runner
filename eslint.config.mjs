@@ -108,7 +108,7 @@ export default [{
 		'promise/no-callback-in-promise': 'off',
 
 		'promise/always-return': ['warn', {
-			ignoreLastCallback: true,
+			ignoreLastCallback: true
 		}],
 
 		'no-console': 'warn',

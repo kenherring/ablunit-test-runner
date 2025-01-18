@@ -71,7 +71,7 @@ export async function parseCallstack (debugLines: ABLDebugLines, callstackRaw: s
 		let lineinfo: SourceMapItem | undefined = undefined
 		lineinfo = await debugLines.getSourceLine(moduleParent, debugLine)
 			.catch((e: unknown) => {
-				log.info('could not find source line for ' + moduleParent + ' at line ' + debugLine + '.  using raw callstack data')
+				log.info('could not find source line for ' + moduleParent + ':' + debugLine + ' using raw callstack data (e=' + e + ')')
 				return undefined
 			})
 

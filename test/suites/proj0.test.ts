@@ -393,4 +393,20 @@ suite('proj0  - Extension Test Suite', () => {
 			'statementCoverage not 100% (' + (fc?.statementCoverage?.covered ?? 0) + ' >= ' + (fc?.statementCoverage?.total ?? 0) + ')')
 	})
 
+	test('proj0.19 - program runs external source', async () => {
+		await runTestsInFile('src/test19.p', 1, true)
+		const res = await getResults()
+		assert.equal(res.length, 1, 'ABLResults[].length')
+		assert.equal(res[0].fileCoverage.size, 1, 'ABLResults[0].fileCoverage.size')
+		assert.equal(res[0].declarationCoverage.size, 1, 'ABLResults[0].declarationCoverage.size')
+
+		let cnt = 0
+		res[0].declarationCoverage.forEach((dc, path) => {
+			log.info('dc uri=' + path + ', dc=' + JSON.stringify(dc))
+			assert.equal(dc.length, 3, 'dc.length')
+			cnt++
+		})
+		assert.equal(cnt, 1, 'declarationCoverage count')
+	})
+
 })

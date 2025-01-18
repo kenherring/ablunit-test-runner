@@ -1,36 +1,27 @@
 import { Uri, workspace } from 'vscode'
 import { assert, getWorkspaceUri, log, runAllTests, suiteSetupCommon, updateTestProfile } from '../testCommon'
+import * as FileUtils from 'FileUtils'
 
 suite('workspace1 - Extension Test Suite', () => {
 
 	suiteSetup('workspace1 - before', async () => {
 		await suiteSetupCommon()
 
-		const files = [
+		FileUtils.deleteFile([
 			Uri.joinPath(getWorkspaceUri(0), '.vscode', 'ablunit-test-profile.json'),
 			Uri.joinPath(getWorkspaceUri(0), 'listings'),
 			Uri.joinPath(getWorkspaceUri(1), 'listings'),
 			Uri.joinPath(getWorkspaceUri(0), 'workspaceAblunit'),
 			Uri.joinPath(getWorkspaceUri(1), 'workspaceAblunit'),
-		]
-		for (const f of files) {
-			log.info('deleting ' + f.fsPath)
-			await workspace.fs.delete(f, { recursive: true })
-				.then(() => {
-					log.info('deleted ' + f.fsPath)
-					return
-				}, () => {
-					log.info('cannot delete ' + f.fsPath + ', does not exist')
-				})
-		}
+		])
 
-		await workspace.fs.copy(Uri.joinPath(getWorkspaceUri(1), '.vscode', 'ablunit-test-profile.json'), Uri.joinPath(getWorkspaceUri(1), '.vscode', 'ablunit-test-profile.json.bk'), { overwrite: true })
+		FileUtils.copyFile(Uri.joinPath(getWorkspaceUri(1), '.vscode', 'ablunit-test-profile.json'), Uri.joinPath(getWorkspaceUri(1), '.vscode', 'ablunit-test-profile.json.bk'))
 	})
 
-	teardown('workspace1 - afterEach', async () => {
+	teardown('workspace1 - afterEach', () => {
 		log.info('after')
-		await workspace.fs.delete(Uri.joinPath(getWorkspaceUri(0), '.vscode', 'ablunit-test-profile.json')).then(() => { return }, (e: unknown) => { return })
-		await workspace.fs.copy(Uri.joinPath(getWorkspaceUri(1), '.vscode', 'ablunit-test-profile.json.bk'), Uri.joinPath(getWorkspaceUri(1), '.vscode', 'ablunit-test-profile.json'), { overwrite: true })
+		FileUtils.deleteFile(Uri.joinPath(getWorkspaceUri(0), '.vscode', 'ablunit-test-profile.json'))
+		FileUtils.copyFile(Uri.joinPath(getWorkspaceUri(1), '.vscode', 'ablunit-test-profile.json.bk'), Uri.joinPath(getWorkspaceUri(1), '.vscode', 'ablunit-test-profile.json'))
 	})
 
 	test('workspace1.1 - <workspaceFolder>/ablunit.json file exists', async () => {

@@ -29,7 +29,7 @@
 		// ],
 
 		"allowJs": true,
-		"checkJs": true,
+		// "checkJs": true,
 
 		// "allowSyntheticDefaultImports": true, // enabled by "esModuleInterop"
 		// "allowUnreachableCode": false, // editor warning when undefined
