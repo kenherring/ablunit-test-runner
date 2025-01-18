@@ -1,4 +1,3 @@
-import { Uri } from 'vscode'
 import { PropathParser } from './ABLPropath'
 import { log } from './ChannelLogger'
 import { SourceMap } from './parse/SourceMapParser'

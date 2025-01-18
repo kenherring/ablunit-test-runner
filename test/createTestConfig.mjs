@@ -52,7 +52,8 @@ function getMochaTimeout (projName) {
 
 	switch (projName) {
 		case 'DebugLines': return 120000 // install openedge-abl-lsp for the first time, so give it a moment to start
-		case 'proj0': return 30000
+		// case 'proj0': return 30000
+		case 'proj0': return 45000
 		case 'proj1': return 30000
 		// case 'proj2': return 20000
 		case 'proj5': return 60000
@@ -311,13 +312,14 @@ function getCoverageOpts () {
 		// * 'lcovonly' does not include 'html' output
 		reporter: [ 'text', 'lcovonly' ],
 		output: coverageDir, // https://github.com/microsoft/vscode-test-cli/issues/38
-		include: [
-			'**'
-		],
 		exclude: [
 			'node_modules',
+			'node_modules/',
 			'node_modules/**',
-			'**/node_modules/**'
+			'./node_modules',
+			'./node_modules/',
+			'./node_modules/**',
+			'**/node_modules/**',
 		],
 	}
 	return coverageOpts

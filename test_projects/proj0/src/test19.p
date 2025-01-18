@@ -25,6 +25,11 @@ procedure testProcedureName :
   run procedureNotTest.
 end procedure.
 
+@Test.
+procedure testProcedureName2 :
+  OpenEdge.Core.Assert:Equals(1,1).
+end procedure.
+
 procedure notRunProc :
   if true then
     message "notRunProc".

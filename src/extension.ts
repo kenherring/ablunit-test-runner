@@ -1,6 +1,5 @@
 import {
-	CancellationError,
-	CancellationToken, ConfigurationChangeEvent, DeclarationCoverage, ExtensionContext,
+	CancellationError, CancellationToken, CancellationTokenSource, ConfigurationChangeEvent, ExtensionContext,
 	ExtensionMode,
 	FileCoverage,
 	FileCoverageDetail,
@@ -26,12 +25,12 @@ import { ABLUnitRuntimeError, TimeoutError } from 'Errors'
 import { basename } from 'path'
 import * as FileUtils from './FileUtils'
 import { gatherAllTestItems, IExtensionTestReferences } from 'ABLUnitCommon'
-import { getModuleRange, IModule } from 'parse/ProfileParser'
+import { getDeclarationCoverage } from 'parse/ProfileParser'
 
 let recentResults: ABLResults[] = []
 let recentError: Error | undefined = undefined
 
-export async function activate (context: ExtensionContext) {
+export function activate (context: ExtensionContext) {
 	const ctrl = tests.createTestController('ablunitTestController', 'ABLUnit Test')
 	let currentTestRun: TestRun | undefined = undefined
 	let isRefreshTestsComplete = false
@@ -43,7 +42,7 @@ export async function activate (context: ExtensionContext) {
 
 	const contextStorageUri = context.storageUri ?? Uri.file(process.env['TEMP'] ?? '') // will always be defined as context.storageUri
 	const contextResourcesUri = Uri.joinPath(context.extensionUri, 'resources')
-	setContextPaths(contextStorageUri, contextResourcesUri, context.logUri)
+	setContextPaths(contextStorageUri)
 	FileUtils.createDir(contextStorageUri)
 
 	context.subscriptions.push(ctrl)
@@ -58,7 +57,28 @@ export async function activate (context: ExtensionContext) {
 			commands.registerCommand('_ablunit.getTestController', () => { return ctrl }),
 			commands.registerCommand('_ablunit.getTestData', () => { return testData.getMap() }),
 			commands.registerCommand('_ablunit.getTestItem', (uri: Uri) => { return getExistingTestItem(ctrl, uri) }),
-			commands.registerCommand('_ablunit.getTestRunError', () => { return recentError })
+			commands.registerCommand('_ablunit.getTestRunError', () => { return recentError }),
+			commands.registerCommand('_loadDetailedCoverageForTest', (uri: Uri, testId: string) => {
+				if (!currentTestRun) {
+					throw new Error('currentTestRun is undefined')
+				}
+
+				const fileCoverage = recentResults[0].fileCoverage.get(uri.fsPath)
+				if (!fileCoverage) {
+					throw new Error('fileCoverage not found for ' + uri.fsPath)
+				}
+
+				const tests = []
+				for (const test of recentResults[0].tests) {
+					tests.push(test, ...gatherTestItems(test.children))
+				}
+				const fromTest = tests.find((a) => a.id == testId)
+				if (!fromTest) {
+					throw new Error('TestItem not found for ' + testId)
+				}
+
+				return loadDetailedCoverageForTest(currentTestRun, fileCoverage, fromTest, new CancellationTokenSource().token)
+			})
 		)
 	}
 
@@ -75,8 +95,14 @@ export async function activate (context: ExtensionContext) {
 			return createOrUpdateFile(ctrl, e.uri, true)
 		}),
 		workspace.onDidChangeTextDocument(e => { return didChangeTextDocument(e, ctrl) }),
-		workspace.onDidCreateFiles(e => { log.info('workspace.onDidCreate ' + e.files[0].fsPath); return createOrUpdateFile(ctrl, e, true) }),
-		workspace.onDidDeleteFiles(e => { log.info('workspace.onDidDelete ' + e.files[0].fsPath); return deleteFiles(ctrl, e.files) }),
+		workspace.onDidCreateFiles(e => {
+			log.info('workspace.onDidCreate ' + e.files[0].fsPath)
+			return createOrUpdateFile(ctrl, e, true)
+		}),
+		workspace.onDidDeleteFiles(e => {
+			log.info('workspace.onDidDelete ' + e.files[0].fsPath)
+			return deleteTestsInFiles(ctrl, e.files)
+		}),
 		// ...startWatchingWorkspace(ctrl),
 	)
 
@@ -111,24 +137,6 @@ export async function activate (context: ExtensionContext) {
 				}
 				throw e
 			})
-	}
-
-	const getDeclarationCoverage = (module: IModule) => {
-		const fdc: DeclarationCoverage[] = []
-
-		const range = getModuleRange(module)
-		if (range) {
-			const zeroLine = module.lines.find((a) => a.LineNo == 0)
-			fdc.push(new DeclarationCoverage(module.EntityName ?? '<main block>', zeroLine?.ExecCount ?? 0, range))
-		}
-		for (const child of module.childModules) {
-			const childRange = getModuleRange(child)
-			if (childRange) {
-				const zeroLine = child.lines.find((a) => a.LineNo == 0)
-				fdc.push(new DeclarationCoverage(child.EntityName ?? '<main block>', zeroLine?.ExecCount ?? 0, childRange))
-			}
-		}
-		return fdc
 	}
 
 	const loadDetailedCoverageForTest = (
@@ -577,24 +585,25 @@ export async function activate (context: ExtensionContext) {
 	const testProfileRun = ctrl.createRunProfile('Run Tests', TestRunProfileKind.Run, runHandler, true, new TestTag('runnable'), false)
 	// const testProfileDebug = ctrl.createRunProfile('Debug Tests', TestRunProfileKind.Debug, runHandler, false, new TestTag('runnable'), false)
 	const testProfileCoverage = ctrl.createRunProfile('Run Tests w/ Coverage', TestRunProfileKind.Coverage, runHandler, true, new TestTag('runnable'), false)
-	// const testProfileDebugCoverage = ctrl.createRunProfile('Debug Tests w/ Coverage', TestRunProfileKind.Coverage, runHandler, false, new TestTag('runnable'), false)
 	testProfileRun.configureHandler = configHandler
 	// testProfileDebug.configureHandler = configHandlerDebug
 	testProfileCoverage.configureHandler = configHandler
 	testProfileCoverage.loadDetailedCoverage = loadDetailedCoverage
 	testProfileCoverage.loadDetailedCoverageForTest = loadDetailedCoverageForTest
-	// testProfileDebugCoverage.configureHandler = configHandler
 
+	let prom
 	if(workspace.getConfiguration('ablunit').get('discoverAllTestsOnActivate', false)) {
-		await commands.executeCommand('testing.refreshTests')
+		prom = commands.executeCommand('testing.refreshTests')
+	} else {
+		prom = Promise.resolve()
 	}
-	log.info('activation complete')
-	return true
+	return prom.then(() => {
+		log.info('activation complete')
+		return true
+	})
 }
 
 let contextStorageUri: Uri
-let contextResourcesUri: Uri
-let contextLogUri: Uri
 
 function updateNode (uri: Uri, ctrl: TestController) {
 	log.debug('updateNode uri="' + uri.fsPath + '"')
@@ -622,22 +631,12 @@ function didChangeTextDocument (e: TextDocumentChangeEvent, ctrl: TestController
 	return updateNode(e.document.uri, ctrl)
 }
 
-export function setContextPaths (storageUri: Uri, resourcesUri: Uri, logUri: Uri) {
+export function setContextPaths (storageUri: Uri) {
 	contextStorageUri = storageUri
-	contextResourcesUri = resourcesUri
-	contextLogUri = logUri
 }
 
 export function getContextStorageUri () {
 	return contextStorageUri
-}
-
-export function getContextResourcesUri () {
-	return contextResourcesUri
-}
-
-export function getContextLogUri () {
-	return contextLogUri
 }
 
 export function checkCancellationRequested (run: TestRun) {
@@ -649,7 +648,9 @@ export function checkCancellationRequested (run: TestRun) {
 }
 
 function getStorageUri (workspaceFolder: WorkspaceFolder) {
-	if (!getContextStorageUri) { throw new Error('contextStorageUri is undefined') }
+	if (!getContextStorageUri()) {
+		throw new Error('contextStorageUri is undefined')
+	}
 
 	const dirs = workspaceFolder.uri.path.split('/')
 	const ret = Uri.joinPath(getContextStorageUri(), dirs[dirs.length - 1])
@@ -841,7 +842,6 @@ function getTestFileAttrs (file: Uri) {
 	return 'other'
 }
 
-// TODO - deprecate this function
 function gatherTestItems (collection: TestItemCollection) {
 	const items: TestItem[] = []
 	for(const [, item] of collection) {
@@ -883,7 +883,7 @@ function getWorkspaceTestPatterns () {
 	return [ includePatterns, excludePatterns ]
 }
 
-function deleteFiles (controller: TestController, files: readonly Uri[]) {
+function deleteTestsInFiles (controller: TestController, files: readonly Uri[]) {
 	log.info('deleted files detected: ' + files.length)
 	let didDelete = false
 	for (const uri of files) {
@@ -896,7 +896,7 @@ function deleteFiles (controller: TestController, files: readonly Uri[]) {
 			log.warn('no test file found for deleted file: ' + uri.fsPath)
 		}
 	}
-	return Promise.resolve(didDelete)
+	return didDelete
 }
 
 function deleteTest (controller: TestController | undefined, item: TestItem | Uri) {
@@ -1015,7 +1015,6 @@ function removeDeletedFiles (ctrl: TestController) {
 			continue
 		}
 		if (!FileUtils.doesFileExist(item.uri)) {
-			log.info('500')
 			deleteTest(ctrl, item)
 		}
 	}

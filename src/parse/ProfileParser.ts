@@ -1,4 +1,4 @@
-import { Position, Range, Uri, workspace } from 'vscode'
+import { DeclarationCoverage, Position, Range, Uri, workspace } from 'vscode'
 import { PropathParser } from '../ABLPropath'
 import { ABLDebugLines } from '../ABLDebugLines'
 import { log } from '../ChannelLogger'
@@ -882,6 +882,24 @@ export function getModuleRange (module: IModule) {
 	const start = new Position(lines[0].LineNo - 1, 0)
 	const end = new Position(lines[lines.length - 1].LineNo - 1, 0)
 	return new Range(start, end)
+}
+
+export function getDeclarationCoverage (module: IModule) {
+	const fdc: DeclarationCoverage[] = []
+
+	const range = getModuleRange(module)
+	if (range) {
+		const zeroLine = module.lines.find((a) => a.LineNo == 0)
+		fdc.push(new DeclarationCoverage(module.EntityName ?? '<main block>', zeroLine?.ExecCount ?? 0, range))
+	}
+	for (const child of module.childModules) {
+		const childRange = getModuleRange(child)
+		if (childRange) {
+			const zeroLine = child.lines.find((a) => a.LineNo == 0)
+			fdc.push(new DeclarationCoverage(child.EntityName ?? '<main block>', zeroLine?.ExecCount ?? 0, childRange))
+		}
+	}
+	return fdc
 }
 
 export function checkSkipList (sourceName: string | undefined) {

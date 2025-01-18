@@ -369,10 +369,28 @@ suite('proj0  - Extension Test Suite', () => {
 
 		let cnt = 0
 		res[0].declarationCoverage.forEach((dc, path) => {
-			assert.equal(dc.length, 3, 'dc.length (path=' + path + ')')
+			assert.equal(dc.length, 4, 'dc.length (path=' + path + ')')
 			cnt++
 		})
 		assert.equal(cnt, 1, 'declarationCoverage count')
+
+		await commands.executeCommand('testing.openCoverage')
+		await sleep2(100)
+
+		// const coverage: FileCoverage = await commands.executeCommand('testing.coverage.uri', toUri('src/test19.p'))
+		// log.info('coverage=' + JSON.stringify(coverage, null, 2))
+
+		for (const child of res[0].tests[0].children) {
+			const [testId, ] = child
+			const r = await commands.executeCommand('_loadDetailedCoverageForTest', toUri('src/test19.p'), testId).then((r) => {
+				log.info('success')
+				return r
+			}, (e: unknown) => {
+				log.error('e=' + e)
+				throw e
+			})
+			log.debug('r=' + JSON.stringify(r, null, 2))
+		}
 	})
 
 })
