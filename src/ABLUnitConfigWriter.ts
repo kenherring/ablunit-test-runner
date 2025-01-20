@@ -133,6 +133,12 @@ export class ABLUnitConfig  {
 		}
 		const pathObj: IBuildPathEntry[] = []
 		if (extensionResourcesDir) {
+			// pathObj.push({
+			// 	path: Uri.joinPath(extensionResourcesDir, 'ADE', 'ablunit').fsPath,
+			// 	type: 'propath',
+			// 	buildDir: Uri.joinPath(extensionResourcesDir, 'ADE', 'ablunit').fsPath,
+			// 	xrefDir: Uri.joinPath(extensionResourcesDir, 'ADE', 'ablunit').fsPath,
+			// })
 			pathObj.push({
 				path: Uri.joinPath(extensionResourcesDir, 'VSCodeTestRunner').fsPath,
 				type: 'propath',

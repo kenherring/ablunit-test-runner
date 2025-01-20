@@ -1,6 +1,6 @@
-import { CancellationError, CancellationToken, TestRun, TestRunProfileKind, Uri, workspace } from 'vscode'
+import { CancellationError, CancellationToken, TestItem, TestRun, TestRunProfileKind, Uri, workspace } from 'vscode'
 import { ABLResults } from './ABLResults'
-import { Duration } from './ABLUnitCommon'
+import { Duration, gatherAllTestItems } from './ABLUnitCommon'
 import { SendHandle, Serializable, SpawnOptions, spawn } from 'child_process'
 import { log } from './ChannelLogger'
 import { processUpdates, setTimeoutTestStatus } from 'parse/UpdateParser'
@@ -8,7 +8,13 @@ import { basename, dirname } from 'path'
 import { globSync } from 'glob'
 import * as fs from 'fs'
 import * as FileUtils from './FileUtils'
-import { ABLUnitRuntimeError, TimeoutError } from 'Errors'
+import { ABLCompileError, ABLUnitRuntimeError, ICompileError, TimeoutError } from 'Errors'
+
+interface IABLUnitStatus {
+	action: string,
+	entityId?: number,
+	entityName?: string,
+}
 
 export enum RunStatus {
 	None = 10,
@@ -44,6 +50,12 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 	const abort = new AbortController()
 	const { signal } = abort
 	let watcher: fs.StatWatcher | undefined = undefined
+	const compileErrors: ICompileError[] = []
+	let currentTestItem: TestItem | undefined = undefined
+	const allTests: TestItem[] = []
+	for (const test of res.tests) {
+		allTests.push(test, ...gatherAllTestItems(test.children))
+	}
 
 	cancellation.onCancellationRequested(() => {
 		log.debug('cancellation requested - ablunitRun')
@@ -81,7 +93,7 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 
 		if (!cmd.includes('${testlist}')) {
 			// this is intentionally not a string substitution.  The variable is a literal part of the string.
-			log.error('command does not contain \'${testlist}\'', options)
+			log.error('command does not contain \'${testlist}\'', {testRun: options, testItem: currentTestItem })
 			throw new Error('command does not contain \'${testlist}\'')
 		}
 		cmd = cmd.replace(/\$\{testlist\}/, testlist)
@@ -154,6 +166,15 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 		return false
 	}
 
+	const setCurrentTestItem = (ablunitStatus: IABLUnitStatus) => {
+		if (ablunitStatus.action == 'TEST_START' && ablunitStatus.entityName) {
+			const parts = ablunitStatus.entityName?.split(' ')
+			currentTestItem = allTests.find(test => test.label == parts[parts.length - 1])
+		} else {
+			currentTestItem = undefined
+		}
+	}
+
 	const runCommand = () => {
 		FileUtils.deleteFile([
 			res.cfg.ablunitConfig.profFilenameUri,
@@ -215,29 +236,64 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 				shell: true,
 			}
 
-			log.info('command=\'' + cmd + ' ' + args.join(' ') + '\'\r\n', options)
+			log.info('command=\'' + cmd + ' ' + args.join(' ') + '\'\r\n', {testRun: options, testItem: currentTestItem })
 			const testRunDuration = new Duration('TestRun')
 			const process = spawn(cmd, args, spawnOpts)
 
 			process.stderr?.on('data', (data: Buffer) => {
-				log.error('\t\t[stderr] ' + data.toString().trim().replace(/\n/g, '\n\t\t[stderr]'), options)
+				log.debug('stderr', {testRun: options})
+				log.error('\t\t[stderr] ' + data.toString().trim().replace(/\n/g, '\n\t\t[stderr] '), {testRun: options, testItem: currentTestItem})
 			})
 			process.stdout?.on('data', (data: Buffer) => {
-				log.info('\t\t[stdout] ' + data.toString().trim().replace(/\n/g, '\n\t\t[stderr]'), options)
+				log.debug('stdout', {testRun: options})
+				const lines = data.toString().split('\n')
+				if (lines[lines.length - 1] == '') {
+					lines.pop()
+				}
+				for (const line of lines) {
+					if (line.startsWith('ABLUNIT_STATUS=SERIALIZED_ERROR ')) {
+						const compilerError = JSON.parse(line.substring(32)) as ICompileError
+						compileErrors.push(compilerError)
+						continue
+					} else if (line.startsWith('ABLUNIT_STATUS=')) {
+						let ablunitStatus: IABLUnitStatus
+						try {
+							ablunitStatus = JSON.parse(line.substring(15)) as IABLUnitStatus
+						} catch (e) {
+							log.error('error parsing ablunitStatus: ' + e)
+							ablunitStatus = { action: 'ParsingError' }
+						}
+						if (ablunitStatus.action == 'TEST_START' || ablunitStatus.action == 'TEST_END') {
+							setCurrentTestItem(ablunitStatus)
+						}
+						continue
+					}
+
+					if (currentTestItem) {
+						log.info('\t\t[stdout] [' + currentTestItem.label + '] ' + line, {testRun: options, testItem: currentTestItem})
+					} else {
+						log.info('\t\t[stdout] ' + line, {testRun: options, testItem: currentTestItem})
+					}
+				}
+				log.info('process.stdout complete')
 			})
 			process.once('spawn', () => {
+				log.debug('spawn', {testRun: options})
 				res.setStatus(RunStatus.Executing)
-				log.info('----- ABLUnit Test Run Started -----', options)
+				log.info('----- ABLUnit Test Run Started -----', {testRun: options, testItem: currentTestItem })
 			}).on('disconnect', () => {
+				log.debug('process.disconnect', {testRun: options})
 				log.info('process.disconnect')
 			}).on('error', (e: Error) => {
+				log.debug('error', {testRun: options})
 				log.info('process.error e=' + e)
 				res.setStatus(RunStatus.Error, 'e=' + e)
-				log.error('----- ABLUnit Test Run Error -----', options)
+				log.error('----- ABLUnit Test Run Error -----', {testRun: options, testItem: currentTestItem })
 				if (e instanceof Error) {
 					reject(e)
 				}
 			}).on('exit', (code: number | null, signal: NodeJS.Signals | null) => {
+				log.debug('exit', {testRun: options})
 				log.info('process.exit code=' + code + '; signal=' + signal + '; process.exitCode=' + process.exitCode + '; process.signalCode=' + process.signalCode + '; killed=' + process.killed)
 				testRunDuration.stop()
 				if (watcher) {
@@ -247,30 +303,38 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 				if (process.killed || signal) {
 					setTimeoutTestStatus(options, res.cfg.ablunitConfig.timeout)
 					res.setStatus(RunStatus.Timeout, 'signal=' + signal)
-					log.info('----- ABLUnit Test Run Timeout - ' + res.cfg.ablunitConfig.timeout + 'ms ----- ' + testRunDuration, options)
+					log.info('----- ABLUnit Test Run Timeout - ' + res.cfg.ablunitConfig.timeout + 'ms ----- ' + testRunDuration, {testRun: options, testItem: currentTestItem })
 					reject(new TimeoutError('ABLUnit process timeout', testRunDuration, res.cfg.ablunitConfig.timeout, cmd))
 					return
 				}
 				if (process.killed) {
 					res.setStatus(RunStatus.Killed, 'signal=' + signal)
-					log.info('----- ABLUnit Test Run Killed - (signal=' + signal + ') ----- ' + testRunDuration, options)
+					log.info('----- ABLUnit Test Run Killed - (signal=' + signal + ') ----- ' + testRunDuration, {testRun: options, testItem: currentTestItem })
 					reject(new ABLUnitRuntimeError('ABLUnit process killed', 'exit_code=' + code + '; signal=' + signal, cmd))
 					return
 				}
 
 				if (code && code != 0) {
+					if (compileErrors.length > 0) {
+						res.setStatus(RunStatus.Error, 'compile_errors=' + compileErrors.length)
+						log.info('----- ABLUnit Test Run Failed (compile_errors=' + compileErrors.length + ') ----- ' + testRunDuration, {testRun: options, testItem: currentTestItem })
+						reject(new ABLCompileError(compileErrors, cmd))
+						return
+					}
 					res.setStatus(RunStatus.Error, 'exit_code=' + code)
-					log.info('----- ABLUnit Test Run Failed (exit_code=' + code + ') ----- ' + testRunDuration, options)
+					log.info('----- ABLUnit Test Run Failed (exit_code=' + code + ') ----- ' + testRunDuration, {testRun: options, testItem: currentTestItem })
 					reject(new ABLUnitRuntimeError('ABLUnit exit_code=' + code, 'ABLUnit exit_code=' + code + '; signal=' + signal, cmd))
 					return
 				}
 
 				res.setStatus(RunStatus.Complete, 'success')
-				log.info('----- ABLUnit Test Run Complete ----- ' + testRunDuration, options)
+				log.info('----- ABLUnit Test Run Complete ----- ' + testRunDuration, {testRun: options, testItem: currentTestItem })
 				resolve('success')
 			}).on('close', (code: number | null, signal: NodeJS.Signals | null) => {
+				log.debug('close', {testRun: options})
 				log.info('process.close code=' + code + '; signal=' + signal + '; process.exitCode=' + process.exitCode + '; process.signalCode=' + process.signalCode + '; killed=' + process.killed)
 			}).on('message', (m: Serializable, _h: SendHandle) => {
+				log.debug('message', {testRun: options})
 				log.info('process.on.message m=' + JSON.stringify(m))
 			})
 		})
@@ -283,6 +347,7 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 		}, (e: unknown) => {
 			log.info('runCommand() error=' + JSON.stringify(e, null, 2))
 			if (e instanceof Error) {
+				log.info('res.thrownError=' + e)
 				res.thrownError = e
 			}
 			throw e

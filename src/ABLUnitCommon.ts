@@ -67,7 +67,7 @@ export function readOEVersionFile (useDLC: string) {
 	return undefined
 }
 
-export function gatherAllTestItems (collection: TestItemCollection) {
+export function gatherAllTestItems (collection: TestItemCollection | TestItem[]) {
 	const items: TestItem[] = []
 	collection.forEach(item => {
 		items.push(item, ...gatherAllTestItems(item.children))
