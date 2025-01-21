@@ -4,6 +4,7 @@ import { getOEVersion } from 'parse/OpenedgeProjectParser'
 import { execSync } from 'child_process'
 import * as glob from 'glob'
 import * as FileUtils from '../../src/FileUtils'
+import { ABLCompileError } from 'Errors'
 
 const workspaceUri = getWorkspaceUri()
 
@@ -49,6 +50,19 @@ suite('proj1 - Extension Test Suite', () => {
 				throw new Error('runAllTests should have thrown an error')
 			}, (e: unknown) => {
 				log.info('runAllTests error: ' + e)
+				if (e instanceof Error) {
+					assert.equal(e.name, 'ABLCompileError', 'e.name=' + e.name + ' e.message=' + e.message)
+					let compileErr: ABLCompileError | undefined = undefined
+					try {
+						compileErr = e as ABLCompileError
+					} catch (e) {
+						assert.fail('e is not an ABLCompileError: \ne=' + JSON.stringify(e, null, 2))
+					}
+					assert.ok(compileErr?.compileErrors.length ?? 99 > 0, 'e.compileErrors.length > 0')
+				} else {
+					assert.fail('e is not an Error object: e=' + e)
+				}
+
 				assert.fileExists(ablunitJson)
 				const wsFolder = getWorkspaceFolders()[0]
 				log.info('getOEVersion(wsFolder)=' + getOEVersion(wsFolder) + '; oeVersion()=' + oeVersion())
@@ -63,8 +77,8 @@ suite('proj1 - Extension Test Suite', () => {
 		return prom
 	})
 
-	test('proj1.2 - output files exist 2 - exclude compileError.p', () => {
-		const p = workspace.getConfiguration('ablunit').update('files.exclude', [ '.builder/**', 'compileError.p' ])
+	test('proj1.2 - output files exist 2 - exclude compileError*.p', () => {
+		const p = workspace.getConfiguration('ablunit').update('files.exclude', [ '.builder/**', 'compileError*.p' ])
 			.then(() => { return runAllTests() })
 			.then(() => {
 				assert.tests.count(32)
@@ -86,9 +100,9 @@ suite('proj1 - Extension Test Suite', () => {
 		return p
 	})
 
-	test('proj1.3 - output files exist 3 - exclude compileError.p as string', async () => {
+	test('proj1.3 - output files exist 3 - exclude compileError*.p as string', async () => {
 		// this isn't officially supported and won't syntac check in the settings.json file(s), but it works
-		await updateConfig('ablunit.files.exclude', 'compileError.p')
+		await updateConfig('ablunit.files.exclude', 'compileError*.p')
 		await runAllTests()
 		assert.tests.count(32)
 	})
@@ -162,7 +176,7 @@ suite('proj1 - Extension Test Suite', () => {
 		// setup test configuration
 		FileUtils.copyFile(Uri.joinPath(workspaceUri, 'openedge-project.proj1.10.json'), Uri.joinPath(workspaceUri, 'openedge-project.json'), { force: true })
 		FileUtils.copyFile(Uri.joinPath(workspaceUri, '.vscode', 'ablunit-test-profile.proj1.10.json'), Uri.joinPath(workspaceUri, '.vscode', 'ablunit-test-profile.json'), { force: true })
-		await workspace.getConfiguration('ablunit').update('files.exclude', [ '.builder/**', 'compileError.p', 'propathTest.p' ])
+		await workspace.getConfiguration('ablunit').update('files.exclude', [ '.builder/**', 'compileError*.p', 'propathTest.p' ])
 		log.info('test proj1.10 config setup complete')
 
 		// delete all *.xref files in the root

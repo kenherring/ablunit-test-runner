@@ -5,6 +5,7 @@ class classTest:
     @test.
     method public void testMethodOne ():
         //nothing here - always pass
+        message 'this is a message from classTest:TestMethodOne()'.
     end method.
 
     @TEST.

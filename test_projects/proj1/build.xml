@@ -32,7 +32,7 @@
     <echo>minSize=${minSize}</echo>
 
     <PCTCompile forceCompile="true" xrefDir=".xref" keepXref="${xref}" xmlXref="${xref}" minSize="${minSize}">
-      <fileset dir="." includes="*.p,*.cls" excludes="compileError.p,propathTest.p" />
+      <fileset dir="." includes="*.p,*.cls" excludes="compileError*.p,propathTest.p" />
     </PCTCompile>
   </target>
 

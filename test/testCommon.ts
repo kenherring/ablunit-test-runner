@@ -526,7 +526,7 @@ export async function runAllTests (doRefresh = true, waitForResults = true, with
 			throw e
 		})
 		.then(() => {
-			log.info(tag + testCommand + ' completed - start getResults()')
+			log.info(tag + testCommand + ' completed')
 			if (!waitForResults) { return [] }
 			return getResults(1, tag)
 		})
@@ -539,6 +539,9 @@ export async function runAllTests (doRefresh = true, waitForResults = true, with
 			return false
 		}, (e: unknown) => {
 			runAllTestsDuration?.stop()
+			if (e instanceof Error && e.name == 'ABLCompileError') {
+				throw e
+			}
 			throw new Error(testCommand + ' failed: ' + e)
 		})
 	runAllTestsDuration.stop()
@@ -806,9 +809,9 @@ export function refreshData (resultsLen = 0) {
 		const refs = resp as IExtensionTestReferences
 		log.info('getExtensionTestReferences command complete (resp.length=' + refs.recentResults.length + ')')
 		if (refs.recentError) {
+			log.error('refs.recentError=' + refs.recentError)
 			throw refs.recentError
 		}
-		// log.info('refs=' + JSON.stringify(refs))
 
 		if (refs.recentResults.length > 0) {
 			const testCount = refs.recentResults?.[0].ablResults?.resultsJson[0].testsuite?.[0].tests ?? undefined
@@ -969,15 +972,20 @@ export async function getResults (len = 1, tag?: string): Promise<ABLResults[]> 
 	if ((!recentResults || recentResults.length === 0) && len > 0) {
 		log.info(tag + 'recentResults not set, refreshing...')
 		for (let i=0; i<5; i++) {
-			const prom = sleep2(250, tag + 'still no recentResults (' + i + '/4)')
-				.then(() => { return refreshData() })
-				.then((gotResults) => {
-					if (gotResults) { return gotResults }
-					return sleep2(250)
-				})
-				.catch((e: unknown) => { log.error('no recentResults yet (' + i + '/4) (e=' + e + ')') })
+			await sleep2(250, tag + 'still no recentResults (' + i + '/4)')
 
-			if (await prom && (recentResults?.length ?? 0) > 0) {
+			try {
+				await refreshData()
+			} catch (e) {
+				log.info('e=' + e)
+				if (e instanceof Error && e.name == 'ABLCompileError') {
+					log.error(tag + 'ABLCompile Error Detected')
+					throw e
+				}
+			}
+
+			if ((recentResults?.length ?? 0) > 0) {
+				log.info('recentResults.length=' + recentResults?.length)
 				break
 			}
 		}

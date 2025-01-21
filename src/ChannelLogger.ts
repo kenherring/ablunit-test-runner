@@ -1,5 +1,11 @@
 /* eslint-disable no-console */
-import { LogLevel, TestRun, window } from 'vscode'
+import { Location, LogLevel, TestItem, TestRun, Uri, window } from 'vscode'
+
+interface ITestInfo {
+	testRun: TestRun
+	location?: Location
+	testItem?: TestItem
+}
 
 enum NotificationType {
 	Info = 'Info',
@@ -17,6 +23,7 @@ class Logger {
 	private readonly consoleTimestamp = process.env['ABLUNIT_TEST_RUNNER_UNIT_TESTING'] === 'true'
 	private testResultsTimestamp = false
 	private readonly extensionCodeDir = __dirname
+	private readonly baseDir = __dirname
 	notificationsEnabled = true
 
 	private constructor (extCodeDir?: string) {
@@ -28,6 +35,7 @@ class Logger {
 		if (extCodeDir) {
 			this.extensionCodeDir = extCodeDir
 		}
+		this.baseDir = Uri.joinPath(Uri.file(this.extensionCodeDir), '..').fsPath
 	}
 
 	public static getInstance () {
@@ -55,23 +63,23 @@ class Logger {
 		this.testResultsTimestamp = e
 	}
 
-	trace (message: string, testRun?: TestRun, stackTrace = true) {
-		this.writeMessage(LogLevel.Trace, message, testRun, stackTrace)
+	trace (message: string, testInfo?: ITestInfo, stackTrace = true) {
+		this.writeMessage(LogLevel.Trace, message, testInfo, stackTrace)
 	}
 
-	debug (message: string, testRun?: TestRun) {
-		this.writeMessage(LogLevel.Debug, message, testRun)
+	debug (message: string, testInfo?: ITestInfo) {
+		this.writeMessage(LogLevel.Debug, message, testInfo)
 	}
 
-	info (message: string, testRun?: TestRun) {
-		this.writeMessage(LogLevel.Info, message, testRun)
+	info (message: string, testInfo?: ITestInfo) {
+		this.writeMessage(LogLevel.Info, message, testInfo)
 	}
 
-	warn (message: string, testRun?: TestRun) {
-		this.writeMessage(LogLevel.Warning, message, testRun)
+	warn (message: string, testInfo?: ITestInfo) {
+		this.writeMessage(LogLevel.Warning, message, testInfo)
 	}
 
-	error (message: string | Error, testRun?: TestRun) {
+	error (message: string | Error, testInfo?: ITestInfo) {
 		if (message instanceof Error) {
 			if (message.stack) {
 				message = '[' + message.name + '] ' +  message.message + '\r\r' + message.stack
@@ -79,7 +87,7 @@ class Logger {
 				message = '[' + message.name + '] ' +  message.message
 			}
 		}
-		this.writeMessage(LogLevel.Error, message, testRun)
+		this.writeMessage(LogLevel.Error, message, testInfo)
 	}
 
 	private notification (message: string, notificationType: NotificationType = NotificationType.Info) {
@@ -114,12 +122,12 @@ class Logger {
 		this.notification(message, NotificationType.Error)
 	}
 
-	private writeMessage (messageLevel: LogLevel, message: string, testRun?: TestRun, includeStack = false) {
+	private writeMessage (messageLevel: LogLevel, message: string, testInfo: ITestInfo | undefined, includeStack = false) {
 		const datetime = new Date().toISOString()
 		this.writeToChannel(messageLevel, message, includeStack)
 
-		if (testRun && messageLevel >= this.testResultsLogLevel) {
-			this.writeToTestResults(message, testRun, includeStack, datetime)
+		if (testInfo && messageLevel >= this.testResultsLogLevel) {
+			this.writeToTestResults(message, testInfo, includeStack, datetime)
 		}
 
 		if (messageLevel >= this.consoleLogLevel) {
@@ -144,22 +152,25 @@ class Logger {
 		}
 	}
 
-	private writeToTestResults (message: string, testRun: TestRun, includeStack: boolean, datetime: string) {
-		let optMsg = message.replace(/\r/g, '').replace(/\n/g, '\r\n')
-
+	private writeToTestResults (message: string, testInfo: ITestInfo, includeStack: boolean, datetime: string) {
+		// ensure we're using `\r\n` for line endings
+		message = message.replace(/\r/g, '').replace(/\n/g, '\r\n')
 		if (includeStack) {
 			const prepareStackTraceOrg = Error.prepareStackTrace
 			const err = new Error()
 			Error.prepareStackTrace = (_, stack) => stack
 			const stack = err.stack as unknown as NodeJS.CallSite[]
 			Error.prepareStackTrace = prepareStackTraceOrg
-			optMsg = optMsg + '\r\n' + stack
+			message = message + 'r\n' + stack
 		}
 		if (this.testResultsTimestamp) {
-			optMsg = '[' + datetime + '] [' + this.getCallerSourceLine() + '] ' + optMsg
+			message = '[' + datetime + '] [' + this.getCallerSourceLine() + '] ' + message
+		}
+		if (!message.endsWith('\r\n')) {
+			message = message + '\r\n'
 		}
 
-		testRun.appendOutput(optMsg + '\r\n')
+		testInfo.testRun.appendOutput(message, testInfo.location, testInfo.testItem)
 	}
 
 	private writeToConsole (messageLevel: LogLevel, message: string, includeStack: boolean) {
@@ -192,8 +203,8 @@ class Logger {
 			const classname = s.getTypeName()
 			if (classname == 'Logger' || classname == '_Logger') continue
 			let ret = s.toString()
-			if (ret.startsWith(this.extensionCodeDir)) {
-				ret = ret.substring(this.extensionCodeDir.length + 1)
+			if (ret.startsWith(this.baseDir)) {
+				ret = ret.substring(this.baseDir.length + 1)
 			} else {
 				const parts = ret.split('(')
 				if (parts.length >=2 && parts[1].startsWith(this.extensionCodeDir)) {
@@ -215,7 +226,6 @@ class Logger {
 			case LogLevel.Error:	return 'Error'
 		}
 	}
-
 
 	private decorateMessage (messageLevel: LogLevel, message: string, includeStack = false) {
 		if (includeStack) {

@@ -21,7 +21,7 @@ import { log } from './ChannelLogger'
 import { getContentFromFilesystem } from './parse/TestParserCommon'
 import { ABLTestCase, ABLTestClass, ABLTestData, ABLTestDir, ABLTestFile, ABLTestProgram, ABLTestSuite, resultData, testData } from './testTree'
 import { minimatch } from 'minimatch'
-import { ABLUnitRuntimeError, TimeoutError } from 'Errors'
+import { ABLCompileError, ABLUnitRuntimeError, TimeoutError } from 'Errors'
 import { basename } from 'path'
 import * as FileUtils from './FileUtils'
 import { gatherAllTestItems, IExtensionTestReferences } from 'ABLUnitCommon'
@@ -133,7 +133,11 @@ export function activate (context: ExtensionContext) {
 		return startTestRun(request, token)
 			.catch((e: unknown) => {
 				if (e instanceof Error) {
+					log.error('recentError=' + e)
 					recentError = e
+				}
+				if (e instanceof ABLUnitRuntimeError) {
+					return
 				}
 				throw e
 			})
@@ -288,7 +292,7 @@ export function activate (context: ExtensionContext) {
 			let ret = false
 			for (const r of res) {
 				if (res.length > 1) {
-					log.info('starting ablunit tests for folder: ' + r.workspaceFolder.uri.fsPath, run)
+					log.info('starting ablunit tests for folder: ' + r.workspaceFolder.uri.fsPath, {testRun: run})
 				}
 
 				ret = await r.run(run).then(() => {
@@ -296,34 +300,17 @@ export function activate (context: ExtensionContext) {
 					return true
 				}, (e: unknown) => {
 					if (e instanceof CancellationError) {
-						log.error('---------- ablunit run cancelled ----------', run)
-						// log.error('[runTestQueue] ablunit run cancelled!', run)
+						log.error('---------- ablunit run cancelled ----------', {testRun: run})
+					} else if (e instanceof ABLCompileError) {
+						log.error('ablunit compile error!\n\te=' + JSON.stringify(e))
 					} else if (e instanceof ABLUnitRuntimeError) {
 						log.error('ablunit runtime error!\n\te=' + JSON.stringify(e))
 					} else if (e instanceof TimeoutError) {
-						log.error('ablunit run timed out!')
+						log.error('ablunit run failed! timeout after ' + e.limit + 'ms')
 					} else if (e instanceof Error) {
 						log.error('ablunit run failed! e=' + e + '\n' + e.stack)
 					} else {
-						log.error('ablunit run failed!: ' + e, run)
-						// log.error('ablunit run failed parsing results with exception: ' + e, run)\
-					}
-
-					for (const t of r.tests) {
-						if (e instanceof CancellationError) {
-							run.errored(t, new TestMessage('ablunit run cancelled!'))
-						} else if (e instanceof ABLUnitRuntimeError) {
-							run.failed(t, new TestMessage(e.promsgError))
-						} else if (e instanceof TimeoutError) {
-							run.failed(t, new TestMessage('ablunit run timed out!'))
-						// } else if (e instanceof ExecException) {
-						// 	run.errored(t, new TestMessage('ablunit run execution error! e=' + JSON.stringify(e)))
-						} else if (e instanceof Error) {
-							run.errored(t, new TestMessage('ablunit run failed! \ne.message=' + e.message + '\ne.name=' + e.name + '\ne.stack=' + e.stack
-							))
-						} else {
-							run.errored(t, new TestMessage('ablunit run failed! e=' + e))
-						}
+						log.error('ablunit run error!: ' + e, {testRun: run})
 					}
 					throw e
 				})
@@ -340,7 +327,7 @@ export function activate (context: ExtensionContext) {
 								+ p.failures + ' failures, '
 								+ p.skipped + ' skipped, '
 								+ r.duration
-					log.info(totals, run)
+					log.info(totals, {testRun: run})
 				} else {
 					log.debug('cannot print totals - missing ablResults object')
 				}
@@ -368,7 +355,7 @@ export function activate (context: ExtensionContext) {
 				return
 			}
 
-			log.debug('ablunit test run complete', run)
+			log.debug('ablunit test run complete', {testRun: run})
 
 			if (run.token.isCancellationRequested) {
 				log.debug('cancellation requested - test run complete')
@@ -674,7 +661,6 @@ function getOrCreateFile (controller: TestController, uri: Uri, excludePatterns?
 
 	if (excludePatterns && excludePatterns.length > 0 && isFileExcluded(uri, excludePatterns)) {
 		if (existing) {
-			log.info('560')
 			deleteTest(controller, existing)
 		}
 		return { item: undefined, data: undefined }
@@ -890,7 +876,6 @@ function deleteTestsInFiles (controller: TestController, files: readonly Uri[]) 
 		log.info('deleted file detected: ' + uri.fsPath)
 		const item = getExistingTestItem(controller, uri)
 		if (item) {
-			log.info('570')
 			didDelete = deleteTest(controller, item)
 		} else {
 			log.warn('no test file found for deleted file: ' + uri.fsPath)
@@ -977,13 +962,11 @@ function removeExcludedChildren (parent: TestItem, excludePatterns: RelativePatt
 		if (data instanceof ABLTestFile) {
 			const excluded = isFileExcluded(item.uri!, excludePatterns)
 			if (item.uri && excluded) {
-				log.info('400')
 				deleteTest(undefined, item)
 			}
 		} else if (data?.isFile) {
 			removeExcludedChildren(item, excludePatterns)
 			if (item.children.size == 0) {
-				log.info('401')
 				deleteTest(undefined, item)
 			}
 		}
@@ -1113,7 +1096,6 @@ function createOrUpdateFile (controller: TestController, e: Uri | FileCreateEven
 	const proms: PromiseLike<boolean>[] = []
 	for (const uri of uris) {
 		if (!isFileIncluded(uri, includePatterns, excludePatterns))  {
-			log.info('550')
 			deleteTest(controller, uri)
 			continue
 		}

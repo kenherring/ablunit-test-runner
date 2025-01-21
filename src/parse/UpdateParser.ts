@@ -6,6 +6,7 @@ export enum TestStatus {
 	unknown = 'unknown',
 	testRoot = 'TEST_ROOT',
 	testTree = 'TEST_TREE',
+	serializedError = 'SERIALIZED_ERROR',
 	stackTrace = 'STACK_TRACE',
 
 	// test statuses
@@ -32,10 +33,11 @@ function testStatusOrder (event: TestStatus | undefined) {
 		case TestStatus.failed: return 41
 		case TestStatus.stackTrace: return 42
 		case TestStatus.errored: return 43
-		case TestStatus.skipped: return 44
-		case TestStatus.exception: return 45
-		case TestStatus.timeout: return 46
-		case TestStatus.complete: return 50
+		case TestStatus.serializedError: return 43
+		case TestStatus.exception: return 50
+		case TestStatus.timeout: return 60
+		case TestStatus.skipped: return 70
+		case TestStatus.complete: return 100
 		default: return -2
 	}
 }
@@ -133,7 +135,7 @@ function parseUpdateLines (lines: string[], tests: TestItem[]) {
 			}
 			continue
 		}
-		if (event === 'COMPLETE') {
+		if (event === 'COMPLETE' || event == 'SERIALIZED_ERROR') {
 			continue
 		}
 
@@ -266,26 +268,26 @@ function setTestRunTestStatus (options: TestRun, item: ITestNode) {
 				options.started(item.test)
 			}
 			if (!item.parent || item.parent.name == 'TEST_ROOT') // only print parent stated, not tests
-				log.info('\t🔵  ' + printName, options)
+				log.info('\t🔵  ' + printName, {testRun: options})
 			break
 		case TestStatus.failed:
 			if (item.test) { options.failed(item.test, [], item.time) }
-			log.info('\t❌  ' + printName, options)
+			log.info('\t❌  ' + printName, {testRun: options})
 			break
 		case TestStatus.passed:
 			if (item.test) { options.passed(item.test, item.time) }
-			log.info('\t✅  ' + printName + ' (' + item.time?.toFixed(0) + 'ms)', options)
+			log.info('\t✅  ' + printName + ' (' + item.time?.toFixed(0) + 'ms)', {testRun: options})
 			break
 		case TestStatus.testRoot:
 			if (item.test) { options.enqueued(item.test) }
 			break
 		case TestStatus.skipped:
 			if (item.test) { options.skipped(item.test) }
-			log.info('\t❔  ' + printName, options)
+			log.info('\t❔  ' + printName, {testRun: options})
 			break
 		case TestStatus.exception:
 			if (item.test) { options.failed(item.test, [], item.time) }
-			log.info('\t⚠️  ' + printName, options)
+			log.info('\t⚠️  ' + printName, {testRun: options})
 			break
 		default:
 			log.error('unexpected item.status=' + item.status + '; item.id=' + item.id + '; item.name=' + item.name)

@@ -1,4 +1,4 @@
-import { Uri, workspace } from 'vscode'
+import { MarkdownString, Uri, workspace } from 'vscode'
 import { log } from './ChannelLogger'
 import { IDlc } from './parse/OpenedgeProjectParser'
 
@@ -142,7 +142,10 @@ export function getPromsgText (text: string) {
 		log.info('match = ' + JSON.stringify(promsgMatch))
 		const promsg = promsgsObj.getMsgNum(Number(promsgMatch![1]))
 		log.info('promsg= ' + promsg?.msgnum + ' ' + promsg?.msgtext)
-		let stackString = text
+		let stackString = '`' + text + '`'
+		if ((promsg?.msgtext.length ?? 0) > 0) {
+			stackString += '\n\n---\n\n**Promsg Detail**\n'
+		}
 		let count = 0
 		promsg?.msgtext.forEach((text: string) => {
 			if (count === 0) {
@@ -151,7 +154,9 @@ export function getPromsgText (text: string) {
 				stackString += '\n\n' + text.replace(/\\n/g, '\n\n')
 			}
 		})
-		return stackString
+
+		const mdString = new MarkdownString(stackString)
+		return mdString
 	} catch (_e: unknown) {
 		return text
 	}
