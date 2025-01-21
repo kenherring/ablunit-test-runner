@@ -52,8 +52,6 @@ function getMochaTimeout (projName) {
 
 	switch (projName) {
 		case 'DebugLines': return 120000 // install openedge-abl-lsp for the first time, so give it a moment to start
-		case 'proj1': return 30000
-		// case 'proj2': return 20000
 		case 'proj5': return 60000
 		case 'proj8': return 45000
 		case 'proj7A': return 120000

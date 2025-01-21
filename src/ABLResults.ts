@@ -475,9 +475,9 @@ export class ABLResults implements Disposable {
 		if (!profileDescription || profileDescription.split('|').length < 2) {
 			return undefined
 		}
+
 		const parentName = profileDescription.split('|')[1].split(' ')[0]
 		const testName = profileDescription.split('|')[1].split(' ')[1]
-
 		const tests = gatherAllTestItems(this.tests)
 
 		let ending = testName
@@ -486,9 +486,7 @@ export class ABLResults implements Disposable {
 		}
 		ending = ending.replace(/\\/g, '/')
 
-		log.info('ending=' + ending)
 		const items = tests.filter((t) => t.id.replace(/\\/g, '/').endsWith(ending))
-
 		if (items.length == 0) {
 			log.error('Could not find test item for "' + parentName + ' ' + testName + '"')
 			throw new Error('Could not find test item for "' + parentName + ' ' + testName + '"')
