@@ -7,7 +7,5 @@ end function.
 
 @Test.
 procedure test_call_error :
-    define variable val as integer no-usndo.
-    val = someFunc("true").
-    Assert:Equals(val,2).
+    define variable val as integer noundo. // COMPILE ERROR noundo <> no-undo
 end procedure.

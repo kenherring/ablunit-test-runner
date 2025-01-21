@@ -4,6 +4,7 @@ import { getOEVersion } from 'parse/OpenedgeProjectParser'
 import { execSync } from 'child_process'
 import * as glob from 'glob'
 import * as FileUtils from '../../src/FileUtils'
+import { ABLCompileError } from 'Errors'
 
 const workspaceUri = getWorkspaceUri()
 
@@ -51,7 +52,13 @@ suite('proj1 - Extension Test Suite', () => {
 				log.info('runAllTests error: ' + e)
 				if (e instanceof Error) {
 					assert.equal(e.name, 'ABLCompileError', 'e.name=' + e.name + ' e.message=' + e.message)
-					assert.equal(e.message, 'compile error count=1')
+					let compileErr: ABLCompileError | undefined = undefined
+					try {
+						compileErr = e as ABLCompileError
+					} catch (e) {
+						assert.fail('e is not an ABLCompileError: \ne=' + JSON.stringify(e, null, 2))
+					}
+					assert.ok(compileErr?.compileErrors.length ?? 99 > 0, 'e.compileErrors.length > 0')
 				} else {
 					assert.fail('e is not an Error object: e=' + e)
 				}

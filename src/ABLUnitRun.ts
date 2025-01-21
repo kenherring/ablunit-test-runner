@@ -218,6 +218,8 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 			})
 		}
 
+		let stdout = ''
+
 		return new Promise<string>((resolve, reject) => {
 			res.setStatus(RunStatus.Running)
 			const runenv = getEnvVars(res.dlc.uri)
@@ -246,9 +248,12 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 			})
 			process.stdout?.on('data', (data: Buffer) => {
 				log.debug('stdout', {testRun: options})
-				const lines = data.toString().split('\n')
+				stdout = stdout + data.toString()
+				const lines = stdout.split('\n')
 				if (lines[lines.length - 1] == '') {
 					lines.pop()
+				} else {
+					stdout = lines.pop() ?? ''
 				}
 				for (const line of lines) {
 					if (line.startsWith('ABLUNIT_STATUS=SERIALIZED_ERROR ')) {

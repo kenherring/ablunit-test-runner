@@ -236,7 +236,7 @@ export class ABLResults implements Disposable {
 			}
 		}
 
-		log.info('resturn e=' + JSON.stringify(e))
+		log.info('return ABLUnitCompileError e.compileErrors.length=' + e.compileErrors.length)
 		return e
 	}
 
