@@ -117,7 +117,11 @@ jobs:
       - attach_workspace: { at: . }
       - restore-test-cache: { oe-version: << parameters.oe-version >> }
       - run: .circleci/run_test_wrapper.sh
-      - persist_to_workspace: { root: ., paths: [ artifacts, coverage ]}
+      - when:
+          condition:
+            equal: [ << pipeline.parameters.primary-oe-version >>, << parameters.oe-version >> ]
+          steps:
+            - persist_to_workspace: { root: ., paths: [ artifacts, coverage ]}
       - store_test_results: { path: artifacts/mocha_results_xunit }
       - run: ## remove artifacts so we don't waste space
           when: on_success
