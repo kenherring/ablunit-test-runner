@@ -475,39 +475,29 @@ export class ABLResults implements Disposable {
 		if (!profileDescription || profileDescription.split('|').length < 2) {
 			return undefined
 		}
-		let parentName = profileDescription.split('|')[1].split(' ')[0]
-		if (parentName.endsWith('.cls')) {
-			parentName = parentName.substring(0, parentName.length - 4)
-		}
+		const parentName = profileDescription.split('|')[1].split(' ')[0]
 		const testName = profileDescription.split('|')[1].split(' ')[1]
 
 		const tests = gatherAllTestItems(this.tests)
 
-		const item = tests.find((t) => {
-			const d = this.testData.get(t)
-			if (!d) {
-				return false
-			}
-			// if (t instanceof ABLTestFile) {
-			// 	if (d.propathRelativePath == testName) {
-			// 		const p = this.testData.get(t.parent)
-			// 		if (p && p.propathRelativePath == parentName) {
-			// 			return true
-			// 		}
-			// 	}
-			// 	return false
-			// }
-			if (parentName == 'TEST_ROOT') {
-				return t.id.endsWith(testName.replace(/\\/g, '/'))
-			}
-			return t.parent?.id.endsWith(parentName.replace(/\\/g, '/')) && t.label == testName
-		})
-
-		if (!item) {
-			log.warn('could not find test item for parent=' + parentName + ', testName=' + testName)
-			return undefined
+		let ending = testName
+		if (parentName != 'TEST_ROOT') {
+			ending = parentName + '#' + testName
 		}
-		return item
+		ending = ending.replace(/\\/g, '/')
+
+		log.info('ending=' + ending)
+		const items = tests.filter((t) => t.id.replace(/\\/g, '/').endsWith(ending))
+
+		if (items.length == 0) {
+			log.error('Could not find test item for "' + parentName + ' ' + testName + '"')
+			throw new Error('Could not find test item for "' + parentName + ' ' + testName + '"')
+		}
+		if (items.length > 1) {
+			log.error('found multiple test items for "' + parentName + ' ' + testName + '"')
+			throw new Error('found multiple test items for "' + parentName + ' ' + testName + '"')
+		}
+		return items[0]
 	}
 
 	async parseProfile (options: TestRun) {
@@ -527,7 +517,7 @@ export class ABLResults implements Disposable {
 		const proms: Promise<ABLProfileJson>[] = []
 		for (let i=0; i < dataFiles.length; i++) {
 			const uri = Uri.joinPath(Uri.file(profDir), dataFiles[i])
-			log.info('parsing profile data ' + i + '/' + dataFiles.length + ' from ' + uri.fsPath, {testRun: options})
+			log.info('parsing profile data ' + (i+1) + '/' + dataFiles.length + ' from ' + uri.fsPath, {testRun: options})
 
 			proms.push(new ABLProfile().parseData(uri, this.cfg.ablunitConfig.profiler.writeJson, this.debugLines))
 		}
