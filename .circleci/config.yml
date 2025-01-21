@@ -17,6 +17,9 @@ parameters:
   latest-oe-version:
     type: string
     default: 12.8.4
+  prerelease: ## main branch is a prerelease; use this parameter to prerelease on other branches
+    type: boolean
+    default: false
 
 oe-version-param: &oe-version-param
   parameters:
@@ -124,18 +127,6 @@ jobs:
           when: on_fail
           command: env
       # - save-test-cache: { oe-version: << parameters.oe-version >> }
-  install-and-run:
-    <<: *oe-version-param
-    executor: psc-primary
-    environment:
-      ABLUNIT_TEST_RUNNER_OE_VERSION: << parameters.oe-version >>
-      ABLUNIT_TEST_RUNNER_VSCODE_VERSION: << parameters.vscode-version >>
-    steps:
-      - attach_workspace: { at: . }
-      - restore-test-cache: { oe-version: << parameters.oe-version >> }
-      - run: .circleci/install_and_run.sh
-      - store_test_results: { path: dummy-ext/artifacts }
-      - store_artifacts: { path: dummy-ext/artifacts }
   sonar:
     <<: *oe-version-param
     docker:
@@ -158,6 +149,8 @@ jobs:
   publish:
     docker:
       - image: cimg/node:20.8
+    environment:
+      PRERELEASE: << pipeline.parameters.prerelease >>
     steps:
       - attach_workspace: { at: . }
       - run: .circleci/publish.sh
@@ -180,12 +173,12 @@ workflows:
           matrix:
             parameters:
               vscode-version: [ stable ]
-          name: test-primary
+          name: test-<< pipeline.parameters.primary-oe-version >>
       - test:
           <<: *context-and-filters
           requires:
             - package
-            - test-primary
+            - test-<< pipeline.parameters.primary-oe-version >>
           matrix:
             alias: test-matrix
             parameters:
@@ -194,21 +187,16 @@ workflows:
       - sonar:
           <<: *context-and-filters
           requires:
-            - test-primary
+            - test-<< pipeline.parameters.primary-oe-version >>
           oe-version: << pipeline.parameters.primary-oe-version >>
-      # - install-and-run:
-      #     <<: *context-and-filters
-      #     requires:
-      #       - test
       - publish:
           context:
             - Azure_PAT
             - GitHub_CLI
-          filters: ## ignore branches; build only tags
-            branches: { ignore: /^.*$/ }
+          filters: ## main branch or PRERELEASE PARAMETER = prerelease; tags = release
             tags: { only: /^.*$/ }
           requires:
             - shellcheck/check
             - sonar
+            - test-<< pipeline.parameters.primary-oe-version >>
             - test-matrix
-            # - install-and-run

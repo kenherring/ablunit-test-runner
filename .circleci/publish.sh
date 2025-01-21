@@ -3,6 +3,59 @@ set -eou pipefail
 
 main_block () {
     echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}]"
+
+    if [ -n "${CIRCLE_TAG:-}" ]; then
+        PRERELEASE=$(gh release view 1.0.0 --json isPrerelease | jq '.isPrerelease')
+        echo "tag $CIRCLE_TAG PRERELEASE=$PRERELEASE"
+    else
+        if [ -z "${PRERELEASE:-}" ]; then
+            echo "PRERELEASE is not set, there is nothing to publish (CIRCLE_BRANCH=$CIRCLE_BRANCH)"
+            exit 0
+        fi
+        PRERELEASE=${PRERELEASE:-true}
+    fi
+
+    if $PRERELEASE; then
+        prerelease
+    else
+        release
+    fi
+}
+
+prerelease () {
+    echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}]"
+    PRERELEASE=${PRERELEASE:-true}
+    if ! $PRERELEASE; then
+        echo "ERROR: PRERELEASE is not set to true"
+        exit 1
+    fi
+
+    if ! ${CIRCLECI:-false}; then
+        ## local testing
+        CIRCLE_BUILD_NUM=${CIRCLE_BUILD_NUM:-999}
+        if [ -z "${CIRCLE_BRANCH:-}" ]; then
+            CIRCLE_BRANCH=$(git branch --show-current)
+        fi
+    fi
+
+    PACKAGE_VERSION=$(jq -r '.version' package.json)
+    echo "PACKAGE_VERSION=$PACKAGE_VERSION"
+    PRERELEASE_VERSION=${PACKAGE_VERSION%.*}.$CIRCLE_BUILD_NUM
+    echo "PRERELEASE_VERSION=$PRERELEASE_VERSION"
+
+    npm version "$PRERELEASE_VERSION"
+    .circleci/package.sh
+    git push origin tag "$PRERELEASE_VERSION"
+
+    local ARGS=()
+    ARGS+=("--githubBranch" "main") ## used to infer lints
+    ARGS+=("--packagePath" "ablunit-test-runner-${PRERELEASE_VERSION}.vsix")
+    ARGS+=("--pre-release")
+    npx vsce publish "${ARGS[@]}"
+}
+
+release () {
+    echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}]"
     PRERELEASE=false
 
     if ! $CIRCLECI; then
@@ -35,6 +88,8 @@ main_block () {
         ARGS+=("--pre-release")
     fi
     npx vsce publish "${ARGS[@]}"
+
+    upload_to_github_release
 }
 
 upload_to_github_release () {
@@ -48,5 +103,4 @@ upload_to_github_release () {
 
 ########## MAIN BLOCK ##########
 main_block
-upload_to_github_release
 echo "[$(date +%Y-%m-%d:%H:%M:%S) $0] completed successfully"
