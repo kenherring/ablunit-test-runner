@@ -4,11 +4,19 @@ set -eou pipefail
 main_block () {
     echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}]"
 
+    if ! ${CIRCLECI:-false}; then
+        ## local testing
+        CIRCLE_BUILD_NUM=${CIRCLE_BUILD_NUM:-999}
+        if [ -z "${CIRCLE_BRANCH:-}" ] && [ -z "${CIRCLE_TAG:-}" ]; then
+            CIRCLE_BRANCH=$(git branch --show-current)
+        fi
+    fi
+
     if [ -n "${CIRCLE_TAG:-}" ]; then
         PRERELEASE=$(gh release view 1.0.0 --json isPrerelease | jq '.isPrerelease')
         echo "tag $CIRCLE_TAG PRERELEASE=$PRERELEASE"
     else
-        if [ -z "${PRERELEASE:-}" ]; then
+        if ! ${PRERELEASE:-false} && [ "$CIRCLE_BRANCH" != "main" ]; then
             echo "PRERELEASE is not set, there is nothing to publish (CIRCLE_BRANCH=$CIRCLE_BRANCH)"
             exit 0
         fi
@@ -28,14 +36,6 @@ prerelease () {
     if ! $PRERELEASE; then
         echo "ERROR: PRERELEASE is not set to true"
         exit 1
-    fi
-
-    if ! ${CIRCLECI:-false}; then
-        ## local testing
-        CIRCLE_BUILD_NUM=${CIRCLE_BUILD_NUM:-999}
-        if [ -z "${CIRCLE_BRANCH:-}" ]; then
-            CIRCLE_BRANCH=$(git branch --show-current)
-        fi
     fi
 
     PACKAGE_VERSION=$(jq -r '.version' package.json)
