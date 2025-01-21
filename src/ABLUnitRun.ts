@@ -52,10 +52,7 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 	let watcher: fs.StatWatcher | undefined = undefined
 	const compileErrors: ICompileError[] = []
 	let currentTestItem: TestItem | undefined = undefined
-	const allTests: TestItem[] = []
-	for (const test of res.tests) {
-		allTests.push(test, ...gatherAllTestItems(test.children))
-	}
+	const allTests = gatherAllTestItems(res.tests)
 
 	cancellation.onCancellationRequested(() => {
 		log.debug('cancellation requested - ablunitRun')
