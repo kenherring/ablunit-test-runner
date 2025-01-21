@@ -215,15 +215,6 @@ class Logger {
 					ret = parts.join('(')
 				}
 			}
-
-			// if (!classname) {
-			// 	// if (s.getFunctionName()) {
-			// 	// 	ret = s.getFunctionName() + ' function ' + ret
-			// 	// }
-			// 	// if (s.getEvalOrigin()) {
-			// 	// 	ret = s.getEvalOrigin() + ' origin ' + ret
-			// 	// }
-			// }
 			return ret
 		}
 	}

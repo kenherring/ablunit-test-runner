@@ -280,7 +280,6 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 						log.info('\t\t[stdout] ' + line, {testRun: options, testItem: currentTestItem})
 					}
 				}
-				log.info('process.stdout complete')
 			})
 			process.once('spawn', () => {
 				log.debug('spawn', {testRun: options})

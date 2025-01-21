@@ -15,7 +15,7 @@ validate_results_count() {
 
 	RESULTS_COUNT=$(find "artifacts/mocha_results_xunit" -name "*.xml" | sort -u | wc -l)
 	if [ "$RESULTS_COUNT" != "$TEST_COUNT" ]; then
-		log_ierror "ERROR: results count != test count ($RESULTS_COUNT != $TEST_COUNT)"
+		log_error "ERROR: results count != test count ($RESULTS_COUNT != $TEST_COUNT)"
 	fi
 
 	LCOV_COUNT=$(find . -name 'lcov.info' | wc -l)

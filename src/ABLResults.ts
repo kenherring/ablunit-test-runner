@@ -427,46 +427,34 @@ export class ABLResults implements Disposable {
 	}
 
 	private setChildResults (item: TestItem, options: TestRun, tc: ITestCase) {
-		switch (tc.status.toLowerCase()) {
-			case 'success': {
-				if (tc.skipped) {
-					options.skipped(item)
-				} else {
-					options.passed(item, tc.time)
-				}
-				return
-			}
-			case 'failure':
-			case 'error': {
-				if (tc.failures && tc.failures.length > 0) {
-					for (const failure of tc.failures) {
-						if (failure.stackTrace[0].uri && failure.stackTrace?.[0].position) {
-							const loc = new Location(failure.stackTrace[0].uri, failure.stackTrace[0].position)
-							log.error(failure.message, {testRun: options, location: loc, testItem: item})
-						}
-						const diff = this.getDiffMessage(failure)
-						if (diff) {
-							options.failed(item, diff, tc.time)
-						} else {
-							const testMessage = new TestMessage(getPromsgText(failure.message))
-							testMessage.stackTrace = failure.stackTrace
-							options.failed(item, testMessage, tc.time)
-						}
-					}
-					return
-				}
-				log.error('unexpected ' + tc.status.toLowerCase() + ' for \'' + tc.name + '\'')
-				throw new Error('unexpected ' + tc.status.toLowerCase() + ' for \'' + tc.name + '\'')
-			}
-			case 'skpped': {
-				options.skipped(item)
-				return
-			}
-			default: {
-				log.error('unexpected test status ' + tc.status + ' for ' + tc.name)
-				throw new Error('unexpected test status ' + tc.status + ' for ' + tc.name)
-			}
+		if (tc.status.toLowerCase() == 'skipped' || tc.skipped) {
+			options.skipped(item)
+			return
 		}
+		if (tc.status.toLowerCase() == 'success') {
+			options.passed(item, tc.time)
+			return
+		}
+
+		if (tc.failures && tc.failures.length > 0) {
+			for (const failure of tc.failures) {
+				let loc: Location | undefined = undefined
+				if (failure.stackTrace[0]?.uri && failure.stackTrace[0]?.position) {
+					loc = new Location(failure.stackTrace[0].uri, failure.stackTrace[0].position)
+					log.error(failure.message, {testRun: options, location: loc, testItem: item})
+				}
+				let testMessage = this.getDiffMessage(failure)
+				if (!testMessage) {
+					testMessage = new TestMessage(getPromsgText(failure.message))
+				}
+				testMessage.stackTrace = failure.stackTrace
+				testMessage.location = loc
+				options.failed(item, testMessage, tc.time)
+			}
+			return
+		}
+		log.error('unexpected test status ' + tc.status + ' for ' + tc.name)
+		throw new Error('unexpected test status ' + tc.status + ' for ' + tc.name)
 	}
 
 	private getDiffMessage (failure: ITestCaseFailure) {
