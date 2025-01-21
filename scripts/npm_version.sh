@@ -73,7 +73,9 @@ update_changelog () {
 
 	rm CHANGELOG.md
 	mv "changelog_$PACKAGE_VERSION.md" CHANGELOG.md
-	code --wait CHANGELOG.md
+	if ! ${CIRCLECI:-false}; then
+		code --wait CHANGELOG.md
+	fi
 }
 
 update_other_files () {

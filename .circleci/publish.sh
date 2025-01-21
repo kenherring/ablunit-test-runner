@@ -76,6 +76,8 @@ release () {
         ARGS+=("--pre-release")
     fi
     npx vsce publish "${ARGS[@]}"
+
+    upload_to_github_release
 }
 
 upload_to_github_release () {
@@ -89,5 +91,4 @@ upload_to_github_release () {
 
 ########## MAIN BLOCK ##########
 main_block
-upload_to_github_release
 echo "[$(date +%Y-%m-%d:%H:%M:%S) $0] completed successfully"
