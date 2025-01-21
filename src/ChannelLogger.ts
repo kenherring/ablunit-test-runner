@@ -170,9 +170,6 @@ class Logger {
 			message = message + '\r\n'
 		}
 
-		if (testInfo.testRun) {
-			log.info('testRun=' + testInfo.testRun.name + ', ' + 'testId=' + testInfo.testItem?.id)
-		}
 		testInfo.testRun.appendOutput(message, testInfo.location, testInfo.testItem)
 	}
 

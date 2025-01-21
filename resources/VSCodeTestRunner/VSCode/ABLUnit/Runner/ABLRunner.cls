@@ -24,16 +24,19 @@ class VSCode.ABLUnit.Runner.ABLRunner inherits OpenEdge.ABLUnit.Runner.ABLRunner
     constructor public ABLRunner () :
         super().
         constructorCommon().
+        if VERBOSE then message "END constructor".
     end constructor.
 
     constructor public ABLRunner (inputConfig as TestConfig, updateFile as character) :
         super(inputConfig, updateFile).
         constructorCommon().
         this-object:updateFilepath = updateFile.
+        if VERBOSE then message "END constructor".
     end constructor.
 
     method private void constructorCommon () :
         VERBOSE = (os-getenv('VERBOSE') = 'true' or os-getenv('VERBOSE') = '1').
+        if VERBOSE then message "constructorCommon".
         createEntityMapRecord(0, 'TEST_ROOT', '').
     end method.
 
@@ -153,9 +156,10 @@ class VSCode.ABLUnit.Runner.ABLRunner inherits OpenEdge.ABLUnit.Runner.ABLRunner
         end catch.
     end method.
 
-    method public override TypeInfo BuildTypeInfo (testCase as character &IF "PROVERSION" >= "12.5" &THEN , testType as character &ENDIF) :
+    method public override TypeInfo BuildTypeInfo (testCase as character &IF PROVERSION >= "12.5" &THEN , testType as character &ENDIF) :
+        if VERBOSE then message "BuildTypeInfo".
         define variable typeInfo as TypeInfo no-undo.
-        typeInfo = super:BuildTypeInfo(testCase &IF "PROVERSION" >= "12.5" &THEN , testType &ENDIF).
+        typeInfo = super:BuildTypeInfo(testCase &IF PROVERSION >= "12.5" &THEN , testType &ENDIF).
         return typeInfo.
 
         catch e as Progress.Lang.AppError:
@@ -194,6 +198,11 @@ class VSCode.ABLUnit.Runner.ABLRunner inherits OpenEdge.ABLUnit.Runner.ABLRunner
         define variable i as integer no-undo.
         do i = 1 to testEntities:Size:
             childTestEntity = cast(testEntities:GetValue(i), TestEntity).
+            if not valid-object(childTestEntity) then
+            do:
+                message 'childTestEtity is not valid!  testEntities[' + string(i) + '/' + string(testEntities:Size) + ']=' testEntities:GetValue(i).
+                next.
+            end.
             createEntityMapRecord(childTestEntity:id, childTestEntity:name, parentName).
             mapEntityChildren(childTestEntity:name, childTestEntity:getTestEntities()).
         end.
@@ -228,7 +237,6 @@ class VSCode.ABLUnit.Runner.ABLRunner inherits OpenEdge.ABLUnit.Runner.ABLRunner
         else
             message 'ABLUNIT_STATUS=~{"action":"' + action + '"~}'.
 
-
         if content begins 'TEST_END ' or
            content begins 'TEST_EXCEPTION ' then
         do:
@@ -238,6 +246,7 @@ class VSCode.ABLUnit.Runner.ABLRunner inherits OpenEdge.ABLUnit.Runner.ABLRunner
                 restartProfiler(getEntityName(entityId), entityId).
             end.
         end.
+        return.
 
         catch e as Progress.Lang.Error:
             message 'Error updating file ' + updateFile.
