@@ -43,6 +43,9 @@ prerelease () {
     PRERELEASE_VERSION=${PACKAGE_VERSION%.*}.$CIRCLE_BUILD_NUM
     echo "PRERELEASE_VERSION=$PRERELEASE_VERSION"
 
+    git config --global user.email "ablunit-test-runner@circleci"
+    git config --global user.name "CircleCI"
+
     npm version "$PRERELEASE_VERSION"
     .circleci/package.sh
     git push origin tag "$PRERELEASE_VERSION"
