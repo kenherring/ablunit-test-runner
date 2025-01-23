@@ -22,6 +22,7 @@ main_block () {
         fi
         PRERELEASE=${PRERELEASE:-true}
     fi
+    export PRERELEASE
 
     if $PRERELEASE; then
         prerelease

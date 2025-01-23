@@ -4,7 +4,7 @@ set -eou pipefail
 initialize () {
     echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}]"
     ABLUNIT_TEST_RUNNER_VSCODE_VERSION=${ABLUNIT_TEST_RUNNER_VSCODE_VERSION:-stable}
-    PRERELEASE=false
+    PRERELEASE=${PRERELEASE:-true}
     PACKAGE_VERSION=$(node -p "require('./package.json').version")
     if [ -z "${CIRCLE_BRANCH:-}" ]; then
         CIRCLE_BRANCH=$(git branch --show-current)
@@ -16,12 +16,6 @@ initialize () {
     if [ -z "${CIRCLE_TAG:-}" ]; then
         echo "ERROR: missing CIRCLE_TAG environment var"
         exit 1
-    fi
-
-    MINOR=$(echo "$CIRCLE_TAG" | cut -d. -f2)
-    if [ "$(( MINOR % 2 ))" = "1" ]; then
-        echo "minor tag is odd. packaging as pre-release. (MINOR=$MINOR)"
-        PRERELEASE=true
     fi
 
     rm -f ./*.vsix
