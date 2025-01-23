@@ -101,6 +101,7 @@ jobs:
       - store_artifacts:
           path: artifacts
       - save-package-cache
+      - restore-test-cache: { oe-version: << parameters.oe-version >> }
       - run: '[ "$(find . -type f -name "*.vsix" | grep -v "^./artifacts" | tee /dev/tty | wc -l)" = "1" ] && echo "pass" || (echo "error - count does not match (expected=$EXPECTED_VSIX_COUNT)" && exit 1)'
       - run: .circleci/run_test_wrapper.sh -p proj0 ## smoke test
   test:

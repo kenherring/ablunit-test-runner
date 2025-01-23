@@ -11,7 +11,11 @@ initialize () {
 	ABLUNIT_TEST_RUNNER_NO_COVERAGE=${ABLUNIT_TEST_RUNNER_NO_COVERAGE:-false}
 	ABLUNIT_TEST_RUNNER_UNIT_TESTING=true
 	ABLUNIT_TEST_RUNNER_REPO_DIR=$(pwd)
-	ABLUNIT_TEST_RUNNER_VSCODE_VERSION=stable
+
+	if [ ! -f /root/.rssw/oedoc.bin ]; then
+		echo "ERROR: /root/.rssw/oedoc.bin not found"
+		exit 1
+	fi
 
 	export ABLUNIT_TEST_RUNNER_DBUS_NUM \
 		ABLUNIT_TEST_RUNNER_OE_VERSION \
@@ -62,8 +66,6 @@ restore_vscode_test () {
 }
 
 dbus_config () {
-	echo "CIRCLECI=${CIRCLECI:-false}"
-	! ${CIRCLECI:-false} && return
 	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] ABLUNIT_TEST_RUNNER_DBUS_NUM=$ABLUNIT_TEST_RUNNER_DBUS_NUM"
 	case $ABLUNIT_TEST_RUNNER_DBUS_NUM in
 		1) dbus_config_1 ;; ## /sbin/start-stop-daemon: signal value must be numeric or name of signal (KILL, INT, ...)
@@ -98,7 +100,6 @@ dbus_config_2 () {
 
 dbus_config_3 () {
 	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}]"
-	set -x
 	DISPLAY=$(grep nameserver /etc/resolv.conf | awk '{print $2}'):0.0
 	export DISPLAY
 	service dbus restart
@@ -107,15 +108,17 @@ dbus_config_3 () {
 	XDG_RUNTIME_DIR=/run/user/$(id -u)
 	export XDG_RUNTIME_DIR
 	if [ ! -d "$XDG_RUNTIME_DIR" ]; then
-		sudo mkdir "$XDG_RUNTIME_DIR"
-		sudo chmod 700 "$XDG_RUNTIME_DIR"
-		sudo chown "$(id -un)":"$(id -gn)" "$XDG_RUNTIME_DIR"
+		mkdir "$XDG_RUNTIME_DIR"
+		chmod 700 "$XDG_RUNTIME_DIR"
+		chown "$(id -un)":"$(id -gn)" "$XDG_RUNTIME_DIR"
+		# sudo mkdir "$XDG_RUNTIME_DIR"
+		# sudo chmod 700 "$XDG_RUNTIME_DIR"
+		# sudo chown "$(id -un)":"$(id -gn)" "$XDG_RUNTIME_DIR"
 	fi
 
 	DBUS_SESSION_BUS_ADDRESS=unix:path=$XDG_RUNTIME_DIR/bus
 	export DBUS_SESSION_BUS_ADDRESS
 	dbus-daemon --session --address="$DBUS_SESSION_BUS_ADDRESS" --nofork --nopidfile --syslog-only &
-	set +x
 }
 
 dbus_config_4 () {

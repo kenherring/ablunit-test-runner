@@ -110,7 +110,7 @@ initialize () {
 	if $DELETE_CACHE_VOLUME; then
 		local VOLS=()
 		docker volume ls | grep -q test-runner-cache && VOLS+=(test-runner-cache)
-		docker volume ls | grep -q vscode-cli-cache && VOLS+=(vscode-cli-cache)
+		docker volume ls | grep -q "vscode-cli-cache-$ABLUNIT_TEST_RUNNER_OE_VERSION" && VOLS=("vscode-cli-cache-$ABLUNIT_TEST_RUNNER_OE_VERSION")
 		if [ ${#VOLS[@]} -eq 0 ]; then
 			echo "no volumes to delete"
 		else
