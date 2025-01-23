@@ -46,7 +46,7 @@ bump_prerelease_version () {
     log_it "bumping version to $BUMP_TO_VERSION"
 
     npm version "$BUMP_TO_VERSION" --no-tag-git-version -m "Bump version to prerelease %s"
-    git push tag origin "$BUMP_TO_VERSION"
+    git push
 }
 
 ## when building the main branch, set the tag to the version in package.json
@@ -56,7 +56,7 @@ push_tag () {
 
     log_it "create tag $PACKAGE_VERSION and push"
     npm version "$PACKAGE_VERSION" --allow-same-ver
-    git push tag origin "PACKAGE_VERSION"
+    git push origin tag "$PACKAGE_VERSION"
 }
 
 ########## MAIN BLOCK ##########
