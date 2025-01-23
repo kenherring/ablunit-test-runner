@@ -16,6 +16,15 @@ main () {
         return 0
     fi
 
+    if $CIRCLECI; then
+        if ! git config --get user.email &>/dev/null; then
+            git config --global user.email "circleci@ablunit-test-runner.kenherring.com"
+        fi
+        if ! git config --get user.name &>/dev/null; then
+            git config --global user.name "CircleCI"
+        fi
+    fi
+
     bump_prerelease_version
 }
 
