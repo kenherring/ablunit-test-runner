@@ -106,12 +106,9 @@ dbus_config_3 () {
 	XDG_RUNTIME_DIR=/run/user/$(id -u)
 	export XDG_RUNTIME_DIR
 	if [ ! -d "$XDG_RUNTIME_DIR" ]; then
-		mkdir "$XDG_RUNTIME_DIR"
-		chmod 700 "$XDG_RUNTIME_DIR"
-		chown "$(id -un)":"$(id -gn)" "$XDG_RUNTIME_DIR"
-		# sudo mkdir "$XDG_RUNTIME_DIR"
-		# sudo chmod 700 "$XDG_RUNTIME_DIR"
-		# sudo chown "$(id -un)":"$(id -gn)" "$XDG_RUNTIME_DIR"
+		sudo mkdir "$XDG_RUNTIME_DIR"
+		sudo chmod 700 "$XDG_RUNTIME_DIR"
+		sudo chown "$(id -un)":"$(id -gn)" "$XDG_RUNTIME_DIR"
 	fi
 
 	DBUS_SESSION_BUS_ADDRESS=unix:path=$XDG_RUNTIME_DIR/bus
