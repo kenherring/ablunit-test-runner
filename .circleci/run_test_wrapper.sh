@@ -13,11 +13,6 @@ initialize () {
 	ABLUNIT_TEST_RUNNER_REPO_DIR=$(pwd)
 	ABLUNIT_TEST_RUNNER_VSCODE_VERSION=stable
 
-	if [ ! -f ~/.rssw/oedoc.bin ]; then
-		echo "ERROR: ~/.rssw/oedoc.bin not found"
-		exit 1
-	fi
-
 	export ABLUNIT_TEST_RUNNER_DBUS_NUM \
 		ABLUNIT_TEST_RUNNER_OE_VERSION \
 		ABLUNIT_TEST_RUNNER_VSCODE_VERSION \
@@ -33,8 +28,6 @@ initialize () {
 	echo "ABLUNIT_TEST_RUNNER_UNIT_TESTING=$ABLUNIT_TEST_RUNNER_UNIT_TESTING"
 	echo "ABLUNIT_TEST_RUNNER_REPO_DIR=$ABLUNIT_TEST_RUNNER_REPO_DIR"
 	echo "CIRCLECI=${CIRCLECI:-}"
-
-	npm install
 
 	update_oe_version
 }
