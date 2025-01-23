@@ -19,7 +19,7 @@ main () {
     bump_prerelease_version
 }
 
-bump_prelease_version () {
+bump_prerelease_version () {
     log_it "PACKAGE_VERSION=$PACKAGE_VERSION"
     PATCH_NUM=$((${PACKAGE_VERSION##*.} + 1))
     if [ "$((PATCH_NUM % 2))" = "0" ]; then
