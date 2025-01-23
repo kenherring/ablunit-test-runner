@@ -5,18 +5,24 @@ initialize () {
     echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}]"
     ABLUNIT_TEST_RUNNER_VSCODE_VERSION=${ABLUNIT_TEST_RUNNER_VSCODE_VERSION:-stable}
     PRERELEASE=${PRERELEASE:-true}
-    PACKAGE_VERSION=$(node -p "require('./package.json').version")
-    if [ -z "${CIRCLE_BRANCH:-}" ]; then
-        CIRCLE_BRANCH=$(git branch --show-current)
+
+    if ! ${CIRCLECI:-false}; then
+        ## local testing
+        [ -z "${CIRCLE_TAG:-}" ] && CIRCLE_TAG=$(git tag --points-at HEAD)
+        if [ -z "${CIRCLE_TAG:-}" ]; then
+            [ -z "${CIRCLE_BRANCH:-}" ] && CIRCLE_BRANCH=$(git branch --show-current)
+        fi
     fi
 
-    if [ -z "${CIRCLE_TAG:-}" ]; then
-        CIRCLE_TAG=$PACKAGE_VERSION
+    PACKAGE_VERSION=$(jq -r '.version' package.json)
+    echo "PACKAGE_VERSION=$PACKAGE_VERSION"
+    PATCH_VERSION=${PACKAGE_VERSION##*.}
+    echo "PATCH_VERSION=$PATCH_VERSION"
+    if [ "$((PATCH_VERSION % 2))" = "1" ]; then
+        echo "version patch component is odd. packaging as prerelease. (MINOR=$MINOR)"
+        PRERELEASE=true
     fi
-    if [ -z "${CIRCLE_TAG:-}" ]; then
-        echo "ERROR: missing CIRCLE_TAG environment var"
-        exit 1
-    fi
+    echo "PRERELEASE=$PRERELEASE"
 
     rm -f ./*.vsix
 }

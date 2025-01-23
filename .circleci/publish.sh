@@ -17,28 +17,29 @@ main_block () {
     PACKAGE_VERSION=$(jq -r '.version' package.json)
     echo "PACKAGE_VERSION=$PACKAGE_VERSION"
     PATCH_VERSION=${PACKAGE_VERSION##*.}
-    echo "$PATCH_VERSION"
+    echo "PATCH_VERSION=$PATCH_VERSION"
     if [ "$((PATCH_VERSION % 2))" = "1" ]; then
         ## Odd patch version is always a pre-release
         PRERELEASE=true
     fi
     echo "PRERELEASE=$PRERELEASE"
 
-    gh release create "$CIRCLE_TAG" "ablunit-test-runner-${CIRCLE_TAG}.vsix" --clobber
+    if [ -n "${CIRCLE_TAG:-}" ] && [ "$CIRCLE_TAG" != "$PACKAGE_VERSION" ]; then
+        log_error "CIRCLE_TAG=$CIRCLE_TAG does not match PACKAGE_VERSION=$PACKAGE_VERSION"
+        return 1
+    fi
+
     publish_release
-    upload_to_github_release
+    if [ -n "$CIRCLE_TAG" ]; then
+        upload_to_github_release
+    fi
 }
 
 publish_release () {
     echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}]"
 
-    if [ ! -f "ablunit-test-runner-${CIRCLE_TAG}.vsix" ]; then
-        echo "ERROR: ablunit-test-runner-${CIRCLE_TAG}.vsix not found"
-        exit 1
-    fi
-
-    if [ "$CIRCLE_TAG" != "$PACKAGE_VERSION" ]; then
-        echo "ERROR: CIRCLE_TAG=$CIRCLE_TAG does not match PACKAGE_VERSION=$PACKAGE_VERSION"
+    if [ ! -f "ablunit-test-runner-${PACKAGE_VERSION}.vsix" ]; then
+        echo "ERROR: ablunit-test-runner-${PACKAGE_VERSION}.vsix not found"
         exit 1
     fi
 

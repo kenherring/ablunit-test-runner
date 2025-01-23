@@ -527,14 +527,14 @@ export class ABLResults implements Disposable {
 			const item = this.findTest(profJson.description)
 			profJson.testItemId = item?.id
 			this.profileJson.push(profJson)
-			await this.assignProfileResults(profJson)
+			await this.assignProfileResults(profJson, item)
 			log.info('parsing profile data complete (' + i + '/' + dataFiles.length + ') ' + duration.toString())
 
 		}
 		log.info('parsing profile data complete ' + duration.toString(), {testRun: options})
 	}
 
-	async assignProfileResults (profJson: ABLProfileJson) {
+	async assignProfileResults (profJson: ABLProfileJson, testItem: TestItem | undefined) {
 		if (!profJson) {
 			log.error('no profile data available...')
 			throw new Error('no profile data available...')
@@ -543,7 +543,6 @@ export class ABLResults implements Disposable {
 			if (checkSkipList(module.SourceName)) {
 				continue
 			}
-			const testItem = gatherAllTestItems(this.tests).find((t) => t.id == profJson.testItemId)
 			await this.setCoverage(module, testItem)
 		}
 	}

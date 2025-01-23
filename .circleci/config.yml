@@ -17,6 +17,10 @@ parameters:
   latest-oe-version:
     type: string
     default: 12.8.4
+  release-from-branch:
+    type: string
+    default: parse-profile-data-performance
+    # default: main
 
 oe-version-param: &oe-version-param
   parameters:
@@ -198,7 +202,7 @@ workflows:
             - Azure_PAT
             - GitHub_CLI
           filters: ## main branch = prerelease; tags = release
-            branches: { only: /^main$/ }
+            branches: { only: /^<< pipeline.parameters.release-from-branch >>$/ }
             tags: { only: /^.*$/ }
           requires:
             - shellcheck/check

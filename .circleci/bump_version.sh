@@ -33,7 +33,7 @@ bump_prerelease_version () {
     log_it "PACKAGE_VERSION=$PACKAGE_VERSION"
     PATCH_NUM=$((${PACKAGE_VERSION##*.} + 1))
     if [ "$((PATCH_NUM % 2))" = "0" ]; then
-        ## always bump to an odd number for pre-release
+        ## always bump to an odd number for prerelease
         ## even number releases are set manually and pushed
         PATCH_NUM=$((PATCH_NUM + 1))
     fi
