@@ -48,8 +48,6 @@ prerelease () {
 
     npm version "$PRERELEASE_VERSION"
     .circleci/package.sh
-    git remote -v ## TODO remove me
-    git remote set-url origin git@github.com:kenherring/ablunit-test-runner.git
     git push origin tag "$PRERELEASE_VERSION"
 
     local ARGS=()
