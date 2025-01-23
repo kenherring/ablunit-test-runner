@@ -3,42 +3,28 @@
 . scripts/common.sh
 
 main () {
-    echo "100"
     log_it
     PACKAGE_VERSION=$(jq -r '.version' package.json)
-    echo "PACKAGE_VERSION=$PACKAGE_VERSION"
+    log_it "PACKAGE_VERSION=$PACKAGE_VERSION"
     if [ "${CIRCLE_BRANCH:-}" = "main" ]; then
-        echo "MAIN BRANCH-1"
         push_tag
-        echo "MAIN BRANCH-2"
         return
     fi
-    echo 110
 
-    GIT_TAG_MATCH=$(git tag -l --sort=version:refname | grep -E "^$PACKAGE_VERSION$")
-    echo "GIT_TAG_MATCH=$GIT_TAG_MATCH"
-    if [ -z "$GIT_TAG_MATCH" ]; then
-        echo "no tag-1"
+    if ! git tag -l --sort=version:refname | grep -q "^$PACKAGE_VERSION$"; then
         log_it "no tag exists for PACKAGE_VERSION=$PACKAGE_VERSION, nothing more to do..."
-        echo "no tag-2"
         return 0
     fi
 
-    echo 120
     if ${CIRCLECI:-}; then
-        echo 121
         if ! git config --get user.email &>/dev/null; then
             git config user.email "circleci@ablunit-test-runner.kenherring.com"
         fi
-        echo 122
         if ! git config --get user.name &>/dev/null; then
             git config user.name "CircleCI"
         fi
-        echo 123
         git config push.autoSetupRemote true
-        echo 124
     fi
-    echo 124
 
     bump_prerelease_version
 }
