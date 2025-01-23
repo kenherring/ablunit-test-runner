@@ -7,7 +7,7 @@ main () {
     PACKAGE_VERSION=$(jq -r '.version' package.json)
     log_it "PACKAGE_VERSION=$PACKAGE_VERSION"
     if [ "${CIRCLE_BRANCH:-}" = "main" ]; then
-        push_tag
+        log_it "nothing more to do, this is the main branch and we're building PACKAGE_VERSION=$PACKAGE_VERSION"
         return
     fi
 

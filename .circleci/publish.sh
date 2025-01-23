@@ -1,8 +1,10 @@
 #!/bin/bash
 set -eou pipefail
 
+. scripts/common.sh
+
 main_block () {
-    echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}]"
+    log_it
     PRERELEASE=false
 
     if ! ${CIRCLECI:-false}; then
@@ -14,57 +16,60 @@ main_block () {
         fi
     fi
 
-    PACKAGE_VERSION=$(jq -r '.version' package.json)
-    echo "PACKAGE_VERSION=$PACKAGE_VERSION"
-    PATCH_VERSION=${PACKAGE_VERSION##*.}
-    echo "PATCH_VERSION=$PATCH_VERSION"
-    if [ "$((PATCH_VERSION % 2))" = "1" ]; then
-        ## Odd patch version is always a pre-release
-        PRERELEASE=true
-    fi
-    echo "PRERELEASE=$PRERELEASE"
-
-    if [ -n "${CIRCLE_TAG:-}" ] && [ "$CIRCLE_TAG" != "$PACKAGE_VERSION" ]; then
-        log_error "CIRCLE_TAG=$CIRCLE_TAG does not match PACKAGE_VERSION=$PACKAGE_VERSION"
-        return 1
-    fi
-
+    validate_tag
     publish_release
     if [ -n "$CIRCLE_TAG" ]; then
         upload_to_github_release
     fi
 }
 
-publish_release () {
-    echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}]"
+validate_tag () {
+    log_it
+    PACKAGE_VERSION=$(jq -r '.version' package.json)
+    log_it "PACKAGE_VERSION=$PACKAGE_VERSION"
+    PATCH_VERSION=${PACKAGE_VERSION##*.}
+    log_it "PATCH_VERSION=$PATCH_VERSION"
+    if [ "$((PATCH_VERSION % 2))" = "1" ]; then
+        ## Odd patch version is always a pre-release
+        PRERELEASE=true
+    elif [ -z "${CIRCLE_TAG}" ]; then
+        log_it "CIRCLE_TAG is not defined and the patch number is even indicating this is not a prerelease.  Nothing to do now, deployment occurs when the GitHub release is created"
+        return 0
+    fi
+    log_it "PRERELEASE=$PRERELEASE"
 
-    if [ ! -f "ablunit-test-runner-${PACKAGE_VERSION}.vsix" ]; then
-        echo "ERROR: ablunit-test-runner-${PACKAGE_VERSION}.vsix not found"
-        exit 1
+    if [ -n "${CIRCLE_TAG:-}" ] && [ "$CIRCLE_TAG" != "$PACKAGE_VERSION" ]; then
+        log_error "CIRCLE_TAG=$CIRCLE_TAG does not match PACKAGE_VERSION=$PACKAGE_VERSION"
+        return 1
     fi
 
-    echo "publishing file 'ablunit-test-runner-${CIRCLE_TAG}.vsix'"
+    if [ ! -f "ablunit-test-runner-${PACKAGE_VERSION}.vsix" ]; then
+        log_error "ablunit-test-runner-${PACKAGE_VERSION}.vsix not found"
+        exit 1
+    fi
+}
+
+publish_release () {
+    log_it  "publishing file 'ablunit-test-runner-${PACKAGE_VERSION}.vsix'"
 
     local ARGS=()
     ARGS+=("--githubBranch" "main")
-    ARGS+=("--packagePath" "ablunit-test-runner-${CIRCLE_TAG}.vsix")
+    ARGS+=("--packagePath" "ablunit-test-runner-${PACKAGE_VERSION}.vsix")
     if $PRERELEASE; then
         ARGS+=("--pre-release")
     fi
     npx vsce publish "${ARGS[@]}"
-
-    upload_to_github_release
 }
 
 upload_to_github_release () {
-    echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}]"
+    log_it
     local GH_TOKEN=$GH_TOKEN_PUBLISH
     export GH_TOKEN
     sudo apt update
     sudo apt install --no-install-recommends -y gh
-    gh release upload "$CIRCLE_TAG" "ablunit-test-runner-${CIRCLE_TAG}.vsix" --clobber
+    gh release upload "$PACKAGE_VERSION" "ablunit-test-runner-${PACKAGE_VERSION}.vsix" --clobber
 }
 
 ########## MAIN BLOCK ##########
 main_block
-echo "[$(date +%Y-%m-%d:%H:%M:%S) $0] completed successfully"
+log_it "completed successfully"
