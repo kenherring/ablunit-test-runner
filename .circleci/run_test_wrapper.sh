@@ -11,9 +11,10 @@ initialize () {
 	ABLUNIT_TEST_RUNNER_NO_COVERAGE=${ABLUNIT_TEST_RUNNER_NO_COVERAGE:-false}
 	ABLUNIT_TEST_RUNNER_UNIT_TESTING=true
 	ABLUNIT_TEST_RUNNER_REPO_DIR=$(pwd)
+	ABLUNIT_TEST_RUNNER_VSCODE_VERSION=stable
 
-	if [ ! -f /root/.rssw/oedoc.bin ]; then
-		echo "ERROR: /root/.rssw/oedoc.bin not found"
+	if [ ! -f ~/.rssw/oedoc.bin ]; then
+		echo "ERROR: ~/.rssw/oedoc.bin not found"
 		exit 1
 	fi
 
@@ -31,8 +32,8 @@ initialize () {
 	echo "ABLUNIT_TEST_RUNNER_RUN_SCRIPT_FLAG=$ABLUNIT_TEST_RUNNER_RUN_SCRIPT_FLAG"
 	echo "ABLUNIT_TEST_RUNNER_UNIT_TESTING=$ABLUNIT_TEST_RUNNER_UNIT_TESTING"
 	echo "ABLUNIT_TEST_RUNNER_REPO_DIR=$ABLUNIT_TEST_RUNNER_REPO_DIR"
-	echo "CIRCLECI=$CIRCLECI"
-	
+	echo "CIRCLECI=${CIRCLECI:-}"
+
 	npm install
 
 	update_oe_version
@@ -68,6 +69,8 @@ restore_vscode_test () {
 }
 
 dbus_config () {
+	echo "CIRCLECI=${CIRCLECI:-false}"
+	! ${CIRCLECI:-false} && return
 	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] ABLUNIT_TEST_RUNNER_DBUS_NUM=$ABLUNIT_TEST_RUNNER_DBUS_NUM"
 	case $ABLUNIT_TEST_RUNNER_DBUS_NUM in
 		1) dbus_config_1 ;; ## /sbin/start-stop-daemon: signal value must be numeric or name of signal (KILL, INT, ...)
