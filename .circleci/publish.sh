@@ -3,6 +3,7 @@ set -eou pipefail
 
 main_block () {
     echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}]"
+    PRERELEASE=false
 
     if ! ${CIRCLECI:-false}; then
         ## local testing
@@ -22,7 +23,6 @@ main_block () {
         fi
         PRERELEASE=${PRERELEASE:-true}
     fi
-    export PRERELEASE
 
     if $PRERELEASE; then
         prerelease
@@ -43,9 +43,6 @@ prerelease () {
     echo "PACKAGE_VERSION=$PACKAGE_VERSION"
     PRERELEASE_VERSION=${PACKAGE_VERSION%.*}.$CIRCLE_BUILD_NUM
     echo "PRERELEASE_VERSION=$PRERELEASE_VERSION"
-
-    git config --global user.email "ablunit-test-runner@circleci"
-    git config --global user.name "CircleCI"
 
     npm version "$PRERELEASE_VERSION"
     .circleci/package.sh

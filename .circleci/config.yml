@@ -95,6 +95,7 @@ jobs:
       - checkout
       - restore-package-cache
       - run: .circleci/package.sh
+      - run: .circleci/bump_version.sh
       - run: rm -r node_modules
       - persist_to_workspace: { root: ., paths: [ . ] }
       - run: cp *.vsix artifacts/
@@ -202,6 +203,7 @@ workflows:
             - Azure_PAT
             - GitHub_CLI
           filters: ## main branch or PRERELEASE PARAMETER = prerelease; tags = release
+            # branches: { only /^main$/ }
             tags: { only: /^.*$/ }
           requires:
             - shellcheck/check
