@@ -95,7 +95,7 @@ jobs:
       - add_ssh_keys:
           fingerprints:
             - "SHA256:7O7u8zJHWLESMSI69NqqahfyiLCMvxryB9aTyYd5c84"
-      - run: ssh-keyscan -t rsa github.com >> ~/.ssh/known_hosts
+      # - run: ssh-keyscan -t rsa github.com >> ~/.ssh/known_hosts
       - run: .circleci/bump_version.sh
       - run: rm -r node_modules
       - persist_to_workspace: { root: ., paths: [ . ] }
