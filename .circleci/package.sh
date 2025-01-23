@@ -19,7 +19,7 @@ initialize () {
     PATCH_VERSION=${PACKAGE_VERSION##*.}
     echo "PATCH_VERSION=$PATCH_VERSION"
     if [ "$((PATCH_VERSION % 2))" = "1" ]; then
-        echo "version patch component is odd. packaging as prerelease. (MINOR=$MINOR)"
+        echo "version patch component is odd. packaging as prerelease. (PATCH=$PATCH_VERSION)"
         PRERELEASE=true
     fi
     echo "PRERELEASE=$PRERELEASE"
