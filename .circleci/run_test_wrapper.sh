@@ -98,6 +98,7 @@ dbus_config_2 () {
 
 dbus_config_3 () {
 	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}]"
+	set -x
 	DISPLAY=$(grep nameserver /etc/resolv.conf | awk '{print $2}'):0.0
 	export DISPLAY
 	service dbus restart
@@ -114,6 +115,7 @@ dbus_config_3 () {
 	DBUS_SESSION_BUS_ADDRESS=unix:path=$XDG_RUNTIME_DIR/bus
 	export DBUS_SESSION_BUS_ADDRESS
 	dbus-daemon --session --address="$DBUS_SESSION_BUS_ADDRESS" --nofork --nopidfile --syslog-only &
+	set +x
 }
 
 dbus_config_4 () {
