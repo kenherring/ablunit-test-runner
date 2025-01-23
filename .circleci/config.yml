@@ -157,6 +157,9 @@ jobs:
       PRERELEASE: << pipeline.parameters.prerelease >>
     steps:
       - attach_workspace: { at: . }
+      - add_ssh_keys:
+          fingerprints:
+            - "SHA256:7O7u8zJHWLESMSI69NqqahfyiLCMvxryB9aTyYd5c84"
       - run: .circleci/publish.sh
       - run: ## remove artifacts so we don't waste space
           when: on_success
