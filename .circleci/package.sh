@@ -74,6 +74,7 @@ run_lint () {
     echo "eslint returned code=$ESLINT_RETURN_CODE"
 
     jq '.' < "${ESLINT_FILE}.json.tmp" > "${ESLINT_FILE}.json"
+    rm -f "${ESLINT_FILE}.json.tmp"
     sed -i 's|/home/circleci/project/|/root/project/|g' "${ESLINT_FILE}.json"
 
     if [ ! -f "${ESLINT_FILE}.json" ]; then
@@ -81,9 +82,9 @@ run_lint () {
         exit 1
     fi
 
-    MESSAGE_COUNT=$(jq '[.[] | .messages | length] | add' < ${ESLINT_FILE}.json.tmp)
-    ERROR_COUNT=$(jq '[.[] | .errorCount] | add' < ${ESLINT_FILE}.json.tmp)
-    WARNING_COUNT=$(jq '[.[] | .warningCount] | add' < ${ESLINT_FILE}.json.tmp)
+    MESSAGE_COUNT=$(jq '[.[] | .messages | length] | add' < ${ESLINT_FILE}.json)
+    ERROR_COUNT=$(jq '[.[] | .errorCount] | add' < ${ESLINT_FILE}.json)
+    WARNING_COUNT=$(jq '[.[] | .warningCount] | add' < ${ESLINT_FILE}.json)
 
     echo 'eslint summary:'
     echo " - message count:  $MESSAGE_COUNT"
