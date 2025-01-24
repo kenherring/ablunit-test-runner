@@ -99,7 +99,6 @@ jobs:
       - add_ssh_keys:
           fingerprints:
             - "SHA256:7O7u8zJHWLESMSI69NqqahfyiLCMvxryB9aTyYd5c84"
-      # - run: ssh-keyscan -t rsa github.com >> ~/.ssh/known_hosts
       - run: .circleci/bump_version.sh
       - run: rm -r node_modules
       - persist_to_workspace: { root: ., paths: [ . ] }
@@ -166,7 +165,12 @@ jobs:
           when: on_success
           command: rm -rf artifacts/* coverage/*
       - store_artifacts: { path: artifacts }
-
+  create-release:
+    docker:
+      - image: cimg/node:20.8
+    steps:
+      - attach_workspace: { at: . }
+      - run: .circleci/create_release.sh
 workflows:
   build:
     jobs:
@@ -197,15 +201,22 @@ workflows:
           requires:
             - test-<< pipeline.parameters.primary-oe-version >>
           oe-version: << pipeline.parameters.primary-oe-version >>
-      - publish:
+      - create-release:
           context:
-            - Azure_PAT
             - GitHub_CLI
-          filters: ## main branch = prerelease; tags = release
+          filters:
             branches: { only: /^<< pipeline.parameters.release-from-branch >>$/ }
-            tags: { only: /^.*$/ }
           requires:
             - shellcheck/check
             - sonar
             - test-<< pipeline.parameters.primary-oe-version >>
             - test-matrix
+  publish-tag:
+    jobs:
+      - publish:
+          context:
+            - Azure_PAT
+            - GitHub_CLI
+          filters: ## tags only
+            branches: { ignore: [ /.*/ ] }
+            tags: { only: /^.*$/ }

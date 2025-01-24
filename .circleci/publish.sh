@@ -18,7 +18,7 @@ main_block () {
 
     validate_tag
     publish_release
-    if [ -n "$CIRCLE_TAG" ]; then
+    if [ -n "${CIRCLE_TAG:-}" ]; then
         upload_to_github_release
     fi
 }
