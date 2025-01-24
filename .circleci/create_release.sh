@@ -37,6 +37,8 @@ main () {
     ARGS+=(--generate-notes)
     ARGS+=(--notes-start-tag "$LATEST_RELEASE_TAG")
 
+    sudo apt update
+    sudo apt install --no-install-recommends -y gh
     gh release create "$PACKAGE_VERSION" "${ARGS[@]}"
     log_it "release created for PACKAGE_VERSION=$PACKAGE_VERSION"
 }
