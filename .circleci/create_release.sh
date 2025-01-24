@@ -37,8 +37,9 @@ main () {
     ARGS+=(--generate-notes)
     ARGS+=(--notes-start-tag "$LATEST_RELEASE_TAG")
 
-    sudo apt update
-    sudo apt install --no-install-recommends -y gh
+    curl -L https://github.com/cli/cli/releases/download/v2.65.0/gh_2.65.0_linux_amd64.deb -o /tmp/gh_2.65.0_linux_amd64.deb
+    dpkg -i /tmp/gh_2.65.0_linux_amd64.deb
+
     gh release create "$PACKAGE_VERSION" "${ARGS[@]}"
     log_it "release created for PACKAGE_VERSION=$PACKAGE_VERSION"
 }

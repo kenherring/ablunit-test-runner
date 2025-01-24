@@ -65,8 +65,10 @@ upload_to_github_release () {
     log_it
     local GH_TOKEN=$GH_TOKEN_PUBLISH
     export GH_TOKEN
-    sudo apt update
-    sudo apt install --no-install-recommends -y gh
+
+    curl -L https://github.com/cli/cli/releases/download/v2.65.0/gh_2.65.0_linux_amd64.deb -o /tmp/gh_2.65.0_linux_amd64.deb
+    dpkg -i /tmp/gh_2.65.0_linux_amd64.deb
+
     gh release upload "$PACKAGE_VERSION" "ablunit-test-runner-${PACKAGE_VERSION}.vsix" --clobber
 }
 
