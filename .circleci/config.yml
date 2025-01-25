@@ -107,7 +107,11 @@ jobs:
       - run: .circleci/run_test_wrapper.sh -p proj0 ## smoke test
   test:
     <<: *oe-version-param
-    executor: psc-primary
+    docker:
+      - image: kherring/ablunit-test-runner:<< parameters.oe-version >>
+        auth:
+          username: $DOCKERHUB_USERNAME
+          password: $DOCKERHUB_TOKEN
     environment:
       ABLUNIT_TEST_RUNNER_OE_VERSION: << parameters.oe-version >>
       ABLUNIT_TEST_RUNNER_VSCODE_VERSION: << parameters.vscode-version >>
@@ -176,7 +180,7 @@ workflows:
           matrix:
             alias: test-matrix
             parameters:
-              oe-version: [ 12.2.12, 12.8.1, 12.8.3, << pipeline.parameters.latest-oe-version >> ]
+              oe-version: [ 12.2.12, 12.8.1, << pipeline.parameters.latest-oe-version >> ]
       - sonar:
           <<: *context-and-filters
           requires:

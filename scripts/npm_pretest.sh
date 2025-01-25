@@ -1,15 +1,17 @@
 #!/bin/bash
 set -eou pipefail
 
+. scripts/common.sh
+
 initialize () {
-	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] pwd=$(pwd)"
+	log_it "pwd=$(pwd)"
 
 
 	if [ -z "$DLC" ]; then
-		echo "ERROR: DLC environment variable is not set"
+		log_error "DLC environment variable is not set"
 		exit 1
 	fi
-	echo "DLC=$DLC"
+	log_it "DLC=$DLC"
 
 	PATH=$PATH:$DLC/ant/bin
 	CIRCLECI=${CIRCLECI:-false}
@@ -28,7 +30,7 @@ initialize () {
 			o)	ABLUNIT_TEST_RUNNER_OE_VERSION="$OPTARG" ;;
 			V)	ABLUNIT_TEST_RUNNER_VSCODE_VERSION="$OPTARG" ;;
 			v)	VERBOSE=true ;;
-			?)	echo "script usage: $(basename "$0") [-h] [-N]" >&2
+			?)	log_it "script usage: $(basename "$0") [-h] [-N]" >&2
 				exit 1 ;;
 		esac
 	done
@@ -42,7 +44,7 @@ initialize () {
 		fi
 	fi
 	if [[ ! "$ABLUNIT_TEST_RUNNER_OE_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-		echo "ERROR: invalid ABLUNIT_TEST_RUNNER_OE_VERSION: '$ABLUNIT_TEST_RUNNER_OE_VERSION'"
+		log_error "invalid ABLUNIT_TEST_RUNNER_OE_VERSION: '$ABLUNIT_TEST_RUNNER_OE_VERSION'"
 		exit 1
 	fi
 
@@ -59,7 +61,7 @@ initialize () {
 
 # load lots of code for a performance test
 get_performance_test_code () {
-	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] pwd=$(pwd) ABLUNIT_TEST_RUNNER_OE_VERSION=$ABLUNIT_TEST_RUNNER_OE_VERSION ABLUNIT_TEST_RUNNER_VSCODE_VERSION=${ABLUNIT_TEST_RUNNER_VSCODE_VERSION:-}"
+	log_it "pwd=$(pwd) ABLUNIT_TEST_RUNNER_OE_VERSION=$ABLUNIT_TEST_RUNNER_OE_VERSION ABLUNIT_TEST_RUNNER_VSCODE_VERSION=${ABLUNIT_TEST_RUNNER_VSCODE_VERSION:-}"
 
 	local TO_FILE="/home/circleci/v${ABLUNIT_TEST_RUNNER_OE_VERSION}.0.tar.gz"
 	if [ "${OS:-}" = "Windows_NT" ] || [ -n "${WSL_DISTRO_NAME:-}" ]; then
@@ -68,8 +70,8 @@ get_performance_test_code () {
 	fi
 	if [ ! -f "$TO_FILE" ]; then
 		if [ -n "${DOCKER_IMAGE:-}" ]; then
-			echo "ERROR: cannot find file '$TO_FILE'"
-			echo " - HINT: this should have been fetched during docker build"
+			log_error "cannot find file '$TO_FILE'\n" \
+				" - HINT: this should have been fetched during docker build"
 		else
 			curl -L "https://github.com/progress/ADE/archive/refs/tags/v${ABLUNIT_TEST_RUNNER_OE_VERSION}.0.tar.gz" -o "$TO_FILE"
 		fi
@@ -78,7 +80,7 @@ get_performance_test_code () {
 }
 
 copy_user_settings () {
-	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}]"
+	log_it
 
 	if [ -d .vscode-test ]; then
 		$VERBOSE && find .vscode-test -type f -name "*.log"
@@ -95,7 +97,7 @@ copy_user_settings () {
 }
 
 get_pct () {
-	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] pwd=$(pwd)"
+	log_it "pwd=$(pwd)"
 	if $WSL && [ ! -f ~/.ant/lib/PCT.jar ]; then
 		mkdir -p ~/.ant/lib
 		local ARGS=()
@@ -110,7 +112,7 @@ get_pct () {
 }
 
 create_dbs () {
-	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] pwd=$(pwd)"
+	log_it "pwd=$(pwd)"
 	if [ -d test_projects/proj0/target/db ]; then
 		return 0
 	fi
@@ -128,15 +130,15 @@ create_dbs () {
 
 package () {
 	if $NO_BUILD; then
-		echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] skipping package (NO_BUILD=$NO_BUILD)"
+		log_it "skipping package (NO_BUILD=$NO_BUILD)"
 		return 0
 	fi
-	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] pwd=$(pwd)"
+	log_it "pwd=$(pwd)"
 
 	local PACKAGE_OUT_OF_DATE=false
 	local VSIX_COUNT=0
 	VSIX_COUNT=$(find . -maxdepth 1 -name "*.vsix" 2>/dev/null | wc -l)
-	echo "VSIX_COUNT=$VSIX_COUNT"
+	log_it "VSIX_COUNT=$VSIX_COUNT"
 
 	if [ -f "ablunit-test-runner-$PACKAGE_VERSION.vsix" ]; then
 		NEWEST_SOURCE=$(find src -type f -printf '%T@ %p\n' | sort -n | tail -1 | cut -d' ' -f2-)
@@ -144,7 +146,7 @@ package () {
 		NEWEST_SOURCE_ROOT=$(find . -maxdepth 1 -type f -printf '%T@ %p\n' | sort -n | tail -1 | cut -d' ' -f2-)
 
 		if $VERBOSE; then
-			echo "recent source files:"
+			log_it "recent source files:"
 			ls -altr "$NEWEST_SOURCE" "$NEWEST_SOURCE_TEST" "$NEWEST_SOURCE_ROOT" "ablunit-test-runner-$PACKAGE_VERSION.vsix"
 		fi
 
@@ -152,20 +154,20 @@ package () {
 		[ "$NEWEST_SOURCE_ROOT" -nt "$NEWEST_SOURCE" ] && NEWEST_SOURCE=$NEWEST_SOURCE_ROOT
 
 		if  [ "$NEWEST_SOURCE" -nt "ablunit-test-runner-$PACKAGE_VERSION.vsix" ]; then
-			echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] newer source file found: $NEWEST_SOURCE"
+			log_it "newer source file found: $NEWEST_SOURCE"
 			PACKAGE_OUT_OF_DATE=true
 		fi
 	else
 		PACKAGE_OUT_OF_DATE=true
 	fi
-	echo "CIRCLECI=$CIRCLECI PACKAGE_OUT_OF_DATE=$PACKAGE_OUT_OF_DATE VSIX_COUNT=$VSIX_COUNT"
+	log_it "CIRCLECI=$CIRCLECI PACKAGE_OUT_OF_DATE=$PACKAGE_OUT_OF_DATE VSIX_COUNT=$VSIX_COUNT"
 	if $PACKAGE_OUT_OF_DATE || $CIRCLECI || [ "$VSIX_COUNT" = "0" ]; then
 		.circleci/package.sh
 	fi
 
 	VSIX_COUNT=$(find . -maxdepth 1 -name "*.vsix" 2>/dev/null | wc -l)
 	if [ "$VSIX_COUNT" = "0" ]; then
-		echo "ERROR: no .vsix files found"
+		log_error "no .vsix files found"
 		exit 1
 	fi
 }
@@ -178,4 +180,4 @@ get_pct
 create_dbs
 package
 rm -rf artifacts/*
-echo "[$(date +%Y-%m-%d:%H:%M:%S) $0] completed successfully!"
+log_it "completed successfully!"
