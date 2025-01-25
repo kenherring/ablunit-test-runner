@@ -64,7 +64,6 @@ export class ABLCompileError extends ABLUnitRuntimeError {
 		this.name = 'ABLCompileError'
 		for (const i of compileErrors) {
 			try {
-				// i.messages = mergeMessagesByPosition(i.messages)
 				mergeMessagesByPosition(i.messages)
 			} catch (e) {
 				log.error('error=' + e)
