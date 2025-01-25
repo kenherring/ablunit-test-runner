@@ -17,10 +17,9 @@ parameters:
   latest-oe-version:
     type: string
     default: 12.8.4
-  release-from-branch:
+  prerelease-from-branch:
     type: string
-    default: parse-profile-data-performance
-    # default: main
+    default: main
 
 oe-version-param: &oe-version-param
   parameters:
@@ -204,7 +203,7 @@ workflows:
           context:
             - GitHub_CLI
           filters:
-            branches: { only: /^<< pipeline.parameters.release-from-branch >>$/ }
+            branches: { only: /^<< pipeline.parameters.prerelease-from-branch >>$/ }
           requires:
             - shellcheck/check
             - sonar
