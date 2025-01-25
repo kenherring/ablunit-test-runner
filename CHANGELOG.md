@@ -1,3 +1,20 @@
+# [1.0.6001](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.0.6001) - 2025-01-25
+
+
+ * Replace snippets with CompletionItemProvider for better granularity (#237)
+ * CircleCI: cache the `.vscode-test` directory (#236)
+ * Profile parsing of performance improvement for multiple data files (#235)
+ * Publish prerelease after merge to main (#234)
+ * improve messages for compile errors (#233)
+ * Test coverage attribution (#228)
+ * Update deps (#232)
+ * Various minor fixes/improvements and config updates (#230)
+ * Refactor file access functions (#229)
+ * [chore] npm update (#226)
+ * Call stack parsing: support multiple errors per test case and negative line numbers for implicit constructors (#223)
+
+**Full Changelog**: [1.0.0...1.0.6001](https://github.com/kenherring/ablunit-test-runner/compare/1.0.0...1.0.6001)
+
 # 🥳 [1.0.0](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.0.0) - 2024-10-24
 
 * Finally, a non-preview release!
