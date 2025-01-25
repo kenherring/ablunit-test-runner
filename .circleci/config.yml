@@ -32,11 +32,6 @@ oe-version-param: &oe-version-param
       default: stable
       enum: [ stable ]
       # enum: [ stable, proposedapi, insiders ]
-context-and-filters: &context-and-filters
-  context:
-    - DockerHub
-    - PROGRESS_CFG
-    - SonarCloud
 
 executors:
   psc-primary:
@@ -172,9 +167,14 @@ workflows:
     jobs:
       - shellcheck/check
       - package:
-          <<: *context-and-filters
+          context:
+            - DockerHub
+            - PROGRESS_CFG
+            - GitHub_CLI
       - test:
-          <<: *context-and-filters
+          context:
+            - DockerHub
+            - PROGRESS_CFG
           requires:
             - package
           matrix:
@@ -182,7 +182,10 @@ workflows:
             parameters:
               oe-version: [ 12.2.12, 12.8.1, << pipeline.parameters.latest-oe-version >> ]
       - sonar:
-          <<: *context-and-filters
+          context:
+            - DockerHub
+            - PROGRESS_CFG
+            - SonarCloud
           requires:
             - test-matrix
           oe-version: << pipeline.parameters.primary-oe-version >>
