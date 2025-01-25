@@ -4,25 +4,25 @@ set -eou pipefail
 initialize () {
     echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}]"
     ABLUNIT_TEST_RUNNER_VSCODE_VERSION=${ABLUNIT_TEST_RUNNER_VSCODE_VERSION:-stable}
-    PRERELEASE=false
-    PACKAGE_VERSION=$(node -p "require('./package.json').version")
-    if [ -z "${CIRCLE_BRANCH:-}" ]; then
-        CIRCLE_BRANCH=$(git branch --show-current)
+    PRERELEASE=${PRERELEASE:-true}
+
+    if ! ${CIRCLECI:-false}; then
+        ## local testing
+        [ -z "${CIRCLE_TAG:-}" ] && CIRCLE_TAG=$(git tag --points-at HEAD)
+        if [ -z "${CIRCLE_TAG:-}" ]; then
+            [ -z "${CIRCLE_BRANCH:-}" ] && CIRCLE_BRANCH=$(git branch --show-current)
+        fi
     fi
 
-    if [ -z "${CIRCLE_TAG:-}" ]; then
-        CIRCLE_TAG=$PACKAGE_VERSION
-    fi
-    if [ -z "${CIRCLE_TAG:-}" ]; then
-        echo "ERROR: missing CIRCLE_TAG environment var"
-        exit 1
-    fi
-
-    MINOR=$(echo "$CIRCLE_TAG" | cut -d. -f2)
-    if [ "$(( MINOR % 2 ))" = "1" ]; then
-        echo "minor tag is odd. packaging as pre-release. (MINOR=$MINOR)"
+    PACKAGE_VERSION=$(jq -r '.version' package.json)
+    echo "PACKAGE_VERSION=$PACKAGE_VERSION"
+    PATCH_VERSION=${PACKAGE_VERSION##*.}
+    echo "PATCH_VERSION=$PATCH_VERSION"
+    if [ "$((PATCH_VERSION % 2))" = "1" ]; then
+        echo "version patch component is odd. packaging as prerelease. (PATCH=$PATCH_VERSION)"
         PRERELEASE=true
     fi
+    echo "PRERELEASE=$PRERELEASE"
 
     rm -f ./*.vsix
 }
@@ -74,6 +74,7 @@ run_lint () {
     echo "eslint returned code=$ESLINT_RETURN_CODE"
 
     jq '.' < "${ESLINT_FILE}.json.tmp" > "${ESLINT_FILE}.json"
+    rm -f "${ESLINT_FILE}.json.tmp"
     sed -i 's|/home/circleci/project/|/root/project/|g' "${ESLINT_FILE}.json"
 
     if [ ! -f "${ESLINT_FILE}.json" ]; then
@@ -81,9 +82,9 @@ run_lint () {
         exit 1
     fi
 
-    MESSAGE_COUNT=$(jq '[.[] | .messages | length] | add' < ${ESLINT_FILE}.json.tmp)
-    ERROR_COUNT=$(jq '[.[] | .errorCount] | add' < ${ESLINT_FILE}.json.tmp)
-    WARNING_COUNT=$(jq '[.[] | .warningCount] | add' < ${ESLINT_FILE}.json.tmp)
+    MESSAGE_COUNT=$(jq '[.[] | .messages | length] | add' < ${ESLINT_FILE}.json)
+    ERROR_COUNT=$(jq '[.[] | .errorCount] | add' < ${ESLINT_FILE}.json)
+    WARNING_COUNT=$(jq '[.[] | .warningCount] | add' < ${ESLINT_FILE}.json)
 
     echo 'eslint summary:'
     echo " - message count:  $MESSAGE_COUNT"

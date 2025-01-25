@@ -475,34 +475,31 @@ export class ABLResults implements Disposable {
 		if (!profileDescription || profileDescription.split('|').length < 2) {
 			return undefined
 		}
-		let parentName = profileDescription.split('|')[1].split(' ')[0]
-		if (parentName.endsWith('.cls')) {
-			parentName = parentName.substring(0, parentName.length - 4)
-		}
+
+		const parentName = profileDescription.split('|')[1].split(' ')[0]
 		const testName = profileDescription.split('|')[1].split(' ')[1]
+		const tests = gatherAllTestItems(this.tests)
 
-		const tests = []
-		for (const t of this.tests) {
-			tests.push(t)
-			for (const [, child] of t.children) {
-				tests.push(child)
-			}
+		let ending = testName
+		if (parentName != 'TEST_ROOT') {
+			ending = parentName + '#' + testName
 		}
+		ending = ending.replace(/\\/g, '/')
 
-		const item = tests.find((t) => {
-			return t.parent?.label == parentName && t.label == testName
-		})
-
-		if (!item) {
-			log.warn('could not find test item for parent=' + parentName + ', testName=' + testName)
-			return undefined
+		const items = tests.filter((t) => t.id.replace(/\\/g, '/').endsWith(ending))
+		if (items.length == 0) {
+			log.error('Could not find test item for "' + parentName + ' ' + testName + '"')
+			throw new Error('Could not find test item for "' + parentName + ' ' + testName + '"')
 		}
-		return item
+		if (items.length > 1) {
+			log.error('found multiple test items for "' + parentName + ' ' + testName + '"')
+			throw new Error('found multiple test items for "' + parentName + ' ' + testName + '"')
+		}
+		return items[0]
 	}
 
 	async parseProfile (options: TestRun) {
 		const duration = new Duration()
-		const profParser = new ABLProfile()
 		const profDir = dirname(this.cfg.ablunitConfig.profFilenameUri.fsPath)
 		const profFile = basename(this.cfg.ablunitConfig.profFilenameUri.fsPath)
 		// <basename>.<ext> -> <basename>_*_*.<ext>
@@ -515,25 +512,29 @@ export class ABLResults implements Disposable {
 		}
 		dataFiles.sort((a, b) => { return a.localeCompare(b) })
 
+		const proms: Promise<ABLProfileJson>[] = []
 		for (let i=0; i < dataFiles.length; i++) {
 			const uri = Uri.joinPath(Uri.file(profDir), dataFiles[i])
-			log.info('parsing profile data ' + i + '/' + dataFiles.length + ' from ' + uri.fsPath, {testRun: options})
+			log.info('parsing profile data ' + (i+1) + '/' + dataFiles.length + ' from ' + uri.fsPath, {testRun: options})
 
-			const prom = profParser.parseData(uri, this.cfg.ablunitConfig.profiler.writeJson, this.debugLines).then((profJson) => {
-				const item = this.findTest(profJson.description)
-				profJson.testItemId = item?.id
-				this.profileJson.push(profJson)
-				return this.assignProfileResults(profJson, item)
-			}).then(() => {
-				log.info('parsing profile data complete (' + i + '/' + dataFiles.length + ') ' + duration.toString())
-				return true
-			})
-			await prom
+			proms.push(new ABLProfile().parseData(uri, this.cfg.ablunitConfig.profiler.writeJson, this.debugLines))
+		}
+
+		const responses = await Promise.all(proms)
+		let i = 0
+		for (const profJson of responses) {
+			i++
+			const item = this.findTest(profJson.description)
+			profJson.testItemId = item?.id
+			this.profileJson.push(profJson)
+			await this.assignProfileResults(profJson, item)
+			log.info('parsing profile data complete (' + i + '/' + dataFiles.length + ') ' + duration.toString())
+
 		}
 		log.info('parsing profile data complete ' + duration.toString(), {testRun: options})
 	}
 
-	async assignProfileResults (profJson: ABLProfileJson, item: TestItem | undefined) {
+	async assignProfileResults (profJson: ABLProfileJson, testItem: TestItem | undefined) {
 		if (!profJson) {
 			log.error('no profile data available...')
 			throw new Error('no profile data available...')
@@ -542,7 +543,7 @@ export class ABLResults implements Disposable {
 			if (checkSkipList(module.SourceName)) {
 				continue
 			}
-			await this.setCoverage(module, item)
+			await this.setCoverage(module, testItem)
 		}
 	}
 

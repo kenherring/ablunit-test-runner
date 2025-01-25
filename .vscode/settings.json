@@ -1,5 +1,5 @@
 {
-	"circleci.filters.branchFilter": "allBranches",
+	"circleci.filters.branchFilter": "currentBranch",
     "circleci.persistedProjectSelection": [
 		"gh/kenherring/ablunit-test-runner"
 	],
