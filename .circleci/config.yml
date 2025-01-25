@@ -116,6 +116,7 @@ jobs:
       ABLUNIT_TEST_RUNNER_OE_VERSION: << parameters.oe-version >>
       ABLUNIT_TEST_RUNNER_VSCODE_VERSION: << parameters.vscode-version >>
       EXPECTED_VSIX_COUNT: << pipeline.parameters.expected-vsix-count >>
+      PRIMARY_OE_VERSION: << pipeline.parameters.primary-oe-version >>
     steps:
       - attach_workspace: { at: . }
       - restore-test-cache: { oe-version: << parameters.oe-version >> }
