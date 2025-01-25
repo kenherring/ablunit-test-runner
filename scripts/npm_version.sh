@@ -53,7 +53,7 @@ update_changelog () {
 	{
 		echo -e "# [${PACKAGE_VERSION}](https://github.com/kenherring/ablunit-test-runner/releases/tag/${PACKAGE_VERSION}) - $(date +%Y-%m-%d)${PRERELEASE_TEXT}\n"
 		git --no-pager log --pretty=format:' * %s' "${PREVIOUS_VERSION}...$(git merge-base origin/main HEAD)"
-		gh pr view --json title,number | jq -r '.title + " (" + (.number|tostring) + ")"'
+		echo -e "\n$(gh pr view --json title,number | jq -r '.title + " (#" + (.number|tostring) + ")"')"
 		echo -e "\n\n**Full Changelog**: [${PREVIOUS_VERSION}...${PACKAGE_VERSION}](https://github.com/kenherring/ablunit-test-runner/compare/${PREVIOUS_VERSION}...${PACKAGE_VERSION})\n"
 		cat CHANGELOG.md
 	} > "changelog_$PACKAGE_VERSION.md"
