@@ -1,5 +1,5 @@
 import { log } from 'ChannelLogger'
-import { CancellationToken, CompletionContext, CompletionItem, CompletionItemKind, CompletionItemProvider, CompletionItemTag, CompletionList, InlineCompletionContext, InlineCompletionItem, InlineCompletionItemProvider, InlineCompletionList, MarkdownString, Position, ProviderResult, Range, SnippetString, TextDocument } from 'vscode'
+import { CancellationToken, CompletionContext, CompletionItem, CompletionItemKind, CompletionItemProvider, CompletionItemTag, CompletionList, InlineCompletionContext, InlineCompletionItem, InlineCompletionItemProvider, InlineCompletionList, MarkdownString, Position, ProviderResult, Range, SnippetString, TextDocument, TextEdit } from 'vscode'
 
 export class SnippetProvider implements CompletionItemProvider {
 	private readonly globalItems: CompletionItem[] = []
@@ -82,7 +82,7 @@ export class SnippetProvider implements CompletionItemProvider {
 		cci = new CompletionItem('@Test method exception')
 		cci.documentation = 'Fails the test if the method does not throw the exception mentioned in the expected attribute.'
 		cci.insertText = new SnippetString(
-			'@Test (expected="${1:ExceptionType}")\n' +
+			'@Test (expected="${1:ExceptionType}").\n' +
 			'method public void testExceptionMethod () :\n' +
 			'\t${2:runMethodThrowsException().} //Throws ${1}\n' +
 			'end method.'
@@ -201,7 +201,7 @@ export class SnippetProvider implements CompletionItemProvider {
 			'Fails the test if the procedure does not throw the exception mentioned in the expected attribute.'
 		)
 		pci.insertText = new SnippetString(
-			'@Test (expected="${1:ExceptionType}")\n' +
+			'@Test (expected="${1:ExceptionType}").\n' +
 			'procedure testExceptionProc :\n' +
 			'\t${2:runProcThrowsException().} //Throws ${1}\n' +
 			'end procedure.'
@@ -439,6 +439,46 @@ export class SnippetProvider implements CompletionItemProvider {
 			return undefined
 		}
 
+		// OpenEdge.Core.Assert <-> Assert
+		let searchVal = 'Assert:'
+		let replaceVal = 'OpenEdge.Core.Assert:'
+		if (document.getText().toLowerCase().includes('using openedge.core.assert.')) {
+			searchVal = 'OpenEdge.Core.Assert:'
+			replaceVal = 'Assert:'
+		}
+
+		for (const i of this.globalItems) {
+			if (typeof i.label == 'string' && i.label.startsWith(searchVal)) {
+				i.label = replaceVal + i.label.substring(searchVal.length)
+			}
+			if (i.insertText instanceof SnippetString && i.insertText.value.startsWith(searchVal)) {
+				i.insertText = new SnippetString(replaceVal + i.insertText.value.substring(searchVal.length))
+			} else if (typeof i.insertText == 'string' && i.insertText.startsWith(searchVal)) {
+				i.insertText = replaceVal + i.insertText.substring(searchVal.length)
+			}
+		}
+
+		const using = this.globalItems.find(i => i.label == 'using OpenEdge.Core.Assert.')
+		if (!using) {
+			log.info('unable to find CompletionItem for "using OpenEdge.Core.Assert."')
+			throw new Error('unable to find CompletionItem for "using OpenEdge.Core.Assert."')
+		}
+		log.info('USING=' + JSON.stringify(using))
+		const docText = document.getText()
+		let idx = docText.indexOf('OpenEdge.Core.Assert:')
+		using.additionalTextEdits = []
+		while (idx >= 0) {
+			const posEdit = document.positionAt(idx)
+			log.info('posEdit=' + JSON.stringify(posEdit))
+			using.additionalTextEdits.push(new TextEdit(
+				new Range(posEdit, posEdit.translate(0, 'OpenEdge.Core.Assert:'.length)),
+				'Assert:')
+			)
+			idx = docText.indexOf('OpenEdge.Core.Assert:', idx + 1)
+		}
+		log.info('using.additionalTextEdits.length=' + using.additionalTextEdits?.length)
+
+
 
 		const endOfLine = document.positionAt(document.offsetAt(pos.with(pos.line + 1, 0)) - 1)
 		log.info('endOfLine=' + JSON.stringify(endOfLine))
@@ -458,6 +498,10 @@ export class SnippetProvider implements CompletionItemProvider {
 		}
 		for (const r of ret.items) {
 			r.range = undefined
+			log.info('additionalEdits.length=' + r.additionalTextEdits?.length)
+			for (const e of r.additionalTextEdits ?? []) {
+				log.info('additionalEdit=' + JSON.stringify(e))
+			}
 		}
 
 		if (wordBefore != '') {
@@ -469,7 +513,7 @@ export class SnippetProvider implements CompletionItemProvider {
 				} else {
 					lbl = r.label.label
 				}
-				if (!lbl.startsWith('@') && !lbl.startsWith('Assert:')) {
+				if (!lbl.startsWith('@') && !lbl.startsWith('Assert:') && !lbl.startsWith('OpenEdge.Core.Assert:')) {
 					continue
 				}
 
@@ -477,7 +521,7 @@ export class SnippetProvider implements CompletionItemProvider {
 				log.info('r.range(1)=' + JSON.stringify(r.range))
 				if (!r.range) {
 					let posEnd
-					if (lbl.startsWith('Assert:') && wordAfter.indexOf('(') > 0) {
+					if ((lbl.startsWith('Assert:') || lbl.startsWith('OpenEdge.Core.Assert:')) && wordAfter.indexOf('(') > 0) {
 						posEnd = pos.translate(0, wordAfter.indexOf('('))
 					} else {
 						posEnd = pos.translate(0, wordAfter.length)
