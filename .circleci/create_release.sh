@@ -46,7 +46,7 @@ main () {
     echo "GH_TOKEN=$GH_TOKEN"
 
     if ! gh release create "$PACKAGE_VERSION" "${ARGS[@]}"; then
-        gh auth login --with-token < "$GH_TOKEN"
+        gh auth login --with-token <<< "$GH_TOKEN"
         gh release create "$PACKAGE_VERSION" "${ARGS[@]}"
     fi
     log_it "release created for PACKAGE_VERSION=$PACKAGE_VERSION"
