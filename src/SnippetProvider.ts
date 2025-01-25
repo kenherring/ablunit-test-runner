@@ -1,4 +1,3 @@
-import { log } from 'ChannelLogger'
 import { CancellationToken, CompletionContext, CompletionItem, CompletionItemKind, CompletionItemProvider, CompletionItemTag, CompletionList, InlineCompletionContext, InlineCompletionItem, InlineCompletionItemProvider, InlineCompletionList, MarkdownString, Position, ProviderResult, Range, SnippetString, TextDocument, TextEdit } from 'vscode'
 
 export class SnippetProvider implements CompletionItemProvider {
@@ -10,64 +9,83 @@ export class SnippetProvider implements CompletionItemProvider {
 	// private readonly procedureItems = new CompletionList()
 
 	constructor (public oeVersion = '12.8') {
-		log.info('SnippetProvider constructor')
+		this.createGlobalSnippets()
+		this.createClassSnippets()
+		this.createProcedureSnippets()
 
-		// ---------- global items ---------- //
+		for (const i of this.classItems) {
+			i.kind = CompletionItemKind.Method
+		}
+		for (const i of this.procedureItems) {
+			i.kind = CompletionItemKind.Function
+		}
 
-		const gci1 = new CompletionItem('block-level on error undo, throw.', CompletionItemKind.Snippet)
-		gci1.kind = CompletionItemKind.Event
-		gci1.documentation = new MarkdownString(
-			'You must have the `[BLOCK | ROUTINE]-LEVEL ON ERROR UNDO, THROW` statement in the test files to run the ABLUnit test cases.\n' +
-			'\n' +
+		const allItems = [...this.globalItems, ...this.classItems, ...this.procedureItems]
+		for (const i of allItems) {
+			const lbl = typeof i.label == 'string' ? i.label : i.label.label
+			if (!lbl.startsWith('@')) {
+				continue
+			}
+
+			i.detail = 'ablunit annotation'
+			i.kind = CompletionItemKind.Snippet
+			if (!i.documentation || typeof i.documentation == 'string') {
+				i.documentation = new MarkdownString(i.documentation)
+			}
+			i.documentation.value.trimEnd()
+			i.documentation.appendMarkdown('\n')
+			i.documentation.appendMarkdown('* [Annotations supported by ABLUnit](' + this.urlForVersion('https://docs.progress.com/bundle/openedge-developer-studio-help/page/Annotations-supported-with-ABLUnit.html') + ')')
+			if (this.isLifecycleAnnotation(lbl)) {
+				i.documentation.appendMarkdown('\n* [Lifecycle of ABLUnit framework](https://docs.progress.com/bundle/openedge-developer-studio-help/page/Lifecycle-of-ABLUnit-framework.html)')
+			}
+
+			i.tags = this.isDeprecated(lbl)
+		}
+	}
+
+	private createGlobalSnippets () {
+		let gci = new CompletionItem('block-level on error undo, throw.', CompletionItemKind.Event)
+		gci.insertText = new SnippetString('block-level on error undo, throw.')
+		gci.documentation = new MarkdownString(
+			'You must have the `[BLOCK | ROUTINE]-LEVEL ON ERROR UNDO, THROW` statement in the test files to run the ABLUnit test cases.\n\n' +
 			'* [Run test cases and test suites](' + this.urlForVersion('https://docs.progress.com/bundle/openedge-developer-studio-help/page/Run-test-cases-and-test-suites.html') + ')\n' +
 			'* [Support for structured error handling](' + this.urlForVersion('https://docs.progress.com/bundle/openedge-developer-studio-help/page/Support-for-structured-error-handling.html') + ')'
 		)
-		this.globalItems.push(gci1)
+		this.globalItems.push(gci)
 
-		const gci2 = new CompletionItem('routine-level on error undo, throw.', CompletionItemKind.Snippet)
-		gci1.kind = CompletionItemKind.Event
-		gci2.insertText = new SnippetString('routine-level on error undo, throw.')
-		gci2.documentation = gci1.documentation
-		this.globalItems.push(gci2)
+		gci = new CompletionItem('routine-level on error undo, throw.', CompletionItemKind.Event)
+		gci.insertText = new SnippetString('routine-level on error undo, throw.')
+		gci.documentation = this.globalItems[0].documentation
+		this.globalItems.push(gci)
 
-		const gci3 = new CompletionItem('using OpenEdge.Core.Assert.', CompletionItemKind.Snippet)
-		gci3.kind = CompletionItemKind.Reference
-		// gci3.kind = CompletionItemKind.Unit
-		gci3.insertText = new SnippetString('using OpenEdge.Core.Assert.')
-		gci3.documentation = new MarkdownString(
+		gci = new CompletionItem('using OpenEdge.Core.Assert.', CompletionItemKind.Reference)
+		gci.insertText = new SnippetString('using OpenEdge.Core.Assert.')
+		gci.documentation = new MarkdownString(
 			'* [OpenEdge.Core.Assert](' + this.urlForVersion('https://docs.progress.com/bundle/openedge-abl-api-reference-128/page/OpenEdge.Core.Assert.html') + ')\n' +
 			'* [USING statement](' + this.urlForVersion('https://docs.progress.com/bundle/abl-reference/page/USING-statement.html') + ')'
 		)
-		this.globalItems.push(gci3)
+		this.globalItems.push(gci)
 
-		this.globalItems.push(...this.createAssertSnippets())
-
-
-
-		const gci4 = new CompletionItem('@Ignore', CompletionItemKind.Snippet)
-		gci4.insertText = new SnippetString(
-			'@Ignore.'
-		)
-		gci4.kind = CompletionItemKind.Snippet
-		gci4.documentation = new MarkdownString(
+		gci = new CompletionItem('@Ignore')
+		gci.insertText = new SnippetString('@Ignore.')
+		gci.documentation = new MarkdownString(
 			'Ignores the test. You can use this annotation when you are still working on a code, the test case is not ready to run, or if the execution time of test is too long to be included.'
 		)
-		this.globalItems.push(gci4)
+		this.globalItems.push(gci)
 
-		// ---------- class items ---------- //
+		this.globalItems.push(...this.createAssertSnippets())
+	}
 
+	private createClassSnippets () {
 		let cci = new CompletionItem('@TestSuite')
-		cci.insertText = new SnippetString(
-			'@TestSuite(classes="${1:procedureList}").'
-		)
+		cci.insertText = new SnippetString('@TestSuite(classes="${1:classList}").')
 		cci.documentation = new MarkdownString(
-			'Runs a suite of test cases from a specified list.\n' +
-			'\n' +
+			'Runs a suite of test cases from a specified list.\n\n' +
 			'* [Test Suite Class](' + this.urlForVersion('https://docs.progress.com/bundle/openedge-developer-studio-help/page/Test-Suite-Class.html') + ')'
 		)
 		this.globalItems.push(cci)
 
-		cci = new CompletionItem('@Test method', CompletionItemKind.Snippet)
+		cci = new CompletionItem('@Test method')
 		cci.insertText = new SnippetString(
 			'@Test.\n' +
 			'method public void ${1:methodName} () :\n' +
@@ -89,7 +107,7 @@ export class SnippetProvider implements CompletionItemProvider {
 		)
 		this.classItems.push(cci)
 
-		cci = new CompletionItem('@Setup method', CompletionItemKind.Snippet)
+		cci = new CompletionItem('@Setup method')
 		cci.documentation = 'To be deprecated, use @BeforeEach'
 		cci.insertText = new SnippetString(
 			'@Setup.\n' +
@@ -173,32 +191,31 @@ export class SnippetProvider implements CompletionItemProvider {
 			'end method.'
 		)
 		this.classItems.push(cci)
+	}
 
-		// ---------- procedure items ---------- //
-
+	private createProcedureSnippets () {
 		let pci = new CompletionItem('@TestSuite')
 		pci.insertText = new SnippetString(
 			'@TestSuite(procedures="${1:procedureList}").'
 		)
 		pci.documentation = new MarkdownString(
-			'Runs a suite of test cases from a specified list.\n' +
-			'\n' +
-			'* [Test Suite Procedure](' + this.urlForVersion('https://docs.progress.com/bundle/openedge-developer-studio-help/page/Test-Suite-Procedure.html') + ')\n'
+			'Runs a suite of test cases from a specified list.\n\n' +
+			'* [Test Suite Procedure](' + this.urlForVersion('https://docs.progress.com/bundle/openedge-developer-studio-help/page/Test-Suite-Procedure.html') + ')'
 		)
 		this.globalItems.push(pci)
 
-		pci = new CompletionItem('@Test Procedure', CompletionItemKind.Snippet)
+		pci = new CompletionItem('@Test Procedure')
 		pci.insertText = new SnippetString('@Test.\nprocedure ${1:procedureName} :\n\t${2://TODO: Implement test procedure}\nend procedure.')
 		pci.documentation = new MarkdownString(
-			'A procedure that is a test procedure\n' +
-			'\n' +
+			'A procedure that is a test procedure\n\n' +
 			'* [Test Procedure](' + this.urlForVersion('https://docs.progress.com/bundle/openedge-developer-studio-help/page/Test-Procedure.html') + ')'
 		)
 		this.procedureItems.push(pci)
 
 		pci = new CompletionItem('@Test procedure exception')
 		pci.documentation = new MarkdownString(
-			'Fails the test if the procedure does not throw the exception mentioned in the expected attribute.'
+			'Fails the test if the procedure does not throw the exception mentioned in the expected attribute.\n\n' +
+			'* [Test Procedure](' + this.urlForVersion('https://docs.progress.com/bundle/openedge-developer-studio-help/page/Test-Procedure.html') + ')'
 		)
 		pci.insertText = new SnippetString(
 			'@Test (expected="${1:ExceptionType}").\n' +
@@ -208,7 +225,7 @@ export class SnippetProvider implements CompletionItemProvider {
 		)
 		this.procedureItems.push(pci)
 
-		pci = new CompletionItem('@Setup procedure', CompletionItemKind.Snippet)
+		pci = new CompletionItem('@Setup procedure')
 		pci.documentation = 'To be deprecated, use @BeforeAll'
 		pci.insertText = new SnippetString(
 			'@Setup.\n' +
@@ -293,47 +310,6 @@ export class SnippetProvider implements CompletionItemProvider {
 			'end procedure.'
 		)
 		this.procedureItems.push(pci)
-
-		for (const i of this.classItems) {
-			i.kind = CompletionItemKind.Method
-		}
-		for (const i of this.procedureItems) {
-			i.kind = CompletionItemKind.Function
-		}
-
-		const allItems = [...this.globalItems, ...this.classItems, ...this.procedureItems]
-		for (const i of allItems) {
-
-			let lbl = ''
-			if (typeof i.label == 'string') {
-				lbl = i.label
-			} else {
-				lbl = i.label.label
-			}
-			log.info('lbl=' + lbl)
-			if (lbl.startsWith('@')) {
-				i.detail = 'ablunit annotation'
-				if (typeof i.documentation == 'string') {
-					i.documentation = new MarkdownString(i.documentation)
-				} else if (!i.documentation) {
-					i.documentation = new MarkdownString()
-				}
-				if (!i.documentation.value.endsWith('\n') && i.documentation.value.length != 0) {
-					i.documentation.appendMarkdown('\n')
-				}
-				i.documentation.appendMarkdown('* [Annotations supported by ABLUnit](' + this.urlForVersion('https://docs.progress.com/bundle/openedge-developer-studio-help/page/Annotations-supported-with-ABLUnit.html') + ')')
-				if (lbl.startsWith('@Before') || lbl.startsWith('@After') || lbl.startsWith('@Setup') || lbl.startsWith('@Teardown')) {
-					i.documentation.appendMarkdown('\n* [Lifecycle of ABLUnit framework](https://docs.progress.com/bundle/openedge-developer-studio-help/page/Lifecycle-of-ABLUnit-framework.html)')
-				}
-			}
-
-			if (this.oeVersion >= '12.6') {
-				if (lbl.startsWith('@Before ') || lbl.startsWith('@After ') || lbl.startsWith('@Teardown') || lbl.startsWith('@Setup')) {
-					i.tags = [CompletionItemTag.Deprecated]
-				}
-			}
-		}
-
 	}
 
 	private createAssertSnippets () {
@@ -419,9 +395,7 @@ export class SnippetProvider implements CompletionItemProvider {
 			i.detail = 'OpenEdge.Core.Assert'
 			if (typeof i.label == 'string') {
 				i.insertText = new SnippetString(i.label + '.')
-				log.info('i.label(1)=' + i.label)
 				i.label = i.label.replace(/\$\{\d:input\}/g, 'param')
-				log.info('i.label(2)=' + i.label)
 			}
 			i.documentation = new MarkdownString(
 				'* [OpenEdge.Core.Assert](' + this.urlForVersion('https://docs.progress.com/bundle/openedge-abl-api-reference-128/page/OpenEdge.Core.Assert.html') + ')'
@@ -431,20 +405,50 @@ export class SnippetProvider implements CompletionItemProvider {
 	}
 
 	provideCompletionItems (document: TextDocument, pos: Position, _token: CancellationToken, _context: CompletionContext): ProviderResult<CompletionItem[] | CompletionList> {
-		log.info('provideCompletionItems document.uri=' + document.uri.fsPath)
-		log.info('completionContext=' + JSON.stringify(_context))
-		log.info('pos=' + JSON.stringify(pos))
-
 		if (document.languageId != 'abl') {
 			return undefined
 		}
 
-		// OpenEdge.Core.Assert <-> Assert
+		this.setAssertPrefix(document)
+
+
+		const endOfLine = document.positionAt(document.offsetAt(pos.with(pos.line + 1, 0)) - 1)
+		const wordBefore = document.getText(new Range(pos.with(pos.line, 0), pos)).split(/\s/).pop() ?? ''
+		const wordAfter = document.getText(new Range(pos, endOfLine)).split(/\s/)[0] ?? ''
+
+		const ret = new CompletionList()
+		ret.items.push(...this.globalItems)
+		if (document.uri.fsPath.endsWith('.cls')) {
+			ret.items.push(...this.classItems)
+		} else if (document.uri.fsPath.endsWith('.p')) {
+			ret.items.push(...this.procedureItems)
+		}
+		for (const r of ret.items) {
+			r.range = undefined
+			if (r.label == 'using OpenEdge.Core.Assert') {
+				this.addUsingEdits(r, document)
+			}
+		}
+
+		if (wordBefore != '') {
+
+			for (const r of ret.items) {
+				this.setRange(r, pos, wordBefore, wordAfter)
+			}
+		}
+
+		return ret
+	}
+
+	private setAssertPrefix (document: TextDocument) {
+		// OpenEdge.Core.Assert <--> Assert
 		let searchVal = 'Assert:'
 		let replaceVal = 'OpenEdge.Core.Assert:'
+		let hasUsing = false
 		if (document.getText().toLowerCase().includes('using openedge.core.assert.')) {
 			searchVal = 'OpenEdge.Core.Assert:'
 			replaceVal = 'Assert:'
+			hasUsing = true
 		}
 
 		for (const i of this.globalItems) {
@@ -457,93 +461,42 @@ export class SnippetProvider implements CompletionItemProvider {
 				i.insertText = replaceVal + i.insertText.substring(searchVal.length)
 			}
 		}
+		return hasUsing
+	}
 
-		const using = this.globalItems.find(i => i.label == 'using OpenEdge.Core.Assert.')
-		if (!using) {
-			log.info('unable to find CompletionItem for "using OpenEdge.Core.Assert."')
-			throw new Error('unable to find CompletionItem for "using OpenEdge.Core.Assert."')
-		}
-		log.info('USING=' + JSON.stringify(using))
+	private addUsingEdits (item: CompletionItem, document: TextDocument) {
 		const docText = document.getText()
 		let idx = docText.indexOf('OpenEdge.Core.Assert:')
-		using.additionalTextEdits = []
+		item.additionalTextEdits = []
 		while (idx >= 0) {
 			const posEdit = document.positionAt(idx)
-			log.info('posEdit=' + JSON.stringify(posEdit))
-			using.additionalTextEdits.push(new TextEdit(
+			item.additionalTextEdits.push(new TextEdit(
 				new Range(posEdit, posEdit.translate(0, 'OpenEdge.Core.Assert:'.length)),
 				'Assert:')
 			)
 			idx = docText.indexOf('OpenEdge.Core.Assert:', idx + 1)
 		}
-		log.info('using.additionalTextEdits.length=' + using.additionalTextEdits?.length)
+	}
 
-
-
-		const endOfLine = document.positionAt(document.offsetAt(pos.with(pos.line + 1, 0)) - 1)
-		log.info('endOfLine=' + JSON.stringify(endOfLine))
-		const wordBefore = document.getText(new Range(pos.with(pos.line, 0), pos)).split(/\s/).pop() ?? ''
-		const wordAfter = document.getText(new Range(pos, endOfLine)).split(/\s/)[0] ?? ''
-
-		log.info('text.raw="' + wordBefore + wordAfter + '"')
-		log.info('  before=' + wordBefore)
-		log.info('   after=' + wordAfter)
-
-		const ret = new CompletionList()
-		ret.items.push(...this.globalItems)
-		if (document.uri.fsPath.endsWith('.cls')) {
-			ret.items.push(...this.classItems)
-		} else if (document.uri.fsPath.endsWith('.p')) {
-			ret.items.push(...this.procedureItems)
+	private setRange (r: CompletionItem, pos: Position, wordBefore: string, wordAfter: string) {
+		const lbl = typeof r.label == 'string' ? r.label : r.label.label
+		if (!lbl.startsWith('@') && !lbl.startsWith('Assert:') && !lbl.startsWith('OpenEdge.Core.Assert:')) {
+			return
 		}
-		for (const r of ret.items) {
-			r.range = undefined
-			log.info('additionalEdits.length=' + r.additionalTextEdits?.length)
-			for (const e of r.additionalTextEdits ?? []) {
-				log.info('additionalEdit=' + JSON.stringify(e))
+
+		if (!r.range) {
+			let posEnd = pos.translate(0, wordAfter.length)
+			if ((lbl.startsWith('Assert:') || lbl.startsWith('OpenEdge.Core.Assert:')) && wordAfter.indexOf('(') > 0) {
+				posEnd = pos.translate(0, wordAfter.indexOf('('))
 			}
+			r.range = new Range(
+				pos.translate(0, 0 - wordBefore.length),
+				posEnd
+			)
 		}
-
-		if (wordBefore != '') {
-
-			for (const r of ret.items) {
-				let lbl
-				if (typeof r.label == 'string') {
-					lbl = r.label
-				} else {
-					lbl = r.label.label
-				}
-				if (!lbl.startsWith('@') && !lbl.startsWith('Assert:') && !lbl.startsWith('OpenEdge.Core.Assert:')) {
-					continue
-				}
-
-				log.info('lbl=' + lbl)
-				log.info('r.range(1)=' + JSON.stringify(r.range))
-				if (!r.range) {
-					let posEnd
-					if ((lbl.startsWith('Assert:') || lbl.startsWith('OpenEdge.Core.Assert:')) && wordAfter.indexOf('(') > 0) {
-						posEnd = pos.translate(0, wordAfter.indexOf('('))
-					} else {
-						posEnd = pos.translate(0, wordAfter.length)
-					}
-					r.range = new Range(
-						pos.translate(0, 0 - wordBefore.length),
-						posEnd
-					)
-					const word = document.getText(r.range)
-					log.info('r.range(2)=' + JSON.stringify(r.range) + ', word=' + word)
-				}
-			}
-		}
-
-
-		log.info('return ret.length=' + ret.items.length)
-		return ret
 	}
 
 	_resolveCompletionItem (item: CompletionItem, _token: CancellationToken): ProviderResult<CompletionItem> {
-		log.info('resolve item=' + JSON.stringify(item, null, 2))
-		log.info('resolve range=' + JSON.stringify(item.range))
 		return item
 	}
 
@@ -573,13 +526,27 @@ export class SnippetProvider implements CompletionItemProvider {
 
 		return url
 	}
+
+	private isLifecycleAnnotation (label: string) {
+		return label.startsWith('@Setup') ||
+			label.startsWith('@Before') ||
+			label.startsWith('@After') ||
+			label.startsWith('@Teardown')
+	}
+
+	private isDeprecated (label: string) {
+		const annotation = label.split(' ')[0]
+		if (annotation == '@Setup' || annotation == '@Before' || annotation == '@After' || annotation == '@Teardown') {
+			return [CompletionItemTag.Deprecated]
+		}
+		return undefined
+	}
 }
 
 
 export class InlineProvider extends SnippetProvider implements InlineCompletionItemProvider  {
 
 	async provideInlineCompletionItems (document: TextDocument, position: Position, _context: InlineCompletionContext, token: CancellationToken) {
-		log.info('context=' + JSON.stringify(context))
 		let ret = await this.provideCompletionItems(document, position, token, {triggerKind: 0, triggerCharacter: undefined})
 		if (ret instanceof CompletionList) {
 			ret = ret.items

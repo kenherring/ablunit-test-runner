@@ -29,7 +29,7 @@ import { gatherAllTestItems, IExtensionTestReferences } from 'ABLUnitCommon'
 import { getDeclarationCoverage } from 'parse/ProfileParser'
 import {
 	// InlineProvider,
-	SnippetProvider
+	SnippetProvider,
 } from 'SnippetProvider'
 
 let recentResults: ABLResults[] = []
@@ -51,8 +51,8 @@ export function activate (context: ExtensionContext) {
 	FileUtils.createDir(contextStorageUri)
 
 	context.subscriptions.push(ctrl)
-	languages.registerCompletionItemProvider({ language: 'abl'}, new SnippetProvider())
 	// languages.registerInlineCompletionItemProvider({ language: 'abl'}, new InlineProvider())
+	languages.registerCompletionItemProvider({ language: 'abl'}, new SnippetProvider())
 
 	log.info('process.env[\'ABLUNIT_TEST_RUNNER_UNIT_TESTING\']=' + process.env['ABLUNIT_TEST_RUNNER_UNIT_TESTING'])
 	if (process.env['ABLUNIT_TEST_RUNNER_UNIT_TESTING']) {
