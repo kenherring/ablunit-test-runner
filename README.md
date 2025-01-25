@@ -78,11 +78,6 @@ A default profile is created when using the **ABLUnit: Configure Test Profile** 
 
 **Note**: Only the first test profile will be imported.  In the future this extension will allow for multiple entries.
 
-### VSCode Configuration - Snippets
-
-This extension includes a few snippets for test annotations and other related code you may find helpful.  These can be removed from intellisense with standard VSCode functionality.  See: [**VSCode Docs -> Snippets in Visual Studio Code
- -> Can I remove snippets from intellisense?**](https://code.visualstudio.com/docs/editor/userdefinedsnippets#_can-i-remove-snippets-from-intellisense)
-
 ## 👷‍♂️ Contributing
 
 See [CONTRIBUTING.md](.github/CONTRIBUTING.md)

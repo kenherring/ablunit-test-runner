@@ -1,36 +1,9 @@
-# [1.0.15](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.0.15) - 2025-01-25
-
- * update-index chmod=+x
- * cleanup
- * cleanup
- * cleanup
- * scripts/sonar_test_results_merge.sh
- * test release again
- * Merge branch 'circleci-test-cache' of github.com:kenherring/ablunit-test-runner into circleci-test-cache
- * remove ABLUNIT_TEST_RUNNER_VSCODE_VERSION
- * Bump version to prerelease 1.0.13
- * cleanup
- * update-index chmod=+x
- * Merge branch 'circleci-test-cache' of github.com:kenherring/ablunit-test-runner into circleci-test-cache
- * Merge branch 'main' into circleci-test-cache
- * saveme
- * more perms experimenting
- * run_test_wrapper.sh
- * run_test_wrapper.sh
- * run_test_wrapper.sh
- * CircleCI: cache the `.vscode-test` directoryCircleCI: cache the `.vscode-test` directory (236)
+# [1.0.6001](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.0.6001) - 2025-01-25
 
 
-**Full Changelog**: [1.0.13...1.0.15](https://github.com/kenherring/ablunit-test-runner/compare/1.0.13...1.0.15)
-
-# [1.0.13](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.0.13) - 2025-01-25
-
-
-
-**Full Changelog**: [1.0.11...1.0.13](https://github.com/kenherring/ablunit-test-runner/compare/1.0.11...1.0.13)
-
-# [1.0.11](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.0.11) - 2025-01-25 (pre-release)
-
+ * Replace snippets with CompletionItemProvider for better granularity (#237)
+ * CircleCI: cache the `.vscode-test` directory (#236)
+ * Profile parsing of performance improvement for multiple data files (#235)
  * Publish prerelease after merge to main (#234)
  * improve messages for compile errors (#233)
  * Test coverage attribution (#228)
@@ -40,7 +13,7 @@
  * [chore] npm update (#226)
  * Call stack parsing: support multiple errors per test case and negative line numbers for implicit constructors (#223)
 
-**Full Changelog**: [1.0.0...1.0.11](https://github.com/kenherring/ablunit-test-runner/compare/1.0.0...1.0.11)
+**Full Changelog**: [1.0.0...1.0.6001](https://github.com/kenherring/ablunit-test-runner/compare/1.0.0...1.0.6001)
 
 # 🥳 [1.0.0](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.0.0) - 2024-10-24
 

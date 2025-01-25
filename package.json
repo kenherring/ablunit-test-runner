@@ -2,7 +2,7 @@
 	"name": "ablunit-test-runner",
 	"displayName": "ABLUnit Test Runner",
 	"description": "OpenEdge ABLUnit test runner for VSCode",
-	"version": "1.0.15",
+	"version": "1.0.6001",
 	"preview": true,
 	"engineStrict": true,
 	"galleryBanner": {
@@ -194,20 +194,6 @@
 					"**/ablunit-test-profile*.json"
 				],
 				"url": "./resources/ablunit-test-profile.schema.json"
-			}
-		],
-		"snippets": [
-			{
-				"language": "abl",
-				"path": "./snippets/snippets-abl.json"
-			},
-			{
-				"language": "abl",
-				"path": "./snippets/snippets-abl-procedure.json"
-			},
-			{
-				"language": "abl",
-				"path": "./snippets/snippets-abl-class.json"
 			}
 		]
 	}

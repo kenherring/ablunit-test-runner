@@ -98,7 +98,7 @@ jobs:
       - save-package-cache
       - restore-test-cache: { oe-version: << pipeline.parameters.primary-oe-version >> }
       - run: '[ "$(find . -type f -name "*.vsix" | grep -v "^./artifacts" | tee /dev/tty | wc -l)" = "1" ] && echo "pass" || (echo "error - count does not match (expected=$EXPECTED_VSIX_COUNT)" && exit 1)'
-      - run: .circleci/run_test_wrapper.sh -p proj0 ## smoke test
+      - run: ABLUNIT_TEST_RUNNER_PROJECT_NAME=proj0 .circleci/run_test_wrapper.sh ## smoke test
   test:
     <<: *oe-version-param
     docker:
