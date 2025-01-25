@@ -14,7 +14,8 @@ import {
 	TextDocument, TextDocumentChangeEvent, Uri, WorkspaceFolder,
 	commands,
 	extensions,
-	tests, window, workspace
+	languages,
+	tests, window, workspace,
 } from 'vscode'
 import { ABLResults } from './ABLResults'
 import { log } from './ChannelLogger'
@@ -26,6 +27,10 @@ import { basename } from 'path'
 import * as FileUtils from './FileUtils'
 import { gatherAllTestItems, IExtensionTestReferences } from 'ABLUnitCommon'
 import { getDeclarationCoverage } from 'parse/ProfileParser'
+import {
+	// InlineProvider,
+	SnippetProvider
+} from 'SnippetProvider'
 
 let recentResults: ABLResults[] = []
 let recentError: Error | undefined = undefined
@@ -46,6 +51,8 @@ export function activate (context: ExtensionContext) {
 	FileUtils.createDir(contextStorageUri)
 
 	context.subscriptions.push(ctrl)
+	languages.registerCompletionItemProvider({ language: 'abl'}, new SnippetProvider())
+	// languages.registerInlineCompletionItemProvider({ language: 'abl'}, new InlineProvider())
 
 	log.info('process.env[\'ABLUNIT_TEST_RUNNER_UNIT_TESTING\']=' + process.env['ABLUNIT_TEST_RUNNER_UNIT_TESTING'])
 	if (process.env['ABLUNIT_TEST_RUNNER_UNIT_TESTING']) {
@@ -92,6 +99,7 @@ export function activate (context: ExtensionContext) {
 			if (workspace.getWorkspaceFolder(e.uri) === undefined) {
 				return
 			}
+
 			return createOrUpdateFile(ctrl, e.uri, true)
 		}),
 		workspace.onDidChangeTextDocument(e => { return didChangeTextDocument(e, ctrl) }),

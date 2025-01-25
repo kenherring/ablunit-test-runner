@@ -195,20 +195,6 @@
 				],
 				"url": "./resources/ablunit-test-profile.schema.json"
 			}
-		],
-		"snippets": [
-			{
-				"language": "abl",
-				"path": "./snippets/snippets-abl.json"
-			},
-			{
-				"language": "abl",
-				"path": "./snippets/snippets-abl-procedure.json"
-			},
-			{
-				"language": "abl",
-				"path": "./snippets/snippets-abl-class.json"
-			}
 		]
 	}
 }
