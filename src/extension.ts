@@ -235,7 +235,6 @@ export function activate (context: ExtensionContext) {
 			throw new Error('configureHandler not implemented for multi-folder workspaces')
 		}
 
-
 		const uri = Uri.joinPath(workspaceFolder.uri, '.vscode', 'ablunit-test-profile.json')
 		const det = Uri.joinPath(context.extensionUri, 'resources', 'ablunit-test-profile.detail.jsonc')
 		const dir = Uri.joinPath(workspaceFolder.uri, '.vscode')

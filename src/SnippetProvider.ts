@@ -4,9 +4,6 @@ export class SnippetProvider implements CompletionItemProvider {
 	private readonly globalItems: CompletionItem[] = []
 	private readonly classItems: CompletionItem[] = []
 	private readonly procedureItems: CompletionItem[] = []
-	// private readonly globalItems = new CompletionList()
-	// private readonly classItems = new CompletionList()
-	// private readonly procedureItems = new CompletionList()
 
 	constructor (public oeVersion = '12.8') {
 		this.createGlobalSnippets()
@@ -43,49 +40,61 @@ export class SnippetProvider implements CompletionItemProvider {
 		}
 	}
 
+	private newCompletionItem (label: string, category: 'global' | 'class' | 'procedure') {
+		const item = new CompletionItem(label)
+		item.insertText = new SnippetString(label)
+		item.kind = CompletionItemKind.Snippet
+		switch (category) {
+			case 'global':
+				this.globalItems.push(item)
+				break
+			case 'class':
+				this.classItems.push(item)
+				break
+			case 'procedure':
+				this.procedureItems.push(item)
+				break
+		}
+		return item
+	}
+
 	private createGlobalSnippets () {
-		let gci = new CompletionItem('block-level on error undo, throw.', CompletionItemKind.Event)
-		gci.insertText = new SnippetString('block-level on error undo, throw.')
+		let gci = this.newCompletionItem('block-level on error undo, throw.', 'global')
+		gci.kind = CompletionItemKind.Event
 		gci.documentation = new MarkdownString(
 			'You must have the `[BLOCK | ROUTINE]-LEVEL ON ERROR UNDO, THROW` statement in the test files to run the ABLUnit test cases.\n\n' +
 			'* [Run test cases and test suites](' + this.urlForVersion('https://docs.progress.com/bundle/openedge-developer-studio-help/page/Run-test-cases-and-test-suites.html') + ')\n' +
 			'* [Support for structured error handling](' + this.urlForVersion('https://docs.progress.com/bundle/openedge-developer-studio-help/page/Support-for-structured-error-handling.html') + ')'
 		)
-		this.globalItems.push(gci)
 
-		gci = new CompletionItem('routine-level on error undo, throw.', CompletionItemKind.Event)
-		gci.insertText = new SnippetString('routine-level on error undo, throw.')
+		gci = this.newCompletionItem('routine-level on error undo, throw.', 'global')
+		gci.kind = CompletionItemKind.Event
 		gci.documentation = this.globalItems[0].documentation
-		this.globalItems.push(gci)
 
-		gci = new CompletionItem('using OpenEdge.Core.Assert.', CompletionItemKind.Reference)
-		gci.insertText = new SnippetString('using OpenEdge.Core.Assert.')
+		gci = this.newCompletionItem('using OpenEdge.Core.Assert.', 'global')
+		gci.kind = CompletionItemKind.Reference
 		gci.documentation = new MarkdownString(
 			'* [OpenEdge.Core.Assert](' + this.urlForVersion('https://docs.progress.com/bundle/openedge-abl-api-reference-128/page/OpenEdge.Core.Assert.html') + ')\n' +
 			'* [USING statement](' + this.urlForVersion('https://docs.progress.com/bundle/abl-reference/page/USING-statement.html') + ')'
 		)
-		this.globalItems.push(gci)
 
-		gci = new CompletionItem('@Ignore')
-		gci.insertText = new SnippetString('@Ignore.')
+		gci = this.newCompletionItem('@Ignore.', 'global')
 		gci.documentation = new MarkdownString(
 			'Ignores the test. You can use this annotation when you are still working on a code, the test case is not ready to run, or if the execution time of test is too long to be included.'
 		)
-		this.globalItems.push(gci)
 
 		this.globalItems.push(...this.createAssertSnippets())
 	}
 
 	private createClassSnippets () {
-		let cci = new CompletionItem('@TestSuite')
+		let cci = this.newCompletionItem('@TestSuite', 'class')
 		cci.insertText = new SnippetString('@TestSuite(classes="${1:classList}").')
 		cci.documentation = new MarkdownString(
 			'Runs a suite of test cases from a specified list.\n\n' +
 			'* [Test Suite Class](' + this.urlForVersion('https://docs.progress.com/bundle/openedge-developer-studio-help/page/Test-Suite-Class.html') + ')'
 		)
-		this.globalItems.push(cci)
 
-		cci = new CompletionItem('@Test method')
+		cci = this.newCompletionItem('@Test method', 'class')
 		cci.insertText = new SnippetString(
 			'@Test.\n' +
 			'method public void ${1:methodName} () :\n' +
@@ -95,9 +104,8 @@ export class SnippetProvider implements CompletionItemProvider {
 		cci.documentation = new MarkdownString(
 			'* [Test Class](' + this.urlForVersion('https://docs.progress.com/bundle/openedge-developer-studio-help/page/Test-Class.html') + ')'
 		)
-		this.classItems.push(cci)
 
-		cci = new CompletionItem('@Test method exception')
+		cci = this.newCompletionItem('@Test method exception', 'class')
 		cci.documentation = 'Fails the test if the method does not throw the exception mentioned in the expected attribute.'
 		cci.insertText = new SnippetString(
 			'@Test (expected="${1:ExceptionType}").\n' +
@@ -105,9 +113,8 @@ export class SnippetProvider implements CompletionItemProvider {
 			'\t${2:runMethodThrowsException().} //Throws ${1}\n' +
 			'end method.'
 		)
-		this.classItems.push(cci)
 
-		cci = new CompletionItem('@Setup method')
+		cci = this.newCompletionItem('@Setup method', 'class')
 		cci.documentation = 'To be deprecated, use @BeforeEach'
 		cci.insertText = new SnippetString(
 			'@Setup.\n' +
@@ -116,9 +123,8 @@ export class SnippetProvider implements CompletionItemProvider {
 			'\t${1:// do setup here}\n' +
 			'end method.'
 		)
-		this.classItems.push(cci)
 
-		cci = new CompletionItem('@Before method')
+		cci = this.newCompletionItem('@Before method', 'class')
 		cci.documentation = 'To be deprecated, use @BeforeAll'
 		cci.insertText = new SnippetString(
 			'@BeforeEach.\n' +
@@ -127,9 +133,8 @@ export class SnippetProvider implements CompletionItemProvider {
 			'\t${1:// do setup here}\n' +
 			'end method.'
 		)
-		this.classItems.push(cci)
 
-		cci = new CompletionItem('@BeforeAll method')
+		cci = this.newCompletionItem('@BeforeAll method', 'class')
 		cci.documentation = 'Executes the procedure once per class, before the start of all tests. This annotation can be used to perform time-sensitive activities such as connecting to a database.'
 		cci.insertText = new SnippetString(
 			'@BeforeAll.\n' +
@@ -138,9 +143,8 @@ export class SnippetProvider implements CompletionItemProvider {
 			'\t${1:// do setup here}\n' +
 			'end method.'
 		)
-		this.classItems.push(cci)
 
-		cci = new CompletionItem('@BeforeEach method')
+		cci = this.newCompletionItem('@BeforeEach method', 'class')
 		cci.documentation = 'Executes the method before each test. This annotation prepares the test environment such as reading input data or initializing the class.'
 		cci.insertText = new SnippetString(
 			'@BeforeEach.\n' +
@@ -149,9 +153,8 @@ export class SnippetProvider implements CompletionItemProvider {
 			'\t${1:// do setup here}\n' +
 			'end method.'
 		)
-		this.classItems.push(cci)
 
-		cci = new CompletionItem('@Teardown method')
+		cci = this.newCompletionItem('@Teardown method', 'class')
 		cci.documentation = 'To be deprecated, use @AfterEach'
 		cci.insertText = new SnippetString(
 			'@Teardown.\n' +
@@ -160,9 +163,8 @@ export class SnippetProvider implements CompletionItemProvider {
 			'\t${1:// do some cleanup here}\n' +
 			'end method.'
 		)
-		this.classItems.push(cci)
 
-		cci = new CompletionItem('@After method')
+		cci = this.newCompletionItem('@After method', 'class')
 		cci.documentation = 'To be deprecated, use @AfterAll'
 		cci.insertText = new SnippetString(
 			'@After.\n' +
@@ -170,9 +172,8 @@ export class SnippetProvider implements CompletionItemProvider {
 			'\t// Executes before after all the tests are executed\n' +
 			'end method.'
 		)
-		this.classItems.push(cci)
 
-		cci = new CompletionItem('@AfterAll method')
+		cci = this.newCompletionItem('@AfterAll method', 'class')
 		cci.documentation = 'Executes the method once, after all the tests are executed. This annotation is used to perform clean-up activities such as disconnecting from a database.'
 		cci.insertText = new SnippetString(
 			'@AfterAll.\n' +
@@ -180,9 +181,8 @@ export class SnippetProvider implements CompletionItemProvider {
 			'\t// Executes once after all tests are executed\n' +
 			'end method.'
 		)
-		this.classItems.push(cci)
 
-		cci = new CompletionItem('@AfterEach method')
+		cci = this.newCompletionItem('@AfterEach method', 'class')
 		cci.documentation = 'Executes the method after each test. This annotation cleans up the test environment such as deleting temporary data or restoring defaults.'
 		cci.insertText = new SnippetString(
 			'@AfterEach.\n' +
@@ -190,43 +190,37 @@ export class SnippetProvider implements CompletionItemProvider {
 			'\t// Executes after each test\n' +
 			'end method.'
 		)
-		this.classItems.push(cci)
 	}
 
 	private createProcedureSnippets () {
-		let pci = new CompletionItem('@TestSuite')
-		pci.insertText = new SnippetString(
-			'@TestSuite(procedures="${1:procedureList}").'
-		)
+		let pci = this.newCompletionItem('@TestSuite', 'procedure')
+		pci.insertText = new SnippetString('@TestSuite(procedures="${1:procedureList}").')
 		pci.documentation = new MarkdownString(
 			'Runs a suite of test cases from a specified list.\n\n' +
 			'* [Test Suite Procedure](' + this.urlForVersion('https://docs.progress.com/bundle/openedge-developer-studio-help/page/Test-Suite-Procedure.html') + ')'
 		)
-		this.globalItems.push(pci)
 
-		pci = new CompletionItem('@Test Procedure')
+		pci = this.newCompletionItem('@Test Procedure', 'procedure')
 		pci.insertText = new SnippetString('@Test.\nprocedure ${1:procedureName} :\n\t${2://TODO: Implement test procedure}\nend procedure.')
 		pci.documentation = new MarkdownString(
 			'A procedure that is a test procedure\n\n' +
 			'* [Test Procedure](' + this.urlForVersion('https://docs.progress.com/bundle/openedge-developer-studio-help/page/Test-Procedure.html') + ')'
 		)
-		this.procedureItems.push(pci)
 
-		pci = new CompletionItem('@Test procedure exception')
-		pci.documentation = new MarkdownString(
-			'Fails the test if the procedure does not throw the exception mentioned in the expected attribute.\n\n' +
-			'* [Test Procedure](' + this.urlForVersion('https://docs.progress.com/bundle/openedge-developer-studio-help/page/Test-Procedure.html') + ')'
-		)
+		pci = this.newCompletionItem('@Test procedure exception', 'procedure')
 		pci.insertText = new SnippetString(
 			'@Test (expected="${1:ExceptionType}").\n' +
 			'procedure testExceptionProc :\n' +
 			'\t${2:runProcThrowsException().} //Throws ${1}\n' +
 			'end procedure.'
 		)
-		this.procedureItems.push(pci)
+		pci.documentation = new MarkdownString(
+			'Fails the test if the procedure does not throw the exception mentioned in the expected attribute.\n\n' +
+			'* [Test Procedure](' + this.urlForVersion('https://docs.progress.com/bundle/openedge-developer-studio-help/page/Test-Procedure.html') + ')'
+		)
 
-		pci = new CompletionItem('@Setup procedure')
-		pci.documentation = 'To be deprecated, use @BeforeAll'
+
+		pci = this.newCompletionItem('@Setup procedure', 'procedure')
 		pci.insertText = new SnippetString(
 			'@Setup.\n' +
 			'procedure beforeAll :\n' +
@@ -234,10 +228,9 @@ export class SnippetProvider implements CompletionItemProvider {
 			'\t${1:// do setup here}\n' +
 			'end procedure.'
 		)
-		this.procedureItems.push(pci)
+		pci.documentation = 'To be deprecated, use @BeforeAll'
 
-		pci = new CompletionItem('@Before procedure')
-		pci.documentation = 'To be deprecated, use @BeforeEach'
+		pci = this.newCompletionItem('@Before procedure', 'procedure')
 		pci.insertText = new SnippetString(
 			'@Before.\n' +
 			'procedure beforeEach :\n' +
@@ -245,10 +238,9 @@ export class SnippetProvider implements CompletionItemProvider {
 			'\t${1:// do setup here}\n' +
 			'end procedure.'
 		)
-		this.procedureItems.push(pci)
+		pci.documentation = 'To be deprecated, use @BeforeEach'
 
-		pci = new CompletionItem('@BeforeAll procedure')
-		pci.documentation = 'Executes the procedure once per program, before the start of all tests. This annotation can be used to perform time-sensitive activities such as connecting to a database.'
+		pci = this.newCompletionItem('@BeforeAll procedure', 'procedure')
 		pci.insertText = new SnippetString(
 			'@BeforeAll.\n' +
 			'procedure beforeAll :\n' +
@@ -256,10 +248,9 @@ export class SnippetProvider implements CompletionItemProvider {
 			'\t${1:// do setup here}\n' +
 			'end procedure.'
 		)
-		this.procedureItems.push(pci)
+		pci.documentation = 'Executes the procedure once per program, before the start of all tests. This annotation can be used to perform time-sensitive activities such as connecting to a database.'
 
-		pci = new CompletionItem('@BeforeEach procedure')
-		pci.documentation = 'Executes the procedure after each test. This annotation cleans up the test environment such as deleting temporary data or restoring defaults.'
+		pci = this.newCompletionItem('@BeforeEach procedure', 'procedure')
 		pci.insertText = new SnippetString(
 			'@BeforeEach.\n' +
 			'procedure beforeEach :\n' +
@@ -267,10 +258,9 @@ export class SnippetProvider implements CompletionItemProvider {
 			'\t${1:// do setup here}\n' +
 			'end procedure.'
 		)
-		this.procedureItems.push(pci)
+		pci.documentation = 'Executes the procedure after each test. This annotation cleans up the test environment such as deleting temporary data or restoring defaults.'
 
-		pci = new CompletionItem('@Teardown procedure')
-		pci.documentation = 'To be deprecated, use @AfterEach'
+		pci = this.newCompletionItem('@Teardown procedure', 'procedure')
 		pci.insertText = new SnippetString(
 			'@TearDown.\n' +
 			'procedure afterEach :\n' +
@@ -278,30 +268,27 @@ export class SnippetProvider implements CompletionItemProvider {
 			'\t${1:// do some cleanup here}\n' +
 			'end procedure'
 		)
-		this.procedureItems.push(pci)
+		pci.documentation = 'To be deprecated, use @AfterEach'
 
-		pci = new CompletionItem('@After procedure')
-		pci.documentation = 'To be deprecated, use @AfterAll'
+		pci = this.newCompletionItem('@After procedure', 'procedure')
 		pci.insertText = new SnippetString(
 			'@After.\n' +
 			'procedure afterAll :\n' +
 			'\t// Executes once after all the tests are executed\n' +
 			'end procedure.'
 		)
-		this.procedureItems.push(pci)
+		pci.documentation = 'To be deprecated, use @AfterAll'
 
-		pci = new CompletionItem('@AfterAll procedure')
-		pci.documentation = 'Executes the procedure once, after all the tests are executed. This annotation is used to perform clean-up activities such as disconnecting from a database.'
+		pci = this.newCompletionItem('@AfterAll procedure', 'procedure')
 		pci.insertText = new SnippetString(
 			'@AfterAll.\n' +
 			'procedure afterAll :\n' +
 			'\t// Executes once after all the tests are executed\n' +
 			'end procedure.'
 		)
-		this.procedureItems.push(pci)
+		pci.documentation = 'Executes the procedure once, after all the tests are executed. This annotation is used to perform clean-up activities such as disconnecting from a database.'
 
-		pci = new CompletionItem('@AfterEach procedure')
-		pci.documentation = 'Executes the procedure after each test. This annotation cleans up the test environment such as deleting temporary data or restoring defaults.'
+		pci = this.newCompletionItem('@AfterEach procedure', 'procedure')
 		pci.insertText = new SnippetString(
 			'@AfterEach.\n' +
 			'procedure afterEach :\n' +
@@ -309,7 +296,7 @@ export class SnippetProvider implements CompletionItemProvider {
 			'\t${1:// do some cleanup here}\n' +
 			'end procedure.'
 		)
-		this.procedureItems.push(pci)
+		pci.documentation = 'Executes the procedure after each test. This annotation cleans up the test environment such as deleting temporary data or restoring defaults.'
 	}
 
 	private createAssertSnippets () {
