@@ -39,16 +39,12 @@ main () {
 
     set -x
     env
+
+    local GH_TOKEN=$GH_TOKEN_PUBLISH
+    export GH_TOKEN
     curl -L https://github.com/cli/cli/releases/download/v2.65.0/gh_2.65.0_linux_amd64.deb -o /tmp/gh_2.65.0_linux_amd64.deb
     sudo dpkg -i /tmp/gh_2.65.0_linux_amd64.deb
-
-    export GH_ENTERPRISE_TOKEN="$GH_TOKEN"
-    echo "GH_TOKEN=$GH_TOKEN"
-
-    if ! gh release create "$PACKAGE_VERSION" "${ARGS[@]}"; then
-        gh auth login --with-token <<< "$GH_TOKEN"
-        gh release create "$PACKAGE_VERSION" "${ARGS[@]}"
-    fi
+    gh release create "$PACKAGE_VERSION" "${ARGS[@]}"
     log_it "release created for PACKAGE_VERSION=$PACKAGE_VERSION"
 }
 
