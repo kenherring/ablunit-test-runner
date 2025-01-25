@@ -17,9 +17,9 @@ parameters:
   latest-oe-version:
     type: string
     default: 12.8.4
-  prerelease: ## main branch is a prerelease; use this parameter to prerelease on other branches
-    type: boolean
-    default: false
+  prerelease-from-branch:
+    type: string
+    default: main
 
 oe-version-param: &oe-version-param
   parameters:
@@ -37,9 +37,6 @@ context-and-filters: &context-and-filters
     - DockerHub
     - PROGRESS_CFG
     - SonarCloud
-  filters:
-    tags: ## all tags
-      only: [ /^.*$/ ]
 
 executors:
   psc-primary:
@@ -95,6 +92,10 @@ jobs:
       - checkout
       - restore-package-cache
       - run: .circleci/package.sh
+      - add_ssh_keys:
+          fingerprints:
+            - "SHA256:7O7u8zJHWLESMSI69NqqahfyiLCMvxryB9aTyYd5c84"
+      - run: .circleci/bump_version.sh
       - run: rm -r node_modules
       - persist_to_workspace: { root: ., paths: [ . ] }
       - run: cp *.vsix artifacts/
@@ -153,16 +154,21 @@ jobs:
   publish:
     docker:
       - image: cimg/node:20.8
-    environment:
-      PRERELEASE: << pipeline.parameters.prerelease >>
     steps:
-      - attach_workspace: { at: . }
+      - checkout
+      - restore-package-cache
+      - run: .circleci/package.sh
       - run: .circleci/publish.sh
       - run: ## remove artifacts so we don't waste space
           when: on_success
           command: rm -rf artifacts/* coverage/*
       - store_artifacts: { path: artifacts }
-
+  create-release:
+    docker:
+      - image: cimg/node:20.8
+    steps:
+      - attach_workspace: { at: . }
+      - run: .circleci/create_release.sh
 workflows:
   build:
     jobs:
@@ -193,14 +199,22 @@ workflows:
           requires:
             - test-<< pipeline.parameters.primary-oe-version >>
           oe-version: << pipeline.parameters.primary-oe-version >>
-      - publish:
+      - create-release:
           context:
-            - Azure_PAT
             - GitHub_CLI
-          filters: ## main branch or PRERELEASE PARAMETER = prerelease; tags = release
-            tags: { only: /^.*$/ }
+          filters:
+            branches: { only: /^<< pipeline.parameters.prerelease-from-branch >>$/ }
           requires:
             - shellcheck/check
             - sonar
             - test-<< pipeline.parameters.primary-oe-version >>
             - test-matrix
+  publish-tag:
+    jobs:
+      - publish:
+          context:
+            - Azure_PAT
+            - GitHub_CLI
+          filters: ## tags only
+            branches: { ignore: [ /.*/ ] }
+            tags: { only: /^.*$/ }
