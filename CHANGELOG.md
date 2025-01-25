@@ -1,3 +1,47 @@
+# [1.0.7](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.0.7) - 2025-01-25 (pre-release)
+
+ * Bump version to prerelease 1.0.5
+ * create_release.sh and publish.sh
+ * create_release.sh
+ * create_release.sh
+ * create_release.sh
+ * install ghcli from release binary
+ * install ghcli from release binary
+ * apt install gh
+ * update-index chmod=+x
+ * rm eslint-report.json.tmp
+ * Bump version to prerelease 1.0.3
+ * create release and tags for prereleases
+ * publish prerelease without tag from main for odd numbered patches
+ * cleanup
+ * cleanup
+ * debug
+ * Merge branch 'parse-profile-data-performance' of github.com:kenherring/ablunit-test-runner into parse-profile-data-performance
+ * debug
+ * Bump version to prerelease 1.0.1
+ * get config set user & email in circleci
+ * get config set user & email in circleci
+ * get config set user & email in circleci
+ * bump tag updates
+ * bump tag updates
+ * chmod +x
+ * config.yml
+ * revert to using odd number patches as prerelease
+ * checkpoint
+ * package as prerelease
+ * ssh-keygen
+ * publish.sh - update remote url to use ssh prior to push
+ * config.yml - add deploy key fingerprint
+ * publish.sh
+ * cleanup
+ * ABLResults.ts
+ * Merge branch 'parse-profile-data-performance' of github.com:kenherring/ablunit-test-runner into parse-profile-data-performance
+ * publish.sh
+ * Merge branch 'main' into parse-profile-data-performance
+ * Profile parsing of performance improvement for multiple data files
+
+**Full Changelog**: [1.0.5...1.0.7](https://github.com/kenherring/ablunit-test-runner/compare/1.0.5...1.0.7)
+
 # [1.0.5](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.0.5) - 2025-01-25 (pre-release)
 
 
