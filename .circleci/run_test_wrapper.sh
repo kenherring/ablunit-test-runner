@@ -47,24 +47,6 @@ update_oe_version () {
 	# ls -al test_projects/*/openedge-project.json
 }
 
-restore_vscode_test () {
-	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] ABLUNIT_TEST_RUNNER_OE_VERSION=$ABLUNIT_TEST_RUNNER_OE_VERSION"
-	local FROM_DIR TO_DIR COUNT
-	FROM_DIR='/home/circleci/.vscode-test'
-	TO_DIR=./.vscode-test
-	if ! COUNT=$(find "$FROM_DIR" -type f 2>/dev/null | wc -l); then
-		COUNT=0
-	fi
-	$VERBOSE && echo "COUNT=$COUNT"
-	if [ "$COUNT" = 0 ]; then
-		echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] WARNING: no files found in $FROM_DIR, skipping restore of cached ./.vscode-test/ directory"
-		return 0
-	fi
-
-	mkdir -p "$TO_DIR"
-	cp -r "$FROM_DIR"/* "$TO_DIR"
-}
-
 dbus_config () {
 	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] ABLUNIT_TEST_RUNNER_DBUS_NUM=$ABLUNIT_TEST_RUNNER_DBUS_NUM"
 	case $ABLUNIT_TEST_RUNNER_DBUS_NUM in

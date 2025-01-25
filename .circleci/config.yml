@@ -25,7 +25,7 @@ oe-version-param: &oe-version-param
   parameters:
     oe-version:
       type: string
-      enum: [ '12.2.12', '12.8.1', '12.8.3', '<< pipeline.parameters.latest-oe-version >>' ]
+      enum: [ '12.2.12', '12.7.0', '12.8.1', '12.8.3', '<< pipeline.parameters.latest-oe-version >>' ]
       default: '12.8.1'
     vscode-version:
       type: string

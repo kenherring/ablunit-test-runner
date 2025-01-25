@@ -18,7 +18,6 @@ initialize () {
 
 	set -x
 	PRERELEASE=false
-	CIRCLE_BUILD_NUM=${CIRCLE_BUILD_NUM:-}
     PACKAGE_VERSION=$(node -p "require('./package.json').version")
 
 	if [ "$(git branch --show-current)" = "main" ]; then
@@ -26,26 +25,16 @@ initialize () {
 		exit 1
 	fi
 
-	# MAJOR=$(echo "$PACKAGE_VERSION" | awk -F. '{print $1}')
-	MINOR=$(echo "$PACKAGE_VERSION" | awk -F. '{print $2}')
-	# PATCH=$(echo "$PACKAGE_VERSION" | awk -F. '{print $3}')
-
-	if [ "$(( MINOR % 2 ))" = "0" ]; then
+	PATCH=${PACKAGE_VERSION##*.}
+	if [ "$((PATCH % 2))" = "0" ]; then
 		PRERELEASE=true
 	fi
-	# remove_unpushed_tags ##TODO
-}
-
-remove_unpushed_tags () {
-	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}]"
-	git fetch --prune origin +refs/tags/*:refs/tags/*
 }
 
 update_version () {
-	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] PACKAGE_VERSION=$PACKAGE_VERSION, CIRCLE_BUILD_NUM=$CIRCLE_BUILD_NUM"
+	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] PACKAGE_VERSION=$PACKAGE_VERSION"
 
 	update_changelog
-	update_other_files
 	git add .
 }
 
@@ -76,18 +65,6 @@ update_changelog () {
 	if ! ${CIRCLECI:-false}; then
 		code --wait CHANGELOG.md
 	fi
-}
-
-update_other_files () {
-	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] updating sonar-project.properties..."
-	sed -i "s/sonar.projectVersion=.*/sonar.projectVersion=$PACKAGE_VERSION/" sonar-project.properties
-
-	## TODO
-	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] updating src/version.ts..."
-	echo "export const LIB_VERSION = '$PACKAGE_VERSION'" > src/version.ts
-
-	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] updating .vscode/launch.json..."
-	sed -i "s/ablunit-test-runner-.*.vsix/ablunit-test-runner-$PACKAGE_VERSION.vsix/" .vscode/launch.json
 }
 
 ########## MAIN BLOCK ##########
