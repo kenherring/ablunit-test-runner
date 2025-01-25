@@ -158,6 +158,7 @@ jobs:
     steps:
       - checkout
       - restore-package-cache
+      - run: .circleci/package.sh
       - run: .circleci/publish.sh
       - run: ## remove artifacts so we don't waste space
           when: on_success
