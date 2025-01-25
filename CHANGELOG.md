@@ -1,3 +1,28 @@
+# [1.0.15](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.0.15) - 2025-01-25
+
+ * update-index chmod=+x
+ * cleanup
+ * cleanup
+ * cleanup
+ * scripts/sonar_test_results_merge.sh
+ * test release again
+ * Merge branch 'circleci-test-cache' of github.com:kenherring/ablunit-test-runner into circleci-test-cache
+ * remove ABLUNIT_TEST_RUNNER_VSCODE_VERSION
+ * Bump version to prerelease 1.0.13
+ * cleanup
+ * update-index chmod=+x
+ * Merge branch 'circleci-test-cache' of github.com:kenherring/ablunit-test-runner into circleci-test-cache
+ * Merge branch 'main' into circleci-test-cache
+ * saveme
+ * more perms experimenting
+ * run_test_wrapper.sh
+ * run_test_wrapper.sh
+ * run_test_wrapper.sh
+ * CircleCI: cache the `.vscode-test` directoryCircleCI: cache the `.vscode-test` directory (236)
+
+
+**Full Changelog**: [1.0.13...1.0.15](https://github.com/kenherring/ablunit-test-runner/compare/1.0.13...1.0.15)
+
 # [1.0.13](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.0.13) - 2025-01-25
 
 
