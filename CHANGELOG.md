@@ -1,3 +1,9 @@
+# [1.0.15](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.0.15) - 2025-01-25 (pre-release)
+
+
+
+**Full Changelog**: [1.0.11...1.0.15](https://github.com/kenherring/ablunit-test-runner/compare/1.0.11...1.0.15)
+
 # [1.0.11](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.0.11) - 2025-01-25 (pre-release)
 
  * Publish prerelease after merge to main (#234)
