@@ -36,14 +36,11 @@ main () {
     fi
     ARGS+=(--generate-notes)
     ARGS+=(--notes-start-tag "$LATEST_RELEASE_TAG")
+    ARGS+=(--target $(git rev-parse HEAD))
 
-    set -x
-    env
-
-    local GH_TOKEN=$GH_TOKEN_PUBLISH
-    export GH_TOKEN
     curl -L https://github.com/cli/cli/releases/download/v2.65.0/gh_2.65.0_linux_amd64.deb -o /tmp/gh_2.65.0_linux_amd64.deb
     sudo dpkg -i /tmp/gh_2.65.0_linux_amd64.deb
+
     gh release create "$PACKAGE_VERSION" "${ARGS[@]}"
     log_it "release created for PACKAGE_VERSION=$PACKAGE_VERSION"
 }
