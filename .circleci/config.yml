@@ -38,9 +38,6 @@ context-and-filters: &context-and-filters
     - DockerHub
     - PROGRESS_CFG
     - SonarCloud
-  filters:
-    tags: ## all tags
-      only: [ /^.*$/ ]
 
 executors:
   psc-primary:
@@ -159,7 +156,8 @@ jobs:
     docker:
       - image: cimg/node:20.8
     steps:
-      - attach_workspace: { at: . }
+      - checkout
+      - restore-package-cache
       - run: .circleci/publish.sh
       - run: ## remove artifacts so we don't waste space
           when: on_success
