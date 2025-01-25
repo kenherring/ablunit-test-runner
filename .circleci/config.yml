@@ -32,11 +32,6 @@ oe-version-param: &oe-version-param
       default: stable
       enum: [ stable ]
       # enum: [ stable, proposedapi, insiders ]
-context-and-filters: &context-and-filters
-  context:
-    - DockerHub
-    - PROGRESS_CFG
-    - SonarCloud
 
 executors:
   psc-primary:
@@ -68,9 +63,9 @@ commands:
           condition: true
           steps:
             - run: tr ' ' '\n' \<<< "$PROGRESS_CFG_BASE64" | base64 --decode > /psc/dlc/progress.cfg
-            # - restore_cache:
-            #     keys:
-            #       - << pipeline.parameters.cache-version >>-test-cache-<< parameters.oe-version >>-{{ checksum "package.json" }}
+            - restore_cache:
+                keys:
+                  - << pipeline.parameters.cache-version >>-test-cache-<< parameters.oe-version >>-{{ checksum "package.json" }}
   save-test-cache:
     parameters:
       oe-version:
@@ -79,12 +74,11 @@ commands:
     steps:
       - save_cache:
           key: << pipeline.parameters.cache-version >>-test-cache-<< parameters.oe-version >>-{{ checksum "package.json" }}
-          paths: [ cache ]
+          paths: [ .vscode-test ]
 
 jobs:
   package:
-    docker:
-      - image: cimg/node:20.8
+    executor: psc-primary
     environment:
       npm_config_cache: /home/circleci/cache/node_modules_cache
       EXPECTED_VSIX_COUNT: << pipeline.parameters.expected-vsix-count >>
@@ -102,7 +96,9 @@ jobs:
       - store_artifacts:
           path: artifacts
       - save-package-cache
+      - restore-test-cache: { oe-version: << pipeline.parameters.primary-oe-version >> }
       - run: '[ "$(find . -type f -name "*.vsix" | grep -v "^./artifacts" | tee /dev/tty | wc -l)" = "1" ] && echo "pass" || (echo "error - count does not match (expected=$EXPECTED_VSIX_COUNT)" && exit 1)'
+      - run: .circleci/run_test_wrapper.sh -p proj0 ## smoke test
   test:
     <<: *oe-version-param
     docker:
@@ -114,6 +110,7 @@ jobs:
       ABLUNIT_TEST_RUNNER_OE_VERSION: << parameters.oe-version >>
       ABLUNIT_TEST_RUNNER_VSCODE_VERSION: << parameters.vscode-version >>
       EXPECTED_VSIX_COUNT: << pipeline.parameters.expected-vsix-count >>
+      PRIMARY_OE_VERSION: << pipeline.parameters.primary-oe-version >>
     steps:
       - attach_workspace: { at: . }
       - restore-test-cache: { oe-version: << parameters.oe-version >> }
@@ -131,14 +128,10 @@ jobs:
       - run:
           when: on_fail
           command: env
-      # - save-test-cache: { oe-version: << parameters.oe-version >> }
+      - save-test-cache: { oe-version: << parameters.oe-version >> }
   sonar:
     <<: *oe-version-param
-    docker:
-      - image: kherring/ablunit-test-runner:<< parameters.oe-version >>
-        auth:
-          username: $DOCKERHUB_USERNAME
-          password: $DOCKERHUB_TOKEN
+    executor: psc-primary
     steps:
       - attach_workspace: { at: . }
       - sonarcloud/scan:
@@ -174,30 +167,27 @@ workflows:
     jobs:
       - shellcheck/check
       - package:
-          <<: *context-and-filters
+          context:
+            - DockerHub
+            - PROGRESS_CFG
+            - GitHub_CLI
       - test:
-          <<: *context-and-filters
+          context:
+            - DockerHub
+            - PROGRESS_CFG
           requires:
             - package
-          oe-version: << pipeline.parameters.primary-oe-version >>
-          matrix:
-            parameters:
-              vscode-version: [ stable ]
-          name: test-<< pipeline.parameters.primary-oe-version >>
-      - test:
-          <<: *context-and-filters
-          requires:
-            - package
-            - test-<< pipeline.parameters.primary-oe-version >>
           matrix:
             alias: test-matrix
             parameters:
-              oe-version: [ 12.2.12, 12.8.3, << pipeline.parameters.latest-oe-version >> ]
-              vscode-version: [ stable ]
+              oe-version: [ 12.2.12, 12.8.1, << pipeline.parameters.latest-oe-version >> ]
       - sonar:
-          <<: *context-and-filters
+          context:
+            - DockerHub
+            - PROGRESS_CFG
+            - SonarCloud
           requires:
-            - test-<< pipeline.parameters.primary-oe-version >>
+            - test-matrix
           oe-version: << pipeline.parameters.primary-oe-version >>
       - create-release:
           context:
@@ -207,7 +197,6 @@ workflows:
           requires:
             - shellcheck/check
             - sonar
-            - test-<< pipeline.parameters.primary-oe-version >>
             - test-matrix
   publish-tag:
     jobs:

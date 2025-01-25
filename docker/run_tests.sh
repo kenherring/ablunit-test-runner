@@ -35,7 +35,7 @@ initialize () {
 	ABLUNIT_TEST_RUNNER_OE_VERSION=${ABLUNIT_TEST_RUNNER_OE_VERSION:-}
 	ABLUNIT_TEST_RUNNER_VSCODE_VERSION=${ABLUNIT_TEST_RUNNER_VSCODE_VERSION:-stable}
 	ABLUNIT_TEST_RUNNER_PROJECT_NAME=${ABLUNIT_TEST_RUNNER_PROJECT_NAME:-${PROJECT_NAME:-}}
-	ABLUNIT_TEST_RUNNER_NO_COVERAGE=${ABLUNIT_TEST_RUNNER_NO_COVERAGE:-false}
+	ABLUNIT_TEST_RUNNER_RUN_SCRIPT_FLAG=${ABLUNIT_TEST_RUNNER_RUN_SCRIPT_FLAG:-true}
 
 	while getopts "bBCdimnsxo:p:PvV:h" OPT; do
 		case $OPT in
@@ -46,7 +46,6 @@ initialize () {
 			d)  DELETE_CACHE_VOLUME=true ;;
 			i)	TEST_PROJECT=dummy-ext ;;
 			m)	STAGED_ONLY=false ;;
-			n)  ABLUNIT_TEST_RUNNER_NO_COVERAGE=true ;;
 			h)	usage && exit 0 ;;
 			P)	CREATE_PACKAGE=true ;;
 			p)	ABLUNIT_TEST_RUNNER_PROJECT_NAME=$OPTARG ;;
@@ -103,14 +102,13 @@ initialize () {
 	export ABLUNIT_TEST_RUNNER_DBUS_NUM \
 		ABLUNIT_TEST_RUNNER_PROJECT_NAME \
 		ABLUNIT_TEST_RUNNER_OE_VERSION \
-		ABLUNIT_TEST_RUNNER_VSCODE_VERSION \
-		ABLUNIT_TEST_RUNNER_NO_COVERAGE
+		ABLUNIT_TEST_RUNNER_VSCODE_VERSION
 
 
 	if $DELETE_CACHE_VOLUME; then
 		local VOLS=()
 		docker volume ls | grep -q test-runner-cache && VOLS+=(test-runner-cache)
-		docker volume ls | grep -q vscode-cli-cache && VOLS+=(vscode-cli-cache)
+		docker volume ls | grep -q "vscode-cli-cache-$ABLUNIT_TEST_RUNNER_OE_VERSION" && VOLS=("vscode-cli-cache-$ABLUNIT_TEST_RUNNER_OE_VERSION")
 		if [ ${#VOLS[@]} -eq 0 ]; then
 			echo "no volumes to delete"
 		else
@@ -154,7 +152,7 @@ run_tests_in_docker () {
 
 	for ABLUNIT_TEST_RUNNER_OE_VERSION in "${OE_VERSIONS[@]}"; do
 		echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] docker run with ABLUNIT_TEST_RUNNER_OE_VERSION=$ABLUNIT_TEST_RUNNER_OE_VERSION"
-		export ABLUNIT_TEST_RUNNER_OE_VERSION ABLUNIT_TEST_RUNNER_VSCODE_VERSION ABLUNIT_TEST_RUNNER_PROJECT_PROJECT_NAME ABLUNIT_TEST_RUNNER_NO_COVERAGE
+		export ABLUNIT_TEST_RUNNER_OE_VERSION ABLUNIT_TEST_RUNNER_VSCODE_VERSION ABLUNIT_TEST_RUNNER_PROJECT_PROJECT_NAME
 		local ARGS=(
 			--cpus=4 ## large resource class in CircleCI
 			--memory=4g ## large resource class in CircleCI
@@ -170,7 +168,6 @@ run_tests_in_docker () {
 			-e CREATE_PACKAGE
 			-e VERBOSE
 			-e ABLUNIT_TEST_RUNNER_VSCODE_VERSION
-			-e ABLUNIT_TEST_RUNNER_NO_COVERAGE
 			-e SET_X
 			-v "${PWD}/artifacts":/home/circleci/project/artifacts
 			-v "${PWD}/coverage":/home/circleci/project/coverage
