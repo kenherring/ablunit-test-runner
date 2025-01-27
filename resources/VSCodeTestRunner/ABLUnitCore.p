@@ -6,6 +6,7 @@ using VSCode.ABLUnit.Runner.ABLRunner.
 block-level on error undo, throw.
 create widget-pool.
 
+message "ABLUnitCore.p start...".
 define variable testConfig as class OpenEdge.ABLUnit.Runner.TestConfig no-undo.
 define variable quitOnEnd as logical init false no-undo.
 define variable VERBOSE as logical no-undo.

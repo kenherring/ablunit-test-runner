@@ -7,7 +7,7 @@ import { FileType, TestItem, TestItemCollection, TestMessage, TestRun, Uri, work
 import { ABLUnitConfig } from './ABLUnitConfigWriter'
 import { ABLResultsParser, ITestCaseFailure, ITestCase, ITestSuite } from './parse/ResultsParser'
 import { ABLTestSuite, ABLTestData, ABLTestCase } from './testTree'
-import { ABLProfile, ABLProfileJson, checkSkipList, getModuleRange, IModule } from './parse/ProfileParser'
+import { ABLProfile, ABLProfileJson, getModuleRange, IModule } from './parse/ProfileParser'
 import { ABLDebugLines } from './ABLDebugLines'
 import { ABLPromsgs, getPromsgText } from './ABLPromsgs'
 import { PropathParser } from './ABLPropath'
@@ -487,6 +487,9 @@ export class ABLResults implements Disposable {
 		ending = ending.replace(/\\/g, '/')
 
 		const items = tests.filter((t) => t.id.replace(/\\/g, '/').endsWith(ending))
+		if (testName == 'TEST_ROOT') {
+			return undefined
+		}
 		if (items.length == 0) {
 			log.error('Could not find test item for "' + parentName + ' ' + testName + '"')
 			throw new Error('Could not find test item for "' + parentName + ' ' + testName + '"')
@@ -517,7 +520,10 @@ export class ABLResults implements Disposable {
 			const uri = Uri.joinPath(Uri.file(profDir), dataFiles[i])
 			log.info('parsing profile data ' + (i+1) + '/' + dataFiles.length + ' from ' + uri.fsPath, {testRun: options})
 
-			proms.push(new ABLProfile().parseData(uri, this.cfg.ablunitConfig.profiler.writeJson, this.debugLines))
+			proms.push(new ABLProfile().parseData(uri, this.cfg.ablunitConfig.profiler.writeJson, this.debugLines, this.cfg.ablunitConfig.profiler.ignoreFrameworkCoverage).then((profJson) => {
+				log.info('parsed profile data ' + (i+1) + '/' + dataFiles.length + ' ' + profJson.parseDuration)
+				return profJson
+			}))
 		}
 
 		const responses = await Promise.all(proms)
@@ -527,9 +533,9 @@ export class ABLResults implements Disposable {
 			const item = this.findTest(profJson.description)
 			profJson.testItemId = item?.id
 			this.profileJson.push(profJson)
+			log.info('assigning profile data (' + i + '/' + dataFiles.length + ')')
 			await this.assignProfileResults(profJson, item)
-			log.info('parsing profile data complete (' + i + '/' + dataFiles.length + ') ' + duration.toString())
-
+			log.info('parsing profile data complete (' + i + '/' + dataFiles.length + ')' + profJson.parseDuration, {testRun: options})
 		}
 		log.info('parsing profile data complete ' + duration.toString(), {testRun: options})
 	}
@@ -540,9 +546,6 @@ export class ABLResults implements Disposable {
 			throw new Error('no profile data available...')
 		}
 		for (const module of profJson.modules) {
-			if (checkSkipList(module.SourceName)) {
-				continue
-			}
 			await this.setCoverage(module, testItem)
 		}
 	}
@@ -609,14 +612,10 @@ export class ABLResults implements Disposable {
 	}
 
 	async setCoverage (module: IModule, item?: TestItem) {
-		if (checkSkipList(module.SourceName)) {
-			return
-		}
 
 		const fileinfo = await this.propath.search(module.SourceUri ?? module.SourceName)
 		if (!fileinfo?.uri) {
 			log.warn('could not find module in propath: ' + module.SourceName + ' (' + module.ModuleID + ')')
-			return
 		}
 
 		const zeroLine = module.lines.find((a) => a.LineNo == 0)
@@ -625,14 +624,14 @@ export class ABLResults implements Disposable {
 		}
 
 		for (const child of module.childModules) {
-			this.addDeclarationFromModule(fileinfo.uri, child)
+			this.addDeclarationFromModule(fileinfo?.uri ?? Uri.file(module.SourceName), child)
 		}
 		// ----- this next line would add the main block to the declaration coverage -----
 		// this.addDeclarationFromModule(fileinfo.uri, module)
 
-		const fsc = this.statementCoverage.get(fileinfo.uri.fsPath) ?? []
+		const fsc = this.statementCoverage.get(fileinfo?.uri.fsPath ?? module.SourceName) ?? []
 		if (fsc.length === 0) {
-			this.statementCoverage.set(fileinfo.uri.fsPath, fsc)
+			this.statementCoverage.set(fileinfo?.uri.fsPath ?? module.SourceName, fsc)
 		}
 
 		const lines = module.lines
@@ -656,20 +655,20 @@ export class ABLResults implements Disposable {
 			}
 		}
 
-		const fdc = this.declarationCoverage.get(fileinfo.uri.fsPath) ?? []
+		const fdc = this.declarationCoverage.get(fileinfo?.uri.fsPath ?? module.SourceName) ?? []
 		fdc.sort((a, b) => this.sortLocation(a, b))
 		fsc.sort((a, b) => this.sortLocation(a, b))
 
 		const fcd: FileCoverageDetail[] = []
 		fcd.push(...fdc, ...fsc)
 
-		const fc = FileCoverage.fromDetails(fileinfo.uri, fcd)
-		const fcOrig = this.fileCoverage.get(fileinfo.uri.fsPath)
+		const fc = FileCoverage.fromDetails(fileinfo?.uri ?? Uri.file(module.SourceName), fcd)
+		const fcOrig = this.fileCoverage.get(fileinfo?.uri.fsPath ?? module.SourceName)
 		fc.includesTests = fcOrig?.includesTests ?? []
 		if (item && !fc.includesTests.find((i) => i.id == item.id)) {
 			fc.includesTests.push(item)
 		}
 
-		this.fileCoverage.set(fileinfo.uri.fsPath, fc)
+		this.fileCoverage.set(fileinfo?.uri.fsPath ?? module.SourceName, fc)
 	}
 }

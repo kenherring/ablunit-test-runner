@@ -9,6 +9,8 @@ export interface IProfilerOptions {
 	traceFilter?: string
 	tracing?: boolean
 	writeJson?: boolean
+	perTest?: boolean
+	ignoreFrameworkCoverage?: boolean
 }
 
 export class ProfilerOptions implements IProfilerOptions {
@@ -21,6 +23,8 @@ export class ProfilerOptions implements IProfilerOptions {
 	public traceFilter = ''
 	public tracing = false
 	public writeJson = false
+	public perTest = true
+	public ignoreFrameworkCoverage = true
 
 	merge (from?: IProfilerOptions) {
 		if (from === undefined) {
@@ -35,5 +39,7 @@ export class ProfilerOptions implements IProfilerOptions {
 		this.traceFilter = from.traceFilter ?? this.traceFilter
 		this.tracing = from.tracing ?? this.tracing
 		this.writeJson = from.writeJson ?? this.writeJson
+		this.perTest = from.perTest ?? this.perTest
+		this.ignoreFrameworkCoverage = from.ignoreFrameworkCoverage ?? this.ignoreFrameworkCoverage
 	}
 }

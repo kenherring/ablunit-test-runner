@@ -214,6 +214,18 @@
 								"default": false,
 								"description": "Write a JSON file containing the parsed profiler data.  The file will be written to the same directory `filename` property.",
 								"markdownDescription": "Write a JSON file containing the parsed profiler data.  The file will be written to the same directory `filename` property."
+							},
+							"perTest": {
+								"type": "boolean",
+								"default": true,
+								"description": "Output profiler data for each test case to a separate file for more granular analysis",
+								"markdownDescription": "Output profiler data for each test case to a separate file for more granular analysis"
+							},
+							"ignoreFrameworkCoverage": {
+								"type": "boolean",
+								"default": true,
+								"description": "Ignore framework code when analyzing profile output for code coverage (OpenEdge.* and VSCode.ABLUnit.* classes)",
+								"markdownDescription": "Ignore framework code when analyzing profile output for code coverage (`OpenEdge.*` and `VSCode.ABLUnit.*` classes)"
 							}
 						}
 					},

@@ -237,14 +237,14 @@ class VSCode.ABLUnit.Runner.ABLRunner inherits OpenEdge.ABLUnit.Runner.ABLRunner
         else
             message 'ABLUNIT_STATUS=~{"action":"' + action + '"~}'.
 
-        if content begins 'TEST_END ' or
-           content begins 'TEST_EXCEPTION ' then
+        if not entityName begins 'TEST_ROOT ' and
+            (content begins 'TEST_END ' or
+             content begins 'TEST_EXCEPTION ' or
+             content begins 'TEST_FAIL ' or
+             content begins 'TEST_IGNORED ') then
         do:
-            if (entityId > 0) then
-            do:
-                if VERBOSE then message "restarting profiler".
-                restartProfiler(getEntityName(entityId), entityId).
-            end.
+            if VERBOSE then message "restarting profiler (entityName=" + entityName + ")".
+            restartProfiler(entityName, entityId).
         end.
         return.
 
@@ -269,10 +269,13 @@ class VSCode.ABLUnit.Runner.ABLRunner inherits OpenEdge.ABLUnit.Runner.ABLRunner
         return parentName + ' ' + entityName.
     end method.
 
+
     method public void restartProfiler(testinfo as character, entityId as integer) :
         if VERBOSE then message "restartProfiler".
-        if entityId = 0 then
-            return. // TEST_ROOT
+        if profiler:description matches "*[perTest=false]" then
+            return. // not perTest
+        // if entityId = 0 then
+        //     return. // TEST_ROOT
 
         define variable extension as character no-undo.
         define variable profile-file-name as character no-undo.
@@ -285,8 +288,9 @@ class VSCode.ABLUnit.Runner.ABLRunner inherits OpenEdge.ABLUnit.Runner.ABLRunner
         extension = entry(num-entries(profiler:file-name, '.'), profiler:file-name, '.').
         basename = substring(profiler:file-name, 1, length(profiler:file-name) - length(extension) - 1).
         profile-file-name = profiler:file-name.
-        profiler:file-name = basename + '_' + string(entityId) + '.' + extension.
+        profiler:file-name = basename + '_' + string(entityId) + '_' + string(mtime) + '.' + extension.
 
+        message "profiler:writeData() to " + profiler:file-name + ' (entityId=' + string(entityId) + ', testinfo=' + testinfo + ')' .
         profiler:write-data().
         profiler:file-name = profile-file-name.
     end method.
