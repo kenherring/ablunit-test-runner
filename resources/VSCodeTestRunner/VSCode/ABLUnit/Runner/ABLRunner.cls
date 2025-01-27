@@ -274,8 +274,6 @@ class VSCode.ABLUnit.Runner.ABLRunner inherits OpenEdge.ABLUnit.Runner.ABLRunner
         if VERBOSE then message "restartProfiler".
         if profiler:description matches "*[perTest=false]" then
             return. // not perTest
-        // if entityId = 0 then
-        //     return. // TEST_ROOT
 
         define variable extension as character no-undo.
         define variable profile-file-name as character no-undo.
@@ -290,7 +288,6 @@ class VSCode.ABLUnit.Runner.ABLRunner inherits OpenEdge.ABLUnit.Runner.ABLRunner
         profile-file-name = profiler:file-name.
         profiler:file-name = basename + '_' + string(entityId) + '_' + string(mtime) + '.' + extension.
 
-        message "profiler:writeData() to " + profiler:file-name + ' (entityId=' + string(entityId) + ', testinfo=' + testinfo + ')' .
         profiler:write-data().
         profiler:file-name = profile-file-name.
     end method.

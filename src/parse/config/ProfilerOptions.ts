@@ -10,7 +10,7 @@ export interface IProfilerOptions {
 	tracing?: boolean
 	writeJson?: boolean
 	perTest?: boolean
-	ignoreFrameworkCoverage?: boolean
+	ignoreExternalCoverage?: boolean
 }
 
 export class ProfilerOptions implements IProfilerOptions {
@@ -24,7 +24,7 @@ export class ProfilerOptions implements IProfilerOptions {
 	public tracing = false
 	public writeJson = false
 	public perTest = true
-	public ignoreFrameworkCoverage = true
+	public ignoreExternalCoverage = true
 
 	merge (from?: IProfilerOptions) {
 		if (from === undefined) {
@@ -40,6 +40,6 @@ export class ProfilerOptions implements IProfilerOptions {
 		this.tracing = from.tracing ?? this.tracing
 		this.writeJson = from.writeJson ?? this.writeJson
 		this.perTest = from.perTest ?? this.perTest
-		this.ignoreFrameworkCoverage = from.ignoreFrameworkCoverage ?? this.ignoreFrameworkCoverage
+		this.ignoreExternalCoverage = from.ignoreExternalCoverage ?? this.ignoreExternalCoverage
 	}
 }

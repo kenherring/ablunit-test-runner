@@ -221,11 +221,11 @@
 								"description": "Output profiler data for each test case to a separate file for more granular analysis",
 								"markdownDescription": "Output profiler data for each test case to a separate file for more granular analysis"
 							},
-							"ignoreFrameworkCoverage": {
+							"ignoreExternalCoverage": {
 								"type": "boolean",
 								"default": true,
-								"description": "Ignore framework code when analyzing profile output for code coverage (OpenEdge.* and VSCode.ABLUnit.* classes)",
-								"markdownDescription": "Ignore framework code when analyzing profile output for code coverage (`OpenEdge.*` and `VSCode.ABLUnit.*` classes)"
+								"description": "Ignore external code when analyzing profile output for code coverage",
+								"markdownDescription": "Ignore external code when analyzing profile output for code coverage"
 							}
 						}
 					},

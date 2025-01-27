@@ -520,7 +520,7 @@ export class ABLResults implements Disposable {
 			const uri = Uri.joinPath(Uri.file(profDir), dataFiles[i])
 			log.info('parsing profile data ' + (i+1) + '/' + dataFiles.length + ' from ' + uri.fsPath, {testRun: options})
 
-			proms.push(new ABLProfile().parseData(uri, this.cfg.ablunitConfig.profiler.writeJson, this.debugLines, this.cfg.ablunitConfig.profiler.ignoreFrameworkCoverage).then((profJson) => {
+			proms.push(new ABLProfile().parseData(uri, this.cfg.ablunitConfig.profiler.writeJson, this.debugLines, this.cfg.ablunitConfig.profiler.ignoreExternalCoverage).then((profJson) => {
 				log.info('parsed profile data ' + (i+1) + '/' + dataFiles.length + ' ' + profJson.parseDuration)
 				return profJson
 			}))
@@ -616,6 +616,14 @@ export class ABLResults implements Disposable {
 		const fileinfo = await this.propath.search(module.SourceUri ?? module.SourceName)
 		if (!fileinfo?.uri) {
 			log.warn('could not find module in propath: ' + module.SourceName + ' (' + module.ModuleID + ')')
+			if (this.cfg.ablunitConfig.profiler.ignoreExternalCoverage) {
+				return
+			}
+		} else if (workspace.getWorkspaceFolder(fileinfo.uri) == undefined) {
+			log.warn('module not in workspace: ' + fileinfo.uri.fsPath)
+			if (this.cfg.ablunitConfig.profiler.ignoreExternalCoverage) {
+				return
+			}
 		}
 
 		const zeroLine = module.lines.find((a) => a.LineNo == 0)

@@ -15,7 +15,7 @@ class ModuleIgnored extends Error {
 export class ABLProfile {
 	profJSON?: ABLProfileJson
 
-	async parseData (uri: Uri, writeJson: boolean, debugLines?: ABLDebugLines, ignoreFrameworkCoverage = true, propath?: PropathParser) {
+	async parseData (uri: Uri, writeJson: boolean, debugLines?: ABLDebugLines, ignoreExternalCoverage = true, propath?: PropathParser) {
 		if (!debugLines) {
 			// unit testing setup
 			debugLines = new ABLDebugLines()
@@ -46,7 +46,7 @@ export class ABLProfile {
 		}
 
 		log.debug('section1 ' + sectionLines[1].length)
-		this.profJSON = new ABLProfileJson(uri, sectionLines[1], debugLines, ignoreFrameworkCoverage)
+		this.profJSON = new ABLProfileJson(uri, sectionLines[1], debugLines, ignoreExternalCoverage)
 		log.debug('section2 ' + sectionLines[2].length)
 		await this.profJSON.addModules(sectionLines[2])
 		log.debug('section3 ' + sectionLines[3].length)
@@ -292,7 +292,7 @@ export class ABLProfileJson {
 	parseDuration: Duration
 	ignoredModules: number[] = [0]
 
-	constructor (public readonly profileUri: Uri, lines: string[], public debugLines: ABLDebugLines, private readonly ignoreFrameworkCoverage: boolean) {
+	constructor (public readonly profileUri: Uri, lines: string[], public debugLines: ABLDebugLines, private readonly ignoreExternalCoverage: boolean) {
 		this.parseDuration = new Duration('parse profile data: ' + profileUri)
 		this.debugLines = debugLines
 		if (lines.length > 1) {
@@ -316,7 +316,7 @@ export class ABLProfileJson {
 	}
 
 	isIgnored (sourceName: string) {
-		if (!this.ignoreFrameworkCoverage) {
+		if (!this.ignoreExternalCoverage) {
 			return false
 		}
 		return sourceName.startsWith('OpenEdge.') ||

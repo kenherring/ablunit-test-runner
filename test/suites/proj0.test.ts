@@ -353,7 +353,7 @@ suite('proj0  - Extension Test Suite', () => {
 
 		assert.ok(fc?.branchCoverage == undefined, 'branchCoverage')
 		assert.equal(fc?.declarationCoverage?.total, 5, 'fc.declarationCoverage.total')
-		assert.equal(fc?.statementCoverage?.total, 19, 'fc.statementCoverage.total')
+		assert.equal(fc?.statementCoverage?.total, 22, 'fc.statementCoverage.total')
 		assert.less(fc?.declarationCoverage?.covered ?? 0, fc?.declarationCoverage?.total ?? 0,
 			'declarationCoverage not 100% (' + (fc?.declarationCoverage?.covered ?? 0) + ' >= ' + (fc?.declarationCoverage?.total ?? 0) + ')')
 		assert.less(fc?.statementCoverage?.covered ?? 0, fc?.statementCoverage?.total ?? 0,

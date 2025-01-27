@@ -123,7 +123,7 @@
 			"tracing": "",
 			"writeJson": false,
 			"perTest": true, // captrue profile data separately for each test case
-			"ignoreFrameworkCoverage": true // do not calculate coverage for ABLUnit framework code
+			"ignoreExternalCoverage": true // do not calculate coverage for external code (outside of workspace)
 		}
 
 	}]
