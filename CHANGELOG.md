@@ -1,3 +1,11 @@
+# [1.0.6003](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.0.6003) - 2025-01-27
+
+
+ * Add profiler options `perTest` and `ignoreFrameworkCoverage` for improved parsing performance (#238)
+
+
+**Full Changelog**: [1.0.6001...1.0.6003](https://github.com/kenherring/ablunit-test-runner/compare/1.0.6001...1.0.6003)
+
 # [1.0.6001](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.0.6001) - 2025-01-25
 
 
