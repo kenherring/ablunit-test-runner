@@ -3,11 +3,19 @@ import { PropathParser } from '../ABLPropath'
 import { ABLDebugLines } from '../ABLDebugLines'
 import { log } from '../ChannelLogger'
 import * as FileUtils from '../FileUtils'
+import { Duration } from 'ABLUnitCommon'
+
+class ModuleIgnored extends Error {
+	constructor (public moduleId: number) {
+		super('module ignored: ' + moduleId)
+		this.name = 'ModuleIgnored'
+	}
+}
 
 export class ABLProfile {
 	profJSON?: ABLProfileJson
 
-	async parseData (uri: Uri, writeJson: boolean, debugLines?: ABLDebugLines, propath?: PropathParser) {
+	async parseData (uri: Uri, writeJson: boolean, debugLines?: ABLDebugLines, ignoreExternalCoverage = true, propath?: PropathParser) {
 		if (!debugLines) {
 			// unit testing setup
 			debugLines = new ABLDebugLines()
@@ -38,7 +46,7 @@ export class ABLProfile {
 		}
 
 		log.debug('section1 ' + sectionLines[1].length)
-		this.profJSON = new ABLProfileJson(uri, sectionLines[1], debugLines)
+		this.profJSON = new ABLProfileJson(uri, sectionLines[1], debugLines, ignoreExternalCoverage)
 		log.debug('section2 ' + sectionLines[2].length)
 		await this.profJSON.addModules(sectionLines[2])
 		log.debug('section3 ' + sectionLines[3].length)
@@ -85,6 +93,7 @@ export class ABLProfile {
 			})
 		}
 		log.debug('parseData returning')
+		this.profJSON.endParse()
 		return this.profJSON
 	}
 
@@ -280,8 +289,11 @@ export class ABLProfileJson {
 	userData: IUserData[] = []
 	testItemId?: string
 	interpretedModuleSequence = 0
+	parseDuration: Duration
+	ignoredModules: number[] = [0]
 
-	constructor (public readonly profileUri: Uri, lines: string[], public debugLines: ABLDebugLines) {
+	constructor (public readonly profileUri: Uri, lines: string[], public debugLines: ABLDebugLines, private readonly ignoreExternalCoverage: boolean) {
+		this.parseDuration = new Duration('parse profile data: ' + profileUri)
 		this.debugLines = debugLines
 		if (lines.length > 1) {
 			throw new Error('Invalid profile data - section 1 should have exactly one line (uri=' + this.profileUri.fsPath + ')')
@@ -299,6 +311,20 @@ export class ABLProfileJson {
 		}
 	}
 
+	endParse () {
+		this.parseDuration.stop()
+	}
+
+	isIgnored (sourceName: string) {
+		if (!this.ignoreExternalCoverage) {
+			return false
+		}
+		return sourceName.startsWith('OpenEdge.') ||
+			sourceName.startsWith('Ccs.Common') ||
+			sourceName.startsWith('VSCode.ABLUnit') ||
+			sourceName.endsWith('ABLUnitCore.p')
+	}
+
 	async addModules (lines: string[]) {
 		this.modules = []
 		const childModules: IModule[] = []
@@ -308,10 +334,11 @@ export class ABLProfileJson {
 				test = moduleRE2.exec(element)
 			}
 
-			const moduleName = test![2]
-			if (!moduleName) {
+			if (!test?.[2]) {
 				throw new Error('Unable to parse module name - name is empty (uri=' + this.profileUri.fsPath + ')')
 			}
+			const moduleName = test[2]
+
 
 			let sourceName = ''
 			let parentName: string | undefined
@@ -338,19 +365,25 @@ export class ABLProfileJson {
 				}
 			}
 
+			if (this.isIgnored(sourceName)) {
+				log.warn('ignoring module moduleId=' + test[1] + ', sourceName=' + sourceName + ', entityName=' + entityName)
+				this.ignoredModules.push(Number(test[1]))
+				continue
+			}
+
 			const fileinfo = await this.debugLines.propath.search(sourceName)
 			const mod: IModule = {
-				ModuleID: Number(test![1]),
+				ModuleID: Number(test[1]),
 				ModuleName: moduleName,
 				EntityName: entityName,
 				SourceName: sourceName,
 				SourceUri: fileinfo?.uri,
 				ParentName: parentName,
-				ListingFile: test![3],
-				CrcValue: Number(test![4]),
-				ModuleLineNum: Number(test![5]),
+				ListingFile: test[3],
+				CrcValue: Number(test[4]),
+				ModuleLineNum: Number(test[5]),
 				Destructor: destructor,
-				UnknownString1: test![6],
+				UnknownString1: test[6],
 				executableLines: 0,
 				executedLines: 0,
 				coveragePct: 0,
@@ -365,7 +398,7 @@ export class ABLProfileJson {
 				ISectionTwelve: []
 			}
 
-			if (Number(test![4]) != 0) {
+			if (Number(test[4]) != 0) {
 				this.modules.push(mod)
 			} else {
 				childModules.push(mod)
@@ -376,9 +409,6 @@ export class ABLProfileJson {
 
 	addChildModulesToParents (childModules: IModule[]) {
 		for(const child of childModules) {
-			if (checkSkipList(child.SourceName)) {
-				continue
-			}
 			let parent = this.modules.find(p => p.SourceUri === child.SourceUri)
 			if (!parent) {
 				parent = this.modules.find(p => p.SourceName === child.ParentName)
@@ -489,8 +519,13 @@ export class ABLProfileJson {
 			}
 
 			const modID = Number(test[1])
+			if (this.ignoredModules.includes(modID)) {
+				continue
+			}
+
 			const sourceName = this.getModule(modID)?.SourceName
-			if (checkSkipList(sourceName)) {
+			if (!sourceName) {
+				log.warn('could not find source name for module ' + modID)
 				continue
 			}
 
@@ -499,10 +534,6 @@ export class ABLProfileJson {
 			sum.ActualTime = Number(test[4])
 			sum.CumulativeTime = Number(test[5])
 
-			if (!sourceName) {
-				log.warn('could not find source name for module ' + modID)
-				continue
-			}
 
 			const lineinfo = await this.debugLines.getSourceLine(sourceName, sum.LineNo)
 			if(lineinfo) {
@@ -558,6 +589,8 @@ export class ABLProfileJson {
 		lines.unshift('.')
 		lines.push('.')
 		let mod: IModule | undefined
+		let ignoringCurrentModule: number | boolean = false
+		let lastModuleLine: string | undefined = undefined
 
 		try {
 			for(let lineNo=1; lineNo < lines.length; lineNo++) {
@@ -574,19 +607,30 @@ export class ABLProfileJson {
 				}
 				if (lines[lineNo - 1] === '.') {
 					// prepare the next section by finding the correct module
-					mod = await this.addCoverageNextSection(lines[lineNo])
-					if (!mod) {
-						log.warn('addCoverageNextSection returned undefined (lineNo=' + lineNo + ', uri=' + this.profileUri.fsPath + ')' +
+					try {
+						ignoringCurrentModule = false
+						mod = await this.addCoverageNextSection(lines[lineNo])
+						lastModuleLine = lines[lineNo]
+					} catch (err) {
+						if (err instanceof ModuleIgnored) {
+							ignoringCurrentModule = err.moduleId
+						} else {
+							log.warn('addCoverageNextSection returned undefined (lineNo=' + lineNo + ', uri=' + this.profileUri.fsPath + ')' +
 							'\tlines[' + lineNo + ']=' + lines[lineNo])
+						}
+
 					}
 					continue
 				}
 
+				if (ignoringCurrentModule) {
+					continue
+				}
+
 				if(!mod) {
-					log.warn('no module found for coverage data in section 6 (uri=' + this.profileUri.fsPath + ')')
-					return
-					// log.error('invalid data in section 6 (uri=' + this.profileUri.fsPath + ')')
-					// throw new Error('invalid data in section 6 (uri=' + this.profileUri.fsPath + ')')
+					log.warn('section 6 coverage data could not find module (uri=' + this.profileUri.fsPath + ')' +
+						'\n\tlastModuleLine=' + lastModuleLine)
+					continue
 				}
 
 				// add exec count to existing line
@@ -627,14 +671,17 @@ export class ABLProfileJson {
 	async addCoverageNextSection (line: string) {
 		const test = coverageRE.exec(line)
 		if (!test) {
+			log.error('Unable to parse coverage data in section 6 (uri=' + this.profileUri.fsPath + ')')
 			throw new Error('Unable to parse coverage data in section 6 (uri=' + this.profileUri.fsPath + ')')
 		}
-		if (checkSkipList(test[2])) {
-			return
+
+		const modId = Number(test[1])
+		if (this.ignoredModules.includes(modId)) {
+			throw new ModuleIgnored(modId)
 		}
 
 		if (test[2] != '') {
-			const mod = this.getChildModule(Number(test[1]), test[2])
+			const mod = this.getChildModule(modId, test[2])
 			if (mod) {
 				mod.executableLines = Number(test[3])
 				return mod
@@ -643,7 +690,7 @@ export class ABLProfileJson {
 
 		const mod = this.getModule(Number(test[1])) ?? this.modules.find(mod => mod.SourceName == test[2])
 		if (!mod) {
-			log.warn('Unable to find module ' + test[1] + ' ' + test[2] + ' in section 6 (' + this.profileUri.fsPath + ')')
+			log.warn('Unable to find module ' + test[1] + ' ' + test[2] + ' while processing coverage information from section 6 (' + this.profileUri.fsPath + ')')
 			return
 		}
 
@@ -681,9 +728,6 @@ export class ABLProfileJson {
 
 	assignParentCoverage () {
 		for (const parent of this.modules) {
-			if (checkSkipList(parent.SourceName)) {
-				continue
-			}
 			for (const child of parent.childModules) {
 				child.executableLines = child.lines.filter(l => l.LineNo > 0 && l.Executable).length
 				child.executedLines = child.lines.filter(l => l.LineNo > 0 && l.ExecCount > 0).length
@@ -900,13 +944,4 @@ export function getDeclarationCoverage (module: IModule) {
 		}
 	}
 	return fdc
-}
-
-export function checkSkipList (sourceName: string | undefined) {
-	return sourceName == undefined ||
-		sourceName.startsWith('OpenEdge.') ||
-		sourceName.endsWith('ABLUnitCore.p') ||
-		sourceName == 'Ccs.Common.Application' ||
-		sourceName == 'VSCode.ABLUnit.Runner.ABLRunner' ||
-		sourceName == 'VSCodeWriteProfiler.p'
 }

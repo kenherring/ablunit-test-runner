@@ -121,7 +121,9 @@
 			"statistics": false,
 			"traceFilter": "",
 			"tracing": "",
-			"writeJson": false
+			"writeJson": false,
+			"perTest": true, // captrue profile data separately for each test case
+			"ignoreExternalCoverage": true // do not calculate coverage for external code (outside of workspace)
 		}
 
 	}]

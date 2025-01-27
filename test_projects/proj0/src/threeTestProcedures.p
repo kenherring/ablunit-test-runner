@@ -1,6 +1,10 @@
 
 
 message 100.
+if true then
+    message 101.
+else
+    message 102.
 
 @Test.
 procedure CustomerFormTest :
