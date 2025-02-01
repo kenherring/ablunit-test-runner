@@ -148,6 +148,7 @@ function getExtensionDevelopmentPath () {
 export async function suiteSetupCommon (runtimes?: IRuntime[]) {
 	log.info('[suiteSetupCommon] waitForExtensionActive \'kherring.ablunit-test-runner\' (projName=' + projName() + ')')
 	await waitForExtensionActive()
+	log.info('enableExtensions=' + enableExtensions())
 	if (enableExtensions()) {
 		await enableOpenedgeAblExtension(runtimes)
 	}
@@ -309,26 +310,63 @@ async function waitForExtensionActive (extensionId = 'kherring.ablunit-test-runn
 	return ext.isActive
 }
 
-export function getRcodeCount (workspaceFolder?: WorkspaceFolder) {
+export function getRcodeCount (workspaceFolder?: WorkspaceFolder | Uri) {
 	return getFileCountByExt('r', workspaceFolder)
+}
+
+export async function deleteRcode (workspaceFolder?: WorkspaceFolder) {
+	if (!workspaceFolder) {
+		workspaceFolder = getWorkspaceFolders()[0]
+	}
+	if (!workspaceFolder) {
+		throw new Error('workspaceFolder is undefined')
+	}
+
+	while (getRcodeCount(workspaceFolder) > 0) {
+		const g = globSync('**/*.r', { cwd: workspaceFolder.uri.fsPath })
+		log.info('deleting ' + g.length + ' rcode files')
+		for (const rcodeFile of g) {
+			log.info('\trm ' + rcodeFile)
+			FileUtils.deleteFile(Uri.joinPath(workspaceFolder.uri, rcodeFile))
+		}
+		const prom = sleep2(100)
+		await prom
+	}
+
+	const rcodeCount = getRcodeCount(workspaceFolder)
+	if (rcodeCount != 0) {
+		log.error('rcode files not deleted! rcodeCount=' + rcodeCount)
+		throw new Error('rcode files not deleted! rcodeCount=' + rcodeCount)
+	}
+	log.info('deleted all rcode files')
+	return true
 }
 
 export function getXrefCount (workspaceFolder?: WorkspaceFolder) {
 	return getFileCountByExt('xref', workspaceFolder)
 }
 
-function getFileCountByExt (ext: string, workspaceFolder?: WorkspaceFolder) {
+function getFileCountByExt (ext: string, workspaceFolder?: WorkspaceFolder | Uri) {
+	let uri: Uri | undefined = undefined
 	if (!workspaceFolder) {
 		workspaceFolder = workspace.workspaceFolders?.[0]
+		uri = workspaceFolder?.uri
+	} else if (workspaceFolder instanceof Uri) {
+		uri = workspaceFolder
+	} else {
+		uri = workspaceFolder.uri
 	}
-	if (!workspaceFolder) {
-		throw new Error('workspaceFolder is undefined')
+	if (!uri) {
+		throw new Error('uri is undefined')
 	}
 
-	const g = globSync('**/*.' + ext, { cwd: workspaceFolder.uri.fsPath })
+	const g = globSync('**/*.' + ext, { cwd: uri.fsPath })
 	const fileCount = g.length
 	if (fileCount >= 0) {
-		log.info('.' + ext + ' count=' + fileCount)
+		log.info('\'*.r\' files=' + fileCount + ' (path=' + uri.fsPath + ')')
+		for (const file of g) {
+			log.info('\t' + file)
+		}
 		return fileCount
 	}
 	throw new Error('fileCount is not a positive number! fileCount=' + fileCount + '(ext=' + ext + ')')
@@ -415,20 +453,8 @@ export function getWorkspaceUri (idx = 0) {
 
 export const workspaceUri = () => getWorkspaceUri()
 
-export function toUri (uri: string | Uri) {
-	if (uri instanceof Uri) {
-		return uri
-	}
-
-	const ws = getWorkspaceUri()
-	if (!ws) {
-		throw new Error('workspaceUri is null (uri="' + uri.toString() + '")')
-	}
-
-	if (FileUtils.isRelativePath(uri)) {
-		return Uri.joinPath(ws, uri)
-	}
-	return Uri.file(uri)
+export function toUri (uri: string | Uri, base?: string | Uri) {
+	return FileUtils.toUri(uri, base)
 }
 
 function fileToString (file: Uri | string) {
@@ -567,11 +593,11 @@ export function runTestsInFile (filename: string, len = 1, coverage = false) {
 			return commands.executeCommand(command)
 		})
 		.then((r: unknown) => {
-			log.debug('executeCommand(' + command + ').then completed successfully (r=' + JSON.stringify(r, null, 2) + ')')
+			log.info('executeCommand(' + command + ').then completed successfully (r=' + JSON.stringify(r, null, 2) + ')')
 			runTestsDuration?.stop()
 			return refreshData(len)
 		}, (e: unknown) => {
-			log.debug('executeCOmmand(' + command + ').catch failed: ' + e)
+			log.info('executeCOmmand(' + command + ').catch failed: ' + e)
 			runTestsDuration?.stop()
 			throw e
 		})

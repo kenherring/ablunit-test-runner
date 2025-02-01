@@ -1,9 +1,11 @@
 import { Uri, commands, window, workspace } from 'vscode'
-import { assert, getRcodeCount, getResults, getTestControllerItemCount, getTestItem, getXrefCount, log, rebuildAblProject, refreshTests, runAllTests, runAllTestsWithCoverage, runTestAtLine, runTestsDuration, runTestsInFile, sleep2, suiteSetupCommon, toUri, updateConfig, updateTestProfile } from '../testCommon'
+import { assert, deleteRcode, getRcodeCount, getResults, getTestControllerItemCount, getTestItem, getXrefCount, log, rebuildAblProject, refreshTests, runAllTests, runAllTestsWithCoverage, runTestAtLine, runTestsDuration, runTestsInFile, sleep2, suiteSetupCommon, toUri, updateConfig, updateTestProfile } from '../testCommon'
 import { ABLResultsParser } from 'parse/ResultsParser'
 import { TimeoutError } from 'Errors'
-import * as vscode from 'vscode'
+import * as glob from 'glob'
 import * as FileUtils from '../../src/FileUtils'
+import * as vscode from 'vscode'
+import { restartLangServer } from '../openedgeAblCommands'
 
 function createTempFile () {
 	const tempFile = toUri('UNIT_TEST.tmp')
@@ -17,12 +19,31 @@ suite('proj0  - Extension Test Suite', () => {
 
 	suiteSetup('proj0 - before', async () => {
 		FileUtils.copyFile(toUri('.vscode/settings.json'), toUri('.vscode/settings.json.bk'), { force: true })
+		FileUtils.copyFile(toUri('openedge-project.json'), toUri('openedge-project.json.bk'), { force: true })
 
+		FileUtils.deleteDir(toUri('d1'))
+		FileUtils.deleteDir(toUri('d2'))
 		FileUtils.deleteFile([
 			toUri('.vscode/ablunit-test-profile.json'),
 			toUri('src/dirA/proj10.p'),
 			toUri('UNIT_TEST.tmp'),
 		], { force: true })
+
+		const rcodeFiles = glob.globSync('**/*.r', { absolute: true, nodir: true, cwd: workspace.workspaceFolders![0].uri.fsPath })
+
+		const rcodeUris: Uri[] = []
+		for (const rcodeFile of rcodeFiles) {
+			rcodeUris.push(Uri.file(rcodeFile))
+		}
+		log.info('deleting ' + rcodeFiles.length + ' rcode files:\n' + JSON.stringify(rcodeFiles, null, 2))
+		FileUtils.deleteFile(rcodeUris, { force: true })
+		log.info('delete rcode complete')
+		let waitCounter = 0
+		while (getRcodeCount() > 0) {
+			waitCounter++
+			await sleep2(25)
+		}
+		log.info('waited ' + waitCounter + ' times for rcode files to be deleted')
 
 		await suiteSetupCommon()
 		await commands.executeCommand('testing.clearTestResults')
@@ -49,6 +70,7 @@ suite('proj0  - Extension Test Suite', () => {
 
 	suiteTeardown('proj0 - after', () => {
 		FileUtils.renameFile(toUri('.vscode/settings.json.bk'), toUri('.vscode/settings.json'))
+		FileUtils.renameFile(toUri('openedge-project.json.bk'), toUri('openedge-project.json'))
 	})
 
 	test('proj0.01 - ${workspaceFolder}/ablunit.json file exists', () => {
@@ -66,8 +88,7 @@ suite('proj0  - Extension Test Suite', () => {
 	})
 
 	test('proj0.02 - run test, open file, validate coverage displays', async () => {
-		await rebuildAblProject()
-		let rcodeCount = getRcodeCount()
+		let rcodeCount = await rebuildAblProject()
 		while (rcodeCount < 10) {
 			await sleep2(250)
 			rcodeCount = getRcodeCount()
@@ -391,6 +412,36 @@ suite('proj0  - Extension Test Suite', () => {
 			})
 			log.debug('r=' + JSON.stringify(r, null, 2))
 		}
+	})
+
+	test('proj0.20 - build directory', async () => {
+		await deleteRcode()
+		FileUtils.copyFile('openedge-project.test20.json', 'openedge-project.json')
+
+
+		const rcodeCount = await sleep2(250)
+			.then(() => { return restartLangServer() })
+			.then(() => { return sleep2(250) })
+			.then(() => {
+				const rcodeCount = getRcodeCount(toUri('d1'))
+				log.info('rcodeCount=' + rcodeCount)
+				return rcodeCount
+			})
+
+		// .then(() => { return rebuildAblProject() })
+		// .then((rcodeCount) => { return rcodeCount })
+
+		log.info('100 rcodeCount=' + rcodeCount)
+		assert.fileExists('d1/test_20.r')
+		log.info('200')
+		assert.fileExists('d2/test_20.p.xref')
+		log.info('300')
+
+		await runTestsInFile('src/test_20.p', 1, true)
+			.then(() => {
+				assert.tests.count(1)
+				assert.coverageProcessingMethod('test_20.p', 'rcode')
+			})
 	})
 
 })

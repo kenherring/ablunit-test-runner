@@ -366,7 +366,7 @@ export class ABLProfileJson {
 			}
 
 			if (this.isIgnored(sourceName)) {
-				log.warn('ignoring module moduleId=' + test[1] + ', sourceName=' + sourceName + ', entityName=' + entityName)
+				log.debug('ignoring module moduleId=' + test[1] + ', sourceName=' + sourceName + ', entityName=' + entityName)
 				this.ignoredModules.push(Number(test[1]))
 				continue
 			}

@@ -36,7 +36,7 @@ interface IOpenEdgeConfig {
 	extraParameters?: string
 	charset?: string
 	buildPath?: IBuildPathEntry[]
-	buildDirectory?: string
+	buildDirectory: string
 	dbConnections: IDatabaseConnection[]
 	procedures: IProcedure[]
 }
@@ -66,10 +66,17 @@ export interface IDatabaseConnection {
 }
 
 export interface IBuildPathEntry {
-	type: string
+	type: 'source' | 'propath'
 	path: string
-	buildDir: string
-	xrefDir: string
+	build: string
+	xref: string
+
+	excludes?: string
+	excludesFile?: string
+	includes?: string
+	includesFile?: string
+	documentation?: string
+	deployment?: string
 }
 
 let oeRuntimes: IOERuntime[] = []
@@ -83,6 +90,7 @@ function getProjectJson (workspaceFolder: WorkspaceFolder) {
 export function getDLC (workspaceFolder: WorkspaceFolder, openedgeProjectProfile?: string, projectJson?: string) {
 	const dlc = dlcMap.get(workspaceFolder)
 	if (dlc) {
+		FileUtils.validateDirectory(dlc.uri)
 		return dlc
 	}
 
@@ -110,9 +118,41 @@ export function getDLC (workspaceFolder: WorkspaceFolder, openedgeProjectProfile
 			version: oeVer,
 		}
 		dlcMap.set(workspaceFolder, dlcObj)
+
+		FileUtils.validateDirectory(dlcObj.uri)
 		return dlcObj
 	}
 	throw new Error('unable to determine DLC')
+}
+
+function getDlcDirectory (version: string | undefined): string {
+	let dlc = ''
+	let dfltDlc = ''
+	let dfltName = ''
+	oeRuntimes.forEach(runtime => {
+		if (runtime.name === version) {
+			dlc = runtime.path
+		}
+		if (runtime.default) {
+			dfltDlc = runtime.path
+			dfltName = runtime.name
+		}
+		runtime.pathExists = FileUtils.doesFileExist(Uri.file(runtime.path))
+	})
+
+	if (dlc === '' && oeRuntimes.length === 1) {
+		dlc = oeRuntimes[0].path
+	}
+
+	if (dlc === '') {
+		dlc = process.env['DLC'] ?? ''
+	}
+
+	if (dlc === '' && dfltDlc != '') {
+		dlc = dfltDlc
+		log.info('OpenEdge version not configured in workspace settings, using default version (' + dfltName + ') in user settings.')
+	}
+	return dlc
 }
 
 export function getOEVersion (workspaceFolder: WorkspaceFolder, openedgeProjectProfile?: string, projectJson?: string) {
@@ -252,21 +292,20 @@ export function getActiveProfile (rootDir: string) {
 	return 'default'
 }
 
-function loadConfigFile (filename: string): IOpenEdgeMainConfig | undefined {
-	log.debug('[loadConfigFile] filename = ' + filename)
-	if (!filename) {
-		throw new Error('filename is undefined')
-	}
+function loadConfigFile (uri: Uri): IOpenEdgeMainConfig | undefined {
+	log.debug('[loadConfigFile] uri=' + uri.fsPath)
 
-	if (!FileUtils.doesFileExist(Uri.file(filename))) {
+	if (!FileUtils.doesFileExist(uri)) {
 		return undefined
 	}
 	try {
-		const data = FileUtils.readStrippedJsonFile(filename)
-		return data as unknown as IOpenEdgeMainConfig
+		log.info('reading OpenEdge project config file: ' + uri.fsPath)
+		const data = FileUtils.readStrippedJsonFile(uri) as IOpenEdgeMainConfig
+		log.info('data.buildDirectory=' + data.buildDirectory)
+		return data
 	} catch (caught) {
-		log.error('[loadConfigFile] Failed to parse ' + filename + ': ' + caught)
-		throw new Error('Failed to parse ' + filename + ': ' + caught)
+		log.error('[loadConfigFile] Failed to parse ' + uri.fsPath + ': ' + caught)
+		throw new Error('Failed to parse ' + uri.fsPath + ': ' + caught)
 	}
 }
 
@@ -319,36 +358,6 @@ function readGlobalOpenEdgeRuntimes (workspaceUri: Uri) {
 	}
 }
 
-function getDlcDirectory (version: string | undefined): string {
-	let dlc = ''
-	let dfltDlc = ''
-	let dfltName = ''
-	oeRuntimes.forEach(runtime => {
-		if (runtime.name === version) {
-			dlc = runtime.path
-		}
-		if (runtime.default) {
-			dfltDlc = runtime.path
-			dfltName = runtime.name
-		}
-		runtime.pathExists = FileUtils.doesFileExist(Uri.file(runtime.path))
-	})
-
-	if (dlc === '' && oeRuntimes.length === 1) {
-		dlc = oeRuntimes[0].path
-	}
-
-	if (dlc === '') {
-		dlc = process.env['DLC'] ?? ''
-	}
-
-	if (dlc === '' && dfltDlc != '') {
-		dlc = dfltDlc
-		log.info('OpenEdge version not configured in workspace settings, using default version (' + dfltName + ') in user settings.')
-	}
-	return dlc
-}
-
 function parseOpenEdgeConfig (cfg: IOpenEdgeConfig | undefined): ProfileConfig {
 	log.debug('[parseOpenEdgeConfig] cfg = ' + JSON.stringify(cfg, null, 2))
 	const retVal = new ProfileConfig()
@@ -391,7 +400,16 @@ function parseOpenEdgeProjectConfig (uri: Uri, workspaceUri: Uri, config: IOpenE
 		// default the propath to the root of the workspace
 		prjConfig.propath = [ '.' ]
 	}
-	prjConfig.buildPath = config.buildPath ?? []
+	if (config.buildPath) {
+		prjConfig.buildPath = config.buildPath
+	} else {
+		prjConfig.buildPath = [ {
+			type: 'source',
+			build: config.buildDirectory,
+			xref: '.builder/pct',
+			path: prjConfig.propath[0],
+		}]
+	}
 	prjConfig.buildDirectory = config.buildDirectory ?? workspaceUri.fsPath
 	prjConfig.dbConnections = config.dbConnections ?? []
 	prjConfig.procedures = config.procedures ?? []
@@ -430,15 +448,16 @@ function readOEConfigFile (uri: Uri, workspaceUri: Uri, openedgeProjectProfile?:
 	log.debug('[readOEConfigFile] uri = ' + uri.fsPath)
 	const projects: OpenEdgeProjectConfig[] = []
 
-	log.info('[readOEConfigFile] OpenEdge project config file found: ' + uri.fsPath)
-	const config = loadConfigFile(uri.fsPath)
+	const config = loadConfigFile(uri)
 	if (!config) {
+		log.info('No OpenEdge project config file found in ' + uri.fsPath + ', using default values')
 		const ret = new OpenEdgeProjectConfig()
 		ret.activeProfile = openedgeProjectProfile
 		return ret
 	}
-
+	log.info('config=' + JSON.stringify(config))
 	const prjConfig = parseOpenEdgeProjectConfig(uri, workspaceUri, config)
+	log.info('prjConfig=' + JSON.stringify(prjConfig, null, 2))
 	if (prjConfig.dlc != '') {
 		log.info('OpenEdge project configured in ' + prjConfig.rootDir + ' -- DLC: ' + prjConfig.dlc)
 		const idx: number = projects.findIndex((element) =>
@@ -460,7 +479,14 @@ function readOEConfigFile (uri: Uri, workspaceUri: Uri, openedgeProjectProfile?:
 }
 
 function getWorkspaceProfileConfig (workspaceUri: Uri, openedgeProjectProfile?: string) {
-	const uri = Uri.joinPath(workspaceUri, 'openedge-project.json')
+	let uri = workspaceUri
+	log.info('workspaceUri=' + workspaceUri.fsPath + ', exists? ' + FileUtils.doesFileExist(workspaceUri))
+	if (!FileUtils.doesFileExist(workspaceUri)) {
+		uri = Uri.joinPath(workspaceUri, 'openedge-project.json')
+		if (!FileUtils.doesFileExist(uri)) {
+			return undefined
+		}
+	}
 	log.debug('[getWorkspaceProfileConfig] uri = ' + uri.fsPath)
 	const prjConfig = readOEConfigFile(uri, workspaceUri, openedgeProjectProfile)
 
@@ -474,7 +500,7 @@ function getWorkspaceProfileConfig (workspaceUri: Uri, openedgeProjectProfile?: 
 			if (prf.propath.length == 0)
 				prf.propath = prjConfig.propath
 			for (const e of prf.buildPath) {
-				e.buildDir = e.buildDir ?? e.path
+				e.build = e.build ?? e.path
 			}
 			return prf
 		}

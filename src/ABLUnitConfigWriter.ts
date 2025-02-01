@@ -146,8 +146,8 @@ export class ABLUnitConfig  {
 			pathObj.push({
 				path: Uri.joinPath(extensionResourcesDir, 'VSCodeTestRunner').fsPath,
 				type: 'propath',
-				buildDir: Uri.joinPath(extensionResourcesDir, 'VSCodeTestRunner').fsPath,
-				xrefDir: Uri.joinPath(extensionResourcesDir, 'VSCodeTestRunner').fsPath,
+				build: Uri.joinPath(extensionResourcesDir, 'VSCodeTestRunner').fsPath,
+				xref: Uri.joinPath(extensionResourcesDir, 'VSCodeTestRunner').fsPath,
 			})
 		}
 		if (conf && conf.buildPath.length > 0) {
@@ -156,16 +156,16 @@ export class ABLUnitConfig  {
 				pathObj.push({
 					path: e.path,
 					type: e.type.toLowerCase(),
-					buildDir: e.buildDir,
-					xrefDir: e.xrefDir
+					build: e.build,
+					xref: e.xref
 				})
 			}
 		} else {
 			pathObj.push({
 				path: '.',
 				type: 'source',
-				buildDir: '.',
-				xrefDir: '.'
+				build: '.',
+				xref: '.'
 			})
 		}
 		parser.setPropath({ propathEntry: pathObj })

@@ -628,7 +628,7 @@ export class ABLResults implements Disposable {
 
 		const zeroLine = module.lines.find((a) => a.LineNo == 0)
 		if (!zeroLine) {
-			log.warn('could not find zeroLine for ' + module.SourceName)
+			log.debug('could not find zeroLine for ' + module.SourceName)
 		}
 
 		for (const child of module.childModules) {

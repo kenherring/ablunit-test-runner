@@ -1,16 +1,25 @@
 #!/bin/bash
 set -eou pipefail
 
+. scripts/common.sh
+
 initialize () {
-    echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}]"
+    log_it
     ABLUNIT_TEST_RUNNER_VSCODE_VERSION=${ABLUNIT_TEST_RUNNER_VSCODE_VERSION:-stable}
     PRERELEASE=${PRERELEASE:-true}
 
     if ! ${CIRCLECI:-false}; then
         ## local testing
-        [ -z "${CIRCLE_TAG:-}" ] && CIRCLE_TAG=$(git tag --points-at HEAD)
-        if [ -z "${CIRCLE_TAG:-}" ]; then
-            [ -z "${CIRCLE_BRANCH:-}" ] && CIRCLE_BRANCH=$(git branch --show-current)
+        if [ -z "${CIRCLE_TAG:-}" ] && [ -z "${CIRCLE_BRANCH:-}" ]; then
+            CIRCLE_TAG=$(git tag --points-at HEAD)
+            if [ -z "${CIRCLE_TAG:-}" ]; then
+                CIRCLE_BRANCH=$(git branch --show-current)
+            fi
+        fi
+        log_it "CIRCLE_TAG=${CIRCLE_TAG:-}; CIRCLE_BRANCH=${CIRCLE_BRANCH:-}"
+        if [ -z "${CIRCLE_TAG:-}" ] && [ -z "${CIRCLE_BRANCH:-}" ]; then
+            log_error "ERROR: could not determine CIRCLE_TAG or CIRCLE_BRANCH"
+            exit 1
         fi
     fi
 
@@ -28,7 +37,7 @@ initialize () {
 }
 
 package () {
-    echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}]"
+    log_it
     package_version stable
     # package_version insiders
 }
@@ -39,7 +48,7 @@ package_version () {
     echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] PACKAGE_VERSION=$VSCODE_VERSION"
 
     local ARGS=()
-    ARGS+=("--githubBranch" "$CIRCLE_BRANCH")
+    ARGS+=("--githubBranch" "${CIRCLE_BRANCH:-main}")
     ARGS+=("--no-git-tag-version")
     if $PRERELEASE; then
         ARGS+=("--pre-release")
@@ -60,7 +69,7 @@ package_version () {
 }
 
 run_lint () {
-	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}]"
+	log_it
 	if [ -n "${ABLUNIT_TEST_RUNNER_PROJECT_NAME:-}" ]; then
 		echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] skipping lint for single ABLUnit test runner project test"
 		return 0
