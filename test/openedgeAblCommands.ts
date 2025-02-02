@@ -1,8 +1,10 @@
-import { commands, extensions, Uri, workspace } from 'vscode'
-import { Duration, activateExtension, enableExtensions, getDefaultDLC, getRcodeCount, installExtension, log, oeVersion, sleep2 } from './testCommon'
+import { commands, extensions, LogLevel, Uri, workspace } from 'vscode'
+import { Duration, activateExtension, enableExtensions, getDefaultDLC, getRcodeCount, getWorkspaceUri, installExtension, log, oeVersion, sleep2, FileUtils } from './testCommon'
 import { getContentFromFilesystem } from 'parse/TestParserCommon'
 import * as glob from 'glob'
+import { dirname } from 'path'
 
+let ablunitLogUri = getWorkspaceUri()
 
 interface IRuntime {
 	name: string,
@@ -12,6 +14,8 @@ interface IRuntime {
 
 export async function enableOpenedgeAblExtension (runtimes?: IRuntime[]) {
 	const extname = 'riversidesoftware.openedge-abl-lsp'
+	ablunitLogUri = await commands.executeCommand('_ablunit.getLogUri')
+
 	if (!extensions.getExtension(extname)) {
 		await installExtension(extname)
 	}
@@ -30,8 +34,9 @@ export async function enableOpenedgeAblExtension (runtimes?: IRuntime[]) {
 }
 
 export function restartLangServer () {
+	log.info('restarting lang server with command abl.restart.langserv')
 	return commands.executeCommand('abl.restart.langserv').then(() => {
-		log.info('abl.restart.langserv command complete')
+		log.info('command abl.restart.langserv command completed successfully')
 		return waitForLangServerReady()
 	}).then(() => {
 		log.info('lang server is ready')
@@ -58,28 +63,10 @@ export function rebuildAblProject () {
 }
 
 export async function printLastLangServerError () {
-	const ablunitLogUri: Uri = await commands.executeCommand('_ablunit.getLogUri')
-	const logUri = Uri.joinPath(ablunitLogUri, '..', '..', '..', '..', '..', 'logs')
-
-	const pattern = logUri.fsPath.replace(/\\/g, '/') + '/*/window*/exthost/output_logging_*/*-ABL Language Server.log'
-	log.info('grep for log files using pattern: ' + pattern)
-	const logFiles = glob.globSync(pattern)
-
-	log.debug('logFiles=' + JSON.stringify(logFiles, null, 2))
-	if (logFiles.length <= 0) {
-		log.warn('No log files found for ABL Language Server')
-		return false
-	}
-	const uri = Uri.file(logFiles[logFiles.length - 1])
-	return getContentFromFilesystem(uri)
-		.then((text) => {
-			if (text === '') {
-				throw new Error('ABL language server log file is empty (uri="' + uri.fsPath + '")')
-			}
-			const lines = text.split('\n')
-
+	return getLogContents()
+		.then((lines) => {
 			if (lines.length == 0) {
-				throw new Error('ABL language server log file has no lines (uri="' + uri.fsPath + '")')
+				throw new Error('ABL language server log file has no lines')
 			}
 
 			let lastLogErrors = ''
@@ -93,42 +80,233 @@ export async function printLastLangServerError () {
 					break
 				}
 			}
-			log.info('Last logged ABL lang server error (uri="' + uri.fsPath + '"; lines.length=' + lines.length + '):\n"' + lastLogErrors + '"')
+			log.info('Last logged ABL lang server error (lines.length=' + lines.length + '):\n"' + lastLogErrors + '"')
 			return hasError
 		}, (e: unknown) => {
 			throw e
 		})
 }
 
+async function getLogContents () {
+	log.debug('ablunitLogUri=' + ablunitLogUri.fsPath)
+	const pattern = dirname(dirname(ablunitLogUri.fsPath)) + '/*/*/*-ABL Language Server.log'
+	log.debug('glob pattern=' + pattern)
+
+	const logFiles = glob.globSync(pattern, { absolute: true, nodir: true })
+	log.debug('logFiles=' + JSON.stringify(logFiles, null, 2))
+
+	if (logFiles.length <= 0) {
+		log.warn('No log files found for ABL Language Server')
+		return []
+	}
+	const uri = Uri.file(logFiles[logFiles.length - 1])
+	log.debug('reading openedge-abl extension log (logFile.length=' + logFiles.length + '):\n\t"' + uri.fsPath + '"')
+	return getContentFromFilesystem(uri)
+		.then((contents) => {
+			contents = contents.replace(/\r/g, '')
+			let lines = contents.split('\n')
+			if (lines.length == 1 && lines[0] == '') {
+				lines = []
+			}
+			log.debug('openedge-abl extension log lines.length=' + lines.length)
+			return contents.split('\n')
+		})
+}
+
 export async function waitForLangServerReady () {
-	const maxWait = 15
+	const maxWait = 15 // seconds
+	const waitTime = new Duration()
+	let langServerReady = false
+	let langServerError = false
+	let lastLogLength = 0
+
+	while (!langServerReady && waitTime.elapsed() < maxWait * 1000) {
+		const prom  = getLogContents()
+			.then((lines) => {
+				if (lastLogLength > lines.length) {
+					log.warn('log file for openedge-abl-lsp extension is smaller!  was length=' + lastLogLength + '; now length=' + lines.length)
+					lastLogLength = 0
+					return false
+				}
+
+				let startAtLine = 0
+				if (lastLogLength != -1 && lastLogLength < lines.length) {
+					startAtLine = lastLogLength
+				}
+
+				let langServerReady = false
+				log.info('---------- lines written to openedge-abl extension log since last check ----------')
+				for (let i=startAtLine; i<lines.length; i++) {
+					log.info(i + ': ' + lines[i])
+
+					// regex matching lines like "[<timestamp>] [<logLevel>] [<projectName] <message>"
+					const lineDetail = /^(\[.*\]) (\[[A-Z]*\]) (\[.*\]) (.*)$/.exec(lines[i])
+
+					if (lineDetail) {
+						// log.info('lineDetail=' + JSON.stringify(lineDetail, null, 4))
+						if (lineDetail[4] == 'Project shutdown completed' || lineDetail[4] == 'Start OE client process') {
+							langServerReady = false
+							langServerError = false
+						} else if (lineDetail[4] == 'OpenEdge worker started') {
+							langServerReady = true
+							langServerError = false
+						} else if (lineDetail[4].startsWith('### OE Client #0 ended with exit code')) {
+							langServerReady = false
+							langServerError = true
+						}
+					}
+				}
+				log.info('---------- ---------- ----------')
+				lastLogLength = lines.length
+				return langServerReady
+			})
+
+		langServerReady = await prom // await promise instead of awaiting in assignment so other threads can run
+		if (langServerReady || langServerError) {
+			break
+		}
+
+		const prom2 = sleep2(250, 'language server not ready yet... (waitTime=' + waitTime + ')')
+		await prom2 // await prom so other threads can run
+	}
+
+	if (langServerReady) {
+		try {
+			const dumpSuccessProm = commands.executeCommand('abl.dumpLangServStatus')
+			const ret = await dumpSuccessProm
+			log.info('command abl.dumpLangServStatus complete (ret=' + ret + ')')
+		} catch (e) {
+			throw new Error('command abl.dumpLangServStatus failed! e=' + e)
+		}
+
+		log.info('lang server is ready (waitTime=' + waitTime + ')')
+		return true
+	}
+	if (langServerError) {
+		log.error('lang server has an error! (waitTime=' + waitTime + ')')
+
+		const clientLogUri = FileUtils.toUri('.builder/clientlog0.log')
+		if (!FileUtils.doesFileExist(clientLogUri)) {
+			log.warn('client log file does not exist: ' + clientLogUri.fsPath)
+		} else {
+			const clientlogLines = FileUtils.readLinesFromFileSync(clientLogUri)
+			if (clientlogLines.length == 0) {
+				log.warn('client log file is empty: ' + clientLogUri.fsPath)
+			} else {
+				log.info('---------- ' + clientLogUri.fsPath + '-----------')
+				for (let i=0; i<clientlogLines.length; i++) {
+					log.info(i + ': ' + clientlogLines[i])
+				}
+				log.info('---------- ---------- ----------')
+			}
+		}
+
+		const stdoutUri = FileUtils.toUri('.builder/stdout0.log')
+		if (!FileUtils.doesFileExist(stdoutUri)) {
+			log.warn('stdout file does not exist: ' + stdoutUri.fsPath)
+		} else {
+			const stdoutLines = FileUtils.readLinesFromFileSync(stdoutUri)
+			if (stdoutLines.length == 0) {
+				log.warn('stdout file is empty: ' + stdoutUri.fsPath)
+			} else {
+				log.info('---------- ' + stdoutUri.fsPath + '-----------')
+				for (let i=0; i<stdoutLines.length; i++) {
+					log.info(i + ': ' + stdoutLines[i])
+				}
+				log.info('---------- ---------- ----------')
+			}
+		}
+		throw new Error('lang server failed to start! (waitTime=' + waitTime + ')')
+	}
+
+	if (log.getLogLevel() < LogLevel.Debug) {
+		const lines = await getLogContents()
+		log.info('---------- openedge-abl extension log ----------')
+		for (let i=0; i<lines.length; i++) {
+			log.info(i + ': ' + lines[i])
+		}
+		log.info('---------- ---------- ----------')
+	}
+
+	log.error('lang server is not ready! (waitTime='  + waitTime + ')')
+	throw new Error('lang server is not ready! (waitTime='  + waitTime + ')')
+}
+
+export async function waitForRCode () {
+	const maxWait = 15 // seconds
 	const waitTime = new Duration()
 	let dumpSuccess = false
 
-	// now wait until it is ready
-	for (let i = 0; i < maxWait; i++) {
-		log.debug('start abl.dumpLangServStatus (i=' + i + ')')
-		const dumpSuccessProm = commands.executeCommand('abl.dumpLangServStatus')
-			.then(() => { return true
-			}, (e: unknown) => {
-				log.info('dumpLangServStatus e=' + e)
-				return false
-			})
+	let lastLogLength = 0
+	let compileSuccess = 0
+	let compileFailed = 0
+	let noChangeCount = 0
 
-		dumpSuccess = await dumpSuccessProm
-		if (dumpSuccess) { break }
-		await sleep2(250, 'language server not ready yet... (i=' + i + ' / ' + maxWait + ', dumpSuccess=' + dumpSuccess + ')')
-			.then(() => { return printLastLangServerError() })
+
+	while (!dumpSuccess && waitTime.elapsed() < maxWait * 1000) {
+
+		const prom  = getLogContents()
+			.then((lines) => {
+				if (lastLogLength > lines.length) {
+					log.warn('log file for openedge-abl-lsp extension is smaller!  was length=' + lastLogLength + '; now length=' + lines.length)
+					lastLogLength = 0
+					return false
+				} else if (lastLogLength != -1 && lastLogLength < lines.length) {
+					log.info('---------- lines written to openedge-abl extension log since last check ----------')
+					for (let i=lastLogLength; i<lines.length; i++) {
+						log.info(i + ': ' + lines[i])
+
+						const lineDetail = /^(\[.*\]) (\[.*\]) (\[.*\]) (.*)$/.exec(lines[i])
+						if (lineDetail && lineDetail.length == 5) {
+							if (lineDetail[4] == 'Project shutdown completed') {
+								compileFailed = 0
+								compileSuccess = 0
+							} else if (lineDetail[4].startsWith('Compilation failed: ')) {
+								compileFailed++
+							} else if (lineDetail[4].startsWith('Compilation successful: ')) {
+								compileSuccess++
+							}
+						}
+					}
+					log.info('---------- ---------- ----------')
+					lastLogLength = lines.length
+					return false
+				}
+				const linesChanged = lines.length - lastLogLength
+				lastLogLength = lines.length
+				if (linesChanged == 0) {
+					noChangeCount++
+				}
+				return noChangeCount > 3 && compileFailed + compileSuccess > 0
+			})
+		dumpSuccess = await prom
+		if (dumpSuccess) {
+			break
+		}
+
+		const prom2 = sleep2(250, 'language server not ready yet... (waitTime=' + waitTime + ', compileFailed=' + compileFailed + ', compileSuccess=' + compileSuccess + ')')
 			.catch((e: unknown) => { throw e })
+		await prom2
 	}
+
+	log.info('lang server compile stats:')
+	log.info('  compile success = ' + compileSuccess)
+	log.info('  compile failed  = ' + compileFailed)
+
 
 	if (dumpSuccess) {
 		log.info('lang server is ready ' + waitTime)
 		return true
 	}
 
-	return printLastLangServerError()
-		.then(() => {
+	return getLogContents()
+		.then((lines) => {
+			log.info('---------- openedge-abl extension log ----------')
+			for (let i=0; i<lines.length; i++) {
+				log.info(i + ': ' + lines[i])
+			}
+			log.info('---------- ---------- ----------')
+			// return printLastLangServerError().then(() => {
 			log.error('lang server is not ready! (waitTime='  + waitTime + ')')
 			throw new Error('lang server is not ready! (waitTime='  + waitTime + ')')
 		}, (e: unknown) => {

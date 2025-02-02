@@ -1,9 +1,9 @@
 import { Uri } from 'vscode'
-import { parseSuiteLines } from '../../src/parse/TestSuiteParser'
-import { parseTestClass } from '../../src/parse/TestClassParser'
-import { parseTestProgram } from '../../src/parse/TestProgramParser'
+import { parseSuiteLines } from 'parse/TestSuiteParser'
+import { parseTestClass } from 'parse/TestClassParser'
+import { parseTestProgram } from 'parse/TestProgramParser'
 import { assert, getTestCount, getWorkspaceUri, runAllTests, suiteSetupCommon } from '../testCommon'
-import { getAnnotationLines, getContentFromFilesystem } from '../../src/parse/TestParserCommon'
+import { getAnnotationLines, getContentFromFilesystem } from 'parse/TestParserCommon'
 
 const workspaceUri = getWorkspaceUri()
 

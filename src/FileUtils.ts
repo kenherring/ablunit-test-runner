@@ -53,6 +53,16 @@ export function writeFile (path: string | Uri, data: string | Uint8Array, option
 	fs.writeFileSync(path, data, options)
 }
 
+export function validateDirectory (path: string | Uri): boolean {
+	if (path instanceof Uri) {
+		if (!doesDirExist(path)) {
+			throw FileSystemError.FileNotFound(path)
+		}
+		return true
+	}
+	return true
+}
+
 export function validateFile (path: string | Uri): boolean {
 
 	if (path instanceof Uri) {
@@ -64,25 +74,21 @@ export function validateFile (path: string | Uri): boolean {
 	return true
 }
 
-export function toUri (path: string | Uri, base?: string): Uri {
-	if (path instanceof Uri) {
-		return path
-	}
-	if (base && isRelativePath(path)) {
-		let uri = Uri.file(base)
-		uri = Uri.joinPath(uri, path)
+export function toUri (uri: string | Uri, base?: string | Uri) {
+	if (uri instanceof Uri) {
 		return uri
 	}
-	if (isRelativePath(path)) {
-		if (workspace.workspaceFolders?.length == 1) {
-			if (path == '.') {
-				return workspace.workspaceFolders[0].uri
-			}
-			return Uri.joinPath(workspace.workspaceFolders[0].uri, path)
-		}
-		throw new FileSystemError('No basedir provided for relative path: ' + path)
+	if (!isRelativePath(uri)) {
+		return Uri.file(uri)
 	}
-	return Uri.file(path)
+	if (base) {
+		base = base instanceof Uri ? base : Uri.file(base)
+		return Uri.joinPath(base, uri)
+	}
+	if (workspace.workspaceFolders && workspace.workspaceFolders.length === 1) {
+		return Uri.joinPath(workspace.workspaceFolders[0].uri, uri)
+	}
+	throw new Error('No basedir provided for relative path: ' + uri)
 }
 
 export function isRelativePath (path: string): boolean {
@@ -156,18 +162,23 @@ function deletePath (type: 'directory' | 'file', uris: Uri[], options: RmOptions
 	}
 }
 
-export function deleteFile (file: Uri | undefined | (Uri | undefined)[], options?: RmOptions): void {
+export function deleteFile (file: Uri | string | undefined | (Uri | string | undefined)[], options?: RmOptions): void {
 	if (!file) return
 	let files: Uri[] = []
 	if (file instanceof Uri) {
 		files = [file]
+	} else if (typeof file === 'string') {
+		files = [toUri(file)]
 	} else if (file) {
-		files = file.filter((f) => f != undefined)
+		files = file.filter((f) => f != undefined).map((f) => toUri(f))
 	}
 	deletePath('file', files, options)
 }
 
-export function deleteDir (dir: Uri | undefined | (Uri | undefined)[], options?: RmOptions): void {
+export function deleteDir (dir: Uri | string | undefined | (Uri | undefined)[], options?: RmOptions): void {
+	if (typeof dir === 'string') {
+		dir = toUri(dir)
+	}
 	if (!dir) return
 	let dirs: Uri[] = []
 	if (dir instanceof Uri) {

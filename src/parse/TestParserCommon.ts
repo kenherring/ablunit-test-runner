@@ -28,7 +28,7 @@ function toUri (pathOrUri: Uri | string): Uri {
 }
 
 export function getContentFromFilesystem (uri: Uri | string) {
-	uri = toUri(uri)
+	uri = FileUtils.toUri(uri)
 	return workspace.fs.readFile(uri)
 		.then((rawContent) => { return textDecoder.decode(rawContent)
 		}, (e: unknown) => { throw e })

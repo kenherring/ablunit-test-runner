@@ -77,7 +77,14 @@ initialize_repo () {
 	else
 		git clone "$REPO_VOLUME" "$PROJECT_DIR"
 	fi
-	git checkout "$GIT_BRANCH"
+
+	if [ -n "${CIRCLE_TAG:-}" ]; then
+		echo "checking out tag $CIRCLE_TAG"
+		git checkout "$CIRCLE_TAG"
+	else
+		echo "checking out branch $GIT_BRANCH"
+		git checkout "$GIT_BRANCH"
+	fi
 	copy_files_from_volume
 }
 

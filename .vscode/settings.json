@@ -31,6 +31,12 @@
 				"ablunit-test-profile*.jsonc",
 			],
 			"url": "./resources/ablunit-test-profile.schema.json"
+		},
+		{
+			"fileMatch": [
+				"openedge-project.*.json"
+			],
+			"url": "https://raw.githubusercontent.com/vscode-abl/vscode-abl/refs/heads/main/resources/openedge.schema.json"
 		}
 	],
 	"npm.autoDetect": "on",
