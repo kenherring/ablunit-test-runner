@@ -3,7 +3,7 @@ set -eou pipefail
 
 usage () {
 	echo "
-usage: $0 [ -o (12.2.12 | 12.7.0 | 12.8.1 | 12.8.3 | 12.8.4 | all) ] [ -V (stable | proposedapi | insiders | X.Y.Z] )] [ -p <project_name> ] [-bBimPv]
+usage: $0 [ -o (12.2.12 | 12.7.0 | 12.8.1 | 12.8.3 | 12.8.4 | 12.8.5 | all) ] [ -V (stable | proposedapi | insiders | X.Y.Z] )] [ -p <project_name> ] [-bBimPv]
 options:
   -o <version>  OE version (default: 12.8.1)
                 alternative: set the ABLUNIT_TEST_RUNNER_OE_VERSION environment variable
@@ -128,12 +128,13 @@ initialize () {
 	fi
 
 	if [ "${ABLUNIT_TEST_RUNNER_OE_VERSION,,}" = "all" ]; then
-		OE_VERSIONS=(12.2.12 12.7.0 12.8.1 12.8.3 12.8.4)
+		OE_VERSIONS=(12.2.12 12.7.0 12.8.1 12.8.3 12.8.4 12.8.5)
 	elif [ "$ABLUNIT_TEST_RUNNER_OE_VERSION" != '12.2.12' ] &&
 		[ "$ABLUNIT_TEST_RUNNER_OE_VERSION" != '12.7.0' ] &&
 		[ "$ABLUNIT_TEST_RUNNER_OE_VERSION" != '12.8.1' ] &&
 		[ "$ABLUNIT_TEST_RUNNER_OE_VERSION" != '12.8.3' ] &&
-		[ "$ABLUNIT_TEST_RUNNER_OE_VERSION" != '12.8.4' ]; then
+		[ "$ABLUNIT_TEST_RUNNER_OE_VERSION" != '12.8.4' ] &&
+		[ "$ABLUNIT_TEST_RUNNER_OE_VERSION" != '12.8.5' ]; then
 		echo "Invalid OE version: $ABLUNIT_TEST_RUNNER_OE_VERSION" >&2
 		usage && exit 1
 	else
