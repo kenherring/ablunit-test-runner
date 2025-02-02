@@ -1,3 +1,11 @@
+# [1.0.6007](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.0.6007) - 2025-02-02
+
+
+ * Bump PCT to v229 (#241)
+
+
+**Full Changelog**: [1.0.6005...1.0.6007](https://github.com/kenherring/ablunit-test-runner/compare/1.0.6005...1.0.6007)
+
 # [1.0.6005](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.0.6005) - 2025-02-02
 
 

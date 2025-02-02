@@ -45,6 +45,8 @@ initialize () {
 
 	mkdir -p docker/.rssw
 	cp ~/.rssw/oedoc.bin docker/.rssw/oedoc.bin
+
+	. docker/.env
 }
 
 build_images () {
@@ -59,6 +61,7 @@ build_images () {
 		echo "Building docker image for OE $DOCKER_TAG"
 		docker build docker "${ARGS[@]}" \
 			--build-arg OE_VERSION="$DOCKER_TAG" \
+			--build-arg PCT_VERSION="$PCT_VERSION" \
 			--secret id=license,src="$DLC/progress.cfg" \
 			-t "ablunit-test-runner:$DOCKER_TAG"
 
