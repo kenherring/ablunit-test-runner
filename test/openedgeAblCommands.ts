@@ -1,4 +1,4 @@
-import { commands, extensions, Uri, workspace } from 'vscode'
+import { commands, extensions, LogLevel, Uri, workspace } from 'vscode'
 import { Duration, activateExtension, enableExtensions, getDefaultDLC, getRcodeCount, getWorkspaceUri, installExtension, log, oeVersion, sleep2 } from './testCommon'
 import { getContentFromFilesystem } from 'parse/TestParserCommon'
 import * as glob from 'glob'
@@ -100,7 +100,7 @@ async function getLogContents () {
 		return []
 	}
 	const uri = Uri.file(logFiles[logFiles.length - 1])
-	log.info('reading openedge-abl extension log (logFile.length=' + logFiles.length + '):\n\t"' + uri.fsPath + '"')
+	log.debug('reading openedge-abl extension log (logFile.length=' + logFiles.length + '):\n\t"' + uri.fsPath + '"')
 	return getContentFromFilesystem(uri)
 		.then((contents) => {
 			contents = contents.replace(/\r/g, '')
@@ -108,12 +108,84 @@ async function getLogContents () {
 			if (lines.length == 1 && lines[0] == '') {
 				lines = []
 			}
-			log.info('openedge-abl extension log lines.length=' + lines.length)
+			log.debug('openedge-abl extension log lines.length=' + lines.length)
 			return contents.split('\n')
 		})
 }
 
 export async function waitForLangServerReady () {
+	const maxWait = 15 // seconds
+	const waitTime = new Duration()
+	let langServerReady = false
+	let lastLogLength = 0
+
+
+	while (!langServerReady && waitTime.elapsed() < maxWait * 1000) {
+
+		const prom  = getLogContents()
+			.then((lines) => {
+				if (lastLogLength > lines.length) {
+					log.warn('log file for openedge-abl-lsp extension is smaller!  was length=' + lastLogLength + '; now length=' + lines.length)
+					lastLogLength = 0
+					return false
+				}
+
+				let startAtLine = 0
+				if (lastLogLength != -1 && lastLogLength < lines.length) {
+					startAtLine = lastLogLength
+				}
+
+				let langServerReady = false
+				log.info('---------- lines written to openedge-abl extension log since last check ----------')
+				for (let i=startAtLine; i<lines.length; i++) {
+					log.info(i + ': ' + lines[i])
+
+					// regex matching lines like "[<timestamp>] [<logLevel>] [<projectName] <message>"
+					const lineDetail = /^(\[.*\]) (\[[A-Z]*\]) (\[.*\]) (.*)$/.exec(lines[i])
+
+					if (lineDetail) {
+						// log.info('lineDetail=' + JSON.stringify(lineDetail, null, 4))
+						if (lineDetail[4] == 'Project shutdown completed' || lineDetail[4] == 'Start OE client process') {
+							langServerReady = false
+						}
+						if (lineDetail[4] == 'OpenEdge worker started') {
+							langServerReady = true
+						}
+					}
+				}
+				log.info('---------- ---------- ----------')
+				lastLogLength = lines.length
+				return langServerReady
+			})
+
+		langServerReady = await prom // await promise instead of awaiting in assignment so other threads can run
+		if (langServerReady) {
+			break
+		}
+
+		const prom2 = sleep2(250, 'language server not ready yet... (waitTime=' + waitTime + ')')
+		await prom2 // await prom so other threads can run
+	}
+
+	if (langServerReady) {
+		log.info('lang server is ready (waitTime=' + waitTime + ')')
+		return true
+	}
+
+	if (log.getLogLevel() < LogLevel.Debug) {
+		const lines = await getLogContents()
+		log.info('---------- openedge-abl extension log ----------')
+		for (let i=0; i<lines.length; i++) {
+			log.info(i + ': ' + lines[i])
+		}
+		log.info('---------- ---------- ----------')
+	}
+
+	log.error('lang server is not ready! (waitTime='  + waitTime + ')')
+	throw new Error('lang server is not ready! (waitTime='  + waitTime + ')')
+}
+
+export async function waitForRCode () {
 	const maxWait = 15 // seconds
 	const waitTime = new Duration()
 	let dumpSuccess = false
@@ -164,110 +236,11 @@ export async function waitForLangServerReady () {
 		if (dumpSuccess) {
 			break
 		}
-		const prom2 = sleep2(250, 'language server not ready yet... (waitTime=' + waitTime + ')')
+
+		const prom2 = sleep2(250, 'language server not ready yet... (waitTime=' + waitTime + ', compileFailed=' + compileFailed + ', compileSuccess=' + compileSuccess + ')')
 			.catch((e: unknown) => { throw e })
 		await prom2
 	}
-
-
-
-	// now wait until it is ready
-	// let lastLogLength = -1
-	// let compileFailed = 0
-	// let compileSuccess = 0
-	// let langServerStatus = 'not yet checked'
-	// let i = 0
-	// while (waitTime.elapsed() < maxWait * 1000) {
-	// 	i++
-	// 	log.info('start abl.dumpLangServStatus (i=' + i + ')')
-
-	// 	let preDumpLogLength = 0
-
-	// 	// format: "[<timestamp>] [<loglevel>] [<projectName>] <message>"
-	// 	const logRegex = /^(\[.*\]) (\[.*\]) (\[.*\]) (.*)$/
-	// 	// const logRegex = /^[^ ]* [^ ]* [^ ]* Project shutdown completed$/
-
-	// 	const dumpSuccessProm = getLogContents()
-	// 		.then((lines) => {
-	// 			preDumpLogLength = lines.length
-	// 			if (lastLogLength > preDumpLogLength) {
-	// 				log.warn('log file for openedge-abl-lsp extension is smaller!  was length=' + lastLogLength + '; now length=' + preDumpLogLength)
-	// 				langServerStatus = 'waiting for log file'
-	// 				lastLogLength = -1
-	// 			} else if (lastLogLength != -1 && lastLogLength < preDumpLogLength) {
-	// 				log.info('---------- lines written to openedge-abl extension log since last check ----------')
-	// 				for (let i=lastLogLength; i<preDumpLogLength; i++) {
-	// 					// log.info(i + ': ' + lines[i])
-
-	// 					const lineDetail = logRegex.exec(lines[i])
-	// 					if (lineDetail && lineDetail.length == 5) {
-	// 						if (lineDetail[4] == 'Project shutdown completed') {
-	// 							compileFailed = 0
-	// 							compileSuccess = 0
-	// 						} else if (lineDetail[4].startsWith('Compilation failed: ')) {
-	// 							compileFailed++
-	// 						} else if (lineDetail[4].startsWith('Compilation successful: ')) {
-	// 							compileSuccess++
-	// 						}
-	// 					}
-	// 				}
-	// 				log.info('---------- ---------- ----------')
-	// 				langServerStatus = 'compiling'
-	// 				lastLogLength = lines.length
-	// 			}
-	// 			return commands.executeCommand('abl.dumpLangServStatus')
-	// 		}).then((r) => {
-	// 			log.info('command abl.dumpLangServStatus completed successfully (r=' + r + ')')
-	// 			return getLogContents()
-	// 		}).then((lines) => {
-	// 			lastLogLength = lines.length
-	// 			if (lines.length == preDumpLogLength) {
-	// 				langServerStatus = 'waiting for status dump'
-	// 				return false
-	// 			}
-
-	// 			langServerStatus = 'reading status dump'
-	// 			log.info('---------- new lines in openedge-abl extension log (lines.length=' + (lines.length - preDumpLogLength) + '; dumpSuccess=' + dumpSuccess + ' ----------')
-	// 			for (let i=preDumpLogLength; i<lines.length; i++) {
-	// 				// log.info(i + ': ' + lines[i])
-
-	// 				const lineDetail = logRegex.exec(lines[i])
-	// 				if (lineDetail && lineDetail.length == 5) {
-	// 					if (lineDetail[4] == 'Project shutdown completed') {
-	// 						compileFailed = 0
-	// 						compileSuccess = 0
-	// 						langServerStatus = 'Project shutdown completed'
-	// 					} else if (lineDetail[4].startsWith('Compilation failed: ')) {
-	// 						compileFailed++
-	// 						langServerStatus = 'Compiling'
-	// 					} else if (lineDetail[4].startsWith('Compilation successful: ')) {
-	// 						compileSuccess++
-	// 						langServerStatus = 'Compiling'
-	// 					} else if (lineDetail[3].startsWith(' -> RCode queue size:')) {
-	// 						langServerStatus = lineDetail[3].substring(4)
-	// 					}
-	// 				}
-	// 			}
-	// 			log.info('---------- ---------- ----------')
-
-	// 			if (langServerStatus == 'dumping status' && compileFailed + compileSuccess > 0) {
-	// 				langServerStatus = 'ready'
-	// 				return true
-	// 			}
-	// 			log.info('abl.dumpLangServStatus completed successfully, but no compile messages found yet')
-	// 			return false
-	// 		}, (e: unknown) => {
-	// 			log.info('dumpLangServStatus e=' + e)
-	// 			return false
-	// 		})
-
-	// 	dumpSuccess = await dumpSuccessProm
-
-	// 	if (dumpSuccess) { break }
-	// 	const prom =  sleep2(250, 'language server not ready yet... (i=' + i + ', langServerStatus=' + langServerStatus + ')')
-	// 		.catch((e: unknown) => { throw e })
-	// 	await prom
-	// }
 
 	log.info('lang server compile stats:')
 	log.info('  compile success = ' + compileSuccess)

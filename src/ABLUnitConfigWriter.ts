@@ -155,7 +155,7 @@ export class ABLUnitConfig  {
 			for (const e of conf.buildPath) {
 				pathObj.push({
 					path: e.path,
-					type: e.type.toLowerCase(),
+					type: e.type,
 					build: e.build,
 					xref: e.xref
 				})

@@ -19,7 +19,7 @@ class Logger {
 	private readonly logOutputChannel
 	private readonly consoleLogLevel = LogLevel.Info
 	private readonly testResultsLogLevel = LogLevel.Info
-	private logLevel: number
+	private logLevel: LogLevel
 	private readonly consoleTimestamp = process.env['ABLUNIT_TEST_RUNNER_UNIT_TESTING'] === 'true' || process.env['circleci']
 	private testResultsTimestamp = false
 	private readonly extensionCodeDir = __dirname
