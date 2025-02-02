@@ -1,7 +1,7 @@
-# [1.0.6005](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.0.6005) - 2025-02-01
+# [1.0.6005](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.0.6005) - 2025-02-02
 
 
- * Add test cases  to validate source map parsing source (#239)
+ * Add OpenEdge 12.8.5 test target (#240)
 
 
 **Full Changelog**: [1.0.6003...1.0.6005](https://github.com/kenherring/ablunit-test-runner/compare/1.0.6003...1.0.6005)
