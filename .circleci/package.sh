@@ -8,10 +8,13 @@ initialize () {
 
     if ! ${CIRCLECI:-false}; then
         ## local testing
-        [ -z "${CIRCLE_TAG:-}" ] && CIRCLE_TAG=$(git tag --points-at HEAD)
-        if [ -z "${CIRCLE_TAG:-}" ]; then
-            [ -z "${CIRCLE_BRANCH:-}" ] && CIRCLE_BRANCH=$(git branch --show-current)
-        fi
+        [ -z "${CIRCLE_TAG:-}" ] && [ -z "${CIRCLE_BRANCH:-}" ] && CIRCLE_TAG=$(git tag --points-at HEAD)
+        [ -z "${CIRCLE_TAG:-}" ] && [ -z "${CIRCLE_BRANCH:-}" ] && CIRCLE_BRANCH=$(git branch --show-current)
+    fi
+
+    if  [ -n "${CIRCLE_TAG:-}" ] && [ -n "${CIRCLE_BRANCH:-}" ]; then
+        echo "ERROR: both CIRCLE_TAG and CIRCLE_BRANCH are set. exiting... (CIRCLE_TAG=$CIRCLE_TAG, CIRCLE_BRANCH=$CIRCLE_BRANCH)"
+        exit 1
     fi
 
     PACKAGE_VERSION=$(jq -r '.version' package.json)
@@ -39,7 +42,7 @@ package_version () {
     echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] PACKAGE_VERSION=$VSCODE_VERSION"
 
     local ARGS=()
-    ARGS+=("--githubBranch" "$CIRCLE_BRANCH")
+    ARGS+=("--githubBranch" "${CIRCLE_BRANCH:-main}")
     ARGS+=("--no-git-tag-version")
     if $PRERELEASE; then
         ARGS+=("--pre-release")

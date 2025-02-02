@@ -12,9 +12,9 @@ RUN apt-get update \
 ## dependencies for running ablunit tests
 COPY --from=psc --chown=circleci:circleci --chmod=744 /psc /psc
 ADD .rssw/oedoc.bin /root/.rssw/oedoc.bin
-
 RUN if [ ! -f /root/.rssw/oedoc.bin ]; then echo "/root/.rssw/oedoc.bin oedoc.bin not found" && exit 1; fi
-RUN curl -v -L https://github.com/Riverside-Software/pct/releases/download/v228/PCT.jar -o /usr/share/ant/lib/PCT.jar
+ARG PCT_VERSION
+ADD https://github.com/Riverside-Software/pct/releases/download/v${PCT_VERSION}/PCT.jar /usr/share/ant/lib/PCT-${PCT_VERSION}.jar
 RUN echo "JAVA_HOME=$(which java)" > /psc/dlc/properties/java.properties
 
 ENV JAVA_HOME=/usr
@@ -24,17 +24,18 @@ ENV PATH=$PATH:$DLC/bin
 ENV PROMSGS=$DLC/promsgs
 
 ## clone and build ablunit.pl for the OE version
-ADD build.xml /psc/dlc/tty/build.xml
 WORKDIR /psc/dlc/tty
 ARG OE_VERSION
 ENV OE_VERSION=${OE_VERSION}
 ENV DOCKER_IMAGE=ablunit-test-runner-${OE_VERSION}
+RUN mkdir /home/circleci
+ADD build.xml /psc/dlc/tty/build.xml
+ADD https://github.com/progress/ADE/archive/refs/tags/v${OE_VERSION}.0.tar.gz /home/circleci/
 RUN --mount=type=secret,id=license,target=/psc/dlc/progress.cfg \
-    git clone --single-branch -b "v${OE_VERSION}.0" https://github.com/progress/ADE.git \
+    tar -xzf "/home/circleci/v${OE_VERSION}.0.tar.gz" -C . \
+    && mv ADE-${OE_VERSION}.0 ADE \
     && ant compile \
     && rm -rf build.xml ADE/ /tmp/*
-RUN mkdir /home/circleci
-RUN curl -L "https://github.com/progress/ADE/archive/refs/tags/v${OE_VERSION}.0.tar.gz" -o "/home/circleci/v${OE_VERSION}.0.tar.gz"
 WORKDIR /
 
 ## create directory for vscode-test which will be a mounted volume

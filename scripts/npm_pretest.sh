@@ -106,7 +106,10 @@ get_pct () {
 		else
 			ARGS+=(-s)
 		fi
-		curl "${ARGS[@]}" https://github.com/Riverside-Software/pct/releases/download/v228/PCT.jar
+		if [ -z "${PCT_VERSION:-}" ]; then
+			. docker/.env
+		fi
+		curl "${ARGS[@]}" "https://github.com/Riverside-Software/pct/releases/download/v${PCT_VERSION}/PCT.jar"
 	fi
 }
 
