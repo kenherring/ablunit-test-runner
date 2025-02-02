@@ -3,6 +3,7 @@ import { Duration, activateExtension, enableExtensions, getDefaultDLC, getRcodeC
 import { getContentFromFilesystem } from 'parse/TestParserCommon'
 import * as glob from 'glob'
 import { dirname } from 'path'
+import * as FileUtils from 'FileUtils'
 
 let ablunitLogUri = getWorkspaceUri()
 
@@ -117,8 +118,8 @@ export async function waitForLangServerReady () {
 	const maxWait = 15 // seconds
 	const waitTime = new Duration()
 	let langServerReady = false
+	let langServerError = false
 	let lastLogLength = 0
-
 
 	while (!langServerReady && waitTime.elapsed() < maxWait * 1000) {
 
@@ -147,9 +148,13 @@ export async function waitForLangServerReady () {
 						// log.info('lineDetail=' + JSON.stringify(lineDetail, null, 4))
 						if (lineDetail[4] == 'Project shutdown completed' || lineDetail[4] == 'Start OE client process') {
 							langServerReady = false
-						}
-						if (lineDetail[4] == 'OpenEdge worker started') {
+							langServerError = false
+						} else if (lineDetail[4] == 'OpenEdge worker started') {
 							langServerReady = true
+							langServerError = false
+						} else if (lineDetail[4].startsWith('### OE Client #0 ended with exit code')) {
+							langServerReady = false
+							langServerError = true
 						}
 					}
 				}
@@ -159,7 +164,7 @@ export async function waitForLangServerReady () {
 			})
 
 		langServerReady = await prom // await promise instead of awaiting in assignment so other threads can run
-		if (langServerReady) {
+		if (langServerReady || langServerError) {
 			break
 		}
 
@@ -170,6 +175,42 @@ export async function waitForLangServerReady () {
 	if (langServerReady) {
 		log.info('lang server is ready (waitTime=' + waitTime + ')')
 		return true
+	}
+	if (langServerError) {
+		log.error('lang server has an error! (waitTime=' + waitTime + ')')
+
+		const clientLogUri = FileUtils.toUri('.builder/clientlog0.log')
+		if (!FileUtils.doesFileExist(clientLogUri)) {
+			log.warn('client log file does not exist: ' + clientLogUri.fsPath)
+		} else {
+			const clientlogLines = FileUtils.readLinesFromFileSync(clientLogUri)
+			if (clientlogLines.length == 0) {
+				log.warn('client log file is empty: ' + clientLogUri.fsPath)
+			} else {
+				log.info('---------- ' + clientLogUri.fsPath + '-----------')
+				for (let i=0; i<clientlogLines.length; i++) {
+					log.info(i + ': ' + clientlogLines[i])
+				}
+				log.info('---------- ---------- ----------')
+			}
+		}
+
+		const stdoutUri = FileUtils.toUri('.builder/stdout0.log')
+		if (!FileUtils.doesFileExist(stdoutUri)) {
+			log.warn('stdout file does not exist: ' + stdoutUri.fsPath)
+		} else {
+			const stdoutLines = FileUtils.readLinesFromFileSync(stdoutUri)
+			if (stdoutLines.length == 0) {
+				log.warn('stdout file is empty: ' + stdoutUri.fsPath)
+			} else {
+				log.info('---------- ' + stdoutUri.fsPath + '-----------')
+				for (let i=0; i<stdoutLines.length; i++) {
+					log.info(i + ': ' + stdoutLines[i])
+				}
+				log.info('---------- ---------- ----------')
+			}
+		}
+		throw new Error('lang server failed to start! (waitTime=' + waitTime + ')')
 	}
 
 	if (log.getLogLevel() < LogLevel.Debug) {
