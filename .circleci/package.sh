@@ -10,17 +10,13 @@ initialize () {
 
     if ! ${CIRCLECI:-false}; then
         ## local testing
-        if [ -z "${CIRCLE_TAG:-}" ] && [ -z "${CIRCLE_BRANCH:-}" ]; then
-            CIRCLE_TAG=$(git tag --points-at HEAD)
-            if [ -z "${CIRCLE_TAG:-}" ]; then
-                CIRCLE_BRANCH=$(git branch --show-current)
-            fi
-        fi
-        log_it "CIRCLE_TAG=${CIRCLE_TAG:-}; CIRCLE_BRANCH=${CIRCLE_BRANCH:-}"
-        if [ -z "${CIRCLE_TAG:-}" ] && [ -z "${CIRCLE_BRANCH:-}" ]; then
-            log_error "ERROR: could not determine CIRCLE_TAG or CIRCLE_BRANCH"
-            exit 1
-        fi
+        [ -z "${CIRCLE_TAG:-}" ] && [ -z "${CIRCLE_BRANCH:-}" ] && CIRCLE_TAG=$(git tag --points-at HEAD)
+        [ -z "${CIRCLE_TAG:-}" ] && [ -z "${CIRCLE_BRANCH:-}" ] && CIRCLE_BRANCH=$(git branch --show-current)
+    fi
+
+    if  [ -n "${CIRCLE_TAG:-}" ] && [ -n "${CIRCLE_BRANCH:-}" ]; then
+        echo "ERROR: both CIRCLE_TAG and CIRCLE_BRANCH are set. exiting... (CIRCLE_TAG=$CIRCLE_TAG, CIRCLE_BRANCH=$CIRCLE_BRANCH)"
+        exit 1
     fi
 
     PACKAGE_VERSION=$(jq -r '.version' package.json)
