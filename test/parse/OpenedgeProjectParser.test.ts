@@ -20,7 +20,10 @@ test('OpenedgeProjectParser.test.1', () => {
 	}
 
 	const oeversion = getOEVersion(workspaceFolder)
-	assert.equal(oeversion, '12.8')
+	const envOEVersionParts = (process.env['ABLUNIT_TEST_RUNNER_OE_VERSION'] ?? '12.8.1').split('.')
+	envOEVersionParts.pop()
+	const envOEVersion = (envOEVersionParts ?? '12.8.1').join('.')
+	assert.equal(oeversion, envOEVersion)
 
 	const dlc = getDLC(workspaceFolder)
 	if (process.env['OS'] == 'Windows_NT') {

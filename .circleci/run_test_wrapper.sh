@@ -129,7 +129,6 @@ run_tests () {
 		RUN_SCRIPT='test'
 	fi
 
-
 	## without this cpstream=UTF-8 and cpstream=US-ASCII
 	if ${DOCKER:-}; then
 		export JAVA_TOOL_OPTIONS=${JAVA_TOOL_OPTIONS:-'-Dfile.encoding=UTF8'}

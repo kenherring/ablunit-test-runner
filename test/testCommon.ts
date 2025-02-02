@@ -1,6 +1,7 @@
 import * as assertParent from 'assert'
 import * as vscode from 'vscode'
-import * as FileUtils from '../src/FileUtils'
+import * as FileUtils from 'FileUtils'
+import { toUri } from 'FileUtils'
 import {
 	CancellationError, TestController,
 	TestItemCollection,
@@ -11,13 +12,13 @@ import {
 	FileCoverageDetail,
 	TestItem
 } from 'vscode'
-import { ABLResults } from '../src/ABLResults'
-import { Duration, gatherAllTestItems, IExtensionTestReferences } from '../src/ABLUnitCommon'
-import { log as logObj } from '../src/ChannelLogger'
-import { ITestSuites } from '../src/parse/ResultsParser'
-import { IConfigurations, parseRunProfiles } from '../src/parse/TestProfileParser'
-import { DefaultRunProfile, IRunProfile as IRunProfileGlobal } from '../src/parse/config/RunProfile'
-import { RunStatus } from '../src/ABLUnitRun'
+import { ABLResults } from 'ABLResults'
+import { Duration, gatherAllTestItems, IExtensionTestReferences } from 'ABLUnitCommon'
+import { log as logObj } from 'ChannelLogger'
+import { ITestSuites } from 'parse/ResultsParser'
+import { IConfigurations, parseRunProfiles } from 'parse/TestProfileParser'
+import { DefaultRunProfile, IRunProfile as IRunProfileGlobal } from 'parse/config/RunProfile'
+import { RunStatus } from 'ABLUnitRun'
 import { enableOpenedgeAblExtension, rebuildAblProject, restartLangServer, setRuntimes, waitForLangServerReady } from './openedgeAblCommands'
 import { globSync } from 'glob'
 import path from 'path'
@@ -96,7 +97,7 @@ export class FilesExclude {
 export { setRuntimes, rebuildAblProject }
 // kherring.ablunit-test-runner extension objects
 export type IRunProfile = IRunProfileGlobal
-export { RunStatus, parseRunProfiles }
+export { FileUtils, RunStatus, parseRunProfiles, toUri }
 // vscode objects
 export {
 	CancellationError, Duration, Selection, Uri,
@@ -452,10 +453,6 @@ export function getWorkspaceUri (idx = 0) {
 }
 
 export const workspaceUri = () => getWorkspaceUri()
-
-export function toUri (uri: string | Uri, base?: string | Uri) {
-	return FileUtils.toUri(uri, base)
-}
 
 function fileToString (file: Uri | string) {
 	if (file instanceof Uri) {

@@ -1,9 +1,8 @@
 import { commands, extensions, LogLevel, Uri, workspace } from 'vscode'
-import { Duration, activateExtension, enableExtensions, getDefaultDLC, getRcodeCount, getWorkspaceUri, installExtension, log, oeVersion, sleep2 } from './testCommon'
+import { Duration, activateExtension, enableExtensions, getDefaultDLC, getRcodeCount, getWorkspaceUri, installExtension, log, oeVersion, sleep2, FileUtils } from './testCommon'
 import { getContentFromFilesystem } from 'parse/TestParserCommon'
 import * as glob from 'glob'
 import { dirname } from 'path'
-import * as FileUtils from 'FileUtils'
 
 let ablunitLogUri = getWorkspaceUri()
 

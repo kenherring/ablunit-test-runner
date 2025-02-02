@@ -74,23 +74,20 @@ export function validateFile (path: string | Uri): boolean {
 	return true
 }
 
-
-
-export function toUri (uri: string | Uri, base?: string | Uri) {
-	if (uri instanceof Uri) {
-		return uri
+export function toUri (path: string | Uri, base?: string | Uri): Uri {
+	if (path instanceof Uri) {
+		return path
 	}
-	if (!isRelativePath(uri)) {
-		return Uri.file(uri)
+	if (isAbsolutePath(path)) {
+		return Uri.file(path)
 	}
 	if (base) {
-		base = base instanceof Uri ? base : Uri.file(base)
-		return Uri.joinPath(base, uri)
+		return Uri.joinPath(toUri(base), path)
 	}
 	if (workspace.workspaceFolders && workspace.workspaceFolders.length === 1) {
-		return Uri.joinPath(workspace.workspaceFolders[0].uri, uri)
+		return Uri.joinPath(workspace.workspaceFolders[0].uri, path)
 	}
-	throw new Error('No basedir provided for relative path: ' + uri)
+	throw new Error('No basedir provided for relative path: ' + path)
 }
 
 export function isRelativePath (path: string): boolean {
@@ -98,6 +95,10 @@ export function isRelativePath (path: string): boolean {
 		return false
 	}
 	return true
+}
+
+export function isAbsolutePath (path: string): boolean {
+	return !isRelativePath(path)
 }
 
 function doesPathExist (uri: Uri | string, type?: 'file' | 'directory'): boolean {
@@ -164,18 +165,23 @@ function deletePath (type: 'directory' | 'file', uris: Uri[], options: RmOptions
 	}
 }
 
-export function deleteFile (file: Uri | undefined | (Uri | undefined)[], options?: RmOptions): void {
+export function deleteFile (file: Uri | string | undefined | (Uri | string | undefined)[], options?: RmOptions): void {
 	if (!file) return
 	let files: Uri[] = []
 	if (file instanceof Uri) {
 		files = [file]
+	} else if (typeof file === 'string') {
+		files = [toUri(file)]
 	} else if (file) {
-		files = file.filter((f) => f != undefined)
+		files = file.filter((f) => f != undefined).map((f) => toUri(f))
 	}
 	deletePath('file', files, options)
 }
 
-export function deleteDir (dir: Uri | undefined | (Uri | undefined)[], options?: RmOptions): void {
+export function deleteDir (dir: Uri | string | undefined | (Uri | undefined)[], options?: RmOptions): void {
+	if (typeof dir === 'string') {
+		dir = toUri(dir)
+	}
 	if (!dir) return
 	let dirs: Uri[] = []
 	if (dir instanceof Uri) {
