@@ -88,9 +88,6 @@ export function toUri (uri: string | Uri, base?: string | Uri) {
 		return Uri.joinPath(base, uri)
 	}
 	if (workspace.workspaceFolders && workspace.workspaceFolders.length === 1) {
-		// if (path == '.') {
-		// 	return workspace.workspaceFolders[0].uri
-		// }
 		return Uri.joinPath(workspace.workspaceFolders[0].uri, uri)
 	}
 	throw new Error('No basedir provided for relative path: ' + uri)

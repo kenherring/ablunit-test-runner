@@ -14,7 +14,7 @@ initialize () {
         [ -z "${CIRCLE_TAG:-}" ] && [ -z "${CIRCLE_BRANCH:-}" ] && CIRCLE_BRANCH=$(git branch --show-current)
     fi
 
-    if  [ -n "${CIRCLE_TAG:-}" ] && [ -n "${CIRCLE_BRANCH:-}" ]; then
+    if  [ -z "${CIRCLE_TAG:-}" ] && [ -z "${CIRCLE_BRANCH:-}" ]; then
         echo "ERROR: both CIRCLE_TAG and CIRCLE_BRANCH are set. exiting... (CIRCLE_TAG=$CIRCLE_TAG, CIRCLE_BRANCH=$CIRCLE_BRANCH)"
         exit 1
     fi

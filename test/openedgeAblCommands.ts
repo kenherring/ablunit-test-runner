@@ -122,7 +122,6 @@ export async function waitForLangServerReady () {
 	let lastLogLength = 0
 
 	while (!langServerReady && waitTime.elapsed() < maxWait * 1000) {
-
 		const prom  = getLogContents()
 			.then((lines) => {
 				if (lastLogLength > lines.length) {
@@ -173,6 +172,14 @@ export async function waitForLangServerReady () {
 	}
 
 	if (langServerReady) {
+		try {
+			const dumpSuccessProm = commands.executeCommand('abl.dumpLangServStatus')
+			const ret = await dumpSuccessProm
+			log.info('command abl.dumpLangServStatus complete (ret=' + ret + ')')
+		} catch (e) {
+			throw new Error('command abl.dumpLangServStatus failed! e=' + e)
+		}
+
 		log.info('lang server is ready (waitTime=' + waitTime + ')')
 		return true
 	}

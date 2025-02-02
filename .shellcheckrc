@@ -1,2 +1,2 @@
 external-sources=true
-disable=SC2207,SC3040
+disable=SC2119,SC2207,SC3040

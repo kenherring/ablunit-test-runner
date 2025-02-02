@@ -128,6 +128,13 @@ run_tests () {
 	if $ABLUNIT_TEST_RUNNER_NO_COVERAGE; then
 		RUN_SCRIPT='test'
 	fi
+
+
+	## without this cpstream=UTF-8 and cpstream=US-ASCII
+	if ${DOCKER:-}; then
+		export JAVA_TOOL_OPTIONS=${JAVA_TOOL_OPTIONS:-'-Dfile.encoding=UTF8'}
+	fi
+
 	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] starting 'npm $RUN_SCRIPT'"
 	EXIT_CODE=0
 	xvfb-run -a npm run "$RUN_SCRIPT" || EXIT_CODE=$?
