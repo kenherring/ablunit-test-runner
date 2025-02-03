@@ -63,28 +63,24 @@ export function rebuildAblProject () {
 }
 
 export async function printLastLangServerError () {
-	return getLogContents()
-		.then((lines) => {
-			if (lines.length == 0) {
-				throw new Error('ABL language server log file has no lines')
-			}
+	const lines = await getLogContents()
+	if (lines.length == 0) {
+		throw new Error('ABL language server log file has no lines')
+	}
 
-			let lastLogErrors = ''
-			let hasError = false
-			for (let i = lines.length - 1; i >= 0; i--) {
-				// read until we hit an error, then read until we don't see an error.
-				if (lines[i].includes(' [ERROR] ')) {
-					hasError = true
-					lastLogErrors = String(i).padStart(8, ' ') + ': ' + lines[i] + '\n' + lastLogErrors
-				} else if (hasError) {
-					break
-				}
-			}
-			log.info('Last logged ABL lang server error (lines.length=' + lines.length + '):\n"' + lastLogErrors + '"')
-			return hasError
-		}, (e: unknown) => {
-			throw e
-		})
+	let lastLogErrors = ''
+	let hasError = false
+	for (let i = lines.length - 1; i >= 0; i--) {
+		// read until we hit an error, then read until we don't see an error.
+		if (lines[i].includes(' [ERROR] ')) {
+			hasError = true
+			lastLogErrors = String(i).padStart(8, ' ') + ': ' + lines[i] + '\n' + lastLogErrors
+		} else if (hasError) {
+			break
+		}
+	}
+	log.info('Last logged ABL lang server error (lines.length=' + lines.length + '):\n"' + lastLogErrors + '"')
+	return hasError
 }
 
 async function getLogContents () {
@@ -101,7 +97,7 @@ async function getLogContents () {
 	}
 	const uri = Uri.file(logFiles[logFiles.length - 1])
 	log.debug('reading openedge-abl extension log (logFile.length=' + logFiles.length + '):\n\t"' + uri.fsPath + '"')
-	return getContentFromFilesystem(uri)
+	return await getContentFromFilesystem(uri)
 		.then((contents) => {
 			contents = contents.replace(/\r/g, '')
 			let lines = contents.split('\n')
@@ -121,7 +117,7 @@ export async function waitForLangServerReady () {
 	let lastLogLength = 0
 
 	while (!langServerReady && waitTime.elapsed() < maxWait * 1000) {
-		const prom  = getLogContents()
+		const prom = getLogContents()
 			.then((lines) => {
 				if (lastLogLength > lines.length) {
 					log.warn('log file for openedge-abl-lsp extension is smaller!  was length=' + lastLogLength + '; now length=' + lines.length)

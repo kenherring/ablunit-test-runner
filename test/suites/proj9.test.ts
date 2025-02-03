@@ -95,7 +95,7 @@ suite('proj9 - Extension Test Suite', () => {
 		assert.equal(await getTestCount(resultsJson, 'error'), 0, 'error test count')
 	})
 
-	test('proj9.20 - do not import openedge-project.json', async () => {
+	test('proj9.20 - do not import openedge-project.json', () => {
 		const prom = updateTestProfile('importOpenedgeProjectJson', false)
 			.then(() => { return updateTestProfile('openedgeProjectProfile', 'profile2') })
 			.then(() => { return runAllTests(true, false) })

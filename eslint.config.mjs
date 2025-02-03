@@ -122,6 +122,7 @@ export default [{
 		'prefer-promise-reject-errors': 'error',
 		quotes: ['warn', 'single'],
 		semi: ['error', 'never'],
+		'require-await': 'error',
 		'space-before-blocks': ['error', 'always'],
 		'space-before-function-paren': ['warn', 'always'],
 		'space-in-parens': ['warn', 'never'],
