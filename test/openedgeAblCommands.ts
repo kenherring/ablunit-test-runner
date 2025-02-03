@@ -295,7 +295,7 @@ export async function waitForRCode () {
 		return true
 	}
 
-	return getLogContents()
+	return await getLogContents()
 		.then((lines) => {
 			log.info('---------- openedge-abl extension log ----------')
 			for (let i=0; i<lines.length; i++) {

@@ -341,9 +341,9 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 		})
 	}
 
-	return runCommand()
-		.then(() => {
-			log.info('runCommand() success')
+	await runCommand()
+		.then((r) => {
+			log.info('runCommand() success (r=' + r + ')')
 			return res.parseOutput(options)
 		}).then(() => {
 			log.debug('runCommand complete!')
