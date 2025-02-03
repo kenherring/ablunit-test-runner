@@ -300,7 +300,7 @@ async function waitForExtensionActive (extensionId = 'kherring.ablunit-test-runn
 	for (let i=0; i<50; i++) {
 		if (ext.isActive) {
 			log.info(extensionId + ' is active! (i=' + i + ')')
-			return Promise.resolve(ext.isActive)
+			return await Promise.resolve(ext.isActive)
 		}
 		log.info('waitied ' + (i + 1) * 100 + 'ms for extension to activate')
 		await sleep2(100)
@@ -715,7 +715,7 @@ export async function cancelTestRun (resolveCurrentRunData = true) {
 		log.info('cancelling test run')
 	}
 
-	return commands.executeCommand('testing.cancelRun').then(() => {
+	return await commands.executeCommand('testing.cancelRun').then(() => {
 		cancelTestRunDuration?.stop()
 		log.info('cancelDuration=' + cancelTestRunDuration?.elapsed() + 'ms')
 		return cancelTestRunDuration

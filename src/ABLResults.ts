@@ -191,7 +191,7 @@ export class ABLResults implements Disposable {
 				// do nothing, can't delete a file that doesn't exist
 			})
 		}
-		return workspace.fs.stat(this.cfg.ablunitConfig.optionsUri.filenameUri).then((stat) => {
+		return await workspace.fs.stat(this.cfg.ablunitConfig.optionsUri.filenameUri).then((stat) => {
 			if (stat.type === FileType.File) {
 				return workspace.fs.delete(this.cfg.ablunitConfig.optionsUri.filenameUri)
 			}

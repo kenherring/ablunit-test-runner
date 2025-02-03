@@ -341,15 +341,21 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 		})
 	}
 
-	return runCommand()
-		.then(() => {
-			log.info('runCommand() success')
+	await runCommand()
+		.then((r) => {
+			log.info('runCommand() success (r=' + r + ')')
 			return res.parseOutput(options)
+		}).then(() => {
+			log.debug('runCommand complete!')
+			return // nosonar
 		}, (e: unknown) => {
 			log.info('runCommand() error=' + JSON.stringify(e, null, 2))
 			if (e instanceof Error) {
 				log.info('res.thrownError=' + e)
 				res.thrownError = e
+			} else {
+				log.info('res.thrownError=' + JSON.stringify(e, null, 2))
+				res.thrownError = new Error('not an error object! e=' + e)
 			}
 			throw e
 		})

@@ -253,7 +253,7 @@ suite('proj1 - Extension Test Suite', () => {
 	})
 
 	// default profile passes, but there is an 'ablunit' profile which is used first
-	test('proj1.14 - run profile \'ablunit\'', async () => {
+	test('proj1.14 - run profile \'ablunit\'', () => {
 		FileUtils.copyFile(Uri.joinPath(workspaceUri, 'openedge-project.proj1.14.json'), Uri.joinPath(workspaceUri, 'openedge-project.json'), { force: true })
 		const p  = runTestsInFile('test_14.p')
 			.then(() => {

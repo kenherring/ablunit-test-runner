@@ -245,12 +245,8 @@ export function activate (context: ExtensionContext) {
 			log.info('successfully created .vscode/ablunit-test-profile.json')
 		}
 
-		return window.showTextDocument(Uri.joinPath(workspaceFolder.uri, '.vscode', 'ablunit-test-profile.json')).then(() => {
+		await window.showTextDocument(Uri.joinPath(workspaceFolder.uri, '.vscode', 'ablunit-test-profile.json')).then(() => {
 			log.info('Opened .vscode/ablunit-test-profile.json')
-			return
-		}, (e: unknown) => {
-			log.error('Failed to open .vscode/ablunit-test-profile.json! e=' + e)
-			return
 		})
 	}
 
@@ -572,7 +568,7 @@ export function activate (context: ExtensionContext) {
 	const configHandler = () => {
 		log.info('testRunProfiler.configureHandler')
 		openTestRunConfig().catch((e: unknown) => {
-			log.error('Failed to open \'.vscode/ablunit-test-profile.json\'. e=' + e)
+			log.error('failed to open test run configuration file. e=' + e)
 		})
 	}
 
