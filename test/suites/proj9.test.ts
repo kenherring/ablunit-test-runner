@@ -96,13 +96,15 @@ suite('proj9 - Extension Test Suite', () => {
 	})
 
 	test('proj9.20 - do not import openedge-project.json', async () => {
-		await updateTestProfile('importOpenedgeProjectJson', false)
+		const prom = updateTestProfile('importOpenedgeProjectJson', false)
 			.then(() => { return updateTestProfile('openedgeProjectProfile', 'profile2') })
 			.then(() => { return runAllTests(true, false) })
-			.catch((e: unknown) => { log.info('runAllTests failed, as expected: e=' + e) })
-		const workspaceFolder = workspace.workspaceFolders![0].uri
-		const resultsJson = Uri.joinPath(workspaceFolder, 'results.json')
-		assert.notFileExists(resultsJson)
+			.then(() => { return assert.fail('runAllTests should have failed') })
+			.catch((e: unknown) => {
+				log.info('runAllTests failed, as expected: e=' + e)
+				assert.notFileExists(Uri.joinPath(workspace.workspaceFolders![0].uri, 'results.json'))
+			})
+		return prom
 	})
 
 })
