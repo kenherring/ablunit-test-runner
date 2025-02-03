@@ -65,7 +65,7 @@ class VSCode.ABLUnit.Runner.ABLRunner inherits OpenEdge.ABLUnit.Runner.ABLRunner
             msgObj:Add('number', error-status:get-number(i)).
             msgArr:Add(msgObj).
         end.
-        errorJson:Add('message' + string(i), msgArr).
+        errorJson:Add('messages' + string(i), msgArr).
 
         errorJson:write(output serialized).
         this-object:updateFile(this-object:updateFilepath, 'SERIALIZED_ERROR ' + serialized, false).

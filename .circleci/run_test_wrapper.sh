@@ -158,7 +158,7 @@ save_and_print_debug_output () {
 	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}]"
 
 	mkdir -p artifacts
-	find . > artifacts/filelist.txt
+	$VERBOSE && find . > artifacts/filelist.txt
 
 	find .vscode-test -name '*ABL*.log'
 	find .vscode-test -name '*ABL*.log' -exec cp {} artifacts \;
