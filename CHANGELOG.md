@@ -1,3 +1,11 @@
+# [1.0.6009](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.0.6009) - 2025-02-02
+
+
+ * Update testing scripts and programs (#242)
+
+
+**Full Changelog**: [1.0.6007...1.0.6009](https://github.com/kenherring/ablunit-test-runner/compare/1.0.6007...1.0.6009)
+
 # [1.0.6007](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.0.6007) - 2025-02-02
 
 
