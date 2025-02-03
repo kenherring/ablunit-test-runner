@@ -353,6 +353,9 @@ export const ablunitRun = async (options: TestRun, res: ABLResults, cancellation
 			if (e instanceof Error) {
 				log.info('res.thrownError=' + e)
 				res.thrownError = e
+			} else {
+				log.info('res.thrownError=' + JSON.stringify(e, null, 2))
+				res.thrownError = new Error('not an error object! e=' + e)
 			}
 			throw e
 		})
