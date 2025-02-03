@@ -99,10 +99,13 @@ suite('proj9 - Extension Test Suite', () => {
 		const prom = updateTestProfile('importOpenedgeProjectJson', false)
 			.then(() => { return updateTestProfile('openedgeProjectProfile', 'profile2') })
 			.then(() => { return runAllTests(true, false) })
-			.then(() => { return assert.fail('runAllTests should have failed') })
-			.catch((e: unknown) => {
+			.then(() => {
+				log.error('expected runAllTests to fail, but it did not')
+				return assert.fail('expected runAllTests to fail, but it did not')
+			}, (e: unknown) => {
 				log.info('runAllTests failed, as expected: e=' + e)
 				assert.notFileExists(Uri.joinPath(workspace.workspaceFolders![0].uri, 'results.json'))
+				return // nosonar
 			})
 		return prom
 	})
