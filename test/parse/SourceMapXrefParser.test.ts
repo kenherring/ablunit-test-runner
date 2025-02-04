@@ -125,7 +125,7 @@ function assertLines (lines: SourceMapItem[], dbgLine: number, srcLine: number, 
 	}
 	const line = filteredLines[0]
 
-	log.info('line=' + JSON.stringify(line, null, 2))
+	log.debug('line=' + JSON.stringify(line, null, 2))
 
 	assert.equal(line.debugLine, dbgLine, 'lines.debugLine ' + line.debugLine + ' != ' + dbgLine) // always true
 	assert.equal(line.sourceLine, srcLine, 'lines.sourceLine ' + line.sourceLine + ' != ' + srcLine + '(dbgLine=' + dbgLine + ')')

@@ -1,6 +1,7 @@
 import * as assertParent from 'assert'
 import * as vscode from 'vscode'
-import * as FileUtils from '../src/FileUtils'
+import * as FileUtils from 'FileUtils'
+import { toUri } from 'FileUtils'
 import {
 	CancellationError, TestController,
 	TestItemCollection,
@@ -11,13 +12,13 @@ import {
 	FileCoverageDetail,
 	TestItem
 } from 'vscode'
-import { ABLResults } from '../src/ABLResults'
-import { Duration, gatherAllTestItems, IExtensionTestReferences } from '../src/ABLUnitCommon'
-import { log as logObj } from '../src/ChannelLogger'
-import { ITestSuites } from '../src/parse/ResultsParser'
-import { IConfigurations, parseRunProfiles } from '../src/parse/TestProfileParser'
-import { DefaultRunProfile, IRunProfile as IRunProfileGlobal } from '../src/parse/config/RunProfile'
-import { RunStatus } from '../src/ABLUnitRun'
+import { ABLResults } from 'ABLResults'
+import { Duration, gatherAllTestItems, IExtensionTestReferences } from 'ABLUnitCommon'
+import { log as logObj } from 'ChannelLogger'
+import { ITestSuites } from 'parse/ResultsParser'
+import { IConfigurations, parseRunProfiles } from 'parse/TestProfileParser'
+import { DefaultRunProfile, IRunProfile as IRunProfileGlobal } from 'parse/config/RunProfile'
+import { RunStatus } from 'ABLUnitRun'
 import { enableOpenedgeAblExtension, rebuildAblProject, restartLangServer, setRuntimes, waitForLangServerReady } from './openedgeAblCommands'
 import { globSync } from 'glob'
 import path from 'path'
@@ -96,7 +97,7 @@ export class FilesExclude {
 export { setRuntimes, rebuildAblProject }
 // kherring.ablunit-test-runner extension objects
 export type IRunProfile = IRunProfileGlobal
-export { RunStatus, parseRunProfiles }
+export { FileUtils, toUri, RunStatus, parseRunProfiles }
 // vscode objects
 export {
 	CancellationError, Duration, Selection, Uri,
@@ -298,7 +299,7 @@ async function waitForExtensionActive (extensionId = 'kherring.ablunit-test-runn
 	for (let i=0; i<50; i++) {
 		if (ext.isActive) {
 			log.info(extensionId + ' is active! (i=' + i + ')')
-			return Promise.resolve(ext.isActive)
+			return await Promise.resolve(ext.isActive)
 		}
 		log.info('waitied ' + (i + 1) * 100 + 'ms for extension to activate')
 		await sleep2(100)
@@ -309,26 +310,63 @@ async function waitForExtensionActive (extensionId = 'kherring.ablunit-test-runn
 	return ext.isActive
 }
 
-export function getRcodeCount (workspaceFolder?: WorkspaceFolder) {
+export function getRcodeCount (workspaceFolder?: WorkspaceFolder | Uri) {
 	return getFileCountByExt('r', workspaceFolder)
+}
+
+export async function deleteRcode (workspaceFolder?: WorkspaceFolder) {
+	if (!workspaceFolder) {
+		workspaceFolder = getWorkspaceFolders()[0]
+	}
+	if (!workspaceFolder) {
+		throw new Error('workspaceFolder is undefined')
+	}
+
+	while (getRcodeCount(workspaceFolder) > 0) {
+		const g = globSync('**/*.r', { cwd: workspaceFolder.uri.fsPath })
+		log.info('deleting ' + g.length + ' rcode files')
+		for (const rcodeFile of g) {
+			log.info('\trm ' + rcodeFile)
+			FileUtils.deleteFile(Uri.joinPath(workspaceFolder.uri, rcodeFile))
+		}
+		const prom = sleep2(100)
+		await prom
+	}
+
+	const rcodeCount = getRcodeCount(workspaceFolder)
+	if (rcodeCount != 0) {
+		log.error('rcode files not deleted! rcodeCount=' + rcodeCount)
+		throw new Error('rcode files not deleted! rcodeCount=' + rcodeCount)
+	}
+	log.info('deleted all rcode files')
+	return true
 }
 
 export function getXrefCount (workspaceFolder?: WorkspaceFolder) {
 	return getFileCountByExt('xref', workspaceFolder)
 }
 
-function getFileCountByExt (ext: string, workspaceFolder?: WorkspaceFolder) {
+function getFileCountByExt (ext: string, workspaceFolder?: WorkspaceFolder | Uri) {
+	let uri: Uri | undefined = undefined
 	if (!workspaceFolder) {
 		workspaceFolder = workspace.workspaceFolders?.[0]
+		uri = workspaceFolder?.uri
+	} else if (workspaceFolder instanceof Uri) {
+		uri = workspaceFolder
+	} else {
+		uri = workspaceFolder.uri
 	}
-	if (!workspaceFolder) {
-		throw new Error('workspaceFolder is undefined')
+	if (!uri) {
+		throw new Error('uri is undefined')
 	}
 
-	const g = globSync('**/*.' + ext, { cwd: workspaceFolder.uri.fsPath })
+	const g = globSync('**/*.' + ext, { cwd: uri.fsPath })
 	const fileCount = g.length
 	if (fileCount >= 0) {
-		log.info('.' + ext + ' count=' + fileCount)
+		log.info('\'*.r\' files=' + fileCount + ' (path=' + uri.fsPath + ')')
+		for (const file of g) {
+			log.info('\t' + file)
+		}
 		return fileCount
 	}
 	throw new Error('fileCount is not a positive number! fileCount=' + fileCount + '(ext=' + ext + ')')
@@ -414,22 +452,6 @@ export function getWorkspaceUri (idx = 0) {
 }
 
 export const workspaceUri = () => getWorkspaceUri()
-
-export function toUri (uri: string | Uri) {
-	if (uri instanceof Uri) {
-		return uri
-	}
-
-	const ws = getWorkspaceUri()
-	if (!ws) {
-		throw new Error('workspaceUri is null (uri="' + uri.toString() + '")')
-	}
-
-	if (FileUtils.isRelativePath(uri)) {
-		return Uri.joinPath(ws, uri)
-	}
-	return Uri.file(uri)
-}
 
 function fileToString (file: Uri | string) {
 	if (file instanceof Uri) {
@@ -539,7 +561,7 @@ export async function runAllTests (doRefresh = true, waitForResults = true, with
 			return false
 		}, (e: unknown) => {
 			runAllTestsDuration?.stop()
-			if (e instanceof Error && e.name == 'ABLCompileError') {
+			if (e instanceof Error && e.name == 'ABLCompilerError') {
 				throw e
 			}
 			throw new Error(testCommand + ' failed: ' + e)
@@ -692,7 +714,7 @@ export async function cancelTestRun (resolveCurrentRunData = true) {
 		log.info('cancelling test run')
 	}
 
-	return commands.executeCommand('testing.cancelRun').then(() => {
+	return await commands.executeCommand('testing.cancelRun').then(() => {
 		cancelTestRunDuration?.stop()
 		log.info('cancelDuration=' + cancelTestRunDuration?.elapsed() + 'ms')
 		return cancelTestRunDuration
@@ -784,6 +806,7 @@ export async function updateTestProfile (key: string, value: string | string[] |
 	}
 	const newjson = Buffer.from(newtext)
 	await workspace.fs.writeFile(testProfileUri, newjson)
+	log.debug('writeFileComplete! newjson=' + newjson)
 	return
 }
 
@@ -978,7 +1001,7 @@ export async function getResults (len = 1, tag?: string): Promise<ABLResults[]> 
 				await refreshData()
 			} catch (e) {
 				log.info('e=' + e)
-				if (e instanceof Error && e.name == 'ABLCompileError') {
+				if (e instanceof Error && e.name == 'ABLCompilerError') {
 					log.error(tag + 'ABLCompile Error Detected')
 					throw e
 				}

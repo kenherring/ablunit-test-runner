@@ -19,7 +19,7 @@ import { ITestObj } from 'parse/config/CoreOptions'
 import * as FileUtils from './FileUtils'
 import { basename, dirname } from 'path'
 import { globSync } from 'glob'
-import { ABLCompileError, ABLUnitRuntimeError, TimeoutError } from 'Errors'
+import { ABLCompilerError, ABLUnitRuntimeError, TimeoutError } from 'Errors'
 
 export class ABLResults implements Disposable {
 	workspaceFolder: WorkspaceFolder
@@ -85,14 +85,18 @@ export class ABLResults implements Disposable {
 		delete this.ablResults
 	}
 
-	setStatus (status: RunStatus, statusNote?: string) {
-		if (this.status === RunStatus.Cancelled) {
+	setStatus (status: RunStatus | Error, statusNote?: string) {
+		if (status instanceof Error) {
+			const e = status
+			statusNote = statusNote ?? e.name + ': ' + e.message
+			status = RunStatus.Error
+		} else if (this.status === RunStatus.Cancelled) {
 			log.debug('cancellation requested - ignoring setStatus() call')
 			throw new CancellationError()
 		}
 		this.status = status
 		this.statusNote = statusNote
-		log.info('STATUS: ' + status)
+		log.info('STATUS: ' + status + ', NOTE: ' + statusNote)
 	}
 
 	setTestData (testData: WeakMap<TestItem, ABLTestData>) {
@@ -191,7 +195,7 @@ export class ABLResults implements Disposable {
 				// do nothing, can't delete a file that doesn't exist
 			})
 		}
-		return workspace.fs.stat(this.cfg.ablunitConfig.optionsUri.filenameUri).then((stat) => {
+		return await workspace.fs.stat(this.cfg.ablunitConfig.optionsUri.filenameUri).then((stat) => {
 			if (stat.type === FileType.File) {
 				return workspace.fs.delete(this.cfg.ablunitConfig.optionsUri.filenameUri)
 			}
@@ -201,11 +205,10 @@ export class ABLResults implements Disposable {
 		})
 	}
 
-	async processCompileErrors (testRun: TestRun, e: ABLCompileError) {
-		log.info('e.compileErrors.length=' + e.compileErrors.length)
+	async processCompilerErrors (testRun: TestRun, e: ABLCompilerError) {
 		const allTests = gatherAllTestItems(this.tests)
 
-		for (const compileError of e.compileErrors) {
+		for (const compileError of e.compilerErrors) {
 			const fileinfo = await this.propath.search(compileError.fileName)
 			if (!fileinfo) {
 				log.warn('could not find file in propath: ' + compileError.fileName)
@@ -236,7 +239,7 @@ export class ABLResults implements Disposable {
 			}
 		}
 
-		log.info('return ABLUnitCompileError e.compileErrors.length=' + e.compileErrors.length)
+		log.info('return ABLUnitCompileError e.compilerErrors.length=' + e.compilerErrors.length)
 		return e
 	}
 
@@ -250,9 +253,9 @@ export class ABLResults implements Disposable {
 			return true
 		}, (e: unknown) => {
 			log.info('e=' + e + ', options=' + JSON.stringify(options))
-			if (e instanceof CancellationError || e instanceof ABLUnitRuntimeError || e instanceof ABLCompileError || e instanceof TimeoutError || e instanceof Error) {
-				if (e instanceof ABLCompileError) {
-					return this.processCompileErrors(options, e)
+			if (e instanceof CancellationError || e instanceof ABLUnitRuntimeError || e instanceof ABLCompilerError || e instanceof TimeoutError || e instanceof Error) {
+				if (e instanceof ABLCompilerError) {
+					return this.processCompilerErrors(options, e)
 				}
 				throw e
 			}
@@ -628,7 +631,7 @@ export class ABLResults implements Disposable {
 
 		const zeroLine = module.lines.find((a) => a.LineNo == 0)
 		if (!zeroLine) {
-			log.warn('could not find zeroLine for ' + module.SourceName)
+			log.debug('could not find zeroLine for ' + module.SourceName)
 		}
 
 		for (const child of module.childModules) {

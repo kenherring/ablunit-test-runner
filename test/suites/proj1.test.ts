@@ -1,10 +1,9 @@
 import { Selection, TaskEndEvent, TaskExecution, commands, tasks, window } from 'vscode'
-import { Uri, assert, getWorkspaceUri, log, runAllTests, sleep, updateConfig, getTestCount, workspace, suiteSetupCommon, getWorkspaceFolders, oeVersion, runTestAtLine, beforeCommon, updateTestProfile, runTestsInFile, sleep2, toUri } from '../testCommon'
+import { Uri, assert, getWorkspaceUri, log, runAllTests, sleep, updateConfig, getTestCount, workspace, suiteSetupCommon, getWorkspaceFolders, oeVersion, runTestAtLine, beforeCommon, updateTestProfile, runTestsInFile, sleep2, FileUtils } from '../testCommon'
 import { getOEVersion } from 'parse/OpenedgeProjectParser'
 import { execSync } from 'child_process'
 import * as glob from 'glob'
-import * as FileUtils from '../../src/FileUtils'
-import { ABLCompileError } from 'Errors'
+import { ABLCompilerError } from 'Errors'
 
 const workspaceUri = getWorkspaceUri()
 
@@ -51,14 +50,14 @@ suite('proj1 - Extension Test Suite', () => {
 			}, (e: unknown) => {
 				log.info('runAllTests error: ' + e)
 				if (e instanceof Error) {
-					assert.equal(e.name, 'ABLCompileError', 'e.name=' + e.name + ' e.message=' + e.message)
-					let compileErr: ABLCompileError | undefined = undefined
+					assert.equal(e.name, 'ABLCompilerError', 'e.name=' + e.name + ' e.message=' + e.message)
+					let compilerErr: ABLCompilerError | undefined = undefined
 					try {
-						compileErr = e as ABLCompileError
+						compilerErr = e as ABLCompilerError
 					} catch (e) {
-						assert.fail('e is not an ABLCompileError: \ne=' + JSON.stringify(e, null, 2))
+						assert.fail('e is not an ABLCompilerError: \ne=' + JSON.stringify(e, null, 2))
 					}
-					assert.ok(compileErr?.compileErrors.length ?? 99 > 0, 'e.compileErrors.length > 0')
+					assert.ok(compilerErr?.compilerErrors.length ?? 99 > 0, 'e.compilerErrors.length > 0')
 				} else {
 					assert.fail('e is not an Error object: e=' + e)
 				}
@@ -254,7 +253,7 @@ suite('proj1 - Extension Test Suite', () => {
 	})
 
 	// default profile passes, but there is an 'ablunit' profile which is used first
-	test('proj1.14 - run profile \'ablunit\'', async () => {
+	test('proj1.14 - run profile \'ablunit\'', () => {
 		FileUtils.copyFile(Uri.joinPath(workspaceUri, 'openedge-project.proj1.14.json'), Uri.joinPath(workspaceUri, 'openedge-project.json'), { force: true })
 		const p  = runTestsInFile('test_14.p')
 			.then(() => {
@@ -314,7 +313,7 @@ suite('proj1 - Extension Test Suite', () => {
 	})
 
 	test('proj1.99 - update charset to ISO8559-1, then read file with UTF-8 chars', async () => {
-		FileUtils.copyFile(toUri('openedge-project.proj1.99.json'), toUri('openedge-project.json'), { force: true })
+		FileUtils.copyFile('openedge-project.proj1.99.json', 'openedge-project.json', { force: true })
 
 		await runTestAtLine('import_charset.p', 14)
 			.then(() => {
