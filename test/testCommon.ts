@@ -97,7 +97,7 @@ export class FilesExclude {
 export { setRuntimes, rebuildAblProject }
 // kherring.ablunit-test-runner extension objects
 export type IRunProfile = IRunProfileGlobal
-export { FileUtils, RunStatus, parseRunProfiles, toUri }
+export { FileUtils, toUri, RunStatus, parseRunProfiles }
 // vscode objects
 export {
 	CancellationError, Duration, Selection, Uri,

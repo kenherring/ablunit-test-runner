@@ -3,6 +3,7 @@ import { Duration, activateExtension, enableExtensions, getDefaultDLC, getRcodeC
 import { getContentFromFilesystem } from 'parse/TestParserCommon'
 import * as glob from 'glob'
 import { dirname } from 'path'
+import { TimeoutError } from 'Errors'
 
 let ablunitLogUri = getWorkspaceUri()
 
@@ -63,19 +64,15 @@ export function rebuildAblProject () {
 }
 
 async function getLogContents () {
-	log.debug('ablunitLogUri=' + ablunitLogUri.fsPath)
 	const pattern = dirname(dirname(ablunitLogUri.fsPath)) + '/*/*/*-ABL Language Server.log'
-	log.debug('glob pattern=' + pattern)
 
 	const logFiles = glob.globSync(pattern, { absolute: true, nodir: true })
-	log.debug('logFiles=' + JSON.stringify(logFiles, null, 2))
 
 	if (logFiles.length <= 0) {
 		log.warn('No log files found for ABL Language Server')
 		return []
 	}
 	const uri = Uri.file(logFiles[logFiles.length - 1])
-	log.debug('reading openedge-abl extension log (logFile.length=' + logFiles.length + '):\n\t"' + uri.fsPath + '"')
 	return await getContentFromFilesystem(uri)
 		.then((contents) => {
 			contents = contents.replace(/\r/g, '')
@@ -84,7 +81,7 @@ async function getLogContents () {
 				lines = []
 			}
 			log.debug('openedge-abl extension log lines.length=' + lines.length)
-			return contents.split('\n')
+			return lines
 		})
 }
 
@@ -110,9 +107,9 @@ export async function waitForLangServerReady () {
 				}
 
 				let langServerReady = false
-				log.info('---------- lines written to openedge-abl extension log since last check ----------')
+				// log.info('---------- lines written to openedge-abl extension log since last check ----------')
 				for (let i=startAtLine; i<lines.length; i++) {
-					log.info(i + ': ' + lines[i])
+					// log.info(i + ': ' + lines[i])
 
 					// regex matching lines like "[<timestamp>] [<logLevel>] [<projectName] <message>"
 					const lineDetail = /^(\[.*\]) (\[[A-Z]*\]) (\[.*\]) (.*)$/.exec(lines[i])
@@ -131,7 +128,7 @@ export async function waitForLangServerReady () {
 						}
 					}
 				}
-				log.info('---------- ---------- ----------')
+				// log.info('---------- ---------- ----------')
 				lastLogLength = lines.length
 				return langServerReady
 			})
@@ -145,18 +142,6 @@ export async function waitForLangServerReady () {
 		await prom2 // await prom so other threads can run
 	}
 
-	if (langServerReady) {
-		try {
-			const dumpSuccessProm = commands.executeCommand('abl.dumpLangServStatus')
-			const ret = await dumpSuccessProm
-			log.info('command abl.dumpLangServStatus complete (ret=' + ret + ')')
-		} catch (e) {
-			throw new Error('command abl.dumpLangServStatus failed! e=' + e)
-		}
-
-		log.info('lang server is ready (waitTime=' + waitTime + ')')
-		return true
-	}
 	if (langServerError) {
 		log.error('lang server has an error! (waitTime=' + waitTime + ')')
 
@@ -194,6 +179,19 @@ export async function waitForLangServerReady () {
 		throw new Error('lang server failed to start! (waitTime=' + waitTime + ')')
 	}
 
+	if (langServerReady) {
+		try {
+			const dumpSuccessProm = commands.executeCommand('abl.dumpLangServStatus')
+			const ret = await dumpSuccessProm
+			log.info('command abl.dumpLangServStatus complete (ret=' + ret + ')')
+		} catch (e) {
+			throw new Error('command abl.dumpLangServStatus failed! e=' + e)
+		}
+
+		log.info('lang server is ready (waitTime=' + waitTime + ')')
+		return true
+	}
+
 	if (log.getLogLevel() < LogLevel.Debug) {
 		const lines = await getLogContents()
 		log.info('---------- openedge-abl extension log ----------')
@@ -210,82 +208,28 @@ export async function waitForLangServerReady () {
 export async function waitForRCode () {
 	const maxWait = 15 // seconds
 	const waitTime = new Duration()
-	let dumpSuccess = false
 
-	let lastLogLength = 0
-	let compileSuccess = 0
-	let compileFailed = 0
 	let noChangeCount = 0
+	let prevRcodeCount = -2
+	let rcodeCount = -1
 
-
-	while (!dumpSuccess && waitTime.elapsed() < maxWait * 1000) {
-
-		const prom  = getLogContents()
-			.then((lines) => {
-				if (lastLogLength > lines.length) {
-					log.warn('log file for openedge-abl-lsp extension is smaller!  was length=' + lastLogLength + '; now length=' + lines.length)
-					lastLogLength = 0
-					return false
-				} else if (lastLogLength != -1 && lastLogLength < lines.length) {
-					log.info('---------- lines written to openedge-abl extension log since last check ----------')
-					for (let i=lastLogLength; i<lines.length; i++) {
-						log.info(i + ': ' + lines[i])
-
-						const lineDetail = /^(\[.*\]) (\[.*\]) (\[.*\]) (.*)$/.exec(lines[i])
-						if (lineDetail && lineDetail.length == 5) {
-							if (lineDetail[4] == 'Project shutdown completed') {
-								compileFailed = 0
-								compileSuccess = 0
-							} else if (lineDetail[4].startsWith('Compilation failed: ')) {
-								compileFailed++
-							} else if (lineDetail[4].startsWith('Compilation successful: ')) {
-								compileSuccess++
-							}
-						}
-					}
-					log.info('---------- ---------- ----------')
-					lastLogLength = lines.length
-					return false
-				}
-				const linesChanged = lines.length - lastLogLength
-				lastLogLength = lines.length
-				if (linesChanged == 0) {
-					noChangeCount++
-				}
-				return noChangeCount > 3 && compileFailed + compileSuccess > 0
-			})
-		dumpSuccess = await prom
-		if (dumpSuccess) {
-			break
+	while (noChangeCount < 3) {
+		const prom = sleep2(250)
+			.then(() => { return waitForLangServerReady() })
+		await prom
+		prevRcodeCount = rcodeCount
+		rcodeCount = getRcodeCount()
+		if (prevRcodeCount == rcodeCount) {
+			noChangeCount ++
 		}
-
-		const prom2 = sleep2(250, 'language server not ready yet... (waitTime=' + waitTime + ', compileFailed=' + compileFailed + ', compileSuccess=' + compileSuccess + ')')
-			.catch((e: unknown) => { throw e })
-		await prom2
+		if (waitTime.elapsed() > maxWait * 1000) {
+			throw new TimeoutError('timeout waiting for rcode', waitTime, maxWait)
+		}
 	}
 
-	log.info('lang server compile stats:')
-	log.info('  compile success = ' + compileSuccess)
-	log.info('  compile failed  = ' + compileFailed)
-
-
-	if (dumpSuccess) {
-		log.info('lang server is ready ' + waitTime)
-		return true
+	if (rcodeCount == 0) {
+		log.info('rcode count is 0 after waitTime=' + waitTime)
 	}
-
-	return await getLogContents()
-		.then((lines) => {
-			log.info('---------- openedge-abl extension log ----------')
-			for (let i=0; i<lines.length; i++) {
-				log.info(i + ': ' + lines[i])
-			}
-			log.info('---------- ---------- ----------')
-			log.error('lang server is not ready! (waitTime='  + waitTime + ')')
-			throw new Error('lang server is not ready! (waitTime='  + waitTime + ')')
-		}, (e: unknown) => {
-			throw e
-		})
 }
 
 export function setRuntimes (runtimes?: IRuntime[]) {

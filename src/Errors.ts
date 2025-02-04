@@ -96,7 +96,7 @@ export class TimeoutError extends Error implements ITimeoutError {
 	limit: number
 	cmd?: string
 
-	constructor (message: string, duration: Duration, limit: number, cmd: string) {
+	constructor (message: string, duration: Duration, limit: number, cmd?: string) {
 		super(message)
 		this.name = 'TimeoutError'
 		this.duration = duration

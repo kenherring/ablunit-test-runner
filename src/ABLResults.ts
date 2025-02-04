@@ -202,7 +202,6 @@ export class ABLResults implements Disposable {
 	}
 
 	async processCompilerErrors (testRun: TestRun, e: ABLCompilerError) {
-		log.info('e.compilerErrors.length=' + e.compilerErrors.length)
 		const allTests = gatherAllTestItems(this.tests)
 
 		for (const compileError of e.compilerErrors) {
