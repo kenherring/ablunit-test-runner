@@ -123,9 +123,6 @@ class VSCode.ABLUnit.Runner.ABLRunner inherits OpenEdge.ABLUnit.Runner.ABLRunner
 
         messages = NEW JsonArray().
 
-        message 800 compiler:num-messages.
-        message 801 error-status:error.
-        message 802 compiler:error-row.
         if compiler:num-messages > 0 then
         do:
             do i = 1 to compiler:num-messages:
@@ -154,7 +151,6 @@ class VSCode.ABLUnit.Runner.ABLRunner inherits OpenEdge.ABLUnit.Runner.ABLRunner
         if error-status:error and error-status:num-messages > 0 then
         do:
             do i = i to error-status:num-messages:
-                message 810 i error-status:get-message(i).
                 detail = NEW JsonObject().
                 if error-status:get-message(i) = '' and error-status:get-number(i) = 0 then
                     next.
