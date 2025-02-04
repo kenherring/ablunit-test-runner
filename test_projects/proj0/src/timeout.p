@@ -27,40 +27,40 @@ end procedure.
 
 @Test.
 procedure timeout_5 :
-    message "pausing 5 seconds".
+    message "pausing 5 seconds (" + string(time, "hh:mm:ss") + ")".
     pause 5.
-    message "pause complete".
+    message "pause complete (" + string(time, "hh:mm:ss") + ")".
     Assert:isTrue(true).
 end procedure.
 
 @Test.
 procedure timeout_2 :
-    message "pausing 2 seconds".
+    message "pausing 2 seconds (" + string(time, "hh:mm:ss") + ")".
     pause 2.
-    message "pause complete".
+    message "pause complete (" + string(time, "hh:mm:ss") + ")".
     Assert:isTrue(true).
 end procedure.
 
 @Test.
 procedure timeout_29 :
-    message "pausing 29 seconds".
+    message "pausing 29 seconds (" + string(time, "hh:mm:ss") + ")".
     pause 29.
-    message "pause complete".
+    message "pause complete (" + string(time, "hh:mm:ss") + ")".
     Assert:isTrue(true).
 end procedure.
 
 @Test.
 procedure timeout_31 :
-    message "pausing 31 seconds".
+    message "pausing 31 seconds (" + string(time, "hh:mm:ss") + ")".
     pause 31.
-    message "pause complete".
+    message "pause complete (" + string(time, "hh:mm:ss") + ")".
     Assert:isTrue(true).
 end procedure.
 
 @Test.
 procedure timeout_45 :
-    message "pausing 45 seconds".
+    message "pausing 45 seconds (" + string(time, "hh:mm:ss") + ")".
     pause 45.
-    message "pause complete".
+    message "pause complete (" + string(time, "hh:mm:ss") + ")".
     Assert:isTrue(true).
 end procedure.
