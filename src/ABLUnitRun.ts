@@ -74,7 +74,7 @@ export async function ablunitRun (options: TestRun, res: ABLResults, cancellatio
 		.then((r) => {
 			log.info('runCommand complete (r=' + r + ')')
 		}, (e: unknown) => {
-			log.info('e=' + e)
+			log.info('runCommand threw error! e=' + e)
 			throw e
 		})
 	await res.parseOutput(options)
@@ -296,23 +296,37 @@ function runCommand (res: ABLResults, options: TestRun, cancellation: Cancellati
 				setTimeoutTestStatus(options, res.cfg.ablunitConfig.timeout)
 				res.setStatus(RunStatus.Timeout, 'signal=' + signal)
 				log.info('----- ABLUnit Test Run Timeout - ' + res.cfg.ablunitConfig.timeout + 'ms ----- ' + testRunDuration, {testRun: options, testItem: currentTestItem })
-				reject(new TimeoutError('ABLUnit process timeout', testRunDuration, res.cfg.ablunitConfig.timeout, cmd))
+				const e = new TimeoutError('ABLUnit process timeout', testRunDuration, res.cfg.ablunitConfig.timeout, cmd)
+				reject(e)
 			}
 			if (process.killed || signal) {
 				res.setStatus(RunStatus.Killed, 'signal=' + signal)
 				log.info('----- ABLUnit Test Run Killed - (signal=' + signal + ') ----- ' + testRunDuration, {testRun: options, testItem: currentTestItem })
-				reject(new ABLUnitRuntimeError('ABLUnit process killed', 'exit_code=' + code + '; signal=' + signal, cmd))
+				const e = new ABLUnitRuntimeError('ABLUnit process killed', 'exit_code=' + code + '; signal=' + signal, cmd)
+				reject(e)
+				return e
 			}
 
 			if (code && code != 0) {
 				if (compilerErrors.length > 0) {
-					res.setStatus(RunStatus.Error, 'compile_errors=' + compilerErrors.length)
-					log.info('----- ABLUnit Test Run Failed (compile_errors=' + compilerErrors.length + ') ----- ' + testRunDuration, {testRun: options, testItem: currentTestItem })
-					reject(new ABLCompilerError(compilerErrors, cmd))
+					log.info('100')
+					res.setStatus(RunStatus.Error, 'compilerErrors=' + compilerErrors.length)
+					log.info('101')
+					const e = new ABLCompilerError(compilerErrors, cmd)
+					log.info('102')
+					res.setStatus(e)
+					log.info('103')
+					log.info('----- ABLUnit Test Run Failed (exit_code=' + code + '; compilerErrors=' + compilerErrors.length + ') ----- ' + testRunDuration, {testRun: options, testItem: currentTestItem })
+					log.info('104')
+					reject(e)
+					log.info('105')
+					return e
 				}
 				res.setStatus(RunStatus.Error, 'exit_code=' + code)
 				log.info('----- ABLUnit Test Run Failed (exit_code=' + code + ') ----- ' + testRunDuration, {testRun: options, testItem: currentTestItem })
-				reject(new ABLUnitRuntimeError('ABLUnit exit_code=' + code, 'ABLUnit exit_code=' + code + '; signal=' + signal, cmd))
+				const e = new ABLUnitRuntimeError('ABLUnit exit_code=' + code, 'ABLUnit exit_code=' + code + '; signal=' + signal, cmd)
+				reject(e)
+				return
 			}
 
 			res.setStatus(RunStatus.Complete, 'success')
