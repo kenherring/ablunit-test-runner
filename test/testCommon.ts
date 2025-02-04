@@ -806,7 +806,7 @@ export async function updateTestProfile (key: string, value: string | string[] |
 	}
 	const newjson = Buffer.from(newtext)
 	await workspace.fs.writeFile(testProfileUri, newjson)
-	log.info('writeFileComplete! newjson=' + newjson)
+	log.debug('writeFileComplete! newjson=' + newjson)
 	return
 }
 

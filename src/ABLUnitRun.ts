@@ -70,7 +70,7 @@ export async function ablunitRun (options: TestRun, res: ABLResults, cancellatio
 
 	await res.cfg.createAblunitJson(res.cfg.ablunitConfig.config_uri, res.cfg.ablunitConfig.options, res.testQueue)
 
-	await runCommand(res, options, cancellation)
+	await runCommand(res, options, cancellation).catch((e: unknown) => { throw e })
 	await res.parseOutput(options)
 }
 

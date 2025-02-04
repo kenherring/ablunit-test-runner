@@ -95,8 +95,8 @@ suite('proj9 - Extension Test Suite', () => {
 		assert.equal(await getTestCount(resultsJson, 'error'), 0, 'error test count')
 	})
 
-	test('proj9.20 - do not import openedge-project.json', () => {
-		const prom = updateTestProfile('importOpenedgeProjectJson', false)
+	test('proj9.20 - do not import openedge-project.json', async () => {
+		await updateTestProfile('importOpenedgeProjectJson', false)
 			.then(() => { return updateTestProfile('openedgeProjectProfile', 'profile2') })
 			.then(() => { return runAllTests(true, false) })
 			.then(() => {
@@ -107,7 +107,6 @@ suite('proj9 - Extension Test Suite', () => {
 				assert.notFileExists(Uri.joinPath(workspace.workspaceFolders![0].uri, 'results.json'))
 				return // nosonar
 			})
-		return prom
 	})
 
 })
