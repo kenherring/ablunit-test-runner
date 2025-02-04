@@ -22,7 +22,6 @@ export interface IErrorStatusMessage {
 
 export interface IErrorStatus {
 	error: boolean
-	// errorObjectDetail: string // handle
 	instantiatingProcedure: string
 	numMessages: number
 	type: string
@@ -72,15 +71,16 @@ function mergeMessagesByPosition (messages: ICompilerErrorMessage[]): ICompilerE
 	return messages
 }
 
-export class ABLCompileError extends ABLUnitRuntimeError {
+export class ABLCompilerError extends ABLUnitRuntimeError {
 	constructor (public compilerErrors: ICompilerError[], cmd?: string) {
 		super('compile error count=' + compilerErrors.length, compilerErrors[0].messages[0].message, cmd)
-		this.name = 'ABLCompileError'
-		try {
-			mergeMessagesByPosition(compilerErrors[0].messages)
-			this.message = 'compile error counf=' + compilerErrors.length + '\n' + compilerErrors.map((m) => { return m.messages.map((n) => { return n.message }).join('\n') }).join('\n')
-		} catch (e) {
-			log.error('error=' + e)
+		this.name = 'ABLCompilerError'
+		for (const i of compilerErrors) {
+			try {
+				mergeMessagesByPosition(i.messages)
+			} catch (e) {
+				log.error('error=' + e)
+			}
 		}
 	}
 }

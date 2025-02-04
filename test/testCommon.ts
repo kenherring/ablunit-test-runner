@@ -561,7 +561,7 @@ export async function runAllTests (doRefresh = true, waitForResults = true, with
 			return false
 		}, (e: unknown) => {
 			runAllTestsDuration?.stop()
-			if (e instanceof Error && e.name == 'ABLCompileError') {
+			if (e instanceof Error && e.name == 'ABLCompilerError') {
 				throw e
 			}
 			throw new Error(testCommand + ' failed: ' + e)
@@ -1001,7 +1001,7 @@ export async function getResults (len = 1, tag?: string): Promise<ABLResults[]> 
 				await refreshData()
 			} catch (e) {
 				log.info('e=' + e)
-				if (e instanceof Error && e.name == 'ABLCompileError') {
+				if (e instanceof Error && e.name == 'ABLCompilerError') {
 					log.error(tag + 'ABLCompile Error Detected')
 					throw e
 				}

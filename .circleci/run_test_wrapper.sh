@@ -139,7 +139,9 @@ run_tests () {
 	xvfb-run -a npm run "$RUN_SCRIPT" || EXIT_CODE=$?
 	echo "xvfb-run end (EXIT_CODE=$EXIT_CODE)"
 
-	mv coverage/lcov.info artifacts/coverage/lcov.info || true ## https://github.com/microsoft/vscode-test-cli/issues/38
+	if [ "$RUN_SCRIPT" = 'test:coverage' ]; then
+		mv coverage/lcov.info artifacts/coverage/lcov.info || true ## https://github.com/microsoft/vscode-test-cli/issues/38
+	fi
 
 	if [ "$EXIT_CODE" = "0" ]; then
 		echo "xvfb-run success"

@@ -62,27 +62,6 @@ export function rebuildAblProject () {
 		})
 }
 
-export async function printLastLangServerError () {
-	const lines = await getLogContents()
-	if (lines.length == 0) {
-		throw new Error('ABL language server log file has no lines')
-	}
-
-	let lastLogErrors = ''
-	let hasError = false
-	for (let i = lines.length - 1; i >= 0; i--) {
-		// read until we hit an error, then read until we don't see an error.
-		if (lines[i].includes(' [ERROR] ')) {
-			hasError = true
-			lastLogErrors = String(i).padStart(8, ' ') + ': ' + lines[i] + '\n' + lastLogErrors
-		} else if (hasError) {
-			break
-		}
-	}
-	log.info('Last logged ABL lang server error (lines.length=' + lines.length + '):\n"' + lastLogErrors + '"')
-	return hasError
-}
-
 async function getLogContents () {
 	log.debug('ablunitLogUri=' + ablunitLogUri.fsPath)
 	const pattern = dirname(dirname(ablunitLogUri.fsPath)) + '/*/*/*-ABL Language Server.log'
@@ -302,7 +281,6 @@ export async function waitForRCode () {
 				log.info(i + ': ' + lines[i])
 			}
 			log.info('---------- ---------- ----------')
-			// return printLastLangServerError().then(() => {
 			log.error('lang server is not ready! (waitTime='  + waitTime + ')')
 			throw new Error('lang server is not ready! (waitTime='  + waitTime + ')')
 		}, (e: unknown) => {

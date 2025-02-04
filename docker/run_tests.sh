@@ -65,7 +65,7 @@ initialize () {
 		usage && exit 1
 	fi
 
-	if $STAGED_ONLY && [ -n "${CIRCLE_TAG:-}" ]; then
+	if ! $STAGED_ONLY && [ -n "${CIRCLE_TAG:-}" ]; then
 		echo "ERROR: -t option is not allowed with -m option - cannot add staged files to tag reference" >&2
 		exit 1
 	fi

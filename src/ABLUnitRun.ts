@@ -8,7 +8,7 @@ import { basename, dirname } from 'path'
 import { globSync } from 'glob'
 import * as fs from 'fs'
 import * as FileUtils from './FileUtils'
-import { ABLCompileError, ABLUnitRuntimeError, ICompilerError, TimeoutError } from 'Errors'
+import { ABLCompilerError, ABLUnitRuntimeError, ICompilerError, TimeoutError } from 'Errors'
 
 interface IABLUnitStatus {
 	action: string,
@@ -46,7 +46,7 @@ export enum RunStatusString {
 	'Error' = 82,
 }
 
-let abort: AbortController = new AbortController
+let abort: AbortController
 let watcher: fs.StatWatcher | undefined = undefined
 let compilerErrors: ICompilerError[] = []
 let currentTestItem: TestItem | undefined = undefined
@@ -327,11 +327,11 @@ async function runCommand (res: ABLResults, options: TestRun, cancellation: Canc
 					res.setStatus(RunStatus.Error, 'compile_errors=' + compilerErrors.length)
 					log.info('----- ABLUnit Test Run Failed (compile_errors=' + compilerErrors.length + ') ----- ' + testRunDuration, {testRun: options, testItem: currentTestItem })
 					// log.info('reject')
-					// reject(new ABLCompileError(compileErrors, cmd))
+					// reject(new ABLCompilerError(compilerErrors, cmd))
 					// log.info('throw')
-					// throw new ABLCompileError(compileErrors, cmd)
-					log.info('compileErrors=' + JSON.stringify(compilerErrors, null, 2))
-					reject(new ABLCompileError(compilerErrors, cmd))
+					// throw new ABLCompilerError(compilerErrors, cmd)
+					log.info('compilerErrors=' + JSON.stringify(compilerErrors, null, 2))
+					reject(new ABLCompilerError(compilerErrors, cmd))
 					// log.info('return')
 					// return new Error('compile error')
 				}
@@ -374,7 +374,7 @@ function setCurrentTestItem (ablunitStatus: IABLUnitStatus) {
 	}
 }
 
-function getEnvVars (dlcUri: Uri | undefined) {
+export function getEnvVars (dlcUri: Uri | undefined) {
 	const runenv = process.env
 	let envConfig: Record<string, string> | undefined = undefined
 	if (process.platform === 'win32') {

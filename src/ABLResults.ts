@@ -19,7 +19,7 @@ import { ITestObj } from 'parse/config/CoreOptions'
 import * as FileUtils from './FileUtils'
 import { basename, dirname } from 'path'
 import { globSync } from 'glob'
-import { ABLCompileError, ABLUnitRuntimeError, TimeoutError } from 'Errors'
+import { ABLCompilerError, ABLUnitRuntimeError, TimeoutError } from 'Errors'
 
 export class ABLResults implements Disposable {
 	workspaceFolder: WorkspaceFolder
@@ -201,11 +201,11 @@ export class ABLResults implements Disposable {
 		})
 	}
 
-	async processCompileErrors (testRun: TestRun, e: ABLCompileError) {
-		log.info('e.compileErrors.length=' + e.compileErrors.length)
+	async processCompilerErrors (testRun: TestRun, e: ABLCompilerError) {
+		log.info('e.compilerErrors.length=' + e.compilerErrors.length)
 		const allTests = gatherAllTestItems(this.tests)
 
-		for (const compileError of e.compileErrors) {
+		for (const compileError of e.compilerErrors) {
 			const fileinfo = await this.propath.search(compileError.fileName)
 			if (!fileinfo) {
 				log.warn('could not find file in propath: ' + compileError.fileName)
@@ -236,7 +236,7 @@ export class ABLResults implements Disposable {
 			}
 		}
 
-		log.info('return ABLUnitCompileError e.compileErrors.length=' + e.compileErrors.length)
+		log.info('return ABLUnitCompileError e.compilerErrors.length=' + e.compilerErrors.length)
 		return e
 	}
 
@@ -250,9 +250,9 @@ export class ABLResults implements Disposable {
 			return true
 		}, (e: unknown) => {
 			log.info('e=' + e + ', options=' + JSON.stringify(options))
-			if (e instanceof CancellationError || e instanceof ABLUnitRuntimeError || e instanceof ABLCompileError || e instanceof TimeoutError || e instanceof Error) {
-				if (e instanceof ABLCompileError) {
-					return this.processCompileErrors(options, e)
+			if (e instanceof CancellationError || e instanceof ABLUnitRuntimeError || e instanceof ABLCompilerError || e instanceof TimeoutError || e instanceof Error) {
+				if (e instanceof ABLCompilerError) {
+					return this.processCompilerErrors(options, e)
 				}
 				throw e
 			}

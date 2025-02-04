@@ -1,5 +1,4 @@
-import { assert, getDefaultDLC, getWorkspaceUri, oeVersion, runAllTests, runAllTestsWithCoverage, setRuntimes, suiteSetupCommon, updateTestProfile, Uri } from '../testCommon'
-import * as FileUtils from 'FileUtils'
+import { assert, getDefaultDLC, getWorkspaceUri, oeVersion, runAllTests, runAllTestsWithCoverage, setRuntimes, suiteSetupCommon, updateTestProfile, Uri, FileUtils } from '../testCommon'
 
 const sessionTempDir = getSessionTempDir()
 
