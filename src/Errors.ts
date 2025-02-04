@@ -73,15 +73,26 @@ function mergeMessagesByPosition (messages: ICompilerErrorMessage[]): ICompilerE
 
 export class ABLCompilerError extends ABLUnitRuntimeError {
 	constructor (public compilerErrors: ICompilerError[], cmd?: string) {
-		super('compile error count=' + compilerErrors.length, compilerErrors[0].messages[0].message, cmd)
+		super('compile error count=' + compilerErrors.length, '<message>', cmd)
+		log.info('200 ' + compilerErrors.length)
+		log.info('200 ' + compilerErrors[0].messages.length)
+		log.info('201 ' + compilerErrors[0].messages[0].messageType + ' ' + compilerErrors[0].messages[0].message)
 		this.name = 'ABLCompilerError'
+		log.info('201')
 		for (const i of compilerErrors) {
+			log.info('202 ' + JSON.stringify(i, null, 2))
 			try {
+				log.info('203')
 				mergeMessagesByPosition(i.messages)
+				log.info('204')
 			} catch (e) {
+				log.info('205')
 				log.error('error=' + e)
+				log.info('206')
 			}
+			log.info('207')
 		}
+		log.info('208')
 	}
 }
 

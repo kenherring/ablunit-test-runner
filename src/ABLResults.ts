@@ -92,7 +92,7 @@ export class ABLResults implements Disposable {
 		}
 		this.status = status
 		this.statusNote = statusNote
-		log.info('STATUS: ' + status)
+		log.info('STATUS: ' + status + ', NOTE: ' + statusNote)
 	}
 
 	setTestData (testData: WeakMap<TestItem, ABLTestData>) {

@@ -245,8 +245,12 @@ function runCommand (res: ABLResults, options: TestRun, cancellation: Cancellati
 			}
 			for (const line of lines) {
 				if (line.startsWith('ABLUNIT_STATUS=SERIALIZED_ERROR ')) {
+					log.info('50 line=' + line)
+					log.info('51 line.substr=' + line.substring(32))
 					const compilerError = JSON.parse(line.substring(32)) as ICompilerError
+					log.info('52')
 					compilerErrors.push(compilerError)
+					log.info('53')
 					continue
 				} else if (line.startsWith('ABLUNIT_STATUS=')) {
 					let ablunitStatus: IABLUnitStatus
