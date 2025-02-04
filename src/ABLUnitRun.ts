@@ -70,7 +70,13 @@ export async function ablunitRun (options: TestRun, res: ABLResults, cancellatio
 
 	await res.cfg.createAblunitJson(res.cfg.ablunitConfig.config_uri, res.cfg.ablunitConfig.options, res.testQueue)
 
-	await runCommand(res, options, cancellation).catch((e: unknown) => { throw e })
+	await runCommand(res, options, cancellation)
+		.then((r) => {
+			log.info('runCommand complete (r=' + r + ')')
+		}, (e: unknown) => {
+			log.info('e=' + e)
+			throw e
+		})
 	await res.parseOutput(options)
 }
 
@@ -156,7 +162,7 @@ function getDefaultCommand (res: ABLResults) {
 	return cmdSanitized
 }
 
-async function runCommand (res: ABLResults, options: TestRun, cancellation: CancellationToken) {
+function runCommand (res: ABLResults, options: TestRun, cancellation: CancellationToken) {
 	FileUtils.deleteFile([
 		res.cfg.ablunitConfig.profFilenameUri,
 		// res.cfg.ablunitConfig.config_uri,
@@ -201,7 +207,7 @@ async function runCommand (res: ABLResults, options: TestRun, cancellation: Canc
 
 	let stdout = ''
 
-	const prom = new Promise<string>((resolve, reject) => {
+	return new Promise<string>((resolve, reject) => {
 		res.setStatus(RunStatus.Running)
 		const runenv = getEnvVars(res.dlc.uri)
 		const compilerErrors: ICompilerError[] = []
@@ -286,13 +292,13 @@ async function runCommand (res: ABLResults, options: TestRun, cancellation: Canc
 				watcher.removeAllListeners()
 			}
 			processUpdates(options, res.tests, updateUri)
-			if (process.killed || signal) {
+			if (signal == 'SIGTERM') {
 				setTimeoutTestStatus(options, res.cfg.ablunitConfig.timeout)
 				res.setStatus(RunStatus.Timeout, 'signal=' + signal)
 				log.info('----- ABLUnit Test Run Timeout - ' + res.cfg.ablunitConfig.timeout + 'ms ----- ' + testRunDuration, {testRun: options, testItem: currentTestItem })
 				reject(new TimeoutError('ABLUnit process timeout', testRunDuration, res.cfg.ablunitConfig.timeout, cmd))
 			}
-			if (process.killed) {
+			if (process.killed || signal) {
 				res.setStatus(RunStatus.Killed, 'signal=' + signal)
 				log.info('----- ABLUnit Test Run Killed - (signal=' + signal + ') ----- ' + testRunDuration, {testRun: options, testItem: currentTestItem })
 				reject(new ABLUnitRuntimeError('ABLUnit process killed', 'exit_code=' + code + '; signal=' + signal, cmd))
@@ -320,7 +326,6 @@ async function runCommand (res: ABLResults, options: TestRun, cancellation: Canc
 			log.info('process.on.message m=' + JSON.stringify(m))
 		})
 	})
-	return await prom
 }
 
 function setCurrentTestItem (ablunitStatus: IABLUnitStatus) {
