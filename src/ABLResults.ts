@@ -85,8 +85,12 @@ export class ABLResults implements Disposable {
 		delete this.ablResults
 	}
 
-	setStatus (status: RunStatus, statusNote?: string) {
-		if (this.status === RunStatus.Cancelled) {
+	setStatus (status: RunStatus | Error, statusNote?: string) {
+		if (status instanceof Error) {
+			const e = status
+			statusNote = statusNote ?? e.name + ': ' + e.message
+			status = RunStatus.Error
+		} else if (this.status === RunStatus.Cancelled) {
 			log.debug('cancellation requested - ignoring setStatus() call')
 			throw new CancellationError()
 		}
