@@ -65,7 +65,7 @@ class VSCode.ABLUnit.Runner.ABLRunner inherits OpenEdge.ABLUnit.Runner.ABLRunner
             msgObj:Add('number', error-status:get-number(i)).
             msgArr:Add(msgObj).
         end.
-        errorJson:Add('message' + string(i), msgArr).
+        errorJson:Add('messages' + string(i), msgArr).
 
         errorJson:write(output serialized).
         this-object:updateFile(this-object:updateFilepath, 'SERIALIZED_ERROR ' + serialized, false).
@@ -122,27 +122,42 @@ class VSCode.ABLUnit.Runner.ABLRunner inherits OpenEdge.ABLUnit.Runner.ABLRunner
         compileErrorJson:Add('warning', compiler:warning).
 
         messages = NEW JsonArray().
-        do i = 1 to compiler:num-messages:
-            detail = NEW JsonObject().
-            detail:Add('column', compiler:get-column(i)).
-            detail:Add('errorColumn', compiler:get-error-column(i)).
-            detail:Add('errorRow', compiler:get-error-row(i)).
-            detail:Add('fileName', compiler:get-file-name(i)).
-            detail:Add('fileOffset', compiler:get-file-offset(i)).
-            detail:Add('message', compiler:get-message(i)).
-            case compiler:get-message-type(i):
-                when 1 then
-                    detail:Add('messageType', '1-Error').
-                when 2 then
-                    detail:Add('messageType', '2-Warning').
-                when 3 then
-                    detail:Add('messageType', '3-Preprocessor Directive').
-                otherwise
-                    undo, throw new Progress.Lang.AppError('unexpected message type: ' + string(compiler:get-message-type(i))).
-            end case.
-            detail:Add('number', compiler:get-number(i)).
-            detail:Add('row', compiler:get-row(i)).
-            messages:Add(detail).
+
+        if compiler:num-messages > 0 then
+        do:
+            do i = 1 to compiler:num-messages:
+                detail = NEW JsonObject().
+                detail:Add('column', compiler:get-column(i)).
+                detail:Add('errorColumn', compiler:get-error-column(i)).
+                detail:Add('errorRow', compiler:get-error-row(i)).
+                detail:Add('fileName', compiler:get-file-name(i)).
+                detail:Add('fileOffset', compiler:get-file-offset(i)).
+                detail:Add('message', compiler:get-message(i)).
+                case compiler:get-message-type(i):
+                    when 1 then
+                        detail:Add('messageType', '1-Error').
+                    when 2 then
+                        detail:Add('messageType', '2-Warning').
+                    when 3 then
+                        detail:Add('messageType', '3-Preprocessor Directive').
+                    otherwise
+                        undo, throw new Progress.Lang.AppError('unexpected message type: ' + string(compiler:get-message-type(i))).
+                end case.
+                detail:Add('number', compiler:get-number(i)).
+                detail:Add('row', compiler:get-row(i)).
+                messages:Add(detail).
+            end.
+        end.
+        if error-status:error and error-status:num-messages > 0 then
+        do:
+            do i = i to error-status:num-messages:
+                detail = NEW JsonObject().
+                if error-status:get-message(i) = '' and error-status:get-number(i) = 0 then
+                    next.
+                detail:Add('message', error-status:get-message(i)).
+                detail:Add('number', error-status:get-number(i)).
+                messages:Add(detail).
+            end.
         end.
 
         compileErrorJson:Add('messages', messages).
@@ -169,7 +184,7 @@ class VSCode.ABLUnit.Runner.ABLRunner inherits OpenEdge.ABLUnit.Runner.ABLRunner
                 define variable progname as character no-undo.
                 define variable serialized as character no-undo.
                 progname = trim(entry(7, e:getMessage(1), ' '),':').
-                compile value(progname) no-error.
+                compile value(progname) save = no no-error.
                 if compiler:error then
                 do:
                     serialized = compilerErrorToJsonString().

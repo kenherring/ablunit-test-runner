@@ -1,11 +1,8 @@
 import { Uri, commands, window, workspace } from 'vscode'
-import { assert, deleteRcode, getRcodeCount, getResults, getTestControllerItemCount, getTestItem, getXrefCount, log, rebuildAblProject, refreshTests, runAllTests, runAllTestsWithCoverage, runTestAtLine, runTestsDuration, runTestsInFile, sleep2, suiteSetupCommon, toUri, updateConfig, updateTestProfile } from '../testCommon'
+import { assert, getRcodeCount, getResults, getTestControllerItemCount, getTestItem, getXrefCount, log, rebuildAblProject, refreshTests, runAllTests, runAllTestsWithCoverage, runTestAtLine, runTestsDuration, runTestsInFile, sleep2, suiteSetupCommon, FileUtils, toUri, updateConfig, updateTestProfile } from '../testCommon'
 import { ABLResultsParser } from 'parse/ResultsParser'
 import { TimeoutError } from 'Errors'
-import * as glob from 'glob'
-import * as FileUtils from '../../src/FileUtils'
 import * as vscode from 'vscode'
-import { restartLangServer } from '../openedgeAblCommands'
 
 function createTempFile () {
 	const tempFile = toUri('UNIT_TEST.tmp')

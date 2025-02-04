@@ -107,7 +107,6 @@ suite('proj9 - Extension Test Suite', () => {
 				assert.notFileExists(Uri.joinPath(workspace.workspaceFolders![0].uri, 'results.json'))
 				return // nosonar
 			})
-		return prom
 	})
 
 })

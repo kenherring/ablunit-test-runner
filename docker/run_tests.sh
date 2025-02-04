@@ -70,6 +70,11 @@ initialize () {
 		exit 1
 	fi
 
+	if ! $STAGED_ONLY && [ -n "${CIRCLE_TAG:-}" ]; then
+		echo "ERROR: -t option is not allowed with -m option - cannot add staged files to tag reference" >&2
+		exit 1
+	fi
+
 	if [ -z "$DLC" ]; then
 		echo "ERROR: DLC environment variable is not set"
 		exit 1
@@ -161,6 +166,7 @@ run_tests_in_docker () {
 	for ABLUNIT_TEST_RUNNER_OE_VERSION in "${OE_VERSIONS[@]}"; do
 		echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] docker run with ABLUNIT_TEST_RUNNER_OE_VERSION=$ABLUNIT_TEST_RUNNER_OE_VERSION"
 		export ABLUNIT_TEST_RUNNER_OE_VERSION ABLUNIT_TEST_RUNNER_VSCODE_VERSION ABLUNIT_TEST_RUNNER_PROJECT_PROJECT_NAME CIRCLE_TAG
+		export ABLUNIT_TEST_RUNNER_OE_VERSION ABLUNIT_TEST_RUNNER_VSCODE_VERSION ABLUNIT_TEST_RUNNER_PROJECT_PROJECT_NAME CIRCLE_TAG
 		local ARGS=(
 			--cpus=4 ## large resource class in CircleCI
 			--memory=4g ## large resource class in CircleCI
@@ -181,6 +187,7 @@ run_tests_in_docker () {
 			-v "${PWD}/coverage":/home/circleci/project/coverage
 		)
 		[ -n "${CIRCLE_TAG:-}" ] && ARGS+=(-e CIRCLE_TAG)
+		[ -n "${CIRCLE_TAG:-}" ] && ARGS+=(-e CIRCLE_TAG)
 		[ -n "${ABLUNIT_TEST_RUNNER_PROJECT_NAME:-}" ] && ARGS+=(-e ABLUNIT_TEST_RUNNER_PROJECT_NAME)
 		ARGS+=(
 			-v "${PWD}":/home/circleci/ablunit-test-runner:ro
@@ -190,7 +197,9 @@ run_tests_in_docker () {
 		)
 		## run tests inside the container
 		set -x
+		set -x
 		docker run "${ARGS[@]}"
+		set +x
 		set +x
 		echo "tests completed successfully with ABLUNIT_TEST_RUNNER_OE_VERSION=$ABLUNIT_TEST_RUNNER_OE_VERSION"
 	done

@@ -2,7 +2,6 @@ import { getDLC, getOEVersion, getOpenEdgeProfileConfig } from 'parse/OpenedgePr
 import { assert, getWorkspaceFolders, log } from '../testCommon'
 import { toUri } from 'FileUtils'
 
-
 const workspaceFolder = getWorkspaceFolders()[0]
 
 suiteSetup('suiteSetup', () => {
