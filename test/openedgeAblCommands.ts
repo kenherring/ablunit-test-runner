@@ -43,6 +43,7 @@ export function restartLangServer () {
 		return true
 	}, (e: unknown) => {
 		log.error('abl.restart.langserv command failed! e=' + e)
+		throw new Error('abl.restart.langserv command failed! e=' + e)
 	})
 }
 
@@ -54,13 +55,15 @@ export async function rebuildAblProject () {
 
 	await commands.executeCommand('abl.project.rebuild')
 
-	while(compileResults.success == 0 && compileResults.failure == 0 && rebuildTime.elapsed() < 15000) {
+	let stillCompiling = true
+	while(!stillCompiling && compileResults.success == 0 && compileResults.failure == 0 && rebuildTime.elapsed() < 15000) {
 		const prom = sleep2(250, 'waiting for project rebuild to complete... ' + rebuildTime)
 			.then(() => { return getLogContents() })
 		const lines = await prom
 		if (lines.length == startingLine) {
 			continue
 		}
+		stillCompiling = false
 		for (let i=startingLine; i<lines.length; i++) {
 			log.info(i + ': ' + lines[i])
 			const parts = /^\[([^\]]*)\] \[([A-Z]*)\] (\[[^\]]*\]*)? ?(.*)$/.exec(lines[i])
@@ -78,12 +81,17 @@ export async function rebuildAblProject () {
 				compileResults = { success: 0, failure: 0 }
 			} else if (message?.startsWith('Compilation successful: ')) {
 				compileResults.success++
+				stillCompiling = true
 			} else if (message?.startsWith('Compilation failed: ')) {
 				compileResults.failure++
+				stillCompiling = true
 			}
 		}
 		startingLine = lines.length
-		log.info('compileResults=' + JSON.stringify(compileResults))
+		log.info('stillCompiling=' + stillCompiling + ', compileResults=' + JSON.stringify(compileResults))
+		if (stillCompiling) {
+			continue
+		}
 		if (compileResults.success > 0 || compileResults.failure > 0) {
 			break
 		}
@@ -132,15 +140,13 @@ interface ILangServStatus {
 
 async function dumpLangServStatus () {
 	const startingLine = (await getLogContents()).length
-	const r = await commands.executeCommand('abl.dumpLangServStatus')
-		.then((r) => {
-			log.info('dump.then (r=' + r + ')')
-			return sleep2(250)
+	await commands.executeCommand('abl.dumpLangServStatus')
+		.then(() => {
+			return sleep2(250, 'pause after command abl.dumpLangServStatus')
 		}, (e: unknown) => {
 			log.error('e=' + e)
 			throw e
 		})
-	log.info('r=' + r)
 
 	let lines = await getLogContents()
 	if (lines.length == startingLine) {
@@ -162,7 +168,7 @@ async function dumpLangServStatus () {
 			const message = parts[4]
 
 			// log.info('message = "' + message + '"')
-			// log.info('parts=' + JSON.stringify(parts, null, 4))
+			// log.info('parts=' + JSON.stringify(parts))
 			if (message == '******** LANGUAGE SERVER STATUS ********') {
 				langServStatus = {}
 			} else if (message.startsWith('Number of OE installs:')) {
@@ -222,7 +228,7 @@ async function dumpLangServStatus () {
 							langServStatus.projectStatus[idx].activeAblSessions = parts[2] as unknown as number
 							langServStatus.projectStatus[idx].lsWorkers = parts[3] as unknown as number
 						}
-					} else if (message.startsWith('-> Source queue size: ')) {
+					} else if (message.startsWith('-> SourceCode queue size: ')) {
 						langServStatus.projectStatus[idx].sourceQueue = message.split(' ').pop() as unknown as number
 					} else if (message.startsWith('-> RCode queue size: ')) {
 						langServStatus.projectStatus[idx].rcodeQueue = message.split(' ').pop() as unknown as number
@@ -262,21 +268,23 @@ async function getLogContents () {
 export async function waitForLangServerReady () {
 	const maxWait = 15 // seconds // seconds
 	const waitTime = new Duration()
-	const langServerReady = false
+	let langServerReady = false
 	let langServerError = false
+	let stillCompiling = true
+	let compileSuccess = 0
+	let compileFailed = 0
 	let lastLogLength = 0
 
-	while (!langServerReady && waitTime.elapsed() < maxWait * 1000) {
-		const prom = sleep2(250)
+	while (!langServerReady || stillCompiling) {
+		const lines = await sleep2(250)
 			.then(() => getLogContents())
-		const lines = await prom
 		if (!lines) {
 			continue
 		}
 
 		if (lastLogLength > lines.length) {
 			log.warn('log file for openedge-abl-lsp extension is smaller!  was length=' + lastLogLength + '; now length=' + lines.length)
-			lastLogLength = 0
+			lastLogLength = 0 // nosonar
 			return false
 		}
 
@@ -285,7 +293,7 @@ export async function waitForLangServerReady () {
 			startAtLine = lastLogLength
 		}
 
-		let langServerReady = false
+		stillCompiling = false
 		log.info('---------- lines written to openedge-abl extension log since last check ----------')
 		for (let i=startAtLine; i<lines.length; i++) {
 			log.info(i + ': ' + lines[i])
@@ -294,7 +302,7 @@ export async function waitForLangServerReady () {
 			const parts = /^\[([^\]]*)\] \[([A-Z]*)\] (\[[^\]]*\]*)? ?(.*)$/.exec(lines[i])
 
 			if (parts && parts.length >= 4 && parts[3]) {
-				log.info('parts=' + JSON.stringify(parts, null, 4))
+				// log.info('parts=' + JSON.stringify(parts, null, 4))
 				if (parts[4] == 'Project shutdown completed' || parts[4] == 'Start OE client process') {
 					langServerReady = false
 					langServerError = false
@@ -304,32 +312,49 @@ export async function waitForLangServerReady () {
 				} else if (parts[4].startsWith('### OE Client #0 ended with exit code')) {
 					langServerReady = false
 					langServerError = true
+				} else if (parts[4].startsWith('Compilation ')) {
+					// langServerReady = false
+					stillCompiling = true
+					if (parts[4].startsWith('Compilation successful: ')) {
+						compileSuccess++
+					} else if (parts[4].startsWith('Compilation failed: ')) {
+						compileFailed++
+					}
 				}
 			}
 		}
 		log.info('---------- ---------- ----------')
 		lastLogLength = lines.length
+		// if (compileSuccess + compileFailed == 0) {
+		// 	langServerReady = false
+		// }
+		// if (langServerReady && stillCompiling) {
+		// 	langServerReady = false
+		// }
 
-		if (langServerReady || langServerError) {
+		if (langServerReady) {
+			const langServStatus = await dumpLangServStatus()
+			if (!langServStatus.projectStatus?.[0] || (langServStatus.projectStatus?.[0]?.rcodeQueue ?? 1) > 0) {
+				stillCompiling = true
+			}
+		}
+
+		if (!stillCompiling && (langServerError || langServerReady)) {
+			log.info('langServerReady=' + langServerReady + '; langServerError=' + langServerError)
 			break
 		}
 
-		const prom2 = sleep2(250, 'language server not ready yet... (waitTime=' + waitTime + ')')
+		const prom2 = sleep2(250, 'language server not ready yet...' +  waitTime +
+			'\n\tlangServerReady=' + langServerReady + ', langServerError=' + langServerError + ', compileSuccess=' + compileSuccess + ', compileFailed=' + compileFailed)
 		await prom2 // await prom so other threads can run
-	}
 
-	if (langServerReady) {
-		try {
-			const dumpSuccessProm = commands.executeCommand('abl.dumpLangServStatus')
-			const ret = await dumpSuccessProm
-			log.info('command abl.dumpLangServStatus complete (ret=' + ret + ')')
-		} catch (e) {
-			throw new Error('command abl.dumpLangServStatus failed! e=' + e)
+		if (waitTime.elapsed() > maxWait * 1000) {
+			log.info('timeout after ' + waitTime.elapsed() + 'ms')
+			break
 		}
-
-		log.info('lang server is ready (waitTime=' + waitTime + ')')
-		return true
 	}
+
+	log.info('--- OUT OF LOOP --- langServerReady=' + langServerReady + '; langServerError=' + langServerError)
 
 	if (langServerError) {
 		log.error('lang server has an error! (waitTime=' + waitTime + ')')
@@ -377,117 +402,13 @@ export async function waitForLangServerReady () {
 		log.info('---------- ---------- ----------')
 	}
 
-	log.error('lang server is not ready! (waitTime='  + waitTime + ')')
-	throw new Error('lang server is not ready! (waitTime='  + waitTime + ')')
-}
-
-export async function waitForRCode () {
-	const maxWait = 15 // seconds
-	const waitTime = new Duration()
-	let langServerReady = false
-	let langServerError = false
-	let lastLogLength = 0
-
-	while (!langServerReady && waitTime.elapsed() < maxWait * 1000) {
-		const prom = getLogContents()
-			.then((lines) => {
-				if (lastLogLength > lines.length) {
-					log.warn('log file for openedge-abl-lsp extension is smaller!  was length=' + lastLogLength + '; now length=' + lines.length)
-					lastLogLength = 0
-					return false
-				}
-
-				let startAtLine = 0
-				if (lastLogLength != -1 && lastLogLength < lines.length) {
-					startAtLine = lastLogLength
-				}
-
-				let langServerReady = false
-				// log.info('---------- lines written to openedge-abl extension log since last check ----------')
-				for (let i=startAtLine; i<lines.length; i++) {
-					// log.info(i + ': ' + lines[i])
-
-					// regex matching lines like "[<timestamp>] [<logLevel>] [<projectName] <message>"
-					const lineDetail = /^(\[.*\]) (\[[A-Z]*\]) (\[.*\]) (.*)$/.exec(lines[i])
-
-					if (lineDetail) {
-						// log.info('lineDetail=' + JSON.stringify(lineDetail, null, 4))
-						if (lineDetail[4] == 'Project shutdown completed' || lineDetail[4] == 'Start OE client process') {
-							langServerReady = false
-							langServerError = false
-						} else if (lineDetail[4] == 'OpenEdge worker started') {
-							langServerReady = true
-							langServerError = false
-						} else if (lineDetail[4].startsWith('### OE Client #0 ended with exit code')) {
-							langServerReady = false
-							langServerError = true
-						}
-					}
-				}
-				// log.info('---------- ---------- ----------')
-				lastLogLength = lines.length
-				return langServerReady
-			})
-
-		langServerReady = await prom // await promise instead of awaiting in assignment so other threads can run
-		if (langServerReady || langServerError) {
-			break
-		}
-
-		const prom2 = sleep2(250, 'language server not ready yet... (waitTime=' + waitTime + ')')
-		await prom2 // await prom so other threads can run
-	}
-
-	if (langServerError) {
-		log.error('lang server has an error! (waitTime=' + waitTime + ')')
-
-		const clientLogUri = FileUtils.toUri('.builder/clientlog0.log')
-		if (!FileUtils.doesFileExist(clientLogUri)) {
-			log.warn('client log file does not exist: ' + clientLogUri.fsPath)
-		} else {
-			const clientlogLines = FileUtils.readLinesFromFileSync(clientLogUri)
-			if (clientlogLines.length == 0) {
-				log.warn('client log file is empty: ' + clientLogUri.fsPath)
-			} else {
-				log.info('---------- ' + clientLogUri.fsPath + '-----------')
-				for (let i=0; i<clientlogLines.length; i++) {
-					log.info(i + ': ' + clientlogLines[i])
-				}
-				log.info('---------- ---------- ----------')
-			}
-		}
-
-		const stdoutUri = FileUtils.toUri('.builder/stdout0.log')
-		if (!FileUtils.doesFileExist(stdoutUri)) {
-			log.warn('stdout file does not exist: ' + stdoutUri.fsPath)
-		} else {
-			const stdoutLines = FileUtils.readLinesFromFileSync(stdoutUri)
-			if (stdoutLines.length == 0) {
-				log.warn('stdout file is empty: ' + stdoutUri.fsPath)
-			} else {
-				log.info('---------- ' + stdoutUri.fsPath + '-----------')
-				for (let i=0; i<stdoutLines.length; i++) {
-					log.info(i + ': ' + stdoutLines[i])
-				}
-				log.info('---------- ---------- ----------')
-			}
-		}
-		throw new Error('lang server failed to start! (waitTime=' + waitTime + ')')
-	}
-
 	if (langServerReady) {
-		try {
-			const dumpSuccessProm = commands.executeCommand('abl.dumpLangServStatus')
-			const ret = await dumpSuccessProm
-			log.info('command abl.dumpLangServStatus complete (ret=' + ret + ')')
-		} catch (e) {
-			throw new Error('command abl.dumpLangServStatus failed! e=' + e)
-		}
-
-		log.info('lang server is ready (waitTime=' + waitTime + ')')
+		log.error('lang server is ready! (waitTime='  + waitTime + ')')
 		return true
 	}
 
+	log.error('lang server is not ready! (waitTime='  + waitTime + ')')
+	throw new Error('lang server is not ready! (waitTime='  + waitTime + ')')
 }
 
 export function setRuntimes (runtimes?: IRuntime[]) {

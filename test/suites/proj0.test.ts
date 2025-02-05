@@ -414,24 +414,13 @@ suite('proj0  - Extension Test Suite', () => {
 	})
 
 	test('proj0.20 - build directory', async () => {
-		let lines = FileUtils.readLinesFromFileSync(toUri('openedge-project.json'))
-		log.info('openedge-project.json:\n' + JSON.stringify(lines, null, 2))
+		FileUtils.copyFile('openedge-project.test20.json', 'openedge-project.json')
 		await deleteRcode()
 
-		FileUtils.copyFile('openedge-project.test20.json', 'openedge-project.json')
-
-		lines = FileUtils.readLinesFromFileSync(toUri('openedge-project.json'))
-		log.info('openedge-project.json:\n' + JSON.stringify(lines, null, 2))
-		for (let i=0; i<lines.length; i++) {
-			log.info(i + ' ' + lines[i])
-		}
-
-		await restartLangServer()
-		await sleep2(100)
-		await sleep2(100)
-		await sleep2(100)
-		const rcodeCount = await rebuildAblProject()
-		log.info('rcodeCount=' + rcodeCount)
+		const rcodeCount = await restartLangServer()
+			.then(() => rebuildAblProject())
+		// log.info('isReady=' + isReady)
+		// const rcodeCount = await rebuildAblProject()
 
 		log.info('100 rcodeCount=' + rcodeCount)
 		assert.fileExists('d1/test_20.r')
