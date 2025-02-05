@@ -65,7 +65,6 @@ export async function rebuildAblProject () {
 		}
 		stillCompiling = false
 		for (let i=startingLine; i<lines.length; i++) {
-			log.info(i + ': ' + lines[i])
 			const parts = /^\[([^\]]*)\] \[([A-Z]*)\] (\[[^\]]*\]*)? ?(.*)$/.exec(lines[i])
 			let message: string | undefined = undefined
 			if (parts) {
@@ -76,7 +75,6 @@ export async function rebuildAblProject () {
 				}
 			}
 
-			log.info('message=' + message)
 			if (message == 'Project rebuild triggered by client') {
 				compileResults = { success: 0, failure: 0 }
 			} else if (message?.startsWith('Compilation successful: ')) {
@@ -294,9 +292,7 @@ export async function waitForLangServerReady () {
 		}
 
 		stillCompiling = false
-		log.info('---------- lines written to openedge-abl extension log since last check ----------')
 		for (let i=startAtLine; i<lines.length; i++) {
-			log.info(i + ': ' + lines[i])
 
 			// regex matching lines like "[<timestamp>] [<logLevel>] [<projectName] <message>"
 			const parts = /^\[([^\]]*)\] \[([A-Z]*)\] (\[[^\]]*\]*)? ?(.*)$/.exec(lines[i])
@@ -323,14 +319,7 @@ export async function waitForLangServerReady () {
 				}
 			}
 		}
-		log.info('---------- ---------- ----------')
 		lastLogLength = lines.length
-		// if (compileSuccess + compileFailed == 0) {
-		// 	langServerReady = false
-		// }
-		// if (langServerReady && stillCompiling) {
-		// 	langServerReady = false
-		// }
 
 		if (langServerReady) {
 			const langServStatus = await dumpLangServStatus()
@@ -353,8 +342,6 @@ export async function waitForLangServerReady () {
 			break
 		}
 	}
-
-	log.info('--- OUT OF LOOP --- langServerReady=' + langServerReady + '; langServerError=' + langServerError)
 
 	if (langServerError) {
 		log.error('lang server has an error! (waitTime=' + waitTime + ')')

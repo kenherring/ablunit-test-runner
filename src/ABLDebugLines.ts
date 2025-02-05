@@ -61,7 +61,6 @@ export class ABLDebugLines {
 		try {
 			map = await getSourceMapFromRCode(this.propath, debugSourceObj.rcodeUri)
 			this.processingMethodMap.set(debugSource, 'rcode')
-			log.info('----- set \'rcode\' as source map processing method for ' + debugSource + ' -----')
 			this.maps.set(debugSource, map)
 			return map
 		} catch (e) {
@@ -72,7 +71,6 @@ export class ABLDebugLines {
 		try {
 			map = await getSourceMapFromXref(this.propath, debugSource)
 			this.processingMethodMap.set(debugSource, 'parse')
-			log.info('----- set \'parse\' as source map processing method for ' + debugSource + ' -----')
 			this.maps.set(debugSource, map)
 			return map
 		} catch(e) {
@@ -80,7 +78,6 @@ export class ABLDebugLines {
 		}
 
 		this.processingMethodMap.set(debugSource, 'none')
-		log.info('----- set \'none\' as source map processing method for ' + debugSource + ' -----')
 		return map
 	}
 }

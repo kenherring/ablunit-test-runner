@@ -10,8 +10,8 @@ suite('proj2 - Extension Test Suite', () => {
 
 	setup('proj2 - beforeEach', () => {
 		beforeCommon()
-		FileUtils.deleteFile('src/compileError.p')
-		FileUtils.deleteFile('.vscode/profile.json')
+		FileUtils.deleteFile(toUri('src/compileError.p'))
+		FileUtils.deleteFile(toUri('.vscode/profile.json'))
 	})
 
 	test('proj2.1 - temp/ablunit.json file exists', () => {

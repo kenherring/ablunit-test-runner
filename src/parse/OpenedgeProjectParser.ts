@@ -70,7 +70,6 @@ export interface IBuildPathEntry {
 	path: string
 	build: string
 	xref: string
-
 	excludes?: string
 	excludesFile?: string
 	includes?: string
@@ -293,15 +292,13 @@ export function getActiveProfile (rootDir: string) {
 }
 
 function loadConfigFile (uri: Uri): IOpenEdgeMainConfig | undefined {
-	log.debug('[loadConfigFile] uri=' + uri.fsPath)
-
 	if (!FileUtils.doesFileExist(uri)) {
+		log.info('No OpenEdge project config file found in ' + uri.fsPath + ', using default values')
 		return undefined
 	}
 	try {
 		log.info('reading OpenEdge project config file: ' + uri.fsPath)
 		const data = FileUtils.readStrippedJsonFile(uri) as IOpenEdgeMainConfig
-		log.info('data.buildDirectory=' + data.buildDirectory)
 		return data
 	} catch (caught) {
 		log.error('[loadConfigFile] Failed to parse ' + uri.fsPath + ': ' + caught)
@@ -450,7 +447,6 @@ function readOEConfigFile (uri: Uri, workspaceUri: Uri, openedgeProjectProfile?:
 
 	const config = loadConfigFile(uri)
 	if (!config) {
-		log.info('No OpenEdge project config file found in ' + uri.fsPath + ', using default values')
 		const ret = new OpenEdgeProjectConfig()
 		ret.activeProfile = openedgeProjectProfile
 		return ret
@@ -480,7 +476,6 @@ function readOEConfigFile (uri: Uri, workspaceUri: Uri, openedgeProjectProfile?:
 
 function getWorkspaceProfileConfig (workspaceUri: Uri, openedgeProjectProfile?: string) {
 	let uri = workspaceUri
-	log.info('workspaceUri=' + workspaceUri.fsPath + ', exists? ' + FileUtils.doesFileExist(workspaceUri))
 	if (!FileUtils.doesFileExist(workspaceUri)) {
 		uri = Uri.joinPath(workspaceUri, 'openedge-project.json')
 		if (!FileUtils.doesFileExist(uri)) {

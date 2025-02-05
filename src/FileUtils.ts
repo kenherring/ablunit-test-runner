@@ -199,18 +199,6 @@ export function copyFile (source: Uri | string, target: Uri | string, _opts?: fs
 		log.warn('copyFile failed! source file does not exist: ' + source.fsPath)
 	}
 	fs.copyFileSync(source.fsPath, target.fsPath)
-
-	// if (doesFileExist(target)) {
-	// 	fs.rmSync(target.fsPath)
-	// 	if (doesFileExist(target)) {
-	// 		throw new Error('failed to copy file! target file exists: ' + target.fsPath)
-	// 	}
-	// }
-	// fs.copyFileSync(source.fsPath, target.fsPath)
-	// if (!doesFileExist(target)) {
-	// 	throw new Error('failed to copy file! target file does not exist: ' + target.fsPath)
-	// }
-	// log.info('fileCopied')
 }
 
 export function copyFileAsync (source: Uri | string, target: Uri | string): Promise<void> {

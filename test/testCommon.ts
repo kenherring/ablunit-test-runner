@@ -97,7 +97,7 @@ export class FilesExclude {
 export { setRuntimes, rebuildAblProject }
 // kherring.ablunit-test-runner extension objects
 export type IRunProfile = IRunProfileGlobal
-export { FileUtils, RunStatus, parseRunProfiles, toUri }
+export { FileUtils, toUri, RunStatus, parseRunProfiles }
 // vscode objects
 export {
 	CancellationError, Duration, Selection, Uri,
@@ -149,7 +149,6 @@ function getExtensionDevelopmentPath () {
 export async function suiteSetupCommon (runtimes?: IRuntime[]) {
 	log.info('[suiteSetupCommon] waitForExtensionActive \'kherring.ablunit-test-runner\' (projName=' + projName() + ')')
 	await waitForExtensionActive()
-	log.info('enableExtensions=' + enableExtensions())
 	if (enableExtensions()) {
 		await enableOpenedgeAblExtension(runtimes)
 	}
@@ -590,12 +589,11 @@ export function runTestsInFile (filename: string, len = 1, coverage = false) {
 			return commands.executeCommand(command)
 		})
 		.then((r: unknown) => {
-			log.info('executeCommand(' + command + ').then completed successfully')
 			log.debug('executeCommand(' + command + ').then completed successfully (r=' + JSON.stringify(r, null, 2) + ')')
 			runTestsDuration?.stop()
 			return refreshData(len)
 		}, (e: unknown) => {
-			log.info('executeCOmmand(' + command + ').catch failed: ' + e)
+			log.debug('executeCOmmand(' + command + ').catch failed: ' + e)
 			runTestsDuration?.stop()
 			throw e
 		})

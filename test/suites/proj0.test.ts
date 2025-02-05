@@ -34,9 +34,7 @@ suite('proj0  - Extension Test Suite', () => {
 		for (const rcodeFile of rcodeFiles) {
 			rcodeUris.push(Uri.file(rcodeFile))
 		}
-		log.info('deleting ' + rcodeFiles.length + ' rcode files:\n' + JSON.stringify(rcodeFiles, null, 2))
 		FileUtils.deleteFile(rcodeUris, { force: true })
-		log.info('delete rcode complete')
 		let waitCounter = 0
 		while (getRcodeCount() > 0) {
 			waitCounter++
@@ -419,14 +417,9 @@ suite('proj0  - Extension Test Suite', () => {
 
 		const rcodeCount = await restartLangServer()
 			.then(() => rebuildAblProject())
-		// log.info('isReady=' + isReady)
-		// const rcodeCount = await rebuildAblProject()
 
-		log.info('100 rcodeCount=' + rcodeCount)
 		assert.fileExists('d1/test_20.r')
-		log.info('200')
 		assert.fileExists('d2/test_20.p.xref')
-		log.info('300')
 
 		await runTestsInFile('src/test_20.p', 1, true)
 			.then(() => {
