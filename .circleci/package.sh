@@ -1,8 +1,10 @@
 #!/bin/bash
 set -eou pipefail
 
+. scripts/common.sh
+
 initialize () {
-    echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}]"
+    log_it
     ABLUNIT_TEST_RUNNER_VSCODE_VERSION=${ABLUNIT_TEST_RUNNER_VSCODE_VERSION:-stable}
     PRERELEASE=${PRERELEASE:-true}
 
@@ -12,7 +14,7 @@ initialize () {
         [ -z "${CIRCLE_TAG:-}" ] && [ -z "${CIRCLE_BRANCH:-}" ] && CIRCLE_BRANCH=$(git branch --show-current)
     fi
 
-    if  [ -n "${CIRCLE_TAG:-}" ] && [ -n "${CIRCLE_BRANCH:-}" ]; then
+    if  [ -z "${CIRCLE_TAG:-}" ] && [ -z "${CIRCLE_BRANCH:-}" ]; then
         echo "ERROR: both CIRCLE_TAG and CIRCLE_BRANCH are set. exiting... (CIRCLE_TAG=$CIRCLE_TAG, CIRCLE_BRANCH=$CIRCLE_BRANCH)"
         exit 1
     fi
@@ -31,7 +33,7 @@ initialize () {
 }
 
 package () {
-    echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}]"
+    log_it
     package_version stable
     # package_version insiders
 }
@@ -39,7 +41,7 @@ package () {
 package_version () {
     local VSCODE_VERSION=$1
     # [ "$ABLUNIT_TEST_RUNNER_VSCODE_VERSION" != "$PACKAGE_VERSION" ] && [ -n "$ABLUNIT_TEST_RUNNER_VSCODE_VERSION" ] && return 0
-    echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] PACKAGE_VERSION=$VSCODE_VERSION"
+    log_it "PACKAGE_VERSION=$VSCODE_VERSION"
 
     local ARGS=()
     ARGS+=("--githubBranch" "${CIRCLE_BRANCH:-main}")
@@ -63,9 +65,9 @@ package_version () {
 }
 
 run_lint () {
-	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}]"
+	log_it
 	if [ -n "${ABLUNIT_TEST_RUNNER_PROJECT_NAME:-}" ]; then
-		echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] skipping lint for single ABLUnit test runner project test"
+		log_it "skipping lint for single ABLUnit test runner project test"
 		return 0
 	fi
 
@@ -74,14 +76,14 @@ run_lint () {
 
     ESLINT_RETURN_CODE=0
 	npm run lint -- -f json -o "${ESLINT_FILE}.json.tmp" || ESLINT_RETURN_CODE=$?
-    echo "eslint returned code=$ESLINT_RETURN_CODE"
+    log_it "eslint returned code=$ESLINT_RETURN_CODE"
 
     jq '.' < "${ESLINT_FILE}.json.tmp" > "${ESLINT_FILE}.json"
     rm -f "${ESLINT_FILE}.json.tmp"
     sed -i 's|/home/circleci/project/|/root/project/|g' "${ESLINT_FILE}.json"
 
     if [ ! -f "${ESLINT_FILE}.json" ]; then
-        echo "ERROR: ${ESLINT_FILE}.json not found"
+        log_it "ERROR: ${ESLINT_FILE}.json not found"
         exit 1
     fi
 
@@ -89,10 +91,10 @@ run_lint () {
     ERROR_COUNT=$(jq '[.[] | .errorCount] | add' < ${ESLINT_FILE}.json)
     WARNING_COUNT=$(jq '[.[] | .warningCount] | add' < ${ESLINT_FILE}.json)
 
-    echo 'eslint summary:'
-    echo " - message count:  $MESSAGE_COUNT"
-    echo " - error count:    $ERROR_COUNT"
-    echo " - warning count:  $WARNING_COUNT"
+    log_it 'eslint summary:' \
+        " - message count:  $MESSAGE_COUNT" \
+        " - error count:    $ERROR_COUNT" \
+        " - warning count:  $WARNING_COUNT"
 }
 
 ########## MAIN BLOCK ##########

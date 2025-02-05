@@ -128,12 +128,20 @@ run_tests () {
 	if $ABLUNIT_TEST_RUNNER_NO_COVERAGE; then
 		RUN_SCRIPT='test'
 	fi
+
+	## without this cpstream=UTF-8 and cpstream=US-ASCII
+	if ${DOCKER:-}; then
+		export JAVA_TOOL_OPTIONS=${JAVA_TOOL_OPTIONS:-'-Dfile.encoding=UTF8'}
+	fi
+
 	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] starting 'npm $RUN_SCRIPT'"
 	EXIT_CODE=0
 	xvfb-run -a npm run "$RUN_SCRIPT" || EXIT_CODE=$?
 	echo "xvfb-run end (EXIT_CODE=$EXIT_CODE)"
 
-	mv coverage/lcov.info artifacts/coverage/lcov.info || true ## https://github.com/microsoft/vscode-test-cli/issues/38
+	if [ "$RUN_SCRIPT" = 'test:coverage' ]; then
+		mv coverage/lcov.info artifacts/coverage/lcov.info || true ## https://github.com/microsoft/vscode-test-cli/issues/38
+	fi
 
 	if [ "$EXIT_CODE" = "0" ]; then
 		echo "xvfb-run success"
@@ -152,7 +160,7 @@ save_and_print_debug_output () {
 	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}]"
 
 	mkdir -p artifacts
-	find . > artifacts/filelist.txt
+	$VERBOSE && find . > artifacts/filelist.txt
 
 	find .vscode-test -name '*ABL*.log'
 	find .vscode-test -name '*ABL*.log' -exec cp {} artifacts \;

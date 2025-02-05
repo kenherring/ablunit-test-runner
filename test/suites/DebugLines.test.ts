@@ -1,8 +1,7 @@
 import { Uri, workspace } from 'vscode'
-import { assert, awaitRCode, getWorkspaceUri, log, suiteSetupCommon } from '../testCommon'
-import { getSourceMapFromRCode } from '../../src/parse/SourceMapRCodeParser'
-import { PropathParser } from '../../src/ABLPropath'
-import { toUri } from 'FileUtils'
+import { assert, awaitRCode, getWorkspaceUri, log, suiteSetupCommon, toUri } from '../testCommon'
+import { getSourceMapFromRCode } from 'parse/SourceMapRCodeParser'
+import { PropathParser } from 'ABLPropath'
 
 const workspaceFolder = workspace.workspaceFolders![0]
 

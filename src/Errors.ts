@@ -15,7 +15,20 @@ export class ABLUnitRuntimeError extends Error {
 	}
 }
 
-export interface ICompileMessage {
+export interface IErrorStatusMessage {
+	message: string
+	messageNumber: number
+}
+
+export interface IErrorStatus {
+	error: boolean
+	instantiatingProcedure: string
+	numMessages: number
+	type: string
+	messages: IErrorStatusMessage[]
+}
+
+export interface ICompilerErrorMessage {
 	column: number
 	errorColumn: number
 	errorRow: number
@@ -27,7 +40,7 @@ export interface ICompileMessage {
 	row: number
 }
 
-export interface ICompileError {
+export interface ICompilerError {
 	name: string,
 	classType: string
 	error: boolean
@@ -42,27 +55,25 @@ export interface ICompileError {
 	stopped: boolean
 	type: string
 	warning: boolean
-	messages: ICompileMessage[]
+	messages: ICompilerErrorMessage[]
 }
 
-function mergeMessagesByPosition (messages: ICompileMessage[]): ICompileMessage[] {
-	let i = 0
-	for (const m of messages) {
-		log.info('i=' + i)
+function mergeMessagesByPosition (messages: ICompilerErrorMessage[]): ICompilerErrorMessage[] {
+	for (let i=0; i<messages.length-2; i++) {
+		const m = messages[i]
 		while (messages[i+1].row == m.row && messages[i+1].column == m.column) {
 			m.message += '\n' + messages[i+1].message
 			messages.splice(i+1, 1)
 		}
-		i = i + 1
 	}
 	return messages
 }
 
-export class ABLCompileError extends ABLUnitRuntimeError {
-	constructor (public compileErrors: ICompileError[], cmd?: string) {
-		super('compile error count=' + compileErrors.length, compileErrors[0].messages[0].message, cmd)
-		this.name = 'ABLCompileError'
-		for (const i of compileErrors) {
+export class ABLCompilerError extends ABLUnitRuntimeError {
+	constructor (public compilerErrors: ICompilerError[], cmd?: string) {
+		super('compile error count=' + compilerErrors.length, '<message>', cmd)
+		this.name = 'ABLCompilerError'
+		for (const i of compilerErrors) {
 			try {
 				mergeMessagesByPosition(i.messages)
 			} catch (e) {
@@ -83,7 +94,7 @@ export class TimeoutError extends Error implements ITimeoutError {
 	limit: number
 	cmd?: string
 
-	constructor (message: string, duration: Duration, limit: number, cmd: string) {
+	constructor (message: string, duration: Duration, limit: number, cmd?: string) {
 		super(message)
 		this.name = 'TimeoutError'
 		this.duration = duration

@@ -84,7 +84,8 @@ export class ABLResultsParser {
 			throw e
 		}
 		if (jsonUri) {
-			return this.writeJsonToFile(jsonUri)
+			await this.writeJsonToFile(jsonUri)
+			return
 		}
 	}
 

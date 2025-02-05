@@ -1,7 +1,15 @@
-# [1.0.6009](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.0.6009) - 2025-02-04
+# [1.0.6011](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.0.6011) - 2025-02-05
 
 
- * Target multiple versions of node when running tests (#243)
+ * Add test cases  to validate source map parsing source (#239)
+
+
+**Full Changelog**: [1.0.6009...1.0.6011](https://github.com/kenherring/ablunit-test-runner/compare/1.0.6009...1.0.6011)
+
+# [1.0.6009](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.0.6009) - 2025-02-02
+
+
+ * Update testing scripts and programs (#242)
 
 
 **Full Changelog**: [1.0.6007...1.0.6009](https://github.com/kenherring/ablunit-test-runner/compare/1.0.6007...1.0.6009)

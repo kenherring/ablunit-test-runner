@@ -22,7 +22,7 @@ import { log } from './ChannelLogger'
 import { getContentFromFilesystem } from './parse/TestParserCommon'
 import { ABLTestCase, ABLTestClass, ABLTestData, ABLTestDir, ABLTestFile, ABLTestProgram, ABLTestSuite, resultData, testData } from './testTree'
 import { minimatch } from 'minimatch'
-import { ABLCompileError, ABLUnitRuntimeError, TimeoutError } from 'Errors'
+import { ABLCompilerError, ABLUnitRuntimeError, TimeoutError } from 'Errors'
 import { basename } from 'path'
 import * as FileUtils from './FileUtils'
 import { gatherAllTestItems, IExtensionTestReferences } from 'ABLUnitCommon'
@@ -245,12 +245,8 @@ export function activate (context: ExtensionContext) {
 			log.info('successfully created .vscode/ablunit-test-profile.json')
 		}
 
-		return window.showTextDocument(Uri.joinPath(workspaceFolder.uri, '.vscode', 'ablunit-test-profile.json')).then(() => {
+		await window.showTextDocument(Uri.joinPath(workspaceFolder.uri, '.vscode', 'ablunit-test-profile.json')).then(() => {
 			log.info('Opened .vscode/ablunit-test-profile.json')
-			return
-		}, (e: unknown) => {
-			log.error('Failed to open .vscode/ablunit-test-profile.json! e=' + e)
-			return
 		})
 	}
 
@@ -308,7 +304,7 @@ export function activate (context: ExtensionContext) {
 				}, (e: unknown) => {
 					if (e instanceof CancellationError) {
 						log.error('---------- ablunit run cancelled ----------', {testRun: run})
-					} else if (e instanceof ABLCompileError) {
+					} else if (e instanceof ABLCompilerError) {
 						log.error('ablunit compile error!\n\te=' + JSON.stringify(e))
 					} else if (e instanceof ABLUnitRuntimeError) {
 						log.error('ablunit runtime error!\n\te=' + JSON.stringify(e))
@@ -572,7 +568,7 @@ export function activate (context: ExtensionContext) {
 	const configHandler = () => {
 		log.info('testRunProfiler.configureHandler')
 		openTestRunConfig().catch((e: unknown) => {
-			log.error('Failed to open \'.vscode/ablunit-test-profile.json\'. e=' + e)
+			log.error('failed to open test run configuration file. e=' + e)
 		})
 	}
 

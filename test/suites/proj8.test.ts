@@ -1,5 +1,5 @@
 import { assert, getResults, getWorkspaceUri, runAllTests, suiteSetupCommon, Uri } from '../testCommon'
-import { getEnvVars } from '../../src/ABLUnitRun'
+import { getEnvVars } from 'ABLUnitRun'
 
 suite('proj8 - Extension Test Suite', () => {
 

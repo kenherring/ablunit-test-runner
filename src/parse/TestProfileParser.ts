@@ -236,7 +236,6 @@ export class RunConfig extends DefaultRunProfile {
 		}
 
 		const charset = getProfileCharset(this.workspaceFolder.uri, this.profile.openedgeProjectProfile)
-		// this.command.additionalArgs.push('-cpinternal', 'UTF-8')
 		if (charset) {
 			if (this.command.additionalArgs.includes('-cpstream')) {
 				log.warn('command.additionalArgs already contains -cpstream.  Replacing with `-cpstream ' + charset)

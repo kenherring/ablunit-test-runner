@@ -1,5 +1,4 @@
-import { assert, getResults, getWorkspaceUri, log, runAllTests, suiteSetupCommon, Uri, commands, beforeCommon, toUri, selectProfile, runTestsInFile } from '../testCommon'
-import * as FileUtils from '../../src/FileUtils'
+import { assert, getResults, getWorkspaceUri, log, runAllTests, suiteSetupCommon, Uri, commands, beforeCommon, toUri, FileUtils, selectProfile, runTestsInFile } from '../testCommon'
 
 const workspaceUri = getWorkspaceUri()
 
