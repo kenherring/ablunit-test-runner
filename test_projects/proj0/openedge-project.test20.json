@@ -1,0 +1,15 @@
+{
+	"name": "proj0.20",
+	"version": "0.20",
+	"charset": "ISO8859-1",
+	"buildDirectory": "build",
+	"numThreads": 1,
+	"dbConnections": [],
+	"graphicalMode": false,
+	"extraParameters": "-debugalert -errorstack",
+	"buildPath": [
+		{ "type": "source", "path": "src", "build": "d1", "xref": "d2", "excludes": "compileError.p" },
+		{ "type": "propath", "path": "${DLC}/tty/netlib/OpenEdge.Net.pl" }
+	],
+	"procedures": []
+}

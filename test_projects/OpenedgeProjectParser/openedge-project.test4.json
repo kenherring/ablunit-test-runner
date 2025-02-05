@@ -1,0 +1,6 @@
+{
+    "oeversion": "12.8",
+    "buildPath": [
+        { "type": "source", "path": "src", "build": "dist" }
+    ]
+}

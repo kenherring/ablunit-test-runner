@@ -1,5 +1,6 @@
-import { getDLC, getOEVersion } from 'parse/OpenedgeProjectParser'
+import { getDLC, getOEVersion, getOpenEdgeProfileConfig } from 'parse/OpenedgeProjectParser'
 import { assert, getWorkspaceFolders, log } from '../testCommon'
+import { toUri } from 'FileUtils'
 
 const workspaceFolder = getWorkspaceFolders()[0]
 
@@ -29,4 +30,35 @@ test('OpenedgeProjectParser.test.1', () => {
 	} else {
 		assert.equal(dlc.uri.fsPath, '/psc/dlc')
 	}
+})
+
+test('OpenedgeProjectParser.test.2', () => {
+	const config = getOpenEdgeProfileConfig(workspaceFolder.uri)
+	if (!config) {
+		throw new Error('config is undefined')
+	}
+
+	log.info('config=' + JSON.stringify(config, null, 4))
+	assert.equal(JSON.stringify(config.propath), JSON.stringify(config.buildPath.map(x => x.build)))
+})
+
+test('OpenedgeProjectParser.test.3', () => {
+	const config = getOpenEdgeProfileConfig(toUri('openedge-project.test3.json'))
+	if (!config) {
+		throw new Error('config is undefined')
+	}
+
+	// log.info('config=' + JSON.stringify(config, null, 4))
+	assert.equal(JSON.stringify(config.propath), '["."]')
+	assert.equal(JSON.stringify(config.buildPath.map(x => x.build)), '["dist"]')
+})
+
+test('OpenedgeProjectParser.test.4', () => {
+	const config = getOpenEdgeProfileConfig(toUri('openedge-project.test4.json'))
+	if (!config) {
+		throw new Error('config is undefined')
+	}
+
+	assert.equal(JSON.stringify(config.propath), '["src"]')
+	assert.equal(JSON.stringify(config.buildPath.map(x => x.build)), '["dist"]')
 })

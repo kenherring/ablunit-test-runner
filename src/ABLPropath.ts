@@ -75,25 +75,25 @@ export class PropathParser {
 		this.propath.entry = []
 
 		for (const entry of importedPropath.propathEntry) {
-			log.debug('found propath entry: ' + entry.path + ' ' + entry.type + ' ' + entry.buildDir)
+			log.debug('found propath entry: ' + entry.path + ' ' + entry.type + ' ' + entry.build)
 			let uri: Uri = Uri.file(entry.path)
 			if(FileUtils.isRelativePath(entry.path)) {
 				uri = Uri.joinPath(this.workspaceFolder.uri, entry.path)
 			}
 
 			let buildUri: Uri = uri
-			if (entry.buildDir) {
-				buildUri = Uri.file(entry.buildDir)
-				if(FileUtils.isRelativePath(entry.buildDir)) {
-					buildUri = Uri.joinPath(this.workspaceFolder.uri, entry.buildDir)
+			if (entry.build) {
+				buildUri = Uri.file(entry.build)
+				if(FileUtils.isRelativePath(entry.build)) {
+					buildUri = Uri.joinPath(this.workspaceFolder.uri, entry.build)
 				}
 			}
 
 			let xrefDirUri: Uri = uri
-			if (entry.xrefDir) {
-				xrefDirUri = Uri.file(entry.xrefDir)
-				if(FileUtils.isRelativePath(entry.xrefDir)) {
-					xrefDirUri = Uri.joinPath(this.workspaceFolder.uri, entry.xrefDir)
+			if (entry.xref) {
+				xrefDirUri = Uri.file(entry.xref)
+				if(FileUtils.isRelativePath(entry.xref)) {
+					xrefDirUri = Uri.joinPath(this.workspaceFolder.uri, entry.xref)
 				}
 			}
 
@@ -106,11 +106,11 @@ export class PropathParser {
 			const e: IPropathEntry = {
 				path: entry.path,
 				type: entry.type,
-				buildDir: entry.buildDir,
+				buildDir: entry.build,
 				uri: uri,
 				relativePath: rel,
 				buildDirUri: buildUri,
-				xrefDir: entry.xrefDir,
+				xrefDir: entry.xref,
 				xrefDirUri: xrefDirUri
 			}
 			// log.info("push entry=" + e.path + " " + e.uri.fsPath)

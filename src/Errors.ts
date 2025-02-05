@@ -59,14 +59,12 @@ export interface ICompilerError {
 }
 
 function mergeMessagesByPosition (messages: ICompilerErrorMessage[]): ICompilerErrorMessage[] {
-	let i = 0
-	for (const m of messages) {
-		log.info('i=' + i)
+	for (let i=0; i<messages.length-2; i++) {
+		const m = messages[i]
 		while (messages[i+1].row == m.row && messages[i+1].column == m.column) {
 			m.message += '\n' + messages[i+1].message
 			messages.splice(i+1, 1)
 		}
-		i = i + 1
 	}
 	return messages
 }
