@@ -418,6 +418,7 @@ suite('proj0  - Extension Test Suite', () => {
 		const rcodeCount = await restartLangServer()
 			.then(() => rebuildAblProject())
 
+		assert.greater(rcodeCount, 0, 'rcodeCount > 0')
 		assert.fileExists('d1/test_20.r')
 		assert.fileExists('d2/test_20.p.xref')
 
