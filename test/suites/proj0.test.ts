@@ -1,7 +1,9 @@
 import { Uri, commands, window, workspace } from 'vscode'
-import { assert, getRcodeCount, getResults, getTestControllerItemCount, getTestItem, getXrefCount, log, rebuildAblProject, refreshTests, runAllTests, runAllTestsWithCoverage, runTestAtLine, runTestsDuration, runTestsInFile, sleep2, suiteSetupCommon, FileUtils, toUri, updateConfig, updateTestProfile } from '../testCommon'
+import { assert, getRcodeCount, getResults, getTestControllerItemCount, getTestItem, getXrefCount, log, rebuildAblProject, refreshTests, runAllTests, runAllTestsWithCoverage, runTestAtLine, runTestsDuration, runTestsInFile, sleep2, suiteSetupCommon, FileUtils, toUri, updateConfig, updateTestProfile, deleteRcode } from '../testCommon'
 import { ABLResultsParser } from 'parse/ResultsParser'
 import { TimeoutError } from 'Errors'
+import { restartLangServer } from '../openedgeAblCommands'
+import * as glob from 'glob'
 import * as vscode from 'vscode'
 
 function createTempFile () {
@@ -412,21 +414,24 @@ suite('proj0  - Extension Test Suite', () => {
 	})
 
 	test('proj0.20 - build directory', async () => {
+		let lines = FileUtils.readLinesFromFileSync(toUri('openedge-project.json'))
+		log.info('openedge-project.json:\n' + JSON.stringify(lines, null, 2))
 		await deleteRcode()
+
 		FileUtils.copyFile('openedge-project.test20.json', 'openedge-project.json')
 
+		lines = FileUtils.readLinesFromFileSync(toUri('openedge-project.json'))
+		log.info('openedge-project.json:\n' + JSON.stringify(lines, null, 2))
+		for (let i=0; i<lines.length; i++) {
+			log.info(i + ' ' + lines[i])
+		}
 
-		const rcodeCount = await sleep2(250)
-			.then(() => { return restartLangServer() })
-			.then(() => { return sleep2(250) })
-			.then(() => {
-				const rcodeCount = getRcodeCount(toUri('d1'))
-				log.info('rcodeCount=' + rcodeCount)
-				return rcodeCount
-			})
-
-		// .then(() => { return rebuildAblProject() })
-		// .then((rcodeCount) => { return rcodeCount })
+		await restartLangServer()
+		await sleep2(100)
+		await sleep2(100)
+		await sleep2(100)
+		const rcodeCount = await rebuildAblProject()
+		log.info('rcodeCount=' + rcodeCount)
 
 		log.info('100 rcodeCount=' + rcodeCount)
 		assert.fileExists('d1/test_20.r')

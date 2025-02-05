@@ -590,7 +590,8 @@ export function runTestsInFile (filename: string, len = 1, coverage = false) {
 			return commands.executeCommand(command)
 		})
 		.then((r: unknown) => {
-			log.info('executeCommand(' + command + ').then completed successfully (r=' + JSON.stringify(r, null, 2) + ')')
+			log.info('executeCommand(' + command + ').then completed successfully')
+			log.debug('executeCommand(' + command + ').then completed successfully (r=' + JSON.stringify(r, null, 2) + ')')
 			runTestsDuration?.stop()
 			return refreshData(len)
 		}, (e: unknown) => {
