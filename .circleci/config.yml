@@ -146,7 +146,7 @@ jobs:
           command: env
   publish:
     docker:
-      - image: cimg/node:20.8
+      - image: cimg/node:22.13
     steps:
       - checkout
       - restore-package-cache
@@ -158,7 +158,7 @@ jobs:
       - store_artifacts: { path: artifacts }
   create-release:
     docker:
-      - image: cimg/node:20.8
+      - image: cimg/node:22.13
     steps:
       - attach_workspace: { at: . }
       - run: .circleci/create_release.sh
