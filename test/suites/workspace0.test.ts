@@ -6,7 +6,7 @@ suite('workspace0 - Extension Test Suite', () => {
 		await suiteSetupCommon()
 	})
 
-	test('workspace0.1 - <workspaceFolder>/ablunit.json file exists', async () => {
+	test('workspace0.1 - workspaceFolder/ablunit.json file exists', async () => {
 		await runAllTests()
 
 		const workspaceFolder = getWorkspaceFolders()[0].uri
