@@ -1,46 +1,12 @@
-# [1.0.6011](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.0.6011) - 2025-02-05
+# [1.0.6013](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.0.6013) - 2025-02-06
 
 
+ * Target multiple versions of node when running tests (#243)
  * Add test cases  to validate source map parsing source (#239)
-
-
-**Full Changelog**: [1.0.6009...1.0.6011](https://github.com/kenherring/ablunit-test-runner/compare/1.0.6009...1.0.6011)
-
-# [1.0.6009](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.0.6009) - 2025-02-02
-
-
  * Update testing scripts and programs (#242)
-
-
-**Full Changelog**: [1.0.6007...1.0.6009](https://github.com/kenherring/ablunit-test-runner/compare/1.0.6007...1.0.6009)
-
-# [1.0.6007](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.0.6007) - 2025-02-02
-
-
  * Bump PCT to v229 (#241)
-
-
-**Full Changelog**: [1.0.6005...1.0.6007](https://github.com/kenherring/ablunit-test-runner/compare/1.0.6005...1.0.6007)
-
-# [1.0.6005](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.0.6005) - 2025-02-02
-
-
  * Add OpenEdge 12.8.5 test target (#240)
-
-
-**Full Changelog**: [1.0.6003...1.0.6005](https://github.com/kenherring/ablunit-test-runner/compare/1.0.6003...1.0.6005)
-
-# [1.0.6003](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.0.6003) - 2025-01-27
-
-
- * Add profiler options `perTest` and `ignoreFrameworkCoverage` for improved parsing performance (#238)
-
-
-**Full Changelog**: [1.0.6001...1.0.6003](https://github.com/kenherring/ablunit-test-runner/compare/1.0.6001...1.0.6003)
-
-# [1.0.6001](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.0.6001) - 2025-01-25
-
-
+ * Add profiler options `perTest` and `ignoreExternalCoverage` for improved parsing performance (#238)
  * Replace snippets with CompletionItemProvider for better granularity (#237)
  * CircleCI: cache the `.vscode-test` directory (#236)
  * Profile parsing of performance improvement for multiple data files (#235)
@@ -53,7 +19,7 @@
  * [chore] npm update (#226)
  * Call stack parsing: support multiple errors per test case and negative line numbers for implicit constructors (#223)
 
-**Full Changelog**: [1.0.0...1.0.6001](https://github.com/kenherring/ablunit-test-runner/compare/1.0.0...1.0.6001)
+**Full Changelog**: [1.0.0...1.0.6013](https://github.com/kenherring/ablunit-test-runner/compare/1.0.0...1.0.6013)
 
 # 🥳 [1.0.0](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.0.0) - 2024-10-24
 

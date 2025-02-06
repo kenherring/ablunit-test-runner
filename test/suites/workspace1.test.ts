@@ -23,7 +23,7 @@ suite('workspace1 - Extension Test Suite', () => {
 		FileUtils.copyFile(Uri.joinPath(getWorkspaceUri(1), '.vscode', 'ablunit-test-profile.json.bk'), Uri.joinPath(getWorkspaceUri(1), '.vscode', 'ablunit-test-profile.json'))
 	})
 
-	test('workspace1.1 - <workspaceFolder>/ablunit.json file exists', async () => {
+	test('workspace1.1 - workspaceFolder/ablunit.json file exists', async () => {
 		await runAllTests()
 
 		const workspaceFolderUri = [

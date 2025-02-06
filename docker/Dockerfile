@@ -1,6 +1,7 @@
 ARG OE_VERSION
+ARG NODE_VERSION=24
 FROM progresssoftware/prgs-oedb:${OE_VERSION}_ent AS psc
-FROM node:20.9
+FROM node:${NODE_VERSION}
 
 ## dependencies for running vscode extension tests
 RUN apt-get update \
