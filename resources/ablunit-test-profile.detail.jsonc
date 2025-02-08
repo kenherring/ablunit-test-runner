@@ -122,7 +122,7 @@
 			"traceFilter": "",
 			"tracing": "",
 			"writeJson": false,
-			"perTest": true, // captrue profile data separately for each test case
+			"perTest": true, // captrue profiler data separately for each test case
 			"ignoreExternalCoverage": true // do not calculate coverage for external code (outside of workspace)
 		}
 

@@ -40,9 +40,9 @@ export class ABLResults implements Disposable {
 	coverageJson: [] = []
 	dlc: IDlc
 	thrownError: Error | undefined
+	allTests: TestItem[] = []
 
 	public fileCoverage: Map<string, FileCoverage> = new Map<string, FileCoverage>()
-	public fileCoverageDetail: FileCoverageDetail[] = []
 	public declarationCoverage: Map<string, DeclarationCoverage[]> = new Map<string, DeclarationCoverage[]>()
 	public statementCoverage: Map<string, StatementCoverage[]> = new Map<string, StatementCoverage[]>()
 
@@ -206,8 +206,6 @@ export class ABLResults implements Disposable {
 	}
 
 	async processCompilerErrors (testRun: TestRun, e: ABLCompilerError) {
-		const allTests = gatherAllTestItems(this.tests)
-
 		for (const compileError of e.compilerErrors) {
 			const fileinfo = await this.propath.search(compileError.fileName)
 			if (!fileinfo) {
@@ -215,12 +213,9 @@ export class ABLResults implements Disposable {
 				continue
 			}
 
-			let testItem = allTests.find((t) => t.id === fileinfo.uri.fsPath)
+			const testItem = this.findTest(fileinfo.uri.fsPath)
 			if (!testItem) {
-				testItem = allTests.map((t) => t.parent).find((t) => t?.id === fileinfo.uri.fsPath)
-			}
-			if (!testItem) {
-				throw new Error('could not find test item for ' + fileinfo.uri.fsPath)
+				continue
 			}
 
 			const testMessages: TestMessage[] = []
@@ -247,9 +242,8 @@ export class ABLResults implements Disposable {
 		log.info('options=' + JSON.stringify(options))
 		await this.deleteResultsXml()
 		const response = await ablunitRun(options, this, this.cancellation).then(() => {
-			if(!this.ablResults?.resultsJson) {
-				throw new Error('no results available')
-			}
+			return this.parseOutput(options)
+		}).then(() => {
 			return true
 		}, (e: unknown) => {
 			log.info('e=' + e + ', options=' + JSON.stringify(options))
@@ -266,6 +260,11 @@ export class ABLResults implements Disposable {
 		if (response instanceof Error) {
 			throw response
 		}
+
+		if (!this.ablResults?.resultsJson) {
+			throw new Error('no results available')
+		}
+
 		return response
 	}
 
@@ -292,7 +291,7 @@ export class ABLResults implements Disposable {
 
 		if (this.request.profile?.kind === TestRunProfileKind.Coverage && this.cfg.ablunitConfig.profiler.enabled && this.cfg.ablunitConfig.profiler.coverage) {
 			this.setStatus(RunStatus.Parsing, 'profiler data')
-			log.info('parsing profiler data...', {testRun: options})
+			log.info('parsing profiler data...')
 			await this.parseProfile(options).then(() => {
 				log.info('parsing profiler data complete ' + parseTime.toString())
 				return true
@@ -474,14 +473,33 @@ export class ABLResults implements Disposable {
 		return tm
 	}
 
-	findTest (profileDescription: string | undefined) {
+	findTest (profileDescription: string | undefined | Uri) {
+		if(this.allTests.length == 0) {
+			this.allTests = gatherAllTestItems(this.tests)
+		}
+
+		// ----- Uri ----- //
+		if (profileDescription instanceof Uri) {
+			let testItem = this.allTests.find((t) => t.id === profileDescription.fsPath)
+			if (!testItem) {
+				testItem = this.allTests.map((t) => t.parent).find((t) => t?.id === profileDescription.fsPath)
+			}
+			if (!testItem) {
+				// TODO account for includes and then restore the error message
+				// throw new Error('could not find test item for ' + fileinfo.uri.fsPath)
+				log.warn('Could not find test item for ' + profileDescription.fsPath)
+				return undefined
+			}
+			return testItem
+		}
+
+		// ----- Description ----- //
 		if (!profileDescription || profileDescription.split('|').length < 2) {
 			return undefined
 		}
 
 		const parentName = profileDescription.split('|')[1].split(' ')[0]
 		const testName = profileDescription.split('|')[1].split(' ')[1]
-		const tests = gatherAllTestItems(this.tests)
 
 		let ending = testName
 		if (parentName != 'TEST_ROOT') {
@@ -489,13 +507,16 @@ export class ABLResults implements Disposable {
 		}
 		ending = ending.replace(/\\/g, '/')
 
-		const items = tests.filter((t) => t.id.replace(/\\/g, '/').endsWith(ending))
+		const items = this.allTests.filter((t) => t.id.replace(/\\/g, '/').endsWith(ending))
 		if (testName == 'TEST_ROOT') {
 			return undefined
 		}
 		if (items.length == 0) {
-			log.error('Could not find test item for "' + parentName + ' ' + testName + '"')
-			throw new Error('Could not find test item for "' + parentName + ' ' + testName + '"')
+			// TODO account for includes and then restore the error message
+			// log.error('Could not find test item for "' + parentName + ' ' + testName + '"')
+			// throw new Error('Could not find test item for "' + parentName + ' ' + testName + '"')
+			log.warn('Could not find test item for "' + parentName + ' ' + testName + '"')
+			return undefined
 		}
 		if (items.length > 1) {
 			log.error('found multiple test items for "' + parentName + ' ' + testName + '"')
@@ -505,26 +526,38 @@ export class ABLResults implements Disposable {
 	}
 
 	async parseProfile (options: TestRun) {
-		const duration = new Duration()
 		const profDir = dirname(this.cfg.ablunitConfig.profFilenameUri.fsPath)
 		const profFile = basename(this.cfg.ablunitConfig.profFilenameUri.fsPath)
 		// <basename>.<ext> -> <basename>_*_*.<ext>
 		const globPattern = profFile.replace(/(.+)\.([a-zA-Z]+)$/, '$1_*.$2')
-		const dataFiles = [ basename(this.cfg.ablunitConfig.profFilenameUri.fsPath) ]
+		const dataFiles = []
 		try {
 			dataFiles.push(...globSync(globPattern, { cwd: profDir }))
 		} catch(e) {
 			log.warn('globSync failed for ' + globPattern + '\n\te=' + e)
 		}
-		dataFiles.sort((a, b) => { return a.localeCompare(b) })
+
+		dataFiles.sort((a, b) => {
+			const regex = /(.+)_([0-9]+)\.([a-zA-Z]+)$/
+			const aMatch = regex.exec(a)
+			const bMatch = regex.exec(b)
+			if (aMatch && bMatch) {
+				const aNum = parseInt(aMatch[2])
+				const bNum = parseInt(bMatch[2])
+				return aNum - bNum
+			}
+			return a.localeCompare(b)
+		})
+		// defined path always is first
+		dataFiles.unshift(basename(this.cfg.ablunitConfig.profFilenameUri.fsPath))
 
 		const proms: Promise<ABLProfileJson>[] = []
 		for (let i=0; i < dataFiles.length; i++) {
 			const uri = Uri.joinPath(Uri.file(profDir), dataFiles[i])
-			log.info('parsing profile data ' + (i+1) + '/' + dataFiles.length + ' from ' + uri.fsPath, {testRun: options})
+			log.debug('parsing profiler data ' + (i+1) + '/' + dataFiles.length + ' from ' + uri.fsPath)
 
 			proms.push(new ABLProfile().parseData(uri, this.cfg.ablunitConfig.profiler.writeJson, this.debugLines, this.cfg.ablunitConfig.profiler.ignoreExternalCoverage).then((profJson) => {
-				log.info('parsed profile data ' + (i+1) + '/' + dataFiles.length + ' ' + profJson.parseDuration)
+				log.debug('parsed profiler data ' + (i+1) + '/' + dataFiles.length + ' ' + profJson.parseDuration)
 				return profJson
 			}))
 		}
@@ -536,17 +569,20 @@ export class ABLResults implements Disposable {
 			const item = this.findTest(profJson.description)
 			profJson.testItemId = item?.id
 			this.profileJson.push(profJson)
-			log.info('assigning profile data (' + i + '/' + dataFiles.length + ')')
+			log.debug('assigning profiler data (' + i + '/' + dataFiles.length + ')')
 			await this.assignProfileResults(profJson, item)
-			log.info('parsing profile data complete (' + i + '/' + dataFiles.length + ')' + profJson.parseDuration, {testRun: options})
+
+			const message = 'parsing profiler data... (' + i + '/' + dataFiles.length + ', duration=' +  profJson.parseDuration.elapsed() + ')'
+			log.info(message)
+			options.appendOutput('\r' + message)
 		}
-		log.info('parsing profile data complete ' + duration.toString(), {testRun: options})
+		options.appendOutput('\r\n')
 	}
 
 	async assignProfileResults (profJson: ABLProfileJson, testItem: TestItem | undefined) {
 		if (!profJson) {
-			log.error('no profile data available...')
-			throw new Error('no profile data available...')
+			log.error('no profiler data available...')
+			throw new Error('no profiler data available...')
 		}
 		for (const module of profJson.modules) {
 			await this.setCoverage(module, testItem)
@@ -640,46 +676,67 @@ export class ABLResults implements Disposable {
 		// ----- this next line would add the main block to the declaration coverage -----
 		// this.addDeclarationFromModule(fileinfo.uri, module)
 
-		const fsc = this.statementCoverage.get(fileinfo?.uri.fsPath ?? module.SourceName) ?? []
-		if (fsc.length === 0) {
-			this.statementCoverage.set(fileinfo?.uri.fsPath ?? module.SourceName, fsc)
-		}
 
+
+		const files: Uri[] = []
+		if (module.SourceUri) {
+			files.push(module.SourceUri)
+		}
 		const lines = module.lines
 		for (const child of module.childModules) {
 			lines.push(...child.lines.filter((l) => l.LineNo > 0))
-		}
 
-		for (const line of lines) {
-			if (line.LineNo <= 0) { continue }
-			const lineno = (line.incLine ?? line.LineNo) - 1
-			const coverageRange = new Position(lineno, 0)
-
-			let cov = fsc.find((c) => JSON.stringify(c.location) == JSON.stringify(coverageRange))
-			if (!cov) {
-				cov = new StatementCoverage(line.ExecCount ?? 0, coverageRange)
-				fsc.push(cov)
-			} else if (typeof cov.executed == 'number') {
-				cov.executed = cov.executed + (line.ExecCount ?? 0)
-			} else if (typeof cov.executed == 'boolean') {
-				cov.executed = cov.executed || line.ExecCount > 0
+			for (const line of lines) {
+				if (line.incUri && !files.find((f) => f == line.incUri)) {
+					files.push(line.incUri)
+				}
 			}
 		}
 
-		const fdc = this.declarationCoverage.get(fileinfo?.uri.fsPath ?? module.SourceName) ?? []
-		fdc.sort((a, b) => this.sortLocation(a, b))
-		fsc.sort((a, b) => this.sortLocation(a, b))
+		for (const f of files) {
 
-		const fcd: FileCoverageDetail[] = []
-		fcd.push(...fdc, ...fsc)
+			const incInfo = await this.propath.search(f)
+			const fsc = this.statementCoverage.get(incInfo?.uri.fsPath ?? module.SourceName) ?? []
+			if (fsc.length === 0) {
+				this.statementCoverage.set(incInfo?.uri.fsPath ?? module.SourceName, fsc)
+			}
 
-		const fc = FileCoverage.fromDetails(fileinfo?.uri ?? Uri.file(module.SourceName), fcd)
-		const fcOrig = this.fileCoverage.get(fileinfo?.uri.fsPath ?? module.SourceName)
-		fc.includesTests = fcOrig?.includesTests ?? []
-		if (item && !fc.includesTests.find((i) => i.id == item.id)) {
-			fc.includesTests.push(item)
+			for (const line of lines) {
+				if (line.LineNo <= 0) { continue }
+				const uri = line.incUri ?? line.srcUri ?? module.SourceUri
+				if (uri?.fsPath != f.fsPath) {
+					continue
+				}
+
+				const lineno = (line.incLine ?? line.LineNo) - 1
+				const coverageRange = new Position(lineno, 0)
+
+				let cov = fsc.find((c) => JSON.stringify(c.location) == JSON.stringify(coverageRange))
+				if (!cov) {
+					cov = new StatementCoverage(line.ExecCount ?? 0, coverageRange)
+					fsc.push(cov)
+				} else if (typeof cov.executed == 'number') {
+					cov.executed = cov.executed + (line.ExecCount ?? 0)
+				} else if (typeof cov.executed == 'boolean') {
+					cov.executed = cov.executed || line.ExecCount > 0
+				}
+			}
+
+			const fdc = this.declarationCoverage.get(incInfo?.uri.fsPath ?? module.SourceName) ?? []
+			fdc.sort((a, b) => this.sortLocation(a, b))
+			fsc.sort((a, b) => this.sortLocation(a, b))
+
+			const fcd: FileCoverageDetail[] = []
+			fcd.push(...fdc, ...fsc)
+
+			const fc = FileCoverage.fromDetails(incInfo?.uri ?? Uri.file(module.SourceName), fcd)
+			const fcOrig = this.fileCoverage.get(incInfo?.uri.fsPath ?? module.SourceName)
+			fc.includesTests = fcOrig?.includesTests ?? []
+			if (item && !fc.includesTests.find((i) => i.id == item.id)) {
+				fc.includesTests.push(item)
+			}
+
+			this.fileCoverage.set(incInfo?.uri.fsPath ?? module.SourceName, fc)
 		}
-
-		this.fileCoverage.set(fileinfo?.uri.fsPath ?? module.SourceName, fc)
 	}
 }

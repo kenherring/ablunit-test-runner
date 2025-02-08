@@ -77,7 +77,6 @@ export async function ablunitRun (options: TestRun, res: ABLResults, cancellatio
 			log.info('runCommand threw error! e=' + e)
 			throw e
 		})
-	await res.parseOutput(options)
 }
 
 function getCommand (res: ABLResults, options: TestRun) {
@@ -226,7 +225,7 @@ function runCommand (res: ABLResults, options: TestRun, cancellation: Cancellati
 			shell: true,
 		}
 
-		log.info('command=\'' + cmd + ' ' + args.join(' ') + '\'\r\n', {testRun: options, testItem: currentTestItem })
+		log.info('command=\'' + cmd + ' ' + args.join(' ') + '\'\n\n', {testRun: options, testItem: currentTestItem })
 		const testRunDuration = new Duration('TestRun')
 		const process = spawn(cmd, args, spawnOpts)
 
@@ -327,6 +326,7 @@ function runCommand (res: ABLResults, options: TestRun, cancellation: Cancellati
 					return e
 				}
 				res.setStatus(RunStatus.Error, 'exit_code=' + code)
+				processUpdates(options, res.tests, updateUri)
 				log.info('----- ABLUnit Test Run Failed (exit_code=' + code + ') ----- ' + testRunDuration, {testRun: options, testItem: currentTestItem })
 				const e = new ABLUnitRuntimeError('ABLUnit exit_code=' + code, 'ABLUnit exit_code=' + code + '; signal=' + signal, cmd)
 				reject(e)

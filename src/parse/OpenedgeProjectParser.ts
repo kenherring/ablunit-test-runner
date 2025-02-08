@@ -391,6 +391,7 @@ function parseOpenEdgeProjectConfig (uri: Uri, workspaceUri: Uri, config: IOpenE
 	prjConfig.charset = config.charset
 	prjConfig.oeversion = config.oeversion
 	prjConfig.graphicalMode = config.graphicalMode
+	prjConfig.buildDirectory = config.buildDirectory ?? workspaceUri.fsPath
 	if (config.buildPath && config.buildPath.length > 0) {
 		prjConfig.propath = config.buildPath.map(str => str.path.replace('${DLC}', prjConfig.dlc))
 	} else {
@@ -399,15 +400,19 @@ function parseOpenEdgeProjectConfig (uri: Uri, workspaceUri: Uri, config: IOpenE
 	}
 	if (config.buildPath) {
 		prjConfig.buildPath = config.buildPath
+		for (const b of prjConfig.buildPath) {
+			if (!b.build) {
+				b.build = prjConfig.buildDirectory
+			}
+		}
 	} else {
-		prjConfig.buildPath = [ {
+		prjConfig.buildPath = [{
 			type: 'source',
 			build: config.buildDirectory,
 			xref: '.builder/pct',
 			path: prjConfig.propath[0],
 		}]
 	}
-	prjConfig.buildDirectory = config.buildDirectory ?? workspaceUri.fsPath
 	prjConfig.dbConnections = config.dbConnections ?? []
 	prjConfig.procedures = config.procedures ?? []
 

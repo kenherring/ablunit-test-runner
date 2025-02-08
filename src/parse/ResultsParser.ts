@@ -282,7 +282,7 @@ export class ABLResultsParser {
 			log.info('wrote results json file: ' + uri.fsPath)
 			return
 		}, (e: unknown) => {
-			log.error('failed to write profile output json file ' + uri.fsPath + ' - ' + e)
+			log.error('failed to write profiler output json file ' + uri.fsPath + ' - ' + e)
 		})
 	}
 }

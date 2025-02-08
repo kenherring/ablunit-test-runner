@@ -62,3 +62,12 @@ test('OpenedgeProjectParser.test.4', () => {
 	assert.equal(JSON.stringify(config.propath), '["src"]')
 	assert.equal(JSON.stringify(config.buildPath.map(x => x.build)), '["dist"]')
 })
+
+test('OpenedgeProjectParser.test.5', () => {
+	const config = getOpenEdgeProfileConfig(toUri('openedge-project.test5.json'))
+	if (!config) {
+		throw new Error('config is undefined')
+	}
+
+	assert.equal(JSON.stringify(config.buildPath.map(x => x.build)), '["build"]')
+})
