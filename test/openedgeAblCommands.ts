@@ -47,7 +47,7 @@ export function restartLangServer () {
 	})
 }
 
-export async function rebuildAblProject () {
+export async function rebuildAblProject (waitForRcodeCount = 0) {
 	log.info('rebuilding abl project...')
 	const rebuildTime = new Duration('rebuildTime')
 	let startingLine = (await getLogContents()).length
@@ -56,13 +56,12 @@ export async function rebuildAblProject () {
 	await commands.executeCommand('abl.project.rebuild')
 
 	let stillCompiling = true
-	while(!stillCompiling && compileResults.success == 0 && compileResults.failure == 0 && rebuildTime.elapsed() < 15000) {
+	while (stillCompiling && rebuildTime.elapsed() < 15000) {
 		const prom = sleep2(250, 'waiting for project rebuild to complete... ' + rebuildTime)
 			.then(() => { return getLogContents() })
 		const lines = await prom
-		if (lines.length == startingLine) {
-			continue
-		}
+		// log.info('lines.length=' + lines.length)
+
 		stillCompiling = false
 		for (let i=startingLine; i<lines.length; i++) {
 			const parts = /^\[([^\]]*)\] \[([A-Z]*)\] (\[[^\]]*\]*)? ?(.*)$/.exec(lines[i])
@@ -75,8 +74,10 @@ export async function rebuildAblProject () {
 				}
 			}
 
+			// log.info('lines[' + i + '] = "' + message + '"')
 			if (message == 'Project rebuild triggered by client') {
 				compileResults = { success: 0, failure: 0 }
+				stillCompiling = true
 			} else if (message?.startsWith('Compilation successful: ')) {
 				compileResults.success++
 				stillCompiling = true
@@ -86,13 +87,24 @@ export async function rebuildAblProject () {
 			}
 		}
 		startingLine = lines.length
+
+		if (compileResults.success == 0 && compileResults.failure == 0) {
+			stillCompiling = true
+		}
+
+		if (waitForRcodeCount > 0) {
+			const rcodeCount = getRcodeCount()
+			if (rcodeCount < waitForRcodeCount) {
+				log.info('rcodeCount=' + rcodeCount + '; waiting for rcodeCount=' + waitForRcodeCount)
+				stillCompiling = true
+			}
+			if (rcodeCount >= waitForRcodeCount) {
+				log.info('rcodeCount=' + rcodeCount + '; rcodeCount >= waitForRcodeCount=' + waitForRcodeCount)
+				stillCompiling = false
+			}
+		}
+
 		log.info('stillCompiling=' + stillCompiling + ', compileResults=' + JSON.stringify(compileResults))
-		if (stillCompiling) {
-			continue
-		}
-		if (compileResults.success > 0 || compileResults.failure > 0) {
-			break
-		}
 	}
 
 	let rcodeCount = getRcodeCount()
@@ -147,7 +159,8 @@ async function dumpLangServStatus () {
 		})
 
 	let lines = await getLogContents()
-	if (lines.length == startingLine) {
+	const duration = new Duration('dumpLangServStatus')
+	while (lines.length == startingLine && duration.elapsed() < 3000) {
 		await sleep2(252)
 		lines = await getLogContents()
 	}

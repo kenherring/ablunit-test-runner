@@ -1103,9 +1103,9 @@ function getLineExecutions (coverage: FileCoverageDetail[] | never[], lineNum: n
 
 	const details = coverage.filter((d: FileCoverageDetail) => {
 		if (d.location instanceof vscode.Range) {
-			return d.location.start.line == lineNum
+			return d.location.start.line == lineNum - 1
 		} else if (d.location instanceof vscode.Position) {
-			return d.location.line == lineNum
+			return d.location.line == lineNum - 1
 		}
 	})
 	if (details.length === 0) {
@@ -1212,7 +1212,7 @@ export const assert = {
 	notDirExists: (...dirs: string[] | Uri[]) => {
 		if (dirs.length === 0) { throw new Error('no dir(s) specified') }
 		for (const dir of dirs) {
-			assertParent.ok(!FileUtils.doesDirExist(toUri(dir)), 'dir exists: ' + fileToString(dir))
+			assertParent.ok(!FileUtils.doesDirExist(toUri(dir)), 'dir exists but should not: ' + fileToString(dir))
 		}
 	},
 
@@ -1229,7 +1229,12 @@ export const assert = {
 	},
 	tests: new AssertTestResults(),
 
-	coverageProcessingMethod (debugSourceFile: string, expected: 'rcode' | 'parse') {
+	coverageProcessingMethod (debugSourceFile: string | Uri, expected: 'rcode' | 'parse') {
+		if (debugSourceFile instanceof Uri) {
+			debugSourceFile = debugSourceFile.fsPath
+		} else {
+			debugSourceFile = toUri(debugSourceFile).fsPath
+		}
 		if (! recentResults) {
 			assert.fail('recentResults is undefined')
 			return
@@ -1241,7 +1246,7 @@ export const assert = {
 		}
 
 		const actual = res.debugLines?.getProcessingMethod(debugSourceFile)
-		assert.equal(actual, expected, 'processing method actual: ' + actual + ' != expected: ' + expected)
+		assert.equal(actual, expected, 'processing method actual: ' + actual + ' != expected: ' + expected + ' (debugSourceFile=' + debugSourceFile + ')')
 	},
 
 	coveredFiles (expected: number) {

@@ -273,7 +273,7 @@ suite('proj1 - Extension Test Suite', () => {
 	test('proj1.15 - compile option without MIN-SIZE without xref', () => {
 		const p = compileWithTaskAndRunWithCoverage('ant build')
 			.then(() => {
-				assert.linesExecuted('test_15.p', [9, 10, 13, 14])
+				assert.linesExecuted('test_15.p', [10, 11, 14, 15])
 				assert.coverageProcessingMethod('test_15.p', 'rcode')
 				return true
 			})

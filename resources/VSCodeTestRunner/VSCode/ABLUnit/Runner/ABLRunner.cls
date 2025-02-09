@@ -20,6 +20,7 @@ class VSCode.ABLUnit.Runner.ABLRunner inherits OpenEdge.ABLUnit.Runner.ABLRunner
 
     define variable VERBOSE as logical no-undo.
     define variable updateFilepath as character no-undo.
+    define variable profilerSubstitute as character no-undo.
 
     constructor public ABLRunner () :
         super().
@@ -215,7 +216,7 @@ class VSCode.ABLUnit.Runner.ABLRunner inherits OpenEdge.ABLUnit.Runner.ABLRunner
             childTestEntity = cast(testEntities:GetValue(i), TestEntity).
             if not valid-object(childTestEntity) then
             do:
-                message 'childTestEtity is not valid!  testEntities[' + string(i) + '/' + string(testEntities:Size) + ']=' testEntities:GetValue(i).
+                if VERBOSE then message 'childTestEtity is not valid!  testEntities[' + string(i) + '/' + string(testEntities:Size) + ']=' testEntities:GetValue(i).
                 next.
             end.
             createEntityMapRecord(childTestEntity:id, childTestEntity:name, parentName).
@@ -252,13 +253,12 @@ class VSCode.ABLUnit.Runner.ABLRunner inherits OpenEdge.ABLUnit.Runner.ABLRunner
         else
             message 'ABLUNIT_STATUS=~{"action":"' + action + '"~}'.
 
-        if not entityName begins 'TEST_ROOT ' and
-            (content begins 'TEST_END ' or
-             content begins 'TEST_EXCEPTION ' or
-             content begins 'TEST_FAIL ' or
-             content begins 'TEST_IGNORED ') then
+        if (content begins 'TEST_END ' or
+            content begins 'TEST_EXCEPTION ' or
+            content begins 'TEST_FAIL ' or
+            content begins 'TEST_IGNORED ') then
         do:
-            if VERBOSE then message "restarting profiler (entityName=" + entityName + ")".
+            if VERBOSE then message "restarting profiler (entityId=" + string(entityId) + ", entityName=" + entityName + ")".
             restartProfiler(entityName, entityId).
         end.
         return.
@@ -284,7 +284,6 @@ class VSCode.ABLUnit.Runner.ABLRunner inherits OpenEdge.ABLUnit.Runner.ABLRunner
         return parentName + ' ' + entityName.
     end method.
 
-
     method public void restartProfiler(testinfo as character, entityId as integer) :
         if VERBOSE then message "restartProfiler".
         if profiler:description matches "*[perTest=false]" then
@@ -298,10 +297,14 @@ class VSCode.ABLUnit.Runner.ABLRunner inherits OpenEdge.ABLUnit.Runner.ABLRunner
             profiler:description = profiler:description + '|'.
         entry(2, profiler:description, '|') = testinfo.
 
-        extension = entry(num-entries(profiler:file-name, '.'), profiler:file-name, '.').
-        basename = substring(profiler:file-name, 1, length(profiler:file-name) - length(extension) - 1).
+        if profilerSubstitute = '' then
+        do:
+            extension = entry(num-entries(profiler:file-name, '.'), profiler:file-name, '.').
+            basename = substring(profiler:file-name, 1, length(profiler:file-name) - length(extension) - 1).
+            profilerSubstitute = basename + '_&1.' + extension.
+        end.
         profile-file-name = profiler:file-name.
-        profiler:file-name = basename + '_' + string(entityId) + '_' + string(mtime) + '.' + extension.
+        profiler:file-name = substitute(profilerSubstitute, string(entityId)).
 
         profiler:write-data().
         profiler:file-name = profile-file-name.

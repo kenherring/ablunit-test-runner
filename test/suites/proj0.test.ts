@@ -101,7 +101,7 @@ suite('proj0  - Extension Test Suite', () => {
 			log.info('runAllTestsWithCoverage.then')
 			return true
 		})
-		assert.linesExecuted('src/dirA/dir1/testInDir.p', [5, 6])
+		assert.linesExecuted('src/dirA/dir1/testInDir.p', [6, 7])
 	})
 
 	// is it possible to validate the line coverage displayed and not just the reported coverage?  does it matter?
@@ -112,7 +112,7 @@ suite('proj0  - Extension Test Suite', () => {
 
 		const lines = (await getResults())[0].statementCoverage.get(testFileUri.fsPath) ?? []
 		assert.assert(lines, 'no coverage found for ' + workspace.asRelativePath(testFileUri))
-		assert.linesExecuted(testFileUri, [5, 6])
+		assert.linesExecuted(testFileUri, [6, 7])
 	})
 
 	test('proj0.04 - coverage=false, open file, run test, validate no coverage displays', async () => {
@@ -351,8 +351,8 @@ suite('proj0  - Extension Test Suite', () => {
 				assert.tests.failed(0)
 				assert.tests.errored(0)
 				assert.tests.skipped(0)
-				assert.linesExecuted('src/test_17.cls', [6, 7, 8])
-				assert.linesExecuted('src/test_17.cls', [40, 41, 42, 43])
+				assert.linesExecuted('src/test_17.cls', [7, 8, 9])
+				assert.linesExecuted('src/test_17.cls', [41, 42, 43, 44])
 			})
 	})
 
@@ -360,7 +360,7 @@ suite('proj0  - Extension Test Suite', () => {
 		await runTestsInFile('src/threeTestProcedures.p', 1, true)
 		const res = await getResults()
 		assert.equal(res.length, 1, 'ABLResults[].length')
-		assert.equal(res[0].profileJson.length, 5, 'ABLResults[0].profileJson[].length')
+		assert.equal(res[0].profileJson.length, 6, 'ABLResults[0].profileJson[].length')
 
 		const fc = res[0].fileCoverage.get(toUri('src/threeTestProcedures.p').fsPath)
 		const sc = res[0].statementCoverage.get(toUri('src/threeTestProcedures.p').fsPath) ?? []
@@ -416,16 +416,16 @@ suite('proj0  - Extension Test Suite', () => {
 		await deleteRcode()
 
 		const rcodeCount = await restartLangServer()
-			.then(() => rebuildAblProject())
+			.then(() => rebuildAblProject(16))
 
-		assert.greater(rcodeCount, 0, 'rcodeCount > 0')
+		assert.greaterOrEqual(rcodeCount, 16, 'rcodeCount > 0')
 		assert.fileExists('d1/test_20.r')
 		assert.fileExists('d2/test_20.p.xref')
 
 		await runTestsInFile('src/test_20.p', 1, true)
 			.then(() => {
 				assert.tests.count(1)
-				assert.coverageProcessingMethod('test_20.p', 'rcode')
+				assert.coverageProcessingMethod(toUri('src/test_20.p'), 'rcode')
 			})
 	})
 

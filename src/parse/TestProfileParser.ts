@@ -129,7 +129,10 @@ export function parseRunProfiles (workspaceFolders: WorkspaceFolder[], wsFilenam
 				profile.tempDir = '${workspaceFolder}/.ablunit'
 			}
 
-			const wsFolder = profile.workspaceFolder?.uri.fsPath ?? '.'
+			let wsFolder = '.'
+			if (profile.workspaceFolder?.uri) {
+				wsFolder = workspace.asRelativePath(profile.workspaceFolder?.uri, false)
+			}
 			profile.tempDir = profile.tempDir.replace('${workspaceFolder}', wsFolder)
 			if (profile.options?.output?.location) {
 				profile.options.output.location = profile.options.output.location.replace('${workspaceFolder}', wsFolder)
@@ -206,7 +209,7 @@ export class RunConfig extends DefaultRunProfile {
 			filenameUri: Uri.joinPath(this.tempDirUri, tmpFilename),
 			updateUri: Uri.joinPath(this.tempDirUri, 'updates.log'),
 		}
-		this.options.output.location = workspace.asRelativePath(this.optionsUri.locationUri, false)
+		this.options.output.location = this.optionsUri.locationUri.fsPath
 		this.optionsUri.filenameUri = Uri.joinPath(this.optionsUri.locationUri, tmpFilename)
 
 		log.debug('this.options.output.writeJson=' + this.options.output.writeJson)

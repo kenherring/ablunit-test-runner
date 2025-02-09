@@ -169,7 +169,7 @@ export function activate (context: ExtensionContext) {
 		for (const res of results) {
 			const profJson = res.profileJson.find((prof) => prof.testItemId == fromTestItem.id)
 			if (!profJson) {
-				log.warn('no profile data found for test item ' + fromTestItem.id)
+				log.warn('no profiler data found for test item ' + fromTestItem.id)
 				continue
 			}
 			const module = profJson.modules.find((mod) => mod.SourceUri?.fsPath == fileCoverage.uri.fsPath)
@@ -1138,12 +1138,8 @@ function isFileIncluded (uri: Uri, includePatterns: RelativePattern[], excludePa
 
 	const relativePath = workspace.asRelativePath(uri.fsPath, false)
 	const includePatternsStr = includePatterns.map(pattern => pattern.pattern)
-	const excludePatternsStr = excludePatterns.map(pattern => pattern.pattern)
-	for (const excludePattern of excludePatternsStr) {
-		if (minimatch(relativePath, excludePattern)) {
-			log.info('file excluded by pattern: ' + excludePattern + ' (file=' + relativePath + ')')
-			return false
-		}
+	if (isFileExcluded(uri, excludePatterns)) {
+		return false
 	}
 
 	for (const pattern of includePatternsStr) {
@@ -1151,7 +1147,7 @@ function isFileIncluded (uri: Uri, includePatterns: RelativePattern[], excludePa
 			return true
 		}
 	}
-	log.info('file does not match any include patterns: ' + relativePath)
+	log.debug('file does not match any include patterns: ' + relativePath)
 	return false
 }
 
@@ -1163,7 +1159,7 @@ function isFileExcluded (uri: Uri, excludePatterns: RelativePattern[]) {
 	const patterns = excludePatterns.map(pattern => pattern.pattern)
 	for (const pattern of patterns) {
 		if (minimatch(relativePath, pattern)) {
-			log.info('file excluded by pattern: ' + pattern + ' (file=' + relativePath + ')')
+			log.debug('file excluded by pattern: ' + pattern + ' (file=' + relativePath + ')')
 			return true
 		}
 	}

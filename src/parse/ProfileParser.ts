@@ -88,7 +88,7 @@ export class ABLProfile {
 			this.writeJsonToFile(jsonUri).then(() => {
 				return true
 			}, (e: unknown) => {
-				log.error('Error writing profile output json file: ' + e)
+				log.error('Error writing profiler output json file: ' + e)
 				return false
 			})
 		}
@@ -103,10 +103,10 @@ export class ABLProfile {
 			userData: this.profJSON!.userData,
 		}
 		return workspace.fs.writeFile(uri, Uint8Array.from(Buffer.from(JSON.stringify(data, null, 2)))).then(() => {
-			log.info('wrote profile output json file: ' + workspace.asRelativePath(uri))
+			log.info('wrote profiler output json file: ' + workspace.asRelativePath(uri))
 			return
 		}, (e: unknown) => {
-			log.error('failed to write profile output json file ' + workspace.asRelativePath(uri) + ' - ' + e)
+			log.error('failed to write profiler output json file ' + workspace.asRelativePath(uri) + ' - ' + e)
 		})
 	}
 }
@@ -523,30 +523,30 @@ export class ABLProfileJson {
 				continue
 			}
 
-			const sourceName = this.getModule(modID)?.SourceName
-			if (!sourceName) {
-				log.warn('could not find source name for module ' + modID)
+			const mod = this.getModule(modID)
+			if (!mod) {
+				log.warn('could not find module ' + modID)
 				continue
 			}
-
 			const sum = new LineSummary(Number(test[2]), true)
 			sum.ExecCount = Number(test[3])
 			sum.ActualTime = Number(test[4])
 			sum.CumulativeTime = Number(test[5])
 
 
-			const lineinfo = await this.debugLines.getSourceLine(sourceName, sum.LineNo)
-			if(lineinfo) {
-				sum.srcLine = lineinfo.debugLine
-				sum.srcUri = lineinfo.debugUri
-				sum.incLine = lineinfo.sourceLine
-				sum.incUri = lineinfo.sourceUri
-			} else {
-				log.debug('could not find source/debug line info for ' + sourceName + ' ' + sum.LineNo)
-			}
-
-			const mod = this.getModule(modID)
 			if (mod) {
+				if (sum.LineNo != 0) {
+					const lineinfo = await this.debugLines.getSourceLine(mod.SourceUri?.fsPath ?? mod.SourceName, sum.LineNo)
+					if(lineinfo) {
+						sum.srcLine = lineinfo.debugLine
+						sum.srcUri = lineinfo.debugUri
+						sum.incLine = lineinfo.sourceLine
+						sum.incUri = lineinfo.sourceUri
+					} else {
+						log.debug('could not find source/debug line info for ' + mod.SourceName + ' ' + sum.LineNo)
+					}
+				}
+
 				mod.lines.push(sum)
 				if (sum.LineNo != 0) {
 					mod.lineCount++
@@ -650,14 +650,14 @@ export class ABLProfileJson {
 					CumulativeTime: 0,
 				}
 
-				if (mod.SourceUri) {
-					const lineinfo = await this.debugLines.getSourceLine(mod.SourceUri.fsPath, lineNo)
-					if (lineinfo) {
-						sum.srcLine = lineinfo.debugLine
-						sum.srcUri = lineinfo.debugUri
-						sum.incLine = lineinfo.sourceLine
-						sum.incUri = lineinfo.sourceUri
-					}
+				const lineinfo = await this.debugLines.getSourceLine(mod.SourceUri?.fsPath ?? mod.SourceName, sum.LineNo)
+				if (lineinfo) {
+					sum.srcLine = lineinfo.debugLine
+					sum.srcUri = lineinfo.debugUri
+					sum.incLine = lineinfo.sourceLine
+					sum.incUri = lineinfo.sourceUri
+				} else {
+					log.debug('could not find source/debug line info for ' + mod.SourceName + ' ' + sum.LineNo)
 				}
 
 				mod.lines.push(sum)
@@ -917,14 +917,15 @@ export function getModuleRange (module: IModule) {
 	for (const child of module.childModules) {
 		lines.push(...child.lines.filter((l) => l.LineNo > 0))
 	}
-	lines.sort((a, b) => { return a.LineNo - b.LineNo })
+	lines.sort((a, b) => a.LineNo - b.LineNo)
 
 	if (lines.length == 0) {
 		return undefined
 	}
 
-	const start = new Position(lines[0].LineNo - 1, 0)
-	const end = new Position(lines[lines.length - 1].LineNo - 1, 0)
+	const start = new Position((lines[0].incLine ?? lines[0].LineNo) - 1, 0)
+	const endLine = lines[lines.length - 1]
+	const end = new Position((endLine.incLine ?? endLine.LineNo) - 1, 0)
 	return new Range(start, end)
 }
 

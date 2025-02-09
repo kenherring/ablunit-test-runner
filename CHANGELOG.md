@@ -1,3 +1,11 @@
+# [1.0.6015](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.0.6015) - 2025-02-08
+
+
+ * Fix debug line mapping (#244)
+
+
+**Full Changelog**: [1.0.6013...1.0.6015](https://github.com/kenherring/ablunit-test-runner/compare/1.0.6013...1.0.6015)
+
 # [1.0.6013](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.0.6013) - 2025-02-06
 
 
