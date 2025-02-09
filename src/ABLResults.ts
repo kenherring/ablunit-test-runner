@@ -671,12 +671,22 @@ export class ABLResults implements Disposable {
 		}
 
 		for (const child of module.childModules) {
-			this.addDeclarationFromModule(fileinfo?.uri ?? Uri.file(module.SourceName), child)
+
+			const incFiles = child.lines.filter((l) => l.LineNo > 0).map((l) => l.incUri)
+			let incFile = incFiles[0]
+			for (let i=1; i < incFiles.length; i++) {
+				// if all lines have a different file than the module, put the declaration in that include file
+				const f = incFiles[i]
+				if (!f || f == fileinfo?.uri) {
+					incFile = fileinfo?.uri
+					break
+				}
+			}
+
+			this.addDeclarationFromModule(incFile ?? Uri.file(module.SourceName), child)
 		}
 		// ----- this next line would add the main block to the declaration coverage -----
 		// this.addDeclarationFromModule(fileinfo.uri, module)
-
-
 
 		const files: Uri[] = []
 		if (module.SourceUri) {
@@ -696,9 +706,13 @@ export class ABLResults implements Disposable {
 		for (const f of files) {
 
 			const incInfo = await this.propath.search(f)
-			const fsc = this.statementCoverage.get(incInfo?.uri.fsPath ?? module.SourceName) ?? []
+			if (!incInfo?.uri) {
+				log.warn('could not find file in propath: ' + f.fsPath)
+				continue
+			}
+			const fsc = this.statementCoverage.get(incInfo.uri.fsPath) ?? []
 			if (fsc.length === 0) {
-				this.statementCoverage.set(incInfo?.uri.fsPath ?? module.SourceName, fsc)
+				this.statementCoverage.set(incInfo.uri.fsPath, fsc)
 			}
 
 			for (const line of lines) {
@@ -722,15 +736,15 @@ export class ABLResults implements Disposable {
 				}
 			}
 
-			const fdc = this.declarationCoverage.get(incInfo?.uri.fsPath ?? module.SourceName) ?? []
+			const fdc = this.declarationCoverage.get(incInfo.uri.fsPath) ?? []
 			fdc.sort((a, b) => this.sortLocation(a, b))
 			fsc.sort((a, b) => this.sortLocation(a, b))
 
 			const fcd: FileCoverageDetail[] = []
 			fcd.push(...fdc, ...fsc)
 
-			const fc = FileCoverage.fromDetails(incInfo?.uri ?? Uri.file(module.SourceName), fcd)
-			const fcOrig = this.fileCoverage.get(incInfo?.uri.fsPath ?? module.SourceName)
+			const fc = FileCoverage.fromDetails(incInfo.uri, fcd)
+			const fcOrig = this.fileCoverage.get(incInfo.uri.fsPath)
 			fc.includesTests = fcOrig?.includesTests ?? []
 			if (item && !fc.includesTests.find((i) => i.id == item.id)) {
 				fc.includesTests.push(item)

@@ -269,7 +269,6 @@ export class ProfileConfig implements IOpenEdgeConfig {
 class OpenEdgeProjectConfig extends ProfileConfig {
 	activeProfile?: string
 	rootDir = '.'
-	override buildDirectory = '.'
 	profiles: Map<string, ProfileConfig> = new Map<string, ProfileConfig>()
 }
 
@@ -402,13 +401,16 @@ function parseOpenEdgeProjectConfig (uri: Uri, workspaceUri: Uri, config: IOpenE
 		prjConfig.buildPath = config.buildPath
 		for (const b of prjConfig.buildPath) {
 			if (!b.build) {
-				b.build = prjConfig.buildDirectory
+				b.build = config.buildDirectory
+			}
+			if (!b.build) {
+				b.build = prjConfig.propath[0]
 			}
 		}
 	} else {
 		prjConfig.buildPath = [{
 			type: 'source',
-			build: config.buildDirectory,
+			build: config.buildDirectory ?? prjConfig.propath[0],
 			xref: '.builder/pct',
 			path: prjConfig.propath[0],
 		}]
@@ -447,7 +449,7 @@ function parseOpenEdgeProjectConfig (uri: Uri, workspaceUri: Uri, config: IOpenE
 }
 
 function readOEConfigFile (uri: Uri, workspaceUri: Uri, openedgeProjectProfile?: string) {
-	log.debug('[readOEConfigFile] uri = ' + uri.fsPath)
+	log.debug('[readOEConfigFile] uri = ' + uri.fsPath + ', workspaceUri=' + workspaceUri.fsPath)
 	const projects: OpenEdgeProjectConfig[] = []
 
 	const config = loadConfigFile(uri)
@@ -487,16 +489,21 @@ function getWorkspaceProfileConfig (workspaceUri: Uri, openedgeProjectProfile?: 
 			return undefined
 		}
 	}
+	const workspaceFolderUri = workspace.getWorkspaceFolder(uri)?.uri
+	if (!workspaceFolderUri) {
+		throw new Error('Uri does not exist in workspace: ')
+	}
 	log.debug('[getWorkspaceProfileConfig] uri = ' + uri.fsPath)
-	const prjConfig = readOEConfigFile(uri, workspaceUri, openedgeProjectProfile)
+	const prjConfig = readOEConfigFile(uri, workspaceFolderUri, openedgeProjectProfile)
 
 	const activeProfile = openedgeProjectProfile ?? prjConfig.activeProfile
 
 	if (activeProfile) {
 		const prf =  prjConfig.profiles.get(activeProfile)
 		if (prf) {
-			if (prf.buildPath.length == 0)
+			if (prf.buildPath.length == 0) {
 				prf.buildPath = prjConfig.buildPath
+			}
 			if (prf.propath.length == 0)
 				prf.propath = prjConfig.propath
 			for (const e of prf.buildPath) {

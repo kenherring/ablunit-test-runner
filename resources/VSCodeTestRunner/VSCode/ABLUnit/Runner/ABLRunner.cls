@@ -216,7 +216,7 @@ class VSCode.ABLUnit.Runner.ABLRunner inherits OpenEdge.ABLUnit.Runner.ABLRunner
             childTestEntity = cast(testEntities:GetValue(i), TestEntity).
             if not valid-object(childTestEntity) then
             do:
-                message 'childTestEtity is not valid!  testEntities[' + string(i) + '/' + string(testEntities:Size) + ']=' testEntities:GetValue(i).
+                if VERBOSE then message 'childTestEtity is not valid!  testEntities[' + string(i) + '/' + string(testEntities:Size) + ']=' testEntities:GetValue(i).
                 next.
             end.
             createEntityMapRecord(childTestEntity:id, childTestEntity:name, parentName).

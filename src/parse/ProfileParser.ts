@@ -917,14 +917,15 @@ export function getModuleRange (module: IModule) {
 	for (const child of module.childModules) {
 		lines.push(...child.lines.filter((l) => l.LineNo > 0))
 	}
-	lines.sort((a, b) => { return a.LineNo - b.LineNo })
+	lines.sort((a, b) => a.LineNo - b.LineNo)
 
 	if (lines.length == 0) {
 		return undefined
 	}
 
-	const start = new Position(lines[0].LineNo - 1, 0)
-	const end = new Position(lines[lines.length - 1].LineNo - 1, 0)
+	const start = new Position((lines[0].incLine ?? lines[0].LineNo) - 1, 0)
+	const endLine = lines[lines.length - 1]
+	const end = new Position((endLine.incLine ?? endLine.LineNo) - 1, 0)
 	return new Range(start, end)
 }
 

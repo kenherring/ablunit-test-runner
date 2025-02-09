@@ -99,4 +99,25 @@ suite('debugLines - Debug Line Tests - insiders', () => {
 		assert.equal(10, sourceMap.items[7].sourceLine, 'sourceLine #7')
 		assert.equal(22, sourceMap.items[7].debugLine, 'debugLine #7')
 	})
+
+	test('debugLines.6 - include lines are executable', async () => {
+		const propath = new PropathParser(workspaceFolder)
+		const sourceMap = await getSourceMapFromRCode(propath, Uri.joinPath(getWorkspaceUri(), 'out/test6.r'))
+
+		assert.equal(sourceMap.items[0].debugUri.fsPath, toUri('src/test6.p').fsPath, 'debugUri[0]')
+		for (let i=0; i < sourceMap.items.length ; i++) {
+			const line = sourceMap.items[i]
+			log.info('i=' + i + ': '+ workspace.asRelativePath(line.debugUri) + ':' + line.debugLine + ' -> ' + workspace.asRelativePath(line.sourceUri) + ':' + line.sourceLine + ', proc=' + line.procName)
+		}
+
+		assert.equal(sourceMap.items[6].sourceUri.fsPath, toUri('src/test6.p'), 'sourceUri[6]')
+		assert.equal(sourceMap.items[6].debugUri.fsPath, toUri('src/test6.p'), 'debugUri[6]')
+		assert.equal(sourceMap.items[6].sourceLine, 7, 'sourceLine[6]')
+		assert.equal(sourceMap.items[6].debugLine, 16, 'debugLine[6]')
+
+		assert.equal(sourceMap.items[9].sourceUri.fsPath, toUri('src/include6.i'), 'sourceUri[9]')
+		assert.equal(sourceMap.items[9].debugUri.fsPath, toUri('src/test6.p'), 'debugUri[9]')
+		assert.equal(sourceMap.items[9].sourceLine, 7, 'sourceLine[9]')
+		assert.equal(sourceMap.items[9].debugLine, 27, 'debugLine[9]')
+	})
 })

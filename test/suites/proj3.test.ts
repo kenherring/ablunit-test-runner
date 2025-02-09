@@ -1,4 +1,4 @@
-import { assert, FileUtils, getDefaultDLC, getRcodeCount, getWorkspaceUri, log, oeVersion, rebuildAblProject, runAllTests, runAllTestsWithCoverage, setRuntimes, suiteSetupCommon, toUri, Uri } from '../testCommon'
+import { assert, FileUtils, getDefaultDLC, getRcodeCount, getWorkspaceUri, log, oeVersion, runAllTests, runAllTestsWithCoverage, setRuntimes, suiteSetupCommon, toUri, Uri } from '../testCommon'
 
 const workspaceUri = getWorkspaceUri()
 
@@ -44,7 +44,19 @@ suite('proj3 - Extension Test Suite', () => {
 		// validate coverage lines when many profiles imported
 		assert.coverageProcessingMethod(toUri('LotsOfTests.p').fsPath, 'rcode')
 		assert.linesExecuted('LotsOfTests.p', [7, 8, 9])
-		assert.linesExecuted('testProcedure.i', [8, 9, 10])
-	})
+		assert.linesExecuted('doSomething.i', [2, 3, 8])
+		assert.linesNotExecuted('doSomething.i', [5, 6, 7])
+		// assert.linesExecuted('testProcedure.i', [8, 9, 10])
 
+		// TODO in 12.2 executing all tests will find this, but not in 12.8
+		// executing just the
+		log.info('oeVerion=' + oeVersion())
+		log.info('process.env[\'OE_VERSION\']=' + process.env['OE_VERSION'])
+		log.info('process.env[\'ABLUNIT_TEST_RUNNER_OE_VERSION\']=' + process.env['ABLUNIT_TEST_RUNNER_OE_VERSION'])
+		if (oeVersion().startsWith('12.8')) {
+			assert.linesExecuted('testProcedure.i', [8, 9, 10])
+		} else {
+			assert.linesNotExecuted('testProcedure.i', [8, 9, 10])
+		}
+	})
 })
