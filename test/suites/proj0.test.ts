@@ -429,4 +429,11 @@ suite('proj0  - Extension Test Suite', () => {
 			})
 	})
 
+	test('proj0.21 - overloaded method coverage', async () => {
+		await runTestsInFile('src/overloadedMethods.cls', 1, true)
+		assert.tests.count(2)
+		assert.linesExecuted('src/overloadedMethods.cls', [17, 18, 19, 22, 23])
+		assert.linesNotExecuted('src/overloadedMethods.cls', [21])
+	})
+
 })

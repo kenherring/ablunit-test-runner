@@ -292,7 +292,7 @@ export class ABLResults implements Disposable {
 		if (this.request.profile?.kind === TestRunProfileKind.Coverage && this.cfg.ablunitConfig.profiler.enabled && this.cfg.ablunitConfig.profiler.coverage) {
 			this.setStatus(RunStatus.Parsing, 'profiler data')
 			log.info('parsing profiler data...')
-			await this.parseProfile(options).then(() => {
+			await this.parseProfile(options, parseTime).then(() => {
 				log.info('parsing profiler data complete ' + parseTime.toString())
 				return true
 			}, (e: unknown) => {
@@ -499,6 +499,9 @@ export class ABLResults implements Disposable {
 		}
 
 		const parentName = profileDescription.split('|')[1].split(' ')[0]
+		if (parentName == 'TEST_ROOT') {
+			return undefined
+		}
 		const testName = profileDescription.split('|')[1].split(' ')[1]
 
 		let ending = testName
@@ -508,9 +511,6 @@ export class ABLResults implements Disposable {
 		ending = ending.replace(/\\/g, '/')
 
 		const items = this.allTests.filter((t) => t.id.replace(/\\/g, '/').endsWith(ending))
-		if (testName == 'TEST_ROOT') {
-			return undefined
-		}
 		if (items.length == 0) {
 			// TODO account for includes and then restore the error message
 			// log.error('Could not find test item for "' + parentName + ' ' + testName + '"')
@@ -525,7 +525,7 @@ export class ABLResults implements Disposable {
 		return items[0]
 	}
 
-	async parseProfile (options: TestRun) {
+	async parseProfile (options: TestRun, parseTime: Duration) {
 		const profDir = dirname(this.cfg.ablunitConfig.profFilenameUri.fsPath)
 		const profFile = basename(this.cfg.ablunitConfig.profFilenameUri.fsPath)
 		// <basename>.<ext> -> <basename>_*_*.<ext>
@@ -572,7 +572,7 @@ export class ABLResults implements Disposable {
 			log.debug('assigning profiler data (' + i + '/' + dataFiles.length + ')')
 			await this.assignProfileResults(profJson, item)
 
-			const message = 'parsing profiler data... (' + i + '/' + dataFiles.length + ', duration=' +  profJson.parseDuration.elapsed() + ')'
+			const message = 'parsing profiler data... (' + i + '/' + dataFiles.length + ', duration=' +  parseTime.elapsed() + ')'
 			log.info(message)
 			options.appendOutput('\r' + message)
 		}
@@ -597,11 +597,15 @@ export class ABLResults implements Disposable {
 	addDeclarationFromModule (uri: Uri, module: IModule) {
 		const fdc = this.declarationCoverage.get(uri.fsPath) ?? []
 
-		let dc = fdc.find((c) => c.name == (module.EntityName ?? '<main block'))
+		let declarationName = module.EntityName
+		if (module.overloaded) {
+			declarationName = declarationName + ' (overload ' + module.overloadSequence + ')'
+		}
+		let dc = fdc.find((c) => c.name == (declarationName ?? '<main block'))
 		if (!dc) {
 			const range = getModuleRange(module)
 			if (range) {
-				dc = new DeclarationCoverage(module.EntityName ?? '<main block>', 0, range)
+				dc = new DeclarationCoverage(declarationName ?? '<main block>', 0, range)
 				fdc.push(dc)
 			}
 		}
