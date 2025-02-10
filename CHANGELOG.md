@@ -1,3 +1,11 @@
+# [1.0.6017](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.0.6017) - 2025-02-10
+
+
+ * Ungroup overloaded methods for coverage reporting (#245)
+
+
+**Full Changelog**: [1.0.6015...1.0.6017](https://github.com/kenherring/ablunit-test-runner/compare/1.0.6015...1.0.6017)
+
 # [1.0.6015](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.0.6015) - 2025-02-08
 
 
