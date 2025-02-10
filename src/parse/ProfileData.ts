@@ -30,7 +30,9 @@ export class ProfileData {
 				const d = data[key] as Uri
 				data[key] = d.fsPath
 			} catch (_e: unknown) {
-				this.convertUris(data[key] as IObject)
+				if (data[key] != undefined && data[key] != null) {
+					this.convertUris(data[key] as IObject)
+				}
 			}
 		}
 		return data
