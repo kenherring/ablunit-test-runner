@@ -35,7 +35,20 @@ class overloadedMethods :
     @Test.
     method public void methodName2 () :
         overloadMethod('a', 'b').
+        message string(overloadedTwice()).
+        external2().
         OpenEdge.Core.Assert:IsTrue(yes).
     end method.
+
+    method public integer overloadedTwice () :
+        return 1.
+    end.
+
+    method public integer notOverloaded () :
+    end method.
+
+    method public integer overloadedTwice(c as char) :
+        return 2.
+    end.
 
 end class.

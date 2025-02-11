@@ -589,11 +589,6 @@ export class ABLResults implements Disposable {
 		}
 	}
 
-	getExecCount (module: IModule) {
-		const zeroLine = module.lines.find((a) => a.LineNo == 0)
-		return zeroLine?.ExecCount ?? 0
-	}
-
 	addDeclarationFromModule (uri: Uri, module: IModule) {
 		const fdc = this.declarationCoverage.get(uri.fsPath) ?? []
 
@@ -605,7 +600,7 @@ export class ABLResults implements Disposable {
 		if (!dc) {
 			const range = getModuleRange(module)
 			if (range) {
-				dc = new DeclarationCoverage(declarationName ?? '<main block>', 0, range)
+				dc = new DeclarationCoverage(declarationName ?? '<main block>', false, range)
 				fdc.push(dc)
 			}
 		}
@@ -614,11 +609,16 @@ export class ABLResults implements Disposable {
 			if (executedLines.length > 0) {
 				dc.executed = true
 			}
-		} else if (typeof dc?.executed == 'number') {
-			dc.executed = dc.executed + this.getExecCount(module)
-		} else if (typeof dc?.executed == 'boolean') {
-			dc.executed = dc.executed || this.getExecCount(module) > 0
+		} else if (dc) {
+			if (!dc.executed) {
+				dc.executed = module.executedLines > 0
+			}
 		}
+		// } else if (typeof dc?.executed == 'number') {
+		// 	dc.executed = dc.executed + module.
+		// } else if (typeof dc?.executed == 'boolean') {
+		// 	dc.executed = dc.executed || this.getExecCount(module) > 0
+		// }
 
 		this.declarationCoverage.set(uri.fsPath, fdc)
 	}
@@ -694,20 +694,24 @@ export class ABLResults implements Disposable {
 
 		const files: Uri[] = []
 		if (module.SourceUri) {
-			files.push(module.SourceUri)
+			if (!files.find(f => f.fsPath == module.SourceUri.fsPath)) {
+				files.push(module.SourceUri)
+			}
 		}
 		const lines = module.lines
 		for (const child of module.childModules) {
 			lines.push(...child.lines.filter((l) => l.LineNo > 0))
 
 			for (const line of lines) {
-				if (line.incUri && !files.find((f) => f == line.incUri)) {
+				if (line.incUri && !files.find((f) => f.fsPath == line.incUri?.fsPath)) {
 					files.push(line.incUri)
 				}
 			}
 		}
 
-		for (const f of files) {
+		const filesNoDupes = Array.from(new Set(files))
+
+		for (const f of filesNoDupes) {
 
 			const incInfo = await this.propath.search(f)
 			if (!incInfo?.uri) {
@@ -720,6 +724,9 @@ export class ABLResults implements Disposable {
 			}
 
 			for (const line of lines) {
+				if (line.incUri?.fsPath != f.fsPath) {
+					continue
+				}
 				if (line.LineNo <= 0) { continue }
 				const uri = line.incUri ?? line.srcUri ?? module.SourceUri
 				if (uri?.fsPath != f.fsPath) {

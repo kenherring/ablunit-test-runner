@@ -125,6 +125,18 @@ export const getSourceMapFromRCode = (propath: PropathParser, uri: Uri) => {
 		return next
 	}
 
+	const parseProc0 = (_bytes: Uint32Array, pos: number, prefix = '') => {
+		log.trace(prefix + ' TODO - implement rcode parsing function parseProc0')
+		log.info(prefix + ' pos=' + pos)
+		// const childBytes = bytes.subarray(pos/4, nextDelim(bytes, pos, 1))
+		// const arr8 = rawBytes.subarray(childBytes.byteOffset, rawBytes.indexOf(0, childBytes.byteOffset + 1))
+		// const value = dec.decode(arr8)
+		// log.info('parseProc0 arr.length=' + arr8.length + ', value=' + value)
+		// for (const b of arr8) {
+		// 	log.info('b=' + b + ', decoded=' + dec.decode(new Uint8Array([b])))
+		// }
+	}
+
 	const parseProcName = (bytes: Uint32Array, pos: number, prefix = '') => {
 		if (debug) {
 			log.info(prefix + ' [parseProcName] pos=' + pos)
@@ -132,26 +144,55 @@ export const getSourceMapFromRCode = (propath: PropathParser, uri: Uri) => {
 		const childBytes = bytes.subarray(pos/4, nextDelim(bytes, pos, 1))
 
 		const arr8 = rawBytes.subarray(childBytes.byteOffset, rawBytes.indexOf(0, childBytes.byteOffset + 1))
-		const name2 = dec.decode(arr8)
+		const name = dec.decode(arr8)
 
-		return name2
+		if (debug) {
+			log.info('found procName=' + name)
+		}
+
+		return name
 	}
 
-	const parseVar = (_bytes: Uint32Array, _pos: number, _prefix = '') => {
-		// log.trace(prefix + " TODO - implement rcode parsing function parseVar")
+	const parseVar = (_bytes: Uint32Array, pos: number, prefix = '') => {
+		log.trace(prefix + ' TODO - implement rcode parsing function parseVar')
+		log.info(prefix + ' pos=' + pos)
+		// const end = nextDelim(bytes, pos + 20, 4, prefix)
+		// log.info('end=' + end)
+		// const childBytes = bytes.subarray(pos/4, end)
+		// log.info(prefix + ' 102 childBytes=' + childBytes)
+
+		// const arr8 = rawBytes.subarray(childBytes.byteOffset, rawBytes.indexOf(0, childBytes.byteOffset + 1))
+		// log.info('arr8=' + arr8)
+		// const value = dec.decode(arr8)
+		// log.info('value=' + value)
+		// return value
 	}
 
-	const parseParam = (_bytes: Uint32Array, _pos: number, _prefix = '') => {
-		// log.trace(prefix + " TODO - implement rcode parsing function parseParam")
+	const parseParam = (bytes: Uint32Array, pos: number, prefix = '') => {
+		log.trace(prefix + ' TODO - implement rcode parsing function parseParam')
+		log.info(prefix + ' pos=' + pos)
+
+		const childBytes = bytes.subarray(pos/4, nextDelim(bytes, pos, 1))
+		for (const b of childBytes) {
+			log.info('\tb=' + b)
+		}
 	}
 
-	const parseProcTT = (_bytes: Uint32Array, _pos: number, _prefix = '') => {
-		// log.trace(prefix + " TODO - implement rcode parsing function parseProcTT")
+	const parseProcTT = (_bytes: Uint32Array, pos: number, prefix = '') => {
+		log.trace(prefix + ' TODO - implement rcode parsing function parseProcTT')
+		log.info(prefix + ' pos=' + pos)
 	}
 
 	const parseProcs = (bytes: Uint32Array, pos: number, prefix = '') => {
 		const end = nextDelim(bytes, pos + 20, 4, prefix)
 		const childBytes = bytes.subarray(pos/4, end)
+		if (childBytes.length > 6) {
+			log.debug('childBytes.length has more info! ' + childBytes.length + ' > 6')
+		}
+
+		if (debug && childBytes[0] && childBytes[0] != 0) {
+			parseProc0(bytes, childBytes[0])
+		}
 
 		let numlines = bytes[childBytes[1]/4 - 2]
 		if (childBytes[5] && childBytes[5] != 0) {
@@ -163,15 +204,15 @@ export const getSourceMapFromRCode = (propath: PropathParser, uri: Uri) => {
 			lines = getLines(bytes, childBytes[1], numlines)
 		}
 
-		if (childBytes[2] && childBytes[2] != 0) {
+		if (debug && childBytes[2] && childBytes[2] != 0) {
 			parseVar(bytes, childBytes[2], prefix + '.' + childBytes[2] + '-2')
 		}
 
-		if (childBytes[3] && childBytes[3] != 0) {
+		if (debug && childBytes[3] && childBytes[3] != 0) {
 			parseParam(bytes, childBytes[3], prefix + '.' + childBytes[3] + '-3')
 		}
 
-		if (childBytes[4] && childBytes[4] != 0) {
+		if (debug && childBytes[4] && childBytes[4] != 0) {
 			parseProcTT(bytes, childBytes[4], prefix + '.' + childBytes[4] + '-4')
 		}
 
@@ -313,7 +354,8 @@ export const getSourceMapFromRCode = (propath: PropathParser, uri: Uri) => {
 						debugUri: debugUri,
 						sourceLine: line,
 						sourceUri: debugUri,
-						procName: proc.procName
+						procName: proc.procName,
+						procNum: proc.procNum,
 					}))
 				}
 			}
@@ -328,7 +370,8 @@ export const getSourceMapFromRCode = (propath: PropathParser, uri: Uri) => {
 					debugUri: mapLine.debugUri,
 					sourceLine: mapLine.sourceLine + (line - mapLine.debugLine),
 					sourceUri: mapLine.sourceUri,
-					procName: proc.procName
+					procName: proc.procName,
+					procNum: proc.procNum,
 				}))
 			}
 		}

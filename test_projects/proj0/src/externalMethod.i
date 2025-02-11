@@ -5,3 +5,7 @@ method public void externalMethod () :
 
     message "do I even exist?".
 end method.
+
+method public void external2 () :
+    message "this prints this message".
+end method.
