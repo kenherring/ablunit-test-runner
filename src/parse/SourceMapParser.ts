@@ -10,6 +10,7 @@ export class SourceMap implements ISourceMap {
 	sourceUri: Uri
 	path: string
 	items: SourceMapItem[] = []
+	crc?: number
 
 	constructor (sourceUri: Uri, path: string) {
 		this.sourceUri = sourceUri
@@ -23,6 +24,7 @@ interface ISourceMapItem {
 	sourceLine: number
 	sourceUri: Uri
 	procName: string
+	procNum?: number
 }
 
 export class SourceMapItem {
@@ -31,6 +33,7 @@ export class SourceMapItem {
 	sourceLine: number
 	sourceUri: Uri
 	procName: string
+	procNum?: number
 
 	get sourcePath () {
 		return this.sourceUri.fsPath
@@ -42,6 +45,7 @@ export class SourceMapItem {
 		this.sourceLine = data.sourceLine
 		this.sourceUri = data.sourceUri
 		this.procName = data.procName
+		this.procNum = data.procNum
 	}
 
 	toJSON () {

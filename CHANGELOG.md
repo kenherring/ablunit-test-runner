@@ -1,6 +1,7 @@
-# [1.0.6015](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.0.6015) - 2025-02-08
+# [1.0.6017](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.0.6017) - 2025-02-10
 
 
+ * Ungroup overloaded methods for coverage reporting (#245)
  * Fix debug line mapping (#244)
 
 

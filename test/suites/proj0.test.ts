@@ -1,5 +1,5 @@
 import { Uri, commands, window, workspace } from 'vscode'
-import { assert, getRcodeCount, getResults, getTestControllerItemCount, getTestItem, getXrefCount, log, rebuildAblProject, refreshTests, runAllTests, runAllTestsWithCoverage, runTestAtLine, runTestsDuration, runTestsInFile, sleep2, suiteSetupCommon, FileUtils, toUri, updateConfig, updateTestProfile, deleteRcode } from '../testCommon'
+import { assert, getRcodeCount, getResults, getTestControllerItemCount, getTestItem, getXrefCount, log, rebuildAblProject, refreshTests, runAllTests, runAllTestsWithCoverage, runTestAtLine, runTestsDuration, runTestsInFile, sleep2, suiteSetupCommon, FileUtils, toUri, updateConfig, updateTestProfile, deleteRcode, setRuntimes } from '../testCommon'
 import { ABLResultsParser } from 'parse/ResultsParser'
 import { TimeoutError } from 'Errors'
 import { restartLangServer } from '../openedgeAblCommands'
@@ -45,6 +45,16 @@ suite('proj0  - Extension Test Suite', () => {
 		await suiteSetupCommon()
 		await commands.executeCommand('testing.clearTestResults')
 		return
+	})
+
+	setup('proj0 - setup', async () => {
+		log.info('process.env[OE_VERSION]=' + process.env['OE_VERSION'])
+		log.info('process.env[ABLUNIT_TEST_RUNNER_OE_VERSION]=' + process.env['ABLUNIT_TEST_RUNNER_OE_VERSION'])
+		const oever = process.env['ABLUNIT_TEST_RUNNER_OE_VERSION'] ?? process.env['OE_VERSION']
+		log.info('oever=' + oever)
+		if (oever === '12.2') {
+			await setRuntimes([{name: '12.2', path: 'C:\\Progress\\OpenEdge', default: true}])
+		}
 	})
 
 	teardown('proj0 - afterEach', () => {
@@ -371,7 +381,7 @@ suite('proj0  - Extension Test Suite', () => {
 
 		assert.ok(fc?.branchCoverage == undefined, 'branchCoverage')
 		assert.equal(fc?.declarationCoverage?.total, 5, 'fc.declarationCoverage.total')
-		assert.equal(fc?.statementCoverage?.total, 22, 'fc.statementCoverage.total')
+		assert.equal(fc?.statementCoverage?.total, 22, 'fc.statementCoverage.total (expect=22, actual=' + fc?.statementCoverage?.total + ')')
 		assert.less(fc?.declarationCoverage?.covered ?? 0, fc?.declarationCoverage?.total ?? 0,
 			'declarationCoverage not 100% (' + (fc?.declarationCoverage?.covered ?? 0) + ' >= ' + (fc?.declarationCoverage?.total ?? 0) + ')')
 		assert.less(fc?.statementCoverage?.covered ?? 0, fc?.statementCoverage?.total ?? 0,
@@ -427,6 +437,13 @@ suite('proj0  - Extension Test Suite', () => {
 				assert.tests.count(1)
 				assert.coverageProcessingMethod(toUri('src/test_20.p'), 'rcode')
 			})
+	})
+
+	test('proj0.21 - overloaded method coverage', async () => {
+		await runTestsInFile('src/overloadedMethods.cls', 1, true)
+		assert.tests.count(2)
+		assert.linesExecuted('src/overloadedMethods.cls', [17, 18, 19, 22, 23])
+		assert.linesNotExecuted('src/overloadedMethods.cls', [21])
 	})
 
 })

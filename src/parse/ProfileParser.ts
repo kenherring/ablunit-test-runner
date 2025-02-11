@@ -4,6 +4,7 @@ import { ABLDebugLines } from '../ABLDebugLines'
 import { log } from '../ChannelLogger'
 import * as FileUtils from '../FileUtils'
 import { Duration } from 'ABLUnitCommon'
+import { ProfileData } from './ProfileData'
 
 class ModuleIgnored extends Error {
 	constructor (public moduleId: number) {
@@ -14,6 +15,7 @@ class ModuleIgnored extends Error {
 
 export class ABLProfile {
 	profJSON?: ABLProfileJson
+	parseAll = false
 
 	async parseData (uri: Uri, writeJson: boolean, debugLines?: ABLDebugLines, ignoreExternalCoverage = true, propath?: PropathParser) {
 		if (!debugLines) {
@@ -49,35 +51,39 @@ export class ABLProfile {
 		this.profJSON = new ABLProfileJson(uri, sectionLines[1], debugLines, ignoreExternalCoverage)
 		log.debug('section2 ' + sectionLines[2].length)
 		await this.profJSON.addModules(sectionLines[2])
+		await this.profJSON.addSourceMap()
 		log.debug('section3 ' + sectionLines[3].length)
 		this.profJSON.addCallTree(sectionLines[3])
 		log.debug('section4 ' + sectionLines[4].length)
-		await this.profJSON.addLineSummary(sectionLines[4])
+		this.profJSON.addLineSummary(sectionLines[4])
 		log.debug('section5 ' + sectionLines[5].length)
 		this.profJSON.addTracing(sectionLines[5])
 		log.debug('section6 ' + sectionLines[6].length)
 		await this.profJSON.addCoverage(sectionLines[6])
-		log.debug('section7 ' + sectionLines[7].length)
-		this.profJSON.addSection7(sectionLines[7])
-		log.debug('sectionLines.length=' + sectionLines.length)
-		if(sectionLines.length > 11) {
-			log.debug('section8 ' + sectionLines[8].length)
-			this.profJSON.addSection8(sectionLines[8])
-			log.debug('section9 ' + sectionLines[9].length)
-			this.profJSON.addSection9(sectionLines[9])
-			log.debug('section10 ' + sectionLines[10].length)
-			this.profJSON.addSection10(sectionLines[10])
-			log.debug('section11 ' + sectionLines[11].length)
-			this.profJSON.addSection11(sectionLines[11])
-			log.debug('section12 ' + sectionLines[12].length)
-			this.profJSON.addSection12(sectionLines[12])
-			log.debug('section13 - User Data' + sectionLines[13].length)
-			this.profJSON.addUserData(sectionLines[13])
-		} else {
-			log.debug('section12 ' + sectionLines[8].length)
-			this.profJSON.addSection12(sectionLines[8])
-			log.debug('section13 - User Data' + sectionLines[9].length)
-			this.profJSON.addUserData(sectionLines[9])
+
+		if (this.parseAll) {
+			log.debug('section7 ' + sectionLines[7].length)
+			this.profJSON.addSection7(sectionLines[7])
+			log.debug('sectionLines.length=' + sectionLines.length)
+			if(sectionLines.length > 11) {
+				log.debug('section8 ' + sectionLines[8].length)
+				this.profJSON.addSection8(sectionLines[8])
+				log.debug('section9 ' + sectionLines[9].length)
+				this.profJSON.addSection9(sectionLines[9])
+				log.debug('section10 ' + sectionLines[10].length)
+				this.profJSON.addSection10(sectionLines[10])
+				log.debug('section11 ' + sectionLines[11].length)
+				this.profJSON.addSection11(sectionLines[11])
+				log.debug('section12 ' + sectionLines[12].length)
+				this.profJSON.addSection12(sectionLines[12])
+				log.debug('section13 ' + sectionLines[13].length + ' (User Data)')
+				this.profJSON.addUserData(sectionLines[13])
+			} else {
+				log.debug('section12 ' + sectionLines[8].length)
+				this.profJSON.addSection12(sectionLines[8])
+				log.debug('section13 ' + sectionLines[9].length + ' (User Data)')
+				this.profJSON.addUserData(sectionLines[9])
+			}
 		}
 
 		this.profJSON.modules.sort((a, b) => a.ModuleID - b.ModuleID)
@@ -98,10 +104,10 @@ export class ABLProfile {
 	}
 
 	writeJsonToFile (uri: Uri) {
-		const data: IProfileData = {
+		const data = new ProfileData(JSON.stringify({
 			modules: this.profJSON!.modules,
 			userData: this.profJSON!.userData,
-		}
+		}))
 		return workspace.fs.writeFile(uri, Uint8Array.from(Buffer.from(JSON.stringify(data, null, 2)))).then(() => {
 			log.info('wrote profiler output json file: ' + workspace.asRelativePath(uri))
 			return
@@ -110,8 +116,6 @@ export class ABLProfile {
 		})
 	}
 }
-
-
 
 const summaryRE = /^(\d+) (\d{2}\/\d{2}\/\d{4}) "([^"]*)" (\d{2}:\d{2}:\d{2}) "([^"]*)" (.*)$/
 const moduleRE = /^(\d+) "([^"]*)" "([^"]*)" (\d+) (\d+) "([^"]*)"$/
@@ -124,6 +128,117 @@ const lineSummaryRE = /^(-?\d+) (-?\d+) (\d+) (\d+\.\d+) (\d+\.\d+)$/
 const tracingRE = /^(\d+) (\d+) (\d+\.\d+) (\d+\.\d+)$/
 // COVERAGE:
 const coverageRE = /^(\d+) "([^"]*)" (\d+)$/
+
+export interface IModule { // Section 2
+	ModuleID: number
+	ModuleName: string
+	EntityName?: string // function/procedure/method name
+	SourceUri: Uri
+	SourceName: string // source file
+	ParentModuleID?: number
+	ParentName?: string
+	Destructor?: boolean
+	ListingFile?: string
+	CrcValue: number
+	ModuleLineNum: number
+	UnknownString1: string
+	procNum?: number
+	overloaded?: boolean
+	overloadSequence?: number
+	executableLines: number
+	executedLines: number
+	coveragePct: number
+	lineCount: number
+	calledBy: ICalledBy[]
+	calledTo: ICalledTo[]
+	childModules: IModule[]
+	lines: LineSummary[]
+	ISectionEight?: ISectionEight[]
+	ISectionNine?: ISectionNine[]
+	ISectionTen?: ISectionTen[]
+	ISectionTwelve?: ISectionTwelve[]
+}
+
+// Split module and child module?
+export interface IModule2 { // Section 2
+	ModuleID: number
+	ModuleName: string
+	SourceUri: Uri
+	SourceName: string // source file
+	UnknownString1: string
+	executableLines: number
+	executedLines: number
+	coveragePct: number
+	lineCount: number
+	calledBy: ICalledBy[]
+	calledTo: ICalledTo[]
+	lines: LineSummary[]
+	ISectionEight?: ISectionEight[]
+	ISectionNine?: ISectionNine[]
+	ISectionTen?: ISectionTen[]
+	ISectionTwelve?: ISectionTwelve[]
+}
+
+export interface IChildModule extends IModule2 {
+	parentId: number
+	ParentName: string
+	EntityName?: string // function/procedure/method name
+	Destructor?: boolean
+	ModuleLineNum: number
+	overloaded?: boolean
+	overloadSequence?: number
+}
+
+export interface IParentModule extends IModule2 {
+	CrcValue: number
+	ListingFile?: string
+	childModules: IChildModule[]
+}
+
+interface ICalledBy { // Section 3
+	CallerModuleID: number
+	CallerLineNo: number
+	CallCount: number
+}
+
+interface ICalledTo { // Section 3
+	CalleeModuleID: number
+	CallerLineNo: number
+	CallCount: number
+}
+
+export interface ILineSummary { // Section 4
+	LineNo: number
+	ExecCount: number
+	ActualTime?: number
+	CumulativeTime?: number
+	Executable: boolean
+	trace?: ITrace[]
+	srcLine?: number
+	srcUri?: Uri
+	incLine?: number
+	incUri?: Uri
+}
+
+interface ITrace { // Section 5
+	StartTime: number,
+	ActualTime: number
+}
+
+class LineSummary { // Section 6}
+	ActualTime?: number
+	CumulativeTime?: number
+	trace?: ITrace[]
+	srcLine?: number
+	srcUri?: Uri
+	incLine?: number
+	incUri?: Uri
+	procNum?: number
+
+	constructor (private readonly sourceName: string, public readonly LineNo: number, public Executable: boolean, public ExecCount: number, public sourcePath: string) {
+	}
+
+}
 
 interface IUserData { // Section 9
 	time: number,
@@ -142,12 +257,12 @@ interface ISectionNine { // -statistics?
 	fields: string[]
 }
 
-interface ISectionTen {
+interface ISectionTen { // Section 10
 	ModuleID: number,
 	remainder: string
 }
 
-interface ISectionTwelve {
+interface ISectionTwelve { // Section 11
 	ModuleID: number,
 	field1: number,
 	field2: number,
@@ -155,118 +270,6 @@ interface ISectionTwelve {
 	field5: number,
 	field6: number,
 	remainder: string
-}
-
-interface ITrace { // Section 5
-	StartTime: number,
-	ActualTime: number
-}
-
-export interface ILineSummary { // Section 4
-	LineNo: number
-	ExecCount: number
-	ActualTime?: number
-	CumulativeTime?: number
-	Executable: boolean
-	trace?: ITrace[]
-	srcLine?: number
-	srcUri?: Uri
-	incLine?: number
-	incUri?: Uri
-}
-
-class LineSummary {
-	ExecCount: number
-	ActualTime?: number
-	CumulativeTime?: number
-	trace?: ITrace[]
-	srcLine?: number
-	srcUri?: Uri
-	incLine?: number
-	incUri?: Uri
-
-	constructor (public readonly LineNo: number, public readonly Executable: boolean) {
-		this.ExecCount = 0
-	}
-
-	get incPath () {
-		if (this.incUri) {
-			return this.incUri.fsPath
-		}
-		return undefined
-	}
-	set incPath (path: string | undefined) {
-		if (path) {
-			this.incUri = Uri.file(path)
-			return
-		}
-		this.incUri = undefined
-	}
-
-	get srcPath () {
-		return this.srcUri?.fsPath
-	}
-	set srcPath (path: string | undefined) {
-		if (path) {
-			this.srcUri = Uri.file(path)
-			return
-		}
-		this.srcUri = undefined
-	}
-
-	toJson () {
-		return {
-			LineNo: this.LineNo,
-			ExecCount: this.ExecCount,
-			ActualTime: this.ActualTime,
-			CumulativeTime: this.CumulativeTime,
-			Executable: this.Executable,
-			trace: this.trace,
-			srcLine: this.srcLine,
-			srcPath: this.srcPath,
-			incLine: this.incLine,
-			incPath: this.incPath,
-		}
-	}
-}
-
-interface ICalledBy { // Section 3
-	CallerModuleID: number
-	CallerLineNo: number
-	CallCount: number
-}
-
-interface ICalledTo { // Section 3
-	CalleeModuleID: number
-	CallerLineNo: number
-	CallCount: number
-}
-
-// Split module and child module?
-export interface IModule { // Section 2
-	ModuleID: number
-	ModuleName: string
-	EntityName?: string // function/procedure/method name
-	SourceUri?: Uri
-	SourceName: string // source file
-	ParentName?: string // parent class, when inheriting
-	Destructor?: boolean
-	ListingFile?: string
-	CrcValue: number
-	ModuleLineNum: number
-	UnknownString1: string
-	executableLines: number
-	executedLines: number
-	coveragePct: number
-	lineCount: number
-	calledBy: ICalledBy[]
-	calledTo: ICalledTo[]
-	childModules: IModule[]
-	lines: ILineSummary[]
-	ISectionEight?: ISectionEight[]
-	ISectionNine?: ISectionNine[]
-	ISectionTen?: ISectionTen[]
-	ISectionTwelve?: ISectionTwelve[]
 }
 
 export interface IProfileData {
@@ -283,14 +286,13 @@ export class ABLProfileJson {
 	description?: string
 	userID?: string
 	properties?: IProps
-	// otherInfo: string
-	// StmtCnt: string | undefined
 	modules: IModule[] = []
 	userData: IUserData[] = []
 	testItemId?: string
 	interpretedModuleSequence = 0
 	parseDuration: Duration
 	ignoredModules: number[] = [0]
+	private hasSourceMap = false
 
 	constructor (public readonly profileUri: Uri, lines: string[], public debugLines: ABLDebugLines, private readonly ignoreExternalCoverage: boolean) {
 		this.parseDuration = new Duration('parse profile data: ' + profileUri)
@@ -372,12 +374,16 @@ export class ABLProfileJson {
 			}
 
 			const fileinfo = await this.debugLines.propath.search(sourceName)
+			if (!fileinfo?.uri) {
+				log.debug('could not find source file in propath for ' + sourceName + ' (uri=' + this.profileUri.fsPath + ')')
+				continue
+			}
 			const mod: IModule = {
 				ModuleID: Number(test[1]),
 				ModuleName: moduleName,
 				EntityName: entityName,
 				SourceName: sourceName,
-				SourceUri: fileinfo?.uri,
+				SourceUri: fileinfo.uri,
 				ParentName: parentName,
 				ListingFile: test[3],
 				CrcValue: Number(test[4]),
@@ -405,6 +411,157 @@ export class ABLProfileJson {
 			}
 		}
 		this.addChildModulesToParents(childModules)
+	}
+
+	async addSourceMap () {
+		for (const mod of this.modules) {
+			const map = await this.debugLines.getSourceMap(mod.SourceUri.fsPath)
+			if (!map) {
+				// could not parse source map :(
+				return
+			}
+			this.hasSourceMap = true
+			for (const item of map.items) {
+				log.info('item.debugLine=' + item.debugLine + ' item.sourceLine=' + item.sourceLine + ' ' + item.sourceUri)
+				if (item.procName == '') {
+					// parent module
+					const l = mod.lines.find(l => l.LineNo == item.debugLine)
+					if (l) {
+						// update existing line on parent module
+						l.Executable = true
+						l.srcUri = item.debugUri
+						l.srcLine = item.debugLine
+						l.incUri = item.sourceUri
+						l.incLine = item.sourceLine
+						l.procNum = item.procNum
+						continue
+					}
+					// add new line to parent module
+					const newLine = new LineSummary(mod.SourceUri.fsPath, item.debugLine, true, 0, item.sourcePath)
+					newLine.srcUri = item.debugUri
+					newLine.srcLine = item.debugLine
+					newLine.incUri = item.sourceUri
+					newLine.incLine = item.sourceLine
+					newLine.procNum = item.procNum
+					mod.lines.push(newLine)
+					continue
+				} else {
+					// child module
+					let children = mod.childModules.filter(m => m.EntityName == item.procName)
+
+					if (children.length > 1) {
+						let seq = 1
+						for (const c of children) {
+							c.overloaded = true
+							c.overloadSequence = seq
+							seq++
+						}
+					}
+
+					if (!children || children.length == 0) {
+						// add new child module - won't have any coverage
+						mod.childModules.push({
+							ModuleID: mod.ModuleID,
+							ModuleName: item.procName + ' ' + mod.ModuleName,
+							EntityName: item.procName,
+							SourceUri: item.debugUri,
+							SourceName: mod.SourceName,
+							ParentModuleID: mod.ModuleID,
+							ParentName: mod.ParentName,
+							Destructor: item.procName.startsWith('~'),
+							CrcValue: map.crc ?? 0,
+							ModuleLineNum: item.debugLine, // not exactly accurate, but as close as we're going to get
+							UnknownString1: '',
+							procNum: item.procNum,
+							executableLines: 1,
+							executedLines: 0,
+							coveragePct: 0,
+							lineCount: 0,
+							calledBy: [],
+							calledTo: [],
+							childModules: [],
+							lines: [],
+							ISectionEight: [],
+							ISectionNine: [],
+							ISectionTen: [],
+							ISectionTwelve: []
+						})
+						children = [mod.childModules[mod.childModules.length - 1]]
+					}
+
+					// add or update line on existing child
+					if (children.length >= 1) {
+						let child = children.find(m => m.procNum == item.procNum)
+						log.info('100 item.procNum=' + item.procNum + ' item.procName=' + item.procName + ' child.EntityName=' + child?.EntityName)
+						if (!child) {
+							child = children.find(m => !m.procNum)
+							if (child) {
+								child.procNum = item.procNum
+							}
+							log.info('101 item.procNum=' + item.procNum + ' item.procName=' + item.procName + ' child.EntityName=' + child?.EntityName)
+						}
+						if (!child) {
+							const modNum = children[0].ModuleID
+							const maxSeq = Math.max(...children.map(c => c.overloadSequence ?? 0)) + 1
+							mod.childModules.push({
+								ModuleID: modNum,
+								ModuleName: item.procName + ' ' + mod.ModuleName,
+								EntityName: item.procName,
+								SourceUri: item.debugUri,
+								SourceName: mod.SourceName,
+								ParentModuleID: mod.ModuleID,
+								ParentName: mod.ParentName,
+								Destructor: item.procName.startsWith('~'),
+								CrcValue: map.crc ?? 0,
+								ModuleLineNum: item.debugLine, // not exactly accurate, but as close as we're going to get
+								UnknownString1: '',
+								procNum: item.procNum,
+								overloaded: true,
+								overloadSequence: maxSeq,
+								executableLines: 1,
+								executedLines: 0,
+								coveragePct: 0,
+								lineCount: 0,
+								calledBy: [],
+								calledTo: [],
+								childModules: [],
+								lines: [],
+								ISectionEight: [],
+								ISectionNine: [],
+								ISectionTen: [],
+								ISectionTwelve: []
+
+							})
+							child = mod.childModules[mod.childModules.length - 1]
+							log.info('101 item.procNum=' + item.procNum + ' item.procName=' + item.procName + ' child.EntityName=' + child?.EntityName)
+						}
+						const l = child.lines.find(l => l.LineNo == item.debugLine)
+						if (l) {
+							// update existing line
+							l.Executable = true
+							l.srcUri = item.debugUri
+							l.srcLine = item.debugLine
+							l.sourcePath = item.sourcePath
+							l.incUri = item.sourceUri
+							l.incLine = item.sourceLine
+							l.procNum = item.procNum
+							continue
+						}
+						// add new line
+						const newLine = new LineSummary(mod.SourceUri.fsPath, item.debugLine, true, 0, item.sourcePath)
+						newLine.srcUri = item.debugUri
+						newLine.srcLine = item.debugLine
+						newLine.incUri = item.sourceUri
+						newLine.incLine = item.sourceLine
+						newLine.procNum = item.procNum
+						child.lines.push(newLine)
+						continue
+					}
+
+				}
+				throw new Error('could not find module to add source map item from ' + item.debugUri + ' (uri=' + this.profileUri.fsPath + ')\n\titem=' + JSON.stringify(item))
+			}
+		}
 	}
 
 	addChildModulesToParents (childModules: IModule[]) {
@@ -444,38 +601,31 @@ export class ABLProfileJson {
 		}
 	}
 
-	getModule (modID: number): IModule | undefined {
-		for(const element of this.modules) {
-			if(element.ModuleID === modID)
-				return element
-		}
-		const parent = this.modules.find(mod => mod.childModules.find(child => child.ModuleID == modID))
-		if(parent)
-			return parent.childModules.find(child => child.ModuleID == modID)
+	getModules (modID: number): IModule[] {
+		return this.modules.flatMap(mod => [mod, ...mod.childModules]).filter(mod => mod.ModuleID === modID) ?? []
 	}
 
-	getChildModule (modID: number, entityName: string): IModule | undefined {
-		const parent = this.getModule(modID)
+	getParentModule (moduleID: number): IModule | undefined {
+		return this.modules.find(p => p.ModuleID == moduleID)
+	}
+
+	getChildModules (modID: number, entityName: string): IModule[] {
+		const parent = this.modules.find(m => m.ModuleID == modID)
 		if(parent) {
-			return parent.childModules.find(child => child.EntityName == entityName)
+			return parent.childModules.filter(child => child.EntityName == entityName) ?? []
 		}
+		return []
 	}
 
-	getModuleLine (modID: number, lineNo: number): ILineSummary | undefined {
-		const mod = this.getModule(modID)
-		if(mod) {
-			for(const element of mod.lines) {
-				if(element.LineNo === lineNo)
-					return element
+	getModuleLine (modID: number, lineNo: number): LineSummary | undefined {
+		const mods = this.getModules(modID)
+		for (const m of mods) {
+			for(const l of m.lines) {
+				if(l.LineNo === lineNo)
+					return l
 			}
 		}
-	}
-
-	getLine (mod: IModule, lineNo: number): ILineSummary | undefined {
-		for(const element of mod.lines) {
-			if(element.LineNo == lineNo)
-				return element
-		}
+		return undefined
 	}
 
 	addCallTree (lines: string[]) {
@@ -490,9 +640,11 @@ export class ABLProfileJson {
 					CallerLineNo: Number(test[2]),
 					CallCount: Number(test[4])
 				}
-				const mod = this.getModule(cbModID)
-				if (mod?.calledBy != undefined) {
-					mod.calledBy[mod.calledBy.length] = cb
+				const mods = this.getModules(cbModID)
+				for (const mod of mods) {
+					if (mod?.calledBy != undefined) {
+						mod.calledBy[mod.calledBy.length] = cb
+					}
 				}
 
 				// Called To
@@ -503,15 +655,17 @@ export class ABLProfileJson {
 					CallCount: Number(test[4])
 				}
 
-				const mod2 = this.getModule(ctModID)
-				if (mod2?.calledTo != undefined) {
-					mod2.calledTo[mod2.calledTo.length] = ct
+				const toMods = this.getModules(ctModID)
+				for (const m of toMods) {
+					if (m.calledTo != undefined) {
+						m.calledTo[m.calledTo.length] = ct
+					}
 				}
 			}
 		}
 	}
 
-	async addLineSummary (lines: string[]) {
+	addLineSummary (lines: string[]) {
 		for(const element of lines) {
 			const test = lineSummaryRE.exec(element)
 			if (!test) {
@@ -523,35 +677,53 @@ export class ABLProfileJson {
 				continue
 			}
 
-			const mod = this.getModule(modID)
+			const mods = this.getModules(modID)
+			const mod = mods.find(m => m.lines.find(l => l.LineNo == Number(test[2])))
 			if (!mod) {
-				log.warn('could not find module ' + modID)
+				log.warn('could not find module ' + modID + ' with line ' + test[2] + ' (uri=' + this.profileUri.fsPath + ')')
 				continue
 			}
-			const sum = new LineSummary(Number(test[2]), true)
-			sum.ExecCount = Number(test[3])
+
+			if (Number(test[2]) != 0) {
+				mod.lineCount++
+			}
+
+			const line = mod.lines.find(l => l.LineNo == Number(test[2]))
+			if (line) {
+				// update existing line
+				line.ExecCount += Number(test[3])
+				if (!line.ActualTime) {
+					line.ActualTime = 0
+				}
+				if (!line.CumulativeTime) {
+					line.CumulativeTime = 0
+				}
+				line.ActualTime += Number(test[4])
+				line.CumulativeTime += Number(test[5])
+				continue
+			}
+
+			const sum = new LineSummary(mod.SourceUri?.fsPath ?? mod.SourceName, Number(test[2]), false, Number(test[3]), 'UNKNOWN')
 			sum.ActualTime = Number(test[4])
 			sum.CumulativeTime = Number(test[5])
 
+			mod.lines.push(sum)
 
-			if (mod) {
-				if (sum.LineNo != 0) {
-					const lineinfo = await this.debugLines.getSourceLine(mod.SourceUri?.fsPath ?? mod.SourceName, sum.LineNo)
-					if(lineinfo) {
-						sum.srcLine = lineinfo.debugLine
-						sum.srcUri = lineinfo.debugUri
-						sum.incLine = lineinfo.sourceLine
-						sum.incUri = lineinfo.sourceUri
-					} else {
-						log.debug('could not find source/debug line info for ' + mod.SourceName + ' ' + sum.LineNo)
-					}
-				}
+		}
 
-				mod.lines.push(sum)
-				if (sum.LineNo != 0) {
-					mod.lineCount++
-				}
+		// summarize execution
+		for (const mod of this.modules) {
+			mod.executableLines = 0
+			mod.executedLines = 0
+			mod.coveragePct = 0
+			for (const child of mod.childModules) {
+				child.executableLines = child.lines.filter(l => l.LineNo != 0 && l.Executable).length
+				child.executedLines = child.lines.filter(l => l.LineNo != 0 && l.ExecCount > 0).length
+				child.coveragePct = child.executedLines * 100 / child.executableLines
+				mod.executableLines += child.executableLines
+				mod.executedLines += child.executedLines
 			}
+			mod.coveragePct = mod.executedLines * 100 / mod.executableLines
 		}
 	}
 
@@ -586,6 +758,10 @@ export class ABLProfileJson {
 	// .
 	// .  (end of section)
 	async addCoverage (lines: string[]) {
+		if (this.hasSourceMap) {
+			return
+		}
+
 		lines.unshift('.')
 		lines.push('.')
 		let mod: IModule | undefined
@@ -609,14 +785,14 @@ export class ABLProfileJson {
 					// prepare the next section by finding the correct module
 					try {
 						ignoringCurrentModule = false
-						mod = await this.addCoverageNextSection(lines[lineNo])
+						mod = await this.addCoverageNextSection(lines[lineNo], Number(lines[lineNo + 1]))
 						lastModuleLine = lines[lineNo]
 					} catch (err) {
 						if (err instanceof ModuleIgnored) {
 							ignoringCurrentModule = err.moduleId
 						} else {
 							log.warn('addCoverageNextSection returned undefined (lineNo=' + lineNo + ', uri=' + this.profileUri.fsPath + ')' +
-							'\tlines[' + lineNo + ']=' + lines[lineNo])
+							'\\ntlines[' + lineNo + ']="' + lines[lineNo] + '"')
 						}
 
 					}
@@ -634,32 +810,19 @@ export class ABLProfileJson {
 				}
 
 				// add exec count to existing line
-				const line = this.getLine(mod, Number(lines[lineNo]))
+				const line = mod.lines.find(l => l.LineNo == Number(lines[lineNo]))
 				if (line) {
 					line.Executable = true
 					mod.executableLines++
 					continue
 				}
 
+				if (mod.overloaded && mod.ModuleLineNum == -1) {
+					mod.ModuleLineNum = Number(lines[lineNo])
+				}
+
 				// create object for first encounter of this line num
-				const sum: ILineSummary = {
-					LineNo: Number(lines[lineNo]),
-					ExecCount: 0,
-					Executable: true,
-					ActualTime: 0,
-					CumulativeTime: 0,
-				}
-
-				const lineinfo = await this.debugLines.getSourceLine(mod.SourceUri?.fsPath ?? mod.SourceName, sum.LineNo)
-				if (lineinfo) {
-					sum.srcLine = lineinfo.debugLine
-					sum.srcUri = lineinfo.debugUri
-					sum.incLine = lineinfo.sourceLine
-					sum.incUri = lineinfo.sourceUri
-				} else {
-					log.debug('could not find source/debug line info for ' + mod.SourceName + ' ' + sum.LineNo)
-				}
-
+				const sum = new LineSummary(mod.SourceUri?.fsPath ?? mod.SourceName, Number(lines[lineNo]), true, 0, 'UNKNWON2')
 				mod.lines.push(sum)
 			}
 		} catch (error) {
@@ -668,44 +831,59 @@ export class ABLProfileJson {
 		this.assignParentCoverage()
 	}
 
-	async addCoverageNextSection (line: string) {
+	async addCoverageNextSection (line: string, firstLine: number) {
 		const test = coverageRE.exec(line)
 		if (!test) {
 			log.error('Unable to parse coverage data in section 6 (uri=' + this.profileUri.fsPath + ')')
 			throw new Error('Unable to parse coverage data in section 6 (uri=' + this.profileUri.fsPath + ')')
 		}
 
-		const modId = Number(test[1])
-		if (this.ignoredModules.includes(modId)) {
-			throw new ModuleIgnored(modId)
+		const modID = Number(test[1])
+		const modName = test[2]
+		const executableLines = Number(test[3])
+		if (this.ignoredModules.includes(modID)) {
+			throw new ModuleIgnored(modID)
 		}
 
-		if (test[2] != '') {
-			const mod = this.getChildModule(modId, test[2])
-			if (mod) {
-				mod.executableLines = Number(test[3])
+		if (modName != '') {
+			const mods = this.getChildModules(modID, modName)
+			if (mods.length > 0) {
+
+				if (mods.length == 1 && mods[0].lines.find(l => l.LineNo == firstLine && l.Executable)) {
+					// It appears 12.2 has some condition where it outputs the coverage for a given file mulutiple times
+					return mods[0]
+				}
+
+				let mod = mods.find((m) => m.lines.find(l => l.LineNo == firstLine))
+				if (!mod) {
+					mod = mods.find((m) => m.EntityName == modName)
+				}
+				if (!mod) {
+					throw new Error('could not find module for module ID=' + modID + ' modName=' + modName)
+				}
 				return mod
 			}
 		}
 
-		const mod = this.getModule(Number(test[1])) ?? this.modules.find(mod => mod.SourceName == test[2])
+		const mod = this.getModules(modID).find(m => m.EntityName == modName) ?? this.modules.find(mod => mod.SourceName == modName)
 		if (!mod) {
-			log.warn('Unable to find module ' + test[1] + ' ' + test[2] + ' while processing coverage information from section 6 (' + this.profileUri.fsPath + ')')
+			log.warn('Unable to find module ' + modID + ' ' + modName + ' while processing coverage information from section 6 (' + this.profileUri.fsPath + ')')
 			return
 		}
 
-		mod.executableLines += Number(test[3])
+		mod.executableLines += executableLines
 
-		if (test[2] != '') {
+		if (modName != '') {
 			const child: IModule = {
-				ModuleID: Number(test[1]),
-				ModuleName: test[2] + ' ' + mod.SourceName,
-				EntityName: test[2],
+				ModuleID: modID,
+				ModuleName: modName + ' ' + mod.SourceName,
+				EntityName: modName,
 				SourceName: mod.SourceName,
+				SourceUri: mod.SourceUri,
 				CrcValue: 0,
 				ModuleLineNum: 0,
 				UnknownString1: '',
-				executableLines: Number(test[3]),
+				executableLines: executableLines,
 				executedLines: 0,
 				coveragePct: 0,
 				lineCount: 0,
@@ -797,7 +975,7 @@ export class ABLProfileJson {
 					field3: Number(test[3]),
 					field4: test[4]
 				}
-				const mod = this.getModule(ISectionEight.ModuleID)
+				const mod = this.getModules(ISectionEight.ModuleID).find(m => m.ModuleID == ISectionEight.ModuleID)
 				if (mod) {
 					if (!mod.ISectionEight) mod.ISectionEight = []
 					mod.ISectionEight.push(ISectionEight)
@@ -822,7 +1000,7 @@ export class ABLProfileJson {
 					ModuleID: Number(test[1]),
 					fields: test[2].trim().split(' ').filter(f => f.length > 0)
 				}
-				const mod = this.getModule(ISectionNine.ModuleID)
+				const mod = this.getModules(ISectionNine.ModuleID).find(m => m.ModuleID == ISectionNine.ModuleID)
 				if (mod) {
 					if (!mod.ISectionNine) mod.ISectionNine = []
 					mod.ISectionNine.push(ISectionNine)
@@ -844,7 +1022,7 @@ export class ABLProfileJson {
 					ModuleID: Number(test[1]),
 					remainder: test[2]
 				}
-				const mod = this.getModule(ISectionTen.ModuleID)
+				const mod = this.getModules(ISectionTen.ModuleID).find(m => m.ModuleID == ISectionTen.ModuleID)
 				if (mod) {
 					if (!mod.ISectionTen) mod.ISectionTen = []
 					mod.ISectionTen.push(ISectionTen)
@@ -877,7 +1055,7 @@ export class ABLProfileJson {
 				field6: Number(test[6]),
 				remainder: test[7]
 			}
-			const mod = this.getModule(ISectionTwelve.ModuleID)
+			const mod = this.getModules(ISectionTwelve.ModuleID).find(m => m.ModuleID == ISectionTwelve.ModuleID)
 			if (mod) {
 				if (!mod.ISectionTwelve) mod.ISectionTwelve = []
 				mod.ISectionTwelve.push(ISectionTwelve)
@@ -911,7 +1089,6 @@ export class ABLProfileJson {
 	}
 }
 
-
 export function getModuleRange (module: IModule) {
 	const lines = module.lines.filter((a) => a.LineNo > 0)
 	for (const child of module.childModules) {
@@ -925,7 +1102,7 @@ export function getModuleRange (module: IModule) {
 
 	const start = new Position((lines[0].incLine ?? lines[0].LineNo) - 1, 0)
 	const endLine = lines[lines.length - 1]
-	const end = new Position((endLine.incLine ?? endLine.LineNo) - 1, 0)
+	const end = new Position((endLine.incLine ?? endLine.LineNo) - 1, 99)
 	return new Range(start, end)
 }
 

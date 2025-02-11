@@ -38,7 +38,7 @@ export class ABLDebugLines {
 		return ret
 	}
 
-	private async getSourceMap (debugSource: string) {
+	async getSourceMap (debugSource: string) {
 		if (!debugSource.endsWith('.p') && !debugSource.endsWith('.cls')) {
 			debugSource = debugSource.replace(/\./g, '/') + '.cls'
 		}
