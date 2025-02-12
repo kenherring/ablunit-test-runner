@@ -7,7 +7,7 @@ import { FileType, TestItem, TestItemCollection, TestMessage, TestRun, Uri, work
 import { ABLUnitConfig } from './ABLUnitConfigWriter'
 import { ABLResultsParser, ITestCaseFailure, ITestCase, ITestSuite } from './parse/ResultsParser'
 import { ABLTestSuite, ABLTestData, ABLTestCase } from './testTree'
-import { ABLProfile, ABLProfileJson, getModuleRange, IModule } from './parse/ProfileParser'
+import { ABLProfile, ABLProfileJson, getLineRange, getModuleRange, IModule } from './parse/ProfileParser'
 import { ABLDebugLines } from './ABLDebugLines'
 import { ABLPromsgs, getPromsgText } from './ABLPromsgs'
 import { PropathParser } from './ABLPropath'
@@ -289,7 +289,7 @@ export class ABLResults implements Disposable {
 			throw new Error('Error parsing results from ' + this.cfg.ablunitConfig.optionsUri.filenameUri.fsPath + '\r\ne=' + e)
 		})
 
-		if (this.request.profile?.kind === TestRunProfileKind.Coverage && this.cfg.ablunitConfig.profiler.enabled && this.cfg.ablunitConfig.profiler.coverage) {
+		if (this.request.profile?.kind === TestRunProfileKind.Coverage && this.cfg.ablunitConfig.profiler.enabled) {
 			this.setStatus(RunStatus.Parsing, 'profiler data')
 			log.info('parsing profiler data...')
 			await this.parseProfile(options, parseTime).then(() => {
@@ -596,7 +596,7 @@ export class ABLResults implements Disposable {
 		if (module.overloaded) {
 			declarationName = declarationName + ' (overload ' + module.overloadSequence + ')'
 		}
-		let dc = fdc.find((c) => c.name == (declarationName ?? '<main block'))
+		let dc = fdc.find((c) => c.name == (declarationName ?? '<main block>'))
 		if (!dc) {
 			const range = getModuleRange(module)
 			if (range) {
@@ -604,22 +604,29 @@ export class ABLResults implements Disposable {
 				fdc.push(dc)
 			}
 		}
-		if (dc?.name == '<main block>') {
-			const executedLines = module.lines.filter((a) => a.ExecCount > 0)
-			if (executedLines.length > 0) {
-				dc.executed = true
-			}
-		} else if (dc) {
-			if (!dc.executed) {
-				dc.executed = module.executedLines > 0
+
+		let executed = module.execCount ?? false
+		if (!executed || module.overloaded) {
+			if (module.lines.find(l => l.ExecCount > 0)) {
+				executed = true
 			}
 		}
-		// } else if (typeof dc?.executed == 'number') {
-		// 	dc.executed = dc.executed + module.
-		// } else if (typeof dc?.executed == 'boolean') {
-		// 	dc.executed = dc.executed || this.getExecCount(module) > 0
-		// }
 
+		if (dc?.name == '<main block>') {
+			dc.executed = executed
+		} else if (typeof dc?.executed == 'number') {
+			if (typeof executed == 'number') {
+				dc.executed += executed
+			} else {
+				dc.executed = dc.executed > 0 || executed
+			}
+		} else if (typeof dc?.executed == 'boolean') {
+			if (typeof executed == 'number') {
+				dc.executed = dc.executed || executed > 0
+			} else {
+				dc.executed = dc.executed || executed
+			}
+		}
 		this.declarationCoverage.set(uri.fsPath, fdc)
 	}
 
@@ -733,8 +740,10 @@ export class ABLResults implements Disposable {
 					continue
 				}
 
-				const lineno = (line.incLine ?? line.LineNo) - 1
-				const coverageRange = new Position(lineno, 0)
+				const coverageRange = getLineRange(line)
+				if (!coverageRange) {
+					continue
+				}
 
 				let cov = fsc.find((c) => JSON.stringify(c.location) == JSON.stringify(coverageRange))
 				if (!cov) {
@@ -755,10 +764,12 @@ export class ABLResults implements Disposable {
 			fcd.push(...fdc, ...fsc)
 
 			const fc = FileCoverage.fromDetails(incInfo.uri, fcd)
-			const fcOrig = this.fileCoverage.get(incInfo.uri.fsPath)
-			fc.includesTests = fcOrig?.includesTests ?? []
-			if (item && !fc.includesTests.find((i) => i.id == item.id)) {
-				fc.includesTests.push(item)
+			if (item) {
+				const fcOrig = this.fileCoverage.get(incInfo.uri.fsPath)
+				fc.includesTests = fcOrig?.includesTests ?? []
+				if (item && !fc.includesTests.find((i) => i.id == item.id)) {
+					fc.includesTests.push(item)
+				}
 			}
 
 			this.fileCoverage.set(incInfo?.uri.fsPath ?? module.SourceName, fc)

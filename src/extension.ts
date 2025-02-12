@@ -26,7 +26,7 @@ import { ABLCompilerError, ABLUnitRuntimeError, TimeoutError } from 'Errors'
 import { basename } from 'path'
 import * as FileUtils from './FileUtils'
 import { gatherAllTestItems, IExtensionTestReferences } from 'ABLUnitCommon'
-import { getDeclarationCoverage } from 'parse/ProfileParser'
+import { getDeclarationCoverage, getLineRange } from 'parse/ProfileParser'
 import {
 	// InlineProvider,
 	SnippetProvider,
@@ -172,31 +172,35 @@ export function activate (context: ExtensionContext) {
 				log.warn('no profiler data found for test item ' + fromTestItem.id)
 				continue
 			}
-			const module = profJson.modules.find((mod) => mod.SourceUri?.fsPath == fileCoverage.uri.fsPath)
-			if (!module) {
-				log.warn('no module data found for ' + fileCoverage.uri.fsPath)
-				continue
-			}
+			const modules = profJson.modules.flatMap(m => [m, ...m.childModules]).filter((mod) => mod.SourceUri?.fsPath == fileCoverage.uri.fsPath || mod.lines.find(l => l.incUri?.fsPath == fileCoverage.uri.fsPath))
+			for (const module of modules) {
+				const lines = module.childModules.map((a) => a.lines).flat().filter(l => l.incUri?.fsPath == fileCoverage.uri.fsPath)
+				for (const line of lines) {
+					if (line.LineNo == 0 || line.incUri?.fsPath != fileCoverage.uri.fsPath) {
+						continue
+					}
+					const coverageRange = getLineRange(line)
+					if (!coverageRange) {
+						continue
+					}
 
-			const lines = module.childModules.map((a) => a.lines).flat()
-			for (const line of lines) {
-				if (line.LineNo == 0) {
-					continue
+					let sc = ret.find((a) => JSON.stringify(a.location) == JSON.stringify(coverageRange))
+					if (!sc) {
+						sc = new StatementCoverage(line.ExecCount, coverageRange)
+					} else if (typeof sc.executed == 'number') {
+						sc.executed = sc.executed + line.ExecCount
+					} else if (typeof sc.executed == 'boolean') {
+						sc.executed = sc.executed || line.ExecCount > 0
+					}
+					ret.push(sc)
 				}
-				const coverageLocation = new Position(line.LineNo - 1, 0)
-				const sc = ret.find((a) => JSON.stringify(a.location) == JSON.stringify(coverageLocation))
-				if (!sc) {
-					ret.push(new StatementCoverage(line.ExecCount, coverageLocation))
-				} else if (typeof sc.executed == 'boolean') {
-					sc.executed = sc.executed || line.ExecCount > 0
-				} else if (typeof sc.executed == 'number') {
-					sc.executed = sc.executed + line.ExecCount
-				} else {
-					throw new Error('unexpected type for sc.executed: ' + typeof sc.executed)
-				}
-			}
 
-			ret.push(...getDeclarationCoverage(module))
+				if (module.lines[0].incUri?.fsPath == fileCoverage.uri.fsPath) {
+					const dc = getDeclarationCoverage(module)
+					ret.push(...dc)
+				}
+
+			}
 		}
 		if (ret.length == 0) {
 			log.warn('no coverage data found for ' + fileCoverage.uri.fsPath + ' by test item ' + fromTestItem.id)

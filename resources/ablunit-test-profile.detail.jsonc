@@ -114,7 +114,7 @@
 		////#   * https://docs.progress.com/bundle/abl-reference/page/PROFILER-system-handle.html
 		"profiler": {
 			"enabled": true,
-			"coverage": true,
+			"coverage": false, // outputs which lines are executable, but the extension gets this information from rcode by default
 			"description": "Run via VSCode - ABLUnit Test Runner Extension",
 			"filename": "prof.out",
 			"listings": false,

@@ -145,6 +145,9 @@ export interface IModule { // Section 2
 	procNum?: number
 	overloaded?: boolean
 	overloadSequence?: number
+	execCount?: number
+	actualTime?: number,
+	cumulativeTime?: number
 	executableLines: number
 	executedLines: number
 	coveragePct: number
@@ -678,14 +681,21 @@ export class ABLProfileJson {
 			}
 
 			const mods = this.getModules(modID)
+
+			if (mods.length > 0) {
+				if (Number(test[2]) != 0) {
+					mods[0].lineCount++
+				} else {
+					mods[0].execCount = Number(test[3])
+					mods[0].actualTime = Number(test[4])
+					mods[0].cumulativeTime = Number(test[5])
+				}
+			}
+
 			const mod = mods.find(m => m.lines.find(l => l.LineNo == Number(test[2])))
 			if (!mod) {
 				log.warn('could not find module ' + modID + ' with line ' + test[2] + ' (uri=' + this.profileUri.fsPath + ')')
 				continue
-			}
-
-			if (Number(test[2]) != 0) {
-				mod.lineCount++
 			}
 
 			const line = mod.lines.find(l => l.LineNo == Number(test[2]))
@@ -1089,8 +1099,33 @@ export class ABLProfileJson {
 	}
 }
 
+export function getLineRange (line: ILineSummary) {
+	try {
+		const lineno = line.incLine ?? line.srcLine
+		if (!lineno) {
+			return undefined
+		}
+		const doc = workspace.textDocuments.find((doc) => doc.uri.fsPath == line.incUri?.fsPath)
+		if (!doc) {
+			return new Position(Math.max(lineno - 1, 0), 0)
+		}
+
+		const la = doc.lineAt(lineno - 1)
+		const start = new Position(lineno - 1, la.firstNonWhitespaceCharacterIndex)
+		const lb = doc.lineAt(lineno - 1)
+		const t = lb.text.replace(/\/\/.*/, '').trimEnd()
+		const end = new Position(lineno - 1, t.length)
+		const r = new Range(start, end)
+		return r
+	} catch (e: unknown) {
+		log.error('Error getting line range for line (uri=' + line.incUri?.fsPath + ', e=' + e)
+		return undefined
+	}
+}
+
 export function getModuleRange (module: IModule) {
 	const lines = module.lines.filter((a) => a.LineNo > 0)
+
 	for (const child of module.childModules) {
 		lines.push(...child.lines.filter((l) => l.LineNo > 0))
 	}
@@ -1100,10 +1135,38 @@ export function getModuleRange (module: IModule) {
 		return undefined
 	}
 
-	const start = new Position((lines[0].incLine ?? lines[0].LineNo) - 1, 0)
-	const endLine = lines[lines.length - 1]
-	const end = new Position((endLine.incLine ?? endLine.LineNo) - 1, 99)
-	return new Range(start, end)
+	const startLine = lines[0].incLine ?? lines[0].LineNo
+	if (!startLine || startLine <=0) {
+		return undefined
+	}
+	let start = new Position(startLine - 1, 0)
+	const endLine = lines[lines.length - 1].incLine ?? lines[lines.length - 1].LineNo
+	if (!endLine || endLine <=0) {
+		return undefined
+	}
+	let end = new Position(endLine - 1, 0)
+
+	try {
+		const doc = workspace.textDocuments.find((doc) => doc.uri.fsPath == module.SourceUri.fsPath)
+		const la = doc?.lineAt(startLine - 1)
+		if (la) {
+			// VSCode Bug - executions only display when the start of a line is AFTER but not equal to the first character of the declaration including it
+			// const startChar = Math.max(la.firstNonWhitespaceCharacterIndex - 1, 0)
+			// start = new Position(startLine - 1, startChar)
+			start = new Position(startLine - 1, 0)
+		}
+		const lb = doc?.lineAt(endLine - 1)
+		if (lb) {
+			const t = lb.text.replace(/\/\/.*/, '').trimEnd()
+			const endChar = t.length
+			end = new Position(endLine - 1, endChar)
+		}
+
+		return new Range(start, end)
+	} catch (e) {
+		log.error('e=' + e)
+		return undefined
+	}
 }
 
 export function getDeclarationCoverage (module: IModule) {
@@ -1112,13 +1175,63 @@ export function getDeclarationCoverage (module: IModule) {
 	const range = getModuleRange(module)
 	if (range) {
 		const zeroLine = module.lines.find((a) => a.LineNo == 0)
-		fdc.push(new DeclarationCoverage(module.EntityName ?? '<main block>', zeroLine?.ExecCount ?? 0, range))
+		const dc = new DeclarationCoverage(module.EntityName ?? '<main block>', zeroLine?.ExecCount ?? 0, range)
+
+		let executed = module.execCount ?? false
+		if (!executed || module.overloaded) {
+			if (module.lines.find(l => l.ExecCount > 0)) {
+				executed = true
+			}
+		}
+
+		if (dc?.name == '<main block>') {
+			dc.executed = executed
+		} else if (typeof dc?.executed == 'number') {
+			if (typeof executed == 'number') {
+				dc.executed += executed
+			} else {
+				dc.executed = dc.executed > 0 || executed
+			}
+		} else if (typeof dc?.executed == 'boolean') {
+			if (typeof executed == 'number') {
+				dc.executed = dc.executed || executed > 0
+			} else {
+				dc.executed = dc.executed || executed
+			}
+		}
+
+		fdc.push(dc)
 	}
 	for (const child of module.childModules) {
 		const childRange = getModuleRange(child)
 		if (childRange) {
 			const zeroLine = child.lines.find((a) => a.LineNo == 0)
-			fdc.push(new DeclarationCoverage(child.EntityName ?? '<main block>', zeroLine?.ExecCount ?? 0, childRange))
+			const dc = new DeclarationCoverage(child.EntityName ?? '<main block>', zeroLine?.ExecCount ?? 0, childRange)
+
+			let executed = module.execCount ?? false
+			if (!executed || module.overloaded) {
+				if (module.lines.find(l => l.ExecCount > 0)) {
+					executed = true
+				}
+			}
+
+			if (dc?.name == '<main block>') {
+				dc.executed = executed
+			} else if (typeof dc?.executed == 'number') {
+				if (typeof executed == 'number') {
+					dc.executed += executed
+				} else {
+					dc.executed = dc.executed > 0 || executed
+				}
+			} else if (typeof dc?.executed == 'boolean') {
+				if (typeof executed == 'number') {
+					dc.executed = dc.executed || executed > 0
+				} else {
+					dc.executed = dc.executed || executed
+				}
+			}
+
+			fdc.push(dc)
 		}
 	}
 	return fdc
