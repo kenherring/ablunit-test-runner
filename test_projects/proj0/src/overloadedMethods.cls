@@ -19,18 +19,18 @@ class overloadedMethods :
             message 'true!'.
         else
             message 'false'.
-        message 102 var1 var2.
+        message 102 var1 var2. // test comment
     end method.
 
     method public void overloadMethod (var1 as integer, var2 as character, var3 as decimal) :
         message 103 var1 var2 var3.
     end method.
 
-    @Test.
-    method public void methodName () :
-        overloadMethod('a', 'b').
-        OpenEdge.Core.Assert:IsTrue(yes).
-    end method.
+@Test.
+method public void methodName () :
+overloadMethod('a', 'b').
+OpenEdge.Core.Assert:IsTrue(yes).
+end method. // end method
 
     @Test.
     method public void methodName2 () :
