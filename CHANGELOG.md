@@ -1,3 +1,11 @@
+# [1.0.6019](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.0.6019) - 2025-02-12
+
+
+ * Line execution counts, improved ranges, and fix individual test coverage (#246)
+
+
+**Full Changelog**: [1.0.6017...1.0.6019](https://github.com/kenherring/ablunit-test-runner/compare/1.0.6017...1.0.6019)
+
 # [1.0.6017](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.0.6017) - 2025-02-10
 
 
