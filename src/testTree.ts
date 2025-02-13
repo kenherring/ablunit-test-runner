@@ -1,10 +1,10 @@
 import { CancellationError, CancellationToken, Range, TestController, TestItem, TestRun, TestTag, Uri, workspace } from 'vscode'
-import { ABLResults } from './ABLResults'
-import { parseABLTestSuite } from './parse/TestSuiteParser'
-import { IClassRet, ITestCase, parseABLTestClass } from './parse/TestClassParser'
-import { IProgramRet, parseABLTestProgram } from './parse/TestProgramParser'
-import { getContentFromFilesystem } from './parse/TestParserCommon'
-import { log } from './ChannelLogger'
+import { ABLResults } from 'ABLResults'
+import { parseABLTestSuite } from 'parse/TestSuiteParser'
+import { IClassRet, ITestCase, parseABLTestClass } from 'parse/TestClassParser'
+import { IProgramRet, parseABLTestProgram } from 'parse/TestProgramParser'
+import { getContentFromFilesystem } from 'parse/TestParserCommon'
+import { log } from 'ChannelLogger'
 
 export type ABLTestData = ABLTestDir | ABLTestFile | ABLTestCase
 export const resultData = new WeakMap<TestRun, ABLResults[]>()

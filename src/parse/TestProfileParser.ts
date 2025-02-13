@@ -1,11 +1,11 @@
 import { FileSystemError, Uri, WorkspaceFolder, workspace } from 'vscode'
-import { CoreOptions } from './config/CoreOptions'
-import { IRunProfile, DefaultRunProfile } from './config/RunProfile'
-import { ProfilerOptions } from './config/ProfilerOptions'
-import { CommandOptions } from './config/CommandOptions'
-import { log } from '../ChannelLogger'
-import { IDatabaseConnection, getExtraParameters, getProfileCharset, getProfileDbConns } from './OpenedgeProjectParser'
-import * as FileUtils from '../FileUtils'
+import { CoreOptions } from 'parse/config/CoreOptions'
+import { IRunProfile, DefaultRunProfile } from 'parse/config/RunProfile'
+import { ProfilerOptions } from 'parse/config/ProfilerOptions'
+import { CommandOptions } from 'parse/config/CommandOptions'
+import { log } from 'ChannelLogger'
+import { IDatabaseConnection, getExtraParameters, getProfileCharset, getProfileDbConns } from 'parse/OpenedgeProjectParser'
+import * as FileUtils from 'FileUtils'
 
 const runProfileFilename = 'ablunit-test-profile.json'
 

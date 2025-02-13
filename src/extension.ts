@@ -17,14 +17,14 @@ import {
 	languages,
 	tests, window, workspace,
 } from 'vscode'
-import { ABLResults } from './ABLResults'
-import { log } from './ChannelLogger'
-import { getContentFromFilesystem } from './parse/TestParserCommon'
-import { ABLTestCase, ABLTestClass, ABLTestData, ABLTestDir, ABLTestFile, ABLTestProgram, ABLTestSuite, resultData, testData } from './testTree'
+import { ABLResults } from 'ABLResults'
+import { log } from 'ChannelLogger'
+import { getContentFromFilesystem } from 'parse/TestParserCommon'
+import { ABLTestCase, ABLTestClass, ABLTestData, ABLTestDir, ABLTestFile, ABLTestProgram, ABLTestSuite, resultData, testData } from 'testTree'
 import { minimatch } from 'minimatch'
 import { ABLCompilerError, ABLUnitRuntimeError, TimeoutError } from 'Errors'
 import { basename } from 'path'
-import * as FileUtils from './FileUtils'
+import * as FileUtils from 'FileUtils'
 import { gatherAllTestItems, IExtensionTestReferences } from 'ABLUnitCommon'
 import { getDeclarationCoverage } from 'parse/ProfileParser'
 import {
@@ -341,7 +341,7 @@ export function activate (context: ExtensionContext) {
 							log.debug('cancellation requested - runTestQueue-2')
 							throw new CancellationError()
 						} else {
-							await r.assignTestResults(test, run)
+							r.assignTestResults(test, run)
 						}
 					}
 				}
@@ -421,7 +421,7 @@ export function activate (context: ExtensionContext) {
 						await updateNode(test.uri, ctrl)
 					}
 				}
-				await r.addTest(test, data, run)
+				r.addTest(test, data, run)
 			}
 
 			resultData.set(run, res)

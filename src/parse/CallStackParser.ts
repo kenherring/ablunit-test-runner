@@ -1,8 +1,8 @@
 import { workspace, Location, Position, Range, Uri } from 'vscode'
-import { ABLDebugLines } from '../ABLDebugLines'
-import { SourceMapItem } from './SourceMapParser'
-import { log } from '../ChannelLogger'
-import * as FileUtils from '../FileUtils'
+import { ABLDebugLines } from 'ABLDebugLines'
+import { SourceMapItem } from 'parse/SourceMapParser'
+import { log } from 'ChannelLogger'
+import * as FileUtils from 'FileUtils'
 
 interface ICallStackItem {
 	rawText: string
@@ -51,7 +51,7 @@ export async function parseCallstack (debugLines: ABLDebugLines, callstackRaw: s
 
 		let debugUri: Uri | undefined = Uri.file(debugFile)
 		if (!FileUtils.doesFileExist(debugUri)) {
-			const fileinfo = await debugLines.propath.search(debugFile)
+			const fileinfo = debugLines.propath.search(debugFile)
 			if (fileinfo) {
 				debugUri = fileinfo.uri
 			} else {
