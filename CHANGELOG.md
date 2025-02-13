@@ -1,23 +1,7 @@
-# [1.0.6019](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.0.6019) - 2025-02-12
-
-
- * Line execution counts, improved ranges, and fix individual test coverage (#246)
-
-
-**Full Changelog**: [1.0.6017...1.0.6019](https://github.com/kenherring/ablunit-test-runner/compare/1.0.6017...1.0.6019)
-
 # [1.0.6017](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.0.6017) - 2025-02-10
-
 
  * Ungroup overloaded methods for coverage reporting (#245)
  * Fix debug line mapping (#244)
-
-
-**Full Changelog**: [1.0.6013...1.0.6015](https://github.com/kenherring/ablunit-test-runner/compare/1.0.6013...1.0.6015)
-
-# [1.0.6013](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.0.6013) - 2025-02-06
-
-
  * Target multiple versions of node when running tests (#243)
  * Add test cases  to validate source map parsing source (#239)
  * Update testing scripts and programs (#242)
@@ -36,7 +20,7 @@
  * [chore] npm update (#226)
  * Call stack parsing: support multiple errors per test case and negative line numbers for implicit constructors (#223)
 
-**Full Changelog**: [1.0.0...1.0.6013](https://github.com/kenherring/ablunit-test-runner/compare/1.0.0...1.0.6013)
+**Full Changelog**: [1.0.0...1.0.6017](https://github.com/kenherring/ablunit-test-runner/compare/1.0.0...1.0.6017)
 
 # 🥳 [1.0.0](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.0.0) - 2024-10-24
 
