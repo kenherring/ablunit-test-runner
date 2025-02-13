@@ -50,16 +50,20 @@ export class ABLProfile {
 		log.debug('section1 ' + sectionLines[1].length)
 		this.profJSON = new ABLProfileJson(uri, sectionLines[1], debugLines, ignoreExternalCoverage)
 		log.debug('section2 ' + sectionLines[2].length)
-		await this.profJSON.addModules(sectionLines[2])
+		this.profJSON.addModules(sectionLines[2])
 		await this.profJSON.addSourceMap()
 		log.debug('section3 ' + sectionLines[3].length)
 		this.profJSON.addCallTree(sectionLines[3])
 		log.debug('section4 ' + sectionLines[4].length)
+		log.info('section4 ' + sectionLines[4].length)
 		this.profJSON.addLineSummary(sectionLines[4])
 		log.debug('section5 ' + sectionLines[5].length)
+		log.info('section5 ' + sectionLines[5].length)
 		this.profJSON.addTracing(sectionLines[5])
 		log.debug('section6 ' + sectionLines[6].length)
-		await this.profJSON.addCoverage(sectionLines[6])
+		log.info('section6 ' + sectionLines[6].length)
+		this.profJSON.addCoverage(sectionLines[6])
+		log.info('this.parseAll=' + this.parseAll)
 
 		if (this.parseAll) {
 			log.debug('section7 ' + sectionLines[7].length)
@@ -291,7 +295,6 @@ export class ABLProfileJson {
 	properties?: IProps
 	modules: IModule[] = []
 	userData: IUserData[] = []
-	testItemId?: string
 	interpretedModuleSequence = 0
 	parseDuration: Duration
 	ignoredModules: number[] = [0]
@@ -330,7 +333,7 @@ export class ABLProfileJson {
 			sourceName.endsWith('ABLUnitCore.p')
 	}
 
-	async addModules (lines: string[]) {
+	addModules (lines: string[]) {
 		this.modules = []
 		const childModules: IModule[] = []
 		for(const element of lines) {
@@ -376,7 +379,7 @@ export class ABLProfileJson {
 				continue
 			}
 
-			const fileinfo = await this.debugLines.propath.search(sourceName)
+			const fileinfo = this.debugLines.propath.search(sourceName)
 			if (!fileinfo?.uri) {
 				log.debug('could not find source file in propath for ' + sourceName + ' (uri=' + this.profileUri.fsPath + ')')
 				continue
@@ -767,7 +770,7 @@ export class ABLProfileJson {
 	// lineNo
 	// .
 	// .  (end of section)
-	async addCoverage (lines: string[]) {
+	addCoverage (lines: string[]) {
 		if (this.hasSourceMap) {
 			return
 		}
@@ -795,7 +798,7 @@ export class ABLProfileJson {
 					// prepare the next section by finding the correct module
 					try {
 						ignoringCurrentModule = false
-						mod = await this.addCoverageNextSection(lines[lineNo], Number(lines[lineNo + 1]))
+						mod = this.addCoverageNextSection(lines[lineNo], Number(lines[lineNo + 1]))
 						lastModuleLine = lines[lineNo]
 					} catch (err) {
 						if (err instanceof ModuleIgnored) {
@@ -841,7 +844,7 @@ export class ABLProfileJson {
 		this.assignParentCoverage()
 	}
 
-	async addCoverageNextSection (line: string, firstLine: number) {
+	addCoverageNextSection (line: string, firstLine: number) {
 		const test = coverageRE.exec(line)
 		if (!test) {
 			log.error('Unable to parse coverage data in section 6 (uri=' + this.profileUri.fsPath + ')')
@@ -903,7 +906,7 @@ export class ABLProfileJson {
 				lines: [],
 			}
 			if (child.SourceName) {
-				const fileinfo = await this.debugLines.propath.search(child.SourceName)
+				const fileinfo = this.debugLines.propath.search(child.SourceName)
 				if (fileinfo?.uri) {
 					child.SourceUri = fileinfo.uri
 				}

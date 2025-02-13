@@ -167,7 +167,7 @@ export function activate (context: ExtensionContext) {
 		}
 
 		for (const res of results) {
-			const profJson = res.profileJson.find((prof) => prof.testItemId == fromTestItem.id)
+			const profJson = res.profileItemMap.get(fromTestItem)
 			if (!profJson) {
 				log.warn('no profiler data found for test item ' + fromTestItem.id)
 				continue
@@ -345,7 +345,7 @@ export function activate (context: ExtensionContext) {
 							log.debug('cancellation requested - runTestQueue-2')
 							throw new CancellationError()
 						} else {
-							await r.assignTestResults(test, run)
+							r.assignTestResults(test, run)
 						}
 					}
 				}
@@ -425,7 +425,7 @@ export function activate (context: ExtensionContext) {
 						await updateNode(test.uri, ctrl)
 					}
 				}
-				await r.addTest(test, data, run)
+				r.addTest(test, data, run)
 			}
 
 			resultData.set(run, res)

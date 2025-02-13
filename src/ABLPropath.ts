@@ -1,7 +1,7 @@
 import { Uri, workspace, WorkspaceFolder } from 'vscode'
-import { IProjectJson } from './parse/OpenedgeProjectParser'
-import { log } from './ChannelLogger'
-import * as FileUtils from './FileUtils'
+import { IProjectJson } from 'parse/OpenedgeProjectParser'
+import { log } from 'ChannelLogger'
+import * as FileUtils from 'FileUtils'
 
 interface IPropathEntry {
 	uri: Uri
@@ -148,7 +148,7 @@ export class PropathParser {
 		return undefined
 	}
 
-	async search (file: string | Uri | undefined) {
+	search (file: string | Uri | undefined) {
 		if (!file) {
 			return undefined
 		}
@@ -168,7 +168,7 @@ export class PropathParser {
 
 		for (const e of this.propath.entry) {
 			const fileInPropathUri = Uri.joinPath(e.uri, relativeFile)
-			const exists = await workspace.fs.stat(fileInPropathUri).then(() => { return true }, () => { return false })
+			const exists = FileUtils.doesFileExist(fileInPropathUri)
 
 			if (exists) {
 				let propathRelativeFile = fileInPropathUri.fsPath.replace(e.uri.fsPath, '')

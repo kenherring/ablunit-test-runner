@@ -37,6 +37,7 @@ export class ABLResults implements Disposable {
 	debugLines: ABLDebugLines
 	promsgs: ABLPromsgs
 	profileJson: ABLProfileJson[] = []
+	profileItemMap: Map<TestItem, ABLProfileJson> = new Map<TestItem, ABLProfileJson>()
 	coverageJson: [] = []
 	dlc: IDlc
 	thrownError: Error | undefined
@@ -125,7 +126,7 @@ export class ABLResults implements Disposable {
 		this.tests = []
 	}
 
-	async addTest (test:  TestItem, data: ABLTestData, options: TestRun) {
+	addTest (test:  TestItem, data: ABLTestData, options: TestRun) {
 		if (!test.uri) {
 			log.error('test.uri is undefined (test.label = ' + test.label + ')', {testRun: options})
 			return
@@ -134,7 +135,7 @@ export class ABLResults implements Disposable {
 			throw new Error('propath is undefined')
 		}
 
-		const testPropath = await this.propath.search(test.uri)
+		const testPropath = this.propath.search(test.uri)
 		if (!testPropath) {
 			this.skippedTests.push(test)
 			log.warn('skipping test, not found in propath: ' + workspace.asRelativePath(test.uri), {testRun: options})
@@ -156,7 +157,7 @@ export class ABLResults implements Disposable {
 
 		const testUri = test.uri
 		let testRel: string = workspace.asRelativePath(testUri, false)
-		const p = await this.propath.search(testUri)
+		const p = this.propath.search(testUri)
 		testRel = (p?.propathRelativeFile ?? testRel).replace(/\\/g, '/')
 
 		const testObj: ITestObj = { test: testRel }
@@ -205,9 +206,9 @@ export class ABLResults implements Disposable {
 		})
 	}
 
-	async processCompilerErrors (testRun: TestRun, e: ABLCompilerError) {
+	processCompilerErrors (testRun: TestRun, e: ABLCompilerError) {
 		for (const compileError of e.compilerErrors) {
-			const fileinfo = await this.propath.search(compileError.fileName)
+			const fileinfo = this.propath.search(compileError.fileName)
 			if (!fileinfo) {
 				log.warn('could not find file in propath: ' + compileError.fileName)
 				continue
@@ -309,7 +310,7 @@ export class ABLResults implements Disposable {
 		log.info('parsing output complete ' + parseTime.toString())
 	}
 
-	async assignTestResults (item: TestItem, options: TestRun) {
+	assignTestResults (item: TestItem, options: TestRun) {
 
 		if (this.skippedTests.includes(item)) {
 			log.warn('skipped test item \'' + item.label + '\'')
@@ -332,7 +333,7 @@ export class ABLResults implements Disposable {
 			return
 		}
 
-		const suiteName = await this.getSuiteName(item)
+		const suiteName = this.getSuiteName(item)
 		const s = this.ablResults.resultsJson[0].testsuite.find((s: ITestSuite) => s.classname === suiteName || s.name === suiteName)
 		if (!s) {
 			log.error('could not find test suite for \'' + suiteName + '\' in results (item=' + item.label + ')')
@@ -400,17 +401,14 @@ export class ABLResults implements Disposable {
 		}
 	}
 
-	private async getSuiteName (item: TestItem) {
+	private getSuiteName (item: TestItem) {
 		let suitePath = workspace.asRelativePath(item.uri!, false)
 
 		if(suitePath) {
-			const propathRelativePath = this.propath.search(suitePath)
-			suitePath = await propathRelativePath.then((res) => {
-				if (res?.propathRelativeFile) {
-					return res.propathRelativeFile
-				}
-				return suitePath
-			})
+			const res = this.propath.search(suitePath)
+			if (res) {
+				suitePath = res.propathRelativeFile
+			}
 		}
 		suitePath = suitePath.replace(/\\/g, '/')
 		return suitePath
@@ -556,36 +554,55 @@ export class ABLResults implements Disposable {
 			const uri = Uri.joinPath(Uri.file(profDir), dataFiles[i])
 			log.debug('parsing profiler data ' + (i+1) + '/' + dataFiles.length + ' from ' + uri.fsPath)
 
+			log.info('100')
 			proms.push(new ABLProfile().parseData(uri, this.cfg.ablunitConfig.profiler.writeJson, this.debugLines, this.cfg.ablunitConfig.profiler.ignoreExternalCoverage).then((profJson) => {
+				log.info('parsed profiler data ' + (i+1) + '/' + dataFiles.length + ' ' + profJson.parseDuration)
 				log.debug('parsed profiler data ' + (i+1) + '/' + dataFiles.length + ' ' + profJson.parseDuration)
+				const item = this.findTest(profJson.description)
+				log.info('114')
+				if (item) {
+					this.profileItemMap.set(item, profJson)
+					log.info('115')
+				}
+				this.profileJson.push(profJson)
+				log.info('116')
+				log.debug('assigning profiler data (' + i + '/' + dataFiles.length + ')')
+				log.info('117')
 				return profJson
 			}))
 		}
 
+		log.info('110')
 		const responses = await Promise.all(proms)
+		log.info('111')
 		let i = 0
+		log.info('112')
 		for (const profJson of responses) {
+			log.info('113')
 			i++
-			const item = this.findTest(profJson.description)
-			profJson.testItemId = item?.id
-			this.profileJson.push(profJson)
-			log.debug('assigning profiler data (' + i + '/' + dataFiles.length + ')')
-			await this.assignProfileResults(profJson, item)
+
+			this.assignProfileResults(profJson)
+			log.info('118')
 
 			const message = 'parsing profiler data... (' + i + '/' + dataFiles.length + ', duration=' +  parseTime.elapsed() + ')'
+			log.info('119')
 			log.info(message)
+			log.info('120')
 			options.appendOutput('\r' + message)
+			log.info('121')
 		}
+		log.info('122')
 		options.appendOutput('\r\n')
+		log.info('123')
 	}
 
-	async assignProfileResults (profJson: ABLProfileJson, testItem: TestItem | undefined) {
+	assignProfileResults (profJson: ABLProfileJson) {
 		if (!profJson) {
 			log.error('no profiler data available...')
 			throw new Error('no profiler data available...')
 		}
 		for (const module of profJson.modules) {
-			await this.setCoverage(module, testItem)
+			this.setCoverage(module)
 		}
 	}
 
@@ -661,9 +678,9 @@ export class ABLResults implements Disposable {
 		return endPosA?.compareTo(endPosB ?? startPosB) ?? 0
 	}
 
-	async setCoverage (module: IModule, item?: TestItem) {
+	setCoverage (module: IModule, item?: TestItem) {
 
-		const fileinfo = await this.propath.search(module.SourceUri ?? module.SourceName)
+		const fileinfo = this.propath.search(module.SourceUri ?? module.SourceName)
 		if (!fileinfo?.uri) {
 			log.warn('could not find module in propath: ' + module.SourceName + ' (' + module.ModuleID + ')')
 			if (this.cfg.ablunitConfig.profiler.ignoreExternalCoverage) {
@@ -720,7 +737,7 @@ export class ABLResults implements Disposable {
 
 		for (const f of filesNoDupes) {
 
-			const incInfo = await this.propath.search(f)
+			const incInfo = this.propath.search(f)
 			if (!incInfo?.uri) {
 				log.warn('could not find file in propath: ' + f.fsPath)
 				continue

@@ -51,7 +51,7 @@ export class ABLDebugLines {
 			return undefined
 		}
 
-		const debugSourceObj = await this.propath.search(debugSource)
+		const debugSourceObj = this.propath.search(debugSource)
 		if (!debugSourceObj) {
 			log.trace('cannot find debug source in propath (' + debugSource + ')')
 			return undefined
@@ -70,7 +70,7 @@ export class ABLDebugLines {
 
 		// if that fails, attempt to parse source map from xref
 		try {
-			map = await getSourceMapFromXref(this.propath, debugSource)
+			map = getSourceMapFromXref(this.propath, debugSource)
 			this.processingMethodMap.set(debugSource, 'parse')
 			log.debug('set processing method to parse for ' + debugSource)
 			this.maps.set(debugSource, map)

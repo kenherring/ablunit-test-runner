@@ -34,25 +34,24 @@ test('SourceMapXrefParser.test_1', () => {
 
 	const testuri = toUri('test_1/test.p')
 	const incuri = toUri('test_1/include.i')
-	return getSourceMap(propath, testuri).then((sourceMap) => {
+	const sourceMap = getSourceMap(propath, testuri)
 
-		for (const item of sourceMap.items) {
-			log.info('item=' + JSON.stringify(item, null, 2))
-		}
+	for (const item of sourceMap.items) {
+		log.info('item=' + JSON.stringify(item, null, 2))
+	}
 
-		assert.equal(sourceMap.items.length, getLineCount(toUri('.dbg/test_1/test.p')))
-		// validate the first executable line is number 4
-		assertLines([sourceMap.items[0]], 1, 1, testuri, testuri)
-		assertLines(sourceMap.items, 6, 6, testuri, testuri)
-		assertLines(sourceMap.items, 7, 1, testuri, incuri)
-		assertLines(sourceMap.items, 8, 2, testuri, incuri)
-		assertLines(sourceMap.items, 9, 3, testuri, incuri)
-		assertLines(sourceMap.items, 10, 4, testuri, incuri)
-		assertLines(sourceMap.items, 11, 7, testuri, testuri)
-		assertLines(sourceMap.items, 12, 8, testuri, testuri)
-		assertLines(sourceMap.items, 13, 9, testuri, testuri)
-		return
-	})
+	assert.equal(sourceMap.items.length, getLineCount(toUri('.dbg/test_1/test.p')))
+	// validate the first executable line is number 4
+	assertLines([sourceMap.items[0]], 1, 1, testuri, testuri)
+	assertLines(sourceMap.items, 6, 6, testuri, testuri)
+	assertLines(sourceMap.items, 7, 1, testuri, incuri)
+	assertLines(sourceMap.items, 8, 2, testuri, incuri)
+	assertLines(sourceMap.items, 9, 3, testuri, incuri)
+	assertLines(sourceMap.items, 10, 4, testuri, incuri)
+	assertLines(sourceMap.items, 11, 7, testuri, testuri)
+	assertLines(sourceMap.items, 12, 8, testuri, testuri)
+	assertLines(sourceMap.items, 13, 9, testuri, testuri)
+	return
 })
 
 test('SourceMapXrefParser.test_2', () => {
@@ -61,16 +60,14 @@ test('SourceMapXrefParser.test_2', () => {
 
 	const testuri = toUri('test_2/test.p')
 	const incuri = toUri('test_2/include.i')
-	return getSourceMap(propath, testuri).then((sourceMap) => {
-		assert.equal(sourceMap.items.length, getLineCount(toUri('.dbg/test_2/test.p')))
-		assertLines(sourceMap.items, 6, 6, testuri, testuri)
-		assertLines(sourceMap.items, 7, 1, testuri, incuri)
-		assertLines(sourceMap.items, 8, 2, testuri, incuri)
-		assertLines(sourceMap.items, 9, 3, testuri, incuri)
-		assertLines(sourceMap.items, 10, 4, testuri, incuri)
-		assertLines(sourceMap.items, 11, 7, testuri, testuri)
-		return
-	})
+	const sourceMap = getSourceMap(propath, testuri)
+	assert.equal(sourceMap.items.length, getLineCount(toUri('.dbg/test_2/test.p')))
+	assertLines(sourceMap.items, 6, 6, testuri, testuri)
+	assertLines(sourceMap.items, 7, 1, testuri, incuri)
+	assertLines(sourceMap.items, 8, 2, testuri, incuri)
+	assertLines(sourceMap.items, 9, 3, testuri, incuri)
+	assertLines(sourceMap.items, 10, 4, testuri, incuri)
+	assertLines(sourceMap.items, 11, 7, testuri, testuri)
 })
 
 test('SourceMapXrefParser.test_3', () => {
@@ -79,26 +76,24 @@ test('SourceMapXrefParser.test_3', () => {
 
 	const testuri = toUri('test_3/test.p')
 	const incuri = toUri('test_3/include.i')
-	return getSourceMap(propath, testuri).then((sourceMap) => {
-		assert.equal(sourceMap.items.length, getLineCount(toUri('.dbg/test_3/test.p')))
-		assertLines(sourceMap.items, 6, 6, testuri, testuri)
-		assertLines(sourceMap.items, 7, 1, testuri, incuri)
-		assertLines(sourceMap.items, 8, 2, testuri, incuri)
-		assertLines(sourceMap.items, 9, 3, testuri, incuri)
-		assertLines(sourceMap.items, 10, 4, testuri, incuri)
-		assertLines(sourceMap.items, 11, 5, testuri, incuri)
-		assertLines(sourceMap.items, 12, 7, testuri, testuri)
-		return
-	})
+	const sourceMap = getSourceMap(propath, testuri)
+	assert.equal(sourceMap.items.length, getLineCount(toUri('.dbg/test_3/test.p')))
+	assertLines(sourceMap.items, 6, 6, testuri, testuri)
+	assertLines(sourceMap.items, 7, 1, testuri, incuri)
+	assertLines(sourceMap.items, 8, 2, testuri, incuri)
+	assertLines(sourceMap.items, 9, 3, testuri, incuri)
+	assertLines(sourceMap.items, 10, 4, testuri, incuri)
+	assertLines(sourceMap.items, 11, 5, testuri, incuri)
+	assertLines(sourceMap.items, 12, 7, testuri, testuri)
+	return
 })
 
 function getSourceMap (propath: PropathParser, uri: Uri) {
-	return getSourceMapFromXref(propath, uri.fsPath).then((sourceMap) => {
-		if (!sourceMap) {
-			throw new Error('no source map found')
-		}
-		return sourceMap
-	})
+	const sourceMap = getSourceMapFromXref(propath, uri.fsPath)
+	if (!sourceMap) {
+		throw new Error('no source map found')
+	}
+	return sourceMap
 }
 
 function getLineCount (uri: Uri) {

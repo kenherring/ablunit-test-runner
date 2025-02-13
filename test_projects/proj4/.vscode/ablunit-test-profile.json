@@ -4,9 +4,10 @@
             "tempDir": "c:\\temp\\ablunit\\tempDir",
             "options": {
                 "output": {
-                    "writeLog": true,
+                    "location": "${tempDir}",
                     "writeJson": true
-                }
+                },
+                "writeLog": true
             },
             "profiler": {
                 "enabled": true,

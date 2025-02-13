@@ -5,6 +5,13 @@ import { FileSystemError, Uri, workspace } from 'vscode'
 import { log } from 'ChannelLogger'
 import { RmOptions } from 'fs'
 
+export function stat (path: string | Uri): fs.Stats {
+	if (path instanceof Uri) {
+		path = path.fsPath
+	}
+	return fs.statSync(path)
+}
+
 export function readFileSync (path: string | Uri, opts?: { encoding?: null; flag?: string; } | null): Buffer {
 	try {
 		return fs.readFileSync(path instanceof Uri ? path.fsPath : path, opts)
