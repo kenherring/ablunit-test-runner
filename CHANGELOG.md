@@ -1,3 +1,11 @@
+# [1.0.6019](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.0.6019) - 2025-02-13
+
+
+ * Add OpenEdge 12.8.6 test target (#247)
+
+
+**Full Changelog**: [1.0.6017...1.0.6019](https://github.com/kenherring/ablunit-test-runner/compare/1.0.6017...1.0.6019)
+
 # [1.0.6017](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.0.6017) - 2025-02-10
 
 
