@@ -1,3 +1,11 @@
+# [1.0.6023](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.0.6023) - 2025-02-13
+
+
+ * Line execution counts, improved ranges, and fix individual test coverage (#246)
+ * Cleanup imports; propath lookup without async (#248)
+
+**Full Changelog**: [1.0.6021...1.0.6023](https://github.com/kenherring/ablunit-test-runner/compare/1.0.6021...1.0.6023)
+
 # [1.0.6021](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.0.6021) - 2025-02-13
 
  * Cleanup imports; propath lookup without async (#248)
