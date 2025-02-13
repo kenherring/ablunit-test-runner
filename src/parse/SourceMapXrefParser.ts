@@ -64,7 +64,7 @@ export const getSourceMapFromXref = (propath: PropathParser, debugSource: string
 		return dbgLine
 	}
 
-	const getIncludesFromXref = async (xrefUri: Uri) => {
+	const getIncludesFromXref = (xrefUri: Uri) => {
 		const incRE = /(\S+) (\S+) (\d+) ([A-Z-_"]+)\s+(.*)/
 		log.info('xrefUri=' + xrefUri.fsPath)
 		const lines = FileUtils.readLinesFromFileSync(xrefUri)
@@ -86,14 +86,14 @@ export const getSourceMapFromXref = (propath: PropathParser, debugSource: string
 				const uri = Uri.file(path)
 				let pinfo
 				if (FileUtils.doesFileExist(uri)) {
-					pinfo = await propath.search(uri)
+					pinfo = propath.search(uri)
 				} else {
-					pinfo = await propath.search(path)
+					pinfo = propath.search(path)
 				}
 
 				const lineNum = Number(lineNumStr)
 				const includeName = includeNameRaw.replace(/^"(.*)"$/, '$1').trim()
-				const incinfo = await propath.search(includeName)
+				const incinfo = propath.search(includeName)
 				if (pinfo && incinfo) {
 					includes.push({incUri: incinfo.uri, srcUri: pinfo.uri, srcLine: lineNum})
 					readIncludeLineCount(incinfo.uri)
@@ -102,7 +102,7 @@ export const getSourceMapFromXref = (propath: PropathParser, debugSource: string
 		}
 	}
 
-	const importDebugLines = async (sourcePath: string, debugSourceUri: Uri,  xrefUri: Uri) => {
+	const importDebugLines = (sourcePath: string, debugSourceUri: Uri,  xrefUri: Uri) => {
 		let m: SourceMap | undefined = map.find((i) => i.sourceUri.fsPath == debugSourceUri.fsPath)
 		if (!m) {
 			m = {
@@ -116,7 +116,7 @@ export const getSourceMapFromXref = (propath: PropathParser, debugSource: string
 		// This reads the xref to find where the include files belong, and finds how many lines each of those includes contain
 		// It is is prone to error, especially in cases of multiple line arguments or include declarations.
 		// Ideally we will parse the rcode for the source map, but this is a fallback option.
-		await getIncludesFromXref(xrefUri)
+		getIncludesFromXref(xrefUri)
 
 		const content = FileUtils.readLinesFromFileSync(debugSourceUri)
 		if (content[content.length-1] == '') {
@@ -143,15 +143,15 @@ export const getSourceMapFromXref = (propath: PropathParser, debugSource: string
 		return m
 	}
 
-	const getSourceMap = async (debugSource: string) => {
+	const getSourceMap = (debugSource: string) => {
 		// check for previously parsed source map
-		const fileinfo = await propath.search(debugSource)
+		const fileinfo = propath.search(debugSource)
 		if (!fileinfo) {
 			throw new Error('cannot find file in propath: ' + debugSource)
 		}
 
 		// import the source map and return it
-		const debugLines = await importDebugLines(debugSource, fileinfo.uri, fileinfo.xrefUri)
+		const debugLines = importDebugLines(debugSource, fileinfo.uri, fileinfo.xrefUri)
 		return debugLines
 	}
 

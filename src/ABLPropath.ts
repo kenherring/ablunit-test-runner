@@ -148,7 +148,7 @@ export class PropathParser {
 		return undefined
 	}
 
-	async search (file: string | Uri | undefined) {
+	search (file: string | Uri | undefined) {
 		if (!file) {
 			return undefined
 		}
@@ -168,7 +168,11 @@ export class PropathParser {
 
 		for (const e of this.propath.entry) {
 			const fileInPropathUri = Uri.joinPath(e.uri, relativeFile)
-			const exists = await workspace.fs.stat(fileInPropathUri).then(() => { return true }, () => { return false })
+
+			let exists = false
+			if (FileUtils.doesFileExist(fileInPropathUri)) {
+				exists = true
+			}
 
 			if (exists) {
 				let propathRelativeFile = fileInPropathUri.fsPath.replace(e.uri.fsPath, '')

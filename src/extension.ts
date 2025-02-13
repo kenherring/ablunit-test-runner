@@ -341,7 +341,7 @@ export function activate (context: ExtensionContext) {
 							log.debug('cancellation requested - runTestQueue-2')
 							throw new CancellationError()
 						} else {
-							await r.assignTestResults(test, run)
+							r.assignTestResults(test, run)
 						}
 					}
 				}
@@ -421,7 +421,7 @@ export function activate (context: ExtensionContext) {
 						await updateNode(test.uri, ctrl)
 					}
 				}
-				await r.addTest(test, data, run)
+				r.addTest(test, data, run)
 			}
 
 			resultData.set(run, res)
