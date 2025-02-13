@@ -1,5 +1,5 @@
 import { Position, Range } from 'vscode'
-import { getAnnotationLines } from './TestParserCommon'
+import { getAnnotationLines } from 'parse/TestParserCommon'
 
 const classRE = /^\s*class\s+(\S+\w):?\s*/i
 const suiteRE = /@testsuite\s*\(((classes|procedures).*)\)/i

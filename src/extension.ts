@@ -17,14 +17,14 @@ import {
 	languages,
 	tests, window, workspace,
 } from 'vscode'
-import { ABLResults } from './ABLResults'
-import { log } from './ChannelLogger'
-import { getContentFromFilesystem } from './parse/TestParserCommon'
-import { ABLTestCase, ABLTestClass, ABLTestData, ABLTestDir, ABLTestFile, ABLTestProgram, ABLTestSuite, resultData, testData } from './testTree'
+import { ABLResults } from 'ABLResults'
+import { log } from 'ChannelLogger'
+import { getContentFromFilesystem } from 'parse/TestParserCommon'
+import { ABLTestCase, ABLTestClass, ABLTestData, ABLTestDir, ABLTestFile, ABLTestProgram, ABLTestSuite, resultData, testData } from 'testTree'
 import { minimatch } from 'minimatch'
 import { ABLCompilerError, ABLUnitRuntimeError, TimeoutError } from 'Errors'
 import { basename } from 'path'
-import * as FileUtils from './FileUtils'
+import * as FileUtils from 'FileUtils'
 import { gatherAllTestItems, IExtensionTestReferences } from 'ABLUnitCommon'
 import { getDeclarationCoverage } from 'parse/ProfileParser'
 import {

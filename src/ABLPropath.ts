@@ -1,7 +1,7 @@
 import { Uri, workspace, WorkspaceFolder } from 'vscode'
-import { IProjectJson } from './parse/OpenedgeProjectParser'
-import { log } from './ChannelLogger'
-import * as FileUtils from './FileUtils'
+import { IProjectJson } from 'parse/OpenedgeProjectParser'
+import { log } from 'ChannelLogger'
+import * as FileUtils from 'FileUtils'
 
 interface IPropathEntry {
 	uri: Uri

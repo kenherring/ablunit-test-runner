@@ -1,5 +1,5 @@
 import { Range } from 'vscode'
-import { getAnnotationLines } from './TestParserCommon'
+import { getAnnotationLines } from 'parse/TestParserCommon'
 
 // PROCEDURE statement
 const procedureRE = /(^|\s+)procedure\s+(\S+)\s*:/i

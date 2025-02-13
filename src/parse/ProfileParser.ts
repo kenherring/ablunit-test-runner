@@ -1,10 +1,10 @@
 import { DeclarationCoverage, Position, Range, Uri, workspace } from 'vscode'
-import { PropathParser } from '../ABLPropath'
-import { ABLDebugLines } from '../ABLDebugLines'
-import { log } from '../ChannelLogger'
-import * as FileUtils from '../FileUtils'
+import { PropathParser } from 'ABLPropath'
+import { ABLDebugLines } from 'ABLDebugLines'
+import { log } from 'ChannelLogger'
+import * as FileUtils from 'FileUtils'
 import { Duration } from 'ABLUnitCommon'
-import { ProfileData } from './ProfileData'
+import { ProfileData } from 'parse/ProfileData'
 
 class ModuleIgnored extends Error {
 	constructor (public moduleId: number) {

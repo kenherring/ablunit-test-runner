@@ -1,8 +1,8 @@
 import { Uri, workspace } from 'vscode'
 import { PropathParser } from '../ABLPropath'
-import { log } from '../ChannelLogger'
+import { log } from 'ChannelLogger'
 import * as FileUtils from 'FileUtils'
-import { SourceMap, SourceMapItem } from './SourceMapParser'
+import { SourceMap, SourceMapItem } from 'parse/SourceMapParser'
 
 interface IXrefInclude {
 	incUri: Uri

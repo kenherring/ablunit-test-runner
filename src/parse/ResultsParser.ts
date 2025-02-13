@@ -2,12 +2,12 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { TestMessageStackFrame, Uri, workspace } from 'vscode'
-import { parseCallstack, ICallStack } from './CallStackParser'
-import { PropathParser } from '../ABLPropath'
+import { parseCallstack, ICallStack } from 'parse/CallStackParser'
+import { PropathParser } from 'ABLPropath'
 import { parseString } from 'xml2js'
-import { ABLDebugLines } from '../ABLDebugLines'
-import { log } from '../ChannelLogger'
-import * as FileUtils from '../FileUtils'
+import { ABLDebugLines } from 'ABLDebugLines'
+import { log } from 'ChannelLogger'
+import * as FileUtils from 'FileUtils'
 
 export interface ITestCaseFailure {
 	callstackRaw: string
