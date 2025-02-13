@@ -60,33 +60,41 @@ export class ABLProfile {
 		log.debug('section5 ' + sectionLines[5].length)
 		log.info('section5 ' + sectionLines[5].length)
 		this.profJSON.addTracing(sectionLines[5])
-		log.debug('section6 ' + sectionLines[6].length)
-		log.info('section6 ' + sectionLines[6].length)
-		this.profJSON.addCoverage(sectionLines[6])
-		log.info('this.parseAll=' + this.parseAll)
+		log.info('section5 done')
+		log.info('section5 done ' + sectionLines.length)
+		if (!sectionLines[6]) {
+			log.info('sectionLines[6] does not exist')
+		}
 
-		if (this.parseAll) {
-			log.debug('section7 ' + sectionLines[7].length)
-			this.profJSON.addSection7(sectionLines[7])
-			log.debug('sectionLines.length=' + sectionLines.length)
-			if(sectionLines.length > 11) {
-				log.debug('section8 ' + sectionLines[8].length)
-				this.profJSON.addSection8(sectionLines[8])
-				log.debug('section9 ' + sectionLines[9].length)
-				this.profJSON.addSection9(sectionLines[9])
-				log.debug('section10 ' + sectionLines[10].length)
-				this.profJSON.addSection10(sectionLines[10])
-				log.debug('section11 ' + sectionLines[11].length)
-				this.profJSON.addSection11(sectionLines[11])
-				log.debug('section12 ' + sectionLines[12].length)
-				this.profJSON.addSection12(sectionLines[12])
-				log.debug('section13 ' + sectionLines[13].length + ' (User Data)')
-				this.profJSON.addUserData(sectionLines[13])
-			} else {
-				log.debug('section12 ' + sectionLines[8].length)
-				this.profJSON.addSection12(sectionLines[8])
-				log.debug('section13 ' + sectionLines[9].length + ' (User Data)')
-				this.profJSON.addUserData(sectionLines[9])
+		if (sectionLines.length > 6) {
+			log.debug('section6 ' + sectionLines[6].length)
+			log.info('section6 ' + sectionLines[6].length)
+			this.profJSON.addCoverage(sectionLines[6])
+			log.info('this.parseAll=' + this.parseAll)
+
+			if (this.parseAll && sectionLines.length > 7) {
+				log.debug('section7 ' + sectionLines[7].length)
+				this.profJSON.addSection7(sectionLines[7])
+				log.debug('sectionLines.length=' + sectionLines.length)
+				if(sectionLines.length > 11) {
+					log.debug('section8 ' + sectionLines[8].length)
+					this.profJSON.addSection8(sectionLines[8])
+					log.debug('section9 ' + sectionLines[9].length)
+					this.profJSON.addSection9(sectionLines[9])
+					log.debug('section10 ' + sectionLines[10].length)
+					this.profJSON.addSection10(sectionLines[10])
+					log.debug('section11 ' + sectionLines[11].length)
+					this.profJSON.addSection11(sectionLines[11])
+					log.debug('section12 ' + sectionLines[12].length)
+					this.profJSON.addSection12(sectionLines[12])
+					log.debug('section13 ' + sectionLines[13].length + ' (User Data)')
+					this.profJSON.addUserData(sectionLines[13])
+				} else {
+					log.debug('section12 ' + sectionLines[8].length)
+					this.profJSON.addSection12(sectionLines[8])
+					log.debug('section13 ' + sectionLines[9].length + ' (User Data)')
+					this.profJSON.addUserData(sectionLines[9])
+				}
 			}
 		}
 
@@ -1165,6 +1173,7 @@ export function getModuleRange (module: IModule) {
 			end = new Position(endLine - 1, endChar)
 		}
 
+		log.info('moduleRange ' + module.SourceUri + ' ' + JSON.stringify(new Range(start, end)))
 		return new Range(start, end)
 	} catch (e) {
 		log.error('e=' + e)
