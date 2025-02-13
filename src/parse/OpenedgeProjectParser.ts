@@ -1,6 +1,6 @@
 import { Uri, workspace, WorkspaceFolder } from 'vscode'
-import { log } from '../ChannelLogger'
-import * as FileUtils from '../FileUtils'
+import { log } from 'ChannelLogger'
+import * as FileUtils from 'FileUtils'
 import * as path from 'path'
 import { readOEVersionFile } from 'ABLUnitCommon'
 

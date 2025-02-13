@@ -4,19 +4,19 @@ import { FileType, TestItem, TestItemCollection, TestMessage, TestRun, Uri, work
 	Location, Position, Range,
 	DeclarationCoverage, StatementCoverage,
 	TestRunRequest, TestRunProfileKind } from 'vscode'
-import { ABLUnitConfig } from './ABLUnitConfigWriter'
-import { ABLResultsParser, ITestCaseFailure, ITestCase, ITestSuite } from './parse/ResultsParser'
-import { ABLTestSuite, ABLTestData, ABLTestCase } from './testTree'
-import { ABLProfile, ABLProfileJson, getLineRange, getModuleRange, IModule } from './parse/ProfileParser'
-import { ABLDebugLines } from './ABLDebugLines'
-import { ABLPromsgs, getPromsgText } from './ABLPromsgs'
-import { PropathParser } from './ABLPropath'
-import { log } from './ChannelLogger'
-import { RunStatus, ablunitRun } from './ABLUnitRun'
-import { getDLC, IDlc } from './parse/OpenedgeProjectParser'
-import { Duration, gatherAllTestItems } from './ABLUnitCommon'
+import { ABLUnitConfig } from 'ABLUnitConfigWriter'
+import { ABLResultsParser, ITestCaseFailure, ITestCase, ITestSuite } from 'parse/ResultsParser'
+import { ABLTestSuite, ABLTestData, ABLTestCase } from 'testTree'
+import { ABLProfile, ABLProfileJson, getLineRange, getModuleRange, IModule } from 'parse/ProfileParser'
+import { ABLDebugLines } from 'ABLDebugLines'
+import { ABLPromsgs, getPromsgText } from 'ABLPromsgs'
+import { PropathParser } from 'ABLPropath'
+import { log } from 'ChannelLogger'
+import { RunStatus, ablunitRun } from 'ABLUnitRun'
+import { getDLC, IDlc } from 'parse/OpenedgeProjectParser'
+import { Duration, gatherAllTestItems } from 'ABLUnitCommon'
 import { ITestObj } from 'parse/config/CoreOptions'
-import * as FileUtils from './FileUtils'
+import * as FileUtils from 'FileUtils'
 import { basename, dirname } from 'path'
 import { globSync } from 'glob'
 import { ABLCompilerError, ABLUnitRuntimeError, TimeoutError } from 'Errors'
@@ -37,7 +37,8 @@ export class ABLResults implements Disposable {
 	debugLines: ABLDebugLines
 	promsgs: ABLPromsgs
 	profileJson: ABLProfileJson[] = []
-	profileItemMap: Map<TestItem, ABLProfileJson> = new Map<TestItem, ABLProfileJson>()
+	profileItemMap: Map<ABLProfileJson, TestItem> = new Map<ABLProfileJson, TestItem>()
+	itemProfileMap: Map<TestItem, ABLProfileJson> = new Map<TestItem, ABLProfileJson>()
 	coverageJson: [] = []
 	dlc: IDlc
 	thrownError: Error | undefined
@@ -405,10 +406,12 @@ export class ABLResults implements Disposable {
 		let suitePath = workspace.asRelativePath(item.uri!, false)
 
 		if(suitePath) {
-			const res = this.propath.search(suitePath)
-			if (res) {
-				suitePath = res.propathRelativeFile
+			const propathRelativePath = this.propath.search(suitePath)
+			const res = propathRelativePath
+			if (res?.propathRelativeFile) {
+				return res.propathRelativeFile
 			}
+			return suitePath
 		}
 		suitePath = suitePath.replace(/\\/g, '/')
 		return suitePath
@@ -561,7 +564,8 @@ export class ABLResults implements Disposable {
 				const item = this.findTest(profJson.description)
 				log.info('114')
 				if (item) {
-					this.profileItemMap.set(item, profJson)
+					this.itemProfileMap.set(item, profJson)
+					this.profileItemMap.set(profJson, item)
 					log.info('115')
 				}
 				this.profileJson.push(profJson)
@@ -578,11 +582,9 @@ export class ABLResults implements Disposable {
 		let i = 0
 		log.info('112')
 		for (const profJson of responses) {
-			log.info('113')
 			i++
-
+			log.debug('assigning profiler data (' + i + '/' + dataFiles.length + ')')
 			this.assignProfileResults(profJson)
-			log.info('118')
 
 			const message = 'parsing profiler data... (' + i + '/' + dataFiles.length + ', duration=' +  parseTime.elapsed() + ')'
 			log.info('119')
@@ -602,7 +604,7 @@ export class ABLResults implements Disposable {
 			throw new Error('no profiler data available...')
 		}
 		for (const module of profJson.modules) {
-			this.setCoverage(module)
+			this.setCoverage(module, this.profileItemMap.get(profJson))
 		}
 	}
 

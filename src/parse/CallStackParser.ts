@@ -1,8 +1,8 @@
 import { workspace, Location, Position, Range, Uri } from 'vscode'
-import { ABLDebugLines } from '../ABLDebugLines'
-import { SourceMapItem } from './SourceMapParser'
-import { log } from '../ChannelLogger'
-import * as FileUtils from '../FileUtils'
+import { ABLDebugLines } from 'ABLDebugLines'
+import { SourceMapItem } from 'parse/SourceMapParser'
+import { log } from 'ChannelLogger'
+import * as FileUtils from 'FileUtils'
 
 interface ICallStackItem {
 	rawText: string

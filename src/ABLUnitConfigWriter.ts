@@ -1,13 +1,13 @@
 import { TestRunProfileKind, TestRunRequest, Uri, workspace, WorkspaceFolder } from 'vscode'
-import { log } from './ChannelLogger'
-import { PropathParser } from './ABLPropath'
+import { log } from 'ChannelLogger'
+import { PropathParser } from 'ABLPropath'
 import { platform } from 'os'
-import { getProfileConfig, RunConfig } from './parse/TestProfileParser'
-import { CoreOptions, IABLUnitJson, ITestObj } from './parse/config/CoreOptions'
-import { ProfilerOptions } from './parse/config/ProfilerOptions'
-import { getOpenEdgeProfileConfig, IBuildPathEntry, IDatabaseConnection, IDlc, ProfileConfig } from './parse/OpenedgeProjectParser'
+import { getProfileConfig, RunConfig } from 'parse/TestProfileParser'
+import { CoreOptions, IABLUnitJson, ITestObj } from 'parse/config/CoreOptions'
+import { ProfilerOptions } from 'parse/config/ProfilerOptions'
+import { getOpenEdgeProfileConfig, IBuildPathEntry, IDatabaseConnection, IDlc, ProfileConfig } from 'parse/OpenedgeProjectParser'
 import { dirname } from 'path'
-import * as FileUtils from './FileUtils'
+import * as FileUtils from 'FileUtils'
 
 export const ablunitConfig = new WeakMap<WorkspaceFolder, RunConfig>()
 

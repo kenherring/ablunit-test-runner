@@ -1,7 +1,7 @@
 import { WorkspaceFolder } from 'vscode'
-import { ICommandOptions, CommandOptions } from './CommandOptions'
-import { ICoreOptions, CoreOptions } from './CoreOptions'
-import { IProfilerOptions, ProfilerOptions } from './ProfilerOptions'
+import { ICommandOptions, CommandOptions } from 'parse/config/CommandOptions'
+import { ICoreOptions, CoreOptions } from 'parse/config/CoreOptions'
+import { IProfilerOptions, ProfilerOptions } from 'parse/config/ProfilerOptions'
 
 export interface IRunProfile {
 	runProfile?: string

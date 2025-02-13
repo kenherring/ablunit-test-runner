@@ -1,9 +1,9 @@
 import { TextDecoder } from 'util'
 import { Uri, workspace } from 'vscode'
-import { PropathParser } from '../ABLPropath'
-import { log } from '../ChannelLogger'
-import * as FileUtils from '../FileUtils'
-import { SourceMap, SourceMapItem } from './SourceMapParser'
+import { PropathParser } from 'ABLPropath'
+import { log } from 'ChannelLogger'
+import * as FileUtils from 'FileUtils'
+import { SourceMap, SourceMapItem } from 'parse/SourceMapParser'
 
 const headerLength = 68
 

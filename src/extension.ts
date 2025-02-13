@@ -167,7 +167,7 @@ export function activate (context: ExtensionContext) {
 		}
 
 		for (const res of results) {
-			const profJson = res.profileItemMap.get(fromTestItem)
+			const profJson = res.itemProfileMap.get(fromTestItem)
 			if (!profJson) {
 				log.warn('no profiler data found for test item ' + fromTestItem.id)
 				continue

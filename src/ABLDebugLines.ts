@@ -1,8 +1,8 @@
-import { PropathParser } from './ABLPropath'
-import { log } from './ChannelLogger'
-import { SourceMap } from './parse/SourceMapParser'
-import { getSourceMapFromRCode } from './parse/SourceMapRCodeParser'
-import { getSourceMapFromXref } from './parse/SourceMapXrefParser'
+import { PropathParser } from 'ABLPropath'
+import { log } from 'ChannelLogger'
+import { SourceMap } from 'parse/SourceMapParser'
+import { getSourceMapFromRCode } from 'parse/SourceMapRCodeParser'
+import { getSourceMapFromXref } from 'parse/SourceMapXrefParser'
 
 
 export class ABLDebugLines {
