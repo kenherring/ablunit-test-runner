@@ -3,11 +3,6 @@
 
  * Line execution counts, improved ranges, and fix individual test coverage (#246)
  * Cleanup imports; propath lookup without async (#248)
-
-**Full Changelog**: [1.0.6021...1.0.6023](https://github.com/kenherring/ablunit-test-runner/compare/1.0.6021...1.0.6023)
-
-# [1.0.6021](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.0.6021) - 2025-02-13
-
  * Cleanup imports; propath lookup without async (#248)
  * Add OpenEdge 12.8.6 test target (#247)
  * Ungroup overloaded methods for coverage reporting (#245)
@@ -30,7 +25,7 @@
  * [chore] npm update (#226)
  * Call stack parsing: support multiple errors per test case and negative line numbers for implicit constructors (#223)
 
-**Full Changelog**: [1.0.0...1.0.6021](https://github.com/kenherring/ablunit-test-runner/compare/1.0.0...1.0.6021)
+**Full Changelog**: [1.0.0...1.0.6023](https://github.com/kenherring/ablunit-test-runner/compare/1.0.0...1.0.6023)
 
 # 🥳 [1.0.0](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.0.0) - 2024-10-24
 

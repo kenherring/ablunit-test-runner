@@ -4,17 +4,17 @@ import { FileType, TestItem, TestItemCollection, TestMessage, TestRun, Uri, work
 	Location, Position, Range,
 	DeclarationCoverage, StatementCoverage,
 	TestRunRequest, TestRunProfileKind } from 'vscode'
-import { ABLUnitConfig } from './ABLUnitConfigWriter'
-import { ABLResultsParser, ITestCaseFailure, ITestCase, ITestSuite } from './parse/ResultsParser'
-import { ABLTestSuite, ABLTestData, ABLTestCase } from './testTree'
-import { ABLProfile, ABLProfileJson, getLineRange, getModuleRange, IModule } from './parse/ProfileParser'
-import { ABLDebugLines } from './ABLDebugLines'
-import { ABLPromsgs, getPromsgText } from './ABLPromsgs'
-import { PropathParser } from './ABLPropath'
-import { log } from './ChannelLogger'
-import { RunStatus, ablunitRun } from './ABLUnitRun'
-import { getDLC, IDlc } from './parse/OpenedgeProjectParser'
-import { Duration, gatherAllTestItems } from './ABLUnitCommon'
+import { ABLUnitConfig } from 'ABLUnitConfigWriter'
+import { ABLResultsParser, ITestCaseFailure, ITestCase, ITestSuite } from 'parse/ResultsParser'
+import { ABLTestSuite, ABLTestData, ABLTestCase } from 'testTree'
+import { ABLProfile, ABLProfileJson, getLineRange, getModuleRange, IModule } from 'parse/ProfileParser'
+import { ABLDebugLines } from 'ABLDebugLines'
+import { ABLPromsgs, getPromsgText } from 'ABLPromsgs'
+import { PropathParser } from 'ABLPropath'
+import { log } from 'ChannelLogger'
+import { RunStatus, ablunitRun } from 'ABLUnitRun'
+import { getDLC, IDlc } from 'parse/OpenedgeProjectParser'
+import { Duration, gatherAllTestItems } from 'ABLUnitCommon'
 import { ITestObj } from 'parse/config/CoreOptions'
 import * as FileUtils from 'FileUtils'
 import { basename, dirname } from 'path'
@@ -557,45 +557,31 @@ export class ABLResults implements Disposable {
 			const uri = Uri.joinPath(Uri.file(profDir), dataFiles[i])
 			log.debug('parsing profiler data ' + (i+1) + '/' + dataFiles.length + ' from ' + uri.fsPath)
 
-			log.info('100')
 			proms.push(new ABLProfile().parseData(uri, this.cfg.ablunitConfig.profiler.writeJson, this.debugLines, this.cfg.ablunitConfig.profiler.ignoreExternalCoverage).then((profJson) => {
-				log.info('parsed profiler data ' + (i+1) + '/' + dataFiles.length + ' ' + profJson.parseDuration)
 				log.debug('parsed profiler data ' + (i+1) + '/' + dataFiles.length + ' ' + profJson.parseDuration)
 				const item = this.findTest(profJson.description)
-				log.info('114')
 				if (item) {
 					this.itemProfileMap.set(item, profJson)
 					this.profileItemMap.set(profJson, item)
-					log.info('115')
 				}
 				this.profileJson.push(profJson)
-				log.info('116')
 				log.debug('assigning profiler data (' + i + '/' + dataFiles.length + ')')
-				log.info('117')
 				return profJson
 			}))
 		}
 
-		log.info('110')
 		const responses = await Promise.all(proms)
-		log.info('111')
 		let i = 0
-		log.info('112')
 		for (const profJson of responses) {
 			i++
 			log.debug('assigning profiler data (' + i + '/' + dataFiles.length + ')')
 			this.assignProfileResults(profJson)
 
 			const message = 'parsing profiler data... (' + i + '/' + dataFiles.length + ', duration=' +  parseTime.elapsed() + ')'
-			log.info('119')
 			log.info(message)
-			log.info('120')
 			options.appendOutput('\r' + message)
-			log.info('121')
 		}
-		log.info('122')
 		options.appendOutput('\r\n')
-		log.info('123')
 	}
 
 	assignProfileResults (profJson: ABLProfileJson) {

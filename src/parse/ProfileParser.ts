@@ -55,22 +55,13 @@ export class ABLProfile {
 		log.debug('section3 ' + sectionLines[3].length)
 		this.profJSON.addCallTree(sectionLines[3])
 		log.debug('section4 ' + sectionLines[4].length)
-		log.info('section4 ' + sectionLines[4].length)
 		this.profJSON.addLineSummary(sectionLines[4])
 		log.debug('section5 ' + sectionLines[5].length)
-		log.info('section5 ' + sectionLines[5].length)
 		this.profJSON.addTracing(sectionLines[5])
-		log.info('section5 done')
-		log.info('section5 done ' + sectionLines.length)
-		if (!sectionLines[6]) {
-			log.info('sectionLines[6] does not exist')
-		}
 
 		if (sectionLines.length > 6) {
 			log.debug('section6 ' + sectionLines[6].length)
-			log.info('section6 ' + sectionLines[6].length)
 			this.profJSON.addCoverage(sectionLines[6])
-			log.info('this.parseAll=' + this.parseAll)
 
 			if (this.parseAll && sectionLines.length > 7) {
 				log.debug('section7 ' + sectionLines[7].length)
