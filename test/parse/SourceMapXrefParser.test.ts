@@ -68,6 +68,7 @@ test('SourceMapXrefParser.test_2', () => {
 	assertLines(sourceMap.items, 9, 3, testuri, incuri)
 	assertLines(sourceMap.items, 10, 4, testuri, incuri)
 	assertLines(sourceMap.items, 11, 7, testuri, testuri)
+	return
 })
 
 test('SourceMapXrefParser.test_3', () => {

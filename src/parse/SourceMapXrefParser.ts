@@ -151,7 +151,8 @@ export const getSourceMapFromXref = (propath: PropathParser, debugSource: string
 		}
 
 		// import the source map and return it
-		return importDebugLines(debugSource, fileinfo.uri, fileinfo.xrefUri)
+		const debugLines = importDebugLines(debugSource, fileinfo.uri, fileinfo.xrefUri)
+		return debugLines
 	}
 
 	return getSourceMap(debugSource)
