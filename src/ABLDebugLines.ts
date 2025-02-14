@@ -3,6 +3,7 @@ import { log } from 'ChannelLogger'
 import { SourceMap } from 'parse/SourceMapParser'
 import { getSourceMapFromRCode } from 'parse/SourceMapRCodeParser'
 import { getSourceMapFromXref } from 'parse/SourceMapXrefParser'
+import { Uri } from 'vscode'
 
 
 export class ABLDebugLines {
@@ -30,39 +31,48 @@ export class ABLDebugLines {
 		// if (debugSource.startsWith('OpenEdge.') || debugSource.includes('ABLUnitCore')) {
 		// 	return undefined
 		// }
-		const map = await this.getSourceMap(debugSource)
+		const fileinfo = this.propath.search(debugSource)
+		if (!fileinfo) {
+			log.warn('cannot find module in propath for "' + debugSource + '"')
+			return undefined
+
+		}
+		const map = await this.getSourceMap(fileinfo.uri)
 		if (!map) {
-			return
+			log.warn('cannot find source map for "' + debugSource + '"')
+			return undefined
 		}
 		const ret = map.items.find((line) => line.debugLine === debugLine)
 		return ret
 	}
 
-	async getSourceMap (debugSource: string) {
-		if (!debugSource.endsWith('.p') && !debugSource.endsWith('.cls')) {
-			debugSource = debugSource.replace(/\./g, '/') + '.cls'
+	async getSourceMap (debugSource: Uri) {
+		if (!debugSource.fsPath.endsWith('.p') && !debugSource.fsPath.endsWith('.cls')) {
+			debugSource = Uri.file(debugSource.fsPath.replace(/\./g, '/') + '.cls')
 		}
-		let map = this.maps.get(debugSource)
+		let map = this.maps.get(debugSource.fsPath)
 		if (map) {
 			// return previously parsed map
 			return map
 		}
-		if (this.processingMethodMap.get(debugSource) === 'none') {
+		if (this.processingMethodMap.get(debugSource.fsPath) === 'none') {
+			log.warn('processing method is none for ' + debugSource)
 			return undefined
 		}
 
 		const debugSourceObj = this.propath.search(debugSource)
 		if (!debugSourceObj) {
 			log.trace('cannot find debug source in propath (' + debugSource + ')')
+			log.warn('cannot find debug source in propath (' + debugSource + ')')
 			return undefined
 		}
 
 		// first, attempt to parse source map from rcode
 		try {
 			map = await getSourceMapFromRCode(this.propath, debugSourceObj.rcodeUri)
-			this.processingMethodMap.set(debugSource, 'rcode')
+			this.processingMethodMap.set(debugSource.fsPath, 'rcode')
 			log.debug('set processing method to rcode for ' + debugSource)
-			this.maps.set(debugSource, map)
+			this.maps.set(debugSource.fsPath, map)
 			return map
 		} catch (e) {
 			log.warn('failed to parse source map from rcode, falling back to source parser\n\tdebugSource=' + debugSource + '\n\te=' + e)
@@ -70,16 +80,16 @@ export class ABLDebugLines {
 
 		// if that fails, attempt to parse source map from xref
 		try {
-			map = getSourceMapFromXref(this.propath, debugSource)
-			this.processingMethodMap.set(debugSource, 'parse')
+			map = getSourceMapFromXref(this.propath, debugSource.fsPath)
+			this.processingMethodMap.set(debugSource.fsPath, 'parse')
 			log.debug('set processing method to parse for ' + debugSource)
-			this.maps.set(debugSource, map)
+			this.maps.set(debugSource.fsPath, map)
 			return map
 		} catch(e) {
 			log.warn('failed to parse source map from xref\n\tdebugSource=' + debugSource + '\n\te=' + e)
 		}
 
-		this.processingMethodMap.set(debugSource, 'none')
+		this.processingMethodMap.set(debugSource.fsPath, 'none')
 		log.debug('set processing method to none for ' + debugSource)
 		return map
 	}

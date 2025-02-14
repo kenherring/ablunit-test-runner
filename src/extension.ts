@@ -6,7 +6,6 @@ import {
 	FileCreateEvent,
 	LogLevel,
 	Position, Range, RelativePattern, Selection,
-	StatementCoverage,
 	TestController, TestItem, TestItemCollection, TestMessage,
 	TestRun,
 	TestRunProfileKind, TestRunRequest,
@@ -26,7 +25,7 @@ import { ABLCompilerError, ABLUnitRuntimeError, TimeoutError } from 'Errors'
 import { basename } from 'path'
 import * as FileUtils from 'FileUtils'
 import { gatherAllTestItems, IExtensionTestReferences } from 'ABLUnitCommon'
-import { getDeclarationCoverage } from 'parse/ProfileParser'
+import { getDeclarationCoverage, getStatementCoverage } from 'parse/ProfileParser'
 import {
 	// InlineProvider,
 	SnippetProvider,
@@ -151,15 +150,15 @@ export function activate (context: ExtensionContext) {
 			})
 	}
 
-	const loadDetailedCoverageForTest = (
+	const loadDetailedCoverageForTest = async (
 		testRun: TestRun,
 		fileCoverage: FileCoverage,
 		fromTestItem: TestItem,
-		_token: CancellationToken): Promise<FileCoverageDetail[]> => {
+		// eslint-disable-next-line @typescript-eslint/require-await, require-await
+		token: CancellationToken): Promise<FileCoverageDetail[]> => {
 
 		const ret: FileCoverageDetail[] = []
 
-		// log.info('loadDetailedCoverageForTest uri="' + fileCoverage.uri.fsPath + '", testRun=' + testRun.name)
 		const results = resultData.get(testRun)
 		if (!results) {
 			log.error('test run has no associated results')
@@ -167,41 +166,30 @@ export function activate (context: ExtensionContext) {
 		}
 
 		for (const res of results) {
-			const profJson = res.profileJson.find((prof) => prof.testItemId == fromTestItem.id)
+			if (token.isCancellationRequested) {
+				log.error('loadDetailedCoverageForTest - cancellation requested')
+				throw new CancellationError()
+			}
+
+			const profJson = res.itemProfileMap.get(fromTestItem)
 			if (!profJson) {
-				log.warn('no profiler data found for test item ' + fromTestItem.id)
-				continue
-			}
-			const module = profJson.modules.find((mod) => mod.SourceUri?.fsPath == fileCoverage.uri.fsPath)
-			if (!module) {
-				log.warn('no module data found for ' + fileCoverage.uri.fsPath)
+				log.warn('profJson not found for test item ' + fromTestItem.id)
 				continue
 			}
 
-			const lines = module.childModules.map((a) => a.lines).flat()
-			for (const line of lines) {
-				if (line.LineNo == 0) {
-					continue
-				}
-				const coverageLocation = new Position(line.LineNo - 1, 0)
-				const sc = ret.find((a) => JSON.stringify(a.location) == JSON.stringify(coverageLocation))
-				if (!sc) {
-					ret.push(new StatementCoverage(line.ExecCount, coverageLocation))
-				} else if (typeof sc.executed == 'boolean') {
-					sc.executed = sc.executed || line.ExecCount > 0
-				} else if (typeof sc.executed == 'number') {
-					sc.executed = sc.executed + line.ExecCount
-				} else {
-					throw new Error('unexpected type for sc.executed: ' + typeof sc.executed)
-				}
+			const modules = [...profJson.modules, ...profJson.modules.flatMap(m => m.childModules)]
+			for (const m of modules) {
+				const dc = getDeclarationCoverage(m, fileCoverage.uri)
+				ret.push(...dc)
+				const sc = getStatementCoverage(m.lines, fileCoverage.uri)
+				ret.push(...sc)
 			}
+		}
+		for (const r of ret) {
+			log.info('r=' + JSON.stringify(r))
+		}
 
-			ret.push(...getDeclarationCoverage(module))
-		}
-		if (ret.length == 0) {
-			log.warn('no coverage data found for ' + fileCoverage.uri.fsPath + ' by test item ' + fromTestItem.id)
-		}
-		return Promise.resolve(ret)
+		return ret
 	}
 
 	const loadDetailedCoverage = (testRun: TestRun, fileCoverage: FileCoverage, _token: CancellationToken) => {
@@ -379,9 +367,10 @@ export function activate (context: ExtensionContext) {
 						log.warn('no coverage data found (' + (i + 1) + '/' + recentResults.length + ')' +
 								'\n\t- profile data path=' + res.cfg.ablunitConfig.profFilenameUri.fsPath + ')')
 					}
-					res.fileCoverage.forEach((c) => {
+
+					for (const [, c] of res.fileCoverage) {
 						run.addCoverage(c)
-					})
+					}
 				}
 			}
 

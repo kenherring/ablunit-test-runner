@@ -168,11 +168,7 @@ export class PropathParser {
 
 		for (const e of this.propath.entry) {
 			const fileInPropathUri = Uri.joinPath(e.uri, relativeFile)
-
-			let exists = false
-			if (FileUtils.doesFileExist(fileInPropathUri)) {
-				exists = true
-			}
+			const exists = FileUtils.doesFileExist(fileInPropathUri)
 
 			if (exists) {
 				let propathRelativeFile = fileInPropathUri.fsPath.replace(e.uri.fsPath, '')
