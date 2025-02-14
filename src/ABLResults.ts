@@ -7,7 +7,7 @@ import { FileType, TestItem, TestItemCollection, TestMessage, TestRun, Uri, work
 import { ABLUnitConfig } from 'ABLUnitConfigWriter'
 import { ABLResultsParser, ITestCaseFailure, ITestCase, ITestSuite } from 'parse/ResultsParser'
 import { ABLTestSuite, ABLTestData, ABLTestCase } from 'testTree'
-import { ABLProfile, ABLProfileJson, getLineRange, getModuleRange, IModule } from 'parse/ProfileParser'
+import { ABLProfile, ABLProfileJson, getDeclarationCoverage, getStatementCoverage, IModule } from 'parse/ProfileParser'
 import { ABLDebugLines } from 'ABLDebugLines'
 import { ABLPromsgs, getPromsgText } from 'ABLPromsgs'
 import { PropathParser } from 'ABLPropath'
@@ -46,7 +46,9 @@ export class ABLResults implements Disposable {
 
 	public fileCoverage: Map<string, FileCoverage> = new Map<string, FileCoverage>()
 	public declarationCoverage: Map<string, DeclarationCoverage[]> = new Map<string, DeclarationCoverage[]>()
+	public testDeclarations: Map<string, DeclarationCoverage[]> = new Map<string, DeclarationCoverage[]>()
 	public statementCoverage: Map<string, StatementCoverage[]> = new Map<string, StatementCoverage[]>()
+	public testStatements: Map<string, StatementCoverage[]> = new Map<string, StatementCoverage[]>()
 
 	constructor (workspaceFolder: WorkspaceFolder,
 		private readonly storageUri: Uri,
@@ -594,47 +596,6 @@ export class ABLResults implements Disposable {
 		}
 	}
 
-	addDeclarationFromModule (uri: Uri, module: IModule) {
-		const fdc = this.declarationCoverage.get(uri.fsPath) ?? []
-
-		let declarationName = module.EntityName
-		if (module.overloaded) {
-			declarationName = declarationName + ' (overload ' + module.overloadSequence + ')'
-		}
-		let dc = fdc.find((c) => c.name == (declarationName ?? '<main block>'))
-		if (!dc) {
-			const range = getModuleRange(module)
-			if (range) {
-				dc = new DeclarationCoverage(declarationName ?? '<main block>', false, range)
-				fdc.push(dc)
-			}
-		}
-
-		let executed = module.execCount ?? false
-		if (!executed || module.overloaded) {
-			if (module.lines.find(l => l.ExecCount > 0)) {
-				executed = true
-			}
-		}
-
-		if (dc?.name == '<main block>') {
-			dc.executed = executed
-		} else if (typeof dc?.executed == 'number') {
-			if (typeof executed == 'number') {
-				dc.executed += executed
-			} else {
-				dc.executed = dc.executed > 0 || executed
-			}
-		} else if (typeof dc?.executed == 'boolean') {
-			if (typeof executed == 'number') {
-				dc.executed = dc.executed || executed > 0
-			} else {
-				dc.executed = dc.executed || executed
-			}
-		}
-		this.declarationCoverage.set(uri.fsPath, fdc)
-	}
-
 	sortLocation (a: DeclarationCoverage | StatementCoverage, b: DeclarationCoverage | StatementCoverage) {
 		let startPosA: Position
 		let startPosB: Position
@@ -668,7 +629,7 @@ export class ABLResults implements Disposable {
 
 	setCoverage (module: IModule, item?: TestItem) {
 
-		const fileinfo = this.propath.search(module.SourceUri ?? module.SourceName)
+		const fileinfo = this.propath.search(module.incUri ?? module.SourceUri ?? module.SourceName)
 		if (!fileinfo?.uri) {
 			log.warn('could not find module in propath: ' + module.SourceName + ' (' + module.ModuleID + ')')
 			if (this.cfg.ablunitConfig.profiler.ignoreExternalCoverage) {
@@ -681,87 +642,102 @@ export class ABLResults implements Disposable {
 			}
 		}
 
-		const zeroLine = module.lines.find((a) => a.LineNo == 0)
-		if (!zeroLine) {
-			log.debug('could not find zeroLine for ' + module.SourceName)
-		}
-
-		for (const child of module.childModules) {
-
-			const incFiles = child.lines.filter((l) => l.LineNo > 0).map((l) => l.incUri)
-			let incFile = incFiles[0]
-			for (let i=1; i < incFiles.length; i++) {
-				// if all lines have a different file than the module, put the declaration in that include file
-				const f = incFiles[i]
-				if (!f || f == fileinfo?.uri) {
-					incFile = fileinfo?.uri
-					break
-				}
-			}
-
-			this.addDeclarationFromModule(incFile ?? Uri.file(module.SourceName), child)
-		}
-		// ----- this next line would add the main block to the declaration coverage -----
-		// this.addDeclarationFromModule(fileinfo.uri, module)
-
 		const files: Uri[] = []
-		if (module.SourceUri) {
-			if (!files.find(f => f.fsPath == module.SourceUri.fsPath)) {
-				files.push(module.SourceUri)
-			}
-		}
-		const lines = module.lines
-		for (const child of module.childModules) {
-			lines.push(...child.lines.filter((l) => l.LineNo > 0))
 
-			for (const line of lines) {
-				if (line.incUri && !files.find((f) => f.fsPath == line.incUri?.fsPath)) {
-					files.push(line.incUri)
-				}
+		for (const line of [module, ...module.childModules]) {
+			const uri = line.incUri ?? line.SourceUri
+			if (uri && !files.find(f => f.fsPath == uri.fsPath)) {
+				files.push(uri)
 			}
 		}
 
-		const filesNoDupes = Array.from(new Set(files))
-
-		for (const f of filesNoDupes) {
+		for (const f of files) {
+			log.info('f.uri=' + f.fsPath + ' ----------------------------')
 
 			const incInfo = this.propath.search(f)
 			if (!incInfo?.uri) {
 				log.warn('could not find file in propath: ' + f.fsPath)
 				continue
 			}
-			const fsc = this.statementCoverage.get(incInfo.uri.fsPath) ?? []
-			if (fsc.length === 0) {
+
+
+			let fdc = this.declarationCoverage.get(incInfo.uri.fsPath)
+			const declarations = getDeclarationCoverage(module, f)
+			if (!fdc) {
+				fdc = declarations
+				this.declarationCoverage.set(incInfo.uri.fsPath, fdc)
+			} else {
+				for (const d of declarations) {
+					const existing = fdc.find((c) => c.name == d.name)
+					if (!existing) {
+						fdc.push(d)
+						continue
+					}
+					if (typeof d.executed == 'number' && typeof existing.executed == 'number') {
+						existing.executed += d.executed
+					} else if (typeof d.executed == 'boolean' && typeof existing.executed == 'number') {
+						existing.executed = existing.executed > 0 || d.executed
+					} else if (typeof d.executed == 'number' && typeof existing.executed == 'boolean') {
+						existing.executed = existing.executed || d.executed > 0
+					} else if (typeof d.executed == 'boolean' && typeof existing.executed == 'boolean') {
+						existing.executed = existing.executed || d.executed
+					}
+					log.info('d.name=' + d.name + ' ' + d.executed + ' ' + JSON.stringify(d.location))
+					continue
+				}
+			}
+
+			const lines = [...module.lines, ...module.childModules.flatMap((m) => m.lines)]
+			let fsc = this.statementCoverage.get(incInfo.uri.fsPath)
+			const statements = getStatementCoverage(lines, f)
+			if (!fsc) {
+				fsc = statements
 				this.statementCoverage.set(incInfo.uri.fsPath, fsc)
-			}
-
-			for (const line of lines) {
-				if (line.incUri?.fsPath != f.fsPath) {
-					continue
-				}
-				if (line.LineNo <= 0) { continue }
-				const uri = line.incUri ?? line.srcUri ?? module.SourceUri
-				if (uri?.fsPath != f.fsPath) {
-					continue
-				}
-
-				const coverageRange = getLineRange(line)
-				if (!coverageRange) {
-					continue
-				}
-
-				let cov = fsc.find((c) => JSON.stringify(c.location) == JSON.stringify(coverageRange))
-				if (!cov) {
-					cov = new StatementCoverage(line.ExecCount ?? 0, coverageRange)
-					fsc.push(cov)
-				} else if (typeof cov.executed == 'number') {
-					cov.executed = cov.executed + (line.ExecCount ?? 0)
-				} else if (typeof cov.executed == 'boolean') {
-					cov.executed = cov.executed || line.ExecCount > 0
+			} else {
+				for (const c of statements) {
+					const existing = fsc.find((s) => JSON.stringify(s.location) == JSON.stringify(c.location))
+					if (!existing) {
+						fsc.push(c)
+					} else {
+						if (typeof existing.executed == 'number' && typeof c.executed == 'number') {
+							existing.executed += c.executed
+						} else if (typeof existing.executed == 'boolean' && typeof c.executed == 'number') {
+							existing.executed = existing.executed || c.executed > 0
+						} else if (typeof existing.executed == 'number' && typeof c.executed == 'boolean') {
+							existing.executed = existing.executed > 0 || c.executed
+						} else if (typeof existing.executed == 'boolean' && typeof c.executed == 'boolean') {
+							existing.executed = existing.executed || c.executed
+						}
+					}
 				}
 			}
 
-			const fdc = this.declarationCoverage.get(incInfo.uri.fsPath) ?? []
+			if (item) {
+				for (const d of declarations) {
+					let tdcs = this.testDeclarations.get(item.id + ',' + incInfo.uri.fsPath)
+					if (!tdcs) {
+						tdcs = []
+					}
+					tdcs.push(JSON.parse(JSON.stringify(d)) as DeclarationCoverage)
+					for (const i of tdcs) {
+						log.info('    tdcs ' + i.executed + ' ' + JSON.stringify(i.location) + ' ' + i.name)
+					}
+					this.testDeclarations.set(item.id + ',' + incInfo.uri.fsPath, tdcs)
+				}
+				for (const s of statements) {
+					let tscs = this.testStatements.get(item.id + ',' + incInfo.uri.fsPath)
+					if (!tscs) {
+						tscs = []
+					}
+					tscs.push(JSON.parse(JSON.stringify(s)) as StatementCoverage)
+					log.info('tscs.key="' + item.id + ',' + incInfo.uri.fsPath + '"')
+					for (const i of tscs) {
+						log.info('    tscs ' + i.executed + ' ' + JSON.stringify(i.location))
+					}
+					this.testStatements.set(item.id + ',' + incInfo.uri.fsPath, tscs)
+				}
+			}
+
 			fdc.sort((a, b) => this.sortLocation(a, b))
 			fsc.sort((a, b) => this.sortLocation(a, b))
 

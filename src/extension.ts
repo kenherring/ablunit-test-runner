@@ -6,7 +6,6 @@ import {
 	FileCreateEvent,
 	LogLevel,
 	Position, Range, RelativePattern, Selection,
-	StatementCoverage,
 	TestController, TestItem, TestItemCollection, TestMessage,
 	TestRun,
 	TestRunProfileKind, TestRunRequest,
@@ -26,7 +25,7 @@ import { ABLCompilerError, ABLUnitRuntimeError, TimeoutError } from 'Errors'
 import { basename } from 'path'
 import * as FileUtils from 'FileUtils'
 import { gatherAllTestItems, IExtensionTestReferences } from 'ABLUnitCommon'
-import { getDeclarationCoverage, getLineRange } from 'parse/ProfileParser'
+import { getDeclarationCoverage, getStatementCoverage } from 'parse/ProfileParser'
 import {
 	// InlineProvider,
 	SnippetProvider,
@@ -151,15 +150,15 @@ export function activate (context: ExtensionContext) {
 			})
 	}
 
-	const loadDetailedCoverageForTest = (
+	const loadDetailedCoverageForTest = async (
 		testRun: TestRun,
 		fileCoverage: FileCoverage,
 		fromTestItem: TestItem,
-		_token: CancellationToken): Promise<FileCoverageDetail[]> => {
+		// eslint-disable-next-line @typescript-eslint/require-await, require-await
+		token: CancellationToken): Promise<FileCoverageDetail[]> => {
 
 		const ret: FileCoverageDetail[] = []
 
-		// log.info('loadDetailedCoverageForTest uri="' + fileCoverage.uri.fsPath + '", testRun=' + testRun.name)
 		const results = resultData.get(testRun)
 		if (!results) {
 			log.error('test run has no associated results')
@@ -167,45 +166,30 @@ export function activate (context: ExtensionContext) {
 		}
 
 		for (const res of results) {
+			if (token.isCancellationRequested) {
+				log.error('loadDetailedCoverageForTest - cancellation requested')
+				throw new CancellationError()
+			}
+
 			const profJson = res.itemProfileMap.get(fromTestItem)
 			if (!profJson) {
-				log.warn('no profiler data found for test item ' + fromTestItem.id)
+				log.warn('profJson not found for test item ' + fromTestItem.id)
 				continue
 			}
-			const modules = profJson.modules.flatMap(m => [m, ...m.childModules]).filter((mod) => mod.SourceUri?.fsPath == fileCoverage.uri.fsPath || mod.lines.find(l => l.incUri?.fsPath == fileCoverage.uri.fsPath))
-			for (const module of modules) {
-				const lines = module.childModules.map((a) => a.lines).flat().filter(l => l.incUri?.fsPath == fileCoverage.uri.fsPath)
-				for (const line of lines) {
-					if (line.LineNo == 0 || line.incUri?.fsPath != fileCoverage.uri.fsPath) {
-						continue
-					}
-					const coverageRange = getLineRange(line)
-					if (!coverageRange) {
-						continue
-					}
 
-					let sc = ret.find((a) => JSON.stringify(a.location) == JSON.stringify(coverageRange))
-					if (!sc) {
-						sc = new StatementCoverage(line.ExecCount, coverageRange)
-					} else if (typeof sc.executed == 'number') {
-						sc.executed = sc.executed + line.ExecCount
-					} else if (typeof sc.executed == 'boolean') {
-						sc.executed = sc.executed || line.ExecCount > 0
-					}
-					ret.push(sc)
-				}
-
-				if (module.lines[0].incUri?.fsPath == fileCoverage.uri.fsPath) {
-					const dc = getDeclarationCoverage(module)
-					ret.push(...dc)
-				}
-
+			const modules = [...profJson.modules, ...profJson.modules.flatMap(m => m.childModules)]
+			for (const m of modules) {
+				const dc = getDeclarationCoverage(m, fileCoverage.uri)
+				ret.push(...dc)
+				const sc = getStatementCoverage(m.lines, fileCoverage.uri)
+				ret.push(...sc)
 			}
 		}
-		if (ret.length == 0) {
-			log.warn('no coverage data found for ' + fileCoverage.uri.fsPath + ' by test item ' + fromTestItem.id)
+		for (const r of ret) {
+			log.info('r=' + JSON.stringify(r))
 		}
-		return Promise.resolve(ret)
+
+		return ret
 	}
 
 	const loadDetailedCoverage = (testRun: TestRun, fileCoverage: FileCoverage, _token: CancellationToken) => {
@@ -383,9 +367,10 @@ export function activate (context: ExtensionContext) {
 						log.warn('no coverage data found (' + (i + 1) + '/' + recentResults.length + ')' +
 								'\n\t- profile data path=' + res.cfg.ablunitConfig.profFilenameUri.fsPath + ')')
 					}
-					res.fileCoverage.forEach((c) => {
+
+					for (const [, c] of res.fileCoverage) {
 						run.addCoverage(c)
-					})
+					}
 				}
 			}
 

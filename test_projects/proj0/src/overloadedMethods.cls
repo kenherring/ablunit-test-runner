@@ -28,7 +28,7 @@ class overloadedMethods :
 
 @Test.
 method public void methodName () :
-overloadMethod('a', 'b').
+ overloadMethod('a', 'b').
 OpenEdge.Core.Assert:IsTrue(yes).
 end method. // end method
 
@@ -38,6 +38,7 @@ end method. // end method
         message string(overloadedTwice()).
         external2().
         OpenEdge.Core.Assert:IsTrue(yes).
+        alsoNotOverloaded(1,2).
     end method.
 
     method public integer overloadedTwice () :
@@ -50,5 +51,17 @@ end method. // end method
     method public integer overloadedTwice(c as char) :
         return 2.
     end.
+
+    method public integer alsoNotOverloaded(
+        var1 as integer,
+        var2 as integer
+    ):
+        message 'not overloaded!'.
+        if true then
+            message 'var1=' var1.
+        else
+            message 'var2=' var2.
+        return 999.
+    end method.
 
 end class.

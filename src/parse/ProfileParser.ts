@@ -1,4 +1,4 @@
-import { DeclarationCoverage, Position, Range, Uri, workspace } from 'vscode'
+import { DeclarationCoverage, Position, Range, StatementCoverage, TextDocument, Uri, workspace } from 'vscode'
 import { PropathParser } from 'ABLPropath'
 import { ABLDebugLines } from 'ABLDebugLines'
 import { log } from 'ChannelLogger'
@@ -90,6 +90,13 @@ export class ABLProfile {
 		}
 
 		this.profJSON.modules.sort((a, b) => a.ModuleID - b.ModuleID)
+		for (const m of [...this.profJSON.modules, ...this.profJSON.modules.flatMap(m => m.childModules)]) {
+			const incUri = m.lines.find(l => l.LineNo != 0 && l.incUri)?.incUri
+			if (incUri && m.lines.filter(l => l.LineNo != 0).every(l => l.incUri?.fsPath == incUri.fsPath)) {
+				m.incUri = incUri
+			}
+		}
+
 		log.debug('parsing profiler data complete (modules.length=' + this.profJSON.modules.length + ')')
 		if (writeJson) {
 			const jsonUri = Uri.file(uri.fsPath.replace(/\.[a-zA-Z]+$/, '.json'))
@@ -163,6 +170,7 @@ export interface IModule { // Section 2
 	ISectionNine?: ISectionNine[]
 	ISectionTen?: ISectionTen[]
 	ISectionTwelve?: ISectionTwelve[]
+	incUri?: Uri
 }
 
 // Split module and child module?
@@ -420,8 +428,9 @@ export class ABLProfileJson {
 
 	async addSourceMap () {
 		for (const mod of this.modules) {
-			const map = await this.debugLines.getSourceMap(mod.SourceUri.fsPath)
+			const map = await this.debugLines.getSourceMap(mod.SourceUri)
 			if (!map) {
+				log.warn('could not parse source map for ' + mod.SourceUri.fsPath)
 				// could not parse source map :(
 				return
 			}
@@ -571,7 +580,7 @@ export class ABLProfileJson {
 
 	addChildModulesToParents (childModules: IModule[]) {
 		for(const child of childModules) {
-			let parent = this.modules.find(p => p.SourceUri === child.SourceUri)
+			let parent = this.modules.find(p => p.SourceUri.fsPath === child.SourceUri.fsPath)
 			if (!parent) {
 				parent = this.modules.find(p => p.SourceName === child.ParentName)
 			}
@@ -1101,140 +1110,121 @@ export class ABLProfileJson {
 	}
 }
 
-export function getLineRange (line: ILineSummary) {
+function getLineRange (line: ILineSummary, shift = 0) {
 	try {
-		const lineno = line.incLine ?? line.srcLine
-		if (!lineno) {
+		const lineno = (line.incLine ?? line.srcLine ?? 0) + shift
+		if (!lineno || lineno < 0) {
 			return undefined
 		}
-		const doc = workspace.textDocuments.find((doc) => doc.uri.fsPath == line.incUri?.fsPath)
+		let doc: TextDocument | FileUtils.TextDocumentLines | undefined = workspace.textDocuments.find((doc) => doc.uri.fsPath == line.incUri?.fsPath)
 		if (!doc) {
-			return new Position(Math.max(lineno - 1, 0), 0)
+			doc = FileUtils.openTextDocument(line.incUri ?? line.srcUri)
+		}
+		if (!doc) {
+			log.error('could not find document for uri=' + line.incUri?.fsPath)
+			throw new Error('could not find document for uri=' + line.incUri?.fsPath)
 		}
 
-		const la = doc.lineAt(lineno - 1)
-		const start = new Position(lineno - 1, la.firstNonWhitespaceCharacterIndex)
-		const lb = doc.lineAt(lineno - 1)
-		const t = lb.text.replace(/\/\/.*/, '').trimEnd()
-		const end = new Position(lineno - 1, t.length)
-		const r = new Range(start, end)
-		return r
+		const l = doc.lineAt(lineno - 1)
+		if (!l) {
+			log.error('line not found in document (uri=' + line.incUri?.fsPath + ', lineno=' + lineno + ')')
+			throw new Error('line not found in document (uri=' + line.incUri?.fsPath + ', lineno=' + lineno + ')')
+		}
+		const start = new Position(lineno - 1, l.firstNonWhitespaceCharacterIndex)
+		const t = l.text.replace(/\/\/.*/, '').trimEnd()
+		const end = new Position(lineno - 1, Math.max(t.length, 0))
+		return new Range(start, end)
 	} catch (e: unknown) {
 		log.error('Error getting line range for line (uri=' + line.incUri?.fsPath + ', e=' + e)
 		return undefined
 	}
 }
 
-export function getModuleRange (module: IModule) {
-	const lines = module.lines.filter((a) => a.LineNo > 0)
-
-	for (const child of module.childModules) {
-		lines.push(...child.lines.filter((l) => l.LineNo > 0))
+export function getStatementCoverage (lines: ILineSummary[], onlyUri?: Uri) {
+	const sc: StatementCoverage[] = []
+	for (const line of lines) {
+		if (onlyUri && onlyUri.fsPath != line.incUri?.fsPath) {
+			continue
+		}
+		if (line.LineNo == 0) {
+			continue
+		}
+		const coverageRange = getLineRange(line)
+		if (!coverageRange) {
+			continue
+		}
+		sc.push(new StatementCoverage(line.ExecCount, coverageRange))
 	}
+	return sc
+}
+
+function getModuleRange (module: IModule, onlyUri: Uri) {
+	const lines = module.lines.filter((l) => l.LineNo > 0 && (l.incUri?.fsPath ?? l.srcUri?.fsPath) == onlyUri.fsPath)
 	lines.sort((a, b) => a.LineNo - b.LineNo)
 
 	if (lines.length == 0) {
+		log.warn('module.lines.length=0')
 		return undefined
 	}
 
-	const startLine = lines[0].incLine ?? lines[0].LineNo
-	if (!startLine || startLine <=0) {
-		return undefined
+	let firstRange = getLineRange(lines[0])
+	let firstLine
+	if (firstRange?.start.character != 0) {
+		// start on char zero if the text starts anywhere that isn't char zero
+		firstLine = firstRange?.with({ start: firstRange.start.with({ character: 0 }) })
+	} else {
+		// instead of char 0, which has a non whitepsace character, start on the end of the previous line
+		firstRange = getLineRange(lines[0], -1)
+		firstLine = firstRange?.with({start: firstRange.start.with({ character: firstRange.end.character })})
 	}
-	let start = new Position(startLine - 1, 0)
-	const endLine = lines[lines.length - 1].incLine ?? lines[lines.length - 1].LineNo
+	const lastLine = getLineRange(lines[lines.length - 1])
+	if (firstLine && lastLine) {
+		// this should be the return value in all cases, theoretically
+		return firstLine.union(lastLine)
+	}
+
+	const startLine = lines[0].incLine ?? lines[0].srcLine ?? lines[0].LineNo
+	const start = new Position(startLine - 1, 0)
+	const endLine = lines[lines.length - 1].incLine ?? lines[lines.length - 1].srcLine ?? lines[lines.length - 1].LineNo
 	if (!endLine || endLine <=0) {
 		return undefined
 	}
-	let end = new Position(endLine - 1, 0)
-
-	try {
-		const doc = workspace.textDocuments.find((doc) => doc.uri.fsPath == module.SourceUri.fsPath)
-		const la = doc?.lineAt(startLine - 1)
-		if (la) {
-			// VSCode Bug - executions only display when the start of a line is AFTER but not equal to the first character of the declaration including it
-			// const startChar = Math.max(la.firstNonWhitespaceCharacterIndex - 1, 0)
-			// start = new Position(startLine - 1, startChar)
-			start = new Position(startLine - 1, 0)
-		}
-		const lb = doc?.lineAt(endLine - 1)
-		if (lb) {
-			const t = lb.text.replace(/\/\/.*/, '').trimEnd()
-			const endChar = t.length
-			end = new Position(endLine - 1, endChar)
-		}
-
-		log.info('moduleRange ' + module.SourceUri + ' ' + JSON.stringify(new Range(start, end)))
-		return new Range(start, end)
-	} catch (e) {
-		log.error('e=' + e)
-		return undefined
-	}
+	const end = new Position(endLine - 1, 0)
+	return new Range(start, end)
 }
 
-export function getDeclarationCoverage (module: IModule) {
+export function getDeclarationCoverage (module: IModule, onlyUri: Uri) {
 	const fdc: DeclarationCoverage[] = []
+	const modules = [...module.childModules]
 
-	const range = getModuleRange(module)
-	if (range) {
-		const zeroLine = module.lines.find((a) => a.LineNo == 0)
-		const dc = new DeclarationCoverage(module.EntityName ?? '<main block>', zeroLine?.ExecCount ?? 0, range)
-
-		let executed = module.execCount ?? false
-		if (!executed || module.overloaded) {
-			if (module.lines.find(l => l.ExecCount > 0)) {
-				executed = true
+	for (const mod of modules) {
+		if (onlyUri) {
+			if (mod.incUri) {
+				if (mod.incUri.fsPath != onlyUri.fsPath) {
+					continue
+				}
+			} else if (mod.SourceUri.fsPath != onlyUri.fsPath) {
+				continue
 			}
 		}
 
-		if (dc?.name == '<main block>') {
-			dc.executed = executed
-		} else if (typeof dc?.executed == 'number') {
-			if (typeof executed == 'number') {
-				dc.executed += executed
-			} else {
-				dc.executed = dc.executed > 0 || executed
-			}
-		} else if (typeof dc?.executed == 'boolean') {
-			if (typeof executed == 'number') {
-				dc.executed = dc.executed || executed > 0
-			} else {
-				dc.executed = dc.executed || executed
-			}
-		}
-
-		fdc.push(dc)
-	}
-	for (const child of module.childModules) {
-		const childRange = getModuleRange(child)
-		if (childRange) {
-			const zeroLine = child.lines.find((a) => a.LineNo == 0)
-			const dc = new DeclarationCoverage(child.EntityName ?? '<main block>', zeroLine?.ExecCount ?? 0, childRange)
-
-			let executed = module.execCount ?? false
-			if (!executed || module.overloaded) {
-				if (module.lines.find(l => l.ExecCount > 0)) {
-					executed = true
-				}
+		const range = getModuleRange(mod, onlyUri)
+		if (range) {
+			let name = mod.EntityName ?? '<main block>'
+			if (mod.overloaded) {
+				name = name + ' (overload ' + mod.overloadSequence + ')'
 			}
 
-			if (dc?.name == '<main block>') {
-				dc.executed = executed
-			} else if (typeof dc?.executed == 'number') {
-				if (typeof executed == 'number') {
-					dc.executed += executed
+			let executed: boolean | number = mod.execCount ?? 0
+			if (mod.overloaded) {
+				const zeroLine = mod.lines.find(l => l.LineNo == 0)
+				if (zeroLine) {
+					executed = zeroLine.ExecCount
 				} else {
-					dc.executed = dc.executed > 0 || executed
-				}
-			} else if (typeof dc?.executed == 'boolean') {
-				if (typeof executed == 'number') {
-					dc.executed = dc.executed || executed > 0
-				} else {
-					dc.executed = dc.executed || executed
+					executed = mod.lines.find(l => l.ExecCount > 0) ? true : false
 				}
 			}
-
-			fdc.push(dc)
+			fdc.push(new DeclarationCoverage(name, executed, range))
 		}
 	}
 	return fdc
