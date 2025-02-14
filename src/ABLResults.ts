@@ -652,8 +652,6 @@ export class ABLResults implements Disposable {
 		}
 
 		for (const f of files) {
-			log.info('f.uri=' + f.fsPath + ' ----------------------------')
-
 			const incInfo = this.propath.search(f)
 			if (!incInfo?.uri) {
 				log.warn('could not find file in propath: ' + f.fsPath)
@@ -682,7 +680,6 @@ export class ABLResults implements Disposable {
 					} else if (typeof d.executed == 'boolean' && typeof existing.executed == 'boolean') {
 						existing.executed = existing.executed || d.executed
 					}
-					log.info('d.name=' + d.name + ' ' + d.executed + ' ' + JSON.stringify(d.location))
 					continue
 				}
 			}
@@ -719,9 +716,6 @@ export class ABLResults implements Disposable {
 						tdcs = []
 					}
 					tdcs.push(JSON.parse(JSON.stringify(d)) as DeclarationCoverage)
-					for (const i of tdcs) {
-						log.info('    tdcs ' + i.executed + ' ' + JSON.stringify(i.location) + ' ' + i.name)
-					}
 					this.testDeclarations.set(item.id + ',' + incInfo.uri.fsPath, tdcs)
 				}
 				for (const s of statements) {
@@ -730,10 +724,6 @@ export class ABLResults implements Disposable {
 						tscs = []
 					}
 					tscs.push(JSON.parse(JSON.stringify(s)) as StatementCoverage)
-					log.info('tscs.key="' + item.id + ',' + incInfo.uri.fsPath + '"')
-					for (const i of tscs) {
-						log.info('    tscs ' + i.executed + ' ' + JSON.stringify(i.location))
-					}
 					this.testStatements.set(item.id + ',' + incInfo.uri.fsPath, tscs)
 				}
 			}
