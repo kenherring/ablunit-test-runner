@@ -411,9 +411,8 @@ export class ABLResults implements Disposable {
 			const propathRelativePath = this.propath.search(suitePath)
 			const res = propathRelativePath
 			if (res?.propathRelativeFile) {
-				return res.propathRelativeFile
+				suitePath =  res.propathRelativeFile
 			}
-			return suitePath
 		}
 		suitePath = suitePath.replace(/\\/g, '/')
 		return suitePath
