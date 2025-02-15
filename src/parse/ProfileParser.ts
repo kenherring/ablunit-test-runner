@@ -1221,7 +1221,7 @@ export function getDeclarationCoverage (module: IModule, onlyUri: Uri) {
 				if (zeroLine) {
 					executed = zeroLine.ExecCount
 				} else {
-					executed = mod.lines.find(l => l.ExecCount > 0) ? true : false
+					executed = mod.lines.find(l => l.ExecCount > 0) != undefined
 				}
 			}
 			fdc.push(new DeclarationCoverage(name, executed, range))

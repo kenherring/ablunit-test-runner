@@ -680,7 +680,6 @@ export class ABLResults implements Disposable {
 					} else if (typeof d.executed == 'boolean' && typeof existing.executed == 'boolean') {
 						existing.executed = existing.executed || d.executed
 					}
-					continue
 				}
 			}
 
@@ -695,16 +694,14 @@ export class ABLResults implements Disposable {
 					const existing = fsc.find((s) => JSON.stringify(s.location) == JSON.stringify(c.location))
 					if (!existing) {
 						fsc.push(c)
-					} else {
-						if (typeof existing.executed == 'number' && typeof c.executed == 'number') {
-							existing.executed += c.executed
-						} else if (typeof existing.executed == 'boolean' && typeof c.executed == 'number') {
-							existing.executed = existing.executed || c.executed > 0
-						} else if (typeof existing.executed == 'number' && typeof c.executed == 'boolean') {
-							existing.executed = existing.executed > 0 || c.executed
-						} else if (typeof existing.executed == 'boolean' && typeof c.executed == 'boolean') {
-							existing.executed = existing.executed || c.executed
-						}
+					} else  if (typeof existing.executed == 'number' && typeof c.executed == 'number') {
+						existing.executed += c.executed
+					} else if (typeof existing.executed == 'boolean' && typeof c.executed == 'number') {
+						existing.executed = existing.executed || c.executed > 0
+					} else if (typeof existing.executed == 'number' && typeof c.executed == 'boolean') {
+						existing.executed = existing.executed > 0 || c.executed
+					} else if (typeof existing.executed == 'boolean' && typeof c.executed == 'boolean') {
+						existing.executed = existing.executed || c.executed
 					}
 				}
 			}
@@ -738,7 +735,7 @@ export class ABLResults implements Disposable {
 			if (item) {
 				const fcOrig = this.fileCoverage.get(incInfo.uri.fsPath)
 				fc.includesTests = fcOrig?.includesTests ?? []
-				if (item && !fc.includesTests.find((i) => i.id == item.id)) {
+				if (!fc.includesTests.find((i) => i.id == item.id)) {
 					fc.includesTests.push(item)
 				}
 			}
