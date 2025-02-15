@@ -166,7 +166,7 @@
 							},
 							"coverage": {
 								"type": "boolean",
-								"default": true,
+								"default": false,
 								"description": "Enable code coverage logging by the profiler.",
 								"markdownDescription": "Enable code coverage logging by the profiler.\n\n* [`COVERAGE` attribute](https://docs.progress.com/bundle/abl-reference/page/COVERAGE-attribute.html)"
 							},

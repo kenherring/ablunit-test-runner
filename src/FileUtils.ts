@@ -5,6 +5,45 @@ import { FileSystemError, Uri, workspace } from 'vscode'
 import { log } from 'ChannelLogger'
 import { RmOptions } from 'fs'
 
+export class TextDocumentLines {
+	uri: Uri
+	lines: string[] = []
+
+	constructor (uri: Uri) {
+		this.uri = uri
+	}
+
+	lineAt (line: number) {
+		if (this.lines.length == 0) {
+			this.lines = readLinesFromFileSync(this.uri)
+		}
+		return {
+			text: this.lines[line],
+			firstNonWhitespaceCharacterIndex: this.lines[line].length - this.lines[line].trimStart().length
+		}
+	}
+
+}
+
+const textDocuments: TextDocumentLines[] = []
+
+export function openTextDocument (uri: Uri | undefined) {
+	if (!uri) {
+		return undefined
+	}
+	let doc = textDocuments.find((d) => d.uri.fsPath === uri.fsPath)
+	if (doc) {
+		return doc
+	}
+	if (!doesFileExist(uri)) {
+		throw FileSystemError.FileNotFound(uri)
+	}
+	doc = new TextDocumentLines(uri)
+	textDocuments.push(doc)
+	return doc
+
+}
+
 export function readFileSync (path: string | Uri, opts?: { encoding?: null; flag?: string; } | null): Buffer {
 	try {
 		return fs.readFileSync(path instanceof Uri ? path.fsPath : path, opts)

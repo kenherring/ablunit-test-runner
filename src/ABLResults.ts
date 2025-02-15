@@ -7,7 +7,7 @@ import { FileType, TestItem, TestItemCollection, TestMessage, TestRun, Uri, work
 import { ABLUnitConfig } from 'ABLUnitConfigWriter'
 import { ABLResultsParser, ITestCaseFailure, ITestCase, ITestSuite } from 'parse/ResultsParser'
 import { ABLTestSuite, ABLTestData, ABLTestCase } from 'testTree'
-import { ABLProfile, ABLProfileJson, getModuleRange, IModule } from 'parse/ProfileParser'
+import { ABLProfile, ABLProfileJson, getDeclarationCoverage, getStatementCoverage, IModule } from 'parse/ProfileParser'
 import { ABLDebugLines } from 'ABLDebugLines'
 import { ABLPromsgs, getPromsgText } from 'ABLPromsgs'
 import { PropathParser } from 'ABLPropath'
@@ -37,6 +37,8 @@ export class ABLResults implements Disposable {
 	debugLines: ABLDebugLines
 	promsgs: ABLPromsgs
 	profileJson: ABLProfileJson[] = []
+	profileItemMap: Map<ABLProfileJson, TestItem> = new Map<ABLProfileJson, TestItem>()
+	itemProfileMap: Map<TestItem, ABLProfileJson> = new Map<TestItem, ABLProfileJson>()
 	coverageJson: [] = []
 	dlc: IDlc
 	thrownError: Error | undefined
@@ -44,7 +46,9 @@ export class ABLResults implements Disposable {
 
 	public fileCoverage: Map<string, FileCoverage> = new Map<string, FileCoverage>()
 	public declarationCoverage: Map<string, DeclarationCoverage[]> = new Map<string, DeclarationCoverage[]>()
+	public testDeclarations: Map<string, DeclarationCoverage[]> = new Map<string, DeclarationCoverage[]>()
 	public statementCoverage: Map<string, StatementCoverage[]> = new Map<string, StatementCoverage[]>()
+	public testStatements: Map<string, StatementCoverage[]> = new Map<string, StatementCoverage[]>()
 
 	constructor (workspaceFolder: WorkspaceFolder,
 		private readonly storageUri: Uri,
@@ -289,7 +293,7 @@ export class ABLResults implements Disposable {
 			throw new Error('Error parsing results from ' + this.cfg.ablunitConfig.optionsUri.filenameUri.fsPath + '\r\ne=' + e)
 		})
 
-		if (this.request.profile?.kind === TestRunProfileKind.Coverage && this.cfg.ablunitConfig.profiler.enabled && this.cfg.ablunitConfig.profiler.coverage) {
+		if (this.request.profile?.kind === TestRunProfileKind.Coverage && this.cfg.ablunitConfig.profiler.enabled) {
 			this.setStatus(RunStatus.Parsing, 'profiler data')
 			log.info('parsing profiler data...')
 			await this.parseProfile(options, parseTime).then(() => {
@@ -557,6 +561,13 @@ export class ABLResults implements Disposable {
 
 			proms.push(new ABLProfile().parseData(uri, this.cfg.ablunitConfig.profiler.writeJson, this.debugLines, this.cfg.ablunitConfig.profiler.ignoreExternalCoverage).then((profJson) => {
 				log.debug('parsed profiler data ' + (i+1) + '/' + dataFiles.length + ' ' + profJson.parseDuration)
+				const item = this.findTest(profJson.description)
+				if (item) {
+					this.itemProfileMap.set(item, profJson)
+					this.profileItemMap.set(profJson, item)
+				}
+				this.profileJson.push(profJson)
+				log.debug('assigning profiler data (' + i + '/' + dataFiles.length + ')')
 				return profJson
 			}))
 		}
@@ -565,11 +576,8 @@ export class ABLResults implements Disposable {
 		let i = 0
 		for (const profJson of responses) {
 			i++
-			const item = this.findTest(profJson.description)
-			profJson.testItemId = item?.id
-			this.profileJson.push(profJson)
 			log.debug('assigning profiler data (' + i + '/' + dataFiles.length + ')')
-			this.assignProfileResults(profJson, item)
+			this.assignProfileResults(profJson)
 
 			const message = 'parsing profiler data... (' + i + '/' + dataFiles.length + ', duration=' +  parseTime.elapsed() + ')'
 			log.info(message)
@@ -578,48 +586,14 @@ export class ABLResults implements Disposable {
 		options.appendOutput('\r\n')
 	}
 
-	assignProfileResults (profJson: ABLProfileJson, testItem: TestItem | undefined) {
+	assignProfileResults (profJson: ABLProfileJson) {
 		if (!profJson) {
 			log.error('no profiler data available...')
 			throw new Error('no profiler data available...')
 		}
 		for (const module of profJson.modules) {
-			this.setCoverage(module, testItem)
+			this.setCoverage(module, this.profileItemMap.get(profJson))
 		}
-	}
-
-	addDeclarationFromModule (uri: Uri, module: IModule) {
-		const fdc = this.declarationCoverage.get(uri.fsPath) ?? []
-
-		let declarationName = module.EntityName
-		if (module.overloaded) {
-			declarationName = declarationName + ' (overload ' + module.overloadSequence + ')'
-		}
-		let dc = fdc.find((c) => c.name == (declarationName ?? '<main block'))
-		if (!dc) {
-			const range = getModuleRange(module)
-			if (range) {
-				dc = new DeclarationCoverage(declarationName ?? '<main block>', false, range)
-				fdc.push(dc)
-			}
-		}
-		if (dc?.name == '<main block>') {
-			const executedLines = module.lines.filter((a) => a.ExecCount > 0)
-			if (executedLines.length > 0) {
-				dc.executed = true
-			}
-		} else if (dc) {
-			if (!dc.executed) {
-				dc.executed = module.executedLines > 0
-			}
-		}
-		// } else if (typeof dc?.executed == 'number') {
-		// 	dc.executed = dc.executed + module.
-		// } else if (typeof dc?.executed == 'boolean') {
-		// 	dc.executed = dc.executed || this.getExecCount(module) > 0
-		// }
-
-		this.declarationCoverage.set(uri.fsPath, fdc)
 	}
 
 	sortLocation (a: DeclarationCoverage | StatementCoverage, b: DeclarationCoverage | StatementCoverage) {
@@ -655,7 +629,7 @@ export class ABLResults implements Disposable {
 
 	setCoverage (module: IModule, item?: TestItem) {
 
-		const fileinfo = this.propath.search(module.SourceUri ?? module.SourceName)
+		const fileinfo = this.propath.search(module.incUri ?? module.SourceUri ?? module.SourceName)
 		if (!fileinfo?.uri) {
 			log.warn('could not find module in propath: ' + module.SourceName + ' (' + module.ModuleID + ')')
 			if (this.cfg.ablunitConfig.profiler.ignoreExternalCoverage) {
@@ -668,85 +642,89 @@ export class ABLResults implements Disposable {
 			}
 		}
 
-		const zeroLine = module.lines.find((a) => a.LineNo == 0)
-		if (!zeroLine) {
-			log.debug('could not find zeroLine for ' + module.SourceName)
-		}
-
-		for (const child of module.childModules) {
-
-			const incFiles = child.lines.filter((l) => l.LineNo > 0).map((l) => l.incUri)
-			let incFile = incFiles[0]
-			for (let i=1; i < incFiles.length; i++) {
-				// if all lines have a different file than the module, put the declaration in that include file
-				const f = incFiles[i]
-				if (!f || f == fileinfo?.uri) {
-					incFile = fileinfo?.uri
-					break
-				}
-			}
-
-			this.addDeclarationFromModule(incFile ?? Uri.file(module.SourceName), child)
-		}
-		// ----- this next line would add the main block to the declaration coverage -----
-		// this.addDeclarationFromModule(fileinfo.uri, module)
-
 		const files: Uri[] = []
-		if (module.SourceUri) {
-			if (!files.find(f => f.fsPath == module.SourceUri.fsPath)) {
-				files.push(module.SourceUri)
-			}
-		}
-		const lines = module.lines
-		for (const child of module.childModules) {
-			lines.push(...child.lines.filter((l) => l.LineNo > 0))
 
-			for (const line of lines) {
-				if (line.incUri && !files.find((f) => f.fsPath == line.incUri?.fsPath)) {
-					files.push(line.incUri)
-				}
+		for (const line of [module, ...module.childModules]) {
+			const uri = line.incUri ?? line.SourceUri
+			if (uri && !files.find(f => f.fsPath == uri.fsPath)) {
+				files.push(uri)
 			}
 		}
 
-		const filesNoDupes = Array.from(new Set(files))
-
-		for (const f of filesNoDupes) {
-
+		for (const f of files) {
 			const incInfo = this.propath.search(f)
 			if (!incInfo?.uri) {
 				log.warn('could not find file in propath: ' + f.fsPath)
 				continue
 			}
-			const fsc = this.statementCoverage.get(incInfo.uri.fsPath) ?? []
-			if (fsc.length === 0) {
+
+
+			let fdc = this.declarationCoverage.get(incInfo.uri.fsPath)
+			const declarations = getDeclarationCoverage(module, f)
+			if (!fdc) {
+				fdc = declarations
+				this.declarationCoverage.set(incInfo.uri.fsPath, fdc)
+			} else {
+				for (const d of declarations) {
+					const existing = fdc.find((c) => c.name == d.name)
+					if (!existing) {
+						fdc.push(d)
+						continue
+					}
+					if (typeof d.executed == 'number' && typeof existing.executed == 'number') {
+						existing.executed += d.executed
+					} else if (typeof d.executed == 'boolean' && typeof existing.executed == 'number') {
+						existing.executed = existing.executed > 0 || d.executed
+					} else if (typeof d.executed == 'number' && typeof existing.executed == 'boolean') {
+						existing.executed = existing.executed || d.executed > 0
+					} else if (typeof d.executed == 'boolean' && typeof existing.executed == 'boolean') {
+						existing.executed = existing.executed || d.executed
+					}
+				}
+			}
+
+			const lines = [...module.lines, ...module.childModules.flatMap((m) => m.lines)]
+			let fsc = this.statementCoverage.get(incInfo.uri.fsPath)
+			const statements = getStatementCoverage(lines, f)
+			if (!fsc) {
+				fsc = statements
 				this.statementCoverage.set(incInfo.uri.fsPath, fsc)
-			}
-
-			for (const line of lines) {
-				if (line.incUri?.fsPath != f.fsPath) {
-					continue
-				}
-				if (line.LineNo <= 0) { continue }
-				const uri = line.incUri ?? line.srcUri ?? module.SourceUri
-				if (uri?.fsPath != f.fsPath) {
-					continue
-				}
-
-				const lineno = (line.incLine ?? line.LineNo) - 1
-				const coverageRange = new Position(lineno, 0)
-
-				let cov = fsc.find((c) => JSON.stringify(c.location) == JSON.stringify(coverageRange))
-				if (!cov) {
-					cov = new StatementCoverage(line.ExecCount ?? 0, coverageRange)
-					fsc.push(cov)
-				} else if (typeof cov.executed == 'number') {
-					cov.executed = cov.executed + (line.ExecCount ?? 0)
-				} else if (typeof cov.executed == 'boolean') {
-					cov.executed = cov.executed || line.ExecCount > 0
+			} else {
+				for (const c of statements) {
+					const existing = fsc.find((s) => JSON.stringify(s.location) == JSON.stringify(c.location))
+					if (!existing) {
+						fsc.push(c)
+					} else  if (typeof existing.executed == 'number' && typeof c.executed == 'number') {
+						existing.executed += c.executed
+					} else if (typeof existing.executed == 'boolean' && typeof c.executed == 'number') {
+						existing.executed = existing.executed || c.executed > 0
+					} else if (typeof existing.executed == 'number' && typeof c.executed == 'boolean') {
+						existing.executed = existing.executed > 0 || c.executed
+					} else if (typeof existing.executed == 'boolean' && typeof c.executed == 'boolean') {
+						existing.executed = existing.executed || c.executed
+					}
 				}
 			}
 
-			const fdc = this.declarationCoverage.get(incInfo.uri.fsPath) ?? []
+			if (item) {
+				for (const d of declarations) {
+					let tdcs = this.testDeclarations.get(item.id + ',' + incInfo.uri.fsPath)
+					if (!tdcs) {
+						tdcs = []
+					}
+					tdcs.push(JSON.parse(JSON.stringify(d)) as DeclarationCoverage)
+					this.testDeclarations.set(item.id + ',' + incInfo.uri.fsPath, tdcs)
+				}
+				for (const s of statements) {
+					let tscs = this.testStatements.get(item.id + ',' + incInfo.uri.fsPath)
+					if (!tscs) {
+						tscs = []
+					}
+					tscs.push(JSON.parse(JSON.stringify(s)) as StatementCoverage)
+					this.testStatements.set(item.id + ',' + incInfo.uri.fsPath, tscs)
+				}
+			}
+
 			fdc.sort((a, b) => this.sortLocation(a, b))
 			fsc.sort((a, b) => this.sortLocation(a, b))
 
@@ -754,10 +732,12 @@ export class ABLResults implements Disposable {
 			fcd.push(...fdc, ...fsc)
 
 			const fc = FileCoverage.fromDetails(incInfo.uri, fcd)
-			const fcOrig = this.fileCoverage.get(incInfo.uri.fsPath)
-			fc.includesTests = fcOrig?.includesTests ?? []
-			if (item && !fc.includesTests.find((i) => i.id == item.id)) {
-				fc.includesTests.push(item)
+			if (item) {
+				const fcOrig = this.fileCoverage.get(incInfo.uri.fsPath)
+				fc.includesTests = fcOrig?.includesTests ?? []
+				if (!fc.includesTests.find((i) => i.id == item.id)) {
+					fc.includesTests.push(item)
+				}
 			}
 
 			this.fileCoverage.set(incInfo?.uri.fsPath ?? module.SourceName, fc)

@@ -105,13 +105,13 @@
 		////#   * https://docs.progress.com/bundle/abl-reference/page/PROFILER-system-handle.html
 		"profiler": {
 			"enabled": true,
-			"coverage": true,
+			"coverage": false,
 			"description": "Run via VSCode - ABLUnit Test Runner Extension",
 			"filename": "prof.out",
 			"listings": false,
 			"statistics": false,
 			"traceFilter": "",
-			"tracing": false,
+			"tracing": "",
 			"writeJson": false
 		}
 	}]
