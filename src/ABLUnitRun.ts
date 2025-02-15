@@ -244,12 +244,8 @@ function runCommand (res: ABLResults, options: TestRun, cancellation: Cancellati
 			}
 			for (const line of lines) {
 				if (line.startsWith('ABLUNIT_STATUS=SERIALIZED_ERROR ')) {
-					log.info('50 line=' + line)
-					log.info('51 line.substr=' + line.substring(32))
 					const compilerError = JSON.parse(line.substring(32)) as ICompilerError
-					log.info('52')
 					compilerErrors.push(compilerError)
-					log.info('53')
 					continue
 				} else if (line.startsWith('ABLUNIT_STATUS=')) {
 					let ablunitStatus: IABLUnitStatus
@@ -312,17 +308,11 @@ function runCommand (res: ABLResults, options: TestRun, cancellation: Cancellati
 
 			if (code && code != 0) {
 				if (compilerErrors.length > 0) {
-					log.info('100')
 					res.setStatus(RunStatus.Error, 'compilerErrors=' + compilerErrors.length)
-					log.info('101')
 					const e = new ABLCompilerError(compilerErrors, cmd)
-					log.info('102')
 					res.setStatus(e)
-					log.info('103')
 					log.info('----- ABLUnit Test Run Failed (exit_code=' + code + '; compilerErrors=' + compilerErrors.length + ') ----- ' + testRunDuration, {testRun: options, testItem: currentTestItem })
-					log.info('104')
 					reject(e)
-					log.info('105')
 					return e
 				}
 				res.setStatus(RunStatus.Error, 'exit_code=' + code)

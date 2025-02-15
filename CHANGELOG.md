@@ -1,3 +1,11 @@
+# [1.0.6025](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.0.6025) - 2025-02-15
+
+
+ * Remove extraneous log messages (#249)
+
+
+**Full Changelog**: [1.0.6023...1.0.6025](https://github.com/kenherring/ablunit-test-runner/compare/1.0.6023...1.0.6025)
+
 # [1.0.6023](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.0.6023) - 2025-02-13
 
 

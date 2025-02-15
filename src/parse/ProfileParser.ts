@@ -436,7 +436,6 @@ export class ABLProfileJson {
 			}
 			this.hasSourceMap = true
 			for (const item of map.items) {
-				log.info('item.debugLine=' + item.debugLine + ' item.sourceLine=' + item.sourceLine + ' ' + item.sourceUri)
 				if (item.procName == '') {
 					// parent module
 					const l = mod.lines.find(l => l.LineNo == item.debugLine)
@@ -506,13 +505,11 @@ export class ABLProfileJson {
 					// add or update line on existing child
 					if (children.length >= 1) {
 						let child = children.find(m => m.procNum == item.procNum)
-						log.info('100 item.procNum=' + item.procNum + ' item.procName=' + item.procName + ' child.EntityName=' + child?.EntityName)
 						if (!child) {
 							child = children.find(m => !m.procNum)
 							if (child) {
 								child.procNum = item.procNum
 							}
-							log.info('101 item.procNum=' + item.procNum + ' item.procName=' + item.procName + ' child.EntityName=' + child?.EntityName)
 						}
 						if (!child) {
 							const modNum = children[0].ModuleID
@@ -547,7 +544,6 @@ export class ABLProfileJson {
 
 							})
 							child = mod.childModules[mod.childModules.length - 1]
-							log.info('101 item.procNum=' + item.procNum + ' item.procName=' + item.procName + ' child.EntityName=' + child?.EntityName)
 						}
 						const l = child.lines.find(l => l.LineNo == item.debugLine)
 						if (l) {
@@ -705,7 +701,7 @@ export class ABLProfileJson {
 
 			const mod = mods.find(m => m.lines.find(l => l.LineNo == Number(test[2])))
 			if (!mod) {
-				log.warn('could not find module ' + modID + ' with line ' + test[2] + ' (uri=' + this.profileUri.fsPath + ')')
+				log.debug('could not find module ' + modID + ' with line ' + test[2] + ' (uri=' + this.profileUri.fsPath + ')')
 				continue
 			}
 
@@ -1163,7 +1159,6 @@ function getModuleRange (module: IModule, onlyUri: Uri) {
 	lines.sort((a, b) => a.LineNo - b.LineNo)
 
 	if (lines.length == 0) {
-		log.warn('module.lines.length=0')
 		return undefined
 	}
 
