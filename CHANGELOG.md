@@ -1,3 +1,11 @@
+# [1.0.6027](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.0.6027) - 2025-02-15
+
+
+ * Fix regression related to path separators when displaying test class results (#250)
+
+
+**Full Changelog**: [1.0.6025...1.0.6027](https://github.com/kenherring/ablunit-test-runner/compare/1.0.6025...1.0.6027)
+
 # [1.0.6025](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.0.6025) - 2025-02-15
 
 
