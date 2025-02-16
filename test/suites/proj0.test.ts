@@ -446,4 +446,11 @@ suite('proj0  - Extension Test Suite', () => {
 		assert.linesNotExecuted('src/overloadedMethods.cls', [21])
 	})
 
+	test('proj0.22 - test coverage for class in subdirectory', async () => {
+		await runTestsInFile('src/dirA/dir1/testClassInDir.cls', 1, true)
+		assert.tests.count(2)
+		assert.tests.passed(2)
+		assert.tests.failed(0)
+	})
+
 })
