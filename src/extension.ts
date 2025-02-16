@@ -64,7 +64,20 @@ export function activate (context: ExtensionContext) {
 			commands.registerCommand('_ablunit.getTestData', () => { return testData.getMap() }),
 			commands.registerCommand('_ablunit.getTestItem', (uri: Uri) => { return getExistingTestItem(ctrl, uri) }),
 			commands.registerCommand('_ablunit.getTestRunError', () => { return recentError }),
-			commands.registerCommand('_loadDetailedCoverageForTest', (uri: Uri, testId: string) => {
+			commands.registerCommand('_ablunit.loadDetailedCoverage', (uri: Uri) => {
+				if (!currentTestRun) {
+					throw new Error('currentTestRun is undefined')
+				}
+
+				const fileCoverage = recentResults[0].fileCoverage.get(uri.fsPath)
+				if (!fileCoverage) {
+					throw new Error('fileCoverage not found for ' + uri.fsPath)
+				}
+
+				return loadDetailedCoverage(currentTestRun, fileCoverage, new CancellationTokenSource().token)
+			}),
+
+			commands.registerCommand('_ablunit.loadDetailedCoverageForTest', (uri: Uri, testId: string) => {
 				if (!currentTestRun) {
 					throw new Error('currentTestRun is undefined')
 				}
