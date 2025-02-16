@@ -453,4 +453,21 @@ suite('proj0  - Extension Test Suite', () => {
 		assert.tests.failed(0)
 	})
 
+	test('proj0.23 - destructor is not an overload', async () => {
+		await runTestsInFile('src/destructorClass.test.cls', 1, true)
+		const res = await getResults()
+
+		const profData = res[0].profileJson
+		const parents = res[0].profileJson.flatMap((p) => p.modules)
+		const childModules = parents.flatMap((p) => p.childModules)
+
+		const modules = childModules.filter(m => m.EntityName == 'destructorClass')
+		assert.equal(modules?.length, 2, 'modules.length')
+
+		assert.equal(modules[0].overloaded, false, 'modules[0].overloaded')
+		assert.equal(modules[0].Destructor, false, 'modules[0].Destructor')
+		assert.equal(modules[1].overloaded, false, 'modules[1].overloaded')
+		assert.equal(modules[1].Destructor, true, 'modules[1].Destructor')
+	})
+
 })
