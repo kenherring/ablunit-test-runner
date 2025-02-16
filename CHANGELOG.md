@@ -1,47 +1,36 @@
-# [1.0.6027](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.0.6027) - 2025-02-15
+# [1.0.6028](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.0.6028) - 2025-02-15
 
+If this release works it will quickly evolve like a Pokemon to be 1.1.0.
 
- * Fix regression related to path separators when displaying test class results (#250)
+## Release Notes
 
+* Suggest enabling `testing.coverageToolbarEnabled` in your VSCode settings to get the full effect of the improved coverage reporting.
+* This release is more heavily dependent on rcode parsing for source mapping.
+  * If for whatever reason you do not have rcode available for your tests you can enable the `coverage` option in `.vscode/ablunit-test-profile.json` to parse from the profiler output.
+  * Backup xref parsing still exists but will likely be deprecated.
 
-**Full Changelog**: [1.0.6025...1.0.6027](https://github.com/kenherring/ablunit-test-runner/compare/1.0.6025...1.0.6027)
-
-# [1.0.6025](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.0.6025) - 2025-02-15
-
-
- * Remove extraneous log messages (#249)
-
-
-**Full Changelog**: [1.0.6023...1.0.6025](https://github.com/kenherring/ablunit-test-runner/compare/1.0.6023...1.0.6025)
-
-# [1.0.6023](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.0.6023) - 2025-02-13
-
+## Change Summary
 
  * Line execution counts, improved ranges, and fix individual test coverage (#246)
- * Cleanup imports; propath lookup without async (#248)
- * Cleanup imports; propath lookup without async (#248)
  * Add OpenEdge 12.8.6 test target (#247)
  * Ungroup overloaded methods for coverage reporting (#245)
- * Fix debug line mapping (#244)
  * Target multiple versions of node when running tests (#243)
- * Add test cases  to validate source map parsing source (#239)
- * Update testing scripts and programs (#242)
- * Bump PCT to v229 (#241)
- * Add OpenEdge 12.8.5 test target (#240)
+ * Add test cases to validate source map parsing source (#239)
  * Add profiler options `perTest` and `ignoreExternalCoverage` for improved parsing performance (#238)
  * Replace snippets with CompletionItemProvider for better granularity (#237)
- * CircleCI: cache the `.vscode-test` directory (#236)
- * Profile parsing of performance improvement for multiple data files (#235)
- * Publish prerelease after merge to main (#234)
+ * Profile parsing performance improvement for multiple data files (#235)
  * improve messages for compile errors (#233)
  * Test coverage attribution (#228)
- * Update deps (#232)
- * Various minor fixes/improvements and config updates (#230)
  * Refactor file access functions (#229)
  * [chore] npm update (#226)
  * Call stack parsing: support multiple errors per test case and negative line numbers for implicit constructors (#223)
 
-**Full Changelog**: [1.0.0...1.0.6023](https://github.com/kenherring/ablunit-test-runner/compare/1.0.0...1.0.6023)
+## Known Bugs
+
+* Destructors appear as overloaded constructors in the coverage reporting.
+* Fallback to xref parsing gives disjoint source mapping. This will probably be deprecated.
+
+**Full Changelog**: [1.0.0...1.0.6028](https://github.com/kenherring/ablunit-test-runner/compare/1.0.0...1.0.6028)
 
 # 🥳 [1.0.0](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.0.0) - 2024-10-24
 
