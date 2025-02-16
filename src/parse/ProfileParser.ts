@@ -1162,16 +1162,23 @@ function getModuleRange (module: IModule, onlyUri: Uri) {
 		return undefined
 	}
 
-	let firstRange = getLineRange(lines[0])
+
 	let firstLine
-	if (firstRange?.start.character != 0) {
-		// start on char zero if the text starts anywhere that isn't char zero
-		firstLine = firstRange?.with({ start: firstRange.start.with({ character: 0 }) })
+
+	if (module.ModuleLineNum && !module.overloaded && lines[0].LineNo != module.ModuleLineNum && lines[0].incLine) {
+		firstLine = new Range(module.ModuleLineNum - (lines[0].LineNo - lines[0].incLine) - 1, 0, module.ModuleLineNum - (lines[0].LineNo - lines[0].incLine), 0)
 	} else {
-		// instead of char 0, which has a non whitepsace character, start on the end of the previous line
-		firstRange = getLineRange(lines[0], -1)
-		firstLine = firstRange?.with({start: firstRange.start.with({ character: firstRange.end.character })})
+		let firstRange = getLineRange(lines[0])
+		if (firstRange?.start.character != 0) {
+			// start on char zero if the text starts anywhere that isn't char zero
+			firstLine = firstRange?.with({ start: firstRange.start.with({ character: 0 }) })
+		} else {
+			// instead of char 0, which has a non whitepsace character, start on the end of the previous line
+			firstRange = getLineRange(lines[0], -1)
+			firstLine = firstRange?.with({start: firstRange.start.with({ character: firstRange.end.character })})
+		}
 	}
+
 	const lastLine = getLineRange(lines[lines.length - 1])
 	if (firstLine && lastLine) {
 		// this should be the return value in all cases, theoretically

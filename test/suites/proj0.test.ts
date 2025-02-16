@@ -1,4 +1,4 @@
-import { Uri, commands, window, workspace } from 'vscode'
+import { DeclarationCoverage, FileCoverageDetail, Range, Uri, commands, window, workspace } from 'vscode'
 import { assert, getRcodeCount, getResults, getTestControllerItemCount, getTestItem, getXrefCount, log, rebuildAblProject, refreshTests, runAllTests, runAllTestsWithCoverage, runTestAtLine, runTestsDuration, runTestsInFile, sleep2, suiteSetupCommon, FileUtils, toUri, updateConfig, updateTestProfile, deleteRcode, setRuntimes } from '../testCommon'
 import { ABLResultsParser } from 'parse/ResultsParser'
 import { TimeoutError } from 'Errors'
@@ -444,6 +444,55 @@ suite('proj0  - Extension Test Suite', () => {
 		assert.tests.count(2)
 		assert.linesExecuted('src/overloadedMethods.cls', [17, 18, 19, 22, 23])
 		assert.linesNotExecuted('src/overloadedMethods.cls', [21])
+		const cov = (await commands.executeCommand('_ablunit.loadDetailedCoverage', toUri('src/overloadedMethods.cls'))) as FileCoverageDetail[]
+		// for (const c of cov) {
+		// 	log.info('c=' + JSON.stringify(c, null, 2))
+		// }
+
+		// validate we've captured the method header - executed declaration, starts are char 0
+		const methodName = cov.find(c => c instanceof DeclarationCoverage && c.name === 'methodName') as DeclarationCoverage
+		if (methodName.location instanceof Range) {
+			assert.equal(methodName.location.start.line, 29, 'methodName.location.start.line')
+		} else {
+			assert.fail('methodName.location not instanceof Range')
+		}
+
+		// validate we've captured the method header - executed declaration, starts indented
+		const methodName2 = cov.find(c => c instanceof DeclarationCoverage && c.name === 'methodName2') as DeclarationCoverage
+		if (methodName2.location instanceof Range) {
+			assert.equal(methodName2.location.start.line, 35, 'methodName2.location.start.line')
+		} else {
+			assert.fail('methodName2.location not instanceof Range')
+		}
+
+		// ---------- TODO - not currently captured ----------
+		// // validate we've captured the method header - not executed
+		// const notOverloaded = cov.find(c => c instanceof DeclarationCoverage && c.name === 'notOverloaded' ) as DeclarationCoverage
+		// if (notOverloaded.location instanceof Range) {
+		// 	assert.equal(notOverloaded.location.start.line, 47, 'notOverloaded.location.start.line')
+		// } else {
+		// 	assert.fail('notOverloaded.location not instanceof Range')
+		// }
+
+		// // validate we've captured the method header - overloaded methods
+		// const overloadMethod_1 = cov.find(c => c instanceof DeclarationCoverage && c.name === 'overloadMethod' ) as DeclarationCoverage
+		// if (overloadMethod_1.location instanceof Range) {
+		// 	assert.equal(overloadMethod_1.location.start.line, 6, 'overloadMethod.location.start.line')
+		// } else {
+		// 	assert.fail('overloadMethod.location not instanceof Range')
+		// }
+		// const overloadMethod_2 = cov.find(c => c instanceof DeclarationCoverage && c.name === 'overloadMethod' ) as DeclarationCoverage
+		// if (overloadMethod_2.location instanceof Range) {
+		// 	assert.equal(overloadMethod_2.location.start.line, 10, 'overloadMethod.location.start.line')
+		// } else {
+		// 	assert.fail('overloadMethod.location not instanceof Range')
+		// }
+		// const overloadMethod_3 = cov.find(c => c instanceof DeclarationCoverage && c.name === 'overloadMethod' ) as DeclarationCoverage
+		// if (overloadMethod_3.location instanceof Range) {
+		// 	assert.equal(overloadMethod_3.location.start.line, 15, 'overloadMethod.location.start.line')
+		// } else {
+		// 	assert.fail('overloadMethod.location not instanceof Range')
+		// }
 	})
 
 	test('proj0.22 - test coverage for class in subdirectory', async () => {
