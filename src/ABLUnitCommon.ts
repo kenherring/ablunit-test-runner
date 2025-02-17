@@ -1,6 +1,7 @@
-import { TestController, TestItem, TestItemCollection, Uri } from 'vscode'
+import { DeclarationCoverage, Position, Range, StatementCoverage, TestController, TestItem, TestItemCollection, Uri } from 'vscode'
 import { ABLResults } from 'ABLResults'
 import * as FileUtils from 'FileUtils'
+import { log } from 'ChannelLogger'
 
 export interface IExtensionTestReferences {
 	testController: TestController
@@ -73,4 +74,39 @@ export function gatherAllTestItems (collection: TestItemCollection | TestItem[])
 		items.push(item, ...gatherAllTestItems(item.children))
 	})
 	return items
+}
+
+export function sortLocation (a: DeclarationCoverage | StatementCoverage, b: DeclarationCoverage | StatementCoverage) {
+	let startPosA: Position
+	let startPosB: Position
+	let endPosA: Position | undefined
+	let endPosB: Position | undefined
+
+	if (a.location instanceof Range) {
+		startPosA = a.location.start
+		endPosA = a.location.end
+	} else if (a.location instanceof Position) {
+		startPosA = a.location
+		endPosA = a.location
+	} else {
+		log.error('Invalid location type, expected Position | Range: ' + JSON.stringify(a.location))
+		throw new Error('Invalid location type, expected Position | Range: ' + JSON.stringify(a.location))
+	}
+	if (b.location instanceof Range) {
+		startPosB = b.location.start
+		endPosB = b.location.end
+	} else if (b.location instanceof Position) {
+		startPosB = b.location
+		endPosB = b.location
+	} else {
+		log.error('Invalid location type, expected Position | Range: ' + JSON.stringify(b.location))
+		throw new Error('Invalid location type, expected Position | Range: ' + JSON.stringify(b.location))
+	}
+
+	const comp = startPosA.compareTo(startPosB)
+	if (comp != 0) {
+		return comp
+	}
+	return endPosA.compareTo(endPosB)
+
 }
