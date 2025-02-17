@@ -51,7 +51,20 @@ export async function parseCallstack (debugLines: ABLDebugLines, callstackRaw: s
 
 		let debugUri: Uri | undefined = Uri.file(debugFile)
 		if (!FileUtils.doesFileExist(debugUri)) {
-			const fileinfo = debugLines.propath.search(debugFile)
+			let fileinfo = debugLines.propath.search(debugFile)
+			log.info('fileinfo=' + JSON.stringify(fileinfo))
+			if (!fileinfo && debugFile.endsWith('.r')) {
+				if (!FileUtils.doesFileExist(debugUri)) {
+					// file.test.p compiles to file/test.p for some reason... this adjusts for that scenario
+					if (debugFile.lastIndexOf('/')) {
+						debugUri = Uri.file(debugFile.substring(0, debugFile.lastIndexOf('/')) + '.' + debugFile.substring(debugFile.lastIndexOf('/') + 1))
+					}
+				}
+				fileinfo = debugLines.propath.search(debugFile.substring(0, debugFile.length - 2) + '.p')
+				if (!fileinfo) {
+					fileinfo = debugLines.propath.search(debugFile.substring(0, debugFile.length - 2) + '.cls')
+				}
+			}
 			if (fileinfo) {
 				debugUri = fileinfo.uri
 			} else {
