@@ -1,3 +1,11 @@
+# [1.0.6029](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.0.6029) - 2025-02-17
+
+
+ * Coverage by test case declarations (#255)
+
+
+**Full Changelog**: [1.0.6028...1.0.6029](https://github.com/kenherring/ablunit-test-runner/compare/1.0.6028...1.0.6029)
+
 # [1.0.6028](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.0.6028) - 2025-02-15
 
 If this release works it will quickly evolve like a Pokemon to be 1.1.0.
