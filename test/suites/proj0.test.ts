@@ -445,9 +445,6 @@ suite('proj0  - Extension Test Suite', () => {
 		assert.linesExecuted('src/overloadedMethods.cls', [17, 18, 19, 22, 23])
 		assert.linesNotExecuted('src/overloadedMethods.cls', [21])
 		const cov = (await commands.executeCommand('_ablunit.loadDetailedCoverage', toUri('src/overloadedMethods.cls'))) as FileCoverageDetail[]
-		// for (const c of cov) {
-		// 	log.info('c=' + JSON.stringify(c, null, 2))
-		// }
 
 		// validate we've captured the method header - executed declaration, starts are char 0
 		const methodName = cov.find(c => c instanceof DeclarationCoverage && c.name === 'methodName') as DeclarationCoverage
