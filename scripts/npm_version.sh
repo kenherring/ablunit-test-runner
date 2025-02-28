@@ -26,7 +26,7 @@ initialize () {
 	fi
 
 	PATCH=${PACKAGE_VERSION##*.}
-	if [ "$((PATCH % 2))" = "0" ]; then
+	if [ "$((PATCH % 2))" = "1" ]; then
 		PRERELEASE=true
 	fi
 }
