@@ -1,16 +1,8 @@
-# [1.0.6029](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.0.6029) - 2025-02-16
-
-
- * Don't display destructors as overloaded constructors (#252)
-
-
-**Full Changelog**: [1.0.6028...1.0.6029](https://github.com/kenherring/ablunit-test-runner/compare/1.0.6028...1.0.6029)
-
-# [1.0.6028](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.0.6028) - 2025-02-15
-
-If this release works it will quickly evolve like a Pokemon to be 1.1.0.
+# [1.1.0](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.1.0) - 2025-02-16
 
 ## Release Notes
+
+This release significantly improves the coverage reporting and leverages the native VSCode API to provide coverage attribution by test case.
 
 * Suggest enabling `testing.coverageToolbarEnabled` in your VSCode settings to get the full effect of the improved coverage reporting.
 * This release is more heavily dependent on rcode parsing for source mapping.
