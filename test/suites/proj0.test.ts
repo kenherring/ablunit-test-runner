@@ -503,4 +503,54 @@ suite('proj0  - Extension Test Suite', () => {
 		assert.tests.failed(0)
 	})
 
+	test('proj0.23 - destructor is not an overload', async () => {
+		await runTestsInFile('src/destructorClass.test.cls', 1, true)
+		const res = await getResults()
+
+		const profData = res[0].profileJson
+		const parents = res[0].profileJson.flatMap((p) => p.modules)
+		const childModules = parents.flatMap((p) => p.childModules)
+
+		const modules = childModules.filter(m => m.EntityName == 'destructorClass')
+		assert.equal(modules?.length, 2, 'modules.length')
+
+		assert.equal(modules[0].overloaded, false, 'modules[0].overloaded')
+		assert.equal(modules[0].Destructor, false, 'modules[0].Destructor')
+		assert.equal(modules[1].overloaded, false, 'modules[1].overloaded')
+		assert.equal(modules[1].Destructor, true, 'modules[1].Destructor')
+	})
+
+	test('proj 0.24 - search propath for destructorClass.test.r', async () => {
+		const res = await getResults()
+		const fileinfo1 = res[0].debugLines.propath.search('destructorClass.cls')
+		if (!fileinfo1) {
+			assert.fail('file not found in propath: destructorClass.cls')
+		}
+
+		const fileinfo2 = res[0].debugLines.propath.search('destructorClass.test.cls')
+		if (!fileinfo2) {
+			assert.fail('file not found in propath: destructorClass.test.cls')
+		}
+		// This should the proper assert, but the compiler has other ideas....
+		// assert.equals(fileinfo2?.rcodeUri.fsPath, toUri('src/destructorClass.test.r').fsPath)
+		assert.equal(fileinfo2?.rcodeUri.fsPath, toUri('src/destructorClass.r').fsPath)
+
+		const fileinfo3 = res[0].debugLines.propath.search('destructorClass.r')
+		if (!fileinfo3) {
+			assert.fail('file not found in propath: destructorClass.r')
+		}
+
+		const fileinfo4 = res[0].debugLines.propath.search('destructorClass.test.r')
+		if (!fileinfo4) {
+			assert.fail('file not found in propath: destructorClass.test.r')
+		}
+		assert.equal(fileinfo4?.uri.fsPath, toUri('src/destructorClass.test.cls').fsPath)
+
+		const fileinfo5 = res[0].debugLines.propath.search('destructorClass/test.r')
+		if (!fileinfo5) {
+			assert.fail('file not found in propath: destructorClass/test.r')
+		}
+		assert.equal(fileinfo5?.uri.fsPath, toUri('src/destructorClass.test.cls').fsPath)
+	})
+
 })
