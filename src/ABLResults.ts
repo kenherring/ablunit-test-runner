@@ -14,7 +14,7 @@ import { PropathParser } from 'ABLPropath'
 import { log } from 'ChannelLogger'
 import { RunStatus, ablunitRun } from 'ABLUnitRun'
 import { getDLC, IDlc } from 'parse/OpenedgeProjectParser'
-import { Duration, gatherAllTestItems } from 'ABLUnitCommon'
+import { Duration, gatherAllTestItems, sortLocation } from 'ABLUnitCommon'
 import { ITestObj } from 'parse/config/CoreOptions'
 import * as FileUtils from 'FileUtils'
 import { basename, dirname } from 'path'
@@ -595,37 +595,6 @@ export class ABLResults implements Disposable {
 		}
 	}
 
-	sortLocation (a: DeclarationCoverage | StatementCoverage, b: DeclarationCoverage | StatementCoverage) {
-		let startPosA: Position
-		let startPosB: Position
-		let endPosA: Position | undefined
-		let endPosB: Position | undefined
-
-		if (a.location instanceof Position) {
-			startPosA = a.location
-		} else {
-			startPosA = a.location.start
-		}
-		if (b.location instanceof Position) {
-			startPosB = b.location
-		} else {
-			startPosB = b.location.start
-		}
-
-		const compStart = startPosA.compareTo(startPosB)
-		if (compStart != 0) {
-			return compStart
-		}
-
-		if (a.location instanceof Range) {
-			endPosA = a.location.end
-		}
-		if (b.location instanceof Range) {
-			endPosB = b.location.end
-		}
-		return endPosA?.compareTo(endPosB ?? startPosB) ?? 0
-	}
-
 	setCoverage (module: IModule, item?: TestItem) {
 
 		const fileinfo = this.propath.search(module.incUri ?? module.SourceUri ?? module.SourceName)
@@ -683,6 +652,9 @@ export class ABLResults implements Disposable {
 					} else if (typeof d.executed == 'boolean' && typeof existing.executed == 'boolean') {
 						existing.executed = existing.executed || d.executed
 					}
+					if (existing.executed === false) {
+						existing.executed = 0
+					}
 				}
 			}
 
@@ -697,7 +669,8 @@ export class ABLResults implements Disposable {
 					const existing = fsc.find((s) => JSON.stringify(s.location) == JSON.stringify(c.location))
 					if (!existing) {
 						fsc.push(c)
-					} else  if (typeof existing.executed == 'number' && typeof c.executed == 'number') {
+						continue
+					} else if (typeof existing.executed == 'number' && typeof c.executed == 'number') {
 						existing.executed += c.executed
 					} else if (typeof existing.executed == 'boolean' && typeof c.executed == 'number') {
 						existing.executed = existing.executed || c.executed > 0
@@ -706,30 +679,23 @@ export class ABLResults implements Disposable {
 					} else if (typeof existing.executed == 'boolean' && typeof c.executed == 'boolean') {
 						existing.executed = existing.executed || c.executed
 					}
+					if (existing.executed === false) {
+						existing.executed = 0
+					}
 				}
 			}
 
 			if (item) {
-				for (const d of declarations) {
-					let tdcs = this.testDeclarations.get(item.id + ',' + incInfo.uri.fsPath)
-					if (!tdcs) {
-						tdcs = []
-					}
-					tdcs.push(JSON.parse(JSON.stringify(d)) as DeclarationCoverage)
-					this.testDeclarations.set(item.id + ',' + incInfo.uri.fsPath, tdcs)
-				}
-				for (const s of statements) {
-					let tscs = this.testStatements.get(item.id + ',' + incInfo.uri.fsPath)
-					if (!tscs) {
-						tscs = []
-					}
-					tscs.push(JSON.parse(JSON.stringify(s)) as StatementCoverage)
-					this.testStatements.set(item.id + ',' + incInfo.uri.fsPath, tscs)
-				}
-			}
+				const key = item.id + '|' + incInfo.uri.fsPath
 
-			fdc.sort((a, b) => this.sortLocation(a, b))
-			fsc.sort((a, b) => this.sortLocation(a, b))
+				let tdcs = this.testDeclarations.get(key) ?? []
+				tdcs.push(...declarations.map(d => new DeclarationCoverage(d.name, d.executed, d.location)))
+				this.testDeclarations.set(key, tdcs)
+
+				let tscs = this.testStatements.get(key) ?? []
+				tscs.push(...statements.map(s => new StatementCoverage(s.executed, s.location)))
+				this.testStatements.set(key, tscs)
+			}
 
 			const fcd: FileCoverageDetail[] = []
 			fcd.push(...fdc, ...fsc)

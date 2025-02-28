@@ -410,7 +410,7 @@ suite('proj0  - Extension Test Suite', () => {
 
 		for (const child of res[0].tests[0].children) {
 			const [testId, ] = child
-			const r = await commands.executeCommand('_loadDetailedCoverageForTest', toUri('src/test19.p'), testId).then((r) => {
+			const r = await commands.executeCommand('_ablunit.loadDetailedCoverageForTest', toUri('src/test19.p'), testId).then((r) => {
 				log.info('success')
 				return r
 			}, (e: unknown) => {
