@@ -11,7 +11,7 @@ import {
 	TestRun,
 	TestRunProfileKind, TestRunRequest,
 	TestTag,
-	TextDocument, TextDocumentChangeEvent, Uri, WorkspaceFolder,
+	TextDocument, Uri, WorkspaceFolder,
 	commands,
 	extensions,
 	languages,
@@ -26,7 +26,6 @@ import { ABLCompilerError, ABLUnitRuntimeError, TimeoutError } from 'Errors'
 import { basename } from 'path'
 import * as FileUtils from 'FileUtils'
 import { gatherAllTestItems, IExtensionTestReferences, sortLocation } from 'ABLUnitCommon'
-import { getDeclarationCoverage, getStatementCoverage } from 'parse/ProfileParser'
 import {
 	// InlineProvider,
 	SnippetProvider,
