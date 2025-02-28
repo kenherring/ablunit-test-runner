@@ -77,7 +77,7 @@ export function activate (context: ExtensionContext) {
 
 				return loadDetailedCoverage(currentTestRun, fileCoverage, new CancellationTokenSource().token)
 			}),
-			commands.registerCommand('_ablunit.loadDetailedCoverageForTest', (uri: Uri, testId: string) => {
+			commands.registerCommand('_ablunit.loadDetailedCoverageForTest', (uri: Uri, item: TestItem) => {
 				if (!currentTestRun) {
 					throw new Error('currentTestRun is undefined')
 				}
