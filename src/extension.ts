@@ -1,11 +1,12 @@
 import {
-	CancellationError, CancellationToken, CancellationTokenSource, ConfigurationChangeEvent, ExtensionContext,
+	CancellationError, CancellationToken, CancellationTokenSource, ConfigurationChangeEvent, DeclarationCoverage, ExtensionContext,
 	ExtensionMode,
 	FileCoverage,
 	FileCoverageDetail,
 	FileCreateEvent,
 	LogLevel,
 	Position, Range, RelativePattern, Selection,
+	StatementCoverage,
 	TestController, TestItem, TestItemCollection, TestMessage,
 	TestRun,
 	TestRunProfileKind, TestRunRequest,
@@ -24,7 +25,7 @@ import { minimatch } from 'minimatch'
 import { ABLCompilerError, ABLUnitRuntimeError, TimeoutError } from 'Errors'
 import { basename } from 'path'
 import * as FileUtils from 'FileUtils'
-import { gatherAllTestItems, IExtensionTestReferences } from 'ABLUnitCommon'
+import { gatherAllTestItems, IExtensionTestReferences, sortLocation } from 'ABLUnitCommon'
 import { getDeclarationCoverage, getStatementCoverage } from 'parse/ProfileParser'
 import {
 	// InlineProvider,
@@ -51,7 +52,7 @@ export function activate (context: ExtensionContext) {
 
 	context.subscriptions.push(ctrl)
 	// languages.registerInlineCompletionItemProvider({ language: 'abl'}, new InlineProvider())
-	languages.registerCompletionItemProvider({ language: 'abl'}, new SnippetProvider())
+	languages.registerCompletionItemProvider({ language: 'abl', scheme: "file" }, new SnippetProvider())
 
 	log.info('process.env[\'ABLUNIT_TEST_RUNNER_UNIT_TESTING\']=' + process.env['ABLUNIT_TEST_RUNNER_UNIT_TESTING'])
 	if (process.env['ABLUNIT_TEST_RUNNER_UNIT_TESTING']) {
@@ -76,7 +77,6 @@ export function activate (context: ExtensionContext) {
 
 				return loadDetailedCoverage(currentTestRun, fileCoverage, new CancellationTokenSource().token)
 			}),
-
 			commands.registerCommand('_ablunit.loadDetailedCoverageForTest', (uri: Uri, testId: string) => {
 				if (!currentTestRun) {
 					throw new Error('currentTestRun is undefined')
@@ -87,16 +87,7 @@ export function activate (context: ExtensionContext) {
 					throw new Error('fileCoverage not found for ' + uri.fsPath)
 				}
 
-				const tests = []
-				for (const test of recentResults[0].tests) {
-					tests.push(test, ...gatherTestItems(test.children))
-				}
-				const fromTest = tests.find((a) => a.id == testId)
-				if (!fromTest) {
-					throw new Error('TestItem not found for ' + testId)
-				}
-
-				return loadDetailedCoverageForTest(currentTestRun, fileCoverage, fromTest, new CancellationTokenSource().token)
+				return loadDetailedCoverage(currentTestRun, fileCoverage, new CancellationTokenSource().token)
 			})
 		)
 	}
@@ -105,25 +96,21 @@ export function activate (context: ExtensionContext) {
 		commands.registerCommand('_ablunit.openCallStackItem', openCallStackItem),
 		workspace.onDidChangeConfiguration(e => { return updateConfiguration(e) }),
 		workspace.onDidOpenTextDocument(e => {
-			if (e.uri.scheme != 'file') {
-				return
-			}
-			if (workspace.getWorkspaceFolder(e.uri) === undefined) {
-				return
-			}
-
+			log.debug('onDidOpenTextDocument ' + e.uri.fsPath)
 			return createOrUpdateFile(ctrl, e.uri, true)
 		}),
-		workspace.onDidChangeTextDocument(e => { return didChangeTextDocument(e, ctrl) }),
+		workspace.onDidSaveTextDocument(e => {
+			log.debug('onDidSaveTextDocument ' + e.uri.fsPath)
+			return createOrUpdateFile(ctrl, e.uri, true)
+		}),
 		workspace.onDidCreateFiles(e => {
-			log.info('workspace.onDidCreate ' + e.files[0].fsPath)
+			log.debug('workspace.onDidCreate ' + e.files[0].fsPath)
 			return createOrUpdateFile(ctrl, e, true)
 		}),
 		workspace.onDidDeleteFiles(e => {
-			log.info('workspace.onDidDelete ' + e.files[0].fsPath)
+			log.debug('workspace.onDidDelete ' + e.files[0].fsPath)
 			return deleteTestsInFiles(ctrl, e.files)
 		}),
-		// ...startWatchingWorkspace(ctrl),
 	)
 
 
@@ -163,49 +150,9 @@ export function activate (context: ExtensionContext) {
 			})
 	}
 
-	const loadDetailedCoverageForTest = async (
-		testRun: TestRun,
-		fileCoverage: FileCoverage,
-		fromTestItem: TestItem,
-		// eslint-disable-next-line @typescript-eslint/require-await, require-await
-		token: CancellationToken): Promise<FileCoverageDetail[]> => {
+	const loadDetailedCoverageForTest = async (testRun: TestRun, fileCoverage: FileCoverage, item: TestItem, _token: CancellationToken) => {
 
-		const ret: FileCoverageDetail[] = []
-
-		const results = resultData.get(testRun)
-		if (!results) {
-			log.error('test run has no associated results')
-			throw new Error('test run has no associated results')
-		}
-
-		for (const res of results) {
-			if (token.isCancellationRequested) {
-				log.error('loadDetailedCoverageForTest - cancellation requested')
-				throw new CancellationError()
-			}
-
-			const profJson = res.itemProfileMap.get(fromTestItem)
-			if (!profJson) {
-				log.warn('profJson not found for test item ' + fromTestItem.id)
-				continue
-			}
-
-			const modules = [...profJson.modules, ...profJson.modules.flatMap(m => m.childModules)]
-			for (const m of modules) {
-				const dc = getDeclarationCoverage(m, fileCoverage.uri)
-				ret.push(...dc)
-				const sc = getStatementCoverage(m.lines, fileCoverage.uri)
-				ret.push(...sc)
-			}
-		}
-		for (const r of ret) {
-			log.info('r=' + JSON.stringify(r))
-		}
-
-		return ret
-	}
-
-	const loadDetailedCoverage = (testRun: TestRun, fileCoverage: FileCoverage, _token: CancellationToken) => {
+		log.info('loadDetailedCoverageForTest uri=' + fileCoverage.uri + ' testId=' + item.id)
 		const ret: FileCoverageDetail[] = []
 		const results = resultData.get(testRun) ?? recentResults
 		if (!results) {
@@ -214,17 +161,66 @@ export function activate (context: ExtensionContext) {
 		}
 
 		for (const result of results) {
-			const lc = result.statementCoverage.get(fileCoverage.uri.fsPath)
-			if (lc) {
-				ret.push(...lc)
-			}
-			const dc = result.declarationCoverage.get(fileCoverage.uri.fsPath)
-			if (dc) {
-				ret.push(...dc)
+
+			const key = item.id + '|' + fileCoverage.uri.fsPath
+
+			const lc = result.testStatements.get(key) ?? []
+			lc.sort((a, b) => sortLocation(a, b))
+			ret.push(...lc)
+
+			const dc = result.testDeclarations.get(key) ?? []
+			dc.sort((a, b) => sortLocation(a, b))
+			ret.push(...dc)
+		}
+		log.info('ret.length=' + ret.length)
+		for (const r of ret) {
+			if (r instanceof StatementCoverage) {
+				const first = r
+				log.info('s loc=' + (first.location instanceof Position ? first.location.line : first.location.start.line) + ' ' + JSON.stringify(r))
+			} else if (r instanceof DeclarationCoverage) {
+				const first = r
+				log.info('d loc=' + (first.location instanceof Position ? first.location.line : first.location.start.line) + ' ' + JSON.stringify(r))
+			} else {
+				log.error('not FileCoverageDetail! ' + JSON.stringify(r))
+				throw new Error('not FileCoverageDetail! ' + JSON.stringify(r))
 			}
 		}
+		return ret
+	}
 
-		return Promise.resolve(ret)
+	const loadDetailedCoverage = async (testRun: TestRun, fileCoverage: FileCoverage, _token: CancellationToken) => {
+		const ret: FileCoverageDetail[] = []
+		const results = resultData.get(testRun) ?? recentResults
+		if (!results) {
+			log.error('test run has no associated results')
+			throw new Error('test run has no associated results')
+		}
+
+		const stat = workspace.fs.stat(fileCoverage.uri)
+		log.info('stat=' + JSON.stringify(stat))
+
+		for (const result of results) {
+			const lc = result.statementCoverage.get(fileCoverage.uri.fsPath) ?? []
+			lc.sort((a, b) => sortLocation(a, b))
+			ret.push(...lc)
+			const dc = result.declarationCoverage.get(fileCoverage.uri.fsPath) ?? []
+			dc.sort((a, b) => sortLocation(a, b))
+			ret.push(...dc)
+		}
+		log.info('ret.length=' + ret.length)
+		for (const r of ret) {
+			if (r instanceof StatementCoverage) {
+				const first = r
+				log.info('s loc=' + (first.location instanceof Position ? first.location.line : first.location.start.line))
+			} else if (r instanceof DeclarationCoverage) {
+				const first = r
+				log.info('d loc=' + (first.location instanceof Position ? first.location.line : first.location.start.line))
+			} else {
+				log.error('not FileCoverageDetail! ' + JSON.stringify(r))
+				throw new Error('not FileCoverageDetail! ' + JSON.stringify(r))
+			}
+		}
+		return ret
 	}
 
 	async function openTestRunConfig () {
@@ -512,19 +508,13 @@ export function activate (context: ExtensionContext) {
 		return Promise.resolve()
 	}
 
-	// ctrl.invalidateTestResults = (items?: TestItem | readonly TestItem[]) => {
-	// 	log.info('ctrl.invalidateTestResults')
-	// 	if (items instanceof Array) {
-	// 		log.info(' - items.length=' + items.length)
-	// 		for(let i=0; i < items.length; i++) {
-	// 			log.info(' - itesm[' + i + '].id=' + items[i].id)
-	// 		}
-	// 	} else {
-	// 		log.info(' - items.id=' + items?.id)
-	// 	}
-	// }
-
-
+	ctrl.invalidateTestResults = (items?: TestItem | readonly TestItem[]) => {
+		if (items instanceof Array) {
+			log.info('ctrl.invalidateTestResults items.length=' + items.length)
+		} else {
+			log.info('ctrl.invalidateTestResults items.id=' + items?.id)
+		}
+	}
 
 	ctrl.refreshHandler = (token: CancellationToken) => {
 		log.info('ctrl.refreshHandler start')
@@ -615,12 +605,12 @@ function updateNode (uri: Uri, ctrl: TestController) {
 	})
 }
 
-function didChangeTextDocument (e: TextDocumentChangeEvent, ctrl: TestController) {
-	if (e.document.languageId == 'log') {
+function didChangeTextDocument (e: TextDocument, ctrl: TestController) {
+	if (e.languageId == 'log') {
 		return Promise.resolve()
 	}
 
-	return updateNode(e.document.uri, ctrl)
+	return updateNode(e.uri, ctrl)
 }
 
 export function setContextPaths (storageUri: Uri) {
@@ -1090,7 +1080,7 @@ function createOrUpdateFile (controller: TestController, e: Uri | FileCreateEven
 
 	let uris: Uri[] = []
 	if (e instanceof Uri) {
-		if (e.scheme !== 'file') {
+		if (e.scheme !== 'file' || workspace.getWorkspaceFolder(e) === undefined) {
 			return Promise.resolve(false)
 		}
 		uris.push(e)
