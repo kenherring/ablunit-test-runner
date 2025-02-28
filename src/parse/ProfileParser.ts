@@ -32,18 +32,17 @@ export class ABLProfile {
 		const lines = FileUtils.readLinesFromFileSync(uri)
 
 		const sectionLines: string[][] = []
-		let linesArr: string[] = []
-		let currentSection: number
-		sectionLines[0] = []
-		currentSection = 1
+		let currentSection: number = 0
+		sectionLines[currentSection] = []
+		currentSection++
+		sectionLines[currentSection] = []
 
 		for (let lineNo = 0; lineNo < lines.length; lineNo++) {
 			if(lines[lineNo] === '.' && (currentSection != 6 || lines[lineNo + 1] === '.')) {
-				sectionLines[currentSection] = linesArr
 				currentSection++
-				linesArr = []
+				sectionLines[currentSection] = []
 			} else {
-				linesArr[linesArr.length] = lines[lineNo]
+				sectionLines[currentSection].push(lines[lineNo])
 			}
 		}
 
@@ -51,40 +50,45 @@ export class ABLProfile {
 		this.profJSON = new ABLProfileJson(uri, sectionLines[1], debugLines, ignoreExternalCoverage)
 		log.debug('section2 ' + sectionLines[2].length)
 		this.profJSON.addModules(sectionLines[2])
-		await this.profJSON.addSourceMap()
-		log.debug('section3 ' + sectionLines[3].length)
-		this.profJSON.addCallTree(sectionLines[3])
-		log.debug('section4 ' + sectionLines[4].length)
-		this.profJSON.addLineSummary(sectionLines[4])
-		log.debug('section5 ' + sectionLines[5].length)
-		this.profJSON.addTracing(sectionLines[5])
+		if (this.profJSON.modules.length > 0) { // all modules excluded
+			await this.profJSON.addSourceMap()
+			log.debug('section3 ' + sectionLines[3].length)
+			this.profJSON.addCallTree(sectionLines[3])
+			log.debug('section4 ' + sectionLines[4].length)
+			this.profJSON.addLineSummary(sectionLines[4])
+			log.debug('section5 ' + sectionLines[5].length)
+			this.profJSON.addTracing(sectionLines[5])
 
-		if (sectionLines.length > 6) {
-			log.debug('section6 ' + sectionLines[6].length)
-			this.profJSON.addCoverage(sectionLines[6])
+			if (sectionLines.length > 6) {
 
-			if (this.parseAll && sectionLines.length > 7) {
-				log.debug('section7 ' + sectionLines[7].length)
-				this.profJSON.addSection7(sectionLines[7])
-				log.debug('sectionLines.length=' + sectionLines.length)
-				if(sectionLines.length > 11) {
-					log.debug('section8 ' + sectionLines[8].length)
-					this.profJSON.addSection8(sectionLines[8])
-					log.debug('section9 ' + sectionLines[9].length)
-					this.profJSON.addSection9(sectionLines[9])
-					log.debug('section10 ' + sectionLines[10].length)
-					this.profJSON.addSection10(sectionLines[10])
-					log.debug('section11 ' + sectionLines[11].length)
-					this.profJSON.addSection11(sectionLines[11])
-					log.debug('section12 ' + sectionLines[12].length)
-					this.profJSON.addSection12(sectionLines[12])
-					log.debug('section13 ' + sectionLines[13].length + ' (User Data)')
-					this.profJSON.addUserData(sectionLines[13])
-				} else {
-					log.debug('section12 ' + sectionLines[8].length)
-					this.profJSON.addSection12(sectionLines[8])
-					log.debug('section13 ' + sectionLines[9].length + ' (User Data)')
-					this.profJSON.addUserData(sectionLines[9])
+				if (sectionLines[6].length > 0) {
+					log.debug('section6 ' + sectionLines[6].length)
+					this.profJSON.addCoverage(sectionLines[6])
+				}
+
+				if (this.parseAll && sectionLines.length > 7) {
+					log.debug('section7 ' + sectionLines[7].length)
+					this.profJSON.addSection7(sectionLines[7])
+					log.debug('sectionLines.length=' + sectionLines.length)
+					if(sectionLines.length > 11) {
+						log.debug('section8 ' + sectionLines[8].length)
+						this.profJSON.addSection8(sectionLines[8])
+						log.debug('section9 ' + sectionLines[9].length)
+						this.profJSON.addSection9(sectionLines[9])
+						log.debug('section10 ' + sectionLines[10].length)
+						this.profJSON.addSection10(sectionLines[10])
+						log.debug('section11 ' + sectionLines[11].length)
+						this.profJSON.addSection11(sectionLines[11])
+						log.debug('section12 ' + sectionLines[12].length)
+						this.profJSON.addSection12(sectionLines[12])
+						log.debug('section13 ' + sectionLines[13].length + ' (User Data)')
+						this.profJSON.addUserData(sectionLines[13])
+					} else {
+						log.debug('section12 ' + sectionLines[8].length)
+						this.profJSON.addSection12(sectionLines[8])
+						log.debug('section13 ' + sectionLines[9].length + ' (User Data)')
+						this.profJSON.addUserData(sectionLines[9])
+					}
 				}
 			}
 		}
@@ -97,7 +101,6 @@ export class ABLProfile {
 			}
 		}
 
-		log.debug('parsing profiler data complete (modules.length=' + this.profJSON.modules.length + ')')
 		if (writeJson) {
 			const jsonUri = Uri.file(uri.fsPath.replace(/\.[a-zA-Z]+$/, '.json'))
 			// eslint-disable-next-line promise/catch-or-return
@@ -109,7 +112,7 @@ export class ABLProfile {
 			})
 		}
 		log.debug('parseData returning')
-		this.profJSON.endParse()
+		this.profJSON.endParse(uri)
 		return this.profJSON
 	}
 
@@ -326,8 +329,9 @@ export class ABLProfileJson {
 		}
 	}
 
-	endParse () {
+	endParse (uri: Uri) {
 		this.parseDuration.stop()
+		log.info('parsed profiler output file ' + uri.fsPath + ' in ' + this.parseDuration.elapsed() + 'ms (modules.length=' + this.modules.length + ')')
 	}
 
 	isIgnored (sourceName: string) {
@@ -1218,6 +1222,9 @@ export function getDeclarationCoverage (module: IModule, onlyUri: Uri) {
 				} else {
 					executed = mod.lines.find(l => l.ExecCount > 0) != undefined
 				}
+			}
+			if (executed === false) {
+				executed = 0
 			}
 			fdc.push(new DeclarationCoverage(name, executed, range))
 		}
