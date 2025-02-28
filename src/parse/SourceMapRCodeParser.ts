@@ -237,7 +237,9 @@ export const getSourceMapFromRCode = (propath: PropathParser, uri: Uri) => {
 	}
 
 	const getSourceName = (num: number) => {
+		log.info('sources.length=' + sources.length + ', num=' + num)
 		for (const src of sources) {
+			log.info('src.sourceNum=' + src.sourceNum + ', src.sourceName=' + src.sourceName)
 			if (src.sourceNum === num) {
 				return src.sourceName
 			}
@@ -247,7 +249,9 @@ export const getSourceMapFromRCode = (propath: PropathParser, uri: Uri) => {
 
 
 	const getSourceUri = (num: number) => {
+		log.info('sources.length=' + sources.length + ', num=' + num)
 		for (const src of sources) {
+			log.info('src.sourceNum=' + src.sourceNum + ', src.sourceName=' + src.sourceName)
 			if (src.sourceNum === num) {
 				return src.sourceUri
 			}

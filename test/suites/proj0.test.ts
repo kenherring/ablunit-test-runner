@@ -531,7 +531,7 @@ suite('proj0  - Extension Test Suite', () => {
 		if (!fileinfo2) {
 			assert.fail('file not found in propath: destructorClass.test.cls')
 		}
-		// This should the proper assert, but the compiler has other ideas....
+		// This should the result, but the compiler has other ideas....
 		// assert.equals(fileinfo2?.rcodeUri.fsPath, toUri('src/destructorClass.test.r').fsPath)
 		assert.equal(fileinfo2?.rcodeUri.fsPath, toUri('src/destructorClass.r').fsPath)
 
