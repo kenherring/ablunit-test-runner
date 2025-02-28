@@ -1,8 +1,6 @@
 # [1.1.1](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.1.1) - 2025-02-28 (pre-release)
 
-
- * 
-
+* Add test case for capturing declaration header in the declaration range (#254)
 
 **Full Changelog**: [1.1.0...1.1.1](https://github.com/kenherring/ablunit-test-runner/compare/1.1.0...1.1.1)
 
