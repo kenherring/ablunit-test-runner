@@ -688,11 +688,11 @@ export class ABLResults implements Disposable {
 			if (item) {
 				const key = item.id + '|' + incInfo.uri.fsPath
 
-				let tdcs = this.testDeclarations.get(key) ?? []
+				const tdcs = this.testDeclarations.get(key) ?? []
 				tdcs.push(...declarations.map(d => new DeclarationCoverage(d.name, d.executed, d.location)))
 				this.testDeclarations.set(key, tdcs)
 
-				let tscs = this.testStatements.get(key) ?? []
+				const tscs = this.testStatements.get(key) ?? []
 				tscs.push(...statements.map(s => new StatementCoverage(s.executed, s.location)))
 				this.testStatements.set(key, tscs)
 			}

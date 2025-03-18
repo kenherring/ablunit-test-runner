@@ -11,7 +11,7 @@ import {
 	TestRun,
 	TestRunProfileKind, TestRunRequest,
 	TestTag,
-	TextDocument, TextDocumentChangeEvent, Uri, WorkspaceFolder,
+	TextDocument, Uri, WorkspaceFolder,
 	commands,
 	extensions,
 	languages,
@@ -26,7 +26,6 @@ import { ABLCompilerError, ABLUnitRuntimeError, TimeoutError } from 'Errors'
 import { basename } from 'path'
 import * as FileUtils from 'FileUtils'
 import { gatherAllTestItems, IExtensionTestReferences, sortLocation } from 'ABLUnitCommon'
-import { getDeclarationCoverage, getStatementCoverage } from 'parse/ProfileParser'
 import {
 	// InlineProvider,
 	SnippetProvider,
@@ -52,7 +51,7 @@ export function activate (context: ExtensionContext) {
 
 	context.subscriptions.push(ctrl)
 	// languages.registerInlineCompletionItemProvider({ language: 'abl'}, new InlineProvider())
-	languages.registerCompletionItemProvider({ language: 'abl', scheme: "file" }, new SnippetProvider())
+	languages.registerCompletionItemProvider({ language: 'abl', scheme: 'file' }, new SnippetProvider())
 
 	log.info('process.env[\'ABLUNIT_TEST_RUNNER_UNIT_TESTING\']=' + process.env['ABLUNIT_TEST_RUNNER_UNIT_TESTING'])
 	if (process.env['ABLUNIT_TEST_RUNNER_UNIT_TESTING']) {
@@ -150,7 +149,7 @@ export function activate (context: ExtensionContext) {
 			})
 	}
 
-	const loadDetailedCoverageForTest = async (testRun: TestRun, fileCoverage: FileCoverage, item: TestItem, _token: CancellationToken) => {
+	const loadDetailedCoverageForTest = (testRun: TestRun, fileCoverage: FileCoverage, item: TestItem, _token: CancellationToken) => {
 
 		log.info('loadDetailedCoverageForTest uri=' + fileCoverage.uri + ' testId=' + item.id)
 		const ret: FileCoverageDetail[] = []
@@ -185,10 +184,10 @@ export function activate (context: ExtensionContext) {
 				throw new Error('not FileCoverageDetail! ' + JSON.stringify(r))
 			}
 		}
-		return ret
+		return Promise.resolve(ret)
 	}
 
-	const loadDetailedCoverage = async (testRun: TestRun, fileCoverage: FileCoverage, _token: CancellationToken) => {
+	const loadDetailedCoverage = (testRun: TestRun, fileCoverage: FileCoverage, _token: CancellationToken) => {
 		const ret: FileCoverageDetail[] = []
 		const results = resultData.get(testRun) ?? recentResults
 		if (!results) {
@@ -220,7 +219,7 @@ export function activate (context: ExtensionContext) {
 				throw new Error('not FileCoverageDetail! ' + JSON.stringify(r))
 			}
 		}
-		return ret
+		return Promise.resolve(ret)
 	}
 
 	async function openTestRunConfig () {
@@ -603,14 +602,6 @@ function updateNode (uri: Uri, ctrl: TestController) {
 		log.debug('updateFromContents item.id=' + item.id)
 		return data.updateFromContents(ctrl, contents, item)
 	})
-}
-
-function didChangeTextDocument (e: TextDocument, ctrl: TestController) {
-	if (e.languageId == 'log') {
-		return Promise.resolve()
-	}
-
-	return updateNode(e.uri, ctrl)
 }
 
 export function setContextPaths (storageUri: Uri) {

@@ -26,8 +26,8 @@ body:
       required: true
   - type: textarea
     attributes:
-      label: Chore Description
+      label: Bug Description
       value: |
-        Describe the chore...
+        Describe the bug...
     validations:
       required: true

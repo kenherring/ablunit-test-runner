@@ -65,12 +65,9 @@
 	"categories": [
 		"Testing"
 	],
-	"activationEvents-other": [
+	"activationEvents": [
 		"onStartupFinished",
 		"workspaceContains:{**/*.cls,**/*.p,.vscode/ablunit-test-profile.json}"
-	],
-	"activationEvents": [
-		"onStartupFinished"
 	],
 	"main": "./dist/extension.js",
 	"scripts": {

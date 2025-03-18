@@ -32,7 +32,7 @@ export class ABLProfile {
 		const lines = FileUtils.readLinesFromFileSync(uri)
 
 		const sectionLines: string[][] = []
-		let currentSection: number = 0
+		let currentSection = 0
 		sectionLines[currentSection] = []
 		currentSection++
 		sectionLines[currentSection] = []
