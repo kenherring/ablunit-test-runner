@@ -8,6 +8,8 @@
 				"executable": "_progres",
 				"progressIni": "progress.ini",
 				"batch": true,
+				"debugHost": "localhost",
+				"debugPort": 3199,
 				"additionalArgs": []
 			},
 			"options": {
