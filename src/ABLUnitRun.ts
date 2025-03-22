@@ -251,7 +251,7 @@ function runCommand (res: ABLResults, options: TestRun, cancellation: Cancellati
 			log.error('\t\t[stderr] ' + data.toString().trim().replace(/\n/g, '\n\t\t[stderr] '), {testRun: options, testItem: currentTestItem})
 		})
 		process.stdout?.on('data', (data: Buffer) => {
-			stdout = stdout + data.toString()
+			stdout = stdout + '\n' + data.toString()
 			let lines = stdout.split('\n')
 			if (lines[lines.length - 1] == '') {
 				lines.pop()
