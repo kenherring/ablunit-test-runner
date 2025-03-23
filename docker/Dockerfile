@@ -47,6 +47,4 @@ RUN mkdir -p ~/.vscode-test
 RUN pipx install yq
 ENV PATH=$PATH:/root/.local/bin
 
-
-
 WORKDIR /home/circleci/project
