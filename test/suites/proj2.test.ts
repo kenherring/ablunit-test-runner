@@ -104,7 +104,7 @@ suite('proj2 - Extension Test Suite', () => {
 		assert.tests.count(1)
 	})
 
-	test('proj2.7 - debugger',  () => {
+	test('proj2.7 - debugger', () => {
 		return runTestsInFile('src/cache/otherTestProcedure.p', 1, TestRunProfileKind.Debug)
 			.then(() => {
 				assert.tests.count(3)
