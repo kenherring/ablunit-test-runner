@@ -89,6 +89,9 @@
 		"version": "sh -c scripts/npm_version.sh",
 		"watch": "npm run build -- --watch"
 	},
+	"extensionDependencies": [
+		"riversidesoftware.openedge-abl-lsp"
+	],
 	"dependencies": {
 		"minimatch": "^10.0.1",
 		"node-json-minify": "^3.0.0",
@@ -159,11 +162,6 @@
 					],
 					"markdownDescription": "Glob patterns to exclude test files",
 					"scope": "machine-overridable"
-				},
-				"ablunit.importOpenedgeProjectJson": {
-					"type": "boolean",
-					"default": true,
-					"markdownDescription": "Import configuration from `openedge-project.json` when possible"
 				}
 			}
 		},
