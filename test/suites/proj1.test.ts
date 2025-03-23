@@ -37,7 +37,7 @@ suite('proj1 - Extension Test Suite', () => {
 		])
 	})
 
-	test('proj1.1 - output files exist 1 - compile error', () => {
+	test('proj1.1 - output files exist 1 - compile error', async () => {
 		const ablunitJson = Uri.joinPath(workspaceUri, 'ablunit.json')
 		const resultsXml = Uri.joinPath(workspaceUri, 'results.xml')
 		const resultsJson = Uri.joinPath(workspaceUri, 'results.json')
@@ -73,7 +73,7 @@ suite('proj1 - Extension Test Suite', () => {
 				assert.notFileExists(resultsJson)
 				log.info('assert proj1.1 complete!')
 			})
-		return prom
+		await prom
 	})
 
 	test('proj1.2 - output files exist 2 - exclude compileError*.p', () => {

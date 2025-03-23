@@ -1014,7 +1014,7 @@ export async function getResults (len = 1, tag?: string): Promise<ABLResults[]> 
 		}
 	}
 	if (len !=0 && !recentResults) {
-		throw new Error('recentResults is null')
+		throw new Error('recentResults is undefined')
 	}
 	if (recentResults && recentResults.length < len) {
 		throw new Error('recent results should be >= ' + len + ' but is ' + recentResults.length)

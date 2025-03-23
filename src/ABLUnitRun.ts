@@ -251,18 +251,17 @@ function runCommand (res: ABLResults, options: TestRun, cancellation: Cancellati
 			log.error('\t\t[stderr] ' + data.toString().trim().replace(/\n/g, '\n\t\t[stderr] '), {testRun: options, testItem: currentTestItem})
 		})
 		process.stdout?.on('data', (data: Buffer) => {
-			stdout = stdout + '\n' + data.toString()
-			let lines = stdout.split('\n')
+			const lines = (stdout + data.toString()).replace('/\r/g', '').split('\n')
 			if (lines[lines.length - 1] == '') {
+				stdout = ''
 				lines.pop()
 			} else {
-				stdout = lines.pop() ?? ''
+				stdout = lines[lines.length - 1]
 			}
 			for (let i=0; i < lines.length; i++) {
 				let line = lines[i]
 				if (line.startsWith('ABLUNIT_STATUS=SERIALIZED_ERROR ')) {
-					const compilerError = JSON.parse(line.substring(32)) as ICompilerError
-					compilerErrors.push(compilerError)
+					compilerErrors.push(JSON.parse(line.substring(32)) as ICompilerError)
 					continue
 				} else if (line.startsWith('ABLUNIT_STATUS=')) {
 					let ablunitStatus: IABLUnitStatus
@@ -303,8 +302,6 @@ function runCommand (res: ABLResults, options: TestRun, cancellation: Cancellati
 				lines[i] = '<<LOGGED>>'
 			}
 
-			lines = lines.filter(line => line != '<<LOGGED>>')
-			stdout = lines.join('\n')
 		})
 		process.once('spawn', () => {
 			log.debug('spawn', {testRun: options})
@@ -335,12 +332,6 @@ function runCommand (res: ABLResults, options: TestRun, cancellation: Cancellati
 				log.info('----- ABLUnit Test Run Timeout - ' + res.cfg.ablunitConfig.timeout + 'ms ----- ' + testRunDuration, {testRun: options, testItem: currentTestItem })
 				const e = new TimeoutError('ABLUnit process timeout', testRunDuration, res.cfg.ablunitConfig.timeout, cmd)
 				reject(e)
-			}
-			if (process.killed || signal) {
-				res.setStatus(RunStatus.Killed, 'signal=' + signal)
-				log.info('----- ABLUnit Test Run Killed - (signal=' + signal + ') ----- ' + testRunDuration, {testRun: options, testItem: currentTestItem })
-				const e = new ABLUnitRuntimeError('ABLUnit process killed', 'exit_code=' + code + '; signal=' + signal, cmd)
-				reject(e)
 				return e
 			}
 
@@ -358,7 +349,14 @@ function runCommand (res: ABLResults, options: TestRun, cancellation: Cancellati
 				log.info('----- ABLUnit Test Run Failed (exit_code=' + code + ') ----- ' + testRunDuration, {testRun: options, testItem: currentTestItem })
 				const e = new ABLUnitRuntimeError('ABLUnit exit_code=' + code, 'ABLUnit exit_code=' + code + '; signal=' + signal, cmd)
 				reject(e)
-				return
+				return e
+			}
+
+			if (process.killed || signal) {
+				res.setStatus(RunStatus.Killed, 'signal=' + signal)
+				const e = new ABLUnitRuntimeError('ABLUnit process killed', 'exit_code=' + code + '; signal=' + signal, cmd)
+				reject(e)
+				return e
 			}
 
 			res.setStatus(RunStatus.Complete, 'success')

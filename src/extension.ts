@@ -516,14 +516,6 @@ export function activate (context: ExtensionContext) {
 		return Promise.resolve()
 	}
 
-	ctrl.invalidateTestResults = (items?: TestItem | readonly TestItem[]) => {
-		if (items instanceof Array) {
-			log.info('ctrl.invalidateTestResults items.length=' + items.length)
-		} else {
-			log.info('ctrl.invalidateTestResults items.id=' + items?.id)
-		}
-	}
-
 	ctrl.refreshHandler = (token: CancellationToken) => {
 		log.info('ctrl.refreshHandler start')
 		isRefreshTestsComplete = false
