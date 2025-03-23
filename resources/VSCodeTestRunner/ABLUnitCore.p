@@ -71,7 +71,14 @@ procedure waitForDebuggerVisible :
 	if debugger:visible then
 		message 'Debugger connected!'.
 	else
+	do:
+		if os-getenv('ABLUNIT_TEST_RUNNER_UNIT_TESTING') = 'true' or
+			os-getenv('ABLUNIT_TEST_RUNNER_UNIT_TESTING') = '1' then
+		do:
+			undo, throw new Progress.Lang.AppError("Debugger not connected - exit with code 1 to indicate unit test failure", 99).
+		end.
 		message 'Debugger not connected - continuing with test execution'.
+	end.
 end procedure.
 
 procedure printPropath :

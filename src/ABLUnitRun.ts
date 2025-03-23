@@ -9,6 +9,7 @@ import { globSync } from 'glob'
 import * as fs from 'fs'
 import * as FileUtils from 'FileUtils'
 import { ABLCompilerError, ABLUnitRuntimeError, ICompilerError, TimeoutError } from 'Errors'
+import { sleep2 } from '../test/testCommon'
 
 interface IABLUnitStatus {
 	action: string,
@@ -83,6 +84,7 @@ export async function ablunitRun (options: TestRun, res: ABLResults, cancellatio
 	await runCommand(res, options, cancellation)
 		.then((r) => {
 			log.info('runCommand complete (r=' + r + ')')
+			return r
 		}, (e: unknown) => {
 			log.info('runCommand threw error! e=' + e)
 			throw e
@@ -247,16 +249,19 @@ function runCommand (res: ABLResults, options: TestRun, cancellation: Cancellati
 		let debuggerStarted = false
 
 		process.stderr?.on('data', (data: Buffer) => {
-			log.debug('stderr', {testRun: options})
+			log.debug('stderr')
 			log.error('\t\t[stderr] ' + data.toString().trim().replace(/\n/g, '\n\t\t[stderr] '), {testRun: options, testItem: currentTestItem})
 		})
 		process.stdout?.on('data', (data: Buffer) => {
+			log.debug('stdout')
 			const lines = (stdout + data.toString()).replace('/\r/g', '').split('\n')
 			if (lines[lines.length - 1] == '') {
 				stdout = ''
 				lines.pop()
+				log.debug('pop blank line')
 			} else {
 				stdout = lines[lines.length - 1]
+				log.debug('stdout savePartialLine=\'' + stdout + '\'')
 			}
 			for (let i=0; i < lines.length; i++) {
 				let line = lines[i]
@@ -286,10 +291,17 @@ function runCommand (res: ABLResults, options: TestRun, cancellation: Cancellati
 
 					// eslint-disable-next-line promise/catch-or-return
 					debug.startDebugging(res.cfg.ablunitConfig.workspaceFolder, debugLaunchProfile)
-						.then(() => {
-							log.info('Debugger started', {testRun: options})
+						.then((r: boolean) => {
+							log.info('Debugger started=' + r)
+							return r
+						}).then((r) => {
+							log.debug('activeDebugSession=' + (debug.activeDebugSession ? true : false))
+							if (!debug.activeDebugSession) {
+								throw new Error('activeDebugSession not found after starting debugger')
+							}
+							return r
 						}, (e: unknown) => {
-							log.error('Debugger failed to start: ' + e, {testRun: options})
+							log.error('Debugger failed to start, continuing with test execution (e=' + e + ')', {testRun: options})
 						})
 				}
 
@@ -301,6 +313,7 @@ function runCommand (res: ABLResults, options: TestRun, cancellation: Cancellati
 				log.info(line, {testRun: options, testItem: currentTestItem})
 				lines[i] = '<<LOGGED>>'
 			}
+			log.debug('stdout DONE')
 
 		})
 		process.once('spawn', () => {

@@ -1,4 +1,5 @@
-import { assert, getResults, getWorkspaceUri, log, runAllTests, suiteSetupCommon, Uri, commands, beforeCommon, toUri, FileUtils, selectProfile, runTestsInFile, oeVersion } from '../testCommon'
+import {  debug, Location, Position, SourceBreakpoint } from 'vscode'
+import { assert, getResults, getWorkspaceUri, log, runAllTests, suiteSetupCommon, Uri, commands, beforeCommon, toUri, FileUtils, selectProfile, runTestsInFile, oeVersion, extensions } from '../testCommon'
 
 const workspaceUri = getWorkspaceUri()
 
@@ -104,11 +105,6 @@ suite('proj2 - Extension Test Suite', () => {
 	})
 
 	test('proj2.7 - debugger',  () => {
-		if (!oeVersion()) {
-			assert.fail('oeVersion is undefined')
-			return
-		}
-		log.info('oeVersion=' + oeVersion)
 		return runTestsInFile('src/cache/otherTestProcedure.p', 1, false, true)
 			.then(() => {
 				assert.tests.count(3)
@@ -117,19 +113,34 @@ suite('proj2 - Extension Test Suite', () => {
 			})
 	})
 
-	test.skip('proj2.8 - debugger w/ breakpoint', () => {
-		if (!oeVersion()) {
-			assert.fail('oeVersion is undefined')
-			return
-		}
-		log.info('oeVersion=' + oeVersion)
-		return runTestsInFile('src/cache/otherTestProcedure.p', 1, false, true)
-		// TODO ----- .then() => // continue on breakpoint
-			.then(() => {
-				assert.tests.count(3)
-				log.info('proj2.8 success')
-				return
+	test('proj2.8 - debugger w/ breakpoint', () => {
+		const loc = new Location(
+			Uri.joinPath(workspaceUri, 'src', 'cache', 'otherTestProcedure.p'),
+			new Position(3, 0)
+		)
+		const sbp = new SourceBreakpoint(loc, true, undefined, undefined, 'HIT BREAKPOINT')
+		debug.addBreakpoints([sbp])
+
+		const prom = runTestsInFile('src/cache/otherTestProcedure.p', 1, false, true)
+		return new Promise<void>((resolve) => {
+			debug.onDidChangeActiveStackItem((e) => {
+				log.info('HIT BREAKPOINT onDidChangeActiveStackItem=' + e?.session.name)
+				resolve()
 			})
+		}).then(() => {
+			log.info('CONTINUE AFTER BREAKPOINT')
+			return commands.executeCommand('workbench.action.debug.continue')
+		}).then(() => {
+			log.info('AWAIT TEST')
+			return prom
+		}).then(() => {
+			log.info('ASSERT tests.count(3)')
+			assert.tests.count(3)
+			return
+		}, (e: unknown) => {
+			assert.fail('proj2.8 - debugger w/ breakpoint failed: ' + e)
+			throw e
+		})
 	})
 
 })

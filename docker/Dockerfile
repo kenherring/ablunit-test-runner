@@ -23,6 +23,7 @@ ENV TERM=vt100
 ENV DLC=/psc/dlc
 ENV PATH=$PATH:$DLC/bin
 ENV PROMSGS=$DLC/promsgs
+RUN proDebugEnable -enable-all
 
 ## clone and build ablunit.pl for the OE version
 WORKDIR /psc/dlc/tty
@@ -45,5 +46,7 @@ RUN mkdir -p ~/.vscode-test
 ## install xq (via yq) for xml parsing
 RUN pipx install yq
 ENV PATH=$PATH:/root/.local/bin
+
+
 
 WORKDIR /home/circleci/project
