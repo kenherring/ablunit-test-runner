@@ -1,5 +1,5 @@
 import {  debug, Location, Position, SourceBreakpoint } from 'vscode'
-import { assert, getResults, getWorkspaceUri, log, runAllTests, suiteSetupCommon, Uri, commands, beforeCommon, toUri, FileUtils, selectProfile, runTestsInFile, oeVersion, extensions } from '../testCommon'
+import { assert, getResults, getWorkspaceUri, log, runAllTests, suiteSetupCommon, Uri, commands, beforeCommon, toUri, FileUtils, selectProfile, runTestsInFile } from '../testCommon'
 
 const workspaceUri = getWorkspaceUri()
 

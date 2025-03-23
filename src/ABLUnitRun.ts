@@ -9,7 +9,6 @@ import { globSync } from 'glob'
 import * as fs from 'fs'
 import * as FileUtils from 'FileUtils'
 import { ABLCompilerError, ABLUnitRuntimeError, ICompilerError, TimeoutError } from 'Errors'
-import { sleep2 } from '../test/testCommon'
 
 interface IABLUnitStatus {
 	action: string,
