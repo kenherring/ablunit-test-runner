@@ -1,5 +1,5 @@
-import {  debug, Location, Position, SourceBreakpoint } from 'vscode'
-import { assert, getResults, getWorkspaceUri, log, runAllTests, suiteSetupCommon, Uri, commands, beforeCommon, toUri, FileUtils, selectProfile, runTestsInFile } from '../testCommon'
+import { debug, Location, Position, SourceBreakpoint } from 'vscode'
+import { assert, getResults, getWorkspaceUri, log, runAllTests, suiteSetupCommon, Uri, commands, beforeCommon, toUri, FileUtils, selectProfile, runTestsInFile, TestRunProfileKind } from '../testCommon'
 
 const workspaceUri = getWorkspaceUri()
 
@@ -105,7 +105,7 @@ suite('proj2 - Extension Test Suite', () => {
 	})
 
 	test('proj2.7 - debugger',  () => {
-		return runTestsInFile('src/cache/otherTestProcedure.p', 1, false, true)
+		return runTestsInFile('src/cache/otherTestProcedure.p', 1, TestRunProfileKind.Debug)
 			.then(() => {
 				assert.tests.count(3)
 				log.info('proj2.7 success')
@@ -121,7 +121,7 @@ suite('proj2 - Extension Test Suite', () => {
 		const sbp = new SourceBreakpoint(loc, true, undefined, undefined, 'HIT BREAKPOINT')
 		debug.addBreakpoints([sbp])
 
-		const prom = runTestsInFile('src/cache/otherTestProcedure.p', 1, false, true)
+		const prom = runTestsInFile('src/cache/otherTestProcedure.p', 1, TestRunProfileKind.Debug)
 		return new Promise<void>((resolve) => {
 			debug.onDidChangeActiveStackItem((e) => {
 				log.info('HIT BREAKPOINT onDidChangeActiveStackItem=' + e?.session.name)

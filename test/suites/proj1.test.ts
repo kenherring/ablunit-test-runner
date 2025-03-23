@@ -1,5 +1,5 @@
 import { Selection, TaskEndEvent, TaskExecution, commands, tasks, window } from 'vscode'
-import { Uri, assert, getWorkspaceUri, log, runAllTests, sleep, updateConfig, getTestCount, workspace, suiteSetupCommon, getWorkspaceFolders, oeVersion, runTestAtLine, beforeCommon, updateTestProfile, runTestsInFile, sleep2, FileUtils } from '../testCommon'
+import { Uri, assert, getWorkspaceUri, log, runAllTests, sleep, updateConfig, getTestCount, workspace, suiteSetupCommon, getWorkspaceFolders, oeVersion, runTestAtLine, beforeCommon, updateTestProfile, runTestsInFile, TestRunProfileKind, sleep2, FileUtils } from '../testCommon'
 import { getOEVersion } from 'parse/OpenedgeProjectParser'
 import { execSync } from 'child_process'
 import * as glob from 'glob'
@@ -371,7 +371,7 @@ async function compileWithTaskAndRunWithCoverage (taskName: string) {
 	assert.fileExists(testRcode)
 	log.info('compile complete! starting tests...')
 
-	await runTestsInFile('test_15.p', 1, true)
+	await runTestsInFile('test_15.p', 1, TestRunProfileKind.Coverage)
 		.then(() => {
 			assert.tests.count(1)
 			assert.tests.passed(1)

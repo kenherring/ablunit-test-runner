@@ -1,5 +1,5 @@
 import { DeclarationCoverage, FileCoverageDetail, Uri, commands, window, workspace } from 'vscode'
-import { assert, getRcodeCount, getResults, getTestControllerItemCount, getTestItem, getXrefCount, log, rebuildAblProject, refreshTests, runAllTests, runAllTestsWithCoverage, runTestAtLine, runTestsDuration, runTestsInFile, sleep2, suiteSetupCommon, FileUtils, toUri, updateConfig, updateTestProfile, deleteRcode, setRuntimes } from '../testCommon'
+import { assert, getRcodeCount, getResults, getTestControllerItemCount, getTestItem, getXrefCount, log, rebuildAblProject, refreshTests, runAllTests, runAllTestsWithCoverage, runTestAtLine, runTestsDuration, runTestsInFile, TestRunProfileKind, sleep2, suiteSetupCommon, FileUtils, toUri, updateConfig, updateTestProfile, deleteRcode, setRuntimes } from '../testCommon'
 import { ABLResultsParser } from 'parse/ResultsParser'
 import { TimeoutError } from 'Errors'
 import { restartLangServer } from '../openedgeAblCommands'
@@ -354,7 +354,7 @@ suite('proj0  - Extension Test Suite', () => {
 	test('proj0.17 - coverage in class property getters/setters', async () => {
 		FileUtils.deleteFile([toUri('results.xml'), toUri('results.json')], { force: true })
 		FileUtils.copyFile(toUri('.vscode/ablunit-test-profile.proj0.17.json'), toUri('.vscode/ablunit-test-profile.json'))
-		await runTestAtLine('src/test_17.cls', 33, 1, true)
+		await runTestAtLine('src/test_17.cls', 33, 1, TestRunProfileKind.Coverage)
 			.then(() => {
 				assert.tests.count(1)
 				assert.tests.passed(1)
@@ -367,7 +367,7 @@ suite('proj0  - Extension Test Suite', () => {
 	})
 
 	test('proj0.18 - not 100% coverage', async () => {
-		await runTestsInFile('src/threeTestProcedures.p', 1, true)
+		await runTestsInFile('src/threeTestProcedures.p', 1, TestRunProfileKind.Coverage)
 		const res = await getResults()
 		assert.equal(res.length, 1, 'ABLResults[].length')
 		assert.equal(res[0].profileJson.length, 6, 'ABLResults[0].profileJson[].length')
@@ -389,7 +389,7 @@ suite('proj0  - Extension Test Suite', () => {
 	})
 
 	test('proj0.19 - program runs external source', async () => {
-		await runTestsInFile('src/test19.p', 1, true)
+		await runTestsInFile('src/test19.p', 1, TestRunProfileKind.Coverage)
 		const res = await getResults()
 		assert.equal(res.length, 1, 'ABLResults[].length')
 		assert.equal(res[0].fileCoverage.size, 1, 'ABLResults[0].fileCoverage.size')
@@ -432,7 +432,7 @@ suite('proj0  - Extension Test Suite', () => {
 		assert.fileExists('d1/test_20.r')
 		assert.fileExists('d2/test_20.p.xref')
 
-		await runTestsInFile('src/test_20.p', 1, true)
+		await runTestsInFile('src/test_20.p', 1, TestRunProfileKind.Coverage)
 			.then(() => {
 				assert.tests.count(1)
 				assert.coverageProcessingMethod(toUri('src/test_20.p'), 'rcode')
@@ -440,7 +440,7 @@ suite('proj0  - Extension Test Suite', () => {
 	})
 
 	test('proj0.21 - overloaded method coverage', async () => {
-		await runTestsInFile('src/overloadedMethods.cls', 1, true)
+		await runTestsInFile('src/overloadedMethods.cls', 1, TestRunProfileKind.Coverage)
 		assert.tests.count(2)
 		assert.linesExecuted('src/overloadedMethods.cls', [17, 18, 19, 22, 23])
 		assert.linesNotExecuted('src/overloadedMethods.cls', [21])
@@ -451,20 +451,10 @@ suite('proj0  - Extension Test Suite', () => {
 		}
 		log.info('testItem.id=' + testItem.id)
 
-		log.info('100')
-		const cov = (await commands.executeCommand('_ablunit.loadDetailedCoverage', toUri('src/overloadedMethods.cls')) as FileCoverageDetail[]) as FileCoverageDetail[]
-		// for (const c of cov) {
-		// 	log.info('c=' + JSON.stringify(c))
-		// }
-
-		log.info('101')
-		const detailedCov = (await commands.executeCommand('_ablunit.loadDetailedCoverageForTest', toUri('src/overloadedMethods.cls'), testItem)) as FileCoverageDetail[]
-		// for (const c of detailedCov) {
-		// 	log.info('c=' + JSON.stringify(c))
-		// }
-
-		const covDeclarations = cov.filter(c => c instanceof DeclarationCoverage) as DeclarationCoverage[]
-		const detailedCovDeclarations = detailedCov.filter(c => c instanceof DeclarationCoverage) as DeclarationCoverage[]
+		const cov: FileCoverageDetail[] = await commands.executeCommand('_ablunit.loadDetailedCoverage', toUri('src/overloadedMethods.cls'))
+		const detailedCov: FileCoverageDetail[] = await commands.executeCommand('_ablunit.loadDetailedCoverageForTest', toUri('src/overloadedMethods.cls'), testItem)
+		const covDeclarations: DeclarationCoverage[] = cov.filter(c => c instanceof DeclarationCoverage)
+		const detailedCovDeclarations: DeclarationCoverage[] = detailedCov.filter(c => c instanceof DeclarationCoverage)
 		log.info('covDeclarations.length=' + covDeclarations.length)
 		log.info('detailedCovDeclarations.length=' + detailedCovDeclarations.length)
 		assert.equal(covDeclarations.length, detailedCovDeclarations.length, 'covDeclarations.length (' + covDeclarations.length + ') != detailedCovDeclarations.length (' + detailedCovDeclarations.length + ')')
@@ -497,7 +487,7 @@ suite('proj0  - Extension Test Suite', () => {
 	})
 
 	test('proj0.22 - test coverage for class in subdirectory', async () => {
-		await runTestsInFile('src/dirA/dir1/testClassInDir.cls', 1, true)
+		await runTestsInFile('src/dirA/dir1/testClassInDir.cls', 1, TestRunProfileKind.Coverage)
 		assert.tests.count(2)
 		assert.tests.passed(2)
 		assert.tests.failed(0)
