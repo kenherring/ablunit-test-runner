@@ -575,12 +575,15 @@ export function runAllTestsWithCoverage () {
 	return runAllTests(true, true, true)
 }
 
-export function runTestsInFile (filename: string, len = 1, coverage = false) {
+export function runTestsInFile (filename: string, len = 1, coverage = false, debug = false) {
 	const testpath = toUri(filename)
 	log.info('runnings tests in file ' + testpath.fsPath)
 	let command = 'testing.runCurrentFile'
 	if (coverage) {
 		command = 'testing.coverageCurrentFile'
+	}
+	if (debug) {
+		command = 'testing.debugCurrentFile'
 	}
 
 	return commands.executeCommand('vscode.open', testpath)

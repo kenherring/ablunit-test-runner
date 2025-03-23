@@ -1,4 +1,4 @@
-import { assert, getResults, getWorkspaceUri, log, runAllTests, suiteSetupCommon, Uri, commands, beforeCommon, toUri, FileUtils, selectProfile, runTestsInFile } from '../testCommon'
+import { assert, getResults, getWorkspaceUri, log, runAllTests, suiteSetupCommon, Uri, commands, beforeCommon, toUri, FileUtils, selectProfile, runTestsInFile, oeVersion } from '../testCommon'
 
 const workspaceUri = getWorkspaceUri()
 
@@ -101,6 +101,35 @@ suite('proj2 - Extension Test Suite', () => {
 		await runTestsInFile('src/compileError.p')
 		assert.ok('test passed as expected')
 		assert.tests.count(1)
+	})
+
+	test('proj2.7 - debugger',  () => {
+		if (!oeVersion()) {
+			assert.fail('oeVersion is undefined')
+			return
+		}
+		log.info('oeVersion=' + oeVersion)
+		return runTestsInFile('src/cache/otherTestProcedure.p', 1, false, true)
+			.then(() => {
+				assert.tests.count(3)
+				log.info('proj2.7 success')
+				return
+			})
+	})
+
+	test.skip('proj2.8 - debugger w/ breakpoint', () => {
+		if (!oeVersion()) {
+			assert.fail('oeVersion is undefined')
+			return
+		}
+		log.info('oeVersion=' + oeVersion)
+		return runTestsInFile('src/cache/otherTestProcedure.p', 1, false, true)
+		// TODO ----- .then() => // continue on breakpoint
+			.then(() => {
+				assert.tests.count(3)
+				log.info('proj2.8 success')
+				return
+			})
 	})
 
 })
