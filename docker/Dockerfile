@@ -23,6 +23,7 @@ ENV TERM=vt100
 ENV DLC=/psc/dlc
 ENV PATH=$PATH:$DLC/bin
 ENV PROMSGS=$DLC/promsgs
+RUN proDebugEnable -enable-all
 
 ## clone and build ablunit.pl for the OE version
 WORKDIR /psc/dlc/tty

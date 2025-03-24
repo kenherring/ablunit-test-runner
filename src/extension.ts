@@ -11,7 +11,7 @@ import {
 	TestRun,
 	TestRunProfileKind, TestRunRequest,
 	TestTag,
-	TextDocument, TextDocumentChangeEvent, Uri, WorkspaceFolder,
+	TextDocument, Uri, WorkspaceFolder,
 	commands,
 	extensions,
 	languages,
@@ -26,11 +26,7 @@ import { ABLCompilerError, ABLUnitRuntimeError, TimeoutError } from 'Errors'
 import { basename } from 'path'
 import * as FileUtils from 'FileUtils'
 import { gatherAllTestItems, IExtensionTestReferences, sortLocation } from 'ABLUnitCommon'
-import { getDeclarationCoverage, getStatementCoverage } from 'parse/ProfileParser'
-import {
-	// InlineProvider,
-	SnippetProvider,
-} from 'SnippetProvider'
+import { SnippetProvider } from 'SnippetProvider'
 
 let recentResults: ABLResults[] = []
 let recentError: Error | undefined = undefined
@@ -52,7 +48,7 @@ export function activate (context: ExtensionContext) {
 
 	context.subscriptions.push(ctrl)
 	// languages.registerInlineCompletionItemProvider({ language: 'abl'}, new InlineProvider())
-	languages.registerCompletionItemProvider({ language: 'abl', scheme: "file" }, new SnippetProvider())
+	languages.registerCompletionItemProvider({ language: 'abl', scheme: 'file' }, new SnippetProvider())
 
 	log.info('process.env[\'ABLUNIT_TEST_RUNNER_UNIT_TESTING\']=' + process.env['ABLUNIT_TEST_RUNNER_UNIT_TESTING'])
 	if (process.env['ABLUNIT_TEST_RUNNER_UNIT_TESTING']) {
@@ -113,7 +109,6 @@ export function activate (context: ExtensionContext) {
 		}),
 	)
 
-
 	const getExtensionTestReferences = () => {
 		if (!process.env['ABLUNIT_TEST_RUNNER_UNIT_TESTING']) {
 			throw new Error('command not allowed outside of unit testing')
@@ -137,6 +132,19 @@ export function activate (context: ExtensionContext) {
 			throw new Error('continuous test runs not implemented')
 		}
 		recentError = undefined
+
+		if (request.profile?.kind === TestRunProfileKind.Debug) {
+			const ext = extensions.getExtension('riversidesoftware.openedge-abl-lsp')
+			if (!ext) {
+				log.notificationError('OpenEdge ABL extension not found')
+				return
+			}
+			if (!ext.isActive) {
+				log.notificationError('OpenEdge ABL extension installed but not active')
+				return
+			}
+		}
+
 		return startTestRun(request, token)
 			.catch((e: unknown) => {
 				if (e instanceof Error) {
@@ -150,7 +158,7 @@ export function activate (context: ExtensionContext) {
 			})
 	}
 
-	const loadDetailedCoverageForTest = async (testRun: TestRun, fileCoverage: FileCoverage, item: TestItem, _token: CancellationToken) => {
+	const loadDetailedCoverageForTest = (testRun: TestRun, fileCoverage: FileCoverage, item: TestItem, _token: CancellationToken): Thenable<FileCoverageDetail[]> => {
 
 		log.info('loadDetailedCoverageForTest uri=' + fileCoverage.uri + ' testId=' + item.id)
 		const ret: FileCoverageDetail[] = []
@@ -185,10 +193,10 @@ export function activate (context: ExtensionContext) {
 				throw new Error('not FileCoverageDetail! ' + JSON.stringify(r))
 			}
 		}
-		return ret
+		return Promise.resolve(ret)
 	}
 
-	const loadDetailedCoverage = async (testRun: TestRun, fileCoverage: FileCoverage, _token: CancellationToken) => {
+	const loadDetailedCoverage = (testRun: TestRun, fileCoverage: FileCoverage, _token: CancellationToken): Promise<FileCoverageDetail[]> => {
 		const ret: FileCoverageDetail[] = []
 		const results = resultData.get(testRun) ?? recentResults
 		if (!results) {
@@ -220,7 +228,7 @@ export function activate (context: ExtensionContext) {
 				throw new Error('not FileCoverageDetail! ' + JSON.stringify(r))
 			}
 		}
-		return ret
+		return Promise.resolve(ret)
 	}
 
 	async function openTestRunConfig () {
@@ -443,7 +451,9 @@ export function activate (context: ExtensionContext) {
 		const tests = request.include ?? gatherTestItems(ctrl.items)
 
 		return discoverTests(tests)
-			.then(() => { return createABLResults() })
+			.then(() => {
+				return createABLResults()
+			})
 			.then((res) => {
 				if (!res) {
 					throw new Error('createABLResults failed')
@@ -508,14 +518,6 @@ export function activate (context: ExtensionContext) {
 		return Promise.resolve()
 	}
 
-	ctrl.invalidateTestResults = (items?: TestItem | readonly TestItem[]) => {
-		if (items instanceof Array) {
-			log.info('ctrl.invalidateTestResults items.length=' + items.length)
-		} else {
-			log.info('ctrl.invalidateTestResults items.id=' + items?.id)
-		}
-	}
-
 	ctrl.refreshHandler = (token: CancellationToken) => {
 		log.info('ctrl.refreshHandler start')
 		isRefreshTestsComplete = false
@@ -542,7 +544,7 @@ export function activate (context: ExtensionContext) {
 
 	function updateConfiguration (event: ConfigurationChangeEvent) {
 		if (!event.affectsConfiguration('ablunit')) {
-			log.warn('configuration updated but does not include ablunit settings (event=' + JSON.stringify(event) + ')')
+			log.debug('configuration updated but does not include ablunit settings (event=' + JSON.stringify(event) + ')')
 		} else {
 			log.debug('affects ablunit.file? ' + event.affectsConfiguration('ablunit.files'))
 			if (event.affectsConfiguration('ablunit.files')) {
@@ -565,10 +567,10 @@ export function activate (context: ExtensionContext) {
 	}
 
 	const testProfileRun = ctrl.createRunProfile('Run Tests', TestRunProfileKind.Run, runHandler, true, new TestTag('runnable'), false)
-	// const testProfileDebug = ctrl.createRunProfile('Debug Tests', TestRunProfileKind.Debug, runHandler, false, new TestTag('runnable'), false)
+	const testProfileDebug = ctrl.createRunProfile('Debug Tests', TestRunProfileKind.Debug, runHandler, true, new TestTag('runnable'), false)
 	const testProfileCoverage = ctrl.createRunProfile('Run Tests w/ Coverage', TestRunProfileKind.Coverage, runHandler, true, new TestTag('runnable'), false)
 	testProfileRun.configureHandler = configHandler
-	// testProfileDebug.configureHandler = configHandlerDebug
+	testProfileDebug.configureHandler = configHandler
 	testProfileCoverage.configureHandler = configHandler
 	testProfileCoverage.loadDetailedCoverage = loadDetailedCoverage
 	testProfileCoverage.loadDetailedCoverageForTest = loadDetailedCoverageForTest
@@ -603,14 +605,6 @@ function updateNode (uri: Uri, ctrl: TestController) {
 		log.debug('updateFromContents item.id=' + item.id)
 		return data.updateFromContents(ctrl, contents, item)
 	})
-}
-
-function didChangeTextDocument (e: TextDocument, ctrl: TestController) {
-	if (e.languageId == 'log') {
-		return Promise.resolve()
-	}
-
-	return updateNode(e.uri, ctrl)
 }
 
 export function setContextPaths (storageUri: Uri) {
