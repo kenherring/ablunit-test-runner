@@ -48,10 +48,7 @@ suite('proj0  - Extension Test Suite', () => {
 	})
 
 	setup('proj0 - setup', async () => {
-		log.info('process.env[OE_VERSION]=' + process.env['OE_VERSION'])
-		log.info('process.env[ABLUNIT_TEST_RUNNER_OE_VERSION]=' + process.env['ABLUNIT_TEST_RUNNER_OE_VERSION'])
 		const oever = process.env['ABLUNIT_TEST_RUNNER_OE_VERSION'] ?? process.env['OE_VERSION']
-		log.info('oever=' + oever)
 		if (oever === '12.2') {
 			await setRuntimes([{name: '12.2', path: 'C:\\Progress\\OpenEdge', default: true}])
 		}
@@ -61,6 +58,8 @@ suite('proj0  - Extension Test Suite', () => {
 		log.info('proj0 teardown')
 		FileUtils.deleteFile([
 			toUri('.vscode/ablunit-test-profile.json'),
+			toUri('results.json'),
+			toUri('results.xml'),
 			toUri('src/dirA/proj10.p'),
 			toUri('UNIT_TEST.tmp'),
 		], { force: true })
@@ -72,7 +71,6 @@ suite('proj0  - Extension Test Suite', () => {
 				log.warn('disposables.length != 0')
 			}
 		}
-		return
 	})
 
 	suiteTeardown('proj0 - after', () => {
@@ -315,8 +313,8 @@ suite('proj0  - Extension Test Suite', () => {
 		return prom
 	})
 
-	test('proj0.13 - timeout 2500ms pass', () => {
-		const prom = updateTestProfile('timeout', 2500)
+	test('proj0.13 - timeout 2500ms pass', async () => {
+		await updateTestProfile('timeout', 2500)
 			.then(() => { return updateConfig('ablunit.files.exclude', '**/.{builder,pct}/**') })
 			.then(() => { return sleep2(100) })
 			.then(() => { return runTestAtLine('src/timeout.p', 37, 0) })
@@ -330,10 +328,10 @@ suite('proj0  - Extension Test Suite', () => {
 				assert.durationLessThan(runTestsDuration, 3250)
 				return
 			})
-		return prom
+		return
 	})
 
-	test('proj0.14 - timeout invalid -5s', () => {
+	test('proj0.14 - timeout invalid -5s', async () => {
 		const prom = updateTestProfile('timeout', -5000)
 			.then(() => { return runTestsInFile('src/simpleTest.p', 0) })
 			.then(() => { return commands.executeCommand('_ablunit.getTestRunError') })
@@ -343,18 +341,29 @@ suite('proj0  - Extension Test Suite', () => {
 				if (e instanceof Error) {
 					log.info('e=' + JSON.stringify(e))
 					assert.equal(e.name, 'RangeError', 'expecting RangeError due to negative timeout value. e=' + JSON.stringify(e, null, 2))
-				} else {
-					assert.fail('expected RangeError to be thrown but got e=' + JSON.stringify(e, null, 2))
+					return true
 				}
-				return
+				assert.fail('expected RangeError to be thrown but got e=' + JSON.stringify(e, null, 2))
+				return false
 			})
-		return prom
+		return await prom
 	})
 
-	test('proj0.17 - coverage in class property getters/setters', async () => {
-		FileUtils.deleteFile([toUri('results.xml'), toUri('results.json')], { force: true })
+	test('proj0.17 - coverage in class property getters/setters', () => {
+		log.info('proj0.17')
+		FileUtils.deleteFile(
+			[
+				toUri('results.xml'),
+				// toUri('.vscode/ablunit-test-profile.json'),
+				toUri('results.json')
+			],
+			{ force: true }
+		)
+		if (FileUtils.doesFileExist(toUri('.vscode/ablunit-test-profile.json'))) {
+			assert.fail('.vscode/ablunit-test-profile.json should not exist')
+		}
 		FileUtils.copyFile(toUri('.vscode/ablunit-test-profile.proj0.17.json'), toUri('.vscode/ablunit-test-profile.json'))
-		await runTestAtLine('src/test_17.cls', 33, 1, TestRunProfileKind.Coverage)
+		const prom = runTestAtLine('src/test_17.cls', 33, 1, TestRunProfileKind.Coverage)
 			.then(() => {
 				assert.tests.count(1)
 				assert.tests.passed(1)
@@ -363,7 +372,9 @@ suite('proj0  - Extension Test Suite', () => {
 				assert.tests.skipped(0)
 				assert.linesExecuted('src/test_17.cls', [7, 8, 9])
 				assert.linesExecuted('src/test_17.cls', [41, 42, 43, 44])
+				return
 			})
+		return prom
 	})
 
 	test('proj0.18 - not 100% coverage', async () => {

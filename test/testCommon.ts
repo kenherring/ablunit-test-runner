@@ -607,7 +607,7 @@ export function runTestAtLine (filename: string, line: number, len = 1, kind: Te
 	switch (kind) {
 		case TestRunProfileKind.Run: command = 'testing.runAtCursor'; break
 		case TestRunProfileKind.Debug: command = 'testing.debugAtCursor'; break
-		case TestRunProfileKind.Coverage: command = 'testing.coverage'; break
+		case TestRunProfileKind.Coverage: command = 'testing.coverageAtCursor'; break
 	}
 	const testpath = Uri.joinPath(getWorkspaceUri(), filename)
 	log.info('running test at line ' + line + ' in ' + testpath.fsPath)

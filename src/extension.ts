@@ -451,7 +451,9 @@ export function activate (context: ExtensionContext) {
 		const tests = request.include ?? gatherTestItems(ctrl.items)
 
 		return discoverTests(tests)
-			.then(() => { return createABLResults() })
+			.then(() => {
+				return createABLResults()
+			})
 			.then((res) => {
 				if (!res) {
 					throw new Error('createABLResults failed')
@@ -543,21 +545,18 @@ export function activate (context: ExtensionContext) {
 	function updateConfiguration (event: ConfigurationChangeEvent) {
 		if (!event.affectsConfiguration('ablunit')) {
 			log.debug('configuration updated but does not include ablunit settings (event=' + JSON.stringify(event) + ')')
-			return
+		} else {
+			log.debug('affects ablunit.file? ' + event.affectsConfiguration('ablunit.files'))
+			if (event.affectsConfiguration('ablunit.files')) {
+				return commands.executeCommand('testing.refreshTests')
+					.then(() => {
+						log.info('tests tree successfully refreshed on configuration change')
+						return
+					}, (e: unknown) => {
+						throw e
+					})
+			}
 		}
-
-		log.debug('affects ablunit.file? ' + event.affectsConfiguration('ablunit.files'))
-		if (!event.affectsConfiguration('ablunit.files')) {
-			return
-		}
-
-		return commands.executeCommand('testing.refreshTests')
-			.then(() => {
-				log.info('tests tree successfully refreshed on configuration change')
-				return
-			}, (e: unknown) => {
-				throw e
-			})
 	}
 
 	const configHandler = () => {
