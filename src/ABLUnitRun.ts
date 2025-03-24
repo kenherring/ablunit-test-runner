@@ -267,7 +267,8 @@ function runCommand (res: ABLResults, options: TestRun, cancellation: Cancellati
 				if (line.startsWith('ABLUNIT_STATUS=SERIALIZED_ERROR ')) {
 					compilerErrors.push(JSON.parse(line.substring(32)) as ICompilerError)
 					continue
-				} else if (line.startsWith('ABLUNIT_STATUS=')) {
+				}
+				if (line.startsWith('ABLUNIT_STATUS=')) {
 					let ablunitStatus: IABLUnitStatus
 					try {
 						ablunitStatus = JSON.parse(line.substring(15)) as IABLUnitStatus
@@ -290,11 +291,8 @@ function runCommand (res: ABLResults, options: TestRun, cancellation: Cancellati
 
 					// eslint-disable-next-line promise/catch-or-return
 					debug.startDebugging(res.cfg.ablunitConfig.workspaceFolder, debugLaunchProfile)
-						.then((r: boolean) => {
-							log.info('Debugger started=' + r)
-							return r
-						}).then((r) => {
-							log.debug('activeDebugSession=' + (debug.activeDebugSession ? true : false))
+						.then((r) => {
+							log.debug('r=' + r + ' activeDebugSession=' + (debug.activeDebugSession ? true : false))
 							if (!debug.activeDebugSession) {
 								throw new Error('activeDebugSession not found after starting debugger')
 							}
@@ -304,11 +302,12 @@ function runCommand (res: ABLResults, options: TestRun, cancellation: Cancellati
 						})
 				}
 
+				line = '\t\t[stdout] '
 				if (currentTestItem) {
-					line = '\t\t[stdout] [' + currentTestItem.label + '] ' + line
-				} else {
-					line = '\t\t[stdout] ' + line
+					line += '[' + currentTestItem.label + '] '
 				}
+				line += line
+
 				log.info(line, {testRun: options, testItem: currentTestItem})
 				lines[i] = '<<LOGGED>>'
 			}
