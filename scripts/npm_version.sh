@@ -19,6 +19,7 @@ initialize () {
 	set -x
 	PRERELEASE=false
     PACKAGE_VERSION=$(node -p "require('./package.json').version")
+	PREVIOUS_VERSION=$(grep -Eo '\[v?[0-9]+\.[0-9]+\.[0-9]+\]' CHANGELOG.md | cut -d[ -f2 | cut -d] -f1 | head -1)
 
 	if [ "$(git branch --show-current)" = "main" ]; then
 		echo "ERROR: cannot be on main branch to run $0"
@@ -35,13 +36,18 @@ update_version () {
 	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] PACKAGE_VERSION=$PACKAGE_VERSION"
 
 	update_changelog
+	update_templates
 	git add .
+}
+
+update_templates () {
+	sed -i "s/$PREVIOUS_VERSION/$PACKAGE_VERSION\n     - $PREVIOUS_VERSION/g" .github/ISSUE_TEMPLATE/bug_report.md
+	sed -i "s/$PREVIOUS_VERSION/$PACKAGE_VERSION\n     - $PREVIOUS_VERSION/g" .github/ISSUE_TEMPLATE/question.md
 }
 
 update_changelog () {
 	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}]"
 	local PREVIOUS_VERSION
-	PREVIOUS_VERSION=$(grep -Eo '\[v?[0-9]+\.[0-9]+\.[0-9]+\]' CHANGELOG.md | cut -d[ -f2 | cut -d] -f1 | head -1)
 	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] update CHANGELOG.md from $PREVIOUS_VERSION to $PACKAGE_VERSION"
 
 	local PRERELEASE_TEXT=
