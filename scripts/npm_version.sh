@@ -41,8 +41,8 @@ update_version () {
 }
 
 update_templates () {
-	sed -i "s/$PREVIOUS_VERSION/$PACKAGE_VERSION\n     - $PREVIOUS_VERSION/g" .github/ISSUE_TEMPLATE/bug_report.md
-	sed -i "s/$PREVIOUS_VERSION/$PACKAGE_VERSION\n     - $PREVIOUS_VERSION/g" .github/ISSUE_TEMPLATE/question.md
+	sed -i "s/$PREVIOUS_VERSION/$PACKAGE_VERSION\n     - $PREVIOUS_VERSION/g" .github/ISSUE_TEMPLATE/bug_report.yml
+	sed -i "s/$PREVIOUS_VERSION/$PACKAGE_VERSION\n     - $PREVIOUS_VERSION/g" .github/ISSUE_TEMPLATE/question.yml
 }
 
 update_changelog () {
