@@ -47,7 +47,6 @@ update_templates () {
 
 update_changelog () {
 	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}]"
-	local PREVIOUS_VERSION
 	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] update CHANGELOG.md from $PREVIOUS_VERSION to $PACKAGE_VERSION"
 
 	local PRERELEASE_TEXT=
