@@ -446,8 +446,8 @@ export class ABLResults implements Disposable {
 				for (const f of failure.stackTrace) {
 					if (f.uri && f.position) {
 						const fLoc = new Location(f.uri, new Range(f.position.line, f.position.character, f.position.line + 1, f.position.character))
-						log.error(failure.message, {testRun: options, location: fLoc, testItem: item})
-						options.appendOutput(failure.message + '\n')
+						// log.error(failure.message, {testRun: options, location: fLoc, testItem: item})
+						// options.appendOutput(failure.message + '\n')
 						if (!loc) {
 							loc = fLoc
 						}

@@ -258,10 +258,6 @@ export class ABLResultsParser {
 				message: result.$.type + ': ' + result.$.message,
 				type: result.$.types
 			}
-
-			if (type == 'error') {
-				fail.message = 'Exception: ' + fail.message
-			}
 			const diffRE = /Expected: (.*) but was: (.*)/
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 			const diff = diffRE.exec(result.$.message)
