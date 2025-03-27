@@ -1,18 +1,14 @@
-# [1.1.3](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.1.3) - 2025-03-26 (pre-release)
+# [1.1.3](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.1.3) - 2025-03-27 (pre-release)
 
-
+ * Exception call stacks (#263)
+ * Improve parsing and display of test output (#262)
+ * Coverage by test case declarations (#255)
+ * Enable debuging TestRunProfile (#257)
  * Update output for messages from tests (#260)
+ * Documentation updates (#258)
+ * Debug Tests: improve messages for missing extension dependency (#261)
 
-
-**Full Changelog**: [1.1.1...1.1.3](https://github.com/kenherring/ablunit-test-runner/compare/1.1.1...1.1.3)
-
-# [1.1.1](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.1.1) - 2025-02-28 (pre-release)
-
-
- * 
-
-
-**Full Changelog**: [1.1.0...1.1.1](https://github.com/kenherring/ablunit-test-runner/compare/1.1.0...1.1.1)
+**Full Changelog**: [1.1.0...1.1.3](https://github.com/kenherring/ablunit-test-runner/compare/1.1.0...1.1.3)
 
 # [1.1.0](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.1.0) - 2025-02-16
 
