@@ -159,11 +159,6 @@
 					],
 					"markdownDescription": "Glob patterns to exclude test files",
 					"scope": "machine-overridable"
-				},
-				"ablunit.importOpenedgeProjectJson": {
-					"type": "boolean",
-					"default": true,
-					"markdownDescription": "Import configuration from `openedge-project.json` when possible"
 				}
 			}
 		},

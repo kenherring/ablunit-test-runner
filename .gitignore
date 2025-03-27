@@ -46,6 +46,7 @@ procore.*
 ablunit.json
 dbconn.pf
 dbg_*
+debugger.pref
 listings/
 prof*.json
 profile.options
