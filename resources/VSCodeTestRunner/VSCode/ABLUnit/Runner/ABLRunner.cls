@@ -248,7 +248,17 @@ class VSCode.ABLUnit.Runner.ABLRunner inherits OpenEdge.ABLUnit.Runner.ABLRunner
             entry2 = entry(2, content, ' ').
             entityId = integer(entry2).
             entityName = getEntityName(entityId).
-            message 'ABLUNIT_STATUS=~{"action":"' + action + '","entityId":' + string(entityId) + ',"entityName":"' + entityName + '"~}'.
+            if action = "TEST_END" then
+            do:
+                define variable duration as character no-undo.
+                if num-entries(content, ' ') > 2 then
+                    duration = entry(3, content, ' ').
+                else
+                    duration = "0".
+                message 'ABLUNIT_STATUS=~{"action":"' + action + '","entityId":' + string(entityId) + ',"entityName":"' + entityName + '", "duration": "' + duration + '"~}'.
+            end.
+            else
+                message 'ABLUNIT_STATUS=~{"action":"' + action + '","entityId":' + string(entityId) + ',"entityName":"' + entityName + '"~}'.
         end.
         else
             message 'ABLUNIT_STATUS=~{"action":"' + action + '"~}'.
