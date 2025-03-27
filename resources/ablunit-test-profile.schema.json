@@ -264,6 +264,12 @@
 								"minimum": 0,
 								"description": "Port to use for debugging."
 							},
+							"debugConnectMaxWait": {
+								"type": "integer",
+								"default": 10000,
+								"minimum": 1000,
+								"description": "Max time to wait for a connection to the debug port."
+							},
 							"additionalArgs": {
 								"type": "array",
 								"default": [],
