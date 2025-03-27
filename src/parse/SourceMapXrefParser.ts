@@ -102,7 +102,7 @@ export const getSourceMapFromXref = (propath: PropathParser, debugSource: string
 		}
 	}
 
-	const importDebugLines = (sourcePath: string, debugSourceUri: Uri,  xrefUri: Uri) => {
+	const importDebugLines = (sourcePath: string, debugSourceUri: Uri, xrefUri: Uri) => {
 		let m: SourceMap | undefined = map.find((i) => i.sourceUri.fsPath == debugSourceUri.fsPath)
 		if (!m) {
 			m = {

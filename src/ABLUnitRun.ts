@@ -1,4 +1,4 @@
-import { CancellationError, CancellationToken, TestItem, TestRun, TestRunProfileKind, Uri, workspace } from 'vscode'
+import { CancellationError, CancellationToken, debug, DebugConfiguration, TestItem, TestRun, TestRunProfileKind, Uri, workspace } from 'vscode'
 import { ABLResults } from 'ABLResults'
 import { Duration, gatherAllTestItems } from 'ABLUnitCommon'
 import { SendHandle, Serializable, SpawnOptions, spawn } from 'child_process'
@@ -46,6 +46,16 @@ export enum RunStatusString {
 	'Error' = 82,
 }
 
+const debugLaunchProfile: DebugConfiguration = {
+	name: 'ablunit-test-runner',
+	type: 'abl',
+	request: 'attach',
+	hostname: 'localhost',
+	mode: 'legacy',
+	port: 3199,
+	localRoot: '${workspaceFolder}',
+}
+
 let abort: AbortController
 let watcher: fs.StatWatcher | undefined = undefined
 let allTests: TestItem[] = []
@@ -73,6 +83,7 @@ export async function ablunitRun (options: TestRun, res: ABLResults, cancellatio
 	await runCommand(res, options, cancellation)
 		.then((r) => {
 			log.info('runCommand complete (r=' + r + ')')
+			return r
 		}, (e: unknown) => {
 			log.info('runCommand threw error! e=' + e)
 			throw e
@@ -139,6 +150,8 @@ function getDefaultCommand (res: ABLResults) {
 
 	if (res.cfg.ablunitConfig.profiler.enabled && res.cfg.requestKind == TestRunProfileKind.Coverage) {
 		cmd.push('-profile', res.cfg.ablunitConfig.profOptsUri.fsPath)
+	} else if (res.cfg.requestKind == TestRunProfileKind.Debug) {
+		cmd.push('-debugReady', res.cfg.ablunitConfig.command.debugPort.toString())
 	}
 
 	const cmdSanitized: string[] = []
@@ -211,6 +224,10 @@ function runCommand (res: ABLResults, options: TestRun, cancellation: Cancellati
 		const runenv = getEnvVars(res.dlc.uri)
 		const compilerErrors: ICompilerError[] = []
 		const updateUri = res.cfg.ablunitConfig.optionsUri.updateUri
+		let timeout = res.cfg.ablunitConfig.timeout
+		if (res.cfg.requestKind == TestRunProfileKind.Debug) {
+			timeout = 0
+		}
 
 		const spawnOpts: SpawnOptions = {
 			signal: abort.signal,
@@ -219,7 +236,7 @@ function runCommand (res: ABLResults, options: TestRun, cancellation: Cancellati
 			// killSignal: 'SIGINT', // works in windows
 			// killSignal: 'SIGHUP', // works in linux
 			killSignal: 'SIGTERM',
-			timeout: res.cfg.ablunitConfig.timeout,
+			timeout: timeout,
 			env: runenv,
 			cwd: res.cfg.ablunitConfig.workspaceFolder.uri.fsPath,
 			shell: true,
@@ -228,26 +245,30 @@ function runCommand (res: ABLResults, options: TestRun, cancellation: Cancellati
 		log.info('command=\'' + cmd + ' ' + args.join(' ') + '\'\n\n', {testRun: options, testItem: currentTestItem })
 		const testRunDuration = new Duration('TestRun')
 		const process = spawn(cmd, args, spawnOpts)
+		let debuggerStarted = false
 
 		process.stderr?.on('data', (data: Buffer) => {
-			log.debug('stderr', {testRun: options})
+			log.debug('stderr')
 			log.error('\t\t[stderr] ' + data.toString().trim().replace(/\n/g, '\n\t\t[stderr] '), {testRun: options, testItem: currentTestItem})
 		})
 		process.stdout?.on('data', (data: Buffer) => {
-			log.debug('stdout', {testRun: options})
-			stdout = stdout + data.toString()
-			const lines = stdout.split('\n')
+			log.debug('stdout')
+			const lines = (stdout + data.toString()).replace('/\r/g', '').split('\n')
 			if (lines[lines.length - 1] == '') {
+				stdout = ''
 				lines.pop()
+				log.debug('pop blank line')
 			} else {
-				stdout = lines.pop() ?? ''
+				stdout = lines[lines.length - 1]
+				log.debug('stdout savePartialLine=\'' + stdout + '\'')
 			}
-			for (const line of lines) {
+			for (let i=0; i < lines.length; i++) {
+				const line = lines[i]
 				if (line.startsWith('ABLUNIT_STATUS=SERIALIZED_ERROR ')) {
-					const compilerError = JSON.parse(line.substring(32)) as ICompilerError
-					compilerErrors.push(compilerError)
+					compilerErrors.push(JSON.parse(line.substring(32)) as ICompilerError)
 					continue
-				} else if (line.startsWith('ABLUNIT_STATUS=')) {
+				}
+				if (line.startsWith('ABLUNIT_STATUS=')) {
 					let ablunitStatus: IABLUnitStatus
 					try {
 						ablunitStatus = JSON.parse(line.substring(15)) as IABLUnitStatus
@@ -261,12 +282,37 @@ function runCommand (res: ABLResults, options: TestRun, cancellation: Cancellati
 					continue
 				}
 
-				if (currentTestItem) {
-					log.info('\t\t[stdout] [' + currentTestItem.label + '] ' + line, {testRun: options, testItem: currentTestItem})
-				} else {
-					log.info('\t\t[stdout] ' + line, {testRun: options, testItem: currentTestItem})
+				if (line.startsWith('Use port ' + res.cfg.ablunitConfig.command.debugPort + ' for the Debugger to connect to.') && !debuggerStarted) {
+					debuggerStarted = true
+
+					debugLaunchProfile['port'] = res.cfg.ablunitConfig.command.debugPort
+					debugLaunchProfile['hostname'] = res.cfg.ablunitConfig.command.debugHost
+					log.info('debugLaunchProfile=' + JSON.stringify(debugLaunchProfile, null, 4))
+
+					// eslint-disable-next-line promise/catch-or-return
+					debug.startDebugging(res.cfg.ablunitConfig.workspaceFolder, debugLaunchProfile)
+						.then((r) => {
+							log.debug('r=' + r + ' activeDebugSession=' + (debug.activeDebugSession ? true : false))
+							if (!debug.activeDebugSession) {
+								throw new Error('activeDebugSession not found after starting debugger')
+							}
+							return r
+						}, (e: unknown) => {
+							log.error('Debugger failed to start, continuing with test execution (e=' + e + ')', {testRun: options})
+						})
 				}
+
+				let outLine = '\t\t'
+				if (currentTestItem) {
+					outLine += '[' + currentTestItem.label + '] '
+				}
+				outLine += line
+
+				log.info(outLine, {testRun: options, testItem: currentTestItem})
+				lines[i] = '<<LOGGED>>'
 			}
+			log.debug('stdout DONE')
+
 		})
 		process.once('spawn', () => {
 			log.debug('spawn', {testRun: options})
@@ -297,12 +343,6 @@ function runCommand (res: ABLResults, options: TestRun, cancellation: Cancellati
 				log.info('----- ABLUnit Test Run Timeout - ' + res.cfg.ablunitConfig.timeout + 'ms ----- ' + testRunDuration, {testRun: options, testItem: currentTestItem })
 				const e = new TimeoutError('ABLUnit process timeout', testRunDuration, res.cfg.ablunitConfig.timeout, cmd)
 				reject(e)
-			}
-			if (process.killed || signal) {
-				res.setStatus(RunStatus.Killed, 'signal=' + signal)
-				log.info('----- ABLUnit Test Run Killed - (signal=' + signal + ') ----- ' + testRunDuration, {testRun: options, testItem: currentTestItem })
-				const e = new ABLUnitRuntimeError('ABLUnit process killed', 'exit_code=' + code + '; signal=' + signal, cmd)
-				reject(e)
 				return e
 			}
 
@@ -320,7 +360,14 @@ function runCommand (res: ABLResults, options: TestRun, cancellation: Cancellati
 				log.info('----- ABLUnit Test Run Failed (exit_code=' + code + ') ----- ' + testRunDuration, {testRun: options, testItem: currentTestItem })
 				const e = new ABLUnitRuntimeError('ABLUnit exit_code=' + code, 'ABLUnit exit_code=' + code + '; signal=' + signal, cmd)
 				reject(e)
-				return
+				return e
+			}
+
+			if (process.killed || signal) {
+				res.setStatus(RunStatus.Killed, 'signal=' + signal)
+				const e = new ABLUnitRuntimeError('ABLUnit process killed', 'exit_code=' + code + '; signal=' + signal, cmd)
+				reject(e)
+				return e
 			}
 
 			res.setStatus(RunStatus.Complete, 'success')
