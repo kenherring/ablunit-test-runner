@@ -10,7 +10,8 @@ import {
 	WorkspaceFolder, commands, extensions, window,
 	workspace,
 	FileCoverageDetail,
-	TestItem
+	TestItem,
+	TestRunProfileKind
 } from 'vscode'
 import { ABLResults } from 'ABLResults'
 import { Duration, gatherAllTestItems, IExtensionTestReferences } from 'ABLUnitCommon'
@@ -100,7 +101,7 @@ export type IRunProfile = IRunProfileGlobal
 export { FileUtils, toUri, RunStatus, parseRunProfiles }
 // vscode objects
 export {
-	CancellationError, Duration, Selection, Uri,
+	CancellationError, Duration, Selection, TestRunProfileKind, Uri,
 	commands, extensions, window, workspace
 }
 
@@ -575,12 +576,14 @@ export function runAllTestsWithCoverage () {
 	return runAllTests(true, true, true)
 }
 
-export function runTestsInFile (filename: string, len = 1, coverage = false) {
+export function runTestsInFile (filename: string, len = 1, kind: TestRunProfileKind = TestRunProfileKind.Run) {
 	const testpath = toUri(filename)
 	log.info('runnings tests in file ' + testpath.fsPath)
-	let command = 'testing.runCurrentFile'
-	if (coverage) {
-		command = 'testing.coverageCurrentFile'
+	let command
+	switch (kind) {
+		case TestRunProfileKind.Run: command = 'testing.runCurrentFile'; break
+		case TestRunProfileKind.Debug: command = 'testing.debugCurrentFile'; break
+		case TestRunProfileKind.Coverage: command = 'testing.coverageCurrentFile'; break
 	}
 
 	return commands.executeCommand('vscode.open', testpath)
@@ -593,14 +596,19 @@ export function runTestsInFile (filename: string, len = 1, coverage = false) {
 			runTestsDuration?.stop()
 			return refreshData(len)
 		}, (e: unknown) => {
-			log.debug('executeCOmmand(' + command + ').catch failed: ' + e)
+			log.debug('executeCommand(' + command + ').catch failed: ' + e)
 			runTestsDuration?.stop()
 			throw e
 		})
 }
 
-export function runTestAtLine (filename: string, line: number, len = 1, withCoverage = false) {
-	const command = withCoverage ? 'testing.coverageAtCursor' : 'testing.runAtCursor'
+export function runTestAtLine (filename: string, line: number, len = 1, kind: TestRunProfileKind = TestRunProfileKind.Run) {
+	let command
+	switch (kind) {
+		case TestRunProfileKind.Run: command = 'testing.runAtCursor'; break
+		case TestRunProfileKind.Debug: command = 'testing.debugAtCursor'; break
+		case TestRunProfileKind.Coverage: command = 'testing.coverageAtCursor'; break
+	}
 	const testpath = Uri.joinPath(getWorkspaceUri(), filename)
 	log.info('running test at line ' + line + ' in ' + testpath.fsPath)
 	return commands.executeCommand('vscode.open', testpath)
@@ -1014,7 +1022,7 @@ export async function getResults (len = 1, tag?: string): Promise<ABLResults[]> 
 		}
 	}
 	if (len !=0 && !recentResults) {
-		throw new Error('recentResults is null')
+		throw new Error('recentResults is undefined')
 	}
 	if (recentResults && recentResults.length < len) {
 		throw new Error('recent results should be >= ' + len + ' but is ' + recentResults.length)

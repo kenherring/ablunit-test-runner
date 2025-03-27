@@ -11,6 +11,17 @@ body:
       value: |
         Ask a question, and please be sure to provide as much context as is necessary.
   - type: dropdown
+    id: extversion
+    attributes:
+      label: Extension Version
+      description: What version of the extension are you using?
+      options:
+        - 1.1.3
+        - 1.1.1
+        - 1.1.0
+        - 1.0.0
+        - other (please specify in the description)
+  - type: dropdown
     id: version
     attributes:
       label: OpenEdge Version

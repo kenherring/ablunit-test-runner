@@ -11,8 +11,8 @@ define variable quitOnEnd as logical init false no-undo.
 define variable VERBOSE as logical no-undo.
 VERBOSE = (os-getenv('VERBOSE') = 'true' or os-getenv('VERBOSE') = '1').
 
-if VERBOSE then
-	run printPropath.
+run waitForDebuggerVisible.
+run printPropath.
 run main.
 return.
 
@@ -46,7 +46,44 @@ end function.
 
 // ---------- PROCEDURES ----------
 
+procedure waitForDebuggerVisible :
+	define variable cnt as integer no-undo.
+	define variable debugReady as logical init false no-undo.
+
+	paramLoop:
+	do cnt = 1 to num-entries(session:startup-parameters):
+		if entry(cnt, session:startup-parameters) begins '-debugReady' then
+		do:
+			debugReady = true.
+			leave paramLoop.
+		end.
+	end.
+	if not debugReady then
+		return.
+
+	etime(yes).
+	do while etime < 10000 and debugger:visible = false:
+		// wait for 10 seconds
+		message 'waiting for debugger to connect... (' + string(etime) + '/10000ms)'.
+		pause 1.
+	end.
+
+	if debugger:visible then
+		message 'Debugger connected!'.
+	else
+	do:
+		if os-getenv('ABLUNIT_TEST_RUNNER_UNIT_TESTING') = 'true' or
+			os-getenv('ABLUNIT_TEST_RUNNER_UNIT_TESTING') = '1' then
+		do:
+			undo, throw new Progress.Lang.AppError("Debugger not connected - exit with code 1 to indicate unit test failure", 99).
+		end.
+		message 'Debugger not connected - continuing with test execution'.
+	end.
+end procedure.
+
 procedure printPropath :
+	if not VERBOSE then
+		return.
 	message "PROPATH:".
 	define variable cnt as integer no-undo.
 	do cnt = 1 to num-entries(propath, ','):
