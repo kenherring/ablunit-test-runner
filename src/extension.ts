@@ -136,11 +136,23 @@ export function activate (context: ExtensionContext) {
 		if (request.profile?.kind === TestRunProfileKind.Debug) {
 			const ext = extensions.getExtension('riversidesoftware.openedge-abl-lsp')
 			if (!ext) {
-				log.notificationError('OpenEdge ABL extension not found')
+				log.error('OpenEdge ABL extension not found')
+				void window.showErrorMessage('Debugging tests requires the "OpenEdge ABL" extension which cannot be found.', 'Show "OpenEdge ABL" in marketplace...', 'Cancel').then((selection) => { // NOSONAR - promise
+					log.info('selection=' + selection)
+					if (selection == 'Show "OpenEdge ABL" in marketplace...') {
+						void commands.executeCommand('extension.open', 'riversidesoftware.openedge-abl-lsp') // NOSONAR - promise
+					}
+				})
 				return
 			}
 			if (!ext.isActive) {
-				log.notificationError('OpenEdge ABL extension installed but not active')
+				log.error('OpenEdge ABL extension installed but not active')
+				void window.showErrorMessage('Debugging tests requires the "OpenEdge ABL" extension which is installed but not active.', 'Activate "OpenEdge ABL"', 'Cancel').then((selection) => { // NOSONAR - promise
+					log.info('selection=' + selection)
+					if (selection == 'Activate "OpenEdge ABL"') {
+						return ext.activate()
+					}
+				})
 				return
 			}
 		}
