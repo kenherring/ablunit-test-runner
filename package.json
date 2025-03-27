@@ -2,7 +2,7 @@
 	"name": "ablunit-test-runner",
 	"displayName": "ABLUnit Test Runner",
 	"description": "OpenEdge ABLUnit test runner for VSCode",
-	"version": "1.1.1",
+	"version": "1.1.3",
 	"engineStrict": true,
 	"galleryBanner": {
 		"color": "#007ACC",
@@ -156,11 +156,6 @@
 					],
 					"markdownDescription": "Glob patterns to exclude test files",
 					"scope": "machine-overridable"
-				},
-				"ablunit.importOpenedgeProjectJson": {
-					"type": "boolean",
-					"default": true,
-					"markdownDescription": "Import configuration from `openedge-project.json` when possible"
 				}
 			}
 		},

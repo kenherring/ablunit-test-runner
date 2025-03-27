@@ -1,7 +1,7 @@
 import { FileType, TestItem, TestItemCollection, TestMessage, TestRun, Uri, workspace, WorkspaceFolder,
 	FileCoverage, FileCoverageDetail,
 	Disposable, CancellationToken, CancellationError,
-	Location, Position, Range,
+	Location, Position,
 	DeclarationCoverage, StatementCoverage,
 	TestRunRequest, TestRunProfileKind } from 'vscode'
 import { ABLUnitConfig } from 'ABLUnitConfigWriter'
@@ -431,7 +431,7 @@ export class ABLResults implements Disposable {
 	}
 
 	private setChildResults (item: TestItem, options: TestRun, tc: ITestCase) {
-		if (tc.status.toLowerCase() == 'skipped' || tc.skipped) {
+		if (tc.status.toLowerCase() == 'skipped' || tc.status.toLowerCase() == 'ignored' || tc.skipped) {
 			options.skipped(item)
 			return
 		}

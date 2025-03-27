@@ -26,10 +26,7 @@ import { ABLCompilerError, ABLUnitRuntimeError, TimeoutError } from 'Errors'
 import { basename } from 'path'
 import * as FileUtils from 'FileUtils'
 import { gatherAllTestItems, IExtensionTestReferences, sortLocation } from 'ABLUnitCommon'
-import {
-	// InlineProvider,
-	SnippetProvider,
-} from 'SnippetProvider'
+import { SnippetProvider } from 'SnippetProvider'
 
 let recentResults: ABLResults[] = []
 let recentError: Error | undefined = undefined
@@ -112,7 +109,6 @@ export function activate (context: ExtensionContext) {
 		}),
 	)
 
-
 	const getExtensionTestReferences = () => {
 		if (!process.env['ABLUNIT_TEST_RUNNER_UNIT_TESTING']) {
 			throw new Error('command not allowed outside of unit testing')
@@ -136,6 +132,31 @@ export function activate (context: ExtensionContext) {
 			throw new Error('continuous test runs not implemented')
 		}
 		recentError = undefined
+
+		if (request.profile?.kind === TestRunProfileKind.Debug) {
+			const ext = extensions.getExtension('riversidesoftware.openedge-abl-lsp')
+			if (!ext) {
+				log.error('OpenEdge ABL extension not found')
+				void window.showErrorMessage('Debugging tests requires the "OpenEdge ABL" extension which cannot be found.', 'Show "OpenEdge ABL" in marketplace...', 'Cancel').then((selection) => { // NOSONAR - promise
+					log.info('selection=' + selection)
+					if (selection == 'Show "OpenEdge ABL" in marketplace...') {
+						void commands.executeCommand('extension.open', 'riversidesoftware.openedge-abl-lsp') // NOSONAR - promise
+					}
+				})
+				return
+			}
+			if (!ext.isActive) {
+				log.error('OpenEdge ABL extension installed but not active')
+				void window.showErrorMessage('Debugging tests requires the "OpenEdge ABL" extension which is installed but not active.', 'Activate "OpenEdge ABL"', 'Cancel').then((selection) => { // NOSONAR - promise
+					log.info('selection=' + selection)
+					if (selection == 'Activate "OpenEdge ABL"') {
+						return ext.activate()
+					}
+				})
+				return
+			}
+		}
+
 		return startTestRun(request, token)
 			.catch((e: unknown) => {
 				if (e instanceof Error) {
@@ -442,7 +463,9 @@ export function activate (context: ExtensionContext) {
 		const tests = request.include ?? gatherTestItems(ctrl.items)
 
 		return discoverTests(tests)
-			.then(() => { return createABLResults() })
+			.then(() => {
+				return createABLResults()
+			})
 			.then((res) => {
 				if (!res) {
 					throw new Error('createABLResults failed')
@@ -507,14 +530,6 @@ export function activate (context: ExtensionContext) {
 		return Promise.resolve()
 	}
 
-	ctrl.invalidateTestResults = (items?: TestItem | readonly TestItem[]) => {
-		if (items instanceof Array) {
-			log.info('ctrl.invalidateTestResults items.length=' + items.length)
-		} else {
-			log.info('ctrl.invalidateTestResults items.id=' + items?.id)
-		}
-	}
-
 	ctrl.refreshHandler = (token: CancellationToken) => {
 		log.info('ctrl.refreshHandler start')
 		isRefreshTestsComplete = false
@@ -541,7 +556,7 @@ export function activate (context: ExtensionContext) {
 
 	function updateConfiguration (event: ConfigurationChangeEvent) {
 		if (!event.affectsConfiguration('ablunit')) {
-			log.warn('configuration updated but does not include ablunit settings (event=' + JSON.stringify(event) + ')')
+			log.debug('configuration updated but does not include ablunit settings (event=' + JSON.stringify(event) + ')')
 		} else {
 			log.debug('affects ablunit.file? ' + event.affectsConfiguration('ablunit.files'))
 			if (event.affectsConfiguration('ablunit.files')) {
@@ -564,10 +579,10 @@ export function activate (context: ExtensionContext) {
 	}
 
 	const testProfileRun = ctrl.createRunProfile('Run Tests', TestRunProfileKind.Run, runHandler, true, new TestTag('runnable'), false)
-	// const testProfileDebug = ctrl.createRunProfile('Debug Tests', TestRunProfileKind.Debug, runHandler, false, new TestTag('runnable'), false)
+	const testProfileDebug = ctrl.createRunProfile('Debug Tests', TestRunProfileKind.Debug, runHandler, true, new TestTag('runnable'), false)
 	const testProfileCoverage = ctrl.createRunProfile('Run Tests w/ Coverage', TestRunProfileKind.Coverage, runHandler, true, new TestTag('runnable'), false)
 	testProfileRun.configureHandler = configHandler
-	// testProfileDebug.configureHandler = configHandlerDebug
+	testProfileDebug.configureHandler = configHandler
 	testProfileCoverage.configureHandler = configHandler
 	testProfileCoverage.loadDetailedCoverage = loadDetailedCoverage
 	testProfileCoverage.loadDetailedCoverageForTest = loadDetailedCoverageForTest
