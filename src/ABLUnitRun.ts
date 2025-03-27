@@ -263,7 +263,7 @@ function runCommand (res: ABLResults, options: TestRun, cancellation: Cancellati
 				log.debug('stdout savePartialLine=\'' + stdout + '\'')
 			}
 			for (let i=0; i < lines.length; i++) {
-				let line = lines[i]
+				const line = lines[i]
 				if (line.startsWith('ABLUNIT_STATUS=SERIALIZED_ERROR ')) {
 					compilerErrors.push(JSON.parse(line.substring(32)) as ICompilerError)
 					continue
@@ -302,13 +302,13 @@ function runCommand (res: ABLResults, options: TestRun, cancellation: Cancellati
 						})
 				}
 
-				line = '\t\t[stdout] '
+				let outLine = '\t\t'
 				if (currentTestItem) {
-					line += '[' + currentTestItem.label + '] '
+					outLine += '[' + currentTestItem.label + '] '
 				}
-				line += line
+				outLine += line
 
-				log.info(line, {testRun: options, testItem: currentTestItem})
+				log.info(outLine, {testRun: options, testItem: currentTestItem})
 				lines[i] = '<<LOGGED>>'
 			}
 			log.debug('stdout DONE')
