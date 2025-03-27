@@ -255,8 +255,12 @@ export class ABLResultsParser {
 				callstackRaw: result._,
 				callstack: callstack,
 				stackTrace: stackTrace,
-				message: result.$.message,
+				message: result.$.type + ': ' + result.$.message,
 				type: result.$.types
+			}
+
+			if (type == 'error') {
+				fail.message = 'Exception: ' + fail.message
 			}
 			const diffRE = /Expected: (.*) but was: (.*)/
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument

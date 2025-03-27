@@ -17,6 +17,7 @@ interface ICallStackItem {
 	markdownText?: string
 	loc?: Location
 	position: Position
+	range: Range
 }
 
 export interface ICallStack {
@@ -70,7 +71,8 @@ export async function parseCallstack (debugLines: ABLDebugLines, callstackRaw: s
 			debugLine: debugLine,
 			debugFile: debugFile,
 			debugUri: debugUri,
-			position: new Position(debugLine - 1, 0)
+			position: new Position(debugLine - 1, 0),
+			range: new Range(debugLine - 1, 0, debugLine, 0)
 		}
 
 		let lineinfo: SourceMapItem | undefined = undefined
