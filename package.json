@@ -89,9 +89,6 @@
 		"version": "sh -c scripts/npm_version.sh",
 		"watch": "npm run build -- --watch"
 	},
-	"extensionDependencies": [
-		"riversidesoftware.openedge-abl-lsp"
-	],
 	"dependencies": {
 		"minimatch": "^10.0.1",
 		"node-json-minify": "^3.0.0",
