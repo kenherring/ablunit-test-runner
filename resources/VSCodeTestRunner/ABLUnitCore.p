@@ -62,9 +62,11 @@ procedure waitForDebuggerVisible :
 		return.
 
 	etime(yes).
-	do while etime < 10000 and debugger:visible = false:
+	define variable maxWait as integer init 10000 no-undo.
+	maxWait = integer(os-getenv('ABLUNIT_TEST_RUNNER_DEBUG_MAX_WAIT')) no-error.
+	do while etime < maxWait and debugger:visible = false:
 		// wait for 10 seconds
-		message 'waiting for debugger to connect... (' + string(etime) + '/10000ms)'.
+		message 'waiting for debugger to connect... (' + string(etime) + '/' + string(maxWait) + 'ms)'.
 		pause 1.
 	end.
 
