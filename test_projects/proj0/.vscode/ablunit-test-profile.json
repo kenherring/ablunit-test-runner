@@ -2,16 +2,10 @@
 	"configurations": [
 		{
 			"tempDir": "${workspaceFolder}",
-			"importOpenedgeProjectJson": true,
-			"timeout": 30000,
 			"command": {
 				"executable": "_progres",
 				"progressIni": "progress.ini",
-				"batch": true,
-				"debugHost": "localhost",
-				"debugPort": 3199,
-				"debugConnectMaxWait": 10000,
-				"additionalArgs": []
+				"debugConnectMaxWait": 30000
 			},
 			"options": {
 				"output": {
@@ -20,17 +14,9 @@
 					"format": "xml",
 					"updateFile": "updates.log"
 				},
-				"debug": false,
 				"quitOnEnd": true,
-				"writeLog": false,
 				"showErrorMessage": true,
-				"throwError": true,
-				"xref": {
-					"useXref": false,
-					"xrefLocation": "${tempDir}",
-					"xrefExtension": "xml.xref",
-					"xrefThrowError": false
-				}
+				"throwError": true
 			},
 			"profiler": {
 				"enabled": true,
