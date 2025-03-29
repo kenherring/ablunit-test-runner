@@ -1,3 +1,11 @@
+# [1.1.9](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.1.9) - 2025-03-29 (pre-release)
+
+
+ * Add test case for capturing declaration header in the declaration range (#254)
+
+
+**Full Changelog**: [1.1.7...1.1.9](https://github.com/kenherring/ablunit-test-runner/compare/1.1.7...1.1.9)
+
 # [1.1.7](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.1.7) - 2025-03-27 (pre-release)
 
 
@@ -14,8 +22,6 @@
  * Coverage by test case declarations (#255)
  * Enable debuging TestRunProfile (#257)
  * Update output for messages from tests (#260)
- * Documentation updates (#258)
- * Debug Tests: improve messages for missing extension dependency (#261)
 
 **Full Changelog**: [1.1.0...1.1.3](https://github.com/kenherring/ablunit-test-runner/compare/1.1.0...1.1.3)
 

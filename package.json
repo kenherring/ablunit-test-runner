@@ -2,7 +2,7 @@
 	"name": "ablunit-test-runner",
 	"displayName": "ABLUnit Test Runner",
 	"description": "OpenEdge ABLUnit test runner for VSCode",
-	"version": "1.1.7",
+	"version": "1.1.9",
 	"engineStrict": true,
 	"galleryBanner": {
 		"color": "#007ACC",
@@ -65,12 +65,9 @@
 	"categories": [
 		"Testing"
 	],
-	"activationEvents-other": [
+	"activationEvents": [
 		"onStartupFinished",
 		"workspaceContains:{**/*.cls,**/*.p,.vscode/ablunit-test-profile.json}"
-	],
-	"activationEvents": [
-		"onStartupFinished"
 	],
 	"main": "./dist/extension.js",
 	"scripts": {

@@ -651,7 +651,12 @@ export class ABLResults implements Disposable {
 					if (!existing) {
 						fdc.push(d)
 						continue
-					} else if (typeof d.executed == 'number' && typeof existing.executed == 'number') {
+					}
+					if (existing.location instanceof Range  && d.location instanceof Range) {
+						// capture declaration header when possible
+						existing.location = existing.location.union(d.location)
+					}
+					if (typeof d.executed == 'number' && typeof existing.executed == 'number') {
 						existing.executed += d.executed
 					} else if (typeof d.executed == 'boolean' && typeof existing.executed == 'number') {
 						existing.executed = existing.executed > 0 || d.executed
