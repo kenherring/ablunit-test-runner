@@ -1,3 +1,11 @@
+# [1.1.11](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.1.11) - 2025-03-29 (pre-release)
+
+
+ * Don't display destructors as overloaded constructors (#252)
+
+
+**Full Changelog**: [1.1.9...1.1.11](https://github.com/kenherring/ablunit-test-runner/compare/1.1.9...1.1.11)
+
 # [1.1.9](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.1.9) - 2025-03-29 (pre-release)
 
 
