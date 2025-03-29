@@ -1,7 +1,7 @@
 import { FileType, TestItem, TestItemCollection, TestMessage, TestRun, Uri, workspace, WorkspaceFolder,
 	FileCoverage, FileCoverageDetail,
 	Disposable, CancellationToken, CancellationError,
-	Location, Position, Range,
+	Location, Position, Range, /* MarkdownString, */
 	DeclarationCoverage, StatementCoverage,
 	TestRunRequest, TestRunProfileKind } from 'vscode'
 import { ABLUnitConfig } from 'ABLUnitConfigWriter'
@@ -431,7 +431,7 @@ export class ABLResults implements Disposable {
 	}
 
 	private setChildResults (item: TestItem, options: TestRun, tc: ITestCase) {
-		if (tc.status.toLowerCase() == 'skipped' || tc.skipped) {
+		if (tc.status.toLowerCase() == 'skipped' || tc.status.toLowerCase() == 'ignored' || tc.skipped) {
 			options.skipped(item)
 			return
 		}
@@ -443,17 +443,30 @@ export class ABLResults implements Disposable {
 		if (tc.failures && tc.failures.length > 0) {
 			for (const failure of tc.failures) {
 				let loc: Location | undefined = undefined
-				if (failure.stackTrace[0]?.uri && failure.stackTrace[0]?.position) {
-					loc = new Location(failure.stackTrace[0].uri, failure.stackTrace[0].position)
-					log.error(failure.message, {testRun: options, location: loc, testItem: item})
+				for (const f of failure.stackTrace) {
+					if (f.uri && f.position) {
+						const fLoc = new Location(f.uri, new Range(f.position.line, f.position.character, f.position.line + 1, f.position.character))
+						// log.error(failure.message, {testRun: options, location: fLoc, testItem: item})
+						// options.appendOutput(failure.message + '\n')
+						if (!loc) {
+							loc = fLoc
+						}
+					}
 				}
 				let testMessage = this.getDiffMessage(failure)
 				if (!testMessage) {
 					testMessage = new TestMessage(getPromsgText(failure.message))
 				}
 				testMessage.stackTrace = failure.stackTrace
-				testMessage.location = loc
-				options.failed(item, testMessage, tc.time)
+				// testMessage.location = loc
+
+				const testMessages = [testMessage]
+				// log.info('failure.callStack=' + JSON.stringify(failure.callstack))
+				// if (failure.callstack.markdownText) {
+				// 	log.info('failure.callSTack.markdownText=' + failure.callstack.markdownText)
+				// 	testMessages.push(new TestMessage(new MarkdownString(failure.callstack.markdownText)))
+				// }
+				options.failed(item, testMessages, tc.time)
 			}
 			return
 		}
@@ -683,11 +696,11 @@ export class ABLResults implements Disposable {
 			if (item) {
 				const key = item.id + '|' + incInfo.uri.fsPath
 
-				let tdcs = this.testDeclarations.get(key) ?? []
+				const tdcs = this.testDeclarations.get(key) ?? []
 				tdcs.push(...declarations.map(d => new DeclarationCoverage(d.name, d.executed, d.location)))
 				this.testDeclarations.set(key, tdcs)
 
-				let tscs = this.testStatements.get(key) ?? []
+				const tscs = this.testStatements.get(key) ?? []
 				tscs.push(...statements.map(s => new StatementCoverage(s.executed, s.location)))
 				this.testStatements.set(key, tscs)
 			}

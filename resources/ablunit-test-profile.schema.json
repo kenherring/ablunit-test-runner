@@ -240,17 +240,35 @@
 								"description": "Program to execute.  Typically an OpenEdge executable, but could be something like `ant` or another script to launch your test suite.",
 								"minLength": 1
 							},
-							"batch": {
-								"type": "boolean",
-								"default": true,
-								"description": "batch mode (-b)"
-							},
 							"progressIni": {
 								"type": "string",
 								"default": "${tempDir}/progress.ini",
 								"nullable": true,
 								"description": "Windows only. Path to ini configuration file. Appended to test run execution with command line arguments: `-basekey INI -basename <progressIni>`.  Set to \"null\" to disable.",
 								"markdownDescription": "Windows only. Path to ini configuration file. Appended to test run execution with command line arguments: `-basekey INI -basename <progressIni>`.  Set to `null` to disable."
+							},
+							"batch": {
+								"type": "boolean",
+								"default": true,
+								"description": "batch mode (-b)"
+							},
+							"debugHost": {
+								"type": "string",
+								"default": "localhost",
+								"minLength": 3,
+								"description": "Host to use for debugging. (default: localhost)"
+							},
+							"debugPort": {
+								"type": "integer",
+								"default": 3199,
+								"minimum": 0,
+								"description": "Port to use for debugging."
+							},
+							"debugConnectMaxWait": {
+								"type": "integer",
+								"default": 10000,
+								"minimum": 1000,
+								"description": "Max time to wait for a connection to the debug port."
 							},
 							"additionalArgs": {
 								"type": "array",

@@ -255,7 +255,7 @@ export class ABLResultsParser {
 				callstackRaw: result._,
 				callstack: callstack,
 				stackTrace: stackTrace,
-				message: result.$.message,
+				message: result.$.type + ': ' + result.$.message,
 				type: result.$.types
 			}
 			const diffRE = /Expected: (.*) but was: (.*)/

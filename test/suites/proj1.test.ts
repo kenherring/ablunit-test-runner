@@ -1,5 +1,5 @@
 import { Selection, TaskEndEvent, TaskExecution, commands, tasks, window } from 'vscode'
-import { Uri, assert, getWorkspaceUri, log, runAllTests, sleep, updateConfig, getTestCount, workspace, suiteSetupCommon, getWorkspaceFolders, oeVersion, runTestAtLine, beforeCommon, updateTestProfile, runTestsInFile, sleep2, FileUtils } from '../testCommon'
+import { Uri, assert, getWorkspaceUri, log, runAllTests, sleep, updateConfig, getTestCount, workspace, suiteSetupCommon, getWorkspaceFolders, oeVersion, runTestAtLine, beforeCommon, updateTestProfile, runTestsInFile, TestRunProfileKind, sleep2, FileUtils } from '../testCommon'
 import { getOEVersion } from 'parse/OpenedgeProjectParser'
 import { execSync } from 'child_process'
 import * as glob from 'glob'
@@ -37,7 +37,7 @@ suite('proj1 - Extension Test Suite', () => {
 		])
 	})
 
-	test('proj1.1 - output files exist 1 - compile error', () => {
+	test('proj1.1 - output files exist 1 - compile error', async () => {
 		const ablunitJson = Uri.joinPath(workspaceUri, 'ablunit.json')
 		const resultsXml = Uri.joinPath(workspaceUri, 'results.xml')
 		const resultsJson = Uri.joinPath(workspaceUri, 'results.json')
@@ -73,7 +73,7 @@ suite('proj1 - Extension Test Suite', () => {
 				assert.notFileExists(resultsJson)
 				log.info('assert proj1.1 complete!')
 			})
-		return prom
+		await prom
 	})
 
 	test('proj1.2 - output files exist 2 - exclude compileError*.p', () => {
@@ -371,7 +371,7 @@ async function compileWithTaskAndRunWithCoverage (taskName: string) {
 	assert.fileExists(testRcode)
 	log.info('compile complete! starting tests...')
 
-	await runTestsInFile('test_15.p', 1, true)
+	await runTestsInFile('test_15.p', 1, TestRunProfileKind.Coverage)
 		.then(() => {
 			assert.tests.count(1)
 			assert.tests.passed(1)

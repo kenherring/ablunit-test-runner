@@ -38,7 +38,6 @@ test('OpenedgeProjectParser.test.2', () => {
 		throw new Error('config is undefined')
 	}
 
-	log.info('config=' + JSON.stringify(config, null, 4))
 	assert.equal(JSON.stringify(config.propath), JSON.stringify(config.buildPath.map(x => x.build)))
 })
 
@@ -48,7 +47,6 @@ test('OpenedgeProjectParser.test.3', () => {
 		throw new Error('config is undefined')
 	}
 
-	// log.info('config=' + JSON.stringify(config, null, 4))
 	assert.equal(JSON.stringify(config.propath), '["."]')
 	assert.equal(JSON.stringify(config.buildPath.map(x => x.build)), '["dist"]')
 })

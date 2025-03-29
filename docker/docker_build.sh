@@ -3,10 +3,13 @@ set -eou pipefail
 
 usage () {
 	echo "
-usage: $0 [-p] [-h]
+usage: $0 [-p] [-n] [-h]
+		[-o < 12.2.12 | 12.8.1 | 12.8.6 | ... >]
+		[-N < 18 | 20 | 22 | ... >]
 options:
   -p				push docker images to dockerhub after build
   -n				no cache
+  -o <version>		build with a specific OE version
   -N <version>		build with a specific node version
   -h				show this help message and exit
 " >&2
@@ -14,12 +17,13 @@ options:
 
 initialize () {
 	local OPT OPTARG OPTIND
-	while getopts "pnN:h" OPT; do
+	while getopts "pnN:o:h" OPT; do
 		case "$OPT" in
-			N)  NODE_VERSION=$OPTARG ;;
+			N)	NODE_VERSION=$OPTARG ;;
 			p)	DOCKER_PUSH=true ;;
-			n)  NO_CACHE=true ;;
-			h) 	usage && exit 0 ;;
+			n)	NO_CACHE=true ;;
+			o)	DOCKER_TAGS=("$OPTARG") ;;
+			h)	usage && exit 0 ;;
 			*)	echo "Invalid option: -$OPT" >&2 && usage && exit 1 ;;
 		esac
 	done

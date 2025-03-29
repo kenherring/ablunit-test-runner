@@ -27,6 +27,7 @@ tmp/
 # OpenEdge Files
 docker/ablunit.pl
 client.mon
+debugger.pref
 proc.mon
 procore.*
 *.crc
@@ -45,6 +46,7 @@ procore.*
 ablunit.json
 dbconn.pf
 dbg_*
+debugger.pref
 listings/
 prof*.json
 profile.options
@@ -57,6 +59,7 @@ rcda*
 srta*
 
 # Test files
+test_projects/proj0/.vscode/launch.json
 test_projects/proj2/src/compileError.p
 
 # Generated test files
