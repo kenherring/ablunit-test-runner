@@ -5,6 +5,7 @@ import { log } from 'ChannelLogger'
 import * as FileUtils from 'FileUtils'
 import { Duration } from 'ABLUnitCommon'
 import { ProfileData } from 'parse/ProfileData'
+import { getShortTypeText, ISignature, SignatureType, SourceMap, SourceMapItem } from './SourceMapParser'
 
 class ModuleIgnored extends Error {
 	constructor (public moduleId: number) {
@@ -103,7 +104,6 @@ export class ABLProfile {
 
 		if (writeJson) {
 			const jsonUri = Uri.file(uri.fsPath.replace(/\.[a-zA-Z]+$/, '.json'))
-			// eslint-disable-next-line promise/catch-or-return
 			this.writeJsonToFile(jsonUri).then(() => {
 				return true
 			}, (e: unknown) => {
@@ -151,6 +151,7 @@ export interface IModule { // Section 2
 	ParentModuleID?: number
 	ParentName?: string
 	Destructor?: boolean
+	signature?: ISignature
 	ListingFile?: string
 	CrcValue: number
 	ModuleLineNum: number
@@ -159,7 +160,7 @@ export interface IModule { // Section 2
 	overloaded?: boolean
 	overloadSequence?: number
 	execCount?: number
-	actualTime?: number,
+	actualTime?: number
 	cumulativeTime?: number
 	executableLines: number
 	executedLines: number
@@ -395,6 +396,7 @@ export class ABLProfileJson {
 				log.debug('could not find source file in propath for ' + sourceName + ' (uri=' + this.profileUri.fsPath + ')')
 				continue
 			}
+
 			const mod: IModule = {
 				ModuleID: Number(test[1]),
 				ModuleName: moduleName,
@@ -421,6 +423,22 @@ export class ABLProfileJson {
 				ISectionTwelve: []
 			}
 
+			// this.debugLines.getSourceMap(mod.SourceUri).then((sourceMap) => {
+			// 	if (!sourceMap) {
+			// 		log.error('could not find source map for module ' + moduleName + ' in uri=' + this.profileUri.fsPath + ' (ModuleID=' + mod.ModuleID + ')')
+			// 		throw new Error('could not find source map for module ' + moduleName + ' in uri=' + this.profileUri.fsPath + ' (ModuleID=' + mod.ModuleID + ')')
+			// 	}
+			// 	const item = sourceMap.items.find(i => i.debugLine === Number(test[5]))
+			// 	if (!item) {
+			// 		log.warn('cound not find debug line item for ' + Number(test[5]))
+			// 		// throw new Error('cound not find debug line item for ' + Number(test[5]))
+			// 	}
+			// 	return this.getSignatureFromMap(sourceMap, entityName, item)
+			// }, (e: unknown) => {
+			// 	log.error('could not get source map for signature (e=' + e + ')')
+			// 	throw e
+			// })
+
 			if (Number(test[4]) != 0) {
 				this.modules.push(mod)
 			} else {
@@ -428,6 +446,55 @@ export class ABLProfileJson {
 			}
 		}
 		this.addChildModulesToParents(childModules)
+	}
+
+	getSignatureFromMap (map: SourceMap, procName: string, destructor: boolean, item: SourceMapItem | undefined) {
+		if (procName == '<main block>') {
+			return undefined
+		}
+		if (destructor) {
+			return map.signatures.find(s => s.type == SignatureType.Destructor)
+		}
+		const signatures = map.signatures.filter(s => s.name == procName)
+		if (signatures.length == 1) {
+			return signatures[0]
+		}
+		log.info('signatures.length=' + signatures.length)
+		log.info('decs=' + JSON.stringify(map.declarations.map(d => d.procName)))
+		log.info('procName=' + procName)
+
+		const declarations = map.declarations.filter(d => d.procName == procName)
+		log.info('declarations.length=' + declarations.length)
+		if (declarations.length != signatures.length) {
+
+			log.info('declarations=' + JSON.stringify(declarations, null, 2))
+			log.info('signatures=' + JSON.stringify(signatures, null, 2))
+
+			log.error('expected declarations and signatures to have the smae number of matches by name (' + declarations.length + ' != ' + signatures.length + ')')
+			// throw new Error('expected declarations and signatures to have the smae number of matches by name (' + declarations.length + ' != ' + signatures.length + ')')
+		}
+
+		let index = 1
+		if (declarations.length > 1 && !destructor) {
+			if (item) {
+				index = declarations.findIndex(d => d.procNum === item.procNum)
+			} else {
+				log.error('Unable to determine procNum for ' + procName + ' in source map for uri=' + this.profileUri.fsPath)
+				return undefined
+				// throw new Error('Unable to determine procNum for ' + procName + ' in source map for uri=' + this.profileUri.fsPath)
+			}
+		}
+		log.info('index=' + index)
+		log.info('map.signatures=' + JSON.stringify(map.signatures, null, 2))
+		const signature = signatures[index]
+		log.info('signature=' + JSON.stringify(signature))
+		if (signature) {
+			return signature
+		}
+
+		log.error('Could not find signature for procedure ' + procName + ' in source map for uri=' + this.profileUri.fsPath)
+		return undefined
+		// throw new Error('Could not find signature for module ' + procName + ' in source map for uri=' + this.profileUri.fsPath)
 	}
 
 	async addSourceMap () {
@@ -438,6 +505,7 @@ export class ABLProfileJson {
 				// could not parse source map :(
 				return
 			}
+
 			this.hasSourceMap = true
 			for (const item of map.items) {
 				if (item.procName == '') {
@@ -462,23 +530,66 @@ export class ABLProfileJson {
 					newLine.procNum = item.procNum
 					mod.lines.push(newLine)
 					continue
-				} else {
-					// child module
-					let children = mod.childModules.filter(m => m.EntityName == item.procName)
+				}
 
-					if (children.length > 1) {
-						let seq = 1
-						for (const c of children) {
-							c.overloaded = true
-							c.overloadSequence = seq
-							seq++
+				// child module
+				let children = mod.childModules.filter(m => m.EntityName == item.procName && !m.Destructor) // find child modules with the same procName and not a destructor
+
+				if (children.length > 1) {
+					let seq = 1
+					for (const c of children) {
+						c.overloaded = true
+						c.overloadSequence = seq
+						seq++
+					}
+				}
+
+				if (!children || children.length == 0) {
+					// add new child module - won't have any coverage
+					mod.childModules.push({
+						ModuleID: mod.ModuleID,
+						ModuleName: item.procName + ' ' + mod.ModuleName,
+						EntityName: item.procName,
+						SourceUri: item.debugUri,
+						SourceName: mod.SourceName,
+						ParentModuleID: mod.ModuleID,
+						ParentName: mod.ParentName,
+						Destructor: item.procName.startsWith('~'),
+						signature: this.getSignatureFromMap(map, item.procName, item.procName.startsWith('~'), item),
+						CrcValue: map.crc ?? 0,
+						ModuleLineNum: item.debugLine, // not exactly accurate, but as close as we're going to get
+						UnknownString1: '',
+						procNum: item.procNum,
+						executableLines: 1,
+						executedLines: 0,
+						coveragePct: 0,
+						lineCount: 0,
+						calledBy: [],
+						calledTo: [],
+						childModules: [],
+						lines: [],
+						ISectionEight: [],
+						ISectionNine: [],
+						ISectionTen: [],
+						ISectionTwelve: []
+					})
+					children = [mod.childModules[mod.childModules.length - 1]]
+				}
+
+				// add or update line on existing child
+				if (children.length >= 1) {
+					let child = children.find(m => m.procNum == item.procNum)
+					if (!child) {
+						child = children.find(m => !m.procNum)
+						if (child) {
+							child.procNum = item.procNum
 						}
 					}
-
-					if (!children || children.length == 0) {
-						// add new child module - won't have any coverage
+					if (!child) {
+						const modNum = children[0].ModuleID
+						const maxSeq = Math.max(...children.map(c => c.overloadSequence ?? 0)) + 1
 						mod.childModules.push({
-							ModuleID: mod.ModuleID,
+							ModuleID: modNum,
 							ModuleName: item.procName + ' ' + mod.ModuleName,
 							EntityName: item.procName,
 							SourceUri: item.debugUri,
@@ -486,10 +597,13 @@ export class ABLProfileJson {
 							ParentModuleID: mod.ModuleID,
 							ParentName: mod.ParentName,
 							Destructor: item.procName.startsWith('~'),
+							signature: this.getSignatureFromMap(map, item.procName, item.procName.startsWith('~'), item),
 							CrcValue: map.crc ?? 0,
 							ModuleLineNum: item.debugLine, // not exactly accurate, but as close as we're going to get
 							UnknownString1: '',
 							procNum: item.procNum,
+							overloaded: !item.procName.startsWith('~'),
+							overloadSequence: maxSeq,
 							executableLines: 1,
 							executedLines: 0,
 							coveragePct: 0,
@@ -502,77 +616,33 @@ export class ABLProfileJson {
 							ISectionNine: [],
 							ISectionTen: [],
 							ISectionTwelve: []
+
 						})
-						children = [mod.childModules[mod.childModules.length - 1]]
+						child = mod.childModules[mod.childModules.length - 1]
 					}
-
-					// add or update line on existing child
-					if (children.length >= 1) {
-						let child = children.find(m => m.procNum == item.procNum)
-						if (!child) {
-							child = children.find(m => !m.procNum)
-							if (child) {
-								child.procNum = item.procNum
-							}
-						}
-						if (!child) {
-							const modNum = children[0].ModuleID
-							const maxSeq = Math.max(...children.map(c => c.overloadSequence ?? 0)) + 1
-							mod.childModules.push({
-								ModuleID: modNum,
-								ModuleName: item.procName + ' ' + mod.ModuleName,
-								EntityName: item.procName,
-								SourceUri: item.debugUri,
-								SourceName: mod.SourceName,
-								ParentModuleID: mod.ModuleID,
-								ParentName: mod.ParentName,
-								Destructor: item.procName.startsWith('~'),
-								CrcValue: map.crc ?? 0,
-								ModuleLineNum: item.debugLine, // not exactly accurate, but as close as we're going to get
-								UnknownString1: '',
-								procNum: item.procNum,
-								overloaded: true,
-								overloadSequence: maxSeq,
-								executableLines: 1,
-								executedLines: 0,
-								coveragePct: 0,
-								lineCount: 0,
-								calledBy: [],
-								calledTo: [],
-								childModules: [],
-								lines: [],
-								ISectionEight: [],
-								ISectionNine: [],
-								ISectionTen: [],
-								ISectionTwelve: []
-
-							})
-							child = mod.childModules[mod.childModules.length - 1]
-						}
-						const l = child.lines.find(l => l.LineNo == item.debugLine)
-						if (l) {
-							// update existing line
-							l.Executable = true
-							l.srcUri = item.debugUri
-							l.srcLine = item.debugLine
-							l.sourcePath = item.sourcePath
-							l.incUri = item.sourceUri
-							l.incLine = item.sourceLine
-							l.procNum = item.procNum
-							continue
-						}
-						// add new line
-						const newLine = new LineSummary(mod.SourceUri.fsPath, item.debugLine, true, 0, item.sourcePath)
-						newLine.srcUri = item.debugUri
-						newLine.srcLine = item.debugLine
-						newLine.incUri = item.sourceUri
-						newLine.incLine = item.sourceLine
-						newLine.procNum = item.procNum
-						child.lines.push(newLine)
+					const l = child.lines.find(l => l.LineNo == item.debugLine)
+					if (l) {
+						// update existing line
+						l.Executable = true
+						l.srcUri = item.debugUri
+						l.srcLine = item.debugLine
+						l.sourcePath = item.sourcePath
+						l.incUri = item.sourceUri
+						l.incLine = item.sourceLine
+						l.procNum = item.procNum
 						continue
 					}
-
+					// add new line
+					const newLine = new LineSummary(mod.SourceUri.fsPath, item.debugLine, true, 0, item.sourcePath)
+					newLine.srcUri = item.debugUri
+					newLine.srcLine = item.debugLine
+					newLine.incUri = item.sourceUri
+					newLine.incLine = item.sourceLine
+					newLine.procNum = item.procNum
+					child.lines.push(newLine)
+					continue
 				}
+
 				throw new Error('could not find module to add source map item from ' + item.debugUri + ' (uri=' + this.profileUri.fsPath + ')\n\titem=' + JSON.stringify(item))
 			}
 		}
@@ -586,7 +656,7 @@ export class ABLProfileJson {
 			}
 			if (!parent) {
 				this.interpretedModuleSequence--
-				log.warn('Could not find parent module, creating interpre modude id ' + this.interpretedModuleSequence + ' for ' + child.SourceName + ' (uri=' + this.profileUri.fsPath + ')')
+				log.warn('Could not find parent module, creating interpreted modude id ' + this.interpretedModuleSequence + ' for ' + child.SourceName + ' (uri=' + this.profileUri.fsPath + ')')
 				parent = {
 					ModuleID: this.interpretedModuleSequence,
 					ModuleName: child.SourceName,
@@ -1166,9 +1236,7 @@ function getModuleRange (module: IModule, onlyUri: Uri) {
 		return undefined
 	}
 
-
 	let firstLine
-
 	if (module.ModuleLineNum && !module.overloaded && lines[0].LineNo != module.ModuleLineNum && lines[0].incLine) {
 		firstLine = new Range(module.ModuleLineNum - (lines[0].LineNo - lines[0].incLine) - 1, 0, module.ModuleLineNum - (lines[0].LineNo - lines[0].incLine), 0)
 	} else {
@@ -1217,8 +1285,27 @@ export function getDeclarationCoverage (module: IModule, onlyUri: Uri) {
 		const range = getModuleRange(mod, onlyUri)
 		if (range) {
 			let name = mod.EntityName ?? '<main block>'
-			if (mod.overloaded) {
-				name = name + ' (overload ' + mod.overloadSequence + ')'
+			if (mod.Destructor) {
+				name = 'destructor ' + name
+			} else if (mod.overloaded) {
+				log.info('mod.overloaded')
+				log.info('mod.signature=' + JSON.stringify(mod.signature))
+				const paramTypesShort = mod.signature?.parameters.map((p) => getShortTypeText(p.type)) ?? []
+				log.info('paramTypesShort=' + JSON.stringify(paramTypesShort))
+				if (paramTypesShort.length > 0) {
+					name = name + '(' + paramTypesShort + ')'
+				} else if (mod.signature?.type == SignatureType.Constructor) {
+					name = name + '()'
+				} else if (mod.signature?.type == SignatureType.Destructor) {
+					name = 'destructor ' + name
+				} else {
+
+					// name = name + ' (overload ' + mod.overloadSequence + ')'
+					log.warn('Unable to determine signature for overloaded module ' + mod.ModuleName + ' (uri=' + onlyUri.fsPath + ')')
+					// throw new Error('Unable to determine signature for overloaded module ' + mod.ModuleName + ' (uri=' + onlyUri.fsPath + ')')
+				}
+			} else {
+				log.info('mod NOT overloaded name=' + name)
 			}
 
 			let executed: boolean | number = mod.execCount ?? 0

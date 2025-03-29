@@ -1,3 +1,7 @@
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+
 import stylistic from '@stylistic/eslint-plugin'
 import typescriptEslint from '@typescript-eslint/eslint-plugin'
 import promise from 'eslint-plugin-promise'
@@ -112,7 +116,9 @@ export default [
 			'@typescript-eslint/switch-exhaustiveness-check': ['warn', {
 				considerDefaultExhaustiveForUnions: true,
 			}],
-			'promise/catch-or-return': 'warn',
+			'promise/catch-or-return': ['warn', {
+				allowThen: true,
+			}],
 			'promise/no-callback-in-promise': 'off',
 
 			'promise/always-return': ['warn', {

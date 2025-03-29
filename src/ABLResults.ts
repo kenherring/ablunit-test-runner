@@ -518,14 +518,15 @@ export class ABLResults implements Disposable {
 			return undefined
 		}
 		const testName = profileDescription.split('|')[1].split(' ')[1]
+		if (testName == 'TEST_ROOT') {
+			return undefined
+		}
 
 		let ending = testName
-		if (parentName != 'TEST_ROOT') {
-			ending = parentName + '#' + testName
-		}
 		ending = ending.replace(/\\/g, '/')
 
-		const items = this.allTests.filter((t) => t.id.replace(/\\/g, '/').endsWith(ending))
+		log.info('parentName=' + parentName)
+		const items = this.allTests.filter((t) => t.id.endsWith(parentName + '#' + ending))
 		if (items.length == 0) {
 			// TODO account for includes and then restore the error message
 			// log.error('Could not find test item for "' + parentName + ' ' + testName + '"')
@@ -535,6 +536,9 @@ export class ABLResults implements Disposable {
 		}
 		if (items.length > 1) {
 			log.error('found multiple test items for "' + parentName + ' ' + testName + '"')
+			for (const i of items) {
+				log.error('item.id=' + i.id)
+			}
 			throw new Error('found multiple test items for "' + parentName + ' ' + testName + '"')
 		}
 		return items[0]
