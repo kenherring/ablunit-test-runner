@@ -3,32 +3,9 @@ import { Uri, workspace } from 'vscode'
 import { PropathParser } from 'ABLPropath'
 import { log } from 'ChannelLogger'
 import * as FileUtils from 'FileUtils'
-import { SourceMap, SourceMapItem } from 'parse/SourceMapParser'
+import { IIncludeMap, IProcedures, ISignature, ISources, ParameterMode, ParameterType, SignatureAccessMode, SignatureType, SourceMap, SourceMapItem } from 'parse/SourceMapParser'
 
 const headerLength = 68
-
-interface IProcedures {
-	procLoc: number,
-	procName: string,
-	procNum: number,
-	lineCount: number,
-	lines: number[] | undefined
-}
-
-interface ISources {
-	sourceName: string,
-	sourceNum: number | undefined
-	sourceUri: Uri
-}
-
-interface IIncludeMap {
-	sourceLine: number,
-	sourceNum: number,
-	sourcePath: string,
-	sourceUri: Uri
-	debugLine: number,
-	debugUri: Uri,
-}
 
 /**
  * Parse RCode (*.r) and return a source map
@@ -36,6 +13,14 @@ interface IIncludeMap {
  **/
 export const getSourceMapFromRCode = (propath: PropathParser, uri: Uri) => {
 	// rcode segments: https://docs.progress.com/bundle/openedge-abl-manage-applications/page/R-code-structure.html
+
+	log.info('getSourceMapFromRCode: uri=' + uri.fsPath)
+	if (!uri.path.endsWith('.r')) {
+		uri = uri.with({path: uri.path.replace(/\.(p|cls)$/, '.r')})
+		if (!uri.path.endsWith('.r')) {
+			throw new Error('expected uri.path to end with `.r` but found: ' + uri.path)
+		}
+	}
 
 	let rawBytes: Uint8Array
 	const debug = false
@@ -59,20 +44,43 @@ export const getSourceMapFromRCode = (propath: PropathParser, uri: Uri) => {
 		throw new Error('invalid length=' + items.length)
 	}
 
-
 	const parseHeader = (raw: Uint8Array) => {
 		const rcodeHeader = raw.subarray(0, headerLength)
+		FileUtils.writeFile(uri.with({path: uri.path + '.header.bin'}), rcodeHeader)
+		// const rcodeCrc =
+
+
+		const majorVersion = toBase10(rcodeHeader.subarray(14, 16))
+		// const minorVersion = toBase10(rcodeHeader.subarray(12, 14))
+		const minorVersion = 0
+		if (!majorVersion) {
+			throw new Error('failed to parse version from rcode header. majorVersion=' + majorVersion + ' minorVersion=' + minorVersion + ' uri=' + uri.fsPath)
+		}
+		log.info('version=' + majorVersion + ' ' + minorVersion)
+
+		log.info('rcode majorVersion=' + majorVersion + ', minorVersion=' + minorVersion)
 		const sizeOfSegmentTable = toBase10(rcodeHeader.subarray(30, 32))
 		const sizeOfSignatures = toBase10(rcodeHeader.subarray(56, 58))
 
 		return {
+			majorVersion: majorVersion,
+			// minorVersion: minorVersion,
+			signatureTableLoc: headerLength + 16,
+			signatureTableSize: sizeOfSignatures,
 			segmentTableLoc: headerLength + sizeOfSignatures + 16,
 			segmentTableSize: sizeOfSegmentTable,
 		}
-
 	}
 
 	const parseSegmentTable = (segmentTable: Uint8Array) => {
+		// RCode Segments:
+		//  * Action code (1 for main, 1 per internal procedure)
+		//  * Expression code (1)
+		//  * Text (1 per language)
+		//  * Initial value (1)
+		//  * Frame (1 per frame)
+		//  * Debugger (1)
+
 		const debug = segmentTable.subarray(12, 16)
 		const debugsize = segmentTable.subarray(28, 32)
 		const debugLoc = toBase10(debug) + segmentTable.byteOffset + segmentTable.length
@@ -80,6 +88,61 @@ export const getSourceMapFromRCode = (propath: PropathParser, uri: Uri) => {
 			debugLoc: debugLoc,
 			debugSize: toBase10(debugsize)
 		}
+	}
+
+	const parseSignatureTable = (signatureTable: Uint8Array) => {
+		// Signature Table: https://docs.progress.com/bundle/openedge-abl-manage-applications/page/R-code-structure.html#SignatureTable
+		// Signature table contains the source file names and their corresponding source numbers.
+
+		const initialOffset = Number('0x' + dec.decode(signatureTable.subarray(0, 4)))
+		log.info('initialOffset=' + initialOffset)
+		const numElements = Number('0x' + dec.decode(signatureTable.subarray(4, 8)))
+		log.info('numElementes=' + numElements)
+
+
+		const signatures: ISignature[] = []
+		let start = initialOffset
+		let end = signatureTable.indexOf(0, start)
+		while (signatures.length < numElements) {
+		// while (start < signatureTable.length) {
+			log.info('start=' + start + ' end=' + end)
+			const sig = dec.decode(signatureTable.subarray(start, end))
+			const parts = sig.split(',')
+			const definition = parts[0]
+
+			log.info('sig=' + sig)
+			signatures.push({
+				_raw: sig,
+				type: definition.split(' ')[0] as SignatureType,
+				name: definition.split(' ')[1],
+				accessMode: Number(definition.split(' ')[2]) as SignatureAccessMode,
+				returns: Number(parts[1].split(' ')[0]) as ParameterType,
+				returnTBD: parts[1].split(' ')[1],
+				parameters: [],
+			})
+
+			for (let i=2; i < parts.length; i++) {
+				if (parts[i] == '') {
+					continue
+				}
+				const param = parts[i].split(' ')
+				if (param) {
+					signatures[signatures.length - 1].parameters.push({
+						_raw: parts[i],
+						mode: Number(param[0]) as ParameterMode,
+						name: param[1],
+						type: Number(param[2]) as ParameterType,
+						unknown4: param[3],
+					})
+				}
+			}
+
+			start = end + 1
+			end = signatureTable.indexOf(0, start)
+		}
+
+		log.info('signatures=' + JSON.stringify(signatures, null, 2))
+		return signatures
 	}
 
 	const getShort = (num: number, half = 1) => {
@@ -141,6 +204,10 @@ export const getSourceMapFromRCode = (propath: PropathParser, uri: Uri) => {
 		if (debug) {
 			log.info(prefix + ' [parseProcName] pos=' + pos)
 		}
+		log.info(prefix + ' [parseProcName] pos=' + pos)
+
+
+
 		const childBytes = bytes.subarray(pos/4, nextDelim(bytes, pos, 1))
 
 		const arr8 = rawBytes.subarray(childBytes.byteOffset, rawBytes.indexOf(0, childBytes.byteOffset + 1))
@@ -149,6 +216,15 @@ export const getSourceMapFromRCode = (propath: PropathParser, uri: Uri) => {
 		if (debug) {
 			log.info('found procName=' + name)
 		}
+		log.info('found procName=' + name)
+
+		pos = pos + nextDelim(bytes, pos, 1)
+		const childBytes2 = bytes.subarray(pos/4, nextDelim(bytes, pos, 1))
+		log.info('childBytes2=' + childBytes2.length + ' bytes=' + childBytes2.toString())
+		const arr9 = rawBytes.subarray(childBytes2.byteOffset, rawBytes.indexOf(0, childBytes2.byteOffset + 1))
+		log.info('arr9.length=' + arr9.length)
+		const name2 = dec.decode(arr9)
+		log.info('name2=' + name2)
 
 		return name
 	}
@@ -246,7 +322,6 @@ export const getSourceMapFromRCode = (propath: PropathParser, uri: Uri) => {
 		}
 		throw new Error('could not find source name for num=' + num + ', uri="' + uri.fsPath + '"')
 	}
-
 
 	const getSourceUri = (num: number) => {
 		log.info('sources.length=' + sources.length + ', num=' + num)
@@ -416,16 +491,39 @@ export const getSourceMapFromRCode = (propath: PropathParser, uri: Uri) => {
 		return debugLines
 	}
 
+	log.info('100 uri=' + uri)
 	return workspace.fs.readFile(uri).then(async (raw) => {
+		log.info('101')
 		const headerInfo = parseHeader(raw.subarray(0, 68))
-		const segmentInfo = parseSegmentTable(raw.subarray(headerInfo.segmentTableLoc, headerInfo.segmentTableLoc + headerInfo.segmentTableSize))
+		log.info('102')
+
+		const rawSegmentTable = raw.subarray(headerInfo.segmentTableLoc, headerInfo.segmentTableLoc + headerInfo.segmentTableSize)
+		FileUtils.writeFile(uri.with({path: uri.path + '.segmentTable.bin'}), rawSegmentTable)
+		const segmentInfo = parseSegmentTable(rawSegmentTable)
+		log.info('103 segmentInfo=' + JSON.stringify(segmentInfo, null, 2))
+
+		const rawSignatureTable = raw.subarray(headerInfo.signatureTableLoc, headerInfo.signatureTableLoc + headerInfo.signatureTableSize)
+		FileUtils.writeFile(uri.with({path: uri.path + '.signatureTable.bin'}), rawSignatureTable)
+		const signatures = parseSignatureTable(rawSignatureTable)
+		log.info('signatures=' + JSON.stringify(signatures, null, 2))
+
+		const rawOther = raw.subarray(headerInfo.segmentTableLoc + headerInfo.segmentTableSize, segmentInfo.debugLoc)
+		FileUtils.writeFile(uri.with({path: uri.path + '.other.bin'}), rawOther)
+
+
 		rawBytes = raw.slice(segmentInfo.debugLoc, segmentInfo.debugLoc + segmentInfo.debugSize)
+		FileUtils.writeFile(uri.with({path: uri.path + '.debug.bin'}), rawBytes)
+		log.info('104')
 		const debugInfo = await parseDebugSegment(raw.subarray(segmentInfo.debugLoc, segmentInfo.debugLoc + segmentInfo.debugSize))
+		log.info('105')
 
 		const sourceMap: SourceMap = {
 			path: uri.fsPath,
 			sourceUri: uri,
-			items: debugInfo
+			items: debugInfo,
+			sources: sources,
+			includes: map,
+			declarations: procs,
 		}
 
 		return sourceMap

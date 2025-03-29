@@ -505,10 +505,10 @@ suite('proj0  - Extension Test Suite', () => {
 	})
 
 	test('proj0.23 - destructor is not an overload', async () => {
-		await runTestsInFile('src/destructorClass.test.cls', 1, true)
+		// await runTestsInFile('src/destructorClass.test.cls', 1, TestRunProfileKind.Coverage)
+		await runTestsInFile('src/destructorClass.test.cls', 1, TestRunProfileKind.Coverage)
 		const res = await getResults()
 
-		const profData = res[0].profileJson
 		const parents = res[0].profileJson.flatMap((p) => p.modules)
 		const childModules = parents.flatMap((p) => p.childModules)
 

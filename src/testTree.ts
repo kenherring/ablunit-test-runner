@@ -5,6 +5,7 @@ import { IClassRet, ITestCase, parseABLTestClass } from 'parse/TestClassParser'
 import { IProgramRet, parseABLTestProgram } from 'parse/TestProgramParser'
 import { getContentFromFilesystem } from 'parse/TestParserCommon'
 import { log } from 'ChannelLogger'
+import { debugLines } from 'ABLDebugLines'
 
 export type ABLTestData = ABLTestDir | ABLTestFile | ABLTestCase
 export const resultData = new WeakMap<TestRun, ABLResults[]>()
@@ -165,6 +166,23 @@ export class ABLTestFile extends TestTypeObj {
 		}
 		item.label = response.label
 		item.range = response.range
+
+		log.info('item.range=' + JSON.stringify(item.range))
+		if (item.uri) {
+			debugLines.getSourceMap(item.uri)
+				.then((map) => {
+					if (!map) {
+						return
+					}
+					for (const m of map.items) {
+						log.info('m=' + JSON.stringify(m))
+					}
+				}, (e: unknown) => {
+					throw e
+				})
+		}
+
+
 		this.updateChildren(controller, item, response.testcases, childType)
 	}
 

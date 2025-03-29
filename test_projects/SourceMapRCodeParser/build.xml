@@ -17,6 +17,7 @@
     </antcall>
     <antcall target="test">
       <param name="testdir" value="test_3" />
+      <param name="minSize" value="false" />
     </antcall>
 
   </target>
@@ -34,10 +35,11 @@
 
   <target name="compile">
     <echo>Compiling...</echo>
+    <property name="minSize" value="true" />
     <echo>minSize=${minSize}</echo>
 
-    <PCTCompile forceCompile="true" listing="false" keepXref="true" xrefDir="." debugListing="false" minSize="false" flattenDebugListing="false">
-      <fileset dir="." includes="test_*/*.p" />
+    <PCTCompile forceCompile="true" listing="false" keepXref="true" xrefDir="." debugListing="false" minSize="${minSize}" flattenDebugListing="false">
+      <fileset dir="." includes="test_*/*.p,test_*/*.cls" />
     </PCTCompile>
   </target>
 
