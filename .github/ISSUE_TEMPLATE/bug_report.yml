@@ -13,10 +13,8 @@ body:
       label: Extension Version
       description: What version of the extension are you using?
       options:
+        - 1.1.9
         - 1.1.7
-        - 1.1.5
-        - 1.1.3
-        - 1.1.1
         - 1.1.0
         - 1.0.0
         - other (please specify in the description)
@@ -39,8 +37,8 @@ body:
       required: true
   - type: textarea
     attributes:
-      label: Chore Description
+      label: Bug Description
       value: |
-        Describe the chore...
+        Describe the bug...
     validations:
       required: true
