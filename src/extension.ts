@@ -192,18 +192,6 @@ export function activate (context: ExtensionContext) {
 			ret.push(...dc)
 		}
 		log.info('ret.length=' + ret.length)
-		// for (const r of ret) {
-		// 	if (r instanceof StatementCoverage) {
-		// 		const first = r
-		// 		log.info('s loc=' + (first.location instanceof Position ? first.location.line : first.location.start.line) + ' ' + JSON.stringify(r))
-		// 	} else if (r instanceof DeclarationCoverage) {
-		// 		const first = r
-		// 		log.info('d loc=' + (first.location instanceof Position ? first.location.line : first.location.start.line) + ' ' + JSON.stringify(r))
-		// 	} else {
-		// 		log.error('not FileCoverageDetail! ' + JSON.stringify(r))
-		// 		throw new Error('not FileCoverageDetail! ' + JSON.stringify(r))
-		// 	}
-		// }
 		return Promise.resolve(ret)
 	}
 
@@ -227,18 +215,6 @@ export function activate (context: ExtensionContext) {
 			ret.push(...dc)
 		}
 		log.info('ret.length=' + ret.length)
-		// for (const r of ret) {
-		// 	if (r instanceof StatementCoverage) {
-		// 		const first = r
-		// 		log.info('s loc=' + (first.location instanceof Position ? first.location.line : first.location.start.line))
-		// 	} else if (r instanceof DeclarationCoverage) {
-		// 		const first = r
-		// 		log.info('d loc=' + (first.location instanceof Position ? first.location.line : first.location.start.line))
-		// 	} else {
-		// 		log.error('not FileCoverageDetail! ' + JSON.stringify(r))
-		// 		throw new Error('not FileCoverageDetail! ' + JSON.stringify(r))
-		// 	}
-		// }
 		return Promise.resolve(ret)
 	}
 

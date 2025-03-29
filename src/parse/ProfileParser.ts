@@ -151,6 +151,7 @@ export interface IModule { // Section 2
 	ParentModuleID?: number
 	ParentName?: string
 	Destructor?: boolean
+	signature?: ISignature
 	ListingFile?: string
 	CrcValue: number
 	ModuleLineNum: number
@@ -158,7 +159,6 @@ export interface IModule { // Section 2
 	procNum?: number
 	overloaded?: boolean
 	overloadSequence?: number
-	signature?: ISignature
 	execCount?: number
 	actualTime?: number
 	cumulativeTime?: number
@@ -455,14 +455,16 @@ export class ABLProfileJson {
 		if (destructor) {
 			return map.signatures.find(s => s.type == SignatureType.Destructor)
 		}
+		const signatures = map.signatures.filter(s => s.name == procName)
+		if (signatures.length == 1) {
+			return signatures[0]
+		}
+		log.info('signatures.length=' + signatures.length)
 		log.info('decs=' + JSON.stringify(map.declarations.map(d => d.procName)))
-		log.info('sigs=' + JSON.stringify(map.signatures.map(s => s.name)))
 		log.info('procName=' + procName)
 
 		const declarations = map.declarations.filter(d => d.procName == procName)
-		const signatures = map.signatures.filter(s => s.name == procName)
 		log.info('declarations.length=' + declarations.length)
-		log.info('signatures.length=' + signatures.length)
 		if (declarations.length != signatures.length) {
 
 			log.info('declarations=' + JSON.stringify(declarations, null, 2))
@@ -528,23 +530,66 @@ export class ABLProfileJson {
 					newLine.procNum = item.procNum
 					mod.lines.push(newLine)
 					continue
-				} else {
-					// child module
-					let children = mod.childModules.filter(m => m.EntityName == item.procName)
+				}
 
-					if (children.length > 1) {
-						let seq = 1
-						for (const c of children) {
-							c.overloaded = true
-							c.overloadSequence = seq
-							seq++
+				// child module
+				let children = mod.childModules.filter(m => m.EntityName == item.procName && !m.Destructor) // find child modules with the same procName and not a destructor
+
+				if (children.length > 1) {
+					let seq = 1
+					for (const c of children) {
+						c.overloaded = true
+						c.overloadSequence = seq
+						seq++
+					}
+				}
+
+				if (!children || children.length == 0) {
+					// add new child module - won't have any coverage
+					mod.childModules.push({
+						ModuleID: mod.ModuleID,
+						ModuleName: item.procName + ' ' + mod.ModuleName,
+						EntityName: item.procName,
+						SourceUri: item.debugUri,
+						SourceName: mod.SourceName,
+						ParentModuleID: mod.ModuleID,
+						ParentName: mod.ParentName,
+						Destructor: item.procName.startsWith('~'),
+						signature: this.getSignatureFromMap(map, item.procName, item.procName.startsWith('~'), item),
+						CrcValue: map.crc ?? 0,
+						ModuleLineNum: item.debugLine, // not exactly accurate, but as close as we're going to get
+						UnknownString1: '',
+						procNum: item.procNum,
+						executableLines: 1,
+						executedLines: 0,
+						coveragePct: 0,
+						lineCount: 0,
+						calledBy: [],
+						calledTo: [],
+						childModules: [],
+						lines: [],
+						ISectionEight: [],
+						ISectionNine: [],
+						ISectionTen: [],
+						ISectionTwelve: []
+					})
+					children = [mod.childModules[mod.childModules.length - 1]]
+				}
+
+				// add or update line on existing child
+				if (children.length >= 1) {
+					let child = children.find(m => m.procNum == item.procNum)
+					if (!child) {
+						child = children.find(m => !m.procNum)
+						if (child) {
+							child.procNum = item.procNum
 						}
 					}
-
-					if (!children || children.length == 0) {
-						// add new child module - won't have any coverage
+					if (!child) {
+						const modNum = children[0].ModuleID
+						const maxSeq = Math.max(...children.map(c => c.overloadSequence ?? 0)) + 1
 						mod.childModules.push({
-							ModuleID: mod.ModuleID,
+							ModuleID: modNum,
 							ModuleName: item.procName + ' ' + mod.ModuleName,
 							EntityName: item.procName,
 							SourceUri: item.debugUri,
@@ -557,6 +602,8 @@ export class ABLProfileJson {
 							ModuleLineNum: item.debugLine, // not exactly accurate, but as close as we're going to get
 							UnknownString1: '',
 							procNum: item.procNum,
+							overloaded: !item.procName.startsWith('~'),
+							overloadSequence: maxSeq,
 							executableLines: 1,
 							executedLines: 0,
 							coveragePct: 0,
@@ -569,78 +616,33 @@ export class ABLProfileJson {
 							ISectionNine: [],
 							ISectionTen: [],
 							ISectionTwelve: []
+
 						})
-						children = [mod.childModules[mod.childModules.length - 1]]
+						child = mod.childModules[mod.childModules.length - 1]
 					}
-
-					// add or update line on existing child
-					if (children.length >= 1) {
-						let child = children.find(m => m.procNum == item.procNum)
-						if (!child) {
-							child = children.find(m => !m.procNum)
-							if (child) {
-								child.procNum = item.procNum
-							}
-						}
-						if (!child) {
-							const modNum = children[0].ModuleID
-							const maxSeq = Math.max(...children.map(c => c.overloadSequence ?? 0)) + 1
-							mod.childModules.push({
-								ModuleID: modNum,
-								ModuleName: item.procName + ' ' + mod.ModuleName,
-								EntityName: item.procName,
-								SourceUri: item.debugUri,
-								SourceName: mod.SourceName,
-								ParentModuleID: mod.ModuleID,
-								ParentName: mod.ParentName,
-								Destructor: item.procName.startsWith('~'),
-								signature: this.getSignatureFromMap(map, item.procName, item.procName.startsWith('~'), item),
-								CrcValue: map.crc ?? 0,
-								ModuleLineNum: item.debugLine, // not exactly accurate, but as close as we're going to get
-								UnknownString1: '',
-								procNum: item.procNum,
-								overloaded: true,
-								overloadSequence: maxSeq,
-								executableLines: 1,
-								executedLines: 0,
-								coveragePct: 0,
-								lineCount: 0,
-								calledBy: [],
-								calledTo: [],
-								childModules: [],
-								lines: [],
-								ISectionEight: [],
-								ISectionNine: [],
-								ISectionTen: [],
-								ISectionTwelve: []
-
-							})
-							child = mod.childModules[mod.childModules.length - 1]
-						}
-						const l = child.lines.find(l => l.LineNo == item.debugLine)
-						if (l) {
-							// update existing line
-							l.Executable = true
-							l.srcUri = item.debugUri
-							l.srcLine = item.debugLine
-							l.sourcePath = item.sourcePath
-							l.incUri = item.sourceUri
-							l.incLine = item.sourceLine
-							l.procNum = item.procNum
-							continue
-						}
-						// add new line
-						const newLine = new LineSummary(mod.SourceUri.fsPath, item.debugLine, true, 0, item.sourcePath)
-						newLine.srcUri = item.debugUri
-						newLine.srcLine = item.debugLine
-						newLine.incUri = item.sourceUri
-						newLine.incLine = item.sourceLine
-						newLine.procNum = item.procNum
-						child.lines.push(newLine)
+					const l = child.lines.find(l => l.LineNo == item.debugLine)
+					if (l) {
+						// update existing line
+						l.Executable = true
+						l.srcUri = item.debugUri
+						l.srcLine = item.debugLine
+						l.sourcePath = item.sourcePath
+						l.incUri = item.sourceUri
+						l.incLine = item.sourceLine
+						l.procNum = item.procNum
 						continue
 					}
-
+					// add new line
+					const newLine = new LineSummary(mod.SourceUri.fsPath, item.debugLine, true, 0, item.sourcePath)
+					newLine.srcUri = item.debugUri
+					newLine.srcLine = item.debugLine
+					newLine.incUri = item.sourceUri
+					newLine.incLine = item.sourceLine
+					newLine.procNum = item.procNum
+					child.lines.push(newLine)
+					continue
 				}
+
 				throw new Error('could not find module to add source map item from ' + item.debugUri + ' (uri=' + this.profileUri.fsPath + ')\n\titem=' + JSON.stringify(item))
 			}
 		}
@@ -1283,7 +1285,9 @@ export function getDeclarationCoverage (module: IModule, onlyUri: Uri) {
 		const range = getModuleRange(mod, onlyUri)
 		if (range) {
 			let name = mod.EntityName ?? '<main block>'
-			if (mod.overloaded) {
+			if (mod.Destructor) {
+				name = 'destructor ' + name
+			} else if (mod.overloaded) {
 				log.info('mod.overloaded')
 				log.info('mod.signature=' + JSON.stringify(mod.signature))
 				const paramTypesShort = mod.signature?.parameters.map((p) => getShortTypeText(p.type)) ?? []

@@ -1,38 +1,3 @@
-# [1.1.11](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.1.11) - 2025-03-29 (pre-release)
-
-
- * Don't display destructors as overloaded constructors (#252)
-
-
-**Full Changelog**: [1.1.9...1.1.11](https://github.com/kenherring/ablunit-test-runner/compare/1.1.9...1.1.11)
-
-# [1.1.9](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.1.9) - 2025-03-29 (pre-release)
-
-
- * Add test case for capturing declaration header in the declaration range (#254)
-
-
-**Full Changelog**: [1.1.7...1.1.9](https://github.com/kenherring/ablunit-test-runner/compare/1.1.7...1.1.9)
-
-# [1.1.7](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.1.7) - 2025-03-27 (pre-release)
-
-
- * Add `debugConnectMaxWait` to test profile configuration options (#266)
- * Exception call stacks (#263)
- * Improve parsing and display of test output (#262)
-
-**Full Changelog**: [1.1.3...1.1.7](https://github.com/kenherring/ablunit-test-runner/compare/1.1.3...1.1.7)
-
-# [1.1.3](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.1.3) - 2025-03-27 (pre-release)
-
- * Exception call stacks (#263)
- * Improve parsing and display of test output (#262)
- * Coverage by test case declarations (#255)
- * Enable debuging TestRunProfile (#257)
- * Update output for messages from tests (#260)
-
-**Full Changelog**: [1.1.0...1.1.3](https://github.com/kenherring/ablunit-test-runner/compare/1.1.0...1.1.3)
-
 # [1.1.0](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.1.0) - 2025-02-16
 
 ## Release Notes

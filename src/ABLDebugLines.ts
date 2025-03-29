@@ -6,7 +6,7 @@ import { getSourceMapFromXref } from 'parse/SourceMapXrefParser'
 import { Uri } from 'vscode'
 
 export class ABLDebugLines {
-	private static instance: ABLDebugLines
+	// private static instance: ABLDebugLines
 	private readonly maps = new Map<string, SourceMap>()
 	private readonly processingMethodMap = new Map<string, 'rcode' | 'parse' | 'none'>()
 	public propath: PropathParser
@@ -18,17 +18,17 @@ export class ABLDebugLines {
 			this.propath = new PropathParser()
 		}
 
-		if (!ABLDebugLines.instance) {
-			ABLDebugLines.instance = this
-		} else if(propath) {
-			ABLDebugLines.instance.propath = propath
-		}
+		// if (!ABLDebugLines.instance) {
+		// 	ABLDebugLines.instance = this
+		// } else if(propath) {
+		// 	ABLDebugLines.instance.propath = propath
+		// }
 	}
 
-	public static getInstance (propath?: PropathParser) {
-		ABLDebugLines.instance = new ABLDebugLines(propath)
-		return ABLDebugLines.instance
-	}
+	// public static getInstance (propath?: PropathParser) {
+	// 	ABLDebugLines.instance = new ABLDebugLines(propath)
+	// 	return ABLDebugLines.instance
+	// }
 
 	getSize () {
 		return this.maps.size
@@ -106,4 +106,4 @@ export class ABLDebugLines {
 	}
 }
 
-export const debugLines = ABLDebugLines.getInstance()
+// export const debugLines = ABLDebugLines.getInstance()

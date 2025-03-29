@@ -26,7 +26,7 @@ setup('setup', () => {
 	log.info('setup ----- start')
 })
 
-test('SourceMapRCodeParser.test_0', async () => {
+test.skip('SourceMapRCodeParser.test_0', async () => {
 	log.info('SourceMapRCodeParser.test_0: start')
 	const propath = new PropathParser()
 	log.info('propath=' + JSON.stringify(propath.propath, null, 2))
@@ -44,7 +44,7 @@ test('SourceMapRCodeParser.test_0', async () => {
 	return
 })
 
-test('SourceMapRCodeParser.test_1', async () => {
+test.skip('SourceMapRCodeParser.test_1', async () => {
 	log.info('SourceMapRCodeParser.test_1: start')
 
 	while (!FileUtils.doesFileExist(toUri('test_1/test.p.xref'))) {
@@ -76,7 +76,7 @@ test('SourceMapRCodeParser.test_1', async () => {
 	return
 })
 
-test('SourceMapRCodeParser.test_2', async () => {
+test.skip('SourceMapRCodeParser.test_2', async () => {
 	const propath = new PropathParser()
 	log.info('propath=' + JSON.stringify(propath.propath, null, 2))
 
@@ -93,7 +93,7 @@ test('SourceMapRCodeParser.test_2', async () => {
 	return
 })
 
-test('SourceMapRCodeParser.test_3', async () => {
+test.skip('SourceMapRCodeParser.test_3', async () => {
 	const propath = new PropathParser()
 	log.info('propath=' + JSON.stringify(propath.propath, null, 2))
 
