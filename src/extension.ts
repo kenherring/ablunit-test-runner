@@ -170,7 +170,7 @@ export function activate (context: ExtensionContext) {
 			})
 	}
 
-	const loadDetailedCoverageForTest = (testRun: TestRun, fileCoverage: FileCoverage, item: TestItem, _token: CancellationToken) => {
+	const loadDetailedCoverageForTest = (testRun: TestRun, fileCoverage: FileCoverage, item: TestItem, _token: CancellationToken): Thenable<FileCoverageDetail[]> => {
 
 		log.info('loadDetailedCoverageForTest uri=' + fileCoverage.uri + ' testId=' + item.id)
 		const ret: FileCoverageDetail[] = []
@@ -208,7 +208,7 @@ export function activate (context: ExtensionContext) {
 		return Promise.resolve(ret)
 	}
 
-	const loadDetailedCoverage = (testRun: TestRun, fileCoverage: FileCoverage, _token: CancellationToken) => {
+	const loadDetailedCoverage = (testRun: TestRun, fileCoverage: FileCoverage, _token: CancellationToken): Promise<FileCoverageDetail[]> => {
 		const ret: FileCoverageDetail[] = []
 		const results = resultData.get(testRun) ?? recentResults
 		if (!results) {

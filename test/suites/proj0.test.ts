@@ -1,4 +1,4 @@
-import { DeclarationCoverage, FileCoverageDetail, Range, Uri, commands, window, workspace } from 'vscode'
+import { DeclarationCoverage, FileCoverageDetail, Range, TestRunProfileKind, Uri, commands, window, workspace } from 'vscode'
 import { assert, getRcodeCount, getResults, getTestControllerItemCount, getTestItem, getXrefCount, log, rebuildAblProject, refreshTests, runAllTests, runAllTestsWithCoverage, runTestAtLine, runTestsDuration, runTestsInFile, sleep2, suiteSetupCommon, FileUtils, toUri, updateConfig, updateTestProfile, deleteRcode, setRuntimes } from '../testCommon'
 import { ABLResultsParser } from 'parse/ResultsParser'
 import { TimeoutError } from 'Errors'
@@ -474,7 +474,7 @@ suite('proj0  - Extension Test Suite', () => {
 
 		// ---------- TODO - not currently captured ----------
 		// // validate we've captured the method header - not executed
-		// const notOverloaded = cov.find(c => c instanceof DeclarationCoverage && c.name === 'notOverloaded' ) as DeclarationCoverage
+		// const notOverloaded = cov.find(c => c instanceof DeclarationCoverage && c.name === 'notOverloaded') as DeclarationCoverage
 		// if (notOverloaded.location instanceof Range) {
 		// 	assert.equal(notOverloaded.location.start.line, 47, 'notOverloaded.location.start.line')
 		// } else {
