@@ -5,6 +5,7 @@ import { log } from 'ChannelLogger'
 import * as FileUtils from 'FileUtils'
 import { Duration } from 'ABLUnitCommon'
 import { ProfileData } from 'parse/ProfileData'
+import { getShortTypeText, ISignature, SignatureType, SourceMap, SourceMapItem } from './SourceMapParser'
 
 class ModuleIgnored extends Error {
 	constructor (public moduleId: number) {
@@ -103,7 +104,6 @@ export class ABLProfile {
 
 		if (writeJson) {
 			const jsonUri = Uri.file(uri.fsPath.replace(/\.[a-zA-Z]+$/, '.json'))
-			// eslint-disable-next-line promise/catch-or-return
 			this.writeJsonToFile(jsonUri).then(() => {
 				return true
 			}, (e: unknown) => {
@@ -158,8 +158,9 @@ export interface IModule { // Section 2
 	procNum?: number
 	overloaded?: boolean
 	overloadSequence?: number
+	signature?: ISignature
 	execCount?: number
-	actualTime?: number,
+	actualTime?: number
 	cumulativeTime?: number
 	executableLines: number
 	executedLines: number
@@ -430,6 +431,27 @@ export class ABLProfileJson {
 		this.addChildModulesToParents(childModules)
 	}
 
+	getSignatureFromMap (map: SourceMap, procName: string, item: SourceMapItem) {
+		const declaration = map.declarations.find(d => d.procNum == item.procNum)
+		log.info('declaration=' + JSON.stringify(declaration))
+		if (!declaration) {
+			log.error('Could not find declaration for procedure ' + procName + ' in source map for uri=' + this.profileUri.fsPath)
+			throw new Error('Could not find declaration for module ' + procName + ' in source map for uri=' + this.profileUri.fsPath)
+		}
+		const signature = map.signatures[map.declarations.indexOf(declaration)]
+		log.info('signature=' + JSON.stringify(signature))
+		if (!signature) {
+			log.error('Could not find signature for procedure ' + procName + ' in source map for uri=' + this.profileUri.fsPath)
+			throw new Error('Could not find signature for module ' + procName + ' in source map for uri=' + this.profileUri.fsPath)
+		}
+		if (signature.name != declaration.procName) {
+			log.error('signature name=' + signature.name + ' does not match declaration.name=' + declaration.procName + ' for uri=' + this.profileUri.fsPath)
+			throw new Error('signature name does not match declaration name for module ' + procName + ' in source map for uri=' + this.profileUri.fsPath)
+		}
+		log.info('mod.signature=' + JSON.stringify(signature))
+		return signature
+	}
+
 	async addSourceMap () {
 		for (const mod of this.modules) {
 			const map = await this.debugLines.getSourceMap(mod.SourceUri)
@@ -438,6 +460,7 @@ export class ABLProfileJson {
 				// could not parse source map :(
 				return
 			}
+
 			this.hasSourceMap = true
 			for (const item of map.items) {
 				if (item.procName == '') {
@@ -486,6 +509,7 @@ export class ABLProfileJson {
 							ParentModuleID: mod.ModuleID,
 							ParentName: mod.ParentName,
 							Destructor: item.procName.startsWith('~'),
+							signature: this.getSignatureFromMap(map, item.procName, item),
 							CrcValue: map.crc ?? 0,
 							ModuleLineNum: item.debugLine, // not exactly accurate, but as close as we're going to get
 							UnknownString1: '',
@@ -527,6 +551,7 @@ export class ABLProfileJson {
 								ParentModuleID: mod.ModuleID,
 								ParentName: mod.ParentName,
 								Destructor: item.procName.startsWith('~'),
+								signature: this.getSignatureFromMap(map, item.procName, item),
 								CrcValue: map.crc ?? 0,
 								ModuleLineNum: item.debugLine, // not exactly accurate, but as close as we're going to get
 								UnknownString1: '',
@@ -586,7 +611,7 @@ export class ABLProfileJson {
 			}
 			if (!parent) {
 				this.interpretedModuleSequence--
-				log.warn('Could not find parent module, creating interpre modude id ' + this.interpretedModuleSequence + ' for ' + child.SourceName + ' (uri=' + this.profileUri.fsPath + ')')
+				log.warn('Could not find parent module, creating interpreted modude id ' + this.interpretedModuleSequence + ' for ' + child.SourceName + ' (uri=' + this.profileUri.fsPath + ')')
 				parent = {
 					ModuleID: this.interpretedModuleSequence,
 					ModuleName: child.SourceName,
@@ -1166,9 +1191,7 @@ function getModuleRange (module: IModule, onlyUri: Uri) {
 		return undefined
 	}
 
-
 	let firstLine
-
 	if (module.ModuleLineNum && !module.overloaded && lines[0].LineNo != module.ModuleLineNum && lines[0].incLine) {
 		firstLine = new Range(module.ModuleLineNum - (lines[0].LineNo - lines[0].incLine) - 1, 0, module.ModuleLineNum - (lines[0].LineNo - lines[0].incLine), 0)
 	} else {
@@ -1218,7 +1241,20 @@ export function getDeclarationCoverage (module: IModule, onlyUri: Uri) {
 		if (range) {
 			let name = mod.EntityName ?? '<main block>'
 			if (mod.overloaded) {
-				name = name + ' (overload ' + mod.overloadSequence + ')'
+
+				log.info('mod.overloaded')
+				log.info('mod.signature=' + JSON.stringify(mod.signature))
+				const paramTypesShort = mod.signature?.parameters.map((p) => getShortTypeText(p.type)) ?? []
+				log.info('paramTypesShort=' + JSON.stringify(paramTypesShort))
+				if (paramTypesShort.length > 0) {
+					name = name + '(' + paramTypesShort + ')'
+				} else if (mod.signature?.type == SignatureType.Constructor) {
+					name = name + '()'
+				} else if (mod.signature?.type == SignatureType.Destructor) {
+					name = 'destructor ' + name
+				} else {
+					name = name + ' (overload ' + mod.overloadSequence + ')'
+				}
 			}
 
 			let executed: boolean | number = mod.execCount ?? 0

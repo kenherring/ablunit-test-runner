@@ -3,7 +3,7 @@ import { Uri, workspace } from 'vscode'
 import { PropathParser } from 'ABLPropath'
 import { log } from 'ChannelLogger'
 import * as FileUtils from 'FileUtils'
-import { IIncludeMap, IProcedures, ISignature, ISources, ParameterMode, ParameterType, SignatureAccessMode, SignatureType, SourceMap, SourceMapItem } from 'parse/SourceMapParser'
+import { IIncludeMap, IDeclarations, ISignature, ISources, ParameterMode, ParameterType, SignatureAccessMode, SignatureType, SourceMap, SourceMapItem } from 'parse/SourceMapParser'
 
 const headerLength = 68
 
@@ -25,7 +25,7 @@ export const getSourceMapFromRCode = (propath: PropathParser, uri: Uri) => {
 	let rawBytes: Uint8Array
 	const debug = false
 	const dec = new TextDecoder()
-	const procs: IProcedures[] = []
+	const procs: IDeclarations[] = []
 	const sources: ISources[] = []
 	const map: IIncludeMap[] = []
 	const debugLines: SourceMapItem[] = []
@@ -49,11 +49,11 @@ export const getSourceMapFromRCode = (propath: PropathParser, uri: Uri) => {
 		FileUtils.writeFile(uri.with({path: uri.path + '.header.bin'}), rcodeHeader)
 		// const rcodeCrc =
 
-
 		const majorVersion = toBase10(rcodeHeader.subarray(14, 16))
 		// const minorVersion = toBase10(rcodeHeader.subarray(12, 14))
 		const minorVersion = 0
 		if (!majorVersion) {
+			log.error('failed to parse major version from rcode header. uri=' + uri.fsPath + ', bytes=' + rcodeHeader.toString())
 			throw new Error('failed to parse version from rcode header. majorVersion=' + majorVersion + ' minorVersion=' + minorVersion + ' uri=' + uri.fsPath)
 		}
 		log.info('version=' + majorVersion + ' ' + minorVersion)
@@ -524,6 +524,7 @@ export const getSourceMapFromRCode = (propath: PropathParser, uri: Uri) => {
 			sources: sources,
 			includes: map,
 			declarations: procs,
+			signatures: signatures,
 		}
 
 		return sourceMap

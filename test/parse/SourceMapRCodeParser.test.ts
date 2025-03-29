@@ -12,6 +12,7 @@ suiteSetup('suiteSetup', () => {
 	FileUtils.deleteFile(toUri('test_3/test.p.xref'))
 	log.info('ant compile-and-test')
 	return commands.executeCommand('workbench.action.tasks.build')
+		.then(() => { return sleep2(5000) })
 		.then(() => {
 			log.info('ant compile-and-test done')
 			return

@@ -21,7 +21,7 @@ export interface IIncludeMap {
 	debugUri: Uri,
 }
 
-export interface IProcedures {
+export interface IDeclarations { // method, procedure, function, constructor, etc
 	procLoc: number,
 	procName: string,
 	procNum: number,
@@ -60,6 +60,19 @@ export enum ParameterType {
 	Integer = 4,
 }
 
+export function getShortTypeText (type: ParameterType): string {
+	switch (type) {
+		case ParameterType.Void:
+			return 'void'
+		case ParameterType.Character:
+			return 'char'
+		case ParameterType.Integer:
+			return 'int'
+		default:
+			return 'unknown'
+	}
+}
+
 interface ISignatureParameter {
 	_raw: string
 	mode: ParameterMode
@@ -84,7 +97,8 @@ export class SourceMap implements ISourceMap {
 	items: SourceMapItem[] = []
 	sources: ISources[] = []
 	includes: IIncludeMap[] = []
-	declarations: IProcedures[] = []
+	declarations: IDeclarations[] = []
+	signatures: ISignature[] = []
 	crc?: number
 
 	constructor (sourceUri: Uri, path: string) {
