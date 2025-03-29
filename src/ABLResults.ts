@@ -518,6 +518,9 @@ export class ABLResults implements Disposable {
 			return undefined
 		}
 		const testName = profileDescription.split('|')[1].split(' ')[1]
+		if (testName == 'TEST_ROOT') {
+			return undefined
+		}
 
 		let ending = testName
 		if (parentName != 'TEST_ROOT') {
