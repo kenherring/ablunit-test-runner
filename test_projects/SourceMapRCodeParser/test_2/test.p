@@ -2,8 +2,7 @@
 block-level on error undo, throw.
 using OpenEdge.Core.Assert.
 
-message program-name(1) + 'starting'.
-{test_2/include.i}
+message program-name(1) + ' starting'.
 
 @Test.
 procedure test_A :

@@ -471,7 +471,6 @@ export class ABLProfileJson {
 			log.info('signatures=' + JSON.stringify(signatures, null, 2))
 
 			log.error('expected declarations and signatures to have the smae number of matches by name (' + declarations.length + ' != ' + signatures.length + ')')
-			// throw new Error('expected declarations and signatures to have the smae number of matches by name (' + declarations.length + ' != ' + signatures.length + ')')
 		}
 
 		let index = 1
@@ -481,7 +480,6 @@ export class ABLProfileJson {
 			} else {
 				log.error('Unable to determine procNum for ' + procName + ' in source map for uri=' + this.profileUri.fsPath)
 				return undefined
-				// throw new Error('Unable to determine procNum for ' + procName + ' in source map for uri=' + this.profileUri.fsPath)
 			}
 		}
 		log.info('index=' + index)
@@ -494,12 +492,13 @@ export class ABLProfileJson {
 
 		log.error('Could not find signature for procedure ' + procName + ' in source map for uri=' + this.profileUri.fsPath)
 		return undefined
-		// throw new Error('Could not find signature for module ' + procName + ' in source map for uri=' + this.profileUri.fsPath)
 	}
 
 	async addSourceMap () {
 		for (const mod of this.modules) {
+			log.info('[addSourceMap] mod.EntityName=' + mod.EntityName)
 			const map = await this.debugLines.getSourceMap(mod.SourceUri)
+			log.info('map.items=' + JSON.stringify(map?.items))
 			if (!map) {
 				log.warn('could not parse source map for ' + mod.SourceUri.fsPath)
 				// could not parse source map :(
@@ -508,6 +507,9 @@ export class ABLProfileJson {
 
 			this.hasSourceMap = true
 			for (const item of map.items) {
+
+				log.info('item.procName=' + item.procName + ' procNum=' + item.procNum)
+
 				if (item.procName == '') {
 					// parent module
 					const l = mod.lines.find(l => l.LineNo == item.debugLine)
@@ -534,6 +536,7 @@ export class ABLProfileJson {
 
 				// child module
 				let children = mod.childModules.filter(m => m.EntityName == item.procName && !m.Destructor) // find child modules with the same procName and not a destructor
+				log.info('children.length=' + children.length)
 
 				if (children.length > 1) {
 					let seq = 1
@@ -545,6 +548,7 @@ export class ABLProfileJson {
 				}
 
 				if (!children || children.length == 0) {
+					log.info('add new child?')
 					// add new child module - won't have any coverage
 					mod.childModules.push({
 						ModuleID: mod.ModuleID,
@@ -574,10 +578,12 @@ export class ABLProfileJson {
 						ISectionTwelve: []
 					})
 					children = [mod.childModules[mod.childModules.length - 1]]
+					log.info('children.length=' + children.length)
 				}
 
 				// add or update line on existing child
 				if (children.length >= 1) {
+					log.info('item.procNum=' + item.procNum)
 					let child = children.find(m => m.procNum == item.procNum)
 					if (!child) {
 						child = children.find(m => !m.procNum)
@@ -632,6 +638,8 @@ export class ABLProfileJson {
 						l.procNum = item.procNum
 						continue
 					}
+
+					log.info('add new line! sourceLine=' + item.sourceLine)
 					// add new line
 					const newLine = new LineSummary(mod.SourceUri.fsPath, item.debugLine, true, 0, item.sourcePath)
 					newLine.srcUri = item.debugUri
@@ -1269,9 +1277,12 @@ function getModuleRange (module: IModule, onlyUri: Uri) {
 
 export function getDeclarationCoverage (module: IModule, onlyUri: Uri) {
 	const fdc: DeclarationCoverage[] = []
-	const modules = [...module.childModules]
+	const modules = [module, ...module.childModules]
+
+	log.info('[getDeclarationCoverage] module=' + module.ModuleName + ' modules.length=' + modules.length)
 
 	for (const mod of modules) {
+		log.info('module mod.name=' + mod.ModuleName + ' mod.EntityName=' + mod.EntityName + ' line=' + mod.ModuleLineNum + ' mod.SourceUri=' + mod.SourceUri)
 		if (onlyUri) {
 			if (mod.incUri) {
 				if (mod.incUri.fsPath != onlyUri.fsPath) {
@@ -1283,29 +1294,28 @@ export function getDeclarationCoverage (module: IModule, onlyUri: Uri) {
 		}
 
 		const range = getModuleRange(mod, onlyUri)
+		log.info('range=' + JSON.stringify(range))
 		if (range) {
 			let name = mod.EntityName ?? '<main block>'
 			if (mod.Destructor) {
 				name = 'destructor ' + name
 			} else if (mod.overloaded) {
-				log.info('mod.overloaded')
-				log.info('mod.signature=' + JSON.stringify(mod.signature))
 				const paramTypesShort = mod.signature?.parameters.map((p) => getShortTypeText(p.type)) ?? []
-				log.info('paramTypesShort=' + JSON.stringify(paramTypesShort))
 				if (paramTypesShort.length > 0) {
 					name = name + '(' + paramTypesShort + ')'
-				} else if (mod.signature?.type == SignatureType.Constructor) {
-					name = name + '()'
-				} else if (mod.signature?.type == SignatureType.Destructor) {
-					name = 'destructor ' + name
 				} else {
-
-					// name = name + ' (overload ' + mod.overloadSequence + ')'
 					log.warn('Unable to determine signature for overloaded module ' + mod.ModuleName + ' (uri=' + onlyUri.fsPath + ')')
 					// throw new Error('Unable to determine signature for overloaded module ' + mod.ModuleName + ' (uri=' + onlyUri.fsPath + ')')
 				}
 			} else {
-				log.info('mod NOT overloaded name=' + name)
+				log.debug('mod NOT overloaded name=' + name)
+			}
+
+
+			if (name.startsWith('propGet_')) {
+				name = name.substring(8) + ' (get)'
+			} else if (name.startsWith('propSet_')) {
+				name = name.substring(8) + ' (set)'
 			}
 
 			let executed: boolean | number = mod.execCount ?? 0

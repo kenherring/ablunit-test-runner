@@ -386,9 +386,10 @@ suite('proj0  - Extension Test Suite', () => {
 		const fc = res[0].fileCoverage.get(toUri('src/threeTestProcedures.p').fsPath)
 		const sc = res[0].statementCoverage.get(toUri('src/threeTestProcedures.p').fsPath) ?? []
 		const dc = res[0].declarationCoverage.get(toUri('src/threeTestProcedures.p').fsPath) ?? []
+		log.info('dc=' + JSON.stringify(dc, null, 2))
 		assert.ok(fc, 'fileCoverage')
 		assert.greater(sc.length, 10, 'statementCoverage[].length')
-		assert.equal(dc.length, 5, 'declarationCoverage[].length')
+		assert.equal(dc.length, 6, 'declarationCoverage[].length')
 
 		assert.ok(fc?.branchCoverage == undefined, 'branchCoverage')
 		assert.equal(fc?.declarationCoverage?.total, 5, 'fc.declarationCoverage.total')
@@ -408,7 +409,7 @@ suite('proj0  - Extension Test Suite', () => {
 
 		let cnt = 0
 		res[0].declarationCoverage.forEach((dc, path) => {
-			assert.equal(dc.length, 4, 'dc.length (path=' + path + ')')
+			assert.equal(dc.length, 5, 'dc.length (path=' + path + ')')
 			cnt++
 		})
 		assert.equal(cnt, 1, 'declarationCoverage count')

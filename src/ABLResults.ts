@@ -649,7 +649,9 @@ export class ABLResults implements Disposable {
 			if (!fdc) {
 				fdc = declarations
 				this.declarationCoverage.set(incInfo.uri.fsPath, fdc)
+				log.info('set')
 			} else {
+				log.info('update')
 				for (const d of declarations) {
 					const existing = fdc.find((c) => c.name == d.name)
 					if (!existing) {
@@ -673,6 +675,7 @@ export class ABLResults implements Disposable {
 						existing.executed = 0
 					}
 				}
+				log.info('fdc=' + JSON.stringify(fdc, null, 2))
 			}
 
 			const lines = [...module.lines, ...module.childModules.flatMap((m) => m.lines)]
@@ -723,6 +726,14 @@ export class ABLResults implements Disposable {
 				fc.includesTests = fcOrig?.includesTests ?? []
 				if (!fc.includesTests.find((i) => i.id == item.id)) {
 					fc.includesTests.push(item)
+				}
+			}
+
+			const mainBlock = fdc.find((d) => d.name === '<main block>')
+			if (mainBlock && fc.declarationCoverage) {
+				fc.declarationCoverage.total = fc.declarationCoverage?.total - 1
+				if (mainBlock.executed) {
+					fc.declarationCoverage.covered = fc.declarationCoverage?.covered - 1
 				}
 			}
 

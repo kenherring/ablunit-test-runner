@@ -22,110 +22,82 @@ suiteSetup('suiteSetup', () => {
 		})
 })
 
-setup('setup', () => {
+setup('setup', async () => {
 	log.info('setup ----- start')
-})
-
-test.skip('SourceMapRCodeParser.test_0', async () => {
-	log.info('SourceMapRCodeParser.test_0: start')
-	const propath = new PropathParser()
-	log.info('propath=' + JSON.stringify(propath.propath, null, 2))
-
-	const testuri = toUri('test_0/test.p')
-	const sourceMap = await getSourceMap(propath, toUri('test_0/test.r'))
-
-	for (const item of sourceMap.items) {
-		log.info('item=' + JSON.stringify(item, null, 2))
-	}
-
-	assert.equal(sourceMap.items.length, 1)
-	// validate the first executable line is number 2
-	assertLines(sourceMap.items, 2, 2, testuri, testuri)
-	return
-})
-
-test.skip('SourceMapRCodeParser.test_1', async () => {
-	log.info('SourceMapRCodeParser.test_1: start')
 
 	while (!FileUtils.doesFileExist(toUri('test_1/test.p.xref'))) {
-		await sleep2(250, 'waiting for test_1/test.p.xref')
+		const prom = sleep2(250, 'waiting for test_1/test.p.xref')
+		await prom
 	}
+})
+
+test('SourceMapRCodeParser.test_0', async () => {
+	log.info('SourceMapRCodeParser.test_0: start')
+	const propath = new PropathParser()
+	const sourceMap = await getSourceMap(propath, toUri('test_0/test.r'))
+	assert.equal(sourceMap.items.length, 0) // compiled with MIN-SIZE=true so no source map
+})
+
+test('SourceMapRCodeParser.test_1', async () => {
+	log.info('SourceMapRCodeParser.test_1: start')
 
 	const propath = new PropathParser()
-	log.info('propath=' + JSON.stringify(propath.propath, null, 2))
-
 	const testuri = toUri('test_1/test.p')
 	const incuri = toUri('test_1/include.i')
 	const sourceMap = await getSourceMap(propath, toUri('test_1/test.r'))
 
-	for (const item of sourceMap.items) {
-		log.info('item=' + JSON.stringify(item, null, 2))
+	assert.equal(sourceMap.items.length, 8)
+
+	// validate the first executable line is number 5
+	assertLines([sourceMap.items[0]], 5, 5, testuri, testuri)
+	assertLines(sourceMap.items, 7, 1, testuri, incuri)
+	assertLines(sourceMap.items, 9, 3, testuri, incuri)
+	assertLines(sourceMap.items, 14, 10, testuri, testuri)
+	assertLines(sourceMap.items, 15, 11, testuri, testuri)
+	assertLines(sourceMap.items, 17, 13, testuri, testuri)
+	assertLines(sourceMap.items, 18, 14, testuri, testuri)
+	assertLines(sourceMap.items, 19, 15, testuri, testuri)
+	return
+})
+
+test('SourceMapRCodeParser.test_3', async () => {
+	log.info('100')
+	const testuri = toUri('test_3/test.p')
+	log.info('101')
+	const sourceMap = await getSourceMap(new PropathParser(), testuri).then((sourceMap) => {
+		log.info('102')
+		return sourceMap
+	}, (e: unknown) => {
+		log.info('Error in test_3: e=' + (e instanceof Error ? e.message : String(e)))
+		throw e
+	})
+
+	log.info('103 sourceMap.signatures.length=' + sourceMap.signatures.length)
+	for (const p of sourceMap.signatures) {
+		log.info('p=' + JSON.stringify(p))
+	}
+	log.info('104 ' + sourceMap.includes.length)
+	for (const i of sourceMap.includes) {
+		log.info('include=' + JSON.stringify(i))
+	}
+	log.info('105 sourceMap.declarations.length=' + sourceMap.declarations.length)
+	for (const d of sourceMap.declarations) {
+		log.info('declaration=' + JSON.stringify(d))
 	}
 
-	assert.equal(sourceMap.items.length, 8)
-	// validate the first executable line is number 4
-	assertLines([sourceMap.items[0]], 1, 1, testuri, testuri)
-	assertLines(sourceMap.items, 6, 6, testuri, testuri)
-	assertLines(sourceMap.items, 7, 1, testuri, incuri)
-	assertLines(sourceMap.items, 8, 2, testuri, incuri)
-	assertLines(sourceMap.items, 9, 3, testuri, incuri)
-	assertLines(sourceMap.items, 10, 4, testuri, incuri)
-	assertLines(sourceMap.items, 11, 7, testuri, testuri)
-	assertLines(sourceMap.items, 12, 8, testuri, testuri)
-	assertLines(sourceMap.items, 13, 9, testuri, testuri)
-	return
+	assert.equal(sourceMap.declarations[0].procName, '')
+	assert.equal(sourceMap.declarations[1].procName, 'NotATest')
+	assert.equal(sourceMap.declarations[2].procName, 'test4')
+	assert.equal(sourceMap.declarations[3].procName, 'test3.2')
+	assert.equal(sourceMap.declarations[4].procName, 'test3.1')
+	assert.equal(sourceMap.declarations[5].procName, 'test_proc')
 })
 
-test.skip('SourceMapRCodeParser.test_2', async () => {
-	const propath = new PropathParser()
-	log.info('propath=' + JSON.stringify(propath.propath, null, 2))
-
-	const testuri = toUri('test_2/test.p')
-	const incuri = toUri('test_2/include.i')
-	const sourceMap = await getSourceMap(propath, testuri)
-	assert.equal(sourceMap.items.length, getLineCount(toUri('.dbg/test_2/test.p')))
-	assertLines(sourceMap.items, 6, 6, testuri, testuri)
-	assertLines(sourceMap.items, 7, 1, testuri, incuri)
-	assertLines(sourceMap.items, 8, 2, testuri, incuri)
-	assertLines(sourceMap.items, 9, 3, testuri, incuri)
-	assertLines(sourceMap.items, 10, 4, testuri, incuri)
-	assertLines(sourceMap.items, 11, 7, testuri, testuri)
-	return
-})
-
-test.skip('SourceMapRCodeParser.test_3', async () => {
-	const propath = new PropathParser()
-	log.info('propath=' + JSON.stringify(propath.propath, null, 2))
-
-	const testuri = toUri('test_3/test.p')
-	const incuri = toUri('test_3/include.i')
-	const sourceMap = await getSourceMap(propath, testuri)
-	assert.equal(sourceMap.items.length, getLineCount(toUri('.dbg/test_3/test.p')))
-	assertLines(sourceMap.items, 6, 6, testuri, testuri)
-	assertLines(sourceMap.items, 7, 1, testuri, incuri)
-	assertLines(sourceMap.items, 8, 2, testuri, incuri)
-	assertLines(sourceMap.items, 9, 3, testuri, incuri)
-	assertLines(sourceMap.items, 10, 4, testuri, incuri)
-	assertLines(sourceMap.items, 11, 5, testuri, incuri)
-	assertLines(sourceMap.items, 12, 7, testuri, testuri)
-	return
-})
 
 test('SourceMapRCodeParser.test_4', async () => {
-	log.info(' ---------- SourceMapRCodeParser.test_4: start ----------')
 	const propath = new PropathParser()
-	log.info('propath=' + JSON.stringify(propath.propath, null, 2))
-
 	const testuri = toUri('test_4/destructorSimple.cls')
-	log.info('testuri=' + testuri.fsPath)
 	const sourceMap = await getSourceMap(propath, testuri).then((sourceMap) => {
-		log.info('sourceMap.items.length=' + sourceMap.items.length)
-		log.info('sourceMap.crc=' + sourceMap.crc)
-
-		for (const d of sourceMap.declarations) {
-			log.info('Declaration: ' + JSON.stringify(d))
-		}
-
 		return sourceMap
 	}, (e: unknown) => {
 		if (e instanceof Error) {
@@ -148,21 +120,9 @@ async function getSourceMap (propath: PropathParser, uri: Uri) {
 	return sourceMap
 }
 
-function getLineCount (uri: Uri) {
-	const lines = FileUtils.readLinesFromFileSync(uri)
-	log.info('lines.length=' + lines.length + ' uri=' + uri.fsPath)
-	log.info('lines[' + lines.length + ']="' + lines[lines.length - 1] + '"')
-	if (lines[lines.length - 1] == '') {
-		log.info('returning ' + (lines.length - 1))
-		return lines.length - 1
-	}
-	log.info('returning ' + lines.length)
-	return lines.length
-}
-
 function assertLines (lines: SourceMapItem[], dbgLine: number, srcLine: number, dbgUri?: Uri, srcUri?: Uri) {
 	const filteredLines = lines.filter((l) => l.debugLine === dbgLine)
-	if (!filteredLines) {
+	if (!filteredLines || filteredLines.length === 0) {
 		assert.fail('lines not found ' + dbgUri?.fsPath + ':' + dbgLine)
 		return
 	}

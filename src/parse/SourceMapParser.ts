@@ -1,11 +1,5 @@
 import { Uri } from 'vscode'
 
-interface ISourceMap {
-	sourceUri: Uri,
-	path: string,
-	items: ISourceMapItem[]
-}
-
 export interface ISources {
 	sourceName: string,
 	sourceNum: number | undefined
@@ -34,6 +28,8 @@ export enum SignatureType {
 	Procedure = 'PROC',
 	Constructor = 'CONST',
 	Destructor = 'DEST',
+	// PropertyGet = 'PGET',
+	// PropertySet = 'PSET',
 	Method = 'METH',
 	TempTable = 'TTAB',
 	DataSet = 'DSET',
@@ -91,7 +87,7 @@ export interface ISignature {
 	parameters: ISignatureParameter[]
 }
 
-export class SourceMap implements ISourceMap {
+export class SourceMap {
 	sourceUri: Uri
 	path: string
 	items: SourceMapItem[] = []

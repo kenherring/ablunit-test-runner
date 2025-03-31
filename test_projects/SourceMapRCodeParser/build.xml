@@ -8,10 +8,11 @@
   <echo>DLC=${env.DLC}</echo>
 
   <target name="compile-and-test">
-    <antcall target="compile" />
     <antcall target="compile">
-      <param name="testdir" value="test_4" />
       <param name="minSize" value="false" />
+    </antcall>
+    <antcall target="compile">
+      <param name="testdir" value="test_0" />
     </antcall>
 
     <antcall target="test">

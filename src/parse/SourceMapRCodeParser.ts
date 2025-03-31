@@ -21,12 +21,11 @@ export const getSourceMapFromRCode = (propath: PropathParser, uri: Uri) => {
 		}
 	}
 
-	let rawBytes: Uint8Array
 	const debug = false
-	const dec = new TextDecoder()
-	const procs: IDeclarations[] = []
+	const decoder = new TextDecoder()
+	const declarations: IDeclarations[] = []
 	const sources: ISources[] = []
-	const map: IIncludeMap[] = []
+	const includes: IIncludeMap[] = []
 	const debugLines: SourceMapItem[] = []
 
 	const toBase10 = (items: Uint8Array) => {
@@ -85,16 +84,19 @@ export const getSourceMapFromRCode = (propath: PropathParser, uri: Uri) => {
 	}
 
 	const parseSignatureTable = (signatureTable: Uint8Array) => {
-		const initialOffset = Number('0x' + dec.decode(signatureTable.subarray(0, 4)))
-		const numElements = Number('0x' + dec.decode(signatureTable.subarray(4, 8)))
+		const initialOffset = Number('0x' + decoder.decode(signatureTable.subarray(0, 4)))
+		const numElements = Number('0x' + decoder.decode(signatureTable.subarray(4, 8)))
 
 		const signatures: ISignature[] = []
 		let start = initialOffset
 		let end = signatureTable.indexOf(0, start)
 		while (signatures.length < numElements) {
-			const sig = dec.decode(signatureTable.subarray(start, end))
+			const sig = decoder.decode(signatureTable.subarray(start, end))
 			const parts = sig.split(',')
 			const definition = parts[0]
+
+			log.warn('SignatureType=' + definition.split(' ')[0])
+			log.info('    ' + (definition.split(' ')[0] as SignatureType))
 
 			signatures.push({
 				_raw: sig,
@@ -137,9 +139,11 @@ export const getSourceMapFromRCode = (propath: PropathParser, uri: Uri) => {
 		}
 	}
 
-	const getLines = (bytes: Uint32Array, byte: number, lineCount: number) => {
+	const getLines = (debugBytes32: Uint32Array, byte: number, lineCount: number) => {
 		const lines: number[] = []
-		const byteLines = bytes.subarray(byte/4, byte/4 + lineCount)
+		log.info('lineCount=' + lineCount + ' byte=' + byte)
+		const byteLines = debugBytes32.subarray(byte/4, byte/4 + lineCount)
+		log.info('byteLines=' + byteLines)
 		for (const element of byteLines) {
 			lines.push(element)
 		}
@@ -172,26 +176,19 @@ export const getSourceMapFromRCode = (propath: PropathParser, uri: Uri) => {
 		return next
 	}
 
-	const parseProc0 = (_bytes: Uint32Array, pos: number, prefix = '') => {
-		log.trace(prefix + ' TODO - implement rcode parsing function parseProc0')
-		log.info(prefix + ' pos=' + pos)
-		// const childBytes = bytes.subarray(pos/4, nextDelim(bytes, pos, 1))
-		// const arr8 = rawBytes.subarray(childBytes.byteOffset, rawBytes.indexOf(0, childBytes.byteOffset + 1))
-		// const value = dec.decode(arr8)
-		// log.info('parseProc0 arr.length=' + arr8.length + ', value=' + value)
-		// for (const b of arr8) {
-		// 	log.info('b=' + b + ', decoded=' + dec.decode(new Uint8Array([b])))
-		// }
-	}
-
-	const parseProcName = (bytes: Uint32Array, pos: number, prefix = '') => {
+	const parseProcName = (debugBytes: Uint8Array, debugBytes32: Uint32Array, pos: number, prefix = '') => {
 		if (debug) {
 			log.info(prefix + ' [parseProcName] pos=' + pos)
 		}
-		const childBytes = bytes.subarray(pos/4, nextDelim(bytes, pos, 1))
 
-		const arr8 = rawBytes.subarray(childBytes.byteOffset, rawBytes.indexOf(0, childBytes.byteOffset + 1))
-		const name = dec.decode(arr8)
+		log.info(prefix + ' [parseProcName] pos=' + pos)
+		const childBytes = debugBytes32.subarray(pos/4, nextDelim(debugBytes32, pos, 1))
+		log.info('childBytes=' + childBytes)
+
+		const arr8 = debugBytes.subarray(childBytes.byteOffset, debugBytes.indexOf(0, childBytes.byteOffset + 1))
+		log.info('arr8.length=' + arr8.length + ' ' + arr8)
+		const name = decoder.decode(arr8)
+		log.info('found procName=' + name)
 
 		if (debug) {
 			log.info('found procName=' + name)
@@ -208,7 +205,7 @@ export const getSourceMapFromRCode = (propath: PropathParser, uri: Uri) => {
 		return name
 	}
 
-	const parseVar = (_bytes: Uint32Array, pos: number, prefix = '') => {
+	const parseVar = (_debugBytes: Uint8Array, _debugBytes32: Uint32Array, pos: number, prefix = '') => {
 		log.trace(prefix + ' TODO - implement rcode parsing function parseVar')
 		log.info(prefix + ' pos=' + pos)
 		// const end = nextDelim(bytes, pos + 20, 4, prefix)
@@ -223,78 +220,92 @@ export const getSourceMapFromRCode = (propath: PropathParser, uri: Uri) => {
 		// return value
 	}
 
-	const parseParam = (bytes: Uint32Array, pos: number, prefix = '') => {
+	const parseParam = (_debugBytes: Uint8Array, _debugBytes32: Uint32Array, pos: number, prefix = '') => {
 		log.trace(prefix + ' TODO - implement rcode parsing function parseParam')
 		log.info(prefix + ' pos=' + pos)
 
-		const childBytes = bytes.subarray(pos/4, nextDelim(bytes, pos, 1))
-		for (const b of childBytes) {
-			log.info('\tb=' + b)
-		}
+		// const childBytes = debugBytes32.subarray(pos/4, nextDelim(debugBytes32, pos, 1))
+		// for (const b of childBytes) {
+		// 	log.info('\tb=' + b)
+		// }
 	}
 
-	const parseProcTT = (_bytes: Uint32Array, pos: number, prefix = '') => {
+	const parseProcTT = (_debugBytes: Uint8Array, _debugBytes32: Uint32Array, pos: number, prefix = '') => {
 		log.trace(prefix + ' TODO - implement rcode parsing function parseProcTT')
 		log.info(prefix + ' pos=' + pos)
 	}
 
-	const parseProcs = (bytes: Uint32Array, pos: number, prefix = '') => {
-		const end = nextDelim(bytes, pos + 20, 4, prefix)
-		const childBytes = bytes.subarray(pos/4, end)
+	const parseProcs = (debugBytes: Uint8Array, debugBytes32: Uint32Array, pos: number, prefix = '') => {
+		const end = nextDelim(debugBytes32, pos + 20, 4, prefix)
+		const childBytes = debugBytes32.subarray(pos/4, end)
 		if (childBytes.length > 6) {
-			log.debug('childBytes.length has more info! ' + childBytes.length + ' > 6')
+			log.debug('childBytes.length has more info! ' + childBytes.length + ' > 6 (childBytes=' + childBytes + ')')
 		}
 
-		if (debug && childBytes[0] && childBytes[0] != 0) {
-			parseProc0(bytes, childBytes[0])
-		}
+		log.info('childBytes=' + childBytes)
 
-		let numlines = bytes[childBytes[1]/4 - 2]
-		if (childBytes[5] && childBytes[5] != 0) {
-			numlines = bytes[childBytes[5]/4 - 2]
+		let numlines = 0
+
+		for (let i=childBytes.length-1; i >= 1; i--) {
+			if (childBytes[i] && childBytes[i] >= 0) {
+				numlines = debugBytes32[childBytes[i]/4 - 2]
+				log.info('found numlines from childBytes[' + i + '] = ' + numlines)
+				break
+			}
 		}
+		log.info('numlines=' + numlines)
+
+		// if (childBytes[5] && childBytes[5] >= 0) {
+		// 	numlines = debugBytes32[childBytes[5]/4 - 2]
+		// } else if (childBytes[3] && childBytes[3] >= 0) {
+		// 	numlines = debugBytes32[childBytes[3]/4 - 2]
+		// } else if (childBytes[2] && childBytes[2] >= 0) {
+		// 	numlines = debugBytes32[childBytes[2]/4 - 2]
+		// } else if (childBytes[1] && childBytes[1] >= 0) {
+		// 	numlines = debugBytes32[childBytes[1]/4 - 2] // this is usually the source line count, but can be overridden by debug lines
+		// }
 
 		let lines: number[] | undefined = undefined
-		if(childBytes[1] && childBytes[1] != 0) {
-			lines = getLines(bytes, childBytes[1], numlines)
+		if(childBytes[1] && childBytes[1] != 0 && numlines > 0) {
+			lines = getLines(debugBytes32, childBytes[1], numlines)
+			log.info('lines=' + lines)
 		}
 
 		if (debug && childBytes[2] && childBytes[2] != 0) {
-			parseVar(bytes, childBytes[2], prefix + '.' + childBytes[2] + '-2')
+			parseVar(debugBytes, debugBytes32, childBytes[2], prefix + '.' + childBytes[2] + '-2')
 		}
 
 		if (debug && childBytes[3] && childBytes[3] != 0) {
-			parseParam(bytes, childBytes[3], prefix + '.' + childBytes[3] + '-3')
+			parseParam(debugBytes, debugBytes32, childBytes[3], prefix + '.' + childBytes[3] + '-3')
 		}
 
 		if (debug && childBytes[4] && childBytes[4] != 0) {
-			parseProcTT(bytes, childBytes[4], prefix + '.' + childBytes[4] + '-4')
+			parseProcTT(debugBytes, debugBytes32, childBytes[4], prefix + '.' + childBytes[4] + '-4')
 		}
 
 		let pname: string | undefined = undefined
 		if (childBytes[5] && childBytes[5] != 0) {
-			pname = parseProcName(bytes, childBytes[5], prefix + '.' + childBytes[5] + '-5')
+			pname = parseProcName(debugBytes, debugBytes32, childBytes[5], prefix + '.' + childBytes[5] + '-5')
 		}
 
-		procs.push({
+		declarations.push({
 			procLoc: pos,
 			procName: pname ?? '',
-			procNum: bytes[childBytes[5]/4 - 1],
+			procNum: debugBytes[childBytes[5]/4 - 1],
 			lineCount: numlines,
 			lines: lines
 		})
 
+		log.info('childBytes[0]=' + childBytes[0])
 		if (childBytes[0] && childBytes[0] != 0) {
-			parseProcs(bytes, childBytes[0], prefix + '.' + childBytes[0] + '-0')
+			parseProcs(debugBytes, debugBytes32, childBytes[0], prefix + '.' + childBytes[0] + '-0')
 		}
 
-		return procs
+		return declarations
 	}
 
 	const getSourceName = (num: number) => {
-		log.info('sources.length=' + sources.length + ', num=' + num)
 		for (const src of sources) {
-			log.info('src.sourceNum=' + src.sourceNum + ', src.sourceName=' + src.sourceName)
 			if (src.sourceNum === num) {
 				return src.sourceName
 			}
@@ -303,14 +314,12 @@ export const getSourceMapFromRCode = (propath: PropathParser, uri: Uri) => {
 	}
 
 	const getSourceUri = (num: number) => {
-		// log.info('sources.length=' + sources.length + ', num=' + num)
 		for (const src of sources) {
-			// log.info('src.sourceNum=' + src.sourceNum + ', src.sourceName=' + src.sourceName)
 			if (src.sourceNum === num) {
 				return src.sourceUri
 			}
 		}
-		throw new Error('could not find source name for num=' + num + ', uri="' + uri.fsPath + '"')
+		throw new Error('could not find source uri for num=' + num + ', uri="' + uri.fsPath + '"')
 	}
 
 	const parseSources = async (bytes: Uint32Array, pos: number, prefix = '') => {
@@ -321,7 +330,7 @@ export const getSourceMapFromRCode = (propath: PropathParser, uri: Uri) => {
 		const sourceNum = getShort(b[2])
 		b[2] = b[2] & 0xff000000
 
-		const sourceName = dec.decode(b.subarray(2)).replace(/\0/g, '')
+		const sourceName = decoder.decode(b.subarray(2)).replace(/\0/g, '')
 		if (sourceNum == undefined) {
 			throw new Error('invalid source number: ' + sourceNum + ' ' + sourceName)
 		}
@@ -360,7 +369,7 @@ export const getSourceMapFromRCode = (propath: PropathParser, uri: Uri) => {
 			}
 		}
 
-		map.push({
+		includes.push({
 			sourceLine: childBytes[1],
 			debugLine: childBytes[2],
 			sourceNum: childBytes[3],
@@ -373,7 +382,7 @@ export const getSourceMapFromRCode = (propath: PropathParser, uri: Uri) => {
 			await parseMap(bytes, childBytes[0], prefix + '.' + childBytes[0] + '-4')
 		}
 
-		return map
+		return includes
 	}
 
 	const parse4 = (_bytes: Uint32Array, _pos: number, prefix = '') => {
@@ -404,8 +413,8 @@ export const getSourceMapFromRCode = (propath: PropathParser, uri: Uri) => {
 
 	const buildDebugLines = () => {
 		const debugUri = getSourceUri(0)
-		if (map.length === 0) {
-			for (const proc of procs) {
+		if (includes.length === 0) {
+			for (const proc of declarations) {
 				for (const line of proc.lines ?? []) {
 					debugLines.push(new SourceMapItem({
 						debugLine: line,
@@ -420,9 +429,9 @@ export const getSourceMapFromRCode = (propath: PropathParser, uri: Uri) => {
 			return
 		}
 
-		for(const proc of procs) {
+		for(const proc of declarations) {
 			for (const line of proc.lines ?? []) {
-				const mapLine = getMapLine(map, line)
+				const mapLine = getMapLine(includes, line)
 				debugLines.push(new SourceMapItem({
 					debugLine: line,
 					debugUri: mapLine.debugUri,
@@ -438,35 +447,43 @@ export const getSourceMapFromRCode = (propath: PropathParser, uri: Uri) => {
 		return debugLines
 	}
 
-	const parseDebugSegment = async (raw: Uint8Array) => {
-		const bytes = new Uint32Array(raw.length / 4)
-		for (let i=0; i < raw.length; i=i+4) {
-			bytes[i/4] = toBase10(raw.subarray(i, i+4))
+	const parseDebugSegment = async (debugBytes: Uint8Array) => {
+		const debugBytes32 = new Uint32Array(debugBytes.length / 4)
+		for (let i=0; i < debugBytes.length; i=i+4) {
+			debugBytes32[i/4] = toBase10(debugBytes.subarray(i, i+4))
+			log.info('debugBytes[' + i + '/' + i/4 + '] = ' + debugBytes32[i/4] + '\t' + decoder.decode(debugBytes.subarray(i, i+4)))
 		}
 
-		const children = bytes.subarray(0, 5)
+		const children = debugBytes32.subarray(0, 5)
 
+		log.info('100')
 		if (children[0]) {
-			parseProcs(bytes, children[0], children[0].toString())
+			parseProcs(debugBytes, debugBytes32, children[0], children[0].toString())
 		}
 
+		log.info('102')
 		if (children[1]) {
-			await parseSources(bytes, children[1], children[1].toString())
+			await parseSources(debugBytes32, children[1], children[1].toString())
 		}
 
+		log.info('103')
 		if (children[2] && children[2] != 0) {
-			parseTT(bytes, children[2], children[2].toString())
+			parseTT(debugBytes32, children[2], children[2].toString())
 		}
 
+		log.info('104')
 		if (children[3] && children[3] != 0) {
-			await parseMap(bytes, children[3], children[3].toString())
+			await parseMap(debugBytes32, children[3], children[3].toString())
 		}
 
+		log.info('105')
 		if (children[4] && children[4] != 0) {
-			parse4(bytes, children[4], children[4].toString())
+			parse4(debugBytes32, children[4], children[4].toString())
 		}
 
+		log.info('106')
 		buildDebugLines()
+		log.info('107')
 		return debugLines
 	}
 
@@ -478,27 +495,23 @@ export const getSourceMapFromRCode = (propath: PropathParser, uri: Uri) => {
 
 		const rawSegmentTable = raw.subarray(headerInfo.segmentTableLoc, headerInfo.segmentTableLoc + headerInfo.segmentTableSize)
 		const segmentInfo = parseSegmentTable(rawSegmentTable)
-		// FileUtils.writeFile(uri.with({path: uri.path + '.segmentTable.bin'}), rawSegmentTable)
 
 		const rawSignatureTable = raw.subarray(headerInfo.signatureTableLoc, headerInfo.signatureTableLoc + headerInfo.signatureTableSize)
 		const signatures = parseSignatureTable(rawSignatureTable)
-		// FileUtils.writeFile(uri.with({path: uri.path + '.signatureTable.bin'}), rawSignatureTable)
 
-		// const rawOther = raw.subarray(headerInfo.segmentTableLoc + headerInfo.segmentTableSize, segmentInfo.debugLoc)
-		// FileUtils.writeFile(uri.with({path: uri.path + '.other.bin'}), rawOther)
-
-
-		rawBytes = raw.slice(segmentInfo.debugLoc, segmentInfo.debugLoc + segmentInfo.debugSize)
-		const debugInfo = await parseDebugSegment(rawBytes)
-		// FileUtils.writeFile(uri.with({path: uri.path + '.debug.bin'}), rawBytes)
+		let debugInfo: SourceMapItem[] = []
+		if (segmentInfo.debugSize > 0) {
+			const debugBytes = raw.slice(segmentInfo.debugLoc, segmentInfo.debugLoc + segmentInfo.debugSize)
+			debugInfo = await parseDebugSegment(debugBytes)
+		}
 
 		const sourceMap: SourceMap = {
 			path: uri.fsPath,
 			sourceUri: uri,
 			items: debugInfo,
 			sources: sources,
-			includes: map,
-			declarations: procs,
+			includes: includes,
+			declarations: declarations,
 			signatures: signatures,
 		}
 
