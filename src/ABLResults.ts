@@ -525,7 +525,6 @@ export class ABLResults implements Disposable {
 		let ending = testName
 		ending = ending.replace(/\\/g, '/')
 
-		log.info('parentName=' + parentName)
 		const items = this.allTests.filter((t) => t.id.endsWith(parentName + '#' + ending))
 		if (items.length == 0) {
 			// TODO account for includes and then restore the error message
@@ -537,7 +536,7 @@ export class ABLResults implements Disposable {
 		if (items.length > 1) {
 			log.error('found multiple test items for "' + parentName + ' ' + testName + '"')
 			for (const i of items) {
-				log.error('item.id=' + i.id)
+				log.error('    item.id=' + i.id)
 			}
 			throw new Error('found multiple test items for "' + parentName + ' ' + testName + '"')
 		}
@@ -649,9 +648,7 @@ export class ABLResults implements Disposable {
 			if (!fdc) {
 				fdc = declarations
 				this.declarationCoverage.set(incInfo.uri.fsPath, fdc)
-				log.info('set')
 			} else {
-				log.info('update')
 				for (const d of declarations) {
 					const existing = fdc.find((c) => c.name == d.name)
 					if (!existing) {
@@ -675,7 +672,6 @@ export class ABLResults implements Disposable {
 						existing.executed = 0
 					}
 				}
-				log.info('fdc=' + JSON.stringify(fdc, null, 2))
 			}
 
 			const lines = [...module.lines, ...module.childModules.flatMap((m) => m.lines)]

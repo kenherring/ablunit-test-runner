@@ -61,29 +61,13 @@ test('SourceMapRCodeParser.test_1', async () => {
 })
 
 test('SourceMapRCodeParser.test_3', async () => {
-	log.info('100')
 	const testuri = toUri('test_3/test.p')
-	log.info('101')
 	const sourceMap = await getSourceMap(new PropathParser(), testuri).then((sourceMap) => {
-		log.info('102')
 		return sourceMap
 	}, (e: unknown) => {
 		log.info('Error in test_3: e=' + (e instanceof Error ? e.message : String(e)))
 		throw e
 	})
-
-	log.info('103 sourceMap.signatures.length=' + sourceMap.signatures.length)
-	for (const p of sourceMap.signatures) {
-		log.info('p=' + JSON.stringify(p))
-	}
-	log.info('104 ' + sourceMap.includes.length)
-	for (const i of sourceMap.includes) {
-		log.info('include=' + JSON.stringify(i))
-	}
-	log.info('105 sourceMap.declarations.length=' + sourceMap.declarations.length)
-	for (const d of sourceMap.declarations) {
-		log.info('declaration=' + JSON.stringify(d))
-	}
 
 	assert.equal(sourceMap.declarations[0].procName, '')
 	assert.equal(sourceMap.declarations[1].procName, 'NotATest')

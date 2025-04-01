@@ -424,22 +424,6 @@ export class ABLProfileJson {
 				ISectionTwelve: []
 			}
 
-			// this.debugLines.getSourceMap(mod.SourceUri).then((sourceMap) => {
-			// 	if (!sourceMap) {
-			// 		log.error('could not find source map for module ' + moduleName + ' in uri=' + this.profileUri.fsPath + ' (ModuleID=' + mod.ModuleID + ')')
-			// 		throw new Error('could not find source map for module ' + moduleName + ' in uri=' + this.profileUri.fsPath + ' (ModuleID=' + mod.ModuleID + ')')
-			// 	}
-			// 	const item = sourceMap.items.find(i => i.debugLine === Number(test[5]))
-			// 	if (!item) {
-			// 		log.warn('cound not find debug line item for ' + Number(test[5]))
-			// 		// throw new Error('cound not find debug line item for ' + Number(test[5]))
-			// 	}
-			// 	return this.getSignatureFromMap(sourceMap, entityName, item)
-			// }, (e: unknown) => {
-			// 	log.error('could not get source map for signature (e=' + e + ')')
-			// 	throw e
-			// })
-
 			if (Number(test[4]) != 0) {
 				this.modules.push(mod)
 			} else {
@@ -460,18 +444,9 @@ export class ABLProfileJson {
 		if (signatures.length == 1) {
 			return signatures[0]
 		}
-		log.info('signatures.length=' + signatures.length)
-		log.info('decs=' + JSON.stringify(map.declarations.map(d => d.procName)))
-		log.info('procName=' + procName)
-
 		const declarations = map.declarations.filter(d => d.procName == procName)
-		log.info('declarations.length=' + declarations.length)
 		if (declarations.length != signatures.length) {
-
-			log.info('declarations=' + JSON.stringify(declarations, null, 2))
-			log.info('signatures=' + JSON.stringify(signatures, null, 2))
-
-			log.error('expected declarations and signatures to have the smae number of matches by name (' + declarations.length + ' != ' + signatures.length + ')')
+			log.warn('expected declarations and signatures to have the smae number of matches by name (' + declarations.length + ' != ' + signatures.length + ')')
 		}
 
 		let index = 1
@@ -483,10 +458,7 @@ export class ABLProfileJson {
 				return undefined
 			}
 		}
-		log.info('index=' + index)
-		log.info('map.signatures=' + JSON.stringify(map.signatures, null, 2))
 		const signature = signatures[index]
-		log.info('signature=' + JSON.stringify(signature))
 		if (signature) {
 			return signature
 		}
@@ -503,7 +475,6 @@ export class ABLProfileJson {
 				log.error('could not get source map for module ' + mod.ModuleName + ' in uri=' + this.profileUri.fsPath + ' (ModuleID=' + mod.ModuleID + ') - ' + e)
 				throw e
 			})
-			log.info('map.items=' + JSON.stringify(map?.items))
 			if (!map) {
 				log.warn('could not parse source map for ' + mod.SourceUri.fsPath)
 				// could not parse source map :(
@@ -540,7 +511,6 @@ export class ABLProfileJson {
 				const signature = this.getSignatureFromMap(map, item.procName, mod.ModuleName.startsWith('~') ?? false, item)
 				const destructor = signature?.type == SignatureType.Destructor
 				let children = mod.childModules.filter(m => m.EntityName == item.procName && m.Destructor == destructor)
-				log.info('children.length=' + children.length)
 
 				if (children.length > 1) {
 					let seq = 1
@@ -552,7 +522,6 @@ export class ABLProfileJson {
 				}
 
 				if (!children || children.length == 0) {
-					log.info('add new child?')
 					// add new child module - won't have any coverage
 					mod.childModules.push({
 						ModuleID: mod.ModuleID,
@@ -582,12 +551,10 @@ export class ABLProfileJson {
 						ISectionTwelve: []
 					})
 					children = [mod.childModules[mod.childModules.length - 1]]
-					log.info('children.length=' + children.length)
 				}
 
 				// add or update line on existing child
 				if (children.length >= 1) {
-					log.info('item.procNum=' + item.procNum)
 					let child = children.find(m => m.procNum == item.procNum)
 					if (!child) {
 						child = children.find(m => !m.procNum)
@@ -643,7 +610,6 @@ export class ABLProfileJson {
 						continue
 					}
 
-					log.info('add new line! sourceLine=' + item.sourceLine)
 					// add new line
 					const newLine = new LineSummary(mod.SourceUri.fsPath, item.debugLine, true, 0, item.sourcePath)
 					newLine.srcUri = item.debugUri
@@ -1283,10 +1249,7 @@ export function getDeclarationCoverage (module: IModule, onlyUri: Uri) {
 	const fdc: DeclarationCoverage[] = []
 	const modules = [module, ...module.childModules]
 
-	log.info('[getDeclarationCoverage] module=' + module.ModuleName + ' modules.length=' + modules.length)
-
 	for (const mod of modules) {
-		log.info('module mod.name=' + mod.ModuleName + ' mod.EntityName=' + mod.EntityName + ' line=' + mod.ModuleLineNum + ' mod.SourceUri=' + mod.SourceUri)
 		if (onlyUri) {
 			if (mod.incUri) {
 				if (mod.incUri.fsPath != onlyUri.fsPath) {
@@ -1303,7 +1266,6 @@ export function getDeclarationCoverage (module: IModule, onlyUri: Uri) {
 		}
 
 		const range = getModuleRange(mod, onlyUri)
-		log.info('range=' + JSON.stringify(range))
 		if (range) {
 			let name = mod.EntityName ?? '<main block>'
 			if (mod.signature?.type == SignatureType.Constructor) {

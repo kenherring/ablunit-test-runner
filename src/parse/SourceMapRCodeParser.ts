@@ -141,9 +141,7 @@ export const getSourceMapFromRCode = (propath: PropathParser, uri: Uri) => {
 
 	const getLines = (debugBytes32: Uint32Array, byte: number, lineCount: number) => {
 		const lines: number[] = []
-		log.info('lineCount=' + lineCount + ' byte=' + byte)
 		const byteLines = debugBytes32.subarray(byte/4, byte/4 + lineCount)
-		log.info('byteLines=' + byteLines)
 		for (const element of byteLines) {
 			lines.push(element)
 		}
@@ -181,26 +179,14 @@ export const getSourceMapFromRCode = (propath: PropathParser, uri: Uri) => {
 			log.info(prefix + ' [parseProcName] pos=' + pos)
 		}
 
-		log.info(prefix + ' [parseProcName] pos=' + pos)
 		const childBytes = debugBytes32.subarray(pos/4, nextDelim(debugBytes32, pos, 1))
-		log.info('childBytes=' + childBytes)
 
 		const arr8 = debugBytes.subarray(childBytes.byteOffset, debugBytes.indexOf(0, childBytes.byteOffset + 1))
-		log.info('arr8.length=' + arr8.length + ' ' + arr8)
 		const name = decoder.decode(arr8)
-		log.info('found procName=' + name)
 
 		if (debug) {
 			log.info('found procName=' + name)
 		}
-
-		// pos = pos + nextDelim(bytes, pos, 1)
-		// const childBytes2 = bytes.subarray(pos/4, nextDelim(bytes, pos, 1))
-		// log.info('childBytes2=' + childBytes2.length + ' bytes=' + childBytes2.toString())
-		// const arr9 = rawBytes.subarray(childBytes2.byteOffset, rawBytes.indexOf(0, childBytes2.byteOffset + 1))
-		// log.info('arr9.length=' + arr9.length)
-		// const name2 = dec.decode(arr9)
-		// log.info('name2=' + name2)
 
 		return name
 	}
@@ -223,11 +209,6 @@ export const getSourceMapFromRCode = (propath: PropathParser, uri: Uri) => {
 	const parseParam = (_debugBytes: Uint8Array, _debugBytes32: Uint32Array, pos: number, prefix = '') => {
 		log.trace(prefix + ' TODO - implement rcode parsing function parseParam')
 		log.info(prefix + ' pos=' + pos)
-
-		// const childBytes = debugBytes32.subarray(pos/4, nextDelim(debugBytes32, pos, 1))
-		// for (const b of childBytes) {
-		// 	log.info('\tb=' + b)
-		// }
 	}
 
 	const parseProcTT = (_debugBytes: Uint8Array, _debugBytes32: Uint32Array, pos: number, prefix = '') => {
@@ -242,33 +223,18 @@ export const getSourceMapFromRCode = (propath: PropathParser, uri: Uri) => {
 			log.debug('childBytes.length has more info! ' + childBytes.length + ' > 6 (childBytes=' + childBytes + ')')
 		}
 
-		log.info('childBytes=' + childBytes)
-
 		let numlines = 0
 
 		for (let i=childBytes.length-1; i >= 1; i--) {
 			if (childBytes[i] && childBytes[i] >= 0) {
 				numlines = debugBytes32[childBytes[i]/4 - 2]
-				log.info('found numlines from childBytes[' + i + '] = ' + numlines)
 				break
 			}
 		}
-		log.info('numlines=' + numlines)
-
-		// if (childBytes[5] && childBytes[5] >= 0) {
-		// 	numlines = debugBytes32[childBytes[5]/4 - 2]
-		// } else if (childBytes[3] && childBytes[3] >= 0) {
-		// 	numlines = debugBytes32[childBytes[3]/4 - 2]
-		// } else if (childBytes[2] && childBytes[2] >= 0) {
-		// 	numlines = debugBytes32[childBytes[2]/4 - 2]
-		// } else if (childBytes[1] && childBytes[1] >= 0) {
-		// 	numlines = debugBytes32[childBytes[1]/4 - 2] // this is usually the source line count, but can be overridden by debug lines
-		// }
 
 		let lines: number[] | undefined = undefined
 		if(childBytes[1] && childBytes[1] != 0 && numlines > 0) {
 			lines = getLines(debugBytes32, childBytes[1], numlines)
-			log.info('lines=' + lines)
 		}
 
 		if (debug && childBytes[2] && childBytes[2] != 0) {
@@ -296,7 +262,6 @@ export const getSourceMapFromRCode = (propath: PropathParser, uri: Uri) => {
 			lines: lines
 		})
 
-		log.info('childBytes[0]=' + childBytes[0])
 		if (childBytes[0] && childBytes[0] != 0) {
 			parseProcs(debugBytes, debugBytes32, childBytes[0], prefix + '.' + childBytes[0] + '-0')
 		}
@@ -451,48 +416,37 @@ export const getSourceMapFromRCode = (propath: PropathParser, uri: Uri) => {
 		const debugBytes32 = new Uint32Array(debugBytes.length / 4)
 		for (let i=0; i < debugBytes.length; i=i+4) {
 			debugBytes32[i/4] = toBase10(debugBytes.subarray(i, i+4))
-			log.info('debugBytes[' + i + '/' + i/4 + '] = ' + debugBytes32[i/4] + '\t' + decoder.decode(debugBytes.subarray(i, i+4)))
+			// log.info('debugBytes[' + i + '/' + i/4 + '] = ' + debugBytes32[i/4] + '\t' + decoder.decode(debugBytes.subarray(i, i+4)))
 		}
 
 		const children = debugBytes32.subarray(0, 5)
 
-		log.info('100')
 		if (children[0]) {
 			parseProcs(debugBytes, debugBytes32, children[0], children[0].toString())
 		}
 
-		log.info('102')
 		if (children[1]) {
 			await parseSources(debugBytes32, children[1], children[1].toString())
 		}
 
-		log.info('103')
 		if (children[2] && children[2] != 0) {
 			parseTT(debugBytes32, children[2], children[2].toString())
 		}
 
-		log.info('104')
 		if (children[3] && children[3] != 0) {
 			await parseMap(debugBytes32, children[3], children[3].toString())
 		}
 
-		log.info('105')
 		if (children[4] && children[4] != 0) {
 			parse4(debugBytes32, children[4], children[4].toString())
 		}
 
-		log.info('106')
 		buildDebugLines()
-		log.info('107')
 		return debugLines
 	}
 
-	log.info('100 uri=' + uri)
 	return workspace.fs.readFile(uri).then(async (raw) => {
-		log.info('101')
 		const headerInfo = parseHeader(raw.subarray(0, 68))
-		log.info('102')
-
 		const rawSegmentTable = raw.subarray(headerInfo.segmentTableLoc, headerInfo.segmentTableLoc + headerInfo.segmentTableSize)
 		const segmentInfo = parseSegmentTable(rawSegmentTable)
 

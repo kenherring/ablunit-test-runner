@@ -665,7 +665,6 @@ function getOrCreateFile (controller: TestController, uri: Uri, excludePatterns?
 		return { item: undefined, data: undefined }
 	}
 	const file = controller.createTestItem(uri.fsPath, basename(uri.fsPath), uri)
-
 	testData.set(file, data)
 	data.didResolve = false
 	file.description = 'To be parsed...'

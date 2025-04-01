@@ -165,23 +165,6 @@ export class ABLTestFile extends TestTypeObj {
 		}
 		item.label = response.label
 		item.range = response.range
-
-		// log.info('item.range=' + JSON.stringify(item.range))
-		// if (item.uri) {
-		// 	debugLines.getSourceMap(item.uri)
-		// 		.then((map) => {
-		// 			if (!map) {
-		// 				return
-		// 			}
-		// 			for (const m of map.items) {
-		// 				log.info('m=' + JSON.stringify(m))
-		// 			}
-		// 		}, (e: unknown) => {
-		// 			throw e
-		// 		})
-		// }
-
-
 		this.updateChildren(controller, item, response.testcases, childType)
 	}
 

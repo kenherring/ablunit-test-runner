@@ -386,7 +386,6 @@ suite('proj0  - Extension Test Suite', () => {
 		const fc = res[0].fileCoverage.get(toUri('src/threeTestProcedures.p').fsPath)
 		const sc = res[0].statementCoverage.get(toUri('src/threeTestProcedures.p').fsPath) ?? []
 		const dc = res[0].declarationCoverage.get(toUri('src/threeTestProcedures.p').fsPath) ?? []
-		log.info('dc=' + JSON.stringify(dc, null, 2))
 		assert.ok(fc, 'fileCoverage')
 		assert.greater(sc.length, 10, 'statementCoverage[].length')
 		assert.equal(dc.length, 6, 'declarationCoverage[].length')

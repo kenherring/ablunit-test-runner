@@ -584,15 +584,7 @@ export function runTestsInFile (filename: string, len = 1, kind: TestRunProfileK
 	}
 
 	return commands.executeCommand('vscode.open', testpath)
-		// .then(() => {
-		// 	log.info('editor-1=' + vscode.window.activeTextEditor?.document.uri.fsPath)
-		// 	if (vscode.window.activeTextEditor?.document.uri.fsPath != testpath.fsPath) {
-		// 		return sleep2(250)
-		// 	}
-		// 	return sleep2(10)
-		// })
 		.then(() => {
-			// log.info('editor-4=' + vscode.window.activeTextEditor?.document.uri.fsPath)
 			assert.equal(vscode.window.activeTextEditor?.document.uri.fsPath, testpath.fsPath, 'vscode.window.activeTextEditor should be open to ' + testpath.fsPath)
 			runTestsDuration = new Duration('runTestsInFile')
 			return commands.executeCommand(command)

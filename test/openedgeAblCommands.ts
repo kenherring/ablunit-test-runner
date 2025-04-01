@@ -103,8 +103,6 @@ export async function rebuildAblProject (waitForRcodeCount = 0) {
 				stillCompiling = false
 			}
 		}
-
-		log.info('stillCompiling=' + stillCompiling + ', compileResults=' + JSON.stringify(compileResults))
 	}
 
 	let rcodeCount = getRcodeCount()
