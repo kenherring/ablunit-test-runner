@@ -621,8 +621,7 @@ export class ABLProfileJson {
 					continue
 				}
 
-				log.error('could not find module to add source map item from ' + item.debugUri + ' (uri=' + this.profileUri.fsPath + ')\n\titem=' + JSON.stringify(item))
-				continue
+				log.warn('could not find module to add source map item from ' + item.debugUri + ' (uri=' + this.profileUri.fsPath + ')\n\titem=' + JSON.stringify(item))
 			}
 		}
 	}
