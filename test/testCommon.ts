@@ -327,7 +327,7 @@ export async function deleteRcode (workspaceFolder?: WorkspaceFolder) {
 		const g = globSync('**/*.r', { cwd: workspaceFolder.uri.fsPath })
 		log.info('deleting ' + g.length + ' rcode files')
 		for (const rcodeFile of g) {
-			log.info('\trm ' + rcodeFile)
+			log.debug('\trm ' + rcodeFile)
 			FileUtils.deleteFile(Uri.joinPath(workspaceFolder.uri, rcodeFile))
 		}
 		const prom = sleep2(100)
@@ -1298,6 +1298,7 @@ export const assert = {
 			assert.fail('no coverage found for ' + file.fsPath)
 			return
 		}
+		log.info('coverage=' + JSON.stringify(coverage, null, 2))
 		for (const line of lines) {
 			log.info('checking line ' + line + ' in ' + file.fsPath)
 			const executions = getLineExecutions(coverage, line)

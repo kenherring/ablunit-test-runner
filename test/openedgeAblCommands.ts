@@ -344,8 +344,9 @@ export async function waitForLangServerReady () {
 			break
 		}
 
-		const prom2 = sleep2(250, 'language server not ready yet...' +  waitTime +
+		const prom2 = sleep2(100, 'language server not ready yet...' +  waitTime +
 			'\n\tlangServerReady=' + langServerReady + ', langServerError=' + langServerError + ', compileSuccess=' + compileSuccess + ', compileFailed=' + compileFailed)
+			.then(() => sleep2(101))
 		await prom2 // await prom so other threads can run
 
 		if (waitTime.elapsed() > maxWait * 1000) {
