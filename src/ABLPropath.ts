@@ -128,7 +128,7 @@ export class PropathParser {
 			if(uri.fsPath.replace(/\\/g, '/').startsWith(e.uri.fsPath.replace(/\\/g, '/') + '/')) {
 				const propathRelativeFile = uri.fsPath.replace(e.uri.fsPath, '').substring(1)
 				const relativeFile = workspace.asRelativePath(uri, false)
-				const rcodeUri = Uri.joinPath(e.buildDirUri, propathRelativeFile.replace(/\.(p|cls)$/, '.r'))
+				const rcodeUri = Uri.joinPath(e.buildDirUri, propathRelativeFile.replace(/\.(p|cls)$/, '').replace('.', '/') + '.r')
 				const xrefUri = Uri.joinPath(e.xrefDirUri, propathRelativeFile + '.xref')
 
 				const fileObj: IABLFile = {
@@ -157,8 +157,8 @@ export class PropathParser {
 		}
 
 		let relativeFile = FileUtils.isRelativePath(file) ? file : workspace.asRelativePath(Uri.file(file), false)
-		if (!relativeFile.endsWith('.cls') && !relativeFile.endsWith('.p') && !relativeFile.endsWith('.w') && !relativeFile.endsWith('.i')) {
-			relativeFile = relativeFile.replace(/\./g, '/') + '.cls'
+		if (!relativeFile.endsWith('.cls') && !relativeFile.endsWith('.p') && !relativeFile.endsWith('.w') && !relativeFile.endsWith('.i') && !relativeFile.endsWith('.r')) {
+			relativeFile = relativeFile + '.cls'
 		}
 
 		const got = this.filemap.get(relativeFile)
@@ -178,7 +178,7 @@ export class PropathParser {
 				const fileObj: IABLFile = {
 					uri: fileInPropathUri,
 					file: file,
-					rcodeUri: Uri.joinPath(e.buildDirUri, propathRelativeFile.replace(/\.(p|cls)$/, '.r')),
+					rcodeUri: Uri.joinPath(e.buildDirUri, propathRelativeFile.replace(/\.(p|cls)$/, '').replace('.', '/') + '.r'),
 					relativeFile: relativeFile,
 					propathEntry: e,
 					propathRelativeFile: propathRelativeFile,

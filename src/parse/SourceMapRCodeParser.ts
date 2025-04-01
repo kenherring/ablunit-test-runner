@@ -95,8 +95,8 @@ export const getSourceMapFromRCode = (propath: PropathParser, uri: Uri) => {
 			const parts = sig.split(',')
 			const definition = parts[0]
 
-			log.warn('SignatureType=' + definition.split(' ')[0])
-			log.info('    ' + (definition.split(' ')[0] as SignatureType))
+			// log.warn('SignatureType=' + definition.split(' ')[0])
+			// log.info('    ' + (definition.split(' ')[0] as SignatureType))
 
 			signatures.push({
 				_raw: sig,
@@ -291,7 +291,7 @@ export const getSourceMapFromRCode = (propath: PropathParser, uri: Uri) => {
 		declarations.push({
 			procLoc: pos,
 			procName: pname ?? '',
-			procNum: debugBytes[childBytes[5]/4 - 1],
+			procNum: debugBytes32[childBytes[5]/4 - 1],
 			lineCount: numlines,
 			lines: lines
 		})

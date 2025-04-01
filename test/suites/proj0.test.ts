@@ -449,6 +449,10 @@ suite('proj0  - Extension Test Suite', () => {
 				assert.tests.count(1)
 				assert.coverageProcessingMethod(toUri('src/test_20.p'), 'rcode')
 			})
+
+		FileUtils.copyFile('openedge-project.json.bk', 'openedge-project.json')
+		await restartLangServer()
+		return await sleep2(250)
 	})
 
 	test('proj0.21 - overloaded method coverage', async () => {
@@ -510,34 +514,27 @@ suite('proj0  - Extension Test Suite', () => {
 		assert.tests.failed(0)
 	})
 
-	test.skip('proj0.23 - destructor is not an overload', async () => {
-		// await runTestsInFile('src/destructorClass.test.cls', 1, TestRunProfileKind.Coverage)
+	test('proj0.23 - destructor is not an overload', async () => {
 		await runTestsInFile('src/destructorClass.test.cls', 1, TestRunProfileKind.Coverage)
 		const res = await getResults()
 
-		const parents = res[0].profileJson.flatMap((p) => p.modules)
-		log.info('90 parents.length=' + parents.length)
+		const parents = res[0].profileJson[1].modules
 		const childModules = parents.flatMap((p) => p.childModules)
-		log.info('91 chdildModules.length=' + childModules.length)
 
-		log.info('100 ' + childModules.map(m => m.EntityName).join(', '))
 		const modules = childModules.filter(m => m.EntityName == 'destructorClass')
-		log.info('101')
 		assert.equal(modules?.length, 2, 'modules.length')
-		log.info('102')
 
-		assert.equal(modules[0].overloaded, false, 'modules[0].overloaded')
-		log.info('103')
-		assert.equal(modules[0].Destructor, false, 'modules[0].Destructor')
-		log.info('104')
-		assert.equal(modules[1].overloaded, false, 'modules[1].overloaded')
-		log.info('105')
-		assert.equal(modules[1].Destructor, true, 'modules[1].Destructor')
-		log.info('106')
+		assert.ok(!modules[0].overloaded, 'modules[0].overloaded')
+		assert.ok(modules[0].Destructor, 'modules[0].Destructor')
+		assert.ok(!modules[1].overloaded, 'modules[1].overloaded')
+		assert.ok(!modules[1].Destructor, 'modules[1].Destructor')
+
 	})
 
-	test.skip('proj 0.24 - search propath for destructorClass.test.r', async () => {
+	test('proj 0.24 - search propath for destructorClass.test.r', async () => {
+		await runTestsInFile('src/destructorClass.test.cls', 1, TestRunProfileKind.Coverage)
 		const res = await getResults()
+
 		const fileinfo1 = res[0].debugLines.propath.search('destructorClass.cls')
 		if (!fileinfo1) {
 			assert.fail('file not found in propath: destructorClass.cls')
@@ -549,24 +546,18 @@ suite('proj0  - Extension Test Suite', () => {
 		}
 		// This should the result, but the compiler has other ideas....
 		// assert.equals(fileinfo2?.rcodeUri.fsPath, toUri('src/destructorClass.test.r').fsPath)
-		assert.equal(fileinfo2?.rcodeUri.fsPath, toUri('src/destructorClass.r').fsPath)
+		assert.equal(fileinfo2?.rcodeUri.fsPath, toUri('src/destructorClass/test.r').fsPath)
 
 		const fileinfo3 = res[0].debugLines.propath.search('destructorClass.r')
 		if (!fileinfo3) {
 			assert.fail('file not found in propath: destructorClass.r')
 		}
 
-		const fileinfo4 = res[0].debugLines.propath.search('destructorClass.test.r')
+		const fileinfo4 = res[0].debugLines.propath.search('destructorClass/test.r')
 		if (!fileinfo4) {
-			assert.fail('file not found in propath: destructorClass.test.r')
-		}
-		assert.equal(fileinfo4?.uri.fsPath, toUri('src/destructorClass.test.cls').fsPath)
-
-		const fileinfo5 = res[0].debugLines.propath.search('destructorClass/test.r')
-		if (!fileinfo5) {
 			assert.fail('file not found in propath: destructorClass/test.r')
 		}
-		assert.equal(fileinfo5?.uri.fsPath, toUri('src/destructorClass.test.cls').fsPath)
+		assert.equal(fileinfo4?.uri.fsPath, toUri('src/destructorClass/test.r').fsPath)
 	})
 
 })

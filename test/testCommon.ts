@@ -365,9 +365,6 @@ function getFileCountByExt (ext: string, workspaceFolder?: WorkspaceFolder | Uri
 	const fileCount = g.length
 	if (fileCount >= 0) {
 		log.info('\'*.r\' files=' + fileCount + ' (path=' + uri.fsPath + ')')
-		for (const file of g) {
-			log.info('\t' + file)
-		}
 		return fileCount
 	}
 	throw new Error('fileCount is not a positive number! fileCount=' + fileCount + '(ext=' + ext + ')')
@@ -587,7 +584,16 @@ export function runTestsInFile (filename: string, len = 1, kind: TestRunProfileK
 	}
 
 	return commands.executeCommand('vscode.open', testpath)
+		// .then(() => {
+		// 	log.info('editor-1=' + vscode.window.activeTextEditor?.document.uri.fsPath)
+		// 	if (vscode.window.activeTextEditor?.document.uri.fsPath != testpath.fsPath) {
+		// 		return sleep2(250)
+		// 	}
+		// 	return sleep2(10)
+		// })
 		.then(() => {
+			// log.info('editor-4=' + vscode.window.activeTextEditor?.document.uri.fsPath)
+			assert.equal(vscode.window.activeTextEditor?.document.uri.fsPath, testpath.fsPath, 'vscode.window.activeTextEditor should be open to ' + testpath.fsPath)
 			runTestsDuration = new Duration('runTestsInFile')
 			return commands.executeCommand(command)
 		})

@@ -82,14 +82,14 @@ export function parseRunProfiles (workspaceFolders: WorkspaceFolder[], wsFilenam
 		} catch (e: unknown) {
 			if (e instanceof FileSystemError) {
 				if (e.name === 'FileNotFound') {
-					log.info('no .vscode/' + wsFilename + ' file found.  using default profile (e=' + e.name + ')')
+					log.debug('no .vscode/' + wsFilename + ' file found.  using default profile (e=' + e.name + ')')
 				}else {
 					log.notificationWarning('Failed to import .vscode/ablunit-test-profile.json.  Attempting to use default profile...\n[' + e.code + ']: ' + e.message)
 				}
 			} else if (e instanceof Error) {
 				// @ts-expect-error ThisIsSafeForTesting
 				if (e.code == 'ENOENT') {
-					log.info('no .vscode/' + wsFilename + ' file found.  using default profile (e=' + e + ')')
+					log.debug('no .vscode/' + wsFilename + ' file found.  using default profile (e=' + e + ')')
 				} else {
 					log.notificationWarning('Failed to import .vscode/ablunit-test-profile.json!  Attempting to use default profile...\n(e=' + e + ')')
 				}

@@ -255,7 +255,6 @@ class LineSummary { // Section 6}
 
 	constructor (private readonly sourceName: string, public readonly LineNo: number, public Executable: boolean, public ExecCount: number, public sourcePath: string) {
 	}
-
 }
 
 interface IUserData { // Section 9
@@ -359,7 +358,6 @@ export class ABLProfileJson {
 			}
 			const moduleName = test[2]
 
-
 			let sourceName = ''
 			let parentName: string | undefined
 			const destructor: boolean = moduleName.startsWith('~')
@@ -383,6 +381,9 @@ export class ABLProfileJson {
 				if (split[3]) {
 					log.warn('module has fourth section: ' + split[3] + ' (module.name=' + sourceName + ', uri=' + this.profileUri.fsPath + ')')
 				}
+			}
+			if (entityName.startsWith('~')) {
+				entityName = entityName.substring(1)
 			}
 
 			if (this.isIgnored(sourceName)) {
@@ -496,8 +497,12 @@ export class ABLProfileJson {
 
 	async addSourceMap () {
 		for (const mod of this.modules) {
-			log.info('[addSourceMap] mod.EntityName=' + mod.EntityName)
-			const map = await this.debugLines.getSourceMap(mod.SourceUri)
+			const map = await this.debugLines.getSourceMap(mod.SourceUri).then((sourceMap) => {
+				return sourceMap
+			}, (e: unknown) => {
+				log.error('could not get source map for module ' + mod.ModuleName + ' in uri=' + this.profileUri.fsPath + ' (ModuleID=' + mod.ModuleID + ') - ' + e)
+				throw e
+			})
 			log.info('map.items=' + JSON.stringify(map?.items))
 			if (!map) {
 				log.warn('could not parse source map for ' + mod.SourceUri.fsPath)
@@ -507,9 +512,6 @@ export class ABLProfileJson {
 
 			this.hasSourceMap = true
 			for (const item of map.items) {
-
-				log.info('item.procName=' + item.procName + ' procNum=' + item.procNum)
-
 				if (item.procName == '') {
 					// parent module
 					const l = mod.lines.find(l => l.LineNo == item.debugLine)
@@ -535,7 +537,9 @@ export class ABLProfileJson {
 				}
 
 				// child module
-				let children = mod.childModules.filter(m => m.EntityName == item.procName && !m.Destructor) // find child modules with the same procName and not a destructor
+				const signature = this.getSignatureFromMap(map, item.procName, mod.ModuleName.startsWith('~') ?? false, item)
+				const destructor = signature?.type == SignatureType.Destructor
+				let children = mod.childModules.filter(m => m.EntityName == item.procName && m.Destructor == destructor)
 				log.info('children.length=' + children.length)
 
 				if (children.length > 1) {
@@ -558,8 +562,8 @@ export class ABLProfileJson {
 						SourceName: mod.SourceName,
 						ParentModuleID: mod.ModuleID,
 						ParentName: mod.ParentName,
-						Destructor: item.procName.startsWith('~'),
-						signature: this.getSignatureFromMap(map, item.procName, item.procName.startsWith('~'), item),
+						Destructor: mod.ModuleName.startsWith('~'),
+						signature: signature,
 						CrcValue: map.crc ?? 0,
 						ModuleLineNum: item.debugLine, // not exactly accurate, but as close as we're going to get
 						UnknownString1: '',
@@ -602,13 +606,13 @@ export class ABLProfileJson {
 							SourceName: mod.SourceName,
 							ParentModuleID: mod.ModuleID,
 							ParentName: mod.ParentName,
-							Destructor: item.procName.startsWith('~'),
-							signature: this.getSignatureFromMap(map, item.procName, item.procName.startsWith('~'), item),
+							Destructor: mod.ModuleName.startsWith('~'),
+							signature: this.getSignatureFromMap(map, item.procName, mod.ModuleName.startsWith('~'), item),
 							CrcValue: map.crc ?? 0,
 							ModuleLineNum: item.debugLine, // not exactly accurate, but as close as we're going to get
 							UnknownString1: '',
 							procNum: item.procNum,
-							overloaded: !item.procName.startsWith('~'),
+							overloaded: !mod.ModuleName.startsWith('~'),
 							overloadSequence: maxSeq,
 							executableLines: 1,
 							executedLines: 0,
@@ -1293,13 +1297,23 @@ export function getDeclarationCoverage (module: IModule, onlyUri: Uri) {
 			}
 		}
 
+		if (mod.ModuleName.startsWith('~') && !mod.Destructor) {
+			log.error('Unexpected module name starting with "~" without a destructor for module ' + mod.ModuleName + ' (uri=' + onlyUri.fsPath + '). This usually indicates a parsing error or unexpected module type.')
+			throw new Error('Unexpected module name starting with "~" without a destructor for module ' + mod.ModuleName + ' (uri=' + onlyUri.fsPath + '). This usually indicates a parsing error or unexpected module type.')
+		}
+
 		const range = getModuleRange(mod, onlyUri)
 		log.info('range=' + JSON.stringify(range))
 		if (range) {
 			let name = mod.EntityName ?? '<main block>'
-			if (mod.Destructor) {
+			if (mod.signature?.type == SignatureType.Constructor) {
+				name = 'constructor ' + name
+			}
+			if (mod.signature?.type == SignatureType.Destructor) {
 				name = 'destructor ' + name
-			} else if (mod.overloaded) {
+			}
+
+			if (mod.overloaded) {
 				const paramTypesShort = mod.signature?.parameters.map((p) => getShortTypeText(p.type)) ?? []
 				if (paramTypesShort.length > 0) {
 					name = name + '(' + paramTypesShort + ')'
@@ -1307,10 +1321,7 @@ export function getDeclarationCoverage (module: IModule, onlyUri: Uri) {
 					log.warn('Unable to determine signature for overloaded module ' + mod.ModuleName + ' (uri=' + onlyUri.fsPath + ')')
 					// throw new Error('Unable to determine signature for overloaded module ' + mod.ModuleName + ' (uri=' + onlyUri.fsPath + ')')
 				}
-			} else {
-				log.debug('mod NOT overloaded name=' + name)
 			}
-
 
 			if (name.startsWith('propGet_')) {
 				name = name.substring(8) + ' (get)'
