@@ -52,7 +52,13 @@ export async function parseCallstack (debugLines: ABLDebugLines, callstackRaw: s
 
 		let debugUri: Uri | undefined = Uri.file(debugFile)
 		if (!FileUtils.doesFileExist(debugUri)) {
-			const fileinfo = debugLines.propath.search(debugFile)
+			let fileinfo = debugLines.propath.search(debugFile)
+			if (!fileinfo && debugFile.endsWith('.r')) {
+				fileinfo = debugLines.propath.search(debugFile.substring(0, debugFile.length - 2) + '.p')
+				if (!fileinfo) {
+					fileinfo = debugLines.propath.search(debugFile.substring(0, debugFile.length - 2) + '.cls')
+				}
+			}
 			if (fileinfo) {
 				debugUri = fileinfo.uri
 			} else {

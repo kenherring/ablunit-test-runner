@@ -1,12 +1,11 @@
 import {
-	CancellationError, CancellationToken, CancellationTokenSource, ConfigurationChangeEvent, DeclarationCoverage, ExtensionContext,
+	CancellationError, CancellationToken, CancellationTokenSource, ConfigurationChangeEvent, ExtensionContext,
 	ExtensionMode,
 	FileCoverage,
 	FileCoverageDetail,
 	FileCreateEvent,
 	LogLevel,
 	Position, Range, RelativePattern, Selection,
-	StatementCoverage,
 	TestController, TestItem, TestItemCollection, TestMessage,
 	TestRun,
 	TestRunProfileKind, TestRunRequest,
@@ -193,18 +192,6 @@ export function activate (context: ExtensionContext) {
 			ret.push(...dc)
 		}
 		log.info('ret.length=' + ret.length)
-		for (const r of ret) {
-			if (r instanceof StatementCoverage) {
-				const first = r
-				log.info('s loc=' + (first.location instanceof Position ? first.location.line : first.location.start.line) + ' ' + JSON.stringify(r))
-			} else if (r instanceof DeclarationCoverage) {
-				const first = r
-				log.info('d loc=' + (first.location instanceof Position ? first.location.line : first.location.start.line) + ' ' + JSON.stringify(r))
-			} else {
-				log.error('not FileCoverageDetail! ' + JSON.stringify(r))
-				throw new Error('not FileCoverageDetail! ' + JSON.stringify(r))
-			}
-		}
 		return Promise.resolve(ret)
 	}
 
@@ -228,18 +215,6 @@ export function activate (context: ExtensionContext) {
 			ret.push(...dc)
 		}
 		log.info('ret.length=' + ret.length)
-		for (const r of ret) {
-			if (r instanceof StatementCoverage) {
-				const first = r
-				log.info('s loc=' + (first.location instanceof Position ? first.location.line : first.location.start.line))
-			} else if (r instanceof DeclarationCoverage) {
-				const first = r
-				log.info('d loc=' + (first.location instanceof Position ? first.location.line : first.location.start.line))
-			} else {
-				log.error('not FileCoverageDetail! ' + JSON.stringify(r))
-				throw new Error('not FileCoverageDetail! ' + JSON.stringify(r))
-			}
-		}
 		return Promise.resolve(ret)
 	}
 
@@ -384,12 +359,11 @@ export function activate (context: ExtensionContext) {
 
 			const data = resultData.get(run) ?? []
 			log.info('setting recentResults (data.length=' + data.length + ')')
-			log.debug('setting recentResults (data.length=' + data.length + ')')
 			log.debug('request.profile.kind=' + request.profile?.kind)
 			recentResults = data
 
 			if (request.profile?.kind === TestRunProfileKind.Coverage) {
-				log.info('adding coverage results to test run')
+				log.info('adding coverage results to test run (recentResults.length=' + recentResults.length + ')')
 				for (let i=0; i < recentResults.length; i++) {
 					const res = recentResults[i]
 					if (res.fileCoverage.size === 0) {

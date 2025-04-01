@@ -5,11 +5,10 @@ import { getSourceMapFromRCode } from 'parse/SourceMapRCodeParser'
 import { getSourceMapFromXref } from 'parse/SourceMapXrefParser'
 import { Uri } from 'vscode'
 
-
 export class ABLDebugLines {
 	private readonly maps = new Map<string, SourceMap>()
 	private readonly processingMethodMap = new Map<string, 'rcode' | 'parse' | 'none'>()
-	propath: PropathParser
+	public propath: PropathParser
 
 	constructor (propath?: PropathParser) {
 		if (propath) {

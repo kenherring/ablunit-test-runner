@@ -108,6 +108,10 @@ export const getSourceMapFromXref = (propath: PropathParser, debugSource: string
 			m = {
 				path: sourcePath,
 				sourceUri: debugSourceUri,
+				includes: [],
+				declarations: [],
+				sources: [],
+				signatures: [],
 				items: [],
 			}
 			map.push(m)

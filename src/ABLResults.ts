@@ -503,6 +503,9 @@ export class ABLResults implements Disposable {
 				// TODO account for includes and then restore the error message
 				// throw new Error('could not find test item for ' + fileinfo.uri.fsPath)
 				log.warn('Could not find test item for ' + profileDescription.fsPath)
+				for (const t of this.allTests) {
+					log.warn('    test.id=' + t.id + ' test.parent=' + t.parent?.id)
+				}
 				return undefined
 			}
 			return testItem
@@ -518,23 +521,29 @@ export class ABLResults implements Disposable {
 			return undefined
 		}
 		const testName = profileDescription.split('|')[1].split(' ')[1]
+		if (testName == 'TEST_ROOT') {
+			return undefined
+		}
 
 		let ending = testName
-		if (parentName != 'TEST_ROOT') {
-			ending = parentName + '#' + testName
-		}
 		ending = ending.replace(/\\/g, '/')
 
-		const items = this.allTests.filter((t) => t.id.replace(/\\/g, '/').endsWith(ending))
+		const items = this.allTests.filter((t) => t.id.replace(/\\/g, '/').endsWith(parentName + '#' + ending))
 		if (items.length == 0) {
 			// TODO account for includes and then restore the error message
 			// log.error('Could not find test item for "' + parentName + ' ' + testName + '"')
 			// throw new Error('Could not find test item for "' + parentName + ' ' + testName + '"')
 			log.warn('Could not find test item for "' + parentName + ' ' + testName + '"')
+			for (const t of this.allTests) {
+				log.warn('    test.id=' + t.id + ' test.parent=' + t.parent?.id)
+			}
 			return undefined
 		}
 		if (items.length > 1) {
 			log.error('found multiple test items for "' + parentName + ' ' + testName + '"')
+			for (const i of items) {
+				log.error('    item.id=' + i.id)
+			}
 			throw new Error('found multiple test items for "' + parentName + ' ' + testName + '"')
 		}
 		return items[0]
@@ -588,12 +597,10 @@ export class ABLResults implements Disposable {
 		let i = 0
 		for (const profJson of responses) {
 			i++
-			log.debug('assigning profiler data (' + i + '/' + dataFiles.length + ')')
-			this.assignProfileResults(profJson)
-
-			const message = 'parsing profiler data... (' + i + '/' + dataFiles.length + ', duration=' +  parseTime.elapsed() + ')'
+			const message = 'assigning profiler data... (' + i + '/' + dataFiles.length + ', duration=' +  parseTime.elapsed() + ')'
 			log.info(message)
 			options.appendOutput('\r' + message)
+			this.assignProfileResults(profJson)
 		}
 		options.appendOutput('\r\n')
 	}
@@ -719,6 +726,14 @@ export class ABLResults implements Disposable {
 				fc.includesTests = fcOrig?.includesTests ?? []
 				if (!fc.includesTests.find((i) => i.id == item.id)) {
 					fc.includesTests.push(item)
+				}
+			}
+
+			const mainBlock = fdc.find((d) => d.name === '<main block>')
+			if (mainBlock && fc.declarationCoverage) {
+				fc.declarationCoverage.total = fc.declarationCoverage?.total - 1
+				if (mainBlock.executed) {
+					fc.declarationCoverage.covered = fc.declarationCoverage?.covered - 1
 				}
 			}
 

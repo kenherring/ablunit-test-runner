@@ -5,6 +5,7 @@ import { TimeoutError } from 'Errors'
 import { restartLangServer } from '../openedgeAblCommands'
 import * as glob from 'glob'
 import * as vscode from 'vscode'
+import { SignatureType } from 'parse/SourceMapParser'
 
 function createTempFile () {
 	const tempFile = toUri('UNIT_TEST.tmp')
@@ -388,7 +389,7 @@ suite('proj0  - Extension Test Suite', () => {
 		const dc = res[0].declarationCoverage.get(toUri('src/threeTestProcedures.p').fsPath) ?? []
 		assert.ok(fc, 'fileCoverage')
 		assert.greater(sc.length, 10, 'statementCoverage[].length')
-		assert.equal(dc.length, 5, 'declarationCoverage[].length')
+		assert.equal(dc.length, 6, 'declarationCoverage[].length')
 
 		assert.ok(fc?.branchCoverage == undefined, 'branchCoverage')
 		assert.equal(fc?.declarationCoverage?.total, 5, 'fc.declarationCoverage.total')
@@ -408,7 +409,7 @@ suite('proj0  - Extension Test Suite', () => {
 
 		let cnt = 0
 		res[0].declarationCoverage.forEach((dc, path) => {
-			assert.equal(dc.length, 4, 'dc.length (path=' + path + ')')
+			assert.equal(dc.length, 5, 'dc.length (path=' + path + ')')
 			cnt++
 		})
 		assert.equal(cnt, 1, 'declarationCoverage count')
@@ -448,6 +449,10 @@ suite('proj0  - Extension Test Suite', () => {
 				assert.tests.count(1)
 				assert.coverageProcessingMethod(toUri('src/test_20.p'), 'rcode')
 			})
+
+		FileUtils.copyFile('openedge-project.json.bk', 'openedge-project.json')
+		await restartLangServer()
+		return await sleep2(250)
 	})
 
 	test('proj0.21 - overloaded method coverage', async () => {
@@ -507,6 +512,68 @@ suite('proj0  - Extension Test Suite', () => {
 		assert.tests.count(2)
 		assert.tests.passed(2)
 		assert.tests.failed(0)
+	})
+
+	test('proj0.23 - destructor is not an overload', async () => {
+		await runTestsInFile('src/destructorClass.test.cls', 1, TestRunProfileKind.Coverage)
+		const res = await getResults()
+
+		const parents = res[0].profileJson[1].modules
+		const childModules = parents.flatMap((p) => p.childModules)
+
+		const modules = childModules.filter(m => m.EntityName == 'destructorClass')
+		assert.equal(modules?.length, 2, 'modules.length')
+
+		assert.ok(modules[0].overloaded, 'modules[0].overloaded')
+		assert.ok(modules[0].Destructor, 'modules[0].Destructor')
+		assert.ok(modules[1].overloaded, 'modules[1].overloaded')
+		assert.ok(!modules[1].Destructor, 'modules[1].Destructor')
+
+	})
+
+	test('proj 0.24 - search propath for destructorClass.test.r', async () => {
+		await runTestsInFile('src/destructorClass.test.cls', 1, TestRunProfileKind.Coverage)
+		const res = await getResults()
+
+		const fileinfo1 = res[0].debugLines.propath.search('destructorClass.cls')
+		if (!fileinfo1) {
+			assert.fail('file not found in propath: destructorClass.cls')
+		}
+
+		const fileinfo2 = res[0].debugLines.propath.search('destructorClass.test.cls')
+		if (!fileinfo2) {
+			assert.fail('file not found in propath: destructorClass.test.cls')
+		}
+		// This should the result, but the compiler has other ideas....
+		// assert.equals(fileinfo2?.rcodeUri.fsPath, toUri('src/destructorClass.test.r').fsPath)
+		assert.equal(fileinfo2?.rcodeUri.fsPath, toUri('src/destructorClass/test.r').fsPath)
+
+		const fileinfo3 = res[0].debugLines.propath.search('destructorClass.r')
+		if (!fileinfo3) {
+			assert.fail('file not found in propath: destructorClass.r')
+		}
+
+		const fileinfo4 = res[0].debugLines.propath.search('destructorClass/test.r')
+		if (!fileinfo4) {
+			assert.fail('file not found in propath: destructorClass/test.r')
+		}
+		assert.equal(fileinfo4?.uri.fsPath, toUri('src/destructorClass/test.r').fsPath)
+	})
+
+	test('proj0.25 - no duplicate destructor', async () => {
+		await runTestsInFile('src/dirA/test_25.cls', 1, TestRunProfileKind.Coverage)
+		const res = await getResults()
+
+		const data = res[0].profileJson[3]
+		let destructorCount = 0
+		for (const m of data.modules) {
+			for (const c of m.childModules) {
+				if (c.signature?.type == SignatureType.Destructor) {
+					destructorCount++
+				}
+			}
+		}
+		assert.equal(destructorCount, 1, 'expected exactly 1 destructor found in the module tree (found ' + destructorCount + ')')
 	})
 
 })

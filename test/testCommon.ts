@@ -327,7 +327,7 @@ export async function deleteRcode (workspaceFolder?: WorkspaceFolder) {
 		const g = globSync('**/*.r', { cwd: workspaceFolder.uri.fsPath })
 		log.info('deleting ' + g.length + ' rcode files')
 		for (const rcodeFile of g) {
-			log.info('\trm ' + rcodeFile)
+			log.debug('\trm ' + rcodeFile)
 			FileUtils.deleteFile(Uri.joinPath(workspaceFolder.uri, rcodeFile))
 		}
 		const prom = sleep2(100)
@@ -365,9 +365,6 @@ function getFileCountByExt (ext: string, workspaceFolder?: WorkspaceFolder | Uri
 	const fileCount = g.length
 	if (fileCount >= 0) {
 		log.info('\'*.r\' files=' + fileCount + ' (path=' + uri.fsPath + ')')
-		for (const file of g) {
-			log.info('\t' + file)
-		}
 		return fileCount
 	}
 	throw new Error('fileCount is not a positive number! fileCount=' + fileCount + '(ext=' + ext + ')')
@@ -588,6 +585,7 @@ export function runTestsInFile (filename: string, len = 1, kind: TestRunProfileK
 
 	return commands.executeCommand('vscode.open', testpath)
 		.then(() => {
+			assert.equal(vscode.window.activeTextEditor?.document.uri.fsPath, testpath.fsPath, 'vscode.window.activeTextEditor should be open to ' + testpath.fsPath)
 			runTestsDuration = new Duration('runTestsInFile')
 			return commands.executeCommand(command)
 		})
@@ -1300,6 +1298,7 @@ export const assert = {
 			assert.fail('no coverage found for ' + file.fsPath)
 			return
 		}
+		log.info('coverage=' + JSON.stringify(coverage, null, 2))
 		for (const line of lines) {
 			log.info('checking line ' + line + ' in ' + file.fsPath)
 			const executions = getLineExecutions(coverage, line)

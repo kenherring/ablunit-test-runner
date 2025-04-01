@@ -1,0 +1,7 @@
+{
+    "ablunit.files.exclude": [
+        "**/.dbg/**",
+    ],
+    "files.trimFinalNewlines": false,
+    "files.insertFinalNewline": false,
+}
