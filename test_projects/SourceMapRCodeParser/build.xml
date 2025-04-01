@@ -10,8 +10,10 @@
   <target name="compile-and-test">
     <antcall target="compile">
       <param name="minSize" value="false" />
+      <param name="testdir" value="test_*" />
     </antcall>
     <antcall target="compile">
+      <param name="minSize" value="true" />
       <param name="testdir" value="test_0" />
     </antcall>
 
@@ -40,8 +42,6 @@
 
   <target name="compile">
     <echo>Compiling...</echo>
-    <property name="testdir" value="test_*" />
-    <property name="minSize" value="true" />
     <echo>minSize=${minSize}</echo>
 
     <PCTCompile forceCompile="true" listing="false" keepXref="true" xrefDir="." debugListing="false" minSize="${minSize}" flattenDebugListing="false">

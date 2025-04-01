@@ -22,10 +22,8 @@ export class ABLProfile {
 		if (!debugLines) {
 			// unit testing setup
 			debugLines = new ABLDebugLines()
-			if (propath) {
+			if (!debugLines.propath && propath) {
 				debugLines.propath = propath
-			} else {
-				throw new Error('propath not set')
 			}
 		}
 
@@ -360,7 +358,7 @@ export class ABLProfileJson {
 
 			let sourceName = ''
 			let parentName: string | undefined
-			const destructor: boolean = moduleName.startsWith('~')
+			const destructor = moduleName.startsWith('~')
 			const split = moduleName.split(' ')
 
 			if (split.length >= 4) {
@@ -387,14 +385,16 @@ export class ABLProfileJson {
 			}
 
 			if (this.isIgnored(sourceName)) {
-				log.debug('ignoring module moduleId=' + test[1] + ', sourceName=' + sourceName + ', entityName=' + entityName)
+				if (!sourceName.startsWith('OpenEdge.')) {
+					log.debug('ignoring module moduleId=' + test[1] + ', sourceName=' + sourceName + ', entityName=' + entityName)
+				}
 				this.ignoredModules.push(Number(test[1]))
 				continue
 			}
 
 			const fileinfo = this.debugLines.propath.search(sourceName)
 			if (!fileinfo?.uri) {
-				log.debug('could not find source file in propath for ' + sourceName + ' (uri=' + this.profileUri.fsPath + ')')
+				log.warn('could not find source file in propath for ' + sourceName + ' (uri=' + this.profileUri.fsPath + ')')
 				continue
 			}
 
@@ -478,7 +478,7 @@ export class ABLProfileJson {
 			if (!map) {
 				log.warn('could not parse source map for ' + mod.SourceUri.fsPath)
 				// could not parse source map :(
-				return
+				continue
 			}
 
 			this.hasSourceMap = true
@@ -509,8 +509,7 @@ export class ABLProfileJson {
 
 				// child module
 				const signature = this.getSignatureFromMap(map, item.procName, mod.ModuleName.startsWith('~') ?? false, item)
-				const destructor = signature?.type == SignatureType.Destructor
-				let children = mod.childModules.filter(m => m.EntityName == item.procName && m.Destructor == destructor)
+				let children = mod.childModules.filter(m => m.EntityName == item.procName)
 
 				if (children.length > 1) {
 					let seq = 1
@@ -531,7 +530,7 @@ export class ABLProfileJson {
 						SourceName: mod.SourceName,
 						ParentModuleID: mod.ModuleID,
 						ParentName: mod.ParentName,
-						Destructor: mod.ModuleName.startsWith('~'),
+						Destructor: signature?.type == SignatureType.Destructor,
 						signature: signature,
 						CrcValue: map.crc ?? 0,
 						ModuleLineNum: item.debugLine, // not exactly accurate, but as close as we're going to get
@@ -563,6 +562,7 @@ export class ABLProfileJson {
 						}
 					}
 					if (!child) {
+						// add child module
 						const modNum = children[0].ModuleID
 						const maxSeq = Math.max(...children.map(c => c.overloadSequence ?? 0)) + 1
 						mod.childModules.push({
@@ -621,7 +621,8 @@ export class ABLProfileJson {
 					continue
 				}
 
-				throw new Error('could not find module to add source map item from ' + item.debugUri + ' (uri=' + this.profileUri.fsPath + ')\n\titem=' + JSON.stringify(item))
+				log.error('could not find module to add source map item from ' + item.debugUri + ' (uri=' + this.profileUri.fsPath + ')\n\titem=' + JSON.stringify(item))
+				continue
 			}
 		}
 	}
@@ -1279,9 +1280,11 @@ export function getDeclarationCoverage (module: IModule, onlyUri: Uri) {
 				const paramTypesShort = mod.signature?.parameters.map((p) => getShortTypeText(p.type)) ?? []
 				if (paramTypesShort.length > 0) {
 					name = name + '(' + paramTypesShort + ')'
+				} else if (mod.signature?.parameters.length == 0) {
+					name = name + '()'
 				} else {
-					log.warn('Unable to determine signature for overloaded module ' + mod.ModuleName + ' (uri=' + onlyUri.fsPath + ')')
-					// throw new Error('Unable to determine signature for overloaded module ' + mod.ModuleName + ' (uri=' + onlyUri.fsPath + ')')
+					log.warn('Unable to determine signature for overloaded module ' + mod.ModuleName + ' (uri=' + onlyUri.fsPath + ', lines=' + mod.lines.map(l => l.LineNo).join(',') + ')')
+					// throw new Error('Unable to determine signature for overloaded module ' + mod.ModuleName + ' (uri=' + onlyUri.fsPath + ', lines=' + mod.lines.map(l => l.LineNo).join(',') + ')')
 				}
 			}
 

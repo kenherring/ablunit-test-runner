@@ -359,12 +359,11 @@ export function activate (context: ExtensionContext) {
 
 			const data = resultData.get(run) ?? []
 			log.info('setting recentResults (data.length=' + data.length + ')')
-			log.debug('setting recentResults (data.length=' + data.length + ')')
 			log.debug('request.profile.kind=' + request.profile?.kind)
 			recentResults = data
 
 			if (request.profile?.kind === TestRunProfileKind.Coverage) {
-				log.info('adding coverage results to test run')
+				log.info('adding coverage results to test run (recentResults.length=' + recentResults.length + ')')
 				for (let i=0; i < recentResults.length; i++) {
 					const res = recentResults[i]
 					if (res.fileCoverage.size === 0) {

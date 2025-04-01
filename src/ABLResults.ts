@@ -503,6 +503,9 @@ export class ABLResults implements Disposable {
 				// TODO account for includes and then restore the error message
 				// throw new Error('could not find test item for ' + fileinfo.uri.fsPath)
 				log.warn('Could not find test item for ' + profileDescription.fsPath)
+				for (const t of this.allTests) {
+					log.warn('    test.id=' + t.id + ' test.parent=' + t.parent?.id)
+				}
 				return undefined
 			}
 			return testItem
@@ -525,12 +528,15 @@ export class ABLResults implements Disposable {
 		let ending = testName
 		ending = ending.replace(/\\/g, '/')
 
-		const items = this.allTests.filter((t) => t.id.endsWith(parentName + '#' + ending))
+		const items = this.allTests.filter((t) => t.id.replace(/\\/g, '/').endsWith(parentName + '#' + ending))
 		if (items.length == 0) {
 			// TODO account for includes and then restore the error message
 			// log.error('Could not find test item for "' + parentName + ' ' + testName + '"')
 			// throw new Error('Could not find test item for "' + parentName + ' ' + testName + '"')
 			log.warn('Could not find test item for "' + parentName + ' ' + testName + '"')
+			for (const t of this.allTests) {
+				log.warn('    test.id=' + t.id + ' test.parent=' + t.parent?.id)
+			}
 			return undefined
 		}
 		if (items.length > 1) {
@@ -591,12 +597,10 @@ export class ABLResults implements Disposable {
 		let i = 0
 		for (const profJson of responses) {
 			i++
-			log.debug('assigning profiler data (' + i + '/' + dataFiles.length + ')')
-			this.assignProfileResults(profJson)
-
-			const message = 'parsing profiler data... (' + i + '/' + dataFiles.length + ', duration=' +  parseTime.elapsed() + ')'
+			const message = 'assigning profiler data... (' + i + '/' + dataFiles.length + ', duration=' +  parseTime.elapsed() + ')'
 			log.info(message)
 			options.appendOutput('\r' + message)
+			this.assignProfileResults(profJson)
 		}
 		options.appendOutput('\r\n')
 	}

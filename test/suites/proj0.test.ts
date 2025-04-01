@@ -5,6 +5,7 @@ import { TimeoutError } from 'Errors'
 import { restartLangServer } from '../openedgeAblCommands'
 import * as glob from 'glob'
 import * as vscode from 'vscode'
+import { SignatureType } from 'parse/SourceMapParser'
 
 function createTempFile () {
 	const tempFile = toUri('UNIT_TEST.tmp')
@@ -523,9 +524,9 @@ suite('proj0  - Extension Test Suite', () => {
 		const modules = childModules.filter(m => m.EntityName == 'destructorClass')
 		assert.equal(modules?.length, 2, 'modules.length')
 
-		assert.ok(!modules[0].overloaded, 'modules[0].overloaded')
+		assert.ok(modules[0].overloaded, 'modules[0].overloaded')
 		assert.ok(modules[0].Destructor, 'modules[0].Destructor')
-		assert.ok(!modules[1].overloaded, 'modules[1].overloaded')
+		assert.ok(modules[1].overloaded, 'modules[1].overloaded')
 		assert.ok(!modules[1].Destructor, 'modules[1].Destructor')
 
 	})
@@ -557,6 +558,22 @@ suite('proj0  - Extension Test Suite', () => {
 			assert.fail('file not found in propath: destructorClass/test.r')
 		}
 		assert.equal(fileinfo4?.uri.fsPath, toUri('src/destructorClass/test.r').fsPath)
+	})
+
+	test('proj0.25 - no duplicate destructor', async () => {
+		await runTestsInFile('src/dirA/test_25.cls', 1, TestRunProfileKind.Coverage)
+		const res = await getResults()
+
+		const data = res[0].profileJson[3]
+		let destructorCount = 0
+		for (const m of data.modules) {
+			for (const c of m.childModules) {
+				if (c.signature?.type == SignatureType.Destructor) {
+					destructorCount++
+				}
+			}
+		}
+		assert.equal(destructorCount, 1, 'expected exactly 1 destructor found in the module tree (found ' + destructorCount + ')')
 	})
 
 })
