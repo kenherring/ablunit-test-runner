@@ -26,6 +26,9 @@ initialize () {
     if [ "$((PATCH % 2))" = "1" ]; then
         echo "version patch component is odd. packaging as prerelease. (PATCH=$PATCH)"
         PRERELEASE=true
+    else
+        echo "version patch component is even. packaging as stable release. (PATCH=$PATCH)"
+        PRERELEASE=false
     fi
     echo "PRERELEASE=$PRERELEASE"
 
