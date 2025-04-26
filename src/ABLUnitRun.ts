@@ -409,13 +409,14 @@ function setCurrentTestItem (ablunitStatus: IABLUnitStatus) {
 		}
 		if (t) {
 			currentTestItems.unshift(t)
+			return
 		}
-		if (!t) {
-			log.error('cannot find test item for \'' + JSON.stringify(ablunitStatus.entityName) + '\'.  available tests (count=' + allTests.length + '):')
-			for (const test of allTests) {
-				log.info(' - ' + test.label + ' ' + test.uri?.fsPath)
-			}
+
+		let msg = 'cannot find test item for \'' + JSON.stringify(ablunitStatus.entityName) + '\'.  available tests (count=' + allTests.length + '):'
+		for (const test of allTests) {
+			msg += '\n - ' + test.label + ' ' + test.uri?.fsPath
 		}
+		log.error(msg)
 	} else {
 		currentTestItems.shift()
 	}

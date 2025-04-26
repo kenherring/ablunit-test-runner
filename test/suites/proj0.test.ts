@@ -454,7 +454,6 @@ suite('proj0  - Extension Test Suite', () => {
 		await deleteRcode()
 		await restartLangServer()
 		await awaitRCode(getWorkspaceFolders()[0], 24)
-		// return sleep2(250)
 	})
 
 	test('proj0.21 - overloaded method coverage', async () => {

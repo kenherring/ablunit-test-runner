@@ -1289,7 +1289,6 @@ export const assert = {
 			return
 		}
 
-		log.info('recentResults.length=' + recentResults.length)
 		const coverage = recentResults[recentResults.length - 1].statementCoverage.get(file.fsPath)
 		if (!coverage) {
 			assert.fail('no coverage found for ' + file.fsPath)

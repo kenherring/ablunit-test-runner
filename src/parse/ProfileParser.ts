@@ -346,8 +346,7 @@ export class ABLProfileJson {
 		this.modules = []
 		const childModules: IModule[] = []
 		for(const element of lines) {
-			const test = moduleRE.exec(element)
-						?? moduleRE2.exec(element)
+			const test = moduleRE.exec(element) ?? moduleRE2.exec(element)
 
 			if (!test?.[2]) {
 				throw new Error('Unable to parse module name - name is empty (uri=' + this.profileUri.fsPath + ')')
