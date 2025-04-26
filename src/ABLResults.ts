@@ -171,9 +171,7 @@ export class ABLResults implements Disposable {
 		const existingTestObj = this.testQueue.find((t: ITestObj) => t.test === testRel)
 		if (testCase && existingTestObj) {
 			if(testObj.cases) {
-				if (!existingTestObj.cases) {
-					existingTestObj.cases = []
-				}
+				existingTestObj.cases = existingTestObj.cases ?? []
 				existingTestObj.cases.push(testCase)
 			}
 			return
@@ -375,10 +373,7 @@ export class ABLResults implements Disposable {
 	parseChildSuites (item: TestItem, s: ITestSuite[], options: TestRun) {
 		for (const t of s) {
 			// find matching child TestItem
-			let child = item.children.get(t.name!)
-			if (!child) {
-				child = item.children.get(t.classname!)
-			}
+			const child = item.children.get(t.name!) ?? item.children.get(t.classname!)
 
 			// parse results for the child TestItem, if it exists
 			if (child) {
@@ -448,15 +443,10 @@ export class ABLResults implements Disposable {
 						const fLoc = new Location(f.uri, new Range(f.position.line, f.position.character, f.position.line + 1, f.position.character))
 						// log.error(failure.message, {testRun: options, location: fLoc, testItem: item})
 						// options.appendOutput(failure.message + '\n')
-						if (!loc) {
-							loc = fLoc
-						}
+						loc = loc ?? fLoc
 					}
 				}
-				let testMessage = this.getDiffMessage(failure)
-				if (!testMessage) {
-					testMessage = new TestMessage(getPromsgText(failure.message))
-				}
+				const testMessage = this.getDiffMessage(failure) ?? new TestMessage(getPromsgText(failure.message))
 				testMessage.stackTrace = failure.stackTrace
 				// testMessage.location = loc
 
@@ -495,10 +485,8 @@ export class ABLResults implements Disposable {
 
 		// ----- Uri ----- //
 		if (profileDescription instanceof Uri) {
-			let testItem = this.allTests.find((t) => t.id === profileDescription.fsPath)
-			if (!testItem) {
-				testItem = this.allTests.map((t) => t.parent).find((t) => t?.id === profileDescription.fsPath)
-			}
+			const testItem = this.allTests.find((t) => t.id === profileDescription.fsPath)
+							?? this.allTests.map((t) => t.parent).find((t) => t?.id === profileDescription.fsPath)
 			if (!testItem) {
 				// TODO account for includes and then restore the error message
 				// throw new Error('could not find test item for ' + fileinfo.uri.fsPath)

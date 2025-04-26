@@ -216,9 +216,8 @@ async function dumpLangServStatus () {
 			} else if (message.startsWith('Project ')) {
 				const parts = /Project ([^ ]*) ([^ ]*) -- Status/.exec(message)
 				if (parts && parts.length >= 3) {
-					if (!langServStatus.projectStatus) {
-						langServStatus.projectStatus = []
-					}
+					langServStatus.projectStatus = langServStatus.projectStatus ?? []
+
 					langServStatus.projectStatus.push({
 						name: parts[1],
 						version: parts[2],
@@ -416,9 +415,8 @@ export function setRuntimes (runtimes?: IRuntime[]) {
 		throw new Error('setRuntimes failed! extensions are disabled')
 	}
 	log.info('runtimes=' + JSON.stringify(runtimes))
-	if (!runtimes) {
-		runtimes = [{name: oeVersion(), path: getDefaultDLC(), default: true}]
-	}
+	runtimes = runtimes ?? [{name: oeVersion(), path: getDefaultDLC(), default: true}]
+
 	log.info('setting abl.configuration.runtimes=' + JSON.stringify(runtimes))
 	const ext = extensions.getExtension('riversidesoftware.openedge-abl-lsp')
 	if (!ext) {

@@ -55,9 +55,7 @@ export async function parseCallstack (debugLines: ABLDebugLines, callstackRaw: s
 			let fileinfo = debugLines.propath.search(debugFile)
 			if (!fileinfo && debugFile.endsWith('.r')) {
 				fileinfo = debugLines.propath.search(debugFile.substring(0, debugFile.length - 2) + '.p')
-				if (!fileinfo) {
-					fileinfo = debugLines.propath.search(debugFile.substring(0, debugFile.length - 2) + '.cls')
-				}
+							?? debugLines.propath.search(debugFile.substring(0, debugFile.length - 2) + '.cls')
 			}
 			if (fileinfo) {
 				debugUri = fileinfo.uri

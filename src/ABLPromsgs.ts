@@ -19,7 +19,6 @@ export class ABLPromsgs {
 		// eslint-disable-next-line @typescript-eslint/no-this-alias
 		promsgsObj = this
 
-		// eslint-disable-next-line promise/catch-or-return
 		this.loadFromCache(cacheUri).then(() => {
 			log.info('promsgs loaded from cache \'' + cacheUri.fsPath + '\'')
 			return true
