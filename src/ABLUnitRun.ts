@@ -401,10 +401,20 @@ function runCommand (res: ABLResults, options: TestRun, cancellation: Cancellati
 function setCurrentTestItem (ablunitStatus: IABLUnitStatus) {
 	if (ablunitStatus.action == 'TEST_START' && ablunitStatus.entityName) {
 		const parts = ablunitStatus.entityName?.split(' ')
-		const t = allTests.find(test => test.label == parts[parts.length - 1])
-					?? allTests.find(test => test.uri?.fsPath.replace(/\\/g, '/').endsWith(parts[parts.length - 1]))
+		let t = allTests.find(test => test.label == parts[parts.length - 1])
+				?? allTests.find(test => test.uri?.fsPath.replace(/\\/g, '/').endsWith(parts[parts.length - 1]))
+		if (!t && parts.length > 1) {
+			t = allTests.find(test => test.label == parts[parts.length - 2])
+				?? allTests.find(test => test.uri?.fsPath.replace(/\\/g, '/').endsWith(parts[parts.length - 2]))
+		}
 		if (t) {
 			currentTestItems.unshift(t)
+		}
+		if (!t) {
+			log.error('cannot find test item for \'' + JSON.stringify(ablunitStatus.entityName) + '\'.  available tests (count=' + allTests.length + '):')
+			for (const test of allTests) {
+				log.info(' - ' + test.label + ' ' + test.uri?.fsPath)
+			}
 		}
 	} else {
 		currentTestItems.shift()
