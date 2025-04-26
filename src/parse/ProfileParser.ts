@@ -346,10 +346,8 @@ export class ABLProfileJson {
 		this.modules = []
 		const childModules: IModule[] = []
 		for(const element of lines) {
-			let test = moduleRE.exec(element)
-			if (!test) {
-				test = moduleRE2.exec(element)
-			}
+			const test = moduleRE.exec(element)
+						?? moduleRE2.exec(element)
 
 			if (!test?.[2]) {
 				throw new Error('Unable to parse module name - name is empty (uri=' + this.profileUri.fsPath + ')')
@@ -629,9 +627,8 @@ export class ABLProfileJson {
 	addChildModulesToParents (childModules: IModule[]) {
 		for(const child of childModules) {
 			let parent = this.modules.find(p => p.SourceUri.fsPath === child.SourceUri.fsPath)
-			if (!parent) {
-				parent = this.modules.find(p => p.SourceName === child.ParentName)
-			}
+						?? this.modules.find(p => p.SourceName === child.ParentName)
+
 			if (!parent) {
 				this.interpretedModuleSequence--
 				log.warn('Could not find parent module, creating interpreted modude id ' + this.interpretedModuleSequence + ' for ' + child.SourceName + ' (uri=' + this.profileUri.fsPath + ')')
@@ -761,14 +758,8 @@ export class ABLProfileJson {
 			if (line) {
 				// update existing line
 				line.ExecCount += Number(test[3])
-				if (!line.ActualTime) {
-					line.ActualTime = 0
-				}
-				if (!line.CumulativeTime) {
-					line.CumulativeTime = 0
-				}
-				line.ActualTime += Number(test[4])
-				line.CumulativeTime += Number(test[5])
+				line.ActualTime = (line.ActualTime ?? 0) + Number(test[4])
+				line.CumulativeTime = (line.CumulativeTime ?? 0) + Number(test[5])
 				continue
 			}
 
@@ -808,7 +799,7 @@ export class ABLProfileJson {
 				}
 				const line = this.getModuleLine(modID, lineNo)
 				if (line) {
-					if(! line.trace) line.trace = []
+					line.trace = line.trace ?? []
 					line.trace[line.trace.length] = trace
 				}
 
@@ -923,10 +914,8 @@ export class ABLProfileJson {
 					return mods[0]
 				}
 
-				let mod = mods.find((m) => m.lines.find(l => l.LineNo == firstLine))
-				if (!mod) {
-					mod = mods.find((m) => m.EntityName == modName)
-				}
+				const mod = mods.find((m) => m.lines.find(l => l.LineNo == firstLine))
+						?? mods.find((m) => m.EntityName == modName)
 				if (!mod) {
 					throw new Error('could not find module for module ID=' + modID + ' modName=' + modName)
 				}
@@ -990,12 +979,10 @@ export class ABLProfileJson {
 					if(parentLine) {
 						parentLine.ExecCount += line.ExecCount
 						if (line.ActualTime) {
-							if (!parentLine.ActualTime) parentLine.ActualTime = 0
-							parentLine.ActualTime += line.ActualTime
+							parentLine.ActualTime = (parentLine.ActualTime ?? 0) + line.ActualTime
 						}
 						if (line.CumulativeTime) {
-							if (!parentLine.CumulativeTime) parentLine.CumulativeTime = 0
-							parentLine.CumulativeTime += line.CumulativeTime
+							parentLine.CumulativeTime = (parentLine.CumulativeTime ?? 0) + line.CumulativeTime
 						}
 						parent.lines[idx] = parentLine
 					} else {
@@ -1046,7 +1033,7 @@ export class ABLProfileJson {
 				}
 				const mod = this.getModules(ISectionEight.ModuleID).find(m => m.ModuleID == ISectionEight.ModuleID)
 				if (mod) {
-					if (!mod.ISectionEight) mod.ISectionEight = []
+					mod.ISectionEight = mod.ISectionEight ?? []
 					mod.ISectionEight.push(ISectionEight)
 				} else {
 					log.error('Unable to find module ' + ISectionEight.ModuleID + ' in section 8')
@@ -1071,7 +1058,7 @@ export class ABLProfileJson {
 				}
 				const mod = this.getModules(ISectionNine.ModuleID).find(m => m.ModuleID == ISectionNine.ModuleID)
 				if (mod) {
-					if (!mod.ISectionNine) mod.ISectionNine = []
+					mod.ISectionNine = mod.ISectionNine ?? []
 					mod.ISectionNine.push(ISectionNine)
 				} else {
 					log.error('Unable to find module ' + ISectionNine.ModuleID + ' in section 9 (uri=' + this.profileUri.fsPath + ')')
@@ -1093,7 +1080,7 @@ export class ABLProfileJson {
 				}
 				const mod = this.getModules(ISectionTen.ModuleID).find(m => m.ModuleID == ISectionTen.ModuleID)
 				if (mod) {
-					if (!mod.ISectionTen) mod.ISectionTen = []
+					mod.ISectionTen = mod.ISectionTen ?? []
 					mod.ISectionTen.push(ISectionTen)
 				} else {
 					log.error('Unable to find module ' + ISectionTen.ModuleID + ' in section 10 (uri=' + this.profileUri.fsPath + ')')
@@ -1126,7 +1113,7 @@ export class ABLProfileJson {
 			}
 			const mod = this.getModules(ISectionTwelve.ModuleID).find(m => m.ModuleID == ISectionTwelve.ModuleID)
 			if (mod) {
-				if (!mod.ISectionTwelve) mod.ISectionTwelve = []
+				mod.ISectionTwelve = mod.ISectionTwelve ?? []
 				mod.ISectionTwelve.push(ISectionTwelve)
 			} else {
 				// TODO
@@ -1164,10 +1151,8 @@ function getLineRange (line: ILineSummary, shift = 0) {
 		if (!lineno || lineno < 0) {
 			return undefined
 		}
-		let doc: TextDocument | FileUtils.TextDocumentLines | undefined = workspace.textDocuments.find((doc) => doc.uri.fsPath == line.incUri?.fsPath)
-		if (!doc) {
-			doc = FileUtils.openTextDocument(line.incUri ?? line.srcUri)
-		}
+		const doc: TextDocument | FileUtils.TextDocumentLines | undefined = workspace.textDocuments.find((doc) => doc.uri.fsPath == line.incUri?.fsPath)
+				?? FileUtils.openTextDocument(line.incUri ?? line.srcUri)
 		if (!doc) {
 			log.error('could not find document for uri=' + line.incUri?.fsPath)
 			throw new Error('could not find document for uri=' + line.incUri?.fsPath)

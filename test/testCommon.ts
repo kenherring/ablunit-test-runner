@@ -316,9 +316,7 @@ export function getRcodeCount (workspaceFolder?: WorkspaceFolder | Uri) {
 }
 
 export async function deleteRcode (workspaceFolder?: WorkspaceFolder) {
-	if (!workspaceFolder) {
-		workspaceFolder = getWorkspaceFolders()[0]
-	}
+	workspaceFolder = workspaceFolder ?? getWorkspaceFolders()[0]
 	if (!workspaceFolder) {
 		throw new Error('workspaceFolder is undefined')
 	}
@@ -516,9 +514,8 @@ export async function runAllTests (doRefresh = true, waitForResults = true, with
 	}
 	beforeCommon()
 	runAllTestsDuration = new Duration('runAllTests')
-	if (!tag) {
-		tag = projName()
-	}
+
+	tag = tag ?? projName()
 	if (tag) {
 		tag = '[' + tag + '] '
 	} else {
@@ -779,9 +776,8 @@ export function updateConfig (key: string, value: unknown, configurationTarget?:
 }
 
 export async function updateTestProfile (key: string, value: string | string[] | boolean | number | object | undefined, workspaceUri?: Uri) {
-	if (!workspaceUri) {
-		workspaceUri = getWorkspaceUri()
-	}
+	workspaceUri = workspaceUri ?? getWorkspaceUri()
+
 	const testProfileUri = Uri.joinPath(workspaceUri, '.vscode', 'ablunit-test-profile.json')
 	let profile: IConfigurations
 	if (!FileUtils.doesFileExist(testProfileUri)) {

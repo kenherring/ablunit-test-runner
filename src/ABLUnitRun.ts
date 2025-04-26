@@ -316,7 +316,6 @@ function runCommand (res: ABLResults, options: TestRun, cancellation: Cancellati
 					debugLaunchProfile['hostname'] = res.cfg.ablunitConfig.command.debugHost
 					log.info('debugLaunchProfile=' + JSON.stringify(debugLaunchProfile, null, 4))
 
-					// eslint-disable-next-line promise/catch-or-return
 					debug.startDebugging(res.cfg.ablunitConfig.workspaceFolder, debugLaunchProfile)
 						.then((r) => {
 							log.debug('r=' + r + ' activeDebugSession=' + (debug.activeDebugSession ? true : false))
@@ -401,10 +400,8 @@ function runCommand (res: ABLResults, options: TestRun, cancellation: Cancellati
 function setCurrentTestItem (ablunitStatus: IABLUnitStatus) {
 	if (ablunitStatus.action == 'TEST_START' && ablunitStatus.entityName) {
 		const parts = ablunitStatus.entityName?.split(' ')
-		let t = allTests.find(test => test.label == parts[parts.length - 1])
-		if (!t) {
-			t = allTests.find(test => test.uri?.fsPath.replace(/\\/g, '/').endsWith(parts[parts.length - 1]))
-		}
+		const t = allTests.find(test => test.label == parts[parts.length - 1])
+					?? allTests.find(test => test.uri?.fsPath.replace(/\\/g, '/').endsWith(parts[parts.length - 1]))
 		if (t) {
 			currentTestItems.unshift(t)
 		}

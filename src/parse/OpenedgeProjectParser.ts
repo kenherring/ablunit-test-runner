@@ -210,12 +210,8 @@ export class ProfileConfig implements IOpenEdgeConfig {
 			this.oeversion = parent.oeversion
 			this.dlc = parent.dlc
 		}
-		if (!this.extraParameters) {
-			this.extraParameters = parent.extraParameters
-		}
-		if (!this.charset) {
-			this.charset = parent.charset
-		}
+		this.extraParameters = this.extraParameters ?? parent.extraParameters
+		this.charset = this.charset ?? parent.charset
 		if (!this.graphicalMode) {
 			this.graphicalMode = parent.graphicalMode
 		}
@@ -386,7 +382,7 @@ function parseOpenEdgeProjectConfig (uri: Uri, workspaceUri: Uri, config: IOpenE
 	prjConfig.rootDir = Uri.file(path.dirname(uri.path)).fsPath
 	readGlobalOpenEdgeRuntimes(workspaceUri)
 	prjConfig.dlc = getDlcDirectory(config.oeversion)
-	prjConfig.extraParameters = config.extraParameters ? config.extraParameters : ''
+	prjConfig.extraParameters = config.extraParameters ?? ''
 	prjConfig.charset = config.charset
 	prjConfig.oeversion = config.oeversion
 	prjConfig.graphicalMode = config.graphicalMode
