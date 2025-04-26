@@ -249,6 +249,7 @@ function runCommand (res: ABLResults, options: TestRun, cancellation: Cancellati
 				log.debug('pop blank line')
 			} else {
 				stdout = lines[lines.length - 1]
+				lines.pop()
 				log.debug('stdout savePartialLine=\'' + stdout + '\'')
 			}
 
