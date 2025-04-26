@@ -1,5 +1,5 @@
 import { DeclarationCoverage, FileCoverageDetail, Range, TestRunProfileKind, Uri, commands, window, workspace } from 'vscode'
-import { assert, getRcodeCount, getResults, getTestControllerItemCount, getTestItem, getXrefCount, log, rebuildAblProject, refreshTests, runAllTests, runAllTestsWithCoverage, runTestAtLine, runTestsDuration, runTestsInFile, sleep2, suiteSetupCommon, FileUtils, toUri, updateConfig, updateTestProfile, deleteRcode, setRuntimes } from '../testCommon'
+import { assert, getRcodeCount, getResults, getTestControllerItemCount, getTestItem, getXrefCount, log, rebuildAblProject, refreshTests, runAllTests, runAllTestsWithCoverage, runTestAtLine, runTestsDuration, runTestsInFile, sleep2, suiteSetupCommon, FileUtils, toUri, updateConfig, updateTestProfile, deleteRcode, setRuntimes, awaitRCode, getWorkspaceFolders } from '../testCommon'
 import { ABLResultsParser } from 'parse/ResultsParser'
 import { TimeoutError } from 'Errors'
 import { restartLangServer } from '../openedgeAblCommands'
@@ -451,11 +451,13 @@ suite('proj0  - Extension Test Suite', () => {
 			})
 
 		FileUtils.copyFile('openedge-project.json.bk', 'openedge-project.json')
+		await deleteRcode()
 		await restartLangServer()
-		return await sleep2(250)
+		await awaitRCode(getWorkspaceFolders()[0], 24)
 	})
 
 	test('proj0.21 - overloaded method coverage', async () => {
+		assert.fileExists('src/overloadedMethods.r')
 		await runTestsInFile('src/overloadedMethods.cls', 1, TestRunProfileKind.Coverage)
 		assert.tests.count(2)
 		assert.linesExecuted('src/overloadedMethods.cls', [17, 18, 19, 22, 23])

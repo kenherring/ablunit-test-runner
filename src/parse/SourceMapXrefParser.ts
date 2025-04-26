@@ -51,7 +51,7 @@ export const getSourceMapFromXref = (propath: PropathParser, debugSource: string
 		for(let incLine=1; incLine<=incLen.lineCount; incLine++) {
 			dbgLine++
 
-			log.info('i=' + '?' + '; sourceLine=' + incLine + '; dbgLine=' + dbgLine + '; sourcePath=' + workspace.asRelativePath(incLen.incUri))
+			log.debug('i=' + '?' + '; sourceLine=' + incLine + '; dbgLine=' + dbgLine + '; sourcePath=' + workspace.asRelativePath(incLen.incUri))
 			m.items.push(new SourceMapItem({
 				debugUri: parentUri,
 				debugLine: dbgLine,
@@ -134,7 +134,7 @@ export const getSourceMapFromXref = (propath: PropathParser, debugSource: string
 		for (let i=1; i<=lineCount; i++) {
 			dbgLine++
 
-			log.info('i=' + i + '; sourceLine=' + i + '; dbgLine=' + dbgLine + '; sourcePath=' + workspace.asRelativePath(sourcePath))
+			log.debug('i=' + i + '; sourceLine=' + i + '; dbgLine=' + dbgLine + '; sourcePath=' + workspace.asRelativePath(sourcePath))
 			m.items.push(new SourceMapItem({
 				debugLine: dbgLine,
 				debugUri: debugSourceUri,

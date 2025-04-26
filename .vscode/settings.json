@@ -58,5 +58,5 @@
 	"sonarlint.disableTelemetry": true,
 	"task.autoDetect": "on",
 	"typescript.preferences.quoteStyle": "single",
-    "typescript.validate.enable": true,
+	"typescript.validate.enable": true,
 }
