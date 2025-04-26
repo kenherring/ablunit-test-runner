@@ -1,5 +1,4 @@
 {
 	"ablunit.discoverAllTestsOnActivate": true,
-	"ablunit.files.include": "{**/*.cls,**/*.p}",
-	"ablunit.files.exclude": "",
+	// "ablunit.debug.hide": true
 }

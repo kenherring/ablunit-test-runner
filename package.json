@@ -140,6 +140,11 @@
 					],
 					"markdownDescription": "Label style for test class files in the test explorer view. <br><br>Example styles for `com/example/myClass.cls`:\n<ul><li>class-type-name\\: `com.example.myClass`</li><li>filename\\: `myClass.cls`</li></ul>"
 				},
+				"ablunit.debug.hide": {
+					"type": "boolean",
+					"default": false,
+					"markdownDescription": "Hide debug tests run button in the test explorer view. Extension must be reloaded for this setting to take effect."
+				},
 				"ablunit.files.include": {
 					"type": "array",
 					"default": [
