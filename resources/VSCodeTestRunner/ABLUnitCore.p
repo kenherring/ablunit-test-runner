@@ -62,10 +62,11 @@ procedure waitForDebuggerVisible :
 		return.
 
 	etime(yes).
-	define variable maxWait as integer init 10000 no-undo.
+	define variable maxWait as integer init 30000 no-undo.
 	maxWait = integer(os-getenv('ABLUNIT_TEST_RUNNER_DEBUG_MAX_WAIT')) no-error.
+
 	do while etime < maxWait and debugger:visible = false:
-		// wait for 10 seconds
+		// check if debugger is connected every 1 second
 		message 'waiting for debugger to connect... (' + string(etime) + '/' + string(maxWait) + 'ms)'.
 		pause 1.
 	end.
@@ -79,7 +80,7 @@ procedure waitForDebuggerVisible :
 		do:
 			undo, throw new Progress.Lang.AppError("Debugger not connected - exit with code 1 to indicate unit test failure", 99).
 		end.
-		message 'Debugger not connected - continuing with test execution'.
+		message 'Debugger not connected - test execution will continue without debugging'.
 	end.
 end procedure.
 
