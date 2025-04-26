@@ -108,9 +108,7 @@ export function parseRunProfiles (workspaceFolders: WorkspaceFolder[], wsFilenam
 				folderProfile = undefined
 			} else {
 				folderProfile = wfConfig.configurations.find((profile) => profile.runProfile === dfltProfile.runProfile)
-				if (!folderProfile) {
-					folderProfile = wfConfig.configurations[0]
-				}
+								?? wfConfig.configurations[0]
 			}
 
 			if(!folderProfile) {
@@ -125,9 +123,7 @@ export function parseRunProfiles (workspaceFolders: WorkspaceFolder[], wsFilenam
 		}
 
 		runProfiles.forEach((profile) => {
-			if (!profile.tempDir) {
-				profile.tempDir = '${workspaceFolder}/.ablunit'
-			}
+			profile.tempDir = profile.tempDir ?? '${workspaceFolder}/.ablunit'
 
 			let wsFolder = '.'
 			if (profile.workspaceFolder?.uri) {
