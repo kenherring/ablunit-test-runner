@@ -60,7 +60,7 @@
 		"progress"
 	],
 	"engines": {
-		"vscode": "^1.96.0"
+		"vscode": "^1.99.1"
 	},
 	"categories": [
 		"Testing"

@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 
-import stylistic from '@stylistic/eslint-plugin'
+import stylistic from '@stylistic/eslint-plugin-ts'
 import typescriptEslint from '@typescript-eslint/eslint-plugin'
 import promise from 'eslint-plugin-promise'
 import tsParser from '@typescript-eslint/parser'
