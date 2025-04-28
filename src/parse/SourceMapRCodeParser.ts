@@ -425,37 +425,7 @@ export const getSourceMapFromRCode = (propath: PropathParser, uri: Uri) => {
 	}
 
 	const parseSegment1 = (segment1Bytes: Uint8Array) => {
-
-		log.info('parseSegment1 segment1Bytes.length=' + segment1Bytes.length)
-
-		// const divider = segment1Bytes.findIndex((byte) => byte != 0)
-		// log.info('divider=' + divider)
-
-		// const parts = []
-		// let zeroCount = 0
-		// let start = 0
-		// let end = 0
-		// for (let i=0; i < segment1Bytes.length; i+=1) {
-
-		// 	if (toBase10(segment1Bytes.subarray(i, i+1)) == 0) {
-		// 		zeroCount += 1
-		// 	} else {
-		// 		zeroCount = 0
-		// 	}
-		// 	if (zeroCount >= divider) {
-		// 		end = i - divider + 1
-		// 		parts.push(segment1Bytes.subarray(start, end))
-		// 		start = i + 1
-		// 		zeroCount = 0
-		// 	}
-		// 	log.info('segment1Bytes[' + i + ']=' + decoder.decode(segment1Bytes.subarray(i, i+1)) + '\t' + toBase10(segment1Bytes.subarray(i, i+1)))
-		// 	log.info('  zeroCount=' + zeroCount)
-		// }
-
-		// log.info('parts.length=' + parts.length)
-		// for (let i=0; i < parts.length - 1; i++) {
-		// 	log.info('parts[' + i + ']=' + decoder.decode(parts[i]))
-		// }
+		log.debug('parseSegment1 segment1Bytes.length=' + segment1Bytes.length)
 
 		const crcLocation = 174
 		const crc = toBase10(segment1Bytes.subarray(crcLocation, crcLocation + 2))

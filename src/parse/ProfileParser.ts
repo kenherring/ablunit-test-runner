@@ -469,10 +469,10 @@ export class ABLProfileJson {
 			const map = await this.debugLines.getSourceMap(mod.SourceUri).then((sourceMap) => {
 
 				// need to print this to the testing output...
-				log.info('rcode.crc=' + sourceMap?.crc + ', module.crc=' + mod.CrcValue)
-				if (sourceMap && sourceMap.crc != mod.CrcValue) {
-					log.warn('crc mismatch for module ' + mod.ModuleName + ' in uri=' + this.profileUri.fsPath + ' (ModuleID=' + mod.ModuleID + ') - expected: ' + mod.CrcValue + ', actual: ' + sourceMap.crc)
-					log.warn('  rcode.crc=' + sourceMap.crc + ', module.crc=' + mod.CrcValue)
+				if (sourceMap?.crc && sourceMap.crc != mod.CrcValue) {
+					log.warn('crc mismatch for module ' + mod.ModuleName + ' in uri=' + this.profileUri.fsPath + ' (ModuleID=' + mod.ModuleID + ') - expected: ' + mod.CrcValue + ', actual: ' + sourceMap.crc +
+							'\n\trcode.crc  =' + sourceMap.crc +
+							'\n\tmodule.crc =' + mod.CrcValue)
 				}
 
 				return sourceMap
