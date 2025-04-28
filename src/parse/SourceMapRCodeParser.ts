@@ -74,12 +74,24 @@ export const getSourceMapFromRCode = (propath: PropathParser, uri: Uri) => {
 		//  * Frame (1 per frame)
 		//  * Debugger (1)
 
-		const debug = segmentTable.subarray(12, 16)
+		const size1 = segmentTable.subarray(16, 20)
+		const size2 = segmentTable.subarray(20, 24)
+		const size3 = segmentTable.subarray(24, 28)
 		const debugsize = segmentTable.subarray(28, 32)
-		const debugLoc = toBase10(debug) + segmentTable.byteOffset + segmentTable.length
+		const loc1 = toBase10(segmentTable.subarray(0, 4)) + segmentTable.byteOffset + segmentTable.length
+		const loc2 = toBase10(segmentTable.subarray(4, 8)) + segmentTable.byteOffset + segmentTable.length
+		const loc3 = toBase10(segmentTable.subarray(8, 12)) + segmentTable.byteOffset + segmentTable.length
+		const debugLoc = toBase10(segmentTable.subarray(12, 16)) + segmentTable.byteOffset + segmentTable.length
+
 		return {
+			segmentLoc1: loc1,
+			segmentSize1: toBase10(size1),
+			segmentLoc2: loc2,
+			segmentSize2: toBase10(size2),
+			segmentLoc3: loc3,
+			segmentSize3: toBase10(size3),
 			debugLoc: debugLoc,
-			debugSize: toBase10(debugsize)
+			debugSize: toBase10(debugsize),
 		}
 	}
 
@@ -412,6 +424,48 @@ export const getSourceMapFromRCode = (propath: PropathParser, uri: Uri) => {
 		return debugLines
 	}
 
+	const parseSegment1 = (segment1Bytes: Uint8Array) => {
+
+		log.info('parseSegment1 segment1Bytes.length=' + segment1Bytes.length)
+
+		// const divider = segment1Bytes.findIndex((byte) => byte != 0)
+		// log.info('divider=' + divider)
+
+		// const parts = []
+		// let zeroCount = 0
+		// let start = 0
+		// let end = 0
+		// for (let i=0; i < segment1Bytes.length; i+=1) {
+
+		// 	if (toBase10(segment1Bytes.subarray(i, i+1)) == 0) {
+		// 		zeroCount += 1
+		// 	} else {
+		// 		zeroCount = 0
+		// 	}
+		// 	if (zeroCount >= divider) {
+		// 		end = i - divider + 1
+		// 		parts.push(segment1Bytes.subarray(start, end))
+		// 		start = i + 1
+		// 		zeroCount = 0
+		// 	}
+		// 	log.info('segment1Bytes[' + i + ']=' + decoder.decode(segment1Bytes.subarray(i, i+1)) + '\t' + toBase10(segment1Bytes.subarray(i, i+1)))
+		// 	log.info('  zeroCount=' + zeroCount)
+		// }
+
+		// log.info('parts.length=' + parts.length)
+		// for (let i=0; i < parts.length - 1; i++) {
+		// 	log.info('parts[' + i + ']=' + decoder.decode(parts[i]))
+		// }
+
+		const crcLocation = 174
+		const crc = toBase10(segment1Bytes.subarray(crcLocation, crcLocation + 2))
+
+		return {
+			crc: crc,
+		}
+
+	}
+
 	const parseDebugSegment = async (debugBytes: Uint8Array) => {
 		const debugBytes32 = new Uint32Array(debugBytes.length / 4)
 		for (let i=0; i < debugBytes.length; i=i+4) {
@@ -453,6 +507,9 @@ export const getSourceMapFromRCode = (propath: PropathParser, uri: Uri) => {
 		const rawSignatureTable = raw.subarray(headerInfo.signatureTableLoc, headerInfo.signatureTableLoc + headerInfo.signatureTableSize)
 		const signatures = parseSignatureTable(rawSignatureTable)
 
+		const segment1Bytes = raw.subarray(segmentInfo.segmentLoc1, segmentInfo.segmentLoc1 + segmentInfo.segmentSize1)
+		const segment1Info = parseSegment1(segment1Bytes)
+
 		let debugInfo: SourceMapItem[] = []
 		if (segmentInfo.debugSize > 0) {
 			const debugBytes = raw.slice(segmentInfo.debugLoc, segmentInfo.debugLoc + segmentInfo.debugSize)
@@ -467,6 +524,7 @@ export const getSourceMapFromRCode = (propath: PropathParser, uri: Uri) => {
 			includes: includes,
 			declarations: declarations,
 			signatures: signatures,
+			crc: segment1Info.crc,
 		}
 
 		return sourceMap

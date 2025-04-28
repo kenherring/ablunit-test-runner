@@ -96,6 +96,18 @@ test('SourceMapRCodeParser.test_4', async () => {
 	return
 })
 
+test('SourceMapRCodeParser.test_5', async () => {
+	const propath = new PropathParser()
+	const testuri = toUri('test_4/destructorSimple.cls')
+	await getSourceMap(propath, testuri).then((sourceMap) => {
+		log.info('sourceMap.crc=' + sourceMap.crc)
+		assert.equal(sourceMap.crc, 8413)
+		return true
+	}, (e: unknown) => {
+		assert.fail('Error in test_5: e=' + (e instanceof Error ? e.message : String(e)))
+	})
+})
+
 async function getSourceMap (propath: PropathParser, uri: Uri) {
 	const sourceMap = await getSourceMapFromRCode(propath, uri)
 	if (!sourceMap) {
