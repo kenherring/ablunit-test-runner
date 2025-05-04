@@ -343,6 +343,7 @@ suite('proj0  - Extension Test Suite', () => {
 		log.info('proj0.17')
 		FileUtils.deleteFile(['results.xml', 'results.json'], { force: true })
 		FileUtils.copyFile('.vscode/ablunit-test-profile.proj0.17.json', '.vscode/ablunit-test-profile.json')
+		await sleep(100)
 		const prom = runTestAtLine('src/test_17.cls', 33, 1, TestRunProfileKind.Coverage)
 			.then(() => {
 				assert.tests.count(1)
