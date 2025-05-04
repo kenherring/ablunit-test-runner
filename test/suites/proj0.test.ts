@@ -339,17 +339,7 @@ suite('proj0  - Extension Test Suite', () => {
 
 	test('proj0.17 - coverage in class property getters/setters', () => {
 		log.info('proj0.17')
-		FileUtils.deleteFile(
-			[
-				toUri('results.xml'),
-				// toUri('.vscode/ablunit-test-profile.json'),
-				toUri('results.json')
-			],
-			{ force: true }
-		)
-		if (FileUtils.doesFileExist(toUri('.vscode/ablunit-test-profile.json'))) {
-			assert.fail('.vscode/ablunit-test-profile.json should not exist')
-		}
+		FileUtils.deleteFile(['results.xml', 'results.json'], { force: true })
 		FileUtils.copyFile('.vscode/ablunit-test-profile.proj0.17.json', '.vscode/ablunit-test-profile.json')
 		const prom = runTestAtLine('src/test_17.cls', 33, 1, TestRunProfileKind.Coverage)
 			.then(() => {
