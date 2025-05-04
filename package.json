@@ -79,7 +79,7 @@
 		"vscode:prepublish": "npm run package",
 		"package": "npm run build",
 		"pretest": "sh -c scripts/npm_pretest.sh",
-		"test": "sh -c scripts/npm_pretest.sh && vscode-test",
+		"test": "vscode-test",
 		"test:coverage": "npm test -- --coverage",
 		"vscode-test": "vscode-test",
 		"test:install-and-run": "cd dummy-ext && npm run test:install-and-run",
