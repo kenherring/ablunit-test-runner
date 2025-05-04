@@ -1,5 +1,5 @@
 import { commands, extensions, LogLevel, Uri, workspace } from 'vscode'
-import { Duration, activateExtension, enableExtensions, getDefaultDLC, getRcodeCount, getWorkspaceUri, installExtension, log, oeVersion, sleep, FileUtils, awaitRCode } from './testCommon'
+import { Duration, activateExtension, enableExtensions, getDefaultDLC, getRcodeCount, getWorkspaceUri, installExtension, log, oeVersion, sleep, FileUtils, getSourceCount } from './testCommon'
 import { getContentFromFilesystem } from 'parse/TestParserCommon'
 import * as glob from 'glob'
 import { dirname } from 'path'
@@ -36,8 +36,10 @@ async function waitForRcode (expectedCount: number) {
 	const maxWait = 15 // seconds
 	const waitTime = new Duration()
 	let rcodeCount = getRcodeCount()
+	if (expectedCount == 0) {
+		expectedCount = getSourceCount() * .80
+	}
 	while (rcodeCount < expectedCount) {
-
 		if (waitTime.elapsed() > maxWait * 1000) {
 			log.error('timeout after ' + waitTime.elapsed() + 'ms')
 			throw new TimeoutError('waiting for rcode', waitTime, maxWait * 1000)
@@ -46,7 +48,7 @@ async function waitForRcode (expectedCount: number) {
 		await sleep(100, null)
 		rcodeCount = getRcodeCount()
 	}
-	log.info('rcodeCount=' + rcodeCount + ' ' + waitTime)
+	log.info('rcodeCount=' + rcodeCount + ', expectedCount=' + expectedCount + ' ' + waitTime)
 	return rcodeCount
 }
 
@@ -59,6 +61,7 @@ export function restartLangServer (rcodeCount = 0): PromiseLike<number> {
 		log.info('lang server is ready')
 		return waitForRcode(rcodeCount)
 	}).then((r) => {
+		log.info('rcodecount=' + r)
 		return r
 	}, (e: unknown) => {
 		log.error('abl.restart.langserv command failed! e=' + e)

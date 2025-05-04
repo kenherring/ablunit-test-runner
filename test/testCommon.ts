@@ -312,6 +312,10 @@ export function deleteRcode (workspaceFolder?: WorkspaceFolder) {
 	return true
 }
 
+export function getSourceCount (workspaceFolder?: WorkspaceFolder | Uri) {
+	return getFileCountByExt('cls', workspaceFolder) + getFileCountByExt('p', workspaceFolder)
+}
+
 export function getRcodeCount (workspaceFolder?: WorkspaceFolder | Uri) {
 	return getFileCountByExt('r', workspaceFolder)
 }
