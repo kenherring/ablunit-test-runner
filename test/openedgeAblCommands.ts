@@ -13,7 +13,7 @@ interface IRuntime {
 	default?: boolean
 }
 
-export async function enableOpenedgeAblExtension (runtimes?: IRuntime[]) {
+export async function enableOpenedgeAblExtension (runtimes?: IRuntime[], rcodeCount?: number) {
 	const extname = 'riversidesoftware.openedge-abl-lsp'
 	ablunitLogUri = await commands.executeCommand('_ablunit.getLogUri')
 
@@ -24,7 +24,7 @@ export async function enableOpenedgeAblExtension (runtimes?: IRuntime[]) {
 		await activateExtension(extname)
 	}
 	await setRuntimes(runtimes)
-		.then(() => waitForRcode(0))
+		.then(() => waitForRcode(rcodeCount))
 		.then((rcodeCount) => {
 			log.info('rebuild complete! (rcodeCount=' + rcodeCount + ')')
 			log.info('riversidesoftware.openedge-abl-lsp extension is enabled!')
@@ -32,20 +32,32 @@ export async function enableOpenedgeAblExtension (runtimes?: IRuntime[]) {
 		}, (e: unknown) => { throw e })
 }
 
-async function waitForRcode (expectedCount: number) {
-	const maxWait = 15 // seconds
+async function waitForRcode (expectedCount?: number) {
+	// const maxWait = 15 // seconds
 	const waitTime = new Duration()
 	let rcodeCount = getRcodeCount()
-	if (expectedCount == 0) {
-		expectedCount = getSourceCount() * .80
-	}
+	let lastRcodeCount = rcodeCount
+	let rcodeDuration = new Duration ('rcodeDuration')
+	expectedCount = expectedCount ?? getSourceCount() * .80
 	while (rcodeCount < expectedCount) {
-		if (waitTime.elapsed() > maxWait * 1000) {
-			log.error('timeout after ' + waitTime.elapsed() + 'ms')
-			throw new TimeoutError('waiting for rcode', waitTime, maxWait * 1000)
+		// if (waitTime.elapsed() > maxWait * 1000) {
+		// 	log.error('timeout after ' + waitTime.elapsed() + 'ms')
+		// 	throw new TimeoutError('waiting for rcode failed. rcodeCount=' + rcodeCount, waitTime, maxWait * 1000)
+		// }
+
+		if (lastRcodeCount != rcodeCount) {
+			rcodeDuration = new Duration('rcodeDuration')
+		} else if (rcodeDuration.elapsed() > 3000) {
+			log.warn('no new rcode generated for 3 seconds, assume we are done compiling')
+			return rcodeCount
 		}
 
-		await sleep(100, null)
+		if (waitTime.elapsed() > 5000) {
+			await sleep(500)
+		} else {
+			await sleep(100, null)
+		}
+		lastRcodeCount = rcodeCount
 		rcodeCount = getRcodeCount()
 	}
 	log.info('rcodeCount=' + rcodeCount + ', expectedCount=' + expectedCount + ' ' + waitTime)
@@ -58,7 +70,6 @@ export function restartLangServer (rcodeCount = 0): PromiseLike<number> {
 		log.info('command abl.restart.langserv command completed successfully')
 		return waitForLangServerReady()
 	}).then(() => {
-		log.info('lang server is ready')
 		return waitForRcode(rcodeCount)
 	}).then((r) => {
 		log.info('rcodecount=' + r)

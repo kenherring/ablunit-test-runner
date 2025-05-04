@@ -147,11 +147,11 @@ function getExtensionDevelopmentPath () {
 	throw new Error('unable to determine extensionDevelopmentPath')
 }
 
-export async function suiteSetupCommon (runtimes?: IRuntime[]) {
+export async function suiteSetupCommon (runtimes?: IRuntime[], rcodeCount?: number) {
 	log.info('[suiteSetupCommon] waitForExtensionActive \'kherring.ablunit-test-runner\' (projName=' + projName() + ')')
 	await waitForExtensionActive()
 	if (enableExtensions()) {
-		await enableOpenedgeAblExtension(runtimes)
+		await enableOpenedgeAblExtension(runtimes, rcodeCount)
 	}
 	log.info('suiteSetupCommon complete!')
 }
