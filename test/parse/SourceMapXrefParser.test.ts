@@ -1,5 +1,5 @@
 import { commands, Uri } from 'vscode'
-import { assert, log, toUri } from '../testCommon'
+import { assert, getXrefCount, log, sleep, toUri } from '../testCommon'
 import { PropathParser } from 'ABLPropath'
 import { SourceMapItem } from 'parse/SourceMapParser'
 import { getSourceMapFromXref } from 'parse/SourceMapXrefParser'
@@ -21,8 +21,11 @@ suiteSetup('suiteSetup', () => {
 		})
 })
 
-setup('setup', () => {
+setup('setup', async () => {
 	log.info('setup ----- start')
+	while (getXrefCount() < 3) {
+		await sleep(100, 'waiting for test_1/test.p.xref')
+	}
 })
 
 test('SourceMapXrefParser.test_1', () => {
