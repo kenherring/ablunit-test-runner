@@ -422,7 +422,7 @@ function setCurrentTestItem (ablunitStatus: IABLUnitStatus) {
 	}
 }
 
-export function getEnvVars (dlcUri: Uri | undefined, maxWait = 10000) {
+export function getEnvVars (dlcUri: Uri | undefined, maxWait = 30000) {
 	const runenv = process.env
 	let envConfig: Record<string, string> | undefined = undefined
 	if (process.platform === 'win32') {

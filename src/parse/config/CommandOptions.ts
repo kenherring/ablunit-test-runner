@@ -15,7 +15,7 @@ export class CommandOptions implements ICommandOptions {
 	batch = true
 	debugHost = 'localhost'
 	debugPort = 3199
-	debugConnectMaxWait = 10000
+	debugConnectMaxWait = 30000
 	additionalArgs: string[] = []
 
 	constructor (from?: ICommandOptions) {
