@@ -1,5 +1,5 @@
 import { CancellationError, LogLevel, commands } from 'vscode'
-import { assert, RunStatus, beforeCommon, beforeProj7, cancelTestRun, getCurrentRunData, getTestControllerItemCount, isoDate, log, refreshTests, runAllTests, waitForTestRunStatus, sleep2 } from '../testCommon'
+import { assert, RunStatus, beforeCommon, beforeProj7, cancelTestRun, getCurrentRunData, getTestControllerItemCount, isoDate, log, refreshTests, runAllTests, waitForTestRunStatus, sleep } from '../testCommon'
 import { Duration } from 'ABLUnitCommon'
 
 suite('proj7B - Extension Test Suite', () => {
@@ -24,13 +24,13 @@ suite('proj7B - Extension Test Suite', () => {
 		while(testCount < 2) {
 			testCount = await getTestControllerItemCount('ABLTestFile')
 			if (testCount >= 2) { break }
-			await sleep2(2)
+			await sleep(2)
 			if (startRefreshTime.elapsed() > 10000) {
 				throw new Error('timeout waiting for getTestControllerItemCount to return > 2 (got ' + testCount + ')')
 			}
 		}
 
-		await sleep2(2)
+		await sleep(2)
 		log.info('cancelling test refresh')
 		const startCancelTime = new Duration()
 		await commands.executeCommand('testing.cancelTestRefresh').then(() => {
@@ -48,12 +48,12 @@ suite('proj7B - Extension Test Suite', () => {
 		const ablfileCount = await getTestControllerItemCount('ABLTestFile')
 		log.info('controller file count after refresh = ' + ablfileCount)
 		if (ablfileCount <= 2) {
-			await sleep2(10)
+			await sleep(10)
 			const ablfileCount = await getTestControllerItemCount('ABLTestFile')
 			log.info('controller file count after refresh(2) = ' + ablfileCount)
 		}
 		if (ablfileCount <= 2) {
-			await sleep2(10)
+			await sleep(10)
 			const ablfileCount = await getTestControllerItemCount('ABLTestFile')
 			log.info('controller file count after refresh(3) = ' + ablfileCount)
 		}
@@ -78,7 +78,7 @@ suite('proj7B - Extension Test Suite', () => {
 		// const runTestTime = new Duration()
 
 		runAllTests().catch((e: unknown) => { log.info('runAllTests got error: ' + e) })
-		await sleep2(250)
+		await sleep(100)
 			.then(() => { return waitForTestRunStatus(RunStatus.Constructed) })
 
 		const elapsedCancelTime = await cancelTestRun(false)
@@ -120,7 +120,7 @@ suite('proj7B - Extension Test Suite', () => {
 		// wait up to 60 seconds until ABLUnit is actually running, then cancel
 		// this validates the cancel will abort the spawned _progres process
 		await waitForTestRunStatus(RunStatus.Executing)
-			.then(() => { return sleep2(500) })
+			.then(() => { return sleep(100) })
 			.catch((e: unknown) => { throw e })
 
 		const resArr = await getCurrentRunData(1, 2)
@@ -130,7 +130,7 @@ suite('proj7B - Extension Test Suite', () => {
 		if (resArr[0].status < RunStatus.Executing) {
 			assert.fail('test run did not reach status \'running command\'')
 		}
-		await sleep2(2000)
+		await sleep(100)
 
 		const saveLogLevel = log.getLogLevel()
 		log.setLogLevel(LogLevel.Debug)

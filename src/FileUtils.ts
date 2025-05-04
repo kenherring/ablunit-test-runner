@@ -92,6 +92,13 @@ export function writeFile (path: string | Uri, data: string | Uint8Array, option
 	fs.writeFileSync(path, data, options)
 }
 
+export function writeFileAsync (path: string | Uri, data: string | Uint8Array, options?: fs.WriteFileOptions): Promise<void> {
+	if (path instanceof Uri) {
+		path = path.fsPath
+	}
+	return fsp.writeFile(path, data, options)
+}
+
 export function validateDirectory (path: string | Uri): boolean {
 	if (path instanceof Uri) {
 		if (!doesDirExist(path)) {

@@ -106,6 +106,7 @@
 		"@vscode/test-electron": "^2.5.2",
 		"@vscode/vsce": "^3.3.2",
 		"esbuild": "^0.25.3",
+		"esbuild-register": "^3.6.0",
 		"eslint": "^9.25.1",
 		"eslint-formatter-unix": "^8.40.0",
 		"eslint-plugin-promise": "^7.2.1",

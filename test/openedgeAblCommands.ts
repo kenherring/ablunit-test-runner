@@ -1,5 +1,5 @@
 import { commands, extensions, LogLevel, Uri, workspace } from 'vscode'
-import { Duration, activateExtension, enableExtensions, getDefaultDLC, getRcodeCount, getWorkspaceUri, installExtension, log, oeVersion, sleep2, FileUtils } from './testCommon'
+import { Duration, activateExtension, enableExtensions, getDefaultDLC, getRcodeCount, getWorkspaceUri, installExtension, log, oeVersion, sleep, FileUtils } from './testCommon'
 import { getContentFromFilesystem } from 'parse/TestParserCommon'
 import * as glob from 'glob'
 import { dirname } from 'path'
@@ -57,7 +57,7 @@ export async function rebuildAblProject (waitForRcodeCount = 0) {
 
 	let stillCompiling = true
 	while (stillCompiling && rebuildTime.elapsed() < 15000) {
-		const prom = sleep2(250, 'waiting for project rebuild to complete... ' + rebuildTime)
+		const prom = sleep(100, 'waiting for project rebuild to complete... ' + rebuildTime)
 			.then(() => { return getLogContents() })
 		const lines = await prom
 		// log.info('lines.length=' + lines.length)
@@ -108,13 +108,13 @@ export async function rebuildAblProject (waitForRcodeCount = 0) {
 	let rcodeCount = getRcodeCount()
 	log.info('command abl.project.rebuild complete! rcodeCount=' + rcodeCount)
 	if (rcodeCount == 0) {
-		await sleep2(250, 'waiting for rcode to be generated...')
+		await sleep(100, 'waiting for rcode to be generated...')
 		rcodeCount = getRcodeCount()
 		log.info('rcodeCount=' + rcodeCount)
 	}
 	const status = await dumpLangServStatus()
 	if (status.projectStatus?.[0] && (status.projectStatus[0].rcodeQueue ?? -1) > 0) {
-		await sleep2(230, 'rcode queue is ' + status.projectStatus[0].rcodeQueue)
+		await sleep(100, 'rcode queue is ' + status.projectStatus[0].rcodeQueue)
 	}
 	rcodeCount = getRcodeCount()
 	log.info('rcodeCount=' + rcodeCount)
@@ -150,7 +150,7 @@ async function dumpLangServStatus () {
 	const startingLine = (await getLogContents()).length
 	await commands.executeCommand('abl.dumpLangServStatus')
 		.then(() => {
-			return sleep2(250, 'pause after command abl.dumpLangServStatus')
+			return sleep(100, 'pause after command abl.dumpLangServStatus')
 		}, (e: unknown) => {
 			log.error('e=' + e)
 			throw e
@@ -159,7 +159,7 @@ async function dumpLangServStatus () {
 	let lines = await getLogContents()
 	const duration = new Duration('dumpLangServStatus')
 	while (lines.length == startingLine && duration.elapsed() < 3000) {
-		await sleep2(252)
+		await sleep(100)
 		lines = await getLogContents()
 	}
 	if (lines.length == startingLine) {
@@ -284,7 +284,7 @@ export async function waitForLangServerReady () {
 	let lastLogLength = 0
 
 	while (!langServerReady || stillCompiling) {
-		const lines = await sleep2(250)
+		const lines = await sleep(100)
 			.then(() => getLogContents())
 		if (!lines) {
 			continue
@@ -343,9 +343,9 @@ export async function waitForLangServerReady () {
 			break
 		}
 
-		const prom2 = sleep2(100, 'language server not ready yet...' +  waitTime +
+		const prom2 = sleep(100, 'language server not ready yet...' +  waitTime +
 			'\n\tlangServerReady=' + langServerReady + ', langServerError=' + langServerError + ', compileSuccess=' + compileSuccess + ', compileFailed=' + compileFailed)
-			.then(() => sleep2(101))
+			.then(() => sleep(100))
 		await prom2 // await prom so other threads can run
 
 		if (waitTime.elapsed() > maxWait * 1000) {
