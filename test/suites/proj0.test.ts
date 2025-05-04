@@ -44,7 +44,7 @@ suite('proj0  - Extension Test Suite', () => {
 		}
 	})
 
-	teardown('proj0 - afterEach', () => {
+	teardown('proj0 - afterEach', async () => {
 		log.info('proj0 teardown')
 		FileUtils.deleteFile([
 			toUri('.vscode/ablunit-test-profile.json'),
@@ -53,6 +53,7 @@ suite('proj0  - Extension Test Suite', () => {
 			toUri('src/dirA/proj10.p'),
 			toUri('UNIT_TEST.tmp'),
 		], { force: true })
+
 		while (disposables.length > 0) {
 			const d = disposables.pop()
 			if (d) {
@@ -61,6 +62,7 @@ suite('proj0  - Extension Test Suite', () => {
 				log.warn('disposables.length != 0')
 			}
 		}
+		await sleep(100)
 	})
 
 	suiteTeardown('proj0 - after', () => {
