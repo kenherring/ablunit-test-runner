@@ -227,6 +227,7 @@ export function installExtension (extname = 'riversidesoftware.openedge-abl-lsp'
 }
 
 export function sleep2 (time = 10, msg?: string | null) {
+	time = time / 2
 	if (msg !== null) {
 		let status = 'sleeping for ' + time + 'ms'
 		if (msg) {
@@ -234,19 +235,6 @@ export function sleep2 (time = 10, msg?: string | null) {
 		}
 		log.info(status)
 	}
-	return new Promise(resolve => setTimeout(resolve, time))
-}
-
-export function sleep (requestedTime = 25, msg?: string) {
-	const time = 25
-	let status = 'sleeping for ' + time + 'ms'
-	if (time !== requestedTime) {
-		status += ' (orig=' + requestedTime + 'ms)'
-	}
-	if (msg) {
-		status = status + ' [' + msg + ']'
-	}
-	log.info(status)
 	return new Promise(resolve => setTimeout(resolve, time))
 }
 
@@ -537,7 +525,7 @@ export async function runAllTests (doRefresh = true, waitForResults = true, with
 	const r = await commands.executeCommand(testCommand)
 		.then((r) => {
 			log.info(tag + 'command ' + testCommand +' complete! (r=' + r + ')')
-			return sleep(250)
+			return sleep2(25)
 		}, (e: unknown) => {
 			log.error(tag + testCommand + ' failed: ' + e)
 			throw e

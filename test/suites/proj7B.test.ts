@@ -25,7 +25,6 @@ suite('proj7B - Extension Test Suite', () => {
 			testCount = await getTestControllerItemCount('ABLTestFile')
 			if (testCount >= 2) { break }
 			await sleep2(2)
-			// await sleep(5, 'waiting for getTestControllerItemCount to return > 10 (got ' + testCount + ')')
 			if (startRefreshTime.elapsed() > 10000) {
 				throw new Error('timeout waiting for getTestControllerItemCount to return > 2 (got ' + testCount + ')')
 			}

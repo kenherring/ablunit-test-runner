@@ -1,5 +1,5 @@
 import { Selection, TaskEndEvent, TaskExecution, commands, tasks, window } from 'vscode'
-import { Uri, assert, getWorkspaceUri, log, runAllTests, sleep, updateConfig, getTestCount, workspace, suiteSetupCommon, getWorkspaceFolders, oeVersion, runTestAtLine, beforeCommon, updateTestProfile, runTestsInFile, TestRunProfileKind, sleep2, FileUtils } from '../testCommon'
+import { Uri, assert, getWorkspaceUri, log, runAllTests, updateConfig, getTestCount, workspace, suiteSetupCommon, getWorkspaceFolders, oeVersion, runTestAtLine, beforeCommon, updateTestProfile, runTestsInFile, TestRunProfileKind, sleep2, FileUtils } from '../testCommon'
 import { getOEVersion } from 'parse/OpenedgeProjectParser'
 import { execSync } from 'child_process'
 import * as glob from 'glob'
@@ -108,7 +108,7 @@ suite('proj1 - Extension Test Suite', () => {
 
 	test('proj1.4 - run test case in file', async () => {
 		await commands.executeCommand('vscode.open', Uri.joinPath(workspaceUri, 'procedureTest.p'))
-		await sleep(200)
+		await sleep2(25)
 		await commands.executeCommand('testing.runCurrentFile')
 
 		const resultsJson = Uri.joinPath(workspaceUri, 'results.json')
