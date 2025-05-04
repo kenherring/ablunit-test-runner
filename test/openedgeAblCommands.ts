@@ -3,6 +3,7 @@ import { Duration, activateExtension, enableExtensions, getDefaultDLC, getRcodeC
 import { getContentFromFilesystem } from 'parse/TestParserCommon'
 import * as glob from 'glob'
 import { dirname } from 'path'
+import { TimeoutError } from 'Errors'
 
 let ablunitLogUri = getWorkspaceUri()
 
@@ -33,14 +34,34 @@ export async function enableOpenedgeAblExtension (runtimes?: IRuntime[]) {
 		}, (e: unknown) => { throw e })
 }
 
-export function restartLangServer () {
+async function waitForRcode (expectedCount: number) {
+	const maxWait = 15 // seconds
+	const waitTime = new Duration()
+	let rcodeCount = getRcodeCount()
+	while (rcodeCount < expectedCount) {
+
+		if (waitTime.elapsed() > maxWait * 1000) {
+			log.error('timeout after ' + waitTime.elapsed() + 'ms')
+			throw new TimeoutError('waiting for rcode', waitTime, maxWait * 1000)
+		}
+
+		await sleep(100, null)
+		rcodeCount = getRcodeCount()
+	}
+	log.info('rcodeCount=' + rcodeCount + ' ' + waitTime)
+	return rcodeCount
+}
+
+export function restartLangServer (rcodeCount = 0): PromiseLike<number> {
 	log.info('restarting lang server with command abl.restart.langserv')
 	return commands.executeCommand('abl.restart.langserv').then(() => {
 		log.info('command abl.restart.langserv command completed successfully')
 		return waitForLangServerReady()
 	}).then(() => {
 		log.info('lang server is ready')
-		return true
+		return waitForRcode(rcodeCount)
+	}).then((r) => {
+		return r
 	}, (e: unknown) => {
 		log.error('abl.restart.langserv command failed! e=' + e)
 		throw new Error('abl.restart.langserv command failed! e=' + e)
@@ -284,8 +305,7 @@ export async function waitForLangServerReady () {
 	let lastLogLength = 0
 
 	while (!langServerReady || stillCompiling) {
-		const lines = await sleep(100)
-			.then(() => getLogContents())
+		const lines = await getLogContents()
 		if (!lines) {
 			continue
 		}
@@ -345,7 +365,6 @@ export async function waitForLangServerReady () {
 
 		const prom2 = sleep(100, 'language server not ready yet...' +  waitTime +
 			'\n\tlangServerReady=' + langServerReady + ', langServerError=' + langServerError + ', compileSuccess=' + compileSuccess + ', compileFailed=' + compileFailed)
-			.then(() => sleep(100))
 		await prom2 // await prom so other threads can run
 
 		if (waitTime.elapsed() > maxWait * 1000) {
@@ -401,7 +420,7 @@ export async function waitForLangServerReady () {
 	}
 
 	if (langServerReady) {
-		log.error('lang server is ready! (waitTime='  + waitTime + ')')
+		log.info('lang server is ready! (waitTime='  + waitTime + ')')
 		return true
 	}
 

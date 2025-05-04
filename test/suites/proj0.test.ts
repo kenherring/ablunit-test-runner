@@ -1,5 +1,5 @@
 import { DeclarationCoverage, FileCoverageDetail, Range, TestRunProfileKind, Uri, commands, window, workspace } from 'vscode'
-import { assert, getRcodeCount, getResults, getTestControllerItemCount, getTestItem, getXrefCount, log, rebuildAblProject, refreshTests, runAllTests, runAllTestsWithCoverage, runTestAtLine, runTestsDuration, runTestsInFile, suiteSetupCommon, FileUtils, toUri, updateConfig, updateTestProfile, deleteRcode, setRuntimes, awaitRCode, getWorkspaceFolders, sleep } from '../testCommon'
+import { assert, getRcodeCount, getResults, getTestControllerItemCount, getTestItem, getXrefCount, log, rebuildAblProject, refreshTests, runAllTests, runAllTestsWithCoverage, runTestAtLine, runTestsDuration, runTestsInFile, suiteSetupCommon, FileUtils, toUri, updateConfig, updateTestProfile, deleteRcode, setRuntimes, sleep } from '../testCommon'
 import { ABLResultsParser } from 'parse/ResultsParser'
 import { TimeoutError } from 'Errors'
 import { restartLangServer } from '../openedgeAblCommands'
@@ -12,13 +12,15 @@ function createTempFile () {
 	return tempFile
 }
 
+const backupProjectFile = 'oeproject.bk'
+
 suite('proj0  - Extension Test Suite', () => {
 
 	const disposables: vscode.Disposable[] = []
 
 	suiteSetup('proj0 - before', async () => {
-		FileUtils.copyFile(toUri('.vscode/settings.json'), toUri('.vscode/settings.json.bk'), { force: true })
-		FileUtils.copyFile(toUri('openedge-project.json'), toUri('openedge-project.json.bk'), { force: true })
+		FileUtils.copyFile('.vscode/settings.json', '.vscode/settings.json.bk', { force: true })
+		FileUtils.copyFile('openedge-project.json', backupProjectFile, { force: true })
 
 		FileUtils.deleteDir(toUri('d1'))
 		FileUtils.deleteDir(toUri('d2'))
@@ -63,7 +65,7 @@ suite('proj0  - Extension Test Suite', () => {
 
 	suiteTeardown('proj0 - after', () => {
 		FileUtils.renameFile(toUri('.vscode/settings.json.bk'), toUri('.vscode/settings.json'))
-		FileUtils.renameFile(toUri('openedge-project.json.bk'), toUri('openedge-project.json'))
+		FileUtils.renameFile(toUri(backupProjectFile), toUri('openedge-project.json'))
 	})
 
 	test('proj0.01 - ${workspaceFolder}/ablunit.json file exists', () => {
@@ -245,7 +247,7 @@ suite('proj0  - Extension Test Suite', () => {
 
 	test('proj0.10C - Delete File', async () => {
 		// init tests
-		FileUtils.copyFile(toUri('src/dirA/proj10.p.orig'), toUri('src/dirA/proj10.p'))
+		FileUtils.copyFile('src/dirA/proj10.p.orig', 'src/dirA/proj10.p')
 		const startCount = await refreshTests()
 			.then(() => { return getTestControllerItemCount('ABLTestFile') })
 		const tempFile = createTempFile()
@@ -344,7 +346,7 @@ suite('proj0  - Extension Test Suite', () => {
 		if (FileUtils.doesFileExist(toUri('.vscode/ablunit-test-profile.json'))) {
 			assert.fail('.vscode/ablunit-test-profile.json should not exist')
 		}
-		FileUtils.copyFile(toUri('.vscode/ablunit-test-profile.proj0.17.json'), toUri('.vscode/ablunit-test-profile.json'))
+		FileUtils.copyFile('.vscode/ablunit-test-profile.proj0.17.json', '.vscode/ablunit-test-profile.json')
 		const prom = runTestAtLine('src/test_17.cls', 33, 1, TestRunProfileKind.Coverage)
 			.then(() => {
 				assert.tests.count(1)
@@ -416,11 +418,8 @@ suite('proj0  - Extension Test Suite', () => {
 	test('proj0.20 - build directory', async () => {
 		FileUtils.copyFile('openedge-project.test20.json', 'openedge-project.json')
 		deleteRcode()
+		await restartLangServer(23)
 
-		const rcodeCount = await restartLangServer()
-			.then(() => rebuildAblProject(16))
-
-		assert.greaterOrEqual(rcodeCount, 16, 'rcodeCount > 0')
 		assert.fileExists('d1/test_20.r')
 		assert.fileExists('d2/test_20.p.xref')
 
@@ -430,10 +429,9 @@ suite('proj0  - Extension Test Suite', () => {
 				assert.coverageProcessingMethod(toUri('src/test_20.p'), 'rcode')
 			})
 
-		FileUtils.copyFile('openedge-project.json.bk', 'openedge-project.json')
+		FileUtils.copyFile(backupProjectFile, 'openedge-project.json')
 		deleteRcode()
-		await restartLangServer()
-		await awaitRCode(getWorkspaceFolders()[0], 24)
+		await restartLangServer(23)
 	})
 
 	test('proj0.21 - overloaded method coverage', async () => {

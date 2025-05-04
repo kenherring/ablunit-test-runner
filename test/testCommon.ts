@@ -343,7 +343,9 @@ function getFileCountByExt (ext: string, workspaceFolder?: WorkspaceFolder | Uri
 	throw new Error('fileCount is not a positive number! fileCount=' + fileCount + '(ext=' + ext + ')')
 }
 
-export async function awaitRCode (workspaceFolder: WorkspaceFolder, rcodeCountMinimum = 1) {
+export async function awaitRCode (workspaceFolder: WorkspaceFolder | undefined, rcodeCountMinimum = 1) {
+	workspaceFolder = workspaceFolder ?? getWorkspaceFolders()[0]
+
 	const ext = extensions.getExtension('riversidesoftware.openedge-abl-lsp')
 	log.info('isActive=' + ext?.isActive)
 	if (!ext?.isActive) {
@@ -1136,7 +1138,9 @@ export const assert = {
 		assertParent.ok(testValue > greaterThan, message)
 	},
 	greaterOrEqual (testValue: number, greaterThan: number, message?: string) {
-		assertParent.ok(testValue >= greaterThan, message)
+		if (testValue < greaterThan) {
+			assert.equal(testValue, '>= ' + greaterThan, message)
+		}
 	},
 	less (testValue: number, lessThan: number, message?: string) {
 		assertParent.ok(testValue < lessThan, message)
