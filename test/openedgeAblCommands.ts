@@ -3,7 +3,6 @@ import { Duration, activateExtension, enableExtensions, getDefaultDLC, getRcodeC
 import { getContentFromFilesystem } from 'parse/TestParserCommon'
 import * as glob from 'glob'
 import { dirname } from 'path'
-import { TimeoutError } from 'Errors'
 
 let ablunitLogUri = getWorkspaceUri()
 
@@ -307,7 +306,7 @@ async function getLogContents () {
 }
 
 export async function waitForLangServerReady () {
-	const maxWait = 15 // seconds // seconds
+	const maxWait = 30 // seconds // seconds
 	const waitTime = new Duration()
 	let langServerReady = false
 	let langServerError = false

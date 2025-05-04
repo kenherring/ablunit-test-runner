@@ -2,7 +2,6 @@ import { Uri, workspace } from 'vscode'
 import { assert, getRcodeCount, getWorkspaceUri, log, suiteSetupCommon, toUri } from '../testCommon'
 import { getSourceMapFromRCode } from 'parse/SourceMapRCodeParser'
 import { PropathParser } from 'ABLPropath'
-import { doesFileExist } from 'FileUtils'
 
 const workspaceFolder = workspace.workspaceFolders![0]
 
