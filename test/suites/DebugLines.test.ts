@@ -1,5 +1,5 @@
 import { Uri, workspace } from 'vscode'
-import { assert, awaitRCode, getWorkspaceUri, log, suiteSetupCommon, toUri } from '../testCommon'
+import { assert, awaitRCode, getRcodeCount, getWorkspaceUri, log, suiteSetupCommon, toUri } from '../testCommon'
 import { getSourceMapFromRCode } from 'parse/SourceMapRCodeParser'
 import { PropathParser } from 'ABLPropath'
 
@@ -9,16 +9,17 @@ suite('debugLines - Debug Line Tests - insiders', () => {
 
 	suiteSetup('debugLines - before', () => {
 		const prom = suiteSetupCommon()
-			.then(() => { return awaitRCode(workspaceFolder, 8) })
-			.then((rcodeCount) => {
-				log.info('rcodeCount=' + rcodeCount)
-				return rcodeCount
-			}, (e: unknown) => {
-				log.error('rcode error: ' + e)
-				throw e
-			})
 		return prom
 	})
+
+	setup('debugLines - before each', () => {
+		log.info('debugLines - before each')
+		const rcodeCount = getRcodeCount()
+		if (rcodeCount < 8) {
+			throw new Error('rcodeCount=' + rcodeCount + ' < 8')
+		}
+	})
+
 
 	test('debugLines.1 - read debug line map from rcode', async () => {
 		const propath = new PropathParser(workspaceFolder)
