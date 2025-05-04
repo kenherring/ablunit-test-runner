@@ -149,7 +149,7 @@ export function isAbsolutePath (path: string): boolean {
 
 function doesPathExist (uri: Uri | string, type?: 'file' | 'directory'): boolean {
 	if (!(uri instanceof Uri)) {
-		uri = Uri.file(uri)
+		uri = toUri(uri)
 	}
 	const exist = fs.existsSync(uri.fsPath)
 	if (!exist || !type) {
@@ -160,7 +160,7 @@ function doesPathExist (uri: Uri | string, type?: 'file' | 'directory'): boolean
 	} else if (type === 'directory') {
 		return fs.statSync(uri.fsPath).isDirectory()
 	}
-	log.debug('unknown path type=' + type)
+	log.warn('unknown path type=' + type)
 	return false
 }
 

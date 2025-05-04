@@ -342,6 +342,9 @@ function getFileCountByExt (ext: string, workspaceFolder?: WorkspaceFolder | Uri
 	const fileCount = g.length
 	if (fileCount >= 0) {
 		log.info('\'*.r\' files=' + fileCount + ' (path=' + uri.fsPath + ')')
+		// for (const file of g) {
+		// 	log.info('\t' + file)
+		// }
 		return fileCount
 	}
 	throw new Error('fileCount is not a positive number! fileCount=' + fileCount + '(ext=' + ext + ')')
