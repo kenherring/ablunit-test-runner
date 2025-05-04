@@ -78,7 +78,7 @@ commands:
 
 jobs:
   package:
-    executor: node:20
+    docker: [ image: node:20.19 ]
     environment:
       npm_config_cache: /home/circleci/cache/node_modules_cache
       EXPECTED_VSIX_COUNT: << pipeline.parameters.expected-vsix-count >>
