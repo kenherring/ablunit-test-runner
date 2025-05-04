@@ -306,7 +306,7 @@ async function getLogContents () {
 }
 
 export async function waitForLangServerReady () {
-	const maxWait = 30 // seconds // seconds
+	const maxWait = 45 // seconds // seconds
 	const waitTime = new Duration()
 	let langServerReady = false
 	let langServerError = false
