@@ -1,5 +1,5 @@
 import { DeclarationCoverage, FileCoverageDetail, Range, TestRunProfileKind, Uri, commands, window, workspace } from 'vscode'
-import { assert, getRcodeCount, getResults, getTestControllerItemCount, getTestItem, getXrefCount, log, rebuildAblProject, refreshTests, runAllTests, runAllTestsWithCoverage, runTestAtLine, runTestsDuration, runTestsInFile, suiteSetupCommon, FileUtils, toUri, updateConfig, updateTestProfile, deleteRcode, setRuntimes, sleep } from '../testCommon'
+import { assert, getRcodeCount, getResults, getTestControllerItemCount, getTestItem, getXrefCount, log, rebuildAblProject, refreshTests, runAllTests, runAllTestsWithCoverage, runTestAtLine, runTestsDuration, runTestsInFile, suiteSetupCommon, FileUtils, toUri, updateConfig, updateTestProfile, deleteRcode, setRuntimes, sleep, Duration } from '../testCommon'
 import { ABLResultsParser } from 'parse/ResultsParser'
 import { TimeoutError } from 'Errors'
 import { restartLangServer } from '../openedgeAblCommands'
@@ -227,9 +227,13 @@ suite('proj0  - Extension Test Suite', () => {
 		}
 		log.info('opened file (activeUri=' + activeUri?.fsPath + ')')
 
-		await sleep(50)
-		const startCount = await getTestItem(toUri('src/dirA/proj10.p'))
-			.then((r) => r.children.size)
+		let testItem = await getTestItem(toUri('src/dirA/proj10.p'))
+		const d = new Duration()
+		while (d.elapsed() < 1000 && testItem.children.size < 1) {
+			await sleep(10, undefined)
+			testItem = await getTestItem(toUri('src/dirA/proj10.p'))
+		}
+		const startCount = testItem.children.size
 		assert.equal(startCount, 1, 'test cases count != 1 (startCount=' + startCount + ')')
 
 		// update test program
