@@ -333,7 +333,7 @@ suite('proj0  - Extension Test Suite', () => {
 	})
 
 	test('proj0.14 - timeout invalid -5s', async () => {
-		const prom = updateTestProfile('timeout', -5000)
+		await updateTestProfile('timeout', -5000)
 			.then(() => { return runTestsInFile('src/simpleTest.p', 0) })
 			.then(() => { return commands.executeCommand('_ablunit.getTestRunError') })
 			.then((e) => {
@@ -347,7 +347,6 @@ suite('proj0  - Extension Test Suite', () => {
 				assert.fail('expected RangeError to be thrown but got e=' + JSON.stringify(e, null, 2))
 				return false
 			})
-		return await prom
 	})
 
 	test('proj0.17 - coverage in class property getters/setters', () => {
