@@ -339,12 +339,11 @@ suite('proj0  - Extension Test Suite', () => {
 		return
 	})
 
-	test('proj0.17 - coverage in class property getters/setters', () => {
+	test('proj0.17 - coverage in class property getters/setters', async () => {
 		log.info('proj0.17')
 		FileUtils.deleteFile(['results.xml', 'results.json'], { force: true })
-		FileUtils.copyFile('.vscode/ablunit-test-profile.proj0.17.json', '.vscode/ablunit-test-profile.json')
-		await sleep(100)
-		const prom = runTestAtLine('src/test_17.cls', 33, 1, TestRunProfileKind.Coverage)
+		await FileUtils.copyFileAsync('.vscode/ablunit-test-profile.proj0.17.json', '.vscode/ablunit-test-profile.json')
+		await runTestAtLine('src/test_17.cls', 33, 1, TestRunProfileKind.Coverage)
 			.then(() => {
 				assert.tests.count(1)
 				assert.tests.passed(1)
@@ -355,7 +354,7 @@ suite('proj0  - Extension Test Suite', () => {
 				assert.linesExecuted('src/test_17.cls', [41, 42, 43, 44])
 				return
 			})
-		return prom
+		return
 	})
 
 	test('proj0.18 - not 100% coverage', async () => {
