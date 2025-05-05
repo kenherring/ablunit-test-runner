@@ -77,11 +77,23 @@ suite('proj7B - Extension Test Suite', () => {
 		const maxCancelTime = 1000
 		// const runTestTime = new Duration()
 
-		runAllTests(true, false).catch((e: unknown) => { log.info('runAllTests got error: ' + e) })
-		await waitForTestRunStatus(RunStatus.Constructed)
+		try {
+			runAllTests(true, false).catch((e: unknown) => { log.info('runAllTests got error: ' + e) })
+			await waitForTestRunStatus(RunStatus.Constructed)
 
-		const elapsedCancelTime = await cancelTestRun(false)
-		assert.durationLessThan(elapsedCancelTime, maxCancelTime)
+			const elapsedCancelTime = await cancelTestRun(false)
+			assert.durationLessThan(elapsedCancelTime, maxCancelTime)
+		} catch (e: unknown) {
+			if (e instanceof Error) {
+				log.info('e.name=' + e.name)
+			} else {
+				log.error('not error type: ' + typeof e)
+			}
+			if (e instanceof Error && e.name == 'Canceled') {
+				log.info('testing.cancelRun threw CancellationError as expected')
+			}
+			throw e
+		}
 
 		// const resArr = await getCurrentRunData()
 		// const res = resArr[0]
