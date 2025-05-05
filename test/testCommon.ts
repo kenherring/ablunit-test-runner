@@ -1283,7 +1283,8 @@ export const assert = {
 			assert.fail('no coverage found for ' + file.fsPath)
 			return
 		}
-		log.info('coverage=' + JSON.stringify(coverage, null, 2))
+
+		// log.info('coverage=' + JSON.stringify(coverage, null, 2))
 		for (const line of lines) {
 			log.info('checking line ' + line + ' in ' + file.fsPath)
 			const executions = getLineExecutions(coverage, line)
