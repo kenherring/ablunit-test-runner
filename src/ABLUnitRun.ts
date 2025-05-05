@@ -253,7 +253,7 @@ function runCommand (res: ABLResults, options: TestRun, cancellation: Cancellati
 				log.debug('stdout savePartialLine=\'' + stdout + '\'')
 			}
 
-			// log.info('lines=' + JSON.stringify(lines, null, 4))
+			log.info('lines=' + JSON.stringify(lines, null, 4))
 
 			for (const line of lines) {
 				if (line.startsWith('ABLUNIT_STATUS=SERIALIZED_ERROR ')) {
