@@ -39,10 +39,6 @@ async function waitForRcode (expectedCount?: number) {
 	let rcodeDuration = new Duration ('rcodeDuration')
 	expectedCount = expectedCount ?? getSourceCount() * .80
 	while (rcodeCount < expectedCount) {
-		// if (waitTime.elapsed() > maxWait * 1000) {
-		// 	log.error('timeout after ' + waitTime.elapsed() + 'ms')
-		// 	throw new TimeoutError('waiting for rcode failed. rcodeCount=' + rcodeCount, waitTime, maxWait * 1000)
-		// }
 
 		if (lastRcodeCount != rcodeCount) {
 			rcodeDuration = new Duration('rcodeDuration')
