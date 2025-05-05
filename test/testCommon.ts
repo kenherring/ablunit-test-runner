@@ -232,6 +232,7 @@ export function sleep (time = 10, msg?: string | null) {
 		log.info(status)
 	}
 	return new Promise(resolve => setTimeout(resolve, time))
+		.then(() => { return })
 }
 
 export async function activateExtension (extname = 'riversidesoftware.openedge-abl-lsp') {
