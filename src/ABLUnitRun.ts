@@ -238,12 +238,10 @@ function runCommand (res: ABLResults, options: TestRun, cancellation: Cancellati
 
 		process.stderr?.on('data', (data: Buffer) => {
 			log.debug('stderr')
-			log.info('stderr')
 			log.error('\t\t[stderr] ' + data.toString().trim().replace(/\n/g, '\n\t\t[stderr] '), {testRun: options, testItem: currentTestItems[0]})
 		})
 		process.stdout?.on('data', (data: Buffer) => {
 			log.debug('stdout')
-			log.info('stdout')
 			const lines = (stdout + data.toString()).replace('/\r/g', '').split('\n')
 			if (lines[lines.length - 1] == '') {
 				stdout = ''
@@ -340,12 +338,10 @@ function runCommand (res: ABLResults, options: TestRun, cancellation: Cancellati
 		})
 		process.once('spawn', () => {
 			log.debug('spawn', {testRun: options})
-			log.info('spawn', {testRun: options})
 			res.setStatus(RunStatus.Executing)
 			log.info('----- ABLUnit Test Run Started -----', {testRun: options, testItem: currentTestItems[0] })
 		}).on('disconnect', () => {
 			log.debug('process.disconnect', {testRun: options})
-			log.info('process.disconnect', {testRun: options})
 			log.info('process.disconnect')
 		}).on('error', (e: Error) => {
 			log.debug('error', {testRun: options})
