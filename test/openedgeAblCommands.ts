@@ -66,6 +66,8 @@ async function waitForRcode (expectedCount?: number) {
 export function restartLangServer (rcodeCount = 0): PromiseLike<number> {
 	log.info('restarting lang server with command abl.restart.langserv')
 	return commands.executeCommand('abl.restart.langserv').then(() => {
+		return sleep(250)
+	}).then(() => {
 		log.info('command abl.restart.langserv command completed successfully')
 		return waitForLangServerReady()
 	}).then(() => {

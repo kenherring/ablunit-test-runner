@@ -241,11 +241,10 @@ suite('proj0  - Extension Test Suite', () => {
 		// update test program
 		const edit = new vscode.WorkspaceEdit()
 		edit.createFile(toUri('src/dirA/proj10.p'), { overwrite: true, contents: Buffer.from('@Test. procedure test1: end procedure.\n\n@Test. procedure test2: end procedure.\n\n@Test. procedure test3: end procedure.') })
-		const success = await workspace.applyEdit(edit)
-		assert.ok(success)
+		assert.ok(await workspace.applyEdit(edit))
 
 		// validate test case items added
-		await sleep(25)
+		await sleep(100)
 		const endCount = await getTestItem(toUri('src/dirA/proj10.p'))
 			.then((r) => r.children.size)
 		assert.equal(endCount - startCount, 2, 'test cases added != 2 (endCount=' + endCount + '; startCount=' + startCount + ')')
