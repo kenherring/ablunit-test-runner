@@ -80,6 +80,7 @@ suite('proj7B - Extension Test Suite', () => {
 		runAllTests().catch((e: unknown) => { log.info('runAllTests got error: ' + e) })
 		await sleep(100)
 			.then(() => { return waitForTestRunStatus(RunStatus.Constructed) })
+			.then(() => { return sleep(100) })
 
 		const elapsedCancelTime = await cancelTestRun(false)
 		assert.durationLessThan(elapsedCancelTime, maxCancelTime)
