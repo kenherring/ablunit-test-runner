@@ -372,7 +372,7 @@ export async function waitForLangServerReady () {
 			break
 		}
 
-		log.info('lastLine=' + lines[lines.length - 1])
+		log.debug('lastLine=' + lines[lines.length - 1])
 		log.info('language server not ready yet...' +  waitTime +
 			'\n\tlangServerReady=' + langServerReady +
 			', langServerError=' + langServerError +
