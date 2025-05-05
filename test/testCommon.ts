@@ -659,7 +659,6 @@ export async function waitForTestRunStatus (waitForStatus: RunStatus) {
 	while (currentStatus < waitForStatus)
 	{
 		count++
-		await sleep(100, 'waitForTestRunStatus count=' + count + '; currentStatus=\'' + currentStatus.toString() + '\' + , waitForStatus=\'' + waitForStatus.toString() + '\'')
 		currentStatus = await getCurrentRunData()
 			.then((runData) => {
 				if (runData.length > 0) {
@@ -683,6 +682,9 @@ export async function waitForTestRunStatus (waitForStatus: RunStatus) {
 	if ((currentStatus as number) < (waitForStatus as number)) {
 		throw new Error('test run status should equal ' + waitForStatus.toString() + ' but is ' + currentStatus.toString())
 	}
+
+	const prom = sleep(50, 'waitForTestRunStatus count=' + count + '; currentStatus=\'' + currentStatus.toString() + '\' + , waitForStatus=\'' + waitForStatus.toString() + '\'')
+	await prom
 }
 
 export async function cancelTestRun (resolveCurrentRunData = true) {
