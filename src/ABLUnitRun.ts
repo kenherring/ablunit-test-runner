@@ -253,31 +253,24 @@ function runCommand (res: ABLResults, options: TestRun, cancellation: Cancellati
 				log.debug('stdout savePartialLine=\'' + stdout + '\'')
 			}
 
-			log.info('lines=' + JSON.stringify(lines, null, 4))
-
 			for (const line of lines) {
 				if (line.startsWith('ABLUNIT_STATUS=SERIALIZED_ERROR ')) {
 					compilerErrors.push(JSON.parse(line.substring(32)) as ICompilerError)
 					continue
 				}
 				if (line.startsWith('ABLUNIT_STATUS=')) {
-					log.info('ABLUNIT_STATUS=')
 					let ablunitStatus: IABLUnitStatus | undefined = undefined
 					try {
-						log.info('cast as IABLUnitStatus (line.substring(15)=' + line.substring(15) + ')')
 						ablunitStatus = JSON.parse(line.substring(15)) as IABLUnitStatus
-						log.info('cast successful')
 					} catch (e) {
 						log.error('error parsing ablunitStatus: ' + e)
 						ablunitStatus = { action: 'ParsingError' }
 						continue
 					}
 
-					log.info('ablunitStatus.action=' + ablunitStatus.action)
 					if (ablunitStatus.action == 'TEST_TREE' || ablunitStatus.entityName?.trim() == 'TEST_ROOT') {
 						continue
 					}
-					log.info('ablunitStatus.entityName=' + ablunitStatus.entityName)
 					if (ablunitStatus.entityName?.startsWith('TEST_ROOT ')) {
 						continue
 					}
@@ -294,13 +287,9 @@ function runCommand (res: ABLResults, options: TestRun, cancellation: Cancellati
 							log.info(prefix + '🔹  ' + ablunitStatus.entityName, {testRun: options})
 							break
 						case 'TEST_END': {
-							log.info('TEST_END.1')
 							const dur = Number(ablunitStatus.duration ?? '0') * 1000
-							log.info('TEST_END.2')
 							options.passed(currentTestItems[0], dur)
-							log.info('TEST_END.3')
 							log.info(prefix + '✅  ' + ablunitStatus.entityName + ' (' + dur + ' ms)', {testRun: options})
-							log.info('TEST_END.4')
 							break
 						}
 						case 'TEST_FAIL':
