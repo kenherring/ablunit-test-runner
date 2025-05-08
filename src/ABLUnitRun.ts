@@ -355,6 +355,8 @@ function runCommand (res: ABLResults, options: TestRun, cancellation: Cancellati
 			log.info('process.disconnect')
 		}).on('error', (e: Error) => {
 			log.debug('error', {testRun: options})
+			log.info('error-1' + typeof e)
+			log.info('error-2' + e.message)
 			log.info('process.error e=' + e)
 			res.setStatus(RunStatus.Error, 'e=' + e)
 			log.error('----- ABLUnit Test Run Error -----', {testRun: options, testItem: currentTestItems[0] })

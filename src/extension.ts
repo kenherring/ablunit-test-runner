@@ -868,7 +868,7 @@ function deleteTest (controller: TestController | undefined, item: TestItem | Ur
 		for (const child of gatherTestItems(item.children)) {
 			deleteChildren(controller, child)
 			child.children.delete(item.id)
-			log.info('delete child test: ' + item.id + ' (children.size=' + item.children.size + ')')
+			log.debug('delete child test: ' + item.id + ' (children.size=' + item.children.size + ')')
 			testData.delete(child)
 		}
 	}
