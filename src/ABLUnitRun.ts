@@ -277,7 +277,6 @@ function runCommand (res: ABLResults, options: TestRun, cancellation: Cancellati
 					if (ablunitStatus.action == 'TEST_TREE' || ablunitStatus.entityName?.trim() == 'TEST_ROOT') {
 						continue
 					}
-					log.info('ablunitStatus.entityName=' + ablunitStatus.entityName)
 					if (ablunitStatus.entityName?.startsWith('TEST_ROOT ')) {
 						continue
 					}
@@ -294,13 +293,9 @@ function runCommand (res: ABLResults, options: TestRun, cancellation: Cancellati
 							log.info(prefix + '🔹  ' + ablunitStatus.entityName, {testRun: options})
 							break
 						case 'TEST_END': {
-							log.info('TEST_END.1')
 							const dur = Number(ablunitStatus.duration ?? '0') * 1000
-							log.info('TEST_END.2')
 							options.passed(currentTestItems[0], dur)
-							log.info('TEST_END.3')
 							log.info(prefix + '✅  ' + ablunitStatus.entityName + ' (' + dur + ' ms)', {testRun: options})
-							log.info('TEST_END.4')
 							break
 						}
 						case 'TEST_FAIL':
