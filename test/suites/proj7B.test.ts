@@ -82,7 +82,9 @@ suite('proj7B - Extension Test Suite', () => {
 			await waitForTestRunStatus(RunStatus.Constructed)
 
 			const elapsedCancelTime = await cancelTestRun(false)
+			log.info('elapsedCancelTime=' + elapsedCancelTime + ', maxCancelTime=' + maxCancelTime)
 			assert.durationLessThan(elapsedCancelTime, maxCancelTime)
+			log.info('post-assert.duration')
 		} catch (e: unknown) {
 			if (e instanceof Error) {
 				log.info('e.name=' + e.name)
@@ -94,6 +96,7 @@ suite('proj7B - Extension Test Suite', () => {
 			}
 			throw e
 		}
+		log.info('post-try')
 
 		// const resArr = await getCurrentRunData()
 		// const res = resArr[0]
