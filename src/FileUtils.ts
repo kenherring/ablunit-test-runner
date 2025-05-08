@@ -239,13 +239,13 @@ export function deleteDir (dir: Uri | string | undefined | (Uri | undefined)[], 
 	deletePath('directory', dirs, options)
 }
 
-export function copyFile (source: Uri | string, target: Uri | string, _opts?: fs.CopySyncOptions): void {
+export function copyFile (source: Uri | string, target: Uri | string, opts: fs.CopySyncOptions = { force: true }): void {
 	source = toUri(source)
 	target = toUri(target)
 	if (!doesFileExist(source)) {
 		log.warn('copyFile failed! source file does not exist: ' + source.fsPath)
 	}
-	fs.copyFileSync(source.fsPath, target.fsPath)
+	fs.cpSync(source.fsPath, target.fsPath, opts)
 }
 
 export function copyFileAsync (source: Uri | string, target: Uri | string): Promise<void> {

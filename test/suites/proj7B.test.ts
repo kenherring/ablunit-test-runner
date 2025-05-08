@@ -9,7 +9,10 @@ suite('proj7B - Extension Test Suite', () => {
 		await beforeProj7()
 	})
 
-	setup('proj7B - beforeEach', beforeCommon)
+	setup('proj7B - beforeEach', () => {
+		log.info('setup proj7B')
+		beforeCommon()
+	})
 
 	test.skip('proj7B.1 - cancel test refresh', async () => {
 		const minCancelTime = 1
@@ -98,16 +101,16 @@ suite('proj7B - Extension Test Suite', () => {
 		}
 		log.info('post-try')
 
-		// const resArr = await getCurrentRunData()
-		// const res = resArr[0]
+		const resArr = await getCurrentRunData()
+		const res = resArr[0]
 
 		// TODO - fix for 12.7.0
 
-		// if (res.status == RunStatus.Cancelled) {
-		// 	log.info('runAllTests completed with status=\'run cancelled\'')
-		// } else {
-		// 	assert.fail('runAllTests completed without status=\'run cancelled\' (status=\'' + res.status + '\')')
-		// }
+		if (res.status == RunStatus.Cancelled) {
+			log.info('runAllTests completed with status=\'run cancelled\'')
+		} else {
+			assert.fail('runAllTests completed without status=\'run cancelled\' (status=\'' + res.status + '\')')
+		}
 
 		// await refreshTests().then(() => {
 		// 	if (res.status == RunStatus.Cancelled) {
@@ -126,6 +129,7 @@ suite('proj7B - Extension Test Suite', () => {
 	})
 
 	test.skip('proj7B.3 - cancel test run while _progres is running', async () => {
+		log.info('proj7B.3')
 		const maxCancelTime = 1000
 		// const runTestTime = new Duration()
 

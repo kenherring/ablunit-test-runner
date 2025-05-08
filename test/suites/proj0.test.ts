@@ -17,10 +17,11 @@ const backupProjectFile = 'oeproject.bk'
 suite('proj0  - Extension Test Suite', () => {
 
 	const disposables: vscode.Disposable[] = []
+	let firstSetup = true
 
 	suiteSetup('proj0 - before', async () => {
-		FileUtils.copyFile('.vscode/settings.json', '.vscode/settings.json.bk', { force: true })
-		FileUtils.copyFile('openedge-project.json', backupProjectFile, { force: true })
+		FileUtils.copyFile('.vscode/settings.json', '.vscode/settings.json.bk')
+		FileUtils.copyFile('openedge-project.json', backupProjectFile)
 
 		FileUtils.deleteDir(toUri('d1'))
 		FileUtils.deleteDir(toUri('d2'))
@@ -38,9 +39,15 @@ suite('proj0  - Extension Test Suite', () => {
 	})
 
 	setup('proj0 - setup', async () => {
-		const oever = process.env['ABLUNIT_TEST_RUNNER_OE_VERSION'] ?? process.env['OE_VERSION']
-		if (oever === '12.2') {
-			await setRuntimes([{name: '12.2', path: 'C:\\Progress\\OpenEdge', default: true}])
+		FileUtils.copyFile('.vscode/settings.json.bk', '.vscode/settings.json')
+		FileUtils.copyFile(backupProjectFile, 'openedge-project.json')
+
+		if (firstSetup) {
+			const oever = process.env['ABLUNIT_TEST_RUNNER_OE_VERSION'] ?? process.env['OE_VERSION']
+			if (oever === '12.2') {
+				await setRuntimes([{name: '12.2', path: 'C:\\Progress\\OpenEdge', default: true}])
+			}
+			firstSetup = false
 		}
 	})
 
@@ -339,7 +346,7 @@ suite('proj0  - Extension Test Suite', () => {
 	test('proj0.17 - coverage in class property getters/setters', async () => {
 		log.info('proj0.17')
 		FileUtils.deleteFile(['results.xml', 'results.json'], { force: true })
-		await FileUtils.copyFileAsync('.vscode/ablunit-test-profile.proj0.17.json', '.vscode/ablunit-test-profile.json')
+		FileUtils.copyFile('.vscode/ablunit-test-profile.proj0.17.json', '.vscode/ablunit-test-profile.json')
 		await runTestAtLine('src/test_17.cls', 33, 1, TestRunProfileKind.Coverage)
 			.then(() => {
 				assert.tests.count(1)
