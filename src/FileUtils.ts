@@ -4,6 +4,7 @@ import JSON_minify from 'node-json-minify'
 import { FileSystemError, Uri, workspace } from 'vscode'
 import { log } from 'ChannelLogger'
 import { RmOptions } from 'fs'
+import { sleep } from '../test/testCommon'
 
 export class TextDocumentLines {
 	uri: Uri
@@ -92,6 +93,13 @@ export function writeFile (path: string | Uri, data: string | Uint8Array, option
 	fs.writeFileSync(path, data, options)
 }
 
+export function writeFileAsync (path: string | Uri, data: string | Uint8Array, options?: fs.WriteFileOptions): Promise<void> {
+	if (path instanceof Uri) {
+		path = path.fsPath
+	}
+	return fsp.writeFile(path, data, options)
+}
+
 export function validateDirectory (path: string | Uri): boolean {
 	if (path instanceof Uri) {
 		if (!doesDirExist(path)) {
@@ -142,7 +150,7 @@ export function isAbsolutePath (path: string): boolean {
 
 function doesPathExist (uri: Uri | string, type?: 'file' | 'directory'): boolean {
 	if (!(uri instanceof Uri)) {
-		uri = Uri.file(uri)
+		uri = toUri(uri)
 	}
 	const exist = fs.existsSync(uri.fsPath)
 	if (!exist || !type) {
@@ -153,7 +161,7 @@ function doesPathExist (uri: Uri | string, type?: 'file' | 'directory'): boolean
 	} else if (type === 'directory') {
 		return fs.statSync(uri.fsPath).isDirectory()
 	}
-	log.debug('unknown path type=' + type)
+	log.warn('unknown path type=' + type)
 	return false
 }
 
@@ -231,13 +239,13 @@ export function deleteDir (dir: Uri | string | undefined | (Uri | undefined)[], 
 	deletePath('directory', dirs, options)
 }
 
-export function copyFile (source: Uri | string, target: Uri | string, _opts?: fs.CopySyncOptions): void {
+export function copyFile (source: Uri | string, target: Uri | string, opts: fs.CopySyncOptions = { force: true }): void {
 	source = toUri(source)
 	target = toUri(target)
 	if (!doesFileExist(source)) {
 		log.warn('copyFile failed! source file does not exist: ' + source.fsPath)
 	}
-	fs.copyFileSync(source.fsPath, target.fsPath)
+	fs.cpSync(source.fsPath, target.fsPath, opts)
 }
 
 export function copyFileAsync (source: Uri | string, target: Uri | string): Promise<void> {
@@ -248,6 +256,7 @@ export function copyFileAsync (source: Uri | string, target: Uri | string): Prom
 		return Promise.resolve()
 	}
 	return fsp.copyFile(source.fsPath, target.fsPath)
+		.then(() => sleep(100, undefined))
 }
 
 export function renameFile (source: Uri | string, target: Uri | string): void {

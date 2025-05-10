@@ -207,6 +207,9 @@ class Logger {
 				ret = ret.substring(this.baseDir.length + 1)
 			} else {
 				const parts = ret.split('(')
+				if (parts[0].trim() == 'sleep') {
+					continue
+				}
 				if (parts.length >=2 && parts[1].startsWith(this.extensionCodeDir)) {
 					parts[1] =  parts[1].substring(this.extensionCodeDir.length + 1)
 					ret = parts.join('(')

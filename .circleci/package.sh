@@ -15,22 +15,21 @@ initialize () {
     fi
 
     if  [ -z "${CIRCLE_TAG:-}" ] && [ -z "${CIRCLE_BRANCH:-}" ]; then
-        echo "ERROR: both CIRCLE_TAG and CIRCLE_BRANCH are set. exiting... (CIRCLE_TAG=$CIRCLE_TAG, CIRCLE_BRANCH=$CIRCLE_BRANCH)"
+        log_error "both CIRCLE_TAG and CIRCLE_BRANCH are set. exiting... (CIRCLE_TAG=$CIRCLE_TAG, CIRCLE_BRANCH=$CIRCLE_BRANCH)"
         exit 1
     fi
 
     PACKAGE_VERSION=$(jq -r '.version' package.json)
-    echo "PACKAGE_VERSION=$PACKAGE_VERSION"
+    log_it "PACKAGE_VERSION=$PACKAGE_VERSION"
     PATCH=${PACKAGE_VERSION##*.}
-    echo "PATCH_VERSION=$PATCH"
+    log_it "PATCH_VERSION=$PATCH"
     if [ "$((PATCH % 2))" = "1" ]; then
-        echo "version patch component is odd. packaging as prerelease. (PATCH=$PATCH)"
+        log_it "version patch component is odd. packaging as prerelease. (PATCH=$PATCH)"
         PRERELEASE=true
     else
-        echo "version patch component is even. packaging as stable release. (PATCH=$PATCH)"
+        log_it "version patch component is even. packaging as stable release. (PATCH=$PATCH)"
         PRERELEASE=false
     fi
-    echo "PRERELEASE=$PRERELEASE"
 
     rm -f ./*.vsix
 }
@@ -86,7 +85,7 @@ run_lint () {
     sed -i 's|/home/circleci/project/|/root/project/|g' "${ESLINT_FILE}.json"
 
     if [ ! -f "${ESLINT_FILE}.json" ]; then
-        log_it "ERROR: ${ESLINT_FILE}.json not found"
+        log_error "${ESLINT_FILE}.json not found"
         exit 1
     fi
 

@@ -9,18 +9,18 @@ validate_results_count() {
 	VERBOSE=${VERBOSE:-false}
 	TEST_COUNT=$(find test/suites -name "*.test.ts" | wc -l)
 	if [ ! -d artifacts ]; then
-		log_it "ERROR: no 'artifacts' directory found"
+		log_error "no 'artifacts' directory found"
 		exit 1
 	fi
 
 	RESULTS_COUNT=$(find "artifacts/mocha_results_xunit" -name "*.xml" | sort -u | wc -l)
 	if [ "$RESULTS_COUNT" != "$TEST_COUNT" ]; then
-		log_error "ERROR: results count != test count ($RESULTS_COUNT != $TEST_COUNT)"
+		log_error "results count != test count ($RESULTS_COUNT != $TEST_COUNT)"
 	fi
 
 	LCOV_COUNT=$(find . -name 'lcov.info' | wc -l)
 	if [ "$LCOV_COUNT" != "1" ]; then
-		log_error "ERROR: LCOV_COUNT != 1 ($LCOV_COUNT != 1)"
+		log_error "LCOV_COUNT != 1 ($LCOV_COUNT != 1)"
 		exit 1
 	fi
 
@@ -33,7 +33,7 @@ validate_results_count() {
 
 	if [ -n "$ABLUNIT_TEST_RUNNER_PROJECT_NAME" ]; then
 		if [ "$RESULTS_COUNT" != "$TEST_COUNT" ] || [ "$LCOV_COUNT" != "$EXPECTED_VSIX_COUNT" ]; then
-			log_error "ERROR: results count != test count ($RESULTS_COUNT != $TEST_COUNT) or LCOV_COUNT != 1 ($LCOV_COUNT != 1)"
+			log_error "results count != test count ($RESULTS_COUNT != $TEST_COUNT) or LCOV_COUNT != 1 ($LCOV_COUNT != 1)"
 			return 1
 		fi
 	fi

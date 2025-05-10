@@ -1,9 +1,8 @@
 import { DeclarationCoverage, FileCoverageDetail, Range, TestRunProfileKind, Uri, commands, window, workspace } from 'vscode'
-import { assert, getRcodeCount, getResults, getTestControllerItemCount, getTestItem, getXrefCount, log, rebuildAblProject, refreshTests, runAllTests, runAllTestsWithCoverage, runTestAtLine, runTestsDuration, runTestsInFile, sleep2, suiteSetupCommon, FileUtils, toUri, updateConfig, updateTestProfile, deleteRcode, setRuntimes, awaitRCode, getWorkspaceFolders } from '../testCommon'
+import { assert, getRcodeCount, getResults, getTestControllerItemCount, getTestItem, getXrefCount, log, rebuildAblProject, refreshTests, runAllTests, runAllTestsWithCoverage, runTestAtLine, runTestsDuration, runTestsInFile, suiteSetupCommon, FileUtils, toUri, updateConfig, updateTestProfile, deleteRcode, setRuntimes, sleep, Duration } from '../testCommon'
 import { ABLResultsParser } from 'parse/ResultsParser'
 import { TimeoutError } from 'Errors'
 import { restartLangServer } from '../openedgeAblCommands'
-import * as glob from 'glob'
 import * as vscode from 'vscode'
 import { SignatureType } from 'parse/SourceMapParser'
 
@@ -13,13 +12,16 @@ function createTempFile () {
 	return tempFile
 }
 
+const backupProjectFile = 'oeproject.bk'
+
 suite('proj0  - Extension Test Suite', () => {
 
 	const disposables: vscode.Disposable[] = []
+	let firstSetup = true
 
 	suiteSetup('proj0 - before', async () => {
-		FileUtils.copyFile(toUri('.vscode/settings.json'), toUri('.vscode/settings.json.bk'), { force: true })
-		FileUtils.copyFile(toUri('openedge-project.json'), toUri('openedge-project.json.bk'), { force: true })
+		FileUtils.copyFile('.vscode/settings.json', '.vscode/settings.json.bk')
+		FileUtils.copyFile('openedge-project.json', backupProjectFile)
 
 		FileUtils.deleteDir(toUri('d1'))
 		FileUtils.deleteDir(toUri('d2'))
@@ -29,19 +31,7 @@ suite('proj0  - Extension Test Suite', () => {
 			toUri('UNIT_TEST.tmp'),
 		], { force: true })
 
-		const rcodeFiles = glob.globSync('**/*.r', { absolute: true, nodir: true, cwd: workspace.workspaceFolders![0].uri.fsPath })
-
-		const rcodeUris: Uri[] = []
-		for (const rcodeFile of rcodeFiles) {
-			rcodeUris.push(Uri.file(rcodeFile))
-		}
-		FileUtils.deleteFile(rcodeUris, { force: true })
-		let waitCounter = 0
-		while (getRcodeCount() > 0) {
-			waitCounter++
-			await sleep2(25)
-		}
-		log.info('waited ' + waitCounter + ' times for rcode files to be deleted')
+		deleteRcode()
 
 		await suiteSetupCommon()
 		await commands.executeCommand('testing.clearTestResults')
@@ -49,13 +39,19 @@ suite('proj0  - Extension Test Suite', () => {
 	})
 
 	setup('proj0 - setup', async () => {
-		const oever = process.env['ABLUNIT_TEST_RUNNER_OE_VERSION'] ?? process.env['OE_VERSION']
-		if (oever === '12.2') {
-			await setRuntimes([{name: '12.2', path: 'C:\\Progress\\OpenEdge', default: true}])
+		FileUtils.copyFile('.vscode/settings.json.bk', '.vscode/settings.json')
+		FileUtils.copyFile(backupProjectFile, 'openedge-project.json')
+
+		if (firstSetup) {
+			const oever = process.env['ABLUNIT_TEST_RUNNER_OE_VERSION'] ?? process.env['OE_VERSION']
+			if (oever === '12.2') {
+				await setRuntimes([{name: '12.2', path: 'C:\\Progress\\OpenEdge', default: true}])
+			}
+			firstSetup = false
 		}
 	})
 
-	teardown('proj0 - afterEach', () => {
+	teardown('proj0 - afterEach', async () => {
 		log.info('proj0 teardown')
 		FileUtils.deleteFile([
 			toUri('.vscode/ablunit-test-profile.json'),
@@ -64,6 +60,7 @@ suite('proj0  - Extension Test Suite', () => {
 			toUri('src/dirA/proj10.p'),
 			toUri('UNIT_TEST.tmp'),
 		], { force: true })
+
 		while (disposables.length > 0) {
 			const d = disposables.pop()
 			if (d) {
@@ -72,16 +69,19 @@ suite('proj0  - Extension Test Suite', () => {
 				log.warn('disposables.length != 0')
 			}
 		}
+		await sleep(100)
 	})
 
 	suiteTeardown('proj0 - after', () => {
 		FileUtils.renameFile(toUri('.vscode/settings.json.bk'), toUri('.vscode/settings.json'))
-		FileUtils.renameFile(toUri('openedge-project.json.bk'), toUri('openedge-project.json'))
+		FileUtils.renameFile(toUri(backupProjectFile), toUri('openedge-project.json'))
 	})
 
 	test('proj0.01 - ${workspaceFolder}/ablunit.json file exists', () => {
 		const prom = runAllTests()
-			.then(() => getResults())
+			.then(() => {
+				return getResults()
+			})
 			.then((recentResults) => {
 				assert.equal(recentResults[0].cfg.ablunitConfig.config_uri, toUri('ablunit.json'), 'ablunit.json path mismatch')
 				assert.fileExists('ablunit.json', 'results.xml')
@@ -94,11 +94,7 @@ suite('proj0  - Extension Test Suite', () => {
 	})
 
 	test('proj0.02 - run test, open file, validate coverage displays', async () => {
-		let rcodeCount = await rebuildAblProject()
-		while (rcodeCount < 10) {
-			await sleep2(250)
-			rcodeCount = getRcodeCount()
-		}
+		await rebuildAblProject(10)
 		if (getRcodeCount() === 0) {
 			assert.fail('no rcode files found')
 		}
@@ -106,6 +102,7 @@ suite('proj0  - Extension Test Suite', () => {
 		if (getXrefCount() === 0) {
 			assert.fail('no xref files found')
 		}
+
 		await runAllTestsWithCoverage().then(() => {
 			log.info('runAllTestsWithCoverage.then')
 			return true
@@ -141,7 +138,6 @@ suite('proj0  - Extension Test Suite', () => {
 
 	test('proj0.05 - parse test class with expected error annotation', async () => {
 		const testClassItem = await commands.executeCommand('vscode.open', toUri('src/threeTestMethods.cls'))
-			.then(() => { return sleep2(250) })
 			.then(() => { return getTestItem(toUri('src/threeTestMethods.cls')) })
 
 		if (!testClassItem) {
@@ -153,7 +149,6 @@ suite('proj0  - Extension Test Suite', () => {
 
 	test('proj0.06 - parse test program with expected error annotation', async () => {
 		await commands.executeCommand('vscode.open', toUri('src/threeTestProcedures.p'))
-		await sleep2(250)
 		const testClassItem = await getTestItem(toUri('src/threeTestProcedures.p'))
 
 		if (!testClassItem) {
@@ -164,7 +159,6 @@ suite('proj0  - Extension Test Suite', () => {
 
 	test('proj0.07 - parse test class with skip annotation', async () => {
 		await commands.executeCommand('vscode.open', toUri('src/ignoreMethod.cls'))
-		await sleep2(100)
 		const testClassItem = await getTestItem(toUri('src/ignoreMethod.cls'))
 
 		if (!testClassItem) {
@@ -177,7 +171,6 @@ suite('proj0  - Extension Test Suite', () => {
 
 	test('proj0.08 - parse test procedure with skip annotation', async () => {
 		await commands.executeCommand('vscode.open', toUri('src/ignoreProcedure.p'))
-		await sleep2(250)
 		const testClassItem = await getTestItem(toUri('src/ignoreProcedure.p'))
 
 		if (!testClassItem) {
@@ -230,31 +223,33 @@ suite('proj0  - Extension Test Suite', () => {
 	})
 
 	test('proj0.10B - Update File', async () => {
-		// init test
-		// const tempFile = await createTempFile()
-		// disposables.push(vscode.workspace.onWillCreateFiles(e => {
-		// 	const ws = new vscode.WorkspaceEdit()
-		// 	ws.insert(tempFile, new vscode.Position(0, 0), 'onWillCreate ' + e.files.length + ' ' + e.files[0].fsPath)
-		// 	e.waitUntil(Promise.resolve(ws))
-		// }))
 		await workspace.fs.writeFile(toUri('src/dirA/proj10.p'), Buffer.from('@Test. procedure test1: end procedure.'))
 		await commands.executeCommand('vscode.open', toUri('src/dirA/proj10.p'))
-			.then((r) => {
-				log.info('opened file (r=' + r + ')')
-				return sleep2(250)
-			}, (e: unknown) => { throw e })
 
-		const startCount = await getTestItem(toUri('src/dirA/proj10.p'))
-			.then((r) => r.children.size)
+		let activeUri = vscode.window.activeTextEditor?.document.uri
+		while (activeUri?.fsPath != toUri('src/dirA/proj10.p').fsPath) {
+			await sleep(10)
+			log.info('waiting for active editor to be src/dirA/proj10.p (activeUri=' + activeUri?.fsPath + ')')
+			activeUri = vscode.window.activeTextEditor?.document.uri
+		}
+		log.info('opened file (activeUri=' + activeUri?.fsPath + ')')
+
+		let testItem = await getTestItem(toUri('src/dirA/proj10.p'))
+		const d = new Duration()
+		while (d.elapsed() < 1000 && testItem.children.size < 1) {
+			await sleep(10, undefined)
+			testItem = await getTestItem(toUri('src/dirA/proj10.p'))
+		}
+		const startCount = testItem.children.size
+		assert.equal(startCount, 1, 'test cases count != 1 (startCount=' + startCount + ')')
 
 		// update test program
 		const edit = new vscode.WorkspaceEdit()
 		edit.createFile(toUri('src/dirA/proj10.p'), { overwrite: true, contents: Buffer.from('@Test. procedure test1: end procedure.\n\n@Test. procedure test2: end procedure.\n\n@Test. procedure test3: end procedure.') })
-		const success = await workspace.applyEdit(edit)
-		assert.ok(success)
+		assert.ok(await workspace.applyEdit(edit))
 
 		// validate test case items added
-		await sleep2(250) // TODO - remove me
+		await sleep(100)
 		const endCount = await getTestItem(toUri('src/dirA/proj10.p'))
 			.then((r) => r.children.size)
 		assert.equal(endCount - startCount, 2, 'test cases added != 2 (endCount=' + endCount + '; startCount=' + startCount + ')')
@@ -262,7 +257,7 @@ suite('proj0  - Extension Test Suite', () => {
 
 	test('proj0.10C - Delete File', async () => {
 		// init tests
-		FileUtils.copyFile(toUri('src/dirA/proj10.p.orig'), toUri('src/dirA/proj10.p'))
+		FileUtils.copyFile('src/dirA/proj10.p.orig', 'src/dirA/proj10.p')
 		const startCount = await refreshTests()
 			.then(() => { return getTestControllerItemCount('ABLTestFile') })
 		const tempFile = createTempFile()
@@ -283,9 +278,9 @@ suite('proj0  - Extension Test Suite', () => {
 	})
 
 	test('proj0.11 - timeout 5s', () => {
+		log.info('---------- proj0.11 ----------')
 		const prom = updateConfig('ablunit.files.exclude', '**/.{builder,pct}/**')
 			.then(() => { return updateTestProfile('timeout', 5000) })
-			.then(() => { return sleep2(250) })
 			.then(() => { return runTestsInFile('src/timeout.p', 0) })
 			.then(() => {
 				return assert.fail('expected TimeoutError to be thrown')
@@ -297,7 +292,13 @@ suite('proj0  - Extension Test Suite', () => {
 	})
 
 	test('proj0.12 - timeout 1500ms fail', () => {
+		log.info('---------- proj0.12 ----------')
 		const prom = updateConfig('ablunit.files.exclude', '**/.{builder,pct}/**')
+			.then(() => {
+				const cfg = workspace.getConfiguration('ablunit.files.exclude')
+				log.info('files.exclude=' + JSON.stringify(cfg))
+				return
+			})
 			.then(() => { return updateTestProfile('timeout', 1500) })
 			.then(() => { return runTestAtLine('src/timeout.p', 37, 0) })
 			.then(() => { return commands.executeCommand('_ablunit.getTestRunError') })
@@ -315,9 +316,9 @@ suite('proj0  - Extension Test Suite', () => {
 	})
 
 	test('proj0.13 - timeout 2500ms pass', async () => {
-		await updateTestProfile('timeout', 2500)
-			.then(() => { return updateConfig('ablunit.files.exclude', '**/.{builder,pct}/**') })
-			.then(() => { return sleep2(100) })
+		log.info('---------- proj0.13 ----------')
+		await updateConfig('ablunit.files.exclude', '**/.{builder,pct}/**')
+			.then(() => updateTestProfile('timeout', 2500))
 			.then(() => { return runTestAtLine('src/timeout.p', 37, 0) })
 			.then(() => { return commands.executeCommand('_ablunit.getTestRunError') })
 			.then((e) => {
@@ -333,6 +334,7 @@ suite('proj0  - Extension Test Suite', () => {
 	})
 
 	test('proj0.14 - timeout invalid -5s', async () => {
+		log.info('---------- proj0.14 ----------')
 		await updateTestProfile('timeout', -5000)
 			.then(() => { return runTestsInFile('src/simpleTest.p', 0) })
 			.then(() => { return commands.executeCommand('_ablunit.getTestRunError') })
@@ -347,23 +349,14 @@ suite('proj0  - Extension Test Suite', () => {
 				assert.fail('expected RangeError to be thrown but got e=' + JSON.stringify(e, null, 2))
 				return false
 			})
+		return
 	})
 
-	test('proj0.17 - coverage in class property getters/setters', () => {
+	test('proj0.17 - coverage in class property getters/setters', async () => {
 		log.info('proj0.17')
-		FileUtils.deleteFile(
-			[
-				toUri('results.xml'),
-				// toUri('.vscode/ablunit-test-profile.json'),
-				toUri('results.json')
-			],
-			{ force: true }
-		)
-		if (FileUtils.doesFileExist(toUri('.vscode/ablunit-test-profile.json'))) {
-			assert.fail('.vscode/ablunit-test-profile.json should not exist')
-		}
-		FileUtils.copyFile(toUri('.vscode/ablunit-test-profile.proj0.17.json'), toUri('.vscode/ablunit-test-profile.json'))
-		const prom = runTestAtLine('src/test_17.cls', 33, 1, TestRunProfileKind.Coverage)
+		FileUtils.deleteFile(['results.xml', 'results.json'], { force: true })
+		FileUtils.copyFile('.vscode/ablunit-test-profile.proj0.17.json', '.vscode/ablunit-test-profile.json')
+		await runTestAtLine('src/test_17.cls', 33, 1, TestRunProfileKind.Coverage)
 			.then(() => {
 				assert.tests.count(1)
 				assert.tests.passed(1)
@@ -374,7 +367,7 @@ suite('proj0  - Extension Test Suite', () => {
 				assert.linesExecuted('src/test_17.cls', [41, 42, 43, 44])
 				return
 			})
-		return prom
+		return
 	})
 
 	test('proj0.18 - not 100% coverage', async () => {
@@ -414,7 +407,6 @@ suite('proj0  - Extension Test Suite', () => {
 		assert.equal(cnt, 1, 'declarationCoverage count')
 
 		await commands.executeCommand('testing.openCoverage')
-		await sleep2(100)
 
 		// const coverage: FileCoverage = await commands.executeCommand('testing.coverage.uri', toUri('src/test19.p'))
 		// log.info('coverage=' + JSON.stringify(coverage, null, 2))
@@ -434,12 +426,9 @@ suite('proj0  - Extension Test Suite', () => {
 
 	test('proj0.20 - build directory', async () => {
 		FileUtils.copyFile('openedge-project.test20.json', 'openedge-project.json')
-		await deleteRcode()
+		deleteRcode()
+		await restartLangServer(23)
 
-		const rcodeCount = await restartLangServer()
-			.then(() => rebuildAblProject(16))
-
-		assert.greaterOrEqual(rcodeCount, 16, 'rcodeCount > 0')
 		assert.fileExists('d1/test_20.r')
 		assert.fileExists('d2/test_20.p.xref')
 
@@ -449,10 +438,9 @@ suite('proj0  - Extension Test Suite', () => {
 				assert.coverageProcessingMethod(toUri('src/test_20.p'), 'rcode')
 			})
 
-		FileUtils.copyFile('openedge-project.json.bk', 'openedge-project.json')
-		await deleteRcode()
-		await restartLangServer()
-		await awaitRCode(getWorkspaceFolders()[0], 24)
+		FileUtils.copyFile(backupProjectFile, 'openedge-project.json')
+		deleteRcode()
+		await restartLangServer(23)
 	})
 
 	test('proj0.21 - overloaded method coverage', async () => {

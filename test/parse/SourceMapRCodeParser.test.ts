@@ -1,5 +1,5 @@
 import { commands, Uri } from 'vscode'
-import { assert, log, sleep2, toUri } from '../testCommon'
+import { assert, log, sleep, toUri } from '../testCommon'
 import { PropathParser } from 'ABLPropath'
 import { SourceMapItem } from 'parse/SourceMapParser'
 import { getSourceMapFromRCode } from 'parse/SourceMapRCodeParser'
@@ -12,7 +12,7 @@ suiteSetup('suiteSetup', () => {
 	FileUtils.deleteFile(toUri('test_3/test.p.xref'))
 	log.info('ant compile-and-test')
 	return commands.executeCommand('workbench.action.tasks.build')
-		.then(() => { return sleep2(5000) })
+		.then(() => { return sleep(2500) })
 		.then(() => {
 			log.info('ant compile-and-test done')
 			return
@@ -22,13 +22,8 @@ suiteSetup('suiteSetup', () => {
 		})
 })
 
-setup('setup', async () => {
+setup('setup', () => {
 	log.info('setup ----- start')
-
-	while (!FileUtils.doesFileExist(toUri('test_1/test.p.xref'))) {
-		const prom = sleep2(250, 'waiting for test_1/test.p.xref')
-		await prom
-	}
 })
 
 test('SourceMapRCodeParser.test_0', async () => {

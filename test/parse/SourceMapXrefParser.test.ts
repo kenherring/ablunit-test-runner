@@ -1,5 +1,5 @@
 import { commands, Uri } from 'vscode'
-import { assert, log, sleep2, toUri } from '../testCommon'
+import { assert, getXrefCount, log, sleep, toUri } from '../testCommon'
 import { PropathParser } from 'ABLPropath'
 import { SourceMapItem } from 'parse/SourceMapParser'
 import { getSourceMapFromXref } from 'parse/SourceMapXrefParser'
@@ -23,8 +23,8 @@ suiteSetup('suiteSetup', () => {
 
 setup('setup', async () => {
 	log.info('setup ----- start')
-	while (!FileUtils.doesFileExist(toUri('test_1/test.p.xref'))) {
-		await sleep2(250, 'waiting for test_1/test.p.xref')
+	while (getXrefCount() < 3) {
+		await sleep(100, 'waiting for test_1/test.p.xref')
 	}
 })
 

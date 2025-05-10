@@ -79,7 +79,7 @@
 		"vscode:prepublish": "npm run package",
 		"package": "npm run build",
 		"pretest": "sh -c scripts/npm_pretest.sh",
-		"test": "sh -c scripts/npm_pretest.sh && vscode-test",
+		"test": "vscode-test",
 		"test:coverage": "npm test -- --coverage",
 		"vscode-test": "vscode-test",
 		"test:install-and-run": "cd dummy-ext && npm run test:install-and-run",
@@ -89,6 +89,7 @@
 	"dependencies": {
 		"minimatch": "^10.0.1",
 		"node-json-minify": "^3.0.0",
+		"tree-kill": "^1.2.2",
 		"xml2js": "^0.6.2"
 	},
 	"devDependencies": {
@@ -106,6 +107,7 @@
 		"@vscode/test-electron": "^2.5.2",
 		"@vscode/vsce": "^3.3.2",
 		"esbuild": "^0.25.3",
+		"esbuild-register": "^3.6.0",
 		"eslint": "^9.25.1",
 		"eslint-formatter-unix": "^8.40.0",
 		"eslint-plugin-promise": "^7.2.1",

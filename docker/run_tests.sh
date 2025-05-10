@@ -198,9 +198,7 @@ run_tests_in_docker () {
 		)
 		## run tests inside the container
 		set -x
-		set -x
 		docker run "${ARGS[@]}"
-		set +x
 		set +x
 		echo "tests completed successfully with ABLUNIT_TEST_RUNNER_OE_VERSION=$ABLUNIT_TEST_RUNNER_OE_VERSION"
 	done

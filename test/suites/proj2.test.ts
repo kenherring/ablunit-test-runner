@@ -113,7 +113,7 @@ suite('proj2 - Extension Test Suite', () => {
 			})
 	})
 
-	test('proj2.8 - debugger w/ breakpoint', () => {
+	test('proj2.8 - debugger w/ breakpoint', async () => {
 		const loc = new Location(
 			Uri.joinPath(workspaceUri, 'src', 'cache', 'otherTestProcedure.p'),
 			new Position(3, 0)
@@ -122,7 +122,7 @@ suite('proj2 - Extension Test Suite', () => {
 		debug.addBreakpoints([sbp])
 
 		const prom = runTestsInFile('src/cache/otherTestProcedure.p', 1, TestRunProfileKind.Debug)
-		return new Promise<void>((resolve) => {
+		await new Promise<void>((resolve) => {
 			debug.onDidChangeActiveStackItem((e) => {
 				log.info('HIT BREAKPOINT onDidChangeActiveStackItem=' + e?.session.name)
 				resolve()
@@ -130,17 +130,25 @@ suite('proj2 - Extension Test Suite', () => {
 		}).then(() => {
 			log.info('CONTINUE AFTER BREAKPOINT')
 			return commands.executeCommand('workbench.action.debug.continue')
-		}).then(() => {
-			log.info('AWAIT TEST')
-			return prom
-		}).then(() => {
-			log.info('ASSERT tests.count(3)')
-			assert.tests.count(3)
-			return
 		}, (e: unknown) => {
 			assert.fail('proj2.8 - debugger w/ breakpoint failed: ' + e)
 			throw e
 		})
+
+		log.info('AWAIT TEST')
+		debug.onDidChangeActiveStackItem((e) => {
+			log.info('HIT ADDITIONAL BREAKPOINT onDidChangeActiveStackItem=' + e?.session.name)
+			commands.executeCommand('workbench.action.debug.continue')
+				.then(() => {
+					log.info('CONTINUE AFTER ADDITIONAL BREAKPOINT')
+				}, (e: unknown) => {
+					log.info('CONTINUE ERROR=' + e)
+				})
+		})
+		await prom
+		log.info('ASSERT tests.count(3)')
+		assert.tests.count(3)
+		return
 	})
 
 })

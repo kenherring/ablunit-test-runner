@@ -175,6 +175,7 @@ package () {
 }
 
 ########## MAIN BLOCK ##########
+START_TIME=$(date +%s)
 initialize "$@"
 copy_user_settings
 get_performance_test_code
@@ -182,4 +183,5 @@ get_pct
 create_dbs
 package
 rm -rf artifacts/*
-log_it "completed successfully!"
+END_TIME=$(date +%s)
+log_it "completed successfully! (time=$((END_TIME - START_TIME))s)"
