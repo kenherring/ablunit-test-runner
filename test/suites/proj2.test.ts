@@ -138,7 +138,6 @@ suite('proj2 - Extension Test Suite', () => {
 			throw e
 		})
 
-		log.info('AWAIT TEST')
 		debug.onDidChangeActiveStackItem((e) => {
 			log.info('HIT ADDITIONAL BREAKPOINT onDidChangeActiveStackItem=' + e?.session.name)
 			commands.executeCommand('workbench.action.debug.continue')

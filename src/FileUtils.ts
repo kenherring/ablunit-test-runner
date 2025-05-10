@@ -4,7 +4,6 @@ import JSON_minify from 'node-json-minify'
 import { FileSystemError, Uri, workspace } from 'vscode'
 import { log } from 'ChannelLogger'
 import { RmOptions } from 'fs'
-import { sleep } from '../test/testCommon'
 
 export class TextDocumentLines {
 	uri: Uri
@@ -256,7 +255,6 @@ export function copyFileAsync (source: Uri | string, target: Uri | string): Prom
 		return Promise.resolve()
 	}
 	return fsp.copyFile(source.fsPath, target.fsPath)
-		.then(() => sleep(100, undefined))
 }
 
 export function renameFile (source: Uri | string, target: Uri | string): void {

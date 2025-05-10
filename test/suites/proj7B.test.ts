@@ -138,7 +138,7 @@ suite('proj7B - Extension Test Suite', () => {
 		// wait up to 60 seconds until ABLUnit is actually running, then cancel
 		// this validates the cancel will abort the spawned _progres process
 		await waitForTestRunStatus(RunStatus.Executing)
-			.then(() => { return sleep(100) })
+			.then(() => { return sleep(500) })
 			.catch((e: unknown) => { throw e })
 
 		const resArr = await getCurrentRunData(1, 2)
@@ -148,7 +148,7 @@ suite('proj7B - Extension Test Suite', () => {
 		if (resArr[0].status < RunStatus.Executing) {
 			assert.fail('test run did not reach status \'running command\'')
 		}
-		await sleep(100)
+		await sleep(2000)
 
 		const saveLogLevel = log.getLogLevel()
 		log.setLogLevel(LogLevel.Debug)
