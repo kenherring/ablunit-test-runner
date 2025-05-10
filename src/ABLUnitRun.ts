@@ -452,44 +452,35 @@ function runCommand (res: ABLResults, options: TestRun, cancellation: Cancellati
 			log.info('process.on.message m=' + JSON.stringify(m))
 		})
 
-		setTimeout(function () {
-			if (proc.exitCode != null) {
-				return
-			}
-			log.info('setTimeout')
-			log.info('1.proc.killed=' + proc.killed +
-				', proc.exitCode=' + proc.exitCode +
-				', proc.signalCode=' + proc.signalCode +
-				', proc.pid=' + proc.pid +
-				', proc.connected=' + proc.connected)
-			if (proc.pid) {
-				log.info('treeKill proc.pid=' + proc.pid)
-				proc.stdin?.end()
-				// abort.abort('abortTimeout')
-				treeKill(proc.pid, 'SIGHUP', (err) => {
-					if (err) {
-						log.error('failed to kill process pid=' + proc.pid + ' err=' + err)
-					}
-					log.info('2.proc.killed=' + proc.killed +
-						', proc.exitCode=' + proc.exitCode +
-						', proc.signalCode=' + proc.signalCode +
-						', proc.pid=' + proc.pid +
-						', proc.connected=' + proc.connected)
-				})
-			}
-			// log.info('proc.kill=' + proc.kill('SIGKILL'))
-
-			// proc.kill('SIGTERM')
-			// log.info('3.proc.killed=' + proc.killed +
-			// 	', proc.exitCode=' + proc.exitCode +
-			// 	', proc.signalCode=' + proc.signalCode +
-			// 	', proc.pid=' + proc.pid +
-			// 	', proc.connected=' + proc.connected)
-
-			// if (proc.exitCode == null) {
-			// 	throw new Error('failed to kill process pid=' + proc.pid)
-			// }
-		}, timeout)
+		if (timeout > 0) {
+			log.info('setTimeout timeout=' + timeout)
+			setTimeout(function () {
+				if (proc.exitCode != null) {
+					return
+				}
+				log.info('setTimeout after ' + timeout + 'ms')
+				log.info('1.proc.killed=' + proc.killed +
+					', proc.exitCode=' + proc.exitCode +
+					', proc.signalCode=' + proc.signalCode +
+					', proc.pid=' + proc.pid +
+					', proc.connected=' + proc.connected)
+				if (proc.pid) {
+					log.info('treeKill proc.pid=' + proc.pid)
+					proc.stdin?.end()
+					// abort.abort('abortTimeout')
+					treeKill(proc.pid, 'SIGTERM', (err) => {
+						if (err) {
+							log.error('failed to kill process pid=' + proc.pid + ' err=' + err)
+						}
+						log.info('2.proc.killed=' + proc.killed +
+							', proc.exitCode=' + proc.exitCode +
+							', proc.signalCode=' + proc.signalCode +
+							', proc.pid=' + proc.pid +
+							', proc.connected=' + proc.connected)
+					})
+				}
+			}, timeout)
+		}
 
 	})
 

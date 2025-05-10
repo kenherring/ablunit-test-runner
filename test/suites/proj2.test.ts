@@ -93,6 +93,7 @@ suite('proj2 - Extension Test Suite', () => {
 	})
 
 	test('proj2.6 - compile error - run with db conn', async () => {
+		log.info('---------- proj2.6 ----------')
 		FileUtils.copyFile(
 			toUri('src/compileError.p.saveme'),
 			toUri('src/compileError.p'),
@@ -105,6 +106,7 @@ suite('proj2 - Extension Test Suite', () => {
 	})
 
 	test('proj2.7 - debugger', () => {
+		log.info('---------- proj2.7 ----------')
 		return runTestsInFile('src/cache/otherTestProcedure.p', 1, TestRunProfileKind.Debug)
 			.then(() => {
 				assert.tests.count(3)
@@ -114,6 +116,7 @@ suite('proj2 - Extension Test Suite', () => {
 	})
 
 	test('proj2.8 - debugger w/ breakpoint', async () => {
+		log.info('---------- proj2.8 ----------')
 		const loc = new Location(
 			Uri.joinPath(workspaceUri, 'src', 'cache', 'otherTestProcedure.p'),
 			new Position(3, 0)

@@ -378,16 +378,7 @@ export async function waitForLangServerReady () {
 			', langServerError=' + langServerError +
 			', compileSuccess=' + compileSuccess +
 			', compileFailed=' + compileFailed)
-		const prom2 = sleep(50, null)
-			.then(() => sleep(50, null))
-			.then(() => sleep(50, null))
-			.then(() => sleep(50, null))
-			.then(() => sleep(50, null))
-			.then(() => {
-				log.info('sleep 250 complete')
-				return
-			})
-		await prom2 // await prom so other threads can run
+		await sleep(200, null)
 
 		if (waitTime.elapsed() > maxWait * 1000) {
 			log.info('timeout after ' + waitTime.elapsed() + 'ms')

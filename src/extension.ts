@@ -816,6 +816,7 @@ function gatherTestItems (collection: TestItemCollection) {
 }
 
 function getWorkspaceTestPatterns () {
+	log.debug('getWorkspaceTestPatterns')
 	const includePatterns: RelativePattern[] = []
 	const excludePatterns: RelativePattern[] = []
 
@@ -826,6 +827,8 @@ function getWorkspaceTestPatterns () {
 		let excludePatternsConfig: string[] | string =
 			workspace.getConfiguration('ablunit', workspaceFolder.uri).get('files.exclude') ??
 			workspace.getConfiguration('ablunit').get('files.exclude', [ '**/.{builder,pct}/**' ])
+		log.debug('getWorkspaceTestPatterns includePatternsConfig=' + JSON.stringify(includePatternsConfig, null, 2))
+		log.debug('getWorkspaceTestPatterns excludePatternsConfig=' + JSON.stringify(excludePatternsConfig, null, 2))
 
 		if (typeof includePatternsConfig === 'string') {
 			if (includePatternsConfig == '') {
@@ -883,7 +886,7 @@ function deleteTest (controller: TestController | undefined, item: TestItem | Ur
 		}
 		item = tmpItem
 	}
-	log.info('delete test item: ' + item.id + ' (children.size=' + item.children.size + ')')
+	log.debug('delete test item: ' + item.id + ' (children.size=' + item.children.size + ')')
 
 	testData.delete(item)
 	deleteChildren(controller, item)
@@ -920,7 +923,9 @@ function removeExcludedFiles (controller: TestController, excludePatterns: Relat
 		if (item.uri && data instanceof ABLTestFile) {
 			const excluded = isFileExcluded(item.uri, excludePatterns)
 			if (excluded) {
-				log.info('remove excluded file from test tree: ' + item.id)
+				log.debug('remove excluded file from test tree: ' + item.id +
+					'\titem.uri=' + item.uri.fsPath +
+					'\texcludePatterns=' + JSON.stringify(excludePatterns.map(p => p.pattern)))
 				deleteTest(controller, item)
 			}
 		}
