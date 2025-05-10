@@ -253,15 +253,12 @@ function runCommand (res: ABLResults, options: TestRun, cancellation: Cancellati
 				log.debug('stdout savePartialLine=\'' + stdout + '\'')
 			}
 
-			log.info('lines=' + JSON.stringify(lines, null, 4))
-
 			for (const line of lines) {
 				if (line.startsWith('ABLUNIT_STATUS=SERIALIZED_ERROR ')) {
 					compilerErrors.push(JSON.parse(line.substring(32)) as ICompilerError)
 					continue
 				}
 				if (line.startsWith('ABLUNIT_STATUS=')) {
-					log.info('ABLUNIT_STATUS=')
 					let ablunitStatus: IABLUnitStatus | undefined = undefined
 					try {
 						ablunitStatus = JSON.parse(line.substring(15)) as IABLUnitStatus
@@ -271,7 +268,6 @@ function runCommand (res: ABLResults, options: TestRun, cancellation: Cancellati
 						continue
 					}
 
-					log.info('ablunitStatus.action=' + ablunitStatus.action)
 					if (ablunitStatus.action == 'TEST_TREE' || ablunitStatus.entityName?.trim() == 'TEST_ROOT') {
 						continue
 					}
@@ -347,27 +343,15 @@ function runCommand (res: ABLResults, options: TestRun, cancellation: Cancellati
 		}).on('disconnect', () => {
 			log.debug('process.disconnect')
 		}).on('error', (e: Error) => {
-			log.debug('error')
-			log.info('error-1=' + typeof e)
-			log.info('error-2=' + e.message)
-			log.info('process.error e=' + JSON.stringify(e, null, 4))
-
+			log.debug('error type=' + typeof e + ' e.message=' + e.message +
+				'\n\te=' + JSON.stringify(e, null, 2))
 			res.setStatus(RunStatus.Error, 'e=' + e)
 			log.error('----- ABLUnit Test Run Error -----', {testRun: options, testItem: currentTestItems[0] })
-
-			log.info('process killed=' + proc.killed +
-				', exitCode=' + proc.exitCode +
-				', signalCode=' + proc.signalCode +
-				', pid=' + proc.pid +
-				', connected=' + proc.connected)
-
-			// if (e instanceof Error && e.name != 'AbortError') {
 			if (e instanceof Error) {
 				reject(e)
 			}
 		}).on('exit', (code: number | null, signal: NodeJS.Signals | null) => {
 			log.debug('exit code=' + code + '; signal=' + signal)
-			log.info('process.exit code=' + code + '; signal=' + signal + '; process.exitCode=' + proc.exitCode + '; process.signalCode=' + proc.signalCode + '; killed=' + proc.killed)
 			testRunDuration.stop()
 			if (signal == 'SIGTERM') {
 				res.setStatus(RunStatus.Timeout, 'signal=' + signal)
@@ -407,19 +391,16 @@ function runCommand (res: ABLResults, options: TestRun, cancellation: Cancellati
 			log.info('----- ABLUnit Test Run Complete ----- ' + testRunDuration, {testRun: options})
 			resolve('success')
 		}).on('message', (m: Serializable, _h: SendHandle) => {
-			log.debug('message')
-			log.info('process.on.message m=' + JSON.stringify(m))
+			log.debug('message m=' + JSON.stringify(m))
 		})
 
 		if (timeout > 0) {
-			log.info('setTimeout timeout=' + timeout)
 			setTimeout(function () {
 				if (proc.exitCode != null) {
 					return
 				}
-				log.info('timeout after ' + timeout + 'ms')
+				log.debug('timeout after ' + timeout + 'ms')
 				if (proc.pid) {
-					// proc.stdin?.end()
 					treeKill(proc.pid, 'SIGTERM', (err) => {
 						if (err) {
 							log.error('failed to kill process pid=' + proc.pid + ' err=' + err)

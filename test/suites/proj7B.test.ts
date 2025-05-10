@@ -10,7 +10,7 @@ suite('proj7B - Extension Test Suite', () => {
 	})
 
 	setup('proj7B - beforeEach', () => {
-		log.info('setup proj7B')
+		log.info('---------- setup proj7B ----------')
 		beforeCommon()
 	})
 
@@ -99,7 +99,6 @@ suite('proj7B - Extension Test Suite', () => {
 			}
 			throw e
 		}
-		log.info('post-try')
 
 		const resArr = await getCurrentRunData()
 		const res = resArr[0]
@@ -129,7 +128,7 @@ suite('proj7B - Extension Test Suite', () => {
 	})
 
 	test.skip('proj7B.3 - cancel test run while _progres is running', async () => {
-		log.info('proj7B.3')
+		log.info('---------- proj7B.3 ----------')
 		const maxCancelTime = 1000
 		// const runTestTime = new Duration()
 

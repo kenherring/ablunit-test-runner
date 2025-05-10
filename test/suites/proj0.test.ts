@@ -51,7 +51,7 @@ suite('proj0  - Extension Test Suite', () => {
 		}
 	})
 
-	teardown('proj0 - afterEach', async () => {
+	teardown('proj0 - afterEach', () => {
 		log.info('proj0 teardown')
 		FileUtils.deleteFile([
 			toUri('.vscode/ablunit-test-profile.json'),
@@ -69,7 +69,6 @@ suite('proj0  - Extension Test Suite', () => {
 				log.warn('disposables.length != 0')
 			}
 		}
-		await sleep(100)
 	})
 
 	suiteTeardown('proj0 - after', () => {
@@ -79,9 +78,7 @@ suite('proj0  - Extension Test Suite', () => {
 
 	test('proj0.01 - ${workspaceFolder}/ablunit.json file exists', () => {
 		const prom = runAllTests()
-			.then(() => {
-				return getResults()
-			})
+			.then(() => getResults())
 			.then((recentResults) => {
 				assert.equal(recentResults[0].cfg.ablunitConfig.config_uri, toUri('ablunit.json'), 'ablunit.json path mismatch')
 				assert.fileExists('ablunit.json', 'results.xml')
@@ -296,7 +293,7 @@ suite('proj0  - Extension Test Suite', () => {
 		const prom = updateConfig('ablunit.files.exclude', '**/.{builder,pct}/**')
 			.then(() => {
 				const cfg = workspace.getConfiguration('ablunit.files.exclude')
-				log.info('files.exclude=' + JSON.stringify(cfg))
+				log.debug('files.exclude=' + JSON.stringify(cfg))
 				return
 			})
 			.then(() => { return updateTestProfile('timeout', 1500) })
@@ -319,8 +316,8 @@ suite('proj0  - Extension Test Suite', () => {
 		log.info('---------- proj0.13 ----------')
 		await updateConfig('ablunit.files.exclude', '**/.{builder,pct}/**')
 			.then(() => updateTestProfile('timeout', 2500))
-			.then(() => { return runTestAtLine('src/timeout.p', 37, 0) })
-			.then(() => { return commands.executeCommand('_ablunit.getTestRunError') })
+			.then(() => runTestAtLine('src/timeout.p', 37, 0))
+			.then(() => commands.executeCommand('_ablunit.getTestRunError'))
 			.then((e) => {
 				if (e) {
 					assert.equal(e, undefined, 'expected no error to be thrown, but got e=' + JSON.stringify(e, null, 2))
