@@ -352,7 +352,6 @@ function runCommand (res: ABLResults, options: TestRun, cancellation: Cancellati
 			log.info('error-2=' + e.message)
 			log.info('process.error e=' + JSON.stringify(e, null, 4))
 
-			if (proc.killed && proc.signalCode == 'SIGTERM')
 			res.setStatus(RunStatus.Error, 'e=' + e)
 			log.error('----- ABLUnit Test Run Error -----', {testRun: options, testItem: currentTestItems[0] })
 
@@ -362,14 +361,15 @@ function runCommand (res: ABLResults, options: TestRun, cancellation: Cancellati
 				', pid=' + proc.pid +
 				', connected=' + proc.connected)
 
-			if (e instanceof Error && e.name != 'AbortError') {
+			// if (e instanceof Error && e.name != 'AbortError') {
+			if (e instanceof Error) {
 				reject(e)
 			}
 		}).on('exit', (code: number | null, signal: NodeJS.Signals | null) => {
 			log.debug('exit code=' + code + '; signal=' + signal)
 			log.info('process.exit code=' + code + '; signal=' + signal + '; process.exitCode=' + proc.exitCode + '; process.signalCode=' + proc.signalCode + '; killed=' + proc.killed)
 			testRunDuration.stop()
-			if (signal == 'SIGHUP') {
+			if (signal == 'SIGTERM') {
 				res.setStatus(RunStatus.Timeout, 'signal=' + signal)
 				log.info('----- ABLUnit Test Run Timeout - ' + res.cfg.ablunitConfig.timeout + 'ms ----- ' + testRunDuration, {testRun: options, testItem: currentTestItems[0] })
 				const e = new TimeoutError('ABLUnit process timeout', testRunDuration, res.cfg.ablunitConfig.timeout, cmd)
