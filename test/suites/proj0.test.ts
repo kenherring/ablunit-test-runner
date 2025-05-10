@@ -278,6 +278,7 @@ suite('proj0  - Extension Test Suite', () => {
 	})
 
 	test('proj0.11 - timeout 5s', () => {
+		log.info('---------- proj0.11 ----------')
 		const prom = updateConfig('ablunit.files.exclude', '**/.{builder,pct}/**')
 			.then(() => { return updateTestProfile('timeout', 5000) })
 			.then(() => { return runTestsInFile('src/timeout.p', 0) })
@@ -291,7 +292,13 @@ suite('proj0  - Extension Test Suite', () => {
 	})
 
 	test('proj0.12 - timeout 1500ms fail', () => {
+		log.info('---------- proj0.12 ----------')
 		const prom = updateConfig('ablunit.files.exclude', '**/.{builder,pct}/**')
+			.then(() => {
+				const cfg = workspace.getConfiguration('ablunit.files.exclude')
+				log.info('files.exclude=' + JSON.stringify(cfg))
+				return
+			})
 			.then(() => { return updateTestProfile('timeout', 1500) })
 			.then(() => { return runTestAtLine('src/timeout.p', 37, 0) })
 			.then(() => { return commands.executeCommand('_ablunit.getTestRunError') })
@@ -309,8 +316,9 @@ suite('proj0  - Extension Test Suite', () => {
 	})
 
 	test('proj0.13 - timeout 2500ms pass', async () => {
-		await updateTestProfile('timeout', 2500)
-			.then(() => { return updateConfig('ablunit.files.exclude', '**/.{builder,pct}/**') })
+		log.info('---------- proj0.13 ----------')
+		await updateConfig('ablunit.files.exclude', '**/.{builder,pct}/**')
+			.then(() => updateTestProfile('timeout', 2500))
 			.then(() => { return runTestAtLine('src/timeout.p', 37, 0) })
 			.then(() => { return commands.executeCommand('_ablunit.getTestRunError') })
 			.then((e) => {
@@ -326,6 +334,7 @@ suite('proj0  - Extension Test Suite', () => {
 	})
 
 	test('proj0.14 - timeout invalid -5s', async () => {
+		log.info('---------- proj0.14 ----------')
 		await updateTestProfile('timeout', -5000)
 			.then(() => { return runTestsInFile('src/simpleTest.p', 0) })
 			.then(() => { return commands.executeCommand('_ablunit.getTestRunError') })

@@ -381,6 +381,12 @@ export async function waitForLangServerReady () {
 		const prom2 = sleep(50, null)
 			.then(() => sleep(50, null))
 			.then(() => sleep(50, null))
+			.then(() => sleep(50, null))
+			.then(() => sleep(50, null))
+			.then(() => {
+				log.info('sleep 250 complete')
+				return
+			})
 		await prom2 // await prom so other threads can run
 
 		if (waitTime.elapsed() > maxWait * 1000) {

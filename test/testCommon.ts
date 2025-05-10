@@ -556,9 +556,32 @@ export function runAllTestsWithCoverage () {
 	return runAllTests(true, true, true)
 }
 
+async function waitForTestsInFile (testpath: Uri) {
+	// await waitForRefreshComplete()
+	const d = new Duration()
+	while (d.elapsed() < 5000) {
+		const i = await sleep(250)
+			.then(() => getTestItem(testpath))
+			.then((i: TestItem) => {
+				return i
+			}, (_e: unknown) => {
+				return undefined
+			})
+		log.info('i.children.size=' + i?.children.size + ' (testpath=' + testpath.fsPath + ')')
+		if ((i?.children.size ?? 0) > 0) {
+			log.info('found ' + i?.children.size + ' tests in ' + testpath.fsPath)
+			break
+		}
+	}
+	if (d.elapsed() > 5000) {
+		log.error('waitForTestsInFile timed out waiting for tests in ' + testpath.fsPath)
+		throw new Error('waitForTestsInFile timed out waiting for tests in ' + testpath.fsPath)
+	}
+}
+
 export function runTestsInFile (filename: string, len = 1, kind: TestRunProfileKind = TestRunProfileKind.Run) {
 	const testpath = toUri(filename)
-	log.info('runnings tests in file ' + testpath.fsPath)
+	log.info('running tests in file ' + testpath.fsPath)
 	let command
 	switch (kind) {
 		case TestRunProfileKind.Run: command = 'testing.runCurrentFile'; break
@@ -567,10 +590,20 @@ export function runTestsInFile (filename: string, len = 1, kind: TestRunProfileK
 	}
 
 	return commands.executeCommand('vscode.open', testpath)
+		.then(() => sleep(100))
+		.then(() => waitForRefreshComplete())
 		.then(() => {
 			assert.equal(vscode.window.activeTextEditor?.document.uri.fsPath, testpath.fsPath, 'vscode.window.activeTextEditor should be open to ' + testpath.fsPath)
+			return waitForTestsInFile(testpath)
+		}, (e: unknown) => {
+			log.error('vscode.open failed: ' + e)
+			throw e
+		}).then(() => {
 			runTestsDuration = new Duration('runTestsInFile')
 			return commands.executeCommand(command)
+		}, (e: unknown) => {
+			log.error('waitForTestsInFile failed: ' + e)
+			throw e
 		})
 		.then((r: unknown) => {
 			log.debug('executeCommand(' + command + ').then completed successfully (r=' + JSON.stringify(r, null, 2) + ')')
@@ -584,15 +617,18 @@ export function runTestsInFile (filename: string, len = 1, kind: TestRunProfileK
 }
 
 export function runTestAtLine (filename: string, line: number, len = 1, kind: TestRunProfileKind = TestRunProfileKind.Run) {
+	const testpath = toUri(filename)
 	let command
 	switch (kind) {
 		case TestRunProfileKind.Run: command = 'testing.runAtCursor'; break
 		case TestRunProfileKind.Debug: command = 'testing.debugAtCursor'; break
 		case TestRunProfileKind.Coverage: command = 'testing.coverageAtCursor'; break
 	}
-	const testpath = Uri.joinPath(getWorkspaceUri(), filename)
+
 	log.info('running test at line ' + line + ' in ' + testpath.fsPath)
 	return commands.executeCommand('vscode.open', testpath)
+		.then(() => sleep(100))
+		.then(() => waitForTestsInFile(testpath))
 		.then(() => {
 			if(window.activeTextEditor?.document.uri.fsPath === testpath.fsPath) {
 				window.activeTextEditor.selection = new Selection(line, 0, line, 0)
@@ -621,7 +657,7 @@ async function waitForRefreshComplete () {
 		const refreshComplete = await commands.executeCommand('_ablunit.isRefreshTestsComplete')
 			.then((r: unknown) => {
 				log.info('isRefreshTestsComplete=' + r)
-				return true
+				return r
 			}, (e: unknown) => {
 				log.info('isRefreshTestComplete error=' + e)
 				return false
@@ -629,9 +665,10 @@ async function waitForRefreshComplete () {
 		if (refreshComplete) {
 			return true
 		}
+		await sleep(100, null).then(() => sleep(100, null))
 	}
-	throw new Error('waitForRefreshComplete timeout')
-
+	log.error('waitForRefreshComplete timed out after ' + refreshDuration.elapsed() + 'ms')
+	throw new Error('waitForRefreshComplete timeout ' + refreshDuration)
 }
 
 export function refreshTests () {
@@ -733,20 +770,30 @@ function getConfigDefaultValue (key: string) {
 	return undefined
 }
 
-export function updateConfig (key: string, value: unknown, configurationTarget?: boolean | vscode.ConfigurationTarget | null) {
+export async function updateConfig (key: string, value: unknown, configurationTarget?: boolean | vscode.ConfigurationTarget | null) {
 	const sectionArr = key.split('.')
 	const section1 = sectionArr.shift()
 	const section2 = sectionArr.join('.')
 
 	const workspaceConfig = workspace.getConfiguration(section1, getWorkspaceUri())
 
+	configurationTarget = configurationTarget ?? vscode.ConfigurationTarget.WorkspaceFolder
+
 	const currentValue = workspaceConfig.get(section2)
+	const cfg = [
+		getWorkspaceUri().fsPath,
+		workspace.getConfiguration('ablunit', getWorkspaceUri()).get('files.exclude'),
+		workspace.getConfiguration('ablunit', getWorkspaceFolders()[0]).get('files.exclude'),
+		workspace.getConfiguration('ablunit').get('files.exclude')
+	]
+	log.info('cfg[]=' + JSON.stringify(cfg, null, 2))
+
 	log.info('current=' + JSON.stringify(currentValue))
 	log.info('  value=' + JSON.stringify(value))
 	if (JSON.stringify(value) === JSON.stringify(currentValue)) {
-		// log.debug(section1 + '.' + section2 + ' is already set to \'' + value + '\'')
+		log.debug(section1 + '.' + section2 + ' is already set to \'' + value + '\'')
 		log.warn(key + ' is already set to \'' + value + '\'')
-		return Promise.resolve(true)
+		// return true
 	}
 
 	if (!value) {
@@ -754,15 +801,20 @@ export function updateConfig (key: string, value: unknown, configurationTarget?:
 		log.info('default=' + JSON.stringify(defaultValue))
 		if (JSON.stringify(defaultValue) === JSON.stringify(currentValue)) {
 			log.warn(key + ' is already set to default value \'' + value + '\'')
-			return Promise.resolve(true)
+			// return true
 		}
 	}
 	log.info('updating configuration section1=' + section2 + ', section2=' + section2 + ', key=' + key + ' value=' + JSON.stringify(value))
-	return workspaceConfig.update(section2, value, configurationTarget)
-		.then(() => true, (e: unknown) => { throw e })
+	await workspaceConfig.update(section2, value, configurationTarget)
+	if (key == 'files.exclude' || key == 'files.include') {
+		await sleep(100)
+			.then(() => waitForRefreshComplete())
+	}
+	return true
 }
 
 export async function updateTestProfile (key: string, value: string | string[] | boolean | number | object | undefined, workspaceUri?: Uri) {
+	log.debug('updateTestProfile key=' + key + ', value=' + JSON.stringify(value))
 	workspaceUri = workspaceUri ?? getWorkspaceUri()
 
 	const testProfileUri = Uri.joinPath(workspaceUri, '.vscode', 'ablunit-test-profile.json')
@@ -794,9 +846,25 @@ export async function updateTestProfile (key: string, value: string | string[] |
 		newtext = newtext.replace(/\n/g, '\r\n')
 	}
 	const newjson = Buffer.from(newtext)
-	// FileUtils.writeFile(testProfileUri, newjson)
 	await FileUtils.writeFileAsync(testProfileUri, newjson)
 	await sleep(250)
+		.then(() => sleep(250))
+
+	if (key === 'timeout') {
+		const waitTime = new Duration('waitForTestProfile')
+		while (waitTime.elapsed() < 1000) {
+			const testProfile = JSON.parse(FileUtils.readFileSync(testProfileUri).toString()) as IConfigurations
+			if (testProfile.configurations[0][key] == value) {
+				break
+			}
+			await sleep(100)
+		}
+		if (waitTime.elapsed() >= 1000) {
+			log.error('waitForTestProfile timed out after ' + waitTime.elapsed() + 'ms')
+			throw new Error('testProfile.configurations[0][' + key + '] != ' + JSON.stringify(value))
+		}
+	}
+
 	log.debug('writeFileComplete! newjson=' + newjson)
 	return
 }
@@ -815,6 +883,7 @@ export function selectProfile (profile: string) {
 }
 
 export function refreshData (resultsLen = 0) {
+	log.debug('refreshData starting...')
 	recentResults = undefined
 	currentRunData = undefined
 
@@ -982,6 +1051,7 @@ export async function getCurrentRunData (len = 1, resLen = 0, tag?: string) {
 }
 
 export async function getResults (len = 1, tag?: string): Promise<ABLResults[]> {
+	log.debug('getResults starting...')
 	tag = tag ?? ''
 	if ((!recentResults || recentResults.length === 0) && len > 0) {
 		log.info(tag + 'recentResults not set, refreshing...')

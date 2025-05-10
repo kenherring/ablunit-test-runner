@@ -1,11 +1,13 @@
 import { CancellationError, CancellationToken, debug, DebugConfiguration, TestItem, TestRun, TestRunProfileKind, Uri, workspace } from 'vscode'
 import { ABLResults } from 'ABLResults'
 import { Duration, gatherAllTestItems } from 'ABLUnitCommon'
-import { SendHandle, Serializable, SpawnOptions, spawn } from 'child_process'
+import { SendHandle, Serializable, SpawnOptions } from 'child_process'
+import * as child_process from 'child_process'
 import { log } from 'ChannelLogger'
 import { basename, dirname } from 'path'
 import { globSync } from 'glob'
 import { ABLCompilerError, ABLUnitRuntimeError, ICompilerError, TimeoutError } from 'Errors'
+import treeKill from 'tree-kill'
 import * as fs from 'fs'
 import * as FileUtils from 'FileUtils'
 
@@ -67,6 +69,7 @@ export async function ablunitRun (options: TestRun, res: ABLResults, cancellatio
 
 	cancellation.onCancellationRequested(() => {
 		log.debug('cancellation requested - ablunitRun')
+		log.info('cancellation requested - ablunitRun')
 		abort.abort()
 		throw new CancellationError()
 	})
@@ -209,38 +212,57 @@ function runCommand (res: ABLResults, options: TestRun, cancellation: Cancellati
 		currentTestItems.pop()
 	}
 
+	res.setStatus(RunStatus.Running)
+	const runenv = getEnvVars(res.dlc.uri, res.cfg.ablunitConfig.command.debugConnectMaxWait)
+	const compilerErrors: ICompilerError[] = []
+	let timeout = res.cfg.ablunitConfig.timeout
+	if (res.cfg.requestKind == TestRunProfileKind.Debug) {
+		timeout = 0
+	} else if (timeout < 0) {
+		throw new RangeError('timeout ' + timeout + ' is invalid and must be greater than 0')
+	}
+
+	// const killSignalTimeout: NodeJS.Signals = 'SIGKILL'
+	// const killSignalTimeout: NodeJS.Signals = 'SIGABRT'
+	// const killSignalTimeout: NodeJS.Signals = 'SIGINT' // nothing
+	// const killSignalTimeout: NodeJS.Signals = 'SIGHUP'
+	// const killSignalTimeout: NodeJS.Signals = 'SIGTERM'
+	// const killSignalTimeout: NodeJS.Signals = 'SIGBREAK'
+	// const killSignalTimeout: NodeJS.Signals = 'SIGQUIT'
+	// const killSignalTimeout: NodeJS.Signals = 'SIGTRAP'
+	// const killSignalTimeout: NodeJS.Signals = 'SIGUSR1'
+
+	// --- DO NOT USE --- //
+	// const killSignalTimeout: NodeJS.Signals = 'SIGSTOP'
+
+	const spawnOpts: SpawnOptions = {
+		signal: abort.signal,
+		// killSignal: 'SIGKILL', // DEFAULT
+		// killSignal: 'SIGABRT', // does not actually kill the process
+		// killSignal: 'SIGINT', // works in windows
+		// killSignal: 'SIGHUP', // works in linux
+		// killSignal: 'SIGTERM', // worked in both but not anymore
+		// killSignal: killSignalTimeout,
+		// timeout: timeout,
+		env: runenv,
+		cwd: res.cfg.ablunitConfig.workspaceFolder.uri.fsPath,
+		shell: true,
+	}
+
+	log.info('command=\'' + cmd + ' ' + args.join(' ') + '\'\n\n', {testRun: options, testItem: currentTestItems[0] })
+	const testRunDuration = new Duration('TestRun')
+	const proc = child_process.spawn(cmd, args, spawnOpts)
+
 	return new Promise<string>((resolve, reject) => {
-		res.setStatus(RunStatus.Running)
-		const runenv = getEnvVars(res.dlc.uri, res.cfg.ablunitConfig.command.debugConnectMaxWait)
-		const compilerErrors: ICompilerError[] = []
-		let timeout = res.cfg.ablunitConfig.timeout
-		if (res.cfg.requestKind == TestRunProfileKind.Debug) {
-			timeout = 0
-		}
-
-		const spawnOpts: SpawnOptions = {
-			signal: abort.signal,
-			// killSignal: 'SIGKILL', // DEFAULT
-			// killSignal: 'SIGABRT', // does not actually kill the process
-			// killSignal: 'SIGINT', // works in windows
-			// killSignal: 'SIGHUP', // works in linux
-			killSignal: 'SIGTERM',
-			timeout: timeout,
-			env: runenv,
-			cwd: res.cfg.ablunitConfig.workspaceFolder.uri.fsPath,
-			shell: true,
-		}
-
-		log.info('command=\'' + cmd + ' ' + args.join(' ') + '\'\n\n', {testRun: options, testItem: currentTestItems[0] })
-		const testRunDuration = new Duration('TestRun')
-		const process = spawn(cmd, args, spawnOpts)
 		let debuggerStarted = false
 
-		process.stderr?.on('data', (data: Buffer) => {
+		proc.stderr?.on('data', (data: Buffer) => {
+			log.info('stderr')
 			log.debug('stderr')
 			log.error('\t\t[stderr] ' + data.toString().trim().replace(/\n/g, '\n\t\t[stderr] '), {testRun: options, testItem: currentTestItems[0]})
 		})
-		process.stdout?.on('data', (data: Buffer) => {
+		proc.stdout?.on('data', (data: Buffer) => {
+			log.info('stdout')
 			log.debug('stdout')
 			const lines = (stdout + data.toString()).replace('/\r/g', '').split('\n')
 			if (lines[lines.length - 1] == '') {
@@ -341,31 +363,54 @@ function runCommand (res: ABLResults, options: TestRun, cancellation: Cancellati
 			log.debug('stdout DONE')
 
 		})
-		process.once('spawn', () => {
-			log.debug('spawn', {testRun: options})
+
+	// const prom = new Promise<string>((resolve, reject) => {
+		proc.once('spawn', () => {
+			log.info('spawn')
+			log.debug('spawn')
 			res.setStatus(RunStatus.Executing)
 			log.info('----- ABLUnit Test Run Started -----', {testRun: options, testItem: currentTestItems[0] })
 		}).on('disconnect', () => {
-			log.debug('process.disconnect', {testRun: options})
 			log.info('process.disconnect')
+			log.debug('process.disconnect')
 		}).on('error', (e: Error) => {
-			log.debug('error', {testRun: options})
-			log.info('error-1' + typeof e)
-			log.info('error-2' + e.message)
-			log.info('process.error e=' + e)
+			log.info('error')
+			log.debug('error')
+			log.info('error-1=' + typeof e)
+			log.info('error-2=' + e.message)
+			log.info('process.error e=' + JSON.stringify(e, null, 4))
+
+			if (proc.killed && proc.signalCode == 'SIGTERM')
 			res.setStatus(RunStatus.Error, 'e=' + e)
 			log.error('----- ABLUnit Test Run Error -----', {testRun: options, testItem: currentTestItems[0] })
-			if (e instanceof Error) {
+
+			log.info('process killed=' + proc.killed +
+				', exitCode=' + proc.exitCode +
+				', signalCode=' + proc.signalCode +
+				', pid=' + proc.pid +
+				', connected=' + proc.connected)
+
+			if (e instanceof Error && e.name != 'AbortError') {
 				reject(e)
 			}
 		}).on('exit', (code: number | null, signal: NodeJS.Signals | null) => {
-			log.debug('exit', {testRun: options})
-			log.info('process.exit code=' + code + '; signal=' + signal + '; process.exitCode=' + process.exitCode + '; process.signalCode=' + process.signalCode + '; killed=' + process.killed)
+			log.info('exit code=' + code + '; signal=' + signal)
+			log.debug('exit')
+			log.info('process.exit code=' + code + '; signal=' + signal + '; process.exitCode=' + proc.exitCode + '; process.signalCode=' + proc.signalCode + '; killed=' + proc.killed)
 			testRunDuration.stop()
-			if (signal == 'SIGTERM') {
+			// if (signal == killSignalTimeout) {
+			// if (signal == 'SIGTERM') {
+			if (signal == 'SIGKILL' || signal == 'SIGHUP' || signal == 'SIGTERM') {
 				res.setStatus(RunStatus.Timeout, 'signal=' + signal)
 				log.info('----- ABLUnit Test Run Timeout - ' + res.cfg.ablunitConfig.timeout + 'ms ----- ' + testRunDuration, {testRun: options, testItem: currentTestItems[0] })
 				const e = new TimeoutError('ABLUnit process timeout', testRunDuration, res.cfg.ablunitConfig.timeout, cmd)
+
+				log.info('process killed=' + proc.killed +
+					', exitCode=' + proc.exitCode +
+					', signalCode=' + proc.signalCode +
+					', pid=' + proc.pid +
+					', connected=' + proc.connected)
+
 				reject(e)
 				return e
 			}
@@ -386,7 +431,7 @@ function runCommand (res: ABLResults, options: TestRun, cancellation: Cancellati
 				return e
 			}
 
-			if (process.killed || signal) {
+			if (proc.killed || signal) {
 				res.setStatus(RunStatus.Killed, 'signal=' + signal)
 				const e = new ABLUnitRuntimeError('ABLUnit process killed', 'exit_code=' + code + '; signal=' + signal, cmd)
 				reject(e)
@@ -396,15 +441,102 @@ function runCommand (res: ABLResults, options: TestRun, cancellation: Cancellati
 			res.setStatus(RunStatus.Complete, 'success')
 			resolve('success')
 		}).on('close', (code: number | null, signal: NodeJS.Signals | null) => {
-			log.debug('close', {testRun: options})
+			log.info('close')
+			log.debug('close')
 			log.info('----- ABLUnit Test Run Complete ----- ' + testRunDuration, {testRun: options})
 			resolve('success')
-			log.info('process.close code=' + code + '; signal=' + signal + '; process.exitCode=' + process.exitCode + '; process.signalCode=' + process.signalCode + '; killed=' + process.killed)
+			log.info('process.close code=' + code + '; signal=' + signal + '; process.exitCode=' + proc.exitCode + '; process.signalCode=' + proc.signalCode + '; killed=' + proc.killed)
 		}).on('message', (m: Serializable, _h: SendHandle) => {
-			log.debug('message', {testRun: options})
+			log.info('message')
+			log.debug('message')
 			log.info('process.on.message m=' + JSON.stringify(m))
 		})
+
+		setTimeout(function () {
+			if (proc.exitCode != null) {
+				return
+			}
+			log.info('setTimeout')
+			log.info('1.proc.killed=' + proc.killed +
+				', proc.exitCode=' + proc.exitCode +
+				', proc.signalCode=' + proc.signalCode +
+				', proc.pid=' + proc.pid +
+				', proc.connected=' + proc.connected)
+			if (proc.pid) {
+				log.info('treeKill proc.pid=' + proc.pid)
+				proc.stdin?.end()
+				// abort.abort('abortTimeout')
+				treeKill(proc.pid, 'SIGHUP', (err) => {
+					if (err) {
+						log.error('failed to kill process pid=' + proc.pid + ' err=' + err)
+					}
+					log.info('2.proc.killed=' + proc.killed +
+						', proc.exitCode=' + proc.exitCode +
+						', proc.signalCode=' + proc.signalCode +
+						', proc.pid=' + proc.pid +
+						', proc.connected=' + proc.connected)
+				})
+			}
+			// log.info('proc.kill=' + proc.kill('SIGKILL'))
+
+			// proc.kill('SIGTERM')
+			// log.info('3.proc.killed=' + proc.killed +
+			// 	', proc.exitCode=' + proc.exitCode +
+			// 	', proc.signalCode=' + proc.signalCode +
+			// 	', proc.pid=' + proc.pid +
+			// 	', proc.connected=' + proc.connected)
+
+			// if (proc.exitCode == null) {
+			// 	throw new Error('failed to kill process pid=' + proc.pid)
+			// }
+		}, timeout)
+
 	})
+
+	// return prom.then((r) => {
+	// 	return r
+	// }, (e: unknown) => {
+	// 	if (e instanceof Error) {
+	// 		return e
+	// 	}
+	// 	return new Error('unknown error: ' + e)
+	// }).then((r) => {
+	// 	log.info('process.removeAllListeners()')
+	// 	// process.removeAllListeners()
+	// 	log.info('process.killed=' + process.killed +
+	// 			', process.exitCode=' + process.exitCode +
+	// 			', process.signalCode=' + process.signalCode +
+	// 			', process.pid=' + process.pid +
+	// 			', process.connected=' + process.connected)
+	// 	if (process.exitCode == null) {
+	// 		log.info('process.kill()')
+	// 		if (process.kill()) {
+	// 			log.info('process killed')
+	// 		} else if (process.kill('SIGHUP')) {
+	// 			log.info('process killed (SIGHUP)')
+	// 		} else if (process.kill('SIGINT')) {
+	// 			log.info('process killed (SIGINT)')
+	// 		} else if (process.kill('SIGTERM')) {
+	// 			log.info('process killed (SIGTERM)')
+	// 		} else if (process.kill('SIGKILL')) {
+	// 			log.info('process killed (SIGKILL)')
+	// 		} else if (process.kill('SIGABRT')) {
+	// 			log.info('process killed (SIGABRT)')
+	// 		} else if (process.kill('SIGQUIT')) {
+	// 			log.info('process killed (SIGQUIT)')
+	// 		} else {
+	// 			log.error('process.kill() failed')
+	// 			// log.info('process.killed=' + process.killed + ', process.exitCode' + process.exitCode + ', process.signalCode' + process.signalCode + ', process.pid=' + process.pid + ', process.connected=' + process.connected)
+	// 			// throw new Error('process.kill() failed')
+	// 		}
+	// 		log.info('process.killed=' + process.killed + ', process.exitCode' + process.exitCode + ', process.signalCode' + process.signalCode + ', process.pid=' + process.pid + ', process.connected=' + process.connected)
+	// 		process.removeAllListeners()
+	// 	}
+	// 	if (r instanceof Error) {
+	// 		throw r
+	// 	}
+	// 	return r
+	// })
 }
 
 function setCurrentTestItem (ablunitStatus: IABLUnitStatus) {
