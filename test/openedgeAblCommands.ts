@@ -1,5 +1,5 @@
 import { commands, extensions, LogLevel, Uri, workspace } from 'vscode'
-import { Duration, activateExtension, enableExtensions, getDefaultDLC, getRcodeCount, getWorkspaceUri, installExtension, log, oeVersion, sleep2, FileUtils } from './testCommon'
+import { Duration, activateExtension, enableExtensions, getDefaultDLC, getRcodeCount, getWorkspaceUri, installExtension, log, oeVersion, sleep, FileUtils, getSourceCount } from './testCommon'
 import { getContentFromFilesystem } from 'parse/TestParserCommon'
 import * as glob from 'glob'
 import { dirname } from 'path'
@@ -12,7 +12,7 @@ interface IRuntime {
 	default?: boolean
 }
 
-export async function enableOpenedgeAblExtension (runtimes?: IRuntime[]) {
+export async function enableOpenedgeAblExtension (runtimes?: IRuntime[], rcodeCount?: number) {
 	const extname = 'riversidesoftware.openedge-abl-lsp'
 	ablunitLogUri = await commands.executeCommand('_ablunit.getLogUri')
 
@@ -23,24 +23,54 @@ export async function enableOpenedgeAblExtension (runtimes?: IRuntime[]) {
 		await activateExtension(extname)
 	}
 	await setRuntimes(runtimes)
-		.then(() => rebuildAblProject())
-		.then(() => {
-			log.info('update complete')
-			const rcodeCount = getRcodeCount()
+		.then(() => waitForRcode(rcodeCount))
+		.then((rcodeCount) => {
 			log.info('rebuild complete! (rcodeCount=' + rcodeCount + ')')
 			log.info('riversidesoftware.openedge-abl-lsp extension is enabled!')
 			return true
 		}, (e: unknown) => { throw e })
 }
 
-export function restartLangServer () {
+async function waitForRcode (expectedCount?: number) {
+	// const maxWait = 15 // seconds
+	const waitTime = new Duration()
+	let rcodeCount = getRcodeCount()
+	let lastRcodeCount = rcodeCount
+	let rcodeDuration = new Duration ('rcodeDuration')
+	expectedCount = expectedCount ?? getSourceCount() * .80
+	while (rcodeCount < expectedCount) {
+
+		if (lastRcodeCount != rcodeCount) {
+			rcodeDuration = new Duration('rcodeDuration')
+		} else if (rcodeDuration.elapsed() > 3000) {
+			log.warn('no new rcode generated for 3 seconds, assume we are done compiling')
+			return rcodeCount
+		}
+
+		if (waitTime.elapsed() > 5000) {
+			await sleep(500)
+		} else {
+			await sleep(100, null)
+		}
+		lastRcodeCount = rcodeCount
+		rcodeCount = getRcodeCount()
+	}
+	log.info('rcodeCount=' + rcodeCount + ', expectedCount=' + expectedCount + ' ' + waitTime)
+	return rcodeCount
+}
+
+export function restartLangServer (rcodeCount = 0): PromiseLike<number> {
 	log.info('restarting lang server with command abl.restart.langserv')
 	return commands.executeCommand('abl.restart.langserv').then(() => {
+		return sleep(250)
+	}).then(() => {
 		log.info('command abl.restart.langserv command completed successfully')
 		return waitForLangServerReady()
 	}).then(() => {
-		log.info('lang server is ready')
-		return true
+		return waitForRcode(rcodeCount)
+	}).then((r) => {
+		log.info('rcodecount=' + r)
+		return r
 	}, (e: unknown) => {
 		log.error('abl.restart.langserv command failed! e=' + e)
 		throw new Error('abl.restart.langserv command failed! e=' + e)
@@ -57,7 +87,7 @@ export async function rebuildAblProject (waitForRcodeCount = 0) {
 
 	let stillCompiling = true
 	while (stillCompiling && rebuildTime.elapsed() < 15000) {
-		const prom = sleep2(250, 'waiting for project rebuild to complete... ' + rebuildTime)
+		const prom = sleep(100, 'waiting for project rebuild to complete... ' + rebuildTime)
 			.then(() => { return getLogContents() })
 		const lines = await prom
 		// log.info('lines.length=' + lines.length)
@@ -108,13 +138,13 @@ export async function rebuildAblProject (waitForRcodeCount = 0) {
 	let rcodeCount = getRcodeCount()
 	log.info('command abl.project.rebuild complete! rcodeCount=' + rcodeCount)
 	if (rcodeCount == 0) {
-		await sleep2(250, 'waiting for rcode to be generated...')
+		await sleep(100, 'waiting for rcode to be generated...')
 		rcodeCount = getRcodeCount()
 		log.info('rcodeCount=' + rcodeCount)
 	}
 	const status = await dumpLangServStatus()
 	if (status.projectStatus?.[0] && (status.projectStatus[0].rcodeQueue ?? -1) > 0) {
-		await sleep2(230, 'rcode queue is ' + status.projectStatus[0].rcodeQueue)
+		await sleep(100, 'rcode queue is ' + status.projectStatus[0].rcodeQueue)
 	}
 	rcodeCount = getRcodeCount()
 	log.info('rcodeCount=' + rcodeCount)
@@ -150,7 +180,7 @@ async function dumpLangServStatus () {
 	const startingLine = (await getLogContents()).length
 	await commands.executeCommand('abl.dumpLangServStatus')
 		.then(() => {
-			return sleep2(250, 'pause after command abl.dumpLangServStatus')
+			return sleep(100, 'pause after command abl.dumpLangServStatus')
 		}, (e: unknown) => {
 			log.error('e=' + e)
 			throw e
@@ -159,7 +189,7 @@ async function dumpLangServStatus () {
 	let lines = await getLogContents()
 	const duration = new Duration('dumpLangServStatus')
 	while (lines.length == startingLine && duration.elapsed() < 3000) {
-		await sleep2(252)
+		await sleep(100)
 		lines = await getLogContents()
 	}
 	if (lines.length == startingLine) {
@@ -274,7 +304,7 @@ async function getLogContents () {
 }
 
 export async function waitForLangServerReady () {
-	const maxWait = 15 // seconds // seconds
+	const maxWait = 45 // seconds // seconds
 	const waitTime = new Duration()
 	let langServerReady = false
 	let langServerError = false
@@ -284,8 +314,7 @@ export async function waitForLangServerReady () {
 	let lastLogLength = 0
 
 	while (!langServerReady || stillCompiling) {
-		const lines = await sleep2(250)
-			.then(() => getLogContents())
+		const lines = await getLogContents()
 		if (!lines) {
 			continue
 		}
@@ -343,10 +372,13 @@ export async function waitForLangServerReady () {
 			break
 		}
 
-		const prom2 = sleep2(100, 'language server not ready yet...' +  waitTime +
-			'\n\tlangServerReady=' + langServerReady + ', langServerError=' + langServerError + ', compileSuccess=' + compileSuccess + ', compileFailed=' + compileFailed)
-			.then(() => sleep2(101))
-		await prom2 // await prom so other threads can run
+		log.debug('lastLine=' + lines[lines.length - 1])
+		log.info('language server not ready yet...' +  waitTime +
+			'\n\tlangServerReady=' + langServerReady +
+			', langServerError=' + langServerError +
+			', compileSuccess=' + compileSuccess +
+			', compileFailed=' + compileFailed)
+		await sleep(200, null)
 
 		if (waitTime.elapsed() > maxWait * 1000) {
 			log.info('timeout after ' + waitTime.elapsed() + 'ms')
@@ -401,7 +433,7 @@ export async function waitForLangServerReady () {
 	}
 
 	if (langServerReady) {
-		log.error('lang server is ready! (waitTime='  + waitTime + ')')
+		log.info('lang server is ready! (waitTime='  + waitTime + ')')
 		return true
 	}
 

@@ -147,11 +147,11 @@ function getExtensionDevelopmentPath () {
 	throw new Error('unable to determine extensionDevelopmentPath')
 }
 
-export async function suiteSetupCommon (runtimes?: IRuntime[]) {
+export async function suiteSetupCommon (runtimes?: IRuntime[], rcodeCount?: number) {
 	log.info('[suiteSetupCommon] waitForExtensionActive \'kherring.ablunit-test-runner\' (projName=' + projName() + ')')
 	await waitForExtensionActive()
 	if (enableExtensions()) {
-		await enableOpenedgeAblExtension(runtimes)
+		await enableOpenedgeAblExtension(runtimes, rcodeCount)
 	}
 	log.info('suiteSetupCommon complete!')
 }
@@ -211,9 +211,6 @@ export function installExtension (extname = 'riversidesoftware.openedge-abl-lsp'
 	const installCommand = 'workbench.extensions.installExtension'
 	return commands.executeCommand(installCommand, extname)
 		.then(() => {
-			log.info('post install command')
-			return sleep2(250)
-		}).then(() => {
 			log.info('get extension \'' + extname + '\'...')
 			const ext = extensions.getExtension(extname)
 			if (!ext) {
@@ -226,7 +223,7 @@ export function installExtension (extname = 'riversidesoftware.openedge-abl-lsp'
 		})
 }
 
-export function sleep2 (time = 10, msg?: string | null) {
+export function sleep (time = 10, msg?: string | null) {
 	if (msg !== null) {
 		let status = 'sleeping for ' + time + 'ms'
 		if (msg) {
@@ -235,28 +232,12 @@ export function sleep2 (time = 10, msg?: string | null) {
 		log.info(status)
 	}
 	return new Promise(resolve => setTimeout(resolve, time))
-}
-
-export function sleep (requestedTime = 25, msg?: string) {
-	const time = 25
-	let status = 'sleeping for ' + time + 'ms'
-	if (time !== requestedTime) {
-		status += ' (orig=' + requestedTime + 'ms)'
-	}
-	if (msg) {
-		status = status + ' [' + msg + ']'
-	}
-	log.info(status)
-	return new Promise(resolve => setTimeout(resolve, time))
+		.then(() => { return })
 }
 
 export async function activateExtension (extname = 'riversidesoftware.openedge-abl-lsp') {
 	log.info('activating ' + extname + ' extension...')
-	let ext = extensions.getExtension(extname)
-	if (!ext) {
-		await sleep2(250, 'wait and retry getExtension')
-		ext = extensions.getExtension(extname)
-	}
+	const ext = extensions.getExtension(extname)
 	if (!ext) {
 		throw new Error('cannot activate extension, not installed: ' + extname)
 	}
@@ -268,7 +249,6 @@ export async function activateExtension (extname = 'riversidesoftware.openedge-a
 			log.info('activated ' + extname + ' extension!')
 		}, (e: unknown) => { throw e })
 	}
-	await sleep2(250)
 	if (extname === 'riversidesoftware.openedge-abl-lsp') {
 		await waitForLangServerReady()
 	}
@@ -289,7 +269,6 @@ async function waitForExtensionActive (extensionId = 'kherring.ablunit-test-runn
 	}
 
 	ext = await ext.activate()
-		.then(() => { return sleep2(250) })
 		.then(() => {
 			log.info('activated? ' + extensionId)
 			return extensions.getExtension(extensionId)
@@ -303,7 +282,6 @@ async function waitForExtensionActive (extensionId = 'kherring.ablunit-test-runn
 			return await Promise.resolve(ext.isActive)
 		}
 		log.info('waitied ' + (i + 1) * 100 + 'ms for extension to activate')
-		await sleep2(100)
 	}
 	if (!ext.isActive) { throw new Error(extensionId + ' is not active') }
 
@@ -311,11 +289,7 @@ async function waitForExtensionActive (extensionId = 'kherring.ablunit-test-runn
 	return ext.isActive
 }
 
-export function getRcodeCount (workspaceFolder?: WorkspaceFolder | Uri) {
-	return getFileCountByExt('r', workspaceFolder)
-}
-
-export async function deleteRcode (workspaceFolder?: WorkspaceFolder) {
+export function deleteRcode (workspaceFolder?: WorkspaceFolder) {
 	workspaceFolder = workspaceFolder ?? getWorkspaceFolders()[0]
 	if (!workspaceFolder) {
 		throw new Error('workspaceFolder is undefined')
@@ -328,8 +302,6 @@ export async function deleteRcode (workspaceFolder?: WorkspaceFolder) {
 			log.debug('\trm ' + rcodeFile)
 			FileUtils.deleteFile(Uri.joinPath(workspaceFolder.uri, rcodeFile))
 		}
-		const prom = sleep2(100)
-		await prom
 	}
 
 	const rcodeCount = getRcodeCount(workspaceFolder)
@@ -339,6 +311,14 @@ export async function deleteRcode (workspaceFolder?: WorkspaceFolder) {
 	}
 	log.info('deleted all rcode files')
 	return true
+}
+
+export function getSourceCount (workspaceFolder?: WorkspaceFolder | Uri) {
+	return getFileCountByExt('cls', workspaceFolder) + getFileCountByExt('p', workspaceFolder)
+}
+
+export function getRcodeCount (workspaceFolder?: WorkspaceFolder | Uri) {
+	return getFileCountByExt('r', workspaceFolder)
 }
 
 export function getXrefCount (workspaceFolder?: WorkspaceFolder) {
@@ -363,12 +343,17 @@ function getFileCountByExt (ext: string, workspaceFolder?: WorkspaceFolder | Uri
 	const fileCount = g.length
 	if (fileCount >= 0) {
 		log.info('\'*.r\' files=' + fileCount + ' (path=' + uri.fsPath + ')')
+		// for (const file of g) {
+		// 	log.info('\t' + file)
+		// }
 		return fileCount
 	}
 	throw new Error('fileCount is not a positive number! fileCount=' + fileCount + '(ext=' + ext + ')')
 }
 
-export async function awaitRCode (workspaceFolder: WorkspaceFolder, rcodeCountMinimum = 1) {
+export async function awaitRCode (workspaceFolder: WorkspaceFolder | undefined, rcodeCountMinimum = 1) {
+	workspaceFolder = workspaceFolder ?? getWorkspaceFolders()[0]
+
 	const ext = extensions.getExtension('riversidesoftware.openedge-abl-lsp')
 	log.info('isActive=' + ext?.isActive)
 	if (!ext?.isActive) {
@@ -387,14 +372,18 @@ export async function awaitRCode (workspaceFolder: WorkspaceFolder, rcodeCountMi
 
 
 	log.info('waiting up to ' + buildWaitTime + ' seconds for rcode')
-	for (let i = 0; i < buildWaitTime; i++) {
+	const waitTime = new Duration('waitForRcode')
+	while (true) {
 		const rcodeCount = getRcodeCount(workspaceFolder)
 		if (rcodeCount >= rcodeCountMinimum) {
 			log.info('compile complete! rcode count = ' + rcodeCount)
 			return rcodeCount
 		}
-		log.info('found ' + rcodeCount + ' rcode files. waiting... (' + i + '/' + buildWaitTime + ')')
-		await sleep2(500)
+		log.info('found ' + rcodeCount + ' rcode files. waiting... (waitTime=' + waitTime.elapsed() + 'ms)')
+		await sleep(100)
+		if (waitTime.elapsed() > buildWaitTime * 1000) {
+			break
+		}
 	}
 
 	await commands.executeCommand('abl.dumpFileStatus').then(() => { log.info('abl.dumpFileStatus complete!'); return })
@@ -535,17 +524,14 @@ export async function runAllTests (doRefresh = true, waitForResults = true, with
 
 	log.info(testCommand + ' starting (waitForResults=' + waitForResults + ')')
 	const r = await commands.executeCommand(testCommand)
-		.then((r) => {
-			log.info(tag + 'command ' + testCommand +' complete! (r=' + r + ')')
-			return sleep(250)
+		.then(() => sleep(25))
+		.then(() => {
+			log.info(tag + 'command ' + testCommand +' complete!')
+			if (!waitForResults) { return [] }
+			return getResults(1, tag)
 		}, (e: unknown) => {
 			log.error(tag + testCommand + ' failed: ' + e)
 			throw e
-		})
-		.then(() => {
-			log.info(tag + testCommand + ' completed')
-			if (!waitForResults) { return [] }
-			return getResults(1, tag)
 		})
 		.then((r) => {
 			if (r.length >= 0) {
@@ -570,9 +556,32 @@ export function runAllTestsWithCoverage () {
 	return runAllTests(true, true, true)
 }
 
+async function waitForTestsInFile (testpath: Uri) {
+	// await waitForRefreshComplete()
+	const d = new Duration()
+	while (d.elapsed() < 5000) {
+		const i = await sleep(250)
+			.then(() => getTestItem(testpath))
+			.then((i: TestItem) => {
+				return i
+			}, (_e: unknown) => {
+				return undefined
+			})
+		log.info('i.children.size=' + i?.children.size + ' (testpath=' + testpath.fsPath + ')')
+		if ((i?.children.size ?? 0) > 0) {
+			log.info('found ' + i?.children.size + ' tests in ' + testpath.fsPath)
+			break
+		}
+	}
+	if (d.elapsed() > 5000) {
+		log.error('waitForTestsInFile timed out waiting for tests in ' + testpath.fsPath)
+		throw new Error('waitForTestsInFile timed out waiting for tests in ' + testpath.fsPath)
+	}
+}
+
 export function runTestsInFile (filename: string, len = 1, kind: TestRunProfileKind = TestRunProfileKind.Run) {
 	const testpath = toUri(filename)
-	log.info('runnings tests in file ' + testpath.fsPath)
+	log.info('running tests in file ' + testpath.fsPath)
 	let command
 	switch (kind) {
 		case TestRunProfileKind.Run: command = 'testing.runCurrentFile'; break
@@ -581,10 +590,20 @@ export function runTestsInFile (filename: string, len = 1, kind: TestRunProfileK
 	}
 
 	return commands.executeCommand('vscode.open', testpath)
+		.then(() => sleep(100))
+		.then(() => waitForRefreshComplete())
 		.then(() => {
 			assert.equal(vscode.window.activeTextEditor?.document.uri.fsPath, testpath.fsPath, 'vscode.window.activeTextEditor should be open to ' + testpath.fsPath)
+			return waitForTestsInFile(testpath)
+		}, (e: unknown) => {
+			log.error('vscode.open failed: ' + e)
+			throw e
+		}).then(() => {
 			runTestsDuration = new Duration('runTestsInFile')
 			return commands.executeCommand(command)
+		}, (e: unknown) => {
+			log.error('waitForTestsInFile failed: ' + e)
+			throw e
 		})
 		.then((r: unknown) => {
 			log.debug('executeCommand(' + command + ').then completed successfully (r=' + JSON.stringify(r, null, 2) + ')')
@@ -598,15 +617,18 @@ export function runTestsInFile (filename: string, len = 1, kind: TestRunProfileK
 }
 
 export function runTestAtLine (filename: string, line: number, len = 1, kind: TestRunProfileKind = TestRunProfileKind.Run) {
+	const testpath = toUri(filename)
 	let command
 	switch (kind) {
 		case TestRunProfileKind.Run: command = 'testing.runAtCursor'; break
 		case TestRunProfileKind.Debug: command = 'testing.debugAtCursor'; break
 		case TestRunProfileKind.Coverage: command = 'testing.coverageAtCursor'; break
 	}
-	const testpath = Uri.joinPath(getWorkspaceUri(), filename)
+
 	log.info('running test at line ' + line + ' in ' + testpath.fsPath)
 	return commands.executeCommand('vscode.open', testpath)
+		.then(() => sleep(100))
+		.then(() => waitForTestsInFile(testpath))
 		.then(() => {
 			if(window.activeTextEditor?.document.uri.fsPath === testpath.fsPath) {
 				window.activeTextEditor.selection = new Selection(line, 0, line, 0)
@@ -635,7 +657,7 @@ async function waitForRefreshComplete () {
 		const refreshComplete = await commands.executeCommand('_ablunit.isRefreshTestsComplete')
 			.then((r: unknown) => {
 				log.info('isRefreshTestsComplete=' + r)
-				return true
+				return r
 			}, (e: unknown) => {
 				log.info('isRefreshTestComplete error=' + e)
 				return false
@@ -643,10 +665,10 @@ async function waitForRefreshComplete () {
 		if (refreshComplete) {
 			return true
 		}
-		await sleep2(500)
+		await sleep(100, null).then(() => sleep(100, null))
 	}
-	throw new Error('waitForRefreshComplete timeout')
-
+	log.error('waitForRefreshComplete timed out after ' + refreshDuration.elapsed() + 'ms')
+	throw new Error('waitForRefreshComplete timeout ' + refreshDuration)
 }
 
 export function refreshTests () {
@@ -674,7 +696,6 @@ export async function waitForTestRunStatus (waitForStatus: RunStatus) {
 	while (currentStatus < waitForStatus)
 	{
 		count++
-		await sleep2(500, 'waitForTestRunStatus count=' + count + '; currentStatus=\'' + currentStatus.toString() + '\' + , waitForStatus=\'' + waitForStatus.toString() + '\'')
 		currentStatus = await getCurrentRunData()
 			.then((runData) => {
 				if (runData.length > 0) {
@@ -698,6 +719,9 @@ export async function waitForTestRunStatus (waitForStatus: RunStatus) {
 	if ((currentStatus as number) < (waitForStatus as number)) {
 		throw new Error('test run status should equal ' + waitForStatus.toString() + ' but is ' + currentStatus.toString())
 	}
+
+	const prom = sleep(50, 'waitForTestRunStatus count=' + count + '; currentStatus=\'' + currentStatus.toString() + '\' + , waitForStatus=\'' + waitForStatus.toString() + '\'')
+	await prom
 }
 
 export async function cancelTestRun (resolveCurrentRunData = true) {
@@ -746,20 +770,30 @@ function getConfigDefaultValue (key: string) {
 	return undefined
 }
 
-export function updateConfig (key: string, value: unknown, configurationTarget?: boolean | vscode.ConfigurationTarget | null) {
+export async function updateConfig (key: string, value: unknown, configurationTarget?: boolean | vscode.ConfigurationTarget | null) {
 	const sectionArr = key.split('.')
 	const section1 = sectionArr.shift()
 	const section2 = sectionArr.join('.')
 
 	const workspaceConfig = workspace.getConfiguration(section1, getWorkspaceUri())
 
+	configurationTarget = configurationTarget ?? vscode.ConfigurationTarget.WorkspaceFolder
+
 	const currentValue = workspaceConfig.get(section2)
+	const cfg = [
+		getWorkspaceUri().fsPath,
+		workspace.getConfiguration('ablunit', getWorkspaceUri()).get('files.exclude'),
+		workspace.getConfiguration('ablunit', getWorkspaceFolders()[0]).get('files.exclude'),
+		workspace.getConfiguration('ablunit').get('files.exclude')
+	]
+	log.info('cfg[]=' + JSON.stringify(cfg, null, 2))
+
 	log.info('current=' + JSON.stringify(currentValue))
 	log.info('  value=' + JSON.stringify(value))
 	if (JSON.stringify(value) === JSON.stringify(currentValue)) {
-		// log.debug(section1 + '.' + section2 + ' is already set to \'' + value + '\'')
+		log.debug(section1 + '.' + section2 + ' is already set to \'' + value + '\'')
 		log.warn(key + ' is already set to \'' + value + '\'')
-		return Promise.resolve(true)
+		// return true
 	}
 
 	if (!value) {
@@ -767,15 +801,20 @@ export function updateConfig (key: string, value: unknown, configurationTarget?:
 		log.info('default=' + JSON.stringify(defaultValue))
 		if (JSON.stringify(defaultValue) === JSON.stringify(currentValue)) {
 			log.warn(key + ' is already set to default value \'' + value + '\'')
-			return Promise.resolve(true)
+			// return true
 		}
 	}
 	log.info('updating configuration section1=' + section2 + ', section2=' + section2 + ', key=' + key + ' value=' + JSON.stringify(value))
-	return workspaceConfig.update(section2, value, configurationTarget)
-		.then(() => true, (e: unknown) => { throw e })
+	await workspaceConfig.update(section2, value, configurationTarget)
+	if (key == 'files.exclude' || key == 'files.include') {
+		await sleep(100)
+			.then(() => waitForRefreshComplete())
+	}
+	return true
 }
 
 export async function updateTestProfile (key: string, value: string | string[] | boolean | number | object | undefined, workspaceUri?: Uri) {
+	log.debug('updateTestProfile key=' + key + ', value=' + JSON.stringify(value))
 	workspaceUri = workspaceUri ?? getWorkspaceUri()
 
 	const testProfileUri = Uri.joinPath(workspaceUri, '.vscode', 'ablunit-test-profile.json')
@@ -807,7 +846,25 @@ export async function updateTestProfile (key: string, value: string | string[] |
 		newtext = newtext.replace(/\n/g, '\r\n')
 	}
 	const newjson = Buffer.from(newtext)
-	await workspace.fs.writeFile(testProfileUri, newjson)
+	await FileUtils.writeFileAsync(testProfileUri, newjson)
+	await sleep(250)
+		.then(() => sleep(250))
+
+	if (key === 'timeout') {
+		const waitTime = new Duration('waitForTestProfile')
+		while (waitTime.elapsed() < 1000) {
+			const testProfile = JSON.parse(FileUtils.readFileSync(testProfileUri).toString()) as IConfigurations
+			if (testProfile.configurations[0][key] == value) {
+				break
+			}
+			await sleep(100)
+		}
+		if (waitTime.elapsed() >= 1000) {
+			log.error('waitForTestProfile timed out after ' + waitTime.elapsed() + 'ms')
+			throw new Error('testProfile.configurations[0][' + key + '] != ' + JSON.stringify(value))
+		}
+	}
+
 	log.debug('writeFileComplete! newjson=' + newjson)
 	return
 }
@@ -826,6 +883,7 @@ export function selectProfile (profile: string) {
 }
 
 export function refreshData (resultsLen = 0) {
+	log.debug('refreshData starting...')
 	recentResults = undefined
 	currentRunData = undefined
 
@@ -961,7 +1019,7 @@ export async function getCurrentRunData (len = 1, resLen = 0, tag?: string) {
 	if (!currentRunData || currentRunData.length === 0) {
 		log.info(tag + 'getCurrentRunData not set, refreshing...')
 		for (let i=0; i<3; i++) {
-			await sleep2(500, tag + 'still no currentRunData, sleep before trying again (' + i + '/3)')
+			await sleep(100, tag + 'still no currentRunData, sleep before trying again (' + i + '/3)')
 			const retResults = await refreshData(resLen).then((r) => {
 				log.debug('refresh success (r=' + r + '; currentRunData.length=' + currentRunData?.length + ')')
 				return true
@@ -993,11 +1051,12 @@ export async function getCurrentRunData (len = 1, resLen = 0, tag?: string) {
 }
 
 export async function getResults (len = 1, tag?: string): Promise<ABLResults[]> {
+	log.debug('getResults starting...')
 	tag = tag ?? ''
 	if ((!recentResults || recentResults.length === 0) && len > 0) {
 		log.info(tag + 'recentResults not set, refreshing...')
 		for (let i=0; i<5; i++) {
-			await sleep2(250, tag + 'still no recentResults (' + i + '/4)')
+			await sleep(100, tag + 'still no recentResults (' + i + '/4)')
 
 			try {
 				await refreshData()
@@ -1159,7 +1218,9 @@ export const assert = {
 		assertParent.ok(testValue > greaterThan, message)
 	},
 	greaterOrEqual (testValue: number, greaterThan: number, message?: string) {
-		assertParent.ok(testValue >= greaterThan, message)
+		if (testValue < greaterThan) {
+			assert.equal(testValue, '>= ' + greaterThan, message)
+		}
 	},
 	less (testValue: number, lessThan: number, message?: string) {
 		assertParent.ok(testValue < lessThan, message)
@@ -1294,7 +1355,8 @@ export const assert = {
 			assert.fail('no coverage found for ' + file.fsPath)
 			return
 		}
-		log.info('coverage=' + JSON.stringify(coverage, null, 2))
+
+		// log.info('coverage=' + JSON.stringify(coverage, null, 2))
 		for (const line of lines) {
 			log.info('checking line ' + line + ' in ' + file.fsPath)
 			const executions = getLineExecutions(coverage, line)
