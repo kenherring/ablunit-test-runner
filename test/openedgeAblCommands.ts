@@ -47,8 +47,10 @@ async function waitForRcode (expectedCount?: number) {
 			return rcodeCount
 		}
 
-		if (waitTime.elapsed() > 5000) {
-			await sleep(500)
+		if (waitTime.elapsed() > 10000) {
+			await sleep(1000, null)
+		} else if (waitTime.elapsed() > 5000) {
+			await sleep(500, null)
 		} else {
 			await sleep(100, null)
 		}
