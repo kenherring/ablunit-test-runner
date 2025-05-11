@@ -99,7 +99,7 @@
 		"@swc-node/register": "^1.10.10",
 		"@types/mocha": "^10.0.10",
 		"@types/node": "20.x",
-		"@types/vscode": "^1.99.1",
+		"@types/vscode": "^1.100.0",
 		"@types/xml2js": "^0.4.14",
 		"@typescript-eslint/eslint-plugin": "^8.31.0",
 		"@typescript-eslint/parser": "^8.31.0",
