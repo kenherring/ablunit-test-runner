@@ -16,16 +16,10 @@ body:
       label: Extension Version
       description: What version of the extension are you using?
       options:
-        - 1.2.3
-        - 1.2.1
         - 1.2.0
-        - 1.1.13
-        - 1.1.11
-        - 1.1.9
-        - 1.1.7
         - 1.1.0
         - 1.0.0
-        - other (please specify in the description)
+        - prerelease/other (please specify in the description)
   - type: dropdown
     id: version
     attributes:

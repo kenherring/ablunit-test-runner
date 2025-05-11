@@ -2,7 +2,6 @@ import { defineConfig } from 'eslint/config'
 import js from '@eslint/js'
 import ts from 'typescript-eslint'
 import promise from 'eslint-plugin-promise'
-import tsParser from '@typescript-eslint/parser'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -25,19 +24,11 @@ export default defineConfig([
 	js.configs.recommended,
 	ts.configs.strictTypeChecked,
 	ts.configs.stylisticTypeChecked,
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-  promise.configs['flat/recommended'],
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+	promise.configs['flat/recommended'],
 	{
+
 		languageOptions: {
-			globals: {
-				Atomics: 'readonly',
-				SharedArrayBuffer: 'readonly',
-			},
-
-			parser: tsParser,
-			ecmaVersion: 5,
-			sourceType: 'script',
-
 			parserOptions: {
 				project: './tsconfig.json',
 				tsconfigRootDir: '.',

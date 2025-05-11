@@ -1,18 +1,10 @@
 # [1.2.3](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.2.3) - 2025-05-11 (pre-release)
 
-
- * 
-
-
-**Full Changelog**: [1.2.1...1.2.3](https://github.com/kenherring/ablunit-test-runner/compare/1.2.1...1.2.3)
-
-# [1.2.1](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.2.1) - 2025-05-04 (pre-release)
-
+ * Update eslint configuration (#279)
  * Unit test cleanup and performance (#274)
  * Increase debug profile wait time to 30s (part 2) (#273)
 
-
-**Full Changelog**: [1.2.0...1.2.1](https://github.com/kenherring/ablunit-test-runner/compare/1.2.0...1.2.1)
+**Full Changelog**: [1.2.0...1.2.3](https://github.com/kenherring/ablunit-test-runner/compare/1.2.0...1.2.3)
 
 # [1.2.0](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.2.0) - 2025-04-26
 
