@@ -93,6 +93,7 @@ suite('proj2 - Extension Test Suite', () => {
 	})
 
 	test('proj2.6 - compile error - run with db conn', async () => {
+		log.info('---------- proj2.6 ----------')
 		FileUtils.copyFile(
 			toUri('src/compileError.p.saveme'),
 			toUri('src/compileError.p'),
@@ -105,6 +106,7 @@ suite('proj2 - Extension Test Suite', () => {
 	})
 
 	test('proj2.7 - debugger', () => {
+		log.info('---------- proj2.7 ----------')
 		return runTestsInFile('src/cache/otherTestProcedure.p', 1, TestRunProfileKind.Debug)
 			.then(() => {
 				assert.tests.count(3)
@@ -113,7 +115,8 @@ suite('proj2 - Extension Test Suite', () => {
 			})
 	})
 
-	test('proj2.8 - debugger w/ breakpoint', () => {
+	test('proj2.8 - debugger w/ breakpoint', async () => {
+		log.info('---------- proj2.8 ----------')
 		const loc = new Location(
 			Uri.joinPath(workspaceUri, 'src', 'cache', 'otherTestProcedure.p'),
 			new Position(3, 0)
@@ -122,7 +125,7 @@ suite('proj2 - Extension Test Suite', () => {
 		debug.addBreakpoints([sbp])
 
 		const prom = runTestsInFile('src/cache/otherTestProcedure.p', 1, TestRunProfileKind.Debug)
-		return new Promise<void>((resolve) => {
+		await new Promise<void>((resolve) => {
 			debug.onDidChangeActiveStackItem((e) => {
 				log.info('HIT BREAKPOINT onDidChangeActiveStackItem=' + e?.session.name)
 				resolve()
@@ -130,17 +133,24 @@ suite('proj2 - Extension Test Suite', () => {
 		}).then(() => {
 			log.info('CONTINUE AFTER BREAKPOINT')
 			return commands.executeCommand('workbench.action.debug.continue')
-		}).then(() => {
-			log.info('AWAIT TEST')
-			return prom
-		}).then(() => {
-			log.info('ASSERT tests.count(3)')
-			assert.tests.count(3)
-			return
 		}, (e: unknown) => {
 			assert.fail('proj2.8 - debugger w/ breakpoint failed: ' + e)
 			throw e
 		})
+
+		debug.onDidChangeActiveStackItem((e) => {
+			log.info('HIT ADDITIONAL BREAKPOINT onDidChangeActiveStackItem=' + e?.session.name)
+			commands.executeCommand('workbench.action.debug.continue')
+				.then(() => {
+					log.info('CONTINUE AFTER ADDITIONAL BREAKPOINT')
+				}, (e: unknown) => {
+					log.info('CONTINUE ERROR=' + e)
+				})
+		})
+		await prom
+		log.info('ASSERT tests.count(3)')
+		assert.tests.count(3)
+		return
 	})
 
 })

@@ -868,7 +868,6 @@ function deleteTest (controller: TestController | undefined, item: TestItem | Ur
 		for (const child of gatherTestItems(item.children)) {
 			deleteChildren(controller, child)
 			child.children.delete(item.id)
-			log.info('delete child test: ' + item.id + ' (children.size=' + item.children.size + ')')
 			testData.delete(child)
 		}
 	}
@@ -883,7 +882,6 @@ function deleteTest (controller: TestController | undefined, item: TestItem | Ur
 		}
 		item = tmpItem
 	}
-	log.info('delete test item: ' + item.id + ' (children.size=' + item.children.size + ')')
 
 	testData.delete(item)
 	deleteChildren(controller, item)
@@ -920,7 +918,6 @@ function removeExcludedFiles (controller: TestController, excludePatterns: Relat
 		if (item.uri && data instanceof ABLTestFile) {
 			const excluded = isFileExcluded(item.uri, excludePatterns)
 			if (excluded) {
-				log.info('remove excluded file from test tree: ' + item.id)
 				deleteTest(controller, item)
 			}
 		}

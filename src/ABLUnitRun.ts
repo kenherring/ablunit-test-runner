@@ -6,6 +6,7 @@ import { log } from 'ChannelLogger'
 import { basename, dirname } from 'path'
 import { globSync } from 'glob'
 import { ABLCompilerError, ABLUnitRuntimeError, ICompilerError, TimeoutError } from 'Errors'
+import treeKill from 'tree-kill'
 import * as fs from 'fs'
 import * as FileUtils from 'FileUtils'
 
@@ -209,38 +210,37 @@ function runCommand (res: ABLResults, options: TestRun, cancellation: Cancellati
 		currentTestItems.pop()
 	}
 
+	res.setStatus(RunStatus.Running)
+	const runenv = getEnvVars(res.dlc.uri, res.cfg.ablunitConfig.command.debugConnectMaxWait)
+	const compilerErrors: ICompilerError[] = []
+	let timeout = res.cfg.ablunitConfig.timeout
+	if (res.cfg.requestKind == TestRunProfileKind.Debug) {
+		timeout = 0
+	} else if (timeout < 0) {
+		throw new RangeError('timeout ' + timeout + ' is invalid and must be greater than 0')
+	}
+
+	const spawnOpts: SpawnOptions = {
+		signal: abort.signal,
+		// killSignal: 'SIGTERM',
+		// timeout: timeout,
+		env: runenv,
+		cwd: res.cfg.ablunitConfig.workspaceFolder.uri.fsPath,
+		shell: true,
+	}
+
+	log.info('command=\'' + cmd + ' ' + args.join(' ') + '\'\n\n', {testRun: options, testItem: currentTestItems[0] })
+	const testRunDuration = new Duration('TestRun')
+	const proc = spawn(cmd, args, spawnOpts)
+
 	return new Promise<string>((resolve, reject) => {
-		res.setStatus(RunStatus.Running)
-		const runenv = getEnvVars(res.dlc.uri, res.cfg.ablunitConfig.command.debugConnectMaxWait)
-		const compilerErrors: ICompilerError[] = []
-		let timeout = res.cfg.ablunitConfig.timeout
-		if (res.cfg.requestKind == TestRunProfileKind.Debug) {
-			timeout = 0
-		}
-
-		const spawnOpts: SpawnOptions = {
-			signal: abort.signal,
-			// killSignal: 'SIGKILL', // DEFAULT
-			// killSignal: 'SIGABRT', // does not actually kill the process
-			// killSignal: 'SIGINT', // works in windows
-			// killSignal: 'SIGHUP', // works in linux
-			killSignal: 'SIGTERM',
-			timeout: timeout,
-			env: runenv,
-			cwd: res.cfg.ablunitConfig.workspaceFolder.uri.fsPath,
-			shell: true,
-		}
-
-		log.info('command=\'' + cmd + ' ' + args.join(' ') + '\'\n\n', {testRun: options, testItem: currentTestItems[0] })
-		const testRunDuration = new Duration('TestRun')
-		const process = spawn(cmd, args, spawnOpts)
 		let debuggerStarted = false
 
-		process.stderr?.on('data', (data: Buffer) => {
+		proc.stderr?.on('data', (data: Buffer) => {
 			log.debug('stderr')
 			log.error('\t\t[stderr] ' + data.toString().trim().replace(/\n/g, '\n\t\t[stderr] '), {testRun: options, testItem: currentTestItems[0]})
 		})
-		process.stdout?.on('data', (data: Buffer) => {
+		proc.stdout?.on('data', (data: Buffer) => {
 			log.debug('stdout')
 			const lines = (stdout + data.toString()).replace('/\r/g', '').split('\n')
 			if (lines[lines.length - 1] == '') {
@@ -259,12 +259,12 @@ function runCommand (res: ABLResults, options: TestRun, cancellation: Cancellati
 					continue
 				}
 				if (line.startsWith('ABLUNIT_STATUS=')) {
-					let ablunitStatus: IABLUnitStatus
+					let ablunitStatus: IABLUnitStatus | undefined = undefined
 					try {
 						ablunitStatus = JSON.parse(line.substring(15)) as IABLUnitStatus
 					} catch (e) {
 						log.error('error parsing ablunitStatus: ' + e)
-						ablunitStatus = { action: 'ParsingError' }
+						continue
 					}
 
 					if (ablunitStatus.action == 'TEST_TREE' || ablunitStatus.entityName?.trim() == 'TEST_ROOT') {
@@ -334,24 +334,23 @@ function runCommand (res: ABLResults, options: TestRun, cancellation: Cancellati
 			log.debug('stdout DONE')
 
 		})
-		process.once('spawn', () => {
-			log.debug('spawn', {testRun: options})
+
+		proc.once('spawn', () => {
+			log.debug('spawn')
 			res.setStatus(RunStatus.Executing)
 			log.info('----- ABLUnit Test Run Started -----', {testRun: options, testItem: currentTestItems[0] })
 		}).on('disconnect', () => {
-			log.debug('process.disconnect', {testRun: options})
-			log.info('process.disconnect')
+			log.debug('process.disconnect')
 		}).on('error', (e: Error) => {
-			log.debug('error', {testRun: options})
-			log.info('process.error e=' + e)
+			log.debug('error type=' + typeof e + ' e.message=' + e.message +
+				'\n\te=' + JSON.stringify(e, null, 2))
 			res.setStatus(RunStatus.Error, 'e=' + e)
 			log.error('----- ABLUnit Test Run Error -----', {testRun: options, testItem: currentTestItems[0] })
 			if (e instanceof Error) {
 				reject(e)
 			}
 		}).on('exit', (code: number | null, signal: NodeJS.Signals | null) => {
-			log.debug('exit', {testRun: options})
-			log.info('process.exit code=' + code + '; signal=' + signal + '; process.exitCode=' + process.exitCode + '; process.signalCode=' + process.signalCode + '; killed=' + process.killed)
+			log.debug('exit code=' + code + '; signal=' + signal)
 			testRunDuration.stop()
 			if (signal == 'SIGTERM') {
 				res.setStatus(RunStatus.Timeout, 'signal=' + signal)
@@ -377,7 +376,7 @@ function runCommand (res: ABLResults, options: TestRun, cancellation: Cancellati
 				return e
 			}
 
-			if (process.killed || signal) {
+			if (proc.killed || signal) {
 				res.setStatus(RunStatus.Killed, 'signal=' + signal)
 				const e = new ABLUnitRuntimeError('ABLUnit process killed', 'exit_code=' + code + '; signal=' + signal, cmd)
 				reject(e)
@@ -387,14 +386,30 @@ function runCommand (res: ABLResults, options: TestRun, cancellation: Cancellati
 			res.setStatus(RunStatus.Complete, 'success')
 			resolve('success')
 		}).on('close', (code: number | null, signal: NodeJS.Signals | null) => {
-			log.debug('close', {testRun: options})
+			log.debug('close code=' + code + ' signal=' + signal)
 			log.info('----- ABLUnit Test Run Complete ----- ' + testRunDuration, {testRun: options})
 			resolve('success')
-			log.info('process.close code=' + code + '; signal=' + signal + '; process.exitCode=' + process.exitCode + '; process.signalCode=' + process.signalCode + '; killed=' + process.killed)
 		}).on('message', (m: Serializable, _h: SendHandle) => {
-			log.debug('message', {testRun: options})
-			log.info('process.on.message m=' + JSON.stringify(m))
+			log.debug('message m=' + JSON.stringify(m))
 		})
+
+		if (timeout > 0) {
+			setTimeout(function () {
+				if (proc.exitCode != null) {
+					return
+				}
+				log.debug('timeout after ' + timeout + 'ms')
+				if (proc.pid) {
+					treeKill(proc.pid, 'SIGTERM', (err) => {
+						if (err) {
+							log.error('failed to kill process pid=' + proc.pid + ' err=' + err)
+							throw err
+						}
+					})
+				}
+			}, timeout)
+		}
+
 	})
 }
 
