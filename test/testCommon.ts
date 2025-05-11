@@ -289,22 +289,23 @@ async function waitForExtensionActive (extensionId = 'kherring.ablunit-test-runn
 	return ext.isActive
 }
 
-export function deleteRcode (workspaceFolder?: WorkspaceFolder) {
+export async function deleteRcode (workspaceFolder?: WorkspaceFolder) {
 	workspaceFolder = workspaceFolder ?? getWorkspaceFolders()[0]
 	if (!workspaceFolder) {
 		throw new Error('workspaceFolder is undefined')
 	}
 
 	while (getRcodeCount(workspaceFolder) > 0) {
-		const g = globSync('**/*.r', { cwd: workspaceFolder.uri.fsPath })
+		const g = globSync('**/*.r', { cwd: workspaceFolder.uri.fsPath }).map((f) => Uri.joinPath(workspaceFolder.uri, f))
 		log.info('deleting ' + g.length + ' rcode files')
-		for (const rcodeFile of g) {
-			log.debug('\trm ' + rcodeFile)
-			FileUtils.deleteFile(Uri.joinPath(workspaceFolder.uri, rcodeFile))
-		}
+		FileUtils.deleteFile(g)
 	}
 
-	const rcodeCount = getRcodeCount(workspaceFolder)
+	let rcodeCount = getRcodeCount(workspaceFolder)
+	if (rcodeCount > 0) {
+		await sleep(250)
+		rcodeCount = getRcodeCount(workspaceFolder)
+	}
 	if (rcodeCount != 0) {
 		log.error('rcode files not deleted! rcodeCount=' + rcodeCount)
 		throw new Error('rcode files not deleted! rcodeCount=' + rcodeCount)
@@ -869,12 +870,6 @@ export function selectProfile (profile: string) {
 	const profileUri = Uri.joinPath(getWorkspaceUri(), '.vscode', 'profile.json')
 	return workspace.fs.writeFile(profileUri, Buffer.from(JSON.stringify(profileJson)))
 		.then(() => restartLangServer())
-		.then((n) => {
-			return n
-		}, (e: unknown) => {
-			log.warn('restartLangServer failed. attemping restart #2 (e=' + e + ')')
-			return restartLangServer()
-		})
 }
 
 export function refreshData (resultsLen = 0) {
