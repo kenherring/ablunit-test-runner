@@ -36,7 +36,9 @@ update_version () {
 	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] PACKAGE_VERSION=$PACKAGE_VERSION"
 
 	update_changelog
-	update_templates
+	if ! $PRERELEASE; then
+		update_templates
+	fi
 	git add .
 }
 
