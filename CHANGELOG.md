@@ -1,11 +1,3 @@
-# [1.2.5](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.2.5) - 2025-05-11 (pre-release)
-
-
- * 
- * Bump the npm_and_yarn group across 1 directory with 2 updates (#277)
-
-**Full Changelog**: [1.2.3...1.2.5](https://github.com/kenherring/ablunit-test-runner/compare/1.2.3...1.2.5)
-
 # [1.2.3](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.2.3) - 2025-05-11 (pre-release)
 
  * Update eslint configuration (#279)
