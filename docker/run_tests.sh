@@ -5,7 +5,7 @@ usage () {
 	echo "
 usage: $0 [ -o (12.2.12 | 12.7.0 | 12.8.1 | 12.8.3 | 12.8.4 | 12.8.5 | 12.8.6 | all) ]
 	[ -V (stable | proposedapi | insiders | X.Y.Z] )] [ -p <project_name> ] [-bBimPv]
-	[ -s (medium | large) ]
+	[ -s (small | medium | large) ]
 
 options:
   -o <version>  OE version (default: 12.8.1)
@@ -23,7 +23,7 @@ options:
                 alternative: set the  ABLUNIT_TEST_RUNNER_PROJECT_NAME environment variable
   -g <pattern>  test grep pattern
   -t <tag>      clone git tag instead of local branch (sets CIRCLE_TAG)
-  -s <size>     CircleCI resource class (medium | large)
+  -S <size>     CircleCI resource class (medium | large)
 				default: medium
   -v            verbose
   -h            show this help message and exit
@@ -45,7 +45,7 @@ initialize () {
 	CPUS=2
 	MEMORY=4g
 
-	while getopts "bBCdimnsxo:p:s:t:PvV:h" OPT; do
+	while getopts "bBCdimnsxo:p:S:t:PvV:h" OPT; do
 		case $OPT in
 			o)	ABLUNIT_TEST_RUNNER_OE_VERSION=$OPTARG ;;
 			b)	OPTS='-b' ;;
@@ -57,9 +57,17 @@ initialize () {
 			h)	usage && exit 0 ;;
 			P)	CREATE_PACKAGE=true ;;
 			p)	ABLUNIT_TEST_RUNNER_PROJECT_NAME=$OPTARG ;;
-			s)	[ "$OPTARG" == "medium" ] && CPUS=2 && MEMORY=4g
-				[ "$OPTARG" == "large" ] && CPUS=4 && MEMORY=8g
-				[ "$OPTARG" != "medium" ] && [ "$OPTARG" != "large" ] && echo "Invalid resource class: $OPTARG" >&2 && usage && exit 1 ;;
+			S)	echo "OPTARG=${OPTARG:-}"
+				if [ "$OPTARG" == "small" ]; then
+					CPUS=1 && MEMORY=2g
+				elif [ "$OPTARG" == "medium" ]; then
+					CPUS=2 && MEMORY=4g
+				elif [ "$OPTARG" == "large" ]; then
+					CPUS=4 && MEMORY=8g
+				else
+					echo "Invalid resource class: $OPTARG" >&2
+					usage && exit 1
+				fi ;;
 			t)	CIRCLE_TAG=$OPTARG ;;
 			x)	OPTS='-x'
 				set -x ;;
