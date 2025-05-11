@@ -12,13 +12,13 @@ const __dirname = path.dirname(__filename)
 export default defineConfig([
 	{
 		ignores: [
-			'**/dummy-ext/',
-			'**/test_projects/',
-			'**/esbuild.js',
 			'.vscode-test/**',
 			'.worktrees/**',
+			'esbuild.js',
 			'dist/**',
+			'dummy-ext/',
 			'resources/ADE/**',
+			'test_projects/',
 		],
 	},
 	js.configs.recommended,
