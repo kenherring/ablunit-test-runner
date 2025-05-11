@@ -1,3 +1,11 @@
+# [1.2.3](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.2.3) - 2025-05-11 (pre-release)
+
+
+ * 
+
+
+**Full Changelog**: [1.2.1...1.2.3](https://github.com/kenherring/ablunit-test-runner/compare/1.2.1...1.2.3)
+
 # [1.2.1](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.2.1) - 2025-05-04 (pre-release)
 
  * Unit test cleanup and performance (#274)
