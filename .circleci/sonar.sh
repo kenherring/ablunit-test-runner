@@ -14,21 +14,23 @@ set -eou pipefail
 ## Run with debug logging:
 ##    .circleci/sonar.sh -Dsonar.log.level=DEBUG
 
+. scripts/common.sh
+
 main_block () {
     initialize
     package
     pre_scan
     sonarcloud_scan "$@"
-    echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 <main>] $0 completed successfull!"
+    log_it 'completed successfull!'
 }
 
 initialize () {
-    echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}]"
+    log_it
     export SONAR_HOST_URL="https://sonarcloud.io"
     ESLINT_FILE=artifacts/eslint_report.json
 
     if [ ! -f artifacts/coverage/lcov.info ]; then
-        echo "ERROR: file not found - artifacts/coverage/lcov.info"
+        log_error "file not found - artifacts/coverage/lcov.info"
         echo " --- hint:  run 'docker/run_tests.sh'"
         exit 1
     fi
@@ -36,17 +38,17 @@ initialize () {
 
 package () {
     VSIX_COUNT=$(find . -maxdepth 1 -name "*.vsix" | wc -l)
-    echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] VSIX_COUNT=$VSIX_COUNT"
+    log_it "VSIX_COUNT=$VSIX_COUNT"
     DO_PACKAGE=false
     [ "$VSIX_COUNT" != "1" ] && DO_PACKAGE=true
     [ ! -f "$ESLINT_FILE" ] && DO_PACKAGE=true
 
-    echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] DO_PACKAGE=$DO_PACKAGE"
+    log_it "DO_PACKAGE=$DO_PACKAGE"
 
     if $DO_PACKAGE; then
         .circleci/package.sh
     else
-        echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] skipping package"
+        log_it 'skipping package'
     fi
 }
 
@@ -66,11 +68,11 @@ pre_scan () {
 }
 
 sonarcloud_scan () {
-    echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}]"
+    log_it
     VERSION=5.0.1.3006
     SONAR_TOKEN=${SONAR_TOKEN:-}
     if [ -z "$SONAR_TOKEN" ]; then
-        echo "ERROR: missing SONAR_TOKEN environment var"
+        log_error 'missing SONAR_TOKEN environment var'
         exit 1
     fi
     SCANNER_DIRECTORY=$(pwd)/tmp/cache/scanner
