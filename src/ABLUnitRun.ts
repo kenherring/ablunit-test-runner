@@ -229,6 +229,11 @@ function runCommand (res: ABLResults, options: TestRun, cancellation: Cancellati
 		shell: true,
 	}
 
+	if (process.platform === 'win32') {
+		spawnOpts.killSignal = 'SIGTERM'
+		spawnOpts.timeout = timeout
+	}
+
 	log.info('command=\'' + cmd + ' ' + args.join(' ') + '\'\n\n', {testRun: options, testItem: currentTestItems[0] })
 	const testRunDuration = new Duration('TestRun')
 	const proc = spawn(cmd, args, spawnOpts)
@@ -387,13 +392,14 @@ function runCommand (res: ABLResults, options: TestRun, cancellation: Cancellati
 			resolve('success')
 		}).on('close', (code: number | null, signal: NodeJS.Signals | null) => {
 			log.debug('close code=' + code + ' signal=' + signal)
-			log.info('----- ABLUnit Test Run Complete ----- ' + testRunDuration, {testRun: options})
-			resolve('success')
+			if (code == 0) {
+				log.info('----- ABLUnit Test Run Complete ----- ' + testRunDuration, {testRun: options})
+			}
 		}).on('message', (m: Serializable, _h: SendHandle) => {
 			log.debug('message m=' + JSON.stringify(m))
 		})
 
-		if (timeout > 0) {
+		if (timeout > 0 && process.platform !== 'win32') {
 			setTimeout(function () {
 				if (proc.exitCode != null) {
 					return
