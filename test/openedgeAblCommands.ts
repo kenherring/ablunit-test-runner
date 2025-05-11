@@ -61,7 +61,7 @@ async function waitForRcode (expectedCount?: number) {
 	return rcodeCount
 }
 
-export function restartLangServer (rcodeCount = 0): PromiseLike<number> {
+export function restartLangServer (rcodeCount = 0, isRetry = false): PromiseLike<number> {
 	log.info('restarting lang server with command abl.restart.langserv')
 	return commands.executeCommand('abl.restart.langserv').then(() => {
 		return sleep(250)
@@ -75,7 +75,13 @@ export function restartLangServer (rcodeCount = 0): PromiseLike<number> {
 		return r
 	}, (e: unknown) => {
 		log.error('abl.restart.langserv command failed! e=' + e)
-		throw new Error('abl.restart.langserv command failed! e=' + e)
+		if (isRetry) {
+			log.error('abl.restart.langserv command failed second attempt! e=' + e)
+			throw new Error('abl.restart.langserv command failed second attempt! e=' + e)
+		} else {
+			log.error('abl.restart.langserv command failed first attempt! e=' + e)
+			return restartLangServer(rcodeCount, true)
+		}
 	})
 }
 
