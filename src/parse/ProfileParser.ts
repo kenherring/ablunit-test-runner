@@ -1,4 +1,4 @@
-import { DeclarationCoverage, Position, Range, StatementCoverage, TextDocument, Uri, workspace } from 'vscode'
+import { DeclarationCoverage, Position, Range, StatementCoverage, TestRun, TextDocument, Uri, workspace } from 'vscode'
 import { PropathParser } from 'ABLPropath'
 import { ABLDebugLines } from 'ABLDebugLines'
 import { log } from 'ChannelLogger'
@@ -18,7 +18,7 @@ export class ABLProfile {
 	profJSON?: ABLProfileJson
 	parseAll = false
 
-	async parseData (uri: Uri, writeJson: boolean, debugLines?: ABLDebugLines, ignoreExternalCoverage = true, propath?: PropathParser) {
+	async parseData (uri: Uri, options: TestRun, writeJson: boolean, debugLines?: ABLDebugLines, ignoreExternalCoverage = true, propath?: PropathParser) {
 		if (!debugLines) {
 			// unit testing setup
 			debugLines = new ABLDebugLines()
@@ -46,7 +46,7 @@ export class ABLProfile {
 		}
 
 		log.debug('section1 ' + sectionLines[1].length)
-		this.profJSON = new ABLProfileJson(uri, sectionLines[1], debugLines, ignoreExternalCoverage)
+		this.profJSON = new ABLProfileJson(options, uri, sectionLines[1], debugLines, ignoreExternalCoverage)
 		log.debug('section2 ' + sectionLines[2].length)
 		this.profJSON.addModules(sectionLines[2])
 		if (this.profJSON.modules.length > 0) { // all modules excluded
@@ -308,7 +308,11 @@ export class ABLProfileJson {
 	ignoredModules: number[] = [0]
 	private hasSourceMap = false
 
-	constructor (public readonly profileUri: Uri, lines: string[], public debugLines: ABLDebugLines, private readonly ignoreExternalCoverage: boolean) {
+	constructor (private readonly options: TestRun,
+				public readonly profileUri: Uri,
+				lines: string[],
+				public debugLines: ABLDebugLines,
+				private readonly ignoreExternalCoverage: boolean) {
 		this.parseDuration = new Duration('parse profile data: ' + profileUri)
 		this.debugLines = debugLines
 		if (lines.length > 1) {
@@ -467,6 +471,13 @@ export class ABLProfileJson {
 	async addSourceMap () {
 		for (const mod of this.modules) {
 			const map = await this.debugLines.getSourceMap(mod.SourceUri).then((sourceMap) => {
+
+				if (sourceMap?.crc && sourceMap.crc != mod.CrcValue) {
+					log.warn('crc mismatch for module ' + mod.ModuleName + ' in uri=' + this.profileUri.fsPath + ' (ModuleID=' + mod.ModuleID + ')' +
+						'\n\t- expected: ' + mod.CrcValue +
+						'\n\t-      got: ' + sourceMap.crc, { testRun: this.options })
+				}
+
 				return sourceMap
 			}, (e: unknown) => {
 				log.error('could not get source map for module ' + mod.ModuleName + ' in uri=' + this.profileUri.fsPath + ' (ModuleID=' + mod.ModuleID + ') - ' + e)

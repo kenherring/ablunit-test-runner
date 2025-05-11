@@ -568,7 +568,7 @@ export class ABLResults implements Disposable {
 			const uri = Uri.joinPath(Uri.file(profDir), dataFiles[i])
 			log.debug('parsing profiler data ' + (i+1) + '/' + dataFiles.length + ' from ' + uri.fsPath)
 
-			proms.push(new ABLProfile().parseData(uri, this.cfg.ablunitConfig.profiler.writeJson, this.debugLines, this.cfg.ablunitConfig.profiler.ignoreExternalCoverage).then((profJson) => {
+			proms.push(new ABLProfile().parseData(uri, options, this.cfg.ablunitConfig.profiler.writeJson, this.debugLines, this.cfg.ablunitConfig.profiler.ignoreExternalCoverage).then((profJson) => {
 				log.debug('parsed profiler data ' + (i+1) + '/' + dataFiles.length + ' ' + profJson.parseDuration)
 				const item = this.findTest(profJson.description)
 				if (item) {
