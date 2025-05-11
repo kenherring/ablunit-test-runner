@@ -47,8 +47,10 @@ async function waitForRcode (expectedCount?: number) {
 			return rcodeCount
 		}
 
-		if (waitTime.elapsed() > 5000) {
-			await sleep(500)
+		if (waitTime.elapsed() > 10000) {
+			await sleep(1000, null)
+		} else if (waitTime.elapsed() > 5000) {
+			await sleep(500, null)
 		} else {
 			await sleep(100, null)
 		}
@@ -187,6 +189,8 @@ async function dumpLangServStatus () {
 		})
 
 	let lines = await getLogContents()
+	log.info('lines=' + JSON.stringify(lines, null, 4))
+
 	const duration = new Duration('dumpLangServStatus')
 	while (lines.length == startingLine && duration.elapsed() < 3000) {
 		await sleep(100)
@@ -304,7 +308,7 @@ async function getLogContents () {
 }
 
 export async function waitForLangServerReady () {
-	const maxWait = 45 // seconds // seconds
+	const maxWait = 15 // seconds
 	const waitTime = new Duration()
 	let langServerReady = false
 	let langServerError = false
@@ -333,6 +337,7 @@ export async function waitForLangServerReady () {
 		stillCompiling = false
 		for (let i=startAtLine; i<lines.length; i++) {
 
+			log.info('lines[' + i + '] = "' + lines[i] + '"')
 			// regex matching lines like "[<timestamp>] [<logLevel>] [<projectName] <message>"
 			const parts = /^\[([^\]]*)\] \[([A-Z]*)\] (\[[^\]]*\]*)? ?(.*)$/.exec(lines[i])
 
@@ -381,8 +386,7 @@ export async function waitForLangServerReady () {
 		await sleep(200, null)
 
 		if (waitTime.elapsed() > maxWait * 1000) {
-			log.info('timeout after ' + waitTime.elapsed() + 'ms')
-			break
+			throw new Error('timeout waiting for language server to be ready! (waitTime=' + waitTime + ')')
 		}
 	}
 

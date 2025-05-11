@@ -771,27 +771,17 @@ function getConfigDefaultValue (key: string) {
 }
 
 export async function updateConfig (key: string, value: unknown, configurationTarget?: boolean | vscode.ConfigurationTarget | null) {
+	configurationTarget = configurationTarget ?? vscode.ConfigurationTarget.WorkspaceFolder
+
 	const sectionArr = key.split('.')
 	const section1 = sectionArr.shift()
 	const section2 = sectionArr.join('.')
-
 	const workspaceConfig = workspace.getConfiguration(section1, getWorkspaceUri())
-
-	configurationTarget = configurationTarget ?? vscode.ConfigurationTarget.WorkspaceFolder
-
 	const currentValue = workspaceConfig.get(section2)
-	const cfg = [
-		getWorkspaceUri().fsPath,
-		workspace.getConfiguration('ablunit', getWorkspaceUri()).get('files.exclude'),
-		workspace.getConfiguration('ablunit', getWorkspaceFolders()[0]).get('files.exclude'),
-		workspace.getConfiguration('ablunit').get('files.exclude')
-	]
-	log.info('cfg[]=' + JSON.stringify(cfg, null, 2))
 
 	log.info('current=' + JSON.stringify(currentValue))
 	log.info('  value=' + JSON.stringify(value))
 	if (JSON.stringify(value) === JSON.stringify(currentValue)) {
-		log.debug(section1 + '.' + section2 + ' is already set to \'' + value + '\'')
 		log.warn(key + ' is already set to \'' + value + '\'')
 		// return true
 	}
@@ -877,9 +867,14 @@ export function selectProfile (profile: string) {
 		profile: profile
 	}
 	const profileUri = Uri.joinPath(getWorkspaceUri(), '.vscode', 'profile.json')
-	return workspace.fs.writeFile(profileUri, Buffer.from(JSON.stringify(profileJson))).then(() => {
-		return restartLangServer()
-	})
+	return workspace.fs.writeFile(profileUri, Buffer.from(JSON.stringify(profileJson)))
+		.then(() => restartLangServer())
+		.then((n) => {
+			return n
+		}, (e: unknown) => {
+			log.warn('restartLangServer failed. attemping restart #2 (e=' + e + ')')
+			return restartLangServer()
+		})
 }
 
 export function refreshData (resultsLen = 0) {

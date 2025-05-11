@@ -1,54 +1,34 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-
-import stylistic from '@stylistic/eslint-plugin-ts'
-import typescriptEslint from '@typescript-eslint/eslint-plugin'
+import { defineConfig } from 'eslint/config'
+import js from '@eslint/js'
+import ts from 'typescript-eslint'
 import promise from 'eslint-plugin-promise'
-import tsParser from '@typescript-eslint/parser'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import js from '@eslint/js'
-import { FlatCompat } from '@eslint/eslintrc'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
-const compat = new FlatCompat({
-	baseDirectory: __dirname,
-	recommendedConfig: js.configs.recommended,
-	allConfig: js.configs.all
-})
 
-export default [
+
+export default defineConfig([
 	{
 		ignores: [
-			'**/dummy-ext/',
-			'**/test_projects/',
-			'**/esbuild.js',
+			'.vscode-test/**',
+			'.worktrees/**',
+			'esbuild.js',
+			'dist/**',
+			'dummy-ext/',
+			'resources/ADE/**',
+			'test_projects/',
 		],
 	},
-	...compat.extends(
-		'eslint:recommended',
-		'plugin:@typescript-eslint/recommended-type-checked',
-		'plugin:@typescript-eslint/strict-type-checked',
-		'plugin:@typescript-eslint/stylistic-type-checked',
-		'plugin:promise/recommended',
-	),
+	js.configs.recommended,
+	ts.configs.strictTypeChecked,
+	ts.configs.stylisticTypeChecked,
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+	promise.configs['flat/recommended'],
 	{
-		plugins: {
-			'@stylistic': stylistic,
-			'@typescript-eslint': typescriptEslint,
-			promise,
-		},
 
 		languageOptions: {
-			globals: {
-				Atomics: 'readonly',
-				SharedArrayBuffer: 'readonly',
-			},
-
-			parser: tsParser,
-			ecmaVersion: 5,
-			sourceType: 'script',
-
 			parserOptions: {
 				project: './tsconfig.json',
 				tsconfigRootDir: '.',
@@ -56,14 +36,14 @@ export default [
 		},
 
 		rules: {
-			'@stylistic/indent': ['error', 'tab'],
+			// '@stylistic/indent': ['error', 'tab'],
 
-			'@stylistic/comma-spacing': ['warn', {
-				before: false,
-				after: true,
-			}],
+			// '@stylistic/comma-spacing': ['warn', {
+			// 	before: false,
+			// 	after: true,
+			// }],
 
-			'@stylistic/no-extra-parens': 'warn',
+			// '@stylistic/no-extra-parens': 'warn',
 
 			'@typescript-eslint/no-restricted-types': ['error', {
 				types: {
@@ -77,7 +57,6 @@ export default [
 			'@typescript-eslint/naming-convention': ['error', {
 				selector: 'interface',
 				format: ['PascalCase'],
-
 				custom: {
 					regex: '^I[A-Z]',
 					match: true,
@@ -127,10 +106,6 @@ export default [
 			'no-empty': 'warn',
 			'no-mixed-spaces-and-tabs': ['error', 'smart-tabs'],
 
-			'no-trailing-spaces': ['error', {
-				skipBlankLines: false,
-			}],
-
 			'prefer-promise-reject-errors': 'error',
 			quotes: ['warn', 'single'],
 			semi: ['error', 'never'],
@@ -143,4 +118,5 @@ export default [
 				markers: ['/'],
 			}],
 		},
-	}]
+	}
+])

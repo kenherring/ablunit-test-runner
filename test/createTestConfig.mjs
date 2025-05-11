@@ -58,7 +58,8 @@ function getMochaTimeout (projName) {
 		case 'proj7B': return 120000
 	}
 
-	return 30000
+	// return 30000
+	return 50000 // could be shorter if we didn't have to wait for lang server in some cases
 }
 
 
