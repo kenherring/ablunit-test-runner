@@ -1,23 +1,18 @@
 import { Uri, workspace } from 'vscode'
-import { assert, awaitRCode, getWorkspaceUri, log, suiteSetupCommon, toUri } from '../testCommon'
+import { assert, getRcodeCount, getWorkspaceUri, log, suiteSetupCommon, toUri } from '../testCommon'
 import { getSourceMapFromRCode } from 'parse/SourceMapRCodeParser'
 import { PropathParser } from 'ABLPropath'
 
 const workspaceFolder = workspace.workspaceFolders![0]
 
-suite('debugLines - Debug Line Tests - insiders', () => {
+suite('debugLines - Debug Line Tests', () => {
 
-	suiteSetup('debugLines - before', () => {
-		const prom = suiteSetupCommon()
-			.then(() => { return awaitRCode(workspaceFolder, 8) })
-			.then((rcodeCount) => {
-				log.info('rcodeCount=' + rcodeCount)
-				return rcodeCount
-			}, (e: unknown) => {
-				log.error('rcode error: ' + e)
-				throw e
-			})
-		return prom
+	suiteSetup('debugLines - before', async () => {
+		await suiteSetupCommon(undefined, 9)
+		const rcodeCount = getRcodeCount()
+		if (rcodeCount < 9) {
+			throw new Error('rcodeCount=' + rcodeCount + ' < 9')
+		}
 	})
 
 	test('debugLines.1 - read debug line map from rcode', async () => {
@@ -102,7 +97,7 @@ suite('debugLines - Debug Line Tests - insiders', () => {
 
 	test('debugLines.6 - include lines are executable', async () => {
 		const propath = new PropathParser(workspaceFolder)
-		const sourceMap = await getSourceMapFromRCode(propath, Uri.joinPath(getWorkspaceUri(), 'out/test6.r'))
+		const sourceMap = await getSourceMapFromRCode(propath, toUri('out/test6.r'))
 
 		assert.equal(sourceMap.items[0].debugUri.fsPath, toUri('src/test6.p').fsPath, 'debugUri[0]')
 		for (let i=0; i < sourceMap.items.length ; i++) {

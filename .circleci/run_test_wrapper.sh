@@ -1,8 +1,10 @@
 #!/bin/bash
 set -eou pipefail
 
+. scripts/common.sh
+
 initialize () {
-	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}]"
+	log_it
 	VERBOSE=${VERBOSE:-false}
 	DONT_PROMPT_WSL_INSTALL=No_Prompt_please
 	PRIMARY_OE_VERSION=${PRIMARY_OE_VERSION:-12.8.1}
@@ -19,7 +21,7 @@ initialize () {
 	ABLUNIT_TEST_RUNNER_NO_COVERAGE=${ABLUNIT_TEST_RUNNER_NO_COVERAGE:-false}
 
 	if [ ! -f /root/.rssw/oedoc.bin ]; then
-		echo "ERROR: /root/.rssw/oedoc.bin not found"
+		log_error "/root/.rssw/oedoc.bin not found"
 		exit 1
 	fi
 
@@ -31,30 +33,30 @@ initialize () {
 		ABLUNIT_TEST_RUNNER_UNIT_TESTING
 	export DONT_PROMPT_WSL_INSTALL VERBOSE
 
-	echo "ABLUNIT_TEST_RUNNER_DBUS_NUM=$ABLUNIT_TEST_RUNNER_DBUS_NUM"
-	echo "ABLUNIT_TEST_RUNNER_OE_VERSION=$ABLUNIT_TEST_RUNNER_OE_VERSION"
-	echo "ABLUNIT_TEST_RUNNER_PROJECT_NAME=$ABLUNIT_TEST_RUNNER_PROJECT_NAME"
-	echo "ABLUNIT_TEST_RUNNER_REPO_DIR=$ABLUNIT_TEST_RUNNER_REPO_DIR"
-	echo "ABLUNIT_TEST_RUNNER_RUN_SCRIPT_FLAG=$ABLUNIT_TEST_RUNNER_RUN_SCRIPT_FLAG"
-	echo "ABLUNIT_TEST_RUNNER_UNIT_TESTING=$ABLUNIT_TEST_RUNNER_UNIT_TESTING"
-	echo "CIRCLECI=${CIRCLECI:-}"
+	log_it "ABLUNIT_TEST_RUNNER_DBUS_NUM=$ABLUNIT_TEST_RUNNER_DBUS_NUM"
+	log_it "ABLUNIT_TEST_RUNNER_OE_VERSION=$ABLUNIT_TEST_RUNNER_OE_VERSION"
+	log_it "ABLUNIT_TEST_RUNNER_PROJECT_NAME=$ABLUNIT_TEST_RUNNER_PROJECT_NAME"
+	log_it "ABLUNIT_TEST_RUNNER_REPO_DIR=$ABLUNIT_TEST_RUNNER_REPO_DIR"
+	log_it "ABLUNIT_TEST_RUNNER_RUN_SCRIPT_FLAG=$ABLUNIT_TEST_RUNNER_RUN_SCRIPT_FLAG"
+	log_it "ABLUNIT_TEST_RUNNER_UNIT_TESTING=$ABLUNIT_TEST_RUNNER_UNIT_TESTING"
+	log_it "CIRCLECI=${CIRCLECI:-}"
 
 	update_oe_version
 }
 
 update_oe_version () {
 	[ "$ABLUNIT_TEST_RUNNER_OE_VERSION" = '12.2' ] && return 0
-	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] ABLUNIT_TEST_RUNNER_OE_VERSION=$ABLUNIT_TEST_RUNNER_OE_VERSION"
+	log_it "ABLUNIT_TEST_RUNNER_OE_VERSION=$ABLUNIT_TEST_RUNNER_OE_VERSION"
 
 	local SHORT_VERSION=${ABLUNIT_TEST_RUNNER_OE_VERSION%.*}
-	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] SHORT_VERSION=$SHORT_VERSION"
+	log_it "SHORT_VERSION=$SHORT_VERSION"
 
 	sed -i "s|\"oeversion\": *\"12.[0-9]\"|\"oeversion\": \"$SHORT_VERSION\"|g" test_projects/*/openedge-project.json
 	# ls -al test_projects/*/openedge-project.json
 }
 
 dbus_config () {
-	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] ABLUNIT_TEST_RUNNER_DBUS_NUM=$ABLUNIT_TEST_RUNNER_DBUS_NUM"
+	log_it "ABLUNIT_TEST_RUNNER_DBUS_NUM=$ABLUNIT_TEST_RUNNER_DBUS_NUM"
 	case $ABLUNIT_TEST_RUNNER_DBUS_NUM in
 		1) dbus_config_1 ;; ## /sbin/start-stop-daemon: signal value must be numeric or name of signal (KILL, INT, ...)
 		2) dbus_config_2 ;; ## Failed to connect to the bus: Failed to connect to socket /run/user/0/bus: No such file or directory
@@ -66,12 +68,12 @@ dbus_config () {
 }
 
 dbus_config_1 () {
-	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}]"
+	log_it
 	/sbin/start-stop-daemon --start --quiet --pidfile /tmp/custom_xvfb_99.pid --make-pidfile --background --exec /usr/bin/xvfb – :99 -ac -screen 0 1280x1024x16
 }
 
 dbus_config_2 () {
-	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}]"
+	log_it
 	## These lines fix dbus errors in the logs related to the next section
 	## However, they also create new errors
 
@@ -87,7 +89,7 @@ dbus_config_2 () {
 }
 
 dbus_config_3 () {
-	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}]"
+	log_it
 	DISPLAY=$(grep nameserver /etc/resolv.conf | awk '{print $2}'):0.0
 	export DISPLAY
 	service dbus restart
@@ -110,19 +112,19 @@ dbus_config_3 () {
 }
 
 dbus_config_4 () {
-	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}]"
+	log_it
 	dbus-daemon --config-file=/usr/share/dbus-1/system.conf --print-address
 	mkdir -p /var/run/dbus
 }
 
 dbus_config_5 () {
-	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}]"
+	log_it
 	dbus-daemon --system &> /dev/null
 	# sudo dbus-daemon --system &> /dev/null
 }
 
 run_tests () {
-	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] ABLUNIT_TEST_RUNNER_NO_COVERAGE=$ABLUNIT_TEST_RUNNER_NO_COVERAGE"
+	log_it "ABLUNIT_TEST_RUNNER_NO_COVERAGE=$ABLUNIT_TEST_RUNNER_NO_COVERAGE"
 
 	local RUN_SCRIPT=test:coverage
 	if $ABLUNIT_TEST_RUNNER_NO_COVERAGE; then
@@ -134,30 +136,30 @@ run_tests () {
 		export JAVA_TOOL_OPTIONS=${JAVA_TOOL_OPTIONS:-'-Dfile.encoding=UTF8'}
 	fi
 
-	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] starting 'npm $RUN_SCRIPT'"
+	log_it "starting 'npm $RUN_SCRIPT'"
 	EXIT_CODE=0
 	xvfb-run -a npm run "$RUN_SCRIPT" || EXIT_CODE=$?
-	echo "xvfb-run end (EXIT_CODE=$EXIT_CODE)"
+	log_it "xvfb-run end (EXIT_CODE=$EXIT_CODE)"
 
 	if [ "$RUN_SCRIPT" = 'test:coverage' ]; then
 		mv coverage/lcov.info artifacts/coverage/lcov.info || true ## https://github.com/microsoft/vscode-test-cli/issues/38
 	fi
 
 	if [ "$EXIT_CODE" = "0" ]; then
-		echo "xvfb-run success"
+		log_it "xvfb-run success"
 	else
-		echo "ERROR: xvfb-run failed (EXIT_CODE=$EXIT_CODE)"
+		log_error "xvfb-run failed (EXIT_CODE=$EXIT_CODE)"
 		save_and_print_debug_output
 	fi
 
 	if ! $ABLUNIT_TEST_RUNNER_NO_COVERAGE && [ ! -s artifacts/coverage/lcov.info ]; then
-		echo 'ERROR: artifacts/coverage/lcov.info not found'
+		log_error 'artifacts/coverage/lcov.info not found'
 		EXIT_CODE=90
 	fi
 }
 
 save_and_print_debug_output () {
-	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}]"
+	log_it
 
 	mkdir -p artifacts
 	$VERBOSE && find . > artifacts/filelist.txt
@@ -175,16 +177,16 @@ save_and_print_debug_output () {
 	fi
 
 	$VERBOSE || return 0
-	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] rcode"
+	log_it "rcode:"
 	find . -name '*.r'
 }
 
 process_exit_code () {
 	if [ "${EXIT_CODE:-0}" = 0 ]; then
-		echo "$0 all tests completed successfully!"
+		log_it "all tests completed successfully!"
 		exit 0
 	fi
-	echo "$0 failed with exit code $EXIT_CODE"
+	log_error "failed with exit code $EXIT_CODE"
 	exit ${EXIT_CODE:-255}
 }
 

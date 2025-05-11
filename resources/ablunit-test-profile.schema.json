@@ -266,7 +266,7 @@
 							},
 							"debugConnectMaxWait": {
 								"type": "integer",
-								"default": 10000,
+								"default": 30000,
 								"minimum": 1000,
 								"description": "Max time to wait for a connection to the debug port."
 							},

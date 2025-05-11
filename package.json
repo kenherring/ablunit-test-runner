@@ -2,7 +2,7 @@
 	"name": "ablunit-test-runner",
 	"displayName": "ABLUnit Test Runner",
 	"description": "OpenEdge ABLUnit test runner for VSCode",
-	"version": "1.2.1",
+	"version": "1.2.7",
 	"engineStrict": true,
 	"galleryBanner": {
 		"color": "#007ACC",
@@ -60,7 +60,7 @@
 		"progress"
 	],
 	"engines": {
-		"vscode": "^1.99.1"
+		"vscode": "^1.100.0"
 	},
 	"categories": [
 		"Testing"
@@ -74,12 +74,12 @@
 		"build": "node esbuild.js",
 		"rebuild": "npm run clean && npm run build",
 		"clean": "sh -c scripts/npm_clean.sh",
-		"lint": "npx eslint ./{src,test}/**/*.ts",
-		"lint-fix-all": "npx eslint ./{src,test}/**/*.ts --fix",
+		"lint": "eslint",
+		"lint-fix-all": "eslint --fix",
 		"vscode:prepublish": "npm run package",
 		"package": "npm run build",
 		"pretest": "sh -c scripts/npm_pretest.sh",
-		"test": "sh -c scripts/npm_pretest.sh && vscode-test",
+		"test": "vscode-test",
 		"test:coverage": "npm test -- --coverage",
 		"vscode-test": "vscode-test",
 		"test:install-and-run": "cd dummy-ext && npm run test:install-and-run",
@@ -89,24 +89,26 @@
 	"dependencies": {
 		"minimatch": "^10.0.1",
 		"node-json-minify": "^3.0.0",
+		"tree-kill": "^1.2.2",
 		"xml2js": "^0.6.2"
 	},
 	"devDependencies": {
 		"@eslint/eslintrc": "^3.3.1",
-		"@eslint/js": "^9.25.1",
+		"@eslint/js": "^9.26.0",
 		"@stylistic/eslint-plugin-ts": "^4.2.0",
 		"@swc-node/register": "^1.10.10",
 		"@types/mocha": "^10.0.10",
-		"@types/node": "20.x",
-		"@types/vscode": "^1.99.1",
+		"@types/node": "22.x",
+		"@types/vscode": "^1.100.0",
 		"@types/xml2js": "^0.4.14",
 		"@typescript-eslint/eslint-plugin": "^8.31.0",
 		"@typescript-eslint/parser": "^8.31.0",
 		"@vscode/test-cli": "^0.0.10",
 		"@vscode/test-electron": "^2.5.2",
 		"@vscode/vsce": "^3.3.2",
-		"esbuild": "^0.25.3",
-		"eslint": "^9.25.1",
+		"esbuild": "^0.25.4",
+		"esbuild-register": "^3.6.0",
+		"eslint": "^9.26.0",
 		"eslint-formatter-unix": "^8.40.0",
 		"eslint-plugin-promise": "^7.2.1",
 		"mocha": "^11.1.0",
@@ -114,7 +116,8 @@
 		"mocha-reporter-sonarqube": "2.1.1",
 		"ts-node": "^10.9.2",
 		"tsconfig-paths": "^4.2.0",
-		"typescript": "^5.8.3"
+		"typescript": "^5.8.3",
+		"typescript-eslint": "^8.32.0"
 	},
 	"contributes": {
 		"configuration": {

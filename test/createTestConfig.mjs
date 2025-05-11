@@ -58,7 +58,8 @@ function getMochaTimeout (projName) {
 		case 'proj7B': return 120000
 	}
 
-	return 30000
+	// return 30000
+	return 50000 // could be shorter if we didn't have to wait for lang server in some cases
 }
 
 
@@ -73,7 +74,7 @@ function getMochaOpts (projName) {
 
 	/** @type {import('mocha').MochaOptions} */
 	const mochaOpts = {
-		// fullTrace: true
+		// fullTrace: true,
 		timeout: getMochaTimeout(projName),
 		// ui: 'tdd', // describe, it, etc
 		// ui: 'bdd' // default; suite, test, etc
@@ -82,6 +83,7 @@ function getMochaOpts (projName) {
 		bail: true,
 		require: [
 			'mocha',
+			'esbuild-register',
 			'tsconfig-paths/register',
 			'@swc-node/register',
 		],

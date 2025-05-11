@@ -62,7 +62,7 @@
 			"debugPort": 3199,
 
 			////# Max time to wait for a connection on the debug port before continuing to run tests.
-			"debugConnectMaxWait": 10000,
+			"debugConnectMaxWait": 30000,
 
 			////# These parameters will be passed to the command line.  Most commonly
 			////# this would be used to provide database connection parameters.
