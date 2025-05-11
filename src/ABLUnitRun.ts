@@ -351,7 +351,7 @@ function runCommand (res: ABLResults, options: TestRun, cancellation: Cancellati
 			}
 		}).on('exit', (code: number | null, signal: NodeJS.Signals | null) => {
 			log.debug('exit code=' + code + '; signal=' + signal)
-			testRunDuration.stop()]
+			testRunDuration.stop()
 			if (signal == 'SIGTERM') {
 				res.setStatus(RunStatus.Timeout, 'signal=' + signal)
 				log.info('----- ABLUnit Test Run Timeout - ' + res.cfg.ablunitConfig.timeout + 'ms ----- ' + testRunDuration, {testRun: options, testItem: currentTestItems[0] })
