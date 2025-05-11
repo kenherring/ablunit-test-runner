@@ -1,6 +1,6 @@
 # [1.2.1](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.2.1) - 2025-05-04 (pre-release)
 
-
+ * Unit test cleanup and performance (#274)
  * Increase debug profile wait time to 30s (part 2) (#273)
 
 

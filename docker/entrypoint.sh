@@ -1,19 +1,25 @@
 #!/bin/bash
 set -eou pipefail
 
+# . scripts/common.sh
+
+log_it () {
+	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[1]}]" "$@"
+}
+
 initialize () {
 	local OPT OPTARG OPTIND
-	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] pwd=$(pwd)"
+	log_it  "pwd=$(pwd)"
 	VERBOSE=${VERBOSE:-false}
 	ABLUNIT_TEST_RUNNER_DBUS_NUM=${ABLUNIT_TEST_RUNNER_DBUS_NUM:-3}
 	ABLUNIT_TEST_RUNNER_OE_VERSION=${ABLUNIT_TEST_RUNNER_OE_VERSION:-}
 	ABLUNIT_TEST_RUNNER_PROJECT_NAME=${ABLUNIT_TEST_RUNNER_PROJECT_NAME:-}
 	ABLUNIT_TEST_RUNNER_RUN_SCRIPT_FLAG=true
 	if $VERBOSE; then
-		echo "ABLUNIT_TEST_RUNNER_DBUS_NUM=$ABLUNIT_TEST_RUNNER_DBUS_NUM"
-		echo "ABLUNIT_TEST_RUNNER_OE_VERSION=$ABLUNIT_TEST_RUNNER_OE_VERSION"
-		echo "ABLUNIT_TEST_RUNNER_PROJECT_NAME=$ABLUNIT_TEST_RUNNER_PROJECT_NAME"
-		echo "ABLUNIT_TEST_RUNNER_RUN_SCRIPT_FLAG=$ABLUNIT_TEST_RUNNER_RUN_SCRIPT_FLAG"
+		log_it "ABLUNIT_TEST_RUNNER_DBUS_NUM=$ABLUNIT_TEST_RUNNER_DBUS_NUM"
+		log_it "ABLUNIT_TEST_RUNNER_OE_VERSION=$ABLUNIT_TEST_RUNNER_OE_VERSION"
+		log_it "ABLUNIT_TEST_RUNNER_PROJECT_NAME=$ABLUNIT_TEST_RUNNER_PROJECT_NAME"
+		log_it "ABLUNIT_TEST_RUNNER_RUN_SCRIPT_FLAG=$ABLUNIT_TEST_RUNNER_RUN_SCRIPT_FLAG"
 	fi
 	BASH_AFTER=false
 	BASH_AFTER_ERROR=false
@@ -48,14 +54,14 @@ initialize () {
 	done
 
 	if [ -z "${TEST_PROJECT:-}" ]; then
-		echo "ERROR: \$TEST_PROJECT not set (values: base, dummy-ext)"
+		log_error "\$TEST_PROJECT not set (values: base, dummy-ext)"
 		exit 1
 	fi
 
 	## save license from the environment variable at runtime
 	tr ' ' '\n' <<< "$PROGRESS_CFG_BASE64" | base64 --decode > /psc/dlc/progress.cfg
 
-	echo 'copying files from local'
+	log_it 'copying files from local'
 	initialize_repo
 	# restore_cache
 
@@ -65,7 +71,7 @@ initialize () {
 }
 
 initialize_repo () {
-	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] pwd=$(pwd)"
+	log_it "pwd=$(pwd)"
 	if [ -d "$PROJECT_DIR/.git" ]; then
 		cd "$PROJECT_DIR"
 		git fetch
@@ -79,28 +85,28 @@ initialize_repo () {
 	fi
 
 	if [ -n "${CIRCLE_TAG:-}" ]; then
-		echo "checking out tag $CIRCLE_TAG"
+		log_it "checking out tag $CIRCLE_TAG"
 		git checkout "$CIRCLE_TAG"
 	else
-		echo "checking out branch $GIT_BRANCH"
+		log_it "checking out branch $GIT_BRANCH"
 		git checkout "$GIT_BRANCH"
 	fi
 	copy_files_from_volume
 }
 
 copy_files_from_volume () {
-	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] pwd=$(pwd)"
+	log_it "pwd=$(pwd)"
 	find_files_to_copy
 	copy_files "staged"
 	[ -f /tmp/modified_files ] && copy_files "modified"
 	while read -r FILE; do
-		echo "deleting deleted file $FILE"
+		log_it "deleting deleted file $FILE"
 		rm "$FILE"
 	done < /tmp/deleted_files
 }
 
 find_files_to_copy () {
-	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] pwd=$(pwd)"
+	log_it "pwd=$(pwd)"
 	local BASE_DIR
 	BASE_DIR=$(pwd)
 
@@ -115,21 +121,21 @@ find_files_to_copy () {
 		touch /tmp/modified_files
 	fi
 
-	echo "file counts:"
-	echo "   staged=$(wc -l /tmp/staged_files)"
-	echo "  deleted=$(wc -l /tmp/deleted_files)"
-	echo " modified=$(wc -l /tmp/modified_files)"
+	log_it "file counts:"
+	log_it "   staged=$(wc -l /tmp/staged_files)"
+	log_it "  deleted=$(wc -l /tmp/deleted_files)"
+	log_it " modified=$(wc -l /tmp/modified_files)"
 
 	cd "$BASE_DIR"
 }
 
 copy_files () {
-	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] pwd=$(pwd)"
+	log_it "pwd=$(pwd)"
 	local TYPE="$1"
-	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] TYPE=$TYPE"
+	log_it "TYPE=$TYPE"
 	while read -r FILE; do
 		if [ ! -d "$FILE" ]; then
-			echo "copying $TYPE file $FILE"
+			log_it "copying $TYPE file $FILE"
 			if [ ! -d "$(dirname "$FILE")" ]; then
 				mkdir -p "$(dirname "$FILE")"
 			fi
@@ -139,7 +145,7 @@ copy_files () {
 }
 
 run_tests () {
-	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] pwd=$(pwd)"
+	log_it "pwd=$(pwd)"
 
 	npm run clean
 
@@ -152,22 +158,22 @@ run_tests () {
 	elif [ "$TEST_PROJECT" = "dummy-ext" ]; then
 		run_tests_dummy_ext
 	else
-		echo "ERROR: unknown test project"
+		log_error "unknown test project"
 		exit 1
 	fi
 }
 
 run_tests_base () {
-	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] pwd=$(pwd)"
+	log_it "pwd=$(pwd)"
 
 	set -eo pipefail ## matches the behavior of CircleCI
 	if ! .circleci/run_test_wrapper.sh; then
-		echo "run_tests failed"
+		log_it "run_tests failed"
 		$BASH_AFTER_ERROR && bash
 		exit 1
 	fi
 	set -eou pipefail
-	echo "run_tests success"
+	log_it "run_tests success"
 
 	if [ -z "${ABLUNIT_TEST_RUNNER_PROJECT_NAME:-}" ]; then
 		analyze_results
@@ -176,12 +182,12 @@ run_tests_base () {
 }
 
 analyze_results () {
-	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] pwd=$(pwd)"
+	log_it "pwd=$(pwd)"
 	RESULTS_COUNT=$(find artifacts/mocha_results_sonar/ -name '*.xml' | wc -l)
 	HAS_ERROR=false
 
 	if [ "$RESULTS_COUNT" = 0 ]; then
-		echo 'ERROR: artifacts/mocha_results_sonar/*.xml not found'
+		log_error 'artifacts/mocha_results_sonar/*.xml not found'
 		HAS_ERROR=true
 	fi
 
@@ -191,30 +197,30 @@ analyze_results () {
 	fi
 
 	if $VERBOSE; then
-		echo "artifacts to be saved:"
+		log_it "artifacts to be saved:"
 		ls -al artifacts || true
 	fi
 }
 
 run_tests_dummy_ext () {
-	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] pwd = $(pwd)"
+	log_it "pwd=$(pwd)"
 
 	if ! .circleci/install_and_run.sh; then
-		echo "run_tests failed"
+		log_it "run_tests failed"
 		$BASH_AFTER_ERROR && bash
 		exit 1
 	fi
-	echo "run_tests success"
+	log_it "run_tests success"
 	analyze_results
 }
 
 save_cache () {
-	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] pwd=$(pwd)"
+	log_it "pwd=$(pwd)"
 
 	# npm run clean
 
 	if [ -d .vscode-test ]; then
-		echo "saving .vscode-test to cache"
+		log_it "saving .vscode-test to cache"
 		mkdir -p "$CACHE_BASE/.vscode-test"
 		mkdir -p "$CACHE_BASE/node_modules"
 		rsync -aR ./.vscode-test "$CACHE_BASE"
@@ -222,7 +228,7 @@ save_cache () {
 	fi
 
 	if [ -d ./dummy-ext/.vscode-test ]; then
-		echo "saving dummy-ext/.vscode-test to cache"
+		log_it "saving dummy-ext/.vscode-test to cache"
 		mkdir -p "$CACHE_BASE/dummy-ext/.vscode-test"
 		mkdir -p "$CACHE_BASE/dummy-ext/node_modules"
 		if [ -d ./dummy-ext/.vscode-test ]; then
@@ -232,38 +238,40 @@ save_cache () {
 			rsync -aR ./dummy-ext/node_modules "$CACHE_BASE"
 		fi
 	elif [ "$TEST_PROJECT" = "dummy-ext" ]; then
-		echo "WARNING: dummy-ext/.vscode-test not found.  cannot save cache"
+		log_it "WARNING: dummy-ext/.vscode-test not found.  cannot save cache"
 		exit 1
 	fi
 }
 
 restore_cache () {
-	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] pwd=$(pwd)"
+	log_it "pwd=$(pwd)"
 	local BASE_DIR
 	BASE_DIR=$(pwd)
 
 	cd "$CACHE_BASE"
 	if [ -d "$CACHE_BASE/.vscode-test" ]; then
-		echo "restoring .vscode-test from cache"
+		log_it "restoring .vscode-test from cache"
 		rsync -aR ./.vscode-test "$BASE_DIR"
 	fi
 	if [ -d "$CACHE_BASE/dummy-ext/.vscode-test" ]; then
-		echo "restoring dummy-ext/.vscode-test from cache"
+		log_it "restoring dummy-ext/.vscode-test from cache"
 		rsync -aR ./dummy-ext/.vscode-test "$BASE_DIR"
 	elif [ "$TEST_PROJECT" = "dummy-ext" ]; then
-		echo "WARNING: dummy-ext/.vscode-test not found in cache"
+		log_it "WARNING: dummy-ext/.vscode-test not found in cache"
 	fi
 	cd -
 }
 
 finish () {
-	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] pwd=$(pwd)"
+	log_it "pwd=$(pwd)"
 	save_cache
 	$BASH_AFTER && bash
-	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0] completed successfully!"
+	END_TIME=$(date +%s)
+	log_it "completed successfully! (time=$((END_TIME - START_TIME))s)"
 }
 
 ########## MAIN BLOCK ##########
+START_TIME=$(date +%s)
 initialize "$@"
 run_tests
 finish
