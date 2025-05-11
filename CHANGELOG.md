@@ -1,3 +1,11 @@
+# [1.2.7](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.2.7) - 2025-05-11 (pre-release)
+
+
+ * 
+ * Create codeql.yml (#278)
+
+**Full Changelog**: [1.2.5...1.2.7](https://github.com/kenherring/ablunit-test-runner/compare/1.2.5...1.2.7)
+
 # [1.2.5](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.2.5) - 2025-05-11 (pre-release)
 
  * Create dependabot.yml (#275)
