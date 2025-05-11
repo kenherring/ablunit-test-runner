@@ -877,9 +877,14 @@ export function selectProfile (profile: string) {
 		profile: profile
 	}
 	const profileUri = Uri.joinPath(getWorkspaceUri(), '.vscode', 'profile.json')
-	return workspace.fs.writeFile(profileUri, Buffer.from(JSON.stringify(profileJson))).then(() => {
-		return restartLangServer()
-	})
+	return workspace.fs.writeFile(profileUri, Buffer.from(JSON.stringify(profileJson)))
+		.then(() => restartLangServer())
+		.then((n) => {
+			return n
+		}, (e: unknown) => {
+			log.warn('restartLangServer failed. attemping restart #2 (e=' + e + ')')
+			return restartLangServer()
+		})
 }
 
 export function refreshData (resultsLen = 0) {
