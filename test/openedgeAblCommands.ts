@@ -189,6 +189,8 @@ async function dumpLangServStatus () {
 		})
 
 	let lines = await getLogContents()
+	log.info('lines=' + JSON.stringify(lines, null, 4))
+
 	const duration = new Duration('dumpLangServStatus')
 	while (lines.length == startingLine && duration.elapsed() < 3000) {
 		await sleep(100)
