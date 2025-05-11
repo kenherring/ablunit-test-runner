@@ -28,8 +28,7 @@ suiteSetup('proj0 - before', async () => {
 		toUri('UNIT_TEST.tmp'),
 	], { force: true })
 
-	deleteRcode()
-
+	await deleteRcode()
 	await suiteSetupCommon()
 	await commands.executeCommand('testing.clearTestResults')
 	return
@@ -424,7 +423,7 @@ test('proj0.19 - program runs external source', async () => {
 
 test('proj0.20 - build directory', async () => {
 	FileUtils.copyFile('openedge-project.test20.json', 'openedge-project.json')
-	deleteRcode()
+	await deleteRcode()
 	await restartLangServer(23)
 
 	assert.fileExists('d1/test_20.r')
@@ -437,7 +436,7 @@ test('proj0.20 - build directory', async () => {
 		})
 
 	FileUtils.copyFile(backupProjectFile, 'openedge-project.json')
-	deleteRcode()
+	await deleteRcode()
 	await restartLangServer(23)
 })
 
