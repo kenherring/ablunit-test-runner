@@ -1,10 +1,12 @@
-# [1.2.3](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.2.3) - 2025-05-11 (pre-release)
+# [1.2.5](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.2.5) - 2025-05-11 (pre-release)
 
+ * Create dependabot.yml (#275)
+ * Bump the npm_and_yarn group across 1 directory with 2 updates (#277)
  * Update eslint configuration (#279)
  * Unit test cleanup and performance (#274)
  * Increase debug profile wait time to 30s (part 2) (#273)
 
-**Full Changelog**: [1.2.0...1.2.3](https://github.com/kenherring/ablunit-test-runner/compare/1.2.0...1.2.3)
+**Full Changelog**: [1.2.0...1.2.5](https://github.com/kenherring/ablunit-test-runner/compare/1.2.0...1.2.5)
 
 # [1.2.0](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.2.0) - 2025-04-26
 
