@@ -426,14 +426,11 @@ export const getSourceMapFromRCode = (propath: PropathParser, uri: Uri) => {
 
 	const parseSegment1 = (segment1Bytes: Uint8Array) => {
 		log.debug('parseSegment1 segment1Bytes.length=' + segment1Bytes.length)
-
 		const crcLocation = 174
 		const crc = toBase10(segment1Bytes.subarray(crcLocation, crcLocation + 2))
-
 		return {
 			crc: crc,
 		}
-
 	}
 
 	const parseDebugSegment = async (debugBytes: Uint8Array) => {
