@@ -306,7 +306,7 @@ async function getLogContents () {
 }
 
 export async function waitForLangServerReady () {
-	const maxWait = 45 // seconds // seconds
+	const maxWait = 15 // seconds
 	const waitTime = new Duration()
 	let langServerReady = false
 	let langServerError = false
@@ -384,8 +384,7 @@ export async function waitForLangServerReady () {
 		await sleep(200, null)
 
 		if (waitTime.elapsed() > maxWait * 1000) {
-			log.info('timeout after ' + waitTime.elapsed() + 'ms')
-			break
+			throw new Error('timeout waiting for language server to be ready! (waitTime=' + waitTime + ')')
 		}
 	}
 
