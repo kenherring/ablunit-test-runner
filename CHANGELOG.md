@@ -1,13 +1,6 @@
 # [1.2.9](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.2.9) - 2025-05-13 (pre-release)
 
-
- * 
-
-
-**Full Changelog**: [1.2.7...1.2.9](https://github.com/kenherring/ablunit-test-runner/compare/1.2.7...1.2.9)
-
-# [1.2.7](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.2.7) - 2025-05-11 (pre-release)
-
+ * Add OpenEdge 12.8.7 test target (#287)
  * Warn when rcode CRC does not match profiler CRC (#272)
  * Create codeql.yml (#278)
  * Create dependabot.yml (#275)
@@ -16,7 +9,7 @@
  * Unit test cleanup and performance (#274)
  * Increase debug profile wait time to 30s (part 2) (#273)
 
-**Full Changelog**: [1.2.0...1.2.7](https://github.com/kenherring/ablunit-test-runner/compare/1.2.0...1.2.7)
+**Full Changelog**: [1.2.0...1.2.9](https://github.com/kenherring/ablunit-test-runner/compare/1.2.0...1.2.9)
 
 # [1.2.0](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.2.0) - 2025-04-26
 
