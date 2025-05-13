@@ -1,3 +1,11 @@
+# [1.2.9](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.2.9) - 2025-05-13 (pre-release)
+
+
+ * 
+
+
+**Full Changelog**: [1.2.7...1.2.9](https://github.com/kenherring/ablunit-test-runner/compare/1.2.7...1.2.9)
+
 # [1.2.7](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.2.7) - 2025-05-11 (pre-release)
 
  * Warn when rcode CRC does not match profiler CRC (#272)
