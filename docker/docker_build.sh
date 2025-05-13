@@ -4,7 +4,7 @@ set -eou pipefail
 usage () {
 	echo "
 usage: $0 [-p] [-n] [-h]
-		[-o < 12.2.12 | 12.8.1 | 12.8.6 | ... >]
+		[-o < 12.2.12 | 12.8.1 | 12.8.7 | ... >]
 		[-N < 18 | 20 | 22 | ... >]
 options:
   -p				push docker images to dockerhub after build
@@ -47,7 +47,8 @@ initialize () {
 		# DOCKER_TAGS+=('12.8.3')
 		# DOCKER_TAGS+=('12.8.4')
 		# DOCKER_TAGS+=('12.8.5')
-		DOCKER_TAGS+=('12.8.6')
+		# DOCKER_TAGS+=('12.8.6')
+		DOCKER_TAGS+=('12.8.7')
 	fi
 
 	mkdir -p docker/.rssw
@@ -67,7 +68,7 @@ set_node_version_for_tag () {
 	elif [ "$DOCKER_TAG" = 12.8.1 ]; then
 		## Most Recent LTS
 		NODE_VERSION_FOR_TAG=22
-	elif [ "$DOCKER_TAG" = 12.8.6 ]; then
+	elif [ "$DOCKER_TAG" = 12.8.7 ]; then
 		## Latest
 		NODE_VERSION_FOR_TAG=23
 	else
