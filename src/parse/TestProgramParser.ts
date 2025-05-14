@@ -3,6 +3,7 @@ import { getAnnotationLines } from 'parse/TestParserCommon'
 
 // PROCEDURE statement
 const procedureRE = /(^|\s+)procedure\s+(\S+)\s*:/i
+const onErrorRE = /(block|routine)-level\s+on\s+error/i
 
 interface ITestCase {
 	label: string
@@ -12,6 +13,7 @@ interface ITestCase {
 export interface IProgramRet {
 	label: string
 	range: Range
+	missingOnError: boolean
 	testcases: ITestCase[]
 }
 
@@ -32,6 +34,7 @@ export function parseTestProgram (lines: string[], label: string) {
 	const programRet: IProgramRet = {
 		label: label,
 		range: new Range(0, 0, 0, 0),
+		missingOnError: true,
 		testcases: []
 	}
 
@@ -40,6 +43,9 @@ export function parseTestProgram (lines: string[], label: string) {
 	const regexIgnore = /^\s*@ignore\s*\.\s*$/i
 
 	for (let lineNo = 0; lineNo < lines.length; lineNo++) {
+		if (onErrorRE.exec(lines[lineNo])) {
+			programRet.missingOnError = false
+		}
 		if (lines[lineNo].trim() === '' || regexIgnore.exec(lines[lineNo])) {
 			continue
 		}
@@ -60,6 +66,10 @@ export function parseTestProgram (lines: string[], label: string) {
 		if (regexTest.exec(lines[lineNo])) {
 			lastNonBlankLineHasAnnotation = true
 		}
+	}
+
+	if (programRet.testcases.length == 0) {
+		programRet.missingOnError = false
 	}
 	return programRet
 }
