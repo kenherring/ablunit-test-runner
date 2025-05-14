@@ -35,9 +35,9 @@ initialize () {
 	PREVIOUS_TAG=$(git tag | grep -v '^v' | grep "[0,2,4,6,8]$" | tail -1)
 
 	echo 200
-	gh pr view --json title,number
-	echo 201
 	CURRENT_PR_TEXT=$(CURRENT_PR_TEXT=$(gh pr view --json title,number | jq -r '.title + " (#" + (.number|tostring) + ")"'))
+	echo 201
+	echo "CURRENT_PR_TEXT=$CURRENT_PR_TEXT"
 	echo 202
 
 	if [ -z "$CURRENT_PR_TEXT" ]; then
