@@ -20,11 +20,8 @@ initialize () {
 		if apt update; then
 			apt install -y gh
 		else
-			echo 100
 			sudo apt update
-			echo 101
 			sudo apt install -y gh
-			echo 102
 		fi
 	fi
 
@@ -43,19 +40,7 @@ initialize () {
     PACKAGE_VERSION=$(node -p "require('./package.json').version")
 	PREVIOUS_VERSION=$(grep -Eo '\[v?[0-9]+\.[0-9]+\.[0-9]+\]' CHANGELOG.md | cut -d[ -f2 | cut -d] -f1 | head -1)
 	PREVIOUS_TAG=$(git tag | grep -v '^v' | grep "[0,2,4,6,8]$" | tail -1)
-
-	echo 200 "GH_TOKEN=${GH_TOKEN:-}"
-	gh auth status
-	echo 201.1
-	if ! gh pr view --json title,number; then
-		echo "ERROR: gh CLI could not get pull request information" >&2
-		exit 1
-	fi
-	echo 201.2
 	CURRENT_PR_TEXT=$(gh pr view --json title,number | jq -r '.title + " (#" + (.number|tostring) + ")"')
-	echo 202
-	echo "CURRENT_PR_TEXT=$CURRENT_PR_TEXT"
-	echo 203
 
 	if [ -z "$CURRENT_PR_TEXT" ]; then
 		echo "ERROR: no current PR text found"
