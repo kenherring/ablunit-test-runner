@@ -37,7 +37,7 @@ initialize () {
 	echo 200 "GH_TOKEN=${GH_TOKEN:-}"
 	gh pr view --json title,number
 	echo 201
-	CURRENT_PR_TEXT=$(CURRENT_PR_TEXT=$(gh pr view --json title,number | jq -r '.title + " (#" + (.number|tostring) + ")"'))
+	CURRENT_PR_TEXT=$(gh pr view --json title,number | jq -r '.title + " (#" + (.number|tostring) + ")"')
 	echo 202
 	echo "CURRENT_PR_TEXT=$CURRENT_PR_TEXT"
 	echo 203
