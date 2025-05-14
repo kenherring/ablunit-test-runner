@@ -17,7 +17,12 @@ initialize () {
 
 	if ! command -v gh &>/dev/null; then
 		echo "attempting to install gh CLI..."
-		apt install -y gh || sudo apt install -y gh
+		if apt update; then
+			apt install -y gh
+		else
+			sudo apt update
+			sudo apt install -y gh
+		fi
 	fi
 
 
