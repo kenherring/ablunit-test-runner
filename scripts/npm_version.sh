@@ -15,6 +15,12 @@ usage () {
 initialize () {
 	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}]"
 
+	if ! command -v gh &>/dev/null; then
+		echo "attempting to install gh CLI..."
+		apt install -y gh
+	fi
+
+
 	PRERELEASE=false
     PACKAGE_VERSION=$(node -p "require('./package.json').version")
 	PREVIOUS_VERSION=$(grep -Eo '\[v?[0-9]+\.[0-9]+\.[0-9]+\]' CHANGELOG.md | cut -d[ -f2 | cut -d] -f1 | head -1)
