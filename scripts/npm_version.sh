@@ -20,8 +20,11 @@ initialize () {
 		if apt update; then
 			apt install -y gh
 		else
+			echo 100
 			sudo apt update
+			echo 101
 			sudo apt install -y gh
+			echo 102
 		fi
 	fi
 
