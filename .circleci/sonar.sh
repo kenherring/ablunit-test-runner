@@ -63,8 +63,6 @@ pre_scan () {
     scripts/sonar_test_results_merge.sh
     ## remove base dir of /home/circleci/project/
     sed -i 's|/home/circleci/project||g' artifacts/eslint_report.json
-    jq . artifacts/eslint_report.json > artifacts/eslint_report_pretty.json
-
 }
 
 sonarcloud_scan () {
