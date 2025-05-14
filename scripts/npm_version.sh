@@ -28,6 +28,16 @@ initialize () {
 		fi
 	fi
 
+	if ! command -v jq &>/dev/null; then
+		echo "attempting to install jq..."
+		if apt update; then
+			apt install -y jq
+		else
+			sudo apt update
+			sudo apt install -y jq
+		fi
+	fi
+
 
 	PRERELEASE=false
     PACKAGE_VERSION=$(node -p "require('./package.json').version")
@@ -35,8 +45,10 @@ initialize () {
 	PREVIOUS_TAG=$(git tag | grep -v '^v' | grep "[0,2,4,6,8]$" | tail -1)
 
 	echo 200 "GH_TOKEN=${GH_TOKEN:-}"
+	gh auth status
+	echo 201.1
 	gh pr view --json title,number
-	echo 201
+	echo 201.2
 	CURRENT_PR_TEXT=$(gh pr view --json title,number | jq -r '.title + " (#" + (.number|tostring) + ")"')
 	echo 202
 	echo "CURRENT_PR_TEXT=$CURRENT_PR_TEXT"
