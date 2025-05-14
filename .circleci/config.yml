@@ -82,6 +82,9 @@ jobs:
     environment:
       npm_config_cache: /home/circleci/cache/node_modules_cache
       EXPECTED_VSIX_COUNT: << pipeline.parameters.expected-vsix-count >>
+      GH_PROMPT_DISABLED: 'true'
+      GH_SPINNER_DISABLED: 'true'
+      NO_COLOR: 'true'
     steps:
       - checkout
       - restore-package-cache
@@ -162,6 +165,7 @@ jobs:
     steps:
       - attach_workspace: { at: . }
       - run: .circleci/create_release.sh
+
 workflows:
   build:
     jobs:
