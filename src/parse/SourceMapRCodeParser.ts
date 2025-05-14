@@ -44,8 +44,6 @@ export const getSourceMapFromRCode = (propath: PropathParser, uri: Uri) => {
 
 	const parseHeader = (raw: Uint8Array) => {
 		const rcodeHeader = raw.subarray(0, headerLength)
-		FileUtils.writeFile(uri.with({path: uri.path + '.header.bin'}), rcodeHeader)
-		// const rcodeCrc = ???
 
 		const majorVersion = toBase10(rcodeHeader.subarray(14, 16))
 		if (!majorVersion) {
