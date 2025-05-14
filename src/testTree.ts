@@ -341,12 +341,14 @@ function hasUndoThrowParameter (uri: Uri) {
 	return false
 }
 
-function manageDiagnostic (uri: Uri, missingOnError: boolean) {
+function manageDiagnostic (uri: Uri | undefined, missingOnError: boolean) {
+	if (!uri) {
+		return
+	}
 	if (!missingOnError || hasUndoThrowParameter(uri)) {
 		diagCollection.delete(uri)
 		return
 	}
-
 	if (diagCollection.has(uri)) {
 		return
 	}
@@ -383,11 +385,7 @@ export class ABLTestClass extends ABLTestFile {
 		this.startParsing(item)
 		const response = parseABLTestClass(displayClassLabel, content, this.relativePath)
 		this.updateItem(controller, item, response, 'Method')
-
-		if (item.uri) {
-			manageDiagnostic(item.uri, response?.missingOnError ?? false)
-		}
-
+		manageDiagnostic(item.uri, response?.missingOnError ?? false)
 		this.setClassInfo(response?.classname)
 		return item.children.size > 0
 	}
@@ -402,11 +400,7 @@ export class ABLTestProgram extends ABLTestFile {
 	public override updateFromContents (controller: TestController, content: string, item: TestItem) {
 		this.startParsing(item)
 		const response = parseABLTestProgram(content, this.relativePath)
-
-		if (item.uri) {
-			manageDiagnostic(item.uri, response?.missingOnError ?? false)
-		}
-
+		manageDiagnostic(item.uri, response?.missingOnError ?? false)
 		this.updateItem(controller, item, response, 'Procedure')
 		return item.children.size > 0
 	}
