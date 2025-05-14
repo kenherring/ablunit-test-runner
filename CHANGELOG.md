@@ -1,3 +1,11 @@
+# [1.2.11](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.2.11) - 2025-05-14 (pre-release)
+
+
+ * 
+
+
+**Full Changelog**: [1.2.9...1.2.11](https://github.com/kenherring/ablunit-test-runner/compare/1.2.9...1.2.11)
+
 # [1.2.9](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.2.9) - 2025-05-13 (pre-release)
 
  * Add OpenEdge 12.8.7 test target (#287)
