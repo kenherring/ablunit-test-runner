@@ -34,11 +34,13 @@ initialize () {
 	PREVIOUS_VERSION=$(grep -Eo '\[v?[0-9]+\.[0-9]+\.[0-9]+\]' CHANGELOG.md | cut -d[ -f2 | cut -d] -f1 | head -1)
 	PREVIOUS_TAG=$(git tag | grep -v '^v' | grep "[0,2,4,6,8]$" | tail -1)
 
-	echo 200
-	CURRENT_PR_TEXT=$(CURRENT_PR_TEXT=$(gh pr view --json title,number | jq -r '.title + " (#" + (.number|tostring) + ")"'))
+	echo 200 "GH_TOKEN=${GH_TOKEN:-}"
+	gh pr view --json title,number
 	echo 201
-	echo "CURRENT_PR_TEXT=$CURRENT_PR_TEXT"
+	CURRENT_PR_TEXT=$(CURRENT_PR_TEXT=$(gh pr view --json title,number | jq -r '.title + " (#" + (.number|tostring) + ")"'))
 	echo 202
+	echo "CURRENT_PR_TEXT=$CURRENT_PR_TEXT"
+	echo 203
 
 	if [ -z "$CURRENT_PR_TEXT" ]; then
 		echo "ERROR: no current PR text found"
