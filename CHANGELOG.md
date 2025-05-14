@@ -1,8 +1,8 @@
 # [1.2.11](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.2.11) - 2025-05-14 (pre-release)
 
-
- * Add OpenEdge 12.8.7 test target (#287)
+ * Display warning for missing [BLOCK|ROUTINE]-LEVEL ON ERROR statement (#290)
  * Remove creation of .bin files (#289)
+ * Add OpenEdge 12.8.7 test target (#287)
  * Warn when rcode CRC does not match profiler CRC (#272)
  * Create codeql.yml (#278)
  * Create dependabot.yml (#275)
