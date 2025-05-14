@@ -1,6 +1,8 @@
-# [1.2.11](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.2.11) - 2025-05-14 (pre-release)
+# [1.2.13](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.2.13) - 2025-05-14 (pre-release)
 
+* Display warning for missing `[BLOCK|ROUTINE]-LEVEL ON ERROR` statement (#290)
 * Update changelog updater (#291)
+* Remove creation of `.bin` files (#289)
 * Add OpenEdge 12.8.7 test target (#287)
 * Bump mocha from 11.1.0 to 11.2.2 (#286)
 * Warn when rcode CRC does not match profiler CRC (#272)
@@ -13,7 +15,7 @@
 * Bump braces from 3.0.2 to 3.0.3 in /dummy-ext in the npm_and_yarn group across 1 directory (#276)
 * Increase debug profile wait time to 30s (part 2) (#273)
 
-**Full Changelog**: [1.2.0...1.2.11](https://github.com/kenherring/ablunit-test-runner/compare/1.2.9...1.2.11)
+**Full Changelog**: [1.2.0...1.2.13](https://github.com/kenherring/ablunit-test-runner/compare/1.2.11...1.2.13)
 
 # [1.2.0](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.2.0) - 2025-04-26
 

@@ -1,13 +1,18 @@
-import { CancellationError, CancellationToken, Range, TestController, TestItem, TestRun, TestTag, Uri, workspace } from 'vscode'
+import { CancellationError, CancellationToken, DiagnosticSeverity, languages, Range, TestController, TestItem, TestRun, TestTag, Uri, workspace, WorkspaceFolder } from 'vscode'
 import { ABLResults } from 'ABLResults'
 import { parseABLTestSuite } from 'parse/TestSuiteParser'
 import { IClassRet, ITestCase, parseABLTestClass } from 'parse/TestClassParser'
 import { IProgramRet, parseABLTestProgram } from 'parse/TestProgramParser'
 import { getContentFromFilesystem } from 'parse/TestParserCommon'
 import { log } from 'ChannelLogger'
+import { getExtraParameters } from 'parse/OpenedgeProjectParser'
+import { getProfileConfig } from 'parse/TestProfileParser'
 
 export type ABLTestData = ABLTestDir | ABLTestFile | ABLTestCase
 export const resultData = new WeakMap<TestRun, ABLResults[]>()
+
+const diagCollection = languages.createDiagnosticCollection('ablunit')
+const undothrowMap = new WeakMap<WorkspaceFolder, boolean>()
 
 class TestData {
 	private readonly td: WeakMap<TestItem, ABLTestData> = new WeakMap<TestItem, ABLTestData>()
@@ -309,6 +314,60 @@ export class ABLTestSuite extends ABLTestFile {
 	}
 }
 
+function hasUndoThrowParameter (uri: Uri) {
+	const workspaceFolder = workspace.getWorkspaceFolder(uri)
+	if (workspaceFolder?.uri) {
+
+		const mapValue = undothrowMap.get(workspaceFolder)
+		if (mapValue !== undefined) {
+			return mapValue
+		}
+
+		const params = getExtraParameters(workspaceFolder.uri) ?? ''
+		if (params.includes('undothrow')) {
+			undothrowMap.set(workspaceFolder, true)
+			return true
+		}
+
+		const profile = getProfileConfig(workspaceFolder)
+		if (profile.command.additionalArgs.includes('undothrow')) {
+			undothrowMap.set(workspaceFolder, true)
+			return true
+		}
+
+		undothrowMap.set(workspaceFolder, false)
+	}
+
+	return false
+}
+
+function manageDiagnostic (uri: Uri | undefined, missingOnError: boolean) {
+	if (!uri) {
+		return
+	}
+	if (!missingOnError || hasUndoThrowParameter(uri)) {
+		diagCollection.delete(uri)
+		return
+	}
+	if (diagCollection.has(uri)) {
+		return
+	}
+
+	diagCollection.set(uri, [
+		{
+			message: 'Missing `[BLOCK | ROUTINE]-LEVEL ON ERROR` statement' +
+				'\nWithout this statement `OpenEdge.Core.Assert` failures will not be caught and reported as test failures.',
+			code: {
+				value: 'Run test cases and test suites',
+				target: Uri.parse('https://docs.progress.com/bundle/openedge-developer-studio-help/page/Run-test-cases-and-test-suites.html')
+			},
+			severity: DiagnosticSeverity.Warning,
+			range: new Range(0, 0, 0, 0),
+			source: 'ablunit',
+		}
+	])
+}
+
 export class ABLTestClass extends ABLTestFile {
 	public classTypeName = ''
 
@@ -326,7 +385,7 @@ export class ABLTestClass extends ABLTestFile {
 		this.startParsing(item)
 		const response = parseABLTestClass(displayClassLabel, content, this.relativePath)
 		this.updateItem(controller, item, response, 'Method')
-
+		manageDiagnostic(item.uri, response?.missingOnError ?? false)
 		this.setClassInfo(response?.classname)
 		return item.children.size > 0
 	}
@@ -341,6 +400,7 @@ export class ABLTestProgram extends ABLTestFile {
 	public override updateFromContents (controller: TestController, content: string, item: TestItem) {
 		this.startParsing(item)
 		const response = parseABLTestProgram(content, this.relativePath)
+		manageDiagnostic(item.uri, response?.missingOnError ?? false)
 		this.updateItem(controller, item, response, 'Procedure')
 		return item.children.size > 0
 	}

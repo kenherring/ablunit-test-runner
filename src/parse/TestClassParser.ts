@@ -1,6 +1,7 @@
 import { Range } from 'vscode'
 import { getAnnotationLines } from 'parse/TestParserCommon'
 
+const onErrorRE = /(block|routine)-level\s+on\s+error/i
 // CLASS statement
 const classRE = /^\s*class\s+(\S+[^:])\s*/i
 // METHOD statement
@@ -15,6 +16,7 @@ export interface IClassRet {
 	classname: string
 	label: string
 	range: Range
+	missingOnError: boolean
 	testcases: ITestCase[]
 }
 
@@ -38,6 +40,7 @@ export function parseTestClass (lines: string[], configClassLabel: string, relat
 		classname: '',
 		label: '',
 		range: new Range(0, 0, 0, 0),
+		missingOnError: true,
 		testcases: []
 	}
 
@@ -46,6 +49,9 @@ export function parseTestClass (lines: string[], configClassLabel: string, relat
 	const regexIgnore = /^\s*@ignore\s*\.\s*$/i
 
 	for (let lineNo = 0; lineNo < lines.length; lineNo++) {
+		if (onErrorRE.exec(lines[lineNo])) {
+			classRet.missingOnError = false
+		}
 		if (lines[lineNo].trim() === '' || regexIgnore.exec(lines[lineNo])) {
 			continue
 		}
@@ -76,6 +82,11 @@ export function parseTestClass (lines: string[], configClassLabel: string, relat
 		if (regexTest.exec(lines[lineNo])) {
 			lastNonBlankLineHasAnnotation = true
 		}
+	}
+
+
+	if (classRet.testcases.length == 0) {
+		classRet.missingOnError = false
 	}
 
 	return classRet
