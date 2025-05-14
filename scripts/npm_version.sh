@@ -47,7 +47,10 @@ initialize () {
 	echo 200 "GH_TOKEN=${GH_TOKEN:-}"
 	gh auth status
 	echo 201.1
-	gh pr view --json title,number
+	if ! gh pr view --json title,number; then
+		echo "ERROR: gh CLI could not get pull request information" >&2
+		exit 1
+	fi
 	echo 201.2
 	CURRENT_PR_TEXT=$(gh pr view --json title,number | jq -r '.title + " (#" + (.number|tostring) + ")"')
 	echo 202
