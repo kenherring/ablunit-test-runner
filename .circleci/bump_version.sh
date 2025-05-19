@@ -10,6 +10,10 @@ main () {
         log_it "nothing more to do, this is the main branch and we're building PACKAGE_VERSION=$PACKAGE_VERSION"
         return
     fi
+    if [ "$(git log -1 '--pretty=%aN')" = "dependabot[bot]" ]; then
+        log_it "nothing more to do, this is a dependabot PR"
+        return
+    fi
 
     if ! git tag -l --sort=version:refname | grep -q "^$PACKAGE_VERSION$"; then
         log_it "no tag exists for PACKAGE_VERSION=$PACKAGE_VERSION, nothing more to do..."
