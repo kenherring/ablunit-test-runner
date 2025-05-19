@@ -101,23 +101,23 @@
 		"@types/node": "22.x",
 		"@types/vscode": "^1.100.0",
 		"@types/xml2js": "^0.4.14",
-		"@typescript-eslint/eslint-plugin": "^8.31.0",
+		"@typescript-eslint/eslint-plugin": "^8.32.1",
 		"@typescript-eslint/parser": "^8.31.0",
 		"@vscode/test-cli": "^0.0.10",
 		"@vscode/test-electron": "^2.5.2",
-		"@vscode/vsce": "^3.3.2",
+		"@vscode/vsce": "^3.4.1",
 		"esbuild": "^0.25.4",
 		"esbuild-register": "^3.6.0",
 		"eslint": "^9.27.0",
 		"eslint-formatter-unix": "^8.40.0",
 		"eslint-plugin-promise": "^7.2.1",
-		"mocha": "^11.2.2",
+		"mocha": "^11.4.0",
 		"mocha-multi-reporters": "^1.5.1",
 		"mocha-reporter-sonarqube": "2.1.1",
 		"ts-node": "^10.9.2",
 		"tsconfig-paths": "^4.2.0",
 		"typescript": "^5.8.3",
-		"typescript-eslint": "^8.32.0"
+		"typescript-eslint": "^8.32.1"
 	},
 	"contributes": {
 		"configuration": {
