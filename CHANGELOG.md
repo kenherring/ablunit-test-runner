@@ -1,6 +1,7 @@
 # [1.2.15](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.2.15) - 2025-05-19 (pre-release)
 
 * Bump mocha from 11.2.2 to 11.4.0 (#292)
+* Update dependencies - mocha, eslint, typescript-eslint, eslint-plugin, vsce (#297)
 * Display warning for missing `[BLOCK|ROUTINE]-LEVEL ON ERROR` statement (#290)
 * Update changelog updater (#291)
 * Remove creation of `.bin` files (#289)
