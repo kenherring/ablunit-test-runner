@@ -12,7 +12,7 @@ RUN apt-get update \
 
 ## dependencies for running ablunit tests
 COPY --from=psc --chown=circleci:circleci --chmod=744 /psc /psc
-ADD .rssw/oedoc.bin /root/.rssw/oedoc.bin
+COPY .rssw/oedoc.bin /root/.rssw/oedoc.bin
 RUN if [ ! -f /root/.rssw/oedoc.bin ]; then echo "/root/.rssw/oedoc.bin oedoc.bin not found" && exit 1; fi
 ARG PCT_VERSION
 ADD https://github.com/Riverside-Software/pct/releases/download/v${PCT_VERSION}/PCT.jar /usr/share/ant/lib/PCT-${PCT_VERSION}.jar
@@ -31,7 +31,7 @@ ARG OE_VERSION
 ENV OE_VERSION=${OE_VERSION}
 ENV DOCKER_IMAGE=ablunit-test-runner-${OE_VERSION}
 RUN mkdir /home/circleci
-ADD build.xml /psc/dlc/tty/build.xml
+COPY build.xml /psc/dlc/tty/build.xml
 ADD https://github.com/progress/ADE/archive/refs/tags/v${OE_VERSION}.0.tar.gz /home/circleci/
 RUN --mount=type=secret,id=license,target=/psc/dlc/progress.cfg \
     tar -xzf "/home/circleci/v${OE_VERSION}.0.tar.gz" -C . \
