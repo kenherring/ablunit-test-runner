@@ -1,5 +1,6 @@
 # [1.2.17](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.2.17) - 2025-05-19 (pre-release)
 
+* Prefer COPY over ADD for copying local resources (#298)
 * Do not bump version for dependabot PRs (#299)
 * Update dependencies - mocha, eslint, typescript-eslint, eslint-plugin, vsce (#297)
 * Display warning for missing `[BLOCK|ROUTINE]-LEVEL ON ERROR` statement (#290)
