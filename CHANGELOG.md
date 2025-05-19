@@ -1,5 +1,6 @@
-# [1.2.15](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.2.15) - 2025-05-19 (pre-release)
+# [1.2.17](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.2.17) - 2025-05-19 (pre-release)
 
+* Bump eslint from 9.26.0 to 9.27.0 (#293)
 * Update dependencies - mocha, eslint, typescript-eslint, eslint-plugin, vsce (#297)
 * Display warning for missing `[BLOCK|ROUTINE]-LEVEL ON ERROR` statement (#290)
 * Update changelog updater (#291)
@@ -16,7 +17,7 @@
 * Bump braces from 3.0.2 to 3.0.3 in /dummy-ext in the npm_and_yarn group across 1 directory (#276)
 * Increase debug profile wait time to 30s (part 2) (#273)
 
-**Full Changelog**: [1.2.0...1.2.15](https://github.com/kenherring/ablunit-test-runner/compare/1.2.13...1.2.15)
+**Full Changelog**: [1.2.0...1.2.17](https://github.com/kenherring/ablunit-test-runner/compare/1.2.15...1.2.17)
 
 # [1.2.0](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.2.0) - 2025-04-26
 
