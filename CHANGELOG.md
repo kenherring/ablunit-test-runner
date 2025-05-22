@@ -1,4 +1,4 @@
-# [1.2.17](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.2.17) - 2025-05-19 (pre-release)
+# [1.3.0](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.3.0) - 2025-05-21
 
 * Prefer COPY over ADD for copying local resources (#298)
 * Do not bump version for dependabot PRs (#299)
@@ -18,7 +18,7 @@
 * Bump braces from 3.0.2 to 3.0.3 in /dummy-ext in the npm_and_yarn group across 1 directory (#276)
 * Increase debug profile wait time to 30s (part 2) (#273)
 
-**Full Changelog**: [1.2.0...1.2.17](https://github.com/kenherring/ablunit-test-runner/compare/1.2.15...1.2.17)
+**Full Changelog**: [1.2.0...1.3.0](https://github.com/kenherring/ablunit-test-runner/compare/1.2.0...1.3.0)
 
 # [1.2.0](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.2.0) - 2025-04-26
 
