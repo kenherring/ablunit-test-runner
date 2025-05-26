@@ -22,6 +22,7 @@ export interface IABLFile {
 	propathEntry: IPropathEntry
 	propathRelativeFile: string
 	xrefUri: Uri
+	debugListingUri: Uri
 }
 
 export interface IPropath {
@@ -130,6 +131,7 @@ export class PropathParser {
 				const relativeFile = workspace.asRelativePath(uri, false)
 				const rcodeUri = Uri.joinPath(e.buildDirUri, propathRelativeFile.replace(/\.(p|cls)$/, '').replace('.', '/') + '.r')
 				const xrefUri = Uri.joinPath(e.xrefDirUri, propathRelativeFile + '.xref')
+				const debugListingUri = Uri.joinPath(e.buildDirUri, propathRelativeFile.replace(/\.(p|cls)$/, '').replace('.', '/') + '.dbg')
 
 				const fileObj: IABLFile = {
 					uri: uri,
@@ -138,7 +140,8 @@ export class PropathParser {
 					relativeFile: relativeFile,
 					propathEntry: e,
 					propathRelativeFile: propathRelativeFile,
-					xrefUri: xrefUri
+					xrefUri: xrefUri,
+					debugListingUri: debugListingUri,
 				}
 				this.files.push(fileObj)
 				this.filemap.set(relativeFile, fileObj)
@@ -182,7 +185,8 @@ export class PropathParser {
 					relativeFile: relativeFile,
 					propathEntry: e,
 					propathRelativeFile: propathRelativeFile,
-					xrefUri: Uri.joinPath(e.xrefDirUri, propathRelativeFile + '.xref')
+					xrefUri: Uri.joinPath(e.xrefDirUri, propathRelativeFile + '.xref'),
+					debugListingUri: Uri.joinPath(e.buildDirUri, propathRelativeFile + '.dbg'),
 				}
 				this.files.push(fileObj)
 				this.filemap.set(relativeFile, fileObj)

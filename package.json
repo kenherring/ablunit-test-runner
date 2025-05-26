@@ -194,6 +194,37 @@
 				],
 				"url": "./resources/ablunit-test-profile.schema.json"
 			}
+		],
+		"menus": {
+			"editor/title": [
+				{
+					"command": "ablunit.showDebugListingPreview",
+					"when": "editorLangId == abl && !notebookEditorFocused",
+					"group": "navigation"
+				}
+			],
+			"explorer/context": [
+				{
+					"command": "ablunit.showDebugListingPreview",
+					"when": "resourceLangId == abl",
+					"group": "1_ablunit@1"
+				}
+			],
+			"editor/context": [
+				{
+					"command": "ablunit.showDebugListingPreview",
+					"when": "resourceLangId == abl",
+					"group": "1_ablunit@1"
+				}
+			]
+		},
+		"commands": [
+			{
+				"command": "ablunit.showDebugListingPreview",
+				"title": "Show debug listing Preview",
+				"category": "ABLUnit",
+				"icon": "$(open-preview)"
+			}
 		]
 	}
 }

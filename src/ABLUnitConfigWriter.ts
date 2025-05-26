@@ -17,11 +17,11 @@ export class ABLUnitConfig  {
 	ablunitConfig: RunConfig = {} as RunConfig
 	requestKind: TestRunProfileKind | undefined
 
-	setup (workspaceFolder: WorkspaceFolder, request: TestRunRequest) {
+	setup (workspaceFolder: WorkspaceFolder, request?: TestRunRequest) {
 		log.info('[ABLUnitConfigWriter setup] workspaceUri="' + workspaceFolder.uri.fsPath + '"')
 		this.ablunitConfig = getProfileConfig(workspaceFolder)
 		log.info('[ABLUnitConfigWriter constructor] setup complete! tempDir=' + this.ablunitConfig.tempDirUri.fsPath)
-		this.requestKind = request.profile?.kind
+		this.requestKind = request?.profile?.kind ?? TestRunProfileKind.Coverage
 	}
 
 	writeFile (uri: Uri, data: Uint8Array) {
@@ -44,7 +44,8 @@ export class ABLUnitConfig  {
 			'PROPATH=' + propath.replace(/\$\{DLC\}/g, dlc.uri.fsPath.replace(/\\/g, '/'))
 		]
 		const iniBytes = Uint8Array.from(Buffer.from(iniData.join('\n')))
-		return workspace.fs.writeFile(this.ablunitConfig.progressIniUri, iniBytes)
+		FileUtils.createDir(dirname(this.ablunitConfig.progressIniUri.fsPath))
+		FileUtils.writeFile(this.ablunitConfig.progressIniUri, iniBytes)
 	}
 
 	createAblunitJson (_uri: Uri, cfg: CoreOptions, testQueue: ITestObj[]) {

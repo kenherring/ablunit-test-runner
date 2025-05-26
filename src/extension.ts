@@ -1,5 +1,5 @@
 import {
-	CancellationError, CancellationToken, CancellationTokenSource, ConfigurationChangeEvent, ExtensionContext,
+	CancellationError, CancellationToken, CancellationTokenSource, ConfigurationChangeEvent, EventEmitter, ExtensionContext,
 	ExtensionMode,
 	FileCoverage,
 	FileCoverageDetail,
@@ -10,7 +10,7 @@ import {
 	TestRun,
 	TestRunProfileKind, TestRunRequest,
 	TestTag,
-	TextDocument, Uri, WorkspaceFolder,
+	TextDocument, TextDocumentContentProvider, TextEditor, TextEditorRevealType, TextEditorSelectionChangeEvent, TextEditorVisibleRangesChangeEvent, Uri, ViewColumn, WorkspaceFolder,
 	commands,
 	extensions,
 	languages,
@@ -26,9 +26,33 @@ import { basename } from 'path'
 import * as FileUtils from 'FileUtils'
 import { gatherAllTestItems, IExtensionTestReferences, sortLocation } from 'ABLUnitCommon'
 import { SnippetProvider } from 'SnippetProvider'
+import { ABLDebugLines } from 'ABLDebugLines'
+import { ABLUnitConfig } from 'ABLUnitConfigWriter'
+import { ablExec } from 'ABLExec'
+import { PropathParser } from 'ABLPropath'
+import { IDlc, getDLC } from 'parse/OpenedgeProjectParser'
 
 let recentResults: ABLResults[] = []
 let recentError: Error | undefined = undefined
+let showDebugListingPreviewWorking = false
+let debugListingPreviewEditor: TextEditor | undefined = undefined
+const debugListingUriMap = new Map<string, Uri>()
+
+class DebugListingContentProvider implements TextDocumentContentProvider {
+	provideTextDocumentContent (uri: Uri): string {
+		const debugListingUri = debugListingUriMap.get(uri.fsPath)
+		log.info('debugListingUri=' + debugListingUri?.fsPath)
+		if (!debugListingUri) {
+			throw new Error('debugListingUri not found for uri: ' + uri.toString())
+		}
+		const content = FileUtils.readFileSync(debugListingUri).toString()
+		log.info('content.length=' + content.length)
+		return content
+	}
+
+	readonly onDidChangeEmitter = new EventEmitter<Uri>()
+	onDidChange = this.onDidChangeEmitter.event
+}
 
 export function activate (context: ExtensionContext) {
 	const ctrl = tests.createTestController('ablunitTestController', 'ABLUnit Test')
@@ -39,6 +63,8 @@ export function activate (context: ExtensionContext) {
 	if (context.extensionMode !== ExtensionMode.Production) {
 		log.setLogLevel(LogLevel.Debug)
 	}
+
+	const debugListingContentProvider = new DebugListingContentProvider()
 
 	const contextStorageUri = context.storageUri ?? Uri.file(process.env['TEMP'] ?? '') // will always be defined as context.storageUri
 	const contextResourcesUri = Uri.joinPath(context.extensionUri, 'resources')
@@ -88,15 +114,58 @@ export function activate (context: ExtensionContext) {
 	}
 
 	context.subscriptions.push(
+		/** **** DEBUG LISTING PREVIEW - start ******/
+		commands.registerCommand('ablunit.showDebugListingPreview', async (uri: Uri | string) => {
+			return await showDebugListingPreview(uri, true, contextResourcesUri, debugListingContentProvider)
+		}),
+		/** **** DEBUG LISTING PREVIEW - end ******/
+
 		commands.registerCommand('_ablunit.openCallStackItem', openCallStackItem),
 		workspace.onDidChangeConfiguration(e => { return updateConfiguration(e) }),
 		workspace.onDidOpenTextDocument(e => {
 			log.debug('onDidOpenTextDocument ' + e.uri.fsPath)
+			if (e.languageId !== 'abl') {
+				return
+			}
 			return createOrUpdateFile(ctrl, e.uri, true)
 		}),
-		workspace.onDidSaveTextDocument(e => {
-			log.debug('onDidSaveTextDocument ' + e.uri.fsPath)
-			return createOrUpdateFile(ctrl, e.uri, true)
+		window.onDidChangeActiveTextEditor(async (e) => {
+			if (e?.document.languageId != 'abl') {
+				return
+			}
+			// if (debugListingPreviewEditor?.document.uri.fsPath === e.document.uri.fsPath) {
+			// 	return
+			// }
+			log.info('onDidChangeActiveTextEditor ' + e?.document.uri.fsPath)
+			return await showDebugListingPreview(e, false, contextResourcesUri, debugListingContentProvider)
+		}),
+		window.onDidChangeTextEditorSelection(e => {
+			if (e.textEditor.document.languageId !== 'abl') {
+				return
+			}
+			if (recentResults.length == 0) {
+				recentResults.push(new ABLResults(workspace.getWorkspaceFolder(e.textEditor.document.uri)!, getStorageUri(workspace.getWorkspaceFolder(e.textEditor.document.uri)!), contextStorageUri, contextResourcesUri, new CancellationTokenSource().token, undefined))
+			}
+			return updateDebugListingSelection(e, recentResults[recentResults.length - 1].debugLines)
+		}),
+		window.onDidChangeTextEditorVisibleRanges(e => {
+			if (e.textEditor.document.languageId !== 'abl') {
+				return
+			}
+			if (recentResults.length == 0) {
+				recentResults.push(new ABLResults(workspace.getWorkspaceFolder(e.textEditor.document.uri)!, getStorageUri(workspace.getWorkspaceFolder(e.textEditor.document.uri)!), contextStorageUri, contextResourcesUri, new CancellationTokenSource().token, undefined))
+			}
+			log.info('onDidChangeTextEditorVisibleRanges ' + e.textEditor.document.uri.fsPath + ', visibleRanges=' + JSON.stringify(e.visibleRanges))
+			return updateDebugListingVisibleRange(e, recentResults[recentResults.length - 1].debugLines)
+		}),
+		workspace.onDidSaveTextDocument(async (e) => {
+			if (e.languageId !== 'abl') {
+				return
+			}
+			log.info('onDidSaveTextDocument ' + e.uri.fsPath)
+			return await createOrUpdateFile(ctrl, e.uri, true).then(() => {
+				return showDebugListingPreview(e.uri, false, contextResourcesUri, debugListingContentProvider)
+			})
 		}),
 		workspace.onDidCreateFiles(e => {
 			log.debug('workspace.onDidCreate ' + e.files[0].fsPath)
@@ -397,7 +466,7 @@ export function activate (context: ExtensionContext) {
 				}
 				let r = res.find(r => r.workspaceFolder === wf)
 				if (!r) {
-					r = new ABLResults(wf, getStorageUri(wf), contextStorageUri, contextResourcesUri, request, cancellation)
+					r = new ABLResults(wf, getStorageUri(wf), contextStorageUri, contextResourcesUri, cancellation, request)
 					cancellation.onCancellationRequested(() => {
 						log.debug('cancellation requested - createABLResults-1')
 						r?.dispose()
@@ -516,7 +585,6 @@ export function activate (context: ExtensionContext) {
 	}
 
 	ctrl.resolveHandler = (item) => {
-
 		if (item?.uri) {
 			const relativePath = workspace.asRelativePath(item.uri)
 			log.info('ctrl.resolveHandler (relativePath=' + relativePath + ')')
@@ -564,6 +632,8 @@ export function activate (context: ExtensionContext) {
 	testProfileCoverage.configureHandler = configHandler
 	testProfileCoverage.loadDetailedCoverage = loadDetailedCoverage
 	testProfileCoverage.loadDetailedCoverageForTest = loadDetailedCoverageForTest
+
+	workspace.registerTextDocumentContentProvider('debugListing', debugListingContentProvider)
 
 	let prom
 	if(workspace.getConfiguration('ablunit').get('discoverAllTestsOnActivate', false)) {
@@ -1066,7 +1136,7 @@ function createOrUpdateFile (controller: TestController, e: Uri | FileCreateEven
 		}
 		uris.push(e)
 	} else {
-		uris = uris.concat(e.files.filter(f => f.scheme === 'file'))
+		uris = uris.concat(e.files.filter(f => f.scheme === 'file' && workspace.getWorkspaceFolder(f) !== undefined))
 	}
 
 	const proms: PromiseLike<boolean>[] = []
@@ -1162,4 +1232,228 @@ function getExtensionVersion () {
 function itemHasTag (item: TestItem, tag: string) {
 	const tags = item.tags.map(t => t.id)
 	return tags.includes(tag)
+}
+
+async function showDebugListingPreview (
+	e: Uri | string | TextEditor | undefined,
+	fromCommand: boolean,
+	contextResourcesUri: Uri,
+	debugListingContentProvider: DebugListingContentProvider,
+	): Promise<boolean> {
+
+	if (!e || showDebugListingPreviewWorking) {
+		return false
+	}
+
+	log.info('---------- showDebugListingPreview called ---------- (showDebugListingPreviewWorking=' + showDebugListingPreviewWorking + ')')
+	showDebugListingPreviewWorking = true
+
+	try {
+		if (!e) {
+			return false
+		}
+
+		let uri: Uri | undefined = undefined
+		if (typeof e === 'string') {
+			uri = Uri.parse(e)
+		} else if (e instanceof Uri) {
+			uri = e
+		} else {
+			if (!e.document) {
+				return true
+			}
+			log.info('e.document.uri=' + e.document.uri?.fsPath + ', e.languageId=' + e.document.languageId)
+			if (e.document.languageId !== 'abl') {
+				log.warn('showDebugListingPreview called with non-ABL document, ignoring: ' + e.document.uri?.fsPath)
+				return true
+			}
+			if (e.document.uri.path.endsWith('.dbg')) {
+				log.warn('showDebugListingPreview called with debug listing document, ignoring: ' + e.document.uri.fsPath)
+				return true
+			}
+			uri = e.document.uri
+		}
+		if (!uri) {
+			throw new Error('showDebugListingPreview called with undefined uri')
+		}
+
+		const wf = workspace.getWorkspaceFolder(uri)
+		if (!wf) {
+			throw new Error('No workspace folder found for uri: ' + uri.fsPath)
+		}
+		const cfg = new ABLUnitConfig()
+		cfg.setup(wf)
+		const propath = cfg.readPropathFromJson(contextResourcesUri)
+		const debugLines = new ABLDebugLines(propath)
+		if (!debugLines) {
+			log.warn('showDebugListingPreview called without debugLines, cannot proceed')
+			return false
+		}
+
+		if (!window.visibleTextEditors.some(e => e.document.uri.scheme === 'debugListing')) {
+			debugListingPreviewEditor = undefined
+		}
+		if (!fromCommand && !debugListingPreviewEditor) {
+			log.debug('showDebugListingPreview called from non-command context, but no debugListingPreviewEditor exists that requires a refresh')
+			return true
+		}
+
+
+
+		log.info('showDebugListingPreview called')
+		log.info('\turi=' + uri.fsPath)
+
+
+		const currentUri = window.activeTextEditor?.document.uri
+		const currentSelection = window.activeTextEditor?.selection
+
+		if (!currentUri) {
+			throw new Error('No activeTextEditor found to get currentUri')
+		}
+
+		log.info('\tabl.generateDebugListing called for uri=' + currentUri.fsPath)
+		const debugListingUri = debugLines.propath.search(currentUri)?.debugListingUri
+		log.info('debugListingUri=' + debugListingUri)
+		if (!debugListingUri) {
+			log.warn('debugLines.propath.search returned undefined for uri=' + currentUri.fsPath)
+			return false
+		}
+
+		await generateDebugListing(cfg, getDLC(wf), contextResourcesUri, propath, currentUri, debugListingUri)
+
+		const debugListingText = FileUtils.readFileSync(debugListingUri).toString()
+		// const debugListingText = window.activeTextEditor?.document.getText()
+		// debugListingUriMap.set(currentUri.fsPath, debugListingUri)
+
+		// await commands.executeCommand('workbench.action.closeActiveEditor')
+
+		if (!debugListingText || debugListingText.length < 1) {
+			throw new Error('debugListingText is empty or undefined. Cannot open debug listing preview.')
+		}
+
+		// refocus the current editor
+		// await window.showTextDocument(currentUri, { selection: currentSelection })
+
+		// const debugListingPreview = await window.showTextDocument(debugListingUri, {
+		// 	viewColumn: ViewColumn.Beside,
+		// 	preview: true,
+		// 	preserveFocus: true,
+		// 	selection: currentSelection
+		// })
+		// log.info('debug listing preview opened successfully (debugListingPreview=' + debugListingPreview.document.uri.fsPath)
+
+		log.info('open preview for debugListingUri=' + debugListingUri?.fsPath)
+		const debugListingPreviewUri = currentUri.with({scheme: 'debugListing', path: 'Debug Listing ' + basename(debugListingUri.fsPath)})
+		log.info('debugListingPreviewUri=' + debugListingPreviewUri.fsPath)
+		debugListingUriMap.set(debugListingPreviewUri.fsPath, debugListingUri)
+
+		if (!debugListingPreviewEditor || debugListingPreviewEditor.document.uri.fsPath !== debugListingPreviewUri.fsPath) {
+			debugListingPreviewEditor = await window.showTextDocument(debugListingPreviewUri, {
+				viewColumn: ViewColumn.Beside,
+				preview: true,
+				preserveFocus: true,
+				selection: currentSelection
+			})
+		}
+
+		log.info('debug listing preview opened successfully (debugListingPreview=' + debugListingPreviewEditor.document.uri)
+
+		const fullRange = new Range(new Position(0, 0), new Position(debugListingPreviewEditor.document.lineCount, 0))
+		await debugListingPreviewEditor.edit(editBuilder => {
+			log.info('editBuilder.replace')
+			editBuilder.replace(fullRange, debugListingText)
+		})
+		log.info('debugListingPreviewEditor.edit complete (debugListingText.length=' + debugListingText.length + ')')
+		debugListingContentProvider.onDidChangeEmitter.fire(debugListingPreviewUri)
+
+		// debugListingPreview.setDecorations({readonly: true})
+		return true
+	} catch (e: unknown) {
+		log.error('showDebugListingPreview failed. e=' + e)
+		throw e
+	} finally {
+		showDebugListingPreviewWorking = false
+		log.info('---------- showDebugListingPreview complete ---------- (showDebugListingPreviewWorking=' + showDebugListingPreviewWorking + ')')
+	}
+}
+
+async function updateDebugListingSelection (e: TextEditorSelectionChangeEvent, debugLines: ABLDebugLines) {
+	if (!debugListingPreviewEditor || e.textEditor.document.languageId != 'abl') {
+		return
+	}
+
+	const mappedSelections: Selection[] = []
+	for (const s of e.selections) {
+		log.info('s.start.line=' + s.start.line + ', s.end.line=' + s.end.line)
+		const sel: Selection = new Selection(
+			await debugLines.getDebugListingPosition(e.textEditor, s.start),
+			await debugLines.getDebugListingPosition(e.textEditor, s.end),
+		)
+		mappedSelections.push(sel)
+	}
+
+	if (mappedSelections.length === 1) {
+		if (mappedSelections[0].start.isEqual(mappedSelections[0].end)) {
+			mappedSelections[0] = new Selection(
+				new Position(mappedSelections[0].start.line, 0),
+				new Position(mappedSelections[0].start.line + 1, 0),
+			)
+		}
+	}
+	log.info('mappedSelections.length=' + mappedSelections.length + ' (e.selections.length=' + e.selections.length + ')')
+	debugListingPreviewEditor.selections = mappedSelections
+
+	const anchor = await debugLines.getDebugListingPosition(e.textEditor, e.textEditor.selection.anchor)
+	const lineCountToAnchor = e.textEditor.selection.anchor.line - e.textEditor.visibleRanges[0].start.line
+	const lineCountFromAnchor = e.textEditor.visibleRanges[0].end.line - e.textEditor.selection.anchor.line
+	const range = new Range(
+		new Position(anchor.line - lineCountToAnchor, 0),
+		new Position(anchor.line + lineCountFromAnchor, 0),
+	)
+	log.info('visible = ' + e.textEditor.visibleRanges[0].start.line + '/' + e.textEditor.selection.anchor.line + '/' + e.textEditor.visibleRanges[0].end.line)
+	log.info('preview = ' + range.start.line + '/' + anchor.line + '/' + range.end.line)
+
+
+	debugListingPreviewEditor.revealRange(range, TextEditorRevealType.InCenter)
+	log.info('  sel=' + e.textEditor.visibleRanges[0].start.line + '-' + e.textEditor.selection.start.line)
+	log.info('range=' + range.start.line + '-' + range.end.line)
+
+	// mappedSelections.push(new Selection(range.start, range.end))
+	// debugListingPreviewEditor.selections = mappedSelections
+
+	log.info('debugListingPreviewEditor.visibleRanges=' + JSON.stringify(debugListingPreviewEditor.visibleRanges))
+}
+
+async function updateDebugListingVisibleRange (e: TextEditorVisibleRangesChangeEvent, debugLines: ABLDebugLines) {
+	if (!debugListingPreviewEditor || e.textEditor.document.languageId != 'abl') {
+		return
+	}
+
+	const anchor = await debugLines.getDebugListingPosition(e.textEditor, e.textEditor.selection.anchor)
+	const lineCountToAnchor = e.textEditor.selection.anchor.line - e.textEditor.visibleRanges[0].start.line
+	const lineCountFromAnchor = e.textEditor.visibleRanges[0].end.line - e.textEditor.selection.anchor.line
+	const range = new Range(
+		new Position(anchor.line - lineCountToAnchor, 0),
+		new Position(anchor.line + lineCountFromAnchor, 0),
+	)
+	log.info('visible = ' + e.textEditor.visibleRanges[0].start.line + '/' + e.textEditor.selection.anchor.line + '/' + e.textEditor.visibleRanges[0].end.line)
+	log.info('preview = ' + range.start.line + '/' + anchor.line + '/' + range.end.line)
+
+
+	debugListingPreviewEditor.revealRange(range, TextEditorRevealType.InCenter)
+	log.info('  sel=' + e.textEditor.visibleRanges[0].start.line + '-' + e.textEditor.selection.start.line)
+	log.info('range=' + range.start.line + '-' + range.end.line)
+
+	// debugListingPreviewEditor.selection = new Selection(range.start, range.end)
+
+	log.info('debugListingPreviewEditor.visibleRanges=' + JSON.stringify(debugListingPreviewEditor.visibleRanges))
+
+}
+
+function generateDebugListing (cfg: ABLUnitConfig, dlc: IDlc, contextResourcesUri: Uri, propath: PropathParser, currentUri: Uri, debugListingUri: Uri) {
+	const env: Record<string, string> = {
+		SOURCE_FILE: currentUri.fsPath,
+		DEBUG_LISTING_PATH: debugListingUri.fsPath,
+	}
+	return ablExec(cfg, dlc, Uri.joinPath(contextResourcesUri, 'VSCodeTestRunner', 'generateDebugListing.p').fsPath, propath, env)
 }
