@@ -111,7 +111,7 @@
 		"eslint": "^9.27.0",
 		"eslint-formatter-unix": "^8.40.0",
 		"eslint-plugin-promise": "^7.2.1",
-		"mocha": "^11.4.0",
+		"mocha": "^11.5.0",
 		"mocha-multi-reporters": "^1.5.1",
 		"mocha-reporter-sonarqube": "2.1.1",
 		"ts-node": "^10.9.2",
