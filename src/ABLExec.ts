@@ -111,38 +111,38 @@ function runCommand (cfg: ABLUnitConfig, dlc: IDlc, execFile: string, propath: P
 		shell: true,
 	}
 
-	log.info('command=\'' + cmd + ' ' + args.join(' ') + '\'\n\n')
+	log.info('command=\'' + cmd + ' ' + args.join(' '))
 	const proc = spawn(cmd, args, spawnOpts)
 
 	return new Promise<string>((resolve, reject) => {
 		proc.stderr?.on('data', (data: Buffer) => {
-			log.info('stderr')
+			log.debug('stderr')
 			log.error('\t\t[stderr] ' + data.toString().trim().replace(/\n/g, '\n\t\t[stderr] '))
 		})
 		proc.stdout?.on('data', (data: Buffer) => {
-			log.info('stdout data=' + data.toString().trim())
+			log.debug('stdout data=' + data.toString().trim())
 		})
 		proc.once('spawn', () => {
-			log.info('spawn')
+			log.debug('spawn')
 		}).on('disconnect', () => {
-			log.info('process.disconnect')
+			log.debug('process.disconnect')
 		}).on('error', (e: Error) => {
-			log.info('error type=' + typeof e + ' e.message=' + e.message +
+			log.debug('error type=' + typeof e + ' e.message=' + e.message +
 				'\n\te=' + JSON.stringify(e, null, 2))
 			log.error('Error generating debug listing: ' + e)
 			if (e instanceof Error) {
 				reject(e)
 			}
 		}).on('exit', (code: number | null, signal: NodeJS.Signals | null) => {
-			log.info('exit code=' + code + '; signal=' + signal)
+			log.debug('exit code=' + code + '; signal=' + signal)
 			if (code != 0) {
 				throw new Error('Failed to execute ABL code (exit_code=' + code + ')')
 			}
 			resolve('success')
 		}).on('close', (code: number | null, signal: NodeJS.Signals | null) => {
-			log.info('close code=' + code + ' signal=' + signal)
+			log.debug('close code=' + code + ' signal=' + signal)
 		}).on('message', (m: Serializable, _h: SendHandle) => {
-			log.info('message m=' + JSON.stringify(m))
+			log.debug('message m=' + JSON.stringify(m))
 		})
 	})
 }

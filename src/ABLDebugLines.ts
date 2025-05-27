@@ -31,7 +31,6 @@ export class ABLDebugLines {
 		if (!debugLine) {
 			throw new Error('Could not determine debug listing line for ' + editor.document.uri.fsPath + ':' + position.line)
 		}
-		log.info('getDebugListingPosition: debugLine=' + debugLine.debugLine + ', sourceLine=' + position.line + '/' + debugLine.sourceLine)
 
 		let line = position.line
 		if (debugLine.debugLine) {
@@ -41,6 +40,32 @@ export class ABLDebugLines {
 		const lineBeforeSelection = editor.document.lineAt(position.line).text.substring(0, position.character)
 		const character = lineBeforeSelection.replace(/\t/g, '        ').length + 12
 		return new Position(line, character)
+	}
+
+	async getSourcePosition (editor: TextEditor | Uri, position: Position) {
+		let uri: Uri | undefined = undefined
+		if (editor instanceof Uri) {
+			uri = editor
+		} else {
+			editor = editor.document.uri
+		}
+		if (!uri) {
+			log.error('Editor or URI is undefined')
+			throw new Error('Editor or URI is undefined')
+		}
+
+		const sourceLine = await this.getSourceLine(uri, position.line + 1)
+		if (!sourceLine) {
+			log.error('Could not determine source line from debugLine ' + uri.fsPath + ':' + position.line)
+			throw new Error('Could not determine source line from debugLine ' + uri.fsPath + ':' + position.line)
+		}
+
+		let line = position.line
+		if (sourceLine.sourceLine) {
+			line = sourceLine.sourceLine - 1
+		}
+
+		return new Position(line, position.character - 12)
 	}
 
 	async getDebugLine (source: Uri, line: number) {
@@ -90,23 +115,54 @@ export class ABLDebugLines {
 		return undefined
 	}
 
-	async getSourceLine (debugSource: string, debugLine: number) {
-		// if (debugSource.startsWith('OpenEdge.') || debugSource.includes('ABLUnitCore')) {
-		// 	return undefined
-		// }
-		const fileinfo = this.propath.search(debugSource)
+	async getSourceLine (source: string | Uri, line: number) {
+		if (typeof source === 'string') {
+			source = Uri.file(source)
+		}
+		const fileinfo = this.propath.search(source)
 		if (!fileinfo) {
-			log.warn('cannot find module in propath for "' + debugSource + '"')
+			log.warn('cannot find module in propath for "' + source + '"')
 			return undefined
 
 		}
 		const map = await this.getSourceMap(fileinfo.uri)
 		if (!map) {
-			log.warn('cannot find source map for "' + debugSource + '"')
+			log.warn('cannot find source map for "' + source + '"')
 			return undefined
 		}
-		const ret = map.items.find((line) => line.debugLine === debugLine)
-		return ret
+		const item = map.items.find(i => i.debugLine === line)
+		if (item) {
+			return item
+		}
+
+
+		const debugItems = map.items.filter((mappedLine) => mappedLine.debugUri.fsPath === source.fsPath)
+
+		const itemAfter = debugItems.filter((mappedLine) => mappedLine.debugLine > line).sort((a, b) => a.debugLine - b.debugLine)[0]
+		if (itemAfter) {
+			const item = new SourceMapItem({
+				debugLine: line,
+				debugUri: itemAfter.debugUri,
+				sourceLine: itemAfter.sourceLine - (itemAfter.debugLine - line),
+				sourceUri: itemAfter.sourceUri,
+				procName: itemAfter.procName,
+				procNum: itemAfter.procNum,
+			})
+			return item
+		}
+
+		const itemBefore = debugItems.filter((mappedLine) => mappedLine.debugLine < line).sort((a, b) => b.debugLine - a.debugLine)[0]
+		if (itemBefore) {
+			const item = new SourceMapItem({
+				debugLine: line,
+				debugUri: itemBefore.debugUri,
+				sourceLine: itemBefore.sourceLine + (line - itemBefore.debugLine),
+				sourceUri: itemBefore.sourceUri,
+				procName: itemBefore.procName,
+				procNum: itemBefore.procNum,
+			})
+			return item
+		}
 	}
 
 	async getSourceMap (debugSource: Uri) {
