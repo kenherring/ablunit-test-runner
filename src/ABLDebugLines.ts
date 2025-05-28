@@ -3,7 +3,7 @@ import { log } from 'ChannelLogger'
 import { SourceMap, SourceMapItem } from 'parse/SourceMapParser'
 import { getSourceMapFromRCode } from 'parse/SourceMapRCodeParser'
 import { getSourceMapFromXref } from 'parse/SourceMapXrefParser'
-import { Position, TextEditor, Uri } from 'vscode'
+import { Position, Range, TextEditor, Uri } from 'vscode'
 
 export class ABLDebugLines {
 	private readonly maps = new Map<string, SourceMap>()
@@ -65,7 +65,11 @@ export class ABLDebugLines {
 			line = sourceLine.sourceLine - 1
 		}
 
-		return new Position(line, position.character - 12)
+		let char = position.character - 12
+		if (char < 0) {
+			char = 0
+		}
+		return new Position(line, char)
 	}
 
 	async getDebugLine (source: Uri, line: number) {
@@ -163,6 +167,26 @@ export class ABLDebugLines {
 			})
 			return item
 		}
+	}
+
+	async getDebugListingRange (source: TextEditor, range: Range) {
+		const start = await this.getDebugListingPosition(source, range.start)
+		const end = await this.getDebugListingPosition(source, range.end)
+		if (!start || !end) {
+			log.warn('Could not determine debug range for ' + source.document.uri.fsPath + ':' + range.start.line + '-' + range.end.line)
+			return undefined
+		}
+		return new Range(start, end)
+	}
+
+	async getSourceRange (source: Uri, range: Range) {
+		const start = await this.getSourcePosition(source, range.start)
+		const end = await this.getSourcePosition(source, range.end)
+		if (!start || !end) {
+			log.warn('Could not determine source range for ' + source.fsPath + ':' + range.start.line + '-' + range.end.line)
+			return undefined
+		}
+		return new Range(start, end)
 	}
 
 	async getSourceMap (debugSource: Uri) {

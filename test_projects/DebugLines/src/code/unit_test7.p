@@ -47,7 +47,27 @@ procedure other_proc_11:
 	message 1.
 end procedure.
 procedure other_proc_12 :
+
+
+	if true then do:
+		if false then do:
+
+
+
+			message 200.
+		end.
+	end.
+
 	message 1.
+
+	def var i as integer no-undo.
+	do i=0 to 10:
+		message i.
+
+	end.
+
+
+
 end procedure.
 procedure other_proc_13 :
 	message 1.

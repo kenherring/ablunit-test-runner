@@ -65,7 +65,7 @@ function getDefaultCommand (cfg: ABLUnitConfig, dlc: IDlc, propath: PropathParse
 		throw new Error('unsupported platform: ' + process.platform)
 	}
 
-	cmd.push('-T', cfg.ablunitConfig.tempDirUri.fsPath)
+	// cmd.push('-T', cfg.ablunitConfig.tempDirUri.fsPath)
 
 	if (cfg.ablunitConfig.dbConnPfUri && cfg.ablunitConfig.dbConns && cfg.ablunitConfig.dbConns.length > 0) {
 		cmd.push('-pf', cfg.ablunitConfig.dbConnPfUri.fsPath)
@@ -78,7 +78,9 @@ function getDefaultCommand (cfg: ABLUnitConfig, dlc: IDlc, propath: PropathParse
 	if (cfg.ablunitConfig.dbAliases.length > 0) {
 		params = 'ALIASES=' + cfg.ablunitConfig.dbAliases.join(';')
 	}
-	cmd.push('-param', '"' + params + '"')
+	if (params.length > 0) {
+		cmd.push('-param', '"' + params + '"')
+	}
 
 	for (const element of cmd) {
 		cmdSanitized.push(element.replace(/\\/g, '/'))
