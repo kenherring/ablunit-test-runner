@@ -561,3 +561,31 @@ test('proj0.25 - no duplicate destructor', async () => {
 	}
 	assert.equal(destructorCount, 1, 'expected exactly 1 destructor found in the module tree (found ' + destructorCount + ')')
 })
+
+test('proj0.26 - database connection needed but not configured', async () => {
+	FileUtils.copyFile('openedge-project.test26.json', 'openedge-project.json')
+	await deleteRcode()
+	await restartLangServer(23)
+
+	await runTestsInFile('src/dirA/dir1/testInDir.p')
+
+	const res = await getResults()
+	assert.equal(res[0].ablResults?.resultsJson[0].errors, 1, 'expected 1 error')
+	assert.equal(res[0].ablResults?.resultsJson[0].failures, 0, 'expected 0 failed tests')
+	assert.equal(res[0].ablResults?.resultsJson[0].passed, 0, 'expected 0 passed tests')
+	assert.equal(res[0].ablResults?.resultsJson[0].skipped, 0, 'expected 0 skipped tests')
+})
+
+test('proj0.27 - database connection not valid', async () => {
+	FileUtils.copyFile('openedge-project.test27.json', 'openedge-project.json')
+	await deleteRcode()
+	await restartLangServer(23)
+
+	await runTestsInFile('src/dirA/dir1/testInDir.p')
+
+	const res = await getResults()
+	assert.equal(res[0].ablResults?.resultsJson[0].errors, 1, 'expected 1 error')
+	assert.equal(res[0].ablResults?.resultsJson[0].failures, 0, 'expected 0 failed tests')
+	assert.equal(res[0].ablResults?.resultsJson[0].passed, 0, 'expected 0 passed tests')
+	assert.equal(res[0].ablResults?.resultsJson[0].skipped, 0, 'expected 0 skipped tests')
+})
