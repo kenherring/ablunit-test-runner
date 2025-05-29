@@ -1,0 +1,12 @@
+{
+	"name": "proj0",
+	"version": "0",
+	"oeversion": "12.8",
+	"charset": "utf-8",
+	"buildPath": [
+		{ "type": "source", "documentation": "docs/src.json", "path": "src", "includes": "**/*.p,**/*.cls", "excludes": "emptyClass.cls", "xref": "." },
+		{ "type": "source", "documentation": "docs/test.json", "path": "test" }
+	],
+	"dbConnections": [],
+	"numThreads": 1
+}

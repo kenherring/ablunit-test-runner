@@ -83,7 +83,7 @@ export function parseRunProfiles (workspaceFolders: WorkspaceFolder[], wsFilenam
 			if (e instanceof FileSystemError) {
 				if (e.name === 'FileNotFound') {
 					log.debug('no .vscode/' + wsFilename + ' file found.  using default profile (e=' + e.name + ')')
-				}else {
+				} else {
 					log.notificationWarning('Failed to import .vscode/ablunit-test-profile.json.  Attempting to use default profile...\n[' + e.code + ']: ' + e.message)
 				}
 			} else if (e instanceof Error) {
