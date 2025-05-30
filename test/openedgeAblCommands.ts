@@ -32,7 +32,6 @@ export async function enableOpenedgeAblExtension (runtimes?: IRuntime[], rcodeCo
 }
 
 async function waitForRcode (expectedCount?: number) {
-	// const maxWait = 15 // seconds
 	const waitTime = new Duration()
 	let rcodeCount = getRcodeCount()
 	let lastRcodeCount = rcodeCount

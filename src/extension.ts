@@ -26,6 +26,7 @@ import { basename } from 'path'
 import * as FileUtils from 'FileUtils'
 import { gatherAllTestItems, IExtensionTestReferences, sortLocation } from 'ABLUnitCommon'
 import { SnippetProvider } from 'SnippetProvider'
+import { DebugListingContentProvider } from 'DebugListingPreview'
 
 let recentResults: ABLResults[] = []
 let recentError: Error | undefined = undefined
@@ -44,6 +45,9 @@ export function activate (context: ExtensionContext) {
 	const contextResourcesUri = Uri.joinPath(context.extensionUri, 'resources')
 	setContextPaths(contextStorageUri)
 	FileUtils.createDir(contextStorageUri)
+
+	const debugListingContentProvider = new DebugListingContentProvider(context, contextResourcesUri)
+	workspace.registerTextDocumentContentProvider('debugListing', debugListingContentProvider)
 
 	context.subscriptions.push(ctrl)
 	// languages.registerInlineCompletionItemProvider({ language: 'abl'}, new InlineProvider())
@@ -92,10 +96,16 @@ export function activate (context: ExtensionContext) {
 		workspace.onDidChangeConfiguration(e => { return updateConfiguration(e) }),
 		workspace.onDidOpenTextDocument(e => {
 			log.debug('onDidOpenTextDocument ' + e.uri.fsPath)
+			if (e.languageId !== 'abl') {
+				return
+			}
 			return createOrUpdateFile(ctrl, e.uri, true)
 		}),
 		workspace.onDidSaveTextDocument(e => {
-			log.debug('onDidSaveTextDocument ' + e.uri.fsPath)
+			if (e.languageId !== 'abl') {
+				return
+			}
+			log.info('onDidSaveTextDocument ' + e.uri.fsPath)
 			return createOrUpdateFile(ctrl, e.uri, true)
 		}),
 		workspace.onDidCreateFiles(e => {
@@ -397,7 +407,7 @@ export function activate (context: ExtensionContext) {
 				}
 				let r = res.find(r => r.workspaceFolder === wf)
 				if (!r) {
-					r = new ABLResults(wf, getStorageUri(wf), contextStorageUri, contextResourcesUri, request, cancellation)
+					r = new ABLResults(wf, getStorageUri(wf), contextStorageUri, contextResourcesUri, cancellation, request)
 					cancellation.onCancellationRequested(() => {
 						log.debug('cancellation requested - createABLResults-1')
 						r?.dispose()
@@ -516,7 +526,6 @@ export function activate (context: ExtensionContext) {
 	}
 
 	ctrl.resolveHandler = (item) => {
-
 		if (item?.uri) {
 			const relativePath = workspace.asRelativePath(item.uri)
 			log.info('ctrl.resolveHandler (relativePath=' + relativePath + ')')
@@ -1066,7 +1075,7 @@ function createOrUpdateFile (controller: TestController, e: Uri | FileCreateEven
 		}
 		uris.push(e)
 	} else {
-		uris = uris.concat(e.files.filter(f => f.scheme === 'file'))
+		uris = uris.concat(e.files.filter(f => f.scheme === 'file' && workspace.getWorkspaceFolder(f) !== undefined))
 	}
 
 	const proms: PromiseLike<boolean>[] = []

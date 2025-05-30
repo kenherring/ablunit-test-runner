@@ -54,8 +54,8 @@ export class ABLResults implements Disposable {
 		private readonly storageUri: Uri,
 		private readonly globalStorageUri: Uri,
 		private readonly extensionResourcesUri: Uri,
-		private readonly request: TestRunRequest,
-		private readonly cancellation: CancellationToken)
+		private readonly cancellation: CancellationToken,
+		private readonly request?: TestRunRequest)
 	{
 		log.info('workspaceFolder=' + workspaceFolder.uri.fsPath)
 		cancellation.onCancellationRequested(() => {
@@ -114,7 +114,7 @@ export class ABLResults implements Disposable {
 		const proms: (Thenable<void> | Promise<void> | Promise<void[]> | undefined)[] = []
 		this.cfg.createProfileOptions(this.cfg.ablunitConfig.profOptsUri, this.cfg.ablunitConfig.profiler)
 		this.cfg.createDbConnPf(this.cfg.ablunitConfig.dbConnPfUri, this.cfg.ablunitConfig.dbConns)
-		proms.push(this.cfg.createProgressIni(this.propath.toString(), this.dlc))
+		this.cfg.createProgressIni(this.propath.toString(), this.dlc)
 		proms.push(this.cfg.createAblunitJson(this.cfg.ablunitConfig.config_uri, this.cfg.ablunitConfig.options, this.testQueue))
 
 		return Promise.all(proms).then(() => {
@@ -271,6 +271,9 @@ export class ABLResults implements Disposable {
 	}
 
 	async parseOutput (options: TestRun) {
+		if (!this.request) {
+			throw new Error('TestRunRequest is undefined')
+		}
 		this.setStatus(RunStatus.Parsing, 'results')
 		log.debug('parsing results from ' + workspace.asRelativePath(this.cfg.ablunitConfig.optionsUri.filenameUri), {testRun: options})
 

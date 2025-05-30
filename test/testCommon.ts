@@ -1360,6 +1360,27 @@ export const assert = {
 
 	linesNotExecuted (file: Uri | string, lines: number[] | number) {
 		assert.linesExecuted(file, lines, false)
+	},
+
+	selection (actual: Selection | undefined, expected: Selection | number[] | undefined) {
+		if (actual === undefined && expected === undefined) {
+			return
+		}
+		if (actual === undefined) {
+			assert.fail('actual selection is undefined, expected: ' + JSON.stringify(expected))
+			return
+		}
+		if (expected === undefined) {
+			assert.fail('expected selection is undefined, actual: ' + JSON.stringify(actual))
+			return
+		}
+		if (expected instanceof Selection) {
+			expected = [expected.start.line, expected.start.character, expected.end.line, expected.end.character]
+		}
+		assert.equal(actual.start.line, expected[0], 'selection start line should be ' + expected[0] + ' but is ' + actual.start.line)
+		assert.equal(actual.start.character, expected[1], 'selection start character should be ' + expected[1] + ' but is ' + actual.start.character)
+		assert.equal(actual.end.line, expected[2], 'selection end line should be ' + expected[2] + ' but is ' + actual.end.line)
+		assert.equal(actual.end.character, expected[3], 'selection end character should be ' + expected[3] + ' but is ' + actual.end.character)
 	}
 }
 
