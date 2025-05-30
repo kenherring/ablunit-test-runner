@@ -30,9 +30,10 @@ async function validateSelectionAfterChange (uri: Uri, expectedSelection: number
 }
 
 suiteSetup('debugLines - before', async () => {
-	await suiteSetupCommon(undefined, 9)
+	await suiteSetupCommon(undefined, 10)
 	const rcodeCount = getRcodeCount()
-	if (rcodeCount < 9) {
+	log.info('rcodeCount=' + rcodeCount)
+	if (rcodeCount < 10) {
 		throw new Error('rcodeCount=' + rcodeCount + ' < 9')
 	}
 })
