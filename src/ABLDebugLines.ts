@@ -26,10 +26,21 @@ export class ABLDebugLines {
 		return this.processingMethodMap.get(debugSource)
 	}
 
-	async getDebugListingPosition (editor: TextEditor, position: Position) {
-		const debugLine = await this.getDebugLine(editor.document.uri, position.line + 1)
+	async getDebugListingPosition (editor: TextEditor | Uri, position: Position) {
+		if (editor instanceof Uri) {
+			throw new Error('Editor must be a TextEditor, not a Uri')
+		}
+
+		let uri: Uri | undefined = undefined
+		if (editor instanceof Uri) {
+			uri = editor
+		} else {
+			uri = editor.document.uri
+		}
+		const debugLine = await this.getDebugLine(uri, position.line + 1)
 		if (!debugLine) {
-			throw new Error('Could not determine debug listing line for ' + editor.document.uri.fsPath + ':' + position.line)
+			log.error('Could not determine debug listing line for ' + uri.fsPath + ':' + position.line)
+			throw new Error('Could not determine debug listing line for ' + uri.fsPath + ':' + position.line)
 		}
 
 		let line = position.line
