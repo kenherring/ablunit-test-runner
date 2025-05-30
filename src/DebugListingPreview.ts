@@ -96,37 +96,21 @@ export class DebugListingContentProvider implements TextDocumentContentProvider 
 	}
 
 	async showDebugListingPreview (e: Uri | TextEditor, fromCommand: boolean, contextResourcesUri: Uri): Promise<boolean> {
-		if (!e || this.showDebugListingPreviewWorking) {
-			return false
-		}
-		if (!fromCommand && !this.previewEditor) {
+		if (this.showDebugListingPreviewWorking || (!fromCommand && !this.previewEditor)) {
 			return false
 		}
 		this.showDebugListingPreviewWorking = true
 
 		try {
-			if (!e) {
-				return false
-			}
-
-			let uri: Uri | undefined = undefined
-			if (e instanceof Uri) {
-				uri = e
-			} else {
-				uri = e.document.uri
-			}
-			if (!uri) {
-				throw new Error('showDebugListingPreview could not determine uri')
-			}
-
+			const uri = e instanceof Uri? e : e.document.uri
 			const wf = workspace.getWorkspaceFolder(uri)
 			if (!wf) {
-				throw new Error('No workspace folder found for uri: ' + uri.fsPath)
+				log.warn('No workspace folder found for uri: ' + uri.fsPath)
+				return false
 			}
-
 			const debugLines = this.getDebugLines(uri)
-			const propath = debugLines.propath
 			const cfg = this.cfg.get(wf)
+
 			if (!cfg) {
 				log.warn('No ABLUnitConfig found for workspace folder: ' + wf.uri.fsPath)
 				return false
@@ -140,9 +124,9 @@ export class DebugListingContentProvider implements TextDocumentContentProvider 
 				return true
 			}
 
-			const currentUri = window.activeTextEditor?.document.uri
-			const currentSelection = window.activeTextEditor?.selection
 
+
+			const currentUri = window.activeTextEditor?.document.uri
 			if (!currentUri) {
 				throw new Error('No activeTextEditor found to get currentUri')
 			}
@@ -154,7 +138,7 @@ export class DebugListingContentProvider implements TextDocumentContentProvider 
 			}
 			const debugListingUri = fileinfo.debugListingUri
 
-			await this.generateDebugListing(cfg, getDLC(wf), contextResourcesUri, propath, currentUri, debugListingUri)
+			await this.generateDebugListing(cfg, getDLC(wf), contextResourcesUri, debugLines.propath, currentUri, debugListingUri)
 
 			const debugListingText = FileUtils.readFileSync(debugListingUri).toString()
 			if (!debugListingText || debugListingText.length < 1) {
@@ -170,7 +154,7 @@ export class DebugListingContentProvider implements TextDocumentContentProvider 
 					viewColumn: ViewColumn.Beside,
 					preview: true,
 					preserveFocus: true,
-					selection: currentSelection
+					// selection: window.activeTextEditor?.selection
 				})
 			}
 
@@ -356,14 +340,9 @@ export class DebugListingContentProvider implements TextDocumentContentProvider 
 		}
 		return ablExec(cfg, dlc, Uri.joinPath(contextResourcesUri, 'VSCodeTestRunner', 'generateDebugListing.p').fsPath, propath, env)
 	}
-
 }
 
-export function getDebugListingPreviewEditor (uri: Uri | undefined): TextEditor | undefined {
-	if (uri == undefined) {
-		return undefined
-	}
-
+export function getDebugListingPreviewEditor (uri: Uri): TextEditor | undefined {
 	return window.visibleTextEditors.find(editor =>
 		editor.document.uri.scheme === 'debugListing'
 		&& editor.document.uri.fsPath === uri.fsPath + ' Debug Listing')

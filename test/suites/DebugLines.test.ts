@@ -149,16 +149,16 @@ test('debugLines.7 - Debug Listing Preview', async () => {
 		assert.fail('no activeTextEditor found')
 		throw new Error('no activeTextEditor found')
 	}
-	assert.equal(window.activeTextEditor?.document.uri.fsPath, sourceUri.fsPath, 'activeTextEditor')
+	assert.equal(window.activeTextEditor.document.uri.fsPath, sourceUri.fsPath, 'activeTextEditor')
 	window.activeTextEditor.selection = new Selection(15, 0, 15, 0)
 
 	await commands.executeCommand('ablunit.showDebugListingPreview')
-	assert.selection(window.activeTextEditor?.selection, [15, 0, 15, 0])
+	assert.selection(window.activeTextEditor.selection, [15, 0, 15, 0])
 
 	// validate initial selection from source editor cursor location
-	const d = getDebugListingPreviewEditor(window.activeTextEditor?.document.uri)
+	const d = getDebugListingPreviewEditor(window.activeTextEditor.document.uri)
 	if (!d) {
-		assert.fail('no Debug Listing Preview open for ' + window.activeTextEditor?.document.uri.fsPath)
+		assert.fail('no Debug Listing Preview open for ' + window.activeTextEditor.document.uri.fsPath)
 		return
 	}
 	assert.equal(d?.document.uri.fsPath, debugUri.fsPath)

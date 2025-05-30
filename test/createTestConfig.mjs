@@ -83,7 +83,7 @@ function getMochaOpts (projName) {
 		bail: true,
 		require: [
 			'mocha',
-			// 'esbuild-register',
+			'esbuild-register',
 			'tsconfig-paths/register',
 			'@swc-node/register',
 		],
