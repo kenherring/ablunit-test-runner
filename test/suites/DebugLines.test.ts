@@ -1,9 +1,33 @@
-import { commands, Selection, Uri, window, workspace } from 'vscode'
-import { assert, Duration, getRcodeCount, getWorkspaceUri, log, sleep, suiteSetupCommon, toUri } from '../testCommon'
+import { commands, Selection, Uri, window, workspace, Disposable } from 'vscode'
+import { assert, getRcodeCount, getWorkspaceUri, log, suiteSetupCommon, toUri } from '../testCommon'
 import { getSourceMapFromRCode } from 'parse/SourceMapRCodeParser'
 import { PropathParser } from 'ABLPropath'
+import { getDebugListingPreviewEditor } from 'DebugListingPreview'
 
 const workspaceFolder = workspace.workspaceFolders![0]
+
+async function validateSelectionAfterChange (uri: Uri, expectedSelection: number[]) {
+	const waitTime = 1000
+
+	const disposeMe: Disposable[] = []
+	await new Promise<boolean>((resolve, reject) => {
+		window.onDidChangeTextEditorSelection((e) => {
+			if (e.textEditor.document.uri.fsPath == uri.fsPath) {
+				resolve(true)
+			}
+			assert.selection(e.textEditor.selection, expectedSelection)
+		}, disposeMe)
+		setTimeout(() => {
+			const message = 'timeout after ' + waitTime + 'ms waiting for onDidChangeTextEditorSelection for ' + uri.fsPath
+			log.error(message)
+			// assert.fail(message)
+			reject(new Error(message))
+		}, waitTime)
+	})
+	for (const d of disposeMe) {
+		d.dispose()
+	}
+}
 
 suiteSetup('debugLines - before', async () => {
 	await suiteSetupCommon(undefined, 9)
@@ -115,50 +139,35 @@ test('debugLines.6 - include lines are executable', async () => {
 })
 
 test('debugLines.7 - Debug Listing Preview', async () => {
-	await commands.executeCommand('vscode.open', toUri('src/code/unit_test7.p'))
+	const sourceUri = toUri('src/code/unit_test7.p')
+	const debugUri = toUri('src/code/unit_test7.p Debug Listing')
 
-	assert.equal(window.activeTextEditor?.document.uri.fsPath, toUri('src/code/unit_test7.p').fsPath, 'activeTextEditor should be src/code/unit_test7.p')
+	await commands.executeCommand('vscode.open', sourceUri)
+
 	if (!window.activeTextEditor) {
 		assert.fail('no activeTextEditor found')
 		throw new Error('no activeTextEditor found')
 	}
+	assert.equal(window.activeTextEditor?.document.uri.fsPath, sourceUri.fsPath, 'activeTextEditor')
 	window.activeTextEditor.selection = new Selection(15, 0, 15, 0)
-	await sleep(100)
 
-	await sleep(100)
-	.then(() => commands.executeCommand('ablunit.showDebugListingPreview'))
-	.then(() => sleep(100))
-	.then(() => sleep(100))
-	.then(() => sleep(100), (e: unknown) => {
-		assert.fail('ablunit.showDebugListingPreview failed: ' + e)
-		throw e
-	})
+	await commands.executeCommand('ablunit.showDebugListingPreview')
+	assert.selection(window.activeTextEditor?.selection, [15, 0, 15, 0])
 
-	let d = window.visibleTextEditors.find(e => e.document.uri.scheme == 'debugListing')
-	const waitDuration = new Duration()
-	while(!d) {
-		for (const e of window.visibleTextEditors) {
-			log.info('visibleTextEditor: ' + e.document.uri.toString())
-		}
-		d = await sleep(100).then(() => window.visibleTextEditors.find(e => e.document.uri.scheme == 'debugListing'))
-		log.info('waiting for debugListing editor ' + waitDuration)
-		if (d)
-			break
-		assert.durationLessThan(waitDuration, 1000)
-	}
+	// validate initial selection from source editor cursor location
+	const d = getDebugListingPreviewEditor(window.activeTextEditor?.document.uri)
 	if (!d) {
-		throw new Error('no debugListing editor found')
+		assert.fail('no Debug Listing Preview open for ' + window.activeTextEditor?.document.uri.fsPath)
+		return
 	}
+	assert.equal(d?.document.uri.fsPath, debugUri.fsPath)
+	assert.selection(d?.selection, [19, 0, 20, 0])
 
-	// validate initial selection
-	assert.equal(d.selection.start.line, 19, 'debugListing selection start')
-	assert.equal(d.selection.end.line, 20, 'debugListing selection end')
+	// move cursor in source editor down two lines
+	window.activeTextEditor.selection = new Selection(17, 4, 17, 4)
+	await validateSelectionAfterChange(debugUri, [21, 0, 22, 0])
 
 	// make selection in debugListing and validate source selection is correct
-	d.selections = [ new Selection(21, 0, 22, 0)]
-	await sleep(100)
-	assert.equal(window.activeTextEditor?.document.uri.fsPath, toUri('src/code/unit_test7.p').fsPath, 'activeTextEditor should be src/code/unit_test7.p after debugListing selection')
-	assert.equal(window.activeTextEditor?.selection.start.line, 15, 'activeTextEditor selection start')
-	assert.equal(window.activeTextEditor?.selection.end.line, 15, 'activeTextEditor selection end')
-
+	d.selection = new Selection(30, 0, 32, 4)
+	await validateSelectionAfterChange(sourceUri, [26,0, 82, 4 + 12])
 })

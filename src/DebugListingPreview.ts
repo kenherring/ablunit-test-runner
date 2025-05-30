@@ -370,3 +370,13 @@ export class DebugListingContentProvider implements TextDocumentContentProvider 
 	}
 
 }
+
+export function getDebugListingPreviewEditor (uri: Uri | undefined): TextEditor | undefined {
+	if (uri == undefined) {
+		return undefined
+	}
+
+	return window.visibleTextEditors.find(editor =>
+		editor.document.uri.scheme === 'debugListing'
+		&& editor.document.uri.fsPath === uri.fsPath + ' Debug Listing')
+}
