@@ -169,6 +169,9 @@ test('debugLines.7 - Debug Listing Preview', async () => {
 	await validateSelectionAfterChange(debugUri, [21, 0, 22, 0])
 
 	// make selection in debugListing and validate source selection is correct
-	d.selection = new Selection(30, 0, 32, 4)
+	// await commands.executeCommand('')
+	await commands.executeCommand('workbench.action.focusNextGroup')
+	assert.equal(window.activeTextEditor.document.uri.fsPath, debugUri.fsPath, 'activeTextEditor after open debugUri')
+	await commands.executeCommand('setSelection', { uri: debugUri, selection: new Selection(30, 0, 32, 4) })
 	await validateSelectionAfterChange(sourceUri, [26,0, 82, 4 + 12])
 })
