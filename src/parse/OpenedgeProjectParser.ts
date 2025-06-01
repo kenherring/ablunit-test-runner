@@ -43,12 +43,11 @@ interface IOpenEdgeConfig {
 
 interface IOpenEdgeMainConfig extends IOpenEdgeConfig {
 	// JSON mapping of openedge-project.json
+	modifiedTime: Date
 	name: string
 	version: string
 	profiles?: IOEProfile[]
 }
-
-const configCacheMap = new Map<string, { data: IOpenEdgeMainConfig, modifiedTime: Date }>()
 
 export interface IDlc {
 	uri: Uri,
@@ -288,22 +287,26 @@ export function getActiveProfile (rootDir: string) {
 	return 'default'
 }
 
+const configMap = new Map<string, IOpenEdgeMainConfig>()
+
 function loadConfigFile (uri: Uri): IOpenEdgeMainConfig | undefined {
 	if (!FileUtils.doesFileExist(uri)) {
 		log.info('No OpenEdge project config file found in ' + uri.fsPath + ', using default values')
 		return undefined
 	}
 
-	const modifiedTime = FileUtils.getFileModifiedTime(uri)
-	const cacheData = configCacheMap.get(uri.fsPath)
-
-	if (cacheData && modifiedTime != cacheData.modifiedTime) {
-		return cacheData.data
+	const cachedConfig = configMap.get(uri.fsPath)
+	const configModifiedTime = FileUtils.getFileModifiedTime(uri)
+	if (cachedConfig && cachedConfig.modifiedTime === configModifiedTime) {
+		log.info('found cached OpenEdge proejct config for ' + uri.fsPath)
+		return cachedConfig
 	}
+
 	try {
 		log.info('reading OpenEdge project config file: ' + uri.fsPath)
 		const data = FileUtils.readStrippedJsonFile(uri) as IOpenEdgeMainConfig
-		configCacheMap.set(uri.fsPath, { data: data, modifiedTime: modifiedTime })
+		data.modifiedTime = configModifiedTime
+		configMap.set(uri.fsPath, data)
 		return data
 	} catch (caught) {
 		log.error('[loadConfigFile] Failed to parse ' + uri.fsPath + ': ' + caught)

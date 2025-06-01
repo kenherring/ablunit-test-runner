@@ -342,7 +342,7 @@ export async function waitForLangServerReady () {
 		stillCompiling = false
 		for (let i=startAtLine; i<lines.length; i++) {
 
-			log.info('lines[' + i + '] = "' + lines[i] + '"')
+			// log.info('lines[' + i + '] = "' + lines[i] + '"')
 			// regex matching lines like "[<timestamp>] [<logLevel>] [<projectName] <message>"
 			const parts = /^\[([^\]]*)\] \[([A-Z]*)\] (\[[^\]]*\]*)? ?(.*)$/.exec(lines[i])
 

@@ -338,7 +338,7 @@ export class DebugListingContentProvider implements TextDocumentContentProvider 
 			SOURCE_FILE: currentUri.fsPath,
 			DEBUG_LISTING_PATH: debugListingUri.fsPath,
 		}
-		return ablExec(cfg, dlc, Uri.joinPath(contextResourcesUri, 'VSCodeTestRunner', 'generateDebugListing.p').fsPath, propath, env)
+		return ablExec(cfg, dlc, Uri.joinPath(contextResourcesUri, 'VSCodeTestRunner', 'VSCode', 'generateDebugListing.p').fsPath, propath, env)
 	}
 }
 

@@ -99,13 +99,9 @@ function getSourceMap (propath: PropathParser, uri: Uri) {
 
 function getLineCount (uri: Uri) {
 	const lines = FileUtils.readLinesFromFileSync(uri)
-	log.info('lines.length=' + lines.length + ' uri=' + uri.fsPath)
-	log.info('lines[' + lines.length + ']="' + lines[lines.length - 1] + '"')
 	if (lines[lines.length - 1] == '') {
-		log.info('returning ' + (lines.length - 1))
 		return lines.length - 1
 	}
-	log.info('returning ' + lines.length)
 	return lines.length
 }
 
