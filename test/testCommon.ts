@@ -308,6 +308,10 @@ export async function deleteRcode (workspaceFolder?: WorkspaceFolder) {
 	}
 	if (rcodeCount != 0) {
 		log.error('rcode files not deleted! rcodeCount=' + rcodeCount)
+		const files = globSync('**/*.r', { cwd: workspaceFolder.uri.fsPath }).map((f) => Uri.joinPath(workspaceFolder.uri, f))
+		for (const file of files) {
+			log.error('  -' + file.fsPath)
+		}
 		throw new Error('rcode files not deleted! rcodeCount=' + rcodeCount)
 	}
 	log.info('deleted all rcode files')

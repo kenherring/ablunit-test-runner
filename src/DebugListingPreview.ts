@@ -312,7 +312,7 @@ export class DebugListingContentProvider implements TextDocumentContentProvider 
 	}
 
 	async updateSourceVisibleRange (editor: TextEditor, visibleRange: Range[]) {
-		if (!this.previewEditor?.document.uri.fsPath || editor.document.languageId != 'debugListing') {
+		if (!this.previewEditor || editor.document.languageId != 'debugListing') {
 			return
 		}
 		const debugLines = this.getDebugLines(editor.document.uri)

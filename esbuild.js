@@ -14,7 +14,7 @@ async function main () {
 		bundle: true,
 		format: 'cjs',
 		minify: production,
-		sourcemap: 'both',
+		sourcemap: 'inline',
 		sourcesContent: false,
 		platform: 'node',
 		outfile: 'dist/extension.js',

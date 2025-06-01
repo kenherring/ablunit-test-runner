@@ -156,6 +156,7 @@ test('debugLines.7 - Debug Listing Preview', async () => {
 	assert.selection(window.activeTextEditor.selection, [15, 0, 15, 0])
 
 	// validate initial selection from source editor cursor location
+	log.info('validate intitial seletion...')
 	const d = getDebugListingPreviewEditor(window.activeTextEditor.document.uri)
 	if (!d) {
 		assert.fail('no Debug Listing Preview open for ' + window.activeTextEditor.document.uri.fsPath)
@@ -165,13 +166,16 @@ test('debugLines.7 - Debug Listing Preview', async () => {
 	assert.selection(d?.selection, [19, 0, 20, 0])
 
 	// move cursor in source editor down two lines
+	log.info('validate after cursor move...')
 	window.activeTextEditor.selection = new Selection(17, 4, 17, 4)
 	await validateSelectionAfterChange(debugUri, [21, 0, 22, 0])
 
 	// make selection in debugListing and validate source selection is correct
-	// await commands.executeCommand('')
+	log.info('validate after selection in debugListing...')
 	await commands.executeCommand('workbench.action.focusNextGroup')
 	assert.equal(window.activeTextEditor.document.uri.fsPath, debugUri.fsPath, 'activeTextEditor after open debugUri')
 	await commands.executeCommand('setSelection', { uri: debugUri, selection: new Selection(30, 0, 32, 4) })
 	await validateSelectionAfterChange(sourceUri, [26,0, 82, 4 + 12])
+
+	log.info('debugLines.7 complete')
 })
