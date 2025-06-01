@@ -298,7 +298,7 @@ function loadConfigFile (uri: Uri): IOpenEdgeMainConfig | undefined {
 	const cachedConfig = configMap.get(uri.fsPath)
 	const configModifiedTime = FileUtils.getFileModifiedTime(uri)
 	if (cachedConfig && cachedConfig.modifiedTime === configModifiedTime) {
-		log.info('found cached OpenEdge proejct config for ' + uri.fsPath)
+		log.info('found cached OpenEdge project config for ' + uri.fsPath)
 		return cachedConfig
 	}
 

@@ -18,7 +18,7 @@ export class DebugListingContentProvider implements TextDocumentContentProvider 
 	private readonly onDidChangeEmitter = new EventEmitter<Uri>()
 	onDidChange = this.onDidChangeEmitter.event
 
-	constructor (context: ExtensionContext, contextResourcesUri: Uri) {
+	constructor (context: ExtensionContext, private readonly contextResourcesUri: Uri) {
 		context.subscriptions.push(
 			commands.registerCommand('ablunit.showDebugListingPreview', async (uri: Uri | string | undefined) => {
 				uri = uri ?? window.activeTextEditor?.document.uri
@@ -178,13 +178,16 @@ export class DebugListingContentProvider implements TextDocumentContentProvider 
 		if (!wf) {
 			throw new Error('No workspace folder found for uri: ' + uri.fsPath)
 		}
-		if (!this.cfg.has(wf)) {
-			const cfg = new ABLUnitConfig()
+
+		let cfg = this.cfg.get(wf)
+		if (!cfg) {
+			cfg = new ABLUnitConfig()
 			cfg.setup(wf)
 			this.cfg.set(wf, cfg)
 		}
+
 		if (!this.debugLinesMap.has(wf)) {
-			const debugLines = new ABLDebugLines(this.cfg.get(wf)?.readPropathFromJson(Uri.joinPath(Uri.file(wf.uri.fsPath), 'resources')))
+			const debugLines = new ABLDebugLines(cfg.readPropathFromJson(this.contextResourcesUri))
 			this.debugLinesMap.set(wf, debugLines)
 		}
 

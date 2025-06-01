@@ -113,7 +113,7 @@ function runCommand (cfg: ABLUnitConfig, dlc: IDlc, execFile: string, propath: P
 		shell: true,
 	}
 
-	log.info('command=\'' + cmd + ' ' + args.join(' '))
+	log.info('command=\'' + cmd + ' ' + args.join(' ')+ '\'')
 	const proc = spawn(cmd, args, spawnOpts)
 
 	return new Promise<string>((resolve, reject) => {
@@ -123,6 +123,7 @@ function runCommand (cfg: ABLUnitConfig, dlc: IDlc, execFile: string, propath: P
 		})
 		proc.stdout?.on('data', (data: Buffer) => {
 			log.debug('stdout data=' + data.toString().trim())
+			log.debug('\t\t[stdout] ' + data.toString().trim().replace(/\n/g, '\n\t\t[stdout] '))
 		})
 		proc.once('spawn', () => {
 			log.debug('spawn')
