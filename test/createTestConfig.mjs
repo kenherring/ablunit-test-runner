@@ -300,6 +300,10 @@ function getTests () {
 		// 'proj7B',
 		// 'proj8',
 		// 'proj9',
+
+		'projA',
+		'workspace0',
+		'workspace1',
 	]
 	const g = glob.globSync('test/suites/*.test.ts').reverse()
 	for (const f of g) {
