@@ -84,14 +84,14 @@ function getMochaOpts (projName) {
 		require: [
 			'mocha',
 			'esbuild-register',
-			'tsconfig-paths/register',
-			'@swc-node/register',
+			// 'tsconfig-paths/register',
+			// '@swc-node/register',
 		],
 	}
 
-	if (projName === 'proj7A') {
-		mochaOpts.retries = 2
-	}
+	// if (projName === 'proj7A') {
+	// 	mochaOpts.retries = 2
+	// }
 
 	if (process.env['ABLUNIT_TEST_RUNNER_RUN_SCRIPT_FLAG']) {
 		mochaOpts.reporter = 'mocha-multi-reporters'
@@ -284,33 +284,10 @@ function getTests () {
 		return tests
 	}
 
-	const basenameList = [
-		'AtStart',
-		'DebugLines',
-		'proj0',
-		'proj1',
-
-		'proj2',
-		'proj3',
-		'proj4',
-		'proj5',
-		'proj6',
-
-		// 'proj7A',
-		// 'proj7B',
-		// 'proj8',
-		// 'proj9',
-
-		'projA',
-		'workspace0',
-		'workspace1',
-	]
 	const g = glob.globSync('test/suites/*.test.ts').reverse()
 	for (const f of g) {
 		const basename = path.basename(f, '.test.ts')
-		if (basenameList.includes(basename)) {
-			tests.push(getTestConfig('suites', basename))
-		}
+		tests.push(getTestConfig('suites', basename))
 	}
 
 	const p = glob.globSync('test/parse/*.test.ts')
