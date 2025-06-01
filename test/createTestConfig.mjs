@@ -18,17 +18,17 @@ const vsVersionNum = '1.88.0'
 const vsVersion = process.env['ABLUNIT_TEST_RUNNER_VSCODE_VERSION'] ?? 'stable'
 const useOEAblPrerelease = false
 const enableExtensions = [
-	'AtStart',
+	// 'AtStart',
 	'DebugLines',
-	'proj0',
-	'proj2',
-	'proj3',
-	'proj4',
-	'proj5',
-	'proj7A',
-	'proj7B',
-	'proj8',
-	'proj9',
+	// 'proj0',
+	// 'proj2',
+	// 'proj3',
+	// 'proj4',
+	// 'proj5',
+	// 'proj7A',
+	// 'proj7B',
+	// 'proj8',
+	// 'proj9',
 ]
 
 function initialize () {
