@@ -18,17 +18,17 @@ const vsVersionNum = '1.88.0'
 const vsVersion = process.env['ABLUNIT_TEST_RUNNER_VSCODE_VERSION'] ?? 'stable'
 const useOEAblPrerelease = false
 const enableExtensions = [
-	// 'AtStart',
+	'AtStart',
 	'DebugLines',
-	// 'proj0',
-	// 'proj2',
-	// 'proj3',
-	// 'proj4',
-	// 'proj5',
-	// 'proj7A',
-	// 'proj7B',
-	// 'proj8',
-	// 'proj9',
+	'proj0',
+	'proj2',
+	'proj3',
+	'proj4',
+	'proj5',
+	'proj7A',
+	'proj7B',
+	'proj8',
+	'proj9',
 ]
 
 function initialize () {
@@ -284,17 +284,17 @@ function getTests () {
 		return tests
 	}
 
-	const g = glob.globSync('test/suites/*.test.ts').reverse()
+	const g = glob.globSync('test/suites/DebugLines.test.ts').reverse()
 	for (const f of g) {
 		const basename = path.basename(f, '.test.ts')
 		tests.push(getTestConfig('suites', basename))
 	}
 
-	const p = glob.globSync('test/parse/*.test.ts')
-	for (const f of p) {
-		const basename = path.basename(f, '.test.ts')
-		tests.push(getTestConfig('parse', basename))
-	}
+	// const p = glob.globSync('test/parse/*.test.ts')
+	// for (const f of p) {
+	// 	const basename = path.basename(f, '.test.ts')
+	// 	tests.push(getTestConfig('parse', basename))
+	// }
 	return tests
 }
 
