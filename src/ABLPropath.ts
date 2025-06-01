@@ -22,7 +22,7 @@ export interface IABLFile {
 	propathEntry: IPropathEntry
 	propathRelativeFile: string
 	xrefUri: Uri
-	debugListingUri: Uri
+	debugListingUri?: Uri
 }
 
 export interface IPropath {
@@ -186,7 +186,10 @@ export class PropathParser {
 					propathEntry: e,
 					propathRelativeFile: propathRelativeFile,
 					xrefUri: Uri.joinPath(e.xrefDirUri, propathRelativeFile + '.xref'),
-					debugListingUri: Uri.joinPath(e.buildDirUri, propathRelativeFile + '.dbg'),
+				}
+				if (!file.endsWith('i')) {
+					// rcodeUri and xrefUri should probably be here too
+					fileObj.debugListingUri = Uri.joinPath(e.buildDirUri, propathRelativeFile + '.dbg')
 				}
 				this.files.push(fileObj)
 				this.filemap.set(relativeFile, fileObj)

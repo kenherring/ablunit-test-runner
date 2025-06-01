@@ -26,21 +26,18 @@ export class ABLDebugLines {
 		return this.processingMethodMap.get(debugSource)
 	}
 
-	async getDebugListingPosition (editor: TextEditor | Uri, position: Position) {
+	async getDebugListingPosition (editor: TextEditor | Uri, sourceUri: Uri, position: Position) {
 		if (editor instanceof Uri) {
-			throw new Error('Editor must be a TextEditor, not a Uri')
+			log.info('Editor must be a TextEditor, not a Uri (uri=' + editor.fsPath + ')')
+			throw new Error('Editor must be a TextEditor, not a Uri (uri=' + editor.fsPath + ')')
 		}
 
-		let uri: Uri | undefined = undefined
-		if (editor instanceof Uri) {
-			uri = editor
-		} else {
-			uri = editor.document.uri
-		}
-		const debugLine = await this.getDebugLine(uri, position.line + 1)
+		log.info('getDebugListingPosition for ' + sourceUri.fsPath + ':' + editor.document.uri.fsPath + ':' + position.line + ':' + position.character)
+
+		const debugLine = await this.getDebugLine(sourceUri, editor.document.uri, position.line + 1)
 		if (!debugLine) {
-			log.error('Could not determine debug listing line for ' + uri.fsPath + ':' + position.line)
-			throw new Error('Could not determine debug listing line for ' + uri.fsPath + ':' + position.line)
+			log.error('Could not determine debug listing line for ' + editor.document.uri.fsPath + ':' + position.line)
+			throw new Error('Could not determine debug listing line for ' + editor.document.uri.fsPath + ':' + position.line)
 		}
 
 		let line = position.line
@@ -53,12 +50,14 @@ export class ABLDebugLines {
 		return new Position(line, character)
 	}
 
-	async getSourcePosition (editor: TextEditor | Uri, position: Position) {
+	async getSourcePosition (editor: TextEditor | Uri, _uri: Uri, position: Position) {
 		let uri: Uri | undefined = undefined
 		if (editor instanceof Uri) {
+			log.info('Editor is a Uri, using it directly (uri=' + editor.fsPath + ')')
 			uri = editor
 		} else {
-			editor = editor.document.uri
+			log.info('Editor is a TextEditor, using its document URI (uri=' + editor.document.uri.fsPath + ')')
+			uri = editor.document.uri
 		}
 		if (!uri) {
 			log.error('Editor or URI is undefined')
@@ -83,18 +82,22 @@ export class ABLDebugLines {
 		return new Position(line, char)
 	}
 
-	async getDebugLine (source: Uri, line: number) {
+	async getDebugLine (source: Uri, include: Uri, line: number) {
 		const fileinfo = this.propath.search(source)
 		if (!fileinfo) {
 			log.warn('cannot find module in propath for "' + source.fsPath + '"')
 			return undefined
 		}
+		log.info('source=' + source.fsPath + ', include=' + include.fsPath + ', line=' + line)
 		const map = await this.getSourceMap(fileinfo.uri)
 		if (!map) {
 			log.warn('cannot find source map for "' + source.fsPath + '"')
 			return undefined
 		}
-		const sourceItems = map.items.filter((mappedLine) => mappedLine.sourceUri.fsPath === source.fsPath)
+		const sourceItems = map.items.filter((mappedLine) => mappedLine.sourceUri.fsPath === include.fsPath)
+		if (sourceItems.length === 0) {
+			log.warn('no source items found for ' + include.fsPath + ' in source map for ' + source.fsPath)
+		}
 
 		const ret = sourceItems.find((mappedLine) => mappedLine.sourceLine === line)
 		if (ret) {
@@ -150,7 +153,6 @@ export class ABLDebugLines {
 			return item
 		}
 
-
 		const debugItems = map.items.filter((mappedLine) => mappedLine.debugUri.fsPath === source.fsPath)
 
 		const itemAfter = debugItems.filter((mappedLine) => mappedLine.debugLine > line).sort((a, b) => a.debugLine - b.debugLine)[0]
@@ -180,9 +182,9 @@ export class ABLDebugLines {
 		}
 	}
 
-	async getDebugListingRange (source: TextEditor, range: Range) {
-		const start = await this.getDebugListingPosition(source, range.start)
-		const end = await this.getDebugListingPosition(source, range.end)
+	async getDebugListingRange (source: TextEditor, sourceUri: Uri, range: Range) {
+		const start = await this.getDebugListingPosition(source, sourceUri, range.start)
+		const end = await this.getDebugListingPosition(source, sourceUri, range.end)
 		if (!start || !end) {
 			log.warn('Could not determine debug range for ' + source.document.uri.fsPath + ':' + range.start.line + '-' + range.end.line)
 			return undefined
@@ -191,8 +193,8 @@ export class ABLDebugLines {
 	}
 
 	async getSourceRange (source: Uri, range: Range) {
-		const start = await this.getSourcePosition(source, range.start)
-		const end = await this.getSourcePosition(source, range.end)
+		const start = await this.getSourcePosition(source, source, range.start)
+		const end = await this.getSourcePosition(source, source, range.end)
 		if (!start || !end) {
 			log.warn('Could not determine source range for ' + source.fsPath + ':' + range.start.line + '-' + range.end.line)
 			return undefined
