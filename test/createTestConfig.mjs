@@ -284,17 +284,34 @@ function getTests () {
 		return tests
 	}
 
-	const g = glob.globSync('test/suites/DebugLines.test.ts').reverse()
+	const basenameList = [
+		'AtStart',
+		'DebugLines',
+		'proj0',
+		'proj1',
+		// 'proj2',
+		// 'proj3',
+		// 'proj4',
+		// 'proj5',
+		// 'proj6',
+		// 'proj7A',
+		// 'proj7B',
+		// 'proj8',
+		// 'proj9',
+	]
+	const g = glob.globSync('test/suites/*.test.ts').reverse()
 	for (const f of g) {
 		const basename = path.basename(f, '.test.ts')
-		tests.push(getTestConfig('suites', basename))
+		if (basenameList.includes(basename)) {
+			tests.push(getTestConfig('suites', basename))
+		}
 	}
 
-	// const p = glob.globSync('test/parse/*.test.ts')
-	// for (const f of p) {
-	// 	const basename = path.basename(f, '.test.ts')
-	// 	tests.push(getTestConfig('parse', basename))
-	// }
+	const p = glob.globSync('test/parse/*.test.ts')
+	for (const f of p) {
+		const basename = path.basename(f, '.test.ts')
+		tests.push(getTestConfig('parse', basename))
+	}
 	return tests
 }
 
