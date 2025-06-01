@@ -299,7 +299,7 @@ function getTests () {
 		// 'proj7A',
 		// 'proj7B',
 		// 'proj8',
-		'proj9',
+		// 'proj9',
 	]
 	const g = glob.globSync('test/suites/*.test.ts').reverse()
 	for (const f of g) {
