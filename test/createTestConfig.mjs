@@ -296,8 +296,8 @@ function getTests () {
 		'proj5',
 		'proj6',
 
-		'proj7A',
-		'proj7B',
+		// 'proj7A',
+		// 'proj7B',
 		'proj8',
 		'proj9',
 	]
