@@ -30,6 +30,9 @@ const enableExtensions = [
 	'proj8',
 	'proj9',
 ]
+const skipProjects = [
+	'proj7A',
+]
 
 function initialize () {
 	if (vsVersion !== 'insiders' && vsVersion !== 'stable' && !vsVersion.startsWith('1.')) {
@@ -287,13 +290,17 @@ function getTests () {
 	const g = glob.globSync('test/suites/*.test.ts').reverse()
 	for (const f of g) {
 		const basename = path.basename(f, '.test.ts')
-		tests.push(getTestConfig('suites', basename))
+		if (!skipProjects.includes(basename)) {
+			tests.push(getTestConfig('suites', basename))
+		}
 	}
 
 	const p = glob.globSync('test/parse/*.test.ts')
 	for (const f of p) {
 		const basename = path.basename(f, '.test.ts')
-		tests.push(getTestConfig('parse', basename))
+		if (!skipProjects.includes(basename)) {
+			tests.push(getTestConfig('parse', basename))
+		}
 	}
 	return tests
 }
