@@ -1,6 +1,7 @@
 # [1.3.5](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.3.5) - 2025-06-02 (pre-release)
 
 * Bump @types/node from 22.15.21 to 22.15.29 (#312)
+* Bump typescript-eslint from 8.32.1 to 8.33.0 (#310)
 * Bump @eslint/js from 9.27.0 to 9.28.0 (#311)
 * Bump @stylistic/eslint-plugin-ts from 4.2.0 to 4.4.0 (#303)
 * Bump @vscode/vsce from 3.4.1 to 3.4.2 (#302)
