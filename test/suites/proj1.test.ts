@@ -1,6 +1,6 @@
 import { Selection, TaskEndEvent, TaskExecution, commands, tasks, window } from 'vscode'
 import { Uri, assert, getWorkspaceUri, log, runAllTests, updateConfig, getTestCount, workspace, suiteSetupCommon, getWorkspaceFolders, oeVersion, runTestAtLine, beforeCommon, updateTestProfile, runTestsInFile, TestRunProfileKind, sleep, FileUtils } from '../testCommon'
-import { getOEVersion } from 'parse/OpenedgeProjectParser'
+import { getOEVersion } from '../../src/parse/OpenedgeProjectParser'
 import { execSync } from 'child_process'
 import * as glob from 'glob'
 import { ABLCompilerError } from 'Errors'

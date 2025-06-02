@@ -1,4 +1,4 @@
-import { getDLC, getOEVersion, getOpenEdgeProfileConfig } from 'parse/OpenedgeProjectParser'
+import { getDLC, getOEVersion, getOpenEdgeProfileConfig } from '../../src/parse/OpenedgeProjectParser'
 import { assert, getWorkspaceFolders, log } from '../testCommon'
 import { toUri } from 'FileUtils'
 
