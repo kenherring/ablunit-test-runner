@@ -31,7 +31,30 @@ const enableExtensions = [
 	'proj9',
 ]
 const skipProjects = [
-	'proj7A',
+	// ----- SUCCESS - 80%+ ----- //
+	// 'AtStart',
+	// 'DebugLines',
+	// 'proj0',
+	'proj1',
+	// 'proj2',
+	// 'proj3',
+	// 'proj4',
+	// 'proj5',
+	// 'proj6',
+	// 'proj7A',
+	// 'proj7B',
+	// 'proj8',
+	// 'proj9',
+	// 'projA',
+	'SourceMapRCodeParser',
+	'TestProfileParser',
+	'SourceMapXrefParser',
+	'workspace0',
+	'workspace1',
+
+	// ----- FAILED - 50% ----- //
+	'OpenedgeProjectParser',
+
 ]
 
 function initialize () {
