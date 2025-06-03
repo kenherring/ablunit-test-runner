@@ -41,6 +41,7 @@ procore.*
 *.preprocess
 *.prof
 *.r
+*.tgz
 *.xref
 *.xref.xml
 *.warnings
