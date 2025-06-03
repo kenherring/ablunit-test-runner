@@ -9,8 +9,9 @@
 		],
 
 		"outDir": "dist",
+		"baseUrl": ".",
 		"paths": {
-			"*": [ "./src/*" ]
+			"*": [ "src/*" ]
 		},
 		// "rootDir": ".",
 		// "sourceRoot": "src",

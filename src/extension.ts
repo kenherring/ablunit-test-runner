@@ -46,9 +46,7 @@ export function activate (context: ExtensionContext) {
 	setContextPaths(contextStorageUri)
 	FileUtils.createDir(contextStorageUri)
 
-	const debugListingContentProvider = new DebugListingContentProvider(context, contextResourcesUri)
-	workspace.registerTextDocumentContentProvider('debugListing', debugListingContentProvider)
-
+	let debugListingContentProvider: DebugListingContentProvider | undefined = undefined
 	context.subscriptions.push(ctrl)
 	// languages.registerInlineCompletionItemProvider({ language: 'abl'}, new InlineProvider())
 	languages.registerCompletionItemProvider({ language: 'abl', scheme: 'file' }, new SnippetProvider())
@@ -87,7 +85,14 @@ export function activate (context: ExtensionContext) {
 				}
 
 				return loadDetailedCoverageForTest(currentTestRun, fileCoverage, item, new CancellationTokenSource().token)
-			})
+			}),
+			commands.registerCommand('ablunit.showDebugListingPreview', async (uri: Uri | string | undefined) => {
+				if (!debugListingContentProvider) {
+					debugListingContentProvider = new DebugListingContentProvider(context, contextResourcesUri)
+					workspace.registerTextDocumentContentProvider('debugListing', debugListingContentProvider)
+				}
+				await debugListingContentProvider.showDebugListingPreviewCommand(uri)
+			}),
 		)
 	}
 

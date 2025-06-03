@@ -1,4 +1,4 @@
-import { commands, EventEmitter, ExtensionContext, Position, Range, Selection, TextDocumentContentProvider, TextEditor, TextEditorRevealType, Uri, ViewColumn, window, workspace, WorkspaceFolder } from 'vscode'
+import { EventEmitter, ExtensionContext, Position, Range, Selection, TextDocumentContentProvider, TextEditor, TextEditorRevealType, Uri, ViewColumn, window, workspace, WorkspaceFolder } from 'vscode'
 import { ABLUnitConfig } from 'ABLUnitConfigWriter'
 import { ABLDebugLines } from 'ABLDebugLines'
 import { PropathParser } from 'ABLPropath'
@@ -20,20 +20,6 @@ export class DebugListingContentProvider implements TextDocumentContentProvider 
 
 	constructor (context: ExtensionContext, private readonly contextResourcesUri: Uri) {
 		context.subscriptions.push(
-			commands.registerCommand('ablunit.showDebugListingPreview', async (uri: Uri | string | undefined) => {
-				uri = uri ?? window.activeTextEditor?.document.uri
-				if (typeof uri === 'string') {
-					uri = Uri.parse(uri)
-				}
-				if (!uri) {
-					log.warn('showDebugListingPreview command invoked without uri')
-					return
-				}
-				await this.showDebugListingPreview(uri, true, contextResourcesUri)
-				if (window.activeTextEditor?.document.languageId == 'abl') {
-					await this.updateDebugListingSelection(window.activeTextEditor)
-				}
-			}),
 			window.onDidChangeActiveTextEditor(async (e) => {
 				if (e?.document.languageId != 'abl'
 					|| e.document.uri.fsPath + ' Debug Listing' == this.previewEditor?.document.uri.fsPath) {
@@ -93,6 +79,21 @@ export class DebugListingContentProvider implements TextDocumentContentProvider 
 			throw new Error('debugListingUri not found for uri: ' + uri.toString())
 		}
 		return FileUtils.readFileSync(debugListingUri).toString()
+	}
+
+	async showDebugListingPreviewCommand (uri: Uri | string | undefined): Promise<void> {
+		uri = uri ?? window.activeTextEditor?.document.uri
+		if (typeof uri === 'string') {
+			uri = Uri.parse(uri)
+		}
+		if (!uri) {
+			log.warn('showDebugListingPreview command invoked without uri')
+			return
+		}
+		await this.showDebugListingPreview(uri, true, this.contextResourcesUri)
+		if (window.activeTextEditor?.document.languageId == 'abl') {
+			await this.updateDebugListingSelection(window.activeTextEditor)
+		}
 	}
 
 	async showDebugListingPreview (e: Uri | TextEditor, fromCommand: boolean, contextResourcesUri: Uri): Promise<boolean> {
