@@ -94,7 +94,7 @@
 	},
 	"devDependencies": {
 		"@eslint/eslintrc": "^3.3.1",
-		"@eslint/js": "^9.26.0",
+		"@eslint/js": "^9.28.0",
 		"@stylistic/eslint-plugin-ts": "^4.4.0",
 		"@swc-node/register": "^1.10.10",
 		"@types/mocha": "^10.0.10",
@@ -108,7 +108,7 @@
 		"@vscode/vsce": "^3.4.2",
 		"esbuild": "^0.25.4",
 		"esbuild-register": "^3.6.0",
-		"eslint": "^9.27.0",
+		"eslint": "^9.28.0",
 		"eslint-formatter-unix": "^8.40.0",
 		"eslint-plugin-promise": "^7.2.1",
 		"mocha": "^11.5.0",
@@ -117,7 +117,7 @@
 		"ts-node": "^10.9.2",
 		"tsconfig-paths": "^4.2.0",
 		"typescript": "^5.8.3",
-		"typescript-eslint": "^8.32.1"
+		"typescript-eslint": "^8.33.0"
 	},
 	"contributes": {
 		"configuration": {
