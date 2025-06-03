@@ -82,10 +82,7 @@ function getMochaOpts (projName) {
 		parallel: false,
 		bail: true,
 		require: [
-			'mocha',
 			'esbuild-register',
-			'tsconfig-paths/register',
-			'@swc-node/register',
 		],
 	}
 
@@ -287,7 +284,7 @@ function getTests () {
 	const g = glob.globSync('test/suites/*.test.ts').reverse()
 	for (const f of g) {
 		const basename = path.basename(f, '.test.ts')
-		tests.push(getTestConfig('suites', basename))
+			tests.push(getTestConfig('suites', basename))
 	}
 
 	const p = glob.globSync('test/parse/*.test.ts')
