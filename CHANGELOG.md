@@ -1,4 +1,4 @@
-# [1.3.5](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.3.5) - 2025-05-27 (pre-release)
+# [1.3.9](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.3.9) - 2025-06-03 (pre-release)
 
 * Add Debug Listing Preview (#305)
 * Bump @stylistic/eslint-plugin-ts from 4.2.0 to 4.4.0 (#303)
@@ -6,7 +6,7 @@
 * Bump mocha from 11.4.0 to 11.5.0 (#301)
 * Bump @types/node from 22.15.17 to 22.15.21 (#304)
 
-**Full Changelog**: [1.3.0...1.3.5](https://github.com/kenherring/ablunit-test-runner/compare/1.3.1...1.3.5)
+**Full Changelog**: [1.3.0...1.3.9](https://github.com/kenherring/ablunit-test-runner/compare/1.3.5...1.3.9)
 
 # [1.3.0](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.3.0) - 2025-05-21
 
