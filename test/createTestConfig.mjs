@@ -30,32 +30,6 @@ const enableExtensions = [
 	'proj8',
 	'proj9',
 ]
-const skipProjects = [
-	// ----- SUCCESS - 80%+ ----- //
-	'AtStart',
-	// 'DebugLines',
-	'proj0',
-	'proj1',
-	'proj2',
-	'proj3',
-	'proj4',
-	'proj5',
-	'proj6',
-	'proj7A',
-	'proj7B',
-	'proj8',
-	'proj9',
-	'projA',
-	'SourceMapRCodeParser',
-	'TestProfileParser',
-	'SourceMapXrefParser',
-	'workspace0',
-	'workspace1',
-
-	// ----- FAILED - 50% ----- //
-	'OpenedgeProjectParser',
-
-]
 
 function initialize () {
 	if (vsVersion !== 'insiders' && vsVersion !== 'stable' && !vsVersion.startsWith('1.')) {
@@ -108,16 +82,12 @@ function getMochaOpts (projName) {
 		parallel: false,
 		bail: true,
 		require: [
-			// 'mocha',
+			'mocha',
 			'esbuild-register',
-			// 'tsconfig-paths/register',
-			// '@swc-node/register',
+			'tsconfig-paths/register',
+			'@swc-node/register',
 		],
 	}
-
-	// if (projName === 'proj7A') {
-	// 	mochaOpts.retries = 2
-	// }
 
 	if (process.env['ABLUNIT_TEST_RUNNER_RUN_SCRIPT_FLAG']) {
 		mochaOpts.reporter = 'mocha-multi-reporters'
@@ -313,17 +283,13 @@ function getTests () {
 	const g = glob.globSync('test/suites/*.test.ts').reverse()
 	for (const f of g) {
 		const basename = path.basename(f, '.test.ts')
-		if (!skipProjects.includes(basename)) {
-			tests.push(getTestConfig('suites', basename))
-		}
+		tests.push(getTestConfig('suites', basename))
 	}
 
 	const p = glob.globSync('test/parse/*.test.ts')
 	for (const f of p) {
 		const basename = path.basename(f, '.test.ts')
-		if (!skipProjects.includes(basename)) {
-			tests.push(getTestConfig('parse', basename))
-		}
+		tests.push(getTestConfig('parse', basename))
 	}
 	return tests
 }
