@@ -20,7 +20,6 @@ async function validateSelectionAfterChange (uri: Uri, expectedSelection: number
 		setTimeout(() => {
 			const message = 'timeout after ' + waitTime + 'ms waiting for onDidChangeTextEditorSelection for ' + uri.fsPath
 			log.error(message)
-			// assert.fail(message)
 			reject(new Error(message))
 		}, waitTime)
 	})
@@ -32,7 +31,6 @@ async function validateSelectionAfterChange (uri: Uri, expectedSelection: number
 suiteSetup('debugLines - before', async () => {
 	await suiteSetupCommon(undefined, 10)
 	const rcodeCount = getRcodeCount()
-	log.info('rcodeCount=' + rcodeCount)
 	if (rcodeCount < 10) {
 		throw new Error('rcodeCount=' + rcodeCount + ' < 9')
 	}

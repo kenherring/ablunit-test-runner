@@ -112,7 +112,7 @@ export async function activate (context: ExtensionContext) {
 			if (e.languageId !== 'abl') {
 				return
 			}
-			log.info('onDidSaveTextDocument ' + e.uri.fsPath)
+			log.debug('onDidSaveTextDocument ' + e.uri.fsPath)
 			return createOrUpdateFile(ctrl, e.uri, true)
 		}),
 		workspace.onDidCreateFiles(e => {
