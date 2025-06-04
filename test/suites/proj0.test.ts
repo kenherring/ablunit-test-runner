@@ -567,25 +567,31 @@ test('proj0.26 - database connection needed but not configured', async () => {
 	await deleteRcode()
 	await restartLangServer(23)
 
-	await runTestsInFile('src/dirA/dir1/testInDir.p')
-
-	const res = await getResults()
-	assert.equal(res[0].ablResults?.resultsJson[0].errors, 1, 'expected 1 error')
-	assert.equal(res[0].ablResults?.resultsJson[0].failures, 0, 'expected 0 failed tests')
-	assert.equal(res[0].ablResults?.resultsJson[0].passed, 0, 'expected 0 passed tests')
-	assert.equal(res[0].ablResults?.resultsJson[0].skipped, 0, 'expected 0 skipped tests')
+	await runTestsInFile('src/dirA/dir1/testInDir.p').then(() => {
+		assert.fail('expected error to be thrown')
+	}, (e: unknown) => {
+		if (!(e instanceof Error)) {
+			assert.fail('expected Error but got: ' + JSON.stringify(e, null, 2))
+			throw e
+		}
+		assert.equal(e.name, 'ABLCompilerError', 'expected ABLUnitRuntimeError but got: ' + JSON.stringify(e, null, 2))
+	})
+	return
 })
 
 test('proj0.27 - database connection not valid', async () => {
 	FileUtils.copyFile('openedge-project.test27.json', 'openedge-project.json')
-	await deleteRcode()
-	await restartLangServer(23)
 
-	await runTestsInFile('src/dirA/dir1/testInDir.p')
-
-	const res = await getResults()
-	assert.equal(res[0].ablResults?.resultsJson[0].errors, 1, 'expected 1 error')
-	assert.equal(res[0].ablResults?.resultsJson[0].failures, 0, 'expected 0 failed tests')
-	assert.equal(res[0].ablResults?.resultsJson[0].passed, 0, 'expected 0 passed tests')
-	assert.equal(res[0].ablResults?.resultsJson[0].skipped, 0, 'expected 0 skipped tests')
+	await runTestsInFile('src/dirA/dir1/testInDir.p').then(() => {
+		assert.fail('expected error to be thrown')
+	}, (e: unknown) => {
+		log.info('e=' + e)
+		if (!(e instanceof Error)) {
+			assert.fail('expected Error but got: ' + JSON.stringify(e, null, 2))
+			throw e
+		}
+		if (e.name !== 'ABLUnitRuntimeError') {
+			assert.fail('expected ABLUnitRuntimeError but got: ' + JSON.stringify(e, null, 2))
+		}
+	})
 })

@@ -210,6 +210,7 @@ export class ABLResults implements Disposable {
 	processCompilerErrors (testRun: TestRun, e: ABLCompilerError) {
 		for (const compileError of e.compilerErrors) {
 			const fileinfo = this.propath.search(compileError.fileName)
+				?? this.propath.search(Uri.joinPath(this.workspaceFolder.uri, compileError.fileName.replace(/\\/g, '/')))
 			if (!fileinfo) {
 				log.warn('could not find file in propath: ' + compileError.fileName)
 				continue
