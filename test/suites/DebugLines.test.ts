@@ -177,6 +177,4 @@ test('debugLines.7 - Debug Listing Preview', async () => {
 	assert.equal(window.activeTextEditor.document.uri.fsPath, debugUri.fsPath, 'activeTextEditor after open debugUri')
 	await commands.executeCommand('setSelection', { uri: debugUri, selection: new Selection(30, 0, 32, 4) })
 	await validateSelectionAfterChange(sourceUri, [26,0, 82, 4 + 12])
-
-	log.info('debugLines.7 complete')
 })

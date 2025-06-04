@@ -315,6 +315,7 @@ function getTests () {
 			tests.push(getTestConfig('parse', basename))
 		}
 	}
+
 	return tests
 }
 
@@ -329,7 +330,7 @@ function getCoverageOpts () {
 		// * 'lcov' includes 'html' output
 		// * 'lcovonly' does not include 'html' output
 		reporter: [ 'text', 'lcovonly' ],
-		output: coverageDir, // https://github.com/microsoft/vscode-test-cli/issues/38
+		// output: coverageDir, // https://github.com/microsoft/vscode-test-cli/issues/38
 		exclude: [
 			'node_modules',
 			'node_modules/',
@@ -338,6 +339,7 @@ function getCoverageOpts () {
 			'./node_modules/',
 			'./node_modules/**',
 			'**/node_modules/**',
+			'**/node_modules',
 		],
 	}
 	return coverageOpts
