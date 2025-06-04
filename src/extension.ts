@@ -26,12 +26,13 @@ import { basename } from 'path'
 import * as FileUtils from 'FileUtils'
 import { gatherAllTestItems, IExtensionTestReferences, sortLocation } from 'ABLUnitCommon'
 import { SnippetProvider } from 'SnippetProvider'
-import { DebugListingContentProvider } from 'DebugListingPreview'
+import { DebugListingContentProvider, getDebugListingPreviewEditor } from 'DebugListingPreview'
+import { ABLUnitTestRunner } from '@types'
 
 let recentResults: ABLResults[] = []
 let recentError: Error | undefined = undefined
 
-export function activate (context: ExtensionContext) {
+export async function activate (context: ExtensionContext) {
 	const ctrl = tests.createTestController('ablunitTestController', 'ABLUnit Test')
 	let currentTestRun: TestRun | undefined = undefined
 	let isRefreshTestsComplete = false
@@ -585,10 +586,12 @@ export function activate (context: ExtensionContext) {
 	} else {
 		prom = Promise.resolve()
 	}
-	return prom.then(() => {
-		log.info('activation complete')
-		return true
-	})
+	await prom
+	log.info('activation complete')
+
+	return {
+		getDebugListingPreviewEditor
+	} as ABLUnitTestRunner
 }
 
 let contextStorageUri: Uri

@@ -1,8 +1,8 @@
-import { commands, Selection, Uri, window, workspace, Disposable } from 'vscode'
+import { commands, Selection, Uri, window, workspace, Disposable, extensions } from 'vscode'
 import { assert, getRcodeCount, getWorkspaceUri, log, suiteSetupCommon, toUri } from '../testCommon'
 import { getSourceMapFromRCode } from 'parse/SourceMapRCodeParser'
 import { PropathParser } from 'ABLPropath'
-import { getDebugListingPreviewEditor } from 'DebugListingPreview'
+import { ABLUnitTestRunner } from '@types'
 
 const workspaceFolder = workspace.workspaceFolders![0]
 
@@ -157,7 +157,8 @@ test('debugLines.7 - Debug Listing Preview', async () => {
 
 	// validate initial selection from source editor cursor location
 	log.info('validate intitial seletion...')
-	const d = getDebugListingPreviewEditor(window.activeTextEditor.document.uri)
+	const ext = extensions.getExtension('kherring.ablunit-test-runner')?.exports as ABLUnitTestRunner
+	const d = ext.getDebugListingPreviewEditor(window.activeTextEditor.document.uri)
 	if (!d) {
 		assert.fail('no Debug Listing Preview open for ' + window.activeTextEditor.document.uri.fsPath)
 		return

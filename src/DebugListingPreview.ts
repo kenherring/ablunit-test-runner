@@ -337,7 +337,7 @@ export class DebugListingContentProvider implements TextDocumentContentProvider 
 		sourceEditor.revealRange(range, TextEditorRevealType.AtTop)
 	}
 
-	generateDebugListing (cfg: ABLUnitConfig, dlc: IDlc, contextResourcesUri: Uri, propath: PropathParser, currentUri: Uri, debugListingUri: Uri) {
+	private generateDebugListing (cfg: ABLUnitConfig, dlc: IDlc, contextResourcesUri: Uri, propath: PropathParser, currentUri: Uri, debugListingUri: Uri) {
 		const env: Record<string, string> = {
 			SOURCE_FILE: currentUri.fsPath,
 			DEBUG_LISTING_PATH: debugListingUri.fsPath,
