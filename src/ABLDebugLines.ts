@@ -58,7 +58,7 @@ export class ABLDebugLines {
 		if (editor instanceof Uri) {
 			uri = editor
 		} else {
-			editor = editor.document.uri
+			uri = editor.document.uri
 		}
 		if (!uri) {
 			log.error('Editor or URI is undefined')
