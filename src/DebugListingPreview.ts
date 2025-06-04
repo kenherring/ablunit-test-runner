@@ -8,7 +8,7 @@ import { log } from 'ChannelLogger'
 import * as FileUtils from 'FileUtils'
 
 export class DebugListingContentProvider implements TextDocumentContentProvider {
-
+	private static instance: DebugListingContentProvider | undefined = undefined
 	private previewEditor: TextEditor | undefined = undefined
 	private showDebugListingPreviewWorking = false
 	private readonly debugListingUriMap = new Map<string, Uri>()
@@ -71,6 +71,11 @@ export class DebugListingContentProvider implements TextDocumentContentProvider 
 				return await this.showDebugListingPreview(e.uri, false, contextResourcesUri)
 			}),
 		)
+	}
+
+	public static getInstance (context: ExtensionContext, contextResourcesUri: Uri) {
+		DebugListingContentProvider.instance = new DebugListingContentProvider(context, contextResourcesUri)
+		return DebugListingContentProvider.instance
 	}
 
 	provideTextDocumentContent (uri: Uri): string {

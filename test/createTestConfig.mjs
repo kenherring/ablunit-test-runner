@@ -279,10 +279,10 @@ function getTests () {
 
 	const skipProjects = [
 		'OpenedgeProjectParser',
-		'SourceMapRCodeParser',
-		'SourceMapXrefParser',
+		// 'SourceMapRCodeParser',
+		// 'SourceMapXrefParser',
 		// 'TestProfileParser',
-		'AtStart',
+		// 'AtStart',
 		// 'DebugLines',
 		// 'proj0',
 		// 'proj1',
@@ -291,13 +291,13 @@ function getTests () {
 		// 'proj4',
 		// 'proj5',
 		// 'proj6',
-		'proj7A',
-		'proj7B',
-		'proj8',
-		'proj9',
-		'projA',
-		'workspace0',
-		'workspace1',
+		// 'proj7A',
+		// 'proj7B',
+		// 'proj8',
+		// 'proj9',
+		// 'projA',
+		// 'workspace0',
+		// 'workspace1',
 	]
 
 	const g = glob.globSync('test/suites/*.test.ts').reverse()

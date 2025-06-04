@@ -31,6 +31,7 @@ import { ABLUnitTestRunner } from '@types'
 
 let recentResults: ABLResults[] = []
 let recentError: Error | undefined = undefined
+let debugListingContentProviderRegistered = false
 
 export async function activate (context: ExtensionContext) {
 	const ctrl = tests.createTestController('ablunitTestController', 'ABLUnit Test')
@@ -47,7 +48,6 @@ export async function activate (context: ExtensionContext) {
 	setContextPaths(contextStorageUri)
 	FileUtils.createDir(contextStorageUri)
 
-	let debugListingContentProvider: DebugListingContentProvider | undefined = undefined
 	context.subscriptions.push(ctrl)
 	// languages.registerInlineCompletionItemProvider({ language: 'abl'}, new InlineProvider())
 	languages.registerCompletionItemProvider({ language: 'abl', scheme: 'file' }, new SnippetProvider())
@@ -88,8 +88,9 @@ export async function activate (context: ExtensionContext) {
 				return loadDetailedCoverageForTest(currentTestRun, fileCoverage, item, new CancellationTokenSource().token)
 			}),
 			commands.registerCommand('ablunit.showDebugListingPreview', async (uri: Uri | string | undefined) => {
-				if (!debugListingContentProvider) {
-					debugListingContentProvider = new DebugListingContentProvider(context, contextResourcesUri)
+				const debugListingContentProvider = DebugListingContentProvider.getInstance(context, contextResourcesUri)
+				if (!debugListingContentProviderRegistered) {
+					debugListingContentProviderRegistered = true
 					workspace.registerTextDocumentContentProvider('debugListing', debugListingContentProvider)
 				}
 				await debugListingContentProvider.showDebugListingPreviewCommand(uri)
