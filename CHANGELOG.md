@@ -1,12 +1,18 @@
-# [1.3.5](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.3.5) - 2025-05-29 (pre-release)
+# [1.3.9](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.3.9) - 2025-06-03 (pre-release)
 
 * Improve test results for failures due to DB connection issues (#307)
+* Fix reported code coverage (#314)
+* Bump tar-fs from 2.1.2 to 2.1.3 in the npm_and_yarn group (#313)
+* Bump eslint from 9.27.0 to 9.28.0 (#308)
+* Bump @types/node from 22.15.21 to 22.15.29 (#312)
+* Bump typescript-eslint from 8.32.1 to 8.33.0 (#310)
+* Bump @eslint/js from 9.27.0 to 9.28.0 (#311)
 * Bump @stylistic/eslint-plugin-ts from 4.2.0 to 4.4.0 (#303)
 * Bump @vscode/vsce from 3.4.1 to 3.4.2 (#302)
 * Bump mocha from 11.4.0 to 11.5.0 (#301)
 * Bump @types/node from 22.15.17 to 22.15.21 (#304)
 
-**Full Changelog**: [1.3.0...1.3.5](https://github.com/kenherring/ablunit-test-runner/compare/1.3.3...1.3.5)
+**Full Changelog**: [1.3.0...1.3.9](https://github.com/kenherring/ablunit-test-runner/compare/1.3.7...1.3.9)
 
 # [1.3.0](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.3.0) - 2025-05-21
 
