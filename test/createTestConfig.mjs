@@ -277,10 +277,33 @@ function getTests () {
 		return tests
 	}
 
+	const skipProjects = [
+		'OpenedgeProjectParser',
+		'SourceMapRCodeParser',
+		'SourceMapXrefParser',
+		// 'TestProfileParser',
+		'AtStart',
+		// 'DebugLines',
+		// 'proj0',
+		// 'proj1',
+		// 'proj2',
+		// 'proj3',
+		// 'proj4',
+		// 'proj5',
+		// 'proj6',
+		'proj7A',
+		'proj7B',
+		'proj8',
+		'proj9',
+		'projA',
+		'workspace0',
+		'workspace1',
+	]
+
 	const g = glob.globSync('test/suites/*.test.ts').reverse()
 	for (const f of g) {
 		const basename = path.basename(f, '.test.ts')
-		if (basename == 'DebugLines') {
+		if (!skipProjects.includes(basename)) {
 			tests.push(getTestConfig('suites', basename))
 		}
 	}
@@ -288,7 +311,7 @@ function getTests () {
 	const p = glob.globSync('test/parse/*.test.ts')
 	for (const f of p) {
 		const basename = path.basename(f, '.test.ts')
-		if (basename == 'OpenEdgeProjectParser') {
+		if (!skipProjects.includes(basename)) {
 			tests.push(getTestConfig('parse', basename))
 		}
 	}
