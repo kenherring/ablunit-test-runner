@@ -156,11 +156,13 @@ class Logger {
 		// ensure we're using `\r\n` for line endings
 		message = message.replace(/\r/g, '').replace(/\n/g, '\r\n')
 		if (includeStack) {
+			// eslint-disable-next-line @typescript-eslint/unbound-method
 			const prepareStackTraceOrg = Error.prepareStackTrace
 			const err = new Error()
 			Error.prepareStackTrace = (_, stack) => stack
 			const stack = err.stack as unknown as NodeJS.CallSite[]
 			Error.prepareStackTrace = prepareStackTraceOrg
+			// eslint-disable-next-line @typescript-eslint/no-base-to-string
 			message = message + 'r\n' + stack
 		}
 		if (this.testResultsTimestamp) {
@@ -193,6 +195,7 @@ class Logger {
 	}
 
 	private getCallerSourceLine () {
+		// eslint-disable-next-line @typescript-eslint/unbound-method
 		const prepareStackTraceOrg = Error.prepareStackTrace
 		const err = new Error()
 		Error.prepareStackTrace = (_, stack) => stack
@@ -202,6 +205,7 @@ class Logger {
 		for (const s of stack) {
 			const classname = s.getTypeName()
 			if (classname == 'Logger' || classname == '_Logger') continue
+			// eslint-disable-next-line @typescript-eslint/no-base-to-string
 			let ret = s.toString()
 			if (ret.startsWith(this.baseDir)) {
 				ret = ret.substring(this.baseDir.length + 1)
