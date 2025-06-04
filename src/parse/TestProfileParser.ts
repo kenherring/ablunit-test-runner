@@ -229,7 +229,6 @@ export class RunConfig extends DefaultRunProfile {
 
 		const extraParameters = getExtraParameters(this.workspaceFolder.uri, this.profile.openedgeProjectProfile)?.split(' ')
 		// TODO - re-join quoted strings
-		log.info('extraParameters=' + JSON.stringify(extraParameters))
 		if (extraParameters) {
 			this.command.additionalArgs.push(...extraParameters)
 		}

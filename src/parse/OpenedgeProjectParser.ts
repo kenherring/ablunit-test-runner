@@ -43,6 +43,7 @@ interface IOpenEdgeConfig {
 
 interface IOpenEdgeMainConfig extends IOpenEdgeConfig {
 	// JSON mapping of openedge-project.json
+	modifiedTime: Date
 	name: string
 	version: string
 	profiles?: IOEProfile[]
@@ -286,14 +287,26 @@ export function getActiveProfile (rootDir: string) {
 	return 'default'
 }
 
+const configMap = new Map<string, IOpenEdgeMainConfig>()
+
 function loadConfigFile (uri: Uri): IOpenEdgeMainConfig | undefined {
 	if (!FileUtils.doesFileExist(uri)) {
 		log.info('No OpenEdge project config file found in ' + uri.fsPath + ', using default values')
 		return undefined
 	}
+
+	const cachedConfig = configMap.get(uri.fsPath)
+	const configModifiedTime = FileUtils.getFileModifiedTime(uri)
+	if (cachedConfig && cachedConfig.modifiedTime === configModifiedTime) {
+		log.debug('found cached OpenEdge project config for ' + uri.fsPath)
+		return cachedConfig
+	}
+
 	try {
 		log.info('reading OpenEdge project config file: ' + uri.fsPath)
 		const data = FileUtils.readStrippedJsonFile(uri) as IOpenEdgeMainConfig
+		data.modifiedTime = configModifiedTime
+		configMap.set(uri.fsPath, data)
 		return data
 	} catch (caught) {
 		log.error('[loadConfigFile] Failed to parse ' + uri.fsPath + ': ' + caught)
@@ -454,11 +467,9 @@ function readOEConfigFile (uri: Uri, workspaceUri: Uri, openedgeProjectProfile?:
 		ret.activeProfile = openedgeProjectProfile
 		return ret
 	}
-	log.debug('config=' + JSON.stringify(config))
 	const prjConfig = parseOpenEdgeProjectConfig(uri, workspaceUri, config)
-	log.debug('prjConfig=' + JSON.stringify(prjConfig, null, 2))
 	if (prjConfig.dlc != '') {
-		log.info('OpenEdge project configured in ' + prjConfig.rootDir + ' -- DLC: ' + prjConfig.dlc)
+		log.debug('OpenEdge project configured in ' + prjConfig.rootDir + ' -- DLC: ' + prjConfig.dlc)
 		const idx: number = projects.findIndex((element) =>
 			element.name == prjConfig.name && element.version == prjConfig.version
 		)

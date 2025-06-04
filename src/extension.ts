@@ -26,11 +26,14 @@ import { basename } from 'path'
 import * as FileUtils from 'FileUtils'
 import { gatherAllTestItems, IExtensionTestReferences, sortLocation } from 'ABLUnitCommon'
 import { SnippetProvider } from 'SnippetProvider'
+import { DebugListingContentProvider, getDebugListingPreviewEditor } from 'DebugListingPreview'
+import { ABLUnitTestRunner } from '@types'
 
 let recentResults: ABLResults[] = []
 let recentError: Error | undefined = undefined
+let debugListingContentProviderRegistered = false
 
-export function activate (context: ExtensionContext) {
+export async function activate (context: ExtensionContext) {
 	const ctrl = tests.createTestController('ablunitTestController', 'ABLUnit Test')
 	let currentTestRun: TestRun | undefined = undefined
 	let isRefreshTestsComplete = false
@@ -83,7 +86,15 @@ export function activate (context: ExtensionContext) {
 				}
 
 				return loadDetailedCoverageForTest(currentTestRun, fileCoverage, item, new CancellationTokenSource().token)
-			})
+			}),
+			commands.registerCommand('ablunit.showDebugListingPreview', async (uri: Uri | string | undefined) => {
+				const debugListingContentProvider = DebugListingContentProvider.getInstance(context, contextResourcesUri)
+				if (!debugListingContentProviderRegistered) {
+					debugListingContentProviderRegistered = true
+					workspace.registerTextDocumentContentProvider('debugListing', debugListingContentProvider)
+				}
+				await debugListingContentProvider.showDebugListingPreviewCommand(uri)
+			}),
 		)
 	}
 
@@ -92,9 +103,15 @@ export function activate (context: ExtensionContext) {
 		workspace.onDidChangeConfiguration(e => { return updateConfiguration(e) }),
 		workspace.onDidOpenTextDocument(e => {
 			log.debug('onDidOpenTextDocument ' + e.uri.fsPath)
+			if (e.languageId !== 'abl') {
+				return
+			}
 			return createOrUpdateFile(ctrl, e.uri, true)
 		}),
 		workspace.onDidSaveTextDocument(e => {
+			if (e.languageId !== 'abl') {
+				return
+			}
 			log.debug('onDidSaveTextDocument ' + e.uri.fsPath)
 			return createOrUpdateFile(ctrl, e.uri, true)
 		}),
@@ -397,7 +414,7 @@ export function activate (context: ExtensionContext) {
 				}
 				let r = res.find(r => r.workspaceFolder === wf)
 				if (!r) {
-					r = new ABLResults(wf, getStorageUri(wf), contextStorageUri, contextResourcesUri, request, cancellation)
+					r = new ABLResults(wf, getStorageUri(wf), contextStorageUri, contextResourcesUri, cancellation, request)
 					cancellation.onCancellationRequested(() => {
 						log.debug('cancellation requested - createABLResults-1')
 						r?.dispose()
@@ -516,7 +533,6 @@ export function activate (context: ExtensionContext) {
 	}
 
 	ctrl.resolveHandler = (item) => {
-
 		if (item?.uri) {
 			const relativePath = workspace.asRelativePath(item.uri)
 			log.info('ctrl.resolveHandler (relativePath=' + relativePath + ')')
@@ -571,10 +587,12 @@ export function activate (context: ExtensionContext) {
 	} else {
 		prom = Promise.resolve()
 	}
-	return prom.then(() => {
-		log.info('activation complete')
-		return true
-	})
+	await prom
+	log.info('activation complete')
+
+	return {
+		getDebugListingPreviewEditor
+	} as ABLUnitTestRunner
 }
 
 let contextStorageUri: Uri
@@ -1066,7 +1084,7 @@ function createOrUpdateFile (controller: TestController, e: Uri | FileCreateEven
 		}
 		uris.push(e)
 	} else {
-		uris = uris.concat(e.files.filter(f => f.scheme === 'file'))
+		uris = uris.concat(e.files.filter(f => f.scheme === 'file' && workspace.getWorkspaceFolder(f) !== undefined))
 	}
 
 	const proms: PromiseLike<boolean>[] = []

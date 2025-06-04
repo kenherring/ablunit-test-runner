@@ -1,4 +1,4 @@
-import { commands, extensions, LogLevel, Uri, workspace } from 'vscode'
+import { commands, extensions, Uri, workspace } from 'vscode'
 import { Duration, activateExtension, enableExtensions, getDefaultDLC, getRcodeCount, getWorkspaceUri, installExtension, log, oeVersion, sleep, FileUtils, getSourceCount } from './testCommon'
 import { getContentFromFilesystem } from 'parse/TestParserCommon'
 import * as glob from 'glob'
@@ -32,7 +32,6 @@ export async function enableOpenedgeAblExtension (runtimes?: IRuntime[], rcodeCo
 }
 
 async function waitForRcode (expectedCount?: number) {
-	// const maxWait = 15 // seconds
 	const waitTime = new Duration()
 	let rcodeCount = getRcodeCount()
 	let lastRcodeCount = rcodeCount
@@ -195,7 +194,7 @@ async function dumpLangServStatus () {
 		})
 
 	let lines = await getLogContents()
-	log.info('lines=' + JSON.stringify(lines, null, 4))
+	// log.info('lines=' + JSON.stringify(lines, null, 4))
 
 	const duration = new Duration('dumpLangServStatus')
 	while (lines.length == startingLine && duration.elapsed() < 3000) {
@@ -343,7 +342,7 @@ export async function waitForLangServerReady () {
 		stillCompiling = false
 		for (let i=startAtLine; i<lines.length; i++) {
 
-			log.info('lines[' + i + '] = "' + lines[i] + '"')
+			// log.info('lines[' + i + '] = "' + lines[i] + '"')
 			// regex matching lines like "[<timestamp>] [<logLevel>] [<projectName] <message>"
 			const parts = /^\[([^\]]*)\] \[([A-Z]*)\] (\[[^\]]*\]*)? ?(.*)$/.exec(lines[i])
 
@@ -407,11 +406,11 @@ export async function waitForLangServerReady () {
 			if (clientlogLines.length == 0) {
 				log.warn('client log file is empty: ' + clientLogUri.fsPath)
 			} else {
-				log.info('---------- ' + clientLogUri.fsPath + '-----------')
-				for (let i=0; i<clientlogLines.length; i++) {
-					log.info(i + ': ' + clientlogLines[i])
-				}
-				log.info('---------- ---------- ----------')
+				// log.info('---------- ' + clientLogUri.fsPath + '-----------')
+				// for (let i=0; i<clientlogLines.length; i++) {
+				// 	log.info(i + ': ' + clientlogLines[i])
+				// }
+				// log.info('---------- ---------- ----------')
 			}
 		}
 
@@ -423,24 +422,24 @@ export async function waitForLangServerReady () {
 			if (stdoutLines.length == 0) {
 				log.warn('stdout file is empty: ' + stdoutUri.fsPath)
 			} else {
-				log.info('---------- ' + stdoutUri.fsPath + '-----------')
-				for (let i=0; i<stdoutLines.length; i++) {
-					log.info(i + ': ' + stdoutLines[i])
-				}
-				log.info('---------- ---------- ----------')
+				// log.info('---------- ' + stdoutUri.fsPath + '-----------')
+				// for (let i=0; i<stdoutLines.length; i++) {
+				// 	log.info(i + ': ' + stdoutLines[i])
+				// }
+				// log.info('---------- ---------- ----------')
 			}
 		}
 		throw new Error('lang server failed to start! (waitTime=' + waitTime + ')')
 	}
 
-	if (log.getLogLevel() < LogLevel.Debug) {
-		const lines = await getLogContents()
-		log.info('---------- openedge-abl extension log ----------')
-		for (let i=0; i<lines.length; i++) {
-			log.info(i + ': ' + lines[i])
-		}
-		log.info('---------- ---------- ----------')
-	}
+	// if (log.getLogLevel() < LogLevel.Debug) {
+	// 	const lines = await getLogContents()
+	// 	log.info('---------- openedge-abl extension log ----------')
+	// 	for (let i=0; i<lines.length; i++) {
+	// 		log.info(i + ': ' + lines[i])
+	// 	}
+	// 	log.info('---------- ---------- ----------')
+	// }
 
 	if (langServerReady) {
 		log.info('lang server is ready! (waitTime='  + waitTime + ')')
@@ -456,7 +455,7 @@ export function setRuntimes (runtimes?: IRuntime[]) {
 	if (!enableExtensions()) {
 		throw new Error('setRuntimes failed! extensions are disabled')
 	}
-	log.info('runtimes=' + JSON.stringify(runtimes))
+	// log.info('runtimes=' + JSON.stringify(runtimes))
 	runtimes = runtimes ?? [{name: oeVersion(), path: getDefaultDLC(), default: true}]
 
 	log.info('setting abl.configuration.runtimes=' + JSON.stringify(runtimes))
@@ -478,18 +477,18 @@ export function setRuntimes (runtimes?: IRuntime[]) {
 		// return restartLangServer()
 	}
 
-	log.info('setting workspace configuration abl.configuration.defaultRuntime=' + oeVersion())
+	// log.info('setting workspace configuration abl.configuration.defaultRuntime=' + oeVersion())
 	const r =  conf.update('configuration.defaultRuntime', oeVersion(), true)
 		.then(() => {
-			log.info('workspace.getConfiguration("abl").update("configuration.runtimes") - START')
+			// log.info('workspace.getConfiguration("abl").update("configuration.runtimes") - START')
 			return conf.update('configuration.runtimes', runtimes, true)
 		})
 		.then(() => {
-			log.info('workspace.getConfiguration("abl").update(configuration.runtime) - END')
+			// log.info('workspace.getConfiguration("abl").update(configuration.runtime) - END')
 			return restartLangServer()
 		})
 		.then(() => {
-			log.info('restartLangServer complete ' + duration)
+			// log.info('restartLangServer complete ' + duration)
 			return true
 		}, (e: unknown) => {
 			if (e instanceof Error) {
@@ -497,6 +496,6 @@ export function setRuntimes (runtimes?: IRuntime[]) {
 			}
 			throw new Error('setRuntimes failed! e=' + e)
 		})
-	log.info('return r=' + JSON.stringify(r))
+	// log.info('return r=' + JSON.stringify(r))
 	return r
 }

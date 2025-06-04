@@ -2,7 +2,7 @@
 	"name": "ablunit-test-runner",
 	"displayName": "ABLUnit Test Runner",
 	"description": "OpenEdge ABLUnit test runner for VSCode",
-	"version": "1.3.9",
+	"version": "1.3.11",
 	"engineStrict": true,
 	"galleryBanner": {
 		"color": "#007ACC",
@@ -185,6 +185,37 @@
 					"**/ablunit-test-profile*.json"
 				],
 				"url": "./resources/ablunit-test-profile.schema.json"
+			}
+		],
+		"menus": {
+			"editor/title": [
+				{
+					"command": "ablunit.showDebugListingPreview",
+					"when": "editorLangId == abl && !notebookEditorFocused",
+					"group": "navigation"
+				}
+			],
+			"explorer/context": [
+				{
+					"command": "ablunit.showDebugListingPreview",
+					"when": "resourceLangId == abl",
+					"group": "1_ablunit@1"
+				}
+			],
+			"editor/context": [
+				{
+					"command": "ablunit.showDebugListingPreview",
+					"when": "resourceLangId == abl",
+					"group": "1_ablunit@1"
+				}
+			]
+		},
+		"commands": [
+			{
+				"command": "ablunit.showDebugListingPreview",
+				"title": "Show debug listing Preview",
+				"category": "ABLUnit",
+				"icon": "$(open-preview)"
 			}
 		]
 	}
