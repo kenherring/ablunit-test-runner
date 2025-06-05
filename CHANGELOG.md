@@ -1,5 +1,6 @@
 # [1.3.13](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.3.13) - 2025-06-05 (pre-release)
 
+* Enable ablunit.debugListingPreview command when not in testing mode (#317)
 * Add extension resources directory to propath at runtime (#316)
 * Add Debug Listing Preview (#305)
 * Fix reported code coverage (#314)
