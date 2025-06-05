@@ -87,19 +87,19 @@ export async function activate (context: ExtensionContext) {
 
 				return loadDetailedCoverageForTest(currentTestRun, fileCoverage, item, new CancellationTokenSource().token)
 			}),
-			commands.registerCommand('ablunit.showDebugListingPreview', async (uri: Uri | string | undefined) => {
-				const debugListingContentProvider = DebugListingContentProvider.getInstance(context, contextResourcesUri)
-				if (!debugListingContentProviderRegistered) {
-					debugListingContentProviderRegistered = true
-					workspace.registerTextDocumentContentProvider('debugListing', debugListingContentProvider)
-				}
-				await debugListingContentProvider.showDebugListingPreviewCommand(uri)
-			}),
 		)
 	}
 
 	context.subscriptions.push(
 		commands.registerCommand('_ablunit.openCallStackItem', openCallStackItem),
+		commands.registerCommand('ablunit.showDebugListingPreview', async (uri: Uri | string | undefined) => {
+			const debugListingContentProvider = DebugListingContentProvider.getInstance(context, contextResourcesUri)
+			if (!debugListingContentProviderRegistered) {
+				debugListingContentProviderRegistered = true
+				workspace.registerTextDocumentContentProvider('debugListing', debugListingContentProvider)
+			}
+			await debugListingContentProvider.showDebugListingPreviewCommand(uri)
+		}),
 		workspace.onDidChangeConfiguration(e => { return updateConfiguration(e) }),
 		workspace.onDidOpenTextDocument(e => {
 			log.debug('onDidOpenTextDocument ' + e.uri.fsPath)
