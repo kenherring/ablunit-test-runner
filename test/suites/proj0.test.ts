@@ -561,3 +561,17 @@ test('proj0.25 - no duplicate destructor', async () => {
 	}
 	assert.equal(destructorCount, 1, 'expected exactly 1 destructor found in the module tree (found ' + destructorCount + ')')
 })
+
+test('proj0.26 - set propath on the fly', async () => {
+	if (process.platform !== 'win32') {
+		log.info('skipping proj0.26 on Linux as it requires a windows environment')
+		return
+	}
+
+	FileUtils.copyFile('openedge-project.test26.json', 'openedge-project.json')
+	await runTestsInFile('src/simpleTest.p', 0).then(() => {
+		assert.ok('test ran successfully')
+	}, (e: unknown) => {
+		assert.fail('test failed: ' + e)
+	})
+})

@@ -1,0 +1,20 @@
+{
+	"name": "proj0",
+	"version": "0",
+	"oeversion": "12.8",
+	"charset": "utf-8",
+	"extraParameters": "-basekey INI -ininame progress.test26.ini",
+	"buildPath": [
+		{ "type": "source", "documentation": "docs/src.json", "path": "src", "includes": "**/*.p,**/*.cls", "excludes": "emptyClass.cls", "xref": "." },
+		{ "type": "source", "documentation": "docs/test.json", "path": "test" }
+	],
+	"dbConnections": [
+		{
+			"name": "sp2k",
+			"aliases": [ "dbalias", "third" ],
+			"connect": "-db target/db/sp2k -RO",
+			"schemaFile": "target/sp2k.df"
+		}
+	],
+	"numThreads": 1
+}
