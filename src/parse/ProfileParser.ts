@@ -343,7 +343,8 @@ export class ABLProfileJson {
 		return sourceName.startsWith('OpenEdge.') ||
 			sourceName.startsWith('Ccs.Common') ||
 			sourceName.startsWith('VSCode.ABLUnit') ||
-			sourceName.endsWith('ABLUnitCore.p')
+			sourceName.endsWith('ABLUnitCore.p') ||
+			sourceName.endsWith('ABLRunner-wrapper.p')
 	}
 
 	addModules (lines: string[]) {
