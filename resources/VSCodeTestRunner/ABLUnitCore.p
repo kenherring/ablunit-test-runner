@@ -1,8 +1,6 @@
 // This file replaces the standard ABLUnitCore.p when the basedir is
 // included as part of the propath ahead of ablunit.pl.
 
-using VSCode.ABLUnit.Runner.ABLRunner.
-
 block-level on error undo, throw.
 create widget-pool.
 
@@ -11,6 +9,7 @@ define variable quitOnEnd as logical init false no-undo.
 define variable VERBOSE as logical no-undo.
 VERBOSE = (os-getenv('VERBOSE') = 'true' or os-getenv('VERBOSE') = '1').
 
+run setPropath.
 run waitForDebuggerVisible.
 run printPropath.
 run main.
@@ -45,6 +44,16 @@ function writeErrorToLog returns logical (outputLocation as character, msg as ch
 end function.
 
 // ---------- PROCEDURES ----------
+
+procedure setPropath :
+	if search('VSCode/createDatabaseAliases.p') = ? then
+	do:
+		define variable vscodeDir as character no-undo.
+		vscodeDir = replace(entry(2, program-name(1), ' '), '~\', '/').
+		entry(num-entries(vscodeDir, '/'), vscodeDir, '/') = ''.
+		propath = vscodeDir + ',' + propath.
+	end.
+end procedure.
 
 procedure waitForDebuggerVisible :
 	define variable cnt as integer no-undo.
@@ -95,7 +104,6 @@ procedure printPropath :
 end procedure.
 
 procedure main :
-	define variable ablRunner as class ABLRunner no-undo.
 	define variable updateFile as character no-undo.
 	if VERBOSE then message 'START main'.
 
@@ -104,10 +112,8 @@ procedure main :
 
 	assign updateFile = getParameter(trim(trim(session:parameter,'"'),"'"), 'ATTR_ABLUNIT_EVENT_FILE').
 	testConfig = readTestConfig(getParameter(trim(trim(session:parameter,'"'),"'"), 'CFG')).
+	run ABLRunner-wrapper.p(testConfig, updateFile).
 	quitOnEnd = (testConfig = ?) or testConfig:quitOnEnd.
-
-	ablRunner = new ABLRunner(testConfig, updateFile).
-	ablRunner:RunTests().
 	if VERBOSE then message 'END main'.
 end procedure.
 
