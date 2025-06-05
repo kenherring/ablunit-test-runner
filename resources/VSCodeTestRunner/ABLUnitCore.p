@@ -120,8 +120,8 @@ procedure main :
 
 	assign updateFile = getParameter(trim(trim(session:parameter,'"'),"'"), 'ATTR_ABLUNIT_EVENT_FILE').
 	testConfig = readTestConfig(getParameter(trim(trim(session:parameter,'"'),"'"), 'CFG')).
-	run ABLRunner-wrapper.p(testConfig, updateFile).
 	quitOnEnd = (testConfig = ?) or testConfig:quitOnEnd.
+	run ABLRunner-wrapper.p(testConfig, updateFile).
 	if VERBOSE then message 'END main'.
 end procedure.
 
