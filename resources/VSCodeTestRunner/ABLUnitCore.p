@@ -46,12 +46,20 @@ end function.
 // ---------- PROCEDURES ----------
 
 procedure setPropath :
+	define variable inputPropath as character no-undo.
+	define variable vscodeDir as character no-undo.
+
 	if search('VSCode/createDatabaseAliases.p') = ? then
 	do:
-		define variable vscodeDir as character no-undo.
-		vscodeDir = replace(entry(2, program-name(1), ' '), '~\', '/').
-		entry(num-entries(vscodeDir, '/'), vscodeDir, '/') = ''.
-		propath = vscodeDir + ',' + propath.
+		inputPropath = getParameter(trim(trim(session:parameter,'"'),"'"), 'PROPATH').
+		if inputPropath <> '' then
+			propath = inputPropath + ',' + propath.
+		else
+		do:
+			vscodeDir = replace(entry(2, program-name(1), ' '), '~\', '/').
+			entry(num-entries(vscodeDir, '/'), vscodeDir, '/') = ''.
+			propath = vscodeDir + ',' + propath.
+		end.
 	end.
 end procedure.
 
