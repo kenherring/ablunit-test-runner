@@ -1,6 +1,10 @@
-# [1.3.11](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.3.11) - 2025-06-04 (pre-release)
+# [1.3.9](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.3.9) - 2025-06-03 (pre-release)
 
 * Improve test results for failures due to DB connection issues (#307)
+* Remove remaining inifile logic; ablunit.showDebugListingPreview compilation improvements (#318)
+* Add extension resources directory to propath at runtime (#316)
+* Enable ablunit.debugListingPreview command when not in testing mode (#317)
+* Add Debug Listing Preview (#305)
 * Fix reported code coverage (#314)
 * Bump tar-fs from 2.1.2 to 2.1.3 in the npm_and_yarn group (#313)
 * Bump eslint from 9.27.0 to 9.28.0 (#308)
@@ -12,7 +16,7 @@
 * Bump mocha from 11.4.0 to 11.5.0 (#301)
 * Bump @types/node from 22.15.17 to 22.15.21 (#304)
 
-**Full Changelog**: [1.3.0...1.3.11](https://github.com/kenherring/ablunit-test-runner/compare/1.3.9...1.3.11)
+**Full Changelog**: [1.3.0...1.3.9](https://github.com/kenherring/ablunit-test-runner/compare/1.3.7...1.3.9)
 
 # [1.3.0](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.3.0) - 2025-05-21
 

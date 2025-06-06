@@ -126,15 +126,7 @@ function getDefaultCommand (res: ABLResults) {
 
 	const cmd = [ executable, '-b', '-p', res.wrapperUri.fsPath.replace(/\\/g, '/') ]
 
-	if (process.platform === 'win32') {
-		if (res.cfg.ablunitConfig.progressIniUri) {
-			cmd.push('-basekey', 'INI', '-ininame', res.cfg.ablunitConfig.progressIniUri.fsPath)
-		}
-	} else if (process.platform === 'linux') {
-		process.env['PROPATH'] = res.propath.toString().replace(/\$\{DLC\}/g, res.dlc.uri.fsPath.replace(/\\/g, '/'))
-	} else {
-		throw new Error('unsupported platform: ' + process.platform)
-	}
+	process.env['PROPATH'] = res.propath.toString().replace(/\$\{DLC\}/g, res.dlc.uri.fsPath.replace(/\\/g, '/'))
 
 	cmd.push('-T', res.cfg.ablunitConfig.tempDirUri.fsPath)
 

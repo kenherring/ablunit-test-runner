@@ -562,7 +562,41 @@ test('proj0.25 - no duplicate destructor', async () => {
 	assert.equal(destructorCount, 1, 'expected exactly 1 destructor found in the module tree (found ' + destructorCount + ')')
 })
 
-test('proj0.26 - database connection needed but not configured', async () => {
+test('proj0.26 - set propath on the fly', async () => {
+	if (process.platform !== 'win32') {
+		log.info('skipping proj0.26 on Linux as it requires a windows environment')
+		return
+	}
+
+	FileUtils.copyFile('openedge-project.test26.json', 'openedge-project.json')
+	await runTestsInFile('src/simpleTest.p', 0).then(() => {
+		assert.ok('test ran successfully')
+	}, (e: unknown) => {
+		assert.fail('test failed: ' + e)
+	})
+	return
+})
+
+test('proj0.27 - ABLExec dbconns', async () => {
+	FileUtils.copyFile('openedge-project.test27.json', 'openedge-project.json')
+
+	await runTestsInFile('src/dirA/dir1/testInDir.p').then(() => {
+			assert.fail('expected error to be thrown running tests in src/dirA/dir1/testInDir.p')
+		}, (e: unknown) => {
+			log.info('tests in src/dirA/dir1/testInDir.p failed as expected: ' + e)
+			assert.equal(window.activeTextEditor?.document.uri.fsPath, toUri('src/dirA/dir1/testInDir.p').fsPath, 'activeTextEditor should be testInDir.p')
+		})
+
+	await commands.executeCommand('ablunit.showDebugListingPreview')
+	assert.equal(window.visibleTextEditors.length, 2, 'visibleTextEditors.length should be 2')
+	for (const e of window.visibleTextEditors) {
+		log.info('e.document= ' + e.document.uri.scheme + ' ' + e.document.uri.fsPath)
+	}
+	assert.ok(window.visibleTextEditors?.find(e => e.document.uri.scheme === 'debugListing'))
+	return
+})
+
+test('proj0.27 - database connection needed but not configured', async () => {
 	FileUtils.copyFile('openedge-project.test26.json', 'openedge-project.json')
 	await deleteRcode()
 	await restartLangServer(23)
@@ -579,7 +613,7 @@ test('proj0.26 - database connection needed but not configured', async () => {
 	return
 })
 
-test('proj0.27 - database connection not valid', async () => {
+test('proj0.28 - database connection not valid', async () => {
 	FileUtils.copyFile('openedge-project.test27.json', 'openedge-project.json')
 
 	await runTestsInFile('src/dirA/dir1/testInDir.p').then(() => {

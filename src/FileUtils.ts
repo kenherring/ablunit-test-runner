@@ -266,3 +266,11 @@ export function renameFile (source: Uri | string, target: Uri | string): void {
 	}
 	fs.renameSync(source.fsPath, target.fsPath)
 }
+
+export function getFileModifiedTime (uri: Uri | string): Date {
+	if (typeof uri === 'string') {
+		uri = toUri(uri)
+	}
+
+	return fs.statSync(uri.fsPath).mtime
+}

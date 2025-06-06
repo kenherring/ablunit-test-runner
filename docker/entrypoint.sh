@@ -223,8 +223,10 @@ save_cache () {
 		log_it "saving .vscode-test to cache"
 		mkdir -p "$CACHE_BASE/.vscode-test"
 		mkdir -p "$CACHE_BASE/node_modules"
+		mkdir -p "$CACHE_BASE/npm"
 		rsync -aR ./.vscode-test "$CACHE_BASE"
 		rsync -aR ./node_modules "$CACHE_BASE"
+		rsync -aR "$npm_config_cache" "$CACHE_BASE/npm"
 	fi
 
 	if [ -d ./dummy-ext/.vscode-test ]; then
@@ -252,6 +254,11 @@ restore_cache () {
 	if [ -d "$CACHE_BASE/.vscode-test" ]; then
 		log_it "restoring .vscode-test from cache"
 		rsync -aR ./.vscode-test "$BASE_DIR"
+	fi
+	if [ -d "$CACHE_BASE/npm" ]; then
+		log_it "restoring $npm_config_cache from cache"
+		## /home/circleci/cache/node_modules_cache
+		rsync -aR ./npm "$npm_config_cache"
 	fi
 	if [ -d "$CACHE_BASE/dummy-ext/.vscode-test" ]; then
 		log_it "restoring dummy-ext/.vscode-test from cache"

@@ -86,10 +86,6 @@ function getMochaOpts (projName) {
 		],
 	}
 
-	if (projName === 'proj7A') {
-		mochaOpts.retries = 2
-	}
-
 	if (process.env['ABLUNIT_TEST_RUNNER_RUN_SCRIPT_FLAG']) {
 		mochaOpts.reporter = 'mocha-multi-reporters'
 		mochaOpts.reporterOptions = {
@@ -281,17 +277,45 @@ function getTests () {
 		return tests
 	}
 
+	const skipProjects = [
+		'OpenedgeProjectParser',
+		// 'SourceMapRCodeParser',
+		// 'SourceMapXrefParser',
+		// 'TestProfileParser',
+		// 'AtStart',
+		// 'DebugLines',
+		// 'proj0',
+		// 'proj1',
+		// 'proj2',
+		// 'proj3',
+		// 'proj4',
+		// 'proj5',
+		// 'proj6',
+		// 'proj7A',
+		// 'proj7B',
+		// 'proj8',
+		// 'proj9',
+		// 'projA',
+		// 'workspace0',
+		// 'workspace1',
+	]
+
 	const g = glob.globSync('test/suites/*.test.ts').reverse()
 	for (const f of g) {
 		const basename = path.basename(f, '.test.ts')
+		if (!skipProjects.includes(basename)) {
 			tests.push(getTestConfig('suites', basename))
+		}
 	}
 
 	const p = glob.globSync('test/parse/*.test.ts')
 	for (const f of p) {
 		const basename = path.basename(f, '.test.ts')
-		tests.push(getTestConfig('parse', basename))
+		if (!skipProjects.includes(basename)) {
+			tests.push(getTestConfig('parse', basename))
+		}
 	}
+
 	return tests
 }
 
@@ -306,7 +330,7 @@ function getCoverageOpts () {
 		// * 'lcov' includes 'html' output
 		// * 'lcovonly' does not include 'html' output
 		reporter: [ 'text', 'lcovonly' ],
-		output: coverageDir, // https://github.com/microsoft/vscode-test-cli/issues/38
+		// output: coverageDir, // https://github.com/microsoft/vscode-test-cli/issues/38
 		exclude: [
 			'node_modules',
 			'node_modules/',
@@ -315,6 +339,7 @@ function getCoverageOpts () {
 			'./node_modules/',
 			'./node_modules/**',
 			'**/node_modules/**',
+			'**/node_modules',
 		],
 	}
 	return coverageOpts

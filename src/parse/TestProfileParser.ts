@@ -171,7 +171,6 @@ export class RunConfig extends DefaultRunProfile {
 		jsonUri?: Uri
 		updateUri: Uri | undefined
 	}
-	public readonly progressIniUri: Uri | undefined
 	public readonly profOptsUri: Uri
 	public readonly profListingsUri: Uri | undefined
 	public readonly profFilenameUri: Uri
@@ -179,7 +178,7 @@ export class RunConfig extends DefaultRunProfile {
 	public readonly dbConnPfUri: Uri
 	public dbAliases: string[] = []
 
-	constructor (private readonly profile: IRunProfile, public workspaceFolder: WorkspaceFolder) {
+	constructor (private readonly profile: IRunProfile, public workspaceFolder: WorkspaceFolder, ablunitProfile = true) {
 		super()
 		this.tempDirUri = this.getUri(this.profile.tempDir)
 		this.timeout = this.profile.timeout
@@ -189,7 +188,7 @@ export class RunConfig extends DefaultRunProfile {
 		this.dbConnPfUri = Uri.joinPath(this.tempDirUri, 'dbconn.pf')
 		this.importOpenedgeProjectJson = this.profile.importOpenedgeProjectJson
 		this.openedgeProjectProfile = this.profile.openedgeProjectProfile ?? undefined
-		this.dbConns = getProfileDbConns(this.workspaceFolder.uri, this.profile.openedgeProjectProfile)
+		this.dbConns = getProfileDbConns(this.workspaceFolder.uri, this.profile.openedgeProjectProfile, ablunitProfile)
 
 		this.options = new CoreOptions(this.profile.options)
 		const tmpFilename = (this.profile.options?.output?.filename?.replace(/\.xml$/, '') ?? 'results') + '.xml'
@@ -220,16 +219,9 @@ export class RunConfig extends DefaultRunProfile {
 		}
 
 		this.command = new CommandOptions(this.profile.command)
-		if (this.command.progressIni != '') {
-			this.progressIniUri = this.getUri(this.command.progressIni)
-			this.command.progressIni = workspace.asRelativePath(this.progressIniUri, false)
-		} else {
-			this.progressIniUri = undefined
-		}
 
 		const extraParameters = getExtraParameters(this.workspaceFolder.uri, this.profile.openedgeProjectProfile)?.split(' ')
 		// TODO - re-join quoted strings
-		log.info('extraParameters=' + JSON.stringify(extraParameters))
 		if (extraParameters) {
 			this.command.additionalArgs.push(...extraParameters)
 		}
@@ -274,6 +266,6 @@ export class RunConfig extends DefaultRunProfile {
 	}
 }
 
-export function getProfileConfig (workspaceFolder: WorkspaceFolder) {
-	return new RunConfig(parseRunProfiles([workspaceFolder])[0], workspaceFolder)
+export function getProfileConfig (workspaceFolder: WorkspaceFolder, ablunitProfile = true) {
+	return new RunConfig(parseRunProfiles([workspaceFolder])[0], workspaceFolder, ablunitProfile)
 }
