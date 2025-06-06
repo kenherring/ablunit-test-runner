@@ -623,8 +623,26 @@ test('proj0.29 - database connection not valid', async () => {
 			assert.fail('expected Error but got: ' + JSON.stringify(e, null, 2))
 			throw e
 		}
-		if (e.name !== 'ABLUnitRuntimeError') {
-			assert.fail('expected ABLUnitRuntimeError but got: ' + JSON.stringify(e, null, 2))
-		}
+		log.info('e.name=' + e.name)
+		assert.equal(e.name, 'ABLUnitRuntimeError', 'expected ABLUnitRuntimeError but got: ' + JSON.stringify(e, null, 2))
 	})
+	return
+})
+
+test('proj0.30 - database connection not valid', async () => {
+	FileUtils.copyFile('.vscode/ablunit-test-profile.test30.json', '.vscode/ablunit-test-profile.json')
+	FileUtils.copyFile('openedge-project.test30.json', 'openedge-project.json')
+
+	await runTestsInFile('src/dirA/dir1/testInDir.p').then(() => {
+		assert.fail('expected error to be thrown')
+	}, (e: unknown) => {
+		log.info('e=' + e)
+		if (!(e instanceof Error)) {
+			assert.fail('expected Error but got: ' + JSON.stringify(e, null, 2))
+			throw e
+		}
+		log.info('e.name=' + e.name + ', e.message=' + e.message)
+		assert.equal(e.name, 'ABLUnitRuntimeError', 'expected ABLUnitRuntimeError but got: ' + JSON.stringify(e, null, 2))
+	})
+	return
 })

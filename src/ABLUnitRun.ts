@@ -327,8 +327,7 @@ function runCommand (res: ABLResults, options: TestRun, cancellation: Cancellati
 						})
 				}
 
-				// if (/\*\* .* \([0-9]+\)/.exec(line)) {
-				if (/^\*\*/.exec(line)) {
+				if (/^\*\* .* \([0-9]+\)/.exec(line)) {
 					openedgeErrorMessages.push(line)
 				}
 
@@ -394,6 +393,9 @@ function runCommand (res: ABLResults, options: TestRun, cancellation: Cancellati
 							options.skipped(allTests[i])
 						}
 					}
+					const e = new ABLUnitRuntimeError('ABLUnit exit_code=' + code, openedgeErrorMessages.join('\n'), cmd)
+					reject(e)
+					return e
 				}
 				const e = new ABLUnitRuntimeError('ABLUnit exit_code=' + code, 'ABLUnit exit_code=' + code + '; signal=' + signal, cmd)
 				reject(e)
@@ -413,6 +415,14 @@ function runCommand (res: ABLResults, options: TestRun, cancellation: Cancellati
 			log.debug('close code=' + code + ' signal=' + signal)
 			if (code == 0) {
 				log.info('----- ABLUnit Test Run Complete ----- ' + testRunDuration, {testRun: options})
+			} else if (openedgeErrorMessages.length > 0 && proc.pid) {
+				log.warn('killing process pid=' + proc.pid + ' after close code=' + code + ' signal=' + signal)
+				treeKill(proc.pid, 'SIGTERM', (err) => {
+						if (err) {
+							log.error('failed to kill process pid=' + proc.pid + ' err=' + err)
+							throw err
+						}
+					})
 			}
 		}).on('message', (m: Serializable, _h: SendHandle) => {
 			log.debug('message m=' + JSON.stringify(m))
