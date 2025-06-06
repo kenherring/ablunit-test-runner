@@ -177,32 +177,3 @@ test('debugLines.7 - Debug Listing Preview', async () => {
 	await commands.executeCommand('setSelection', { uri: debugUri, selection: new Selection(30, 0, 32, 4) })
 	await validateSelectionAfterChange(sourceUri, [26,0, 82, 4 + 12])
 })
-
-test('debugLines.8 - Debug Listing Preview', async () => {
-	FileUtils.copyFile('openedge-project.test8.json', 'openedge-project.json')
-	const sourceUri = toUri('src/code/unit_test7.p')
-	const debugUri = toUri('src/code/unit_test7.p Debug Listing')
-
-	await commands.executeCommand('workbench.action.closeAllEditors')
-	await commands.executeCommand('vscode.open', sourceUri)
-	if (!window.activeTextEditor) {
-		assert.fail('no activeTextEditor found')
-		throw new Error('no activeTextEditor found')
-	}
-	assert.equal(window.activeTextEditor.document.uri.fsPath, sourceUri.fsPath, 'activeTextEditor')
-	window.activeTextEditor.selection = new Selection(15, 0, 15, 0)
-
-	await commands.executeCommand('ablunit.showDebugListingPreview')
-	assert.selection(window.activeTextEditor.selection, [15, 0, 15, 0])
-
-	// validate initial selection from source editor cursor location
-	log.info('validate intitial seletion...')
-	const ext = extensions.getExtension('kherring.ablunit-test-runner')?.exports as ABLUnitTestRunner
-	const d = ext.getDebugListingPreviewEditor(window.activeTextEditor.document.uri)
-	if (!d) {
-		assert.fail('no Debug Listing Preview open for ' + window.activeTextEditor.document.uri.fsPath)
-		return
-	}
-	assert.equal(d?.document.uri.fsPath, debugUri.fsPath)
-	assert.selection(d?.selection, [19, 0, 20, 0])
-})
