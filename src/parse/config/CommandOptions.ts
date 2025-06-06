@@ -1,7 +1,7 @@
 
 export interface ICommandOptions {
 	executable: string | undefined
-	progressIni: string | undefined
+	progressIni?: string
 	batch: boolean | undefined
 	debugHost: string | undefined
 	debugPort: number | undefined
@@ -11,7 +11,6 @@ export interface ICommandOptions {
 
 export class CommandOptions implements ICommandOptions {
 	executable = '_progres'
-	progressIni = 'progress.ini'
 	batch = true
 	debugHost = 'localhost'
 	debugPort = 3199
@@ -23,7 +22,6 @@ export class CommandOptions implements ICommandOptions {
 			return
 		}
 		this.executable = from.executable ?? this.executable
-		this.progressIni = from.progressIni ?? this.progressIni
 		this.batch = from.batch ?? this.batch
 		this.debugHost = from.debugHost ?? this.debugHost
 		this.debugPort = from.debugPort ?? this.debugPort

@@ -51,7 +51,7 @@ procedure setPropath :
 
 	if search('VSCode/createDatabaseAliases.p') = ? then
 	do:
-		inputPropath = getParameter(trim(trim(session:parameter,'"'),"'"), 'PROPATH').
+		inputPropath = os-getenv('PROPATH').
 		if inputPropath <> '' then
 			propath = inputPropath + ',' + propath.
 		else
@@ -121,7 +121,7 @@ procedure main :
 	assign updateFile = getParameter(trim(trim(session:parameter,'"'),"'"), 'ATTR_ABLUNIT_EVENT_FILE').
 	testConfig = readTestConfig(getParameter(trim(trim(session:parameter,'"'),"'"), 'CFG')).
 	quitOnEnd = (testConfig = ?) or testConfig:quitOnEnd.
-	run ABLRunner-wrapper.p(testConfig, updateFile).
+	run VSCode/ABLRunner-wrapper.p(testConfig, updateFile).
 	if VERBOSE then message 'END main'.
 end procedure.
 

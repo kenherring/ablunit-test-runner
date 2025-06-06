@@ -188,7 +188,7 @@ export class DebugListingContentProvider implements TextDocumentContentProvider 
 		let cfg = this.cfg.get(wf)
 		if (!cfg) {
 			cfg = new ABLUnitConfig()
-			cfg.setup(wf)
+			cfg.setup(wf, undefined, false)
 			this.cfg.set(wf, cfg)
 		}
 
@@ -345,8 +345,10 @@ export class DebugListingContentProvider implements TextDocumentContentProvider 
 	private generateDebugListing (cfg: ABLUnitConfig, dlc: IDlc, contextResourcesUri: Uri, propath: PropathParser, currentUri: Uri, debugListingUri: Uri) {
 		const env: Record<string, string> = {
 			SOURCE_FILE: currentUri.fsPath,
-			DEBUG_LISTING_PATH: debugListingUri.fsPath,
+			DEBUG_LISTING_FILE: debugListingUri.fsPath,
 		}
+
+		cfg.createDbConnPf(cfg.ablunitConfig.dbConnPfUri, cfg.ablunitConfig.dbConns)
 		return ablExec(cfg, dlc, Uri.joinPath(contextResourcesUri, 'VSCodeTestRunner', 'VSCode', 'generateDebugListing.p').fsPath, propath, env)
 	}
 }

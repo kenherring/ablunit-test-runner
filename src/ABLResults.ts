@@ -114,7 +114,6 @@ export class ABLResults implements Disposable {
 		const proms: (Thenable<void> | Promise<void> | Promise<void[]> | undefined)[] = []
 		this.cfg.createProfileOptions(this.cfg.ablunitConfig.profOptsUri, this.cfg.ablunitConfig.profiler)
 		this.cfg.createDbConnPf(this.cfg.ablunitConfig.dbConnPfUri, this.cfg.ablunitConfig.dbConns)
-		// this.cfg.createProgressIni(this.propath.toString(), this.dlc)
 		proms.push(this.cfg.createAblunitJson(this.cfg.ablunitConfig.config_uri, this.cfg.ablunitConfig.options, this.testQueue))
 
 		return Promise.all(proms).then(() => {

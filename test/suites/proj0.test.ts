@@ -574,4 +574,24 @@ test('proj0.26 - set propath on the fly', async () => {
 	}, (e: unknown) => {
 		assert.fail('test failed: ' + e)
 	})
+	return
+})
+
+test('proj0.27 - ABLExec', async () => {
+	FileUtils.copyFile('openedge-project.test27.json', 'openedge-project.json')
+
+	await runTestsInFile('src/dirA/dir1/testInDir.p').then(() => {
+			assert.fail('expected error to be thrown running tests in src/dirA/dir1/testInDir.p')
+		}, (e: unknown) => {
+			log.info('tests in src/dirA/dir1/testInDir.p failed as expected: ' + e)
+			assert.equal(window.activeTextEditor?.document.uri.fsPath, toUri('src/dirA/dir1/testInDir.p').fsPath, 'activeTextEditor should be testInDir.p')
+		})
+
+	await commands.executeCommand('ablunit.showDebugListingPreview')
+	assert.equal(window.visibleTextEditors.length, 2, 'visibleTextEditors.length should be 2')
+	for (const e of window.visibleTextEditors) {
+		log.info('e.document= ' + e.document.uri.scheme + ' ' + e.document.uri.fsPath)
+	}
+	assert.ok(window.visibleTextEditors?.find(e => e.document.uri.scheme === 'debugListing'))
+	return
 })
