@@ -577,7 +577,7 @@ test('proj0.26 - set propath on the fly', async () => {
 	return
 })
 
-test('proj0.27 - ABLExec', async () => {
+test('proj0.27 - ABLExec dbconns', async () => {
 	FileUtils.copyFile('openedge-project.test27.json', 'openedge-project.json')
 
 	await runTestsInFile('src/dirA/dir1/testInDir.p').then(() => {

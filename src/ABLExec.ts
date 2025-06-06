@@ -108,11 +108,11 @@ function runCommand (cfg: ABLUnitConfig, dlc: IDlc, execFile: string, propath: P
 	return new Promise<string>((resolve, reject) => {
 		proc.stderr?.on('data', (data: Buffer) => {
 			log.debug('stderr')
-			log.info('\t\t[stderr] ' + data.toString().trim().replace(/\n/g, '\n\t\t[stderr] '))
+			log.error('\t\t[stderr] ' + data.toString().trim().replace(/\n/g, '\n\t\t[stderr] '))
 		})
 		proc.stdout?.on('data', (data: Buffer) => {
 			log.debug('stdout data=' + data.toString().trim())
-			log.info('\t\t[stdout] ' + data.toString().trim().replace(/\n/g, '\n\t\t[stdout] '))
+			log.debug('\t\t[stdout] ' + data.toString().trim().replace(/\n/g, '\n\t\t[stdout] '))
 		})
 		proc.once('spawn', () => {
 			log.debug('spawn')

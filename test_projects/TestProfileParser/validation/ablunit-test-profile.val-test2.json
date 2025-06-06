@@ -1,6 +1,7 @@
 {
 	"configurations": [
 		{
+			"hide": false,
 			"tempDir": ".",
 			"importOpenedgeProjectJson": true,
 			"timeout": 30000,

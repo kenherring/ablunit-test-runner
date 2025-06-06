@@ -1,22 +1,19 @@
 block-level on error undo, throw.
 
 define variable VERBOSE as logical no-undo.
-VERBOSE = true.
 
 run main.
 return.
 
 catch s as Progress.Lang.Stop:
-	message "CATCH STOP generateDebugListing.p".
+	// if VERBOSE then message "CATCH STOP generateDebugListing.p (s.message=" + s:toString() + ")".
+	message "CATCH STOP generateDebugListing.p (s.message=" + s:toString() + ")".
 	undo, throw s.
 end catch.
 catch e as Progress.Lang.Error:
-	message "CATCH ERROR generateDebugListing.p".
+	// message "CATCH ERROR generateDebugListing.p (e.message=" + e:GetMessage(0) + " (" + string(e:GetMessageNum(0)) + "))".
 	undo, throw e.
 end catch.
-finally:
-	message "FINALLY generateDebugListing.p".
-end finally.
 
 procedure main :
     run setPropath.

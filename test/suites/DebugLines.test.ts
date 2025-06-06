@@ -1,5 +1,5 @@
 import { commands, Selection, Uri, window, workspace, Disposable, extensions } from 'vscode'
-import { assert, FileUtils, getRcodeCount, getWorkspaceUri, log, suiteSetupCommon, toUri } from '../testCommon'
+import { assert, getRcodeCount, getWorkspaceUri, log, suiteSetupCommon, toUri } from '../testCommon'
 import { getSourceMapFromRCode } from 'parse/SourceMapRCodeParser'
 import { PropathParser } from 'ABLPropath'
 import { ABLUnitTestRunner } from '@types'

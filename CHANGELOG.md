@@ -1,6 +1,6 @@
 # [1.3.17](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.3.17) - 2025-06-06 (pre-release)
 
-* Remove remaining inifile logic; ablunit.showDebugListingPreview compi… (#318)
+* Remove remaining inifile logic; ablunit.showDebugListingPreview compilation improvements (#318)
 * Add extension resources directory to propath at runtime (#316)
 * Enable ablunit.debugListingPreview command when not in testing mode (#317)
 * Add Debug Listing Preview (#305)

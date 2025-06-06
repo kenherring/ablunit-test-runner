@@ -348,7 +348,7 @@ export class DebugListingContentProvider implements TextDocumentContentProvider 
 			DEBUG_LISTING_FILE: debugListingUri.fsPath,
 		}
 
-		cfg.createDbConnPf(cfg.ablunitConfig.dbConnPfUri, cfg.ablunitConfig.dbConns)
+		cfg.createDbConnPf()
 		return ablExec(cfg, dlc, Uri.joinPath(contextResourcesUri, 'VSCodeTestRunner', 'VSCode', 'generateDebugListing.p').fsPath, propath, env)
 	}
 }

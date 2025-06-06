@@ -15,7 +15,6 @@ export class ABLUnitConfig  {
 	// ablunitConfig: IABLUnitConfig = <IABLUnitConfig>{}
 	ablunitConfig: RunConfig = {} as RunConfig
 	requestKind: TestRunProfileKind | undefined
-	ablunitProfile = true
 
 	setup (workspaceFolder: WorkspaceFolder, request?: TestRunRequest, ablunitProfile = true) {
 		log.info('[ABLUnitConfigWriter setup] workspaceUri="' + workspaceFolder.uri.fsPath + '"')
@@ -91,7 +90,9 @@ export class ABLUnitConfig  {
 		this.writeFile(uri, Uint8Array.from(Buffer.from(opt.join('\n') + '\n')))
 	}
 
-	createDbConnPf (uri: Uri, dbConns: IDatabaseConnection[]) {
+	createDbConnPf (uri?: Uri, dbConns?: IDatabaseConnection[]) {
+		uri = uri ?? this.ablunitConfig.dbConnPfUri
+		dbConns = dbConns ?? this.ablunitConfig.dbConns
 		if (!dbConns || dbConns.length == 0) {
 			return
 		}
