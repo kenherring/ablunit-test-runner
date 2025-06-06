@@ -1,5 +1,6 @@
-# [1.3.15](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.3.15) - 2025-06-05 (pre-release)
+# [1.3.17](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.3.17) - 2025-06-06 (pre-release)
 
+* Remove remaining inifile logic; ablunit.showDebugListingPreview compilation improvements (#318)
 * Add extension resources directory to propath at runtime (#316)
 * Enable ablunit.debugListingPreview command when not in testing mode (#317)
 * Add Debug Listing Preview (#305)
@@ -14,7 +15,7 @@
 * Bump mocha from 11.4.0 to 11.5.0 (#301)
 * Bump @types/node from 22.15.17 to 22.15.21 (#304)
 
-**Full Changelog**: [1.3.0...1.3.15](https://github.com/kenherring/ablunit-test-runner/compare/1.3.13...1.3.15)
+**Full Changelog**: [1.3.0...1.3.17](https://github.com/kenherring/ablunit-test-runner/compare/1.3.15...1.3.17)
 
 # [1.3.0](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.3.0) - 2025-05-21
 

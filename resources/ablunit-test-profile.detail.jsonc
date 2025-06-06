@@ -40,18 +40,6 @@
 			////# Path to the executable used launch the test run.
 			"executable": "_progres",
 
-			////# Path to the "progressIni" file which can define a propath, etc.  It will be
-			////# passed to the test run process with the following parameters:
-			////#    '-basekey INI -ininame ${progressIni}'
-			////#
-			////# Notes:
-			////#   * When the value provided resolves to an existing file it will be copied
-			////#     to the "tempDir" before test execution.
-			////#   * If no value is provided or the file does not exist the extension will
-			////#     attempt to create a default progress.ini file in the "tempDir".
-			////#   * A blank value will remove the related args from the command line.
-			"progressIni": "progress.ini",
-
 			////# Include batch mode (-b) argument
 			"batch": true,
 

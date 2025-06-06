@@ -141,6 +141,7 @@ test('debugLines.7 - Debug Listing Preview', async () => {
 	const sourceUri = toUri('src/code/unit_test7.p')
 	const debugUri = toUri('src/code/unit_test7.p Debug Listing')
 
+	await commands.executeCommand('workbench.action.closeAllEditors')
 	await commands.executeCommand('vscode.open', sourceUri)
 
 	if (!window.activeTextEditor) {

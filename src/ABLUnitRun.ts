@@ -126,6 +126,8 @@ function getDefaultCommand (res: ABLResults) {
 
 	const cmd = [ executable, '-b', '-p', res.wrapperUri.fsPath.replace(/\\/g, '/') ]
 
+	process.env['PROPATH'] = res.propath.toString().replace(/\$\{DLC\}/g, res.dlc.uri.fsPath.replace(/\\/g, '/'))
+
 	cmd.push('-T', res.cfg.ablunitConfig.tempDirUri.fsPath)
 
 	if (res.cfg.ablunitConfig.dbConnPfUri && res.cfg.ablunitConfig.dbConns && res.cfg.ablunitConfig.dbConns.length > 0) {
@@ -144,13 +146,6 @@ function getDefaultCommand (res: ABLResults) {
 	let params = 'CFG=' + res.cfg.ablunitConfig.config_uri.fsPath + '='
 	if (res.cfg.ablunitConfig.dbAliases.length > 0) {
 		params = params + ' ALIASES=' + res.cfg.ablunitConfig.dbAliases.join(';')
-	}
-	if (process.platform === 'win32') {
-		params = params + ' PROPATH=' + res.propath.toString().replace(/\$\{DLC\}/g, res.dlc.uri.fsPath.replace(/\\/g, '/'))
-	} else if (process.platform === 'linux') {
-		process.env['PROPATH'] = res.propath.toString().replace(/\$\{DLC\}/g, res.dlc.uri.fsPath.replace(/\\/g, '/'))
-	} else {
-		throw new Error('unsupported platform: ' + process.platform)
 	}
 	if (res.cfg.ablunitConfig.optionsUri.updateUri) {
 		params = params + ' ATTR_ABLUNIT_EVENT_FILE=' + res.cfg.ablunitConfig.optionsUri.updateUri.fsPath

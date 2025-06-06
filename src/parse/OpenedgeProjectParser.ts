@@ -387,7 +387,7 @@ function parseOpenEdgeConfig (cfg: IOpenEdgeConfig | undefined): ProfileConfig {
 	return retVal
 }
 
-function parseOpenEdgeProjectConfig (uri: Uri, workspaceUri: Uri, config: IOpenEdgeMainConfig): OpenEdgeProjectConfig {
+function parseOpenEdgeProjectConfig (uri: Uri, workspaceUri: Uri, config: IOpenEdgeMainConfig, ablunitProfile: boolean): OpenEdgeProjectConfig {
 	log.debug('[parseOpenEdgeProjectConfig] uri = ' + uri.fsPath)
 	const prjConfig = new OpenEdgeProjectConfig()
 	prjConfig.name = config.name
@@ -440,7 +440,7 @@ function parseOpenEdgeProjectConfig (uri: Uri, workspaceUri: Uri, config: IOpenE
 	}
 
 	// Active profile
-	if (prjConfig.profiles.has('ablunit')) {
+	if (ablunitProfile && prjConfig.profiles.has('ablunit')) {
 		prjConfig.activeProfile = 'ablunit'
 	} else {
 		const actProf = getActiveProfile(prjConfig.rootDir)
@@ -457,7 +457,7 @@ function parseOpenEdgeProjectConfig (uri: Uri, workspaceUri: Uri, config: IOpenE
 	return prjConfig
 }
 
-function readOEConfigFile (uri: Uri, workspaceUri: Uri, openedgeProjectProfile?: string) {
+function readOEConfigFile (uri: Uri, workspaceUri: Uri, openedgeProjectProfile?: string, ablunitProfile = true) {
 	log.debug('[readOEConfigFile] uri = ' + uri.fsPath + ', workspaceUri=' + workspaceUri.fsPath)
 	const projects: OpenEdgeProjectConfig[] = []
 
@@ -467,7 +467,7 @@ function readOEConfigFile (uri: Uri, workspaceUri: Uri, openedgeProjectProfile?:
 		ret.activeProfile = openedgeProjectProfile
 		return ret
 	}
-	const prjConfig = parseOpenEdgeProjectConfig(uri, workspaceUri, config)
+	const prjConfig = parseOpenEdgeProjectConfig(uri, workspaceUri, config, ablunitProfile)
 	if (prjConfig.dlc != '') {
 		log.debug('OpenEdge project configured in ' + prjConfig.rootDir + ' -- DLC: ' + prjConfig.dlc)
 		const idx: number = projects.findIndex((element) =>
@@ -488,7 +488,7 @@ function readOEConfigFile (uri: Uri, workspaceUri: Uri, openedgeProjectProfile?:
 	return prjConfig
 }
 
-function getWorkspaceProfileConfig (workspaceUri: Uri, openedgeProjectProfile?: string) {
+function getWorkspaceProfileConfig (workspaceUri: Uri, openedgeProjectProfile?: string, ablunitProfile = true) {
 	let uri = workspaceUri
 	if (!FileUtils.doesFileExist(workspaceUri)) {
 		uri = Uri.joinPath(workspaceUri, 'openedge-project.json')
@@ -501,7 +501,7 @@ function getWorkspaceProfileConfig (workspaceUri: Uri, openedgeProjectProfile?: 
 		throw new Error('Uri does not exist in workspace: ')
 	}
 	log.debug('[getWorkspaceProfileConfig] uri = ' + uri.fsPath)
-	const prjConfig = readOEConfigFile(uri, workspaceFolderUri, openedgeProjectProfile)
+	const prjConfig = readOEConfigFile(uri, workspaceFolderUri, openedgeProjectProfile, ablunitProfile)
 
 	const activeProfile = openedgeProjectProfile ?? prjConfig.activeProfile
 
@@ -551,10 +551,10 @@ export function getExtraParameters (workspaceUri: Uri, openedgeProjectProfile?: 
 	return profileConfig.extraParameters
 }
 
-export function getProfileDbConns (workspaceUri: Uri, openedgeProjectProfile?: string) {
+export function getProfileDbConns (workspaceUri: Uri, openedgeProjectProfile?: string, ablunitProfile = true) {
 	log.debug('[getProfileDbConns] workspaceUri = ' + workspaceUri.fsPath)
 
-	const profileConfig = getWorkspaceProfileConfig(workspaceUri, openedgeProjectProfile)
+	const profileConfig = getWorkspaceProfileConfig(workspaceUri, openedgeProjectProfile, ablunitProfile)
 	if (!profileConfig) {
 		log.info('[getProfileDbConns] profileConfig is undefined')
 		return []

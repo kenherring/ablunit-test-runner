@@ -3,8 +3,7 @@
 		{
 			"tempDir": "${workspaceFolder}",
 			"command": {
-				"executable": "_progres",
-				"progressIni": "progress.ini"
+				"executable": "_progres"
 			},
 			"options": {
 				"output": {

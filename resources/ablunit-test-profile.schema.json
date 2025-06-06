@@ -242,10 +242,10 @@
 							},
 							"progressIni": {
 								"type": "string",
-								"default": "${tempDir}/progress.ini",
+								"default": "",
 								"nullable": true,
-								"description": "Windows only. Path to ini configuration file. Appended to test run execution with command line arguments: `-basekey INI -basename <progressIni>`.  Set to \"null\" to disable.",
-								"markdownDescription": "Windows only. Path to ini configuration file. Appended to test run execution with command line arguments: `-basekey INI -basename <progressIni>`.  Set to `null` to disable."
+								"description": "Deprecated",
+								"markdownDescription": "Deprecated\n\n~~Windows only. Path to ini configuration file. Appended to test run execution with command line arguments: `-basekey INI -basename <progressIni>`.  Set to `null` to disable.~~"
 							},
 							"batch": {
 								"type": "boolean",

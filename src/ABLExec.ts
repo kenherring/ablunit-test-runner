@@ -54,18 +54,7 @@ function getDefaultCommand (cfg: ABLUnitConfig, dlc: IDlc, propath: PropathParse
 
 	const cmd = [ executable, '-b', '-p', execFile ]
 
-	if (process.platform === 'win32') {
-		cfg.createProgressIni(propath.toString(), dlc)
-		if (cfg.ablunitConfig.progressIniUri) {
-			cmd.push('-basekey', 'INI', '-ininame', cfg.ablunitConfig.progressIniUri.fsPath)
-		}
-	} else if (process.platform === 'linux') {
-		process.env['PROPATH'] = propath.toString()
-	} else {
-		throw new Error('unsupported platform: ' + process.platform)
-	}
-
-	// cmd.push('-T', cfg.ablunitConfig.tempDirUri.fsPath)
+	process.env['PROPATH'] = propath.toString().replace(/\$\{DLC\}/g, dlc.uri.fsPath.replace(/\\/g, '/'))
 
 	if (cfg.ablunitConfig.dbConnPfUri && cfg.ablunitConfig.dbConns && cfg.ablunitConfig.dbConns.length > 0) {
 		cmd.push('-pf', cfg.ablunitConfig.dbConnPfUri.fsPath)
@@ -173,6 +162,6 @@ export function getEnvVars (dlcUri: Uri | undefined, env: Record<string, string>
 		runenv['DLC'] = dlcUri.fsPath.replace(/\\/g, '/')
 	}
 	runenv['SOURCE_FILE'] = env['SOURCE_FILE']
-	runenv['DEBUG_LISTING_PATH'] = env['DEBUG_LISTING_PATH']
+	runenv['DEBUG_LISTING_FILE'] = env['DEBUG_LISTING_FILE']
 	return runenv
 }

@@ -124,18 +124,12 @@ suite('proj4 - Extension Test Suite', () => {
 	test('proj4.6 - tempDir=target', async () => {
 		const workspaceUri = getWorkspaceUri()
 		const ablunitJson = Uri.joinPath(workspaceUri, 'target', 'ablunit.json')
-		const progressIni = Uri.joinPath(workspaceUri, 'target', 'progress.ini')
-		FileUtils.deleteFile([ablunitJson, progressIni])
 
 		await updateTestProfile('tempDir', 'target')
 		await runAllTests()
 		assert.fileExists(ablunitJson)
-		if (process.platform === 'win32') {
-			assert.fileExists(progressIni)
-		}
 
 		FileUtils.deleteFile(ablunitJson)
-		FileUtils.deleteFile(progressIni)
 	})
 
 })
