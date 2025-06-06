@@ -327,7 +327,7 @@ function runCommand (res: ABLResults, options: TestRun, cancellation: Cancellati
 						})
 				}
 
-				if (/^\*\* .* \([0-9]+\)/.exec(line)) {
+				if (/^\*\* .* \(\d+\)/.exec(line)) {
 					openedgeErrorMessages.push(line)
 				}
 
