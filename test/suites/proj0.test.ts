@@ -595,3 +595,54 @@ test('proj0.27 - ABLExec dbconns', async () => {
 	assert.ok(window.visibleTextEditors?.find(e => e.document.uri.scheme === 'debugListing'))
 	return
 })
+
+test('proj0.28 - database connection needed but not configured', async () => {
+	FileUtils.copyFile('openedge-project.test28.json', 'openedge-project.json')
+	await deleteRcode()
+
+	await runTestsInFile('src/dirA/dir1/testInDir.p').then(() => {
+		assert.fail('expected error to be thrown')
+	}, (e: unknown) => {
+		if (!(e instanceof Error)) {
+			assert.fail('expected Error but got: ' + JSON.stringify(e, null, 2))
+			throw e
+		}
+		assert.equal(e.name, 'ABLCompilerError', 'expected ABLUnitRuntimeError but got: ' + JSON.stringify(e, null, 2))
+	})
+	return
+})
+
+test('proj0.29 - database connection not valid', async () => {
+	FileUtils.copyFile('openedge-project.test29.json', 'openedge-project.json')
+
+	await runTestsInFile('src/dirA/dir1/testInDir.p').then(() => {
+		assert.fail('expected error to be thrown')
+	}, (e: unknown) => {
+		log.info('e=' + e)
+		if (!(e instanceof Error)) {
+			assert.fail('expected Error but got: ' + JSON.stringify(e, null, 2))
+			throw e
+		}
+		log.info('e.name=' + e.name)
+		assert.equal(e.name, 'ABLUnitRuntimeError', 'expected ABLUnitRuntimeError but got: ' + JSON.stringify(e, null, 2))
+	})
+	return
+})
+
+test('proj0.30 - database connection not valid', async () => {
+	FileUtils.copyFile('.vscode/ablunit-test-profile.test30.json', '.vscode/ablunit-test-profile.json')
+	FileUtils.copyFile('openedge-project.test30.json', 'openedge-project.json')
+
+	await runTestsInFile('src/dirA/dir1/testInDir.p').then(() => {
+		assert.fail('expected error to be thrown')
+	}, (e: unknown) => {
+		log.info('e=' + e)
+		if (!(e instanceof Error)) {
+			assert.fail('expected Error but got: ' + JSON.stringify(e, null, 2))
+			throw e
+		}
+		log.info('e.name=' + e.name + ', e.message=' + e.message)
+		assert.equal(e.name, 'ABLUnitRuntimeError', 'expected ABLUnitRuntimeError but got: ' + JSON.stringify(e, null, 2))
+	})
+	return
+})
