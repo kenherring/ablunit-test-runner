@@ -596,10 +596,9 @@ test('proj0.27 - ABLExec dbconns', async () => {
 	return
 })
 
-test('proj0.27 - database connection needed but not configured', async () => {
-	FileUtils.copyFile('openedge-project.test26.json', 'openedge-project.json')
+test('proj0.28 - database connection needed but not configured', async () => {
+	FileUtils.copyFile('openedge-project.test28.json', 'openedge-project.json')
 	await deleteRcode()
-	await restartLangServer(23)
 
 	await runTestsInFile('src/dirA/dir1/testInDir.p').then(() => {
 		assert.fail('expected error to be thrown')
@@ -613,8 +612,8 @@ test('proj0.27 - database connection needed but not configured', async () => {
 	return
 })
 
-test('proj0.28 - database connection not valid', async () => {
-	FileUtils.copyFile('openedge-project.test27.json', 'openedge-project.json')
+test('proj0.29 - database connection not valid', async () => {
+	FileUtils.copyFile('openedge-project.test29.json', 'openedge-project.json')
 
 	await runTestsInFile('src/dirA/dir1/testInDir.p').then(() => {
 		assert.fail('expected error to be thrown')
