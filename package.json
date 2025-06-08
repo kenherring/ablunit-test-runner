@@ -191,21 +191,21 @@
 			"editor/title": [
 				{
 					"command": "ablunit.showDebugListingPreview",
-					"when": "editorLangId == abl && !notebookEditorFocused",
+					"when": "editorLangId == abl && !notebookEditorFocused && (resourceExtname == '.cls' || resourceExtname == '.p')",
 					"group": "navigation"
 				}
 			],
 			"explorer/context": [
 				{
 					"command": "ablunit.showDebugListingPreview",
-					"when": "resourceLangId == abl",
+					"when": "resourceLangId == abl && (resourceExtname == '.cls' || resourceExtname == '.p')",
 					"group": "1_ablunit@1"
 				}
 			],
 			"editor/context": [
 				{
 					"command": "ablunit.showDebugListingPreview",
-					"when": "resourceLangId == abl",
+					"when": "resourceLangId == abl && (resourceExtname == '.cls' || resourceExtname == '.p')",
 					"group": "1_ablunit@1"
 				}
 			]
@@ -215,7 +215,8 @@
 				"command": "ablunit.showDebugListingPreview",
 				"title": "Show debug listing Preview",
 				"category": "ABLUnit",
-				"icon": "$(open-preview)"
+				"icon": "$(open-preview)",
+				"enablement": "resourceExtname == '.cls' || resourceExtname == '.p'"
 			}
 		]
 	}

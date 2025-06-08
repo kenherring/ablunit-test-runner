@@ -1,5 +1,5 @@
 import { commands, Selection, Uri, window, workspace, Disposable, extensions } from 'vscode'
-import { assert, getRcodeCount, getWorkspaceUri, log, suiteSetupCommon, toUri } from '../testCommon'
+import { assert, getRcodeCount, getWorkspaceUri, log, sleep, suiteSetupCommon, toUri } from '../testCommon'
 import { getSourceMapFromRCode } from 'parse/SourceMapRCodeParser'
 import { PropathParser } from 'ABLPropath'
 import { ABLUnitTestRunner } from '@types'
@@ -176,4 +176,44 @@ test('debugLines.7 - Debug Listing Preview', async () => {
 	assert.equal(window.activeTextEditor.document.uri.fsPath, debugUri.fsPath, 'activeTextEditor after open debugUri')
 	await commands.executeCommand('setSelection', { uri: debugUri, selection: new Selection(30, 0, 32, 4) })
 	await validateSelectionAfterChange(sourceUri, [26,0, 82, 4 + 12])
+})
+
+test('debugLines.8 - Debug Listing Preview with include', () => {
+	const sourceUri = toUri('src/code/unit_test7.p')
+	const debugUri = toUri('src/code/unit_test7.p Debug Listing')
+	const includeUri = toUri('src/inc/include_7.i')
+
+	return commands.executeCommand('workbench.action.closeAllEditors')
+		.then(() => commands.executeCommand('vscode.open', sourceUri))
+		.then(() => commands.executeCommand('ablunit.showDebugListingPreview'))
+		.then(() => {
+			assert.equal(window.activeTextEditor?.document.uri.fsPath, sourceUri.fsPath, 'activeTextEditor')
+			return commands.executeCommand('workbench.action.focusNextGroup')
+		})
+		.then(() => sleep(100))
+		.then(() => {
+			// log.info('activeTextEditor after open debugUri: ' + window.activeTextEditor?.document.uri.fsPath)
+			const debugEditor = window.visibleTextEditors.find(e => e.document.uri.scheme == 'debugListing')
+			assert.equal(debugEditor?.document.uri.fsPath, debugUri.fsPath, 'debugEditor')
+			if (!debugEditor) {
+				assert.fail('no debug editor found')
+				return
+			}
+			log.info('set debugEditor.selection')
+			debugEditor.selection = new Selection(42, 0, 42, 0)
+			// return commands.executeCommand('workbench.action.gotoLine', { lineNumber: 41 })
+			return sleep(250)
+		}).then(() => {
+			const debugEditor = window.visibleTextEditors.find(e => e.document.uri.scheme == 'debugListing')
+			assert.selection(debugEditor?.selection, [42, 0, 42, 0], debugEditor?.document.uri)
+			const includeEditor = window.visibleTextEditors.filter(e => e.document.uri.fsPath != debugUri.fsPath)
+			// assert.equal(includeEditor.length, 1, 'should be one include editor open')
+			assert.equal(includeEditor[0].document.uri.fsPath, includeUri.fsPath, 'include editor should be the only other visible editor')
+			assert.selection(includeEditor[0].selection, [8, 0, 9, 0])
+			return
+		}, (e: unknown) => {
+			log.error('Error in debugLines.8: ' + e)
+			assert.fail('Error in debugLines.8: ' + e)
+			throw e
+		})
 })

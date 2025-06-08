@@ -1366,7 +1366,7 @@ export const assert = {
 		assert.linesExecuted(file, lines, false)
 	},
 
-	selection (actual: Selection | undefined, expected: Selection | number[] | undefined) {
+	selection (actual: Selection | undefined, expected: Selection | number[] | undefined, uri?: Uri) {
 		if (actual === undefined && expected === undefined) {
 			return
 		}
@@ -1381,10 +1381,14 @@ export const assert = {
 		if (expected instanceof Selection) {
 			expected = [expected.start.line, expected.start.character, expected.end.line, expected.end.character]
 		}
-		assert.equal(actual.start.line, expected[0], 'selection start line should be ' + expected[0] + ' but is ' + actual.start.line)
-		assert.equal(actual.start.character, expected[1], 'selection start character should be ' + expected[1] + ' but is ' + actual.start.character)
-		assert.equal(actual.end.line, expected[2], 'selection end line should be ' + expected[2] + ' but is ' + actual.end.line)
-		assert.equal(actual.end.character, expected[3], 'selection end character should be ' + expected[3] + ' but is ' + actual.end.character)
+		let uriText = ''
+		if (uri) {
+			uriText = ' (' + uri.fsPath + ')'
+		}
+		assert.equal(actual.start.line, expected[0], 'selection start line should be ' + expected[0] + ' but is ' + actual.start.line + uriText)
+		assert.equal(actual.start.character, expected[1], 'selection start character should be ' + expected[1] + ' but is ' + actual.start.character + uriText)
+		assert.equal(actual.end.line, expected[2], 'selection end line should be ' + expected[2] + ' but is ' + actual.end.line + uriText)
+		assert.equal(actual.end.character, expected[3], 'selection end character should be ' + expected[3] + ' but is ' + actual.end.character + uriText)
 	}
 }
 
