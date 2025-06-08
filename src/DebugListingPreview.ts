@@ -19,7 +19,6 @@ export class DebugListingContentProvider implements TextDocumentContentProvider 
 	private previewEditor: TextEditor | undefined = undefined
 	private showDebugListingPreviewProcessing = false
 	private showTextDocumentProcessing = false
-	private selectionProcessing = false
 	private readonly selectionProcessed: string[] = []
 	private readonly visibleRangeProcessed = new Map<string, number>()
 	private readonly debugListingUriMap = new Map<string, Uri>()
@@ -39,7 +38,7 @@ export class DebugListingContentProvider implements TextDocumentContentProvider 
 					return
 				}
 				log.debug('--- onDidChangeActiveTextEditor e.document.uri=' + e.document.uri.fsPath + ', languageId=' + e.document.languageId)
-				await this.showDebugListingPreview(e, false, contextResourcesUri).then(() => { log.info('--- onDidChangeActiveTextEditor done') })
+				await this.showDebugListingPreview(e, false, contextResourcesUri)
 			}),
 			window.tabGroups.onDidChangeTabGroups((_e: TabGroupChangeEvent) => {
 				if (this.showTextDocumentProcessing) {
@@ -68,31 +67,22 @@ export class DebugListingContentProvider implements TextDocumentContentProvider 
 				if (e.textEditor.document.languageId != 'abl' && e.textEditor.document.uri.scheme != 'debugListing') {
 					return
 				}
-				if (this.selectionProcessing) {
-					// TODO - does this do anything?
-					log.info('--- SKIP this.selectionProcessing=' + this.selectionProcessing)
-					return
-				}
 				if (e.kind == TextEditorSelectionChangeKind.Command && this.selectionProcessed.includes(e.textEditor.document.uri.fsPath)) {
-					log.info('SKIP TextEditorSelectionChangeKind.Command and already processed')
+					log.debug('SKIP TextEditorSelectionChangeKind.Command and already processed (uri=' + e.textEditor.document.uri.fsPath + ')')
 					while (this.selectionProcessed.includes(e.textEditor.document.uri.fsPath)) {
 						this.selectionProcessed.splice(this.selectionProcessed.indexOf(e.textEditor.document.uri.fsPath))
-						log.info('pop selectionProcessed: ' + e.textEditor.document.uri.fsPath)
 					}
 					return
 				}
 
-				this.selectionProcessing = true
 				if (e.textEditor.document.languageId == 'abl') {
 					// TODO return instead of await --- but fix the sourceMap problems in the log file first
 					await this.updateDebugListingSelection(e.textEditor)
 						.then(() => this.updateDebugListingVisibleRanges(e.textEditor, e.textEditor.visibleRanges as Range[]))
-						.finally(() => this.selectionProcessing = false)
 				}
 				if (e.textEditor.document.uri.scheme == 'debugListing') {
 					await this.updateSourceSelection(e.textEditor)
 						.then(() => this.updateSourceVisibleRanges(e.textEditor, e.textEditor.visibleRanges as Range[]))
-						.finally(() => this.selectionProcessing = false)
 				}
 			}),
 			window.onDidChangeTextEditorVisibleRanges((e) => {
@@ -103,10 +93,6 @@ export class DebugListingContentProvider implements TextDocumentContentProvider 
 					return
 				}
 				if (!this.previewEditor) {
-					return
-				}
-				if (this.selectionProcessing) {
-					log.info('SKIP this.selectionProcessing')
 					return
 				}
 
@@ -144,7 +130,6 @@ export class DebugListingContentProvider implements TextDocumentContentProvider 
 		this.previewEditor = window.visibleTextEditors.find(editor => editor.document.uri.scheme == 'debugListing')
 		if (force) {
 			this.showDebugListingPreviewProcessing = false
-			this.selectionProcessing = false
 			this.selectionProcessed.length = 0
 			this.visibleRangeProcessed.clear()
 		}
@@ -254,10 +239,16 @@ export class DebugListingContentProvider implements TextDocumentContentProvider 
 
 			if (!this.previewEditor || this.previewEditor.document.uri.fsPath !== debugListingPreviewUri.fsPath) {
 				this.previewEditor = await window.showTextDocument(debugListingPreviewUri, {
-					viewColumn: ViewColumn.Beside,
+					viewColumn: this.previewEditor?.viewColumn ?? ViewColumn.Beside,
 					preview: true,
 					preserveFocus: true,
+				}).then(() => {
+					return window.visibleTextEditors.find(editor => editor.document.uri.fsPath === debugListingPreviewUri.fsPath)
 				})
+				if (!this.previewEditor) {
+					log.error('Failed to show debug listing preview for uri: ' + debugListingPreviewUri.fsPath)
+					throw new Error('Failed to show debug listing preview for uri: ' + debugListingPreviewUri.fsPath)
+				}
 				this.sourceUriMap.set(this.previewEditor.document.uri.fsPath, sourceUri)
 			}
 
@@ -488,10 +479,17 @@ export class DebugListingContentProvider implements TextDocumentContentProvider 
 		if (!includeOrSourceEditor) {
 			log.debug('show TextDocument for ' + activeSelection.uri.fsPath + ':' + activeSelections[0].selection.start.line + ':' + activeSelections[0].selection.end.line)
 			this.showTextDocumentProcessing = true
-			const vc = (this.previewEditor?.viewColumn ?? 2) - 1
+			let vc = (this.previewEditor?.viewColumn ?? 2) - 1
+
+			if (vc > 1 &&  vc == Number(window.visibleTextEditors.find(e => e.document.uri.scheme == 'debugListing')?.viewColumn)) {
+				vc = vc - 1
+			}
 			includeOrSourceEditor = await window.showTextDocument(activeSelection.uri, { viewColumn: vc, preserveFocus: true, selection: activeSelections[0].selection  })
-				.then(() => this.showTextDocumentProcessing = false)
-				.then(() => window.visibleTextEditors.find(e => e.document.uri.fsPath == activeSelection.uri.fsPath))
+				.then(() => {
+					this.showTextDocumentProcessing = false
+					this.setPreviewEditor(true)
+					return window.visibleTextEditors.find(e => e.document.uri.fsPath == activeSelection.uri.fsPath)
+				})
 			if (!includeOrSourceEditor) {
 				log.error('Failed showing TextDocument for ' + activeSelection.uri.fsPath)
 				throw new Error('Failed showing TextDocument for ' + activeSelection.uri.fsPath)
@@ -513,7 +511,6 @@ export class DebugListingContentProvider implements TextDocumentContentProvider 
 				this.selectionProcessed.push(visibleEditor.document.uri.fsPath)
 				visibleEditor.selections = inactiveSelections.filter(s => s.uri.fsPath == sel.uri.fsPath).map(m => m.selection)
 				log.debug('set inactive selections 2 ' + visibleEditor.document.uri.fsPath + ' to ' + visibleEditor.selections.map(s => s.start.line + ':' + s.end.line).join(', '))
-				continue
 			}
 		}
 	}
@@ -546,7 +543,6 @@ export class DebugListingContentProvider implements TextDocumentContentProvider 
 		)
 		const includeOrSourceEditor = window.visibleTextEditors.find(e => e.document.uri.fsPath == rangeInfo.activeUri.fsPath)
 		if (!includeOrSourceEditor) {
-			log.warn('visibleTextEditor not found for uri: ' + rangeInfo.activeUri.fsPath)
 			return
 		}
 
