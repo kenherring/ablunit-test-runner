@@ -1,5 +1,5 @@
-import { commands, Selection, Uri, window, workspace, Disposable, extensions } from 'vscode'
-import { assert, getRcodeCount, getWorkspaceUri, log, sleep, suiteSetupCommon, toUri } from '../testCommon'
+import { commands, Selection, Uri, window, workspace, Disposable, extensions, ViewColumn, TabInputText } from 'vscode'
+import { assert, getRcodeCount, getWorkspaceUri, log, runTestsInFile, sleep, suiteSetupCommon, toUri } from '../testCommon'
 import { getSourceMapFromRCode } from 'parse/SourceMapRCodeParser'
 import { PropathParser } from 'ABLPropath'
 import { ABLUnitTestRunner } from '@types'
@@ -266,18 +266,19 @@ test('debugLines.10 - Debug Listing Preview selection across files', () => {
 			assert.equal(window.activeTextEditor?.document.uri.fsPath, sourceUri.fsPath, 'activeTextEditor')
 			return commands.executeCommand('ablunit.showDebugListingPreview')
 		})
+		.then(() => sleep(100))
 		.then(() => {
 			assert.equal(window.activeTextEditor?.document.uri.fsPath, sourceUri.fsPath, 'activeTextEditor')
 			const debugEditor = window.visibleTextEditors.filter(e => e.document.uri.scheme == 'debugListing')
 			assert.equal(debugEditor.length, 1, 'should be only one debug editor open')
 			assert.equal(debugEditor[0].document.uri.fsPath, debugUri.fsPath, 'debugEditor')
 			debugEditor[0].selection = new Selection(30, 0, 40, 0)
-			return sleep(50)
+			return sleep(100)
 		}).then(() => {
 			const debugEditor = window.visibleTextEditors.find(e => e.document.uri.scheme == 'debugListing')
 			assert.selection(debugEditor?.selection, [30, 0, 40, 0], debugEditor?.document.uri)
 
-			const includeEditor = window.visibleTextEditors.filter(e => e.document.uri.fsPath != debugUri.fsPath)
+			const includeEditor = window.visibleTextEditors.filter(e => e.document.uri.fsPath != debugEditor?.document.uri.fsPath)
 			assert.equal(includeEditor.length, 1, 'should be only one source editor open')
 			assert.equal(includeEditor[0].document.uri.fsPath, includeUri.fsPath, 'include editor should be the only other visible editor')
 			assert.selection(includeEditor[0].selection, [0, 0, 6, 0])

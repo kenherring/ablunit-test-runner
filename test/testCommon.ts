@@ -223,11 +223,14 @@ export function installExtension (extname = 'riversidesoftware.openedge-abl-lsp'
 		})
 }
 
-export function sleep (time = 10, msg?: string | null) {
+export function sleep (time = 10, msg?: string | null, divider = false) {
 	if (msg !== null) {
 		let status = 'sleeping for ' + time + 'ms'
 		if (msg) {
 			status = status + ' [' + msg + ']'
+		}
+		if (divider) {
+			status = '------------------------------ ' + status + ' --------------------------------'
 		}
 		log.info(status)
 	}

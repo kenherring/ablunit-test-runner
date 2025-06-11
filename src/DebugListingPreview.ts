@@ -122,10 +122,10 @@ export class DebugListingContentProvider implements TextDocumentContentProvider 
 		return DebugListingContentProvider.instance
 	}
 
-	private setPreviewEditor (force = false): void {
+	private setPreviewEditor (force = false): boolean {
 		log.debug('--- setPreviewEditor force=' + force + ', this.previewEditor=' + this.previewEditor?.document.uri.fsPath)
 		if (!force && this.previewEditor) {
-			return
+			return true
 		}
 		this.previewEditor = window.visibleTextEditors.find(editor => editor.document.uri.scheme == 'debugListing')
 		if (force) {
@@ -134,10 +134,9 @@ export class DebugListingContentProvider implements TextDocumentContentProvider 
 			this.visibleRangeProcessed.clear()
 		}
 		if (this.previewEditor) {
-			return
+			return true
 		}
-		log.debug('failed to sync previewEditor!')
-		throw new Error('failed to sync previewEditor!')
+		return false
 	}
 
 	private async getSourceUri (includeUri: Uri) {
@@ -161,8 +160,8 @@ export class DebugListingContentProvider implements TextDocumentContentProvider 
 			}
 		}
 		if (includeUri.path.endsWith('.i')) {
-			log.error('No sourceUri found for includeUri: ' + includeUri.fsPath)
-			throw new Error('No sourceUri found for includeUri: ' + includeUri.fsPath)
+			log.warn('No sourceUri found for includeUri: ' + includeUri.fsPath)
+			return undefined
 		}
 		return includeUri
 	}
@@ -305,6 +304,10 @@ export class DebugListingContentProvider implements TextDocumentContentProvider 
 
 		const includeUri = editor.document.uri
 		const sourceUri = await this.getSourceUri(includeUri)
+		if (!sourceUri) {
+			log.error('no source Uri found for include uri ' + includeUri.fsPath)
+			throw new Error('No source Uri found for include uri ' + includeUri.fsPath)
+		}
 
 		for (const range of visibleRange) {
 			rangeUnion = range.union(rangeUnion)
@@ -345,10 +348,16 @@ export class DebugListingContentProvider implements TextDocumentContentProvider 
 
 	private async updateDebugListingSelection (e: TextEditor) {
 		log.debug('--- updateDebugListingSelection e.document.uri=' + e.document.uri.fsPath + ', languageId=' + e.document.languageId)
-		this.setPreviewEditor()
+		if (!this.setPreviewEditor()) {
+			return
+		}
 
 		const includeUri = e.document.uri
 		const sourceUri = await this.getSourceUri(includeUri)
+		if (!sourceUri) {
+			log.error('could not find source Uri for include ' + includeUri.fsPath)
+			throw new Error('could not find source Uri for include ' + includeUri.fsPath)
+		}
 		const debugLines = this.getDebugLines(sourceUri)
 
 		const mappedSelections: Selection[] = []
@@ -380,10 +389,16 @@ export class DebugListingContentProvider implements TextDocumentContentProvider 
 
 	private async updateDebugListingVisibleRanges (editor: TextEditor, visibleRange: Range[]) {
 		log.debug('--- updateDebugListingVisibleRanges editor=' + editor.document.uri.fsPath + ', visibleRange=' + visibleRange.map(r => r.start.line + ':' + r.end.line).join(', '))
-		this.setPreviewEditor()
+		if (!this.setPreviewEditor()) {
+			return
+		}
 
 		const includeUri = editor.document.uri
 		const sourceUri = await this.getSourceUri(includeUri)
+		if (!sourceUri) {
+			log.error('could not find source Uri for include ' + includeUri.fsPath)
+			throw new Error('could not find source Uri for include ' + includeUri.fsPath)
+		}
 		const debugLines = this.getDebugLines(sourceUri)
 
 		const rangeInfo = await this.translateRange(
@@ -521,7 +536,12 @@ export class DebugListingContentProvider implements TextDocumentContentProvider 
 
 		const debugListingUri = e.document.uri
 		const sourceUri = await this.getSourceUri(debugListingUri)
+		if (!sourceUri) {
+			log.error('could not find source Uri for debug listing uri ' + debugListingUri.fsPath)
+			throw new Error('could not find source Uri for include ' + debugListingUri.fsPath)
+		}
 		const debugLines = this.getDebugLines(sourceUri)
+
 		const rangeInfo = await this.translateRange(e, visibleRange, e.selection.active, (debugListing: TextEditor | Uri, _u: TextEditor | Uri | undefined, p: Position) => debugLines.getSourcePositionWrapper(debugListing, undefined, p))
 
 		// The math is correct for the range, but we have to add 6 additional lines for what
