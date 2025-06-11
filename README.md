@@ -11,11 +11,16 @@ The [ABLUnit Test Runner](https://github.com/kenherring/ablunit-test-runner/) ex
 
 * Execute/Debug ABLUnit tests from the VSCode **Test Explorer View**
 * Display test results in the VSCode **Test Results View**
-* Color coded line coverage highlighting in the editor
+  * View [code coverage](https://code.visualstudio.com/docs/debugtest/testing#_test-coverage) in VSCode
+* **Debug Listing Preview** editor synced with source code
 
 ### 📷 Code Coverage Screenshot
 
 ![code coverage example screenshot](https://github.com/kenherring/ablunit-test-runner/raw/main/resources/images/coverage.png)
+
+### 🐞 Debug Listing Preview
+
+![Debug Listing Preview screenshot](https://github.com/kenherring/ablunit-test-runner/raw/main/resources/images/debug_listing_preview.gif)
 
 ## 📝 Supported OpenEdge Versions
 
