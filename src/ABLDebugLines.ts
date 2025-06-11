@@ -4,6 +4,7 @@ import { SourceMap, SourceMapItem } from 'parse/SourceMapParser'
 import { getSourceMapFromRCode } from 'parse/SourceMapRCodeParser'
 import { getSourceMapFromXref } from 'parse/SourceMapXrefParser'
 import { Position, Range, TextEditor, Uri } from 'vscode'
+import * as FileUtils from 'FileUtils'
 
 export class ABLDebugLines {
 	private readonly maps = new Map<string, SourceMap>()
@@ -26,21 +27,22 @@ export class ABLDebugLines {
 		return this.processingMethodMap.get(debugSource)
 	}
 
-	async getDebugListingPosition (editor: TextEditor | Uri, position: Position) {
-		if (editor instanceof Uri) {
-			throw new Error('Editor must be a TextEditor, not a Uri')
-		}
+	expire (sourceUri: Uri) {
+		log.debug('expire source map for ' + sourceUri.fsPath)
+		this.maps.delete(sourceUri.fsPath)
+		this.processingMethodMap.delete(sourceUri.fsPath)
+	}
 
-		let uri: Uri | undefined = undefined
-		if (editor instanceof Uri) {
-			uri = editor
-		} else {
-			uri = editor.document.uri
+	async getDebugListingPosition (source: Uri, include: TextEditor, position: Position) {
+		if (!include || include instanceof Uri) {
+			throw new Error('Include must be a TextEditor (include=' + include?.fsPath + ')')
 		}
-		const debugLine = await this.getDebugLine(uri, position.line + 1)
+		const includeUri = include?.document.uri
+
+		const debugLine = await this.getDebugLine(source, includeUri, position.line + 1)
 		if (!debugLine) {
-			log.error('Could not determine debug listing line for ' + uri.fsPath + ':' + position.line)
-			throw new Error('Could not determine debug listing line for ' + uri.fsPath + ':' + position.line)
+			log.error('Could not determine debug listing line for ' + source.fsPath + ':' + includeUri.fsPath + ':' + position.line)
+			throw new Error('Could not determine debug listing line for ' + source.fsPath + ':' + includeUri.fsPath + ':' + position.line)
 		}
 
 		let line = position.line
@@ -48,9 +50,16 @@ export class ABLDebugLines {
 			line = debugLine.debugLine - 1
 		}
 
-		const lineBeforeSelection = editor.document.lineAt(position.line).text.substring(0, position.character)
+		const lineBeforeSelection = include.document.lineAt(position.line).text.substring(0, position.character)
 		const character = lineBeforeSelection.replace(/\t/g, '        ').length + 12
-		return new Position(line, character)
+		return {
+			uri: debugLine.debugUri,
+			position: new Position(line, character)
+		}
+	}
+
+	async getSourcePositionWrapper (editor: TextEditor | Uri, _u: undefined, position: Position) {
+		return await this.getSourcePosition(editor, position)
 	}
 
 	async getSourcePosition (editor: TextEditor | Uri, position: Position) {
@@ -80,10 +89,13 @@ export class ABLDebugLines {
 		if (char < 0) {
 			char = 0
 		}
-		return new Position(line, char)
+		return {
+			uri: sourceLine.sourceUri,
+			position: new Position(line, char)
+		}
 	}
 
-	async getDebugLine (source: Uri, line: number) {
+	async getDebugLine (source: Uri, include: Uri, line: number) {
 		const fileinfo = this.propath.search(source)
 		if (!fileinfo) {
 			log.warn('cannot find module in propath for "' + source.fsPath + '"')
@@ -94,7 +106,16 @@ export class ABLDebugLines {
 			log.warn('cannot find source map for "' + source.fsPath + '"')
 			return undefined
 		}
-		const sourceItems = map.items.filter((mappedLine) => mappedLine.sourceUri.fsPath === source.fsPath)
+		if (map.items.length == 0) {
+			log.error('Source map has no lines! (uri=' + fileinfo.uri + ')')
+			throw new Error('Source map has no lines! (uri=' + fileinfo.uri + ')')
+		}
+
+		const sourceItems = map.items.filter((mappedLine) => mappedLine.sourceUri.fsPath === include.fsPath)
+		if (sourceItems.length == 0) {
+			log.error('Source map has no lines matching ' + include.fsPath)
+			throw new Error('Source map has no lines matching ' + include.fsPath)
+		}
 
 		const ret = sourceItems.find((mappedLine) => mappedLine.sourceLine === line)
 		if (ret) {
@@ -126,7 +147,6 @@ export class ABLDebugLines {
 			})
 			return item
 		}
-
 		return undefined
 	}
 
@@ -180,14 +200,14 @@ export class ABLDebugLines {
 		}
 	}
 
-	async getDebugListingRange (source: TextEditor, range: Range) {
-		const start = await this.getDebugListingPosition(source, range.start)
-		const end = await this.getDebugListingPosition(source, range.end)
+	async getDebugListingRange (source: Uri, include: TextEditor, range: Range) {
+		const start = await this.getDebugListingPosition(source, include, range.start)
+		const end = await this.getDebugListingPosition(source, include, range.end)
 		if (!start || !end) {
-			log.warn('Could not determine debug range for ' + source.document.uri.fsPath + ':' + range.start.line + '-' + range.end.line)
+			log.error('Could not determine debug range for ' + source.fsPath + ':' + include.document.uri + ':' + range.start.line + '-' + range.end.line)
 			return undefined
 		}
-		return new Range(start, end)
+		return new Range(start.position, end.position)
 	}
 
 	async getSourceRange (source: Uri, range: Range) {
@@ -197,17 +217,26 @@ export class ABLDebugLines {
 			log.warn('Could not determine source range for ' + source.fsPath + ':' + range.start.line + '-' + range.end.line)
 			return undefined
 		}
-		return new Range(start, end)
+		return new Range(start.position, end.position)
 	}
 
 	async getSourceMap (debugSource: Uri) {
+		if (debugSource.path.endsWith('.i')) {
+			log.error('getSourceMap cannot be called for include files: ' + debugSource.fsPath)
+			throw new Error('getSourceMap cannot be called for include files: ' + debugSource.fsPath)
+		}
 		if (!debugSource.fsPath.endsWith('.p') && !debugSource.fsPath.endsWith('.cls')) {
 			debugSource = Uri.file(debugSource.fsPath.replace(/\./g, '/') + '.cls')
 		}
 		let map = this.maps.get(debugSource.fsPath)
 		if (map) {
-			// return previously parsed map
-			return map
+			log.debug('found map for ' + map.sourceUri.fsPath)
+			if (map.modified.valueOf() != FileUtils.getFileModifiedTime(map.sourceUri).valueOf()) {
+				log.debug('source map out of date (uri=' + map.sourceUri + ', debugSource=' + debugSource + ')')
+			} else {
+				log.debug('return previously parsed map for ' + map.sourceUri)
+				return map
+			}
 		}
 		if (this.processingMethodMap.get(debugSource.fsPath) === 'none') {
 			log.warn('processing method is none for ' + debugSource)

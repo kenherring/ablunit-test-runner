@@ -1,4 +1,5 @@
 import { Uri } from 'vscode'
+import * as FileUtils from 'FileUtils'
 
 export interface ISources {
 	sourceName: string,
@@ -88,8 +89,7 @@ export interface ISignature {
 }
 
 export class SourceMap {
-	sourceUri: Uri
-	path: string
+	readonly modified: Date
 	items: SourceMapItem[] = []
 	sources: ISources[] = []
 	includes: IIncludeMap[] = []
@@ -97,9 +97,8 @@ export class SourceMap {
 	signatures: ISignature[] = []
 	crc?: number
 
-	constructor (sourceUri: Uri, path: string) {
-		this.sourceUri = sourceUri
-		this.path = path
+	constructor (public readonly sourceUri: Uri, public readonly path: string, public readonly processingMethod: 'rcode' | 'xref') {
+		this.modified = FileUtils.getFileModifiedTime(sourceUri)
 	}
 }
 

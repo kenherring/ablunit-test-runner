@@ -1,4 +1,4 @@
-import { EventEmitter, ExtensionContext, Position, Range, Selection, TextDocumentContentProvider, TextEditor, TextEditorRevealType, Uri, ViewColumn, window, workspace, WorkspaceFolder } from 'vscode'
+import { EventEmitter, ExtensionContext, Position, Range, Selection, TabChangeEvent, TabGroupChangeEvent, TextDocumentContentProvider, TextEditor, TextEditorRevealType, TextEditorSelectionChangeKind, Uri, ViewColumn, window, workspace, WorkspaceFolder } from 'vscode'
 import { ABLUnitConfig } from 'ABLUnitConfigWriter'
 import { ABLDebugLines } from 'ABLDebugLines'
 import { PropathParser } from 'ABLPropath'
@@ -7,10 +7,20 @@ import { ablExec } from 'ABLExec'
 import { log } from 'ChannelLogger'
 import * as FileUtils from 'FileUtils'
 
+interface IRangeInfo {
+	linesBeforeActive: number
+	linesAfterActive: number
+	activeUri: Uri
+	activePosition: Position
+}
+
 export class DebugListingContentProvider implements TextDocumentContentProvider {
 	private static instance: DebugListingContentProvider | undefined = undefined
 	private previewEditor: TextEditor | undefined = undefined
-	private showDebugListingPreviewWorking = false
+	private showDebugListingPreviewProcessing = false
+	private showTextDocumentProcessing = false
+	private readonly selectionProcessed: string[] = []
+	private readonly visibleRangeProcessed = new Map<string, number>()
 	private readonly debugListingUriMap = new Map<string, Uri>()
 	private readonly sourceUriMap = new Map<string, Uri>()
 	private readonly cfg: Map<WorkspaceFolder, ABLUnitConfig> = new Map<WorkspaceFolder, ABLUnitConfig>()
@@ -21,51 +31,85 @@ export class DebugListingContentProvider implements TextDocumentContentProvider 
 	constructor (context: ExtensionContext, private readonly contextResourcesUri: Uri) {
 		context.subscriptions.push(
 			window.onDidChangeActiveTextEditor(async (e) => {
-				if (e?.document.languageId != 'abl'
-					|| e.document.uri.fsPath + ' Debug Listing' == this.previewEditor?.document.uri.fsPath) {
+				if (e?.document.languageId != 'abl') {
 					return
 				}
-				return await this.showDebugListingPreview(e, false, contextResourcesUri)
-			}),
-			window.onDidChangeVisibleTextEditors(e => {
-				if (!e.find(editor => editor.document.uri.scheme == 'debugListing')) {
-					this.previewEditor = undefined
+				if (e.document.uri.fsPath + ' Debug Listing' == this.previewEditor?.document.uri.fsPath) {
+					return
 				}
+				log.debug('--- onDidChangeActiveTextEditor e.document.uri=' + e.document.uri.fsPath + ', languageId=' + e.document.languageId)
+				await this.showDebugListingPreview(e, false, contextResourcesUri)
+			}),
+			window.tabGroups.onDidChangeTabGroups((_e: TabGroupChangeEvent) => {
+				if (this.showTextDocumentProcessing) {
+					return
+				}
+				this.setPreviewEditor(true)
+			}),
+			window.tabGroups.onDidChangeTabs((_e: TabChangeEvent) => {
+				if (this.showTextDocumentProcessing) {
+					return
+				}
+				this.setPreviewEditor(true)
 			}),
 			window.onDidChangeTextEditorSelection(async (e) => {
+				if (this.showTextDocumentProcessing) {
+					return
+				}
 				if (e.textEditor.document.languageId != 'abl' && e.textEditor.document.uri.scheme != 'debugListing') {
 					return
 				}
-				if (window.activeTextEditor?.document.uri != e.textEditor.document.uri) {
-					// do nothing for non-active editor selection updates
-					log.debug('skip inactive (uri=' + e.textEditor.document.uri.fsPath + ')')
+				log.debug('--- onDidChangeTextEditorSelection e.textEditor.document.uri=' + e.textEditor.document.uri.fsPath + ':' + e.selections[0].start.line + ':' + e.selections[0].start.character +
+					'-' + e.selections[0].end.line + ':' + e.selections[0].end.character)
+				if (!this.previewEditor) {
 					return
 				}
+				if (e.textEditor.document.languageId != 'abl' && e.textEditor.document.uri.scheme != 'debugListing') {
+					return
+				}
+				if (e.kind == TextEditorSelectionChangeKind.Command && this.selectionProcessed.includes(e.textEditor.document.uri.fsPath)) {
+					log.debug('SKIP TextEditorSelectionChangeKind.Command and already processed (uri=' + e.textEditor.document.uri.fsPath + ')')
+					while (this.selectionProcessed.includes(e.textEditor.document.uri.fsPath)) {
+						this.selectionProcessed.splice(this.selectionProcessed.indexOf(e.textEditor.document.uri.fsPath))
+					}
+					return
+				}
+
 				if (e.textEditor.document.languageId == 'abl') {
+					// TODO return instead of await --- but fix the sourceMap problems in the log file first
 					await this.updateDebugListingSelection(e.textEditor)
-					await this.updateDebugListingVisibleRanges(e.textEditor, e.textEditor.visibleRanges as Range[])
+						.then(() => this.updateDebugListingVisibleRanges(e.textEditor, e.textEditor.visibleRanges as Range[]))
 				}
 				if (e.textEditor.document.uri.scheme == 'debugListing') {
 					await this.updateSourceSelection(e.textEditor)
+						.then(() => this.updateSourceVisibleRanges(e.textEditor, e.textEditor.visibleRanges as Range[]))
 				}
 			}),
-			window.onDidChangeTextEditorVisibleRanges(async (e) => {
+			window.onDidChangeTextEditorVisibleRanges((e) => {
+				if (this.showTextDocumentProcessing) {
+					return
+				}
 				if (e.textEditor.document.languageId != 'abl' && e.textEditor.document.uri.scheme != 'debugListing') {
 					return
 				}
-				if (window.activeTextEditor?.document.uri != e.textEditor.document.uri) {
-					// do nothing for non-active editor selection updates
-					log.debug('skip inactive (uri=' + e.textEditor.document.uri.fsPath + ')')
+				if (!this.previewEditor) {
 					return
 				}
+
+				const lastSetTime = this.visibleRangeProcessed.get(e.textEditor.document.uri.fsPath)
+				if (lastSetTime && (Date.now() - lastSetTime) < 1000) {
+					return
+				}
+				log.debug('-- onDidChangeTextEditorVisibleRanges e.textEditor.document.uri=' + e.textEditor.document.uri.fsPath)
+
 				if (e.textEditor.document.languageId == 'abl') {
-					await this.updateDebugListingVisibleRanges(e.textEditor, e.visibleRanges as Range[])
-				} else if (e.textEditor.document.uri.scheme == 'debugListing') {
-					await this.updateSourceVisibleRange(e.textEditor, e.visibleRanges as Range[])
+					return this.updateDebugListingVisibleRanges(e.textEditor, e.visibleRanges as Range[])
+				} else {
+					return this.updateSourceVisibleRanges(e.textEditor, e.visibleRanges as Range[])
 				}
 			}),
 			workspace.onDidSaveTextDocument(async (e) => {
-				if (e.languageId !== 'abl') {
+				if (e.languageId != 'abl' || !this.previewEditor) {
 					return
 				}
 				return await this.showDebugListingPreview(e.uri, false, contextResourcesUri)
@@ -74,19 +118,65 @@ export class DebugListingContentProvider implements TextDocumentContentProvider 
 	}
 
 	public static getInstance (context: ExtensionContext, contextResourcesUri: Uri) {
-		DebugListingContentProvider.instance = new DebugListingContentProvider(context, contextResourcesUri)
+		DebugListingContentProvider.instance = DebugListingContentProvider.instance ?? new DebugListingContentProvider(context, contextResourcesUri)
 		return DebugListingContentProvider.instance
 	}
 
-	provideTextDocumentContent (uri: Uri): string {
+	private setPreviewEditor (force = false): boolean {
+		log.debug('--- setPreviewEditor force=' + force + ', this.previewEditor=' + this.previewEditor?.document.uri.fsPath)
+		if (!force && this.previewEditor) {
+			return true
+		}
+		this.previewEditor = window.visibleTextEditors.find(editor => editor.document.uri.scheme == 'debugListing')
+		if (force) {
+			this.showDebugListingPreviewProcessing = false
+			this.selectionProcessed.length = 0
+			this.visibleRangeProcessed.clear()
+		}
+		if (this.previewEditor) {
+			return true
+		}
+		return false
+	}
+
+	private async getSourceUri (includeUri: Uri) {
+		const sourceUri = this.sourceUriMap.get(includeUri.fsPath)
+		if (sourceUri) {
+			return sourceUri
+		}
+		if (this.previewEditor) {
+			const sourceUri = this.sourceUriMap.get(this.previewEditor.document.uri.fsPath)
+			if (sourceUri) {
+				const debugLines = this.getDebugLines(sourceUri)
+				const sourceMap = await debugLines.getSourceMap(sourceUri)
+				if (sourceMap?.includes.find(i => i.sourceUri.fsPath == includeUri.fsPath)) {
+					const includeMap = sourceMap?.includes.find(i => i.sourceUri.fsPath == includeUri.fsPath)
+					if (includeMap) {
+						log.debug('Include uri was not mapped but found in sourceMap: ' + JSON.stringify(includeMap))
+						this.sourceUriMap.set(includeUri.fsPath, sourceUri)
+						return sourceUri
+					}
+				}
+			}
+		}
+		if (includeUri.path.endsWith('.i')) {
+			log.warn('No sourceUri found for includeUri: ' + includeUri.fsPath)
+			return undefined
+		}
+		return includeUri
+	}
+
+	public provideTextDocumentContent (uri: Uri): string {
 		const debugListingUri = this.debugListingUriMap.get(uri.fsPath)
 		if (!debugListingUri) {
+			log.error('debugListingUri not found for uri: ' + uri.toString())
 			throw new Error('debugListingUri not found for uri: ' + uri.toString())
 		}
 		return FileUtils.readFileSync(debugListingUri).toString()
 	}
 
-	async showDebugListingPreviewCommand (uri: Uri | string | undefined): Promise<void> {
+	public async showDebugListingPreviewCommand (uri: Uri | string | undefined): Promise<void> {
+		log.debug('--- showDebugListingPreviewCommand uri: ' + (typeof uri === 'string' ? uri : uri?.fsPath))
 		uri = uri ?? window.activeTextEditor?.document.uri
 		if (typeof uri === 'string') {
 			uri = Uri.parse(uri)
@@ -101,67 +191,64 @@ export class DebugListingContentProvider implements TextDocumentContentProvider 
 		}
 	}
 
-	async showDebugListingPreview (e: Uri | TextEditor, fromCommand: boolean, contextResourcesUri: Uri): Promise<boolean> {
-		if (this.showDebugListingPreviewWorking || (!fromCommand && !this.previewEditor)) {
+	private async showDebugListingPreview (e: Uri | TextEditor, fromCommand: boolean, contextResourcesUri: Uri): Promise<boolean> {
+		if (this.showDebugListingPreviewProcessing || (!fromCommand && !this.previewEditor)) {
 			return false
 		}
-		this.showDebugListingPreviewWorking = true
+		const sourceUri = e instanceof Uri? e : e.document.uri
+		if (sourceUri.path.endsWith('.i')) {
+			log.debug('skipping showDebugListingPreview for include file: ' + sourceUri.fsPath)
+			return false
+		}
+		log.debug('--- showDebugListingPreview e=' + (e instanceof Uri ? e.fsPath : e.document.uri.fsPath) + ', fromCommand=' + fromCommand)
+
+		this.showDebugListingPreviewProcessing = true
+		const wf = workspace.getWorkspaceFolder(sourceUri)
+		if (!wf) {
+			log.warn('No workspace folder found for uri: ' + sourceUri.fsPath)
+			return false
+		}
+		this.sourceUriMap.clear()
 
 		try {
-			const uri = e instanceof Uri? e : e.document.uri
-			const wf = workspace.getWorkspaceFolder(uri)
-			if (!wf) {
-				log.warn('No workspace folder found for uri: ' + uri.fsPath)
-				return false
-			}
-			const debugLines = this.getDebugLines(uri)
-			const cfg = this.cfg.get(wf)
-
-			if (!cfg) {
-				log.warn('No ABLUnitConfig found for workspace folder: ' + wf.uri.fsPath)
-				return false
-			}
-
-			if (!window.visibleTextEditors.some(e => e.document.uri.scheme === 'debugListing')) {
-				this.previewEditor = undefined
-			}
+			const debugLines = this.getDebugLines(sourceUri)
+			const cfg = this.cfg.get(wf)!
 			if (!fromCommand && !this.previewEditor) {
 				log.debug('showDebugListingPreview called from non-command context, but no debugListingPreviewEditor exists that requires a refresh')
 				return true
 			}
 
-
-
-			const currentUri = window.activeTextEditor?.document.uri
-			if (!currentUri) {
-				throw new Error('No activeTextEditor found to get currentUri')
-			}
-
-			const fileinfo = debugLines.propath.search(currentUri)
+			const fileinfo = debugLines.propath.search(sourceUri)
 			if (!fileinfo) {
-				log.warn('debugLines.propath.search returned undefined for uri=' + currentUri.fsPath)
+				log.warn('debugLines.propath.search returned undefined for uri=' + sourceUri.fsPath)
 				return false
 			}
-			const debugListingUri = fileinfo.debugListingUri
 
-			await this.generateDebugListing(cfg, getDLC(wf), contextResourcesUri, debugLines.propath, currentUri, debugListingUri)
+			const debugListingUri = fileinfo.debugListingUri
+			await this.generateDebugListing(debugLines, cfg, getDLC(wf), contextResourcesUri, debugLines.propath, sourceUri, fileinfo.rcodeDirectory, fileinfo.rcodeUri, debugListingUri)
 
 			const debugListingText = FileUtils.readFileSync(debugListingUri).toString()
 			if (!debugListingText || debugListingText.length < 1) {
 				throw new Error('debugListingText is empty or undefined. Cannot open debug listing preview.')
 			}
 
-			const debugListingPreviewUri = currentUri.with({scheme: 'debugListing', path: uri.path + ' Debug Listing'})
+			const debugListingPreviewUri = sourceUri.with({scheme: 'debugListing', path: sourceUri.path + ' Debug Listing'})
 			this.debugListingUriMap.set(debugListingPreviewUri.fsPath, debugListingUri)
-			this.sourceUriMap.set(debugListingPreviewUri.fsPath, uri)
+			this.sourceUriMap.set(debugListingPreviewUri.fsPath, sourceUri)
 
 			if (!this.previewEditor || this.previewEditor.document.uri.fsPath !== debugListingPreviewUri.fsPath) {
 				this.previewEditor = await window.showTextDocument(debugListingPreviewUri, {
-					viewColumn: ViewColumn.Beside,
+					viewColumn: this.previewEditor?.viewColumn ?? ViewColumn.Beside,
 					preview: true,
 					preserveFocus: true,
-					// selection: window.activeTextEditor?.selection
+				}).then(() => {
+					return window.visibleTextEditors.find(editor => editor.document.uri.fsPath === debugListingPreviewUri.fsPath)
 				})
+				if (!this.previewEditor) {
+					log.error('Failed to show debug listing preview for uri: ' + debugListingPreviewUri.fsPath)
+					throw new Error('Failed to show debug listing preview for uri: ' + debugListingPreviewUri.fsPath)
+				}
+				this.sourceUriMap.set(this.previewEditor.document.uri.fsPath, sourceUri)
 			}
 
 			const fullRange = new Range(new Position(0, 0), new Position(this.previewEditor.document.lineCount, 0))
@@ -175,11 +262,11 @@ export class DebugListingContentProvider implements TextDocumentContentProvider 
 			log.error('showDebugListingPreview failed. e=' + e)
 			throw e
 		} finally {
-			this.showDebugListingPreviewWorking = false
+			this.showDebugListingPreviewProcessing = false
 		}
 	}
 
-	getDebugLines (uri: Uri): ABLDebugLines {
+	private getDebugLines (uri: Uri): ABLDebugLines {
 		const wf = workspace.getWorkspaceFolder(uri)
 		if (!wf) {
 			throw new Error('No workspace folder found for uri: ' + uri.fsPath)
@@ -204,68 +291,23 @@ export class DebugListingContentProvider implements TextDocumentContentProvider 
 		return debugLines
 	}
 
-	async updateDebugListingSelection (e: TextEditor) {
-		if (!this.previewEditor || e.document.languageId != 'abl') {
-			return
-		}
-
-		const debugLines = this.getDebugLines(e.document.uri)
-
-		const mappedSelections: Selection[] = []
-		for (const s of e.selections) {
-			const sel: Selection = new Selection(
-				await debugLines.getDebugListingPosition(e, s.anchor),
-				await debugLines.getDebugListingPosition(e, s.active),
-			)
-			mappedSelections.push(sel)
-		}
-
-		if (mappedSelections.length === 1) {
-			if (mappedSelections[0].isEmpty) {
-				mappedSelections[0] = new Selection(
-					new Position(mappedSelections[0].active.line, 0),
-					new Position(mappedSelections[0].active.line + 1, 0),
-				)
-			}
-		}
-		this.previewEditor.selections = mappedSelections
-	}
-
-	async updateSourceSelection (e: TextEditor) {
-		const uri = this.sourceUriMap.get(e.document.uri.fsPath)
-		if (!uri) {
-		    log.warn('No sourceUri found for e.document.uri: ' + e.document.uri.fsPath)
-		    return
-		}
-
-		const sourceEditor = window.visibleTextEditors.find(e => e.document.uri.fsPath == uri.fsPath)
-		if (!sourceEditor) {
-		    log.warn('No source editor found for uri: ' + uri.fsPath)
-		    return
-		}
-
-		const debugLines = this.getDebugLines(uri)
-
-		const mappedSelections: Selection[] = []
-		for (const s of e.selections) {
-			const debugListAnchor = await debugLines.getSourcePosition(uri, s.anchor)
-			const debugListActive = await debugLines.getSourcePosition(uri, s.active)
-		    mappedSelections.push(new Selection(debugListAnchor, debugListActive))
-		}
-
-		if (mappedSelections.length === 1 && mappedSelections[0].isEmpty) {
-			// when only one empty selection is present select the whole line so it's easier to see
-			mappedSelections[0] = new Selection(mappedSelections[0].start.line, 0, mappedSelections[0].start.line + 1, 0)
-		}
-
-		sourceEditor.selections = mappedSelections
-	}
-
-	async getRangeArrayInfo (editor: TextEditor, visibleRange: Range[], activePosition: Position, debugLinesMethod: (e: TextEditor | Uri, p: Position) => Promise<Position>): Promise<[number, number, Position]> {
+	private async translateRange (editor: TextEditor,
+							visibleRange: Range[],
+							activePosition: Position,
+							positionMethod: (source: Uri, include: TextEditor, p: Position) => Promise<{uri: Uri, position: Position}>
+							): Promise<IRangeInfo> {
+		log.debug('editor=' + editor.document.uri.fsPath + ', activePosition=' + activePosition.line + ':' + activePosition.character)
 		let rangeUnion = visibleRange[0]
 		let totalVisibleLines = 0
 		let linesBeforeActive = 0
 		let linesAfterActive = 0
+
+		const includeUri = editor.document.uri
+		const sourceUri = await this.getSourceUri(includeUri)
+		if (!sourceUri) {
+			log.error('no source Uri found for include uri ' + includeUri.fsPath)
+			throw new Error('No source Uri found for include uri ' + includeUri.fsPath)
+		}
 
 		for (const range of visibleRange) {
 			rangeUnion = range.union(rangeUnion)
@@ -281,71 +323,290 @@ export class DebugListingContentProvider implements TextDocumentContentProvider 
 			}
 		}
 
+		let uriAndPosition: { uri: Uri, position: Position }
 		if (activePosition.line < rangeUnion.start.line) {
 			// cursor is before the visible range
-			activePosition = await debugLinesMethod(editor, new Position(rangeUnion.start.line, 0))
+			uriAndPosition = await positionMethod(sourceUri, editor, new Position(rangeUnion.start.line, 0))
 			linesBeforeActive = 0
 			linesAfterActive = totalVisibleLines
 		} else if (activePosition.line > rangeUnion.end.line) {
 			// cursor if after the visible range
-			activePosition = await debugLinesMethod(editor, new Position(rangeUnion.end.line, 0))
+			uriAndPosition = await positionMethod(sourceUri, editor, new Position(rangeUnion.end.line, 0))
 			linesBeforeActive = totalVisibleLines - 1
 			linesAfterActive = 0
 		} else {
-			activePosition = await debugLinesMethod(editor, activePosition)
+			uriAndPosition = await positionMethod(sourceUri, editor, activePosition)
 		}
 
-		return [ linesBeforeActive, linesAfterActive, activePosition ]
+		return {
+			linesBeforeActive,
+			linesAfterActive,
+			activeUri: uriAndPosition.uri,
+			activePosition: uriAndPosition.position
+		}
 	}
 
-	async updateDebugListingVisibleRanges (editor: TextEditor, visibleRange: Range[]) {
-		if (!this.previewEditor || editor.document.languageId != 'abl') {
+	private async updateDebugListingSelection (e: TextEditor) {
+		log.debug('--- updateDebugListingSelection e.document.uri=' + e.document.uri.fsPath + ', languageId=' + e.document.languageId)
+		if (!this.setPreviewEditor()) {
 			return
 		}
-		const debugLines = this.getDebugLines(editor.document.uri)
 
-		const [ debugLinesBeforeActive, debugLinesAfterActive, activePosition ]
-			= await this.getRangeArrayInfo(editor, visibleRange, editor.selection.active, (e: TextEditor | Uri, p: Position) => debugLines.getDebugListingPosition(e, p))
+		const includeUri = e.document.uri
+		const sourceUri = await this.getSourceUri(includeUri)
+		if (!sourceUri) {
+			log.error('could not find source Uri for include ' + includeUri.fsPath)
+			throw new Error('could not find source Uri for include ' + includeUri.fsPath)
+		}
+		const debugLines = this.getDebugLines(sourceUri)
+
+		const mappedSelections: Selection[] = []
+		for (const s of e.selections) {
+			const sel: Selection = new Selection(
+				(await debugLines.getDebugListingPosition(sourceUri, e, s.anchor)).position,
+				(await debugLines.getDebugListingPosition(sourceUri, e, s.active)).position,
+			)
+			mappedSelections.push(sel)
+		}
+
+		if (mappedSelections.length === 1) {
+			if (mappedSelections[0].isEmpty) {
+				mappedSelections[0] = new Selection(
+					new Position(mappedSelections[0].active.line, 0),
+					new Position(mappedSelections[0].active.line + 1, 0),
+				)
+			}
+		}
+
+		log.debug('set selections:')
+		for (const sel of mappedSelections) {
+			log.debug('\t' + this.previewEditor!.document.uri.fsPath + ':' + sel.start.line + ':' + sel.end.line)
+		}
+		this.selectionProcessed.push(this.previewEditor!.document.uri.fsPath)
+		log.debug('set selections for ' + this.previewEditor!.document.uri.fsPath + ' to ' + mappedSelections.map(s => s.start.line + ':' + s.end.line).join(', '))
+		this.previewEditor!.selections = mappedSelections
+	}
+
+	private async updateDebugListingVisibleRanges (editor: TextEditor, visibleRange: Range[]) {
+		log.debug('--- updateDebugListingVisibleRanges editor=' + editor.document.uri.fsPath + ', visibleRange=' + visibleRange.map(r => r.start.line + ':' + r.end.line).join(', '))
+		if (!this.setPreviewEditor()) {
+			return
+		}
+
+		const includeUri = editor.document.uri
+		const sourceUri = await this.getSourceUri(includeUri)
+		if (!sourceUri) {
+			log.error('could not find source Uri for include ' + includeUri.fsPath)
+			throw new Error('could not find source Uri for include ' + includeUri.fsPath)
+		}
+		const debugLines = this.getDebugLines(sourceUri)
+
+		const rangeInfo = await this.translateRange(
+				editor,
+				visibleRange,
+				editor.selection.active,
+				(source: Uri, include: TextEditor, p: Position) => debugLines.getDebugListingPosition(source, include, p))
 
 		// The math is correct for the range, but we have to add 3 additional lines for what
 		// appears to be MAGIC in how VSCode chooses to reveal ranges.
 		const range = new Range(
-			activePosition.line - debugLinesBeforeActive + 3, 0,
-			Math.min(activePosition.line + debugLinesAfterActive, this.previewEditor.document.lineCount), 0
+			rangeInfo.activePosition.line - rangeInfo.linesBeforeActive + 3, 0,
+			Math.min(rangeInfo.activePosition.line + rangeInfo.linesAfterActive, this.previewEditor!.document.lineCount), 0
 		)
 
-		this.previewEditor.revealRange(range, TextEditorRevealType.AtTop)
+		this.visibleRangeProcessed.set(this.previewEditor!.document.uri.fsPath, Date.now())
+		log.debug('revealRange=' + this.previewEditor!.document.uri.fsPath + ':' + range.start.line + ':' + range.end.line)
+		this.previewEditor!.revealRange(range, TextEditorRevealType.AtTop)
 	}
 
-	async updateSourceVisibleRange (editor: TextEditor, visibleRange: Range[]) {
-		if (!this.previewEditor || editor.document.languageId != 'debugListing') {
-			return
-		}
-		const debugLines = this.getDebugLines(editor.document.uri)
-		const debugUri = this.previewEditor.document.uri.fsPath
-		const sourceEditor = window.visibleTextEditors.find(e => e.document.uri.fsPath == this.sourceUriMap.get(debugUri)?.fsPath)
-		if (!sourceEditor) {
-			log.warn('No source editor found for debugUri: ' + debugUri)
-			return
+	private async updateSourceSelection (e: TextEditor) {
+		log.debug('--- updateSourceSelection e.document.uri=' + e.document.uri.fsPath + ', languageId=' + e.document.languageId)
+		this.previewEditor = e
+
+		const debugListingUri = e.document.uri
+		const sourceUri = await this.getSourceUri(debugListingUri)
+		if (!sourceUri) {
+		    log.warn('No sourceUri found for e.document.uri: ' + e.document.uri.fsPath)
+		    return
 		}
 
-		const [ sourceLinesBeforeActive, sourceLinesAfterActive, activePosition ]
-			= await this.getRangeArrayInfo(editor, visibleRange, editor.selection.active, (e: TextEditor | Uri, p: Position) => debugLines.getSourcePosition(e, p))
+		const debugLines = this.getDebugLines(sourceUri)
+		const mappedSelections: {uri: Uri, selection: Selection}[] = []
+		const activeSelection = await debugLines.getSourcePosition(sourceUri, e.selection.active)
 
-		// The math is correct for the range, but we have to add 3 additional lines for what
+		for (const s of e.selections) {
+			let debugListAnchor = await debugLines.getSourcePosition(sourceUri, s.anchor)
+			const debugListActive = await debugLines.getSourcePosition(sourceUri, s.active)
+			if (debugListAnchor.uri.fsPath !== debugListActive.uri.fsPath) {
+
+				const map = await debugLines.getSourceMap(sourceUri)
+				const includeItem = map?.includes.find(i => i.sourceUri.fsPath == debugListAnchor.uri.fsPath)
+
+				if (includeItem) {
+					if (debugListActive.uri.fsPath == sourceUri.fsPath) {
+						const includeItem2 = map?.includes[map?.includes.indexOf(includeItem) + 1]
+						if (includeItem2) {
+							if ((includeItem2.sourceLine - 1) < 0) {
+								log.error('includeItem2.sourceLine is less than 0: ' + includeItem2.sourceLine)
+								throw new Error('includeItem2.sourceLine is less than 0: ' + includeItem2.sourceLine)
+							}
+							debugListAnchor = {
+								uri: debugListActive.uri,
+								position: new Position(includeItem2.sourceLine - 1, 0)
+							}
+						}
+					} else {
+						debugListAnchor = {
+							uri: debugListActive.uri,
+							position: new Position(0, 0)
+						}
+						if (s.isReversed) {
+							const includeEditor = window.visibleTextEditors.find(e => e.document.uri.fsPath == includeItem.debugUri.fsPath)
+							if (includeEditor) {
+								debugListAnchor.position = new Position(includeEditor.document.lineCount, 0)
+							} else {
+								log.warn('Unable to find TextEditor for includeItem.debugUri: ' + includeItem.debugUri.fsPath)
+								debugListAnchor.position = new Position(includeItem.sourceLine + 1, 0)
+							}
+						}
+					}
+				}
+			}
+
+			log.debug('mapSelection: ' + debugListAnchor.uri.fsPath + ':' + debugListAnchor.position.line + '-' + debugListActive.uri.fsPath + ':' + debugListActive.position.line)
+			mappedSelections.push({
+				uri: debugListActive.uri,
+				selection: new Selection(debugListAnchor.position, debugListActive.position)
+			})
+		}
+
+		if (mappedSelections.length === 1 && mappedSelections[0].selection.isEmpty) {
+			// when only one empty selection is present select the whole line so it's easier to see
+			mappedSelections[0] = {
+				uri: mappedSelections[0].uri,
+				selection: new Selection(mappedSelections[0].selection.start.line, 0, mappedSelections[0].selection.start.line + 1, 0)
+			}
+		}
+
+		const activeSelections = mappedSelections.filter(s => s.uri.fsPath == activeSelection.uri.fsPath)
+
+		let includeOrSourceEditor = window.visibleTextEditors.find(e => e.document.uri.fsPath == activeSelection.uri.fsPath)
+		if (!includeOrSourceEditor) {
+			log.debug('show TextDocument for ' + activeSelection.uri.fsPath + ':' + activeSelections[0].selection.start.line + ':' + activeSelections[0].selection.end.line)
+			this.showTextDocumentProcessing = true
+			let vc = (this.previewEditor?.viewColumn ?? 2) - 1
+
+			if (vc > 1 &&  vc == Number(window.visibleTextEditors.find(e => e.document.uri.scheme == 'debugListing')?.viewColumn)) {
+				vc = vc - 1
+			}
+			includeOrSourceEditor = await window.showTextDocument(activeSelection.uri, { viewColumn: vc, preserveFocus: true, selection: activeSelections[0].selection  })
+				.then(() => {
+					this.showTextDocumentProcessing = false
+					this.setPreviewEditor(true)
+					return window.visibleTextEditors.find(e => e.document.uri.fsPath == activeSelection.uri.fsPath)
+				})
+			if (!includeOrSourceEditor) {
+				log.error('Failed showing TextDocument for ' + activeSelection.uri.fsPath)
+				throw new Error('Failed showing TextDocument for ' + activeSelection.uri.fsPath)
+			}
+		}
+
+		if (JSON.stringify(includeOrSourceEditor.selections) == JSON.stringify(activeSelections.map(m => m.selection))) {
+			log.debug('Selections are already set for ' + includeOrSourceEditor.document.uri.fsPath)
+		} else {
+			log.debug('set active selections ' + includeOrSourceEditor.document.uri.fsPath + ' to ' + activeSelections.map(s => s.selection.start.line + ':' + s.selection.end.line).join(', '))
+			this.selectionProcessed.push(includeOrSourceEditor.document.uri.fsPath)
+			includeOrSourceEditor.selections = activeSelections.map(m => m.selection)
+		}
+
+		const inactiveSelections = mappedSelections.filter(s => s.uri.fsPath != activeSelection.uri.fsPath)
+		for (const sel of inactiveSelections) {
+			const visibleEditor = window.visibleTextEditors.find(e => e.document.uri.fsPath == sel.uri.fsPath)
+			if (visibleEditor) {
+				this.selectionProcessed.push(visibleEditor.document.uri.fsPath)
+				visibleEditor.selections = inactiveSelections.filter(s => s.uri.fsPath == sel.uri.fsPath).map(m => m.selection)
+				log.debug('set inactive selections 2 ' + visibleEditor.document.uri.fsPath + ' to ' + visibleEditor.selections.map(s => s.start.line + ':' + s.end.line).join(', '))
+			}
+		}
+	}
+
+	private async updateSourceVisibleRanges (e: TextEditor, visibleRange: Range[]) {
+		log.debug('--- updateSourceVisibleRange e.document.uri=' + e.document.uri.fsPath + ', languageId=' + e.document.languageId)
+		this.previewEditor = e
+
+		const debugListingUri = e.document.uri
+		const sourceUri = await this.getSourceUri(debugListingUri)
+		if (!sourceUri) {
+			log.error('could not find source Uri for debug listing uri ' + debugListingUri.fsPath)
+			throw new Error('could not find source Uri for include ' + debugListingUri.fsPath)
+		}
+		const debugLines = this.getDebugLines(sourceUri)
+
+		const rangeInfo = await this.translateRange(e, visibleRange, e.selection.active, (debugListing: TextEditor | Uri, _u: TextEditor | Uri | undefined, p: Position) => debugLines.getSourcePositionWrapper(debugListing, undefined, p))
+
+		// The math is correct for the range, but we have to add 6 additional lines for what
 		// appears to be MAGIC in how VSCode chooses to reveal ranges.
-		const range = new Range(
-			activePosition.line - sourceLinesBeforeActive + 3, 0,
-			Math.min(activePosition.line + sourceLinesAfterActive, this.previewEditor.document.lineCount), 0
-		)
+		let startLine = rangeInfo.activePosition.line - rangeInfo.linesBeforeActive + 6
+		if (startLine < 0) {
+			log.debug('start line is less than 0: ' + startLine)
+			startLine = 0
+		}
+		let endLine = Math.min(rangeInfo.activePosition.line + rangeInfo.linesAfterActive, this.previewEditor.document.lineCount)
+		if (endLine < 0) {
+			log.debug('end line is less than 0: ' + endLine)
+			endLine = 0
+		}
 
-		sourceEditor.revealRange(range, TextEditorRevealType.AtTop)
+		const range = new Range(
+			startLine, 0,
+			endLine, 0
+		)
+		const includeOrSourceEditor = window.visibleTextEditors.find(e => e.document.uri.fsPath == rangeInfo.activeUri.fsPath)
+		if (!includeOrSourceEditor) {
+			return
+		}
+
+		log.debug('revealRange ' + includeOrSourceEditor.document.uri.fsPath + ':' + range.start.line + ':' + range.end.line)
+		this.visibleRangeProcessed.set(includeOrSourceEditor.document.uri.fsPath, Date.now())
+		includeOrSourceEditor.revealRange(range, TextEditorRevealType.AtTop)
 	}
 
-	private generateDebugListing (cfg: ABLUnitConfig, dlc: IDlc, contextResourcesUri: Uri, propath: PropathParser, currentUri: Uri, debugListingUri: Uri) {
+	private generateDebugListing (
+			debugLines: ABLDebugLines,
+			cfg: ABLUnitConfig,
+			dlc: IDlc,
+			contextResourcesUri: Uri,
+			propath: PropathParser,
+			sourceUri: Uri,
+			rcodeDirectory: Uri,
+			rcodeUri: Uri,
+			debugListingUri: Uri) {
+		log.debug('--- generateDebugListing sourceUri=' + sourceUri.fsPath + ', debugListingUri=' + debugListingUri.fsPath)
+		debugLines.expire(sourceUri)
+
 		const env: Record<string, string> = {
-			SOURCE_FILE: currentUri.fsPath,
+			SOURCE_FILE: sourceUri.fsPath,
+			RCODE_DIRECTORY: '',
 			DEBUG_LISTING_FILE: debugListingUri.fsPath,
+		}
+
+		const currentModified = FileUtils.getFileModifiedTime(sourceUri)
+		let rcodeModified: Date | undefined
+
+		try {
+			rcodeModified = FileUtils.getFileModifiedTime(rcodeUri)
+		} catch (_e) {
+			rcodeModified = undefined
+		}
+
+		log.debug('currentModified: ' + currentModified)
+		log.debug('  rcodeModified: ' + rcodeModified)
+		if (!rcodeModified || currentModified > rcodeModified) {
+			log.debug('rcode out of date:'
+				+ '\n\t' + currentModified + ' - ' + sourceUri.fsPath
+				+ '\n\t' + rcodeModified + ' - ' + rcodeUri.fsPath
+			)
+			env['RCODE_DIRECTORY'] = rcodeDirectory.fsPath
 		}
 
 		cfg.createDbConnPf()

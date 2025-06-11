@@ -17,6 +17,7 @@ interface IPropathEntry {
 export interface IABLFile {
 	uri: Uri
 	file: string
+	rcodeDirectory: Uri,
 	rcodeUri: Uri
 	relativeFile: string
 	propathEntry: IPropathEntry
@@ -136,6 +137,7 @@ export class PropathParser {
 				const fileObj: IABLFile = {
 					uri: uri,
 					file: relativeFile,
+					rcodeDirectory: e.buildDirUri,
 					rcodeUri: rcodeUri,
 					relativeFile: relativeFile,
 					propathEntry: e,
@@ -181,6 +183,7 @@ export class PropathParser {
 				const fileObj: IABLFile = {
 					uri: fileInPropathUri,
 					file: file,
+					rcodeDirectory: e.buildDirUri,
 					rcodeUri: Uri.joinPath(e.buildDirUri, propathRelativeFile.replace(/\.(p|cls)$/, '').replace('.', '/') + '.r'),
 					relativeFile: relativeFile,
 					propathEntry: e,
