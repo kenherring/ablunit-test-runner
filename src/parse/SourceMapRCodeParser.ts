@@ -279,9 +279,18 @@ export const getSourceMapFromRCode = (propath: PropathParser, uri: Uri) => {
 		return declarations
 	}
 
+	const getSourceNum = (num: number) => {
+		for (const src of sources) {
+			if (!src.sourceName.endsWith('.dbg') && src.sourceNum === num) {
+				return src.sourceNum
+			}
+		}
+		throw new Error('could not find source num for num=' + num + ', uri=' + uri.fsPath + '"')
+	}
+
 	const getSourceName = (num: number) => {
 		for (const src of sources) {
-			if (src.sourceNum === num) {
+			if (!src.sourceName.endsWith('.dbg') && src.sourceNum === num) {
 				return src.sourceName
 			}
 		}
@@ -290,7 +299,7 @@ export const getSourceMapFromRCode = (propath: PropathParser, uri: Uri) => {
 
 	const getSourceUri = (num: number) => {
 		for (const src of sources) {
-			if (src.sourceNum === num) {
+			if (!src.sourceName.endsWith('.dbg') && src.sourceNum === num) {
 				return src.sourceUri
 			}
 		}
@@ -305,16 +314,18 @@ export const getSourceMapFromRCode = (propath: PropathParser, uri: Uri) => {
 		const sourceNum = getShort(b[2])
 		b[2] = b[2] & 0xff000000
 
-		const sourceName = decoder.decode(b.subarray(2)).replace(/\0/g, '')
+		const sourceName = decoder.decode(b.subarray(2)).replace(/\0/g, '').replace(/\\/g, '/')
 		if (sourceNum == undefined) {
 			throw new Error('invalid source number: ' + sourceNum + ' ' + sourceName)
 		}
 		const sourceUri = FileUtils.isRelativePath(sourceName) ? Uri.joinPath(propath.workspaceFolder.uri, sourceName) : Uri.file(sourceName)
 
+
+		log.debug('sourceName[' + sources.length + ']=' + sourceName)
 		sources.push({
-			sourceName: sourceName.replace(/\\/g, '/'),
+			sourceName: sourceName,
 			sourceNum: sourceNum,
-			sourceUri: sourceUri
+			sourceUri: sourceUri,
 		})
 
 		if (childBytes[0] && childBytes[0] != 0) {
@@ -367,13 +378,14 @@ export const getSourceMapFromRCode = (propath: PropathParser, uri: Uri) => {
 
 	const getMapLine = (map: IIncludeMap[], linenum: number) => {
 		if (map[0].debugLine > linenum) {
+			const sourceNum = 0 // TODO - this should not be hardcoded
 			return {
 				sourceLine: linenum,
 				debugLine: linenum,
-				sourceNum: 0,
-				sourcePath: getSourceName(0),
-				sourceUri: getSourceUri(0),
-				debugUri: getSourceUri(0)
+				sourceNum: getSourceNum(sourceNum),
+				sourcePath: getSourceName(sourceNum),
+				sourceUri: getSourceUri(sourceNum),
+				debugUri: getSourceUri(sourceNum)
 			} as IIncludeMap
 		}
 		let lastMap: IIncludeMap = map[0]
@@ -484,12 +496,14 @@ export const getSourceMapFromRCode = (propath: PropathParser, uri: Uri) => {
 		const sourceMap: SourceMap = {
 			path: uri.fsPath,
 			sourceUri: uri,
+			modified: FileUtils.getFileModifiedTime(uri),
 			items: debugInfo,
 			sources: sources,
 			includes: includes,
 			declarations: declarations,
 			signatures: signatures,
 			crc: segment1Info.crc,
+			processingMethod: 'rcode',
 		}
 
 		return sourceMap

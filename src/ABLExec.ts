@@ -110,14 +110,16 @@ function runCommand (cfg: ABLUnitConfig, dlc: IDlc, execFile: string, propath: P
 			log.debug('stderr')
 			const lines = data.toString().replace(/\\r\\n/g, '\n').split('\n')
 			for (const line of lines) {
-				log.error('[stderr] ' + line.trim())
+				log.error('[stderr] ' + line.trimEnd())
 			}
 		})
 		proc.stdout?.on('data', (data: Buffer) => {
 			log.debug('stdout data=' + data.toString().trim())
 			const lines = data.toString().replace(/\\r\\n/g, '\n').split('\n')
 			for (const line of lines) {
-				log.info('\t\t[stdout] ' + line.trim())
+				if (line.trim().length > 0) {
+					log.info('\t\t[stdout] ' + line.trimEnd())
+				}
 			}
 		})
 		proc.once('spawn', () => {
@@ -169,5 +171,8 @@ export function getEnvVars (dlcUri: Uri | undefined, env: Record<string, string>
 	}
 	runenv['SOURCE_FILE'] = env['SOURCE_FILE']
 	runenv['DEBUG_LISTING_FILE'] = env['DEBUG_LISTING_FILE']
+	if (env['RCODE_DIRECTORY']) {
+		runenv['RCODE_DIRECTORY'] = env['RCODE_DIRECTORY']
+	}
 	return runenv
 }

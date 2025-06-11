@@ -1,5 +1,5 @@
-import { commands, Selection, Uri, window, workspace, Disposable, extensions, ViewColumn, TabInputText } from 'vscode'
-import { assert, getRcodeCount, getWorkspaceUri, log, runTestsInFile, sleep, suiteSetupCommon, toUri } from '../testCommon'
+import { commands, Selection, Uri, window, workspace, Disposable, extensions } from 'vscode'
+import { assert, getRcodeCount, getWorkspaceUri, log, sleep, suiteSetupCommon, toUri } from '../testCommon'
 import { getSourceMapFromRCode } from 'parse/SourceMapRCodeParser'
 import { PropathParser } from 'ABLPropath'
 import { ABLUnitTestRunner } from '@types'
@@ -190,6 +190,7 @@ test('debugLines.8 - Debug Listing Preview with include', () => {
 			assert.equal(window.activeTextEditor?.document.uri.fsPath, sourceUri.fsPath, 'activeTextEditor')
 			return commands.executeCommand('workbench.action.focusNextGroup')
 		})
+		.then(() => sleep(100))
 		.then(() => {
 			// log.info('activeTextEditor after open debugUri: ' + window.activeTextEditor?.document.uri.fsPath)
 			const debugEditor = window.visibleTextEditors.find(e => e.document.uri.scheme == 'debugListing')

@@ -225,7 +225,7 @@ export class DebugListingContentProvider implements TextDocumentContentProvider 
 			}
 
 			const debugListingUri = fileinfo.debugListingUri
-			await this.generateDebugListing(cfg, getDLC(wf), contextResourcesUri, debugLines.propath, sourceUri, debugListingUri)
+			await this.generateDebugListing(debugLines, cfg, getDLC(wf), contextResourcesUri, debugLines.propath, sourceUri, fileinfo.rcodeDirectory, fileinfo.rcodeUri, debugListingUri)
 
 			const debugListingText = FileUtils.readFileSync(debugListingUri).toString()
 			if (!debugListingText || debugListingText.length < 1) {
@@ -571,11 +571,42 @@ export class DebugListingContentProvider implements TextDocumentContentProvider 
 		includeOrSourceEditor.revealRange(range, TextEditorRevealType.AtTop)
 	}
 
-	private generateDebugListing (cfg: ABLUnitConfig, dlc: IDlc, contextResourcesUri: Uri, propath: PropathParser, currentUri: Uri, debugListingUri: Uri) {
-		log.debug('--- generateDebugListing currentUri=' + currentUri.fsPath + ', debugListingUri=' + debugListingUri.fsPath)
+	private generateDebugListing (
+			debugLines: ABLDebugLines,
+			cfg: ABLUnitConfig,
+			dlc: IDlc,
+			contextResourcesUri: Uri,
+			propath: PropathParser,
+			sourceUri: Uri,
+			rcodeDirectory: Uri,
+			rcodeUri: Uri,
+			debugListingUri: Uri) {
+		log.debug('--- generateDebugListing sourceUri=' + sourceUri.fsPath + ', debugListingUri=' + debugListingUri.fsPath)
+		debugLines.expire(sourceUri)
+
 		const env: Record<string, string> = {
-			SOURCE_FILE: currentUri.fsPath,
+			SOURCE_FILE: sourceUri.fsPath,
+			RCODE_DIRECTORY: '',
 			DEBUG_LISTING_FILE: debugListingUri.fsPath,
+		}
+
+		const currentModified = FileUtils.getFileModifiedTime(sourceUri)
+		let rcodeModified: Date | undefined
+
+		try {
+			rcodeModified = FileUtils.getFileModifiedTime(rcodeUri)
+		} catch (_e) {
+			rcodeModified = undefined
+		}
+
+		log.debug('currentModified: ' + currentModified)
+		log.debug('  rcodeModified: ' + rcodeModified)
+		if (!rcodeModified || currentModified > rcodeModified) {
+			log.debug('rcode out of date:'
+				+ '\n\t' + currentModified + ' - ' + sourceUri.fsPath
+				+ '\n\t' + rcodeModified + ' - ' + rcodeUri.fsPath
+			)
+			env['RCODE_DIRECTORY'] = rcodeDirectory.fsPath
 		}
 
 		cfg.createDbConnPf()
