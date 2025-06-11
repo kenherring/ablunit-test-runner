@@ -11,25 +11,8 @@
 		{
 			"name": "sp2k",
 			"aliases": [],
-			"connect": "-db target/db/sp2k -RO",
-			"schemaFile": "target/sp2k.df"
-		}
-	],
-	"profiles": [
-		{
-			"inherits": "default",
-			"name": "ablunit",
-			"value": {
-				"dbConnections": [
-					{
-						// does not exist
-						"name": "notExist",
-						"aliases": [],
-						"connect": "-db target/db/notExist -RO",
-						"schemaFile": "target/sp2k.df"
-					}
-				]
-			}
+			"connect": "-db db1 -H localhost -S 2500",  // This database does not exist
+			"schemaFile": "target/sp3k.df"
 		}
 	],
 	"numThreads": 1

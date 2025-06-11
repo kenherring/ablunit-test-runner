@@ -1,6 +1,7 @@
 # [1.3.21](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.3.21) - 2025-06-08 (pre-release)
 
 * Updates for DebugListingPreview to sync editors with includes (#320)
+* Improve test results for failures due to DB connection issues (#307)
 * Remove remaining inifile logic; ablunit.showDebugListingPreview compilation improvements (#318)
 * Add extension resources directory to propath at runtime (#316)
 * Enable ablunit.debugListingPreview command when not in testing mode (#317)

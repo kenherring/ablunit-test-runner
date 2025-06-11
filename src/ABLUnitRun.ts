@@ -1,4 +1,4 @@
-import { CancellationError, CancellationToken, debug, DebugConfiguration, TestItem, TestRun, TestRunProfileKind, Uri, workspace } from 'vscode'
+import { CancellationError, CancellationToken, debug, DebugConfiguration, TestItem, TestMessage, TestRun, TestRunProfileKind, Uri, workspace } from 'vscode'
 import { ABLResults } from 'ABLResults'
 import { Duration, gatherAllTestItems } from 'ABLUnitCommon'
 import { SendHandle, Serializable, SpawnOptions, spawn } from 'child_process'
@@ -229,6 +229,7 @@ function runCommand (res: ABLResults, options: TestRun, cancellation: Cancellati
 	log.info('command=\'' + cmd + ' ' + args.join(' ') + '\'\n\n', {testRun: options, testItem: currentTestItems[0] })
 	const testRunDuration = new Duration('TestRun')
 	const proc = spawn(cmd, args, spawnOpts)
+	const openedgeErrorMessages: string[] = []
 
 	return new Promise<string>((resolve, reject) => {
 		let debuggerStarted = false
@@ -326,6 +327,10 @@ function runCommand (res: ABLResults, options: TestRun, cancellation: Cancellati
 						})
 				}
 
+				if (/^\*\* .* \(\d+\)/.exec(line)) {
+					openedgeErrorMessages.push(line)
+				}
+
 				log.info(line, {testRun: options, testItem: currentTestItems[0]})
 			}
 			log.debug('stdout DONE')
@@ -361,6 +366,15 @@ function runCommand (res: ABLResults, options: TestRun, cancellation: Cancellati
 				if (compilerErrors.length > 0) {
 					res.setStatus(RunStatus.Error, 'compilerErrors=' + compilerErrors.length)
 					const e = new ABLCompilerError(compilerErrors, cmd)
+					const msg = new TestMessage(compilerErrors[0].messages.map(m => m.message).join('\n'))
+					if (currentTestItems.length > 0) {
+						options.errored(currentTestItems[0], msg)
+					} else {
+						options.errored(allTests[0], msg)
+					}
+					for (const item of allTests) {
+						options.skipped(item)
+					}
 					res.setStatus(e)
 					log.info('----- ABLUnit Test Run Failed (exit_code=' + code + '; compilerErrors=' + compilerErrors.length + ') ----- ' + testRunDuration, {testRun: options, testItem: currentTestItems[0] })
 					reject(e)
@@ -368,6 +382,21 @@ function runCommand (res: ABLResults, options: TestRun, cancellation: Cancellati
 				}
 				res.setStatus(RunStatus.Error, 'exit_code=' + code)
 				log.info('----- ABLUnit Test Run Failed (exit_code=' + code + ') ----- ' + testRunDuration, {testRun: options, testItem: currentTestItems[0] })
+
+				if (openedgeErrorMessages.length > 0) {
+					for (let i=0; i < allTests.length; i++) {
+						if (i ===0) {
+							for (const openedgeErrorMessage of openedgeErrorMessages) {
+								options.failed(allTests[i], new TestMessage(openedgeErrorMessage))
+							}
+						} else {
+							options.skipped(allTests[i])
+						}
+					}
+					const e = new ABLUnitRuntimeError('ABLUnit exit_code=' + code, openedgeErrorMessages.join('\n'), cmd)
+					reject(e)
+					return e
+				}
 				const e = new ABLUnitRuntimeError('ABLUnit exit_code=' + code, 'ABLUnit exit_code=' + code + '; signal=' + signal, cmd)
 				reject(e)
 				return e
@@ -386,6 +415,14 @@ function runCommand (res: ABLResults, options: TestRun, cancellation: Cancellati
 			log.debug('close code=' + code + ' signal=' + signal)
 			if (code == 0) {
 				log.info('----- ABLUnit Test Run Complete ----- ' + testRunDuration, {testRun: options})
+			} else if (openedgeErrorMessages.length > 0 && proc.pid) {
+				log.warn('killing process pid=' + proc.pid + ' after close code=' + code + ' signal=' + signal)
+				treeKill(proc.pid, 'SIGTERM', (err) => {
+						if (err) {
+							log.error('failed to kill process pid=' + proc.pid + ' err=' + err)
+							throw err
+						}
+					})
 			}
 		}).on('message', (m: Serializable, _h: SendHandle) => {
 			log.debug('message m=' + JSON.stringify(m))
