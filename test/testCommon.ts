@@ -11,7 +11,8 @@ import {
 	workspace,
 	FileCoverageDetail,
 	TestItem,
-	TestRunProfileKind
+	TestRunProfileKind,
+	Position
 } from 'vscode'
 import { ABLResults } from 'ABLResults'
 import { Duration, gatherAllTestItems, IExtensionTestReferences } from 'ABLUnitCommon'
@@ -1367,6 +1368,13 @@ export const assert = {
 
 	linesNotExecuted (file: Uri | string, lines: number[] | number) {
 		assert.linesExecuted(file, lines, false)
+	},
+
+	position (actual: { uri: Uri, position: Position }, expectedUri: Uri, lineChar: [number, number]) {
+		const message = expectedUri.fsPath + ':' + lineChar[0] + ':' + lineChar[1]
+		const expectedPosition = new Position(lineChar[0], lineChar[1])
+		assert.equal(actual.uri.fsPath, expectedUri.fsPath, message)
+		assert.equal(JSON.stringify(actual.position), JSON.stringify(expectedPosition), message)
 	},
 
 	selection (actual: Selection | undefined, expected: Selection | number[] | undefined, uri?: Uri) {

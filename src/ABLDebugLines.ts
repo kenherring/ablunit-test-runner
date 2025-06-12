@@ -33,7 +33,10 @@ export class ABLDebugLines {
 		this.processingMethodMap.delete(sourceUri.fsPath)
 	}
 
-	async getDebugListingPosition (source: Uri, include: TextEditor, position: Position) {
+	async getDebugListingPosition (source: Uri, include: TextEditor, position: Position | [number, number]) {
+		if (position instanceof Array) {
+			position = new Position(position[0], position[1])
+		}
 		if (!include || include instanceof Uri) {
 			throw new Error('Include must be a TextEditor (include=' + include?.fsPath + ')')
 		}
@@ -62,7 +65,10 @@ export class ABLDebugLines {
 		return await this.getSourcePosition(editor, position)
 	}
 
-	async getSourcePosition (editor: TextEditor | Uri, position: Position) {
+	async getSourcePosition (editor: TextEditor | Uri, position: Position | [number, number]) {
+		if (position instanceof Array) {
+			position = new Position(position[0], position[1])
+		}
 		let uri: Uri | undefined = undefined
 		if (editor instanceof Uri) {
 			uri = editor
@@ -88,6 +94,11 @@ export class ABLDebugLines {
 		let char = position.character - 12
 		if (char < 0) {
 			char = 0
+		}
+
+		const fileLength = FileUtils.readLinesFromFileSync(sourceLine.sourceUri).length
+		if (fileLength < line + 1) {
+			throw new Error('Source line ' + (line + 1) + ' is greater than file length ' + fileLength + ' ' + sourceLine.sourceUri.fsPath)
 		}
 		return {
 			uri: sourceLine.sourceUri,
@@ -122,20 +133,9 @@ export class ABLDebugLines {
 			return ret
 		}
 
-		const itemAfter = sourceItems.filter((mappedLine) => mappedLine.sourceLine > line).sort((a, b) => a.debugLine - b.debugLine)[0]
-		if (itemAfter) {
-			const item = new SourceMapItem({
-				debugLine: itemAfter.debugLine - (itemAfter.sourceLine - line),
-				debugUri: itemAfter.debugUri,
-				sourceLine: line,
-				sourceUri: itemAfter.sourceUri,
-				procName: itemAfter.procName,
-				procNum: itemAfter.procNum,
-			})
-			return item
-		}
-
 		const itemBefore = sourceItems.filter((mappedLine) => mappedLine.sourceLine < line).sort((a, b) => b.debugLine - a.debugLine)[0]
+		const itemAfter = sourceItems.filter((mappedLine) => mappedLine.sourceLine > line).sort((a, b) => a.debugLine - b.debugLine)[0]
+
 		if (itemBefore) {
 			const item = new SourceMapItem({
 				debugLine: itemBefore.debugLine + (line - itemBefore.sourceLine),
@@ -147,7 +147,18 @@ export class ABLDebugLines {
 			})
 			return item
 		}
-		return undefined
+		if (itemAfter) {
+			const item = new SourceMapItem({
+				debugLine: line,
+				debugUri: source,
+				sourceLine: line,
+				sourceUri: source,
+				procName: ''
+			})
+			return item
+		}
+
+		throw new Error('Cound not find debug line for ' + source.fsPath + ':' + include.fsPath + ':' + line)
 	}
 
 	async getSourceLine (source: string | Uri, line: number) {
@@ -170,23 +181,10 @@ export class ABLDebugLines {
 			return item
 		}
 
-
 		const debugItems = map.items.filter((mappedLine) => mappedLine.debugUri.fsPath === source.fsPath)
-
-		const itemAfter = debugItems.filter((mappedLine) => mappedLine.debugLine > line).sort((a, b) => a.debugLine - b.debugLine)[0]
-		if (itemAfter) {
-			const item = new SourceMapItem({
-				debugLine: line,
-				debugUri: itemAfter.debugUri,
-				sourceLine: itemAfter.sourceLine - (itemAfter.debugLine - line),
-				sourceUri: itemAfter.sourceUri,
-				procName: itemAfter.procName,
-				procNum: itemAfter.procNum,
-			})
-			return item
-		}
-
 		const itemBefore = debugItems.filter((mappedLine) => mappedLine.debugLine < line).sort((a, b) => b.debugLine - a.debugLine)[0]
+		const itemAfter = debugItems.filter((mappedLine) => mappedLine.debugLine > line).sort((a, b) => a.debugLine - b.debugLine)[0]
+
 		if (itemBefore) {
 			const item = new SourceMapItem({
 				debugLine: line,
@@ -198,6 +196,19 @@ export class ABLDebugLines {
 			})
 			return item
 		}
+
+		if (itemAfter) {
+			return new SourceMapItem({
+				debugLine: line,
+				debugUri: source,
+				sourceLine: line,
+				sourceUri: source,
+				procName: '',
+
+			})
+		}
+
+		throw new Error('Cound not find source line for ' + source.fsPath + ':' + line)
 	}
 
 	async getDebugListingRange (source: Uri, include: TextEditor, range: Range) {
@@ -225,7 +236,7 @@ export class ABLDebugLines {
 			log.error('getSourceMap cannot be called for include files: ' + debugSource.fsPath)
 			throw new Error('getSourceMap cannot be called for include files: ' + debugSource.fsPath)
 		}
-		if (!debugSource.fsPath.endsWith('.p') && !debugSource.fsPath.endsWith('.cls')) {
+		if (!debugSource.fsPath.endsWith('.p') && !debugSource.fsPath.endsWith('.r') && !debugSource.fsPath.endsWith('.cls')) {
 			debugSource = Uri.file(debugSource.fsPath.replace(/\./g, '/') + '.cls')
 		}
 		let map = this.maps.get(debugSource.fsPath)

@@ -1,32 +1,11 @@
-import { commands, Selection, Uri, window, workspace, Disposable, extensions } from 'vscode'
-import { assert, getRcodeCount, getWorkspaceUri, log, sleep, suiteSetupCommon, toUri } from '../testCommon'
+import { commands, Uri, workspace, window } from 'vscode'
+import { assert, getRcodeCount, getWorkspaceUri, log, suiteSetupCommon, toUri } from '../testCommon'
 import { getSourceMapFromRCode } from 'parse/SourceMapRCodeParser'
 import { PropathParser } from 'ABLPropath'
-import { ABLUnitTestRunner } from '@types'
+import { ABLDebugLines } from 'ABLDebugLines'
+import { ABLUnitConfig } from 'ABLUnitConfigWriter'
 
 const workspaceFolder = workspace.workspaceFolders![0]
-
-async function validateSelectionAfterChange (uri: Uri, expectedSelection: number[]) {
-	const waitTime = 1000
-
-	const disposeMe: Disposable[] = []
-	await new Promise<boolean>((resolve, reject) => {
-		window.onDidChangeTextEditorSelection((e) => {
-			if (e.textEditor.document.uri.fsPath == uri.fsPath) {
-				resolve(true)
-			}
-			assert.selection(e.textEditor.selection, expectedSelection)
-		}, disposeMe)
-		setTimeout(() => {
-			const message = 'timeout after ' + waitTime + 'ms waiting for onDidChangeTextEditorSelection for ' + uri.fsPath
-			log.error(message)
-			reject(new Error(message))
-		}, waitTime)
-	})
-	for (const d of disposeMe) {
-		d.dispose()
-	}
-}
 
 suiteSetup('debugLines - before', async () => {
 	await suiteSetupCommon(undefined, 10)
@@ -39,7 +18,9 @@ suiteSetup('debugLines - before', async () => {
 test('debugLines.1 - read debug line map from rcode', async () => {
 	const propath = new PropathParser(workspaceFolder)
 	const sourceMap = await getSourceMapFromRCode(propath, Uri.joinPath(getWorkspaceUri(), 'out/code/unit_test1.r'))
-	assert.equal(7, sourceMap.items.length)
+	assert.equal(9, sourceMap.items.length)
+	assert.equal(7, sourceMap.items.filter(i => i.executable).length)
+	sourceMap.items = sourceMap.items.filter(i => i.executable)
 
 	log.info('sourceMap.items[0]=' + JSON.stringify(sourceMap.items[0]))
 	assert.equal('src/code/unit_test1.p', workspace.asRelativePath(sourceMap.items[0].sourceUri))
@@ -57,7 +38,9 @@ test('debugLines.1 - read debug line map from rcode', async () => {
 test('debugLines.2 - read debug line map from rcode', async () => {
 	const propath = new PropathParser(workspaceFolder)
 	const sourceMap = await getSourceMapFromRCode(propath, Uri.joinPath(getWorkspaceUri(), 'out/code/unit_test2.r'))
-	assert.equal(7, sourceMap.items.length)
+	assert.equal(9, sourceMap.items.length)
+	assert.equal(7, sourceMap.items.filter(i => i.executable).length)
+	sourceMap.items = sourceMap.items.filter(i => i.executable)
 
 	assert.equal(toUri('src/inc/unit_inc1.i').fsPath, sourceMap.items[2].sourceUri.fsPath)
 	assert.equal(1, sourceMap.items[2].sourceLine)
@@ -71,7 +54,9 @@ test('debugLines.2 - read debug line map from rcode', async () => {
 test('debugLines.3 - read debug line map from rcode', async () => {
 	const propath = new PropathParser(workspaceFolder)
 	const sourceMap = await getSourceMapFromRCode(propath, Uri.joinPath(getWorkspaceUri(), 'out/code/unit_test3.r'))
-	assert.equal(7, sourceMap.items.length)
+	assert.equal(9, sourceMap.items.length)
+	assert.equal(7, sourceMap.items.filter(i => i.executable).length)
+	sourceMap.items = sourceMap.items.filter(i => i.executable)
 
 	assert.equal(toUri('src/inc/unit_inc3.i').fsPath, sourceMap.items[2].sourcePath)
 	assert.equal(1, sourceMap.items[2].sourceLine)
@@ -95,7 +80,9 @@ test('debugLines.4 - read debug line map from rcode', async () => {
 test('debugLines.5 - read debug line map for class from rcode', async () => {
 	const propath = new PropathParser(workspaceFolder)
 	const sourceMap = await getSourceMapFromRCode(propath, Uri.joinPath(getWorkspaceUri(), 'out/code/unit_test5.r'))
-	assert.equal(9, sourceMap.items.length)
+	assert.equal(11, sourceMap.items.length)
+	assert.equal(9, sourceMap.items.filter(i => i.executable).length)
+	sourceMap.items = sourceMap.items.filter(i => i.executable)
 
 	// test_method_1
 	assert.equal(toUri('src/code/unit_test5.cls'), sourceMap.items[0].sourcePath, 'sourcePath #0')
@@ -119,6 +106,7 @@ test('debugLines.5 - read debug line map for class from rcode', async () => {
 test('debugLines.6 - include lines are executable', async () => {
 	const propath = new PropathParser(workspaceFolder)
 	const sourceMap = await getSourceMapFromRCode(propath, toUri('out/test6.r'))
+	sourceMap.items = sourceMap.items.filter(i => i.executable)
 
 	assert.equal(sourceMap.items[0].debugUri.fsPath, toUri('src/test6.p').fsPath, 'debugUri[0]')
 	for (let i=0; i < sourceMap.items.length ; i++) {
@@ -137,157 +125,102 @@ test('debugLines.6 - include lines are executable', async () => {
 	assert.equal(sourceMap.items[9].debugLine, 27, 'debugLine[9]')
 })
 
-test('debugLines.7 - Debug Listing Preview', async () => {
+ test('debugLines.7A - comment alignment for source', async () => {
+	log.info('-------------------- debugLines.7A --------------------')
+	const debugLines = new ABLDebugLines((new ABLUnitConfig(workspaceFolder, undefined, false)).readPropathFromJson())
 	const sourceUri = toUri('src/code/unit_test7.p')
-	const debugUri = toUri('src/code/unit_test7.p Debug Listing')
+	const includeUri = toUri('src/inc/include_7A.i')
 
-	await commands.executeCommand('workbench.action.closeAllEditors')
-	await commands.executeCommand('vscode.open', sourceUri)
-
-	if (!window.activeTextEditor) {
-		assert.fail('no activeTextEditor found')
-		throw new Error('no activeTextEditor found')
-	}
-	assert.equal(window.activeTextEditor.document.uri.fsPath, sourceUri.fsPath, 'activeTextEditor')
-	window.activeTextEditor.selection = new Selection(15, 0, 15, 0)
-
-	await commands.executeCommand('ablunit.showDebugListingPreview')
-	assert.selection(window.activeTextEditor.selection, [15, 0, 15, 0])
-
-	// validate initial selection from source editor cursor location
-	log.info('validate intitial seletion...')
-	const ext = extensions.getExtension('kherring.ablunit-test-runner')?.exports as ABLUnitTestRunner
-	const d = ext.getDebugListingPreviewEditor(window.activeTextEditor.document.uri)
-	if (!d) {
-		assert.fail('no Debug Listing Preview open for ' + window.activeTextEditor.document.uri.fsPath)
-		return
-	}
-	assert.equal(d?.document.uri.fsPath, debugUri.fsPath)
-	assert.selection(d?.selection, [19, 0, 20, 0])
-
-	// move cursor in source editor down two lines
-	log.info('validate after cursor move...')
-	window.activeTextEditor.selection = new Selection(17, 4, 17, 4)
-	await validateSelectionAfterChange(debugUri, [21, 0, 22, 0])
-
-	// make selection in debugListing and validate source selection is correct
-	log.info('validate after selection in debugListing...')
-	await commands.executeCommand('workbench.action.focusNextGroup')
-	assert.equal(window.activeTextEditor.document.uri.fsPath, debugUri.fsPath, 'activeTextEditor after open debugUri')
-	await commands.executeCommand('setSelection', { uri: debugUri, selection: new Selection(30, 0, 32, 4) })
-	await validateSelectionAfterChange(sourceUri, [26,0, 82, 4 + 12])
+	assert.position(await debugLines.getSourcePosition(sourceUri, [0, 0]), sourceUri, [0, 0])
+	assert.position(await debugLines.getSourcePosition(sourceUri, [1, 0]), sourceUri, [1, 0])
+	assert.position(await debugLines.getSourcePosition(sourceUri, [2, 0]), sourceUri, [2, 0])
+	assert.position(await debugLines.getSourcePosition(sourceUri, [3, 0]), sourceUri, [3, 0])
+	assert.position(await debugLines.getSourcePosition(sourceUri, [4, 0]), sourceUri, [4, 0])
+	assert.position(await debugLines.getSourcePosition(sourceUri, [5, 0]), sourceUri, [5, 0])
+	assert.position(await debugLines.getSourcePosition(sourceUri, [6, 0]), sourceUri, [6, 0])
+	assert.position(await debugLines.getSourcePosition(sourceUri, [7, 0]), includeUri, [0, 0])
+	assert.position(await debugLines.getSourcePosition(sourceUri, [8, 0]), includeUri, [1, 0])
+	assert.position(await debugLines.getSourcePosition(sourceUri, [9, 0]), includeUri, [2, 0])
+	assert.position(await debugLines.getSourcePosition(sourceUri, [10, 0]), includeUri, [3, 0])
+	assert.position(await debugLines.getSourcePosition(sourceUri, [11, 0]), includeUri, [4, 0])
+	assert.position(await debugLines.getSourcePosition(sourceUri, [12, 0]), includeUri, [5, 0])
+	assert.position(await debugLines.getSourcePosition(sourceUri, [13, 0]), includeUri, [6, 0])
+	assert.position(await debugLines.getSourcePosition(sourceUri, [14, 0]), includeUri, [7, 0])
+	assert.position(await debugLines.getSourcePosition(sourceUri, [15, 0]), includeUri, [8, 0])
+	assert.position(await debugLines.getSourcePosition(sourceUri, [16, 0]), includeUri, [9, 0])
+	assert.position(await debugLines.getSourcePosition(sourceUri, [17, 0]), includeUri, [10, 0])
+	assert.position(await debugLines.getSourcePosition(sourceUri, [18, 0]), includeUri, [11, 0])
+	assert.position(await debugLines.getSourcePosition(sourceUri, [19, 0]), includeUri, [12, 0])
+	assert.position(await debugLines.getSourcePosition(sourceUri, [20, 0]), includeUri, [13, 0])
+	assert.position(await debugLines.getSourcePosition(sourceUri, [21, 0]), includeUri, [14, 0])
+	assert.position(await debugLines.getSourcePosition(sourceUri, [22, 0]), includeUri, [15, 0])
+	assert.position(await debugLines.getSourcePosition(sourceUri, [23, 0]), sourceUri, [7, 0])
+	assert.position(await debugLines.getSourcePosition(sourceUri, [24, 0]), sourceUri, [8, 0])
+	assert.position(await debugLines.getSourcePosition(sourceUri, [25, 0]), sourceUri, [9, 0])
+	assert.position(await debugLines.getSourcePosition(sourceUri, [26, 0]), sourceUri, [10, 0])
+	assert.position(await debugLines.getSourcePosition(sourceUri, [27, 0]), sourceUri, [11, 0])  // blank final line
+	await debugLines.getSourcePosition(sourceUri, [28, 0])
+		.then(() => {
+			assert.fail('getSourcePosition should not resolve for line 29, expected to throw an error')
+		}, (e: unknown) => {
+			log.info('getSourcePosition for line 29 threw as expected: ' + e)
+		})
+	return
 })
 
-test('debugLines.8 - Debug Listing Preview with include', () => {
+test('debugLines.7B - comment alignmen for debug listing', async () => {
+	log.info('-------------------- debugLines.7B --------------------')
+	const debugLines = new ABLDebugLines((new ABLUnitConfig(workspaceFolder, undefined, false)).readPropathFromJson())
 	const sourceUri = toUri('src/code/unit_test7.p')
-	const debugUri = toUri('src/code/unit_test7.p Debug Listing')
-	const includeUri = toUri('src/inc/include_7.i')
+	const includeUri = toUri('src/inc/include_7A.i')
 
-	return commands.executeCommand('workbench.action.closeAllEditors')
+	const sourceEditor = await commands.executeCommand('workbench.action.closeAllEditors')
 		.then(() => commands.executeCommand('vscode.open', sourceUri))
-		.then(() => commands.executeCommand('ablunit.showDebugListingPreview'))
+		.then(() => { return window.visibleTextEditors[0] })
+	assert.position(await debugLines.getDebugListingPosition(sourceUri, sourceEditor, [0, 0]), sourceUri, [0, 12])
+	assert.position(await debugLines.getDebugListingPosition(sourceUri, sourceEditor, [1, 0]), sourceUri, [1, 12])
+	assert.position(await debugLines.getDebugListingPosition(sourceUri, sourceEditor, [2, 0]), sourceUri, [2, 12])
+	assert.position(await debugLines.getDebugListingPosition(sourceUri, sourceEditor, [3, 0]), sourceUri, [3, 12])
+	assert.position(await debugLines.getDebugListingPosition(sourceUri, sourceEditor, [4, 0]), sourceUri, [4, 12])
+	assert.position(await debugLines.getDebugListingPosition(sourceUri, sourceEditor, [5, 0]), sourceUri, [5, 12])
+	assert.position(await debugLines.getDebugListingPosition(sourceUri, sourceEditor, [6, 0]), sourceUri, [6, 12])
+	const includeEditor = await commands.executeCommand('workbench.action.closeAllEditors')
+		.then(() => commands.executeCommand('vscode.open', includeUri))
+		.then(() => { return window.visibleTextEditors[0] })
+	assert.notEqual(includeEditor, sourceEditor, 'includeEditor should not be the same as sourceEditor')
+	assert.position(await debugLines.getDebugListingPosition(sourceUri, includeEditor, [0, 0]), sourceUri, [7, 12])
+	assert.position(await debugLines.getDebugListingPosition(sourceUri, includeEditor, [1, 0]), sourceUri, [8, 12])
+	assert.position(await debugLines.getDebugListingPosition(sourceUri, includeEditor, [2, 0]), sourceUri, [9, 12])
+	assert.position(await debugLines.getDebugListingPosition(sourceUri, includeEditor, [3, 0]), sourceUri, [10, 12])
+	assert.position(await debugLines.getDebugListingPosition(sourceUri, includeEditor, [4, 0]), sourceUri, [11, 12])
+	assert.position(await debugLines.getDebugListingPosition(sourceUri, includeEditor, [5, 0]), sourceUri, [12, 12])
+	assert.position(await debugLines.getDebugListingPosition(sourceUri, includeEditor, [6, 0]), sourceUri, [13, 12])
+	assert.position(await debugLines.getDebugListingPosition(sourceUri, includeEditor, [7, 0]), sourceUri, [14, 12])
+	assert.position(await debugLines.getDebugListingPosition(sourceUri, includeEditor, [8, 0]), sourceUri, [15, 12])
+	assert.position(await debugLines.getDebugListingPosition(sourceUri, includeEditor, [9, 0]), sourceUri, [16, 12])
+	assert.position(await debugLines.getDebugListingPosition(sourceUri, includeEditor, [10, 0]), sourceUri, [17, 12])
+	assert.position(await debugLines.getDebugListingPosition(sourceUri, includeEditor, [11, 0]), sourceUri, [18, 12])
+	assert.position(await debugLines.getDebugListingPosition(sourceUri, includeEditor, [12, 0]), sourceUri, [19, 12])
+	assert.position(await debugLines.getDebugListingPosition(sourceUri, includeEditor, [13, 0]), sourceUri, [20, 12])
+	assert.position(await debugLines.getDebugListingPosition(sourceUri, includeEditor, [14, 0]), sourceUri, [21, 12])
+	assert.position(await debugLines.getDebugListingPosition(sourceUri, includeEditor, [15, 0]), sourceUri, [22, 12])
+	assert.position(await debugLines.getDebugListingPosition(sourceUri, sourceEditor, [7, 0]), sourceUri, [23, 12])
+	assert.position(await debugLines.getDebugListingPosition(sourceUri, sourceEditor, [8, 0]), sourceUri, [24, 12])
+	assert.position(await debugLines.getDebugListingPosition(sourceUri, sourceEditor, [9, 0]), sourceUri, [25, 12])
+	assert.position(await debugLines.getDebugListingPosition(sourceUri, sourceEditor, [10, 0]), sourceUri, [26, 12])
+	assert.position(await debugLines.getDebugListingPosition(sourceUri, sourceEditor, [11, 0]), sourceUri, [27, 12])
+
+	await debugLines.getDebugListingPosition(sourceUri, includeEditor, [16, 0])
 		.then(() => {
-			assert.equal(window.activeTextEditor?.document.uri.fsPath, sourceUri.fsPath, 'activeTextEditor')
-			return commands.executeCommand('workbench.action.focusNextGroup')
-		})
-		.then(() => sleep(100))
-		.then(() => {
-			// log.info('activeTextEditor after open debugUri: ' + window.activeTextEditor?.document.uri.fsPath)
-			const debugEditor = window.visibleTextEditors.find(e => e.document.uri.scheme == 'debugListing')
-			assert.equal(debugEditor?.document.uri.fsPath, debugUri.fsPath, 'debugEditor')
-			if (!debugEditor) {
-				assert.fail('no debug editor found')
-			}
-			log.info('set debugEditor.selection')
-			debugEditor!.selection = new Selection(42, 0, 42, 0)
-			return sleep(100)
-		}).then(() => {
-			const debugEditor = window.visibleTextEditors.filter(e => e.document.uri.scheme == 'debugListing')
-			assert.equal(debugEditor.length, 1, 'should be only one debug editor open')
-			assert.equal(debugEditor[0].document.uri.fsPath, debugUri.fsPath, 'debugEditor')
-			assert.selection(debugEditor[0].selection, [42, 0, 42, 0], debugEditor[0].document.uri)
-			const includeEditor = window.visibleTextEditors.filter(e => e.document.uri.fsPath != debugUri.fsPath)
-			// assert.equal(includeEditor.length, 1, 'should be one include editor open')
-			assert.equal(includeEditor[0].document.uri.fsPath, includeUri.fsPath, 'include editor should be the only other visible editor')
-			assert.selection(includeEditor[0].selection, [8, 0, 9, 0])
-			return
+			assert.fail('getDebugListingPosition should not resolve for ' + includeUri.fsPath + ':16, expected to throw an error')
 		}, (e: unknown) => {
-			log.error('Error in debugLines.8: ' + e)
-			assert.fail('Error in debugLines.8: ' + e)
-			throw e
+			log.info('getDebugListingPosition for line 23 threw as expected: ' + e)
 		})
-	return
-})
-
-test('debugLines.9 - Debug Listing Preview selection across files', () => {
-	const sourceUri = toUri('src/code/unit_test7.p')
-	const debugUri = toUri('src/code/unit_test7.p Debug Listing')
-
-	return commands.executeCommand('workbench.action.closeAllEditors')
-		.then(() => commands.executeCommand('vscode.open', sourceUri))
-		.then(() => commands.executeCommand('ablunit.showDebugListingPreview'))
+	await debugLines.getDebugListingPosition(sourceUri, sourceEditor, [12, 0])
 		.then(() => {
-			assert.equal(window.activeTextEditor?.document.uri.fsPath, sourceUri.fsPath, 'activeTextEditor')
-			const debugEditor = window.visibleTextEditors.find(e => e.document.uri.scheme == 'debugListing')
-			assert.equal(debugEditor?.document.uri.fsPath, debugUri.fsPath, 'debugEditor')
-			debugEditor!.selection = new Selection(40, 0, 30, 0)
-			return sleep(25)
-		}).then(() => {
-			const debugEditor = window.visibleTextEditors.find(e => e.document.uri.scheme == 'debugListing')
-			assert.selection(debugEditor?.selection, [30, 0, 40, 0], debugEditor?.document.uri)
-			assert.ok(debugEditor?.selection.isReversed, 'debugEditor selection should be reversed')
-
-			const sourceEditor = window.visibleTextEditors.filter(e => e.document.uri.fsPath != debugUri.fsPath)
-			assert.equal(sourceEditor.length, 1, 'should be only one source editor open')
-
-			assert.equal(sourceEditor[0].document.uri.fsPath, sourceUri.fsPath, 'source editor should be the only other visible editor')
-			assert.selection(sourceEditor[0].selection, [26, 0, 30, 0])
-			return
+			assert.fail('getDebugListingPosition should not resolve for  28, expected to throw an error')
 		}, (e: unknown) => {
-			log.error('Error in debugLines.8: ' + e)
-			assert.fail('Error in debugLines.8: ' + e)
-			throw e
+			log.info('getDebugListingPosition for line 28 threw as expected: ' + e)
 		})
-	return
-})
 
-test('debugLines.10 - Debug Listing Preview selection across files', () => {
-	log.info('---------- start debugLines.10 ----------')
-	const sourceUri = toUri('src/code/unit_test7.p')
-	const debugUri = toUri('src/code/unit_test7.p Debug Listing')
-	const includeUri = toUri('src/inc/include_7.i')
-
-	return commands.executeCommand('workbench.action.closeAllEditors')
-		.then(() => {
-			assert.equal(window.visibleTextEditors.length, 0, 'should be no visible editors before opening sourceUri')
-			return commands.executeCommand('vscode.open', sourceUri)
-		})
-		.then(() => {
-			assert.equal(window.visibleTextEditors.length, 1, 'after vscode.open')
-			assert.equal(window.activeTextEditor?.document.uri.fsPath, sourceUri.fsPath, 'activeTextEditor')
-			return commands.executeCommand('ablunit.showDebugListingPreview')
-		})
-		.then(() => sleep(100))
-		.then(() => {
-			assert.equal(window.activeTextEditor?.document.uri.fsPath, sourceUri.fsPath, 'activeTextEditor')
-			const debugEditor = window.visibleTextEditors.filter(e => e.document.uri.scheme == 'debugListing')
-			assert.equal(debugEditor.length, 1, 'should be only one debug editor open')
-			assert.equal(debugEditor[0].document.uri.fsPath, debugUri.fsPath, 'debugEditor')
-			debugEditor[0].selection = new Selection(30, 0, 40, 0)
-			return sleep(100)
-		}).then(() => {
-			const debugEditor = window.visibleTextEditors.find(e => e.document.uri.scheme == 'debugListing')
-			assert.selection(debugEditor?.selection, [30, 0, 40, 0], debugEditor?.document.uri)
-
-			const includeEditor = window.visibleTextEditors.filter(e => e.document.uri.fsPath != debugEditor?.document.uri.fsPath)
-			assert.equal(includeEditor.length, 1, 'should be only one source editor open')
-			assert.equal(includeEditor[0].document.uri.fsPath, includeUri.fsPath, 'include editor should be the only other visible editor')
-			assert.selection(includeEditor[0].selection, [0, 0, 6, 0])
-			return
-		}, (e: unknown) => {
-			log.error('Error in debugLines.8: ' + e)
-			assert.fail('Error in debugLines.8: ' + e)
-			throw e
-		})
-	return
 })

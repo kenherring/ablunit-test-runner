@@ -510,11 +510,12 @@ test('proj0.23 - destructor is not an overload', async () => {
 	const modules = childModules.filter(m => m.EntityName == 'destructorClass')
 	assert.equal(modules?.length, 2, 'modules.length')
 
-	assert.ok(modules[0].overloaded, 'modules[0].overloaded')
+	assert.equal(modules[0].ModuleName.split(' ')[0], '~destructorClass', 'modules[0].ModuleName')
+	assert.ok(!modules[0].overloaded, 'modules[0].overloaded')
 	assert.ok(modules[0].Destructor, 'modules[0].Destructor')
+	assert.equal(modules[1].ModuleName.split(' ')[0], 'destructorClass', 'modules[1].ModuleName')
 	assert.ok(modules[1].overloaded, 'modules[1].overloaded')
 	assert.ok(!modules[1].Destructor, 'modules[1].Destructor')
-
 })
 
 test('proj 0.24 - search propath for destructorClass.test.r', async () => {

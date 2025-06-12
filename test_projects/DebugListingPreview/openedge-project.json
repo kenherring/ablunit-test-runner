@@ -1,0 +1,12 @@
+{
+	"name": "DebugListingPreview",
+	"oeversion": "12.8",
+	"charset": "UTF-8",
+	"dbConnections": [],
+	"graphicalMode": false,
+	"version": "0.0.0",
+	"buildPath": [
+		{ "path": "src", "type": "source", "includes": "*.*,**/*.*" }
+	],
+	"buildDirectory": "out"
+}

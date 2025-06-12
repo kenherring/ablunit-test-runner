@@ -1,5 +1,5 @@
 import { commands, Uri } from 'vscode'
-import { assert, log, sleep, toUri } from '../testCommon'
+import { assert, getRcodeCount, log, sleep, toUri } from '../testCommon'
 import { PropathParser } from 'ABLPropath'
 import { SourceMapItem } from 'parse/SourceMapParser'
 import { getSourceMapFromRCode } from 'parse/SourceMapRCodeParser'
@@ -12,9 +12,11 @@ suiteSetup('suiteSetup', () => {
 	FileUtils.deleteFile(toUri('test_3/test.p.xref'))
 	log.info('ant compile-and-test')
 	return commands.executeCommand('workbench.action.tasks.build')
-		.then(() => { return sleep(2500) })
+		.then(() => sleep(3000))
 		.then(() => {
-			log.info('ant compile-and-test done')
+			const rcodeCount = getRcodeCount()
+			log.info('ant compile-and-test done (rcodeCount=' + rcodeCount + ')')
+			assert.greater(rcodeCount, 4, 'rcodeCount > 4')
 			return
 		}, (e: unknown) => {
 			log.error('error compiling! (e=' + e + ')')
@@ -40,6 +42,7 @@ test('SourceMapRCodeParser.test_1', async () => {
 	const testuri = toUri('test_1/test.p')
 	const incuri = toUri('test_1/include.i')
 	const sourceMap = await getSourceMap(propath, toUri('test_1/test.r'))
+	sourceMap.items = sourceMap.items.filter((i) => i.executable)
 
 	assert.equal(sourceMap.items.length, 8)
 

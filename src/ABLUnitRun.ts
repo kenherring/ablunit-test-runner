@@ -419,8 +419,7 @@ function runCommand (res: ABLResults, options: TestRun, cancellation: Cancellati
 				log.warn('killing process pid=' + proc.pid + ' after close code=' + code + ' signal=' + signal)
 				treeKill(proc.pid, 'SIGTERM', (err) => {
 						if (err) {
-							log.error('failed to kill process pid=' + proc.pid + ' err=' + err)
-							throw err
+							log.warn('failed to kill process pid=' + proc.pid + ' err=' + err)
 						}
 					})
 			}
@@ -437,8 +436,7 @@ function runCommand (res: ABLResults, options: TestRun, cancellation: Cancellati
 				if (proc.pid) {
 					treeKill(proc.pid, 'SIGTERM', (err) => {
 						if (err) {
-							log.error('failed to kill process pid=' + proc.pid + ' err=' + err)
-							throw err
+							log.warn('failed to kill process pid=' + proc.pid + ' err=' + err)
 						}
 					})
 				}

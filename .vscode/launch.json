@@ -42,6 +42,7 @@
 			"type": "pickString",
 			"options": [
 				"AtStart",
+				"DebugListingPreview",
 				"DebugLines",
 				"proj0",
 				"proj1",
