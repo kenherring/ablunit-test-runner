@@ -1,20 +1,25 @@
-# [1.3.21](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.3.21) - 2025-06-08 (pre-release)
+# [1.3.23](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.3.23) - 2025-06-12 (pre-release)
 
-* Add Debug Listing Preview (#305, #317, #320)
+* Improve debug listing line calculations (#327)
+* Updates for DebugListingPreview to sync editors with includes (#320)
 * Improve test results for failures due to DB connection issues (#307)
-* Add extension resources directory to propath at runtime (#316, #318)
+* Remove remaining inifile logic; ablunit.showDebugListingPreview compilation improvements (#318)
+* Add extension resources directory to propath at runtime (#316)
+* Enable ablunit.debugListingPreview command when not in testing mode (#317)
+* Add Debug Listing Preview (#305)
 * Fix reported code coverage (#314)
 * Dependencies:
     * Bump @eslint/js from 9.27.0 to 9.28.0 (#311)
     * Bump @stylistic/eslint-plugin-ts from 4.2.0 to 4.4.0 (#303)
-    * Bump @types/node from 22.15.17 to 22.15.29 (#304, #312)
-    * Bump @vscode/vsce from 3.4.1 to 3.4.2 (#302)
+    * Bump @types/node from 22.15.17 to 22.15.30 (#304, #312, #321)
+    * Bump @vscode/vsce from 3.4.1 to 3.5.0 (#302, #323)
+    * Bump esbuild from 0.25.4 to 0.25.5 (#325)
     * Bump eslint from 9.27.0 to 9.28.0 (#308)
-    * Bump mocha from 11.4.0 to 11.5.0 (#301)
+    * Bump mocha from 11.4.0 to 11.6.0 (#301, #324)
     * Bump tar-fs from 2.1.2 to 2.1.3 in the npm_and_yarn group (#313)
-    * Bump typescript-eslint from 8.32.1 to 8.33.0 (#310)
+    * Bump typescript-eslint from 8.32.1 to 8.33.1 (#310, #322)
 
-**Full Changelog**: [1.3.0...1.3.21](https://github.com/kenherring/ablunit-test-runner/compare/1.3.17...1.3.21)
+**Full Changelog**: [1.3.0...1.3.23](https://github.com/kenherring/ablunit-test-runner/compare/1.3.21...1.3.23)
 
 # [1.3.0](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.3.0) - 2025-05-21
 

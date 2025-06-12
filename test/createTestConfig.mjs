@@ -20,6 +20,7 @@ const useOEAblPrerelease = false
 const enableExtensions = [
 	'AtStart',
 	'DebugLines',
+	'DebugListingPreview',
 	'proj0',
 	'proj2',
 	'proj3',
@@ -81,7 +82,7 @@ function getMochaOpts (projName) {
 		// ui: 'bdd' // default; suite, test, etc
 		retries: 0,
 		parallel: false,
-		bail: true,
+		bail: false,
 		require: [
 			'esbuild-register',
 		],

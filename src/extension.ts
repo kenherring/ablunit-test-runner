@@ -867,15 +867,13 @@ function getWorkspaceTestPatterns () {
 }
 
 function deleteTestsInFiles (controller: TestController, files: readonly Uri[]) {
-	log.info('deleted files detected: ' + files.length)
+	log.debug('deleted files detected: ' + files.length)
 	let didDelete = false
 	for (const uri of files) {
-		log.info('deleted file detected: ' + uri.fsPath)
+		log.debug('\t-' + uri.fsPath)
 		const item = getExistingTestItem(controller, uri)
 		if (item) {
 			didDelete = deleteTest(controller, item)
-		} else {
-			log.warn('no test file found for deleted file: ' + uri.fsPath)
 		}
 	}
 	return didDelete

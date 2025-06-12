@@ -65,8 +65,7 @@ export class ABLResults implements Disposable {
 		this.duration = new Duration()
 		this.workspaceFolder = workspaceFolder
 		this.wrapperUri = Uri.joinPath(this.extensionResourcesUri, 'VSCodeTestRunner', 'ABLUnitCore.p')
-		this.cfg = new ABLUnitConfig()
-		this.cfg.setup(this.workspaceFolder, this.request)
+		this.cfg = new ABLUnitConfig(workspaceFolder, this.request)
 		this.dlc = getDLC(this.workspaceFolder, this.cfg.ablunitConfig.openedgeProjectProfile)
 		this.promsgs = new ABLPromsgs(this.dlc, this.globalStorageUri)
 		this.propath = this.cfg.readPropathFromJson(this.extensionResourcesUri)

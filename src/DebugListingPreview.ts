@@ -274,8 +274,7 @@ export class DebugListingContentProvider implements TextDocumentContentProvider 
 
 		let cfg = this.cfg.get(wf)
 		if (!cfg) {
-			cfg = new ABLUnitConfig()
-			cfg.setup(wf, undefined, false)
+			cfg = new ABLUnitConfig(wf, undefined, false)
 			this.cfg.set(wf, cfg)
 		}
 

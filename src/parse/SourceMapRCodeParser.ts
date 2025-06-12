@@ -410,6 +410,7 @@ export const getSourceMapFromRCode = (propath: PropathParser, uri: Uri) => {
 						sourceUri: debugUri,
 						procName: proc.procName,
 						procNum: proc.procNum,
+						executable: true,
 					}))
 				}
 			}
@@ -426,6 +427,7 @@ export const getSourceMapFromRCode = (propath: PropathParser, uri: Uri) => {
 					sourceUri: mapLine.sourceUri,
 					procName: proc.procName,
 					procNum: proc.procNum,
+					executable: true,
 				}))
 			}
 		}
@@ -492,6 +494,17 @@ export const getSourceMapFromRCode = (propath: PropathParser, uri: Uri) => {
 			const debugBytes = raw.slice(segmentInfo.debugLoc, segmentInfo.debugLoc + segmentInfo.debugSize)
 			debugInfo = await parseDebugSegment(debugBytes)
 		}
+
+		for (const include of includes) {
+			debugInfo.push(new SourceMapItem({
+				debugLine: include.debugLine,
+				debugUri: include.debugUri,
+				sourceLine: include.sourceLine,
+				sourceUri: include.sourceUri,
+				procName: '',
+			}))
+		}
+		debugInfo = debugInfo.sort((a, b) => a.debugLine - b.debugLine)
 
 		const sourceMap: SourceMap = {
 			path: uri.fsPath,

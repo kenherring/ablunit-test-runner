@@ -109,6 +109,7 @@ interface ISourceMapItem {
 	sourceUri: Uri
 	procName: string
 	procNum?: number
+	executable?: boolean
 }
 
 export class SourceMapItem {
@@ -118,6 +119,7 @@ export class SourceMapItem {
 	sourceUri: Uri
 	procName: string
 	procNum?: number
+	executable?: boolean
 
 	get sourcePath () {
 		return this.sourceUri.fsPath
@@ -130,6 +132,7 @@ export class SourceMapItem {
 		this.sourceUri = data.sourceUri
 		this.procName = data.procName
 		this.procNum = data.procNum
+		this.executable = data.executable ?? false
 	}
 
 	toJSON () {

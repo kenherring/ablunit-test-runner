@@ -12,14 +12,13 @@ export const ablunitConfig = new WeakMap<WorkspaceFolder, RunConfig>()
 
 export class ABLUnitConfig  {
 
-	// ablunitConfig: IABLUnitConfig = <IABLUnitConfig>{}
 	ablunitConfig: RunConfig = {} as RunConfig
 	requestKind: TestRunProfileKind | undefined
 
-	setup (workspaceFolder: WorkspaceFolder, request?: TestRunRequest, ablunitProfile = true) {
-		log.info('[ABLUnitConfigWriter setup] workspaceUri="' + workspaceFolder.uri.fsPath + '"')
+	constructor (workspaceFolder: WorkspaceFolder, request?: TestRunRequest, ablunitProfile = true) {
+		log.debug('workspaceUri="' + workspaceFolder.uri.fsPath + '"')
 		this.ablunitConfig = getProfileConfig(workspaceFolder, ablunitProfile)
-		log.info('[ABLUnitConfigWriter constructor] setup complete! tempDir=' + this.ablunitConfig.tempDirUri.fsPath)
+		log.debug('tempDir=' + this.ablunitConfig.tempDirUri.fsPath)
 		this.requestKind = request?.profile?.kind ?? TestRunProfileKind.Coverage
 	}
 
