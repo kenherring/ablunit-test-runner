@@ -1,0 +1,11 @@
+{
+	"name": "proj0",
+	"version": "0",
+	"oeversion": "12.8",
+	"charset": "utf-8",
+	"buildPath": [
+		{ "type": "source", "path": "src" },
+		{ "type": "source", "path": "test" }
+	],
+	"numThreads": 1
+}
