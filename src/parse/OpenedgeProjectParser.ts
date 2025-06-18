@@ -39,6 +39,7 @@ interface IOpenEdgeConfig {
 	buildDirectory: string
 	dbConnections: IDatabaseConnection[]
 	procedures: IProcedure[]
+	rootUri: Uri
 }
 
 interface IOpenEdgeMainConfig extends IOpenEdgeConfig {
@@ -69,6 +70,7 @@ export interface IDatabaseConnection {
 export interface IBuildPathEntry {
 	type: 'source' | 'propath'
 	path: string
+	pathUri: Uri
 	build: string
 	xref: string
 	excludes?: string
@@ -204,6 +206,8 @@ export class ProfileConfig implements IOpenEdgeConfig {
 	parameterFiles: string[] = []
 	dbDictionary: string[] = []
 
+	constructor (public readonly rootUri: Uri) {}
+
 	public overwriteValues (parent: ProfileConfig | undefined) {
 		if (!parent) return
 
@@ -265,8 +269,14 @@ export class ProfileConfig implements IOpenEdgeConfig {
 
 class OpenEdgeProjectConfig extends ProfileConfig {
 	activeProfile?: string
-	rootDir = '.'
+	// @deprecate('Use rootUri instead of rootDir')
+	public readonly rootDir: string
 	profiles: Map<string, ProfileConfig> = new Map<string, ProfileConfig>()
+
+	constructor (workspace: WorkspaceFolder | Uri) {
+		super(workspace instanceof Uri ? workspace : workspace.uri)
+		this.rootDir = this.rootUri.fsPath
+	}
 }
 
 export function getActiveProfile (rootDir: string) {
@@ -297,7 +307,7 @@ function loadConfigFile (uri: Uri): IOpenEdgeMainConfig | undefined {
 
 	const cachedConfig = configMap.get(uri.fsPath)
 	const configModifiedTime = FileUtils.getFileModifiedTime(uri)
-	if (cachedConfig && cachedConfig.modifiedTime === configModifiedTime) {
+	if (cachedConfig && cachedConfig.modifiedTime.valueOf() === configModifiedTime.valueOf()) {
 		log.debug('found cached OpenEdge project config for ' + uri.fsPath)
 		return cachedConfig
 	}
@@ -353,9 +363,8 @@ function readGlobalOpenEdgeRuntimes (workspaceUri: Uri) {
 
 	let defaultProject: OpenEdgeProjectConfig | undefined
 	if (defaultRuntime != null) {
-		defaultProject = new OpenEdgeProjectConfig()
+		defaultProject = new OpenEdgeProjectConfig(workspaceUri)
 		defaultProject.dlc = defaultRuntime.path
-		defaultProject.rootDir = workspaceUri.fsPath
 		defaultProject.oeversion = defaultRuntime.name
 		defaultProject.extraParameters = ''
 		defaultProject.graphicalMode = false
@@ -363,9 +372,9 @@ function readGlobalOpenEdgeRuntimes (workspaceUri: Uri) {
 	}
 }
 
-function parseOpenEdgeConfig (cfg: IOpenEdgeConfig | undefined): ProfileConfig {
+function parseOpenEdgeConfig (rootUri: Uri, cfg: IOpenEdgeConfig | undefined): ProfileConfig {
 	log.debug('[parseOpenEdgeConfig] cfg = ' + JSON.stringify(cfg, null, 2))
-	const retVal = new ProfileConfig()
+	const retVal = new ProfileConfig(rootUri)
 	if (cfg?.oeversion) {
 		retVal.dlc = getDlcDirectory(cfg.oeversion)
 	} else if (process.env['DLC']) {
@@ -389,10 +398,9 @@ function parseOpenEdgeConfig (cfg: IOpenEdgeConfig | undefined): ProfileConfig {
 
 function parseOpenEdgeProjectConfig (uri: Uri, workspaceUri: Uri, config: IOpenEdgeMainConfig, ablunitProfile: boolean): OpenEdgeProjectConfig {
 	log.debug('[parseOpenEdgeProjectConfig] uri = ' + uri.fsPath)
-	const prjConfig = new OpenEdgeProjectConfig()
+	const prjConfig = new OpenEdgeProjectConfig(workspaceUri)
 	prjConfig.name = config.name
 	prjConfig.version = config.version
-	prjConfig.rootDir = Uri.file(path.dirname(uri.path)).fsPath
 	readGlobalOpenEdgeRuntimes(workspaceUri)
 	prjConfig.dlc = getDlcDirectory(config.oeversion)
 	prjConfig.extraParameters = config.extraParameters ?? ''
@@ -422,15 +430,25 @@ function parseOpenEdgeProjectConfig (uri: Uri, workspaceUri: Uri, config: IOpenE
 			build: config.buildDirectory ?? prjConfig.propath[0],
 			xref: '.builder/pct',
 			path: prjConfig.propath[0],
+			pathUri: FileUtils.toUri(prjConfig.propath[0]),
 		}]
 	}
+
+	for (const b of prjConfig.buildPath) {
+		if (FileUtils.isRelativePath(b.path)) {
+			b.pathUri = Uri.joinPath(prjConfig.rootUri, b.path)
+		} else {
+			b.pathUri = Uri.file(b.path)
+		}
+	}
+
 	prjConfig.dbConnections = config.dbConnections ?? []
 	prjConfig.procedures = config.procedures ?? []
 
 	prjConfig.profiles.set('default', prjConfig)
 	if (config.profiles) {
 		config.profiles.forEach(profile => {
-			const p = parseOpenEdgeConfig(profile.value)
+			const p = parseOpenEdgeConfig(prjConfig.rootUri, profile.value)
 			if (profile.inherits && prjConfig.profiles.get(profile.inherits)) {
 				const parent = prjConfig.profiles.get(profile.inherits)
 				p.overwriteValues(parent)
@@ -463,7 +481,7 @@ function readOEConfigFile (uri: Uri, workspaceUri: Uri, openedgeProjectProfile?:
 
 	const config = loadConfigFile(uri)
 	if (!config) {
-		const ret = new OpenEdgeProjectConfig()
+		const ret = new OpenEdgeProjectConfig(workspaceUri)
 		ret.activeProfile = openedgeProjectProfile
 		return ret
 	}

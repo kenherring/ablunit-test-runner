@@ -697,7 +697,7 @@ function getOrCreateFile (controller: TestController, uri: Uri, excludePatterns?
 
 	const data = createFileNode(uri)
 	if(!data) {
-		log.trace('No tests found in file: ' +workspace.asRelativePath(uri))
+		log.debug('No tests found in file: ' +workspace.asRelativePath(uri))
 		return { item: undefined, data: undefined }
 	}
 	const file = controller.createTestItem(uri.fsPath, basename(uri.fsPath), uri)
@@ -1039,10 +1039,6 @@ function refreshTestTree (controller: TestController, token: CancellationToken):
 	}
 
 	const [ includePatterns, excludePatterns ] = getWorkspaceTestPatterns()
-	log.info('includePatternslength=' + includePatterns.length + ', excludePatterns.length=' + excludePatterns.length)
-	log.info('includePatterns=' + JSON.stringify(includePatterns.map(p => p.pattern)))
-	log.info('excludePatterns=' + JSON.stringify(excludePatterns.map(p => p.pattern)))
-
 	removeExcludedFiles(controller, excludePatterns, token)
 
 	log.debug('finding files...')
@@ -1051,6 +1047,9 @@ function refreshTestTree (controller: TestController, token: CancellationToken):
 	const prom1 = findMatchingFiles(includePatterns, token, checkCancellationToken)
 		.then((r) => {
 			for (const file of r) {
+				if (!isFileIncluded(file, includePatterns, excludePatterns)) {
+					continue
+				}
 				checkCancellationToken()
 				const { item, data } = getOrCreateFile(controller, file, excludePatterns)
 				if (!item && !data) {
@@ -1138,74 +1137,97 @@ function openCallStackItem (traceUriStr: string) {
 
 function isFileIncluded (uri: Uri, includePatterns: RelativePattern[], excludePatterns: RelativePattern[]) {
 	const workspaceFolder = workspace.getWorkspaceFolder(uri)
-	if (!workspaceFolder) { return false }
+	if (!workspaceFolder) {
+		log.debug('\tfile not in workspace: ' + uri.fsPath)
+		return false
+	}
 
+	// first check the extension patterns
 	const relativePath = workspace.asRelativePath(uri.fsPath, false)
-	const patterns = includePatterns.map(pattern => pattern.pattern)
+	if (includePatterns.length > 0) {
+		let included = false
+		for (const p of includePatterns) {
+			if (minimatch(relativePath, p.pattern, { magicalBraces: true })) {
+				included = true
+				break
+			}
+		}
+		if (!included) {
+			return false
+		}
+	}
 	if (isFileExcluded(uri, excludePatterns)) {
 		return false
 	}
 
+	// second, check the openedge-project.json patterns
 	const profileJson = getOpenEdgeProfileConfig(workspaceFolder.uri)
-	for (const b of profileJson?.buildPath ?? []) {
-		log.info('b.includes=' + b.includes)
-		log.info('b.includesFile=' + b.includesFile)
+	if (!profileJson) {
+		return true
+	}
+	for (const b of profileJson.buildPath.filter(b => b.type == 'source') ?? []) {
+		if (b.path.includes('${DLC}')) {
+			log.error('unexpanded ${DLC} in buildPath is not supported')
+			// TODO! should be processed in getOpenEdgeProfileConfig
+			throw new Error('unexpanded ${DLC} in buildPath is not supported')
+		}
+		if (!uri.fsPath.startsWith(b.pathUri.fsPath)) {
+			// not in the path, skip.
+			continue
+		}
 
-		if (b.includes) {
-			patterns.push(b.includes)
-			log.debug('file excluded by buildPath (excludes=' + b.excludes + ', includes=' + b.includes + ', file=' + relativePath + ')')
-			return true
-		} else if (b.includesFile) {
-			for (const p of FileUtils.readLinesFromFileSync(FileUtils.toUri(b.includesFile))) {
-				patterns.push(p)
+		const includePatterns = b.includes?.split(',') ?? []
+		if (b.includesFile) {
+			includePatterns.push(...FileUtils.readLinesFromFileSync(FileUtils.toUri(b.includesFile)))
+		}
+
+		if (includePatterns.length > 0) {
+			let included = false
+			for (const p of includePatterns) {
+				if (minimatch(uri.fsPath, workspaceFolder.uri.fsPath + p)) {
+					included = true
+					break
+				}
+			}
+			if (!included) {
+				// does not match any include pattern, skip.
+				continue
 			}
 		}
-		log.info('includes patterns.length=' + patterns.length)
-	}
 
-
-	for (const pattern of patterns) {
-		if (minimatch(relativePath, pattern)) {
-			return true
+		// we know it's included, so let's see if it's excluded
+		const excludePatterns = b.excludes?.split(',') ?? []
+		if (b.excludesFile) {
+			excludePatterns.push(...FileUtils.readLinesFromFileSync(FileUtils.toUri(b.excludesFile)))
 		}
+		let excluded = false
+		for (const p of excludePatterns) {
+			if (minimatch(relativePath, p) || minimatch(basename(relativePath), basename(p))) {
+				// excluded, skip.
+				excluded = true
+				break
+			}
+		}
+		if (excluded) {
+			continue
+		}
+
+		// included and not excluded, so it is a match
+		return true
 	}
-	log.debug('file does not match any include patterns: ' + relativePath)
+
 	return false
 }
 
 function isFileExcluded (uri: Uri, excludePatterns: RelativePattern[]) {
 	const workspaceFolder = workspace.getWorkspaceFolder(uri)
-	if (!workspaceFolder) { return true }
-
-	const relativePath = workspace.asRelativePath(uri.fsPath, false)
-	const patterns = excludePatterns.map(pattern => pattern.pattern)
-	log.info('patterns.length=' + patterns.length)
-
-	const profileJson = getOpenEdgeProfileConfig(workspaceFolder.uri)
-	for (const b of profileJson?.buildPath ?? []) {
-		log.info('b.excludes=' + b.excludes)
-		log.info('b.excludesFile=' + b.excludesFile)
-
-		if (b.excludes) {
-			for (const p of b.excludes.split(',')) {
-				if (p.includes('/')) {
-					patterns.push(p)
-				} else {
-					patterns.push('**/' + p)
-				}
-			}
-		} else if (b.excludesFile) {
-			for (const p of FileUtils.readLinesFromFileSync(FileUtils.toUri(b.excludesFile))) {
-				patterns.push(p)
-			}
-		}
-		log.info('excludes patterns.length=' + patterns.length)
+	if (!workspaceFolder) {
+		return true
 	}
 
-	// const profileJson = getOpenEdgeProfileConfig(workspace.getWorkspaceFolder(uri), //TODO//)
-
-	for (const pattern of patterns) {
-		if (minimatch(relativePath, pattern)) {
+	const relativePath = workspace.asRelativePath(uri.fsPath, false)
+	for (const pattern of excludePatterns.map(pattern => pattern.pattern)) {
+		if (minimatch(relativePath, pattern, { magicalBraces: true })) {
 			log.debug('file excluded by pattern: ' + pattern + ' (file=' + relativePath + ')')
 			return true
 		}
