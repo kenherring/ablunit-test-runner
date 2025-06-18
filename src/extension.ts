@@ -28,6 +28,7 @@ import { gatherAllTestItems, IExtensionTestReferences, sortLocation } from 'ABLU
 import { SnippetProvider } from 'SnippetProvider'
 import { DebugListingContentProvider, getDebugListingPreviewEditor } from 'DebugListingPreview'
 import { ABLUnitTestRunner } from '@types'
+import { getOpenEdgeProfileConfig } from 'parse/OpenedgeProjectParser'
 
 let recentResults: ABLResults[] = []
 let recentError: Error | undefined = undefined
@@ -1126,12 +1127,30 @@ function isFileIncluded (uri: Uri, includePatterns: RelativePattern[], excludePa
 	if (!workspaceFolder) { return false }
 
 	const relativePath = workspace.asRelativePath(uri.fsPath, false)
-	const includePatternsStr = includePatterns.map(pattern => pattern.pattern)
+	const patterns = includePatterns.map(pattern => pattern.pattern)
 	if (isFileExcluded(uri, excludePatterns)) {
 		return false
 	}
 
-	for (const pattern of includePatternsStr) {
+	const profileJson = getOpenEdgeProfileConfig(workspaceFolder.uri)
+	for (const b of profileJson?.buildPath ?? []) {
+		log.info('b.includes=' + b.includes)
+		log.info('b.includesFile=' + b.includesFile)
+
+		if (b.includes) {
+			patterns.push(b.includes)
+			log.debug('file excluded by buildPath (excludes=' + b.excludes + ', includes=' + b.includes + ', file=' + relativePath + ')')
+			return true
+		} else if (b.includesFile) {
+			for (const p of FileUtils.readLinesFromFileSync(FileUtils.toUri(b.includesFile))) {
+				patterns.push(p)
+			}
+		}
+		log.info('includes patterns.length=' + patterns.length)
+	}
+
+
+	for (const pattern of patterns) {
 		if (minimatch(relativePath, pattern)) {
 			return true
 		}
@@ -1146,6 +1165,27 @@ function isFileExcluded (uri: Uri, excludePatterns: RelativePattern[]) {
 
 	const relativePath = workspace.asRelativePath(uri.fsPath, false)
 	const patterns = excludePatterns.map(pattern => pattern.pattern)
+	log.info('patterns.length=' + patterns.length)
+
+	const profileJson = getOpenEdgeProfileConfig(workspaceFolder.uri)
+	for (const b of profileJson?.buildPath ?? []) {
+		log.info('b.excludes=' + b.excludes)
+		log.info('b.excludesFile=' + b.excludesFile)
+
+		if (b.excludes) {
+			patterns.push(b.excludes)
+			log.debug('file excluded by buildPath (excludes=' + b.excludes + ', includes=' + b.includes + ', file=' + relativePath + ')')
+			return true
+		} else if (b.excludesFile) {
+			for (const p of FileUtils.readLinesFromFileSync(FileUtils.toUri(b.excludesFile))) {
+				patterns.push(p)
+			}
+		}
+		log.info('excludes patterns.length=' + patterns.length)
+	}
+
+	// const profileJson = getOpenEdgeProfileConfig(workspace.getWorkspaceFolder(uri), //TODO//)
+
 	for (const pattern of patterns) {
 		if (minimatch(relativePath, pattern)) {
 			log.debug('file excluded by pattern: ' + pattern + ' (file=' + relativePath + ')')
