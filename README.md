@@ -87,6 +87,8 @@ See [CONTRIBUTING.md](.github/CONTRIBUTING.md)
   * [Profiler (-profile) startup parameter](https://docs.progress.com/bundle/openedge-startup-and-parameter-reference/page/Profiler-profile.html)
 * GitHub Repo - [progress/ade](https://github.com/progress/ADE) - OpenEdge Source Files
 * Docker Hub - [progresssoftware/prgs-oedb](https://hub.docker.com/r/progresssoftware/prgs-oedb) - Progress Software Corporation
+* In the news 📰
+  * Baltic Amadeus Blog - [ABLUnit Testing in VS Code with the ABLUnit Test Runner ExtensionABLUnit Testing in VS Code with the ABLUnit Test Runner Extension](https://www.ba.lt/en/news/ablunit-testing-in-vs-code/)
 * My other projects
   * [BATS Test Runner](https://github.com/kenherring/bats-test-runner) - Bash Automated Testing System (BATS) test runner
 
