@@ -1,5 +1,6 @@
 # [1.3.25](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.3.25) - 2025-06-18 (pre-release)
 
+* Add "in the news" to README.md links (#333)
 * Bump @types/vscode from 1.100.0 to 1.101.0 (#330)
 * Bump minimatch from 10.0.1 to 10.0.3 (#331)
 * Bump @types/node from 24.0.0 to 24.0.3 (#328)
