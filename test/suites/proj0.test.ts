@@ -1,10 +1,11 @@
-import { DeclarationCoverage, FileCoverageDetail, Range, TestRunProfileKind, Uri, commands, window, workspace } from 'vscode'
+import { DeclarationCoverage, Extension, FileCoverageDetail, Range, TestRunProfileKind, Uri, commands, window, workspace } from 'vscode'
 import { assert, getRcodeCount, getResults, getTestControllerItemCount, getTestItem, getXrefCount, log, rebuildAblProject, refreshTests, runAllTests, runAllTestsWithCoverage, runTestAtLine, runTestsDuration, runTestsInFile, suiteSetupCommon, FileUtils, toUri, updateConfig, updateTestProfile, deleteRcode, setRuntimes, sleep, Duration } from '../testCommon'
 import { ABLResultsParser } from 'parse/ResultsParser'
 import { TimeoutError } from 'Errors'
 import { restartLangServer } from '../openedgeAblCommands'
 import * as vscode from 'vscode'
 import { SignatureType } from 'parse/SourceMapParser'
+import { ABLUnitTestRunner } from '@types'
 
 function createTempFile () {
 	const tempFile = toUri('UNIT_TEST.tmp')
@@ -15,6 +16,7 @@ function createTempFile () {
 const backupProjectFile = 'oeproject.bk'
 const disposables: vscode.Disposable[] = []
 let firstSetup = true
+let ext: Extension<ABLUnitTestRunner>
 
 suiteSetup('proj0 - before', async () => {
 	FileUtils.copyFile('.vscode/settings.json', '.vscode/settings.json.bk')
@@ -31,6 +33,17 @@ suiteSetup('proj0 - before', async () => {
 	await deleteRcode()
 	await suiteSetupCommon()
 	await commands.executeCommand('testing.clearTestResults')
+
+	const localExt = vscode.extensions.getExtension('kherring.ablunit-test-runner')
+	if (!localExt) {
+		log.error('Extension not found')
+		assert.fail('Extension not found')
+	}
+	ext = localExt as Extension<ABLUnitTestRunner>
+	if (!ext.isActive) {
+		await sleep(250)
+	}
+
 	return
 })
 
@@ -631,6 +644,10 @@ test('proj0.29 - database connection not valid', async () => {
 })
 
 test('proj0.30 - database connection not valid', async () => {
+	if (!process.env['CIRCLECI']) {
+		log.info('skipping proj0.30 as it has a long execution time and is intended to run on CI only')
+		return
+	}
 	FileUtils.copyFile('.vscode/ablunit-test-profile.test30.json', '.vscode/ablunit-test-profile.json')
 	FileUtils.copyFile('openedge-project.test30.json', 'openedge-project.json')
 
@@ -646,4 +663,22 @@ test('proj0.30 - database connection not valid', async () => {
 		assert.equal(e.name, 'ABLUnitRuntimeError', 'expected ABLUnitRuntimeError but got: ' + JSON.stringify(e, null, 2))
 	})
 	return
+})
+
+test('proj0.31 - test program excluded by openedge-project.json', async () => {
+	await FileUtils.copyFileAsync('openedge-project.test31A.json', 'openedge-project.json')
+		.then(() => refreshTests())
+		.then(() => { assert.equal(ext.exports.getTestItems(toUri('src/test_17.cls'))?.length, 1, '[31A]') })
+	await FileUtils.copyFileAsync('openedge-project.test31B.json', 'openedge-project.json')
+		.then(() => refreshTests())
+		.then(() => { assert.equal(ext.exports.getTestItems(toUri('src/test_17.cls'))?.length, 0, '[31B]') })
+	await FileUtils.copyFileAsync('openedge-project.test31C.json', 'openedge-project.json')
+		.then(() => refreshTests())
+		.then(() => { assert.equal(ext.exports.getTestItems(toUri('src/test_17.cls'))?.length, 0, '[31C]') })
+	await FileUtils.copyFileAsync('openedge-project.test31D.json', 'openedge-project.json')
+		.then(() => refreshTests())
+		.then(() => { assert.equal(ext.exports.getTestItems(toUri('src/test_17.cls'))?.length, 0, '[31D]') })
+	await FileUtils.copyFileAsync('openedge-project.test31E.json', 'openedge-project.json')
+		.then(() => refreshTests())
+		.then(() => { assert.equal(ext.exports.getTestItems(toUri('src/test_17.cls'))?.length, 1, '[31E]') })
 })

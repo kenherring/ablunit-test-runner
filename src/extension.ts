@@ -499,8 +499,8 @@ export async function activate (context: ExtensionContext) {
 			log.debug('resolveHandlerFunc called with undefined item - refresh tests?')
 			if (workspace.getConfiguration('ablunit').get('discoverAllTestsOnActivate', false)) {
 				log.debug('discoverAllTestsOnActivate is true. refreshing test tree...')
-				return commands.executeCommand('testing.refreshTests').then(() => {
-					log.trace('tests tree successfully refreshed on workspace startup')
+				return refreshTestTree(ctrl, new CancellationTokenSource().token).then(() => {
+					log.debug('tests tree successfully refreshed on workspace startup')
 					return
 				}, (e: unknown) => {
 					log.error('failed to refresh test tree. e=' + e)
@@ -527,7 +527,9 @@ export async function activate (context: ExtensionContext) {
 		isRefreshTestsComplete = false
 		return refreshTestTree(ctrl, token)
 			.then((r) => {
-				log.info('ctrl.refreshHandler post-refreshTestTree (r=' + r + ')')
+				log.info('ctrl.items.size=' + ctrl.items.size)
+				const allItems = gatherAllTestItems(ctrl.items)
+				log.info('ctrl.refreshHandler post-refreshTestTree (r=' + r + ', count=' + allItems.length + ')')
 				isRefreshTestsComplete = true
 				return
 			}, (e: unknown) => { throw e })
@@ -591,9 +593,21 @@ export async function activate (context: ExtensionContext) {
 	await prom
 	log.info('activation complete')
 
-	return {
-		getDebugListingPreviewEditor
-	} as ABLUnitTestRunner
+	const exports: ABLUnitTestRunner = {
+		getDebugListingPreviewEditor,
+		getTestItems: (uri?: Uri) => {
+			log.info('getTestItems uri=' + uri?.fsPath)
+			const allItems = gatherAllTestItems(ctrl.items)
+			log.info('allItems.length=' + allItems.length)
+			if (uri) {
+				const matchingTests = allItems.filter(i => i.uri?.fsPath == uri.fsPath)
+				log.info('matches.length=' + matchingTests.length)
+				return matchingTests
+			}
+			return allItems
+		}
+	}
+	return exports
 }
 
 let contextStorageUri: Uri
@@ -1173,9 +1187,13 @@ function isFileExcluded (uri: Uri, excludePatterns: RelativePattern[]) {
 		log.info('b.excludesFile=' + b.excludesFile)
 
 		if (b.excludes) {
-			patterns.push(b.excludes)
-			log.debug('file excluded by buildPath (excludes=' + b.excludes + ', includes=' + b.includes + ', file=' + relativePath + ')')
-			return true
+			for (const p of b.excludes.split(',')) {
+				if (p.includes('/')) {
+					patterns.push(p)
+				} else {
+					patterns.push('**/' + p)
+				}
+			}
 		} else if (b.excludesFile) {
 			for (const p of FileUtils.readLinesFromFileSync(FileUtils.toUri(b.excludesFile))) {
 				patterns.push(p)
