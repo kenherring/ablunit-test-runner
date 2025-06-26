@@ -455,6 +455,13 @@ function parseOpenEdgeProjectConfig (uri: Uri, workspaceUri: Uri, config: IOpenE
 				const parent = prjConfig.profiles.get(profile.inherits)
 				p.overwriteValues(parent)
 			}
+			for (const b of p.buildPath) {
+				if (FileUtils.isRelativePath(b.path)) {
+					b.pathUri = Uri.file(path.join(prjConfig.rootDir, b.path))
+				} else {
+					b.pathUri = Uri.file(b.path.replace('${DLC}', p.dlc))
+				}
+			}
 			prjConfig.profiles.set(profile.name, p)
 		})
 	}
