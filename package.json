@@ -105,7 +105,7 @@
 		"esbuild-register": "^3.6.0",
 		"eslint": "^9.29.0",
 		"eslint-plugin-promise": "^7.2.1",
-		"mocha": "^11.6.0",
+		"mocha": "^11.7.1",
 		"mocha-multi-reporters": "^1.5.1",
 		"mocha-reporter-sonarqube": "2.1.1",
 		"typescript": "^5.8.3",
