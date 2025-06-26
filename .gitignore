@@ -18,6 +18,7 @@ tmp/
 *.tmp
 *.vsix
 *.zip
+.env
 
 /vscode.d.ts
 

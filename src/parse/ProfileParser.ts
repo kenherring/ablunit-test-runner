@@ -340,11 +340,12 @@ export class ABLProfileJson {
 		if (!this.ignoreExternalCoverage) {
 			return false
 		}
-		return sourceName.startsWith('OpenEdge.') ||
-			sourceName.startsWith('Ccs.Common') ||
-			sourceName.startsWith('VSCode.ABLUnit') ||
-			sourceName.endsWith('ABLUnitCore.p') ||
-			sourceName.endsWith('ABLRunner-wrapper.p')
+		return sourceName.startsWith('OpenEdge.')
+			|| sourceName.startsWith('Ccs.Common')
+			|| sourceName.startsWith('VSCode.ABLUnit')
+			|| sourceName.endsWith('ABLUnitCore.p')
+			|| sourceName.endsWith('ABLRunner-wrapper.p')
+			|| sourceName.endsWith('createDatabaseAliases.p')
 	}
 
 	addModules (lines: string[]) {
@@ -387,9 +388,7 @@ export class ABLProfileJson {
 			}
 
 			if (this.isIgnored(sourceName)) {
-				if (!sourceName.startsWith('OpenEdge.')) {
-					log.debug('ignoring module moduleId=' + test[1] + ', sourceName=' + sourceName + ', entityName=' + entityName)
-				}
+				log.debug('ignoring module moduleId=' + test[1] + ', sourceName=' + sourceName + ', entityName=' + entityName)
 				this.ignoredModules.push(Number(test[1]))
 				continue
 			}
