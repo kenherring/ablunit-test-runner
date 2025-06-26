@@ -130,9 +130,9 @@ export class PropathParser {
 			if(uri.fsPath.replace(/\\/g, '/').startsWith(e.uri.fsPath.replace(/\\/g, '/') + '/')) {
 				const propathRelativeFile = uri.fsPath.replace(e.uri.fsPath, '').substring(1)
 				const relativeFile = workspace.asRelativePath(uri, false)
-				const rcodeUri = Uri.joinPath(e.buildDirUri, propathRelativeFile.replace(/\.(p|cls)$/, '').replace('.', '/') + '.r')
+				const rcodeUri = Uri.joinPath(e.buildDirUri, propathRelativeFile.replace(/\.(p|cls)$/, '') + '.r')
 				const xrefUri = Uri.joinPath(e.xrefDirUri, propathRelativeFile + '.xref')
-				const debugListingUri = Uri.joinPath(e.buildDirUri, propathRelativeFile.replace(/\.(p|cls)$/, '').replace('.', '/') + '.dbg')
+				const debugListingUri = Uri.joinPath(e.buildDirUri, propathRelativeFile.replace(/\.(p|cls)$/, '') + '.dbg')
 
 				const fileObj: IABLFile = {
 					uri: uri,
@@ -184,7 +184,7 @@ export class PropathParser {
 					uri: fileInPropathUri,
 					file: file,
 					rcodeDirectory: e.buildDirUri,
-					rcodeUri: Uri.joinPath(e.buildDirUri, propathRelativeFile.replace(/\.(p|cls)$/, '').replace('.', '/') + '.r'),
+					rcodeUri: Uri.joinPath(e.buildDirUri, propathRelativeFile.replace(/\.(p|cls)$/, '') + '.r'),
 					relativeFile: relativeFile,
 					propathEntry: e,
 					propathRelativeFile: propathRelativeFile,

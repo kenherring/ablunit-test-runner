@@ -41,7 +41,7 @@ async function waitForRcode (expectedCount?: number) {
 
 		if (lastRcodeCount != rcodeCount) {
 			rcodeDuration = new Duration('rcodeDuration')
-		} else if (rcodeDuration.elapsed() > 3000) {
+		} else if (rcodeCount > 0 && rcodeDuration.elapsed() > 3000) {
 			log.warn('no new rcode generated for 3 seconds, assume we are done compiling')
 			return rcodeCount
 		}
