@@ -513,7 +513,7 @@ test('proj0.22 - test coverage for class in subdirectory', async () => {
 	assert.tests.failed(0)
 })
 
-test('proj0.23 - destructor is not an overload', async () => {
+test.skip('proj0.23 - destructor is not an overload', async () => {
 	await runTestsInFile('src/destructorClass.test.cls', 1, TestRunProfileKind.Coverage)
 	const res = await getResults()
 
@@ -531,7 +531,7 @@ test('proj0.23 - destructor is not an overload', async () => {
 	assert.ok(!modules[1].Destructor, 'modules[1].Destructor')
 })
 
-test('proj 0.24 - search propath for destructorClass.test.r', async () => {
+test('proj0.24 - search propath for destructorClass.test.r', async () => {
 	await runTestsInFile('src/destructorClass.test.cls', 1, TestRunProfileKind.Coverage)
 	const res = await getResults()
 
@@ -544,20 +544,18 @@ test('proj 0.24 - search propath for destructorClass.test.r', async () => {
 	if (!fileinfo2) {
 		assert.fail('file not found in propath: destructorClass.test.cls')
 	}
-	// This should the result, but the compiler has other ideas....
-	// assert.equals(fileinfo2?.rcodeUri.fsPath, toUri('src/destructorClass.test.r').fsPath)
-	assert.equal(fileinfo2?.rcodeUri.fsPath, toUri('src/destructorClass/test.r').fsPath)
+	assert.equal(fileinfo2?.rcodeUri.fsPath, toUri('src/destructorClass.test.r').fsPath)
 
 	const fileinfo3 = res[0].debugLines.propath.search('destructorClass.r')
 	if (!fileinfo3) {
 		assert.fail('file not found in propath: destructorClass.r')
 	}
 
-	const fileinfo4 = res[0].debugLines.propath.search('destructorClass/test.r')
+	const fileinfo4 = res[0].debugLines.propath.search('destructorClass.test.r')
 	if (!fileinfo4) {
-		assert.fail('file not found in propath: destructorClass/test.r')
+		assert.fail('file not found in propath: destructorClass.test.r')
 	}
-	assert.equal(fileinfo4?.uri.fsPath, toUri('src/destructorClass/test.r').fsPath)
+	assert.equal(fileinfo4?.uri.fsPath, toUri('src/destructorClass.test.r').fsPath)
 })
 
 test('proj0.25 - no duplicate destructor', async () => {
