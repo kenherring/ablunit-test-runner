@@ -666,37 +666,42 @@ test('proj0.30 - database connection not valid', async () => {
 suite('proj0.31 - include/exclude patterns', () => {
 
 	test('proj0.31A - test program excluded by openedge-project.json', async () => {
-		await FileUtils.copyFileAsync('openedge-project.test31A.json', 'openedge-project.json')
+		await FileUtils.copyFileAsync('openedge-project.test31A.json', 'openedge-project.json', true)
 			.then(() => refreshTests())
 			.then(() => { assert.equal(ext.exports.getTestItems(toUri('src/test_17.cls'))?.length, 1, '[31A]') })
 	})
 
 	test('proj0.31B - test program excluded by openedge-project.json', async () => {
-		await FileUtils.copyFileAsync('openedge-project.test31B.json', 'openedge-project.json')
+		log.info('proj0.31B - start - ' + FileUtils.getFileModifiedTime('openedge-project.json').valueOf() + ' - ' + FileUtils.getFileModifiedTime('openedge-project.json'))
+		await FileUtils.copyFileAsync('openedge-project.test31B.json', 'openedge-project.json', true)
+			.then(() => {
+				log.info('proj0.31B - copied - ' + FileUtils.getFileModifiedTime('openedge-project.json').valueOf() + ' - ' + FileUtils.getFileModifiedTime('openedge-project.json'))
+				return sleep(250)
+			})
 			.then(() => refreshTests())
 			.then(() => { assert.equal(ext.exports.getTestItems(toUri('src/test_17.cls'))?.length, 0, '[31B]') })
 	})
 
 	test('proj0.31C - test program excluded by openedge-project.json', async () => {
-		await FileUtils.copyFileAsync('openedge-project.test31C.json', 'openedge-project.json')
+		await FileUtils.copyFileAsync('openedge-project.test31C.json', 'openedge-project.json', true)
 			.then(() => refreshTests())
 			.then(() => { assert.equal(ext.exports.getTestItems(toUri('src/test_17.cls'))?.length, 0, '[31C]') })
 	})
 
 	test('proj0.31D - test program excluded by openedge-project.json', async () => {
-		await FileUtils.copyFileAsync('openedge-project.test31D.json', 'openedge-project.json')
+		await FileUtils.copyFileAsync('openedge-project.test31D.json', 'openedge-project.json', true)
 			.then(() => refreshTests())
 			.then(() => { assert.equal(ext.exports.getTestItems(toUri('src/test_17.cls'))?.length, 0, '[31D]') })
 	})
 
 	test('proj0.31E - test program excluded by openedge-project.json', async () => {
-		await FileUtils.copyFileAsync('openedge-project.test31E.json', 'openedge-project.json')
+		await FileUtils.copyFileAsync('openedge-project.test31E.json', 'openedge-project.json', true)
 			.then(() => refreshTests())
 			.then(() => { assert.equal(ext.exports.getTestItems(toUri('src/test_17.cls'))?.length, 1, '[31E]') })
 	})
 
 	test('proj0.31F - test program excluded by openedge-project.json', async () => {
-		await FileUtils.copyFileAsync('openedge-project.test31F.json', 'openedge-project.json')
+		await FileUtils.copyFileAsync('openedge-project.test31F.json', 'openedge-project.json', true)
 			.then(() => refreshTests())
 			.then(() => { assert.equal(ext.exports.getTestItems(toUri('src/test_17.cls'))?.length, 1, '[31F]') })
 	})

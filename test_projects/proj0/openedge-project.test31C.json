@@ -4,7 +4,7 @@
 	"oeversion": "12.8",
 	"charset": "utf-8",
 	"buildPath": [
-		{ "type": "source", "path": "src", "excludes": "src/*17.cls" },
+		{ "type": "source", "path": "src", "excludes": "*17.cls" },
 		{ "type": "source", "path": "test" }
 	],
 	"numThreads": 1

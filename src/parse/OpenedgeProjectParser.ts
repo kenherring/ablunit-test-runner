@@ -1,4 +1,4 @@
-import { Uri, workspace, WorkspaceFolder } from 'vscode'
+import { RelativePattern, Uri, workspace, WorkspaceFolder } from 'vscode'
 import { log } from 'ChannelLogger'
 import * as FileUtils from 'FileUtils'
 import * as path from 'path'
@@ -307,8 +307,10 @@ function loadConfigFile (uri: Uri): IOpenEdgeMainConfig | undefined {
 
 	const cachedConfig = configMap.get(uri.fsPath)
 	const configModifiedTime = FileUtils.getFileModifiedTime(uri)
+	log.info('cachedConfig.modifiedTime.valueOf()=' + cachedConfig?.modifiedTime.valueOf())
+	log.info('       configModifiedTime.valueOf()=' + configModifiedTime.valueOf())
 	if (cachedConfig && cachedConfig.modifiedTime.valueOf() === configModifiedTime.valueOf()) {
-		log.debug('found cached OpenEdge project config for ' + uri.fsPath)
+		log.info('found cached OpenEdge project config for ' + uri.fsPath)
 		return cachedConfig
 	}
 
@@ -476,7 +478,7 @@ function parseOpenEdgeProjectConfig (uri: Uri, workspaceUri: Uri, config: IOpenE
 }
 
 function readOEConfigFile (uri: Uri, workspaceUri: Uri, openedgeProjectProfile?: string, ablunitProfile = true) {
-	log.debug('[readOEConfigFile] uri = ' + uri.fsPath + ', workspaceUri=' + workspaceUri.fsPath)
+	log.info('uri = ' + uri.fsPath + ', workspaceUri=' + workspaceUri.fsPath)
 	const projects: OpenEdgeProjectConfig[] = []
 
 	const config = loadConfigFile(uri)
@@ -518,7 +520,7 @@ function getWorkspaceProfileConfig (workspaceUri: Uri, openedgeProjectProfile?: 
 	if (!workspaceFolderUri) {
 		throw new Error('Uri does not exist in workspace: ')
 	}
-	log.debug('[getWorkspaceProfileConfig] uri = ' + uri.fsPath)
+	log.debug('uri = ' + uri.fsPath)
 	const prjConfig = readOEConfigFile(uri, workspaceFolderUri, openedgeProjectProfile, ablunitProfile)
 
 	const activeProfile = openedgeProjectProfile ?? prjConfig.activeProfile
@@ -544,6 +546,7 @@ function getWorkspaceProfileConfig (workspaceUri: Uri, openedgeProjectProfile?: 
 }
 
 export function getOpenEdgeProfileConfig (workspaceUri: Uri, openedgeProjectProfile?: string) {
+	log.info('getOpenEdgeProfileConfig: workspaceUri = ' + workspaceUri.fsPath + ', openedgeProjectProfile = ' + openedgeProjectProfile)
 	const profileConfig = getWorkspaceProfileConfig(workspaceUri, openedgeProjectProfile)
 	if (profileConfig) {
 		return profileConfig
@@ -580,6 +583,30 @@ export function getProfileDbConns (workspaceUri: Uri, openedgeProjectProfile?: s
 	log.trace('[getProfileDbConns] profileConfig.dbConnections = ' + JSON.stringify(profileConfig.dbConnections, null, 2))
 	return profileConfig.dbConnections
 }
+
+export function getBuildPathPatterns (workspaceFolder: WorkspaceFolder, buildPath: IBuildPathEntry): { includes: RelativePattern[]; excludes: RelativePattern[] } {
+	const includes: RelativePattern[] = []
+	if (buildPath.includesFile) {
+		const lines = FileUtils.readLinesFromFileSync(FileUtils.toUri(buildPath.includesFile))
+		includes.push(...lines.map(p => new RelativePattern(workspaceFolder, workspace.asRelativePath(buildPath.path) + '/' + p)))
+	} else {
+		for (const p of buildPath.includes?.split(',') ?? []) {
+			includes.push(new RelativePattern(workspaceFolder, workspace.asRelativePath(buildPath.pathUri) + '/' + p))
+		}
+	}
+
+	const excludes: RelativePattern[] = []
+	if (buildPath.excludesFile) {
+		const lines = FileUtils.readLinesFromFileSync(FileUtils.toUri(buildPath.excludesFile))
+		excludes.push(...lines.map(p => new RelativePattern(workspaceFolder, workspace.asRelativePath(buildPath.path) + '/' + p)))
+	} else {
+		for (const p of buildPath.excludes?.split(',') ?? []) {
+			excludes.push(new RelativePattern(workspaceFolder, workspace.asRelativePath(buildPath.pathUri) + '/' + p))
+		}
+	}
+	return { includes: includes, excludes: excludes }
+}
+
 
 // This file adapted from vscode-abl/vscode-abl
 //

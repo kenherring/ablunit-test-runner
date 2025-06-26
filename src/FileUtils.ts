@@ -247,12 +247,16 @@ export function copyFile (source: Uri | string, target: Uri | string, opts: fs.C
 	fs.cpSync(source.fsPath, target.fsPath, opts)
 }
 
-export function copyFileAsync (source: Uri | string, target: Uri | string): Promise<void> {
+export function copyFileAsync (source: Uri | string, target: Uri | string, setModifiedTime = false): Promise<void> {
 	source = toUri(source)
 	target = toUri(target)
 	if (!doesFileExist(source)) {
 		log.warn('copyFile failed! source file does not exist: ' + source.fsPath)
 		return Promise.resolve()
+	}
+	if (setModifiedTime) {
+		return fsp.copyFile(source.fsPath, target.fsPath)
+			.then(() => fsp.utimes(target.fsPath, new Date(), new Date()))
 	}
 	return fsp.copyFile(source.fsPath, target.fsPath)
 }
