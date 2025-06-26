@@ -307,10 +307,8 @@ function loadConfigFile (uri: Uri): IOpenEdgeMainConfig | undefined {
 
 	const cachedConfig = configMap.get(uri.fsPath)
 	const configModifiedTime = FileUtils.getFileModifiedTime(uri)
-	log.info('cachedConfig.modifiedTime.valueOf()=' + cachedConfig?.modifiedTime.valueOf())
-	log.info('       configModifiedTime.valueOf()=' + configModifiedTime.valueOf())
 	if (cachedConfig && cachedConfig.modifiedTime.valueOf() === configModifiedTime.valueOf()) {
-		log.info('found cached OpenEdge project config for ' + uri.fsPath)
+		log.debug('found cached OpenEdge project config for ' + uri.fsPath)
 		return cachedConfig
 	}
 
@@ -485,7 +483,7 @@ function parseOpenEdgeProjectConfig (uri: Uri, workspaceUri: Uri, config: IOpenE
 }
 
 function readOEConfigFile (uri: Uri, workspaceUri: Uri, openedgeProjectProfile?: string, ablunitProfile = true) {
-	log.info('uri = ' + uri.fsPath + ', workspaceUri=' + workspaceUri.fsPath)
+	log.debug('uri = ' + uri.fsPath + ', workspaceUri=' + workspaceUri.fsPath)
 	const projects: OpenEdgeProjectConfig[] = []
 
 	const config = loadConfigFile(uri)
@@ -527,7 +525,7 @@ function getWorkspaceProfileConfig (workspaceUri: Uri, openedgeProjectProfile?: 
 	if (!workspaceFolderUri) {
 		throw new Error('Uri does not exist in workspace: ')
 	}
-	log.debug('uri = ' + uri.fsPath)
+	log.debug('[getWorkspaceProfileConfig] uri = ' + uri.fsPath)
 	const prjConfig = readOEConfigFile(uri, workspaceFolderUri, openedgeProjectProfile, ablunitProfile)
 
 	const activeProfile = openedgeProjectProfile ?? prjConfig.activeProfile
@@ -553,7 +551,6 @@ function getWorkspaceProfileConfig (workspaceUri: Uri, openedgeProjectProfile?: 
 }
 
 export function getOpenEdgeProfileConfig (workspaceUri: Uri, openedgeProjectProfile?: string) {
-	log.info('getOpenEdgeProfileConfig: workspaceUri = ' + workspaceUri.fsPath + ', openedgeProjectProfile = ' + openedgeProjectProfile)
 	const profileConfig = getWorkspaceProfileConfig(workspaceUri, openedgeProjectProfile)
 	if (profileConfig) {
 		return profileConfig

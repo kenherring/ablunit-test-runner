@@ -527,9 +527,7 @@ export async function activate (context: ExtensionContext) {
 		isRefreshTestsComplete = false
 		return refreshTestTree(ctrl, token)
 			.then((r) => {
-				log.info('ctrl.items.size=' + ctrl.items.size)
-				const allItems = gatherAllTestItems(ctrl.items)
-				log.info('ctrl.refreshHandler post-refreshTestTree (r=' + r + ', count=' + allItems.length + ')')
+				log.debug('ctrl.refreshHandler post-refreshTestTree (r=' + r + ')')
 				isRefreshTestsComplete = true
 				return
 			}, (e: unknown) => { throw e })
@@ -596,12 +594,9 @@ export async function activate (context: ExtensionContext) {
 	const exports: ABLUnitTestRunner = {
 		getDebugListingPreviewEditor,
 		getTestItems: (uri?: Uri) => {
-			log.info('getTestItems uri=' + uri?.fsPath)
 			const allItems = gatherAllTestItems(ctrl.items)
-			log.info('allItems.length=' + allItems.length)
 			if (uri) {
 				const matchingTests = allItems.filter(i => i.uri?.fsPath == uri.fsPath)
-				log.info('matches.length=' + matchingTests.length)
 				return matchingTests
 			}
 			return allItems
@@ -1141,19 +1136,20 @@ function openCallStackItem (traceUriStr: string) {
 }
 
 function isFileIncluded (uri: Uri) {
-	log.info('isFileIncluded: ' + uri.fsPath)
 	const workspaceFolder = workspace.getWorkspaceFolder(uri)
 	if (!workspaceFolder) {
-		log.debug('\tfile not in workspace: ' + uri.fsPath)
+		log.debug('file not in workspace: ' + uri.fsPath)
 		return false
 	}
 
 	// First, check the patterns in workspace settings
 	const [includePatterns, excludePatterns] = getWorkspaceTestPatterns(uri)
 	if (includePatterns.length > 0 && !doesFileMatch(uri, includePatterns)) {
+		log.debug('files does not match include patterns: ' + uri.fsPath)
 		return false
 	}
 	if (doesFileMatch(uri, excludePatterns)) {
+		log.debug('file matches exclude pattern: ' + uri.fsPath)
 		return false
 	}
 
@@ -1163,29 +1159,19 @@ function isFileIncluded (uri: Uri) {
 		return true
 	}
 	for (const b of profileJson.buildPath.filter(b => b.type == 'source') ?? []) {
-		log.info('checking buildPath entry: ' + JSON.stringify(b))
 		if (!uri.fsPath.startsWith(b.pathUri.fsPath)) {
-			log.info('\tfile not in buildPath - skipping to next buildPath entry'
-				+ '\n\tfile: ' + uri.fsPath
-				+ '\n\tpath: ' + b.pathUri.fsPath
-			)
 			continue
 		}
 
 		const buildPathPatterns = getBuildPathPatterns(workspaceFolder, b)
-		log.info('\tincludePatterns.length=' + buildPathPatterns.includes.length)
-
 		if (buildPathPatterns.includes.length > 0 && !doesFileMatch(uri, buildPathPatterns.includes)) {
-			log.info('\tfile does not match includes - skipping to next buildPath entry')
+			log.debug('file does not match buildPath include patterns: ' + uri.fsPath)
 			continue
 		}
-		log.info('\tfile matches includes')
-
 		if (doesFileMatch(uri, buildPathPatterns.excludes)) {
-			log.info('\tfile matches excludes - skipping to next buildPath entry')
+			log.debug('file matches buildPath exclude patterns: ' + uri.fsPath)
 			continue
 		}
-		log.info('\tfile does not match excludes - included by buildPath entry')
 		return true
 	}
 	return false
@@ -1199,9 +1185,8 @@ function doesFileMatch (uri: Uri, patterns: RelativePattern[]) {
 
 	const relativePath = workspace.asRelativePath(uri.fsPath, false)
 	for (const pattern of patterns.map(pattern => pattern.pattern)) {
-		log.info('\t\tchecking pattern ' + pattern + ' against ' + relativePath)
 		if (minimatch(relativePath, pattern, { magicalBraces: true })) {
-			log.info('file ' + relativePath + ' matches \'' + pattern + '\'')
+			log.debug('file ' + relativePath + ' matches \'' + pattern + '\'')
 			return true
 		}
 	}

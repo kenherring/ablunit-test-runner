@@ -36,7 +36,6 @@ suiteSetup('proj0 - before', async () => {
 
 	const localExt = vscode.extensions.getExtension('kherring.ablunit-test-runner')
 	if (!localExt) {
-		log.error('Extension not found')
 		assert.fail('Extension not found')
 	}
 	ext = localExt as Extension<ABLUnitTestRunner>
@@ -674,10 +673,6 @@ suite('proj0.31 - include/exclude patterns', () => {
 	test('proj0.31B - test program excluded by openedge-project.json', async () => {
 		log.info('proj0.31B - start - ' + FileUtils.getFileModifiedTime('openedge-project.json').valueOf() + ' - ' + FileUtils.getFileModifiedTime('openedge-project.json'))
 		await FileUtils.copyFileAsync('openedge-project.test31B.json', 'openedge-project.json', true)
-			.then(() => {
-				log.info('proj0.31B - copied - ' + FileUtils.getFileModifiedTime('openedge-project.json').valueOf() + ' - ' + FileUtils.getFileModifiedTime('openedge-project.json'))
-				return sleep(250)
-			})
 			.then(() => refreshTests())
 			.then(() => { assert.equal(ext.exports.getTestItems(toUri('src/test_17.cls'))?.length, 0, '[31B]') })
 	})
