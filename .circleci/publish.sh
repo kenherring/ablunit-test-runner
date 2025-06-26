@@ -67,6 +67,11 @@ upload_to_github_release () {
     curl -L https://github.com/cli/cli/releases/download/v2.65.0/gh_2.65.0_linux_amd64.deb -o /tmp/gh_2.65.0_linux_amd64.deb
     sudo dpkg -i /tmp/gh_2.65.0_linux_amd64.deb
 
+    if [ -z "${VSCE_PAT:-}" ]; then
+        log_error "VSCE_PAT is not set.  Cannot upload to GitHub release"
+        return 1
+    fi
+
     gh release upload "$PACKAGE_VERSION" "ablunit-test-runner-${PACKAGE_VERSION}.vsix" --clobber
     log_it "release artifact uploaded for PACKAGE_VERSION=$PACKAGE_VERSION"
 }

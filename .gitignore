@@ -22,6 +22,9 @@ tmp/
 
 /vscode.d.ts
 
+# Local files
+.env
+
 # OpenEdge ABL Extension (vscode-abl/vscode-abl)
 *.bin
 .builder

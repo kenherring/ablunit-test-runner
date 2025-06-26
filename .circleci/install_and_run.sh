@@ -25,7 +25,7 @@ initialize() {
 build_dummy_extension() {
     echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}]"
     cd dummy-ext
-    npm install
+    npm ci
     npm run compile
 }
 
