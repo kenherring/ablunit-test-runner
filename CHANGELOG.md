@@ -1,6 +1,7 @@
 # [1.3.31](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.3.31) - 2025-06-30 (pre-release)
 
 * Bump @eslint/js from 9.29.0 to 9.30.0 (#342)
+* Add OpenEdge 12.8.8 test target (#339)
 * Bump @vscode/vsce from 3.5.0 to 3.6.0 (#340)
 * Adhere to include/exclude patterns in openedge-project.json (#334)
 * Bump typescript-eslint from 8.34.0 to 8.34.1 (#336)

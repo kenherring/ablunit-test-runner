@@ -16,7 +16,7 @@ parameters:
     default: 12.8.1
   latest-oe-version:
     type: string
-    default: 12.8.7
+    default: 12.8.8
   prerelease-from-branch:
     type: string
     default: main
