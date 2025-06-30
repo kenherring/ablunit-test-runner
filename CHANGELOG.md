@@ -1,5 +1,7 @@
-# [1.3.29](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.3.29) - 2025-06-26 (pre-release)
+# [1.3.31](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.3.31) - 2025-06-30 (pre-release)
 
+* Bump @types/node from 24.0.3 to 24.0.7 (#343)
+* Bump @vscode/vsce from 3.5.0 to 3.6.0 (#340)
 * Adhere to include/exclude patterns in openedge-project.json (#334)
 * Bump typescript-eslint from 8.34.0 to 8.34.1 (#336)
 * Bump mocha from 11.6.0 to 11.7.0 (#337)
@@ -33,7 +35,7 @@
 * Bump mocha from 11.4.0 to 11.5.0 (#301)
 * Bump @types/node from 22.15.17 to 22.15.21 (#304)
 
-**Full Changelog**: [1.3.0...1.3.29](https://github.com/kenherring/ablunit-test-runner/compare/1.3.25...1.3.29)
+**Full Changelog**: [1.3.0...1.3.31](https://github.com/kenherring/ablunit-test-runner/compare/1.3.29...1.3.31)
 
 # [1.3.0](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.3.0) - 2025-05-21
 
