@@ -18,8 +18,12 @@ tmp/
 *.tmp
 *.vsix
 *.zip
+.env
 
 /vscode.d.ts
+
+# Local files
+.env
 
 # OpenEdge ABL Extension (vscode-abl/vscode-abl)
 *.bin

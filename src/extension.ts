@@ -28,6 +28,7 @@ import { gatherAllTestItems, IExtensionTestReferences, sortLocation } from 'ABLU
 import { SnippetProvider } from 'SnippetProvider'
 import { DebugListingContentProvider, getDebugListingPreviewEditor } from 'DebugListingPreview'
 import { ABLUnitTestRunner } from '@types'
+import { getBuildPathPatterns, getOpenEdgeProfileConfig } from 'parse/OpenedgeProjectParser'
 
 let recentResults: ABLResults[] = []
 let recentError: Error | undefined = undefined
@@ -498,8 +499,8 @@ export async function activate (context: ExtensionContext) {
 			log.debug('resolveHandlerFunc called with undefined item - refresh tests?')
 			if (workspace.getConfiguration('ablunit').get('discoverAllTestsOnActivate', false)) {
 				log.debug('discoverAllTestsOnActivate is true. refreshing test tree...')
-				return commands.executeCommand('testing.refreshTests').then(() => {
-					log.trace('tests tree successfully refreshed on workspace startup')
+				return refreshTestTree(ctrl, new CancellationTokenSource().token).then(() => {
+					log.debug('tests tree successfully refreshed on workspace startup')
 					return
 				}, (e: unknown) => {
 					log.error('failed to refresh test tree. e=' + e)
@@ -526,7 +527,7 @@ export async function activate (context: ExtensionContext) {
 		isRefreshTestsComplete = false
 		return refreshTestTree(ctrl, token)
 			.then((r) => {
-				log.info('ctrl.refreshHandler post-refreshTestTree (r=' + r + ')')
+				log.debug('ctrl.refreshHandler post-refreshTestTree (r=' + r + ')')
 				isRefreshTestsComplete = true
 				return
 			}, (e: unknown) => { throw e })
@@ -590,16 +591,25 @@ export async function activate (context: ExtensionContext) {
 	await prom
 	log.info('activation complete')
 
-	return {
-		getDebugListingPreviewEditor
-	} as ABLUnitTestRunner
+	const exports: ABLUnitTestRunner = {
+		getDebugListingPreviewEditor,
+		getTestItems: (uri?: Uri) => {
+			const allItems = gatherAllTestItems(ctrl.items)
+			if (uri) {
+				const matchingTests = allItems.filter(i => i.uri?.fsPath == uri.fsPath)
+				return matchingTests
+			}
+			return allItems
+		}
+	}
+	return exports
 }
 
 let contextStorageUri: Uri
 
 function updateNode (uri: Uri, ctrl: TestController) {
 	log.debug('updateNode uri="' + uri.fsPath + '"')
-	if(uri.scheme !== 'file' || isFileExcluded(uri, getWorkspaceTestPatterns()[1])) {
+	if(uri.scheme !== 'file' || !isFileIncluded(uri)) {
 		return Promise.resolve(false)
 	}
 
@@ -653,10 +663,10 @@ function getExistingTestItem (controller: TestController, uri: Uri) {
 	return undefined
 }
 
-function getOrCreateFile (controller: TestController, uri: Uri, excludePatterns?: RelativePattern[]) {
+function getOrCreateFile (controller: TestController, uri: Uri) {
 	const existing = getExistingTestItem(controller, uri)
 
-	if (excludePatterns && excludePatterns.length > 0 && isFileExcluded(uri, excludePatterns)) {
+	if (!isFileIncluded(uri)) {
 		if (existing) {
 			deleteTest(controller, existing)
 		}
@@ -682,7 +692,7 @@ function getOrCreateFile (controller: TestController, uri: Uri, excludePatterns?
 
 	const data = createFileNode(uri)
 	if(!data) {
-		log.trace('No tests found in file: ' +workspace.asRelativePath(uri))
+		log.debug('No tests found in file: ' +workspace.asRelativePath(uri))
 		return { item: undefined, data: undefined }
 	}
 	const file = controller.createTestItem(uri.fsPath, basename(uri.fsPath), uri)
@@ -833,11 +843,22 @@ function gatherTestItems (collection: TestItemCollection) {
 	return items
 }
 
-function getWorkspaceTestPatterns () {
+function getWorkspaceTestPatterns (uri?: Uri) {
 	const includePatterns: RelativePattern[] = []
 	const excludePatterns: RelativePattern[] = []
 
+	let wf: WorkspaceFolder | undefined = undefined
+	if (uri) {
+		wf = workspace.getWorkspaceFolder(uri)
+		if (!wf) {
+			throw new Error('getWorkspaceTestPatterns called with uri not in workspace: ' + uri.fsPath)
+		}
+	}
+
 	for (const workspaceFolder of workspace.workspaceFolders ?? []) {
+		if (wf && workspaceFolder.uri.fsPath !== wf.uri.fsPath) {
+			continue
+		}
 		let includePatternsConfig: string[] | string =
 			workspace.getConfiguration('ablunit', workspaceFolder.uri).get('files.include') ??
 			workspace.getConfiguration('ablunit').get('files.include', [ '**/*.{cls,p}' ])
@@ -917,8 +938,7 @@ function deleteTest (controller: TestController | undefined, item: TestItem | Ur
 	return false
 }
 
-function removeExcludedFiles (controller: TestController, excludePatterns: RelativePattern[], token?: CancellationToken) {
-	if (excludePatterns.length === 0) { return }
+function removeExcludedFiles (controller: TestController, token?: CancellationToken) {
 	token?.onCancellationRequested(() => {
 		log.debug('cancellation requested - removeExcludedFiles')
 		throw new CancellationError()
@@ -929,22 +949,18 @@ function removeExcludedFiles (controller: TestController, excludePatterns: Relat
 	for (const item of items) {
 		const data = testData.get(item)
 		if (item.id === 'ABLTestSuiteGroup') {
-			removeExcludedChildren(item, excludePatterns)
+			removeExcludedChildren(item)
 		}
-		if (item.uri && data instanceof ABLTestFile) {
-			const excluded = isFileExcluded(item.uri, excludePatterns)
-			if (excluded) {
-				deleteTest(controller, item)
-			}
+		if (item.uri && data instanceof ABLTestFile && !isFileIncluded(item.uri)) {
+			deleteTest(controller, item)
 		}
 		if (item.children.size == 0 && itemHasTag(item, 'ABLTestDir')) {
-			log.info('remove empty directory form test tree: ' + item.id)
 			deleteTest(controller, item)
 		}
 	}
 }
 
-function removeExcludedChildren (parent: TestItem, excludePatterns: RelativePattern[]) {
+function removeExcludedChildren (parent: TestItem) {
 	if (!parent.children) {
 		return
 	}
@@ -952,12 +968,11 @@ function removeExcludedChildren (parent: TestItem, excludePatterns: RelativePatt
 	for(const [,item] of parent.children) {
 		const data = testData.get(item)
 		if (data instanceof ABLTestFile) {
-			const excluded = isFileExcluded(item.uri!, excludePatterns)
-			if (item.uri && excluded) {
+			if (!isFileIncluded(item.uri!)) {
 				deleteTest(undefined, item)
 			}
 		} else if (data?.isFile) {
-			removeExcludedChildren(item, excludePatterns)
+			removeExcludedChildren(item)
 			if (item.children.size == 0) {
 				deleteTest(undefined, item)
 			}
@@ -965,9 +980,11 @@ function removeExcludedChildren (parent: TestItem, excludePatterns: RelativePatt
 	}
 }
 
-function findMatchingFiles (includePatterns: RelativePattern[], token: CancellationToken, checkCancellationToken: () => void): Promise<Uri[]> {
+function findMatchingFiles (token: CancellationToken, checkCancellationToken: () => void): Promise<Uri[]> {
 	const filelist: Uri[] = []
 	const proms: PromiseLike<boolean>[] = []
+	const [ includePatterns, ] = getWorkspaceTestPatterns()
+
 	for (const includePattern of includePatterns) {
 		const prom = workspace.findFiles(includePattern, undefined, undefined, token)
 			.then((files) => {
@@ -1023,21 +1040,19 @@ function refreshTestTree (controller: TestController, token: CancellationToken):
 		throw new CancellationError()
 	}
 
-	const [ includePatterns, excludePatterns ] = getWorkspaceTestPatterns()
-	log.info('includePatternslength=' + includePatterns.length + ', excludePatterns.length=' + excludePatterns.length)
-	log.info('includePatterns=' + JSON.stringify(includePatterns.map(p => p.pattern)))
-	log.info('excludePatterns=' + JSON.stringify(excludePatterns.map(p => p.pattern)))
-
-	removeExcludedFiles(controller, excludePatterns, token)
+	removeExcludedFiles(controller, token)
 
 	log.debug('finding files...')
 
 	removeDeletedFiles(controller)
-	const prom1 = findMatchingFiles(includePatterns, token, checkCancellationToken)
+	const prom1 = findMatchingFiles(token, checkCancellationToken)
 		.then((r) => {
 			for (const file of r) {
+				if (!isFileIncluded(file)) {
+					continue
+				}
 				checkCancellationToken()
-				const { item, data } = getOrCreateFile(controller, file, excludePatterns)
+				const { item, data } = getOrCreateFile(controller, file)
 				if (!item && !data) {
 					log.debug('could not create test item for file: ' + file.fsPath)
 				}
@@ -1073,7 +1088,6 @@ function getControllerTestFileCount (controller: TestController) {
 }
 
 function createOrUpdateFile (controller: TestController, e: Uri | FileCreateEvent, isEvent = false) {
-	const [includePatterns, excludePatterns ] = getWorkspaceTestPatterns()
 
 	let uris: Uri[] = []
 	if (e instanceof Uri) {
@@ -1087,12 +1101,12 @@ function createOrUpdateFile (controller: TestController, e: Uri | FileCreateEven
 
 	const proms: PromiseLike<boolean>[] = []
 	for (const uri of uris) {
-		if (!isFileIncluded(uri, includePatterns, excludePatterns))  {
+		if (!isFileIncluded(uri))  {
 			deleteTest(controller, uri)
 			continue
 		}
 
-		const { item, data } = getOrCreateFile(controller, uri, excludePatterns)
+		const { item, data } = getOrCreateFile(controller, uri)
 		if (data?.didResolve) {
 			controller.invalidateTestResults(item)
 			proms.push(data.updateFromDisk(controller, item))
@@ -1121,34 +1135,58 @@ function openCallStackItem (traceUriStr: string) {
 	}, (e: unknown) => { throw e })
 }
 
-function isFileIncluded (uri: Uri, includePatterns: RelativePattern[], excludePatterns: RelativePattern[]) {
+function isFileIncluded (uri: Uri) {
 	const workspaceFolder = workspace.getWorkspaceFolder(uri)
-	if (!workspaceFolder) { return false }
-
-	const relativePath = workspace.asRelativePath(uri.fsPath, false)
-	const includePatternsStr = includePatterns.map(pattern => pattern.pattern)
-	if (isFileExcluded(uri, excludePatterns)) {
+	if (!workspaceFolder) {
+		log.debug('file not in workspace: ' + uri.fsPath)
 		return false
 	}
 
-	for (const pattern of includePatternsStr) {
-		if (minimatch(relativePath, pattern)) {
-			return true
-		}
+	// First, check the patterns in workspace settings
+	const [includePatterns, excludePatterns] = getWorkspaceTestPatterns(uri)
+	if (includePatterns.length > 0 && !doesFileMatch(uri, includePatterns)) {
+		log.debug('files does not match include patterns: ' + uri.fsPath)
+		return false
 	}
-	log.debug('file does not match any include patterns: ' + relativePath)
+	if (doesFileMatch(uri, excludePatterns)) {
+		log.debug('file matches exclude pattern: ' + uri.fsPath)
+		return false
+	}
+
+	// second, check the openedge-project.json patterns
+	const profileJson = getOpenEdgeProfileConfig(workspaceFolder.uri)
+	if (!profileJson) {
+		return true
+	}
+	for (const b of profileJson.buildPath.filter(b => b.type == 'source') ?? []) {
+		if (!uri.fsPath.startsWith(b.pathUri.fsPath)) {
+			continue
+		}
+
+		const buildPathPatterns = getBuildPathPatterns(workspaceFolder, b)
+		if (buildPathPatterns.includes.length > 0 && !doesFileMatch(uri, buildPathPatterns.includes)) {
+			log.debug('file does not match buildPath include patterns: ' + uri.fsPath)
+			continue
+		}
+		if (doesFileMatch(uri, buildPathPatterns.excludes)) {
+			log.debug('file matches buildPath exclude patterns: ' + uri.fsPath)
+			continue
+		}
+		return true
+	}
 	return false
 }
 
-function isFileExcluded (uri: Uri, excludePatterns: RelativePattern[]) {
+function doesFileMatch (uri: Uri, patterns: RelativePattern[]) {
 	const workspaceFolder = workspace.getWorkspaceFolder(uri)
-	if (!workspaceFolder) { return true }
+	if (!workspaceFolder) {
+		return true
+	}
 
 	const relativePath = workspace.asRelativePath(uri.fsPath, false)
-	const patterns = excludePatterns.map(pattern => pattern.pattern)
-	for (const pattern of patterns) {
-		if (minimatch(relativePath, pattern)) {
-			log.debug('file excluded by pattern: ' + pattern + ' (file=' + relativePath + ')')
+	for (const pattern of patterns.map(pattern => pattern.pattern)) {
+		if (minimatch(relativePath, pattern, { magicalBraces: true })) {
+			log.debug('file ' + relativePath + ' matches \'' + pattern + '\'')
 			return true
 		}
 	}

@@ -54,9 +54,9 @@ initialize () {
 	fi
 
 	if [ ! -d node_modules ]; then
-		log_it 'start npm install'
-		npm install
-		log_it 'end npm install'
+		log_it 'start npm ci'
+		npm ci
+		log_it 'end npm ci'
 	fi
 }
 

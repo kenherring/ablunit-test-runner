@@ -576,7 +576,6 @@ async function waitForTestsInFile (testpath: Uri) {
 			}, (_e: unknown) => {
 				return undefined
 			})
-		log.info('i.children.size=' + i?.children.size + ' (testpath=' + testpath.fsPath + ')')
 		if ((i?.children.size ?? 0) > 0) {
 			log.info('found ' + i?.children.size + ' tests in ' + testpath.fsPath)
 			break

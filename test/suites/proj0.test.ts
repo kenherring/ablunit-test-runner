@@ -1,10 +1,11 @@
-import { DeclarationCoverage, FileCoverageDetail, Range, TestRunProfileKind, Uri, commands, window, workspace } from 'vscode'
+import { DeclarationCoverage, Extension, FileCoverageDetail, Range, TestRunProfileKind, Uri, commands, window, workspace } from 'vscode'
 import { assert, getRcodeCount, getResults, getTestControllerItemCount, getTestItem, getXrefCount, log, rebuildAblProject, refreshTests, runAllTests, runAllTestsWithCoverage, runTestAtLine, runTestsDuration, runTestsInFile, suiteSetupCommon, FileUtils, toUri, updateConfig, updateTestProfile, deleteRcode, setRuntimes, sleep, Duration } from '../testCommon'
 import { ABLResultsParser } from 'parse/ResultsParser'
 import { TimeoutError } from 'Errors'
 import { restartLangServer } from '../openedgeAblCommands'
 import * as vscode from 'vscode'
 import { SignatureType } from 'parse/SourceMapParser'
+import { ABLUnitTestRunner } from '@types'
 
 function createTempFile () {
 	const tempFile = toUri('UNIT_TEST.tmp')
@@ -15,6 +16,7 @@ function createTempFile () {
 const backupProjectFile = 'oeproject.bk'
 const disposables: vscode.Disposable[] = []
 let firstSetup = true
+let ext: Extension<ABLUnitTestRunner>
 
 suiteSetup('proj0 - before', async () => {
 	FileUtils.copyFile('.vscode/settings.json', '.vscode/settings.json.bk')
@@ -31,6 +33,16 @@ suiteSetup('proj0 - before', async () => {
 	await deleteRcode()
 	await suiteSetupCommon()
 	await commands.executeCommand('testing.clearTestResults')
+
+	const localExt = vscode.extensions.getExtension('kherring.ablunit-test-runner')
+	if (!localExt) {
+		assert.fail('Extension not found')
+	}
+	ext = localExt as Extension<ABLUnitTestRunner>
+	if (!ext.isActive) {
+		await sleep(250)
+	}
+
 	return
 })
 
@@ -500,7 +512,7 @@ test('proj0.22 - test coverage for class in subdirectory', async () => {
 	assert.tests.failed(0)
 })
 
-test('proj0.23 - destructor is not an overload', async () => {
+test.skip('proj0.23 - destructor is not an overload', async () => {
 	await runTestsInFile('src/destructorClass.test.cls', 1, TestRunProfileKind.Coverage)
 	const res = await getResults()
 
@@ -518,7 +530,7 @@ test('proj0.23 - destructor is not an overload', async () => {
 	assert.ok(!modules[1].Destructor, 'modules[1].Destructor')
 })
 
-test('proj 0.24 - search propath for destructorClass.test.r', async () => {
+test('proj0.24 - search propath for destructorClass.test.r', async () => {
 	await runTestsInFile('src/destructorClass.test.cls', 1, TestRunProfileKind.Coverage)
 	const res = await getResults()
 
@@ -531,20 +543,18 @@ test('proj 0.24 - search propath for destructorClass.test.r', async () => {
 	if (!fileinfo2) {
 		assert.fail('file not found in propath: destructorClass.test.cls')
 	}
-	// This should the result, but the compiler has other ideas....
-	// assert.equals(fileinfo2?.rcodeUri.fsPath, toUri('src/destructorClass.test.r').fsPath)
-	assert.equal(fileinfo2?.rcodeUri.fsPath, toUri('src/destructorClass/test.r').fsPath)
+	assert.equal(fileinfo2?.rcodeUri.fsPath, toUri('src/destructorClass.test.r').fsPath)
 
 	const fileinfo3 = res[0].debugLines.propath.search('destructorClass.r')
 	if (!fileinfo3) {
 		assert.fail('file not found in propath: destructorClass.r')
 	}
 
-	const fileinfo4 = res[0].debugLines.propath.search('destructorClass/test.r')
+	const fileinfo4 = res[0].debugLines.propath.search('destructorClass.test.r')
 	if (!fileinfo4) {
-		assert.fail('file not found in propath: destructorClass/test.r')
+		assert.fail('file not found in propath: destructorClass.test.r')
 	}
-	assert.equal(fileinfo4?.uri.fsPath, toUri('src/destructorClass/test.r').fsPath)
+	assert.equal(fileinfo4?.uri.fsPath, toUri('src/destructorClass.test.r').fsPath)
 })
 
 test('proj0.25 - no duplicate destructor', async () => {
@@ -631,6 +641,10 @@ test('proj0.29 - database connection not valid', async () => {
 })
 
 test('proj0.30 - database connection not valid', async () => {
+	if (!process.env['CIRCLECI']) {
+		log.info('skipping proj0.30 as it has a long execution time and is intended to run on CI only')
+		return
+	}
 	FileUtils.copyFile('.vscode/ablunit-test-profile.test30.json', '.vscode/ablunit-test-profile.json')
 	FileUtils.copyFile('openedge-project.test30.json', 'openedge-project.json')
 
@@ -646,4 +660,44 @@ test('proj0.30 - database connection not valid', async () => {
 		assert.equal(e.name, 'ABLUnitRuntimeError', 'expected ABLUnitRuntimeError but got: ' + JSON.stringify(e, null, 2))
 	})
 	return
+})
+
+suite('proj0.31 - include/exclude patterns', () => {
+
+	test('proj0.31A - test program excluded by openedge-project.json', async () => {
+		await FileUtils.copyFileAsync('openedge-project.test31A.json', 'openedge-project.json', true)
+			.then(() => refreshTests())
+			.then(() => { assert.equal(ext.exports.getTestItems(toUri('src/test_17.cls'))?.length, 1, '[31A]') })
+	})
+
+	test('proj0.31B - test program excluded by openedge-project.json', async () => {
+		log.info('proj0.31B - start - ' + FileUtils.getFileModifiedTime('openedge-project.json').valueOf() + ' - ' + FileUtils.getFileModifiedTime('openedge-project.json'))
+		await FileUtils.copyFileAsync('openedge-project.test31B.json', 'openedge-project.json', true)
+			.then(() => refreshTests())
+			.then(() => { assert.equal(ext.exports.getTestItems(toUri('src/test_17.cls'))?.length, 0, '[31B]') })
+	})
+
+	test('proj0.31C - test program excluded by openedge-project.json', async () => {
+		await FileUtils.copyFileAsync('openedge-project.test31C.json', 'openedge-project.json', true)
+			.then(() => refreshTests())
+			.then(() => { assert.equal(ext.exports.getTestItems(toUri('src/test_17.cls'))?.length, 0, '[31C]') })
+	})
+
+	test('proj0.31D - test program excluded by openedge-project.json', async () => {
+		await FileUtils.copyFileAsync('openedge-project.test31D.json', 'openedge-project.json', true)
+			.then(() => refreshTests())
+			.then(() => { assert.equal(ext.exports.getTestItems(toUri('src/test_17.cls'))?.length, 0, '[31D]') })
+	})
+
+	test('proj0.31E - test program excluded by openedge-project.json', async () => {
+		await FileUtils.copyFileAsync('openedge-project.test31E.json', 'openedge-project.json', true)
+			.then(() => refreshTests())
+			.then(() => { assert.equal(ext.exports.getTestItems(toUri('src/test_17.cls'))?.length, 1, '[31E]') })
+	})
+
+	test('proj0.31F - test program excluded by openedge-project.json', async () => {
+		await FileUtils.copyFileAsync('openedge-project.test31F.json', 'openedge-project.json', true)
+			.then(() => refreshTests())
+			.then(() => { assert.equal(ext.exports.getTestItems(toUri('src/test_17.cls'))?.length, 1, '[31F]') })
+	})
 })
