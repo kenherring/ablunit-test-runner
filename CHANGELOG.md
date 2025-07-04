@@ -1,6 +1,7 @@
 # [1.3.33](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.3.33) - 2025-06-30 (pre-release)
 
 * Bump @types/node from 24.0.3 to 24.0.7 (#343)
+* Bump @eslint/js from 9.29.0 to 9.30.0 (#342)
 * Bump eslint from 9.29.0 to 9.30.0 (#341)
 * Add OpenEdge 12.8.8 test target (#339)
 * Bump @vscode/vsce from 3.5.0 to 3.6.0 (#340)
