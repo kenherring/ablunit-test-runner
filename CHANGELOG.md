@@ -1,5 +1,11 @@
-# [1.3.37](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.3.37) - 2025-07-20 (pre-release)
+# [1.3.39](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.3.39) - 2025-08-03 (pre-release)
 
+* Bump form-data and @eslint/plugin-kit (#359)
+* Bump @types/node from 24.0.14 to 24.1.0 (#355)
+* Bump esbuild from 0.25.6 to 0.25.8 (#354)
+* Bump typescript-eslint from 8.36.0 to 8.38.0 (#357)
+* Bump eslint from 9.31.0 to 9.32.0 (#358)
+* Bump form-data from 4.0.1 to 4.0.4 in the npm_and_yarn group (#353)
 * Bump @types/vscode from 1.101.0 to 1.102.0 (#348)
 * Bump @types/node from 24.0.10 to 24.0.13 (#349)
 * Bump esbuild from 0.25.5 to 0.25.6 (#351)
@@ -46,7 +52,7 @@
 * Bump mocha from 11.4.0 to 11.5.0 (#301)
 * Bump @types/node from 22.15.17 to 22.15.21 (#304)
 
-**Full Changelog**: [1.3.0...1.3.37](https://github.com/kenherring/ablunit-test-runner/compare/1.3.35...1.3.37)
+**Full Changelog**: [1.3.0...1.3.39](https://github.com/kenherring/ablunit-test-runner/compare/1.3.37...1.3.39)
 
 # [1.3.0](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.3.0) - 2025-05-21
 
