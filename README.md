@@ -73,7 +73,7 @@ See [CONTRIBUTING.md](.github/CONTRIBUTING.md)
 
 * `npm install`
 * Make any changes you wish
-* `npm test` or use the [Extension Test Runner](https://marketplace.visualstudio.com/items?itemName=ms-vscode.extension-test-runner)
+* `npm test` or use the [Extension Test Runner](https://marketplace.visualstudio.com/items?itemName=ms-vscode.extension-test-runner) extension
 
 ## 🔗 Links
 
