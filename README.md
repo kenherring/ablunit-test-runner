@@ -24,7 +24,7 @@ The [ABLUnit Test Runner](https://github.com/kenherring/ablunit-test-runner/) ex
 
 ## 📝 Supported OpenEdge Versions
 
-This project was developed using the [Progress OpenEdge Developers Kit: Classroom Edition](https://www.progress.com/openedge/classroom-edition).  It was primarily tested with 12.8.1, but the unit tests are run for 12.2 and 12.8.8 during the CI builds too.
+This project was developed using the [Progress OpenEdge Developers Kit: Classroom Edition](https://www.progress.com/openedge/classroom-edition).  It was primarily tested with 12.8.1, but the unit tests are run for 12.2 and 12.8.9 during the CI builds too.
 
 ## ⛺ Configuration
 
