@@ -1,4 +1,4 @@
-# [1.3.39](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.3.39) - 2025-08-03 (pre-release)
+# [1.3.43](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.3.43) - 2025-08-19 (pre-release)
 
 * Enable ablunit.debugListingPreview command when not in testing mode (#317)
 * Fix propath calculations for classes with `.` in the filepath (#338)
@@ -18,7 +18,7 @@
     * Bump @eslint/js from 9.27.0 to 9.30.1 (#311, #342, #346)
     * Bump @stylistic/eslint-plugin-ts from 4.2.0 to 4.4.0 (#303)
     * Bump @types/node from 22.15.17 to 24.0.10 (#304, #312, #321, #328, #334, #344, #349, #355)
-    * Bump @types/vscode from 1.100.0 to 1.102.0 (#330, #348)
+    * Bump @types/vscode from 1.100.0 to 1.103.0 (#330, #348, #372)
     * Bump @vscode/vsce from 3.4.1 to 3.6.0 (#302, #323, #340)
     * Bump brace-expansion from 1.1.11 to 1.1.12 in the npm_and_yarn group (#326)
     * Bump esbuild from 0.25.4 to 0.25.8 (#325, #351, #354)
@@ -29,7 +29,7 @@
     * Bump tar-fs from 2.1.2 to 2.1.3 in the npm_and_yarn group (#313)
     * Bump typescript-eslint from 8.32.1 to 8.38.0 (#310, #322, #336, #345, #357)
 
-**Full Changelog**: [1.3.0...1.3.39](https://github.com/kenherring/ablunit-test-runner/compare/1.3.37...1.3.39)
+**Full Changelog**: [1.3.0...1.3.43](https://github.com/kenherring/ablunit-test-runner/compare/1.3.39...1.3.43)
 
 # [1.3.0](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.3.0) - 2025-05-21
 
