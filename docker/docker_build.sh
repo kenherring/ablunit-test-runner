@@ -5,13 +5,13 @@ usage () {
 	echo "
 usage: $0 [-p] [-n] [-h]
 		[-o < 12.2.12 | 12.8.1 | 12.8.9 | ... >]
-		[-N < 18 | 20 | 22 | ... >]
+		[-N < 20 | 22 | 24 | ... >]
 options:
-  -p				push docker images to dockerhub after build
-  -n				no cache
-  -o <version>		build with a specific OE version
-  -N <version>		build with a specific node version
-  -h				show this help message and exit
+  -p                push docker images to dockerhub after build
+  -n                no cache
+  -o <version>      build with a specific OE version
+  -N <version>      build with a specific node version
+  -h                show this help message and exit
 " >&2
 }
 
@@ -99,10 +99,17 @@ build_images () {
 			set_node_version_for_tag "$DOCKER_TAG"
 		fi
 
+		PROGRESS_ADE_TAG="$DOCKER_TAG"
+		if [ "$PROGRESS_ADE_TAG" = '12.8.9' ]; then
+			## temporary while we wait for the next ADE release
+			PROGRESS_ADE_TAG='12.8.8'
+		fi
+
 		echo "Building docker image for OE $DOCKER_TAG, Node $NODE_VERSION_FOR_TAG..."
 		set -x
 		docker build docker "${ARGS[@]}" \
 			--build-arg OE_VERSION="$DOCKER_TAG" \
+			--build-arg PROGRESS_ADE_TAG="$PROGRESS_ADE_TAG" \
 			--build-arg NODE_VERSION="$NODE_VERSION_FOR_TAG" \
 			--build-arg PCT_VERSION="$PCT_VERSION" \
 			--secret id=license,src="$DLC/progress.cfg" \
