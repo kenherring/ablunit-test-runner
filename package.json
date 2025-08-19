@@ -60,7 +60,7 @@
 		"progress"
 	],
 	"engines": {
-		"vscode": "^1.102.0"
+		"vscode": "^1.103.0"
 	},
 	"categories": [
 		"Testing"
@@ -96,12 +96,12 @@
 		"@eslint/js": "^9.33.0",
 		"@types/mocha": "^10.0.10",
 		"@types/node": "24.x",
-		"@types/vscode": "^1.102.0",
+		"@types/vscode": "^1.103.0",
 		"@types/xml2js": "^0.4.14",
 		"@vscode/test-cli": "^0.0.11",
 		"@vscode/test-electron": "^2.5.2",
 		"@vscode/vsce": "^3.6.0",
-		"esbuild": "^0.25.8",
+		"esbuild": "^0.25.9",
 		"esbuild-register": "^3.6.0",
 		"eslint": "^9.33.0",
 		"eslint-plugin-promise": "^7.2.1",
