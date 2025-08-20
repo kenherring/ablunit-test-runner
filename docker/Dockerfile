@@ -28,14 +28,15 @@ RUN proDebugEnable -enable-all
 ## clone and build ablunit.pl for the OE version
 WORKDIR /psc/dlc/tty
 ARG OE_VERSION
+ARG PROGRESS_ADE_TAG
 ENV OE_VERSION=${OE_VERSION}
 ENV DOCKER_IMAGE=ablunit-test-runner-${OE_VERSION}
 RUN mkdir /home/circleci
 COPY build.xml /psc/dlc/tty/build.xml
-ADD https://github.com/progress/ADE/archive/refs/tags/v${OE_VERSION}.0.tar.gz /home/circleci/
+ADD https://github.com/progress/ADE/archive/refs/tags/v${PROGRESS_ADE_TAG}.0.tar.gz /home/circleci/
 RUN --mount=type=secret,id=license,target=/psc/dlc/progress.cfg \
-    tar -xzf "/home/circleci/v${OE_VERSION}.0.tar.gz" -C . \
-    && mv ADE-${OE_VERSION}.0 ADE \
+    tar -xzf "/home/circleci/v${PROGRESS_ADE_TAG}.0.tar.gz" -C . \
+    && mv ADE-${PROGRESS_ADE_TAG}.0 ADE \
     && ant compile \
     && rm -rf build.xml ADE/ /tmp/*
 WORKDIR /

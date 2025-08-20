@@ -1,5 +1,6 @@
 # [1.3.43](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.3.43) - 2025-08-19 (pre-release)
 
+* Add OpenEdge 12.8.9 test target (#339, #371)
 * Enable ablunit.debugListingPreview command when not in testing mode (#317)
 * Fix propath calculations for classes with `.` in the filepath (#338)
 * Fix reported code coverage (#314)
@@ -10,7 +11,6 @@
 * Add "in the news" to README.md links (#333)
 * Add Debug Listing Preview (#305)
 * Add extension resources directory to propath at runtime (#316)
-* Add OpenEdge 12.8.8 test target (#339)
 * Adhere to include/exclude patterns in openedge-project.json (#334)
 * Bump version to 1.3.39 (#360)
 * Prepare version 1.3.41 (#370)
