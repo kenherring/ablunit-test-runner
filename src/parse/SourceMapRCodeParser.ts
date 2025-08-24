@@ -390,39 +390,18 @@ export const getSourceMapFromRCode = (propath: PropathParser, uri: Uri) => {
 
 	const buildDebugLines = () => {
 		const debugUri = getSourceUri(0)
-		if (includes.length === 0) {
-			for (const proc of declarations) {
-				for (const line of proc.lines ?? []) {
-					const smi = new SourceMapItem({
-						debugLine: line,
-						debugUri: debugUri,
-						sourceLine: line,
-						sourceUri: debugUri,
-						procName: proc.procName,
-						procNum: proc.procNum,
-						executable: true,
-						type: 'declaration-A',
-					})
-					if (!debugLines.some(d => JSON.stringify(d) === JSON.stringify(smi))) {
-						debugLines.push(smi)
-					}
-				}
-			}
-			return
-		}
-
 		for(const proc of declarations) {
 			for (const line of proc.lines ?? []) {
 				const mapLine = getMapLine(includes, line)
 				const smi = new SourceMapItem({
 					debugLine: line,
-					debugUri: mapLine.debugUri,
-					sourceLine: mapLine.sourceLine + (line - mapLine.debugLine),
-					sourceUri: mapLine.sourceUri,
+					debugUri: mapLine ? mapLine.debugUri : debugUri,
+					sourceLine: mapLine ? mapLine.sourceLine + (line - mapLine.debugLine) : line,
+					sourceUri: mapLine ? mapLine.sourceUri : debugUri,
 					procName: proc.procName,
 					procNum: proc.procNum,
 					executable: true,
-					type: 'declaration-B proc.procName=' + proc.procName
+					type: 'declaration proc.procName=' + proc.procName
 				})
 				if (!debugLines.some(d => JSON.stringify(d) === JSON.stringify(smi))) {
 					debugLines.push(smi)
