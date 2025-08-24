@@ -1,6 +1,6 @@
-# [1.3.43](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.3.43) - 2025-08-19 (pre-release)
+# [1.3.45](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.3.45) - 2025-08-24 (pre-release)
 
-* Add OpenEdge 12.8.9 test target (#339, #371)
+* Add OpenEdge 12.8.9 test target (#339, #371, #376)
 * Enable ablunit.debugListingPreview command when not in testing mode (#317)
 * Fix propath calculations for classes with `.` in the filepath (#338)
 * Fix reported code coverage (#314)
@@ -29,7 +29,7 @@
     * Bump tar-fs from 2.1.2 to 2.1.3 in the npm_and_yarn group (#313)
     * Bump typescript-eslint from 8.32.1 to 8.38.0 (#310, #322, #336, #345, #357)
 
-**Full Changelog**: [1.3.0...1.3.43](https://github.com/kenherring/ablunit-test-runner/compare/1.3.39...1.3.43)
+**Full Changelog**: [1.3.0...1.3.45](https://github.com/kenherring/ablunit-test-runner/compare/1.3.43...1.3.45)
 
 # [1.3.0](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.3.0) - 2025-05-21
 

@@ -100,10 +100,6 @@ build_images () {
 		fi
 
 		PROGRESS_ADE_TAG="$DOCKER_TAG"
-		if [ "$PROGRESS_ADE_TAG" = '12.8.9' ]; then
-			## temporary while we wait for the next ADE release
-			PROGRESS_ADE_TAG='12.8.8'
-		fi
 
 		echo "Building docker image for OE $DOCKER_TAG, Node $NODE_VERSION_FOR_TAG..."
 		set -x
