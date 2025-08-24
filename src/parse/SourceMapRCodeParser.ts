@@ -392,7 +392,7 @@ export const getSourceMapFromRCode = (propath: PropathParser, uri: Uri) => {
 		const debugUri = getSourceUri(0)
 		for(const proc of declarations) {
 			for (const line of proc.lines ?? []) {
-				const mapLine = getMapLine(includes, line)
+				const mapLine = includes.length > 0 ? getMapLine(includes, line) : undefined
 				const smi = new SourceMapItem({
 					debugLine: line,
 					debugUri: mapLine ? mapLine.debugUri : debugUri,
