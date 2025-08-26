@@ -93,7 +93,7 @@
 		"xml2js": "^0.6.2"
 	},
 	"devDependencies": {
-		"@eslint/js": "^9.33.0",
+		"@eslint/js": "^9.34.0",
 		"@types/mocha": "^10.0.10",
 		"@types/node": "24.x",
 		"@types/vscode": "^1.103.0",
