@@ -103,13 +103,13 @@
 		"@vscode/vsce": "^3.6.0",
 		"esbuild": "^0.25.9",
 		"esbuild-register": "^3.6.0",
-		"eslint": "^9.33.0",
+		"eslint": "^9.34.0",
 		"eslint-plugin-promise": "^7.2.1",
 		"mocha": "^11.7.1",
 		"mocha-multi-reporters": "^1.5.1",
 		"mocha-reporter-sonarqube": "2.1.1",
 		"typescript": "^5.9.2",
-		"typescript-eslint": "^8.39.1"
+		"typescript-eslint": "^8.41.0"
 	},
 	"contributes": {
 		"configuration": {
