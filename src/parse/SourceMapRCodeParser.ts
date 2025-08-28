@@ -388,8 +388,13 @@ export const getSourceMapFromRCode = (propath: PropathParser, uri: Uri) => {
 		return map[map.length - 1]
 	}
 
+	const getSourceMapItemKey = (smi: SourceMapItem): string => {
+		return `${smi.debugLine.toString()}|${smi.debugUri.fsPath}|${smi.sourceLine.toString()}|${smi.sourceUri.fsPath}|${smi.procName}|${smi.procNum?.toString() ?? ''}|${smi.type}`
+	}
+
 	const buildDebugLines = () => {
 		const debugUri = getSourceUri(0)
+		const seen = new Set<string>()
 		for(const proc of declarations) {
 			for (const line of proc.lines ?? []) {
 				const mapLine = includes.length > 0 ? getMapLine(includes, line) : undefined
@@ -403,8 +408,10 @@ export const getSourceMapFromRCode = (propath: PropathParser, uri: Uri) => {
 					executable: true,
 					type: 'declaration proc.procName=' + proc.procName
 				})
-				if (!debugLines.some(d => JSON.stringify(d) === JSON.stringify(smi))) {
+				const key = getSourceMapItemKey(smi)
+				if (!seen.has(key)) {
 					debugLines.push(smi)
+					seen.add(key)
 				}
 			}
 		}
@@ -475,6 +482,12 @@ export const getSourceMapFromRCode = (propath: PropathParser, uri: Uri) => {
 			debugInfo = await parseDebugSegment(debugBytes)
 		}
 
+		const seen = new Set<string>()
+		// Add existing debugInfo items to the seen set
+		for (const item of debugInfo) {
+			seen.add(getSourceMapItemKey(item))
+		}
+		
 		for (const include of includes) {
 			const smi = new SourceMapItem({
 				debugLine: include.debugLine,
@@ -484,8 +497,10 @@ export const getSourceMapFromRCode = (propath: PropathParser, uri: Uri) => {
 				procName: '',
 				type: 'include',
 			})
-			if (!debugInfo.some(d => JSON.stringify(d) === JSON.stringify(smi))) {
+			const key = getSourceMapItemKey(smi)
+			if (!seen.has(key)) {
 				debugInfo.push(smi)
+				seen.add(key)
 			}
 		}
 		debugInfo = debugInfo.sort((a, b) => a.debugLine - b.debugLine)
