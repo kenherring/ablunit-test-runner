@@ -7,7 +7,7 @@
 !LICENSE
 !dist/extension.js*
 !package.json
-!resources/ablunit-test-profile.details.jsonc
+!resources/ablunit-test-profile.detail.jsonc
 !resources/ablunit-test-profile.schema.json
 !resources/VSCodeTestRunner/
 !resources/images/icon_128.png
