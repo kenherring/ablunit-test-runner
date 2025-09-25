@@ -1,0 +1,75 @@
+name: CI Workflow
+
+permissions:
+  contents: write
+  pull-requests: write
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+  # release:
+  #   types:
+  #     - created
+
+jobs:
+  build:
+    runs-on: linux
+    container: node:24.8-alpine
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Run ShellCheck
+        uses: ludeeus/action-shellcheck@master
+        if: matrix.os == 'ubuntu-latest'
+        with:
+          ignore_paths: ./test_projects/**
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - run: npm install
+      - run: npm run build
+      # - run: npm run lint:sonar
+      #   if: matrix.os == 'ubuntu-latest'
+
+  test:
+    needs: build
+    strategy:
+      matrix:
+        oe-version: [ 12.8.1 ]
+        # oe-version: [ 12.2.12, 12.8.1, 12.8.8 ]
+    runs-on: linux
+    container: kherring/ablunit-test-runner:${{ matrix.oe-version }}
+    steps:
+      # - name: download artifact
+      #   uses: ???
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - run: ./.github/workflows/run_test_wrapper.sh
+      # - name: upload-test-results
+
+  sonarqube:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: TODO
+        run: echo 'TODO'
+
+      # - name: download artifacts
+      #   uses: ???
+      # - name: SonarQube Scan
+      #   uses: SonarSource/sonarqube-scan-action@<action version or sha1> # Ex: v4.1.0 or sha1, See the latest version at https://github.com/marketplace/actions/official-sonarqube-scan
+      #   env:
+      #     SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
