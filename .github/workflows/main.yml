@@ -38,8 +38,6 @@ jobs:
           node-version-file: .nvmrc
       - run: npm install
       - run: npm run build
-      - run: npm run lint:sonar
-      #   if: matrix.os == 'ubuntu-latest'
 
   test:
     needs: build
@@ -67,6 +65,14 @@ jobs:
           fetch-depth: 0
       - run: ./.github/workflows/run_test_wrapper.sh
       # - name: upload-test-results
+
+  # shellcheck:
+  #   name: Shellcheck
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - name: Run ShellCheck
+  #       uses: ludeeus/action-shellcheck@master
 
   sonarqube:
     needs: test
