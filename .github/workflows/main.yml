@@ -48,7 +48,11 @@ jobs:
         oe-version: [ 12.8.1 ]
         # oe-version: [ 12.2.12, 12.8.1, 12.8.8 ]
     runs-on: ubuntu-latest
-    container: kherring/ablunit-test-runner:${{ matrix.oe-version }}
+    container:
+      image: kherring/ablunit-test-runner:${{ matrix.oe-version }}
+      credentials:
+        username: ${{ secrets.DOCKER_USER }}
+        password: ${{ secrets.DOCKER_PAT }}
     steps:
       # - name: download artifact
       #   uses: ???
