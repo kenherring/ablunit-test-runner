@@ -38,21 +38,26 @@ jobs:
           node-version-file: .nvmrc
       - run: npm install
       - run: npm run build
-      # - run: npm run lint:sonar
+      - run: npm run lint:sonar
       #   if: matrix.os == 'ubuntu-latest'
 
   test:
     needs: build
     strategy:
       matrix:
-        oe-version: [ 12.8.1 ]
-        # oe-version: [ 12.2.12, 12.8.1, 12.8.8 ]
+        # oe-version: [ 12.8.9 ]
+        oe-version: [ 12.2.12, 12.8.1, 12.8.9 ]
     runs-on: ubuntu-latest
     container:
       image: kherring/ablunit-test-runner:${{ matrix.oe-version }}
       credentials:
         username: ${{ secrets.DOCKER_USER }}
         password: ${{ secrets.DOCKER_PAT }}
+    env:
+      ABLUNIT_TEST_RUNNER_OE_VERSION: ${{ matrix.oe-version }}
+      ABLUNIT_TEST_RUNNER_VSCODE_VERSION: 'stable'
+      EXPECTED_VSIX_COUNT: 1
+      PRIMARY_OE_VERSION: 12.8.1
     steps:
       # - name: download artifact
       #   uses: ???
@@ -60,10 +65,6 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Install Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version-file: .nvmrc
       - run: ./.github/workflows/run_test_wrapper.sh
       # - name: upload-test-results
 
