@@ -15,10 +15,13 @@ on:
   #   types:
   #     - created
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
-    runs-on: linux
-    container: node:24.8-alpine
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -44,7 +47,7 @@ jobs:
       matrix:
         oe-version: [ 12.8.1 ]
         # oe-version: [ 12.2.12, 12.8.1, 12.8.8 ]
-    runs-on: linux
+    runs-on: ubuntu-latest
     container: kherring/ablunit-test-runner:${{ matrix.oe-version }}
     steps:
       # - name: download artifact
