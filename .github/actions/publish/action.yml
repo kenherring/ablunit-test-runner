@@ -1,0 +1,29 @@
+
+name: Publish Release
+description: Publish release tag to VSCode Marketplace
+
+inputs:
+  VSCE_PAT:
+    description: 'Personal Access Token for VSCE'
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Publish
+      shell: bash
+      if: github.ref_type == 'tag'
+      env:
+        GH_TOKEN: ${{ github.token }}
+        VSCE_PAT: ${{ inputs.VSCE_PAT }}
+      run: |
+        if [ -z "${GITHUB_REF_NAME:-}" ]; then
+          echo "ERROR: GITHUB_REF_NAME is not set..." >&2
+          exit 1
+        fi
+        if [ -z "${VSCE_PAT:-}" ]; then
+          echo "ERROR: VSCE_PAT is not set" >&2
+          exit 1
+        fi
+        gh release upload "$GITHUB_REF_NAME" ablunit-test-runner-*.vsix
+        npm run deploy
