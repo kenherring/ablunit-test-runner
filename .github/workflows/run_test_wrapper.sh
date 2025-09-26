@@ -4,7 +4,7 @@ set -eou pipefail
 . scripts/common.sh
 
 initialize () {
-	log_it
+	log_it "whoami=${whoami}"
 	VERBOSE=${VERBOSE:-false}
 	VERBOSE=true
 	DONT_PROMPT_WSL_INSTALL=No_Prompt_please
@@ -15,6 +15,8 @@ initialize () {
 	ABLUNIT_TEST_RUNNER_REPO_DIR=$(pwd)
 	ABLUNIT_TEST_RUNNER_RUN_SCRIPT_FLAG=${ABLUNIT_TEST_RUNNER_RUN_SCRIPT_FLAG:-true}
 	ABLUNIT_TEST_RUNNER_UNIT_TESTING=true
+	# HOME=/home/circleci
+	HOME=/github/home
 
 	if [ "$ABLUNIT_TEST_RUNNER_OE_VERSION" != "$PRIMARY_OE_VERSION" ]; then
 		ABLUNIT_TEST_RUNNER_NO_COVERAGE=${ABLUNIT_TEST_RUNNER_NO_COVERAGE:-true}
@@ -171,9 +173,9 @@ save_and_print_debug_output () {
 	find .vscode-test -name 'settings.json' -exec cp {} artifacts \;
 	local FROM_DIR TO_DIR
 	FROM_DIR=$(find .vscode-test  -maxdepth 1 -type d -name 'vscode-*' | tail -1)
-	TO_DIR=/home/circleci/.vscode-test/$(basename "$FROM_DIR")
+	TO_DIR="$HOME"/.vscode-test/$(basename "$FROM_DIR")
 	if [ ! -d "$TO_DIR" ] && [ -n "$FROM_DIR" ]; then
-		mkdir -p /home/circleci/.vscode-test/
+		mkdir -p "$HOME"/.vscode-test/
 		cp -r "$FROM_DIR" "$TO_DIR"
 	fi
 

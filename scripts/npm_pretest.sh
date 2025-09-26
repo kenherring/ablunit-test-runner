@@ -6,7 +6,7 @@ set -eou pipefail
 . scripts/common.sh
 
 initialize () {
-	log_it "pwd=$(pwd)"
+	log_it "pwd=$(pwd) whoami=$(whoami)"
 
 
 	if [ -z "$DLC" ]; then
@@ -17,6 +17,9 @@ initialize () {
 
 	PATH=$PATH:$DLC/ant/bin
 	CI=${CI:-false}
+	# HOME=/home/circleci
+	HOME=/github/home
+
 	NO_BUILD=${NO_BUILD:-false}
 	VERBOSE=${VERBOSE:-false}
 	WSL=false
@@ -66,7 +69,7 @@ initialize () {
 get_performance_test_code () {
 	log_it "pwd=$(pwd) ABLUNIT_TEST_RUNNER_OE_VERSION=$ABLUNIT_TEST_RUNNER_OE_VERSION ABLUNIT_TEST_RUNNER_VSCODE_VERSION=${ABLUNIT_TEST_RUNNER_VSCODE_VERSION:-}"
 
-	local TO_FILE="/home/circleci/v${ABLUNIT_TEST_RUNNER_OE_VERSION}.0.tar.gz"
+	local TO_FILE="$HOME/v${ABLUNIT_TEST_RUNNER_OE_VERSION}.0.tar.gz"
 	if [ "${OS:-}" = "Windows_NT" ] || [ -n "${WSL_DISTRO_NAME:-}" ]; then
 		mkdir -p .vscode-test
 		TO_FILE=.vscode-test/v${ABLUNIT_TEST_RUNNER_OE_VERSION}.0.tar.gz
@@ -101,7 +104,7 @@ copy_user_settings () {
 
 get_pct () {
 	log_it "pwd=$(pwd) WSL=$WSL"
-	ls ~/.ant/lib/
+	ls ~/.ant/lib/ || true
 
 	if $WSL && [ ! -f ~/.ant/lib/PCT.jar ]; then
 		log_it "downloading PCT.jar ..."

@@ -37,6 +37,8 @@ initialize () {
 	DELETE_CACHE_VOLUME=false
 	TEST_PROJECT=base
 	STAGED_ONLY=true
+	# HOME=/home/circleci
+	HOME=/github/home
 	ABLUNIT_TEST_RUNNER_DBUS_NUM=${ABLUNIT_TEST_RUNNER_DBUS_NUM:-3}
 	ABLUNIT_TEST_RUNNER_OE_VERSION=${ABLUNIT_TEST_RUNNER_OE_VERSION:-}
 	ABLUNIT_TEST_RUNNER_VSCODE_VERSION=${ABLUNIT_TEST_RUNNER_VSCODE_VERSION:-stable}
@@ -205,17 +207,17 @@ run_tests_in_docker () {
 			-e VERBOSE
 			-e ABLUNIT_TEST_RUNNER_VSCODE_VERSION
 			-e SET_X
-			-v "${PWD}/artifacts":/home/circleci/project/artifacts
-			-v "${PWD}/coverage":/home/circleci/project/coverage
+			-v "${PWD}/artifacts":"$HOME"/project/artifacts
+			-v "${PWD}/coverage":"$HOME"/project/coverage
 		)
 		[ -n "${CIRCLE_TAG:-}" ] && ARGS+=(-e CIRCLE_TAG)
 		[ -n "${CIRCLE_TAG:-}" ] && ARGS+=(-e CIRCLE_TAG)
 		[ -n "${ABLUNIT_TEST_RUNNER_PROJECT_NAME:-}" ] && ARGS+=(-e ABLUNIT_TEST_RUNNER_PROJECT_NAME)
 		ARGS+=(
-			-v "${PWD}":/home/circleci/ablunit-test-runner:ro
-			-v "vscode-cli-cache-$ABLUNIT_TEST_RUNNER_OE_VERSION":/home/circleci/project/.vscode-test
+			-v "${PWD}":"$HOME"/ablunit-test-runner:ro
+			-v "vscode-cli-cache-$ABLUNIT_TEST_RUNNER_OE_VERSION":"$HOME"/project/.vscode-test
 			kherring/ablunit-test-runner:"${ABLUNIT_TEST_RUNNER_OE_VERSION}"
-			bash -c "/home/circleci/ablunit-test-runner/docker/$SCRIPT.sh $OPTS;"
+			bash -c "$HOME/ablunit-test-runner/docker/$SCRIPT.sh $OPTS;"
 		)
 		## run tests inside the container
 		set -x
