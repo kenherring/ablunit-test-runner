@@ -22,7 +22,7 @@ Development workflows
 - Tests:
   - Primary: `npm test` (drives VSCode test CLI; see [test/createTestConfig.mjs](test/createTestConfig.mjs) and [scripts/npm_pretest.sh](scripts/npm_pretest.sh)).
   - In VSCode: install “Extension Test Runner” and run suites; or run integration tests via Test Explorer.
-  - In Docker/CI: [docker/run_tests.sh](docker/run_tests.sh), CircleCI scripts in [.circleci/](.circleci).
+  - In Docker/CI: [docker/run_tests.sh](docker/run_tests.sh), GitHub Actions scripts in [.github/workflows/](.github/workflows/).
 - Useful test helpers: [test/testCommon.ts](test/testCommon.ts) provides `runAllTests`, `refreshTests`, `updateConfig`, `updateTestProfile`, assertions, and OpenEdge language server helpers from [test/openedgeAblCommands.ts](test/openedgeAblCommands.ts).
 
 Conventions and patterns

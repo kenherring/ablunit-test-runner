@@ -14,7 +14,7 @@ initialize () {
 	log_it "DLC=$DLC"
 
 	PATH=$PATH:$DLC/ant/bin
-	CIRCLECI=${CIRCLECI:-false}
+	CI=${CI:-false}
 	NO_BUILD=${NO_BUILD:-false}
 	VERBOSE=${VERBOSE:-false}
 	WSL=false
@@ -47,7 +47,7 @@ initialize () {
 		exit 1
 	fi
 
-	export PATH CIRCLECI ABLUNIT_TEST_RUNNER_OE_VERSION ABLUNIT_TEST_RUNNER_VSCODE_VERSION
+	export PATH CI ABLUNIT_TEST_RUNNER_OE_VERSION ABLUNIT_TEST_RUNNER_VSCODE_VERSION
 
 	if [ -d artifacts ]; then
 		rm -rf artifacts/*
@@ -164,8 +164,8 @@ package () {
 	else
 		PACKAGE_OUT_OF_DATE=true
 	fi
-	log_it "CIRCLECI=$CIRCLECI PACKAGE_OUT_OF_DATE=$PACKAGE_OUT_OF_DATE VSIX_COUNT=$VSIX_COUNT"
-	if $PACKAGE_OUT_OF_DATE || $CIRCLECI || [ "$VSIX_COUNT" = "0" ]; then
+	log_it "CI=$CI PACKAGE_OUT_OF_DATE=$PACKAGE_OUT_OF_DATE VSIX_COUNT=$VSIX_COUNT"
+	if $PACKAGE_OUT_OF_DATE || $CI || [ "$VSIX_COUNT" = "0" ]; then
 		.circleci/package.sh
 	fi
 

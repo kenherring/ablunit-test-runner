@@ -20,7 +20,7 @@ main () {
         return 0
     fi
 
-    if ${CIRCLECI:-}; then
+    if ${CI:-}; then
         if ! git config --get user.email &>/dev/null; then
             git config user.email "circleci@ablunit-test-runner.kenherring.com"
         fi

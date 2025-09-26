@@ -24,7 +24,7 @@ initialize () {
 	BASH_AFTER=false
 	BASH_AFTER_ERROR=false
 	CACHE_BASE=/home/circleci/cache
-	CIRCLECI=${CIRCLECI:-false}
+	CI=${CI:-false}
 	npm_config_cache=$CACHE_BASE/node_modules_cache
 	PROJECT_DIR=/home/circleci/project
 	REPO_VOLUME=/home/circleci/ablunit-test-runner
@@ -36,7 +36,7 @@ initialize () {
 		ABLUNIT_TEST_RUNNER_OE_VERSION \
 		ABLUNIT_TEST_RUNNER_PROJECT_NAME \
 		ABLUNIT_TEST_RUNNER_RUN_SCRIPT_FLAG \
-		CIRCLECI
+		CI
 
 	git config --global init.defaultBranch main
 	mkdir -p "$npm_config_cache" "$PROJECT_DIR"
@@ -167,7 +167,7 @@ run_tests_base () {
 	log_it "pwd=$(pwd)"
 
 	set -eo pipefail ## matches the behavior of CircleCI
-	if ! .circleci/run_test_wrapper.sh; then
+	if ! ./.github/workflows/run_test_wrapper.sh; then
 		log_it "run_tests failed"
 		$BASH_AFTER_ERROR && bash
 		exit 1
