@@ -1,6 +1,8 @@
 #!/bin/bash
 set -eou pipefail
 
+# set -x
+
 . scripts/common.sh
 
 initialize () {
@@ -98,8 +100,11 @@ copy_user_settings () {
 }
 
 get_pct () {
-	log_it "pwd=$(pwd)"
+	log_it "pwd=$(pwd) WSL=$WSL"
+	ls ~/.ant/lib/
+
 	if $WSL && [ ! -f ~/.ant/lib/PCT.jar ]; then
+		log_it "downloading PCT.jar ..."
 		mkdir -p ~/.ant/lib
 		local ARGS=()
 		ARGS+=(-L -o ~/.ant/lib/PCT.jar)
@@ -112,27 +117,37 @@ get_pct () {
 			. docker/.env
 		fi
 		curl "${ARGS[@]}" "https://github.com/Riverside-Software/pct/releases/download/v${PCT_VERSION}/PCT.jar"
+		log_it "PCT.jar download complete"
 	fi
 }
 
 create_dbs () {
 	log_it "pwd=$(pwd)"
 	if [ -d test_projects/proj0/target/db ]; then
+		log_it 'test_projects/proj0/target/db already exists, skipping create_dbs'
 		return 0
 	fi
 
 	local COMMAND=ant
 	cd test_projects/proj0
 	COMMAND=ant
-	if ! command -v $COMMAND; then
+	if ! command -v "$COMMAND"; then
 		COMMAND="$DLC/ant/bin/ant"
 	fi
+	if ! command -v "$COMMAND"; then
+		log_error "cannot find ant command (COMMAND=$COMMAND, DLC=$DLC)"
+		exit 1
+	fi
 	mkdir -p artifacts
-	$COMMAND > artifacts/pretest_ant.log >&1
+	log_it "running ant command: $COMMAND"
+	$COMMAND
+	# $COMMAND > artifacts/pretest_ant.log >&1
+	log_it "ant command completed successfully"
 	cd -
 }
 
 package () {
+	log_it
 	if $NO_BUILD; then
 		log_it "skipping package (NO_BUILD=$NO_BUILD)"
 		return 0
