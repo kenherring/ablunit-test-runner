@@ -45,6 +45,8 @@ initialize () {
 	log_it "CI=${CI:-}"
 
 	update_oe_version
+
+	tr ' ' '\n' <<< "$PROGRESS_CFG_BASE64" | base64 --decode > /psc/dlc/progress.cfg
 }
 
 update_oe_version () {
