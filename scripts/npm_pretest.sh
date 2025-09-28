@@ -6,7 +6,7 @@ set -eou pipefail
 . scripts/common.sh
 
 initialize () {
-	log_it "pwd=$(pwd) whoami=$(whoami)"
+	log_it "pwd=$(pwd) whoami=$(whoami) HOME=${HOME}"
 
 
 	if [ -z "$DLC" ]; then
@@ -69,18 +69,21 @@ initialize () {
 get_performance_test_code () {
 	log_it "pwd=$(pwd) ABLUNIT_TEST_RUNNER_OE_VERSION=$ABLUNIT_TEST_RUNNER_OE_VERSION ABLUNIT_TEST_RUNNER_VSCODE_VERSION=${ABLUNIT_TEST_RUNNER_VSCODE_VERSION:-}"
 
+	log_it "HOME=$HOME"
+	ls $HOME
 	local TO_FILE="$HOME/v${ABLUNIT_TEST_RUNNER_OE_VERSION}.0.tar.gz"
 	if [ "${OS:-}" = "Windows_NT" ] || [ -n "${WSL_DISTRO_NAME:-}" ]; then
 		mkdir -p .vscode-test
 		TO_FILE=.vscode-test/v${ABLUNIT_TEST_RUNNER_OE_VERSION}.0.tar.gz
 	fi
 	if [ ! -f "$TO_FILE" ]; then
-		if [ -n "${DOCKER_IMAGE:-}" ]; then
-			log_error "cannot find file '$TO_FILE'\n" \
-				" - HINT: this should have been fetched during docker build"
-		else
-			curl -L "https://github.com/progress/ADE/archive/refs/tags/v${ABLUNIT_TEST_RUNNER_OE_VERSION}.0.tar.gz" -o "$TO_FILE"
-		fi
+		curl -L "https://github.com/progress/ADE/archive/refs/tags/v${ABLUNIT_TEST_RUNNER_OE_VERSION}.0.tar.gz" -o "$TO_FILE"
+		# if [ -n "${DOCKER_IMAGE:-}" ]; then
+		# 	log_error "cannot find file '$TO_FILE'\n" \
+		# 		" - HINT: this should have been fetched during docker build"
+		# else
+		# 	curl -L "https://github.com/progress/ADE/archive/refs/tags/v${ABLUNIT_TEST_RUNNER_OE_VERSION}.0.tar.gz" -o "$TO_FILE"
+		# fi
 	fi
 	tar -xf "$TO_FILE" -C test_projects/proj7_load_performance/src
 }
