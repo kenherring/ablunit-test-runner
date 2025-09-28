@@ -104,7 +104,7 @@ copy_user_settings () {
 
 get_pct () {
 	log_it "pwd=$(pwd) WSL=$WSL"
-	ls ~/.ant/lib/ || true
+	[ -d ~/.ant/lib ] || mkdir -p ~/.ant/lib
 
 	if $WSL && [ ! -f ~/.ant/lib/PCT.jar ]; then
 		log_it "downloading PCT.jar ..."
