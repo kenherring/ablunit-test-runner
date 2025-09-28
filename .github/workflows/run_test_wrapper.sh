@@ -4,7 +4,7 @@ set -eou pipefail
 . scripts/common.sh
 
 initialize () {
-	log_it "whoami=${whoami}"
+	log_it "whoami=$(whoami)"
 	VERBOSE=${VERBOSE:-false}
 	VERBOSE=true
 	DONT_PROMPT_WSL_INSTALL=No_Prompt_please
