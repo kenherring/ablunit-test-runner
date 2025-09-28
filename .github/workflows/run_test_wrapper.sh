@@ -58,7 +58,9 @@ initialize () {
 
 	update_oe_version
 
-	if [ ! -f /psc/dlc/progress.cfg ]; then
+	ls -al /psc/dlc/progress.cfg
+	if [ -n "${PROGRESS_CFG_BASE64:-}" ]; then
+		log_it "PROGRESS_CFG_BASE64 is set"
 		tr ' ' '\n' <<< "$PROGRESS_CFG_BASE64" | base64 --decode > /psc/dlc/progress.cfg
 	fi
 }
