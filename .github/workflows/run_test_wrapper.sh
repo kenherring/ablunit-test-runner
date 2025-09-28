@@ -5,6 +5,18 @@ set -eou pipefail
 
 initialize () {
 	log_it "whoami=$(whoami)"
+
+	echo "GITHUB_REF_NAME=${GITHUB_REF_NAME}"
+	echo "GITHUB_REF_TYPE=${GITHUB_REF_TYPE}"
+	if [ "$GITHUB_REF_TYPE" = "tag" ]; then
+		CIRCLE_BRANCH=
+		CIRCLE_TAG="$GITHUB_REF_NAME"
+	else
+		CIRCLE_BRANCH="$GITHUB_REF_NAME"
+		CIRCLE_TAG=""
+	fi
+	export CIRCLE_BRANCH CIRCLE_TAG
+
 	VERBOSE=${VERBOSE:-false}
 	VERBOSE=true
 	DONT_PROMPT_WSL_INSTALL=No_Prompt_please
@@ -46,7 +58,9 @@ initialize () {
 
 	update_oe_version
 
-	tr ' ' '\n' <<< "$PROGRESS_CFG_BASE64" | base64 --decode > /psc/dlc/progress.cfg
+	if [ ! -f /psc/dlc/progress.cfg ]; then
+		tr ' ' '\n' <<< "$PROGRESS_CFG_BASE64" | base64 --decode > /psc/dlc/progress.cfg
+	fi
 }
 
 update_oe_version () {
