@@ -6,7 +6,7 @@ FROM node:${NODE_VERSION}
 ## dependencies for running vscode extension tests
 RUN apt-get update \
     && apt-get install -y --no-install-recommends libasound2 libgbm1 libgtk-3-0 libnss3 vulkan-tools \
-    && apt-get install -y --no-install-recommends xauth xvfb xauth rsync ant jq xq dbus \
+    && apt-get install -y --no-install-recommends xauth xvfb xauth rsync ant jq dbus \
     && apt-get install -y --no-install-recommends gh pipx \
     && rm -rf /var/lib/apt/lists/* /var/cache/apt/archives/*
 
@@ -49,6 +49,6 @@ RUN mkdir -p ~/.vscode-test
 
 ## install xq (via yq) for xml parsing
 RUN pipx install yq
-ENV PATH=$PATH:/root/.local/bin
+ENV PATH=$PATH:${HOME}/.local/bin
 
 WORKDIR ${HOME}/project

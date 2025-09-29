@@ -4,7 +4,7 @@
 
 * `npm test` - run unit tests
 * `docker/run_tests.sh` - run unit tests within a docker container
-  * This is the same way that CircleCI run the tests
+  * This is the same way that tests run via CI
 
 ### VSCode Test Runner
 
