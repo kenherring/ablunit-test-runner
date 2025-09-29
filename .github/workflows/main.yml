@@ -43,7 +43,7 @@ jobs:
     needs: build
     strategy:
       matrix:
-        oe-version: [ 12.8.1 ]
+        oe-version: [ 12.2.12, 12.8.1 ]
         # oe-version: [ 12.2.12, 12.8.1, 12.8.9 ]
     runs-on: ubuntu-latest
     container:
