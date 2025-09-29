@@ -25,7 +25,7 @@ jobs:
         with:
           fetch-depth: 0
       - name: Run ShellCheck
-        uses: ludeeus/action-shellcheck@v2
+        uses: ludeeus/action-shellcheck@2.0.0
         if: matrix.os == 'ubuntu-latest'
         with:
           ignore_paths: ./test_projects/**
