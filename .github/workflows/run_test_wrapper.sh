@@ -38,8 +38,12 @@ initialize () {
 
 	if ! command -v xq; then
 		# shellcheck disable=SC2016
-		log_it 'adding ${HOME}/.local/bin to path'
+		log_it "adding ${HOME}/.local/bin to path"
 		PATH=$PATH:${HOME}/.local/bin
+		if ! command -v xq; then
+			log_it "adding /root/.local/bin to path"
+			PATH=$PATH:/root/.local/bin
+		fi
 		if ! command -v xq; then
 			log_error "xq command not found"
 			exit 1

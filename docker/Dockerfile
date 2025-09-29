@@ -31,12 +31,10 @@ ARG OE_VERSION
 ARG PROGRESS_ADE_TAG
 ENV OE_VERSION=${OE_VERSION}
 ENV DOCKER_IMAGE=ablunit-test-runner-${OE_VERSION}
-# ARG HOME=/home/circleci
 ARG HOME=/github/home
 RUN mkdir -p ${HOME}
 COPY build.xml /psc/dlc/tty/build.xml
 ADD https://github.com/progress/ADE/archive/refs/tags/v${PROGRESS_ADE_TAG}.0.tar.gz ${HOME}
-RUN ls -l ${HOME}
 RUN --mount=type=secret,id=license,target=/psc/dlc/progress.cfg \
     tar -xzf "${HOME}/v${PROGRESS_ADE_TAG}.0.tar.gz" -C . \
     && mv ADE-${PROGRESS_ADE_TAG}.0 ADE \
@@ -49,6 +47,6 @@ RUN mkdir -p ~/.vscode-test
 
 ## install xq (via yq) for xml parsing
 RUN pipx install yq
-ENV PATH=$PATH:${HOME}/.local/bin
+ENV PATH=$PATH:/root/.local/bin
 
 WORKDIR ${HOME}/project
