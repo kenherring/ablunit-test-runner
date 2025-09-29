@@ -33,6 +33,16 @@ initialize () {
 	# HOME=/home/circleci
 	HOME=/github/home
 
+	if ! command -v xq; then
+		# shellcheck disable=SC2016
+		log_it 'adding ${HOME}/.local/bin to path'
+		PATH=$PATH:${HOME}/.local/bin
+		if ! command -v xq; then
+			log_error "xq command not found"
+			exit 1
+		fi
+	fi
+
 	if [ "$ABLUNIT_TEST_RUNNER_OE_VERSION" != "$PRIMARY_OE_VERSION" ]; then
 		ABLUNIT_TEST_RUNNER_NO_COVERAGE=${ABLUNIT_TEST_RUNNER_NO_COVERAGE:-true}
 	fi
