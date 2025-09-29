@@ -25,7 +25,7 @@ jobs:
         with:
           fetch-depth: 0
       - name: Run ShellCheck
-        uses: ludeeus/action-shellcheck@master
+        uses: ludeeus/action-shellcheck@v2.0.0
         if: matrix.os == 'ubuntu-latest'
         with:
           ignore_paths: ./test_projects/**
@@ -62,7 +62,7 @@ jobs:
       - run: ./.github/workflows/run_test_wrapper.sh
       - name: SonarQube Scan
         if: ${{ matrix.oe-version == '12.8.1' }}
-        uses: SonarSource/sonarqube-scan-action@v6
+        uses: SonarSource/sonarqube-scan-action@v6.0.0
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
