@@ -1,6 +1,5 @@
 {
 	"recommendations": [
-		"circleci.circleci",
 		"dbaeumer.vscode-eslint",
 		"github.vscode-pull-request-github",
 		"ms-vscode.extension-test-runner",

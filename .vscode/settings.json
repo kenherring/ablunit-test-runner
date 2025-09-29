@@ -1,8 +1,4 @@
 {
-	"circleci.filters.branchFilter": "currentBranch",
-    "circleci.persistedProjectSelection": [
-		"gh/kenherring/ablunit-test-runner"
-	],
 	"eslint.lintTask.enable": true,
 	"eslint.codeActionsOnSave.mode": "problems",
 	"files.associations": {

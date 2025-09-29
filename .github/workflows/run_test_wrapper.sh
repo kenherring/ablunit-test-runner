@@ -4,7 +4,26 @@ set -eou pipefail
 . scripts/common.sh
 
 initialize () {
-	log_it
+	log_it "whoami=$(whoami)"
+
+	GITHUB_REF_TYPE="${GITHUB_REF_TYPE:-branch}"
+	echo "GITHUB_REF_NAME=${GITHUB_REF_NAME:-}"
+	echo "GITHUB_REF_TYPE=${GITHUB_REF_TYPE:-}"
+	if [ "$GITHUB_REF_TYPE" = "tag" ]; then
+		CIRCLE_BRANCH=
+		CIRCLE_TAG="$GITHUB_REF_NAME"
+	else
+		if [ -z "${GITHUB_REF_NAME:-}" ]; then
+			GITHUB_REF_NAME=$(git rev-parse --abbrev-ref HEAD)
+		fi
+		CIRCLE_BRANCH="$GITHUB_REF_NAME"
+		CIRCLE_TAG=""
+	fi
+	if [ -z "${CIRCLECI:-}" ] && [ -n "${CI:-}" ]; then
+		CIRCLECI=${CI:-}
+	fi
+	export CIRCLECI CIRCLE_BRANCH CIRCLE_TAG
+
 	VERBOSE=${VERBOSE:-false}
 	DONT_PROMPT_WSL_INSTALL=No_Prompt_please
 	PRIMARY_OE_VERSION=${PRIMARY_OE_VERSION:-12.8.1}
@@ -14,6 +33,29 @@ initialize () {
 	ABLUNIT_TEST_RUNNER_REPO_DIR=$(pwd)
 	ABLUNIT_TEST_RUNNER_RUN_SCRIPT_FLAG=${ABLUNIT_TEST_RUNNER_RUN_SCRIPT_FLAG:-true}
 	ABLUNIT_TEST_RUNNER_UNIT_TESTING=true
+	HOME=/github/home
+
+	if ! command -v xq; then
+		# shellcheck disable=SC2016
+		log_it "adding ${HOME}/.local/bin to path"
+		PATH=$PATH:${HOME}/.local/bin
+		if ! command -v xq; then
+			log_it "adding /root/.local/bin to path"
+			PATH=$PATH:/root/.local/bin
+		fi
+		if ! command -v xq; then
+			log_it 'install xq (via yq)'
+			pipx install yq
+		fi
+		if ! command -v xq; then
+			log_error "xq command not found"
+			exit 1
+		fi
+	fi
+
+	if [ -n "${PROGRESS_CFG_BASE64:-}" ]; then
+		tr ' ' '\n' <<< "$PROGRESS_CFG_BASE64" | base64 --decode > /psc/dlc/progress.cfg
+	fi
 
 	if [ "$ABLUNIT_TEST_RUNNER_OE_VERSION" != "$PRIMARY_OE_VERSION" ]; then
 		ABLUNIT_TEST_RUNNER_NO_COVERAGE=${ABLUNIT_TEST_RUNNER_NO_COVERAGE:-true}
@@ -170,9 +212,9 @@ save_and_print_debug_output () {
 	find .vscode-test -name 'settings.json' -exec cp {} artifacts \;
 	local FROM_DIR TO_DIR
 	FROM_DIR=$(find .vscode-test  -maxdepth 1 -type d -name 'vscode-*' | tail -1)
-	TO_DIR=/home/circleci/.vscode-test/$(basename "$FROM_DIR")
+	TO_DIR="$HOME"/.vscode-test/$(basename "$FROM_DIR")
 	if [ ! -d "$TO_DIR" ] && [ -n "$FROM_DIR" ]; then
-		mkdir -p /home/circleci/.vscode-test/
+		mkdir -p "$HOME"/.vscode-test/
 		cp -r "$FROM_DIR" "$TO_DIR"
 	fi
 
