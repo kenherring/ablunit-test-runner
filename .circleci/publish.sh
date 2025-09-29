@@ -7,7 +7,7 @@ main_block () {
     log_it
     PRERELEASE=false
 
-    if ! ${CI:-false}; then
+    if ! ${CIRCLECI:-false}; then
         ## local testing
 
         [ -z "${CIRCLE_TAG:-}" ] && CIRCLE_TAG=$(git tag --points-at HEAD)

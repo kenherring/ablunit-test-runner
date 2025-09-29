@@ -8,7 +8,7 @@ initialize () {
     ABLUNIT_TEST_RUNNER_VSCODE_VERSION=${ABLUNIT_TEST_RUNNER_VSCODE_VERSION:-stable}
     PRERELEASE=${PRERELEASE:-true}
 
-    if ! ${CI:-false}; then
+    if ! ${CIRCLECI:-false}; then
         ## local testing
         [ -z "${CIRCLE_TAG:-}" ] && [ -z "${CIRCLE_BRANCH:-}" ] && CIRCLE_TAG=$(git tag --points-at HEAD)
         [ -z "${CIRCLE_TAG:-}" ] && [ -z "${CIRCLE_BRANCH:-}" ] && CIRCLE_BRANCH=$(git branch --show-current)

@@ -100,7 +100,7 @@ initialize () {
 		exit 1
 	fi
 
-	if ${CI:-false} && [ -z "$ABLUNIT_TEST_RUNNER_OE_VERSION" ]; then
+	if ${CIRCLECI:-false} && [ -z "$ABLUNIT_TEST_RUNNER_OE_VERSION" ]; then
 		cat "$DLC/version"
 		ABLUNIT_TEST_RUNNER_OE_VERSION=$(awk '{print $3}' < "$DLC/version")
 		if [[ "$ABLUNIT_TEST_RUNNER_OE_VERSION" =~ ^[0-9]+\.[0-9]+$ ]]; then

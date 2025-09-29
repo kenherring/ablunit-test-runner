@@ -26,7 +26,7 @@ initialize () {
 	BASH_AFTER=false
 	BASH_AFTER_ERROR=false
 	CACHE_BASE="$HOME"/cache
-	CI=${CI:-false}
+	CIRCLECI=${CIRCLECI:-false}
 	npm_config_cache=$CACHE_BASE/node_modules_cache
 	PROJECT_DIR="$HOME"/project
 	REPO_VOLUME="$HOME"/ablunit-test-runner
@@ -38,7 +38,7 @@ initialize () {
 		ABLUNIT_TEST_RUNNER_OE_VERSION \
 		ABLUNIT_TEST_RUNNER_PROJECT_NAME \
 		ABLUNIT_TEST_RUNNER_RUN_SCRIPT_FLAG \
-		CI
+		CIRCLECI
 
 	git config --global init.defaultBranch main
 	mkdir -p "$npm_config_cache" "$PROJECT_DIR"
@@ -259,7 +259,6 @@ restore_cache () {
 	fi
 	if [ -d "$CACHE_BASE/npm" ]; then
 		log_it "restoring $npm_config_cache from cache"
-		## "$HOME"/cache/node_modules_cache
 		rsync -aR ./npm "$npm_config_cache"
 	fi
 	if [ -d "$CACHE_BASE/dummy-ext/.vscode-test" ]; then

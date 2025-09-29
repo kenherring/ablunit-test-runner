@@ -98,7 +98,7 @@ function getMochaOpts (projName) {
 		}
 	}
 
-	if (process.env['CI'] == 'true') {
+	if (process.env['CIRCLECI'] == 'true') {
 		mochaOpts.bail = false
 	}
 

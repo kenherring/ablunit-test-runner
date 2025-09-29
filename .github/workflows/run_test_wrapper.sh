@@ -19,7 +19,10 @@ initialize () {
 		CIRCLE_BRANCH="$GITHUB_REF_NAME"
 		CIRCLE_TAG=""
 	fi
-	export CIRCLE_BRANCH CIRCLE_TAG
+	if [ -z "${CIRCLECI:-}" ] && [ -n "${CI:-}" ]; then
+		CIRCLECI=${CI:-}
+	fi
+	export CIRCLECI CIRCLE_BRANCH CIRCLE_TAG
 
 	VERBOSE=${VERBOSE:-false}
 	DONT_PROMPT_WSL_INSTALL=No_Prompt_please
@@ -41,6 +44,10 @@ initialize () {
 			log_error "xq command not found"
 			exit 1
 		fi
+	fi
+
+	if [ -n "${PROGRESS_CFG_BASE64:-}" ]; then
+		tr ' ' '\n' <<< "$PROGRESS_CFG_BASE64" | base64 --decode > /psc/dlc/progress.cfg
 	fi
 
 	if [ "$ABLUNIT_TEST_RUNNER_OE_VERSION" != "$PRIMARY_OE_VERSION" ]; then
@@ -67,15 +74,9 @@ initialize () {
 	log_it "ABLUNIT_TEST_RUNNER_REPO_DIR=$ABLUNIT_TEST_RUNNER_REPO_DIR"
 	log_it "ABLUNIT_TEST_RUNNER_RUN_SCRIPT_FLAG=$ABLUNIT_TEST_RUNNER_RUN_SCRIPT_FLAG"
 	log_it "ABLUNIT_TEST_RUNNER_UNIT_TESTING=$ABLUNIT_TEST_RUNNER_UNIT_TESTING"
-	log_it "CI=${CI:-}"
+	log_it "CIRCLECI=${CIRCLECI:-}"
 
 	update_oe_version
-
-	ls -al /psc/dlc/progress.cfg
-	if [ -n "${PROGRESS_CFG_BASE64:-}" ]; then
-		log_it "PROGRESS_CFG_BASE64 is set"
-		tr ' ' '\n' <<< "$PROGRESS_CFG_BASE64" | base64 --decode > /psc/dlc/progress.cfg
-	fi
 }
 
 update_oe_version () {

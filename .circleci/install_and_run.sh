@@ -5,7 +5,7 @@ initialize() {
     echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}] pwd=$(pwd)"
     local VSIX_COUNT
 
-    CI=${CI:-false}
+    CIRCLECI=${CIRCLECI:-false}
     # PACKAGE_VERSION=$(node -p "require('./package.json').version")
     export DONT_PROMPT_WSL_INSTALL=true
 
@@ -13,7 +13,7 @@ initialize() {
         CIRCLE_BRANCH="$(git branch --show-current)"
     fi
 
-    $CI || .circleci/package.sh
+    $CIRCLECI || .circleci/package.sh
 
     echo "vsix files packaged:"
     find . -name 'ablunit-test-runner-*.vsix'

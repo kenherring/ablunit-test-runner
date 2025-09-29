@@ -1,5 +1,6 @@
 # ABLUnit Test Runner 🏃‍♂️🏃🏃‍♀️
 
+[![CI Workflow](https://github.com/kenherring/ablunit-test-runner/actions/workflows/main.yml/badge.svg)](https://github.com/kenherring/ablunit-test-runner/actions/workflows/main.yml)
 [![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=kenherring_ablunit-test-runner&metric=sqale_rating)](https://sonarcloud.io/summary/new_code?id=kenherring_ablunit-test-runner)
 [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=kenherring_ablunit-test-runner&metric=coverage)](https://sonarcloud.io/summary/new_code?id=kenherring_ablunit-test-runner)
 [![VSCode Marketplace Version](https://img.shields.io/visual-studio-marketplace/v/kherring.ablunit-test-runner?include_prereleases&logo=visual%20studio%20code&logoColor=blue&color=blue)](https://marketplace.visualstudio.com/items?itemName=kherring.ablunit-test-runner)

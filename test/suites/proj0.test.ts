@@ -641,7 +641,7 @@ test('proj0.29 - database connection not valid', async () => {
 })
 
 test('proj0.30 - database connection not valid', async () => {
-	if (!process.env['CI']) {
+	if (!process.env['CIRCLECI']) {
 		log.info('skipping proj0.30 as it has a long execution time and is intended to run on CI only')
 		return
 	}

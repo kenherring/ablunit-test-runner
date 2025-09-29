@@ -16,10 +16,9 @@ initialize () {
 	log_it "DLC=$DLC"
 
 	PATH=$PATH:$DLC/ant/bin
-	CI=${CI:-false}
+	CIRCLECI=${CIRCLECI:-false}
 	# HOME=/home/circleci
 	HOME=/github/home
-
 	NO_BUILD=${NO_BUILD:-false}
 	VERBOSE=${VERBOSE:-false}
 	WSL=false
@@ -52,7 +51,7 @@ initialize () {
 		exit 1
 	fi
 
-	export PATH CI ABLUNIT_TEST_RUNNER_OE_VERSION ABLUNIT_TEST_RUNNER_VSCODE_VERSION
+	export PATH CIRCLECI ABLUNIT_TEST_RUNNER_OE_VERSION ABLUNIT_TEST_RUNNER_VSCODE_VERSION
 
 	if [ -d artifacts ]; then
 		rm -rf artifacts/*
@@ -69,8 +68,6 @@ initialize () {
 get_performance_test_code () {
 	log_it "pwd=$(pwd) ABLUNIT_TEST_RUNNER_OE_VERSION=$ABLUNIT_TEST_RUNNER_OE_VERSION ABLUNIT_TEST_RUNNER_VSCODE_VERSION=${ABLUNIT_TEST_RUNNER_VSCODE_VERSION:-}"
 
-	log_it "HOME=$HOME"
-	ls $HOME
 	local TO_FILE="$HOME/v${ABLUNIT_TEST_RUNNER_OE_VERSION}.0.tar.gz"
 	if [ "${OS:-}" = "Windows_NT" ] || [ -n "${WSL_DISTRO_NAME:-}" ]; then
 		mkdir -p .vscode-test
@@ -106,11 +103,10 @@ copy_user_settings () {
 }
 
 get_pct () {
-	log_it "pwd=$(pwd) WSL=$WSL"
+	log_it "pwd=$(pwd)"
 	[ -d ~/.ant/lib ] || mkdir -p ~/.ant/lib
 
 	if $WSL && [ ! -f ~/.ant/lib/PCT.jar ]; then
-		log_it "downloading PCT.jar ..."
 		mkdir -p ~/.ant/lib
 		local ARGS=()
 		ARGS+=(-L -o ~/.ant/lib/PCT.jar)
@@ -123,37 +119,27 @@ get_pct () {
 			. docker/.env
 		fi
 		curl "${ARGS[@]}" "https://github.com/Riverside-Software/pct/releases/download/v${PCT_VERSION}/PCT.jar"
-		log_it "PCT.jar download complete"
 	fi
 }
 
 create_dbs () {
 	log_it "pwd=$(pwd)"
 	if [ -d test_projects/proj0/target/db ]; then
-		log_it 'test_projects/proj0/target/db already exists, skipping create_dbs'
 		return 0
 	fi
 
 	local COMMAND=ant
 	cd test_projects/proj0
 	COMMAND=ant
-	if ! command -v "$COMMAND"; then
+	if ! command -v $COMMAND; then
 		COMMAND="$DLC/ant/bin/ant"
 	fi
-	if ! command -v "$COMMAND"; then
-		log_error "cannot find ant command (COMMAND=$COMMAND, DLC=$DLC)"
-		exit 1
-	fi
 	mkdir -p artifacts
-	log_it "running ant command: $COMMAND"
-	$COMMAND
-	# $COMMAND > artifacts/pretest_ant.log >&1
-	log_it "ant command completed successfully"
+	$COMMAND > artifacts/pretest_ant.log >&1
 	cd -
 }
 
 package () {
-	log_it
 	if $NO_BUILD; then
 		log_it "skipping package (NO_BUILD=$NO_BUILD)"
 		return 0
@@ -185,8 +171,8 @@ package () {
 	else
 		PACKAGE_OUT_OF_DATE=true
 	fi
-	log_it "CI=$CI PACKAGE_OUT_OF_DATE=$PACKAGE_OUT_OF_DATE VSIX_COUNT=$VSIX_COUNT"
-	if $PACKAGE_OUT_OF_DATE || $CI || [ "$VSIX_COUNT" = "0" ]; then
+	log_it "CIRCLECI=$CIRCLECI PACKAGE_OUT_OF_DATE=$PACKAGE_OUT_OF_DATE VSIX_COUNT=$VSIX_COUNT"
+	if $PACKAGE_OUT_OF_DATE || $CIRCLECI || [ "$VSIX_COUNT" = "0" ]; then
 		.circleci/package.sh
 	fi
 

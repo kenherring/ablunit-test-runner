@@ -105,7 +105,7 @@ update_changelog () {
 	} > "changelog_$PACKAGE_VERSION.md"
 
 	mv "changelog_$PACKAGE_VERSION.md" CHANGELOG.md
-	if ! ${CI:-false}; then
+	if ! ${CIRCLECI:-false}; then
 		code --wait CHANGELOG.md
 	fi
 }

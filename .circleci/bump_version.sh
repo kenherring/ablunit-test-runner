@@ -20,12 +20,12 @@ main () {
         return 0
     fi
 
-    if ${CI:-}; then
+    if ${CIRCLECI:-}; then
         if ! git config --get user.email &>/dev/null; then
-            git config user.email "ci@ablunit-test-runner.kenherring.com"
+            git config user.email "circleci@ablunit-test-runner.kenherring.com"
         fi
         if ! git config --get user.name &>/dev/null; then
-            git config user.name "CI"
+            git config user.name "CircleCI"
         fi
         git config push.autoSetupRemote true
     fi
