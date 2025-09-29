@@ -60,7 +60,7 @@ jobs:
           fetch-depth: 0
       - run: ./.github/workflows/run_test_wrapper.sh
       - name: SonarQube Scan
-        if: ${{ matrix.oe-version = '12.8.1' }}
+        if: ${{ matrix.oe-version == '12.8.1' }}
         uses: SonarSource/sonarqube-scan-action@v6
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
