@@ -39,6 +39,7 @@ jobs:
   test:
     needs: build
     strategy:
+      fail-fast: false
       matrix:
         oe-version: [ 12.2.12, 12.8.1, 12.8.9 ]
     runs-on: ubuntu-latest
