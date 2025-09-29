@@ -45,6 +45,10 @@ initialize () {
 			PATH=$PATH:/root/.local/bin
 		fi
 		if ! command -v xq; then
+			log_it 'install xq (via yq)'
+			pipx install yq
+		fi
+		if ! command -v xq; then
 			log_error "xq command not found"
 			exit 1
 		fi
