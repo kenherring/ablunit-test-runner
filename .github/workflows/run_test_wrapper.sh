@@ -33,7 +33,6 @@ initialize () {
 	ABLUNIT_TEST_RUNNER_REPO_DIR=$(pwd)
 	ABLUNIT_TEST_RUNNER_RUN_SCRIPT_FLAG=${ABLUNIT_TEST_RUNNER_RUN_SCRIPT_FLAG:-true}
 	ABLUNIT_TEST_RUNNER_UNIT_TESTING=true
-	# HOME=/home/circleci
 	HOME=/github/home
 
 	if ! command -v xq; then

@@ -11,7 +11,6 @@ initialize () {
 	local OPT OPTARG OPTIND
 	log_it  "pwd=$(pwd)"
 	VERBOSE=${VERBOSE:-false}
-	# HOME=/home/cirlceci
 	HOME=/github/home
 	ABLUNIT_TEST_RUNNER_DBUS_NUM=${ABLUNIT_TEST_RUNNER_DBUS_NUM:-3}
 	ABLUNIT_TEST_RUNNER_OE_VERSION=${ABLUNIT_TEST_RUNNER_OE_VERSION:-}

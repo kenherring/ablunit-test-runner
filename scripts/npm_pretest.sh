@@ -1,8 +1,6 @@
 #!/bin/bash
 set -eou pipefail
 
-# set -x
-
 . scripts/common.sh
 
 initialize () {
@@ -17,7 +15,6 @@ initialize () {
 
 	PATH=$PATH:$DLC/ant/bin
 	CIRCLECI=${CIRCLECI:-false}
-	# HOME=/home/circleci
 	HOME=/github/home
 	NO_BUILD=${NO_BUILD:-false}
 	VERBOSE=${VERBOSE:-false}
