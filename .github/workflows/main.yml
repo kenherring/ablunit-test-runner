@@ -11,9 +11,6 @@ on:
   push:
     branches:
       - main
-  # release:
-  #   types:
-  #     - created
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -57,14 +54,18 @@ jobs:
       PRIMARY_OE_VERSION: 12.8.1
       PROGRESS_CFG_BASE64: ${{ secrets.PROGRESS_CFG_BASE64 }}
     steps:
-      # - name: download artifact
-      #   uses: ???
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - run: ./.github/workflows/run_test_wrapper.sh
-      # - name: upload-test-results
+      - uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: |
+            artifacts/eslint_report.json
+            artifacts/coverage/lcov.info
+            artifacts/mocha_results_merged.xml
 
   # shellcheck:
   #   name: Shellcheck
@@ -78,12 +79,12 @@ jobs:
     needs: test
     runs-on: ubuntu-latest
     steps:
-      - name: TODO
-        run: echo 'TODO'
-
-      # - name: download artifacts
-      #   uses: ???
-      # - name: SonarQube Scan
-      #   uses: SonarSource/sonarqube-scan-action@<action version or sha1> # Ex: v4.1.0 or sha1, See the latest version at https://github.com/marketplace/actions/official-sonarqube-scan
-      #   env:
-      #     SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      - name: download test-results artifacts
+        uses: actions/download-artifact@v5
+        with:
+          path: test-results
+          merge-multiple: true
+      - name: SonarQube Scan
+        uses: SonarSource/sonarqube-scan-action@v6
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
