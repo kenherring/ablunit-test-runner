@@ -59,13 +59,11 @@ jobs:
         with:
           fetch-depth: 0
       - run: ./.github/workflows/run_test_wrapper.sh
-      - uses: actions/upload-artifact@v4
-        with:
-          name: test-results
-          path: |
-            artifacts/eslint_report.json
-            artifacts/coverage/lcov.info
-            artifacts/mocha_results_merged.xml
+      - name: SonarQube Scan
+        if: ${{ matrix.oe-version = '12.8.1' }}
+        uses: SonarSource/sonarqube-scan-action@v6
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
   # shellcheck:
   #   name: Shellcheck
@@ -74,17 +72,3 @@ jobs:
   #     - uses: actions/checkout@v4
   #     - name: Run ShellCheck
   #       uses: ludeeus/action-shellcheck@master
-
-  sonarqube:
-    needs: test
-    runs-on: ubuntu-latest
-    steps:
-      - name: download test-results artifacts
-        uses: actions/download-artifact@v5
-        with:
-          path: test-results
-          merge-multiple: true
-      - name: SonarQube Scan
-        uses: SonarSource/sonarqube-scan-action@v6
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
