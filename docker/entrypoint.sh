@@ -11,6 +11,7 @@ initialize () {
 	local OPT OPTARG OPTIND
 	log_it  "pwd=$(pwd)"
 	VERBOSE=${VERBOSE:-false}
+	HOME=/github/home
 	ABLUNIT_TEST_RUNNER_DBUS_NUM=${ABLUNIT_TEST_RUNNER_DBUS_NUM:-3}
 	ABLUNIT_TEST_RUNNER_OE_VERSION=${ABLUNIT_TEST_RUNNER_OE_VERSION:-}
 	ABLUNIT_TEST_RUNNER_PROJECT_NAME=${ABLUNIT_TEST_RUNNER_PROJECT_NAME:-}
@@ -23,11 +24,11 @@ initialize () {
 	fi
 	BASH_AFTER=false
 	BASH_AFTER_ERROR=false
-	CACHE_BASE=/home/circleci/cache
+	CACHE_BASE="$HOME"/cache
 	CIRCLECI=${CIRCLECI:-false}
 	npm_config_cache=$CACHE_BASE/node_modules_cache
-	PROJECT_DIR=/home/circleci/project
-	REPO_VOLUME=/home/circleci/ablunit-test-runner
+	PROJECT_DIR="$HOME"/project
+	REPO_VOLUME="$HOME"/ablunit-test-runner
 	GIT_BRANCH=$(cd "$REPO_VOLUME" && git branch --show-current)
 	STAGED_ONLY=${STAGED_ONLY:-true}
 	${CREATE_PACKAGE:-false} && TEST_PROJECT=package
@@ -167,7 +168,7 @@ run_tests_base () {
 	log_it "pwd=$(pwd)"
 
 	set -eo pipefail ## matches the behavior of CircleCI
-	if ! .circleci/run_test_wrapper.sh; then
+	if ! ./.github/workflows/run_test_wrapper.sh; then
 		log_it "run_tests failed"
 		$BASH_AFTER_ERROR && bash
 		exit 1
@@ -257,7 +258,6 @@ restore_cache () {
 	fi
 	if [ -d "$CACHE_BASE/npm" ]; then
 		log_it "restoring $npm_config_cache from cache"
-		## /home/circleci/cache/node_modules_cache
 		rsync -aR ./npm "$npm_config_cache"
 	fi
 	if [ -d "$CACHE_BASE/dummy-ext/.vscode-test" ]; then

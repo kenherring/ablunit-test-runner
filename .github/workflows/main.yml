@@ -1,0 +1,75 @@
+name: CI Workflow
+
+permissions:
+  contents: write
+  pull-requests: write
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Run ShellCheck
+        uses: ludeeus/action-shellcheck@2.0.0
+        if: matrix.os == 'ubuntu-latest'
+        with:
+          ignore_paths: ./test_projects/**
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - run: npm install
+      - run: npm run build
+
+  test:
+    needs: build
+    strategy:
+      fail-fast: false
+      matrix:
+        oe-version: [ 12.2.12, 12.8.1, 12.8.9 ]
+    runs-on: ubuntu-latest
+    container:
+      image: kherring/ablunit-test-runner:${{ matrix.oe-version }}
+      credentials:
+        username: ${{ secrets.DOCKER_USER }}
+        password: ${{ secrets.DOCKER_PAT }}
+    env:
+      ABLUNIT_TEST_RUNNER_OE_VERSION: ${{ matrix.oe-version }}
+      ABLUNIT_TEST_RUNNER_VSCODE_VERSION: 'stable'
+      EXPECTED_VSIX_COUNT: 1
+      PRIMARY_OE_VERSION: 12.8.1
+      PROGRESS_CFG_BASE64: ${{ secrets.PROGRESS_CFG_BASE64 }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - run: ./.github/workflows/run_test_wrapper.sh
+      - name: SonarQube Scan
+        if: ${{ matrix.oe-version == '12.8.1' && github.actor != 'dependabot[bot]' }}
+        uses: SonarSource/sonarqube-scan-action@v6.0.0
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+  # shellcheck:
+  #   name: Shellcheck
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - name: Run ShellCheck
+  #       uses: ludeeus/action-shellcheck@master

@@ -11,7 +11,7 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/* /var/cache/apt/archives/*
 
 ## dependencies for running ablunit tests
-COPY --from=psc --chown=circleci:circleci --chmod=744 /psc /psc
+COPY --from=psc --chown=github:github --chmod=744 /psc /psc
 COPY .rssw/oedoc.bin /root/.rssw/oedoc.bin
 RUN if [ ! -f /root/.rssw/oedoc.bin ]; then echo "/root/.rssw/oedoc.bin oedoc.bin not found" && exit 1; fi
 ARG PCT_VERSION
@@ -31,11 +31,12 @@ ARG OE_VERSION
 ARG PROGRESS_ADE_TAG
 ENV OE_VERSION=${OE_VERSION}
 ENV DOCKER_IMAGE=ablunit-test-runner-${OE_VERSION}
-RUN mkdir /home/circleci
+ARG HOME=/github/home
+RUN mkdir -p ${HOME}
 COPY build.xml /psc/dlc/tty/build.xml
-ADD https://github.com/progress/ADE/archive/refs/tags/v${PROGRESS_ADE_TAG}.0.tar.gz /home/circleci/
+ADD https://github.com/progress/ADE/archive/refs/tags/v${PROGRESS_ADE_TAG}.0.tar.gz ${HOME}
 RUN --mount=type=secret,id=license,target=/psc/dlc/progress.cfg \
-    tar -xzf "/home/circleci/v${PROGRESS_ADE_TAG}.0.tar.gz" -C . \
+    tar -xzf "${HOME}/v${PROGRESS_ADE_TAG}.0.tar.gz" -C . \
     && mv ADE-${PROGRESS_ADE_TAG}.0 ADE \
     && ant compile \
     && rm -rf build.xml ADE/ /tmp/*
@@ -48,4 +49,4 @@ RUN mkdir -p ~/.vscode-test
 RUN pipx install yq
 ENV PATH=$PATH:/root/.local/bin
 
-WORKDIR /home/circleci/project
+WORKDIR ${HOME}/project
