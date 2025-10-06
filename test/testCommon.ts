@@ -194,7 +194,7 @@ export function setFilesExcludePattern () {
 	})
 }
 
-export function installExtension (extname = 'riversidesoftware.openedge-abl-lsp'): PromiseLike<boolean> {
+export function installExtension (extname = 'RiversideSoftware.openedge-abl-lsp'): PromiseLike<boolean> {
 	log.info('start process.args=' + process.argv.join(' '))
 	if (extensions.getExtension(extname)) {
 		log.info('extension ' + extname + ' is already installed')
@@ -203,7 +203,7 @@ export function installExtension (extname = 'riversidesoftware.openedge-abl-lsp'
 	if (extname == 'kherring.ablunit-test-runner') {
 		throw new Error('extension kherring.ablunit-test-runner should be loaded from the extensionDevelopmentPath')
 	}
-	if (extname === 'riversidesoftware.openedge-abl-lsp' && ! enableExtensions()) {
+	if (extname === 'RiversideSoftware.openedge-abl-lsp' && ! enableExtensions()) {
 		throw new Error('extensions disabed, openedge-abl-lsp cannot be installed')
 	}
 
@@ -239,7 +239,7 @@ export function sleep (time = 10, msg?: string | null, divider = false) {
 		.then(() => { return })
 }
 
-export async function activateExtension (extname = 'riversidesoftware.openedge-abl-lsp') {
+export async function activateExtension (extname = 'RiversideSoftware.openedge-abl-lsp') {
 	log.info('activating ' + extname + ' extension...')
 	const ext = extensions.getExtension(extname)
 	if (!ext) {
@@ -253,7 +253,7 @@ export async function activateExtension (extname = 'riversidesoftware.openedge-a
 			log.info('activated ' + extname + ' extension!')
 		}, (e: unknown) => { throw e })
 	}
-	if (extname === 'riversidesoftware.openedge-abl-lsp') {
+	if (extname === 'RiversideSoftware.openedge-abl-lsp') {
 		await waitForLangServerReady()
 	}
 	log.info('isActive=' + ext.isActive)
@@ -363,7 +363,7 @@ function getFileCountByExt (ext: string, workspaceFolder?: WorkspaceFolder | Uri
 export async function awaitRCode (workspaceFolder: WorkspaceFolder | undefined, rcodeCountMinimum = 1) {
 	workspaceFolder = workspaceFolder ?? getWorkspaceFolders()[0]
 
-	const ext = extensions.getExtension('riversidesoftware.openedge-abl-lsp')
+	const ext = extensions.getExtension('RiversideSoftware.openedge-abl-lsp')
 	log.info('isActive=' + ext?.isActive)
 	if (!ext?.isActive) {
 		log.info('[awaitRCode] extension not active! (ext=' + JSON.stringify(ext) + ')')
@@ -868,7 +868,7 @@ export async function updateTestProfile (key: string, value: string | string[] |
 }
 
 export function selectProfile (profile: string) {
-	if (! extensions.getExtension('riversidesoftware.openedge-abl-lsp')) {
+	if (! extensions.getExtension('RiversideSoftware.openedge-abl-lsp')) {
 		throw new Error('openedge-abl-lsp is not installed')
 	}
 	const profileJson = {
