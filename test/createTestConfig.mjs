@@ -264,9 +264,9 @@ function getTestConfig (testDir, projName) {
 		label: 'suite_' + projName,
 		srcDir: './',
 	}
-	if(enableExtensions.includes(projName)) {
-		testConfig.installExtensions = [ 'riversidesoftware.openedge-abl-lsp' ]
-	}
+	// if(enableExtensions.includes(projName)) {
+	// 	testConfig.installExtensions = [ 'riversidesoftware.openedge-abl-lsp' ]
+	// }
 	return testConfig
 }
 
@@ -279,6 +279,7 @@ function getTests () {
 		for (const p of projects) {
 			tests.push(getTestConfig('suites', p))
 		}
+		tests[0].installExtensions = [ 'riversidesoftware.openedge-abl-lsp' ]
 		return tests
 	}
 
