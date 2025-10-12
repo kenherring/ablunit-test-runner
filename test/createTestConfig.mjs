@@ -17,6 +17,7 @@ const DLC = undefined
 const vsVersionNum = '1.88.0'
 const vsVersion = process.env['ABLUNIT_TEST_RUNNER_VSCODE_VERSION'] ?? 'stable'
 // const useOEAblPrerelease = false
+let installSet = false
 const enableExtensions = [
 	'AtStart',
 	'DebugLines',
@@ -264,8 +265,9 @@ function getTestConfig (testDir, projName) {
 		label: 'suite_' + projName,
 		srcDir: './',
 	}
-	if(enableExtensions.includes(projName)) {
+	if(!installSet && enableExtensions.includes(projName)) {
 		testConfig.installExtensions = [ 'riversidesoftware.openedge-abl-lsp' ]
+		installSet = true
 	}
 	return testConfig
 }
