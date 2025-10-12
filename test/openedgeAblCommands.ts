@@ -5,11 +5,30 @@ import * as glob from 'glob'
 import { dirname } from 'path'
 
 let ablunitLogUri = getWorkspaceUri()
-
 interface IRuntime {
 	name: string,
 	path: string,
 	default?: boolean
+}
+
+interface IAblExtProjectStatus {
+	name: string
+	initialized: boolean
+	workers: number
+	sourceTasks: number
+	rcodeTasks: number
+}
+
+interface IAblExtStatus {
+	projects: IAblExtProjectStatus[]
+}
+
+interface IAblExtExports {
+	getProjectInfo: (projectUri: Uri) => Promise<unknown>
+	getFileInfo: (uri: Uri) => Promise<unknown>
+	getSchema: (projectUri: Uri) => Promise<unknown>
+	status: () => Promise<IAblExtStatus>
+	restartLanguageServer: () => Promise<void>
 }
 
 export async function enableOpenedgeAblExtension (runtimes?: IRuntime[], rcodeCount?: number) {
@@ -61,11 +80,30 @@ async function waitForRcode (expectedCount?: number) {
 }
 
 export function restartLangServer (rcodeCount = 0): Promise<number> {
+	log.info('restartLanguageServer')
 	const ablExt = extensions.getExtension('riversidesoftware.openedge-abl-lsp')
 	if (!ablExt) throw new Error('extension not installed: riversidesoftware.openedge-abl-lsp')
-	// @ts-ignore
-	return ablExt.restartLanguageServer()
-	.then(() => waitForRcode(rcodeCount))
+	if (ablExt.exports instanceof Object) {
+		log.info('object.keys.length=' + Object.keys(ablExt.exports as object).length)
+		if (Object.keys(ablExt.exports as object).length === 0) {
+			throw new Error('object.keys.length=0 for ablExt.exports')
+		}
+		for (const key of Object.keys(ablExt.exports as object)) {
+			log.info('key=' + key)
+		}
+	} else {
+		log.info('typeof ablext=' + typeof ablExt)
+	}
+	const ablExtExports = ablExt.exports as IAblExtExports
+	if (typeof ablExtExports.restartLanguageServer !== 'function') {
+		throw new Error('ablExtExports.restartLanguageServer is not a function!!! typeof=' + typeof ablExtExports.restartLanguageServer)
+	}
+	return ablExtExports.restartLanguageServer()
+		.then(() => ablExtExports.status())
+		.then((status: unknown) => {
+			log.info('ablExtExports.status()=' + JSON.stringify(status, null, 4))
+			return waitForRcode(rcodeCount)
+		})
 }
 
 export async function rebuildAblProject (waitForRcodeCount = 0) {

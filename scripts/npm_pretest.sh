@@ -15,7 +15,9 @@ initialize () {
 
 	PATH=$PATH:$DLC/ant/bin
 	CIRCLECI=${CIRCLECI:-false}
-	HOME=/github/home
+	if $CIRCLECI; then
+		HOME=/github/home
+	fi
 	NO_BUILD=${NO_BUILD:-false}
 	VERBOSE=${VERBOSE:-false}
 	WSL=false
