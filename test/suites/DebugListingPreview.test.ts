@@ -24,16 +24,15 @@ async function validateSelectionAfterChange (uri: Uri, expectedSelection: number
     }
 }
 
-suiteSetup('debugListingPreview - before', async () => {
+suiteSetup('debugLines - before', async () => {
 	await suiteSetupCommon(undefined, 1)
 	const rcodeCount = getRcodeCount()
-	const rcodeExpectedCount = 1
-	if (rcodeCount < rcodeExpectedCount) {
-		throw new Error('rcodeCount=' + rcodeCount + ' < ' + rcodeExpectedCount)
+	if (rcodeCount < 1) {
+		throw new Error('rcodeCount=' + rcodeCount + ' < 1')
 	}
 })
 
-test('debugListingPreview.7 - Debug Listing Preview', async () => {
+test('debugLines.7 - Debug Listing Preview', async () => {
 	const sourceUri = toUri('src/code/unit_test7.p')
 	const debugUri = toUri('src/code/unit_test7.p Debug Listing')
 
@@ -74,7 +73,7 @@ test('debugListingPreview.7 - Debug Listing Preview', async () => {
 	await validateSelectionAfterChange(sourceUri, [26,0, 82, 4 + 12])
 })
 
-test('debugListingPreview.8 - Debug Listing Preview with include', () => {
+test('debugLines.8 - Debug Listing Preview with include', () => {
 	const sourceUri = toUri('src/code/unit_test7.p')
 	const debugUri = toUri('src/code/unit_test7.p Debug Listing')
 	const includeUri = toUri('src/inc/include_7.i')
@@ -118,14 +117,14 @@ test('debugListingPreview.8 - Debug Listing Preview with include', () => {
 			assert.selection(includeEditor[0].selection, [8, 0, 9, 0])
 			return
 		}, (e: unknown) => {
-			log.error('Error in debugListingPreview.8: ' + e)
-			assert.fail('Error in debugListingPreview.8: ' + e)
+			log.error('Error in debugLines.8: ' + e)
+			assert.fail('Error in debugLines.8: ' + e)
 			throw e
 		})
 	return
 })
 
-test('debugListingPreview.9 - Debug Listing Preview selection across files', async () => {
+test('debugLines.9 - Debug Listing Preview selection across files', async () => {
 	const sourceUri = toUri('src/code/unit_test7.p')
 	const debugUri = toUri('src/code/unit_test7.p Debug Listing')
 
@@ -159,15 +158,15 @@ test('debugListingPreview.9 - Debug Listing Preview selection across files', asy
 			assert.selection(sourceEditor[0].selection, [26, 0, 30, 0])
 			return
 		}, (e: unknown) => {
-			log.error('Error in debugListingPreview.9: ' + e)
-			assert.fail('Error in debugListingPreview.9: ' + e)
+			log.error('Error in debugLines.8: ' + e)
+			assert.fail('Error in debugLines.8: ' + e)
 			throw e
 		})
 	return
 })
 
-test('debugListingPreview.10 - Debug Listing Preview selection across files', () => {
-	log.info('---------- start debugListingPreview.10 ----------')
+test('debugLines.10 - Debug Listing Preview selection across files', () => {
+	log.info('---------- start debugLines.10 ----------')
 	const sourceUri = toUri('src/code/unit_test7.p')
 	const debugUri = toUri('src/code/unit_test7.p Debug Listing')
 	const includeUri = toUri('src/inc/include_7.i')
@@ -211,8 +210,8 @@ test('debugListingPreview.10 - Debug Listing Preview selection across files', ()
 			assert.selection(includeEditor[0].selection, [0, 0, 6, 0])
 			return
 		}, (e: unknown) => {
-			log.error('Error in debugListingPreview.10: ' + e)
-			assert.fail('Error in debugListingPreview.10: ' + e)
+			log.error('Error in debugLines.8: ' + e)
+			assert.fail('Error in debugLines.8: ' + e)
 			throw e
 		})
 	return

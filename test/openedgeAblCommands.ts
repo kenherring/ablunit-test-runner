@@ -104,9 +104,7 @@ async function waitForRcode (expectedCount?: number) {
 	return rcodeCount
 }
 
-export async function restartLangServer (rcodeCount = 0): Promise<number> {
-	log.info('-----> START')
-
+function setAblExports () {
 	if (!ablExtExports) {
 		const ablExt = extensions.getExtension('riversidesoftware.openedge-abl-lsp')
 		if (!ablExt) {
@@ -117,11 +115,17 @@ export async function restartLangServer (rcodeCount = 0): Promise<number> {
 	if (typeof ablExtExports.restartLanguageServer !== 'function') {
 		throw new Error('ablExtExports.restartLanguageServer is not a function!!! typeof=' + typeof ablExtExports.restartLanguageServer)
 	}
+}
 
-	await ablExtExports.status()
+export async function restartLangServer (rcodeCount = 0): Promise<number> {
+	log.info('-----> START restartLangServer')
+
+	setAblExports()
+
+	await ablExtExports!.status()
 		.then((status) => JSON.stringify('status=' + JSON.stringify(status, null, 4)))
 
-	return await ablExtExports.restartLanguageServer()
+	return await ablExtExports!.restartLanguageServer()
 		.then(() => waitForLangServerReady())
 		.then(() => ablExtExports!.status())
 		.then((status: unknown) => {
@@ -361,10 +365,12 @@ async function getLogContents () {
 async function waitForLangServerReady () {
 	log.info('----> START waitForLangServerReady')
 	const maxWait = 15 // seconds
-	ablExtExports = ablExtExports ?? extensions.getExtension('riversidesoftware.openedge-abl-lsp')?.exports as IAblExtExports
+
+
+	setAblExports()
 
 	const waitTime = new Duration()
-	let status = await ablExtExports.status()
+	let status = await ablExtExports!.status()
 
 	while (waitTime.elapsed() < maxWait * 1000) {
 		if (!status?.projects || status.projects.length === 0) {

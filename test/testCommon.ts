@@ -854,7 +854,6 @@ export function selectProfile (profile: string) {
 		profile: profile
 	}
 	const profileUri = Uri.joinPath(getWorkspaceUri(), '.vscode', 'profile.json')
-	log.info('-----> START selectProfile')
 	return workspace.fs.writeFile(profileUri, Buffer.from(JSON.stringify(profileJson)))
 		.then(() => restartLangServer())
 }
