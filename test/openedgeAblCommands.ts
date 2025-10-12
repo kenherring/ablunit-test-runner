@@ -1,5 +1,5 @@
 import { commands, extensions, Uri, workspace } from 'vscode'
-import { Duration, enableExtensions, getDefaultDLC, getRcodeCount, getWorkspaceUri, installExtension, log, oeVersion, sleep, getSourceCount } from './testCommon'
+import { Duration, enableExtensions, getDefaultDLC, getRcodeCount, getWorkspaceUri, log, oeVersion, sleep, getSourceCount } from './testCommon'
 import { getContentFromFilesystem } from 'parse/TestParserCommon'
 import * as glob from 'glob'
 import { dirname } from 'path'
@@ -38,6 +38,10 @@ async function activateExtension () {
 	const extname = 'riversidesoftware.openedge-abl-lsp'
 	log.info('activating ' + extname + ' extension...')
 	const ext = extensions.getExtension(extname)
+	// if (!ext) {
+	// 	await installExtension(extname)
+	// 	ext = extensions.getExtension(extname)
+	// }
 	if (!ext) {
 		throw new Error('cannot activate extension, not installed: ' + extname)
 	}
@@ -60,9 +64,9 @@ export async function enableOpenedgeAblExtension (runtimes?: IRuntime[], rcodeCo
 	const extname = 'riversidesoftware.openedge-abl-lsp'
 	ablunitLogUri = await commands.executeCommand('_ablunit.getLogUri')
 
-	if (!extensions.getExtension(extname)) {
-		await installExtension(extname)
-	}
+	// if (!extensions.getExtension(extname)) {
+	// 	await installExtension(extname)
+	// }
 	if (!extensions.getExtension(extname)?.isActive) {
 		await activateExtension()
 	}
