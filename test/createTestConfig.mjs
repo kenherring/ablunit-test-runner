@@ -16,7 +16,8 @@ const DLC = undefined
 // const DLC = 'C:/Progress/OpenEdge'
 const vsVersionNum = '1.88.0'
 const vsVersion = process.env['ABLUNIT_TEST_RUNNER_VSCODE_VERSION'] ?? 'stable'
-const useOEAblPrerelease = false
+// const useOEAblPrerelease = false
+let installSet = false
 const enableExtensions = [
 	'AtStart',
 	'DebugLines',
@@ -80,7 +81,7 @@ function getMochaOpts (projName) {
 		timeout: getMochaTimeout(projName),
 		// ui: 'tdd', // describe, it, etc
 		// ui: 'bdd' // default; suite, test, etc
-		retries: 0,
+		retries: 1,
 		parallel: false,
 		bail: false,
 		require: [
@@ -136,13 +137,13 @@ function getLaunchArgs (projName) {
 	// } else {
 	// 	args.push('--install-extension', './ablunit-test-runner-insiders-' + extVersion + '.vsix')
 	// }
-	if (enableExtensions.includes(projName)) {
-		if (useOEAblPrerelease) {
-			args.push('--install-extension', 'riversidesoftware.openedge-abl-lsp@prerelease')
-		} else {
-			args.push('--install-extension', 'riversidesoftware.openedge-abl-lsp')
-		}
-	}
+	// if (enableExtensions.includes(projName)) {
+	// 	if (useOEAblPrerelease) {
+	// 		args.push('--install-extension', 'riversidesoftware.openedge-abl-lsp@prerelease')
+	// 	} else {
+	// 		args.push('--install-extension', 'riversidesoftware.openedge-abl-lsp')
+	// 	}
+	// }
 	// args.push('--pre-release')
 	// args.push('--uninstall-extension <ext-id>')
 	// args.push('--update-extensions')
@@ -251,7 +252,7 @@ function getTestConfig (testDir, projName) {
 		useInstallation,
 		// useInstallation: { fromMachine: true },
 		// download: { reporter: ProgressReporter, timeout: ? }
-		installExtensions: [ 'riversidesoftware.openedge-abl-lsp' ],
+		// installExtensions: [ 'riversidesoftware.openedge-abl-lsp' ],
 		// installExtensions: [ 'riversidesoftware.openedge-abl-lsp@prerelease' ],
 
 		// --- IBaseTestConfiguration --- //
@@ -263,6 +264,10 @@ function getTestConfig (testDir, projName) {
 		mocha: getMochaOpts(projName),
 		label: 'suite_' + projName,
 		srcDir: './',
+	}
+	if(!installSet && enableExtensions.includes(projName)) {
+		testConfig.installExtensions = [ 'riversidesoftware.openedge-abl-lsp' ]
+		installSet = true
 	}
 	return testConfig
 }

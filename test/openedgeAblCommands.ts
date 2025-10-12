@@ -1,5 +1,5 @@
 import { commands, extensions, Uri, workspace } from 'vscode'
-import { Duration, activateExtension, enableExtensions, getDefaultDLC, getRcodeCount, getWorkspaceUri, installExtension, log, oeVersion, sleep, FileUtils, getSourceCount } from './testCommon'
+import { Duration, enableExtensions, getDefaultDLC, getRcodeCount, getWorkspaceUri, log, oeVersion, sleep, getSourceCount } from './testCommon'
 import { getContentFromFilesystem } from 'parse/TestParserCommon'
 import * as glob from 'glob'
 import { dirname } from 'path'
@@ -12,15 +12,53 @@ interface IRuntime {
 	default?: boolean
 }
 
+interface IAblExtProjectStatus {
+	name: string
+	initialized: boolean
+	workers: number
+	sourceTasks: number
+	rcodeTasks: number
+}
+
+interface IAblExtStatus {
+	projects: IAblExtProjectStatus[]
+}
+
+interface IAblExtExports {
+	getProjectInfo: (projectUri: Uri) => Promise<unknown>
+	getFileInfo: (uri: Uri) => Promise<unknown>
+	getSchema: (projectUri: Uri) => Promise<unknown>
+	status: () => Promise<IAblExtStatus>
+	restartLanguageServer: () => Promise<void>
+}
+
+let ablExtExports: IAblExtExports | undefined = undefined
+
+async function activateExtension () {
+	const extname = 'riversidesoftware.openedge-abl-lsp'
+	log.info('activating ' + extname + ' extension...')
+	const ext = extensions.getExtension(extname)
+	if (!ext) {
+		throw new Error('cannot activate extension, not installed: ' + extname)
+	}
+
+	if (!ext.isActive) {
+		await ext.activate().then(() => {
+			log.info('activated ' + extname + ' extension!')
+		}, (e: unknown) => { throw e })
+	}
+	if (extname === 'riversidesoftware.openedge-abl-lsp') {
+		await waitForLangServerReady()
+	}
+	return ext.isActive
+}
+
 export async function enableOpenedgeAblExtension (runtimes?: IRuntime[], rcodeCount?: number) {
 	const extname = 'riversidesoftware.openedge-abl-lsp'
 	ablunitLogUri = await commands.executeCommand('_ablunit.getLogUri')
 
-	if (!extensions.getExtension(extname)) {
-		await installExtension(extname)
-	}
 	if (!extensions.getExtension(extname)?.isActive) {
-		await activateExtension(extname)
+		await activateExtension()
 	}
 	await setRuntimes(runtimes)
 		.then(() => waitForRcode(rcodeCount))
@@ -41,8 +79,8 @@ async function waitForRcode (expectedCount?: number) {
 
 		if (lastRcodeCount != rcodeCount) {
 			rcodeDuration = new Duration('rcodeDuration')
-		} else if (rcodeCount > 0 && rcodeDuration.elapsed() > 3000) {
-			log.warn('no new rcode generated for 3 seconds, assume we are done compiling')
+		} else if (rcodeCount > 0 && rcodeDuration.elapsed() > 5000) {
+			log.warn('no new rcode generated for 5 seconds, assume we are done compiling')
 			return rcodeCount
 		}
 
@@ -60,28 +98,28 @@ async function waitForRcode (expectedCount?: number) {
 	return rcodeCount
 }
 
-export function restartLangServer (rcodeCount = 0, isRetry = false): PromiseLike<number> {
-	log.info('restarting lang server with command abl.restart.langserv')
-	return commands.executeCommand('abl.restart.langserv').then(() => {
-		return sleep(250)
-	}).then(() => {
-		log.info('command abl.restart.langserv command completed successfully')
-		return waitForLangServerReady()
-	}).then(() => {
-		return waitForRcode(rcodeCount)
-	}).then((r) => {
-		log.info('rcodecount=' + r)
-		return r
-	}, (e: unknown) => {
-		log.error('abl.restart.langserv command failed! e=' + e)
-		if (isRetry) {
-			log.error('abl.restart.langserv command failed second attempt! e=' + e)
-			throw new Error('abl.restart.langserv command failed second attempt! e=' + e)
-		} else {
-			log.error('abl.restart.langserv command failed first attempt! e=' + e)
-			return restartLangServer(rcodeCount, true)
+function setAblExports () {
+	if (!ablExtExports) {
+		const ablExt = extensions.getExtension('riversidesoftware.openedge-abl-lsp')
+		if (!ablExt) {
+			throw new Error('extension not installed: riversidesoftware.openedge-abl-lsp')
 		}
-	})
+		ablExtExports = ablExt.exports as IAblExtExports
+	}
+	if (typeof ablExtExports.restartLanguageServer !== 'function') {
+		throw new Error('ablExtExports.restartLanguageServer is not a function!!! typeof=' + typeof ablExtExports.restartLanguageServer)
+	}
+}
+
+export async function restartLangServer (rcodeCount = 0): Promise<number> {
+	setAblExports()
+
+	const status = await ablExtExports!.status()
+	log.info('status=' + JSON.stringify(status))
+
+	return await ablExtExports!.restartLanguageServer()
+		.then(() => waitForLangServerReady())
+		.then(() => waitForRcode(rcodeCount))
 }
 
 export async function rebuildAblProject (waitForRcodeCount = 0) {
@@ -149,145 +187,17 @@ export async function rebuildAblProject (waitForRcodeCount = 0) {
 		rcodeCount = getRcodeCount()
 		log.info('rcodeCount=' + rcodeCount)
 	}
-	const status = await dumpLangServStatus()
-	if (status.projectStatus?.[0] && (status.projectStatus[0].rcodeQueue ?? -1) > 0) {
-		await sleep(100, 'rcode queue is ' + status.projectStatus[0].rcodeQueue)
+
+	setAblExports()
+	const status = await ablExtExports!.status()
+	for (const project of status.projects) {
+		if (project.rcodeTasks > 0 || project.sourceTasks > 0) {
+			await sleep(100, 'rcode queue is ' + project.rcodeTasks + ', source queue is ' + project.sourceTasks)
+		}
 	}
 	rcodeCount = getRcodeCount()
 	log.info('rcodeCount=' + rcodeCount)
 	return rcodeCount
-}
-
-interface ILangServStatus {
-	numOeInstalls?: number			// Number of OE installs: 1
-	installVersion?: string			// Install 12.8 : C:\Progress\OpenEdge-12.8
-	installPath?: string
-	// No registered CABL license
-	uppercaseKeywords?: boolean 	// Uppercase keywords: false
-	buildMode?: string				// Build mode: FULL_BUILD
-	showIncludes?: boolean			// Show include files in outline: false
-	showIncludeContent?: boolean		// Show content of include files in outline: false
-	filesInMem?: number				// Text files in memory: 0 -- Parse units: 0
-	parseUnits?: number
-	numProjects?: number			// Number of projects: 1
-	projectStatus?: [{				// Project proj0 0 -- Status
-		name: string
-		version: string
-		rootDir?: string			//  -> Root directory: d:\ablunit-test-runner\test_projects\proj0
-		numThreads?: number			//  -> Number of threads: 1 -- Active ABL sessions: 1 -- LS Workers: 1
-		activeAblSessions?: number
-		lsWorkers?: number
-		sourceQueue?: number		//  -> SourceCode queue size: 0
-		rcodeQueue?: number			//  -> RCode queue size: 5
-		deployQueue?: number		//  -> Deployment queue size: 0
-	}?]
-}
-
-async function dumpLangServStatus () {
-	const startingLine = (await getLogContents()).length
-	await commands.executeCommand('abl.dumpLangServStatus')
-		.then(() => {
-			return sleep(100, 'pause after command abl.dumpLangServStatus')
-		}, (e: unknown) => {
-			log.error('e=' + e)
-			throw e
-		})
-
-	let lines = await getLogContents()
-	// log.info('lines=' + JSON.stringify(lines, null, 4))
-
-	const duration = new Duration('dumpLangServStatus')
-	while (lines.length == startingLine && duration.elapsed() < 3000) {
-		await sleep(100)
-		lines = await getLogContents()
-	}
-	if (lines.length == startingLine) {
-		throw new Error('No new lines in log after command abl.dumpLangServStatus (lines.length=' + lines.length + ')')
-	}
-
-	let langServStatus: ILangServStatus = {}
-
-	for (let i=startingLine; i<lines.length; i++) {
-		const parts = /^\[([^\]]*)\] \[([A-Z]*)\] (\[[^\]]\]*)? ?(.*)$/.exec(lines[i])
-		if (parts && parts.length >= 3) {
-			// const timestamp = parts[1]
-			// const logLevel = parts[2]
-			// const projectName = parts[3]
-			const message = parts[4]
-
-			// log.info('message = "' + message + '"')
-			// log.info('parts=' + JSON.stringify(parts))
-			if (message == '******** LANGUAGE SERVER STATUS ********') {
-				langServStatus = {}
-			} else if (message.startsWith('Number of OE installs:')) {
-				// Number of OE installs: 1
-				langServStatus.numOeInstalls = message.split(' ').pop() as unknown as number
-			} else if (message.startsWith('Install ')) {
-				// Install 12.8 : C:\Progress\OpenEdge-12.8
-				const parts = /Install ([^ ]*) : (.*)/.exec(message)
-				if (parts && parts.length >= 3) {
-					langServStatus.installVersion = parts[1]
-					langServStatus.installPath = parts[2]
-				}
-			// } else if (message == 'No registered CABL license') {
-			} else if (message.startsWith('Uppercase keywords: ')) {
-				// Uppercase keywords: false
-				langServStatus.uppercaseKeywords = message.split(' ').pop() == 'true'
-			} else if (message.startsWith('Build mode: ')) {
-				// Build mode: FULL_BUILD
-				langServStatus.buildMode = message.split(' ').pop()
-			} else if (message.startsWith('Show include files in outline: ')) {
-				// Show include files in outline: false
-				langServStatus.showIncludes = message.split(' ').pop() == 'true'
-			} else if (message.startsWith('Show content of include files in outline: ')) {
-				// Show content of include files in outline: false
-				langServStatus.showIncludeContent = message.split(' ').pop() == 'true'
-			} else if (message.startsWith('Text files in memory: ')) {
-				// Text files in memory: 0 -- Parse units: 0
-				const parts = /Text files in memory: ([^ ]*) -- Parse units: (.*)/.exec(message)
-				if (parts && parts.length >= 3) {
-					langServStatus.filesInMem = parts[1] as unknown as number
-					langServStatus.parseUnits = parts[2] as unknown as number
-				}
-			} else if (message.startsWith('Number of projects: ')) {
-				// Number of projects: 1
-				langServStatus.numProjects = message.split(' ').pop() as unknown as number
-			} else if (message.startsWith('Project ')) {
-				const parts = /Project ([^ ]*) ([^ ]*) -- Status/.exec(message)
-				if (parts && parts.length >= 3) {
-					langServStatus.projectStatus = langServStatus.projectStatus ?? []
-
-					langServStatus.projectStatus.push({
-						name: parts[1],
-						version: parts[2],
-					})
-				}
-			} else if (message.startsWith('-> ')) {
-				const idx = (langServStatus.projectStatus?.length ?? 0) - 1
-				if (idx <= 0 && langServStatus.projectStatus?.[idx]) {
-					if (message.startsWith('-> Root directory: ')) {
-						langServStatus.projectStatus[idx].rootDir = message.split(' ').pop()
-					} else if (message.startsWith('-> Number of threads: ')) {
-						// -> Number of threads: 1 -- Active ABL sessions: 1 -- LS Workers: 1
-						const parts = /-> Number of threads: ([^ ]*) -- Active ABL sessions: ([^ ]*) -- LS Workers: (.*)/.exec(message)
-						if (parts && parts.length >= 4) {
-							langServStatus.projectStatus[idx].numThreads = parts[1] as unknown as number
-							langServStatus.projectStatus[idx].activeAblSessions = parts[2] as unknown as number
-							langServStatus.projectStatus[idx].lsWorkers = parts[3] as unknown as number
-						}
-					} else if (message.startsWith('-> SourceCode queue size: ')) {
-						langServStatus.projectStatus[idx].sourceQueue = message.split(' ').pop() as unknown as number
-					} else if (message.startsWith('-> RCode queue size: ')) {
-						langServStatus.projectStatus[idx].rcodeQueue = message.split(' ').pop() as unknown as number
-					} else if (message.startsWith('-> Deployment queue size: ' + 0)) {
-						langServStatus.projectStatus[idx].deployQueue = message.split(' ').pop() as unknown as number
-					}
-				}
-			}
-		}
-	}
-	log.info('langServStatus=' + JSON.stringify(langServStatus))
-	return langServStatus
 }
 
 async function getLogContents () {
@@ -312,142 +222,36 @@ async function getLogContents () {
 		})
 }
 
-export async function waitForLangServerReady () {
+async function waitForLangServerReady () {
 	const maxWait = 15 // seconds
-	const waitTime = new Duration()
-	let langServerReady = false
-	let langServerError = false
-	let stillCompiling = true
-	let compileSuccess = 0
-	let compileFailed = 0
-	let lastLogLength = 0
+	setAblExports()
 
-	while (!langServerReady || stillCompiling) {
-		const lines = await getLogContents()
-		if (!lines) {
+	const waitTime = new Duration()
+	let status = await ablExtExports!.status()
+	while (waitTime.elapsed() < maxWait * 1000) {
+		if (!status?.projects || status.projects.length === 0) {
+			log.info('language server not ready yet...' +  waitTime)
 			continue
 		}
 
-		if (lastLogLength > lines.length) {
-			log.warn('log file for openedge-abl-lsp extension is smaller!  was length=' + lastLogLength + '; now length=' + lines.length)
-			lastLogLength = 0 // nosonar
-			return false
-		}
-
-		let startAtLine = 0
-		if (lastLogLength != -1 && lastLogLength <= lines.length) {
-			startAtLine = lastLogLength
-		}
-
-		stillCompiling = false
-		for (let i=startAtLine; i<lines.length; i++) {
-
-			// log.info('lines[' + i + '] = "' + lines[i] + '"')
-			// regex matching lines like "[<timestamp>] [<logLevel>] [<projectName] <message>"
-			const parts = /^\[([^\]]*)\] \[([A-Z]*)\] (\[[^\]]*\]*)? ?(.*)$/.exec(lines[i])
-
-			if (parts && parts.length >= 4 && parts[3]) {
-				// log.info('parts=' + JSON.stringify(parts, null, 4))
-				if (parts[4] == 'Project shutdown completed' || parts[4] == 'Start OE client process') {
-					langServerReady = false
-					langServerError = false
-				} else if (parts[4] == 'Builder is already started' || parts[4].startsWith('OpenEdge worker started')) {
-					langServerReady = true
-					langServerError = false
-				} else if (parts[4].startsWith('### OE Client #0 ended with exit code')) {
-					langServerReady = false
-					langServerError = true
-				} else if (parts[4].startsWith('Compilation ')) {
-					// langServerReady = false
-					stillCompiling = true
-					if (parts[4].startsWith('Compilation successful: ')) {
-						compileSuccess++
-					} else if (parts[4].startsWith('Compilation failed: ')) {
-						compileFailed++
-					}
-				}
+		let isReady = true
+		for (const project of status.projects) {
+			if (!project.initialized || project.rcodeTasks !== 0 || project.sourceTasks !== 0) {
+				isReady = false
 			}
 		}
-		lastLogLength = lines.length
-
-		if (langServerReady) {
-			const langServStatus = await dumpLangServStatus()
-			if (!langServStatus.projectStatus?.[0] || (langServStatus.projectStatus?.[0]?.rcodeQueue ?? 1) > 0) {
-				stillCompiling = true
-			}
+		if (isReady) {
+			log.info('Language server is ready!')
+			return
 		}
 
-		if (!stillCompiling && (langServerError || langServerReady)) {
-			log.info('langServerReady=' + langServerReady + '; langServerError=' + langServerError)
-			break
-		}
-
-		log.debug('lastLine=' + lines[lines.length - 1])
-		log.info('language server not ready yet...' +  waitTime +
-			'\n\tlangServerReady=' + langServerReady +
-			', langServerError=' + langServerError +
-			', compileSuccess=' + compileSuccess +
-			', compileFailed=' + compileFailed)
-		await sleep(200, null)
-
-		if (waitTime.elapsed() > maxWait * 1000) {
-			throw new Error('timeout waiting for language server to be ready! (waitTime=' + waitTime + ')')
-		}
+		await sleep(250)
+			.then(() => ablExtExports!.status())
+			.then((response) => {
+				status = response
+			})
 	}
-
-	if (langServerError) {
-		log.error('lang server has an error! (waitTime=' + waitTime + ')')
-
-		const clientLogUri = FileUtils.toUri('.builder/clientlog0.log')
-		if (!FileUtils.doesFileExist(clientLogUri)) {
-			log.warn('client log file does not exist: ' + clientLogUri.fsPath)
-		} else {
-			const clientlogLines = FileUtils.readLinesFromFileSync(clientLogUri)
-			if (clientlogLines.length == 0) {
-				log.warn('client log file is empty: ' + clientLogUri.fsPath)
-			} else {
-				// log.info('---------- ' + clientLogUri.fsPath + '-----------')
-				// for (let i=0; i<clientlogLines.length; i++) {
-				// 	log.info(i + ': ' + clientlogLines[i])
-				// }
-				// log.info('---------- ---------- ----------')
-			}
-		}
-
-		const stdoutUri = FileUtils.toUri('.builder/stdout0.log')
-		if (!FileUtils.doesFileExist(stdoutUri)) {
-			log.warn('stdout file does not exist: ' + stdoutUri.fsPath)
-		} else {
-			const stdoutLines = FileUtils.readLinesFromFileSync(stdoutUri)
-			if (stdoutLines.length == 0) {
-				log.warn('stdout file is empty: ' + stdoutUri.fsPath)
-			} else {
-				// log.info('---------- ' + stdoutUri.fsPath + '-----------')
-				// for (let i=0; i<stdoutLines.length; i++) {
-				// 	log.info(i + ': ' + stdoutLines[i])
-				// }
-				// log.info('---------- ---------- ----------')
-			}
-		}
-		throw new Error('lang server failed to start! (waitTime=' + waitTime + ')')
-	}
-
-	// if (log.getLogLevel() < LogLevel.Debug) {
-	// 	const lines = await getLogContents()
-	// 	log.info('---------- openedge-abl extension log ----------')
-	// 	for (let i=0; i<lines.length; i++) {
-	// 		log.info(i + ': ' + lines[i])
-	// 	}
-	// 	log.info('---------- ---------- ----------')
-	// }
-
-	if (langServerReady) {
-		log.info('lang server is ready! (waitTime='  + waitTime + ')')
-		return true
-	}
-
-	log.error('lang server is not ready! (waitTime='  + waitTime + ')')
-	throw new Error('lang server is not ready! (waitTime='  + waitTime + ')')
+	throw new Error('language server is not ready!  status=' + JSON.stringify(status))
 }
 
 export function setRuntimes (runtimes?: IRuntime[]) {
@@ -474,21 +278,15 @@ export function setRuntimes (runtimes?: IRuntime[]) {
 	if (JSON.stringify(current) === JSON.stringify(runtimes)) {
 		log.info('runtmes are already set ' + duration)
 		return Promise.resolve(true)
-		// return restartLangServer()
 	}
 
-	// log.info('setting workspace configuration abl.configuration.defaultRuntime=' + oeVersion())
 	const r =  conf.update('configuration.defaultRuntime', oeVersion(), true)
+		.then(() => conf.update('configuration.runtimes', runtimes, true))
 		.then(() => {
-			// log.info('workspace.getConfiguration("abl").update("configuration.runtimes") - START')
-			return conf.update('configuration.runtimes', runtimes, true)
-		})
-		.then(() => {
-			// log.info('workspace.getConfiguration("abl").update(configuration.runtime) - END')
+			log.info('restarting lang server after setRuntimes')
 			return restartLangServer()
 		})
 		.then(() => {
-			// log.info('restartLangServer complete ' + duration)
 			return true
 		}, (e: unknown) => {
 			if (e instanceof Error) {
@@ -496,6 +294,5 @@ export function setRuntimes (runtimes?: IRuntime[]) {
 			}
 			throw new Error('setRuntimes failed! e=' + e)
 		})
-	// log.info('return r=' + JSON.stringify(r))
 	return r
 }
