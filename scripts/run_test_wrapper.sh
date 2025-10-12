@@ -236,5 +236,5 @@ process_exit_code () {
 initialize "$@"
 dbus_config
 run_tests
-scripts/sonar_test_results_merge.sh
+# scripts/sonar_test_results_merge.sh
 process_exit_code
