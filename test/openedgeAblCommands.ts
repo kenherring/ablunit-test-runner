@@ -38,17 +38,11 @@ async function activateExtension () {
 	const extname = 'riversidesoftware.openedge-abl-lsp'
 	log.info('activating ' + extname + ' extension...')
 	const ext = extensions.getExtension(extname)
-	// if (!ext) {
-	// 	await installExtension(extname)
-	// 	ext = extensions.getExtension(extname)
-	// }
 	if (!ext) {
 		throw new Error('cannot activate extension, not installed: ' + extname)
 	}
-	log.info('active? ' + ext.isActive)
 
 	if (!ext.isActive) {
-		log.info('ext.activate')
 		await ext.activate().then(() => {
 			log.info('activated ' + extname + ' extension!')
 		}, (e: unknown) => { throw e })
@@ -56,7 +50,6 @@ async function activateExtension () {
 	if (extname === 'riversidesoftware.openedge-abl-lsp') {
 		await waitForLangServerReady()
 	}
-	log.info('isActive=' + ext.isActive)
 	return ext.isActive
 }
 
@@ -64,9 +57,6 @@ export async function enableOpenedgeAblExtension (runtimes?: IRuntime[], rcodeCo
 	const extname = 'riversidesoftware.openedge-abl-lsp'
 	ablunitLogUri = await commands.executeCommand('_ablunit.getLogUri')
 
-	// if (!extensions.getExtension(extname)) {
-	// 	await installExtension(extname)
-	// }
 	if (!extensions.getExtension(extname)?.isActive) {
 		await activateExtension()
 	}
@@ -122,20 +112,19 @@ function setAblExports () {
 }
 
 export async function restartLangServer (rcodeCount = 0): Promise<number> {
-	log.info('-----> START restartLangServer')
-
 	setAblExports()
 
-	await ablExtExports!.status()
-		.then((status) => JSON.stringify('status=' + JSON.stringify(status, null, 4)))
+	// await ablExtExports!.status()
+	// 	.then((status) => JSON.stringify('status=' + JSON.stringify(status, null, 4)))
 
 	return await ablExtExports!.restartLanguageServer()
 		.then(() => waitForLangServerReady())
-		.then(() => ablExtExports!.status())
-		.then((status: unknown) => {
-			log.info('ablExtExports.status()=' + JSON.stringify(status, null, 4))
-			return waitForRcode(rcodeCount)
-		})
+		.then(() => waitForRcode(rcodeCount))
+		// .then(() => ablExtExports!.status())
+		// .then((status: unknown) => {
+		// 	log.info('ablExtExports.status()=' + JSON.stringify(status, null, 4))
+		// 	return waitForRcode(rcodeCount)
+		// })
 }
 
 export async function rebuildAblProject (waitForRcodeCount = 0) {
@@ -367,27 +356,19 @@ async function getLogContents () {
 }
 
 async function waitForLangServerReady () {
-	log.info('----> START waitForLangServerReady')
 	const maxWait = 15 // seconds
-
-
 	setAblExports()
 
 	const waitTime = new Duration()
 	let status = await ablExtExports!.status()
-
 	while (waitTime.elapsed() < maxWait * 1000) {
 		if (!status?.projects || status.projects.length === 0) {
-			log.warn('status=' + JSON.stringify(status, null, 4))
 			log.info('language server not ready yet...' +  waitTime)
 			continue
 		}
 
-		log.info('status.projects.length=' + status.projects.length)
-
 		let isReady = true
 		for (const project of status.projects) {
-			log.info('project=' + JSON.stringify(project))
 			if (!project.initialized || project.rcodeTasks !== 0 || project.sourceTasks !== 0) {
 				isReady = false
 			}
@@ -401,7 +382,6 @@ async function waitForLangServerReady () {
 			.then(() => ablExtExports!.status())
 			.then((response) => {
 				status = response
-				log.info('status=' + JSON.stringify(status, null, 4))
 			})
 	}
 	throw new Error('language server is not ready!  status=' + JSON.stringify(status))
@@ -433,7 +413,6 @@ export function setRuntimes (runtimes?: IRuntime[]) {
 		return Promise.resolve(true)
 	}
 
-	log.info('-----> START setRuntimes')
 	const r =  conf.update('configuration.defaultRuntime', oeVersion(), true)
 		.then(() => conf.update('configuration.runtimes', runtimes, true))
 		.then(() => restartLangServer())

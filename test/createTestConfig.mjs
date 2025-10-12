@@ -279,7 +279,6 @@ function getTests () {
 		for (const p of projects) {
 			tests.push(getTestConfig('suites', p))
 		}
-		// tests[0].installExtensions = [ 'riversidesoftware.openedge-abl-lsp' ]
 		return tests
 	}
 

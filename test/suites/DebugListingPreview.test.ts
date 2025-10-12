@@ -80,18 +80,14 @@ test('debugLines.8 - Debug Listing Preview with include', () => {
 
 	return commands.executeCommand('workbench.action.closeAllEditors')
 		.then(() => sleep(100))
-		.then(() => sleep(100))
 		.then(() => commands.executeCommand('vscode.open', sourceUri))
 		.then(() => sleep(100))
-		.then(() => sleep(100))
 		.then(() => commands.executeCommand('ablunit.showDebugListingPreview'))
-		.then(() => sleep(100))
 		.then(() => sleep(100))
 		.then(() => {
 			assert.equal(window.activeTextEditor?.document.uri.fsPath, sourceUri.fsPath, 'activeTextEditor')
 			return commands.executeCommand('workbench.action.focusNextGroup')
 		})
-		.then(() => sleep(100))
 		.then(() => sleep(100))
 		.then(() => {
 			// log.info('activeTextEditor after open debugUri: ' + window.activeTextEditor?.document.uri.fsPath)
@@ -104,7 +100,6 @@ test('debugLines.8 - Debug Listing Preview with include', () => {
 			debugEditor!.selection = new Selection(42, 0, 42, 0)
 			return sleep(100)
 		})
-		.then(() => sleep(100))
 		.then(() => sleep(100))
 		.then(() => {
 			const debugEditor = window.visibleTextEditors.filter(e => e.document.uri.scheme == 'debugListing')
@@ -130,12 +125,9 @@ test('debugLines.9 - Debug Listing Preview selection across files', async () => 
 
 	await commands.executeCommand('workbench.action.closeAllEditors')
 		.then(() => sleep(100))
-		.then(() => sleep(100))
 		.then(() => commands.executeCommand('vscode.open', sourceUri))
 		.then(() => sleep(100))
-		.then(() => sleep(100))
 		.then(() => commands.executeCommand('ablunit.showDebugListingPreview'))
-		.then(() => sleep(100))
 		.then(() => sleep(100))
 		.then(() => {
 			assert.equal(window.activeTextEditor?.document.uri.fsPath, sourceUri.fsPath, 'activeTextEditor')
@@ -144,7 +136,6 @@ test('debugLines.9 - Debug Listing Preview selection across files', async () => 
 			debugEditor!.selection = new Selection(40, 0, 30, 0)
 			return sleep(25)
 		})
-		.then(() => sleep(100))
 		.then(() => sleep(100))
 		.then(() => {
 			const debugEditor = window.visibleTextEditors.find(e => e.document.uri.scheme == 'debugListing')
@@ -173,19 +164,16 @@ test('debugLines.10 - Debug Listing Preview selection across files', () => {
 
 	return commands.executeCommand('workbench.action.closeAllEditors')
 		.then(() => sleep(100))
-		.then(() => sleep(100))
 		.then(() => {
 			assert.equal(window.visibleTextEditors.length, 0, 'should be no visible editors before opening sourceUri')
 			return commands.executeCommand('vscode.open', sourceUri)
 		})
-		.then(() => sleep(100))
 		.then(() => sleep(100))
 		.then(() => {
 			assert.equal(window.visibleTextEditors.length, 1, 'after vscode.open')
 			assert.equal(window.activeTextEditor?.document.uri.fsPath, sourceUri.fsPath, 'activeTextEditor')
 			return commands.executeCommand('ablunit.showDebugListingPreview')
 		})
-		.then(() => sleep(100))
 		.then(() => sleep(100))
 		.then(() => {
 			assert.equal(window.activeTextEditor?.document.uri.fsPath, sourceUri.fsPath, 'activeTextEditor')
@@ -196,16 +184,12 @@ test('debugLines.10 - Debug Listing Preview selection across files', () => {
 			return sleep(100)
 		})
 		.then(() => sleep(100))
-		.then(() => sleep(100))
 		.then(() => {
 			const debugEditor = window.visibleTextEditors.find(e => e.document.uri.scheme == 'debugListing')
 			assert.selection(debugEditor?.selection, [30, 0, 40, 0], debugEditor?.document.uri)
 
 			const includeEditor = window.visibleTextEditors.filter(e => e.document.uri.fsPath != debugEditor?.document.uri.fsPath)
 			assert.equal(includeEditor.length, 1, 'should be only one source editor open')
-			for (const editor of window.visibleTextEditors) {
-				log.info('visibleTextEditor: ' + editor.document.uri.fsPath)
-			}
 			assert.equal(includeEditor[0].document.uri.fsPath, includeUri.fsPath, 'include editor should be the only other visible editor')
 			assert.selection(includeEditor[0].selection, [0, 0, 6, 0])
 			return

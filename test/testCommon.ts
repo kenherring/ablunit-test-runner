@@ -194,37 +194,6 @@ export function setFilesExcludePattern () {
 	})
 }
 
-// TODO - remove me
-// export function installExtension (extname = 'riversidesoftware.openedge-abl-lsp'): PromiseLike<boolean> {
-// 	log.info('start extname=' + extname + ', process.args=' + process.argv.join(' '))
-// 	if (extensions.getExtension(extname)) {
-// 		log.info('extension ' + extname + ' is already installed')
-// 		return Promise.resolve(true)
-// 	}
-// 	if (extname == 'kherring.ablunit-test-runner') {
-// 		throw new Error('extension kherring.ablunit-test-runner should be loaded from the extensionDevelopmentPath')
-// 	}
-// 	if (extname === 'riversidesoftware.openedge-abl-lsp' && ! enableExtensions()) {
-// 		throw new Error('extensions disabed, openedge-abl-lsp cannot be installed')
-// 	}
-
-
-// 	log.info('installing ' + extname + ' extension...')
-// 	const installCommand = 'workbench.extensions.installExtension'
-// 	return commands.executeCommand(installCommand, extname)
-// 		.then(() => {
-// 			log.info('get extension \'' + extname + '\'...')
-// 			const ext = extensions.getExtension(extname)
-// 			if (!ext) {
-// 				throw new Error('get after install failed (undefined)')
-// 			}
-// 			return true
-// 		}, (e: unknown) => {
-// 			log.error('install failed e=' + e)
-// 			return false
-// 		})
-// }
-
 export function sleep (time = 10, msg?: string | null, divider = false) {
 	if (msg !== null) {
 		let status = 'sleeping for ' + time + 'ms'
