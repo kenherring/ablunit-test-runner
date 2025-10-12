@@ -114,6 +114,9 @@ function setAblExports () {
 export async function restartLangServer (rcodeCount = 0): Promise<number> {
 	setAblExports()
 
+	const status = await ablExtExports!.status()
+	log.info('status=' + JSON.stringify(status))
+
 	return await ablExtExports!.restartLanguageServer()
 		.then(() => waitForLangServerReady())
 		.then(() => waitForRcode(rcodeCount))
@@ -184,145 +187,16 @@ export async function rebuildAblProject (waitForRcodeCount = 0) {
 		rcodeCount = getRcodeCount()
 		log.info('rcodeCount=' + rcodeCount)
 	}
-	const status = await dumpLangServStatus()
-	if (status.projectStatus?.[0] && (status.projectStatus[0].rcodeQueue ?? -1) > 0) {
-		await sleep(100, 'rcode queue is ' + status.projectStatus[0].rcodeQueue)
+
+	const status = await ablExtExports!.status()
+	for (const project of status.projects) {
+		if (project.rcodeTasks > 0 || project.sourceTasks > 0) {
+			await sleep(100, 'rcode queue is ' + project.rcodeTasks + ', source queue is ' + project.sourceTasks)
+		}
 	}
 	rcodeCount = getRcodeCount()
 	log.info('rcodeCount=' + rcodeCount)
 	return rcodeCount
-}
-
-interface ILangServStatus {
-	numOeInstalls?: number			// Number of OE installs: 1
-	installVersion?: string			// Install 12.8 : C:\Progress\OpenEdge-12.8
-	installPath?: string
-	// No registered CABL license
-	uppercaseKeywords?: boolean 	// Uppercase keywords: false
-	buildMode?: string				// Build mode: FULL_BUILD
-	showIncludes?: boolean			// Show include files in outline: false
-	showIncludeContent?: boolean		// Show content of include files in outline: false
-	filesInMem?: number				// Text files in memory: 0 -- Parse units: 0
-	parseUnits?: number
-	numProjects?: number			// Number of projects: 1
-	projectStatus?: [{				// Project proj0 0 -- Status
-		name: string
-		version: string
-		rootDir?: string			//  -> Root directory: d:\ablunit-test-runner\test_projects\proj0
-		numThreads?: number			//  -> Number of threads: 1 -- Active ABL sessions: 1 -- LS Workers: 1
-		activeAblSessions?: number
-		lsWorkers?: number
-		sourceQueue?: number		//  -> SourceCode queue size: 0
-		rcodeQueue?: number			//  -> RCode queue size: 5
-		deployQueue?: number		//  -> Deployment queue size: 0
-	}?]
-}
-
-async function dumpLangServStatus () {
-	const startingLine = (await getLogContents()).length
-	await commands.executeCommand('abl.dumpLangServStatus')
-		.then(() => {
-			return sleep(100, 'pause after command abl.dumpLangServStatus')
-		}, (e: unknown) => {
-			log.error('e=' + e)
-			throw e
-		})
-
-	let lines = await getLogContents()
-	// log.info('lines=' + JSON.stringify(lines, null, 4))
-
-	const duration = new Duration('dumpLangServStatus')
-	while (lines.length == startingLine && duration.elapsed() < 3000) {
-		await sleep(100)
-		lines = await getLogContents()
-	}
-	if (lines.length == startingLine) {
-		throw new Error('No new lines in log after command abl.dumpLangServStatus (lines.length=' + lines.length + ')')
-	}
-
-	let langServStatus: ILangServStatus = {}
-
-	for (let i=startingLine; i<lines.length; i++) {
-		const parts = /^\[([^\]]*)\] \[([A-Z]*)\] (\[[^\]]\]*)? ?(.*)$/.exec(lines[i])
-		if (parts && parts.length >= 3) {
-			// const timestamp = parts[1]
-			// const logLevel = parts[2]
-			// const projectName = parts[3]
-			const message = parts[4]
-
-			// log.info('message = "' + message + '"')
-			// log.info('parts=' + JSON.stringify(parts))
-			if (message == '******** LANGUAGE SERVER STATUS ********') {
-				langServStatus = {}
-			} else if (message.startsWith('Number of OE installs:')) {
-				// Number of OE installs: 1
-				langServStatus.numOeInstalls = message.split(' ').pop() as unknown as number
-			} else if (message.startsWith('Install ')) {
-				// Install 12.8 : C:\Progress\OpenEdge-12.8
-				const parts = /Install ([^ ]*) : (.*)/.exec(message)
-				if (parts && parts.length >= 3) {
-					langServStatus.installVersion = parts[1]
-					langServStatus.installPath = parts[2]
-				}
-			// } else if (message == 'No registered CABL license') {
-			} else if (message.startsWith('Uppercase keywords: ')) {
-				// Uppercase keywords: false
-				langServStatus.uppercaseKeywords = message.split(' ').pop() == 'true'
-			} else if (message.startsWith('Build mode: ')) {
-				// Build mode: FULL_BUILD
-				langServStatus.buildMode = message.split(' ').pop()
-			} else if (message.startsWith('Show include files in outline: ')) {
-				// Show include files in outline: false
-				langServStatus.showIncludes = message.split(' ').pop() == 'true'
-			} else if (message.startsWith('Show content of include files in outline: ')) {
-				// Show content of include files in outline: false
-				langServStatus.showIncludeContent = message.split(' ').pop() == 'true'
-			} else if (message.startsWith('Text files in memory: ')) {
-				// Text files in memory: 0 -- Parse units: 0
-				const parts = /Text files in memory: ([^ ]*) -- Parse units: (.*)/.exec(message)
-				if (parts && parts.length >= 3) {
-					langServStatus.filesInMem = parts[1] as unknown as number
-					langServStatus.parseUnits = parts[2] as unknown as number
-				}
-			} else if (message.startsWith('Number of projects: ')) {
-				// Number of projects: 1
-				langServStatus.numProjects = message.split(' ').pop() as unknown as number
-			} else if (message.startsWith('Project ')) {
-				const parts = /Project ([^ ]*) ([^ ]*) -- Status/.exec(message)
-				if (parts && parts.length >= 3) {
-					langServStatus.projectStatus = langServStatus.projectStatus ?? []
-
-					langServStatus.projectStatus.push({
-						name: parts[1],
-						version: parts[2],
-					})
-				}
-			} else if (message.startsWith('-> ')) {
-				const idx = (langServStatus.projectStatus?.length ?? 0) - 1
-				if (idx <= 0 && langServStatus.projectStatus?.[idx]) {
-					if (message.startsWith('-> Root directory: ')) {
-						langServStatus.projectStatus[idx].rootDir = message.split(' ').pop()
-					} else if (message.startsWith('-> Number of threads: ')) {
-						// -> Number of threads: 1 -- Active ABL sessions: 1 -- LS Workers: 1
-						const parts = /-> Number of threads: ([^ ]*) -- Active ABL sessions: ([^ ]*) -- LS Workers: (.*)/.exec(message)
-						if (parts && parts.length >= 4) {
-							langServStatus.projectStatus[idx].numThreads = parts[1] as unknown as number
-							langServStatus.projectStatus[idx].activeAblSessions = parts[2] as unknown as number
-							langServStatus.projectStatus[idx].lsWorkers = parts[3] as unknown as number
-						}
-					} else if (message.startsWith('-> SourceCode queue size: ')) {
-						langServStatus.projectStatus[idx].sourceQueue = message.split(' ').pop() as unknown as number
-					} else if (message.startsWith('-> RCode queue size: ')) {
-						langServStatus.projectStatus[idx].rcodeQueue = message.split(' ').pop() as unknown as number
-					} else if (message.startsWith('-> Deployment queue size: ' + 0)) {
-						langServStatus.projectStatus[idx].deployQueue = message.split(' ').pop() as unknown as number
-					}
-				}
-			}
-		}
-	}
-	log.info('langServStatus=' + JSON.stringify(langServStatus))
-	return langServStatus
 }
 
 async function getLogContents () {
@@ -407,7 +281,10 @@ export function setRuntimes (runtimes?: IRuntime[]) {
 
 	const r =  conf.update('configuration.defaultRuntime', oeVersion(), true)
 		.then(() => conf.update('configuration.runtimes', runtimes, true))
-		.then(() => restartLangServer())
+		.then(() => {
+			log.info('restarting lang server after setRuntimes')
+			return restartLangServer()
+		})
 		.then(() => {
 			return true
 		}, (e: unknown) => {
