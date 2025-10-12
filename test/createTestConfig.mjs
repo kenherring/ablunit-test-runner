@@ -251,7 +251,7 @@ function getTestConfig (testDir, projName) {
 		useInstallation,
 		// useInstallation: { fromMachine: true },
 		// download: { reporter: ProgressReporter, timeout: ? }
-		installExtensions: [ 'riversidesoftware.openedge-abl-lsp' ],
+		// installExtensions: [ 'riversidesoftware.openedge-abl-lsp' ],
 		// installExtensions: [ 'riversidesoftware.openedge-abl-lsp@prerelease' ],
 
 		// --- IBaseTestConfiguration --- //
