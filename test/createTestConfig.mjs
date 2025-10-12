@@ -138,9 +138,9 @@ function getLaunchArgs (projName) {
 	// }
 	if (enableExtensions.includes(projName)) {
 		if (useOEAblPrerelease) {
-			args.push('--install-extension', 'RiversideSoftware.openedge-abl-lsp@prerelease')
+			args.push('--install-extension', 'riversidesoftware.openedge-abl-lsp@prerelease')
 		} else {
-			args.push('--install-extension', 'RiversideSoftware.openedge-abl-lsp')
+			args.push('--install-extension', 'riversidesoftware.openedge-abl-lsp')
 		}
 	}
 	// args.push('--pre-release')
@@ -251,8 +251,8 @@ function getTestConfig (testDir, projName) {
 		useInstallation,
 		// useInstallation: { fromMachine: true },
 		// download: { reporter: ProgressReporter, timeout: ? }
-		installExtensions: [ 'RiversideSoftware.openedge-abl-lsp' ],
-		// installExtensions: [ 'RiversideSoftware.openedge-abl-lsp@prerelease' ],
+		installExtensions: [ 'riversidesoftware.openedge-abl-lsp' ],
+		// installExtensions: [ 'riversidesoftware.openedge-abl-lsp@prerelease' ],
 
 		// --- IBaseTestConfiguration --- //
 		files: absolulteFile,

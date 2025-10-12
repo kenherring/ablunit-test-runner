@@ -20,7 +20,7 @@ initialize () {
 		CIRCLE_TAG=""
 	fi
 	if [ -z "${CIRCLECI:-}" ] && [ -n "${CI:-}" ]; then
-		CIRCLECI=${CI:-}
+		CIRCLECI=${CI:-false}
 	fi
 	export CIRCLECI CIRCLE_BRANCH CIRCLE_TAG
 
@@ -81,7 +81,7 @@ initialize () {
 	log_it "ABLUNIT_TEST_RUNNER_REPO_DIR=$ABLUNIT_TEST_RUNNER_REPO_DIR"
 	log_it "ABLUNIT_TEST_RUNNER_RUN_SCRIPT_FLAG=$ABLUNIT_TEST_RUNNER_RUN_SCRIPT_FLAG"
 	log_it "ABLUNIT_TEST_RUNNER_UNIT_TESTING=$ABLUNIT_TEST_RUNNER_UNIT_TESTING"
-	log_it "CIRCLECI=${CIRCLECI:-}"
+	log_it "CIRCLECI=$CIRCLECI"
 
 	update_oe_version
 }

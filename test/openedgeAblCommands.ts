@@ -13,7 +13,7 @@ interface IRuntime {
 }
 
 export async function enableOpenedgeAblExtension (runtimes?: IRuntime[], rcodeCount?: number) {
-	const extname = 'RiversideSoftware.openedge-abl-lsp'
+	const extname = 'riversidesoftware.openedge-abl-lsp'
 	ablunitLogUri = await commands.executeCommand('_ablunit.getLogUri')
 
 	if (!extensions.getExtension(extname)) {
@@ -26,7 +26,7 @@ export async function enableOpenedgeAblExtension (runtimes?: IRuntime[], rcodeCo
 		.then(() => waitForRcode(rcodeCount))
 		.then((rcodeCount) => {
 			log.info('rebuild complete! (rcodeCount=' + rcodeCount + ')')
-			log.info('RiversideSoftware.openedge-abl-lsp extension is enabled!')
+			log.info('riversidesoftware.openedge-abl-lsp extension is enabled!')
 			return true
 		}, (e: unknown) => { throw e })
 }
@@ -459,7 +459,7 @@ export function setRuntimes (runtimes?: IRuntime[]) {
 	runtimes = runtimes ?? [{name: oeVersion(), path: getDefaultDLC(), default: true}]
 
 	log.info('setting abl.configuration.runtimes=' + JSON.stringify(runtimes))
-	const ext = extensions.getExtension('RiversideSoftware.openedge-abl-lsp')
+	const ext = extensions.getExtension('riversidesoftware.openedge-abl-lsp')
 	if (!ext) {
 		throw new Error('extension not installed: riversidesoftware.openedge-abl-lsp')
 	}

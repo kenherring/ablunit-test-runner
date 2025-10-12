@@ -151,13 +151,13 @@ export async function activate (context: ExtensionContext) {
 		recentError = undefined
 
 		if (request.profile?.kind === TestRunProfileKind.Debug) {
-			const ext = extensions.getExtension('RiversideSoftware.openedge-abl-lsp')
+			const ext = extensions.getExtension('riversidesoftware.openedge-abl-lsp')
 			if (!ext) {
 				log.error('OpenEdge ABL extension not found')
 				void window.showErrorMessage('Debugging tests requires the "OpenEdge ABL" extension which cannot be found.', 'Show "OpenEdge ABL" in marketplace...', 'Cancel').then((selection) => { // NOSONAR - promise
 					log.info('selection=' + selection)
 					if (selection == 'Show "OpenEdge ABL" in marketplace...') {
-						void commands.executeCommand('extension.open', 'RiversideSoftware.openedge-abl-lsp') // NOSONAR - promise
+						void commands.executeCommand('extension.open', 'riversidesoftware.openedge-abl-lsp') // NOSONAR - promise
 					}
 				})
 				return

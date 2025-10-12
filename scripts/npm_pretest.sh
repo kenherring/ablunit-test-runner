@@ -14,8 +14,10 @@ initialize () {
 	log_it "DLC=$DLC"
 
 	PATH=$PATH:$DLC/ant/bin
-	CIRCLECI=${CIRCLECI:-false}
-	HOME=/github/home
+	CIRCLECI=${CI:-false}
+	if ${CIRCLECI:-}; then
+		HOME=/github/home
+	fi
 	NO_BUILD=${NO_BUILD:-false}
 	VERBOSE=${VERBOSE:-false}
 	WSL=false
@@ -101,7 +103,10 @@ copy_user_settings () {
 
 get_pct () {
 	log_it "pwd=$(pwd)"
-	[ -d ~/.ant/lib ] || mkdir -p ~/.ant/lib
+	if [ -d ~/.ant/lib ]; then
+		log_it "mkdir"
+		mkdir -p ~/.ant/lib
+	fi
 
 	if $WSL && [ ! -f ~/.ant/lib/PCT.jar ]; then
 		mkdir -p ~/.ant/lib
