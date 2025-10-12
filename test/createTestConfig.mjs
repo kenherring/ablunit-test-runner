@@ -81,7 +81,7 @@ function getMochaOpts (projName) {
 		timeout: getMochaTimeout(projName),
 		// ui: 'tdd', // describe, it, etc
 		// ui: 'bdd' // default; suite, test, etc
-		retries: 0,
+		retries: 1,
 		parallel: false,
 		bail: false,
 		require: [

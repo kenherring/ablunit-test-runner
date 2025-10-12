@@ -114,17 +114,9 @@ function setAblExports () {
 export async function restartLangServer (rcodeCount = 0): Promise<number> {
 	setAblExports()
 
-	// await ablExtExports!.status()
-	// 	.then((status) => JSON.stringify('status=' + JSON.stringify(status, null, 4)))
-
 	return await ablExtExports!.restartLanguageServer()
 		.then(() => waitForLangServerReady())
 		.then(() => waitForRcode(rcodeCount))
-		// .then(() => ablExtExports!.status())
-		// .then((status: unknown) => {
-		// 	log.info('ablExtExports.status()=' + JSON.stringify(status, null, 4))
-		// 	return waitForRcode(rcodeCount)
-		// })
 }
 
 export async function rebuildAblProject (waitForRcodeCount = 0) {
@@ -378,7 +370,7 @@ async function waitForLangServerReady () {
 			return
 		}
 
-		await sleep(500)
+		await sleep(250)
 			.then(() => ablExtExports!.status())
 			.then((response) => {
 				status = response
