@@ -21,7 +21,7 @@ import { ITestSuites } from 'parse/ResultsParser'
 import { IConfigurations, parseRunProfiles } from 'parse/TestProfileParser'
 import { DefaultRunProfile, IRunProfile as IRunProfileGlobal } from 'parse/config/RunProfile'
 import { RunStatus } from 'ABLUnitRun'
-import { enableOpenedgeAblExtension, rebuildAblProject, restartLangServer, setRuntimes, waitForLangServerReady } from './openedgeAblCommands'
+import { enableOpenedgeAblExtension, rebuildAblProject, restartLangServer, setRuntimes } from './openedgeAblCommands'
 import { globSync } from 'glob'
 import path from 'path'
 
@@ -237,27 +237,6 @@ export function sleep (time = 10, msg?: string | null, divider = false) {
 	}
 	return new Promise(resolve => setTimeout(resolve, time))
 		.then(() => { return })
-}
-
-export async function activateExtension (extname = 'riversidesoftware.openedge-abl-lsp') {
-	log.info('activating ' + extname + ' extension...')
-	const ext = extensions.getExtension(extname)
-	if (!ext) {
-		throw new Error('cannot activate extension, not installed: ' + extname)
-	}
-	log.info('active? ' + ext.isActive)
-
-	if (!ext.isActive) {
-		log.info('ext.activate')
-		await ext.activate().then(() => {
-			log.info('activated ' + extname + ' extension!')
-		}, (e: unknown) => { throw e })
-	}
-	if (extname === 'riversidesoftware.openedge-abl-lsp') {
-		await waitForLangServerReady()
-	}
-	log.info('isActive=' + ext.isActive)
-	return ext.isActive
 }
 
 async function waitForExtensionActive (extensionId = 'kherring.ablunit-test-runner') {

@@ -1,5 +1,5 @@
 import { commands, extensions, Uri, workspace } from 'vscode'
-import { Duration, activateExtension, enableExtensions, getDefaultDLC, getRcodeCount, getWorkspaceUri, installExtension, log, oeVersion, sleep, FileUtils, getSourceCount } from './testCommon'
+import { Duration, enableExtensions, getDefaultDLC, getRcodeCount, getWorkspaceUri, installExtension, log, oeVersion, sleep, getSourceCount } from './testCommon'
 import { getContentFromFilesystem } from 'parse/TestParserCommon'
 import * as glob from 'glob'
 import { dirname } from 'path'
@@ -31,6 +31,30 @@ interface IAblExtExports {
 	restartLanguageServer: () => Promise<void>
 }
 
+let ablExtExports: IAblExtExports | undefined = undefined
+
+async function activateExtension () {
+	const extname = 'riversidesoftware.openedge-abl-lsp'
+	log.info('activating ' + extname + ' extension...')
+	const ext = extensions.getExtension(extname)
+	if (!ext) {
+		throw new Error('cannot activate extension, not installed: ' + extname)
+	}
+	log.info('active? ' + ext.isActive)
+
+	if (!ext.isActive) {
+		log.info('ext.activate')
+		await ext.activate().then(() => {
+			log.info('activated ' + extname + ' extension!')
+		}, (e: unknown) => { throw e })
+	}
+	if (extname === 'riversidesoftware.openedge-abl-lsp') {
+		await waitForLangServerReady()
+	}
+	log.info('isActive=' + ext.isActive)
+	return ext.isActive
+}
+
 export async function enableOpenedgeAblExtension (runtimes?: IRuntime[], rcodeCount?: number) {
 	const extname = 'riversidesoftware.openedge-abl-lsp'
 	ablunitLogUri = await commands.executeCommand('_ablunit.getLogUri')
@@ -39,7 +63,7 @@ export async function enableOpenedgeAblExtension (runtimes?: IRuntime[], rcodeCo
 		await installExtension(extname)
 	}
 	if (!extensions.getExtension(extname)?.isActive) {
-		await activateExtension(extname)
+		await activateExtension()
 	}
 	await setRuntimes(runtimes)
 		.then(() => waitForRcode(rcodeCount))
@@ -60,8 +84,8 @@ async function waitForRcode (expectedCount?: number) {
 
 		if (lastRcodeCount != rcodeCount) {
 			rcodeDuration = new Duration('rcodeDuration')
-		} else if (rcodeCount > 0 && rcodeDuration.elapsed() > 3000) {
-			log.warn('no new rcode generated for 3 seconds, assume we are done compiling')
+		} else if (rcodeCount > 0 && rcodeDuration.elapsed() > 5000) {
+			log.warn('no new rcode generated for 5 seconds, assume we are done compiling')
 			return rcodeCount
 		}
 
@@ -80,26 +104,21 @@ async function waitForRcode (expectedCount?: number) {
 }
 
 export function restartLangServer (rcodeCount = 0): Promise<number> {
-	log.info('restartLanguageServer')
-	const ablExt = extensions.getExtension('riversidesoftware.openedge-abl-lsp')
-	if (!ablExt) throw new Error('extension not installed: riversidesoftware.openedge-abl-lsp')
-	if (ablExt.exports instanceof Object) {
-		log.info('object.keys.length=' + Object.keys(ablExt.exports as object).length)
-		if (Object.keys(ablExt.exports as object).length === 0) {
-			throw new Error('object.keys.length=0 for ablExt.exports')
+	log.info('-----> START')
+
+	if (!ablExtExports) {
+		const ablExt = extensions.getExtension('riversidesoftware.openedge-abl-lsp')
+		if (!ablExt) {
+			throw new Error('extension not installed: riversidesoftware.openedge-abl-lsp')
 		}
-		for (const key of Object.keys(ablExt.exports as object)) {
-			log.info('key=' + key)
-		}
-	} else {
-		log.info('typeof ablext=' + typeof ablExt)
+		ablExtExports = ablExt.exports as IAblExtExports
 	}
-	const ablExtExports = ablExt.exports as IAblExtExports
 	if (typeof ablExtExports.restartLanguageServer !== 'function') {
 		throw new Error('ablExtExports.restartLanguageServer is not a function!!! typeof=' + typeof ablExtExports.restartLanguageServer)
 	}
 	return ablExtExports.restartLanguageServer()
-		.then(() => ablExtExports.status())
+		.then(() => waitForLangServerReady())
+		.then(() => ablExtExports!.status())
 		.then((status: unknown) => {
 			log.info('ablExtExports.status()=' + JSON.stringify(status, null, 4))
 			return waitForRcode(rcodeCount)
@@ -334,142 +353,43 @@ async function getLogContents () {
 		})
 }
 
-export async function waitForLangServerReady () {
+async function waitForLangServerReady () {
+	log.info('----> START waitForLangServerReady')
 	const maxWait = 15 // seconds
-	const waitTime = new Duration()
-	let langServerReady = false
-	let langServerError = false
-	let stillCompiling = true
-	let compileSuccess = 0
-	let compileFailed = 0
-	let lastLogLength = 0
+	ablExtExports = ablExtExports ?? extensions.getExtension('riversidesoftware.openedge-abl-lsp')?.exports as IAblExtExports
 
-	while (!langServerReady || stillCompiling) {
-		const lines = await getLogContents()
-		if (!lines) {
+	const waitTime = new Duration()
+	let status = await ablExtExports.status()
+
+	while (waitTime.elapsed() < maxWait * 1000) {
+		if (!status?.projects || status.projects.length === 0) {
+			log.warn('status=' + JSON.stringify(status, null, 4))
+			log.info('language server not ready yet...' +  waitTime)
 			continue
 		}
 
-		if (lastLogLength > lines.length) {
-			log.warn('log file for openedge-abl-lsp extension is smaller!  was length=' + lastLogLength + '; now length=' + lines.length)
-			lastLogLength = 0 // nosonar
-			return false
-		}
+		log.info('status.projects.length=' + status.projects.length)
 
-		let startAtLine = 0
-		if (lastLogLength != -1 && lastLogLength <= lines.length) {
-			startAtLine = lastLogLength
-		}
-
-		stillCompiling = false
-		for (let i=startAtLine; i<lines.length; i++) {
-
-			// log.info('lines[' + i + '] = "' + lines[i] + '"')
-			// regex matching lines like "[<timestamp>] [<logLevel>] [<projectName] <message>"
-			const parts = /^\[([^\]]*)\] \[([A-Z]*)\] (\[[^\]]*\]*)? ?(.*)$/.exec(lines[i])
-
-			if (parts && parts.length >= 4 && parts[3]) {
-				// log.info('parts=' + JSON.stringify(parts, null, 4))
-				if (parts[4] == 'Project shutdown completed' || parts[4] == 'Start OE client process') {
-					langServerReady = false
-					langServerError = false
-				} else if (parts[4] == 'Builder is already started' || parts[4].startsWith('OpenEdge worker started')) {
-					langServerReady = true
-					langServerError = false
-				} else if (parts[4].startsWith('### OE Client #0 ended with exit code')) {
-					langServerReady = false
-					langServerError = true
-				} else if (parts[4].startsWith('Compilation ')) {
-					// langServerReady = false
-					stillCompiling = true
-					if (parts[4].startsWith('Compilation successful: ')) {
-						compileSuccess++
-					} else if (parts[4].startsWith('Compilation failed: ')) {
-						compileFailed++
-					}
-				}
+		let isReady = true
+		for (const project of status.projects) {
+			log.info('project=' + JSON.stringify(project))
+			if (!project.initialized || project.rcodeTasks !== 0 || project.sourceTasks !== 0) {
+				isReady = false
 			}
 		}
-		lastLogLength = lines.length
-
-		if (langServerReady) {
-			const langServStatus = await dumpLangServStatus()
-			if (!langServStatus.projectStatus?.[0] || (langServStatus.projectStatus?.[0]?.rcodeQueue ?? 1) > 0) {
-				stillCompiling = true
-			}
+		if (isReady) {
+			log.info('Language server is ready!')
+			return
 		}
 
-		if (!stillCompiling && (langServerError || langServerReady)) {
-			log.info('langServerReady=' + langServerReady + '; langServerError=' + langServerError)
-			break
-		}
-
-		log.debug('lastLine=' + lines[lines.length - 1])
-		log.info('language server not ready yet...' +  waitTime +
-			'\n\tlangServerReady=' + langServerReady +
-			', langServerError=' + langServerError +
-			', compileSuccess=' + compileSuccess +
-			', compileFailed=' + compileFailed)
-		await sleep(200, null)
-
-		if (waitTime.elapsed() > maxWait * 1000) {
-			throw new Error('timeout waiting for language server to be ready! (waitTime=' + waitTime + ')')
-		}
+		await sleep(500)
+			.then(() => ablExtExports!.status())
+			.then((response) => {
+				status = response
+				log.info('status=' + JSON.stringify(status, null, 4))
+			})
 	}
-
-	if (langServerError) {
-		log.error('lang server has an error! (waitTime=' + waitTime + ')')
-
-		const clientLogUri = FileUtils.toUri('.builder/clientlog0.log')
-		if (!FileUtils.doesFileExist(clientLogUri)) {
-			log.warn('client log file does not exist: ' + clientLogUri.fsPath)
-		} else {
-			const clientlogLines = FileUtils.readLinesFromFileSync(clientLogUri)
-			if (clientlogLines.length == 0) {
-				log.warn('client log file is empty: ' + clientLogUri.fsPath)
-			} else {
-				// log.info('---------- ' + clientLogUri.fsPath + '-----------')
-				// for (let i=0; i<clientlogLines.length; i++) {
-				// 	log.info(i + ': ' + clientlogLines[i])
-				// }
-				// log.info('---------- ---------- ----------')
-			}
-		}
-
-		const stdoutUri = FileUtils.toUri('.builder/stdout0.log')
-		if (!FileUtils.doesFileExist(stdoutUri)) {
-			log.warn('stdout file does not exist: ' + stdoutUri.fsPath)
-		} else {
-			const stdoutLines = FileUtils.readLinesFromFileSync(stdoutUri)
-			if (stdoutLines.length == 0) {
-				log.warn('stdout file is empty: ' + stdoutUri.fsPath)
-			} else {
-				// log.info('---------- ' + stdoutUri.fsPath + '-----------')
-				// for (let i=0; i<stdoutLines.length; i++) {
-				// 	log.info(i + ': ' + stdoutLines[i])
-				// }
-				// log.info('---------- ---------- ----------')
-			}
-		}
-		throw new Error('lang server failed to start! (waitTime=' + waitTime + ')')
-	}
-
-	// if (log.getLogLevel() < LogLevel.Debug) {
-	// 	const lines = await getLogContents()
-	// 	log.info('---------- openedge-abl extension log ----------')
-	// 	for (let i=0; i<lines.length; i++) {
-	// 		log.info(i + ': ' + lines[i])
-	// 	}
-	// 	log.info('---------- ---------- ----------')
-	// }
-
-	if (langServerReady) {
-		log.info('lang server is ready! (waitTime='  + waitTime + ')')
-		return true
-	}
-
-	log.error('lang server is not ready! (waitTime='  + waitTime + ')')
-	throw new Error('lang server is not ready! (waitTime='  + waitTime + ')')
+	throw new Error('language server is not ready!  status=' + JSON.stringify(status))
 }
 
 export function setRuntimes (runtimes?: IRuntime[]) {
