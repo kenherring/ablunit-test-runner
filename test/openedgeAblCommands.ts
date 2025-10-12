@@ -5,6 +5,7 @@ import * as glob from 'glob'
 import { dirname } from 'path'
 
 let ablunitLogUri = getWorkspaceUri()
+
 interface IRuntime {
 	name: string,
 	path: string,
@@ -103,7 +104,7 @@ async function waitForRcode (expectedCount?: number) {
 	return rcodeCount
 }
 
-export function restartLangServer (rcodeCount = 0): Promise<number> {
+export async function restartLangServer (rcodeCount = 0): Promise<number> {
 	log.info('-----> START')
 
 	if (!ablExtExports) {
@@ -116,7 +117,11 @@ export function restartLangServer (rcodeCount = 0): Promise<number> {
 	if (typeof ablExtExports.restartLanguageServer !== 'function') {
 		throw new Error('ablExtExports.restartLanguageServer is not a function!!! typeof=' + typeof ablExtExports.restartLanguageServer)
 	}
-	return ablExtExports.restartLanguageServer()
+
+	await ablExtExports.status()
+		.then((status) => JSON.stringify('status=' + JSON.stringify(status, null, 4)))
+
+	return await ablExtExports.restartLanguageServer()
 		.then(() => waitForLangServerReady())
 		.then(() => ablExtExports!.status())
 		.then((status: unknown) => {
@@ -418,6 +423,7 @@ export function setRuntimes (runtimes?: IRuntime[]) {
 		return Promise.resolve(true)
 	}
 
+	log.info('-----> START setRuntimes')
 	const r =  conf.update('configuration.defaultRuntime', oeVersion(), true)
 		.then(() => conf.update('configuration.runtimes', runtimes, true))
 		.then(() => restartLangServer())
