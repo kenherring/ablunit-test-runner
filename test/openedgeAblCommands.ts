@@ -188,6 +188,7 @@ export async function rebuildAblProject (waitForRcodeCount = 0) {
 		log.info('rcodeCount=' + rcodeCount)
 	}
 
+	setAblExports()
 	const status = await ablExtExports!.status()
 	for (const project of status.projects) {
 		if (project.rcodeTasks > 0 || project.sourceTasks > 0) {
