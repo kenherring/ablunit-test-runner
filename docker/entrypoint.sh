@@ -168,7 +168,7 @@ run_tests_base () {
 	log_it "pwd=$(pwd)"
 
 	set -eo pipefail ## matches the behavior of CircleCI
-	if ! ./.github/workflows/run_test_wrapper.sh; then
+	if ! ./scripts/run_test_wrapper.sh; then
 		log_it "run_tests failed"
 		$BASH_AFTER_ERROR && bash
 		exit 1

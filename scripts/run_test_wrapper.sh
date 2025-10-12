@@ -19,7 +19,7 @@ initialize () {
 		CIRCLE_BRANCH="$GITHUB_REF_NAME"
 		CIRCLE_TAG=""
 	fi
-	if [ -z "${CIRCLECI:-}" ] && [ -n "${CI:-}" ]; then
+	if [ -z "${CIRCLECI:-}" ]; then
 		CIRCLECI=${CI:-false}
 	fi
 	export CIRCLECI CIRCLE_BRANCH CIRCLE_TAG
