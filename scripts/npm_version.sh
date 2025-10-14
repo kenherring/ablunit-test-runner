@@ -46,8 +46,8 @@ initialize () {
 		exit 1
 	fi
 
-	if [ "$(git branch --show-current)" = "main" ]; then
-		echo "ERROR: cannot be on main branch to run $0"
+	if [ "$CIRCLE_BRANCH" = "main" ]; then
+		echo "ERROR: cannot be on main branch to run $0 (CIRCLE_BRANCH=$CIRCLE_BRANCH)"
 		exit 1
 	fi
 
