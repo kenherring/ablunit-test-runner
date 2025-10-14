@@ -24,6 +24,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          ref: ${{ github.ref_name }}
       - name: Run ShellCheck
         uses: ludeeus/action-shellcheck@2.0.0
         if: matrix.os == 'ubuntu-latest'
@@ -36,7 +37,8 @@ jobs:
       - run: ./scripts/package.sh
       - run: ./scripts/bump_version.sh
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
+          # GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   test:
     needs: build
@@ -61,6 +63,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          # ref: ${{ github.ref_name }}
       - run: ./scripts/run_test_wrapper.sh
       - run: ./scripts/sonar_test_results_merge.sh
       - name: SonarQube Scan
