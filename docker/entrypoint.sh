@@ -151,7 +151,7 @@ run_tests () {
 	npm run clean
 
 	if [ "$TEST_PROJECT" = "package" ]; then
-		.circleci/package.sh
+		./scripts/package.sh
 	elif [ "$TEST_PROJECT" = "base" ]; then
 		run_tests_base || E_CODE=$?
 		save_cache
@@ -206,7 +206,7 @@ analyze_results () {
 run_tests_dummy_ext () {
 	log_it "pwd=$(pwd)"
 
-	if ! .circleci/install_and_run.sh; then
+	if ! ./scripts/install_and_run.sh; then
 		log_it "run_tests failed"
 		$BASH_AFTER_ERROR && bash
 		exit 1
