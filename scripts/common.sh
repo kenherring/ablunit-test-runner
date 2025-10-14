@@ -1,6 +1,20 @@
 #!/bin/bash
 set -eou pipefail
 
+GITHUB_REF_TYPE="${GITHUB_REF_TYPE:-branch}"
+CIRCLECI=${CI:-false}
+if [ "$GITHUB_REF_TYPE" = "tag" ]; then
+	CIRCLE_BRANCH=
+	CIRCLE_TAG="$GITHUB_REF_NAME"
+else ## branch
+	if [ -z "${GITHUB_REF_NAME:-}" ]; then
+		GITHUB_REF_NAME=$(git rev-parse --abbrev-ref HEAD)
+	fi
+	CIRCLE_BRANCH="$GITHUB_REF_NAME"
+	CIRCLE_TAG=""
+fi
+export CIRCLECI CIRCLE_TAG CIRCLE_BRANCH
+
 log_it () {
 	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[1]}]" "$@"
 }

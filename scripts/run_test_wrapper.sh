@@ -6,24 +6,6 @@ set -eou pipefail
 initialize () {
 	log_it "whoami=$(whoami)"
 
-	GITHUB_REF_TYPE="${GITHUB_REF_TYPE:-branch}"
-	echo "GITHUB_REF_NAME=${GITHUB_REF_NAME:-}"
-	echo "GITHUB_REF_TYPE=${GITHUB_REF_TYPE:-}"
-	if [ "$GITHUB_REF_TYPE" = "tag" ]; then
-		CIRCLE_BRANCH=
-		CIRCLE_TAG="$GITHUB_REF_NAME"
-	else
-		if [ -z "${GITHUB_REF_NAME:-}" ]; then
-			GITHUB_REF_NAME=$(git rev-parse --abbrev-ref HEAD)
-		fi
-		CIRCLE_BRANCH="$GITHUB_REF_NAME"
-		CIRCLE_TAG=""
-	fi
-	if [ -z "${CIRCLECI:-}" ]; then
-		CIRCLECI=${CI:-false}
-	fi
-	export CIRCLECI CIRCLE_BRANCH CIRCLE_TAG
-
 	VERBOSE=${VERBOSE:-false}
 	DONT_PROMPT_WSL_INSTALL=No_Prompt_please
 	PRIMARY_OE_VERSION=${PRIMARY_OE_VERSION:-12.8.1}
