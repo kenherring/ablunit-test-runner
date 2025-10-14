@@ -35,7 +35,6 @@ initialize () {
 		fi
 	fi
 
-
 	PRERELEASE=false
     PACKAGE_VERSION=$(node -p "require('./package.json').version")
 	PREVIOUS_VERSION=$(grep -Eo '\[v?[0-9]+\.[0-9]+\.[0-9]+\]' CHANGELOG.md | cut -d[ -f2 | cut -d] -f1 | head -1)

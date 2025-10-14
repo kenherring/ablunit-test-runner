@@ -35,6 +35,8 @@ jobs:
           node-version-file: .nvmrc
       - run: ./scripts/package.sh
       - run: ./scripts/bump_version.sh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   test:
     needs: build
