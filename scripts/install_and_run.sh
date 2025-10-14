@@ -13,7 +13,7 @@ initialize() {
         CIRCLE_BRANCH="$(git branch --show-current)"
     fi
 
-    $CIRCLECI || .circleci/package.sh
+    $CIRCLECI || ./scripts/package.sh
 
     echo "vsix files packaged:"
     find . -name 'ablunit-test-runner-*.vsix'

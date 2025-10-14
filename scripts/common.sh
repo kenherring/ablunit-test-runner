@@ -1,6 +1,11 @@
 #!/bin/bash
 set -eou pipefail
 
+echo "GITHUB_REF_TYPE=${GITHUB_REF_TYPE:-}"
+echo "GITHUB_REF_NAME=${GITHUB_REF_NAME:-}"
+echo "GITHUB_REF=${GITHUB_REF}"
+env
+
 GITHUB_REF_TYPE="${GITHUB_REF_TYPE:-branch}"
 CIRCLECI=${CI:-false}
 if [ "$GITHUB_REF_TYPE" = "tag" ]; then

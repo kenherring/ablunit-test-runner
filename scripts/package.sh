@@ -82,7 +82,6 @@ run_lint () {
 
     jq '.' < "${ESLINT_FILE}.json.tmp" > "${ESLINT_FILE}.json"
     rm -f "${ESLINT_FILE}.json.tmp"
-    sed -i 's|/home/circleci/project/|/root/project/|g' "${ESLINT_FILE}.json"
 
     if [ ! -f "${ESLINT_FILE}.json" ]; then
         log_error "${ESLINT_FILE}.json not found"
