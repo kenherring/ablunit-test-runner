@@ -1,24 +1,29 @@
 #!/bin/bash
 set -eou pipefail
 
-echo "GITHUB_REF_TYPE=${GITHUB_REF_TYPE:-}"
-echo "GITHUB_REF_NAME=${GITHUB_REF_NAME:-}"
-echo "GITHUB_REF=${GITHUB_REF}"
-env
+common_init () {
+	echo "GITHUB_REF_TYPE=${GITHUB_REF_TYPE:-}"
+	echo "GITHUB_REF_NAME=${GITHUB_REF_NAME:-}"
+	echo "GITHUB_HEAD_REF=${GITHUB_HEAD_REF:-}"
+	echo "GITHUB_REF=${GITHUB_REF:-}"
 
-GITHUB_REF_TYPE="${GITHUB_REF_TYPE:-branch}"
-CIRCLECI=${CI:-false}
-if [ "$GITHUB_REF_TYPE" = "tag" ]; then
-	CIRCLE_BRANCH=
-	CIRCLE_TAG="$GITHUB_REF_NAME"
-else ## branch
-	if [ -z "${GITHUB_REF_NAME:-}" ]; then
-		GITHUB_REF_NAME=$(git rev-parse --abbrev-ref HEAD)
+ 	# GITHUB_EVENT_NAME=pull_request
+	GITHUB_REF_TYPE="${GITHUB_REF_TYPE:-branch}"
+	CIRCLECI=${GITHUB_ACTIONS:-false}
+	if [ "$GITHUB_REF_TYPE" = "tag" ]; then
+		CIRCLE_BRANCH=
+		CIRCLE_TAG="${GITHUB_REF_NAME:-}"
+	else ## branch
+		CIRCLE_BRANCH="${GITHUB_HEAD_REF:-}"
+		CIRCLE_TAG=
 	fi
-	CIRCLE_BRANCH="$GITHUB_REF_NAME"
-	CIRCLE_TAG=""
-fi
-export CIRCLECI CIRCLE_TAG CIRCLE_BRANCH
+
+	[ -z "${CIRCLE_TAG:-}" ] && [ -z "${CIRCLE_BRANCH:-}" ] && CIRCLE_TAG=$(git tag --points-at HEAD)
+	[ -z "${CIRCLE_TAG:-}" ] && [ -z "${CIRCLE_BRANCH:-}" ] && CIRCLE_TAG=$(git rev-parse --abbrev-ref HEAD)
+	[ -z "${CIRCLE_TAG:-}" ] && [ -z "${CIRCLE_BRANCH:-}" ] && CIRCLE_BRANCH=$(git branch --show-current)
+
+	export CIRCLECI CIRCLE_TAG CIRCLE_BRANCH
+}
 
 log_it () {
 	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[1]}]" "$@"
@@ -57,3 +62,5 @@ validate_version_updated() {
 		exit 1
 	fi
 }
+
+common_init
