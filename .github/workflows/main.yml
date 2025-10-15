@@ -71,6 +71,12 @@ jobs:
         uses: SonarSource/sonarqube-scan-action@v6.0.0
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      - uses: actions/upload-artifact@v4
+        # if: ${{ github.event-name != 'pull_request' && matrix.oe-version == '12.8.1' }}
+        if: ${{ matrix.oe-version == '12.8.1' }}
+        with:
+          name: package-artifact
+          path: ./ablunit-test-runner*.vsix
 
   # shellcheck:
   #   name: Shellcheck
@@ -79,3 +85,18 @@ jobs:
   #     - uses: actions/checkout@v4
   #     - name: Run ShellCheck
   #       uses: ludeeus/action-shellcheck@master
+
+  publish:
+    needs: [ 'test' ]
+    runs-on: ubuntu-latest
+    # if: ${{ github.event-name != 'pull_request' }}
+    steps:
+      # - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v5
+        with:
+          name: package-artifact
+      - name: Publish
+        if: github.ref_type == 'tag' && matrix.os == 'ubuntu-latest'
+        uses: ./.github/actions/publish/
+        with:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}

@@ -16,6 +16,7 @@ runs:
       env:
         GH_TOKEN: ${{ github.token }}
         VSCE_PAT: ${{ inputs.VSCE_PAT }}
+      ## TODO - validate tag matches package.json
       run: |
         if [ -z "${GITHUB_REF_NAME:-}" ]; then
           echo "ERROR: GITHUB_REF_NAME is not set..." >&2
@@ -26,4 +27,5 @@ runs:
           exit 1
         fi
         gh release upload "$GITHUB_REF_NAME" ablunit-test-runner-*.vsix
-        npm run deploy
+        ## TODO
+        # npm run deploy
