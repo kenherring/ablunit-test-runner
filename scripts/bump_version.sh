@@ -20,16 +20,14 @@ main () {
         return 0
     fi
 
-
-    env
-    exit 1
-
     if ${CIRCLECI:-}; then
         if ! git config --get user.email &>/dev/null; then
-            git config user.email "${ACTOR_EMAIL:-noreply@ablunit-test-runner.kenherring.com}"
+            LAST_COMMITTER_EMAIL=$(git log -1 --pretty='%ae')
+            git config user.email "${LAST_COMMITTER_EMAIL:-noreply@ablunit-test-runner.kenherring.com}"
         fi
         if ! git config --get user.name &>/dev/null; then
-            git config user.name "${ACTOR_NAME:-CI Workflow}"
+            LAST_COMMITTER_USER=$(git log -1 --pretty='%an')
+            git config user.name "${LAST_COMMITTER_USER:-CI Workflow}"
         fi
         git config push.autoSetupRemote true
     fi
