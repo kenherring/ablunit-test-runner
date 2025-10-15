@@ -91,7 +91,6 @@ jobs:
     runs-on: ubuntu-latest
     # if: ${{ github.event-name != 'pull_request' }}
     steps:
-      # - uses: actions/checkout@v4
       - uses: actions/download-artifact@v5
         with:
           name: package-artifact
