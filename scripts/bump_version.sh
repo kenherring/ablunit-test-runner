@@ -20,6 +20,16 @@ main () {
         return 0
     fi
 
+    if ${CIRCLECI:-}; then
+        if ! git config --get user.email &>/dev/null; then
+            git config user.email "noreply@ablunit-test-runner.kenherring.com"
+        fi
+        if ! git config --get user.name &>/dev/null; then
+            git config user.name "CI Workflow"
+        fi
+        git config push.autoSetupRemote true
+    fi
+
     bump_prerelease_version
 }
 
