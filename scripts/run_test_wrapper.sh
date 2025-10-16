@@ -17,24 +17,6 @@ initialize () {
 	ABLUNIT_TEST_RUNNER_UNIT_TESTING=true
 	HOME=/github/home
 
-	if ! command -v xq; then
-		# shellcheck disable=SC2016
-		log_it "adding ${HOME}/.local/bin to path"
-		PATH=$PATH:${HOME}/.local/bin
-		if ! command -v xq; then
-			log_it "adding /root/.local/bin to path"
-			PATH=$PATH:/root/.local/bin
-		fi
-		if ! command -v xq; then
-			log_it 'install xq (via yq)'
-			pipx install yq
-		fi
-		if ! command -v xq; then
-			log_error "xq command not found"
-			exit 1
-		fi
-	fi
-
 	if [ -n "${PROGRESS_CFG_BASE64:-}" ]; then
 		tr ' ' '\n' <<< "$PROGRESS_CFG_BASE64" | base64 --decode > /psc/dlc/progress.cfg
 	fi

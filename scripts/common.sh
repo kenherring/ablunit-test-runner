@@ -49,6 +49,27 @@ jq () {
 	fi
 }
 
+setup_xq () {
+	if command -v xq; then
+		return
+	fi
+
+	log_it "adding ${HOME}/.local/bin to path"
+	PATH=$PATH:${HOME}/.local/bin
+	if ! command -v xq; then
+		log_it "adding /root/.local/bin to path"
+		PATH=$PATH:/root/.local/bin
+	fi
+	if ! command -v xq; then
+		log_it 'install xq (via yq)'
+		pipx install yq
+	fi
+	if ! command -v xq; then
+		log_error "xq command not found"
+		exit 1
+	fi
+}
+
 validate_version_updated() {
 	log_it 'validating version matches throughout the project...' >&2
 	local PACKAGE_VERSION SONAR_PROJECT_VERSION CHANGELOG_VERSION
