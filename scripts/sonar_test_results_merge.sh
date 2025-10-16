@@ -13,7 +13,7 @@ initialize () {
         echo "Directory is empty"
     fi
 
-    install_xq
+    setup_xq
 }
 
 convert_and_merge_xml () {
