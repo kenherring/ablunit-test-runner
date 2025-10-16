@@ -35,7 +35,6 @@ initialize () {
 		fi
 	fi
 
-
 	PRERELEASE=false
     PACKAGE_VERSION=$(node -p "require('./package.json').version")
 	PREVIOUS_VERSION=$(grep -Eo '\[v?[0-9]+\.[0-9]+\.[0-9]+\]' CHANGELOG.md | cut -d[ -f2 | cut -d] -f1 | head -1)
@@ -47,8 +46,8 @@ initialize () {
 		exit 1
 	fi
 
-	if [ "$(git branch --show-current)" = "main" ]; then
-		echo "ERROR: cannot be on main branch to run $0"
+	if [ "$CIRCLE_BRANCH" = "main" ]; then
+		echo "ERROR: cannot be on main branch to run $0 (CIRCLE_BRANCH=$CIRCLE_BRANCH)"
 		exit 1
 	fi
 

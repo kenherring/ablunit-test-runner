@@ -12,6 +12,8 @@ initialize () {
     else
         echo "Directory is empty"
     fi
+
+    setup_xq
 }
 
 convert_and_merge_xml () {
