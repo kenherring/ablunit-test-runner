@@ -7,20 +7,9 @@ main_block () {
     log_it
     PRERELEASE=false
 
-    if ! ${CIRCLECI:-false}; then
-        ## local testing
-
-        [ -z "${CIRCLE_TAG:-}" ] && CIRCLE_TAG=$(git tag --points-at HEAD)
-        if [ -z "${CIRCLE_TAG:-}" ]; then
-            [ -z "${CIRCLE_BRANCH:-}" ] && CIRCLE_BRANCH=$(git branch --show-current)
-        fi
-    fi
-
     validate_tag
     publish_release
-    if [ -n "${CIRCLE_TAG:-}" ]; then
-        upload_to_github_release
-    fi
+    upload_to_github_release
 }
 
 validate_tag () {
@@ -45,6 +34,11 @@ validate_tag () {
 
     if [ ! -f "ablunit-test-runner-${PACKAGE_VERSION}.vsix" ]; then
         log_error "ablunit-test-runner-${PACKAGE_VERSION}.vsix not found"
+        exit 1
+    fi
+
+    if [[ ! "$CIRCLE_TAG" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+        log_error "Tag does not match 0.0.0 format"
         exit 1
     fi
 }

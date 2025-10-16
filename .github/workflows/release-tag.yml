@@ -1,0 +1,14 @@
+name: Release Tag Workflow
+
+on:
+  push:
+    tags:
+      - '*.*.*'
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - run: ./scripts/publish.sh
+        env:
+          GH_TOKEN: ${{ github.token }}
