@@ -6,6 +6,7 @@ set -eou pipefail
 main_block () {
     log_it
     PRERELEASE=false
+    PACKAGE_VERSION=$(jq -r '.version' package.json)
 
     if [ ! -f "ablunit-test-runner-${PACKAGE_VERSION}.vsix" ]; then
         npm ci
@@ -18,7 +19,6 @@ main_block () {
 
 validate_tag () {
     log_it
-    PACKAGE_VERSION=$(jq -r '.version' package.json)
     log_it "PACKAGE_VERSION=$PACKAGE_VERSION"
     PATCH_VERSION=${PACKAGE_VERSION##*.}
     log_it "PATCH_VERSION=$PATCH_VERSION"
