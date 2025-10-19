@@ -1,5 +1,6 @@
-# [1.3.73](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.3.73) - 2025-10-19 (pre-release)
+# [1.3.75](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.3.75) - 2025-10-19 (pre-release)
 
+* Update automatic prereleases in github actions (#415)
 * Update automatic prereleases in github actions (#414)
 * Add configuration options for disabling competion items (#413)
 * Set branch name in CI run for main branch (#412)
@@ -90,7 +91,7 @@
 * Bump mocha from 11.4.0 to 11.5.0 (#301)
 * Bump @types/node from 22.15.17 to 22.15.21 (#304)
 
-**Full Changelog**: [1.3.0...1.3.73](https://github.com/kenherring/ablunit-test-runner/compare/1.3.71...1.3.73)
+**Full Changelog**: [1.3.0...1.3.75](https://github.com/kenherring/ablunit-test-runner/compare/1.3.73...1.3.75)
 
 # [1.3.0](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.3.0) - 2025-05-21
 
