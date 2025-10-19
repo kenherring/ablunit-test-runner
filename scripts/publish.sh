@@ -7,7 +7,10 @@ main_block () {
     log_it
     PRERELEASE=false
 
-    npm ci
+    if [ ! -f "ablunit-test-runner-${PACKAGE_VERSION}.vsix" ]; then
+        npm ci
+        npm run build
+    fi
     validate_tag
     publish_release
     upload_to_github_release
