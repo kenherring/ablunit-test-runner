@@ -1,4 +1,5 @@
 #!/bin/bash
+set -x
 
 ## Automatically publish pre-release branches
 ## Creates a release in GitHub with the current version as a tag and
@@ -9,15 +10,12 @@
 main () {
     log_it
 
-    set -x
-
     if [ ! -f package.json ]; then
-        log_error "package.json not found"
+        log_error "package.json not found - is the repo checked out?"
         exit 1
     fi
 
     PACKAGE_VERSION=$(jq -r '.version' package.json)
-    log_it "PACKAGE_VERSION=$PACKAGE_VERSION"
     if git tag -l --sort=version:refname | grep -q "^$PACKAGE_VERSION$"; then
         log_error "tag exists for PACKAGE_VERSION=$PACKAGE_VERSION"
         exit 1
@@ -25,21 +23,15 @@ main () {
 
     PRERELEASE=false
     PATCH_VERSION=${PACKAGE_VERSION##*.}
-    log_it "PATCH_VERSION=$PATCH_VERSION"
     if [ "$((PATCH_VERSION % 2))" = "1" ]; then
         PRERELEASE=true
     fi
-    log_it "PRERELEASE=$PRERELEASE"
-
-
 
     git tag -l '[0-9].*' --sort=version:refname
     git tag -l '[0-9].*' --sort=version:refname | grep -E "^[0-9]+\.[0-9]+\.[0-9]*[0,2,4,6,8]$"
     git tag -l '[0-9].*' --sort=version:refname | grep -E "^[0-9]+\.[0-9]+\.[0-9]*[0,2,4,6,8]$" | tail -1
 
-
     LATEST_RELEASE_TAG=$(git tag -l '[0-9].*' --sort=version:refname | grep -E "^[0-9]+\.[0-9]+\.[0-9]*[0,2,4,6,8]$" | tail -1)
-    log_it "LATEST_RELEASE_TAG=$LATEST_RELEASE_TAG"
 
     ARGS=()
     if $PRERELEASE; then
@@ -55,7 +47,6 @@ main () {
     ARGS+=(--generate-notes)
     ARGS+=(--notes-start-tag "$LATEST_RELEASE_TAG")
     ARGS+=(--target $(git rev-parse HEAD))
-    log_it "ARGS=${ARGS[*]}"
 
     gh release create "$PACKAGE_VERSION" "${ARGS[@]}"
     log_it "release created for PACKAGE_VERSION=$PACKAGE_VERSION"
