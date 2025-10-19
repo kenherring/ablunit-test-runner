@@ -14,7 +14,7 @@ common_init () {
 		CIRCLE_BRANCH=
 		CIRCLE_TAG="${GITHUB_REF_NAME:-}"
 	else ## branch
-		CIRCLE_BRANCH="${GITHUB_HEAD_REF:-}"
+		CIRCLE_BRANCH="${GITHUB_HEAD_REF:-$GITHUB_REF_NAME}"
 		CIRCLE_TAG=
 	fi
 
