@@ -5,4 +5,11 @@
 		"**/.{builder,pct}/**",
 		"src/timeout.p",
 	],
+
+    // "ablunit.suggest.enabled": false,
+    // "ablunit.suggest.annotations": false,
+    // "ablunit.suggest.events": false,
+    // "ablunit.suggest.references": false,
+    // "ablunit.suggest.methods": false,
+	"window.border": "blue",
 }
