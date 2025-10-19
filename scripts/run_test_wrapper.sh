@@ -6,24 +6,6 @@ set -eou pipefail
 initialize () {
 	log_it "whoami=$(whoami)"
 
-	GITHUB_REF_TYPE="${GITHUB_REF_TYPE:-branch}"
-	echo "GITHUB_REF_NAME=${GITHUB_REF_NAME:-}"
-	echo "GITHUB_REF_TYPE=${GITHUB_REF_TYPE:-}"
-	if [ "$GITHUB_REF_TYPE" = "tag" ]; then
-		CIRCLE_BRANCH=
-		CIRCLE_TAG="$GITHUB_REF_NAME"
-	else
-		if [ -z "${GITHUB_REF_NAME:-}" ]; then
-			GITHUB_REF_NAME=$(git rev-parse --abbrev-ref HEAD)
-		fi
-		CIRCLE_BRANCH="$GITHUB_REF_NAME"
-		CIRCLE_TAG=""
-	fi
-	if [ -z "${CIRCLECI:-}" ] && [ -n "${CI:-}" ]; then
-		CIRCLECI=${CI:-}
-	fi
-	export CIRCLECI CIRCLE_BRANCH CIRCLE_TAG
-
 	VERBOSE=${VERBOSE:-false}
 	DONT_PROMPT_WSL_INSTALL=No_Prompt_please
 	PRIMARY_OE_VERSION=${PRIMARY_OE_VERSION:-12.8.1}
@@ -34,24 +16,6 @@ initialize () {
 	ABLUNIT_TEST_RUNNER_RUN_SCRIPT_FLAG=${ABLUNIT_TEST_RUNNER_RUN_SCRIPT_FLAG:-true}
 	ABLUNIT_TEST_RUNNER_UNIT_TESTING=true
 	HOME=/github/home
-
-	if ! command -v xq; then
-		# shellcheck disable=SC2016
-		log_it "adding ${HOME}/.local/bin to path"
-		PATH=$PATH:${HOME}/.local/bin
-		if ! command -v xq; then
-			log_it "adding /root/.local/bin to path"
-			PATH=$PATH:/root/.local/bin
-		fi
-		if ! command -v xq; then
-			log_it 'install xq (via yq)'
-			pipx install yq
-		fi
-		if ! command -v xq; then
-			log_error "xq command not found"
-			exit 1
-		fi
-	fi
 
 	if [ -n "${PROGRESS_CFG_BASE64:-}" ]; then
 		tr ' ' '\n' <<< "$PROGRESS_CFG_BASE64" | base64 --decode > /psc/dlc/progress.cfg
@@ -81,7 +45,7 @@ initialize () {
 	log_it "ABLUNIT_TEST_RUNNER_REPO_DIR=$ABLUNIT_TEST_RUNNER_REPO_DIR"
 	log_it "ABLUNIT_TEST_RUNNER_RUN_SCRIPT_FLAG=$ABLUNIT_TEST_RUNNER_RUN_SCRIPT_FLAG"
 	log_it "ABLUNIT_TEST_RUNNER_UNIT_TESTING=$ABLUNIT_TEST_RUNNER_UNIT_TESTING"
-	log_it "CIRCLECI=${CIRCLECI:-}"
+	log_it "CIRCLECI=$CIRCLECI"
 
 	update_oe_version
 }
@@ -236,5 +200,4 @@ process_exit_code () {
 initialize "$@"
 dbus_config
 run_tests
-scripts/sonar_test_results_merge.sh
 process_exit_code

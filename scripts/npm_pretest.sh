@@ -103,7 +103,10 @@ copy_user_settings () {
 
 get_pct () {
 	log_it "pwd=$(pwd)"
-	[ -d ~/.ant/lib ] || mkdir -p ~/.ant/lib
+	if [ ! -d ~/.ant/lib ]; then
+		log_it "mkdir"
+		mkdir -p ~/.ant/lib
+	fi
 
 	if $WSL && [ ! -f ~/.ant/lib/PCT.jar ]; then
 		mkdir -p ~/.ant/lib
@@ -172,7 +175,7 @@ package () {
 	fi
 	log_it "CIRCLECI=$CIRCLECI PACKAGE_OUT_OF_DATE=$PACKAGE_OUT_OF_DATE VSIX_COUNT=$VSIX_COUNT"
 	if $PACKAGE_OUT_OF_DATE || $CIRCLECI || [ "$VSIX_COUNT" = "0" ]; then
-		.circleci/package.sh
+		./scripts/package.sh
 	fi
 
 	VSIX_COUNT=$(find . -maxdepth 1 -name "*.vsix" 2>/dev/null | wc -l)

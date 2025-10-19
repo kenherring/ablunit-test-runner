@@ -1,8 +1,6 @@
 #!/bin/bash
 set -eou pipefail
 
-# . scripts/common.sh
-
 log_it () {
 	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[1]}]" "$@"
 }
@@ -25,19 +23,17 @@ initialize () {
 	BASH_AFTER=false
 	BASH_AFTER_ERROR=false
 	CACHE_BASE="$HOME"/cache
-	CIRCLECI=${CIRCLECI:-false}
 	npm_config_cache=$CACHE_BASE/node_modules_cache
 	PROJECT_DIR="$HOME"/project
 	REPO_VOLUME="$HOME"/ablunit-test-runner
-	GIT_BRANCH=$(cd "$REPO_VOLUME" && git branch --show-current)
+	[ -z "${CIRCLE_BRANCH:-}" ] && CIRCLE_BRANCH=${GIT_BRANCH:-}
 	STAGED_ONLY=${STAGED_ONLY:-true}
 	${CREATE_PACKAGE:-false} && TEST_PROJECT=package
 
 	export ABLUNIT_TEST_RUNNER_DBUS_NUM \
 		ABLUNIT_TEST_RUNNER_OE_VERSION \
 		ABLUNIT_TEST_RUNNER_PROJECT_NAME \
-		ABLUNIT_TEST_RUNNER_RUN_SCRIPT_FLAG \
-		CIRCLECI
+		ABLUNIT_TEST_RUNNER_RUN_SCRIPT_FLAG
 
 	git config --global init.defaultBranch main
 	mkdir -p "$npm_config_cache" "$PROJECT_DIR"
@@ -89,8 +85,8 @@ initialize_repo () {
 		log_it "checking out tag $CIRCLE_TAG"
 		git checkout "$CIRCLE_TAG"
 	else
-		log_it "checking out branch $GIT_BRANCH"
-		git checkout "$GIT_BRANCH"
+		log_it "checking out branch $CIRCLE_BRANCH"
+		git checkout "$CIRCLE_BRANCH"
 	fi
 	copy_files_from_volume
 }
@@ -151,7 +147,7 @@ run_tests () {
 	npm run clean
 
 	if [ "$TEST_PROJECT" = "package" ]; then
-		.circleci/package.sh
+		./scripts/package.sh
 	elif [ "$TEST_PROJECT" = "base" ]; then
 		run_tests_base || E_CODE=$?
 		save_cache
@@ -168,7 +164,7 @@ run_tests_base () {
 	log_it "pwd=$(pwd)"
 
 	set -eo pipefail ## matches the behavior of CircleCI
-	if ! ./.github/workflows/run_test_wrapper.sh; then
+	if ! ./scripts/run_test_wrapper.sh; then
 		log_it "run_tests failed"
 		$BASH_AFTER_ERROR && bash
 		exit 1
@@ -206,7 +202,7 @@ analyze_results () {
 run_tests_dummy_ext () {
 	log_it "pwd=$(pwd)"
 
-	if ! .circleci/install_and_run.sh; then
+	if ! ./scripts/install_and_run.sh; then
 		log_it "run_tests failed"
 		$BASH_AFTER_ERROR && bash
 		exit 1

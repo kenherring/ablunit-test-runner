@@ -8,12 +8,6 @@ initialize () {
     ABLUNIT_TEST_RUNNER_VSCODE_VERSION=${ABLUNIT_TEST_RUNNER_VSCODE_VERSION:-stable}
     PRERELEASE=${PRERELEASE:-true}
 
-    if ! ${CIRCLECI:-false}; then
-        ## local testing
-        [ -z "${CIRCLE_TAG:-}" ] && [ -z "${CIRCLE_BRANCH:-}" ] && CIRCLE_TAG=$(git tag --points-at HEAD)
-        [ -z "${CIRCLE_TAG:-}" ] && [ -z "${CIRCLE_BRANCH:-}" ] && CIRCLE_BRANCH=$(git branch --show-current)
-    fi
-
     if  [ -z "${CIRCLE_TAG:-}" ] && [ -z "${CIRCLE_BRANCH:-}" ]; then
         log_error "both CIRCLE_TAG and CIRCLE_BRANCH are set. exiting... (CIRCLE_TAG=$CIRCLE_TAG, CIRCLE_BRANCH=$CIRCLE_BRANCH)"
         exit 1
@@ -82,7 +76,6 @@ run_lint () {
 
     jq '.' < "${ESLINT_FILE}.json.tmp" > "${ESLINT_FILE}.json"
     rm -f "${ESLINT_FILE}.json.tmp"
-    sed -i 's|/home/circleci/project/|/root/project/|g' "${ESLINT_FILE}.json"
 
     if [ ! -f "${ESLINT_FILE}.json" ]; then
         log_error "${ESLINT_FILE}.json not found"

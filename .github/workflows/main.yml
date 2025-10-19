@@ -17,13 +17,14 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          ref: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref_name }}
       - name: Run ShellCheck
         uses: ludeeus/action-shellcheck@2.0.0
         if: matrix.os == 'ubuntu-latest'
@@ -33,8 +34,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
-      - run: npm ci
-      - run: npm run build
+      - run: ./scripts/package.sh
+      - run: ./scripts/bump_version.sh
+        env:
+          GH_TOKEN: ${{ github.token }}
 
   test:
     needs: build
@@ -55,21 +58,32 @@ jobs:
       PRIMARY_OE_VERSION: 12.8.1
       PROGRESS_CFG_BASE64: ${{ secrets.PROGRESS_CFG_BASE64 }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - run: ./.github/workflows/run_test_wrapper.sh
+      - run: ./scripts/run_test_wrapper.sh
+      - run: ./scripts/sonar_test_results_merge.sh
       - name: SonarQube Scan
         if: ${{ matrix.oe-version == '12.8.1' && github.actor != 'dependabot[bot]' }}
         uses: SonarSource/sonarqube-scan-action@v6.0.0
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      - uses: actions/upload-artifact@v4
+        if: ${{ matrix.oe-version == '12.8.1' }}
+        with:
+          name: package-artifact
+          path: ./ablunit-test-runner*.vsix
 
-  # shellcheck:
-  #   name: Shellcheck
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #     - name: Run ShellCheck
-  #       uses: ludeeus/action-shellcheck@master
+  create-release:
+    needs: [ 'test' ]
+    runs-on: ubuntu-latest
+    if: ${{ github.ref == 'refs/heads/main' }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-tags: true
+      - uses: actions/download-artifact@v5
+        with:
+          name: package-artifact
+      - name: create release
+        run: ./scripts/create-release.sh
