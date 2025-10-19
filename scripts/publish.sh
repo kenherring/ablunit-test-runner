@@ -58,9 +58,6 @@ publish_release () {
 upload_to_github_release () {
     log_it
 
-    curl -L https://github.com/cli/cli/releases/download/v2.65.0/gh_2.65.0_linux_amd64.deb -o /tmp/gh_2.65.0_linux_amd64.deb
-    sudo dpkg -i /tmp/gh_2.65.0_linux_amd64.deb
-
     if [ -z "${VSCE_PAT:-}" ]; then
         log_error "VSCE_PAT is not set.  Cannot upload to GitHub release"
         return 1
