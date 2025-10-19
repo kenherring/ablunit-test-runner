@@ -13,3 +13,4 @@ jobs:
       - run: ./scripts/publish.sh
         env:
           GH_TOKEN: ${{ github.token }}
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
