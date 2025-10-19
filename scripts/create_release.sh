@@ -28,7 +28,7 @@ main () {
     fi
 
     if [ -z "$(git tag)" ]; then
-        git pull --tags
+        git fetch --tags
     fi
     git tag -l '[0-9].*'
     git tag -l '[0-9].*' --sort=version:refname
