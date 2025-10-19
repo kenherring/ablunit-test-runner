@@ -156,6 +156,31 @@
 					],
 					"markdownDescription": "Glob patterns to exclude test files",
 					"scope": "machine-overridable"
+				},
+				"ablunit.suggest.enabled": {
+					"type": "boolean",
+					"default": true,
+					"markdownDescription": "Enable/disable autocomplete suggestions."
+				},
+				"ablunit.suggest.annotations": {
+					"type": "boolean",
+					"default": true,
+					"markdownDescription": "Enable/disable autocomplete suggestions for ABLUnit annotations."
+				},
+				"ablunit.suggest.events": {
+					"type": "boolean",
+					"default": true,
+					"markdownDescription": "Enable/disable autocomplete suggestions for `[block | routine]-level` statements."
+				},
+				"ablunit.suggest.methods": {
+					"type": "boolean",
+					"default": true,
+					"markdownDescription": "Enable/disable autocomplete suggestions for methods."
+				},
+				"ablunit.suggest.references": {
+					"type": "boolean",
+					"default": true,
+					"markdownDescription": "Enable/disable autocomplete suggestions for references."
 				}
 			}
 		},

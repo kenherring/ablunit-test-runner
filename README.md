@@ -55,6 +55,11 @@ The following table gives a brief description of the available settings via the 
 | `ablunit.debug.hide` | `false` | Hide debug tests run button in the test explorer view. Extension must be reloaded for this setting to take effect. |
 | `ablunit.files.include` | `[ "**/*.{cls,p}" ]` | Glob pattern array matching test files. |
 | `ablunit.files.exclude` | `[ "**/.builder/**", "**/.pct/** ]` | Glob pattern array to exclude test files. |
+| `ablunit.suggest.enabled` | `true` | Enable/disable all autocomplete suggestions provided by the extension. |
+| `ablunit.suggest.annotations` | `true` | Enable/disable autocomplete suggestions for ABLUnit annotations. |
+| `ablunit.suggest.events` | `true` | Enable/disable autocomplete suggestions for `[block \| routine]-level` statements. |
+| `ablunit.suggest.methods` | `true` | Enable/disable autocomplete suggestions for methods. |
+| `ablunit.suggest.references` | `true` | Enable/disable autocomplete suggestions for references. |
 | `ablunit.test.classlabel` | `classname` | The label format for test classes. Example for class with path `com/example/myClass.cls`:<ul><li>class-type-name example: `com.example.myClass`</li><li>filename example: `myClass.cls`</li></ul> |
 
 ### 🧪 Test Profile Configuration

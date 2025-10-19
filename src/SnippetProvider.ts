@@ -1,4 +1,14 @@
 import { CancellationToken, CompletionContext, CompletionItem, CompletionItemKind, CompletionItemProvider, CompletionItemTag, CompletionList, InlineCompletionContext, InlineCompletionItem, InlineCompletionItemProvider, InlineCompletionList, MarkdownString, Position, ProviderResult, Range, SnippetString, TextDocument, TextEdit } from 'vscode'
+import { workspace } from '../test/testCommon'
+import { log } from 'ChannelLogger'
+
+interface ISnippetOptions {
+	enabled: boolean
+	annotations: boolean
+	events: boolean
+	references: boolean
+	methods: boolean
+}
 
 export class SnippetProvider implements CompletionItemProvider {
 	private readonly globalItems: CompletionItem[] = []
@@ -384,6 +394,7 @@ export class SnippetProvider implements CompletionItemProvider {
 				i.insertText = new SnippetString(i.label + '.')
 				i.label = i.label.replace(/\$\{\d:input\}/g, 'param')
 			}
+			i.kind = CompletionItemKind.Method
 			i.documentation = new MarkdownString(
 				'* [OpenEdge.Core.Assert](' + this.urlForVersion('https://docs.progress.com/bundle/openedge-abl-api-reference-128/page/OpenEdge.Core.Assert.html') + ')'
 			)
@@ -391,8 +402,37 @@ export class SnippetProvider implements CompletionItemProvider {
 		return items
 	}
 
+	private itemEnabled (item: CompletionItem, opts: ISnippetOptions) {
+		const label = typeof item.label === 'string' ? item.label : item.label.label
+		if (label.startsWith('@')) {
+			return opts.annotations
+		}
+		switch (item.kind) {
+			case CompletionItemKind.Event:
+				return opts.events
+			case CompletionItemKind.Reference:
+				return opts.references
+			case CompletionItemKind.Method:
+				return opts.methods
+			default:
+				return true
+		}
+	}
+
 	provideCompletionItems (document: TextDocument, pos: Position, _token: CancellationToken, _context: CompletionContext): ProviderResult<CompletionItem[] | CompletionList> {
 		if (document.languageId != 'abl') {
+			return undefined
+		}
+
+
+		const snippetOptions: ISnippetOptions = workspace.getConfiguration('ablunit').get('suggest') ?? {
+			enabled: true,
+			annotations: true,
+			events: true,
+			references: true,
+			methods: true,
+		}
+		if (!snippetOptions.enabled) {
 			return undefined
 		}
 
@@ -410,6 +450,22 @@ export class SnippetProvider implements CompletionItemProvider {
 		} else if (document.uri.fsPath.endsWith('.p')) {
 			ret.items.push(...this.procedureItems)
 		}
+		ret.items = ret.items.filter(item => this.itemEnabled(item, snippetOptions))
+
+		const documentText = document.getText().toLowerCase()
+		if (documentText.includes('block-level ') || documentText.includes('routine-level ')) {
+			ret.items = ret.items.filter(item => {
+				const label = typeof item.label == 'string' ? item.label : item.label.label
+				return !label.startsWith('block-level on error') && !label.startsWith('routine-level on error')
+			})
+		}
+		if (documentText.includes('using openedge.core.assert')) {
+			ret.items = ret.items.filter(item => {
+				const label = typeof item.label == 'string' ? item.label : item.label.label
+				return label != 'using OpenEdge.Core.Assert.'
+			})
+		}
+
 		for (const r of ret.items) {
 			r.range = undefined
 			if (r.label == 'using OpenEdge.Core.Assert') {

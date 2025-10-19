@@ -86,4 +86,4 @@ jobs:
         with:
           name: package-artifact
       - name: create release
-        run: ./scripts/create-release.sh
+        run: ./scripts/create_release.sh
