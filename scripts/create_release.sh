@@ -1,5 +1,4 @@
 #!/bin/bash
-set -x
 
 ## Automatically publish pre-release branches
 ## Creates a release in GitHub with the current version as a tag and
@@ -30,11 +29,6 @@ main () {
     if [ -z "$(git tag)" ]; then
         git fetch --tags
     fi
-    git tag -l '[0-9].*'
-    git tag -l '[0-9].*' --sort=version:refname
-    git tag -l '[0-9].*' --sort=version:refname | grep -E "^[0-9]+\.[0-9]+\.[0-9]*[0,2,4,6,8]$"
-    git tag -l '[0-9].*' --sort=version:refname | grep -E "^[0-9]+\.[0-9]+\.[0-9]*[0,2,4,6,8]$" | tail -1
-
     LATEST_RELEASE_TAG=$(git tag -l '[0-9].*' --sort=version:refname | grep -E "^[0-9]+\.[0-9]+\.[0-9]*[0,2,4,6,8]$" | tail -1)
 
     ARGS=()
