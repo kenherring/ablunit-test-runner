@@ -25,7 +25,7 @@ main () {
     log_it "PRERELEASE=$PRERELEASE"
 
     LATEST_RELEASE_TAG=$(git tag -l '[0-9].*' --sort=version:refname | grep -E "^[0-9]+\.[0-9]+\.[0-9]*[0,2,4,6,8]$" | tail -1)
-    log_it "LATEST_RELEASE_TAG"
+    log_it "LATEST_RELEASE_TAG=$LATEST_RELEASE_TAG"
 
     ARGS=()
     if $PRERELEASE; then
