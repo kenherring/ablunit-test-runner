@@ -87,8 +87,10 @@ jobs:
         with:
           fetch-depth: 0
           ref: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref_name }}
-      # - uses: actions/download-artifact@v5
-      #   with:
-      #     name: package-artifact
+      - uses: actions/download-artifact@v5
+        with:
+          name: package-artifact
       - name: create release
         run: ./scripts/create_release.sh
+        env:
+          GH_TOKEN: ${{ github.token }}
