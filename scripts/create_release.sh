@@ -9,6 +9,11 @@
 main () {
     log_it
 
+    if [ ! -f package.json ]; then
+        log_error "package.json not found"
+        exit 1
+    fi
+
     PACKAGE_VERSION=$(jq -r '.version' package.json)
     log_it "PACKAGE_VERSION=$PACKAGE_VERSION"
     if git tag -l --sort=version:refname | grep -q "^$PACKAGE_VERSION$"; then
