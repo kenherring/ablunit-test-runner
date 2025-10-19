@@ -51,10 +51,13 @@ jobs:
       credentials:
         username: ${{ secrets.DOCKER_USER }}
         password: ${{ secrets.DOCKER_PAT }}
+    permissions:
+      contents: write
     env:
       ABLUNIT_TEST_RUNNER_OE_VERSION: ${{ matrix.oe-version }}
       ABLUNIT_TEST_RUNNER_VSCODE_VERSION: 'stable'
       EXPECTED_VSIX_COUNT: 1
+      GH_TOKEN: ${{ github.token }}
       PRIMARY_OE_VERSION: 12.8.1
       PROGRESS_CFG_BASE64: ${{ secrets.PROGRESS_CFG_BASE64 }}
     steps:
