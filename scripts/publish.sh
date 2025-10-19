@@ -10,7 +10,7 @@ main_block () {
 
     if [ ! -f "ablunit-test-runner-${PACKAGE_VERSION}.vsix" ]; then
         npm ci
-        npm run build
+        # npm run build
     fi
     validate_tag
     publish_release
@@ -47,7 +47,7 @@ publish_release () {
 
     local ARGS=()
     ARGS+=("--githubBranch" "main")
-    ARGS+=("--packagePath" "ablunit-test-runner-${PACKAGE_VERSION}.vsix")
+    # ARGS+=("--packagePath" "ablunit-test-runner-${PACKAGE_VERSION}.vsix")
     if $PRERELEASE; then
         ARGS+=("--pre-release")
     fi
