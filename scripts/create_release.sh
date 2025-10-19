@@ -27,7 +27,9 @@ main () {
         PRERELEASE=true
     fi
 
-    git tag
+    if [ -z "$(git tag)" ]; then
+        git pull --tags
+    fi
     git tag -l '[0-9].*'
     git tag -l '[0-9].*' --sort=version:refname
     git tag -l '[0-9].*' --sort=version:refname | grep -E "^[0-9]+\.[0-9]+\.[0-9]*[0,2,4,6,8]$"
