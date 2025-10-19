@@ -1,4 +1,4 @@
-# [1.3.63](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.3.63) - 2025-10-19 (pre-release)
+# [1.3.65](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.3.65) - 2025-10-19 (pre-release)
 
 * Unit test configuration update (#403)
 * Bump typescript from 5.9.2 to 5.9.3 (#410)
@@ -87,7 +87,7 @@
 * Bump mocha from 11.4.0 to 11.5.0 (#301)
 * Bump @types/node from 22.15.17 to 22.15.21 (#304)
 
-**Full Changelog**: [1.3.0...1.3.63](https://github.com/kenherring/ablunit-test-runner/compare/1.3.61...1.3.63)
+**Full Changelog**: [1.3.0...1.3.65](https://github.com/kenherring/ablunit-test-runner/compare/1.3.63...1.3.65)
 
 # [1.3.0](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.3.0) - 2025-05-21
 
