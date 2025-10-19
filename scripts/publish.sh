@@ -7,6 +7,7 @@ main_block () {
     log_it
     PRERELEASE=false
 
+    npm ci
     validate_tag
     publish_release
     upload_to_github_release
@@ -30,11 +31,6 @@ validate_tag () {
     if [ -n "${CIRCLE_TAG:-}" ] && [ "$CIRCLE_TAG" != "$PACKAGE_VERSION" ]; then
         log_error "CIRCLE_TAG=$CIRCLE_TAG does not match PACKAGE_VERSION=$PACKAGE_VERSION"
         return 1
-    fi
-
-    if [ ! -f "ablunit-test-runner-${PACKAGE_VERSION}.vsix" ]; then
-        log_error "ablunit-test-runner-${PACKAGE_VERSION}.vsix not found"
-        exit 1
     fi
 
     if [[ ! "$CIRCLE_TAG" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
