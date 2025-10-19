@@ -27,6 +27,8 @@ main () {
         PRERELEASE=true
     fi
 
+    git tag
+    git tag -l '[0-9].*'
     git tag -l '[0-9].*' --sort=version:refname
     git tag -l '[0-9].*' --sort=version:refname | grep -E "^[0-9]+\.[0-9]+\.[0-9]*[0,2,4,6,8]$"
     git tag -l '[0-9].*' --sort=version:refname | grep -E "^[0-9]+\.[0-9]+\.[0-9]*[0,2,4,6,8]$" | tail -1
