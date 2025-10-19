@@ -874,9 +874,8 @@ export class ABLProfileJson {
 				}
 
 				if(!mod) {
-					if (lastModuleLine) {
-						log.warn('section 6 coverage data could not find module (lastModuleLine=' + lastModuleLine + ', uri=' + this.profileUri.fsPath + ')')
-					}
+					log.warn('section 6 coverage data could not find module (uri=' + this.profileUri.fsPath + ')' +
+						'\n\tlastModuleLine=' + lastModuleLine)
 					continue
 				}
 
