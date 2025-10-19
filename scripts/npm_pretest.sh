@@ -103,7 +103,7 @@ copy_user_settings () {
 
 get_pct () {
 	log_it "pwd=$(pwd)"
-	if [ -d ~/.ant/lib ]; then
+	if [ ! -d ~/.ant/lib ]; then
 		log_it "mkdir"
 		mkdir -p ~/.ant/lib
 	fi
