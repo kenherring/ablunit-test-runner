@@ -6,12 +6,7 @@ set -eou pipefail
 main_block () {
     log_it
     PRERELEASE=false
-    PACKAGE_VERSION=$(jq -r '.version' package.json)
 
-    if [ ! -f "ablunit-test-runner-${PACKAGE_VERSION}.vsix" ]; then
-        npm ci
-        # npm run build
-    fi
     validate_tag
     publish_release
     upload_to_github_release
@@ -19,6 +14,7 @@ main_block () {
 
 validate_tag () {
     log_it
+    PACKAGE_VERSION=$(jq -r '.version' package.json)
     log_it "PACKAGE_VERSION=$PACKAGE_VERSION"
     PATCH_VERSION=${PACKAGE_VERSION##*.}
     log_it "PATCH_VERSION=$PATCH_VERSION"
@@ -37,7 +33,7 @@ validate_tag () {
     fi
 
     if [[ ! "$CIRCLE_TAG" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-        log_error "Tag does not match 0.0.0 format"
+        log_error "Tag $CIRCLE_TAG does not match 0.0.0 format"
         exit 1
     fi
 }
@@ -47,7 +43,7 @@ publish_release () {
 
     local ARGS=()
     ARGS+=("--githubBranch" "main")
-    # ARGS+=("--packagePath" "ablunit-test-runner-${PACKAGE_VERSION}.vsix")
+    ARGS+=("--packagePath" "ablunit-test-runner-${PACKAGE_VERSION}.vsix")
     if $PRERELEASE; then
         ARGS+=("--pre-release")
     fi
