@@ -36,6 +36,11 @@ validate_tag () {
         log_error "Tag $CIRCLE_TAG does not match 0.0.0 format"
         exit 1
     fi
+
+    if [ ! -f "ablunit-test-runner-${PACKAGE_VERSION}.vsix" ]; then
+        log_error "ablunit-test-runner-${PACKAGE_VERSION}.vsix not found"
+        exit 1
+    fi
 }
 
 publish_release () {
