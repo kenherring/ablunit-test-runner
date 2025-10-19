@@ -9,6 +9,8 @@
 main () {
     log_it
 
+    set -x
+
     if [ ! -f package.json ]; then
         log_error "package.json not found"
         exit 1
@@ -28,6 +30,13 @@ main () {
         PRERELEASE=true
     fi
     log_it "PRERELEASE=$PRERELEASE"
+
+
+
+    git tag -l '[0-9].*' --sort=version:refname
+    git tag -l '[0-9].*' --sort=version:refname | grep -E "^[0-9]+\.[0-9]+\.[0-9]*[0,2,4,6,8]$"
+    git tag -l '[0-9].*' --sort=version:refname | grep -E "^[0-9]+\.[0-9]+\.[0-9]*[0,2,4,6,8]$" | tail -1
+
 
     LATEST_RELEASE_TAG=$(git tag -l '[0-9].*' --sort=version:refname | grep -E "^[0-9]+\.[0-9]+\.[0-9]*[0,2,4,6,8]$" | tail -1)
     log_it "LATEST_RELEASE_TAG=$LATEST_RELEASE_TAG"
