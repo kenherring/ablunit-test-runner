@@ -55,8 +55,11 @@ bump_prerelease_version () {
     npm version "$BUMP_TO_VERSION" --no-tag-git-version -m "Bump version to prerelease %s"
     git push
 
-    gh workflow run --ref "${GITHUB_REF_NAME:-}" "CI Workflow"
-    log_error "pushed $GITHUB_REF_NAME, exit_code=1"
+    echo "GITHUB_REF=$GITHUB_REF"
+    echo "GITHUB_REF_NAME=$GITHUB_REF_NAME"
+    echo "GITHUB_REF_TYPE=$GITHUB_REF_TYPE"
+    gh workflow run --ref "${GITHUB_REF:-}" "CI Workflow"
+    log_error "pushed $GITHUB_REF, exit_code=1"
     exit 1
 }
 
