@@ -2,7 +2,7 @@
 	"name": "ablunit-test-runner",
 	"displayName": "ABLUnit Test Runner",
 	"description": "OpenEdge ABLUnit test runner for VSCode",
-	"version": "1.3.75",
+	"version": "1.3.77",
 	"engineStrict": true,
 	"galleryBanner": {
 		"color": "#007ACC",
@@ -60,7 +60,7 @@
 		"progress"
 	],
 	"engines": {
-		"vscode": "^1.103.0"
+		"vscode": "^1.96.0"
 	},
 	"categories": [
 		"Testing"
@@ -96,7 +96,7 @@
 		"@eslint/js": "^9.38.0",
 		"@types/mocha": "^10.0.10",
 		"@types/node": "24.x",
-		"@types/vscode": "^1.103.0",
+		"@types/vscode": "^1.96.0",
 		"@types/xml2js": "^0.4.14",
 		"@vscode/test-cli": "^0.0.12",
 		"@vscode/test-electron": "^2.5.2",
