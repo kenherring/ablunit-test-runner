@@ -1,11 +1,11 @@
 name: CI Workflow
 
 permissions:
+  actions: write        ## tag push
   contents: write       ## release creation
   pull-requests: write
-  actions: write
-  checks: write
-  statuses: write
+  # checks: write
+  # statuses: write
 
 on:
   pull_request:
@@ -42,6 +42,7 @@ jobs:
       - run: ./scripts/bump_version.sh
         env:
           GH_TOKEN: ${{ github.token }}
+          GITHUB_REF_NAME: ${{ github.ref_name }}
 
   test:
     needs: build

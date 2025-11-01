@@ -54,6 +54,10 @@ bump_prerelease_version () {
 
     npm version "$BUMP_TO_VERSION" --no-tag-git-version -m "Bump version to prerelease %s"
     git push
+
+    gh workflow run --ref "${GITHUB_REF_NAME:-}" main
+    log_error "pushed $GITHUB_REF_NAME, exit_code=1"
+    exit 1
 }
 
 ## when building the main branch, set the tag to the version in package.json
