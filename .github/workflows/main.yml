@@ -53,7 +53,10 @@ jobs:
         username: ${{ secrets.DOCKER_USER }}
         password: ${{ secrets.DOCKER_PAT }}
     permissions:
-      contents: write
+      # contents: write
+      actions: write
+      # checks: write
+      # pull_requests: write
     env:
       ABLUNIT_TEST_RUNNER_OE_VERSION: ${{ matrix.oe-version }}
       ABLUNIT_TEST_RUNNER_VSCODE_VERSION: 'stable'
