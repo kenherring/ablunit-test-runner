@@ -113,15 +113,20 @@ build_images () {
 		set +x
 
 		echo "validate and tag new image..."
-		## ensure we're leaving behind a license or ssh-keys
+		## ensure we're not leaving behind a license or ssh-keys
 		## since we're using secret mounts we shouldn't be, but good to be safe in case it changes later
 		## alternative option - use a secret mount: https://docs.docker.com/build/building/secrets/#secret-mounts
 		if ! docker run --rm "ablunit-test-runner:$DOCKER_TAG" bash -c 'test ! -f ~/.ssh/*'; then
 			echo "ERROR: found ssh key(s) left in the docker image..."
 			exit 1
 		fi
+		if ! docker run --rm "ablunit-test-runner:$DOCKER_TAG" bash -c '[ "$(wc -l < /psc/dlc/progress.cfg)" = "0" ]'; then
+			echo "ERROR: found /psc/dlc/progress.cfg left in the docker image kherring/ablunit-test-runner:$DOCKER_TAG"
+			exit 1
+		fi
 		## tag with the org now that we know it doesn't have an accidental license exposure
 		docker tag "ablunit-test-runner:$DOCKER_TAG" "kherring/ablunit-test-runner:$DOCKER_TAG"
+		docker image rm "ablunit-test-runner:$DOCKER_TAG"
 	done
 	SUCCESS_MESSAGE="Docker image(s) built successfully!"
 }

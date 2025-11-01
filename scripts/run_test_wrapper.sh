@@ -18,7 +18,7 @@ initialize () {
 	HOME=/github/home
 
 	if [ -n "${PROGRESS_CFG_BASE64:-}" ]; then
-		tr ' ' '\n' <<< "$PROGRESS_CFG_BASE64" | base64 --decode > /psc/dlc/progress.cfg
+		tr ' ' '\n' <<< "$PROGRESS_CFG_BASE64" | base64 --decode > "$DLC/progress.cfg"
 	fi
 
 	if [ "$ABLUNIT_TEST_RUNNER_OE_VERSION" != "$PRIMARY_OE_VERSION" ]; then
