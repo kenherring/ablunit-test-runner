@@ -14,17 +14,17 @@ common_init () {
 		CIRCLE_BRANCH=
 		CIRCLE_TAG="${GITHUB_REF_NAME:-}"
 	else ## branch
-		CIRCLE_BRANCH="${GITHUB_HEAD_REF:-$GITHUB_REF_NAME}"
+		CIRCLE_BRANCH="${GITHUB_HEAD_REF:-${GITHUB_REF_NAME:-}}"
 		CIRCLE_TAG=
 	fi
-
-	echo "CIRCLE_TAG=${CIRCLE_TAG:-}"
-	echo "CIRCLE_BRANCH=${CIRCLE_BRANCH:-}"
-	echo "CIRCLECI=${CIRCLECI:-}"
 
 	[ -z "${CIRCLE_TAG:-}" ] && [ -z "${CIRCLE_BRANCH:-}" ] && CIRCLE_TAG=$(git tag --points-at HEAD)
 	[ -z "${CIRCLE_TAG:-}" ] && [ -z "${CIRCLE_BRANCH:-}" ] && CIRCLE_TAG=$(git rev-parse --abbrev-ref HEAD)
 	[ -z "${CIRCLE_TAG:-}" ] && [ -z "${CIRCLE_BRANCH:-}" ] && CIRCLE_BRANCH=$(git branch --show-current)
+
+	echo "CIRCLE_TAG=${CIRCLE_TAG:-}"
+	echo "CIRCLE_BRANCH=${CIRCLE_BRANCH:-}"
+	echo "CIRCLECI=${CIRCLECI:-}"
 
 	export CIRCLECI CIRCLE_TAG CIRCLE_BRANCH
 }
