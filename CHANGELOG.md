@@ -1,5 +1,11 @@
-# [1.3.75](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.3.75) - 2025-10-19 (pre-release)
+# [1.3.77](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.3.77) - 2025-11-01 (pre-release)
 
+* require vscode engine 1.96.0+ (#422)
+* Bump @types/node from 24.7.2 to 24.9.0 (#416)
+* Bump eslint from 9.37.0 to 9.38.0 (#418)
+* Bump typescript-eslint from 8.45.0 to 8.46.1 (#419)
+* Bump @eslint/js from 9.37.0 to 9.38.0 (#417)
+* Bump esbuild from 0.25.10 to 0.25.11 (#420)
 * Update automatic prereleases in github actions (#415)
 * Update automatic prereleases in github actions (#414)
 * Add configuration options for disabling competion items (#413)
@@ -91,7 +97,7 @@
 * Bump mocha from 11.4.0 to 11.5.0 (#301)
 * Bump @types/node from 22.15.17 to 22.15.21 (#304)
 
-**Full Changelog**: [1.3.0...1.3.75](https://github.com/kenherring/ablunit-test-runner/compare/1.3.73...1.3.75)
+**Full Changelog**: [1.3.0...1.3.77](https://github.com/kenherring/ablunit-test-runner/compare/1.3.75...1.3.77)
 
 # [1.3.0](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.3.0) - 2025-05-21
 
