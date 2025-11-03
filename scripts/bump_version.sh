@@ -54,6 +54,9 @@ bump_prerelease_version () {
 
     npm version "$BUMP_TO_VERSION" --no-tag-git-version -m "Bump version to prerelease %s"
     git push
+
+    log_error "pushed branch $CIRCLE_BRANCH, exit_code=1"
+    exit 1
 }
 
 ## when building the main branch, set the tag to the version in package.json
