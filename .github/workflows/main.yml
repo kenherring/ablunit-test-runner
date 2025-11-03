@@ -1,9 +1,5 @@
 name: CI Workflow
 
-permissions:
-  contents: write
-  pull-requests: write
-
 on:
   pull_request:
     branches:
@@ -26,6 +22,7 @@ jobs:
         with:
           fetch-depth: 0
           ref: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref_name }}
+          token: ${{ secrets.MY_GITHUB_TOKEN }}
       - name: Run ShellCheck
         uses: ludeeus/action-shellcheck@2.0.0
         if: matrix.os == 'ubuntu-latest'
@@ -52,8 +49,6 @@ jobs:
       credentials:
         username: ${{ secrets.DOCKER_USER }}
         password: ${{ secrets.DOCKER_PAT }}
-    permissions:
-      contents: write
     env:
       ABLUNIT_TEST_RUNNER_OE_VERSION: ${{ matrix.oe-version }}
       ABLUNIT_TEST_RUNNER_VSCODE_VERSION: 'stable'
@@ -94,4 +89,4 @@ jobs:
       - name: create release
         run: ./scripts/create_release.sh
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ secrets.MY_GITHUB_TOKEN }}

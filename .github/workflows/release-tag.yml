@@ -4,13 +4,25 @@ on:
   push:
     tags:
       - '*.*.*'
-
-permissions:
-  contents: write
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'tag for which the workflow will trigger'
 
 jobs:
-  publish:
+  trigger:
+    if: ${{ github.ref_type != 'tag' }}
     runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: gh workflow run --ref "${{ github.event.inputs.tag }}" release-tag
+        env:
+          GH_TOKEN: ${{ secrets.MY_GITHUB_TOKEN }}
+  publish:
+    if: ${{ github.ref_type == 'tag' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write ## attach artifact to release
     steps:
       - uses: actions/checkout@v4
       - run: ./scripts/package.sh
