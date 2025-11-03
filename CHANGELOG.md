@@ -1,6 +1,7 @@
 # [1.4.0](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.4.0) - 2025-11-03
 
 * Prepare version 1.4.0 (#425)
+* Bump PCT from v229 to v230 (#424)
 * Add "in the news" to README.md links (#333)
 * Add `.vscode/mcp.json` and regenerate `.github/copilot-instructions.md` (#383)
 * Add back missing configuration json in package (#385)
@@ -45,7 +46,7 @@
   * Bump typescript from 5.8.3 to 5.9.3 (#363, #410)
   * Bump typescript-eslint from 8.32.1 to 8.46.1 (#310, #322, #336, #345, #357, #362, #365, #380, #389, #400, #419)
 
-**Full Changelog**: [1.3.0...1.4.0](https://github.com/kenherring/ablunit-test-runner/compare/1.3.77...1.4.0)
+**Full Changelog**: [1.3.0...1.4.0](https://github.com/kenherring/ablunit-test-runner/compare/1.3.0...1.4.0)
 
 # [1.3.0](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.3.0) - 2025-05-21
 
