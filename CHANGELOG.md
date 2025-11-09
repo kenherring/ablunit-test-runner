@@ -1,6 +1,10 @@
-# [1.3.85](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.3.85) - 2025-11-09 (pre-release)
+# [1.3.87](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.3.87) - 2025-11-09 (pre-release)
 
 * Prepare version 1.4.0 (#425)
+* Bump typescript-eslint from 8.46.2 to 8.46.3 (#427)
+* Bump minimatch from 10.0.3 to 10.1.1 (#429)
+* Bump esbuild from 0.25.11 to 0.25.12 (#428)
+* Bump eslint from 9.38.0 to 9.39.0 (#430)
 * Fix token issue running github actions (#432)
 * Minor updates from WSL testing (#431)
 * Bump PCT from v229 to v230 (#424)
@@ -102,7 +106,7 @@
 * Bump mocha from 11.4.0 to 11.5.0 (#301)
 * Bump @types/node from 22.15.17 to 22.15.21 (#304)
 
-**Full Changelog**: [1.3.0...1.3.85](https://github.com/kenherring/ablunit-test-runner/compare/1.3.83...1.3.85)
+**Full Changelog**: [1.3.0...1.3.87](https://github.com/kenherring/ablunit-test-runner/compare/1.3.85...1.3.87)
 
 # [1.3.0](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.3.0) - 2025-05-21
 
