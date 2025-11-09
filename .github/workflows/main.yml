@@ -22,7 +22,6 @@ jobs:
         with:
           fetch-depth: 0
           ref: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref_name }}
-          token: ${{ secrets.MY_GITHUB_TOKEN }}
       - name: Run ShellCheck
         uses: ludeeus/action-shellcheck@2.0.0
         if: matrix.os == 'ubuntu-latest'
