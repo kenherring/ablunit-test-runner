@@ -18,8 +18,8 @@
 				"group": "build-task",
 			},
 			"runOptions": {
-				"runOn": "folderOpen"
-			}
+				"runOn": "folderOpen",
+			},
 		},
 		{
 			"label": "npm clean",
@@ -31,16 +31,8 @@
 				"reveal": "silent",
 				"focus": false,
 				"group": "build-task",
-			}
-		},
-		{
-			"label": "npm package",
-			"hide": true,
-			"type": "npm",
-			"script": "package",
-			"presentation": {
-				"reveal": "always",
-			}
+			},
+			"problemMatcher": [],
 		},
 		{
 			"label": "npm pretest",
@@ -52,7 +44,8 @@
 				"reveal": "silent",
 				"focus": false,
 				"group": "build-task",
-			}
+			},
+			"problemMatcher": [],
 		},
 		{
 			"label": "npm watch",
@@ -63,21 +56,31 @@
 			"presentation": {
 				"reveal": "silent",
 				"focus": false,
-				"group": "build-task"
+				"group": "build-task",
 			},
 			"group": {
 				"kind": "build",
-				"isDefault": true
-			}
+				"isDefault": true,
+			},
+		},
+		{
+			"label": "npm package",
+			"hide": true,
+			"type": "npm",
+			"script": "package",
+			"presentation": {
+				"reveal": "always",
+			},
+			"problemMatcher": [],
 		},
 		{
 			"label": "run all tests in docker",
 			"type": "shell",
 			"command": "docker/run_tests.sh",
 			"args": [
-				"-m"
+				"-m",
 			],
-			"problemMatcher": []
+			"problemMatcher": [],
 		},
 		{
 			"label": "run test in docker",
@@ -86,27 +89,27 @@
 			"args": [
 				"-p",
 				"'${relativeFile}'",
-				"-m"
+				"-m",
 			],
-			"problemMatcher": []
+			"problemMatcher": [],
 		},
 		{
 			"type": "npm",
 			"script": "lint",
 			"problemMatcher": [
-				"$eslint-stylish"
+				"$eslint-stylish",
 			],
 			"label": "npm: lint",
-			"detail": "npx eslint ./src --ext .ts,.js"
+			"detail": "npx eslint ./src --ext .ts,.js",
 		},
 		{
 			"type": "npm",
 			"script": "lint-fix-all",
 			"problemMatcher": [
-				"$eslint-stylish"
+				"$eslint-stylish",
 			],
 			"label": "npm: lint-fix-all",
-			"detail": "npx eslint ./src --ext .ts,.js --fix"
-		},
-	]
+			"detail": "npx eslint ./src --ext .ts,.js --fix",
+		}
+	],
 }

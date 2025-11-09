@@ -13,7 +13,9 @@ initialize () {
 	fi
 	log_it "DLC=$DLC"
 
-	PATH=$PATH:$DLC/ant/bin
+	if ! command -v ant; then
+		PATH=$PATH:$DLC/ant/bin
+	fi
 	CIRCLECI=${CIRCLECI:-false}
 	if $CIRCLECI; then
 		HOME=/github/home
