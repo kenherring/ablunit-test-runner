@@ -1,5 +1,6 @@
-# [1.3.81](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.3.81) - 2025-11-03 (pre-release)
+# [1.3.83](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.3.83) - 2025-11-09 (pre-release)
 
+* Minor updates from WSL testing (#431)
 * Bump PCT from v229 to v230 (#424)
 * Add workflow_dispatch to release-tag workflow (#423)
 * require vscode engine 1.96.0+ (#422)
@@ -99,7 +100,7 @@
 * Bump mocha from 11.4.0 to 11.5.0 (#301)
 * Bump @types/node from 22.15.17 to 22.15.21 (#304)
 
-**Full Changelog**: [1.3.0...1.3.81](https://github.com/kenherring/ablunit-test-runner/compare/1.3.79...1.3.81)
+**Full Changelog**: [1.3.0...1.3.83](https://github.com/kenherring/ablunit-test-runner/compare/1.3.81...1.3.83)
 
 # [1.3.0](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.3.0) - 2025-05-21
 
