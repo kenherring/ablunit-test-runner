@@ -87,7 +87,7 @@
 		"watch": "npm run build -- --watch"
 	},
 	"dependencies": {
-		"minimatch": "^10.0.3",
+		"minimatch": "^10.1.1",
 		"node-json-minify": "^3.0.0",
 		"tree-kill": "^1.2.2",
 		"xml2js": "^0.6.2"
@@ -101,15 +101,15 @@
 		"@vscode/test-cli": "^0.0.12",
 		"@vscode/test-electron": "^2.5.2",
 		"@vscode/vsce": "^3.6.2",
-		"esbuild": "^0.25.11",
+		"esbuild": "^0.26.0",
 		"esbuild-register": "^3.6.0",
-		"eslint": "^9.38.0",
+		"eslint": "^9.39.1",
 		"eslint-plugin-promise": "^7.2.1",
 		"mocha": "^11.7.2",
 		"mocha-multi-reporters": "^1.5.1",
 		"mocha-reporter-sonarqube": "2.1.1",
 		"typescript": "^5.9.3",
-		"typescript-eslint": "^8.46.2"
+		"typescript-eslint": "^8.46.3"
 	},
 	"contributes": {
 		"configuration": {

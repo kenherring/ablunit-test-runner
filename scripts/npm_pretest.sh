@@ -13,7 +13,7 @@ initialize () {
 	fi
 	log_it "DLC=$DLC"
 
-	if ! command -v ant; then
+	if ! command -v ant &>/dev/null; then
 		PATH=$PATH:$DLC/ant/bin
 	fi
 	CIRCLECI=${CIRCLECI:-false}

@@ -37,10 +37,8 @@ class Logger {
 		}
 		this.baseDir = Uri.joinPath(Uri.file(this.extensionCodeDir), '..').fsPath
 	}
-
 	public static getInstance () {
-		Logger.instance = new Logger()
-		Logger.instance.clearOutputChannel()
+		Logger.instance = Logger.instance ?? new Logger()
 		return Logger.instance
 	}
 
