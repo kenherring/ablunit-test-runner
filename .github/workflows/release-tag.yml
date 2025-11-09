@@ -9,6 +9,9 @@ on:
       tag:
         description: 'tag for which the workflow will trigger'
 
+permissions:
+  contents: read
+
 jobs:
   trigger:
     if: ${{ github.ref_type != 'tag' }}
