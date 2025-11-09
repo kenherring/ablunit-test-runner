@@ -76,7 +76,10 @@ initialize_repo () {
 		cd "$PROJECT_DIR"
 		git init
 		git remote add origin "$REPO_VOLUME"
-		git fetch
+		if ! git fetch; then
+			git config --global --add safe.directory "$REPO_VOLUME/.git"
+			git fetch
+		fi
 	else
 		git clone "$REPO_VOLUME" "$PROJECT_DIR"
 	fi

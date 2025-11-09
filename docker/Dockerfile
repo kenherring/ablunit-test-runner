@@ -28,18 +28,12 @@ RUN proDebugEnable -enable-all
 ## clone and build ablunit.pl for the OE version
 WORKDIR /psc/dlc/tty
 ARG OE_VERSION
-ARG PROGRESS_ADE_TAG
 ENV OE_VERSION=${OE_VERSION}
 ENV DOCKER_IMAGE=ablunit-test-runner-${OE_VERSION}
 ARG HOME=/github/home
 RUN mkdir -p ${HOME}
-COPY build.xml /psc/dlc/tty/build.xml
-ADD https://github.com/progress/ADE/archive/refs/tags/v${PROGRESS_ADE_TAG}.0.tar.gz ${HOME}
-RUN --mount=type=secret,id=license,target=/psc/dlc/progress.cfg \
-    tar -xzf "${HOME}/v${PROGRESS_ADE_TAG}.0.tar.gz" -C . \
-    && mv ADE-${PROGRESS_ADE_TAG}.0 ADE \
-    && ant compile \
-    && rm -rf build.xml ADE/ /tmp/*
+COPY compile_deps/ /tmp/compile_deps/
+RUN --mount=type=secret,id=license,target=/psc/dlc/progress.cfg /tmp/compile_deps/create_ablunit_library.sh
 WORKDIR /
 
 ## create directory for vscode-test which will be a mounted volume
