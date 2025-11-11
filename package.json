@@ -100,7 +100,7 @@
 		"@types/xml2js": "^0.4.14",
 		"@vscode/test-cli": "^0.0.12",
 		"@vscode/test-electron": "^2.5.2",
-		"@vscode/vsce": "^3.6.2",
+		"@vscode/vsce": "^3.7.0",
 		"esbuild": "^0.27.0",
 		"esbuild-register": "^3.6.0",
 		"eslint": "^9.39.1",
