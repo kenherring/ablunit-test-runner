@@ -102,5 +102,3 @@ See [CONTRIBUTING.md](.github/CONTRIBUTING.md)
 This is my first VSCode extension, and my first TypeScript project. I am sure there are many ways to improve the code, and I welcome any feedback.  I'm also open to collaboration for anyone who might wish to contribute.
 
 Quality code is my passion.  Unit testing is an important component of ensuring code remains functional when future changes are made.  I hope this extension helps others embrace [TDD](https://en.wikipedia.org/wiki/Test-driven_development) and improve their code.
-
-<!-- -->
