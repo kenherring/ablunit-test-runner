@@ -1,7 +1,6 @@
 # [1.3.91](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.3.91) - 2025-11-12 (pre-release)
 
-* Use remote settings (#440)
-* Bump @types/vscode to 1.104.0 (#439)
+* Improve DLC identification (#439, #440)
 * Prepare version 1.3.87 (#438)
 * Bump @vscode/vsce from 3.6.2 to 3.7.0 (#434)
 * Bump @types/node from 24.9.1 to 24.10.0 (#433)

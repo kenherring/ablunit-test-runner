@@ -90,9 +90,7 @@ function getProjectJson (workspaceFolder: WorkspaceFolder) {
 }
 
 export function getDLC (workspaceFolder: WorkspaceFolder, openedgeProjectProfile?: string, projectJson?: string) {
-	log.info('[getDlc] workspaceFolder=' + workspaceFolder.name + ', openedgeProjectProfile=' + openedgeProjectProfile + ', projectJson=' + projectJson)
 	const dlc = dlcMap.get(workspaceFolder)
-	log.info('900 dlc.uri=' + dlc?.uri)
 	if (dlc) {
 		try {
 			FileUtils.validateDirectory(dlc.uri)

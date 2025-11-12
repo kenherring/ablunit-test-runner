@@ -47,7 +47,6 @@ export class Duration {
 }
 
 export function readOEVersionFile (useDLC: string) {
-	log.info('[readOEVersionFile] useDLC=' + useDLC)
 	const dlcUri = Uri.file(useDLC)
 	const versionFileUri = Uri.joinPath(dlcUri, 'version')
 	if (!FileUtils.doesFileExist(versionFileUri)) {
@@ -70,7 +69,6 @@ export function readOEVersionFile (useDLC: string) {
 }
 
 export function gatherAllTestItems (collection: TestItemCollection | TestItem[]) {
-	log.info('gatherAllTestItems')
 	const items: TestItem[] = []
 	collection.forEach(item => {
 		items.push(item, ...gatherAllTestItems(item.children))
