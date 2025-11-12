@@ -1,6 +1,8 @@
-# [1.3.85](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.3.85) - 2025-11-09 (pre-release)
+# [1.3.93](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.3.93) - 2025-11-12 (pre-release)
 
-* Improve DLC identification (#439, #440)
+* Prepare version 1.4.0 (#425)
+* Improve DLC identification (#440)
+* Bump @types/vscode to 1.104.0 (#439)
 * Prepare version 1.3.87 (#438)
 * Bump @vscode/vsce from 3.6.2 to 3.7.0 (#434)
 * Bump @types/node from 24.9.1 to 24.10.0 (#433)
@@ -112,7 +114,7 @@
 * Bump mocha from 11.4.0 to 11.5.0 (#301)
 * Bump @types/node from 22.15.17 to 22.15.21 (#304)
 
-**Full Changelog**: [1.3.0...1.3.85](https://github.com/kenherring/ablunit-test-runner/compare/1.3.83...1.3.85)
+**Full Changelog**: [1.3.0...1.3.93](https://github.com/kenherring/ablunit-test-runner/compare/1.3.85...1.3.93)
 
 # [1.3.0](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.3.0) - 2025-05-21
 
