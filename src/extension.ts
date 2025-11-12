@@ -35,96 +35,115 @@ let recentError: Error | undefined = undefined
 let debugListingContentProviderRegistered = false
 
 export async function activate (context: ExtensionContext) {
+	log.info('100')
 	const ctrl = tests.createTestController('ablunitTestController', 'ABLUnit Test')
+	log.info('101')
 	let currentTestRun: TestRun | undefined = undefined
+	log.info('102')
 	let isRefreshTestsComplete = false
 
+	log.info('103')
 	logActivationEvent(context.extensionMode)
+	log.info('104')
+
 	if (context.extensionMode !== ExtensionMode.Production) {
+		log.info('105')
 		log.setLogLevel(LogLevel.Debug)
+		log.info('106')
 	}
+	log.info('107')
 
 	const contextStorageUri = context.storageUri ?? Uri.file(process.env['TEMP'] ?? '') // will always be defined as context.storageUri
+	log.info('108')
 	const contextResourcesUri = Uri.joinPath(context.extensionUri, 'resources')
-	setContextPaths(contextStorageUri)
-	FileUtils.createDir(contextStorageUri)
+	log.info('109')
 
-	context.subscriptions.push(ctrl)
-	// languages.registerInlineCompletionItemProvider({ language: 'abl'}, new InlineProvider())
-	languages.registerCompletionItemProvider({ language: 'abl', scheme: 'file' }, new SnippetProvider())
+	try {
+		log.info('110')
+		setContextPaths(contextStorageUri)
+		FileUtils.createDir(contextStorageUri)
 
-	log.info('process.env[\'ABLUNIT_TEST_RUNNER_UNIT_TESTING\']=' + process.env['ABLUNIT_TEST_RUNNER_UNIT_TESTING'])
-	if (process.env['ABLUNIT_TEST_RUNNER_UNIT_TESTING']) {
-		log.info('push internal commands')
+		context.subscriptions.push(ctrl)
+		// languages.registerInlineCompletionItemProvider({ language: 'abl'}, new InlineProvider())
+		languages.registerCompletionItemProvider({ language: 'abl', scheme: 'file' }, new SnippetProvider())
+
+		log.info('process.env[\'ABLUNIT_TEST_RUNNER_UNIT_TESTING\']=' + process.env['ABLUNIT_TEST_RUNNER_UNIT_TESTING'])
+		if (process.env['ABLUNIT_TEST_RUNNER_UNIT_TESTING']) {
+			log.info('push internal commands')
+			context.subscriptions.push(
+				commands.registerCommand('_ablunit.getExtensionTestReferences', () => { return getExtensionTestReferences() }),
+				commands.registerCommand('_ablunit.isRefreshTestsComplete', () => { return isRefreshTestsComplete }),
+				commands.registerCommand('_ablunit.getLogUri', () => { return context.logUri }),
+				commands.registerCommand('_ablunit.getTestController', () => { return ctrl }),
+				commands.registerCommand('_ablunit.getTestData', () => { return testData.getMap() }),
+				commands.registerCommand('_ablunit.getTestItem', (uri: Uri) => { return getExistingTestItem(ctrl, uri) }),
+				commands.registerCommand('_ablunit.getTestRunError', () => { return recentError }),
+				commands.registerCommand('_ablunit.loadDetailedCoverage', (uri: Uri) => {
+					if (!currentTestRun) {
+						throw new Error('currentTestRun is undefined')
+					}
+
+					const fileCoverage = recentResults[0].fileCoverage.get(uri.fsPath)
+					if (!fileCoverage) {
+						throw new Error('fileCoverage not found for ' + uri.fsPath)
+					}
+
+					return loadDetailedCoverage(currentTestRun, fileCoverage, new CancellationTokenSource().token)
+				}),
+				commands.registerCommand('_ablunit.loadDetailedCoverageForTest', (uri: Uri, item: TestItem) => {
+					if (!currentTestRun) {
+						throw new Error('currentTestRun is undefined')
+					}
+
+					const fileCoverage = recentResults[0].fileCoverage.get(uri.fsPath)
+					if (!fileCoverage) {
+						throw new Error('fileCoverage not found for ' + uri.fsPath)
+					}
+
+					return loadDetailedCoverageForTest(currentTestRun, fileCoverage, item, new CancellationTokenSource().token)
+				}),
+			)
+		}
+		log.info('200')
+
 		context.subscriptions.push(
-			commands.registerCommand('_ablunit.getExtensionTestReferences', () => { return getExtensionTestReferences() }),
-			commands.registerCommand('_ablunit.isRefreshTestsComplete', () => { return isRefreshTestsComplete }),
-			commands.registerCommand('_ablunit.getLogUri', () => { return context.logUri }),
-			commands.registerCommand('_ablunit.getTestController', () => { return ctrl }),
-			commands.registerCommand('_ablunit.getTestData', () => { return testData.getMap() }),
-			commands.registerCommand('_ablunit.getTestItem', (uri: Uri) => { return getExistingTestItem(ctrl, uri) }),
-			commands.registerCommand('_ablunit.getTestRunError', () => { return recentError }),
-			commands.registerCommand('_ablunit.loadDetailedCoverage', (uri: Uri) => {
-				if (!currentTestRun) {
-					throw new Error('currentTestRun is undefined')
+			commands.registerCommand('_ablunit.openCallStackItem', openCallStackItem),
+			commands.registerCommand('ablunit.showDebugListingPreview', async (uri: Uri | string | undefined) => {
+				const debugListingContentProvider = DebugListingContentProvider.getInstance(context, contextResourcesUri)
+				if (!debugListingContentProviderRegistered) {
+					debugListingContentProviderRegistered = true
+					workspace.registerTextDocumentContentProvider('debugListing', debugListingContentProvider)
 				}
-
-				const fileCoverage = recentResults[0].fileCoverage.get(uri.fsPath)
-				if (!fileCoverage) {
-					throw new Error('fileCoverage not found for ' + uri.fsPath)
-				}
-
-				return loadDetailedCoverage(currentTestRun, fileCoverage, new CancellationTokenSource().token)
+				await debugListingContentProvider.showDebugListingPreviewCommand(uri)
 			}),
-			commands.registerCommand('_ablunit.loadDetailedCoverageForTest', (uri: Uri, item: TestItem) => {
-				if (!currentTestRun) {
-					throw new Error('currentTestRun is undefined')
+			workspace.onDidChangeConfiguration(e => { return updateConfiguration(e) }),
+			workspace.onDidOpenTextDocument(e => {
+				log.debug('onDidOpenTextDocument ' + e.uri.fsPath)
+				if (e.languageId !== 'abl') {
+					return
 				}
-
-				const fileCoverage = recentResults[0].fileCoverage.get(uri.fsPath)
-				if (!fileCoverage) {
-					throw new Error('fileCoverage not found for ' + uri.fsPath)
+				return createOrUpdateFile(ctrl, e.uri, true)
+			}),
+			workspace.onDidSaveTextDocument(e => {
+				if (e.languageId !== 'abl') {
+					return
 				}
-
-				return loadDetailedCoverageForTest(currentTestRun, fileCoverage, item, new CancellationTokenSource().token)
+				log.debug('onDidSaveTextDocument ' + e.uri.fsPath)
+				return createOrUpdateFile(ctrl, e.uri, true)
+			}),
+			workspace.onDidCreateFiles(e => {
+				log.debug('workspace.onDidCreate ' + e.files[0].fsPath)
+				return createOrUpdateFile(ctrl, e, true)
+			}),
+			workspace.onDidDeleteFiles(e => {
+				log.debug('workspace.onDidDelete ' + e.files[0].fsPath)
+				return deleteTestsInFiles(ctrl, e.files)
 			}),
 		)
+	} catch (e: unknown) {
+		log.error('Error during activation: ' + e)
+		throw e
 	}
-
-	context.subscriptions.push(
-		commands.registerCommand('_ablunit.openCallStackItem', openCallStackItem),
-		commands.registerCommand('ablunit.showDebugListingPreview', async (uri: Uri | string | undefined) => {
-			const debugListingContentProvider = DebugListingContentProvider.getInstance(context, contextResourcesUri)
-			if (!debugListingContentProviderRegistered) {
-				debugListingContentProviderRegistered = true
-				workspace.registerTextDocumentContentProvider('debugListing', debugListingContentProvider)
-			}
-			await debugListingContentProvider.showDebugListingPreviewCommand(uri)
-		}),
-		workspace.onDidChangeConfiguration(e => { return updateConfiguration(e) }),
-		workspace.onDidOpenTextDocument(e => {
-			log.debug('onDidOpenTextDocument ' + e.uri.fsPath)
-			if (e.languageId !== 'abl') {
-				return
-			}
-			return createOrUpdateFile(ctrl, e.uri, true)
-		}),
-		workspace.onDidSaveTextDocument(e => {
-			if (e.languageId !== 'abl') {
-				return
-			}
-			log.debug('onDidSaveTextDocument ' + e.uri.fsPath)
-			return createOrUpdateFile(ctrl, e.uri, true)
-		}),
-		workspace.onDidCreateFiles(e => {
-			log.debug('workspace.onDidCreate ' + e.files[0].fsPath)
-			return createOrUpdateFile(ctrl, e, true)
-		}),
-		workspace.onDidDeleteFiles(e => {
-			log.debug('workspace.onDidDelete ' + e.files[0].fsPath)
-			return deleteTestsInFiles(ctrl, e.files)
-		}),
-	)
 
 	const getExtensionTestReferences = () => {
 		if (!process.env['ABLUNIT_TEST_RUNNER_UNIT_TESTING']) {
@@ -569,40 +588,51 @@ export async function activate (context: ExtensionContext) {
 		})
 	}
 
+	log.info('300')
 	const testProfileRun = ctrl.createRunProfile('Run Tests', TestRunProfileKind.Run, runHandler, true, new TestTag('runnable'), false)
-	testProfileRun.configureHandler = configHandler
+	log.info('301')
 
-	if (!workspace.getConfiguration('ablunit').get('debug.hide', false)) {
-		const testProfileDebug = ctrl.createRunProfile('Debug Tests', TestRunProfileKind.Debug, runHandler, true, new TestTag('runnable'), false)
-		testProfileDebug.configureHandler = configHandler
-	}
+	try {
+		log.info('302')
+		testProfileRun.configureHandler = configHandler
 
-	const testProfileCoverage = ctrl.createRunProfile('Run Tests w/ Coverage', TestRunProfileKind.Coverage, runHandler, true, new TestTag('runnable'), false)
-	testProfileCoverage.configureHandler = configHandler
-	testProfileCoverage.loadDetailedCoverage = loadDetailedCoverage
-	testProfileCoverage.loadDetailedCoverageForTest = loadDetailedCoverageForTest
-
-	let prom
-	if(workspace.getConfiguration('ablunit').get('discoverAllTestsOnActivate', false)) {
-		prom = commands.executeCommand('testing.refreshTests')
-	} else {
-		prom = Promise.resolve()
-	}
-	await prom
-	log.info('activation complete')
-
-	const exports: ABLUnitTestRunner = {
-		getDebugListingPreviewEditor,
-		getTestItems: (uri?: Uri) => {
-			const allItems = gatherAllTestItems(ctrl.items)
-			if (uri) {
-				const matchingTests = allItems.filter(i => i.uri?.fsPath == uri.fsPath)
-				return matchingTests
-			}
-			return allItems
+		if (!workspace.getConfiguration('ablunit').get('debug.hide', false)) {
+			const testProfileDebug = ctrl.createRunProfile('Debug Tests', TestRunProfileKind.Debug, runHandler, true, new TestTag('runnable'), false)
+			testProfileDebug.configureHandler = configHandler
 		}
+		log.info('303')
+
+		const testProfileCoverage = ctrl.createRunProfile('Run Tests w/ Coverage', TestRunProfileKind.Coverage, runHandler, true, new TestTag('runnable'), false)
+		testProfileCoverage.configureHandler = configHandler
+		testProfileCoverage.loadDetailedCoverage = loadDetailedCoverage
+		testProfileCoverage.loadDetailedCoverageForTest = loadDetailedCoverageForTest
+
+		let prom
+		if(workspace.getConfiguration('ablunit').get('discoverAllTestsOnActivate', false)) {
+			prom = commands.executeCommand('testing.refreshTests')
+		} else {
+			prom = Promise.resolve()
+		}
+		log.info('304')
+		await prom
+		log.info('activation complete')
+
+		const exports: ABLUnitTestRunner = {
+			getDebugListingPreviewEditor,
+			getTestItems: (uri?: Uri) => {
+				const allItems = gatherAllTestItems(ctrl.items)
+				if (uri) {
+					const matchingTests = allItems.filter(i => i.uri?.fsPath == uri.fsPath)
+					return matchingTests
+				}
+				return allItems
+			}
+		}
+		return exports
+	} catch (e: unknown) {
+		log.error('Error during activation: ' + e)
+		throw e
 	}
-	return exports
 }
 
 let contextStorageUri: Uri
