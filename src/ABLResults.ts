@@ -110,7 +110,7 @@ export class ABLResults implements Disposable {
 		log.info('[start] workspaceFolder=' + this.workspaceFolder.uri.fsPath)
 
 		// eslint-disable-next-line @typescript-eslint/no-invalid-void-type
-		const proms: (Thenable<void> | Promise<void> | Promise<void[]> | undefined)[] = []
+		const proms: (Thenable<void> | Promise<void> | Promise<void[]>)[] = []
 		this.cfg.createProfileOptions(this.cfg.ablunitConfig.profOptsUri, this.cfg.ablunitConfig.profiler)
 		this.cfg.createDbConnPf(this.cfg.ablunitConfig.dbConnPfUri, this.cfg.ablunitConfig.dbConns)
 		proms.push(this.cfg.createAblunitJson(this.cfg.ablunitConfig.config_uri, this.cfg.ablunitConfig.options, this.testQueue))

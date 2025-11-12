@@ -92,8 +92,12 @@ function getProjectJson (workspaceFolder: WorkspaceFolder) {
 export function getDLC (workspaceFolder: WorkspaceFolder, openedgeProjectProfile?: string, projectJson?: string) {
 	const dlc = dlcMap.get(workspaceFolder)
 	if (dlc) {
-		FileUtils.validateDirectory(dlc.uri)
-		return dlc
+		try {
+			FileUtils.validateDirectory(dlc.uri)
+			return dlc
+		} catch (e: unknown) {
+			log.warn('dlc not found: ' + dlc.uri + ' (e=' + e + ')')
+		}
 	}
 
 	let runtimeDlc: Uri | undefined = undefined
