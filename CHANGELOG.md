@@ -1,7 +1,7 @@
 # [1.4.0](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.4.0) - 2025-11-12
 
 * Prepare version 1.4.0 (#370, #438, #425)
-* Improve DLC identification (#440)
+* Improve DLC identification (#440, #441)
 * Minor updates from WSL testing (#431)
 * require vscode engine 1.96.0+ (#422)
 * Add configuration options for disabling competion items (#413)

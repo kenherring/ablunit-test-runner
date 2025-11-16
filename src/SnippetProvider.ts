@@ -1,5 +1,4 @@
-import { CancellationToken, CompletionContext, CompletionItem, CompletionItemKind, CompletionItemProvider, CompletionItemTag, CompletionList, InlineCompletionContext, InlineCompletionItem, InlineCompletionItemProvider, InlineCompletionList, MarkdownString, Position, ProviderResult, Range, SnippetString, TextDocument, TextEdit } from 'vscode'
-import { workspace } from '../test/testCommon'
+import { CancellationToken, CompletionContext, CompletionItem, CompletionItemKind, CompletionItemProvider, CompletionItemTag, CompletionList, InlineCompletionContext, InlineCompletionItem, InlineCompletionItemProvider, InlineCompletionList, MarkdownString, Position, ProviderResult, Range, SnippetString, TextDocument, TextEdit, workspace } from 'vscode'
 
 interface ISnippetOptions {
 	enabled: boolean
