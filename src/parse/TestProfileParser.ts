@@ -176,11 +176,13 @@ export class RunConfig extends DefaultRunProfile {
 	public readonly profFilenameUri: Uri
 	public readonly dbConns: IDatabaseConnection[]
 	public readonly dbConnPfUri: Uri
+	public readonly initializationProcedure?: string
 	public dbAliases: string[] = []
 
 	constructor (private readonly profile: IRunProfile, public workspaceFolder: WorkspaceFolder, ablunitProfile = true) {
 		super()
 		this.tempDirUri = this.getUri(this.profile.tempDir)
+		this.initializationProcedure = this.profile.initializationProcedure
 		this.timeout = this.profile.timeout
 		log.debug('tempDirUri="' + this.tempDirUri.fsPath + '"')
 		this.config_uri = Uri.joinPath(this.tempDirUri, 'ablunit.json')

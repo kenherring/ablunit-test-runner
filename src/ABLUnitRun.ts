@@ -203,7 +203,7 @@ function runCommand (res: ABLResults, options: TestRun, cancellation: Cancellati
 	}
 
 	res.setStatus(RunStatus.Running)
-	const runenv = getEnvVars(res.dlc.uri, res.cfg.ablunitConfig.command.debugConnectMaxWait)
+	const runenv = getEnvVars(res.dlc.uri, res.cfg.ablunitConfig.command.debugConnectMaxWait, res.cfg.ablunitConfig.initializationProcedure)
 	const compilerErrors: ICompilerError[] = []
 	let timeout = res.cfg.ablunitConfig.timeout
 	if (res.cfg.requestKind == TestRunProfileKind.Debug) {
@@ -470,7 +470,7 @@ function setCurrentTestItem (ablunitStatus: IABLUnitStatus) {
 	}
 }
 
-export function getEnvVars (dlcUri: Uri | undefined, maxWait = 30000) {
+export function getEnvVars (dlcUri: Uri | undefined, maxWait = 30000, initializationProcedure?: string) {
 	const runenv = process.env
 	let envConfig: Record<string, string> | undefined = undefined
 	if (process.platform === 'win32') {
@@ -493,5 +493,8 @@ export function getEnvVars (dlcUri: Uri | undefined, maxWait = 30000) {
 		runenv['DLC'] = dlcUri.fsPath.replace(/\\/g, '/')
 	}
 	runenv['ABLUNIT_TEST_RUNNER_DEBUG_MAX_WAIT'] = maxWait.toString()
+	if (initializationProcedure) {
+		runenv['ABLUNIT_INITIALIZATION_PROCEDURE'] = initializationProcedure
+	}
 	return runenv
 }

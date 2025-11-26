@@ -121,6 +121,12 @@ procedure main :
 	assign updateFile = getParameter(trim(trim(session:parameter,'"'),"'"), 'ATTR_ABLUNIT_EVENT_FILE').
 	testConfig = readTestConfig(getParameter(trim(trim(session:parameter,'"'),"'"), 'CFG')).
 	quitOnEnd = (testConfig = ?) or testConfig:quitOnEnd.
+
+	define variable initializationProcedure as character no-undo.
+	initializationProcedure = os-getenv('ABLUNIT_INITIALIZATION_PROCEDURE').
+	if initializationProcedure <> ? and initializationProcedure > '' then
+		run value(initializationProcedure).
+
 	run VSCode/ABLRunner-wrapper.p(testConfig, updateFile).
 	if VERBOSE then message 'END main'.
 end procedure.
