@@ -120,6 +120,7 @@ export class ABLUnitConfig  {
 		if (extensionResourcesDir) {
 			pathObj.push({
 				path: Uri.joinPath(extensionResourcesDir, 'VSCodeTestRunner').fsPath,
+				pathUri: Uri.joinPath(extensionResourcesDir, 'VSCodeTestRunner'),
 				type: 'propath',
 				build: Uri.joinPath(extensionResourcesDir, 'VSCodeTestRunner').fsPath,
 				xref: Uri.joinPath(extensionResourcesDir, 'VSCodeTestRunner').fsPath,
@@ -130,6 +131,7 @@ export class ABLUnitConfig  {
 			for (const e of conf.buildPath) {
 				pathObj.push({
 					path: e.path,
+					pathUri: Uri.parse(e.path),
 					type: e.type,
 					build: e.build,
 					xref: e.xref
@@ -138,6 +140,7 @@ export class ABLUnitConfig  {
 		} else {
 			pathObj.push({
 				path: '.',
+				pathUri: Uri.parse('.'),
 				type: 'source',
 				build: '.',
 				xref: '.'
