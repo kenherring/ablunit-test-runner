@@ -277,6 +277,15 @@
 								"items": { "type": "string" }
 							}
 						}
+					},
+					"initializationProcedure": {
+						"type": [
+							"string",
+							"null"
+						],
+						"default": null,
+						"nullable": true,
+						"description": "Path to an ABL procedure to run before tests are executed, but after databases are connected and the propath is set  Path is relative to the workspace root."
 					}
 				}
 			}

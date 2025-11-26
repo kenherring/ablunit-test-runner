@@ -14,6 +14,7 @@ export interface IRunProfile {
 	command?: ICommandOptions
 	options?: ICoreOptions
 	profiler?: IProfilerOptions
+	initializationProcedure?: string
 }
 
 export class DefaultRunProfile implements IRunProfile {
