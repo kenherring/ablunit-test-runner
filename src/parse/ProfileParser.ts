@@ -701,7 +701,7 @@ export class ABLProfileJson {
 		for(const element of lines) {
 			const test = callTreeRE.exec(element)
 
-			if(test && test.length == 5) {
+			if(test?.length == 5) {
 				// Called By
 				const cbModID = Number(test[3])
 				const cb = {
@@ -874,8 +874,9 @@ export class ABLProfileJson {
 				}
 
 				if(!mod) {
-					log.warn('section 6 coverage data could not find module (uri=' + this.profileUri.fsPath + ')' +
-						'\n\tlastModuleLine=' + lastModuleLine)
+					if (lastModuleLine) {
+						log.warn('section 6 coverage data could not find module (lastModuleLine=' + lastModuleLine + ', uri=' + this.profileUri.fsPath + ')')
+					}
 					continue
 				}
 

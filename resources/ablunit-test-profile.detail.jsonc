@@ -121,7 +121,7 @@
 			"writeJson": false,
 			"perTest": true, // capture profiler data separately for each test case
 			"ignoreExternalCoverage": true // do not calculate coverage for external code (outside of workspace)
-		}
-
+		},
+		"initializationProcedure": "src/ablunit-init.p" // initialization procedure run after DBs are connected and propath is set but before any tests are executed
 	}]
 }

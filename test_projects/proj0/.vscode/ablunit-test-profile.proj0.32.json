@@ -1,0 +1,7 @@
+{
+	"configurations": [
+		{
+			"initializationProcedure": "init_proc.p"
+		}
+	]
+}

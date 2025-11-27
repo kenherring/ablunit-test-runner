@@ -3,6 +3,7 @@
 		{
 			"tempDir": "${workspaceFolder}",
 			"importOpenedgeProjectJson": true,
+			"openedgeProjectProfile": "default",
 			"timeout": 30000,
 			"command": {
 				"executable": "_progres",
@@ -36,7 +37,8 @@
 				"enabled": true,
 				"description": "Run via VSCode - ABLUnit Test Runner Extension",
 				"filename": "prof.out"
-			}
+			},
+			"initializationProcedure": null
 		}
 	]
 }
