@@ -701,3 +701,24 @@ suite('proj0.31 - include/exclude patterns', () => {
 			.then(() => { assert.equal(ext.exports.getTestItems(toUri('src/test_17.cls'))?.length, 1, '[31F]') })
 	})
 })
+
+suite('proj0.32 - initializationProcedure', () => {
+	test('proj0.32A - super procedure expected but not found', async () => {
+		await runTestsInFile('src/test_32.p').then(() => {
+			assert.fail('test passed, but should have failed')
+		}, (e: unknown) => {
+			assert.ok('test failed successfully (e=' + e + ')')
+		})
+		return
+	})
+
+	test('proj0.32B - super procedure in initializationProcedure successful', async () => {
+		FileUtils.copyFile('.vscode/ablunit-test-profile.proj0.32.json', '.vscode/ablunit-test-profile.json')
+		await runTestsInFile('src/test_32.p').then(() => {
+			assert.ok('test ran successfully')
+		}, (e: unknown) => {
+			assert.fail('test failed: ' + e)
+		})
+		return
+	})
+})
