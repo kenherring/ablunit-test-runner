@@ -705,9 +705,11 @@ suite('proj0.31 - include/exclude patterns', () => {
 suite('proj0.32 - initializationProcedure', () => {
 	test('proj0.32A - super procedure expected but not found', async () => {
 		await runTestsInFile('src/test_32.p').then(() => {
-			assert.fail('test passed, but should have failed')
+			assert.tests.errored(1)
+			assert.tests.failed(0)
+			assert.tests.passed(0)
 		}, (e: unknown) => {
-			assert.ok('test failed successfully (e=' + e + ')')
+			assert.fail('unexpected test error (e=' + e + ')')
 		})
 		return
 	})
@@ -715,9 +717,11 @@ suite('proj0.32 - initializationProcedure', () => {
 	test('proj0.32B - super procedure in initializationProcedure successful', async () => {
 		FileUtils.copyFile('.vscode/ablunit-test-profile.proj0.32.json', '.vscode/ablunit-test-profile.json')
 		await runTestsInFile('src/test_32.p').then(() => {
-			assert.ok('test ran successfully')
+			assert.tests.errored(0)
+			assert.tests.failed(0)
+			assert.tests.passed(1)
 		}, (e: unknown) => {
-			assert.fail('test failed: ' + e)
+			assert.fail('unexpected test error (e=' + e + ')')
 		})
 		return
 	})
