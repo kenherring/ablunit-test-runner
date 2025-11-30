@@ -1,6 +1,6 @@
 # [1.4.4](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.4.4) - 2025-11-26 (pre-release)
 
-* Prepare 1.4.4 (+#454)
+* Prepare 1.4.4 (#454)
 * Add `initializationProcedure` option to ablunit-test-profile.json (#453)
 * Bump typescript-eslint from 8.46.4 to 8.48.0 (#449)
 * Bump @vscode/vsce from 3.7.0 to 3.7.1 (#450)
