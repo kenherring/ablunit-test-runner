@@ -1,5 +1,6 @@
-# [1.4.3](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.4.3) - 2025-11-26 (pre-release)
+# [1.4.4](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.4.4) - 2025-11-26 (pre-release)
 
+* Prepare 1.4.4 (#454)
 * Add `initializationProcedure` option to ablunit-test-profile.json (#453)
 * Bump typescript-eslint from 8.46.4 to 8.48.0 (#449)
 * Bump @vscode/vsce from 3.7.0 to 3.7.1 (#450)
@@ -8,7 +9,7 @@
 * Bump the npm_and_yarn group across 1 directory with 1 update (#446)
 * Bump js-yaml from 3.14.1 to 3.14.2 in the npm_and_yarn group across 1 directory (#445)
 
-**Full Changelog**: [1.4.0...1.4.3](https://github.com/kenherring/ablunit-test-runner/compare/1.4.1...1.4.3)
+**Full Changelog**: [1.4.0...1.4.4](https://github.com/kenherring/ablunit-test-runner/compare/1.4.0...1.4.4)
 
 # [1.4.0](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.4.0) - 2025-11-12
 
