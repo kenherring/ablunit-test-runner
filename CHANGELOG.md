@@ -9,7 +9,7 @@
 * Bump the npm_and_yarn group across 1 directory with 1 update (#446)
 * Bump js-yaml from 3.14.1 to 3.14.2 in the npm_and_yarn group across 1 directory (#445)
 
-**Full Changelog**: [1.4.0...1.4.4](https://github.com/kenherring/ablunit-test-runner/compare/1.4.1...1.4.4)
+**Full Changelog**: [1.4.0...1.4.4](https://github.com/kenherring/ablunit-test-runner/compare/1.4.0...1.4.4)
 
 # [1.4.0](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.4.0) - 2025-11-12
 
