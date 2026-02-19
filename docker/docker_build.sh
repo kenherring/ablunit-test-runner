@@ -76,8 +76,7 @@ set_node_version_for_tag () {
 		NODE_VERSION_FOR_TAG=24
 	elif [ "$DOCKER_TAG" = 13.0.0 ]; then
 		## Latest
-		NODE_VERSION_FOR_TAG=24
-		# NODE_VERSION_FOR_TAG=25
+		NODE_VERSION_FOR_TAG=25
 	else
 		NODE _VERSION_FOR_TAG="$(node --version)"
 		NODE_VERSION_FOR_TAG=${NODE_VERSION_FOR_TAG:1}
