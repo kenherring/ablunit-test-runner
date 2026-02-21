@@ -298,7 +298,7 @@ function getTests () {
 		// 'DebugLines',
 		// 'proj0',
 		// 'proj1',
-		'proj2',
+		// 'proj2',
 		// 'proj3',
 		// 'proj4',
 		// 'proj5',
