@@ -103,7 +103,7 @@
 		"@vscode/vsce": "^3.7.1",
 		"esbuild": "^0.27.3",
 		"esbuild-register": "^3.6.0",
-		"eslint": "^9.39.2",
+		"eslint": "^10.0.1",
 		"eslint-plugin-promise": "^7.2.1",
 		"mocha": "^11.7.5",
 		"mocha-multi-reporters": "^1.5.1",
