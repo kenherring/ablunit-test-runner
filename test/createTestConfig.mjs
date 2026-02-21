@@ -290,13 +290,13 @@ function getTests () {
 
 	const skipProjects = [
 		// 'DebugListingPreview',
-		'OpenedgeProjectParser',
-		'SourceMapRCodeParser',
-		'SourceMapXrefParser',
-		'TestProfileParser',
+		// 'OpenedgeProjectParser',
+		// 'SourceMapRCodeParser',
+		// 'SourceMapXrefParser',
+		// 'TestProfileParser',
 		// 'AtStart',
 		// 'DebugLines',
-		'proj0',
+		// 'proj0',
 		// 'proj1',
 		// 'proj2',
 		'proj3',
