@@ -286,7 +286,7 @@ function getTests () {
 
 	const skipProjects = [
 		// 'OpenedgeProjectParser',
-		// 'SourceMapRCodeParser',
+		'SourceMapRCodeParser',
 		// 'SourceMapXrefParser',
 		// 'TestProfileParser',
 		// 'AtStart',
