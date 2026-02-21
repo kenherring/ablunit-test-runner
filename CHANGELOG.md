@@ -1,6 +1,9 @@
-# [1.4.5](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.4.5) - 2026-02-19 (pre-release)
+# [1.4.5](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.4.5) - 2026-02-21 (pre-release)
 
 * Add OpenEdge 13.0.0 test target (#473)
+* npm audit fix (#474)
+* Bump typescript-eslint from 8.48.0 to 8.50.1 (#467)
+* Bump esbuild from 0.27.1 to 0.27.2 (#465)
 * Bump esbuild from 0.27.0 to 0.27.1 (#457)
 * Bump jws from 3.2.2 to 3.2.3 in the npm_and_yarn group across 1 directory (#455)
 
