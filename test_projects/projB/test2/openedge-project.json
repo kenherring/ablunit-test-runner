@@ -1,0 +1,20 @@
+{
+    "name": "projB_test2",
+    "charset": "utf-8",
+    "version": "0",
+    "oeversion": "12.8",
+    "buildPath": [
+        {
+            "path": "source",
+            "type": "source"
+        }
+    ],
+    "dbConnections": [
+        {
+            "name": "sp2k",
+            "connect": "-db target/db/sp2k -1",
+            "schemaFile": "target/sp2k.pf",
+            "aliases": []
+        }
+    ]
+}

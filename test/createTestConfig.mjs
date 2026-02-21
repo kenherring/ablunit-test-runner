@@ -303,6 +303,7 @@ function getTests () {
 		// 'proj8',
 		// 'proj9',
 		// 'projA',
+		// 'projB',
 		// 'workspace0',
 		// 'workspace1',
 	]
