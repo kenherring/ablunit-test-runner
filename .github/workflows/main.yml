@@ -45,7 +45,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        oe-version: [ 12.2.12, 12.8.1, 12.8.9 ]
+        oe-version: [ 12.2.12, 12.8.1, 12.8.9, 13.0.0 ]
     runs-on: ubuntu-latest
     container:
       image: kherring/ablunit-test-runner:${{ matrix.oe-version }}
