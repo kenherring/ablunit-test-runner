@@ -182,6 +182,9 @@ save_and_print_debug_output () {
 		cp -r "$FROM_DIR" "$TO_DIR"
 	fi
 
+	log_it "----- FAILURES -----"
+	grep -r '<failure>' artifacts/mocha_results_xunit/ || true
+
 	$VERBOSE || return 0
 	log_it "rcode:"
 	find . -name '*.r'

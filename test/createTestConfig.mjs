@@ -289,7 +289,7 @@ function getTests () {
 	}
 
 	const skipProjects = [
-		'DebugListingPreview',
+		// 'DebugListingPreview',
 		'OpenedgeProjectParser',
 		'SourceMapRCodeParser',
 		'SourceMapXrefParser',
