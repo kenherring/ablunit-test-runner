@@ -61,8 +61,8 @@ function getMochaTimeout (projName) {
 		case 'proj7B': return 120000
 	}
 
-	// return 30000
-	return 50000 // could be shorter if we didn't have to wait for lang server in some cases
+	return 30000
+	// return 50000 // could be shorter if we didn't have to wait for lang server in some cases
 }
 
 
@@ -81,7 +81,7 @@ function getMochaOpts (projName) {
 		timeout: getMochaTimeout(projName),
 		// ui: 'tdd', // describe, it, etc
 		// ui: 'bdd' // default; suite, test, etc
-		retries: 2,
+		retries: 0,
 		parallel: false,
 		bail: true,
 		require: [
@@ -127,8 +127,8 @@ function getLaunchArgs (projName) {
 	// args.push('--profile-temp') // create a temporary profile for the test run in lieu of cleaning up user data
 	// args.push('--help')
 	// args.push('--extensions-dir', '<dir>')
-	// args.push('--list-extensions')
-	// args.push('--show-versions')
+	args.push('--list-extensions')
+	args.push('--show-versions')
 	// args.push('--category', '<category>')
 	// args.push('--install-extension <ext-id>')
 
@@ -171,6 +171,7 @@ function getLaunchArgs (projName) {
 	if (!enableExtensions.includes(projName)) {
 		args.push('--disable-extensions')
 	}
+	args.push('--disable-extension', 'github.copilot-chat')
 	args.push('--disable-extension', 'vscode.builtin-notebook-renderers')
 	args.push('--disable-extension', 'vscode.emmet')
 	args.push('--disable-extension', 'vscode.git')
@@ -286,7 +287,7 @@ function getTests () {
 
 	const skipProjects = [
 		// 'OpenedgeProjectParser',
-		'SourceMapRCodeParser',
+		// 'SourceMapRCodeParser',
 		// 'SourceMapXrefParser',
 		// 'TestProfileParser',
 		// 'AtStart',
