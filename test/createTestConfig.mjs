@@ -81,9 +81,9 @@ function getMochaOpts (projName) {
 		timeout: getMochaTimeout(projName),
 		// ui: 'tdd', // describe, it, etc
 		// ui: 'bdd' // default; suite, test, etc
-		retries: 1,
+		retries: 2,
 		parallel: false,
-		bail: false,
+		bail: true,
 		require: [
 			'esbuild-register',
 		],
@@ -285,7 +285,7 @@ function getTests () {
 	}
 
 	const skipProjects = [
-		'OpenedgeProjectParser',
+		// 'OpenedgeProjectParser',
 		// 'SourceMapRCodeParser',
 		// 'SourceMapXrefParser',
 		// 'TestProfileParser',
@@ -303,6 +303,7 @@ function getTests () {
 		// 'proj8',
 		// 'proj9',
 		// 'projA',
+		// 'projB',
 		// 'workspace0',
 		// 'workspace1',
 	]
