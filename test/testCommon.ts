@@ -283,6 +283,8 @@ export function getXrefCount (workspaceFolder?: WorkspaceFolder) {
 	return getFileCountByExt('xref', workspaceFolder)
 }
 
+let previousFileCount = 0
+
 function getFileCountByExt (ext: string, workspaceFolder?: WorkspaceFolder | Uri) {
 	let uri: Uri | undefined = undefined
 	if (!workspaceFolder) {
@@ -300,10 +302,16 @@ function getFileCountByExt (ext: string, workspaceFolder?: WorkspaceFolder | Uri
 	const g = globSync('**/*.' + ext, { cwd: uri.fsPath })
 	const fileCount = g.length
 	if (fileCount >= 0) {
-		log.info('\'*.r\' files=' + fileCount + ' (path=' + uri.fsPath + ')')
-		// for (const file of g) {
-		// 	log.info('\t' + file)
-		// }
+		if (previousFileCount > fileCount) {
+			previousFileCount = -1
+		}
+		if (previousFileCount != fileCount) {
+			log.info('\'*.r\' files=' + fileCount + ' (path=' + uri.fsPath + ')')
+			previousFileCount = fileCount
+			// for (const file of g) {
+			// 	log.info('\t' + file)
+			// }
+		}
 		return fileCount
 	}
 	throw new Error('fileCount is not a positive number! fileCount=' + fileCount + '(ext=' + ext + ')')
