@@ -192,10 +192,13 @@ function getLaunchArgs (projName) {
 	args.push('--disable-crash-reporter')
 	args.push('--disable-gpu-sandbox')
 	args.push('--disable-gpu')
+	// args.push('--disable-lcd-text')
 	args.push('--disable-telemetry')
 	args.push('--disable-updates')
 	args.push('--disable-workspace-trust')
 	args.push('--disable-dev-shm-usage', '--no-xshm')
+
+	// args.push('--transient')
 	return args
 }
 
