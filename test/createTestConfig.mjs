@@ -99,7 +99,7 @@ function getMochaOpts (projName) {
 		}
 	}
 
-	if (process.env['CIRCLECI'] == 'true') {
+	if (process.env['CI'] == 'true') {
 		mochaOpts.bail = false
 	}
 
@@ -127,8 +127,8 @@ function getLaunchArgs (projName) {
 	// args.push('--profile-temp') // create a temporary profile for the test run in lieu of cleaning up user data
 	// args.push('--help')
 	// args.push('--extensions-dir', '<dir>')
-	args.push('--list-extensions')
-	args.push('--show-versions')
+	// args.push('--list-extensions')
+	// args.push('--show-versions')
 	// args.push('--category', '<category>')
 	// args.push('--install-extension <ext-id>')
 
