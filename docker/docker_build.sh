@@ -50,7 +50,7 @@ initialize () {
 		# DOCKER_TAGS+=('12.8.6')
 		# DOCKER_TAGS+=('12.8.7')
 		# DOCKER_TAGS+=('12.8.8')
-		DOCKER_TAGS+=('12.8.9')
+		# DOCKER_TAGS+=('12.8.9')
 		DOCKER_TAGS+=('12.8.11')
 		DOCKER_TAGS+=('13.0.0')
 	fi
@@ -76,7 +76,7 @@ set_node_version_for_tag () {
 		## Most Recent LTS
 		NODE_VERSION_FOR_TAG=24
 	else
-		NODE _VERSION_FOR_TAG="$(node --version)"
+		NODE_VERSION_FOR_TAG="$(node --version)"
 		NODE_VERSION_FOR_TAG=${NODE_VERSION_FOR_TAG:1}
 	fi
 
