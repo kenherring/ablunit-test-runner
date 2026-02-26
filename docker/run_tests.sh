@@ -46,7 +46,7 @@ initialize () {
 	CPUS=2
 	MEMORY=4g
 
-	while getopts "bBCdimnsxo:p:S:t:PvV:h" OPT; do
+	while getopts "bBCdig:mnsxo:p:S:t:PvV:h" OPT; do
 		case $OPT in
 			o)	ABLUNIT_TEST_RUNNER_OE_VERSION=$OPTARG ;;
 			b)	OPTS='-b' ;;
@@ -54,6 +54,7 @@ initialize () {
 			C)	DELETE_CACHE_VOLUME=true ;;
 			d)  DELETE_CACHE_VOLUME=true ;;
 			i)	TEST_PROJECT=dummy-ext ;;
+			g)  TEST_GREP_PATTERN=$OPTARG ;;
 			m)	STAGED_ONLY=false ;;
 			h)	usage && exit 0 ;;
 			P)	CREATE_PACKAGE=true ;;
@@ -129,7 +130,7 @@ initialize () {
 		usage && exit 1
 	fi
 
-	export GIT_BRANCH PROGRESS_CFG_BASE64 STAGED_ONLY TEST_PROJECT CREATE_PACKAGE VERBOSE
+	export GIT_BRANCH PROGRESS_CFG_BASE64 STAGED_ONLY TEST_PROJECT TEST_GREP_PATTERN CREATE_PACKAGE VERBOSE
 	export ABLUNIT_TEST_RUNNER_DBUS_NUM \
 		ABLUNIT_TEST_RUNNER_PROJECT_NAME \
 		ABLUNIT_TEST_RUNNER_OE_VERSION \
