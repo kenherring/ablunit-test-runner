@@ -1,5 +1,6 @@
 # [1.4.5](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.4.5) - 2026-02-21 (pre-release)
 
+* Add OpenEdge 13.0.0 test target (#473)
 * Fix intermittent test failures (#477)
 * npm audit fix (#474)
 * Bump qs from 6.14.0 to 6.14.1 in the npm_and_yarn group across 1 directory (#468)
