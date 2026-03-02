@@ -4,6 +4,8 @@
 block-level on error undo, throw.
 create widget-pool.
 
+define input parameter sessionParameter as character no-undo.
+
 define variable testConfig as class OpenEdge.ABLUnit.Runner.TestConfig no-undo.
 define variable quitOnEnd as logical init false no-undo.
 define variable VERBOSE as logical no-undo.
@@ -116,10 +118,10 @@ procedure main :
 	if VERBOSE then message 'START main'.
 
 	session:suppress-warnings = true.
-	run VSCode/createDatabaseAliases.p(VERBOSE).
+	run VSCode/createDatabaseAliases.p(VERBOSE, sessionParameter).
 
-	assign updateFile = getParameter(trim(trim(session:parameter,'"'),"'"), 'ATTR_ABLUNIT_EVENT_FILE').
-	testConfig = readTestConfig(getParameter(trim(trim(session:parameter,'"'),"'"), 'CFG')).
+	assign updateFile = getParameter(trim(trim(sessionParameter,'"'),"'"), 'ATTR_ABLUNIT_EVENT_FILE').
+	testConfig = readTestConfig(getParameter(trim(trim(sessionParameter,'"'),"'"), 'CFG')).
 	quitOnEnd = (testConfig = ?) or testConfig:quitOnEnd.
 
 	define variable initializationProcedure as character no-undo.
