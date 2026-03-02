@@ -1,5 +1,6 @@
 
 define input parameter VERBOSE as logical no-undo.
+define input parameter sessionParameter as character no-undo.
 
 define variable aliasesSessionParam as character no-undo.
 define variable paramStart as integer no-undo.
@@ -11,18 +12,18 @@ define variable aliasName as character no-undo.
 define variable databaseName as character no-undo.
 if VERBOSE then message 'START createDatabaseAliases'.
 
-if index(session:parameter,"ALIASES=") <= 0 then
+if index(sessionParameter,"ALIASES=") <= 0 then
 do:
-    if VERBOSE then message 'END createDatabaseAliases - no ALIASES in session:parameter'.
+    if VERBOSE then message 'END createDatabaseAliases - no ALIASES in sessionParameter'.
     return.
 end.
 
-assign paramStart = index(session:parameter,'ALIASES=') + 8.
-assign paramEnd = index(session:parameter,' ',paramStart).
+assign paramStart = index(sessionParameter,'ALIASES=') + 8.
+assign paramEnd = index(sessionParameter,' ',paramStart).
 if paramEnd = 0 then
-    paramEnd = length(session:parameter) + 1.
+    paramEnd = length(sessionParameter) + 1.
 
-assign aliasesSessionParam = substring(session:parameter, paramStart, paramEnd - paramStart).
+assign aliasesSessionParam = substring(sessionParameter, paramStart, paramEnd - paramStart).
 
 do dbCount = 1 to num-entries(aliasesSessionParam,';'):
     assign aliasList = entry(dbCount, aliasesSessionParam,';').
