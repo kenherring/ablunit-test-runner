@@ -4,7 +4,7 @@ set -eou pipefail
 usage () {
 	echo "
 usage: $0 [-p] [-n] [-h]
-		[-o < 12.2.12 | 12.8.1 | 12.8.9 | 12.8.11 | 13.0.0 | ... >]
+		[-o < 12.2.12 | 12.8.1 | 12.8.9 | 12.8.11 | ... >]
 		[-N < 20 | 22 | 24 | ... >]
 options:
   -p                push docker images to dockerhub after build
@@ -52,7 +52,6 @@ initialize () {
 		# DOCKER_TAGS+=('12.8.8')
 		# DOCKER_TAGS+=('12.8.9')
 		DOCKER_TAGS+=('12.8.11')
-		DOCKER_TAGS+=('13.0.0')
 	fi
 
 	mkdir -p docker/.rssw
