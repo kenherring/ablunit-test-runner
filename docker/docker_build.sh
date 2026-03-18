@@ -50,7 +50,9 @@ initialize () {
 		# DOCKER_TAGS+=('12.8.6')
 		# DOCKER_TAGS+=('12.8.7')
 		# DOCKER_TAGS+=('12.8.8')
-		DOCKER_TAGS+=('12.8.9')
+		# DOCKER_TAGS+=('12.8.9')
+		DOCKER_TAGS+=('12.8.11')
+		DOCKER_TAGS+=('13.0.0')
 	fi
 
 	mkdir -p docker/.rssw
@@ -70,8 +72,8 @@ set_node_version_for_tag () {
 	elif [ "$DOCKER_TAG" = 12.8.1 ]; then
 		## Most Recent LTS
 		NODE_VERSION_FOR_TAG=22
-	elif [ "$DOCKER_TAG" = 12.8.9 ]; then
-		## Latest
+	elif [ "$DOCKER_TAG" = 12.8.11 ]; then
+		## Most Recent LTS
 		NODE_VERSION_FOR_TAG=24
 	elif [ "$DOCKER_TAG" = 13.0.0 ]; then
 		## Latest
