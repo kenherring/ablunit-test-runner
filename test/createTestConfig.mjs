@@ -61,8 +61,8 @@ function getMochaTimeout (projName) {
 		case 'proj7B': return 120000
 	}
 
-	// return 30000
-	return 50000 // could be shorter if we didn't have to wait for lang server in some cases
+	return 30000
+	// return 50000 // could be shorter if we didn't have to wait for lang server in some cases
 }
 
 
@@ -81,9 +81,9 @@ function getMochaOpts (projName) {
 		timeout: getMochaTimeout(projName),
 		// ui: 'tdd', // describe, it, etc
 		// ui: 'bdd' // default; suite, test, etc
-		retries: 1,
+		retries: 0,
 		parallel: false,
-		bail: false,
+		bail: true,
 		require: [
 			'esbuild-register',
 		],
@@ -99,7 +99,7 @@ function getMochaOpts (projName) {
 		}
 	}
 
-	if (process.env['CIRCLECI'] == 'true') {
+	if (process.env['CI'] == 'true') {
 		mochaOpts.bail = false
 	}
 
@@ -171,6 +171,7 @@ function getLaunchArgs (projName) {
 	if (!enableExtensions.includes(projName)) {
 		args.push('--disable-extensions')
 	}
+	args.push('--disable-extension', 'github.copilot-chat')
 	args.push('--disable-extension', 'vscode.builtin-notebook-renderers')
 	args.push('--disable-extension', 'vscode.emmet')
 	args.push('--disable-extension', 'vscode.git')
@@ -191,10 +192,13 @@ function getLaunchArgs (projName) {
 	args.push('--disable-crash-reporter')
 	args.push('--disable-gpu-sandbox')
 	args.push('--disable-gpu')
+	// args.push('--disable-lcd-text')
 	args.push('--disable-telemetry')
 	args.push('--disable-updates')
 	args.push('--disable-workspace-trust')
 	args.push('--disable-dev-shm-usage', '--no-xshm')
+
+	// args.push('--transient')
 	return args
 }
 
@@ -285,7 +289,8 @@ function getTests () {
 	}
 
 	const skipProjects = [
-		'OpenedgeProjectParser',
+		// 'DebugListingPreview',
+		// 'OpenedgeProjectParser',
 		// 'SourceMapRCodeParser',
 		// 'SourceMapXrefParser',
 		// 'TestProfileParser',
