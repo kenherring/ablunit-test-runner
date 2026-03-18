@@ -3,7 +3,7 @@ set -eou pipefail
 
 usage () {
 	echo "
-usage: $0 [ -o (12.2.12 | 12.8.1 | 12.8.9 | 12.8.11 | ... | all) ]
+usage: $0 [ -o (12.2.12 | 12.7.0 | 12.8.1 | 12.8.9 | 12.8.11 | ... | all) ]
 	[ -V (stable | proposedapi | insiders | X.Y.Z] )] [ -p <project_name> ] [-bBimPv]
 	[ -s (small | medium | large) ]
 
