@@ -4,7 +4,7 @@ set -eou pipefail
 usage () {
 	echo "
 usage: $0 [-p] [-n] [-h]
-		[-o < 12.2.12 | 12.8.1 | 12.8.9 | 12.8.11 | ... >]
+		[-o < 12.2.12 | 12.8.1 | 12.8.11 | ... >]
 		[-N < 20 | 22 | 24 | ... >]
 options:
   -p                push docker images to dockerhub after build
