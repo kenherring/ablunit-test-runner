@@ -1,13 +1,18 @@
-# [1.4.5](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.4.5) - 2026-02-21 (pre-release)
+# [1.4.7](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.4.7) - 2026-03-14 (pre-release)
 
 * Configure dependabot for github actions ecosystem (#475)
+* Add OpenEdge 12.8.11 test target (#484)
+* Bump typescript-eslint from 8.56.0 to 8.56.1 (#482)
+* Improve intermittent test failures (#477)
 * npm audit fix (#474)
+* Bump qs from 6.14.0 to 6.14.1 in the npm_and_yarn group across 1 directory (#468)
+* Bump lodash from 4.17.21 to 4.17.23 in /dummy-ext in the npm_and_yarn group across 1 directory (#470)
 * Bump typescript-eslint from 8.48.0 to 8.50.1 (#467)
 * Bump esbuild from 0.27.1 to 0.27.2 (#465)
 * Bump esbuild from 0.27.0 to 0.27.1 (#457)
 * Bump jws from 3.2.2 to 3.2.3 in the npm_and_yarn group across 1 directory (#455)
 
-**Full Changelog**: [1.4.4...1.4.5](https://github.com/kenherring/ablunit-test-runner/compare/1.4.4...1.4.5)
+**Full Changelog**: [1.4.4...1.4.7](https://github.com/kenherring/ablunit-test-runner/compare/1.4.5...1.4.7)
 
 # [1.4.4](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.4.4) - 2025-11-26 (pre-release)
 
