@@ -1,6 +1,12 @@
-# [1.4.7](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.4.7) - 2026-03-14 (pre-release)
+# [1.4.9](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.4.9) - 2026-03-19 (pre-release)
 
+* Improve github actions logging with grouping (#503)
+* Bump @tootallnate/once from 1.1.2 to removed in /dummy-ext in the npm_and_yarn group across 1 directory (#495)
+* Bump PCT from v230 to v231 (#476)
 * Add OpenEdge 12.8.11 test target (#484)
+* Bump minimatch from 10.2.2 to 10.2.4 (#493)
+* Bump typescript-eslint from 8.56.1 to 8.57.0 (#497)
+* Bump the npm_and_yarn group across 1 directory with 1 update (#486)
 * Bump typescript-eslint from 8.56.0 to 8.56.1 (#482)
 * Improve intermittent test failures (#477)
 * npm audit fix (#474)
@@ -11,7 +17,7 @@
 * Bump esbuild from 0.27.0 to 0.27.1 (#457)
 * Bump jws from 3.2.2 to 3.2.3 in the npm_and_yarn group across 1 directory (#455)
 
-**Full Changelog**: [1.4.4...1.4.7](https://github.com/kenherring/ablunit-test-runner/compare/1.4.5...1.4.7)
+**Full Changelog**: [1.4.4...1.4.9](https://github.com/kenherring/ablunit-test-runner/compare/1.4.7...1.4.9)
 
 # [1.4.4](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.4.4) - 2025-11-26 (pre-release)
 
