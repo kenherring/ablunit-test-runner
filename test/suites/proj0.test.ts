@@ -78,12 +78,12 @@ teardown('proj0 - afterEach', () => {
 			log.warn('disposables.length != 0')
 		}
 	}
-	log.info('::endgroup::')
 })
 
 suiteTeardown('proj0 - after', () => {
 	FileUtils.renameFile(toUri('.vscode/settings.json.bk'), toUri('.vscode/settings.json'))
 	FileUtils.renameFile(toUri(backupProjectFile), toUri('openedge-project.json'))
+	log.info('::endgroup::')
 })
 
 test('proj0.01 - ${workspaceFolder}/ablunit.json file exists', () => {
