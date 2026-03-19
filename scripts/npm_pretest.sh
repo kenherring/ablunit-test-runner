@@ -17,6 +17,7 @@ initialize () {
 		PATH=$PATH:$DLC/ant/bin
 	fi
 	CIRCLECI=${CIRCLECI:-false}
+	CI=${CI:-false}
 	if $CIRCLECI; then
 		HOME=/github/home
 	fi
@@ -175,7 +176,7 @@ package () {
 	else
 		PACKAGE_OUT_OF_DATE=true
 	fi
-	log_it "CIRCLECI=$CIRCLECI PACKAGE_OUT_OF_DATE=$PACKAGE_OUT_OF_DATE VSIX_COUNT=$VSIX_COUNT"
+	log_it "CIRCLECI=$CIRCLECI CI=$CI PACKAGE_OUT_OF_DATE=$PACKAGE_OUT_OF_DATE VSIX_COUNT=$VSIX_COUNT"
 	if $PACKAGE_OUT_OF_DATE || $CIRCLECI || [ "$VSIX_COUNT" = "0" ]; then
 		./scripts/package.sh
 	fi
@@ -189,6 +190,7 @@ package () {
 
 ########## MAIN BLOCK ##########
 START_TIME=$(date +%s)
+! ${CI:-false} || echo "::group::npm_pretest"
 initialize "$@"
 copy_user_settings
 get_performance_test_code
@@ -198,3 +200,4 @@ package
 rm -rf artifacts/*
 END_TIME=$(date +%s)
 log_it "completed successfully! (time=$((END_TIME - START_TIME))s)"
+! ${CI:-false} || echo "::endgroup::"

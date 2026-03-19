@@ -8,6 +8,7 @@ initialize() {
     local VSIX_COUNT
 
     CIRCLECI=${CIRCLECI:-false}
+    CI=${CI:-false}
     # PACKAGE_VERSION=$(node -p "require('./package.json').version")
     export DONT_PROMPT_WSL_INSTALL=true
 

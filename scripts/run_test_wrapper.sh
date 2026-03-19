@@ -46,6 +46,7 @@ initialize () {
 	log_it "ABLUNIT_TEST_RUNNER_RUN_SCRIPT_FLAG=$ABLUNIT_TEST_RUNNER_RUN_SCRIPT_FLAG"
 	log_it "ABLUNIT_TEST_RUNNER_UNIT_TESTING=$ABLUNIT_TEST_RUNNER_UNIT_TESTING"
 	log_it "CIRCLECI=$CIRCLECI"
+	log_it "CI=$CI"
 
 	update_oe_version
 }
@@ -142,6 +143,7 @@ run_tests () {
 		export JAVA_TOOL_OPTIONS=${JAVA_TOOL_OPTIONS:-'-Dfile.encoding=UTF8'}
 	fi
 
+	! ${CI:-false} || echo "::endgroup::"
 	log_it "starting 'npm $RUN_SCRIPT'"
 	EXIT_CODE=0
 	xvfb-run -a npm run "$RUN_SCRIPT" || EXIT_CODE=$?
@@ -201,6 +203,7 @@ process_exit_code () {
 }
 
 ########## MAIN BLOCK ##########
+! ${CI:-false} || echo "::group::run_test_wrapper start"
 initialize "$@"
 dbus_config
 run_tests
