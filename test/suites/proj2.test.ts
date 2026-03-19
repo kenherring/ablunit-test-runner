@@ -5,8 +5,14 @@ const workspaceUri = getWorkspaceUri()
 
 suite('proj2 - Extension Test Suite', () => {
 
+
 	suiteSetup('proj2 - before', async () => {
+		log.info('::group::proj2')
 		await suiteSetupCommon()
+	})
+
+	suiteTeardown('proj1 - teardown', () => {
+		log.info('::endgroup::')
 	})
 
 	setup('proj2 - beforeEach', () => {

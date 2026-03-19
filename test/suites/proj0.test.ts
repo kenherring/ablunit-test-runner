@@ -19,6 +19,7 @@ let firstSetup = true
 let ext: Extension<ABLUnitTestRunner>
 
 suiteSetup('proj0 - before', async () => {
+	log.info('::group::proj0')
 	FileUtils.copyFile('.vscode/settings.json', '.vscode/settings.json.bk')
 	FileUtils.copyFile('openedge-project.json', backupProjectFile)
 
@@ -77,6 +78,7 @@ teardown('proj0 - afterEach', () => {
 			log.warn('disposables.length != 0')
 		}
 	}
+	log.info('::endgroup::')
 })
 
 suiteTeardown('proj0 - after', () => {

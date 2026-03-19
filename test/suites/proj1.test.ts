@@ -10,11 +10,16 @@ const workspaceUri = getWorkspaceUri()
 suite('proj1 - Extension Test Suite', () => {
 
 	suiteSetup('proj1 - suiteSetup', async () => {
+		log.info('::group::proj1')
 		FileUtils.copyFile(Uri.joinPath(workspaceUri, 'openedge-project.json'), Uri.joinPath(workspaceUri, 'openedge-project.bk.json'), { force: true })
 		FileUtils.copyFile(Uri.joinPath(workspaceUri, '.vscode', 'ablunit-test-profile.json'), Uri.joinPath(workspaceUri, '.vscode', 'ablunit-test-profile.bk.json'), { force: true })
 		FileUtils.copyFile(Uri.joinPath(workspaceUri, '.vscode', 'settings.json'), Uri.joinPath(workspaceUri, '.vscode', 'settings.bk.json'), { force: true })
 		await suiteSetupCommon()
 		log.info('suiteSetup complete')
+	})
+
+	suiteTeardown('proj1 - teardown', () => {
+		log.info('::endgroup::')
 	})
 
 	setup('proj1 - beforeEach', () => {
