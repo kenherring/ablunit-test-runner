@@ -26,7 +26,7 @@ common_init () {
 	echo "CIRCLE_TAG=${CIRCLE_TAG:-}"
 	echo "CIRCLE_BRANCH=${CIRCLE_BRANCH:-}"
 	echo "CIRCLECI=${CIRCLECI:-}"
-	echo "CI=${CI:-}
+	echo "CI=${CI:-}"
 
 	export CIRCLECI CIRCLE_TAG CIRCLE_BRANCH
 }
