@@ -1,6 +1,7 @@
 # [1.4.9](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.4.9) - 2026-03-19 (pre-release)
 
 * Improve github actions logging with grouping (#503)
+* Configure dependabot for github actions ecosystem (#475)
 * Bump @tootallnate/once from 1.1.2 to removed in /dummy-ext in the npm_and_yarn group across 1 directory (#495)
 * Bump PCT from v230 to v231 (#476)
 * Add OpenEdge 12.8.11 test target (#484)
