@@ -4,7 +4,6 @@ set -eou pipefail
 . scripts/common.sh
 
 initialize () {
-	# log_group_start "$0"
 	log_it "pwd=$(pwd) whoami=$(whoami) HOME=${HOME}"
 
 
@@ -198,4 +197,3 @@ package
 rm -rf artifacts/*
 END_TIME=$(date +%s)
 log_it "completed successfully! (time=$((END_TIME - START_TIME))s)"
-# log_group_end
