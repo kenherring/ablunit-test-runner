@@ -2,6 +2,8 @@
 
 . scripts/common.sh
 
+set -x
+
 main () {
     log_it
     PACKAGE_VERSION=$(jq -r '.version' package.json)
