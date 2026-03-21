@@ -1,5 +1,5 @@
 /* eslint-disable no-console */
-import { Location, LogLevel, TestItem, TestRun, Uri, window } from 'vscode'
+import { Location, LogLevel, LogOutputChannel, TestItem, TestRun, Uri, window } from 'vscode'
 
 interface ITestInfo {
 	testRun: TestRun
@@ -13,10 +13,21 @@ enum NotificationType {
 	Error = 'Error',
 }
 
+class GroupLogger {
+
+	public start (name: string) {
+		console.info('::group::' + name)
+	}
+
+	public end () {
+		console.info('::endgroup::')
+	}
+}
+
 class Logger {
 	private static instance: Logger
 
-	private readonly logOutputChannel
+	private readonly logOutputChannel: LogOutputChannel
 	private readonly consoleLogLevel = LogLevel.Info
 	private readonly testResultsLogLevel = LogLevel.Info
 	private logLevel: LogLevel
@@ -25,6 +36,7 @@ class Logger {
 	private readonly extensionCodeDir = __dirname
 	private readonly baseDir = __dirname
 	notificationsEnabled = true
+	public readonly group: GroupLogger
 
 	private constructor (extCodeDir?: string) {
 		this.logLevel = LogLevel.Info
@@ -36,7 +48,9 @@ class Logger {
 			this.extensionCodeDir = extCodeDir
 		}
 		this.baseDir = Uri.joinPath(Uri.file(this.extensionCodeDir), '..').fsPath
+		this.group = new GroupLogger()
 	}
+
 	public static getInstance () {
 		Logger.instance = Logger.instance ?? new Logger()
 		return Logger.instance

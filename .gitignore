@@ -3,7 +3,7 @@
 .vscode-test/
 .vscode-test-docker/
 .worktrees/
-artifacts/
+artifacts*/
 coverage/
 dist/
 docker/.rssw/

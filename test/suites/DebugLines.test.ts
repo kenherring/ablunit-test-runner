@@ -8,7 +8,7 @@ import { ABLUnitConfig } from 'ABLUnitConfigWriter'
 const workspaceFolder = workspace.workspaceFolders![0]
 
 suiteSetup('debugLines - before', async () => {
-	log.info('::group::DebugLines')
+	log.group.start('DebugLines')
 	await suiteSetupCommon(undefined, 10)
 	const rcodeCount = getRcodeCount()
 	if (rcodeCount < 10) {
@@ -17,7 +17,7 @@ suiteSetup('debugLines - before', async () => {
 })
 
 teardown('debugLines - teardown', () => {
-	log.info('::endgroup::')
+	log.group.end()
 })
 
 test('debugLines.1 - read debug line map from rcode', async () => {

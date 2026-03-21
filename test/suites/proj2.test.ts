@@ -7,12 +7,12 @@ suite('proj2 - Extension Test Suite', () => {
 
 
 	suiteSetup('proj2 - before', async () => {
-		log.info('::group::proj2')
+		log.group.start('proj2')
 		await suiteSetupCommon()
 	})
 
 	suiteTeardown('proj1 - teardown', () => {
-		log.info('::endgroup::')
+		log.group.end()
 	})
 
 	setup('proj2 - beforeEach', () => {
