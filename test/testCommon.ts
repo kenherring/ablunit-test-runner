@@ -168,8 +168,10 @@ export function teardownCommon () {
 }
 
 export function suiteTeardownCommon () {
-	return setRuntimes()
-	log.group.end()
+	return setRuntimes().then(() => {
+		log.group.end()
+		return
+	})
 }
 
 export function setFilesExcludePattern () {

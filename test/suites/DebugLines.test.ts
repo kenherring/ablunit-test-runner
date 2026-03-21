@@ -1,5 +1,5 @@
 import { commands, Uri, workspace, window } from 'vscode'
-import { assert, getRcodeCount, getWorkspaceUri, log, suiteSetupCommon, toUri } from '../testCommon'
+import { assert, getRcodeCount, getWorkspaceUri, log, suiteSetupCommon, suiteTeardownCommon, toUri } from '../testCommon'
 import { getSourceMapFromRCode } from 'parse/SourceMapRCodeParser'
 import { PropathParser } from 'ABLPropath'
 import { ABLDebugLines } from 'ABLDebugLines'
@@ -8,7 +8,6 @@ import { ABLUnitConfig } from 'ABLUnitConfigWriter'
 const workspaceFolder = workspace.workspaceFolders![0]
 
 suiteSetup('debugLines - before', async () => {
-	log.group.start('DebugLines')
 	await suiteSetupCommon(undefined, 10)
 	const rcodeCount = getRcodeCount()
 	if (rcodeCount < 10) {
@@ -16,8 +15,8 @@ suiteSetup('debugLines - before', async () => {
 	}
 })
 
-teardown('debugLines - teardown', () => {
-	log.group.end()
+suiteTeardown('debugLines - teardown', async () => {
+	await suiteTeardownCommon()
 })
 
 test('debugLines.1 - read debug line map from rcode', async () => {
