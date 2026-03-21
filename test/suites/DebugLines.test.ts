@@ -8,7 +8,7 @@ import { ABLUnitConfig } from 'ABLUnitConfigWriter'
 const workspaceFolder = workspace.workspaceFolders![0]
 
 suiteSetup('debugLines - before', async () => {
-	await suiteSetupCommon(undefined, 10)
+	await suiteSetupCommon(undefined, undefined, 10)
 	const rcodeCount = getRcodeCount()
 	if (rcodeCount < 10) {
 		throw new Error('rcodeCount=' + rcodeCount + ' < 9')

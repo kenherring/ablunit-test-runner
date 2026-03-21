@@ -1,8 +1,9 @@
 import { CancellationError, LogLevel, commands } from 'vscode'
-import { assert, RunStatus, beforeCommon, beforeProj7, cancelTestRun, getCurrentRunData, getTestControllerItemCount, isoDate, log, refreshTests, runAllTests, waitForTestRunStatus, sleep } from '../testCommon'
+import { assert, RunStatus, beforeCommon, beforeProj7, cancelTestRun, getCurrentRunData, getTestControllerItemCount, isoDate, log, refreshTests, runAllTests, waitForTestRunStatus, sleep, suiteSetupCommon } from '../testCommon'
 import { Duration } from 'ABLUnitCommon'
 
 suiteSetup('proj7B - before', async () => {
+	await suiteSetupCommon('proj7B')
 	beforeCommon()
 	await beforeProj7()
 })
