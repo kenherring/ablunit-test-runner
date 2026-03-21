@@ -1,7 +1,16 @@
-# [1.4.9](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.4.9) - 2026-03-19 (pre-release)
+# [1.4.11](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.4.11) - 2026-03-21 (pre-release)
 
 * Improve github actions logging with grouping (#503)
+* Bump actions/download-artifact from 5 to 8 (#506)
+* Bump actions/upload-artifact from 4 to 7 (#505)
+* Bump SonarSource/sonarqube-scan-action from 6.0.0 to 7.0.0 (#507)
+* Bump esbuild from 0.27.3 to 0.27.4 (#512)
+* Bump typescript-eslint from 8.57.0 to 8.57.1 (#513)
+* Bump actions/checkout from 4 to 6 (#509)
+* Bump actions/setup-node from 4 to 6 (#504)
 * Configure dependabot for github actions ecosystem (#475)
+* Bump flatted from 3.3.3 to 3.4.2 in the npm_and_yarn group across 1 directory (#502)
+* Bump undici from 7.22.0 to 7.24.4 in the npm_and_yarn group across 1 directory (#501)
 * Bump @tootallnate/once from 1.1.2 to removed in /dummy-ext in the npm_and_yarn group across 1 directory (#495)
 * Bump PCT from v230 to v231 (#476)
 * Add OpenEdge 12.8.11 test target (#484)
@@ -18,7 +27,7 @@
 * Bump esbuild from 0.27.0 to 0.27.1 (#457)
 * Bump jws from 3.2.2 to 3.2.3 in the npm_and_yarn group across 1 directory (#455)
 
-**Full Changelog**: [1.4.4...1.4.9](https://github.com/kenherring/ablunit-test-runner/compare/1.4.7...1.4.9)
+**Full Changelog**: [1.4.4...1.4.11](https://github.com/kenherring/ablunit-test-runner/compare/1.4.9...1.4.11)
 
 # [1.4.4](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.4.4) - 2025-11-26 (pre-release)
 
