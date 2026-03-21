@@ -32,7 +32,7 @@ jobs:
         with:
           ignore_paths: ./test_projects/**
       - name: Install Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version-file: .nvmrc
       - run: ./scripts/package.sh
