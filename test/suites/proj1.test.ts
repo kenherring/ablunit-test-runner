@@ -1,5 +1,5 @@
 import { Selection, TaskEndEvent, TaskExecution, commands, tasks, window } from 'vscode'
-import { Uri, assert, getWorkspaceUri, log, runAllTests, updateConfig, getTestCount, workspace, suiteSetupCommon, getWorkspaceFolders, oeVersion, runTestAtLine, beforeCommon, updateTestProfile, runTestsInFile, TestRunProfileKind, sleep, FileUtils, suiteTeardownCommon } from '../testCommon'
+import { Uri, assert, getWorkspaceUri, log, runAllTests, updateConfig, getTestCount, workspace, suiteSetupCommon, getWorkspaceFolders, oeVersion, runTestAtLine, beforeCommon, updateTestProfile, runTestsInFile, TestRunProfileKind, sleep, FileUtils } from '../testCommon'
 import { getOEVersion } from 'parse/OpenedgeProjectParser'
 import { execSync } from 'child_process'
 import * as glob from 'glob'
@@ -29,13 +29,12 @@ suite('proj1 - Extension Test Suite', () => {
 		FileUtils.copyFile(Uri.joinPath(workspaceUri, '.vscode', 'settings.bk.json'), Uri.joinPath(workspaceUri, '.vscode', 'settings.json'), { force: true })
 	})
 
-	suiteTeardown('proj1 - suiteTeardown', async () => {
+	suiteTeardown('proj1 - suiteTeardown', () => {
 		FileUtils.deleteFile([
 			Uri.joinPath(workspaceUri, 'openedge-project.bk.json'),
 			Uri.joinPath(workspaceUri, '.vscode', 'ablunit-test-profile.bk.json'),
 			Uri.joinPath(workspaceUri, '.vscode', 'settings.bk.json'),
 		])
-		await suiteTeardownCommon()
 	})
 
 	test('proj1.1 - output files exist 1 - compile error', async () => {

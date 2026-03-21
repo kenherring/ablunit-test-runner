@@ -149,7 +149,7 @@ function getExtensionDevelopmentPath () {
 }
 
 export async function suiteSetupCommon (runtimes?: IRuntime[], rcodeCount?: number) {
-	log.group.start(projName() ?? 'unknown project')
+	log.group.start('test suite: ' + (projName() ?? 'unknown project'))
 	log.info('[suiteSetupCommon] waitForExtensionActive \'kherring.ablunit-test-runner\' (projName=' + projName() + ')')
 	await waitForExtensionActive()
 	if (enableExtensions()) {
@@ -168,10 +168,7 @@ export function teardownCommon () {
 }
 
 export function suiteTeardownCommon () {
-	return setRuntimes().then(() => {
-		log.group.end()
-		return
-	})
+	return setRuntimes()
 }
 
 export function setFilesExcludePattern () {

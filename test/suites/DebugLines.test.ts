@@ -1,5 +1,5 @@
 import { commands, Uri, workspace, window } from 'vscode'
-import { assert, getRcodeCount, getWorkspaceUri, log, suiteSetupCommon, suiteTeardownCommon, toUri } from '../testCommon'
+import { assert, getRcodeCount, getWorkspaceUri, log, suiteSetupCommon, toUri } from '../testCommon'
 import { getSourceMapFromRCode } from 'parse/SourceMapRCodeParser'
 import { PropathParser } from 'ABLPropath'
 import { ABLDebugLines } from 'ABLDebugLines'
@@ -13,10 +13,6 @@ suiteSetup('debugLines - before', async () => {
 	if (rcodeCount < 10) {
 		throw new Error('rcodeCount=' + rcodeCount + ' < 9')
 	}
-})
-
-suiteTeardown('debugLines - teardown', async () => {
-	await suiteTeardownCommon()
 })
 
 test('debugLines.1 - read debug line map from rcode', async () => {
