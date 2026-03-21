@@ -3,7 +3,7 @@ import { assert, getWorkspaceFolders, runAllTests, suiteSetupCommon, Uri } from 
 suite('workspace0 - Extension Test Suite', () => {
 
 	suiteSetup('workspace0 - before', async () => {
-		await suiteSetupCommon()
+		await suiteSetupCommon('workspace0')
 	})
 
 	test('workspace0.1 - workspaceFolder/ablunit.json file exists', async () => {

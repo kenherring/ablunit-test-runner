@@ -8,6 +8,10 @@ suiteSetup('suiteSetup', () => {
 	suiteSetupCommon_logGroup()
 })
 
+suiteTeardown('suiteTeardown', () => {
+	log.group.end()
+})
+
 test('OpenedgeProjectParser.test.1', () => {
 	log.info('----- test.1 -----')
 	if (!workspaceFolder) {

@@ -3,7 +3,7 @@ import { assert, RunStatus, beforeCommon, beforeProj7, cancelTestRun, getCurrent
 import { Duration } from 'ABLUnitCommon'
 
 suiteSetup('proj7B - before', async () => {
-	await suiteSetupCommon()
+	await suiteSetupCommon('proj7B')
 	beforeCommon()
 	await beforeProj7()
 })
