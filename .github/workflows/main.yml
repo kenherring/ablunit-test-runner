@@ -21,7 +21,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
           ref: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref_name }}
@@ -32,7 +32,7 @@ jobs:
         with:
           ignore_paths: ./test_projects/**
       - name: Install Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version-file: .nvmrc
       - run: ./scripts/package.sh
@@ -60,7 +60,7 @@ jobs:
       PRIMARY_OE_VERSION: 12.8.1
       PROGRESS_CFG_BASE64: ${{ secrets.PROGRESS_CFG_BASE64 }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
           ref: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref_name }}
@@ -68,10 +68,10 @@ jobs:
       - run: ./scripts/sonar_test_results_merge.sh
       - name: SonarQube Scan
         if: ${{ matrix.oe-version == '12.8.1' && github.actor != 'dependabot[bot]' }}
-        uses: SonarSource/sonarqube-scan-action@v6.0.0
+        uses: SonarSource/sonarqube-scan-action@v7.0.0
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: ${{ matrix.oe-version == '12.8.1' }}
         with:
           name: package-artifact
@@ -82,11 +82,11 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ github.ref == 'refs/heads/main' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
           ref: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref_name }}
-      - uses: actions/download-artifact@v5
+      - uses: actions/download-artifact@v8
         with:
           name: package-artifact
       - name: create release
