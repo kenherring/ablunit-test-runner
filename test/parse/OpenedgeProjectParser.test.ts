@@ -1,15 +1,15 @@
 import { getDLC, getOEVersion, getOpenEdgeProfileConfig } from 'parse/OpenedgeProjectParser'
-import { assert, getWorkspaceFolders, log } from '../testCommon'
+import { assert, getWorkspaceFolders, log, suiteSetupCommon_logGroup } from '../testCommon'
 import { toUri } from 'FileUtils'
 
 const workspaceFolder = getWorkspaceFolders()[0]
 
 suiteSetup('suiteSetup', () => {
-	log.info('----- suiteSetup -----')
+	suiteSetupCommon_logGroup()
 })
 
-setup('setup', () => {
-	log.info('----- setup -----')
+suiteTeardown('suiteTeardown', () => {
+	log.group.end()
 })
 
 test('OpenedgeProjectParser.test.1', () => {

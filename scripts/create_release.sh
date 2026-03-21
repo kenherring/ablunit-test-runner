@@ -35,7 +35,7 @@ main () {
     if $PRERELEASE; then
         ARGS+=(--prerelease)
         ARGS+=(--title "$PACKAGE_VERSION (prerelease)")
-        if ! ${CIRCLECI:-false}; then
+        if ! ${CI:-false}; then
             ARGS+=(--draft)
         fi
     else

@@ -20,7 +20,7 @@ main () {
         return 0
     fi
 
-    if ${CIRCLECI:-}; then
+    if ${CI:-false}; then
         if ! git config --get user.email &>/dev/null; then
             LAST_COMMITTER_EMAIL=$(git log -1 --pretty='%ae')
             git config user.email "${LAST_COMMITTER_EMAIL:-noreply@ablunit-test-runner.kenherring.com}"
