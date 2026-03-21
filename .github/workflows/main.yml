@@ -50,8 +50,8 @@ jobs:
     container:
       image: kherring/ablunit-test-runner:${{ matrix.oe-version }}
       credentials:
-        username: ${{ secrets.DOCKER_USER || '' }}
-        password: ${{ secrets.DOCKER_PAT || '' }}
+        username: ${{ secrets.DOCKER_USER || 'undefined' }}
+        password: ${{ secrets.DOCKER_PAT || 'undefined' }}
     env:
       ABLUNIT_TEST_RUNNER_OE_VERSION: ${{ matrix.oe-version }}
       ABLUNIT_TEST_RUNNER_VSCODE_VERSION: 'stable'
