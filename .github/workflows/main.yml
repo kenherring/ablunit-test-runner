@@ -68,7 +68,7 @@ jobs:
       - run: ./scripts/sonar_test_results_merge.sh
       - name: SonarQube Scan
         if: ${{ matrix.oe-version == '12.8.1' && github.actor != 'dependabot[bot]' }}
-        uses: SonarSource/sonarqube-scan-action@v6.0.0
+        uses: SonarSource/sonarqube-scan-action@v7.0.0
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       - uses: actions/upload-artifact@v4
