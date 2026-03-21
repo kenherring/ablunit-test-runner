@@ -9,8 +9,6 @@ common_init () {
 
  	# GITHUB_EVENT_NAME=pull_request
 	GITHUB_REF_TYPE="${GITHUB_REF_TYPE:-branch}"
-	CIRCLECI=${GITHUB_ACTIONS:-false}
-	CI=${CI:-false}
 	if [ "$GITHUB_REF_TYPE" = "tag" ]; then
 		CIRCLE_BRANCH=
 		CIRCLE_TAG="${GITHUB_REF_NAME:-}"
@@ -25,10 +23,9 @@ common_init () {
 
 	echo "CIRCLE_TAG=${CIRCLE_TAG:-}"
 	echo "CIRCLE_BRANCH=${CIRCLE_BRANCH:-}"
-	echo "CIRCLECI=${CIRCLECI:-}"
 	echo "CI=${CI:-}"
 
-	export CIRCLECI CIRCLE_TAG CIRCLE_BRANCH
+	export CIRCLE_TAG CIRCLE_BRANCH
 }
 
 log_it () {

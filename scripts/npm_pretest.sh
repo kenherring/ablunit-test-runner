@@ -16,9 +16,7 @@ initialize () {
 	if ! command -v ant &>/dev/null; then
 		PATH=$PATH:$DLC/ant/bin
 	fi
-	CIRCLECI=${CIRCLECI:-false}
-	CI=${CI:-false}
-	if $CIRCLECI; then
+	if ${CI:-false}; then
 		HOME=/github/home
 	fi
 	NO_BUILD=${NO_BUILD:-false}
@@ -53,7 +51,7 @@ initialize () {
 		exit 1
 	fi
 
-	export PATH CIRCLECI ABLUNIT_TEST_RUNNER_OE_VERSION ABLUNIT_TEST_RUNNER_VSCODE_VERSION
+	export PATH ABLUNIT_TEST_RUNNER_OE_VERSION ABLUNIT_TEST_RUNNER_VSCODE_VERSION
 
 	if [ -d artifacts ]; then
 		rm -rf artifacts/*
@@ -176,8 +174,8 @@ package () {
 	else
 		PACKAGE_OUT_OF_DATE=true
 	fi
-	log_it "CIRCLECI=$CIRCLECI CI=$CI PACKAGE_OUT_OF_DATE=$PACKAGE_OUT_OF_DATE VSIX_COUNT=$VSIX_COUNT"
-	if $PACKAGE_OUT_OF_DATE || $CIRCLECI || [ "$VSIX_COUNT" = "0" ]; then
+	log_it "CI=${CI:-} PACKAGE_OUT_OF_DATE=$PACKAGE_OUT_OF_DATE VSIX_COUNT=$VSIX_COUNT"
+	if $PACKAGE_OUT_OF_DATE || $CI || [ "$VSIX_COUNT" = "0" ]; then
 		./scripts/package.sh
 	fi
 
