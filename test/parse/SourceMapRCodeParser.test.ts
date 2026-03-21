@@ -1,11 +1,12 @@
 import { commands, Uri } from 'vscode'
-import { assert, getRcodeCount, log, sleep, toUri } from '../testCommon'
+import { assert, getRcodeCount, log, sleep, suiteSetupCommon_logGroup, toUri } from '../testCommon'
 import { PropathParser } from 'ABLPropath'
 import { SourceMapItem } from 'parse/SourceMapParser'
 import { getSourceMapFromRCode } from 'parse/SourceMapRCodeParser'
 import * as FileUtils from 'FileUtils'
 
 suiteSetup('suiteSetup', () => {
+	suiteSetupCommon_logGroup()
 	log.info('delete xref files')
 	FileUtils.deleteFile(toUri('test_1/test.p.xref'))
 	FileUtils.deleteFile(toUri('test_2/test.p.xref'))

@@ -148,8 +148,12 @@ function getExtensionDevelopmentPath () {
 	throw new Error('unable to determine extensionDevelopmentPath')
 }
 
-export async function suiteSetupCommon (runtimes?: IRuntime[], rcodeCount?: number) {
+export function suiteSetupCommon_logGroup () {
 	log.group.start('test suite: ' + (projName() ?? 'unknown project'))
+}
+
+export async function suiteSetupCommon (runtimes?: IRuntime[], rcodeCount?: number) {
+	suiteSetupCommon_logGroup()
 	log.info('[suiteSetupCommon] waitForExtensionActive \'kherring.ablunit-test-runner\' (projName=' + projName() + ')')
 	await waitForExtensionActive()
 	if (enableExtensions()) {
