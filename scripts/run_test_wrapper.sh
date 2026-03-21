@@ -4,6 +4,7 @@ set -eou pipefail
 . scripts/common.sh
 
 initialize () {
+	log_group_start "$0"
 	log_it "whoami=$(whoami)"
 
 	VERBOSE=${VERBOSE:-false}
@@ -142,11 +143,13 @@ run_tests () {
 		export JAVA_TOOL_OPTIONS=${JAVA_TOOL_OPTIONS:-'-Dfile.encoding=UTF8'}
 	fi
 
-	! ${CI:-false} || echo "::endgroup::"
+	log_group_end
+	log_group_start "npm $RUN_SCRIPT"
 	log_it "starting 'npm $RUN_SCRIPT'"
 	EXIT_CODE=0
 	xvfb-run -a npm run "$RUN_SCRIPT" || EXIT_CODE=$?
 	log_it "xvfb-run end (EXIT_CODE=$EXIT_CODE)"
+	log_group_end
 
 	if [ "$RUN_SCRIPT" = 'test:coverage' ]; then
 		mv coverage/lcov.info artifacts/coverage/lcov.info || true ## https://github.com/microsoft/vscode-test-cli/issues/38
@@ -202,7 +205,6 @@ process_exit_code () {
 }
 
 ########## MAIN BLOCK ##########
-! ${CI:-false} || echo "::group::run_test_wrapper start"
 initialize "$@"
 dbus_config
 run_tests

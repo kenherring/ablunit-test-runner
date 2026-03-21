@@ -36,6 +36,19 @@ log_error () {
 	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[1]}] ERROR:" "$@" >&2
 }
 
+log_group_start () {
+	local GROUP_NAME=$1
+	if ${CI:-false}; then
+		echo "::group::$GROUP_NAME"
+	fi
+}
+
+log_group_end () {
+	if ${CI:-false}; then
+		echo "::endgroup::"
+	fi
+}
+
 jq () {
 	if command -v jq >/dev/null 2>&1; then
 		command jq "$@"

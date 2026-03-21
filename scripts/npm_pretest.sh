@@ -4,6 +4,7 @@ set -eou pipefail
 . scripts/common.sh
 
 initialize () {
+	log_group_start "$0"
 	log_it "pwd=$(pwd) whoami=$(whoami) HOME=${HOME}"
 
 
@@ -188,7 +189,6 @@ package () {
 
 ########## MAIN BLOCK ##########
 START_TIME=$(date +%s)
-! ${CI:-false} || echo "::group::npm_pretest"
 initialize "$@"
 copy_user_settings
 get_performance_test_code
@@ -198,4 +198,4 @@ package
 rm -rf artifacts/*
 END_TIME=$(date +%s)
 log_it "completed successfully! (time=$((END_TIME - START_TIME))s)"
-! ${CI:-false} || echo "::endgroup::"
+log_group_end

@@ -1,5 +1,5 @@
 import { Selection, TaskEndEvent, TaskExecution, commands, tasks, window } from 'vscode'
-import { Uri, assert, getWorkspaceUri, log, runAllTests, updateConfig, getTestCount, workspace, suiteSetupCommon, getWorkspaceFolders, oeVersion, runTestAtLine, beforeCommon, updateTestProfile, runTestsInFile, TestRunProfileKind, sleep, FileUtils } from '../testCommon'
+import { Uri, assert, getWorkspaceUri, log, runAllTests, updateConfig, getTestCount, workspace, suiteSetupCommon, getWorkspaceFolders, oeVersion, runTestAtLine, beforeCommon, updateTestProfile, runTestsInFile, TestRunProfileKind, sleep, FileUtils, suiteTeardownCommon } from '../testCommon'
 import { getOEVersion } from 'parse/OpenedgeProjectParser'
 import { execSync } from 'child_process'
 import * as glob from 'glob'
@@ -10,16 +10,11 @@ const workspaceUri = getWorkspaceUri()
 suite('proj1 - Extension Test Suite', () => {
 
 	suiteSetup('proj1 - suiteSetup', async () => {
-		log.info('::group::proj1')
 		FileUtils.copyFile(Uri.joinPath(workspaceUri, 'openedge-project.json'), Uri.joinPath(workspaceUri, 'openedge-project.bk.json'), { force: true })
 		FileUtils.copyFile(Uri.joinPath(workspaceUri, '.vscode', 'ablunit-test-profile.json'), Uri.joinPath(workspaceUri, '.vscode', 'ablunit-test-profile.bk.json'), { force: true })
 		FileUtils.copyFile(Uri.joinPath(workspaceUri, '.vscode', 'settings.json'), Uri.joinPath(workspaceUri, '.vscode', 'settings.bk.json'), { force: true })
 		await suiteSetupCommon()
 		log.info('suiteSetup complete')
-	})
-
-	suiteTeardown('proj1 - teardown', () => {
-		log.info('::endgroup::')
 	})
 
 	setup('proj1 - beforeEach', () => {
@@ -34,12 +29,13 @@ suite('proj1 - Extension Test Suite', () => {
 		FileUtils.copyFile(Uri.joinPath(workspaceUri, '.vscode', 'settings.bk.json'), Uri.joinPath(workspaceUri, '.vscode', 'settings.json'), { force: true })
 	})
 
-	suiteTeardown('proj1 - suiteTeardown', () => {
+	suiteTeardown('proj1 - suiteTeardown', async () => {
 		FileUtils.deleteFile([
 			Uri.joinPath(workspaceUri, 'openedge-project.bk.json'),
 			Uri.joinPath(workspaceUri, '.vscode', 'ablunit-test-profile.bk.json'),
 			Uri.joinPath(workspaceUri, '.vscode', 'settings.bk.json'),
 		])
+		await suiteTeardownCommon()
 	})
 
 	test('proj1.1 - output files exist 1 - compile error', async () => {

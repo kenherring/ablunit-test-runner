@@ -1,5 +1,5 @@
 import { DeclarationCoverage, Extension, FileCoverageDetail, Range, TestRunProfileKind, Uri, commands, window, workspace } from 'vscode'
-import { assert, getRcodeCount, getResults, getTestControllerItemCount, getTestItem, getXrefCount, log, rebuildAblProject, refreshTests, runAllTests, runAllTestsWithCoverage, runTestAtLine, runTestsDuration, runTestsInFile, suiteSetupCommon, FileUtils, toUri, updateConfig, updateTestProfile, deleteRcode, setRuntimes, sleep, Duration } from '../testCommon'
+import { assert, getRcodeCount, getResults, getTestControllerItemCount, getTestItem, getXrefCount, log, rebuildAblProject, refreshTests, runAllTests, runAllTestsWithCoverage, runTestAtLine, runTestsDuration, runTestsInFile, suiteSetupCommon, FileUtils, toUri, updateConfig, updateTestProfile, deleteRcode, setRuntimes, sleep, Duration, suiteTeardownCommon } from '../testCommon'
 import { ABLResultsParser } from 'parse/ResultsParser'
 import { TimeoutError } from 'Errors'
 import { restartLangServer } from '../openedgeAblCommands'
@@ -19,7 +19,6 @@ let firstSetup = true
 let ext: Extension<ABLUnitTestRunner>
 
 suiteSetup('proj0 - before', async () => {
-	log.info('::group::proj0')
 	FileUtils.copyFile('.vscode/settings.json', '.vscode/settings.json.bk')
 	FileUtils.copyFile('openedge-project.json', backupProjectFile)
 
@@ -83,7 +82,7 @@ teardown('proj0 - afterEach', () => {
 suiteTeardown('proj0 - after', () => {
 	FileUtils.renameFile(toUri('.vscode/settings.json.bk'), toUri('.vscode/settings.json'))
 	FileUtils.renameFile(toUri(backupProjectFile), toUri('openedge-project.json'))
-	log.info('::endgroup::')
+	// await suiteTeardownCommon()
 })
 
 test('proj0.01 - ${workspaceFolder}/ablunit.json file exists', () => {

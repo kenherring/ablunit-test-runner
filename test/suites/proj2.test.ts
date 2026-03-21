@@ -1,5 +1,5 @@
 import { debug, Location, Position, SourceBreakpoint } from 'vscode'
-import { assert, getResults, getWorkspaceUri, log, runAllTests, suiteSetupCommon, Uri, commands, beforeCommon, toUri, FileUtils, selectProfile, runTestsInFile, TestRunProfileKind } from '../testCommon'
+import { assert, getResults, getWorkspaceUri, log, runAllTests, suiteSetupCommon, Uri, commands, beforeCommon, toUri, FileUtils, selectProfile, runTestsInFile, TestRunProfileKind, suiteTeardownCommon } from '../testCommon'
 
 const workspaceUri = getWorkspaceUri()
 
@@ -7,18 +7,17 @@ suite('proj2 - Extension Test Suite', () => {
 
 
 	suiteSetup('proj2 - before', async () => {
-		log.group.start('proj2')
 		await suiteSetupCommon()
-	})
-
-	suiteTeardown('proj1 - teardown', () => {
-		log.group.end()
 	})
 
 	setup('proj2 - beforeEach', () => {
 		beforeCommon()
 		FileUtils.deleteFile(toUri('src/compileError.p'))
 		FileUtils.deleteFile(toUri('.vscode/profile.json'))
+	})
+
+	suiteTeardown('proj1 - teardown', async () => {
+		await suiteTeardownCommon()
 	})
 
 	test('proj2.1 - temp/ablunit.json file exists', () => {
