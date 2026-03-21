@@ -2,12 +2,6 @@
 set -eou pipefail
 
 common_init () {
-	echo "GITHUB_REF_TYPE=${GITHUB_REF_TYPE:-}"
-	echo "GITHUB_REF_NAME=${GITHUB_REF_NAME:-}"
-	echo "GITHUB_HEAD_REF=${GITHUB_HEAD_REF:-}"
-	echo "GITHUB_REF=${GITHUB_REF:-}"
-
- 	# GITHUB_EVENT_NAME=pull_request
 	GITHUB_REF_TYPE="${GITHUB_REF_TYPE:-branch}"
 	if [ "$GITHUB_REF_TYPE" = "tag" ]; then
 		CIRCLE_BRANCH=
@@ -20,10 +14,6 @@ common_init () {
 	[ -z "${CIRCLE_TAG:-}" ] && [ -z "${CIRCLE_BRANCH:-}" ] && CIRCLE_TAG=$(git tag --points-at HEAD)
 	[ -z "${CIRCLE_TAG:-}" ] && [ -z "${CIRCLE_BRANCH:-}" ] && CIRCLE_TAG=$(git rev-parse --abbrev-ref HEAD)
 	[ -z "${CIRCLE_TAG:-}" ] && [ -z "${CIRCLE_BRANCH:-}" ] && CIRCLE_BRANCH=$(git branch --show-current)
-
-	echo "CIRCLE_TAG=${CIRCLE_TAG:-}"
-	echo "CIRCLE_BRANCH=${CIRCLE_BRANCH:-}"
-	echo "CI=${CI:-}"
 
 	export CIRCLE_TAG CIRCLE_BRANCH
 }
