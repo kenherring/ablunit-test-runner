@@ -3,7 +3,7 @@ set -eou pipefail
 
 usage () {
 	echo "
-usage: $0 [ -o (12.2.12 | 12.7.0 | 12.8.1 | 12.8.9 | 12.8.11 | ... | all) ]
+usage: $0 [ -o (12.2.12 | 12.7.0 | 12.8.1 | 12.8.9 | 12.8.11 | 13.0.0 | ... | all) ]
 	[ -V (stable | proposedapi | insiders | X.Y.Z] )] [ -p <project_name> ] [-bBimPv]
 	[ -s (small | medium | large) ]
 
@@ -46,7 +46,7 @@ initialize () {
 	CPUS=2
 	MEMORY=4g
 
-	while getopts "bBCdimnsxo:p:S:t:PvV:h" OPT; do
+	while getopts "bBCdig:mnsxo:p:S:t:PvV:h" OPT; do
 		case $OPT in
 			o)	ABLUNIT_TEST_RUNNER_OE_VERSION=$OPTARG ;;
 			b)	OPTS='-b' ;;
@@ -54,6 +54,7 @@ initialize () {
 			C)	DELETE_CACHE_VOLUME=true ;;
 			d)  DELETE_CACHE_VOLUME=true ;;
 			i)	TEST_PROJECT=dummy-ext ;;
+			g)  TEST_GREP_PATTERN=$OPTARG ;;
 			m)	STAGED_ONLY=false ;;
 			h)	usage && exit 0 ;;
 			P)	CREATE_PACKAGE=true ;;
@@ -129,7 +130,7 @@ initialize () {
 		usage && exit 1
 	fi
 
-	export GIT_BRANCH PROGRESS_CFG_BASE64 STAGED_ONLY TEST_PROJECT CREATE_PACKAGE VERBOSE
+	export GIT_BRANCH PROGRESS_CFG_BASE64 STAGED_ONLY TEST_PROJECT TEST_GREP_PATTERN CREATE_PACKAGE VERBOSE
 	export ABLUNIT_TEST_RUNNER_DBUS_NUM \
 		ABLUNIT_TEST_RUNNER_PROJECT_NAME \
 		ABLUNIT_TEST_RUNNER_OE_VERSION \
@@ -159,7 +160,7 @@ initialize () {
 	fi
 
 	if [ "${ABLUNIT_TEST_RUNNER_OE_VERSION,,}" = "all" ]; then
-		OE_VERSIONS=(12.2.12 12.7.0 12.8.1 12.8.3 12.8.4 12.8.5 12.8.6 12.8.7 12.8.8 12.8.9 12.8.11)
+		OE_VERSIONS=(12.2.12 12.7.0 12.8.1 12.8.3 12.8.4 12.8.5 12.8.6 12.8.7 12.8.8 12.8.9 12.8.11 13.0.0)
 	elif [ "$ABLUNIT_TEST_RUNNER_OE_VERSION" != '12.2.12' ] &&
 		[ "$ABLUNIT_TEST_RUNNER_OE_VERSION" != '12.7.0' ] &&
 		[ "$ABLUNIT_TEST_RUNNER_OE_VERSION" != '12.8.1' ] &&
@@ -170,7 +171,8 @@ initialize () {
 		[ "$ABLUNIT_TEST_RUNNER_OE_VERSION" != '12.8.7' ] &&
 		[ "$ABLUNIT_TEST_RUNNER_OE_VERSION" != '12.8.8' ] &&
 		[ "$ABLUNIT_TEST_RUNNER_OE_VERSION" != '12.8.9' ] &&
-		[ "$ABLUNIT_TEST_RUNNER_OE_VERSION" != '12.8.11' ]; then
+		[ "$ABLUNIT_TEST_RUNNER_OE_VERSION" != '12.8.11' ] &&
+		[ "$ABLUNIT_TEST_RUNNER_OE_VERSION" != '13.0.0' ]; then
 		echo "Invalid OE version: $ABLUNIT_TEST_RUNNER_OE_VERSION" >&2
 		usage && exit 1
 	else

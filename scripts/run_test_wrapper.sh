@@ -178,6 +178,12 @@ save_and_print_debug_output () {
 	find .vscode-test -name '*ABL*.log' -exec cp {} artifacts \;
 	find .vscode-test -name 'settings.json'
 	find .vscode-test -name 'settings.json' -exec cp {} artifacts \;
+
+	find test_projects -name 'ablunit.json'
+	find test_projects -name 'ablunit.json' -exec cp {} artifacts \;
+	find test_projects -name 'results.xml'
+	find test_projects -name 'results.xml' -exec cp {} artifacts \;
+
 	local FROM_DIR TO_DIR
 	FROM_DIR=$(find .vscode-test  -maxdepth 1 -type d -name 'vscode-*' | tail -1)
 	TO_DIR="$HOME"/.vscode-test/$(basename "$FROM_DIR")

@@ -80,7 +80,6 @@ suite('proj1 - Extension Test Suite', () => {
 		const p = workspace.getConfiguration('ablunit').update('files.exclude', [ '.builder/**', 'compileError*.p' ])
 			.then(() => { return runAllTests() })
 			.then(() => {
-				assert.tests.count(32)
 				if (oeVersion()?.startsWith('12.2')) {
 					// only 1 error in 12.2 as it doesn't capture the destruct error
 					assert.tests.passed(25)
@@ -91,6 +90,8 @@ suite('proj1 - Extension Test Suite', () => {
 				}
 				assert.tests.failed(2)
 				assert.tests.skipped(1)
+				assert.tests.count(32)
+				assert.tests.count(33)
 				return true
 			},
 			(e: unknown) => {
