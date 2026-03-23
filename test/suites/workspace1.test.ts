@@ -5,7 +5,7 @@ import * as FileUtils from 'FileUtils'
 suite('workspace1 - Extension Test Suite', () => {
 
 	suiteSetup('workspace1 - before', async () => {
-		await suiteSetupCommon()
+		await suiteSetupCommon('workspace1')
 
 		FileUtils.deleteFile([
 			Uri.joinPath(getWorkspaceUri(0), '.vscode', 'ablunit-test-profile.json'),

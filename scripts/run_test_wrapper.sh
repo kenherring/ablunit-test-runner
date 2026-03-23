@@ -4,6 +4,7 @@ set -eou pipefail
 . scripts/common.sh
 
 initialize () {
+	log_group_start "$0"
 	log_it "whoami=$(whoami)"
 
 	VERBOSE=${VERBOSE:-false}
@@ -45,7 +46,7 @@ initialize () {
 	log_it "ABLUNIT_TEST_RUNNER_REPO_DIR=$ABLUNIT_TEST_RUNNER_REPO_DIR"
 	log_it "ABLUNIT_TEST_RUNNER_RUN_SCRIPT_FLAG=$ABLUNIT_TEST_RUNNER_RUN_SCRIPT_FLAG"
 	log_it "ABLUNIT_TEST_RUNNER_UNIT_TESTING=$ABLUNIT_TEST_RUNNER_UNIT_TESTING"
-	log_it "CIRCLECI=$CIRCLECI"
+	log_it "CI=${CI:-}"
 
 	update_oe_version
 }
@@ -142,10 +143,13 @@ run_tests () {
 		export JAVA_TOOL_OPTIONS=${JAVA_TOOL_OPTIONS:-'-Dfile.encoding=UTF8'}
 	fi
 
+	log_group_end
+	log_group_start "npm $RUN_SCRIPT"
 	log_it "starting 'npm $RUN_SCRIPT'"
 	EXIT_CODE=0
 	xvfb-run -a npm run "$RUN_SCRIPT" || EXIT_CODE=$?
 	log_it "xvfb-run end (EXIT_CODE=$EXIT_CODE)"
+	log_group_end
 
 	if [ "$RUN_SCRIPT" = 'test:coverage' ]; then
 		mv coverage/lcov.info artifacts/coverage/lcov.info || true ## https://github.com/microsoft/vscode-test-cli/issues/38

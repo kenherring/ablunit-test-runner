@@ -20,7 +20,7 @@ main () {
         return 0
     fi
 
-    if ${CIRCLECI:-}; then
+    if ${CI:-false}; then
         if ! git config --get user.email &>/dev/null; then
             LAST_COMMITTER_EMAIL=$(git log -1 --pretty='%ae')
             git config user.email "${LAST_COMMITTER_EMAIL:-noreply@ablunit-test-runner.kenherring.com}"
@@ -53,7 +53,14 @@ bump_prerelease_version () {
     log_it "bumping version to $BUMP_TO_VERSION"
 
     npm version "$BUMP_TO_VERSION" --no-tag-git-version -m "Bump version to prerelease %s"
-    git push
+
+    if ! git push; then
+        ## ignore failures as these might be from forks usually...
+        EXIT_CODE=$?
+        log_error "failed to push branch $CIRCLE_BRANCH, exit_code=$EXIT_CODE"
+        # exit $EXIT_CODE
+        exit 0
+    fi
 
     log_error "pushed branch $CIRCLE_BRANCH, exit_code=1"
     exit 1

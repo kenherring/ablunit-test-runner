@@ -88,7 +88,11 @@ const getEnvVar = (envVar: string) => {
 	return undefined
 }
 
-const projName = () => { return getWorkspaceUri().fsPath.replace(/\\/g, '/').split('/').pop() }
+let inputtedProjName: string | undefined = undefined
+
+const projName = () => {
+	return inputtedProjName ?? getWorkspaceUri().fsPath.replace(/\\/g, '/').split('/').pop()
+}
 
 // test suite objects
 export const log = logObj
@@ -148,7 +152,13 @@ function getExtensionDevelopmentPath () {
 	throw new Error('unable to determine extensionDevelopmentPath')
 }
 
-export async function suiteSetupCommon (runtimes?: IRuntime[], rcodeCount?: number) {
+export function suiteSetupCommon_logGroup () {
+	log.group.start('test suite: ' + (projName() ?? 'unknown project'))
+}
+
+export async function suiteSetupCommon (name?: string, runtimes?: IRuntime[], rcodeCount?: number) {
+	inputtedProjName = name
+	suiteSetupCommon_logGroup()
 	log.info('[suiteSetupCommon] waitForExtensionActive \'kherring.ablunit-test-runner\' (projName=' + projName() + ')')
 	await waitForExtensionActive()
 	if (enableExtensions()) {

@@ -2,14 +2,7 @@
 set -eou pipefail
 
 common_init () {
-	echo "GITHUB_REF_TYPE=${GITHUB_REF_TYPE:-}"
-	echo "GITHUB_REF_NAME=${GITHUB_REF_NAME:-}"
-	echo "GITHUB_HEAD_REF=${GITHUB_HEAD_REF:-}"
-	echo "GITHUB_REF=${GITHUB_REF:-}"
-
- 	# GITHUB_EVENT_NAME=pull_request
 	GITHUB_REF_TYPE="${GITHUB_REF_TYPE:-branch}"
-	CIRCLECI=${GITHUB_ACTIONS:-false}
 	if [ "$GITHUB_REF_TYPE" = "tag" ]; then
 		CIRCLE_BRANCH=
 		CIRCLE_TAG="${GITHUB_REF_NAME:-}"
@@ -22,11 +15,7 @@ common_init () {
 	[ -z "${CIRCLE_TAG:-}" ] && [ -z "${CIRCLE_BRANCH:-}" ] && CIRCLE_TAG=$(git rev-parse --abbrev-ref HEAD)
 	[ -z "${CIRCLE_TAG:-}" ] && [ -z "${CIRCLE_BRANCH:-}" ] && CIRCLE_BRANCH=$(git branch --show-current)
 
-	echo "CIRCLE_TAG=${CIRCLE_TAG:-}"
-	echo "CIRCLE_BRANCH=${CIRCLE_BRANCH:-}"
-	echo "CIRCLECI=${CIRCLECI:-}"
-
-	export CIRCLECI CIRCLE_TAG CIRCLE_BRANCH
+	export CIRCLE_TAG CIRCLE_BRANCH
 }
 
 log_it () {
@@ -35,6 +24,19 @@ log_it () {
 
 log_error () {
 	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[1]}] ERROR:" "$@" >&2
+}
+
+log_group_start () {
+	local GROUP_NAME=$1
+	if ${CI:-false}; then
+		echo "::group::$GROUP_NAME"
+	fi
+}
+
+log_group_end () {
+	if ${CI:-false}; then
+		echo "::endgroup::"
+	fi
 }
 
 jq () {

@@ -3,7 +3,7 @@ import { assert, beforeProj7, Duration, log, runAllTests, suiteSetupCommon } fro
 suite('proj7A - Extension Test Suite', () => {
 
 	suiteSetup('proj7A - before', () => {
-		return suiteSetupCommon()
+		return suiteSetupCommon('proj7A')
 			.then(() => { return beforeProj7() })
 			.then(() => {
 				log.info('suiteSetup complete')
