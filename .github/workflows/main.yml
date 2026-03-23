@@ -40,6 +40,7 @@ jobs:
           node-version-file: .nvmrc
       - run: ./scripts/package.sh
       - run: ./scripts/bump_version.sh
+        if: github.event_name != 'pull_request_target'
         env:
           GH_TOKEN: ${{ github.token }}
 
