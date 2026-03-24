@@ -124,7 +124,7 @@ function getDefaultCommand (res: ABLResults) {
 
 	const executable = res.dlc.uri.fsPath.replace(/\\/g, '/') + '/bin/' + res.cfg.ablunitConfig.command.executable
 
-	const cmd = [ executable, '-b', '-p', res.wrapperUri.fsPath.replace(/\\/g, '/') ]
+	const cmd = [ executable, ...(res.cfg.ablunitConfig.command.batch ? ['-b'] : []), '-p', res.wrapperUri.fsPath.replace(/\\/g, '/') ]
 
 	process.env['PROPATH'] = res.propath.toString().replace(/\$\{DLC\}/g, res.dlc.uri.fsPath.replace(/\\/g, '/'))
 
