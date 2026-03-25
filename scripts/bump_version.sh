@@ -4,10 +4,8 @@
 
 initialize() {
     log_it
-
-    env | sort
-
     set -x
+    env | sort
 }
 
 main () {
