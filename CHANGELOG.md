@@ -1,6 +1,5 @@
-# [1.4.19](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.4.19) - 2026-03-23 (pre-release)
+# [1.4.17](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.4.17) - 2026-03-23 (pre-release)
 
-* actions: skip bump_version.sh for pull_request_target (#520)
 * actions: use `pull_request_target` instead of `pull_request` (#519)
 * Bump github/codeql-action from 3 to 4 (#518)
 * actions: skip version bump when git push fails due to forked pull request (#516)

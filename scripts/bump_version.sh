@@ -2,12 +2,6 @@
 
 . scripts/common.sh
 
-initialize() {
-    log_it
-    set -x
-    env | sort
-}
-
 main () {
     log_it
     PACKAGE_VERSION=$(jq -r '.version' package.json)
@@ -88,5 +82,4 @@ push_tag () {
 }
 
 ########## MAIN BLOCK ##########
-initialize
 main
