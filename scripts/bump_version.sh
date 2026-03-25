@@ -52,7 +52,9 @@ bump_prerelease_version () {
     done
     log_it "bumping version to $BUMP_TO_VERSION"
 
-    if ! npm version "$BUMP_TO_VERSION" --no-tag-git-version -m "Bump version to prerelease %s"; then
+    if npm version "$BUMP_TO_VERSION" --no-tag-git-version -m "Bump version to prerelease %s"; then
+        log_it "npm version executed successfully"
+    else
         EXIT_CODE=$?
         log_error "npm version failed, exit_code=$EXIT_CODE"
         # exit $EXIT_CODE
