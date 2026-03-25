@@ -1,5 +1,6 @@
-# [1.4.17](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.4.17) - 2026-03-23 (pre-release)
+# [1.4.19](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.4.19) - 2026-03-25 (pre-release)
 
+* actions: debug messages for bump_version.sh (#520)
 * actions: use `pull_request_target` instead of `pull_request` (#519)
 * Bump github/codeql-action from 3 to 4 (#518)
 * actions: skip version bump when git push fails due to forked pull request (#516)
@@ -32,7 +33,7 @@
 * Bump esbuild from 0.27.0 to 0.27.1 (#457)
 * Bump jws from 3.2.2 to 3.2.3 in the npm_and_yarn group across 1 directory (#455)
 
-**Full Changelog**: [1.4.4...1.4.17](https://github.com/kenherring/ablunit-test-runner/compare/1.4.15...1.4.17)
+**Full Changelog**: [1.4.4...1.4.19](https://github.com/kenherring/ablunit-test-runner/compare/1.4.17...1.4.19)
 
 # [1.4.4](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.4.4) - 2025-11-26 (pre-release)
 

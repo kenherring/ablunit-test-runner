@@ -1,9 +1,9 @@
 name: CI Workflow
 
 on:
-  pull_request_target:
-    branches:
-      - main
+  # pull_request_target:
+  #   branches:
+  #     - main
   pull_request:
     branches:
       - main
@@ -40,8 +40,11 @@ jobs:
           node-version-file: .nvmrc
       - run: ./scripts/package.sh
       - run: ./scripts/bump_version.sh
+        if: ${{ github.event_name != 'pull_request_target' }}
         env:
           GH_TOKEN: ${{ github.token }}
+          GITHUB_EVENT_NAME: ${{ github.event_name }}
+          GITHUB_REF_NAME: ${{ github.ref_name }}
 
   test:
     needs: build

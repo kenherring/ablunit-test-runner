@@ -2,6 +2,11 @@
 set -eou pipefail
 
 common_init () {
+	if ${ACTIONS_STEP_DEBUG:-false}; then
+		set -x
+		env | sort
+	fi
+
 	GITHUB_REF_TYPE="${GITHUB_REF_TYPE:-branch}"
 	if [ "$GITHUB_REF_TYPE" = "tag" ]; then
 		CIRCLE_BRANCH=
