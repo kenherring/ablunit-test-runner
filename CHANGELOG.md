@@ -1,5 +1,6 @@
-# [1.4.23](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.4.23) - 2026-03-26 (pre-release)
+# [1.4.25](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.4.25) - 2026-03-26 (pre-release)
 
+* actions: debug pull_request_target (#529)
 * Bump test target to OpenEdge 12.2.19 (#528)
 * actions: debug pull_request_target (#527)
 * actions: debug pull_request_target (#526)
@@ -38,7 +39,7 @@
 * Bump esbuild from 0.27.0 to 0.27.1 (#457)
 * Bump jws from 3.2.2 to 3.2.3 in the npm_and_yarn group across 1 directory (#455)
 
-**Full Changelog**: [1.4.4...1.4.23](https://github.com/kenherring/ablunit-test-runner/compare/1.4.21...1.4.23)
+**Full Changelog**: [1.4.4...1.4.25](https://github.com/kenherring/ablunit-test-runner/compare/1.4.23...1.4.25)
 
 # [1.4.4](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.4.4) - 2025-11-26 (pre-release)
 
