@@ -57,16 +57,15 @@ bump_prerelease_version () {
     else
         EXIT_CODE=$?
         log_error "npm version failed, exit_code=$EXIT_CODE"
-        # exit $EXIT_CODE
-        exit 0
+        exit $EXIT_CODE
     fi
 
-    if ! git push; then
-        ## ignore failures as these might be from forks usually...
+    if git push; then
+        log_it "git push executed successfully"
+    else
         EXIT_CODE=$?
         log_error "failed to push branch $CIRCLE_BRANCH, exit_code=$EXIT_CODE"
-        # exit $EXIT_CODE
-        exit 0
+        exit $EXIT_CODE
     fi
 
     log_error "pushed branch $CIRCLE_BRANCH, exit_code=1"
