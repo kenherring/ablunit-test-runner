@@ -3,10 +3,11 @@ set -eou pipefail
 
 common_init () {
 	echo "ACTIONS_STEP_DEBUG=${ACTIONS_STEP_DEBUG:-}"
-	# if ${ACTIONS_STEP_DEBUG:-false}; then
+	echo "RUNNER_DEBUG=${RUNNER_DEBUG:-}"
+	if ${RUNNER_DEBUG:-false}; then
 		set -x
 		env | sort
-	# fi
+	fi
 
 	GITHUB_REF_TYPE="${GITHUB_REF_TYPE:-branch}"
 	if [ "$GITHUB_REF_TYPE" = "tag" ]; then
