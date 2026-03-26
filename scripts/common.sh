@@ -2,7 +2,6 @@
 set -eou pipefail
 
 common_init () {
-	echo "RUNNER_DEBUG=${RUNNER_DEBUG:-}"
 	if [ "${RUNNER_DEBUG:-}" = "1" ]; then
 		set -x
 		env | sort

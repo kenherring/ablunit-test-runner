@@ -71,8 +71,6 @@ bump_prerelease_version () {
     fi
 
     log_it "pushed branch $CIRCLE_BRANCH successfully"
-    # log_error "pushed branch $CIRCLE_BRANCH, exit_code=1"
-    # exit 1
 }
 
 ## when building the main branch, set the tag to the version in package.json

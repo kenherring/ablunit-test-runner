@@ -36,16 +36,9 @@ initialize () {
 	fi
 
 	PRERELEASE=false
-    PACKAGE_VERSION=$(node -p "require('./package.json').version")
+	PACKAGE_VERSION=$(node -p "require('./package.json').version")
 	PREVIOUS_VERSION=$(grep -Eo '\[v?[0-9]+\.[0-9]+\.[0-9]+\]' CHANGELOG.md | cut -d[ -f2 | cut -d] -f1 | head -1)
-	git status
-	git tag
-	git tag | grep -v '^v'
-	git tag | grep -v '^v' | grep "[0,2,4,6,8]$"
-	git tag | grep -v '^v' | grep "[0,2,4,6,8]$" | tail -1
 	PREVIOUS_TAG=$(git tag | grep -v '^v' | grep "[0,2,4,6,8]$" | tail -1)
-	gh pr view --json title,number
-	gh pr view --json title,number | jq -r '.title + " (#" + (.number|tostring) + ")"'
 	CURRENT_PR_TEXT=$(gh pr view --json title,number | jq -r '.title + " (#" + (.number|tostring) + ")"')
 
 	if [ -z "$CURRENT_PR_TEXT" ]; then
