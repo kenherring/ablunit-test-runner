@@ -1,11 +1,11 @@
 name: CI Workflow
 
 on:
-  pull_request_target:
-    branches:
-      - main
-    paths-ignore:
-      - .github/workflows/main.yml
+  # pull_request_target:
+  #   branches:
+  #     - main
+  #   paths-ignore:
+  #     - .github/workflows/main.yml
   pull_request:
     branches:
       - main
@@ -31,7 +31,7 @@ jobs:
       - uses: actions/checkout@v6
         with:
           fetch-depth: 0
-          ref: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref_name }}
+          # ref: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref_name }}
           token: ${{ secrets.MY_GITHUB_TOKEN || github.token }}
       - name: Run ShellCheck
         uses: ludeeus/action-shellcheck@2.0.0
@@ -51,6 +51,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           GITHUB_EVENT_NAME: ${{ github.event_name }}
           GITHUB_REF_NAME: ${{ github.ref_name }}
+          GITHUB_HEAD_REF: ${{ github.head_ref }}
 
   test:
     needs: build

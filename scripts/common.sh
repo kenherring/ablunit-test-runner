@@ -2,7 +2,7 @@
 set -eou pipefail
 
 common_init () {
-	echo "ACTIONS_STEP_DEBUG=$ACTIONS_STEP_DEBUG"
+	echo "ACTIONS_STEP_DEBUG=${ACTIONS_STEP_DEBUG:-}"
 	if ${ACTIONS_STEP_DEBUG:-false}; then
 		set -x
 		env | sort
