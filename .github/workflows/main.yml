@@ -17,7 +17,7 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.sha }}
   cancel-in-progress: true
 
 permissions:
@@ -45,7 +45,7 @@ jobs:
       - run: ./scripts/bump_version.sh
         continue-on-error: true
         env:
-          GH_TOKEN: ${{ github.token }}
+          ACTIONS_STEP_DEBUG: ${{ runner.debug }}
           GITHUB_EVENT_NAME: ${{ github.event_name }}
           GITHUB_REF_NAME: ${{ github.ref_name }}
           GITHUB_HEAD_REF: ${{ github.head_ref }}
