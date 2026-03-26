@@ -2,9 +2,8 @@
 set -eou pipefail
 
 common_init () {
-	echo "ACTIONS_STEP_DEBUG=${ACTIONS_STEP_DEBUG:-}"
 	echo "RUNNER_DEBUG=${RUNNER_DEBUG:-}"
-	if ${RUNNER_DEBUG:-false}; then
+	if [ "${RUNNER_DEBUG:-}" = "1" ]; then
 		set -x
 		env | sort
 	fi
