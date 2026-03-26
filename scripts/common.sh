@@ -2,7 +2,7 @@
 set -eou pipefail
 
 common_init () {
-	if ${ACTIONS_STEP_DEBUG:-false}; then
+	if [ "${RUNNER_DEBUG:-}" = "1" ]; then
 		set -x
 		env | sort
 	fi
