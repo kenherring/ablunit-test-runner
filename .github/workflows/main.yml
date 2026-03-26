@@ -45,6 +45,7 @@ jobs:
       - run: ./scripts/bump_version.sh
         continue-on-error: true
         env:
+          GH_TOKEN: ${{ github.token }}
           KH_RUNNER_DEBUG: ${{ runner.debug }}
           KH_GITHUB_EVENT_NAME: ${{ github.event_name }}
           KH_GITHUB_REF_NAME: ${{ github.ref_name }}
