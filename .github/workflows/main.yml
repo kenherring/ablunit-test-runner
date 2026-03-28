@@ -7,17 +7,11 @@ on:
   pull_request_target:
     branches:
       - main
-  # workflow_run:
-  #   workflows:
-  #     - Preflight
-  #   types:
-  #     - completed
-  # workflow_call:
   workflow_dispatch:
 
-# concurrency:
-#   group: ${{ github.workflow }}-${{ github.ref }}-${{ github.head_ref }}
-#   cancel-in-progress: true
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
@@ -27,6 +21,13 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+      - name: validate user
+        run: |
+          echo "github.actor=${{ github.actor }}"
+          if [ "${{ github.actor }}" != "kenherring" ] && [ "${{ github.actor }}" != "dependabot[bot]" ]; then
+            echo "Unauthorized user. Exiting."
+            exit 1
+          fi
       - uses: actions/checkout@v6
         with:
           fetch-depth: 0
@@ -41,13 +42,6 @@ jobs:
         with:
           node-version-file: .nvmrc
       - run: ./scripts/package.sh
-      - name: validate user
-        run: |
-          echo "github.actor=${{ github.actor }}"
-          if [ "${{ github.actor }}" != "kenherring" ] && [ "${{ github.actor }}" != "dependabot[bot]" ]; then
-            echo "Unauthorized user. Exiting."
-            exit 1
-          fi
       - run: ./scripts/bump_version.sh
         # continue-on-error: true
         if: ${{ github.head_ref != 'main' }}

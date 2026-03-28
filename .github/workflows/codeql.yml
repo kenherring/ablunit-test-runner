@@ -20,7 +20,7 @@ on:
     - cron: '34 19 * * 3'
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.head_ref }}
+  group: ${{ github.workflow }}-${{ github.head_ref }}
   cancel-in-progress: true
 
 jobs:
