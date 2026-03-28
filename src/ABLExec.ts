@@ -147,7 +147,7 @@ function runCommand (cfg: ABLUnitConfig, dlc: IDlc, execFile: string, propath: P
 	})
 }
 
-export function getEnvVars (dlcUri: Uri | undefined, env: Record<string, string>) {
+function getEnvVars (dlcUri: Uri | undefined, env: Record<string, string>) {
 	const runenv = process.env
 	let envConfig: Record<string, string> | undefined = undefined
 	if (process.platform === 'win32') {
