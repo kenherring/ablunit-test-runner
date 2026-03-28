@@ -4,9 +4,9 @@ on:
   pull_request_target:
     branches:
       - main
-  pull_request:
-    branches:
-      - main
+  # pull_request:
+  #   branches:
+  #     - main
   push:
     branches:
       - main
@@ -41,7 +41,7 @@ jobs:
       - run: ./scripts/package.sh
       - run: ./scripts/bump_version.sh
         # continue-on-error: true
-        if: ${{ github.ref != 'refs/heads/main' }}
+        if: ${{ github.head_ref != 'main' }}
         env:
           GH_TOKEN: ${{ github.token }}
 
@@ -84,7 +84,7 @@ jobs:
   create-release:
     needs: [ 'test' ]
     runs-on: ubuntu-latest
-    if: ${{ github.ref == 'refs/heads/main' }}
+    if: ${{ github.head_ref == 'main' }}
     steps:
       - uses: actions/checkout@v6
         with:
