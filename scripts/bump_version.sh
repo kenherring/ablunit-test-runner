@@ -5,8 +5,6 @@
 main () {
     log_it
 
-    env | sort
-
     PACKAGE_VERSION=$(jq -r '.version' package.json)
     log_it "PACKAGE_VERSION=$PACKAGE_VERSION"
     if [ "${CIRCLE_BRANCH:-}" = "main" ]; then

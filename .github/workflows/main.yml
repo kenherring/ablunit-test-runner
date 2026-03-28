@@ -1,16 +1,21 @@
 name: CI Workflow
 
 on:
-  pull_request_target:
-    branches:
-      - main
+  # pull_request_target:
+  #   branches:
+  #     - main
+  #   # types: [labeled]
+  # pull_request:
+  #   branches:
+  #     - main
   push:
     branches:
       - main
+  workflow_run:
   workflow_dispatch:
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.head_ref }}
   cancel-in-progress: true
 
 permissions:
@@ -28,7 +33,6 @@ jobs:
           token: ${{ secrets.MY_GITHUB_TOKEN || github.token }}
       - name: Run ShellCheck
         uses: ludeeus/action-shellcheck@2.0.0
-        if: matrix.os == 'ubuntu-latest'
         with:
           ignore_paths: ./test_projects/**
       - name: Install Node.js
@@ -81,7 +85,7 @@ jobs:
   create-release:
     needs: [ 'test' ]
     runs-on: ubuntu-latest
-    if: ${{ github.head_ref == 'main' }}
+    if: ${{ github.head_ref == 'main' && github.event_name != 'pull_request_target' && github.event_name == 'pull_request'}}
     steps:
       - uses: actions/checkout@v6
         with:
