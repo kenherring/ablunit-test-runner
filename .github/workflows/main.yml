@@ -1,13 +1,6 @@
 name: CI Workflow
 
 on:
-  # pull_request_target:
-  #   branches:
-  #     - main
-  #   # types: [labeled]
-  # pull_request:
-  #   branches:
-  #     - main
   push:
     branches:
       - main
