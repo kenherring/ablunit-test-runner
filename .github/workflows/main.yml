@@ -9,7 +9,7 @@ on:
   #     - Preflight
   #   types:
   #     - completed
-  # workflow_call:
+  workflow_call:
   workflow_dispatch:
 
 concurrency:
