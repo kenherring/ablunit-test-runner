@@ -4,11 +4,14 @@ on:
   push:
     branches:
       - main
-  workflow_run:
-    workflows:
-      - Preflight
-    types:
-      - completed
+  pull_request_target:
+    branches:
+      - main
+  # workflow_run:
+  #   workflows:
+  #     - Preflight
+  #   types:
+  #     - completed
   # workflow_call:
   workflow_dispatch:
 
@@ -38,6 +41,13 @@ jobs:
         with:
           node-version-file: .nvmrc
       - run: ./scripts/package.sh
+      - name: validate user
+        run: |
+          echo "github.actor=${{ github.actor }}"
+          if [ "${{ github.actor }}" != "kherring" ] && [ "${{ github.actor }}" != "dependabot[bot]" ]; then
+            echo "Unauthorized user. Exiting."
+            exit 1
+          fi
       - run: ./scripts/bump_version.sh
         # continue-on-error: true
         if: ${{ github.head_ref != 'main' }}
