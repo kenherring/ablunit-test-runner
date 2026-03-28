@@ -19,4 +19,4 @@ jobs:
   #   steps:
   #     - run: echo "Preflight complete!"
   trigger-main-workflow:
-    uses: .github/workflows/main.yml
+    uses: .github/workflows/main.yml@main
