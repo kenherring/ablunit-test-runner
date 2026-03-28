@@ -1,4 +1,4 @@
-name: Fork Approval
+name: Preflight
 
 on:
   pull_request:
@@ -13,9 +13,8 @@ permissions:
   contents: read
 
 jobs:
-
-  trigger-main-workflow:
+  preflight-job:
+    name: Preflight Step
     runs-on: ubuntu-latest
     steps:
-      - name: Trigger main workflow
-        uses: .github/workflows/main.yml
+      - run: echo "Preflight complete!"
