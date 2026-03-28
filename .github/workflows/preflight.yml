@@ -13,11 +13,10 @@ permissions:
   contents: read
 
 jobs:
-  preflight-job:
-    name: Preflight Step
-    runs-on: ubuntu-latest
-    steps:
-      - run: echo "Preflight complete!"
-  # trigger-main-workflow:
-  #   name: Trigger Main Workflow
-  #   uses: .github/workflows/main.yml
+  # preflight-job:
+  #   name: Preflight Step
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - run: echo "Preflight complete!"
+  trigger-main-workflow:
+    uses: .github/workflows/main.yml
