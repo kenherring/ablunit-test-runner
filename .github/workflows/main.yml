@@ -44,7 +44,7 @@ jobs:
       - name: validate user
         run: |
           echo "github.actor=${{ github.actor }}"
-          if [ "${{ github.actor }}" != "kherring" ] && [ "${{ github.actor }}" != "dependabot[bot]" ]; then
+          if [ "${{ github.actor }}" != "kenherring" ] && [ "${{ github.actor }}" != "dependabot[bot]" ]; then
             echo "Unauthorized user. Exiting."
             exit 1
           fi
