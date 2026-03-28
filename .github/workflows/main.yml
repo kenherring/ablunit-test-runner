@@ -7,6 +7,9 @@ on:
   pull_request_target:
     branches:
       - main
+  # pull_request:
+  #   branches:
+  #     - main
   workflow_dispatch:
 
 concurrency:
@@ -22,6 +25,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: validate user
+        if: ${{ github.event_name == "pull_request_target" }}
         run: |
           echo "github.actor=${{ github.actor }}"
           if [ "${{ github.actor }}" != "kenherring" ] && [ "${{ github.actor }}" != "dependabot[bot]" ]; then
