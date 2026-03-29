@@ -91,7 +91,7 @@ jobs:
           args: >
             -Dsonar.pullrequest.branch=${{ github.head_ref }}
             -Dsonar.pullrequest.key=${{ github.event.issue.number }}
-            -Dsonar.pullrequest.base=main
+            -Dsonar.pullrequest.base=${{ github.event.pull_request.base.ref }}
       - uses: actions/upload-artifact@v7
         if: ${{ matrix.oe-version == '12.8.1' }}
         with:
