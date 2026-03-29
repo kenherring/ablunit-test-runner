@@ -7,6 +7,9 @@ on:
   pull_request_target:
     branches:
       - main
+  # pull_request:
+  #   branches:
+  #     - main
   workflow_dispatch:
 
 concurrency:
@@ -22,6 +25,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: validate user
+        if: ${{ github.event_name == "pull_request_target" }}
         run: |
           echo "github.actor=${{ github.actor }}"
           if [ "${{ github.actor }}" != "kenherring" ] && [ "${{ github.actor }}" != "dependabot[bot]" ]; then
@@ -73,11 +77,21 @@ jobs:
           fetch-depth: 0
       - run: ./scripts/run_test_wrapper.sh
       - run: ./scripts/sonar_test_results_merge.sh
-      - name: SonarQube Scan
-        if: ${{ matrix.oe-version == '12.8.1' && github.actor != 'dependabot[bot]' }}
+      - name: SonarQube Scan - main
+        if: ${{ matrix.oe-version == '12.8.1' && github.actor != 'dependabot[bot]' && github.head_ref == 'main' }}
         uses: SonarSource/sonarqube-scan-action@v7.0.0
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      - name: SonarQube Scan
+        if: ${{ matrix.oe-version == '12.8.1' && github.actor != 'dependabot[bot]' && github.head_ref != 'main' }}
+        uses: SonarSource/sonarqube-scan-action@v7.0.0
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          args: >
+            -Dsonar.pullrequest.branch=${{ github.head_ref }}
+            -Dsonar.pullrequest.key=${{ github.event.issue.number }}
+            -Dsonar.pullrequest.base=main
       - uses: actions/upload-artifact@v7
         if: ${{ matrix.oe-version == '12.8.1' }}
         with:
