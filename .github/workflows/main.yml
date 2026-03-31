@@ -29,7 +29,7 @@ jobs:
         run: |
           echo "github.actor=${{ github.actor }}"
           if [ "${{ github.actor }}" != "kenherring" ] && [ "${{ github.actor }}" != "dependabot[bot]" ]; then
-            echo "Unauthorized user. Exiting."
+            echo "Unauthorized user. Stopping workflow run..."
             exit 1
           fi
       - name: debug-vars
@@ -37,8 +37,8 @@ jobs:
           echo "github.event_name=${{ github.event_name }}"
           echo "github.head_ref=${{ github.head_ref }}"
           echo "github.actor=${{ github.actor }}"
-          echo "github.event.issue.number=${{ github.event.issue.number }}"
-          echo "github.event.pull_request.base.ref=${{ ithub.event.pull_request.base.ref }}"
+          echo "github.event.number=${{ github.event.number }}"
+          echo "github.event.pull_request.base.ref=${{ github.event.pull_request.base.ref }}"
           env | sort
           exit 1
       - uses: actions/checkout@v6
@@ -99,7 +99,7 @@ jobs:
         with:
           args: >
             -Dsonar.pullrequest.branch=${{ github.head_ref }}
-            -Dsonar.pullrequest.key=${{ github.event.issue.number }}
+            -Dsonar.pullrequest.key=${{ github.event.number }}
             -Dsonar.pullrequest.base=${{ github.event.pull_request.base.ref }}
       - uses: actions/upload-artifact@v7
         if: ${{ matrix.oe-version == '12.8.1' }}
