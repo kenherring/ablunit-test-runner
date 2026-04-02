@@ -1,6 +1,19 @@
-# [1.4.17](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.4.17) - 2026-03-23 (pre-release)
+# [1.4.29](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.4.29) - 2026-03-28 (pre-release)
 
-* Add OpenEdge 13.0.0 test target (#473)
+* actions: debug pull_request_target (#535)
+* actions: debug pull_request_target (#534)
+* actions: debug pull_request_target (#532)
+* Bump brace-expansion from 1.1.12 to 1.1.13 in the npm_and_yarn group across 1 directory (#533)
+* actions: debug pull_request_target (#531)
+* actions: debug pull_request_target (#530)
+* actions: debug pull_request_target (#529)
+* Bump test target to OpenEdge 12.2.19 (#528)
+* actions: debug pull_request_target (#527)
+* actions: debug pull_request_target (#526)
+* Bump picomatch from 2.3.1 to 2.3.2 in /dummy-ext in the npm_and_yarn group across 1 directory (#525)
+* Bump the npm_and_yarn group across 1 directory with 1 update (#524)
+* actions: debug messages for bump_version.sh (#520)
+* actions: use `pull_request_target` instead of `pull_request` (#519)
 * Bump github/codeql-action from 3 to 4 (#518)
 * actions: skip version bump when git push fails due to forked pull request (#516)
 * Revert "actions: checkout without secret token (#515)" (#517)
@@ -32,7 +45,7 @@
 * Bump esbuild from 0.27.0 to 0.27.1 (#457)
 * Bump jws from 3.2.2 to 3.2.3 in the npm_and_yarn group across 1 directory (#455)
 
-**Full Changelog**: [1.4.4...1.4.17](https://github.com/kenherring/ablunit-test-runner/compare/1.4.15...1.4.17)
+**Full Changelog**: [1.4.4...1.4.15](https://github.com/kenherring/ablunit-test-runner/compare/1.4.13...1.4.15)
 
 # [1.4.4](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.4.4) - 2025-11-26 (pre-release)
 

@@ -1,16 +1,16 @@
 name: CI Workflow
 
 on:
-  pull_request:
+  push:
     branches:
       - main
-  push:
+  pull_request_target:
     branches:
       - main
   workflow_dispatch:
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.head_ref }}
   cancel-in-progress: true
 
 permissions:
@@ -21,14 +21,22 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+      - name: validate user
+        if: ${{ github.event_name == 'pull_request_target' }}
+        run: |
+          echo "github.actor=${{ github.actor }}"
+          if [ "${{ github.actor }}" != "kenherring" ] && [ "${{ github.actor }}" != "dependabot[bot]" ]; then
+            echo "Unauthorized user. Stopping workflow run..."
+            exit 1
+          fi
       - uses: actions/checkout@v6
         with:
           fetch-depth: 0
-          ref: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref_name }}
+          ref: ${{ github.event_name == 'pull_request_target' && github.head_ref || github.event_name == 'pull_request' && github.head_ref || github.ref_name }}
+          # ref: ${{ github.event_name == 'pull_request_target' && github.event.pull_request.head.sha || github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.ref_name }}
           token: ${{ secrets.MY_GITHUB_TOKEN || github.token }}
       - name: Run ShellCheck
         uses: ludeeus/action-shellcheck@2.0.0
-        if: matrix.os == 'ubuntu-latest'
         with:
           ignore_paths: ./test_projects/**
       - name: Install Node.js
@@ -37,6 +45,7 @@ jobs:
           node-version-file: .nvmrc
       - run: ./scripts/package.sh
       - run: ./scripts/bump_version.sh
+        if: ${{ github.head_ref != 'main' }}
         env:
           GH_TOKEN: ${{ github.token }}
 
@@ -45,13 +54,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        oe-version: [ 12.2.12, 12.8.1, 12.8.11, 13.0.0 ]
+        oe-version: [ 12.2.19, 12.8.1, 12.8.11 ]
     runs-on: ubuntu-latest
     container:
       image: kherring/ablunit-test-runner:${{ matrix.oe-version }}
       credentials:
-        username: ${{ secrets.DOCKER_USER }}
-        password: ${{ secrets.DOCKER_PAT }}
+        username: ${{ secrets.DOCKER_USER || 'undefined' }}
+        password: ${{ secrets.DOCKER_PAT || 'undefined' }}
     env:
       ABLUNIT_TEST_RUNNER_OE_VERSION: ${{ matrix.oe-version }}
       ABLUNIT_TEST_RUNNER_VSCODE_VERSION: 'stable'
@@ -63,14 +72,24 @@ jobs:
       - uses: actions/checkout@v6
         with:
           fetch-depth: 0
-          ref: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref_name }}
+          ref: ${{ github.event_name == 'pull_request_target' && github.head_ref || github.event_name == 'pull_request' && github.head_ref || github.ref_name }}
       - run: ./scripts/run_test_wrapper.sh
       - run: ./scripts/sonar_test_results_merge.sh
-      - name: SonarQube Scan
-        if: ${{ matrix.oe-version == '12.8.1' && github.actor != 'dependabot[bot]' }}
+      - name: SonarQube Scan - main
+        if: ${{ matrix.oe-version == '12.8.1' && github.actor != 'dependabot[bot]' && github.head_ref == 'main' }}
         uses: SonarSource/sonarqube-scan-action@v7.0.0
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      - name: SonarQube Scan
+        if: ${{ matrix.oe-version == '12.8.1' && github.actor != 'dependabot[bot]' && github.head_ref != 'main' }}
+        uses: SonarSource/sonarqube-scan-action@v7.0.0
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          args: >
+            -Dsonar.pullrequest.branch=${{ github.head_ref }}
+            -Dsonar.pullrequest.key=${{ github.event.number }}
+            -Dsonar.pullrequest.base=${{ github.event.pull_request.base.ref }}
       - uses: actions/upload-artifact@v7
         if: ${{ matrix.oe-version == '12.8.1' }}
         with:
@@ -80,12 +99,12 @@ jobs:
   create-release:
     needs: [ 'test' ]
     runs-on: ubuntu-latest
-    if: ${{ github.ref == 'refs/heads/main' }}
+    if: ${{ github.head_ref == 'main' && github.event_name != 'pull_request_target' && github.event_name == 'pull_request'}}
     steps:
       - uses: actions/checkout@v6
         with:
           fetch-depth: 0
-          ref: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref_name }}
+          ref: ${{ github.event_name == 'pull_request_target' && github.head_ref || github.event_name == 'pull_request' && github.head_ref || github.ref_name }}
       - uses: actions/download-artifact@v8
         with:
           name: package-artifact

@@ -4,7 +4,7 @@ set -eou pipefail
 usage () {
 	echo "
 usage: $0 [-p] [-n] [-h]
-		[-o < 12.2.12 | 12.8.1 | 12.8.11 | 13.0.0 | ... >]
+		[-o < 12.2.19 | 12.8.1 | 12.8.11 | ... >]
 		[-N < 20 | 22 | 24 | ... >]
 options:
   -p                push docker images to dockerhub after build
@@ -41,7 +41,8 @@ initialize () {
 
 	if [ -z "${DOCKER_TAGS:-}" ]; then
 		DOCKER_TAGS=()
-		DOCKER_TAGS+=('12.2.12')
+		# DOCKER_TAGS+=('12.2.12')
+		DOCKER_TAGS+=('12.2.19')
 		# DOCKER_TAGS+=('12.7.0')
 		DOCKER_TAGS+=('12.8.1')
 		# DOCKER_TAGS+=('12.8.3')
@@ -66,7 +67,7 @@ set_node_version_for_tag () {
 	local DOCKER_TAG=$1
 
 	unset NODE_VERSION_FOR_TAG
-	if [ "$DOCKER_TAG" = 12.2.12 ]; then
+	if [ "$DOCKER_TAG" = 12.2.19 ]; then
 		## Prior LTS
 		NODE_VERSION_FOR_TAG=20
 	elif [ "$DOCKER_TAG" = 12.8.1 ]; then

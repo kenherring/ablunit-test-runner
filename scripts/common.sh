@@ -2,6 +2,12 @@
 set -eou pipefail
 
 common_init () {
+	echo "RUNNER_DEBUG=${RUNNER_DEBUG:-}"
+	if [ "${RUNNER_DEBUG:-}" = "1" ]; then
+		set -x
+		env | sort
+	fi
+
 	GITHUB_REF_TYPE="${GITHUB_REF_TYPE:-branch}"
 	if [ "$GITHUB_REF_TYPE" = "tag" ]; then
 		CIRCLE_BRANCH=
