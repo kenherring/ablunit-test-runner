@@ -1,5 +1,8 @@
 block-level on error undo, throw.
 
+// Compile error in OE 13.0.0:
+// Unable to build type info for destructorClass.test.cls: Periods may not be used in files with 'cls' extension. (21020)
+
 class destructorClass.test inherits destructorClass use-widget-pool:
 
     @Test.
