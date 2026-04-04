@@ -53,10 +53,10 @@ suite('proj3 - Extension Test Suite', () => {
 		log.info('oeVerion=' + oeVersion())
 		log.info('process.env[\'OE_VERSION\']=' + process.env['OE_VERSION'])
 		log.info('process.env[\'ABLUNIT_TEST_RUNNER_OE_VERSION\']=' + process.env['ABLUNIT_TEST_RUNNER_OE_VERSION'])
-		if (oeVersion().startsWith('12.8')) {
-			assert.linesExecuted('testProcedure.i', [8, 9, 10])
-		} else {
+		if (oeVersion().startsWith('12.2')) {
 			assert.linesNotExecuted('testProcedure.i', [8, 9, 10])
+		} else {
+			assert.linesExecuted('testProcedure.i', [8, 9, 10])
 		}
 	})
 })
