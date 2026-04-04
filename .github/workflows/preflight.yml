@@ -7,6 +7,9 @@ on:
   pull_request_target:
     branches:
       - main
+  push:
+    branches:
+      - main
 
 jobs:
   preflight:
@@ -29,4 +32,4 @@ jobs:
           echo "github.actor=${{ github.actor }}"
           echo "github.event.number=${{ github.event.number }}"
           echo "github.event.pull_request.base.ref=${{ github.event.pull_request.base.ref }}"
-          echo "github.event=${{ toJson(github.event) }}" || true
+          # echo "github.event=${{ toJson(github.event) }}" || true
