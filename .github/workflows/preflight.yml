@@ -7,13 +7,16 @@ on:
   pull_request_target:
     branches:
       - main
+  push:
+    branches:
+      - main
 
 jobs:
   preflight:
     runs-on: ubuntu-latest
     steps:
       - name: validate user
-        # if: ${{ github.event_name == "pull_request_target" }}
+        # if: ${{ github.event_name == 'pull_request_target' }}
         run: |
           echo "github.actor=${{ github.actor }}"
           if [ "${{ github.actor }}" != "kenherring" ] && [ "${{ github.actor }}" != "dependabot[bot]" ]; then
@@ -21,6 +24,7 @@ jobs:
             exit 1
           fi
       - name: debug-vars
+        continue-on-error: true
         run: |
           env | sort
           echo "github.event_name=${{ github.event_name }}"
@@ -28,4 +32,4 @@ jobs:
           echo "github.actor=${{ github.actor }}"
           echo "github.event.number=${{ github.event.number }}"
           echo "github.event.pull_request.base.ref=${{ github.event.pull_request.base.ref }}"
-          echo "github.event=${{ toJson(github.event) }}" || true
+          # echo "github.event=${{ toJson(github.event) }}" || true

@@ -53,9 +53,9 @@ export async function activate (context: ExtensionContext) {
 	// languages.registerInlineCompletionItemProvider({ language: 'abl'}, new InlineProvider())
 	languages.registerCompletionItemProvider({ language: 'abl', scheme: 'file' }, new SnippetProvider())
 
-	log.info('process.env[\'ABLUNIT_TEST_RUNNER_UNIT_TESTING\']=' + process.env['ABLUNIT_TEST_RUNNER_UNIT_TESTING'])
+	log.debug('process.env[\'ABLUNIT_TEST_RUNNER_UNIT_TESTING\']=' + process.env['ABLUNIT_TEST_RUNNER_UNIT_TESTING'])
 	if (process.env['ABLUNIT_TEST_RUNNER_UNIT_TESTING']) {
-		log.info('push internal commands')
+		log.debug('push internal commands')
 		context.subscriptions.push(
 			commands.registerCommand('_ablunit.getExtensionTestReferences', () => { return getExtensionTestReferences() }),
 			commands.registerCommand('_ablunit.isRefreshTestsComplete', () => { return isRefreshTestsComplete }),
