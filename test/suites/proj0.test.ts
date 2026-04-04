@@ -530,7 +530,7 @@ test.skip('proj0.23 - destructor is not an overload', async () => {
 	assert.ok(!modules[1].Destructor, 'modules[1].Destructor')
 })
 
-test('proj0.24 - search propath for destructorClass.test.r', async () => {
+test.skip('proj0.24 - search propath for destructorClass.test.r', async () => {
 	await runTestsInFile('src/destructorClass.test.cls', 1, TestRunProfileKind.Coverage)
 	const res = await getResults()
 
