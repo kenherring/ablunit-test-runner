@@ -155,7 +155,6 @@ run_tests () {
 	log_it "xvfb-run end (EXIT_CODE=$EXIT_CODE)"
 	log_group_end
 
-	echo "RUN_SCRIPT[0]=${RUN_SCRIPT[0]}"
 	if [ "${RUN_SCRIPT[0]}" = 'test:coverage' ]; then
 		mv coverage/lcov.info artifacts/coverage/lcov.info || true ## https://github.com/microsoft/vscode-test-cli/issues/38
 	fi
