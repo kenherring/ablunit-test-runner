@@ -91,7 +91,7 @@ suite('proj1 - Extension Test Suite', () => {
 				assert.tests.failed(2)
 				assert.tests.skipped(1)
 				assert.tests.count(32)
-				assert.tests.count(33)
+				// assert.tests.count(33)
 				return true
 			},
 			(e: unknown) => {
