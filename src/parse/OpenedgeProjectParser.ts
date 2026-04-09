@@ -580,7 +580,7 @@ export function getExtraParameters (workspaceUri: Uri, openedgeProjectProfile?: 
 	return profileConfig.extraParameters
 }
 
-export function getProfileDbConns (workspaceUri: Uri, openedgeProjectProfile?: string, ablunitProfile = true) {
+export function getProfileDbConns (workspaceUri: Uri, openedgeProjectProfile?: string, ablunitProfile = true): IDatabaseConnection[] {
 	log.debug('[getProfileDbConns] workspaceUri = ' + workspaceUri.fsPath)
 
 	const profileConfig = getWorkspaceProfileConfig(workspaceUri, openedgeProjectProfile, ablunitProfile)
@@ -589,7 +589,7 @@ export function getProfileDbConns (workspaceUri: Uri, openedgeProjectProfile?: s
 		return []
 	}
 	log.trace('[getProfileDbConns] profileConfig.dbConnections = ' + JSON.stringify(profileConfig.dbConnections, null, 2))
-	return profileConfig.dbConnections
+	return profileConfig.dbConnections ?? []
 }
 
 export function getBuildPathPatterns (workspaceFolder: WorkspaceFolder, buildPath: IBuildPathEntry): { includes: RelativePattern[]; excludes: RelativePattern[] } {
