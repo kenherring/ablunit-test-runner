@@ -26,10 +26,14 @@ export async function ablExec (cfg: ABLUnitConfig, dlc: IDlc, execFile: string, 
 		})
 }
 
-function getCommand (cfg: ABLUnitConfig, dlc: IDlc, execFile: string, propath: PropathParser) {
-	if (cfg.ablunitConfig.command.executable != '_progres' &&
-		cfg.ablunitConfig.command.executable != 'prowin' &&
-		cfg.ablunitConfig.command.executable != 'prowin32') {
+function getCommand (cfg: ABLUnitConfig,  dlc: IDlc, execFile: string, propath: PropathParser) {
+	const progressExecutables = ['_progres', 'prowin', 'prowin32']
+
+	if (process.platform === 'win32') {
+		progressExecutables.push('_progres.exe', 'prowin.exe', 'prowin32.exe')
+	}
+
+	if (!progressExecutables.includes(cfg.ablunitConfig.command.executable)) {
 		return getCustomCommand(cfg, dlc)
 	}
 	return getDefaultCommand(cfg, dlc, propath, execFile)
