@@ -37,7 +37,7 @@ interface IOpenEdgeConfig {
 	charset?: string
 	buildPath?: IBuildPathEntry[]
 	buildDirectory: string
-	dbConnections: IDatabaseConnection[]
+	dbConnections: IDatabaseConnection[] | undefined
 	procedures: IProcedure[]
 	rootUri: Uri
 }
@@ -203,7 +203,7 @@ export class ProfileConfig implements IOpenEdgeConfig {
 	charset?: string
 	buildPath: IBuildPathEntry[] = []
 	buildDirectory = '.'
-	dbConnections: IDatabaseConnection[] = []
+	dbConnections: IDatabaseConnection[] | undefined = undefined
 	procedures: IProcedure[] = []
 
 	startupProc?: string
@@ -233,7 +233,7 @@ export class ProfileConfig implements IOpenEdgeConfig {
 		if (this.propath.length == 0 && parent.propath) {
 			this.propath = parent.propath
 		}
-		if (this.dbConnections.length == 0 && parent.dbConnections) {
+		if (this.dbConnections === undefined && parent.dbConnections) {
 			this.dbConnections = parent.dbConnections
 		}
 		if (this.procedures.length == 0 && parent.procedures) {
@@ -394,7 +394,7 @@ function parseOpenEdgeConfig (rootUri: Uri, cfg: IOpenEdgeConfig | undefined): P
 	retVal.startupProc = ''
 	retVal.parameterFiles = []
 	retVal.dbDictionary = []
-	retVal.dbConnections = cfg?.dbConnections ?? []
+	retVal.dbConnections = cfg?.dbConnections
 	retVal.procedures = cfg?.procedures ?? []
 
 	return retVal
@@ -446,7 +446,7 @@ function parseOpenEdgeProjectConfig (uri: Uri, workspaceUri: Uri, config: IOpenE
 		}
 	}
 
-	prjConfig.dbConnections = config.dbConnections ?? []
+	prjConfig.dbConnections = config.dbConnections
 	prjConfig.procedures = config.procedures ?? []
 
 	prjConfig.profiles.set('default', prjConfig)
@@ -580,7 +580,7 @@ export function getExtraParameters (workspaceUri: Uri, openedgeProjectProfile?: 
 	return profileConfig.extraParameters
 }
 
-export function getProfileDbConns (workspaceUri: Uri, openedgeProjectProfile?: string, ablunitProfile = true) {
+export function getProfileDbConns (workspaceUri: Uri, openedgeProjectProfile?: string, ablunitProfile = true): IDatabaseConnection[] {
 	log.debug('[getProfileDbConns] workspaceUri = ' + workspaceUri.fsPath)
 
 	const profileConfig = getWorkspaceProfileConfig(workspaceUri, openedgeProjectProfile, ablunitProfile)
@@ -589,7 +589,7 @@ export function getProfileDbConns (workspaceUri: Uri, openedgeProjectProfile?: s
 		return []
 	}
 	log.trace('[getProfileDbConns] profileConfig.dbConnections = ' + JSON.stringify(profileConfig.dbConnections, null, 2))
-	return profileConfig.dbConnections
+	return profileConfig.dbConnections ?? []
 }
 
 export function getBuildPathPatterns (workspaceFolder: WorkspaceFolder, buildPath: IBuildPathEntry): { includes: RelativePattern[]; excludes: RelativePattern[] } {

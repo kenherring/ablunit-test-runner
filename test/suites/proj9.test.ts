@@ -1,14 +1,17 @@
-import { assert, deleteTestFiles, getTestCount, getWorkspaceUri, log, runAllTests, selectProfile, suiteSetupCommon, updateTestProfile, Uri, workspace } from '../testCommon'
+import { assert, deleteTestFiles, getTestCount, getWorkspaceUri, log, runAllTests, runTestsInFile, selectProfile, suiteSetupCommon, updateTestProfile, Uri, workspace } from '../testCommon'
 import * as FileUtils from 'FileUtils'
 
 const testProfileJson = Uri.joinPath(getWorkspaceUri(), '.vscode/ablunit-test-profile.json')
 const testProfileBackup = Uri.joinPath(getWorkspaceUri(), '.vscode/ablunit-test-profile.json.backup')
+const openedgeProjectJson = Uri.joinPath(getWorkspaceUri(), 'openedge-project.json')
+const openedgeProjectBackup = Uri.joinPath(getWorkspaceUri(), 'openedge-project.json.backup')
 
 suite('proj9 - Extension Test Suite', () => {
 
 	suiteSetup('proj9 - before', async () => {
 		await suiteSetupCommon()
 		FileUtils.copyFile(testProfileJson, testProfileBackup)
+		FileUtils.copyFile(openedgeProjectJson, openedgeProjectBackup)
 	})
 
 	setup('proj9 - beforeEach', () => {
@@ -21,10 +24,12 @@ suite('proj9 - Extension Test Suite', () => {
 	teardown('proj9 - afterEach', () => {
 		FileUtils.deleteFile(testProfileJson)
 		FileUtils.copyFile(testProfileBackup, testProfileJson)
+		FileUtils.copyFile(openedgeProjectBackup, openedgeProjectJson)
 	})
 
 	suiteTeardown('proj9 - after', () => {
 		FileUtils.deleteFile(testProfileBackup)
+		FileUtils.deleteFile(openedgeProjectBackup)
 	})
 
 	test('proj9.1 - ${workspaceFolder}/ablunit.json file exists', async () => {
@@ -38,7 +43,7 @@ suite('proj9 - Extension Test Suite', () => {
 		assert.fileExists(resultsXml)
 		assert.fileExists(resultsJson)
 
-		assert.equal(await getTestCount(resultsJson, 'pass'), 7, 'passed test count')
+		assert.equal(await getTestCount(resultsJson, 'pass'), 8, 'passed test count')
 		assert.equal(await getTestCount(resultsJson, 'fail'), 0, 'failed test count')
 		assert.equal(await getTestCount(resultsJson, 'error'), 0, 'error test count')
 	})
@@ -91,6 +96,69 @@ suite('proj9 - Extension Test Suite', () => {
 
 		assert.fileExists(resultsJson)
 		assert.equal(await getTestCount(resultsJson, 'pass'), 2, 'passed test count')
+		assert.equal(await getTestCount(resultsJson, 'fail'), 0, 'failed test count')
+		assert.equal(await getTestCount(resultsJson, 'error'), 0, 'error test count')
+	})
+
+	test('proj9.13a - db connections in NoDB-profile are used (none)', async () => {
+		FileUtils.copyFile('.vscode/ablunit-test-profile.test13.json', '.vscode/ablunit-test-profile.json')
+		FileUtils.copyFile('openedge-project.test13.json', 'openedge-project.json')
+
+		await selectProfile('NoDB-profile')
+		await runTestsInFile('src/numdbsTest.p')
+
+		const workspaceFolder = workspace.workspaceFolders![0].uri
+		const resultsJson = Uri.joinPath(workspaceFolder, 'results.json')
+
+		assert.fileExists(resultsJson)
+		assert.equal(await getTestCount(resultsJson, 'pass'), 0, 'passed test count')
+		assert.equal(await getTestCount(resultsJson, 'fail'), 1, 'failed test count')
+		assert.equal(await getTestCount(resultsJson, 'error'), 0, 'error test count')
+	})
+
+	test('proj9.13b - db connections in default profile are used (one)', async () => {
+		FileUtils.copyFile('.vscode/ablunit-test-profile.test13.json', '.vscode/ablunit-test-profile.json')
+		FileUtils.copyFile('openedge-project.test13.json', 'openedge-project.json')
+
+		await runTestsInFile('src/numdbsTest.p')
+
+		const workspaceFolder = workspace.workspaceFolders![0].uri
+		const resultsJson = Uri.joinPath(workspaceFolder, 'results.json')
+
+		assert.fileExists(resultsJson)
+		assert.equal(await getTestCount(resultsJson, 'pass'), 1, 'passed test count')
+		assert.equal(await getTestCount(resultsJson, 'fail'), 0, 'failed test count')
+		assert.equal(await getTestCount(resultsJson, 'error'), 0, 'error test count')
+	})
+
+	test('proj9.13c - db connections in inherited-profile are used (none)', async () => {
+		FileUtils.copyFile('.vscode/ablunit-test-profile.test13.json', '.vscode/ablunit-test-profile.json')
+		FileUtils.copyFile('openedge-project.test13.json', 'openedge-project.json')
+
+		await selectProfile('inherited-profile')
+		await runTestsInFile('src/numdbsTest.p')
+
+		const workspaceFolder = workspace.workspaceFolders![0].uri
+		const resultsJson = Uri.joinPath(workspaceFolder, 'results.json')
+
+		assert.fileExists(resultsJson)
+		assert.equal(await getTestCount(resultsJson, 'pass'), 0, 'passed test count')
+		assert.equal(await getTestCount(resultsJson, 'fail'), 1, 'failed test count')
+		assert.equal(await getTestCount(resultsJson, 'error'), 0, 'error test count')
+	})
+
+	test('proj9.13d - db connections in inherited-profile2 are used (one)', async () => {
+		FileUtils.copyFile('.vscode/ablunit-test-profile.test13.json', '.vscode/ablunit-test-profile.json')
+		FileUtils.copyFile('openedge-project.test13.json', 'openedge-project.json')
+
+		await selectProfile('inherited-profile2')
+		await runTestsInFile('src/numdbsTest.p')
+
+		const workspaceFolder = workspace.workspaceFolders![0].uri
+		const resultsJson = Uri.joinPath(workspaceFolder, 'results.json')
+
+		assert.fileExists(resultsJson)
+		assert.equal(await getTestCount(resultsJson, 'pass'), 1, 'passed test count')
 		assert.equal(await getTestCount(resultsJson, 'fail'), 0, 'failed test count')
 		assert.equal(await getTestCount(resultsJson, 'error'), 0, 'error test count')
 	})
