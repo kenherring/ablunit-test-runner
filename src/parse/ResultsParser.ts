@@ -171,7 +171,7 @@ export class ABLResultsParser {
 				errors: Number(res[idx].$.errors),
 				failures: Number(res[idx].$.failures),
 				skipped: Number(res[idx].$.skipped ?? 0),
-				time: Number(res[idx].$.time * 1000),
+				time: Number(res[idx].$.time) * 1000,
 				properties: this.parseProperties(res[idx].properties),
 				testsuite: testsuite,
 				testcases: testcases

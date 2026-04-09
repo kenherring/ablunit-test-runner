@@ -236,7 +236,7 @@ export class DebugListingContentProvider implements TextDocumentContentProvider 
 			this.debugListingUriMap.set(debugListingPreviewUri.fsPath, debugListingUri)
 			this.sourceUriMap.set(debugListingPreviewUri.fsPath, sourceUri)
 
-			if (!this.previewEditor || this.previewEditor.document.uri.fsPath !== debugListingPreviewUri.fsPath) {
+			if (this.previewEditor?.document.uri.fsPath !== debugListingPreviewUri.fsPath) {
 				this.previewEditor = await window.showTextDocument(debugListingPreviewUri, {
 					viewColumn: this.previewEditor?.viewColumn ?? ViewColumn.Beside,
 					preview: true,

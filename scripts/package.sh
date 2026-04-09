@@ -14,9 +14,7 @@ initialize () {
     fi
 
     PACKAGE_VERSION=$(jq -r '.version' package.json)
-    log_it "PACKAGE_VERSION=$PACKAGE_VERSION"
     PATCH=${PACKAGE_VERSION##*.}
-    log_it "PATCH_VERSION=$PATCH"
     if [ "$((PATCH % 2))" = "1" ]; then
         log_it "version patch component is odd. packaging as prerelease. (PATCH=$PATCH)"
         PRERELEASE=true

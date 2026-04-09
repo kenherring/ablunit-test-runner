@@ -104,7 +104,7 @@ jobs:
   create-release:
     needs: [ 'test' ]
     runs-on: ubuntu-latest
-    if: ${{ github.head_ref == 'main' && github.event_name != 'pull_request_target' && github.event_name == 'pull_request'}}
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     steps:
       - uses: actions/checkout@v6
         with:

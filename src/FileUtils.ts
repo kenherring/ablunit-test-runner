@@ -130,7 +130,7 @@ export function toUri (path: string | Uri, base?: string | Uri): Uri {
 	if (base) {
 		return Uri.joinPath(toUri(base), path)
 	}
-	if (workspace.workspaceFolders && workspace.workspaceFolders.length === 1) {
+	if (workspace.workspaceFolders?.length === 1) {
 		return Uri.joinPath(workspace.workspaceFolders[0].uri, path)
 	}
 	throw new Error('No basedir provided for relative path: ' + path)
