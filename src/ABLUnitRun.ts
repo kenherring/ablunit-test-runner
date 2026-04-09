@@ -85,9 +85,13 @@ export async function ablunitRun (options: TestRun, res: ABLResults, cancellatio
 }
 
 function getCommand (res: ABLResults, options: TestRun) {
-	if (res.cfg.ablunitConfig.command.executable != '_progres' &&
-		res.cfg.ablunitConfig.command.executable != 'prowin' &&
-		res.cfg.ablunitConfig.command.executable != 'prowin32') {
+	const progressExecutables = ['_progres', 'prowin', 'prowin32']
+
+	if (process.platform === 'win32') {
+		progressExecutables.push('_progres.exe', 'prowin.exe', 'prowin32.exe')
+	}
+
+	if (!progressExecutables.includes(res.cfg.ablunitConfig.command.executable)) {
 		return getCustomCommand(res, options)
 	}
 	return getDefaultCommand(res)
