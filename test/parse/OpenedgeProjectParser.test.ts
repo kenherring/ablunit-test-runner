@@ -1,4 +1,4 @@
-import { getDLC, getOEVersion, getOpenEdgeProfileConfig } from 'parse/OpenedgeProjectParser'
+import { getDLC, getOEVersion, getOpenEdgeProfileConfig, getProfileDbConns } from 'parse/OpenedgeProjectParser'
 import { assert, getWorkspaceFolders, log, suiteSetupCommon_logGroup } from '../testCommon'
 import { toUri } from 'FileUtils'
 
@@ -77,4 +77,37 @@ test('OpenedgeProjectParser.test.6', () => {
 	}
 
 	assert.equal(JSON.stringify(config.buildPath.map(x => x.build)), '["src"]')
+})
+
+test('OpenedgeProjectParser.test.7a', () => {
+	const dbConns = getProfileDbConns(toUri('openedge-project.test7.json'))
+	assert.equal(dbConns?.length, 1, 'Expected 1 DB connection!')
+	// const config = getOpenEdgeProfileConfig(toUri('openedge-project.test7.json'))
+	// if (!config) {
+	// 	throw new Error('config is undefined')
+	// }
+
+	// assert.equal(config.dbConnections?.length, 1, 'Expected 1 DB connection!')
+})
+
+test('OpenedgeProjectParser.test.7b', () => {
+	const dbConns = getProfileDbConns(toUri('openedge-project.test7.json'), 'NoDB-profile')
+	assert.equal(dbConns?.length, 0, 'Expected no DB connections!')
+	// const config = getOpenEdgeProfileConfig(toUri('openedge-project.test7.json'), 'NoDB-profile')
+	// if (!config) {
+	// 	throw new Error('config is undefined')
+	// }
+
+	// assert.equal(config.dbConnections?.length, 0, 'Expected no DB connections!')
+})
+
+test('OpenedgeProjectParser.test.7c', () => {
+	const dbConns = getProfileDbConns(toUri('openedge-project.test7.json'), 'inherited-profile')
+	assert.equal(dbConns?.length, 0, 'Expected no DB connections!')
+	// const config = getOpenEdgeProfileConfig(toUri('openedge-project.test7.json'), 'inherited-profile')
+	// if (!config) {
+	// 	throw new Error('config is undefined')
+	// }
+
+	// assert.equal(config.dbConnections?.length, 0, 'Expected no DB connections!')
 })

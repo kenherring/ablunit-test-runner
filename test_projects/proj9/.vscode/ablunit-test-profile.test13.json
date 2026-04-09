@@ -1,0 +1,17 @@
+{
+	"configurations": [{
+		"tempDir": "${workspaceFolder}",
+		"options": {
+			"output": {
+				"location": "${tempDir}",
+				"filename": "results",
+				"format": "xml",
+				"writeJson": true
+			},
+			"quitOnEnd": true,
+			"writeLog":  false,
+			"showErrorMessage": true,
+			"throwError": true
+		}
+	}]
+}
