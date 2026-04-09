@@ -24,6 +24,12 @@
 			"value": {
 				"dbConnections": []
 			}
+		},
+		{
+			"name": "inherited-profile2",
+			"inherits": "default",
+			"value": {
+			}
 		}
 	]
 }

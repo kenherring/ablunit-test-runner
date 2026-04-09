@@ -37,7 +37,7 @@ interface IOpenEdgeConfig {
 	charset?: string
 	buildPath?: IBuildPathEntry[]
 	buildDirectory: string
-	dbConnections: IDatabaseConnection[]
+	dbConnections: IDatabaseConnection[] | undefined
 	procedures: IProcedure[]
 	rootUri: Uri
 }
@@ -203,7 +203,7 @@ export class ProfileConfig implements IOpenEdgeConfig {
 	charset?: string
 	buildPath: IBuildPathEntry[] = []
 	buildDirectory = '.'
-	dbConnections: IDatabaseConnection[] = []
+	dbConnections: IDatabaseConnection[] | undefined = undefined
 	procedures: IProcedure[] = []
 
 	startupProc?: string
@@ -233,7 +233,7 @@ export class ProfileConfig implements IOpenEdgeConfig {
 		if (this.propath.length == 0 && parent.propath) {
 			this.propath = parent.propath
 		}
-		if (this.dbConnections.length == 0 && parent.dbConnections) {
+		if (this.dbConnections === undefined && parent.dbConnections) {
 			this.dbConnections = parent.dbConnections
 		}
 		if (this.procedures.length == 0 && parent.procedures) {
@@ -394,7 +394,7 @@ function parseOpenEdgeConfig (rootUri: Uri, cfg: IOpenEdgeConfig | undefined): P
 	retVal.startupProc = ''
 	retVal.parameterFiles = []
 	retVal.dbDictionary = []
-	retVal.dbConnections = cfg?.dbConnections ?? []
+	retVal.dbConnections = cfg?.dbConnections
 	retVal.procedures = cfg?.procedures ?? []
 
 	return retVal
@@ -446,7 +446,7 @@ function parseOpenEdgeProjectConfig (uri: Uri, workspaceUri: Uri, config: IOpenE
 		}
 	}
 
-	prjConfig.dbConnections = config.dbConnections ?? []
+	prjConfig.dbConnections = config.dbConnections
 	prjConfig.procedures = config.procedures ?? []
 
 	prjConfig.profiles.set('default', prjConfig)
