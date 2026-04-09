@@ -81,20 +81,20 @@ test('OpenedgeProjectParser.test.6', () => {
 
 test('OpenedgeProjectParser.test.7a', () => {
 	const dbConns = getProfileDbConns(toUri('openedge-project.test7.json'))
-	assert.equal(dbConns?.length, 1, 'Expected 1 DB connection!')
+	assert.equal(dbConns.length, 1, 'Expected 1 DB connection!')
 })
 
 test('OpenedgeProjectParser.test.7b', () => {
 	const dbConns = getProfileDbConns(toUri('openedge-project.test7.json'), 'NoDB-profile')
-	assert.equal(dbConns?.length, 0, 'Expected no DB connections!')
+	assert.equal(dbConns.length, 0, 'Expected no DB connections!')
 })
 
 test('OpenedgeProjectParser.test.7c', () => {
 	const dbConns = getProfileDbConns(toUri('openedge-project.test7.json'), 'inherited-profile')
-	assert.equal(dbConns?.length, 0, 'Expected no DB connections!')
+	assert.equal(dbConns.length, 0, 'Expected no DB connections!')
 })
 
 test('OpenedgeProjectParser.test.7d', () => {
 	const dbConns = getProfileDbConns(toUri('openedge-project.test7.json'), 'inherited-profile2')
-	assert.equal(dbConns?.length, 1, 'Expected 1 DB connection!')
+	assert.equal(dbConns.length, 1, 'Expected 1 DB connection!')
 })
