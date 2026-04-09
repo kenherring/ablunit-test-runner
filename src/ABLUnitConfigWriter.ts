@@ -32,6 +32,7 @@ export class ABLUnitConfig  {
 			throw new Error('Output location not defined!')
 		}
 		log.info('creating ablunit.json: \'' + this.ablunitConfig.config_uri.fsPath + '\'')
+		testQueue.sort((a, b) => a.test.localeCompare(b.test))
 		const promarr: PromiseLike<void>[] = []
 		FileUtils.createDir(this.ablunitConfig.optionsUri.locationUri)
 		FileUtils.deleteFile(this.ablunitConfig.optionsUri.filenameUri)

@@ -143,15 +143,19 @@ run_tests () {
 		export JAVA_TOOL_OPTIONS=${JAVA_TOOL_OPTIONS:-'-Dfile.encoding=UTF8'}
 	fi
 
+	if [ "${TEST_GREP_PATTERN:-}" != "" ]; then
+		RUN_SCRIPT=("$RUN_SCRIPT" '--' '--grep' "\"$TEST_GREP_PATTERN\"")
+	fi
+
 	log_group_end
-	log_group_start "npm $RUN_SCRIPT"
-	log_it "starting 'npm $RUN_SCRIPT'"
+	log_group_start "npm ${RUN_SCRIPT[*]}"
+	log_it "starting 'npm ${RUN_SCRIPT[*]}'"
 	EXIT_CODE=0
-	xvfb-run -a npm run "$RUN_SCRIPT" || EXIT_CODE=$?
+	xvfb-run -a npm run "${RUN_SCRIPT[@]}" || EXIT_CODE=$?
 	log_it "xvfb-run end (EXIT_CODE=$EXIT_CODE)"
 	log_group_end
 
-	if [ "$RUN_SCRIPT" = 'test:coverage' ]; then
+	if [ "${RUN_SCRIPT[0]}" = 'test:coverage' ]; then
 		mv coverage/lcov.info artifacts/coverage/lcov.info || true ## https://github.com/microsoft/vscode-test-cli/issues/38
 	fi
 
@@ -178,6 +182,12 @@ save_and_print_debug_output () {
 	find .vscode-test -name '*ABL*.log' -exec cp {} artifacts \;
 	find .vscode-test -name 'settings.json'
 	find .vscode-test -name 'settings.json' -exec cp {} artifacts \;
+
+	find test_projects -name 'ablunit.json'
+	find test_projects -name 'ablunit.json' -exec cp {} artifacts \;
+	find test_projects -name 'results.xml'
+	find test_projects -name 'results.xml' -exec cp {} artifacts \;
+
 	local FROM_DIR TO_DIR
 	FROM_DIR=$(find .vscode-test  -maxdepth 1 -type d -name 'vscode-*' | tail -1)
 	TO_DIR="$HOME"/.vscode-test/$(basename "$FROM_DIR")
@@ -196,6 +206,9 @@ save_and_print_debug_output () {
 }
 
 process_exit_code () {
+	# find test_projects -name 'ablunit.json' -exec cp {} artifacts \;
+	# find test_projects -name 'results.xml' -exec cp {} artifacts \;
+
 	if [ "${EXIT_CODE:-0}" = 0 ]; then
 		log_it "all tests completed successfully!"
 		exit 0

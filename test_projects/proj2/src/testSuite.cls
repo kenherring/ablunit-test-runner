@@ -5,5 +5,5 @@
 @testsuite(classes="src.classes.testClass3",
 		   procedures="src/procedures/test_proc2.p").
 
-class src.testsuite :
+class src.testSuite :
 end class.
