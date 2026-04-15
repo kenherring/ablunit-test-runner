@@ -46,4 +46,21 @@ suite('proj8 - Extension Test Suite', () => {
 			})
 	})
 
+	test('proj8.3 - getEnvVars does not mutate process.env for initializationProcedure', () => {
+		const key = 'ABLUNIT_INITIALIZATION_PROCEDURE'
+		const original = process.env[key]
+		process.env[key] = 'original-value'
+		try {
+			const envVars = getEnvVars(undefined, 30000)
+			assert.strictEqual(envVars[key], undefined)
+			assert.strictEqual(process.env[key], 'original-value')
+		} finally {
+			if (original === undefined) {
+				delete process.env.ABLUNIT_INITIALIZATION_PROCEDURE
+			} else {
+				process.env[key] = original
+			}
+		}
+	})
+
 })

@@ -479,7 +479,7 @@ function setCurrentTestItem (ablunitStatus: IABLUnitStatus) {
 }
 
 export function getEnvVars (dlcUri: Uri | undefined, maxWait = 30000, initializationProcedure?: string) {
-	const runenv = process.env
+	const runenv = { ...process.env }
 	let envConfig: Record<string, string> | undefined = undefined
 	if (process.platform === 'win32') {
 		envConfig = workspace.getConfiguration('terminal').get('integrated.env.windows')
@@ -504,7 +504,7 @@ export function getEnvVars (dlcUri: Uri | undefined, maxWait = 30000, initializa
 	if (initializationProcedure) {
 		runenv['ABLUNIT_INITIALIZATION_PROCEDURE'] = initializationProcedure
 	} else {
-		runenv['ABLUNIT_INITIALIZATION_PROCEDURE'] = ''
+		delete runenv['ABLUNIT_INITIALIZATION_PROCEDURE']
 	}
 	return runenv
 }
