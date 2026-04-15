@@ -50,6 +50,8 @@ validate_other () {
 
 ########## MAIN BLOCK ##########
 # validate_circleci_config
+# validate_package_json
 validate_compile
 validate_version_updated
+validate_other
 echo "pre-commit checks successful!" >&2
