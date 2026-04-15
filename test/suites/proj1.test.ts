@@ -321,6 +321,21 @@ suite('proj1 - Extension Test Suite', () => {
 		return p
 	})
 
+	test('proj1.17 - codepage windows-1252', () => {
+		if (process.platform !== 'win32') {
+			log.info('skipping proj1.17 on Linux as it requires a windows environment')
+			return
+		}
+		FileUtils.copyFile(Uri.joinPath(workspaceUri, 'openedge-project.proj1.17.json'), Uri.joinPath(workspaceUri, 'openedge-project.json'), { force: true })
+		const p = runTestsInFile('classTest.cls')
+			.then(() => {
+				assert.tests.count(2)
+				assert.tests.passed(2)
+				return true
+			})
+		return p
+	})
+
 	test('proj1.98 - check startup parameters for -y -yx', async () => {
 		FileUtils.copyFile(Uri.joinPath(workspaceUri, 'openedge-project.proj1.98.json'), Uri.joinPath(workspaceUri, 'openedge-project.json'), { force: true })
 		await runTestAtLine('import_charset.p', 68)

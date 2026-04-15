@@ -1,0 +1,9 @@
+{
+	"name": "proj1.17",
+	"version": "1.0",
+	"charset": "windows-1252",
+	"buildDirectory": "build",
+	"numThreads": 1,
+	"dbConnections": [],
+	"graphicalMode": false
+}
