@@ -1,5 +1,6 @@
-# [1.4.33](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.4.33) - 2026-04-15 (pre-release)
+# [1.4.35](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.4.35) - 2026-04-15 (pre-release)
 
+* Trim `windows-` from codepage (#567)
 * Clear environment variable when `initializationProcedure` is no longer set (#565)
 * build(deps-dev): bump typescript-eslint from 8.58.0 to 8.58.1 (#563)
 * Empty `dbConnections` array in openedge-project profile are not used (#560)
@@ -70,7 +71,7 @@
 * Bump esbuild from 0.27.0 to 0.27.1 (#457)
 * Bump jws from 3.2.2 to 3.2.3 in the npm_and_yarn group across 1 directory (#455)
 
-**Full Changelog**: [1.4.4...1.4.33](https://github.com/kenherring/ablunit-test-runner/compare/1.4.4...1.4.33)
+**Full Changelog**: [1.4.4...1.4.35](https://github.com/kenherring/ablunit-test-runner/compare/1.4.4...1.4.35)
 
 # [1.4.4](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.4.4) - 2025-11-26 (pre-release)
 

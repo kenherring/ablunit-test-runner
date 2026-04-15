@@ -228,8 +228,11 @@ export class RunConfig extends DefaultRunProfile {
 			this.command.additionalArgs.push(...extraParameters)
 		}
 
-		const charset = getProfileCharset(this.workspaceFolder.uri, this.profile.openedgeProjectProfile)
+		let charset = getProfileCharset(this.workspaceFolder.uri, this.profile.openedgeProjectProfile)
 		if (charset) {
+			if (charset.startsWith('windows-')) {
+				charset = charset.substring('windows-'.length)
+			}
 			if (this.command.additionalArgs.includes('-cpstream')) {
 				log.warn('command.additionalArgs already contains -cpstream.  Replacing with `-cpstream ' + charset)
 				this.command.additionalArgs.splice(this.command.additionalArgs.indexOf('-cpstream'), 2, '-cpstream', charset)
