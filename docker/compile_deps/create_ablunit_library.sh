@@ -1,5 +1,5 @@
 #!/bin/bash
-set -eou pipefail
+set -euo pipefail
 
 ## create ablunit.pl
 PROGRESS_ADE_TAG=$(cat /psc/dlc/version | cut -d ' ' -f3)

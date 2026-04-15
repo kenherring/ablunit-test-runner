@@ -1,5 +1,4 @@
 #!/bin/bash
-set -eou pipefail
 
 ## Enable this hook with: git config
 ## git config core.hooksPath .git-hooks/
@@ -42,7 +41,8 @@ validate_compile () {
 
 validate_other () {
 	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[0]}]"
-	if grep 'set -eou'; then
+	## grep excluding this file
+	if git grep 'set -eou' -- ':!'"$0"; then
 		echo "ERROR: found 'set -eou'!  Change to 'set -euo pipefail'." >&2
 		exit 1
 	fi

@@ -1,5 +1,4 @@
 #!/bin/bash
-set -eou pipefail
 
 . ./scripts/common.sh
 
