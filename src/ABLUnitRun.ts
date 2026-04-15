@@ -503,6 +503,8 @@ export function getEnvVars (dlcUri: Uri | undefined, maxWait = 30000, initializa
 	runenv['ABLUNIT_TEST_RUNNER_DEBUG_MAX_WAIT'] = maxWait.toString()
 	if (initializationProcedure) {
 		runenv['ABLUNIT_INITIALIZATION_PROCEDURE'] = initializationProcedure
+	} else {
+		runenv['ABLUNIT_INITIALIZATION_PROCEDURE'] = ''
 	}
 	return runenv
 }

@@ -125,7 +125,14 @@ procedure main :
 	define variable initializationProcedure as character no-undo.
 	initializationProcedure = os-getenv('ABLUNIT_INITIALIZATION_PROCEDURE').
 	if initializationProcedure <> ? and initializationProcedure > '' then
+	do:
+		if search(initializationProcedure) = ? then
+		do:
+			undo, throw new Progress.Lang.AppError('Initialization procedure ' + initializationProcedure + ' not found in PROPATH', 89).
+		end.
+
 		run value(initializationProcedure).
+	end.
 
 	run VSCode/ABLRunner-wrapper.p(testConfig, updateFile).
 	if VERBOSE then message 'END main'.
@@ -166,7 +173,7 @@ catch e as Progress.Lang.Error:
 		define variable i as integer no-undo.
 		do i = 1 to e:NumMessages:
 			message '[ABLRunner error]' e:GetMessage(i) view-as alert-box error.
-			if not e:GetMessage(1) begins 'Unable to build type info' then
+			if e:CallStack <> ? and not e:GetMessage(1) begins 'Unable to build type info' then
 			do:
 				message '[ABLRunner error]~t' + replace(e:CallStack, '~n', '~n[ABLRunner error]~t').
 			end.
