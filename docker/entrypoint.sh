@@ -1,5 +1,5 @@
 #!/bin/bash
-set -eou pipefail
+set -euo pipefail
 
 log_it () {
 	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 ${FUNCNAME[1]}]" "$@"
@@ -172,7 +172,7 @@ run_tests_base () {
 		$BASH_AFTER_ERROR && bash
 		exit 1
 	fi
-	set -eou pipefail
+	set -euo pipefail
 	log_it "run_tests success"
 
 	if [ -z "${ABLUNIT_TEST_RUNNER_PROJECT_NAME:-}" ]; then

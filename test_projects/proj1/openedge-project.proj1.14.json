@@ -16,11 +16,13 @@
 	"profiles": [
 		{
 			"name": "dev",
-			"parameters": "-debugalert -errorstack",
-			"buildPath": [
-				{ "type": "propath", "path": "ADE/ablunit/" },
-				{ "type": "propath", "path": "${DLC}/tty/netlib/OpenEdge.Net.pl" }
-			]
+			"value": {
+				"parameters": "-debugalert -errorstack",
+				"buildPath": [
+					{ "type": "propath", "path": "ADE/ablunit/" },
+					{ "type": "propath", "path": "${DLC}/tty/netlib/OpenEdge.Net.pl" }
+				]
+			}
 		},
 		{
 			"name": "ablunit",

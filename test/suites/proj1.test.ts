@@ -336,7 +336,7 @@ suite('proj1 - Extension Test Suite', () => {
 		return p
 	})
 
-	test('proj1.98 - check startup parmaeters for -y -yx', async () => {
+	test('proj1.98 - check startup parameters for -y -yx', async () => {
 		FileUtils.copyFile(Uri.joinPath(workspaceUri, 'openedge-project.proj1.98.json'), Uri.joinPath(workspaceUri, 'openedge-project.json'), { force: true })
 		await runTestAtLine('import_charset.p', 68)
 			.then(() => {

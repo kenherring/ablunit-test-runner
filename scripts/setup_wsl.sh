@@ -1,5 +1,5 @@
 #!/bin/bash
-set -eou pipefail
+set -euo pipefail
 
 OE_VERSION=${OE_VERSION:-12.8.1}
 

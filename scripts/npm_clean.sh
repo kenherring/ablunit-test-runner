@@ -1,5 +1,5 @@
 #!/bin/bash
-set -eou pipefail
+set -euo pipefail
 
 main_block () {
 	echo "[$(date +%Y-%m-%d:%H:%M:%S) $0 main_block] starting script (pwd=$(pwd))"
