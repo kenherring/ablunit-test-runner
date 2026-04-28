@@ -726,3 +726,16 @@ suite('proj0.32 - initializationProcedure', () => {
 		return
 	})
 })
+
+test('proj0.33 - european numbers (-E)', async () => {
+	FileUtils.copyFile('.vscode/ablunit-test-profile.test33.json', '.vscode/ablunit-test-profile.json')
+	await updateConfig('ablunit.files.exclude', '**/.{builder,pct}/**')
+		.then(() => runTestAtLine('src/timeout.p', 37, 0))
+		.then(() => getResults())
+		.then((recentResults) => {
+			assert.ok(!isNaN(Number(recentResults[0].ablResults?.resultsJson[0].testsuite?.[0].time)), 'time should not be NaN due to european number format')
+			assert.ok(!isNaN(Number(recentResults[0].ablResults?.resultsJson[0].testsuite?.[0].testcases?.[0].time)), 'time should not be NaN due to european number format')
+		}, (e: unknown) => {
+			assert.fail('unexpected test error (e=' + e + ')')
+		})
+})
