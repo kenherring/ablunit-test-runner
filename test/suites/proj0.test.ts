@@ -730,7 +730,17 @@ suite('proj0.32 - initializationProcedure', () => {
 test('proj0.33 - european numbers (-E)', () => {
 	FileUtils.copyFile('.vscode/ablunit-test-profile.test33.json', '.vscode/ablunit-test-profile.json')
 	const prom = updateConfig('ablunit.files.exclude', '**/.{builder,pct}/**')
-		.then(() => sleep(100))
+		.then(() => {
+			const cfg = workspace.getConfiguration('ablunit.files.exclude')
+			log.info('files.exclude-1=' + JSON.stringify(cfg))
+			return
+		})
+		.then(() => sleep(250)) // wait for config update to propagate
+		.then(() => {
+			const cfg = workspace.getConfiguration('ablunit.files.exclude')
+			log.info('files.exclude-2=' + JSON.stringify(cfg))
+			return
+		})
 		.then(() => runTestAtLine('src/timeout.p', 37, 0))
 		.then(() => getResults())
 		.then((recentResults) => {
