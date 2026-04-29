@@ -626,7 +626,7 @@ test.skip('proj0.28 - database connection needed but not configured', async () =
 	return
 })
 
-test.skip('proj0.29 - database connection not valid', async () => {
+test('proj0.29 - database connection not valid', async () => {
 	FileUtils.copyFile('openedge-project.test29.json', 'openedge-project.json')
 
 	await runTestsInFile('src/dirA/dir1/testInDir.p').then(() => {
@@ -643,7 +643,7 @@ test.skip('proj0.29 - database connection not valid', async () => {
 	return
 })
 
-test.skip('proj0.30 - database connection not valid', async () => {
+test('proj0.30 - database connection not valid', async () => {
 	if (!process.env['CI']) {
 		log.info('skipping proj0.30 as it has a long execution time and is intended to run on CI only')
 		return
@@ -741,12 +741,8 @@ test('proj0.33 - european numbers (-E)', () => {
 
 	const prom = sleep(250)
 		.then(() => updateConfig('ablunit.files.exclude', '**/.{builder,pct}/**'))
-		.then(() => {
-			const cfg = workspace.getConfiguration('ablunit').get('files.exclude')
-			log.info('files.exclude-1=' + JSON.stringify(cfg))
-			return
-		})
-		.then(() => sleep(250)) // wait for config update to propagate
+		// .then(() => sleep(250)) // wait for config update to propagate
+		.then(() => sleep(100)) // wait for config update to propagate
 		.then(() => {
 			const cfg = workspace.getConfiguration('ablunit').get('files.exclude')
 			log.info('files.exclude-2=' + JSON.stringify(cfg))
