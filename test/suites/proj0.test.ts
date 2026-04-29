@@ -727,15 +727,18 @@ suite('proj0.32 - initializationProcedure', () => {
 	})
 })
 
-test('proj0.33 - european numbers (-E)', async () => {
+test('proj0.33 - european numbers (-E)', () => {
 	FileUtils.copyFile('.vscode/ablunit-test-profile.test33.json', '.vscode/ablunit-test-profile.json')
-	await updateConfig('ablunit.files.exclude', '**/.{builder,pct}/**')
+	const prom = updateConfig('ablunit.files.exclude', '**/.{builder,pct}/**')
+		.then(() => sleep(100))
 		.then(() => runTestAtLine('src/timeout.p', 37, 0))
 		.then(() => getResults())
 		.then((recentResults) => {
-			assert.ok(!isNaN(Number(recentResults[0].ablResults?.resultsJson[0].testsuite?.[0].time)), 'time should not be NaN due to european number format')
-			assert.ok(!isNaN(Number(recentResults[0].ablResults?.resultsJson[0].testsuite?.[0].testcases?.[0].time)), 'time should not be NaN due to european number format')
+			assert.ok(!isNaN(Number(recentResults[0].ablResults?.resultsJson[0].testsuite?.[0].time)), 'testsuite time should not be NaN due to european number format')
+			assert.ok(!isNaN(Number(recentResults[0].ablResults?.resultsJson[0].testsuite?.[0].testcases?.[0].time)), 'testcase time should not be NaN due to european number format')
+			return true
 		}, (e: unknown) => {
 			assert.fail('unexpected test error (e=' + e + ')')
 		})
+	return prom
 })
