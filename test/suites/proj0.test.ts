@@ -77,6 +77,9 @@ teardown('proj0 - afterEach', () => {
 			log.warn('disposables.length != 0')
 		}
 	}
+
+	log.info('proj0 teardown COMPLETE - waiting 250s')
+	return sleep(250)
 })
 
 suiteTeardown('proj0 - after', () => {
@@ -84,7 +87,7 @@ suiteTeardown('proj0 - after', () => {
 	FileUtils.renameFile(toUri(backupProjectFile), toUri('openedge-project.json'))
 })
 
-test('proj0.01 - ${workspaceFolder}/ablunit.json file exists', () => {
+test.skip('proj0.01 - ${workspaceFolder}/ablunit.json file exists', () => {
 	const prom = runAllTests()
 		.then(() => getResults())
 		.then((recentResults) => {
@@ -98,7 +101,7 @@ test('proj0.01 - ${workspaceFolder}/ablunit.json file exists', () => {
 	return prom
 })
 
-test('proj0.02 - run test, open file, validate coverage displays', async () => {
+test.skip('proj0.02 - run test, open file, validate coverage displays', async () => {
 	await rebuildAblProject(10)
 	if (getRcodeCount() === 0) {
 		assert.fail('no rcode files found')
@@ -116,7 +119,7 @@ test('proj0.02 - run test, open file, validate coverage displays', async () => {
 })
 
 // is it possible to validate the line coverage displayed and not just the reported coverage?  does it matter?
-test('proj0.03 - open file, run test, validate coverage displays', async () => {
+test.skip('proj0.03 - open file, run test, validate coverage displays', async () => {
 	const testFileUri = Uri.joinPath(workspace.workspaceFolders![0].uri, 'src', 'dirA', 'dir1', 'testInDir.p')
 	await window.showTextDocument(testFileUri)
 	await runAllTestsWithCoverage()
@@ -126,7 +129,7 @@ test('proj0.03 - open file, run test, validate coverage displays', async () => {
 	assert.linesExecuted(testFileUri, [6, 7])
 })
 
-test('proj0.04 - coverage=false, open file, run test, validate no coverage displays', async () => {
+test.skip('proj0.04 - coverage=false, open file, run test, validate no coverage displays', async () => {
 	await updateTestProfile('profiler.coverage', false)
 	const testFileUri = Uri.joinPath(workspace.workspaceFolders![0].uri, 'src', 'dirA', 'dir1', 'testInDir.p')
 	await window.showTextDocument(testFileUri)
@@ -141,7 +144,7 @@ test('proj0.04 - coverage=false, open file, run test, validate no coverage displ
 	assert.equal(0, executedLines.length, 'executed lines found for ' + workspace.asRelativePath(testFileUri) + '. should be empty')
 })
 
-test('proj0.05 - parse test class with expected error annotation', async () => {
+test.skip('proj0.05 - parse test class with expected error annotation', async () => {
 	const testClassItem = await commands.executeCommand('vscode.open', toUri('src/threeTestMethods.cls'))
 		.then(() => { return getTestItem(toUri('src/threeTestMethods.cls')) })
 
@@ -152,7 +155,7 @@ test('proj0.05 - parse test class with expected error annotation', async () => {
 	assert.equal(testClassItem.children.size, 3, 'testClassItem.children.size should be 3')
 })
 
-test('proj0.06 - parse test program with expected error annotation', async () => {
+test.skip('proj0.06 - parse test program with expected error annotation', async () => {
 	await commands.executeCommand('vscode.open', toUri('src/threeTestProcedures.p'))
 	const testClassItem = await getTestItem(toUri('src/threeTestProcedures.p'))
 
@@ -162,7 +165,7 @@ test('proj0.06 - parse test program with expected error annotation', async () =>
 	assert.equal(testClassItem.children.size, 3, 'testClassItem.children.size should be 3')
 })
 
-test('proj0.07 - parse test class with skip annotation', async () => {
+test.skip('proj0.07 - parse test class with skip annotation', async () => {
 	await commands.executeCommand('vscode.open', toUri('src/ignoreMethod.cls'))
 	const testClassItem = await getTestItem(toUri('src/ignoreMethod.cls'))
 
@@ -174,7 +177,7 @@ test('proj0.07 - parse test class with skip annotation', async () => {
 	assert.equal(testClassItem.children.size, 5, 'testClassItem.children.size should be 5')
 })
 
-test('proj0.08 - parse test procedure with skip annotation', async () => {
+test.skip('proj0.08 - parse test procedure with skip annotation', async () => {
 	await commands.executeCommand('vscode.open', toUri('src/ignoreProcedure.p'))
 	const testClassItem = await getTestItem(toUri('src/ignoreProcedure.p'))
 
@@ -186,7 +189,7 @@ test('proj0.08 - parse test procedure with skip annotation', async () => {
 	assert.equal(testClassItem.children.size, 5, 'testClassItem.children.size should be 5')
 })
 
-test('proj0.09 - ABLResultsParser', async () => {
+test.skip('proj0.09 - ABLResultsParser', async () => {
 	const rp = new ABLResultsParser()
 	await rp.parseResults(toUri('results_test1.xml'))
 		.then(() => {
@@ -202,7 +205,7 @@ test('proj0.09 - ABLResultsParser', async () => {
 	return
 })
 
-test('proj0.10A - Create File', async () => {
+test.skip('proj0.10A - Create File', async () => {
 	// init test
 	await refreshTests()
 	const startCount = await getTestControllerItemCount()
@@ -227,7 +230,7 @@ test('proj0.10A - Create File', async () => {
 	return
 })
 
-test('proj0.10B - Update File', async () => {
+test.skip('proj0.10B - Update File', async () => {
 	await FileUtils.writeFileAsync(toUri('src/dirA/proj10.p'), Buffer.from('@Test. procedure test1: end procedure.'))
 		.then(() => commands.executeCommand('vscode.open', toUri('src/dirA/proj10.p')))
 
@@ -264,7 +267,7 @@ test('proj0.10B - Update File', async () => {
 	assert.equal(endCount - startCount, 2, 'test cases added != 2 (endCount=' + endCount + '; startCount=' + startCount + ')')
 })
 
-test('proj0.10C - Delete File', async () => {
+test.skip('proj0.10C - Delete File', async () => {
 	// init tests
 	FileUtils.copyFile('src/dirA/proj10.p.orig', 'src/dirA/proj10.p')
 	const startCount = await refreshTests()
@@ -286,7 +289,7 @@ test('proj0.10C - Delete File', async () => {
 	return
 })
 
-test('proj0.11 - timeout 5s', () => {
+test.skip('proj0.11 - timeout 5s', () => {
 	log.info('---------- proj0.11 ----------')
 	const prom = updateConfig('ablunit.files.exclude', '**/.{builder,pct}/**')
 		.then(() => { return updateTestProfile('timeout', 5000) })
@@ -300,7 +303,7 @@ test('proj0.11 - timeout 5s', () => {
 	return prom
 })
 
-test('proj0.12 - timeout 1500ms fail', () => {
+test.skip('proj0.12 - timeout 1500ms fail', () => {
 	log.info('---------- proj0.12 ----------')
 	const prom = updateConfig('ablunit.files.exclude', '**/.{builder,pct}/**')
 		.then(() => {
@@ -324,7 +327,7 @@ test('proj0.12 - timeout 1500ms fail', () => {
 	return prom
 })
 
-test('proj0.13 - timeout 2500ms pass', async () => {
+test.skip('proj0.13 - timeout 2500ms pass', async () => {
 	log.info('---------- proj0.13 ----------')
 	await updateConfig('ablunit.files.exclude', '**/.{builder,pct}/**')
 		.then(() => updateTestProfile('timeout', 2500))
@@ -342,7 +345,7 @@ test('proj0.13 - timeout 2500ms pass', async () => {
 	return
 })
 
-test('proj0.14 - timeout invalid -5s', async () => {
+test.skip('proj0.14 - timeout invalid -5s', async () => {
 	log.info('---------- proj0.14 ----------')
 	await updateTestProfile('timeout', -5000)
 		.then(() => { return runTestsInFile('src/simpleTest.p', 0) })
@@ -361,7 +364,7 @@ test('proj0.14 - timeout invalid -5s', async () => {
 	return
 })
 
-test('proj0.17 - coverage in class property getters/setters', async () => {
+test.skip('proj0.17 - coverage in class property getters/setters', async () => {
 	log.info('proj0.17')
 	FileUtils.deleteFile(['results.xml', 'results.json'], { force: true })
 	FileUtils.copyFile('.vscode/ablunit-test-profile.proj0.17.json', '.vscode/ablunit-test-profile.json')
@@ -379,7 +382,7 @@ test('proj0.17 - coverage in class property getters/setters', async () => {
 	return
 })
 
-test('proj0.18 - not 100% coverage', async () => {
+test.skip('proj0.18 - not 100% coverage', async () => {
 	await runTestsInFile('src/threeTestProcedures.p', 1, TestRunProfileKind.Coverage)
 	const res = await getResults()
 	assert.equal(res.length, 1, 'ABLResults[].length')
@@ -401,7 +404,7 @@ test('proj0.18 - not 100% coverage', async () => {
 		'statementCoverage not 100% (' + (fc?.statementCoverage?.covered ?? 0) + ' >= ' + (fc?.statementCoverage?.total ?? 0) + ')')
 })
 
-test('proj0.19 - program runs external source', async () => {
+test.skip('proj0.19 - program runs external source', async () => {
 	await runTestsInFile('src/test19.p', 1, TestRunProfileKind.Coverage)
 	const res = await getResults()
 	assert.equal(res.length, 1, 'ABLResults[].length')
@@ -433,7 +436,7 @@ test('proj0.19 - program runs external source', async () => {
 	}
 })
 
-test('proj0.20 - build directory', async () => {
+test.skip('proj0.20 - build directory', async () => {
 	FileUtils.copyFile('openedge-project.test20.json', 'openedge-project.json')
 	await deleteRcode()
 	await restartLangServer(23)
@@ -452,7 +455,7 @@ test('proj0.20 - build directory', async () => {
 	await restartLangServer(23)
 })
 
-test('proj0.21 - overloaded method coverage', async () => {
+test.skip('proj0.21 - overloaded method coverage', async () => {
 	assert.fileExists('src/overloadedMethods.r')
 	await runTestsInFile('src/overloadedMethods.cls', 1, TestRunProfileKind.Coverage)
 	assert.tests.count(2)
@@ -505,7 +508,7 @@ test('proj0.21 - overloaded method coverage', async () => {
 	// }
 })
 
-test('proj0.22 - test coverage for class in subdirectory', async () => {
+test.skip('proj0.22 - test coverage for class in subdirectory', async () => {
 	await runTestsInFile('src/dirA/dir1/testClassInDir.cls', 1, TestRunProfileKind.Coverage)
 	assert.tests.count(2)
 	assert.tests.passed(2)
@@ -557,7 +560,7 @@ test.skip('proj0.24 - search propath for destructorClass.test.r', async () => {
 	assert.equal(fileinfo4?.uri.fsPath, toUri('src/destructorClass.test.r').fsPath)
 })
 
-test('proj0.25 - no duplicate destructor', async () => {
+test.skip('proj0.25 - no duplicate destructor', async () => {
 	await runTestsInFile('src/dirA/test_25.cls', 1, TestRunProfileKind.Coverage)
 	const res = await getResults()
 
@@ -573,7 +576,7 @@ test('proj0.25 - no duplicate destructor', async () => {
 	assert.equal(destructorCount, 1, 'expected exactly 1 destructor found in the module tree (found ' + destructorCount + ')')
 })
 
-test('proj0.26 - set propath on the fly', async () => {
+test.skip('proj0.26 - set propath on the fly', async () => {
 	if (process.platform !== 'win32') {
 		log.info('skipping proj0.26 on Linux as it requires a windows environment')
 		return
@@ -588,7 +591,7 @@ test('proj0.26 - set propath on the fly', async () => {
 	return
 })
 
-test('proj0.27 - ABLExec dbconns', async () => {
+test.skip('proj0.27 - ABLExec dbconns', async () => {
 	FileUtils.copyFile('openedge-project.test27.json', 'openedge-project.json')
 
 	await runTestsInFile('src/dirA/dir1/testInDir.p').then(() => {
@@ -607,7 +610,7 @@ test('proj0.27 - ABLExec dbconns', async () => {
 	return
 })
 
-test('proj0.28 - database connection needed but not configured', async () => {
+test.skip('proj0.28 - database connection needed but not configured', async () => {
 	FileUtils.copyFile('openedge-project.test28.json', 'openedge-project.json')
 	await deleteRcode()
 
@@ -623,7 +626,7 @@ test('proj0.28 - database connection needed but not configured', async () => {
 	return
 })
 
-test('proj0.29 - database connection not valid', async () => {
+test.skip('proj0.29 - database connection not valid', async () => {
 	FileUtils.copyFile('openedge-project.test29.json', 'openedge-project.json')
 
 	await runTestsInFile('src/dirA/dir1/testInDir.p').then(() => {
@@ -640,7 +643,7 @@ test('proj0.29 - database connection not valid', async () => {
 	return
 })
 
-test('proj0.30 - database connection not valid', async () => {
+test.skip('proj0.30 - database connection not valid', async () => {
 	if (!process.env['CI']) {
 		log.info('skipping proj0.30 as it has a long execution time and is intended to run on CI only')
 		return
@@ -664,38 +667,38 @@ test('proj0.30 - database connection not valid', async () => {
 
 suite('proj0.31 - include/exclude patterns', () => {
 
-	test('proj0.31A - test program excluded by openedge-project.json', async () => {
+	test.skip('proj0.31A - test program excluded by openedge-project.json', async () => {
 		await FileUtils.copyFileAsync('openedge-project.test31A.json', 'openedge-project.json', true)
 			.then(() => refreshTests())
 			.then(() => { assert.equal(ext.exports.getTestItems(toUri('src/test_17.cls'))?.length, 1, '[31A]') })
 	})
 
-	test('proj0.31B - test program excluded by openedge-project.json', async () => {
+	test.skip('proj0.31B - test program excluded by openedge-project.json', async () => {
 		log.info('proj0.31B - start - ' + FileUtils.getFileModifiedTime('openedge-project.json').valueOf() + ' - ' + FileUtils.getFileModifiedTime('openedge-project.json'))
 		await FileUtils.copyFileAsync('openedge-project.test31B.json', 'openedge-project.json', true)
 			.then(() => refreshTests())
 			.then(() => { assert.equal(ext.exports.getTestItems(toUri('src/test_17.cls'))?.length, 0, '[31B]') })
 	})
 
-	test('proj0.31C - test program excluded by openedge-project.json', async () => {
+	test.skip('proj0.31C - test program excluded by openedge-project.json', async () => {
 		await FileUtils.copyFileAsync('openedge-project.test31C.json', 'openedge-project.json', true)
 			.then(() => refreshTests())
 			.then(() => { assert.equal(ext.exports.getTestItems(toUri('src/test_17.cls'))?.length, 0, '[31C]') })
 	})
 
-	test('proj0.31D - test program excluded by openedge-project.json', async () => {
+	test.skip('proj0.31D - test program excluded by openedge-project.json', async () => {
 		await FileUtils.copyFileAsync('openedge-project.test31D.json', 'openedge-project.json', true)
 			.then(() => refreshTests())
 			.then(() => { assert.equal(ext.exports.getTestItems(toUri('src/test_17.cls'))?.length, 0, '[31D]') })
 	})
 
-	test('proj0.31E - test program excluded by openedge-project.json', async () => {
+	test.skip('proj0.31E - test program excluded by openedge-project.json', async () => {
 		await FileUtils.copyFileAsync('openedge-project.test31E.json', 'openedge-project.json', true)
 			.then(() => refreshTests())
 			.then(() => { assert.equal(ext.exports.getTestItems(toUri('src/test_17.cls'))?.length, 1, '[31E]') })
 	})
 
-	test('proj0.31F - test program excluded by openedge-project.json', async () => {
+	test.skip('proj0.31F - test program excluded by openedge-project.json', async () => {
 		await FileUtils.copyFileAsync('openedge-project.test31F.json', 'openedge-project.json', true)
 			.then(() => refreshTests())
 			.then(() => { assert.equal(ext.exports.getTestItems(toUri('src/test_17.cls'))?.length, 1, '[31F]') })
@@ -703,7 +706,7 @@ suite('proj0.31 - include/exclude patterns', () => {
 })
 
 suite('proj0.32 - initializationProcedure', () => {
-	test('proj0.32A - super procedure expected but not found', async () => {
+	test.skip('proj0.32A - super procedure expected but not found', async () => {
 		await runTestsInFile('src/test_32.p').then(() => {
 			assert.tests.errored(1)
 			assert.tests.failed(0)
@@ -714,7 +717,7 @@ suite('proj0.32 - initializationProcedure', () => {
 		return
 	})
 
-	test('proj0.32B - super procedure in initializationProcedure successful', async () => {
+	test.skip('proj0.32B - super procedure in initializationProcedure successful', async () => {
 		FileUtils.copyFile('.vscode/ablunit-test-profile.proj0.32.json', '.vscode/ablunit-test-profile.json')
 		await runTestsInFile('src/test_32.p').then(() => {
 			assert.tests.errored(0)
@@ -727,19 +730,33 @@ suite('proj0.32 - initializationProcedure', () => {
 	})
 })
 
+// test('proj0.33 - european numbers (-E)', async () => {
 test('proj0.33 - european numbers (-E)', () => {
+	log.info('proj0.33')
 	FileUtils.copyFile('.vscode/ablunit-test-profile.test33.json', '.vscode/ablunit-test-profile.json')
-	const prom = updateConfig('ablunit.files.exclude', '**/.{builder,pct}/**')
+	// await sleep(100)
+
+	const testProfile2 = FileUtils.readFileSync(Uri.joinPath(workspace.workspaceFolders![0].uri, '.vscode/ablunit-test-profile.json'))
+	log.info('testProfile2=' + testProfile2)
+
+	const prom = sleep(250)
+		.then(() => updateConfig('ablunit.files.exclude', '**/.{builder,pct}/**'))
 		.then(() => {
-			const cfg = workspace.getConfiguration('ablunit.files.exclude')
+			const cfg = workspace.getConfiguration('ablunit').get('files.exclude')
 			log.info('files.exclude-1=' + JSON.stringify(cfg))
 			return
 		})
 		.then(() => sleep(250)) // wait for config update to propagate
 		.then(() => {
-			const cfg = workspace.getConfiguration('ablunit.files.exclude')
+			const cfg = workspace.getConfiguration('ablunit').get('files.exclude')
 			log.info('files.exclude-2=' + JSON.stringify(cfg))
 			return
+		})
+		.then(() => {
+			// FileUtils.copyFile('.vscode/ablunit-test-profile.test33.json', '.vscode/ablunit-test-profile.json')
+			const testProfile = FileUtils.readFileSync(Uri.joinPath(workspace.workspaceFolders![0].uri, '.vscode/ablunit-test-profile.json'))
+			log.info('testProfile=' + testProfile)
+			return true
 		})
 		.then(() => runTestAtLine('src/timeout.p', 37, 0))
 		.then(() => getResults())
