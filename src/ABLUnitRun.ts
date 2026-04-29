@@ -292,7 +292,6 @@ function runCommand (res: ABLResults, options: TestRun, cancellation: Cancellati
 							log.info(prefix + '🔹  ' + ablunitStatus.entityName, {testRun: options})
 							break
 						case 'TEST_END': {
-							log.info('ablunitStats.duration=' + ablunitStatus.duration)
 							if (ablunitStatus.duration?.includes(',') && !ablunitStatus.duration.includes('.')) {
 								// European number format (-E)
 								ablunitStatus.duration = ablunitStatus.duration.replace(/,/, '.')

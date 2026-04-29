@@ -163,12 +163,10 @@ export class ABLResultsParser {
 			}
 
 			let time: string = res[idx].$.time
-			log.info('time-1.1=' + time)
 			if (isNaN(Number(time)) && time.includes(',')) {
 				// European number format (-E)
 				time = time.replace(/,/, '.')
 			}
-			log.info('time-1.2=' + time)
 
 			suites[idx] = {
 				name: namePathSep,
@@ -212,12 +210,10 @@ export class ABLResultsParser {
 		for (let idx=0; idx<res.length; idx++) {
 
 			let time: string = res[idx].$.time
-			log.info('time-2.1=' + time)
 			if (isNaN(Number(time)) && time.includes(',')) {
 				// European number format (-E)
 				time = time.replace(/,/, '.')
 			}
-			log.info('time-2.2=' + time)
 
 			cases[idx] = {
 				name: res[idx].$.name,
