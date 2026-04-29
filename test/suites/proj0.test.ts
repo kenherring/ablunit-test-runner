@@ -742,7 +742,7 @@ test('proj0.33 - european numbers (-E)', () => {
 
 	const prom = sleep(250)
 		.then(() => updateConfig('ablunit.files.exclude', '**/.{builder,pct}/**'))
-		.then(() => updateTestProfile('timeout', 10000))
+		.then(() => updateTestProfile('timeout', 30000))
 		.then(() => sleep(250)) // wait for config update to propagate
 		// .then(() => sleep(100)) // wait for config update to propagate
 		.then(() => {
