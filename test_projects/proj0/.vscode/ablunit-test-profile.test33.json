@@ -1,16 +1,6 @@
 {
     "configurations": [
         {
-            "timeout": 0,
-            "tempDir": "${workspaceFolder}",
-            "options": {
-                "output": {
-                    "location": "${tempDir}",
-                    "filename": "results.xml",
-                    "format": "xml",
-                    "writeJson": true
-                }
-            },
             "command": {
                 "additionalArgs": [
                     "-E"
