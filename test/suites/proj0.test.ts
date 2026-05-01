@@ -376,17 +376,19 @@ test('proj0.15 - european numbers (-E)', () => {
 
 	const prom = updateConfig('ablunit.files.exclude', '**/.{builder,pct}/**')
 		.then(() => sleep(100))
-		.then(() => updateTestProfile('timeout', 2500))
 		.then(() => runTestAtLine('src/timeout.p', 37, 0))
 		.then(() => getResults())
 		.then((recentResults) => {
+			const resultsXml = FileUtils.readFileSync(toUri('results.xml')).toString()
+			log.info('resultsXml=' + resultsXml)
+			const time = resultsXml.search(/time="[\d]+,[\d]+"/)
+			assert.ok(time > 0, 'could not find time attribute with european number format in results.xml')
 			assert.ok(!isNaN(Number(recentResults[0].ablResults?.resultsJson[0].testsuite?.[0].time)), 'testsuite time should not be NaN due to european number format')
 			assert.ok(!isNaN(Number(recentResults[0].ablResults?.resultsJson[0].testsuite?.[0].testcases?.[0].time)), 'testcase time should not be NaN due to european number format')
 			return true
 		}, (e: unknown) => {
 			assert.fail('unexpected test error (e=' + e + ')')
 		})
-
 	return prom
 })
 
@@ -405,7 +407,6 @@ test('proj0.17 - coverage in class property getters/setters', async () => {
 			assert.linesExecuted('src/test_17.cls', [41, 42, 43, 44])
 			return
 		})
-	log.info('---------- proj0.17 complete ----------')
 	return
 })
 

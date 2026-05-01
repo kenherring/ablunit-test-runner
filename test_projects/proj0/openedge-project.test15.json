@@ -3,14 +3,16 @@
 	"version": "0",
 	"oeversion": "12.8",
 	"charset": "utf-8",
+	"extraParameters": "-E",
 	"buildPath": [
 		{ "type": "source", "documentation": "docs/src.json", "path": "src", "includes": "**/*.p,**/*.cls", "excludes": "emptyClass.cls", "xref": "." },
 		{ "type": "source", "documentation": "docs/test.json", "path": "test" }
 	],
+	//this is a comment!
 	"dbConnections": [
 		{
 			"name": "sp2k",
-			"aliases": [ "dbalias", "third" ],
+			"aliases": [ "dbalias", "third" ], //here's another comment.  why is this field required per the schema?
 			"connect": "-db target/db/sp2k -RO",
 			"schemaFile": "target/sp2k.df"
 		}
