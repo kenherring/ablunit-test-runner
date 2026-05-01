@@ -374,8 +374,7 @@ test('proj0.15 - european numbers (-E)', () => {
 	log.info('---------- proj0.15 -----------')
 	FileUtils.copyFile('openedge-project.test15.json', 'openedge-project.json')
 
-	const prom = restartLangServer(32)
-		.then(() => updateConfig('ablunit.files.exclude', '**/.{builder,pct}/**'))
+	const prom = updateConfig('ablunit.files.exclude', '**/.{builder,pct}/**')
 		.then(() => sleep(100))
 		.then(() => updateTestProfile('timeout', 2500))
 		.then(() => runTestAtLine('src/timeout.p', 37, 0))
