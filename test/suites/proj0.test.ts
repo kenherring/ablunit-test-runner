@@ -376,7 +376,6 @@ test('proj0.15 - european numbers (-E)', async () => {
 	await restartLangServer(32)
 
 	await updateConfig('ablunit.files.exclude', '**/.{builder,pct}/**')
-		.then(() => sleep(100))
 		.then(() => updateTestProfile('timeout', 2500))
 		.then(() => runTestAtLine('src/timeout.p', 37, 0))
 		.then(() => getResults())
@@ -396,8 +395,6 @@ test('proj0.17 - coverage in class property getters/setters', async () => {
 	log.info('---------- proj0.17 ----------')
 	FileUtils.deleteFile(['results.xml', 'results.json'], { force: true })
 	FileUtils.copyFile('.vscode/ablunit-test-profile.proj0.17.json', '.vscode/ablunit-test-profile.json')
-	// await sleep(100)
-	
 	await runTestAtLine('src/test_17.cls', 33, 1, TestRunProfileKind.Coverage)
 		.then(() => {
 			assert.tests.count(1)
