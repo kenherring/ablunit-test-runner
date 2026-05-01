@@ -15,7 +15,7 @@ function createTempFile () {
 
 async function restoreProjectConfig () {
 	log.info('restoring openedge-project.json file')
-	FileUtils.copyFile(backupProjectFile, 'openedge-project.json')
+	FileUtils.copyFile(backupProjectFile, 'openedge-project.json', { preserveTimestamps: true})
 	await deleteRcode()
 	await restartLangServer(32)
 }
@@ -56,7 +56,7 @@ suiteSetup('proj0 - before', async () => {
 setup('proj0 - setup', async () => {
 	log.info('---------- setup ----------')
 	FileUtils.copyFile('.vscode/settings.json.bk', '.vscode/settings.json')
-	if (FileUtils.getFileModifiedTime(backupProjectFile) !== FileUtils.getFileModifiedTime('openedge-project.json')) {
+	if (FileUtils.getFileModifiedTime(backupProjectFile).valueOf() !== FileUtils.getFileModifiedTime('openedge-project.json').valueOf()) {
 		await restoreProjectConfig()
 	}
 	await commands.executeCommand('workbench.action.closeAllEditors')
@@ -314,16 +314,10 @@ test('proj0.11 - timeout 5s', () => {
 	return prom
 })
 
-test('proj0.12 - timeout 1500ms fail', async () => {
+test('proj0.12 - timeout 1500ms fail', () => {
 	log.info('---------- proj0.12 ----------')
 	const prom = updateConfig('ablunit.files.exclude', '**/.{builder,pct}/**')
-		.then(() => {
-			const cfg = workspace.getConfiguration('ablunit').get('files.exclude')
-			log.info('files.exclude=' + JSON.stringify(cfg))
-			return
-		})
 		.then(() => { return updateTestProfile('timeout', 1500) })
-		.then(() => sleep(251))
 		.then(() => { return runTestAtLine('src/timeout.p', 37, 0) })
 		.then(() => { return commands.executeCommand('_ablunit.getTestRunError') })
 		.then(() => {
@@ -336,8 +330,7 @@ test('proj0.12 - timeout 1500ms fail', async () => {
 			assert.durationLessThan(t.duration, 2000)
 			return
 		})
-	await prom
-	log.info('---------- proj0.12 complete ----------')
+	return prom
 })
 
 test('proj0.13 - timeout 2500ms pass', async () => {
@@ -380,7 +373,6 @@ test('proj0.14 - timeout invalid -5s', async () => {
 test('proj0.15 - european numbers (-E)', async () => {
 	log.info('---------- proj0.15 -----------')
 	FileUtils.copyFile('openedge-project.test15.json', 'openedge-project.json')
-	// await deleteRcode()
 	await restartLangServer(32)
 
 	await updateConfig('ablunit.files.exclude', '**/.{builder,pct}/**')
@@ -396,7 +388,6 @@ test('proj0.15 - european numbers (-E)', async () => {
 			assert.fail('unexpected test error (e=' + e + ')')
 		})
 
-
 	log.info('---------- proj0.15 complete -----------')
 	return
 })
@@ -405,7 +396,8 @@ test('proj0.17 - coverage in class property getters/setters', async () => {
 	log.info('---------- proj0.17 ----------')
 	FileUtils.deleteFile(['results.xml', 'results.json'], { force: true })
 	FileUtils.copyFile('.vscode/ablunit-test-profile.proj0.17.json', '.vscode/ablunit-test-profile.json')
-	await sleep(100)
+	// await sleep(100)
+	
 	await runTestAtLine('src/test_17.cls', 33, 1, TestRunProfileKind.Coverage)
 		.then(() => {
 			assert.tests.count(1)
