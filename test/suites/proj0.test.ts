@@ -370,12 +370,13 @@ test('proj0.14 - timeout invalid -5s', async () => {
 	return
 })
 
-test('proj0.15 - european numbers (-E)', async () => {
+test('proj0.15 - european numbers (-E)', () => {
 	log.info('---------- proj0.15 -----------')
 	FileUtils.copyFile('openedge-project.test15.json', 'openedge-project.json')
-	await restartLangServer(32)
 
-	await updateConfig('ablunit.files.exclude', '**/.{builder,pct}/**')
+	const prom = restartLangServer(32)
+		.then(() => updateConfig('ablunit.files.exclude', '**/.{builder,pct}/**'))
+		.then(() => sleep(100))
 		.then(() => updateTestProfile('timeout', 2500))
 		.then(() => runTestAtLine('src/timeout.p', 37, 0))
 		.then(() => getResults())
@@ -387,8 +388,7 @@ test('proj0.15 - european numbers (-E)', async () => {
 			assert.fail('unexpected test error (e=' + e + ')')
 		})
 
-	log.info('---------- proj0.15 complete -----------')
-	return
+	return prom
 })
 
 test('proj0.17 - coverage in class property getters/setters', async () => {
