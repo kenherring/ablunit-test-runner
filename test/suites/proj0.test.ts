@@ -77,9 +77,6 @@ teardown('proj0 - afterEach', () => {
 			log.warn('disposables.length != 0')
 		}
 	}
-
-	// log.info('proj0 teardown COMPLETE - waiting 250s')
-	// return sleep(250)
 })
 
 suiteTeardown('proj0 - after', () => {
@@ -730,32 +727,20 @@ suite('proj0.32 - initializationProcedure', () => {
 	})
 })
 
-// test.skip('proj0.33 - european numbers (-E)', async () => {
 test('proj0.33 - european numbers (-E)', () => {
-	log.info('proj0.33')
-	// FileUtils.copyFile('.vscode/ablunit-test-profile.test33.json', '.vscode/ablunit-test-profile.json')
-	// await sleep(100)
-	// const testProfile2 = FileUtils.readFileSync(Uri.joinPath(workspace.workspaceFolders![0].uri, '.vscode/ablunit-test-profile.json'))
-	// log.info('testProfile2=' + testProfile2)
-
+	log.info('proj0.33 - european numbers (-E)')
 	FileUtils.copyFile('openedge-project.test33.json', 'openedge-project.json')
 
 	const prom = sleep(250)
 		.then(() => updateConfig('ablunit.files.exclude', '**/.{builder,pct}/**'))
 		.then(() => updateTestProfile('timeout', 30000))
-		.then(() => sleep(250)) // wait for config update to propagate
-		// .then(() => sleep(100)) // wait for config update to propagate
+		.then(() => sleep(100)) // wait for config update to propagate
 		.then(() => {
+			// TODO remove me
 			const cfg = workspace.getConfiguration('ablunit').get('files.exclude')
-			log.info('files.exclude-2=' + JSON.stringify(cfg))
+			log.info('files.exclude=' + JSON.stringify(cfg))
 			return
 		})
-		// .then(() => {
-		// 	// FileUtils.copyFile('.vscode/ablunit-test-profile.test33.json', '.vscode/ablunit-test-profile.json')
-		// 	const testProfile = FileUtils.readFileSync(Uri.joinPath(workspace.workspaceFolders![0].uri, '.vscode/ablunit-test-profile.json'))
-		// 	log.info('testProfile=' + testProfile)
-		// 	return true
-		// })
 		.then(() => runTestAtLine('src/timeout.p', 37, 0))
 		.then(() => getResults())
 		.then((recentResults) => {
