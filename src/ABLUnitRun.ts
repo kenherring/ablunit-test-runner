@@ -292,7 +292,12 @@ function runCommand (res: ABLResults, options: TestRun, cancellation: Cancellati
 							log.info(prefix + '🔹  ' + ablunitStatus.entityName, {testRun: options})
 							break
 						case 'TEST_END': {
-							const dur = Number(ablunitStatus.duration ?? '0') * 1000
+							if (ablunitStatus.duration?.includes(',') && !ablunitStatus.duration.includes('.')) {
+								// European number format (-E)
+								ablunitStatus.duration = ablunitStatus.duration.replace(/,/, '.')
+							}
+
+							const dur = Math.round(Number(ablunitStatus.duration ?? '0') * 1000)
 							options.passed(currentTestItems[0], dur)
 							log.info(prefix + '✅  ' + ablunitStatus.entityName + ' (' + dur + ' ms)', {testRun: options})
 							break

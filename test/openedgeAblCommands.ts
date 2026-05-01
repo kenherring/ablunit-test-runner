@@ -118,6 +118,7 @@ export async function restartLangServer (rcodeCount = 0): Promise<number> {
 	log.info('status=' + JSON.stringify(status))
 
 	return await ablExtExports!.restartLanguageServer()
+		.then(() => sleep(100))
 		.then(() => waitForLangServerReady())
 		.then(() => waitForRcode(rcodeCount))
 }
@@ -230,22 +231,22 @@ async function waitForLangServerReady () {
 	let status = await ablExtExports!.status()
 	while (waitTime.elapsed() < maxWait * 1000) {
 		if (!status?.projects || status.projects.length === 0) {
-			log.info('language server not ready yet...' +  waitTime)
-			continue
-		}
-
-		let isReady = true
-		for (const project of status.projects) {
-			if (!project.initialized || project.rcodeTasks !== 0 || project.sourceTasks !== 0) {
-				isReady = false
+			log.info('language server not ready yet... ' +  waitTime +
+					 '\n\tstatus=' + JSON.stringify(status))
+		} else {
+			let isReady = true
+			for (const project of status.projects) {
+				if (!project.initialized || project.rcodeTasks !== 0 || project.sourceTasks !== 0) {
+					isReady = false
+				}
+			}
+			if (isReady) {
+				log.info('Language server is ready!')
+				return
 			}
 		}
-		if (isReady) {
-			log.info('Language server is ready!')
-			return
-		}
 
-		await sleep(250)
+		await sleep(250, null)
 			.then(() => ablExtExports!.status())
 			.then((response) => {
 				status = response

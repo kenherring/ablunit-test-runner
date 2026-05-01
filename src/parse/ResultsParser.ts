@@ -162,6 +162,12 @@ export class ABLResultsParser {
 				namePathSep = workspace.asRelativePath(namePathSep, false)
 			}
 
+			let time: string = res[idx].$.time
+			if (Number.isNaN(Number(time)) && time.includes(',')) {
+				// European number format (-E)
+				time = time.replace(/,/, '.')
+			}
+
 			suites[idx] = {
 				name: namePathSep,
 				classname: res[idx].$.classname ?? undefined,
@@ -171,7 +177,7 @@ export class ABLResultsParser {
 				errors: Number(res[idx].$.errors),
 				failures: Number(res[idx].$.failures),
 				skipped: Number(res[idx].$.skipped ?? 0),
-				time: Number(res[idx].$.time) * 1000,
+				time: Math.round(Number.parseFloat(time) * 1000),
 				properties: this.parseProperties(res[idx].properties),
 				testsuite: testsuite,
 				testcases: testcases
@@ -202,11 +208,18 @@ export class ABLResultsParser {
 		const cases: ITestCase[] = []
 
 		for (let idx=0; idx<res.length; idx++) {
+
+			let time: string = res[idx].$.time
+			if (Number.isNaN(Number(time)) && time.includes(',')) {
+				// European number format (-E)
+				time = time.replace(/,/, '.')
+			}
+
 			cases[idx] = {
 				name: res[idx].$.name,
 				classname: res[idx].$.classname ?? undefined,
 				status: res[idx].$.status,
-				time: Number(res[idx].$.time),
+				time: Number(time),
 				failures: await this.parseFailOrError(res[idx]),
 				skipped: this.parseSkipped(res[idx]),
 			}

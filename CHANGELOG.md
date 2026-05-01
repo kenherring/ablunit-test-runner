@@ -1,5 +1,9 @@
-# [1.4.37](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.4.37) - 2026-04-15 (pre-release)
+# [1.4.39](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.4.39) - 2026-04-28 (pre-release)
 
+* Allow parsing European number formats for test execution times (#574)
+* build(deps-dev): bump @vscode/vsce from 3.7.1 to 3.9.1 (#570)
+* build(deps-dev): bump typescript-eslint from 8.58.2 to 8.59.0 (#573)
+* build(deps-dev): bump typescript-eslint from 8.58.1 to 8.58.2 (#571)
 * Various fixes for development tooling (#566)
 * Trim `windows-` from codepage (#567)
 * Clear environment variable when `initializationProcedure` is no longer set (#565)
@@ -72,7 +76,7 @@
 * Bump esbuild from 0.27.0 to 0.27.1 (#457)
 * Bump jws from 3.2.2 to 3.2.3 in the npm_and_yarn group across 1 directory (#455)
 
-**Full Changelog**: [1.4.4...1.4.37](https://github.com/kenherring/ablunit-test-runner/compare/1.4.4...1.4.37)
+**Full Changelog**: [1.4.4...1.4.39](https://github.com/kenherring/ablunit-test-runner/compare/1.4.4...1.4.39)
 
 # [1.4.4](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.4.4) - 2025-11-26 (pre-release)
 
