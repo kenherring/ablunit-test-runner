@@ -82,12 +82,12 @@ jobs:
       - run: ./scripts/sonar_test_results_merge.sh
       - name: SonarQube Scan - main
         if: ${{ matrix.oe-version == '12.8.1' && github.actor != 'dependabot[bot]' && github.head_ref == 'main' }}
-        uses: SonarSource/sonarqube-scan-action@v7.1.0
+        uses: SonarSource/sonarqube-scan-action@v8.0.0
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       - name: SonarQube Scan
         if: ${{ matrix.oe-version == '12.8.1' && github.actor != 'dependabot[bot]' && github.head_ref != 'main' }}
-        uses: SonarSource/sonarqube-scan-action@v7.1.0
+        uses: SonarSource/sonarqube-scan-action@v8.0.0
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         with:
