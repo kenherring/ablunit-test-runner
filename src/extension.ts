@@ -1184,11 +1184,17 @@ function doesFileMatch (uri: Uri, patterns: RelativePattern[]) {
 	}
 
 	const relativePath = workspace.asRelativePath(uri.fsPath, false)
+	let allPatterns = ''
 	for (const pattern of patterns.map(pattern => pattern.pattern)) {
 		if (minimatch(relativePath, pattern, { magicalBraces: true })) {
 			log.debug('file ' + relativePath + ' matches \'' + pattern + '\'')
 			return true
+		} else {
+			allPatterns += pattern + ','
 		}
+	}
+	if (allPatterns.length > 0) {
+		log.debug('file ' + relativePath + ' does not match \'' + allPatterns.replace(/,$/, "") + '\'')
 	}
 	return false
 }
