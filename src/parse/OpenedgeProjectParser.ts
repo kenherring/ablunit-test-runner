@@ -596,20 +596,20 @@ export function getBuildPathPatterns (workspaceFolder: WorkspaceFolder, buildPat
 	const includes: RelativePattern[] = []
 	if (buildPath.includesFile) {
 		const lines = FileUtils.readLinesFromFileSync(FileUtils.toUri(buildPath.includesFile))
-		includes.push(...lines.map(p => new RelativePattern(workspaceFolder, workspace.asRelativePath(buildPath.path) + '/' + p)))
+		includes.push(...lines.map(p => new RelativePattern(workspaceFolder, workspace.asRelativePath(`${buildPath.pathUri.fsPath}/${p}`, false))))
 	} else {
 		for (const p of buildPath.includes?.split(',') ?? []) {
-			includes.push(new RelativePattern(workspaceFolder, workspace.asRelativePath(buildPath.pathUri) + '/' + p))
+			includes.push(new RelativePattern(workspaceFolder, workspace.asRelativePath(`${buildPath.pathUri.fsPath}/${p}`, false)))
 		}
 	}
 
 	const excludes: RelativePattern[] = []
 	if (buildPath.excludesFile) {
 		const lines = FileUtils.readLinesFromFileSync(FileUtils.toUri(buildPath.excludesFile))
-		excludes.push(...lines.map(p => new RelativePattern(workspaceFolder, workspace.asRelativePath(buildPath.path) + '/' + p)))
+		excludes.push(...lines.map(p => new RelativePattern(workspaceFolder, workspace.asRelativePath(`${buildPath.pathUri.fsPath}/${p}`, false))))
 	} else {
 		for (const p of buildPath.excludes?.split(',') ?? []) {
-			excludes.push(new RelativePattern(workspaceFolder, workspace.asRelativePath(buildPath.pathUri) + '/' + p))
+			excludes.push(new RelativePattern(workspaceFolder, workspace.asRelativePath(`${buildPath.pathUri.fsPath}/${p}`, false)))
 		}
 	}
 	return { includes: includes, excludes: excludes }
