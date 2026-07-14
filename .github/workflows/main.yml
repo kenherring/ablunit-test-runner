@@ -34,7 +34,7 @@ jobs:
             echo "Unauthorized user. Stopping workflow run..."
             exit 1
           fi
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
           ref: ${{ github.event_name == 'pull_request_target' && github.head_ref || github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.ref_name }}
@@ -73,7 +73,7 @@ jobs:
       PRIMARY_OE_VERSION: 12.8.1
       PROGRESS_CFG_BASE64: ${{ secrets.PROGRESS_CFG_BASE64 }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         continue-on-error: true
         with:
           fetch-depth: 0
@@ -106,7 +106,7 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
           ref: ${{ github.event_name == 'pull_request_target' && github.head_ref || github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.ref_name }}
