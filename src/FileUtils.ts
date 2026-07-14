@@ -278,3 +278,12 @@ export function getFileModifiedTime (uri: Uri | string): Date {
 
 	return fs.statSync(uri.fsPath).mtime
 }
+
+export function quotePath (path: string) {
+	const sanitized = path.replace(/\\/g, '/')
+	if (sanitized.includes(' ') && !sanitized.startsWith('"') && !sanitized.endsWith('"')) {
+		return '"' + sanitized + '"'
+	}
+	return sanitized
+}
+
