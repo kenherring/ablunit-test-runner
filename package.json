@@ -108,7 +108,7 @@
 		"mocha": "^11.7.6",
 		"mocha-multi-reporters": "^1.5.1",
 		"mocha-reporter-sonarqube": "2.1.1",
-		"typescript": "^5.9.3",
+		"typescript": "^7.0.2",
 		"typescript-eslint": "^8.64.0"
 	},
 	"contributes": {
