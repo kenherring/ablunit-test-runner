@@ -31,7 +31,7 @@
 		}
 	},
 	"devDependencies": {
-		"@vscode/test-cli": "^0.0.4",
+		"@vscode/test-cli": "^0.0.15",
 		"@vscode/test-electron": "^2.5.2",
 		"mocha-junit-reporter": "^2.2.1",
 		"mocha-multi-reporters": "^1.5.1"
