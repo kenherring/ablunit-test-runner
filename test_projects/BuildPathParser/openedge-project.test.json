@@ -1,0 +1,11 @@
+{
+    "oeversion": "12.8",
+    "buildPath": [
+        {
+            "type": "source",
+            "path": "src",
+            "includes": "Keep/Me/**,Also/Keep/**",
+            "excludes": "Not/This/*.p,Not/This/*.cls"
+        }
+    ]
+}
