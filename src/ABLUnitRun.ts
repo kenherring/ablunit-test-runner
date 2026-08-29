@@ -126,9 +126,9 @@ function getDefaultCommand (res: ABLResults) {
 		throw new Error('temp directory not set')
 	}
 
-	const executable = res.dlc.uri.fsPath.replace(/\\/g, '/') + '/bin/' + res.cfg.ablunitConfig.command.executable
+	const executable = FileUtils.quotePath(res.dlc.uri.fsPath + '/bin/' + res.cfg.ablunitConfig.command.executable)
 
-	const cmd = [ executable, '-p', res.wrapperUri.fsPath.replace(/\\/g, '/') ]
+	const cmd = [ executable, '-p', FileUtils.quotePath(res.wrapperUri.fsPath) ]
 
 	if (res.cfg.ablunitConfig.command.batch) {
 		cmd.push('-b')
@@ -136,14 +136,14 @@ function getDefaultCommand (res: ABLResults) {
 
 	process.env['PROPATH'] = res.propath.toString().replace(/\$\{DLC\}/g, res.dlc.uri.fsPath.replace(/\\/g, '/'))
 
-	cmd.push('-T', res.cfg.ablunitConfig.tempDirUri.fsPath)
+	cmd.push('-T', FileUtils.quotePath(res.cfg.ablunitConfig.tempDirUri.fsPath))
 
 	if (res.cfg.ablunitConfig.dbConnPfUri && res.cfg.ablunitConfig.dbConns && res.cfg.ablunitConfig.dbConns.length > 0) {
-		cmd.push('-pf', res.cfg.ablunitConfig.dbConnPfUri.fsPath)
+		cmd.push('-pf', FileUtils.quotePath(res.cfg.ablunitConfig.dbConnPfUri.fsPath))
 	}
 
 	if (res.cfg.ablunitConfig.profiler.enabled && res.cfg.requestKind == TestRunProfileKind.Coverage) {
-		cmd.push('-profile', res.cfg.ablunitConfig.profOptsUri.fsPath)
+		cmd.push('-profile', FileUtils.quotePath(res.cfg.ablunitConfig.profOptsUri.fsPath))
 	} else if (res.cfg.requestKind == TestRunProfileKind.Debug) {
 		cmd.push('-debugReady', res.cfg.ablunitConfig.command.debugPort.toString())
 	}
@@ -151,12 +151,12 @@ function getDefaultCommand (res: ABLResults) {
 	const cmdSanitized: string[] = []
 	cmd.push(...res.cfg.ablunitConfig.command.additionalArgs)
 
-	let params = 'CFG=' + res.cfg.ablunitConfig.config_uri.fsPath + '='
+	let params = 'CFG=' + res.cfg.ablunitConfig.config_uri.fsPath
 	if (res.cfg.ablunitConfig.dbAliases.length > 0) {
-		params = params + ' ALIASES=' + res.cfg.ablunitConfig.dbAliases.join(';')
+		params = params + '|ALIASES=' + res.cfg.ablunitConfig.dbAliases.join(';')
 	}
 	if (res.cfg.ablunitConfig.optionsUri.updateUri) {
-		params = params + ' ATTR_ABLUNIT_EVENT_FILE=' + res.cfg.ablunitConfig.optionsUri.updateUri.fsPath
+		params = params + '|ATTR_ABLUNIT_EVENT_FILE=' + res.cfg.ablunitConfig.optionsUri.updateUri.fsPath
 	}
 	cmd.push('-param', '"' + params + '"')
 

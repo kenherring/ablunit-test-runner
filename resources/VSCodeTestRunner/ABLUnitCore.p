@@ -17,15 +17,6 @@ return.
 
 // --------- FUNCTIONS ----------
 
-function getParameter returns character (input params as character, input name as character) :
-	define variable cnt as integer no-undo.
-	do cnt = 1 to num-entries(params,' '):
-		if entry(cnt,params,' ') begins name + '=' then
-			return entry(2, entry(cnt, params, ' '), '=').
-	end.
-	return ''.
-end function.
-
 function readTestConfig returns OpenEdge.ABLUnit.Runner.TestConfig (filepath as character) :
 	return new OpenEdge.ABLUnit.Runner.TestConfig(cast((new Progress.Json.ObjectModel.ObjectModelParser()):ParseFile(filepath), Progress.Json.ObjectModel.JsonObject)).
 end function.
@@ -113,13 +104,15 @@ end procedure.
 
 procedure main :
 	define variable updateFile as character no-undo.
+	define variable cfgFile as character no-undo.
 	if VERBOSE then message 'START main'.
 
 	session:suppress-warnings = true.
-	run VSCode/createDatabaseAliases.p(VERBOSE).
+	run VSCode/createDatabaseAliases.p(VERBOSE, session:parameter).
 
-	assign updateFile = getParameter(trim(trim(session:parameter,'"'),"'"), 'ATTR_ABLUNIT_EVENT_FILE').
-	testConfig = readTestConfig(getParameter(trim(trim(session:parameter,'"'),"'"), 'CFG')).
+	run VSCode/getSessionParameter.p(session:parameter, 'ATTR_ABLUNIT_EVENT_FILE', output updateFile).
+	run VSCode/getSessionParameter.p(session:parameter, 'CFG', output cfgFile).
+	testConfig = readTestConfig(cfgFile).
 	quitOnEnd = (testConfig = ?) or testConfig:quitOnEnd.
 
 	define variable initializationProcedure as character no-undo.
