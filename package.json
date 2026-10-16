@@ -2,7 +2,7 @@
 	"name": "ablunit-test-runner",
 	"displayName": "ABLUnit Test Runner",
 	"description": "OpenEdge ABLUnit test runner for VSCode",
-	"version": "1.4.41",
+	"version": "1.4.43",
 	"engineStrict": true,
 	"galleryBanner": {
 		"color": "#007ACC",
@@ -87,7 +87,7 @@
 		"watch": "npm run build -- --watch"
 	},
 	"dependencies": {
-		"minimatch": "^10.2.4",
+		"minimatch": "^10.2.6",
 		"node-json-minify": "^3.0.0",
 		"tree-kill": "^1.2.2",
 		"xml2js": "^0.6.2"
@@ -98,18 +98,18 @@
 		"@types/node": "24.x",
 		"@types/vscode": "1.96.0",
 		"@types/xml2js": "^0.4.14",
-		"@vscode/test-cli": "^0.0.12",
-		"@vscode/test-electron": "^3.0.0",
-		"@vscode/vsce": "^3.9.1",
-		"esbuild": "^0.28.0",
+		"@vscode/test-cli": "^0.0.15",
+		"@vscode/test-electron": "^3.1.0",
+		"@vscode/vsce": "^3.9.2",
+		"esbuild": "^0.28.2",
 		"esbuild-register": "^3.6.0",
 		"eslint": "^9.39.2",
 		"eslint-plugin-promise": "^7.3.0",
-		"mocha": "^11.7.6",
-		"mocha-multi-reporters": "^1.5.1",
+		"mocha": "^11.8.0",
+		"mocha-multi-reporters": "^1.5.2",
 		"mocha-reporter-sonarqube": "2.1.1",
 		"typescript": "^5.9.3",
-		"typescript-eslint": "^8.64.0"
+		"typescript-eslint": "^8.71.0"
 	},
 	"contributes": {
 		"configuration": {
