@@ -29,6 +29,7 @@ import { SnippetProvider } from 'SnippetProvider'
 import { DebugListingContentProvider, getDebugListingPreviewEditor } from 'DebugListingPreview'
 import { ABLUnitTestRunner } from '@types'
 import { getBuildPathPatterns, getOpenEdgeProfileConfig } from 'parse/OpenedgeProjectParser'
+import { registerLanguageModelTools } from 'LanguageModelTools'
 
 let recentResults: ABLResults[] = []
 let recentError: Error | undefined = undefined
@@ -581,6 +582,37 @@ export async function activate (context: ExtensionContext) {
 	testProfileCoverage.configureHandler = configHandler
 	testProfileCoverage.loadDetailedCoverage = loadDetailedCoverage
 	testProfileCoverage.loadDetailedCoverageForTest = loadDetailedCoverageForTest
+
+	// Language Model tools (ablunit_list_tests, ablunit_run_tests) let chat agents and other
+	// extensions list and run tests without the Test Explorer UI.  See LanguageModelTools.ts.
+	const getRootTestItems = async (token: CancellationToken) => {
+		// the tree is empty until the first refresh when ablunit.discoverAllTestsOnActivate is false
+		if (ctrl.items.size === 0) {
+			await refreshTestTree(ctrl, token)
+		}
+		return gatherTestItems(ctrl.items)
+	}
+
+	context.subscriptions.push(...registerLanguageModelTools({
+		resolveTestFile: async (uri: Uri) => {
+			// the file may not be in the tree yet (never opened, or tests not discovered)
+			await updateNode(uri, ctrl)
+			return getExistingTestItem(ctrl, uri)
+		},
+		getRootTestItems,
+		runTests: async (include: TestItem[] | undefined, token: CancellationToken) => {
+			if (!include) {
+				// startTestRun falls back to ctrl.items, which must not be empty
+				await getRootTestItems(token)
+			}
+			// Call startTestRun rather than runHandler: runHandler swallows ABLUnitRuntimeError
+			// (into recentError), while the tool needs the error to report it to the caller.
+			// The run still shows up in the Test Explorer like any other run.
+			await startTestRun(new TestRunRequest(include, undefined, testProfileRun), token)
+			// set by startTestRun on completion; a run started concurrently from the UI would overwrite it
+			return recentResults
+		},
+	}))
 
 	let prom
 	if(workspace.getConfiguration('ablunit').get('discoverAllTestsOnActivate', false)) {
