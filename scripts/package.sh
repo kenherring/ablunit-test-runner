@@ -94,5 +94,5 @@ START_TIME=$(date +%s)
 initialize
 package
 run_lint
-echo "[$(date +%Y-%m-%d:%H:%M:%S) $0] completed successfully (time=$((END_TIME - START_TIME))s)"
 END_TIME=$(date +%s)
+echo "[$(date +%Y-%m-%d:%H:%M:%S) $0] completed successfully (time=$((END_TIME - START_TIME))s)"
