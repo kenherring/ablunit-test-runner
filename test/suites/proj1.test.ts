@@ -1,4 +1,4 @@
-import { Selection, TaskEndEvent, TaskExecution, commands, tasks, window } from 'vscode'
+import { LanguageModelTextPart, Selection, TaskEndEvent, TaskExecution, commands, lm, tasks, window } from 'vscode'
 import { Uri, assert, getWorkspaceUri, log, runAllTests, updateConfig, getTestCount, workspace, suiteSetupCommon, getWorkspaceFolders, oeVersion, runTestAtLine, beforeCommon, updateTestProfile, runTestsInFile, TestRunProfileKind, sleep, FileUtils } from '../testCommon'
 import { getOEVersion } from 'parse/OpenedgeProjectParser'
 import { execSync } from 'child_process'
@@ -334,6 +334,16 @@ suite('proj1 - Extension Test Suite', () => {
 				return true
 			})
 		return p
+	})
+
+	test('proj1.18 - language model tool - ignored test is named as skipped', async () => {
+		const result = await lm.invokeTool('ablunit_run_tests', { input: { fileUri: 'procedureTest_Ignore.p' }, toolInvocationToken: undefined })
+		const text = result.content
+			.filter((part): part is LanguageModelTextPart => part instanceof LanguageModelTextPart)
+			.map((part) => part.value)
+			.join('\n')
+		log.info('ablunit_run_tests returned:\n' + text)
+		assert.ok(/^SKIPPED .*test_proc$/m.test(text), 'expected a SKIPPED line for test_proc in:\n' + text)
 	})
 
 	test('proj1.98 - check startup parameters for -y -yx', async () => {

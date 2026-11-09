@@ -197,12 +197,13 @@ function formatStackFrame (frame: TestMessageStackFrame) {
 
 function formatTestCase (tc: ITestCase, suiteName: string | undefined, lines: string[]) {
 	const status = tc.status.toLowerCase()
-	if (status === 'success') {
-		return
-	}
 	const name = (suiteName ? suiteName + ' > ' : '') + tc.name
+	// checked before 'success': ABLUnit reports ignored tests with status="Success" and ignored="true"
 	if (tc.skipped || status === 'skipped' || status === 'ignored') {
 		lines.push('SKIPPED ' + name)
+		return
+	}
+	if (status === 'success') {
 		return
 	}
 	lines.push(status.toUpperCase() + ' ' + name)
