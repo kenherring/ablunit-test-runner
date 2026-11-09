@@ -196,4 +196,5 @@ create_dbs
 package
 rm -rf artifacts/*
 END_TIME=$(date +%s)
-log_it "completed successfully! (time=$((END_TIME - START_TIME))s)"
+echo "[$(date +%Y-%m-%d:%H:%M:%S) $0] completed successfully (time=$((END_TIME - START_TIME))s)"
+

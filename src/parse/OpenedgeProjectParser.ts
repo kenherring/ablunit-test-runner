@@ -434,7 +434,7 @@ function parseOpenEdgeProjectConfig (uri: Uri, workspaceUri: Uri, config: IOpenE
 			build: config.buildDirectory ?? prjConfig.propath[0],
 			xref: '.builder/pct',
 			path: prjConfig.propath[0],
-			pathUri: FileUtils.toUri(prjConfig.propath[0]),
+			pathUri: FileUtils.toUri(prjConfig.propath[0], workspaceUri),
 		}]
 	}
 
@@ -595,7 +595,7 @@ export function getProfileDbConns (workspaceUri: Uri, openedgeProjectProfile?: s
 export function getBuildPathPatterns (workspaceFolder: WorkspaceFolder, buildPath: IBuildPathEntry): { includes: RelativePattern[]; excludes: RelativePattern[] } {
 	const includes: RelativePattern[] = []
 	if (buildPath.includesFile) {
-		const lines = FileUtils.readLinesFromFileSync(FileUtils.toUri(buildPath.includesFile))
+		const lines = FileUtils.readLinesFromFileSync(FileUtils.toUri(buildPath.includesFile, workspaceFolder.uri))
 		includes.push(...lines.map(p => new RelativePattern(workspaceFolder, workspace.asRelativePath(buildPath.path) + '/' + p)))
 	} else {
 		for (const p of buildPath.includes?.split(',') ?? []) {
@@ -605,7 +605,7 @@ export function getBuildPathPatterns (workspaceFolder: WorkspaceFolder, buildPat
 
 	const excludes: RelativePattern[] = []
 	if (buildPath.excludesFile) {
-		const lines = FileUtils.readLinesFromFileSync(FileUtils.toUri(buildPath.excludesFile))
+		const lines = FileUtils.readLinesFromFileSync(FileUtils.toUri(buildPath.excludesFile, workspaceFolder.uri))
 		excludes.push(...lines.map(p => new RelativePattern(workspaceFolder, workspace.asRelativePath(buildPath.path) + '/' + p)))
 	} else {
 		for (const p of buildPath.excludes?.split(',') ?? []) {
