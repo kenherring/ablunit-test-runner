@@ -586,10 +586,7 @@ export async function activate (context: ExtensionContext) {
 	// Language Model tools (ablunit_list_tests, ablunit_run_tests) let chat agents and other
 	// extensions list and run tests without the Test Explorer UI.  See LanguageModelTools.ts.
 	const getRootTestItems = async (token: CancellationToken) => {
-		// the tree is empty until the first refresh when ablunit.discoverAllTestsOnActivate is false
-		if (ctrl.items.size === 0) {
-			await refreshTestTree(ctrl, token)
-		}
+		await refreshTestTree(ctrl, token)
 		return gatherTestItems(ctrl.items)
 	}
 
