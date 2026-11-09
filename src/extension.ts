@@ -31,8 +31,8 @@ import { ABLUnitTestRunner } from '@types'
 import { getBuildPathPatterns, getOpenEdgeProfileConfig } from 'parse/OpenedgeProjectParser'
 import { registerLanguageModelTools } from 'LanguageModelTools'
 
-let recentResults: ABLResults[] = []
 let recentError: Error | undefined = undefined
+let recentResults: ABLResults[] = []
 let debugListingContentProviderRegistered = false
 
 export async function activate (context: ExtensionContext) {
@@ -176,7 +176,9 @@ export async function activate (context: ExtensionContext) {
 		}
 
 		return startTestRun(request, token)
-			.catch((e: unknown) => {
+			.then(() => {
+				return
+			}, (e: unknown) => {
 				if (e instanceof Error) {
 					log.error('recentError=' + e)
 					recentError = e
@@ -289,7 +291,7 @@ export async function activate (context: ExtensionContext) {
 			}
 		}
 
-		const runTestQueue = async (res: ABLResults[]) => {
+		const runTestQueue = async (res: ABLResults[]): Promise<ABLResults[]> => {
 			for (const { test } of queue) {
 				if (run.token.isCancellationRequested) {
 					log.debug('cancellation requested - runTestQueue-1')
@@ -366,7 +368,7 @@ export async function activate (context: ExtensionContext) {
 					}
 				}
 				run.end()
-				return
+				return []
 			}
 
 			log.debug('ablunit test run complete', {testRun: run})
@@ -398,7 +400,7 @@ export async function activate (context: ExtensionContext) {
 
 			run.end()
 			log.notificationInfo('ablunit tests complete')
-			return
+			return data
 		}
 
 		const createABLResults = async () => {
@@ -466,9 +468,9 @@ export async function activate (context: ExtensionContext) {
 				checkCancellationRequested(run)
 				return runTestQueue(res)
 			})
-			.then(() => {
+			.then((results) => {
 				log.debug('runTestQueue complete')
-				return
+				return results
 			}, (e: unknown) => {
 				run.end()
 				throw e
@@ -605,9 +607,7 @@ export async function activate (context: ExtensionContext) {
 			// Call startTestRun rather than runHandler: runHandler swallows ABLUnitRuntimeError
 			// (into recentError), while the tool needs the error to report it to the caller.
 			// The run still shows up in the Test Explorer like any other run.
-			await startTestRun(new TestRunRequest(include, undefined, testProfileRun), token)
-			// set by startTestRun on completion; a run started concurrently from the UI would overwrite it
-			return recentResults
+			return await startTestRun(new TestRunRequest(include, undefined, testProfileRun), token)
 		},
 	}))
 
