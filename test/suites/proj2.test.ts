@@ -27,6 +27,13 @@ suite('proj2 - Extension Test Suite', () => {
 		FileUtils.deleteFile(toUri('.vscode/profile.json'))
 	})
 
+	// must stay the first test: it needs a tree where no test file has been parsed yet
+	test('proj2.0 - language model tool - list all tests on a fresh workspace', async () => {
+		const text = await invokeLanguageModelTool('ablunit_list_tests', {})
+		assert.ok(text.includes('otherTestProcedure.p'), 'expected otherTestProcedure.p in:\n' + text)
+		assert.ok(text.includes('testProcedure1'), 'expected testProcedure1 in:\n' + text)
+	})
+
 	test('proj2.1 - temp/ablunit.json file exists', () => {
 		return runAllTests().then(() => {
 			const ablunitJson = Uri.joinPath(workspaceUri, 'temp', 'ablunit.json')

@@ -599,6 +599,12 @@ export async function activate (context: ExtensionContext) {
 			return getExistingTestItem(ctrl, uri)
 		},
 		getRootTestItems,
+		getResolvedRootTestItems: async (token: CancellationToken) => {
+			await refreshTestTree(ctrl, token)
+			await resolveUnparsedTestFiles(ctrl, token)
+			// gathered after parsing, which removes the files that turn out to have no tests
+			return gatherTestItems(ctrl.items)
+		},
 		runTests: async (include: TestItem[] | undefined, token: CancellationToken) => {
 			if (!include) {
 				// startTestRun falls back to ctrl.items, which must not be empty
@@ -1090,6 +1096,37 @@ function refreshTestTree (controller: TestController, token: CancellationToken):
 			return true
 		})
 	return prom1
+}
+
+/**
+ * Parses the discovered test files that have not been parsed yet, so their
+ * methods and procedures are in the tree without being expanded in the Test
+ * Explorer. A file that cannot be parsed is logged and skipped (updateFromDisk
+ * sets the error on its test item) rather than failing the others.
+ */
+async function resolveUnparsedTestFiles (controller: TestController, token: CancellationToken) {
+	const unparsed: { item: TestItem, data: ABLTestFile }[] = []
+	for (const item of gatherAllTestItems(controller.items)) {
+		const data = testData.get(item)
+		if (data instanceof ABLTestFile && !data.didResolve) {
+			unparsed.push({ item, data })
+		}
+	}
+
+	// in batches to limit the files open at once and to stop promptly on cancellation
+	const batchSize = 50
+	for (let i = 0; i < unparsed.length; i += batchSize) {
+		if (token.isCancellationRequested) {
+			throw new CancellationError()
+		}
+		const batch = unparsed.slice(i, i + batchSize)
+		const results = await Promise.allSettled(batch.map(({ item, data }) => data.updateFromDisk(controller, item)))
+		results.forEach((result, idx) => {
+			if (result.status === 'rejected') {
+				log.warn('failed to parse test file ' + workspace.asRelativePath(batch[idx].item.uri!) + ': ' + result.reason)
+			}
+		})
+	}
 }
 
 function getControllerTestFileCount (controller: TestController) {

@@ -36,6 +36,8 @@ export interface ILanguageModelToolHost {
 	resolveTestFile: (uri: Uri) => Promise<TestItem | undefined>
 	/** Returns the top-level test items, discovering the workspace tests first when the tree is empty. */
 	getRootTestItems: (token: CancellationToken) => Promise<TestItem[]>
+	/** Same as getRootTestItems, and also parses the discovered files so the items include their methods and procedures. */
+	getResolvedRootTestItems: (token: CancellationToken) => Promise<TestItem[]>
 	/** Runs the given tests (all tests when undefined) with the 'Run Tests' profile and resolves with the results. */
 	runTests: (include: TestItem[] | undefined, token: CancellationToken) => Promise<ABLResults[]>
 }
@@ -91,7 +93,7 @@ class ListTestsTool implements LanguageModelTool<IListTestsInput> {
 			}
 			roots = [item]
 		} else {
-			roots = await this.host.getRootTestItems(token)
+			roots = await this.host.getResolvedRootTestItems(token)
 		}
 
 		const lines: string[] = []
