@@ -1,5 +1,16 @@
-# [1.4.43](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.4.43) - 2026-10-13 (pre-release)
+# [1.4.45](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.4.45) - 2026-11-07 (pre-release)
 
+* Remove user validation step from actions pipeline (#644)
+* build(deps): bump SonarSource/sonarqube-scan-action from 8.3.0 to 8.4.0 (#641)
+* build(deps-dev): bump @vscode/vsce from 4.0.0 to 4.1.0 (#636)
+* build(deps): bump @azure/msal-node from 6.0.1 to 7.1.2 in the npm_and_yarn group across 1 directory (#642)
+* build(deps): bump minimatch from 10.2.6 to 11.0.3 (#637)
+* build(deps-dev): bump typescript-eslint from 8.72.0 to 8.72.1 (#639)
+* build(deps-dev): bump qs from 6.16.0 to 6.17.1 in the npm_and_yarn group across 1 directory (#635)
+* build(deps-dev): bump typescript-eslint from 8.71.2 to 8.72.0 (#632)
+* build(deps-dev): bump mocha from 11.8.0 to 12.0.3 (#630)
+* build(deps-dev): bump @vscode/vsce from 3.9.2 to 4.0.0 (#631)
+* build(deps-dev): bump typescript-eslint from 8.71.0 to 8.71.2 (#629)
 * build(deps-dev): bump mocha-multi-reporters from 1.5.1 to 1.5.2 (#625)
 * build(deps-dev): bump esbuild from 0.28.1 to 0.28.2 (#626)
 * build(deps): bump SonarSource/sonarqube-scan-action from 8.2.1 to 8.3.0 (#620)
@@ -102,7 +113,7 @@
 * Bump esbuild from 0.27.0 to 0.27.1 (#457)
 * Bump jws from 3.2.2 to 3.2.3 in the npm_and_yarn group across 1 directory (#455)
 
-**Full Changelog**: [1.4.4...1.4.43](https://github.com/kenherring/ablunit-test-runner/compare/1.4.4...1.4.43)
+**Full Changelog**: [1.4.4...1.4.45](https://github.com/kenherring/ablunit-test-runner/compare/1.4.4...1.4.45)
 
 # [1.4.4](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.4.4) - 2025-11-26 (pre-release)
 
