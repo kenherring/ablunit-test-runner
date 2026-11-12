@@ -243,6 +243,60 @@
 				"icon": "$(open-preview)",
 				"enablement": "resourceExtname == '.cls' || resourceExtname == '.p'"
 			}
+		],
+		"languageModelTools": [
+			{
+				"name": "ablunit_list_tests",
+				"toolReferenceName": "ablunitListTests",
+				"displayName": "List ABLUnit Tests",
+				"userDescription": "List the ABLUnit tests discovered in the workspace or in a file.",
+				"modelDescription": "Lists the OpenEdge ABLUnit tests (test classes, test programs, test suites and their test methods/procedures) discovered by the ABLUnit Test Runner extension. Use it to find which tests exist and their exact names before running them with ablunit_run_tests. When fileUri is omitted, lists every test in the workspace.",
+				"canBeReferencedInPrompt": true,
+				"icon": "$(beaker)",
+				"tags": [
+					"ablunit",
+					"openedge",
+					"abl",
+					"tests"
+				],
+				"inputSchema": {
+					"type": "object",
+					"properties": {
+						"fileUri": {
+							"type": "string",
+							"description": "Test file (.cls or .p): workspace-relative path, absolute path, or file URI."
+						}
+					}
+				}
+			},
+			{
+				"name": "ablunit_run_tests",
+				"toolReferenceName": "ablunitRunTests",
+				"displayName": "Run ABLUnit Tests",
+				"userDescription": "Run ABLUnit tests and report the results.",
+				"modelDescription": "Runs OpenEdge ABLUnit tests with the ABLUnit Test Runner extension (same configuration as the Test Explorer 'Run Tests' profile: .vscode/ablunit-test-profile.json and openedge-project.json) and returns the totals plus, for every test that did not pass, its failure message, expected/actual values and call stack. Compile errors and ABLUnit runtime errors are reported as well. Omit fileUri to run every test in the workspace; pass fileUri to run the tests in one file; pass fileUri and testName to run a single test method or procedure. Tests run against the files saved on disk.",
+				"canBeReferencedInPrompt": true,
+				"icon": "$(beaker)",
+				"tags": [
+					"ablunit",
+					"openedge",
+					"abl",
+					"tests"
+				],
+				"inputSchema": {
+					"type": "object",
+					"properties": {
+						"fileUri": {
+							"type": "string",
+							"description": "Test file (.cls or .p): workspace-relative path, absolute path, or file URI."
+						},
+						"testName": {
+							"type": "string",
+							"description": "Name of a single test method (test class) or internal procedure (test program) inside fileUri, as returned by ablunit_list_tests. Case-insensitive. Requires fileUri."
+						}
+					}
+				}
+			}
 		]
 	}
 }

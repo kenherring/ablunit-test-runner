@@ -29,9 +29,10 @@ import { SnippetProvider } from 'SnippetProvider'
 import { DebugListingContentProvider, getDebugListingPreviewEditor } from 'DebugListingPreview'
 import { ABLUnitTestRunner } from '@types'
 import { getBuildPathPatterns, getOpenEdgeProfileConfig } from 'parse/OpenedgeProjectParser'
+import { registerLanguageModelTools } from 'LanguageModelTools'
 
-let recentResults: ABLResults[] = []
 let recentError: Error | undefined = undefined
+let recentResults: ABLResults[] = []
 let debugListingContentProviderRegistered = false
 
 export async function activate (context: ExtensionContext) {
@@ -175,7 +176,9 @@ export async function activate (context: ExtensionContext) {
 		}
 
 		return startTestRun(request, token)
-			.catch((e: unknown) => {
+			.then(() => {
+				return
+			}, (e: unknown) => {
 				if (e instanceof Error) {
 					log.error('recentError=' + e)
 					recentError = e
@@ -288,7 +291,7 @@ export async function activate (context: ExtensionContext) {
 			}
 		}
 
-		const runTestQueue = async (res: ABLResults[]) => {
+		const runTestQueue = async (res: ABLResults[]): Promise<ABLResults[]> => {
 			for (const { test } of queue) {
 				if (run.token.isCancellationRequested) {
 					log.debug('cancellation requested - runTestQueue-1')
@@ -365,7 +368,7 @@ export async function activate (context: ExtensionContext) {
 					}
 				}
 				run.end()
-				return
+				return []
 			}
 
 			log.debug('ablunit test run complete', {testRun: run})
@@ -397,7 +400,7 @@ export async function activate (context: ExtensionContext) {
 
 			run.end()
 			log.notificationInfo('ablunit tests complete')
-			return
+			return data
 		}
 
 		const createABLResults = async () => {
@@ -465,9 +468,9 @@ export async function activate (context: ExtensionContext) {
 				checkCancellationRequested(run)
 				return runTestQueue(res)
 			})
-			.then(() => {
+			.then((results) => {
 				log.debug('runTestQueue complete')
-				return
+				return results
 			}, (e: unknown) => {
 				run.end()
 				throw e
@@ -581,6 +584,38 @@ export async function activate (context: ExtensionContext) {
 	testProfileCoverage.configureHandler = configHandler
 	testProfileCoverage.loadDetailedCoverage = loadDetailedCoverage
 	testProfileCoverage.loadDetailedCoverageForTest = loadDetailedCoverageForTest
+
+	// Language Model tools (ablunit_list_tests, ablunit_run_tests) let chat agents and other
+	// extensions list and run tests without the Test Explorer UI.  See LanguageModelTools.ts.
+	const getRootTestItems = async (token: CancellationToken) => {
+		await refreshTestTree(ctrl, token)
+		return gatherTestItems(ctrl.items)
+	}
+
+	context.subscriptions.push(...registerLanguageModelTools({
+		resolveTestFile: async (uri: Uri) => {
+			// the file may not be in the tree yet (never opened, or tests not discovered)
+			await updateNode(uri, ctrl)
+			return getExistingTestItem(ctrl, uri)
+		},
+		getRootTestItems,
+		getResolvedRootTestItems: async (token: CancellationToken) => {
+			await refreshTestTree(ctrl, token)
+			await resolveUnparsedTestFiles(ctrl, token)
+			// gathered after parsing, which removes the files that turn out to have no tests
+			return gatherTestItems(ctrl.items)
+		},
+		runTests: async (include: TestItem[] | undefined, token: CancellationToken) => {
+			if (!include) {
+				// startTestRun falls back to ctrl.items, which must not be empty
+				await getRootTestItems(token)
+			}
+			// Call startTestRun rather than runHandler: runHandler swallows ABLUnitRuntimeError
+			// (into recentError), while the tool needs the error to report it to the caller.
+			// The run still shows up in the Test Explorer like any other run.
+			return await startTestRun(new TestRunRequest(include, undefined, testProfileRun), token)
+		},
+	}))
 
 	let prom
 	if(workspace.getConfiguration('ablunit').get('discoverAllTestsOnActivate', false)) {
@@ -1061,6 +1096,37 @@ function refreshTestTree (controller: TestController, token: CancellationToken):
 			return true
 		})
 	return prom1
+}
+
+/**
+ * Parses the discovered test files that have not been parsed yet, so their
+ * methods and procedures are in the tree without being expanded in the Test
+ * Explorer. A file that cannot be parsed is logged and skipped (updateFromDisk
+ * sets the error on its test item) rather than failing the others.
+ */
+async function resolveUnparsedTestFiles (controller: TestController, token: CancellationToken) {
+	const unparsed: { item: TestItem, data: ABLTestFile }[] = []
+	for (const item of gatherAllTestItems(controller.items)) {
+		const data = testData.get(item)
+		if (data instanceof ABLTestFile && !data.didResolve) {
+			unparsed.push({ item, data })
+		}
+	}
+
+	// in batches to limit the files open at once and to stop promptly on cancellation
+	const batchSize = 50
+	for (let i = 0; i < unparsed.length; i += batchSize) {
+		if (token.isCancellationRequested) {
+			throw new CancellationError()
+		}
+		const batch = unparsed.slice(i, i + batchSize)
+		const results = await Promise.allSettled(batch.map(({ item, data }) => data.updateFromDisk(controller, item)))
+		results.forEach((result, idx) => {
+			if (result.status === 'rejected') {
+				log.warn('failed to parse test file ' + workspace.asRelativePath(batch[idx].item.uri!) + ': ' + result.reason)
+			}
+		})
+	}
 }
 
 function getControllerTestFileCount (controller: TestController) {
