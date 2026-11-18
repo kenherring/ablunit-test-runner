@@ -1,6 +1,7 @@
 # [1.4.47](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.4.47) - 2026-11-17 (pre-release)
 
 * build(deps): bump minimatch from 11.0.5 to 11.0.8 (#651)
+* build(deps-dev): bump typescript-eslint from 8.72.1 to 8.72.2 (#653)
 * build(deps): bump SonarSource/sonarqube-scan-action from 8.4.1 to 8.5.0 (#652)
 * build(deps): bump minimatch from 11.0.3 to 11.0.4 (#646)
 * build(deps): bump SonarSource/sonarqube-scan-action from 8.4.0 to 8.4.1 (#648)
