@@ -1,7 +1,19 @@
-import { debug, Location, Position, SourceBreakpoint } from 'vscode'
+import { debug, LanguageModelTextPart, lm, Location, Position, SourceBreakpoint } from 'vscode'
 import { assert, getResults, getWorkspaceUri, log, runAllTests, suiteSetupCommon, Uri, commands, beforeCommon, toUri, FileUtils, selectProfile, runTestsInFile, TestRunProfileKind } from '../testCommon'
 
 const workspaceUri = getWorkspaceUri()
+
+// Invokes a tool the way other extensions do (no chat session, so no toolInvocationToken)
+// and returns the text parts of the result
+async function invokeLanguageModelTool (name: string, input: object) {
+	const result = await lm.invokeTool(name, { input, toolInvocationToken: undefined })
+	const text = result.content
+		.filter((part): part is LanguageModelTextPart => part instanceof LanguageModelTextPart)
+		.map((part) => part.value)
+		.join('\n')
+	log.info(name + ' returned:\n' + text)
+	return text
+}
 
 suite('proj2 - Extension Test Suite', () => {
 
@@ -13,6 +25,13 @@ suite('proj2 - Extension Test Suite', () => {
 		beforeCommon()
 		FileUtils.deleteFile(toUri('src/compileError.p'))
 		FileUtils.deleteFile(toUri('.vscode/profile.json'))
+	})
+
+	// must stay the first test: it needs a tree where no test file has been parsed yet
+	test('proj2.0 - language model tool - list all tests on a fresh workspace', async () => {
+		const text = await invokeLanguageModelTool('ablunit_list_tests', {})
+		assert.ok(text.includes('otherTestProcedure.p'), 'expected otherTestProcedure.p in:\n' + text)
+		assert.ok(text.includes('testProcedure1'), 'expected testProcedure1 in:\n' + text)
 	})
 
 	test('proj2.1 - temp/ablunit.json file exists', () => {
@@ -103,6 +122,35 @@ suite('proj2 - Extension Test Suite', () => {
 		await runTestsInFile('src/compileError.p')
 		assert.ok('test passed as expected')
 		assert.tests.count(1)
+	})
+
+	test('proj2.9 - language model tool - list tests in file', async () => {
+		const text = await invokeLanguageModelTool('ablunit_list_tests', { fileUri: 'src/cache/otherTestProcedure.p' })
+		assert.ok(text.includes('testProcedure1'), 'expected testProcedure1 in:\n' + text)
+		assert.ok(text.includes('testProcedure2'), 'expected testProcedure2 in:\n' + text)
+		assert.ok(text.includes('testProcedure3'), 'expected testProcedure3 in:\n' + text)
+	})
+
+	test('proj2.10 - language model tool - run tests in file', async () => {
+		const text = await invokeLanguageModelTool('ablunit_run_tests', { fileUri: 'src/testSuite.cls' })
+		assert.ok(text.includes('9 tests, 5 passed, 3 failures, 1 errors, 0 skipped'), 'unexpected totals in:\n' + text)
+	})
+
+	test('proj2.11 - language model tool - run single test', async () => {
+		const text = await invokeLanguageModelTool('ablunit_run_tests', { fileUri: 'src/cache/otherTestProcedure.p', testName: 'TESTPROCEDURE2' })
+		assert.ok(text.startsWith('1 tests, 1 passed, 0 failures, 0 errors, 0 skipped'), 'unexpected totals in:\n' + text)
+	})
+
+	test('proj2.12 - language model tool - failure details', async () => {
+		const text = await invokeLanguageModelTool('ablunit_run_tests', { fileUri: Uri.joinPath(workspaceUri, 'src/classes/testClass2.cls').toString() })
+		assert.ok(text.startsWith('1 tests, 0 passed, 1 failures, 0 errors, 0 skipped'), 'unexpected totals in:\n' + text)
+		assert.ok(text.includes('testMethod'), 'expected failing test name in:\n' + text)
+		assert.ok(text.includes('testClass2.cls:6'), 'expected call stack location in:\n' + text)
+	})
+
+	test('proj2.13 - language model tool - unknown test name', async () => {
+		const text = await invokeLanguageModelTool('ablunit_run_tests', { fileUri: 'src/cache/otherTestProcedure.p', testName: 'doesNotExist' })
+		assert.ok(text.startsWith('No test named "doesNotExist"'), 'unexpected response:\n' + text)
 	})
 
 	// temporarily skipping this test case because the vscode-abl extension is ignoring `"pause": false` in the debug configuration
