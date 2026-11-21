@@ -4,6 +4,7 @@ import { log } from 'ChannelLogger'
 import { ABLUnitConfig } from 'ABLUnitConfigWriter'
 import { IDlc } from 'parse/OpenedgeProjectParser'
 import { PropathParser } from 'ABLPropath'
+import * as FileUtils from 'FileUtils'
 
 let abort: AbortController
 
@@ -54,9 +55,9 @@ function getDefaultCommand (cfg: ABLUnitConfig, dlc: IDlc, propath: PropathParse
 		throw new Error('temp directory not set')
 	}
 
-	const executable = dlc.uri.fsPath.replace(/\\/g, '/') + '/bin/' + cfg.ablunitConfig.command.executable
+	const executable = FileUtils.quotePath(dlc.uri.fsPath + '/bin/' + cfg.ablunitConfig.command.executable)
 
-	const cmd = [ executable, '-p', execFile ]
+	const cmd = [ executable, '-p', FileUtils.quotePath(execFile) ]
 
 	if (cfg.ablunitConfig.command.batch) {
 		cmd.push('-b')
@@ -65,7 +66,7 @@ function getDefaultCommand (cfg: ABLUnitConfig, dlc: IDlc, propath: PropathParse
 	process.env['PROPATH'] = propath.toString().replace(/\$\{DLC\}/g, dlc.uri.fsPath.replace(/\\/g, '/'))
 
 	if (cfg.ablunitConfig.dbConnPfUri && cfg.ablunitConfig.dbConns && cfg.ablunitConfig.dbConns.length > 0) {
-		cmd.push('-pf', cfg.ablunitConfig.dbConnPfUri.fsPath)
+		cmd.push('-pf', FileUtils.quotePath(cfg.ablunitConfig.dbConnPfUri.fsPath))
 	}
 
 	const cmdSanitized: string[] = []
