@@ -1,0 +1,13 @@
+<project name="projB_test2">
+
+    <taskdef resource="PCT.properties" />
+	<typedef resource="types.properties" />
+	<property environment="env" />
+	<DlcHome value="${env.DLC}" />
+
+    <target name="createDatabase">
+        <mkdir dir="target/db" />
+        <sports2000 dbName="sp2k" destDir="target/db" />
+    </target>
+
+</project>

@@ -1,0 +1,12 @@
+{
+    "name": "projB_test1",
+    "charset": "utf-8",
+    "version": "0",
+    "oeVersion": "12.8",
+    "buildPath": [
+        {
+            "path": "src",
+            "type": "source"
+        }
+    ]
+}
