@@ -1,5 +1,8 @@
-# [1.4.47](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.4.47) - 2026-11-17 (pre-release)
+# [1.4.49](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.4.49) - 2026-11-26 (pre-release)
 
+* build(deps-dev): bump typescript-eslint from 8.72.2 to 8.73.0 (#654)
+* build(deps): bump minimatch from 11.0.5 to 11.0.8 (#651)
+* Skip flaky tests (#657)
 * build(deps-dev): bump typescript-eslint from 8.72.1 to 8.72.2 (#653)
 * build(deps): bump SonarSource/sonarqube-scan-action from 8.4.1 to 8.5.0 (#652)
 * build(deps): bump minimatch from 11.0.3 to 11.0.4 (#646)
@@ -118,7 +121,7 @@
 * Bump esbuild from 0.27.0 to 0.27.1 (#457)
 * Bump jws from 3.2.2 to 3.2.3 in the npm_and_yarn group across 1 directory (#455)
 
-**Full Changelog**: [1.4.4...1.4.47](https://github.com/kenherring/ablunit-test-runner/compare/1.4.4...1.4.47)
+**Full Changelog**: [1.4.4...1.4.49](https://github.com/kenherring/ablunit-test-runner/compare/1.4.4...1.4.49)
 
 # [1.4.4](https://github.com/kenherring/ablunit-test-runner/releases/tag/1.4.4) - 2025-11-26 (pre-release)
 
