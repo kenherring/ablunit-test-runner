@@ -25,7 +25,7 @@ end function.
 
 procedure main :
     run setPropath.
-    run VSCode/createDatabaseAliases.p(false).
+    run VSCode/createDatabaseAliases.p(false, session:parameter).
 
 	define variable sourceFile as character no-undo.
 	define variable rcodeDirectory as character no-undo.
